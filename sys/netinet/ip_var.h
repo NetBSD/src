@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_var.h	7.7 (Berkeley) 6/28/90
- *	$Id: ip_var.h,v 1.4 1993/12/06 04:59:42 hpeyerl Exp $
+ *	$Id: ip_var.h,v 1.5 1994/01/08 21:21:53 mycroft Exp $
  */
 
 #ifndef _NETINET_IP_VAR_H_
@@ -71,11 +71,11 @@ struct ipq {
  * Note: ipf_next must be at same offset as ipq_next above
  */
 struct	ipasfrag {
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_char	ip_hl:4,
 		ip_v:4;
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 	u_char	ip_v:4,
 		ip_hl:4;
 #endif
@@ -96,7 +96,7 @@ struct	ipasfrag {
  * The actual length of the options (including ipopt_dst)
  * is in m_len.
  */
-#define MAX_IPOPTLEN	40
+#define	MAX_IPOPTLEN	40
 
 struct ipoption {
 	struct	in_addr ipopt_dst;	/* first-hop dst if source routed */
@@ -141,7 +141,7 @@ struct	ipstat {
 #ifdef KERNEL
 /* flags passed to ip_output as last parameter */
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
-#define IP_MULTICASTOPTS	0x2		/* multicast opts present */
+#define	IP_MULTICASTOPTS	0x2		/* multicast opts present */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 

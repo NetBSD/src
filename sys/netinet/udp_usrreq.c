@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.5 1993/12/18 00:42:15 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.6 1994/01/08 21:22:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -164,7 +164,6 @@ udp_input(m, iphlen)
 		 * compatibility we avoid the problem here rather than
 		 * fixing the interface.  Maybe 4.4BSD will remedy this?)
 		 */
-  
 		/*
 		 * Construct sockaddr format source address.
 		 */
@@ -186,7 +185,7 @@ udp_input(m, iphlen)
 					continue;
 			}
 			if (inp->inp_faddr.s_addr != INADDR_ANY) {
- 				if (inp->inp_faddr.s_addr !=
+				if (inp->inp_faddr.s_addr !=
 				    ip->ip_src.s_addr ||
 				    inp->inp_fport != uh->uh_sport)
 					continue;
@@ -216,7 +215,7 @@ udp_input(m, iphlen)
 			if ((last->so_options & SO_REUSEADDR) == 0)
 				break;
 		}
-  
+
 		if (last == NULL) {
 			/*
 			 * No matching pcb found; discard datagram.

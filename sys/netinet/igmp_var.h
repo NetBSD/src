@@ -66,7 +66,7 @@ struct igmpstat igmpstat;
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define IGMP_RANDOM_DELAY(multiaddr)					\
+#define	IGMP_RANDOM_DELAY(multiaddr)					\
 	/* struct in_addr multiaddr; */					\
 	(random() % (IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ) + 1)
 

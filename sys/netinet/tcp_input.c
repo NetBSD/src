@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_input.c	7.25 (Berkeley) 6/30/90
- *	$Id: tcp_input.c,v 1.3 1993/12/18 00:42:03 mycroft Exp $
+ *	$Id: tcp_input.c,v 1.4 1994/01/08 21:21:58 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -368,7 +368,7 @@ findpcb:
 		tcp_dooptions(tp, om, ti);
 		om = 0;
 	}
-	/* 
+	/*
 	 * Header prediction: check for the two common cases
 	 * of a uni-directional data xfer.  If the packet has
 	 * no control flags, is in-sequence, the window didn't
@@ -610,7 +610,7 @@ trimthenstep6:
 
 	/*
 	 * States other than LISTEN or SYN_SENT.
-	 * First check that at least some bytes of segment are within 
+	 * First check that at least some bytes of segment are within
 	 * receive window.  If segment begins before rcv_nxt,
 	 * drop leading data (and SYN); if nothing left, just ack.
 	 */
@@ -619,7 +619,7 @@ trimthenstep6:
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
 			ti->ti_seq++;
-			if (ti->ti_urp > 1) 
+			if (ti->ti_urp > 1)
 				ti->ti_urp--;
 			else
 				tiflags &= ~TH_URG;
@@ -764,7 +764,7 @@ trimthenstep6:
 	 */
 	if ((tiflags & TH_ACK) == 0)
 		goto drop;
-	
+
 	/*
 	 * Ack processing.
 	 */
@@ -824,7 +824,7 @@ trimthenstep6:
 				 * the new ssthresh).
 				 *
 				 * Dup acks mean that packets have left the
-				 * network (they're now cached at the receiver) 
+				 * network (they're now cached at the receiver)
 				 * so bump cwnd by the amount in the receiver
 				 * to keep a constant cwnd packets in the
 				 * network.
@@ -1033,14 +1033,14 @@ step6:
 		 * If this segment advances the known urgent pointer,
 		 * then mark the data stream.  This should not happen
 		 * in CLOSE_WAIT, CLOSING, LAST_ACK or TIME_WAIT STATES since
-		 * a FIN has been received from the remote side. 
+		 * a FIN has been received from the remote side.
 		 * In these states we ignore the URG.
 		 *
 		 * According to RFC961 (Assigned Protocols),
 		 * the urgent pointer points to the last octet
 		 * of urgent data.  We continue, however,
 		 * to consider it to indicate the first octet
-		 * of data past the urgent section as the original 
+		 * of data past the urgent section as the original
 		 * spec states (in one of two places).
 		 */
 		if (SEQ_GT(ti->ti_seq+ti->ti_urp, tp->rcv_up)) {
@@ -1127,7 +1127,7 @@ dodata:							/* XXX */
 
 	 	/*
 		 * In FIN_WAIT_2 state enter the TIME_WAIT state,
-		 * starting the time-wait timer, turning off the other 
+		 * starting the time-wait timer, turning off the other
 		 * standard timers.
 		 */
 		case TCPS_FIN_WAIT_2:
@@ -1260,7 +1260,7 @@ tcp_pulloutofband(so, ti, m)
 	register struct mbuf *m;
 {
 	int cnt = ti->ti_urp - 1;
-	
+
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
 			char *cp = mtod(m, caddr_t) + cnt;
@@ -1317,7 +1317,7 @@ tcp_xmit_timer(tp)
 		if ((tp->t_rttvar += delta) <= 0)
 			tp->t_rttvar = 1;
 	} else {
-		/* 
+		/*
 		 * No rtt measurement yet - use the unsmoothed rtt.
 		 * Set the variance to half the rtt (so our first
 		 * retransmit happens at 2*rtt)
@@ -1341,7 +1341,7 @@ tcp_xmit_timer(tp)
 	 */
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    tp->t_rttmin, TCPTV_REXMTMAX);
-	
+
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
 	 * it is probably safe to discard any error indications we've

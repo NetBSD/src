@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_cksum.c	7.3 (Berkeley) 6/28/90
- *	$Id: in_cksum.c,v 1.4 1993/12/18 00:41:51 mycroft Exp $
+ *	$Id: in_cksum.c,v 1.5 1994/01/08 21:21:39 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -44,8 +44,8 @@
  * code and should be modified for each CPU to be as fast as possible.
  */
 
-#define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
-#define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
+#define	ADDCARRY(x) (x > 65535 ? x -= 65535 : x)
+#define	REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
 
 in_cksum_c(m, len)
 	register struct mbuf *m;
@@ -75,7 +75,7 @@ in_cksum_c(m, len)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous 
+			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
 			s_util.c[1] = *(char *)w;

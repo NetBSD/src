@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.10 1994/01/07 22:16:11 cgd Exp $
+ *	$Id: ip_output.c,v 1.11 1994/01/08 21:21:52 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -207,7 +207,7 @@ ip_output(m0, opt, ro, flags
 		if (inm != NULL &&
 		   (imo == NULL || imo->imo_multicast_loop)) {
 			/*
- 			 * If we belong to the destination multicast group
+			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
 			 * forbid loopback, loop back a copy.
 			 */
@@ -783,7 +783,7 @@ ip_setmoptions(optname, imop, m)
 		addr = *(mtod(m, struct in_addr *));
 		/*
 		 * INADDR_ANY is used to remove a previous selection.
- 		 * When no interface is selected, a default one is
+		 * When no interface is selected, a default one is
 		 * chosen every time a multicast packet is sent.
 		 */
 		if (addr.s_addr == INADDR_ANY) {
@@ -793,7 +793,7 @@ ip_setmoptions(optname, imop, m)
 		/*
 		 * The selected interface is identified by its local
 		 * IP address.  Find the interface and confirm that
- 		 * it supports multicasting.
+		 * it supports multicasting.
 		 */
 		INADDR_TO_IFP(addr, ifp);
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
@@ -813,7 +813,7 @@ ip_setmoptions(optname, imop, m)
 		}
 		imo->imo_multicast_ttl = *(mtod(m, u_char *));
 		break;
- 
+
 	case IP_MULTICAST_LOOP:
 		/*
 		 * Set the loopback flag for outgoing multicast packets.
@@ -823,7 +823,7 @@ ip_setmoptions(optname, imop, m)
 		   (loop = *(mtod(m, u_char *))) > 1) {
 			error = EINVAL;
 			break;
- 		}
+		}
 		imo->imo_multicast_loop = loop;
 		break;
 
@@ -866,26 +866,26 @@ ip_setmoptions(optname, imop, m)
 		 * See if we found an interface, and confirm that it
 		 * supports multicast.
 		 */
- 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
 		/*
 		 * See if the membership already exists or if all the
 		 * membership slots are full.
- 		 */
+		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
 			if (imo->imo_membership[i]->inm_ifp == ifp &&
 			    imo->imo_membership[i]->inm_addr.s_addr
 						== mreq->imr_multiaddr.s_addr)
 				break;
- 		}
+		}
 		if (i < imo->imo_num_memberships) {
 			error = EADDRINUSE;
 			break;
 		}
 		if (i == IP_MAX_MEMBERSHIPS) {
- 			error = ETOOMANYREFS;
+			error = ETOOMANYREFS;
 			break;
 		}
 		/*
@@ -934,7 +934,7 @@ ip_setmoptions(optname, imop, m)
 			if ((ifp == NULL ||
 			     imo->imo_membership[i]->inm_ifp == ifp) &&
 			     imo->imo_membership[i]->inm_addr.s_addr ==
- 			     mreq->imr_multiaddr.s_addr)
+			     mreq->imr_multiaddr.s_addr)
 				break;
 		}
 		if (i == imo->imo_num_memberships) {
@@ -945,7 +945,7 @@ ip_setmoptions(optname, imop, m)
 		 * Give up the multicast address record to which the
 		 * membership points.
 		 */
- 		in_delmulti(imo->imo_membership[i]);
+		in_delmulti(imo->imo_membership[i]);
 		/*
 		 * Remove the gap in the membership array.
 		 */

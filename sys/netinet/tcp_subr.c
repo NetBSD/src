@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
- *	$Id: tcp_subr.c,v 1.5 1993/12/18 00:42:07 mycroft Exp $
+ *	$Id: tcp_subr.c,v 1.6 1994/01/08 21:22:01 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		m->m_data = (caddr_t)ti;
 		m->m_len = sizeof (struct tcpiphdr);
 		tlen = 0;
-#define xchg(a,b,type) { type t; t=a; a=b; b=t; }
+#define	xchg(a,b,type) { type t; t=a; a=b; b=t; }
 		xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_long);
 		xchg(ti->ti_dport, ti->ti_sport, u_short);
 #undef xchg
@@ -220,7 +220,7 @@ tcp_newtcpcb(inp)
 	tp->t_srtt = TCPTV_SRTTBASE;
 	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << 2;
 	tp->t_rttmin = TCPTV_MIN;
-	TCPT_RANGESET(tp->t_rxtcur, 
+	TCPT_RANGESET(tp->t_rxtcur,
 	    ((TCPTV_SRTTBASE >> 2) + (TCPTV_SRTTDFLT << 2)) >> 1,
 	    TCPTV_MIN, TCPTV_REXMTMAX);
 	tp->snd_cwnd = TCP_MAXWIN;
@@ -273,7 +273,7 @@ tcp_close(tp)
 
 	/*
 	 * If we sent enough data to get some meaningful characteristics,
-	 * save them in the routing entry.  'Enough' is arbitrarily 
+	 * save them in the routing entry.  'Enough' is arbitrarily
 	 * defined as the sendpipesize (default 4K) * 16.  This would
 	 * give us 16 rtt samples assuming we only get one sample per
 	 * window (the usual case on a long haul net).  16 samples is

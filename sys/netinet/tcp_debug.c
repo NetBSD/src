@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
- *	$Id: tcp_debug.c,v 1.4 1993/12/18 00:42:01 mycroft Exp $
+ *	$Id: tcp_debug.c,v 1.5 1994/01/08 21:21:57 mycroft Exp $
  */
 
 #ifdef TCPDEBUG
 /* load symbolic names */
-#define PRUREQUESTS
-#define TCPSTATES
+#define	PRUREQUESTS
+#define	TCPSTATES
 #define	TCPTIMERS
 #define	TANAMES
 #endif
@@ -131,7 +131,7 @@ tcp_trace(act, ostate, tp, ti, req)
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define	pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_var.h	7.6 (Berkeley) 6/28/90
- *	$Id: in_var.h,v 1.4 1993/12/08 23:48:05 hpeyerl Exp $
+ *	$Id: in_var.h,v 1.5 1994/01/08 21:21:43 mycroft Exp $
  */
 
 #ifndef _NETINET_IN_VAR_H_
@@ -46,7 +46,7 @@
 struct in_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
-#define ia_flags	ia_ifa.ifa_flags
+#define	ia_flags	ia_ifa.ifa_flags
 					/* ia_{,sub}net{,mask} in host order */
 	u_long	ia_net;			/* network number of interface */
 	u_long	ia_netmask;		/* mask of net part */
@@ -58,14 +58,14 @@ struct in_ifaddr {
 	struct	sockaddr_in ia_dstaddr; /* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
-	struct	in_multi *ia_multiaddrs; /*list of multicast addresses */
+	struct	in_multi *ia_multiaddrs; /* list of multicast addresses */
 };
 
 struct	in_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr_in ifra_addr;
 	struct	sockaddr_in ifra_broadaddr;
-#define ifra_dstaddr ifra_broadaddr
+#define	ifra_dstaddr ifra_broadaddr
 	struct	sockaddr_in ifra_mask;
 };
 /*
@@ -85,7 +85,7 @@ struct	ifqueue	ipintrq;		/* ip packet input queue */
  * Macro for finding the interface (ifnet structure) corresponding to one
  * of our IP addresses.
  */
-#define INADDR_TO_IFP(addr, ifp) \
+#define	INADDR_TO_IFP(addr, ifp) \
 	/* struct in_addr addr; */ \
 	/* struct ifnet *ifp; */ \
 { \
@@ -102,7 +102,7 @@ struct	ifqueue	ipintrq;		/* ip packet input queue */
  * Macro for finding the internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-#define IFP_TO_IA(ifp, ia) \
+#define	IFP_TO_IA(ifp, ia) \
 	/* struct ifnet *ifp; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
@@ -142,7 +142,7 @@ struct in_multistep {
  * Macro for looking up the in_multi record for a given IP multicast address
  * on a given interface.  If no matching record is found, "inm" returns NULL.
  */
-#define IN_LOOKUP_MULTI(addr, ifp, inm) \
+#define	IN_LOOKUP_MULTI(addr, ifp, inm) \
 	/* struct in_addr addr; */ \
 	/* struct ifnet *ifp; */ \
 	/* struct in_multi *inm; */ \
@@ -166,7 +166,7 @@ struct in_multistep {
  * and get the first record.  Both macros return a NULL "inm" when there
  * are no remaining records.
  */
-#define IN_NEXT_MULTI(step, inm) \
+#define	IN_NEXT_MULTI(step, inm) \
 	/* struct in_multistep  step; */ \
 	/* struct in_multi *inm; */ \
 { \
@@ -183,7 +183,7 @@ struct in_multistep {
 		} \
 }
 
-#define IN_FIRST_MULTI(step, inm) \
+#define	IN_FIRST_MULTI(step, inm) \
 	/* struct in_multistep step; */ \
 	/* struct in_multi *inm; */ \
 { \
@@ -195,5 +195,5 @@ struct in_multistep {
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 int	in_delmulti __P((struct in_multi *));
 #endif
-  
+
 #endif /* !_NETINET_IN_VAR_H_ */

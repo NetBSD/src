@@ -49,12 +49,12 @@ struct igmp {
 	struct in_addr	igmp_group;	/* group address being reported    */
 };					/*  (zero for queries)             */
 
-#define IGMP_MINLEN		     8
+#define	IGMP_MINLEN		     8
 
-#define IGMP_HOST_MEMBERSHIP_QUERY   0x11  /* message types, incl. version */
-#define IGMP_HOST_MEMBERSHIP_REPORT  0x12
-#define IGMP_DVMRP		     0x13  /* for experimental multicast   */
+#define	IGMP_HOST_MEMBERSHIP_QUERY   0x11  /* message types, incl. version */
+#define	IGMP_HOST_MEMBERSHIP_REPORT  0x12
+#define	IGMP_DVMRP		     0x13  /* for experimental multicast   */
 					   /*  routing protocol            */
 
-#define IGMP_MAX_HOST_REPORT_DELAY   10    /* max delay for response to    */
+#define	IGMP_MAX_HOST_REPORT_DELAY   10    /* max delay for response to    */
 					   /*  query (in seconds)          */

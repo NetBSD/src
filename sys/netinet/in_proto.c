@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_proto.c	7.5 (Berkeley) 6/28/90
- *	$Id: in_proto.c,v 1.5 1993/12/18 00:41:54 mycroft Exp $
+ *	$Id: in_proto.c,v 1.6 1994/01/08 21:21:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif
-	/* raw wildcard */
+/* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -147,7 +147,7 @@ struct protosw inetsw[] = {
 };
 
 struct domain inetdomain =
-    { AF_INET, "internet", 0, 0, 0, 
+    { AF_INET, "internet", 0, 0, 0,
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])] };
 
 #if NIMP > 0

@@ -80,7 +80,7 @@ igmp_input(m, iphlen)
 {
 	register struct igmp *igmp;
 	register struct ip *ip;
-        register int igmplen;
+	register int igmplen;
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register int minlen;
 	register struct in_multi *inm;

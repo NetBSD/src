@@ -94,8 +94,8 @@ static	void srcrt_send __P((struct ip *, struct vif *, struct mbuf *));
 static	void encap_send __P((struct ip *, struct vif *, struct mbuf *));
 static	multiencap_decap __P((struct mbuf *, int hlen));
 
-#define INSIZ sizeof(struct in_addr)
-#define	same(a1, a2) (bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
+#define	INSIZ	sizeof(struct in_addr)
+#define	same(a1, a2)	(bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 
 /*
@@ -119,8 +119,8 @@ struct	mrtstat	mrtstat;
  */
 struct ifnet multicast_decap_if[MAXVIFS];
 
-#define ENCAP_TTL 64
-#define ENCAP_PROTO 4
+#define	ENCAP_TTL 64
+#define	ENCAP_PROTO 4
 
 /* prototype IP hdr for encapsulated packets */
 struct ip multicast_encap_iphdr = {
@@ -133,7 +133,7 @@ struct ip multicast_encap_iphdr = {
 	sizeof(struct ip),		/* total length */
 	0,				/* id */
 	0,				/* frag offset */
-	ENCAP_TTL, ENCAP_PROTO,	
+	ENCAP_TTL, ENCAP_PROTO,
 	0,				/* checksum */
 };
 
@@ -176,14 +176,14 @@ nethash(n)
  * datagram source address to the associated multicast route.  Note
  * that unlike mrttable, the hash is on IP address, not IP net number.
  */
-#define MSRCHASHSIZ 1024
-#define MSRCHASH(a) ((((a) >> 20) ^ ((a) >> 10) ^ (a)) & (MSRCHASHSIZ - 1))
+#define	MSRCHASHSIZ	1024
+#define	MSRCHASH(a)	((((a) >> 20) ^ ((a) >> 10) ^ (a)) & (MSRCHASHSIZ - 1))
 struct mrt *mrtsrchash[MSRCHASHSIZ];
 
 /*
  * Find a route for a given origin IP address.
  */
-#define MRTFIND(o, rt) { \
+#define	MRTFIND(o, rt) { \
 	register u_int _mrhash = o; \
 	_mrhash = MSRCHASH(_mrhash); \
 	++mrtstat.mrts_mrt_lookups; \
@@ -196,7 +196,7 @@ struct mrt *mrtsrchash[MSRCHASHSIZ];
 
 static struct mrt *
 mrtfind(origin)
-    u_long origin;
+	u_long origin;
 {
 	register struct mrt *rt;
 	register u_int hash;
@@ -412,7 +412,7 @@ add_vif(vifcp)
 		 * IP multicasts from the if
 		 */
 		((struct sockaddr_in *)&ifr.ifr_addr)->sin_family = AF_INET;
-		((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr = 
+		((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr =
 			INADDR_ANY;
 		s = splnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
@@ -700,8 +700,8 @@ del_mrt(origin)
  * discard it.
  */
 
-#define IP_HDR_LEN  20	/* # bytes of fixed IP header (excluding options) */
-#define TUNNEL_LEN  12  /* # bytes of IP option for tunnel encapsulation  */
+#define	IP_HDR_LEN  20	/* # bytes of fixed IP header (excluding options) */
+#define	TUNNEL_LEN  12	/* # bytes of IP option for tunnel encapsulation  */
 
 int
 ip_mforward(ip, ifp, m)

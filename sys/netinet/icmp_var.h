@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icmp_var.h	7.5 (Berkeley) 6/28/90
- *	$Id: icmp_var.h,v 1.3 1993/05/20 03:49:51 cgd Exp $
+ *	$Id: icmp_var.h,v 1.4 1994/01/08 21:21:28 mycroft Exp $
  */
 
 #ifndef _NETINET_ICMP_VAR_H_
@@ -48,7 +48,7 @@ struct	icmpstat {
 	int	icps_oldicmp;		/* no error 'cuz old was icmp */
 	int	icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
- 	int	icps_badcode;		/* icmp_code out of range */
+	int	icps_badcode;		/* icmp_code out of range */
 	int	icps_tooshort;		/* packet < ICMP_MINLEN */
 	int	icps_checksum;		/* bad checksum */
 	int	icps_badlen;		/* calculated bound mismatch */

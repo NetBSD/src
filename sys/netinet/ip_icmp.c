@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
- *	$Id: ip_icmp.c,v 1.4 1993/12/18 00:41:56 mycroft Exp $
+ *	$Id: ip_icmp.c,v 1.5 1994/01/08 21:21:45 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -188,11 +188,11 @@ icmp_input(m, hlen)
 		goto freeit;
 	}
 	i = hlen + MIN(icmplen, ICMP_ADVLENMIN);
- 	if (m->m_len < i && (m = m_pullup(m, i)) == 0)  {
+	if (m->m_len < i && (m = m_pullup(m, i)) == 0)  {
 		icmpstat.icps_tooshort++;
 		return;
 	}
- 	ip = mtod(m, struct ip *);
+	ip = mtod(m, struct ip *);
 	m->m_len -= hlen;
 	m->m_data += hlen;
 	icp = mtod(m, struct icmp *);
@@ -276,7 +276,7 @@ icmp_input(m, hlen)
 		icp->icmp_rtime = iptime();
 		icp->icmp_ttime = icp->icmp_rtime;	/* bogus, do later! */
 		goto reflect;
-		
+
 	case ICMP_IREQ:
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 		if (in_netof(ip->ip_src) == 0 &&
