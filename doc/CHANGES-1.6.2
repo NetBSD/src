@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.156 2003/09/20 15:20:09 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.157 2003/09/21 10:50:53 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1761,4 +1761,63 @@ crypto/dist/ssh/buffer.c			1.5
 	protect against double free; #660;  zardoz at users.sf.net
 	from openbsd
 	[christos, ticket #1477]
+
+usr.sbin/pkg_install/add/add.h			1.6
+usr.sbin/pkg_install/add/extract.c		1.30-1.31
+usr.sbin/pkg_install/add/futil.c		1.10-1.12
+usr.sbin/pkg_install/add/main.c			1.28-1.31
+usr.sbin/pkg_install/add/perform.c		1.78-1.87
+usr.sbin/pkg_install/add/pkg_add.1		1.39-1.45
+usr.sbin/pkg_install/add/verify.c		1.3
+usr.sbin/pkg_install/add/verify.h		1.3-1.1
+usr.sbin/pkg_install/lib/Makefile		1.20-1.21
+usr.sbin/pkg_install/lib/defs.h			1.20-1.1
+usr.sbin/pkg_install/lib/exec.c			1.9
+usr.sbin/pkg_install/lib/file.c			1.59-1.63
+usr.sbin/pkg_install/lib/ftpio.c		1.50-1.54
+usr.sbin/pkg_install/lib/global.c		1.50-1.6
+usr.sbin/pkg_install/lib/lib.h			1.49-1.57
+usr.sbin/pkg_install/lib/lpkg.c			1.5
+usr.sbin/pkg_install/lib/path.c			1.6
+usr.sbin/pkg_install/lib/path.h			1.4
+usr.sbin/pkg_install/lib/pen.c			1.24-1.31
+usr.sbin/pkg_install/lib/pkgdb.c		1.14-1.18
+usr.sbin/pkg_install/lib/plist.c		1.38-1.40
+usr.sbin/pkg_install/lib/str.c			1.43-1.45
+usr.sbin/pkg_install/lib/version.c		1.43-1.1
+usr.sbin/pkg_install/lib/version.h		1.22-1.34
+usr.sbin/pkg_install/lib/fexec.c		1.1-1.4
+usr.sbin/pkg_install/Makefile			1.6
+usr.sbin/pkg_install/Makefile.inc		1.24
+usr.sbin/pkg_install/README			1.7-1.8
+usr.sbin/pkg_install/tkpkg			1.7-1.5
+usr.sbin/pkg_install/admin/Makefile		1.7-1.1
+usr.sbin/pkg_install/admin/README		1.7-1.1
+usr.sbin/pkg_install/admin/main.c		1.33-1.42
+usr.sbin/pkg_install/admin/pkg_admin.1		1.21-1.26
+usr.sbin/pkg_install/create/Makefile		1.21-1.4
+usr.sbin/pkg_install/create/create.h		1.18
+usr.sbin/pkg_install/create/main.c		1.24-1.26
+usr.sbin/pkg_install/create/perform.c		1.36-1.38
+usr.sbin/pkg_install/create/pkg_create.1	1.36-1.39
+usr.sbin/pkg_install/create/pl.c		1.26-1.28
+usr.sbin/pkg_install/delete/Makefile		1.26-1.4
+usr.sbin/pkg_install/delete/delete.h		1.7
+usr.sbin/pkg_install/delete/main.c		1.25-1.29
+usr.sbin/pkg_install/delete/perform.c		1.41-1.47
+usr.sbin/pkg_install/delete/pkg_delete.1	1.28-1.31
+usr.sbin/pkg_install/info/Makefile		1.28-1.4
+usr.sbin/pkg_install/info/info.h		1.13-1.14
+usr.sbin/pkg_install/info/main.c		1.34-1.37
+usr.sbin/pkg_install/info/perform.c		1.44-1.49
+usr.sbin/pkg_install/info/pkg_info.1		1.33-1.34
+usr.sbin/pkg_install/info/show.c		1.22-1.27
+usr.sbin/pkg_install/view/Makefile		1.1
+usr.sbin/pkg_install/view/linkfarm.1		1.1-1.5
+usr.sbin/pkg_install/view/linkfarm.sh		1.1-1.3
+usr.sbin/pkg_install/view/pkg_view.1		1.1-1.8
+usr.sbin/pkg_install/view/pkg_view.sh		1.1-1.4
+
+	Update the package tools to version 20030918.
+	[jlam, ticket #1457]
 
