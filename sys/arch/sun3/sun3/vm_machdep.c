@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 1999/05/26 22:07:41 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 1999/05/26 22:19:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -386,9 +386,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io mappings associated with this I/O operation.
- * The temporary I/O mappings were non-cached, so there is
- * no need to flush write-back cache here.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 1999/05/26 22:07:38 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 1999/05/26 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -370,10 +370,8 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
-
 void
 vunmapbuf(bp, len)
 	struct buf *bp;

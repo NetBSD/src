@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1999/05/26 22:07:39 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 1999/05/26 22:19:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 1999/05/26 22:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 1999/05/26 22:19:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,8 +339,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
