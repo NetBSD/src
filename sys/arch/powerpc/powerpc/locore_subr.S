@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.14 2003/07/31 15:30:41 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.15 2003/08/04 00:32:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,6 +77,54 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
+#define	SWITCHFRAME_SAVE(t0)					\
+	streg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
+	streg	%r11,(SFRAME_CR)(t0);		/* CR */	\
+	streg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
+	streg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+	streg	%r14,(SFRAME_R14)(t0);				\
+	streg	%r15,(SFRAME_R15)(t0);				\
+	streg	%r16,(SFRAME_R16)(t0);				\
+	streg	%r17,(SFRAME_R17)(t0);				\
+	streg	%r18,(SFRAME_R18)(t0);				\
+	streg	%r19,(SFRAME_R19)(t0);				\
+	streg	%r20,(SFRAME_R20)(t0);				\
+	streg	%r21,(SFRAME_R21)(t0);				\
+	streg	%r22,(SFRAME_R22)(t0);				\
+	streg	%r23,(SFRAME_R23)(t0);				\
+	streg	%r24,(SFRAME_R24)(t0);				\
+	streg	%r25,(SFRAME_R25)(t0);				\
+	streg	%r26,(SFRAME_R26)(t0);				\
+	streg	%r27,(SFRAME_R27)(t0);				\
+	streg	%r28,(SFRAME_R28)(t0);				\
+	streg	%r29,(SFRAME_R29)(t0);				\
+	streg	%r30,(SFRAME_R30)(t0);				\
+	streg	%r31,(SFRAME_R31)(t0)
+
+#define	SWITCHFRAME_RESTORE(t0)					\
+	ldreg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
+	ldreg	%r11,(SFRAME_CR)(t0);		/* CR */	\
+	ldreg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
+	ldreg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+	ldreg	%r14,(SFRAME_R14)(t0);				\
+	ldreg	%r15,(SFRAME_R15)(t0);				\
+	ldreg	%r16,(SFRAME_R16)(t0);				\
+	ldreg	%r17,(SFRAME_R17)(t0);				\
+	ldreg	%r18,(SFRAME_R18)(t0);				\
+	ldreg	%r19,(SFRAME_R19)(t0);				\
+	ldreg	%r20,(SFRAME_R20)(t0);				\
+	ldreg	%r21,(SFRAME_R21)(t0);				\
+	ldreg	%r22,(SFRAME_R22)(t0);				\
+	ldreg	%r23,(SFRAME_R23)(t0);				\
+	ldreg	%r24,(SFRAME_R24)(t0);				\
+	ldreg	%r25,(SFRAME_R25)(t0);				\
+	ldreg	%r26,(SFRAME_R26)(t0);				\
+	ldreg	%r27,(SFRAME_R27)(t0);				\
+	ldreg	%r28,(SFRAME_R28)(t0);				\
+	ldreg	%r29,(SFRAME_R29)(t0);				\
+	ldreg	%r30,(SFRAME_R30)(t0);				\
+	ldreg	%r31,(SFRAME_R31)(t0)
+
 	.data
 GLOBAL(powersave)
 	.long	-1
@@ -90,7 +138,7 @@ GLOBAL(powersave)
  */
 ASENTRY(Idle)
 	lis	%r8,_C_LABEL(sched_whichqs)@ha
-	lwz	%r9,_C_LABEL(sched_whichqs)@l(%r8)
+	ldint	%r9,_C_LABEL(sched_whichqs)@l(%r8)
 
 	or.	%r9,%r9,%r9
 	bne+	.Lsw1			/* at least one queue non-empty */
@@ -110,7 +158,7 @@ ASENTRY(Idle)
 
 /* Check if we can use power saving mode */
 	lis	%r8,_C_LABEL(powersave)@ha
-	lwz	%r9,_C_LABEL(powersave)@l(%r8)
+	ldint	%r9,_C_LABEL(powersave)@l(%r8)
 
 	add.	%r9,%r9,%r9
 	ble	1f
@@ -144,8 +192,8 @@ ASENTRY(Idle)
 ENTRY(switch_exit)
 /* First switch to the idle pcb/kernel stack */
 	GET_CPUINFO(%r7)
-	lwz	%r6,CI_IDLE_PCB(%r7)
-	stw	%r6,CI_CURPCB(%r7)
+	ldptr	%r6,CI_IDLE_PCB(%r7)
+	stptr	%r6,CI_CURPCB(%r7)
 
 	/*
 	 * Adjust the stack to provide space for the callee to save LR.
@@ -171,10 +219,10 @@ ENTRY(switch_exit)
  */
 ENTRY_NOPROFILE(cpu_switch)
 	mflr	%r0			/* save lr */
-	stw	%r0,SZREG(%r1)
-	stwu	%r1,-CALLFRAMELEN(%r1)
-	stw	%r31,(3*SZREG)(%r1)
-	stw	%r30,(2*SZREG)(%r1)
+	streg	%r0,CFRAME_LR(%r1)
+	stptru	%r1,-CALLFRAMELEN(%r1)
+	streg	%r30,CFRAME_R30(%r1)
+	streg	%r31,CFRAME_R31(%r1)
 
 	mr	%r30,%r3
 #if defined(MULTIPROCESSOR)
@@ -183,33 +231,33 @@ ENTRY_NOPROFILE(cpu_switch)
 	cmpwi	%r30,0			/* old process was exiting? */
 	beq	1f
 
-#if defined(PPC_OEA) && !defined(_LP64)
+#if defined(PPC_OEA) && !defined(PPC_OEA64)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* no USER_SR needed */
 #endif
 	mfcr	%r11			/* save cr */
 	mr	%r12,%r2		/* save r2 */
-	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
-	stmw	%r10,(2*SZREG)(%r1)	/* save USER_SR, CR, R2, non-volatile */
-	lwz	%r3,L_ADDR(%r30)	/* get PCB address */
-	stw	%r1,PCB_SP(%r3)		/* save SP */
+	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
+	ldptr	%r3,L_ADDR(%r30)	/* get PCB address */
+	streg	%r1,PCB_SP(%r3)		/* save SP */
 
-	lwz	%r6,CI_IDLE_PCB(%r7)
+	ldptr	%r6,CI_IDLE_PCB(%r7)
 	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
 
 1:
 	li	%r31,0
-	stw	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
-	lwz	%r31,CI_CURPCB(%r7)
+	streg	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
+	ldptr	%r31,CI_CURPCB(%r7)
 
-	lwz	%r3,CI_CPL(%r7)
-	stw	%r3,PCB_SPL(%r31)	/* save spl */
+	ldint	%r3,CI_CPL(%r7)
+	stint	%r3,PCB_SPL(%r31)	/* save spl */
 #else
 	GET_CPUINFO(%r3)
 	li	%r31,0
-	stw	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
-	lwz	%r31,CI_CURPCB(%r3)
+	streg	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
+	ldptr	%r31,CI_CURPCB(%r3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -220,7 +268,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	li	%r3,0			/* spl0() */
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
-	stw	%r3,PCB_SPL(%r31)	/* save spl */
+	stint	%r3,PCB_SPL(%r31)	/* save spl */
 #endif
 
 /* Lock the scheduler. */
@@ -240,7 +288,7 @@ ENTRY_NOPROFILE(cpu_switch)
 
 /* Find a new process */
 	lis	%r8,_C_LABEL(sched_whichqs)@ha
-	lwz	%r9,_C_LABEL(sched_whichqs)@l(%r8)
+	ldint	%r9,_C_LABEL(sched_whichqs)@l(%r8)
 
 	or.	%r9,%r9,%r9
 	beq-	_ASM_LABEL(Idle)	/* all queues empty */
@@ -251,10 +299,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	slwi	%r3,%r10,3
 	add	%r3,%r3,%r4		/* select queue */
 
-	lwz	%r31,L_FORW(%r3)	/* unlink first proc from queue */
-	lwz	%r4,L_FORW(%r31)
-	stw	%r4,L_FORW(%r3)
-	stw	%r3,L_BACK(%r4)
+	ldptr	%r31,L_FORW(%r3)	/* unlink first proc from queue */
+	ldptr	%r4,L_FORW(%r31)
+	streg	%r4,L_FORW(%r3)
+	streg	%r3,L_BACK(%r4)
 
 	cmpl	%cr0,%r3,%r4		/* queue empty? */
 	bne	1f
@@ -262,27 +310,27 @@ ENTRY_NOPROFILE(cpu_switch)
 	lis	%r3,0x80000000@h
 	srw	%r3,%r3,%r10
 	andc	%r9,%r9,%r3
-	stw	%r9,_C_LABEL(sched_whichqs)@l(%r8) /* mark it empty */
+	stint	%r9,_C_LABEL(sched_whichqs)@l(%r8) /* mark it empty */
 
 switch_common:
 1:
 	/* just did this resched thing */
 	li	%r3,0
 	GET_CPUINFO(%r4)
-	stw	%r3,CI_WANT_RESCHED(%r4)
-	stw	%r3,L_BACK(%r31)	/* probably superfluous */
+	stint	%r3,CI_WANT_RESCHED(%r4)
+	streg	%r3,L_BACK(%r31)	/* probably superfluous */
 
 #ifdef MULTIPROCESSOR
-	stw	%r4,L_CPU(%r31)		/* l->l_cpu = curcpu() */
+	streg	%r4,L_CPU(%r31)		/* l->l_cpu = curcpu() */
 #endif
 
 	/* Process now running on a processor. */
 	li	%r3,LSONPROC		/* l->l_stat = LSONPROC */
-	stw	%r3,L_STAT(%r31)
+	stint	%r3,L_STAT(%r31)
 
 	/* record new process */
-	stw	%r31,CI_CURLWP(%r4)
-	lwz	%r4,L_ADDR(%r31)
+	stptr	%r31,CI_CURLWP(%r4)
+	ldptr	%r4,L_ADDR(%r31)
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
 	li	%r3,0			/* if it is the same lwp, return 0 */
@@ -292,38 +340,42 @@ switch_common:
 	or.	%r30,%r30,%r30		/* old lwp was exiting? */
 	beq	switch_exited
 
-#if defined(PPC_OEA) && !defined(_LP64)
+#if defined(PPC_OEA) && !defined(PPC_OEA64)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else /* PPC_OEA */
 	li	%r10,0			/* no SR needed */
 #endif
 	mfcr	%r11			/* save cr */
 	mr	%r12,%r2		/* save r2 */
-	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
-	stmw	%r10,(2*SZREG)(%r1)
-	lwz	%r3,L_ADDR(%r30)
-	stw	%r1,PCB_SP(%r3)		/* save SP */
+	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
+	ldptr	%r3,L_ADDR(%r30)
+	streg	%r1,PCB_SP(%r3)		/* save SP */
 
 switch_exited:
 #endif
 
 	/* indicate new pcb */
 	GET_CPUINFO(%r6)
-	stw	%r4,CI_CURPCB(%r6)
+	stptr	%r4,CI_CURPCB(%r6)
 
 	/* save real pmap pointer for spill fill */
-	lwz	%r5,PCB_PMR(%r4)
-	stwu	%r5,CI_CURPM(%r6)
+	ldptr	%r5,PCB_PMR(%r4)
+	stptru	%r5,CI_CURPM(%r6)
+#ifdef PPC_OEA64
+	stdcx.	%r5,%r0,%r6		/* clear possible reservation */
+#else
 	stwcx.	%r5,%r0,%r6		/* clear possible reservation */
+#endif
 	isync
 
-	lwz	%r1,PCB_SP(%r4)		/* get new procs SP */
-	lmw	%r10,(2*SZREG)(%r1)	/* get non-volatile, CR, R2, USER_SR */
-	lwz	%r1,0(%r1)		/* get saved SP */
+	ldreg	%r1,PCB_SP(%r4)		/* get new procs SP */
+	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
+	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
 	isync
-#if defined(PPC_OEA) && !defined(_LP64)
+#if defined(PPC_OEA) && !defined(PPC_OEA64)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
 	isync
 #endif
@@ -345,14 +397,14 @@ switch_return:
 	mtmsr	%r3
 #endif
 
-	lwz	%r3,PCB_SPL(%r4)
+	ldint	%r3,PCB_SPL(%r4)
 	bl	_C_LABEL(lcsplx)
 
 #if defined(PPC_IBM4XX)
 0:
 	GET_CPUINFO(%r3)
-	lwz	%r3,CI_CURPM(%r3)	/* Do we need a context? */
-	lwz	%r4,PM_CTX(%r3)
+	ldreg	%r3,CI_CURPM(%r3)	/* Do we need a context? */
+	ldreg	%r4,PM_CTX(%r3)
 	cmpwi	%r4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
 	bne	1f
@@ -362,10 +414,10 @@ switch_return:
 #endif
 	mr	%r3,%r30		/* restore return value */
 
-	lwz	%r31,(3*SZREG)(%r1)
-	lwz	%r30,(2*SZREG)(%r1)
+	ldreg	%r31,CFRAME_R31(%r1)
+	ldreg	%r30,CFRAME_R30(%r1)
 	addi	%r1,1,CALLFRAMELEN
-	lwz	%r0,SZREG(%r1)
+	ldreg	%r0,CFRAME_LR(%r1)
 	mtlr	%r0
 	blr
 
@@ -379,13 +431,13 @@ switch_return:
  */
 ENTRY(cpu_switchto)
 	mflr	%r0			/* save lr */
-	stw	%r0,SZREG(%r1)
-	stwu	%r1,-CALLFRAMELEN(%r1)
-	stw	%r31,(3*SZREG)(%r1)
-	stw	%r30,(2*SZREG)(%r1)
+	streg	%r0,CFRAME_LR(%r1)
+	stptru	%r1,-CALLFRAMELEN(%r1)
+	streg	%r31,CFRAME_R31(%r1)
+	streg	%r30,CFRAME_R30(%r1)
 
-	stwu	%r1,-CALLFRAMELEN(%r1)
-	stw	%r29,(2*SZREG)(%r1)
+	stptru	%r1,-CALLFRAMELEN(%r1)
+	streg	%r29,CFRAME_R31(%r1)
 	mr	%r30,%r3			/* r30 = curlwp */
 	mr	%r29,%r4			/* r29 = newlwp */
 
@@ -395,33 +447,33 @@ ENTRY(cpu_switchto)
 	cmpwi	%r30,0			/* old process was exiting? */
 	beq	1f
 
-#if defined(PPC_OEA) && !defined(_LP64)
+#if defined(PPC_OEA) && !defined(PPC_OEA64)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* USER_SR not needed */
 #endif
 	mfcr	%r11			/* save cr */
 	mr	%r12,%r2		/* save r2 */
-	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
-	stmw	%r10,(2*SZREG)(%r1)	/* save USER_SR, CR, R2, non-volatile */
-	lwz	%r3,L_ADDR(%r30)	/* get PCB */
-	stw	%r1,PCB_SP(%r3)		/* save SP */
+	stptru	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
+	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
+	ldreg	%r3,L_ADDR(%r30)	/* get PCB */
+	streg	%r1,PCB_SP(%r3)		/* save SP */
 
-	lwz	%r6,CI_IDLE_PCB(%r7)
+	ldreg	%r6,CI_IDLE_PCB(%r7)
 	addi	%r1,%r6,USPACE-CALLFRAMELEN /* callframe rsvd at stack top */
 
 1:
 	li	%r31,0
-	stw	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
-	lwz	%r31,CI_CURPCB(%r7)
+	streg	%r31,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
+	ldreg	%r31,CI_CURPCB(%r7)
 
-	lwz	%r3,CI_CPL(%r7)
-	stw	%r3,PCB_SPL(%r31)	/* save spl */
+	ldint	%r3,CI_CPL(%r7)
+	stint	%r3,PCB_SPL(%r31)	/* save spl */
 #else
 	GET_CPUINFO(%r3)
 	li	%r31,0
-	stw	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
-	lwz	%r31,CI_CURPCB(%r3)
+	stptr	%r31,CI_CURLWP(%r3)	/* Zero to not accumulate cpu time */
+	ldptr	%r31,CI_CURPCB(%r3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -432,7 +484,7 @@ ENTRY(cpu_switchto)
 	li	%r3,0
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
-	stw	%r3,PCB_SPL(%r31)	/* save spl */
+	stint	%r3,PCB_SPL(%r31)	/* save spl */
 #endif
 
 /* Lock the scheduler. */
@@ -452,7 +504,7 @@ ENTRY(cpu_switchto)
 
 	/* Make stack normal, r31 newlwp, r30 oldlwp */
 	mr	%r31,%r29
-	lwz	%r29,(2*SZREG)(%r1)
+	ldptr	%r29,CFRAME_R31(%r1)
 	addi	%r1,%r1,CALLFRAMELEN
 
 	b	switch_common
