@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.9 2001/03/06 03:14:39 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.10 2001/03/12 08:46:27 sato Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -270,7 +270,8 @@ struct vrc4172pwm_softc *sc;
 	sc->sc_raw_freq = vrc4172pwm_read(sc, VRC2_PWM_LCDFREQ);
 	sc->sc_raw_duty = vrc4172pwm_read(sc, VRC2_PWM_LCDDUTY);
 	sc->sc_brightness = vrc4172pwm_rawduty2brightness(sc);
-	DPRINTF(("vrc4172pwm_init_brightness: param=0x%x, freq=0x%x, duty=0x%x, blightness=%d\n", (int)sc->sc_param, sc->sc_raw_freq, sc->sc_raw_duty, sc->sc_brightness));
+	sc->sc_light = vrc4172pwm_get_light(sc);
+	DPRINTF(("vrc4172pwm_init_brightness: param=0x%x, freq=0x%x, duty=0x%x, blightness=%d light=%d\n", (int)sc->sc_param, sc->sc_raw_freq, sc->sc_raw_duty, sc->sc_brightness, sc->sc_light));
 }
 /*
  * backlight on/off
@@ -293,16 +294,17 @@ vrc4172pwm_light(sc, on)
 		sc->sc_brightness = brightness; /* resume */
 		vrc4172pwm_write(sc, VRC2_PWM_LCDDUTYEN, VRC2_PWM_LCD_DIS);
 	}
+	sc->sc_light = on;
 }
 
 /*
  * get backlight on/off
  */
-inline int
+int
 vrc4172pwm_get_light(sc)
 	struct vrc4172pwm_softc *sc;
 {
-	return vrc4172pwm_read(sc, VRC2_PWM_LCDDUTYEN);
+	return VRC2_PWM_LCDEN_MASK&vrc4172pwm_read(sc, VRC2_PWM_LCDDUTYEN);
 }
 
 /*
@@ -442,10 +444,11 @@ vrc4172pwm_pmevent(ctx, type, id, msg)
         switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
+		sc->sc_light_save = sc->sc_light;
 		vrc4172pwm_light(sc, 0);
 		break;
 	case PWR_RESUME:
-		vrc4172pwm_light(sc, 1);
+		vrc4172pwm_light(sc, sc->sc_light_save);
 		break;
 	default:
 		return 1;
