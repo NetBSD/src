@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)union_subr.c	8.9 (Berkeley) 5/17/94
- *	$Id: union_subr.c,v 1.2 1994/06/15 23:07:59 mycroft Exp $
+ *	$Id: union_subr.c,v 1.3 1994/06/17 15:21:35 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -131,8 +131,8 @@ union_updatevp(un, uppervp, lowervp)
 
 	if (ohash != nhash || !docache) {
 		if (un->un_flags & UN_CACHED) {
-			LIST_REMOVE(un, un_cache);
 			un->un_flags &= ~UN_CACHED;
+			LIST_REMOVE(un, un_cache);
 		}
 	}
 
@@ -265,7 +265,7 @@ int
 union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp)
 	struct vnode **vpp;
 	struct mount *mp;
-	struct vnode *undvp;
+	struct vnode *undvp;		/* parent union vnode */
 	struct vnode *dvp;		/* may be null */
 	struct componentname *cnp;	/* may be null */
 	struct vnode *uppervp;		/* may be null */
@@ -470,6 +470,9 @@ loop:
 	un->un_uppersz = VNOVAL;
 	un->un_lowervp = lowervp;
 	un->un_lowersz = VNOVAL;
+	un->un_pvp = undvp;
+	if (undvp != NULLVP)
+		VREF(undvp);
 	un->un_openl = 0;
 	un->un_flags = UN_LOCKED;
 	if (un->un_uppervp)
@@ -512,10 +515,12 @@ union_freevp(vp)
 	struct union_node *un = VTOUNION(vp);
 
 	if (un->un_flags & UN_CACHED) {
-		LIST_REMOVE(un, un_cache);
 		un->un_flags &= ~UN_CACHED;
+		LIST_REMOVE(un, un_cache);
 	}
 
+	if (un->un_pvp != NULLVP)
+		vrele(un->un_pvp);
 	if (un->un_uppervp != NULLVP)
 		vrele(un->un_uppervp);
 	if (un->un_lowervp != NULLVP)
@@ -861,12 +866,16 @@ void
 union_removed_upper(un)
 	struct union_node *un;
 {
+
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
 		VOP_UNLOCK(un->un_uppervp);
 	}
 
-	union_newupper(un, NULLVP);
+	if (un->un_flags & UN_CACHED) {
+		un->un_flags &= ~UN_CACHED;
+		LIST_REMOVE(un, un_cache);
+	}
 }
 
 struct vnode *
