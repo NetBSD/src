@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.10 1997/10/29 01:06:58 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.11 1997/10/30 00:03:34 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,8 +169,8 @@ int config_network (void)
 	run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
 		  net_defroute);
 
-	network_up =  run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
-		|| run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
+	network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
+		&& !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
 
 	return network_up;
 }
@@ -182,7 +182,7 @@ get_via_ftp (void)
 	char filename[SSTRSIZE];
 	int  ret;
 
-	while (config_network ()) {
+	while (!config_network ()) {
 		msg_display (MSG_netnotup);
 		process_menu (MENU_yesno);
 		if (!yesno)
@@ -235,7 +235,7 @@ get_via_ftp (void)
 int
 get_via_nfs(void)
 {
-        while (config_network ()) {
+        while (!config_network ()) {
                 msg_display (MSG_netnotup);
                 process_menu (MENU_yesno);
                 if (!yesno)
@@ -246,7 +246,7 @@ get_via_nfs(void)
 	process_menu (MENU_nfssource);
 
 	/* Mount it */
-	while(!run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+	while(run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
 		process_menu (MENU_nfsbadmount);
 		if (!yesno)
 			return 0;

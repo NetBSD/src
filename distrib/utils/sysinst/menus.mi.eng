@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.9 1997/10/29 01:06:51 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.10 1997/10/30 00:03:32 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,12 +63,15 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
 		action { do_install(); };
 	option "Upgrade NetBSD on a hard disk",
 		action { do_upgrade(); };
+	option "Reboot the computer", exit,
+		action (endwin) { run_prog("/sbin/reboot"); };
+	option "Utility menu", sub menu utility;
+
+menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); puts(CL); };
 	option "Configure network",
 		action { config_network(); };
-	option "Reboot the computer", exit,
-		action (endwin) { run_prog("/sbin/reboot"); };
 	option "Halt the system", exit,
 		action (endwin) { run_prog("/sbin/halt"); };
 
@@ -284,10 +287,15 @@ menu fdremount, title " What do you want to do? ";
 	option "Try again", exit, action { yesno = 1; };
 	option "Abort install", exit, action { yesno = 0; };
 
+menu fdok, title "  Hit enter to continue  ";
+	option "OK", exit, action { yesno = 1; };
+	option "Abort install", exit, action { yesno = 0; };
+
+
 menu cdromsource, title "  Change";
 	display action
 		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
-	option "Host", action
+	option "Device", action
 		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
 	option "Directory", action
 		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
