@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.262 1999/10/06 12:21:43 drochner Exp $
+#	$NetBSD: GENERIC,v 1.263 1999/10/06 23:01:45 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -160,7 +160,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
-#options	PCDISPLAY_SOFTCURSOR
+options		PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -314,6 +314,7 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+dpt*	at eisa? slot ?			# DPT EATA SCSI
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
