@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.13 1999/11/02 21:13:18 drochner Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.14 2000/03/13 23:22:51 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -409,7 +409,7 @@ copy(out, in, offset, size)
 	char    ibuf[4096];
 	int     remaining, cur, count;
 
-	/* Go the the start of the ELF symbol table... */
+	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, offset, SEEK_SET) < 0) {
 		perror("copy: lseek");
 		exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cd.c,v 1.8 1998/07/26 23:14:40 mycroft Exp $	*/
+/*	$NetBSD: ex_cd.c,v 1.9 2000/03/13 23:22:52 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -150,7 +150,7 @@ ex_cdalloc(sp, str)
 			 * Empty strings specify ".".  The only way to get an
 			 * empty string is a leading colon, colons in a row,
 			 * or a trailing colon.  Or, to put it the other way,
-			 * if the the length is zero, then it's either ":XXX",
+			 * if the length is zero, then it's either ":XXX",
 			 * "XXX::XXXX" , "XXX:", or "", and the only failure
 			 * mode is the last one.  Note, the string ":" gives
 			 * us two entries of '.', so we only include one of

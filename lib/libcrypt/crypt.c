@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.13 1998/10/20 02:02:30 matt Exp $	*/
+/*	$NetBSD: crypt.c,v 1.14 2000/03/13 22:59:22 soren Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.13 1998/10/20 02:02:30 matt Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.14 2000/03/13 22:59:22 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -609,7 +609,7 @@ des_setkey(key)
 
 /*
  * Encrypt (or decrypt if num_iter < 0) the 8 chars at "in" with abs(num_iter)
- * iterations of DES, using the the given 24-bit salt and the pre-computed key
+ * iterations of DES, using the given 24-bit salt and the pre-computed key
  * schedule, and store the resulting 8 chars at "out" (in == out is permitted).
  *
  * NOTE: the performance of this routine is critically dependent on your

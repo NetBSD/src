@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4p,v 1.2 1998/01/09 06:35:25 perry Exp $
+.\"	$NetBSD: tp.4p,v 1.3 2000/03/13 23:03:36 soren Exp $
 .\"
 .TH TP 4P "9 December 1988"
 .ds ]W Wisconsin ARGO 1.0
@@ -370,7 +370,7 @@ p_use_checksum
 Boolean.
 [ true ]
 .IP
-Boolean indicating the the use of checksums will be negotiated.
+Boolean indicating the use of checksums will be negotiated.
 This parameter applies only to class 4.
 .\" ******************8
 .TP 25

@@ -1,4 +1,4 @@
-.\"	$NetBSD: trans_design.nr,v 1.2 1998/01/09 06:34:53 perry Exp $
+.\"	$NetBSD: trans_design.nr,v 1.3 2000/03/13 23:03:35 soren Exp $
 .\"
 .NC "The Design of the ARGO Transport Entity"
 .sh 1 "Protocol Hooks"
@@ -1459,7 +1459,7 @@ and lacking
 a method to measure
 the round trip time in the other direction,
 ARGO TP uses the measured average round trip time
-to adjust the the sendack timer.
+to adjust the sendack timer.
 .pp
 The choice of strategies is made with the
 \fIsetsockopt()\fR system call.

@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: misc.c,v 1.9 1998/01/05 05:15:55 perry Exp $ */
+/* $NetBSD: misc.c,v 1.10 2000/03/13 23:22:51 soren Exp $ */
 
 #include "flexdef.h"
 
@@ -705,7 +705,7 @@ const char str[];
 	}
 
 
-/* readable_form - return the the human-readable form of a character
+/* readable_form - return the human-readable form of a character
  *
  * The returned string is in static storage.
  */
