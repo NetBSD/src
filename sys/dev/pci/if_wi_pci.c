@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.20 2003/03/28 13:58:40 perry Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.21 2003/03/29 03:25:22 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.20 2003/03/28 13:58:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.21 2003/03/29 03:25:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,8 @@ wi_pci_attach(parent, self, aux)
 	const char *intrstr;
 	const struct wi_pci_product *wpp;
 	pci_intr_handle_t ih;
-	bus_space_tag_t memt, iot;
-	bus_space_handle_t memh, ioh;
+	bus_space_tag_t memt, iot, plxt;
+	bus_space_handle_t memh, ioh, plxh;
 
 	psc->psc_pa = pa;
 
@@ -251,6 +251,12 @@ wi_pci_attach(parent, self, aux)
 		if (pci_mapreg_map(pa, WI_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 		    &iot, &ioh, NULL, NULL) != 0) {
 			printf(": can't map I/O space\n");
+			return;
+		}
+		/* Map PLX. */
+		if (pci_mapreg_map(pa, WI_PCI_PLX_LOIO, PCI_MAPREG_TYPE_IO, 0,
+		    &plxt, &plxh, NULL, NULL) != 0) {
+			printf(": can't map PLX\n");
 			return;
 		}
 	} else {
@@ -285,6 +291,16 @@ wi_pci_attach(parent, self, aux)
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
+
+	if (wpp->wpp_plx) {
+		uint32_t command;
+#define	WI_LOCAL_INTCSR		0x4c
+#define	WI_LOCAL_INTEN		0x40	/* poke this into INTCSR */
+
+		command = bus_space_read_4(plxt, plxh, WI_LOCAL_INTCSR);
+		command |= WI_LOCAL_INTEN;
+		bus_space_write_4(plxt, plxh, WI_LOCAL_INTCSR, command);
+	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
