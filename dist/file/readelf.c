@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.1.1.1 2003/02/23 23:08:26 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.2 2003/02/28 18:25:09 thorpej Exp $	*/
 
 #include "file.h"
 
@@ -16,7 +16,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.23 2003/02/08 18:33:53 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.1.1.1 2003/02/23 23:08:26 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.2 2003/02/28 18:25:09 thorpej Exp $");
 #endif
 #endif
 
@@ -257,11 +257,54 @@ dophn_exec(int class, int swap, int fd, off_t off, int num, size_t size)
 				    strcmp(&nbuf[nameoffset], "NetBSD") == 0 &&
 				    nh_type == NT_NETBSD_VERSION &&
 				    nh_descsz == 4) {
+					uint32_t desc = getu32(swap,
+					    *(uint32_t *)&nbuf[offset]);
+
 					printf(", for NetBSD");
 					/*
-					 * Version number is stuck at 199905,
-					 * and hence is basically content-free.
+					 * The version number used to be
+					 * stuck as 199906, and was thus
+					 * basically content-free.  Newer
+					 * versions of NetBSD have fixed
+					 * this, however, and now use the
+					 * encoding of __NetBSD_Version__:
+					 *
+					 *	MMmmrrpp00
+					 *
+					 * M = major version
+					 * m = minor version
+					 * r = release ["",A-Z,Z[A-Z] but
+					 *     numeric]
+					 * p = patchlevel
 					 */
+					if (desc > 100000000U) {
+						u_int ver_patch =
+						    (desc / 100) % 100;
+						u_int ver_rel =
+						    (desc / 10000) % 100;
+						u_int ver_min =
+						    (desc / 1000000) % 100;
+						u_int ver_maj =
+						    desc / 100000000;
+
+						printf(" %u.%u", ver_maj,
+						    ver_min);
+						if (ver_rel == 0 &&
+						    ver_patch != 0) {
+							printf(".%u",
+							    ver_patch);
+						} else if (ver_rel != 0 &&
+							   ver_rel <= 26) {
+							printf("%c",
+							    'A' + ver_rel - 1);
+						} else if (ver_rel != 0 &&
+							   ver_rel <= 52) {
+							printf("Z%c",
+							    'A' + ver_rel - 1);
+						} else if (ver_rel != 0) {
+							printf("<unknown>");
+						}
+					}
 				}
 
 				if (nh_namesz == 8 &&
