@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.13 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: slc.c,v 1.14 2005/02/06 05:58:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.13 2003/08/07 09:46:51 agc Exp $");
+__RCSID("$NetBSD: slc.c,v 1.14 2005/02/06 05:58:20 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,8 @@ static int		slcchange;	/* change to slc is requested */
 static unsigned char	*slcptr;	/* pointer into slc buffer */
 static unsigned char	slcbuf[NSLC*6];	/* buffer for slc negotiation */
 
-void default_slc __P((void));
-void process_slc __P((u_int, u_int, cc_t));
+void default_slc(void);
+void process_slc(u_int, u_int, cc_t);
 
 /*
  * send_slc
@@ -59,9 +59,9 @@ void process_slc __P((u_int, u_int, cc_t));
  * Write out the current special characters to the client.
  */
 void
-send_slc()
+send_slc(void)
 {
-	register int i;
+	int i;
 
 	/*
 	 * Send out list of triplets of special characters
@@ -83,9 +83,9 @@ send_slc()
  * Set pty special characters to all the defaults.
  */
 void
-default_slc()
+default_slc(void)
 {
-	register int i;
+	int i;
 
 	for (i = 1; i <= NSLC; i++) {
 		slctab[i].current.val = slctab[i].defset.val;
@@ -108,9 +108,9 @@ default_slc()
  * Initialize the slc mapping table.
  */
 void
-get_slc_defaults()
+get_slc_defaults(void)
 {
-	register int i;
+	int i;
 
 	init_termbuf();
 
@@ -130,9 +130,7 @@ get_slc_defaults()
  * Add an slc triplet to the slc buffer.
  */
 void
-add_slc(func, flag, val)
-	register char func, flag;
-	register cc_t val;
+add_slc(char func, char flag, cc_t val)
 {
 
 	if ((*slcptr++ = (unsigned char)func) == 0xff)
@@ -155,8 +153,7 @@ add_slc(func, flag, val)
  * of the terminal control structures.
  */
 void
-start_slc(getit)
-	register int getit;
+start_slc(int getit)
 {
 
 	slcchange = 0;
@@ -174,10 +171,9 @@ start_slc(getit)
  * Finish up the slc negotiation.  If something to send, then send it.
  */
 int
-end_slc(bufp)
-	register unsigned char **bufp;
+end_slc(unsigned char **bufp)
 {
-	register int len;
+	int len;
 
 	/*
 	 * If a change has occurred, store the new terminal control
@@ -222,9 +218,7 @@ end_slc(bufp)
  * Figure out what to do about the client's slc
  */
 void
-process_slc(func, flag, val)
-	u_int func, flag;
-	cc_t val;
+process_slc(u_int func, u_int flag, cc_t val)
 {
 	int hislevel, mylevel, ack;
 
@@ -288,9 +282,7 @@ process_slc(func, flag, val)
  * Compare client's request with what we are capable of supporting.
  */
 void
-change_slc(func, flag, val)
-	int func, flag;
-	cc_t val;
+change_slc(int func, int flag, cc_t val)
 {
 	int hislevel, mylevel;
 
@@ -398,9 +390,9 @@ cc_t oldeofc = '\004';
  * and flags up to the defaults.
  */
 void
-check_slc()
+check_slc(void)
 {
-	register int i;
+	int i;
 
 	for (i = 1; i <= NSLC; i++) {
 #if VEOF == VMIN
@@ -441,13 +433,11 @@ check_slc()
  * ptr points to the beginning of the buffer, len is the length.
  */
 void
-do_opt_slc(ptr, len)
-	register unsigned char *ptr;
-	register int len;
+do_opt_slc(unsigned char *ptr, int len)
 {
-	register unsigned char func, flag;
+	unsigned char func, flag;
 	cc_t val;
-	register unsigned char *end = ptr + len;
+	unsigned char *end = ptr + len;
 
 	if (terminit()) {  /* go ahead */
 		while (ptr < end) {
@@ -482,7 +472,7 @@ do_opt_slc(ptr, len)
  * Do slc stuff that was deferred.
  */
 void
-deferslc()
+deferslc(void)
 {
 	if (def_slcbuf) {
 		start_slc(1);
