@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2000/01/14 02:39:14 mjl Exp $
+#	$NetBSD: Makefile,v 1.18 2000/06/20 06:00:38 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
-
-SRCTOP=	../..
-.include <bsd.crypto.mk>
 
 PROG=	su
 DPADD+=	${LIBCRYPT}
@@ -16,9 +13,14 @@ CPPFLAGS+=-DLOGIN_CAP
 #
 #CPPFLAGS+=-DSUGROUP=\"sugroup\"
 
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/usr.bin/su/Makefile.frag"
+.ifdef AFS
+DPADD+= ${LIBKAFS}
+LDADD+= -lkafs
 .endif
+
+CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
+DPADD+= ${LIBKRB} ${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
+LDADD+= -lkrb -ldes -lcom_err -lroken
 
 .include <bsd.prog.mk>
 
