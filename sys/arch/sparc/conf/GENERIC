@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2004/07/15 03:53:51 atatat Exp $
+# $NetBSD: GENERIC,v 1.162 2004/08/01 10:45:23 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.162 $"
 
 maxusers	32
 
@@ -338,6 +338,11 @@ bpp*	at sbus? slot? offset ?
 magma*	at sbus? slot ? offset ?
 mtty*	at magma?
 mbpp*	at magma?
+
+## SUNW,spif Serial/Parallel driver
+spif*  at sbus? slot ? offset ?
+stty*  at spif?
+sbpp*  at spif?
 
 ## PCMCIA serial interfaces
 #com*	at pcmcia?
