@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.202 2000/12/29 03:16:40 itojun Exp $
+# $NetBSD: mi,v 1.203 2000/12/30 13:11:34 augustss Exp $
 .
 ./altroot
 ./bin
@@ -384,6 +384,7 @@
 ./usr/bin/units
 ./usr/bin/unvis
 ./usr/bin/uptime
+./usr/bin/usbhidaction
 ./usr/bin/usbhidctl
 ./usr/bin/users
 ./usr/bin/uucp
