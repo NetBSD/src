@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kevin Fall.
@@ -35,41 +35,42 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cat.c	5.15 (Berkeley) 5/23/91";*/
-static char rcsid[] = "$Id: cat.c,v 1.8 1993/11/19 20:00:51 jtc Exp $";
+/*static char sccsid[] = "from: @(#)cat.c	8.1 (Berkeley) 7/19/93";*/
+static char *rcsid = "$Id: cat.c,v 1.9 1994/09/20 01:24:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
+#include <locale.h>
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
-#include <ctype.h>
+#include <unistd.h>
 
 int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
 char *filename;
 
-void cook_args	__P((char **));
-void cook_buf	__P((FILE *));
-void raw_args	__P((char **));
-void raw_cat	__P((int));
-void err	__P((int, const char *, ...));
+void cook_args __P((char *argv[]));
+void cook_buf __P((FILE *));
+void raw_args __P((char *argv[]));
+void raw_cat __P((int));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	extern int optind;
 	int ch;
@@ -112,7 +113,7 @@ main(argc, argv)
 	else
 		raw_args(argv);
 	if (fclose(stdout))
-		err(1, "stdout: %s", strerror(errno));
+		err(1, "stdout");
 	exit(rval);
 }
 
@@ -128,8 +129,8 @@ cook_args(argv)
 		if (*argv) {
 			if (!strcmp(*argv, "-"))
 				fp = stdin;
-			else if (!(fp = fopen(*argv, "r"))) {
-				err(0, "%s: %s", *argv, strerror(errno));
+			else if ((fp = fopen(*argv, "r")) == NULL) {
+				warn("%s", *argv);
 				++argv;
 				continue;
 			}
@@ -197,11 +198,11 @@ cook_buf(fp)
 			break;
 	}
 	if (ferror(fp)) {
-		err(0, "%s: %s", filename, strerror(errno));
+		warn("%s", filename);
 		clearerr(fp);
 	}
 	if (ferror(stdout))
-		err(1, "stdout: %s", strerror(errno));
+		err(1, "stdout");
 }
 
 void
@@ -217,7 +218,7 @@ raw_args(argv)
 			if (!strcmp(*argv, "-"))
 				fd = fileno(stdin);
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
-				err(0, "%s: %s", *argv, strerror(errno));
+				warn("%s", *argv);
 				++argv;
 				continue;
 			}
@@ -239,48 +240,17 @@ raw_cat(rfd)
 	struct stat sbuf;
 
 	wfd = fileno(stdout);
-	if (!buf) {
+	if (buf == NULL) {
 		if (fstat(wfd, &sbuf))
-			err(1, "%s: %s", filename, strerror(errno));
+			err(1, "%s", filename);
 		bsize = MAX(sbuf.st_blksize, 1024);
-		if (!(buf = malloc((u_int)bsize)))
-			err(1, "%s", strerror(errno));
+		if ((buf = malloc((u_int)bsize)) == NULL)
+			err(1, NULL);
 	}
 	while ((nr = read(rfd, buf, bsize)) > 0)
-		for (off = 0; off < nr; off += nw)
-			if ((nw = write(wfd, buf + off, nr - off)) < 0)
+		for (off = 0; nr; nr -= nw, off += nw)
+			if ((nw = write(wfd, buf + off, nr)) < 0)
 				err(1, "stdout");
 	if (nr < 0)
-		err(0, "%s: %s", filename, strerror(errno));
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(int ex, const char *fmt, ...)
-#else
-err(ex, fmt, va_alist)
-	int ex;
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "cat: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	if (ex)
-		exit(1);
-	rval = 1;
+		warn("%s", filename);
 }
