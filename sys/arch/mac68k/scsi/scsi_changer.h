@@ -1,16 +1,4 @@
 /*
- * HISTORY
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * 
- */
-
-/*
  * SCSI changer interface description
  */
 
@@ -29,11 +17,12 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- */
-
-/*
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
+ *
+ *	$Id: scsi_changer.h,v 1.2 1993/11/29 00:45:20 briggs Exp $
  */
+#ifndef _SCSI_SCSI_CHANGER_H
+#define _SCSI_SCSI_CHANGER_H 1
 
 /*
  * SCSI command format
@@ -105,4 +94,5 @@ struct element_status_page
 	u_char rsvd;
 	u_char byte_count_of_descriptor_data[3];
 };
+#endif /*_SCSI_SCSI_CHANGER_H*/
 

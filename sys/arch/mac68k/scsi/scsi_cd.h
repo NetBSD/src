@@ -12,20 +12,13 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- */
-
-
-
-/*
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
+ *
+ *	$Id: scsi_cd.h,v 1.2 1993/11/29 00:45:16 briggs Exp $
  */
+#ifndef	_SCSI_SCSI_CD_H
+#define _SCSI_SCSI_CD_H 1
+
 /*
  *	Define two bits always in the same place in byte 2 (flag byte)
  */
@@ -232,4 +225,5 @@ struct cd_mode_data
 	struct blk_desc blk_desc;
 	union cd_pages page;
 };
+#endif /*_SCSI_SCSI_CD_H*/
 

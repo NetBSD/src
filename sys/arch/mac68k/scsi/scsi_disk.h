@@ -1,42 +1,9 @@
 /*
- * HISTORY
- * $Log: scsi_disk.h,v $
- * Revision 1.1.1.1  1993/09/29 06:08:39  briggs
- * The current MacBSD architecture sub-directory for NetBSD-0.9--more or
- * less.  It needs some help to get to be -current.  Support for minimal
- * hardware on the SE/30, II, IIx, and IIcx exists.
- *
- * Revision 1.3  93/08/05  21:38:11  julian
- * fix the definitionof the last byte of each scsi command.
- * 
- * Revision 1.2  93/07/31  22:52:42  julian
- * removed all bitfields
- * 
- * Revision 1.1  93/04/12  21:51:04  root
- * checkin for 'jules'
- * 
- * Revision 1.2  1992/10/13  03:14:21  julian
- * added the load-eject field in 'start/stop' for removable devices.
- *
- * Revision 1.1  1992/09/26  22:11:29  julian
- * Initial revision
- *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * 
- */
-
-/*
  * SCSI interface description
  */
 
 /*
- * Some lines of this file comes from a file of the name "scsi.h"
+ * Some lines of this file come from a file of the name "scsi.h"
  * distributed by OSF as part of mach2.5,
  *  so the following disclaimer has been kept.
  *
@@ -77,16 +44,17 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- */
-
-/*
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
+ *
+ *	$Id: scsi_disk.h,v 1.2 1993/11/29 00:45:22 briggs Exp $
  */
 
 /*
  * SCSI command format
  */
 
+#ifndef	_SCSI_SCSI_DISK_H
+#define _SCSI_SCSI_DISK_H 1
 
 struct scsi_reassign_blocks
 {
@@ -245,3 +213,4 @@ union	disk_pages /* this is the structure copied from osf */
 	   u_char reserved3;
     	} rigid_geometry;
 } ;
+#endif /* _SCSI_SCSI_DISK_H*/
