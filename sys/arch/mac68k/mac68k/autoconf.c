@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.5 1994/01/30 01:01:14 briggs Exp $
+ *	$Id: autoconf.c,v 1.6 1994/02/02 01:06:23 briggs Exp $
  */
 
 /*
@@ -246,7 +246,6 @@ swapconf()
 #define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 struct	device *bootdv = NULL;
-struct	dkdevice *bootdk;
 
 #define	PARTITIONMASK	0x7
 #define	UNITSHIFT	3
@@ -257,21 +256,32 @@ target_to_unit(u_long target)
 	return sd_target_to_unit(target);
 }
 
+/* swiped from sparc/sparc/autoconf.c */
+static int
+findblkmajor(register struct dkdevice *dv)
+{
+	register int	i;
+
+	for (i=0 ; i<nblkdev ; i++) {
+		if ((void (*)(struct buf *))bdevsw[i].d_strategy ==
+		    dv->dk_driver->d_strategy)
+			return i;
+	}
+}
+
 /*
  * Yanked from i386/i386/autoconf.c
  */
 void
 findbootdev()
 {
-	register struct dkdevice *dk;
-	register void (*strat)(struct buf *);
+	register struct device *dv;
 	register int unit;
 	int major;
 
 	major = B_TYPE(bootdev);
 	if (major < 0 || major >= nblkdev)
 		return;
-	strat = bdevsw[major].d_strategy;
 
 	unit = B_UNIT(bootdev);
 
@@ -279,11 +289,11 @@ findbootdev()
 	unit = target_to_unit(unit);
 	bootdev |= (unit << B_UNITSHIFT);
 
-	for (dk = dkhead; dk; dk = dk->dk_next) {
-		if (dk->dk_driver->d_strategy == strat &&
-		    dk->dk_device.dv_unit == unit) {
-			bootdk = dk;
-			bootdv = &dk->dk_device;
+	for (dv = alldevs ; dv ; dv = dv->dv_next) {
+		if (   (dv->dv_class == DV_DISK)
+		    && (major == findblkmajor((struct dkdevice *) dv))
+		    && (unit == dv->dv_unit)) {
+			bootdv = dv;
 			return;
 		}
 	}
@@ -347,8 +357,6 @@ setroot()
 	}
 	if (swp->sw_dev == NODEV)
 		return;
-
-	swapdev = swdevt[0].sw_dev;
 
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
