@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.19 1999/07/08 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.20 1999/07/15 10:46:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -132,8 +132,9 @@ cachectl1(req, addr, len, p)
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		register int		inc = 0;
-			 int		pa = 0, doall = 0;
+			 int		doall = 0;
 			 vaddr_t	end = 0;
+			 paddr_t	pa = 0;
 
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
@@ -156,8 +157,8 @@ cachectl1(req, addr, len, p)
 			 */
 			if (!doall &&
 			    (pa == 0 || (addr & PGOFSET) == 0)) {
-				if (pmap_extract(p->p_vmspace, addr, &pa) ==
-				    FALSE)
+				if (pmap_extract(p->p_vmspace->vm_map.pmap,
+				    addr, &pa) == FALSE)
 					doall = 1;
 			}
 			switch (req) {
