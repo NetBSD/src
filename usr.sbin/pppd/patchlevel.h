@@ -1,4 +1,4 @@
 #define	PATCHLEVEL	0
 
-#define VERSION "1.3"
-#define DATE "17 Jun 93"
+#define VERSION	"2.0"
+#define DATE	"8 Nov 93"
