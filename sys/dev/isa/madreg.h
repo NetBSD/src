@@ -1,3 +1,4 @@
+/*	$NetBSD: madreg.h,v 1.2 1997/04/06 00:35:19 augustss Exp $	*/
 /*
  * Copyright (c) 1996 Lennart Augustsson
  * Copyright (c) 1995 Hannu Savolainen
