@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 1996/03/17 13:18:20 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
+
+/*
+ * These are really for MAKE_BOOTSTRAP but harmless.
+ * XXX - Why not just use malloc in here, anyway?
+ */
+#ifndef	ALIGNBYTES
+#define	ALIGNBYTES 3
+#endif
+#ifndef ALIGN
+#define	ALIGN(p)	(((long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#endif
 
 /*
  * Interned strings are kept in a hash table.  By making each string
