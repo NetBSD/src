@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.8 2001/05/28 04:22:56 assar Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.9 2002/06/02 15:25:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -114,18 +114,17 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
+	case 0:
+		printf("no IPv6 multicast routing compiled into this system\n");
+		return;
 
-	 case 0:
-		 printf("no IPv6 multicast routing compiled into this system\n");
-		 return;
+	case IPPROTO_PIM:
+		break;
 
-	 case IPPROTO_PIM:
-		 break;
-
-	 default:
-		 printf("IPv6 multicast routing protocol %u, unknown\n",
-			mrtproto);
-		 return;
+	default:
+		printf("IPv6 multicast routing protocol %u, unknown\n",
+		    mrtproto);
+		return;
 	}
 
 	if (mfcaddr == 0) {
@@ -153,15 +152,13 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 		maxmif = mifi;
 		if (!banner_printed) {
 			printf("\nIPv6 Multicast Interface Table\n"
-			       " Mif   Rate   PhyIF   "
-			       "Pkts-In   Pkts-Out\n");
+			    " Mif   Rate   PhyIF   Pkts-In   Pkts-Out\n");
 			banner_printed = 1;
 		}
 
-		printf("  %2u   %4d",
-		       mifi, mifp->m6_rate_limit);
+		printf("  %2u   %4d", mifi, mifp->m6_rate_limit);
 		printf("   %5s", (mifp->m6_flags & MIFF_REGISTER) ?
-		       "reg0" : if_indextoname(ifnet.if_index, ifname));
+		    "reg0" : if_indextoname(ifnet.if_index, ifname));
 
 		printf(" %9llu  %9llu\n", (unsigned long long)mifp->m6_pkt_in,
 		    (unsigned long long)mifp->m6_pkt_out);
@@ -178,16 +175,16 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 			if (!banner_printed) {
 				printf ("\nIPv6 Multicast Forwarding Cache\n");
 				printf(" %-*.*s %-*.*s %s",
-				       WID_ORG, WID_ORG, "Origin",
-				       WID_GRP, WID_GRP, "Group",
-				       "  Packets Waits In-Mif  Out-Mifs\n");
+				    WID_ORG, WID_ORG, "Origin",
+				    WID_GRP, WID_GRP, "Group",
+				    "  Packets Waits In-Mif  Out-Mifs\n");
 				banner_printed = 1;
 			}
 			
 			printf(" %-*.*s", WID_ORG, WID_ORG,
-			       routename6(&mfc.mf6c_origin));
+			    routename6(&mfc.mf6c_origin));
 			printf(" %-*.*s", WID_GRP, WID_GRP,
-			       routename6(&mfc.mf6c_mcastgrp));
+			    routename6(&mfc.mf6c_mcastgrp));
 			printf(" %9llu", (unsigned long long)mfc.mf6c_pkt_cnt);
 
 			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {
@@ -233,17 +230,17 @@ mrt6_stats(mrpaddr, mstaddr)
 
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
-	 case 0:
-		 printf("no IPv6 multicast routing compiled into this system\n");
-		 return;
+	case 0:
+		printf("no IPv6 multicast routing compiled into this system\n");
+		return;
 
-	 case IPPROTO_PIM:
-		 break;
+	case IPPROTO_PIM:
+		break;
 
-	 default:
-		 printf("IPv6 multicast routing protocol %u, unknown\n",
+	default:
+		printf("IPv6 multicast routing protocol %u, unknown\n",
 			mrtproto);
-		 return;
+		return;
 	}
 
 	if (mstaddr == 0) {
