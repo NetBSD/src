@@ -50,9 +50,9 @@ ftp.funet.fi		Anonymous FTP
 
 ftp.netbsd.org		Anonymous FTP, SUP
 
-	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+	Anon-FTP path: pub/NetBSD/NetBSD-1.1
 	SUP: get the file pub/sup/README.sup via anonymous FTP from
 		ftp.netbsd.org, and read it for instructions.
 
-If you wish to become a distribution site for NetBSD, contact Chris
-Demetriou <cgd@NetBSD.ORG>.
+If you wish to become a distribution site for NetBSD, contact
+mirrors@netbsd.org.
