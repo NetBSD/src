@@ -18,7 +18,9 @@
 ./usr/bin/lex
 ./usr/bin/lint
 ./usr/bin/lorder
+./usr/bin/menuc
 ./usr/bin/mkstr
+./usr/bin/msgc
 ./usr/bin/ranlib
 ./usr/bin/rpcgen
 ./usr/bin/strip
@@ -1065,7 +1067,9 @@
 ./usr/share/man/cat1/lex.0
 ./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
+./usr/share/man/cat1/menuc.0
 ./usr/share/man/cat1/mkstr.0
+./usr/share/man/cat1/msgc.0
 ./usr/share/man/cat1/ranlib.0
 ./usr/share/man/cat1/rpcgen.0
 ./usr/share/man/cat1/strip.0
@@ -1986,6 +1990,8 @@
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
+./usr/share/misc/menu_sys.def
+./usr/share/misc/msg_sys.def
 ./usr/share/misc/operator
 ./usr/share/misc/style
 ./usr/share/mk/bsd.README
