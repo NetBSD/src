@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2002/04/18 15:39:02 bouyer Exp $
+#	$NetBSD: Makefile,v 1.38 2002/05/05 20:38:48 jdolecek Exp $
 
 LIB=sa
 
@@ -44,7 +44,9 @@ SRC_here= clock.c dev_disk.c devopen.c \
 	 sun3.c sun3x.c vers.c xxboot.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
-SRCS+= ${S}/arch/sun3/sun3/ctrlsp.S
+
+.PATH: ${S}/arch/sun3/sun3
+SRCS+= ctrlsp.S
 
 # only needed during build
 libinstall::
