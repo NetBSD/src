@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.50.2.1 1999/06/18 16:44:15 perry Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.50.2.2 1999/06/18 17:42:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.50.2.1 1999/06/18 16:44:15 perry Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.50.2.2 1999/06/18 17:42:19 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,6 +370,8 @@ main(argc, argv)
 	/* Initialize af, just for use in getinfo(). */
 	if (afp == NULL)
 		af = afs->af_af;
+	else
+		af = afp->af_af;
 
 	/* Get information about the interface. */
 	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
