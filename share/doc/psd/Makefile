@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/17 09:59:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/22 22:12:30 enami Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/23/94
 
 # The following modules do not build/install:
@@ -29,10 +29,6 @@ SUBDIR+= 19.curses
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}
-
-beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
-	    ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
