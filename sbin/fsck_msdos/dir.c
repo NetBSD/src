@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.6 1996/09/23 16:27:58 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.7 1996/09/24 13:17:18 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.6 1996/09/23 16:27:58 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.7 1996/09/24 13:17:18 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -485,11 +485,17 @@ readDosDirSection(f, boot, fat, dir)
 					pwarn("%s has entries after end of directory\n",
 					      fullpath(dir));
 					if (ask(1, "Extend")) {
+						u_char *q;
+
 						dir->fsckflags &= ~DIREMPTY;
 						if (delete(f, boot, fat,
 							   empcl, empty - buffer,
-							   cl, p - buffer, 0) == FSFATAL)
+							   cl, p - buffer, 1) == FSFATAL)
 							return FSFATAL;
+						q = empcl == cl ? empty : buffer;
+						for (; q < p; q += 32)
+							*q = SLOT_DELETED;
+						mod |= THISMOD|FSDIRMOD;
 					} else if (ask(0, "Truncate"))
 						dir->fsckflags |= DIREMPWARN;
 				}
