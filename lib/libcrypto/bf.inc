@@ -1,4 +1,4 @@
-#	$NetBSD: bf.inc,v 1.4 2001/09/09 21:22:09 tls Exp $
+#	$NetBSD: bf.inc,v 1.5 2001/09/10 02:56:57 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,13 +8,6 @@
 .PATH:	${OPENSSLSRC}/crypto/bf
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/bf
-
-.if (${MACHINE_CPU} == "i386")
-CPPFLAGS+=      -DBF_PTR2
-.endif
-.if (${MACHINE_CPU} == "sparc" || ${MACHINE_CPU} == "mips") 
-CPPFLAGS+=      -DBF_PTR
-.endif
 
 SRCS+=bf_skey.c bf_ecb.c   bf_enc.c  bf_cfb64.c bf_ofb64.c
 
