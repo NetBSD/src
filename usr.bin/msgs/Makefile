@@ -1,7 +1,7 @@
-#	@(#)Makefile	5.8 (Berkeley) 5/11/90
+#	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
 PROG=	msgs
-DPADD=	${LIBTERM} ${LIBCOMPAT}
-LDADD=	-ltermlib -lcompat
+DPADD=	${LIBTERM}
+LDADD=	-ltermlib
 
 .include <bsd.prog.mk>

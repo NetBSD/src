@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)msgs.c	5.8 (Berkeley) 2/4/91";
+static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*
@@ -70,17 +70,19 @@ static char sccsid[] = "@(#)msgs.c	5.8 (Berkeley) 2/4/91";
 
 #include <sys/param.h>
 #include <sys/dir.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <sgtty.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 #define CMODE	0666		/* bounds file creation mode */
@@ -129,7 +131,6 @@ int	nlines;
 int	Lpp = 0;
 time_t	t;
 time_t	keep;
-struct	sgttyb	otty;
 
 char	*mktemp();
 char	*nxtfld();
@@ -161,7 +162,6 @@ int argc; char *argv[];
 	setbuf(stdout, NULL);
 #endif
 
-	gtty(fileno(stdout), &otty);
 	time(&t);
 	setuid(uid = getuid());
 	ruptible = (signal(SIGINT, SIG_IGN) == SIG_DFL);
@@ -398,7 +398,9 @@ int argc; char *argv[];
 	}
 	else
 		newrc = YES;
-	msgsrc = fopen(fname, "a");
+	msgsrc = fopen(fname, "r+");
+	if (msgsrc == NULL)
+		msgsrc = fopen(fname, "w");
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
@@ -630,7 +632,7 @@ int length;
 	}
 
 	/* trick to force wait on output */
-	stty(fileno(stdout), &otty);
+	tcdrain(fileno(stdout));
 }
 
 void
