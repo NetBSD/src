@@ -1,3 +1,5 @@
+/*	$NetBSD: strcmp.S,v 1.2 1997/05/08 13:38:56 matthias Exp $	*/
+
 /* 
  * Written by Randy Hyde, 1993
  * Public domain.
@@ -6,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcmp.S,v 1.1 1996/09/24 09:30:03 matthias Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.2 1997/05/08 13:38:56 matthias Exp $")
 #endif
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: ptrace.S,v 1.4 1997/05/08 13:39:05 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,24 +19,17 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: ptrace.S,v 1.3 1994/05/03 20:40:36 phil Exp $
- */
-
-/* 
- * This is included for the NetBSD version!
  */
 
 #include "SYS.h"
 
-	.globl	_errno
-	.globl	cerror
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: ptrace.S,v 1.4 1997/05/08 13:39:05 matthias Exp $")
+#endif
 
 ENTRY(ptrace)
-	PIC_PROLOGUE
-	movqd	0, PIC_GOT(_errno)
-	PIC_EPILOGUE
-	movd	SYS_ptrace, r0
-	SVC
-	bcs	cerror
+	movqd	0,r0
+	bsr	_ASM_LABEL(cerror)
+	SYSTRAP(ptrace)
+	bcs	_ASM_LABEL(cerror)
 	ret	0
