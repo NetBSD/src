@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74.2.1 1999/10/19 17:47:43 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.2 1999/10/20 22:33:28 thorpej Exp $ */
 
 
 /*
@@ -120,6 +120,7 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
+void	wdc_kill_pending __P((struct channel_softc *));
 
 
 #define DEBUG_INTR   0x01
@@ -473,6 +474,8 @@ wdcactivate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (wdc->sc_dying != 0)
+			goto out;
 		for (i = 0; i < wdc->nchannels; i++) {
 			chp = wdc->channels[i];
 
@@ -503,6 +506,7 @@ wdcactivate(self, act)
 				}
 			}
 		}
+		wdc->sc_dying = 1;
 		break;
 	}
 
@@ -557,6 +561,8 @@ wdcdetach(self, flags)
 					goto out;
 			}
 		}
+
+		wdc_kill_pending(chp);
 	}
 
 out:
@@ -1169,6 +1175,7 @@ wdc_exec_command(drvp, wdc_c)
 	xfer->cmd = wdc_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
+	xfer->c_kill_xfer = __wdccommand_done;
 
 	s = splbio();
 	wdc_exec_xfer(chp, xfer);
@@ -1292,8 +1299,8 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
-	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
-								== 0) {
+	if ((wdc_c->flags & AT_READREG) != 0 && chp->wdc->sc_dying != 0 &&
+	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						 wd_sdh);
 		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
@@ -1432,6 +1439,23 @@ wdc_free_xfer(chp, xfer)
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
 	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
+}
+
+/*
+ * Kill off all pending xfers for a channel_softc.
+ *
+ * Must be called at splbio().
+ */
+void
+wdc_kill_pending(chp)
+	struct channel_softc *chp;
+{
+	struct wdc_xfer *xfer;
+
+	while ((xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer)) != NULL) {
+		chp = xfer->chp;
+		(*xfer->c_kill_xfer)(chp, xfer);
+	}
 }
 
 static void

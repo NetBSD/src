@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27.2.2 1999/10/20 20:39:05 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.3 1999/10/20 22:39:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -87,6 +87,7 @@ int wdcdebug_atapi_mask = 0;
 void  wdc_atapi_minphys  __P((struct buf *bp));
 void  wdc_atapi_start	__P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *, int));
+void  wdc_atapi_kill_xfer __P((struct channel_softc *, struct wdc_xfer *));
 int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_reset	 __P((struct channel_softc *, struct wdc_xfer *));
@@ -143,6 +144,37 @@ wdc_atapi_minphys(bp)
 	if (bp->b_bcount > MAX_SIZE)
 		bp->b_bcount = MAX_SIZE;
 	minphys(bp);
+}
+
+/*
+ * Kill off all pending xfers for a scsipi_link.
+ *
+ * Must be called at splbio().
+ */
+void
+atapi_kill_pending(sc_link)
+	struct scsipi_link *sc_link;
+{
+	struct wdc_softc *wdc = (void *)sc_link->adapter_softc;
+	struct channel_softc *chp =
+	    wdc->channels[sc_link->scsipi_atapi.channel];
+
+	wdc_kill_pending(chp);
+}
+
+void
+wdc_atapi_kill_xfer(chp, xfer)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+{
+	struct scsipi_xfer *sc_xfer = xfer->cmd;
+
+	untimeout(wdctimeout, chp);
+	/* remove this command from xfer queue */
+	wdc_free_xfer(chp, xfer);
+	sc_xfer->xs_status |= XS_STS_DONE;
+	sc_xfer->error = XS_DRIVER_STUFFUP;
+	scsipi_done(sc_xfer);
 }
 
 int
@@ -240,6 +272,7 @@ wdc_atapi_scsipi_request(chan, req, arg)
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = wdc_atapi_start;
 		xfer->c_intr = wdc_atapi_intr;
+		xfer->c_kill_xfer = wdc_atapi_kill_xfer;
 		s = splbio();
 		wdc_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.19.2.1 1999/10/19 17:47:45 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.19.2.2 1999/10/20 22:33:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ struct wdc_softc { /* Per controller state */
 	 * The reference count here is used for both IDE and ATAPI devices.
 	 */
 	struct scsipi_adapter sc_atapi_adapter;
+	int		sc_dying;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
@@ -149,6 +150,7 @@ struct wdc_xfer {
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
+	void (*c_kill_xfer) __P((struct channel_softc *, struct wdc_xfer *));
 };
 
 /*
@@ -180,6 +182,7 @@ void  wdctimeout	__P((void *arg));
 
 int	wdc_addref __P((struct channel_softc *));
 void	wdc_delref __P((struct channel_softc *));
+void	wdc_kill_pending __P((struct channel_softc *));
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
