@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2000/01/21 23:29:07 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.73 2000/01/23 22:19:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ struct fdc_softc {
 #define FDC_82077		0x01
 #define FDC_NEEDHEADSETTLE	0x02
 #define FDC_EIS			0x04
+#define FDC_NEEDMOTORWAIT	0x08
 	int		sc_errors;		/* number of retries so far */
 	int		sc_overruns;		/* number of DMA overruns */
 	int		sc_cfg;			/* current configuration */
@@ -434,6 +435,7 @@ establish_chip_type(fdc, tag, type, addr, size, handle)
 	}
 
 	fdc->sc_flags |= FDC_82077;
+	fdc->sc_flags |= FDC_NEEDMOTORWAIT;
 }
 
 /*
@@ -671,7 +673,7 @@ fdmatch(parent, match, aux)
 		/* XXX - for now, punt on more than one drive */
 		return (0);
 
-	if (fdc->sc_flags & FDC_82077) {
+	if ((fdc->sc_flags & FDC_82077) != 0) {
 		/* select drive and turn on motor */
 		bus_space_write_1(t, h, fdc->sc_reg_dor,
 				  drive | FDO_FRST | FDO_MOEN(drive));
@@ -718,7 +720,7 @@ fdmatch(parent, match, aux)
 	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
 
 	/* turn off motor */
-	if (fdc->sc_flags & FDC_82077) {
+	if ((fdc->sc_flags & FDC_82077) != 0) {
 		/* deselect drive and turn motor off */
 		bus_space_write_1(t, h, fdc->sc_reg_dor, FDO_FRST | FDO_DS);
 	} else {
@@ -923,7 +925,7 @@ fdc_reset(fdc)
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
 
-	if (fdc->sc_flags & FDC_82077) {
+	if ((fdc->sc_flags & FDC_82077) != 0) {
 		bus_space_write_1(t, h, fdc->sc_reg_dor,
 				  FDO_FDMAEN | FDO_MOEN(0));
 	}
@@ -932,7 +934,7 @@ fdc_reset(fdc)
 	delay(10);
 	bus_space_write_1(t, h, fdc->sc_reg_drs, 0);
 
-	if (fdc->sc_flags & FDC_82077) {
+	if ((fdc->sc_flags & FDC_82077) != 0) {
 		bus_space_write_1(t, h, fdc->sc_reg_dor,
 				  FDO_FRST | FDO_FDMAEN | FDO_DS);
 	}
@@ -950,7 +952,7 @@ fd_set_motor(fdc)
 	u_char status;
 	int n;
 
-	if (fdc->sc_flags & FDC_82077) {
+	if ((fdc->sc_flags & FDC_82077) != 0) {
 		status = FDO_FRST | FDO_FDMAEN;
 		if ((fd = fdc->sc_drives.tqh_first) != NULL)
 			status |= fd->sc_drive;
@@ -961,16 +963,15 @@ fd_set_motor(fdc)
 		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
 				  fdc->sc_reg_dor, status);
 	} else {
-		int on = 0;
 
-		for (n = 0; n < 4; n++)
-			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
-				on = 1;
-		if (on) {
-			auxregbisc(AUXIO4C_FDS, 0);
-		} else {
-			auxregbisc(0, AUXIO4C_FDS);
+		for (n = 0; n < 4; n++) {
+			if ((fd = fdc->sc_fd[n]) != NULL  &&
+			    (fd->sc_flags & FD_MOTOR) != 0) {
+				auxregbisc(AUXIO4C_FDS, 0);
+				return;
+			}
 		}
+		auxregbisc(0, AUXIO4C_FDS);
 	}
 }
 
@@ -1030,6 +1031,7 @@ fdcresult(fdc)
 		} else
 			delay(1);
 	}
+
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return (fdc->sc_nstat = -1);
 }
@@ -1049,15 +1051,14 @@ fdc_wrfifo(fdc, x)
 
 	for (i = 100000; i-- > 0;) {
 		u_int8_t v = bus_space_read_1(t, h, fdc->sc_reg_msr);
-		if ((v & (NE7_DIO|NE7_RQM)) == NE7_RQM)
-			break;
+		if ((v & (NE7_DIO|NE7_RQM)) == NE7_RQM) {
+			/* The chip is ready */
+			bus_space_write_1(t, h, fdc->sc_reg_fifo, x);
+			return (0);
+		}
 		delay(1);
 	}
-	if (i <= 0)
-		return (-1);
-
-	bus_space_write_1(t, h, fdc->sc_reg_fifo, x);
-	return (0);
+	return (-1);
 }
 
 int
@@ -1191,7 +1192,7 @@ fdcstatus(fdc, s)
 	 * A 82072 seems to return <invalid command> on
 	 * gratuitous Sense Interrupt commands.
 	 */
-	if (n == 0 && (fdc->sc_flags & FDC_82077)) {
+	if (n == 0 && (fdc->sc_flags & FDC_82077) != 0) {
 		fdc_wrfifo(fdc, NE7CMD_SENSEI);
 		(void) fdcresult(fdc);
 		n = 2;
@@ -1245,13 +1246,6 @@ fdctimeout(arg)
 		fdc->sc_state = DEVIDLE;
 		goto out;
 	}
-
-	/*
-	 * When waiting for I/O don't report the timeout now; there
-	 * might just be no floppy disk in the drive.
-	 */
-	if (fdc->sc_state != IOCOMPLETE)
-		fdcstatus(fdc, "timeout");
 
 	if (BUFQ_FIRST(&fd->sc_q) != NULL)
 		fdc->sc_state++;
@@ -1445,7 +1439,7 @@ loop:
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc);
 			fdc->sc_state = MOTORWAIT;
-			if (fdc->sc_flags & FDC_82077) { /* XXX */
+			if ((fdc->sc_flags & FDC_NEEDMOTORWAIT) != 0) { /*XXX*/
 				/* Allow .25s for motor to stabilize. */
 				timeout(fd_motor_on, fd, hz / 4);
 			} else {
@@ -1489,7 +1483,7 @@ loop:
 		/* seek function */
 		FDC_WRFIFO(fdc, NE7CMD_SEEK);
 		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
-		FDC_WRFIFO(fdc, bp->b_cylin * fd->sc_type->step);
+		FDC_WRFIFO(fdc, bp->b_cylinder * fd->sc_type->step);
 		return (1);
 
 	case DOIO:
@@ -1600,7 +1594,7 @@ loop:
 		fdc->sc_itask = FDC_ITASK_RESULT;
 		fdc->sc_state = IOCLEANUPWAIT;
 		fdc->sc_nstat = 0;
-		/* 1/2 second should be enough */
+		/* 1/10 second should be enough */
 		timeout(fdctimeout, fdc, hz/10);
 		FTC_FLIP;
 		return (1);
@@ -1609,6 +1603,8 @@ loop:
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
+		fdcstatus(fdc, "timeout");
+
 		/* All other timeouts always roll through to a chip reset */
 		fdcretry(fdc);
 
@@ -1778,7 +1774,6 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
@@ -1826,16 +1821,7 @@ fdcretry(fdc)
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FD_BSIZE(fd),
 				(struct disklabel *)NULL);
-
-			printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-				NE7_ST0BITS, bits, sizeof(bits)));
-			printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-				NE7_ST1BITS, bits, sizeof(bits)));
-			printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-				NE7_ST2BITS, bits, sizeof(bits)));
-			printf(" cyl %d head %d sec %d)\n",
-				fdc->sc_status[3], fdc->sc_status[4],
-				fdc->sc_status[5]);
+			fdcstatus(fdc, " controller status");
 		}
 
 	failsilent:
@@ -2253,7 +2239,7 @@ fd_do_eject(fd)
 		auxregbisc(AUXIO4C_FEJ, AUXIO4C_FDS);
 		return;
 	}
-	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077)) {
+	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077) != 0) {
 		bus_space_tag_t t = fdc->sc_bustag;
 		bus_space_handle_t h = fdc->sc_handle;
 		u_int8_t dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
