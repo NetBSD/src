@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.279 2004/06/17 20:08:39 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.280 2004/06/18 09:22:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4026,4 +4026,11 @@ sys/arch/amd64/include/gdt.h			1.2
 	causing	gdt_grow to corrupt the GDT. Fix this, and remove the
 	extraneous definitions of the sizes from gdt.c.
 	[fvdl, ticket #506]
+
+bin/pax/buf_subs.c				1.24
+bin/pax/tar.c					1.54-1.56 via patch
+
+	Fix PR bin/25934: pax creates broken tar archives if they contain files
+	with multiple hardlinks and at least one filename >=100 chars long.
+	[dillo, ticket #507]
 
