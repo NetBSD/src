@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.22 1997/07/06 19:32:39 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.23 1997/07/29 09:42:13 fair Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -78,28 +78,28 @@ svr4_printcontext(fun, uc)
 	printf("%s at %p\n", fun, uc);
 
 	printf("Regs: ");
-	printf("PSR = %x ", r[SVR4_SPARC_PSR]);
-	printf("PC = %x ",  r[SVR4_SPARC_PC]);
-	printf("nPC = %x ", r[SVR4_SPARC_nPC]);
-	printf("Y = %x ",   r[SVR4_SPARC_Y]);
-	printf("G1 = %x ",  r[SVR4_SPARC_G1]);
-	printf("G2 = %x ",  r[SVR4_SPARC_G2]);
-	printf("G3 = %x ",  r[SVR4_SPARC_G3]);
-	printf("G4 = %x ",  r[SVR4_SPARC_G4]);
-	printf("G5 = %x ",  r[SVR4_SPARC_G5]);
-	printf("G6 = %x ",  r[SVR4_SPARC_G6]);
-	printf("G7 = %x ",  r[SVR4_SPARC_G7]);
-	printf("O0 = %x ",  r[SVR4_SPARC_O0]);
-	printf("O1 = %x ",  r[SVR4_SPARC_O1]);
-	printf("O2 = %x ",  r[SVR4_SPARC_O2]);
-	printf("O3 = %x ",  r[SVR4_SPARC_O3]);
-	printf("O4 = %x ",  r[SVR4_SPARC_O4]);
-	printf("O5 = %x ",  r[SVR4_SPARC_O5]);
-	printf("O6 = %x ",  r[SVR4_SPARC_O6]);
-	printf("O7 = %x ",  r[SVR4_SPARC_O7]);
+	printf("PSR = 0x%x ", r[SVR4_SPARC_PSR]);
+	printf("PC = 0x%x ",  r[SVR4_SPARC_PC]);
+	printf("nPC = 0x%x ", r[SVR4_SPARC_nPC]);
+	printf("Y = 0x%x ",   r[SVR4_SPARC_Y]);
+	printf("G1 = 0x%x ",  r[SVR4_SPARC_G1]);
+	printf("G2 = 0x%x ",  r[SVR4_SPARC_G2]);
+	printf("G3 = 0x%x ",  r[SVR4_SPARC_G3]);
+	printf("G4 = 0x%x ",  r[SVR4_SPARC_G4]);
+	printf("G5 = 0x%x ",  r[SVR4_SPARC_G5]);
+	printf("G6 = 0x%x ",  r[SVR4_SPARC_G6]);
+	printf("G7 = 0x%x ",  r[SVR4_SPARC_G7]);
+	printf("O0 = 0x%x ",  r[SVR4_SPARC_O0]);
+	printf("O1 = 0x%x ",  r[SVR4_SPARC_O1]);
+	printf("O2 = 0x%x ",  r[SVR4_SPARC_O2]);
+	printf("O3 = 0x%x ",  r[SVR4_SPARC_O3]);
+	printf("O4 = 0x%x ",  r[SVR4_SPARC_O4]);
+	printf("O5 = 0x%x ",  r[SVR4_SPARC_O5]);
+	printf("O6 = 0x%x ",  r[SVR4_SPARC_O6]);
+	printf("O7 = 0x%x ",  r[SVR4_SPARC_O7]);
 	printf("\n");
 
-	printf("Signal Stack: sp %p, size %d, flags %x\n",
+	printf("Signal Stack: sp %p, size %d, flags 0x%x\n",
 	    s->ss_sp, s->ss_size, s->ss_flags);
 
 	printf("Flags: %lx\n", uc->uc_flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 1997/07/08 22:14:42 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.52 1997/07/29 09:41:58 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1192,6 +1192,6 @@ fsrtoname(impl, vers, fver, buf)
 		    (p->iu_vers == vers || p->iu_vers == ANY) &&
 		    (p->fpu_vers == fver))
 			return (p->name);
-	sprintf(buf, "version %x", fver);
+	sprintf(buf, "version 0x%x", fver);
 	return (buf);
 }

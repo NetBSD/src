@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 1997/07/16 15:35:23 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.91 1997/07/29 09:42:11 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1297,7 +1297,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 		panic("me_alloc: stealing from kernel");
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
-		printf("me_alloc: stealing pmeg %x from pmap %p\n",
+		printf("me_alloc: stealing pmeg 0x%x from pmap %p\n",
 		    me->me_cookie, pm);
 #endif
 	/*
@@ -1497,7 +1497,7 @@ region_alloc(mh, newpm, newvr)
 		if (me->me_pmap != NULL)
 			panic("region_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMUREG_ALLOC)
-			printf("region_alloc: got smeg %x\n", me->me_cookie);
+			printf("region_alloc: got smeg 0x%x\n", me->me_cookie);
 #endif
 		TAILQ_INSERT_TAIL(mh, me, me_list);
 
@@ -1523,7 +1523,7 @@ region_alloc(mh, newpm, newvr)
 		panic("region_alloc: stealing from kernel");
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMUREG_ALLOC | PDB_MMUREG_STEAL))
-		printf("region_alloc: stealing smeg %x from pmap %p\n",
+		printf("region_alloc: stealing smeg 0x%x from pmap %p\n",
 		    me->me_cookie, pm);
 #endif
 	/*
@@ -1580,7 +1580,7 @@ region_free(pm, smeg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_MMUREG_ALLOC)
-		printf("region_free: freeing smeg %x from pmap %p\n",
+		printf("region_free: freeing smeg 0x%x from pmap %p\n",
 		    me->me_cookie, pm);
 	if (me->me_cookie != smeg)
 		panic("region_free: wrong mmuentry");
@@ -1636,7 +1636,7 @@ mmu_pagein(pm, va, prot)
 	rp = &pm->pm_regmap[vr];
 #ifdef DEBUG
 if (pm == pmap_kernel())
-printf("mmu_pagein: kernel wants map at va %x, vr %d, vs %d\n", va, vr, vs);
+printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
 #endif
 
 	/* return 0 if we have no PMEGs to load */
@@ -2178,7 +2178,7 @@ pv_link4_4c(pv, pm, va)
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
 					printf(
-			"pv_link: badalias: pid %d, %lx<=>%lx, pa %lx\n",
+			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
 					va, npv->pv_va,
 					vm_first_phys + (pv-pv_table)*NBPG);
@@ -2457,7 +2457,7 @@ pv_link4m(pv, pm, va)
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
 					printf(
-			"pv_link: badalias: pid %d, %lx<=>%lx, pa %lx\n",
+			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
 					va, npv->pv_va,
 					vm_first_phys + (pv-pv_table)*NBPG);
@@ -3411,7 +3411,7 @@ pass2:
 			/* This chunk overlaps the previous in pv_table[] */
 			sva += PAGE_SIZE;
 			if (sva < eva)
-				panic("pmap_init: sva(%lx) < eva(%lx)",
+				panic("pmap_init: sva(0x%lx) < eva(0x%lx)",
 				      sva, eva);
 		}
 		eva = round_page(va + len);
@@ -3694,7 +3694,7 @@ pmap_remove(pm, va, endva)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(%p, %lx, %lx)\n", pm, va, endva);
+		printf("pmap_remove(%p, 0x%lx, 0x%lx)\n", pm, va, endva);
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -3906,7 +3906,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 #ifdef DEBUG
 			if ((pmapdebug & PDB_SANITYCHK) &&
 			    (getpte4m(va) & SRMMU_TETYPE) == SRMMU_TEPTE)
-				panic("pmap_rmk: Spurious kTLB entry for %lx",
+				panic("pmap_rmk: Spurious kTLB entry for 0x%lx",
 				      va);
 #endif
 			va += NBPG;
@@ -4182,7 +4182,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			if ((pmapdebug & PDB_SANITYCHK) &&
 			    pm->pm_ctx &&
 			    (getpte4m(va) & SRMMU_TEPTE) == SRMMU_TEPTE)
-				panic("pmap_rmu: Spurious uTLB entry for %lx",
+				panic("pmap_rmu: Spurious uTLB entry for 0x%lx",
 				      va);
 #endif
 			continue;
@@ -4259,10 +4259,10 @@ pmap_page_protect4_4c(pa, prot)
 
 #ifdef DEBUG
 	if (!pmap_pa_exists(pa))
-		panic("pmap_page_protect: no such address: %lx", pa);
+		panic("pmap_page_protect: no such address: 0x%lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
+		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
 #endif
 	/*
 	 * Skip unmanaged pages, or operations that do not take
@@ -4346,7 +4346,7 @@ pmap_page_protect4_4c(pa, prot)
 
 		tpte = getpte4(pteva);
 		if ((tpte & PG_V) == 0)
-			panic("pmap_page_protect !PG_V: ctx %d, va %x, pte %x",
+			panic("pmap_page_protect !PG_V: ctx %d, va 0x%x, pte 0x%x",
 			      pm->pm_ctxnum, va, tpte);
 		flags |= MR4_4C(tpte);
 
@@ -4549,7 +4549,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%p, %lx, %x, %x)\n",
+		printf("pmap_changeprot(%p, 0x%lx, 0x%x, 0x%x)\n",
 		    pm, va, prot, wired);
 #endif
 
@@ -4660,7 +4660,7 @@ pmap_page_protect4m(pa, prot)
 		panic("pmap_page_protect: no such address: 0x%lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
+		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
 #endif
 	/*
 	 * Skip unmanaged pages, or operations that do not take
@@ -4876,7 +4876,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_changeprot(%p, %lx, %x, %x)\n",
+		printf("pmap_changeprot(%p, 0x%lx, 0x%x, 0x%x)\n",
 		    pm, va, prot, wired);
 #endif
 
@@ -4952,7 +4952,7 @@ pmap_enter4_4c(pm, va, pa, prot, wired)
 
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
-		printf("pmap_enter: pm %p, va %lx, pa %lx: in MMU hole\n",
+		printf("pmap_enter: pm %p, va 0x%lx, pa 0x%lx: in MMU hole\n",
 			pm, va, pa);
 #endif
 		return;
@@ -4960,7 +4960,7 @@ pmap_enter4_4c(pm, va, pa, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
+		printf("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
 		    pm, va, pa, prot, wired);
 #endif
 
@@ -4974,7 +4974,7 @@ pmap_enter4_4c(pm, va, pa, prot, wired)
 	if ((pteproto & PG_TYPE) == PG_OBMEM && managed(pa)) {
 #ifdef DIAGNOSTIC
 		if (!pmap_pa_exists(pa))
-			panic("pmap_enter: no such address: %lx", pa);
+			panic("pmap_enter: no such address: 0x%lx", pa);
 #endif
 		pv = pvhead(pa);
 	} else {
@@ -5044,7 +5044,7 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
 #ifdef DEBUG
-printf("pmap_enk: changing existing va=>pa entry: va %lx, pteproto %x\n",
+printf("pmap_enk: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x\n",
 	va, pteproto);
 #endif
 			/*
@@ -5149,7 +5149,7 @@ pmap_enu4_4c(pm, va, prot, wired, pv, pteproto)
 
 #ifdef DEBUG
 	if (pm->pm_gap_end < pm->pm_gap_start) {
-		printf("pmap_enu: gap_start %x, gap_end %x",
+		printf("pmap_enu: gap_start 0x%x, gap_end 0x%x",
 			pm->pm_gap_start, pm->pm_gap_end);
 		panic("pmap_enu: gap botch");
 	}
@@ -5238,7 +5238,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * If old page was cached, flush cache.
 			 */
 #if 0
-printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
+printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 	curproc->p_comm, curproc->p_pid, va);
 #endif
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
@@ -5318,7 +5318,7 @@ pmap_enter4m(pm, va, pa, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
+		printf("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, 0x%x)\n",
 		    pm, va, pa, prot, wired);
 #endif
 
@@ -5346,7 +5346,7 @@ pmap_enter4m(pm, va, pa, prot, wired)
 	if ((pteproto & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && managed(pa)) {
 #ifdef DIAGNOSTIC
 		if (!pmap_pa_exists(pa))
-			panic("pmap_enter: no such address: %lx", pa);
+			panic("pmap_enter: no such address: 0x%lx", pa);
 #endif
 		pv = pvhead(pa);
 	} else {
@@ -5393,7 +5393,7 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 	s = splpmap();		/* XXX way too conservative */
 
 	if (rp->rg_seg_ptps == NULL) /* enter new region */
-		panic("pmap_enk4m: missing kernel region table for va %lx",va);
+		panic("pmap_enk4m: missing kernel region table for va 0x%lx",va);
 
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
@@ -5410,8 +5410,8 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 #ifdef DEBUG
-printf("pmap_enk4m: changing existing va=>pa entry: va %lx, pteproto %x, "
-       "oldpte %x\n", va, pteproto, tpte);
+printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
+       "oldpte 0x%x\n", va, pteproto, tpte);
 #endif
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -5575,7 +5575,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 */
 #ifdef DEBUG
 if (pmapdebug & PDB_SWITCHMAP)
-printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa(pte=%x) entry\n",
+printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa(pte=0x%x) entry\n",
 	curproc->p_comm, curproc->p_pid, (int)va, (int)pte);
 #endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
@@ -6333,7 +6333,7 @@ pm_check_u(s, pm)
 	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps)
 					      >> SRMMU_PPNPASHIFT) |
 					     SRMMU_TEPTD)))
-	    panic("%s: CHK(pmap %p): SRMMU region table at %x not installed "
+	    panic("%s: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, pm, pm->pm_reg_ptps_pa, pm->pm_ctxnum);
 #endif
 
@@ -6412,13 +6412,13 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	if (CPU_ISSUN4M &&
 	    (pm->pm_reg_ptps == NULL ||
 	     pm->pm_reg_ptps_pa != VA2PA((caddr_t)pm->pm_reg_ptps)))
-	    panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=%x",
+	    panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
 		  s, pm, pm->pm_reg_ptps, pm->pm_reg_ptps_pa);
 
 	if (CPU_ISSUN4M &&
 	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps) >>
 					     SRMMU_PPNPASHIFT) | SRMMU_TEPTD)))
-	    panic("%s: CHK(pmap %p): SRMMU region table at %x not installed "
+	    panic("%s: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, pm, pm->pm_reg_ptps_pa, 0);
 #endif
 	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
@@ -6751,7 +6751,7 @@ void print_fe_map(void)
 	for (i = 0xfe000000; i < 0xff000000; i+=4096) {
 		if (((pte = getpte4m(i)) & SRMMU_TETYPE) != SRMMU_TEPTE)
 		    continue;
-		printf("0x%x -> 0x%x%x (pte %x)\n", i, pte >> 28,
+		printf("0x%x -> 0x%x%x (pte 0x%x)\n", i, pte >> 28,
 		       (pte & ~0xff) << 4, pte);
 	}
 	printf("done\n");

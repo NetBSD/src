@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 1997/07/06 21:34:45 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.57 1997/07/29 09:42:15 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -312,7 +312,7 @@ trap(type, psr, pc, tf)
 			return;
 		}
 	dopanic:
-		printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
+		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
 		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 		       PSR_BITS, bits, sizeof(bits)));
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
@@ -330,7 +330,7 @@ trap(type, psr, pc, tf)
 		if (type < 0x80) {
 			if (!ignore_bogus_traps)
 				goto dopanic;
-			printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
+			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 			       PSR_BITS, bits, sizeof(bits)));
 			trapsignal(p, SIGILL, type);
@@ -434,7 +434,7 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
@@ -456,7 +456,7 @@ badtrap:
 		 */
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		write_user_windows();
@@ -464,7 +464,7 @@ badtrap:
 			sigexit(p, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
 				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
@@ -594,7 +594,7 @@ rwindow_save(p)
 	do {
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf(" %x", rw[1].rw_in[6]);
+			printf(" 0x%x", rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -676,7 +676,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x ser=%s\n", pc,
+			printf("text fault: pc=0x%x ser=%s\n", pc,
 			  bitmask_snprintf(ser, SER_BITS, bits, sizeof(bits)));
 			panic("kernel fault");
 			/* NOTREACHED */
@@ -755,7 +755,7 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x ser=%s\n",
+				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
 				    pc, v, bitmask_snprintf(ser, SER_BITS,
 				    bits, sizeof(bits)));
 				panic("kernel fault");
@@ -914,7 +914,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x sfsr=%s sfva=%x\n", pc,
+			printf("text fault: pc=0x%x sfsr=%s sfva=0x%x\n", pc,
 			    bitmask_snprintf(sfsr, SFSR_BITS, bits,
 			    sizeof(bits)), sfva);
 			panic("kernel fault");
@@ -975,7 +975,7 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x sfsr=%s\n",
+				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
 				    pc, sfva, bitmask_snprintf(sfsr, SFSR_BITS,
 				    bits, sizeof(bits)));
 				panic("kernel fault");

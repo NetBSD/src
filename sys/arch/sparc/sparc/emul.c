@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.2 1997/03/15 00:39:51 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.3 1997/07/29 09:42:01 fair Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -167,7 +167,7 @@ muldiv(tf, code, rd, rs1, rs2)
 	op.num = code->i_op3.i_op3;
 
 #ifdef DEBUG_EMUL
-	uprintf("muldiv %x: %c%s%s %c%d, %c%d, ", code->i_int,
+	uprintf("muldiv 0x%x: %c%s%s %c%d, %c%d, ", code->i_int,
 	    "us"[op.bits.sgn], op.bits.div ? "div" : "mul",
 	    op.bits.cc ? "cc" : "", REGNAME(code->i_op3.i_rd),
 	    REGNAME(code->i_op3.i_rs1));
@@ -296,7 +296,7 @@ fixalign(p, tf)
 	rs1 += rs2;
 
 #ifdef DEBUG_EMUL
-	uprintf("memalign %x: %s%c%c %c%d, %c%d, ", code.i_int,
+	uprintf("memalign 0x%x: %s%c%c %c%d, %c%d, ", code.i_int,
 	    op.bits.st ? "st" : "ld", "us"[op.bits.sgn],
 	    "w*hd"[op.bits.sz], op.bits.fl ? 'f' : REGNAME(code.i_op3.i_rd),
 	    REGNAME(code.i_op3.i_rs1));
@@ -427,7 +427,7 @@ emulinstr(pc, tf)
 
 	default:
 		if ((code.i_op3.i_op3 & 0x2a) != 0xa) {
-			DPRINTF(("emulinstr: Unsupported op3 %x\n",
+			DPRINTF(("emulinstr: Unsupported op3 0x%x\n",
 			    code.i_op3.i_op3));
 			return SIGILL;
 		}
