@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 1998/02/18 01:13:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.46 1998/02/19 07:05:53 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -8,8 +8,7 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libkvm \
 	librpcsvc libskey libterm libutil libwrap liby libz
 
 # XXX Temporary until these ports are able to use libkvm.
-.if	(${MACHINE} == "pica")   || \
-	(${MACHINE} == "pmax")
+.if	(${MACHINE_ARCH} == "mips")
 SUBDIR+=        libkvm.old
 .endif
 
