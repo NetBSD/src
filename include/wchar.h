@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.14 2003/03/03 07:39:53 tshiozak Exp $	*/
+/*	$NetBSD: wchar.h,v 1.15 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -127,7 +127,10 @@ size_t	wcsrtombs __P((char * __restrict, const wchar_t ** __restrict, size_t,
 	    mbstate_t * __restrict));
 size_t	wcsspn __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
+wchar_t *wcstok __P((wchar_t * __restrict, const wchar_t * __restrict,
+		     wchar_t ** __restrict));
 size_t	wcsxfrm __P((wchar_t *, const wchar_t *, size_t));
+wchar_t	*wcswcs __P((const wchar_t *, const wchar_t *));
 wchar_t	*wmemchr __P((const wchar_t *, wchar_t, size_t));
 int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t * __restrict, const wchar_t * __restrict,

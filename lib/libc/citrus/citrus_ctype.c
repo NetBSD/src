@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.3 2002/12/26 07:58:19 uebayasi Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.4 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.3 2002/12/26 07:58:19 uebayasi Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.4 2003/03/05 20:18:15 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -40,14 +41,12 @@ __RCSID("$NetBSD: citrus_ctype.c,v 1.3 2002/12/26 07:58:19 uebayasi Exp $");
 #include <unistd.h>
 #include <locale.h>
 #include <stddef.h>
+#include <wchar.h>
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_ctype_fallback.h"
 #include "citrus_none.h"
 #include _CITRUS_DEFAULT_CTYPE_HEADER
-
-#include <sys/types.h>
-#include <dirent.h>
-#include <dlfcn.h>
 
 _citrus_ctype_rec_t _citrus_ctype_default = {
 	&_CITRUS_DEFAULT_CTYPE_OPS,	/* cc_ops */
@@ -87,7 +86,17 @@ _initctypemodule(_citrus_ctype_t cc, char const *modname,
 	if (ret)
 		goto bad;
 
-	/* If return ABI version is not expected, should fixup it */
+	/* If return ABI version is not expected, fixup it here*/
+	switch (cc->cc_ops->co_abi_version) {
+	case 0x00000001:
+		cc->cc_ops->co_btowc = &_citrus_ctype_btowc_fallback;
+		cc->cc_ops->co_wctob = &_citrus_ctype_wctob_fallback;
+		/* FALLTHROUGH */
+	case 0x00000002:
+		/* FALLTHROUGH */
+	default:
+		break;
+	}
 
 	/* validation check */
 	if (cc->cc_ops->co_init == NULL ||
@@ -103,7 +112,9 @@ _initctypemodule(_citrus_ctype_t cc, char const *modname,
 	    cc->cc_ops->co_wcrtomb == NULL ||
 	    cc->cc_ops->co_wcsrtombs == NULL ||
 	    cc->cc_ops->co_wcstombs == NULL ||
-	    cc->cc_ops->co_wctomb == NULL)
+	    cc->cc_ops->co_wctomb == NULL ||
+	    cc->cc_ops->co_btowc == NULL ||
+	    cc->cc_ops->co_wctob == NULL)
 		goto bad;
 
 	/* init and get closure */

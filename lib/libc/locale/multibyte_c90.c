@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.3 2002/03/26 06:10:27 yamt Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.4 2003/03/05 20:18:16 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.3 2002/03/26 06:10:27 yamt Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.4 2003/03/05 20:18:16 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h>
+#include <wchar.h>
 #include <citrus/citrus_module.h>
 #include <citrus/citrus_ctype.h>
 #include "rune.h"

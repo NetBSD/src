@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.20 2003/01/01 15:57:12 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.21 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -655,6 +655,67 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	err = _FUNCNAME(wcrtomb_priv)(ei, s, _ENCODING_MB_CUR_MAX(ei), wc,
 	    psenc, &nr);
 	*nresult = (int)nr;
+
+	return 0;
+}
+
+static int
+/*ARGSUSED*/
+_FUNCNAME(ctype_btowc)(_citrus_ctype_rec_t * __restrict cc,
+		       int c, wint_t * __restrict wcresult)
+{
+	_ENCODING_STATE state;
+	_ENCODING_INFO *ei;
+	char mb;
+	char const *s;
+	wchar_t wc;
+	size_t nr;
+	int err;
+
+	_DIAGASSERT(cc != NULL && cc->cc_closure != NULL);
+
+	if (c == EOF) {
+		*wcresult = WEOF;
+		return 0;
+	}
+	ei = _CEI_TO_EI(_TO_CEI(cc->cc_closure));
+	_FUNCNAME(init_state)(ei, &state);
+	mb = (char)(unsigned)c;
+	s = &mb;
+	err = _FUNCNAME(mbrtowc_priv)(ei, &wc, &s, 1, &state, &nr);
+	if (!err && (nr == 0 || nr == 1))
+		*wcresult = (wint_t)wc;
+	else
+		*wcresult = WEOF;
+
+	return 0;
+}
+
+static int
+/*ARGSUSED*/
+_FUNCNAME(ctype_wctob)(_citrus_ctype_rec_t * __restrict cc,
+		       wint_t wc, int * __restrict cresult)
+{
+	_ENCODING_STATE state;
+	_ENCODING_INFO *ei;
+	char buf[MB_LEN_MAX];
+	size_t nr;
+	int err;
+
+	_DIAGASSERT(cc != NULL && cc->cc_closure != NULL);
+
+	if (wc == WEOF) {
+		*cresult = EOF;
+		return 0;
+	}
+	ei = _CEI_TO_EI(_TO_CEI(cc->cc_closure));
+	_FUNCNAME(init_state)(ei, &state);
+	err = _FUNCNAME(wcrtomb_priv)(ei, buf, _ENCODING_MB_CUR_MAX(ei),
+				      (wchar_t)wc, &state, &nr);
+	if (!err && nr == 1)
+		*cresult = buf[0];
+	else
+		*cresult = EOF;
 
 	return 0;
 }

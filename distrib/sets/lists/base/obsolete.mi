@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.66 2003/02/22 03:20:47 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.67 2003/03/05 20:18:14 tshiozak Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -34,22 +34,27 @@
 ./usr/lib/runemodule/libBIG5.so
 ./usr/lib/runemodule/libBIG5.so.3
 ./usr/lib/runemodule/libBIG5.so.3.0
+./usr/lib/runemodule/libBIG5.so.4.0
 ./usr/lib/runemodule/libEUC.a
 ./usr/lib/runemodule/libEUC.so
 ./usr/lib/runemodule/libEUC.so.3
 ./usr/lib/runemodule/libEUC.so.3.0
+./usr/lib/runemodule/libEUC.so.4.0
 ./usr/lib/runemodule/libEUCTW.a
 ./usr/lib/runemodule/libEUCTW.so
 ./usr/lib/runemodule/libEUCTW.so.3
 ./usr/lib/runemodule/libEUCTW.so.3.0
+./usr/lib/runemodule/libEUCTW.so.4.0
 ./usr/lib/runemodule/libISO2022.a
 ./usr/lib/runemodule/libISO2022.so
 ./usr/lib/runemodule/libISO2022.so.3
 ./usr/lib/runemodule/libISO2022.so.3.0
+./usr/lib/runemodule/libISO2022.so.4.0
 ./usr/lib/runemodule/libMSKanji.a
 ./usr/lib/runemodule/libMSKanji.so
 ./usr/lib/runemodule/libMSKanji.so.3
 ./usr/lib/runemodule/libMSKanji.so.3.0
+./usr/lib/runemodule/libMSKanji.so.4.0
 ./usr/lib/runemodule/libUTF2.a
 ./usr/lib/runemodule/libUTF2.so
 ./usr/lib/runemodule/libUTF2.so.3
@@ -58,6 +63,7 @@
 ./usr/lib/runemodule/libUTF8.so
 ./usr/lib/runemodule/libUTF8.so.3
 ./usr/lib/runemodule/libUTF8.so.3.0
+./usr/lib/runemodule/libUTF8.so.4.0
 ./usr/libexec/cpp
 ./usr/libexec/hprop
 ./usr/libexec/kdc

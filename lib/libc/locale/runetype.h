@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.12 2003/03/03 08:49:15 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.13 2003/03/05 20:18:16 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -56,7 +56,7 @@ extern size_t __mb_len_max_runtime;
 
 
 #define	_CACHED_RUNES		(1 << 8)	/* Must be a power of 2 */
-#define _RUNE_ISCACHED(c)	((c)>=0 || (c)<_CACHED_RUNES)
+#define _RUNE_ISCACHED(c)	((c)>=0 && (c)<_CACHED_RUNES)
 
 
 /*
