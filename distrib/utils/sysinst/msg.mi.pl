@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.5 2002/05/27 09:15:40 zuntum Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.6 2002/05/27 09:18:59 zuntum Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -135,12 +135,12 @@ podac rozmiary partycji recznie.
 }
 
 message pleasemountroot
-{Glowny dysk nie jest zamontowany. Zamontuj go.
+{Glowny dysk nie jest zamountowany. Zamountuj go.
 
 Wybrany przez ciebie dysk docelowy %s jest takze aktualnym glownym dyskiem.
 Musze wiedziec czy aktualnie dzialam poza docelowym dyskiem (%sa), czy 
 poza alternatywnym (powiedzmy, w %sb, twojej partycji wymiany).
-Nie moge tego stwierdzic dopoki nie zamontujesz glownej partycji z ktorej uruchomiles system zapis/odczyt (np 'mount /dev/%sb /').
+Nie moge tego stwierdzic dopoki nie zamountujesz glownej partycji z ktorej uruchomiles system zapis/odczyt (np 'mount /dev/%sb /').
 
 Przerywam i wracam do glownego menu, abys mogl uruchomic powloke.
 }
@@ -188,7 +188,7 @@ Masz kilka mozliwosci. Sa one opisane ponizej.
 -- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
 -- Standard z Xami: podwojona partycja wymiany, miejsce na binaria X.
 -- Wlasna: sam ustawiasz rozmiary wszystkich partycji BSD disklabel. 
--- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamontowac.
+-- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamountowac.
 
 Dysk NetBSD to %.2f Megabajtow. 
 Standard wymaga przynajmniej %.2f Megabajtow.
@@ -322,7 +322,7 @@ message nomount
 {Typ partycji %c to nie 4.2BSD lub msdos i dlatego nie ma ona swojego mountpoint.}
 
 message mountfail
-{zamontowanie urzadzenia %s na %s nie powiodlo sie.
+{zamountowanie urzadzenia %s na %s nie powiodlo sie.
 }
 
 message dotar
@@ -443,7 +443,7 @@ katalog:	%s
 }
 
 message localfssource
-{Podaj niezamontowane lokalne urzadzenie oraz katalog na nim, gdzie
+{Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie
 znajduje sie dystrybucja. Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 urzadzenie:	%s
@@ -452,7 +452,7 @@ katalog:	%s
 }
 
 message localdir
-{Podaj aktualnie zamontowany lokalny katalog, gdzie znajduje sie
+{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie
 dystrybucja. Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 katalog:	%s
@@ -462,10 +462,10 @@ message filesys
 {system plikow}
 
 message cdrombadmount
-{CDROM nie moze zostac zamontowany na %s.}
+{CDROM nie moze zostac zamountowany na %s.}
 
 message localfsbadmount
-{%s nie mogl byc zamontowany na lokalnym urzadzeniu %s.}
+{%s nie mogl byc zamountowany na lokalnym urzadzeniu %s.}
 
 message badlocalsetdir
 {%s nie jest katalogiem}
@@ -691,7 +691,7 @@ jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
 }
 
 message badmount
-{System plikow %s%s nie zostal pomyslnie zamontowany. Aktualizacja przerwana.}
+{System plikow %s%s nie zostal pomyslnie zamountowany. Aktualizacja przerwana.}
 
 message upgrinode
 {System plikow, %s, uzywa starego formatu inode. Jesli uzywasz
@@ -719,7 +719,7 @@ message fdnotfound
 zawierajaca ten plik.}
 
 message fdremount
-{Dyskietka nie zostala pomyslnie zamontowana. Mozesz:
+{Dyskietka nie zostala pomyslnie zamountowana. Mozesz:
 
 Sprobowac jeszcze raz i wlozyc dyskietke z plikiem "%s".
 
@@ -789,7 +789,7 @@ nie powiodlo sie. Nie moge kontynuowac.}
 message aoutfail
 {Katalog do ktorego stare a.out wspoldzielone biblioteki powinny byc
 przeniesione nie moze zostac utworzony. Sproboj jeszcze raz procedury
-aktualizacji i upewnij sie, ze zamontowales wszystkie systemy plikow.}
+aktualizacji i upewnij sie, ze zamountowales wszystkie systemy plikow.}
 
 message noactivepart
 {Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
@@ -858,7 +858,7 @@ Specjalne wartosci, ktore moga byc podane jako wartosci przesuniecia:
 
 message postuseexisting
 {
-Nie zapomnij zamontowac wszystkich systemow plikow, ktorych chcesz
+Nie zapomnij zamountowac wszystkich systemow plikow, ktorych chcesz
 uzywac w systemie. Nacisnij <enter> aby kontynuowac.
 }
 
