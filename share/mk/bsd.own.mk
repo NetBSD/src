@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.401 2003/12/07 22:23:00 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.402 2003/12/07 22:33:16 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -423,7 +423,7 @@ NOPIC=		# defined
 # so don't build the _pic version.  Unless we are using GCC3 which
 # doesn't support PIC yet.
 #
-.if ${MACHINE_ARCH} == "vax" && && ${HAVE_GCC3} != "no"
+.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC3} != "no"
 NOPIC=		# defined
 .endif
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
