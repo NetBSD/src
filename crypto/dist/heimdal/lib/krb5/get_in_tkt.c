@@ -33,12 +33,12 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_in_tkt.c,v 1.1.1.5 2001/09/17 12:25:03 assar Exp $");
+RCSID("$Id: get_in_tkt.c,v 1.2 2002/02/10 15:31:20 bjh21 Exp $");
 
 krb5_error_code
 krb5_init_etype (krb5_context context,
 		 unsigned *len,
-		 int **val,
+		 krb5_enctype **val,
 		 const krb5_enctype *etypes)
 {
     int i;
@@ -58,7 +58,7 @@ krb5_init_etype (krb5_context context,
     for (i = 0; tmp[i]; ++i)
 	;
     *len = i;
-    *val = malloc(i * sizeof(int));
+    *val = malloc(i * sizeof(**val));
     if (i != 0 && *val == NULL) {
 	ret = ENOMEM;
 	krb5_set_error_string(context, "malloc: out of memory");
@@ -370,14 +370,14 @@ add_padata(krb5_context context,
 	   krb5_principal client,
 	   krb5_key_proc key_proc,
 	   krb5_const_pointer keyseed,
-	   int *enctypes, 
+	   krb5_enctype *enctypes, 
 	   unsigned netypes,
 	   krb5_salt *salt)
 {
     krb5_error_code ret;
     PA_DATA *pa2;
     krb5_salt salt2;
-    int *ep;
+    krb5_enctype *ep;
     int i;
     
     if(salt == NULL) {
@@ -386,7 +386,7 @@ add_padata(krb5_context context,
 	salt = &salt2;
     }
     if (!enctypes) {
-	enctypes = (int *)context->etypes; /* XXX */
+	enctypes = context->etypes;
 	netypes = 0;
 	for (ep = enctypes; *ep != ETYPE_NULL; ep++)
 	    netypes++;

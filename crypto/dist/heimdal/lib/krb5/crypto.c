@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: crypto.c,v 1.7 2001/09/17 12:32:38 assar Exp $");
+RCSID("$Id: crypto.c,v 1.8 2002/02/10 15:31:19 bjh21 Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -1447,7 +1447,7 @@ do_checksum (krb5_context context,
 static krb5_error_code
 create_checksum(krb5_context context,
 		krb5_crypto crypto,
-		krb5_key_usage usage, /* not krb5_key_usage */
+		unsigned usage, /* not krb5_key_usage */
 		krb5_cksumtype type, /* 0 -> pick from crypto */
 		void *data,
 		size_t len,
@@ -2143,18 +2143,18 @@ krb5_error_code
 krb5_keytype_to_enctypes (krb5_context context,
 			  krb5_keytype keytype,
 			  unsigned *len,
-			  int **val)
+			  krb5_enctype **val)
 {
     int i;
     unsigned n = 0;
-    int *ret;
+    krb5_enctype *ret;
 
     for (i = num_etypes - 1; i >= 0; --i) {
 	if (etypes[i]->keytype->type == keytype
 	    && !(etypes[i]->flags & F_PSEUDO))
 	    ++n;
     }
-    ret = malloc(n * sizeof(int));
+    ret = malloc(n * sizeof(*ret));
     if (ret == NULL && n != 0) {
 	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
@@ -2179,10 +2179,10 @@ krb5_error_code
 krb5_keytype_to_enctypes_default (krb5_context context,
 				  krb5_keytype keytype,
 				  unsigned *len,
-				  int **val)
+				  krb5_enctype **val)
 {
     int i, n;
-    int *ret;
+    krb5_enctype *ret;
 
     if (keytype != KEYTYPE_DES || context->etypes_des == NULL)
 	return krb5_keytype_to_enctypes (context, keytype, len, val);
