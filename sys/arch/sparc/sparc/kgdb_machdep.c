@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 1998/01/08 01:17:55 mrg Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.4 1998/08/21 14:13:54 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #if defined(SUN4M)
 #define getpte4m(va) \
-	lda(((vm_offset_t)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
+	lda(((u_long)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -296,17 +296,17 @@ kgdb_setregs(regs, gdb_regs)
  */
 int
 kgdb_acc(va, len)
-	vm_offset_t va;
+	vaddr_t va;
 	size_t len;
 {
 	int pte;
-	vm_offset_t eva;
+	vaddr_t eva;
 
 	eva = round_page(va + len);
 	va = trunc_page(va);
 
 	/* XXX icky: valid address but causes timeout */
-	if (va >= (vm_offset_t)0xfffff000)
+	if (va >= (vaddr_t)0xfffff000)
 		return (0);
 
 	for (; va < eva; va += NBPG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.20 1998/08/20 20:49:33 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.21 1998/08/21 14:13:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,7 +61,7 @@ struct iommu_softc {
 	struct iommureg	*sc_reg;
 	u_int		sc_pagesize;
 	u_int		sc_range;
-	u_int		sc_dvmabase;
+	bus_addr_t	sc_dvmabase;
 	iopte_t		*sc_ptes;
 	int		sc_hasiocache;
 };
@@ -163,14 +163,14 @@ iommu_attach(parent, self, aux)
 	void *aux;
 {
 #if defined(SUN4M)
-	register struct iommu_softc *sc = (struct iommu_softc *)self;
+	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	register int node;
+	int node;
 	struct bootpath *bp;
 	bus_space_handle_t bh;
-	register u_int pbase, pa;
-	register int i, mmupcrsave, s;
-	register iopte_t *tpte_p;
+	u_int pbase, pa;
+	int i, mmupcrsave, s;
+	iopte_t *tpte_p;
 	extern u_int *kernel_iopte_table;
 	extern u_int kernel_iopte_table_pa;
 
@@ -329,14 +329,15 @@ iommu_attach(parent, self, aux)
 
 void
 iommu_enter(va, pa)
-	u_int va, pa;
+	bus_addr_t va;
+	paddr_t pa;
 {
 	struct iommu_softc *sc = iommu_sc;
 	int pte;
 
 #ifdef DEBUG
 	if (va < sc->sc_dvmabase)
-		panic("iommu_enter: va 0x%x not in DVMA space",va);
+		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
 #endif
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
@@ -351,27 +352,30 @@ iommu_enter(va, pa)
  */
 void
 iommu_remove(va, len)
-	register u_int va, len;
+	bus_addr_t va;
+	bus_size_t len;
 {
-	register struct iommu_softc *sc = iommu_sc;
+	struct iommu_softc *sc = iommu_sc;
+	u_int pagesz = sc->sc_pagesize;
+	bus_addr_t base = sc->sc_dvmabase;
 
 #ifdef DEBUG
-	if (va < sc->sc_dvmabase)
-		panic("iommu_enter: va 0x%x not in DVMA space", va);
+	if (va < base)
+		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
 #endif
 
-	while (len > 0) {
+	while ((long)len > 0) {
 #ifdef notyet
 #ifdef DEBUG
-		if ((sc->sc_ptes[atop(va - sc->sc_dvmabase)] & IOPTE_V) == 0)
-			panic("iommu_clear: clearing invalid pte at va 0x%x",
-				va);
+		if ((sc->sc_ptes[atop(va - base)] & IOPTE_V) == 0)
+			panic("iommu_clear: clearing invalid pte at va 0x%lx",
+			      (long)va);
 #endif
 #endif
-		sc->sc_ptes[atop(va - sc->sc_dvmabase)] = 0;
+		sc->sc_ptes[atop(va - base)] = 0;
 		IOMMU_FLUSHPAGE(sc, va);
-		len -= sc->sc_pagesize;
-		va += sc->sc_pagesize;
+		len -= pagesz;
+		va += pagesz;
 	}
 }
 
@@ -435,7 +439,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t dvmaddr, curaddr;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 
 	/*
@@ -560,7 +564,7 @@ iommu_dmamap_unload(t, map)
 
 	iommu_remove(addr, len);
 	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
-		printf("warning: %ld of DVMA space lost\n", len);
+		printf("warning: %ld of DVMA space lost\n", (long)len);
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
@@ -598,7 +602,7 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t curaddr;
+	paddr_t pa;
 	bus_addr_t dvmaddr;
 	vm_page_t m;
 	int error;
@@ -626,9 +630,9 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	mlist = segs[0]._ds_mlist;
 	/* Map memory into DVMA space */
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		curaddr = VM_PAGE_TO_PHYS(m);
+		pa = VM_PAGE_TO_PHYS(m);
 
-		iommu_enter(dvmaddr, curaddr);
+		iommu_enter(dvmaddr, pa);
 		dvmaddr += PAGE_SIZE;
 	}
 
@@ -656,7 +660,7 @@ iommu_dmamem_free(t, segs, nsegs)
 
 	iommu_remove(addr, len);
 	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
-		printf("warning: %ld of DVMA space lost\n", len);
+		printf("warning: %ld of DVMA space lost\n", (long)len);
 	/*
 	 * Return the list of pages back to the VM system.
 	 */
@@ -677,7 +681,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vm_offset_t va, sva;
+	vaddr_t va, sva;
 	bus_addr_t addr;
 	struct pglist *mlist;
 	int cbit;

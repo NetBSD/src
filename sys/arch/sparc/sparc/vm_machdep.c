@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1998/07/31 22:35:07 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.38 1998/08/21 14:13:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,21 +75,21 @@
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	paddr_t pa;
 
 	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
 		panic("pagemove 1");
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 		if (pa == 0)
 			panic("pagemove 2");
 		pmap_remove(pmap_kernel(),
-		    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -103,13 +103,13 @@ pagemove(from, to, size)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -120,7 +120,7 @@ vmapbuf(bp, len)
 	 */
 	bp->b_saveaddr = bp->b_data;
 	uva = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 #if defined(UVM)
 	kva = uvm_km_valloc_wait(kernel_map, len);
@@ -158,16 +158,16 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 
 	/* This will call pmap_remove() for us. */

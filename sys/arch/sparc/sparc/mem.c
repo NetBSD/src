@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 1998/02/10 14:11:41 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.17 1998/08/21 14:13:55 pk Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,8 @@
 
 #include <vm/vm.h>
 
-extern vm_offset_t prom_vstart;
-extern vm_offset_t prom_vend;
+extern vaddr_t prom_vstart;
+extern vaddr_t prom_vend;
 caddr_t zeropage;
 
 /*ARGSUSED*/
@@ -93,9 +93,10 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t va;
+	paddr_t pa;
+	int o, c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 	extern caddr_t vmmap;
@@ -124,43 +125,43 @@ mmrw(dev, uio, flags)
 
 		/* minor device 0 is physical memory */
 		case 0:
-			v = uio->uio_offset;
-			if (!pmap_pa_exists(v)) {
+			pa = (paddr_t)uio->uio_offset;
+			if (!pmap_pa_exists(pa)) {
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+				   trunc_page(pa), uio->uio_rw == UIO_READ ?
+				   VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(),
+				    (vaddr_t)vmmap, (vaddr_t)vmmap + NBPG);
 			break;
 
 		/* minor device 1 is kernel memory */
 		case 1:
-			v = uio->uio_offset;
-			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
+			va = (vaddr_t)uio->uio_offset;
+			if (va >= MSGBUF_VA && va < MSGBUF_VA+NBPG) {
 				c = min(iov->iov_len, 4096);
-			} else if (v >= prom_vstart && v < prom_vend &&
+			} else if (va >= prom_vstart && va < prom_vend &&
 				   uio->uio_rw == UIO_READ) {
 				/* Allow read-only access to the PROM */
 				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
 #if defined(UVM)
-				if (!uvm_kernacc((caddr_t)v, c,
+				if (!uvm_kernacc((caddr_t)va, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 #else
-				if (!kernacc((caddr_t)v, c,
+				if (!kernacc((caddr_t)va, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 #endif
 			}
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)va, c, uio);
 			break;
 
 		/* minor device 2 is EOF/RATHOLE */
