@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.5.30.1 2001/11/20 16:31:54 pk Exp $	*/
+/*	$NetBSD: emul.c,v 1.5.30.2 2001/11/29 13:11:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ fixalign(l, tf)
 		uprintf("%c%d\n", REGNAME(code.i_asi.i_rs2));
 #endif
 #ifdef DIAGNOSTIC
-	if (op.bits.fl && p != cpuinfo.fpproc)
+	if (op.bits.fl && l != cpuinfo.fpproc)
 		panic("fp align without being the FP owning process");
 #endif
 
