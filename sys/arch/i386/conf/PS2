@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.9 2001/03/17 09:55:32 jdolecek Exp $
+#	$NetBSD: PS2,v 1.10 2001/03/19 22:08:17 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -107,8 +107,11 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?			# the drives themselves
 tr*	at mca? slot ?			# IBM Token Ring adapter
 
+# MCA serial interfaces
+com*	at mca? slot ?			# 16x50s on comm boards
+
 # MCA network devices
-elmc*	at mca? slot ?
+elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
 
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -125,7 +128,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-#pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device (ramdisk)
