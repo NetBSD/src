@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$Id: lprint.c,v 1.3 1993/10/07 19:58:31 brezak Exp $";
+static char rcsid[] = "$Id: lprint.c,v 1.4 1994/12/24 16:33:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$Id: lprint.c,v 1.3 1993/10/07 19:58:31 brezak Exp $";
 #include <sys/time.h>
 #include <tzfile.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <paths.h>
 #include "finger.h"

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: net.c,v 1.3 1994/01/14 03:50:50 mycroft Exp $";
+static char rcsid[] = "$Id: net.c,v 1.4 1994/12/24 16:33:53 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: net.c,v 1.3 1994/01/14 03:50:50 mycroft Exp $";
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 netfinger(name)
