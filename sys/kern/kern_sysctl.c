@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.5 2003/08/27 03:18:10 msaitoh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.6 2003/08/27 03:54:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -678,7 +678,8 @@ cleanup:
 		return (error);
 	}
 	if (name[1] == PROC_PID_LIMIT) {
-		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
+		if (namelen != 4 || name[2] < 1 ||
+		    name[2] >= PROC_PID_LIMIT_MAXID)
 			return EINVAL;
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
 		if (name[3] == PROC_PID_LIMIT_TYPE_HARD)
