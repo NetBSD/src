@@ -42,7 +42,7 @@
  * 09 Aug 92	Christoph Robitschko	Correct minor number on com ports
  * 10 Feb 93	Jordan K. Hubbard	Added select code
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.3 1993/03/27 09:24:42 cgd Exp $";
 
 #include "com.h"
 #if NCOM > 0
@@ -723,7 +723,6 @@ comcnputc(dev, c)
 	stat = inb(com+com_iir);
 	splx(s);
 }
-#endif
 
 int
 comselect(dev, rw, p)
@@ -764,3 +763,4 @@ comselect(dev, rw, p)
 	splx(s);
 	return (1);
 }
+#endif
