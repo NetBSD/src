@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.17 1994/07/25 22:55:19 mycroft Exp $
+ *	$Id: if_le.c,v 1.18 1994/09/18 00:43:19 mycroft Exp $
  */
 
 #include "le.h"
@@ -75,8 +75,11 @@
 #endif
 
 #include <machine/cpu.h>
-#include <hp300/hp300/isr.h>
 #include <machine/mtpr.h>
+#include <hp300/hp300/isr.h>
+#ifdef USELEDS
+#include <hp300/hp300/led.h>
+#endif
 
 #include <hp300/dev/device.h>
 #include <hp300/dev/if_lereg.h>
@@ -578,6 +581,11 @@ letint(unit)
 	register int tmd = (sc->sc_last_td - sc->sc_no_td + NTBUF) % NTBUF;
 	struct mds *cdm = &sc->sc_td[tmd];
 
+#ifdef USELEDS
+	if (inledcontrol == 0)
+		ledcontrol(0, 0, LED_LANXMT);
+#endif
+
 	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
 #ifdef LEDEBUG
@@ -642,6 +650,11 @@ lerint(unit)
 	register struct le_softc *sc = &le_softc[unit];
 	register int rmd = sc->sc_last_rd;
 	struct mds *cdm = &sc->sc_rd[rmd];
+
+#ifdef USELEDS
+	if (inledcontrol == 0)
+		ledcontrol(0, 0, LED_LANRCV);
+#endif
 
 	if (cdm->flags & LE_OWN) {
 		/* Race condition with loop below. */
