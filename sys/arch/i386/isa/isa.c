@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.49 1994/04/07 06:50:54 mycroft Exp $
+ *	$Id: isa.c,v 1.50 1994/04/21 04:26:37 mycroft Exp $
  */
 
 /*
@@ -428,7 +428,7 @@ isa_dmaabort(chan)
 
 #ifdef DIAGNOSTIC
 	if (chan < 0 || chan > 7)
-		panic("isa_dmadone: impossible request");
+		panic("isa_dmaabort: impossible request");
 #endif
 
 	bounced[chan] = 0;
