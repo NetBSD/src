@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.120 2004/06/05 21:19:00 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.121 2004/06/06 06:06:59 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -246,7 +246,7 @@ run_makedev(void)
 int
 get_via_floppy(void)
 {
-	char fddev[STRSIZE] = "/dev/fd0a";
+	char fddev[STRSIZE];
 	char fname[STRSIZE];
 	char full_name[STRSIZE];
 	char catcmd[STRSIZE];
@@ -255,6 +255,7 @@ get_via_floppy(void)
 	int  first;
 	struct stat sb;
 
+	(void)strlcpy(fddev, "/dev/fd0a", STRSIZE);
 	cd_dist_dir("unloading from floppy");
 
 	msg_prompt_add(MSG_fddev, fddev, fddev, STRSIZE);

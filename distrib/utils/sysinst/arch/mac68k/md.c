@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41 2004/03/26 20:02:22 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.42 2004/06/06 06:07:00 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,39 @@
 #include "menu_defs.h"
 
 int blk_size;
+
+MAP_TYPE map_types[] = {
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER43},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVERATA},
+	{MAP_RESERVED, APPLE_PART_TYPE_FWB_COMPONENT},
+	{MAP_MACOS,    APPLE_PART_TYPE_MAC},
+	{MAP_NETBSD,   APPLE_PART_TYPE_NETBSD},
+	{MAP_RESERVED, APPLE_PART_TYPE_PARTMAP},
+	{MAP_OTHER,    APPLE_PART_TYPE_SCRATCH},
+	{MAP_NETBSD,   APPLE_PART_TYPE_UNIX},
+	{MAP_EOL,      NULL}
+};
+
+MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}};
+
+struct apple_part_map_entry new_map[] =
+{
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0xa5a5, 6, 1, NEW_MAP_SIZE & 0x7e,
+	  "Apple", "Apple_Partition_Map", 0, NEW_MAP_SIZE, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 64, 32,
+	  "Macintosh", "Apple_Driver", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 96, 64,
+	  "Macintosh", "Apple_Driver43", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 160, 64,
+	  "Macintosh", "Apple_Driver_ATA", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 224, 4096,
+	  "untitled", "Apple_HFS", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6,4320, 0,
+	  "untitled", "Apple_Free", 0, 0, 0x37 }
+};
+
+const char *fdtype = "msdos";
 
 /*
  * Compare lexigraphically two strings

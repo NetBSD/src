@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2004/03/05 05:36:11 jmc Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2004/06/06 06:07:01 christos Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 #include "menu_defs.h"
 
 
+const char *fdtype = "msdos";
 /* prototypes */
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2004/06/05 21:18:59 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2004/06/06 06:06:59 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-#define MAIN
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -56,6 +55,7 @@
 #include "txtwalk.h"
 
 int main(int, char **);
+static void init(void);
 static void select_language(void);
 static void usage(void);
 static void miscsighandler(int);
@@ -73,6 +73,40 @@ FILE *script;			/* script file */
 extern int log_flip(void);
 #endif
 
+static void
+init(void)
+{
+	(void)strlcpy(rel, REL, SSTRSIZE);
+	(void)strlcpy(machine, MACH, SSTRSIZE);
+	sizemult = 1;
+	ramsize = 0;
+	rammb = 0;
+	(void)strlcpy(diskdev, "", SSTRSIZE);
+	disktype = "unknown";
+	tmp_mfs_size = 0;
+	(void)strlcpy(bsddiskname, "mydisk", DISKNAME_SIZE);
+	doessf = "";
+	(void)strlcpy(dist_dir, "/usr/INSTALL", STRSIZE);  
+	clean_dist_dir = 0;
+	(void)strlcpy(ext_dir, "", STRSIZE);
+	(void)strlcpy(set_dir, "/" MACH "/binary/sets", STRSIZE);
+	(void)strlcpy(ftp_host, SYSINST_FTP_HOST, STRSIZE);
+	(void)strlcpy(ftp_dir, SYSINST_FTP_DIR, STRSIZE);
+	(void)strlcpy(ftp_user, "ftp", SSTRSIZE);
+	(void)strlcpy(ftp_pass, "", STRSIZE);
+	(void)strlcpy(ftp_proxy, "", STRSIZE);
+	(void)strlcpy(nfs_host, "", STRSIZE);
+	(void)strlcpy(nfs_dir, "/bsd/release", STRSIZE);
+	(void)strlcpy(cdrom_dev, "cd0a", SSTRSIZE);
+	(void)strlcpy(localfs_dev, "sd0a", SSTRSIZE);
+	(void)strlcpy(localfs_fs, "ffs", SSTRSIZE);
+	(void)strlcpy(localfs_dir, "release", STRSIZE);
+	(void)strlcpy(targetroot_mnt, "/targetroot", SSTRSIZE);
+	(void)strlcpy(distfs_mnt, "/mnt2", SSTRSIZE);
+	mnt2_mounted = 0;
+	(void)strlcpy(dist_postfix, ".tgz", SSTRSIZE);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -80,6 +114,7 @@ main(int argc, char **argv)
 	int ch;
 
 	logging = 0; /* shut them off unless turned on by the user */
+	init();
 #ifdef DEBUG
 	log_flip();
 #endif

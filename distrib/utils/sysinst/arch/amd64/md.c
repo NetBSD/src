@@ -1,5 +1,7 @@
-/*	$NetBSD: md.c,v 1.5 2003/05/18 07:58:10 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.6 2004/06/06 06:06:59 christos Exp $ */
 
 /* md.c -- Machine specific code for amd64 */
+
+const char *boottype = "";
 
 #include "../i386/md.c"

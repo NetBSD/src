@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.16 2004/06/06 06:06:59 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,6 +52,8 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+const char *fdtype = "msdos";
 
 int
 md_get_info(void)

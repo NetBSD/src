@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2004/06/06 06:07:01 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,7 @@
 #include "endian.h"
 
 
+const char *fdtype = "msdos";
 /* prototypes */
 
 

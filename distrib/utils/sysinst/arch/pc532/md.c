@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2003/07/11 14:48:43 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.30 2004/06/06 06:07:01 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,6 +52,8 @@
 #include "menu_defs.h"
 /* Maximum */
 #define MAX(i,j) ((i)>(j)?(i):(j))
+
+const char *fdtype = "";
    
 
 int
