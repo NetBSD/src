@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.12 1998/08/10 14:47:17 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.13 1998/12/06 14:33:54 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -150,7 +150,11 @@ vsbus_attach(parent, self, aux)
 		va.va_type = inr_vf;
 		config_found(self, &va, vsbus_print);
 	}
-#ifdef notyet
+
+	/* XXX - Avoid searching for SCSI on 4000/60 */
+	if (vax_boardtype == VAX_BTYP_46)
+		return;
+
 	/*
 	 * Check for mass storage devices. This is tricky :-/
 	 * VS2K always has both MFM and SCSI.
@@ -158,8 +162,10 @@ vsbus_attach(parent, self, aux)
 	 * The device registers are at different places for them all.
 	 */
 	if (vax_boardtype == VAX_BTYP_410) {
+#ifdef notyet
 		va.va_type = inr_dc;
 		config_found(self, &va, vsbus_print);
+#endif
 		va.va_type = 0x200C0080;
 		config_found(self, &va, vsbus_print);
 		return;
@@ -172,6 +178,7 @@ vsbus_attach(parent, self, aux)
 	va.va_type = 0x200C0080;
 	config_found(self, &va, vsbus_print);
 
+#ifdef notyet
 	/* The last one is MFM or SCSI */
 	if ((vax_confdata & KA420_CFG_STCMSK) == KA420_CFG_RB) {
 		va.va_type = inr_dc;
