@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.1 2002/06/17 16:29:09 christos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.2 2002/06/18 01:25:04 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.1 2002/06/17 16:29:09 christos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.2 2002/06/18 01:25:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ static int
 nbsd_open(void)
 {
 	char *path = "/dev/systrace";
-	int fd, cfd = -1;
+	int fd;
 
 	fd = open(path, O_RDONLY, 0);
 	if (fd == -1) {
@@ -206,17 +206,10 @@ nbsd_open(void)
 		return (-1);
 	}
 
-	if (ioctl(fd, SYSTR_CLONE, &cfd) == -1) {
-		warn("ioctl(SYSTR_CLONE)");
-		goto out;
-	}
-
-	if (fcntl(cfd, F_SETFD, 1) == -1)
+	if (fcntl(fd, F_SETFD, 1) == -1)
 		warn("fcntl(F_SETFD)");
 
- out:
-	close (fd);
-	return (cfd);
+	return (fd);
 }
 
 static struct intercept_pid *
