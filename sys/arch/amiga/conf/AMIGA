@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.66.2.1 2004/06/30 21:30:09 jdc Exp $
+# $NetBSD: AMIGA,v 1.66.2.2 2004/07/02 19:59:46 he Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.22 2004/06/26 07:32:05 abs Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.18.2.2 2004/07/02 17:41:12 he Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.66.2.1 $"
+#ident 		"GENERIC-$Revision: 1.66.2.2 $"
 
 
 maxusers	8
@@ -159,6 +159,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #
 # Support for various kernel options
@@ -460,8 +461,6 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
