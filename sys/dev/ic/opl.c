@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.14 2001/10/23 13:09:43 itohy Exp $	*/
+/*	$NetBSD: opl.c,v 1.15 2001/10/23 17:58:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -581,7 +581,7 @@ oplsyn_ctlchange(ms, chan, parm, w14)
 {
 	struct opl_softc *sc = ms->data;
 
-	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, voice));
+	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, chan));
 	switch (parm) {
 	case MIDI_CTRL_PAN_MSB:
 		sc->pan[chan] =
