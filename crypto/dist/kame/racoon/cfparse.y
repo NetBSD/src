@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.81 2001/01/02 05:06:56 itojun Exp $	*/
+/*	$KAME: cfparse.y,v 1.82 2001/01/04 06:07:31 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -330,7 +330,7 @@ listen_stmt
 			if (p->addr == NULL) {
 				yyerror("failed to copy sockaddr ");
 				delmyaddr(p);
-				return 0;
+				return -1;
 			}
 
 			insmyaddr(p, &lcconf->myaddrs);
