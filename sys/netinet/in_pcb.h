@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.37 2004/04/18 21:00:35 matt Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.38 2004/04/21 17:49:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,35 +111,35 @@ struct inpcb {
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
-void	in_losing (struct inpcb *);
-int	in_pcballoc (struct socket *, void *);
-int	in_pcbbind (void *, struct mbuf *, struct proc *);
-int	in_pcbconnect (void *, struct mbuf *);
-void	in_pcbdetach (void *);
-void	in_pcbdisconnect (void *);
-void	in_pcbinit (struct inpcbtable *, int, int);
+void	in_losing(struct inpcb *);
+int	in_pcballoc(struct socket *, void *);
+int	in_pcbbind(void *, struct mbuf *, struct proc *);
+int	in_pcbconnect(void *, struct mbuf *);
+void	in_pcbdetach(void *);
+void	in_pcbdisconnect(void *);
+void	in_pcbinit(struct inpcbtable *, int, int);
 struct inpcb *
-	in_pcblookup_port (struct inpcbtable *,
+	in_pcblookup_port(struct inpcbtable *,
 	    struct in_addr, u_int, int);
 struct inpcb *
-	in_pcblookup_bind (struct inpcbtable *,
+	in_pcblookup_bind(struct inpcbtable *,
 	    struct in_addr, u_int);
 struct inpcb *
-	in_pcblookup_connect (struct inpcbtable *,
+	in_pcblookup_connect(struct inpcbtable *,
 	    struct in_addr, u_int, struct in_addr, u_int);
-int	in_pcbnotify (struct inpcbtable *, struct in_addr, u_int,
+int	in_pcbnotify(struct inpcbtable *, struct in_addr, u_int,
 	    struct in_addr, u_int, int, void (*)(struct inpcb *, int));
-void	in_pcbnotifyall (struct inpcbtable *, struct in_addr, int,
+void	in_pcbnotifyall(struct inpcbtable *, struct in_addr, int,
 	    void (*)(struct inpcb *, int));
-void	in_pcbpurgeif0 (struct inpcbtable *, struct ifnet *);
-void	in_pcbpurgeif (struct inpcbtable *, struct ifnet *);
-void	in_pcbstate (struct inpcb *, int);
-void	in_rtchange (struct inpcb *, int);
-void	in_setpeeraddr (struct inpcb *, struct mbuf *);
-void	in_setsockaddr (struct inpcb *, struct mbuf *);
+void	in_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
+void	in_pcbpurgeif(struct inpcbtable *, struct ifnet *);
+void	in_pcbstate(struct inpcb *, int);
+void	in_rtchange(struct inpcb *, int);
+void	in_setpeeraddr(struct inpcb *, struct mbuf *);
+void	in_setsockaddr(struct inpcb *, struct mbuf *);
 struct rtentry *
-	in_pcbrtentry (struct inpcb *);
-extern struct sockaddr_in *in_selectsrc (struct sockaddr_in *,
+	in_pcbrtentry(struct inpcb *);
+extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
 	struct route *, int, struct ip_moptions *, int *);
 #endif
 
