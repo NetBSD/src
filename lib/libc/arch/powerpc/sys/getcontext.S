@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.2 2003/01/18 11:12:55 thorpej Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.3 2003/10/03 22:37:35 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$NetBSD: getcontext.S,v 1.2 2003/01/18 11:12:55 thorpej Exp $"
+	.asciz "$NetBSD: getcontext.S,v 1.3 2003/10/03 22:37:35 kleink Exp $"
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -48,13 +48,13 @@ WEAK_ALIAS(getcontext, _getcontext)
 #endif
 
 ENTRY(_getcontext)
-	mr	5, 3				# must save pointer
-	li	0, SYS_getcontext
+	mr	%r5,%r3				# must save pointer
+	li	%r0,SYS_getcontext
 	sc
 	bso	1f
-	mflr	4
-	stw	4, (48 + 34 * 4)(5)		# saved pc <- lr
-	stw	3, (48 +  3 * 4)(5)		# arrange for return value 0
+	mflr	%r4
+	stw	%r4,(48 + 34 * 4)(%r5)		# saved pc <- lr
+	stw	%r3,(48 +  3 * 4)(%r5)		# arrange for return value 0
 	blr
 1:
 	b	PIC_PLT(_C_LABEL(__cerror))
