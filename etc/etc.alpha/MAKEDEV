@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.16 1997/07/07 22:26:51 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.17 1997/07/13 19:29:17 hpeyerl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	kbd	keyboard (provides events, for X11)
 #	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)
+#	satlink* PlanetConnect satellite receiver driver
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
@@ -88,7 +89,7 @@ all)
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
 	sh MAKEDEV kbd mouse lpa0 lpt0 audio ipl wd0 wd1 fd0 fd1
-	sh MAKEDEV local
+	sh MAKEDEV satlink0 local
 	;;
 
 std)
@@ -302,6 +303,12 @@ ipl)
 	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
+
+satlink*)
+	unit=${i#satlink};
+	rm -f satlink$unit
+	mknod satlink$unit c 38 $unit
+	chmod 444 satlink$unit
 
 local)
 	umask 0
