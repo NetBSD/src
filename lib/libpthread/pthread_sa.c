@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.12 2001/11/14 15:27:09 briggs Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.13 2001/11/17 01:59:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,8 +76,7 @@ void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
 void pthread__recycle_bulk(pthread_t self, pthread_t qhead);
 
 static void
-pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, int sig, 
-    u_long code, void *arg)
+pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue;
 	int first = 1;
@@ -140,11 +139,13 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, int sig,
 		 * (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.
 		 */
 		if (deliversig) {
+			siginfo_t *si = arg;
 			if (ev)
 				pthread__signal(pthread__sa_id(sas[1]),
-				    sig, code);
+				    si->si_signo, si->si_code);
 			else
-				pthread__signal(NULL, sig, code);
+				pthread__signal(NULL, 
+				    si->si_signo, si->si_code);
 		}
 	}
 
