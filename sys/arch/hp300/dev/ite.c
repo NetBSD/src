@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.13 1993/12/06 13:15:44 mycroft Exp $
+ *	$Id: ite.c,v 1.14 1993/12/06 13:27:49 mycroft Exp $
  */
 
 /*
@@ -119,6 +119,8 @@ extern	struct tty *constty;
  * Size is based on a 68x128 display, which is currently our largest.
  */
 u_char  console_attributes[0x2200];
+
+iteattach() {}
 
 /*
  * Perform functions necessary to setup device as a terminal emulator.
