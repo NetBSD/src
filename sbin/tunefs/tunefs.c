@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tunefs.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tunefs.c,v 1.4 1993/08/01 18:23:49 mycroft Exp $";
+static char rcsid[] = "$Id: tunefs.c,v 1.5 1994/04/12 04:17:37 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -203,7 +203,7 @@ again:
 	}
 	if (argc != 1)
 		goto usage;
-	bwrite(SBOFF / dev_bsize, (char *)&sblock, SBSIZE);
+	bwrite((daddr_t)SBOFF / dev_bsize, (char *)&sblock, SBSIZE);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
 			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
@@ -232,7 +232,7 @@ getsb(fs, file)
 		perror(file);
 		exit(3);
 	}
-	if (bread(SBOFF, (char *)fs, SBSIZE)) {
+	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE)) {
 		fprintf(stderr, "bad super block");
 		perror(file);
 		exit(4);
