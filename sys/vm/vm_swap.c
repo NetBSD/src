@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.40 1997/06/16 13:35:17 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.41 1997/06/16 20:21:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -623,10 +623,6 @@ swap_on(p, sdp)
 	nswapdev++;
 	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
-	if (dumpdev == NULL && vp->v_type == VBLK) {
-		dumpdev = dev;
-		cpu_dumpconf();
-	}
 
 	return (0);
 
