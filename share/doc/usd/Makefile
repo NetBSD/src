@@ -14,9 +14,6 @@
 BINDIR=	/usr/share/doc/usd
 FILES=	00.contents Makefile Title
 SUBDIR=	18.msdiffs 19.memacros 20.meref
-.if exists(04.csh)
-SUBDIR+= 04.csh
-.endif
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}
