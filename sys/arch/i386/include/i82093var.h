@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
+/* $NetBSD: i82093var.h,v 1.1.2.3 2000/02/27 20:26:06 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _I386_I82093VAR_H_
+#define _I386_I82093VAR_H_
 
 #include <machine/apicvar.h>
 
@@ -88,16 +91,6 @@ void ioapic_format_redir (char *, char *, int, u_int32_t, u_int32_t);
 void ioapic_enable __P((void));
 void lapic_vectorset __P((void)); /* XXX */
 
+extern int ioapic_bsp_id;
 
-/*
- * Temporary hacks, for treating the APIC sort of like a wider PIC.
- * XXX this is sick, but it will get things starting to roll.
- * XXX will not scale to multiple APIC's, ignores most of the nice new
- * features of the APIC, but will start using it to deliver i/o interrupts.
- */
-
-void apic_calculatemasks __P((void);)
-#define APIC_ICU_OFFSET	48		/* 0-31 are processor exceptions */
-					/* 32-47 are ISA interrupts */
-#define APIC_ICU_LEN 24			/* 48..71 are APIC interrupts */
-
+#endif /* !_I386_I82093VAR_H_ */
