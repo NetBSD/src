@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.237 2003/11/26 07:13:05 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.238 2003/11/26 09:42:03 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3050,4 +3050,13 @@ lib/libc/sys/intro.2				1.36
 	Catch up with namei: An empty string is not a valid pathname.
 	Noted by SAITOH Akinori in PR misc/23565.
 	[kleink, ticket #1567]
+
+
+sys/netinet/ip_nat.c				patched by hand
+sys/netinet/ip_nat.h				patched by hand
+
+	 Change to ip filter's NAT code to keep excessive NAT
+	 entries from causing the kernel to panic.
+	 [jklos, ticket #1568]
+
 
