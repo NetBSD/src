@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 1996/03/08 11:40:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 1996/03/08 20:19:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1419,4 +1419,48 @@ cpu_reset()
 	pmap_update(); 
 
 	for (;;);
+}
+
+int
+bus_mem_map(t, bpa, size, cacheable, mhp)
+	bus_chipset_tag_t t;
+	bus_mem_addr_t bpa;
+	bus_mem_size_t size;
+	int cacheable;
+	bus_mem_handle_t *mhp;
+{
+	u_long pa, endpa;
+	vm_offset_t va;
+
+	pa = i386_trunc_page(bpa);
+	endpa = i386_round_page(bpa + size);
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return (1);
+	*mhp = (caddr_t)(va + (bpa & PGOFSET));
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+                pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
+                    TRUE);
+                if (!cacheable)
+                        pmap_changebit(pa, PG_N, ~0);
+                else
+                        pmap_changebit(pa, 0, ~PG_N);
+        }
+ 
+        return 0;
+}
+
+void
+bus_mem_unmap(t, memh, size)
+	bus_chipset_tag_t t;
+	bus_mem_handle_t memh;
+	bus_mem_size_t size;
+{
+	vm_offset_t va, endva;
+
+	va = i386_trunc_page(memh);
+	endva = i386_round_page(memh);
+	kmem_free(kmem_map, va, endva - va);
 }
