@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.15 2002/06/24 05:48:37 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.16 2002/07/01 06:17:12 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.36 2002/06/16 21:30:58 itojun Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.38 2002/06/27 19:49:08 stevesk Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -110,7 +110,8 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 
 	if (!(lb = malloc(sizeof(*lb)))) {
 		if (errfun)
-			(*errfun) ("linebuf (%s): malloc failed\n", lb->filename);
+			(*errfun) ("linebuf (%s): malloc failed\n",
+			    filename ? filename : "(stdin)");
 		return (NULL);
 	}
 	if (filename) {
@@ -696,9 +697,11 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'T':
-			timeout = atoi(optarg);
-			if (timeout <= 0)
+			timeout = convtime(optarg);
+			if (timeout == -1 || timeout == 0) {
+				fprintf(stderr, "Bad timeout '%s'\n", optarg);
 				usage();
+			}
 			break;
 		case 'v':
 			if (!debug_flag) {
