@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201var.h,v 1.2 1998/01/05 07:03:12 perry Exp $	*/
+/*	$NetBSD: lk201var.h,v 1.3 1999/01/28 10:20:11 jonathan Exp $	*/
 
 #ifndef _LK201VAR_H_
 #define _LK201VAR_H_
@@ -13,5 +13,6 @@ extern void mouseInput __P((int cc));
 
 extern int LKgetc __P((dev_t dev));
 extern void lk_divert __P((int (*getfn) __P ((dev_t dev)), dev_t in_dev));
+extern void lk_bell __P ((int ring));
 #endif
 #endif	/* _LK201VAR_H_ */
