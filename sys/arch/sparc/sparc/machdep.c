@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.205 2002/11/28 15:29:54 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.206 2002/12/06 16:04:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1973,7 +1973,7 @@ sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
 		intr_fasttrap(pil, (void (*)__P((void)))handler);
 	else
-		intr_establish(pil, ih);
+		intr_establish(pil, level, ih);
 	return (ih);
 }
 
