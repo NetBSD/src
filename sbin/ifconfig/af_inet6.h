@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2005/03/20 01:09:16 thorpej Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.1 2005/03/20 01:09:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,41 +29,23 @@
  * SUCH DAMAGE.
  */
 
-#define	RIDADDR 0  
-#define	ADDR    1
-#define	MASK    2
-#define	DSTADDR 3
+/* XXX */
+#include <netinet/in.h>
 
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-};
+/* XXX */
+extern struct in6_ifreq    ifr6;
+extern struct in6_ifreq    in6_ridreq;
+extern struct in6_aliasreq in6_addreq;
 
-extern const struct afswtch *afp;
-extern struct ifreq ifr;
-extern int s;
-extern int explicit_prefix;
-extern char name[30];
+void	setia6flags(const char *, int);
+void	setia6pltime(const char *, int);
+void	setia6vltime(const char *, int);
+void	setia6lifetime(const char *, const char *);
+void	setia6eui64(const char *, int);
 
-extern u_short flags;
-extern int zflag;
-#ifdef INET6
-extern int Lflag;
-#endif /* INET6 */
-
-extern struct ifreq ifr, ridreq;
-extern struct ifaliasreq addreq;
-
-const struct afswtch *lookup_af_byname(const char *);
-const struct afswtch *lookup_af_bynum(int);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
-void	print_string(const u_int8_t *, int);
-void    getsock(int);
+void	in6_fillscopeid(struct sockaddr_in6 *sin6);     
+void	in6_alias(struct in6_ifreq *);  
+void	in6_status(int);
+void	in6_getaddr(const char *, int); 
+void	in6_getprefix(const char *, int);
+void	in6_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.4 2005/03/19 23:16:55 thorpej Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.5 2005/03/20 01:09:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.4 2005/03/19 23:16:55 thorpej Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.5 2005/03/20 01:09:16 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: tunnel.c,v 1.4 2005/03/19 23:16:55 thorpej Exp $");
 #include "tunnel.h"
 
 #ifdef INET6
-extern void in6_fillscopeid(struct sockaddr_in6 *sin6);	/* XXX */
+#include "af_inet6.h"
 #endif
 
 void
