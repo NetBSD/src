@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.102 2000/01/31 14:18:56 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.103 2000/02/12 17:19:34 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -224,6 +224,17 @@ do { \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
+} while (0)
+
+/*
+ * Convert TCP protocol fields to host order for easier processing.
+ */
+#define	TCP_FIELDS_TO_HOST(th)						\
+do {									\
+	NTOHL((th)->th_seq);						\
+	NTOHL((th)->th_ack);						\
+	NTOHS((th)->th_win);						\
+	NTOHS((th)->th_urp);						\
 } while (0)
 
 int
@@ -585,6 +596,26 @@ tcp_input(m, va_alist)
 	opti.maxseg = 0;
 
 	/*
+	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN.
+	 *
+	 * TCP is, by definition, unicast, so we reject all
+	 * multicast outright.
+	 *
+	 * Note, there are additional src/dst address checks in
+	 * the AF-specific code below.
+	 */
+	if (m->m_flags & (M_BCAST|M_MCAST)) {
+		/* XXX stat */
+		goto drop;
+	}
+#ifdef INET6
+	if (m->m_flags & M_ANYCAST6) {
+		/* XXX stat */
+		goto drop;
+	}
+#endif
+
+	/*
 	 * Get IP and TCP header together in first mbuf.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
@@ -621,27 +652,17 @@ tcp_input(m, va_alist)
 #endif
 
 		/*
-		 * Checksum extended TCP header and data.
+		 * Make sure destination address is not multicast.
+		 * Source address checked in ip_input().
 		 */
+		if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+			/* XXX stat */
+			goto drop;
+		}
+
+		/* We do the checksum after PCB lookup... */
 		len = ip->ip_len;
 		tlen = len - toff;
-#ifndef PULLDOWN_TEST
-	    {
-		struct ipovly *ipov;
-		ipov = (struct ipovly *)ip;
-		bzero(ipov->ih_x1, sizeof ipov->ih_x1);
-		ipov->ih_len = htons(tlen);
-	    }
-		if (in_cksum(m, len) != 0) {
-			tcpstat.tcps_rcvbadsum++;
-			goto drop;
-		}
-#else
-		if (in4_cksum(m, IPPROTO_TCP, toff, tlen) != 0) {
-			tcpstat.tcps_rcvbadsum++;
-			goto drop;
-		}
-#endif
 		break;
 #ifdef INET6
 	case 6:
@@ -676,14 +697,17 @@ tcp_input(m, va_alist)
 		}
 
 		/*
-		 * Checksum extended TCP header and data.
+		 * Make sure destination address is not multicast.
+		 * Source address checked in ip6_input().
 		 */
-		len = m->m_pkthdr.len;
-		tlen = len - toff;
-		if (in6_cksum(m, IPPROTO_TCP, toff, tlen)) {
-			tcpstat.tcps_rcvbadsum++;
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+			/* XXX stat */
 			goto drop;
 		}
+
+		/* We do the checksum after PCB lookup... */
+		len = m->m_pkthdr.len;
+		tlen = len - toff;
 		break;
 #endif
 	default:
@@ -762,14 +786,6 @@ tcp_input(m, va_alist)
 	tiflags = th->th_flags;
 
 	/*
-	 * Convert TCP protocol specific fields to host format.
-	 */
-	NTOHL(th->th_seq);
-	NTOHL(th->th_ack);
-	NTOHS(th->th_win);
-	NTOHS(th->th_urp);
-
-	/*
 	 * Locate pcb for segment.
 	 */
 findpcb:
@@ -839,6 +855,7 @@ findpcb:
 				    dst, ntohs(th->th_dport),
 				    src, ntohs(th->th_sport));
 			}
+			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset;
 		}
 #ifdef IPSEC
@@ -877,6 +894,7 @@ findpcb:
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
+			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset;
 		}
 #ifdef IPSEC
@@ -909,11 +927,49 @@ findpcb:
 	}
 #endif
 	if (tp == 0) {
+		TCP_FIELDS_TO_HOST(th);
 		goto dropwithreset;
 	}
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
-	
+
+	/*
+	 * Checksum extended TCP header and data.
+	 */
+	switch (af) {
+	case AF_INET:
+#ifndef PULLDOWN_TEST
+	    {
+		struct ipovly *ipov;
+		ipov = (struct ipovly *)ip;
+		bzero(ipov->ih_x1, sizeof ipov->ih_x1); 
+		ipov->ih_len = htons(tlen + off);
+
+		if (in_cksum(m, len) != 0) {
+			tcpstat.tcps_rcvbadsum++;
+			goto drop;
+		}
+	    }
+#else
+		if (in4_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0) {
+			tcpstat.tcps_rcvbadsum++; 
+			goto drop;
+		}
+#endif
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0) {
+			tcpstat.tcps_rcvbadsum++;
+			goto drop;
+		}
+		break;
+#endif
+	}
+
+	TCP_FIELDS_TO_HOST(th);
+
 	/* Unscale the window into a 32-bit value. */
 	if ((tiflags & TH_SYN) == 0)
 		tiwin = th->th_win << tp->snd_scale;
@@ -2063,16 +2119,8 @@ dropwithreset:
 	 * Make ACK acceptable to originator of segment.
 	 * Don't bother to respond if destination was broadcast/multicast.
 	 */
-	if ((tiflags & TH_RST) || m->m_flags & (M_BCAST|M_MCAST))
+	if (tiflags & TH_RST)
 		goto drop;
-	if (ip && IN_MULTICAST(ip->ip_dst.s_addr))
-		goto drop;
-#ifdef INET6
-	if (m->m_flags & M_ANYCAST6)
-		goto drop;
-	else if (ip6 && IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-		goto drop;
-#endif
     {
 	/*
 	 * need to recover version # field, which was overwritten on
@@ -3144,32 +3192,9 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 
 	/*
 	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-	 * in_broadcast() should never return true on a received
-	 * packet with M_BCAST not set.
+	 *
+	 * Note this check is performed in tcp_input() very early on.
 	 */
-	if (m->m_flags & (M_BCAST|M_MCAST))
-		return 0;
-#ifdef INET6
-	if (m->m_flags & M_ANYCAST6)
-		return 0;
-#endif
-
-	switch (src->sa_family) {
-	case AF_INET:
-		if (IN_MULTICAST(((struct sockaddr_in *)src)->sin_addr.s_addr)
-		 || IN_MULTICAST(((struct sockaddr_in *)dst)->sin_addr.s_addr))
-			return 0;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)src)->sin6_addr)
-		 || IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)dst)->sin6_addr))
-			return 0;
-		break;
-#endif
-	default:
-		return 0;
-	}
 
 	/*
 	 * Initialize some local state.
