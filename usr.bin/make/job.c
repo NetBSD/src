@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -253,7 +253,7 @@ static void watchfd __P((Job *));
 static void clearfd __P((Job *));
 static int readyfd __P((Job *));
 #define JBSTART 256
-#define JBINCR 256
+#define JBFACTOR 2
 #endif
 #endif
 
@@ -3245,6 +3245,7 @@ static void
 watchfd(job)
     Job *job;
 {
+    int i;
     if (job->inPollfd != NULL)
 	Punt("Watching watched job");
     if (fds == NULL) {
@@ -3252,31 +3253,18 @@ watchfd(job)
 	fds = emalloc(sizeof(struct pollfd) * maxfds);
 	jobfds = emalloc(sizeof(Job **) * maxfds);
     } else if (nfds == maxfds) {
-	struct pollfd *newfds;
-	maxfds += JBINCR;
-	newfds = erealloc(fds, sizeof(struct pollfd) * maxfds);
+	maxfds *= JBFACTOR;
+	fds = erealloc(fds, sizeof(struct pollfd) * maxfds);
 	jobfds = erealloc(jobfds, sizeof(Job **) * maxfds);
-	if (newfds != fds) {
-	    /* Re-thread for the new allocated pointer */
-	    LstNode ln;
-	    if (Lst_Open(jobs) == FAILURE) {
-		Punt("Cannot open job table");
-	    }
-	    while ((ln = Lst_Next(jobs)) != NILLNODE) {
-		Job *jb = (Job *) Lst_Datum(ln);
-		int i = jb->inPollfd - fds;
-		jb->inPollfd = &newfds[i];
-		jobfds[i] = jb;
-	    }
-	    Lst_Close(jobs);
-	}
-	fds = newfds;
+	for (i = 0; i < nfds; i++)
+	    jobfds[i]->inPollfd = &fds[i];
     }
 
     fds[nfds].fd = job->inPipe;
-    job->inPollfd = &fds[nfds];
+    fds[nfds].events = POLLIN;
     jobfds[nfds] = job;
-    fds[nfds++].events = POLLIN;
+    job->inPollfd = &fds[nfds];
+    nfds++;
 }
 
 static void
