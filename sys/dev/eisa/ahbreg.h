@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.9 1998/08/17 00:26:33 mycroft Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.10 2000/07/12 21:15:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
  * functioning of this software in any circumstances.
  */
 
-typedef u_long physaddr;
-typedef u_long physlen;
+typedef u_int32_t physaddr;
+typedef u_int32_t physlen;
 
 /*
  * Offset of AHA1740 registers, relative from slot base.
@@ -167,8 +167,8 @@ struct ahb_ecb_status {
 #define	HS_SCSI_RESET_ADAPTER	0x22
 #define	HS_SCSI_RESET_INCOMING	0x23
 	u_char  target_stat;
-	u_long  resid_count;
-	u_long  resid_addr;
+	u_int32_t  resid_count;
+	u_int32_t  resid_addr;
 	u_short addit_status;
 	u_char  sense_len;
 	u_char  unused[9];
@@ -218,7 +218,7 @@ struct ahb_ecb {
 	/*-----------------end of hardware supported fields----------------*/
 	TAILQ_ENTRY(ahb_ecb) chain;
 	struct ahb_ecb *nexthash;
-	long hashkey;
+	int32_t hashkey;
 	struct scsipi_xfer *xs;	/* the scsipi_xfer for this cmd */
 	int flags;
 #define	ECB_ALLOC	0x01
