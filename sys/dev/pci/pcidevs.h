@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.364 2001/09/28 22:06:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.365 2001/10/01 00:28:02 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.360 2001/10/01 00:27:33 thorpej Exp 
  */
 
 /*
@@ -1570,6 +1570,7 @@
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
 
 /* RICOH products */
