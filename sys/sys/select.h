@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.19 2005/02/25 19:56:07 matt Exp $	*/
+/*	$NetBSD: select.h,v 1.20 2005/03/05 19:48:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,11 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
+
+#ifdef _NETBSD_SOURCE
 #include <sys/event.h>		/* for struct klist */
 
 /*
@@ -46,6 +50,7 @@ struct selinfo {
 	pid_t		sel_pid;	/* process to be notified */
 	uint8_t		sel_collision;	/* non-zero if a collision occurred */
 };
+#endif /* !_NETBSD_SOURCE_ */
 
 #ifdef _KERNEL
 #include <sys/signal.h>			/* for sigset_t */
@@ -67,6 +72,17 @@ selnotify(struct selinfo *sip, long knhint)
 		selwakeup(sip);
 	KNOTE(&sip->sel_klist, knhint);
 }
-#endif
+
+#else /* _KERNEL */
+
+#include <signal.h>
+#include <time.h>
+
+int	pselect(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, const struct timespec * __restrict,
+	    const sigset_t * __restrict);
+int	select(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, struct timeval * __restrict);
+#endif /* _KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */
