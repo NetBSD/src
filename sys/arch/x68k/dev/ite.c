@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.12 1998/08/05 15:57:43 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.13 1998/08/06 14:08:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,14 +62,14 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <machine/kbio.h>
+#include <machine/iteioctl.h>
+#include <machine/grfioctl.h>
 
-#include <x68k/dev/grfioctl.h>
 #include <x68k/dev/grfvar.h>
 #include <x68k/dev/itevar.h>
 #include <x68k/dev/kbdmap.h>
 
 #include <x68k/x68k/iodevice.h>
-#include <x68k/dev/iteioctl.h>
 
 #define SUBR_CNPROBE(min)	itesw[min].ite_cnprobe(min)
 #define SUBR_INIT(ip)		ip->isw->ite_init(ip)

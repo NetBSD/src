@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.9 1998/06/30 11:59:10 msaitoh Exp $	*/
+/*	$NetBSD: grf.c,v 1.10 1998/08/06 14:08:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,8 @@
 #include <sys/poll.h>
 #include <sys/conf.h>
 
-#include <x68k/dev/grfioctl.h>
+#include <machine/grfioctl.h>
+
 #include <x68k/dev/grfvar.h>
 #include <x68k/dev/itevar.h>
 

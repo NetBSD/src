@@ -3,14 +3,14 @@
  * from: amiga/stand/loadkmap/loadkmap.c
  * Copyright 1993 by Masaru Oki
  *
- *	$NetBSD: loadfont.c,v 1.2 1997/10/13 14:23:08 lukem Exp $
+ *	$NetBSD: loadfont.c,v 1.3 1998/08/06 14:08:55 minoura Exp $
  */
 
 #include <stdio.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #define ITEKANJI 1 /* XXX */
-#include "../../dev/iteioctl.h" /* XXX */
+#include <machine/iteioctl.h>
 
 void load_font __P((const char *file));
 

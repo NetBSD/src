@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.2 1998/01/05 20:52:30 perry Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.3 1998/08/06 14:08:55 minoura Exp $	*/
 /*
  * loadkmap - load keyboard map (for NetBSD/X680x0)
  * from: amiga/stand/loadkmap/loadkmap.c
@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #define ITEKANJI 1 /* XXX */
-#include "../../dev/iteioctl.h"
+#include <machine/iteioctl.h>
 #include "kbdmap.h"
 
 void load_kmap __P((const char *file));
