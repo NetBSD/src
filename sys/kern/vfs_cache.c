@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.40 2003/02/20 02:49:51 jmc Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.41 2003/03/02 13:26:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.40 2003/02/20 02:49:51 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.41 2003/03/02 13:26:22 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -481,9 +481,9 @@ nchreinit(void)
 			ncp->nc_vhash.le_prev = NULL;
 		}
 	}
+	simple_unlock(&namecache_slock);
 	hashdone(oldhash1, M_CACHE);
 	hashdone(oldhash2, M_CACHE);
-	simple_unlock(&namecache_slock);
 }
 
 /*
