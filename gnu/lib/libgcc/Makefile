@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2001/12/12 08:58:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2001/12/12 09:30:55 lukem Exp $
 
 REQUIRETOOLS=	yes
 
@@ -38,13 +38,13 @@ CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
-${G_LIB2FUNCS_EH:=.o}:
+${G_LIB2FUNCS_EH:=.o}: libgcc2.c
 	${COMPILE.c} -fexceptions -o $@ ${>:M*.c}
 
-${G_LIB2FUNCS_EH:=.po}:
+${G_LIB2FUNCS_EH:=.po}: libgcc2.c
 	${COMPILE.c} -pg -fexceptions -o $@ ${>:M*.c}
 
-${G_LIB2FUNCS_EH:=.so}:
+${G_LIB2FUNCS_EH:=.so}: libgcc2.c
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -o $@ ${>:M*.c}
 
 ${CXX_LIB2FUNCS}: ${.CURDIR}/Makefile
