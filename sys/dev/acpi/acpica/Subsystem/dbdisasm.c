@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisasm - parser op tree display routines
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.4 2002/06/15 01:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.5 2002/06/15 17:59:50 thorpej Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -151,7 +151,7 @@ NATIVE_CHAR                 *AcpiGbl_DbDisasmIndent = "....";
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiDbBlockType (
     ACPI_PARSE_OBJECT       *Op)
 {
@@ -236,7 +236,7 @@ AcpiPsDisplayObjectPathname (
 
 #else
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiPsDisplayObjectPathname (
     ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op)
