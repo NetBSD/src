@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.7 2002/03/27 10:14:17 darrenr Exp $ */
+/*	$NetBSD: tcx.c,v 1.8 2002/08/23 02:53:11 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.7 2002/03/27 10:14:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.8 2002/08/23 02:53:11 thorpej Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -87,7 +87,7 @@ struct tcx_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	struct sbus_reg	sc_physadr[TCX_NREG];	/* phys addr of h/w */
+	struct openprom_addr sc_physadr[TCX_NREG];/* phys addr of h/w */
 
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;/* THC registers */
@@ -261,16 +261,16 @@ tcxattach(parent, self, args)
 		return;
 	}
 	bcopy(sa->sa_reg, sc->sc_physadr,
-	      sa->sa_nreg * sizeof(struct sbus_reg));
+	      sa->sa_nreg * sizeof(struct openprom_addr));
 
 	/* XXX - fix THC and TEC offsets */
-	sc->sc_physadr[TCX_REG_TEC].sbr_offset += 0x1000;
-	sc->sc_physadr[TCX_REG_THC].sbr_offset += 0x1000;
+	sc->sc_physadr[TCX_REG_TEC].oa_base += 0x1000;
+	sc->sc_physadr[TCX_REG_THC].oa_base += 0x1000;
 
 	/* Map the register banks we care about */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sc->sc_physadr[TCX_REG_THC].sbr_slot,
-			 sc->sc_physadr[TCX_REG_THC].sbr_offset,
+			 sc->sc_physadr[TCX_REG_THC].oa_space,
+			 sc->sc_physadr[TCX_REG_THC].oa_base,
 			 sizeof (struct tcx_thc),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("tcxattach: cannot map thc registers\n");
@@ -280,8 +280,8 @@ tcxattach(parent, self, args)
 		bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
-			 sc->sc_physadr[TCX_REG_CMAP].sbr_offset,
+			 sc->sc_physadr[TCX_REG_CMAP].oa_space,
+			 sc->sc_physadr[TCX_REG_CMAP].oa_base,
 			 sizeof (struct bt_regs),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("tcxattach: cannot map bt registers\n");
@@ -293,8 +293,8 @@ tcxattach(parent, self, args)
 #ifdef TCX_CG8
 	if (!sc->sc_8bit) {
 		if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sc->sc_physadr[TCX_REG_RDFB32].sbr_slot,
-			 (bus_addr_t)sc->sc_physadr[TCX_REG_RDFB32].sbr_offset,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_RDFB32].oa_space,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_RDFB32].oa_base,
 			 TCX_SIZE_DFB32,
 			 BUS_SPACE_MAP_LINEAR,
 			 0, &bh) != 0) {
@@ -603,7 +603,7 @@ tcxmmap(dev, off, prot)
 	int prot;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
-	struct sbus_reg *rr = sc->sc_physadr;
+	struct openprom_addr *rr = sc->sc_physadr;
 	struct mmo *mo, *mo_end;
 	u_int u, sz;
 	static struct mmo mmo[] = {
@@ -687,8 +687,8 @@ tcxmmap(dev, off, prot)
 		}
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
-				BUS_ADDR(rr[mo->mo_bank].sbr_slot,
-					 rr[mo->mo_bank].sbr_offset),
+				BUS_ADDR(rr[mo->mo_bank].oa_space,
+					 rr[mo->mo_bank].oa_base),
 				u,
 				prot,
 				BUS_SPACE_MAP_LINEAR));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.17 2002/03/20 19:32:42 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.18 2002/08/23 02:53:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #include "opt_sparc_arch.h"
 #endif
 
+#include <machine/bsd_openprom.h>
+
 struct sbus_softc;
 
 /*
@@ -57,28 +59,6 @@ struct sbusdev {
 typedef u_int32_t sbus_slot_t;
 typedef u_int32_t sbus_offset_t;
 
-/* Device register space description */
-struct sbus_reg {
-	u_int32_t	sbr_slot;
-	u_int32_t	sbr_offset;
-	u_int32_t	sbr_size;
-};
-
-/* Interrupt information */
-struct sbus_intr {
-	u_int32_t	sbi_pri;	/* priority (IPL) */
-	u_int32_t	sbi_vec;	/* vector (always 0?) */
-};
-
-/* Address translation accross busses */
-struct sbus_range {
-	u_int32_t	cspace;		/* Client space */
-	u_int32_t	coffset;	/* Client offset */
-	u_int32_t	pspace;		/* Parent space */
-	u_int32_t	poffset;	/* Parent offset */
-	u_int32_t	size;		/* Size in bytes of this range */
-};
-
 /*
  * Sbus driver attach arguments.
  */
@@ -88,15 +68,15 @@ struct sbus_attach_args {
 	bus_dma_tag_t	sa_dmatag;
 	char		*sa_name;	/* PROM node name */
 	int		sa_node;	/* PROM handle */
-	struct sbus_reg	*sa_reg;	/* Sbus register space for device */
+	struct openprom_addr *sa_reg;	/* Sbus register space for device */
 	int		sa_nreg;	/* Number of Sbus register spaces */
-#define sa_slot		sa_reg[0].sbr_slot
-#define sa_offset	sa_reg[0].sbr_offset
-#define sa_size		sa_reg[0].sbr_size
+#define sa_slot		sa_reg[0].oa_space
+#define sa_offset	sa_reg[0].oa_base
+#define sa_size		sa_reg[0].oa_size
 
-	struct sbus_intr *sa_intr;	/* Sbus interrupts for device */
+	struct openprom_intr *sa_intr;	/* Sbus interrupts for device */
 	int		sa_nintr;	/* Number of interrupts */
-#define sa_pri		sa_intr[0].sbi_pri
+#define sa_pri		sa_intr[0].oi_pri
 
 	u_int32_t	*sa_promvaddrs;/* PROM-supplied virtual addresses -- 32-bit */
 	int		sa_npromvaddrs;	/* Number of PROM VAs */
@@ -134,7 +114,7 @@ struct sbus_softc {
 	bus_dma_tag_t	sc_dmatag;
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
 	struct	sbusdev *sc_sbdev;	/* list of all children */
-	struct	sbus_range *sc_range;
+	struct	openprom_range *sc_range;
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */
 	/* machdep stuff follows here */
