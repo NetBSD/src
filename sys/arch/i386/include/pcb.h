@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26 1999/09/12 01:17:07 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.10.1 2000/02/20 17:43:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,10 @@
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+
 #include <sys/signal.h>
 
 #include <machine/segments.h>
@@ -124,7 +128,9 @@ struct md_coredump {
 };    
 
 #ifdef _KERNEL
+#ifndef MULTIPROCESSOR
 struct pcb *curpcb;		/* our current running pcb */
+#endif
 #endif
 
 #endif /* _I386_PCB_H_ */
