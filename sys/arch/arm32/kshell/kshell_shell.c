@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_shell.c,v 1.1 1996/01/31 23:24:04 mark Exp $ */
+/* $NetBSD: kshell_shell.c,v 1.2 1996/02/22 23:31:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 09/10/94
  * Last updated : 28/08/94
  *
- *    $Id: kshell_shell.c,v 1.1 1996/01/31 23:24:04 mark Exp $
+ *    $Id: kshell_shell.c,v 1.2 1996/02/22 23:31:51 mark Exp $
  */
 
 /* Include standard header files */
@@ -75,7 +75,6 @@ caddr_t shell_ident = 0;
 /* Local function prototypes */
 
 char	*strchr __P((const char *, int));
-int	strcmp __P((char *, char *));
 
 void dumpb __P((u_char */*addr*/, int /*count*/));
 void dumpw __P((u_char */*addr*/, int /*count*/));
