@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.4 1995/05/03 19:20:11 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.5 1995/06/16 15:36:37 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,9 +43,12 @@
 #include "sys/file.h"
 #include "sys/conf.h"
 #include "sys/device.h"
+#include "sys/reboot.h"
+
 #include "dev/cons.h"
-#include "vax/include/mtpr.h"
-#include "vax/vax/gencons.h"
+
+#include "machine/mtpr.h"
+#include "machine/../vax/gencons.h"
 
 struct	tty *gencntty[1];
 
@@ -176,10 +179,24 @@ gencnstart(tp)
 out:	splx(s);
 }
 
-gencnrint(){
+gencnrint()
+{
 	struct tty *tp=gencntty[0];
+	int i, j;
 
-	(*linesw[tp->t_line].l_rint)(mfpr(PR_RXDB),tp);
+	i = mfpr(PR_RXDB);
+#ifdef DDB
+	if (boothowto & RB_KDB) {
+		j = kdbrint(i);
+
+		if (j == 1)
+			return;
+
+		if (j == 2)
+			(*linesw[tp->t_line].l_rint)(27, tp);
+	}			
+#endif
+	(*linesw[tp->t_line].l_rint)(i,tp);
 	return;
 }
 
@@ -253,7 +270,7 @@ gencngetc(dev)
 	dev_t	dev;
 {
 	while((mfpr(PR_RXCS)&GC_DON)==0); /* Receive chr */
-	return mfpr(PR_RXDB);
+	return mfpr(PR_RXDB) & 0x7f;
 }
 
 conout(str)

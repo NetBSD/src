@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.7 1995/06/05 16:26:49 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.8 1995/06/16 15:36:42 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,10 @@
 
 #include "sys/param.h"
 #include "sys/types.h"
+#include "sys/reboot.h"
+
+#include "vm/vm.h"
+
 #include "machine/cpu.h"
 #include "machine/sid.h"
 #include "machine/uvaxII.h"
@@ -42,12 +46,12 @@
 #include "machine/param.h"
 #include "machine/vmparam.h"
 #include "machine/pcb.h"
-#include "vm/vm.h"
 
 #define ROUND_PAGE(x)   (((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
 
 u_int	proc0paddr;
 volatile int	cpunumber, *Sysmap, boothowto, cpu_type;
+volatile char *esym;
 extern volatile int bootdev;
 
 /*
@@ -67,6 +71,7 @@ start(how, dev)
 	mtpr(0x1f,PR_IPL); /* No interrupts before istack is ok, please */
 #ifdef COMPAT_RENO
 	asm("
+	movl	r9,_esym
 	movl	r10,_bootdev
 	movl	r11,_boothowto
 	jsb	ett
@@ -90,13 +95,19 @@ to_kmem:
  */
 
 	PAGE_SIZE = NBPG*2; /* Set logical page size */
-	proc0paddr=ROUND_PAGE(&end);
+#ifdef DDB
+	if ((boothowto & RB_KDB) != 0)
+		proc0paddr = ROUND_PAGE(esym) | 0x80000000;
+	else
+#endif
+		proc0paddr = ROUND_PAGE(&end);
+
 	mtpr(proc0paddr, PR_PCBB); /* must be set before ksp for some cpus */
 	mtpr(proc0paddr+UPAGES*NBPG,PR_KSP); /* new kernel stack */
 
-/*
- * Set logical page size and put Sysmap on its place.
- */
+	/*
+	 * Set logical page size and put Sysmap on its place.
+	 */
 	Sysmap=(u_int *)ROUND_PAGE(mfpr(PR_KSP));
 
 	/* Be sure some important internal registers have safe values */
