@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.40 2003/10/29 10:12:43 mycroft Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.41 2004/01/16 05:12:08 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.40 2003/10/29 10:12:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.41 2004/01/16 05:12:08 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -250,10 +250,19 @@ ip6_forward(m, srcrt)
 	 *      ipsec esp/tunnel/xxx-xxx/require esp/transport//require;
 	 */
 	for (isr = sp->req; isr; isr = isr->next) {
-		if (isr->saidx.mode == IPSEC_MODE_TRANSPORT)
-			goto skip_ipsec;
+		if (isr->saidx.mode == IPSEC_MODE_ANY)
+			goto doipsectunnel;
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL)
+			goto doipsectunnel;
 	}
+
+	/*
+	 * if there's no need for tunnel mode IPsec, skip.
+	 */
+	if (!isr)
+		goto skip_ipsec;
 	
+    doipsectunnel:
 	/*
 	 * All the extension headers will become inaccessible
 	 * (since they can be encrypted).
@@ -300,8 +309,17 @@ ip6_forward(m, srcrt)
 		return;
 	}
 
+	if (ip6 != mtod(m, struct ip6_hdr *)) {
+		/*
+		 * now tunnel mode headers are added.  we are originating
+		 * packet instead of forwarding the packet.  
+		 */
+		ip6_output(m, NULL, NULL, IPV6_FORWARDING/*XXX*/, NULL, NULL,
+		    NULL);
+		return;
+	}
+
 	/* adjust pointer */
-	ip6 = mtod(m, struct ip6_hdr *);
 	rt = state.ro ? state.ro->ro_rt : NULL;
 	dst = (struct sockaddr_in6 *)state.dst;
 	if (dst != NULL && rt != NULL) {
