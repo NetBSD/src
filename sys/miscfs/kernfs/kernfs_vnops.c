@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.88.2.5 2004/09/21 13:36:31 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88.2.6 2004/10/27 06:48:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -706,7 +706,7 @@ kernfs_open(v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 #ifdef IPSEC
@@ -747,7 +747,7 @@ kernfs_close(v)
 		struct vnode *a_vp;
 		int a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
@@ -774,7 +774,7 @@ kernfs_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
@@ -794,7 +794,7 @@ kernfs_default_fileop_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 
@@ -812,7 +812,7 @@ kernfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct kernfs_subdir *ks;
@@ -1003,7 +1003,7 @@ kernfs_ioctl(v)
 		void *a_data;
 		int a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
@@ -1020,7 +1020,7 @@ kernfs_mmap(v)
 		struct vnode *a_vp;
 		int a_fflags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
@@ -1405,7 +1405,7 @@ kernfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	const struct kernfs_node *kfs = VTOKERN(ap->a_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4.2.5 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.5 2004/09/21 13:34:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ filecore_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
@@ -137,7 +137,7 @@ filecore_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);

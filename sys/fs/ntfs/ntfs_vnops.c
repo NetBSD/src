@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.6 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.7 2004/10/27 06:48:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.6 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.7 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ ntfs_getattr(ap)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -444,7 +444,7 @@ ntfs_access(ap)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -523,7 +523,7 @@ ntfs_open(ap)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 #if NTFS_DEBUG
@@ -552,7 +552,7 @@ ntfs_close(ap)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 #if NTFS_DEBUG
@@ -837,7 +837,7 @@ ntfs_fsync(ap)
 		int a_waitfor;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap;
 {
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.28.2.4 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.28.2.5 2004/10/27 06:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.4 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.28.2.5 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ smbfs_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 #ifdef SMB_VNODE_DEBUG
@@ -341,7 +341,7 @@ smbfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct lwp *l;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
