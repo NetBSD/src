@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.16 2000/01/25 08:31:57 augustss Exp $
+# $NetBSD: ENIWETOK,v 1.17 2000/02/25 20:52:11 mycroft Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -248,7 +248,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #isa*	at	pceb?
 #eisa*	at	pceb?
 isa*	at	sio?
-isapnp*	at	isa?
+#isapnp*	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -263,7 +263,7 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
-ep*	at	isapnp?
+#ep*	at	isapnp?
 #ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
 #iy0	at	isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
@@ -278,9 +278,9 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #vga*	at	isa?				# ISA (EISA: XXX) VGA
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
-wdc*	at	isapnp?
+#wdc*	at	isapnp?
 wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
-wss*	at	isapnp?
+#wss*	at	isapnp?
 audio*	at	wss?
 #midi*	at	wss?
 #sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
@@ -293,7 +293,7 @@ audio*	at	wss?
 #bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 #uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 #uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
-pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #pcic*	at	isapnp?
 
 # EISA devices
@@ -314,7 +314,7 @@ com*	at	pcmcia? function ?		# Modems and serial cards
 #wdc*	at	pcmcia? function ?		# PCMCIA IDE controllers
 ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
 #mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
-#ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
+ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 #sm*	at	pcmcia? function ?		# Megahertz Ethernet
 #sb*	at	pcmcia? function ?		# SoundBlaster clones
 
@@ -340,11 +340,11 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
 wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+#wd*	at	wdc? drive ?
 
 # ATAPI bus support
 atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+#atapibus* at	wdc?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
