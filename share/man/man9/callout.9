@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.10 2003/07/20 16:25:57 he Exp $
+.\"	$NetBSD: callout.9,v 1.11 2003/08/07 09:53:33 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 3, 2003
+.Dd July 20, 2003
 .Dt CALLOUT 9
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@
 .Fn "callout_ack" "struct callout *c"
 .Fd CALLOUT_INITIALIZER
 .Pp
-.Fd CALLOUT_INITIALIZER_SETFUNC(func, arg)
+.Fn CALLOUT_INITIALIZER_SETFUNC "func" "arg"
 .Sh DESCRIPTION
 The
 .Nm callout
@@ -227,7 +227,6 @@ state in the callout handle
 This is used in situations where it is necessary to protect against
 the race condition described under
 .Fn callout_invoking .
-The
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY
