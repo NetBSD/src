@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.2 1998/07/04 05:36:06 dbj Exp $	*/
+/*	$NetBSD: seglist.h,v 1.3 1998/08/04 19:08:23 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -67,6 +67,8 @@ struct phys_seg_list_t {
 #define	NeXT_WARP9	1
 #define	NeXT_X15	2
 #define	NeXT_WARP9C	3
+
+#define NeXT_TURBO_COLOR 5			/* probed witnessed */
 
 /* Instantiated in pmap.c */
 /* size +1 is for list termination */
