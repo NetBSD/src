@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.5 2004/01/12 03:26:08 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.6 2004/01/12 11:30:24 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.5 2004/01/12 03:26:08 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.6 2004/01/12 11:30:24 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -247,7 +247,7 @@ ip2x_mappable_intr(void *arg)
 	mstat &= mmask;
 
 	for (i = 0; i < 8; i++) {
-		intnum = i + 16 + (which * 8);
+		intnum = i + 16 + (which << 3);
 		if (mstat & (1 << i)) {
 			if (intrtab[intnum].ih_fun != NULL)
 				ret |= (intrtab[intnum].ih_fun)
