@@ -42,6 +42,7 @@
 #	doesn't search gcc-include
 #
 PATH=/usr/bin:/bin
+CC=${CC-gcc}
 CPP=/usr/libexec/cpp
 ALST="-traditional -D__GNUC__ -$ "
 NSI=no
@@ -59,6 +60,9 @@ do
 		NSI=yes
 		;;
 	-traditional)
+		;;
+	-B*)
+		CPP=`${CC} $A -print-prog-name=cpp`
 		;;
 	-ansi)
 		ALST=`echo $ALST | sed -e 's/-traditional//'`
