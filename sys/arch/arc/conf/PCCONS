@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.26 2003/06/14 08:09:48 tsutsui Exp $
+#	$NetBSD: PCCONS,v 1.27 2003/06/15 06:08:12 tsutsui Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -242,7 +242,6 @@ lpt0		at isa? port 0x378 irq 7
 #ne*		at isapnp?			# NE[12]000 PnP ethernet
 #we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1		at isa? port 0x300 iomem 0xcc000 irq 10
-#we*		at isapnp?
 
 # XXX - should be configured
 #btl0		at isa? port 0x330 irq ? drq ?
