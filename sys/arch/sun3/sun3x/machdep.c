@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 1997/09/19 13:55:42 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 1997/10/02 01:15:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,8 +255,8 @@ cpu_startup()
 	 * Also, offset some to avoid PROM scribbles.
 	 */
 	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + 0x1000);
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
+	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
