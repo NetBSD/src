@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.51 2003/11/13 06:46:02 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.52 2003/12/19 09:09:27 pk Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 13, 2003
+.Dd December 19, 2003
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -511,6 +511,10 @@ on the memory described in
 .Pp
 .Ft vaddr_t
 .br
+.Fn uvm_km_kmemalloc1 "struct vm_map *map" "struct uvm_object *obj" "vsize_t size" "vsize_t align" "voff_t preferred offset" "int flags" ;
+.Pp
+.Ft vaddr_t
+.br
 .Fn uvm_km_kmemalloc "struct vm_map *map" "struct uvm_object *obj" "vsize_t size" "int flags" ;
 .Pp
 .Ft vaddr_t
@@ -555,11 +559,15 @@ bytes of wired memory in the kernel map, zeroing the memory if the
 .Fa zeroit
 argument is non-zero.
 .Pp
-.Fn uvm_km_kmemalloc
+.Fn uvm_km_kmemalloc1
 allocates and returns
 .Fa size
 bytes of wired kernel memory into
 .Fa obj .
+The first address of the allocated memory range will be aligned according to the
+.Fa align
+argument
+.Pq specify 0 if no alignment is necessary .
 The flags can be any of:
 .Bd -literal
 #define UVM_KMF_NOWAIT  0x1                     /* matches M_NOWAIT */
@@ -570,19 +578,19 @@ The flags can be any of:
 .Pp
 .Dv UVM_KMF_NOWAIT
 causes
-.Fn uvm_km_kmemalloc
+.Fn uvm_km_kmemalloc1
 to return immediately if no memory is available.
 .Dv UVM_KMF_VALLOC
 causes no physical pages to be allocated, only virtual space.
 .Dv UVM_KMF_TRYLOCK
 causes
-.Fn uvm_km_kmemalloc
+.Fn uvm_km_kmemalloc1
 to use
 .Fn simple_lock_try
 when locking maps.
 .Dv UVM_KMF_CANFAIL
 indicates that
-.Fn uvm_km_kmemalloc
+.Fn uvm_km_kmemalloc1
 can return 0 even if
 .Dv UVM_KMF_NOWAIT
 is not specified.
@@ -591,8 +599,21 @@ is not specified.
 nor
 .Dv UVM_KMF_CANFAIL
 are specified,
-.Fn uvm_km_kmemalloc
+.Fn uvm_km_kmemalloc1
 will never fail, but rather sleep indefinitely until the allocation succeeds.)
+.Pp
+.Fn uvm_km_kmemalloc
+allocates kernel memory like
+.Fn uvm_km_kmemalloc1
+but uses the default values
+.Dv 0
+for the
+.Fa align ,
+and
+.Dv UVM_UNKNOWN_OFFSET
+for the
+.Fa prefer
+arguments.
 .Pp
 .Fn uvm_km_valloc
 and
