@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.1.1.2 2002/06/20 10:30:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getnetgrent.c,v 1.14 1999/10/07 20:44:03 vixie Exp";
+static const char rcsid[] = "Id: getnetgrent.c,v 1.15 2001/05/29 05:48:49 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -72,7 +72,7 @@ innetgr(const char *netgroup, const char *host,
 }
 
 int
-getnetgrent(char **host, char **user, char **domain) {
+getnetgrent(const char **host, const char **user, const char **domain) {
 	struct net_data *net_data = init();
 
 	return (getnetgrent_p(host, user, domain, net_data));
@@ -111,7 +111,7 @@ innetgr_p(const char *netgroup, const char *host,
 }
 
 int
-getnetgrent_p(char **host, char **user, char **domain,
+getnetgrent_p(const char **host, const char **user, const char **domain,
 	      struct net_data *net_data ) {
 	struct irs_ng *ng;
 

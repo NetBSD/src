@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_streams.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ev_streams.c,v 1.1.1.2 2002/06/20 10:30:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_streams.c,v 8.21 1999/10/07 20:44:04 vixie Exp";
+static const char rcsid[] = "Id: ev_streams.c,v 8.22 2001/05/29 05:49:29 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -127,6 +127,8 @@ int
 evTimeRW(evContext opaqueCtx, evStreamID id, evTimerID timer) /*ARGSUSED*/ {
 	evStream *str = id.opaque;
 
+	UNUSED(opaqueCtx);
+
 	str->timer = timer;
 	str->flags |= EV_STR_TIMEROK;
 	return (0);
@@ -135,6 +137,8 @@ evTimeRW(evContext opaqueCtx, evStreamID id, evTimerID timer) /*ARGSUSED*/ {
 int
 evUntimeRW(evContext opaqueCtx, evStreamID id) /*ARGSUSED*/ {
 	evStream *str = id.opaque;
+
+	UNUSED(opaqueCtx);
 
 	str->flags &= ~EV_STR_TIMEROK;
 	return (0);
@@ -220,7 +224,7 @@ copyvec(evStream *str, const struct iovec *iov, int iocnt) {
 static void
 consume(evStream *str, size_t bytes) {
 	while (bytes > 0) {
-		if (bytes < str->iovCur->iov_len) {
+		if (bytes < (size_t)str->iovCur->iov_len) {
 			str->iovCur->iov_len -= bytes;
 			str->iovCur->iov_base = (void *)
 				((u_char *)str->iovCur->iov_base + bytes);
@@ -259,6 +263,8 @@ writable(evContext opaqueCtx, void *uap, int fd, int evmask) {
 	evStream *str = uap;
 	int bytes;
 
+	UNUSED(evmask);
+
 	bytes = writev(fd, str->iovCur, str->iovCurCount);
 	if (bytes > 0) {
 		if ((str->flags & EV_STR_TIMEROK) != 0)
@@ -279,6 +285,8 @@ static void
 readable(evContext opaqueCtx, void *uap, int fd, int evmask) {
 	evStream *str = uap;
 	int bytes;
+
+	UNUSED(evmask);
 
 	bytes = readv(fd, str->iovCur, str->iovCurCount);
 	if (bytes > 0) {

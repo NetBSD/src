@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_date.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ns_date.c,v 1.1.1.2 2002/06/20 10:30:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_date.c,v 1.2 1999/10/13 16:39:35 vixie Exp";
+static const char rcsid[] = "Id: ns_date.c,v 1.3 2001/05/29 05:49:34 marka Exp";
 #endif
 
 /* Import. */
@@ -118,7 +118,7 @@ datepart(const char *buf, int size, int min, int max, int *errp) {
 	int i;
 
 	for (i = 0; i < size; i++) {
-		if (!isdigit(buf[i]))
+		if (!isdigit((unsigned char)(buf[i])))
 			*errp = 1;
 		result = (result * 10) + buf[i] - '0';
 	}

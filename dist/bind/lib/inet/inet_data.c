@@ -1,7 +1,7 @@
-/*	$NetBSD: bitncmp.c,v 1.1.1.2 2002/06/20 10:30:34 itojun Exp $	*/
+/*	$NetBSD: inet_data.c,v 1.1.1.1 2002/06/20 10:30:18 itojun Exp $	*/
 
 /*
- * Copyright (c) 1996,1999 by Internet Software Consortium.
+ * Copyright (c) 1995-1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,51 +18,29 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: bitncmp.c,v 1.7 2001/05/29 05:49:23 marka Exp";
-#endif
+static char rcsid[] = "Id: inet_data.c,v 1.2 2001/06/20 22:06:36 marka Exp";
+#endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
 
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+#include <ctype.h>
+#include <netdb.h>
+#include <resolv.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "port_after.h"
 
-#include <isc/misc.h>
-
-/*
- * int
- * bitncmp(l, r, n)
- *	compare bit masks l and r, for n bits.
- * return:
- *	-1, 1, or 0 in the libc tradition.
- * note:
- *	network byte order assumed.  this means 192.5.5.240/28 has
- *	0x11110000 in its fourth octet.
- * author:
- *	Paul Vixie (ISC), June 1996
- */
-int
-bitncmp(const void *l, const void *r, int n) {
-	u_int lb, rb;
-	int x, b;
-
-	b = n / 8;
-	x = memcmp(l, r, b);
-	if (x)
-		return (x);
-
-	lb = ((const u_char *)l)[b];
-	rb = ((const u_char *)r)[b];
-	for (b = n % 8; b > 0; b--) {
-		if ((lb & 0x80) != (rb & 0x80)) {
-			if (lb & 0x80)
-				return (1);
-			return (-1);
-		}
-		lb <<= 1;
-		rb <<= 1;
-	}
-	return (0);
-}
+const struct in6_addr isc_in6addr_any = IN6ADDR_ANY_INIT;
+const struct in6_addr isc_in6addr_loopback = IN6ADDR_LOOPBACK_INIT;

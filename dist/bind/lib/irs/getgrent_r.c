@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent_r.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: getgrent_r.c,v 1.1.1.2 2002/06/20 10:30:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getgrent_r.c,v 8.4 1999/01/18 07:46:51 vixie Exp";
+static const char rcsid[] = "Id: getgrent_r.c,v 8.7 2001/11/01 08:02:08 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -28,7 +28,17 @@ static const char rcsid[] = "Id: getgrent_r.c,v 8.4 1999/01/18 07:46:51 vixie Ex
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
+#if (defined(POSIX_GETGRNAM_R) || defined(POSIX_GETGRGID_R)) && \
+    defined(_POSIX_PTHREAD_SEMANTICS)
+	/* turn off solaris remapping in <grp.h> */
+#define _UNIX95
+#undef _POSIX_PTHREAD_SEMANTICS
 #include <grp.h>
+#define _POSIX_PTHREAD_SEMANTICS 1
+#else
+#include <grp.h>
+#endif
 #include <sys/param.h>
 #include <port_after.h>
 
@@ -52,7 +62,7 @@ getgrnam_r(const char *name,  struct group *gptr,
 
 	if (ge == NULL) {
 		*result = NULL;
-		return (-1);
+		return (0);
 	}
 
 	res = copy_group(ge, gptr, buf, buflen);
@@ -77,11 +87,11 @@ getgrnam_r(const char *name,  struct group *gptr,
 /* POSIX 1003.1c */
 #ifdef POSIX_GETGRGID_R
 int
-__posix_getgrgid_r(const gid_t gid, struct group *gptr,
+__posix_getgrgid_r(gid_t gid, struct group *gptr,
 		char *buf, int buflen, struct group **result) {
 #else /* POSIX_GETGRGID_R */
 int
-getgrgid_r(const gid_t gid, struct group *gptr,
+getgrgid_r(gid_t gid, struct group *gptr,
 		char *buf, size_t buflen, struct group **result) {
 #endif /* POSIX_GETGRGID_R */
 	struct group *ge = getgrgid(gid);
@@ -89,7 +99,7 @@ getgrgid_r(const gid_t gid, struct group *gptr,
 
 	if (ge == NULL) {
 		*result = NULL;
-		return (-1);
+		return (0);
 	}
 
 	res = copy_group(ge, gptr, buf, buflen);
@@ -99,7 +109,7 @@ getgrgid_r(const gid_t gid, struct group *gptr,
 
 #ifdef POSIX_GETGRGID_R
 struct group *
-getgrgid_r(const gid_t gid, struct group *gptr,
+getgrgid_r(gid_t gid, struct group *gptr,
 		char *buf, int buflen) {
 	struct group *ge = getgrgid(gid);
 	int res;
@@ -183,7 +193,7 @@ copy_group(struct group *ge, struct group *gptr, char *buf, int buflen) {
 	
 	if (len > buflen) {
 		errno = ERANGE;
-		return (-1);
+		return (ERANGE);
 	}
 
 	/* copy group id */

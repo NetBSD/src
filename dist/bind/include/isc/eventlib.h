@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: eventlib.h,v 1.1.1.2 2002/06/20 10:30:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -20,7 +20,7 @@
 /* eventlib.h - exported interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib.h,v 1.22 1999/08/18 22:09:04 vixie Exp
+ * Id: eventlib.h,v 1.23 2001/05/29 05:47:09 marka Exp
  */
 
 #ifndef _EVENTLIB_H
@@ -108,7 +108,7 @@ int  evHighestFD __P((evContext ctx));
 
 int evListen __P((evContext ctx, int fd, int maxconn,
 		  evConnFunc func, void *uap, evConnID *id));
-int evConnect __P((evContext ctx, int fd, void *ra, int ralen,
+int evConnect __P((evContext ctx, int fd, const void *ra, int ralen,
 		   evConnFunc func, void *uap, evConnID *id));
 int evCancelConn __P((evContext ctx, evConnID id));
 int evHold __P((evContext, evConnID));
