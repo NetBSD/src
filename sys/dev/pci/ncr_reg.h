@@ -1,6 +1,8 @@
-/*	$NetBSD: ncr_reg.h,v 1.4 1994/12/28 19:44:31 mycroft Exp $	*/
+/*	$NetBSD: ncr_reg.h,v 1.5 1995/10/01 20:51:37 mycroft Exp $	*/
 
 /**************************************************************************
+**
+**  $Id: ncr_reg.h,v 1.5 1995/10/01 20:51:37 mycroft Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -9,7 +11,7 @@
 **-------------------------------------------------------------------------
 **
 **  Written for 386bsd and FreeBSD by
-**	wolf@dentaro.gun.de	Wolfgang Stanglmeier
+**	wolf@cologne.de		Wolfgang Stanglmeier
 **	se@mi.Uni-Koeln.de	Stefan Esser
 **
 **  Ported to NetBSD by
@@ -41,15 +43,12 @@
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **
-**-------------------------------------------------------------------------
+***************************************************************************
 */
-
-#include <scsi/scsi_message.h>
 
 #ifndef __NCR_REG_H__
 #define __NCR_REG_H__
 
-
 /*-----------------------------------------------------------------
 **
 **	The ncr 53c810 register structure.
@@ -98,7 +97,7 @@ struct ncr_reg {
 /*0a*/  u_char    nc_ssid;
 
 /*0b*/  u_char    nc_sbcl;
-
+
 /*0c*/  u_char    nc_dstat;
         #define   DFE     0x80  /* sta: dma fifo empty              */
         #define   MDPE    0x40  /* int: master data parity error    */
@@ -125,6 +124,7 @@ struct ncr_reg {
         #define   ILF1    0x80  /* sta: data in SIDL register msb[W]*/
         #define   ORF1    0x40  /* sta: data in SODR register msb[W]*/
         #define   OLF1    0x20  /* sta: data in SODL register msb[W]*/
+        #define   LDSC    0x02  /* sta: disconnect & reconnect      */
 
 /*10*/  u_long    nc_dsa;	/* --> Base page                    */
 
@@ -135,8 +135,8 @@ struct ncr_reg {
         #define   SEM     0x10  /* r/w: message between host + ncr  */
         #define   CON     0x08  /* sta: connected to scsi           */
         #define   INTF    0x04  /* sta: int on the fly (reset by wr)*/
-        #define   SIP     0x02  /* sta: scsi-interupt               */
-        #define   DIP     0x01  /* sta: host/script interupt        */
+        #define   SIP     0x02  /* sta: scsi-interrupt              */
+        #define   DIP     0x01  /* sta: host/script interrupt       */
 
 /*15*/  u_char    nc_15_;
 /*16*/	u_char	  nc_16_;
@@ -152,7 +152,7 @@ struct ncr_reg {
 	#define   CLF	  0x04	/* clear scsi fifo		    */
 
 /*1c*/  u_long    nc_temp;	/* ### Temporary stack              */
-
+
 /*20*/	u_char	  nc_dfifo;
 /*21*/  u_char    nc_ctest4;
 /*22*/  u_char    nc_ctest5;
@@ -175,8 +175,8 @@ struct ncr_reg {
 
 /*3c*/  u_long    nc_adder;
 
-/*40*/  u_short   nc_sien;	/* -->: interupt enable             */
-/*42*/  u_short   nc_sist;	/* <--: interupt status             */
+/*40*/  u_short   nc_sien;	/* -->: interrupt enable            */
+/*42*/  u_short   nc_sist;	/* <--: interrupt status            */
         #define   STO     0x0400/* sta: timeout (select)            */
         #define   GEN     0x0200/* sta: timeout (general)           */
         #define   HTH     0x0100/* sta: timeout (handshake)         */
@@ -208,7 +208,7 @@ struct ncr_reg {
 /*4f*/  u_char    nc_stest3;
 	#define   TE     0x80	/* c: tolerAnt enable */
 	#define   CSF    0x02	/* c: clear scsi fifo */
-
+
 /*50*/  u_short   nc_sidl;	/* Lowlevel: latched from scsi data */
 /*52*/  u_short   nc_52_;
 /*54*/  u_short   nc_sodl;	/* Lowlevel: data out to scsi data  */
@@ -221,7 +221,7 @@ struct ncr_reg {
 /*5f*/  u_char    nc_scr3;	/*                                  */
 /*60*/
 };
-
+
 /*-----------------------------------------------------------
 **
 **	Utility macros for the script.
@@ -280,7 +280,7 @@ struct scr_tblmove {
         u_long  size;
         u_long  addr;
 };
-
+
 /*-----------------------------------------------------------
 **
 **	Selection
@@ -328,7 +328,7 @@ struct scr_tblsel {
 
 #define	SCR_WAIT_DISC	0x48000000
 #define SCR_WAIT_RESEL  0x50000000
-
+
 /*-----------------------------------------------------------
 **
 **	Bit Set / Reset
@@ -367,7 +367,7 @@ struct scr_tblsel {
 */
 
 #define SCR_COPY(n) (0xc0000000 | (n))
-
+
 /*-----------------------------------------------------------
 **
 **	Register move and binary operations
@@ -406,7 +406,7 @@ struct scr_tblsel {
 #define      SCR_SHR    0x05000000
 #define      SCR_ADD    0x06000000
 #define      SCR_ADDC   0x07000000
-
+
 /*-----------------------------------------------------------
 **
 **	FROM_REG (reg)		  reg  = SFBR
@@ -435,7 +435,7 @@ struct scr_tblsel {
 
 #define SCR_LOAD_SFBR(data) \
         (SCR_REG_SFBR (gpreg, SCR_LOAD, data))
-
+
 /*-----------------------------------------------------------
 **
 **	Waiting for Disconnect or Reselect
@@ -490,7 +490,7 @@ struct scr_tblsel {
 #define MASK(D,M)      (0x00040000 | (((M ^ 0xff) & 0xff) << 8ul)|((D) & 0xff))
 
 #define CARRYSET       (0x00200000)
-
+
 /*-----------------------------------------------------------
 **
 **	SCSI  constants.
