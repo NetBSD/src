@@ -1,47 +1,44 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/12/17 09:22:47 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/12/12 00:05:11 tv Exp $
 #
 # Makefile for install
 
+PROG=		sysinst
+NOMAN=		# defined
+
 .include <bsd.own.mk>		# for mk.conf
 
-PROG=sysinst
-
-LDADD=-lcurses -ltermcap -lutil
-LDSTATIC?=-static
+LDADD=		-lcurses -ltermcap -lutil
+LDSTATIC?=	-static
 
 .if exists(${.CURDIR}/../../../../sys/conf/osrelease.sh)
-VERDEP=${.CURDIR}/../../../../sys/conf/osrelease.sh
-VER != sh ${.CURDIR}/../../../../sys/conf/osrelease.sh
+VERDEP=		${.CURDIR}/../../../../sys/conf/osrelease.sh
+VER!=		sh ${VERDEP}
 .endif
 
 .if exists(${.CURDIR}/../../../../../sys/conf/osrelease.sh)
-VERDEP=${.CURDIR}/../../../../../sys/conf/osrelease.sh
-VER != sh ${.CURDIR}/../../../../../sys/conf/osrelease.sh
+VERDEP=		${.CURDIR}/../../../../../sys/conf/osrelease.sh
+VER!=		sh ${VERDEP}
 .endif
 
-CPPFLAGS+= -I. -I${.CURDIR}/../.. -I${.CURDIR} \
-	 -DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
+CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
+		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
 
 .if defined(SYSINST_FTP_HOST)
-CPPFLAGS+=-DFTP_HOST="${SYSINST_FTP_HOST}"
+CPPFLAGS+=	-DFTP_HOST="${SYSINST_FTP_HOST}"
 .endif
 
 .if defined(SYSINST_FTP_DIR)
-CPPFLAGS+=-DFTP_DIR="${SYSINST_FTP_DIR}"
+CPPFLAGS+=	-DFTP_DIR="${SYSINST_FTP_DIR}"
 .endif
 
-MKMAN=no
+WARNS=		1
 
-WARNS=1
+CLEANFILES=	menu_defs.c menu_defs.h menus.def \
+		msg_defs.c msg_defs.h msg.def msgtouch
 
-CLEANFILES= menu_defs.c menu_defs.h menus.def msg_defs.c msg_defs.h msg.def msgtouch
-
-SYSINSTLANG?=en
+SYSINSTLANG?=	en
 
 .PATH: ${.CURDIR}/../..
-
-MENUC?=menuc
-MSGC?=msgc
 
 .include <bsd.prog.mk>
 

@@ -1,17 +1,13 @@
-# 	$NetBSD: Makefile,v 1.15 2001/10/05 01:17:32 jmc Exp $
+# 	$NetBSD: Makefile,v 1.16 2001/12/12 00:05:14 tv Exp $
 # Build a smaller sh (e.g. for boot media)
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-MKMAN=no
+SRCDIR=		${.CURDIR}/../../../bin/sh
 
-SRCDIR= ${.CURDIR}/../../../bin/sh
-
-CPPFLAGS+= -I${SRCDIR} -DSMALL
-.if ${MACHINE_ARCH} != "sparc64"
-DBG= -Os
-.endif
-LDSTATIC?=-static
+CPPFLAGS+=	-I${SRCDIR} -DSMALL
 
 .PATH: ${SRCDIR} ${SRCDIR}/bltin ${SRCDIR}/../../usr.bin/printf ${SRCDIR}/../../bin/test
 

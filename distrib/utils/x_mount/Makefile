@@ -1,22 +1,15 @@
-# $NetBSD: Makefile,v 1.3 2001/10/05 01:17:31 jmc Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 00:05:13 tv Exp $
 # Build a smaller mount (i.e. for boot media)
 
-PROG=	mount
-MKMAN=	no
+SRCDIR=		${.CURDIR}/../../../sbin/mount
 
-SRCDIR= ${.CURDIR}/../../../sbin/mount
+PROG=		mount
+NOMAN=		# defined
 
-SRCS=	mount.c vfslist.c
-
-CPPFLAGS+= -DNO_MOUNT_PROGS -I${SRCDIR}
-.if ${MACHINE_ARCH} != "sparc64"
-DBG= -Os
-.endif
-LDSTATIC?=-static
-WARNS?= 1
-
-all: ${PROG}
+SRCS=		mount.c vfslist.c
+CPPFLAGS+=	-DNO_MOUNT_PROGS -I${SRCDIR}
+WARNS?=		1
 
 .include <bsd.prog.mk>
 
-.PATH:  ${SRCDIR}
+.PATH:		${SRCDIR}

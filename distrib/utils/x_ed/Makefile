@@ -1,19 +1,14 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/08/09 13:35:23 leo Exp $
+# $NetBSD: Makefile,v 1.2 2001/12/12 00:05:12 tv Exp $
 # Build an ed without crypt support
 
-PROG=	ed
-MKMAN=	no
+SRCDIR=		${.CURDIR}/../../../bin/ed
 
-SRCDIR= ${.CURDIR}/../../../bin/ed
+PROG=		ed
+NOMAN=		# defined
 
-SRCS=	buf.c cbc.c glbl.c io.c main.c re.c sub.c undo.c
-
-CPPFLAGS+= -DBACKWARDS
-
-LDSTATIC?=-static
-
-all: ${PROG}
+SRCS=		buf.c cbc.c glbl.c io.c main.c re.c sub.c undo.c
+CPPFLAGS+=	-DBACKWARDS
 
 .include <bsd.prog.mk>
 
-.PATH:  ${SRCDIR}
+.PATH:		${SRCDIR}

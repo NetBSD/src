@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/18 01:10:24 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 00:05:10 tv Exp $
 
-PROG=	mksunbootcd
-MAN=	mksunbootcd.1
-WARNS=	1
-
-LDSTATIC?=-static
+PROG=		mksunbootcd
+WARNS=		1
 
 .include <bsd.prog.mk>
 
