@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.7 1995/03/21 18:35:36 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.8 1995/05/23 19:47:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.7 1995/03/21 18:35:36 mycroft Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.8 1995/05/23 19:47:16 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -662,7 +662,7 @@ tellmewhat(lex)
     register struct biltins *bptr;
     register struct wordent *sp = lex->next;
     bool    aliased = 0;
-    Char   *s0, *s1, *s2;
+    Char   *s0, *s1, *s2, *cmd;
     Char    qc;
 
     if (adrof1(sp->word, &aliases)) {
@@ -709,6 +709,8 @@ tellmewhat(lex)
 	}
     }
 
+    sp->word = cmd = globone(sp->word, G_IGNORE);
+
     if ((i = iscommand(strip(sp->word))) != 0) {
 	register Char **pv;
 	register struct varent *v;
@@ -723,10 +725,15 @@ tellmewhat(lex)
 	while (--i)
 	    pv++;
 	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {
-	    sp->word = Strspl(STRdotsl, sp->word);
-	    prlex(cshout, lex);
-	    xfree((ptr_t) sp->word);
+	    if (!slash) {
+		sp->word = Strspl(STRdotsl, sp->word);
+		prlex(cshout, lex);
+		xfree((ptr_t) sp->word);
+	    }
+	    else
+		prlex(cshout, lex);
 	    sp->word = s0;	/* we save and then restore this */
+	    xfree((ptr_t) cmd);
 	    return;
 	}
 	s1 = Strspl(*pv, STRslash);
@@ -741,4 +748,5 @@ tellmewhat(lex)
 	(void) fprintf(csherr, "%s: Command not found.\n", vis_str(sp->word));
     }
     sp->word = s0;		/* we save and then restore this */
+    xfree((ptr_t) cmd);
 }
