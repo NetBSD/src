@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.17 1996/12/23 08:37:02 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.18 1997/01/11 10:58:12 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -70,6 +70,8 @@
 #include <sys/conf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #if defined(INET) && defined(PLIP)
@@ -203,6 +205,7 @@ lptmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct confargs *ca = aux;
 	volatile struct i8255 *i8255 =
 		(volatile struct i8255 *)((struct cfdata *)cf)->cf_loc[0];
 	int unit = ((struct cfdata *)cf)->cf_unit;
@@ -229,7 +232,11 @@ lptmatch(parent, cf, aux)
 
 	i8255->port_control = LPT_MODE;
 	i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
-	
+
+	ca->ca_addr = (int)i8255;
+	if (ca->ca_irq == -1)
+		ca->ca_irq = LPT_IRQ(unit);
+
 	return 1;
 }
 
@@ -238,15 +245,14 @@ lptattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct confargs *ca = aux;
 	struct lpt_softc *sc = (struct lpt_softc *) self;
-	volatile struct i8255 *i8255 =
-			(volatile struct i8255 *)self->dv_cfdata->cf_loc[0];
+	volatile struct i8255 *i8255;
 
-	if ((sc->sc_irq = self->dv_cfdata->cf_loc[1]) == -1)
-		sc->sc_irq = LPT_IRQ(self->dv_unit);
+	printf("\n");
 
-	if ((int)i8255 == -1)
-		i8255 = LPT_ADR(self->dv_unit);
+	sc->sc_irq = ca->ca_irq;
+	i8255 = (volatile struct i8255 *)ca->ca_addr;
 	i8255->port_control = LPT_MODE;
 	i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
 	i8255->port_control = LPT_IRQDISABLE;
@@ -259,7 +265,6 @@ lptattach(parent, self, aux)
 #endif
 	intr_establish(sc->sc_irq, lptintr, sc, sc->sc_dev.dv_xname,
 			IPL_ZERO, IPL_ZERO, FALLING_EDGE);
-	printf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
 }
 
 /*

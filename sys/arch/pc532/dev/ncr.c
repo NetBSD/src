@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.32 1996/12/23 08:37:04 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.33 1997/01/11 10:58:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -41,6 +41,8 @@
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
+
+#include <machine/autoconf.h>
 #include <machine/cpufunc.h>
 
 
@@ -103,10 +105,14 @@ ncr_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct confargs *ca = aux;
 	int unit = cf->cf_unit;
 	
 	if (unit != 0)	/* Only one unit */
 		return(0);
+
+	ca->ca_addr = (int)NCR5380;
+	ca->ca_irq  = IR_SCSI1;
 	return(1);
 }
 
@@ -115,6 +121,7 @@ ncr_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct confargs *ca = aux;
 	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
 	int flags;
 
@@ -124,7 +131,12 @@ ncr_attach(parent, self, aux)
 	scsi_select_ctlr(DP8490);
 
 	/* Pull in config flags. */ 
-	flags = sc->sc_dev.dv_cfdata->cf_flags | ncr_default_options;
+	flags = ca->ca_flags | ncr_default_options;
+
+	if (flags)
+		printf(": flags %d\n");
+	else
+		printf("\n");
 
 	/*
 	 * Fill in the prototype scsi_link.
@@ -166,7 +178,6 @@ ncr_attach(parent, self, aux)
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, IPL_BIO, RISING_EDGE);
-	printf(" addr 0x%x, irq %d\n", NCR5380, IR_SCSI1);
 
 	/*
 	 *  Initialize the SCSI controller itself.

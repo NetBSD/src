@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1996/12/23 08:35:57 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/01/11 10:58:47 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@ configure()
 {
 	extern int safepri;
 	int i;
-	static char *ipl_names[] = IPL_NAMES;
+	static const char *ipl_names[] = IPL_NAMES;
 
 	/* Start the clocks. */
 	startrtclock();
@@ -227,7 +227,6 @@ mbprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-#if 0
 	struct confargs *ca = aux;
 
 	printf(" addr 0x%x", ca->ca_addr);
@@ -236,11 +235,7 @@ mbprint(aux, pnp)
 		if (ca->ca_irq & 0xf0)
 			printf(", %d", ca->ca_irq >> 4);
 	}
-	if (ca->ca_flags != 0)
-		printf(", flags %d", ca->ca_flags);
 
-	printf("\n");
-#endif
 	return(UNCONF);
 }
 
