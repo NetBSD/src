@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.31 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: time.h,v 1.32 2003/09/13 22:31:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -139,12 +139,13 @@ int clock_getres __P((clockid_t, struct timespec *));
 int clock_gettime __P((clockid_t, struct timespec *));
 int clock_settime __P((clockid_t, const struct timespec *));
 int nanosleep __P((const struct timespec *, struct timespec *));
-int timer_create __P((clockid_t, struct sigevent *, timer_t *));
+int timer_create __P((clockid_t, struct sigevent * __restrict,
+    timer_t * __restrict));
 int timer_delete __P((timer_t));
 int timer_getoverrun __P((timer_t));
 int timer_gettime __P((timer_t, struct itimerspec *));
-int timer_settime __P((timer_t, int, const struct itimerspec *, 
-    struct itimerspec *));
+int timer_settime __P((timer_t, int, const struct itimerspec * __restrict, 
+    struct itimerspec * __restrict));
 #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \

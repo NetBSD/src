@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_create.2,v 1.1 2003/09/13 22:22:30 christos Exp $
+.\"	$NetBSD: timer_create.2,v 1.2 2003/09/13 22:31:04 kleink Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .In time.h
 .In signal.h
 .Ft int
-.Fn timer_create "clockid_t clockid" "struct sigevent *evp" "timer_t *timerid"
+.Fn timer_create "clockid_t clockid" "struct sigevent * restrict evp" "timer_t * restrict timerid"
 .Sh DESCRIPTION
 The
 .Fn timer_create
