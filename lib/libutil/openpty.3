@@ -1,4 +1,4 @@
-.\"	$NetBSD: openpty.3,v 1.4 1998/02/05 18:52:27 perry Exp $
+.\"	$NetBSD: openpty.3,v 1.4.10.1 2000/07/26 17:25:37 ad Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,10 +157,3 @@ fails.
 .El
 .Sh SEE ALSO
 .Xr fork 2
-.Sh BUGS
-The names of the virtual consoles for the i386 PCVT console driver
-conflict with what would be the seventh group of pseudo-ttys, so
-.Fn openpty
-skips
-.Pa /dev/[pt]tyv[0123456789abcdef]
-while looking for pseudo-ttys.
