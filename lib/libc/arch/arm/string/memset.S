@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2000/12/29 20:13:59 bjh21 Exp $	*/
+/*	$NetBSD: memset.S,v 1.2 2002/08/17 19:54:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -51,12 +51,12 @@ ENTRY(memset)
 	and	r1, r1, #0x000000ff	/* We write bytes */
 
 	cmp	r2, #0x00000004		/* Do we have less than 4 bytes */
-	blt	Lmemset_lessthanfour
+	blt	.Lmemset_lessthanfour
 
 	/* Ok first we will word align the address */
 
 	ands	r3, r0, #0x00000003	/* Get the bottom two bits */
-	beq	Lmemset_addraligned	/* The address is word aligned */
+	beq	.Lmemset_addraligned	/* The address is word aligned */
 
 	rsb	r3, r3, #0x00000004
 	sub	r2, r2, r3
@@ -66,11 +66,11 @@ ENTRY(memset)
 	strgtb	r1, [r0], #0x0001	/* and a third */
 
 	cmp	r2, #0x00000004
-	blt	Lmemset_lessthanfour
+	blt	.Lmemset_lessthanfour
 
 	/* Now we must be word aligned */
 
-Lmemset_addraligned:
+.Lmemset_addraligned:
 
 	orr	r3, r1, r1, lsl #8	/* Repeat the byte into a word */
 	orr	r3, r3, r3, lsl #16
@@ -78,7 +78,7 @@ Lmemset_addraligned:
 	/* We know we have at least 4 bytes ... */
 
 	cmp	r2, #0x00000020		/* If less than 32 then use words */
-	blt	Lmemset_lessthan32
+	blt	.Lmemset_lessthan32
 
 	/* We have at least 32 so lets use quad words */
 
@@ -87,32 +87,32 @@ Lmemset_addraligned:
 	mov	r5, r3
 	mov	r6, r3
 
-Lmemset_loop16:
+.Lmemset_loop16:
 	stmia	r0!, {r3-r6}		/* Store 16 bytes */
 	sub	r2, r2, #0x00000010	/* Adjust count */
 	cmp	r2, #0x00000010		/* Still got at least 16 bytes ? */
-	bgt	Lmemset_loop16
+	bgt	.Lmemset_loop16
 
 	ldmfd	sp!, {r4-r6}		/* Restore registers */
 
 	/* Do we need to set some words as well ? */
 
 	cmp	r2, #0x00000004
-	blt	Lmemset_lessthanfour
+	blt	.Lmemset_lessthanfour
 
 	/* Have either less than 16 or less than 32 depending on route taken */
 
-Lmemset_lessthan32:
+.Lmemset_lessthan32:
 
 	/* We have at least 4 bytes so copy as words */
 
-Lmemset_loop4:
+.Lmemset_loop4:
 	str	r3, [r0], #0x0004
 	sub	r2, r2, #0x0004
 	cmp	r2, #0x00000004
-	bge	Lmemset_loop4
+	bge	.Lmemset_loop4
 
-Lmemset_lessthanfour:
+.Lmemset_lessthanfour:
 	cmp	r2, #0x00000000
 	ldmeqfd	sp!, {r0}
 #ifdef __APCS_26__

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.3 2002/08/17 19:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,13 +53,13 @@ ASENTRY(CERROR)
 #else
 #ifdef PIC
 	/* Setup the GOT */
-	ldr	r3, got
+	ldr	r3, .Lgot
 	add	r3, pc, r3
 .L1:
-	ldr	r1, Lerrno
+	ldr	r1, .Lerrno
 	ldr	r1, [r3, r1]
 #else
-	ldr	r1, Lerrno
+	ldr	r1, .Lerrno
 #endif /* PIC */
 	str	r0, [r1]
 	mvn	r0, #0x00000000
@@ -72,12 +72,12 @@ ASENTRY(CERROR)
 
 #ifdef PIC
 	.align	0
-got:
+.Lgot:
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif /* PIC */
 
 	.globl	_C_LABEL(errno)
 
-Lerrno:
+.Lerrno:
 	.word	PIC_SYM(_C_LABEL(errno), GOT)
 #endif /* _REENTRANT */

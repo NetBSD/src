@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2001/11/13 20:04:52 chris Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2002/08/17 19:54:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -54,7 +54,7 @@ ENTRY(__setjmp14)
 	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
 	ldmfd	sp!, {r0-r2, r14}
 
-	ldr	r1, Lsetjmp_magic
+	ldr	r1, .Lsetjmp_magic
 	str	r1, [r0], #4
 
 #ifdef SOFTFLOAT
@@ -75,15 +75,15 @@ ENTRY(__setjmp14)
         mov	r15, r14
 #endif
 
-Lsetjmp_magic:
+.Lsetjmp_magic:
 	.word	_JB_MAGIC_SETJMP
 
 
 ENTRY(__longjmp14)
-	ldr	r2, Lsetjmp_magic
+	ldr	r2, .Lsetjmp_magic
 	ldr	r3, [r0]
 	teq	r2, r3
-	bne	botch
+	bne	.Lbotch
 
 	/* Restore the signal mask. */
 	stmfd	sp!, {r0-r2, r14}
@@ -109,7 +109,7 @@ ENTRY(__longjmp14)
 	/* Validate sp and r14 */
 	teq	sp, #0
 	teqne	r14, #0
-	beq	botch
+	beq	.Lbotch
 
 	/* Set return value */
 
@@ -123,7 +123,7 @@ ENTRY(__longjmp14)
 #endif
 
 	/* validation failed, die die die. */
-botch:
+.Lbotch:
 	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
 	bl	PIC_SYM(_C_LABEL(abort), PLT)
 	b	. - 8		/* Cannot get here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.4 2001/07/16 05:50:07 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.5 2002/08/17 19:54:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,13 +56,13 @@ CURBRK:
 ENTRY(_sbrk)
 #ifdef PIC
 	/* Setup the GOT */
-	ldr	r3, Lgot
+	ldr	r3, .Lgot
 	add	r3, pc, r3
 .L1:
-	ldr	r2, Lcurbrk
+	ldr	r2, .Lcurbrk
 	ldr	r2, [r3, r2]
 #else
-	ldr	r2, Lcurbrk
+	ldr	r2, .Lcurbrk
 #endif
 	/* Get the current brk address */
 	ldr	r1, [r2]
@@ -87,8 +87,8 @@ ENTRY(_sbrk)
 
 	.align	0
 #ifdef PIC
-Lgot:
+.Lgot:
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
-Lcurbrk:
+.Lcurbrk:
 	.word	PIC_SYM(CURBRK, GOT)
