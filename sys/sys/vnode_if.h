@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.35 2001/05/26 21:27:20 chs Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.36 2001/05/26 21:34:04 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
@@ -1531,8 +1531,8 @@ extern const struct vnodeop_desc vop_getpages_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_GETPAGES(struct vnode *, voff_t, struct vm_page **, int *, int, vm_prot_t, 
-    int, int)
+int VOP_GETPAGES(struct vnode *, voff_t, struct vm_page **, int *, int, 
+    vm_prot_t, int, int)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
