@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.49 1997/06/23 02:40:29 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.50 1997/07/12 22:08:03 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -157,6 +157,10 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration

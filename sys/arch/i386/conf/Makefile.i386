@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.82 1997/03/14 23:16:08 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.83 1997/07/12 22:07:57 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -144,6 +144,10 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${I386}/i386/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration
