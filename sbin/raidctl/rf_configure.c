@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.16 2003/05/17 01:05:03 itojun Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.17 2003/06/23 11:53:41 agc Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -46,6 +46,12 @@
  * need for KERNEL ifdefs.
  *
  **************************************************************/
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: rf_configure.c,v 1.17 2003/06/23 11:53:41 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
