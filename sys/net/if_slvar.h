@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.17 1997/03/27 20:36:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,7 @@ struct sl_softc {
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
 	u_char	*sc_buf;		/* input buffer */
+	u_char	*sc_xxx;		/* XXX don't ask... */
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
 	long	sc_lasttime;		/* last time a char arrived */

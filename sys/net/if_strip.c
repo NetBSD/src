@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.8 1996/10/25 22:15:54 cgd Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.9 1997/03/27 20:36:18 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -373,12 +373,15 @@ static int
 stripinit(sc)
 	register struct st_softc *sc;
 {
-	register caddr_t p;
+	register u_char *p;
 
-	if (sc->sc_ep == (u_char *) 0) {
-		MCLALLOC(p, M_WAIT);
-		if (p)
-			sc->sc_ep = (u_char *)p + SLBUFSIZE;
+	if (sc->sc_ep == NULL) {
+		/*
+		 * XXX the trick this is used for is evil...
+		 */
+		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_WAITOK);
+		if (sc->sc_xxx)
+			sc->sc_ep = sc_xxx + SLBUFSIZE;
 		else {
 			printf("%s: can't allocate buffer\n",
 			    sc->sc_if.if_xname);
@@ -388,10 +391,10 @@ stripinit(sc)
 	}
 
 	/* Get contiguous buffer in which to de-bytestuff/rll-decode input */
-	if (sc->sc_rxbuf == (u_char *) 0) {
-		MCLALLOC(p, M_WAIT);
+	if (sc->sc_rxbuf == NULL) {
+		p = (u_char *)malloc(MCLBYTES, M_DEVBUF, M_WAITOK);
 		if (p)
-			sc->sc_rxbuf = (u_char *)p + SLBUFSIZE - SLMAX;
+			sc->sc_rxbuf = p + SLBUFSIZE - SLMAX;
 		else {
 			printf("%s: can't allocate input buffer\n",
 			    sc->sc_if.if_xname);
@@ -401,8 +404,8 @@ stripinit(sc)
 	}
 
 	/* Get contiguous buffer in which to bytestuff/rll-encode output */
-	if (sc->sc_txbuf == (u_char *) 0) {
-		MCLALLOC(p, M_WAIT);
+	if (sc->sc_txbuf == NULL) {
+		p = (u_char *)malloc(MCLBYTES, M_DEVBUF, M_WAITOK);
 		if (p)
 			sc->sc_txbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
@@ -510,9 +513,11 @@ stripclose(tp)
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
-		MCLFREE((caddr_t)(sc->sc_ep - SLBUFSIZE));
-		MCLFREE((caddr_t)(sc->sc_rxbuf - SLBUFSIZE + SLMAX)); /* XXX */
-		MCLFREE((caddr_t)(sc->sc_txbuf - SLBUFSIZE + SLMAX)); /* XXX */
+		free((caddr_t)(sc->sc_ep - SLBUFSIZE), M_MBUF);
+		/* XXX */
+		free((caddr_t)(sc->sc_rxbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
+		/* XXX */
+		free((caddr_t)(sc->sc_txbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
 		sc->sc_ep = 0;
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
@@ -1065,18 +1070,23 @@ strip_btom(sc, len)
 	 * guarantees that packet will fit in a cluster.
 	 */
 	if (len >= MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
+		/*
+		 * XXX this is that evil trick I mentioned...
+		 */
+		p = sc->sc_xxx; 
+		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_NOWAIT);
+		if (sc->sc_xxx == NULL) {
 			/*
-			 * we couldn't get a cluster - if memory's this
-			 * low, it's time to start dropping packets.
+			 * We couldn't allocate a new buffer - if
+			 * memory's this low, it's time to start
+			 * dropping packets.
 			 */
 			(void) m_free(m);
 			return (NULL);
 		}
-		sc->sc_ep = mtod(m, u_char *) + SLBUFSIZE;
+		sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
+		MEXTADD(m, p, MCLBYTES, M_MBUF, NULL, NULL);
 		m->m_data = (caddr_t)sc->sc_buf;
-		m->m_ext.ext_buf = (caddr_t)((long)sc->sc_buf &~ MCLOFSET);
 	} else
 		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
 

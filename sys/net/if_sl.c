@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.44 1996/10/13 02:11:04 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.45 1997/03/27 20:36:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -73,6 +73,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
@@ -223,12 +224,14 @@ static int
 slinit(sc)
 	register struct sl_softc *sc;
 {
-	register caddr_t p;
 
-	if (sc->sc_ep == (u_char *) 0) {
-		MCLALLOC(p, M_WAIT);
-		if (p)
-			sc->sc_ep = (u_char *)p + SLBUFSIZE;
+	if (sc->sc_ep == NULL) {
+		/*
+		 * XXX the trick this is used for is evil...
+		 */
+		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_WAITOK);
+		if (sc->sc_xxx)
+			sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
 		else {
 			printf("sl%d: can't allocate buffer\n", sc->sc_unit);
 			sc->sc_if.if_flags &= ~IFF_UP;
@@ -321,7 +324,7 @@ slclose(tp)
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
-		MCLFREE((caddr_t)(sc->sc_ep - SLBUFSIZE));
+		free((caddr_t)(sc->sc_ep - SLBUFSIZE), M_MBUF);
 		sc->sc_ep = 0;
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
@@ -650,6 +653,7 @@ sl_btom(sc, len)
 	register int len;
 {
 	register struct mbuf *m;
+	register u_char *p;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -663,18 +667,23 @@ sl_btom(sc, len)
 	 * guarantees that packet will fit in a cluster.
 	 */
 	if (len >= MHLEN) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
+		/*
+		 * XXX this is that evil trick I mentioned...
+		 */
+		p = sc->sc_xxx;
+		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_NOWAIT);
+		if (sc->sc_xxx == NULL) {
 			/*
-			 * we couldn't get a cluster - if memory's this
-			 * low, it's time to start dropping packets.
+			 * We couldn't allocate a new buffer - if
+			 * memory's this low, it's time to start
+			 * dropping packets.
 			 */
 			(void) m_free(m);
 			return (NULL);
 		}
-		sc->sc_ep = mtod(m, u_char *) + SLBUFSIZE;
+		sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
+		MEXTADD(m, p, MCLBYTES, M_MBUF, NULL, NULL);
 		m->m_data = (caddr_t)sc->sc_buf;
-		m->m_ext.ext_buf = (caddr_t)((long)sc->sc_buf &~ MCLOFSET);
 	} else
 		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.3 1996/08/02 02:53:39 jonathan Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.4 1997/03/27 20:36:21 thorpej Exp $	*/
 
 /*
  * Definitions for SLIP interface data structures
@@ -16,6 +16,7 @@ struct st_softc {
 	u_char	*sc_buf;		/* input buffer */
 	u_char	*sc_rxbuf;		/* input destuffing buffer */
 	u_char	*sc_txbuf;		/* output stuffing buffer */
+	u_char	*sc_xxx;		/* XXX don't ask... */
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
