@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.17 1996/10/16 14:49:56 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.18 1996/11/02 18:26:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.17 1996/10/16 14:49:56 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.18 1996/11/02 18:26:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -361,7 +361,7 @@ getoptsreset(value)
 	const char *value;
 {
 	if (number(value) == 1)
-		shellparam.optnext;
+		shellparam.optnext = NULL;
 }
 
 /*
