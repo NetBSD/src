@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_prf.c	7.30 (Berkeley) 6/29/91
- *	$Id: subr_prf.c,v 1.12 1994/05/05 05:38:22 cgd Exp $
+ *	$Id: subr_prf.c,v 1.13 1994/05/12 10:26:19 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -81,7 +81,6 @@ int	(*v_poll)() = cnpoll;		/* kdb hook to enable input polling */
 extern	cnputc();			/* standard console putc */
 int	(*v_putc)() = cnputc;		/* routine to putc on virtual console */
 
-static void  logpri __P((int level));
 static void  putchar __P((int ch, int flags, struct tty *tp));
 static char *ksprintn __P((u_long num, int base, int *len));
 void  kprintf __P((const char *fmt, int flags, struct tty *tp, va_list));
@@ -288,7 +287,7 @@ log(level, fmt /*, va_alist */)
 	logwakeup();
 }
 
-static void
+void
 logpri(level)
 	int level;
 {
