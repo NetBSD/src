@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.3 2000/06/17 05:57:41 jhawk Exp $
+$NetBSD: TODO,v 1.4 2000/07/05 16:29:26 jhawk Exp $
 
 In rough order.
 
@@ -22,9 +22,9 @@ done	command history sometimes gets slightly confused
 Features to be implemented:
 
 1.	Have "ps" print pids with a 0t prefix to reduce radix
-	confusion.
+	confusion. This is very ugly...needs thought.
 
-2.	"set" should display the old value as "write" does.
+done	"set" should display the old value as "write" does.
 
 3.	Support 64-bit longs in "write". /L or /q? both? long versus quad?
 
