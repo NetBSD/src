@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.11 1994/06/13 08:13:06 chopps Exp $
+ *	$Id: siop.c,v 1.12 1994/06/14 00:59:10 chopps Exp $
  */
 
 /*
@@ -538,6 +538,22 @@ siop_delay(delay)
 }
 
 void
+siopinitialize(dev)
+	struct siop_softc *dev;
+{
+	/*
+	 * check that scripts is on a long word boundary
+	 * and that DS is on a long word boundary
+	 */
+	dev->sc_scriptspa = kvtop(scripts);
+	dev->sc_dspa = kvtop(&dev->sc_ds);
+	dev->sc_lunpa = kvtop(&dev->sc_lun);
+	dev->sc_statuspa = kvtop(&dev->sc_stat[0]);
+	dev->sc_msgpa = kvtop(&dev->sc_msg[0]);
+	siopreset (dev);
+}
+
+void
 siopreset(dev)
 	struct siop_softc *dev;
 {
@@ -619,13 +635,13 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 	dev->sc_msg[0] = -1;
 	dev->sc_ds.scsi_addr = (0x10000 << target) | (dev->sc_sync[target].period << 8);
 	dev->sc_ds.idlen = 1;
-	dev->sc_ds.idbuf = (char *) kvtop(&dev->sc_lun);
+	dev->sc_ds.idbuf = (char *) dev->sc_lunpa;
 	dev->sc_ds.cmdlen = clen;
 	dev->sc_ds.cmdbuf = (char *) kvtop(cbuf);
 	dev->sc_ds.stslen = 1;
-	dev->sc_ds.stsbuf = (char *) kvtop(&dev->sc_stat[0]);
+	dev->sc_ds.stsbuf = (char *) dev->sc_statuspa;
 	dev->sc_ds.msglen = 1;
-	dev->sc_ds.msgbuf = (char *) kvtop(&dev->sc_msg[0]);
+	dev->sc_ds.msgbuf = (char *) dev->sc_msgpa;
 	dev->sc_ds.sdtrolen = 0;
 	dev->sc_ds.sdtrilen = 0;
 	dev->sc_ds.chain[0].datalen = len;
@@ -706,11 +722,16 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 		regs->siop_scratch = regs->siop_scratch | 0x100;
 	else
 		regs->siop_scratch = regs->siop_scratch & ~0xff00;
-	regs->siop_dsa = (long) kvtop(&dev->sc_ds);
-#if 1
+	regs->siop_dsa = dev->sc_dspa;
+#if 0
 	DCIS();				/* push data cache */
+#else
+	dma_cachectl (dev, sizeof (struct siop_softc));
+	dma_cachectl (cbuf, clen);
+	if (buf != NULL && len != 0)
+		dma_cachectl (buf, len);
 #endif
-	regs->siop_dsp = (long) kvtop(scripts);
+	regs->siop_dsp = dev->sc_scriptspa;
 }
 
 /*
@@ -734,7 +755,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 	regs->siop_ctest8 &= ~0x04;
 #ifdef DEBUG
 	if (siop_debug & 1) {
-		DCIAS(kvtop(&dev->sc_stat));	/* XXX */
+		DCIAS(dev->sc_statuspa);	/* XXX */
 		printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 		    istat, dstat, sstat0, regs->siop_dsps, regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);
 	}
@@ -742,9 +763,9 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 	if (dstat & SIOP_DSTAT_SIR && (regs->siop_dsps == 0xff00 ||
 	    regs->siop_dsps == 0xfffc)) {
 		/* Normal completion status, or check condition */
-		if (regs->siop_dsa != (long) kvtop(&dev->sc_ds)) {
+		if (regs->siop_dsa != dev->sc_dspa) {
 			printf ("siop: invalid dsa: %x %x\n", regs->siop_dsa,
-			    kvtop(&dev->sc_ds));
+			    dev->sc_dspa);
 			panic("*** siop DSA invalid ***");
 		}
 		target = dev->sc_slave;
@@ -788,8 +809,10 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 				scsi_period_to_siop (dev, target);
 			}
 		}
-#if 1
+#if 0
 		DCIAS(kvtop(&dev->sc_stat));	/* XXX */
+#else
+		dma_cachectl(&dev->sc_stat[0], 1);	/* XXXX correct ?*/
 #endif
 		*status = dev->sc_stat[0];
 		return 1;
@@ -798,7 +821,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 #ifdef DEBUG
 		if (siop_debug & 9)
 			printf ("Phase mismatch: %x dsp +%x\n", regs->siop_sbcl,
-			    regs->siop_dsp - kvtop(scripts));
+			    regs->siop_dsp - dev->sc_scriptspa);
 		if (siop_debug & 0x10)
 			panic ("53c710 phase mismatch");
 #endif
@@ -814,22 +837,22 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
  * for message in, check for possible reject for sync request
  */
 		case 0:
-			regs->siop_dsp = kvtop(scripts) + Ent_dataout;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_dataout;
 			break;
 		case 1:
-			regs->siop_dsp = kvtop(scripts) + Ent_datain;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_datain;
 			break;
 		case 2:
-			regs->siop_dsp = kvtop(scripts) + Ent_cmd;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_cmd;
 			break;
 		case 3:
-			regs->siop_dsp = kvtop(scripts) + Ent_status;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_status;
 			break;
 		case 6:
-			regs->siop_dsp = kvtop(scripts) + Ent_msgout;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_msgout;
 			break;
 		case 7:
-			regs->siop_dsp = kvtop(scripts) + Ent_msgin;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_msgin;
 			break;
 		default:
 			goto bad_phase;
@@ -853,8 +876,8 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 			printf ("DMA chaining completed: dsa %x dnad %x addr %x\n",
 				regs->siop_dsa,	regs->siop_dnad, regs->siop_addr);
 #endif
-		regs->siop_dsa = kvtop (&dev->sc_ds);
-		regs->siop_dsp = kvtop (scripts) + Ent_status;
+		regs->siop_dsa = dev->sc_dspa;
+		regs->siop_dsp = dev->sc_scriptspa + Ent_status;
 		return 0;
 	}
 	target = dev->sc_slave;
@@ -871,7 +894,7 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 #endif
 		siop_inhibit_sync[target] = -1;
 		if ((regs->siop_sbcl & 7) == 6) {
-			regs->siop_dsp = kvtop(scripts) + Ent_msgout;
+			regs->siop_dsp = dev->sc_scriptspa + Ent_msgout;
 			return (0);
 		}
 	}
@@ -898,7 +921,11 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		return 1;
 	}
 	if (sstat0 == 0 && dstat & SIOP_DSTAT_SIR) {
-		DCIAS(kvtop(&dev->sc_stat));
+#if 0
+		DCIAS(dev->sc_statuspa);
+#else
+		dma_cachectl (&dev->sc_stat[0], 1);
+#endif
 		printf ("SIOP interrupt: %x sts %x msg %x sbcl %x\n",
 		    regs->siop_dsps, dev->sc_stat[0], dev->sc_msg[0],
 		    regs->siop_sbcl);
@@ -913,8 +940,8 @@ bad_phase:
  * then panics
  */
 printf ("siopchkintr: target %x ds %x\n", target, &dev->sc_ds);
-printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", kvtop(scripts),
-    kvtop(&dev->sc_ds), kvtop(regs), regs->siop_dsp, *((long *)&regs->siop_dcmd));
+printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", dev->sc_scriptspa,
+    dev->sc_dspa, kvtop(regs), regs->siop_dsp, *((long *)&regs->siop_dcmd));
 printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x dsa %x sbcl %x sts %x msg %x\n",
     istat, dstat, sstat0, regs->siop_dsps, regs->siop_dsa, regs->siop_sbcl,
     dev->sc_stat[0], dev->sc_msg[0]);
@@ -975,6 +1002,7 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 			if (--i <= 0) {
 				printf ("waiting: tgt %d cmd %02x sbcl %02x dsp %x (+%x) dcmd %x ds %x\n",
 				    target, *((char *)cbuf),
+				    regs->siop_dsp - dev->sc_scriptspa,
 				    regs->siop_sbcl, regs->siop_dsp,
 				    regs->siop_dsp - kvtop(scripts),
 				    *((long *)&regs->siop_dcmd), &dev->sc_ds);
@@ -987,7 +1015,7 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 		sstat0 = regs->siop_sstat0;
 #ifdef DEBUG
 		if (siop_debug & 1) {
-			DCIAS(kvtop(&dev->sc_stat));	/* XXX should just invalidate dev->sc_stat */
+			DCIAS(dev->sc_statuspa);	/* XXX should just invalidate dev->sc_stat */
 			printf ("siopicmd: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 			    istat, dstat, sstat0, regs->siop_dsps, regs->siop_sbcl,
 			    dev->sc_stat[0], dev->sc_msg[0]);
@@ -1085,7 +1113,7 @@ siopintr (dev)
 
 #ifdef DEBUG
 	if (siop_debug & 5) {
-		DCIAS(kvtop(&dev->sc_stat));
+		DCIAS(dev->sc_statuspa);
 		printf ("siopintr%d: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 		    unit, istat, dstat, sstat0, regs->siop_dsps,
 		    regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sbic.c,v 1.2 1994/05/12 06:43:09 chopps Exp $
+ *	$Id: sbic.c,v 1.3 1994/06/14 00:58:56 chopps Exp $
  */
 
 /*
@@ -1096,12 +1096,12 @@ sbicgo(dev, xs)
 	struct sbic_softc *dev;
 	struct scsi_xfer *xs;
 {
-	int i, dmaflags, count, tcount, target;
-	u_char phase, csr, asr, cmd, *addr;
+	int i, dmaflags, count, tcount, target, len, wait;
+	u_char phase, csr, asr, cmd, *addr, *tmpaddr;
 	sbic_regmap_p regs;
 	struct dma_chain *dcp;
+	u_int deoff, dspa;
 	char *dmaend;
-	int wait;
 
 	target = xs->sc_link->target;
 	count = xs->datalen;
@@ -1247,7 +1247,8 @@ out:
 		}
 		addr = dev->sc_dmabuffer;	/* and use dma buffer */
 	}
-
+	tmpaddr = addr;
+	len = count;
 #ifdef DEBUG
 	if (sbic_dma_debug & DDB_FOLLOW)
 		printf("sbicgo(%d, %x, %x, %x)\n", dev->sc_dev.dv_unit,
@@ -1292,7 +1293,16 @@ out:
 	/*
 	 * push the data cash
 	 */
+#if 0
 	DCIS();
+#else
+	dma_cachectl(tmpaddr, len);
+
+	dspa = (u_int)dev->sc_chain[0].dc_addr;
+	deoff = (u_int)dev->sc_last->dc_addr + (dev->sc_last->dc_count >> 1);
+	if ((dspa & 0xF) || (deoff & 0xF))
+		dev->sc_flags |= SBICF_DCFLUSH;
+#endif
 
 	/*
 	 * dmago() also enables interrupts for the sbic
@@ -1316,6 +1326,7 @@ sbicintr(dev)
 	struct sbic_softc *dev;
 {
 	sbic_regmap_p regs;
+	struct dma_chain *df, *dl;
 	u_char asr, csr;
 	int i;
 
@@ -1344,7 +1355,16 @@ sbicintr(dev)
 		if (dev->sc_flags & SBICF_BBUF)
 			bcopy(dev->sc_dmabuffer, dev->sc_dmausrbuf,
 			    dev->sc_dmausrlen);
-		dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF);
+		/*
+		 * check for overlapping cache line, flush if so
+		 */
+		if (dev->sc_flags & SBICF_DCFLUSH) {
+			df = dev->sc_chain;
+			dl = dev->sc_last;
+			DCFL(df->dc_addr);
+			DCFL(dl->dc_addr + (dl->dc_count >> 1));
+		}
+		dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 		dev->sc_dmafree(dev);
 		sbic_scsidone(dev, dev->sc_stat[0]);
 	} else if (csr == (SBIC_CSR_XFERRED|DATA_OUT_PHASE)
@@ -1379,7 +1399,17 @@ sbicintr(dev)
 		sbicerror(dev, regs, csr);
 		sbicabort(dev, regs, "intr");
 		if (dev->sc_flags & SBICF_INDMA) {
-			dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF);
+			/*
+			 * check for overlapping cache line, flush if so
+			 */
+			if (dev->sc_flags & SBICF_DCFLUSH) {
+				df = dev->sc_chain;
+				dl = dev->sc_last;
+				DCFL(df->dc_addr);
+				DCFL(dl->dc_addr + (dl->dc_count >> 1));
+			}
+			dev->sc_flags &= 
+			    ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 			dev->sc_dmafree(dev);
 			sbic_scsidone(dev, -1);
 		}

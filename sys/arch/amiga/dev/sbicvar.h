@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: sbicvar.h,v 1.1 1994/05/08 05:53:39 chopps Exp $
+ *	$Id: sbicvar.h,v 1.2 1994/06/14 00:59:03 chopps Exp $
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
@@ -94,6 +94,7 @@ struct	sbic_softc {
 
 /* sc_flags */
 #define	SBICF_ALIVE	0x01	/* controller initialized */
+#define SBICF_DCFLUSH	0x02	/* need flush for overlap after dma finishes */
 #define SBICF_SELECTED	0x04	/* bus is in selected state. */
 #define SBICF_BADDMA	0x10	/* controller can only DMA to ztwobus space */
 #define SBICF_BBUF	0x20	/* DMA input needs to be copied from bounce */

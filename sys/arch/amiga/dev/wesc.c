@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: wesc.c,v 1.1 1994/05/12 06:00:05 chopps Exp $
+ *	$Id: wesc.c,v 1.2 1994/06/14 00:59:23 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ wescattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 0x2200;
 	
-	siopreset(sc);
+	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_targ = 7;
