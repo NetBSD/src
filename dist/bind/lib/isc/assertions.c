@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: assertions.c,v 1.1.1.1.8.1 2002/07/01 17:13:30 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: assertions.c,v 8.3 1999/01/08 19:25:14 vixie Exp";
+static const char rcsid[] = "Id: assertions.c,v 8.4 2001/05/29 05:49:22 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -36,7 +36,8 @@ static const char rcsid[] = "Id: assertions.c,v 8.3 1999/01/08 19:25:14 vixie Ex
  * Forward.
  */
 
-static void default_assertion_failed(char *, int, assertion_type, char *, int);
+static void default_assertion_failed(const char *, int, assertion_type,
+				     const char *, int);
 
 /*
  * Public.
@@ -52,9 +53,9 @@ set_assertion_failure_callback(assertion_failure_callback f) {
 		__assertion_failed = f;
 }
 
-char *
+const char *
 assertion_type_to_text(assertion_type type) {
-	char *result;
+	const char *result;
 
 	switch (type) {
 	case assert_require:
@@ -80,8 +81,8 @@ assertion_type_to_text(assertion_type type) {
  */
 
 static void
-default_assertion_failed(char *file, int line, assertion_type type, char *cond,
-			 int print_errno)
+default_assertion_failed(const char *file, int line, assertion_type type,
+			 const char *cond, int print_errno)
 {
 	fprintf(stderr, "%s:%d: %s(%s)%s%s failed.\n",
 		file, line, assertion_type_to_text(type), cond,

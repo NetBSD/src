@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_gr.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: irp_gr.c,v 1.1.1.1.8.1 2002/07/01 17:13:22 he Exp $	*/
 
 /*
  * Portions Copyright(c) 1996, 1998 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_gr.c,v 8.1 1999/01/18 07:46:53 vixie Exp";
+static const char rcsid[] = "Id: irp_gr.c,v 8.3 2001/05/29 05:48:57 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* extern */
@@ -287,7 +287,7 @@ gr_bygid(struct irs_gr *this, gid_t gid) {
 	int code;
 	char text[256];
 
-	if (gr->gr_name != NULL && gr->gr_gid == gid) {
+	if (gr->gr_name != NULL && (gid_t)gr->gr_gid == gid) {
 		return (gr);
 	}
 
@@ -398,6 +398,9 @@ free_group(struct group *gr) {
 
 	for (p = gr->gr_mem ; p != NULL && *p != NULL ; p++)
 		free(*p);
+
+	if (gr->gr_mem)
+		free(gr->gr_mem);
 
 	if (p != NULL)
 		free(p);
