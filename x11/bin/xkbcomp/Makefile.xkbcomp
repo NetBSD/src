@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xkbcomp,v 1.1.1.1 2003/09/11 18:37:07 lukem Exp $
+#	$NetBSD: Makefile.xkbcomp,v 1.2 2003/11/08 13:57:29 lukem Exp $
 
 XKBDISTDIR=	${X11SRCDIR.xc}/programs/xkbcomp/${XKBNAME}
 
@@ -16,6 +16,7 @@ XKBCOMPDIR!=		cd ${NETBSDSRCDIR}/x11/tools/xkbcomp && ${PRINTOBJDIR}
 XKBCOMP=		${XKBCOMPDIR}/xkbcomp
 
 ${XKBNAME}.dir:
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	(cd ${XKBDISTDIR} && ${XKBCOMP} -lfhlpR -o ${.OBJDIR}/${.TARGET} '*')
 

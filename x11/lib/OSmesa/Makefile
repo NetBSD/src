@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/11/08 13:57:29 lukem Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -80,6 +80,7 @@ ${GENMATYPES}:
 	(cd ${.CURDIR}/gen_matypes && ${MAKE})
 
 matypes.h: ${GENMATYPES}
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${GENMATYPES} > ${.TARGET}
 CLEANFILES+=	matypes.h

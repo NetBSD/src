@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rstart,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+#	$NetBSD: Makefile.rstart,v 1.2 2003/11/08 13:57:29 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ FILESDIR=	${X11LIBDIR}/rstart/${CFDIR}
 
 .for _F in ${CFFILES}
 ${_F}.sed: ${_F}
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	sed ${CFSED} < ${.ALLSRC} > ${.TARGET}
 
