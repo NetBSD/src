@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.4 1998/06/09 12:56:54 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.5 1998/06/10 11:14:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -296,6 +296,9 @@ wdattach(parent, self, aux)
 		    wd->sc_params.atap_heads,
 		    wd->sc_params.atap_sectors, DEV_BSIZE);
 	}
+	WDCDEBUG_PRINT(("atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
+	    wd->sc_params.atap_dmatiming_mimi,
+	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
 	/*
 	 * Initialize and attach the disk structure.
 	 */
