@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.41 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.42 2005/01/08 03:16:51 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.41 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.42 2005/01/08 03:16:51 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ Static void cue_stop(struct cue_softc *);
 Static void cue_watchdog(struct ifnet *);
 
 Static void cue_setmulti(struct cue_softc *);
-Static u_int32_t cue_crc(caddr_t);
+Static u_int32_t cue_crc(const char *);
 Static void cue_reset(struct cue_softc *);
 
 Static int cue_csr_read_1(struct cue_softc *, int);
@@ -364,7 +364,7 @@ cue_getmac(struct cue_softc *sc, void *buf)
 #define CUE_BITS	9
 
 Static u_int32_t
-cue_crc(caddr_t addr)
+cue_crc(const char *addr)
 {
 	u_int32_t		idx, bit, data, crc;
 
