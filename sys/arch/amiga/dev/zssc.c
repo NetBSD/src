@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.29 2001/04/25 17:53:10 bouyer Exp $	*/
+/*	$NetBSD: zssc.c,v 1.30 2002/01/26 13:41:01 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,11 +51,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void zsscattach __P((struct device *, struct device *, void *));
-int  zsscmatch __P((struct device *, struct cfdata *, void *));
-int  zssc_dmaintr __P((void *));
+void zsscattach(struct device *, struct device *, void *);
+int  zsscmatch(struct device *, struct cfdata *, void *);
+int  zssc_dmaintr(void *);
 #ifdef DEBUG
-void zssc_dump __P((void));
+void zssc_dump(void);
 #endif
 
 struct cfattach zssc_ca = {
@@ -66,10 +66,7 @@ struct cfattach zssc_ca = {
  * if we are an PPI Zeus
  */
 int
-zsscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+zsscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -80,9 +77,7 @@ zsscmatch(pdp, cfp, auxp)
 }
 
 void
-zsscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+zsscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc;
 	struct zbus_args *zap;
@@ -114,9 +109,9 @@ zsscattach(pdp, dp, auxp)
 
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0; 
+	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = 8;
-	sc->sc_channel.chan_nluns = 8; 
+	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = 7;
 
 	siopinitialize(sc);
@@ -141,8 +136,7 @@ zsscattach(pdp, dp, auxp)
  */
 
 int
-zssc_dmaintr(arg)
-	void *arg;
+zssc_dmaintr(void *arg)
 {
 	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
@@ -174,7 +168,7 @@ zssc_dmaintr(arg)
 
 #ifdef DEBUG
 void
-zssc_dump()
+zssc_dump(void)
 {
 	extern struct cfdriver zssc_cd;
 	int i;

@@ -1,3 +1,5 @@
+/*	$NetBSD: amidisplaycc.c,v 1.3 2002/01/26 13:40:52 aymeric Exp $ */
+
 /*-
  * Copyright (c) 2000 Jukka Andberg.
  * All rights reserved.
@@ -27,7 +29,7 @@
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
- * to render text on bitmapped screens. Uses the functions defined in 
+ * to render text on bitmapped screens. Uses the functions defined in
  * grfabs_reg.h for display creation/destruction and low level setup.
  *
  * For each virtual terminal a new screen ('view') is allocated.
@@ -79,7 +81,7 @@ struct amidisplaycc_softc
 
 	/* runtime-loaded fonts */
 	struct wsdisplay_font         fonts[AMIDISPLAYCC_MAXFONTS];
-	
+
 	struct amidisplaycc_screen  * currentscreen;
 
 	/* display turned on? */
@@ -94,20 +96,16 @@ struct amidisplaycc_softc
 };
 
 
-/* 
+/*
  * Configuration stuff.
  */
 
-static int  amidisplaycc_match  __P((struct device *, 
-				     struct cfdata *, 
-				     void *));
-static void amidisplaycc_attach __P((struct device *, 
-				     struct device *, 
-				     void *));
+static int  amidisplaycc_match(struct device *, struct cfdata *, void *);
+static void amidisplaycc_attach(struct device *, struct device *, void *);
 
 struct cfattach amidisplaycc_ca = {
-	sizeof(struct amidisplaycc_softc), 
-	amidisplaycc_match, 
+	sizeof(struct amidisplaycc_softc),
+	amidisplaycc_match,
 	amidisplaycc_attach
 };
 
@@ -117,63 +115,51 @@ cons_decl(amidisplaycc_);
 
 /* private utility functions */
 
-static int  amidisplaycc_setvideo    __P((struct amidisplaycc_softc *,
-					 int ));
+static int amidisplaycc_setvideo(struct amidisplaycc_softc *, int);
 
-static int  amidisplaycc_setemulcmap __P((struct amidisplaycc_screen *,
-					  struct wsdisplay_cmap *));
+static int amidisplaycc_setemulcmap(struct amidisplaycc_screen *,
+				    struct wsdisplay_cmap *);
 
-static int  amidisplaycc_cmapioctl   __P((view_t *, u_long, 
-					  struct wsdisplay_cmap *));
-static int  amidisplaycc_setcmap     __P((view_t *, struct wsdisplay_cmap *));
-static int  amidisplaycc_getcmap     __P((view_t *, struct wsdisplay_cmap *));
-static int  amidisplaycc_gfxscreen   __P((struct amidisplaycc_softc *, int));
+static int amidisplaycc_cmapioctl(view_t *, u_long, struct wsdisplay_cmap *);
+static int amidisplaycc_setcmap(view_t *, struct wsdisplay_cmap *);
+static int amidisplaycc_getcmap(view_t *, struct wsdisplay_cmap *);
+static int amidisplaycc_gfxscreen(struct amidisplaycc_softc *, int);
 
-static int
-amidisplaycc_setnamedfont            __P((struct amidisplaycc_screen *, 
-					 char *));
-static void
-amidisplaycc_setfont                 __P((struct amidisplaycc_screen *, 
-					 struct wsdisplay_font *,
-					 int));
-static struct wsdisplay_font *
-amidisplaycc_findfont                __P((struct amidisplaycc_softc *,
-					 const char *, int, int));
+static int amidisplaycc_setnamedfont(struct amidisplaycc_screen *, char *);
+static void amidisplaycc_setfont(struct amidisplaycc_screen *,
+				 struct wsdisplay_font *, int);
+static struct wsdisplay_font *amidisplaycc_findfont(struct amidisplaycc_softc *,
+						    const char *, int, int);
 
 static void dprintf(const char *fmt, ...);
 
 /* end of private utility functions */
 
 /* emulops for wscons */
-void amidisplaycc_cursor       __P(( void *, int, int, int         ));
-int  amidisplaycc_mapchar      __P(( void *, int, unsigned int *   ));
-void amidisplaycc_putchar      __P(( void *, int, int, u_int, long ));
-void amidisplaycc_copycols     __P(( void *, int, int, int, int    ));
-void amidisplaycc_erasecols    __P(( void *, int, int, int, long   ));
-void amidisplaycc_copyrows     __P(( void *, int, int, int         ));
-void amidisplaycc_eraserows    __P(( void *, int, int, long        ));
-int  amidisplaycc_alloc_attr   __P(( void *, int, int, int, long * ));
+void amidisplaycc_cursor(void *, int, int, int);
+int amidisplaycc_mapchar(void *, int, unsigned int *);
+void amidisplaycc_putchar(void *, int, int, u_int, long);
+void amidisplaycc_copycols(void *, int, int, int, int);
+void amidisplaycc_erasecols(void *, int, int, int, long);
+void amidisplaycc_copyrows(void *, int, int, int);
+void amidisplaycc_eraserows(void *, int, int, long);
+int  amidisplaycc_alloc_attr(void *, int, int, int, long *);
 /* end of emulops for wscons */
 
 
 /* accessops for wscons */
-int      amidisplaycc_ioctl        __P(( void *, u_long, caddr_t, 
-					 int, struct proc *              ));
-paddr_t  amidisplaycc_mmap         __P(( void *, off_t, int              ));
-int      amidisplaycc_alloc_screen __P(( void *, 
-					 const struct wsscreen_descr *,
-					 void **, int *, int *, long *   ));
-
-void     amidisplaycc_free_screen  __P(( void *, void *                  ));
-int      amidisplaycc_show_screen  __P(( void *, void *, int, 
-					 void (*) (void *, int, int), 
-					 void *                          ));
-int      amidisplaycc_load_font    __P(( void *, void *, 
-					 struct wsdisplay_font *         ));
-void     amidisplaycc_pollc        __P(( void *, int ));
+int amidisplaycc_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t amidisplaycc_mmap(void *, off_t, int);
+int amidisplaycc_alloc_screen(void *, const struct wsscreen_descr *, void **,
+			      int *, int *, long *);
+void amidisplaycc_free_screen( void *, void *);
+int amidisplaycc_show_screen(void *, void *, int, void (*)(void *, int, int),
+			     void *);
+int amidisplaycc_load_font(void *, void *, struct wsdisplay_font *);
+void amidisplaycc_pollc(void *, int);
 /* end of accessops for wscons */
 
-/* 
+/*
  * These structures are passed to wscons, and they contain the
  * display-specific callback functions.
  */
@@ -300,7 +286,7 @@ struct amidisplaycc_screen
 
 	u_char  * savedscreen;
 
-	/* 
+	/*
 	 * The font is either one we loaded ourselves, or
 	 * one gotten using the wsfont system.
 	 *
@@ -308,7 +294,7 @@ struct amidisplaycc_screen
 	 * For fonts loaded by ourselves it is -1.
 	 * For wsfonts it contains a cookie for that system.
 	 */
-	struct wsdisplay_font  * font; 
+	struct wsdisplay_font  * font;
 	int                      wsfontcookie;
 	int                      fontwidth;
 	int                      fontheight;
@@ -316,22 +302,22 @@ struct amidisplaycc_screen
 
 typedef struct amidisplaycc_screen adccscr_t;
 
-/* 
+/*
  * Need one statically allocated screen for early init.
- * The rest are mallocated when needed. 
+ * The rest are mallocated when needed.
  */
 adccscr_t amidisplaycc_consolescreen;
 
 
 /*
- * Bring in the one or two builtin fonts. 
+ * Bring in the one or two builtin fonts.
  */
 
 extern unsigned char kernel_font_8x8[];
 extern unsigned char kernel_font_lo_8x8;
 extern unsigned char kernel_font_hi_8x8;
 
-/* 
+/*
  * Default palettes for 2, 4 and 8 color emulation displays.
  */
 
@@ -368,12 +354,11 @@ static int aga_enable = 0;
  * in constab[] in conf.c for this to work.
  */
 void
-amidisplaycc_cnprobe(cd)
-	struct consdev *cd;
+amidisplaycc_cnprobe(struct consdev *cd)
 {
 	cd->cn_pri = CN_INTERNAL;
 
-	/* 
+	/*
 	 * Yeah, real nice. But if we win the console then the wscons system
 	 * does the proper initialization.
 	 */
@@ -384,8 +369,7 @@ amidisplaycc_cnprobe(cd)
  * This gets called if this device is used as the console.
  */
 void
-amidisplaycc_cninit(cd)
-	struct consdev  * cd;
+amidisplaycc_cninit(struct consdev  * cd)
 {
 	void  * cookie;
 	long    attr;
@@ -394,14 +378,14 @@ amidisplaycc_cninit(cd)
 
 	/* Yeah, we got the console! */
 
-	/* 
+	/*
 	 * This will do the basic stuff we also need.
 	 */
 	config_console();
 
-	/* 
-	 * Call the init function in grfabs.c if we have 
-	 * no grfcc to do it. 
+	/*
+	 * Call the init function in grfabs.c if we have
+	 * no grfcc to do it.
 	 * If grfcc is present it will call grfcc_probe()
 	 * during config_console() above.
 	 */
@@ -413,7 +397,7 @@ amidisplaycc_cninit(cd)
 	viewprobe();
 #endif
 
-	/* 
+	/*
 	 * Set up wscons to handle the details.
 	 * It will then call us back when it needs something
 	 * display-specific. It will also set up cn_tab properly,
@@ -430,10 +414,7 @@ amidisplaycc_cninit(cd)
 }
 
 static int
-amidisplaycc_match(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+amidisplaycc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	char *name = auxp;
 
@@ -449,24 +430,21 @@ amidisplaycc_match(pdp, cfp, auxp)
 
 /* ARGSUSED */
 static void
-amidisplaycc_attach(pdp, dp, auxp)
-	struct device  * pdp;
-	struct device  * dp;
-	void           * auxp;
+amidisplaycc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct wsemuldisplaydev_attach_args    waa;
 	struct amidisplaycc_softc            * adp;
 
 	adp = (struct amidisplaycc_softc*)dp;
 
-	/* 
+	/*
 	 * Attach only at real configuration time. Console init is done at
 	 * the amidisplaycc_cninit function above.
-	 */ 
+	 */
 	if (adp) {
 		printf(": Amiga custom chip graphics %s",
 		       aga_enable ? "(AGA)" : "");
-		
+
 		if (amidisplaycc_consolescreen.isconsole) {
 			adp->currentscreen = &amidisplaycc_consolescreen;
 			printf(" (console)");
@@ -477,8 +455,8 @@ amidisplaycc_attach(pdp, dp, auxp)
 
 		adp->ison = 1;
 
-		/* 
-		 * Mapped screen properties. 
+		/*
+		 * Mapped screen properties.
 		 * Would need a way to configure.
 		 */
 		adp->gfxview = NULL;
@@ -491,7 +469,7 @@ amidisplaycc_attach(pdp, dp, auxp)
 		else
 			adp->gfxdepth = 4;
 
-		if (NELEMS(amidisplaycc_screentab) != 
+		if (NELEMS(amidisplaycc_screentab) !=
 		    NELEMS(amidisplaycc_screens))
 			panic("invalid screen definitions");
 
@@ -519,7 +497,7 @@ amidisplaycc_attach(pdp, dp, auxp)
 #define ATTRBG(attr) (((attr)>>8) & 255)
 #define ATTRMO(attr) ((attr) & 255)
 
-/* 
+/*
  * Called by wscons to draw/clear the cursor.
  * We do this by xorring the block to the screen.
  *
@@ -527,11 +505,7 @@ amidisplaycc_attach(pdp, dp, auxp)
  * under the cursor before clearing it.
  */
 void
-amidisplaycc_cursor(screen, on, row, col)
-	void  * screen;
-	int     on;
-	int     row;
-	int     col;
+amidisplaycc_cursor(void *screen, int on, int row, int col)
 {
 	adccscr_t  * scr;
 	u_char     * dst;
@@ -573,10 +547,7 @@ amidisplaycc_cursor(screen, on, row, col)
  * This obviously does something important, don't ask me what.
  */
 int
-amidisplaycc_mapchar(screen, ch, chp)
-	void          * screen;
-	int             ch;
-	unsigned int  * chp;
+amidisplaycc_mapchar(void *screen, int ch, unsigned int *chp)
 {
 	if (ch > 0 && ch < 256) {
 		*chp = ch;
@@ -586,19 +557,14 @@ amidisplaycc_mapchar(screen, ch, chp)
 	return (0);
 }
 
-/* 
- * Write a character to screen with color / bgcolor / hilite(bold) / 
+/*
+ * Write a character to screen with color / bgcolor / hilite(bold) /
  * underline / reverse.
  * Surely could be made faster but I'm not sure if its worth the
  * effort as scrolling is at least a magnitude slower.
  */
 void
-amidisplaycc_putchar(screen, row, col, ch, attr)
-	void  * screen;
-	int     row;
-	int     col;
-	u_int   ch;
-	long    attr;
+amidisplaycc_putchar(void *screen, int row, int col, u_int ch, long attr)
 {
 	adccscr_t  * scr;
 	u_char     * dst;
@@ -670,8 +636,8 @@ amidisplaycc_putchar(screen, row, col, ch, attr)
 	scr->rowmasks[row] |= fgcolor | bgcolor;
 
 	for (plane = 0 ; plane < depth ; plane++) {
-		dst = scr->planes[plane] + bmapoffset; 
-	
+		dst = scr->planes[plane] + bmapoffset;
+
 		if (fgcolor & 1) {
 			if (bgcolor & 1) {
 				/* fg=on bg=on (fill) */
@@ -682,7 +648,7 @@ amidisplaycc_putchar(screen, row, col, ch, attr)
 				}
 			} else {
 				/* fg=on bg=off (normal) */
-			
+
 				font = fontreal;
 				for (j = 0 ; j < fontheight ; j++) {
 					f = *(font++);
@@ -697,7 +663,7 @@ amidisplaycc_putchar(screen, row, col, ch, attr)
 		} else {
 			if (bgcolor & 1) {
 				/* fg=off bg=on (inverted) */
-			
+
 				font = fontreal;
 				for (j = 0 ; j < fontheight ; j++) {
 					f = *(font++);
@@ -706,9 +672,9 @@ amidisplaycc_putchar(screen, row, col, ch, attr)
 					dst += linebytes;
 				}
 
-				if (underline) 
+				if (underline)
 					*(dst - linebytes) = 0;
-			} else { 
+			} else {
 				/* fg=off bg=off (clear) */
 
 				for (j = 0 ; j < fontheight ; j++) {
@@ -722,17 +688,12 @@ amidisplaycc_putchar(screen, row, col, ch, attr)
 	}
 }
 
-/* 
+/*
  * Copy characters on a row to another position on the same row.
  */
 
 void
-amidisplaycc_copycols(screen, row, srccol, dstcol, ncols)
-	void  * screen;
-	int     row;
-	int     srccol;
-	int     dstcol;
-	int     ncols;
+amidisplaycc_copycols(void *screen, int row, int srccol, int dstcol, int ncols)
 {
 	adccscr_t  * scr;
 	u_char     * src;
@@ -747,7 +708,7 @@ amidisplaycc_copycols(screen, row, srccol, dstcol, ncols)
 
 	scr = screen;
 
-	if (srccol < 0 || srccol + ncols > scr->ncols || 
+	if (srccol < 0 || srccol + ncols > scr->ncols ||
 	    dstcol < 0 || dstcol + ncols > scr->ncols ||
 	    row < 0 || row >= scr->nrows)
 		return;
@@ -782,13 +743,9 @@ amidisplaycc_copycols(screen, row, srccol, dstcol, ncols)
  * Erase part of a row.
  */
 
-void 
-amidisplaycc_erasecols(screen, row, startcol, ncols, attr)
-	void  * screen;
-	int     row;
-	int     startcol;
-	int     ncols;
-	long    attr;
+void
+amidisplaycc_erasecols(void *screen, int row, int startcol, int ncols,
+		       long attr)
 {
 	adccscr_t  * scr;
 	u_char     * dst;
@@ -835,11 +792,7 @@ amidisplaycc_erasecols(screen, row, startcol, ncols, attr)
  */
 
 void
-amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
-	void  * screen;
-	int     srcrow;
-	int     dstrow;
-	int     nrows;
+amidisplaycc_copyrows(void *screen, int srcrow, int dstrow, int nrows)
 {
 	adccscr_t  * scr;
 	u_char     * src;
@@ -873,7 +826,7 @@ amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
 	rowbytes   = scr->rowbytes;
 	linebytes  = scr->linebytes;
 	fontheight = scr->fontheight;
-	
+
 	srcbmapoffset = rowbytes * srcrow;
 	dstbmapoffset = rowbytes * dstrow;
 
@@ -907,9 +860,9 @@ amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
 		for (plane = 0 ; plane < depth ; plane++) {
 
 			if (srcmask & 1) {
-				/* 
-				 * Source row has data on this 
-				 * plane, copy it. 
+				/*
+				 * Source row has data on this
+				 * plane, copy it.
 				 */
 
 				src = scr->planes[plane] + srcbmapoffset;
@@ -921,9 +874,9 @@ amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
 
 				} else {
 
-					/* 
-					 * Data not continuous, 
-					 * must do in pieces 
+					/*
+					 * Data not continuous,
+					 * must do in pieces
 					 */
 					for (i=0 ; i < fontheight ; i++) {
 						memcpy(dst, src, widthbytes);
@@ -933,7 +886,7 @@ amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
 					}
 				}
 			} else if (dstmask & 1) {
-				/* 
+				/*
 				 * Source plane is empty, but dest is not.
 				 * so all we need to is clear it.
 				 */
@@ -967,11 +920,7 @@ amidisplaycc_copyrows(screen, srcrow, dstrow, nrows)
  */
 
 void
-amidisplaycc_eraserows(screen, row, nrows, attr)
-	void  * screen;
-	int     row;
-	int     nrows;
-	long    attr;
+amidisplaycc_eraserows(void *screen, int row, int nrows, long attr)
 {
 	adccscr_t  * scr;
 	u_char     * dst;
@@ -1014,7 +963,7 @@ amidisplaycc_eraserows(screen, row, nrows, attr)
 
 	for (plane = 0 ; plane < depth ; plane++) {
 		dst = scr->planes[plane] + bmapoffset;
-		fill = (bgcolor & 1) ? 255 : 0; 
+		fill = (bgcolor & 1) ? 255 : 0;
 
 		if (fillsize > 0) {
 			/* If the rows are continuous, write them all. */
@@ -1035,12 +984,7 @@ amidisplaycc_eraserows(screen, row, nrows, attr)
  * background color, and flags.
  */
 int
-amidisplaycc_alloc_attr(screen, fg, bg, flags, attrp)
-	void  * screen;
-	int     fg;
-	int     bg;
-	int     flags;
-	long  * attrp;
+amidisplaycc_alloc_attr(void *screen, int fg, int bg, int flags, long *attrp)
 {
 	adccscr_t  * scr;
 	int          maxcolor;
@@ -1055,14 +999,14 @@ amidisplaycc_alloc_attr(screen, fg, bg, flags, attrp)
 	newbg = bg & maxcolor;
 
 #ifdef ADJUSTCOLORS
-	/* 
+	/*
 	 * Hack for low-color screens, if background color is nonzero
 	 * but would be displayed as one, adjust it.
 	 */
 	if (bg > 0 && newbg == 0)
 		newbg = maxcolor;
 
-	/* 
+	/*
 	 * If foreground and background colors are different but would
 	 * display the same fix them by modifying the foreground.
 	 */
@@ -1079,12 +1023,7 @@ amidisplaycc_alloc_attr(screen, fg, bg, flags, attrp)
 }
 
 int
-amidisplaycc_ioctl(dp, cmd, data, flag, p)
-	void         * dp;
-	u_long         cmd;
-	caddr_t        data;
-	int            flag;
-	struct proc  * p; 
+amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct amidisplaycc_softc *adp;
 
@@ -1113,9 +1052,9 @@ amidisplaycc_ioctl(dp, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GVIDEO:
 		dprintf("amidisplaycc: WSDISPLAYIO_GVIDEO\n");
-		UINTDATA = adp->ison ? 
+		UINTDATA = adp->ison ?
 		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
-		
+
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
@@ -1161,13 +1100,11 @@ amidisplaycc_ioctl(dp, cmd, data, flag, p)
  */
 
 static int
-amidisplaycc_gfxscreen(adp, on)
-	struct amidisplaycc_softc  * adp;
-	int                          on;
+amidisplaycc_gfxscreen(struct amidisplaycc_softc *adp, int on)
 {
 	dimen_t  dimension;
 
-	dprintf("amidisplaycc: switching to %s mode.\n", 
+	dprintf("amidisplaycc: switching to %s mode.\n",
 		on ? "mapped" : "emul");
 
 	/* Current mode same as requested mode? */
@@ -1175,7 +1112,7 @@ amidisplaycc_gfxscreen(adp, on)
 		return (0);
 
 	if (!on) {
-		/* 
+		/*
 		 * Switch away from mapped mode. If there is
 		 * a emulation screen, switch to it, otherwise
 		 * just try to hide the mapped screen.
@@ -1188,7 +1125,7 @@ amidisplaycc_gfxscreen(adp, on)
 
 		return (0);
 	}
-	
+
 	/* switch to mapped mode then */
 
 	if (adp->gfxview == NULL) {
@@ -1197,12 +1134,12 @@ amidisplaycc_gfxscreen(adp, on)
 		dimension.width = adp->gfxwidth;
 		dimension.height = adp->gfxheight;
 
-		dprintf("amidisplaycc: preparing mapped screen %dx%dx%d\n", 
+		dprintf("amidisplaycc: preparing mapped screen %dx%dx%d\n",
 			dimension.width,
 			dimension.height,
 			adp->gfxdepth);
 
-		adp->gfxview = grf_alloc_view(NULL, 
+		adp->gfxview = grf_alloc_view(NULL,
 					      &dimension,
 					      adp->gfxdepth);
 	}
@@ -1223,10 +1160,7 @@ amidisplaycc_gfxscreen(adp, on)
  * by switching to mapped mode by using an ioctl.
  */
 paddr_t
-amidisplaycc_mmap(dp, off, prot)
-	void   * dp;
-	off_t    off;
-	int      prot;
+amidisplaycc_mmap(void *dp, off_t off, int prot)
 {
 	struct amidisplaycc_softc  * adp;
 	bmap_t                     * bm;
@@ -1274,13 +1208,9 @@ amidisplaycc_mmap(dp, off, prot)
  */
 
 int
-amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
-	void   * dp;
-	const struct wsscreen_descr * screenp;
-	void  ** cookiep;
-	int    * curxp;
-	int    * curyp;
-	long   * defattrp;
+amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
+			  void  **cookiep, int *curxp, int *curyp,
+			  long *defattrp)
 {
 	const struct amidisplaycc_screen_descr  * adccscreenp;
 	struct amidisplaycc_screen              * scr;
@@ -1329,7 +1259,7 @@ amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
 	if (view == NULL)
 		return (ENOMEM);
 
-	/* 
+	/*
 	 * First screen gets the statically allocated console screen.
 	 * Others are allocated dynamically.
 	 */
@@ -1368,8 +1298,8 @@ amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
 	scr->fontwidth    = fontwidth;
 	scr->fontheight   = fontheight;
 
-	/* 
-	 * Note that dont try to load font for the console (adp==NULL) 
+	/*
+	 * Note that dont try to load font for the console (adp==NULL)
 	 *
 	 * Here we dont care which font we get as long as it is the
 	 * right size so pass NULL.
@@ -1377,7 +1307,7 @@ amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
 	if (adp)
 		amidisplaycc_setnamedfont(scr, NULL);
 
-	/* 
+	/*
 	 * If no font found, use the builtin one.
 	 * It will look stupid if the wanted size was different.
 	 */
@@ -1400,7 +1330,7 @@ amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
 	for (i = 0 ; i < MAXCOLORS ; i++)
 		scr->colormap[i] = i;
 
-	/* 
+	/*
 	 * Arrange the most used pens to quickest colors.
 	 * The default color for given depth is (1<<depth)-1.
 	 * It is assumed it is used most and it is mapped to
@@ -1455,9 +1385,7 @@ amidisplaycc_alloc_screen(dp, screenp, cookiep, curxp, curyp, defattrp)
  */
 
 void
-amidisplaycc_free_screen(dp, screen)
-	void  * dp;
-	void  * screen;
+amidisplaycc_free_screen(void *dp, void *screen)
 {
 	struct amidisplaycc_screen  * scr;
 	struct amidisplaycc_softc   * adp;
@@ -1490,12 +1418,8 @@ amidisplaycc_free_screen(dp, screen)
 
 /* ARGSUSED2 */
 int
-amidisplaycc_show_screen(dp, screen, waitok, cb, cbarg)
-	void  * dp;
-	void  * screen;
-	int     waitok;
-	void (* cb) (void *, int, int);
-	void  * cbarg;
+amidisplaycc_show_screen(void *dp, void *screen, int waitok,
+			 void (*cb) (void *, int, int), void *cbarg)
 {
 	adccscr_t *scr;
 	struct amidisplaycc_softc *adp;
@@ -1536,20 +1460,17 @@ amidisplaycc_show_screen(dp, screen, waitok, cb, cbarg)
  * findfont(adp, name, x, y)  -- find last font with given name and size
  *
  * Note that when finding an empty location first one found is returned,
- * however when finding an existing font, the last one matching is 
- * returned. This is because fonts cannot be unloaded and the last 
+ * however when finding an existing font, the last one matching is
+ * returned. This is because fonts cannot be unloaded and the last
  * font on the list is the one added latest and thus probably preferred.
  *
  * Note also that this is the only function which makes assumptions
  * about the storage location for the fonts.
  */
 static struct wsdisplay_font *
-amidisplaycc_findfont(adp, name, width, height)
-	struct amidisplaycc_softc  * adp;
-	const char                 * name;
-	int                          width;
-	int                          height;
-{	
+amidisplaycc_findfont(struct amidisplaycc_softc *adp, const char *name,
+		      int width, int height)
+{
 	struct wsdisplay_font  * font;
 
 	int  findempty;
@@ -1592,10 +1513,8 @@ amidisplaycc_findfont(adp, name, width, height)
  * NULL font cannot be accompanied by valid cookie (!= -1)
  */
 static void
-amidisplaycc_setfont(scr, font, wsfontcookie)
-	struct amidisplaycc_screen * scr;
-	struct wsdisplay_font      * font;
-	int                          wsfontcookie;
+amidisplaycc_setfont(struct amidisplaycc_screen *scr,
+		     struct wsdisplay_font *font, int wsfontcookie)
 {
 	if (scr == NULL)
 		panic("amidisplaycc_setfont: scr==NULL");
@@ -1621,9 +1540,7 @@ amidisplaycc_setfont(scr, font, wsfontcookie)
  */
 
 static int
-amidisplaycc_setnamedfont(scr, fontname)
-	struct amidisplaycc_screen  * scr;
-	char                        * fontname;
+amidisplaycc_setnamedfont(struct amidisplaycc_screen *scr, char *fontname)
 {
 	struct wsdisplay_font  * font;
 	int  wsfontcookie;
@@ -1636,28 +1553,28 @@ amidisplaycc_setnamedfont(scr, fontname)
 	}
 
 	/* Try first our dynamically loaded fonts. */
-	font = amidisplaycc_findfont(scr->device, 
-				     fontname, 
-				     scr->fontwidth, 
+	font = amidisplaycc_findfont(scr->device,
+				     fontname,
+				     scr->fontwidth,
 				     scr->fontheight);
 
 	if (font == NULL) {
-		/* 
+		/*
 		 * Ok, no dynamically loaded font found.
 		 * Try the wsfont system then.
 		 */
-		wsfontcookie = wsfont_find(fontname, 
-					   scr->fontwidth, 
-					   scr->fontheight, 
+		wsfontcookie = wsfont_find(fontname,
+					   scr->fontwidth,
+					   scr->fontheight,
 					   1);
 
 		if (wsfontcookie == -1)
 			return (EINVAL);
 
 		/* So, found a suitable font. Now lock it. */
-		if (wsfont_lock(wsfontcookie, 
-				&font, 
-				WSDISPLAY_FONTORDER_L2R, 
+		if (wsfont_lock(wsfontcookie,
+				&font,
+				WSDISPLAY_FONTORDER_L2R,
 				WSDISPLAY_FONTORDER_L2R) == -1)
 			return (EINVAL);
 
@@ -1676,10 +1593,7 @@ amidisplaycc_setnamedfont(scr, fontname)
  * the font but don't use it.
  */
 int
-amidisplaycc_load_font(dp, cookie, font)
-	void                   * dp;
-	void                   * cookie;
-	struct wsdisplay_font  * font;
+amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 {
 	struct amidisplaycc_softc   * adp;
 	struct amidisplaycc_screen  * scr;
@@ -1696,7 +1610,7 @@ amidisplaycc_load_font(dp, cookie, font)
 	adp = dp;
 	scr = cookie;
 
-	/* 
+	/*
 	 * If font has no data it means we have to find the
 	 * named font and use it.
 	 */
@@ -1722,9 +1636,9 @@ amidisplaycc_load_font(dp, cookie, font)
 	size = font->fontheight * font->numchars;
 
 	/* Check if the same font was loaded before */
-	myfont = amidisplaycc_findfont(adp, 
-				       font->name, 
-				       font->fontwidth, 
+	myfont = amidisplaycc_findfont(adp,
+				       font->name,
+				       font->fontwidth,
 				       font->fontheight);
 
 	olddata = NULL;
@@ -1768,7 +1682,7 @@ amidisplaycc_load_font(dp, cookie, font)
 	myfont->numchars  = font->numchars;
 
 	myfont->data = malloc(size,
-			      M_DEVBUF, 
+			      M_DEVBUF,
 			      M_WAITOK);
 
 	if (olddata)
@@ -1797,9 +1711,7 @@ amidisplaycc_load_font(dp, cookie, font)
  * Set display on/off.
  */
 static int
-amidisplaycc_setvideo(adp, mode)
-	struct amidisplaycc_softc  * adp;
-	int                          mode;
+amidisplaycc_setvideo(struct amidisplaycc_softc *adp, int mode)
 {
         view_t * view;
 
@@ -1844,10 +1756,7 @@ amidisplaycc_setvideo(adp, mode)
  */
 
 static int
-amidisplaycc_cmapioctl(view, cmd, cmap)
-	view_t                 * view;
-	u_long                   cmd;
-	struct wsdisplay_cmap  * cmap;
+amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 {
 	struct wsdisplay_cmap  tmpcmap;
 	u_char                 cmred[MAXCOLORS];
@@ -1863,7 +1772,7 @@ amidisplaycc_cmapioctl(view, cmd, cmap)
 
 	if (cmap->count == 0)
 		return (0);
-	    
+
 	tmpcmap.index = cmap->index;
 	tmpcmap.count = cmap->count;
 	tmpcmap.red   = cmred;
@@ -1886,7 +1795,7 @@ amidisplaycc_cmapioctl(view, cmd, cmap)
 			return (err);
 
 		return amidisplaycc_setcmap(view, &tmpcmap);
-		    
+
 	} else if (cmd == WSDISPLAYIO_GETCMAP) {
 
 		err = amidisplaycc_getcmap(view, &tmpcmap);
@@ -1908,7 +1817,7 @@ amidisplaycc_cmapioctl(view, cmd, cmap)
 			return (err);
 
 		return (0);
-		
+
 	} else
 		return (-1);
 }
@@ -1920,9 +1829,8 @@ amidisplaycc_cmapioctl(view, cmd, cmap)
  */
 
 static int
-amidisplaycc_setemulcmap(scr, cmap)
-	struct amidisplaycc_screen  * scr;
-	struct wsdisplay_cmap       * cmap;
+amidisplaycc_setemulcmap(struct amidisplaycc_screen *scr,
+			 struct wsdisplay_cmap *cmap)
 {
 	struct wsdisplay_cmap  tmpcmap;
 
@@ -1934,7 +1842,7 @@ amidisplaycc_setemulcmap(scr, cmap)
 	int                    i;
 
 	/*
-	 * Get old palette first. 
+	 * Get old palette first.
 	 * Because of the color mapping going on in the emulation
 	 * screen the color range may not be contiguous in the real
 	 * palette.
@@ -1963,19 +1871,17 @@ amidisplaycc_setemulcmap(scr, cmap)
 	rc = amidisplaycc_setcmap(scr->view, &tmpcmap);
 	if (rc)
 		return (rc);
-	
+
 	return (0);
 }
 
 
 /*
- * Set the colormap for the given screen. 
+ * Set the colormap for the given screen.
  */
 
 static int
-amidisplaycc_setcmap(view, cmap)
-	view_t                 * view;
-	struct wsdisplay_cmap  * cmap;
+amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 {
 	u_long      cmentries [MAXCOLORS];
 
@@ -2012,7 +1918,7 @@ amidisplaycc_setcmap(view, cmap)
 	cm.first = index;
 	cm.size  = count;
 
-	/* 
+	/*
 	 * Get the old colormap. We need to do this at least to know
 	 * how many bits to use with the color values.
 	 */
@@ -2021,10 +1927,10 @@ amidisplaycc_setcmap(view, cmap)
 	if (err)
 		return (err);
 
-	/* 
+	/*
 	 * The palette entries from wscons contain 8 bits per gun.
 	 * We need to convert them to the number of bits the view
-	 * expects. That is typically 4 or 8. Here we calculate the 
+	 * expects. That is typically 4 or 8. Here we calculate the
 	 * conversion constants with which we divide the color values.
 	 */
 
@@ -2055,14 +1961,14 @@ amidisplaycc_setcmap(view, cmap)
 			cm.entry[c + index] = MAKE_COLOR_ENTRY(
 				0,
 				0,
-				(cmap->red[c] + 
-				 cmap->green[c] + 
+				(cmap->red[c] +
+				 cmap->green[c] +
 				 cmap->blue[c]) / 3 / grey_div);
 		}
 	}
-	
 
-	/* 
+
+	/*
 	 * Now we have a new colormap that contains all the entries. Set
 	 * it to the view.
 	 */
@@ -2079,9 +1985,7 @@ amidisplaycc_setcmap(view, cmap)
  */
 
 static int
-amidisplaycc_getcmap(view, cmap)
-	view_t                 * view;
-	struct wsdisplay_cmap  * cmap;
+amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 {
 	u_long      cmentries [MAXCOLORS];
 
@@ -2131,7 +2035,7 @@ amidisplaycc_getcmap(view, cmap)
 		return (EINVAL);
 
 	/*
-	 * Copy color data to wscons-style structure. Translate to 
+	 * Copy color data to wscons-style structure. Translate to
 	 * 8 bits/gun from whatever resolution the color natively is.
 	 */
 
@@ -2160,13 +2064,12 @@ amidisplaycc_getcmap(view, cmap)
 }
 
 /* ARGSUSED */
-void amidisplaycc_pollc(cookie, on)
-	void *  cookie;
-	int     on;
+void
+amidisplaycc_pollc(void *cookie, int on)
 {
 }
 
-/* 
+/*
  * These dummy functions are here just so that we can compete of
  * the console at init.
  * If we win the console then the wscons system will provide the
@@ -2176,25 +2079,20 @@ void amidisplaycc_pollc(cookie, on)
 
 /* ARGSUSED */
 void
-amidisplaycc_cnputc(cd,ch)
-	dev_t cd;
-	int ch;
+amidisplaycc_cnputc(dev_t cd, int ch)
 {
 }
 
 /* ARGSUSED */
 int
-amidisplaycc_cngetc(cd)
-	dev_t cd;
+amidisplaycc_cngetc(dev_t cd)
 {
 	return (0);
 }
 
 /* ARGSUSED */
-void 
-amidisplaycc_cnpollc(cd,on)
-	dev_t cd;
-	int on;
+void
+amidisplaycc_cnpollc(dev_t cd, int on)
 {
 }
 
@@ -2205,7 +2103,7 @@ amidisplaycc_cnpollc(cd,on)
 
 /* ARGSUSED */
 static void
-dprintf(const char *fmt,...)
+dprintf(const char *fmt, ...)
 {
 #ifdef DEBUG
 	va_list ap;
@@ -2217,8 +2115,3 @@ dprintf(const char *fmt,...)
 }
 
 #endif /* AMIDISPLAYCC */
-
-
-
-
-

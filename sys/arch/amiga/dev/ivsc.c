@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.28 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.29 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,14 +49,14 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void ivscattach __P((struct device *, struct device *, void *));
-int ivscmatch __P((struct device *, struct cfdata *, void *));
+void ivscattach(struct device *, struct device *, void *);
+int ivscmatch(struct device *, struct cfdata *, void *);
 
-int ivsc_intr __P((void *));
-int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int ivsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
+int ivsc_intr(void *);
+int ivsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int ivsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
 
 
 #ifdef DEBUG
@@ -78,10 +78,7 @@ struct cfattach ivsc_ca = {
  * if this is an IVS board
  */
 int
-ivscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+ivscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -99,9 +96,7 @@ ivscmatch(pdp, cfp, auxp)
 }
 
 void
-ivscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+ivscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc = (struct sci_softc *)dp;
@@ -112,7 +107,7 @@ ivscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	rp = (u_char *)zap->va + 0x40;
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
@@ -158,7 +153,7 @@ ivscattach(pdp, dp, auxp)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 8;      
+	chan->chan_ntargets = 8;
 	chan->chan_nluns = 8;
 	chan->chan_id = 7;
 
@@ -169,11 +164,8 @@ ivscattach(pdp, dp, auxp)
 }
 
 int
-ivsc_dma_xfer_in (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+ivsc_dma_xfer_in(struct sci_softc *dev, int len, register u_char *buf,
+                 int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_idata + 0x20;
@@ -255,11 +247,8 @@ ivsc_dma_xfer_in (dev, len, buf, phase)
 }
 
 int
-ivsc_dma_xfer_out (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+ivsc_dma_xfer_out(struct sci_softc *dev, int len, register u_char *buf,
+                  int phase)
 {
 	int wait = sci_data_wait;
 	volatile register u_char *sci_dma = dev->sci_data + 0x20;
@@ -306,8 +295,7 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 }
 
 int
-ivsc_intr(arg)
-	void *arg;
+ivsc_intr(void *arg)
 {
 	struct sci_softc *dev = arg;
 	u_char stat;
