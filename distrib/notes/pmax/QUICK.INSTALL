@@ -1,6 +1,6 @@
 	Guide for the Impatient
 	-----------------------
-	$NetBSD: QUICK.INSTALL,v 1.4 2001/07/24 18:11:00 nra Exp $
+	$NetBSD: QUICK.INSTALL,v 1.5 2001/08/26 12:00:17 simonb Exp $
 
 NetBSD 1.3.3 includes the install materials on CD.  However, we cannot
 make a single CD bootable on a dozen systems, so the CD cannot be
@@ -180,11 +180,11 @@ of gunzip from the FTP site.
 
     [... Kernel boot messages and copyright...]
 
-    boot device: rz0
-    root device (default rz0a): rz0b	# enter "rz0b" for root device
-    dump device (default rz0b): none	# enter "none" for dump device
+    boot device: sd0
+    root device (default sd0a): sd0b	# enter "sd0b" for root device
+    dump device (default sd0b): none	# enter "none" for dump device
     file system (default generic):	# press <return> at this prompt
-    root on rz0b
+    root on sd0b
     WARNING: clock gained 50 days -- CHECK AND RESET THE DATE!
     root file system type: ffs
     Enter pathname of shell or RETURN for sh:
