@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.78 2002/02/11 21:15:00 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.79 2002/10/22 18:48:28 perry Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -45,9 +45,9 @@ MANCOMPRESS:=	| ${MANCOMPRESS}
 __installpage: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		${.ALLSRC} ${.TARGET}" && \
+		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		${.ALLSRC} ${.TARGET})
+		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET})
 
 ##### Build and install rules (source form pages)
 
@@ -96,7 +96,7 @@ manlinks: manpages					# symlink install
 		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			echo $$t -\> $$l; \
-			${INSTALL_LINK} $$l $$t; \
+			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
 	done
 .endif
@@ -153,7 +153,7 @@ catlinks: catpages					# symlink install
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			echo $$t -\> $$l; \
-			${INSTALL_LINK} $$l $$t; \
+			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
 	done
 .endif
