@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.79 1995/01/03 01:30:55 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.80 1995/04/10 01:04:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -682,6 +682,7 @@ pcstop(tp, flag)
 
 }
 
+void
 pccnprobe(cp)
 	struct consdev *cp;
 {
@@ -698,6 +699,7 @@ pccnprobe(cp)
 }
 
 /* ARGSUSED */
+void
 pccninit(cp)
 	struct consdev *cp;
 {
@@ -709,6 +711,7 @@ pccninit(cp)
 }
 
 /* ARGSUSED */
+void
 pccnputc(dev, c)
 	dev_t dev;
 	char c;
