@@ -352,7 +352,7 @@ pcic_attach(parent, self, aux)
     bus_space_tag_t memt = ia->ia_memt;
     bus_space_handle_t ioh;
     bus_space_handle_t memh;
-    int vendor, count, irq, i;
+    int vendor, count, i;
 
     /* Map i/o space. */
     if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
@@ -423,12 +423,12 @@ pcic_attach(parent, self, aux)
        use two different interrupts, but interrupts are relatively
        scarce, shareable, and for PCIC controllers, very infrequent. */
 
-    if (ia->ia_irq == IRQUNK) {
+    if ((sc->irq = ia->ia_irq) == IRQUNK) {
 	/* XXX CHECK RETURN VALUE */
-	(void) isa_intr_alloc(ic, PCIC_CSC_INTR_IRQ_VALIDMASK, IST_EDGE, &irq);
-	sc->irq = irq;
-
-	printf(": using irq %d", irq);
+	(void) isa_intr_alloc(ic,
+			      PCIC_CSC_INTR_IRQ_VALIDMASK,
+			      IST_EDGE, &sc->irq);
+	printf(": using irq %d", sc->irq);
     }
 
     printf("\n");
@@ -442,7 +442,7 @@ pcic_attach(parent, self, aux)
 	pcic_read(&sc->handle[i], PCIC_CSC);
     }
 
-    sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY, pcic_intr, sc);
+    sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY, pcic_intr, sc);
 
     if ((sc->handle[0].flags & PCIC_FLAG_SOCKETP) ||
 	(sc->handle[1].flags & PCIC_FLAG_SOCKETP)) {
@@ -1054,6 +1054,23 @@ void pcic_chip_mem_unmap(pch, window)
 }
 
 
+/* XXX mycroft recommends this I/O space range.  I should put this
+   in a header somewhere */
+
+/* XXX some hardware doesn't seem to grok addresses in 0x400 range--
+   apparently missing a bit or more of address lines.
+   (e.g. CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
+   TravelMate 5000--not clear which is at fault)
+
+   Allow them to be overridden by patching a kernel and/or by a config
+   file option */
+
+#ifndef PCIC_ALLOC_IOBASE
+#define PCIC_ALLOC_IOBASE 0x400
+#endif
+
+int pcic_alloc_iobase = PCIC_ALLOC_IOBASE;
+
 int pcic_chip_io_alloc(pch, start, size, pcihp)
      pcmcia_chipset_handle_t pch;
      bus_addr_t start;
@@ -1071,9 +1088,6 @@ int pcic_chip_io_alloc(pch, start, size, pcihp)
      * generic isa interface to this, but there isn't currently one
      */
 
-    /* XXX mycroft recommends this I/O space range.  I should put this
-       in a header somewhere */
-
     iot = h->sc->iot;
 
     if (start) {
@@ -1084,7 +1098,7 @@ int pcic_chip_io_alloc(pch, start, size, pcihp)
 		 (u_long) ioaddr, (u_long) size));
     } else {
 	flags |= PCMCIA_IO_ALLOCATED;
-	if (bus_space_alloc(iot, 0x400, 0xfff, size, size, 
+	if (bus_space_alloc(iot, pcic_alloc_iobase, 0xfff, size, size, 
 			    0, 0, &ioaddr, &ioh))
 	    return(1);
 	DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
@@ -1187,6 +1201,10 @@ int pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	     win, (width == PCMCIA_WIDTH_IO8)?"io8":"io16",
 	     (u_long) ioaddr, (u_long) size));
 
+    printf(" port 0x%lx", (u_long)ioaddr);
+    if (size > 1)
+	printf("-0x%lx", (u_long)ioaddr + (u_long)size - 1);
+
     pcic_write(h, io_map_index[win].start_lsb, ioaddr & 0xff);
     pcic_write(h, io_map_index[win].start_msb, (ioaddr >> 8) & 0xff);
 
@@ -1225,6 +1243,10 @@ void pcic_chip_io_unmap(pch, window)
 
     h->ioalloc &= ~(1 << window);
 }
+
+/* allow patching or kernel option file override of available IRQs.
+   Useful if order of probing would screw up other devices, or if PCIC
+   hardware/cards have trouble with certain interrupt lines. */
 
 #ifndef PCIC_INTR_ALLOC_MASK
 #define	PCIC_INTR_ALLOC_MASK	0xffff
