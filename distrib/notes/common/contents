@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.112 2004/11/07 18:06:38 mbw Exp $
+.\"	$NetBSD: contents,v 1.113 2004/11/14 04:54:25 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -492,14 +492,18 @@ subdirectory
 of the
 .Nx \*V
 .ie \n[sparc64] \{\
-distribution tree.  If you want to install 32-bit only binaries, you will 
-need the
+distribution tree.  
+.(Note
+If you want to install 32-bit only binaries, you will 
+still need to boot using the sparc64 installation tools.  When it 
+asks you for the distribution set to install, provide the
 .Nx /sparc
-.Pa binary/sets
-and will need to use the 
+.Pa binary/sets .
+Be sure to use the 32 bit sparc
 .Pa kern-GENERIC_SUN4U.tgz 
-kernel distribution.  You still need to follow the \*M installation
-procedure, not sparc.
+kernel distribution.  Otherwise, continue to follow the \*M installation
+procedure, not the sparc instructions.
+.Note)
 Most people will want the 64-bit \*M distribution tree:
 .\}
 .el distribution tree, and are as follows:
