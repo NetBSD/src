@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1995/04/21 21:57:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1995/04/22 20:25:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,6 +117,10 @@ int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 extern	short exframesize[];
+
+#ifdef COMPAT_HPUX
+extern struct emul emul_hpux;
+#endif
 
 /*
  * Console initialization: called early on from main,
@@ -416,15 +420,15 @@ again:
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	register struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
-	frame->f_pc = entry & ~1;
+	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
@@ -433,7 +437,7 @@ setregs(p, entry, stack, retval)
 #endif
 #ifdef COMPAT_HPUX
 	p->p_md.md_flags &= ~MDP_HPUXMMAP;
-	if (p->p_emul == EMUL_HPUX) {
+	if (p->p_emul == &emul_hpux) {
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
@@ -468,7 +472,7 @@ setregs(p, entry, stack, retval)
 	{
 		extern short sigcodetrap[];
 
-		if ((p->p_pptr->p_emul == EMUL_HPUX) &&
+		if ((p->p_pptr->p_emul == &emul_hpux) &&
 		    (p->p_flag & P_TRACED)) {
 			p->p_md.md_flags |= MDP_HPUXTRACE;
 			*sigcodetrap = 0x4E42;
@@ -761,7 +765,7 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 #ifdef COMPAT_HPUX
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
@@ -867,7 +871,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
-	if (p->p_emul == EMUL_HPUX) {
+	if (p->p_emul == &emul_hpux) {
 		register struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
@@ -950,7 +954,7 @@ sigreturn(p, uap, retval)
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_emul == EMUL_HPUX) {
+	if (p->p_emul == &emul_hpux) {
 		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
 		struct hpuxsigcontext htsigc;
 

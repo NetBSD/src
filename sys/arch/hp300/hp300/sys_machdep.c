@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 1994/10/26 07:26:00 cgd Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 1995/04/22 20:25:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -138,15 +138,18 @@ cachectl(req, addr, len)
 		register int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
+#ifdef COMPAT_HPUX
+		extern struct emul emul_hpux;
+
+		if ((curproc->p_emul == &emul_hpux) &&
+		    len != 16 && len != NBPG)
+			doall = 1;
+#endif
 
 		if (addr == 0 ||
 		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
 			doall = 1;
-#ifdef COMPAT_HPUX
-		if ((curproc->p_emul == EMUL_HPUX) &&
-		    len != 16 && len != NBPG)
-			doall = 1;
-#endif
+
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {

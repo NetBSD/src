@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1995/03/23 20:19:21 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1995/04/22 20:27:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,8 +76,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
-
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_exec(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */

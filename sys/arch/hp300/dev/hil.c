@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.18 1995/04/10 00:58:36 mycroft Exp $	*/
+/*	$NetBSD: hil.c,v 1.19 1995/04/22 20:25:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,10 @@ int 	hildebug = 0;
 #define HDB_KEYBOARD	0x10
 #define HDB_IDMODULE	0x20
 #define HDB_EVENTS	0x80
+#endif
+
+#ifdef COMPAT_HPUX
+extern struct emul emul_hpux;
 #endif
 
 /* symbolic sleep message strings */
@@ -188,11 +192,14 @@ hilopen(dev, flags, mode, p)
 	 * 3.	BSD processes default to shared queue interface.
 	 *	Multiple processes can open the device.
 	 */
-	if (p->p_emul == EMUL_HPUX) {
+#ifdef COMPAT_HPUX
+	if (p->p_emul == &emul_hpux) {
 		if (dptr->hd_flags & (HIL_READIN|HIL_QUEUEIN))
 			return(EBUSY);
 		dptr->hd_flags |= HIL_READIN;
-	} else {
+	} else
+#endif
+	{
 		if (dptr->hd_flags & HIL_READIN)
 			return(EBUSY);
 		dptr->hd_flags |= HIL_QUEUEIN;
@@ -237,6 +244,7 @@ hilclose(dev, flags, mode, p)
 	register int i;
 	u_char device = HILUNIT(dev);
 	char mask, lpctrl;
+	extern struct emul emul_netbsd;
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -247,7 +255,7 @@ hilclose(dev, flags, mode, p)
 	if (device && (dptr->hd_flags & HIL_PSEUDO))
 		return (0);
 
-	if (p && p->p_emul != EMUL_HPUX) {
+	if (p && p->p_emul == &emul_netbsd) {
 		/*
 		 * If this is the loop device,
 		 * free up all queues belonging to this process.
@@ -414,7 +422,7 @@ hilioctl(dev, cmd, data, flag, p)
 	}
 
 #ifdef COMPAT_HPUX
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		return(hpuxhilioctl(dev, cmd, data, flag));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1995/03/28 18:18:16 jtc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 1995/04/22 20:27:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,8 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
+#define	cpu_exec(p)		/* nothing */
+#define cpu_swapin(p)           /* nothing */
 
 /*  XXX needed?  PAN
  * function vs. inline configuration;
@@ -64,9 +65,6 @@
 #define	NEED_FFS		/* need ffs function */
 #define	NEED_BCMP		/* need bcmp function */
 #define	NEED_STRLEN		/* need strlen function */
-
-#define	cpu_exec(p)		/* nothing */
-#define cpu_swapin(p)           /* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats

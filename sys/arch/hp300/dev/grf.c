@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.13 1995/04/10 00:58:10 mycroft Exp $	*/
+/*	$NetBSD: grf.c,v 1.14 1995/04/22 20:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@
 
 #ifdef COMPAT_HPUX
 #include <hp300/hpux/hpux.h>
+extern struct emul emul_hpux;
 #endif
 
 #include <vm/vm.h>
@@ -109,7 +110,7 @@ grfopen(dev, flags)
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (curproc->p_emul == EMUL_HPUX)
+	if (curproc->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -158,7 +159,7 @@ grfioctl(dev, cmd, data, flag, p)
 	int error;
 
 #ifdef COMPAT_HPUX
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		return(hpuxgrfioctl(dev, cmd, data, flag, p));
 #endif
 	error = 0;
