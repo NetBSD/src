@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.15 1997/05/02 14:23:51 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.16 1997/05/06 20:59:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.15 1997/05/02 14:23:51 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.16 1997/05/06 20:59:42 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1001,7 +1001,10 @@ Dir_MTime (gn)
     if (gn->type & OP_ARCHV) {
 	return Arch_MTime (gn);
     } else if (gn->path == (char *)NULL) {
-	fullName = Dir_FindFile (gn->name, dirSearchPath);
+	if (gn->type & OP_PHONY)
+	    fullName = NULL;
+	else
+	    fullName = Dir_FindFile (gn->name, dirSearchPath);
     } else {
 	fullName = gn->path;
     }
