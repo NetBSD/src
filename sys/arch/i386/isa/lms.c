@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.45 2004/09/14 20:25:05 drochner Exp $	*/
+/*	$NetBSD: lms.c,v 1.46 2005/02/03 21:08:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.45 2004/09/14 20:25:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.46 2005/02/03 21:08:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,16 @@ struct lms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int lmsprobe __P((struct device *, struct cfdata *, void *));
-void lmsattach __P((struct device *, struct device *, void *));
-int lmsintr __P((void *));
+int lmsprobe(struct device *, struct cfdata *, void *);
+void lmsattach(struct device *, struct device *, void *);
+int lmsintr(void *);
 
 CFATTACH_DECL(lms, sizeof(struct lms_softc),
     lmsprobe, lmsattach, NULL, NULL);
 
-int	lms_enable __P((void *));
-int	lms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	lms_disable __P((void *));
+int	lms_enable(void *);
+int	lms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	lms_disable(void *);
 
 const struct wsmouse_accessops lms_accessops = {
 	lms_enable,
@@ -77,10 +77,7 @@ const struct wsmouse_accessops lms_accessops = {
 };
 
 int
-lmsprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lmsprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -137,9 +134,7 @@ out:
 }
 
 void
-lmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -175,8 +170,7 @@ lmsattach(parent, self, aux)
 }
 
 int
-lms_enable(v)
-	void *v;
+lms_enable(void *v)
 {
 	struct lms_softc *sc = v;
 
@@ -193,8 +187,7 @@ lms_enable(v)
 }
 
 void
-lms_disable(v)
-	void *v;
+lms_disable(void *v)
 {
 	struct lms_softc *sc = v;
 
@@ -205,12 +198,7 @@ lms_disable(v)
 }
 
 int
-lms_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+lms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if 0
 	struct lms_softc *sc = v;
@@ -225,8 +213,7 @@ lms_ioctl(v, cmd, data, flag, p)
 }
 
 int
-lmsintr(arg)
-	void *arg;
+lmsintr(void *arg)
 {
 	struct lms_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.169 2004/03/13 17:31:34 bjh21 Exp $	*/
+/*	$NetBSD: pccons.c,v 1.170 2005/02/03 21:08:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.169 2004/03/13 17:31:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.170 2005/02/03 21:08:58 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -202,10 +202,10 @@ struct pc_softc {
 
 static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
-int pcprobe __P((struct device *, struct cfdata *, void *));
-void pcattach __P((struct device *, struct device *, void *));
-int pcintr __P((void *));
-void pcinit __P((void));
+int pcprobe(struct device *, struct cfdata *, void *);
+void pcattach(struct device *, struct device *, void *);
+int pcintr(void *);
+void pcinit(void);
 
 CFATTACH_DECL(pc, sizeof(struct pc_softc),
     pcprobe, pcattach, NULL, NULL);
@@ -217,9 +217,9 @@ struct pcconskbd_softc {
 	struct	device sc_dev;
 };
 
-int pcconskbdprobe __P((struct device *, struct cfdata *, void *));
-void pcconskbdattach __P((struct device *, struct device *, void *));
-void pcinput __P((void *, int));
+int pcconskbdprobe(struct device *, struct cfdata *, void *);
+void pcconskbdattach(struct device *, struct device *, void *);
+void pcinput(void *, int);
 
 CFATTACH_DECL(pcconskbd, sizeof(struct pcconskbd_softc), pcconskbdprobe,
     pcconskbdattach, NULL, NULL);
@@ -267,48 +267,48 @@ const struct cdevsw pc_cdevsw = {
 static unsigned int addr_6845 = MONO_BASE;
 
 #if (NPCCONSKBD == 0)
-char *sget __P((void));
+char *sget(void);
 #endif
-char *strans __P((u_char));
-void sput __P((u_char *, int));
+char *strans(u_char);
+void sput(u_char *, int);
 #ifdef XSERVER
-void pc_xmode_on __P((void));
-void pc_xmode_off __P((void));
+void pc_xmode_on(void);
+void pc_xmode_off(void);
 #endif
 
-void	pcstart __P((struct tty *));
-int	pcparam __P((struct tty *, struct termios *));
+void	pcstart(struct tty *);
+int	pcparam(struct tty *, struct termios *);
 
 #if (NPCCONSKBD == 0)
-int kbd_cmd __P((u_char, u_char));
+int kbd_cmd(u_char, u_char);
 #endif
-void set_cursor_shape __P((void));
+void set_cursor_shape(void);
 #ifdef XSERVER
 #ifdef XFREE86_BUG_COMPAT
-void get_cursor_shape __P((void));
+void get_cursor_shape(void);
 #endif
 #endif
-void do_async_update __P((void *));
-void async_update __P((void));
+void do_async_update(void *);
+void async_update(void);
 #if (NPCCONSKBD > 0)
-void update_leds __P((void));
+void update_leds(void);
 #else
 #define update_leds async_update
 #endif
 
 #if (NPCCONSKBD == 0)
-static __inline int kbd_wait_output __P((void));
-static __inline int kbd_wait_input __P((void));
-static __inline void kbd_flush_input __P((void));
-static u_char kbc_get8042cmd __P((void));
-static int kbc_put8042cmd __P((u_char));
+static __inline int kbd_wait_output(void);
+static __inline int kbd_wait_input(void);
+static __inline void kbd_flush_input(void);
+static u_char kbc_get8042cmd(void);
+static int kbc_put8042cmd(u_char);
 #endif
 
-void pccnprobe __P((struct consdev *));
-void pccninit __P((struct consdev *));
-void pccnputc __P((dev_t, int));
-int pccngetc __P((dev_t));
-void pccnpollc __P((dev_t, int));
+void pccnprobe(struct consdev *);
+void pccninit(struct consdev *);
+void pccnputc(dev_t, int);
+int pccngetc(dev_t);
+void pccnpollc(dev_t, int);
 
 #if (NPCCONSKBD == 0)
 
@@ -321,7 +321,7 @@ void pccnpollc __P((dev_t, int));
 	{ u_char x = inb(0x84); (void) x; }
 
 static __inline int
-kbd_wait_output()
+kbd_wait_output(void)
 {
 	u_int i;
 
@@ -334,7 +334,7 @@ kbd_wait_output()
 }
 
 static __inline int
-kbd_wait_input()
+kbd_wait_input(void)
 {
 	u_int i;
 
@@ -347,7 +347,7 @@ kbd_wait_input()
 }
 
 static __inline void
-kbd_flush_input()
+kbd_flush_input(void)
 {
 	u_int i;
 
@@ -364,7 +364,7 @@ kbd_flush_input()
  * Get the current command byte.
  */
 static u_char
-kbc_get8042cmd()
+kbc_get8042cmd(void)
 {
 
 	if (!kbd_wait_output())
@@ -380,8 +380,7 @@ kbc_get8042cmd()
  * Pass command byte to keyboard controller (8042).
  */
 static int
-kbc_put8042cmd(val)
-	u_char val;
+kbc_put8042cmd(u_char val)
 {
 
 	if (!kbd_wait_output())
@@ -397,9 +396,7 @@ kbc_put8042cmd(val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(val, polling)
-	u_char val;
-	u_char polling;
+kbd_cmd(u_char val, u_char polling)
 {
 	u_int retries = 3;
 	register u_int i;
@@ -446,7 +443,7 @@ kbd_cmd(val, polling)
 #endif /* NPCCONSKBD == 0 */
 
 void
-set_cursor_shape()
+set_cursor_shape(void)
 {
 	register int iobase = addr_6845;
 
@@ -460,7 +457,7 @@ set_cursor_shape()
 #ifdef XSERVER
 #ifdef XFREE86_BUG_COMPAT
 void
-get_cursor_shape()
+get_cursor_shape(void)
 {
 	register int iobase = addr_6845;
 
@@ -485,8 +482,7 @@ get_cursor_shape()
 #endif /* XSERVER */
 
 void
-do_async_update(v)
-	void *v;
+do_async_update(void *v)
 {
 #if (NPCCONSKBD == 0)
 	u_char poll = v ? 1 : 0;
@@ -540,7 +536,7 @@ do_async_update(v)
 }
 
 void
-async_update()
+async_update(void)
 {
 
 	if (kernel || polling) {
@@ -571,10 +567,7 @@ void update_leds()
  * these are both bad jokes
  */
 int
-pcprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 #if (NPCCONSKBD == 0)
@@ -746,9 +739,7 @@ lose:
 }
 
 void
-pcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -793,10 +784,7 @@ pcattach(parent, self, aux)
 
 #if (NPCCONSKBD > 0)
 int
-pcconskbdprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcconskbdprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pckbport_attach_args *pka = aux;
 
@@ -806,9 +794,7 @@ pcconskbdprobe(parent, match, aux)
 }
 
 void
-pcconskbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcconskbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbport_attach_args *pka = aux;
 
@@ -820,9 +806,7 @@ pcconskbdattach(parent, self, aux)
 }
 
 int
-pcconskbd_cnattach(tag, slot)
-	pckbport_tag_t tag;
-	pckbport_slot_t slot;
+pcconskbd_cnattach(pckbport_tag_t tag, pckbport_slot_t slot)
 {
 	kbctag = tag;
 	kbcslot = slot;
@@ -832,10 +816,7 @@ pcconskbd_cnattach(tag, slot)
 #endif
 
 int
-pcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pcopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -873,10 +854,7 @@ pcopen(dev, flag, mode, p)
 }
 
 int
-pcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -892,10 +870,7 @@ pcclose(dev, flag, mode, p)
 }
 
 int
-pcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -904,10 +879,7 @@ pcread(dev, uio, flag)
 }
 
 int
-pcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -916,10 +888,7 @@ pcwrite(dev, uio, flag)
 }
 
 int
-pcpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+pcpoll(dev_t dev, int events, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -928,8 +897,7 @@ pcpoll(dev, events, p)
 }
 
 struct tty *
-pctty(dev)
-	dev_t dev;
+pctty(dev_t dev)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -944,9 +912,7 @@ pctty(dev)
  */
 #if (NPCCONSKBD > 0)
 void
-pcinput(arg, data)
-	void *arg;
-	int data;
+pcinput(void *arg, int data)
 {
 	struct pc_softc *sc = arg;
 	register struct tty *tp = sc->sc_tty;
@@ -963,8 +929,7 @@ pcinput(arg, data)
 }
 #else
 int
-pcintr(arg)
-	void *arg;
+pcintr(void *arg)
 {
 	struct pc_softc *sc = arg;
 	register struct tty *tp = sc->sc_tty;
@@ -991,12 +956,7 @@ pcintr(arg)
 #endif
 
 int
-pcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -1071,8 +1031,7 @@ pcioctl(dev, cmd, data, flag, p)
 }
 
 void
-pcstart(tp)
-	struct tty *tp;
+pcstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
@@ -1112,9 +1071,7 @@ out:
 }
 
 void
-pcstop(tp, flag)
-	struct tty *tp;
-	int flag;
+pcstop(struct tty *tp, int flag)
 {
 
 	lock_state |= SCROLL;
@@ -1122,7 +1079,7 @@ pcstop(tp, flag)
 }
 
 int
-pccnattach()
+pccnattach(void)
 {
 	static struct consdev pccons = {
 		NULL, NULL, pccngetc, pccnputc, pccnpollc, NULL, NULL,
@@ -1138,9 +1095,7 @@ pccnattach()
 
 /* ARGSUSED */
 void
-pccnputc(dev, c)
-	dev_t dev;
-	int c;
+pccnputc(dev_t dev, int c)
 {
 	u_char oldkernel = kernel;
 	char help = c;
@@ -1160,8 +1115,7 @@ pccnputc(dev, c)
  */
 /* ARGSUSED */
 int
-pccngetc(dev)
-	dev_t dev;
+pccngetc(dev_t dev)
 {
 	register char *cp;
 
@@ -1201,9 +1155,7 @@ pccngetc(dev)
 }
 
 void
-pccnpollc(dev, on)
-	dev_t dev;
-	int on;
+pccnpollc(dev_t dev, int on)
 {
 
 	polling = on;
@@ -1240,9 +1192,7 @@ pccnpollc(dev, on)
  * Set line parameters.
  */
 int
-pcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+pcparam(struct tty *tp, struct termios *t)
 {
 
 	tp->t_ispeed = t->c_ispeed;
@@ -1266,7 +1216,7 @@ pcparam(tp, t)
 #endif
 
 void
-pcinit()
+pcinit(void)
 {
 	u_short volatile *cp;
 	u_short was;
@@ -1355,9 +1305,7 @@ static u_char iso2ibm437[] =
  * `pc3' termcap emulation.
  */
 void
-sput(cp, n)
-	u_char *cp;
-	int n;
+sput(u_char *cp, int n)
 {
 	u_char c, scroll = 0;
 
@@ -2454,7 +2402,7 @@ static Scan_def	scan_codes[] = {
 
 #if (NPCCONSKBD == 0)
 char *
-sget()
+sget(void)
 {
 	u_char dt, *capchar;
 
@@ -2486,8 +2434,7 @@ loop:
  * Get characters from the keyboard.  If none are present, return NULL.
  */
 char *
-strans(dt)
-	u_char dt;
+strans(u_char dt)
 {
 	static u_char extended = 0, shift_state = 0;
 	static u_char capchar[2];
@@ -2706,10 +2653,7 @@ strans(dt)
 }
 
 paddr_t
-pcmmap(dev, offset, nprot)
-	dev_t dev;
-	off_t offset;
-	int nprot;
+pcmmap(dev_t dev, off_t offset, int nprot)
 {
 
 	if (offset > 0x20000)
@@ -2719,7 +2663,7 @@ pcmmap(dev, offset, nprot)
 
 #ifdef XSERVER
 void
-pc_xmode_on()
+pc_xmode_on(void)
 {
 #ifdef COMPAT_10
 	struct trapframe *fp;
@@ -2743,7 +2687,7 @@ pc_xmode_on()
 }
 
 void
-pc_xmode_off()
+pc_xmode_off(void)
 {
 	struct trapframe *fp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.84 2004/07/03 18:24:37 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.85 2005/02/03 21:08:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84 2004/07/03 18:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.85 2005/02/03 21:08:58 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -159,8 +159,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.84 2004/07/03 18:24:37 yamt Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int sysbeepmatch __P((struct device *, struct cfdata *, void *));
-void sysbeepattach __P((struct device *, struct device *, void *));
+int sysbeepmatch(struct device *, struct cfdata *, void *);
+void sysbeepattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
     sysbeepmatch, sysbeepattach, NULL, NULL);
@@ -176,36 +176,39 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-void	spinwait __P((int));
-int	clockintr __P((void *, struct intrframe));
-int	gettick __P((void));
-void	sysbeep __P((int, int));
-void	rtcinit __P((void));
-int	rtcget __P((mc_todregs *));
-void	rtcput __P((mc_todregs *));
-int 	bcdtobin __P((int));
-int	bintobcd __P((int));
+void	spinwait(int);
+int	clockintr(void *, struct intrframe);
+int	gettick(void);
+void	sysbeep(int, int);
+void	rtcinit(void);
+int	rtcget(mc_todregs *);
+void	rtcput(mc_todregs *);
+int 	bcdtobin(int);
+int	bintobcd(int);
 
-static inline int gettick_broken_latch __P((void));
+static int cmoscheck(void);
+static int cmoscheckps2(void);
+
+static int clock_expandyear(int);
+
+static inline int gettick_broken_latch(void);
 
 
-__inline u_int mc146818_read __P((void *, u_int));
-__inline void mc146818_write __P((void *, u_int, u_int));
+__inline u_int mc146818_read(void *, u_int);
+__inline void mc146818_write(void *, u_int, u_int);
 
+/* XXX use sc? */
 __inline u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
 
 	outb(IO_RTC, reg);
 	return (inb(IO_RTC+1));
 }
 
+/* XXX use sc? */
 __inline void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
 
 	outb(IO_RTC, reg);
@@ -226,7 +229,7 @@ static int ticks[6];
  */
 
 int
-gettick_broken_latch()
+gettick_broken_latch(void)
 {
 	u_long ef;
 	int v1, v2, v3;
@@ -298,7 +301,7 @@ gettick_broken_latch()
 
 /* minimal initialization, enough for delay() */
 void
-initrtclock()
+initrtclock(void)
 {
 	u_long tval;
 
@@ -337,7 +340,7 @@ u_short	isa_timer_msb_table[ISA_TIMER_MSB_TABLE_SIZE];	/* timer->usec MSB */
 u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
 
 void
-startrtclock()
+startrtclock(void)
 {
 	int s;
 	u_long tval;
@@ -458,7 +461,7 @@ clockintr(void *arg, struct intrframe frame)
 }
 
 int
-gettick()
+gettick(void)
 {
 	u_long ef;
 	u_char lo, hi;
@@ -486,8 +489,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-i8254_delay(n)
-	int n;
+i8254_delay(int n)
 {
 	int tick, otick;
 	static const int delaytab[26] = {
@@ -569,18 +571,13 @@ i8254_delay(n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sysbeepmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sysbeepattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
@@ -590,8 +587,7 @@ sysbeepattach(parent, self, aux)
 #endif
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)
@@ -604,7 +600,7 @@ extern int fixtick; /* XXX */
 #endif /* NTP */
 
 void
-i8254_initclocks()
+i8254_initclocks(void)
 {
 
 #ifdef NTP
@@ -624,7 +620,7 @@ i8254_initclocks()
 }
 
 void
-rtcinit()
+rtcinit(void)
 {
 	static int first_rtcopen_ever = 1;
 
@@ -638,8 +634,7 @@ rtcinit()
 }
 
 int
-rtcget(regs)
-	mc_todregs *regs;
+rtcget(mc_todregs *regs)
 {
 
 	rtcinit();
@@ -650,8 +645,7 @@ rtcget(regs)
 }	
 
 void
-rtcput(regs)
-	mc_todregs *regs;
+rtcput(mc_todregs *regs)
 {
 
 	rtcinit();
@@ -659,16 +653,14 @@ rtcput(regs)
 }
 
 int
-bcdtobin(n)
-	int n;
+bcdtobin(int n)
 {
 
 	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 int
-bintobcd(n)
-	int n;
+bintobcd(int n)
 {
 
 	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
@@ -680,9 +672,8 @@ static int timeset;
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
  */
-static int cmoscheck __P((void));
 static int
-cmoscheck()
+cmoscheck(void)
 {
 	int i;
 	unsigned short cksum = 0;
@@ -698,9 +689,8 @@ cmoscheck()
 /*
  * Check whether the CMOS layout is PS/2 like, to be called at splclock().
  */
-static int cmoscheckps2 __P((void));
 static int
-cmoscheckps2()
+cmoscheckps2(void)
 {
 #if 0
 	/* Disabled until I find out the CRC checksum algorithm IBM uses */
@@ -733,10 +723,8 @@ int rtc_update_century = 0;
  * Being here, deal with the CMOS century byte.
  */
 static int centb = NVRAM_CENTURY;
-static int clock_expandyear __P((int));
 static int
-clock_expandyear(clockyear)
-	int clockyear;
+clock_expandyear(int clockyear)
 {
 	int s, clockcentury, cmoscentury;
 
@@ -790,8 +778,7 @@ clock_expandyear(clockyear)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -889,7 +876,7 @@ fstime:
  * Reset the clock.
  */
 void
-resettodr()
+resettodr(void)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -932,7 +919,6 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 }
