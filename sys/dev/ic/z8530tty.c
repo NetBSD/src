@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.19.2.6 1998/11/25 06:16:00 cgd Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.19.2.7 1999/02/01 07:40:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -327,6 +327,10 @@ zstty_attach(parent, self, aux)
 
 		s = splzs();
 
+		/* Turn on interrupts. */
+		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+
 		/* Fetch the current modem control status, needed later. */
 		cs->cs_rr0 = zs_read_csr(cs);
 
@@ -338,10 +342,6 @@ zstty_attach(parent, self, aux)
 		t.c_cflag = cs->cs_defcflag;
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-
-		/* Turn on interrupts when zsparam writes the chip. */
-		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
-
 		(void) zsparam(tp, &t);
 
 		s = splzs();
@@ -841,7 +841,7 @@ zsparam(tp, t)
 
 	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
 	tmp15 = cs->cs_preg[15];
-#if 1
+#if 0
 	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD))
 		SET(tmp15, ZSWR15_DCD_IE);
 	else
@@ -939,15 +939,9 @@ zsparam(tp, t)
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
-	 * explicit request. Do this only if we have enabled interrupts on
-	 * this pin. mac68k and macppc serial ports might have a clock on
-	 * DCD, and so it makes no sense to pass the clock state further up
-	 * the tty system.
+	 * explicit request.
 	 */
-	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD)) {
-		(void) (*linesw[tp->t_line].l_modem)(tp,
-				ISSET(cs->cs_rr0, ZSRR0_DCD));
-	}
+	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(cs->cs_rr0, ZSRR0_DCD));
 
 	if (!ISSET(cflag, CHWFLOW)) {
 		if (zst->zst_tx_stopped) {
