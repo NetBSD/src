@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.2 2004/12/16 17:01:02 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -189,7 +189,8 @@ typedef	struct	ipnat	{
 	u_int		in_hv;
 	int		in_flineno;		/* conf. file line number */
 	u_short		in_pnext;
-	u_char		in_xxx1[2];
+	u_char		in_v;
+	u_char		in_xxx;
 	/* From here to the end is covered by IPN_CMPSIZ */
 	u_32_t		in_flags;
 	u_32_t		in_mssclamp;		/* if != 0 clamp MSS to this */
