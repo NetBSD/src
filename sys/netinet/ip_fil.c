@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.76 2002/03/14 12:34:01 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.77 2002/03/14 12:34:29 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -122,7 +122,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.76 2002/03/14 12:34:01 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.77 2002/03/14 12:34:29 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.53 2002/03/13 02:29:08 darrenr Exp";
@@ -2162,8 +2162,8 @@ struct uio *uio;
 			num = io->iov_len;
 			if (num > left)
 				num = left;
-			start = io->iov_base + offset;
-			if (start > io->iov_base + io->iov_len) {
+			start = (char *)io->iov_base + offset;
+			if (start > (char *)io->iov_base + io->iov_len) {
 				offset -= io->iov_len;
 				ioc++;
 				continue;
