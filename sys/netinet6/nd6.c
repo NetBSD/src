@@ -1,10 +1,10 @@
-/*	$NetBSD: nd6.c,v 1.24 2000/04/13 16:27:00 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.25 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.55 2000/04/16 14:08:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -348,7 +348,7 @@ nd6_options(ndopts)
 			 * Unknown options must be silently ignored,
 			 * to accomodate future extension to the protocol.
 			 */
-			log(LOG_INFO,
+			log(LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "
 			    "option ignored\n", nd_opt->nd_opt_type);
 		}
@@ -411,6 +411,9 @@ nd6_timer(ignored_arg)
 		/* sanity check */
 		if (!rt)
 			panic("rt=0 in nd6_timer(ln=%p)\n", ln);
+		if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
+			panic("rt_llinfo(%p) is not equal to ln(%p)\n",
+			      rt->rt_llinfo, ln);
 		if (!dst)
 			panic("dst=0 in nd6_timer(ln=%p)\n", ln);
 
@@ -446,7 +449,7 @@ nd6_timer(ignored_arg)
 			if (ln->ln_expire)
 				ln->ln_state = ND6_LLINFO_STALE;
 			break;
-		/* 
+		/*
 		 * ND6_LLINFO_STALE state requires nothing for timer
 		 * routine.
 		 */
@@ -648,7 +651,7 @@ nd6_lookup(addr6, create, ifp)
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
-		 * If we want to create a neighbor cache for the address, we 
+		 * If we want to create a neighbor cache for the address, we
 		 * should free the route for the destination and allocate an
 		 * interface route.
 		 */
@@ -659,6 +662,8 @@ nd6_lookup(addr6, create, ifp)
 	}
 	if (!rt) {
 		if (create && ifp) {
+			int e;
+
 			/*
 			 * If no route is available and create is set,
 			 * we allocate a host route for the destination
@@ -675,17 +680,19 @@ nd6_lookup(addr6, create, ifp)
 			 * Create a new route. RTF_LLINFO is necessary
 			 * to create a Neighbor Cache entry for the
 			 * destination in nd6_rtrequest which will be
-			 * called in rtequest via ifa->ifa_rtrequest. 
+			 * called in rtequest via ifa->ifa_rtrequest.
 			 */
-			if (rtrequest(RTM_ADD, (struct sockaddr *)&sin6,
-				      ifa->ifa_addr,
-				      (struct sockaddr *)&all1_sa,
-				      (ifa->ifa_flags |
-				       RTF_HOST | RTF_LLINFO) & ~RTF_CLONING,
-				      &rt))
+			if ((e = rtrequest(RTM_ADD, (struct sockaddr *)&sin6,
+					   ifa->ifa_addr,
+					   (struct sockaddr *)&all1_sa,
+					   (ifa->ifa_flags |
+					    RTF_HOST | RTF_LLINFO) &
+					   ~RTF_CLONING,
+					   &rt)) != 0)
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
-				    "neighbor(%s)\n", ip6_sprintf(addr6));
+				    "neighbor(%s), errno=%d\n",
+				    ip6_sprintf(addr6), e);
 			if (rt == NULL)
 				return(NULL);
 			if (rt->rt_llinfo) {
@@ -720,7 +727,7 @@ nd6_lookup(addr6, create, ifp)
 
 /*
  * Detect if a given IPv6 address identifies a neighbor on a given link.
- * XXX: should take care of the destination of a p2p link? 
+ * XXX: should take care of the destination of a p2p link?
  */
 int
 nd6_is_addr_neighbor(addr, ifp)
@@ -1099,7 +1106,7 @@ nd6_rtrequest(req, rt, sa)
 			 */
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 		} else {
-		        /* 
+		        /*
 			 * When req == RTM_RESOLVE, rt is created and
 			 * initialized in rtrequest(), so rt_expire is 0.
 			 */
@@ -1592,7 +1599,7 @@ fail:
 				nd6_output(ifp, ln->ln_hold,
 					   (struct sockaddr_in6 *)rt_key(rt),
 					   rt);
-#endif 
+#endif
 				ln->ln_hold = 0;
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
@@ -1641,9 +1648,8 @@ fail:
 	case ND_REDIRECT:
 		/*
 		 * If the icmp is a redirect to a better router, always set the
-		 * is_router flag. Otherwise, if the entry is newly created, 
+		 * is_router flag. Otherwise, if the entry is newly created,
 		 * clear the flag. [RFC 2461, sec 8.3]
-		 * 
 		 */
 		if (code == ND_REDIRECT_ROUTER)
 			ln->ln_router = 1;
@@ -1728,7 +1734,7 @@ nd6_output(ifp, m0, dst, rt0)
 	}
 
 	/*
-	 * next hop determination. This routine is derived from ether_outpout. 
+	 * next hop determination. This routine is derived from ether_outpout.
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -1738,7 +1744,7 @@ nd6_output(ifp, m0, dst, rt0)
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
 					return nd6_output(ifp, m0, dst, rt); /* XXX: loop care? */
-			} else 
+			} else
 				senderr(EHOSTUNREACH);
 		}
 		if (rt->rt_flags & RTF_GATEWAY) {
@@ -1826,7 +1832,7 @@ nd6_output(ifp, m0, dst, rt0)
 	
   sendpkt:
 	return((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
-	
+
   bad:
 	if (m)
 		m_freem(m);
