@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 1999/03/05 10:45:25 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 1999/03/05 11:07:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3387,16 +3387,16 @@ dostart:
 
 #ifdef DDB
 	/*
-	 * First, check for DDB arguments. The loader passes `_esym' in %o4.
+	 * First, check for DDB arguments. The loader passes `esym' in %o4.
 	 * A DDB magic number is passed in %o5 to allow for bootloaders
 	 * that know nothing about DDB symbol loading conventions.
 	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
 	 * for their own mirky business.
 	 *
 	 * Pre-NetBSD 1.3 bootblocks had KERNBASE compiled in, and used
-	 * it to compute the value of `_esym'. In order to successfully
+	 * it to compute the value of `esym'. In order to successfully
 	 * boot a kernel built with a different value for KERNBASE using
-	 * old bootblocks, we fixup `_esym' here by the difference between
+	 * old bootblocks, we fixup `esym' here by the difference between
 	 * KERNBASE and the old value (known to be 0xf8000000) compiled
 	 * into pre-1.3 bootblocks.
 	 * We use the magic number passed as the sixth argument to
@@ -3419,8 +3419,8 @@ dostart:
 	tst	%o4			! do we have the symbols?
 	bz	2f
 	 sub	%o4, %l4, %o4		! apply compat correction
-	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
-	st	%o4, [%l3 + %lo(_esym - KERNBASE)]
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
+	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
 2:
 #endif
 	/*
@@ -3566,8 +3566,8 @@ start_havetype:
 	set	KERNBASE, %l1		! highva
 	set	_end + (2 << 18), %l2	! last va that must be remapped
 #ifdef DDB
-	sethi	%hi(_esym - KERNBASE), %o1
-	ld	[%o1+%lo(_esym - KERNBASE)], %o1
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %o1
+	ld	[%o1+%lo(_C_LABEL(esym) - KERNBASE)], %o1
 	tst	%o1
 	bz	1f
 	 nop
