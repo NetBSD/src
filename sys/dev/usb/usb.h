@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.45 2000/04/21 16:01:31 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.46 2000/04/21 18:57:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -298,9 +298,9 @@ typedef struct {
 	uByte		DeviceRemovable[32]; /* max 255 ports */
 #define UHD_NOT_REMOV(desc, i) \
     (((desc)->DeviceRemovable[(i)/8] >> ((i) % 8)) & 1)
-	/* deprecated uByte		PortPowerCtrlMask[]; */
+	/* deprecated */ uByte		PortPowerCtrlMask[1];
 } usb_hub_descriptor_t;
-#define USB_HUB_DESCRIPTOR_SIZE 8
+#define USB_HUB_DESCRIPTOR_SIZE 9 /* includes deprecated PortPowerCtrlMask */
 
 typedef struct {
 	uWord		wStatus;
