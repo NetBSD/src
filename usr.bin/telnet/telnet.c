@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.11 1998/07/26 22:35:49 mycroft Exp $	*/
+/*	$NetBSD: telnet.c,v 1.12 1998/11/06 19:54:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.11 1998/07/26 22:35:49 mycroft Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.12 1998/11/06 19:54:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -692,7 +692,7 @@ mklist(buf, name)
 		 */
 		if ((c == ' ') || !isascii(c))
 			n = 1;
-		else if (islower(c))
+		else if (islower((unsigned char)c))
 			*cp = toupper(c);
 	}
 
@@ -751,7 +751,7 @@ char termbuf[1024];
 
 	/*ARGSUSED*/
 	int
-setupterm(tname, fd, errp)
+setup_term(tname, fd, errp)
 	char *tname;
 	int fd, *errp;
 {
@@ -785,7 +785,7 @@ gettermname()
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
 		if ((tname = (char *)env_getvalue((unsigned char *)"TERM")) &&
-				(setupterm(tname, 1, &err) == 0)) {
+				(setup_term(tname, 1, &err) == 0)) {
 			tnamep = mklist(termbuf, tname);
 		} else {
 			if (tname && ((int)strlen(tname) <= 40)) {
