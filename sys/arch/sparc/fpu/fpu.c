@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13.4.2 2001/11/20 16:28:02 pk Exp $ */
+/*	$NetBSD: fpu.c,v 1.13.4.3 2002/01/04 19:08:47 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -361,14 +361,14 @@ fpu_execute(fe, instr)
 		case FMVIC >> 2:
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVIC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
+			cond = (curproc->l_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVXC >> 2:
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVXC\n"));
-			cond = (curproc->p_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
+			cond = (curproc->l_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -376,7 +376,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] != 0)
+			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] != 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -384,7 +384,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] > 0)
+			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] > 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -392,7 +392,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] >= 0)
+			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] >= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -400,7 +400,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRNZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] == 0)
+			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] == 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -408,7 +408,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->p_md.md_tf->tf_global[rs1] <= 0)
+			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] <= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
@@ -416,7 +416,7 @@ fpu_execute(fe, instr)
 			/* Presume we're curproc */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->p_md.md_tf->tf_global[rs1] < 0)
+			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] < 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;		
