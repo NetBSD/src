@@ -12,7 +12,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -39,12 +39,13 @@ static const char rcsid[] =
 #include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <util.h>
 
-#include "mtree.h"		/* XXX for extern.h */
 #include "extern.h"
 
 /*
- * We're assuming that there won't be a whole lot of excludes, 
+ * We're assuming that there won't be a whole lot of excludes,
  * so it's OK to use a stupid algorithm.
  */
 struct exclude {
@@ -54,9 +55,11 @@ struct exclude {
 };
 static LIST_HEAD(, exclude) excludes;
 
+
 void
 init_excludes(void)
 {
+
 	LIST_INIT(&excludes);
 }
 
@@ -64,28 +67,24 @@ void
 read_excludes_file(const char *name)
 {
 	FILE *fp;
-	char *line, *str;
+	char *line;
 	struct exclude *e;
-	size_t len;
 
 	fp = fopen(name, "r");
 	if (fp == 0)
 		err(1, "%s", name);
 
-	while ((line = fgetln(fp, &len)) != 0) {
-		if (line[len - 1] == '\n')
-			len--;
-		if (len == 0)
+	while ((line = fparseln(fp, NULL, NULL, NULL,
+	    FPARSELN_UNESCCOMM | FPARSELN_UNESCCONT | FPARSELN_UNESCESC))
+	    != NULL) {
+		if (line[0] == '\0')
 			continue;
 
-		str = malloc(len + 1);
-		e = malloc(sizeof *e);
-		if (str == 0 || e == 0)
-			errx(1, "memory allocation error");
-		e->glob = str;
-		memcpy(str, line, len);
-		str[len] = '\0';
-		if (strchr(str, '/'))
+		if ((e = malloc(sizeof *e)) == NULL)
+			mtree_err("memory allocation error");
+
+		e->glob = line;
+		if (strchr(e->glob, '/') != NULL)
 			e->pathname = 1;
 		else
 			e->pathname = 0;
@@ -103,9 +102,10 @@ check_excludes(const char *fname, const char *path)
 #define MATCH(g, n) (fnmatch((g), (n), FNM_PATHNAME) == 0)
 
 	LIST_FOREACH(e, &excludes, link) {
-		if (e->pathname && MATCH(e->glob, path) 
-		    || MATCH(e->glob, fname))
-			return 1;
+		if ((e->pathname && MATCH(e->glob, path))
+		    || MATCH(e->glob, fname)) {
+			return (1);
+		}
 	}
-	return 0;
+	return (0);
 }
