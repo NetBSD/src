@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.7 1997/10/11 02:24:23 cjs Exp $	*/
+/*	$NetBSD: util.h,v 1.8 1997/11/16 22:18:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -36,6 +36,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <stdio.h>
 #include <pwd.h>
 #include <utmp.h>
 #include <termios.h>
@@ -63,6 +64,7 @@ int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
 void	pw_error __P((const char *name, int err, int eval));
 int	openpty __P((int *, int *, char *, struct termios *,
 		     struct winsize *));
+int	fparseln __P((FILE *, size_t *, size_t *, const char[3]));
 pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
