@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.1 2002/05/24 04:01:44 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.2 2002/05/24 04:53:07 itojun Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ arc4_stir(as)
 	}       rdat;
 
 	gettimeofday(&rdat.tv, NULL);
-	fd = open("/dev/arandom", O_RDONLY);
+	fd = open("/dev/urandom", O_RDONLY);
 	if (fd != -1) {
 		read(fd, rdat.rnd, sizeof(rdat.rnd));
 		close(fd);
