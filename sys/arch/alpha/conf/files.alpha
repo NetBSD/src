@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.3 1995/03/03 01:33:44 cgd Exp $
+#	$NetBSD: files.alpha,v 1.4 1995/04/22 12:45:08 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -7,60 +7,93 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+
+#
+# Bus-independent devices
+#
+
 device mainbus at root { }              # no locators (yet?)
 
 device cpu at mainbus			# not really optional
 file	arch/alpha/alpha/cpu.c		cpu
 
+#
+# Machine-independent SCSI drivers
+#
+
+include "../../../scsi/files.scsi"
+major { st = 2 }
+major { cd = 3 }
+major { sd = 8 }
+
+#
+# TurboChannel Devices
+#
+
+# the turbochannel bus itself
 device tc at mainbus { slot = -1, offset = -1 }
-file	arch/alpha/tc/tc.c		tc
+file	arch/alpha/tc/tc.c		tc		needs-flag
 file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
 file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
 
-device asic at tc { offset = -1 }		# not really optional
+# the TurboChannel IOCTL ASIC
+device asic at tc { offset = -1 }	# not really optional
 file	arch/alpha/tc/asic.c		asic
 
-device clock at asic 				# not really optional
+# the TurboChannel clock (XXX)
+device clock at asic 			# not really optional
 file	arch/alpha/alpha/clock.c	clock
 
+# Smart Frame buffer (XXX NOT YET SUPPORTED)
 device sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
+# 8530 UARTs
 device scc at asic
-file	arch/alpha/tc/scc.c		scc	needs-count
+file	arch/alpha/tc/scc.c		scc		needs-count
 
+# the TCDS ASIC
 device tcds at tc { slot = -1 }
-file	arch/alpha/tc/tcds.c		tcds	needs-count
+file	arch/alpha/tc/tcds.c		tcds		needs-count
 
-define	scsi {}
-file	scsi/scsi_base.c		scsi
-file	scsi/scsi_ioctl.c		scsi
-file	scsi/scsiconf.c			scsi
-
+# 53C[F]90 SCSI
 device esp at tcds: scsi
-file	arch/alpha/tc/esp.c		esp needs-count
-file	arch/alpha/tc/dma.c		esp
+file	arch/alpha/tc/esp.c		esp		needs-count
+file	arch/alpha/tc/tcds_dma.c	esp
 
-device scsibus at scsi	{ target = -1, drive = -1 }
-
-major { cd = 3 }
-device cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-major { sd = 8 }
-device sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
-major { st = 2 }
-device st at scsibus: tape
-file	scsi/st.c			st needs-flag
-device ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-device uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
-device su at scsibus: disk
-file	scsi/su.c			su needs-flag
-
+# Baseboard Lance ethernet.  (XXX option slot lance)
 device le at asic: ifnet, ether
-file	arch/alpha/tc/if_le.c		le	needs-count
+file	arch/alpha/tc/if_le.c		le		needs-count
+
+#
+# ISA Devices
+#
+
+#device	isa at mainbus {[port = -1], [size = 0],	# XXX
+#			[iomem = -1], [iosiz = 0],
+#			[irq = -1], [drq = -1]}
+#include "../../../dev/isa/files.isa"
+#file	arch/alpha/isa/isa_machdep.c	isa		needs-flag # XXX
+#file	arch/alpha/isa/isa_xxx.c	isa
+
+#
+# EISA Devices
+#
+
+#include "../../../dev/eisa/files.eisa"
+
+#
+# PCI devices
+#
+
+device	pci at mainbus {[bus = -1], [dev = -1]}
+
+include "../../../dev/pci/files.pci"
+file	arch/alpha/pci/pci_machdep.c	pci
+
+#
+# Standard files
+#
 
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/conf.c
@@ -76,9 +109,13 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
-
 file	dev/cons.c
 file	netinet/in_cksum.c
+
+#
+# Optional files
+#
+
 file	netns/ns_cksum.c		ns
 
 file	compat/osf1/osf1_ioctl.c	compat_osf1
