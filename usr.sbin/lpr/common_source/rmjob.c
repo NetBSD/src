@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.17 2001/06/25 11:04:52 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.18 2002/07/14 15:27:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.17 2001/06/25 11:04:52 mrg Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.18 2002/07/14 15:27:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,11 +76,11 @@ static char	current[40];		/* active control file name */
 
 extern uid_t	uid, euid;		/* real and effective user id's */
 
-static	void	do_unlink __P((char *));
-static	void	alarmer __P((int));
+static	void	do_unlink(char *);
+static	void	alarmer(int);
 
 void
-rmjob()
+rmjob(void)
 {
 	int i, nitems;
 	int assasinated = 0;
@@ -165,8 +165,7 @@ rmjob()
  * Return boolean indicating existence of a lock file.
  */
 int
-lockchk(s)
-	char *s;
+lockchk(char *s)
 {
 	FILE *fp;
 	int i, n;
@@ -204,8 +203,7 @@ lockchk(s)
  * Process a control file.
  */
 void
-process(file)
-	char *file;
+process(char *file)
 {
 	FILE *cfp;
 
@@ -228,8 +226,7 @@ process(file)
 }
 
 static void
-do_unlink(file)
-	char *file;
+do_unlink(char *file)
 {
 	int	ret;
 
@@ -245,8 +242,7 @@ do_unlink(file)
  * Do the dirty work in checking
  */
 int
-chk(file)
-	char *file;
+chk(char *file)
 {
 	int *r, n;
 	char **u, *cp;
@@ -302,8 +298,7 @@ chk(file)
  * Normal users can only remove the file from where it was sent.
  */
 int
-isowner(owner, file)
-	char *owner, *file;
+isowner(char *owner, char *file)
 {
 	if (!strcmp(person, root) && (from == host || !strcmp(from, file+6)))
 		return(1);
@@ -320,7 +315,7 @@ isowner(owner, file)
  * then try removing files on the remote machine.
  */
 void
-rmremote()
+rmremote(void)
 {
 	char *cp, *s;
 	int i, rem;
@@ -393,8 +388,7 @@ rmremote()
 }
 
 static void
-alarmer(s)
-	int s;
+alarmer(int s)
 {
 	/* nothing */
 }
@@ -403,8 +397,7 @@ alarmer(s)
  * Return 1 if the filename begins with 'cf'
  */
 int
-iscf(d)
-	const struct dirent *d;
+iscf(const struct dirent *d)
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.15 2002/07/09 01:12:35 hubertf Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.16 2002/07/14 15:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.15 2002/07/09 01:12:35 hubertf Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.16 2002/07/14 15:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,14 +77,14 @@ static int	 minfree;       /* keep at least minfree blocks available */
 static char	*sp = "";
 static char	 tfname[NAME_MAX];	/* tmp copy of cf before linking */
 
-static int        chksize __P((int));
-static void       frecverr __P((const char *, ...))
+static int        chksize(int);
+static void       frecverr(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-static int        noresponse __P((void));
-static void       rcleanup __P((int));
-static int        read_number __P((char *));
-static int        readfile __P((char *, int));
-static int        readjob __P((void));
+static int        noresponse(void);
+static void       rcleanup(int);
+static int        read_number(char *);
+static int        readfile(char *, int);
+static int        readjob(void);
 
 
 void
@@ -336,28 +336,15 @@ rcleanup(int signo)
 	dfname[0] = '\0';
 }
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static void
-#ifdef __STDC__
 frecverr(const char *msg, ...)
-#else
-frecverr(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	extern char fromb[];
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	rcleanup(0);
 	syslog(LOG_ERR, "%s", fromb);
 	vsyslog(LOG_ERR, msg, ap);
