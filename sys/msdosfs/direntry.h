@@ -1,8 +1,8 @@
-/*	$NetBSD: direntry.h,v 1.9 1995/03/29 22:08:52 briggs Exp $	*/
+/*	$NetBSD: direntry.h,v 1.10 1995/10/15 15:34:20 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1995 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -72,6 +72,24 @@ struct direntry {
 };
 
 /*
+ * Structure of a Win95 long name directory entry
+ */
+struct winentry {
+	u_int8_t	weCnt;
+#define	WIN_LAST	0x40
+#define	WIN_CNT		0x3f
+	u_int8_t	wePart1[10];
+	u_int8_t	weAttributes;
+#define	ATTR_WIN95	0x0f
+	u_int8_t	weReserved1;
+	u_int8_t	weChksum;
+	u_int8_t	wePart2[12];
+	u_int16_t	weReserved2;
+	u_int8_t	wePart3[4];
+};
+#define	WIN_CHARS	13	/* Number of chars per winentry */
+
+/*
  * This is the format of the contents of the deTime field in the direntry
  * structure.
  * We don't use bitfields because we don't know how compilers for
@@ -99,5 +117,10 @@ struct direntry {
 void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
 void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
 int dos2unixfn __P((u_char dn[11], u_char *un));
-void unix2dosfn __P((u_char *un, u_char dn[11], int unlen));
+int unix2dosfn __P((u_char *un, u_char dn[12], int unlen, u_int gen));
+int unix2winfn __P((u_char *un, int unlen, struct winentry *wep, int cnt, int chksum));
+int winChkName __P((u_char *un, int unlen, struct winentry *wep, int chksum));
+int win2unixfn __P((struct winentry *wep, struct dirent *dp, int chksum));
+u_int8_t winChksum __P((u_int8_t *name));
+int winSlotCnt __P((u_char *un, int unlen));
 #endif	/* _KERNEL */

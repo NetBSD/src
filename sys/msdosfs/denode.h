@@ -1,8 +1,8 @@
-/*	$NetBSD: denode.h,v 1.16 1995/09/09 19:38:00 ws Exp $	*/
+/*	$NetBSD: denode.h,v 1.17 1995/10/15 15:34:19 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1995 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -141,17 +141,15 @@ struct denode {
 	u_long de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
 	u_long de_dirclust;	/* cluster of the directory file containing this entry */
-	u_long de_diroffset;	/* ordinal of this entry in the directory */
-	u_long de_fndclust;	/* cluster of found dir entry */
+	u_long de_diroffset;	/* offset of this entry in the directory cluster */
 	u_long de_fndoffset;	/* offset of found dir entry */
+	int de_fndcnt;		/* number of slots before de_fndoffset */
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
 	pid_t de_lockholder;	/* current lock holder */
 	pid_t de_lockwaiter;	/* lock wanter */
-	/* the next two fields must be contiguous in memory... */
-	u_char de_Name[8];	/* name, from directory entry */
-	u_char de_Extension[3];	/* extension, from directory entry */
+	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
 	u_short de_Time;	/* creation time */
 	u_short de_Date;	/* creation date */
@@ -168,6 +166,12 @@ struct denode {
 #define	DE_UPDATE	0x0004	/* Modification time update request. */
 #define	DE_MODIFIED	0x0008	/* Denode has been modified. */
 #define	DE_RENAME	0x0010	/* Denode is in the process of being renamed */
+
+/*
+ * Maximum filename length in Win95
+ * Note: Must be < sizeof(dirent.d_name)
+ */
+#define	WIN_MAXLEN	255
 
 /*
  * Transfer directory entries between internal and external form.
@@ -269,7 +273,7 @@ int	msdosfs_reallocblks __P((struct vop_reallocblks_args *));
 /*
  * Internal service routine prototypes.
  */
-int createde __P((struct denode *, struct denode *, struct denode **));
+int createde __P((struct denode *, struct denode *, struct denode **, struct componentname *));
 int deextend __P((struct denode *, u_long, struct ucred *));
 int deget __P((struct msdosfsmount *, u_long, u_long, struct direntry *, struct denode **));
 int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
@@ -280,4 +284,5 @@ int readde __P((struct denode *, struct buf **, struct direntry **));
 int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **));
 void reinsert __P((struct denode *));
 int removede __P((struct denode *, struct denode *));
+int uniqdosname __P((struct denode *, struct componentname *, u_char *));
 #endif	/* _KERNEL */
