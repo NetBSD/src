@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28 1997/08/17 16:51:21 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.28.4.1 1997/10/26 21:20:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,11 +38,15 @@
  *	@(#)rz.c	8.1 (Berkeley) 7/29/93
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.1 1997/10/26 21:20:40 mellon Exp $");
+
 /*
  * SCSI CCS (Command Command Set) disk driver.
  * NOTE: The name was changed from "sd" to "rz" for DEC naming compatibility.
  * I guess I can't avoid confusion someplace.
  */
+
 #include "rz.h"
 #if NRZ > 0
 
@@ -69,7 +73,10 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
+struct rz_softc;
 int	rzprobe __P((void /*register struct pmax_scsi_device*/ *sd));
+void	rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
+void	rzgetgeom __P((struct rz_softc *, struct disklabel *lp));
 void	rzstart __P((int unit));
 void	rzdone __P((int unit, int error, int resid, int status));
 void	rzgetinfo __P((dev_t dev));
@@ -109,6 +116,7 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	{  196608,  RZ_END }	/* H -- B to end of disk */
 };
 
+
 extern char *
 readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		   struct disklabel *lp, struct cpu_disklabel *osdep));
@@ -123,9 +131,6 @@ extern char *
 compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));
 #endif
-
-
-#define	RAWPART		2	/* 'c' partition */	/* XXX */
 
 struct rzstats {
 	long	rzresets;
@@ -781,7 +786,6 @@ rzgetinfo(dev)
 	register int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
 	register struct disklabel *lp = sc->sc_label;
-	register int i;
 	char *msg;
 	int part;
 	struct cpu_disklabel cd;
@@ -821,9 +825,35 @@ rzgetinfo(dev)
 	 * Now try to read the disklabel
 	 */
 	msg = readdisklabel(dev, rzstrategy, lp, &cd);
+
+	/*
+	 * If this is an installation diskimage, the label geometry 
+	 * is from a vnd(4) diskimage, not the real SCSI disk, and so
+	 * the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
+	 */
+	if (msg == NULL &&
+	    strncmp(lp->d_typename, "install diskimag", 16) == 0 &&
+	    strlen(lp->d_packname) == 0 &&
+	    lp->d_npartitions == RAW_PART+1 &&
+	    lp->d_partitions[0].p_offset == 0 &&
+	    lp->d_partitions[0].p_size == 65536 &&
+#if 0
+	    lp->d_partitions[0].p_size == lp->d_partitions[RAW_PART].p_size &&
+#endif
+	    lp->d_partitions[RAW_PART].p_size != sc->sc_blks) {
+		printf("rz%d: WARNING: %s\n", unit,
+		       "install diskimage, recomputing label.");
+		rzgetgeom(sc, lp);
+		lp->d_partitions[RAW_PART].p_size = sc->sc_blks;
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_checksum = dkcksum(lp);
+		return;
+	}
 	if (msg == NULL)
 		return;
 	printf("rz%d: WARNING: %s\n", unit, msg);
+
+
 
 #ifdef	COMPAT_ULTRIX
 	/*
@@ -835,38 +865,12 @@ rzgetinfo(dev)
 		       unit);
 		return;
 	}
-	printf("rz%d: WARNING: Ultrix label, %s\n", unit, msg);
+	printf("rz%d: WARNING: trying Ultrix label, %s\n", unit, msg);
 #endif
 	/*
 	 * No label found. Concoct one from compile-time default.
 	 */
-	lp->d_magic = DISKMAGIC;
-	lp->d_magic2 = DISKMAGIC;
-	lp->d_type = DTYPE_SCSI;
-	lp->d_subtype = 0;
-	lp->d_typename[0] = '\0';
-	lp->d_secsize = DEV_BSIZE;
-	lp->d_secperunit = sc->sc_blks;
-	lp->d_npartitions = MAXPARTITIONS;
-	lp->d_bbsize = BBSIZE;
-	lp->d_sbsize = SBSIZE;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		register struct partition *pp = & lp->d_partitions[i];
-
-		pp->p_size = rzdefaultpart[i].nblocks;
-		pp->p_offset = rzdefaultpart[i].strtblk;
-
-		/*
-		 * Clip end of partition against end of disk.
-		 * If both start and end beyond end of disk, set to zero.
-		 */
-		if (pp->p_offset > sc->sc_blks) {
-			pp->p_size = 0;
-			pp->p_offset = 0;
-		} else if ((pp->p_size + pp->p_offset) > sc->sc_blks)
-			pp->p_size = sc->sc_blks - pp->p_offset;
-	}
-	lp->d_partitions[RAWPART].p_size = sc->sc_blks;	/*XXX redundancy */
+	rzgetdefaultlabel(sc, lp);
 }
 
 int
@@ -913,7 +917,7 @@ rzopen(dev, flags, mode, p)
 	 * (whole disk).
 	 */
 	mask = 1 << part;
-	if ((sc->sc_openpart & mask) == 0 && part != RAWPART) {
+	if ((sc->sc_openpart & mask) == 0 && part != RAW_PART) {
 		register struct partition *pp;
 		u_long start, end;
 
@@ -923,7 +927,7 @@ rzopen(dev, flags, mode, p)
 		for (pp = lp->d_partitions, i = 0;
 		     i < lp->d_npartitions; pp++, i++) {
 			if (pp->p_offset + pp->p_size <= start ||
-			    pp->p_offset >= end || i == RAWPART)
+			    pp->p_offset >= end || i == RAW_PART)
 				continue;
 			if (sc->sc_openpart & (1 << i))
 				log(LOG_WARNING,
@@ -973,7 +977,10 @@ rzclose(dev, flags, mode, p)
 		while (sc->sc_tab.b_actf)
 			sleep((caddr_t)&sc->sc_tab, PZERO - 1);
 		splx(s);
+#if 0
+		/* 4.4Lite semantics  breaks disklabel -[N|W] on close */
 		sc->sc_flags &= ~RZF_WLABEL;
+#endif
 	}
 	return (0);
 }
@@ -1115,6 +1122,10 @@ rzioctl(dev, cmd, data, flag, p)
 		error = writedisklabel(dev, rzstrategy, sc->sc_label, &cd);
 		sc->sc_flags = flags;
 		return (error);
+
+	case DIOCGDEFLABEL:
+		rzgetdefaultlabel(sc, (struct disklabel *)data);
+		return(0);
 	}
 	/*NOTREACHED*/
 }
@@ -1146,6 +1157,74 @@ rzsize(dev)
 		return (-1);
 
 	return (size);
+}
+
+void
+rzgetgeom(sc, lp)
+	struct rz_softc *sc;
+	struct disklabel *lp;
+{
+
+	/* XXX Fill in from doing mode-page sense of page 4, if supported. */
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_ntracks = 64 ;
+	lp->d_nsectors = 32 ;
+	lp->d_ncylinders = sc->sc_blks / ( lp->d_ntracks * lp->d_nsectors) ;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_secperunit = sc->sc_blks;
+}
+
+void
+rzgetdefaultlabel(sc, lp)
+	struct rz_softc *sc;
+	struct disklabel *lp;
+{
+	register int i;
+
+	bzero(lp, sizeof(struct disklabel));
+
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_type = DTYPE_SCSI;
+	lp->d_subtype = 0;
+	if (sc->sc_type == SCSI_ROM_TYPE)
+		strncpy(lp->d_typename, "SCSI CD-ROM", 16);
+	else
+		strncpy(lp->d_typename, "SCSI disk", 16);
+
+	rzgetgeom(sc, lp);
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+	lp->d_npartitions = MAXPARTITIONS;
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		register struct partition *pp = & lp->d_partitions[i];
+
+		pp->p_size = rzdefaultpart[i].nblocks;
+		pp->p_offset = rzdefaultpart[i].strtblk;
+
+		/* Change RZ_END to be end-of-disk */
+		if (pp->p_size == RZ_END) {
+			pp->p_size = sc->sc_blks - pp->p_offset;
+		}
+		/*
+		 * Clip end of partition against end of disk.
+		 * If both start and end beyond end of disk, set to zero.
+		 */
+		if (pp->p_offset > sc->sc_blks) {
+			pp->p_size = 0;
+			pp->p_offset = 0;
+		} else if ((pp->p_size + pp->p_offset) > sc->sc_blks)
+			pp->p_size = sc->sc_blks - pp->p_offset;
+	}
+	/*XXX redundancy */
+	lp->d_partitions[RAW_PART].p_size = sc->sc_blks;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+
+	lp->d_checksum = dkcksum(lp);
 }
 
 /*
