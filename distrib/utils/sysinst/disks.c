@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.18 1998/10/31 03:54:44 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.19 1998/12/16 22:35:26 simonb Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,7 +81,7 @@ static void get_disks(void)
 
 	while (*xd != NULL) {
 		for (i=0; i< MAX_DISKS; i++) {
-			sprintf (d_name, "%s%d", *xd, i);
+			snprintf (d_name, SSTRSIZE, "%s%d", *xd, i);
 			if (get_geom (d_name, &l) && numdisks < MAX_DISKS) {
 				strncpy (disks[numdisks].name,
 					 d_name, SSTRSIZE);
@@ -169,6 +169,7 @@ void disp_cur_fspart (int disp, int showall)
 {
 	int i;
 	int start, stop;
+	int poffset, psize, pend;
 
 	if (disp < 0) {
 		start = 0;
@@ -181,12 +182,15 @@ void disp_cur_fspart (int disp, int showall)
 	msg_display_add (MSG_fspart_head);
 	for (i=start; i<stop; i++) {
 		if (showall || bsdlabel[i][D_SIZE] > 0) {
+			poffset = bsdlabel[i][D_OFFSET] / sizemult;
+			psize = bsdlabel[i][D_SIZE] / sizemult;
+			if (psize == 0)
+				pend = 0;
+			else
+				pend = (bsdlabel[i][D_OFFSET] +
+				bsdlabel[i][D_SIZE]) / sizemult - 1;
 			msg_printf_add (" %c: %9d %9d %9d %6s",
-					'a'+i,
-					bsdlabel[i][D_SIZE]/sizemult ,
-					bsdlabel[i][D_OFFSET]/sizemult,
-					(bsdlabel[i][D_OFFSET] +
-					 bsdlabel[i][D_SIZE])/sizemult,
+					'a'+i, psize, poffset, pend,
 					fstype[bsdlabel[i][D_FSTYPE]]);
 			if (bsdlabel[i][D_FSTYPE] == T_42BSD)
 				msg_printf_add ("%6d%6d %s",
