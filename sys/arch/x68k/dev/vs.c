@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.11 2001/11/25 16:00:06 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.12 2002/03/16 09:00:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -389,13 +389,18 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		rate = p->sample_rate;
 		p->sw_code = NULL;
 		p->factor = 1;
+		p->factor_denom = 1;
+		p->hw_precision = 4;
+		p->hw_encoding = AUDIO_ENCODING_ADPCM;
+		DPRINTF(1, ("vs_set_params: encoding=%d, precision=%d\n",
+			p->encoding, p->precision));
 		switch (p->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			if (p->precision != 8)
 				return EINVAL;
 			if (mode == AUMODE_PLAY) {
 				p->sw_code = msm6258_mulaw_to_adpcm;
-				rate = p->sample_rate * 2;
+				p->factor_denom = 2;
 			} else {
 				p->sw_code = msm6258_adpcm_to_mulaw;
 				p->factor = 2;
@@ -407,7 +412,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 				return EINVAL;
 			if (mode == AUMODE_PLAY) {
 				p->sw_code = msm6258_ulinear8_to_adpcm;
-				rate = p->sample_rate * 2;
+				p->factor_denom = 2;
 			} else {
 				p->sw_code = msm6258_adpcm_to_ulinear8;
 				p->factor = 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.5 2001/11/13 13:14:42 lukem Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.6 2002/03/16 09:00:42 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.5 2001/11/13 13:14:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.6 2002/03/16 09:00:42 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.5 2001/11/13 13:14:42 lukem Exp $");
 #include <sys/audioio.h>
 
 #include <dev/audio_if.h>
-#include <dev/audiovar.h>
 #include <dev/auconv.h>
+#include <dev/audiovar.h>
 #include <dev/mulaw.h>
 #include <dev/ic/msm6258var.h>
 
@@ -135,11 +135,12 @@ msm6258_ulinear8_to_adpcm(void *hdl, u_char *p, int cc)
 	char *x = &(mc->mc_estim);
 	short *y = &(mc->mc_amp);
 	register int i;
+	u_char *d = p;
 	u_char f;
 
-	for (i = 0; i < cc; i++) {
-		f = pcm2adpcm_step(p[i], y, x);
-		p[i] = f + (pcm2adpcm_step(p[i], y, x) << 4);
+	for (i = 0; i < cc; ) {
+		f = pcm2adpcm_step(p[i++], y, x);
+		*d++ = f + (pcm2adpcm_step(p[i++], y, x) << 4);
 	}
 }
 
