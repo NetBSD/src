@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.157 1996/11/18 01:06:10 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.158 1996/12/03 23:59:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -62,17 +62,23 @@
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 
+/*
+ * override user-land alignment before including asm.h
+ */
+#define	ALIGN_DATA	.align	2
+#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
+#define _ALIGN_TEXT	ALIGN_TEXT
+#include <machine/asm.h>
+
 #include <i386/isa/debug.h>
+
 
 /* XXX temporary kluge; these should not be here */
 #define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
 #define	IOM_END		0x100000	/* end of I/O memory "hole" */
 #define	IOM_SIZE	(IOM_END - IOM_BEGIN)
 
-
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
 
 /* NB: NOP now preserves registers so NOPs can be inserted anywhere */
 /* XXX: NOP and FASTER_NOP are misleadingly named */
@@ -138,7 +144,13 @@
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
-#define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
+
+/*
+ * Non-profiled, profiled, and alternate entry points.
+ *
+ * XXX most entry points should be profilable. Due to ignorance of which 
+ * are safe, only a few (bcopy, copyin, copyout) are profiled.
+ */
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
 /*
@@ -146,10 +158,14 @@
  */
 	.data
 
-	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
+	.globl	_cpu,_cpu_id,_cpu_vendor,_cpuid_level,_cpu_feature
+	.globl	_cold,_esym,_boothowto,_bootdev,_atdevbase
 	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
 	.globl	_biosextmem,_dynamic_gdt
-_cpu:		.long	0	# are we 386, 386sx, or 486
+_cpu:		.long	0	# are we 386, 386sx, or 486, or Pentium, or..
+_cpu_id:	.long	0	# saved from `cpuid' instruction
+_cpu_feature:	.long	0	# feature flags from 'cpuid' instruction
+_cpuid_level:	.long	-1	# max. level accepted by 'cpuid' instruction
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
@@ -230,6 +246,26 @@ try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 
 	testl	%eax,%eax
 	jnz	try486
+
+	/*
+	 * Try the test of a NexGen CPU -- ZF will not change on a DIV
+	 * instruction on a NexGen, it will on an i386.  Documented in
+	 * Nx586 Processor Recognition Application Note, NexGen, Inc.
+	 */
+	movl	$0x5555,%eax
+	xorl	%edx,%edx
+	movl	$2,%ecx
+	jnz	is386
+
+isnx586:
+	/*
+	 * Don't try cpuid, as Nx586s reportedly don't support the
+	 * PSL_ID bit.
+	 */
+	movl	$CPU_NX586,RELOC(_cpu)
+	jmp	2f
+
+is386:
 	movl	$CPU_386,RELOC(_cpu)
 	jmp	2f
 
@@ -269,8 +305,6 @@ is486:	movl	$CPU_486,RELOC(_cpu)
 	jne	2f			# yes; must not be Cyrix CPU
 
 	movl	$CPU_486DLC,RELOC(_cpu) 	# set CPU type
-	movl	$0x69727943,RELOC(_cpu_vendor)	# store vendor string
-	movb	$0x78,RELOC(_cpu_vendor)+4
 
 #ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
@@ -334,17 +368,16 @@ is486:	movl	$CPU_486,RELOC(_cpu)
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
+	movl	%eax,RELOC(_cpuid_level)
 	movl	%ebx,RELOC(_cpu_vendor)	# store vendor string
 	movl	%edx,RELOC(_cpu_vendor)+4
 	movl	%ecx,RELOC(_cpu_vendor)+8
+	movl	$0,  RELOC(_cpu_vendor)+12
 
 	movl	$1,%eax
 	cpuid
-	rorl	$8,%eax			# extract family type
-	andl	$15,%eax
-	cmpl	$5,%eax
-	jb	is486			# less than a Pentium
-	movl	$CPU_586,RELOC(_cpu)
+	movl	%eax,RELOC(_cpu_id)	# store cpu_id and features
+	movl	%edx,RELOC(_cpu_feature)
 
 2:
 	/*
@@ -561,7 +594,7 @@ begin:
 
 	call 	_main
 
-ENTRY(proc_trampoline)
+NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	%esi
 	addl	$4,%esp
@@ -573,7 +606,7 @@ ENTRY(proc_trampoline)
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(sigcode)
+NENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -597,7 +630,7 @@ _esigcode:
 /*****************************************************************************/
 
 #ifdef COMPAT_SVR4
-ENTRY(svr4_sigcode)
+NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
@@ -626,7 +659,7 @@ _svr4_esigcode:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(linux_sigcode)
+NENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -653,7 +686,7 @@ _linux_esigcode:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(freebsd_sigcode)
+NENTRY(freebsd_sigcode)
 	call	FREEBSD_SIGF_HANDLER(%esp)
 	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
 					# the copy at SIGF_SCP(%esp))
@@ -775,8 +808,8 @@ ENTRY(bcopyw)
  * bcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes.
  */
-ENTRY(bcopy)
 ALTENTRY(ovbcopy)
+ENTRY(bcopy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
@@ -853,10 +886,10 @@ ENTRY(copyout)
 	ja	_copy_fault
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	3f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	testl	%eax,%eax		# anything to do?
 	jz	3f
@@ -989,10 +1022,10 @@ ENTRY(copyoutstr)
 	movl	20(%esp),%edx		# edx = maxlen
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	5f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	/* Compute number of bytes in first page. */
 	movl	%edi,%eax
@@ -1054,7 +1087,7 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 #endif /* I386_CPU */
 
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 5:	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
@@ -1085,7 +1118,7 @@ ENTRY(copyoutstr)
 	jae	_copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
@@ -1290,10 +1323,10 @@ ENTRY(suword)
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1331,10 +1364,10 @@ ENTRY(susword)
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1373,10 +1406,10 @@ ENTRY(suswintr)
 	movl	$_fusubail,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1407,10 +1440,10 @@ ENTRY(subyte)
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	2f
-#endif /* I486_CPU || I586_CPU */
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1446,7 +1479,7 @@ ENTRY(subyte)
  * void lgdt(struct region_descriptor *rdp);
  * Change the global descriptor table.
  */
-ENTRY(lgdt)
+NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
@@ -1506,7 +1539,7 @@ ENTRY(longjmp)
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
-ENTRY(setrunqueue)
+NENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
 	cmpl	$0,P_BACK(%eax)	# should not be on q already
@@ -1537,7 +1570,7 @@ ENTRY(setrunqueue)
  * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrunqueue)
+NENTRY(remrunqueue)
 	movl	4(%esp),%ecx
 	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
@@ -1587,7 +1620,7 @@ ENTRY(idle)
 	jmp	_idle
 
 #ifdef DIAGNOSTIC
-ENTRY(switch_error)
+NENTRY(switch_error)
 	pushl	$1f
 	call	_panic
 	/* NOTREACHED */
@@ -1978,16 +2011,16 @@ IDTVEC(align)
  * necessary, and resume as if we were handling a general protection fault.
  * This will cause the process to get a SIGBUS.
  */
-ENTRY(resume_iret)
+NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
-ENTRY(resume_pop_ds)
+NENTRY(resume_pop_ds)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
-ENTRY(resume_pop_es)
+NENTRY(resume_pop_es)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 
-ENTRY(alltraps)
+NENTRY(alltraps)
 	INTRENTRY
 calltrap:
 #ifdef DIAGNOSTIC
@@ -2032,7 +2065,7 @@ calltrap:
  * This code checks for a kgdb trap, then falls through
  * to the regular trap code.
  */
-ENTRY(bpttraps)
+NENTRY(bpttraps)
 	INTRENTRY
 	testb	$SEL_RPL,TF_CS(%esp)
 	jne	calltrap
@@ -2126,7 +2159,7 @@ ENTRY(bzero)
 	stosb
 
 #if defined(I486_CPU)
-#if defined(I386_CPU) || defined(I586_CPU)
+#if defined(I386_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_486,_cpu_class
 	jne	8f
 #endif
@@ -2181,7 +2214,7 @@ ENTRY(bzero)
 	.data
 apmstatus:	.long 0
 	.text
-ENTRY(apmcall)
+NENTRY(apmcall)
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%esi
@@ -2255,7 +2288,7 @@ _biostramp_image_size:
  *
  *	Fills in *regs with registers as returned by BIOS.
  */
-ENTRY(bioscall)
+NENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 1996/11/18 01:06:12 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 1996/12/03 23:59:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -418,56 +418,230 @@ allocsys(v)
 char	cpu_model[120];
 extern	char version[];
 
-struct cpu_nameclass i386_cpus[] = {
-	{ "i386SX",	CPUCLASS_386 },	/* CPU_386SX */
-	{ "i386DX",	CPUCLASS_386 },	/* CPU_386   */
-	{ "i486SX",	CPUCLASS_486 },	/* CPU_486SX */
-	{ "i486DX",	CPUCLASS_486 },	/* CPU_486   */
-	{ "Pentium",	CPUCLASS_586 },	/* CPU_586   */
-	{ "Cx486DLC",	CPUCLASS_486 },	/* CPU_486DLC (Cyrix) */
+/*
+ * Note: these are just the ones that may not have a cpuid instruction.
+ * We deal with the rest in a different way.
+ */
+struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386 },	/* CPU_386SX */
+	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386 },	/* CPU_386   */
+	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486 },	/* CPU_486SX */
+	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486 },	/* CPU_486   */
+	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486 },	/* CPU_486DLC */
+	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_586 }, /* CPU_NX586 */
 };
+
+const char *classnames[] = {
+	"386",
+	"486",
+	"586",
+	"686"
+};
+
+const char *modifiers[] = {
+	"",
+	"OverDrive ",
+	"Dual ",
+	""
+};
+
+struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+	{
+		"GenuineIntel",
+		CPUVENDOR_INTEL,
+		"Intel",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486, 
+			{
+				"486DX", "486DX", "486DX", "486DX2", "486SL",
+				"486SX2", 0, "486DX2 W/B Enhanced",
+				"486DX4", 0, 0, 0, 0, 0, 0, 0,
+				"486"		/* Default */
+			}
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, "Pentium", "Pentium (P54C)",
+				"Pentium (P24T)", "Pentium", "Pentium", 0,
+				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium"	/* Default */
+			}
+		},
+		/* Family 6 */
+		{
+			CPUCLASS_686,
+			{
+				0, "Pentium Pro", 0, 0, "Pentium Pro", 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro"	/* Default */
+			}
+		} }
+	},
+	{
+		"AuthenticAMD",
+		CPUVENDOR_AMD,
+		"AMD",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, "Am486DX2 W/T",
+				0, 0, 0, "Am486DX2 W/B",
+				"Am486DX4 W/T or Am5x86 W/T 150",
+				"Am486DX4 W/B or Am5x86 W/B 150", 0, 0,
+				0, 0, "Am5x86 W/T 133/160",
+				"Am5x86 W/B 133/160",
+				"Am486 or Am5x86"	/* Default */
+			},
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				"K5", "K5", 0, 0, 0, 0, "K6",
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"K5 or K6",		/* Default */
+			},
+		},
+		/* Family 6, not yet available from AMD */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			},
+		} }
+	},
+	{
+		"CyrixInstead",
+		CPUVENDOR_CYRIX,
+		"Cyrix",
+		/* Family 4 */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"486"		/* Default */
+			},
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, "6x86", 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0,
+				"6x86"		/* Default */
+			}
+		},
+		/* Family 6, not yet available from Cyrix */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium Pro compatible"	/* Default */
+			}
+		} }
+	}
+};
+
+#define CPUDEBUG
 
 void
 identifycpu()
 {
 	extern char cpu_vendor[];
+	extern int cpu_id;
+	const char *name, *modifier, *vendorname;
+	int class = CPUCLASS_386, vendor, i, max;
+	int family, model, step, modif;
+	struct cpu_cpuid_nameclass *cpup = NULL;
 
-	printf("CPU: ");
+	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
-	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
-		panic("unknown cpu type %d\n", cpu);
+		if (cpu < 0 || cpu >=
+		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
+			panic("unknown cpu type %d\n", cpu);
 #endif
-	sprintf(cpu_model, "%s (", i386_cpus[cpu].cpu_name);
-	if (cpu_vendor[0] != '\0') {
-		strcat(cpu_model, cpu_vendor);
-		strcat(cpu_model, " ");
+		name = i386_nocpuid_cpus[cpu].cpu_name;
+		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
+		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
+		class = i386_nocpuid_cpus[cpu].cpu_class;
+		modifier = "";
+	} else {
+		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		modif = (cpu_id >> 12) & 3;
+		family = (cpu_id >> 8) & 15;
+		if (family < CPU_MINFAMILY)
+			panic("identifycpu: strange family value");
+		model = (cpu_id >> 4) & 15;
+		step = cpu_id & 15;
+#ifdef CPUDEBUG
+		printf("cpu0: family %x model %x step %x\n", family, model,
+			step);
+#endif
+
+		for (i = 0; i < max; i++) {
+			if (!strncmp(cpu_vendor,
+			    i386_cpuid_cpus[i].cpu_id, 12)) {
+				cpup = &i386_cpuid_cpus[i];
+				break;
+			}
+		}
+
+		if (cpup == NULL) {
+			vendor = CPUVENDOR_UNKNOWN;
+			if (cpu_vendor[0] != '\0')
+				vendorname = &cpu_vendor[0];
+			else
+				vendorname = "Unknown";
+			if (family > CPU_MAXFAMILY)
+				family = CPU_MAXFAMILY;
+			class = family - 3;
+			modifier = "";
+			name = "";
+		} else {
+			vendor = cpup->cpu_vendor;
+			vendorname = cpup->cpu_vendorname;
+			modifier = modifiers[modif];
+			if (family > CPU_MAXFAMILY) {
+				family = CPU_MAXFAMILY;
+				model = CPU_DEFMODEL;
+			} else if (model > CPU_MAXMODEL)
+				model = CPU_DEFMODEL;
+			i = family - CPU_MINFAMILY;
+			name = cpup->cpu_family[i].cpu_models[model];
+			if (name == NULL)
+			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
+			class = cpup->cpu_family[i].cpu_class;
+		}
 	}
 
-	cpu_class = i386_cpus[cpu].cpu_class;
-	switch(cpu_class) {
-	case CPUCLASS_386:
-		strcat(cpu_model, "386");
-		break;
-	case CPUCLASS_486:
-		strcat(cpu_model, "486");
-		break;
-	case CPUCLASS_586:
-		strcat(cpu_model, "586");
-		break;
-	default:
-		strcat(cpu_model, "unknown");	/* will panic below... */
-		break;
-	}
-	strcat(cpu_model, "-class CPU)");
-	printf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
+	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
+		classnames[class]);
+	printf("cpu0: %s\n", cpu_model);
+
+	cpu_class = class;
 
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
+#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
 #error No CPU classes configured.
+#endif
+#ifndef I686_CPU
+	case CPUCLASS_686:
+		printf("NOTICE: this kernel does not support Pentium Pro CPU class\n");
+#ifdef I586_CPU
+		printf("NOTICE: lowering CPU class to i586\n");
+		cpu_class = CPUCLASS_586;
+		break;
+#endif
 #endif
 #ifndef I586_CPU
 	case CPUCLASS_586:
@@ -508,7 +682,7 @@ identifycpu()
 #endif
 	}
 
-#if defined(I486_CPU) || defined(I586_CPU)
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * On a 486 or above, enable ring 0 write protection.
 	 */
