@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.51 2000/06/26 14:21:14 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.52 2000/06/27 17:41:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -63,8 +63,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

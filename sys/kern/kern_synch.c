@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.78 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.79 2000/06/27 17:41:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@
 #include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 #include <sys/sched.h>
 
 #include <uvm/uvm_extern.h>

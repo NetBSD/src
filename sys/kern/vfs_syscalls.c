@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.158 2000/06/19 18:53:55 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.159 2000/06/27 17:41:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,16 +56,14 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
-
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_mode __P((struct vnode *, int, struct proc *p));

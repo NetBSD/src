@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.43 2000/06/06 18:26:36 soren Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.44 2000/06/27 17:41:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

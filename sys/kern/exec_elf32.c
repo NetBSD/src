@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.50 2000/06/26 14:38:54 mrg Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.51 2000/06/27 17:41:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@
 #include <sys/stat.h>
 
 #include <sys/mman.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
