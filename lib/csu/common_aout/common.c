@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.17 2000/02/09 22:41:54 kristerw Exp $	*/
+/*	$NetBSD: common.c,v 1.18 2002/11/12 14:33:49 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,11 @@ __load_rtld(dp)
 	entry = (rtld_entry_fn)(crt.crt_ba + sizeof hdr);
 	if ((*entry)(CRT_VERSION_BSD_4, &crt) == -1) {
 		/* Feeble attempt to deal with out-dated ld.so */
-#		define str "crt0: update /usr/libexec/ld.so\n"
+#ifdef __STDC__
+#		define str "crt0: update " LDSO "\n"
+#else
+#		define str "crt0: update ld.so\n"
+#endif
 		(void)write(2, str, sizeof(str)-1);
 #		undef str
 		if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
