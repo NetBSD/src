@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.580 2002/11/12 23:40:19 manu Exp $
+#	$NetBSD: files,v 1.581 2002/11/19 04:11:05 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -73,7 +73,8 @@ defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
-				COMPAT_13 COMPAT_14 COMPAT_16 COMPAT_NOMID
+				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_16
+				COMPAT_NOMID
 
 #
 # Cryptography support.  Include this early, since several things
