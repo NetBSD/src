@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.3 1995/04/26 14:24:56 pk Exp $ */
+/*	$NetBSD: kbd.h,v 1.4 1995/07/06 05:36:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
  */
 #define	KBD_RESET	0xff		/* keyboard `reset' response */
 #define	KBD_IDLE	0x7f		/* keyboard `all keys are up' code */
+#define	KBD_LAYOUT	0xfe		/* keyboard `get layout' response */
 
 /* Keyboard IDs */
 #define	KB_SUN2		2		/* type 2 keyboard */
@@ -79,6 +80,7 @@
 #define	KBD_CMD_CLICK	10		/* turn keyclick on */
 #define	KBD_CMD_NOCLICK	11		/* turn keyclick off */
 #define KBD_CMD_SETLED	14		/* set LED state (type 4 kbd) */
+#define KBD_CMD_GLAYOUT	15		/* get DIP switch (type 4 kbd) */
 
 #define	LED_NUM_LOCK	0x1
 #define	LED_COMPOSE	0x2

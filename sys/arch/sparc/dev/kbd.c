@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18 1995/05/10 16:04:55 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.19 1995/07/06 05:35:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -188,8 +188,9 @@ struct kbd_state {
 #define	kbd_anyshift	kbd_shift.s
 	char	kbd_control;	/* true => ctrl down */
 	char	kbd_click;	/* true => keyclick enabled */
-	char	kbd_takeid;	/* take next byte as ID */
+	u_char	kbd_pending;	/* Another code from the keyboard is due */
 	u_char	kbd_id;		/* a place to store the ID */
+	u_char	kbd_layout;	/* a place to store layout */
 	char	kbd_leds;	/* LED state */
 };
 
@@ -434,16 +435,31 @@ kbd_rint(register int c)
 	}
 
 	/* Read the keyboard id if we read a KBD_RESET last time */
-	if (k->k_state.kbd_takeid) {
-		k->k_state.kbd_takeid = 0;
+	if (k->k_state.kbd_pending == KBD_RESET) {
+		k->k_state.kbd_pending = 0;
 		k->k_state.kbd_id = c;
 		kbd_reset(&k->k_state);
+		if (c == KB_SUN4) {
+			/* Arrange to get keyboard layout as well */
+			(void)ttyoutput(KBD_CMD_GLAYOUT, k->k_kbd);
+			(*k->k_kbd->t_oproc)(k->k_kbd);
+		}
 		return;
 	}
 
-	/* If we have been reset, setup to grab the keyboard id next time */
-	if (c == KBD_RESET) {
-		k->k_state.kbd_takeid = 1;
+	/* Read the keyboard layout if we read a KBD_LAYOUT last time */
+	if (k->k_state.kbd_pending == KBD_LAYOUT) {
+		k->k_state.kbd_pending = 0;
+		k->k_state.kbd_layout = c;
+		return;
+	}
+
+	/*
+	 * If reset or layout in progress, setup to grab the accompanying
+	 * keyboard response next time (id on reset, dip switch on layout).
+	 */
+	if (c == KBD_RESET || c == KBD_LAYOUT) {
+		k->k_state.kbd_pending = c;
 		return;
 	}
 
@@ -650,7 +666,7 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case KIOCLAYOUT:
-		*data = 0;
+		*(unsigned int *)data = k->k_state.kbd_layout;
 		return (0);
 
 	case KIOCSLED:
