@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.61 2000/04/15 04:38:07 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.62 2000/05/26 02:23:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,32 +50,31 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dkstat.h>
+#include <sys/exec.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
-#include <sys/unistd.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/disklabel.h>
-#include <sys/device.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-#include <sys/msgbuf.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
-
+#include <sys/syscallargs.h>
+#include <sys/tty.h>
+#include <sys/unistd.h>
+#include <sys/vnode.h>
+#include <sys/sysctl.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
+
+#define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
 /*
  * Locking and stats
@@ -85,6 +84,10 @@ static struct sysctl_lock {
 	int	sl_want;
 	int	sl_locked;
 } memlock;
+
+static int sysctl_doeproc __P((int *, u_int, char *, size_t *));
+static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
+static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
 
 int
 sys___sysctl(p, v, retval)
@@ -234,6 +237,7 @@ char defcorename[MAXPATHLEN] = "%n.core";
 int defcorenamelen = sizeof("%n.core");
 #endif
 extern	int	kern_logsigexit;
+extern	fixpt_t	ccpu;
 
 /*
  * kernel related system variables.
@@ -255,8 +259,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
 	case KERN_PROC:
+	case KERN_PROC2:
 	case KERN_PROF:
 	case KERN_MBUF:
+	case KERN_PROC_ARGS:
 		/* Not terminal. */
 		break;
 	default:
@@ -321,7 +327,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_VNODE:
 		return (sysctl_vnode(oldp, oldlenp, p));
 	case KERN_PROC:
-		return (sysctl_doeproc(name + 1, namelen - 1, oldp, oldlenp));
+	case KERN_PROC2:
+		return (sysctl_doeproc(name, namelen, oldp, oldlenp));
+	case KERN_PROC_ARGS:
+		return (sysctl_procargs(name + 1, namelen - 1,
+		    oldp, oldlenp, p));
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp));
 #ifdef GPROF
@@ -423,7 +433,15 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_LOGIN_NAME_MAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, LOGIN_NAME_MAX));
 	case KERN_LOGSIGEXIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &kern_logsigexit));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &kern_logsigexit));
+	case KERN_FSCALE:
+		return (sysctl_rdint(oldp, oldlenp, newp, FSCALE));
+	case KERN_CCPU:
+		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
+	case KERN_CP_TIME:
+		return (sysctl_rdstruct(oldp, oldlenp, newp, cp_time,
+		    sizeof(cp_time)));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -528,7 +546,7 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	struct proc *ptmp=NULL;
+	struct proc *ptmp = NULL;
 	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
@@ -954,23 +972,40 @@ sysctl_doeproc(name, namelen, where, sizep)
 	char *where;
 	size_t *sizep;
 {
-	struct proc *p;
-	struct kinfo_proc *dp = (struct kinfo_proc *)where;
-	int needed = 0;
-	int buflen = where != NULL ? *sizep : 0;
-	const struct proclist_desc *pd;
 	struct eproc eproc;
-	int error = 0;
+	struct kinfo_proc2 kproc2;
+	struct kinfo_proc *dp = (struct kinfo_proc *)where;
+	struct proc *p;
+	const struct proclist_desc *pd;
+	char *dp2;
+	int type, op, arg, elem_size, elem_count;
+	int buflen, needed, error;
 
-	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
-		return (EINVAL);
+	dp2 = where;
+	buflen = where != NULL ? *sizep : 0;
+	error = needed = 0;
+	type = name[0];
+
+	if (type == KERN_PROC) {
+		if (namelen != 3 && !(namelen == 2 && name[1] == KERN_PROC_ALL))
+			return (EINVAL);
+		op = name[1];
+		if (op != KERN_PROC_ALL)
+			arg = name[2];
+	} else {
+		if (namelen != 5)
+			return (EINVAL);
+		op = name[1];
+		arg = name[2];
+		elem_size = name[3];
+		elem_count = name[4];
+	}
 
 	proclist_lock_read();
 
 	pd = proclists;
 again:
-	for (p = LIST_FIRST(pd->pd_list); p != NULL;
-	     p = LIST_NEXT(p, p_list)) {
+	for (p = LIST_FIRST(pd->pd_list); p != NULL; p = LIST_NEXT(p, p_list)) {
 		/*
 		 * Skip embryonic processes.
 		 */
@@ -980,59 +1015,75 @@ again:
 		 * TODO - make more efficient (see notes below).
 		 * do by session.
 		 */
-		switch (name[0]) {
+		switch (op) {
 
 		case KERN_PROC_PID:
 			/* could do this with just a lookup */
-			if (p->p_pid != (pid_t)name[1])
+			if (p->p_pid != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_PGRP:
 			/* could do this by traversing pgrp */
-			if (p->p_pgrp->pg_id != (pid_t)name[1])
+			if (p->p_pgrp->pg_id != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_TTY:
-			if (name[1] == KERN_PROC_TTY_REVOKE) {
+			if (arg == KERN_PROC_TTY_REVOKE) {
 				if ((p->p_flag & P_CONTROLT) == 0 ||
 				    p->p_session->s_ttyp == NULL ||
 				    p->p_session->s_ttyvp != NULL)
 					continue;
 			} else if ((p->p_flag & P_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL) {
-				if ((dev_t)name[1] != KERN_PROC_TTY_NODEV)
+				if ((dev_t)arg != KERN_PROC_TTY_NODEV)
 					continue;
-			} else if (p->p_session->s_ttyp->t_dev !=
-			    (dev_t)name[1])
+			} else if (p->p_session->s_ttyp->t_dev != (dev_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_UID:
-			if (p->p_ucred->cr_uid != (uid_t)name[1])
+			if (p->p_ucred->cr_uid != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RUID:
-			if (p->p_cred->p_ruid != (uid_t)name[1])
+			if (p->p_cred->p_ruid != (uid_t)arg)
 				continue;
 			break;
 		}
-		if (buflen >= sizeof(struct kinfo_proc)) {
-			fill_eproc(p, &eproc);
-			error = copyout((caddr_t)p, &dp->kp_proc,
-					sizeof(struct proc));
-			if (error)
-				goto cleanup;
-			error = copyout((caddr_t)&eproc, &dp->kp_eproc,
-					sizeof(eproc));
-			if (error)
-				goto cleanup;
-			dp++;
-			buflen -= sizeof(struct kinfo_proc);
+		if (type == KERN_PROC) {
+			if (buflen >= sizeof(struct kinfo_proc)) {
+				fill_eproc(p, &eproc);
+				error = copyout((caddr_t)p, &dp->kp_proc,
+						sizeof(struct proc));
+				if (error)
+					goto cleanup;
+				error = copyout((caddr_t)&eproc, &dp->kp_eproc,
+						sizeof(eproc));
+				if (error)
+					goto cleanup;
+				dp++;
+				buflen -= sizeof(struct kinfo_proc);
+			}
+			needed += sizeof(struct kinfo_proc);
+		} else { /* KERN_PROC2 */
+			if (buflen >= elem_size) {
+				fill_kproc2(p, &kproc2);
+				/*
+				 * Copy out elem_size, but not larger than
+				 * the size of a struct kinfo_proc2.
+				 */
+				error = copyout(&kproc2, dp2,
+				    min(sizeof(kproc2), elem_size));
+				if (error)
+					goto cleanup;
+				dp2 += elem_size;
+				buflen -= elem_size;
+			}
+			needed += elem_size;
 		}
-		needed += sizeof(struct kinfo_proc);
 	}
 	pd++;
 	if (pd->pd_list != NULL)
@@ -1040,7 +1091,10 @@ again:
 	proclist_unlock_read();
 
 	if (where != NULL) {
-		*sizep = (caddr_t)dp - where;
+		if (type == KERN_PROC)
+			*sizep = (caddr_t)dp - where;
+		else
+			*sizep = dp2 - where;
 		if (needed > *sizep)
 			return (ENOMEM);
 	} else {
@@ -1103,4 +1157,336 @@ fill_eproc(p, ep)
 	if (SESS_LEADER(p))
 		ep->e_flag |= EPROC_SLEADER;
 	strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
+}
+
+/*
+ * Fill in an eproc structure for the specified process.
+ */
+static void
+fill_kproc2(p, ki)
+	struct proc *p;
+	struct kinfo_proc2 *ki;
+{
+	struct tty *tp;
+
+	memset(ki, 0, sizeof(*ki));
+
+	ki->p_forw = PTRTOINT64(p->p_forw);
+	ki->p_back = PTRTOINT64(p->p_back);
+	ki->p_paddr = PTRTOINT64(p);
+
+	ki->p_addr = PTRTOINT64(p->p_addr);
+	ki->p_fd = PTRTOINT64(p->p_fd);
+	ki->p_cwdi = PTRTOINT64(p->p_cwdi);
+	ki->p_stats = PTRTOINT64(p->p_stats);
+	ki->p_limit = PTRTOINT64(p->p_limit);
+	ki->p_vmspace = PTRTOINT64(p->p_vmspace);
+	ki->p_sigacts = PTRTOINT64(p->p_sigacts);
+	ki->p_sess = PTRTOINT64(p->p_session);
+	ki->p_tsess = 0;	/* may be changed if controlling tty below */
+	ki->p_ru = PTRTOINT64(p->p_ru);
+
+	ki->p_eflag = 0;
+	ki->p_exitsig = p->p_exitsig;
+	ki->p_flag = p->p_flag;
+
+	ki->p_pid = p->p_pid;
+	if (p->p_pptr)
+		ki->p_ppid = p->p_pptr->p_pid;
+	else
+		ki->p_ppid = 0;
+	ki->p_sid = p->p_session->s_sid;
+	ki->p__pgid = p->p_pgrp->pg_id;
+
+	ki->p_tpgid = NO_PID;	/* may be changed if controlling tty below */
+
+	ki->p_uid = p->p_ucred->cr_uid;
+	ki->p_ruid = p->p_cred->p_ruid;
+	ki->p_gid = p->p_ucred->cr_gid;
+	ki->p_rgid = p->p_cred->p_rgid;
+
+	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
+	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
+	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
+
+	ki->p_jobc = p->p_pgrp->pg_jobc;
+	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
+		ki->p_tdev = tp->t_dev;
+		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		ki->p_tsess = PTRTOINT64(tp->t_session);
+	} else {
+		ki->p_tdev = NODEV;
+	}
+
+	ki->p_estcpu = p->p_estcpu;
+	ki->p_rtime_sec = p->p_rtime.tv_sec;
+	ki->p_rtime_usec = p->p_rtime.tv_usec;
+	ki->p_cpticks = p->p_cpticks;
+	ki->p_pctcpu = p->p_pctcpu;
+	ki->p_swtime = p->p_swtime;
+	ki->p_slptime = p->p_slptime;
+	ki->p_schedflags = p->p_schedflags;
+
+	ki->p_uticks = p->p_uticks;
+	ki->p_sticks = p->p_sticks;
+	ki->p_iticks = p->p_iticks;
+
+	ki->p_tracep = PTRTOINT64(p->p_tracep);
+	ki->p_traceflag = p->p_traceflag;
+
+	ki->p_holdcnt = p->p_holdcnt;
+
+	memcpy(&ki->p_siglist, &p->p_siglist, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigmask, &p->p_sigmask, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigignore, &p->p_sigignore, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigcatch, &p->p_sigcatch, sizeof(ki_sigset_t));
+
+	ki->p_stat = p->p_stat;
+	ki->p_priority = p->p_priority;
+	ki->p_usrpri = p->p_usrpri;
+	ki->p_nice = p->p_nice;
+
+	ki->p_xstat = p->p_xstat;
+	ki->p_acflag = p->p_acflag;
+
+	strncpy(ki->p_comm, p->p_comm,
+	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+
+	if (p->p_wmesg)
+		strncpy(ki->p_wmesg, p->p_wmesg, sizeof(ki->p_wmesg));
+	ki->p_wchan = PTRTOINT64(p->p_wchan);
+
+	strncpy(ki->p_login, p->p_session->s_login, sizeof(ki->p_login));
+
+	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
+		ki->p_vm_rssize = 0;
+		ki->p_vm_tsize = 0;
+		ki->p_vm_dsize = 0;
+		ki->p_vm_ssize = 0;
+	} else {
+		struct vmspace *vm = p->p_vmspace;
+
+		ki->p_vm_rssize = vm_resident_count(vm);
+		ki->p_vm_tsize = vm->vm_tsize;
+		ki->p_vm_dsize = vm->vm_dsize;
+		ki->p_vm_ssize = vm->vm_ssize;
+	}
+
+	if (p->p_session->s_ttyvp)
+		ki->p_eflag |= EPROC_CTTY;
+	if (SESS_LEADER(p))
+		ki->p_eflag |= EPROC_SLEADER;
+
+	/* XXX Is this double check necessary? */
+	if (P_ZOMBIE(p) || p->p_addr == NULL) {
+		ki->p_uvalid = 0;
+	} else {
+		ki->p_uvalid = 1;
+
+		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
+		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
+
+		ki->p_uutime_sec = p->p_stats->p_ru.ru_utime.tv_sec;
+		ki->p_uutime_usec = p->p_stats->p_ru.ru_utime.tv_usec;
+		ki->p_ustime_sec = p->p_stats->p_ru.ru_stime.tv_sec;
+		ki->p_ustime_usec = p->p_stats->p_ru.ru_stime.tv_usec;
+
+		ki->p_uru_maxrss = p->p_stats->p_ru.ru_maxrss;
+		ki->p_uru_ixrss = p->p_stats->p_ru.ru_ixrss;
+		ki->p_uru_idrss = p->p_stats->p_ru.ru_idrss;
+		ki->p_uru_isrss = p->p_stats->p_ru.ru_isrss;
+		ki->p_uru_minflt = p->p_stats->p_ru.ru_minflt;
+		ki->p_uru_majflt = p->p_stats->p_ru.ru_majflt;
+		ki->p_uru_nswap = p->p_stats->p_ru.ru_nswap;
+		ki->p_uru_inblock = p->p_stats->p_ru.ru_inblock;
+		ki->p_uru_oublock = p->p_stats->p_ru.ru_oublock;
+		ki->p_uru_msgsnd = p->p_stats->p_ru.ru_msgsnd;
+		ki->p_uru_msgrcv = p->p_stats->p_ru.ru_msgrcv;
+		ki->p_uru_nsignals = p->p_stats->p_ru.ru_nsignals;
+		ki->p_uru_nvcsw = p->p_stats->p_ru.ru_nvcsw;
+		ki->p_uru_nivcsw = p->p_stats->p_ru.ru_nivcsw;
+
+		ki->p_uctime_sec = p->p_stats->p_cru.ru_utime.tv_sec +
+		    p->p_stats->p_cru.ru_stime.tv_sec;
+		ki->p_uctime_usec = p->p_stats->p_cru.ru_utime.tv_usec +
+		    p->p_stats->p_cru.ru_stime.tv_usec;
+	}
+}
+
+int
+sysctl_procargs(name, namelen, where, sizep, up)
+	int *name;
+	u_int namelen;
+	void *where;
+	size_t *sizep;
+	struct proc *up;
+{
+	struct ps_strings pss;
+	struct proc *p;
+	size_t len, upper_bound, xlen;
+	struct uio auio;
+	struct iovec aiov;
+	vaddr_t argv;
+	pid_t pid;
+	int nargv, type, error, i;
+	char *arg;
+
+	if (namelen != 2)
+		return (EINVAL);
+	pid = name[0];
+	type = name[1];
+
+	switch (type) {
+	  case KERN_PROC_ARGV:
+	  case KERN_PROC_NARGV:
+	  case KERN_PROC_ENV:
+	  case KERN_PROC_NENV:
+		/* ok */
+		break;
+	  default:
+		return (EINVAL);
+	}
+
+	/* check pid */
+	if ((p = pfind(pid)) == NULL)
+		return (EINVAL);
+
+	/* only root or same user change look at the environment */
+	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
+		if (up->p_ucred->cr_uid != 0) {
+			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
+			    up->p_cred->p_ruid != p->p_cred->p_svuid)
+				return (EPERM);
+		}
+	}
+
+	if (sizep != NULL && where == NULL) {
+		if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV)
+			*sizep = sizeof (int);
+		else
+			*sizep = ARG_MAX;	/* XXX XXX XXX */
+		return (0);
+	}
+	if (where == NULL || sizep == NULL)
+		return (EINVAL);
+	/*
+	 * Allocate a temporary buffer to hold the arguments.
+	 */
+	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+
+	/*
+	 * Zombies don't have a stack, so we can't read their psstrings.
+	 * System processes also don't have a user stack.
+	 */
+	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
+		return (EINVAL);
+
+	/*
+	 * Lock the process down in memory.
+	 */
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	PHOLD(p);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+
+	/*
+	 * Read in the ps_strings structure.
+	 */
+	aiov.iov_base = &pss;
+	aiov.iov_len = sizeof(pss);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = (vaddr_t)p->p_psstr;
+	auio.uio_resid = sizeof(pss);
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_READ;
+	auio.uio_procp = NULL;
+	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	if (error)
+		goto done;
+
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
+		memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
+	else
+		memcpy(&nargv, (char *)&pss + p->p_psnenv, sizeof(nargv));
+	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
+		error = copyout(&nargv, where, sizeof(nargv));
+		*sizep = len;
+		goto done;
+	}
+	/*
+	 * Now read the address of the argument vector.
+	 */
+	switch (type) {
+	  case KERN_PROC_ARGV:
+		/* XXX compat32 stuff here */
+		memcpy(&auio.uio_offset, (char *)&pss + p->p_psargv,
+		    sizeof(auio.uio_offset));
+		break;
+	  case KERN_PROC_ENV:
+		memcpy(&auio.uio_offset, (char *)&pss + p->p_psenv,
+		    sizeof(auio.uio_offset));
+		break;
+	}
+	aiov.iov_base = &argv;
+	aiov.iov_len = sizeof(argv);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = sizeof(argv);
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_rw = UIO_READ; 
+	auio.uio_procp = NULL;
+	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	if (error)
+		goto done;
+
+	/*
+	 * Now copy in the actual argument vector, one page at a time,
+	 * since we don't know how long the vector is (though, we do
+	 * know how many NUL-terminated strings are in the vector).
+	 */
+	len = 0;
+	upper_bound = *sizep;
+	for (; nargv != 0 && len < upper_bound; len += xlen) {
+		aiov.iov_base = arg;
+		aiov.iov_len = PAGE_SIZE;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = argv + len;
+		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
+		auio.uio_resid = xlen;
+		auio.uio_segflg = UIO_SYSSPACE;
+		auio.uio_rw = UIO_READ;
+		auio.uio_procp = NULL;
+		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		if (error)
+			goto done;
+
+		for (i = 0; i < xlen && nargv != 0; i++) {
+			if (arg[i] == '\0')
+				nargv--;	/* one full string */
+		}
+
+		/* make sure we don't copyout past the end of the user's buffer */
+		if (len + i > upper_bound)
+			i = upper_bound - len;
+
+		error = copyout(arg, (char *)where + len, i);
+		if (error)
+			break;
+
+		if (nargv == 0) {
+			len += i;
+			break;
+		}
+	}
+	*sizep = len;
+
+done:
+	PRELE(p);
+	uvmspace_free(p->p_vmspace);
+
+	free(arg, M_TEMP);
+	return (error);
 }
