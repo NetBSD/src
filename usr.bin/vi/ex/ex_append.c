@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_append.c,v 1.9 2002/04/09 01:47:32 thorpej Exp $	*/
+/*	$NetBSD: ex_append.c,v 1.10 2002/12/06 03:24:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -268,7 +268,7 @@ ex_aci(sp, cmdp, cmd)
 		return (1);
 
 	for (cnt = 0, tp = tiq.cqh_first;
-	    tp != (TEXT *)&tiq; ++cnt, tp = tp->q.cqe_next)
+	    tp != (void *)&tiq; ++cnt, tp = tp->q.cqe_next)
 		if (db_append(sp, 1, lno++, tp->lb, tp->len))
 			return (1);
 
