@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_4.c,v 1.7 1999/02/10 00:45:45 hubertf Exp $	*/
+/*	$NetBSD: dr_4.c,v 1.8 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_4.c,v 1.7 1999/02/10 00:45:45 hubertf Exp $");
+__RCSID("$NetBSD: dr_4.c,v 1.8 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ struct ship *from, *to;
 		return;
 	friend = capship(from)->nationality == capship(to)->nationality;
 	while (--k >= 0) {
-		if (friend || die() < 3) {
+		if (friend || dieroll() < 3) {
 			cleangrapple(from, to, 0);
 			makesignal(from, "ungrappling $$", to);
 		}
@@ -67,7 +67,7 @@ void
 grap(from, to)
 struct ship *from, *to;
 {
-	if (capship(from)->nationality != capship(to)->nationality && die() > 2)
+	if (capship(from)->nationality != capship(to)->nationality && dieroll() > 2)
 		return;
 	Write(W_GRAP, from, to->file->index, 0, 0, 0);
 	Write(W_GRAP, to, from->file->index, 0, 0, 0);
