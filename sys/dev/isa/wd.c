@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.166 1997/10/13 00:47:33 explorer Exp $ */
+/*	$NetBSD: wd.c,v 1.166.2.1 1998/05/05 09:14:53 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -285,7 +285,7 @@ wdstart(arg)
 	struct buf *dp, *bp=0;
 	struct wd_link *d_link = wd->d_link;
 	struct wdc_xfer *xfer;
-	u_long p_offset; 
+	daddr_t blkno, p_offset;
 
 	while (d_link->openings > 0) {
 
@@ -304,6 +304,8 @@ wdstart(arg)
 		  wd->sc_dk.dk_label->d_partitions[WDPART(bp->b_dev)].p_offset;
 		else
 			p_offset = 0;
+		blkno = bp->b_blkno + p_offset;
+		blkno /= (wd->d_link->sc_lp->d_secsize / DEV_BSIZE);
 
 		xfer = wdc_get_xfer(0);
 		if (xfer == NULL)
@@ -311,11 +313,10 @@ wdstart(arg)
 
 		xfer->d_link = d_link;
 		xfer->c_bp = bp;
-		xfer->c_p_offset = p_offset;
 		xfer->databuf = bp->b_data;
 		xfer->c_bcount = bp->b_bcount;
 		xfer->c_flags |= bp->b_flags & (B_READ|B_WRITE);
-		xfer->c_blkno = bp->b_blkno;
+		xfer->c_blkno = blkno;
 
 		/* Instrumentation. */
 		disk_busy(&wd->sc_dk);
