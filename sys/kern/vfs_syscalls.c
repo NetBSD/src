@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.130 1999/03/17 15:35:03 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.131 1999/03/22 17:13:35 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -720,6 +720,7 @@ sys_fchdir(p, v, retval)
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
+
 	VREF(vp);
 	vn_lock(vp,  LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type != VDIR)
@@ -741,10 +742,75 @@ sys_fchdir(p, v, retval)
 		return (error);
 	}
 	VOP_UNLOCK(vp, 0);
+
+	/*
+	 * Disallow changing to a directory not under the process's
+	 * current root directory (if there is one).
+	 */
+	if (fdp->fd_rdir &&
+	    !vn_isunder(vp, NULL, p)) {
+		vrele(vp);
+		return EPERM;	/* operation not permitted */
+	}
+	
 	vrele(fdp->fd_cdir);
 	fdp->fd_cdir = vp;
 	return (0);
 }
+
+/*
+ * Change this process's notion of the root directory to a given file descriptor.
+ */
+
+int
+sys_fchroot(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_fchroot_args *uap = v;
+	struct filedesc	*fdp = p->p_fd;
+	struct vnode	*vp;
+	struct file	*fp;
+	int		 error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return error;
+	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
+		return error;
+	vp = (struct vnode *) fp->f_data;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp->v_type != VDIR)
+		error = ENOTDIR;
+	else
+		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
+	if (error)
+		return error;
+	VREF(vp);
+
+	/*
+	 * Prevent escaping from chroot by putting the root under
+	 * the working directory.  Silently chdir to / if we aren't
+	 * already there.
+	 */
+	if (!vn_isunder(fdp->fd_cdir, vp, p)) {
+		/*
+		 * XXX would be more failsafe to change directory to a
+		 * deadfs node here instead
+		 */
+		vrele(fdp->fd_cdir);
+		VREF(vp);
+		fdp->fd_cdir = vp;
+	}
+	
+	if (fdp->fd_rdir != NULL)
+		vrele(fdp->fd_rdir);
+	fdp->fd_rdir = vp;
+	return 0;
+}
+
+
 
 /*
  * Change current working directory (``.'').
@@ -786,6 +852,7 @@ sys_chroot(p, v, retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
+	struct vnode *vp;
 	int error;
 	struct nameidata nd;
 
@@ -797,7 +864,24 @@ sys_chroot(p, v, retval)
 		return (error);
 	if (fdp->fd_rdir != NULL)
 		vrele(fdp->fd_rdir);
-	fdp->fd_rdir = nd.ni_vp;
+	vp = nd.ni_vp;
+	fdp->fd_rdir = vp;
+
+	/*
+	 * Prevent escaping from chroot by putting the root under
+	 * the working directory.  Silently chdir to / if we aren't
+	 * already there.
+	 */
+	if (!vn_isunder(fdp->fd_cdir, vp, p)) {
+		/*
+		 * XXX would be more failsafe to change directory to a
+		 * deadfs node here instead
+		 */
+		vrele(fdp->fd_cdir);
+		VREF(vp);
+		fdp->fd_cdir = vp;
+	}
+	
 	return (0);
 }
 
