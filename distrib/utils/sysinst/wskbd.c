@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.2 2004/10/16 13:20:11 dsl Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.3 2005/01/20 22:15:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.2 2004/10/16 13:20:11 dsl Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.3 2005/01/20 22:15:46 dsl Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -51,14 +51,37 @@ void save_kb_encoding(void);
 
 /* wscons setup for sysinst */
 
+static const char *kbd_name = 0;
+static int kb_default = 0;
+
 struct kb_types {
 	kbd_t		kb_encoding;
 	const char	*kb_name;
 };
 
-static struct kb_types kb_types[] = { KB_ENCTAB };
-static const char *kbd_name = 0;
-static int kb_default = 0;
+/* Types and names of keyboards, maybethe names should be translated... */
+static struct kb_types kb_types[] = {
+    /* KB_ENCTAB - except that it is too terse, and variants need to be set */
+    { KB_US,		"US-English" },
+    { KB_UK,		"UK-English" },
+    { KB_BE,		"Belgian" },
+    { KB_DK,		"Danish" },
+    { KB_SV,		"Finish" },
+    { KB_FR,		"French" },
+    { KB_DE | KB_NODEAD,"German" },
+    { KB_HU,		"Hungarian" },
+    { KB_IT,		"Italian" },
+    { KB_JP,		"Japanese" },
+    { KB_NO,		"Norwegian" },
+    { KB_PL,		"Polish" },
+    { KB_PT,		"Portugese" },
+    { KB_RU,		"Russian" },
+    { KB_ES,		"Spanish" },
+    { KB_SV,		"Swedish" },
+    { KB_SF,		"Swiss French" },
+    { KB_SG,		"Swiss German" },
+    { KB_UA,		"Ukrainian" },
+};
 
 static int
 set_kb_encoding(menudesc *m, void *arg)
