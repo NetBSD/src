@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2002/11/12 22:14:21 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2002/11/24 01:09:09 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2002/11/12 22:14:21 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2002/11/24 01:09:09 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -172,7 +172,7 @@ void pmap_dump_pvlist(vaddr_t phys, char *m);
 #define	PDB_PVDUMP	0x8000
 
 int debugmap = 0;
-int pmapdebug = PDB_PARANOIA | PDB_FOLLOW;
+int pmapdebug = PDB_PARANOIA | PDB_FOLLOW | PDB_GROWKERN | PDB_ENTER | PDB_REMOVE;
 #define	NPDEBUG(_lev_,_stat_) \
 	if (pmapdebug & (_lev_)) \
         	((_stat_))
@@ -1063,6 +1063,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	memhook = (char *) virtual_avail;	/* don't need pte */
+	*pte = 0;
 	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbufaddr = (caddr_t) virtual_avail;	/* don't need pte */
@@ -2361,7 +2362,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (!pmap)
 		return;
 
-	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
+	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pmap, sva, eva));
 
 	/*
@@ -2719,9 +2720,11 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	int error, nflags;
 	struct vm_page *ptp = NULL;
 
-	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
-	    va, pa, pmap, prot, wired));
+	NPDEBUG(PDB_ENTER, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, flags=%08x, wired = %d\n",
+	    va, pa, pmap, prot, flags, wired));
 
+	KDASSERT((flags & PMAP_WIRED) == 0 || (flags & VM_PROT_ALL) != 0);
+	
 #ifdef DIAGNOSTIC
 	/* Valid address ? */
 	if (va >= (pmap_curmaxkvaddr))
