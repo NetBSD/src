@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.166 2004/04/29 06:08:56 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.167 2004/04/29 06:11:43 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1692,3 +1692,10 @@ x11/lib/freetype2/Makefile			1.7
 
 	Sync to changes made in XFree86 4.4 and add -DXFREE86_FT2 appropriately.
 	[lukem, ticket #229]
+
+x11/bin/xhost/Makefile				1.4
+x11/bin/xgc/Makefile				1.4
+x11/bin/xdm/Makefile.xdm			1.5
+
+	Add some #defines missed in the upgrade to XFree86 4.4.x
+	[lukem, ticket #231]
