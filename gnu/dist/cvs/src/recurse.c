@@ -12,6 +12,7 @@
 #include "savecwd.h"
 #include "fileattr.h"
 #include "edit.h"
+#include <assert.h>
 
 static int do_dir_proc PROTO((Node * p, void *closure));
 static int do_file_proc PROTO((Node * p, void *closure));
@@ -35,6 +36,7 @@ struct recursion_frame {
     int aflag;
     int locktype;
     int dosrcs;
+    char *repository;			/* Keep track of repository for rtag */
 };
 
 static int do_recursion PROTO ((struct recursion_frame *frame));
@@ -67,7 +69,7 @@ struct frame_and_entries {
 int
 start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 		 argc, argv, local, which, aflag, locktype,
-		 update_preload, dosrcs)
+		 update_preload, dosrcs, repository_in)
     FILEPROC fileproc;
     FILESDONEPROC filesdoneproc;
     DIRENTPROC 	direntproc;
@@ -105,6 +107,15 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     int locktype;
     char *update_preload;
     int dosrcs;
+    /* Keep track of the repository string.  This is only for the remote mode,
+     * specifically, r* commands (rtag, rdiff, co, ...) where xgetwd() was
+     * used to locate the repository.  Things would break when xgetwd() was
+     * used with a symlinked repository because xgetwd() would return the true
+     * path and in some cases this would cause the path to be printed as other
+     * than the user specified in error messages and in other cases some of
+     * CVS's security assertions would fail.
+     */
+    char *repository_in;
 {
     int i, err = 0;
 #ifdef CLIENT_SUPPORT
@@ -123,6 +134,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     frame.aflag = aflag;
     frame.locktype = locktype;
     frame.dosrcs = dosrcs;
+    frame.repository = repository_in;
 
     expand_wild (argc, argv, &argc, &argv);
 
@@ -502,7 +514,7 @@ do_recursion (frame)
 {
     int err = 0;
     int dodoneproc = 1;
-    char *srepository;
+    char *srepository = NULL;
     List *entries = NULL;
     int locktype;
     int process_this_directory = 1;
@@ -613,17 +625,19 @@ do_recursion (frame)
     if (frame->which & W_LOCAL)
     {
 	if (isdir (CVSADM))
+	{
 	    repository = Name_Repository ((char *) NULL, update_dir);
+	    srepository = repository;		/* remember what to free */
+	}
 	else
 	    repository = NULL;
     }
     else
     {
-	repository = xgetwd ();
-	if (repository == NULL)
-	    error (1, errno, "could not get working directory");
+	repository = frame->repository;
+	assert ( repository != NULL );
+	assert ( strstr ( repository, "/./" ) == NULL );
     }
-    srepository = repository;		/* remember what to free */
 
     fileattr_startdir (repository);
 
@@ -662,7 +676,10 @@ do_recursion (frame)
 	       repository at this point.  Name_Repository will give a
 	       reasonable error message.  */
 	    if (repository == NULL)
-		repository = Name_Repository ((char *) NULL, update_dir);
+	    {
+		Name_Repository ((char *) NULL, update_dir);
+		assert (!"Not reached.  Please report this problem to <bug-cvs@gnu.org>");
+	    }
 
 	    /* find the files and fill in entries if appropriate */
 	    if (process_this_directory)
@@ -736,7 +753,10 @@ do_recursion (frame)
 	err += walklist (filelist, do_file_proc, &frfile);
 
 	/* unlock it */
-	if (locktype != CVS_LOCK_NONE)
+	if (/* We only lock the repository above when repository is set */
+	    repository
+	    /* and when asked for a read or write lock. */
+	    && locktype != CVS_LOCK_NONE)
 	    Lock_Cleanup ();
 
 	/* clean up */
@@ -778,8 +798,8 @@ do_recursion (frame)
     if (srepository)
     {
 	free (srepository);
-	repository = (char *) NULL;
     }
+    repository = (char *) NULL;
 
     return (err);
 }
@@ -1093,7 +1113,30 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	/* make the recursive call */
 	xframe = *frame;
 	xframe.flags = dir_return;
+	/* Keep track of repository, really just for r* commands (rtag, rdiff,
+	 * co, ...) to tag_check_valid, since all the other commands use
+	 * CVS/Repository to figure it out per directory.
+	 */
+	if ( repository )
+	{
+	    if ( strcmp ( dir, "." ) == 0 )
+		xframe.repository = xstrdup ( repository );
+	    else
+	    {
+		xframe.repository = xmalloc ( strlen ( repository )
+					      + strlen ( dir )
+					      + 2 );
+		sprintf ( xframe.repository, "%s/%s", repository, dir );
+	    }
+	}
+	else
+	    xframe.repository = NULL;
 	err += do_recursion (&xframe);
+	if ( xframe.repository )
+	{
+	    free ( xframe.repository );
+	    xframe.repository = NULL;
+	}
 
 	/* put the `.' back if necessary */
 	if (stripped_dot)
