@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.3 1998/10/12 22:02:44 is Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.4 1998/11/08 21:09:27 is Exp $	*/
 
 /*
  * Copyright (c) 1998 Ignatios Souvatzis.  All rights reserved.
@@ -55,6 +55,15 @@ bswm(amiga_interleaved_write_region_2, u_int16_t);
 bssr(amiga_interleaved_set_region_2, u_int16_t);
 bscr(amiga_interleaved_copy_region_2, u_int16_t);
 
+bsr(amiga_interleaved_wordaccess_read_2, u_int16_t);
+bsw(amiga_interleaved_wordaccess_write_2, u_int16_t);
+bsrm(amiga_interleaved_wordaccess_read_multi_2, u_int16_t);
+bswm(amiga_interleaved_wordaccess_write_multi_2, u_int16_t);
+bsrm(amiga_interleaved_wordaccess_read_region_2, u_int16_t);
+bswm(amiga_interleaved_wordaccess_write_region_2, u_int16_t);
+bssr(amiga_interleaved_wordaccess_set_region_2, u_int16_t);
+bscr(amiga_interleaved_wordaccess_copy_region_2, u_int16_t);
+
 const struct amiga_bus_space_methods amiga_contiguous_methods = {
 	amiga_contiguous_read_2,
 	amiga_contiguous_write_2,
@@ -81,6 +90,20 @@ const struct amiga_bus_space_methods amiga_interleaved_methods = {
 	amiga_interleaved_write_region_2,
 	amiga_interleaved_set_region_2,
 	amiga_interleaved_copy_region_2
+};
+
+const struct amiga_bus_space_methods amiga_interleaved_wordaccess_methods = {
+	amiga_interleaved_wordaccess_read_2,
+	amiga_interleaved_wordaccess_write_2,
+	amiga_interleaved_wordaccess_read_multi_2,
+	amiga_interleaved_wordaccess_write_multi_2,
+	amiga_interleaved_wordaccess_read_region_2,
+	amiga_interleaved_wordaccess_write_region_2,
+	/* next two identical to the above here */
+	amiga_interleaved_wordaccess_read_region_2,	/* region_stream */
+	amiga_interleaved_wordaccess_write_region_2,
+	amiga_interleaved_wordaccess_set_region_2,
+	amiga_interleaved_wordaccess_copy_region_2
 };
 
 /*
@@ -371,3 +394,152 @@ amiga_interleaved_copy_region_2(t, srch, srco, dsth, dsto, s)
 		q += step;
 	}
 }
+
+/*
+ * Interleaved_wordaccess methods. Have a stride, but translate
+ * word accesses to word accesses at the target address.
+ */
+
+u_int16_t
+amiga_interleaved_wordaccess_read_2(t, h, o)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+{
+	/* ARGSUSED */
+	return (* (u_int16_t *) (h + (o << t->stride)));
+}
+
+void
+amiga_interleaved_wordaccess_write_2(t, h, o, v)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+{
+	/* ARGSUSED */
+	* (u_int16_t *) (h + (o << t->stride)) = v;
+}
+
+void
+amiga_interleaved_wordaccess_read_multi_2(t, h, o, p, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t *p;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q;
+
+	q = (volatile u_int16_t *)(h + (o << t->stride));
+
+	while (s-- > 0) {
+		*p++ =  *q;
+	}
+}
+
+void
+amiga_interleaved_wordaccess_write_multi_2(t, h, o, p, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	const u_int16_t *p;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q;
+
+	q = (volatile u_int16_t *)(h + (o << t->stride));
+
+	while (s-- > 0) {
+		*q = *p++;
+	}
+}
+
+void
+amiga_interleaved_wordaccess_read_region_2(t, h, o, p, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t *p;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q;
+	int step;
+
+	q = (volatile u_int16_t *)(h + (o << t->stride));
+	step = (1 << t->stride) / sizeof(u_int16_t);
+
+	while (s-- > 0) {
+		*p++ =  *q;
+		q += step;
+	}
+}
+
+void
+amiga_interleaved_wordaccess_write_region_2(t, h, o, p, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	const u_int16_t *p;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q;
+	int step;
+
+	q = (volatile u_int16_t *)(h + (o << t->stride));
+	step = (1 << t->stride) / sizeof(u_int16_t);
+
+	while (s-- > 0) {
+		*q = *p++;
+		q += step;
+	}
+}
+
+void
+amiga_interleaved_wordaccess_set_region_2(t, h, o, v, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q;
+	int step;
+
+	q = (volatile u_int16_t *)(h + (o << t->stride));
+	step = (1 << t->stride) / sizeof(u_int16_t);
+
+	while (s-- > 0) {
+		*q = v;
+		q += step;
+	}
+}
+
+void
+amiga_interleaved_wordaccess_copy_region_2(t, srch, srco, dsth, dsto, s)
+	bus_space_tag_t t;
+	bus_space_handle_t srch, dsth;
+	bus_size_t srco, dsto;
+	bus_size_t s;
+{
+	int step;
+	/* ARGSUSED */
+	volatile u_int16_t *p;
+	volatile u_int16_t *q;
+
+	p = (volatile u_int16_t *)(srch + (srco << t->stride));
+	q = (volatile u_int16_t *)(dsth + (dsto << t->stride));
+	step = (1 << t->stride) / sizeof(u_int16_t);
+
+	while (s-- > 0) {
+		*q = *p;
+		q += step;
+		p += step;
+	}
+}
+

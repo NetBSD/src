@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1998/11/07 22:50:25 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1998/11/08 21:09:27 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -97,7 +97,7 @@ struct bus_space_tag {
 	bus_addr_t	base;
 	u_int8_t	stride;
 	u_int8_t	dum[3];
-	struct amiga_bus_space_methods *absm;
+	const struct amiga_bus_space_methods *absm;
 };
 
 struct amiga_bus_space_methods {
@@ -117,6 +117,10 @@ struct amiga_bus_space_methods {
 
 	/* add 32bit methods here */
 };
+
+const struct amiga_bus_space_methods amiga_contiguous_methods;
+const struct amiga_bus_space_methods amiga_interleaved_methods;
+const struct amiga_bus_space_methods amiga_interleaved_wordaccess_methods;
 
 /*
  * Macro definition of map, unmap, etc.
