@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.19 2000/09/25 00:28:54 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.20 2000/09/25 14:08:08 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.19 2000/09/25 00:28:54 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.20 2000/09/25 14:08:08 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -63,7 +63,8 @@ wearit()
 			return (firstnumber);
 
 		default:
-			printf("You can't wear%s%s!\n", (is_plural_object(value) ? " " : " a "), objsht[value]);
+			printf("You can't wear %s%s!\n",
+			    A_OR_AN_OR_BLANK(value), objsht[value]);
 			return (firstnumber);
 
 		case KNIFE:
@@ -91,9 +92,8 @@ wearit()
 				carrying -= objwt[value];
 				encumber -= objcumber[value];
 				ourtime++;
-				printf("You are now wearing %s %s.\n",
-				    (is_plural_object(value) ? "the"
-					: "a"), objsht[value]);
+				printf("You are now wearing %s%s.\n",
+				    A_OR_AN_OR_THE(value), objsht[value]);
 			} else
 				if (testbit(wear, value))
 					printf("You are already wearing the %s.\n",
@@ -199,7 +199,8 @@ murder()
 				    wordvalue[wordnumber] == EVERYTHING)
 					puts("You can't kill that!");
 				else
-					printf("You can't kill the %s!\n",
+					printf("You can't kill %s%s!\n",
+					    A_OR_AN_OR_BLANK(wordvalue[wordnumber]),
 					    objsht[wordvalue[wordnumber]]);
 				break;
 			}

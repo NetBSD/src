@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2000/09/24 14:11:09 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.26 2000/09/25 14:08:08 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -229,6 +229,7 @@
 
 /* Flags for objects.  */
 #define OBJ_PLURAL	1
+#define OBJ_AN		2
 
 struct room {
 	const char   *name;
@@ -256,6 +257,14 @@ extern const int     objwt[NUMOFOBJECTS];
 extern const int     objcumber[NUMOFOBJECTS];
 extern const int     objflags[NUMOFOBJECTS];
 #define is_plural_object(n)	(objflags[(n)] & OBJ_PLURAL)
+/*
+ * These macros yield words to use with objects (followed but not preceded
+ * by spaces, or with no spaces if the expansion is the empty string).
+ */
+#define A_OR_AN(n)		(objflags[(n)] & OBJ_AN ? "an " : "a ")
+#define A_OR_AN_OR_THE(n)	(is_plural_object((n)) ? "the " : A_OR_AN((n)))
+#define A_OR_AN_OR_BLANK(n)	(is_plural_object((n)) ? "" : A_OR_AN((n)))
+#define IS_OR_ARE(n)		(is_plural_object((n)) ? "are " : "is ")
 
  /* current input line */
 #define WORDLEN	15
