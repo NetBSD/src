@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1999/01/15 07:43:48 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1999/02/27 06:39:37 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,6 +42,7 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"

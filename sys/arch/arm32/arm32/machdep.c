@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1999/02/07 09:34:58 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1999/02/27 06:39:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,6 +40,7 @@
  * Created      : 17/09/94
  */
 
+#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"

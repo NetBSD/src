@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.161 1999/02/23 03:20:02 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_uvm.h"
@@ -82,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 1999/02/23 03:20:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
