@@ -1,9 +1,0 @@
-#	$Id: NOTES,v 1.2 1993/05/20 04:01:30 cgd Exp $
-
-name		type		ro/rw
-version		string		ro
-copyright	string		ro
-hostname	string		rw
-loadavg		int[3]		ro
-hz		int		ro
-physmem		int		ro
