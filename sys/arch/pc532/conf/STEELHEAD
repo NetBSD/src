@@ -1,7 +1,7 @@
 #
 # STEELHEAD: Phil Nelson's pc532.
 #
-#	$Id: STEELHEAD,v 1.2 1994/05/25 00:00:53 phil Exp $
+#	$Id: STEELHEAD,v 1.3 1994/08/01 23:44:08 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
@@ -42,3 +42,4 @@ pseudo-device	log
 pseudo-device	sl	1
 pseudo-device	ppp	1
 pseudo-device	pty	10
+pseudo-device	vn	4
