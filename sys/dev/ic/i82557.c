@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.6 1999/08/04 00:17:28 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.7 1999/08/04 05:21:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -173,10 +173,11 @@ inline void fxp_scb_wait __P((struct fxp_softc *));
 
 void	fxp_start __P((struct ifnet *));
 int	fxp_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	fxp_init __P((struct fxp_softc *));
-void	fxp_stop __P((struct fxp_softc *));
+int	fxp_init __P((struct fxp_softc *));
+void	fxp_rxdrain __P((struct fxp_softc *));
+void	fxp_stop __P((struct fxp_softc *, int));
 void	fxp_watchdog __P((struct ifnet *));
-int	fxp_add_rfabuf __P((struct fxp_softc *, struct fxp_rxdesc *));
+int	fxp_add_rfabuf __P((struct fxp_softc *, bus_dmamap_t, int));
 int	fxp_mdi_read __P((struct device *, int, int));
 void	fxp_statchg __P((struct device *));
 void	fxp_mdi_write __P((struct device *, int, int, int));
@@ -186,6 +187,8 @@ void	fxp_tick __P((void *));
 void	fxp_mc_setup __P((struct fxp_softc *));
 
 void	fxp_shutdown __P((void *));
+
+int	fxp_copy_small = 0;
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
@@ -286,22 +289,10 @@ fxp_attach(sc)
 	 */
 	for (i = 0; i < FXP_NRFABUFS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, 0, &sc->sc_rx_dmamaps[i])) != 0) {
+		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
 			printf("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
-		}
-	}
-
-	/*
-	 * Pre-allocate the receive buffers.
-	 */
-	for (i = 0; i < FXP_NRFABUFS; i++) {
-		sc->sc_rxdescs[i].fr_dmamap = sc->sc_rx_dmamaps[i];
-		if (fxp_add_rfabuf(sc, &sc->sc_rxdescs[i]) != 0) {
-			printf("%s: unable to allocate or map rx buffer %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_6;
 		}
 	}
 
@@ -359,19 +350,10 @@ fxp_attach(sc)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall though.
 	 */
- fail_6:
-	for (i = 0; i < FXP_NRFABUFS; i++) {
-		if (sc->sc_rxdescs[i].fr_mbhead != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->sc_rxdescs[i].fr_dmamap);
-			m_freem(sc->sc_rxdescs[i].fr_mbhead);
-		}
-	}
  fail_5:
 	for (i = 0; i < FXP_NRFABUFS; i++) {
-		if (sc->sc_rxdescs[i].fr_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_rxdescs[i].fr_dmamap);
+		if (sc->sc_rxmaps[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmaps[i]);
 	}
  fail_4:
 	for (i = 0; i < FXP_NTXCB; i++) {
@@ -442,7 +424,7 @@ fxp_shutdown(arg)
 {
 	struct fxp_softc *sc = arg;
 
-	fxp_stop(sc);
+	fxp_stop(sc, 1);
 }
 
 /*
@@ -736,7 +718,12 @@ fxp_intr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct fxp_cb_tx *txd;
 	struct fxp_txsoft *txs;
+	struct mbuf *m, *m0;
+	bus_dmamap_t rxmap;
+	struct fxp_rfa *rfa;
+	struct ether_header *eh;
 	int i, oflags, claimed = 0;
+	u_int16_t len;
 	u_int8_t statack;
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
@@ -753,80 +740,102 @@ fxp_intr(arg)
 		 * re-start the receiver.
 		 */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
-			struct fxp_rxdesc *rxd;
-			struct mbuf *m;
-			struct fxp_rfa *rfa;
-			bus_dmamap_t rxmap;
  rcvloop:
-			rxd = sc->rfa_head;
-			rxmap = rxd->fr_dmamap;
-			m = rxd->fr_mbhead;
-			rfa = (struct fxp_rfa *)(m->m_ext.ext_buf +
-			    RFA_ALIGNMENT_FUDGE);
+			m = sc->sc_rxq.ifq_head;
+			rfa = FXP_MTORFA(m);
+			rxmap = M_GETCTX(m, bus_dmamap_t);
 
-			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
-			    rxmap->dm_mapsize,
+			FXP_RFASYNC(sc, m,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-			if (rfa->rfa_status & FXP_RFA_STATUS_C) {
+			if ((rfa->rfa_status & FXP_RFA_STATUS_C) == 0) {
 				/*
-				 * Remove first packet from the chain.
+				 * We have processed all of the
+				 * receive buffers.
 				 */
-				sc->rfa_head = rxd->fr_next;
-				rxd->fr_next = NULL;
+				goto do_transmit;
+			}
 
+			IF_DEQUEUE(&sc->sc_rxq, m);
+
+			FXP_RXBUFSYNC(sc, m, BUS_DMASYNC_POSTREAD);
+
+			len = rfa->actual_size & (m->m_ext.ext_size - 1);
+
+			if (len < sizeof(struct ether_header)) {
 				/*
-				 * Add a new buffer to the receive chain.
-				 * If this fails, the old buffer is recycled
-				 * instead.
+				 * Runt packet; drop it now.
 				 */
-				if (fxp_add_rfabuf(sc, rxd) == 0) {
-					struct ether_header *eh;
-					u_int16_t total_len;
-
-					total_len = rfa->actual_size &
-					    (MCLBYTES - 1);
-					if (total_len <
-					    sizeof(struct ether_header)) {
-						m_freem(m);
-						goto rcvloop;
-					}
-					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len = total_len;
-					eh = mtod(m, struct ether_header *);
-#if NBPFILTER > 0
-					if (ifp->if_bpf) {
-						bpf_tap(ifp->if_bpf,
-						    mtod(m, caddr_t),
-						    total_len); 
-						/*
-						 * Only pass this packet up
-						 * if it is for us.
-						 */
-						if ((ifp->if_flags &
-						    IFF_PROMISC) &&
-						    (rfa->rfa_status &
-						    FXP_RFA_STATUS_IAMATCH) &&
-						    (eh->ether_dhost[0] & 1)
-						    == 0) {
-							m_freem(m);
-							goto rcvloop;
-						}
-					}
-#endif /* NBPFILTER > 0 */
-					(*ifp->if_input)(ifp, m);
-				}
+				FXP_INIT_RFABUF(sc, m);
 				goto rcvloop;
 			}
-			if (statack & FXP_SCB_STATACK_RNR) {
-				fxp_scb_wait(sc);
-				CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-				    rxmap->dm_segs[0].ds_addr +
-				    RFA_ALIGNMENT_FUDGE);
-				CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
-				    FXP_SCB_COMMAND_RU_START);
+
+			/*
+			 * If the packet is small enough to fit in a
+			 * single header mbuf, allocate one and copy
+			 * the data into it.  This greatly reduces
+			 * memory consumption when we receive lots
+			 * of small packets.
+			 *
+			 * Otherwise, we add a new buffer to the receive
+			 * chain.  If this fails, we drop the packet and
+			 * recycle the old buffer.
+			 */
+			if (fxp_copy_small != 0 && len <= MHLEN) {
+				MGETHDR(m0, M_DONTWAIT, MT_DATA);
+				if (m == NULL)
+					goto dropit;
+				memcpy(mtod(m0, caddr_t),
+				    mtod(m, caddr_t), len);
+				FXP_INIT_RFABUF(sc, m);
+				m = m0;
+			} else {
+				if (fxp_add_rfabuf(sc, rxmap, 1) != 0) {
+ dropit:
+					ifp->if_ierrors++;
+					FXP_INIT_RFABUF(sc, m);
+					goto rcvloop;
+				}
 			}
+
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = len;
+			eh = mtod(m, struct ether_header *);
+
+#if NBPFILTER > 0
+			/*
+			 * Pass this up to any BPF listeners, but only
+			 * pass it up the stack it its for us.
+			 */
+			if (ifp->if_bpf) {
+				bpf_mtap(ifp->if_bpf, m);
+
+				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				    (rfa->rfa_status &
+				     FXP_RFA_STATUS_IAMATCH) != 0 &&
+				    (eh->ether_dhost[0] & 1) == 0) {
+					m_freem(m);
+					goto rcvloop;
+				}
+			}
+#endif /* NBPFILTER > 0 */
+
+			/* Pass it on. */
+			(*ifp->if_input)(ifp, m);
+			goto rcvloop;
 		}
+
+ do_transmit:
+		if (statack & FXP_SCB_STATACK_RNR) {
+			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
+			fxp_scb_wait(sc);
+			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
+			    rxmap->dm_segs[0].ds_addr +
+			    RFA_ALIGNMENT_FUDGE);
+			CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
+			    FXP_SCB_COMMAND_RU_START);
+		}
+
 		/*
 		 * Free any finished transmit mbuf chains.
 		 */
@@ -879,7 +888,7 @@ fxp_intr(arg)
 					 */
 					if (((ifp->if_flags ^ oflags) &
 					    IFF_ALLMULTI) != 0)
-						fxp_init(sc);
+						(void) fxp_init(sc);
 				}
 			}
 
@@ -925,9 +934,9 @@ fxp_tick(arg)
 	ifp->if_collisions += sp->tx_total_collisions;
 	if (sp->rx_good) {
 		ifp->if_ipackets += sp->rx_good;
-		sc->rx_idle_secs = 0;
+		sc->sc_rxidle = 0;
 	} else {
-		sc->rx_idle_secs++;
+		sc->sc_rxidle++;
 	}
 	ifp->if_ierrors +=
 	    sp->rx_crc_errors +
@@ -954,8 +963,8 @@ fxp_tick(arg)
 	 * occur in 10Mbps mode, but has been seen to occur in 100Mbps
 	 * mode as well (perhaps due to a 10/100 speed transition).
 	 */
-	if (sc->rx_idle_secs > FXP_MAX_RX_IDLE) {
-		sc->rx_idle_secs = 0;
+	if (sc->sc_rxidle > FXP_MAX_RX_IDLE) {
+		sc->sc_rxidle = 0;
 		fxp_mc_setup(sc);
 	}
 	/*
@@ -1000,7 +1009,7 @@ fxp_tick(arg)
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: fxp_tick: allmulti state changed\n",
 			    sc->sc_dev.dv_xname);
-		fxp_init(sc);
+		(void) fxp_init(sc);
 	}
 
 	splx(s);
@@ -1012,15 +1021,36 @@ fxp_tick(arg)
 }
 
 /*
+ * Drain the receive queue.
+ */
+void
+fxp_rxdrain(sc)
+	struct fxp_softc *sc;
+{
+	bus_dmamap_t rxmap;
+	struct mbuf *m;
+
+	for (;;) {
+		IF_DEQUEUE(&sc->sc_rxq, m);
+		if (m == NULL)
+			break;
+		rxmap = M_GETCTX(m, bus_dmamap_t);
+		bus_dmamap_unload(sc->sc_dmat, rxmap);
+		FXP_RXMAP_PUT(sc, rxmap);
+		m_freem(m);
+	}
+}
+
+/*
  * Stop the interface. Cancels the statistics updater and resets
  * the interface.
  */
 void
-fxp_stop(sc)
+fxp_stop(sc, drain)
 	struct fxp_softc *sc;
+	int drain;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct fxp_rxdesc *rxd;
 	struct fxp_txsoft *txs;
 	int i;
 
@@ -1048,26 +1078,11 @@ fxp_stop(sc)
 	}
 	sc->sc_txpending = 0;
 
-	/*
-	 * Free all the receive buffers then reallocate/reinitialize
-	 */
-	sc->rfa_head = NULL;
-	sc->rfa_tail = NULL;
-	for (i = 0; i < FXP_NRFABUFS; i++) {
-		rxd = &sc->sc_rxdescs[i];
-		if (rxd->fr_mbhead != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, rxd->fr_dmamap);
-			m_freem(rxd->fr_mbhead);
-			rxd->fr_mbhead = NULL;
-		}
-		if (fxp_add_rfabuf(sc, rxd) != 0) {
-			/*
-			 * This "can't happen" - we're at splnet()
-			 * and we just freed the buffer we need
-			 * above.
-			 */
-			panic("fxp_stop: no buffers!");
-		}
+	if (drain) {
+		/*
+		 * Release the receive buffers.
+		 */
+		fxp_rxdrain(sc);
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1089,13 +1104,13 @@ fxp_watchdog(ifp)
 	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	fxp_init(sc);
+	(void) fxp_init(sc);
 }
 
 /*
  * Initialize the interface.  Must be called at splnet().
  */
-void
+int
 fxp_init(sc)
 	struct fxp_softc *sc;
 {
@@ -1103,12 +1118,13 @@ fxp_init(sc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txd;
-	int i, prm, allm;
+	bus_dmamap_t rxmap;
+	int i, prm, allm, error = 0;
 
 	/*
 	 * Cancel any pending I/O
 	 */
-	fxp_stop(sc);
+	fxp_stop(sc, 0);
 
 	sc->sc_flags = 0;
 
@@ -1239,6 +1255,27 @@ fxp_init(sc)
 	sc->sc_txlast = FXP_NTXCB - 1;
 
 	/*
+	 * Initialize the receive buffer list.
+	 */
+	sc->sc_rxq.ifq_maxlen = FXP_NRFABUFS;
+	while (sc->sc_rxq.ifq_len < FXP_NRFABUFS) {
+		rxmap = FXP_RXMAP_GET(sc);
+		if ((error = fxp_add_rfabuf(sc, rxmap, 0)) != 0) {
+			printf("%s: unable to allocate or map rx "
+			    "buffer %d, error = %d\n",
+			    sc->sc_dev.dv_xname,
+			    sc->sc_rxq.ifq_len, error);
+			/*
+			 * XXX Should attempt to run with fewer receive
+			 * XXX buffers instead of just failing.
+			 */
+			FXP_RXMAP_PUT(sc, rxmap);
+			fxp_rxdrain(sc);
+			goto out;
+		}
+	}
+
+	/*
 	 * Give the transmit ring to the chip.  We do this by pointing
 	 * the chip at the last descriptor (which is a NOP|SUSPEND), and
 	 * issuing a start command.  It will execute the NOP and then
@@ -1251,9 +1288,10 @@ fxp_init(sc)
 	/*
 	 * Initialize receiver buffer area - RFA.
 	 */
+	rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-	    sc->rfa_head->fr_dmamap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
+	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
 	if (sc->sc_flags & FXPF_MII) {
@@ -1270,7 +1308,7 @@ fxp_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
-	 * Start stats updater.
+	 * Start the one second timer.
 	 */
 	timeout(fxp_tick, sc, hz);
 
@@ -1278,6 +1316,11 @@ fxp_init(sc)
 	 * Attempt to start output on the interface.
 	 */
 	fxp_start(ifp);
+
+ out:
+	if (error)
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	return (error);
 }
 
 /*
@@ -1335,112 +1378,46 @@ fxp_80c24_mediastatus(ifp, ifmr)
 
 /*
  * Add a buffer to the end of the RFA buffer list.
- * Return 0 if successful, 1 for failure. A failure results in
- * adding the 'oldm' (if non-NULL) on to the end of the list -
- * tossing out it's old contents and recycling it.
+ * Return 0 if successful, error code on failure.
+ *
  * The RFA struct is stuck at the beginning of mbuf cluster and the
  * data pointer is fixed up to point just past it.
  */
 int
-fxp_add_rfabuf(sc, rxd)
+fxp_add_rfabuf(sc, rxmap, unload)
 	struct fxp_softc *sc;
-	struct fxp_rxdesc *rxd;
-{
-	struct mbuf *m, *oldm;
-	struct fxp_rfa *rfa, *p_rfa;
 	bus_dmamap_t rxmap;
-	u_int32_t v;
-	int error, rval = 0;
-
-	oldm = rxd->fr_mbhead;
-	rxmap = rxd->fr_dmamap;
+	int unload;
+{
+	struct mbuf *m;
+	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m != NULL) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			if (oldm == NULL)
-				return 1;
-			m = oldm;
-			m->m_data = m->m_ext.ext_buf;
-			rval = 1;
-		}
-	} else {
-		if (oldm == NULL)
-			return 1;
-		m = oldm;
-		m->m_data = m->m_ext.ext_buf;
-		rval = 1;
+	if (m == NULL)
+		return (ENOBUFS);
+
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (ENOBUFS);
 	}
 
-	rxd->fr_mbhead = m;
+	if (unload)
+		bus_dmamap_unload(sc->sc_dmat, rxmap);
 
-	/*
-	 * Setup the DMA map for this receive buffer.
-	 */
-	if (m != oldm) {
-		if (oldm != NULL)
-			bus_dmamap_unload(sc->sc_dmat, rxmap);
-		error = bus_dmamap_load(sc->sc_dmat, rxmap,
-		    m->m_ext.ext_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: can't load rx buffer, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
-			panic("fxp_add_rfabuf");	/* XXX */
-		}
+	M_SETCTX(m, rxmap);
+
+	error = bus_dmamap_load(sc->sc_dmat, rxmap,
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load rx DMA map %d, error = %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_rxq.ifq_len, error);
+		panic("fxp_add_rfabuf");		/* XXX */
 	}
 
-	/*
-	 * Move the data pointer up so that the incoming data packet
-	 * will be 32-bit aligned.
-	 */
-	m->m_data += RFA_ALIGNMENT_FUDGE;
+	FXP_INIT_RFABUF(sc, m);
 
-	/*
-	 * Get a pointer to the base of the mbuf cluster and move
-	 * data start past the RFA descriptor.
-	 */
-	rfa = mtod(m, struct fxp_rfa *);
-	m->m_data += sizeof(struct fxp_rfa);
-	rfa->size = MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE;
-
-	/*
-	 * Initialize the rest of the RFA.
-	 */
-	rfa->rfa_status = 0;
-	rfa->rfa_control = FXP_RFA_CONTROL_EL;
-	rfa->actual_size = 0;
-
-	/*
-	 * Note that since the RFA is misaligned, we cannot store values
-	 * directly.  Instead, we must copy.
-	 */
-	v = -1;
-	memcpy((void *)&rfa->link_addr, &v, sizeof(v));
-	memcpy((void *)&rfa->rbd_addr, &v, sizeof(v));
-
-	/*
-	 * If there are other buffers already on the list, attach this
-	 * one to the end by fixing up the tail to point to this one.
-	 */
-	if (sc->rfa_head != NULL) {
-		p_rfa = (struct fxp_rfa *)
-		    (sc->rfa_tail->fr_mbhead->m_ext.ext_buf +
-		     RFA_ALIGNMENT_FUDGE);
-		sc->rfa_tail->fr_next = rxd;
-		v = rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;
-		memcpy((void *)&p_rfa->link_addr, &v, sizeof(v));
-		p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;
-	} else {
-		sc->rfa_head = rxd;
-	}
-	sc->rfa_tail = rxd;
-
-	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	return (rval);
+	return (0);
 }
 
 volatile int
@@ -1516,7 +1493,8 @@ fxp_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			fxp_init(sc);
+			if ((error = fxp_init(sc)) != 0)
+				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
@@ -1532,12 +1510,12 @@ fxp_ioctl(ifp, command, data)
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ifp->if_addrlen);
 			 /* Set new address. */
-			 fxp_init(sc);
+			 error = fxp_init(sc);
 			 break;
 		    }
 #endif /* NS */
 		default:
-			fxp_init(sc);
+			error = fxp_init(sc);
 			break;
 		}
 		break;
@@ -1556,20 +1534,20 @@ fxp_ioctl(ifp, command, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			fxp_stop(sc);
+			fxp_stop(sc, 1);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			fxp_init(sc);
+			error = fxp_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up change in any other
 			 * flags that affect the hardware state.
 			 */
-			fxp_init(sc);
+			error = fxp_init(sc);
 		}
 		break;
 
@@ -1593,8 +1571,9 @@ fxp_ioctl(ifp, command, data)
 			 * handled by the config block.
 			 */
 			if (((ifp->if_flags ^ oflags) & IFF_ALLMULTI) != 0)
-				fxp_init(sc);
-			error = 0;
+				error = fxp_init(sc);
+			else
+				error = 0;
 		}
 		break;
 
