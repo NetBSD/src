@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.30 2005/03/02 22:11:03 tron Exp $
+#	$NetBSD: BRANCHES,v 1.31 2005/03/05 07:54:19 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -677,7 +677,8 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			pc532 (simonb@)
 			alpha, i386, mac68k, macppc, pmax, shark,
 			    sparc, sparc64 (chs@)
-			news68k (tsutsui@)
+			cobalt, dreamcast, hp300, news68k (tsutsui@)
+			amiga (mhitch@)
 
 		known to have the same problem as trunk:
 			vax (chs@, stuck while running kvm_mkdb)
