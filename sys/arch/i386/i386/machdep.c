@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.467 2002/01/31 17:40:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.468 2002/03/06 13:10:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.467 2002/01/31 17:40:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.468 2002/03/06 13:10:20 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2210,7 +2210,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
