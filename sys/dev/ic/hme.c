@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.44 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: hme.c,v 1.45 2005/02/18 00:22:11 heas Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.44 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.45 2005/02/18 00:22:11 heas Exp $");
 
 /* #define HMEDEBUG */
 
@@ -508,6 +508,7 @@ hme_init(sc)
 	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
             ETHER_MAX_LEN);
+	sc->sc_ec_capenable = sc->sc_ethercom.ec_capenable;
 
 	/* Load station MAC address */
 	ea = sc->sc_enaddr;
@@ -1339,6 +1340,10 @@ hme_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+#ifdef HMEDEBUG
+		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
+#endif
+
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1361,18 +1366,19 @@ hme_ioctl(ifp, cmd, data)
 			 * which will trigger a reset.
 			 */
 #define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
-			if (ifp->if_flags == sc->sc_if_flags)
-				break;
-			if ((ifp->if_flags & (~RESETIGN))
-			    == (sc->sc_if_flags & (~RESETIGN)))
-				hme_setladrf(sc);
-			else
-				hme_init(sc);
+			if (ifp->if_flags == sc->sc_if_flags) {
+				if ((ifp->if_flags & (~RESETIGN))
+				    == (sc->sc_if_flags & (~RESETIGN)))
+					hme_setladrf(sc);
+				else
+					hme_init(sc);
+			}
 #undef RESETIGN
 		}
-#ifdef HMEDEBUG
-		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
-#endif
+
+		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
+			hme_init(sc);
+
 		break;
 
 	case SIOCADDMULTI:
