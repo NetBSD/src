@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.13 2003/06/29 22:29:11 fvdl Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.14 2004/04/21 01:05:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_misc.c,v 1.13 2003/06/29 22:29:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_misc.c,v 1.14 2004/04/21 01:05:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -410,7 +410,7 @@ aout_sys_statfs(l, v, retval)
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_statfs(l, v, retval);
+	return compat_20_sys_statfs(l, v, retval);
 }
 
 

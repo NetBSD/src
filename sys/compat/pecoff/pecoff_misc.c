@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.8 2003/06/29 22:29:43 fvdl Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.9 2004/04/21 01:05:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.8 2003/06/29 22:29:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.9 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -412,7 +412,7 @@ pecoff_sys_statfs(l, v, retval)
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_statfs(l, v, retval);
+	return compat_20_sys_statfs(l, v, retval);
 }
 
 

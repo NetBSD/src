@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.130 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: syscallargs.h,v 1.131 2004/04/21 01:05:43 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -103,8 +103,8 @@ struct sys_obreak_args {
 	syscallarg(char *) nsize;
 };
 
-struct sys_getfsstat_args {
-	syscallarg(struct statfs *) buf;
+struct compat_20_sys_getfsstat_args {
+	syscallarg(struct statfs12 *) buf;
 	syscallarg(long) bufsize;
 	syscallarg(int) flags;
 };
@@ -713,14 +713,14 @@ struct compat_43_sys_getdirentries_args {
 	syscallarg(long *) basep;
 };
 
-struct sys_statfs_args {
+struct compat_20_sys_statfs_args {
 	syscallarg(const char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct statfs12 *) buf;
 };
 
-struct sys_fstatfs_args {
+struct compat_20_sys_fstatfs_args {
 	syscallarg(int) fd;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct statfs12 *) buf;
 };
 
 struct sys_getfh_args {
@@ -1307,9 +1307,9 @@ struct sys_fhstat_args {
 	syscallarg(struct stat *) sb;
 };
 
-struct sys_fhstatfs_args {
+struct compat_20_sys_fhstatfs_args {
 	syscallarg(const fhandle_t *) fhp;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct statfs12 *) buf;
 };
 #if defined(SYSVSEM) || !defined(_KERNEL)
 
@@ -1453,6 +1453,30 @@ struct sys_uuidgen_args {
 	syscallarg(int) count;
 };
 
+struct sys_getvfsstat_args {
+	syscallarg(struct statvfs *) buf;
+	syscallarg(size_t) bufsize;
+	syscallarg(int) flags;
+};
+
+struct sys_statvfs1_args {
+	syscallarg(const char *) path;
+	syscallarg(struct statvfs *) buf;
+	syscallarg(int) flags;
+};
+
+struct sys_fstatvfs1_args {
+	syscallarg(int) fd;
+	syscallarg(struct statvfs *) buf;
+	syscallarg(int) flags;
+};
+
+struct sys_fhstatvfs1_args {
+	syscallarg(const fhandle_t *) fhp;
+	syscallarg(struct statvfs *) buf;
+	syscallarg(int) flags;
+};
+
 /*
  * System call prototypes.
  */
@@ -1489,7 +1513,7 @@ int	sys_chown(struct lwp *, void *, register_t *);
 
 int	sys_obreak(struct lwp *, void *, register_t *);
 
-int	sys_getfsstat(struct lwp *, void *, register_t *);
+int	compat_20_sys_getfsstat(struct lwp *, void *, register_t *);
 
 int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 
@@ -1760,9 +1784,9 @@ int	sys_nfssvc(struct lwp *, void *, register_t *);
 #endif
 int	compat_43_sys_getdirentries(struct lwp *, void *, register_t *);
 
-int	sys_statfs(struct lwp *, void *, register_t *);
+int	compat_20_sys_statfs(struct lwp *, void *, register_t *);
 
-int	sys_fstatfs(struct lwp *, void *, register_t *);
+int	compat_20_sys_fstatfs(struct lwp *, void *, register_t *);
 
 int	sys_getfh(struct lwp *, void *, register_t *);
 
@@ -2005,7 +2029,7 @@ int	sys_fhopen(struct lwp *, void *, register_t *);
 
 int	sys_fhstat(struct lwp *, void *, register_t *);
 
-int	sys_fhstatfs(struct lwp *, void *, register_t *);
+int	compat_20_sys_fhstatfs(struct lwp *, void *, register_t *);
 
 #if defined(SYSVSEM) || !defined(_KERNEL)
 int	sys_____semctl13(struct lwp *, void *, register_t *);
@@ -2077,5 +2101,13 @@ int	sys_kevent(struct lwp *, void *, register_t *);
 int	sys_fsync_range(struct lwp *, void *, register_t *);
 
 int	sys_uuidgen(struct lwp *, void *, register_t *);
+
+int	sys_getvfsstat(struct lwp *, void *, register_t *);
+
+int	sys_statvfs1(struct lwp *, void *, register_t *);
+
+int	sys_fstatvfs1(struct lwp *, void *, register_t *);
+
+int	sys_fhstatvfs1(struct lwp *, void *, register_t *);
 
 #endif /* _SYS__SYSCALLARGS_H_ */

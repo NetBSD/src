@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.17 2004/01/05 23:23:33 jmmv Exp $	 */
+/* $NetBSD: main.c,v 1.18 2004/04/21 01:05:33 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -269,13 +269,13 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	if (rerun)
 		printf("\n***** PLEASE RERUN FSCK *****\n");
 	if (hotroot()) {
-		struct statfs stfs_buf;
+		struct statvfs stfs_buf;
 		/*
 		 * We modified the root.  Do a mount update on
 		 * it, unless it is read-write, so we can continue.
 		 */
-		if (statfs("/", &stfs_buf) == 0) {
-			long flags = stfs_buf.f_flags;
+		if (statvfs("/", &stfs_buf) == 0) {
+			long flags = stfs_buf.f_flag;
 			struct ufs_args args;
 			int ret;
 

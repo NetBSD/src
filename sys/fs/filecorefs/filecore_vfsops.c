@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.9 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.10 2004/04/21 01:05:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.9 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.10 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,7 @@ struct vfsops filecore_vfsops = {
 	filecore_unmount,
 	filecore_root,
 	filecore_quotactl,
-	filecore_statfs,
+	filecore_statvfs,
 	filecore_sync,
 	filecore_vget,
 	filecore_fhtovp,
@@ -168,7 +168,7 @@ filecore_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)filecore_statfs(mp, &mp->mnt_stat, p);
+	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -262,7 +262,7 @@ filecore_mount(mp, path, data, ndp, p)
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, p);
 }
 
@@ -367,8 +367,9 @@ filecore_mountfs(devvp, mp, p, argp)
 	bp = NULL;
 
 	mp->mnt_data = fcmp;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FILECORE);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FILECORE);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = fcdr->log2secsize;
@@ -490,26 +491,25 @@ filecore_quotactl(mp, cmd, uid, arg, p)
  * Get file system statistics.
  */
 int
-filecore_statfs(mp, sbp, p)
+filecore_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
-#ifdef COMPAT_09
-	sbp->f_type = 255;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = fcmp->blksize;
+	sbp->f_frsize = sbp->f_bsize; /* XXX */
 	sbp->f_iosize = sbp->f_bsize;	/* XXX */
 	sbp->f_blocks = fcmp->nblks;
 	sbp->f_bfree = 0; /* total free blocks */
 	sbp->f_bavail = 0; /* blocks free for non superuser */
+	sbp->f_bresvd = 0; /* reserved blocks */
 	sbp->f_files =  0; /* total files */
-	sbp->f_ffree = 0; /* free file nodes */
-	copy_statfs_info(sbp, mp);
+	sbp->f_ffree = 0; /* free file nodes for non superuser */
+	sbp->f_favail = 0; /* free file nodes */
+	sbp->f_fresvd = 0; /* reserved file nodes */
+	copy_statvfs_info(sbp, mp);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.82 2004/03/26 18:38:55 drochner Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.83 2004/04/21 01:05:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.82 2004/03/26 18:38:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.83 2004/04/21 01:05:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2224,12 +2224,12 @@ int netbsd32_fhstatfs(l, v, retval)
 {
 	struct netbsd32_fhstatfs_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statvfs *) buf;
 	} */ *uap = v;
 	struct sys_fhstatfs_args ua;
 
 	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(buf, struct statfs);
+	NETBSD32TOP_UAP(buf, struct statvfs);
 	return (sys_fhstatfs(l, &ua, retval));
 }
 

@@ -53,7 +53,7 @@
 #define HAVE_SYS_DUSTAT_H 0 /* <sys/dustat.h> */
 #define HAVE_SYS_FS_TYPES_H 0 /* <sys/fs_types.h> */
 #define HAVE_USTAT_H 0 /* <ustat.h> */
-#define HAVE_SYS_STATVFS_H 0 /* <sys/statvfs.h> */
+#define HAVE_SYS_STATVFS_H 1 /* <sys/statvfs.h> */
 
 /* If major and minor are not defined in <sys/types.h>, but are in
    <sys/mkdev.h>, set MAJOR_IN_MKDEV to 1.  If they are in
@@ -193,9 +193,9 @@
    STAT_STATFS4          four argument statfs function
    STAT_DISK_SPACE	 disk_space function (QNX)
    STAT_USTAT            the ustat function with 512 byte blocks.  */
-#define STAT_STATVFS 0
+#define STAT_STATVFS 1
 #define STAT_STATFS3_OSF1 0
-#define STAT_STATFS2_BSIZE 1
+#define STAT_STATFS2_BSIZE 0
 #define STAT_STATFS2_FSIZE 0
 #define STAT_STATFS2_FS_DATA 0
 #define STAT_STATFS4 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.55 2004/03/06 06:54:12 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.56 2004/04/21 01:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.55 2004/03/06 06:54:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.56 2004/04/21 01:05:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -621,7 +621,7 @@ ufs_dirbad(ip, offset, how)
 	mp = ITOV(ip)->v_mount;
 	printf("%s: bad dir ino %d at offset %d: %s\n",
 	    mp->mnt_stat.f_mntonname, ip->i_number, offset, how);
-	if ((mp->mnt_stat.f_flags & MNT_RDONLY) == 0)
+	if ((mp->mnt_stat.f_flag & MNT_RDONLY) == 0)
 		panic("bad dir");
 }
 

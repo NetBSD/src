@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.61 2004/03/26 20:28:39 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.62 2004/04/21 01:05:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.61 2004/03/26 20:28:39 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.62 2004/04/21 01:05:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,13 +67,13 @@ extern char *strpct(u_long, u_long, u_int);
 int	 main(int, char *[]);
 int	 bread(off_t, void *, int);
 char	*getmntpt(char *);
-void	 prtstat(struct statfs *, int);
+void	 prtstat(struct statvfs *, int);
 int	 selected(const char *);
 void	 maketypelist(char *);
-long	 regetmntinfo(struct statfs **, long);
+long	 regetmntinfo(struct statvfs **, long);
 void	 usage(void);
 void	 prthumanval(int64_t, char *);
-void	 prthuman(struct statfs *, int64_t, int64_t);
+void	 prthuman(struct statvfs *, int64_t, int64_t);
 
 int	aflag, gflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
@@ -82,7 +82,7 @@ int
 main(int argc, char *argv[])
 {
 	struct stat stbuf;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 	long mntsize;
 	int ch, i, maxwidth, width;
 	char *mntpt;
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	if (*argv == NULL) {
 		mntsize = regetmntinfo(&mntbuf, mntsize);
 	} else {
-		mntbuf = malloc(argc * sizeof(struct statfs));
+		mntbuf = malloc(argc * sizeof(*mntbuf));
 		mntsize = 0;
 		for (; *argv != NULL; argv++) {
 			if (stat(*argv, &stbuf) < 0) {
@@ -152,9 +152,9 @@ main(int argc, char *argv[])
 			 * Statfs does not take a `wait' flag, so we cannot
 			 * implement nflag here.
 			 */
-			if (!statfs(mntpt, &mntbuf[mntsize]))
+			if (!statvfs(mntpt, &mntbuf[mntsize]))
 				if (lflag &&
-				    (mntbuf[mntsize].f_flags & MNT_LOCAL) == 0)
+				    (mntbuf[mntsize].f_flag & MNT_LOCAL) == 0)
 					warnx("Warning: %s is not a local %s",
 					    *argv, "file system");
 				else if
@@ -186,7 +186,7 @@ char *
 getmntpt(char *name)
 {
 	long mntsize, i;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	for (i = 0; i < mntsize; i++) {
@@ -253,13 +253,13 @@ maketypelist(char *fslist)
 /*
  * Make a pass over the filesystem info in ``mntbuf'' filtering out
  * filesystem types not in ``fsmask'' and possibly re-stating to get
- * current (not cached) info.  Returns the new count of valid statfs bufs.
+ * current (not cached) info.  Returns the new count of valid statvfs bufs.
  */
 long
-regetmntinfo(struct statfs **mntbufp, long mntsize)
+regetmntinfo(struct statvfs **mntbufp, long mntsize)
 {
 	int i, j;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 
 	if (!lflag && typelist == NULL && aflag)
 		return (nflag ? mntsize : getmntinfo(mntbufp, MNT_WAIT));
@@ -267,17 +267,17 @@ regetmntinfo(struct statfs **mntbufp, long mntsize)
 	mntbuf = *mntbufp;
 	j = 0;
 	for (i = 0; i < mntsize; i++) {
-		if (!aflag && (mntbuf[i].f_flags & MNT_IGNORE) != 0)
+		if (!aflag && (mntbuf[i].f_flag & MNT_IGNORE) != 0)
 			continue;
-		if (lflag && (mntbuf[i].f_flags & MNT_LOCAL) == 0)
+		if (lflag && (mntbuf[i].f_flag & MNT_LOCAL) == 0)
 			continue;
 		if (!selected(mntbuf[i].f_fstypename))
 			continue;
 		if (nflag)
 			mntbuf[j] = mntbuf[i];
 		else {
-			struct statfs layerbuf = mntbuf[i];
-			(void)statfs(mntbuf[i].f_mntonname, &mntbuf[j]);
+			struct statvfs layerbuf = mntbuf[i];
+			(void)statvfs(mntbuf[i].f_mntonname, &mntbuf[j]);
 			/*
 			 * If the FS name changed, then new data is for
 			 * a different layer and we don't want it.
@@ -304,17 +304,17 @@ prthumanval(int64_t bytes, char *pad)
 }
 
 void
-prthuman(struct statfs *sfsp, int64_t used, int64_t bavail)
+prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
-	prthumanval((int64_t)(u_long)sfsp->f_blocks * sfsp->f_bsize, "");
-	prthumanval(used * sfsp->f_bsize, "  ");
-	prthumanval(bavail * sfsp->f_bsize, "   ");
+	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "");
+	prthumanval(used * sfsp->f_frsize, "  ");
+	prthumanval(bavail * sfsp->f_frsize, "   ");
 }
 
 
 /*
- * Convert statfs returned filesystem size into BLOCKSIZE units.
+ * Convert statvfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
  */
 #define fsbtoblk(num, fsbs, bs)					\
@@ -326,14 +326,14 @@ prthuman(struct statfs *sfsp, int64_t used, int64_t bavail)
  * Print out status about a filesystem.
  */
 void
-prtstat(struct statfs *sfsp, int maxwidth)
+prtstat(struct statvfs *sfsp, int maxwidth)
 {
 	static long blocksize;
 	static int headerlen, timesthrough;
 	static char *header;
 	static const char full[] = "100%";
 	static const char empty[] = "  0%";
-	long used, availblks, inodes;
+	int64_t used, availblks, inodes;
 	int64_t bavail;
 
 	if (maxwidth < 11)
@@ -365,24 +365,21 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	}
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
-	availblks = sfsp->f_bavail + used;
-	if ((u_long)availblks > (u_long)used)
-		bavail = (u_long)sfsp->f_bavail;
-	else
-		bavail = sfsp->f_bavail;
+	bavail = sfsp->f_bfree - sfsp->f_bresvd;
+	availblks = bavail + used;
 	if (hflag)
 		prthuman(sfsp, (u_long)used, bavail);
 	else
 		(void)printf(" %*" PRId64 " %8" PRId64 " %9" PRId64, headerlen,
-		    fsbtoblk((u_long)sfsp->f_blocks, sfsp->f_bsize, blocksize),
-		    fsbtoblk((u_long)used, sfsp->f_bsize, blocksize),
-		    fsbtoblk(bavail, sfsp->f_bsize, blocksize));
+		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
+		    fsbtoblk(used, sfsp->f_frsize, blocksize),
+		    fsbtoblk(bavail, sfsp->f_frsize, blocksize));
 	(void)printf("%7s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %8ld %8ld %6s ", used, sfsp->f_ffree,
+		(void)printf(" %8ld %8ld %6s ", (u_long)used, (u_long)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
 		    strpct((u_long)used, (u_long)inodes, 0));
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.47 2004/03/30 22:51:55 heas Exp $	*/
+/*	$NetBSD: function.c,v 1.48 2004/04/21 01:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.47 2004/03/30 22:51:55 heas Exp $");
+__RCSID("$NetBSD: function.c,v 1.48 2004/04/21 01:05:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -720,7 +720,7 @@ f_fstype(plan, entry)
 {
 	static dev_t curdev;	/* need a guaranteed illegal dev value */
 	static int first = 1;
-	struct statfs sb;
+	struct statvfs sb;
 	static short val;
 	static char fstype[MFSNAMELEN];
 	char *p, save[2];
@@ -747,7 +747,7 @@ f_fstype(plan, entry)
 		} else 
 			p = NULL;
 
-		if (statfs(entry->fts_accpath, &sb))
+		if (statvfs(entry->fts_accpath, &sb))
 			err(1, "%s", entry->fts_accpath);
 
 		if (p) {
@@ -761,7 +761,7 @@ f_fstype(plan, entry)
 		 * Further tests may need both of these values, so
 		 * always copy both of them.
 		 */
-		val = sb.f_flags;
+		val = sb.f_flag;
 		strlcpy(fstype, sb.f_fstypename, sizeof(fstype));
 	}
 	switch (plan->flags) {

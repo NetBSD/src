@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.205 2004/03/23 13:22:33 junyoung Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.206 2004/04/21 01:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.205 2004/03/23 13:22:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.206 2004/04/21 01:05:38 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -80,7 +80,6 @@ static int change_owner(struct vnode *, uid_t, gid_t, struct proc *, int);
 static int change_utimes(struct vnode *vp, const struct timeval *,
 	       struct proc *p);
 static int rename_files(const char *, const char *, struct proc *, int);
-static int dostatfs(struct mount *, struct statfs *, struct proc *, int, int);
 
 void checkdirs(struct vnode *);
 
@@ -367,7 +366,7 @@ sys_mount(l, v, retval)
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
-		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
+		(void) VFS_STATVFS(mp, &mp->mnt_stat, p);
 		if ((error = VFS_START(mp, 0, p)))
 			vrele(vp);
 	} else {
@@ -665,8 +664,8 @@ sys_quotactl(l, v, retval)
 	return (error);
 }
 
-static int
-dostatfs(struct mount *mp, struct statfs *sp, struct proc *p, int flags,
+int
+dostatvfs(struct mount *mp, struct statvfs *sp, struct proc *p, int flags,
     int root)
 {
 	struct cwdinfo *cwdi = p->p_cwdi;
@@ -683,7 +682,7 @@ dostatfs(struct mount *mp, struct statfs *sp, struct proc *p, int flags,
 		goto done;
 	}
 
-	if ((error = VFS_STATFS(mp, sp, p)) != 0) {
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0) {
 		return error;
 	}
 
@@ -727,8 +726,7 @@ done:
 		}
 		free(path, M_TEMP);
 	}
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	sp->f_oflags = sp->f_flags & 0xffff;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;
 }
 
@@ -737,18 +735,19 @@ done:
  */
 /* ARGSUSED */
 int
-sys_statfs(l, v, retval)
+sys_statvfs1(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_statfs_args /* {
+	struct sys_statvfs1_args /* {
 		syscallarg(const char *) path;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statvfs *) buf;
+		syscallarg(int) flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs sbuf;
+	struct statvfs sbuf;
 	int error;
 	struct nameidata nd;
 
@@ -757,7 +756,7 @@ sys_statfs(l, v, retval)
 		return error;
 	mp = nd.ni_vp->v_mount;
 	vrele(nd.ni_vp);
-	if ((error = dostatfs(mp, &sbuf, p, 0, 1)) != 0)
+	if ((error = dostatvfs(mp, &sbuf, p, SCARG(uap, flags), 1)) != 0)
 		return error;
 	return copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf));
 }
@@ -767,26 +766,27 @@ sys_statfs(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fstatfs(l, v, retval)
+sys_fstatvfs1(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_fstatfs_args /* {
+	struct sys_fstatvfs1_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statvfs *) buf;
+		syscallarg(int) flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs sbuf;
+	struct statvfs sbuf;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
-	if ((error = dostatfs(mp, &sbuf, p, 0, 1)) != 0)
+	if ((error = dostatvfs(mp, &sbuf, p, SCARG(uap, flags), 1)) != 0)
 		goto out;
 	error = copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf));
  out:
@@ -799,25 +799,26 @@ sys_fstatfs(l, v, retval)
  * Get statistics on all filesystems.
  */
 int
-sys_getfsstat(l, v, retval)
+sys_getvfsstat(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_getfsstat_args /* {
-		syscallarg(struct statfs *) buf;
-		syscallarg(long) bufsize;
+	struct sys_getvfsstat_args /* {
+		syscallarg(struct statvfs *) buf;
+		syscallarg(size_t) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	int root = 0;
 	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
-	struct statfs sbuf;
-	caddr_t sfsp;
-	long count, maxcount, error = 0;
+	struct statvfs sbuf;
+	struct statvfs *sfsp;
+	size_t count, maxcount;
+	int error = 0;
 
-	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
-	sfsp = (caddr_t)SCARG(uap, buf);
+	maxcount = SCARG(uap, bufsize) / sizeof(struct statvfs);
+	sfsp = SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -827,19 +828,19 @@ sys_getfsstat(l, v, retval)
 			continue;
 		}
 		if (sfsp && count < maxcount) {
-			error = dostatfs(mp, &sbuf, p, SCARG(uap, flags), 0);
+			error = dostatvfs(mp, &sbuf, p, SCARG(uap, flags), 0);
 			if (error) {
 				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
 			}
-			error = copyout(&sbuf, sfsp, sizeof(sbuf));
+			error = copyout(&sbuf, sfsp, sizeof(*sfsp));
 			if (error) {
 				vfs_unbusy(mp);
 				return (error);
 			}
-			sfsp += sizeof(sbuf);
+			sfsp++;
 			root |= strcmp(sbuf.f_mntonname, "/") == 0;
 		}
 		count++;
@@ -852,11 +853,11 @@ sys_getfsstat(l, v, retval)
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatfs(p->p_cwdi->cwdi_rdir->v_mount, &sbuf, p,
+		if ((error = dostatvfs(p->p_cwdi->cwdi_rdir->v_mount, &sbuf, p,
 		    SCARG(uap, flags), 1)) != 0)
 			return error;
 		if (sfsp)
-			error = copyout(&sbuf, sfsp, sizeof(sbuf));
+			error = copyout(&sbuf, sfsp, sizeof(*sfsp));
 		count++;
 	}
 	if (sfsp && count > maxcount)
@@ -1209,7 +1210,7 @@ sys_getfh(l, v, retval)
 		return (error);
 	vp = nd.ni_vp;
 	memset(&fh, 0, sizeof(fh));
-	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
 	vput(vp);
 	if (error)
@@ -1402,17 +1403,18 @@ sys_fhstat(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_fhstatfs(l, v, retval)
+sys_fhstatvfs1(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_fhstatfs_args /*
+	struct sys_fhstatvfs1_args /*
 		syscallarg(const fhandle_t *) fhp;
-		syscallarg(struct statfs *) buf;
+		syscallarg(struct statvfs *) buf;
+		syscallarg(int)	flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statfs sbuf;
+	struct statvfs sbuf;
 	fhandle_t fh;
 	struct mount *mp;
 	struct vnode *vp;
@@ -1421,21 +1423,24 @@ sys_fhstatfs(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
-		return (error);
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return error;
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
-		return (error);
+		return error;
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return (ESTALE);
+		return ESTALE;
 	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
-		return (error);
+		return error;
+
 	mp = vp->v_mount;
+	if ((error = dostatvfs(mp, &sbuf, p, SCARG(uap, flags), 1)) != 0) {
+		vput(vp);
+		return error;
+	}
 	vput(vp);
-	if ((error = VFS_STATFS(mp, &sbuf, p)) != 0)
-		return (error);
-	return (copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf)));
+	return copyout(&sbuf, SCARG(uap, buf), sizeof(sbuf));
 }
 
 /*
