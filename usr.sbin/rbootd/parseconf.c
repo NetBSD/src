@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.6 1997/10/18 11:23:07 lukem Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.7 1997/10/19 19:43:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.6 1997/10/18 11:23:07 lukem Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.7 1997/10/19 19:43:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,8 +345,7 @@ GetBootFiles()
 	 */
 	i = 0;
 	for (dp = readdir(dfd); dp != NULL; dp = readdir(dfd)) {
-		if (stat(dp->d_name, &statb) < 0 ||
-		    (statb.st_mode & S_IFMT) != S_IFREG)
+		if (stat(dp->d_name, &statb) < 0 || !S_ISREG(statb.st_mode))
 			continue;
 		if (i == C_MAXFILE)
 			syslog(LOG_ERR,
