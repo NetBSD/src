@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.70 1999/07/15 23:18:43 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.71 1999/07/20 21:54:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -367,6 +367,14 @@ reaper()
 		LIST_REMOVE(p, p_list);
 
 		/*
+		 * Give machine-dependent code a chance to free any
+		 * resources it couldn't free while still running on
+		 * that process's context.  This must be done before
+		 * uvm_exit(), in case these resources are in the PCB.
+		 */
+		cpu_wait(p);
+
+		/*
 		 * Free the VM resources we're still holding on to.
 		 * We must do this from a valid thread because doing
 		 * so may block.
@@ -490,12 +498,6 @@ loop:
 			if (p->p_textvp)
 				vrele(p->p_textvp);
 
-			/*
-			 * Give machine-dependent layer a chance
-			 * to free anything that cpu_exit couldn't
-			 * release while still running in process context.
-			 */
-			cpu_wait(p);
 			pool_put(&proc_pool, p);
 			nprocs--;
 			return (0);
