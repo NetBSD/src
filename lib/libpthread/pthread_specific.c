@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.7 2003/05/15 19:13:24 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.8 2003/05/15 19:16:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.7 2003/05/15 19:13:24 nathanw Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.8 2003/05/15 19:16:37 wiz Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -162,7 +162,7 @@ pthread_key_delete(pthread_key_t key)
 	 * Note that the argument in option 3 only applies because we
 	 * keep TSD in ordinary memory which follows the pthreads
 	 * visibility rules. The visibility rules are not required by
-	 * the standard to apply to TSD, so the arguemnt doesn't
+	 * the standard to apply to TSD, so the argument doesn't
 	 * apply in general, just to this implementation.
 	 */
 
