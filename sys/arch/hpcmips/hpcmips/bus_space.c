@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 1999/11/20 19:40:58 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 1999/11/20 19:40:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
 		panic("bus_space_alloc: no extent");
 
 	rstart += t->t_base;
+	rend += t->t_base;
 	if ((err = extent_alloc_subregion(t->t_extent, rstart, rend, size,
 					  alignment, boundary, 
 					  EX_FAST|EX_NOWAIT|EX_MALLOCOK, &bpa)))
