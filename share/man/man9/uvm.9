@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.25 2001/07/28 15:31:29 chs Exp $
+.\"	$NetBSD: uvm.9,v 1.26 2001/07/28 15:55:14 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -72,13 +72,13 @@ There are also several miscellaneous functions.
 .nr nS 1
 .Pp
 .Ft void
-.Fn uvm_init
+.Fn uvm_init "void"
 .Ft void
 .Fn uvm_init_limits "struct proc *p"
 .Ft void
-.Fn uvm_setpagesize
+.Fn uvm_setpagesize "void"
 .Ft void
-.Fn uvm_swap_init
+.Fn uvm_swap_init "void"
 .nr nS 0
 .Pp
 .Fn uvm_init
@@ -121,7 +121,7 @@ initialises the swap sub-system.
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
 .Ft void
-.Fn uvmspace_exec "struct proc *p"
+.Fn uvmspace_exec "struct proc *p" "vaddr_t start" "vaddr_t end"
 .Ft struct vmspace *
 .Fn uvmspace_fork "struct vmspace *vm"
 .Ft void
@@ -217,10 +217,10 @@ The values that
 .Fa advice
 can take are:
 .Bd -literal
-#define UVM_ADV_NORMAL  0x0     /* 'normal' */
-#define UVM_ADV_RANDOM  0x1     /* 'random' */
+#define UVM_ADV_NORMAL     0x0  /* 'normal' */
+#define UVM_ADV_RANDOM     0x1  /* 'random' */
 #define UVM_ADV_SEQUENTIAL 0x2  /* 'sequential' */
-#define UVM_ADV_MASK    0x7     /* mask */
+#define UVM_ADV_MASK       0x7  /* mask */
 .Ed
 .Pp
 The values that
@@ -315,6 +315,10 @@ either reuses the address space of process
 if there are no other references to it, or creates
 a new one with
 .Fn uvmspace_alloc .
+The range of valid addresses in the address space is reset to
+.Fa start
+through
+.Fa end .
 .Pp
 .Fn uvmspace_fork
 creates and returns a new address space based upon the
@@ -396,8 +400,8 @@ but the actual mapping may be smaller than this.
 is updated to contain the actual length mapped.
 The flags must be one of
 .Bd -literal
-#define UBC_READ	0x01	/* mapping will be accessed for read */
-#define UBC_WRITE	0x02	/* mapping will be accessed for write */
+#define UBC_READ        0x01    /* mapping will be accessed for read */
+#define UBC_WRITE       0x02    /* mapping will be accessed for write */
 .Ed
 .Pp
 Currently,
@@ -548,7 +552,7 @@ is non-zero, entries in the map may be paged out.
 .Pp
 .nr nS 1
 .Ft struct vm_page *
-.Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon"
+.Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon" "int flags"
 .Ft void
 .Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "voff_t newoff"
 .Ft void
@@ -568,15 +572,26 @@ in either the object
 .Fa uobj
 or the anonymous memory
 .Fa anon ,
-which must be locked by the caller.  Only one of
-.Fa off
-and
-.Fa uobj
-can be non
-.Dv NULL .
+which must be locked by the caller.
 Returns
 .Dv NULL
 when no page can be found.
+The flags can be any of
+.Bd -literal
+#define UVM_PGA_USERESERVE      0x0001  /* ok to use reserve pages */
+#define UVM_PGA_ZERO            0x0002  /* returned page must be zero'd */
+.Ed
+.Pp
+.Dv UVM_PGA_USERESERVE
+means to allocate a page even if that will result in the number of free pages
+being lower than
+.Dv uvmexp.reserve_pagedaemon
+(if the current thread is the pagedaemon) or
+.Dv uvmexp.reserve_kernel
+(if the current thread is not the pagedaemon).
+.Dv UVM_PGA_ZERO
+causes the returned page to be filled with zeroes, either by allocating it
+from a pool of pre-zeroed pages or by zeroing it in-line as necessary.
 .Pp
 .Fn uvm_pagerealloc
 reallocates page
@@ -628,9 +643,9 @@ addresses of pages not already in use.
 .Pp
 .nr nS 1
 .Ft void
-.Fn uvm_pageout
+.Fn uvm_pageout "void"
 .Ft void
-.Fn uvm_scheduler
+.Fn uvm_scheduler "void"
 .Ft void
 .Fn uvm_swapin "struct proc *p"
 .nr nS 0
@@ -669,7 +684,7 @@ swaps in the named process.
 .Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
 
 .Ft void
-.Fn uvm_meter
+.Fn uvm_meter "void"
 .Ft int
 .Fn uvm_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp " "size_t newlen" "struct proc *p"
 
@@ -890,11 +905,11 @@ The number of pages requested is pointed to by
 and this value is updated with the actual number of pages returned.
 The flags can be
 .Bd -literal
-#define UFP_ALL		0x00	/* return all pages requested */
-#define UFP_NOWAIT	0x01	/* don't sleep */
-#define UFP_NOALLOC	0x02	/* don't allocate new pages */
-#define UFP_NOCACHE	0x04	/* don't return pages which already exist */
-#define UFP_NORDONLY	0x08	/* don't return PG_READONLY pages */
+#define UFP_ALL         0x00    /* return all pages requested */
+#define UFP_NOWAIT      0x01    /* don't sleep */
+#define UFP_NOALLOC     0x02    /* don't allocate new pages */
+#define UFP_NOCACHE     0x04    /* don't return pages which already exist */
+#define UFP_NORDONLY    0x08    /* don't return PG_READONLY pages */
 .Ed
 .Pp
 .Dv UFP_ALL
