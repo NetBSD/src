@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1997/12/02 22:34:02 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1997/12/29 19:52:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 1997/12/02 22:34:02 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 1997/12/29 19:52:56 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ main(argc,argv)
 	if (*m4wraps) { 		/* anything for rundown ??   */
 		ilevel = 0;		/* in case m4wrap includes.. */
 		bufbase = bp = buf;	/* use the entire buffer   */
-		putback(EOF);		/* eof is a must !!	     */
+		putbackeof();		/* eof is a must !!	     */
 		pbstr(m4wraps); 	/* user-defined wrapup act   */
 		macro();		/* last will and testament   */
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1997/12/02 22:34:05 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 1997/12/29 19:52:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1997/12/02 22:34:05 cgd Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 1997/12/29 19:52:57 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,22 @@ indx(s1, s2)
  */
 void
 putback(c)
-	pbent c;
+	unsigned char c;
 {
 	if (bp < endpbb)
 		*bp++ = c;
+	else
+		errx(1, "too many characters pushed back");
+}
+
+/*
+ *  putbackeof - push EOF back onto input
+ */
+void
+putbackeof()
+{
+	if (bp < endpbb)
+		*bp++ = EOF;
 	else
 		errx(1, "too many characters pushed back");
 }
@@ -106,7 +118,7 @@ pbstr(s)
 	es--;
 	while (es >= s)
 		if (zp < endpbb)
-			*zp++ = *es--;
+			*zp++ = (unsigned char)*es--;
 	if ((bp = zp) == endpbb)
 		errx(1, "too many characters pushed back");
 }
