@@ -1,4 +1,4 @@
-/*	$Id: cpu.c,v 1.1 1998/01/16 04:17:42 sakamoto Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*
  * This file contains information proprietary to Be Inc.

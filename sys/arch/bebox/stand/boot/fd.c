@@ -1,4 +1,4 @@
-/*	$Id: fd.c,v 1.1 1998/01/16 04:17:47 sakamoto Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)

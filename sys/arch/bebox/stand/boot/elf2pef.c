@@ -1,4 +1,4 @@
-/*	$Id: elf2pef.c,v 1.2 1998/10/05 02:01:58 sakamoto Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
