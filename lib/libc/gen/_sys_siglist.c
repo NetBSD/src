@@ -1,4 +1,4 @@
-/*	$NetBSD: _sys_siglist.c,v 1.7 1998/01/09 03:15:26 perry Exp $	*/
+/*	$NetBSD: _sys_siglist.c,v 1.8 1998/12/06 07:05:48 jonathan Exp $	*/
 
 /*
  * Written by J.T. Conklin, December 12, 1994
@@ -6,6 +6,11 @@
  */
 
 #include <sys/cdefs.h>
+
+__warn_references(sys_siglist,
+    "warning: reference to compatibility sys_siglist[]; include <signal.h> or <unistd.h> for correct reference")
+__warn_references(__sys_siglist,
+    "warning: reference to deprecated __sys_siglist[]; include <signal.h> or <unistd.h> and use sys_siglist")
 
 #ifdef __indr_reference
 __indr_reference(_sys_siglist, sys_siglist)
