@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22.8.1 1997/08/23 07:12:24 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.22.8.2 1997/08/27 23:13:54 thorpej Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -23,7 +23,7 @@ options		DDB
 options		KTRACE
 #options		DIAGNOSTIC
 
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Network support
 #options		GATEWAY
