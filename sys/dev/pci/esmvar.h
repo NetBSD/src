@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.1 2001/01/08 19:54:31 rh Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.2 2001/01/09 23:27:07 rh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -99,6 +99,7 @@ struct esm_softc {
 
 	struct ac97_codec_if	*codec_if;
 	struct ac97_host_if	host_if;
+	enum ac97_host_flags	codec_flags;
 
 	struct esm_dma		*sc_dmas;
 
@@ -113,10 +114,23 @@ struct esm_softc {
 	void *sc_rarg;
 };
 
+struct esm_quirks {
+	pci_vendor_id_t		eq_vendor;	/* subsystem vendor */
+	pci_product_id_t	eq_product;	/* and product */
+
+	enum esm_quirk_flags {
+		ESM_QUIRKF_GPIO = 0x1,		/* needs GPIO operation */
+		ESM_QUIRKF_SWAPPEDCH = 0x2,	/* left/right is reversed */
+	};
+
+	enum esm_quirk_flags	eq_quirks;	/* needed quirks */
+};
+
 int	esm_read_codec(void *, u_int8_t, u_int16_t *);
 int	esm_write_codec(void *, u_int8_t, u_int16_t);
 int	esm_attach_codec(void *, struct ac97_codec_if *);
 void	esm_reset_codec(void *);
+enum ac97_host_flags	esm_flags_codec(void *);
 
 void	esm_power(struct esm_softc *, int);
 void	esm_init(struct esm_softc *);
@@ -156,3 +170,5 @@ int	esm_freemem(struct esm_softc *, struct esm_dma *);
 int	esm_suspend(struct esm_softc *);
 int	esm_resume(struct esm_softc *);
 int	esm_shutdown(struct esm_softc *);
+
+enum esm_quirk_flags	esm_get_quirks(pcireg_t);
