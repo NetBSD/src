@@ -1,3 +1,5 @@
+/*	$NetBSD: ping.c,v 1.13 1995/03/18 14:59:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: ping.c,v 1.12 1994/12/18 00:20:51 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: ping.c,v 1.13 1995/03/18 14:59:16 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

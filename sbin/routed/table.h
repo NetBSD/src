@@ -1,3 +1,5 @@
+/*	$NetBSD: table.h,v 1.6 1995/03/18 15:00:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)table.h	8.1 (Berkeley) 6/5/93
- *	$Id: table.h,v 1.5 1994/05/13 08:04:52 mycroft Exp $
+ *	@(#)table.h	8.1 (Berkeley) 6/5/93
  */
 
 /*

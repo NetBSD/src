@@ -1,3 +1,5 @@
+/*	$NetBSD: setup.c,v 1.19 1995/03/18 14:56:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)setup.c	8.5 (Berkeley) 11/23/94";*/
-static char *rcsid = "$Id: setup.c,v 1.18 1994/12/28 00:03:57 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
+#else
+static char rcsid[] = "$NetBSD: setup.c,v 1.19 1995/03/18 14:56:01 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #define DKTYPENAMES

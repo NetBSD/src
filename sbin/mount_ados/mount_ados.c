@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_ados.c,v 1.4 1995/03/18 14:57:10 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -29,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_ados.c,v 1.3 1995/01/18 08:37:51 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mount_ados.c,v 1.4 1995/03/18 14:57:10 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>

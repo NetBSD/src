@@ -1,3 +1,5 @@
+/*	$NetBSD: trace.h,v 1.6 1995/03/18 15:00:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)trace.h	8.1 (Berkeley) 6/5/93
- *	$Id: trace.h,v 1.5 1994/05/13 08:04:59 mycroft Exp $
+ *	@(#)trace.h	8.1 (Berkeley) 6/5/93
  */
 
 /*

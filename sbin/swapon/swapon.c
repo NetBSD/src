@@ -1,3 +1,5 @@
+/*	$NetBSD: swapon.c,v 1.7 1995/03/18 15:01:18 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)swapon.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: swapon.c,v 1.6 1994/12/18 00:25:37 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)swapon.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: swapon.c,v 1.7 1995/03/18 15:01:18 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <fstab.h>

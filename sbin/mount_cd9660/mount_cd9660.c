@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_cd9660.c,v 1.2 1995/03/18 14:57:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994
  *      The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *      @(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94
  */
 
 #ifndef lint
@@ -45,7 +45,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
+#else
+static char rcsid[] = "$NetBSD: mount_cd9660.c,v 1.2 1995/03/18 14:57:15 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,9 +79,8 @@ main(argc, argv)
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
-	char *dev, *dir, *options;
+	char *dev, *dir;
 
-	options = NULL;
 	mntflags = opts = 0;
 	while ((ch = getopt(argc, argv, "ego:r")) != EOF)
 		switch (ch) {
@@ -88,7 +91,7 @@ main(argc, argv)
 			opts |= ISOFSMNT_GENS;
 			break;
 		case 'o':
-			getmntopts(options, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags);
 			break;
 		case 'r':
 			opts |= ISOFSMNT_NORRIP;

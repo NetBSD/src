@@ -1,5 +1,4 @@
-#	from: @(#)Makefile    1.1 (Julian Elischer)	3/28/93
-#	$Id: Makefile,v 1.3 1994/12/22 10:44:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/03/18 14:55:33 cgd Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c

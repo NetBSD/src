@@ -1,3 +1,5 @@
+/*	$NetBSD: savecore.c,v 1.21 1995/03/18 15:01:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1986, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.20 1995/01/04 05:30:07 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
+#else
+static char rcsid[] = "$NetBSD: savecore.c,v 1.21 1995/03/18 15:01:02 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: reboot.c,v 1.6 1995/03/18 14:59:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -38,8 +40,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)reboot.c	5.11 (Berkeley) 2/27/91";*/
-static char rcsid[] = "$Id: reboot.c,v 1.5 1994/12/18 00:22:53 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)reboot.c	5.11 (Berkeley) 2/27/91";
+#else
+static char rcsid[] = "$NetBSD: reboot.c,v 1.6 1995/03/18 14:59:27 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
