@@ -1,0 +1,8 @@
+# OBSOLETE # Host: Motorola 88k running SVR4
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-delta88v4.h
+# OBSOLETE 
+# OBSOLETE NAT_FILE= nm-delta88v4.h
+# OBSOLETE NATDEPFILES= fork-child.o m88k-nat.o corelow.o core-regset.o \
+# OBSOLETE 	solib.o solib-svr4.o solib-legacy.o \
+# OBSOLETE 	procfs.o proc-api.o proc-events.o proc-flags.o proc-why.o

@@ -1,0 +1,1309 @@
+This is gdb.info, produced by makeinfo version 4.1 from ./gdb.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Ninth Edition, December 2001, of `Debugging with GDB:
+the GNU Source-Level Debugger' for GDB Version 5.3.
+
+   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
+1998,
+1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software" and "Free Software Needs Free
+Documentation", with the Front-Cover Texts being "A GNU Manual," and
+with the Back-Cover Texts as in (a) below.
+
+   (a) The Free Software Foundation's Back-Cover Text is: "You have
+freedom to copy and modify this GNU Manual, like GNU software.  Copies
+published by the Free Software Foundation raise funds for GNU
+development."
+
+
+File: gdb.info,  Node: Macros,  Next: Tracepoints,  Prev: Data,  Up: Top
+
+C Preprocessor Macros
+*********************
+
+   Some languages, such as C and C++, provide a way to define and invoke
+"preprocessor macros" which expand into strings of tokens.  GDB can
+evaluate expressions containing macro invocations, show the result of
+macro expansion, and show a macro's definition, including where it was
+defined.
+
+   You may need to compile your program specially to provide GDB with
+information about preprocessor macros.  Most compilers do not include
+macros in their debugging information, even when you compile with the
+`-g' flag.  *Note Compilation::.
+
+   A program may define a macro at one point, remove that definition
+later, and then provide a different definition after that.  Thus, at
+different points in the program, a macro may have different
+definitions, or have no definition at all.  If there is a current stack
+frame, GDB uses the macros in scope at that frame's source code line.
+Otherwise, GDB uses the macros in scope at the current listing location;
+see *Note List::.
+
+   At the moment, GDB does not support the `##' token-splicing
+operator, the `#' stringification operator, or variable-arity macros.
+
+   Whenever GDB evaluates an expression, it always expands any macro
+invocations present in the expression.  GDB also provides the following
+commands for working with macros explicitly.
+
+`macro expand EXPRESSION'
+`macro exp EXPRESSION'
+     Show the results of expanding all preprocessor macro invocations in
+     EXPRESSION.  Since GDB simply expands macros, but does not parse
+     the result, EXPRESSION need not be a valid expression; it can be
+     any string of tokens.
+
+`macro expand-once EXPRESSION'
+`macro exp1 EXPRESSION'
+     (This command is not yet implemented.)  Show the results of
+     expanding those preprocessor macro invocations that appear
+     explicitly in EXPRESSION.  Macro invocations appearing in that
+     expansion are left unchanged.  This command allows you to see the
+     effect of a particular macro more clearly, without being confused
+     by further expansions.  Since GDB simply expands macros, but does
+     not parse the result, EXPRESSION need not be a valid expression; it
+     can be any string of tokens.
+
+`info macro MACRO'
+     Show the definition of the macro named MACRO, and describe the
+     source location where that definition was established.
+
+`macro define MACRO REPLACEMENT-LIST'
+`macro define MACRO(ARGLIST) REPLACEMENT-LIST'
+     (This command is not yet implemented.)  Introduce a definition for
+     a preprocessor macro named MACRO, invocations of which are replaced
+     by the tokens given in REPLACEMENT-LIST.  The first form of this
+     command defines an "object-like" macro, which takes no arguments;
+     the second form defines a "function-like" macro, which takes the
+     arguments given in ARGLIST.
+
+     A definition introduced by this command is in scope in every
+     expression evaluated in GDB, until it is removed with the `macro
+     undef' command, described below.  The definition overrides all
+     definitions for MACRO present in the program being debugged, as
+     well as any previous user-supplied definition.
+
+`macro undef MACRO'
+     (This command is not yet implemented.)  Remove any user-supplied
+     definition for the macro named MACRO.  This command only affects
+     definitions provided with the `macro define' command, described
+     above; it cannot remove definitions present in the program being
+     debugged.
+
+   Here is a transcript showing the above commands in action.  First, we
+show our source files:
+
+     $ cat sample.c
+     #include <stdio.h>
+     #include "sample.h"
+     
+     #define M 42
+     #define ADD(x) (M + x)
+     
+     main ()
+     {
+     #define N 28
+       printf ("Hello, world!\n");
+     #undef N
+       printf ("We're so creative.\n");
+     #define N 1729
+       printf ("Goodbye, world!\n");
+     }
+     $ cat sample.h
+     #define Q <
+     $
+
+   Now, we compile the program using the GNU C compiler, GCC.  We pass
+the `-gdwarf-2' and `-g3' flags to ensure the compiler includes
+information about preprocessor macros in the debugging information.
+
+     $ gcc -gdwarf-2 -g3 sample.c -o sample
+     $
+
+   Now, we start GDB on our sample program:
+
+     $ gdb -nw sample
+     GNU gdb 2002-05-06-cvs
+     Copyright 2002 Free Software Foundation, Inc.
+     GDB is free software, ...
+     (gdb)
+
+   We can expand macros and examine their definitions, even when the
+program is not running.  GDB uses the current listing position to
+decide which macro definitions are in scope:
+
+     (gdb) list main
+     3
+     4       #define M 42
+     5       #define ADD(x) (M + x)
+     6
+     7       main ()
+     8       {
+     9       #define N 28
+     10        printf ("Hello, world!\n");
+     11      #undef N
+     12        printf ("We're so creative.\n");
+     (gdb) info macro ADD
+     Defined at /home/jimb/gdb/macros/play/sample.c:5
+     #define ADD(x) (M + x)
+     (gdb) info macro Q
+     Defined at /home/jimb/gdb/macros/play/sample.h:1
+       included at /home/jimb/gdb/macros/play/sample.c:2
+     #define Q <
+     (gdb) macro expand ADD(1)
+     expands to: (42 + 1)
+     (gdb) macro expand-once ADD(1)
+     expands to: once (M + 1)
+     (gdb)
+
+   In the example above, note that `macro expand-once' expands only the
+macro invocation explicit in the original text -- the invocation of
+`ADD' -- but does not expand the invocation of the macro `M', which was
+introduced by `ADD'.
+
+   Once the program is running, GDB uses the macro definitions in force
+at the source line of the current stack frame:
+
+     (gdb) break main
+     Breakpoint 1 at 0x8048370: file sample.c, line 10.
+     (gdb) run
+     Starting program: /home/jimb/gdb/macros/play/sample
+     
+     Breakpoint 1, main () at sample.c:10
+     10        printf ("Hello, world!\n");
+     (gdb)
+
+   At line 10, the definition of the macro `N' at line 9 is in force:
+
+     (gdb) info macro N
+     Defined at /home/jimb/gdb/macros/play/sample.c:9
+     #define N 28
+     (gdb) macro expand N Q M
+     expands to: 28 < 42
+     (gdb) print N Q M
+     $1 = 1
+     (gdb)
+
+   As we step over directives that remove `N''s definition, and then
+give it a new definition, GDB finds the definition (or lack thereof) in
+force at each point:
+
+     (gdb) next
+     Hello, world!
+     12        printf ("We're so creative.\n");
+     (gdb) info macro N
+     The symbol `N' has no definition as a C/C++ preprocessor macro
+     at /home/jimb/gdb/macros/play/sample.c:12
+     (gdb) next
+     We're so creative.
+     14        printf ("Goodbye, world!\n");
+     (gdb) info macro N
+     Defined at /home/jimb/gdb/macros/play/sample.c:13
+     #define N 1729
+     (gdb) macro expand N Q M
+     expands to: 1729 < 42
+     (gdb) print N Q M
+     $2 = 0
+     (gdb)
+
+
+File: gdb.info,  Node: Tracepoints,  Next: Overlays,  Prev: Macros,  Up: Top
+
+Tracepoints
+***********
+
+   In some applications, it is not feasible for the debugger to
+interrupt the program's execution long enough for the developer to learn
+anything helpful about its behavior.  If the program's correctness
+depends on its real-time behavior, delays introduced by a debugger
+might cause the program to change its behavior drastically, or perhaps
+fail, even when the code itself is correct.  It is useful to be able to
+observe the program's behavior without interrupting it.
+
+   Using GDB's `trace' and `collect' commands, you can specify
+locations in the program, called "tracepoints", and arbitrary
+expressions to evaluate when those tracepoints are reached.  Later,
+using the `tfind' command, you can examine the values those expressions
+had when the program hit the tracepoints.  The expressions may also
+denote objects in memory--structures or arrays, for example--whose
+values GDB should record; while visiting a particular tracepoint, you
+may inspect those objects as if they were in memory at that moment.
+However, because GDB records these values without interacting with you,
+it can do so quickly and unobtrusively, hopefully not disturbing the
+program's behavior.
+
+   The tracepoint facility is currently available only for remote
+targets.  *Note Targets::.  In addition, your remote target must know
+how to collect trace data.  This functionality is implemented in the
+remote stub; however, none of the stubs distributed with GDB support
+tracepoints as of this writing.
+
+   This chapter describes the tracepoint commands and features.
+
+* Menu:
+
+* Set Tracepoints::
+* Analyze Collected Data::
+* Tracepoint Variables::
+
+
+File: gdb.info,  Node: Set Tracepoints,  Next: Analyze Collected Data,  Up: Tracepoints
+
+Commands to Set Tracepoints
+===========================
+
+   Before running such a "trace experiment", an arbitrary number of
+tracepoints can be set.  Like a breakpoint (*note Set Breaks::), a
+tracepoint has a number assigned to it by GDB.  Like with breakpoints,
+tracepoint numbers are successive integers starting from one.  Many of
+the commands associated with tracepoints take the tracepoint number as
+their argument, to identify which tracepoint to work on.
+
+   For each tracepoint, you can specify, in advance, some arbitrary set
+of data that you want the target to collect in the trace buffer when it
+hits that tracepoint.  The collected data can include registers, local
+variables, or global data.  Later, you can use GDB commands to examine
+the values these data had at the time the tracepoint was hit.
+
+   This section describes commands to set tracepoints and associated
+conditions and actions.
+
+* Menu:
+
+* Create and Delete Tracepoints::
+* Enable and Disable Tracepoints::
+* Tracepoint Passcounts::
+* Tracepoint Actions::
+* Listing Tracepoints::
+* Starting and Stopping Trace Experiment::
+
+
+File: gdb.info,  Node: Create and Delete Tracepoints,  Next: Enable and Disable Tracepoints,  Up: Set Tracepoints
+
+Create and Delete Tracepoints
+-----------------------------
+
+`trace'
+     The `trace' command is very similar to the `break' command.  Its
+     argument can be a source line, a function name, or an address in
+     the target program.  *Note Set Breaks::.  The `trace' command
+     defines a tracepoint, which is a point in the target program where
+     the debugger will briefly stop, collect some data, and then allow
+     the program to continue.  Setting a tracepoint or changing its
+     commands doesn't take effect until the next `tstart' command;
+     thus, you cannot change the tracepoint attributes once a trace
+     experiment is running.
+
+     Here are some examples of using the `trace' command:
+
+          (gdb) trace foo.c:121    // a source file and line number
+          
+          (gdb) trace +2           // 2 lines forward
+          
+          (gdb) trace my_function  // first source line of function
+          
+          (gdb) trace *my_function // EXACT start address of function
+          
+          (gdb) trace *0x2117c4    // an address
+
+     You can abbreviate `trace' as `tr'.
+
+     The convenience variable `$tpnum' records the tracepoint number of
+     the most recently set tracepoint.
+
+`delete tracepoint [NUM]'
+     Permanently delete one or more tracepoints.  With no argument, the
+     default is to delete all tracepoints.
+
+     Examples:
+
+          (gdb) delete trace 1 2 3 // remove three tracepoints
+          
+          (gdb) delete trace       // remove all tracepoints
+
+     You can abbreviate this command as `del tr'.
+
+
+File: gdb.info,  Node: Enable and Disable Tracepoints,  Next: Tracepoint Passcounts,  Prev: Create and Delete Tracepoints,  Up: Set Tracepoints
+
+Enable and Disable Tracepoints
+------------------------------
+
+`disable tracepoint [NUM]'
+     Disable tracepoint NUM, or all tracepoints if no argument NUM is
+     given.  A disabled tracepoint will have no effect during the next
+     trace experiment, but it is not forgotten.  You can re-enable a
+     disabled tracepoint using the `enable tracepoint' command.
+
+`enable tracepoint [NUM]'
+     Enable tracepoint NUM, or all tracepoints.  The enabled
+     tracepoints will become effective the next time a trace experiment
+     is run.
+
+
+File: gdb.info,  Node: Tracepoint Passcounts,  Next: Tracepoint Actions,  Prev: Enable and Disable Tracepoints,  Up: Set Tracepoints
+
+Tracepoint Passcounts
+---------------------
+
+`passcount [N [NUM]]'
+     Set the "passcount" of a tracepoint.  The passcount is a way to
+     automatically stop a trace experiment.  If a tracepoint's
+     passcount is N, then the trace experiment will be automatically
+     stopped on the N'th time that tracepoint is hit.  If the
+     tracepoint number NUM is not specified, the `passcount' command
+     sets the passcount of the most recently defined tracepoint.  If no
+     passcount is given, the trace experiment will run until stopped
+     explicitly by the user.
+
+     Examples:
+
+          (gdb) passcount 5 2 // Stop on the 5th execution of
+                                        `// tracepoint 2'
+
+          (gdb) passcount 12  // Stop on the 12th execution of the
+                                        `// most recently defined tracepoint.'
+          (gdb) trace foo
+          (gdb) pass 3
+          (gdb) trace bar
+          (gdb) pass 2
+          (gdb) trace baz
+          (gdb) pass 1        // Stop tracing when foo has been
+                                         `// executed 3 times OR when bar has'
+     `// been executed 2 times'
+     `// OR when baz has been executed 1 time.'
+
+
+File: gdb.info,  Node: Tracepoint Actions,  Next: Listing Tracepoints,  Prev: Tracepoint Passcounts,  Up: Set Tracepoints
+
+Tracepoint Action Lists
+-----------------------
+
+`actions [NUM]'
+     This command will prompt for a list of actions to be taken when the
+     tracepoint is hit.  If the tracepoint number NUM is not specified,
+     this command sets the actions for the one that was most recently
+     defined (so that you can define a tracepoint and then say
+     `actions' without bothering about its number).  You specify the
+     actions themselves on the following lines, one action at a time,
+     and terminate the actions list with a line containing just `end'.
+     So far, the only defined actions are `collect' and
+     `while-stepping'.
+
+     To remove all actions from a tracepoint, type `actions NUM' and
+     follow it immediately with `end'.
+
+          (gdb) collect DATA // collect some data
+          
+          (gdb) while-stepping 5 // single-step 5 times, collect data
+          
+          (gdb) end              // signals the end of actions.
+
+     In the following example, the action list begins with `collect'
+     commands indicating the things to be collected when the tracepoint
+     is hit.  Then, in order to single-step and collect additional data
+     following the tracepoint, a `while-stepping' command is used,
+     followed by the list of things to be collected while stepping.  The
+     `while-stepping' command is terminated by its own separate `end'
+     command.  Lastly, the action list is terminated by an `end'
+     command.
+
+          (gdb) trace foo
+          (gdb) actions
+          Enter actions for tracepoint 1, one per line:
+          > collect bar,baz
+          > collect $regs
+          > while-stepping 12
+            > collect $fp, $sp
+            > end
+          end
+
+`collect EXPR1, EXPR2, ...'
+     Collect values of the given expressions when the tracepoint is hit.
+     This command accepts a comma-separated list of any valid
+     expressions.  In addition to global, static, or local variables,
+     the following special arguments are supported:
+
+    `$regs'
+          collect all registers
+
+    `$args'
+          collect all function arguments
+
+    `$locals'
+          collect all local variables.
+
+     You can give several consecutive `collect' commands, each one with
+     a single argument, or one `collect' command with several arguments
+     separated by commas: the effect is the same.
+
+     The command `info scope' (*note info scope: Symbols.) is
+     particularly useful for figuring out what data to collect.
+
+`while-stepping N'
+     Perform N single-step traces after the tracepoint, collecting new
+     data at each step.  The `while-stepping' command is followed by
+     the list of what to collect while stepping (followed by its own
+     `end' command):
+
+          > while-stepping 12
+            > collect $regs, myglobal
+            > end
+          >
+
+     You may abbreviate `while-stepping' as `ws' or `stepping'.
+
+
+File: gdb.info,  Node: Listing Tracepoints,  Next: Starting and Stopping Trace Experiment,  Prev: Tracepoint Actions,  Up: Set Tracepoints
+
+Listing Tracepoints
+-------------------
+
+`info tracepoints [NUM]'
+     Display information about the tracepoint NUM.  If you don't specify
+     a tracepoint number, displays information about all the tracepoints
+     defined so far.  For each tracepoint, the following information is
+     shown:
+
+        * its number
+
+        * whether it is enabled or disabled
+
+        * its address
+
+        * its passcount as given by the `passcount N' command
+
+        * its step count as given by the `while-stepping N' command
+
+        * where in the source files is the tracepoint set
+
+        * its action list as given by the `actions' command
+
+          (gdb) info trace
+          Num Enb Address    PassC StepC What
+          1   y   0x002117c4 0     0     <gdb_asm>
+          2   y   0x0020dc64 0     0     in g_test at g_test.c:1375
+          3   y   0x0020b1f4 0     0     in get_data at ../foo.c:41
+          (gdb)
+
+     This command can be abbreviated `info tp'.
+
+
+File: gdb.info,  Node: Starting and Stopping Trace Experiment,  Prev: Listing Tracepoints,  Up: Set Tracepoints
+
+Starting and Stopping Trace Experiment
+--------------------------------------
+
+`tstart'
+     This command takes no arguments.  It starts the trace experiment,
+     and begins collecting data.  This has the side effect of
+     discarding all the data collected in the trace buffer during the
+     previous trace experiment.
+
+`tstop'
+     This command takes no arguments.  It ends the trace experiment, and
+     stops collecting data.
+
+     *Note:* a trace experiment and data collection may stop
+     automatically if any tracepoint's passcount is reached (*note
+     Tracepoint Passcounts::), or if the trace buffer becomes full.
+
+`tstatus'
+     This command displays the status of the current trace data
+     collection.
+
+   Here is an example of the commands we described so far:
+
+     (gdb) trace gdb_c_test
+     (gdb) actions
+     Enter actions for tracepoint #1, one per line.
+     > collect $regs,$locals,$args
+     > while-stepping 11
+       > collect $regs
+       > end
+     > end
+     (gdb) tstart
+     	[time passes ...]
+     (gdb) tstop
+
+
+File: gdb.info,  Node: Analyze Collected Data,  Next: Tracepoint Variables,  Prev: Set Tracepoints,  Up: Tracepoints
+
+Using the collected data
+========================
+
+   After the tracepoint experiment ends, you use GDB commands for
+examining the trace data.  The basic idea is that each tracepoint
+collects a trace "snapshot" every time it is hit and another snapshot
+every time it single-steps.  All these snapshots are consecutively
+numbered from zero and go into a buffer, and you can examine them
+later.  The way you examine them is to "focus" on a specific trace
+snapshot.  When the remote stub is focused on a trace snapshot, it will
+respond to all GDB requests for memory and registers by reading from
+the buffer which belongs to that snapshot, rather than from _real_
+memory or registers of the program being debugged.  This means that
+*all* GDB commands (`print', `info registers', `backtrace', etc.) will
+behave as if we were currently debugging the program state as it was
+when the tracepoint occurred.  Any requests for data that are not in
+the buffer will fail.
+
+* Menu:
+
+* tfind::                       How to select a trace snapshot
+* tdump::                       How to display all data for a snapshot
+* save-tracepoints::            How to save tracepoints for a future run
+
+
+File: gdb.info,  Node: tfind,  Next: tdump,  Up: Analyze Collected Data
+
+`tfind N'
+---------
+
+   The basic command for selecting a trace snapshot from the buffer is
+`tfind N', which finds trace snapshot number N, counting from zero.  If
+no argument N is given, the next snapshot is selected.
+
+   Here are the various forms of using the `tfind' command.
+
+`tfind start'
+     Find the first snapshot in the buffer.  This is a synonym for
+     `tfind 0' (since 0 is the number of the first snapshot).
+
+`tfind none'
+     Stop debugging trace snapshots, resume _live_ debugging.
+
+`tfind end'
+     Same as `tfind none'.
+
+`tfind'
+     No argument means find the next trace snapshot.
+
+`tfind -'
+     Find the previous trace snapshot before the current one.  This
+     permits retracing earlier steps.
+
+`tfind tracepoint NUM'
+     Find the next snapshot associated with tracepoint NUM.  Search
+     proceeds forward from the last examined trace snapshot.  If no
+     argument NUM is given, it means find the next snapshot collected
+     for the same tracepoint as the current snapshot.
+
+`tfind pc ADDR'
+     Find the next snapshot associated with the value ADDR of the
+     program counter.  Search proceeds forward from the last examined
+     trace snapshot.  If no argument ADDR is given, it means find the
+     next snapshot with the same value of PC as the current snapshot.
+
+`tfind outside ADDR1, ADDR2'
+     Find the next snapshot whose PC is outside the given range of
+     addresses.
+
+`tfind range ADDR1, ADDR2'
+     Find the next snapshot whose PC is between ADDR1 and ADDR2.
+
+`tfind line [FILE:]N'
+     Find the next snapshot associated with the source line N.  If the
+     optional argument FILE is given, refer to line N in that source
+     file.  Search proceeds forward from the last examined trace
+     snapshot.  If no argument N is given, it means find the next line
+     other than the one currently being examined; thus saying `tfind
+     line' repeatedly can appear to have the same effect as stepping
+     from line to line in a _live_ debugging session.
+
+   The default arguments for the `tfind' commands are specifically
+designed to make it easy to scan through the trace buffer.  For
+instance, `tfind' with no argument selects the next trace snapshot, and
+`tfind -' with no argument selects the previous trace snapshot.  So, by
+giving one `tfind' command, and then simply hitting <RET> repeatedly
+you can examine all the trace snapshots in order.  Or, by saying `tfind
+-' and then hitting <RET> repeatedly you can examine the snapshots in
+reverse order.  The `tfind line' command with no argument selects the
+snapshot for the next source line executed.  The `tfind pc' command with
+no argument selects the next snapshot with the same program counter
+(PC) as the current frame.  The `tfind tracepoint' command with no
+argument selects the next trace snapshot collected by the same
+tracepoint as the current one.
+
+   In addition to letting you scan through the trace buffer manually,
+these commands make it easy to construct GDB scripts that scan through
+the trace buffer and print out whatever collected data you are
+interested in.  Thus, if we want to examine the PC, FP, and SP
+registers from each trace frame in the buffer, we can say this:
+
+     (gdb) tfind start
+     (gdb) while ($trace_frame != -1)
+     > printf "Frame %d, PC = %08X, SP = %08X, FP = %08X\n", \
+               $trace_frame, $pc, $sp, $fp
+     > tfind
+     > end
+     
+     Frame 0, PC = 0020DC64, SP = 0030BF3C, FP = 0030BF44
+     Frame 1, PC = 0020DC6C, SP = 0030BF38, FP = 0030BF44
+     Frame 2, PC = 0020DC70, SP = 0030BF34, FP = 0030BF44
+     Frame 3, PC = 0020DC74, SP = 0030BF30, FP = 0030BF44
+     Frame 4, PC = 0020DC78, SP = 0030BF2C, FP = 0030BF44
+     Frame 5, PC = 0020DC7C, SP = 0030BF28, FP = 0030BF44
+     Frame 6, PC = 0020DC80, SP = 0030BF24, FP = 0030BF44
+     Frame 7, PC = 0020DC84, SP = 0030BF20, FP = 0030BF44
+     Frame 8, PC = 0020DC88, SP = 0030BF1C, FP = 0030BF44
+     Frame 9, PC = 0020DC8E, SP = 0030BF18, FP = 0030BF44
+     Frame 10, PC = 00203F6C, SP = 0030BE3C, FP = 0030BF14
+
+   Or, if we want to examine the variable `X' at each source line in
+the buffer:
+
+     (gdb) tfind start
+     (gdb) while ($trace_frame != -1)
+     > printf "Frame %d, X == %d\n", $trace_frame, X
+     > tfind line
+     > end
+     
+     Frame 0, X = 1
+     Frame 7, X = 2
+     Frame 13, X = 255
+
+
+File: gdb.info,  Node: tdump,  Next: save-tracepoints,  Prev: tfind,  Up: Analyze Collected Data
+
+`tdump'
+-------
+
+   This command takes no arguments.  It prints all the data collected at
+the current trace snapshot.
+
+     (gdb) trace 444
+     (gdb) actions
+     Enter actions for tracepoint #2, one per line:
+     > collect $regs, $locals, $args, gdb_long_test
+     > end
+     
+     (gdb) tstart
+     
+     (gdb) tfind line 444
+     #0  gdb_test (p1=0x11, p2=0x22, p3=0x33, p4=0x44, p5=0x55, p6=0x66)
+     at gdb_test.c:444
+     444        printp( "%s: arguments = 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n", )
+     
+     (gdb) tdump
+     Data collected at tracepoint 2, trace frame 1:
+     d0             0xc4aa0085       -995491707
+     d1             0x18     24
+     d2             0x80     128
+     d3             0x33     51
+     d4             0x71aea3d        119204413
+     d5             0x22     34
+     d6             0xe0     224
+     d7             0x380035 3670069
+     a0             0x19e24a 1696330
+     a1             0x3000668        50333288
+     a2             0x100    256
+     a3             0x322000 3284992
+     a4             0x3000698        50333336
+     a5             0x1ad3cc 1758156
+     fp             0x30bf3c 0x30bf3c
+     sp             0x30bf34 0x30bf34
+     ps             0x0      0
+     pc             0x20b2c8 0x20b2c8
+     fpcontrol      0x0      0
+     fpstatus       0x0      0
+     fpiaddr        0x0      0
+     p = 0x20e5b4 "gdb-test"
+     p1 = (void *) 0x11
+     p2 = (void *) 0x22
+     p3 = (void *) 0x33
+     p4 = (void *) 0x44
+     p5 = (void *) 0x55
+     p6 = (void *) 0x66
+     gdb_long_test = 17 '\021'
+     
+     (gdb)
+
+
+File: gdb.info,  Node: save-tracepoints,  Prev: tdump,  Up: Analyze Collected Data
+
+`save-tracepoints FILENAME'
+---------------------------
+
+   This command saves all current tracepoint definitions together with
+their actions and passcounts, into a file `FILENAME' suitable for use
+in a later debugging session.  To read the saved tracepoint
+definitions, use the `source' command (*note Command Files::).
+
+
+File: gdb.info,  Node: Tracepoint Variables,  Prev: Analyze Collected Data,  Up: Tracepoints
+
+Convenience Variables for Tracepoints
+=====================================
+
+`(int) $trace_frame'
+     The current trace snapshot (a.k.a. "frame") number, or -1 if no
+     snapshot is selected.
+
+`(int) $tracepoint'
+     The tracepoint for the current trace snapshot.
+
+`(int) $trace_line'
+     The line number for the current trace snapshot.
+
+`(char []) $trace_file'
+     The source file for the current trace snapshot.
+
+`(char []) $trace_func'
+     The name of the function containing `$tracepoint'.
+
+   Note: `$trace_file' is not suitable for use in `printf', use
+`output' instead.
+
+   Here's a simple example of using these convenience variables for
+stepping through all the trace snapshots and printing some of their
+data.
+
+     (gdb) tfind start
+     
+     (gdb) while $trace_frame != -1
+     > output $trace_file
+     > printf ", line %d (tracepoint #%d)\n", $trace_line, $tracepoint
+     > tfind
+     > end
+
+
+File: gdb.info,  Node: Overlays,  Next: Languages,  Prev: Tracepoints,  Up: Top
+
+Debugging Programs That Use Overlays
+************************************
+
+   If your program is too large to fit completely in your target
+system's memory, you can sometimes use "overlays" to work around this
+problem.  GDB provides some support for debugging programs that use
+overlays.
+
+* Menu:
+
+* How Overlays Work::              A general explanation of overlays.
+* Overlay Commands::               Managing overlays in GDB.
+* Automatic Overlay Debugging::    GDB can find out which overlays are
+                                   mapped by asking the inferior.
+* Overlay Sample Program::         A sample program using overlays.
+
+
+File: gdb.info,  Node: How Overlays Work,  Next: Overlay Commands,  Up: Overlays
+
+How Overlays Work
+=================
+
+   Suppose you have a computer whose instruction address space is only
+64 kilobytes long, but which has much more memory which can be accessed
+by other means: special instructions, segment registers, or memory
+management hardware, for example.  Suppose further that you want to
+adapt a program which is larger than 64 kilobytes to run on this system.
+
+   One solution is to identify modules of your program which are
+relatively independent, and need not call each other directly; call
+these modules "overlays".  Separate the overlays from the main program,
+and place their machine code in the larger memory.  Place your main
+program in instruction memory, but leave at least enough space there to
+hold the largest overlay as well.
+
+   Now, to call a function located in an overlay, you must first copy
+that overlay's machine code from the large memory into the space set
+aside for it in the instruction memory, and then jump to its entry point
+there.
+
+         Data             Instruction            Larger
+     Address Space       Address Space        Address Space
+     +-----------+       +-----------+        +-----------+
+     |           |       |           |        |           |
+     +-----------+       +-----------+        +-----------+<-- overlay 1
+     | program   |       |   main    |   .----| overlay 1 | load address
+     | variables |       |  program  |   |    +-----------+
+     | and heap  |       |           |   |    |           |
+     +-----------+       |           |   |    +-----------+<-- overlay 2
+     |           |       +-----------+   |    |           | load address
+     +-----------+       |           |   |  .-| overlay 2 |
+                         |           |   |  | |           |
+              mapped --->+-----------+   |  | +-----------+
+              address    |           |   |  | |           |
+                         |  overlay  | <-'  | |           |
+                         |   area    |  <---' +-----------+<-- overlay 3
+                         |           | <---.  |           | load address
+                         +-----------+     `--| overlay 3 |
+                         |           |        |           |
+                         +-----------+        |           |
+                                              +-----------+
+                                              |           |
+                                              +-----------+
+     
+                         A code overlay
+
+   The diagram (*note A code overlay::) shows a system with separate
+data and instruction address spaces.  To map an overlay, the program
+copies its code from the larger address space to the instruction
+address space.  Since the overlays shown here all use the same mapped
+address, only one may be mapped at a time.  For a system with a single
+address space for data and instructions, the diagram would be similar,
+except that the program variables and heap would share an address space
+with the main program and the overlay area.
+
+   An overlay loaded into instruction memory and ready for use is
+called a "mapped" overlay; its "mapped address" is its address in the
+instruction memory.  An overlay not present (or only partially present)
+in instruction memory is called "unmapped"; its "load address" is its
+address in the larger memory.  The mapped address is also called the
+"virtual memory address", or "VMA"; the load address is also called the
+"load memory address", or "LMA".
+
+   Unfortunately, overlays are not a completely transparent way to
+adapt a program to limited instruction memory.  They introduce a new
+set of global constraints you must keep in mind as you design your
+program:
+
+   * Before calling or returning to a function in an overlay, your
+     program must make sure that overlay is actually mapped.
+     Otherwise, the call or return will transfer control to the right
+     address, but in the wrong overlay, and your program will probably
+     crash.
+
+   * If the process of mapping an overlay is expensive on your system,
+     you will need to choose your overlays carefully to minimize their
+     effect on your program's performance.
+
+   * The executable file you load onto your system must contain each
+     overlay's instructions, appearing at the overlay's load address,
+     not its mapped address.  However, each overlay's instructions must
+     be relocated and its symbols defined as if the overlay were at its
+     mapped address.  You can use GNU linker scripts to specify
+     different load and relocation addresses for pieces of your
+     program; see *Note Overlay Description: (ld.info)Overlay
+     Description.
+
+   * The procedure for loading executable files onto your system must
+     be able to load their contents into the larger address space as
+     well as the instruction and data spaces.
+
+
+   The overlay system described above is rather simple, and could be
+improved in many ways:
+
+   * If your system has suitable bank switch registers or memory
+     management hardware, you could use those facilities to make an
+     overlay's load area contents simply appear at their mapped address
+     in instruction space.  This would probably be faster than copying
+     the overlay to its mapped area in the usual way.
+
+   * If your overlays are small enough, you could set aside more than
+     one overlay area, and have more than one overlay mapped at a time.
+
+   * You can use overlays to manage data, as well as instructions.  In
+     general, data overlays are even less transparent to your design
+     than code overlays: whereas code overlays only require care when
+     you call or return to functions, data overlays require care every
+     time you access the data.  Also, if you change the contents of a
+     data overlay, you must copy its contents back out to its load
+     address before you can copy a different data overlay into the same
+     mapped area.
+
+
+
+File: gdb.info,  Node: Overlay Commands,  Next: Automatic Overlay Debugging,  Prev: How Overlays Work,  Up: Overlays
+
+Overlay Commands
+================
+
+   To use GDB's overlay support, each overlay in your program must
+correspond to a separate section of the executable file.  The section's
+virtual memory address and load memory address must be the overlay's
+mapped and load addresses.  Identifying overlays with sections allows
+GDB to determine the appropriate address of a function or variable,
+depending on whether the overlay is mapped or not.
+
+   GDB's overlay commands all start with the word `overlay'; you can
+abbreviate this as `ov' or `ovly'.  The commands are:
+
+`overlay off'
+     Disable GDB's overlay support.  When overlay support is disabled,
+     GDB assumes that all functions and variables are always present at
+     their mapped addresses.  By default, GDB's overlay support is
+     disabled.
+
+`overlay manual'
+     Enable "manual" overlay debugging.  In this mode, GDB relies on
+     you to tell it which overlays are mapped, and which are not, using
+     the `overlay map-overlay' and `overlay unmap-overlay' commands
+     described below.
+
+`overlay map-overlay OVERLAY'
+`overlay map OVERLAY'
+     Tell GDB that OVERLAY is now mapped; OVERLAY must be the name of
+     the object file section containing the overlay.  When an overlay
+     is mapped, GDB assumes it can find the overlay's functions and
+     variables at their mapped addresses.  GDB assumes that any other
+     overlays whose mapped ranges overlap that of OVERLAY are now
+     unmapped.
+
+`overlay unmap-overlay OVERLAY'
+`overlay unmap OVERLAY'
+     Tell GDB that OVERLAY is no longer mapped; OVERLAY must be the
+     name of the object file section containing the overlay.  When an
+     overlay is unmapped, GDB assumes it can find the overlay's
+     functions and variables at their load addresses.
+
+`overlay auto'
+     Enable "automatic" overlay debugging.  In this mode, GDB consults
+     a data structure the overlay manager maintains in the inferior to
+     see which overlays are mapped.  For details, see *Note Automatic
+     Overlay Debugging::.
+
+`overlay load-target'
+`overlay load'
+     Re-read the overlay table from the inferior.  Normally, GDB
+     re-reads the table GDB automatically each time the inferior stops,
+     so this command should only be necessary if you have changed the
+     overlay mapping yourself using GDB.  This command is only useful
+     when using automatic overlay debugging.
+
+`overlay list-overlays'
+`overlay list'
+     Display a list of the overlays currently mapped, along with their
+     mapped addresses, load addresses, and sizes.
+
+   Normally, when GDB prints a code address, it includes the name of
+the function the address falls in:
+
+     (gdb) print main
+     $3 = {int ()} 0x11a0 <main>
+
+When overlay debugging is enabled, GDB recognizes code in unmapped
+overlays, and prints the names of unmapped functions with asterisks
+around them.  For example, if `foo' is a function in an unmapped
+overlay, GDB prints it this way:
+
+     (gdb) overlay list
+     No sections are mapped.
+     (gdb) print foo
+     $5 = {int (int)} 0x100000 <*foo*>
+
+When `foo''s overlay is mapped, GDB prints the function's name normally:
+
+     (gdb) overlay list
+     Section .ov.foo.text, loaded at 0x100000 - 0x100034,
+             mapped at 0x1016 - 0x104a
+     (gdb) print foo
+     $6 = {int (int)} 0x1016 <foo>
+
+   When overlay debugging is enabled, GDB can find the correct address
+for functions and variables in an overlay, whether or not the overlay
+is mapped.  This allows most GDB commands, like `break' and
+`disassemble', to work normally, even on unmapped code.  However, GDB's
+breakpoint support has some limitations:
+
+   * You can set breakpoints in functions in unmapped overlays, as long
+     as GDB can write to the overlay at its load address.
+
+   * GDB can not set hardware or simulator-based breakpoints in
+     unmapped overlays.  However, if you set a breakpoint at the end of
+     your overlay manager (and tell GDB which overlays are now mapped,
+     if you are using manual overlay management), GDB will re-set its
+     breakpoints properly.
+
+
+File: gdb.info,  Node: Automatic Overlay Debugging,  Next: Overlay Sample Program,  Prev: Overlay Commands,  Up: Overlays
+
+Automatic Overlay Debugging
+===========================
+
+   GDB can automatically track which overlays are mapped and which are
+not, given some simple co-operation from the overlay manager in the
+inferior.  If you enable automatic overlay debugging with the `overlay
+auto' command (*note Overlay Commands::), GDB looks in the inferior's
+memory for certain variables describing the current state of the
+overlays.
+
+   Here are the variables your overlay manager must define to support
+GDB's automatic overlay debugging:
+
+`_ovly_table':
+     This variable must be an array of the following structures:
+
+          struct
+          {
+            /* The overlay's mapped address.  */
+            unsigned long vma;
+          
+            /* The size of the overlay, in bytes.  */
+            unsigned long size;
+          
+            /* The overlay's load address.  */
+            unsigned long lma;
+          
+            /* Non-zero if the overlay is currently mapped;
+               zero otherwise.  */
+            unsigned long mapped;
+          }
+
+`_novlys':
+     This variable must be a four-byte signed integer, holding the total
+     number of elements in `_ovly_table'.
+
+   To decide whether a particular overlay is mapped or not, GDB looks
+for an entry in `_ovly_table' whose `vma' and `lma' members equal the
+VMA and LMA of the overlay's section in the executable file.  When GDB
+finds a matching entry, it consults the entry's `mapped' member to
+determine whether the overlay is currently mapped.
+
+   In addition, your overlay manager may define a function called
+`_ovly_debug_event'.  If this function is defined, GDB will silently
+set a breakpoint there.  If the overlay manager then calls this
+function whenever it has changed the overlay table, this will enable
+GDB to accurately keep track of which overlays are in program memory,
+and update any breakpoints that may be set in overlays.  This will
+allow breakpoints to work even if the overlays are kept in ROM or other
+non-writable memory while they are not being executed.
+
+
+File: gdb.info,  Node: Overlay Sample Program,  Prev: Automatic Overlay Debugging,  Up: Overlays
+
+Overlay Sample Program
+======================
+
+   When linking a program which uses overlays, you must place the
+overlays at their load addresses, while relocating them to run at their
+mapped addresses.  To do this, you must write a linker script (*note
+Overlay Description: (ld.info)Overlay Description.).  Unfortunately,
+since linker scripts are specific to a particular host system, target
+architecture, and target memory layout, this manual cannot provide
+portable sample code demonstrating GDB's overlay support.
+
+   However, the GDB source distribution does contain an overlaid
+program, with linker scripts for a few systems, as part of its test
+suite.  The program consists of the following files from
+`gdb/testsuite/gdb.base':
+
+`overlays.c'
+     The main program file.
+
+`ovlymgr.c'
+     A simple overlay manager, used by `overlays.c'.
+
+`foo.c'
+`bar.c'
+`baz.c'
+`grbx.c'
+     Overlay modules, loaded and used by `overlays.c'.
+
+`d10v.ld'
+`m32r.ld'
+     Linker scripts for linking the test program on the `d10v-elf' and
+     `m32r-elf' targets.
+
+   You can build the test program using the `d10v-elf' GCC
+cross-compiler like this:
+
+     $ d10v-elf-gcc -g -c overlays.c
+     $ d10v-elf-gcc -g -c ovlymgr.c
+     $ d10v-elf-gcc -g -c foo.c
+     $ d10v-elf-gcc -g -c bar.c
+     $ d10v-elf-gcc -g -c baz.c
+     $ d10v-elf-gcc -g -c grbx.c
+     $ d10v-elf-gcc -g overlays.o ovlymgr.o foo.o bar.o \
+                       baz.o grbx.o -Wl,-Td10v.ld -o overlays
+
+   The build process is identical for any other architecture, except
+that you must substitute the appropriate compiler and linker script for
+the target system for `d10v-elf-gcc' and `d10v.ld'.
+
+
+File: gdb.info,  Node: Languages,  Next: Symbols,  Prev: Overlays,  Up: Top
+
+Using GDB with Different Languages
+**********************************
+
+   Although programming languages generally have common aspects, they
+are rarely expressed in the same manner.  For instance, in ANSI C,
+dereferencing a pointer `p' is accomplished by `*p', but in Modula-2,
+it is accomplished by `p^'.  Values can also be represented (and
+displayed) differently.  Hex numbers in C appear as `0x1ae', while in
+Modula-2 they appear as `1AEH'.
+
+   Language-specific information is built into GDB for some languages,
+allowing you to express operations like the above in your program's
+native language, and allowing GDB to output values in a manner
+consistent with the syntax of your program's native language.  The
+language you use to build expressions is called the "working language".
+
+* Menu:
+
+* Setting::                     Switching between source languages
+* Show::                        Displaying the language
+* Checks::                      Type and range checks
+* Support::                     Supported languages
+
+
+File: gdb.info,  Node: Setting,  Next: Show,  Up: Languages
+
+Switching between source languages
+==================================
+
+   There are two ways to control the working language--either have GDB
+set it automatically, or select it manually yourself.  You can use the
+`set language' command for either purpose.  On startup, GDB defaults to
+setting the language automatically.  The working language is used to
+determine how expressions you type are interpreted, how values are
+printed, etc.
+
+   In addition to the working language, every source file that GDB
+knows about has its own working language.  For some object file
+formats, the compiler might indicate which language a particular source
+file is in.  However, most of the time GDB infers the language from the
+name of the file.  The language of a source file controls whether C++
+names are demangled--this way `backtrace' can show each frame
+appropriately for its own language.  There is no way to set the
+language of a source file from within GDB, but you can set the language
+associated with a filename extension.  *Note Displaying the language:
+Show.
+
+   This is most commonly a problem when you use a program, such as
+`cfront' or `f2c', that generates C but is written in another language.
+In that case, make the program use `#line' directives in its C output;
+that way GDB will know the correct language of the source code of the
+original program, and will display that source code, not the generated
+C code.
+
+* Menu:
+
+* Filenames::                   Filename extensions and languages.
+* Manually::                    Setting the working language manually
+* Automatically::               Having GDB infer the source language
+
+
+File: gdb.info,  Node: Filenames,  Next: Manually,  Up: Setting
+
+List of filename extensions and languages
+-----------------------------------------
+
+   If a source file name ends in one of the following extensions, then
+GDB infers that its language is the one indicated.
+
+`.c'
+     C source file
+
+`.C'
+`.cc'
+`.cp'
+`.cpp'
+`.cxx'
+`.c++'
+     C++ source file
+
+`.f'
+`.F'
+     Fortran source file
+
+`.mod'
+     Modula-2 source file
+
+`.s'
+`.S'
+     Assembler source file.  This actually behaves almost like C, but
+     GDB does not skip over function prologues when stepping.
+
+   In addition, you may set the language associated with a filename
+extension.  *Note Displaying the language: Show.
+
+
+File: gdb.info,  Node: Manually,  Next: Automatically,  Prev: Filenames,  Up: Setting
+
+Setting the working language
+----------------------------
+
+   If you allow GDB to set the language automatically, expressions are
+interpreted the same way in your debugging session and your program.
+
+   If you wish, you may set the language manually.  To do this, issue
+the command `set language LANG', where LANG is the name of a language,
+such as `c' or `modula-2'.  For a list of the supported languages, type
+`set language'.
+
+   Setting the language manually prevents GDB from updating the working
+language automatically.  This can lead to confusion if you try to debug
+a program when the working language is not the same as the source
+language, when an expression is acceptable to both languages--but means
+different things.  For instance, if the current source file were
+written in C, and GDB was parsing Modula-2, a command such as:
+
+     print a = b + c
+
+might not have the effect you intended.  In C, this means to add `b'
+and `c' and place the result in `a'.  The result printed would be the
+value of `a'.  In Modula-2, this means to compare `a' to the result of
+`b+c', yielding a `BOOLEAN' value.
+
+
+File: gdb.info,  Node: Automatically,  Prev: Manually,  Up: Setting
+
+Having GDB infer the source language
+------------------------------------
+
+   To have GDB set the working language automatically, use `set
+language local' or `set language auto'.  GDB then infers the working
+language.  That is, when your program stops in a frame (usually by
+encountering a breakpoint), GDB sets the working language to the
+language recorded for the function in that frame.  If the language for
+a frame is unknown (that is, if the function or block corresponding to
+the frame was defined in a source file that does not have a recognized
+extension), the current working language is not changed, and GDB issues
+a warning.
+
+   This may not seem necessary for most programs, which are written
+entirely in one source language.  However, program modules and libraries
+written in one source language can be used by a main program written in
+a different source language.  Using `set language auto' in this case
+frees you from having to set the working language manually.
+
+
+File: gdb.info,  Node: Show,  Next: Checks,  Prev: Setting,  Up: Languages
+
+Displaying the language
+=======================
+
+   The following commands help you find out which language is the
+working language, and also what language source files were written in.
+
+`show language'
+     Display the current working language.  This is the language you
+     can use with commands such as `print' to build and compute
+     expressions that may involve variables in your program.
+
+`info frame'
+     Display the source language for this frame.  This language becomes
+     the working language if you use an identifier from this frame.
+     *Note Information about a frame: Frame Info, to identify the other
+     information listed here.
+
+`info source'
+     Display the source language of this source file.  *Note Examining
+     the Symbol Table: Symbols, to identify the other information
+     listed here.
+
+   In unusual circumstances, you may have source files with extensions
+not in the standard list.  You can then set the extension associated
+with a language explicitly:
+
+`set extension-language .EXT LANGUAGE'
+     Set source files with extension .EXT to be assumed to be in the
+     source language LANGUAGE.
+
+`info extensions'
+     List all the filename extensions and the associated languages.
+
