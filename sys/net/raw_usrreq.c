@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.13 1996/05/23 18:26:26 mycroft Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.14 1996/05/28 23:24:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -186,7 +186,6 @@ raw_usrreq(so, req, m, nam, control, p)
 	register struct rawcb *rp;
 	int s;
 	register int error = 0;
-	int len;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
