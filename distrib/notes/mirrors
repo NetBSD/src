@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of August 20, 1998.
+The following sites mirror NetBSD as of September 01, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -36,6 +36,11 @@ Denmark
 * ftp.dk.netbsd.org
   Aalborg University
   ftp://ftp.dk.netbsd.org/pub/NetBSD
+
+Finland
+
+* ftp.fi.netbsd.org
+  ftp://ftp.fi.netbsd.org/pub/NetBSD
 
 France
 
@@ -226,6 +231,11 @@ Austria
   University of Technology, Vienna
   http://www.at.netbsd.org/
 
+Finland
+
+* www.fi.netbsd.org
+  http://www.fi.netbsd.org/
+
 France
 
 * www.fr.netbsd.org
@@ -247,4 +257,8 @@ USA
 * www.netbsd.org
   Western Washington State University
   http://www.netbsd.org/
+
+* www2.us.netbsd.org
+  East Coast
+  http://www.us.netbsd.org/
 
