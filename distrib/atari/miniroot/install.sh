@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.1.1 1996/05/19 19:43:38 leo Exp $
+#	$NetBSD: install.sh,v 1.2 1996/05/25 22:13:08 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,13 +56,25 @@ MODE="install"
 #	md_installboot()	- install boot-blocks on disk
 #	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
+#	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+#	md_native_fstype()	- native filesystem type for disk installs
+#	md_native_fsopts()	- native filesystem options for disk installs
 . install.md
 
 # include common subroutines
 . install.sub
+
+# decide upon an editor
+if [ X$EDITOR = X ]; then
+	if [ -x /usr/bin/vi ]; then
+		EDITOR=vi
+	else
+		EDITOR=ed
+	fi
+fi
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -141,8 +153,6 @@ getresp "y"
 case "$resp" in
 	y*|Y*)
 		md_prep_disklabel ${ROOTDISK}
-		#disklabel -W ${ROOTDISK}
-		#disklabel -e ${ROOTDISK}
 		;;
 
 	*)
@@ -192,7 +202,7 @@ while [ "X$resp" != X"done" ]; do
 		;;
 
 	*)
-		_device_name=`echo $resp | sed 's/.*\///'`
+		_device_name=`basename $resp`
 
 		# force at least one iteration
 		_first_char="X"
@@ -204,12 +214,10 @@ while [ "X$resp" != X"done" ]; do
 				# Invalid response; no multiple roots
 				_first_char="X"
 			else
-				_first_char=`echo ${_mount_point} | \
-				    sed 's/^\(.\).*/\1/'`
+				_first_char=`firstchar ${_mount_point}`
 			fi
 		done
-		echo "${_device_name}	${_mount_point}" >> \
-		    ${FILESYSTEMS}
+		echo "${_device_name}	${_mount_point}" >> ${FILESYSTEMS}
 		resp="X"	# force loop to repeat
 		;;
 	esac
@@ -225,7 +233,7 @@ echo -n	"mistakes, you may edit this now.  Edit? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		${VI} ${FILESYSTEMS}
+		${EDITOR} ${FILESYSTEMS}
 		;;
 	*)
 		;;
@@ -234,7 +242,7 @@ esac
 # Loop though the file, place filesystems on each device.
 echo	"Creating filesystems..."
 (
-	while read _device_name _mount_point; do
+	while read _device_name _junk; do
 		newfs /dev/r${_device_name}
 		echo ""
 	done
@@ -313,7 +321,7 @@ case "$resp" in
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
-				${VI} /tmp/hosts
+				${EDITOR} /tmp/hosts
 				;;
 
 			*)
@@ -354,13 +362,11 @@ esac
 # Now that the network has been configured, it is safe to configure the
 # fstab.
 (
-	while read dev mp
-	do
-		if [ "$mp" = "/" ]
-		then
-			printf "/dev/%s %s ffs rw 1 1\n" $dev $mp
+	while read _dev _mp; do
+		if [ "$mp" = "/" ]; then
+			echo /dev/$_dev $_mp ffs rw 1 1
 		else
-			printf "/dev/%s %s ffs rw 1 2\n" $dev $mp
+			echo /dev/$_dev $_mp ffs rw 1 2
 		fi
 	done
 ) < ${FILESYSTEMS} > /tmp/fstab
@@ -381,7 +387,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		${VI} /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
