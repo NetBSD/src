@@ -1,11 +1,11 @@
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -14,7 +14,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 %{
 #include "pic.h"
@@ -30,12 +30,16 @@ extern void do_for(char *var, double from, double to,
 		   int by_is_multiplicative, double by, char *body);
 extern void do_lookahead();
 
+#undef fmod
+#undef rand
+
 extern "C" {
   double fmod(double, double);
   int rand();
 }
 
-#define YYDEBUG 1
+/* Maximum number of characters produced by printf("%g") */
+#define GDIGITS 14
 
 int yylex();
 void yyerror(const char *);
@@ -89,9 +93,10 @@ char *do_sprintf(const char *form, const double *v, int nv);
 %token <str> VARIABLE
 %token <x> NUMBER
 %token <lstr> TEXT
-%token <lstr> COMMAND
+%token <lstr> COMMAND_LINE
 %token <str> DELIMITED
 %token <n> ORDINAL
+%token TH
 %token LEFT_ARROW_HEAD
 %token RIGHT_ARROW_HEAD
 %token DOUBLE_ARROW_HEAD
@@ -159,8 +164,8 @@ char *do_sprintf(const char *form, const double *v, int nv);
 %token LOG
 %token EXP
 %token SQRT
-%token MAX
-%token MIN
+%token K_MAX
+%token K_MIN
 %token INT
 %token RAND
 %token COPY
@@ -195,6 +200,7 @@ char *do_sprintf(const char *form, const double *v, int nv);
 %token FILL
 %token ALIGNED
 %token SPRINTF
+%token COMMAND
 
 %token DEFINE
 %token UNDEF
@@ -216,8 +222,8 @@ parses properly. */
 %left CHOP DASHED DOTTED UP DOWN FILL
 %left LABEL
 
-%left VARIABLE NUMBER '(' SIN COS ATAN2 LOG EXP SQRT MAX MIN INT RAND LAST 
-%left  ORDINAL HERE 
+%left VARIABLE NUMBER '(' SIN COS ATAN2 LOG EXP SQRT K_MAX K_MIN INT RAND LAST 
+%left ORDINAL HERE '`'
 
 /* these need to be lower than '-' */
 %left HEIGHT RADIUS WIDTH DIAMETER FROM TO AT THICKNESS
@@ -242,7 +248,7 @@ works */
 %right '!'
 %right '^'
 
-%type <x> expr conditional_expr
+%type <x> expr any_expr text_expr
 %type <by> optional_by
 %type <pair> expr_pair position_not_place
 %type <if_data> simple_if
@@ -253,10 +259,10 @@ works */
 %type <spec> object_spec
 %type <pair> position
 %type <obtype> object_type
-%type <n> optional_ordinal_last
+%type <n> optional_ordinal_last ordinal
 %type <str> until
 %type <dv> sprintf_args
-%type <lstr> text
+%type <lstr> text print_args print_arg
 
 %%
 
@@ -293,10 +299,22 @@ separator:
 	;
 
 placeless_element:
-	VARIABLE '=' conditional_expr
+	VARIABLE '=' any_expr
 		{
 		  define_variable($1, $3);
-		  delete $1;
+		  a_delete $1;
+		}
+	| VARIABLE ':' '=' any_expr
+		{
+		  place *p = lookup_label($1);
+		  if (!p) {
+		    lex_error("variable `%1' not defined", $1);
+		    YYABORT;
+		  }
+		  p->obj = 0;
+		  p->x = $4;
+		  p->y = 0.0;
+		  a_delete $1;
 		}
 	| UP
 		{ current_direction = UP_DIRECTION; }
@@ -306,27 +324,21 @@ placeless_element:
 		{ current_direction = LEFT_DIRECTION; }
 	| RIGHT
 		{ current_direction = RIGHT_DIRECTION; }
-	| COMMAND
+	| COMMAND_LINE
 		{
-		  olist.append(make_command_object($1.str,
-							 $1.filename,
-							 $1.lineno));
+		  olist.append(make_command_object($1.str, $1.filename,
+						   $1.lineno));
 		}
-	| PRINT expr
+	| COMMAND print_args
 		{
-		  fprintf(stderr, "%g\n", $2);
-		  fflush(stderr);
+		  olist.append(make_command_object($2.str, $2.filename,
+						   $2.lineno));
 		}
-	| PRINT text
+	| PRINT print_args
 		{
 		  fprintf(stderr, "%s\n", $2.str);
-		  delete $2.str;
-		  fflush(stderr);
-		}
-	| PRINT position
-		{
-		  fprintf(stderr, "%g, %g\n", $2.x, $2.y);
-		  fflush(stderr);
+		  a_delete $2.str;
+	          fflush(stderr);
 		}
 	| SH
 		{ delim_flag = 1; }
@@ -334,7 +346,7 @@ placeless_element:
 		{
 		  delim_flag = 0;
 		  system($3);
-		  delete $3;
+		  a_delete $3;
 		}
 	| COPY TEXT
 		{
@@ -353,8 +365,8 @@ placeless_element:
 		    do_lookahead();
 		  copy_file_thru($2.str, $5, $7);
 		  // do not delete the filename
-		  delete $5;
-		  delete $7;
+		  a_delete $5;
+		  a_delete $7;
 		}
 	| COPY THRU
 		{ delim_flag = 2; }
@@ -365,8 +377,8 @@ placeless_element:
 		  if (yychar < 0)
 		    do_lookahead();
 		  copy_rest_thru($4, $6);
-		  delete $4;
-		  delete $6;
+		  a_delete $4;
+		  a_delete $6;
 		}
 	| FOR VARIABLE '=' expr TO expr optional_by DO
 	  	{ delim_flag = 1; }
@@ -383,7 +395,7 @@ placeless_element:
 		    do_lookahead();
 		  if ($1.x != 0.0)
 		    push_body($1.body);
-		  delete $1.body;
+		  a_delete $1.body;
 		}
 	| simple_if ELSE
 		{ delim_flag = 1; }
@@ -396,8 +408,8 @@ placeless_element:
 		    push_body($1.body);
 		  else
 		    push_body($4);
-		  delete $1.body;
-		  delete $4;
+		  a_delete $1.body;
+		  a_delete $4;
 		}
 	| reset_variables
 	| RESET
@@ -406,15 +418,54 @@ placeless_element:
 
 reset_variables:
 	RESET VARIABLE
-		{ reset($2); delete $2; }
+		{ reset($2); a_delete $2; }
 	| reset_variables VARIABLE
-		{ reset($2); delete $2; }
+		{ reset($2); a_delete $2; }
 	| reset_variables ',' VARIABLE
-		{ reset($3); delete $3; }
+		{ reset($3); a_delete $3; }
 	;
 
+print_args:
+	print_arg
+		{ $$ = $1; }
+	| print_args print_arg
+		{
+		  $$.str = new char[strlen($1.str) + strlen($2.str) + 1];
+		  strcpy($$.str, $1.str);
+		  strcat($$.str, $2.str);
+		  a_delete $1.str;
+		  a_delete $2.str;
+		  if ($1.filename) {
+		    $$.filename = $1.filename;
+		    $$.lineno = $1.lineno;
+		  }
+		  else if ($2.filename) {
+		    $$.filename = $2.filename;
+		    $$.lineno = $2.lineno;
+		  }
+		}
+	;
+
+print_arg:
+  	expr               %prec ','
+		{
+		  $$.str = new char[GDIGITS + 1];
+		  sprintf($$.str, "%g", $1);
+		  $$.filename = 0;
+		  $$.lineno = 0;
+		}
+	| text
+		{ $$ = $1; }
+	| position          %prec ','
+		{
+		  $$.str = new char[GDIGITS + 2 + GDIGITS + 1];
+		  sprintf($$.str, "%g, %g", $1.x, $1.y);
+		  $$.filename = 0;
+		  $$.lineno = 0;
+		}
+
 simple_if:
-	IF conditional_expr THEN
+	IF any_expr THEN
 		{ delim_flag = 1; }
 	DELIMITED
 		{ delim_flag = 0; $$.x = $2; $$.body = $5; }
@@ -427,21 +478,42 @@ until:
 		{ $$ = $2.str; }
 	;
 	
-conditional_expr:
+any_expr:
 	expr
 		{ $$ = $1; }
-	| text EQUALEQUAL text
+	| text_expr
+		{ $$ = $1; }
+	;
+	
+text_expr:
+	text EQUALEQUAL text
 		{
 		  $$ = strcmp($1.str, $3.str) == 0;
-		  delete $1.str;
-		  delete $3.str;
+		  a_delete $1.str;
+		  a_delete $3.str;
 		}
 	| text NOTEQUAL text
 		{
 		  $$ = strcmp($1.str, $3.str) != 0;
-		  delete $1.str;
-		  delete $3.str;
+		  a_delete $1.str;
+		  a_delete $3.str;
 		}
+	| text_expr ANDAND text_expr
+		{ $$ = ($1 != 0.0 && $3 != 0.0); }
+	| text_expr ANDAND expr
+		{ $$ = ($1 != 0.0 && $3 != 0.0); }
+	| expr ANDAND text_expr
+		{ $$ = ($1 != 0.0 && $3 != 0.0); }
+	| text_expr OROR text_expr
+		{ $$ = ($1 != 0.0 || $3 != 0.0); }
+	| text_expr OROR expr
+		{ $$ = ($1 != 0.0 || $3 != 0.0); }
+	| expr OROR text_expr
+		{ $$ = ($1 != 0.0 || $3 != 0.0); }
+	| '!' text_expr
+		{ $$ = ($2 == 0.0); }
+	;
+
 
 optional_by:
 	/* empty */
@@ -468,20 +540,20 @@ element:
 		  }
 		}
 	| LABEL ':' optional_separator element
-		{ $$ = $4; define_label($1, & $$); delete $1; }
+		{ $$ = $4; define_label($1, & $$); a_delete $1; }
 	| LABEL ':' optional_separator position_not_place
 		{
 		  $$.obj = 0;
 		  $$.x = $4.x;
 		  $$.y = $4.y;
 		  define_label($1, & $$);
-		  delete $1;
+		  a_delete $1;
 		}
 	| LABEL ':' optional_separator place
 		{
 		  $$ = $4;
 		  define_label($1, & $$);
-		  delete $1;
+		  a_delete $1;
 		}
 	| '{'
 		{
@@ -494,6 +566,9 @@ element:
 		  current_position.x = $<state>2.x;
 		  current_position.y = $<state>2.y;
 		  current_direction = $<state>2.dir;
+		}
+	  optional_element
+		{
 		  $$ = $3;
 		}
 	| placeless_element
@@ -502,6 +577,13 @@ element:
 		  $$.x = current_position.x;
 		  $$.y = current_position.y;
 		}
+	;
+
+optional_element:
+	/* empty */
+		{}
+	| element
+		{}
 	;
 
 object_spec:
@@ -565,7 +647,7 @@ object_spec:
 		  $$ = new object_spec(TEXT_OBJECT);
 		  $$->text = new text_item(format_number($3.str, $2),
 					   $3.filename, $3.lineno);
-		  delete $3.str;
+		  a_delete $3.str;
 		}
 	| '[' 
 		{
@@ -921,8 +1003,8 @@ text:
 		  $$.filename = $3.filename;
 		  $$.lineno = $3.lineno;
 		  $$.str = do_sprintf($3.str, $4.v, $4.nv);
-		  delete $4.v;
-		  delete $3.str;
+		  a_delete $4.v;
+		  a_delete $3.str;
 		}
 	;
 
@@ -946,7 +1028,7 @@ sprintf_args:
 		      $$.maxv *= 2;
 		      $$.v = new double[$$.maxv];
 		      memcpy($$.v, oldv, $$.nv*sizeof(double));
-		      delete oldv;
+		      a_delete oldv;
 		    }
 		  }
 		  $$.v[$$.nv] = $3;
@@ -1045,7 +1127,7 @@ label:
 		    YYABORT;
 		  }
 		  $$ = *p;
-		  delete $1;
+		  a_delete $1;
 		}
 	| nth_primitive
 		{
@@ -1059,15 +1141,25 @@ label:
 		}
 	;
 
+ordinal:
+	ORDINAL
+		{ $$ = $1; }
+	| '`' any_expr TH
+		{
+		  // XXX Check for overflow (and non-integers?).
+		  $$ = (int)$2;
+		}
+	;
+
 optional_ordinal_last:
         LAST
 		{ $$ = 1; }
-  	| ORDINAL LAST
+  	| ordinal LAST
 		{ $$ = $1; }
 	;
 
 nth_primitive:
-	ORDINAL object_type
+	ordinal object_type
 		{
 		  int count = 0;
 		  for (object *p = olist.head; p != 0; p = p->next)
@@ -1176,7 +1268,7 @@ path:
 	| LABEL relative_path
 		{
 		  lex_warning("initial `%1' in `with' argument ignored", $1);
-		  delete $1;
+		  a_delete $1;
 		  $$ = $2;
 		}
 	;
@@ -1247,7 +1339,7 @@ expr:
 		    lex_error("there is no variable `%1'", $1);
 		    YYABORT;
 		  }
-		  delete $1;
+		  a_delete $1;
 		}
 	| NUMBER
 		{ $$ = $1; }
@@ -1323,9 +1415,9 @@ expr:
 		}
 	| '-' expr    %prec '!'
 		{ $$ = -$2; }
-	| '(' expr ')'
+	| '(' any_expr ')'
 		{ $$ = $2; }
-	| SIN '(' expr ')'
+	| SIN '(' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = sin($3);
@@ -1334,7 +1426,7 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| COS '(' expr ')'
+	| COS '(' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = cos($3);
@@ -1343,7 +1435,7 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| ATAN2 '(' expr ',' expr ')'
+	| ATAN2 '(' any_expr ',' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = atan2($3, $5);
@@ -1356,7 +1448,7 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| LOG '(' expr ')'
+	| LOG '(' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = log10($3);
@@ -1365,7 +1457,7 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| EXP '(' expr ')'
+	| EXP '(' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = pow(10.0, $3);
@@ -1374,7 +1466,7 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| SQRT '(' expr ')'
+	| SQRT '(' any_expr ')'
 		{
 		  errno = 0;
 		  $$ = sqrt($3);
@@ -1383,13 +1475,13 @@ expr:
 		    YYABORT;
 		  }
 		}
-	| MAX '(' expr ',' expr ')'
+	| K_MAX '(' any_expr ',' any_expr ')'
 		{ $$ = $3 > $5 ? $3 : $5; }
-	| MIN '(' expr ',' expr ')'
-		{ $$ = $3 > $5 ? $3 : $5; }
-	| INT '(' expr ')'
+	| K_MIN '(' any_expr ',' any_expr ')'
+		{ $$ = $3 < $5 ? $3 : $5; }
+	| INT '(' any_expr ')'
 		{ $$ = floor($3); }
-	| RAND '(' expr ')'
+	| RAND '(' any_expr ')'
 		{ $$ = 1.0 + floor(((rand()&0x7fff)/double(0x7fff))*$3); }
 	| RAND '(' ')'
 		{

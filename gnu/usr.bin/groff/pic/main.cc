@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "pic.h"
@@ -26,7 +26,8 @@ output *out;
 
 int flyback_flag;
 int zero_length_line_flag = 0;
-int driver_extension_flag = 0;
+// Non-zero means we're using a groff driver.
+int driver_extension_flag = 1;
 int compatible_flag = 0;
 int command_char = '.';		// the character that introduces lines
 				// that should be passed through tranparently
@@ -218,20 +219,30 @@ void do_picture(FILE *fp)
     ;
   if (c == '<') {
     string filename;
-    while ((c = getc(fp)) != EOF) {
-      if (c == '\n') {
-	current_lineno++;
-	break;
-      }
+    while ((c = getc(fp)) == ' ')
+      ;
+    while (c != EOF && c != ' ' && c != '\n') {
       filename += char(c);
+      c = getc(fp);
     }
-    filename += '\0';
-    const char *old_filename = current_filename;
-    int old_lineno = current_lineno;
-    // filenames must be permanent
-    do_file(strsave(filename.contents()));
-    current_filename = old_filename;
-    current_lineno = old_lineno;
+    if (c == ' ') {
+      do {
+	c = getc(fp);
+      } while (c != EOF && c != '\n');
+    }
+    if (c == '\n') 
+      current_lineno++;
+    if (filename.length() == 0)
+      error("missing filename after `<'");
+    else {
+      filename += '\0';
+      const char *old_filename = current_filename;
+      int old_lineno = current_lineno;
+      // filenames must be permanent
+      do_file(strsave(filename.contents()));
+      current_filename = old_filename;
+      current_lineno = old_lineno;
+    }
     out->set_location(current_filename, current_lineno);
   }
   else {
@@ -282,6 +293,7 @@ void do_file(const char *filename)
   if (strcmp(filename, "-") == 0)
     fp = stdin;
   else {
+    errno = 0;
     fp = fopen(filename, "r");
     if (fp == 0)
       fatal("can't open `%1': %2", filename, strerror(errno));
@@ -433,6 +445,7 @@ void do_whole_file(const char *filename)
   if (strcmp(filename, "-") == 0)
     fp = stdin;
   else {
+    errno = 0;
     fp = fopen(filename, "r");
     if (fp == 0)
       fatal("can't open `%1': %2", filename, strerror(errno));
@@ -446,7 +459,7 @@ void do_whole_file(const char *filename)
 
 void usage()
 {
-  fprintf(stderr, "usage: %s [ -pxvzC ] [ filename ... ]\n", program_name);
+  fprintf(stderr, "usage: %s [ -nvC ] [ filename ... ]\n", program_name);
 #ifdef TEX_SUPPORT
   fprintf(stderr, "       %s -t [ -cvzC ] [ filename ... ]\n", program_name);
 #endif
@@ -456,8 +469,36 @@ void usage()
   exit(1);
 }
 
+#ifdef __MSDOS__
+static char *fix_program_name(char *arg, char *dflt)
+{
+  if (!arg)
+    return dflt;
+  char *prog = strchr(arg, '\0');
+  for (;;) {
+    if (prog == arg)
+      break;
+    --prog;
+    if (strchr("\\/:", *prog)) {
+      prog++;
+      break;
+    }
+  }	
+  char *ext = strchr(prog, '.');
+  if (ext)
+    *ext = '\0';
+  for (char *p = prog; *p; p++)
+    if ('A' <= *p && *p <= 'Z')
+      *p = 'a' + (*p - 'A');
+  return prog;
+}
+#endif /* __MSDOS__ */
+
 int main(int argc, char **argv)
 {
+#ifdef __MSDOS__
+  argv[0] = fix_program_name(argv[0], "pic");
+#endif /* __MSDOS__ */
   program_name = argv[0];
   static char stderr_buf[BUFSIZ];
   setbuf(stderr, stderr_buf);
@@ -466,12 +507,11 @@ int main(int argc, char **argv)
   int tex_flag = 0;
   int tpic_flag = 0;
 #endif
-  int grops_flag = 0;
 #ifdef FIG_SUPPORT
   int whole_file_flag = 0;
   int fig_flag = 0;
 #endif
-  while ((opt = getopt(argc, argv, "T:CDtcvxzpf")) != EOF)
+  while ((opt = getopt(argc, argv, "T:CDtcvnxzpf")) != EOF)
     switch (opt) {
     case 'C':
       compatible_flag = 1;
@@ -487,8 +527,12 @@ int main(int argc, char **argv)
       fatal("fig support not included");
 #endif
       break;
+    case 'n':
+      driver_extension_flag = 0;
+      break;
     case 'p':
-      grops_flag++;
+    case 'x':
+      warning("-%1 option is obsolete", char(opt));
       break;
     case 't':
 #ifdef TEX_SUPPORT
@@ -511,9 +555,6 @@ int main(int argc, char **argv)
 	fflush(stderr);
 	break;
       }
-    case 'x':
-      driver_extension_flag++;
-      /* fall through */
     case 'z':
       // zero length lines will be printed as dots
       zero_length_line_flag++;
@@ -525,10 +566,8 @@ int main(int argc, char **argv)
       assert(0);
     }
   parse_init();
-  if (grops_flag)
-    out = make_grops_output();
 #ifdef TEX_SUPPORT
-  else if (tpic_flag) {
+  if (tpic_flag) {
     out = make_tpic_output();
     lf_flag = 0;
   }
@@ -537,12 +576,13 @@ int main(int argc, char **argv)
     command_char = '\\';
     lf_flag = 0;
   }
+  else
 #endif
 #ifdef FIG_SUPPORT
-  else if (fig_flag)
+  if (fig_flag)
     out = make_fig_output();
-#endif
   else
+#endif
     out = make_troff_output();
 #ifdef FIG_SUPPORT
   if (whole_file_flag) {

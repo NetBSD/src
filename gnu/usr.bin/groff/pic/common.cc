@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "pic.h"
@@ -112,6 +112,8 @@ void common_output::dashed_arc(const position &start, const position &cent,
   double rad = hypot(c - start);
   double dash_angle = lt.dash_width/rad;
   double total_angle = end_angle - start_angle;
+  while (total_angle < 0)
+    total_angle += M_PI + M_PI;
   if (total_angle <= dash_angle*2.0) {
     solid_arc(cent, rad, start_angle, end_angle, lt);
     return;
@@ -138,6 +140,8 @@ void common_output::dotted_arc(const position &start, const position &cent,
   distance end_offset = end - c;
   double start_angle = atan2(start_offset.y, start_offset.x);
   double total_angle = atan2(end_offset.y, end_offset.x) - start_angle;
+  while (total_angle < 0)
+    total_angle += M_PI + M_PI;
   double rad = hypot(c - start);
   int ndots = int(total_angle/(lt.dash_width/rad) + .5);
   if (ndots == 0)
@@ -292,6 +296,8 @@ void common_output::dash_line(const position &start, const position &end,
 {
   distance dist = end - start;
   double length = hypot(dist);
+  if (length == 0.0)
+    return;
   double pos = 0.0;
   for (;;) {
     if (*offsetp >= dash_width) {
