@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.8 2000/12/04 18:40:05 scw Exp $	*/
+/*	$NetBSD: prom.h,v 1.9 2000/12/04 18:48:18 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -185,7 +185,7 @@ struct mvmeprom_args {
 #define MVMEPROM_REG_NBARGSTART	"%a3"
 #define MVMEPROM_REG_NBARGEND	"%a4"
 #define MVMEPROM_REG_ARGSTART	"%a5"
-#define MVMEPROM_REG_ARGEND	"%a6"
+#define MVMEPROM_REG_ARGEND	"%fp"
 
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x400
