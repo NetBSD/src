@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.39 1997/03/20 21:42:11 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.40 1997/03/29 05:41:28 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -172,10 +172,11 @@ sbdsp_probe(sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (sc->sc_dev.dv_cfdata->cf_flags != 0)
+	if (sc->sc_dev.dv_cfdata->cf_flags != 0) {
 		sc->sc_model = sbdsp_jazz16_probe(sc);
-	else
+	} else {
 		sc->sc_model = sbversion(sc);
+	}
 
 	return 1;
 }
@@ -200,36 +201,50 @@ sbdsp_jazz16_probe(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;
 
-	if (bus_space_map(iot, JAZZ16_CONFIG_PORT, 1, 0, &ioh))
+	DPRINTF(("jazz16 probe\n"));
+
+	if (bus_space_map(iot, JAZZ16_CONFIG_PORT, 1, 0, &ioh)) {
+		DPRINTF(("bus map failed\n"));
 		return rval;
+	}
 
 	if (jazz16_drq_conf[sc->sc_drq8] == (u_char)-1 ||
-	    jazz16_irq_conf[sc->sc_irq] == (u_char)-1)
+	    jazz16_irq_conf[sc->sc_irq] == (u_char)-1) {
+		DPRINTF(("drq/irq check failed\n"));
 		goto done;		/* give up, we can't do it. */
+	}
 
 	bus_space_write_1(iot, ioh, 0, JAZZ16_WAKEUP);
 	delay(10000);			/* delay 10 ms */
 	bus_space_write_1(iot, ioh, 0, JAZZ16_SETBASE);
 	bus_space_write_1(iot, ioh, 0, sc->sc_iobase & 0x70);
 
-	if (sbdsp_reset(sc) < 0)
+	if (sbdsp_reset(sc) < 0) {
+		DPRINTF(("sbdsp_reset check failed\n"));
 		goto done;		/* XXX? what else could we do? */
+	}
 
-	if (sbdsp_wdsp(sc, JAZZ16_READ_VER))
+	if (sbdsp_wdsp(sc, JAZZ16_READ_VER)) {
+		DPRINTF(("read16 setup failed\n"));
 		goto done;
+	}
 
-	if (sbdsp_rdsp(sc) != JAZZ16_VER_JAZZ)
+	if (sbdsp_rdsp(sc) != JAZZ16_VER_JAZZ) {
+		DPRINTF(("read16 failed\n"));
 		goto done;
+	}
 
 	/* XXX set both 8 & 16-bit drq to same channel, it works fine. */
 	sc->sc_drq16 = sc->sc_drq8;
 	if (sbdsp_wdsp(sc, JAZZ16_SET_DMAINTR) ||
 	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq16] << 4) |
 		jazz16_drq_conf[sc->sc_drq8]) ||
-	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq]))
-		DPRINTF(("sbdsp: can't write jazz16 probe stuff"));
-	else
+	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq])) {
+		DPRINTF(("sbdsp: can't write jazz16 probe stuff\n"));
+	} else {
+		DPRINTF(("jazz16 detected!\n"));
 		rval |= MODEL_JAZZ16;
+	}
 
 done:
 	bus_space_unmap(iot, ioh, 1);
