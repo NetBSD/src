@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.13 1995/08/27 20:56:38 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.14 1995/08/30 00:32:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -433,9 +433,8 @@ linux_machdepioctl(p, uap, retval)
 #if NVT > 0
 	case LINUX_KDGKBMODE:
 		/*
-		 * The keyboard mode isn't saved anywhere. This is just
-		 * here to make the keyboard stuff in the Linux svgalib
-		 * work most of the time.
+		 * Could be implemented but somehow KDGKBMODE is the
+		 * same as KBDGLEDS.
 		 */
 		mode = K_XLATE;
 		return copyout(&mode, SCARG(uap, data), sizeof mode);
@@ -443,35 +442,6 @@ linux_machdepioctl(p, uap, retval)
 		com = KDSKBMODE;
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
 			SCARG(&bia, data) = (caddr_t)K_RAW;
-		/*
-		 * Another kluge: Linux doesn't do VT switching
-		 * when the keyboard is in raw mode. pcvt does.
-		 * Simply disable VT switching when the mode
-		 * is set to K_RAW, and re-enable when setting
-		 * to K_XLATE.  XXX
-		 */
-		lvt.mode = SCARG(&bia, data) == K_RAW ? VT_PROCESS : VT_AUTO;
-		lvt.waitv = lvt.relsig = lvt.acqsig = lvt.frsig = 0;
-		fdp = p->p_fd;
-		if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-			return EBADF;
-		if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-			return EBADF;
-		/*
-		 * Setting relsig to 0 left pcvt in a state where it
-		 * waits for an acknowledgement. Send it now, ignore
-		 * the result.
-		 */
-		if (SCARG(&bia, data) == (caddr_t)K_XLATE) {
-			mode = VT_FALSE;
-			(*fp->f_ops->fo_ioctl)(fp, VT_RELDISP,
-			    (caddr_t)&mode, p);
-		}
-
-		if ((error = (*fp->f_ops->fo_ioctl)(fp, VT_SETMODE,
-		    (caddr_t)&lvt, p)))
-			return error;
 		break;
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
