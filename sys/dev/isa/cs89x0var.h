@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.6 1998/07/27 01:20:19 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.7 1998/08/07 05:55:14 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -100,6 +100,8 @@ struct cs_softc {
 
 	int	sc_xe_ent;		/* current early-xmit table entry */
 	int	sc_xe_togo;		/* # of packets to go at this ent */
+
+	int	sc_carrier;		/* has carrier */
 
 	u_int8_t sc_enaddr[6];		/* MAC address */
 };
