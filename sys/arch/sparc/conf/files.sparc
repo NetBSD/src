@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.23 1996/05/21 19:06:26 pk Exp $
+#	$NetBSD: files.sparc,v 1.24 1996/05/29 21:56:38 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -150,8 +150,12 @@ file	arch/sparc/dev/si.c		si | sw
 
 pseudo-device	kbd
 
+#
+# Generic Sun stuff
+#
+include "../../../dev/sun/files.sun"
+
 file	arch/sparc/dev/cons.c
-file	arch/sparc/dev/event.c
 file	arch/sparc/dev/fb.c
 file	arch/sparc/dev/ms.c
 file	arch/sparc/dev/kbd.c		kbd
@@ -216,3 +220,8 @@ include "../../../compat/sunos/files.sunos"
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns
+
+#pseudo-device rd
+#major	{rd = 5}
+#file	arch/sparc/dev/rd_root.c	microroot
+#file	dev/ramdisk.c			rd needs-flag
