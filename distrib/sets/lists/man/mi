@@ -191,6 +191,7 @@
 ./usr/share/man/cat1/newaliases.0
 ./usr/share/man/cat1/nfsstat.0
 ./usr/share/man/cat1/nice.0
+./usr/share/man/cat1/nl.0
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
 ./usr/share/man/cat1/objcopy.0
@@ -1272,6 +1273,7 @@
 ./usr/share/man/man1/newaliases.1
 ./usr/share/man/man1/nfsstat.1
 ./usr/share/man/man1/nice.1
+./usr/share/man/man1/nl.1
 ./usr/share/man/man1/nm.1
 ./usr/share/man/man1/nohup.1
 ./usr/share/man/man1/objcopy.1
