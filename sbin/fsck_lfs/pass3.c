@@ -1,4 +1,4 @@
-/* $NetBSD: pass3.c,v 1.5 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: pass3.c,v 1.6 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #include "extern.h"
 
 void
-pass3()
+pass3(void)
 {
 	register struct inoinfo **inpp, *inp;
 	ino_t orphan;

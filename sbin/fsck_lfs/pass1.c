@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.18 2004/07/18 20:51:30 yamt Exp $	 */
+/* $NetBSD: pass1.c,v 1.19 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -85,7 +85,7 @@ i_d_cmp(const void *va, const void *vb)
 }
 
 void
-pass1()
+pass1(void)
 {
 	ino_t inumber;
 	int i;

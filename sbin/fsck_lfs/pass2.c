@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.10 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: pass2.c,v 1.11 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@ static int pass2check(struct inodesc *);
 static int blksort(const void *, const void *);
 
 void
-pass2()
+pass2(void)
 {
 	struct ufs1_dinode *dp;
 	struct uvnode *vp;

@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.16 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: pass0.c,v 1.17 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ extern int fake_cleanseg;
 #define dbshift (fs->lfs_bshift - fs->lfs_blktodb)
 
 void
-pass0()
+pass0(void)
 {
 	daddr_t daddr;
 	CLEANERINFO *cip;

@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.13 2003/10/05 17:11:23 jdolecek Exp $	 */
+/* $NetBSD: dir.c,v 1.14 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -76,7 +76,7 @@ static int chgino(struct inodesc *);
  * Propagate connected state through the tree.
  */
 void
-propagate()
+propagate(void)
 {
 	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
