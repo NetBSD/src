@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.84 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.85 2004/02/23 05:01:04 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.84 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.85 2004/02/23 05:01:04 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -2238,7 +2238,8 @@ in6_are_prefix_equal(p1, p2, len)
 
 	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
 		return (0);
-	if (p1->s6_addr[bytelen] >> (8 - bitlen) !=
+	if (bitlen != 0 &&
+	    p1->s6_addr[bytelen] >> (8 - bitlen) !=
 	    p2->s6_addr[bytelen] >> (8 - bitlen))
 		return (0);
 
