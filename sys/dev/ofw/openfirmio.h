@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.h,v 1.1 2000/11/14 06:45:54 matt Exp $ */
+/*	$NetBSD: openfirmio.h,v 1.2 2000/11/14 21:07:26 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@ struct ofiocdesc {
 #define	OFIOCGET	_IOWR('O', 1, struct ofiocdesc) /* get openprom field */
 #define	OFIOCSET	_IOW('O', 2, struct ofiocdesc) /* set openprom field */
 #define	OFIOCNEXTPROP	_IOWR('O', 3, struct ofiocdesc) /* get next property */
+#define	OFIOCGETOPTNODE	_IOR('O', 4, int)	/* get options node */
 #define	OFIOCGETNEXT	_IOWR('O', 5, int)	/* get next node of node */
 #define	OFIOCGETCHILD	_IOWR('O', 6, int)	/* get first child of node */
 #define	OFIOCFINDDEVICE	_IOWR('O', 7, struct ofiocdesc) /* find a specific device */
