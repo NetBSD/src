@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.7 2002/01/07 21:47:04 thorpej Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.7.10.1 2002/12/12 23:44:49 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.7 2002/01/07 21:47:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.7.10.1 2002/12/12 23:44:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.7 2002/01/07 21:47:04 thorpej Exp $");
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
+
+#include <dev/i2o/dptivar.h>
 
 #define	DPT_ISA_IOSIZE		16
 #define DPT_ISA_MAXCCBS		16
@@ -313,6 +315,10 @@ dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 		ec->ec_feat3 = (ec->ec_feat3 & ~EC_F3_MAX_TARGET_MASK) |
 		    (7 << EC_F3_MAX_TARGET_SHIFT);
 
-	/* Now attach to the bus-independent code. */
+	sc->sc_bustype = SI_ISA_BUS;
+	sc->sc_isaport = ia->ia_io[0].ir_addr;
+	sc->sc_isairq = ia->ia_irq[0].ir_irq;
+	sc->sc_isadrq = ia->ia_drq[0].ir_drq;
+
 	dpt_init(sc, NULL);
 }
