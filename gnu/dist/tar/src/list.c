@@ -78,6 +78,10 @@ read_and (void (*do_something) ())
     {
       prev_status = status;
       status = read_header (0);
+      /* check if the namelist got emptied during the course of reading */
+      /* the tape, if so stop by setting status to EOF */
+      if (namelist_freed)
+        status = HEADER_END_OF_FILE;
       switch (status)
 	{
 	case HEADER_STILL_UNREAD:
