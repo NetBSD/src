@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.4 1999/10/20 22:52:18 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.5 1999/10/26 23:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -119,6 +119,9 @@ struct scsipi_max_openings {
  */
 struct scsipi_xfer_mode {
 	int	xm_target;		/* target, for I_T Nexus */
+	int	xm_mode;		/* PERIPH_CAP* bits */
+	int	xm_period;		/* sync period */
+	int	xm_offset;		/* sync offset */
 };
 
 
@@ -134,18 +137,14 @@ struct scsipi_xfer_mode {
  *
  *	ADAPTER_REQ_GROW_RESOURCES	no argument
  *
- *	ADAPTER_REQ_SET_XFER_MODE	scsipi_periph * -- set the xfer
- *					mode based on the periph's
- *					capabilities
- *
- *	ADAPTER_REQ_GET_XFER_MODE	scsipi_periph * -- fill in the
- *					current mode in the periph
+ *	ADAPTER_REQ_SET_XFER_MODE	scsipi_xfer_mode * -- set the xfer
+ *					mode for the I_T Nexus according to
+ *					this
  */
 typedef enum {
 	ADAPTER_REQ_RUN_XFER,		/* run a scsipi_xfer */
 	ADAPTER_REQ_GROW_RESOURCES,	/* grow xfer execution resources */
 	ADAPTER_REQ_SET_XFER_MODE,	/* set xfer mode */
-	ADAPTER_REQ_GET_XFER_MODE,	/* get xfer mode */
 } scsipi_adapter_req_t;
 
 
@@ -590,6 +589,7 @@ int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
 	    int, struct proc *));
 
 void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
+void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));
 
 void	scsipi_channel_init __P((struct scsipi_channel *));
 struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
