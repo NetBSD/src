@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.13 2000/02/22 10:45:47 darrenr Exp $	*/
+/*	$NetBSD: pfil.c,v 1.14 2000/02/22 11:30:22 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -77,9 +77,9 @@ pfil_add_hook(func, flags, ph)
 		pfil_init(ph);
 
 	if (flags & PFIL_IN)
-		err = pfil_list_add(&ph->ph_in, func, flags);
+		err = pfil_list_add(&ph->ph_in, func, flags & ~PFIL_OUT);
 	if ((err == 0) && (flags & PFIL_OUT))
-		err = pfil_list_add(&ph->ph_out, func, flags);
+		err = pfil_list_add(&ph->ph_out, func, flags & ~PFIL_IN);
 	return err;
 }
 
