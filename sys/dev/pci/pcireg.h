@@ -1,7 +1,7 @@
-/*	$NetBSD: pcireg.h,v 1.28.2.1 2000/08/10 22:25:56 soda Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.28.2.2 2001/10/25 17:54:48 he Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1999
+ * Copyright (c) 1995, 1996, 1999, 2000
  *     Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
  *
@@ -155,6 +155,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_FLOPPY	0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
 #define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
+#define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -163,6 +164,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_FDDI		0x02
 #define	PCI_SUBCLASS_NETWORK_ATM		0x03
 #define	PCI_SUBCLASS_NETWORK_ISDN		0x04
+#define	PCI_SUBCLASS_NETWORK_WORLDFIP		0x05
+#define	PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP	0x06
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
@@ -192,6 +195,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
 #define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
 #define	PCI_SUBCLASS_BRIDGE_RACEWAY		0x08
+#define	PCI_SUBCLASS_BRIDGE_STPCI		0x09
+#define	PCI_SUBCLASS_BRIDGE_INFINIBAND		0x0a
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /* 0x07 communications subclasses */
@@ -237,6 +242,10 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SERIALBUS_USB		0x03
 #define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04	/* XXX _FIBRECHANNEL */
 #define	PCI_SUBCLASS_SERIALBUS_SMBUS		0x05
+#define	PCI_SUBCLASS_SERIALBUS_INFINIBAND	0x06
+#define	PCI_SUBCLASS_SERIALBUS_IPMI		0x07
+#define	PCI_SUBCLASS_SERIALBUS_SERCOS		0x08
+#define	PCI_SUBCLASS_SERIALBUS_CANBUS		0x09
 
 /* 0x0d wireless subclasses */
 #define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
@@ -245,7 +254,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_WIRELESS_MISC		0x80
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
-#define	PCI_SUBCLASS_I2O_10			0x00	/* I2O 1.0 XXX ??? */
+#define	PCI_SUBCLASS_I2O_STANDARD		0x00
 
 /* 0x0f satellite communication subclasses */
 /*	PCI_SUBCLASS_SATCOM_???			0x00	/ * XXX ??? */
@@ -261,6 +270,7 @@ typedef u_int8_t pci_revision_t;
 
 /* 0x11 data acquisition and signal processing subclasses */
 #define	PCI_SUBCLASS_DASP_DPIO			0x00
+#define	PCI_SUBCLASS_DASP_TIMEFREQ		0x01
 #define	PCI_SUBCLASS_DASP_MISC			0x80
 
 /*
@@ -353,17 +363,25 @@ typedef u_int8_t pci_revision_t;
 /*
  * capabilities link list (PCI rev. 2.2)
  */
-#define PCI_CAPLISTPTR_REG		0x34	/* header type 0 */
-#define PCI_CARDBUS_CAPLISTPTR_REG	0x14	/* header type 2 */
-#define PCI_CAPLIST_PTR(cpr) ((cpr) & 0xff)
-#define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
-#define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
-#define PCI_CAP_PWRMGMT	1
-#define PCI_CAP_AGP	2
-#define PCI_CAP_VPD	3
-#define PCI_CAP_SLOTID	4
-#define PCI_CAP_MBI	5
-#define PCI_CAP_HOTSWAP	6
+#define	PCI_CAPLISTPTR_REG		0x34	/* header type 0 */
+#define	PCI_CARDBUS_CAPLISTPTR_REG	0x14	/* header type 2 */
+#define	PCI_CAPLIST_PTR(cpr)	((cpr) & 0xff)
+#define	PCI_CAPLIST_NEXT(cr)	(((cr) >> 8) & 0xff)
+#define	PCI_CAPLIST_CAP(cr)	((cr) & 0xff)
+
+#define	PCI_CAP_RESERVED0	0x00
+#define	PCI_CAP_PWRMGMT		0x01
+#define	PCI_CAP_AGP		0x02
+#define	PCI_CAP_VPD		0x03
+#define	PCI_CAP_SLOTID		0x04
+#define	PCI_CAP_MBI		0x05
+#define	PCI_CAP_CPCI_HOTSWAP	0x06
+#define	PCI_CAP_PCIX		0x07
+#define	PCI_CAP_LDT		0x08
+#define	PCI_CAP_VENDSPEC	0x09
+#define	PCI_CAP_DEBUGPORT	0x0a
+#define	PCI_CAP_CPCI_RSRCCTL	0x0b
+#define	PCI_CAP_HOTPLUG		0x0c
 
 /*
  * Power Management Control Status Register; access via capability pointer.
