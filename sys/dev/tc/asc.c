@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.13 1995/08/21 21:22:43 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.14 1995/09/11 08:29:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -457,8 +457,6 @@ int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
 int	ascprint(void*, char*);
 
-int asc_doprobe __P((void *addr, int unit, int pri, struct device *self));
-
 extern struct cfdriver asccd;
 struct cfdriver asccd = {
 	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct asc_softc)
@@ -485,8 +483,8 @@ struct scsi_device asc_dev = {
  * Definition of the controller for the old auto-configuration program.
  */
 void	asc_start();
-void	asc_intr();
-struct	driver ascdriver = {
+int	asc_intr __P ((void *asc));
+struct	pmax_driver ascdriver = {
 	"asc", NULL, asc_start, 0, asc_intr,
 };
 
@@ -527,17 +525,16 @@ ascattach(parent, self, aux)
 	int id, s, i;
 	int bufsiz;
 
-	void *addr;
-	int unit, priority;
+	void *ascaddr;
+	int unit;
 
-	addr = MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
-	unit = self->dv_unit;
-	priority = ca->ca_slot;
+	ascaddr = (void *)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	unit = asc->sc_dev.dv_unit;
 	
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
-	asc->regs = (asc_regmap_t *)(addr + ASC_OFFSET_53C94);
+	asc->regs = (asc_regmap_t *)(ascaddr + ASC_OFFSET_53C94);
 
 	/*
 	 * Set up machine dependencies.
@@ -563,8 +560,8 @@ ascattach(parent, self, aux)
 	     */
 	case DS_3MAX:
 	default:
-	    asc->dmar = (volatile int *)(addr + ASC_OFFSET_DMAR);
-	    asc->buff = (u_char *)(addr + ASC_OFFSET_RAM);
+	    asc->dmar = (volatile int *)(ascaddr + ASC_OFFSET_DMAR);
+	    asc->buff = (u_char *)(ascaddr + ASC_OFFSET_RAM);
 	    bufsiz = PER_TGT_DMA_SIZE;
 	    asc->dma_start = tb_dma_start;
 	    asc->dma_end = tb_dma_end;
@@ -643,7 +640,7 @@ ascattach(parent, self, aux)
 	(void) pmax_add_scsi(&ascdriver, unit);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, asc_intr, self->dv_unit);
+	BUS_INTR_ESTABLISH(ca, asc_intr, asc);
 	printf(": target %d\n", id);
 
 
@@ -905,11 +902,11 @@ asc_startcmd(asc, target)
  *	Move along the current command's script if
  *	all is well, invoke error handler if not.
  */
-void
-asc_intr(unit)
-	int unit;
+int
+asc_intr(sc)
+	void *sc;
 {
-	register asc_softc_t asc = asccd.cd_devs[unit];
+	register asc_softc_t asc = (asc_softc_t) sc;
 	register asc_regmap_t *regs = asc->regs;
 	register State *state;
 	register script_t *scpt;
@@ -923,7 +920,7 @@ again:
 	scpt = asc->script;
 
 #ifdef DEBUG
-	asc_logp->status = PACK(unit, status, ss, ir);
+	asc_logp->status = PACK(asc->sc_dev.dv_unit, status, ss, ir);
 	asc_logp->target = (asc->state == ASC_STATE_BUSY) ? asc->target : -1;
 	asc_logp->state = scpt - asc_scripts;
 	asc_logp->msg = -1;
@@ -1155,7 +1152,7 @@ again:
 			asc->st[i].flags = 0;
 		}
 		asc->target = -1;
-		return;
+		return 0 ; /* XXX ??? */
 	}
 
 	/* check for command errors */
@@ -1195,7 +1192,7 @@ again:
 				}
 				state->error = ENXIO;
 				asc_end(asc, status, ss, ir);
-				return;
+				return 0 ; /* XXX ??? */
 			}
 			/* FALLTHROUGH */
 
@@ -1216,7 +1213,7 @@ again:
 			state->flags |= DISCONN;
 			regs->asc_cmd = ASC_CMD_ENABLE_SEL;
 			readback(regs->asc_cmd);
-			return;
+			return 0 ; /* XXX ??? */
 		}
 	}
 
@@ -1271,7 +1268,7 @@ done:
 		ir = status;
 	if (status & ASC_CSR_INT)
 		goto again;
-	return;
+	return 0 ; /* XXX ??? */
 
 abort:
 #ifdef DEBUG
