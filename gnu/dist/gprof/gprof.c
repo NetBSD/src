@@ -464,9 +464,6 @@ This program is free software.  This program has absolutely no warranty.\n");
     {
       sym_id_add (*sp, EXCL_TIME);
       sym_id_add (*sp, EXCL_GRAPH);
-#ifdef __alpha__
-      sym_id_add (*sp, EXCL_FLAT);
-#endif
     }
 
   /*
