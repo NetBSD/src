@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.20 1998/09/05 13:08:40 pk Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.21 1998/12/15 22:27:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,18 +42,16 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/mman.h>
-#include <sys/resource.h>
+#include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <ar.h>
-#include <ranlib.h>
-#include <a.out.h>
-#include <stab.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <link.h>
 
 #include "ld.h"
 
@@ -90,14 +88,16 @@ static int	do_conf __P((void));
 static int	buildhints __P((void));
 static int	readhints __P((void));
 static void	listhints __P((void));
+static int	hinthash __P((char *, int, int));
+int		main __P((int, char *[]));
 
 int
 main(argc, argv)
-int	argc;
-char	*argv[];
+	int	argc;
+	char	*argv[];
 {
-	int		i, c;
-	int		rval = 0;
+	int	i, c;
+	int	rval = 0;
 
 	while ((c = getopt(argc, argv, "cmrsSv")) != -1) {
 		switch (c) {
@@ -132,10 +132,10 @@ char	*argv[];
 
 	if (justread || merge) {
 		if ((rval = readhints()) != 0)
-			return rval;
+			return (rval);
 		if (justread) {
 			listhints();
-			return rval;
+			return (rval);
 		}
 	}
 
@@ -154,7 +154,7 @@ char	*argv[];
 
 	rval |= buildhints();
 
-	return rval;
+	return (rval);
 }
 
 int
@@ -167,7 +167,7 @@ do_conf ()
 	int		rval = 0;
 
 	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL)
-		return;
+		return (-1);
 
 	while ((line = fgetln(conf, &len)) != NULL) {
 		if (*line == '#' || *line == '\n')
@@ -197,14 +197,14 @@ do_conf ()
 		}
 	}
 
-	return rval;
+	return (rval);
 }
 
 int
 dodir(dir, silent, update_dir_list)
-char	*dir;
-int	silent;
-int	update_dir_list;
+	char	*dir;
+	int	silent;
+	int	update_dir_list;
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -214,7 +214,7 @@ int	update_dir_list;
 	if ((dd = opendir(dir)) == NULL) {
 		if (!silent || errno != ENOENT)
 			warn("%s", dir);
-		return -1;
+		return (-1);
 	}
 
 	if (update_dir_list) {
@@ -225,8 +225,8 @@ int	update_dir_list;
 	}
 
 	while ((dp = readdir(dd)) != NULL) {
-		register int n;
-		register char *cp;
+		int n;
+		char *cp;
 
 		/* Check for `lib' prefix */
 		if (dp->d_name[0] != 'l' ||
@@ -260,13 +260,13 @@ int	update_dir_list;
 		enter(dir, dp->d_name, name, dewey, ndewey);
 	}
 
-	return 0;
+	return (0);
 }
 
 static void
 enter(dir, file, name, dewey, ndewey)
-char	*dir, *file, *name;
-int	dewey[], ndewey;
+	char	*dir, *file, *name;
+	int	dewey[], ndewey;
 {
 	struct shlib_list	*shp;
 
@@ -319,10 +319,11 @@ int	dewey[], ndewey;
 #define _PATH_LD_HINTS		"./ld.so.hints"
 #endif
 
+/* XXX - should be a common function with rtld.c */
 int
 hinthash(cp, vmajor, vminor)
-char	*cp;
-int	vmajor, vminor;
+	char	*cp;
+	int	vmajor, vminor;
 {
 	int	k = 0;
 
@@ -334,7 +335,7 @@ int	vmajor, vminor;
 	k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
 #endif
 
-	return k;
+	return (k);
 }
 
 int
@@ -369,7 +370,7 @@ buildhints()
 	hdr.hh_ehints = hdr.hh_strtab + hdr.hh_strtab_sz;
 
 	if (verbose)
-		printf("Totals: entries %d, buckets %d, string size %d\n",
+		printf("Totals: entries %d, buckets %ld, string size %d\n",
 					nhints, hdr.hh_nbucket, strtab_sz);
 
 	/* Allocate buckets and string table */
@@ -397,7 +398,7 @@ buildhints()
 			}
 			if (i == hdr.hh_nbucket) {
 				warnx("Bummer!");
-				return -1;
+				return (-1);
 			}
 			while (bp->hi_next != -1)
 				bp = &blist[bp->hi_next];
@@ -431,44 +432,44 @@ buildhints()
 	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
 	if ((fd = mkstemp(tmpfile)) == -1) {
 		warn("%s", tmpfile);
-		return -1;
+		return (-1);
 	}
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
 		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 	if (write(fd, strtab, strtab_sz) != strtab_sz) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 	if (fchmod(fd, 0444) == -1) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 	if (close(fd) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 
 	/* Install it */
 	if (unlink(_PATH_LD_HINTS) != 0 && errno != ENOENT) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 
 	if (rename(tmpfile, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 
-	return 0;
+	return (0);
 }
 
 static int
@@ -485,27 +486,27 @@ readhints()
 
 	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 
-	msize = PAGSIZ;
+	msize = getpagesize();
 	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
 
 	if (addr == (caddr_t)-1) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		return (-1);
 	}
 
 	hdr = (struct hints_header *)addr;
 	if (HH_BADMAG(*hdr)) {
-		warnx("%s: Bad magic: %o",
+		warnx("%s: Bad magic: %lo",
 			_PATH_LD_HINTS, hdr->hh_magic);
-		return -1;
+		return (-1);
 	}
 
 	if (hdr->hh_version != LD_HINTS_VERSION_2) {
-		warnx("Unsupported version: %d", hdr->hh_version);
-		return -1;
+		warnx("Unsupported version: %ld", hdr->hh_version);
+		return (-1);
 	}
 
 	if (hdr->hh_ehints > msize) {
@@ -514,7 +515,7 @@ readhints()
 				fd, msize) != (caddr_t)(addr+msize)) {
 
 			warn("%s", _PATH_LD_HINTS);
-			return -1;
+			return (-1);
 		}
 	}
 	close(fd);
@@ -528,11 +529,11 @@ readhints()
 		/* Sanity check */
 		if (bp->hi_namex >= hdr->hh_strtab_sz) {
 			warnx("Bad name index: %#x", bp->hi_namex);
-			return -1;
+			return (-1);
 		}
 		if (bp->hi_pathx >= hdr->hh_strtab_sz) {
 			warnx("Bad path index: %#x", bp->hi_pathx);
-			return -1;
+			return (-1);
 		}
 
 		/* Allocate new list element */
@@ -548,7 +549,7 @@ readhints()
 	}
 	dir_list = strdup(strtab + hdr->hh_dirlist);
 
-	return 0;
+	return (0);
 }
 
 static void
