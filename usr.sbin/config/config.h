@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.13 1994/03/10 19:50:43 mycroft Exp $
+ *	$Id: config.h,v 1.14 1994/03/12 03:26:52 mycroft Exp $
  */
 
 /*
@@ -120,8 +120,9 @@ struct device {
 	char	*d_mask;		/* interrupt mask */
 	int	d_maddr;		/* io memory base */
 	int	d_msize;		/* io memory size */
-	int	d_drq;			/* DMA request  */
-	int	d_irq;			/* interrupt request  */
+	int	d_drq;			/* DMA request */
+	int	d_irq;			/* interrupt request */
+	int	d_seq;			/* sequential number */
 	struct	device *d_next;		/* Next one in list */
 };
 #define TO_NEXUS	(struct device *)-1
