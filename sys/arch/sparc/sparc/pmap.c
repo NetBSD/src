@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 1997/07/06 12:22:39 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.86 1997/07/06 12:29:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1986,7 +1986,7 @@ pv_changepte4_4c(pv0, bis, bic)
 				tpte = getpte4(va);
 			}
 			if (tpte & PG_V)
-				flags |= (tpte >> PG_M_SHIFT) & (PV_MOD|PV_REF);
+				flags |= MR4_4C(tpte);
 			tpte = (tpte | bis) & ~bic;
 			setpte4(va, tpte);
 			if (pte != NULL)	/* update software copy */
@@ -2054,8 +2054,7 @@ pv_syncflags4_4c(pv0)
 			tpte = getpte4(va);
 		}
 		if (tpte & (PG_M|PG_U) && tpte & PG_V) {
-			flags |= (tpte >> PG_M_SHIFT) &
-			    (PV_MOD|PV_REF);
+			flags |= MR4_4C(tpte);
 			tpte &= ~(PG_M|PG_U);
 			setpte4(va, tpte);
 		}
@@ -2100,8 +2099,11 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
 			FREE(npv, M_VMPVENT);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_flags &= ~PV_NC;
+			return;
+		}
 	} else {
 		register struct pvlist *prev;
 
@@ -2373,8 +2375,11 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
 			FREE(npv, M_VMPVENT);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_flags |= PV_C4M;
+			return;
+		}
 	} else {
 		register struct pvlist *prev;
 
@@ -4727,8 +4732,7 @@ pmap_page_protect4m(pa, prot)
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
 				free(rp->rg_seg_ptps, M_VMPMAP);
-				setpgt4m(&pm->pm_reg_ptps[vr],
-					SRMMU_TEINVALID);
+				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			}
 		}
 
