@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/04/12 15:41:27 dbj Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/19 21:41:59 christos Exp $
 
 NOMAN=		1
 
@@ -19,6 +19,7 @@ FREETYPESRC=	${FREETYPETOP}/src
 .PATH:	${FREETYPESRC}/cff
 .PATH:	${FREETYPESRC}/cid
 .PATH:	${FREETYPESRC}/gzip
+.PATH:	${FREETYPESRC}/lzw
 .PATH:	${FREETYPESRC}/pcf
 .PATH:	${FREETYPESRC}/pfr
 .PATH:	${FREETYPESRC}/psaux
@@ -32,7 +33,7 @@ FREETYPESRC=	${FREETYPETOP}/src
 .PATH:	${FREETYPESRC}/type42
 .PATH:	${FREETYPESRC}/winfonts
 SRCS.freetype=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
-		ftinit.c ftmm.c ftpfr.c ftstroker.c ftsynth.c ftsystem.c \
+		ftinit.c ftlzw.c ftmm.c ftpfr.c ftsynth.c ftsystem.c \
 		fttype1.c ftwinfnt.c ftxf86.c autohint.c bdf.c cff.c \
 		type1cid.c ftgzip.c pcf.c pfr.c psaux.c pshinter.c psnames.c \
 		raster.c sfnt.c smooth.c truetype.c type1.c type42.c winfnt.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/06 03:14:23 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ INCS=	MITMisc.h Print.h Printstr.h XEVI.h XEVIstr.h XI.h \
 	dpmsstr.h extutil.h fontcache.h fontcacheP.h fontcachstr.h lbxbuf.h \
 	lbxbufstr.h lbxdeltastr.h lbximage.h lbxopts.h lbxstr.h lbxzlib.h \
 	mitmiscstr.h multibuf.h multibufst.h panoramiXext.h panoramiXproto.h \
+	panoramiXwrap.h \
 	randr.h randrproto.h record.h recordstr.h render.h renderproto.h \
 	saver.h saverproto.h scrnsaver.h security.h securstr.h shape.h \
 	shapestr.h shmstr.h sync.h syncstr.h xcmiscstr.h xf86bigfont.h \

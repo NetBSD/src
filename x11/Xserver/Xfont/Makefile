@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/06 14:12:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2005/03/19 21:41:58 christos Exp $
 
-SUBDIR=bitmap freetype type1 xtt speedo
+SUBDIR=bitmap freetype type1 speedo
 
 .include <bsd.subdir.mk>

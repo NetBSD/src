@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2005/03/19 21:41:59 christos Exp $
 
 NOMAN=		1
 
@@ -25,6 +25,7 @@ SRCS+=		fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 .PATH:		${FREETYPESRC}/cff
 .PATH:		${FREETYPESRC}/cid
 .PATH:		${FREETYPESRC}/gzip
+.PATH:		${FREETYPESRC}/lzw
 .PATH:		${FREETYPESRC}/pcf
 .PATH:		${FREETYPESRC}/pfr
 .PATH:		${FREETYPESRC}/psaux
@@ -41,7 +42,7 @@ SRCS+=		autohint.c bdf.c cff.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
 		ftglyph.c ftinit.c ftmm.c ftsynth.c ftsystem.c fttype1.c \
 		ftxf86.c pcf.c pfr.c psaux.c pshinter.c psnames.c raster.c \
 		sfnt.c smooth.c truetype.c type1.c type1cid.c type42.c \
-		winfnt.c ftgzip.c
+		winfnt.c ftgzip.c ftlzw.c
 
 .PATH:		${X11SRCDIR.xc}/extras/expat/lib
 SRCS+=		xmlparse.c xmlrole.c xmltok.c
