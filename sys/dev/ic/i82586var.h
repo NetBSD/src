@@ -1,5 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.5 1997/12/13 21:18:02 pk Exp $	*/
-/* 	$Id: i82586var.h,v 1.5 1997/12/13 21:18:02 pk Exp $ */
+/*	$NetBSD: i82586var.h,v 1.6 1998/01/06 04:55:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.

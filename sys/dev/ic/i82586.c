@@ -1,5 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.7 1997/12/13 21:18:01 pk Exp $	*/
-/*	$Id: i82586.c,v 1.7 1997/12/13 21:18:01 pk Exp $ */
+/*	$NetBSD: i82586.c,v 1.8 1998/01/06 04:55:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
