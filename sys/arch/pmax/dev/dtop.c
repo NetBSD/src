@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.21 1997/05/25 02:37:55 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.22 1997/05/25 04:49:59 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -185,16 +185,6 @@ int  dtop_keyboard_handler	__P((dtop_device_t, dtop_message_t, int, int));
 int  dtopparam		__P((struct tty *, struct termios *));
 void dtopstart		__P((struct tty *));
 
-void dtopKBDPutc	__P((dev_t, int));
-int  dtopKBDGetc	__P((dev_t));
-
-
-					/* X11 keyboard input upcall  */
-void	(*dtopDivertXInput) __P((int));
-					/* X11 mouse motion event upcall */
-void	(*dtopMouseEvent) __P((MouseReport *mrp));
-					/* X11 mouse buttons event upcall */
-void (*dtopMouseButtons) __P((MouseReport *mrp));
 
 
 /*
