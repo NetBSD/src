@@ -1,4 +1,4 @@
-/*	$NetBSD: pmon.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: pmon.c,v 1.2 2001/06/14 15:28:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,11 @@ void
 pmon_init(char *envp[])
 {
 
-	environ = envp;
+	if (environ == NULL)
+		environ = envp;
+#ifdef PMON_DEBUG
+	printf("pmon_init: environ = %p (%p)\n", environ, *environ);
+#endif
 }
 
 /*
@@ -70,6 +74,9 @@ pmon_getenv(const char *var)
 	i = strlen(var);
 
 	while (*env != NULL) {
+#ifdef PMON_DEBUG
+		printf("pmon_getenv: %s\n", *env);
+#endif
 		if (strncasecmp(var, *env, i) == 0 &&
 		    (*env)[i] == '=') {
 			rv = &(*env)[i + 1];
