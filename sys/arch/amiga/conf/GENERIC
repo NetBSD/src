@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.19 1994/06/17 20:06:50 chopps Exp $
+#	$Id: GENERIC,v 1.20 1994/06/20 02:29:51 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -29,8 +29,8 @@ options		DEVPAGER	# Pager for devices (Required)
 #
 options		ETHER		# XXXX!!!!
 options		INET		# IP networking support (Required)
-options		ISO		# ISO Networking support
-options		TPIP		# ARGO TP networking support
+#options	ISO		# ISO Networking support
+#options	TPIP		# ARGO TP networking support
 #options	CCITT		# CCITT X.25
 #options	NS		# Xerox XNS
 #options	EON		# ISO CLNL over IP
@@ -52,13 +52,13 @@ options		FFS		# Berkeley fast file system
 options		MFS		# Memory based filesystem
 options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem (Recommended)
-#options		MSDOSFS		# MS-DOS filesystem
 options		FDESC		# /dev/fd filesystem
-#options		LOFS		# Loopback filesystem
-#options		ISOFS		# ISO 9660 file system, with Rock Ridge
-options		PORTAL		# Portal filesystem
+options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
 options		ADOSFS		# AmigaDOS file system
+#options	ISOFS		# ISO 9660 file system, with Rock Ridge
+#options	PORTAL		# Portal filesystem
+#options	MSDOSFS		# MS-DOS filesystem
 
 
 #
@@ -67,9 +67,9 @@ options		ADOSFS		# AmigaDOS file system
 options		"COMPAT_09"	# compatability with older NetBSD release
 options		"COMPAT_43"	# 4.3 BSD compatible system calls
 options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-#options	COMPAT_HPUX	# HP300 compatability
 options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 options		"COMPAT_NOMID"	# allow nonvalid machine id executables
+#options	COMPAT_HPUX	# HP300 compatability
 
 #
 # Support for System V IPC facilities.
@@ -106,7 +106,7 @@ options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
 options		"GRF_A2024"	# Support for the A2024
-#options		"KFONT_8X11"	# 8x11 font
+#options	"KFONT_8X11"	# 8x11 font
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at ztwobus0		# retina II
