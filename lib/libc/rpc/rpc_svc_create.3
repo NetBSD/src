@@ -2,18 +2,19 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_create 1.3 89/06/28 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
+.\" $NetBSD: rpc_svc_create.3,v 1.2 2001/04/09 12:21:01 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CREATE 3
 .Sh NAME
-.Nm rpc_svc_create,
-.Nm svc_control,
-.Nm svc_create,
-.Nm svc_destroy,
-.Nm svc_dg_create,
-.Nm svc_fd_create,
-.Nm svc_raw_create,
-.Nm svc_tli_create,
-.Nm svc_tp_create,
+.Nm rpc_svc_create ,
+.Nm svc_control ,
+.Nm svc_create ,
+.Nm svc_destroy ,
+.Nm svc_dg_create ,
+.Nm svc_fd_create ,
+.Nm svc_raw_create ,
+.Nm svc_tli_create ,
+.Nm svc_tp_create ,
 .Nm svc_vc_create
 .Nd library routines for the creation of server handles
 .Sh LIBRARY
@@ -48,7 +49,7 @@ Once the handle is created, the server can be invoked by calling
 .Sh Routines
 See
 .Xr rpc 3
-for the definition of the 
+for the definition of the
 .Dv SVCXPRT
 data structure.
 .Pp
@@ -76,12 +77,12 @@ be returned.
 should be a pointer to an
 integer.  Upon successful completion of the
 .Dv SVCGET_VERSQUIET
-request, 
+request,
 .Fa *info
 contains an
 integer which describes the server's current
 behavior:  0 indicates normal server behavior
-(that is, an 
+(that is, an
 .Dv RPC_PROGVERSMISMATCH
 error
 will be returned); 1 indicates that the out of
@@ -91,11 +92,11 @@ range request will be silently ignored.
 If a request is received for a program number
 served by this server but the version number
 is outside the range registered with the server,
-an 
-.Dv RPC_PROGVERSMISMATCH.
+an
+.Dv RPC_PROGVERSMISMATCH
 error will normally
 be returned.  It is sometimes desirable to
-change this behavior.  
+change this behavior.
 .Fa info
 should be a
 pointer to an integer which is either 0
@@ -127,7 +128,7 @@ it defaults to
 .Fn svc_create
 registers itself with the rpcbind
 service (see
-.Xr rpcbind 8 ).
+.Xr rpcbind 8 ) .
 .Fa dispatch
 is called when there is a remote procedure call for the given
 .Fa prognum
@@ -138,7 +139,7 @@ this requires calling
 (see
 .Fn svc_run
 in
-.Xr rpc_svc_reg 3 ).
+.Xr rpc_svc_reg 3 ) .
 If
 .Fn svc_create
 succeeds, it returns the number of server
@@ -203,7 +204,7 @@ client should live in the same address space;
 (see
 .Fn clnt_raw_create
 in
-.Xr rpc_clnt_create 3 ).
+.Xr rpc_clnt_create 3 ) .
 This routine allows simulation of RPC and acquisition of
 RPC overheads (such as round trip times),
 without any kernel and networking interference.
@@ -219,7 +220,7 @@ should not be called when the raw interface is being used.
 This routine creates an RPC
 server handle, and returns a pointer to it.
 .Fa fildes
-is the file descriptor on which the service is listening. 
+is the file descriptor on which the service is listening.
 If
 .Fa fildes
 is
