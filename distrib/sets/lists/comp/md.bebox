@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.22 2003/10/24 06:49:37 matt Exp $
+# $NetBSD: md.bebox,v 1.23 2003/10/24 18:22:14 matt Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
 ./usr/include/bebox/aout_machdep.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/bebox/profile.h	comp-c-include
 ./usr/include/bebox/psl.h	comp-c-include
 ./usr/include/bebox/ptrace.h	comp-c-include
+./usr/include/bebox/pte.h	comp-c-include
 ./usr/include/bebox/reg.h	comp-c-include
 ./usr/include/bebox/reloc.h	comp-c-include
 ./usr/include/bebox/setjmp.h	comp-c-include
