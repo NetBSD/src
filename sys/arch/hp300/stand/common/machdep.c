@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1997/04/27 21:13:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1997/05/12 07:53:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/param.h>
-#include "samachdep.h"
+#include <hp300/stand/common/samachdep.h>
 
 char *
 getmachineid()
@@ -82,9 +82,7 @@ getmachineid()
 	return(cp);
 }
 
-#ifdef ROMPRF
 int userom;
-#endif
 
 struct trapframe {
 	int dregs[8];
@@ -103,9 +101,11 @@ trap(fp)
 	if (intrap)
 		return(0);
 	intrap = 1;
-#ifdef ROMPRF
+
+#if 0
 	userom = 1;
 #endif
+
 	printf("Got unexpected trap: format=%x vector=%x ps=%x pc=%x\n",
 		  (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
@@ -114,23 +114,25 @@ trap(fp)
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
 	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
 	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
-#ifdef ROMPRF
+
+#if 0
 	userom = 0;
 #endif
+
 	intrap = 0;
 	return(0);
 }
 
-#ifdef ROMPRF
-#define ROWS	46
-#define COLS	128
+#define ROWS	24
+#define COLS	80
 
+void
 romputchar(c)
-	register int c;
+	int c;
 {
 	static char buf[COLS];
 	static int col = 0, row = 0;
-	register int i;
+	int i;
 
 	switch (c) {
 	case '\0':
@@ -160,7 +162,6 @@ romputchar(c)
 		break;
 	}
 }
-#endif
 
 void
 machdep_start(entry, howto, loadaddr, ssym, esym)
