@@ -9579,7 +9579,7 @@ lookup (name, len, hash)
     bucket = bucket->next;
   }
   /* Lookups pass no hashcode.  #define passes one.  Look for no hashcode. */
-  if (islookup && !strncmp(name, "unix", len) && !warned_unix) {
+  if (islookup && len == 4 && bcmp(name, "unix", 4) == 0 && !warned_unix) {
     warned_unix++;
     warning("deprecated symbol \"unix\" is no longer predefined");
   }
