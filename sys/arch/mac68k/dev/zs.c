@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 1996/08/27 21:56:13 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 1996/09/16 04:32:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -677,7 +677,10 @@ zscninit(struct consdev * cp)
         mac68k_set_io_offsets(IOBase);
 	zs_conschan = (struct zschan *) -1;
 	zs_consunit = chan;
-	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE | ZS_HWFLAG_CONABRT;
+	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE;
+#ifdef ZS_DDB_BREAK
+	zs_hwflags[0][zs_consunit] |= ZS_HWFLAG_CONABRT;
+#endif
 	zs_init();
         /*
 	 * zsinit will set up the addresses of the scc. It will also, if
