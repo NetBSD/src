@@ -31,20 +31,17 @@
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 
-struct parms {
-        int			start;
-        union descriptor	*descs;
-        int			num;
-};
-
 int
-i386_set_ldt(int start, union descriptor *descs, int num)
+i386_set_ldt(start, desc, num)
+	int start;
+	union descriptor *desc;
+	int num;
 {
-        struct parms p;
+	struct i386_set_ldt_args p;
 
-        p.start = start;
-        p.descs = descs;
-        p.num   = num;
-        
+	p.start = start;
+	p.desc = desc;
+	p.num = num;
+
 	return sysarch(I386_SET_LDT, (char *)&p);
 }
