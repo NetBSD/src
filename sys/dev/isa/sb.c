@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.58 1998/06/17 08:17:25 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.59 1998/06/29 22:40:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -237,7 +237,7 @@ void
 sbattach(sc)
 	struct sbdsp_softc *sc;
 {
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, IST_EDGE,
+	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, sc->sc_ist,
 	    IPL_AUDIO, sbdsp_intr, sc);
 
 	sbdsp_attach(sc);
