@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.58 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.58 2002/03/05 04:12:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -774,7 +774,8 @@ done_probe:
 
   reg = EN_READ(sc, MID_RESID);
 
-  printf("%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %ldKB on-board RAM\n",
+  aprint_normal(
+      "%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %ldKB on-board RAM\n",
 	sc->sc_dev.dv_xname, MID_VER(reg), MID_MID(reg), MID_DID(reg), 
 	(MID_IS_SABRE(reg)) ? "sabre controller, " : "",
 	(MID_IS_SUNI(reg)) ? "SUNI" : "Utopia",
@@ -783,19 +784,21 @@ done_probe:
 
   if (sc->is_adaptec) {
     if (sc->bestburstlen == 64 && sc->alburst == 0)
-      printf("%s: passed 64 byte DMA test\n", sc->sc_dev.dv_xname);
+      aprint_normal("%s: passed 64 byte DMA test\n", sc->sc_dev.dv_xname);
     else
-      printf("%s: FAILED DMA TEST: burst=%d, alburst=%d\n", 
+      aprint_error("%s: FAILED DMA TEST: burst=%d, alburst=%d\n", 
 	    sc->sc_dev.dv_xname, sc->bestburstlen, sc->alburst);
   } else {
-    printf("%s: maximum DMA burst length = %d bytes%s\n", sc->sc_dev.dv_xname,
+    aprint_normal("%s: maximum DMA burst length = %d bytes%s\n",
+          sc->sc_dev.dv_xname,
 	  sc->bestburstlen, (sc->alburst) ? " (must align)" : "");
   }
 
 #if 0		/* WMAYBE doesn't work, don't complain about it */
   /* check if en_dmaprobe disabled wmaybe */
   if (en_dmaplan == en_dma_planB)
-    printf("%s: note: WMAYBE DMA has been disabled\n", sc->sc_dev.dv_xname);
+    aprint_normal("%s: note: WMAYBE DMA has been disabled\n",
+        sc->sc_dev.dv_xname);
 #endif
 
   /*
@@ -829,7 +832,7 @@ done_probe:
   ptr = roundup(ptr, EN_TXSZ * 1024);	/* align */
   sz = sz - (ptr - sav);
   if (EN_TXSZ*1024 * EN_NTX > sz) {
-    printf("%s: EN_NTX/EN_TXSZ too big\n", sc->sc_dev.dv_xname);
+    aprint_error("%s: EN_NTX/EN_TXSZ too big\n", sc->sc_dev.dv_xname);
     return;
   }
   for (lcv = 0 ; lcv < EN_NTX ; lcv++) {
@@ -845,7 +848,7 @@ done_probe:
     memset(&sc->txslot[lcv].indma, 0, sizeof(sc->txslot[lcv].indma));
     memset(&sc->txslot[lcv].q, 0, sizeof(sc->txslot[lcv].q));
 #ifdef EN_DEBUG
-    printf("%s: tx%d: start 0x%x, stop 0x%x\n", sc->sc_dev.dv_xname, lcv,
+    aprint_debug("%s: tx%d: start 0x%x, stop 0x%x\n", sc->sc_dev.dv_xname, lcv,
 		sc->txslot[lcv].start, sc->txslot[lcv].stop);
 #endif
   }
@@ -855,7 +858,7 @@ done_probe:
   sz = sz - (ptr - sav);
   sc->en_nrx = sz / (EN_RXSZ * 1024);
   if (sc->en_nrx <= 0) {
-    printf("%s: EN_NTX/EN_TXSZ/EN_RXSZ too big\n", sc->sc_dev.dv_xname);
+    aprint_error("%s: EN_NTX/EN_TXSZ/EN_RXSZ too big\n", sc->sc_dev.dv_xname);
     return;
   }
 
@@ -883,7 +886,8 @@ done_probe:
 	(en_k2sz(EN_RXSZ) << MIDV_SZSHIFT) | MIDV_TRASH;
 
 #ifdef EN_DEBUG
-    printf("%s: rx%d: start 0x%x, stop 0x%x, mode 0x%x\n", sc->sc_dev.dv_xname,
+    aprint_debug("%s: rx%d: start 0x%x, stop 0x%x, mode 0x%x\n",
+        sc->sc_dev.dv_xname,
 	lcv, sc->rxslot[lcv].start, sc->rxslot[lcv].stop, sc->rxslot[lcv].mode);
 #endif
   }
@@ -897,10 +901,11 @@ done_probe:
 #endif
   sc->need_drqs = sc->need_dtqs = 0;
 
-  printf("%s: %d %dKB receive buffers, %d %dKB transmit buffers allocated\n",
+  aprint_normal(
+	"%s: %d %dKB receive buffers, %d %dKB transmit buffers allocated\n",
 	sc->sc_dev.dv_xname, sc->en_nrx, EN_RXSZ, EN_NTX, EN_TXSZ);
 
-  printf("%s: End Station Identifier (mac address) %s\n",
+  aprint_normal("%s: End Station Identifier (mac address) %s\n",
         sc->sc_dev.dv_xname, ether_sprintf(sc->macaddr));
 
   /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.24 2003/01/06 12:38:51 wiz Exp $	*/
+/*	$NetBSD: cac.c,v 1.25 2003/01/31 00:26:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.24 2003/01/06 12:38:51 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.25 2003/01/31 00:26:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	struct cac_ccb *ccb;
 	
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
+		aprint_normal("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
 		    intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
@@ -110,7 +110,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate CCBs, error = %d\n",
+		aprint_error("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
 	}
@@ -118,21 +118,21 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size, 
 	    (caddr_t *)&sc->sc_ccbs,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map CCBs, error = %d\n",
+		aprint_error("%s: unable to map CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, 
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: unable to create CCB DMA map, error = %d\n",
+		aprint_error("%s: unable to create CCB DMA map, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_ccbs, 
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load CCB DMA map, error = %d\n",
+		aprint_error("%s: unable to load CCB DMA map, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
 	}
@@ -149,7 +149,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		    &ccb->ccb_dmamap_xfer);
 
 		if (error) {
-			printf("%s: can't create ccb dmamap (%d)\n", 
+			aprint_error("%s: can't create ccb dmamap (%d)\n", 
 			    sc->sc_dv.dv_xname, error);
 			break;
 		}
@@ -163,7 +163,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	if (startfw) {
 		if (cac_cmd(sc, CAC_CMD_START_FIRMWARE, &cinfo, sizeof(cinfo),
 		    0, 0, CAC_CCB_DATA_IN, NULL)) {
-			printf("%s: CAC_CMD_START_FIRMWARE failed\n",
+			aprint_error("%s: CAC_CMD_START_FIRMWARE failed\n",
 			    sc->sc_dv.dv_xname);
 			return (-1);
 		}
@@ -171,7 +171,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	if (cac_cmd(sc, CAC_CMD_GET_CTRL_INFO, &cinfo, sizeof(cinfo), 0, 0, 
 	    CAC_CCB_DATA_IN, NULL)) {
-		printf("%s: CAC_CMD_GET_CTRL_INFO failed\n", 
+		aprint_error("%s: CAC_CMD_GET_CTRL_INFO failed\n", 
 		    sc->sc_dv.dv_xname);
 		return (-1);
 	}
