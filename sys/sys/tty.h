@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.31 1996/05/29 02:02:42 mrg Exp $	*/
+/*	$NetBSD: tty.h,v 1.32 1996/05/30 22:00:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
+#include <sys/queue.h>
 
 #ifndef REAL_CLISTS
 /*
