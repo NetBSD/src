@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxreg.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: pxreg.h,v 1.7 2000/01/14 02:00:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PXREG_H_
-#define _PXREG_H_ 1
+#ifndef _PMAX_DEV_PXREG_H_
+#define _PMAX_DEV_PXREG_H_
 
 /*
  * Definitions for the PixelStamp on Digital's 2D and 3D TurboChannel
@@ -366,4 +366,4 @@ px_poll_addr(slotbase, addr)
 	return (volatile int32_t *)(slotbase + px_sys2dma(addr));
 }
 
-#endif /* _PXREG_H_ */
+#endif	/* !_PMAX_DEV_PXREG_H_ */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.26 2000/01/10 03:24:33 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.27 2000/01/14 02:00:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.26 2000/01/10 03:24:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.27 2000/01/14 02:00:46 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -64,12 +64,17 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.26 2000/01/10 03:24:33 simonb Exp $");
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/cons.h>
+
 #include <dev/ic/bt459reg.h>
+
 #include <dev/tc/tcvar.h>
+
 #include <dev/rcons/rcons.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wsfont/wsfont.h>
@@ -120,9 +125,12 @@ struct cfattach px_ca = {
 
 /* The different types of card that we support, for px_match(). */
 static const char *px_types[] = {
-	"PMAG-CA ",
-	"PMAG-DA ",
-	"PMAG-FA ",	/* XXX um, does this ever get reported? */
+	"PMAG-CA ",	/* 2DA */
+	"PMAG-DA ",	/* LM-3DA */
+	"PMAG-FA ",	/* HE-3DA */
+	"PMAG-FB ",	/* HE+3DA */
+	"PMAGB-FA",	/* HE+3DA */
+	"PMAGB-FB",	/* HE+3DA */
 };
 
 #define NUM_PX_TYPES (sizeof(px_types) / sizeof(px_types[0]))
@@ -270,7 +278,6 @@ px_match(parent, match, aux)
 	return (0);
 }
 
-
 /*
  * Attach the graphics board.
  */
@@ -319,7 +326,6 @@ px_attach(parent, self, aux)
 		printf(", %dKB SRAM", px_probe_sram(pxi) >> 10);
 	printf("\n");
 }
-
 
 /*
  * Initialize the graphics board. This can be called from tc_findcons and
@@ -422,7 +428,6 @@ px_init(fi, slotbase, unit, console)
 	return 1;
 }
 
-
 /*
  * Initalize our DISGUSTING little hack so we can use the qvss event-buffer
  * stuff for the X server.
@@ -454,7 +459,6 @@ px_qvss_init(pxi)
 	tb_kbdmouseconfig(fi);
 	init_pmaxfbu(fi);
 }
-
 
 /*
  * Initialize the Brooktree 459 VDAC.
@@ -524,7 +528,6 @@ px_bt459_init(pxi)
 	}
 }
 
-
 /*
  * Determine the number of planes supported by the given buffer.
  * XXX should know this from module name
@@ -564,7 +567,6 @@ px_probe_planes(pxi, buf)
 	/* Don't give a damn about Z-buffers... */
 	panic("px_probe_planes: (buf != 0) was un-implemented (bloat)");
 }
-	
 
 /*
  * Figure out how much SRAM the PXG has: 128KB or 256KB.
@@ -704,7 +706,6 @@ px_init_stic(pxi, probe)
 #endif
 }
 
-
 /*
  * Make a cursor matching the current font dimensions.
  */
@@ -732,7 +733,6 @@ px_make_cursor(pxi)
 	}
 }
 
-
 /*
  * Convert a 16x16 cursor from the Xserver.
  */
@@ -757,7 +757,6 @@ px_conv_cursor(pxi, sip)
 	}
 }
 
-
 /*
  * Load a single byte into the cursor map.
  */
@@ -780,7 +779,6 @@ px_load_cursor_data(pxi, pos, val)
 			break;
 	}
 }
-
 
 /*
  * Load the cursor image.
@@ -812,7 +810,6 @@ px_load_cursor(pxi)
 	}
 }
 
-
 /*
  * Load the colormap.
  */
@@ -838,7 +835,6 @@ px_load_cmap(pxi, index, num)
 	for (; num--; p++)
 		BT459_WRITE_CMAP(vdac, DUPBYTE0(*p));
 }
-
 
 /*
  * Flush any pending updates to the bt459. This gets called during vblank
@@ -922,7 +918,6 @@ px_bt459_flush(pxi)
 
 	pxi->pxi_dirty = 0;
 }
-
 
 /*
  * PixelStamp board interrupt handler. We can get more than one interrupt
@@ -1047,7 +1042,6 @@ px_intr(xxx_sc)
 	return (0);
 }
 
-
 /*
  * Allocate a PixelStamp packet buffer.
  */
@@ -1138,7 +1132,6 @@ px_alloc_pbuf(pxi)
 	return buf;
 }
 
-
 /*
  * Send a PixelStamp packet.
  */
@@ -1209,7 +1202,6 @@ px_send_packet(pxi, buf)
 	return (-*poll);
 }
 
-
 /*
  * Draw a 'flat' rectangle
  */
@@ -1237,7 +1229,6 @@ px_rect(pxi, x, y, w, h, color)
 	return px_send_packet(pxi, pb);
 }
 
-
 /*
  * Allocate attribute. We just pack these into an integer.
  */
@@ -1264,7 +1255,6 @@ px_alloc_attr(cookie, fg, bg, flags, attr)
 	*attr = fg | (bg << 8) | (flags << 16);
 	return 0;
 }
-
 
 /*
  * Erase columns
@@ -1300,7 +1290,6 @@ px_erasecols(cookie, row, col, num, attr)
 	px_send_packet(pxi, pb);
 }
 
-
 /*
  * Erase rows
  */
@@ -1333,7 +1322,6 @@ px_eraserows(cookie, row, num, attr)
 
 	px_send_packet(pxi, pb);
 }
-
 
 /*
  * Copy rows.
@@ -1397,7 +1385,6 @@ px_copyrows(cookie, src, dst, height)
 	}
 }
 
-
 /*
  * Copy columns.
  */
@@ -1443,7 +1430,6 @@ px_copycols(cookie, row, src, dst, num)
 
 	px_send_packet(pxi, pbs);
 }
-
 
 /*
  * Blit a character at the specified co-ordinates.
@@ -1567,7 +1553,6 @@ px_putchar(cookie, r, c, uc, attr)
 	px_send_packet(pxi, pb);
 }
 
-
 /*
  * Map a character.
  */
@@ -1594,7 +1579,6 @@ px_mapchar(cookie, c, cp)
 	*cp = c;
 	return (5);
 }
-
 
 /*
  * Position|{enable|disable} the cursor at the specified location.
@@ -1636,7 +1620,6 @@ px_cursor(cookie, on, row, col)
 		px_bt459_flush(pxi);
 }
 
-
 /*
  * Move the cursor for qvss. This is disgusting.
  */
@@ -1655,7 +1638,6 @@ px_cursor_hack(fi, x, y)
 	if (pxi->pxi_option)
 		px_bt459_flush(pxi);
 }
-
 
 int
 pxopen(dev, flag, mode, p)
@@ -1860,7 +1842,6 @@ pxioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
-
 int
 pxpoll(dev, events, p)
 	dev_t dev;
@@ -1919,7 +1900,6 @@ pxmmap(dev, off, prot)
 
 	return (-1);
 }
-
 
 /*
  * mmap info struct for this card into userspace.
