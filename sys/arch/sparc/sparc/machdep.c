@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 1998/08/21 14:13:55 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.121 1998/08/23 09:59:24 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@
 #if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
 #else
 vm_map_t buffer_map;
 #endif
@@ -181,12 +180,9 @@ extern	caddr_t msgbufaddr;
 int   safepri = 0;
 
 /*
- * dvmamap is used to manage DVMA memory. Note: this coincides with
- * the memory range in `phys_map' (which is mostly a place-holder).
+ * dvmamap24 is used to manage DVMA memory for devices that have the upper
+ * eight address bits wired to all-ones (e.g. `le' and `ie')
  */
-vaddr_t dvma_base, dvma_end;
-struct map *dvmamap;
-static int ndvmamap;	/* # of entries in dvmamap */
 struct extent *dvmamap24;
 
 caddr_t allocsys __P((caddr_t));
@@ -355,41 +351,13 @@ cpu_startup()
 				 16*NCARGS, TRUE);
 #endif
 
-	/*
-	 * Allocate a map for physio.  Others use a submap of the kernel
-	 * map, but we want one completely separate, even though it uses
-	 * the same pmap.
-	 */
-	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
-	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
-#if defined(UVM)
-	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#else
-	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#endif
-	if (phys_map == NULL)
-		panic("unable to create DVMA map");
-	/*
-	 * Allocate DVMA space and dump into a privately managed
-	 * resource map for double mappings which is usable from
-	 * interrupt contexts.
-	 */
-#if defined(UVM)
-	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
-#else
-	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
-#endif
-	rminit(dvmamap, btoc((dvma_end-dvma_base)),
-		vtorc(dvma_base), "dvmamap", ndvmamap);
-
 	if (CPU_ISSUN4OR4C) {
 		/*
 		 * Allocate dma map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
 		 */
-		dvmamap24 = extent_create("dvmamap24", 0xff000000, dvma_base,
+		dvmamap24 = extent_create("dvmamap24",
+					  D24_DVMA_END, D24_DVMA_END,
 					  M_DEVBUF, 0, 0, EX_NOWAIT);
 		if (dvmamap24 == NULL)
 			panic("unable to allocate DVMA map");
@@ -512,11 +480,6 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	/*
-	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
-	 * and one for each process too (PHYSIO).
-	 */
-	valloc(dvmamap, struct map, ndvmamap = maxproc + ((nbuf / 4) &~ 1));
 	return (v);
 }
 
@@ -1230,52 +1193,6 @@ wcopy(vb1, vb2, l)
 		*b2 = *b1e;
 }
 
-static bus_addr_t dvmamap_alloc __P((int, int));
-
-static __inline__ bus_addr_t
-dvmamap_alloc(size, flags)
-	int size;
-	int flags;
-{
-	int s, pn, npf;
-
-	npf = btoc(size);
-	s = splimp();
-	for (;;) {
-		pn = rmalloc(dvmamap, npf);
-		if (pn != 0)
-			break;
-
-		if (flags & BUS_DMA_WAITOK) {
-			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
-			continue;
-		}
-		splx(s);
-		return ((bus_addr_t)-1);
-	}
-	splx(s);
-
-	return ((bus_addr_t)rctov(pn));
-}
-
-static void dvmamap_free __P((bus_addr_t, bus_size_t));
-
-static __inline__ void
-dvmamap_free (addr, size)
-	bus_addr_t addr;
-	bus_size_t size;
-{
-	int s, pn, npf;
-
-	npf = btoc(size);
-	pn = vtorc(addr);
-	s = splimp();
-	rmfree(dvmamap, npf, pn);
-	wakeup(dvmamap);
-	splx(s);
-}
-
-
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -1558,7 +1475,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 
 	cpuinfo.cache_flush(buf, buflen);
 
-	if (p == NULL) {
+	if (p == NULL && (map->_dm_flags & BUS_DMA_24BIT) == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
 		map->dm_segs[0].ds_addr = (bus_addr_t)buf;
@@ -1569,9 +1486,11 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #if notyet
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
-	dvmaddr = dvmamap_alloc(sgsize, flags);
-	if (dvmaddr != 0)
+	if (extent_alloc(dvmamap24, sgsize, NBPG, map->_dm_boundary,
+			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
+			 (u_long *)&dvmaddr) != 0) {
 		return (ENOMEM);
+	}
 
 	/*
 	 * We always use just one segment.
@@ -1580,6 +1499,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 1;
 	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
 	map->dm_segs[0].ds_len = buflen;
+	map->_dm_flags |= BUS_DMA_HASMAP;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -1627,8 +1547,6 @@ sun4_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	bus_addr_t addr;
-	bus_size_t len;
 
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
@@ -1638,16 +1556,29 @@ sun4_dmamap_unload(t, map)
 		map->dm_nsegs = 0;
 		return;
 	}
+#if notyet
+	bus_addr_t addr;
+	bus_size_t len;
+
+	if ((map->_dm_flags & (BUS_DMA_BIT24 | BUS_DMA_HASMAP)) == 0) {
+		/* Nothing to release */
+		map->dm_mapsize = 0;
+		map->dm_nsegs = 0;
+		return;
+	}
+
 	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
 	len = map->dm_segs[0].ds_len;
 
 	pmap_remove(pmap_kernel(), addr, addr + len);
 
-	dvmamap_free(addr, len);
+	if (extent_free(dvmamap24, addr, len, EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+#endif
 }
 
 /*
@@ -1691,10 +1622,12 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error != 0)
 		return (error);
 
-	if (extent_alloc(dvmamap24, round_page(size), NBPG, boundary,
+	if (extent_alloc(dvmamap24, round_page(size), alignment, boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dvmaddr) != 0)
+			 (u_long *)&dvmaddr) != 0) {
+		_bus_dmamem_free_common(t, segs, nsegs);
 		return (ENOMEM);
+	}
 
 	/*
 	 * Compute the location, size, and number of segments actually
