@@ -17,9 +17,11 @@ CLEANFILES+= ${RPCSRCS:R:S/$/_xdr.c/g} ${RPCSRCS:R:S/$/.h/g}
 .SUFFIXES: .x _xdr.c .h
 
 .x_xdr.c:
-	${RPCCOM} -c -o ${.TARGET} ${.IMPSRC}
+	@echo generating $@...
+	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -c ${.IMPSRC} -o $$PWD/${.TARGET}
 
 .x.h:
-	${RPCCOM} -h -o ${.TARGET} ${.IMPSRC}
+	@echo generating $@...
+	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -h ${.IMPSRC} -o $$PWD/${.TARGET}
 
 OBJS+= ${RPCSRCS:R:S/$/_xdr.o/g}
