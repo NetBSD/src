@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.176 2003/07/15 00:05:02 lukem Exp $ */
+/*	$NetBSD: cpu.c,v 1.177 2003/07/16 08:08:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.176 2003/07/15 00:05:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.177 2003/07/16 08:08:22 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -446,6 +446,14 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		cpi->eintstack = eintstack;
 		cpi->idle_u = idle_u;
 		/* Note: `curpcb' is set to `proc0' in locore */
+
+		/*
+		 * If we haven't been able to determine the Id of the
+		 * boot CPU, set it now. In this case we can only boot
+		 * from CPU #0 (see also the CPU attach code in autoconf.c)
+		 */
+		if (bootmid == 0)
+			bootmid = mid;
 	} else {
 #if defined(MULTIPROCESSOR)
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
@@ -1746,8 +1754,11 @@ viking_mmu_enable()
 int
 viking_getmid(void)
 {
-	u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
-	return ((v >> 24) & 0xf);
+	if (cpuinfo.mxcc) {
+		u_int v = ldda(MXCC_MBUSPORT, ASI_CONTROL) & 0xffffffff;
+		return ((v >> 24) & 0xf);
+	}
+	return (0);
 }
 
 int
