@@ -20,9 +20,12 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.10 1994/12/22 05:54:27 briggs Exp $
+#	$Id: MAKEDEV,v 1.11 1994/12/27 05:00:22 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
+#	all	a smattering--at least one of each except
+#		fd* (unimp.) and ch*
+#
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -30,7 +33,7 @@
 #	st*	scsi tapes
 #
 # Disks:
-#	fd*	floppy disk drives (3 1/2")
+#	fd*	floppy disk drives (3 1/2") (unimp.)
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
 #	ch*	SCSI changers
@@ -56,6 +59,17 @@ umask 77
 for i
 do
 case $i in
+
+all)
+	sh MAKEDEV std
+	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
+	sh MAKEDEV adb grf0 grf1 ttye0
+	sh MAKEDEV tty00 tty01 pty0
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
+	sh MAKEDEV lkm
+	sh MAKEDEV local
+	;;
 
 std)
 	rm -f console drum kmem mem reload zero null tty
