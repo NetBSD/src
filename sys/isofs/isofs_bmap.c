@@ -1,16 +1,16 @@
 /*
- * 	$Id: isofs_bmap.c,v 1.5 1993/10/28 17:38:43 ws Exp $
+ * 	$Id: isofs_bmap.c,v 1.6 1993/12/18 04:31:28 mycroft Exp $
  */
 
-#include "param.h"
-#include "namei.h"
-#include "buf.h"
-#include "file.h"
-#include "vnode.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
 
-#include "iso.h"
-#include "isofs_node.h"
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
 
 iso_bmap(ip, lblkno, result)
 struct iso_node *ip;

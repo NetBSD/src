@@ -28,25 +28,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.5 1993/11/26 19:56:55 ws Exp $
+ *	$Id: isofs_rrip.c,v 1.6 1993/12/18 04:31:51 mycroft Exp $
  */
 
-#include "param.h"
-#include "namei.h"
-#include "buf.h"
-#include "file.h"
-#include "vnode.h"
-#include "mount.h"
-#include "kernel.h"
-#include "stat.h"
-#include "types.h"
+#include <sys/param.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/kernel.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
 
-#include "sys/time.h"
-
-#include "iso.h"
-#include "isofs_node.h"
-#include "isofs_rrip.h"
-#include "iso_rrip.h"
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
+#include <isofs/isofs_rrip.h>
+#include <isofs/iso_rrip.h>
 
 /*
  * POSIX file attribute
