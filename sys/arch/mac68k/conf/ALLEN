@@ -49,18 +49,16 @@ config		netbsd	root on sd0 swap on sd0
 
 ncr*	at mainbus?		# SCSI NCR 5380
 
-scsibus0	at scsi? target 7
-sd0	at scsibus0 drive ?
-sd1	at scsibus0 drive ?
-sd2	at scsibus0 drive ?
-sd3	at scsibus0 drive ?
-sd4	at scsibus0 drive ?
-sd5	at scsibus0 drive ?
-sd6	at scsibus0 drive ?
-st0	at scsibus0 drive ?
-st1	at scsibus0 drive ?
-cd0	at scsibus0 drive ?
-cd1	at scsibus0 drive ?
+scbus0	at scsi? target 7
+sd0	at scbus0 drive ?
+sd1	at scbus0 drive ?
+sd2	at scbus0 drive ?
+sd3	at scbus0 drive ?
+sd4	at scbus0 drive ?
+sd5	at scbus0 drive ?
+sd6	at scbus0 drive ?
+st0	at scbus0 drive ?
+#cd0	at scbus0 drive ?
 
 pseudo-device	loop
 pseudo-device	pty	16
