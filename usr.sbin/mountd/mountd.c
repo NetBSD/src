@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.52.2.1 1999/11/20 17:17:27 he Exp $	 */
+/* $NetBSD: mountd.c,v 1.52.2.2 1999/11/21 15:24:08 he Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.52.2.1 1999/11/20 17:17:27 he Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.52.2.2 1999/11/21 15:24:08 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2269,7 +2269,7 @@ bad:
 bad1:
 	syslog(LOG_ERR,
 	    "\"%s\", line %ld: `%s' is not a%s directory",
-	    line, (unsigned long)lineno, file, dirp);
+	    line, (unsigned long)lineno, dirp, file);
 	if (cp)
 		*cp = '/';
 	return 0;
