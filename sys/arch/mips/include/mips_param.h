@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.7 1997/09/20 12:08:06 leo Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.8 1998/02/19 06:40:09 thorpej Exp $	*/
 
 /*
  * Architecture name.
@@ -47,7 +47,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
