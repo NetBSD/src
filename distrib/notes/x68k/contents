@@ -1,8 +1,8 @@
-The x68k-specific portion of the NetBSD 1.2 release is found in the
+The x68k-specific portion of the NetBSD 1.2.1 release is found in the
 "x68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.2/x68k/
+.../NetBSD-1.2.1/x68k/
 			binary/		x68k binary distribution sets;
 					see below.
 
@@ -13,9 +13,9 @@ out as follows:
 					runs on Human68k.
 
 There are three floppy images in the "x68k/floppies" subdirectory of
-the NetBSD 1.2 distribution. One is bootable kernel-copy floppy, one
-is "inst12.fs", which is used to install NetBSD/x68k for the first
-time, and one is "upgr12.fs", which is used in upgrading the system
+the NetBSD 1.2.1 distribution. One is bootable kernel-copy floppy, one
+is "inst121.fs", which is used to install NetBSD/x68k for the first
+time, and one is "upgr121.fs", which is used in upgrading the system
 from the previous version of NetBSD/x68k.
 
 Bootable Kernel-copy floppy:
@@ -33,22 +33,22 @@ Installation floppy:
 	This disk contains the software necessary to prepare your hard
 	drive for NetBSD and install the NetBSD distribution. It is
 	not bootable, and must be used in conjunction with the kernel-
-	copy floppy.  This floppy is named "inst12.fs".
+	copy floppy.  This floppy is named "inst121.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
 	system from a previous version of NetBSD.  It is not bootable,
 	and must be used in conjunction with the kernel-copy floppy.
-	This floppy is named "upgr12.fs".
+	This floppy is named "upgr121.fs".
 
 The NetBSD/x68k binary distribution sets contain the binaries which
-comprise the NetBSD 1.2 release for the x68k.  There are seven binary
+comprise the NetBSD 1.2.1 release for the x68k.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "x68k/binary" subdirectory of the NetBSD 1.2
+subdirectories of the "x68k/binary" subdirectory of the NetBSD 1.2.1
 distribution tree, and are as follows:
 
-	base12	The NetBSD/x68k 1.2 base binary distribution.  You
+	base121	The NetBSD/x68k 1.2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -56,7 +56,7 @@ distribution tree, and are as follows:
 		everything described below.
 		[ 7.5M gzipped, 22.8M uncompressed ]
 
-	comp12	The NetBSD/x68k Compiler tools.  All of the tools
+	comp121	The NetBSD/x68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -67,7 +67,7 @@ distribution tree, and are as follows:
 		call and library manual pages.
 		[ 5.3M gzipped, 17.5M uncompressed ]
 
-	etc12	This distribution set contains the system
+	etc121	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -76,27 +76,27 @@ distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 68K gzipped, 358K uncompressed ]
 
-	games12	This set includes the games and their manual pages.
+	games121 This set includes the games and their manual pages.
 		[ 2.8M gzipped, 7.0M uncompressed ]
 
-	man12	This set includes all of the manual pages for the
+	man121	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.9M gzipped, 3.5M uncompressed ]
 
-	misc12	This set includes the system dictionaries (which are
+	misc121	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text12	This set includes NetBSD's text processing tools,
+	text121	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
-For other platform, there is a security distribution named "secr12"
+For other platform, there is a security distribution named "secr121"
 provided.  It contains the files which cannot be exported outside
 the United States and Canada.  Since all the developers of the NetBSD/x68k
 live in Japan, the x68k security distribution is not provided in the

@@ -1,8 +1,8 @@
-The pc532-specific portion of the NetBSD 1.2 release is found in the
+The pc532-specific portion of the NetBSD 1.2.1 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:
 
-.../NetBSD-1.2/pc532/
+.../NetBSD-1.2.1/pc532/
 
 	INSTALL			Installation notes; this file.
 	CKSUM			output of "cksum *.gz"
@@ -21,7 +21,7 @@ the files as follows:
 The binary distribution consists of the following files:
 
 	base.tar.gz
-		The NetBSD/pc532 1.2 base binary distribution.  You
+		The NetBSD/pc532 1.2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -95,7 +95,7 @@ is supported by the following files:
 				   pc532 ROM monitor.
 
 
-The upgrade process is supported by having a copy of a 1.2 kernel
+The upgrade process is supported by having a copy of a 1.2.1 kernel
 available.  This file is:
 
 	netbsd.default.gz	-- a kernel produced from the DEFAULT
