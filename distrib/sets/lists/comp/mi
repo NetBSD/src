@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.428 2002/02/12 02:27:59 thorpej Exp $
+#	$NetBSD: mi,v 1.429 2002/03/14 04:06:11 simonb Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1766,6 +1766,7 @@
 ./usr/share/man/cat3/fnmatch.0	comp-c-catman
 ./usr/share/man/cat3/fopen.0	comp-c-catman
 ./usr/share/man/cat3/forkpty.0	comp-c-catman
+./usr/share/man/cat3/form.0	comp-c-catman
 ./usr/share/man/cat3/form_cursor.0	comp-c-catman
 ./usr/share/man/cat3/form_data.0	comp-c-catman
 ./usr/share/man/cat3/form_driver.0	comp-c-catman
@@ -4234,6 +4235,7 @@
 ./usr/share/man/man3/fnmatch.3		comp-c-man
 ./usr/share/man/man3/fopen.3		comp-c-man
 ./usr/share/man/man3/forkpty.3		comp-c-man
+./usr/share/man/man3/form.3		comp-c-man
 ./usr/share/man/man3/form_cursor.3	comp-c-man
 ./usr/share/man/man3/form_data.3	comp-c-man
 ./usr/share/man/man3/form_driver.3	comp-c-man
