@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.79 2004/04/12 05:26:36 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.80 2004/04/12 05:28:36 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -561,3 +561,9 @@ sys/arch/hp300/dev/itevar.h			1.19
 
 	Don't panic when kernel tries to print a horizontal tab via itecnputc().
 	[tsutsui, ticket #1667]
+
+sys/arch/hp300/dev/hil.c			patch
+
+	Include "ite.h" before the first reference of NITE.
+	Fixes panic with unknown type keyboards (including JP one).
+	[tsutsui, ticket #1668]
