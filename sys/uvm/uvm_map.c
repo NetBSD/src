@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.40 1999/05/20 23:03:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.41 1999/05/23 06:27:13 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1845,6 +1845,120 @@ uvm_map_inherit(map, start, end, new_inheritance)
 	vm_map_unlock(map);
 	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
 	return(KERN_SUCCESS);
+}
+
+/* 
+ * uvm_map_advice: set advice code for range of addrs in map.
+ *
+ * => map must be unlocked
+ */
+
+int
+uvm_map_advice(map, start, end, new_advice)
+	vm_map_t map;
+	vaddr_t start;
+	vaddr_t end;
+	int new_advice;
+{
+	vm_map_entry_t entry, temp_entry;
+	UVMHIST_FUNC("uvm_map_advice"); UVMHIST_CALLED(maphist);
+	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_adv=0x%x)",
+	    map, start, end, new_advice);
+
+	vm_map_lock(map);
+	
+	VM_MAP_RANGE_CHECK(map, start, end);
+	
+	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
+		entry = temp_entry;
+		UVM_MAP_CLIP_START(map, entry, start);
+	} else {
+		entry = temp_entry->next;
+	}
+	
+	while ((entry != &map->header) && (entry->start < end)) {
+		UVM_MAP_CLIP_END(map, entry, end);
+
+		switch (new_advice) {
+		case MADV_NORMAL:
+		case MADV_RANDOM:
+		case MADV_SEQUENTIAL:
+			/* nothing special here */
+			break;
+
+#if 0
+		case MADV_WILLNEED:
+			/* activate all these pages */
+			/* XXX */
+			/*
+			 * should invent a "weak" mode for uvm_fault()
+			 * which would only do the PGO_LOCKED pgo_get().
+			 */
+			break;
+
+		case MADV_DONTNEED:
+			/* deactivate this page */
+			/* XXX */
+			/*
+			 * vm_page_t p;
+			 * uvm_lock_pageq();
+			 * for (p in each page)
+			 *	if (not_wired)
+			 *		uvm_pagedeactivate(p);
+			 * uvm_unlock_pageq();
+			 */
+			break;
+
+		case MADV_SPACEAVAIL:
+			/* 
+			 * XXXMRG
+			 * what is this?  i think:  "ensure that we have
+			 * allocated backing-store for these pages".  this
+			 * is going to require changes in the page daemon,
+			 * as it will free swap space allocated to pages in
+			 * core.  there's also what to do for
+			 * device/file/anonymous memory..
+			 */
+			break;
+
+		case MADV_GARBAGE:
+			/* pages are `empty' and can be garbage collected */
+			/* XXX */
+			/*
+			 * (perhaps MADV_FREE? check freebsd's MADV_FREE).
+			 * 
+			 * need to do this:
+			 *	- clear all the referenced and modified bits on
+			 *	  the pages,
+			 *	- delete any backing store,
+			 *	- mark the page as `recycable'.
+			 *
+			 * So, if you start paging, the pages would be thrown out
+			 * and then zero-filled the next time they're used.
+			 * Otherwise you'd just reuse them directly.  Once the
+			 * page has been modified again, it would no longer be
+			 * recyclable.  That way, malloc() can just tell the
+			 * system when pages are `empty'; if memory is needed,
+			 * they'll be tossed; if memory is not needed, there
+			 * will be no additional overhead.
+			 */
+			break;
+#endif
+
+		default:
+			UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
+			return (KERN_INVALID_ARGUMENT);
+		}
+
+
+		entry->advice = new_advice;
+		
+		entry = entry->next;
+	}
+
+	vm_map_unlock(map);
+	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
+	return (KERN_SUCCESS);
 }
 
 /*
