@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.29 1999/02/17 08:13:12 itohy Exp $
+#	$NetBSD: newvers.sh,v 1.30 2000/01/23 23:39:19 hubertf Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,11 @@ fi
 
 touch version
 v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
-id=`basename ${d}`
+if [ -f ident ]; then
+	id="`cat ident`"
+else
+	id=`basename ${d}`
+fi
 osrelcmd=`dirname $0`/osrelease.sh
 
 ost="NetBSD"
