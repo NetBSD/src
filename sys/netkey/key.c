@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.63.2.1 2002/11/19 21:19:06 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.63.2.2 2002/11/19 21:21:50 tron Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.2.1 2002/11/19 21:19:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.2.2 2002/11/19 21:21:50 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1851,8 +1851,7 @@ key_spddelete2(so, m, mhp)
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: invalid message is passed.\n"));
-		key_senderror(so, m, EINVAL);
-		return 0;
+		return key_senderror(so, m, EINVAL);
 	}
 
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
@@ -1860,7 +1859,7 @@ key_spddelete2(so, m, mhp)
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
 		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
-		key_senderror(so, m, EINVAL);
+		return key_senderror(so, m, EINVAL);
 	}
 
 	key_sp_dead(sp);
