@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.57 1996/05/19 21:04:48 veego Exp $
+#	$NetBSD: GENERIC,v 1.58 1996/08/11 09:48:21 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -100,7 +100,6 @@ options		KTRACE		# Add kernel tracing system call
 #options	DEBUG		# Add debugging statements
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
-#options	KGDB		# Kernel debugger (KGDB) support
 #options	PANICBUTTON	# Forced crash via keypress (???)
 
 #
@@ -143,6 +142,8 @@ options		GRF_AGA		# AGA Chip Set
 #options	RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
 #options	RETINA_SPEED_HACK
+# enables the Hardwarecursor which does not work on some systems.
+#options	RH_HARDWARECURSOR
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
