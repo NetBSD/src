@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/11/18 03:11:41 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/11/20 03:31:02 uwe Exp $ */
 	
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ ASSERT_IMMEDIATE_7BIT_OK(PT_TRAPUC)
 	mov	tmp, sp						; \
 .else								; \
 	mov	tmp, r0						; \
-	add	#STACKSPACE, r0					; \
+	add	#-STACKSPACE, r0				; \
 	mov	r0, sp						; \
 .endif
 
@@ -257,9 +257,6 @@ NENTRY(pthread__locked_switch)
 	add	#1, r0
 	mov.l	r0, @(PT_SPINLOCKS, r9)	/* ++next->pt_spinlocks */
 
-	mov	#PT_UC, r0
-	mov.l	sp, @(r0, r8)		/* self->pt_uc = &cntx; */
-
 	mov.l	CALL_TARGET(41b,_getcontext_u), r0
 41:	CALL	(r0)			/* _getcontext_u(self->pt_uc); */
 	 mov	sp, r4
@@ -270,6 +267,9 @@ NENTRY(pthread__locked_switch)
 	 */
 	mova	Lpthread__locked_switch_return_point, r0
 	mov.l	r0, @(UC_PC, sp)
+
+	mov	#PT_UC, r0
+	mov.l	sp, @(r0, r8)		/* self->pt_uc = &cntx; */
 
 	STACK_SWITCH(r9, r4)		/* r4 = next->pt_uc; */
 
