@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 1999/03/06 11:11:11 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24.4.1 1999/06/21 01:03:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,6 +140,10 @@ struct pmap_physseg {
 	int	dummy;
 };
 
+/* MD round macros */
+#define	vax_round_page(x) (((vaddr_t)(x) + VAX_PGOFSET) & ~VAX_PGOFSET)
+#define	vax_trunc_page(x) ((vaddr_t)(x) & ~VAX_PGOFSET)
+
 /*
  * Mach derived constants
  */
@@ -152,7 +156,6 @@ struct pmap_physseg {
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0xC0000000))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 

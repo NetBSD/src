@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134.2.2 1999/04/21 14:50:19 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134.2.2.2.1 1999/06/21 00:59:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,16 +43,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 1999/04/21 14:50:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2.2.1 1999/06/21 00:59:05 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "le_ioasic.h"		/* XXX will go XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
 #include <sys/proc.h>
@@ -65,23 +65,19 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 1999/04/21 14:50:19 perry Exp 
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/device.h>
 #include <sys/user.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 
-#include <dev/cons.h>
-
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
+#include <sys/sysctl.h>
+#include <dev/cons.h>
 
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -91,8 +87,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 1999/04/21 14:50:19 perry Exp 
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
-#include <mips/locore.h>		/* wbflush() */
-#include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
+#include <machine/locore.h>
+#include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/clockreg.h>
+#include <pmax/pmax/machdep.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -100,40 +98,73 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2 1999/04/21 14:50:19 perry Exp 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#include <ddb/db_extern.h>
 #endif
 
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/maxine.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
-#include <dev/tc/ioasicvar.h>
-#include <pmax/dev/promiovar.h>		/* prom console I/O vector */
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[40];
 
-#include <pmax/pmax/machdep.h>		/*  splXXX() function pointer hack */
+/* maps for VM objects */
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
 
-#include "le_ioasic.h"
+int	systype;		/* mother board type */
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
+int	maxmem;			/* max memory per process */
+int	physmem;		/* max supported memory, changes to actual */
+int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+int	mem_cluster_cnt;
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ * Used as an argument to splx().
+ * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
+ * disables mips1 FPU interrupts.
+ */
+int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
+
+struct splvec	splvec;			/* XXX will go XXX */
+
+void	mach_init __P((int, char *[], int, int, u_int, char *));
+
+unsigned (*clkread) __P((void)); /* high resolution timer if available */
+unsigned nullclkread __P((void));
+
+int	initcpu __P((void));
+
+/* XXX XXX XXX */
+u_long	le_iomem;		/* 128K for lance chip via. ASIC */
+
+/* Old 4.4bsd/pmax-derived interrupt-enable method */
+
+void	(*tc_enable_interrupt)
+     __P ((u_int slotno, int (*handler) __P((void *sc)),
+          void *sc, int onoff));
+
+volatile struct chiptime *mcclock_addr;
+/*XXXjrs*/
+const	struct callback *callv;	/* pointer to PROM entry points */
+/* XXX XXX XXX */
+
+#ifdef DEBUG
+/* stacktrace code violates prototypes to get callee's registers */
+extern void stacktrace __P((void)); /*XXX*/
+#endif
 
 /* Motherboard or system-specific initialization vector */
-void		unimpl_os_init __P((void));
-void		unimpl_bus_reset __P((void));
-void		unimpl_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+void	unimpl_os_init __P((void));
+void	unimpl_bus_reset __P((void));
+int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
+void	unimpl_cons_init __P((void));
+void	unimpl_device_register __P((struct device *, void *));
+void 	unimpl_iointr __P ((void *, u_long));
+void	unimpl_clockintr __P ((void *));
 
-int		unimpl_intr __P((u_int mask, u_int pc,
-			      u_int statusReg, u_int causeReg));
-
-void		unimpl_cons_init __P((void));
-void		unimpl_device_register __P((struct device *, void *));
-const char*	unimpl_model_name __P((void));
-void	 	unimpl_iointr __P ((void *, u_long));
-void 		unimpl_clockintr __P ((void *));
-void	 	unimpl_errintr __P ((void));
-
-
-struct platform  platform = {
+struct platform platform = {
 	"iobus not set",
 	unimpl_os_init,
 	unimpl_bus_reset,
@@ -143,90 +174,9 @@ struct platform  platform = {
 	unimpl_clockintr
 };
 
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[40];
-
-char	*bootinfo = NULL;		/* pointer to bootinfo structure */
-
-/*  maps for VM objects */
-
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
-
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
-int	systype;		/* Mother board type */
-u_long	le_iomem;		/* 128K for lance chip via. ASIC */
-
-
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
-
-/* Old 4.4bsd/pmax-derived interrupt-enable method */
-
-void	(*tc_enable_interrupt)
-     __P ((u_int slotno, int (*handler) __P((void *sc)),
-          void *sc, int onoff));
-
-
-/*
- * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
- * register and baseboard interrupt-control registers at runtime.
- * Instead, we declare the standard splXXX names as function pointers,
- * and initialie them to point to the above functions to match
- * the way a specific motherboard is  wired up.
- */
-int	(*Mach_splbio) __P((void)) = splhigh;
-int	(*Mach_splnet)__P((void)) = splhigh;
-int	(*Mach_spltty)__P((void)) = splhigh;
-int	(*Mach_splimp)__P((void)) = splhigh;
-int	(*Mach_splclock)__P((void)) = splhigh;
-int	(*Mach_splstatclock)__P((void)) = splhigh;
-volatile struct chiptime *mcclock_addr;
-
-
-/*XXXjrs*/
-const	struct callback *callv;	/* pointer to PROM entry points */
-
-
-/*
- *  Local functions.
- */
-extern	int	atoi __P((const char *cp));
-int	initcpu __P((void));
-
-
-/* initialize bss, etc. from kernel start, before main() is called. */
-extern	void
-mach_init __P((int argc, char *argv[], u_int code,
-    const struct callback *cv, u_int bim, char *bip));
-
-
-void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
-
-#ifdef DEBUG
-/* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
-#endif
-
 extern caddr_t esym;
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.  Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
-/* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-
+extern struct user *proc0paddr;
+extern struct consdev promcd;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -237,8 +187,7 @@ void
 mach_init(argc, argv, code, cv, bim, bip)
 	int argc;
 	char *argv[];
-	u_int code;
-	const struct callback *cv;
+	int code, cv;
 	u_int bim;
 	char *bip;
 {
@@ -248,8 +197,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	caddr_t kernend, v;
 	unsigned size;
 #ifdef DDB
-	int nsym;
-	caddr_t ssym;
+	int nsym = 0;
+	caddr_t ssym = 0;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
@@ -282,7 +231,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		ssym = (caddr_t)bi_syms->ssym;
 		esym = (caddr_t)bi_syms->esym;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	}
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
@@ -294,20 +243,16 @@ mach_init(argc, argv, code, cv, bim, bip)
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
 		kernend = (caddr_t)mips_round_page(end);
-		bzero(edata, kernend - edata);
+		memset(edata, 0, kernend - edata);
 	}
 
 	/* Initialize callv so we can do PROM output... */
-	if (code == DEC_PROM_MAGIC) {
-		callv = cv;
-	} else {
-		callv = &callvec;
-	}
+	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
@@ -388,39 +333,31 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	db_machine_init();
 	/* init symbols if present */
-	if (nsym && ssym && esym)
-		ddb_init(nsym, (int *)ssym, (int *)esym);
+	if (esym)
+		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
 	/*
-	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
-	mips_init_proc0(kernend);
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
 
 	/*
 	 * Determine what model of computer we are running on.
 	 */
-	if (code == DEC_PROM_MAGIC) {
-		i = (*cv->_getsysid)();
-		cp = "";
-	} else {
-		cp = (*callv->_getenv)("systype");
-		if (cp)
-			i = atoi(cp);
-		else {
-			cp = "";
-			i = 0;
-		}
-	}
+	i = prom_systype();
 
 	/* Check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown System type '%s' 0x%x\n", cp, i);
+		printf("Unknown system type '%08x'\n", i);
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -430,13 +367,10 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
-	/* check what model platform we are running on */
-	systype = ((i >> 16) & 0xff);
-
-
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
+	systype = ((i >> 16) & 0xff);
 	if (systype >= nsysinit) {
 		platform_not_supported();
 		/* NOTREACHED */
@@ -447,7 +381,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Find out how much memory is available.
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
-	physmem = btoc((vaddr_t)kernend - MIPS_KSEG0_START);
+	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
 	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
 	while (cp < (char *)physmem_boardmax) {
 	  	int j;
@@ -482,11 +416,22 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/*
 	 * Load the rest of the available pages into the VM system.
+	 * Put the first 8M of RAM onto a lower-priority free list, since
+	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
+	 * into this region, and we want them to have a fighting chance of
+	 * allocating their DMA memory during autoconfiguratoin.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	if (last <= (8 * 1024 * 1024)) {
+		uvm_page_physload(atop(first), atop(last), atop(first),
+		    atop(last), VM_FREELIST_DEFAULT);
+	} else {
+		uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
+		    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
+		uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
+		    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -499,9 +444,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (unsigned)allocsys(0);
+	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v) - v) != size)
+	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 
 	/*
@@ -512,8 +457,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 
 /*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * Machine-dependent startup code.
+ * allocate memory for variable-sized tables, initialize cpu.
  */
 void
 cpu_startup()
@@ -522,6 +467,7 @@ cpu_startup()
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -533,10 +479,9 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-
 	printf("%s\n", cpu_model);
-
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -593,13 +538,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, TRUE, FALSE, NULL);
+				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -618,9 +563,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -660,7 +606,7 @@ cpu_startup()
 
 
 /*
- * machine dependent system variables.
+ * Machine dependent system variables.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -685,7 +631,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
 	        if(!bibp)
-			return(ENOENT); /* ??? */
+			return (ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 	default:
 		return (EOPNOTSUPP);
@@ -719,50 +665,9 @@ lookup_bootinfo(type)
 	return (NULL);
 }
 
-/*
- * PROM reset callback for reset switch.
- * XXX enter ddb instead?
- */
-void
-prom_haltbutton()
-{
-	(*callv->_halt)((int *)0, 0);
-}
-
-
-/*
- * call PROM to halt or reboot.
- */
-volatile void
-prom_halt(howto, bootstr)
-	int howto;
-	char *bootstr;
-
-{
-	if (callv != &callvec) {
-		if (howto & RB_HALT)
-			(*callv->_rex)('h');
-		else {
-			(*callv->_rex)('b');
-		}
-	} else if (howto & RB_HALT) {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void))) DEC_PROM_REINIT;
-
-		(*f)();	/* jump back to prom monitor */
-	} else {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void)))DEC_PROM_AUTOBOOT;
-		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
-	}
-
-	while(1) ;	/* fool gcc */
-	/*NOTREACHED*/
-}
-
 void
 cpu_reboot(howto, bootstr)
-	/*register*/ int howto;
+	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
 	extern int cold;
@@ -816,139 +721,33 @@ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
-
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
 
-
-/*
- * Read a high-resolution clock, if one is available, and return
- * the current microsecond offset from time-of-day.
- */
-
-/* XXX clock hacks */
-#include "opt_dec_3maxplus.h"
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
-
-#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE) ||defined(DEC_3MIN))
-#define	clkread()	(0)
-#else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
-static __inline u_long clkread __P((void));	/* get usec-resolution clock */
+#include "opt_dec_3maxplus.h"
 
 /*
- * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
- * [Or free-running microsecond counter on Maxine.]
- *
- * XXXjrs needs better MI hardware tier support.
- */
-u_long latched_cycle_cnt;
-
-/*
- * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
- * to interpolate micro-seconds since the  last RTC clock tick.
- * The interpolation base is the copy of the bus cycle-counter taken
- * by the RTC interrupt handler.
- * On XINE, use the microsecond free-running counter.
- *
- */
-static __inline u_long
-clkread()
-{
-
-#ifdef DEC_3MAXPLUS
-	register u_long usec, cycles;	/* really 32 bits? */
-#endif
-
-#if defined(DEC_3MIN)
-	if (systype == DS_3MIN && CPUISMIPS3) {
-		extern u_int32_t mips3_cycle_count __P((void));
-		register u_int32_t mips3_cycles =
-		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
-		/* XXX divides take 78 cycles: approximate with * 41/2048  */
-#if 0
-		return (mips3_cycles / cpu_mhz);
-#else
-		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
-		       (mips3_cycles >> 11));
-#endif
-	} else
-#endif
-#ifdef DEC_MAXINE
-	if (systype == DS_MAXINE)
-		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
-		    latched_cycle_cnt);
-	else
-#endif
-#ifdef DEC_3MAXPLUS
-	if (systype == DS_3MAXPLUS)
-		/* 5k/240 TC bus counter */
-		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
-	else
-#endif
-		return (0);
-
-#ifdef DEC_3MAXPLUS
-	/* Compute difference in cycle count from last hardclock() to now */
-#if 1
-	/* my code, using u_ints */
-	cycles = cycles - latched_cycle_cnt;
-#else
-	/* Mills code, using (signed) ints */
-	if (cycles >= latched_cycle_cnt)
-		cycles = cycles - latched_cycle_cnt;
-	else
-		cycles = latched_cycle_cnt - cycles;
-#endif
-
-	/*
-	 * Scale from 40ns to microseconds.
-	 * Avoid a kernel FP divide (by 25) using the approximation
-	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
-	 */
-	usec = cycles + (cycles << 3) + (cycles << 5);
-	usec = usec >> 10;
-
-#ifdef CLOCK_DEBUG
-	if (usec > 3906 +4) {
-		 addlog("clkread: usec %d, counter=%lx\n",
-			 usec, latched_cycle_cnt);
-		stacktrace();
-	}
-#endif /*CLOCK_DEBUG*/
-	return usec;
-#endif /* DEC_3MAXPLUS */
-}
-
-#if 0
-void
-microset()
-{
-	latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
-}
-#endif	/* 0 */
-#endif	/* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
+ * Return the best possible estimate of the time in the timeval to
+ * which tvp points.  We guarantee that the time will be greater than
+ * the value obtained by a previous call.  Some models of DECstations
+ * provide a high resolution timer circuit.
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splclock();
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec += clkread();
+#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
+	tvp->tv_usec += (*clkread)();
+#endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
@@ -968,7 +767,7 @@ microtime(tvp)
 int
 initcpu()
 {
-	register volatile struct chiptime *c;
+	volatile struct chiptime *c;
 	int i = 0;
 
 	/*
@@ -1004,131 +803,34 @@ delay(n)
         DELAY(n);
 }
 
-
 /*
- * Convert an ASCII string into an integer.
+ *  Ensure all platform vectors are always initialized.
  */
-int
-atoi(s)
-	const char *s;
-{
-	int c;
-	unsigned base = 10, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;
-}
-
-/*
- *  Ensure all  platform vectors are always initialized.
- */
-
 void
 unimpl_os_init()
 {
-	panic("sysconf.init didnt set os_init\n");
+	panic("sysconf.init didnt set os_init");
 }
 
 void
 unimpl_bus_reset()
 {
-	panic("sysconf.init didnt set bus_reset\n");
-}
-
-void
-unimpl_enable_intr(slotno, handler, sc, onoff)
-	u_int slotno;
-	int (*handler) __P((intr_arg_t sc));
-	 intr_arg_t sc;
-	int onoff;
-{
-	panic("sysconf.init didnt set enable_intr\n");
-}
-
-
-int
-unimpl_intr (mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr\n");
+	panic("sysconf.init didnt set bus_reset");
 }
 
 void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init\n");
+	panic("sysconf.init didnt set cons_init");
 }
 
 void
 unimpl_device_register(sc, arg)
-     struct device *sc;
-     void *arg;
-{
-	panic("sysconf.init didnt set device_register\n");
-
-}
-
-const char*
-unimpl_model_name()
-{
-	panic("sysconf.init didnt set model_name\n");
-}
-
-void
-unimpl_clockintr(arg)
+	struct device *sc;
 	void *arg;
 {
-	panic("sysconf.init didnt set clockintr\n");
+	panic("sysconf.init didnt set device_register");
+
 }
 
 void
@@ -1136,11 +838,28 @@ unimpl_iointr(arg, arg2)
 	void *arg;
 	u_long arg2;
 {
-	panic("sysconf.init didnt set iointr\n");
+	panic("sysconf.init didnt set iointr");
 }
 
 void
-unimpl_errintr()
+unimpl_clockintr(arg)
+	void *arg;
 {
-	panic("sysconf.init didnt set errintr_name\n");
+	panic("sysconf.init didnt set clockintr");
 }
+
+int
+unimpl_intr(mask, pc, statusreg, causereg)
+	u_int mask;
+	u_int pc;
+	u_int statusreg;
+	u_int causereg;
+{
+	panic("sysconf.init didnt set intr");
+}
+
+unsigned
+nullclkread()
+{
+	return 0;
+}	

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.8 1999/03/29 07:22:02 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.8.4.1 1999/06/21 01:19:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.8 1999/03/29 07:22:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.8.4.1 1999/06/21 01:19:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.8 1999/03/29 07:22:02 nisimura Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/ic/ims332reg.h>
 
 #include <uvm/uvm_extern.h>
@@ -70,17 +71,18 @@ struct fb_devconfig {
 	int	   dc_blanked;		/* currently has video disabled */
 };
 
-struct hwcmap {
+struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
 	u_int8_t r[CMAP_SIZE];
 	u_int8_t g[CMAP_SIZE];
 	u_int8_t b[CMAP_SIZE];
 };
 
-struct hwcursor {
+struct hwcursor64 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
+	struct wsdisplay_curpos cc_magic;	/* not used by PMAG-DV */
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
 	u_int64_t cc_image[64 + 64];
@@ -89,18 +91,19 @@ struct hwcursor {
 #define	XCFB_FB_OFFSET	0x2000000	/* from module's base */
 #define	XCFB_FB_SIZE	 0x100000	/* frame buffer size */
 
-#define	IMS332_ADDRESS	0xbc140000
-#define	IMS332_RPTR	0xbc1c0000
-#define	IMS332_WPTR	0xbc1e0000
+#define	IMS332_HIGH	(IOASIC_SLOT_5_START)
+#define	IMS332_RLOW	(IOASIC_SLOT_7_START)
+#define	IMS332_WLOW	(IOASIC_SLOT_7_START + 0x20000)
 
 struct xcfb_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcmap sc_cmap;		/* software copy of colormap */
-	struct hwcursor sc_cursor;	/* software copy of cursor */
+	struct hwcmap256 sc_cmap;	/* software copy of colormap */
+	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	/* XXX MAXINE can take PMAG-DV virtical retrace interrupt XXX */
 	int nscreens;
 	/* cursor coordiate is located at upper-left corner */
+	int sc_csr;			/* software copy of IMS332 CSR A */
 };
 
 int  xcfbmatch __P((struct device *, struct cfdata *, void *));
@@ -113,6 +116,7 @@ struct cfattach xcfb_ca = {
 void xcfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
 struct fb_devconfig xcfb_console_dc;
 tc_addr_t xcfb_consaddr;
+
 
 struct wsdisplay_emulops xcfb_emulops = {
 	rcons_cursor,
@@ -159,6 +163,7 @@ struct wsdisplay_accessops xcfb_accessops = {
 };
 
 int  xcfb_cnattach __P((tc_addr_t));
+int  xcfbintr __P((void *));
 void xcfbinit __P((struct fb_devconfig *));
 void xcfb_screenblank __P((struct xcfb_softc *));
 
@@ -167,13 +172,15 @@ static int  get_cmap __P((struct xcfb_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct xcfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct xcfb_softc *, struct wsdisplay_curpos *));
-void ims332_loadcmap __P((struct hwcmap *));
+void ims332_loadcmap __P((struct hwcmap256 *));
 void ims332_set_cursor __P((struct xcfb_softc *));
 void ims332_set_curpos __P((struct xcfb_softc *));
 void ims332_load_curcmap __P((struct xcfb_softc *));
 void ims332_load_curshape __P((struct xcfb_softc *));
 u_int32_t ims332_read_reg __P((int));
 void ims332_write_reg __P((int, u_int32_t));
+
+extern long ioasic_base;	/* XXX */
 
 /*
  * Compose 2 bit/pixel cursor image.  
@@ -285,8 +292,8 @@ xcfbattach(parent, self, aux)
 	struct xcfb_softc *sc = (struct xcfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap *cm;
-	int console, i;
+	struct hwcmap256 *cm;
+	int console;
 
 	console = (ta->ta_addr == xcfb_consaddr);
 	if (console) {
@@ -302,12 +309,12 @@ xcfbattach(parent, self, aux)
 	    sc->sc_dc->dc_depth);
 
 	cm = &sc->sc_cmap;
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;
-	for (i = 1; i < CMAP_SIZE; i++) {
-		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
-	}
+	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
+	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
 
-	/* PMAG-DV emits no interrupt */
+	sc->sc_csr = IMS332_BPP_8 | IMS332_CSR_A_VTG_ENABLE;
+
+        tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, xcfbintr, sc);
 
 	waa.console = console;
 	waa.scrdata = &xcfb_screenlist;
@@ -458,7 +465,19 @@ xcfb_cnattach(addr)
         wsdisplay_cnattach(&xcfb_stdscreen, &dcp->dc_rcons,
                            0, 0, defattr);
         xcfb_consaddr = addr;
-        return(0);
+        return (0);
+}
+
+int
+xcfbintr(v)
+	void *v;
+{
+	int intr;
+
+	intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+	intr &= ~XINE_INTR_VINT;
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = intr;
+	return 1;
 }
 
 void
@@ -468,11 +487,32 @@ xcfbinit(dc)
 	u_int32_t csr;
 	int i;
 
-	csr = IMS332_BPP_8 | IMS332_CSR_A_DMA_DISABLE
-		| IMS332_CSR_A_VTG_ENABLE | IMS332_CSR_A_DISABLE_CURSOR;
-	ims332_write_reg(IMS332_REG_CSR_A, csr);
-
+	csr = *(u_int32_t *)(ioasic_base + IOASIC_CSR);
+	csr &= ~XINE_CSR_VDAC_ENABLE;
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = csr;
+	DELAY(50);
+	csr |= XINE_CSR_VDAC_ENABLE;
+	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = csr;
+	DELAY(50);
+	ims332_write_reg(IMS332_REG_BOOT, 0x2c);
+	ims332_write_reg(IMS332_REG_CSR_A,
+		IMS332_BPP_8|IMS332_CSR_A_DISABLE_CURSOR);
+	ims332_write_reg(IMS332_REG_HALF_SYNCH, 0x10);
+	ims332_write_reg(IMS332_REG_BACK_PORCH, 0x21);
+	ims332_write_reg(IMS332_REG_DISPLAY, 0x100);
+	ims332_write_reg(IMS332_REG_SHORT_DIS, 0x5d);
+	ims332_write_reg(IMS332_REG_BROAD_PULSE, 0x9f);
+	ims332_write_reg(IMS332_REG_LINE_TIME, 0x146);
+	ims332_write_reg(IMS332_REG_V_SYNC, 0x0c);
+	ims332_write_reg(IMS332_REG_V_PRE_EQUALIZE, 0x02);
+	ims332_write_reg(IMS332_REG_V_POST_EQUALIZE, 0x02);
+	ims332_write_reg(IMS332_REG_V_BLANK, 0x2a);
+	ims332_write_reg(IMS332_REG_V_DISPLAY, 0x600);
+	ims332_write_reg(IMS332_REG_LINE_START, 0x10);
+	ims332_write_reg(IMS332_REG_MEM_INIT, 0x0a);
 	ims332_write_reg(IMS332_REG_COLOR_MASK, 0xffffff);
+	ims332_write_reg(IMS332_REG_CSR_A,
+		IMS332_BPP_8|IMS332_CSR_A_VTG_ENABLE);
 
 	/* build sane colormap */
 	ims332_write_reg(IMS332_REG_LUT_BASE, 0);
@@ -497,25 +537,11 @@ void
 xcfb_screenblank(sc)
 	struct xcfb_softc *sc;
 {
-	struct fb_devconfig *dc = sc->sc_dc;
-	u_int16_t csr;
-
-	if (dc->dc_blanked) {
-		/* blank screen */
-		ims332_write_reg(IMS332_REG_LUT_BASE, 0);
-		ims332_write_reg(IMS332_REG_COLOR_MASK, 0);
-		csr = ims332_read_reg(IMS332_REG_CSR_A);
-		csr |= IMS332_CSR_A_DISABLE_CURSOR;
-		ims332_write_reg(IMS332_REG_CSR_A, csr);
-	}
-	else {
-		/* restore current colormap */
-		ims332_loadcmap(&sc->sc_cmap);
-		/* turnon hardware cursor */
-		csr = ims332_read_reg(IMS332_REG_CSR_A);
-		csr &= ~IMS332_CSR_A_DISABLE_CURSOR;
-		ims332_write_reg(IMS332_REG_CSR_A, csr);
-	}
+	if (sc->sc_dc->dc_blanked)
+		sc->sc_csr |= IMS332_CSR_A_FORCE_BLANK;
+	else
+		sc->sc_csr &= ~IMS332_CSR_A_FORCE_BLANK;
+	ims332_write_reg(IMS332_REG_CSR_A, sc->sc_csr);
 }
 
 static int
@@ -569,7 +595,6 @@ set_cursor(sc, p)
 {
 #define	cc (&sc->sc_cursor)
 	int v, index, count;
-	u_int32_t csr;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -603,12 +628,11 @@ set_cursor(sc, p)
 	}
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		cc->cc_hot = p->hot;
-		csr = ims332_read_reg(IMS332_REG_CSR_A);
 		if (p->enable)
-			csr &= ~IMS332_CSR_A_DISABLE_CURSOR;
+			sc->sc_csr &= ~IMS332_CSR_A_DISABLE_CURSOR;
 		else
-			csr |= IMS332_CSR_A_DISABLE_CURSOR;
-		ims332_write_reg(IMS332_REG_CSR_A, csr);
+			sc->sc_csr |= IMS332_CSR_A_DISABLE_CURSOR;
+		ims332_write_reg(IMS332_REG_CSR_A, sc->sc_csr);
 	}
 	if (v & WSDISPLAY_CURSOR_DOPOS) {
 		set_curpos(sc, &p->pos);
@@ -649,7 +673,7 @@ set_curpos(sc, curpos)
 
 void
 ims332_loadcmap(cm)
-	struct hwcmap *cm;
+	struct hwcmap256 *cm;
 {
 	int i;
 	u_int32_t rgb;
@@ -666,9 +690,12 @@ ims332_set_curpos(sc)
 {
 	struct wsdisplay_curpos *curpos = &sc->sc_cursor.cc_pos;
 	u_int32_t pos;
+	int s;
 
+	s = spltty();
 	pos = (curpos->x & 0xfff) << 12 | (curpos->y & 0xfff);
 	ims332_write_reg(IMS332_REG_CURSOR_LOC, pos);
+	splx(s);
 }
 
 void
@@ -726,12 +753,12 @@ u_int32_t
 ims332_read_reg(regno)
 	int regno;
 {
-	caddr_t imsreg = (caddr_t)IMS332_ADDRESS;
-	caddr_t rptr = (caddr_t)IMS332_RPTR + (regno << 4);
+	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
+	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_RLOW) + (regno << 4);
 	u_int v0, v1;
 
-	v1 = *(volatile u_int32_t *)imsreg;
-	v0 = *(volatile u_int16_t *)rptr;
+	v1 = *(volatile u_int16_t *)high8;
+	v0 = *(volatile u_int16_t *)low16;
 	return (v1 & 0xff00) << 8 | v0;
 }
 
@@ -740,9 +767,9 @@ ims332_write_reg(regno, val)
 	int regno;
 	u_int32_t val;
 {
-	caddr_t imsreg = (caddr_t)IMS332_ADDRESS;
-	caddr_t wptr = (caddr_t)IMS332_WPTR + (regno << 4);
+	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
+	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_WLOW) + (regno << 4);
 
-	*(volatile u_int32_t *)imsreg = (val & 0xff0000) >> 8;
-	*(volatile u_int16_t *)wptr = val;
+	*(volatile u_int16_t *)high8 = (val & 0xff0000) >> 8;
+	*(volatile u_int16_t *)low16 = val;
 }

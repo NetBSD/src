@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.7 1999/01/29 22:24:24 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.7.4.1 1999/06/21 01:19:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -437,9 +437,17 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 		req = WSKBDIO_COMPLEXBELL;
 #define d (*(int *)data)
 		if (d) {
-			bd.which = WSKBD_BELL_DOPITCH | WSKBD_BELL_DOPERIOD;
-			bd.pitch = d & 0xffff; /* Hz */
-			bd.period = d >> 16; /* ms */
+#define PCVT_SYSBEEPF	1193182
+			if (d >> 16) {
+				bd.which = WSKBD_BELL_DOPERIOD;
+				bd.period = d >> 16; /* ms */
+			}
+			else
+				bd.which = 0;
+			if (d & 0xffff) {
+				bd.which |= WSKBD_BELL_DOPITCH;
+				bd.pitch = PCVT_SYSBEEPF/(d & 0xffff); /* Hz */
+			}
 		} else
 			bd.which = 0; /* default */
 #undef d

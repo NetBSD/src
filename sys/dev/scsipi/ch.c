@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.37.2.1 1999/04/05 16:39:32 bouyer Exp $	*/
+/*	$NetBSD: ch.c,v 1.37.2.1.2.1 1999/06/21 01:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 Jason R. Thorpe <thorpej@and.com>

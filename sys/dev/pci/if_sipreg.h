@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.1 1999/06/01 18:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.1.2.1 1999/06/21 01:18:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.18 1999/02/15 00:32:16 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.18.4.1 1999/06/21 01:19:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -333,7 +333,13 @@ typedef struct {
 #define  USUBCLASS_AUDIOCONTROL	1
 #define  USUBCLASS_AUDIOSTREAM	2
 #define UCLASS_CDC		2 /* communication */
+#define	 USUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
 #define  USUBCLASS_ABSTRACT_CONTROL_MODEL	2
+#define	 USUBCLASS_TELEPHONE_CONTROL_MODEL	3
+#define	 USUBCLASS_MULTICHANNEL_CONTROL_MODEL	4
+#define	 USUBCLASS_CAPI_CONTROLMODEL		5
+#define	 USUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
+#define	 USUBCLASS_ATM_NETWORKING_CONTROL_MODEL	7
 #define   UPROTO_CDC_AT		1
 #define UCLASS_HID		3
 #define  USUBCLASS_BOOT	 	1
@@ -341,6 +347,15 @@ typedef struct {
 #define  USUBCLASS_PRINTER	1
 #define  UPROTO_PRINTER_UNI	1
 #define  UPROTO_PRINTER_BI	2
+#define UCLASS_MASS		8
+#define  USUBCLASS_RBC		1
+#define  USUBCLASS_SFF8020I	2
+#define  USUBCLASS_QIC157	3
+#define  USUBCLASS_UFI		4
+#define  USUBCLASS_SFF8070I	5
+#define  USUBCLASS_SCSI		6
+#define  UPROTO_MASS_CBI_C	0
+#define  UPROTO_MASS_CBI_NC	1
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
@@ -437,7 +452,7 @@ struct usb_device_info {
 	u_int8_t	addr;	/* device address */
 	char		product[USB_MAX_STRING_LEN];
 	char		vendor[USB_MAX_STRING_LEN];
-	char		revision[8];
+	char		release[8];
 	u_int16_t	productNo;
 	u_int16_t	vendorNo;
 	u_int8_t	class;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1999/03/30 07:34:49 tron Exp $
+	$NetBSD: syscalls.master,v 1.9.4.1 1999/06/21 01:07:35 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -147,7 +147,7 @@
 63	NOARGS		{ int sys_getpgrp(void); }
 64	NOARGS		{ int compat_43_sys_getpagesize(void); }
 65	UNIMPL
-66	UNIMPL		osf_vfork
+66	NOARGS		{ int sys___vfork14(void); }
 67	STD		{ int linux_sys_stat(char *path, \
 			    struct linux_stat *sp); }
 68	STD		{ int linux_sys_lstat(char *path, \
@@ -459,7 +459,7 @@
 309	UNIMPL		get_kernel_syms
 310	UNIMPL		syslog
 311	NOARGS		{ int sys_reboot(int opt); }
-312	UNIMPL		clone
+312	UNIMPL		{ int linux_sys_clone(int flags, void *stack); }
 ; XXX XAX does alpha linux really have a.out exec?
 #ifdef EXEC_AOUT
 313	STD		{ int linux_sys_uselib(char *path); }
@@ -499,8 +499,10 @@
 341	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
 342	UNIMPL		nfsservctl
-343	UNIMPL		setresgid
-344	UNIMPL		getresgid
+343	STD		{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
+			    uid_t suid); }
+344	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \
+			    uid_t *suid); }
 345	UNIMPL		pciconfig_read
 346	UNIMPL		pciconfig_write
 347	UNIMPL		query_module

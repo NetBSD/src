@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.6.2.1 1999/05/06 19:23:10 perry Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.6.2.1.2.1 1999/06/21 01:18:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,13 +70,6 @@ struct cfattach ohci_pci_ca = {
 	sizeof(struct ohci_softc), ohci_pci_match, ohci_pci_attach
 };
 
-struct {
-	pcitag_t	tag;
-	int		valid;
-} ohci_pci_console_info;
-
-void ohci_pci_has_console __P((pcitag_t));
-
 int
 ohci_pci_match(parent, match, aux)
 	struct device *parent;
@@ -147,8 +140,9 @@ ohci_pci_attach(parent, self, aux)
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
+	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor));
+		strncpy(sc->sc_vendor, vendor, sizeof(sc->sc_vendor) - 1);
 	else
 		sprintf(sc->sc_vendor, "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	
@@ -159,22 +153,6 @@ ohci_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (ohci_pci_console_info.valid &&
-	    memcmp(&ohci_pci_console_info.tag, &pa->pa_tag,
-	           sizeof(pcitag_t)) == 0)
-		sc->sc_bus.has_console = 1;
-	else
-		sc->sc_bus.has_console = 0;
-
 	/* Attach usb device. */
 	config_found((void *)sc, &sc->sc_bus, usbctlprint);
-}
-
-void
-ohci_pci_has_console(tag)
-	pcitag_t tag;
-{
-
-	ohci_pci_console_info.tag = tag;
-	ohci_pci_console_info.valid = 1;
 }

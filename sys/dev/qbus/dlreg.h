@@ -1,4 +1,4 @@
-/*	$NetBSD: dlreg.h,v 1.3 1999/05/27 16:02:04 ragge Exp $	*/
+/*	$NetBSD: dlreg.h,v 1.3.2.1 1999/06/21 01:18:50 thorpej Exp $	*/
 /*
  * Copyright (c) 1997  Ben Harris.  All rights reserved.
  *

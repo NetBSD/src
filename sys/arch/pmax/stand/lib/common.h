@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 1999/04/11 04:05:46 simonb Exp $	*/
+/*	$NetBSD: common.h,v 1.1.2.1 1999/06/21 00:59:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

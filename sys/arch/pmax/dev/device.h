@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.12 1997/01/31 02:00:56 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.12.24.1 1999/06/21 00:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ struct pmax_scsi_device {
 #define	UNKNOWN -2	/* -2 means not set yet */
 
 /*
- * This structure contains information that a SCSI interface controller 
+ * This structure contains information that a SCSI interface controller
  * needs to execute a SCSI command.
  */
 typedef struct ScsiCmd {

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.3 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops_bitops.h,v 1.3.2.1 1999/06/21 01:19:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

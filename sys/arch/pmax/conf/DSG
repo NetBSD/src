@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.16 1999/02/07 07:14:21 jonathan Exp $
+# 	$NetBSD: DSG,v 1.16.4.1 1999/06/21 00:58:31 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -71,6 +71,11 @@ options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# Netbsd 1.2 reboot()
 
+# Raster console options
+options		FONT_BOLD8x16		# Font for fb devices
+options		FONT_LUCIDA16x29	# Font for px devices
+#options	FONT_GALLANT12x22
+#options	FONT_QVSS8x15
 
 # pmax specific
 options 	COMPAT_ULTRIX	# ultrix compatibility

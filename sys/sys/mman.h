@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.20 1999/02/06 16:14:52 kleink Exp $	*/
+/*	$NetBSD: mman.h,v 1.20.4.1 1999/06/21 01:30:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,14 @@ typedef	_BSD_SIZE_T_	size_t;
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
+
+#ifdef _KERNEL
+/*
+ * Deprecated flag; these are treated as MAP_PRIVATE internally by
+ * the kernel.
+ */
 #define	MAP_COPY	0x0004	/* "copy" region at mmap time */
+#endif
 
 /*
  * Other flags
@@ -91,6 +98,12 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MS_INVALIDATE	0x02	/* invalidate cached data */
 #define	MS_SYNC		0x04	/* perform synchronous writes */
 
+/*
+ * Flags to mlockall
+ */
+#define	MCL_CURRENT	0x01	/* lock all pages currently mapped */
+#define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
+
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Advice to madvise
@@ -100,6 +113,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MADV_SEQUENTIAL	2	/* expect sequential page references */
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
+#define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
 #endif
 
 #ifndef _KERNEL
@@ -118,8 +132,11 @@ int	msync __P((void *, size_t, int))	__RENAME(__msync13);
 #endif
 int	mlock __P((const void *, size_t));
 int	munlock __P((const void *, size_t));
+int	mlockall __P((int));
+int	munlockall __P((void));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	madvise __P((void *, size_t, int));
+int	mincore __P((void *, size_t, char *));
 int	minherit __P((void *, size_t, int));
 #endif
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 1999/05/23 02:46:35 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.1.2.1 1999/06/21 01:02:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath

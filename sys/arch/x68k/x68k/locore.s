@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41.2.1 1999/04/30 17:38:24 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.41.2.1.2.1 1999/06/21 01:04:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 
@@ -266,36 +267,51 @@ Lisberr:
 /*
  * FP exceptions.
  */
-_fpfline:
+#include "opt_fpuemulate.h"
+ENTRY_NOPROFILE(fpfline)
 #if defined(M68040)
+	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
+	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
-	jne	_illinst		| no, not an FP emulation
+	jne	_C_LABEL(illinst)	| no, not an FP emulation
 #ifdef FPSP
-	.globl fpsp_unimp
-	jmp	fpsp_unimp		| yes, go handle it
+	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
 	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
+Lfp_unimp:
+#endif
+#ifdef FPU_EMULATE
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
 #else
-	jra	_illinst
+	jra	_C_LABEL(illinst)
 #endif
 
-_fpunsupp:
+ENTRY_NOPROFILE(fpunsupp)
 #if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	_illinst		| no, treat as illinst
+	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040?
+	jne	Lfp_unsupp		| no, skip FPSP
 #ifdef FPSP
-	.globl	fpsp_unsupp
-	jmp	fpsp_unsupp		| yes, go handle it
+	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
 	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
+Lfp_unsupp:
+#endif
+#ifdef FPU_EMULATE
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
 #else
 	jra	_illinst
 #endif
@@ -1633,6 +1649,23 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,sp@		| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
+	rts
+
+/*
+ * _delay(u_int N)
+ *
+ * Delay for at least (N/256) microsecends.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
+ */
+ENTRY_NOPROFILE(_delay)
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor
+	movl	_C_LABEL(delay_divisor),d1
+L_delay:
+	subl	d1,d0
+	jgt	L_delay
 	rts
 
 /*

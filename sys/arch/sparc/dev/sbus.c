@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.34.2.1 1999/04/14 21:18:30 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.34.2.1.2.1 1999/06/21 01:01:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1999/04/08 05:07:35 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45.4.1 1999/06/21 01:03:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1922,7 +1922,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 * and, possibly, associated parent tables if this is a
 		 * change wiring operation.  Currently it does not.
 		 *
-		 * This may be ok if pmap_change_wiring() is the only
+		 * This may be ok if pmap_unwire() is the only
 		 * interface used to UNWIRE a page.
 		 */
 
@@ -2341,20 +2341,17 @@ pmap_protect_kernel(startva, endva, prot)
 	}
 }
 
-/* pmap_change_wiring			INTERFACE
+/* pmap_unwire				INTERFACE
  **
- * Changes the wiring of the specified page.
+ * Clear the wired attribute of the specified page.
  *
  * This function is called from vm_fault.c to unwire
- * a mapping.  It really should be called 'pmap_unwire'
- * because it is never asked to do anything but remove
- * wirings.
+ * a mapping.
  */
 void
-pmap_change_wiring(pmap, va, wire)
+pmap_unwire(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
-	boolean_t wire;
 {
 	int a_idx, b_idx, c_idx;
 	a_tmgr_t *a_tbl;
@@ -2366,11 +2363,6 @@ pmap_change_wiring(pmap, va, wire)
 	if (pmap == pmap_kernel())
 		return;
 
-#ifdef	PMAP_DEBUG
-	if (wire == TRUE)
-		panic("pmap_change_wiring: wire requested.");
-#endif
-	
 	/*
 	 * Walk through the tables.  If the walk terminates without
 	 * a valid PTE then the address wasn't wired in the first place.
@@ -2407,26 +2399,6 @@ pmap_change_wiring(pmap, va, wire)
 			}
 		}
 	}
-}
-
-/* pmap_pageable			INTERFACE
- **
- * Make the specified range of addresses within the given pmap,
- * 'pageable' or 'not-pageable'.  A pageable page must not cause
- * any faults when referenced.  A non-pageable page may.
- *
- * This routine is only advisory.  The VM system will call pmap_enter()
- * to wire or unwire pages that are going to be made pageable before calling
- * this function.  By the time this routine is called, everything that needs
- * to be done has already been done.
- */
-void
-pmap_pageable(pmap, start, end, pageable)
-	pmap_t pmap;
-	vm_offset_t start, end;
-	boolean_t pageable;
-{
-	/* not implemented. */
 }
 
 /* pmap_copy				INTERFACE

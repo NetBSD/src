@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.8 1999/03/25 19:55:37 simonb Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.8.4.1 1999/06/21 00:59:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -89,7 +89,6 @@
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn01.h>
 
@@ -106,18 +105,21 @@ void		dec_3100_bus_reset __P((void));
 void		dec_3100_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_3100_intr __P((u_int mask, u_int pc,
-			      u_int statusReg, u_int causeReg));
-
+int		dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3100_cons_init __P((void));
 void		dec_3100_device_register __P((struct device *, void *));
 
 static void	dec_3100_errintr __P((void));
 
-void
-dec_3100_intr_establish __P((void* cookie, int level,
+void	dec_3100_intr_establish __P((void* cookie, int level,
 			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
 void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
+
+extern unsigned nullclkread __P((void));
+extern unsigned (*clkread) __P((void));
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
 
 
 /*
@@ -126,8 +128,7 @@ void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
 void
 dec_3100_init()
 {
-
-	platform.iobus = "ibus";
+	platform.iobus = "baseboard";
 
 	platform.os_init = dec_3100_os_init;
 	platform.bus_reset = dec_3100_bus_reset;
@@ -148,15 +149,18 @@ dec_3100_os_init()
 	 */
 	mips_hardware_intr = dec_3100_intr;
 	tc_enable_interrupt = dec_3100_enable_intr; /*XXX*/
-	Mach_splbio = cpu_spl0;
-	Mach_splnet = cpu_spl1;
-	Mach_spltty = cpu_spl2;
-	Mach_splimp = splhigh; /*XXX Mach_spl1(), if not for malloc()*/
-	Mach_splclock = cpu_spl3;
-	Mach_splstatclock = cpu_spl3;
+	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
+
+	splvec.splbio = MIPS_SPL0;
+	splvec.splnet = MIPS_SPL_0_1;
+	splvec.spltty = MIPS_SPL_0_1_2;
+	splvec.splimp = MIPS_SPLHIGH;				/* ??? */
+	splvec.splclock = MIPS_SPL_0_1_2_3;
+	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 }
 
@@ -195,7 +199,7 @@ dec_3100_device_register(dev, aux)
  */
 void
 dec_3100_enable_intr(slotno, handler, sc, on)
-	register unsigned int slotno;
+	unsigned int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
@@ -215,31 +219,32 @@ dec_3100_enable_intr(slotno, handler, sc, on)
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
 int
-dec_3100_intr(mask, pc, statusReg, causeReg)
+dec_3100_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+	unsigned status;
+	unsigned cause;
 {
-	register volatile struct chiptime *c =
-	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-	struct clockframe cf;
-	int temp;
-
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_3) {
-		temp = c->regc;	/* XXX clear interrupt bits */
+		struct clockframe cf;
+		struct chiptime *clk;
+		volatile int temp;
+
+		clk = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
+		temp = clk->regc;	/* XXX clear interrupt bits */
+
 		cf.pc = pc;
-		cf.sr = statusReg;
+		cf.sr = status;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
 		/* keep clock interrupts enabled when we return */
-		causeReg &= ~MIPS_INT_MASK_3;
+		cause &= ~MIPS_INT_MASK_3;
 	}
 
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_3));
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
 
 #if NSII > 0
 	if (mask & MIPS_INT_MASK_0) {
@@ -272,8 +277,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 		dec_3100_errintr();
 		intrcnt[ERROR_INTR]++;
 	}
-	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		MIPS_SR_INT_ENA_CUR);
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 void

@@ -1,5 +1,5 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.2 1999/03/31 14:29:58 mycroft Exp $
-# 	From: GENERIC,v 1.76 1999/01/17 20:45:26 pk Exp
+# 	$NetBSD: BILL-THE-CAT,v 1.2.4.1 1999/06/21 01:01:39 thorpej Exp $
+# 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
 
@@ -23,8 +23,11 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE	# fast rasterop console
-
+#options 	RASTERCONSOLE		# fast rasterop console
+#options 	FONT_GALLANT12x22	# the console font
+#options 	FONT_BOLD8x16		# a somewhat smaller font
+#options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
+#options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
@@ -123,7 +126,7 @@ options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
+options 	COMPAT_AOUT	# NetBSD a.out compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -530,6 +533,5 @@ pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
-## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
 pseudo-device	rnd

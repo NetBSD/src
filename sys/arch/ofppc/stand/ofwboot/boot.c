@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1998/02/22 07:42:31 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.4.10.1 1999/06/21 00:55:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ aout_exec(fd, hdr, entryp, esymp)
 		printf("read text: %s\n", strerror(errno));
 		return (1);
 	}
-	syncicache((void *)paddr, hdr->a_text);
+	__syncicache((void *)paddr, hdr->a_text);
 
 	/* Load data. */
 	printf("+%lu", hdr->a_data);
@@ -373,7 +373,7 @@ elf_exec(fd, elf, entryp, esymp)
 			printf("read segment: %s\n", strerror(errno));
 			return (1);
 		}
-		syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
+		__syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
 
 		/* Zero BSS. */
 		if (phdr.p_filesz < phdr.p_memsz) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.39.2.1 1999/05/05 20:59:12 perry Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.39.2.1.2.1 1999/06/21 01:24:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -810,7 +810,7 @@ unp_externalize(rights)
 	int f, error = 0;
 
 	/* Make sure the recipient should be able to see the descriptors.. */
-	if (p->p_fd->fd_rdir != NULL) {
+	if (p->p_cwdi->cwdi_rdir != NULL) {
 		rp = (struct file **)ALIGN(cm + 1);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
@@ -823,7 +823,7 @@ unp_externalize(rights)
 			if (fp->f_type == DTYPE_VNODE) {
 				struct vnode *vp = (struct vnode *)fp->f_data;
 				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_fd->fd_rdir, p)) {
+				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
 					error = EPERM;
 					break;
 				}
@@ -908,7 +908,8 @@ unp_internalize(control, p)
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
 		if ((unsigned)fd >= fdescp->fd_nfiles ||
-		    fdescp->fd_ofiles[fd] == NULL)
+		    fdescp->fd_ofiles[fd] == NULL ||
+		    (fdescp->fd_ofiles[fd]->f_iflags & FIF_WANTCLOSE) != 0)
 			return (EBADF);
 	}
 
@@ -946,9 +947,11 @@ morespace:
 	rp = ((struct file **)ALIGN(cm + 1)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*fdp--];
+		FILE_USE(fp);
 		*rp-- = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
+		FILE_UNUSE(fp, NULL);
 		unp_rights++;
 	}
 	return (0);
@@ -1173,11 +1176,16 @@ unp_gc()
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
+		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
+		FILE_UNUSE(fp, NULL);
 	}
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		(void) closef(*fpp, (struct proc *)0);
+	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
+		fp = *fpp;
+		FILE_USE(fp);
+		(void) closef(fp, (struct proc *)0);
+	}
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
@@ -1264,6 +1272,7 @@ unp_discard(fp)
 {
 	if (fp == NULL)
 		return;
+	FILE_USE(fp);
 	fp->f_msgcount--;
 	unp_rights--;
 	(void) closef(fp, (struct proc *)0);

@@ -1,19 +1,21 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 1999/06/21 01:25:34 thorpej Exp $
 
 LIB=	z
 MKPIC=	no
 MKPROFILE=no
 
-CPPFLAGS=	-I. ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
+CPPFLAGS=	-I${ZDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
+
+.PATH.c: ${ZDIR}
 
 # files to be copied down from libz.
 LIBZSRCS= adler32.c crc32.c infblock.c infcodes.c inffast.c \
-        inflate.c inftrees.c infutil.c
+        inflate.c inftrees.c infutil.c uncompr.c
 LIBZHDRS= infblock.h infcodes.h inffast.h inftrees.h infutil.h \
 	zconf.h zlib.h zutil.h
 
 # Other stuff
-SRCS=	${LIBZSRCS}
+SRCS=	${LIBZSRCS} zalloc.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o
@@ -29,6 +31,10 @@ lib${LIB}.o:: ${OBJS}
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
 update-sources:
-	for file in ${LIBZSRCS} ${LIBZHDRS}; do \
-		cp ${.CURDIR}/../../../lib/libz/$$file ${.CURDIR}; \
+	-@for file in ${LIBZSRCS} ${LIBZHDRS}; do \
+		tail +2 ${.CURDIR}/../../../lib/libz/$$file > .tmp1.$$file ; \
+		tail +2 ${.CURDIR}/$$file > .tmp2.$$file ; \
+		cmp -s .tmp1.$$file .tmp2.$$file || ( echo Updating $$file ; \
+		  cp ${.CURDIR}/../../../lib/libz/$$file ${.CURDIR} ) ; \
+		rm .tmp1.$$file .tmp2.$$file ; \
 	done

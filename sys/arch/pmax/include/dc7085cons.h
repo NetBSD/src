@@ -1,4 +1,4 @@
-/*	$NetBSD: dc7085cons.h,v 1.4 1994/10/26 21:09:36 cgd Exp $	*/
+/*	$NetBSD: dc7085cons.h,v 1.4.30.1 1999/06/21 00:58:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  *	without express or implied warranty.
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/dc7085.h,
- *      
+ *
  *	v 1.4 89/08/15 19:52:46 rab Exp  SPRITE (DECWRL)
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.1 1999/06/07 04:25:37 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.17.2.1.2.2 1999/06/21 01:47:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -386,6 +386,7 @@ uvm_pageboot_alloc(size)
 
 #else /* !PMAP_STEAL_MEMORY */
 
+	static boolean_t initialized = FALSE;
 	vaddr_t addr, vaddr;
 	paddr_t paddr;
 
@@ -393,23 +394,39 @@ uvm_pageboot_alloc(size)
 	size = round_page(size);
 
 	/*
-	 * on first call to this function init ourselves.   we detect this
-	 * by checking virtual_space_start/end which are in the zero'd BSS area.
+	 * on first call to this function, initialize ourselves.
 	 */
-
-	if (virtual_space_start == virtual_space_end) {
+	if (initialized == FALSE) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 
 		/* round it the way we like it */
 		virtual_space_start = round_page(virtual_space_start);
 		virtual_space_end = trunc_page(virtual_space_end);
+
+		initialized = TRUE;
 	}
 
 	/*
 	 * allocate virtual memory for this request
 	 */
+	if (virtual_space_start == virtual_space_end ||
+	    (virtual_space_end - virtual_space_start) < size)
+		panic("uvm_pageboot_alloc: out of virtual space");
 
 	addr = virtual_space_start;
+
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * If the kernel pmap can't map the requested space,
+	 * then allocate more resources for it.
+	 */
+	if (uvm_maxkaddr < (addr + size)) {
+		uvm_maxkaddr = pmap_growkernel(addr + size);
+		if (uvm_maxkaddr < (addr + size))
+			panic("uvm_pageboot_alloc: pmap_growkernel() failed");
+	}
+#endif
+
 	virtual_space_start += size;
 
 	/*
@@ -424,6 +441,10 @@ uvm_pageboot_alloc(size)
 
 		/* XXX: should be wired, but some pmaps don't like that ... */
 #if defined(PMAP_NEW)
+		/*
+		 * Note this memory is no longer managed, so using
+		 * pmap_kenter is safe.
+		 */
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
 #else
 		pmap_enter(pmap_kernel(), vaddr, paddr,
@@ -829,9 +850,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		panic("uvm_pagealloc: obj and anon != NULL");
 #endif
 
-	s = splimp();
-
-	uvm_lock_fpageq();		/* lock free page queue */
+	s = uvm_lock_fpageq();		/* lock free page queue */
 
 	/*
 	 * check to see if we need to generate some free pages waking
@@ -854,7 +873,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 */
 
 	use_reserve = (flags & UVM_PGA_USERESERVE) ||
-		(obj && obj->uo_refs == UVM_OBJ_KERN);
+		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
 	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
 	     !(use_reserve && curproc == uvm.pagedaemon_proc)))
@@ -903,8 +922,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	TAILQ_REMOVE(freeq, pg, pageq);
 	uvmexp.free--;
 
-	uvm_unlock_fpageq();		/* unlock free page queue */
-	splx(s);
+	uvm_unlock_fpageq(s);		/* unlock free page queue */
 
 	pg->offset = off;
 	pg->uobject = obj;
@@ -929,8 +947,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	return(pg);
 
  fail:
-	uvm_unlock_fpageq();
-	splx(s);
+	uvm_unlock_fpageq(s);
 	return (NULL);
 }
 
@@ -1078,8 +1095,7 @@ uvm_pagefree(pg)
 	 * and put on free queue 
 	 */
 
-	s = splimp();
-	uvm_lock_fpageq();
+	s = uvm_lock_fpageq();
 	TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)],
 	    pg, pageq);
 	pg->pqflags = PQ_FREE;
@@ -1089,8 +1105,7 @@ uvm_pagefree(pg)
 	pg->uanon = (void *)0xdeadbeef;
 #endif
 	uvmexp.free++;
-	uvm_unlock_fpageq();
-	splx(s);
+	uvm_unlock_fpageq(s);
 }
 
 #if defined(UVM_PAGE_TRKOWN)

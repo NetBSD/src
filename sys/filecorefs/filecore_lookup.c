@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.3.2.1 1999/04/10 12:12:34 tron Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.3.2.1.2.1 1999/06/21 01:21:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry

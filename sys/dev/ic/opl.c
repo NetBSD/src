@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.7.6.1 1999/06/21 01:17:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /*
  * The OPL3 (YMF262) manual can be found at
- * ftp://ftp.yamahayst.com/pub/Fax_Back_Doc/Sound/YMF262.PDF
+ * ftp://ftp.yamahayst.com/Fax_Back_Doc/sound/YMF262.PDF
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.2.1 1999/04/16 16:21:48 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.2.1.2.1 1999/06/21 00:55:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,6 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#include "opt_sysv.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>
@@ -87,9 +86,8 @@ int astpending;
 
 char *bootpath;
 
-#define MSGBUFADDR 0x3000
-
-caddr_t allocsys __P((caddr_t));
+paddr_t msgbuf_paddr;
+vaddr_t msgbuf_vaddr;
 
 static int fake_spl __P((void));
 static int fake_splx __P((int));
@@ -235,7 +233,7 @@ initppc(startkernel, endkernel, args)
 #endif /* DDB || NIPKDB > 0 */
 		}
 
-	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -357,8 +355,8 @@ install_extint(handler)
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
-	syncicache((void *)&extint_call, sizeof extint_call);
-	syncicache((void *)EXC_EXI, (int)&extsize);
+	__syncicache((void *)&extint_call, sizeof extint_call);
+	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
@@ -372,28 +370,36 @@ cpu_startup()
 	caddr_t v;
 	paddr_t minaddr, maxaddr;
 	int base, residual;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
+	char pbuf[9];
 
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
 
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+		panic("startup: no room for message buffer");
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
+		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+
 	printf("%s", version);
 	identifycpu();
 
-	printf("real mem = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	sz = (int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, NULL) - v != sz)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -446,19 +452,19 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				 VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use direct-mapped
+	 * pool pages.
 	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts.
@@ -467,9 +473,10 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	printf("avail memory = %d\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	       nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
@@ -495,52 +502,6 @@ cpu_startup()
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
-}
-
-/*
- * Allocate space for system data structures.
- */
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-#define	valloc(name, type, num) \
-	v = (caddr_t)(((name) = (type *)v) + (num))
-
-	valloc(callout, struct callout, ncallout);
-#ifdef	SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef	SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof (int));
-#endif
-#ifdef	SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Decide on buffer space to use.
-	 */
-	if (bufpages == 0)
-		bufpages = (physmem / 20) / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;
-		if (nswbuf > 256)
-			nswbuf = 256;
-	}
-	valloc(buf, struct buf, nbuf);
-
-	return (v);
 }
 
 /*
@@ -727,7 +688,6 @@ sys___sigreturn14(p, v, retval)
 
 /*
  * Machine dependent system variables.
- * None for now.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -742,7 +702,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);
+
 	switch (name[0]) {
+	case CPU_CACHELINE:
+		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
 	default:
 		return (EOPNOTSUPP);
 	}

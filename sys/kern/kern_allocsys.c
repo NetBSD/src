@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.4 1999/06/01 00:40:48 lukem Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.4.2.1 1999/06/21 01:24:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

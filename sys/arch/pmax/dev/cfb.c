@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.29.10.2 1999/04/12 21:27:05 pk Exp $	*/
+/*	$NetBSD: cfb.c,v 1.29.10.2.2.1 1999/06/21 00:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -346,7 +346,7 @@ cfb_intr(sc)
 {
 	struct fbinfo *fi = (struct fbinfo *)sc;
 	char *slot_addr = (((char *)fi->fi_base) - CFB_OFFSET_VRAM);
-	
+
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr+CFB_OFFSET_IREQ) = 0;
 

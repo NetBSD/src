@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.10 1999/03/27 17:58:20 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.10.4.1 1999/06/21 01:02:29 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -19,8 +19,9 @@ options		__ELF__		# we use elf
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE	# fast rasterop console
-
+#options 	RASTERCONSOLE		# fast rasterop console
+#options	FONT_GALLANT12x22	# the console font
+#options	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -221,13 +222,13 @@ ms0	at zs1 channel 1	# mouse
 ## called `se' and `su'
 
 ## Part of a PC87332VLJ?
-#se0	at ebus?		# 
-#kbd0	at su1 channel 0	# keyboard
-#ms0	at su1 channel 1	# mouse
-
-## These are two SAB82532 controllers
 #su0	at ebus?		# ttya
 #su1	at ebus?		# ttyb
+#kbd0	at su0			# keyboard
+#ms0	at su1			# mouse
+
+## This is the SAB82532 DUART
+#se0	at ebus?		# 
 
 
 #### Disk controllers and disks

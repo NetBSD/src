@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1999/02/15 18:59:36 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.4.4.1 1999/06/21 01:01:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,12 +40,14 @@
 #include <a.out.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
 
+#include "bootinfo.h"
+
 static int	bootoptions __P((char *));
-void		loadfile __P((int, caddr_t));
 #if 0
 static void	promsyms __P((int, struct exec *));
 #endif
@@ -117,7 +119,16 @@ main()
 	int	io, i;
 	char	*kernel;
 	int	how;
+	u_long	marks[MARK_MAX], bootinfo;
+	struct btinfo_symtab bi_sym;
+	void	*arg;
 
+#ifdef HEAP_VARIABLE
+	{
+		extern char end[];
+		setheap((void *)ALIGN(end), (void *)0xffffffff);
+	}
+#endif
 	prom_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
@@ -160,10 +171,11 @@ main()
 			}
 		}
 
-		if ((io = open(kernel, 0)) >= 0)
+		marks[MARK_START] = 0;
+		printf("Booting %s\n", kernel);
+		if ((io = loadfile(kernel, marks, LOAD_KERNEL)) != -1)
 			break;
-		printf("open: %s: %s", kernel, strerror(errno));
-
+			
 		/*
 		 * if we have are not in askname mode, and we aren't using the
 		 * prom bootfile, try the next one (if it exits).  otherwise,
@@ -179,176 +191,23 @@ main()
 		}
 	}
 
-	/*
-	 * XXX
-	 * make loadfile() return a value, so that if the load of the kernel
-	 * fails, we can jump back and try another kernel in the list.
-	 */
-	printf("Booting %s @ %p\n", kernel, PROM_LOADADDR);
-	loadfile(io, PROM_LOADADDR);
+	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
+	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
+#if 0
+	/* Old style cruft; works only with a.out */
+	marks[MARK_END] |= 0xf0000000;
+	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, marks[MARK_END],
+	    DDB_MAGIC1);
+#else
+	/* Should work with both a.out and ELF, but somehow ELF is busted */
+	bootinfo = bi_init(marks[MARK_END]);
+	bi_sym.nsym = marks[MARK_NSYM];
+	bi_sym.ssym = marks[MARK_SYM];
+	bi_sym.esym = marks[MARK_END];
+	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
+	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, bootinfo, DDB_MAGIC2);
+#endif
 
 	_rtt();
 }
-
-void
-loadfile(io, addr)
-	int	io;
-	caddr_t addr;
-{
-	entry_t entry = (entry_t)PROM_LOADADDR;
-	void *arg;
-	struct exec x;
-	int i;
-
-	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) ||
-	    N_BADMAG(x)) {
-		printf("Bad format\n");
-		return;
-	}
-	printf("%ld", x.a_text);
-	if (N_GETMAGIC(x) == ZMAGIC) {
-		entry = (entry_t)(addr+sizeof(struct exec));
-		addr += sizeof(struct exec);
-	}
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
-		goto shread;
-	addr += x.a_text;
-	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & __LDPGSZ)
-			*addr++ = 0;
-	printf("+%ld", x.a_data);
-	if (read(io, addr, x.a_data) != x.a_data)
-		goto shread;
-	addr += x.a_data;
-	printf("+%ld", x.a_bss);
-	for (i = 0; i < x.a_bss; i++)
-		*addr++ = 0;
-	if (x.a_syms != 0) {
-		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
-		addr += sizeof(x.a_syms);
-		printf("+[%ld", x.a_syms);
-		if (read(io, addr, x.a_syms) != x.a_syms)
-			goto shread;
-		addr += x.a_syms;
-
-		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
-			goto shread;
-
-		bcopy(&strtablen, addr, sizeof(int));
-		if ((i = strtablen) != 0) {
-			i -= sizeof(int);
-			addr += sizeof(int);
-			if (read(io, addr, i) != i)
-			    goto shread;
-			addr += i;
-		}
-		printf("+%d]", i);
-		esym = ((u_int)x.a_entry - (u_int)PROM_LOADADDR) +
-			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
-#if 0
-		/*
-		 * The FORTH word `loadsyms' is mentioned in the
-		 * "Openboot command reference" book, but it seems it has
-		 * not been implemented on at least one machine..
-		 */
-		promsyms(io, &x);
-#endif
-	}
-	printf("=%p\n", addr);
-	close(io);
-
-	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
-	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
-	(*entry)(arg, 0, 0, 0, esym, DDB_MAGIC1);
-	return;
-
-shread:
-	printf("boot: short read\n");
-	return;
-}
-
-#if 0
-struct syms {
-	u_int32_t	value;
-	u_int32_t	index;
-};
-
-static void
-sort(syms, n)
-	struct syms *syms;
-	int n;
-{
-	register struct syms *sj;
-	register int i, j, k;
-	register u_int32_t value, index;
-
-	/* Insertion sort.  This is O(n^2), but so what? */
-	for (i = 1; i < n; i++) {
-		/* save i'th entry */
-		value = syms[i].value;
-		index = syms[i].index;
-		/* find j such that i'th entry goes before j'th */
-		for (j = 0, sj = syms; j < i; j++, sj++)
-			if (value < sj->value)
-				break;
-		/* slide up any additional entries */
-		for (k = 0; k < (i - j); k++) {
-			sj[k+1].value = sj[k].value;
-			sj[k+1].index = sj[k].index;
-		}
-		sj->value = value;
-		sj->index = index;
-	}
-}
-
-void
-promsyms(fd, hp)
-	int fd;
-	struct exec *hp;
-{
-	int i, n, strtablen;
-	char *str, *p, *cp, buf[128];
-	struct syms *syms;
-
-	lseek(fd, sizeof(*hp)+hp->a_text+hp->a_data, SEEK_SET);
-	n = hp->a_syms/sizeof(struct nlist);
-	if (n == 0)
-		return;
-	syms = (struct syms *)alloc(n * sizeof(struct syms));
-
-	printf("+[%x+", hp->a_syms);
-	for (i = 0; i < n; i++) {
-		struct nlist nlist;
-
-		if (read(fd, &nlist, sizeof(nlist)) != sizeof(nlist)) {
-			printf("promsyms: read failed\n");
-			return;
-		}
-		syms[i].value = nlist.n_value;
-		syms[i].index = nlist.n_un.n_strx - sizeof(strtablen);
-	}
-
-	sort(syms, n);
-
-	if (read(fd, &strtablen, sizeof(strtablen)) != sizeof(strtablen)) {
-		printf("promsym: read failed (strtablen)\n");
-		return;
-	}
-	if (strtablen < sizeof(strtablen)) {
-		printf("promsym: string table corrupted\n");
-		return;
-	}
-	strtablen -= sizeof(strtablen);
-	str = (char *)alloc(strtablen);
-
-	printf("%x]", strtablen);
-	if (read(fd, str, strtablen) != strtablen) {
-		printf("promsym: read failed (strtab)\n");
-		return;
-	}
-
-	sprintf(buf, "%x %d %x loadsyms", syms, n, str);
-	prom_interpret(buf);
-}
-#endif

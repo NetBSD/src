@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.27.8.2 1999/04/12 21:27:05 pk Exp $	*/
+/*	$NetBSD: sfb.c,v 1.27.8.2.2.1 1999/06/21 00:58:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -301,7 +301,7 @@ sfbinit(fi, base, unit, silent)
 	fi->fi_fbu->scrInfo.max_col = 80;
 
 #if defined(DEBUG) || defined(SFBDEBUG)
-	printf(" (tty %d rows by %d cols) ", 
+	printf(" (tty %d rows by %d cols) ",
 	       fi->fi_fbu->scrInfo.max_row, fi->fi_fbu->scrInfo.max_col);
 #endif
 	init_pmaxfbu(fi);
@@ -333,12 +333,13 @@ sfbinit(fi, base, unit, silent)
 
 
 /*
- * The  TURBOChannel sfb interrupts by default on every vertical retrace,
+ * The TURBOChannel sfb interrupts by default on every vertical retrace,
  * and we don't know to disable those interrupt requests.
- * The 4.4BSD/pamx kernel never enabled delivery of those interrupts from the TC bus,
- * but there's a kernel design bug on the 3MIN, where disabling
- * (or enabling) TC option interrupts has no effect; each slot interrupt is
- * mapped directly to a separate R3000 interrupt  and they always seem to be taken.
+ * The 4.4BSD/pmax kernel never enabled delivery of those interrupts
+ * from the TC bus, but there's a kernel design bug on the 3MIN, where
+ * disabling (or enabling) TC option interrupts has no effect; each slot
+ * interrupt is mapped directly to a separate R3000 interrupt and they
+ * always seem to be taken.
  *
  * This function simply dismisses SFB interrupts, or the interrupt
  * request from the card will still be active.
@@ -349,7 +350,7 @@ sfb_intr(sc)
 {
 	struct fbinfo *fi = (struct fbinfo *)sc;
 	char *slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
-	
+
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr + SFB_CLEAR) = 0;
 

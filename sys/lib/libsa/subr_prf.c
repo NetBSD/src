@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.1 1999/02/13 20:56:58 pk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.1.4.1 1999/06/21 01:25:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -176,6 +176,7 @@ reswitch:	switch (ch = *fmt++) {
 		case 'p':
 			put('0');
 			put('x');
+			lflag = 1;
 			/* fall through */
 		case 'x':
 			ul = lflag ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.10.6.1 1999/04/30 15:29:06 perry Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.10.6.1.2.1 1999/06/21 01:06:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

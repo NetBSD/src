@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.1 1999/06/06 18:58:50 ragge Exp $ */
+/* $NetBSD: sgmap.h,v 1.1.2.1 1999/06/21 01:03:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.3 1998/11/19 15:38:24 mrg Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.3.6.1 1999/06/21 01:02:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -155,7 +155,7 @@ cgeightmatch(parent, cf, aux)
 	/*
 	 * Make sure there's hardware there.
 	 */
-	if (probeget(ra->ra_vaddr, 4) == -1)
+	if (probeget(ra->ra_vaddr, ASI_PRIMARY, 4) == -1)
 		return (0);
 
 #if defined(SUN4)

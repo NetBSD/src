@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 1999/04/04 06:57:39 explorer Exp $
+#	$NetBSD: Makefile,v 1.3.2.1.2.1 1999/06/21 01:27:31 thorpej Exp $
 
 KDIR=	/sys/net
 INCSDIR= /usr/include/net

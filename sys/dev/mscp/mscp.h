@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.h,v 1.6 1999/05/29 19:11:16 ragge Exp $	*/
+/*	$NetBSD: mscp.h,v 1.6.2.1 1999/06/21 01:18:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.

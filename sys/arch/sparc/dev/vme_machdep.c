@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.17.2.1 1999/04/14 21:15:49 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.17.2.1.2.1 1999/06/21 01:01:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

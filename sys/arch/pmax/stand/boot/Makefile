@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/31 02:35:14 simonb Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 1999/06/21 00:59:09 thorpej Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -6,7 +6,6 @@ S=	${.CURDIR}/../../../..
 PROG=		boot
 RELOC=		80710000
 BINMODE=	555
-MKMAN=		no
 SRCS=		start.S boot.c
 NEWVERSWHAT=	"Secondary Boot"
 VERSIONFILE=	${.CURDIR}/version

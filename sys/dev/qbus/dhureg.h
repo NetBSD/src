@@ -1,4 +1,4 @@
-/*	$NetBSD: dhureg.h,v 1.4 1999/05/28 20:17:29 ragge Exp $	*/
+/*	$NetBSD: dhureg.h,v 1.4.2.1 1999/06/21 01:18:49 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.22 1999/03/29 17:23:45 augustss Exp $
+$NetBSD: usbdevs,v 1.22.4.1 1999/06/21 01:19:30 thorpej Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,39 +42,43 @@ $NetBSD: usbdevs,v 1.22 1999/03/29 17:23:45 augustss Exp $
  */
 
 vendor NEC		0x0409	NEC
-vendor KODAK		0x040a	Eastman Kodak
-/* Computer Access Technology Corporation */
-vendor CATC		0x0423	CATC
-vendor NANAO		0x0440	Nanao
-vendor UNIXTAR		0x0451  Unixtar
-vendor GENIUS		0x0458	Genius
+vendor KODAK		0x040a	Eastman Kodak co.
+vendor CATC		0x0423	Computer Access Technology Corp.
+vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
+vendor NANAO		0x0440	NANAO Corporation
+vendor TI		0x0451  Texas Instruments
+vendor GENIUS		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
-vendor KENSINGTON	0x0461	Kensington
-vendor CHERRY		0x046a	Cherry
-/* Behavior Technology Corporation */
-vendor BTC		0x046e	BTC
+vendor KENSINGTON	0x0461	Primax Electronics
+vendor CHERRY		0x046a	Cherry Mikroschalter GMBH
+vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
-vendor CONNECTIX	0x0478	Connectix
-vendor ACER		0x04a5	Acer Peripherals
+vendor CONNECTIX	0x0478	Connectix Corp.
+vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
-vendor EPSON		0x04b8	Epson
-vendor 3COM		0x04c1	3Com
+vendor EPSON		0x04b8	Seiko Epson Corp.
+vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
-vendor JAZZ		0x04fa	Jazz
-vendor AKS		0x0529	Aladdin Knowledge Systems
-vendor ATEN		0x0557	ATen
-vendor PERACOM		0x0565	Peracom
+vendor BROTHER		0x04f9	Brother Industries Corp.
+vendor JAZZ		0x04fa	Dallas Semiconductor
+vendor AKS		0x0529	Fast Security AG
+vendor VISION		0x0533	Alcatel Mobile Phones
+vendor ATEN		0x0557	ATEN International Co. ltd.
+vendor PERACOM		0x0565	Peracom Networks, Inc.
+vendor WACOM		0x056a	WACOM Co. Ltd.
 vendor EIZO		0x056d	EIZO
-vendor AGILER		0x056e	Agiler
-vendor BELKIN		0x05ab	Belkin
-vendor LOGITECH		0x05ac	Logitech
+vendor AGILER		0x056e	Elecom Co., Ltd.
+vendor IOMEGA		0x059b	Iomega Corporation
+vendor BELKIN		0x05ab	In-System Design
+vendor LOGITECH		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
+vendor MACALLY		0x0618	Macally
 vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
-vendor ENTREGA		0x1645	Entrega
 vendor INSIDEOUT	0x1608	Inside Out Networks
+vendor ENTREGA		0x1645	Entrega
 vendor INTEL		0x8086	Intel
 
 /*
@@ -91,8 +95,11 @@ product KODAK DC260		0x0110	Digital Science DC260
 /* CATC products */
 product CATC ANDROMEDA		0x1237	Andromeda hub
 
+/* Gravis products */
+product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
+
 /* Unixtar products */
-product UNIXTAR UTUSB41		0x1446	UT-USB41 hub
+product TI UTUSB41		0x1446	UT-USB41 hub
 
 /* Genius products */
 product GENIUS NICHE		0x0001	Niche mouse
@@ -100,8 +107,11 @@ product GENIUS FLIGHT2000	0x1004	Flight 2000 joystick
 
 /* Microsoft products */
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
+product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
+product MICROSOFT DDS80		0x0014	Digital Sound System 80
 
 /* Kensington products */
+product KENSINGTON COMFORT	0x4d01	Comfort
 product KENSINGTON MOUSEINABOX	0x4d02	Mouse-in-a-Box
 
 /* Cherry products */
@@ -136,11 +146,17 @@ product KONICA CAMERA		0x0720	Digital Color Camera
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
 
+/* Brother Industries products */
+product	BROTHER HL1050		0x0002	HL-1050 laser printer
+
 /* Jazz products */
 product JAZZ J6502		0x4201	J-6502 speakers
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Vision products */
+product VISION VC6452V002	0x0002	VC6452V002 Camera
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
@@ -148,12 +164,18 @@ product ATEN UC1284		0x2001	Parallel printer adapter
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
 
+/* Wacom products */
+product WACOM CT0405U		0x0000	CT-0405-U Tablet
+
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
 /* Agiler products */
 product AGILER MOUSE29UO	0x0002	mouse 29UO
+
+/* Iomega products */
+product IOMEGA ZIP100		0x0001	Zip 100
 
 /* Belkin products */
 product BELKIN F5U002		0x0002	Parallel printer adapter
@@ -164,6 +186,9 @@ product LOGITECH M4848		0x0301	M4848 mouse
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
+
+/* Macally products */
+product MACALLY MOUSE1		0x0101	mouse
 
 /* ADS products */
 product ADS ENET		0x0008	Ethernet adapter

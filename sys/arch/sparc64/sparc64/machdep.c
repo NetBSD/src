@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36.2.1 1999/04/16 16:24:16 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.36.2.1.2.1 1999/06/21 01:02:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,10 +81,8 @@
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
 
-#include "opt_bufcache.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -106,15 +104,6 @@
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -144,21 +133,6 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 extern vaddr_t avail_end;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-
 int	physmem;
 
 extern	caddr_t msgbufaddr;
@@ -177,9 +151,39 @@ vaddr_t dvma_base, dvma_end;
 struct map *dvmamap;
 static int ndvmamap;	/* # of entries in dvmamap */
 
-caddr_t allocsys __P((caddr_t));
 void	dumpsys __P((void));
+caddr_t	mdallocsys __P((caddr_t));
 void	stackdump __P((void));
+
+/* 
+ * This is the table that tells us how to access different bus space types.
+ */ 
+#define BUS_BYPASS_ACCESS_ENABLED 0
+#if BUS_BYPASS_ACCESS_ENABLED == 1
+/*
+ * Bypass access 
+ */
+int bus_type_asi[] = {
+	ASI_PHYS_NON_CACHED,			/* UPA */
+	ASI_PHYS_NON_CACHED,			/* SBUS */
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI memory space */
+	ASI_PHYS_NON_CACHED_LITTLE,			/* PCI I/O space */
+	0
+};
+#else
+/*
+ * MMU access - we want to use the MMU for all this..
+ */
+int bus_type_asi[] = {
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	0
+};
+#endif
 
 /*
  * Machine-dependent startup code
@@ -198,6 +202,7 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	extern struct user *proc0paddr;
+	char pbuf[9];
 
 #ifdef DEBUG
 	pmapdebug = 0;
@@ -210,17 +215,18 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("real mem = %ld\n", (long)ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (long)allocsys((caddr_t)0);
+	sz = (long)allocsys(NULL, mdallocsys);
 
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
+	if (allocsys(v, mdallocsys) - v != sz)
 		panic("startup: table size inconsistency");
 
         /*
@@ -275,7 +281,7 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, TRUE, FALSE, NULL);
+                                 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -284,7 +290,7 @@ cpu_startup()
 	 */
 	dvma_base = DVMA_BASE;
 	dvma_end = DVMA_END;
-	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
+	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 0);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
@@ -301,7 +307,7 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-            VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 	/*
 	 * Initialize callouts
 	 */
@@ -313,9 +319,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %ld buffers containing %ld bytes of memory\n",
-		(long)nbuf, (long)bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -327,70 +334,25 @@ cpu_startup()
 #endif
 }
 
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * You call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
 caddr_t
-allocsys(v)
-	register caddr_t v;
+mdallocsys(v)
+	caddr_t v;
 {
 
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16 and at
-	 * most 1/2 of available kernel virtual memory).
-	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0) {
-		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-			   (MAXBSIZE/NBPG) / 2;
-		bufpages = (physmem / 20) / CLSIZE;
-		if (nbuf == 0 && bufpages > bmax)
-			bufpages = bmax;
-	}
+#if 1	/* XXX this is from allocsys().  we have a copy as we use nbuf */
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
+#endif
 	/*
-	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
+	 * Allocate DVMA slots for 1/4 of the number of I/O buffers
 	 * and one for each process too (PHYSIO).
 	 */
-	valloc(dvmamap, struct map, ndvmamap = maxproc + ((nbuf / 4) &~ 1));
-	return (v);
+	ndvmamap = maxproc + ((nbuf / 4) &~ 1);
+printf("mdallocsys: v = %p; nbuf = %d\n", v, (int)nbuf);
+	ALLOCSYS(v, dvmamap, struct map, ndvmamap);
 }
 
 /*
@@ -420,10 +382,6 @@ setregs(p, pack, stack)
 	register struct fpstate *fs;
 	register int64_t tstate;
 
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
@@ -530,11 +488,6 @@ sendsig(catcher, sig, mask, code)
 #endif
 	struct sigframe sf;
 	int onstack;
-
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(tf->tf_out[6] + STACK_OFFSET);
@@ -692,10 +645,6 @@ sys___sigreturn14(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
@@ -1066,6 +1015,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return (ENOEXEC);
 }
 
+#if 0
 void
 wzero(vb, l)
 	void *vb;
@@ -1135,6 +1085,7 @@ wcopy(vb1, vb2, l)
 	if (l & 1)
 		*b2 = *b1e;
 }
+#endif
 
 bus_addr_t dvmamap_alloc __P((int, int));
 
@@ -1527,21 +1478,12 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int r, cbit;
 	size_t oversize;
 	u_long align;
-#if 0
-	/* This went away with dvma_mapin.  We may need it later */
-	extern u_long dvma_cachealign;
-#endif
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
 
 	cbit = PMAP_NC;
-#if 0
-	/* This went away with dvma_mapin.  We may need it later */
-	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
-#else
 	align = PAGE_SIZE;
-#endif
 
 	size = round_page(size);
 
@@ -1578,7 +1520,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
@@ -1705,15 +1648,16 @@ static	vaddr_t iobase = IODEV_BASE;
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 
 #ifdef NOTDEF_DEBUG
-	printf("\nsparc_bus_map: type %x addr %p virt %p paddr %llx\n",
-		       iospace, addr, *hp, (paddr_t)pa);
+	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
+		       (int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
 #endif
 	switch (iospace) {
 	case PCI_CONFIG_BUS_SPACE:
+	case PCI_IO_BUS_SPACE:
 		pm_flags = PMAP_NC|PMAP_LITTLE;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		pm_flags = PMAP_LITTLE|PMAP_NC;
 		break;
 	default:
 		pm_flags = PMAP_NC;
@@ -1722,8 +1666,7 @@ static	vaddr_t iobase = IODEV_BASE;
 
 	do {
 #ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
-		       (int)(pa>>32), (int)pa, v, (int)((*hp)>>32), (int)*hp);
+		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", (u_int64_t)pa, (char *)v, (u_int64_t)*hp);
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
@@ -1760,11 +1703,6 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 #else
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
 #endif
-#if 0
-	printf("sparc_bus_mmap: encoding pa %llx as %llx becomes %llx\n",
-	       (bus_addr_t)(paddr), (bus_space_handle_t)*hp, 
-	       (paddr_t)(pmap_phys_address(*hp)));
-#endif
 	return (0);
 }
 
@@ -1789,7 +1727,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 		return (0);
 
 	tmp = (caddr_t)bh;
-	result = (probeget(tmp + offset, size) != -1);
+	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);
@@ -1814,10 +1752,7 @@ sparc_mainbus_intr_establish(t, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(level, (void (*)__P((void)))handler);
-	else
-		intr_establish(level, ih);
+	intr_establish(level, ih);
 	return (ih);
 }
 
@@ -1848,7 +1783,7 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
-	UPA_BUS_SPACE,			/* type (ASI) */
+	UPA_BUS_SPACE,			/* type */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */

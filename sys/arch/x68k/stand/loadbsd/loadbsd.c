@@ -19,13 +19,13 @@
  *		-d	use compiled-in rootdev
  *		-r	specify root device
  *
- *	$NetBSD: loadbsd.c,v 1.1.8.1 1999/04/30 16:34:06 perry Exp $
+ *	$NetBSD: loadbsd.c,v 1.1.8.1.2.1 1999/06/21 01:04:14 thorpej Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.1.8.1 1999/04/30 16:34:06 perry Exp $");
-#define VERSION	"$Revision: 1.1.8.1 $ $Date: 1999/04/30 16:34:06 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.1.8.1.2.1 1999/06/21 01:04:14 thorpej Exp $");
+#define VERSION	"$Revision: 1.1.8.1.2.1 $ $Date: 1999/06/21 01:04:14 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>

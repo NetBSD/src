@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.2 1998/08/13 02:10:41 eeh Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.2.8.1 1999/06/21 01:02:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ cgtwomatch(parent, cf, aux)
 	/* XXX - Must do our own mapping at CG2_CTLREG_OFF */
 	bus_untmp();
 	tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CG2_CTLREG_OFF, NBPG);
-	if (probeget(tmp, 2) != -1)
+	if (probeget(tmp, ASI_PRIMARY, 2) != -1)
 		return 1;
 #endif
 	return 0;

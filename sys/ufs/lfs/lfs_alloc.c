@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.2 1999/04/16 23:10:07 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.1 1999/06/21 01:31:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -350,13 +350,13 @@ lfs_vfree(v)
 #endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
-		if (sup->su_nbytes < DINODE_SIZE) {
-			sup->su_nbytes = DINODE_SIZE;
 #ifdef DIAGNOSTIC
-			panic("lfs_vfree: negative byte count (segment %d)\n",
-			      datosn(fs, old_iaddr));
-#endif /* DIAGNOSTIC */
+		if (sup->su_nbytes < DINODE_SIZE) {
+			printf("lfs_vfree: negative byte count (segment %d short by %d)\n", datosn(fs, old_iaddr), (int)DINODE_SIZE - sup->su_nbytes);
+			panic("lfs_vfree: negative byte count");
+			sup->su_nbytes = DINODE_SIZE;
 		}
+#endif
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}

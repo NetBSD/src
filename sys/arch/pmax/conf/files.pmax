@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.61 1999/03/27 08:15:29 simonb Exp $
+#	$NetBSD: files.pmax,v 1.61.4.1 1999/06/21 00:58:33 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -16,21 +16,18 @@ device cpu				# not optional
 attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
 
-# CPU support option headers
-defopt	DEC_3100	# "kn01":	3100, 2100 (kn01)
-defopt	DEC_3MAX	# "kn02":	Decstation 5000/200
-defopt	DEC_3MIN	# "kn02ba":	Decstation 5000/{20,25,33,50}
-defopt	DEC_MAXINE	# "kn02ca":	Decstation 5000/{20,25,33,50}
-defopt	DEC_3MAXPLUS	# "kn03":	Decstation 5000/240, 5000/260
+# Model support option headers
+defopt 	DEC_3100	# DECstation 2100, 3100 (kn01)
+defopt 	DEC_5100	# DECsystem 5100 (kn230)
+defopt 	DEC_3MAX	# DECstation 5000/200 (kn02)
+defopt 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
+defopt 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
+defopt 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
+defopt	DEC_5800	# DECsystem 5800 isis (kn5800) XMI
+defopt	DEC_5400	# DECsystem 5400 mipsfair (kn210) Qbus
+defopt	DEC_5500	# DECsystem 5500 mipsfair2 (kn220) Qbus
 
-defopt	DEC_5800	# "kn5800":	Decstation 5800 isis (XMI)
-defopt	DEC_5400	# "kn210":	Decstation 5400 mipsfair
-defopt	DEC_5500	# "kn220":	Decstation 5500 mipsfair2
-defopt	DEC_5100	# "kn230":	Decstation 5100 mipsmate
-
-#
-# CPU-dependent files
-#
+# Model dependent files
 file	arch/pmax/pmax/dec_3100.c	dec_3100	# DS3100, pmax
 file	arch/pmax/pmax/dec_3max.c	dec_3max	# DS5000/200, 3max
 file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus	# DS5000/240, 3maxplus
@@ -42,8 +39,8 @@ file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 #file	arch/pmax/pmax/dec_5800.c	dec_5800	# 5800, isis
 
 # handlers for memory subsystems shared across models..
-file	arch/pmax/pmax/dec_kn02_subr.c	dec_3min|dec_maxine
-file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
+file	arch/pmax/pmax/memc_3max.c	dec_3max|dec_3maxplus
+file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
 
 #
 # Bus-independent support for DEC devices
@@ -111,7 +108,6 @@ file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 #
 
 include "dev/scsipi/files.scsipi"
-#major { st = 10 }
 #major { cd = 3 }
 #major { sd = 21 }
 major { tz = 10 }
@@ -180,9 +176,12 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 attach le at ibus with le_pmax:		le24, le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
+# Raster operations for rcons. This isn't in the rcons section, since
+# it depends on fb devices for configuration glue. 
+include "dev/rasops/files.rasops"
 
 # 3100 (pmax) onboard framebuffer
-device pm
+device pm: rasops1, rasops8
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
@@ -192,15 +191,15 @@ file	arch/pmax/dev/pm_ds.c		pm_ds
 # Turbochannel options.							#
 #########################################################################
 
-device cfb
+device cfb: rasops8
 attach cfb at tc
 file	arch/pmax/dev/cfb.c		cfb needs-flag
 
-device sfb
+device sfb: rasops8
 attach sfb at tc
 file	arch/pmax/dev/sfb.c		sfb needs-flag
 
-device mfb
+device mfb: rasops8
 attach mfb at tc
 file	arch/pmax/dev/mfb.c		mfb needs-flag
 
@@ -210,10 +209,15 @@ attach scc at ioasic
 file	arch/pmax/tc/scc.c		scc needs-flag
 
 # MAXINE onboard framebuffer
-device	xcfb
+device	xcfb: rasops8
 attach	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
+
+#  PixelStamp graphics boards
+device	px
+attach	px at tc
+file	arch/pmax/dev/px.c 		px needs-flag
 
 # DECWRL 45Mbit T3 interface
 device	tt: tty
@@ -227,30 +231,26 @@ file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
 file	arch/pmax/pmax/bus_space.c
 file	arch/pmax/pmax/conf.c
-#file	arch/pmax/pmax/kadb.c			optional kadb
-#file	arch/pmax/pmax/machdep.c		standard config-dependent
-file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/disksubr.c
-file	arch/pmax/stand/lib/callvec.c
+file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
+file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-
-
-# Console code.
+file	arch/pmax/stand/lib/callvec.c
 file	dev/cons.c
-file	arch/pmax/dev/promio.c			# default console
-file	arch/pmax/dev/findcons.c		# find and set up console.
+file	arch/pmax/dev/findcons.c	# find and set up console.
+#file	arch/pmax/pmax/kadb.c		# obsolute kadb
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
 include "dev/rcons/files.rcons"
+include "dev/wsfont/files.wsfont"
 
 pseudo-device	rasterconsole
 file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
-file	arch/pmax/dev/font.c			rasterconsole	# rcons fontdef
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
-file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
+file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb | px
 file	arch/pmax/dev/qvss_compat.c	fb
 
 

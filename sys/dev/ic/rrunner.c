@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.9 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.9.4.1 1999/06/21 01:17:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1062,7 +1062,17 @@ esh_fpread(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
+		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ | VM_PROT_WRITE) != KERN_SUCCESS) {
+			/* Unlock what we've locked so far. */
+			for (--i; i >= 0; i--) {
+				iovp = &uio->uio_iov[i];
+				uvm_vsunlock(p, ivop->iov_base,
+				    iovp->iov_len);
+			}
+			error = EFAULT;
+			goto fpread_done;
+		}
 	}
 
 	/* 
@@ -1225,7 +1235,17 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vslock(p, iovp->iov_base, iovp->iov_len);
+		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ) != KERN_SUCCESS) {
+			/* Unlock what we've locked so far. */
+			for (--i; i >= 0; i--) {
+				iovp = &uio->uio_iov[i];
+				uvm_vsunlock(p, ivop->iov_base,
+				    iovp->iov_len);
+			}
+			error = EFAULT;
+			goto fpwrite_done;
+		}
 	}
 
 	/* 
@@ -2405,7 +2425,6 @@ esh_read_snap_ring(sc, consumer, error)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct esh_snap_ring_ctl *recv = &sc->sc_snap_recv;
-	struct hippi_header *hh;
 	int start_consumer = recv->ec_consumer;
 	u_int16_t control;
 
@@ -2489,10 +2508,9 @@ esh_read_snap_ring(sc, consumer, error)
 				if ((ifp->if_flags & IFF_RUNNING) == 0) {
 					m_freem(m);
 				} else {
-					m = m_pullup(m, sizeof(struct hippi_header *));
-					hh = mtod(m, struct hippi_header *);
-					m_adj(m, sizeof(struct hippi_header));
-					hippi_input(ifp, hh, m);
+					m = m_pullup(m,
+					    sizeof(struct hippi_header));
+					(*ifp->if_input)(ifp, m);
 				}
 			} else {
 				ifp->if_ierrors++;

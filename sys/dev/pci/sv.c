@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.7.2.1 1999/04/14 17:32:24 jonathan Exp $ */
+/*      $NetBSD: sv.c,v 1.7.2.1.2.1 1999/06/21 01:18:42 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*

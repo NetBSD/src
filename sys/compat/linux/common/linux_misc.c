@@ -1,11 +1,12 @@
-/*	$NetBSD: linux_misc.c,v 1.53 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.53.4.1 1999/06/21 01:07:37 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden and Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz; by Jason R. Thorpe
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,8 +49,10 @@
  * Function in multiarch:
  *	linux_sys_break			: linux_break.c
  *	linux_sys_alarm			: linux_misc_notalpha.c
+ *	linux_sys_getresgid		: linux_misc_notalpha.c
  *	linux_sys_nice			: linux_misc_notalpha.c
  *	linux_sys_readdir		: linux_misc_notalpha.c
+ *	linux_sys_setresgid		: linux_misc_notalpha.c
  *	linux_sys_time			: linux_misc_notalpha.c
  *	linux_sys_utime			: linux_misc_notalpha.c
  *	linux_sys_waitpid		: linux_misc_notalpha.c
@@ -103,6 +106,7 @@
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_sched.h>
 
 
 /* Local linux_misc.c functions: */
@@ -147,7 +151,7 @@ linux_sys_wait4(p, v, retval)
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
 	struct sys_wait4_args w4a;
-	int error, *status, tstat;
+	int error, *status, tstat, options, linux_options;
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
@@ -156,9 +160,22 @@ linux_sys_wait4(p, v, retval)
 	} else
 		status = NULL;
 
+	linux_options = SCARG(uap, options);
+	options = 0;
+	if (linux_options &
+	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WCLONE))
+		return (EINVAL);
+
+	if (linux_options & LINUX_WAIT4_WNOHANG)
+		options |= WNOHANG;
+	if (linux_options & LINUX_WAIT4_WUNTRACED)
+		options |= WUNTRACED;
+	if (linux_options & LINUX_WAIT4_WCLONE)
+		options |= WALTSIG;
+
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
+	SCARG(&w4a, options) = options;
 	SCARG(&w4a, rusage) = SCARG(uap, rusage);
 
 	if ((error = sys_wait4(p, &w4a, retval)))
@@ -548,18 +565,23 @@ linux_sys_getdents(p, v, retval)
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
 
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
 
 	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
-		return error;
+		goto out1;
 
 	nbytes = SCARG(uap, count);
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
@@ -666,6 +688,8 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
+ out1:
+	FILE_UNUSE(fp, p);
 	return error;
 }
 
@@ -893,4 +917,155 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
+}
+
+int
+linux_sys_clone(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_clone_args /* {
+		syscallarg(int) flags;
+		syscallarg(void *) stack;
+	} */ *uap = v;
+	int flags, sig;
+
+	/*
+	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
+	 */
+	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
+		return (EINVAL);
+
+	flags = 0;
+
+	if (SCARG(uap, flags) & LINUX_CLONE_VM)
+		flags |= FORK_SHAREVM;
+	if (SCARG(uap, flags) & LINUX_CLONE_FS)
+		flags |= FORK_SHARECWD;
+	if (SCARG(uap, flags) & LINUX_CLONE_FILES)
+		flags |= FORK_SHAREFILES;
+	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND)
+		flags |= FORK_SHARESIGS;
+	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
+		flags |= FORK_PPWAIT;
+
+	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+	if (sig < 0 || sig >= LINUX_NSIG)
+		return (EINVAL);
+	sig = linux_to_native_sig[sig];
+
+	/* XXX Is this the right thing? */
+	if (sig == 0)
+		sig = SIGCHLD;
+
+	/*
+	 * Note that Linux does not provide a portable way of specifying
+	 * the stack area; the caller must know if the stack grows up
+	 * or down.  So, we pass a stack size of 0, so that the code
+	 * that makes this adjustment is a noop.
+	 */
+	return (fork1(p, flags, sig, SCARG(uap, stack), 0, retval, NULL));
+}
+
+int
+linux_sys_setresuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setresuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+		syscallarg(uid_t) suid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	uid_t ruid, euid, suid;
+	int error;
+
+	ruid = SCARG(uap, ruid);
+	euid = SCARG(uap, euid);
+	suid = SCARG(uap, suid);
+
+	/*
+	 * Note: These checks are a little different than the NetBSD
+	 * setreuid(2) call performs.  This precisely follows the
+	 * behavior of the Linux kernel.
+	 */
+	if (ruid != (uid_t)-1 &&
+	    ruid != pc->p_ruid &&
+	    ruid != pc->pc_ucred->cr_uid &&
+	    ruid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (euid != (uid_t)-1 &&
+	    euid != pc->p_ruid &&
+	    euid != pc->pc_ucred->cr_uid &&
+	    euid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (suid != (uid_t)-1 &&
+	    suid != pc->p_ruid &&
+	    suid != pc->pc_ucred->cr_uid &&
+	    suid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	/*
+	 * Now assign the new real, effective, and saved UIDs.
+	 * Note that Linux, unlike NetBSD in setreuid(2), does not
+	 * set the saved UID in this call unless the user specifies
+	 * it.
+	 */
+	if (ruid != (uid_t)-1) {
+		(void)chgproccnt(pc->p_ruid, -1);
+		(void)chgproccnt(ruid, 1);
+		pc->p_ruid = ruid;
+	}
+
+	if (euid != (uid_t)-1) {
+		pc->pc_ucred = crcopy(pc->pc_ucred);
+		pc->pc_ucred->cr_uid = euid;
+	}
+
+	if (suid != (uid_t)-1)
+		pc->p_svuid = suid;
+
+	if (ruid != (uid_t)-1 && euid != (uid_t)-1 && suid != (uid_t)-1)
+		p->p_flag |= P_SUGID;
+	return (0);
+}
+
+int
+linux_sys_getresuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getresuid_args /* {
+		syscallarg(uid_t *) ruid;
+		syscallarg(uid_t *) euid;
+		syscallarg(uid_t *) suid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	int error;
+
+	/*
+	 * Linux copies these values out to userspace like so:
+	 *
+	 *	1. Copy out ruid.
+	 *	2. If that succeeds, copy out euid.
+	 *	3. If both of those succeed, copy out suid.
+	 */
+	if ((error = copyout(&pc->p_ruid, SCARG(uap, ruid),
+			     sizeof(uid_t))) != 0)
+		return (error);
+
+	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, euid),
+			     sizeof(uid_t))) != 0)
+		return (error);
+
+	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
 }

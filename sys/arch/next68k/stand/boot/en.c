@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
+/*      $NetBSD: en.c,v 1.2.4.1 1999/06/21 00:54:08 thorpej Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -42,6 +42,8 @@
 #include <netif.h>
 #include <net.h>
 #include <nfs.h>
+
+#include <lib/libkern/libkern.h>
 
 extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))

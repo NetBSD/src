@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111.4.1 1999/06/21 01:03:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2329,7 +2329,7 @@ pmap_enter_user(pmap, pgva, new_pte, wired)
 #ifdef	PMAP_DEBUG
 	/*
 	 * Some user pages are wired here, and a later
-	 * call to pmap_change_wiring() will unwire them.
+	 * call to pmap_unwire() will unwire them.
 	 * XXX - Need a separate list for wired user pmegs
 	 * so they can not be stolen from the active list.
 	 * XXX - Note: vm_fault.c assumes pmap_extract will
@@ -2788,17 +2788,16 @@ pmap_deactivate(p)
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
+ *	Routine:	pmap_unwire
+ *	Function:	Clear the wired attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t	pmap;
 	vm_offset_t	va;
-	boolean_t	wired;
 {
 	int s, sme;
 	int wiremask, ptenum;
@@ -2808,8 +2807,8 @@ pmap_change_wiring(pmap, va, wired)
 		return;
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_WIRING)
-		printf("pmap_change_wiring(pmap=%p, va=0x%lx, wire=%d)\n",
-			   pmap, va, wired);
+		printf("pmap_unwire(pmap=%p, va=0x%lx)\n",
+			   pmap, va);
 #endif
 	/*
 	 * We are asked to unwire pages that were wired when
@@ -2833,12 +2832,9 @@ pmap_change_wiring(pmap, va, wired)
 
 	sme = get_segmap(va);
 	if (sme == SEGINV)
-		panic("pmap_change_wiring: invalid va=0x%lx", va);
+		panic("pmap_unwire: invalid va=0x%lx", va);
 	pmegp = pmeg_p(sme);
-	if (wired)
-		pmegp->pmeg_wired |= wiremask;
-	else
-		pmegp->pmeg_wired &= ~wiremask;
+	pmegp->pmeg_wired &= ~wiremask;
 
 	splx(s);
 }
@@ -2947,29 +2943,6 @@ pmap_page_protect(pa, prot)
 	}
 
 	splx(s);
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
-{
-	/* not implemented, hopefully not needed */
 }
 
 /*

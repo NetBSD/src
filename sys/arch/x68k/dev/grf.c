@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.13 1999/03/24 05:51:17 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.13.4.1 1999/06/21 01:04:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,6 +80,7 @@ extern struct emul emul_hpux;
 #include <vm/vm_pager.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -566,7 +567,8 @@ grfmap(dev, addrp, p)
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
-			 flags, (caddr_t)&vn, 0);
+			 flags, (caddr_t)&vn, 0,
+			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
 	return(error);

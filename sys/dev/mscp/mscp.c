@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.11 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.11.2.1 1999/06/21 01:18:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.

@@ -1,21 +1,21 @@
-/*	$NetBSD: autoconf.h,v 1.11 1999/03/16 05:59:01 nisimura Exp $ */
+/*	$NetBSD: autoconf.h,v 1.11.4.1 1999/06/21 00:58:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -32,8 +32,8 @@
  */
 
 struct confargs {
-	char	*ca_name;		/* device name */
-	int	ca_slot;		/* CPU "slot" number */
+	const char	*ca_name;		/* device name */
+	int		ca_slot;		/* CPU "slot" number */
 };
 
 typedef void	*intr_arg_t;		/* pointer to some softc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.21 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.21.4.1 1999/06/21 01:19:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ extern int usbdebug;
 #endif
 
 static usbd_status usbd_ar_pipe  __P((usbd_pipe_handle pipe));
-static usbd_status usbd_ar_iface __P((usbd_interface_handle iface));
 static void usbd_transfer_cb __P((usbd_request_handle reqh));
 static void usbd_sync_transfer_cb __P((usbd_request_handle reqh));
 static usbd_status usbd_do_transfer __P((usbd_request_handle reqh));
@@ -97,8 +96,6 @@ usbd_open_pipe(iface, address, flags, pipe)
 	usbd_status r;
 	int i;
 
-	if (iface->state != USBD_INTERFACE_ACTIVE)
-		return (USBD_INTERFACE_NOT_ACTIVE);
 	for (i = 0; i < iface->idesc->bNumEndpoints; i++) {
 		ep = &iface->endpoints[i];
 		if (ep->edesc->bEndpointAddress == address)
@@ -192,8 +189,6 @@ usbd_status
 usbd_close_pipe(pipe)
 	usbd_pipe_handle pipe;
 {
-	if (pipe->iface->state != USBD_INTERFACE_ACTIVE)
-		return (USBD_INTERFACE_NOT_ACTIVE);
 	if (--pipe->refcnt != 0)
 		return (USBD_NORMAL_COMPLETION);
 	if (SIMPLEQ_FIRST(&pipe->queue) != 0)
@@ -264,25 +259,16 @@ usbd_setup_request(reqh, pipe, priv, buffer, length, flags, timeout, callback)
 			      usbd_status));
 {
 	reqh->pipe = pipe;
-	reqh->isreq = 0;
 	reqh->priv = priv;
 	reqh->buffer = buffer;
 	reqh->length = length;
 	reqh->actlen = 0;
 	reqh->flags = flags;
-	reqh->callback = callback;
+	reqh->timeout = timeout;
 	reqh->status = USBD_NOT_STARTED;
+	reqh->callback = callback;
 	reqh->retries = 1;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_setup_device_request(reqh, req)
-	usbd_request_handle reqh;
-	usb_device_request_t *req;
-{
-	reqh->isreq = 1;
-	reqh->request = *req;
+	reqh->isreq = 0;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -311,17 +297,8 @@ usbd_setup_default_request(reqh, dev, priv, timeout, req, buffer,
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
 	reqh->request = *req;
-	reqh->isreq = 1;
 	reqh->retries = 1;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_set_request_timeout(reqh, timeout)
-	usbd_request_handle reqh;
-	u_int32_t timeout;
-{
-	reqh->timeout = timeout;
+	reqh->isreq = 1;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -339,25 +316,6 @@ usbd_get_request_status(reqh, priv, buffer, count, status)
 	*status = reqh->status;
 	return (USBD_NORMAL_COMPLETION);
 }
-
-usbd_status 
-usbd_request_device_data(reqh, req)
-	usbd_request_handle reqh;
-	usb_device_request_t *req;
-{
-	if (!reqh->isreq) 
-		return (USBD_INVAL);
-	*req = reqh->request;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-#if 0
-usb_descriptor_t *
-usbd_get_descriptor(iface, desc_type)
-	usbd_interface_handle *iface;
-	u_int8_t desc_type;
-XX
-#endif
 
 usb_config_descriptor_t *
 usbd_get_config_descriptor(dev)
@@ -391,91 +349,18 @@ usbd_interface2endpoint_descriptor(iface, index)
 }
 
 usbd_status 
-usbd_set_configuration(dev, conf)
-	usbd_device_handle dev;
-	u_int8_t conf;
-{
-	return usbd_set_config_no(dev, conf, 0);
-}
-
-usbd_status 
-usbd_retry_request(reqh, retry_count)
-	usbd_request_handle reqh;
-	u_int32_t retry_count;
-{
-	usbd_status r;
-
-	r = usbd_set_pipe_state(reqh->pipe, USBD_PIPE_ACTIVE);
-	if (r != USBD_NORMAL_COMPLETION)
-		return (r);
-	reqh->retries = retry_count;
-	return (usbd_transfer(reqh));
-}
-
-usbd_status 
 usbd_abort_pipe(pipe)
 	usbd_pipe_handle pipe;
 {
 	usbd_status r;
-	int s, st;
+	int s;
 
-	if (pipe->iface->state != USBD_INTERFACE_ACTIVE)
-		return (USBD_INTERFACE_NOT_ACTIVE);
 	s = splusb();
-	st = pipe->state;
 	r = usbd_ar_pipe(pipe);
-	pipe->state = st;
 	splx(s);
 	return (r);
 }
 	
-usbd_status 
-usbd_abort_interface(iface)
-	usbd_interface_handle iface;
-{
-	usbd_status r;
-	int s, st;
-
-	s = splusb();
-	st = iface->state;
-	r = usbd_ar_iface(iface);
-	iface->state = st;
-	splx(s);
-	return (r);
-}
-
-usbd_status 
-usbd_reset_pipe(pipe)
-	usbd_pipe_handle pipe;
-{
-	usbd_status r;
-	int s;
-
-	if (pipe->iface->state != USBD_INTERFACE_ACTIVE)
-		return (USBD_INTERFACE_NOT_ACTIVE);
-	s = splusb();
-	r = usbd_ar_pipe(pipe);
-	/* XXX anything else */
-	pipe->state = USBD_PIPE_ACTIVE;
-	splx(s);
-	return (r);
-}
-
-usbd_status 
-usbd_reset_interface(iface)
-	usbd_interface_handle iface;
-{
-	usbd_status r;
-	int s;
-
-	s = splusb();
-	r = usbd_ar_iface(iface);
-	/* XXX anything else */
-	iface->state = USBD_INTERFACE_ACTIVE;
-	splx(s);
-	return (r);
-}
-
 usbd_status 
 usbd_clear_endpoint_stall(pipe)
 	usbd_pipe_handle pipe;
@@ -484,6 +369,7 @@ usbd_clear_endpoint_stall(pipe)
 	usb_device_request_t req;
 	usbd_status r;
 
+	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -518,126 +404,6 @@ usbd_clear_endpoint_stall_async(pipe)
 }
 
 usbd_status 
-usbd_set_pipe_state(pipe, state)
-	usbd_pipe_handle pipe;
-	usbd_pipe_state state;
-{
-	int s;
-	usbd_status r;
-	usbd_request_handle reqh;
-
-	if (pipe->iface->state != USBD_INTERFACE_ACTIVE)
-		return (USBD_INTERFACE_NOT_ACTIVE);
-	if (state != USBD_PIPE_ACTIVE &&
-	    state != USBD_PIPE_STALLED &&
-	    state != USBD_PIPE_IDLE)
-		return (USBD_INVAL);
-	pipe->state = state;
-	r = USBD_NORMAL_COMPLETION;
-	if (state == USBD_PIPE_ACTIVE) {
-		s = splusb();
-		if (!pipe->running) {
-			reqh = SIMPLEQ_FIRST(&pipe->queue);
-			if (reqh != 0) {
-				pipe->running = 1;
-				splx(s);
-				r = pipe->methods->start(reqh);
-			} else
-				splx(s);
-		} else
-			splx(s);
-	}
-	return (r);
-}
-
-usbd_status 
-usbd_get_pipe_state(pipe, state, endpoint_state, request_count)
-	usbd_pipe_handle pipe;
-	usbd_pipe_state *state;
-	u_int32_t *endpoint_state;
-	u_int32_t *request_count;
-{
-	int n;
-	usbd_request_handle r;
-
-	*state = pipe->state;
-	*endpoint_state = pipe->endpoint->state;
-	for (r = SIMPLEQ_FIRST(&pipe->queue), n = 0; 
-	     r != 0; 
-	     r = SIMPLEQ_NEXT(r, next), n++)
-		;
-	*request_count = n;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_set_interface_state(iface, state)
-	usbd_interface_handle iface;
-	usbd_interface_state state;
-{
-	int ps;
-	usbd_pipe_handle p;
-
-	if (state == USBD_INTERFACE_ACTIVE)
-		ps = USBD_PIPE_ACTIVE;
-	else if (state == USBD_INTERFACE_STALLED)
-		ps = USBD_PIPE_STALLED;
-	else if (state == USBD_INTERFACE_IDLE)
-		ps = USBD_PIPE_IDLE;
-	else
-		return (USBD_INVAL);
-	iface->state = USBD_INTERFACE_ACTIVE; /* to allow setting the pipe */
-	for (p = LIST_FIRST(&iface->pipes); p != 0; p = LIST_NEXT(p, next))
-		usbd_set_pipe_state(p, ps);
-	iface->state = state;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_get_interface_state(iface, state)
-	usbd_interface_handle iface;
-	usbd_interface_state *state;
-{
-	*state = iface->state;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_get_device_state(dev, state)
-	usbd_device_handle dev;
-	usbd_device_state *state;
-{
-	*state = dev->state;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-#if 0
-usbd_status 
-usbd_set_device_state(dev, state)
-	usbd_device_handle dev;
-	usbd_device_state state;
-X
-#endif
-
-usbd_status 
-usbd_device_address(dev, address)
-	usbd_device_handle dev;
-	u_int8_t *address;
-{
-	*address = dev->address;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_endpoint_address(pipe, address)
-	usbd_pipe_handle pipe;
-	u_int8_t *address;
-{
-	*address = pipe->endpoint->edesc->bEndpointAddress;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
 usbd_endpoint_count(iface, count)
 	usbd_interface_handle iface;
 	u_int8_t *count;
@@ -657,88 +423,12 @@ usbd_interface_count(dev, count)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-#if 0
-u_int8_t 
-usbd_bus_count()
-{
-	return (usb_bus_count());
-}
-
-usbd_status 
-usbd_get_bus_handle(index, bus)
-	u_int8_t index;
-	usbd_bus_handle *bus;
-{
-	return (usb_get_bus_handle(index, bus));
-}
-#endif
-
-usbd_status 
-usbd_get_root_hub(bus, dev)
-	usbd_bus_handle bus; 
-	usbd_device_handle *dev;
-{
-	*dev = bus->root_hub;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_port_count(dev, nports)
-	usbd_device_handle dev;
-	u_int8_t *nports;
-{
-	if (dev->hub == 0)
-		return (USBD_INVAL);
-	*nports = dev->hub->hubdesc.bNbrPorts;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_hub2device_handle(dev, port, devp)
-	usbd_device_handle dev;
-	u_int8_t port;
-	usbd_device_handle *devp;
-{
-	if (dev->hub == 0 || port >= dev->hub->hubdesc.bNbrPorts || 
-	    dev->hub->ports[port].device == 0)
-		return (USBD_INVAL);
-	*devp = dev->hub->ports[port].device;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_request2pipe_handle(reqh, pipe)
-	usbd_request_handle reqh;
-	usbd_pipe_handle *pipe;
-{
-	*pipe = reqh->pipe;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_pipe2interface_handle(pipe, iface)
-	usbd_pipe_handle pipe;
-	usbd_interface_handle *iface;
-{
-	*iface = pipe->iface;
-	return (USBD_NORMAL_COMPLETION);
-}
-
 usbd_status 
 usbd_interface2device_handle(iface, dev)
 	usbd_interface_handle iface;
 	usbd_device_handle *dev;
 {
 	*dev = iface->device;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_device2bus_handle(dev, bus)
-	usbd_device_handle dev;
-	usbd_bus_handle *bus;
-{
-	*bus = dev->bus;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -754,53 +444,6 @@ usbd_device2interface_handle(dev, ifaceno, iface)
 		return (USBD_INVAL);
 	*iface = &dev->ifaces[ifaceno];
 	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_set_interface_private_handle(iface, priv)
-	usbd_interface_handle iface;
-	usbd_private_handle priv;
-{
-	iface->priv = priv;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_get_interface_private_handle(iface, priv)
-	usbd_interface_handle iface;
-	usbd_private_handle *priv;
-{
-	*priv = iface->priv;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_reference_pipe(pipe)
-	usbd_pipe_handle pipe;
-{
-	pipe->refcnt++;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status 
-usbd_dereference_pipe(pipe)
-	usbd_pipe_handle pipe;
-{
-	pipe->refcnt--;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_lock_token
-usbd_lock()
-{
-	return (splusb());
-}
-
-void
-usbd_unlock(tok)
-	usbd_lock_token tok;
-{
-	splx(tok);
 }
 
 /* XXXX use altno */
@@ -819,7 +462,6 @@ usbd_set_interface(iface, altidx)
 		free(iface->endpoints, M_USB);
 	iface->endpoints = 0;
 	iface->idesc = 0;
-	iface->state = USBD_INTERFACE_IDLE;
 
 	r = usbd_fill_iface_data(iface->device, iface->index, altidx);
 	if (r != USBD_NORMAL_COMPLETION)
@@ -903,22 +545,6 @@ usbd_ar_pipe(pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-/* Dequeue all interface operations, called at splusb(). */
-static usbd_status
-usbd_ar_iface(iface)
-	usbd_interface_handle iface;
-{
-	usbd_pipe_handle p;
-	usbd_status r, ret = USBD_NORMAL_COMPLETION;
-
-	for (p = LIST_FIRST(&iface->pipes); p != 0; p = LIST_NEXT(p, next)) {
-		r = usbd_ar_pipe(p);
-		if (r != USBD_NORMAL_COMPLETION)
-			ret = r;
-	}
-	return (ret);
-}
-
 static int usbd_global_init_done = 0;
 
 void
@@ -945,7 +571,13 @@ usbd_transfer_cb(reqh)
 {
 	usbd_pipe_handle pipe = reqh->pipe;
 
+	DPRINTFN(10, ("usbd_transfer_cb: reqh=%p\n", reqh));
 	/* Count completed transfers. */
+#ifdef DIAGNOSTIC
+	if (!pipe)
+		printf("usbd_transfer_cb: pipe==0, reqh=%p\n", reqh);
+	else
+#endif
 	++pipe->device->bus->stats.requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
@@ -966,6 +598,7 @@ static void
 usbd_sync_transfer_cb(reqh)
 	usbd_request_handle reqh;
 {
+	DPRINTFN(10, ("usbd_sync_transfer_cb: reqh=%p\n", reqh));
 	usbd_transfer_cb(reqh);
 	if (!reqh->pipe->device->bus->use_polling)
 		wakeup(reqh);

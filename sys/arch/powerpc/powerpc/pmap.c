@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19.2.1 1999/04/16 16:23:25 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.1.2.1 1999/06/21 01:01:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -709,19 +709,6 @@ pmap_collect(pm)
 }
 
 /*
- * Make the specified pages pageable or not as requested.
- *
- * This routine is merely advisory.
- */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vaddr_t start, end;
-	int pageable;
-{
-}
-
-/*
  * Fill the given physical page with zeroes.
  */
 void
@@ -1020,7 +1007,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 			/* 
 			 * Flush the real memory from the cache.
 			 */
-			syncicache((void *)pa, NBPG);
+			__syncicache((void *)pa, NBPG);
 		}
 
 	s = splimp();
@@ -1432,5 +1419,5 @@ pmap_procwr(p, va, len)
 	paddr_t pa;
 
 	pa = pmap_extract(p->p_vmspace->vm_map.pmap, va);
-	syncicache((void *)pa, len);
+	__syncicache((void *)pa, len);
 }

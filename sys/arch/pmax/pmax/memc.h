@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.h,v 1.1 1999/05/21 01:09:49 nisimura Exp $	*/
+/*	$NetBSD: memc.h,v 1.1.4.1 1999/06/21 00:59:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.

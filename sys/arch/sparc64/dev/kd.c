@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.1.1.1.10.1 1999/06/21 01:02:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,6 +119,9 @@ kd_init(unit)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
+	int i;
+	char *prop;
+	
 
 	if (unit != 0)
 		return;
@@ -150,36 +153,20 @@ kd_init(unit)
 #endif
 	}
 
-	if (CPU_ISSUN4COR4M) {
-		int i;
-		char *prop;
-
-		if (kd->rows == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#rows"))) {
-			i = 0;
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->rows = (unsigned short)i;
-		}
-		if (kd->cols == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#columns"))) {
-			i = 0;
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->cols = (unsigned short)i;
-		}
+	if (kd->rows == 0 &&
+	    (prop = getpropstring(optionsnode, "screen-#rows"))) {
+		i = 0;
+		while (*prop != '\0')
+			i = i * 10 + *prop++ - '0';
+		kd->rows = (unsigned short)i;
 	}
-	if (CPU_ISSUN4) {
-		struct eeprom *ep = (struct eeprom *)eeprom_va;
-
-		if (ep) {
-			if (kd->rows == 0)
-				kd->rows = (u_short)ep->eeTtyRows;
-			if (kd->cols == 0)
-				kd->cols = (u_short)ep->eeTtyCols;
-		}
+	if (kd->cols == 0 &&
+	    (prop = getpropstring(optionsnode, "screen-#columns"))) {
+		i = 0;
+		while (*prop != '\0')
+			i = i * 10 + *prop++ - '0';
+		kd->cols = (unsigned short)i;
 	}
-
 	return;
 }
 
@@ -478,6 +465,9 @@ static int  kdcngetc __P((dev_t));
 static void kdcnputc __P((dev_t, int));
 static void kdcnpollc __P((dev_t, int));
 
+/* The keyboard driver uses cn_hw to access the real console driver */
+extern struct consdev consdev_prom;
+struct consdev *cn_hw = &consdev_prom;
 struct consdev consdev_kd = {
 	kdcnprobe,
 	kdcninit,
@@ -518,14 +508,14 @@ kdcngetc(dev)
 	int code, class, data, keysym;
 
 	for (;;) {
-		code = zs_getc(zs_conschan);
+		code = (*cn_hw->cn_getc)(dev);
 		keysym = kbd_code_to_keysym(ks, code);
 		class = KEYSYM_CLASS(keysym);
-
+		
 		switch (class) {
 		case KEYSYM_ASCII:
 			goto out;
-
+			
 		case KEYSYM_CLRMOD:
 		case KEYSYM_SETMOD:
 			data = (keysym & 0x1F);
@@ -538,12 +528,12 @@ kdcngetc(dev)
 			else
 				ks->kbd_modbits &= ~data;
 			break;
-
+			
 		case KEYSYM_ALL_UP:
 			/* No toggle keys here. */
 			ks->kbd_modbits = 0;
 			break;
-
+			
 		default:	/* ignore all other keysyms */
 			break;
 		}
@@ -557,9 +547,12 @@ kdcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
+	int s;
 	char c0 = (c & 0x7f);
 
-	OF_write(OF_stdout(), &c0, sizeof(c0));
+	s = splhigh();
+	OF_write(OF_stdout(), &c0, 1);
+	splx(s);
 }
 
 static void
@@ -579,5 +572,6 @@ kdcnpollc(dev, on)
 	} else {
 		/* Resuming kernel. */
 	}
+	(*cn_hw->cn_pollc)(dev, on);
 }
 

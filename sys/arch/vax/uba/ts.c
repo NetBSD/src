@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.12.8.1 1999/04/12 21:27:11 pk Exp $ */
+/*	$NetBSD: ts.c,v 1.12.8.1.2.1 1999/06/21 01:03:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.2 1999/06/05 14:19:44 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.2.2.1 1999/06/21 01:02:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green

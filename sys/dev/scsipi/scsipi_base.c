@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.20.2.1 1999/04/07 15:04:22 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.20.2.1.2.1 1999/06/21 01:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -607,8 +607,11 @@ retry:
 	 * returned SUCCESSFULLY_QUEUED when the command was
 	 * submitted), we need to free the scsipi_xfer here.
 	 */
-	if (SCSIPI_XFER_ASYNC(xs))
+	if (SCSIPI_XFER_ASYNC(xs)) {
+		int s = splbio();
 		scsipi_free_xs(xs, SCSI_NOSLEEP);
+		splx(s);
+	}
 	if (bp)
 		biodone(bp);
 }

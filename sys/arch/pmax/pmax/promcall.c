@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.27 1999/01/29 05:37:45 simonb Exp $	*/
+/*	$NetBSD: promcall.c,v 1.3.2.2 1999/06/21 00:59:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,77 +43,67 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.27 1999/01/29 05:37:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.3.2.2 1999/06/21 00:59:08 thorpej Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 #include <dev/cons.h>
 
-#include <machine/dec_prom.h>
-#include <pmax/dev/promiovar.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
+#include <machine/dec_prom.h>
 
+static int  romgetc __P((dev_t));
+static void romputc __P((dev_t, int));
+static int  atoi __P((const char *));
 
-static int  romgetc	__P ((dev_t));
-static void romputc	__P ((dev_t, int));
-static void rompollc	__P((dev_t, int));
+#define DEFAULT_SCSIID	7    /* XXX - this should really live somewhere else */
 
 /*
  * Default consdev, for errors or warnings before
  * consinit runs: use the PROM.
  */
 struct consdev promcd = {
-	(void (*)(struct consdev *))0,		/* probe */
-	(void (*)(struct consdev *))0,		/* init */
-	(int  (*)(dev_t))     romgetc,		/* getc */
-	(void (*)(dev_t, int))romputc,		/* putc */
-	(void (*)(dev_t, int))rompollc,		/* pollc */
-	makedev (0, 0),
+	NULL,		/* probe */
+	NULL,		/* init */
+	romgetc,	/* getc */
+	romputc,	/* putc */
+	nullcnpollc,	/* pollc */
+	makedev(0, 0),
 	CN_DEAD,
 };
 
 /*
- * Get character from ROM console.
+ * Get character from PROM console.
  */
 static int
 romgetc(dev)
 	dev_t dev;
 {
-	int s = splhigh ();
-	int chr;
+	int chr, s;
+
+	s  = splhigh();
 	chr = (*callv->_getchar)();
-	splx (s);
+	splx(s);
 	return chr;
 }
 
-
 /*
- * Print a character on ROM console.
+ * Print a character on PROM console.
  */
 static void
-romputc (dev, c)
+romputc(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
 	int s;
+
 	s = splhigh();
 	(*callv->_printf)("%c", c);
 	splx(s);
 }
-
-
-/*
- * Toggle polling. Not implemented in NetBSD.
- */
-static void
-rompollc (dev, c)
-	dev_t dev;
-	register int c;
-{
-	return;
-}
-
-
 
 /*
  * Call back to the PROM to find out what devices it is using
@@ -132,7 +122,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 	 * Get and parse the "osconsole" environment variable.
 	 */
 	*crtslot = *kbdslot = -1;
-	oscon = (*callv->_getenv)("osconsole");
+	oscon = prom_getenv("osconsole");
 	if (oscon && *oscon >= '0' && *oscon <= '9') {
 		*kbdslot = *oscon - '0';
 		*prom_using_screen = 0;
@@ -167,4 +157,140 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 		*kbdslot = 7;
 	}
 
+}
+
+/*
+ * Get a prom environment variable.
+ */
+char *
+prom_getenv(name)
+	char *name;
+{
+	return (*callv->_getenv)(name);
+}
+
+/*
+ * Get 32bit system type of Digital hardware.
+ *	cputype,		u_int8_t [3]
+ *	systype,		u_int8_t [2]
+ *	firmware revision,	u_int8_t [1]
+ *	hardware revision.	u_int8_t [0]
+ */
+int
+prom_systype()
+{
+	char *cp;
+
+	if (callv != &callvec)
+		return (*callv->_getsysid)();
+	cp = prom_getenv("systype");
+	return (cp != NULL) ? atoi(cp) : 0;
+}
+
+/*
+ * Reset machine by haltbutton.
+ */
+void
+prom_haltbutton()
+{
+	(*callv->_halt)((int *)0, 0);
+}
+
+/*
+ * Halt/reboot machine.
+ */
+volatile void
+prom_halt(howto, bootstr)
+	int howto;
+	char *bootstr;
+{
+	if (callv != &callvec)
+		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
+	else {
+		volatile void (*f) __P((void));
+
+		f = (howto & RB_HALT)
+			? (void *)DEC_PROM_REINIT
+			: (void *)DEC_PROM_AUTOBOOT;
+		(*f)();
+	}
+
+	while(1) ;	/* fool gcc */
+	/*NOTREACHED*/
+}
+
+/*
+ * Get the host SCSI ID from the PROM.
+ */
+int
+prom_scsiid(cnum)
+	int cnum;
+{
+	char scsiid_var[8];	/* strlen("scsiidX") + NULL */
+	char *cp;
+
+	snprintf(scsiid_var, 8, "scsiid%d", cnum);
+	cp = prom_getenv(scsiid_var);
+	return (cp != NULL) ? atoi(cp) : DEFAULT_SCSIID;
+}
+
+/*
+ * over-engineered atoi(3)
+ */
+static int
+atoi(s)
+	const char *s;
+{
+	int c;
+	unsigned base = 10, d;
+	int neg = 0, val = 0;
+
+	if (s == 0 || (c = *s++) == 0)
+		goto out;
+
+	/* skip spaces if any */
+	while (c == ' ' || c == '\t')
+		c = *s++;
+
+	/* parse sign, allow more than one (compat) */
+	while (c == '-') {
+		neg = !neg;
+		c = *s++;
+	}
+
+	/* parse base specification, if any */
+	if (c == '0') {
+		c = *s++;
+		switch (c) {
+		case 'X':
+		case 'x':
+			base = 16;
+			break;
+		case 'B':
+		case 'b':
+			base = 2;
+			break;
+		default:
+			base = 8;
+		}
+	}
+
+	/* parse number proper */
+	for (;;) {
+		if (c >= '0' && c <= '9')
+			d = c - '0';
+		else if (c >= 'a' && c <= 'z')
+			d = c - 'a' + 10;
+		else if (c >= 'A' && c <= 'Z')
+			d = c - 'A' + 10;
+		else
+			break;
+		val *= base;
+		val += d;
+		c = *s++;
+	}
+	if (neg)
+		val = -val;
+out:
+	return val;
 }

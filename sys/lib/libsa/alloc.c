@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.12 1999/04/01 02:41:08 simonb Exp $	*/
+/*	$NetBSD: alloc.c,v 1.12.4.1 1999/06/21 01:25:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -110,7 +110,7 @@
 struct fl {
 	unsigned	size;
 	struct fl	*next;
-} *freelist = (struct fl *)0;
+} *freelist;
 
 #ifdef HEAP_VARIABLE
 static char *top, *heapstart, *heaplimit;
@@ -195,7 +195,9 @@ alloc(size)
 	/* we take the best fit */
 	f = bestf;
 
+#ifndef ALLOC_FIRST_FIT
 found:
+#endif
         /* remove from freelist */
         help = (char*)*f;
 	*f = (*f)->next;

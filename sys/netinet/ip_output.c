@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.58 1999/03/27 01:24:50 aidan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.58.4.1 1999/06/21 01:27:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -325,6 +325,17 @@ ip_output(m0, va_alist)
 	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
 #endif
+
+	/*
+	 * packets with Class-D address as source are not valid per 
+	 * RFC 1112
+	 */
+	if (IN_MULTICAST(ip->ip_src.s_addr)) {
+		ipstat.ips_odropped++;
+		error = EADDRNOTAVAIL;
+		goto bad;
+	}
+
 	/*
 	 * Look for broadcast address and
 	 * and verify user is allowed to send
@@ -348,6 +359,7 @@ ip_output(m0, va_alist)
 	} else
 		m->m_flags &= ~M_BCAST;
 
+sendit:
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
@@ -366,7 +378,6 @@ ip_output(m0, va_alist)
 			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
-sendit:
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */

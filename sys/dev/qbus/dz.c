@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.18 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.18.2.1 1999/06/21 01:18:50 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993

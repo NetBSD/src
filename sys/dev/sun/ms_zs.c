@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.1 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.1.2.1 1999/06/21 01:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

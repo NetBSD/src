@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2.2.1 1999/04/10 14:26:00 minoura Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2.2.1.2.1 1999/06/21 01:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 1998/08/29 20:44:51 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7.8.1 1999/06/21 01:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ static int lemedia[] = {
 	IFM_ETHER|IFM_10_5,
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
-
 
 struct cfattach le_sbus_ca = {
 	sizeof(struct le_softc), lematch_sbus, leattach_sbus

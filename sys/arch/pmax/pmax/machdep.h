@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 1998/03/25 06:22:20 jonathan Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2.12.1 1999/06/21 00:59:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,34 +34,15 @@
 extern char machine[];
 extern char cpu_model[];
 
-
-/* XXX ioasic hardware initialization. */
-void	ioasic_init __P((int flags));	/* chip revision flag */
-
-
-/*
- * Interrupt-blocking functions defined in locore. These names aren't used
- * directly except here and in interrupt handlers.
- */
-
-/* Block out one hardware interrupt-enable bit. */
-extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
-extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
-
-/* Block out nested interrupt-enable bits. */
-extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
-extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
-extern int	splhigh __P((void));
-
 extern volatile struct chiptime *mcclock_addr;
 
-
-/* jump to PROM after halt switch.  */
-extern void prom_haltbutton __P((void));
-
-
-/* high-res clock ticks.  Need better timer support. */
-u_long latched_cycle_cnt;
+/* PROM callback routines - see pmax/promcall.c */
+void	 prom_findcons __P((int *, int *, int *));
+void	 prom_halt __P((int, char *)) __attribute__((__noreturn__));
+void	 prom_haltbutton __P((void));
+int	 prom_scsiid __P((int));
+char	*prom_getenv __P((char *));
+int	 prom_systype __P((void));
 
 /* XXX max memory */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */

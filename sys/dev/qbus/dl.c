@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.10 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.10.2.1 1999/06/21 01:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

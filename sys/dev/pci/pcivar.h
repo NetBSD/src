@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.38 1999/03/19 03:37:52 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.38.4.1 1999/06/21 01:18:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.

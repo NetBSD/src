@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.2 1999/05/12 09:00:11 tron Exp $
+/* $NetBSD: lkminit_vfs.c,v 1.2.2.1 1999/06/21 01:26:05 thorpej Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

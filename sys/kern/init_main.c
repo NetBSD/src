@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145.4.1 1999/06/07 04:25:30 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145.4.2 1999/06/21 01:23:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -65,9 +65,6 @@
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/device.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -118,8 +115,10 @@ struct	pgrp pgrp0;
 struct	proc proc0;
 struct	pcred cred0;
 struct	filedesc0 filedesc0;
+struct	cwdinfo cwdi0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
+struct	sigacts sigacts0;
 #ifndef curproc
 struct	proc *curproc = &proc0;
 #endif
@@ -247,7 +246,7 @@ main()
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
-	memcpy(p->p_comm, "swapper", sizeof("swapper"));
+	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -259,6 +258,11 @@ main()
 	finit();
 	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
+
+	/* Create the CWD info. */
+	p->p_cwdi = &cwdi0;
+	cwdi0.cwdi_cmask = cmask;
+	cwdi0.cwdi_refcnt = 1;
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
@@ -292,11 +296,10 @@ main()
 	p->p_addr = proc0paddr;				/* XXX */
 
 	/*
-	 * We continue to place resource usage info and signal
-	 * actions in the user struct so they're pageable.
+	 * We continue to place resource usage info in the
+	 * user struct so they're pageable.
 	 */
 	p->p_stats = &p->p_addr->u_stats;
-	p->p_sigacts = &p->p_addr->u_sigacts;
 
 	/*
 	 * Charge root for one process.
@@ -316,11 +319,6 @@ main()
 
 	/* Start real time and statistics clocks. */
 	initclocks();
-
-#ifdef REAL_CLISTS
-	/* Initialize clists. */
-	clist_init();
-#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -370,7 +368,7 @@ main()
 			printf("cannot mount root, error = %d\n", error);
 			boothowto |= RB_ASKNAME;
 			setroot(root_device,
-			    (rootdev != NODEV) ? DISKPART(rootdev) : 0, NULL);
+			    (rootdev != NODEV) ? DISKPART(rootdev) : 0);
 		}
 	} while (error != 0);
 	mountroothook_destroy();
@@ -384,10 +382,10 @@ main()
 	 */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
-	filedesc0.fd_fd.fd_cdir = rootvnode;
-	VREF(filedesc0.fd_fd.fd_cdir);
+	cwdi0.cwdi_cdir = rootvnode;
+	VREF(cwdi0.cwdi_cdir);
 	VOP_UNLOCK(rootvnode, 0);
-	filedesc0.fd_fd.fd_rdir = NULL;
+	cwdi0.cwdi_rdir = NULL;
 	uvm_swap_init();
 
 	/*
@@ -398,11 +396,16 @@ main()
 	p->p_stats->p_start = runtime = mono_time = boottime = time;
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
-	/* Initialize signal state for process 0. */
+	/*
+	 * Initialize signal-related data structures, and signal state
+	 * for proc0.
+	 */
+	signal_init();
+	p->p_sigacts = &sigacts0;
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, 0, NULL, &initproc))
+	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
 		panic("fork init");
 	cpu_set_kpc(initproc, start_init, initproc);
 
@@ -476,6 +479,7 @@ start_init(arg)
 	/*
 	 * Now in process 1.
 	 */
+	strncpy(p->p_comm, "init", MAXCOMLEN);
 
 	/*
 	 * This is not the right way to do this.  We really should

@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.3 1998/10/09 06:13:30 matt Exp $	*/
+/*	$NetBSD: netio.c,v 1.3.8.1 1999/06/21 01:03:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 #include "samachdep.h"

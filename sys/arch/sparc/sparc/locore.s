@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114.2.1 1999/04/30 15:33:55 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.114.2.1.2.1 1999/06/21 01:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -218,7 +218,6 @@ cputypval:
 	.ascii	"     "
 cputypvar:
 	.asciz	"compatible"
-cputypvallen = cputypvar - cputypval
 	_ALIGN
 #endif
 
@@ -268,7 +267,7 @@ sun4_notsup:
  * which must be aligned on a 4096 byte boundary.  The text segment
  * starts beyond page 0 of KERNBASE so that there is a red zone
  * between user and kernel space.  Since the boot ROM loads us at
- * 0x4000, it is far easier to start at KERNBASE+0x4000 than to
+ * PROM_LOADADDR, it is far easier to start at KERNBASE+PROM_LOADADDR than to
  * buck the trend.  This is two or four pages in (depending on if
  * pagesize is 8192 or 4096).    We place two items in this area:
  * the message buffer (phys addr 0) and the cpu_softc structure for
@@ -277,8 +276,6 @@ sun4_notsup:
  * kernel space we remap it in configure() to another location and
  * invalidate the mapping at KERNBASE.
  */
-!	.globl _msgbufaddr	/* This label no longer used in C code */
-_msgbufaddr = KERNBASE
 
 /*
  * Each trap has room for four instructions, of which one perforce must
@@ -349,7 +346,7 @@ _msgbufaddr = KERNBASE
 #endif
 
 /* special high-speed 1-instruction-shaved-off traps (get nothing in %l3) */
-#define	SYSCALL		b syscall; mov %psr, %l0; nop; nop
+#define	SYSCALL		b _C_LABEL(_syscall); mov %psr, %l0; nop; nop
 #define	WINDOW_OF	b window_of; mov %psr, %l0; nop; nop
 #define	WINDOW_UF	b window_uf; mov %psr, %l0; nop; nop
 #ifdef notyet
@@ -1206,9 +1203,9 @@ Lpanic_red:
 	st	%g0, [t1 + %lo(_redzone)]; \
 	set	_redstack + REDSTACK - 96, %sp; \
 	/* prevent panic() from lowering ipl */ \
-	sethi	%hi(_panicstr), t2; \
+	sethi	%hi(_C_LABEL(panicstr)), t2; \
 	set	Lpanic_red, t2; \
-	st	t2, [t1 + %lo(_panicstr)]; \
+	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; \
 	rd	%psr, t1;		/* t1 = splhigh() */ \
 	or	t1, PSR_PIL, t2; \
 	wr	t2, 0, %psr; \
@@ -1216,7 +1213,7 @@ Lpanic_red:
 	nop; nop; nop; \
 	save	%sp, -CCFSZ, %sp;	/* preserve current window */ \
 	sethi	%hi(Lpanic_red), %o0; \
-	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
+	call	_C_LABEL(panic); or %o0, %lo(Lpanic_red), %o0; \
 7:
 
 #else
@@ -2325,7 +2322,7 @@ kgdb_rett:
  * XXX	should not have to save&reload ALL the registers just for
  *	ptrace...
  */
-syscall:
+_C_LABEL(_syscall):
 	TRAP_SETUP(-CCFSZ-80)
 	wr	%l0, PSR_ET, %psr
 	std	%l0, [%sp + CCFSZ + 0]	! tf_psr, tf_pc
@@ -2733,7 +2730,7 @@ nmi_sun4m:
 	.globl	window_uf, winuf_user, winuf_ok, winuf_invalid
 	.globl	return_from_trap, rft_kernel, rft_user, rft_invalid
 	.globl	softtrap, slowtrap
-	.globl	clean_trap_window, syscall
+	.globl	clean_trap_window, _C_LABEL(_syscall)
 #endif
 
 /*
@@ -3351,14 +3348,20 @@ dostart:
 	 * Startup.
 	 *
 	 * We have been loaded in low RAM, at some address which
-	 * is page aligned (0x4000 actually) rather than where we
-	 * want to run (KERNBASE+0x4000).  Until we get everything set,
+	 * is page aligned (PROM_LOADADDR actually) rather than where we
+	 * want to run (KERNBASE+PROM_LOADADDR).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
 
 #ifdef DDB
 	/*
-	 * First, check for DDB arguments. The loader passes `esym' in %o4.
+	 * We now use the bootinfo method to pass arguments, and the new
+	 * magic number indicates that. A pointer to esym is passed in
+	 * %o4[0] and the bootinfo structure is passed in %o4[1].
+	 *
+	 * For compatibility with older versions, we check for DDB arguments
+	 * if the older magic number is there. The loader passes `esym' in
+	 * %o4.
 	 * A DDB magic number is passed in %o5 to allow for bootloaders
 	 * that know nothing about DDB symbol loading conventions.
 	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
@@ -3373,32 +3376,53 @@ dostart:
 	 * We use the magic number passed as the sixth argument to
 	 * distinguish bootblock versions.
 	 */
-	mov	%g0, %l4
-	set	0x44444231, %l3
-	cmp	%o5, %l3		! chk magic
-	be	1f
+	set	KERNBASE, %l4
 
-	set	0x44444230, %l3
-	cmp	%o5, %l3		! chk compat magic
-	bne	2f
+	set	0x44444232, %l3		! bootinfo magic
+	cmp	%o5, %l3
+	bne	1f
+	 nop
 
-	set	KERNBASE, %l4		! compat magic found
+	/* The loader has passed to us a `bootinfo' structure */
+	ld	[%o4], %l3		! 1st word is esym
+	add	%l3, %l4, %o5		! relocate
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
+	st	%o5, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
+
+	ld	[%o4 + 4], %l3		! 2nd word is bootinfo
+	add	%l3, %l4, %o5		! relocate
+	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
+	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
+	b,a	3f
+
+1:
+	/* Check for old-style DDB loader magic */
+	set	0x44444231, %l3		! ddb magic
+	cmp	%o5, %l3
+	be,a	2f
+	 clr	%l4			! if DDB_MAGIC1, clear %l4
+
+	set	0x44444230, %l3		! compat magic
+	cmp	%o5, %l3
+	bne	3f
+
+					! note: %l4 set to KERNBASE above.
 	set	0xf8000000, %l5		! compute correction term:
 	sub	%l5, %l4, %l4		!  old KERNBASE (0xf8000000 ) - KERNBASE
 
-1:
+2:
 	tst	%o4			! do we have the symbols?
-	bz	2f
+	bz	3f
 	 sub	%o4, %l4, %o4		! apply compat correction
 	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
 	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
-2:
+3:
 #endif
 	/*
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
 	 */
-	set	0x4000, %g7
+	set	PROM_LOADADDR, %g7
 	cmp	%o0, %g7
 	be	is_sun4
 	 nop
@@ -3753,6 +3777,7 @@ startmap_done:
 	sethi	%hi(_C_LABEL(trapbase)), %o0
 	st	%g6, [%o0+%lo(_C_LABEL(trapbase))]
 
+#ifdef notdef
 	/*
 	 * Step 2: clear BSS.  This may just be paranoia; the boot
 	 * loader might already do it for us; but what the hell.
@@ -3761,6 +3786,7 @@ startmap_done:
 	set	_end, %o1
 	call	_C_LABEL(bzero)
 	 sub	%o1, %o0, %o1
+#endif
 
 	/*
 	 * Stash prom vectors now, after bzero, as it lives in bss
@@ -3958,92 +3984,96 @@ _C_LABEL(cpu_hatch):
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
+#define SAVE_STATE \
+	/* \
+	 * XXX  the `save' and `restore' below are unnecessary: should \
+	 *	replace with simple arithmetic on %sp \
+	 * \
+	 * Make room on the stack for 32 %f registers + %fsr.  This comes \
+	 * out to 33*4 or 132 bytes, but this must be aligned to a multiple \
+	 * of 8, or 136 bytes. \
+	 */ \
+	save	%sp, -CCFSZ - 136, %sp; \
+	mov	%g2, %l2;		/* save globals in %l registers */ \
+	mov	%g3, %l3; \
+	mov	%g4, %l4; \
+	mov	%g5, %l5; \
+	mov	%g6, %l6; \
+	mov	%g7, %l7; \
+	/* \
+	 * Saving the fpu registers is expensive, so do it iff the fsr \
+	 * stored in the sigcontext shows that the fpu is enabled. \
+	 */ \
+	ld	[%fp + 64 + 16 + SC_PSR_OFFSET], %l0; \
+	sethi	%hi(PSR_EF), %l1;	/* FPU enable is too high for andcc */ \
+	andcc	%l0, %l1, %l0;		/* %l0 = fpu enable bit */ \
+	be	1f;			/* if not set, skip the saves */ \
+	 rd	%y, %l1;		/* in any case, save %y */ \
+	/* fpu is enabled, oh well */ \
+	st	%fsr, [%sp + CCFSZ + 0]; \
+	std	%f0, [%sp + CCFSZ + 8]; \
+	std	%f2, [%sp + CCFSZ + 16]; \
+	std	%f4, [%sp + CCFSZ + 24]; \
+	std	%f6, [%sp + CCFSZ + 32]; \
+	std	%f8, [%sp + CCFSZ + 40]; \
+	std	%f10, [%sp + CCFSZ + 48]; \
+	std	%f12, [%sp + CCFSZ + 56]; \
+	std	%f14, [%sp + CCFSZ + 64]; \
+	std	%f16, [%sp + CCFSZ + 72]; \
+	std	%f18, [%sp + CCFSZ + 80]; \
+	std	%f20, [%sp + CCFSZ + 88]; \
+	std	%f22, [%sp + CCFSZ + 96]; \
+	std	%f24, [%sp + CCFSZ + 104]; \
+	std	%f26, [%sp + CCFSZ + 112]; \
+	std	%f28, [%sp + CCFSZ + 120]; \
+	std	%f30, [%sp + CCFSZ + 128]; \
+1:
+
+#define RESTORE_STATE \
+	/* \
+	 * Now that the handler has returned, re-establish all the state \
+	 * we just saved above, then do a sigreturn. \
+	 */ \
+	tst	%l0;			/* reload fpu registers? */ \
+	be	1f;			/* if not, skip the loads */ \
+	 wr	%l1, %g0, %y;		/* in any case, restore %y */ \
+	ld	[%sp + CCFSZ + 0], %fsr; \
+	ldd	[%sp + CCFSZ + 8], %f0; \
+	ldd	[%sp + CCFSZ + 16], %f2; \
+	ldd	[%sp + CCFSZ + 24], %f4; \
+	ldd	[%sp + CCFSZ + 32], %f6; \
+	ldd	[%sp + CCFSZ + 40], %f8; \
+	ldd	[%sp + CCFSZ + 48], %f10; \
+	ldd	[%sp + CCFSZ + 56], %f12; \
+	ldd	[%sp + CCFSZ + 64], %f14; \
+	ldd	[%sp + CCFSZ + 72], %f16; \
+	ldd	[%sp + CCFSZ + 80], %f18; \
+	ldd	[%sp + CCFSZ + 88], %f20; \
+	ldd	[%sp + CCFSZ + 96], %f22; \
+	ldd	[%sp + CCFSZ + 104], %f24; \
+	ldd	[%sp + CCFSZ + 112], %f26; \
+	ldd	[%sp + CCFSZ + 120], %f28; \
+	ldd	[%sp + CCFSZ + 128], %f30; \
+1: \
+	mov	%l2, %g2; \
+	mov	%l3, %g3; \
+	mov	%l4, %g4; \
+	mov	%l5, %g5; \
+	mov	%l6, %g6; \
+	mov	%l7, %g7
+
 	.globl	_C_LABEL(sigcode)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(sigcode):
-	/*
-	 * XXX  the `save' and `restore' below are unnecessary: should
-	 *	replace with simple arithmetic on %sp
-	 *
-	 * Make room on the stack for 32 %f registers + %fsr.  This comes
-	 * out to 33*4 or 132 bytes, but this must be aligned to a multiple
-	 * of 8, or 136 bytes.
-	 */
-	save	%sp, -CCFSZ - 136, %sp
-	mov	%g2, %l2		! save globals in %l registers
-	mov	%g3, %l3
-	mov	%g4, %l4
-	mov	%g5, %l5
-	mov	%g6, %l6
-	mov	%g7, %l7
-	/*
-	 * Saving the fpu registers is expensive, so do it iff the fsr
-	 * stored in the sigcontext shows that the fpu is enabled.
-	 */
-	ld	[%fp + 64 + 16 + SC_PSR_OFFSET], %l0
-	sethi	%hi(PSR_EF), %l1	! FPU enable bit is too high for andcc
-	andcc	%l0, %l1, %l0		! %l0 = fpu enable bit
-	be	1f			! if not set, skip the saves
-	 rd	%y, %l1			! in any case, save %y
 
-	! fpu is enabled, oh well
-	st	%fsr, [%sp + CCFSZ + 0]
-	std	%f0, [%sp + CCFSZ + 8]
-	std	%f2, [%sp + CCFSZ + 16]
-	std	%f4, [%sp + CCFSZ + 24]
-	std	%f6, [%sp + CCFSZ + 32]
-	std	%f8, [%sp + CCFSZ + 40]
-	std	%f10, [%sp + CCFSZ + 48]
-	std	%f12, [%sp + CCFSZ + 56]
-	std	%f14, [%sp + CCFSZ + 64]
-	std	%f16, [%sp + CCFSZ + 72]
-	std	%f18, [%sp + CCFSZ + 80]
-	std	%f20, [%sp + CCFSZ + 88]
-	std	%f22, [%sp + CCFSZ + 96]
-	std	%f24, [%sp + CCFSZ + 104]
-	std	%f26, [%sp + CCFSZ + 112]
-	std	%f28, [%sp + CCFSZ + 120]
-	std	%f30, [%sp + CCFSZ + 128]
+	SAVE_STATE
 
-1:
 	ldd	[%fp + 64], %o0		! sig, code
 	ld	[%fp + 76], %o3		! arg3
 	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
 	 add	%fp, 64 + 16, %o2	! scp
 
-	/*
-	 * Now that the handler has returned, re-establish all the state
-	 * we just saved above, then do a sigreturn.
-	 */
-	tst	%l0			! reload fpu registers?
-	be	1f			! if not, skip the loads
-	 wr	%l1, %g0, %y		! in any case, restore %y
-
-	ld	[%sp + CCFSZ + 0], %fsr
-	ldd	[%sp + CCFSZ + 8], %f0
-	ldd	[%sp + CCFSZ + 16], %f2
-	ldd	[%sp + CCFSZ + 24], %f4
-	ldd	[%sp + CCFSZ + 32], %f6
-	ldd	[%sp + CCFSZ + 40], %f8
-	ldd	[%sp + CCFSZ + 48], %f10
-	ldd	[%sp + CCFSZ + 56], %f12
-	ldd	[%sp + CCFSZ + 64], %f14
-	ldd	[%sp + CCFSZ + 72], %f16
-	ldd	[%sp + CCFSZ + 80], %f18
-	ldd	[%sp + CCFSZ + 88], %f20
-	ldd	[%sp + CCFSZ + 96], %f22
-	ldd	[%sp + CCFSZ + 104], %f24
-	ldd	[%sp + CCFSZ + 112], %f26
-	ldd	[%sp + CCFSZ + 120], %f28
-	ldd	[%sp + CCFSZ + 128], %f30
-
-1:
-	mov	%l2, %g2
-	mov	%l3, %g3
-	mov	%l4, %g4
-	mov	%l5, %g5
-	mov	%l6, %g6
-	mov	%l7, %g7
+	RESTORE_STATE
 
 	! get registers back & set syscall #
 	restore	%g0, SYS___sigreturn14, %g1
@@ -4055,116 +4085,18 @@ _C_LABEL(sigcode):
 _C_LABEL(esigcode):
 
 #ifdef COMPAT_SUNOS
-/*
- * The following code is copied to the top of the user stack when each
- * process is exec'ed, and signals are `trampolined' off it.
- *
- * When this code is run, the stack looks like:
- *	[%sp]		64 bytes to which registers can be dumped
- *	[%sp + 64]	signal number (goes in %o0)
- *	[%sp + 64 + 4]	signal code (goes in %o1)
- *	[%sp + 64 + 8]	placeholder
- *	[%sp + 64 + 12]	argument for %o3, currently unsupported (always 0)
- *	[%sp + 64 + 16]	first word of saved state (sigcontext)
- *	    .
- *	    .
- *	    .
- *	[%sp + NNN]	last word of saved state
- * (followed by previous stack contents or top of signal stack).
- * The address of the function to call is in %g1; the old %g1 and %o0
- * have already been saved in the sigcontext.  We are running in a clean
- * window, all previous windows now being saved to the stack.
- *
- * Note that [%sp + 64 + 8] == %sp + 64 + 16.  The copy at %sp+64+8
- * will eventually be removed, with a hole left in its place, if things
- * work out.
- */
 	.globl	_C_LABEL(sunos_sigcode)
 	.globl	_C_LABEL(sunos_esigcode)
 _C_LABEL(sunos_sigcode):
-	/*
-	 * XXX  the `save' and `restore' below are unnecessary: should
-	 *	replace with simple arithmetic on %sp
-	 *
-	 * Make room on the stack for 32 %f registers + %fsr.  This comes
-	 * out to 33*4 or 132 bytes, but this must be aligned to a multiple
-	 * of 8, or 136 bytes.
-	 */
-	save	%sp, -CCFSZ - 136, %sp
-	mov	%g2, %l2		! save globals in %l registers
-	mov	%g3, %l3
-	mov	%g4, %l4
-	mov	%g5, %l5
-	mov	%g6, %l6
-	mov	%g7, %l7
-	/*
-	 * Saving the fpu registers is expensive, so do it iff the fsr
-	 * stored in the sigcontext shows that the fpu is enabled.
-	 */
-	ld	[%fp + 64 + 16 + SC_PSR_OFFSET], %l0
-	sethi	%hi(PSR_EF), %l1	! FPU enable bit is too high for andcc
-	andcc	%l0, %l1, %l0		! %l0 = fpu enable bit
-	be	1f			! if not set, skip the saves
-	 rd	%y, %l1			! in any case, save %y
 
-	! fpu is enabled, oh well
-	st	%fsr, [%sp + CCFSZ + 0]
-	std	%f0, [%sp + CCFSZ + 8]
-	std	%f2, [%sp + CCFSZ + 16]
-	std	%f4, [%sp + CCFSZ + 24]
-	std	%f6, [%sp + CCFSZ + 32]
-	std	%f8, [%sp + CCFSZ + 40]
-	std	%f10, [%sp + CCFSZ + 48]
-	std	%f12, [%sp + CCFSZ + 56]
-	std	%f14, [%sp + CCFSZ + 64]
-	std	%f16, [%sp + CCFSZ + 72]
-	std	%f18, [%sp + CCFSZ + 80]
-	std	%f20, [%sp + CCFSZ + 88]
-	std	%f22, [%sp + CCFSZ + 96]
-	std	%f24, [%sp + CCFSZ + 104]
-	std	%f26, [%sp + CCFSZ + 112]
-	std	%f28, [%sp + CCFSZ + 120]
-	std	%f30, [%sp + CCFSZ + 128]
+	SAVE_STATE
 
-1:
 	ldd	[%fp + 64], %o0		! sig, code
 	ld	[%fp + 76], %o3		! arg3
 	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
 	 add	%fp, 64 + 16, %o2	! scp
 
-	/*
-	 * Now that the handler has returned, re-establish all the state
-	 * we just saved above, then do a sigreturn.
-	 */
-	tst	%l0			! reload fpu registers?
-	be	1f			! if not, skip the loads
-	 wr	%l1, %g0, %y		! in any case, restore %y
-
-	ld	[%sp + CCFSZ + 0], %fsr
-	ldd	[%sp + CCFSZ + 8], %f0
-	ldd	[%sp + CCFSZ + 16], %f2
-	ldd	[%sp + CCFSZ + 24], %f4
-	ldd	[%sp + CCFSZ + 32], %f6
-	ldd	[%sp + CCFSZ + 40], %f8
-	ldd	[%sp + CCFSZ + 48], %f10
-	ldd	[%sp + CCFSZ + 56], %f12
-	ldd	[%sp + CCFSZ + 64], %f14
-	ldd	[%sp + CCFSZ + 72], %f16
-	ldd	[%sp + CCFSZ + 80], %f18
-	ldd	[%sp + CCFSZ + 88], %f20
-	ldd	[%sp + CCFSZ + 96], %f22
-	ldd	[%sp + CCFSZ + 104], %f24
-	ldd	[%sp + CCFSZ + 112], %f26
-	ldd	[%sp + CCFSZ + 120], %f28
-	ldd	[%sp + CCFSZ + 128], %f30
-
-1:
-	mov	%l2, %g2
-	mov	%l3, %g3
-	mov	%l4, %g4
-	mov	%l5, %g5
-	mov	%l6, %g6
-	mov	%l7, %g7
+	RESTORE_STATE
 
 	! get registers back & set syscall #
 	restore	%g0, SUNOS_SYS_sigreturn, %g1
@@ -4177,116 +4109,18 @@ _C_LABEL(sunos_esigcode):
 #endif /* COMPAT_SUNOS */
 
 #ifdef COMPAT_SVR4
-/*
- * The following code is copied to the top of the user stack when each
- * process is exec'ed, and signals are `trampolined' off it.
- *
- * When this code is run, the stack looks like:
- *	[%sp]		64 bytes to which registers can be dumped
- *	[%sp + 64]	signal number (goes in %o0)
- *	[%sp + 64 + 4]	pointer to saved siginfo
- *	[%sp + 64 + 8]	pointer to saved context
- *	[%sp + 64 + 12]	address of the user's handler
- *	[%sp + 64 + 16]	first word of saved state (context)
- *	    .
- *	    .
- *	    .
- *	[%sp + NNN]	last word of saved state (siginfo)
- * (followed by previous stack contents or top of signal stack).
- * The address of the function to call is in %g1; the old %g1 and %o0
- * have already been saved in the sigcontext.  We are running in a clean
- * window, all previous windows now being saved to the stack.
- *
- * Note that [%sp + 64 + 8] == %sp + 64 + 16.  The copy at %sp+64+8
- * will eventually be removed, with a hole left in its place, if things
- * work out.
- */
 	.globl	_C_LABEL(svr4_sigcode)
 	.globl	_C_LABEL(svr4_esigcode)
 _C_LABEL(svr4_sigcode):
-	/*
-	 * XXX  the `save' and `restore' below are unnecessary: should
-	 *	replace with simple arithmetic on %sp
-	 *
-	 * Make room on the stack for 32 %f registers + %fsr.  This comes
-	 * out to 33*4 or 132 bytes, but this must be aligned to a multiple
-	 * of 8, or 136 bytes.
-	 */
-	save	%sp, -CCFSZ - 136, %sp
-	mov	%g2, %l2		! save globals in %l registers
-	mov	%g3, %l3
-	mov	%g4, %l4
-	mov	%g5, %l5
-	mov	%g6, %l6
-	mov	%g7, %l7
-	/*
-	 * Saving the fpu registers is expensive, so do it iff the fsr
-	 * stored in the sigcontext shows that the fpu is enabled.
-	 */
-	ld	[%fp + 64 + 16 + SC_PSR_OFFSET], %l0
-	sethi	%hi(PSR_EF), %l1	! FPU enable bit is too high for andcc
-	andcc	%l0, %l1, %l0		! %l0 = fpu enable bit
-	be	1f			! if not set, skip the saves
-	 rd	%y, %l1			! in any case, save %y
 
-	! fpu is enabled, oh well
-	st	%fsr, [%sp + CCFSZ + 0]
-	std	%f0, [%sp + CCFSZ + 8]
-	std	%f2, [%sp + CCFSZ + 16]
-	std	%f4, [%sp + CCFSZ + 24]
-	std	%f6, [%sp + CCFSZ + 32]
-	std	%f8, [%sp + CCFSZ + 40]
-	std	%f10, [%sp + CCFSZ + 48]
-	std	%f12, [%sp + CCFSZ + 56]
-	std	%f14, [%sp + CCFSZ + 64]
-	std	%f16, [%sp + CCFSZ + 72]
-	std	%f18, [%sp + CCFSZ + 80]
-	std	%f20, [%sp + CCFSZ + 88]
-	std	%f22, [%sp + CCFSZ + 96]
-	std	%f24, [%sp + CCFSZ + 104]
-	std	%f26, [%sp + CCFSZ + 112]
-	std	%f28, [%sp + CCFSZ + 120]
-	std	%f30, [%sp + CCFSZ + 128]
+	SAVE_STATE
 
-1:
 	ldd	[%fp + 64], %o0		! sig, siginfo
 	ld	[%fp + 72], %o2		! uctx
 	call	%g1			! (*sa->sa_handler)(sig,siginfo,uctx)
 	 nop
 
-	/*
-	 * Now that the handler has returned, re-establish all the state
-	 * we just saved above, then do a sigreturn.
-	 */
-	tst	%l0			! reload fpu registers?
-	be	1f			! if not, skip the loads
-	 wr	%l1, %g0, %y		! in any case, restore %y
-
-	ld	[%sp + CCFSZ + 0], %fsr
-	ldd	[%sp + CCFSZ + 8], %f0
-	ldd	[%sp + CCFSZ + 16], %f2
-	ldd	[%sp + CCFSZ + 24], %f4
-	ldd	[%sp + CCFSZ + 32], %f6
-	ldd	[%sp + CCFSZ + 40], %f8
-	ldd	[%sp + CCFSZ + 48], %f10
-	ldd	[%sp + CCFSZ + 56], %f12
-	ldd	[%sp + CCFSZ + 64], %f14
-	ldd	[%sp + CCFSZ + 72], %f16
-	ldd	[%sp + CCFSZ + 80], %f18
-	ldd	[%sp + CCFSZ + 88], %f20
-	ldd	[%sp + CCFSZ + 96], %f22
-	ldd	[%sp + CCFSZ + 104], %f24
-	ldd	[%sp + CCFSZ + 112], %f26
-	ldd	[%sp + CCFSZ + 120], %f28
-	ldd	[%sp + CCFSZ + 128], %f30
-
-1:
-	mov	%l2, %g2
-	mov	%l3, %g3
-	mov	%l4, %g4
-	mov	%l5, %g5
-	mov	%l6, %g6
-	mov	%l7, %g7
+	RESTORE_STATE
 
 	restore	%g0, SVR4_SYS_context, %g1	! get registers & set syscall #
 	mov	1, %o0
@@ -6320,6 +6154,9 @@ Llongjmpbotch:
 _C_LABEL(esym):
 	.word	0
 #endif
+	.globl	_C_LABEL(bootinfo)
+_C_LABEL(bootinfo):
+	.word	0
 	.globl	_C_LABEL(cold)
 _C_LABEL(cold):
 	.word	1		! cold start flag

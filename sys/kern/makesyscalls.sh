@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.33 1999/02/17 18:17:10 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.33.4.1 1999/06/21 01:24:03 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -456,9 +456,11 @@ $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	syscall++
 	next
 }
-$2 == "OBSOL" || $2 == "UNIMPL" {
+$2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
 	if ($2 == "OBSOL")
 		comment="obsolete"
+	else if ($2 == "EXCL")
+		comment="excluded"
 	else
 		comment="unimplemented"
 	for (i = 3; i <= NF; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.56.2.2 1999/05/04 22:28:45 perry Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.56.2.2.2.1 1999/06/21 01:27:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,9 @@ static	void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((struct in_addr *, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
+#if NLOOP > 0
 extern	struct ifnet loif[NLOOP];
+#endif
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
@@ -328,8 +330,10 @@ arp_rtrequest(req, rt, sa)
 			    LLADDR(SDL(gate)),
 			    SDL(gate)->sdl_alen = 
 			    rt->rt_ifp->if_data.ifi_addrlen);
+#if NLOOP > 0
 			if (useloopback)
 				rt->rt_ifp = &loif[0];
+#endif
 		}
 		break;
 
@@ -635,22 +639,28 @@ in_arpinput(m)
 		}
 #if NTOKEN > 0
 		/*
-		 * XXX uses m_pktdat and assumes the complete answer including
+		 * XXX uses m_data and assumes the complete answer including
 		 * XXX token-ring headers is in the same buf
 		 */
-		if (ifp->if_type == IFT_ISO88025 &&
-			m->m_pktdat[8] & TOKEN_RI_PRESENT) {
-			struct token_rif	*rif;
-			size_t	riflen;
+		if (ifp->if_type == IFT_ISO88025) {
+			struct token_header *trh;
 
-			rif = TOKEN_RIF((struct token_header *) m->m_pktdat);
-			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
+			trh = (struct token_header *)M_TRHSTART(m);
+			if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
+				struct token_rif	*rif;
+				size_t	riflen;
 
-			if (riflen > 2 && riflen < sizeof(struct token_rif) &&
-				(riflen & 1) == 0) {
-				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
-				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-				bcopy(rif, TOKEN_RIF(la), riflen);
+				rif = TOKEN_RIF(trh);
+				riflen = (ntohs(rif->tr_rcf) &
+				    TOKEN_RCF_LEN_MASK) >> 8;
+
+				if (riflen > 2 &&
+				    riflen < sizeof(struct token_rif) &&
+				    (riflen & 1) == 0) {
+					rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
+					rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
+					bcopy(rif, TOKEN_RIF(la), riflen);
+				}
 			}
 		}
 #endif /* NTOKEN > 0 */
@@ -691,6 +701,8 @@ reply:
 	ah->ar_op = htons(ARPOP_REPLY);
 	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
+	m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + (2 * ah->ar_hln);
+	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);

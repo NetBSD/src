@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpreg.h,v 1.4 1999/05/29 19:12:53 ragge Exp $	*/
+/*	$NetBSD: mscpreg.h,v 1.4.2.1 1999/06/21 01:18:27 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.60.4.1 1999/04/21 22:52:54 perry Exp $	*/
+/*	$NetBSD: vnd.c,v 1.60.4.1.2.1 1999/06/21 01:17:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_mman.h,v 1.1.10.1 1999/04/06 15:00:45 tv Exp $	*/
+/*	$NetBSD: svr4_mman.h,v 1.1.10.1.2.1 1999/06/21 01:09:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.18 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.18.4.1 1999/06/21 01:47:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -157,22 +157,18 @@ uvm_useracc(addr, len, rw)
 	size_t len;
 	int rw;
 {
+	vm_map_t map;
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-#if defined(i386) || defined(pc532)
-	/*
-	 * XXX - specially disallow access to user page tables - they are
-	 * in the map.  This is here until i386 & pc532 pmaps are fixed...
-	 */
-	if ((vaddr_t) addr >= VM_MAXUSER_ADDRESS
-	    || (vaddr_t) addr + len > VM_MAXUSER_ADDRESS
-	    || (vaddr_t) addr + len <= (vaddr_t) addr)
-		return (FALSE);
-#endif
+	/* XXX curproc */
+	map = &curproc->p_vmspace->vm_map;
 
-	rv = uvm_map_checkprot(&curproc->p_vmspace->vm_map,
-			trunc_page(addr), round_page(addr+len), prot);
+	vm_map_lock_read(map);
+	rv = uvm_map_checkprot(map, trunc_page(addr), round_page(addr+len),
+	    prot);
+	vm_map_unlock_read(map);
+
 	return(rv);
 }
 
@@ -223,14 +219,24 @@ uvm_chgkprot(addr, len, rw)
  * - XXXCDC: consider nuking this (or making it a macro?)
  */
 
-void
-uvm_vslock(p, addr, len)
+int
+uvm_vslock(p, addr, len, access_type)
 	struct proc *p;
 	caddr_t	addr;
 	size_t	len;
+	vm_prot_t access_type;
 {
-	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
-	    round_page(addr+len));
+	vm_map_t map;
+	vaddr_t start, end;
+	int rv;
+
+	map = &p->p_vmspace->vm_map;
+	start = trunc_page(addr);
+	end = round_page(addr + len);
+
+	rv = uvm_fault_wire(map, start, end, access_type);
+
+	return (rv);
 }
 
 /*
@@ -246,7 +252,7 @@ uvm_vsunlock(p, addr, len)
 	caddr_t	addr;
 	size_t	len;
 {
-	uvm_fault_unwire(p->p_vmspace->vm_map.pmap, trunc_page(addr), 
+	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page(addr), 
 		round_page(addr+len));
 }
 
@@ -256,6 +262,8 @@ uvm_vsunlock(p, addr, len)
  * - the address space is copied as per parent map's inherit values
  * - a new "user" structure is allocated for the child process
  *	[filled in by MD layer...]
+ * - if specified, the child gets a new user stack described by
+ *	stack and stacksize
  * - NOTE: the kernel stack may be at a different location in the child
  *	process, and thus addresses of automatic variables may be invalid
  *	after cpu_fork returns in the child process.  We do nothing here
@@ -264,9 +272,11 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared)
+uvm_fork(p1, p2, shared, stack, stacksize)
 	struct proc *p1, *p2;
 	boolean_t shared;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	int rv;
@@ -281,20 +291,20 @@ uvm_fork(p1, p2, shared)
 	 * and the kernel stack.  Wired state is stored in p->p_flag's
 	 * P_INMEM bit rather than in the vm_map_entry's wired count
 	 * to prevent kernel_map fragmentation.
+	 *
+	 * Note the kernel stack gets read/write accesses right off
+	 * the bat.
 	 */
 	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE);
+	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
 	if (rv != KERN_SUCCESS)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
-	 * p_stats and p_sigacts currently point at fields in the user
-	 * struct but not at &u, instead at p_addr.  Copy p_sigacts and
-	 * parts of p_stats; zero the rest of p_stats (statistics).
+	 * p_stats currently points at a field in the user struct.  Copy
+	 * parts of p_stats, and zero out the rest.
 	 */
 	p2->p_stats = &up->u_stats;
-	p2->p_sigacts = &up->u_sigacts;
-	up->u_sigacts = *p1->p_sigacts;
 	memset(&up->u_stats.pstat_startzero, 0,
 	(unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
 		    (caddr_t)&up->u_stats.pstat_startzero));
@@ -307,7 +317,7 @@ uvm_fork(p1, p2, shared)
 	 * the child ready to run.  The child will exit directly to user
 	 * mode on its first time slice, and will not return here.
 	 */
-	cpu_fork(p1, p2);
+	cpu_fork(p1, p2, stack, stacksize);
 }
 
 /*
@@ -372,7 +382,8 @@ uvm_swapin(p)
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE);
+	uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	    VM_PROT_READ | VM_PROT_WRITE);
 
 	/*
 	 * Some architectures need to be notified when the user area has
@@ -585,7 +596,7 @@ uvm_swapout(p)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	addr = (vaddr_t)p->p_addr;
-	uvm_fault_unwire(kernel_map->pmap, addr, addr + USPACE); /* !P_INMEM */
+	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/*

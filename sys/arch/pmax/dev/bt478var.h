@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478var.h,v 1.2 1996/09/21 03:22:24 jonathan Exp $	*/
+/*	$NetBSD: bt478var.h,v 1.2.26.1 1999/06/21 00:58:35 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* 
+/*
  * External declarations exported from the bt478 low-level
  * chipset driver.
  */

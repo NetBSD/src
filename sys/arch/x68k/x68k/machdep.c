@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.1 1999/04/16 16:26:27 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.1.2.1 1999/06/21 01:04:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,6 @@
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -54,7 +53,6 @@
 #include "opt_fpuemulate.h"
 #include "opt_m060sp.h"
 #include "opt_panicbutton.h"
-#include "opt_sysv.h"
 #include "opt_extmem.h"
 
 #include <sys/param.h>
@@ -81,15 +79,6 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -128,34 +117,12 @@ int badbaddr __P((caddr_t));
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-int cpuspeed;	/* XXX */
-
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail;
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-#ifdef BUFCACHE
-int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
-#else
-int	bufcache = 0;		/* fallback to old algorithm */
-#endif
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
@@ -191,6 +158,19 @@ void	nmihand __P((struct frame));
 void	intrhand __P((int));
 
 /*
+ * On the 68020/68030, the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68040, the value of delay_divisor is roughly
+ * 759 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68060, the value of delay_divisor is reported to be
+ * 128 / cpuspeed (where cpuspeed is in MHz).
+ */
+int	delay_divisor = 140;	/* assume some reasonable value to start */
+static int cpuspeed;		/* MPU clock (in MHz) */
+
+/*
  * Machine-dependent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
@@ -204,15 +184,9 @@ void
 consinit()
 {
 	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.  Note that we only set it if a custom value
-	 * has not already been specified.
+	 * bring graphics layer up.
 	 */
-
-	cpuspeed = MHZ_25; /* XXX */
-
-	if (mmutype == MMU_68040)
-		cpuspeed *= 2;	/* XXX */
+	config_console();
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -252,10 +226,11 @@ void
 cpu_startup()
 {
 	unsigned i;
-	caddr_t v, firstaddr;
+	caddr_t v;
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -286,111 +261,19 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	
-	if (bufpages == 0) {
-		if (bufcache == 0) {		/* use old algorithm */
-			/*
-			 * Determine how many buffers to allocate.
-			 * Since an x68k tends to be long on memory and short
-			 * on disk speed, we allocate more buffer space than
-			 * the BSD standard of use 10% of memory for the first
-			 * 2 Meg, 5% of remaining.
-			 * We just allocate a flat 10%.  Insure a minimum of 16
-			 * buffers.
-			 * We allocate 1/2 as many swap buffer headers as file
-			 * i/o buffers.
-			 */
-			bufpages = physmem / 10 / CLSIZE;
-			if (physmem < btoc(2 * 1024 * 1024))
-				bufpages = physmem / 10 / CLSIZE;
-			else
-				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-				    (20 * CLSIZE);
-		} else {
-			/*
-			 * Set size of buffer cache to physmem/bufcache * 100
-			 * (i.e., bufcache % of physmem).
-			 */
-			if (bufcache < 5 || bufcache > 95) {
-				printf(
-		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
-				    bufcache);
-				bufcache = 10;
-			}
-			bufpages= physmem / (CLSIZE * 100) * bufcache;
-		}
-	}
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vsize_t)(v - firstaddr);
-		firstaddr = (caddr_t) uvm_km_zalloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vsize_t)(v - firstaddr) != size)
+	size = (vm_size_t)allocsys(NULL, NULL);
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if (allocsys(v, NULL) - v != size)
 		panic("startup: table size inconsistency");
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -445,19 +328,20 @@ again:
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, TRUE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
+				 FALSE, NULL);
 
 	/*
 	 * Initialize callouts
@@ -470,9 +354,11 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -523,16 +409,16 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
+char	cpu_model[96];		/* max 85 chars */
 extern	char version[];
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	"emulator FPU", 	/* 0 */
+	", emulator FPU", 	/* 0 */
 #else
-	"no math support",	/* 0 */
+	", no math support",	/* 0 */
 #endif
-	" m68881 FPU",		/* 1 */
-	" m68882 FPU",		/* 2 */
+	", m68881 FPU",		/* 1 */
+	", m68882 FPU",		/* 2 */
 	"/FPU",			/* 3 */
 	"/FPU",			/* 4 */
 	};
@@ -542,6 +428,7 @@ identifycpu()
 {
         /* there's alot of XXX in here... */
 	char *cpu_type, *mach, *mmu, *fpu;
+	char clock[16];
 
 	/*
 	 * check machine type constant
@@ -573,14 +460,20 @@ identifycpu()
 		break;
 	}
 
+	cpuspeed = 2048 / delay_divisor;
+	sprintf(clock, "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
 		cpu_type = "m68060";
 		mmu = "/MMU";
+		cpuspeed = 128 / delay_divisor;
+		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
+		cpuspeed = 759 / delay_divisor;
+		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
@@ -588,19 +481,20 @@ identifycpu()
 		break;
 	case CPU_68020:
 		cpu_type = "m68020";
-		mmu = " m68851 MMU";
+		mmu = ", m68851 MMU";
 		break;
 	default:
 		cpu_type = "unknown";
-		mmu = " unknown MMU";
+		mmu = ", unknown MMU";
 		break;
 	}
 	fputype = fpu_probe();
 	if (fputype >= 0 && fputype < sizeof(fpu_descr)/sizeof(fpu_descr[0]))
 		fpu = fpu_descr[fputype];
 	else
-		fpu = " unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+		fpu = ", unknown FPU";
+	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)",
+		mach, cpu_type, mmu, fpu, clock);
 	printf("%s\n", cpu_model);
 }
 
@@ -1375,7 +1269,7 @@ asm("end_check_mem:");
 	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
 
-	DPRINTF ((" End."));
+	DPRINTF ((" End.\n"));
 
 	DPRINTF (("Returning from mem_exists. result = %d\n", exists));
 
@@ -1389,6 +1283,7 @@ setmemrange(void)
 	psize_t s, min, max;
 	struct memlist *mlist = memlist;
 	u_long h;
+	int basemax = ctob(physmem);
 
 	/*
 	 * VM system is not started yet.  Use the first and second avalable
@@ -1423,12 +1318,12 @@ setmemrange(void)
 		 * But some type of extended memory is in 32bit address space.
 		 * Check whether.
 		 */
-		if (!mem_exists(mlist[i].base, avail_end))
+		if (!mem_exists(mlist[i].base, basemax))
 			continue;
 		h = 0;
 		/* range check */
 		for (s = min; s <= max; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, h))
+			if (!mem_exists(mlist[i].base + s - 4, basemax))
 				break;
 			h = (u_long)(mlist[i].base + s);
 		}

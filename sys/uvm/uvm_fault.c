@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.1 1999/06/07 04:25:36 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.2 1999/06/21 01:47:20 thorpej Exp $	*/
 
 /*
  *
@@ -595,6 +595,19 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 		narrow = FALSE;		/* normal fault */
 
 	/*
+	 * before we do anything else, if this is a fault on a kernel
+	 * address, check to see if the address is managed by an
+	 * interrupt-safe map.  If it is, we fail immediately.  Intrsafe
+	 * maps are never pageable, and this approach avoids an evil
+	 * locking mess.
+	 */
+	if (orig_map == kernel_map && uvmfault_check_intrsafe(&ufi)) {
+		UVMHIST_LOG(maphist, "<- VA 0x%lx in intrsafe map %p",
+		    ufi.orig_rvaddr, ufi.map, 0, 0);
+		return (KERN_FAILURE);
+	}
+
+	/*
 	 * "goto ReFault" means restart the page fault from ground zero.
 	 */
 ReFault:
@@ -622,6 +635,17 @@ ReFault:
 	}
 
 	/*
+	 * if the map is not a pageable map, a page fault always fails.
+	 */
+
+	if ((ufi.map->flags & VM_MAP_PAGEABLE) == 0) {
+		UVMHIST_LOG(maphist,
+		    "<- map %p not pageable", ufi.map, 0, 0, 0);
+		uvmfault_unlockmaps(&ufi, FALSE);
+		return (KERN_FAILURE);
+	}
+
+	/*
 	 * "enter_prot" is the protection we want to enter the page in at.
 	 * for certain pages (e.g. copy-on-write pages) this protection can
 	 * be more strict than ufi.entry->protection.  "wired" means either
@@ -629,7 +653,7 @@ ReFault:
 	 */
 
 	enter_prot = ufi.entry->protection;
-	wired = (ufi.entry->wired_count != 0) || (fault_type == VM_FAULT_WIRE);
+	wired = VM_MAPENT_ISWIRED(ufi.entry) || (fault_type == VM_FAULT_WIRE);
 	if (wired)
 		access_type = enter_prot; /* full access for wired */
 
@@ -829,7 +853,7 @@ ReFault:
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
 			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
 			    enter_prot, 
-			    (ufi.entry->wired_count != 0), 0);
+			    VM_MAPENT_ISWIRED(ufi.entry), 0);
 		}
 		simple_unlock(&anon->an_lock);
 	}
@@ -1236,11 +1260,19 @@ ReFault:
 
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
+
+		/*
+		 * since the now-wired page cannot be paged out,
+		 * release its swap resources for others to use.
+		 * since an anon with no swap cannot be PG_CLEAN,
+		 * clear its clean flag now.
+		 */
+
+		pg->flags &= ~(PG_CLEAN);
 		uvm_anon_dropswap(anon);
 	} else {
 		/* activate it */
 		uvm_pageactivate(pg);
-
 	}
 
 	uvm_unlock_pageq();
@@ -1676,9 +1708,19 @@ Case2:
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
 		if (pg->pqflags & PQ_AOBJ) {
+
+			/*
+			 * since the now-wired page cannot be paged out,
+			 * release its swap resources for others to use.
+			 * since an aobj page with no swap cannot be PG_CLEAN,
+			 * clear its clean flag now.
+			 */
+
+			pg->flags &= ~(PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
 	} else {
+		/* activate it */
 		uvm_pageactivate(pg);
 	}
 	uvm_unlock_pageq();
@@ -1704,16 +1746,17 @@ Case2:
 /*
  * uvm_fault_wire: wire down a range of virtual addresses in a map.
  *
- * => map should be locked by caller?   If so how can we call
- *	uvm_fault?   WRONG.
- * => XXXCDC: locking here is all screwed up!!!  start with 
- *	uvm_map_pageable and fix it.
+ * => map may be read-locked by caller, but MUST NOT be write-locked.
+ * => if map is read-locked, any operations which may cause map to
+ *	be write-locked in uvm_fault() must be taken care of by
+ *	the caller.  See uvm_map_pageable().
  */
 
 int
-uvm_fault_wire(map, start, end)
+uvm_fault_wire(map, start, end, access_type)
 	vm_map_t map;
 	vaddr_t start, end;
+	vm_prot_t access_type;
 {
 	vaddr_t va;
 	pmap_t  pmap;
@@ -1722,23 +1765,15 @@ uvm_fault_wire(map, start, end)
 	pmap = vm_map_pmap(map);
 
 	/*
-	 * call pmap pageable: this tells the pmap layer to lock down these
-	 * page tables.
-	 */
-
-	pmap_pageable(pmap, start, end, FALSE);
-
-	/*
-	 * now fault it in page at a time.   if the fault fails then we have
-	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
-	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
+	 * fault it in page at a time.   if the fault fails then we have
+	 * to undo what we have done.
 	 */
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
-		rv = uvm_fault(map, va, VM_FAULT_WIRE, VM_PROT_NONE);
+		rv = uvm_fault(map, va, VM_FAULT_WIRE, access_type);
 		if (rv) {
 			if (va != start) {
-				uvm_fault_unwire(map->pmap, start, va);
+				uvm_fault_unwire(map, start, va);
 			}
 			return (rv);
 		}
@@ -1749,18 +1784,40 @@ uvm_fault_wire(map, start, end)
 
 /*
  * uvm_fault_unwire(): unwire range of virtual space.
- *
- * => caller holds reference to pmap (via its map)
  */
 
 void
-uvm_fault_unwire(pmap, start, end)
-	struct pmap *pmap;
+uvm_fault_unwire(map, start, end)
+	vm_map_t map;
 	vaddr_t start, end;
 {
+
+	vm_map_lock_read(map);
+	uvm_fault_unwire_locked(map, start, end);
+	vm_map_unlock_read(map);
+}
+
+/*
+ * uvm_fault_unwire_locked(): the guts of uvm_fault_unwire().
+ *
+ * => map must be at least read-locked.
+ */
+
+void
+uvm_fault_unwire_locked(map, start, end)
+	vm_map_t map;
+	vaddr_t start, end;
+{
+	vm_map_entry_t entry;
+	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
 	struct vm_page *pg;
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("uvm_fault_unwire_locked: intrsafe map");
+#endif
 
 	/*
 	 * we assume that the area we are unwiring has actually been wired
@@ -1768,29 +1825,55 @@ uvm_fault_unwire(pmap, start, end)
 	 * the PAs from the pmap.   we also lock out the page daemon so that
 	 * we can call uvm_pageunwire.
 	 */
-	
+
 	uvm_lock_pageq();
+
+	/*
+	 * find the beginning map entry for the region.
+	 */
+#ifdef DIAGNOSTIC
+	if (start < vm_map_min(map) || end > vm_map_max(map))
+		panic("uvm_fault_unwire_locked: address out of range");
+#endif
+	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
+		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
 		pa = pmap_extract(pmap, va);
 
 		/* XXX: assumes PA 0 cannot be in map */
 		if (pa == (paddr_t) 0) {
-			panic("uvm_fault_unwire: unwiring non-wired memory");
+			panic("uvm_fault_unwire_locked: unwiring "
+			    "non-wired memory");
 		}
-		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
+
+		/*
+		 * make sure the current entry is for the address we're
+		 * dealing with.  if not, grab the next entry.
+		 */
+#ifdef DIAGNOSTIC
+		if (va < entry->start)
+			panic("uvm_fault_unwire_locked: hole 1");
+#endif
+		if (va >= entry->end) {
+#ifdef DIAGNOSTIC
+			if (entry->next == &map->header ||
+			    entry->next->start > entry->end)
+				panic("uvm_fault_unwire_locked: hole 2");
+#endif
+			entry = entry->next;
+		}
+
+		/*
+		 * if the entry is no longer wired, tell the pmap.
+		 */
+		if (VM_MAPENT_ISWIRED(entry) == 0)
+			pmap_unwire(pmap, va);
+
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)
 			uvm_pageunwire(pg);
 	}
 
 	uvm_unlock_pageq();
-
-	/*
-	 * now we call pmap_pageable to let the pmap know that the page tables
-	 * in this space no longer need to be wired.
-	 */
-
-	pmap_pageable(pmap, start, end, TRUE);
-
 }

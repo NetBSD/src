@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1999/03/18 03:23:53 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.13.4.1 1999/06/21 01:02:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,9 +64,6 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
-#if 0
-#include <sys/user.h>
-#endif
 
 #include <net/if.h>
 
@@ -83,6 +80,10 @@
 #include <machine/pmap.h>
 #include <sparc64/sparc64/timerreg.h>
 
+#include <dev/ata/atavar.h>
+#include <dev/pci/pcivar.h>
+#include <dev/sbus/sbusvar.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -98,7 +99,8 @@ int printspl = 0;
  * the machine.
  */
 int	cold;		/* if 1, still working on cold-start */
-int	fbnode;		/* node ID of ROM's console frame buffer */
+int	stdinnode;	/* node ID of ROM's console input device */
+int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
 
 #ifdef KGDB
@@ -254,6 +256,7 @@ bootstrap(nctx)
  *	[sbus device] val[0] is a sbus slot, and val[1] is an sbus offset
  *	[scsi disk] val[0] is target, val[1] is lun, val[2] is partition
  *	[scsi tape] val[0] is target, val[1] is lun, val[2] is file #
+ *	[pci device] val[0] is device, val[1] is function, val[2] might be partition
  * }
  *
  */
@@ -374,7 +377,6 @@ bootpath_print(bp)
  * device, so we can't set boot device there.   we patch in with
  * dk_establish(), and use this to recover the bootpath.
  */
-
 struct bootpath *
 bootpath_store(storep, bp)
 	int storep;
@@ -389,6 +391,7 @@ bootpath_store(storep, bp)
 
 	return (retval);
 }
+
 /* TEMP: */
 struct bootpath *altbootpath_store(int, struct bootpath *);
 struct bootpath *
@@ -515,7 +518,7 @@ cpu_rootconf()
 	bootdv = bp == NULL ? NULL : bp->dev;
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
-	setroot(bootdv, bootpartition, dev_name2blk);
+	setroot(bootdv, bootpartition);
 }
 
 /*
@@ -594,112 +597,6 @@ findnode(first, name)
 	return (0);
 }
 
-#if 0
-/*
- * Fill in a romaux.  Returns 1 on success, 0 if the register property
- * was not the right size.
- */
-int
-romprop(rp, cp, node)
-	register struct romaux *rp;
-	const char *cp;
-	register int node;
-{
-	register int len;
-	static union { char regbuf[256]; struct rom_reg rr[RA_MAXREG]; struct rom_reg64 rr64[RA_MAXREG]; } u;
-	static const char pl[] = "property length";
-
-	bzero(u.regbuf, sizeof u);
-	len = getprop(node, "reg", (void *)u.regbuf, sizeof(u.regbuf));
-	if (len == -1 &&
-	    node_has_property(node, "device_type") &&
-	    strcmp(getpropstring(node, "device_type"), "hierarchical") == 0)
-		len = 0;
-	if (len > RA_MAXREG * sizeof(struct rom_reg))
-		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
-		       cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
-	if (len % sizeof(struct rom_reg) && len % sizeof(struct rom_reg64)) {
-		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
-		       cp, pl, len, sizeof(struct rom_reg));
-		return (0);
-	}
-#ifdef NOTDEF_DEBUG
-	printf("romprop: reg len=%d; len % sizeof(struct rom_reg64)=%d; len % sizeof(struct rom_reg)=%d\n",
-	       len, len % sizeof(struct rom_reg), len % sizeof(struct rom_reg64));
-#endif
-	if (len % sizeof(struct rom_reg64) == 0) {
-		rp->ra_node = node;
-		rp->ra_name = cp;
-		rp->ra_nreg = len / sizeof(struct rom_reg64);
-		for( len=0; len<rp->ra_nreg; len++ ) {
-			/* Convert to 32-bit format */
-			rp->ra_reg[len].rr_iospace = (u.rr64[len].rr_paddr>>32);
-			rp->ra_reg[len].rr_paddr = (void*)(u.rr64[len].rr_paddr);
-			rp->ra_reg[len].rr_len = u.rr64[len].rr_len;
-#ifdef NOTDEF_DEBUG
-			printf("romprop: reg[%d]=(%x,%x,%x)\n",
-			       len, rp->ra_reg[len].rr_iospace, 
-			       rp->ra_reg[len].rr_paddr,
-			       rp->ra_reg[len].rr_len);
-#endif
-		}
-	} else {
-		rp->ra_node = node;
-		rp->ra_name = cp;
-		rp->ra_nreg = len / sizeof(struct rom_reg);
-		bcopy(u.rr, rp->ra_reg, len);
-	}
-
-	len = getprop(node, "address", (void *)rp->ra_vaddrs,
-		      sizeof(rp->ra_vaddrs));
-	if (len == -1) {
-		rp->ra_vaddr = 0;	/* XXX - driver compat */
-		len = 0;
-	}
-	if (len & 3) {
-		printf("%s \"address\" %s = %d (need multiple of 4)\n",
-		       cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nvaddrs = len >> 2;
-	
-	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
-	if (len == -1)
-		len = 0;
-	if (len & 7) {
-		printf("%s \"intr\" %s = %d (need multiple of 8)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nintr = len >>= 3;
-	/* SPARCstation interrupts are not hardware-vectored */
-	while (--len >= 0) {
-		if (rp->ra_intr[len].int_vec) {
-			printf("WARNING: %s interrupt %d has nonzero vector\n",
-			    cp, len);
-			break;
-		}
-	}
-	/* Sun4u interrupts */
-	len = getprop(node, "interrupts", (void *)&rp->ra_interrupt, sizeof rp->ra_interrupt);
-	if (len == -1)
-		len = 0;
-	if (len & 2) {
-		printf("%s \"interrupts\" %s = %d (need multiple of 4)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_ninterrupt = len >>= 2;
-	len = getprop(node, "ranges", (void *)&rp->ra_range,
-		      sizeof rp->ra_range);
-	if (len == -1)
-		len = 0;
-	rp->ra_nrange = len / sizeof(struct rom_range);
-
-	return (1);
-}
-#endif
-
 int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
@@ -733,10 +630,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	int node0, node;
 
 	static const char *const openboot_special[] = {
-		/* find these first */
-		"counter-timer",
-		"",
-
 		/* ignore these (end with NULL) */
 		/*
 		 * These are _root_ devices to ignore. Others must be handled
@@ -798,49 +691,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	if (optionsnode == 0)
 		panic("no options in OPENPROM");
 
-	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
-
-		if ((node = findnode(node0, sp)) == 0) {
-			printf("could not find %s in OPENPROM\n", sp);
-			panic(sp);
-		}
-
-		bzero(&ma, sizeof ma);
-		ma.ma_bustag = &mainbus_space_tag;
-		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_name = getpropstringA(node, "name", namebuf);
-		ma.ma_node = node;
-		if (getprop(node, "reg", sizeof(ma.ma_reg[0]), 
-			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
-{
-panic("mainbus_attach(): %s has no \"reg\"\n", sp);
-			continue;
-}
-		if (getprop(node, "interrupts", sizeof(ma.ma_interrupts[0]), 
-			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
-			free(ma.ma_reg, M_DEVBUF);
-panic("mainbus_attach(): %s has no \"interrupts\"\n", sp);
-			continue;
-		}
-		if (getprop(node, "address", sizeof(*ma.ma_address), 
-			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
-			free(ma.ma_reg, M_DEVBUF);
-			free(ma.ma_interrupts, M_DEVBUF);
-panic("mainbus_attach(): %s has no \"address\"\n", sp);
-			continue;
-		}
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
-
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
-			panic(sp);
-		free(ma.ma_reg, M_DEVBUF);
-		free(ma.ma_interrupts, M_DEVBUF);
-		free(ma.ma_address, M_DEVBUF);
-	}
-
 	/*
-	 * Configure the rest of the devices, in PROM order.  Skip
+	 * Configure the devices, in PROM order.  Skip
 	 * PROM entries that are not for devices, or which must be
 	 * done before we get here.
 	 */
@@ -893,105 +745,6 @@ panic("mainbus_attach(): %s has no \"address\"\n", sp);
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
-
-/*
- * findzs() is called from the zs driver (which is, at least in theory,
- * generic to any machine with a Zilog ZSCC chip).  It should return the
- * address of the corresponding zs channel.  It may not fail, and it
- * may be called before the VM code can be used.  Here we count on the
- * FORTH PROM to map in the required zs chips.
- */
-void *
-findzs(zs)
-	int zs;
-{
-	int node, n;
-	unsigned int addr;
-
-	node = firstchild(findroot());
-	/* Ultras have zs on the sbus */
-	node = findnode(node, "sbus");
-	if (!node)
-		panic("findzs: no sbus node");
-	node = firstchild(node);
-	n=0;
-	while ((node = findnode(node, "zs")) != 0) {
-		/* There is no way to identify a node by its number */
-		if ( n++ == zs ) { 
-			if ((addr = getpropint(node, "address", 0)) == 0)
-				/* We really should just map it in ourselves */
-				panic("findzs: zs%d not mapped by PROM", zs);
-			return ((void *)(unsigned long)addr);
-		}
-		node = nextsibling(node);
-	}
-	panic("findzs: cannot find zs%d", zs);
-	/* NOTREACHED */
-}
-
-#if 0
-int
-makememarr(ap, max, which)
-	register struct memarr *ap;
-	int max, which;
-{
-	struct v2rmi {
-		int	zero;
-		int	addr;
-		int	len;
-	} v2rmi[200];		/* version 2 rom meminfo layout */
-#define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
-	register int i, node, len;
-	char *prop;
-
-	/*
-	 * Version 2 PROMs use a property array to describe them.
-	 */
-	if (max > MAXMEMINFO) {
-		printf("makememarr: limited to %d\n", MAXMEMINFO);
-		max = MAXMEMINFO;
-	}
-	if ((node = findnode(firstchild(findroot()), "memory")) == 0)
-		panic("makememarr: cannot find \"memory\" node");
-	switch (which) {
-		
-	case MEMARR_AVAILPHYS:
-		prop = "available";
-		break;
-		
-	case MEMARR_TOTALPHYS:
-		prop = "reg";
-		break;
-		
-	default:
-		panic("makememarr");
-	}
-	len = getprop(node, prop, (void *)v2rmi, sizeof v2rmi) /
-		sizeof(struct v2rmi);
-	for (i = 0; i < len; i++) {
-		if (i >= max)
-			goto overflow;
-		ap->addr = v2rmi[i].addr;
-		ap->len = v2rmi[i].len;
-		ap++;
-	}
-
-	/*
-	 * Success!  (Hooray)
-	 */
-	if (i == 0)
-		panic("makememarr: no memory found");
-	return (i);
-
-overflow:
-	/*
-	 * Oops, there are more things in the PROM than our caller
-	 * provided space for.  Truncate any extras.
-	 */
-	printf("makememarr: WARNING: lost some memory\n");
-	return (i);
-}
-#endif
 
 int
 getprop(node, name, size, nitem, bufp)
@@ -1266,6 +1019,7 @@ getdevunit(name, unit)
 #define BUSCLASS_OBIO		3
 #define BUSCLASS_SBUS		4
 #define BUSCLASS_VME		5
+#define BUSCLASS_PCI		6
 
 static int bus_class __P((struct device *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
@@ -1284,6 +1038,9 @@ static struct {
 	{ "dma",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
+	{ "psycho",	BUSCLASS_MAINBUS },
+	{ "simba",	BUSCLASS_PCI },
+	{ "pciide",	BUSCLASS_PCI },
 	{ "vme",	BUSCLASS_VME }
 };
 
@@ -1318,7 +1075,7 @@ instance_match(dev, aux, bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
-	struct iommu_attach_args *iom;
+	struct pci_attach_args *pa;
 
 	/*
 	 * Several Sbus devices are represented on bootpaths in one of
@@ -1328,6 +1085,9 @@ instance_match(dev, aux, bp)
 	 *
 	 * hence we fall back on a `unit number' check if the Sbus-specific
 	 * instance parameter check does not produce a match.
+	 *
+	 * For PCI devices, we get:
+	 *	../pci@../xxx@<dev>,<fn>/...
 	 */
 
 	switch (bus_class(dev)) {
@@ -1339,6 +1099,12 @@ instance_match(dev, aux, bp)
 	case BUSCLASS_SBUS:
 		sa = aux;
 		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
+			return (1);
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		if (bp->val[0] == pa->pa_device &&
+		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
 	default:
@@ -1401,8 +1167,12 @@ device_register(dev, aux)
 	    strcmp(dvname, "ledma") == 0 ||
 	    strcmp(dvname, "espdma") == 0 ||
 	    strcmp(dvname, "esp") == 0 ||
+	    strcmp(dvname, "pci") == 0 ||
+	    strcmp(dvname, "pciide") == 0 ||
+	    strcmp(dvname, "psycho") == 0 ||
+	    strcmp(dvname, "simba") == 0 ||
 	    strcmp(dvname, "xdc") == 0 ||
-	    strcmp(dvname, "xyc") == 0 ) {
+	    strcmp(dvname, "xyc") == 0) {
 		/*
 		 * A bus or controller device of sorts. Check instance
 		 * parameters and advance boot path on match.
@@ -1411,9 +1181,10 @@ device_register(dev, aux)
 			altbootpath_store(1, bp + 1);
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0) {
+	} else if (strcmp(dvname, "le") == 0 ||
+		   strcmp(dvname, "hme") == 0) {
 		/*
-		 * LANCE ethernet device
+		 * ethernet devices: LANCE, Happy Meal Ethernet.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
@@ -1473,6 +1244,17 @@ device_register(dev, aux)
 			nail_bootdev(dev, bp);
 			return;
 		}
+	} else if (strcmp("wd", dvname) == 0) {
+		/*
+		 * IDE disks.
+		 * ?XXX?
+		 */
+		struct ata_atapi_attach *aa = aux;
+
+		if (aa->aa_channel == bp->val[0]) {
+			nail_bootdev(dev, bp);
+			return;
+		}
 	} else {
 		/*
 		 * Generic match procedure.
@@ -1482,5 +1264,4 @@ device_register(dev, aux)
 			return;
 		}
 	}
-
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 1999/03/26 23:41:36 mycroft Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.44.4.1 1999/06/21 01:01:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -97,7 +97,9 @@ pagemove(from, to, size)
 
 
 /*
- * Map an IO request into kernel virtual address space.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
@@ -148,7 +150,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the mappings associated with this I/O operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
@@ -191,8 +193,10 @@ vunmapbuf(bp, len)
  * the first element in struct user.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *opcb = &p1->p_addr->u_pcb;
 	struct pcb *npcb = &p2->p_addr->u_pcb;
@@ -244,6 +248,12 @@ cpu_fork(p1, p2)
 
 	/* Copy parent's trapframe */
 	*tf2 = *(struct trapframe *)((int)opcb + USPACE - sizeof(*tf2));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf2->tf_out[6] = (u_int)stack + stacksize;
 
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {

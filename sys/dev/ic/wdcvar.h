@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.16.2.1 1999/04/12 09:14:31 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.16.2.1.2.1 1999/06/21 01:17:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9 1998/03/18 21:59:39 matthias Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9.10.1 1999/06/21 00:57:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,10 +41,6 @@
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_pmap_new.h"
-#endif
-
 /*
  * PC 532 process control block
  *
@@ -70,9 +66,7 @@ struct pcb {
  * Software pcb (extension)
  */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
-#if defined(PMAP_NEW)
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
-#endif
 };
 
 /*    

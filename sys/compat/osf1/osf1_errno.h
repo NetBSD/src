@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_errno.h,v 1.3 1999/05/01 02:57:10 cgd Exp $ */
+/* $NetBSD: osf1_errno.h,v 1.3.2.1 1999/06/21 01:08:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

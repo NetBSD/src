@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.11 1999/03/25 16:58:40 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.11.4.1 1999/06/21 01:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1102,6 +1102,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	struct iovec *ktriov = NULL;
 #endif
 	
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
 	auio.uio_iov = (struct iovec *)(u_long)mp->msg_iov;
@@ -1114,8 +1115,10 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
 #if 0
 		/* cannot happen iov_len is unsigned */
-		if (iov->iov_len < 0)
-			return (EINVAL);
+		if (iov->iov_len < 0) {
+			error = EINVAL;
+			goto out1;
+		}
 #endif
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
@@ -1123,8 +1126,10 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 		 * avoid garbage return values.
 		 */
 		auio.uio_resid += iov->iov_len;
-		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX)
-			return (EINVAL);
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+			error = EINVAL;
+			goto out1;
+		}
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
@@ -1230,11 +1235,13 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 		}
 		mp->msg_controllen = len;
 	}
-out:
+ out:
 	if (from)
 		m_freem(from);
 	if (control)
 		m_freem(control);
+ out1:
+	FILE_UNUSE(fp);
 	return (error);
 }
 
@@ -2303,27 +2310,6 @@ compat_netbsd32_listen(p, v, retval)
 }
 
 int
-compat_netbsd32_vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef TRACE
-	struct compat_netbsd32_vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-	struct sys_vtrace_args ua;
-
-	NETBSD32TO64_UAP(request);
-	NETBSD32TO64_UAP(value);
-	return (vtrace(p, &ua, retval));
-#else
-	return (ENOSYS);
-#endif
-}
-
-int
 compat_netbsd32_gettimeofday(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -3112,15 +3098,19 @@ compat_netbsd32_fstatfs(p, v, retval)
 	struct netbsd32_statfs s32;
 	int error;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	netbsd32_from_statfs(sp, &s32);
-	return (copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32)));
+	error = copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32));
+ out:
+	FILE_UNUSE(fp);
+	return (error);
 }
 
 #if defined(NFS) || defined(NFSSERVER)
@@ -3791,8 +3781,23 @@ compat_netbsd32___sysctl(p, v, retval)
 		}
 		memlock.sl_lock = 1;
 #endif /* XXXXXXXX */
-		if (dolock)
-			uvm_vslock(p, SCARG(uap, old), savelen);
+		if (dolock) {
+			/*
+			 * XXX Um, this is kind of evil.  What should
+			 * XXX we be passing here?
+			 */
+			if (uvm_vslock(p, SCARG(uap, old), savelen,
+			    VM_PROT_NONE) != KERN_SUCCESS) {
+#if 0 /* XXXXXXXX */
+				memlock.sl_lock = 0;
+				if (memlock.sl_want) {
+					memlock.sl_want = 0;
+					wakeup((caddr_t)&memlock);
+				}
+#endif /* XXXXXXXX */
+				return (EFAULT);
+			}
+		}
 		oldlen = savelen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
@@ -3878,11 +3883,14 @@ compat_netbsd32_futimes(p, v, retval)
 	int error;
 	struct file *fp;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	return (change_utimes32((struct vnode *)fp->f_data, 
-				(struct timeval *)(u_long)SCARG(uap, tptr), p));
+	error = change_utimes32((struct vnode *)fp->f_data, 
+				(struct timeval *)(u_long)SCARG(uap, tptr), p);
+	FILE_UNUSE(fp);
+	return (error);
 }
 
 int
@@ -4605,13 +4613,18 @@ compat_netbsd32_getdents(p, v, retval)
 	struct file *fp;
 	int error, done;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out;
+	}
 	error = vn_readdir(fp, (caddr_t)(u_long)SCARG(uap, buf), UIO_USERSPACE,
 			SCARG(uap, count), &done, p, 0, 0);
 	*retval = done;
+ out:
+	FILE_UNUSE(fp);
 	return (error);
 }
 

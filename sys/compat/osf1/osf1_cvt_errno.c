@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt_errno.c,v 1.5 1999/05/01 02:57:09 cgd Exp $ */
+/* $NetBSD: osf1_cvt_errno.c,v 1.5.2.1 1999/06/21 01:08:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_common.h,v 1.1 1999/06/06 19:03:40 ragge Exp $	*/
+/*	$NetBSD: uba_common.h,v 1.1.2.1 1999/06/21 01:03:44 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.

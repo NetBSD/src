@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.18 1999/03/22 13:08:51 mrg Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.18.4.1 1999/06/21 00:59:00 thorpej Exp $	*/
 
 /*
  * conf-glue.c:
@@ -173,9 +173,9 @@ pmax_add_scsi(dp, unit)
 void
 configure_scsi()
 {
-	register struct pmax_ctlr *cp;
-	register struct pmax_scsi_device *dp;
-	register struct pmax_driver *drp;
+	struct pmax_ctlr *cp;
+	struct pmax_scsi_device *dp;
+	struct pmax_driver *drp;
 
 	/* probe and initialize SCSI buses */
 	for (cp = &pmax_scsi_table[0]; (drp = cp->pmax_driver) != NULL; cp++) {

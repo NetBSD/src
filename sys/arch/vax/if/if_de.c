@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.35 1998/11/29 14:48:52 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.35.6.1 1999/06/21 01:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -583,8 +583,17 @@ deread(ds, ifrw, len)
 	 * information to be at the front.
 	 */
 	m = if_ubaget(&ds->ds_deuba, ifrw, len, &ds->ds_if);
-	if (m)
-		ether_input(&ds->ds_if, eh, m);
+	if (m) {
+		/*
+		 * XXX I'll let ragge make this sane.  I'm not entirely
+		 * XXX sure what's going on in if_ubaget().
+		 */
+		M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+		if (m) {
+			*mtod(m, struct ether_header *) = *eh;
+			(*ds->ds_if.if_input)(&ds->ds_if, m);
+		}
+	}
 }
 /*
  * Process an ioctl request.

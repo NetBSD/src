@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.5 1998/12/14 23:44:04 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.5.4.1 1999/06/21 01:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ usb_block_allocmem(tag, size, align, dmap)
 	if (error)
 		goto unmap;
 
-	error = bus_dmamap_load(tag, p->map, p->kaddr,p->size, NULL, 
+	error = bus_dmamap_load(tag, p->map, p->kaddr, p->size, NULL, 
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;

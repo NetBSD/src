@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.24 1998/03/21 19:42:22 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.24.10.1 1999/06/21 01:01:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@
 #include <sparc/dev/pfourreg.h>
 
 static struct fbdevice *devfb;
-
 
 void
 fb_unblank()
@@ -338,7 +337,7 @@ donesize:
 
 static void fb_bell __P((int));
 
-#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
+#if !defined(RASTERCONS_FULLSCREEN)
 static int a2int __P((char *, int));
 
 static int
@@ -363,61 +362,74 @@ fb_bell(on)
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
 }
 
-#include <sparc/dev/rcons_font.h>
-
 void
 fbrcons_init(fb)
 	struct fbdevice *fb;
 {
 	struct rconsole	*rc = &fb->fb_rcons;
+	struct rasops_info *ri = &fb->fb_rinfo;
+	int maxrow, maxcol, *row, *col;
 
-	/*
-	 * Common glue for rconsole initialization
-	 * XXX - mostly duplicates values with fbdevice.
-	 */
-	rc->rc_linebytes = fb->fb_linebytes;
-	rc->rc_pixels = fb->fb_pixels;
-	rc->rc_width = fb->fb_type.fb_width;
-	rc->rc_height = fb->fb_type.fb_height;
-	rc->rc_depth = fb->fb_type.fb_depth;
-	/* Setup the static font */
-	rc->rc_font = &console_font;
+	/* Set up what rasops needs to know about */
+	bzero(ri, sizeof *ri);
+	ri->ri_stride = fb->fb_linebytes;
+	ri->ri_bits = (caddr_t)fb->fb_pixels;
+	ri->ri_depth = fb->fb_type.fb_depth;
+	ri->ri_width = fb->fb_type.fb_width;
+	ri->ri_height = fb->fb_type.fb_height;
 
-#if defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT)
-	rc->rc_maxcol = rc->rc_width / rc->rc_font->width;
-	rc->rc_maxrow = rc->rc_height / rc->rc_font->height;
-#else
+	/* These'll be sanity checked by rasops... */
+	maxrow = 0;
+	maxcol = 0;
+
+#if !defined(RASTERCONS_FULLSCREEN)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 		if (eep == NULL) {
-			rc->rc_maxcol = 80;
-			rc->rc_maxrow = 34;
+			maxcol = 80;
+			maxrow = 34;
 		} else {
-			rc->rc_maxcol = eep->eeTtyCols;
-			rc->rc_maxrow = eep->eeTtyRows;
+			maxcol = eep->eeTtyCols;
+			maxrow = eep->eeTtyRows;
 		}
 	}
 #endif /* SUN4 */
-
 	if (!CPU_ISSUN4) {
-		rc->rc_maxcol =
+		maxcol =
 		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-		rc->rc_maxrow =
+		maxrow =
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
-#endif /* RASTERCONS_FULLSCREEN || RASTERCONS_SMALLFONT */
+#endif /* !RASTERCONS_FULLSCREEN */
+	/* 
+	 * XXX until somebody actually sets the colormap after a call to 
+	 * rasops_init() with ri->ri_cmap, we can only do mono..
+	 */
+	ri->ri_forcemono = 1;
 
-#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
+	/* Get operations set and connect to rcons */
+	if (rasops_init(ri, maxrow, maxcol, 0, 1))
+		panic("fbrcons_init: rasops_init failed!");
+
+	rc->rc_row = rc->rc_col = 0;
+#if !defined(RASTERCONS_FULLSCREEN)
 	/* Determine addresses of prom emulator row and column */
-	if (CPU_ISSUN4 ||
-	    romgetcursoraddr(&rc->rc_row, &rc->rc_col))
+	if (!CPU_ISSUN4 && !romgetcursoraddr(&row, &col)) {
+		rc->rc_row = *row;
+		rc->rc_col = *col;
+	}
 #endif
-		rc->rc_row = rc->rc_col = NULL;
-
+	rc->rc_ops = &ri->ri_ops;
+	rc->rc_cookie = ri;
 	rc->rc_bell = fb_bell;
-	rcons_init(rc);
+	rc->rc_maxcol = ri->ri_cols;
+	rc->rc_maxrow = ri->ri_rows;
+	rc->rc_width = ri->ri_emuwidth;
+	rc->rc_height = ri->ri_emuheight;
+	rcons_init(rc, 0);
+
 	/* Hook up virtual console */
 	v_putc = rcons_cnputc;
 }
