@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1997/11/07 05:34:07 mikel Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/13 14:18:45 lukem Exp $
 
 LIB=	ossaudio
 MAN=	ossaudio.3
 
 SRCS=	ossaudio.c
 
-CFLAGS+= -I${.CURDIR}
+CPPFLAGS+= -I${.CURDIR}
 
 INCS=	soundcard.h
 INCSDIR=/usr/include
