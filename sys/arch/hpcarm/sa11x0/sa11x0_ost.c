@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.6 2001/04/17 15:58:51 toshii Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.7 2001/05/01 12:36:55 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -90,7 +90,7 @@ saost_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return(0);
+	return (1);
 }
 
 void
