@@ -78,39 +78,37 @@ static void
 unsupply_fpregs (fregs)
      struct fpreg *fregs;
 {
-
-  memset(fregs, 0, sizeof(*fregs));
-  memcpy(fregs->fpreg, &registers[REGISTER_BYTE (FP0_REGNUM)],
-	 sizeof(fregs->fpreg));
+  memset (fregs, 0, sizeof (*fregs));
+  memcpy (fregs->fpreg, &registers[REGISTER_BYTE (FP0_REGNUM)], sizeof (fregs->fpreg));
 }
 
 void
-nbsd_reg_to_internal(regs)
+nbsd_reg_to_internal (regs)
      char *regs;
 {
-  supply_regs(regs);
+  supply_regs (regs);
 }
 
 void
-nbsd_fpreg_to_internal(fregs)
+nbsd_fpreg_to_internal (fregs)
      char *fregs;
 {
-  supply_fpregs(fregs);
+  supply_fpregs (fregs);
 }
 
 void
-nbsd_internal_to_reg(regs)
+nbsd_internal_to_reg (regs)
      char *regs;
 {
-  unsupply_regs(regs);
+  unsupply_regs (regs);
 }
 
 
 void
-nbsd_internal_to_fpreg(regs)
+nbsd_internal_to_fpreg (regs)
      char *regs;
 {
-  unsupply_fpregs(regs);
+  unsupply_fpregs (regs);
 }
 
 void
@@ -121,13 +119,13 @@ fetch_inferior_registers (regno)
   struct fpreg inffpreg;
 
   /* Integer registers */
-  ptrace(PT_GETREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &infreg, 
-      GET_LWP(inferior_pid));
+  ptrace (PT_GETREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &infreg, 
+      GET_LWP (inferior_pid));
   supply_regs ((char *) &infreg);
 
   /* Floating point registers */
-  ptrace(PT_GETFPREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
-      GET_LWP(inferior_pid));
+  ptrace (PT_GETFPREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP (inferior_pid));
   supply_fpregs ((char *) &inffpreg);
 }
 
@@ -138,14 +136,14 @@ store_inferior_registers (regno)
   struct reg infreg;
   struct fpreg inffpreg;
 
-  unsupply_regs((char *)&infreg);
-  ptrace(PT_SETREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &infreg,
-      GET_LWP(inferior_pid));
+  unsupply_regs ((char *)&infreg);
+  ptrace(PT_SETREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &infreg,
+      GET_LWP (inferior_pid));
 
   /* Floating point registers */
-  unsupply_fpregs(&inffpreg);
-  ptrace(PT_SETFPREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
-      GET_LWP(inferior_pid));
+  unsupply_fpregs (&inffpreg);
+  ptrace (PT_SETFPREGS, GET_PROCESS (inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP (inferior_pid));
 }
 
 static void
