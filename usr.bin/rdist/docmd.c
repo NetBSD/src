@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: docmd.c,v 1.6 1994/03/07 05:05:26 cgd Exp $";
+static char *rcsid = "$Id: docmd.c,v 1.7 1996/07/12 00:06:32 thorpej Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -233,7 +233,8 @@ makeconn(rhost)
 		ruser = user;
 	if (!qflag)
 		printf("updating host %s\n", rhost);
-	(void) sprintf(buf, "%s -Server%s", _PATH_RDIST, qflag ? " -q" : "");
+	(void) snprintf(buf, BUFSIZ, "%s -Server%s", _PATH_RDIST,
+	    qflag ? " -q" : "");
 	if (port < 0) {
 		struct servent *sp;
 
@@ -530,7 +531,7 @@ notify(file, rhost, to, lmod)
 	/*
 	 * Create a pipe to mailling program.
 	 */
-	(void)sprintf(buf, "%s -oi -t", _PATH_SENDMAIL);
+	(void)snprintf(buf, BUFSIZ, "%s -oi -t", _PATH_SENDMAIL);
 	pf = popen(buf, "w");
 	if (pf == NULL) {
 		error("notify: \"%s\" failed\n", _PATH_SENDMAIL);
