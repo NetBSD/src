@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.h,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: vif.h,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: vif.h,v 1.1.1.1 1999/08/08 23:30:56 itojun Exp
+ *  KAME Id: vif.h,v 1.2 1999/08/24 16:45:23 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -256,7 +256,7 @@ struct listaddr {
     } al_alu;
     u_char	     al_pv;		/* router protocol version	    */
     u_char	     al_mv;		/* router mrouted version	    */
-    u_char	     al_old;            /* time since heard old report      */
+    u_char	     al_old; /* time since heard old report: unnecessary for mld */
     u_char	     al_index;		/* neighbor index		    */
     u_long	     al_timerid;        /* timer for group membership	    */
     u_long	     al_query;		/* timer for repeated leave query   */
