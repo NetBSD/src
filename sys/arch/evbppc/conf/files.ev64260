@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.4 2003/07/25 11:44:18 scw Exp $
+#	$NetBSD: files.ev64260,v 1.5 2004/03/13 17:31:33 bjh21 Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -88,7 +88,7 @@ file	arch/evbppc/isa/isaclock.c		isa
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma

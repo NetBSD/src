@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.5 2003/11/19 14:27:24 scw Exp $
+#	$NetBSD: files.walnut,v 1.6 2004/03/13 17:31:33 bjh21 Exp $
 #
 # walnut-specific configuration info
 
@@ -55,7 +55,7 @@ device	ds1743rtc: todservice
 attach	ds1743rtc at pbus
 file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 attach	pckbc at pbus with pckbc_pbus
 file	arch/evbppc/walnut/dev/pckbc_pbus.c	pckbc_pbus
 

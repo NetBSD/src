@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.13 2004/02/27 17:56:01 martin Exp $ */
+/* $NetBSD: pms.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.13 2004/02/27 17:56:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,9 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.13 2004/02/27 17:56:01 martin Exp $");
 
 #include <machine/bus.h>
 
-#include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 
-#include <dev/pckbc/pmsreg.h>
+#include <dev/pckbport/pmsreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -69,7 +69,7 @@ enum pms_type tries[] = {
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
-	pckbc_tag_t sc_kbctag;
+	pckbport_tag_t sc_kbctag;
 	int sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
@@ -94,7 +94,7 @@ void pmsinput __P((void *, int));
 CFATTACH_DECL(pms, sizeof(struct pms_softc),
     pmsprobe, pmsattach, NULL, NULL);
 
-static int	pms_protocol __P((pckbc_tag_t, pckbc_slot_t));
+static int	pms_protocol __P((pckbport_tag_t, pckbport_slot_t));
 static void	do_enable __P((struct pms_softc *));
 static void	do_disable __P((struct pms_softc *));
 static void	pms_reset_thread __P((void*));
@@ -114,8 +114,8 @@ const struct wsmouse_accessops pms_accessops = {
 
 static int
 pms_protocol(tag, slot)
-	pckbc_tag_t tag;
-	pckbc_slot_t slot;
+	pckbport_tag_t tag;
+	pckbport_slot_t slot;
 {
 	u_char cmd[2], resp[1];
 	int i, j, res;
@@ -128,13 +128,13 @@ pms_protocol(tag, slot)
 		cmd[0] = PMS_SET_SAMPLE;
 		for (i = 0; i < 3; i++) {
 			cmd[1] = p->rates[i];
-			res = pckbc_enqueue_cmd(tag, slot, cmd, 2, 0, 1, 0);
+			res = pckbport_enqueue_cmd(tag, slot, cmd, 2, 0, 1, 0);
 			if (res)
 				return PMS_STANDARD;
 		}
 
 		cmd[0] = PMS_SEND_DEV_ID;
-		res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
+		res = pckbport_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
 		if (res)
 			return PMS_UNKNOWN;
 		if (resp[0] == p->response) {
@@ -153,19 +153,19 @@ pmsprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
 	int res;
 
-	if (pa->pa_slot != PCKBC_AUX_SLOT)
+	if (pa->pa_slot != PCKBPORT_AUX_SLOT)
 		return (0);
 
 	/* Flush any garbage. */
-	pckbc_flush(pa->pa_tag, pa->pa_slot);
+	pckbport_flush(pa->pa_tag, pa->pa_slot);
 
 	/* reset the device */
 	cmd[0] = PMS_RESET;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
 #ifdef DEBUG
 		printf("pmsprobe: reset error %d\n", res);
@@ -194,7 +194,7 @@ pmsattach(parent, self, aux)
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
 	u_char cmd[1], resp[2];
 	int res;
@@ -205,11 +205,11 @@ pmsattach(parent, self, aux)
 	printf("\n");
 
 	/* Flush any garbage. */
-	pckbc_flush(pa->pa_tag, pa->pa_slot);
+	pckbport_flush(pa->pa_tag, pa->pa_slot);
 
 	/* reset the device */
 	cmd[0] = PMS_RESET;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 #ifdef DEBUG
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
 		printf("pmsattach: reset error\n");
@@ -220,7 +220,7 @@ pmsattach(parent, self, aux)
 	sc->buttons = 0;
 	sc->protocol = PMS_UNKNOWN;
 
-	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
+	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 			       pmsinput, sc, sc->sc_dev.dv_xname);
 
 	a.accessops = &pms_accessops;
@@ -236,10 +236,10 @@ pmsattach(parent, self, aux)
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
 	if (res)
 		printf("pmsattach: disable error\n");
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
 	kthread_create(pms_spawn_reset_thread, sc);
 
@@ -259,10 +259,10 @@ do_enable(sc)
 	sc->inputstate = 0;
 	sc->buttons = 0;
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
 	cmd[0] = PMS_DEV_ENABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
+	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pms_enable: command error %d\n", res);
 
@@ -276,20 +276,20 @@ do_enable(sc)
 
 		scmd[0] = PMS_SET_RES;
 		scmd[1] = 3; /* 8 counts/mm */
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
+		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
 		    2, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error1 (%d)\n", res);
 
 		scmd[0] = PMS_SET_SCALE21;
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
+		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
 		    1, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error2 (%d)\n", res);
 
 		scmd[0] = PMS_SET_SAMPLE;
 		scmd[1] = 100; /* 100 samples/sec */
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
+		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, scmd,
 		    2, 0, 1, 0);
 		if (res)
 			printf("pms_enable: setup error3 (%d)\n", res);
@@ -305,11 +305,11 @@ do_disable(sc)
 	int res;
 
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
+	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pms_disable: command error\n");
 
-	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
+	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }
 
 int
@@ -404,7 +404,7 @@ pms_ioctl(v, cmd, data, flag, p)
 
 		kbcmd[0] = PMS_SET_RES;
 		kbcmd[1] = i;			
-		i = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
+		i = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
 		    2, 0, 1, 0);
 		
 		if (i)
@@ -448,7 +448,7 @@ pms_reset_thread(arg)
 		save_protocol = sc->protocol;
 		pms_disable(sc);
 		cmd[0] = PMS_RESET;
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1,
+		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1,
 		    2, 1, resp);
 		if (res)
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
@@ -462,14 +462,14 @@ pms_reset_thread(arg)
 #endif
 			pms_disable(sc);
 			cmd[0] = PMS_RESET;
-			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			res = pckbport_enqueue_cmd(sc->sc_kbctag,
 			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
 			if (res)
 				DPRINTF(("%s: reset error %d\n",
 				    sc->sc_dev.dv_xname, res));
 			tsleep(pms_reset_thread, PWAIT, "pmsreset", hz);
 			cmd[0] = PMS_RESET;
-			res = pckbc_enqueue_cmd(sc->sc_kbctag,
+			res = pckbport_enqueue_cmd(sc->sc_kbctag,
 			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
 			if (res)
 				DPRINTF(("%s: reset error %d\n",

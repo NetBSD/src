@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2003/10/24 18:21:52 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2004/03/13 17:31:33 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2003/10/24 18:21:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2003/10/24 18:21:52 matt Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 #endif
 
 #include "com.h"
@@ -369,9 +370,9 @@ dokbd:
  * mi keyboard controller driver
  */
 int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+pckbport_machdep_cnattach(kbctag, kbcslot)
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 #if (NPC > 0)
 	return (pcconskbd_cnattach(kbctag, kbcslot));

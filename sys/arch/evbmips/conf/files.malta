@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.8 2003/10/08 17:29:59 bouyer Exp $
+#	$NetBSD: files.malta,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -43,7 +43,7 @@ include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
 
 # Machine-independent PC-style keyboard controller drivers
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"

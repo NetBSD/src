@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.10 2004/02/10 01:11:45 bjh21 Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.11 2004/03/13 17:31:33 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.10 2004/02/10 01:11:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.11 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,14 +220,14 @@ pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
 		t->t_cmdbyte = KC8_CPU; /* initial command: enable ports */
 		callout_init(&t->t_cleanup);
 
-		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0); /* flush */
+		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT); /* flush */
 
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
 			printf(": unable to request self test");
 		else {
 			int response;
 
-			response = pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
+			response = pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 			if (response == 0x55)
 				printf(": selftest ok");
 			else
@@ -305,7 +305,7 @@ jsc_pckbdintr(void *vsc)
  * Called by pckbc_cnattach().
  */
 int
-pckbc_machdep_cnattach(constag, slot)
+pckbport_machdep_cnattach(constag, slot)
     pckbc_tag_t constag;
     pckbc_slot_t slot;
 {

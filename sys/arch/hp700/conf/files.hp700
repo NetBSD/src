@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.8 2004/03/12 11:41:39 jkunz Exp $
+#	$NetBSD: files.hp700,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -32,7 +32,7 @@ include "dev/i2o/files.i2o"
 #include "dev/atapiscsi/files.atapiscsi"
 #include "dev/ata/files.ata"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 #
 # ISA Bus support

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.36 2004/01/19 03:26:14 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.37 2004/03/13 17:31:34 bjh21 Exp $
 
 maxpartitions 16
 
@@ -46,7 +46,7 @@ file	arch/sgimips/eisa/eisa_machdep.c	eisa
 include "dev/vme/files.vme"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 include "dev/usb/files.usb"
 include "dev/scsipi/files.scsipi"
 include "dev/ata/files.ata"

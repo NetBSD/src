@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbc.c,v 1.3 2003/08/07 16:29:35 agc Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -97,14 +97,14 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.3 2003/08/07 16:29:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
  * layout.  Since stock Xsun(1) knows this layout, JavaStation-1 gets
  * X for free.  When sparc port is switched to wscons and its X server
  * knows how to talk wskbd, this driver will no longer be necessary,
- * and we will be able to attach the keyboard with the MI pckbc(4) driver.
+ * and we will be able to attach the keyboard with the MI pckbport(4) driver.
  */
 
 #include <sys/param.h>
@@ -122,9 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.3 2003/08/07 16:29:35 agc Exp $");
 #include <dev/sun/kbd_reg.h>
 #include <dev/sun/kbio.h>
 
-#include <dev/pckbc/pckbdreg.h>
-
-#include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbdreg.h>
+#include <dev/pckbport/pckbportvar.h>
 
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
@@ -133,12 +132,12 @@ __KERNEL_RCSID(0, "$NetBSD: kbd_pckbc.c,v 1.3 2003/08/07 16:29:35 agc Exp $");
 #define DPRINTF(args) /* printf args */
 
 
-struct kbd_pckbc_softc {
+struct kbd_pckbport_softc {
 	struct kbd_softc sc_kbd;
 
-	/* pckbc attachment */
-	pckbc_tag_t sc_kbctag;
-	pckbc_slot_t sc_kbcslot;
+	/* pckbport attachment */
+	pckbport_tag_t sc_kbctag;
+	pckbport_slot_t sc_kbcslot;
 
 	/*
 	 * Middle layer data.
@@ -153,11 +152,11 @@ struct kbd_pckbc_softc {
 	
 };
 
-static int	kbd_pckbc_match(struct device *, struct cfdata *, void *);
-static void	kbd_pckbc_attach(struct device *, struct device *, void *);
+static int	kbd_pckbport_match(struct device *, struct cfdata *, void *);
+static void	kbd_pckbport_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(kbd_pckbc, sizeof(struct kbd_pckbc_softc),
-    kbd_pckbc_match, kbd_pckbc_attach, NULL, NULL);
+CFATTACH_DECL(kbd_pckbport, sizeof(struct kbd_pckbport_softc),
+    kbd_pckbport_match, kbd_pckbport_attach, NULL, NULL);
 
 
 /*
@@ -165,24 +164,24 @@ CFATTACH_DECL(kbd_pckbc, sizeof(struct kbd_pckbc_softc),
  */
 
 /* callbacks for the upper /dev/kbd layer */
-static int	kbd_pckbc_open(struct kbd_softc *);
-static int	kbd_pckbc_close(struct kbd_softc *);
-static int	kbd_pckbc_do_cmd(struct kbd_softc *, int, int);
-static int	kbd_pckbc_set_leds(struct kbd_softc *, int, int);
+static int	kbd_pckbport_open(struct kbd_softc *);
+static int	kbd_pckbport_close(struct kbd_softc *);
+static int	kbd_pckbport_do_cmd(struct kbd_softc *, int, int);
+static int	kbd_pckbport_set_leds(struct kbd_softc *, int, int);
 
-static const struct kbd_ops kbd_ops_pckbc = {
-	kbd_pckbc_open,
-	kbd_pckbc_close,
-	kbd_pckbc_do_cmd,
-	kbd_pckbc_set_leds
+static const struct kbd_ops kbd_ops_pckbport = {
+	kbd_pckbport_open,
+	kbd_pckbport_close,
+	kbd_pckbport_do_cmd,
+	kbd_pckbport_set_leds
 };
 
 
-static const u_int8_t	kbd_pckbc_xt_to_sun[];
+static const u_int8_t	kbd_pckbport_xt_to_sun[];
 
-static int	kbd_pckbc_set_xtscancode(pckbc_tag_t, pckbc_slot_t);
-static void	kbd_pckbc_input(void *, int);
-static int	kbd_pckbc_decode(struct kbd_pckbc_softc *, int, int *);
+static int	kbd_pckbport_set_xtscancode(pckbport_tag_t, pckbport_slot_t);
+static void	kbd_pckbport_input(void *, int);
+static int	kbd_pckbport_decode(struct kbd_pckbport_softc *, int, int *);
 
 
 /*********************************************************************
@@ -190,14 +189,14 @@ static int	kbd_pckbc_decode(struct kbd_pckbc_softc *, int, int *);
  */
 
 int 
-kbd_pckbc_match(parent, cf, aux)
+kbd_pckbport_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void   *aux;
 {
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 
-	if (pa->pa_slot != PCKBC_KBD_SLOT)
+	if (pa->pa_slot != PCKBPORT_KBD_SLOT)
 		return (0);
 
 	return (1);
@@ -205,27 +204,27 @@ kbd_pckbc_match(parent, cf, aux)
 
 
 void
-kbd_pckbc_attach(parent, self, aux)
+kbd_pckbport_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 
 {
-	struct kbd_pckbc_softc *sc = (void *)self;
-	struct pckbc_attach_args *pa = aux;
+	struct kbd_pckbport_softc *sc = (void *)self;
+	struct pckbport_attach_args *pa = aux;
 	struct kbd_softc *kbd = &sc->sc_kbd;
 
-	/* save our attachment to pckbc */
+	/* save our attachment to pckbport */
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
 	/* provide upper layer a link to our middle layer */
-	kbd->k_ops = &kbd_ops_pckbc;
+	kbd->k_ops = &kbd_ops_pckbport;
 
 	/* pre-fill keyboard type/layout */
 	kbd->k_state.kbd_id = KB_SUN4;	/* NB: type5 keyboards actually report type4 */
 	kbd->k_state.kbd_layout = 19;	/* US101A */
 
-	if (1) { /* XXX: pckbc_machdep_cnattach should tell us */
+	if (1) { /* XXX: pckbport_machdep_cnattach should tell us */
 		/*
 		 * Hookup ourselves as the console input channel
 		 */
@@ -242,7 +241,7 @@ kbd_pckbc_attach(parent, self, aux)
 
 	printf("\n");
 
-	kbd_pckbc_set_xtscancode(sc->sc_kbctag, sc->sc_kbcslot);
+	kbd_pckbport_set_xtscancode(sc->sc_kbctag, sc->sc_kbcslot);
 
 	/* slow down typematic (can't disable, grrr) */
 	{
@@ -251,7 +250,7 @@ kbd_pckbc_attach(parent, self, aux)
 
 		cmd[0] = KBC_TYPEMATIC;
 		cmd[1] = 0x7f;	/* 1s, 2/s */
-		res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+		res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				     cmd, 2, 0, NULL, 0);
 		if (res) {
 			printf("%s: set typematic failed, error %d\n",
@@ -259,17 +258,17 @@ kbd_pckbc_attach(parent, self, aux)
 		}
 	}
 
-	/* register our callback with pckbc interrupt handler */
-	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       kbd_pckbc_input, sc,
+	/* register our callback with pckbport interrupt handler */
+	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
+			       kbd_pckbport_input, sc,
 			       kbd->k_dev.dv_xname);
 }
 
 
 static int
-kbd_pckbc_set_xtscancode(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+kbd_pckbport_set_xtscancode(kbctag, kbcslot)
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 	u_char cmd[2];
 	int res;
@@ -287,11 +286,11 @@ kbd_pckbc_set_xtscancode(kbctag, kbcslot)
 	 * XXX It would perhaps be a better choice to just use AT scan codes
 	 * and not bother with this.
 	 */
-	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
+	if (pckbport_xt_translation(kbctag, kbcslot, 1)) {
 		/* The 8042 is translating for us; use AT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 2;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			u_char cmd[1];
 #ifdef DEBUG
@@ -304,15 +303,15 @@ kbd_pckbc_set_xtscancode(kbctag, kbcslot)
 			 * default anyway.
 			 */
 			cmd[0] = KBC_RESET;
-			(void)pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
-			pckbc_flush(kbctag, kbcslot);
+			(void)pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
+			pckbport_flush(kbctag, kbcslot);
 			res = 0;
 		}
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 1;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 #ifdef DEBUG
 		if (res)
 			printf("pckbd: error setting scanset 1\n");
@@ -332,15 +331,15 @@ kbd_pckbc_set_xtscancode(kbctag, kbcslot)
  * Called with user context.
  */
 static int
-kbd_pckbc_open(kbd)
+kbd_pckbport_open(kbd)
 	struct kbd_softc *kbd;
 {
-	struct kbd_pckbc_softc *sc = (struct kbd_pckbc_softc *)kbd;
+	struct kbd_pckbport_softc *sc = (struct kbd_pckbport_softc *)kbd;
 	struct kbd_state *ks;
 	int error = 0;
 
 	if (kbd == NULL) {
-		DPRINTF(("kbd_pckbc_open: kbd == NULL\n"));
+		DPRINTF(("kbd_pckbport_open: kbd == NULL\n"));
 		return (ENXIO);
 	}
 
@@ -367,11 +366,11 @@ kbd_pckbc_open(kbd)
 
 
 static int
-kbd_pckbc_close(kbd)
+kbd_pckbport_close(kbd)
 	struct kbd_softc *kbd;
 {
 #if 0
-	struct kbd_pckbc_softc *k = (struct kbd_pckbc_softc *)kbd;
+	struct kbd_pckbport_softc *k = (struct kbd_pckbport_softc *)kbd;
 #endif
 	return (0);		/* nothing to do so far */
 }
@@ -382,7 +381,7 @@ kbd_pckbc_close(kbd)
  */
 /* ARGSUSED2 */
 static int
-kbd_pckbc_do_cmd(kbd, suncmd, isioctl)
+kbd_pckbport_do_cmd(kbd, suncmd, isioctl)
 	struct kbd_softc *kbd;
 	int suncmd;
 	int isioctl;
@@ -410,12 +409,12 @@ kbd_pckbc_do_cmd(kbd, suncmd, isioctl)
 
 /* ARGSUSED2 */
 static int
-kbd_pckbc_set_leds(kbd, sunleds, isioctl)
+kbd_pckbport_set_leds(kbd, sunleds, isioctl)
 	struct kbd_softc *kbd;
 	int sunleds;
 	int isioctl;
 {
-	struct kbd_pckbc_softc *sc = (struct kbd_pckbc_softc *)kbd;
+	struct kbd_pckbport_softc *sc = (struct kbd_pckbport_softc *)kbd;
 	u_char pcleds;
 	u_char cmd[2];
 	int res;
@@ -439,10 +438,10 @@ kbd_pckbc_set_leds(kbd, sunleds, isioctl)
 	cmd[0] = KBC_MODEIND;
 	cmd[1] = pcleds;
 	if (isioctl) /* user called KIOCSLED */
-	    res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+	    res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				    cmd, 2, 0, 1, NULL);
 	else /* console updates leds - called from interrupt handler */
-	    res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
+	    res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				 cmd, 2, 0, NULL, 0);
 	return (res);
 }
@@ -453,19 +452,19 @@ kbd_pckbc_set_leds(kbd, sunleds, isioctl)
  */
 
 /*
- * Got a receive interrupt - pckbc wants to give us a byte.
+ * Got a receive interrupt - pckbport wants to give us a byte.
  */
 static void
-kbd_pckbc_input(vsc, data)
+kbd_pckbport_input(vsc, data)
 	void *vsc;
 	int data;
 {
-	struct kbd_pckbc_softc *sc = vsc;
+	struct kbd_pckbport_softc *sc = vsc;
 	struct kbd_softc *kbd = &sc->sc_kbd;
 	int sunkey;
 
 	/* convert to sun make/break code */
-	if (!kbd_pckbc_decode(sc, data, &sunkey))
+	if (!kbd_pckbport_decode(sc, data, &sunkey))
 		return;
 
 	kbd_input(kbd, sunkey);
@@ -476,8 +475,8 @@ kbd_pckbc_input(vsc, data)
  * Plagiarized from pckbd_decode
  */
 static int
-kbd_pckbc_decode(sc, data, sundata)
-    	struct kbd_pckbc_softc *sc;
+kbd_pckbport_decode(sc, data, sundata)
+    	struct kbd_pckbport_softc *sc;
 	int data;
 	int *sundata;
 {
@@ -531,7 +530,7 @@ kbd_pckbc_decode(sc, data, sundata)
 	}
 
 	
-	sunkey = kbd_pckbc_xt_to_sun[key];
+	sunkey = kbd_pckbport_xt_to_sun[key];
 
 	DPRINTF((" -> xt 0x%02x %s -> %d\n",
 		 key, (up ? "up  " : "down"),  sunkey));
@@ -543,7 +542,7 @@ kbd_pckbc_decode(sc, data, sundata)
 	return (1);
 }
 
-static const u_int8_t kbd_pckbc_xt_to_sun[256] = {
+static const u_int8_t kbd_pckbport_xt_to_sun[256] = {
 /* 0x00 */   0,	/*             */
 /* 0x01 */  29,	/* Esc         */
 /* 0x02 */  30,	/* 1           */
@@ -801,4 +800,4 @@ static const u_int8_t kbd_pckbc_xt_to_sun[256] = {
 /* 0xfd */   0,	/*             */
 /* 0xfe */   0,	/*             */
 /* 0xff */   0	/*             */
-}; /* kbd_pckbc_xt_to_sun */
+}; /* kbd_pckbport_xt_to_sun */

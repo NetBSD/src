@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.7 2003/07/27 01:19:35 thorpej Exp $
+# $NetBSD: files.sbmips,v 1.8 2004/03/13 17:31:34 bjh21 Exp $
 
 maxpartitions 8
 
@@ -47,7 +47,7 @@ include "dev/isa/files.isa"
 # XXXCGD machdep isa files
 
 # PC Keyboard Controller support
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # XXXCGD lots of junk isa devices, e.g. fd
 
