@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.6.2.2 1996/12/08 00:31:43 cgd Exp $	*/
+/*	$NetBSD: sfb.c,v 1.6.2.3 1997/01/25 01:16:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -25,6 +25,14 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
+ */
+
+/*
+ * XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
+ * XXX                                                                     XXX
+ * XXX THIS DRIVER NEEDS TO BE CONVERTED TO USE THE NEW WSCONS INTERFACES. XXX
+ * XXX                                                                     XXX
+ * XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
  */
 
 #include <sys/param.h>
