@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: netif.c,v 1.2 1993/10/16 07:57:45 cgd Exp $
+ *	$Id: netif.c,v 1.3 1994/02/14 21:53:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ netif_attach(nif, desc, machdep_hint)
 		printf("%s%d: netif_attach\n", drv->netif_bname, nif->nif_unit);
 #endif
 	desc->io_netif = nif; 
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 	if (drv->netif_init == NULL)
 		panic("%s%d: no netif_init support\n", drv->netif_bname,
 		    nif->nif_unit);
@@ -208,7 +208,7 @@ netif_detach(nif)
 	if (netif_debug)
 		printf("%s%d: netif_detach\n", drv->netif_bname, nif->nif_unit);
 #endif
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 	if (drv->netif_end == NULL)
 		panic("%s%d: no netif_end support\n", drv->netif_bname,
 		    nif->nif_unit);
@@ -231,7 +231,7 @@ netif_get(desc, pkt, len, timo)
 	if (netif_debug)
 		printf("%s%d: netif_get\n", drv->netif_bname, nif->nif_unit);
 #endif
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 	if (drv->netif_get == NULL)
 		panic("%s%d: no netif_get support\n", drv->netif_bname,
 		    nif->nif_unit);
@@ -259,7 +259,7 @@ netif_put(desc, pkt, len)
 	if (netif_debug)
 		printf("%s%d: netif_put\n", drv->netif_bname, nif->nif_unit);
 #endif
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 	if (drv->netif_put == NULL)
 		panic("%s%d: no netif_put support\n", drv->netif_bname,
 		    nif->nif_unit);
