@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.10 1998/01/22 16:23:32 perry Exp $
+#	$NetBSD: aliases,v 1.11 1998/02/02 06:14:45 mikel Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -28,16 +28,24 @@ toor:		root
 # operator:
 
 # Standard aliases defined by rfc2142
-abuse:		postmaster # address to report network abuse (like spam)
-noc:		root	   # reports of network infrastructure difficulties
-security:	root	   # address to report security problems
-hostmaster:	root	   # DNS maintainer (DNS SOA records should use this)
-usenet:		root	   # Usenet news service maintainer
-news:		usenet	   # defined as an alias for "usenet"
-webmaster:	root	   # http/web service maintainer
-www:		webmaster  # defined as an alias for "webmaster"
-uucp:		root	   # uucp service maintainer
-ftp:		root	   # ftp maintainer (especially anonymous ftp)
+# address to report network abuse (like spam)
+abuse:		postmaster
+# reports of network infrastructure difficulties
+noc:		root
+# address to report security problems
+security:	root
+# DNS administrator (DNS SOA records should use this)
+hostmaster:	root
+# Usenet news service administrator
+usenet:		root
+news:		usenet
+# http/web service administrator
+webmaster:	root
+www:		webmaster
+# UUCP service administrator
+uucp:		root
+# FTP administrator (especially anonymous FTP)
+ftp:		root
 
 # don't enable this.
 # decode:	/dev/null
