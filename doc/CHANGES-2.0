@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.5 2004/03/29 16:01:46 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.6 2004/03/29 19:31:29 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -63,3 +63,10 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch by hand
 	
 	This is the correct place to bump the default OS version now
 	[wiz, private email]
+
+gnu/lib/libgcc3/Makefile.inc			1.7
+
+	Remove generated sources files "__gcc_bcmp.c", "_bb.c" and "_eprintf.c"
+	in "cleandir" target.
+	[tron, ticket #10]
+
