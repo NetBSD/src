@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.1 1998/04/18 19:00:17 pk Exp $ */
+/*	$NetBSD: xbox.c,v 1.2 1998/07/27 19:13:06 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 #include <vm/vm.h>
 
 #include <machine/bus.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/xboxvar.h>
+#include <dev/sbus/sbusvar.h>
+#include <dev/sbus/xboxvar.h>
 #include <machine/autoconf.h>
 
 /*
