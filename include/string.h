@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.12 1998/02/02 22:07:54 perry Exp $	*/
+/*	$NetBSD: string.h,v 1.13 1998/02/03 04:45:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,6 +49,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 __BEGIN_DECLS
 void	*memchr __P((const void *, int, size_t));
