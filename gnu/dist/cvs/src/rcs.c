@@ -8238,6 +8238,10 @@ count_delta_actions (np, ignore)
 RETSIGTYPE
 rcs_cleanup ()
 {
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
     /* Note that the checks for existence_error are because we are
        called from a signal handler, so we don't know whether the
        files got created.  */
