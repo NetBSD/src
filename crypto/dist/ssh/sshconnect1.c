@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.26 2003/07/24 15:31:55 itojun Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,20 +15,20 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect1.c,v 1.52 2002/08/08 13:50:23 aaron Exp $");
-__RCSID("$NetBSD: sshconnect1.c,v 1.26 2003/07/24 15:31:55 itojun Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
 #ifdef KRB4
 #include <krb.h>
-#endif
-#ifdef KRB5
-#include <krb5.h>
-#endif
 #ifdef AFS
 #include <kafs.h>
 #include "radix.h"
+#endif
+#endif
+#ifdef KRB5
+#include <krb5.h>
 #endif
 
 #include "ssh.h"
@@ -685,6 +685,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 }
 #endif /* KRB5 */
 
+#ifdef KRB4
 #ifdef AFS
 static void
 send_krb4_tgt(void)
@@ -807,6 +808,7 @@ send_afs_tokens(void)
 }
 
 #endif /* AFS */
+#endif /* KRB4 */
 
 /*
  * Tries to authenticate with any string-based challenge/response system.
@@ -1241,6 +1243,7 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 		krb5_free_context(context);
 #endif
 
+#ifdef KRB4
 #ifdef AFS
 	/* Try Kerberos v4 TGT passing if the server supports it. */
 	if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
@@ -1257,6 +1260,7 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 		send_afs_tokens();
 	}
 #endif /* AFS */
+#endif /* KRB4 */
 
 	return;	/* need statement after label */
 }

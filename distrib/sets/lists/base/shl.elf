@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.81 2003/10/09 04:40:30 thorpej Exp $
+# $NetBSD: shl.elf,v 1.82 2003/12/11 09:46:26 dyoung Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12		base-sys-shlib
 ./lib/libcrypt.so.0		base-sys-shlib
@@ -30,12 +30,10 @@
 ./usr/lib/i18n/libmapper_std.so.4	base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.4	base-i18n-shlib
 ./usr/lib/libamu.so.2		base-amd-shlib
-./usr/lib/libasn1.so.6		base-krb5-shlib
 ./usr/lib/libbsdmalloc.so.0	base-sys-shlib
 ./usr/lib/libbz2.so.1		base-sys-shlib
 ./usr/lib/libc.so.12		base-sys-shlib
 ./usr/lib/libcdk.so.1		base-sys-shlib
-./usr/lib/libcom_err.so.4	base-krb5-shlib
 ./usr/lib/libcrypt.so.0		base-sys-shlib
 ./usr/lib/libcrypto.so.2	base-crypto-shlib
 ./usr/lib/libcurses.so.5	base-sys-shlib
@@ -44,18 +42,8 @@
 ./usr/lib/libevent.so.0		base-sys-shlib
 ./usr/lib/libform.so.3		base-sys-shlib
 ./usr/lib/libgnumalloc.so.0	base-sys-shlib
-./usr/lib/libgssapi.so.5	base-krb5-shlib
-./usr/lib/libhdb.so.9		base-krb5-shlib
 ./usr/lib/libintl.so.0		base-sys-shlib
 ./usr/lib/libipsec.so.2		base-net-shlib
-./usr/lib/libkadm.so.5		base-krb4-shlib
-./usr/lib/libkadm5clnt.so.8	base-krb5-shlib
-./usr/lib/libkadm5srv.so.9	base-krb5-shlib
-./usr/lib/libkafs.so.6		base-krb5-shlib
-./usr/lib/libkdb.so.5		base-krb4-shlib
-./usr/lib/libkrb.so.6		base-krb4-shlib
-./usr/lib/libkrb5.so.19		base-krb5-shlib
-./usr/lib/libkstream.so.2	base-krb4-shlib
 ./usr/lib/libkvm.so.5		base-sys-shlib
 ./usr/lib/libm.so.0		base-sys-shlib
 ./usr/lib/libmagic.so.0		base-sys-shlib
@@ -67,11 +55,8 @@
 ./usr/lib/libpthread.so.0	base-sys-shlib
 ./usr/lib/libpthread_dbg.so.0	base-sys-shlib
 ./usr/lib/libresolv.so.1	base-net-shlib
-./usr/lib/libroken.so.12	base-krb5-shlib
 ./usr/lib/librt.so.0		base-sys-shlib
 ./usr/lib/libskey.so.1		base-sys-shlib
-./usr/lib/libsl.so.2		base-krb5-shlib
-./usr/lib/libss.so.4		base-krb5-shlib
 ./usr/lib/libssl.so.3		base-crypto-shlib
 ./usr/lib/libtermcap.so.0	base-sys-shlib
 ./usr/lib/libtermlib.so.0	base-sys-shlib

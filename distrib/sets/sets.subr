@@ -10,6 +10,8 @@
 # Environment
 #
 #	have_gcc3
+#	krb
+#	krb4
 # 	lintlibs
 # 	lkm
 # 	machine
@@ -42,7 +44,7 @@ list_set_files () {
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.6 2003/12/09 15:42:31 tsutsui Exp $
+# 	# $NetBSD: sets.subr,v 1.7 2003/12/11 09:46:26 dyoung Exp $
 # 	.			base-sys-root
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -57,6 +59,8 @@ list_set_files () {
 # Environment
 #
 #	have_gcc3
+#	krb
+#	krb4
 # 	lintlibs
 # 	lkm
 # 	machine
@@ -103,6 +107,30 @@ list_set_lists () {
 		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
 			echo $setd/lists/$setname/shl.${shlib}
 		fi
+		if [ "$krb" != "no" -a \
+		     -f $setd/lists/$setname/krb.shl.${shlib} ]; then
+			echo $setd/lists/$setname/krb.shl.${shlib}
+		fi
+		if [ "$krb" != "no" -a "$krb4" != "no" -a \
+		     -f $setd/lists/$setname/krb4.shl.${shlib} ]; then
+			echo $setd/lists/$setname/krb4.shl.${shlib}
+		fi
+		if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.shl.mi ]
+		then
+			echo $setd/lists/$setname/krb.shl.mi
+		fi
+		if [ "$krb" != "no" -a "$krb4" != "no" -a \
+		     -f $setd/lists/$setname/krb4.shl.mi ]
+		then
+			echo $setd/lists/$setname/krb4.shl.mi
+		fi
+	fi
+	if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.mi ]; then
+		echo $setd/lists/$setname/krb.mi
+	fi
+	if [ "$krb" != "no" -a "$krb4" != "no" -a \
+	     -f $setd/lists/$setname/krb4.mi ]; then
+		echo $setd/lists/$setname/krb4.mi
 	fi
 	if [ "$lkm" != "no" ]; then
 		if [ -f $setd/lists/$setname/lkm.mi ]; then
@@ -112,6 +140,15 @@ list_set_lists () {
 	if [ "$lintlibs" != no ]; then
 		if [ -f $setd/lists/$setname/lint.mi ]; then
 			echo $setd/lists/$setname/lint.mi
+		fi
+		if [ "$krb" != "no" -a "$krb4" != "no" -a \
+		     -f $setd/lists/$setname/krb4.lint.mi ]
+		then
+			echo $setd/lists/$setname/krb4.lint.mi
+		fi
+		if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.lint.mi ]
+		then
+			echo $setd/lists/$setname/krb.lint.mi
 		fi
 	fi
 	if [ "$toolchain_missing" != "yes" ]; then
