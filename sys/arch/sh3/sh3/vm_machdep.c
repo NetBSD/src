@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2002/03/04 02:43:25 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 2002/03/08 13:12:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -143,12 +143,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	pcb->r15 = (int)sf;
 }
 
-void
-cpu_swapout(struct proc *p)
-{
-
-}
-
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -210,24 +204,6 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 	chdr->c_nseg++;
 	return 0;
 }
-
-#if 0
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-void
-setredzone(u_short *pte, caddr_t vaddr)
-{
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
-}
-#endif
 
 /*
  * Move pages from one kernel virtual address to another.
