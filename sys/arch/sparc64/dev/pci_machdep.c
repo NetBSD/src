@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40 2003/11/09 14:28:56 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41 2004/01/21 07:16:07 petrov Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2003/11/09 14:28:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2004/01/21 07:16:07 petrov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,6 +76,7 @@ struct sparc_pci_chipset _sparc_pci_chipset = {
 };
 
 static int pci_bus_frequency(int node);
+static int pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
 
 static pcitag_t
 ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
@@ -448,6 +449,51 @@ pci_conf_write(pc, tag, reg, data)
 		PCITAG_OFFSET(tag) + reg, data);
 }
 
+static int
+pci_find_ino(pa, ihp)
+	struct pci_attach_args *pa;
+	pci_intr_handle_t *ihp;
+{
+	struct psycho_pbm *pp = pa->pa_pc->cookie;
+	struct psycho_softc *sc = pp->pp_sc;
+	u_int dev;
+	u_int ino;
+
+	ino = *ihp;
+
+	if ((ino & ~INTMAP_PCIINT) == 0) {
+
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+		    pp->pp_id == PSYCHO_PBM_B)
+			dev = pa->pa_device - 2;
+		else
+			dev = pa->pa_device - 1;
+
+		DPRINTF(SPDB_CONF, ("pci_find_ino: mode %d, pbm %d, dev %d\n",
+		       sc->sc_mode, pp->pp_id, dev));
+
+		if (ino == 0 || ino > 4) {
+			u_int32_t intreg;
+
+			intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			     PCI_INTERRUPT_REG);
+			
+			ino = PCI_INTERRUPT_PIN(intreg) - 1;
+		} else
+			ino -= 1;
+
+		ino &= INTMAP_PCIINT;
+
+		ino |= sc->sc_ign;
+		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
+		ino |= (dev << 2) & INTMAP_PCISLOT;
+
+		*ihp = ino;
+	}
+
+	return (0);
+}
+
 /*
  * interrupt mapping foo.
  * XXX: how does this deal with multiple interrupts for a device?
@@ -478,6 +524,7 @@ pci_intr_map(pa, ihp)
 	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
 		sizeof(interrupts)) < 0) {
 		printf("OF_mapintr failed\n");
+		pci_find_ino(pa, &interrupts);
 	}
 	/* Try to find an IPL for this type of device. */
 	if (OF_getprop(node, "device_type", &devtype, sizeof(devtype)) > 0) {
