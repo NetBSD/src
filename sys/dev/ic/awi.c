@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.45 2002/09/02 13:37:35 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.46 2002/09/03 14:54:00 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.45 2002/09/02 13:37:35 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.46 2002/09/03 14:54:00 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -491,9 +491,9 @@ awi_init(struct ifnet *ifp)
 	    (ic->ic_flags & IEEE80211_F_HOSTAP) ? 1 : 0;
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
 	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
-	sc->sc_mib_mac.aDesired_ESS_ID[1] = sc->sc_ic.ic_des_esslen;
-	memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], sc->sc_ic.ic_des_essid,
-	    sc->sc_ic.ic_des_esslen);
+	sc->sc_mib_mac.aDesired_ESS_ID[1] = ic->ic_des_esslen;
+	memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], ic->ic_des_essid,
+	    ic->ic_des_esslen);
 
 	if ((error = awi_mode_init(sc)) != 0) {
 		DPRINTF(("awi_init: awi_mode_init failed %d\n", error));
@@ -533,8 +533,8 @@ awi_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (((sc->sc_ic.ic_flags & IEEE80211_F_ADHOC) && sc->sc_no_bssid) ||
-	    (sc->sc_ic.ic_flags & IEEE80211_F_HOSTAP)) {
+	if (((ic->ic_flags & IEEE80211_F_ADHOC) && sc->sc_no_bssid) ||
+	    (ic->ic_flags & IEEE80211_F_HOSTAP)) {
 		bs->bs_chan = ic->ic_ibss_chan;
 		bs->bs_intval = ic->ic_lintval;
 		bs->bs_rssi = 0;
@@ -547,7 +547,7 @@ awi_init(struct ifnet *ifp)
 				    ic->ic_sup_rates[i];
 		}
 		memcpy(bs->bs_macaddr, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-		if (sc->sc_ic.ic_flags & IEEE80211_F_HOSTAP) {
+		if (ic->ic_flags & IEEE80211_F_HOSTAP) {
 			memcpy(bs->bs_bssid, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 			bs->bs_esslen = ic->ic_des_esslen;
 			memcpy(bs->bs_essid, ic->ic_des_essid, bs->bs_esslen);
@@ -975,7 +975,8 @@ awi_mode_init(struct awi_softc *sc)
 	/* reinitialize muticast filter */
 	n = 0;
 	sc->sc_mib_local.Accept_All_Multicast_Dis = 0;
-	if (ifp->if_flags & IFF_PROMISC) {
+	if ((sc->sc_ic.ic_flags & IEEE80211_F_HOSTAP) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC)) {
 		sc->sc_mib_mac.aPromiscuous_Enable = 1;
 		goto set_mib;
 	}
@@ -1264,8 +1265,14 @@ awi_hw_init(struct awi_softc *sc)
 			printf(" (lost interrupt)\n");
 		else
 			printf(" (command timeout)\n");
+		return error;
 	}
-	return error;
+
+	/* Initialize VBM */
+	awi_write_1(sc, AWI_VBM_OFFSET, 0);
+	awi_write_1(sc, AWI_VBM_LENGTH, 1);
+	awi_write_1(sc, AWI_VBM_BITMAP, 0);
+	return 0;
 }
 
 /*
@@ -1324,11 +1331,19 @@ awi_init_mibs(struct awi_softc *sc)
 	}
 	sc->sc_cur_chan = cs->cs_def;
 
-	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
-	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
 	sc->sc_mib_local.Fragmentation_Dis = 1;
-	sc->sc_mib_local.Accept_All_Multicast_Dis = 1;
+	sc->sc_mib_local.Add_PLCP_Dis = 0;
+	sc->sc_mib_local.MAC_Hdr_Prsv = 1;
+	sc->sc_mib_local.Rx_Mgmt_Que_En = 0;
+	sc->sc_mib_local.Re_Assembly_Dis = 1;
+	sc->sc_mib_local.Strip_PLCP_Dis = 0;
 	sc->sc_mib_local.Power_Saving_Mode_Dis = 1;
+	sc->sc_mib_local.Accept_All_Multicast_Dis = 1;
+	sc->sc_mib_local.Check_Seq_Cntl_Dis = 1;
+	sc->sc_mib_local.Flush_CFP_Queue_On_CF_End = 0;
+	sc->sc_mib_local.Network_Mode = 1;
+	sc->sc_mib_local.PWD_Lvl = 0;
+	sc->sc_mib_local.CFP_Mode = 0;
 
 	/* allocate buffers */
 	sc->sc_txbase = AWI_BUFFERS;
@@ -1341,8 +1356,15 @@ awi_init_mibs(struct awi_softc *sc)
 	LE_WRITE_4(&sc->sc_mib_local.Rx_Buffer_Offset, sc->sc_txend);
 	LE_WRITE_4(&sc->sc_mib_local.Rx_Buffer_Size,
 	    AWI_BUFFERS_END - sc->sc_txend);
-	sc->sc_mib_local.Network_Mode = 1;
 	sc->sc_mib_local.Acting_as_AP = 0;
+	sc->sc_mib_local.Fill_CFP = 0;
+
+	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
+	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
+
+	sc->sc_mib_mgt.aPower_Mgt_Mode = 0;
+	sc->sc_mib_mgt.aDTIM_Period = 1;
+	LE_WRITE_2(&sc->sc_mib_mgt.aATIM_Window, 0);
 	return 0;
 }
 
