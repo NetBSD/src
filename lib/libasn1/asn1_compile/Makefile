@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/09/17 12:34:41 assar Exp $
+# $NetBSD: Makefile,v 1.10 2001/09/21 22:58:59 tv Exp $
 
 NOMAN=	noman
 
@@ -34,31 +34,26 @@ roken_SRCS =					\
 	get_window_size.c
 
 SRCS=	$(asn1_compile_SRCS)			\
-	$(roken_SRCS)
+	$(roken_SRCS)				\
+	nb_progname.c
 
 YHEADER=	1
 
-BINDIR=	/usr/bin
-
-LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
+#LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
+#	 -I${LIBROKEN}				\
 
 HOST_CPPFLAGS+= -I.				\
 	 -I${.CURDIR}/../../../include/heimdal	\
-	 -I${LIBROKEN}				\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
 DPSRCS=	print_version.h
 
-make-print-version.lo: ${.CURDIR}/../../../include/heimdal/version.h
-
-make-print-version: make-print-version.lo
-	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}
-
-print_version.h: make-print-version
+print_version.h: make-print-version.c ${.CURDIR}/../../../include/heimdal/version.h
+	${HOST_LINK.c} -o make-print-version ${>:M*.c}
 	./make-print-version print_version.h
 
-CLEANFILES+=	print_version.h make-print-version make-print-version.lo
+CLEANFILES+=	print_version.h make-print-version
 
 .include <bsd.hostprog.mk>
