@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.7 2004/04/16 07:54:34 tron Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.8 2004/04/22 07:52:03 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.7 2004/04/16 07:54:34 tron Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.8 2004/04/22 07:52:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,12 @@ static void parse_destroy(char *);
 static void parse_describe(char *);
 static void getdesc1(int *, u_int, struct sysctlnode *);
 static void getdesc(int *, u_int, struct sysctlnode *);
+static void trim_whitespace(char *, int);
 static void sysctlerror(int);
+static void sysctlparseerror(u_int, const char *);
+static void sysctlperror(const char *, ...);
+#define EXIT(n) do { \
+	if (fn == NULL) exit(n); else return; } while (/*CONSTCOND*/0)
 
 /*
  * "borrowed" from libc:sysctlgetmibinfo.c
@@ -235,6 +240,8 @@ struct sysctlnode my_root = {
 };
 
 int	Aflag, aflag, dflag, Mflag, nflag, qflag, rflag, wflag, xflag;
+size_t	nr;
+char	*fn;
 int	req;
 FILE	*warnfp = stderr;
 
@@ -255,7 +262,6 @@ const char *lname[] = {
 int
 main(int argc, char *argv[])
 {
-	char *fn = NULL;
 	int name[CTL_MAXNAME];
 	int ch;
 
@@ -333,7 +339,8 @@ main(int argc, char *argv[])
 		if (fp == NULL) {
 			err(1, "%s", fn);
 		} else {
-			while ((l = fparseln(fp, NULL, NULL, NULL, 0)) != NULL)
+			nr = 0;
+			while ((l = fparseln(fp, NULL, &nr, NULL, 0)) != NULL)
 			{
 				if (*l) {
 					parse(l);
@@ -739,10 +746,10 @@ parse(char *l)
 			value[-1] = '=';
 		if (strncmp(key + 2, "create", 6) == 0 &&
 		    (key[8] == '=' || key[8] == sep[0]))
-			parse_create(key + 8 + (key[8] == '='));
+			parse_create(key + 8 + (key[8] == '=' ? 1 : 0));
 		else if (strncmp(key + 2, "destroy", 7) == 0 &&
 			 (key[9] == '=' || key[9] == sep[0]))
-			parse_destroy(key + 9 + (key[9] == '='));
+			parse_destroy(key + 9 + (key[9] == '=' ? 1 : 0));
 		else if (strncmp(key + 2, "describe", 8) == 0 &&
 			 (key[10] == '=' || key[10] == sep[0])) {
 			key += 10 + (key[10] == '=');
@@ -755,8 +762,7 @@ parse(char *l)
 			}
 		}
 		else
-			fprintf(warnfp, "%s: unable to parse '%s'\n",
-				getprogname(), key);
+			sysctlperror("unable to parse '%s'\n", key);
 		return;
 	}
 
@@ -766,9 +772,8 @@ parse(char *l)
 
 	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
 			     SYSCTL_VERSION) == -1) {
-		fprintf(warnfp, "%s: %s level name '%s' in '%s' is invalid\n",
-			getprogname(), lname[namelen], gsname, l);
-		exit(1);
+		sysctlparseerror(namelen, l);
+		EXIT(1);
 	}
 
 	type = SYSCTL_TYPE(node->sysctl_flags);
@@ -783,9 +788,11 @@ parse(char *l)
 		return;
 	}
 
+	if (fn)
+		trim_whitespace(value, 1);
+
 	if (!wflag) {
-		fprintf(warnfp, "%s: Must specify -w to set variables\n",
-			getprogname());
+		sysctlperror("Must specify -w to set variables\n");
 		exit(1);
 	}
 
@@ -851,12 +858,11 @@ parse_create(char *l)
 	char *nname, *key, *value, *data, *addr, *c, *t;
 	int name[CTL_MAXNAME], i, rc, method, flags, rw;
 	u_int namelen, type;
-	u_quad_t q;
-	long li, lo;
+	u_quad_t uq;
+	quad_t q;
 
 	if (!wflag) {
-		fprintf(warnfp, "%s: Must specify -w to create nodes\n",
-			getprogname());
+		sysctlperror("Must specify -w to create nodes\n");
 		exit(1);
 	}
 
@@ -879,7 +885,7 @@ parse_create(char *l)
 	 * misc stuff used when constructing
 	 */
 	i = 0;
-	q = 0;
+	uq = 0;
 	key = NULL;
 	value = NULL;
 
@@ -933,29 +939,29 @@ parse_create(char *l)
 			 * (or if the address is invalid).
 			 */
 			if (method != 0) {
-				fprintf(warnfp,
-				    "%s: %s: already have %s for new node\n",
-				    getprogname(), nname,
+				sysctlperror(
+				    "%s: already have %s for new node\n",
+				    nname,
 				    method == CTL_CREATE ? "addr" : "symbol");
-				exit(1);
+				EXIT(1);
 			}
 			errno = 0;
 			addr = (void*)strtoul(value, &t, 0);
 			if (*t != '\0' || errno != 0) {
-				fprintf(warnfp,
-				    "%s: %s: '%s' is not a valid address\n",
-				    getprogname(), nname, value);
-				exit(1);
+				sysctlperror(
+				    "%s: '%s' is not a valid address\n",
+				    nname, value);
+				EXIT(1);
 			}
 			method = CTL_CREATE;
 		}
 		else if (strcmp(key, "symbol") == 0) {
 			if (method != 0) {
-				fprintf(warnfp,
-				    "%s: %s: already have %s for new node\n",
-				    getprogname(), nname,
+				sysctlperror(
+				    "%s: already have %s for new node\n",
+				    nname,
 				    method == CTL_CREATE ? "addr" : "symbol");
-				exit(1);
+				EXIT(1);
 			}
 			addr = value;
 			method = CTL_CREATESYM;
@@ -976,10 +982,10 @@ parse_create(char *l)
 			else if (strcmp(value, "struct") == 0)
 				type = CTLTYPE_STRUCT;
 			else {
-				fprintf(warnfp,
-					"%s: %s: '%s' is not a valid type\n",
-					getprogname(), nname, value);
-				exit(1);
+				sysctlperror(
+					"%s: '%s' is not a valid type\n",
+					nname, value);
+				EXIT(1);
 			}
 		}
 		else if (strcmp(key, "size") == 0) {
@@ -991,23 +997,23 @@ parse_create(char *l)
 			 */
 			sz = strtoul(value, &t, 0);
 			if (*t != '\0' || errno != 0) {
-				fprintf(warnfp,
-					"%s: %s: '%s' is not a valid size\n",
-					getprogname(), nname, value);
-				exit(1);
+				sysctlperror(
+					"%s: '%s' is not a valid size\n",
+					nname, value);
+				EXIT(1);
 			}
 		}
 		else if (strcmp(key, "n") == 0) {
 			errno = 0;
-			li = strtol(value, &t, 0);
-			node.sysctl_num = li;
-			lo = node.sysctl_num;
-			if (*t != '\0' || errno != 0 || li != lo || lo < 0) {
-				fprintf(warnfp,
-				    "%s: %s: '%s' is not a valid mib number\n",
-				    getprogname(), nname, value);
-				exit(1);
+			q = strtoq(value, &t, 0);
+			if (*t != '\0' || errno != 0 ||
+			    q < INT_MIN || q > UINT_MAX) {
+				sysctlperror(
+				    "%s: '%s' is not a valid mib number\n",
+				    nname, value);
+				EXIT(1);
 			}
+			node.sysctl_num = (int)q;
 		}
 		else if (strcmp(key, "flags") == 0) {
 			t = value;
@@ -1045,18 +1051,18 @@ parse_create(char *l)
 					rw = CTLFLAG_READWRITE;
 					break;
 				default:
-					fprintf(warnfp,
-					   "%s: %s: '%c' is not a valid flag\n",
-					    getprogname(), nname, *t);
-					exit(1);
+					sysctlperror(
+					   "%s: '%c' is not a valid flag\n",
+					    nname, *t);
+					EXIT(1);
 				}
 				t++;
 			}
 		}
 		else {
-			fprintf(warnfp, "%s: %s: unrecognized keyword '%s'\n",
-				getprogname(), nname, key);
-			exit(1);
+			sysctlperror("%s: unrecognized keyword '%s'\n",
+				     nname, key);
+			EXIT(1);
 		}
 	}
 
@@ -1073,24 +1079,24 @@ parse_create(char *l)
 	 */
 	if (data != NULL) {
 		if (addr != NULL) {
-			fprintf(warnfp,
-				"%s: %s: cannot specify both value and "
-				"address\n", getprogname(), nname);
-			exit(1);
+			sysctlperror(
+				"%s: cannot specify both value and "
+				"address\n", nname);
+			EXIT(1);
 		}
 
 		switch (type) {
 		case CTLTYPE_INT:
 			errno = 0;
-			li = strtol(data, &t, 0);
-			i = li;
-			lo = i;
-			if (*t != '\0' || errno != 0 || li != lo || lo < 0) {
-				fprintf(warnfp,
-					"%s: %s: '%s' is not a valid integer\n",
-					getprogname(), nname, value);
-				exit(1);
+			q = strtoq(data, &t, 0);
+			if (*t != '\0' || errno != 0 ||
+				q < INT_MIN || q > UINT_MAX) {
+				sysctlperror(
+				    "%s: '%s' is not a valid integer\n",
+				    nname, value);
+				EXIT(1);
 			}
+			i = (int)q;
 			if (!(flags & CTLFLAG_OWNDATA)) {
 				flags |= CTLFLAG_IMMEDIATE;
 				node.sysctl_idata = i;
@@ -1106,35 +1112,34 @@ parse_create(char *l)
 			if (sz == 0)
 				sz = strlen(data) + 1;
 			else if (sz < strlen(data) + 1) {
-				fprintf(warnfp, "%s: %s: ignoring size=%zu for "
+				sysctlperror("%s: ignoring size=%zu for "
 					"string node, too small for given "
-					"value\n", getprogname(), nname, sz);
+					"value\n", nname, sz);
 				sz = strlen(data) + 1;
 			}
 			break;
 		case CTLTYPE_QUAD:
 			errno = 0;
-			q = strtouq(data, &t, 0);
+			uq = strtouq(data, &t, 0);
 			if (*t != '\0' || errno != 0) {
-				fprintf(warnfp,
-					"%s: %s: '%s' is not a valid quad\n",
-					getprogname(), nname, value);
-				exit(1);
+				sysctlperror(
+					"%s: '%s' is not a valid quad\n",
+					nname, value);
+				EXIT(1);
 			}
 			if (!(flags & CTLFLAG_OWNDATA)) {
 				flags |= CTLFLAG_IMMEDIATE;
-				node.sysctl_qdata = q;
+				node.sysctl_qdata = uq;
 			}
 			else
-				node.sysctl_data = &q;
+				node.sysctl_data = &uq;
 			if (sz == 0)
 				sz = sizeof(u_quad_t);
 			break;
 		case CTLTYPE_STRUCT:
-			fprintf(warnfp,
-				"%s: %s: struct not initializable\n",
-				getprogname(), nname);
-			exit(1);
+			sysctlperror("%s: struct not initializable\n",
+				     nname);
+			EXIT(1);
 		}
 
 		/*
@@ -1156,10 +1161,10 @@ parse_create(char *l)
 	 */
 	else if (type != CTLTYPE_NODE) {
 		if (sz == 0) {
-			fprintf(warnfp,
-				"%s: %s: need a size or a starting value\n",
-				getprogname(), nname);
-                        exit(1);
+			sysctlperror(
+			    "%s: need a size or a starting value\n",
+			    nname);
+                        EXIT(1);
                 }
 		if (!(flags & CTLFLAG_IMMEDIATE))
 			flags |= CTLFLAG_OWNDATA;
@@ -1171,16 +1176,14 @@ parse_create(char *l)
 	 */
 	if ((flags & CTLFLAG_IMMEDIATE) &&
 	    (type == CTLTYPE_STRING || type == CTLTYPE_STRUCT)) {
-		fprintf(warnfp,
-			"%s: %s: cannot make an immediate %s\n", 
-			getprogname(), nname,
-			(type == CTLTYPE_STRING) ? "string" : "struct");
-		exit(1);
+		sysctlperror("%s: cannot make an immediate %s\n", 
+			     nname,
+			     (type == CTLTYPE_STRING) ? "string" : "struct");
+		EXIT(1);
 	}
 	if (type == CTLTYPE_NODE && node.sysctl_data != NULL) {
-		fprintf(warnfp, "%s: %s: nodes do not have data\n",
-			getprogname(), nname);
-		exit(1);
+		sysctlperror("%s: nodes do not have data\n", nname);
+		EXIT(1);
 	}
 	
 	/*
@@ -1190,15 +1193,13 @@ parse_create(char *l)
 		if ((type == CTLTYPE_INT && sz != sizeof(int)) ||
 		    (type == CTLTYPE_QUAD && sz != sizeof(u_quad_t)) ||
 		    (type == CTLTYPE_NODE && sz != 0)) {
-			fprintf(warnfp, "%s: %s: wrong size for type\n",
-				getprogname(), nname);
-			exit(1);
+			sysctlperror("%s: wrong size for type\n", nname);
+			EXIT(1);
 		}
 	}
 	else if (type == CTLTYPE_STRUCT) {
-		fprintf(warnfp, "%s: %s: struct must have size\n",
-			getprogname(), nname);
-		exit(1);
+		sysctlperror("%s: struct must have size\n", nname);
+		EXIT(1);
 	}
 
 	/*
@@ -1218,9 +1219,8 @@ parse_create(char *l)
 	 * if a kernel address was specified, that can't be made
 	 * writeable by us.
 	if (rw != CTLFLAG_READONLY && addr) {
-		fprintf(warnfp, "%s: %s: kernel data can only be readable\n",
-			getprogname(), nname);
-		exit(1);
+		sysctlperror("%s: kernel data can only be readable\n", nname);
+		EXIT(1);
 	}
 	 */
 
@@ -1267,10 +1267,8 @@ parse_create(char *l)
 				      gsname, &sz, NULL, SYSCTL_VERSION);
 		*t = sep[0];
 		if (rc == -1) {
-			fprintf(warnfp,
-				"%s: %s level name '%s' in '%s' is invalid\n",
-				getprogname(), lname[namelen], gsname, nname);
-			exit(1);
+			sysctlparseerror(namelen, nname);
+			EXIT(1);
 		}
 	}
 
@@ -1286,10 +1284,9 @@ parse_create(char *l)
 	rc = sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
 
 	if (rc == -1) {
-		fprintf(warnfp,
-			"%s: %s: CTL_CREATE failed: %s\n",
-			getprogname(), nname, strerror(errno));
-		exit(1);
+		sysctlperror("%s: CTL_CREATE failed: %s\n",
+			     nname, strerror(errno));
+		EXIT(1);
 	}
 	else if (!qflag && !nflag)
 		printf("%s(%s): (created)\n", nname, st(type));
@@ -1304,8 +1301,7 @@ parse_destroy(char *l)
 	u_int namelen;
 
 	if (!wflag) {
-		fprintf(warnfp, "%s: Must specify -w to destroy nodes\n",
-			getprogname());
+		sysctlperror("Must specify -w to destroy nodes\n");
 		exit(1);
 	}
 
@@ -1315,10 +1311,8 @@ parse_destroy(char *l)
 	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
 			      SYSCTL_VERSION);
 	if (rc == -1) {
-		fprintf(warnfp,
-			"%s: %s level name '%s' in '%s' is invalid\n",
-			getprogname(), lname[namelen], gsname, l);
-		exit(1);
+		sysctlparseerror(namelen, l);
+		EXIT(1);
 	}
 
 	memset(&node, 0, sizeof(node));
@@ -1330,10 +1324,9 @@ parse_destroy(char *l)
 	rc = sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
 
 	if (rc == -1) {
-		fprintf(warnfp,
-			"%s: %s: CTL_DESTROY failed: %s\n",
-			getprogname(), l, strerror(errno));
-		exit(1);
+		sysctlperror("%s: CTL_DESTROY failed: %s\n",
+			     l, strerror(errno));
+		EXIT(1);
 	}
 	else if (!qflag && !nflag)
 		printf("%s(%s): (destroyed)\n", gsname,
@@ -1351,9 +1344,7 @@ parse_describe(char *l)
 	size_t sz;
 
 	if (!wflag) {
-		fprintf(warnfp,
-			"%s: Must specify -w to set descriptions\n",
-			getprogname());
+		sysctlperror("Must specify -w to set descriptions\n");
 		exit(1);
 	}
 
@@ -1366,10 +1357,8 @@ parse_describe(char *l)
 	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
 			      SYSCTL_VERSION);
 	if (rc == -1) {
-		fprintf(warnfp,
-			"%s: %s level name '%s' in '%s' is invalid\n",
-			getprogname(), lname[namelen], gsname, l);
-		exit(1);
+		sysctlparseerror(namelen, l);
+		EXIT(1);
 	}
 
 	sz = sizeof(buf);
@@ -1380,11 +1369,10 @@ parse_describe(char *l)
 	name[namelen - 1] = CTL_DESCRIBE;
 	rc = sysctl(name, namelen, d, &sz, &newdesc, sizeof(newdesc));
 	if (rc == -1)
-		fprintf(warnfp, "%s: %s: CTL_DESCRIBE failed: %s\n",
-			getprogname(), gsname, strerror(errno));
+		sysctlperror("%s: CTL_DESCRIBE failed: %s\n",
+			     gsname, strerror(errno));
 	else if (d->descr_len == 1)
-		fprintf(warnfp, "%s: %s: description not set\n",
-			getprogname(), gsname);
+		sysctlperror("%s: description not set\n", gsname);
 	else if (!qflag && !nflag)
 		printf("%s: %s\n", gsname, d->descr_str);
 }
@@ -1445,6 +1433,7 @@ getdesc1(int *name, u_int namelen, struct sysctlnode *pnode)
 	name[namelen - 1] = node.sysctl_num;
 	if (pnode->sysctl_desc != NULL &&
 	    pnode->sysctl_desc != (const char *)-1)
+		/* LINTED mallocated it, must free it */
 		free((void*)pnode->sysctl_desc);
 	pnode->sysctl_desc = desc;
 }
@@ -1453,7 +1442,7 @@ static void
 getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 {
 	struct sysctlnode *node = pnode->sysctl_child;
-	struct sysctldesc *d, *p;
+	struct sysctldesc *d, *p, *plim;
 	char *desc;
 	size_t sz;
 	int rc, i;
@@ -1485,13 +1474,13 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	 * hokey nested loop here, giving O(n**2) behavior, but should
 	 * suffice for now
 	 */
+	plim = /*LINTED ptr cast*/(struct sysctldesc *)((char*)d + sz);
 	for (i = 0; i < pnode->sysctl_clen; i++) {
 		node = &pnode->sysctl_child[i];
-		for (p = d; (char *)p < (char *)d + sz; p = NEXT_DESCR(p))
+		for (p = d; p < plim; p = NEXT_DESCR(p))
 			if (node->sysctl_num == p->descr_num)
 				break;
-		if ((char *)p < (char *)d + sz &&
-		    node[i].sysctl_ver == p->descr_ver) {
+		if (p < plim && node[i].sysctl_ver == p->descr_ver) {
 			/*
 			 * match found, attempt to attach description
 			 */
@@ -1510,6 +1499,22 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	free(d);
 }
 
+static void
+trim_whitespace(char *s, int dir)
+{
+	char *i, *o;
+
+	i = o = s;
+	if (dir & 1)
+		while (isspace((unsigned char)*i))
+			i++;
+	while ((*o++ = *i++) != '\0');
+	o -= 2; /* already past nul, skip back to before it */
+	if (dir & 2)
+		while (o > s && isspace((unsigned char)*o))
+			*o-- = '\0';
+}
+
 void
 sysctlerror(int soft)
 {
@@ -1521,18 +1526,39 @@ sysctlerror(int soft)
 		case EOPNOTSUPP:
 		case EPROTONOSUPPORT:
 			if (Aflag || req)
-				fprintf(warnfp,
-					"%s: the value is not available\n",
-					gsname);
+				sysctlperror("%s: the value is not available\n",
+					     gsname);
 			return;
 		}
 	}
 
-	fprintf(warnfp, "%s: sysctl() failed with %s\n",
-		gsname, strerror(errno));
+	sysctlperror("%s: sysctl() failed with %s\n",
+		     gsname, strerror(errno));
 	if (!soft)
-		exit(1);
+		EXIT(1);
 }
+
+void
+sysctlparseerror(u_int namelen, const char *pname)
+{
+
+	sysctlperror("%s level name '%s' in '%s' is invalid\n",
+		     lname[namelen], gsname, pname);
+}
+
+static void
+sysctlperror(const char *fmt, ...)
+{
+	va_list ap;
+
+	(void)fprintf(warnfp, "%s: ", getprogname());
+	if (fn)
+		(void)fprintf(warnfp, "%s#%zu: ", fn, nr);
+	va_start(ap, fmt);
+	(void)vfprintf(warnfp, fmt, ap);
+	va_end(ap);
+}
+
 
 /*
  * ********************************************************************
@@ -1549,17 +1575,20 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	void *i, *o;
 	char *t;
 
+	if (fn)
+		trim_whitespace(value, 3);
+
 	si = so = 0;
 	i = o = NULL;
 	errno = 0;
 	qi = strtouq(value, &t, 0);
 	if (errno != 0) {
-		fprintf(warnfp, "%s: value too large\n", value);
-		exit(1);
+		sysctlperror("%s: value too large\n", value);
+		EXIT(1);
 	}
 	if (*t != '\0') {
-		fprintf(warnfp, "%s: not a number\n", value);
-		exit(1);
+		sysctlperror("%s: not a number\n", value);
+		EXIT(1);
 	}
 
 	switch (SYSCTL_TYPE(node->sysctl_flags)) {
@@ -1567,8 +1596,8 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 		ii = (int)qi;
 		qo = ii;
 		if (qo != qi) {
-			fprintf(warnfp, "%s: value too large\n", value);
-			exit(1);
+			sysctlperror("%s: value too large\n", value);
+			EXIT(1);
 		}
 		o = &io;
 		so = sizeof(io);
@@ -1584,8 +1613,10 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	}
 
 	rc = sysctl(name, namelen, o, &so, i, si);
-	if (rc == -1)
+	if (rc == -1) {
 		sysctlerror(0);
+		return;
+	}
 
 	switch (SYSCTL_TYPE(node->sysctl_flags)) {
 	case CTLTYPE_INT:
@@ -1610,18 +1641,20 @@ write_string(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	si = strlen(i) + 1;
 	so = node->sysctl_size;
 	if (si > so && so != 0) {
-		fprintf(warnfp, "%s: string too long\n", value);
-		exit(1);
+		sysctlperror("%s: string too long\n", value);
+		EXIT(1);
 	}
 	o = malloc(so);
 	if (o == NULL) {
-		fprintf(warnfp, "%s: !malloc failed!\n", gsname);
+		sysctlperror("%s: !malloc failed!\n", gsname);
 		exit(1);
 	}
 
 	rc = sysctl(name, namelen, o, &so, i, si);
-	if (rc == -1)
+	if (rc == -1) {
 		sysctlerror(0);
+		return;
+	}
 
 	display_string(node, gsname, o, so, DISPLAY_OLD);
 	display_string(node, gsname, i, si, DISPLAY_NEW);
@@ -1754,9 +1787,9 @@ display_struct(const struct sysctlnode *node, const char *name,
 		return;
 	if (!(xflag || rflag)) {
 		if (Aflag || req)
-			fprintf(warnfp,
-				"%s: this type is unknown to this program\n",
-				gsname);
+			sysctlperror(
+			    "%s: this type is unknown to this program\n",
+			    gsname);
 		return;
 	}
 	if ((nflag || rflag) && (n == DISPLAY_OLD))
@@ -1869,8 +1902,8 @@ printother(HANDLER_ARGS)
 	 * thing?
 	 */
 	if (v != NULL) {
-		fprintf(warnfp, "%s: use '%s' to view this information\n",
-			gsname, (const char *)v);
+		sysctlperror("%s: use '%s' to view this information\n",
+			     gsname, (const char *)v);
 		return;
 	}
 
@@ -1879,16 +1912,16 @@ printother(HANDLER_ARGS)
 	 */
 	switch (name[0]) {
 	case CTL_NET:
-		fprintf(warnfp, "%s: use 'netstat' to view this information\n",
-			sname);
+		sysctlperror("%s: use 'netstat' to view this information\n",
+			     sname);
 		break;
 	case CTL_DEBUG:
-		fprintf(warnfp, "%s: missing 'options DEBUG' from kernel?\n",
-			sname);
+		sysctlperror("%s: missing 'options DEBUG' from kernel?\n",
+			     sname);
 		break;
 	case CTL_DDB:
-		fprintf(warnfp, "%s: missing 'options DDB' from kernel?\n",
-			sname);
+		sysctlperror("%s: missing 'options DDB' from kernel?\n",
+			     sname);
 		break;
 	}
 }
@@ -2123,6 +2156,9 @@ proc_limit(HANDLER_ARGS)
 	char *t;
 	int rc;
 
+	if (fn)
+		trim_whitespace(value, 3);
+
 	osz = sizeof(olim);
 	if (value != NULL) {
 		nsz = sizeof(nlim);
@@ -2133,10 +2169,9 @@ proc_limit(HANDLER_ARGS)
 			errno = 0;
 			nlim = strtouq(value, &t, 0);
 			if (*t != '\0' || errno != 0) {
-				fprintf(warnfp,
-					"%s: %s: '%s' is not a valid limit\n",
-					getprogname(), sname, value);
-				exit(1);
+				sysctlperror("%s: '%s' is not a valid limit\n",
+					     sname, value);
+				EXIT(1);
 			}
 		}
 	}
@@ -2214,7 +2249,7 @@ machdep_diskinfo(HANDLER_ARGS)
 	bi = dl->dl_biosdisks;
 	/* LINTED -- pointer casts are tedious */
 	if ((char *)&ni[lim] != (char *)dl + sz) {
-		fprintf(warnfp, "size mismatch\n");
+		sysctlperror("%s: size mismatch\n", gsname);
 		return;
 	}
 	for (i = 0; i < lim; ni++, i++) {
