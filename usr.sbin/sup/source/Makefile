@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/07/10 18:53:56 wiz Exp $
+#	$NetBSD: Makefile,v 1.19 2002/11/30 03:10:58 lukem Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -83,7 +83,7 @@ MAN8			= supservers.8
 AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
-NETBSD_LIBS		= -lcrypt -lutil
+NETBSD_LIBS		= -lcrypt
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 EXTRALIBS		= libextra.a
