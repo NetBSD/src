@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.6 1995/01/07 10:30:14 mycroft Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.7 1995/11/19 17:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -74,6 +74,30 @@ static u_char sec_par[] = {
 	0370,0171,0172,0373,0174,0375,0376,0177
 };
 
+void	nhpibreset __P((int)); 
+int	nhpibsend __P((int, int, int, void *, int));
+int	nhpibrecv __P((int, int, int, void *, int));
+int	nhpibppoll __P((int));
+void	nhpibppwatch __P((void *));
+void	nhpibgo __P((int, int, int, void *, int, int, int));
+void	nhpibdone __P((int));
+int	nhpibintr __P((int));
+
+/*
+ * Our controller ops structure.
+ */
+struct	hpib_controller nhpib_controller = {
+	nhpibreset,
+	nhpibsend,
+	nhpibrecv,
+	nhpibppoll,
+	nhpibppwatch,
+	nhpibgo,
+	nhpibdone,
+	nhpibintr
+};
+
+int
 nhpibtype(hc)
 	register struct hp_ctlr *hc;
 {
@@ -84,17 +108,22 @@ nhpibtype(hc)
 		hs->sc_type = HPIBA;
 		hs->sc_ba = HPIBA_BA;
 		hc->hp_ipl = HPIBA_IPL;
+		hs->sc_descrip = "Internal HP-IB";
 	}
 	else if (hd->hpib_cid == HPIBB) {
 		hs->sc_type = HPIBB;
 		hs->sc_ba = hd->hpib_csa & CSA_BA;
 		hc->hp_ipl = HPIB_IPL(hd->hpib_ids);
+		hs->sc_descrip = "98624 HP-IB";
 	}
 	else
 		return(0);
+
+	hs->sc_controller = &nhpib_controller;
 	return(1);
 }
 
+void
 nhpibreset(unit)
 	int unit;
 {
@@ -132,13 +161,15 @@ nhpibifc(hd)
 	hd->hpib_acr = AUX_SSRE;
 }
 
-nhpibsend(unit, slave, sec, addr, origcnt)
+int
+nhpibsend(unit, slave, sec, ptr, origcnt)
 	int unit, slave, sec, origcnt;
-	register char *addr;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct nhpibdevice *hd;
 	register int cnt = origcnt;
+	char *addr = ptr;
 
 	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	hd->hpib_acr = AUX_TCA;
@@ -188,13 +219,15 @@ senderror:
 	return(origcnt - cnt - 1);
 }
 
-nhpibrecv(unit, slave, sec, addr, origcnt)
+int
+nhpibrecv(unit, slave, sec, ptr, origcnt)
 	int unit, slave, sec, origcnt;
-	register char *addr;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct nhpibdevice *hd;
 	register int cnt = origcnt;
+	char *addr = ptr;
 
 	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	/*
@@ -239,13 +272,14 @@ recvbyteserror:
 	return(origcnt - cnt - 1);
 }
 
-nhpibgo(unit, slave, sec, addr, count, rw, timo)
-	register int unit, slave;
-	int sec, count, rw;
-	char *addr;
+void
+nhpibgo(unit, slave, sec, ptr, count, rw, timo)
+	int unit, slave, sec, count, rw, timo;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct nhpibdevice *hd;
+	char *addr = ptr;
 
 	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	hs->sc_flags |= HPIBF_IO;
@@ -313,6 +347,7 @@ nhpibreadtimo(arg)
 	(void) splx(s);
 }
 
+void
 nhpibdone(unit)
 	register int unit;
 {
@@ -344,6 +379,7 @@ nhpibdone(unit)
 	}
 }
 
+int
 nhpibintr(unit)
 	register int unit;
 {
@@ -389,6 +425,7 @@ nhpibintr(unit)
 	return(1);
 }
 
+int
 nhpibppoll(unit)
 	int unit;
 {
@@ -407,6 +444,7 @@ nhpibppoll(unit)
 int nhpibreporttimo = 0;
 #endif
 
+int
 nhpibwait(hd, x)
 	register struct nhpibdevice *hd;
 	int x;
@@ -446,4 +484,4 @@ again:
 	else
 		timeout(nhpibppwatch, (void *)unit, 1);
 }
-#endif
+#endif /* NHPIB > 0 */
