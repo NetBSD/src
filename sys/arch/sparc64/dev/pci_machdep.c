@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 2000/07/18 11:37:31 pk Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 2000/07/26 17:46:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -189,6 +189,7 @@ pci_attach_hook(parent, self, pba)
 				continue;
 			DPRINTF(SPDB_INTFIX, ("... BINGO! ..."));
 			
+		bingo:
 			/*
 			 * OK!  we found match.  pull out the old interrupt
 			 * register, patch in the new value, and put it back.
@@ -202,6 +203,25 @@ pci_attach_hook(parent, self, pba)
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; reread %x from intreg", intr));
 			break;
+		}
+		if (i == pp->pp_nintmap) {
+			/*
+			 * Not matched by parent interrupt map. If the
+			 * interrupt property has the INTMAP_OBIO bit
+			 * set, assume the PROM has (wrongly) supplied it
+			 * in the parent's bus format, rather than as a
+			 * PCI interrupt line number.
+			 *
+			 * This seems to be an issue only with the
+			 * psycho host-to-pci bridge.
+			 */
+			if (pp->pp_sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+			    (*ip & INTMAP_OBIO) != 0) {
+				DPRINTF((SPDB_INTFIX|SPDB_INTMAP),
+		("\n\t; PSYCHO: no match but obio interrupt in parent format"));
+
+				i = -1; goto bingo; /* XXX - hackish.. */
+			}
 		}
 
 		/* enable mem & dma if not already */
