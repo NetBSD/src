@@ -118,11 +118,15 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	All ports now use "new" config. Old config has been laid to rest.
 
-	The arp subsystem and API has been rewritten to detach it from
-	being very ethernet-centric.
+	The ARP subsystem and API has been rewritten to make it less
+	ethernet-centric.
 
-	Many kernel interface manuals have been written and added to
-	manual section 9.
+	A new if_media subsystem has been added which allows network
+	interfaces to be configured using media type names rather than
+	device-specific mode bits.
+
+	Many kernel interface manual pages have been added to manual
+	section 9.
 
 	Several ports support much more hardware.
 
@@ -235,8 +239,9 @@ NetBSD _VER has a binary distribution.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (i.e. the `domestic' portion) that may be subject to
-export regulations of the United States, and that it is your
-responsibility should you choose to export these portions.
+export regulations of the United States.   It is your responsibility
+to determine whether or not it is legal for you to export these portions
+and to act accordingly.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
