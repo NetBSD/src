@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.43 2002/11/17 01:51:24 itojun Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.44 2003/02/03 04:22:20 elric Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.43 2002/11/17 01:51:24 itojun Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.44 2003/02/03 04:22:20 elric Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -274,7 +274,14 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 			_gr_hesnum++;
 		}
 
-		hp = hesiod_resolve(context, line, "group");
+		hp = NULL;
+		if (search && !name) {
+			hp = hesiod_resolve(context, line, "gid");
+			if (hp == NULL && errno != ENOENT)
+				break;
+		}
+		if (hp == NULL)
+			hp = hesiod_resolve(context, line, "group");
 		if (hp == NULL) {
 			if (errno == ENOENT) {
 				if (!search)
