@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <arch/i386/pnpbios/pnpbiosvar.h>
 
 #include "opt_pnpbiosverbose.h"
+#include "locators.h"
 
 struct pnpbios_softc {
 	struct device sc_dev;
@@ -52,9 +53,11 @@ static int pnpbios_print __P((void *, const char *));
 static int pnpbios_getnumnodes __P((int *, size_t *));
 static int pnpbios_getnode __P((int, int *, unsigned char *, size_t));
 static void eisaid_to_string __P((unsigned char *, char *));
-static void pnpbios_attachnode __P((struct pnpbios_softc *,
+static void pnpbios_attachnode __P((struct pnpbios_softc *, int,
 				    unsigned char *, size_t));
 static int pnp_scan __P((unsigned char **, size_t, struct pnpresources *, int));
+
+static int pnpbios_submatch __P((struct device *, struct cfdata *, void *));
 
 extern int pnpbioscall __P((int));
 
@@ -69,9 +72,14 @@ struct cfattach pnpbios_ca = {
 #define PNPBIOS_BUFSIZE 4096
 
 int pnpbios_enabled = 1;
-int pnpbios_attached;
 size_t pnpbios_entry;
 caddr_t pnpbios_scratchbuf;
+
+/*
+ * There can be only one of these, and the i386 ISA code needs to
+ * reference this.
+ */
+struct pnpbios_softc *pnpbios_softc;
 
 #define PNPBIOS_SIGNATURE ('$' | ('P' << 8) | ('n' << 16) | ('P' << 24))
 
@@ -129,7 +137,7 @@ pnpbios_match(parent, match, aux)
 		return (0);
 
 	/* There can be only one! */
-	if (pnpbios_attached)
+	if (pnpbios_softc != NULL)
 		return (0);
 
 	return (pnpbios_enabled);
@@ -171,7 +179,7 @@ pnpbios_attach(parent, self, aux)
 	int res, num, i, size, idx;
 	unsigned char *buf;
 
-	pnpbios_attached = 1;
+	pnpbios_softc = sc;
 	sc->sc_ic = paa->paa_ic;
 
 	isa_dmainit(sc->sc_ic, I386_BUS_SPACE_IO, &isa_bus_dma_tag, self);
@@ -226,7 +234,7 @@ pnpbios_attach(parent, self, aux)
 			printf("pnpbios_getnode: error %d\n", res);
 			continue;
 		}
-		pnpbios_attachnode(sc, buf, buf[0] + (buf[1] << 8));
+		pnpbios_attachnode(sc, idx, buf, buf[0] + (buf[1] << 8));
 	}
 	if (idx != 0xff)
 		printf("last idx=%x\n", idx);
@@ -365,20 +373,46 @@ pnpbios_print(aux, pnp)
 	if (pnp)
 		return (QUIET);
 
-	printf(" (%s", aa->primid);
+	printf(" index %d (%s", aa->idx, aa->primid);
 	if (aa->resc->longname)
 		printf(", %s", aa->resc->longname);
 	if (aa->idstr != aa->primid)
 		printf(", attached as %s", aa->idstr);
-	printf("), ");
-	pnpbios_printres(aa->resc);
+	printf(")");
 
 	return (0);
 }
 
+void
+pnpbios_print_devres(dev, aa)
+	struct device *dev;
+	struct pnpbiosdev_attach_args *aa;
+{
+
+	printf("%s: ", dev->dv_xname);
+	pnpbios_printres(aa->resc);
+	printf("\n");
+}
+
+static int
+pnpbios_submatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct pnpbiosdev_attach_args *aa = aux;
+
+	if (match->cf_loc[PNPBIOSCF_INDEX] != PNPBIOSCF_INDEX_DEFAULT &&
+	    match->cf_loc[PNPBIOSCF_INDEX] != aa->idx)
+		return (0);
+
+	return ((*match->cf_attach->ca_match)(parent, match, aux));
+}
+
 static void
-pnpbios_attachnode(sc, buf, len)
+pnpbios_attachnode(sc, idx, buf, len)
 	struct pnpbios_softc *sc;
+	int idx;
 	unsigned char *buf;
 	size_t len;
 {
@@ -420,20 +454,23 @@ pnpbios_attachnode(sc, buf, len)
 	}
 
 	aa.pbt = 0; /* XXX placeholder */
+	aa.idx = idx;
 	aa.resc = &r;
 	aa.ic = sc->sc_ic;
 	aa.primid = idstr;
 
 	/* first try the specific device ID */
 	aa.idstr = idstr;
-	if (config_found((struct device *)sc, &aa, pnpbios_print))
+	if (config_found_sm((struct device *)sc, &aa, pnpbios_print,
+	    pnpbios_submatch))
 		return;
 
 	/* if no driver was found, try compatible IDs */
 	compatid = s.compatids;
 	while (compatid) {
 		aa.idstr = compatid->idstr;
-		if (config_found((struct device *)sc, &aa, pnpbios_print))
+		if (config_found_sm((struct device *)sc, &aa, pnpbios_print,
+		    pnpbios_submatch))
 			return;
 		compatid = compatid->next;
 	}
@@ -449,7 +486,7 @@ pnpbios_attachnode(sc, buf, len)
 	}
 	printf(" (");
 	pnpbios_printres(&r);
-	printf(") at %s ignored\n", sc->sc_dev.dv_xname);
+	printf(") at %s index %d ignored\n", sc->sc_dev.dv_xname, idx);
 #endif
 
 	return;

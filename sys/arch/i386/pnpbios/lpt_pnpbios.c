@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.1 1999/11/14 02:15:50 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -32,87 +32,61 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/termios.h>
 
 #include <machine/bus.h>
-
-#include <sys/audioio.h>
-#include <dev/audio_if.h>
-#include <dev/midi_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
 #include <i386/pnpbios/pnpbiosvar.h>
 
-#include <dev/isa/sbreg.h>
-#include <dev/isa/sbvar.h>
+#include <dev/ic/lptvar.h>
 
-#include <dev/isa/sbdspvar.h>
+struct lpt_pnpbios_softc {
+	struct	lpt_softc sc_lpt;
+};
 
-int sb_pnpbios_match __P((struct device *, struct cfdata *, void *));
-void sb_pnpbios_attach __P((struct device *, struct device *, void *));
+int lpt_pnpbios_match __P((struct device *, struct cfdata *, void *));
+void lpt_pnpbios_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sb_pnpbios_ca = {
-	sizeof(struct sbdsp_softc), sb_pnpbios_match, sb_pnpbios_attach
+struct cfattach lpt_pnpbios_ca = {
+	sizeof(struct lpt_pnpbios_softc), lpt_pnpbios_match, lpt_pnpbios_attach
 };
 
 int
-sb_pnpbios_match(parent, match, aux)
+lpt_pnpbios_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "NMX2210"))
+	if (strcmp(aa->idstr, "PNP0400"))
 		return (0);
 
 	return (1);
 }
 
 void
-sb_pnpbios_attach(parent, self, aux)
+lpt_pnpbios_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sbdsp_softc *sc = (void *)self;
+	struct lpt_pnpbios_softc *psc = (void *)self;
+	struct lpt_softc *sc = &psc->sc_lpt;
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
+	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	sc->sc_ic = aa->ic;
-
-	/* XXX These are only for setting chip configuration registers. */
-	pnpbios_getiobase(aa->pbt, aa->resc, 0, 0, &sc->sc_iobase);
-
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_irq)) {
-		printf(": can't get IRQ\n");
-		return;
-	}
-
-	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->sc_drq8)) {
-		printf(": can't get DMA channel\n");
-		return;
-	}
-	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->sc_drq16))
-		sc->sc_drq16 = -1;
-
 	printf("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", self->dv_xname);
+	lpt_attach_subr(sc);
 
-	if (!sbmatch(sc)) {
-		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_AUDIO,
-					   sbdsp_intr, sc);
-
-	sbattach(sc);
+	sc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_TTY,
+					    lptintr, sc);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbiosvar.h,v 1.1 1999/11/12 18:36:46 drochner Exp $ */
+/* $NetBSD: pnpbiosvar.h,v 1.2 1999/11/14 02:15:51 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -79,6 +79,7 @@ typedef void *pnpbios_tag_t; /* driver private */
 struct pnpbiosdev_attach_args {
 	pnpbios_tag_t pbt;
 	isa_chipset_tag_t ic;
+	int idx;
 	struct pnpresources *resc;
 	char *idstr;
 	char *primid;
@@ -93,3 +94,5 @@ int pnpbios_getiobase __P((pnpbios_tag_t, struct pnpresources *, int,
 			   bus_space_tag_t *, int *));
 int pnpbios_getirqnum __P((pnpbios_tag_t, struct pnpresources *, int, int *));
 int pnpbios_getdmachan __P((pnpbios_tag_t, struct pnpresources *, int, int *));
+void pnpbios_print_devres __P((struct device *,
+			       struct pnpbiosdev_attach_args *));
