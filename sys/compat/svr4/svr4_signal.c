@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.17 1995/08/19 04:04:50 cgd Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.18 1995/09/19 22:10:16 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -251,15 +251,16 @@ bsd_to_svr4_sigaltstack(bss, sss)
 }
 
 int
-svr4_sigaction(p, uap, retval)
+svr4_sigaction(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct svr4_sigaction *) nsa;
 		syscallarg(struct svr4_sigaction *) osa;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct svr4_sigaction *nssa, *ossa, tmpssa;
 	struct sigaction *nbsa, *obsa, tmpbsa;
 	struct sigaction_args sa;
@@ -304,14 +305,15 @@ svr4_sigaction(p, uap, retval)
 }
 
 int 
-svr4_sigaltstack(p, uap, retval)
+svr4_sigaltstack(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_sigaltstack_args /* {
 		syscallarg(struct svr4_sigaltstack *) nss;
 		syscallarg(struct svr4_sigaltstack *) oss;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct svr4_sigaltstack *nsss, *osss, tmpsss;
 	struct sigaltstack *nbss, *obss, tmpbss;
 	struct sigaltstack_args sa;
@@ -358,14 +360,15 @@ svr4_sigaltstack(p, uap, retval)
  * Stolen from the ibcs2 one
  */
 int
-svr4_signal(p, uap, retval)
+svr4_signal(p, v, retval)
 	register struct proc *p;
-	struct svr4_signal_args	/* {
-		syscallarg(int) signum;
-		syscallarg(svr4_sig_t) handler;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct svr4_signal_args /* {
+		syscallarg(int) signum;
+		syscallarg(svr4_sig_t) handler;
+	} */ *uap = v;
 	int signum = svr4_to_bsd_sig[SVR4_SIGNO(SCARG(uap, signum))];
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -479,15 +482,16 @@ svr4_signal(p, uap, retval)
 }
 
 int
-svr4_sigprocmask(p, uap, retval)
+svr4_sigprocmask(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(svr4_sigset_t *) set;
 		syscallarg(svr4_sigset_t *) oset;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	svr4_sigset_t sss;
 	sigset_t bss;
 	int error = 0;
@@ -534,14 +538,15 @@ svr4_sigprocmask(p, uap, retval)
 }
 
 int
-svr4_sigpending(p, uap, retval)
+svr4_sigpending(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_sigpending_args /* {
 		syscallarg(int) what;
 		syscallarg(svr4_sigset_t *) mask;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	sigset_t bss;
 	svr4_sigset_t sss;
 
@@ -565,13 +570,14 @@ svr4_sigpending(p, uap, retval)
 }
 
 int
-svr4_sigsuspend(p, uap, retval)
+svr4_sigsuspend(p, v, retval)
 	register struct proc *p;
-	struct svr4_sigsuspend_args /* {
-		syscallarg(svr4_sigset_t *) ss;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct svr4_sigsuspend_args /* {
+		syscallarg(svr4_sigset_t *) ss;
+	} */ *uap = v;
 	svr4_sigset_t sss;
 	sigset_t bss;
 	struct sigsuspend_args sa;
@@ -587,14 +593,15 @@ svr4_sigsuspend(p, uap, retval)
 }
 
 int
-svr4_kill(p, uap, retval)
+svr4_kill(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
@@ -603,14 +610,15 @@ svr4_kill(p, uap, retval)
 }
 
 int 
-svr4_context(p, uap, retval)
+svr4_context(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_context_args /* {
 		syscallarg(int) func;
 		syscallarg(struct svr4_ucontext *) uc;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct svr4_ucontext uc;
 	int error;
 	*retval = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.7 1995/06/24 20:29:27 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.8 1995/09/19 22:10:20 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -635,11 +635,12 @@ svr4_showmsg(str, fd, ctl, dat, flags)
 
 
 int
-svr4_putmsg(p, uap, retval)
+svr4_putmsg(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_putmsg_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_putmsg_args *uap = v;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
 	struct svr4_strbuf dat, ctl;
@@ -756,11 +757,12 @@ svr4_putmsg(p, uap, retval)
 
 
 int
-svr4_getmsg(p, uap, retval)
+svr4_getmsg(p, v, retval)
 	register struct proc			*p;
-	register struct svr4_getmsg_args	*uap;
+	void					*v;
 	register_t				*retval;
 {
+	struct svr4_getmsg_args *uap = v;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
 	struct getpeername_args ga;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.10 1995/07/04 19:47:02 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.11 1995/09/19 22:10:12 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -82,11 +82,12 @@ svr4_decode_cmd(cmd, dir, c, num, argsiz)
 #endif
 
 int
-svr4_ioctl(p, uap, retval)
+svr4_ioctl(p, v, retval)
 	register struct proc		*p;
-	register struct svr4_ioctl_args	*uap;
+	void				*v;
 	register_t			*retval;
 {
+	struct svr4_ioctl_args *uap = v;
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
