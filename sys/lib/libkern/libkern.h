@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.22 1998/06/21 18:43:35 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.23 1998/07/31 23:44:41 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -156,6 +156,7 @@ void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
 void	*memchr __P((const void *, int, size_t));
 void	*memcpy __P((void *, const void *, size_t));
+void	*memmove __P((void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
 u_long	 random __P((void));
