@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2 2003/03/03 22:23:22 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2 2003/03/03 22:23:22 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -136,7 +136,8 @@ i686_mtrr_dump(const char *tag)
 
 	for (i = 0; i < nmtrr_raw; i++)
 		printf("%s: %x: %016llx\n",
-		    tag, mtrr_raw[i].msraddr, rdmsr(mtrr_raw[i].msraddr));
+		    tag, mtrr_raw[i].msraddr,
+		    (unsigned long long)rdmsr(mtrr_raw[i].msraddr));
 }
 
 /*
