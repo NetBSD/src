@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.10 2002/06/18 04:33:36 itojun Exp $	*/
+/*	$NetBSD: adb.c,v 1.11 2002/06/18 05:22:51 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,6 +48,7 @@
 #include <dev/ofw/openfirm.h>
 
 #include "aed.h"
+#include "apm.h"
 
 /*
  * Function declarations.
@@ -159,6 +160,15 @@ adbattach(parent, self, aux)
 
 		(void)config_found(self, &aa_args, adbprint);
 	}
+
+#if NAPM > 0
+	/* Magic for signalling the apm driver to match. */
+	aa_args.origaddr = ADBADDR_APM;
+	aa_args.adbaddr = ADBADDR_APM;
+	aa_args.handler_id = ADBADDR_APM;
+
+	(void)config_found(self, &aa_args, NULL);
+#endif
 
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.18 2002/06/18 04:35:02 itojun Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.19 2002/06/18 05:22:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1264,6 +1264,49 @@ pm_eject_pcmcia(slot)
 	p.s_buf = p.r_buf = p.data;
 	p.data[0] = 5 + slot;	/* XXX */
 	pmgrop(&p);
+}
+
+/*
+ * Thanks to Paul Mackerras and Fabio Riccardi's Linux implementation
+ * for a clear description of the PMU results.
+ */
+int
+pm_battery_info(int battery, struct pmu_battery_info *info)
+{
+	PMData p;
+
+	p.command = PMU_SMART_BATTERY_STATE;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = battery + 1;
+	pmgrop(&p);
+
+	info->flags = p.data[1];
+
+	switch (p.data[0]) {
+	case 3:
+	case 4:
+		info->cur_charge = p.data[2];
+		info->max_charge = p.data[3];
+		info->draw = *((signed char *)&p.data[4]);
+		info->voltage = p.data[5];
+		break;
+	case 5:
+		info->cur_charge = ((p.data[2] << 8) | (p.data[3]));
+		info->max_charge = ((p.data[4] << 8) | (p.data[5]));
+		info->draw = *((signed short *)&p.data[6]);
+		info->voltage = ((p.data[8] << 8) | (p.data[7]));
+		break;
+	default:
+		/* XXX - Error condition */
+		info->cur_charge = 0;
+		info->max_charge = 0;
+		info->draw = 0;
+		info->voltage = 0;
+		break;
+	}
+
+	return 1;
 }
 
 int
