@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.6 1997/10/10 05:40:12 mrg Exp $
+.\"	$NetBSD: pfil.9,v 1.6.2.1 1997/11/11 14:05:10 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -30,7 +30,10 @@
 .Dt PFIL 9
 .Os NetBSD
 .Sh NAME
-.Nm pfil
+.Nm pfil ,
+.Nm pfil_hook_get ,
+.Nm pfil_add_hook ,
+.Nm pfil_remove_hook
 .Nd packet filter interface
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
