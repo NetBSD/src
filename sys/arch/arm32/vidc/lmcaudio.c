@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.21 1998/08/31 02:34:36 mark Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.22 1999/01/01 12:45:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -253,8 +253,8 @@ lmcaudio_attach(parent, self, aux)
 #endif
 	if (ag.silence == NULL || ag.beep == NULL)
 		panic("lmcaudio: Cannot allocate memory\n");
-	bzero((char *)ag.silence, NBPG);
-	bcopy((char *)beep_waveform, (char *)ag.beep, sizeof(beep_waveform));
+	memset((char *)ag.silence, 0, NBPG);
+	memcpy((char *)ag.beep, (char *)beep_waveform, sizeof(beep_waveform));
 
 	conv_jap((u_char *)ag.beep, sizeof(beep_waveform));
 
@@ -420,7 +420,7 @@ lmcaudio_start_output(addr, p, cc, intr, arg)
 		/*
 		 * Not on quad word boundary.
 		 */
-		bcopy(p, (char *)ag.silence, (cc > NBPG ? NBPG : cc));
+		memcpy((char *)ag.silence, p, (cc > NBPG ? NBPG : cc));
 		p = (void *)ag.silence;
 		if (cc > NBPG) {
 			cc = NBPG;
@@ -618,7 +618,7 @@ lmcaudio_shutdown()
 	printf ( "lmcaudio: stop output\n" );
 #endif
 
-	bzero((char *)ag.silence, NBPG);
+	memset((char *)ag.silence, 0, NBPG);
 	IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(ag.silence));
 	IOMD_WRITE_WORD(IOMD_SD0ENDA, (PHYS(ag.silence) + NBPG - 16) | 0x80000000);
 	disable_irq(sdma_channel);
