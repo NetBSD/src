@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_types.h,v 1.5 2002/11/10 21:53:41 manu Exp $	 */
+/*	$NetBSD: mach_vm.h,v 1.1 2002/11/10 21:53:41 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,50 +36,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_TYPES_H_
-#define	_MACH_TYPES_H_
+#ifndef	_MACH_VM_H_
+#define	_MACH_VM_H_
 
-typedef int mach_port_t;
-typedef int mach_port_name_t;
-typedef int mach_kern_return_t;
-typedef int mach_clock_res_t;
-typedef int mach_clock_id_t;
-typedef int mach_boolean_t;
-typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
-typedef int mach_absolute_time_t;
-typedef int mach_integer_t;
-typedef int mach_cpu_type_t;
-typedef int mach_cpu_subtype_t;
-typedef int mach_port_right_t;
-typedef int mach_vm_address_t;
-typedef int mach_vm_inherit_t;
-typedef int mach_vm_prot_t;
-typedef unsigned int mach_natural_t;
-typedef unsigned int mach_vm_size_t;
-typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
+
+#include <sys/types.h> 
+#include <sys/param.h>
+
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+
+/* vm_map */
 
 typedef struct {
-	u_int32_t	numer;
-	u_int32_t	denom;
-} mach_timebase_info_t;
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_object;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_address;
+	mach_vm_size_t req_size;
+	mach_vm_address_t req_mask;
+	int req_flags;
+	mach_vm_offset_t req_offset;
+	mach_boolean_t req_copy;
+	mach_vm_prot_t req_cur_protection;
+	mach_vm_prot_t req_max_protection;
+	mach_vm_inherit_t req_inherance;
+} mach_vm_map_request_t;
 
 typedef struct {
-	u_int8_t       mig_vers;
-	u_int8_t       if_vers;
-	u_int8_t       reserved1;
-	u_int8_t       mig_encoding;
-	u_int8_t       int_rep;
-	u_int8_t       char_rep; 
-	u_int8_t       float_rep;
-	u_int8_t       reserved2;
-} mach_ndr_record_t;
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_vm_address_t rep_address;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_map_reply_t;
 
-#ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif /* DEBUG_MACH */
+/* vm_deallocate */
 
-#endif /* !_MACH_TYPES_H_ */
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_address;
+	mach_vm_size_t req_size;
+} mach_vm_deallocate_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_deallocate_reply_t;
+
+int mach_vm_map __P((struct proc *, mach_msg_header_t *));
+int mach_vm_deallocate __P((struct proc *, mach_msg_header_t *));
+
+#endif /* _MACH_VM_H_ */
