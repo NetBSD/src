@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.12 1997/11/04 06:31:16 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.13 1998/01/12 08:51:09 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -192,9 +192,7 @@ struct cfattach ahb_ca = {
 	sizeof(struct ahb_softc), ahbmatch, ahbattach
 };
 
-struct cfdriver ahb_cd = {
-	NULL, "ahb", DV_DULL
-};
+extern struct cfdriver ahb_cd;
 
 #define	AHB_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
