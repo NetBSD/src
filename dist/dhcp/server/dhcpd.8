@@ -153,7 +153,7 @@ BOOTP client, permanently assigning an address to each client.
 Whenever changes are made to the dhcpd.conf file, dhcpd must be
 restarted.   To restart dhcpd, send a SIGTERM (signal 15) to the
 process ID contained in
-.IR RUNDIR/dhcpd.pid ,
+.IR /var/run/dhcpd.pid ,
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
@@ -237,7 +237,7 @@ your existing lease file with its test data.  The DHCP server will
 refuse to operate in playback mode unless you specify an alternate
 lease file.
 .SH CONFIGURATION
-The syntax of the dhcpd.conf(5) file is discussed seperately.   This
+The syntax of the dhcpd.conf(5) file is discussed separately.   This
 section should be used as an overview of the configuration process,
 and the dhcpd.conf(5) documentation should be consulted for detailed
 reference information.
@@ -253,7 +253,7 @@ support might look like this:
 .sp 1
 	subnet 239.252.197.0 netmask 255.255.255.0 {
 	  range 239.252.197.10 239.252.197.250;
-        }
+	}
 .fi
 .PP
 Multiple address ranges may be specified like this:
@@ -293,7 +293,7 @@ to the subnet command:
 	  range 239.252.197.10 239.252.197.107;
 	  default-lease-time 600;
 	  max-lease-time 7200;
-	|
+	}
 .fi
 .PP
 This particular subnet declaration specifies a default lease time of
@@ -724,8 +724,8 @@ Indicates the number of update messages that have been received from
 the failover partner but not yet processed.
 .RE
 .SH FILES
-.B ETCDIR/dhcpd.conf, DBDIR/dhcpd.leases, RUNDIR/dhcpd.pid,
-.B DBDIR/dhcpd.leases~.
+.B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
+.B /var/db/dhcpd.leases~.
 .SH SEE ALSO
 dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .SH AUTHOR
