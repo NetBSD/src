@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43 2001/04/13 23:30:18 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.44 2001/08/02 13:37:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -511,6 +511,11 @@ tunread(dev, uio, ioflag)
 	splx(s);
 
 	while (m0 && uio->uio_resid > 0 && error == 0) {
+		if (m0->m_len == 0) {
+			MFREE(m0, m);
+			m0 = m;
+			continue;
+		}
 		len = min(uio->uio_resid, m0->m_len);
 		if (len == 0)
 			break;
