@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.19 2003/05/27 15:24:24 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.20 2003/06/02 16:59:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.19 2003/05/27 15:24:24 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.20 2003/06/02 16:59:26 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -779,6 +779,34 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 
 	param->sched_priority = 0;
 
+	return 0;
+}
+
+int
+pthread_attr_getstack(const pthread_attr_t *attr, void **addr, size_t *size)
+{
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	*addr = pthread__self()->pt_stack.ss_sp;
+	*size = pthread__self()->pt_stack.ss_size;
+	return 0;
+}
+
+int
+pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size)
+{
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	*size = pthread__self()->pt_stack.ss_size;
+	return 0;
+}
+
+int
+pthread_attr_getstackaddr(const pthread_attr_t *attr, void **addr)
+{
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	*addr = pthread__self()->pt_stack.ss_sp;
 	return 0;
 }
 
