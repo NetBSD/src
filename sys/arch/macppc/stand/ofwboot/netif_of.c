@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.6 2003/03/13 11:35:55 drochner Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.7 2003/03/13 12:15:31 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -103,7 +103,7 @@ netif_of_open(op)
 	return 0;
 }
 
-int
+void
 netif_of_close(fd)
 	int fd;
 {
@@ -112,13 +112,13 @@ netif_of_close(fd)
 #ifdef	NETIF_DEBUG
 	printf("netif_close(%x)...", fd);
 #endif
-	if (fd != 0) {
+
 #ifdef	NETIF_DEBUG
+	if (fd != 0) {
 		printf("EBADF\n");
-#endif
-		errno = EBADF;
-		return -1;
+		return;
 	}
+#endif
 
 	io = &sockets[fd];
 	io->io_netif = NULL;
@@ -126,7 +126,6 @@ netif_of_close(fd)
 #ifdef	NETIF_DEBUG
 	printf("OK\n");
 #endif
-	return 0;
 }
 
 /*
