@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1997/06/16 23:41:56 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1997/06/18 04:51:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,9 +83,11 @@ cpu_fork(p1, p2)
 	tf = (struct frame *)(KERNELSTACK - 24);
 	p2->p_md.md_regs = p2->p_addr->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+
 #ifdef MIPS3
 	mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
 #endif
+
 	/* XXX save pte mask outside loop ? */
 	for (i = 0, pte = kvtopte(p2->p_addr); i < UPAGES; i++, pte++) {
 		if (CPUISMIPS3)
@@ -236,7 +238,7 @@ pagemove(from, to, size)
 	tpte = kvtopte(to);
 #ifdef MIPS3
 	if(((int)from & machCacheAliasMask) != ((int)to & machCacheAliasMask)) {
-		MachHitFlushDCache(from, size);
+		mips3_HitFlushDCache((vm_offset_t)from, size);
 	}
 #endif
 	while (size > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1997/06/16 23:41:40 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 1997/06/18 04:51:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -435,7 +435,7 @@ mach_init(argc, argv, code, cv)
 
 	if (CPUISMIPS3) {
 		mips3_FlushDCache(MACH_CACHED_TO_PHYS(start), v - start);
-		MachHitFlushDCache((caddr_t)UADDR, UPAGES * NBPG);
+		mips3_HitFlushDCache(UADDR, UPAGES * NBPG);
 	}
 
 	/*
