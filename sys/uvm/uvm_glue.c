@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.6 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.7 1998/04/09 00:23:39 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -265,8 +265,7 @@ uvm_fork(p1, p2, shared)
 	struct proc *p1, *p2;
 	boolean_t shared;
 {
-	register struct user *up;
-	vm_offset_t addr;
+	struct user *up = p2->p_addr;
 	int rv;
 
 	if (shared == TRUE)
@@ -274,32 +273,16 @@ uvm_fork(p1, p2, shared)
 	else
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
 
-#if !defined(vax)
 	/*
-	 * Allocate a wired-down (for now) pcb and kernel stack for the process
-	 * "wired" state is stored in p->p_flag's P_INMEM bit rather than in
-	 * vm_map_entry's wired count to prevent kernel_map fragmentation.
+	 * Wire down the U-area for the process, which contains the PCB
+	 * and the kernel stack.  Wired state is stored in p->p_flag's
+	 * P_INMEM bit rather than in the vm_map_entry's wired count
+	 * to prevent kernel_map fragmentation.
 	 */
-	addr = uvm_km_valloc(kernel_map, USPACE);
-	if (addr == 0)
-		panic("uvm_fork: no more kernel virtual memory");
-	rv = uvm_fault_wire(kernel_map, addr, addr + USPACE);
+	rv = uvm_fault_wire(kernel_map, (vm_offset_t)up,
+	    (vm_offset_t)up + USPACE);
 	if (rv != KERN_SUCCESS)
-		panic("uvm_fork: uvm_fault_wire failed: %d\n", rv);
-#else
-	/*
-	 * XXXCDC: Why does VAX need this?
-	 *
-	 * XXX somehow, on 386, ocassionally pageout removes active, wired down
-	 * kstack and pagetables, WITHOUT going thru vm_page_unwire! Why this
-	 * appears to work is not yet clear, yet it does...
-	 */
-	addr = uvm_km_alloc(kernel_map, USPACE);
-	if (addr == 0)
-		panic("uvm_fork: no more kernel virtual memory");
-#endif
-	up = (struct user *)addr;
-	p2->p_addr = up;
+		panic("uvm_forl: uvm_fault_wire failed: %d", rv);
 
 	/*
 	 * p_stats and p_sigacts currently point at fields in the user
