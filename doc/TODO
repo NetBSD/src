@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.2 2002/12/05 22:47:28 jonb Exp $
+#	$NetBSD: TODO,v 1.3 2003/08/10 19:47:07 jdolecek Exp $
 
 THINGS TO BE DONE:
 
@@ -36,12 +36,6 @@ High Kernel:
 	kernel suport for lockd(8), lockf(3)
     clean up support for LKM and protections checking (cgd)
 
-Low Kernel:
-    [hp300] integrate into new SCSI setup (or wait for torek's?)
-
-User-level support:
-    replace routed with gated (trouble with gated license).
-    
 User programs:
     rwall nfs-mountees on shutdown
     add detachment to window
