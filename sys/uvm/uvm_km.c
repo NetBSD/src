@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.24 1999/05/25 20:30:08 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.25 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -456,7 +456,7 @@ uvm_km_init(start, end)
 	 * before installing.
 	 */
 
-	uvm_map_setup(&kernel_map_store, base, end, FALSE);
+	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
 	if (uvm_map(&kernel_map_store, &base, start - base, NULL,
 	    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
@@ -481,11 +481,11 @@ uvm_km_init(start, end)
  *	alloc a new map
  */
 struct vm_map *
-uvm_km_suballoc(map, min, max, size, pageable, fixed, submap)
+uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	struct vm_map *map;
 	vaddr_t *min, *max;		/* OUT, OUT */
 	vsize_t size;
-	boolean_t pageable;
+	int flags;
 	boolean_t fixed;
 	struct vm_map *submap;
 {
@@ -515,11 +515,11 @@ uvm_km_suballoc(map, min, max, size, pageable, fixed, submap)
 
 	pmap_reference(vm_map_pmap(map));
 	if (submap == NULL) {
-		submap = uvm_map_create(vm_map_pmap(map), *min, *max, pageable);
+		submap = uvm_map_create(vm_map_pmap(map), *min, *max, flags);
 		if (submap == NULL)
 			panic("uvm_km_suballoc: unable to create submap");
 	} else {
-		uvm_map_setup(submap, *min, *max, pageable);
+		uvm_map_setup(submap, *min, *max, flags);
 		submap->pmap = vm_map_pmap(map);
 	}
 
