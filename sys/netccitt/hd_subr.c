@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.6 1996/02/13 22:04:31 christos Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.7 1996/10/10 23:02:22 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -378,9 +378,9 @@ hd_message(hdp, msg)
 	char           *msg;
 {
 	if (hdcbhead->hd_next)
-		printf("HDLC(%s): %s\n", format_ntn(hdp->hd_xcp), msg);
+		kprintf("HDLC(%s): %s\n", format_ntn(hdp->hd_xcp), msg);
 	else
-		printf("HDLC: %s\n", msg);
+		kprintf("HDLC: %s\n", msg);
 }
 
 #ifdef HDLCDEBUG
@@ -388,10 +388,10 @@ void
 hd_status(hdp)
 	struct hdcb    *hdp;
 {
-	printf("HDLC STATUS:\n V(S)=%d, V(R)=%d, retxqi=%d,\n",
-	       hdp->hd_vs, hdp->hd_vr, hdp->hd_retxqi);
+	kprintf("HDLC STATUS:\n V(S)=%d, V(R)=%d, retxqi=%d,\n",
+	    hdp->hd_vs, hdp->hd_vr, hdp->hd_retxqi);
 
-	printf("Last_rx_nr=%d, Last_tx_nr=%d,\n Condition=%d, Xx=%d\n",
-	 hdp->hd_lastrxnr, hdp->hd_lasttxnr, hdp->hd_condition, hdp->hd_xx);
+	kprintf("Last_rx_nr=%d, Last_tx_nr=%d,\n Condition=%d, Xx=%d\n",
+	    hdp->hd_lastrxnr, hdp->hd_lasttxnr, hdp->hd_condition, hdp->hd_xx);
 }
 #endif
