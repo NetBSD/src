@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154.2.2 2000/08/23 11:58:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.154.2.3 2000/10/01 21:53:31 hubertf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -44,6 +44,14 @@
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	US/Pacific
+
+# Flags for creating ISO CDROM image
+# mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
+MKISOFS?=	mkisofs
+MKISOFS_FLAGS+= -J -l \
+		-r -T -v \
+		-P "The NetBSD Project" \
+		-m "${RELEASEDIR}/instalation/cdrom"
 
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
@@ -118,7 +126,7 @@ obj:
 	mkdir -p ${KERNOBJDIR}
 
 .ifndef DESTDIR
-distribution distrib-dirs release snapshot:
+distribution distrib-dirs release snapshot iso-image:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
@@ -244,13 +252,36 @@ distrib-dirs:
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
-release snapshot snap_pre snap_md_pre snap_md_post:
+release snapshot snap_pre snap_md_pre snap_md_post iso-image:
 	@echo setenv RELEASEDIR before doing that!
 	@false
 .else
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
+
+# Standalone target to create a CDROM image after the release
+# was composed. Should be run after "make build" in both src and xsrc
+iso-image: iso-image_md_post
+
+iso-image_mi: iso-image_md_pre
+	@if ${MKISOFS} --version; then \
+		mkdir -p ${RELEASEDIR}/installation/cdrom ; \
+		${MKISOFS} ${MKISOFS_FLAGS} \
+			-o ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
+			${RELEASEDIR} ; \
+		sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/cdrom '*.iso' ; \
+	else \
+		echo "install pkgsrc/sysutils/cdrecord and type 'make iso-image'." ; \
+	fi
+
+# Setup the $RELEASEDIR to produce a bootable CD image:
+iso-image_md_pre:
+# nothing here -- look in the machine-dependent Makefile.inc
+
+# Fixup the  CD-image to be bootable
+iso-image_md_post: iso-image_mi
+# nothing here -- look in the machine-dependent Makefile.inc
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
