@@ -1488,9 +1488,14 @@ static int reject_maps_rbl(SMTPD_STATE *state)
     int     dns_status = DNS_FAIL;
     int     i;
     int     result;
+    struct in_addr a;
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, state->addr);
+
+    /* IPv4 only for now */
+    if (inet_pton(AF_INET, state->addr, &a) != 1)
+	return SMTPD_CHECK_DUNNO;
 
     /*
      * Build the constant part of the RBL query: the reverse client address.
