@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/07/18 16:53:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/31 18:28:50 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,8 @@ ELFSIZE=32
 
 .PATH:	$S/compat/svr4
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF${ELFSIZE} -DELFSIZE=${ELFSIZE}
+CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF${ELFSIZE} \
+		-DELFSIZE=${ELFSIZE}
 
 MKMAN=	no
 
@@ -18,5 +19,14 @@ KMOD=	exec_svr4_elf
 
 SRCS=	lkminit_exec.c
 SRCS+=	svr4_exec_elf${ELFSIZE}.c
+
+# compat_util.c symbol redifinitions
+CPPFLAGS+=	-Demul_find=svr4_emul_find				\
+		-Dstackgap_init=svr4_stackgap_init			\
+		-Demul_flags_translate=svr4_emul_flags_translate	\
+		-Dstackgap_alloc=svr4_stackgap_alloc		 	\
+		-Dcompat_offseterr=svr4_compat_offseterr
+.PATH: $S/compat/common
+SRCS+=	compat_util.c
 
 .include <bsd.kmod.mk>
