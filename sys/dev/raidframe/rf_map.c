@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.19 2002/09/23 02:53:58 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.20 2002/09/23 02:55:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.19 2002/09/23 02:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.20 2002/09/23 02:55:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -586,7 +586,7 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
 	RF_AccessStripeMap_t *asmap;
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
-	RF_RowCol_t trow, tcol, row, i;
+	RF_RowCol_t trow, tcol, i;
 	RF_SectorNum_t diskOffset;
 	RF_RaidAddr_t sosAddr;
 	int     numFailures;
@@ -600,7 +600,6 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
 	numFailures = 0;
 
 	sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
-	row = asmap->physInfo->row;
 	for (i = 0; i < layoutPtr->numDataCol; i++) {
 		(layoutPtr->map->MapSector) (raidPtr, sosAddr + i * layoutPtr->sectorsPerStripeUnit,
 		    &trow, &tcol, &diskOffset, 0);
