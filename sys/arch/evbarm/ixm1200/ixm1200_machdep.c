@@ -1,7 +1,7 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.11 2002/12/08 13:22:32 ichiro Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.12 2003/02/22 05:32:02 igy Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -738,9 +738,10 @@ consinit(void)
 
 	consinit_called = 1;
 
-	if (ixpcomcnattach(&ixpsip_bs_tag, IXPCOM_UART_BASE,
+	if (ixpcomcnattach(&ixpsip_bs_tag,
+			   IXPCOM_UART_HWBASE, IXPCOM_UART_VBASE,
 			   CONSPEED, CONMODE))
-		panic("can't init serial console @%lx", IXPCOM_UART_BASE);
+		panic("can't init serial console @%lx", IXPCOM_UART_HWBASE);
 }
 
 #ifdef DEBUG_BEFOREMMU
