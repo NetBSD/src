@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.12 1997/10/20 01:09:54 lukem Exp $	*/
+/*	$NetBSD: tsort.c,v 1.13 1998/08/25 20:59:42 ross Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.12 1997/10/20 01:09:54 lukem Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.13 1998/08/25 20:59:42 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -344,8 +344,8 @@ tsort()
 			if (cycle_buf == NULL || longest_cycle == NULL)
 				err(1, "malloc");
 		}
-		for (n = graph; n != NULL; n = n->n_next)
-			if (!(n->n_flags & NF_ACYCLIC))
+		for (n = graph; n != NULL; n = n->n_next) {
+			if (!(n->n_flags & NF_ACYCLIC)) {
 				if ((cnt = find_cycle(n, n, 0, 0)) != 0) {
 					if (!quiet) {
 						warnx("cycle in data");
@@ -361,7 +361,8 @@ tsort()
 					n->n_flags  |= NF_ACYCLIC;
 					clear_cycle();
 				}
-
+			}
+		}
 		if (n == NULL)
 			errx(1, "internal error -- could not find cycle");
 	}

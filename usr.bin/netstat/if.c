@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.28 1998/07/12 03:20:14 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.29 1998/08/25 20:59:39 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.28 1998/07/12 03:20:14 mrg Exp $");
+__RCSID("$NetBSD: if.c,v 1.29 1998/08/25 20:59:39 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,7 @@ banner:
 	}
 	if (dflag)
 		printf("%5.5s ", "drops");
-	if (lastif - iftot > 0)
+	if (lastif - iftot > 0) {
 		if (bflag) {
 			printf("%10.10s %8.8s %10.10s %5.5s",
 				"bytes", " ", "bytes", " ");
@@ -373,6 +373,7 @@ banner:
 			printf("%8.8s %5.5s %8.8s %5.5s %5.5s ",
 				"packets", "errs", "packets", "errs", "colls");
 		}
+	}
 	if (dflag)
 		printf(" %5.5s", "drops");
 	putchar('\n');

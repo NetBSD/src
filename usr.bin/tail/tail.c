@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.6 1998/02/09 22:39:43 cjs Exp $");
+__RCSID("$NetBSD: tail.c,v 1.7 1998/08/25 20:59:41 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ main(argc, argv)
 	 * If style not specified, the default is the whole file for -r, and
 	 * the last 10 lines if not -r.
 	 */
-	if (style == NOTSET)
+	if (style == NOTSET) {
 		if (rflag) {
 			off = 0;
 			style = REVERSE;
@@ -166,7 +166,7 @@ main(argc, argv)
 			off = 10;
 			style = RLINES;
 		}
-
+	}
 	if (*argv)
 		for (first = 1; (fname = *argv++) != NULL;) {
 			if ((fp = fopen(fname, "r")) == NULL ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.11 1997/10/19 19:31:19 mycroft Exp $	*/
+/*	$NetBSD: expand.c,v 1.12 1998/08/25 20:59:39 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.11 1997/10/19 19:31:19 mycroft Exp $");
+__RCSID("$NetBSD: expand.c,v 1.12 1998/08/25 20:59:39 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ slash:
 			while (*s)
 				addpath(*s++);
 			addpath('/');
-			if (stat(path, &stb) == 0 && S_ISDIR(stb.st_mode))
+			if (stat(path, &stb) == 0 && S_ISDIR(stb.st_mode)) {
 				if (*p == '\0') {
 					if (which & E_TILDE)
 						Cat(path, "");
@@ -524,6 +524,7 @@ slash:
 						Cat(tilde, tpathp);
 				} else
 					expsh(p);
+			}
 			pathp = spathp;
 			*pathp = '\0';
 			return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.10 1998/07/26 23:09:50 mycroft Exp $	*/
+/*	$NetBSD: term.c,v 1.11 1998/08/25 20:59:42 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.10 1998/07/26 23:09:50 mycroft Exp $");
+__RCSID("$NetBSD: term.c,v 1.11 1998/08/25 20:59:42 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,12 +109,12 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 	 * ttype now contains a pointer to the type of the terminal.
 	 * If the first character is '?', ask the user.
 	 */
-	if (ttype[0] == '?')
+	if (ttype[0] == '?') {
 		if (ttype[1] != '\0')
 			ttype = askuser(ttype + 1);
 		else
 			ttype = askuser(NULL);
-
+	}
 	/* Find the termcap entry.  If it doesn't exist, ask the user. */
 	while ((rval = tgetent(tbuf, ttype)) == 0) {
 		warnx("terminal type %s is unknown", ttype);

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.6 1997/10/19 03:17:17 lukem Exp $	*/
+/*	$NetBSD: indent.c,v 1.7 1998/08/25 20:59:37 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.6 1997/10/19 03:17:17 lukem Exp $");
+__RCSID("$NetBSD: indent.c,v 1.7 1998/08/25 20:59:37 ross Exp $");
 #endif
 #endif				/* not lint */
 
@@ -223,13 +223,14 @@ main(argc, argv)
 		fprintf(stderr, "indent: usage: indent file [ outfile ] [ options ]\n");
 		exit(1);
 	}
-	if (output == 0)
+	if (output == 0) {
 		if (troff)
 			output = stdout;
 		else {
 			out_name = in_name;
 			bakcopy();
 		}
+	}
 	if (ps.com_ind <= 1)
 		ps.com_ind = 2;	/* dont put normal comments before column 2 */
 	if (troff) {
@@ -977,7 +978,7 @@ check_type:
 					*e_code++ = ' ';
 				ps.want_blank = false;
 				if (is_procname == 0 || !procnames_start_line) {
-					if (!ps.block_init)
+					if (!ps.block_init) {
 						if (troff && !ps.dumped_decl_indent) {
 							sprintf(e_code, "\n.De %dp+\200p\n", dec_ind * 7);
 							ps.dumped_decl_indent = 1;
@@ -987,6 +988,7 @@ check_type:
 								CHECK_SIZE_CODE;
 								*e_code++ = ' ';
 							}
+					}
 				} else {
 					if (dec_ind && s_code != e_code)
 						dump_line();
