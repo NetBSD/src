@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/03/17 21:34:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/26 15:04:47 lukem Exp $
 
 
 .include "${.CURDIR}/../../../Makefile.inc"
@@ -56,7 +56,8 @@ unconfig:
 
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	${RELINSTALL} ${IMAGE} ${RELEASEDIR}/installation/floppy
+	# XXX: do we want both?
 	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
 
 real-floppy:
