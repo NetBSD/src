@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.164 2000/07/05 23:31:13 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.165 2000/11/22 00:32:24 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,9 +161,7 @@ sdattach(parent, sd, sc_link, ops)
 #endif
 
 	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
+	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
 
