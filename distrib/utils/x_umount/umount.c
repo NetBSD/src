@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.2 2003/08/07 09:28:02 agc Exp $	*/
+/*	$NetBSD: umount.c,v 1.2.2.1 2004/09/01 03:34:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.2 2003/08/07 09:28:02 agc Exp $");
+__RCSID("$NetBSD: umount.c,v 1.2.2.1 2004/09/01 03:34:18 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,11 @@ __RCSID("$NetBSD: umount.c,v 1.2 2003/08/07 09:28:02 agc Exp $");
 
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
-int	fflag, raw;
+int	fflag;
 
 char	*getmntname __P((char *, mntwhat, char **));
 int	 main __P((int, char *[]));
-int	 umountfs __P((char *, char **));
+int	 umountfs __P((char *, char **, int));
 void	 usage __P((void));
 
 int
@@ -74,6 +74,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, errs;
+	int raw = 0;
 	char **typelist = NULL;
 
 	/* Start disks transferring immediately. */
@@ -98,15 +99,16 @@ main(argc, argv)
 		usage();
 
 	for (errs = 0; *argv != NULL; ++argv)
-		if (umountfs(*argv, typelist) != 0)
+		if (umountfs(*argv, typelist, raw) != 0)
 			errs = 1;
 	exit(errs);
 }
 
 int
-umountfs(name, typelist)
+umountfs(name, typelist, raw)
 	char *name;
 	char **typelist;
+	int raw;
 {
 	struct stat sb;
 	char *type, *delimp, *mntpt, rname[MAXPATHLEN];
