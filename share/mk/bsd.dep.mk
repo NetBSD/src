@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.37 2002/11/10 21:26:45 thorpej Exp $
+#	$NetBSD: bsd.dep.mk,v 1.38 2002/11/26 18:42:30 thorpej Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -15,11 +15,7 @@ MKDEP?=		mkdep
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)
-.if defined(HAVE_GCC3)
-__acpp_flags=
-.else
 __acpp_flags=	-traditional-cpp
-.endif
 .NOPATH:	.depend
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
