@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.3 1994/06/13 20:48:09 mycroft Exp $
+ *	$Id: util.c,v 1.4 1996/12/04 22:59:09 thorpej Exp $
  */
 
 /*
@@ -242,10 +242,10 @@ char **chp;
  * addr is in network byte order.
  * sizeof(buf) needs to be at least 16.
  */
-char *inet_dquad P((char *buf, unsigned long addr));
+char *inet_dquad P((char *buf, u_int32_t addr));
 char *inet_dquad(buf, addr)
 char *buf;
-unsigned long addr;
+u_int32_t addr;
 {
 	addr = ntohl(addr);
 	sprintf(buf, "%d.%d.%d.%d",
