@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.37 2000/06/03 20:47:36 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.38 2001/07/12 23:35:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2000/06/03 20:47:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2001/07/12 23:35:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ parse_prom_bootdev()
 	booted_partition = 0;
 	bootdev_data = NULL;
 
-	bcopy(bootinfo.booted_dev, hacked_boot_dev,
+	memcpy(hacked_boot_dev, bootinfo.booted_dev,
 	    min(sizeof bootinfo.booted_dev, sizeof hacked_boot_dev));
 #if 0
 	printf("parse_prom_bootdev: boot dev = \"%s\"\n", hacked_boot_dev);

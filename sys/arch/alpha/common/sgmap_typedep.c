@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.15 2001/07/12 23:25:40 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.16 2001/07/12 23:35:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.15 2001/07/12 23:25:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.16 2001/07/12 23:35:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -216,7 +216,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #ifdef SGMAP_LOG
 	if (panicstr == NULL) {
 		sl.sl_ptecnt = map->_dm_ptecnt;
-		bcopy(&sl, &__C(SGMAP_TYPE,_log)[__C(SGMAP_TYPE,_log_next)],
+		memcpy(&__C(SGMAP_TYPE,_log)[__C(SGMAP_TYPE,_log_next)], &sl,
 		    sizeof(sl));
 		__C(SGMAP_TYPE,_log_last) = __C(SGMAP_TYPE,_log_next);
 		if (++__C(SGMAP_TYPE,_log_next) == SGMAP_LOGSIZE)

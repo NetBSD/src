@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.246 2001/07/12 23:25:39 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.247 2001/07/12 23:35:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2001/07/12 23:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2001/07/12 23:35:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,10 +282,10 @@ alpha_init(pfn, ptb, bim, bip, biv)
 				bootinfo.hwrpb_size =
 				    ((struct rpb *)HWRPB_ADDR)->rpb_size;
 			}
-			bcopy(v1p->boot_flags, bootinfo.boot_flags,
+			memcpy(bootinfo.boot_flags, v1p->boot_flags,
 			    min(sizeof v1p->boot_flags,
 			      sizeof bootinfo.boot_flags));
-			bcopy(v1p->booted_kernel, bootinfo.booted_kernel,
+			memcpy(bootinfo.booted_kernel, v1p->booted_kernel,
 			    min(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
 			/* booted dev not provided in bootinfo */
@@ -1541,7 +1541,7 @@ sendsig(catcher, sig, mask, code)
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	memcpy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 	ksc.sc_fp_control = alpha_read_fp_c(p);
 	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
@@ -1668,7 +1668,7 @@ sys___sigreturn14(p, v, retval)
 	/* XXX ksc.sc_ownedfp ? */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
 	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
