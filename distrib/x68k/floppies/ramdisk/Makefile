@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2002/10/17 02:05:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/10/27 08:00:26 isaki Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=			inst.fs
-IMAGESIZE=		1200k
+IMAGESIZE=		1240k
 IMAGE_RELEASEDIR=	installation/floppy
 
 MAKEFS_FLAGS=	-f 10
