@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.25 1999/06/15 23:32:08 thorpej Exp $
+# $NetBSD: shl.mi,v 1.26 1999/06/25 07:36:36 pk Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -22,6 +22,6 @@
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libusb.so.0.0
-./usr/lib/libutil.so.5.0
+./usr/lib/libutil.so.5.1
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.1
