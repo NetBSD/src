@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.32 2000/02/25 17:14:18 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.33 2000/02/29 16:54:29 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -270,7 +270,7 @@ rf_Shutdown(raidPtr)
 
 	raidPtr->valid = 0;
 
-	rf_update_component_labels(raidPtr);
+	rf_final_update_component_labels(raidPtr);
 
 	rf_UnconfigureVnodes(raidPtr);
 
