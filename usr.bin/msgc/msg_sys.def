@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.12 1999/07/04 10:13:12 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.13 1999/07/04 10:29:30 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,14 +39,13 @@
 static WINDOW *msg_win = NULL;
 static char *cbuffer;
 static size_t cbuffersize;
-static int do_echo = 1;
 
 static int last_i_was_nl, last_i_was_space;
 static int last_o_was_punct, last_o_was_space;
 
 static int	_msg_vprintf(int auto_fill, char *fmt, va_list ap);
-static void	_msg_vprompt(char *msg, char *def, char *val, int max_chars,
-		    va_list ap);
+static void	_msg_vprompt(char *msg, int do_echo, char *def, char *val,
+		    int max_chars, va_list ap);
 
 /* Routines */
 
@@ -270,7 +269,8 @@ int msg_printf_add (char *fmt, ...)
 
 
 static void
-_msg_vprompt(char *msg, char *def, char *val, int max_chars, va_list ap)
+_msg_vprompt(char *msg, int do_echo, char *def, char *val, int max_chars,
+    va_list ap)
 {
 	int ch;
 	int count = 0;
@@ -357,34 +357,38 @@ _msg_vprompt(char *msg, char *def, char *val, int max_chars, va_list ap)
 	}
 }
 
-void msg_prompt_add (int msg_no, char *def, char *val, int max_chars, ...)
-{
-	va_list ap;
-
-	va_start (ap, max_chars);
-	_msg_vprompt(msg_list[msg_no], def, val, max_chars, ap);
-	va_end(ap);
-}
-
-void msg_prompt (int msg_no, char *def, char *val, int max_chars, ...)
+void
+msg_prompt(int msg_no, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
 	va_start (ap, max_chars);
-	_msg_vprompt(msg_list[msg_no], def, val, max_chars, ap);
+	_msg_vprompt(msg_list[msg_no], 1, def, val, max_chars, ap);
 	va_end (ap);
 }
 
-void msg_noecho()
+void
+msg_prompt_add(int msg_no, char *def, char *val, int max_chars, ...)
 {
-	do_echo = 0;
+	va_list ap;
+
+	va_start (ap, max_chars);
+	_msg_vprompt(msg_list[msg_no], 1, def, val, max_chars, ap);
+	va_end(ap);
 }
 
-void msg_echo()
+void
+msg_prompt_noecho(int msg_no, char *def, char *val, int max_chars, ...)
 {
-	do_echo = 1;
+	va_list ap;
+
+	msg_clear();
+
+	va_start (ap, max_chars);
+	_msg_vprompt(msg_list[msg_no], 0, def, val, max_chars, ap);
+	va_end (ap);
 }
 
 void msg_table_add(int msg_no, ...)
