@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: trap.h,v 1.2 1998/09/07 01:39:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,7 +148,13 @@
 #define T_SVR4_GETHRTIME	0x124
 #define T_SVR4_GETHRVTIME	0x125
 #define T_SVR4_GETHRESTIME	0x127
-
+#define T_GETCC			0x132
+#define T_SETCC			0x133
+#define T_SVID_SYSCALL		0x164
+#define	T_SPARC_INTL_SYSCALL	0x165
+#define	T_OS_VENDOR_SYSCALL	0x166
+#define	T_HW_OEM_SYSCALL	0x167
+#define T_RTF_DEF_TRAP		0x168
 
 #ifdef _KERNEL			/* pseudo traps for locore.s */
 #define	T_RWRET		-1	/* need first user window for trap return */
