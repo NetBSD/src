@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,47 +30,52 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_pcb.c	7.14 (Berkeley) 4/20/91
+ *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "ioctl.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/proc.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "in_var.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 
 struct	in_addr zeroin_addr;
 
+int
 in_pcballoc(so, head)
 	struct socket *so;
 	struct inpcb *head;
 {
-	struct mbuf *m;
 	register struct inpcb *inp;
 
-	m = m_getclr(M_DONTWAIT, MT_PCB);
-	if (m == NULL)
+	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_WAITOK);
+	if (inp == NULL)
 		return (ENOBUFS);
-	inp = mtod(m, struct inpcb *);
+	bzero((caddr_t)inp, sizeof(*inp));
 	inp->inp_head = head;
 	inp->inp_socket = so;
 	insque(inp, head);
 	so->so_pcb = (caddr_t)inp;
 	return (0);
 }
-	
+
+int
 in_pcbbind(inp, nam)
 	register struct inpcb *inp;
 	struct mbuf *nam;
@@ -78,44 +83,61 @@ in_pcbbind(inp, nam)
 	register struct socket *so = inp->inp_socket;
 	register struct inpcb *head = inp->inp_head;
 	register struct sockaddr_in *sin;
+	struct proc *p = curproc;		/* XXX */
 	u_short lport = 0;
+	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+	int error;
 
 	if (in_ifaddr == 0)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || inp->inp_laddr.s_addr != INADDR_ANY)
 		return (EINVAL);
-	if (nam == 0)
-		goto noname;
-	sin = mtod(nam, struct sockaddr_in *);
-	if (nam->m_len != sizeof (*sin))
-		return (EINVAL);
-	if (sin->sin_addr.s_addr != INADDR_ANY) {
-		int tport = sin->sin_port;
+	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
+	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
+	     (so->so_options & SO_ACCEPTCONN) == 0))
+		wild = INPLOOKUP_WILDCARD;
+	if (nam) {
+		sin = mtod(nam, struct sockaddr_in *);
+		if (nam->m_len != sizeof (*sin))
+			return (EINVAL);
+#ifdef notdef
+		/*
+		 * We should check the family, but old programs
+		 * incorrectly fail to initialize it.
+		 */
+		if (sin->sin_family != AF_INET)
+			return (EAFNOSUPPORT);
+#endif
+		lport = sin->sin_port;
+		if (IN_MULTICAST(ntohl(sin->sin_addr.s_addr))) {
+			/*
+			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+			 * allow complete duplication of binding if
+			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+			 * and a multicast address is bound on both
+			 * new and duplicated sockets.
+			 */
+			if (so->so_options & SO_REUSEADDR)
+				reuseport = SO_REUSEADDR|SO_REUSEPORT;
+		} else if (sin->sin_addr.s_addr != INADDR_ANY) {
+			sin->sin_port = 0;		/* yech... */
+			if (ifa_ifwithaddr((struct sockaddr *)sin) == 0)
+				return (EADDRNOTAVAIL);
+		}
+		if (lport) {
+			struct inpcb *t;
 
-		sin->sin_port = 0;		/* yech... */
-		if (ifa_ifwithaddr((struct sockaddr *)sin) == 0)
-			return (EADDRNOTAVAIL);
-		sin->sin_port = tport;
+			/* GROSS */
+			if (ntohs(lport) < IPPORT_RESERVED &&
+			    (error = suser(p->p_ucred, &p->p_acflag)))
+				return (error);
+			t = in_pcblookup(head, zeroin_addr, 0,
+			    sin->sin_addr, lport, wild);
+			if (t && (reuseport & t->inp_socket->so_options) == 0)
+				return (EADDRINUSE);
+		}
+		inp->inp_laddr = sin->sin_addr;
 	}
-	lport = sin->sin_port;
-	if (lport) {
-		u_short aport = ntohs(lport);
-		int wild = 0;
-
-		/* GROSS */
-		if (aport < IPPORT_RESERVED && (so->so_state & SS_PRIV) == 0)
-			return (EACCES);
-		/* even GROSSER, but this is the Internet */
-		if ((so->so_options & SO_REUSEADDR) == 0 &&
-		    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-		     (so->so_options & SO_ACCEPTCONN) == 0))
-			wild = INPLOOKUP_WILDCARD;
-		if (in_pcblookup(head,
-		    zeroin_addr, 0, sin->sin_addr, lport, wild))
-			return (EADDRINUSE);
-	}
-	inp->inp_laddr = sin->sin_addr;
-noname:
 	if (lport == 0)
 		do {
 			if (head->inp_lport++ < IPPORT_RESERVED ||
@@ -123,7 +145,7 @@ noname:
 				head->inp_lport = IPPORT_RESERVED;
 			lport = htons(head->inp_lport);
 		} while (in_pcblookup(head,
-			    zeroin_addr, 0, inp->inp_laddr, lport, 0));
+			    zeroin_addr, 0, inp->inp_laddr, lport, wild));
 	inp->inp_lport = lport;
 	return (0);
 }
@@ -134,6 +156,7 @@ noname:
  * If don't have a local address for this socket yet,
  * then pick one.
  */
+int
 in_pcbconnect(inp, nam)
 	register struct inpcb *inp;
 	struct mbuf *nam;
@@ -157,6 +180,8 @@ in_pcbconnect(inp, nam)
 		 * choose the broadcast address for that interface.
 		 */
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define sintosa(sin)	((struct sockaddr *)(sin))
+#define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 		    sin->sin_addr = IA_SIN(in_ifaddr)->sin_addr;
 		else if (sin->sin_addr.s_addr == (u_long)INADDR_BROADCAST &&
@@ -165,7 +190,6 @@ in_pcbconnect(inp, nam)
 	}
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		register struct route *ro;
-		struct ifnet *ifp;
 
 		ia = (struct in_ifaddr *)0;
 		/* 
@@ -196,24 +220,40 @@ in_pcbconnect(inp, nam)
 		 * unless it is the loopback (in case a route
 		 * to our address on another net goes to loopback).
 		 */
-		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp) &&
-		    (ifp->if_flags & IFF_LOOPBACK) == 0)
-			for (ia = in_ifaddr; ia; ia = ia->ia_next)
-				if (ia->ia_ifp == ifp)
-					break;
+		if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+			ia = ifatoia(ro->ro_rt->rt_ifa);
 		if (ia == 0) {
-			int fport = sin->sin_port;
+			u_short fport = sin->sin_port;
 
 			sin->sin_port = 0;
-			ia = (struct in_ifaddr *)
-			    ifa_ifwithdstaddr((struct sockaddr *)sin);
-			sin->sin_port = fport;
+			ia = ifatoia(ifa_ifwithdstaddr(sintosa(sin)));
 			if (ia == 0)
-				ia = in_iaonnetof(in_netof(sin->sin_addr));
+				ia = ifatoia(ifa_ifwithnet(sintosa(sin)));
+			sin->sin_port = fport;
 			if (ia == 0)
 				ia = in_ifaddr;
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
+		}
+		/*
+		 * If the destination address is multicast and an outgoing
+		 * interface has been set as a multicast option, use the
+		 * address of that interface as our source address.
+		 */
+		if (IN_MULTICAST(ntohl(sin->sin_addr.s_addr)) &&
+		    inp->inp_moptions != NULL) {
+			struct ip_moptions *imo;
+			struct ifnet *ifp;
+
+			imo = inp->inp_moptions;
+			if (imo->imo_multicast_ifp != NULL) {
+				ifp = imo->imo_multicast_ifp;
+				for (ia = in_ifaddr; ia; ia = ia->ia_next)
+					if (ia->ia_ifp == ifp)
+						break;
+				if (ia == 0)
+					return (EADDRNOTAVAIL);
+			}
 		}
 		ifaddr = (struct sockaddr_in *)&ia->ia_addr;
 	}
@@ -234,6 +274,7 @@ in_pcbconnect(inp, nam)
 	return (0);
 }
 
+int
 in_pcbdisconnect(inp)
 	struct inpcb *inp;
 {
@@ -244,6 +285,7 @@ in_pcbdisconnect(inp)
 		in_pcbdetach(inp);
 }
 
+int
 in_pcbdetach(inp)
 	struct inpcb *inp;
 {
@@ -255,10 +297,12 @@ in_pcbdetach(inp)
 		(void)m_free(inp->inp_options);
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
+	ip_freemoptions(inp->inp_moptions);
 	remque(inp);
-	(void) m_free(dtom(inp));
+	FREE(inp, M_PCB);
 }
 
+int
 in_setsockaddr(inp, nam)
 	register struct inpcb *inp;
 	struct mbuf *nam;
@@ -274,6 +318,7 @@ in_setsockaddr(inp, nam)
 	sin->sin_addr = inp->inp_laddr;
 }
 
+int
 in_setpeeraddr(inp, nam)
 	struct inpcb *inp;
 	struct mbuf *nam;
@@ -300,18 +345,20 @@ in_setpeeraddr(inp, nam)
  *
  * Must be called at splnet.
  */
-in_pcbnotify(head, dst, fport, laddr, lport, cmd, notify)
+int
+in_pcbnotify(head, dst, fport_arg, laddr, lport_arg, cmd, notify)
 	struct inpcb *head;
 	struct sockaddr *dst;
-	u_short fport, lport;
+	u_int fport_arg, lport_arg;
 	struct in_addr laddr;
-	int cmd, (*notify)();
+	int cmd;
+	void (*notify) __P((struct inpcb *, int));
 {
+	extern u_char inetctlerrmap[];
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
+	u_short fport = fport_arg, lport = lport_arg;
 	int errno;
-	int in_rtchange();
-	extern u_char inetctlerrmap[];
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET)
 		return;
@@ -356,25 +403,31 @@ in_pcbnotify(head, dst, fport, laddr, lport, cmd, notify)
  * routing information.  If the route was created dynamically
  * (by a redirect), time to try a default gateway again.
  */
+int
 in_losing(inp)
 	struct inpcb *inp;
 {
 	register struct rtentry *rt;
+	struct rt_addrinfo info;
 
 	if ((rt = inp->inp_route.ro_rt)) {
-		rt_missmsg(RTM_LOSING, &inp->inp_route.ro_dst,
-			    rt->rt_gateway, (struct sockaddr *)rt_mask(rt),
-			    (struct sockaddr *)0, rt->rt_flags, 0);
+		inp->inp_route.ro_rt = 0;
+		bzero((caddr_t)&info, sizeof(info));
+		info.rti_info[RTAX_DST] =
+			(struct sockaddr *)&inp->inp_route.ro_dst;
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags, 
 				(struct rtentry **)0);
-		inp->inp_route.ro_rt = 0;
-		rtfree(rt);
+		else 
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.
 		 */
+			rtfree(rt);
 	}
 }
 
@@ -382,8 +435,10 @@ in_losing(inp)
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
  */
-in_rtchange(inp)
+void
+in_rtchange(inp, errno)
 	register struct inpcb *inp;
+	int errno;
 {
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);
@@ -396,14 +451,15 @@ in_rtchange(inp)
 }
 
 struct inpcb *
-in_pcblookup(head, faddr, fport, laddr, lport, flags)
+in_pcblookup(head, faddr, fport_arg, laddr, lport_arg, flags)
 	struct inpcb *head;
 	struct in_addr faddr, laddr;
-	u_short fport, lport;
+	u_int fport_arg, lport_arg;
 	int flags;
 {
 	register struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
+	u_short fport = fport_arg, lport = lport_arg;
 
 	for (inp = head->inp_next; inp != head; inp = inp->inp_next) {
 		if (inp->inp_lport != lport)
