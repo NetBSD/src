@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.102 2003/09/27 19:07:12 dsl Exp $
+.\"	$NetBSD: sysctl.8,v 1.103 2003/10/15 19:58:24 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,14 +64,14 @@ described as a dotted set of components.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl a
-List all the currently available string or integer values.
 .It Fl A
 List all the known MIB names including tables.
 Those with string or integer values will be printed as with the
 .Fl a
 flag; for the table values,
 the name of the utility to retrieve them is given.
+.It Fl a
+List all the currently available string or integer values.
 .It Fl e
 Separate the name and the value of the variable(s) with
 .Ql = .
