@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.74 2000/07/28 04:06:55 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.75 2000/08/15 22:13:02 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -622,7 +622,7 @@ extern	u_long syn_cache_count;
 	{ 1, 1, 0, PR_SLOWHZ },			\
 	{ 1, 0, &tcp_do_newreno },		\
 	{ 1, 0, &tcp_log_refused },		\
-	{ 1, 1, 0, 0 },				\
+	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
 }
 
