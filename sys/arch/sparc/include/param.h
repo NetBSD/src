@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 1996/03/04 05:04:38 cgd Exp $ */
+/*	$NetBSD: param.h,v 1.23 1996/03/31 22:18:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,9 +43,12 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  */
-
 /*
- * Machine dependent constants for Sun-4c (SPARCstation)
+ * Sun4M support by Aaron Brown, Harvard University.
+ * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
+ * All rights reserved.
+ *
+ * $Id: param.h,v 1.23 1996/03/31 22:18:16 pk Exp $
  */
 #define	_MACHINE	sparc
 #define	MACHINE		"sparc"
@@ -58,16 +61,6 @@
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
 #endif					/* XXX */
-
-#if defined(SUN4M)
-/* 
- * The sun4m supports multiple CPUs. Currently, we only support uniprocessor
- * operations, but we map in the interrupt registers for everybody just for
- * kicks. This constant affects the `fixed' virtual device addresses
- * defined in <sparc/vaddrs.h>.
- */
-#define NCPU_MAX	4	/* XXX: are there 4m's with > 4 CPUs? */
-#endif 
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for
@@ -85,7 +78,7 @@
  * 	sun4 only		8192 bytes/page
  *	sun4c/sun4m only	4096 bytes/page
  *	sun4/sun4c/sun4m	either of the above
- * 
+ *
  * In the later case NBPG, PGOFSET, and PGSHIFT are encoded in variables
  * initialized early in locore.s.  Since they are variables, rather than
  * simple constants, the kernel will not perform slighly worse.
@@ -197,12 +190,13 @@ extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
 extern caddr_t	dvma_malloc __P((size_t, void *, int));
 extern void	dvma_free __P((caddr_t, size_t, void *));
 
-
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 
 extern int cputyp;
 extern int cpumod;
+extern int mmumod;
+
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 
@@ -214,15 +208,29 @@ extern int cpumod;
 #define CPU_SUN4M	2
 /*
  * Values for cpumod (cpu model) variable.  XXX currently valid only for sun4
+ * or Sun4M
  */
 #define SUN4_100	0x22
 #define SUN4_200	0x21
 #define SUN4_300	0x23
 #define SUN4_400	0x24
+#define SUN4M_MS	0x04	/* MicroSPARC-II */
+#define SUN4M_SS	0x40	/* Generic SuperSPARC */
+#define SUN4M_HS	0x10	/* Generic ROSS sparc product (HyperSPARC) */
+#define SUN4M_RT620	0x1f	/* Ross HyperSPARC RT620 */
+#define SUN4M_STP1020N	0x41	/* TI SuperSPARC STP1020N */
+#define SUN4M_STP1020P	0x40	/* TI SuperSPARC STP1020P */
+#define SUN4M_STP1020A	0x40	/* TI SuperSPARC STP1020A */
+
+/* Values for mmumod (mmu model) variable. Valid only for Sun4M */
+#define	SUN4M_MMU_HS	0x1	/* ROSS HyperSparc */
+#define SUN4M_MMU_SS	0x0	/* TI SuperSPARC */
+#define SUN4M_MMU_MS1	0x4	/* MicroSPARC-I (??? XXX) */
+#define SUN4M_MMU_MS	0x0	/* MicroSPARC-II (ugh, conflicts w/SS) */
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
- * Let compiler optimize away code conditionals on constants.
+ * Let compiler optimize away code conditional on constants.
  */
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
