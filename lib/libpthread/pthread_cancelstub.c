@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.7 2003/11/21 23:03:13 nathanw Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.8 2003/11/24 23:23:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.7 2003/11/21 23:03:13 nathanw Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.8 2003/11/24 23:23:17 cl Exp $");
 
 /*
  * This is necessary because the fsync_range() name is always weak (it is
@@ -93,7 +93,7 @@ ssize_t	_sys_writev(int, const struct iovec *, int);
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_false((id)->pt_cancel))				\
 		pthread_exit(PTHREAD_CANCELED);				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 int
