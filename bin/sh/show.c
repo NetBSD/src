@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.15 1997/07/04 21:02:22 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.16 1997/12/01 14:40:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.15 1997/07/04 21:02:22 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.16 1997/12/01 14:40:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,6 @@ trargs(ap)
 void
 opentrace() {
 	char s[100];
-	char *getenv();
 #ifdef O_APPEND
 	int flags;
 #endif
