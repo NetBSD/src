@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.20 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.21 2003/04/09 01:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,10 +48,6 @@ typedef struct adb_trace_xlate_s {
 
 extern adb_trace_xlate_t adb_trace_xlations[];
 
-#define ADB_MAXTRACE	(NBPG / sizeof(int) - 1)
-extern int	adb_traceq[ADB_MAXTRACE];
-extern int	adb_traceq_tail;
-extern int	adb_traceq_len;
 extern int	adb_polling;
 
 #ifdef DEBUG
