@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.17 2002/03/30 11:15:41 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.18 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.17 2002/03/30 11:15:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.18 2002/03/30 11:43:33 martin Exp $");
 
 #include "isdn.h"
 
@@ -365,6 +365,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 			cd->bri = -1;
+			cd->l3drv = NULL;
 
 			d = isdn_find_l3_by_bri(mcr->controller);
 			if (d == NULL) {
@@ -383,6 +384,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 
 			cd->bri = mcr->controller;	/* fill cd */
+			cd->l3drv = d;
 			cd->bprot = mcr->bprot;
 			cd->bchan_driver_index = mcr->driver;
 			cd->bchan_driver_unit = mcr->driver_unit;
@@ -672,7 +674,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 			
-			d = isdn_find_l3_by_bri(cd->bri);
+			d = cd->l3drv;
 			if (d == NULL) {
 				error = EINVAL;
 				break;
