@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.2 1999/09/26 10:22:10 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -63,7 +63,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $";
+    "$Id: fb.c,v 1.2 1999/09/26 10:22:10 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -212,15 +212,12 @@ fbattach(parent, self, aux)
 		}
 	}
 
-	printf(": %dx%d, %d colors",
+	printf(": %dx%d pixels, %d colors, %dx%d chars",
 	       sc->sc_dc->dc_raster.width,
 	       sc->sc_dc->dc_raster.height,
-	       pow(2, sc->sc_dc->dc_raster.depth));
-
-{
-#include "wsdisplay.h"
-printf(": NWSDISPLAY=%d", NWSDISPLAY);
-}
+	       pow(2, sc->sc_dc->dc_raster.depth),
+	       sc->sc_dc->dc_rcons.rc_maxcol,
+	       sc->sc_dc->dc_rcons.rc_maxrow);
 
 	printf("\n");
 
