@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.36 2004/04/23 17:25:26 itojun Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.37 2004/05/20 09:23:33 martin Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.36 2004/04/23 17:25:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.37 2004/05/20 09:23:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,15 @@ int	uplcomdebug = 0;
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
 
+#define	UPLCOM_FLOW_OUT_CTS	0x0001
+#define	UPLCOM_FLOW_OUT_DSR	0x0002
+#define	UPLCOM_FLOW_IN_DSR	0x0004
+#define	UPLCOM_FLOW_IN_DTR	0x0008
+#define	UPLCOM_FLOW_IN_RTS	0x0010
+#define	UPLCOM_FLOW_OUT_RTS	0x0020
+#define	UPLCOM_FLOW_OUT_XON	0x0080
+#define	UPLCOM_FLOW_IN_XON	0x0100
+
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
@@ -97,9 +106,8 @@ struct	uplcom_softc {
 	int			sc_isize;
 
 	usb_cdc_line_state_t	sc_line_state;	/* current line state */
-	u_char			sc_dtr;		/* current DTR state */
-	u_char			sc_rts;		/* current RTS state */
-	u_char			sc_status;
+	int			sc_dtr;		/* current DTR state */
+	int			sc_rts;		/* current RTS state */
 
 	device_ptr_t		sc_subdev;	/* ucom device */
 
@@ -337,7 +345,7 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->sc_dtr = sc->sc_rts = 0;
+	sc->sc_dtr = sc->sc_rts = -1;
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UPLCOMIBUFSIZE;
@@ -439,8 +447,15 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	usb_device_request_t req;
 	int ls;
 
-	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
-		(sc->sc_rts ? UCDC_LINE_RTS : 0);
+	/* make sure we have initialized state for sc_dtr and sc_rts */
+	if (sc->sc_dtr == -1)
+		sc->sc_dtr = 0;
+	if (sc->sc_rts == -1)
+		sc->sc_rts = 0;
+
+	ls = (sc->sc_dtr ? UPLCOM_FLOW_OUT_DSR : 0) |
+		(sc->sc_rts ? UPLCOM_FLOW_OUT_CTS : 0);
+
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
 	USETW(req.wValue, ls);
@@ -477,9 +492,10 @@ uplcom_dtr(struct uplcom_softc *sc, int onoff)
 
 	DPRINTF(("uplcom_dtr: onoff=%d\n", onoff));
 
-	if (sc->sc_dtr == onoff)
+	if (sc->sc_dtr != -1 && !sc->sc_dtr == !onoff)
 		return;
-	sc->sc_dtr = onoff;
+
+	sc->sc_dtr = !!onoff;
 
 	uplcom_set_line_state(sc);
 }
@@ -489,9 +505,10 @@ uplcom_rts(struct uplcom_softc *sc, int onoff)
 {
 	DPRINTF(("uplcom_rts: onoff=%d\n", onoff));
 
-	if (sc->sc_rts == onoff)
+	if (sc->sc_rts != -1 && !sc->sc_rts == !onoff)
 		return;
-	sc->sc_rts = onoff;
+
+	sc->sc_rts = !!onoff;
 
 	uplcom_set_line_state(sc);
 }
@@ -614,6 +631,9 @@ uplcom_param(void *addr, int portno, struct termios *t)
 	if (ISSET(t->c_cflag, CRTSCTS))
 		uplcom_set_crtscts(sc);
 
+	if (sc->sc_rts == -1 || sc->sc_dtr == -1)
+		uplcom_set_line_state(sc);
+
 	if (err) {
 		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
 		return (EIO);
@@ -634,7 +654,6 @@ uplcom_open(void *addr, int portno)
 	DPRINTF(("uplcom_open: sc=%p\n", sc));
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_status = 0; /* clear status bit */
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 		err = usbd_open_pipe_intr(sc->sc_intr_iface, sc->sc_intr_number,
 			USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
