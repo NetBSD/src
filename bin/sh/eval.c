@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.23 1995/05/15 02:47:38 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.24 1995/05/15 03:29:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,8 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.7 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.23 1995/05/15 02:47:38 christos Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.24 1995/05/15 03:29:54 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <signal.h>
