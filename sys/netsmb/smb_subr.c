@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.5 2003/02/15 23:02:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -44,6 +44,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mbuf.h>
+#include <sys/socketvar.h>		/* for M_SONAME */
 
 #include <netsmb/iconv.h>
 
@@ -64,7 +65,7 @@
 smb_unichar smb_unieol = 0;
 
 static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
-MALLOC_DEFINE(M_SMPTEMP, "smbtemp", "Temp netsmb data");
+MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
 
 void
 smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred)
@@ -178,7 +179,7 @@ smb_memfree(void *s)
 }
 
 void *
-smb_zmalloc(unsigned long size, int type, int flags)
+smb_zmalloc(unsigned long size, struct malloc_type *type, int flags)
 {
 
 	return malloc(size, type, flags | M_ZERO);

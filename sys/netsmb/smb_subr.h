@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.5 2003/02/15 23:02:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -152,7 +152,7 @@ void *smb_memdupin(void *umem, int len);
 void smb_strtouni(u_int16_t *dst, const char *src);
 void smb_strfree(char *s);
 void smb_memfree(void *s);
-void *smb_zmalloc(unsigned long size, int type, int flags);
+void *smb_zmalloc(unsigned long size, struct malloc_type *type, int flags);
 
 int  smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN);
 int  smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN);
