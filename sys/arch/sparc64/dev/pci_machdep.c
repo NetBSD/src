@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31 2002/05/16 20:28:33 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32 2002/06/29 02:35:22 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -247,14 +247,23 @@ pci_enumerate_bus(struct pci_softc *sc,
 	struct ofw_pci_register reg;
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag;
-	pcireg_t class;
+	pcireg_t class, csr;
 	int node, b, d, f, ret;
 	char name[30];
+	extern int pci_config_dump;
 
 	if (sc->sc_bridgetag)
 		node = PCITAG_NODE(*sc->sc_bridgetag);
 	else
 		node = pc->rootnode;
+
+	/* Turn on parity for the bus. */
+	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_PARITY_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	if (pci_config_dump) pci_conf_print(pc, tag, NULL);
 
 	for (node = OF_child(node); node != 0 && node != -1;
 	     node = OF_peer(node)) {
@@ -278,6 +287,16 @@ pci_enumerate_bus(struct pci_softc *sc,
 		}
 
 		tag = ofpci_make_tag(pc, node, b, d, f);
+
+		/*
+		 * Turn on parity and fast-back-to-back for the device.
+		 */
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (csr & PCI_STATUS_BACKTOBACK_SUPPORT)
+			csr |= PCI_COMMAND_BACKTOBACK_ENABLE;
+		csr |= PCI_COMMAND_PARITY_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
 		ret = pci_probe_device(sc, tag, match, pap);
 		if (match != NULL && ret != 0)
 			return (ret);
