@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.31 1997/10/12 15:21:24 mycroft Exp $	*/
+/*	$NetBSD: login.c,v 1.31.2.1 1997/11/07 20:34:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.31 1997/10/12 15:21:24 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.31.2.1 1997/11/07 20:34:52 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -485,7 +485,9 @@ main(argc, argv)
 #endif
 
 	if (!quietlog) {
-		(void)printf("%s\n\t%s  %s\n\n",
+		(void)printf("%s  %s\n%s\n\t%s  %s\n\n",
+ 	    "Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.",
+	    "All rights reserved.",
 	    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994",
 		    "The Regents of the University of California. ",
 		    "All rights reserved.");
