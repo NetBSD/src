@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.35 2003/10/13 08:07:22 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.36 2003/11/02 03:31:29 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.35 2003/10/13 08:07:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.36 2003/11/02 03:31:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,6 +406,7 @@ wi_pcmcia_find(psc, pa, cfe)
 		printf(" can't map i/o space\n");
 		goto fail2;
 	}
+	printf("\n");
 	/* Enable the card */
 	pcmcia_function_init(psc->sc_pf, cfe);
 	if (pcmcia_function_enable(psc->sc_pf)) {
@@ -498,6 +499,7 @@ wi_pcmcia_attach(parent, self, aux)
 		goto no_interrupt;
 	}
 
+	printf("%s:", sc->sc_dev.dv_xname);
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->sc_dev.dv_xname);
