@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2002/09/27 20:35:10 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5 2002/10/01 21:36:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -60,9 +60,8 @@ struct pcib_softc {
 	struct sandpoint_isa_chipset sc_chipset;
 };
 
-const struct cfattach pcib_ca = {
-	sizeof(struct pcib_softc), pcibmatch, pcibattach
-};
+CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
+    pcibmatch, pcibattach, NULL, NULL)
 
 void	pcib_callback __P((struct device *));
 int	pcib_print __P((void *, const char *));
