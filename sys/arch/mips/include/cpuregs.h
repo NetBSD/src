@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.43 2001/05/31 02:06:26 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.44 2001/08/15 03:01:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -640,7 +640,7 @@
 #endif
 
 /*
- * CPU processor revision ID
+ * CPU processor revision IDs for company ID == 0 (non mips32/64 chips) */
  */
 #define MIPS_R2000	0x01	/* MIPS R2000 			ISA I	*/
 #define MIPS_R3000	0x02	/* MIPS R3000 			ISA I	*/
@@ -670,8 +670,24 @@
 #define MIPS_TX4900	0x2d	/* Toshiba TX49 family		ISA III */
 #define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
 #define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
+
+/*
+ * CPU processor revision IDs for company ID == 1 (MIPS) */
+ */
 #define MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
+#define MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
+#define MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
+
+/*
+ * CPU processor revision IDs for company ID == 3 (Alchemy) */
+ */
+#define MIPS_AU1000	0x01	/* Alchemy Au1000 		ISA 32  */
+
+/*
+ * CPU processor revision IDs for company ID == 4 (SiByte) */
+ */
+#define MIPS_SB1	0x01	/* SiByte SB1	 		ISA 64  */
 
 /*
  * FPU processor revision ID
