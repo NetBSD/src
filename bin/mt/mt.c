@@ -1,6 +1,8 @@
+/*	$NetBSD: mt.c,v 1.5 1995/03/21 06:57:47 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mt.c	5.6 (Berkeley) 6/6/91";*/
-static char rcsid[] = "$Id: mt.c,v 1.4 1994/04/05 21:13:55 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)mt.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: mt.c,v 1.5 1995/03/21 06:57:47 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -50,120 +55,104 @@ static char rcsid[] = "$Id: mt.c,v 1.4 1994/04/05 21:13:55 mycroft Exp $";
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include <err.h>
-
-static void printreg();
-static void status();
-static void usage();
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
 struct commands {
 	char *c_name;
 	int c_code;
 	int c_ronly;
 } com[] = {
-	{ "weof",	MTWEOF,	 0 },
-	{ "eof",	MTWEOF,	 0 },
-	{ "fsf",	MTFSF,	 1 },
-	{ "bsf",	MTBSF,	 1 },
-	{ "fsr",	MTFSR,	 1 },
-	{ "bsr",	MTBSR,	 1 },
-	{ "rewind",	MTREW,	 1 },
-	{ "offline",	MTOFFL,	 1 },
-	{ "rewoffl",	MTOFFL,	 1 },
-	{ "status",	MTNOP,	 1 },
-	{ "retension",	MTRETEN, 1 },
+	{ "bsf",	MTBSF,	1 },
+	{ "bsr",	MTBSR,	1 },
+	{ "eof",	MTWEOF,	0 },
+	{ "eom",	MTEOM,	1 },
 	{ "erase",	MTERASE, 0 },
-	{ "eom",	MTEOM,	 1 },
-	{ "nbsf",	MTNBSF,	 1 },
-	{ 0 }
+	{ "fsf",	MTFSF,	1 },
+	{ "fsr",	MTFSR,	1 },
+	{ "offline",	MTOFFL,	1 },
+	{ "rewind",	MTREW,	1 },
+	{ "rewoffl",	MTOFFL,	1 },
+	{ "status",	MTNOP,	1 },
+	{ "retension",	MTRETEN, 1 },
+	{ "weof",	MTWEOF,	0 },
+	{ NULL }
 };
 
-int mtfd;
-struct mtop mt_com;
-struct mtget mt_status;
-char *tape = NULL;
+void printreg __P((char *, u_int, char *));
+void status __P((struct mtget *));
+void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	register char *cp;
 	register struct commands *comp;
-	int c;
+	struct mtget mt_status;
+	struct mtop mt_com;
+	int ch, len, mtfd;
+	char *p, *tape;
 
-	while ((c = getopt(argc, argv, "f:t:")) != -1) {
-		switch (c) {
+	if ((tape = getenv("TAPE")) == NULL)
+		tape = DEFTAPE;
+
+	while ((ch = getopt(argc, argv, "f:t:")) != -1)
+		switch (ch) {
 		case 'f':
 		case 't':
 			tape = optarg;
 			break;
+		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
-	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1 || argc > 2) {
+	if (argc < 1 || argc > 2)
 		usage();
-		/* NOTREACHED */
-	}
 
-	cp = argv[0];
-	for (comp = com; comp->c_name != NULL; comp++)
-		if (strncmp(cp, comp->c_name, strlen(cp)) == 0)
+	len = strlen(p = *argv++);
+	for (comp = com;; comp++) {
+		if (comp->c_name == NULL)
+			errx(1, "%s: unknown command", p);
+		if (strncmp(p, comp->c_name, len) == 0)
 			break;
-	if (comp->c_name == NULL) {
-		errx(1, "don't grok \"%s\"", cp);
-		/* NOTREACHED */
 	}
-
-	if (tape == NULL) {
-		if ((tape = getenv("TAPE")) == NULL)
-			tape = DEFTAPE;
-	}
-
-	if ((mtfd = open(tape, comp->c_ronly ? O_RDONLY : O_RDWR)) < 0) {
+	if ((mtfd = open(tape, comp->c_ronly ? O_RDONLY : O_RDWR)) < 0)
 		err(1, "%s", tape);
-		/* NOTREACHED */
-	}
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
-		mt_com.mt_count = (argc == 2 ? atoi(argv[1]) : 1);
-		if (mt_com.mt_count < 0) {
-			errx(1, "negative repeat count");
-			/* NOTREACHED */
+		if (*argv) {
+			mt_com.mt_count = strtol(*argv, &p, 10);
+			if (mt_com.mt_count <= 0 || *p)
+				errx(1, "%s: illegal count", *argv);
 		}
-		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0) {
-			err(2, "%s %s %d failed", 
-				tape, comp->c_name, mt_com.mt_count);
-			/* NOTREACHED */
-		}
+		else
+			mt_com.mt_count = 1;
+		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
+			err(1, "%s: %s", tape, comp->c_name);
 	} else {
-		if (ioctl(mtfd, MTIOCGET, (char *)&mt_status) < 0) {
-			err(2, NULL);
-			/* NOTREACHED */
-		}
+		if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
+			err(1, "ioctl MTIOCGET");
 		status(&mt_status);
 	}
-
-	exit(0);
+	exit (0);
+	/* NOTREACHED */
 }
 
 #ifdef vax
-#include <vaxmba/mtreg.h>
-#include <vaxmba/htreg.h>
+#include <vax/mba/mtreg.h>
+#include <vax/mba/htreg.h>
 
-#include <vaxuba/utreg.h>
-#include <vaxuba/tmreg.h>
+#include <vax/uba/utreg.h>
+#include <vax/uba/tmreg.h>
 #undef b_repcnt		/* argh */
-#include <vaxuba/tsreg.h>
+#include <vax/uba/tsreg.h>
 #endif
 
 #ifdef sun
@@ -201,33 +190,35 @@ struct tape_desc {
 /*
  * Interpret the status buffer returned
  */
-static void
+void
 status(bp)
 	register struct mtget *bp;
 {
 	register struct tape_desc *mt;
 
-	for (mt = tapes; mt->t_type; mt++)
+	for (mt = tapes;; mt++) {
+		if (mt->t_type == 0) {
+			(void)printf("%d: unknown tape drive type\n",
+			    bp->mt_type);
+			return;
+		}
 		if (mt->t_type == bp->mt_type)
 			break;
-	if (mt->t_type == 0) {
-		printf("unknown tape drive type (%d)\n", bp->mt_type);
-		return;
 	}
-	printf("%s tape drive, residual=%d\n", mt->t_name, bp->mt_resid);
+	(void)printf("%s tape drive, residual=%d\n", mt->t_name, bp->mt_resid);
 	printreg("ds", bp->mt_dsreg, mt->t_dsbits);
 	printreg("\ner", bp->mt_erreg, mt->t_erbits);
-	putchar('\n');
+	(void)putchar('\n');
 }
 
 /*
- * Print a register a la the %b format of the kernel's printf
+ * Print a register a la the %b format of the kernel's printf.
  */
-static void
+void
 printreg(s, v, bits)
 	char *s;
+	register u_int v;
 	register char *bits;
-	register unsigned short v;
 {
 	register int i, any = 0;
 	register char c;
@@ -254,9 +245,9 @@ printreg(s, v, bits)
 	}
 }
 
-static void
+void
 usage()
 {
-	fprintf(stderr, "usage: mt [ -f device ] command [ count ]\n");
+	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
 	exit(1);
 }

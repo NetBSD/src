@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 1/14/91
-#	$Id: Makefile,v 1.2 1993/08/01 05:47:16 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1995/03/21 06:57:43 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	mt
 
