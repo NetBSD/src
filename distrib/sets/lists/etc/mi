@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.75 2001/01/15 17:57:44 itojun Exp $
+# $NetBSD: mi,v 1.76 2001/01/18 02:01:53 thorpej Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -116,6 +116,7 @@
 ./etc/rc.d/ppp
 ./etc/rc.d/pwcheck
 ./etc/rc.d/quota
+./etc/rc.d/racoon
 ./etc/rc.d/raidframe
 ./etc/rc.d/rarpd
 ./etc/rc.d/rbootd
