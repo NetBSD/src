@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.7 1996/04/23 14:20:28 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.8 1996/04/25 06:18:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -99,7 +99,7 @@
 #define	SBC_DB_DMA	0x02
 #define	SBC_DB_BREAK	0x04
 
-int	sbc_debug = SBC_DB_INTR | SBC_DB_DMA | SBC_DB_BREAK;
+int	sbc_debug = 0 /* SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 #endif
 
@@ -111,7 +111,6 @@ struct sbc_pdma_handle {
 #define	SBC_DH_BUSY	0x01	/* This DH is in use */
 #define	SBC_DH_OUT	0x02	/* PDMA does data out (write) */
 #define	SBC_DH_XFER	0x04	/* PDMA transfer not completed */
-#define	SBC_DH_START	0x08	/* PDMA transfer not yet underway */
 	u_char	*dh_addr;	/* data buffer */
 	int	dh_len;		/* length of data buffer */
 };
@@ -129,9 +128,6 @@ struct sbc_softc {
 	volatile u_char	*sc_iflag;
 	int		sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
-#ifdef SBC_DEBUG
-	char		*sc_vstate;
-#endif
 };
 
 /*
@@ -467,7 +463,7 @@ sbc_irq_intr(p)
 				    ncr_sc->sc_dev.dv_xname);
 # ifdef DDB
 				if (sbc_debug & SBC_DB_BREAK)
-					Debugger();	/* XXX */
+					Debugger();
 # endif
 			}
 #endif
@@ -545,7 +541,8 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 	return count - len;
 
 timeout:
-	printf("pdma_out: timeout len=%d count=%d\n", len, count);
+	printf("%s: pdma_out: timeout len=%d count=%d\n",
+	    ncr_sc->sc_dev.dv_xname, len, count);
 	if ((*ncr_sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0) {
 		*ncr_sc->sci_icmd &= ~SCI_ICMD_DATA;
 		--len;
@@ -655,7 +652,8 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 	return count - len;
 
 timeout:
-	printf("pdma_in: timeout len=%d count=%d\n", len, count);
+	printf("%s: pdma_in: timeout len=%d count=%d\n",
+	    ncr_sc->sc_dev.dv_xname, len, count);
 
 	SCI_CLR_INTR(ncr_sc);
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
@@ -703,15 +701,14 @@ sbc_drq_intr(p)
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
 	 */
-	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0 || dh->dh_len == 0) {
+	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0)
+		return;
+	if (dh->dh_len == 0) {
 		dh->dh_flags &= ~SBC_DH_XFER;
 		return;
 	}
 
-	dh->dh_flags &= ~SBC_DH_START;
-
 #ifdef SBC_DEBUG
-	sc->sc_vstate = "got drq interrupt.";
 	if (sbc_debug & SBC_DB_INTR)
 		printf("%s: drq intr, dh_len=0x%x, dh_flags=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_len, dh->dh_flags);
@@ -730,20 +727,21 @@ sbc_drq_intr(p)
 			 - (u_long) sc->sc_drq_addr);
 
 		if ((count < 0) || (count > dh->dh_len)) {
-			printf("%s: count = 0x%x (pending 0x%x)\n",
+			printf("%s: complete=0x%x (pending 0x%x)\n",
 			    ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 			panic("something is wrong");
 		}
+#ifdef SBC_DEBUG
+		if (sbc_debug & SBC_DB_INTR)
+			printf("%s: drq /berr, pending=0x%x, complete=0x%x\n",
+			   ncr_sc->sc_dev.dv_xname, dh->dh_len, count);
+#endif
 
 		dh->dh_addr += count;
 		dh->dh_len -= count;
-		dh->dh_flags &= ~SBC_DH_XFER;
+		if (dh->dh_len == 0)
+			dh->dh_flags &= ~SBC_DH_XFER;
 		mac68k_buserr_addr = 0;
-
-#if 0
-		/* Can we rely on a 5380 disconnect interrupt? */
-		ncr5380_intr(ncr_sc);
-#endif
 		return;
 	}
 
@@ -826,7 +824,8 @@ sbc_drq_intr(p)
 
 					dh->dh_addr += (dcount - count);
 					dh->dh_len -= (dcount - count);
-					dh->dh_flags &= ~SBC_DH_XFER;
+					if (dh->dh_len == 0)
+						dh->dh_flags &= ~SBC_DH_XFER;
 					return;
 				}
 				R4; R4; R4; R4; R4; R4; R4; R4;
@@ -869,11 +868,8 @@ sbc_drq_intr(p)
 	 */
 	nofault = (int *) 0;
 
-	dh->dh_flags &= ~SBC_DH_XFER;
-
-#ifdef SBC_DEBUG
-	sc->sc_vstate = "done in xfer.";
-#endif
+	if (dh->dh_len == 0)
+		dh->dh_flags &= ~SBC_DH_XFER;
 }
 
 void
@@ -888,24 +884,30 @@ sbc_dma_alloc(ncr_sc)
 
 #ifdef	DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
-		panic("sbc_dma_alloc: already have DMA handle");
+		panic("sbc_dma_alloc: already have PDMA handle");
 #endif
 
-	/* Polled transfers shouldn't allocate a DMA handle. */
+	/* Polled transfers shouldn't allocate a PDMA handle. */
 	if (sr->sr_flags & SR_IMMED)
+		return;
+
+	/* XXX - we don't trust PDMA writes yet! */
+	if (xs->flags & SCSI_DATA_OUT)
 		return;
 
 	xlen = ncr_sc->sc_datalen;
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("sbc_dma_alloc: xlen=0x%x\n", xlen);
+		panic("sbc_dma_alloc: len=0x%x\n", xlen);
 
 	/* XXX - should segment these instead */
 	if (xlen > MAX_DMA_LEN) {
-		printf("sbc_dma_alloc: excessive xlen=0x%x\n", xlen);
+		printf("%s: excessive dma len=0x%x\n",
+		    ncr_sc->sc_dev.dv_xname, xlen);
 #ifdef DDB
-		Debugger();
+		if (sbc_debug & SBC_DB_BREAK)
+			Debugger();
 #endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
@@ -967,14 +969,6 @@ sbc_dma_poll(ncr_sc)
 	register int s;
 	register int timo;
 
-#if 0
-	/*
-	 * If we haven't started the transfer yet, DO IT NOW!
-	 */
-	if (dh->dh_flags & SBC_DH_START)
-		sbc_drq_intr(ncr_sc);
-#endif
-
 	timo = 50000;	/* X100 = 5 sec. */
 	for (;;) {
 		if ((dh->dh_flags & SBC_DH_XFER) == 0)
@@ -1011,22 +1005,20 @@ sbc_dma_start(ncr_sc)
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 
 	/*
-	 * Match bus phase, set DMA mode, and assert data bus,
-	 * then start the transfer.
+	 * Match bus phase, set DMA mode, and assert data bus (for
+	 * writing only), then start the transfer.
 	 */
 	if (dh->dh_flags & SBC_DH_OUT) {
 		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
-		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
+		*ncr_sc->sci_icmd = SCI_ICMD_DATA;
 		*ncr_sc->sci_dma_send = 0;
 	} else {
 		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
 		SCI_CLR_INTR(ncr_sc);
-		*ncr_sc->sci_icmd = 0;
-		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
+		*ncr_sc->sci_icmd = 0;
 		*ncr_sc->sci_irecv = 0;
 	}
 
@@ -1034,14 +1026,14 @@ sbc_dma_start(ncr_sc)
 	 * Set the SBC_DH_XFER flag so that sbc_dma_poll() will wait
 	 * even if the SCSI DRQ service routine hasn't been serviced yet.
 	 */
-	dh->dh_flags |= (SBC_DH_XFER | SBC_DH_START);;
+	dh->dh_flags |= SBC_DH_XFER;
 
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
 #ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
-		printf("sbc_dma_start: started, va=0x%lx, xlen=0x%x\n",
-			(long)dh->dh_addr, dh->dh_len);
+		printf("%s: PDMA started, va=%p, len=0x%x\n",
+		    ncr_sc->sc_dev.dv_xname, dh->dh_addr, dh->dh_len);
 #endif
 }
 
@@ -1063,7 +1055,9 @@ sbc_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef SBC_DEBUG
-		printf("sbc_dma_stop: DMA not running\n");
+		if (sbc_debug & SBC_DB_DMA)
+			printf("%s: dma_stop: DMA not running\n",
+			    ncr_sc->sc_dev.dv_xname);
 #endif
 		return;
 	}
@@ -1074,7 +1068,8 @@ sbc_dma_stop(ncr_sc)
 
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_DMA)
-			printf("sbc_dma_stop: ntrans=0x%x\n", ntrans);
+			printf("%s: dma_stop: ntrans=0x%x\n",
+			    ncr_sc->sc_dev.dv_xname, ntrans);
 #endif
 
 		if (ntrans > ncr_sc->sc_datalen)
@@ -1092,7 +1087,10 @@ sbc_dma_stop(ncr_sc)
 	*ncr_sc->sci_mode &= ~SCI_MODE_DMA;
 	*ncr_sc->sci_icmd = 0;
 
-	printf("%s: exit dma_stop, csr=0x%x, bus_csr=0x%x\n",
-	    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
-	    *ncr_sc->sci_bus_csr);
+#ifdef SBC_DEBUG
+	if (sbc_debug & SBC_DB_DMA)
+		printf("%s: exit dma_stop, csr=0x%x, bus_csr=0x%x\n",
+		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
+		    *ncr_sc->sci_bus_csr);
+#endif
 }
