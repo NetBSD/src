@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19 1997/03/21 08:39:40 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.20 1997/03/21 14:30:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -613,6 +613,7 @@ viking_pcache_flush_line(va, pa)
 
 	if (i == 0) {
 		/* In bootstrap; flash-clear entire cache */
+		sta(0x80000000, ASI_DCACHECLR, 0);	/* Unlock */
 		sta(0, ASI_DCACHECLR, 0);
 		return;
 	}
@@ -643,4 +644,5 @@ cypress_pcache_flush_line(va, pa)
 	 */
 
 	/* NOT YET IMPLEMENTED */
+	srmmu_vcache_flush_page(va & ~(NBPG - 1));
 }
