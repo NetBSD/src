@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1999/02/02 15:49:52 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.30 1999/02/04 00:27:07 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 1999/02/02 15:49:52 itohy Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 1999/02/04 00:27:07 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,8 +268,10 @@ cmdloop(top)
 STATIC void
 read_profile(name)
 	char *name;
-	{
+{
 	int fd;
+	int xflag_set = 0;
+	int vflag_set = 0;
 
 	INTOFF;
 	if ((fd = open(name, O_RDONLY)) >= 0)
@@ -277,7 +279,20 @@ read_profile(name)
 	INTON;
 	if (fd < 0)
 		return;
+	/* -q turns off -x and -v just when executing init files */
+	if (qflag)  {
+	    if (xflag)
+		    xflag = 0, xflag_set = 1;
+	    if (vflag)
+		    vflag = 0, vflag_set = 1;
+	}
 	cmdloop(0);
+	if (qflag)  {
+	    if (xflag_set)
+		    xflag = 1;
+	    if (vflag_set)
+		    vflag = 1;
+	}
 	popfile();
 }
 
