@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.14 2004/10/20 13:53:56 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.15 2004/10/20 13:56:53 augustss Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.14 2004/10/20 13:53:56 augustss Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.15 2004/10/20 13:56:53 augustss Exp $");
 #endif
 
 #include <stdio.h>
@@ -306,10 +306,10 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 			if (verbose > 2)
 				printf("kind=%d usage=%x flags=%x\n",
 				       h.kind, h.usage, h.flags);
-			if ((h.flags & HIO_CONST) && h.kind != hid_collection)
-				continue;
 			switch (h.kind) {
 			case hid_input:
+				if (h.flags & HIO_CONST)
+					continue;
 				if (h.usage_minimum != 0 ||
 				    h.usage_maximum != 0) {
 					lo = h.usage_minimum;
