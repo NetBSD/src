@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/08 04:20:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/08 04:25:34 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -31,9 +31,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/newport \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${XSERVERINCDIR}
 
-FILES=			XF86Config
-FILESNAME_XF86Config=	XF86Config.indy
-FILESDIR=		${X11LIBDIR}
+FILES=		XF86Config.indy
+FILESDIR=	${X11LIBDIR}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
