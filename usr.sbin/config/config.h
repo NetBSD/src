@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.53 2001/05/18 07:48:07 minoura Exp $	*/
+/*	$NetBSD: config.h,v 1.54 2001/06/08 12:47:06 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -317,6 +317,8 @@ struct hashtab;
 const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
 const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
 const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
+struct	nvlist *machinesubarches;
+				/* machine subarches, e.g., "sun68k" or "hpc" */
 const char *srcdir;		/* path to source directory (rel. to build) */
 const char *builddir;		/* path to build directory */
 const char *defbuilddir;	/* default build directory */
