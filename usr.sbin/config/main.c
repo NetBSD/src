@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2000/10/02 19:48:34 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2000/10/02 19:57:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,16 @@
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
  */
 
-#ifndef lint
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+#define	COPYRIGHT(x)	__COPYRIGHT(x)
+#else
+#define	COPYRIGHT(x)	static const char copyright[] = x
+#endif
+
+#ifndef lint
+COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not MAKE_BOOTSTRAP */
 #endif /* not lint */
 
 #include <sys/types.h>
