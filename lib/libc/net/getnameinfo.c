@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.13 2000/03/17 06:11:55 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.14 2000/04/24 09:27:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,6 +39,7 @@
  *   modified).
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -49,6 +50,10 @@
 #include <resolv.h>
 #include <string.h>
 #include <stddef.h>
+
+#ifdef __weak_alias
+__weak_alias(getnameinfo,_getnameinfo)
+#endif
 
 #define SUCCESS 0
 #define ANY 0

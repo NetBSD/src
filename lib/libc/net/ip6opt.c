@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.5 2000/01/23 00:09:19 mycroft Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.6 2000/04/24 09:27:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -39,6 +40,15 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(inet6_option_alloc,_inet6_option_alloc)
+__weak_alias(inet6_option_append,_inet6_option_append)
+__weak_alias(inet6_option_find,_inet6_option_find)
+__weak_alias(inet6_option_init,_inet6_option_init)
+__weak_alias(inet6_option_next,_inet6_option_next)
+__weak_alias(inet6_option_space,_inet6_option_space)
+#endif
 
 static int ip6optlen(u_int8_t *opt, u_int8_t *lim);
 static void inet6_insert_padopt(u_char *p, size_t len);
