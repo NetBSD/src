@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.5 2000/08/18 03:19:27 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.6 2000/08/21 00:27:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -127,6 +127,10 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 	
 	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
 
+	/* Don't send IPI to cpu which isn't (yet) running. */
+	if (!(ci->ci_flags & CPUF_RUNNING))
+		return;
+	
 	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
