@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.61 1997/10/15 06:00:11 explorer Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.62 1997/11/21 10:27:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -232,7 +232,10 @@ struct ie_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	int sc_iobase;
+	/* bus handles */
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+
 	caddr_t sc_maddr;
 	u_int sc_msize;
 
@@ -348,8 +351,9 @@ struct cfdriver ie_cd = {
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))
 #define MK_16(base, ptr) ((u_short)(u_long)MK_24(base, ptr))
 
-#define PORT	sc->sc_iobase
 #define MEM 	sc->sc_maddr
+
+#define IE_NPORTS 16 /*  the number of I/O ports */
 
 /*
  * Here are a few useful functions.  We could have done these as macros, but
@@ -396,14 +400,38 @@ ieprobe(parent, match, aux)
 {
 	struct ie_softc *sc = match;
 	struct isa_attach_args *ia = aux;
+	int found;
 
-	if (sl_probe(sc, ia))
-		return 1;
-	if (el_probe(sc, ia))
-		return 1;
-	if (ee16_probe(sc, ia))
-		return 1;
-	return 0;
+	sc->sc_iot = ia->ia_iot;
+
+	/* Disallow wildcarded values. */
+	if (ia->ia_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Map i/o space. */
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, IE_NPORTS, 0, &sc->sc_ioh))
+		return 0;
+
+	if (sl_probe(sc, ia)) {
+		found = 1;
+		goto out;
+	}
+	if (el_probe(sc, ia)) {
+		found = 1;
+		goto out;
+	}
+	if (ee16_probe(sc, ia)) {
+		found = 1;
+		goto out;
+	}
+	found = 0;
+out:
+	if (found)
+		ia->ia_iosize = IE_NPORTS;
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, IE_NPORTS);
+	return (found);
 }
 
 int
@@ -413,13 +441,11 @@ sl_probe(sc, ia)
 {
 	u_char c;
 
-	sc->sc_iobase = ia->ia_iobase;
-
 	/* Need this for part of the probe. */
 	sc->reset_586 = sl_reset_586;
 	sc->chan_attn = sl_chan_attn;
 
-	c = inb(PORT + IEATT_REVISION);
+	c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEATT_REVISION);
 	switch (SL_BOARD(c)) {
 	case SL10_BOARD:
 		sc->hard_type = IE_STARLAN10;
@@ -469,7 +495,6 @@ sl_probe(sc, ia)
 
 	slel_get_address(sc);
 
-	ia->ia_iosize = 16;
 	return 1;
 }
 
@@ -483,8 +508,6 @@ el_probe(sc, ia)
 	u_char c;
 	int i, rval = 0;
 	u_char signature[] = "*3COM*";
-
-	sc->sc_iobase = ia->ia_iobase;
 
 	/* Need this for part of the probe. */
 	sc->reset_586 = el_reset_586;
@@ -505,15 +528,16 @@ el_probe(sc, ia)
 	elink_reset(iot, ioh, sc->sc_dev.dv_parent->dv_unit);
 	elink_idseq(iot, ioh, ELINK_507_POLY);
 	elink_idseq(iot, ioh, ELINK_507_POLY);
-	outb(ELINK_ID_PORT, 0xff);
+	bus_space_write_1(iot, ioh, 0, 0xff);
 
 	/* Check for 3COM signature before proceeding. */
-	outb(PORT + IE507_CTRL, inb(PORT + IE507_CTRL) & 0xfc);	/* XXX */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL,
+		bus_space_read_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL) & 0xfc); /* XXX */
 	for (i = 0; i < 6; i++)
-		if (inb(PORT + i) != signature[i])
+		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, i) != signature[i])
 			goto out;
 
-	c = inb(PORT + IE507_MADDR);
+	c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IE507_MADDR);
 	if (c & 0x20) {
 		printf("%s: can't map 3C507 RAM in high memory\n",
 		    sc->sc_dev.dv_xname);
@@ -521,18 +545,19 @@ el_probe(sc, ia)
 	}
 
 	/* Go to RUN state. */
-	outb(ELINK_ID_PORT, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x0);
 	elink_idseq(iot, ioh, ELINK_507_POLY);
-	outb(ELINK_ID_PORT, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x0);
 
 	/* Set bank 2 for version info and read BCD version byte. */
-	outb(PORT + IE507_CTRL, EL_CTRL_NRST | EL_CTRL_BNK2);
-	i = inb(PORT + 3);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL,
+		EL_CTRL_NRST | EL_CTRL_BNK2);
+	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3);
 
 	sc->hard_type = IE_3C507;
 	sc->hard_vers = 10*(i / 16) + (i % 16) - 1;
 
-	i = inb(PORT + IE507_IRQ) & 0x0f;
+	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IE507_IRQ) & 0x0f;
 
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != i) {
@@ -543,7 +568,8 @@ el_probe(sc, ia)
 	} else
 		ia->ia_irq = i;
 
-	i = ((inb(PORT + IE507_MADDR) & 0x1c) << 12) + 0xc0000;
+	i = ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, IE507_MADDR) & 0x1c) << 12)
+		+ 0xc0000;
 
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != i) {
@@ -554,7 +580,7 @@ el_probe(sc, ia)
 	} else
 		ia->ia_maddr = i;
 
-	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL, EL_CTRL_NORMAL);
 
 	/*
 	 * Divine memory size on-board the card.
@@ -564,7 +590,7 @@ el_probe(sc, ia)
 
 	if (!sc->sc_msize) {
 		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
-		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL, EL_CTRL_NRST);
 		goto out;
 	}
 
@@ -573,16 +599,15 @@ el_probe(sc, ia)
 	else if (ia->ia_msize != sc->sc_msize) {
 		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
-		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL, EL_CTRL_NRST);
 		goto out;
 	}
 
 	slel_get_address(sc);
 
 	/* Clear the interrupt latch just in case. */
-	outb(PORT + IE507_ICTRL, 1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_ICTRL, 1);
 
-	ia->ia_iosize = 16;
 	rval = 1;
 
  out:
@@ -610,17 +635,17 @@ ee16_probe(sc, ia)
 	sc->chan_attn = ee16_chan_attn;
 
 	/* reset any ee16 at the current iobase */
-	outb(ia->ia_iobase + IEE16_ECTRL, IEE16_RESET_ASIC);
-	outb(ia->ia_iobase + IEE16_ECTRL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, IEE16_RESET_ASIC);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, 0);
 	delay(240);
 
 	/* now look for ee16. */
 	board_id = id_var1 = id_var2 = 0;
 	for (i=0; i<4 ; i++) {
-		id_var1 = inb(ia->ia_iobase + IEE16_ID_PORT);
+		id_var1 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ID_PORT);
 		id_var2 = ((id_var1 & 0x03) << 2);
 		board_id |= (( id_var1 >> 4)  << id_var2);
-		}
+	}
 
 	if (board_id != IEE16_ID) {
 #ifdef IEDEBUG
@@ -630,7 +655,6 @@ ee16_probe(sc, ia)
 	}
 
 	/* need sc->sc_iobase for ee16_read_eeprom */
-	sc->sc_iobase = ia->ia_iobase;
 	sc->hard_type = IE_EE16;
 
 	/*
@@ -727,7 +751,7 @@ ee16_probe(sc, ia)
 #endif
 
 	/* need to put the 586 in RESET, and leave it */
-	outb(PORT + IEE16_ECTRL, IEE16_RESET_586);  
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, IEE16_RESET_586);
 
 	/* read the eeprom and checksum it, should == IEE16_ID */
 	for(i = 0; i < 0x40; i++)
@@ -754,13 +778,14 @@ ee16_probe(sc, ia)
 	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
 
 	/* ZZZ This should be checked against eeprom location 6, low byte */
-	outb(PORT + IEE16_MEMDEC, decode & 0xFF);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_MEMDEC, decode & 0xFF);
 	/* ZZZ This should be checked against eeprom location 1, low byte */
-	outb(PORT + IEE16_MCTRL, adjust);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_MCTRL, adjust);
 	/* ZZZ Now if I could find this one I would have it made */
-	outb(PORT + IEE16_MPCTRL, (~decode & 0xFF));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_MPCTRL, (~decode & 0xFF));
 	/* ZZZ I think this is location 6, high byte */
-	outb(PORT + IEE16_MECTRL, edecode); /*XXX disable Exxx */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,+ IEE16_MECTRL,
+		edecode); /*XXX disable Exxx */
 
 	/*
 	 * first prime the stupid bart DRAM controller so that it
@@ -804,18 +829,18 @@ ee16_probe(sc, ia)
 	sc->sc_enaddr[4] = eaddrtemp >> 8;
 
 	/* disable the board interrupts */
-	outb(PORT + IEE16_IRQ, sc->irq_encoded);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_IRQ, sc->irq_encoded);
 
 	/* enable loopback to keep bad packets off the wire */
 	if(sc->hard_type == IE_EE16) {
-		bart_config = inb(PORT + IEE16_CONFIG);
+		bart_config = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_CONFIG);
 		bart_config |= IEE16_BART_LOOPBACK;
 		bart_config |= IEE16_BART_MCS16_TEST; /* inb doesn't get bit! */
-		outb(PORT + IEE16_CONFIG, bart_config);
-		bart_config = inb(PORT + IEE16_CONFIG);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_CONFIG, bart_config);
+		bart_config = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_CONFIG);
 	}
 
-	outb(PORT + IEE16_ECTRL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, 0);
 	delay(100);
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize)) {
 #ifdef IEDEBUG
@@ -824,7 +849,6 @@ ee16_probe(sc, ia)
 		return 0;
 	}
 
-	ia->ia_iosize = 16;	/* the number of I/O ports */
 	return 1;		/* found */
 }
 
@@ -839,6 +863,14 @@ ieattach(parent, self, aux)
 	struct ie_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	sc->sc_iot = ia->ia_iot;
+
+	/* Map i/o space. */
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, IE_NPORTS, 0, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -897,11 +929,11 @@ ieintr(arg)
 
 	/* Clear the interrupt latch on the 3C507. */
 	if (sc->hard_type == IE_3C507)
-		outb(PORT + IE507_ICTRL, 1);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_ICTRL, 1);
 
 	/* disable interrupts on the EE16. */
 	if (sc->hard_type == IE_EE16)
-		outb(PORT + IEE16_IRQ, sc->irq_encoded);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_IRQ, sc->irq_encoded);
 
 	status = sc->scb->ie_status & IE_ST_WHENCE;
 	if (status == 0)
@@ -953,13 +985,14 @@ loop:
 
 	/* Clear the interrupt latch on the 3C507. */
 	if (sc->hard_type == IE_3C507)
-		outb(PORT + IE507_ICTRL, 1);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_ICTRL, 1);
 
 	status = sc->scb->ie_status & IE_ST_WHENCE;
 	if (status == 0) {
 		/* enable interrupts on the EE16. */
 		if (sc->hard_type == IE_EE16)
-		    outb(PORT + IEE16_IRQ, sc->irq_encoded | IEE16_IRQ_ENABLE);
+		    bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_IRQ,
+				sc->irq_encoded | IEE16_IRQ_ENABLE);
 		return 1;
 	}
 
@@ -1711,9 +1744,9 @@ el_reset_586(sc)
 	struct ie_softc *sc;
 {
 
-	outb(PORT + IE507_CTRL, EL_CTRL_RESET);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL, EL_CTRL_RESET);
 	delay(100);
-	outb(PORT + IE507_CTRL, EL_CTRL_NORMAL);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_CTRL, EL_CTRL_NORMAL);
 	delay(100);
 }
 
@@ -1722,7 +1755,7 @@ sl_reset_586(sc)
 	struct ie_softc *sc;
 {
 
-	outb(PORT + IEATT_RESET, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEATT_RESET, 0);
 }
 
 void
@@ -1730,9 +1763,9 @@ ee16_reset_586(sc)
 	struct ie_softc *sc;
 {
 
-	outb(PORT + IEE16_ECTRL, IEE16_RESET_586);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, IEE16_RESET_586);
 	delay(100);
-	outb(PORT + IEE16_ECTRL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, 0);
 	delay(100);
 }
 
@@ -1741,7 +1774,7 @@ el_chan_attn(sc)
 	struct ie_softc *sc;
 {
 
-	outb(PORT + IE507_ATTN, 1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IE507_ATTN, 1);
 }
 
 void
@@ -1749,14 +1782,14 @@ sl_chan_attn(sc)
 	struct ie_softc *sc;
 {
 
-	outb(PORT + IEATT_ATTN, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEATT_ATTN, 0);
 }
 
 void
 ee16_chan_attn(sc)
 	struct ie_softc *sc;
 {
-	outb(PORT + IEE16_ATTN, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ATTN, 0);
 }
 
 u_short
@@ -1766,17 +1799,17 @@ ee16_read_eeprom(sc, location)
 {
 	int ectrl, edata;
 
-	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 	ectrl &= IEE16_ECTRL_MASK;
 	ectrl |= IEE16_ECTRL_EECS;
-	outb(PORT + IEE16_ECTRL, ectrl);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, ectrl);
 
 	ee16_eeprom_outbits(sc, IEE16_EEPROM_READ, IEE16_EEPROM_OPSIZE1);
 	ee16_eeprom_outbits(sc, location, IEE16_EEPROM_ADDR_SIZE);
 	edata = ee16_eeprom_inbits(sc);
-	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 	ectrl &= ~(IEE16_RESET_ASIC | IEE16_ECTRL_EEDI | IEE16_ECTRL_EECS);
-	outb(PORT + IEE16_ECTRL, ectrl);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, ectrl);
 	ee16_eeprom_clock(sc, 1);
 	ee16_eeprom_clock(sc, 0);
 	return edata;
@@ -1789,20 +1822,20 @@ ee16_eeprom_outbits(sc, edata, count)
 {
 	int ectrl, i;
 
-	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 	ectrl &= ~IEE16_RESET_ASIC;
 	for (i = count - 1; i >= 0; i--) {
 		ectrl &= ~IEE16_ECTRL_EEDI;
 		if (edata & (1 << i)) {
 			ectrl |= IEE16_ECTRL_EEDI;
 		}
-		outb(PORT + IEE16_ECTRL, ectrl);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, ectrl);
 		delay(1);	/* eeprom data must be setup for 0.4 uSec */
 		ee16_eeprom_clock(sc, 1);
 		ee16_eeprom_clock(sc, 0);
 	}
 	ectrl &= ~IEE16_ECTRL_EEDI;
-	outb(PORT + IEE16_ECTRL, ectrl);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, ectrl);
 	delay(1);		/* eeprom data must be held for 0.4 uSec */
 }
 
@@ -1812,12 +1845,12 @@ ee16_eeprom_inbits(sc)
 {
 	int ectrl, edata, i;
 
-	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 	ectrl &= ~IEE16_RESET_ASIC;
 	for (edata = 0, i = 0; i < 16; i++) {
 		edata = edata << 1;
 		ee16_eeprom_clock(sc, 1);
-		ectrl = inb(PORT + IEE16_ECTRL);
+		ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 		if (ectrl & IEE16_ECTRL_EEDO) {
 			edata |= 1;
 		}
@@ -1833,12 +1866,12 @@ ee16_eeprom_clock(sc, state)
 {
 	int ectrl;
 
-	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL);
 	ectrl &= ~(IEE16_RESET_ASIC | IEE16_ECTRL_EESK);
 	if (state) {
 		ectrl |= IEE16_ECTRL_EESK;
 	}
-	outb(PORT + IEE16_ECTRL, ectrl);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_ECTRL, ectrl);
 	delay(9);		/* EESK must be stable for 8.38 uSec */
 }
 
@@ -1847,7 +1880,8 @@ ee16_interrupt_enable(sc)
 	struct ie_softc *sc;
 {
 	delay(100);
-	outb(PORT + IEE16_IRQ, sc->irq_encoded | IEE16_IRQ_ENABLE);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_IRQ,
+		sc->irq_encoded | IEE16_IRQ_ENABLE);
 	delay(100);
 }
 void
@@ -1858,7 +1892,7 @@ slel_get_address(sc)
 	int i;
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		addr[i] = inb(PORT + i);
+		addr[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, i);
 }
 
 void
@@ -2191,10 +2225,10 @@ ieinit(sc)
 	u_char	bart_config;
 
 	if(sc->hard_type == IE_EE16) {
-		bart_config = inb(PORT + IEE16_CONFIG);
+		bart_config = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IEE16_CONFIG);
 		bart_config &= ~IEE16_BART_LOOPBACK;
 		bart_config |= IEE16_BART_MCS16_TEST; /* inb doesn't get bit! */
-		outb(PORT + IEE16_CONFIG, bart_config);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, IEE16_CONFIG, bart_config);
 		ee16_interrupt_enable(sc); 
 		ee16_chan_attn(sc);
 		}
