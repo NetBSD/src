@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.23.2.1 1998/05/08 06:01:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.23.2.1 1998/05/08 06:01:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: jobs.c,v 1.23 1997/10/08 20:31:52 christos Exp $");
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <paths.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #ifdef BSD
@@ -572,6 +573,8 @@ forkshell(jp, n, mode)
 {
 	int pid;
 	int pgrp;
+	const char *devnull = _PATH_DEVNULL;
+	/* const */ char *nullerr = "Can't open %s";
 
 	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
 	    mode));
@@ -622,8 +625,8 @@ forkshell(jp, n, mode)
 			if ((jp == NULL || jp->nprocs == 0) &&
 			    ! fd0_redirected_p ()) {
 				close(0);
-				if (open("/dev/null", O_RDONLY) != 0)
-					error("Can't open /dev/null");
+				if (open(devnull, O_RDONLY) != 0)
+					error(nullerr, devnull);
 			}
 		}
 #else
@@ -633,8 +636,8 @@ forkshell(jp, n, mode)
 			if ((jp == NULL || jp->nprocs == 0) &&
 			    ! fd0_redirected_p ()) {
 				close(0);
-				if (open("/dev/null", O_RDONLY) != 0)
-					error("Can't open /dev/null");
+				if (open(devnull, O_RDONLY) != 0)
+					error(nullerr, devnull);
 			}
 		}
 #endif
@@ -810,7 +813,8 @@ dowait(block, job)
 				outfmt(out2, "%d: ", pid);
 #if JOBS
 			if (sig == SIGTSTP && rootshell && iflag)
-				outfmt(out2, "%%%d ", job - jobtab + 1);
+				outfmt(out2, "%%%ld ",
+				    (long)(job - jobtab + 1));
 #endif
 			if (sig < NSIG && sys_siglist[sig])
 				out2str(sys_siglist[sig]);

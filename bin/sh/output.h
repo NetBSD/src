@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.13 1997/04/11 23:08:40 christos Exp $	*/
+/*	$NetBSD: output.h,v 1.13.2.1 1998/05/08 06:01:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,11 +69,15 @@ void emptyoutbuf __P((struct output *));
 void flushall __P((void));
 void flushout __P((struct output *));
 void freestdout __P((void));
-void outfmt __P((struct output *, char *, ...));
-void out1fmt __P((char *, ...));
-void dprintf __P((char *, ...));
-void fmtstr __P((char *, int, char *, ...));
-void doformat __P((struct output *, char *, va_list));
+void outfmt __P((struct output *, const char *, ...))
+    __attribute__((__format__(__printf__,2,3)));
+void out1fmt __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void dprintf __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void fmtstr __P((char *, size_t, const char *, ...))
+    __attribute__((__format__(__printf__,3,4)));
+void doformat __P((struct output *, const char *, va_list));
 int xwrite __P((int, char *, int));
 int xioctl __P((int, unsigned long, char *));
 
