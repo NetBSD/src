@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)isspace.3	5.3 (Berkeley) 7/31/91
-.\"	$Id: isspace.3,v 1.2 1993/07/30 08:37:34 mycroft Exp $
+.\"	$Id: isspace.3,v 1.3 1993/10/15 00:59:02 jtc Exp $
 .\"
 .Dd July 31, 1991
 .Dt ISSPACE 3
@@ -83,9 +83,10 @@ The
 macro returns zero if the character tests false and
 returns non-zero if the character tests true.
 .Sh SEE ALSO
-.Xr isascii 3 ,
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
+.Xr isascii 3 ,
+.Xr isblank 3 ,
 .Xr iscntrl 3 ,
 .Xr isdigit 3 ,
 .Xr isgraph 3 ,
@@ -97,7 +98,7 @@ returns non-zero if the character tests true.
 .Xr toascii 3 ,
 .Xr tolower 3 ,
 .Xr toupper 3 ,
-.Xr stdio 3
+.Xr stdio 3 ,
 .Xr ascii 7
 .Sh STANDARDS
 The
