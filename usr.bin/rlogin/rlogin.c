@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.30 2004/03/31 13:01:00 jmmv Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.31 2004/10/16 02:03:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.30 2004/03/31 13:01:00 jmmv Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.31 2004/10/16 02:03:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ __RCSID("$NetBSD: rlogin.c,v 1.30 2004/03/31 13:01:00 jmmv Exp $");
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include "getport.h"
 
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
@@ -125,7 +127,7 @@ u_int		getescape(char *);
 void		lostpeer(int);
 int		main(int, char **);
 void		mode(int);
-void		msg(char *);
+void		msg(const char *);
 void		oob(int);
 int		reader(sigset_t *);
 void		sendwindow(void);
@@ -156,7 +158,7 @@ main(int argc, char *argv[])
 	char *host, *p, *user, *name, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
-	char *service=NULL;
+	char *service = NULL;
 	struct rlimit rlim;
 #ifdef KERBEROS
 	KTEXT_ST ticket;
@@ -221,17 +223,7 @@ main(int argc, char *argv[])
 			user = optarg;
 			break;
 		case 'p':
-			/*HF*/
-			service = optarg;
-			sp = getservbyname(service, "tcp");
-			if (sp == NULL) {       /* number given, no name */
-				sp = malloc(sizeof(*sp));
-				memset(sp, 0, sizeof(*sp));
-				sp->s_name = service;
-				sp->s_port = atoi(service);
-				if (sp->s_port <= 0 || sp->s_port > IPPORT_ANONMAX)   
-					errx(1,"port must be between 1 and %d", IPPORT_ANONMAX);
-			}
+			sp = getport(service = optarg, "tcp");
 			break;
 #ifdef CRYPT
 #ifdef KERBEROS
@@ -947,7 +939,7 @@ copytochild(int signo)
 }
 
 void
-msg(char *str)
+msg(const char *str)
 {
 
 	(void)fprintf(stderr, "rlogin: %s\r\n", str);
