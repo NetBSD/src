@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.138 2004/04/28 05:57:30 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.139 2004/04/28 05:59:53 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1434,3 +1434,16 @@ sys/sys/bootblock.h				1.27
 
 	Add offset of old i386 mbr bootsel structure.
 	[dsl, ticket #198]
+
+distrib/utils/sysinst/Makefile.inc		1.36
+distrib/utils/sysinst/mbr.c			1.62
+distrib/utils/sysinst/mbr.h			1.19
+distrib/utils/sysinst/arch/i386/md.c		1.101
+
+	Fix mbr bootcode handling to ensure that the bootselect table is always
+	written into the correct place - even if the user decides not to update
+	the mbr code and has the old (pre layout change) code installed.
+	Tell the user that the mbr code needs updating if the new install uses
+	'all the disk' and the old version had the bootselect code (otherwise 
+	you get an empty menu). PR#25146
+	[dsl, ticket #199]
