@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.9 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.10 2003/12/29 04:33:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.9 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.10 2003/12/29 04:33:31 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -51,45 +51,12 @@ static struct pool rf_mcpair_pool;
 #define RF_MCPAIR_INC       16
 #define RF_MCPAIR_INITIAL   24
 
-static int init_mcpair(RF_MCPair_t *);
-static void clean_mcpair(RF_MCPair_t *);
 static void rf_ShutdownMCPair(void *);
-
-
-
-static int 
-init_mcpair(t)
-	RF_MCPair_t *t;
-{
-	int     rc;
-
-	rc = rf_mutex_init(&t->mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
-	rc = rf_cond_init(&t->cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		rf_mutex_destroy(&t->mutex);
-		return (rc);
-	}
-	return (0);
-}
-
-static void 
-clean_mcpair(t)
-	RF_MCPair_t *t;
-{
-	rf_mutex_destroy(&t->mutex);
-	rf_cond_destroy(&t->cond);
-}
 
 static void 
 rf_ShutdownMCPair(ignored)
 	void   *ignored;
 {
-	/* XXX what about the "cleaning" stuff???  Is it even necessary */
 	pool_destroy(&rf_mcpair_pool);
 }
 
@@ -120,12 +87,9 @@ rf_AllocMCPair()
 	RF_MCPair_t *t;
 
 	t = pool_get(&rf_mcpair_pool, PR_WAITOK);
-	if (init_mcpair(t)) {
-		/* some sort of error... */
-		pool_put(&rf_mcpair_pool, t);
-		t = NULL;
-	}
 	if (t) {
+		simple_lock_init(&t->mutex);
+		t->cond = 0;
 		t->flag = 0;
 		t->next = NULL;
 	}
@@ -136,7 +100,6 @@ void
 rf_FreeMCPair(t)
 	RF_MCPair_t *t;
 {
-	clean_mcpair(t);
 	pool_put(&rf_mcpair_pool, t);
 }
 /* the callback function used to wake you up when you use an mcpair to wait for something */
