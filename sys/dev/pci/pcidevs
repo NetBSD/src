@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp $
+$NetBSD: pcidevs,v 1.467 2002/09/06 23:41:56 uwe Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1315,8 +1315,10 @@ product INITIO I935	0x9401	INIC-935 SCSI
 product INITIO I950	0x9500	INIC-950 SCSI
 
 /* Integraphics Systems products */
-product INTEGRAPHICS IGA1680	0x1680	IGA 1680
-product INTEGRAPHICS IGA1682	0x1682	IGA 1682
+product INTEGRAPHICS IGA1680		0x1680	IGA 1680
+product INTEGRAPHICS IGA1682		0x1682	IGA 1682
+product INTEGRAPHICS CYBERPRO2000	0x2000	CyberPro 2000
+product INTEGRAPHICS CYBERPRO2010	0x2010	CyberPro 2010
 
 /* Integrated Micro Solutions products */
 product IMS 8849	0x8849	8849
