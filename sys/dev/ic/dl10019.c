@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.3 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.4 2001/07/05 05:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ dl10019_mii_readreg(struct device *self, int phy, int reg)
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	val = mii_bitbang_readreg(self, &dl10019_mii_bitbang_ops, phy, reg);
+	val = mii_bitbang_readreg(self, ops, phy, reg);
 
 	return (val);
 }
@@ -228,7 +228,7 @@ dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	mii_bitbang_writereg(self, &dl10019_mii_bitbang_ops, phy, reg, val);
+	mii_bitbang_writereg(self, ops, phy, reg, val);
 }
 
 void
