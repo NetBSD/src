@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
+/*	$NetBSD: dirent.h,v 1.13 1997/01/22 07:09:10 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)dirent.h	8.3 (Berkeley) 8/10/94
  */
+
+#ifndef _SYS_DIRENT_H_
+#define _SYS_DIRENT_H_
 
 /*
  * The dirent structure defines the format of directory entries returned by
@@ -78,7 +81,7 @@ struct dirent {
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
 
-#if defined(_KERNEL)
+#ifdef _KERNEL
 /*
  * The DIRENT_SIZE macro gives the minimum record length which will hold
  * the directory entry.  This requires the amount of space in struct dirent
@@ -89,3 +92,5 @@ struct dirent {
     ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
 
 #endif	/* !_KERNEL */
+
+#endif	/* !_SYS_DIRENT_H_ */

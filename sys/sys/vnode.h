@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.39 1996/09/07 12:41:37 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.40 1997/01/22 07:09:34 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
  */
+
+#ifndef _SYS_VNODE_H_
+#define _SYS_VNODE_H_
 
 #include <sys/queue.h>
 
@@ -402,3 +405,5 @@ void 	vrele __P((struct vnode *vp));
 int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));
 #endif /* _KERNEL */
+
+#endif /* !_SYS_VNODE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.15 1997/01/22 07:09:15 mikel Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)filedesc.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_FILEDESC_H_
+#define _SYS_FILEDESC_H_
 
 /*
  * This structure is used for the management of descriptors.  It may be
@@ -106,4 +109,6 @@ void	fdcloseexec __P((struct proc *));
 
 int	closef __P((struct file *, struct proc *));
 int	getsock __P((struct filedesc *, int, struct file **));
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_FILEDESC_H_ */

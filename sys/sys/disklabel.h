@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.42 1997/01/22 07:09:11 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)disklabel.h	8.2 (Berkeley) 7/10/94
  */
+
+#ifndef _SYS_DISKLABEL_H_
+#define _SYS_DISKLABEL_H_
 
 /*
  * Disk description table, see disktab(5)
@@ -335,3 +338,5 @@ struct disklabel *getdiskbyname __P((const char *));
 __END_DECLS
 
 #endif
+
+#endif /* !_SYS_DISKLABEL_H_ */

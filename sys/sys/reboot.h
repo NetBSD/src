@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.11 1996/08/10 00:23:14 mrg Exp $	*/
+/*	$NetBSD: reboot.h,v 1.12 1997/01/22 07:09:23 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)reboot.h	8.2 (Berkeley) 7/10/94
  */
+
+#ifndef _SYS_REBOOT_H_
+#define _SYS_REBOOT_H_
 
 /*
  * Arguments to reboot system call.  These are passed to the boot program,
@@ -100,3 +103,4 @@ __END_DECLS
 
 #endif /* _KERNEL */
 
+#endif /* !_SYS_REBOOT_H_ */

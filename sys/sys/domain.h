@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
+/*	$NetBSD: domain.h,v 1.11 1997/01/22 07:09:11 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)domain.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_DOMAIN_H_
+#define _SYS_DOMAIN_H_
+
 /*
  * Structure per communications domain.
  */
@@ -65,3 +68,5 @@ struct	domain {
 struct	domain *domains;
 void domaininit __P((void));
 #endif
+
+#endif /* !_SYS_DOMAIN_H_ */
