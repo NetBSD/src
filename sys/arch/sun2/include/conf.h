@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2002/02/27 01:19:08 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.4 2002/02/28 03:17:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -36,9 +36,9 @@
  *	@(#)conf.c	8.2 (Berkeley) 11/14/93
  */
 
-#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
-#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
-#define DEV_LEDS	13 	/* minor device 13 is leds */
+#define	DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define	DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define	DEV_LEDS	13 	/* minor device 13 is leds */
 
 #include <sys/conf.h>
 
