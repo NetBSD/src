@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2000/06/01 00:49:57 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 2000/06/01 02:28:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -72,7 +72,7 @@ int booted_partition;	/* defaults to 0 (aka 'a' partition */
 #define MAINBUS	0
 
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -87,7 +87,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	/*
 	 * The device we booted from are looked for during autoconfig.
