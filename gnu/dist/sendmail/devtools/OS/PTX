@@ -1,0 +1,8 @@
+#	$Id: PTX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confMAPDEF', `-DNDBM')
+define(`confOPTIMIZE', `-g')
+define(`confLIBS', `-lsocket -linet -lelf -lnsl -lseq')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')

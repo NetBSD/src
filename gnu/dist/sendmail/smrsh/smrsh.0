@@ -22,30 +22,34 @@ DDEESSCCRRIIPPTTIIOONN
 
        Briefly, _s_m_r_s_h limits programs  to  be  in  the  directory
        /usr/adm/sm.bin,  allowing  the  system  administrator  to
-       choose the set of acceptable commands.   It  also  rejects
-       any  commands with the characters ``', `<', `>', `|', `;',
-       `&', `$', `(', `)', `\r' (carriage return), or `\n'  (new-
-       line)  on the command line to prevent ``end run'' attacks.
+       choose the set of acceptable commands, and  to  the  shell
+       builtin  commands  ``exec'',  ``exit'',  and ``echo''.  It
+       also rejects any commands with the  characters  ``',  `<',
+       `>',  `;',  `$', `(', `)', `\r' (carriage return), or `\n'
+       (newline) on the  command  line  to  prevent  ``end  run''
+       attacks.   It  allows ``||'' and ``&&'' to enable commands
+       like: ``"|exec /usr/local/bin/procmail -f-  /etc/procmail-
+       rcs/user || exit 75"''
 
-       Initial pathnames on programs are stripped, so  forwarding
+       Initial  pathnames on programs are stripped, so forwarding
        to      ``/usr/ucb/vacation'',      ``/usr/bin/vacation'',
-       ``/home/server/mydir/bin/vacation'', and ``vacation''  all
+       ``/home/server/mydir/bin/vacation'',  and ``vacation'' all
        actually forward to ``/usr/adm/sm.bin/vacation''.
 
-       System  administrators  should be conservative about popu-
-       lating /usr/adm/sm.bin.  Reasonable  additions  are  _v_a_c_a_-
-       _t_i_o_n(1),  _p_r_o_c_m_a_i_l(1),  and the like.  No matter how brow-
-       beaten you may be, never include any shell  or  shell-like
-       program  (such  as _p_e_r_l(1)) in the sm.bin directory.  Note
-       that this does not restrict  the  use  of  shell  or  perl
+       System administrators should be conservative  about  popu-
+       lating  /usr/adm/sm.bin.   Reasonable  additions are _v_a_c_a_-
+       _t_i_o_n(1), _p_r_o_c_m_a_i_l(1), and the like.  No matter  how  brow-
+       beaten  you  may be, never include any shell or shell-like
+       program (such as _p_e_r_l(1)) in the sm.bin  directory.   Note
+       that  this  does  not  restrict  the  use of shell or perl
        scripts in the sm.bin directory (using the ``#!'' syntax);
        it simply disallows execution of arbitrary programs.
 
 CCOOMMPPIILLAATTIIOONN
-       Compilation should be trivial on most  systems.   You  may
-       need  to  use -DPATH=\"_p_a_t_h\" to adjust the default search
-       path  (defaults  to   ``/bin:/usr/bin:/usr/ucb'')   and/or
-       -DCMDBIN=\"_d_i_r\"  to  change the default program directory
+       Compilation  should  be  trivial on most systems.  You may
+       need to use -DPATH=\"_p_a_t_h\" to adjust the  default  search
+       path   (defaults   to  ``/bin:/usr/bin:/usr/ucb'')  and/or
+       -DCMDBIN=\"_d_i_r\" to change the default  program  directory
        (defaults to ``/usr/adm/sm.bin'').
 
 FFIILLEESS
@@ -53,10 +57,6 @@ FFIILLEESS
 
 SSEEEE AALLSSOO
        sendmail(8)
-
-
-
-
 
 
 

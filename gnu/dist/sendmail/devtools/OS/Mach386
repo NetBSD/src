@@ -1,0 +1,9 @@
+#	$Id: Mach386,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confCC', `gcc')
+define(`confMAPDEF', `-DNDBM')
+define(`confLIBS', `-ldbm')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confDEPEND_TYPE', `CC-M')

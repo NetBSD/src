@@ -1,0 +1,7 @@
+#	$Id: SCO,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+define(`confENVDEF', `-D_SCO_unix_')
+define(`confLIBS', `-lsocket -lprot_s -lx -lc_s')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
