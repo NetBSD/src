@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.124 1999/04/01 03:58:44 cjs Exp $
+#	$NetBSD: rc,v 1.125 1999/04/13 07:40:53 tron Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -145,6 +145,11 @@ rm -f /var/spool/uucp/STST/*
 # $dmesg_flags is imported from /etc/rc.conf
 if checkyesno dmesg; then
 	dmesg $dmesg_flags > /var/run/dmesg.boot
+fi
+
+if checkyesno wscons && [ -f /etc/rc.wscons ]; then
+	echo 'configuring wscons'
+	/bin/sh /etc/rc.wscons $wscons_flags
 fi
 
 # start the system logger first, so that all messages from daemons
@@ -507,11 +512,6 @@ if checkyesno kerberos; then
 	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
 	echo -n ' kadmind';	kadmind -n >> /var/log/kadmind.log &
 	echo '.'
-fi
-
-if checkyesno wscons && [ -f /etc/rc.wscons ]; then
-	echo 'configuring wscons'
-	/bin/sh /etc/rc.wscons $wscons_flags
 fi
 
 # xdm after wscons - need a virtual screen for X
