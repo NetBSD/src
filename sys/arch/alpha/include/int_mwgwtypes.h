@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.2 2001/04/26 16:25:20 kleink Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.3 2001/09/22 18:03:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,9 +71,9 @@ typedef	__COMPILER_INT64__	  int_fast64_t;
 typedef	__COMPILER_UINT64__	 uint_fast64_t;
 #else
 /* LONGLONG */
-typedef	long long int		  int_fast64_t;
+typedef	long int		  int_fast64_t;
 /* LONGLONG */
-typedef	unsigned long long int	 uint_fast64_t;
+typedef	unsigned long int	 uint_fast64_t;
 #endif
 
 /* 7.18.1.5 Greatest-width integer types */
