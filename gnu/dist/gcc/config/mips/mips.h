@@ -919,6 +919,7 @@ while (0)
 #endif
 
 /* By default, turn on GDB extensions.  */
+
 #define DEFAULT_GDB_EXTENSIONS 1
 
 /* If we are passing smuggling stabs through the MIPS ECOFF object

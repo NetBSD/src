@@ -20,17 +20,22 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Use ELF.  */
+
 #define OBJECT_FORMAT_ELF
 
 /* Until we figure out what MIPS ELF targets normally use, just do
    stabs in ELF.  */
+
+#undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 /* Mostly like ECOFF.  */
+
 #include "mips/ecoff.h"
 
 /* We need to use .esize and .etype instead of .size and .type to
    avoid conflicting with ELF directives.  */
+
 #undef PUT_SDB_SIZE
 #define PUT_SDB_SIZE(a)					\
 do {							\
