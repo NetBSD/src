@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.122 2001/02/14 18:21:42 eeh Exp $	*/
+/*	$NetBSD: param.h,v 1.123 2001/03/19 00:29:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -256,8 +256,8 @@
  * Defaults for Unified Buffer Cache parameters.
  */
 
-#ifndef UBC_WINSIZE
-#define UBC_WINSIZE 8192
+#ifndef UBC_WINSHIFT
+#define UBC_WINSHIFT 13
 #endif
 #ifndef UBC_NWINS
 #define UBC_NWINS 1024
