@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.32 2002/11/02 06:35:30 enami Exp $	*/
+/*	$NetBSD: iostat.c,v 1.33 2003/03/01 05:38:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.32 2002/11/02 06:35:30 enami Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.33 2003/03/01 05:38:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,7 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
+static int	ndrives;
 
 #define ISSET(x, a)	((x) & (a))
 #define SHOW_CPU	1<<0
@@ -333,6 +334,9 @@ disk_statsx(double etime)
 	double atime, kbps;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {
+		if (!cur.dk_select[dn])
+			continue;
+
 		(void)printf("%-8.8s", cur.dk_name[dn]);
 
 					/* average read Kbytes per transfer */
@@ -375,14 +379,8 @@ disk_statsx(double etime)
 
 					/* average write megabytes
 					   (per second) */
-		(void)printf(" %8.2f",
+		(void)printf(" %8.2f\n",
 		    cur.dk_wbytes[dn] / (1024.0 * 1024) / etime);
-		/*
-		 * Our caller prints a newline; we need one for every line
-		 * except the last.
-		 */
-		if (dn < dk_ndrive -1)
-			(void)printf("\n");
 	}
 }
 
@@ -415,6 +413,7 @@ static void
 display(void)
 {
 	double	etime;
+	int newline = 1;
 
 	/* Sum up the elapsed ticks. */
 	etime = cur.cp_etime;
@@ -434,20 +433,23 @@ display(void)
 	if (ISSET(todo, SHOW_STATS_2))
 		disk_stats2(etime);
 
-	if (ISSET(todo, SHOW_STATS_X))
+	if (ISSET(todo, SHOW_STATS_X)) {
 		disk_statsx(etime);
+		newline = 0;
+	}
 
 	if (ISSET(todo, SHOW_CPU))
 		cpustats();
 
-	(void)printf("\n");
+	if (newline)
+		(void)printf("\n");
 	(void)fflush(stdout);
 }
 
 static void
 selectdrives(int argc, char *argv[])
 {
-	int	i, ndrives;
+	int	i;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -458,10 +460,6 @@ selectdrives(int argc, char *argv[])
 	 * The backward compatibility #ifdefs permit the syntax:
 	 *	iostat [ drives ] [ interval [ count ] ]
 	 */
-	if (ISSET(todo, SHOW_STATS_X)) {
-		for (i = 0; i < dk_ndrive; i++)
-			cur.dk_select[i] = 1;
-	}
 
 #define	BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
@@ -469,13 +467,14 @@ selectdrives(int argc, char *argv[])
 		if (isdigit(**argv))
 			break;
 #endif
-		if (!ISSET(todo, SHOW_STATS_X))
-			for (i = 0; i < dk_ndrive; i++) {
-				if (strcmp(cur.dk_name[i], *argv))
-					continue;
-				cur.dk_select[i] = 1;
-				++ndrives;
-			}
+		for (i = 0; i < dk_ndrive; i++) {
+			if (cur.dk_select[i])
+				continue;
+			if (strcmp(cur.dk_name[i], *argv) != 0)
+				continue;
+			cur.dk_select[i] = 1;
+			++ndrives;
+		}
 	}
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
@@ -493,11 +492,13 @@ selectdrives(int argc, char *argv[])
 			interval = 1;
 
 	/* Pick up to 4 drives if none specified. */
-	if (ndrives == 0)
-		for (i = 0; i < dk_ndrive && ndrives < 4; i++) {
+	if (ndrives == 0) {
+		int maxdrives = ISSET(todo, SHOW_STATS_X) ? dk_ndrive : 4;
+		for (i = 0; i < dk_ndrive && ndrives < maxdrives; i++) {
 			if (cur.dk_select[i])
 				continue;
 			cur.dk_select[i] = 1;
 			++ndrives;
 		}
+	}
 }
