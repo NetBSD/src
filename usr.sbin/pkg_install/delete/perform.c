@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23 1999/03/22 06:04:16 abs Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.1 1999/08/22 17:54:55 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23 1999/03/22 06:04:16 abs Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.1 1999/08/22 17:54:55 he Exp $");
 #endif
 #endif
 
@@ -475,6 +475,21 @@ pkg_do(char *pkg)
     (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
     	    pkg);
     if (!fexists(LogDir) || !isdir(LogDir)) {
+	{
+	    /* Check if the given package name matches something
+	     * with 'pkg-[0-9]*'
+	     */
+	    char try[FILENAME_MAX];
+	    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+	    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+				 find_fn, NULL) != 0) {
+		return 0; /* we've just appended some names to the pkgs list,
+			   * they will be processed after this package.
+			   */
+	    }
+	}
+	
+	/* No match */
 	warnx("no such package '%s' installed", pkg);
 	return 1;
     }
@@ -581,6 +596,18 @@ pkg_do(char *pkg)
 	    return (1);
 	
 	require_delete(home, 1);
+    }
+    if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	if (Fake)
+	    printf("Would execute post-de-install script at this point.\n");
+	else {
+	    vsystem("chmod +x %s", DEINSTALL_FNAME);	/* make sure */
+	    if (vsystem("./%s %s POST-DEINSTALL", DEINSTALL_FNAME, pkg)) {
+		warnx("post-deinstall script returned error status");
+		if (!Force)
+		    return 1;
+	    }
+	}
     }
     return 0;
 }
