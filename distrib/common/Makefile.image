@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.20 2003/03/11 07:18:38 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.21 2003/03/25 18:37:59 imp Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -45,7 +45,8 @@ ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 	-rm -rf ${WORKDIR} ${WORKBUILT}
 	mkdir -m 755 ${WORKDIR}
 	${MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW
-	${PARSELIST} -v mode=populate ${LISTS} | sh -e ${POPULATE_DEBUG} \
+	${PARSELIST} -v mode=populate ${LISTS} | \
+	MAKE=${MAKE} sh -e ${POPULATE_DEBUG} \
 	&& touch ${WORKBUILT}
 
 CLEANFILES+=	${WORKBUILT}
