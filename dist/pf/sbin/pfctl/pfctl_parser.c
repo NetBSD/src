@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.3 2004/06/24 11:05:10 hannken Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.4 2004/10/29 19:46:27 dsl Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.194.2.1 2004/05/05 04:00:50 brad Exp $ */
 
 /*
@@ -1169,7 +1169,7 @@ ifa_exists(const char *ifa_name, int group_ok)
 	char			*p, buf[IFNAMSIZ];
 	int			 group;
 
-	group = !isdigit(ifa_name[strlen(ifa_name) - 1]);
+	group = !isdigit((unsigned char)ifa_name[strlen(ifa_name) - 1]);
 	if (group && !group_ok)
 		return (NULL);
 	if (iftab == NULL)
@@ -1182,7 +1182,7 @@ ifa_exists(const char *ifa_name, int group_ok)
 	if (!group) {
 		/* look for clonable and/or dynamic interface */
 		strlcpy(buf, ifa_name, sizeof(buf));
-		for (p = buf + strlen(buf) - 1; p > buf && isdigit(*p); p--)
+		for (p = buf + strlen(buf) - 1; p > buf && isdigit((unsigned char)*p); p--)
 			*p = '\0';
 		for (n = iftab; n != NULL; n = n->next)
 			if (n->af == AF_LINK &&
