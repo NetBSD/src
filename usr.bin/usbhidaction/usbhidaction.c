@@ -1,7 +1,7 @@
-/*      $NetBSD: usbhidaction.c,v 1.6 2001/12/29 23:17:50 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,8 +50,12 @@
 #include <dev/usb/usbhid.h>
 #include <usbhid.h>
 #include <util.h>
+#include <syslog.h>
+#include <signal.h>
 
 int verbose = 0;
+int isdemon = 0;
+int reparse = 1;
 
 struct command {
 	struct command *next;
@@ -68,8 +72,15 @@ struct command *commands;
 #define SIZE 4000
 
 void usage(void);
-void parse_conf(const char *, report_desc_t, int, int);
+struct command *parse_conf(const char *, report_desc_t, int, int);
 void docmd(struct command *, int, const char *, int, char **);
+void freecommands(struct command *);
+
+static void
+sighup(int sig)
+{
+	reparse = 1;
+}
 
 int
 main(int argc, char **argv)
@@ -132,20 +143,22 @@ main(int argc, char **argv)
 	if (repd == NULL)
 		err(1, "hid_get_report_desc() failed\n");
 
-	parse_conf(conf, repd, reportid, ignore);
+	commands = parse_conf(conf, repd, reportid, ignore);
 
 	sz = hid_report_size(repd, hid_input, reportid);
-	hid_dispose_report_desc(repd);
 
 	if (verbose)
 		printf("report size %d\n", sz);
 	if (sz > sizeof buf)
 		errx(1, "report too large");
 
+	(void)signal(SIGHUP, sighup);
+
 	if (demon) {
 		if (daemon(0, 0) < 0)
 			err(1, "daemon()");
 		pidfile(NULL);
+		isdemon = 1;
 	}
 
 	for(;;) {
@@ -172,6 +185,15 @@ main(int argc, char **argv)
 			if (cmd->value == val || cmd->anyvalue)
 				docmd(cmd, val, dev, argc, argv);
 		}
+		if (reparse) {
+			struct command *cmds =
+			    parse_conf(conf, repd, reportid, ignore);
+			if (cmds) {
+				freecommands(commands);
+				commands = cmds;
+			}
+			reparse = 0;
+		}
 	}
 
 	exit(0);
@@ -197,7 +219,7 @@ peek(FILE *f)
 	return c;
 }
 
-void
+struct command *
 parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 {
 	FILE *f;
@@ -205,15 +227,17 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 	int line;
 	char buf[SIZE], name[SIZE], value[SIZE], action[SIZE];
 	char usage[SIZE], coll[SIZE];
-	struct command *cmd;
+	struct command *cmd, *cmds;
 	struct hid_data *d;
 	struct hid_item h;
 	int u, lo, hi, range;
+	
 
 	f = fopen(conf, "r");
 	if (f == NULL)
 		err(1, "%s", conf);
 
+	cmds = NULL;
 	for (line = 1; ; line++) {
 		if (fgets(buf, sizeof buf, f) == NULL)
 			break;
@@ -228,24 +252,42 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		if (p)
 			*p = 0;
 		if (sscanf(buf, "%s %s %[^\n]", name, value, action) != 3) {
-			errx(1, "config file `%s', line %d, syntax error: %s",
-			     conf, line, buf);
+			if (isdemon) {
+				syslog(LOG_WARNING, "config file `%s', line %d"
+				       ", syntax error: %s", conf, line, buf);
+				freecommands(cmds);
+				return (NULL);
+			} else {
+				errx(1, "config file `%s', line %d,"
+				     ", syntax error: %s", conf, line, buf);
+			}
 		}
 
 		cmd = malloc(sizeof *cmd);
 		if (cmd == NULL)
 			err(1, "malloc failed");
-		cmd->next = commands;
-		commands = cmd;
+		cmd->next = cmds;
+		cmds = cmd;
 		cmd->line = line;
 
 		if (strcmp(value, "*") == 0) {
 			cmd->anyvalue = 1;
 		} else {
 			cmd->anyvalue = 0;
-			if (sscanf(value, "%d", &cmd->value) != 1)
-				errx(1, "config file `%s', line %d, "
-				     "bad value: %s\n", conf, line, value);
+			if (sscanf(value, "%d", &cmd->value) != 1) {
+				if (isdemon) {
+					syslog(LOG_WARNING,
+					       "config file `%s', line %d, "
+					       "bad value: %s\n",
+					       conf, line, value);
+					freecommands(cmds);
+					return (NULL);
+				} else {
+					errx(1, "config file `%s', line %d, "
+					     "bad value: %s\n",
+					     conf, line, value);
+				}
+			}
 		}
 
 		coll[0] = 0;
@@ -307,8 +349,15 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				warnx("ignore item '%s'\n", name);
 			continue;
 		}
-		errx(1, "config file `%s', line %d, HID item not found: `%s'\n",
-		     conf, line, name);
+		if (isdemon) {
+			syslog(LOG_WARNING, "config file `%s', line %d, HID "
+			       "item not found: `%s'\n", conf, line, name);
+			freecommands(cmds);
+			return (NULL);
+		} else {
+			errx(1, "config file `%s', line %d, HID item "
+			     "not found: `%s'\n", conf, line, name);
+		}
 
 	foundhid:
 		hid_end_parse(d);
@@ -327,6 +376,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 			       cmd->value, cmd->action);
 	}
 	fclose(f);
+	return (cmds);
 }
 
 void
@@ -372,4 +422,16 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 	r = system(cmdbuf);
 	if (verbose > 1 && r)
 		printf("return code = 0x%x\n", r);
+}
+
+void
+freecommands(struct command *cmd)
+{
+	struct command *next;
+
+	while (cmd) {
+		next = cmd->next;
+		free(cmd);
+		cmd = next;
+	}
 }
