@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.7 1998/10/08 12:57:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1998/10/09 09:22:15 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1998/10/08 12:57:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1998/10/09 09:22:15 agc Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.7 1998/10/08 12:57:59 agc Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "YNOhvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
+static char Options[] = "Ohvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
 
 char	*Prefix		= NULL;
 char	*Comment	= NULL;
@@ -57,14 +57,6 @@ main(int argc, char **argv)
 	switch(ch) {
 	case 'v':
 	    Verbose = TRUE;
-	    break;
-
-	case 'N':
-	    AutoAnswer = NO;
-	    break;
-
-	case 'Y':
-	    AutoAnswer = YES;
 	    break;
 
 	case 'O':

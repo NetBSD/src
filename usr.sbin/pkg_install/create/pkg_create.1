@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.8 1998/06/05 11:22:20 frueauf Exp $
+.\" $NetBSD: pkg_create.1,v 1.9 1998/10/09 09:22:16 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl YNOhv
+.Op Fl Ohv
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
@@ -85,10 +85,6 @@ Fetch long description for package from file
 or, if preceded by
 .Cm - ,
 the argument itself.
-.It Fl Y
-Assume a default answer of `Yes' for any questions asked.
-.It Fl N
-Assume a default answer of `No' for any questions asked.
 .It Fl O
 Go into a `packing list Only' mode.  This is a custom hack for the
 .Em "FreeBSD Ports Collection"
