@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.3 2004/02/12 17:01:31 shige Exp $	*/
+/*	$NetBSD: x1226.c,v 1.4 2004/02/13 20:12:00 shige Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.3 2004/02/12 17:01:31 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.4 2004/02/13 20:12:00 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	addr = X1226_REG_SR;
 	cmdbuf[0] = ((addr >> 8) & 0xff);
 	cmdbuf[1] = (addr & 0xff);
-	cmdbuf[2] = X1226_FLAG_SR_RWEL;
+	cmdbuf[2] = X1226_FLAG_SR_WEL | X1226_FLAG_SR_RWEL;
 	if (iic_exec(sc->sc_tag,
 		I2C_OP_WRITE_WITH_STOP,
 		sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0) != 0) {
