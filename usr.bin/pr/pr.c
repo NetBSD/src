@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.9 2000/10/22 15:06:52 kleink Exp $	*/
+/*	$NetBSD: pr.c,v 1.10 2001/07/22 13:34:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.9 2000/10/22 15:06:52 kleink Exp $");
+__RCSID("$NetBSD: pr.c,v 1.10 2001/07/22 13:34:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: pr.c,v 1.9 2000/10/22 15:06:52 kleink Exp $");
 /*
  * pr:	a printing and pagination filter. If multiple input files
  *	are specified, each is read, formatted, and written to standard
- *	output. By default, input is seperated into 66-line pages, each
+ *	output. By default, input is separated into 66-line pages, each
  *	with a header that includes the page number, date, time and the
  *	files pathname.
  *

@@ -468,7 +468,7 @@ int main (int argc, char **argv, char **envp)
 			  case NUMBER:
 			    strcpy (buf, val);
 			    token = peek_token (&val, (unsigned *)0, cfile);
-			    /* Colon-seperated hex list? */
+			    /* Colon-separated hex list? */
 			    if (token == COLON)
 				goto cshl;
 			    else if (token == DOT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.43 2001/04/25 17:53:08 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.44 2001/07/22 13:34:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1001,7 +1001,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 	SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN);
 
 	/*
-	 * wait for select (merged from seperate function may need
+	 * wait for select (merged from separate function may need
 	 * cleanup)
 	 */
 	WAIT_CIP(regs);

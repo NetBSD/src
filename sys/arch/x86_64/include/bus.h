@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2001/07/19 15:32:21 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2001/07/22 13:34:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 /*
  * XXXfvdl plain copy of x86_64 stuff. The arrival of the real hardware
- * may cause enough changes to this file to be seperate.
+ * may cause enough changes to this file to be separate.
  */
 
 #ifndef _X86_64_BUS_H_

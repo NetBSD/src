@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.32 2001/06/02 18:09:25 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.33 2001/07/22 13:34:12 wiz Exp $	*/
 
 /*
  *
@@ -847,7 +847,7 @@ ReStart:
 }
 
 /*
- * amap_splitref: split a single reference into two seperate references
+ * amap_splitref: split a single reference into two separate references
  *
  * => called from uvm_map's clip routines
  * => origref's map should be locked

@@ -133,7 +133,7 @@ actual date.
 .PP
 The hardware statement records the MAC address of the network
 interface on which the lease will be used.   It is specified as a
-series of hexadecimal octets, seperated by colons.
+series of hexadecimal octets, separated by colons.
 .PP
 .B uid \fIclient-identifier\fB;\fR
 .PP
@@ -144,7 +144,7 @@ send one.   Client identifiers are normally an ARP type (1 for
 ethernet) followed by the MAC address, just like in the \fBhardware\fI
 statement, but this is not required.
 .PP
-The client identifier is recorded as a colon-seperated hexadecimal
+The client identifier is recorded as a colon-separated hexadecimal
 list or as a quoted string.   If it is recorded as a quoted string and
 it contains one or more non-printable characters, those characters are
 represented as octal escapes - a backslash character followed by three
@@ -229,7 +229,7 @@ record.   The name to which the PTR record points will be either the
 The \fBon\fI statement records a list of statements to execute if a
 certain event occurs.   The possible events that can occur for an
 active lease are \fBrelease\fR and \fBexpiry\fR.   More than one event
-can be specified - if so, the events are seperated by '|' characters.
+can be specified - if so, the events are separated by '|' characters.
 .SH THE FAILOVER PEER STATE DECLARATION
 The state of any failover peering arrangements is also recorded in the
 lease file, using the \fBfailover peer\fR statement:

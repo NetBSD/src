@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.17 2001/03/04 01:51:05 assar Exp $	*/
+/*	$NetBSD: telnet.c,v 1.18 2001/07/22 13:34:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.17 2001/03/04 01:51:05 assar Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.18 2001/07/22 13:34:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,7 @@ dontoption(option)
 
 /*
  * Given a buffer returned by tgetent(), this routine will turn
- * the pipe seperated list of names in the buffer into an array
+ * the pipe separated list of names in the buffer into an array
  * of pointers to null terminated names.  We toss out any bad,
  * duplicate, or verbose names (names with spaces).
  */
