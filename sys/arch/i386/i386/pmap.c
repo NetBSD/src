@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1998/01/06 07:16:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 1998/01/09 04:37:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -219,6 +219,11 @@ pmap_bootstrap(virtual_start)
 {
 	vm_offset_t va;
 	pt_entry_t *pte, *junk;
+
+	/*
+	 * set the VM page size.
+	 */
+	vm_set_page_size();
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
