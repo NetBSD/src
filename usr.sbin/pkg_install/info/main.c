@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.4.2.3 1998/08/29 03:35:56 mellon Exp $	*/
+/*	$NetBSD: main.c,v 1.4.2.4 1998/11/06 20:41:06 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.4.2.3 1998/08/29 03:35:56 mellon Exp $");
+__RCSID("$NetBSD: main.c,v 1.4.2.4 1998/11/06 20:41:06 cgd Exp $");
 #endif
 #endif
 
@@ -34,16 +34,25 @@ __RCSID("$NetBSD: main.c,v 1.4.2.3 1998/08/29 03:35:56 mellon Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "acDde:fIikLl:mpqRrvh";
+static char Options[] = "aBbcDde:fIikLl:mpqRrvh";
 
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
 Boolean Quiet		= FALSE;
 char *InfoPrefix	= "";
 char PlayPen[FILENAME_MAX];
+size_t PlayPenSize	= sizeof(PlayPen);
 char *CheckPkg		= NULL;
 
-static void usage __P((void));
+static void
+usage(void)
+{
+    fprintf(stderr, "%s\n%s\n%s\n",
+	"usage: pkg_info [-BbcDdfIikLmpqRrvh] [-e package] [-l prefix]",
+	"                pkg-name [pkg-name ...]",
+	"       pkg_info -a [flags]");
+    exit(1);
+}
 
 int
 main(int argc, char **argv)
@@ -57,6 +66,14 @@ main(int argc, char **argv)
 	case 'a':
 	    AllInstalled = TRUE;
 	    break;
+
+	    case 'B':
+		Flags |= SHOW_BUILD_INFO;
+		break;
+
+	    case 'b':
+		Flags |= SHOW_BUILD_VERSION;
+		break;
 
 	case 'c':
 	    Flags |= SHOW_COMMENT;
@@ -122,7 +139,8 @@ main(int argc, char **argv)
 	    Verbose = TRUE;
 	    /* Reasonable definition of 'everything' */
 	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
-		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
+		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
+		SHOW_REQBY;
 	    break;
 
 	case 'h':
@@ -154,14 +172,4 @@ main(int argc, char **argv)
 	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
     return pkg_perform(start);
-}
-
-static void
-usage()
-{
-    fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
-	"                pkg-name [pkg-name ...]",
-	"       pkg_info -a [flags]");
-    exit(1);
 }
