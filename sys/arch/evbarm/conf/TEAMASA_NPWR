@@ -1,11 +1,11 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.1 2002/02/07 21:34:23 thorpej Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.2 2002/02/08 01:41:48 briggs Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
 #
 
 include	"arch/evbarm/conf/std.iq80310"
-options 	TEAMASA_NPWR	# Enable Npwr support
+options 	IOP310_TEAMASA_NPWR	# Enable Npwr support
 
 # estimated number of users
 
