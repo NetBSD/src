@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.3.2.3 2002/01/09 02:58:33 nathanw Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.3.2.4 2002/05/08 19:46:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.2.3 2002/01/09 02:58:33 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.2.4 2002/05/08 19:46:51 nathanw Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -361,7 +361,9 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		notesize = sizeof(nhdr) + elfround(namesize) +
 		    elfround(sizeof(intreg));
 		if (offset) {
+			PHOLD(l);
 			error = process_read_regs(l, &intreg);
+			PRELE(l);
 			if (error)
 				return (error);
 
@@ -382,7 +384,9 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		notesize = sizeof(nhdr) + elfround(namesize) +
 		    elfround(sizeof(freg));
 		if (offset) {
+			PHOLD(l);
 			error = process_read_fpregs(l, &freg);
+			PRELE(l);
 			if (error)
 				return (error);
 
