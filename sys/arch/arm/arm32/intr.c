@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2001/10/27 16:34:12 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,9 +49,17 @@
 
 #include <net/netisr.h>
 
+#include <machine/conf.h>
+
+#ifndef NPLCOM
+#define NPLCOM 0
+#endif
+
 u_int soft_interrupts = 0;
 
 extern int current_spl_level;
+
+extern unsigned spl_mask;
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 #ifdef IRQSTATS
@@ -69,6 +77,10 @@ extern u_int sintrcnt[];
 #if NCOM > 0
 extern void comsoft	__P((void));
 #endif	/* NCOM > 0 */
+
+#if NPLCOM > 0
+extern void plcomsoft	__P((void));
+#endif	/* NPLCOM > 0 */
 
 /* Eventually these will become macros */
 
@@ -165,6 +177,9 @@ dosoftints()
 #if NCOM > 0
 		comsoft();
 #endif	/* NCOM > 0 */
+#if NPLCOM > 0
+		plcomsoft();
+#endif	/* NPLCOM > 0 */
 		(void)splx(s);
 	}
 }
