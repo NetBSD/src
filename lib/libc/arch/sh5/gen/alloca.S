@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.1 2002/07/05 13:31:30 scw Exp $	*/
+/*	$NetBSD: alloca.S,v 1.2 2002/09/06 15:31:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 
 ENTRY_NOPROFILE(alloca)
 	ptabs/l	r18, tr0
+	addi	r2, 15, r2
 	andi	r2, -16, r2
 	sub	r15, r2, r15
 	or	r15, r63, r2
