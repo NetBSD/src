@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2000/06/09 05:41:57 soda Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2000/12/24 09:25:24 ur Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -69,10 +69,6 @@ struct cfattach aclock_isa_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
-struct cfattach aclock_pica_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
-
 struct cfattach aclock_algor_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
@@ -93,23 +89,8 @@ clockmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
-
 	/* See how many clocks this system has */	
 	switch (cputype) {
-
-	case ACER_PICA_61:
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-		/* make sure that we're looking for this type of device. */
-		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
-			return (0);
-
-		break;
-
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
 	case ALGOR_P4032:
@@ -145,20 +126,9 @@ clockattach(parent, self, aux)
 	mcclock_attach(parent, self, aux);
 
 	switch (cputype) {
-
-	case ACER_PICA_61:
 	case ALGOR_P4032:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
-		break;
-
-	case MAGNUM:
-		BUS_INTR_ESTABLISH((struct confargs *)aux,
-			(intr_handler_t)clockintr, self);
 		break;
 
 	case DESKSTATION_RPC44:

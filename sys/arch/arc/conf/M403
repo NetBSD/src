@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.10 2000/09/24 15:59:28 jdolecek Exp $
+#	$NetBSD: M403,v 1.11 2000/12/24 09:25:25 ur Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -116,27 +116,27 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-#### Pica bus devices
+#### Jazz-Internal bus devices
 
-pica*		at mainbus0	# ACER Pica systems local bus.
-aclock0 	at pica?
-#pc0		at pica?
-#opms0		at pica?
-vga0		at pica?	# Jazz localbus VGA
-pckbc0		at pica?	# PC keyboard controller
+jazzio*		at mainbus0	# Jazz-Internal bus.
+aclock0 	at jazzio?
+#pc0		at jazzio?
+#opms0		at jazzio?
+vga0		at jazzio?	# Jazz localbus VGA
+pckbc0		at jazzio?	# PC keyboard controller
 options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
-com0		at pica?
-com1		at pica?
-lpt0		at pica?
-sn0		at pica?
+com0		at jazzio?
+com1		at jazzio?
+lpt0		at jazzio?
+sn0		at jazzio?
 
-fdc0		at pica?
+fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-asc0		at pica?
+asc0		at jazzio?
 scsibus* 	at asc?
 
-#siop0		at pica?
+#siop0		at jazzio?
 #scsibus* 	at siop?
 
 #### ISA bus devices
