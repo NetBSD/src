@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.42 2001/04/22 23:19:27 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.43 2001/04/24 20:11:53 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -102,6 +102,11 @@
  * The kernel pmap is a special case; it gets statically-allocated
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
+struct pmap_asn_info {
+	unsigned int		pma_asn;	/* address space number */
+	unsigned long		pma_asngen;	/* ASN generation number */
+};
+
 struct pmap {
 	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
@@ -110,19 +115,26 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_nlev2;	/* level 2 pt page count */
 	long			pm_nlev3;	/* level 3 pt page count */
-	unsigned int		*pm_asn;	/* address space number */
-	unsigned long		*pm_asngen;	/* ASN generation number */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
+	struct pmap_asn_info	pm_asni[1];	/* ASN information */
+			/*	variable length		*/
 };
-
 typedef struct pmap	*pmap_t;
+
+/*
+ * Compute the sizeo of a pmap structure.  Subtract one because one
+ * ASN info structure is already included in the pmap structure itself.
+ */
+#define	PMAP_SIZEOF(x)							\
+	(ALIGN(sizeof(struct pmap) +					\
+	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
 
-extern struct pmap	kernel_pmap_store;
+extern u_long		kernel_pmap_store[];
 
-#define pmap_kernel()	(&kernel_pmap_store)
+#define pmap_kernel()	((pmap_t) (&kernel_pmap_store[0]))
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
