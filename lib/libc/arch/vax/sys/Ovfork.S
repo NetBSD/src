@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: Ovfork.S,v 1.3 1998/12/02 19:29:57 thorpej Exp $"
+	.asciz "$NetBSD: Ovfork.S,v 1.3.2.1 2000/02/07 19:48:40 he Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -70,6 +70,14 @@ here:
 	jmp	(r2)
 
 err:
+#ifdef _REENTRANT
+	pushr	$0x5
+	calls	$0,___errno
+	movl	(sp)+,(r0)
+	mnegl	$1,r0
+	rsb
+#else
 	movl	r0,_errno
 	mnegl	$1,r0
 	jmp	(r2)
+#endif
