@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.51 1995/09/26 19:31:15 thorpej Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.52 1995/09/26 22:56:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1445,7 +1445,7 @@ aha_bus_speed_check(aha, speed)
 		 * first 54 bytes, because that's all the board copies during
 		 * WRITE_FIFO and READ_FIFO.
 		 */
-		if (memcmp(aha_test_string, aha_scratch_buf, 54))
+		if (bcmp(aha_test_string, aha_scratch_buf, 54))
 			return 0; /* failed test */
 	}
 
