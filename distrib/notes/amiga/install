@@ -11,8 +11,9 @@ installed on your hard disk.  If you wish to stop the installation,
 you may hit Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 
->>>	transfer installation file system to the swap partition.
->>>	Does this go here, or in the hard disk prep section?
+	Transfer the install miniroot filesystem onto the hard disk
+	partition used by NetBSD for swapping, as described in the
+	"Preparing your System for NetBSD Installation" section above.
 
 >>>	Getting loadbsd, ixemul.library, and netbsd onto AmigaDOS
 >>>	partition.
@@ -25,22 +26,24 @@ begin again from scratch.
 	your system as the kernel configures the hardware.  Note which
 	hard disk device(s) are configured (sd0, sd1, etc).  Then
 	you will be prompted for a root device.  At this time type
-	'sd0*'.
->>>	Need to document what device number to actually use.
+	'sd0*', where '0' is the device which contains the swap
+	partition you created during the hard disk preparation.
 
 	The system should continue to boot.  For now ignore WARNING:
-	messages about bad dates in clocks and swap space.  Eventually
->>>	                                       ^^^^^^^^^^???
-	you will be asked to enter the pathname of the shell, just
-	hit return.  After a short while you should see a welcome
-	message and a prompt, asking if you wish to proceed with the
-	installation.
+	messages about bad dates in clocks.  Eventually you will be
+	asked to enter the pathname of the shell, just hit return.
+	After a short while you should see a welcome message and a
+	prompt, asking if you wish to proceed with the installation.
 
 	If you wish to proceed, enter "y" and then return.
 
 	If you have configured your hard drive[s] correctly it
 	should find the drive and partition that you selected to
-	use as your root.
+	use as your root.  You will be prompted for which device
+	you want to use for your root.  If you have multiple disks
+	present with root partitions defined, you will need to be
+	sure you enter the device name of the correct partition you
+	want to install NetBSD on.
 
 	YOU ARE NOW AT THE POINT OF NO RETURN.  If you confirm that
 	you want to install NetBSD, your hard drive will be modified,
