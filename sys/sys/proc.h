@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.175 2003/11/04 16:19:52 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.176 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -151,6 +151,7 @@ struct emul {
  * is running.
  *
  * Fields marked 'p:' are protected by the process's own p_lock.
+ * Fields marked 'l:' are protected by the proclist_lock
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
@@ -176,18 +177,17 @@ struct proc {
 
 	pid_t		p_pid;		/* Process identifier. */
 	SLIST_ENTRY(proc) p_dead;	/* Processes waiting for reaper */
-	LIST_ENTRY(proc) p_pglist;	/* List of processes in pgrp. */
-	struct proc 	*p_pptr;	/* Pointer to parent process. */
-	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
-	LIST_HEAD(, proc) p_children;	/* Pointer to list of children. */
+	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
+	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
+	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
+	LIST_HEAD(, proc) p_children;	/* l: Pointer to list of children. */
 
 	struct simplelock p_lock;	/* Lock on proc state (p:) */
 
+	/* XXX dsl: locking of LWP info is suspect in schedcpu and kpsignal2 */
 	LIST_HEAD(, lwp) p_lwps;	/* p: Pointer to list of LWPs. */
 
 	LIST_HEAD(, ras) p_raslist;	/* p: Pointer to RAS queue */
-	u_int		p_nu;		/* unused: was number of RASs */
-	struct simplelock p_nu2;	/* unused: was Lock for RAS queue */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
@@ -196,6 +196,8 @@ struct proc {
 	int 		p_nrlwps;	/* p: Number of running LWPs */
 	int 		p_nzlwps;	/* p: Number of zombie LWPs */
 	int 		p_nlwpid;	/* p: Next LWP ID */
+
+	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
 
 	struct sadata 	*p_sa;		/* Scheduler activation information */
 
@@ -417,8 +419,17 @@ extern struct pool 	pstats_pool;	/* memory pool for pstats */
 extern struct pool	rusage_pool;	/* Memory pool for rusages */
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
-struct proc *pfind(pid_t);		/* Find process by id */
-struct pgrp *pgfind(pid_t);		/* Find process group by id */
+struct proc *p_find(pid_t, uint);	/* Find process by id */
+struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
+/* Flags values for p_find() and pg_find(). */
+#define PFIND_ZOMBIE		1	/* look for zombies as well */
+#define PFIND_LOCKED		2	/* proclist locked on entry */
+#define PFIND_UNLOCK_FAIL	4	/* unlock proclist on failure */
+#define PFIND_UNLOCK_OK		8	/* unlock proclist on success */
+#define PFIND_UNLOCK		(PFIND_UNLOCK_OK | PFIND_UNLOCK_FAIL)
+/* For source compatibility. but UNLOCK_OK gives a stale answer... */
+#define pfind(pid) p_find((pid), PFIND_UNLOCK)
+#define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
 int	chgproccnt(uid_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.174 2003/09/15 00:33:35 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.175 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.174 2003/09/15 00:33:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.175 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -819,6 +819,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
+		p->p_pptr->p_nstopchild++;
 		p->p_stat = SSTOP;
 		l->l_stat = LSSTOP;
 		p->p_nrlwps--;

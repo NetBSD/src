@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.112 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.113 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.112 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.113 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -200,7 +200,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc	*p1, *p2;
+	struct proc	*p1, *p2, *parent;
 	uid_t		uid;
 	struct lwp	*l2;
 	int		count, s;
@@ -337,12 +337,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_flag |= P_CONTROLT;
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
-	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
+	parent = (flags & FORK_NOWAIT) ? initproc : p1;
+	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
 	s = proclist_lock_write();
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
+	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	proclist_unlock_write(s);
 
 #ifdef KTRACE
@@ -424,6 +425,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_acflag = AFORK;
 	p2->p_nrlwps = 1;
 	if (p1->p_flag & P_STOPFORK) {
+		p1->p_nstopchild++;
 		p2->p_stat = SSTOP;
 		l2->l_stat = LSSTOP;
 	} else {

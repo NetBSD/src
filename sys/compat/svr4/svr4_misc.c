@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.106 2003/06/29 22:29:47 fvdl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.107 2003/11/12 21:07:37 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.106 2003/06/29 22:29:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.107 2003/11/12 21:07:37 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
     struct svr4_statvfs *));
 static void bsd_statfs_to_svr4_statvfs64 __P((const struct statfs *,
     struct svr4_statvfs64 *));
-static struct proc *svr4_pfind __P((pid_t pid));
+#define svr4_pfind(pid) p_find((pid), PFIND_UNLOCK | PFIND_ZOMBIE)
 
 static int svr4_mknod __P((struct lwp *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t));
@@ -943,29 +943,6 @@ svr4_sys_ulimit(l, v, retval)
 	default:
 		return EINVAL;
 	}
-}
-
-
-static struct proc *
-svr4_pfind(pid)
-	pid_t pid;
-{
-	struct proc *p = NULL;
-
-	proclist_lock_read();
-
-	/* look in the live processes */
-	if ((p = pfind(pid)) != NULL)
-		goto out;
-
-	/* look in the zombies */
-	for (p = zombproc.lh_first; p != 0; p = p->p_list.le_next)
-		if (p->p_pid == pid)
-			goto out;
-
- out:
-	proclist_unlock_read();
-	return p;
 }
 
 
