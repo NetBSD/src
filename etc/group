@@ -6,7 +6,6 @@ tty:*:4:root
 operator:*:5:root
 mail:*:6:
 bin:*:7:
-news:*:8:
 wsrc:*:9:
 maildrop:*:11:
 postfix:*:12:
