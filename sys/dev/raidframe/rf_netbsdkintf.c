@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.5 2000/10/17 20:11:47 tv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.6 2000/10/18 02:45:41 tv Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1059,7 +1059,7 @@ raidioctl(dev, cmd, data, flag, p)
 			ci_label.row = row;
 			for(column=0;column<raidPtr->numCol;column++) {
 				diskPtr = &raidPtr->Disks[row][column];
-				if (diskPtr->status != rf_ds_failed) {
+				if (!RF_DEAD_DISK(diskPtr->status)) {
 					ci_label.partitionSize = diskPtr->partitionSize;
 					ci_label.column = column;
 					raidwrite_component_label( 
@@ -2167,6 +2167,12 @@ raidread_component_label(dev, b_vp, clabel)
 	/* XXX should probably ensure that we don't try to do this if
 	   someone has changed rf_protected_sectors. */ 
 
+	if (b_vp == NULL) {
+		/* For whatever reason, this component is not valid.
+		   Don't try to read a component label from it. */
+		return(EINVAL);
+	}
+
 	/* get a block of the appropriate size... */
 	bp = geteblk((int)RF_COMPONENT_INFO_SIZE);
 	bp->b_dev = dev;
@@ -2244,7 +2250,9 @@ rf_markalldirty(raidPtr)
 	raidPtr->mod_counter++;
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
-			if (raidPtr->Disks[r][c].status != rf_ds_failed) {
+			/* we don't want to touch (at all) a disk that has
+			   failed */
+			if (!RF_DEAD_DISK(raidPtr->Disks[r][c].status)) {
 				raidread_component_label(
 					raidPtr->Disks[r][c].dev,
 					raidPtr->raid_cinfo[r][c].ci_vp,
