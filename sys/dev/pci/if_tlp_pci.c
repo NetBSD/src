@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39.2.2 2000/07/15 19:47:05 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.3 2000/07/15 22:48:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ tlp_pci_attach(parent, self, aux)
 			return;
 		}
 		if (reg != 0) {
-			printf(": waking up from power state D%d\n%s: ",
+			printf(": waking up from power state D%d\n%s",
 			    reg, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
