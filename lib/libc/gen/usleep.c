@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.7.2.1 1995/10/20 17:33:23 pk Exp $	*/
+/*	$NetBSD: usleep.c,v 1.7.2.2 1995/10/26 22:05:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.7.2.1 1995/10/20 17:33:23 pk Exp $";
+static char rcsid[] = "$NetBSD: usleep.c,v 1.7.2.2 1995/10/26 22:05:52 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,20 +98,20 @@ usleep(useconds)
 	ringring = 0;
  	(void) sigsuspend(&set);
 
-	if (ringring) {
-		/* Our alarm went off; timer is not currently running */
-		sigaction(SIGALRM, &oact, NULL);
-		sigprocmask(SIG_SETMASK, &oset, NULL);
-		(void) setitimer(ITIMER_REAL, &oitv, &itv);
-	} else {
+	if (!ringring) {
+		struct itimerval nulltv;
 		/*
 		 * Interrupted by other signal; allow for pending 
-		 * SIGALRM to be processed before resetting handler.
+		 * SIGALRM to be processed before resetting handler,
+		 * after first turning off the timer.
 		 */
-		(void) setitimer(ITIMER_REAL, &oitv, &itv);
-		sigprocmask(SIG_SETMASK, &oset, NULL);
-		sigaction(SIGALRM, &oact, NULL);
+		timerclear(&nulltv.it_interval);
+		timerclear(&nulltv.it_value);
+		(void) setitimer(ITIMER_REAL, &nulltv, NULL);
 	}
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigaction(SIGALRM, &oact, NULL);
+	(void) setitimer(ITIMER_REAL, &oitv, NULL);
 }
 
 static void
