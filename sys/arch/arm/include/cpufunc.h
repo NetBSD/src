@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.30 2004/01/26 15:54:16 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.31 2004/08/07 11:47:58 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -442,7 +442,7 @@ __set_cpsr_c(u_int bic, u_int eor)
 		"eor	 %1, %1, %3\n"	/* XOR bits */
 		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
 	: "=&r" (ret), "=&r" (tmp)
-	: "r" (bic), "r" (eor));
+	: "r" (bic), "r" (eor) : "memory");
 
 	return ret;
 }
