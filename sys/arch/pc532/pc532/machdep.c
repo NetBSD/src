@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144.2.3 2004/09/18 14:38:35 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144.2.4 2004/09/21 13:19:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144.2.3 2004/09/18 14:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144.2.4 2004/09/21 13:19:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1054,8 +1054,8 @@ init532()
  * Any takers for Sinix, Genix, SVR2/32000 or Minix?
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return ENOEXEC;

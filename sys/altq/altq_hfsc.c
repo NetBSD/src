@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.7.2.3 2004/09/18 14:30:29 skrll Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.7.2.4 2004/09/21 13:11:19 skrll Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.7.2.3 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.7.2.4 2004/09/21 13:11:19 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -133,9 +133,9 @@ static u_int64_t rtsc_x2y __P((struct runtime_sc *, u_int64_t));
 static void rtsc_min __P((struct runtime_sc *, struct internal_sc *,
 			  u_int64_t, u_int64_t));
 
-int hfscopen __P((dev_t, int, int, struct proc *));
-int hfscclose __P((dev_t, int, int, struct proc *));
-int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
+int hfscopen __P((dev_t, int, int, struct lwp *));
+int hfscclose __P((dev_t, int, int, struct lwp *));
+int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
 static int hfsccmd_if_attach __P((struct hfsc_attach *));
 static int hfsccmd_if_detach __P((struct hfsc_interface *));
 static int hfsccmd_add_class __P((struct hfsc_add_class *));
@@ -1400,10 +1400,10 @@ rtsc_min(rtsc, isc, x, y)
  * hfsc device interface
  */
 int
-hfscopen(dev, flag, fmt, p)
+hfscopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1418,10 +1418,10 @@ hfscopen(dev, flag, fmt, p)
 }
 
 int
-hfscclose(dev, flag, fmt, p)
+hfscclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct hfsc_if *hif;
 	int err, error = 0;
@@ -1442,15 +1442,16 @@ hfscclose(dev, flag, fmt, p)
 }
 
 int
-hfscioctl(dev, cmd, addr, flag, p)
+hfscioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct hfsc_if *hif;
 	struct hfsc_interface *ifacep;
+	struct proc* p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */

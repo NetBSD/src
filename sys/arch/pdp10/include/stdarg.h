@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.2.4.3 2004/09/18 14:38:42 skrll Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.2.4.4 2004/09/21 13:20:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

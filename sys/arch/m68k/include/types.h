@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19.2.2 2004/09/18 14:36:17 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.19.2.3 2004/09/21 13:17:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.4.12.2 2004/09/18 14:32:24 skrll Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.4.12.3 2004/09/21 13:13:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.

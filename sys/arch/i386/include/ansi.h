@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.16.2.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: ansi.h,v 1.16.2.3 2004/09/21 13:16:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

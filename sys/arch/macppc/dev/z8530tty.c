@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.18.2.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.18.2.3 2004/09/21 13:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.18.2.2 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.18.2.3 2004/09/21 13:18:19 skrll Exp $");
 
 #include "opt_kgdb.h"
 

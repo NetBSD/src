@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.7.16.3 2004/09/18 14:34:39 skrll Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.7.16.4 2004/09/21 13:15:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

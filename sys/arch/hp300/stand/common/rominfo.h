@@ -1,4 +1,4 @@
-/*	$NetBSD: rominfo.h,v 1.2.24.2 2004/09/18 14:34:20 skrll Exp $	*/
+/*	$NetBSD: rominfo.h,v 1.2.24.3 2004/09/21 13:15:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

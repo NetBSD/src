@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.71.2.2 2004/09/18 14:35:22 skrll Exp $
+#	$NetBSD: INSTALL_TINY,v 1.71.2.3 2004/09/21 13:16:37 skrll Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #

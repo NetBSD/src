@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2.2.2 2004/09/18 14:37:51 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.2.3 2004/09/21 13:19:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

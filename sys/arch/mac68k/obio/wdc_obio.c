@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.3.6.3 2004/09/18 14:36:56 skrll Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.3.6.4 2004/09/21 13:18:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.3.6.3 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.3.6.4 2004/09/21 13:18:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.1.20.2 2004/09/18 14:37:57 skrll Exp $	*/
+/*	$NetBSD: exec_mvme.c,v 1.1.20.3 2004/09/21 13:19:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.13.2.2 2004/09/18 14:34:59 skrll Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.13.2.3 2004/09/21 13:16:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.13.2.2 2004/09/18 14:34:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.13.2.3 2004/09/21 13:16:13 skrll Exp $");
 
 #undef TX39SIBDEBUG
 

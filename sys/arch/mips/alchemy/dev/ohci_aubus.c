@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.2.2.2 2004/09/18 14:37:17 skrll Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.2.2.3 2004/09/21 13:18:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.2.2.2 2004/09/18 14:37:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.2.2.3 2004/09/21 13:18:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

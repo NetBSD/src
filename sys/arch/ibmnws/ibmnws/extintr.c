@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.1.4.3 2004/09/18 14:36:02 skrll Exp $ */
+/*	$NetBSD: extintr.c,v 1.1.4.4 2004/09/21 13:17:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom

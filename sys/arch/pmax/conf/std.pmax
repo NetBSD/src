@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmax,v 1.15.6.2 2004/09/18 14:38:49 skrll Exp $
+#	$NetBSD: std.pmax,v 1.15.6.3 2004/09/21 13:20:14 skrll Exp $
 # standard, required pmax info
 
 machine pmax mips

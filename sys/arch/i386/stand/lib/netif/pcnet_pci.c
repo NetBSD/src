@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_pci.c,v 1.5.44.2 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: pcnet_pci.c,v 1.5.44.3 2004/09/21 13:17:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996

@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.14.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: frodo.c,v 1.14.2.4 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.14.2.3 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.14.2.4 2004/09/21 13:15:14 skrll Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 

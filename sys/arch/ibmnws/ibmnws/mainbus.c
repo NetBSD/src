@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.4.4 2004/09/18 14:36:02 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.4.5 2004/09/21 13:17:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.3.36.2 2004/09/18 14:31:12 skrll Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.3.36.3 2004/09/21 13:12:01 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob

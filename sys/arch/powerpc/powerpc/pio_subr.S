@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.3.2.2 2004/09/18 14:39:20 skrll Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.3.2.3 2004/09/21 13:20:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas

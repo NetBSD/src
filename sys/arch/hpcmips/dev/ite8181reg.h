@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.1.26.2 2004/09/18 14:34:52 skrll Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.1.26.3 2004/09/21 13:16:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.13.2.3 2004/09/18 14:35:06 skrll Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.13.2.4 2004/09/21 13:16:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.13.2.3 2004/09/18 14:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.13.2.4 2004/09/21 13:16:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10.2.3 2004/09/18 14:30:29 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.10.2.4 2004/09/21 13:11:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.3 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.4 2004/09/21 13:11:19 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>

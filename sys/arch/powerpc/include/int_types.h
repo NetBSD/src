@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.6.6.2 2004/09/18 14:39:11 skrll Exp $	*/
+/*	$NetBSD: int_types.h,v 1.6.6.3 2004/09/21 13:20:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.57.10.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: nubus.h,v 1.57.10.3 2004/09/21 13:18:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.

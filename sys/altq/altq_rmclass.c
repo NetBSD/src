@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.5.16.2 2004/09/18 14:30:29 skrll Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.5.16.3 2004/09/21 13:11:19 skrll Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.5.16.2 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.5.16.3 2004/09/21 13:11:19 skrll Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.21.2.2 2004/09/18 14:34:59 skrll Exp $ */
+/*	$NetBSD: txcom.c,v 1.21.2.3 2004/09/21 13:16:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.2 2004/09/18 14:34:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.21.2.3 2004/09/21 13:16:13 skrll Exp $");
 
 #include "opt_tx39uart_debug.h"
 

@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.16.16.2 2004/09/18 14:34:19 skrll Exp $
+|	$NetBSD: vectors.s,v 1.16.16.3 2004/09/21 13:15:26 skrll Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.1.4.3 2004/09/18 14:32:38 skrll Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.1.4.3 2004/09/18 14:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

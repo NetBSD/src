@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17.6.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.6.3 2004/09/21 13:12:48 skrll Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.6.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.6.3 2004/09/21 13:12:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.5.10.2 2004/09/18 14:39:37 skrll Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.5.10.3 2004/09/21 13:21:07 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)

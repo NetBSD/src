@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.16.2 2004/09/18 14:34:58 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.16.3 2004/09/21 13:16:12 skrll Exp $
 
 UUDECODE_FILES=	pbsdboot.exe pbsdboot1.exe
 

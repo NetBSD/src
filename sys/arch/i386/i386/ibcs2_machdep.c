@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.22.2.2 2004/09/18 14:35:27 skrll Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.22.2.3 2004/09/21 13:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.22.2.2 2004/09/18 14:35:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.22.2.3 2004/09/21 13:16:42 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"

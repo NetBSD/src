@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.17.2.2 2004/09/18 14:31:12 skrll Exp $ */
+/* $NetBSD: mcpcia.c,v 1.17.2.3 2004/09/21 13:12:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.17.2.2 2004/09/18 14:31:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.17.2.3 2004/09/21 13:12:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

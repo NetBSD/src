@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.5.2.2 2004/09/18 14:30:29 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.5.2.3 2004/09/21 13:11:19 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -451,4 +451,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.5.2.2 2004/09/18 14:30:29 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.5.2.3 2004/09/21 13:11:19 skrll Exp $")

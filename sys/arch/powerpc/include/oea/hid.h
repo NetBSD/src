@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.2.2.2 2004/09/18 14:39:19 skrll Exp $	*/
+/*	$NetBSD: hid.h,v 1.2.2.3 2004/09/21 13:20:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.

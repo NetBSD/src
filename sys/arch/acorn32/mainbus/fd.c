@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16.2.4 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.16.2.5 2004/09/21 13:11:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.16.2.4 2004/09/18 14:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.16.2.5 2004/09/21 13:11:28 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -302,7 +302,7 @@ int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
-int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+int fdformat __P((dev_t, struct ne7_fd_formb *, struct lwp *));
 
 int
 fdcprobe(parent, cf, aux)
@@ -801,11 +801,11 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
+fdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
  	int unit;
 	struct fd_softc *fd;
@@ -834,11 +834,11 @@ fdopen(dev, flags, mode, p)
 }
 
 int
-fdclose(dev, flags, mode, p)
+fdclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
@@ -1322,12 +1322,12 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
+fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fdformat_parms *form_parms;
@@ -1482,7 +1482,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(dev, fd_formb, l);
 		free(fd_formb, M_TEMP);
 		return error;
 
@@ -1504,10 +1504,10 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
+fdformat(dev, finfo, l)
 	dev_t dev;
 	struct ne7_fd_formb *finfo;
-	struct proc *p;
+	struct lwp *l;
 {
 	int rv = 0, s;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
@@ -1520,7 +1520,7 @@ fdformat(dev, finfo, p)
 		return ENOBUFS;
 	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
-	bp->b_proc = p;
+	bp->b_proc = l->l_proc;
 	bp->b_dev = dev;
 
 	/*
@@ -1609,7 +1609,7 @@ load_memory_disc_from_floppy(md, dev)
 
 	s = spl0();
 
-	if (fdopen(bp->b_dev, 0, 0, curproc) != 0) {
+	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
 		brelse(bp);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
@@ -1637,7 +1637,7 @@ load_memory_disc_from_floppy(md, dev)
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",
 	    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
         
-	fdclose(bp->b_dev, 0, 0, curproc);
+	fdclose(bp->b_dev, 0, 0, curlwp);
 
 	brelse(bp);
 

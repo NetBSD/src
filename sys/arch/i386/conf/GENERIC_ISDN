@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.12.2.2 2004/09/18 14:35:22 skrll Exp $
+# $NetBSD: GENERIC_ISDN,v 1.12.2.3 2004/09/21 13:16:35 skrll Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 

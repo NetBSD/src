@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.1.48.2 2004/09/18 14:37:08 skrll Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.1.48.3 2004/09/21 13:18:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

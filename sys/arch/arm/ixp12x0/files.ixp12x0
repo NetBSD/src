@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp12x0,v 1.4.2.2 2004/09/18 14:32:32 skrll Exp $
+#       $NetBSD: files.ixp12x0,v 1.4.2.3 2004/09/21 13:13:32 skrll Exp $
 #
 # Configuration info for Intel IXP12x0 CPU support
 #

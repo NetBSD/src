@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.10.2.2 2004/09/18 14:38:05 skrll Exp $	*/
+/*	$NetBSD: spifi.c,v 1.10.2.3 2004/09/21 13:19:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.10.2.2 2004/09/18 14:38:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.10.2.3 2004/09/21 13:19:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

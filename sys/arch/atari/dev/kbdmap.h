@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.4.62.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.4.62.3 2004/09/21 13:13:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild

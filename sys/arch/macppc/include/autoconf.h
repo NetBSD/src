@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5.6.2 2004/09/18 14:37:08 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.6.3 2004/09/21 13:18:29 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.38.6.2 2004/09/18 14:38:49 skrll Exp $	*/
+/*	$NetBSD: pm.c,v 1.38.6.3 2004/09/21 13:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.38.6.2 2004/09/18 14:38:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.38.6.3 2004/09/21 13:20:19 skrll Exp $");
 
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5.6.2 2004/09/18 14:33:33 skrll Exp $	*/
+/*	$NetBSD: pchb.c,v 1.5.6.3 2004/09/21 13:14:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5.6.2 2004/09/18 14:33:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5.6.3 2004/09/21 13:14:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

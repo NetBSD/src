@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.26.6.2 2004/09/18 14:31:34 skrll Exp $ */
+/*	$NetBSD: msc.c,v 1.26.6.3 2004/09/21 13:12:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.2 2004/09/18 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.3 2004/09/21 13:12:30 skrll Exp $");
 
 #include "msc.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.12.8.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.12.8.3 2004/09/21 13:16:57 skrll Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_

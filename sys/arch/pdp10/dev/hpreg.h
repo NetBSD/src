@@ -1,4 +1,4 @@
-/*	$NetBSD: hpreg.h,v 1.1.4.3 2004/09/18 14:38:42 skrll Exp $ */
+/*	$NetBSD: hpreg.h,v 1.1.4.4 2004/09/21 13:20:04 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.4.2.2 2004/09/18 14:35:28 skrll Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.4.2.3 2004/09/21 13:16:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

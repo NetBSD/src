@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.3.2.2 2004/09/18 14:32:47 skrll Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.3.2.3 2004/09/21 13:13:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.3.2.2 2004/09/18 14:32:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.3.2.3 2004/09/21 13:13:43 skrll Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"

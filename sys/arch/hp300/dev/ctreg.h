@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.7.24.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.7.24.3 2004/09/21 13:15:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

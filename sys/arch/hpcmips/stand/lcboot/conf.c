@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.1.2.2 2004/09/18 14:34:58 skrll Exp $ */
+/* $NetBSD: conf.c,v 1.1.2.3 2004/09/21 13:16:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1.2.2 2004/09/18 14:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1.2.3 2004/09/21 13:16:12 skrll Exp $");
 
 #include <netinet/in.h>
 

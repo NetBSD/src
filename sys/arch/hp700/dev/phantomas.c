@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.1.4.3 2004/09/18 14:34:32 skrll Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.1.4.4 2004/09/21 13:15:40 skrll Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*

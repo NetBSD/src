@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.10.54.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: icu.h,v 1.10.54.3 2004/09/21 13:19:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.23.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.23.2.4 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.3 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.4 2004/09/21 13:15:14 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 

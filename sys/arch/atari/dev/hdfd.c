@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.39.2.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.39.2.3 2004/09/21 13:13:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.39.2.2 2004/09/18 14:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.39.2.3 2004/09/21 13:13:58 skrll Exp $");
 
 #include "opt_ddb.h"
 

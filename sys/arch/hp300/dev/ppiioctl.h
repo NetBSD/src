@@ -1,4 +1,4 @@
-/*	$NetBSD: ppiioctl.h,v 1.4.66.2 2004/09/18 14:34:09 skrll Exp $	*/
+/*	$NetBSD: ppiioctl.h,v 1.4.66.3 2004/09/21 13:15:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

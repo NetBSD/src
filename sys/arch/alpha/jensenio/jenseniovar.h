@@ -1,4 +1,4 @@
-/* $NetBSD: jenseniovar.h,v 1.1.28.2 2004/09/18 14:31:03 skrll Exp $ */
+/* $NetBSD: jenseniovar.h,v 1.1.28.3 2004/09/21 13:12:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

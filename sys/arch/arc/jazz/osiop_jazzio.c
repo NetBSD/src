@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.4.2.2 2004/09/18 14:32:09 skrll Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.4.2.2 2004/09/18 14:32:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_jazzio.c,v 1.4.2.3 2004/09/21 13:13:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

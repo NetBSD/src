@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127.2.3 2004/09/18 14:32:55 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.2.4 2004/09/21 13:13:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.3 2004/09/18 14:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.4 2004/09/21 13:13:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -940,8 +940,8 @@ candbtimer()
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -952,7 +952,7 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(p, epp));
+		return(exec_aout_prep_zmagic(l->l_proc, epp));
 #endif
 	return(error);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13.8.2 2004/09/18 14:30:30 skrll Exp $
+#	$NetBSD: INSTALL,v 1.13.8.3 2004/09/21 13:11:20 skrll Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.13.8.2 $"
+#ident		"INSTALL-$Revision: 1.13.8.3 $"
 
 # estimated number of users
 maxusers	32

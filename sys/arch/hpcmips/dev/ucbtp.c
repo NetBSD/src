@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.11.2.3 2004/09/18 14:34:52 skrll Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.11.2.4 2004/09/21 13:16:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.3 2004/09/18 14:34:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.4 2004/09/21 13:16:05 skrll Exp $");
 
 #include "opt_use_poll.h"
 

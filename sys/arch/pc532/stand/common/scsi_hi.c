@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_hi.c,v 1.1.54.2 2004/09/18 14:38:35 skrll Exp $	*/
+/*	$NetBSD: scsi_hi.c,v 1.1.54.3 2004/09/21 13:20:04 skrll Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver

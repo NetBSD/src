@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.1.26.2 2004/09/18 14:34:45 skrll Exp $	*/
+/*	$NetBSD: platid.c,v 1.1.26.3 2004/09/21 13:15:53 skrll Exp $	*/
 
 #ifndef UNICODE
 #error	"compile with UNICODE"

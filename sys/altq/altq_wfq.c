@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.5.16.3 2004/09/18 14:30:29 skrll Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.5.16.4 2004/09/21 13:11:19 skrll Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.5.16.3 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.5.16.4 2004/09/21 13:11:19 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -639,19 +639,19 @@ wfq_config(cf)
 altqdev_decl(wfq);
 
 int
-wfqopen(dev, flag, fmt, p)
+wfqopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
 
 int
-wfqclose(dev, flag, fmt, p)
+wfqclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ifnet *ifp;
 	struct wfq_interface iface;
@@ -674,13 +674,14 @@ wfqclose(dev, flag, fmt, p)
 }
 
 int
-wfqioctl(dev, cmd, addr, flag, p)
+wfqioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int	error = 0;
 	int 	s;
 

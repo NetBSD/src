@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.10.50.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.10.50.4 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

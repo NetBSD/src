@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.3.4.3 2004/09/18 14:32:16 skrll Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.3.4.4 2004/09/21 13:13:08 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.3.4.3 2004/09/18 14:32:16 skrll Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.3.4.4 2004/09/21 13:13:08 skrll Exp $")	
 
 	.text
 	.align	0

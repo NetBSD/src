@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.7.2.2 2004/09/18 14:39:11 skrll Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.7.2.3 2004/09/21 13:20:34 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

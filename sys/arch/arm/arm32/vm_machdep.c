@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28.2.3 2004/09/18 14:32:17 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28.2.4 2004/09/21 13:13:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28.2.3 2004/09/18 14:32:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28.2.4 2004/09/21 13:13:10 skrll Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"

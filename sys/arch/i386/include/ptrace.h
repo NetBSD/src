@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.11.2.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.11.2.3 2004/09/21 13:16:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -125,15 +125,15 @@
 struct xmmregs;
 
 /* Functions used by both ptrace(2) and procfs. */
-int	process_machdep_doxmmregs(struct proc *, struct lwp *, struct uio *);
+int	process_machdep_doxmmregs(struct lwp *, struct lwp *, struct uio *);
 int	process_machdep_validxmmregs(struct proc *);
 
 /* Functions used by procfs. */
 struct mount;
 struct pfsnode;
-int	procfs_machdep_doxmmregs(struct proc *, struct lwp *,
+int	procfs_machdep_doxmmregs(struct lwp *, struct lwp *,
 	    struct pfsnode *, struct uio *);
-int	procfs_machdep_validxmmregs(struct proc *, struct mount *);
+int	procfs_machdep_validxmmregs(struct lwp *, struct mount *);
 
 #endif /* _KERNEL */
 

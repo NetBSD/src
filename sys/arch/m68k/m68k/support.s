@@ -1,4 +1,4 @@
-/*	$NetBSD: support.s,v 1.3.22.2 2004/09/18 14:36:38 skrll Exp $	*/
+/*	$NetBSD: support.s,v 1.3.22.3 2004/09/21 13:17:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

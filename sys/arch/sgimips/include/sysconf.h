@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.3.18.2 2004/09/18 14:39:49 skrll Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.3.18.3 2004/09/21 13:21:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

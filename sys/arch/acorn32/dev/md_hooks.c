@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.4.12.2 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.4.12.3 2004/09/21 13:11:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.4.12.2 2004/09/18 14:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.4.12.3 2004/09/21 13:11:21 skrll Exp $");
 
 #include "opt_md.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.1.4.3 2004/09/18 14:33:58 skrll Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.1.4.4 2004/09/21 13:15:01 skrll Exp $
 
 MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
 

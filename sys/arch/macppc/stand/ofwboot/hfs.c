@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.c,v 1.2.22.2 2004/09/18 14:37:09 skrll Exp $	*/
+/*	$NetBSD: hfs.c,v 1.2.22.3 2004/09/21 13:18:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410_intr.h,v 1.1.4.3 2004/09/18 14:32:38 skrll Exp $ */
+/*	$NetBSD: s3c2410_intr.h,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.

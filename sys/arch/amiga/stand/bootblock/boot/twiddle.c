@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.1.1.1.56.2 2004/09/18 14:31:55 skrll Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.1.1.1.56.3 2004/09/21 13:12:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,7 +31,7 @@
  *	@(#)printf.c	8.1 (Berkeley) 6/11/93
  */
 
-/*	From: $NetBSD: twiddle.c,v 1.1.1.1.56.2 2004/09/18 14:31:55 skrll Exp $	*/
+/*	From: $NetBSD: twiddle.c,v 1.1.1.1.56.3 2004/09/21 13:12:46 skrll Exp $	*/
 
 #include "stand.h"
 

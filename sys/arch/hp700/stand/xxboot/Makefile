@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.4 2004/09/18 14:34:32 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.5 2004/09/21 13:15:40 skrll Exp $
 
 PROG=	xxboot
 SRCS=	start.s main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.s

@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.2.6.2 2004/09/18 14:38:10 skrll Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.2.6.3 2004/09/21 13:19:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

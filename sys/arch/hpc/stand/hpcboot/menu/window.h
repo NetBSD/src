@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: window.h,v 1.1.26.2 2004/09/18 14:34:45 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: window.h,v 1.1.26.3 2004/09/21 13:15:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

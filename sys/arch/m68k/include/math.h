@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.4.16.2 2004/09/18 14:36:17 skrll Exp $	*/
+/*	$NetBSD: math.h,v 1.4.16.3 2004/09/21 13:17:35 skrll Exp $	*/
 
 #ifndef __mc68010__
 #define	__HAVE_LONG_DOUBLE

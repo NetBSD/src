@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.5.2.2 2004/09/18 14:39:19 skrll Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.5.2.3 2004/09/21 13:20:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

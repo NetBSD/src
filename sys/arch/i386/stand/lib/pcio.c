@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.14.2.3 2004/09/18 14:35:57 skrll Exp $	 */
+/*	$NetBSD: pcio.c,v 1.14.2.4 2004/09/21 13:17:11 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997

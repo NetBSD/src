@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9.2.2 2004/09/18 14:39:30 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.3 2004/09/21 13:21:00 skrll Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-

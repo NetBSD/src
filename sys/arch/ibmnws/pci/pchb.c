@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2.2.3 2004/09/18 14:36:06 skrll Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2.2.4 2004/09/21 13:17:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

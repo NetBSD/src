@@ -1,3 +1,3 @@
-/*	$NetBSD: darwin_machdep.h,v 1.1.4.3 2004/09/18 14:36:02 skrll Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.1.4.4 2004/09/21 13:17:19 skrll Exp $ */
 
 #include <powerpc/darwin_machdep.h>

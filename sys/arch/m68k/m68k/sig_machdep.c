@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19.2.3 2004/09/18 14:36:38 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19.2.4 2004/09/21 13:17:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.3 2004/09/18 14:36:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.4 2004/09/21 13:17:56 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
