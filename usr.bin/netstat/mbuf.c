@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.19 2003/02/26 06:31:21 matt Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.20 2003/02/27 08:07:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.19 2003/02/26 06:31:21 matt Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.20 2003/02/27 08:07:14 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,8 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 		return;
 	}
 
-	for (mo = (void *) data; len >= sizeof(*mo); len -= sizeof(*mo), mo++) {
+	for (mo = (void *) data, lines = 0; len >= sizeof(*mo);
+	    len -= sizeof(*mo), mo++) {
 		char buf[32];
 		if (vflag == 1 &&
 		    mo->mo_claims == 0 &&
