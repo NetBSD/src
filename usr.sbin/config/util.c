@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2000/01/20 00:08:08 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2000/10/02 18:59:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,11 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <sys/types.h>
 #include "config.h"
 
@@ -245,22 +241,12 @@ nvfreel(nv)
 }
 
 void
-#if __STDC__
 warn(const char *fmt, ...)
-#else
-warn(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	extern const char *yyfile;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vxwarn(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
@@ -281,22 +267,12 @@ vxwarn(file, line, fmt, ap)
  * and line number.
  */
 void
-#if __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif	/* __STDC__ */
 {
 	va_list ap;
 	extern const char *yyfile;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vxerror(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
@@ -306,23 +282,11 @@ error(fmt, va_alist)
  * find out about it until later).
  */
 void
-#if __STDC__
 xerror(const char *file, int line, const char *fmt, ...)
-#else
-xerror(file, line, fmt, va_alist)
-	const char *file;
-	int line;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vxerror(file, line, fmt, ap);
 	va_end(ap);
 }
@@ -346,21 +310,11 @@ vxerror(file, line, fmt, ap)
  * Internal error, abort.
  */
 __dead void
-#if __STDC__
 panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "config: panic: ");
 	(void)vfprintf(stderr, fmt, ap);
 	(void)putc('\n', stderr);
