@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.12 2004/03/17 20:20:43 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.12.2.1 2004/05/15 13:38:19 tron Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -65,6 +65,10 @@ CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+
+# The sh5 gcc version 3.3.3 (NetBSD nb2 20040502) gets an internal
+# compiler error with higher optimizations on a few files:
+CC_NOOPT=	${NORMAL_C:C/-O./-O0/}
 
 ##
 ## (3) libkern and compat
