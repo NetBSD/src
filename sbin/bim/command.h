@@ -1,4 +1,4 @@
-/*	$NetBSD: command.h,v 1.4 2002/05/25 23:45:12 wiz Exp $	*/
+/*	$NetBSD: command.h,v 1.5 2005/02/05 14:23:24 xtraeme Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -46,7 +46,7 @@
     to the function that processes the command and a help message.  */
 
 struct command {	/* The commands, their names, help */
-	int	(*fn) __P((int, char **, char *));
+	int	(*fn)(int, char **, char *);
 	char	*name;
 	char	*syntax;
 	char	*help;
