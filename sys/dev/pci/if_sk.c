@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.6 2003/12/17 09:17:07 tls Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.7 2004/01/28 17:07:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -253,6 +253,7 @@ static const struct sk_product {
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
+	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET, },
 	{ 0, 0, }
 };
 
