@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2000/07/25 05:41:30 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2000/07/25 05:44:27 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -219,15 +219,6 @@ initppc(startkernel, endkernel, args)
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
-#if 0
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-#endif
-
 #ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
 	OF_set_callback(callback);
 #endif
@@ -293,6 +284,13 @@ initppc(startkernel, endkernel, args)
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	ofmsr &= ~PSL_IP;
+
+	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
 
 	/*
 	 * Parse arg string.
