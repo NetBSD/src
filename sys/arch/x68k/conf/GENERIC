@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.79 2002/09/18 02:44:11 lukem Exp $
+# $NetBSD: GENERIC,v 1.80 2002/09/20 10:40:01 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 maxusers	8
 
@@ -206,6 +206,7 @@ options 	INET6		# IPV6
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
