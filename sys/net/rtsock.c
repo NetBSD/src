@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.21 1996/07/01 01:12:32 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.22 1996/12/11 09:37:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -246,7 +246,8 @@ route_output(m, va_alist)
 					ifaaddr = 0;
 			    }
 			}
-			len = rt_msg2(rtm->rtm_type, &info, NULL, NULL);
+			len = rt_msg2(rtm->rtm_type, &info, (caddr_t)0,
+			    (struct walkarg *)0);
 			if (len > rtm->rtm_msglen) {
 				struct rt_msghdr *new_rtm;
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
@@ -255,7 +256,8 @@ route_output(m, va_alist)
 				Bcopy(rtm, new_rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
-			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)rtm, NULL);
+			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)rtm,
+			    (struct walkarg *)0);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_rmx = rt->rt_rmx;
 			rtm->rtm_addrs = info.rti_addrs;
@@ -741,7 +743,7 @@ sysctl_iflist(af, w)
 			continue;
 		ifa = ifp->if_addrlist.tqh_first;
 		ifpaddr = ifa->ifa_addr;
-		len = rt_msg2(RTM_IFINFO, &info, NULL, w);
+		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
 		ifpaddr = 0;
 		if (w->w_where && w->w_tmem) {
 			register struct if_msghdr *ifm;
