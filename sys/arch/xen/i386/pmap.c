@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.6.6.2 2004/12/17 11:27:24 bouyer Exp $	*/
-/*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
+/*	$NetBSD: pmap.c,v 1.6.6.3 2004/12/17 17:23:01 bouyer Exp $	*/
+/*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
  *
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.2 2004/12/17 11:27:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.3 2004/12/17 17:23:01 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -153,8 +153,6 @@ void xpmap_find_pte(paddr_t);
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
@@ -2249,7 +2247,11 @@ pmap_reactivate(struct pmap *pmap)
 	 * for this pmap in the meantime.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi(); /* protect from tlb shootdown ipis. */
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
@@ -2283,6 +2285,10 @@ pmap_load()
 	int s;
 
 	KASSERT(ci->ci_want_pmapload);
+
+	/* should be able to take ipis. */
+	KASSERT(ci->ci_ilevel < IPL_IPI);
+	KASSERT(read_psl() == 0);
 
 	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
@@ -2326,7 +2332,11 @@ pmap_load()
 	 * mark the pmap in use by this processor.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
@@ -2528,7 +2538,8 @@ pmap_zero_page(pa)
 #endif
 
 	maptp = (pt_entry_t *)vtomach((vaddr_t)zpte);
-	PTE_SET(zpte, maptp, (pa & PG_FRAME) | PG_V | PG_RW);	/* map in */
+	PTE_SET(zpte, maptp,
+	    (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U);/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
@@ -2552,16 +2563,22 @@ pmap_pageidlezero(pa)
 	pt_entry_t *maptp;
 	caddr_t zerova = VASLEW(zerop, id);
 	boolean_t rv = TRUE;
-	int i, *ptr;
+	int *ptr;
+	int *ep;
+#if defined(I686_CPU)
+	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
-		panic("pmap_zero_page_uncached: lock botch");
+		panic("pmap_pageidlezero: lock botch");
 #endif
 	maptp = (pt_entry_t *)vtomach((vaddr_t)zpte);
-	PTE_SET(zpte, maptp, (pa & PG_FRAME) | PG_V | PG_RW);	/* map in */
+	PTE_SET(zpte, maptp,
+	    (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U); /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
+	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
+	    ptr < ep; ptr++) {
 		if (sched_whichqs != 0) {
 
 			/*
@@ -2574,8 +2591,19 @@ pmap_pageidlezero(pa)
 			rv = FALSE;
 			break;
 		}
-		*ptr++ = 0;
+#if defined(I686_CPU)
+		if (cpu_features & CPUID_SSE2)
+			__asm __volatile ("movnti %1, %0" :
+			    "=m"(*ptr) : "r" (0));
+		else
+#endif /* defined(I686_CPU) */
+			*ptr = 0;
 	}
+
+#if defined(I686_CPU)
+	if (cpu_features & CPUID_SSE2)
+		__asm __volatile ("sfence" ::: "memory");
+#endif /* defined(I686_CPU) */       
 
 	PTE_CLEAR(zpte, maptp);				/* zap! */
 	return (rv);
@@ -2604,8 +2632,8 @@ pmap_copy_page(srcpa, dstpa)
 
 	maspte = (pt_entry_t *)vtomach((vaddr_t)spte);
 	madpte = (pt_entry_t *)vtomach((vaddr_t)dpte);
-	PTE_SET(spte, maspte, (srcpa & PG_FRAME) | PG_V | PG_RW);
-	PTE_SET(dpte, madpte, (dstpa & PG_FRAME) | PG_V | PG_RW);
+	PTE_SET(spte, maspte, (srcpa & PG_FRAME) | PG_V | PG_RW | PG_U);
+	PTE_SET(dpte, madpte, (dstpa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U);
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 	memcpy(cdstva, csrcva, PAGE_SIZE);
 	PTE_CLEAR(spte, maspte);			/* zap! */
@@ -4260,7 +4288,11 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 
 	self = curcpu();
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 #if 0
 	printf("dshootdown %lx\n", va);
 #endif
@@ -4344,7 +4376,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 /*
  * pmap_do_tlb_shootdown_checktlbstate: check and update ci_tlbstate.
  *
- * => called at splipi.
+ * => called at splipi if MULTIPROCESSOR.
+ * => called at splvm if !MULTIPROCESSOR.
  * => return TRUE if we need to maintain user tlbs.
  */
 static __inline boolean_t
@@ -4390,10 +4423,15 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-#endif
+#endif /* MULTIPROCESSOR */
+
 	KASSERT(self == curcpu());
 
+#ifdef MULTIPROCESSOR
 	s = splipi();
+#else /* MULTIPROCESSOR */
+	s = splvm();
+#endif /* MULTIPROCESSOR */
 
 	__cpu_simple_lock(&pq->pq_slock);
 
@@ -4436,7 +4474,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
-#endif
+#endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 
 	splx(s);
