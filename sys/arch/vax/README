@@ -1,5 +1,5 @@
 
-	$Id: README,v 1.1 1994/08/02 20:18:46 ragge Exp $
+	$Id: README,v 1.2 1994/08/16 23:39:52 ragge Exp $
 
 Some information and status of VAX port:
 
@@ -16,10 +16,6 @@ implemented.
 Device drivers for UDA50 and DELUA are almost unchanged from the 4.4BSD
 release, and at least uda/ra routines seem to work.
 
-There are done some very ugly things in some file files, that assumes
-for example a special hardware config :( Watch out for them, there
-are probably some swedish comments around there too. :)
-
 Config code isn't working yet, there are more important things to fix
 first :) To glue together IO devices there are a file glue.c. Config.new
 just creates some header files right now.
@@ -30,14 +26,13 @@ Current state of VAX port of NetBSD:
 - Virtual memory starts ok.
 - It may find some devices :)
 - It mounts root filesystem from RA81 OK.
-- It forks twice, copies out icode, start icode, calls execve and bails out...
+- It loads init and fork it to process 3 to exec /bin/sh, but 
+  something is wrong, copy-on-write on stack area doesn't work...
 
 Lots important things to do:
 - Boot blocks and routines. (We currently use old 4.3 boot)
 - Whole skit.c should be emptied.
-- Fix pmap so that it works with user processes. (VERY important!)
-- Fix some fast-hack-implementations of various things.
-- Clean the code almost everywhere from foolish printouts.
+- Clean the code almost everywhere from foolish printouts. :)
 
 As base code for our work we have used 0.9b distribution. For development 
 we used gas 1.35 with patches for bit instructions and gcc 2.5.8.
@@ -55,3 +50,4 @@ If you want to look at other files get them from nearest ftp site with
 an 4.4BSD distribution, or from ftp.luth.se:/pub/unix/4_4bsd_l directory.
 
 /ragge@ludd.luth.se
+
