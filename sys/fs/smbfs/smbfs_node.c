@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.10 2003/02/24 18:41:04 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.11 2003/02/24 21:27:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -73,16 +73,6 @@ static struct genfs_ops smbfs_genfsops = {
 
 struct pool smbfs_node_pool;
 
-#if 0
-static int smbfs_hashprint(struct mount *mp);
-
-#ifdef SYSCTL_DECL
-SYSCTL_DECL(_vfs_smbfs);
-#endif
-SYSCTL_PROC(_vfs_smbfs, OID_AUTO, vnprint, CTLFLAG_WR|CTLTYPE_OPAQUE,
-	    NULL, 0, smbfs_hashprint, "S,vnlist", "vnode hash");
-#endif
-
 #define	FNV_32_PRIME ((u_int32_t) 0x01000193UL)
 #define	FNV1_32_INIT ((u_int32_t) 33554467UL)
 
@@ -97,24 +87,6 @@ smbfs_hash(const u_char *name, int nmlen)
 	}
 	return v;
 }
-
-#if 0
-static int
-smbfs_hashprint(struct mount *mp)
-{
-	struct smbmount *smp = VFSTOSMBFS(mp);
-	struct smbnode_hashhead *nhpp;
-	struct smbnode *np;
-	int i;
-
-	for(i = 0; i <= smp->sm_hashlen; i++) {
-		nhpp = &smp->sm_hash[i];
-		LIST_FOREACH(np, nhpp, n_hash)
-			vprint(NULL, SMBTOV(np));
-	}
-	return 0;
-}
-#endif
 
 static inline char *
 smbfs_name_alloc(const u_char *name, int nmlen)
