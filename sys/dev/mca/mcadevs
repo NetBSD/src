@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.1 2000/05/11 15:42:05 jdolecek Exp $
+$NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ product 0x6014 "Standard Microsystems ARCNET-PS110 Adapter"		[6]
 product 0x6018 "Gateway Comms. G/Ethernet Adapter"			[6]
 product 0x601F "HP Scanner Interface Adapter"				[5]
 product 0x602F "Arcmaster ARCnet Adapter"				[6]
-product 0x6042 3C523 "3Com 3C523 Ethernet Adapter"		3C523 EtherDisk
+product 0x6042 3C523 "3Com EtherLink/MC Ethernet Adapter (3C523)"	3C523 EtherDisk
 product 0x6060 "IDEAcomm 5251 7 LU Adapter"				[6]
 product 0x6091 "Stallion ONboard2 Terminal Adapter"			[6]
 product 0x609E "Microtek MS-PS/2 Interface Adapter"			[5]
