@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.41 1999/01/06 13:52:23 lukem Exp $       */
+/*     $NetBSD: login.c,v 1.42 1999/01/11 20:20:54 kim Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.41 1999/01/06 13:52:23 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.42 1999/01/11 20:20:54 kim Exp $");
 #endif /* not lint */
 
 /*
@@ -713,7 +713,7 @@ dolastlog(quiet)
 			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
 			    ll.ll_time != 0) {
 				(void)printf("Last login: %.*s ",
-				    24-5, (char *)ctime(&ll.ll_time));
+				    24, (char *)ctime(&ll.ll_time));
 				if (*ll.ll_host != '\0')
 					(void)printf("from %.*s\n",
 					    (int)sizeof(ll.ll_host),
