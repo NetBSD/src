@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.17 2003/10/27 03:58:17 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.18 2004/03/24 07:45:23 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.17 2003/10/27 03:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.18 2004/03/24 07:45:23 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -242,6 +242,11 @@ do {									\
 #define	EMAC_READ(sc, reg) \
 	bus_space_read_stream_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
+#define	EMAC_SET_FILTER(aht, category) \
+do {									\
+	(aht)[3 - ((category) >> 4)] |= 1 << ((category) & 0xf);	\
+} while (/*CONSTCOND*/0)
+
 static int	emac_match(struct device *, struct cfdata *, void *);
 static void	emac_attach(struct device *, struct device *, void *);
 
@@ -255,6 +260,7 @@ static void	emac_shutdown(void *);
 static void	emac_start(struct ifnet *);
 static void	emac_stop(struct ifnet *, int);
 static void	emac_watchdog(struct ifnet *);
+static int	emac_set_filter(struct emac_softc *);
 
 static int	emac_wol_intr(void *);
 static int	emac_serr_intr(void *);
@@ -789,11 +795,9 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Enable Individual and (possibly) Broadcast Address modes,
 	 * runt packets, and strip padding.
-	 *
-	 * XXX:	promiscuous mode (and promiscuous multicast mode) need to be
-	 *	dealt with here!
 	 */
 	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP |
+	    (ifp->if_flags & IFF_PROMISC ? RMR_PME : 0) |
 	    (ifp->if_flags & IFF_BROADCAST ? RMR_BAE : 0));
 
 	/*
@@ -1010,11 +1014,7 @@ emac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-#if 0
-			error = emac_set_filter(sc);	/* XXX not done yet */
-#else
-			error = emac_init(ifp);
-#endif
+			error = emac_set_filter(sc);
 		}
 		break;
 	}
@@ -1044,6 +1044,63 @@ emac_reset(struct emac_softc *sc)
 	/* set the MAL config register */
 	mtdcr(DCR_MAL0_CFG, MAL0_CFG_PLBB | MAL0_CFG_OPBBL | MAL0_CFG_LEA |
 	    MAL0_CFG_SD | MAL0_CFG_PLBLT);
+}
+
+static int
+emac_set_filter(struct emac_softc *sc)
+{
+	struct ether_multistep step;
+	struct ether_multi *enm;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint32_t rmr, crc, gaht[4] = {0, 0, 0, 0};
+	int category, cnt = 0;
+
+	rmr = EMAC_READ(sc, EMAC_RMR);
+	rmr &= ~(RMR_PMME | RMR_MAE);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo,
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			gaht[0] = gaht[1] = gaht[2] = gaht[3] = 0xffff;
+			break;
+		}
+
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 6 most significant bits. */
+		category = crc >> 26;
+		EMAC_SET_FILTER(gaht, category);
+
+		ETHER_NEXT_MULTI(step, enm);
+		cnt++;
+	}
+
+	if ((gaht[0] & gaht[1] & gaht[2] & gaht[3]) == 0xffff) {
+		/* All categories are true. */
+		ifp->if_flags |= IFF_ALLMULTI;
+		rmr |= RMR_PMME;
+	} else if (cnt != 0) {
+		/* Some categories are true. */
+		EMAC_WRITE(sc, EMAC_GAHT1, gaht[0]); 
+		EMAC_WRITE(sc, EMAC_GAHT2, gaht[1]);
+		EMAC_WRITE(sc, EMAC_GAHT3, gaht[2]);
+		EMAC_WRITE(sc, EMAC_GAHT4, gaht[3]);
+
+		rmr |= RMR_MAE;
+	}
+	EMAC_WRITE(sc, EMAC_RMR, rmr);
+
+	return 0;
 }
 
 /*
