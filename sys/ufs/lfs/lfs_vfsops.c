@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.145 2004/03/24 15:34:56 atatat Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.146 2004/03/27 04:43:44 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.145 2004/03/24 15:34:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.146 2004/03/27 04:43:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -249,6 +249,9 @@ lfs_writerd(void *arg)
 void
 lfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_SEGMENT);
+#endif
 	ufs_init();
 
 	/*
@@ -279,6 +282,9 @@ lfs_done()
 	pool_destroy(&lfs_inode_pool);
 	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
+#ifdef _LKM
+	malloc_type_detach(M_SEGMENT);
+#endif
 }
 
 /*

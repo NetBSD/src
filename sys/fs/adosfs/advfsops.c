@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.10 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.10 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -812,6 +812,11 @@ adosfs_sync(mp, waitfor, uc, p)
 void
 adosfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_ADOSFSMNT);
+	malloc_type_attach(M_ANODE);
+	malloc_type_attach(M_ADOSFSBITMAP);
+#endif
 	simple_lock_init(&adosfs_hashlock);
 
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0,
@@ -822,6 +827,11 @@ void
 adosfs_done()
 {
 	pool_destroy(&adosfs_node_pool);
+#ifdef _LKM
+	malloc_type_detach(M_ADOSFSBITMAP);
+	malloc_type_detach(M_ANODE);
+	malloc_type_detach(M_ADOSFSMNT);
+#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
