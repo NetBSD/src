@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.91 2004/12/05 04:15:16 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.92 2004/12/05 05:42:19 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.91 2004/12/05 04:15:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.92 2004/12/05 05:42:19 christos Exp $");
 
 #include "ppp.h"
 
@@ -240,7 +240,7 @@ struct compressor *ppp_compressors[PPP_COMPRESSORS_MAX] = {
  * Called from boot code to establish ppp interfaces.
  */
 void
-pppattach()
+pppattach(void)
 {
     LIST_INIT(&ppp_softc_list);
     if_clone_attach(&ppp_cloner);
