@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.25 1999/02/04 00:40:55 cjs Exp $	*/
+/*	$NetBSD: job.c,v 1.26 1999/05/03 09:49:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.25 1999/02/04 00:40:55 cjs Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.26 1999/05/03 09:49:55 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.25 1999/02/04 00:40:55 cjs Exp $");
+__RCSID("$NetBSD: job.c,v 1.26 1999/05/03 09:49:55 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -269,7 +269,7 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 
 
 #if defined(USE_PGRP) && defined(SYSV)
-# define KILL(pid, sig)		killpg(-(pid), (sig))
+# define KILL(pid, sig)		kill(-(pid), (sig))
 #else
 # if defined(USE_PGRP)
 #  define KILL(pid, sig)	killpg((pid), (sig))
