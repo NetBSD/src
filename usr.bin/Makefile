@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 1998/09/29 22:43:51 jonathan Exp $
+#	$NetBSD: Makefile,v 1.89 1998/10/25 23:30:39 jonathan Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -8,7 +8,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	bzip2 bzip2recover cal calendar cap_mkdb checknr chflags chpass \
 	cksum cmp col colcrt colrm column comm compress \
 	crontab crunch ctags cut dirname du eject env \
-	error expand false file find finger fmt fold fpr \
+	error expand false fdformat file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head \
 	hexdump id indent ipcrm ipcs join jot kdump ktrace \
 	lam last lastcomm leave less lex locate lock \
@@ -28,7 +28,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	ypmatch ypwhich
 
 .if	make(clean) || make(cleandir) || make(distclean)
-SUBDIR+=elf2aout elf2ecoff elfstrip fdformat ldd strip telnet
+SUBDIR+=elf2aout elf2ecoff elfstrip ldd strip telnet
 .else
 
 # Don't use the standard a.out tool chain on non-aout (ELF) platforms.
@@ -37,11 +37,6 @@ SUBDIR+=elf2aout elf2ecoff elfstrip fdformat ldd strip telnet
 SUBDIR+= strip
 .else
 SUBDIR+= ldd
-.endif
-
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE} == "atari" || \
-     ${MACHINE_ARCH} == "arm32" || ${MACHINE_ARCH} == "sparc")
-SUBDIR+= fdformat
 .endif
 
 # Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
