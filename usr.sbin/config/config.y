@@ -23,6 +23,7 @@
 %token	DUMPS
 %token	EQUALS
 %token	FLAGS
+%token	HIGH
 %token	HZ
 %token	IDENT
 %token	IOMEM
@@ -106,7 +107,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.11 1994/02/01 02:07:21 cgd Exp $
+ *	$Id: config.y,v 1.12 1994/02/18 06:10:42 mycroft Exp $
  */
 
 #include "config.h"
@@ -538,6 +539,8 @@ Info:
 	      = { cur.d_mask = "bio"; } |
 	NET 
 	      = { cur.d_mask = "net"; } |
+	HIGH
+	      = { cur.d_mask = "high"; } |
 	FLAGS NUMBER
 	      = { cur.d_flags = $2; };
 
