@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.46 2003/01/26 06:20:30 matt Exp $
+$NetBSD: miidevs,v 1.47 2003/05/02 19:39:29 scw Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ model yyAMD 79c901home		0x0039 Am79C901 HomePNA 1.0 interface
 model xxBROADCOM 3C905B		0x0012 Broadcom 3c905B internal PHY
 model xxBROADCOM 3C905C		0x0017 Broadcom 3c905C internal PHY
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
+model xxBROADCOM BCM5214	0x0028 BCM5214 Quad 10/100 media interface
 model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
