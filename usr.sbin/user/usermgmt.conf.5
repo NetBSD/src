@@ -1,4 +1,4 @@
-.\" $NetBSD: usermgmt.conf.5,v 1.2 2002/06/01 09:21:11 wiz Exp $
+.\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,16 +66,17 @@ See
 .Xr login.conf 5
 for more information on user login classes.
 .It Ic expire
-sets the default time at which the current password expires. This
-can be used to implement password aging.  Both the
+sets the default time at which the current password expires.
+This can be used to implement password aging.
+Both the
 .Ar expire
 and
 .Ar inactive
 fields should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
-sufficient), day is the day of the month, and year is the year. Time
-in seconds since the epoch (UTC) is also valid.
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
 .It Ic group
 sets the default primary group for new users.
