@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.51 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.52 2004/03/19 15:31:04 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.52 2004/03/19 15:31:04 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,8 +168,6 @@ CFATTACH_DECL(zs, sizeof(struct zsc_softc),
     zs_match_sbus, zs_attach_sbus, NULL, NULL);
 
 extern struct cfdriver zs_cd;
-extern int stdinnode;
-extern int fbnode;
 
 /* Interrupt handlers. */
 int zscheckintr __P((void *));
