@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/06/11 11:35:21 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2000/06/14 10:24:24 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -60,9 +60,9 @@ release:
 	@false
 .else
 release:
-	-mkdir -p ${RELEASEDIR}/installation/floppies
-	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppies
-	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppies/${IMAGE}.gz
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip -c -9 ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
 .endif
 
 clean cleandir distclean:
