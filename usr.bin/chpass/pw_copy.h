@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	@(#)pw_copy.h	8.1 (Berkeley) 4/2/94
  */
 
-#include <paths.h>
-
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/chpass.XXXXXX"
+void	 pw_copy __P((int, int, struct passwd *));
