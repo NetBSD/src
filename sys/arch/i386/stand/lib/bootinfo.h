@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.4 1999/03/08 21:44:48 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5 1999/03/10 01:28:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -38,8 +38,6 @@ struct bootinfo {
 	int nentries;
 	physaddr_t entry[1];
 };
-
-#define BI_NHD	16
 
 extern struct bootinfo *bootinfo;
 
