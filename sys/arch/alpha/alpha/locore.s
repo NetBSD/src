@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.57 1999/02/23 03:20:02 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.58 1999/03/12 23:03:31 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.57 1999/02/23 03:20:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.58 1999/03/12 23:03:31 perry Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1097,15 +1097,12 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 /*
  * Copy a bytes within the kernel's address space.
  *
- * In the kernel, bcopy() doesn't have to handle the overlapping
- * case; that's that ovbcopy() is for.  However, it doesn't hurt
- * to do both in bcopy, and it does provide a measure of safety.
+ * Although bcopy() is not specified to handle overlapping regions,
+ * this version does do so.
  *
  * void bcopy(char *from, char *to, size_t len);
- * void ovbcopy(char *from, char *to, size_t len);
  */
 LEAF(bcopy,3)
-XLEAF(ovbcopy,3)
 
 	/* Check for negative length */
 	ble	a2,bcopy_done
