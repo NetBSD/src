@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.5 2002/11/01 05:47:23 simonb Exp $
+# $NetBSD: files.sbmips,v 1.6 2002/11/09 05:36:49 cgd Exp $
 
 maxpartitions 8
 
@@ -13,11 +13,7 @@ file arch/sbmips/sbmips/systemsw.c
 file dev/clock_subr.c
 file dev/cons.c
 
-file arch/sbmips/sbmips/sb1250_icu.c	!ikos
-
-file arch/sbmips/ikos/ikos_clock.c	ikos
-file arch/sbmips/ikos/ikos_icu.c	ikos
-file arch/sbmips/ikos/ikoscons.c	ikos
+file arch/sbmips/sbmips/sb1250_icu.c
 
 file arch/mips/cfe/cfe_api.c
 

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2002/03/06 02:13:50 simonb Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2002/11/09 05:36:50 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -40,10 +40,6 @@
 #include <sys/device.h>
 #include <machine/intr.h>
 
-#ifdef IKOS
-#include <sbmips/ikos/ikosvar.h>
-#endif
-
 struct device	*booted_device;
 int		booted_partition;
 
@@ -53,14 +49,8 @@ cpu_configure(void)
 
 	(void)splhigh();
 
-#ifdef IKOS
-	ikos_icu_init();
-	if (system_set_clockfns(NULL, ikos_clock_init))
-		panic("couldn't set clock init to ikos_clock_init");
-#else
 	if (config_rootfound("zbbus", NULL) == NULL)
 		panic("no zbbus found");
-#endif
 
 	_splnone();
 }
