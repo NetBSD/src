@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.30 2002/02/14 07:08:02 chs Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.30.8.1 2002/05/16 12:19:32 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.30 2002/02/14 07:08:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.30.8.1 2002/05/16 12:19:32 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -122,19 +122,24 @@ void eshwatchdog __P((struct ifnet *));
 
 /* Routines to support FP operation */
 
-int esh_fpopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-int esh_fpclose __P((dev_t dev, int fflag, int devtype, struct proc *));
-int esh_fpread __P((dev_t dev, struct uio *uio, int ioflag));
-int esh_fpwrite __P((dev_t dev, struct uio *uio, int ioflag));
-static void esh_fpstrategy __P((struct buf *bp));
-int esh_fpioctl __P((dev_t dev, u_long cmd, caddr_t data,
-		     int fflag, struct proc *p));
-void esh_fpstop __P((struct tty *tp, int rw));
-int esh_fppoll __P((dev_t dev, int events, struct proc *p));
-
+dev_type_open(esh_fpopen);
+dev_type_close(esh_fpclose);
+dev_type_read(esh_fpread);
+dev_type_write(esh_fpwrite);
 #ifdef MORE_DONE
-paddr_t esh_fpmmap __P((dev_t, off_t, int));
+dev_type_mmap(esh_fpmmap);
 #endif
+dev_type_strategy(esh_fpstrategy);
+
+const struct cdevsw esh_cdevsw = {
+	esh_fpopen, esh_fpclose, esh_fpread, esh_fpwrite, nullioctl,
+	nostop, notty, nullpoll,
+#ifdef MORE_DONE
+	esh_fpmmap,
+#else
+	nommap,
+#endif
+};
 
 /* General routines, not externally visable */
 
@@ -1314,7 +1319,7 @@ fpwrite_done:
 	return error;
 }
 
-static void 
+void 
 esh_fpstrategy(bp)
 	struct buf *bp;
 {
@@ -1414,36 +1419,6 @@ done:
 #endif
 	biodone(bp);
 }
-
-
-int 
-esh_fpioctl(dev, cmd, data, fflag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int fflag;
-	struct proc *p;
-{
-	return 0;
-}
-
-
-void 
-esh_fpstop(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-}
-
-int 
-esh_fppoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return 0;
-}
-
 
 /*
  * Handle interrupts.  This is basicly event handling code;  version two
