@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.3 1998/07/08 04:59:02 thorpej Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.4 1998/07/27 00:48:15 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -49,7 +49,7 @@ ofisa_get_isabus_data(phandle, iba)
 {
 
 	iba->iba_iot = &isa_io_bs_tag;
-	iba->iba_memt = &isa_io_bs_tag;
+	iba->iba_memt = &isa_mem_bs_tag;
 	iba->iba_dmat = &isa_bus_dma_tag;
 	iba->iba_ic = &isa_chipset_tag;
 
