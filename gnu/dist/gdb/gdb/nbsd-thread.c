@@ -145,7 +145,7 @@ nbsd_thread_activate ()
   nbsd_thread_active = 1;
   nbsd_find_new_threads ();
   ptid = find_active_thread ();
-  if (ptid_equals (ptid, minus_one_ptid))
+  if (ptid_equal (ptid, minus_one_ptid))
     error ("No active thread found\n");
   inferior_ptid = ptid;
 }
@@ -276,7 +276,7 @@ nbsd_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
   if (!ptid_equal(ptid, minus_one_ptid))
     ptid = inferior_ptid;
   rtnval = child_ops.to_wait (ptid, ourstatus);
-  if (ptid_equals (rtnval, minus_one_ptid) && nbsd_thread_active)
+  if (ptid_equal (rtnval, minus_one_ptid) && nbsd_thread_active)
     {
       rtnval = find_active_thread ();
       if (ptid_equal (rtnval, minus_one_ptid))
@@ -300,7 +300,7 @@ nbsd_thread_fetch_registers (int regno)
 
   old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
+  if (nbsd_thread_active && !ptid_equal (inferior_ptid, minus_one_ptid))
     {
       if ((val = td_map_id2thr (main_ta, TIDGET (inferior_ptid), &thread)) != 0)
 	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
@@ -339,7 +339,7 @@ nbsd_thread_store_registers (int regno)
 
   old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
+  if (nbsd_thread_active && !ptid_equal (inferior_ptid, minus_one_ptid))
     {
       val = td_map_id2thr (main_ta, TIDGET (inferior_ptid), &thread);
       if (val != 0)
