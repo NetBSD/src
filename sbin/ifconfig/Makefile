@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.27 2005/03/20 02:44:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.28 2005/03/20 14:24:13 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
+
+# when making a change to this file, please check if the change is
+# also needed for src/distrib/utils/x_ifconfig/Makefile.
 
 .include <bsd.own.mk>
 
