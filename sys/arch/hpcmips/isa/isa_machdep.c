@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2000/09/25 09:03:32 sato Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2000/10/16 03:32:44 sato Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -83,6 +83,15 @@ struct cfattach vrisab_ca = {
 static void __find_pcic __P((void));
 #endif
 
+#ifdef DEBUG_FIND_COMPORT
+#include <mips/cpuregs.h>
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
+#warning DEBUG_FIND_COMPORT
+static void __find_comport __P((void));
+#endif
+
+
 int
 vrisabmatch(parent, match, aux)
 	struct device *parent;
@@ -152,6 +161,11 @@ vrisabattach(parent, self, aux)
 		iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
 		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
 	config_found(self, &iba, vrisabprint);
+#endif
+
+#ifdef DEBUG_FIND_COMPORT
+#warning DEBUG_FIND_COMPORT
+	__find_comport();
 #endif
 }
 
@@ -273,6 +287,7 @@ isa_intr_alloc(ic, mask, type, irq)
 	return 0;
 }
 
+
 #ifdef DEBUG_FIND_PCIC
 #warning DEBUG_FIND_PCIC
 static void
@@ -306,6 +321,56 @@ __find_pcic(void)
 	for (i = VR_ISA_PORT_BASE; i < VR_ISA_PORT_BASE+VR_ISA_PORT_SIZE; i+= step) {
 		__read_revid (0x3e0);
 		__read_revid (0x3e2);
+	}
+}
+#endif
+
+
+#ifdef DEBUG_FIND_COMPORT
+#warning DEBUG_FIND_COMPORT
+
+static int probe_com __P((u_int32_t));
+
+static int  probe_com( port_addr )
+	u_int32_t	port_addr;
+{
+	u_int32_t	addr;
+	u_int8_t	ubtmp1;
+	u_int8_t	ubtmp2;
+
+	addr = MIPS_PHYS_TO_KSEG1( port_addr );
+
+	*((volatile u_int8_t*)(addr + com_cfcr)) = LCR_8BITS;
+	*((volatile u_int8_t*)(addr + com_iir)) = 0;
+
+	ubtmp1 = *((volatile u_int8_t*)(addr + com_cfcr));
+	ubtmp2 = *((volatile u_int8_t*)(addr + com_iir));
+
+	if( (ubtmp1 != LCR_8BITS) || ((ubtmp2 & 0x38) != 0) ){
+		return( 0 );
+	}
+
+	return( 1 );
+}
+
+static void
+__find_comport(void)
+{
+	int	found;
+	u_int32_t	port;
+	u_int32_t	step;
+
+	found = 0;
+	step = 0x08;
+
+	printf("Searching COM port. Trying ISA port %#x-%#x step %#x\n",
+		   VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE - 1, step );
+
+	for( port = VR_ISA_PORT_BASE ; port < (VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE) ; port += step ){
+		if( probe_com( port ) ){
+			found++;
+			printf("found %d at %#x\n",found,port);
+		}
 	}
 }
 #endif
