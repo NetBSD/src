@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.14 1995/06/18 10:59:46 cgd Exp $	*/
+/*	$NetBSD: umount.c,v 1.15 1995/09/22 02:03:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: umount.c,v 1.14 1995/06/18 10:59:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: umount.c,v 1.15 1995/09/22 02:03:48 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,13 +196,15 @@ umountfs(name)
 		return (1);
 	}
 
-	name = rname;
+	mntpt = name = rname;
 
 	if (stat(name, &sb) < 0) {
-		if (((mntpt = getmntname(name, MNTFROM, type)) == NULL) &&
-		    ((mntpt = getmntname(name, MNTON, type)) == NULL)) {
-			warnx("%s: not currently mounted", name);
-			return (1);
+		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
+			name = rname;
+			if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
+				warnx("%s: not currently mounted", name);
+				return (1);
+			}
 		}
 	} else if (S_ISBLK(sb.st_mode)) {
 		if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
@@ -210,7 +212,6 @@ umountfs(name)
 			return (1);
 		}
 	} else if (S_ISDIR(sb.st_mode)) {
-		mntpt = name;
 		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
 			warnx("%s: not currently mounted", mntpt);
 			return (1);
