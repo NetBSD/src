@@ -6,6 +6,7 @@
 ./usr/include/machine/kbio.h
 ./usr/include/machine/kcore.h
 ./usr/include/machine/opmbellio.h
+./usr/include/machine/parioctl.h
 ./usr/include/machine/pci_machdep.h
 ./usr/include/machine/powioctl.h
 ./usr/include/machine/remote-sl.h
