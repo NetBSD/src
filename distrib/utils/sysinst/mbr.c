@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.21 2000/03/14 22:42:48 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.22 2000/05/27 18:41:36 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -505,13 +505,12 @@ convert_mbr_chs(cyl, head, sec, cylp, headp, secp, relsecs)
 {
 	unsigned int tcyl, temp, thead, tsec;
 
+	temp = cyl * head * sec - 1;
+	if (relsecs >= temp)
+		relsecs = temp;
+
 	temp = head * sec;
 	tcyl = relsecs / temp;
-
-	if (tcyl >= 1024) {
-		*cylp = *headp = *secp = 0xff;
-		return;
-	}
 
 	relsecs %= temp;
 	thead = relsecs / sec;
