@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.26 1997/06/11 10:10:19 bouyer Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.27 1997/06/26 22:23:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -853,7 +853,9 @@ abortit:
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip || (fcnp->cn_flags&ISDOTDOT) ||
+		    dp == ip ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
+		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp);
 			error = EINVAL;
