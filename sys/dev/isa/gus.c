@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.8 1996/02/17 03:35:22 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.9 1996/02/17 04:49:50 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -667,7 +667,7 @@ struct audio_device gus_device = {
 
 int
 gusprobe(parent, match, aux)
-	struct device *parent, *self;
+	struct device *parent;
 	void *match, *aux;
 {
 	register struct gus_softc *sc = match;
