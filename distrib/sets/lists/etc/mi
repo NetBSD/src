@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.70 2000/10/14 01:33:04 wiz Exp $
+# $NetBSD: mi,v 1.71 2000/10/16 13:38:45 simonb Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -157,6 +157,11 @@
 ./etc/security.conf
 ./etc/services
 ./etc/shells
+./etc/skel/.cshrc
+./etc/skel/.login
+./etc/skel/.mailrc
+./etc/skel/.profile
+./etc/skel/.rhosts
 ./etc/skeykeys
 ./etc/spwd.db
 ./etc/ssh.conf
