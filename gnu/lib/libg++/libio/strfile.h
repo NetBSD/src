@@ -40,7 +40,11 @@ typedef struct _IO_strfile_
 {
   struct _IO_FILE _f;
   const void *_vtable;
-  struct _IO_str_fields _s;
+  struct _IO_str_fields _s __attribute__ ((aligned(8)));
+	/*
+	 * XXX This alignment is a workaround for a Sparc alignment problem.
+	 * see NetBSD PR #3417.
+	 */
 } _IO_strfile;
 
 /* dynamic: set when the array object is allocated (or reallocated)  as
