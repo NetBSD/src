@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.437 2004/09/10 03:09:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.438 2004/09/10 06:52:53 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7143,6 +7143,14 @@ sys/dev/mca/if_we_mca.c				1.10
 
 sys/dev/mca/if_we_mca.c				1.11
 
-	Compute the shared memory location instead of hardcoding list of "known"
-	pos3 values for 8013 variants. PR#26877
+	Compute the shared memory location instead of hardcoding list of
+	"known" pos3 values for 8013 variants. PR#26877
 	[jdolecek, ticket #822]
+
+sys/dev/ic/ac97.c				1.59
+
+	Check power states after codec reset. This change fixes a
+	resume problem on some boards.
+	Patch provided by Joachim Thiemann in PR kern/26457
+	[kent, ticket #823]
+
