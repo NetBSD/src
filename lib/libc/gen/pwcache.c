@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.27 2004/05/18 22:14:35 sjg Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.28 2004/06/18 20:34:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -68,6 +68,12 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+/*
+ * XXX Undefine the renames of these functions so that we don't
+ * XXX rename the versions found in the host's <pwd.h> by mistake!
+ */
+#undef group_from_gid
+#undef user_from_uid
 #endif
 
 #include <sys/cdefs.h>
@@ -75,7 +81,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.27 2004/05/18 22:14:35 sjg Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.28 2004/06/18 20:34:58 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,6 +97,12 @@ __RCSID("$NetBSD: pwcache.c,v 1.27 2004/05/18 22:14:35 sjg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+/* XXX Now, re-apply the renaming that we undid above. */
+#define	group_from_gid	__nbcompat_group_from_gid
+#define	user_from_uid	__nbcompat_user_from_uid
+#endif
 
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
