@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.7 1997/10/08 01:08:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $";
+static char rcsid[] = "$NetBSD: telnetd.c,v 1.7 1997/10/08 01:08:08 enami Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(argc, argv)
 	highpty = getnpty();
 #endif /* CRAY */
 
-	while ((ch = getopt(argc, argv, valid_opts)) != EOF) {
+	while ((ch = getopt(argc, argv, valid_opts)) != -1) {
 		switch(ch) {
 
 #ifdef	AUTHENTICATION
