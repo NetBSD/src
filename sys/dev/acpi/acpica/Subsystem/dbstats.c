@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              $Revision: 1.10 $
+ *              xRevision: 68 $
  *
  ******************************************************************************/
 
@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.11 2003/11/09 11:50:59 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"

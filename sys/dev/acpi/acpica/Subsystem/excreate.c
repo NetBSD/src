@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              $Revision: 1.7 $
+ *              xRevision: 100 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
 
 #define __EXCREATE_C__
 

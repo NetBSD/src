@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              $Revision: 1.8 $
+ *              xRevision: 190 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.9 2003/11/09 11:51:01 kochi Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              $Revision: 1.9 $
+ *              xRevision: 113 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.10 2003/11/09 11:51:01 kochi Exp $");
 
 #define __UTCOPY_C__
 
