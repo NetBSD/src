@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 1998/11/24 06:05:34 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -82,6 +82,7 @@ static char rcsid[] = "Id: debug.c,v 8.11 1998/03/19 19:30:54 halley Exp";
 #include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "port_after.h"
 
