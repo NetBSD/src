@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.2 2003/07/19 04:52:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_I82489REG_H_
-#define _X86_I82489REG_H_
+#ifndef _X86_I82489VAR_H_
+#define _X86_I82489VAR_H_
 
 /*
  * Software definitions belonging to Local APIC driver.
