@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.18 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.19 1999/04/30 21:23:50 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -288,13 +288,10 @@ uvm_fork(p1, p2, shared)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
-	 * p_stats and p_sigacts currently point at fields in the user
-	 * struct but not at &u, instead at p_addr.  Copy p_sigacts and
-	 * parts of p_stats; zero the rest of p_stats (statistics).
+	 * p_stats currently points at a field in the user struct.  Copy
+	 * parts of p_stats, and zero out the rest.
 	 */
 	p2->p_stats = &up->u_stats;
-	p2->p_sigacts = &up->u_sigacts;
-	up->u_sigacts = *p1->p_sigacts;
 	memset(&up->u_stats.pstat_startzero, 0,
 	(unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
 		    (caddr_t)&up->u_stats.pstat_startzero));
