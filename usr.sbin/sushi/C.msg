@@ -17,7 +17,7 @@ $set 1 errors
 16 cannot allocate scroll widget
 17 select failure
 18 can't stat
-19 No menu hierchy found.
+19 No menu hierarchy found.
 20 Bad keybinding
 21 Bad keyword in config file
 22 Null filename in escript argument
@@ -52,7 +52,7 @@ $set 3 run.c stuff
 11 the pre-defined list.  Please use TAB or the List(F4) command to edit.
 12 Press the ENTER key to return from the list popup.
 13 The current field is a multiple-selection list field.  The field can only
-14 be edited by issuing the List(F4) command, and toggling desired options
+14 be edited by issueing the List(F4) command, and toggling desired options
 15 with the spacebar.  Press the ENTER key to return from the list popup.
 16 No help is available for this screen.
 17 Are you sure? (Y/n)

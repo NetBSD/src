@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.41 2005/01/11 22:51:26 peter Exp $       */
+/*      $NetBSD: scanform.c,v 1.42 2005/01/11 23:07:12 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1606,7 +1606,7 @@ tab_help(FORM *form)
 	} else if (*buffer == 'm') {
 		msg[0] = catgets(catalog, 3, 13, "The current field is a "
 		    "multiple-selection list field.  The field can only");
-		msg[1] = catgets(catalog, 3, 14, "be edited by issuing "
+		msg[1] = catgets(catalog, 3, 14, "be edited by issueing "
 		    "the List(F4) command, and toggling desired options");
 		msg[2] = catgets(catalog, 3, 15, "with the spacebar.  "
 		    "Press the ENTER key to return from the list popup.");
