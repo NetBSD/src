@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.11 1995/01/18 16:22:35 mycroft Exp $	*/
+/*	$NetBSD: disk.c,v 1.12 1995/03/12 00:10:58 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -153,6 +153,8 @@ Bread(sector, addr)
 	int sector;
 	void *addr;
 {
+	int error;
+
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
 
@@ -163,13 +165,10 @@ Bread(sector, addr)
 		if (nsec > RA_SECTORS)
 			nsec = RA_SECTORS;
 		twiddle();
-		if (biosread(dosdev, cyl, head, sec, nsec, ra_buf) != 0) {
+		while ((error = biosread(dosdev, cyl, head, sec, nsec, ra_buf)) != 0) {
+			printf("Error %d: C:%d H:%d S:%d\n", error, cyl, head, sec);
 			nsec = 1;
 			twiddle();
-			while (biosread(dosdev, cyl, head, sec, nsec, ra_buf) != 0) {
-				printf("Error: C:%d H:%d S:%d\n", cyl, head, sec);
-				twiddle();
-			}
 		}
 		ra_dev = dosdev;
 		ra_first = sector;
