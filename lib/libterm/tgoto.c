@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.10 1998/07/27 01:57:26 mycroft Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.11 1998/10/14 13:51:37 agc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.10 1998/07/27 01:57:26 mycroft Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.11 1998/10/14 13:51:37 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ copy:
 				goto one;
 			if (which < 100)
 				goto two;
-			/* fall into... */
+			/* FALLTHROUGH */
 
 		case '3':
 			if (which >= 1000)
@@ -128,7 +128,7 @@ copy:
 			if (dp >= &result[MAXRETURNSIZE])
 				goto toohard;
 			which %= 100;
-			/* fall into... */
+			/* FALLTHROUGH */
 
 		case '2':
 two:	
@@ -156,7 +156,7 @@ setwhich:
 
 		case '+':
 			which += *cp++;
-			/* fall into... */
+			/* FALLTHROUGH */
 
 		case '.':
 			/*
