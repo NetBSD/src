@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.3 1998/01/15 22:36:41 cgd Exp $	*/
+/*	$NetBSD: mdb.c,v 1.4 1998/03/30 02:28:37 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 
 /* Data */
 #define MAX 500
-static menu_no = 0;
+static int menu_no = 0;
 static id_rec *menus[MAX];
 
 
