@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.132 2001/01/17 00:07:19 fvdl Exp $
+# $NetBSD: files.alpha,v 1.133 2001/02/23 07:21:41 nisimura Exp $
 #
 # alpha-specific configuration info
 
@@ -166,15 +166,20 @@ file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 #  IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
-# Color Frame buffer
+# PMAG-B CX
 device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb		needs-flag
 
-# Smart Frame buffer
+# PMAGB-B HX or CXT
 device	sfb: wsemuldisplaydev, rasops8
 attach	sfb at tc
 file	dev/tc/sfb.c			sfb		needs-flag
+
+# PMAGD HX+
+device	sfbp: wsemuldisplaydev, rasops32
+attach	sfbp at tc
+file	dev/tc/sfbplus.c		sfbp		needs-flag
 
 # 8530 UARTs
 device	scc: tty
