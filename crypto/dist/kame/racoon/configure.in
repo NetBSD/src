@@ -649,8 +649,9 @@ if test $signing = "yes"; then
 fi
 AC_CHECK_HEADERS(openssl/cversion.h openssl/opensslv.h)
 
-dnl checking rijndael
 AC_SUBST(CRYPTOBJS)
+
+dnl checking rijndael
 AC_CHECK_HEADER(openssl/rijndael.h, [], [
 	CPPFLAGS="$CPPFLAGS -I./missing"
 	CRYPTOBJS="$CRYPTOBJS rijndael-api-fst.o rijndael-alg-fst.o"
@@ -663,9 +664,9 @@ AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
 yes
 #endif],
 [AC_MSG_RESULT(no)
-        echo "WARNING: sha2 does not work."],
+        echo "WARNING: missing/crypto/sha2 is not compatible with this openssl."
+        echo "WARNING: sha2 disabled."],
 [AC_MSG_RESULT(yes)
- AC_SUBST(CRYPTOBJS)
  AC_DEFINE(WITH_SHA2)
  AC_CHECK_HEADER(openssl/sha2.h, [], [
 	CPPFLAGS="$CPPFLAGS -I./missing"
