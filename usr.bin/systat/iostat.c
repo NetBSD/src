@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.31 2005/02/26 22:11:06 dsl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.32 2005/02/26 22:28:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.31 2005/02/26 22:11:06 dsl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.32 2005/02/26 22:28:23 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ numlabels(int row)
 {
 	int i, col, regions, ndrives;
 
-#define COLWIDTH	(8 + secs * 5 + read_write * 9 + 2)
+#define COLWIDTH	(9 + secs * 5 + 1 + read_write * 9 + 1)
 #define DRIVESPERLINE	((getmaxx(wnd) + 1) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
@@ -149,16 +149,16 @@ numlabels(int row)
 				if (row > getmaxy(wnd) - (linesperregion))
 					break;
 			}
-			mvwprintw(wnd, row, col + 4, "%s", cur.dk_name[i]);
+			mvwprintw(wnd, row, col + 5, "%s", cur.dk_name[i]);
 			if (read_write)
-				mvwprintw(wnd, row, col + 9 + secs * 5,
+				mvwprintw(wnd, row, col + 11 + secs * 5,
 				    "(write)");
-			mvwprintw(wnd, row + 1, col, "kBps %s",
+			mvwprintw(wnd, row + 1, col, " kBps %s",
 				read_write ? "r/s" : "tps");
 			if (secs)
 				waddstr(wnd, "  sec");
 			if (read_write)
-				waddstr(wnd, " kBps w/s");
+				waddstr(wnd, "  kBps w/s");
 			col += COLWIDTH;
 		}
 	if (col)
@@ -258,12 +258,12 @@ stats(int row, int col, int dn)
 		rxfer += cur.dk_wxfer[dn];
 	}
 	if (numbers) {
-		mvwprintw(wnd, row, col, "%4.0f%4.0f",
+		mvwprintw(wnd, row, col, "%5.0f%4.0f",
 		    rwords / etime, rxfer / etime);
 		if (secs)
 			wprintw(wnd, "%5.1f", atime / etime);
 		if (read_write)
-			wprintw(wnd, " %4.0f%4.0f",
+			wprintw(wnd, " %5.0f%4.0f",
 			    wwords / etime, cur.dk_wxfer[dn] / etime);
 		return (row);
 	}
