@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.8 1996/12/09 09:57:41 mrg Exp $	*/
+/*	$NetBSD: displayq.c,v 1.9 1997/04/19 06:33:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -89,7 +89,7 @@ displayq(format)
 	int format;
 {
 	register struct queue *q;
-	register int i, nitems, fd, ret;
+	register int i, nitems, fd, ret, c;
 	register char	*cp;
 	struct queue **queue;
 	struct stat statb;
@@ -163,7 +163,7 @@ displayq(format)
 		else {
 			/* get daemon pid */
 			cp = current;
-			while ((*cp = getc(fp)) != EOF && *cp != '\n')
+			while ((c = getc(fp)) != EOF && (*cp = c) != '\n')
 				cp++;
 			*cp = '\0';
 			i = atoi(current);
@@ -179,7 +179,8 @@ displayq(format)
 			} else {
 				/* read current file name */
 				cp = current;
-				while ((*cp = getc(fp)) != EOF && *cp != '\n')
+				while ((c = getc(fp)) != EOF &&
+				    (*cp = c) != '\n')
 					cp++;
 				*cp = '\0';
 				/*
