@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.71 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.72 2003/03/10 20:50:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.71 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.72 2003/03/10 20:50:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -512,7 +512,8 @@ tlp_pci_attach(parent, self, aux)
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
+			printf("%s: waking up from power state D%d\n%s",
+			    sc->sc_dev.dv_xname,
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
@@ -523,8 +524,8 @@ tlp_pci_attach(parent, self, aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf(": unable to wake up from power state D3, "
-			       "reboot required.\n");
+			printf("%s: unable to wake up from power state D3, "
+			       "reboot required.\n", sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
@@ -549,7 +550,8 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
