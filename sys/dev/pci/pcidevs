@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.594 2003/11/28 05:59:41 cube Exp $
+$NetBSD: pcidevs,v 1.595 2003/11/28 20:04:16 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2396,7 +2396,10 @@ product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
 product TAMARACK	TC9021		0x1021	Tamarack TC9021 Gigabit Ethernet
 product TAMARACK	TC9021_ALT	0x9021	Tamarack TC9021 Gigabit Ethernet (alt ID)
 
-/* Tekram Technology products (1st PCI Vendor ID)*/
+/* Tandem Computers */
+product TANDEM SERVERNETII	0x0005	ServerNet II VIA adapter
+
+/* Tekram Technology products (1st PCI Vendor ID) */
 product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
@@ -2504,10 +2507,13 @@ product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-product TRIONES HPT366		0x0004	HPT366/370 IDE Controller
-product TRIONES HPT372		0x0005	HPT372 IDE Controller
+product TRIONES HPT343		0x0003	HPT343/345 IDE Controller
+product TRIONES HPT366		0x0004	HPT366/370/372 IDE Controller
+product TRIONES HPT372A		0x0005	HPT372A IDE Controller
 product TRIONES HPT302		0x0006	HPT302 IDE Controller
+product TRIONES HPT371		0x0007	HPT371 IDE Controller
 product TRIONES HPT374		0x0008	HPT374 IDE Controller
+product TRIONES HPT372N		0x0009	HPT372N IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
