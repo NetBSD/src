@@ -1,7 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.1 1999/09/13 10:30:34 itojun Exp $	*/
-#ifndef _EVBSH3_IEEE_H_
-#define _EVBSH3_IEEE_H_
+/*	$NetBSD: ieee.h,v 1.2 2003/10/23 13:02:52 kleink Exp $	*/
 
 #include <sh3/ieee.h>
-
-#endif /* _EVBSH3_IEEE_H_ */
