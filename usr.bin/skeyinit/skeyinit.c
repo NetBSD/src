@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.20 2002/11/16 05:24:44 itojun Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.21 2003/05/17 21:05:10 itojun Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -84,8 +84,8 @@ int main(int argc, char **argv)
 
 	defaultseed[SKEY_NAMELEN] = '\0';
 	(void)time(&now);
-	(void)sprintf(tbuf, "%05ld", (long) (now % 100000));
-	(void)strncat(defaultseed, tbuf, sizeof(defaultseed) - 5);
+	(void)snprintf(tbuf, sizeof(tbuf), "%05ld", (long) (now % 100000));
+	(void)strlcat(defaultseed, tbuf, sizeof(defaultseed));
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %ld", (u_long)getuid());
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 			}
 			if (isdigit((unsigned char)lastc) && lastc == '9' &&
 			    l < 16) {
-				(void)strncpy(defaultseed, skey.seed,
+				(void)strlcpy(defaultseed, skey.seed,
 				    sizeof(defaultseed));
 				defaultseed[l - 1] = '0';
 				defaultseed[l] = '0';
