@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/08/14 12:36:10 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/08/14 13:55:57 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -19,12 +19,12 @@ _CURDIR?=${.CURDIR}
 MKTOOLS?=no
 .if ${MKTOOLS} == "always"
 build:
-	@cd ${_CURDIR} && ${MAKE} cleandir
 .else
 build: ${TIMESTAMP}
 ${TIMESTAMP}: ${_CURDIR}/Makefile
 .endif
 .if ${MKTOOLS} != "no"
+	@cd ${_CURDIR} && ${MAKE} cleandir
 	@cd ${_CURDIR} && ${MAKE} all
 	@cd ${_CURDIR} && ${MAKE} install
 .else
