@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.15 2003/07/15 02:15:05 lukem Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.15 2003/07/15 02:15:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16 2004/03/19 20:17:51 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -66,6 +66,7 @@ struct cpuq {
 SIMPLEQ_HEAD(, cpuq) cpuq = SIMPLEQ_HEAD_INITIALIZER(cpuq);
 
 extern long avail_start, avail_end, proc0paddr;
+struct cpu_info_qh cpus = SIMPLEQ_HEAD_INITIALIZER(cpus);
 
 void
 cpu_boot_secondary_processors()
@@ -124,11 +125,12 @@ cpu_slavesetup(struct device *dev)
 	ci = &sc->sc_ci;
 	ci->ci_dev = dev;
 	ci->ci_exit = scratch;
-	(u_long)ci->ci_pcb = (u_long)pcb & ~KERNBASE;
+	ci->ci_pcb = (void *)((intptr_t)pcb & ~KERNBASE);
 	ci->ci_istack = istackbase + PAGE_SIZE;
-	pcb->KSP = (u_long)pcb + USPACE; /* Idle kernel stack */
-	pcb->SSP = (u_long)ci;
-	pcb->PC = (u_long)slaverun + 2;
+	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);
+	pcb->KSP = (uintptr_t)pcb + USPACE; /* Idle kernel stack */
+	pcb->SSP = (uintptr_t)ci;
+	pcb->PC = (uintptr_t)slaverun + 2;
 	pcb->PSL = 0;
 
 	cq = malloc(sizeof(*cq), M_TEMP, M_NOWAIT);
