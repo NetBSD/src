@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.1.1.4 2000/07/20 05:50:24 mellon Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.2 2000/10/11 20:23:51 is Exp $";
 #endif /* not lint */
 
 /*
@@ -73,7 +73,8 @@ struct zonegrp {
 
 static int	nscopy(struct sockaddr_in *, const struct sockaddr_in *, int);
 static int	nsprom(struct sockaddr_in *, const struct in_addr *, int);
-static void	dprintf(const char *, ...);
+static void	dprintf(const char *, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 
 void tkey_free (ns_tsig_key **);
 

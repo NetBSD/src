@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.25 1999/12/01 22:12:52 wennmach Exp $	*/
+/*	$NetBSD: create.c,v 1.26 2000/10/11 20:23:54 is Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.25 1999/12/01 22:12:52 wennmach Exp $");
+__RCSID("$NetBSD: create.c,v 1.26 2000/10/11 20:23:54 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,8 @@ static char codebuf[4*MAXPATHLEN + 1];
 static const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 
 static int	dsort __P((const FTSENT **, const FTSENT **));
-static void	output __P((int *, const char *, ...));
+static void	output __P((int *, const char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *,
 			   u_long *));
 static void	statf __P((FTSENT *));
@@ -191,7 +192,7 @@ statf(p)
 		    crc(fd, &val, &len))
 			mtree_err("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
-		output(&indent, "cksum=%lu", val);
+		output(&indent, "cksum=%lu", (long)val);
 	}
 	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
 		if ((md5cp = MD5File(p->fts_accpath, md5buf)) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.7 2000/05/19 10:43:36 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.8 2000/10/11 20:23:54 is Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -69,7 +69,7 @@ static char dumpfilename[] = _PATH_PIM6D_DUMP;
 static char cachefilename[] = _PATH_PIM6D_CACHE; /* TODO: notused */
 
 static char *sec2str __P((time_t));
-
+	
 static char *
 sec2str(total)
 	time_t total;

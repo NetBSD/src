@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.4 1998/05/09 17:22:07 kleink Exp $	*/
+/*	$NetBSD: mapper.c,v 1.5 2000/10/11 20:23:53 is Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -91,6 +91,10 @@ int			get_number __P((int *var, int deflt, char ***pargv,
 						int *pargc));
 u_int32_t			host_addr __P((char *name));
 
+#ifdef __STDC__
+void log(int severity, int syserr, const char *format, ...)
+	__attribute__((__format__(__printf__, 3, 4)));
+#endif
 
 Node *find_node(addr, ptr)
     u_int32_t addr;
@@ -160,7 +164,7 @@ Neighbor *find_neighbor(addr, node)
  */
 #ifdef __STDC__
 void
-log(int severity, int syserr, char *format, ...)
+log(int severity, int syserr, const char *format, ...)
 {
 	va_list ap;
 	char    fmt[100];
@@ -189,7 +193,8 @@ log(severity, syserr, format, va_alist)
 	    if (severity == LOG_WARNING)
 		strcat(fmt, "warning - ");
 	    strncat(fmt, format, 80);
-	    vfprintf(stderr, fmt, ap);
+	    format = fmt;
+	    vfprintf(stderr, format, ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
 	    else

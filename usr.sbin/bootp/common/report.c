@@ -1,8 +1,8 @@
-/*	$NetBSD: report.c,v 1.4 1998/07/26 15:33:34 mycroft Exp $	*/
+/*	$NetBSD: report.c,v 1.5 2000/10/11 20:23:49 is Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: report.c,v 1.4 1998/07/26 15:33:34 mycroft Exp $");
+__RCSID("$NetBSD: report.c,v 1.5 2000/10/11 20:23:49 is Exp $");
 #endif
 
 /*
@@ -98,13 +98,13 @@ static int numlevels = sizeof(levelnames) / sizeof(levelnames[0]);
  */
 #ifdef	__STDC__
 void
-report(int priority, char *fmt,...)
+report(int priority, const char *fmt,...)
 #else
 /*VARARGS2*/
 void
 report(priority, fmt, va_alist)
 	int priority;
-	char *fmt;
+	const char *fmt;
 	va_dcl
 #endif
 {

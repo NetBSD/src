@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 1999/08/24 15:52:53 bouyer Exp $	*/
+/*	$NetBSD: log.c,v 1.6 2000/10/11 20:23:57 is Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -88,7 +88,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		closelog ();
 		exit (retval);
 	}
@@ -118,7 +118,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		return;
 	}
 	fprintf (stderr,"SUP: %s\n",buf);
@@ -148,7 +148,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_INFO,buf);
+		syslog (LOG_INFO, "%s", buf);
 		return;
 	}
 	printf ("%s\n",buf);
@@ -195,7 +195,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (deny_severity, buf);
+		syslog (deny_severity, "%s", buf);
 		return;
 	}
 	printf ("%s\n",buf);
@@ -225,7 +225,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (allow_severity, buf);
+		syslog (allow_severity, "%s", buf);
 		return;
 	}
 	printf ("%s\n",buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2000/10/11 20:23:50 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,10 +53,13 @@
 #include "config.h"
 
 static void nomem(void);
-static void vxerror(const char *, int, const char *, va_list);
-static void vxwarn(const char *, int, const char *, va_list);
+static void vxerror(const char *, int, const char *, va_list)
+	     __attribute__((__format__(__printf__, 3, 0)));
+static void vxwarn(const char *, int, const char *, va_list)
+	     __attribute__((__format__(__printf__, 3, 0)));
 static void vxmsg(const char *fname, int line, const char *class, 
-		  const char *fmt, va_list);
+		  const char *fmt, va_list)
+     __attribute__((__format__(__printf__, 4, 0)));
 
 /*
  * Malloc, with abort on error.

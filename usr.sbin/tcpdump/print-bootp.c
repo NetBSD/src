@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bootp.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
+/*	$NetBSD: print-bootp.c,v 1.7 2000/10/11 20:23:57 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: print-bootp.c,v 1.45 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-bootp.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.7 2000/10/11 20:23:57 is Exp $");
 #endif
 #endif
 
@@ -394,7 +394,7 @@ static void
 cmu_print(register const u_char *bp, register u_int length)
 {
 	register const struct cmu_vend *cmu;
-	char *fmt = " %s:%s";
+	const char fmt[] = " %s:%s";
 
 #define PRINTCMUADDR(m, s) { TCHECK(cmu->m); \
     if (cmu->m.s_addr != 0) \

@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.30 2000/08/28 21:35:14 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.31 2000/10/11 20:23:55 is Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -165,7 +165,8 @@ typedef int (*matchfn) (const char *found, char *data);
 
 /* Prototypes */
 /* Misc */
-int     vsystem(const char *,...);
+int     vsystem(const char *,...)
+	__attribute__((__format__(__printf__, 1, 2)));
 void    cleanup(int);
 char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);

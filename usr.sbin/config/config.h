@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.50 2000/10/02 19:59:42 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.51 2000/10/11 20:23:49 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,8 @@
 			       (((x) & 0x000000ff) >>  0)))
 #define makedev(x,y)    ((dev_t)((((x) <<  8) & 0x000fff00) | \
                                  (((y) << 12) & 0xfff00000) | \
-                                 (((y) <<  0) & 0x000000ff))) 
+                                 (((y) <<  0) & 0x000000ff)))
+#define __attribute__(x)
 #endif	/* MAKE_BOOTSTRAP */
 
 #define ARRCHR '#'
@@ -437,10 +438,14 @@ char	*estrdup(const char *);
 void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
-void	warn(const char *, ...);			/* immediate warns */
-void	error(const char *, ...);			/* immediate errs */
-void	xerror(const char *, int, const char *, ...);	/* delayed errs */
-__dead void panic(const char *, ...);
+void	warn(const char *, ...)				/* immediate warns */
+     __attribute__((__format__(__printf__, 1, 2)));	
+void	error(const char *, ...)			/* immediate errs */
+     __attribute__((__format__(__printf__, 1, 2)));
+void	xerror(const char *, int, const char *, ...)	/* delayed errs */
+     __attribute__((__format__(__printf__, 3, 4)));
+__dead void panic(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
 struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);

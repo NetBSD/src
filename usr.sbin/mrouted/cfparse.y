@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.5 1998/03/30 02:33:37 mrg Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.6 2000/10/11 20:23:53 is Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -19,8 +19,10 @@
 /*
  * Local function declarations
  */
-static void		fatal __P((char *fmt, ...));
-static void		warn __P((char *fmt, ...));
+static void		fatal __P((char *fmt, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
+static void		warn __P((char *fmt, ...))
+        __attribute__((__format__(__printf__, 1, 2)));
 static void		yyerror __P((char *s));
 static char *		next_word __P((void));
 static int		yylex __P((void));

@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.6 2000/03/01 10:50:01 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.7 2000/10/11 20:23:48 is Exp $
 
 WARNS=0
-
+WFORMAT=2
 BIND_DIR=	${.CURDIR}/..
 BIND_DIST_DIR=	${.CURDIR}/../../../dist/bind
 

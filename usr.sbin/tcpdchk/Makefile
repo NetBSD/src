@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/08/27 16:07:23 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2000/10/11 20:23:57 is Exp $
 
 PROG=	tcpdchk
 SRCS=	tcpdchk.c fakelog.c inetcf.c scaffold.c percent_m.c
@@ -11,5 +11,3 @@ CPPFLAGS+= -I${.CURDIR}/../../lib/libwrap
 .include "${.CURDIR}/../../lib/libwrap/Makefile.cflags"
 
 .include <bsd.prog.mk>
-
-CFLAGS=
