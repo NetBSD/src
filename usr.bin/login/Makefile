@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/07/23 08:01:35 itojun Exp $
+#	$NetBSD: Makefile,v 1.40 2003/08/23 23:03:43 lha Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -27,8 +27,8 @@ LDADD+= -lkrb5 -lasn1
 .if (${USE_KERBEROS4} != "no")
 SRCS+= klogin.c
 CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
-DPADD+=	${LIBKRB}
-LDADD+= -lkrb
+DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+= -lkrb -ldes
 .endif
 
 .if (${USE_KERBEROS4} != "no" || ${USE_KERBEROS} != "no")
