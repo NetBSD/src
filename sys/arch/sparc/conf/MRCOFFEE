@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.1 2003/12/15 19:33:01 martin Exp $
+# $NetBSD: MRCOFFEE,v 1.1.2.1 2004/07/15 20:22:33 he Exp $
 # From: NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.1 $"
+#ident 		"MRCOFFEE-$Revision: 1.1.2.1 $"
 
 maxusers	32
 
@@ -73,6 +73,7 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
