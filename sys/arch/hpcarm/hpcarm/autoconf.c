@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/05/13 13:53:09 bjh21 Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/09/03 05:02:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -184,4 +184,22 @@ void
 device_register(struct device *dev, void *aux)
 {
 }
-/* End of autoconf.c */
+
+/*
+ * This entire table could be autoconfig()ed but that would mean that
+ * the kernel's idea of the console would be out of sync with that of
+ * the standalone boot.  I think it best that they both use the same
+ * known algorithm unless we see a pressing need otherwise.
+ */
+
+#include <dev/cons.h>
+
+cons_decl(com);   
+cons_decl(sacom);
+
+struct consdev constab[] = {
+#if (NSACOM > 0)
+	cons_init(sacom),
+#endif
+	{ 0 },
+};
