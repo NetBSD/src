@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2001/11/20 15:53:22 soren Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.1 2002/07/19 01:41:19 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -103,15 +103,8 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	char sgivolcmd[256];
-	/* boot blocks ... */
-	sprintf(sgivolcmd, "/usr/mdec/sgivol -wqf boot /usr/mdec/boot %s", 
-			diskdev);
-	printf(msg_string(MSG_dobootblks), diskdev);
-	do_system(sgivolcmd);
-	scripting_fprintf(log, "%s\n", sgivolcmd);
-
-	return 0;
+	return run_prog(RUN_DISPLAY, MSG_cmdfail,
+	    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/boot", diskdev);
 }
 
 int
