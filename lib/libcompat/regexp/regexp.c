@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: regexp.c,v 1.3 1993/08/26 00:45:35 jtc Exp $";
+static char *rcsid = "$Id: regexp.c,v 1.4 1995/06/05 19:42:32 pk Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -175,18 +175,18 @@ static long regsize;		/* Code size. */
 #ifndef STATIC
 #define	STATIC	static
 #endif
-STATIC char *reg();
-STATIC char *regbranch();
-STATIC char *regpiece();
-STATIC char *regatom();
-STATIC char *regnode();
-STATIC char *regnext();
-STATIC void regc();
-STATIC void reginsert();
-STATIC void regtail();
-STATIC void regoptail();
+STATIC char *reg __P((int, int *));
+STATIC char *regbranch __P((int *));
+STATIC char *regpiece __P((int *));
+STATIC char *regatom __P((int *));
+STATIC char *regnode __P((char));
+STATIC char *regnext __P((char *));
+STATIC void regc __P((char));
+STATIC void reginsert __P((char, char *));
+STATIC void regtail __P((char *, char *));
+STATIC void regoptail __P((char *, char *));
 #ifdef STRCSPN
-STATIC int strcspn();
+STATIC int strcspn __P((char *, char *));
 #endif
 
 /*
@@ -302,7 +302,7 @@ int *flagp;
 	register char *ret;
 	register char *br;
 	register char *ender;
-	register int parno;
+	register int parno = 0;
 	int flags;
 
 	*flagp = HASWIDTH;	/* Tentatively. */
@@ -775,14 +775,14 @@ static char **regendp;		/* Ditto for endp. */
 /*
  * Forwards.
  */
-STATIC int regtry();
-STATIC int regmatch();
-STATIC int regrepeat();
+STATIC int regtry __P((const regexp *, const char *));
+STATIC int regmatch __P((char *));
+STATIC int regrepeat __P((char *));
 
 #ifdef DEBUG
 int regnarrate = 0;
-void regdump();
-STATIC char *regprop();
+void regdump __P((regexp *));
+STATIC char *regprop __P((char *));
 #endif
 
 /*
@@ -794,7 +794,6 @@ register const regexp *prog;
 register const char *string;
 {
 	register char *s;
-	extern char *strchr();
 
 	/* Be paranoid... */
 	if (prog == NULL || string == NULL) {
@@ -852,14 +851,14 @@ register const char *string;
  */
 static int			/* 0 failure, 1 success */
 regtry(prog, string)
-regexp *prog;
-char *string;
+const regexp *prog;
+const char *string;
 {
 	register int i;
 	register char **sp;
 	register char **ep;
 
-	reginput = string;
+	reginput = (char *)string;
 	regstartp = prog->startp;
 	regendp = prog->endp;
 
@@ -870,8 +869,8 @@ char *string;
 		*ep++ = NULL;
 	}
 	if (regmatch(prog->program + 1)) {
-		prog->startp[0] = string;
-		prog->endp[0] = reginput;
+		((regexp *)prog)->startp[0] = (char *)string;
+		((regexp *)prog)->endp[0] = reginput;
 		return(1);
 	} else
 		return(0);
@@ -893,7 +892,6 @@ char *prog;
 {
 	register char *scan;	/* Current node. */
 	char *next;		/* Next node. */
-	extern char *strchr();
 
 	scan = prog;
 #ifdef DEBUG
@@ -1156,8 +1154,6 @@ register char *p;
 }
 
 #ifdef DEBUG
-
-STATIC char *regprop();
 
 /*
  - regdump - dump a regexp onto stdout in vaguely comprehensible form
