@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.66.2.1 1997/01/14 21:25:16 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.66.2.2 1997/01/18 04:14:42 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -8,6 +8,7 @@ include "arch/i386/conf/std.i386"
 options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
 options		I586_CPU
+options		I686_CPU
 options		MATH_EMULATE	# floating point emulation
 #options	VM86		# Virtual 8086 emulation
 
@@ -21,8 +22,7 @@ options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
-options		TIMEZONE=0	# time zone to adjust RTC time by
-options		DST=0		# daylight savings time used by RTC
+options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
 
 options		DDB		# in-kernel debugger
@@ -205,6 +205,11 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+# PnP bus and devices should be declared last 
+isapnp0	at isa? 
+sb*	at isapnp?
+joy*	at isapnp?
 
 include	"arch/i386/conf/GENERIC.local"
 

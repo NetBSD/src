@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.22 1996/12/22 23:01:12 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.22.2.1 1997/01/18 04:29:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -697,14 +697,14 @@ xenix_sys_ftime(p, v, retval)
 		syscallarg(struct xenix_timeb *) tp;
 	} */ *uap = v;
 	struct timeval tv;
-	extern struct timezone tz;
 	struct xenix_timeb itb;
 
 	microtime(&tv);
 	itb.time = tv.tv_sec;
 	itb.millitm = (tv.tv_usec / 1000);
-	itb.timezone = tz.tz_minuteswest;
-	itb.dstflag = tz.tz_dsttime;
+	/* NetBSD has no kernel notion of timezone -- fake it. */
+	itb.timezone = 0;
+	itb.dstflag = 0;
 	return copyout((caddr_t)&itb, (caddr_t)SCARG(uap, tp), xenix_timeb_len);
 }
 
