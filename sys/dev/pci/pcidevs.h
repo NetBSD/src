@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.117 1999/03/16 22:32:58 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.118 1999/03/17 19:21:49 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.110 1999/03/16 21:24:46 mjacob Exp 
+ *	NetBSD: pcidevs,v 1.111 1999/03/17 19:20:51 thorpej Exp 
  */
 
 /*
@@ -1042,6 +1042,7 @@
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
+#define	PCI_PRODUCT_SIS_900	0x0900		/* SiS900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
