@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.48 2002/01/14 15:25:43 he Exp $
+.\"	$NetBSD: main,v 1.61.2.49 2002/02/23 19:37:12 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,6 +58,8 @@
 .Nm INSTALL
 .Nd Installation procedure for
 .Nx*M .
+.Sh CONTENTS
+.Tc
 .Sh DESCRIPTION
 .
 .Ss About this Document
@@ -1262,7 +1264,7 @@ because there is a
 option to change the version string:
 .(disp
  option {
-	version "newstring";
+        version "newstring";
  };
 .disp)
 .
