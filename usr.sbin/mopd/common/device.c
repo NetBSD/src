@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.5 2002/08/22 07:18:42 itojun Exp $	*/
+/*	$NetBSD: device.c,v 1.6 2003/04/20 00:17:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.5 2002/08/22 07:18:42 itojun Exp $");
+__RCSID("$NetBSD: device.c,v 1.6 2003/04/20 00:17:22 christos Exp $");
 #endif
 
 #include "os.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: device.c,v 1.5 2002/08/22 07:18:42 itojun Exp $");
 #include "device.h"
 #include "mopdef.h"
 #include "pf.h"
+#include "log.h"
 
 struct	if_info *iflist;		/* Interface List		*/
 
@@ -66,18 +67,14 @@ deviceEthAddr(ifname, eaddr)
 	   and find the right one.  */
 
 	/* Use datagram socket to get Ethernet address. */
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "deviceEthAddr: socket: %m");
-		exit(1);
-	}
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		mopLogErr("deviceEthAddr: socket");
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
 	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		syslog(LOG_ERR, "deviceEthAddr: SIOGIFCONF: %m");
-		exit(1);
-	}
+	    ifc.ifc_len < sizeof(struct ifreq))
+		mopLogErr("deviceEthAddr: SIOGIFCONF");
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
@@ -92,8 +89,7 @@ deviceEthAddr(ifname, eaddr)
 		}
 	}
 
-	syslog(LOG_ERR, "deviceEthAddr: Never saw interface `%s'!", ifname);
-	exit(1);
+	mopLogErrX("deviceEthAddr: Never saw interface `%s'!", ifname);
 }
 #endif	/* DEV_NEW_CONF */
 
@@ -124,10 +120,8 @@ deviceOpen(ifname, proto, trans)
 	if (tmp.fd != -1) {
 		
 		p = (struct if_info *)malloc(sizeof(*p));
-		if (p == 0) {
-		syslog(LOG_ERR, "deviceOpen: malloc: %m");
-		exit(1);
-		}
+		if (p == 0)
+			mopLogErr("deviceOpen: malloc");
 	
 		p->next = iflist;
 		iflist = p;
@@ -196,7 +190,8 @@ deviceInitOne(ifname)
 		}
 	}
 
-	syslog(LOG_INFO, "Initialized %s", interface);
+	if (!mopInteractive)
+		syslog(LOG_INFO, "Initialized %s", interface);
 
 	/* Ok, get transport information */
 	
@@ -260,18 +255,14 @@ deviceInitAll()
 	int fd;
 	int i, len;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "deviceInitAll: socket: %m");
-		exit(1);
-	}
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		mopLogErr("deviceInitAll: socket");
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
 	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		syslog(LOG_ERR, "deviceInitAll: SIOCGIFCONF: %m");
-		exit(1);
-	}
+	    ifc.ifc_len < sizeof(struct ifreq))
+		mopLogErr("deviceInitAll: SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
@@ -281,7 +272,7 @@ deviceInitAll()
 		    sdl->sdl_alen != 6)
 			continue;
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-			syslog(LOG_ERR, "deviceInitAll: SIOCGIFFLAGS: %m");
+			mopLogWarn("deviceInitAll: SIOCGIFFLAGS");
 			continue;
 		}
 		if ((ifr->ifr_flags &
@@ -296,17 +287,13 @@ deviceInitAll()
 	struct ifreq ibuf[8], *ifrp;
 	struct ifconf ifc;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "deviceInitAll: old socket: %m");
-		exit(1);
-	}
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		mopLogErr("deviceInitAll: old socket");
 	ifc.ifc_len = sizeof ibuf;
 	ifc.ifc_buf = (caddr_t)ibuf;
 	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		syslog(LOG_ERR, "deviceInitAll: old SIOCGIFCONF: %m");
-		exit(1);
-	}
+	    ifc.ifc_len < sizeof(struct ifreq))
+		mopLogErr("deviceInitAll: old SIOCGIFCONF");
 	ifrp = ibuf;
 	n = ifc.ifc_len / sizeof(*ifrp);
 	for (; --n >= 0; ++ifrp) {

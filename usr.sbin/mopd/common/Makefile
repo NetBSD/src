@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/18 13:31:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/04/20 00:17:22 christos Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
 
 LIB=	common
-SRCS=	cmp.c device.c dl.c file.c get.c loop-bsd.c mopdef.c nma.c pf.c \
+SRCS=	cmp.c device.c dl.c file.c get.c log.c loop-bsd.c mopdef.c nma.c pf.c \
 	print.c put.c rc.c version.c
 CLEANFILES= version.c
 
