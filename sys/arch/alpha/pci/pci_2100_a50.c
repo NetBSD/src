@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.14 1997/04/07 23:40:40 cgd Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.15 1997/05/31 05:46:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.14 1997/04/07 23:40:40 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.15 1997/05/31 05:46:06 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,10 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 	int device, pirq;
 	pcireg_t pirqreg;
 	u_int8_t pirqline;
+
+#ifndef DIAGNOSTIC
+	pirq = 0;				/* XXX gcc -Wuninitialized */
+#endif
 
         if (buspin == 0) {
                 /* No IRQ used. */
