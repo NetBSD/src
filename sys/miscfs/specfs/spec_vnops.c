@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.74 2003/11/26 11:33:50 pk Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.75 2003/12/10 11:40:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.74 2003/11/26 11:33:50 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.75 2003/12/10 11:40:12 hannken Exp $");
+
+#include "fss.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.74 2003/11/26 11:33:50 pk Exp $");
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#if NFSS > 0
+#include <dev/fssvar.h>
+#endif
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
@@ -587,8 +593,12 @@ spec_strategy(v)
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
 	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL)
+	if (bdev != NULL) {
+#if NFSS > 0
+		fss_cow_hook(bp);
+#endif
 		(*bdev->d_strategy)(bp);
+	}
 	return (0);
 }
 

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.6 2003/11/24 06:33:17 isaki Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.7 2003/12/10 11:40:11 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 23, 2003
+.Dd December 10, 2003
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -164,6 +164,9 @@ IBM PS/2 ESDI disk devices, see
 ``floppy'' disk drives (3 1/2", 5 1/4"), see
 .Xr \&amiga/fdc 4 ,
 .Xr \&i386/fdc 4
+. It Ar fss#
+Files system snapshot devices, see
+.Xr \&fss 4
 . It Ar gdrom#
 Dreamcast ``gigadisc'' CD-ROM drive, see
 .Xr \&dreamcast/gdrom 4
