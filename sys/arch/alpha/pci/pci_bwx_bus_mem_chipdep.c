@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.15 2001/09/04 05:31:28 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.16 2001/09/04 16:14:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -505,7 +505,7 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 	return ((void *)bsh);
 }
 
-void *
+paddr_t
 __C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
 	void *v;
 	bus_addr_t addr;
@@ -514,7 +514,7 @@ __C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
 	int flags;
 {
 
-	return (alpha_atop(CHIP_MEM_SYS_START(v) + addr + off));
+	return (alpha_btop(CHIP_MEM_SYS_START(v) + addr + off));
 }
 
 inline void

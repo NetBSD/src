@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.12 2001/09/04 05:31:28 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.13 2001/09/04 16:14:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -522,7 +522,7 @@ __C(CHIP,_io_vaddr)(v, bsh)
 }
 
 paddr_t
-__C(CHIP,_io_vaddr)(v, addr, off, prot, flags)
+__C(CHIP,_io_mmap)(v, addr, off, prot, flags)
 	void *v;
 	bus_addr_t addr;
 	off_t off;
