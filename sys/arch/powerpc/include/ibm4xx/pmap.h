@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2001/06/13 06:01:49 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2001/09/11 04:35:44 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -149,6 +149,7 @@ struct pmap {
 typedef	struct pmap *pmap_t;
 
 #ifdef	_KERNEL
+#define	PMAP_GROWKERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
