@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1999/05/25 04:17:58 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 1999/05/31 07:42:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -52,6 +52,7 @@ extern int _splraise __P((int));
 extern int _spllower __P((int));
 extern int _splset __P((int));
 extern int _splget __P((void));
+extern void _splnone __P((void));
 extern void _setsoftintr __P((int));
 extern void _clrsoftintr __P((int));
 
