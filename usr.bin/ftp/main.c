@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 1999/09/22 07:18:36 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.51 1999/09/24 06:14:40 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 1999/09/22 07:18:36 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 1999/09/24 06:14:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,15 +158,20 @@ main(argc, argv)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1)
 		err(1, "can't create socket");
-	len = sizeof(sndbuf_size);
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size, &len)
-	    < 0)
-		err(1, "unable to get default sndbuf size");
 	len = sizeof(rcvbuf_size);
 	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size, &len)
 	    < 0)
 		err(1, "unable to get default rcvbuf size");
-	close(s);
+	len = sizeof(sndbuf_size);
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size, &len)
+	    < 0)
+		err(1, "unable to get default sndbuf size");
+	(void)close(s);
+					/* sanity check returned buffer sizes */
+	if (rcvbuf_size <= 0)
+		rcvbuf_size = 8192;
+	if (sndbuf_size <= 0)
+		sndbuf_size = 8192;
 
 	marg_sl = sl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
