@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2003/05/12 15:15:12 kleink Exp $
+# $NetBSD: Makefile.inc,v 1.5 2003/05/17 15:05:52 thorpej Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 	fabs.c flt_rounds.c \
@@ -6,8 +6,8 @@ SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 
 # Common ieee754 constants and functions
 SRCS+=	nanf_ieee754.c	# infinity is ``different'' on arm, use local version
-SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c ldexp_ieee754.c
-SRCS+=	modf_ieee754.c
+SRCS+=	frexp_ieee754.c isinf_ieee754.c isinfl_ieee754.c isnan_ieee754.c
+SRCS+=	isnanl_ieee754.c ldexp_ieee754.c modf_ieee754.c
 
 SRCS+=	setjmp.S __setjmp14.S
 SRCS+=	_setjmp.S
