@@ -69,6 +69,10 @@ Boston, MA 02111-1307, USA.    */
 /* Name the port. */
 #define TARGET_NAME	"alpha-netbsd"
 
+/* XXX Redefine this; <alpha/alpha.h> mucks with it. */
+#undef TARGET_VERSION
+#define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);           
+
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  Under NetBSD/Alpha, the assembler does
    nothing special with -pg. */
