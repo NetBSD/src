@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.51 2003/09/14 19:16:06 jschauma Exp $	*/
+/*	$NetBSD: ls.c,v 1.52 2003/09/22 02:43:20 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.51 2003/09/14 19:16:06 jschauma Exp $");
+__RCSID("$NetBSD: ls.c,v 1.52 2003/09/22 02:43:20 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,6 @@ int rval = EXIT_SUCCESS;	/* exit value - set if error encountered */
 int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
-int f_escape;			/* print octal escapes for nongraphic characters */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
 int f_inode;			/* print inode */
@@ -96,6 +95,8 @@ int f_longform;			/* long listing format */
 int f_nonprint;			/* show unprintables as ? */
 int f_nosort;			/* don't sort output */
 int f_numericonly;		/* don't convert uid/gid to name */
+int f_octal;			/* print octal escapes for nongraphic characters */
+int f_octal_escape;		/* like f_octal but use C escapes if possible */
 int f_recursive;		/* ls subdirectories also */
 int f_reversesort;		/* reverse whatever sort is used */
 int f_sectime;			/* print the real time for all files */
@@ -134,7 +135,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWabcdfgiklmnopqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ABCFLRSTWabcdfgiklmnopqrstuwx")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -195,10 +196,17 @@ ls_main(int argc, char *argv[])
 		case 'A':
 			f_listdot = 1;
 			break;
-		/* the -b option turns off the -q option. */
-		case 'b':
-			f_escape = 1;
+		/* the -B option turns off the -b, -q and -w options. */
+		case 'B':
 			f_nonprint = 0;
+			f_octal = 1;
+			f_octal_escape = 0;
+			break;
+		/* the -b option turns off the -B, -q and -w options. */
+		case 'b':
+			f_nonprint = 0;
+			f_octal = 0;
+			f_octal_escape = 1;
 			break;
 		/* The -d option turns off the -R option. */
 		case 'd':
@@ -224,10 +232,11 @@ ls_main(int argc, char *argv[])
 		case 'p':
 			f_typedir = 1;
 			break;
-		/* the -q option turns off the -b option. */
+		/* the -q option turns off the -B, -b and -w options. */
 		case 'q':
 			f_nonprint = 1;
-			f_escape = 0;
+			f_octal = 0;
+			f_octal_escape = 0;
 			break;
 		case 'r':
 			f_reversesort = 1;
@@ -246,6 +255,12 @@ ls_main(int argc, char *argv[])
 			break;
 		case 'W':
 			f_whiteout = 1;
+			break;
+		/* the -w option turns off the -B, -b and -q options. */
+		case 'w':
+			f_nonprint = 0;
+			f_octal = 0;
+			f_octal_escape = 0;
 			break;
 		default:
 		case '?':
