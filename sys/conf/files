@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.623 2003/07/27 01:17:37 thorpej Exp $
+#	$NetBSD: files,v 1.624 2003/07/28 21:28:24 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -85,6 +85,14 @@ defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 # Cryptography support.  Include this early, since several things
 # use it.
 #
+# First, define the pseudo-device for the opencrypto framework,
+# so that defining opencrypto can automatically pull in required
+# transforms from the list immediately below.
+#
+defpseudo opencrypto	
+include "opencrypto/files.opencrypto"
+
+# Individual crypto transforms
 include "crypto/arc4/files.arc4"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"

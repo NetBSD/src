@@ -1,7 +1,6 @@
-#	$NetBSD: files.opencrypto,v 1.3 2003/07/27 03:34:40 jonathan Exp $
+#	$NetBSD: files.opencrypto,v 1.4 2003/07/28 21:28:23 jonathan Exp $
 #
 #
-defpseudo opencrypto
 
 file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
@@ -15,7 +14,7 @@ file	opencrypto/crypto.c		opencrypto
 # crypto  algorithms
 file	opencrypto/blf.c		opencrypto
 file	opencrypto/skipjack.c		opencrypto
-file	opencrypto/rmd160.c		opencrypto
+# rmd160.c is now in sys/crypto/ripemd160/files.ripemd160
 file	opencrypto/cast.c		opencrypto
 file	opencrypto/rijndael.c		opencrypto
 # sha2.c is in crypto/sha2/files.sha2
