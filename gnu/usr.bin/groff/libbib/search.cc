@@ -62,7 +62,7 @@ void search_list::add_file(const char *filename, int silent)
       p = make_linear_search_item(fd, filename, next_fid);
   }
   if (p) {
-    for (search_item **pp = &list; *pp; pp = &(*pp)->next)
+    search_item **pp; for (pp = &list; *pp; pp = &(*pp)->next)
       ;
     *pp = p;
     next_fid = p->next_filename_id();

@@ -242,7 +242,7 @@ int main(int argc, char **argv)
     string path;
     int lineno = 1;
     for (;;) {
-      for (int c = getc(fp); c != '\n' && c != EOF; c = getc(fp)) {
+      int c; for (c = getc(fp); c != '\n' && c != EOF; c = getc(fp)) {
 	if (c == '\0')
 	  error_with_file_and_line(foption, lineno,
 				   "nul character in pathname ignored");

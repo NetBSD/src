@@ -89,14 +89,14 @@ int main(int argc, char **argv)
   param.comma_depth = DEFAULT_COMMA_DEPTH;
   param.desc_depth = DEFAULT_DESC_DEPTH;
   param.body_depth = DEFAULT_BODY_DEPTH;
-  for (int i = 1; i < argc && argv[i][0] == '-'; i++) {
+  int i; for (i = 1; i < argc && argv[i][0] == '-'; i++) {
     if (argv[i][1] == '-' && argv[i][2] == '\0') {
       i++;
       break;
     }
     if (i + 1 >= argc)
       usage();
-    for (int j = 0;; j++) {
+    int j; for (j = 0;; j++) {
       if (j >= sizeof(param_table)/sizeof(param_table[0]))
 	fatal("parameter `%1' not recognized", argv[i] + 1);
       if (strcmp(param_table[j].name, argv[i] + 1) == 0)

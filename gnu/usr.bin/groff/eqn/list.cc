@@ -159,7 +159,7 @@ int list_box::compute_metrics(int style)
     have_simple = list.p[i]->is_simple();
   if (have_simple) {
     printf(".nr " WIDTH_FORMAT " +\\w" DELIMITER_CHAR, uid);
-    for (int i = 0; i < list.len; i++)
+    for (i = 0; i < list.len; i++)
       if (list.p[i]->is_simple())
 	list.p[i]->output();
     printf(DELIMITER_CHAR "\n");
@@ -174,7 +174,7 @@ int list_box::compute_metrics(int style)
 void list_box::compute_sublist_width(int n)
 {
   int total_spacing = 0;
-  for (int i = 1; i < n + 1 && i < list.len; i++)
+  int i; for (i = 1; i < n + 1 && i < list.len; i++)
     total_spacing += compute_spacing(is_script, list.p[i-1]->spacing_type,
 				     list.p[i]->spacing_type);
   printf(".nr " TEMP_REG " %dM", total_spacing);
@@ -186,7 +186,7 @@ void list_box::compute_sublist_width(int n)
     have_simple = list.p[i]->is_simple();
   if (have_simple) {
     printf("+\\w" DELIMITER_CHAR);
-    for (int i = 0; i < n; i++)
+    for (i = 0; i < n; i++)
       if (list.p[i]->is_simple())
 	list.p[i]->output();
     printf(DELIMITER_CHAR);

@@ -513,7 +513,7 @@ int input_stack::set_location(const char *filename, int lineno)
 
 void input_stack::next_file(FILE *fp, const char *s)
 {
-  for (input_iterator **pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
+  input_iterator **pp; for (pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
     if ((*pp)->next_file(fp, s))
       return;
   if (++level > limit && limit > 0)
@@ -1400,7 +1400,7 @@ void token::next()
 	  symbol s = read_escape_name();
 	  if (s.is_null())
 	    break;
-	  for (const char *p = s.contents(); *p != '\0'; p++)
+	  const char *p; for (p = s.contents(); *p != '\0'; p++)
 	    if (!csdigit(*p))
 	      break;
 	  if (*p)
@@ -2730,7 +2730,7 @@ input_iterator *macro_iterator::get_arg(int i)
 
 void macro_iterator::add_arg(const macro &m)
 {
-  for (arg_list **p = &args; *p; p = &((*p)->next))
+  arg_list **p; for (p = &args; *p; p = &((*p)->next))
     ;
   *p = new arg_list(m);
   ++argc;
@@ -3107,7 +3107,7 @@ static void interpolate_arg(symbol nm)
     }
   }
   else {
-    for (const char *p = s; *p && csdigit(*p); p++)
+    const char *p; for (p = s; *p && csdigit(*p); p++)
       ;
     if (*p)
       error("bad argument name `%1'", s);
@@ -3245,7 +3245,7 @@ void do_define_macro(define_mode mode)
       const char *s = term.contents();
       int d;
       // see if it matches term
-      for (int i = 0; s[i] != 0; i++) {
+      int i; for (i = 0; s[i] != 0; i++) {
 	d = get_copy(&n);
 	if ((unsigned char)s[i] != d)
 	  break;

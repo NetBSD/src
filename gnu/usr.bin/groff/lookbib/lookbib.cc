@@ -106,7 +106,7 @@ main(int argc, char **argv)
     search_list_iterator iter(&list, line);
     const char *start;
     int len;
-    for (int count = 0; iter.next(&start, &len); count++) {
+    int count; for (count = 0; iter.next(&start, &len); count++) {
       if (fwrite(start, 1, len, stdout) != len)
 	fatal("write error on stdout: %1", strerror(errno));
       // Can happen for last reference in file.
