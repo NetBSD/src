@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2000/05/28 18:17:59 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.64 2000/06/04 19:03:27 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -148,7 +148,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 */
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
-	cf->ca_maskpsw = 0x20000000;
+	cf->ca_maskpsw = 0x20000000;	/* CALLS stack frame, no registers */
 	cf->ca_pc = (unsigned)&sret;	/* return PC; userspace trampoline */
 	cf->ca_argno = 1;
 	cf->ca_arg1 = (int)arg;
