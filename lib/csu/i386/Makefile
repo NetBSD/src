@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
-#	$Id: Makefile,v 1.6 1993/08/09 04:49:39 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/08/10 08:35:59 deraadt Exp $
 
 CFLAGS+=	-DLIBC_SCCS
 OBJS=		crt0.o gcrt0.o
@@ -26,7 +26,7 @@ gmon.o: gmon.c gmon.h
 	mv a.out ${.TARGET}
 
 install:
-        install -d -o ${BINOWN} -g ${BINGRP} -m 0755 ${DESTDIR}/usr/lib
+	install -d -o ${BINOWN} -g ${BINGRP} -m 0755 ${DESTDIR}/usr/lib
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
