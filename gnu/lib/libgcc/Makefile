@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/07/18 20:20:01 tv Exp $
+#	$NetBSD: Makefile,v 1.20 2001/07/19 06:14:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -36,10 +36,13 @@ op${f}.o: ${G_CXX_LIB2SRCS:M*/new1.cc}
 	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
 .endfor
 
-.for f in vnew vnewnt del delnt vdel vdelnt
+.for f in vnew vnewnt delnt vdel vdelnt
 op${f}.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
 	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
 .endfor
+
+opdel.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
+	${COMPILE.c} -DL_op_delete -o $@ ${>:M*.cc}
 
 .include <bsd.lib.mk>
 
