@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.11 1993/08/03 05:06:49 mycroft Exp $
+ *	$Id: if_is.c,v 1.12 1993/09/06 18:24:35 mycroft Exp $
  */
 
 /* TODO
@@ -53,6 +53,7 @@
 #endif
 
 #if NBPFILTER > 0
+#include "sys/select.h"
 #include "net/bpf.h"
 #include "net/bpfdesc.h"
 #endif
@@ -851,7 +852,7 @@ is_ioctl(ifp, cmd, data)
                  */
 		case AF_NS:
 		    {
-			register struct arpcom.ac_enaddr *ina = &(IA_SNS(ifa)->sns_addr);
+			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)(is->arpcom.ac_enaddr);
