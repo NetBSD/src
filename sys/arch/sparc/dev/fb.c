@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.7 1995/09/17 20:43:45 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.8 1995/10/02 21:48:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,13 +164,19 @@ fbrcons_init(fb)
 	fb->fb_rcons.rc_height = fb->fb_type.fb_height;
 	fb->fb_rcons.rc_depth = fb->fb_type.fb_depth;
 
-	fb->fb_rcons.rc_maxcol =
-		a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-	fb->fb_rcons.rc_maxrow =
-		a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+	if (cputyp == CPU_SUN4) {
+		fb->fb_rcons.rc_maxcol = 80;
+		fb->fb_rcons.rc_maxrow = 34;
+	} else {
+		fb->fb_rcons.rc_maxcol =
+		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
+		fb->fb_rcons.rc_maxrow =
+		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+	}
 
 	/* Determine addresses of prom emulator row and column */
-	if (romgetcursoraddr(&fb->fb_rcons.rc_row, &fb->fb_rcons.rc_col))
+	if (cputyp == CPU_SUN4 ||
+	    romgetcursoraddr(&fb->fb_rcons.rc_row, &fb->fb_rcons.rc_col))
 		fb->fb_rcons.rc_row = fb->fb_rcons.rc_col = NULL;
 
 	fb->fb_rcons.rc_bell = fb_bell;
