@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.2 2001/09/29 05:34:00 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.3 2001/09/29 05:39:14 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -88,8 +88,6 @@ void		acpi_shutdown(void *);
 ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
 void		acpi_build_tree(struct acpi_softc *);
 ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
-
-void		acpi_system_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 void		acpi_enable_fixed_events(struct acpi_softc *);
 
@@ -252,15 +250,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Our current state is "awake". */
 	sc->sc_sleepstate = ACPI_STATE_S0;
-
-	/*
-	 * We want to install a single system notify handler.
-	 */
-	rv = AcpiInstallNotifyHandler(ACPI_ROOT_OBJECT, ACPI_SYSTEM_NOTIFY,
-	    acpi_system_notify_handler, sc);
-	if (rv != AE_OK)
-		printf("%s: WARNING: unable to install system notify "
-		    "handler: %d\n", sc->sc_dev.dv_xname, rv);
 
 	/*
 	 * Check for fixed-hardware features.
@@ -571,21 +560,6 @@ acpi_fixed_sleep_button_handler(void *context)
 	printf("%s: fixed sleep button pressed\n", sc->sc_dev.dv_xname);
 
 	return (INTERRUPT_HANDLED);
-}
-
-/*****************************************************************************
- * ACPI system notification handlers
- *****************************************************************************/
-
-void
-acpi_system_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
-{
-	struct acpi_softc *sc = context;
-
-	/* XXX XXX XXX */
-
-	printf("%s: received system notify message 0x%x for handle %p\n",
-	    sc->sc_dev.dv_xname, notify, handle);
 }
 
 /*****************************************************************************
