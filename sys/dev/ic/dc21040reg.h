@@ -21,11 +21,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: dc21040reg.h,v 1.1.1.2 1995/07/24 05:24:35 cgd Exp $
+ * $Id: dc21040reg.h,v 1.1.1.3 1995/08/17 17:06:54 cgd Exp $
  *
  * $Log: dc21040reg.h,v $
- * Revision 1.1.1.2  1995/07/24 05:24:35  cgd
- * latest from matt thomas; right name this time.
+ * Revision 1.1.1.3  1995/08/17 17:06:54  cgd
+ * Matt Thomas's dc21040 'de' driver, July 26, '95 snapshot.
+ *
+ * Revision 1.9  1995/07/26  18:32:13  thomas
+ *  Finish DE425 support for BSD/OS.
+ *  Cleanup the PCI device ids
+ *  misc other small changes
+ *
+ * Revision 1.8  1995/07/24  18:30:12  thomas
+ * More vestigal DE425 support.
+ * Workaround SMC failure to use correct SROM checksum
+ * Change probe slightly.
  *
  * Revision 1.7  1995/07/17  23:37:11  thomas
  * disable auto-negotiation for now on DC21041
@@ -346,4 +356,24 @@ typedef struct {
 #define	SROMCMD_RD	6
 
 #define	SROM_BITWIDTH	6
+
+/*
+ * Definitions for the DE425.
+ */
+#define	DE425_CFID		0x08	/* Configuration Id */
+#define	DE425_CFCS		0x0C	/* Configuration Command-Status */
+#define	DE425_CFRV		0x18	/* Configuration Revision */
+#define	DE425_CFLT		0x1C	/* Configuration Latency Timer */
+#define	DE425_CBIO		0x28	/* Configuration Base IO Address */
+#define	DE425_CFDA		0x2C	/* Configuration Driver Area */
+#define	DE425_ENETROM_OFFSET	0xC90	/* Offset in I/O space for ENETROM */
+#define	DE425_CFG0		0xC88	/* IRQ register */
+
+#define	DEC_VENDORID		0x1011
+#define	DC21040_CHIPID		0x0002
+#define	DC21140_CHIPID		0x0009
+#define	DC21041_CHIPID		0x0014
+#define	PCI_VENDORID(x)		((x) & 0xFFFF)
+#define	PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+
 #endif /* !defined(_DC21040_H) */
