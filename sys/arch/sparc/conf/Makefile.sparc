@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.59 1999/05/05 10:50:02 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.60 1999/06/28 21:03:23 pk Exp $
 
 # Makefile for NetBSD
 #
@@ -173,7 +173,9 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${SPARC}/sparc/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
