@@ -1,4 +1,4 @@
-/* $NetBSD: mouse.h,v 1.2 1996/06/03 22:07:39 mark Exp $ */
+/* $NetBSD: mouse.h,v 1.3 1996/10/14 22:41:59 mark Exp $ */
 
 /*
  * Copyright (c) Mark Brinicombe 1996 All rights reserved
@@ -49,6 +49,7 @@
 #define BUT2CHNG	0x10	/* Button 2 changed if set */
 #define BUT1CHNG	0x20	/* Button 1 changed if set */
 #define MOVEMENT	0x40	/* Mouse movement detected */
+#define IOC_ACK		0x80	/* Acknowledge an ioctl */
 
 /* Define user visible mouse structures */
 
@@ -76,7 +77,7 @@ struct mouse_origin {
 	int x, y;
 };
 
-/* Define mouse ioctls */
+/* Define mouse ioctls + associated data */
 
 #define MOUSEIOC_WRITEX		_IO ( 'M', 100 )
 #define MOUSEIOC_WRITEY		_IO ( 'M', 101 )
@@ -90,4 +91,7 @@ struct mouse_origin {
 #define MOUSEIOC_GETBOUNDS	_IOR ( 'M', 106, struct mouse_boundingbox )
 #define MOUSEIOC_GETORIGIN	_IOR ( 'M', 107, struct mouse_origin )
 
+#define MOUSEIOC_SETMODE	_IO ( 'M', 108 )
+#define MOUSEMODE_ABS		0x00
+#define MOUSEMODE_REL		0x01
 /* End of mouse.h */
