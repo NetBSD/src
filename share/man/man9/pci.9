@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.10 2003/03/25 22:04:50 thorpej Exp $
+.\"     $NetBSD: pci.9,v 1.11 2003/04/16 10:14:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -396,8 +396,8 @@ Read
 .Fa offset
 into the buffer pointed to by
 .Fa data .
-Returns 0 on sucess or non-zero if the device has no Vital Product Data
-capability or if reading of the Vital Product Data fails.
+Returns 0 on success or non-zero if the device has no Vital Product Data
+capability or if reading the Vital Product Data fails.
 .It Fn pci_vpd_write "pc" "tag" "offset" "count" "data"
 Write
 .Fa count
@@ -406,7 +406,7 @@ Write
 from the buffer pointed to by
 .Fa data .
 Returns 0 on success or non-zero if the device has no Vital Product Data
-capability of if writing of the Vital Product Data fails.
+capability of if writing the Vital Product Data fails.
 .It Fn pci_make_tag "pc" "bus" "device" "function"
 Create a new PCI tag for the PCI device specified by the tuple
 .Ao
