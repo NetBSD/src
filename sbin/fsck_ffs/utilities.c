@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.16 1996/04/05 01:45:33 cgd Exp $	*/
+/*	$NetBSD: utilities.c,v 1.17 1996/09/23 16:18:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.16 1996/04/05 01:45:33 cgd Exp $";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.17 1996/09/23 16:18:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,10 +52,13 @@ static char rcsid[] = "$NetBSD: utilities.c,v 1.16 1996/04/05 01:45:33 cgd Exp $
 #include <ctype.h>
 #include <unistd.h>
 
+#include "util.h"
 #include "fsck.h"
 #include "extern.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
+
+static void rwerror __P((char *, daddr_t));
 
 int
 ftypeok(dp)
@@ -226,7 +229,7 @@ flush(fd, bp)
 	}
 }
 
-void
+static void
 rwerror(mesg, blk)
 	char *mesg;
 	daddr_t blk;
@@ -234,7 +237,7 @@ rwerror(mesg, blk)
 
 	if (preen == 0)
 		printf("\n");
-	pfatal("CANNOT %s: BLK %ld", mesg, blk);
+	pfatal("CANNOT %s: BLK %d", mesg, blk);
 	if (reply("CONTINUE") == 0)
 		errexit("Program terminated\n");
 }
@@ -469,7 +472,8 @@ getpathname(namebuf, curdir, ino)
 }
 
 void
-catch()
+catch(n)
+	int n;
 {
 	if (!doinglevel2)
 		ckfini(0);
@@ -482,7 +486,8 @@ catch()
  * so that reboot sequence may be interrupted.
  */
 void
-catchquit()
+catchquit(n)
+	int n;
 {
 	extern returntosingle;
 
@@ -496,7 +501,8 @@ catchquit()
  * Used by child processes in preen.
  */
 void
-voidquit()
+voidquit(n)
+	int n;
 {
 
 	sleep(1);
@@ -544,61 +550,3 @@ dofix(idesc, msg)
 	}
 	/* NOTREACHED */
 }
-
-/* VARARGS1 */
-errexit(s1, s2, s3, s4)
-	char *s1;
-	long s2, s3, s4;
-{
-	printf(s1, s2, s3, s4);
-	exit(8);
-}
-
-/*
- * An unexpected inconsistency occured.
- * Die if preening, otherwise just print message and continue.
- */
-/* VARARGS1 */
-pfatal(s, a1, a2, a3)
-	char *s;
-	long a1, a2, a3;
-{
-
-	if (preen) {
-		printf("%s: ", cdevname);
-		printf(s, a1, a2, a3);
-		printf("\n");
-		printf("%s: UNEXPECTED INCONSISTENCY; RUN fsck_ffs MANUALLY.\n",
-			cdevname);
-		exit(8);
-	}
-	printf(s, a1, a2, a3);
-}
-
-/*
- * Pwarn just prints a message when not preening,
- * or a warning (preceded by filename) when preening.
- */
-/* VARARGS1 */
-pwarn(s, a1, a2, a3, a4, a5, a6)
-	char *s;
-	long a1, a2, a3, a4, a5, a6;
-{
-
-	if (preen)
-		printf("%s: ", cdevname);
-	printf(s, a1, a2, a3, a4, a5, a6);
-}
-
-#ifndef lint
-/*
- * Stub for routines from kernel.
- */
-panic(s)
-	char *s;
-{
-
-	pfatal("INTERNAL INCONSISTENCY:");
-	errexit(s);
-}
-#endif
