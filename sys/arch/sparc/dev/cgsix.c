@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.21 1996/03/14 19:44:40 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.22 1996/03/16 23:28:27 christos Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -529,7 +529,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 
 	default:
 #ifdef DEBUG
-		log(LOG_NOTICE, "cgsixioctl(%x) (%s[%d])\n", cmd,
+		log(LOG_NOTICE, "cgsixioctl(%lx) (%s[%d])\n", cmd,
 		    p->p_comm, p->p_pid);
 #endif
 		return (ENOTTY);
