@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111.2.1 1999/05/16 22:38:11 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.111.2.2 1999/06/09 07:38:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1488,6 +1488,33 @@ ENTRY(m68881_restore)
 	fmovem	a0@(216),fp0-fp7	| restore FP general registers
 Lm68881rdone:
 	frestore a0@			| restore state
+	rts
+
+/*
+ * Low-level microsecond delay helper
+ *
+ * The branch target for the loops must be aligned on a half-line (8-byte)
+ * boundary to minimize cache effects.  This guarantees both that there
+ * will be no prefetch stalls due to cache line burst operations and that
+ * the loops will run from a single cache half-line.
+ */
+	.align	8			| align to half-line boundary
+ENTRY(_delay)
+	movl	sp@(4),d0
+	jeq	Ldelayexit
+	movl	d0,d1
+	andl	#0xffff,d0
+	swap	d1
+	subql	#1,d0
+	andl	#0xffff,d1
+Ldelay:
+	tstl	_C_LABEL(delay_flag)
+	dbeq	d0,Ldelay
+	dbeq	d1,Ldelay
+	addql	#1,d0
+	swap	d1
+	orl	d1,d0
+Ldelayexit:
 	rts
 
 /*
