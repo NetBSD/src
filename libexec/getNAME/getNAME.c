@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.18 2001/02/04 22:05:13 christos Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.19 2001/02/19 22:46:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.18 2001/02/04 22:05:13 christos Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.19 2001/02/19 22:46:14 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,6 @@ int main __P((int, char *[]));
 
 /* The .SH NAMEs that are allowed. */
 char *names[] = { "name", "namn", 0 };
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -534,6 +532,7 @@ again:
 static void
 usage()
 {
-	(void)fprintf(stderr, "Usage: %s [-itw] file ...\n", __progname);
+
+	(void)fprintf(stderr, "Usage: %s [-itw] file ...\n", getprogname());
 	exit(1);
 }

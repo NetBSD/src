@@ -1,4 +1,4 @@
-/*	$NetBSD: semtest.c,v 1.2 2000/01/31 15:10:34 christos Exp $	*/
+/*	$NetBSD: semtest.c,v 1.3 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -304,9 +304,8 @@ print_semid_ds(sp, mode)
 void
 usage()
 {
-	extern const char *__progname;
 
-	fprintf(stderr, "usage: %s keypath\n", __progname);
+	fprintf(stderr, "usage: %s keypath\n", getprogname());
 	exit(1);
 }
 
