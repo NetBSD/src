@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.16 2000/04/04 17:07:29 thorpej Exp $	*/
+/*	$NetBSD: re.c,v 1.17 2002/01/23 19:07:33 atatat Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.16 2000/04/04 17:07:29 thorpej Exp $");
+__RCSID("$NetBSD: re.c,v 1.17 2002/01/23 19:07:33 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ get_compiled_pattern()
 		return NULL;
 	}
 	patlock = 0;
-	if ((n = regcomp(exp, exps, 0)) != 0) {
+	if ((n = regcomp(exp, exps, ere)) != 0) {
 		regerror(n, exp, errmsg, sizeof errmsg);
 		free(exp);
 		return exp = NULL;
