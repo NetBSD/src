@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.33 1998/04/01 22:15:52 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.34 1998/04/13 21:18:19 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -394,8 +394,11 @@ send:
 	optlen = 0;
 	hdrlen = sizeof (struct tcpiphdr);
 	if (flags & TH_SYN) {
+		struct rtentry *rt = in_pcbrtentry(tp->t_inpcb);
+
 		tp->snd_nxt = tp->iss;
-		tp->t_ourmss = tcp_mss_to_advertise(tp);
+		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
+						    rt->rt_ifp : NULL);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;

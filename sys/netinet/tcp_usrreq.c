@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.34 1998/02/19 02:36:44 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.35 1998/04/13 21:18:20 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -635,6 +635,9 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_INIT_WIN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_init_win));
+	case TCPCTL_MSS_IFMTU:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_mss_ifmtu));
 	default:
 		return (ENOPROTOOPT);
 	}

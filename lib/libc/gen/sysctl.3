@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.23 1998/02/05 18:48:01 perry Exp $
+.\"	$NetBSD: sysctl.3,v 1.24 1998/04/13 21:24:49 kml Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -499,6 +499,7 @@ The currently defined protocols and names are:
 .It tcp	syn_bucket_limit	integer	yes
 .It tcp	syn_cache_interval	integer	yes
 .It tcp	init_win	integer	yes
+.It tcp	mss_ifmtu	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -555,6 +556,11 @@ Returns the TCP compressed state engine's timer interval.
 If greater than 0, returns the number of segments used for the inital
 slow start congestion window.  A value of 0 indicates that an experimental
 auto-tuning algorithm is being used to compute the initial window.
+.It Li tcp.mss_ifmtu
+If greater than 0, calculate the outgoing MSS based on the MTU of
+the appropriate interface.  Otherwise, calculate it based on
+the greater of the MTU of the interface, and the largest (non-loopback)
+interface MTU on the system.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.

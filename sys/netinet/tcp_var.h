@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.40 1998/04/07 05:09:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.41 1998/04/13 21:18:20 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -373,7 +373,8 @@ struct	tcpstat {
 #define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
 #define	TCPCTL_INIT_WIN		8	/* initial window */
-#define	TCPCTL_MAXID		9
+#define	TCPCTL_MSS_IFMTU	9	/* mss from interface, not in_maxmtu */
+#define	TCPCTL_MAXID	       10
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -385,6 +386,7 @@ struct	tcpstat {
 	{ "syn_bucket_limit", CTLTYPE_INT }, \
 	{ "syn_cache_interval", CTLTYPE_INT },\
 	{ "init_win", CTLTYPE_INT }, \
+	{ "mss_ifmtu", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -394,6 +396,7 @@ u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
+extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
@@ -420,7 +423,7 @@ void	 tcp_established __P((struct tcpcb *));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 void	 tcp_input __P((struct mbuf *, ...));
-int	 tcp_mss_to_advertise __P((const struct tcpcb *));
+u_long	 tcp_mss_to_advertise __P((const struct ifnet *));
 void	 tcp_mss_from_peer __P((struct tcpcb *, int));
 void	 tcp_mtudisc __P((struct inpcb *, int));
 struct tcpcb *

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.19 1998/02/06 06:23:56 perry Exp $
+.\"	$NetBSD: sysctl.8,v 1.20 1998/04/13 21:21:13 kml Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,6 +153,8 @@ privilege can change the value.
 .It net.inet.tcp.syn_bucket_limit	integer	yes
 .It net.inet.tcp.syn_cache_interval	integer	yes
 .It net.inet.tcp.init_win	integer	yes
+.It net.inet.tcp.init_win	integer	yes
+.It net.inet.tcp.mss_ifmtu	integer	yes
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.sendspace	integer	yes
 .It net.inet.udp.recvspace	integer	yes
