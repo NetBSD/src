@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 1997/04/09 20:07:13 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1997/04/14 02:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,13 +56,14 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <arch/m68k/include/frame.h>
+#include <m68k/frame.h>
+
 #include <machine/db_machdep.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
+#include <machine/intr.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
