@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1999/09/13 10:31:05 itojun Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1999/09/27 08:47:56 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <machine/cpu.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
