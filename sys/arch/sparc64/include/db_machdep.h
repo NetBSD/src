@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 2000/01/10 03:53:20 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.10 2000/03/16 02:36:58 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -45,18 +45,20 @@
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
-#if 1
-typedef struct {
-	struct trapframe64 ddb_tf;
-	struct frame64	 ddb_fr;
-} db_regs_t;
-#else
-struct trapregs {
-	int64_t	tt;
+struct trapstate {
 	int64_t tstate;
 	int64_t tpc;
 	int64_t	tnpc;
+	int64_t	tt;
 };
+#if 1
+typedef struct {
+	struct trapframe64	ddb_tf;
+	struct frame64		ddb_fr;
+	struct trapstate	ddb_ts[5];
+	int			ddb_tl;
+} db_regs_t;
+#else
 typedef struct db_regs {
 	struct trapregs dbr_traps[4];
 	int		dbr_y;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: intreg.h,v 1.2 2000/03/16 02:36:59 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,12 @@
 #define	IE_L1		(1<<1)	/* request software level 1 interrupt */
 
 #ifndef _LOCORE
+struct intrhand;	/* This is in cpu.h if you need it. */
+void	send_softint __P((int cpu, int level, struct intrhand *ih));
+#if 0
 void	ienab_bis __P((int bis));	/* set given bits */
 void	ienab_bic __P((int bic));	/* clear given bits */
+#endif
 #endif
 
 #if 0
