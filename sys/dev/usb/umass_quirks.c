@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.15 2002/07/07 19:52:48 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.16 2002/07/11 21:42:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -183,6 +183,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  PQUIRK_NOMODESENSE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_TRUMPION, USB_PRODUCT_TRUMPION_XXX1100 },
+	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 
