@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.17 1997/07/01 21:17:39 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,14 +38,18 @@
  * SUCH DAMAGE.
  */
 
+#ifdef MAKE_BOOTSTRAP
+static char rcsid[] = "$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $";
+#else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.17 1997/07/01 21:17:39 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.18 1997/09/28 03:31:11 lukem Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*-
  * suff.c --
