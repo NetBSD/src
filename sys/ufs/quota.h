@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)quota.h	7.9 (Berkeley) 2/22/91
- *	$Id: quota.h,v 1.4 1994/04/26 20:19:52 pk Exp $
+ *	$Id: quota.h,v 1.5 1994/04/27 21:43:47 cgd Exp $
  */
 
 #ifndef _UFS_QUOTA_H_
@@ -175,6 +175,13 @@ struct	dquot {
 
 #include <sys/cdefs.h>
 
+struct dquot;
+struct inode;
+struct mount;
+struct proc;
+struct ucred;
+struct ufsmount;
+struct vnode;
 __BEGIN_DECLS
 int	quotactl __P((const char *, int, int, void *));
 int	getinoquota __P((struct inode *));
