@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.21 2002/03/13 03:46:55 kent Exp $
+.\"	$NetBSD: audio.9,v 1.21.2.1 2002/06/10 16:03:28 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,6 +103,7 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;			/* coding space change */
+	int	factor_denom;		/* denominator of factor */
 	/*
 	 * The following four members represent what format is used in a
 	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
@@ -205,9 +206,10 @@ structures contain the encoding parameters that should be set.
 .Pp
 If the hardware requires software assistance with some encoding
 (e.g., it might be lacking mulaw support) it should fill the
-.Va sw_code
-and
+.Va sw_code ,
 .Va factor
+and
+.Va factor_denom
 fields of these structures with translation information, and
 set to hw_* fields what format the hardware actually uses.
 For example, if
@@ -219,6 +221,8 @@ to
 .Va sw_code ,
 2 to
 .Va factor ,
+1 to
+.Va factor_denom ,
 .Dv AUDIO_ENCODING_SLINEAR_LE
 to 
 .Va hw_encoding
