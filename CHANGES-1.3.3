@@ -429,12 +429,17 @@ sys/arch/alpha/pci/sio.c			1.23
   code would stop at the bridge (pceb) and would not even call
   match for the two Qlogic ISP cards that followed.  (mjacob)
 
+sys/arch/i386/Makefile				patch
+sys/arch/i386/isa/pcvt/Makefile			new
+sys/arch/i386/isa/pcvt/Util/Makefile.inc	1.7-1.10
+sys/arch/i386/isa/pcvt/Util/keycap/Makefile	1.11
+sys/arch/i386/isa/pcvt/Util/keycap/shlib_version 1.1 (new)
+distrib/sets/lists/base/md.i386			1.40-1.44 (patch)
+distrib/sets/lists/comp/md.i386			1.28-1.29 (patch)
 
-NOT YET PULLED UP (expecting patches or further information):
+  Install pcvt utilities and fonts.  (feyrer)
 
-distrib/sets/lists/base/md.i386			patch
-sys/arch/i386/isa/pcvt/Makefile			??? (1.1-1.3 (new)?)
-sys/arch/i386/isa/pcvt/Util/Makefile		1.7-1.8
-sys/arch/i386/isa/pcvt/Util/Makefile.inc	1.8-1.9 (patch)
+sys/sys/Makefile				patch
 
-  Install pcvt utilities.  (feyrer)
+  Change owner/group of installed headers to BINOWN/BINGRP,
+  so that they're consistent with the rest of the includes.  (cgd)
