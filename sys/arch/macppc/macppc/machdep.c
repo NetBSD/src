@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2000/07/06 23:27:29 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2000/07/25 05:41:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,19 +92,27 @@ char bootpath[256];
 paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
-
-int	ofkbd_ihandle;
-int	ofkbd_cngetc __P((dev_t));
-void	ofkbd_cnpollc __P((dev_t, int));
-int	lcsplx __P((int));
+int ofkbd_ihandle;
 
 int msgbufmapped = 0;
-
-void install_extint __P((void (*)(void)));
 
 #ifdef DDB
 void *startsym, *endsym;
 #endif
+
+struct ofw_translations {
+	vaddr_t va;
+	int len;
+	paddr_t pa;
+	int mode;
+};
+
+int ofkbd_cngetc(dev_t);
+void ofkbd_cnpollc(dev_t, int);
+int lcsplx(int);
+void install_extint(void (*)(void));
+int save_ofmap(struct ofw_translations *, int);
+void restore_ofmap(struct ofw_translations *, int);
 
 void
 initppc(startkernel, endkernel, args)
@@ -125,11 +133,12 @@ initppc(startkernel, endkernel, args)
 #ifdef IPKDB
 	extern ipkdblow, ipkdbsize;
 #endif
-	extern void consinit __P((void));
-	extern void callback __P((void *));
-	extern void ext_intr __P((void));
+	extern void callback(void *);
+	extern void ext_intr(void);
 	int exc, scratch;
 	struct mem_region *allmem, *availmem, *mp;
+	struct ofw_translations *ofmap;
+	int ofmaplen;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -198,7 +207,10 @@ initppc(startkernel, endkernel, args)
 	}
 
 	chosen = OF_finddevice("/chosen");
-	save_ofw_mapping();
+
+	ofmaplen = save_ofmap(NULL, 0);
+	ofmap = alloca(ofmaplen);
+	save_ofmap(ofmap, ofmaplen);
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -334,59 +346,56 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-	restore_ofw_mapping();
+	restore_ofmap(ofmap, ofmaplen);
 }
 
-static int N_mapping;
-static struct {
-	vaddr_t va;
-	int len;
-	paddr_t pa;
-	int mode;
-} ofw_mapping[256];
-
 int
-save_ofw_mapping()
+save_ofmap(ofmap, maxlen)
+	struct ofw_translations *ofmap;
+	int maxlen;
 {
-	int mmui, mmu;
+	int mmui, mmu, len;
 
-	OF_getprop(chosen, "mmu", &mmui, 4);
+	OF_getprop(chosen, "mmu", &mmui, sizeof mmui);
 	mmu = OF_instance_to_package(mmui);
-	bzero(ofw_mapping, sizeof(ofw_mapping));
-	N_mapping =
-	    OF_getprop(mmu, "translations", ofw_mapping, sizeof(ofw_mapping));
-	N_mapping /= sizeof(ofw_mapping[0]);
 
-	return 0;
+	if (ofmap) {
+		bzero(ofmap, maxlen);	/* to be safe */
+		len = OF_getprop(mmu, "translations", ofmap, maxlen);
+	} else
+		len = OF_getproplen(mmu, "translations");
+
+	return len;
 }
 
-int
-restore_ofw_mapping()
+void
+restore_ofmap(ofmap, len)
+	struct ofw_translations *ofmap;
+	int len;
 {
+	int n = len / sizeof(struct ofw_translations);
 	int i;
 
 	pmap_pinit(&ofw_pmap);
 
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 
-	for (i = 0; i < N_mapping; i++) {
-		paddr_t pa = ofw_mapping[i].pa;
-		vaddr_t va = ofw_mapping[i].va;
-		int size = ofw_mapping[i].len;
+	for (i = 0; i < n; i++) {
+		paddr_t pa = ofmap[i].pa;
+		vaddr_t va = ofmap[i].va;
+		int len = ofmap[i].len;
 
 		if (va < 0xf0000000)			/* XXX */
 			continue;
 
-		while (size > 0) {
+		while (len > 0) {
 			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
 			    VM_PROT_ALL|PMAP_WIRED);
 			pa += NBPG;
 			va += NBPG;
-			size -= NBPG;
+			len -= NBPG;
 		}
 	}
-
-	return 0;
 }
 
 /*
