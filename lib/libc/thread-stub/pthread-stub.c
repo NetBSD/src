@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.8 2002/02/23 23:06:36 gmcgarry Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.9 2002/03/11 21:12:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -55,8 +55,6 @@ __weak_alias(pthread_once, _pthread_once)
 __weak_alias(pthread_cond_init, _pthread_cond_init)
 __weak_alias(pthread_cond_wait, _pthread_cond_wait)
 __weak_alias(pthread_cond_signal, _pthread_cond_signal)
-__weak_alias(pthread_spinlock, _pthread_spinlock)
-__weak_alias(pthread_spinunlock, _pthread_spinunlock)
 __weak_alias(pthread_key_create, _pthread_key_create)
 __weak_alias(pthread_setspecific, _pthread_setspecific)
 __weak_alias(pthread_getspecific, _pthread_getspecific)
@@ -78,8 +76,8 @@ int _pthread_once(pthread_once_t *, void (*)(void));
 int _pthread_cond_init(pthread_cond_t *,const pthread_condattr_t *);
 int _pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
 int _pthread_cond_signal(pthread_cond_t *);
-void _pthread_spinlock(pthread_t, pthread_spin_t *);
-void _pthread_spinunlock(pthread_t, pthread_spin_t *);
+void _pthread_spin_lock(pthread_spinlock_t *);
+void _pthread_spin_unlock(pthread_spinlock_t *);
 int _pthread_key_create(pthread_key_t *, void (*)(void *));
 int _pthread_setspecific(pthread_key_t, const void *);
 void* _pthread_getspecific(pthread_key_t);
@@ -196,24 +194,6 @@ _pthread_cond_signal(pthread_cond_t *c)
 	(void)c;
 	
 	return (0);
-}
-
-void 
-_pthread_spinlock(pthread_t t, pthread_spin_t *l)
-{
-	/* LINTED deliberate lack of effect */
-	(void)t;
-	/* LINTED deliberate lack of effect */
-	(void)l;
-}
-
-void
-_pthread_spinunlock(pthread_t t, pthread_spin_t *l)
-{
-	/* LINTED deliberate lack of effect */
-	(void)t;
-	/* LINTED deliberate lack of effect */
-	(void)l;
 }
 
 int
