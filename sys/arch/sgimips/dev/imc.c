@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.18 2004/06/13 18:30:11 rumble Exp $	*/
+/*	$NetBSD: imc.c,v 1.19 2004/07/25 10:28:28 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.18 2004/06/13 18:30:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.19 2004/07/25 10:28:28 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,7 +51,7 @@ struct imc_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	int eisa_present : 1;
+	int eisa_present;
 };
 
 static int	imc_match(struct device *, struct cfdata *, void *);
@@ -118,11 +118,11 @@ imc_attach(parent, self, aux)
 
 	sysid = bus_space_read_4(isc.iot, isc.ioh, IMC_SYSID);
 
-	/* EISA present bit is on even on Indys, so don't trust it! */
-	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		isc.eisa_present = (sysid & IMC_SYSID_HAVEISA);
-	else
+	/* We can't trust the "EISA present" bit on Indys */
+	if (mach_subtype == MACH_SGI_IP22_GUINESS)
 		isc.eisa_present = 0;
+	else
+		isc.eisa_present = (sysid & IMC_SYSID_HAVEISA);
 
 	printf(": revision %d", (sysid & IMC_SYSID_REVMASK));
 
