@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.6 2004/02/03 20:00:22 jdolecek Exp $ */
+/* $NetBSD: lptctl.c,v 1.7 2004/02/03 20:04:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -88,17 +88,17 @@ main(const int argc, const char * const * argv) {
 			}
 		} else if (strcmp("mode", argv[i]) == 0) {
 			if (strcmp("standard", argv[i + 1]) == 0)
-				mode = standard;
+				mode = mode_standard;
 			else if (strcmp("ps2", argv[i + 1]) == 0)
-				mode = ps2;
+				mode = mode_ps2;
 			else if (strcmp("nibble", argv[i + 1]) == 0)
-				mode = nibble;
+				mode = mode_nibble;
 			else if (strcmp("fast", argv[i + 1]) == 0)
-				mode = fast;
+				mode = mode_fast;
 			else if (strcmp("ecp", argv[i + 1]) == 0)
-				mode = ecp;
+				mode = mode_ecp;
 			else if (strcmp("epp", argv[i + 1]) == 0)
-				mode = epp;
+				mode = mode_epp;
 			else {
 				errx(2, "invalid '%s' command argument '%s'",
 					argv[i], argv[i+1]);
@@ -140,22 +140,22 @@ print_lpt_info(int mode, int flags) {
 		
 	printf("mode=");
 	switch(mode) {
-	case standard:
+	case mode_standard:
 		printf("standard ");
 		break;
-	case nibble:
+	case mode_nibble:
 		printf("nibble ");
 		break;
-	case fast:
+	case mode_fast:
 		printf("fast ");
 		break;
-	case ps2:
+	case mode_ps2:
 		printf("ps2 ");
 		break;
-	case ecp:
+	case mode_ecp:
 		printf("ecp ");
 		break;
-	case epp:
+	case mode_epp:
 		printf("epp ");
 		break;
 	default:
