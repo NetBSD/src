@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.11 1997/02/04 00:33:32 cgd Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.12 1998/01/31 04:14:48 ross Exp $	*/
 
 /* 
  * Mach Operating System
@@ -47,8 +47,6 @@
 #define DDB_ONPANIC	1
 #endif
 int		db_onpanic = DDB_ONPANIC;
-
-extern unsigned int db_maxoff;
 
 extern int	db_radix;
 extern int	db_max_width;
