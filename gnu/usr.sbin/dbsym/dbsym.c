@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.4 2002/04/08 14:20:41 bjh21 Exp $ */
+/* $NetBSD: dbsym.c,v 1.5 2002/09/13 15:28:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -38,8 +38,12 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: dbsym.c,v 1.4 2002/04/08 14:20:41 bjh21 Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.5 2002/09/13 15:28:44 thorpej Exp $");
 #endif /* not lint */
+
+#if HAVE_CONFIG_H 
+#include "config.h" 
+#endif
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -63,9 +67,9 @@ struct symbols {
 	size_t offset;
 } db_symtab_symbols[] = {
 #define	X_DB_SYMTAB	0
-	{ "_db_symtab", NULL, 0 },
+	{ "_db_symtab", 0, 0 },
 #define	X_DB_SYMTABSIZE	1
-	{ "_db_symtabsize", NULL, 0 },
+	{ "_db_symtabsize", 0, 0 },
 	{ NULL }
 };
 
@@ -233,7 +237,7 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 	free(symbol_table);
 
 	for (s = symbols; s->name != NULL; s++) {
-		if (s->vma == NULL)
+		if (s->vma == 0)
 			return (1);
 
 		for (p = abfd->sections; p != NULL; p = p->next) {
