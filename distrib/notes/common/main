@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.7 2002/07/09 11:18:54 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.8 2002/07/09 14:53:32 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 9, 2002
+.Dd July 10, 2002
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -426,6 +426,7 @@ main development trunk.
 So, there are features in 1.6.1 which were not in, e.g. 1.6B, and vice
 versa.
 ..
+.if \n[FOR_RELEASE] \{\
 .Ss Changes Between The NetBSD 1.5 and 1.6 Releases
 .Pp
 The
@@ -433,7 +434,7 @@ The
 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many userland enhancements.
+new and updated kernel subsystems, and many user-land enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
@@ -447,7 +448,9 @@ Some highlights include:
 .
 .(bullet
 Ports to new platforms including:
+algor,
 evbarm,
+hpcarm,
 hpcsh,
 newsmips,
 sandpoint,
@@ -457,7 +460,8 @@ and
 walnut.
 .It
 Unified Buffer Cache (UBC) removes size restriction of the file system's
-buffer cache to use all available RAM (if not otherwise used!).
+buffer cache to use all available RAM (if not otherwise used!) and
+improves overall system performance.
 .It
 Road-robin page colouring implemented for various ports for better
 cache utilisation, more deterministic run-time behaviour, and faster
@@ -527,17 +531,23 @@ Zero-Copy for TCP and UDP transmit path achieved through page
 loaning code for
 .Fn sosend .
 .It
+In-kernel ISDN support, from the ISDN4BSD project.
+.It
+802.1Q VLAN (virtual LAN) support.
+See
+.Xr vlan 4 .
+.It
 IPFilter now supports IPv6 filtering.
 .It
-Add
-.Xr ndbootd 8 ,
+.Xr ndbootd 8
+added;
 used to netboot
-.Nx Ns sun2
+.Nx Ns /sun2
 machines.
 .It
-Added the
 .Xr racoon 8
-IKE daemon from the KAME project, for IPsec key negotiation.
+added;
+IKE key management daemon for IPsec key negotiation, from the KAME project.
 .It
 WEP encryption supported in
 .Xr ifconfig 8
@@ -548,19 +558,21 @@ driver.
 .Xr wi 4
 and
 .Xr wiconfig 8
-now support scanning for access points.
+now support scanning for access points,
+and defaults to BSS instead of ad-hoc mode.
 .It
 Bridging support; currently only for ethernet.
 See
 .Xr bridge 4 .
 .It
-In-kernel PPP over Ethernet (PPPoE - RFC 2516).
-See 
+In-kernel PPP over Ethernet (PPPoE) - RFC 2516,
+with much lower overhead than user-land PPPoE clients.
+See
 .Xr pppoe 8 .
 .It
-Add
 .Xr ifwatchd 8
-to invoke up-script and down-script when a network interface goes up and down.
+added;
+invokes up-script and down-script when a network interface goes up and down.
 Used by
 .Xr pppoe 8 .
 .bullet)
@@ -581,13 +593,30 @@ support a
 .Fl F
 option to manipulate file system images in regular files.
 .It
-Added
-.Xr makefs 8 ,
-which creates file system images from a directory tree.
+.Xr makefs 8
+added;
+creates file system images from a directory tree.
 (Currently ffs only.)
 .It
-Add
-.Xr dpti 4 ,
+Enhanced
+.Fn ffs_dirpref
+by Grigoriy Orlov, which noticibly improves performance on FFS file systems
+when creating directories, and subsequently manipulating them.
+.It
+Fixes for free block tracking and directory block allocation in FFS softdeps.
+.It
+Correctly support FFS file systems with a large number of cylinder groups.
+.It
+Fix the endian independant FFS (FFS_EI) support.
+.It
+.Xr newfs 8 
+calculates default block size from the file system size,
+and uses the largest possible cylinders/group (cpg) value if
+.Fl c
+isn't given.
+.It
+.Xr dpti 4
+driver added;
 an implementation of the DPT/Adaptec SCSI/I2O RAID management interface.
 Allows the use of the Linux versions of
 .Ic dptmgr ,
@@ -621,6 +650,12 @@ See
 .Xr passwd.conf 5 .
 .It
 Several more code audits were performed.
+.It
+.Pa /etc/security
+performs many more checks and is far more flexible in how it monitors
+changes.
+See
+.Xr security.conf 5 .
 .
 .\" XXX: list security advisories here?
 .
@@ -629,15 +664,15 @@ Several more code audits were performed.
 .Ss2 System administration and user tools
 .
 .(bullet
-Added
-.Xr sushi 8 ,
+.Xr sushi 8
+added;
 a menu based system administration tool.
 .It
-Added
 .Xr pgrep 1
 and
-.Xr pkill 1 ,
-to find or signal processes by name or other attributes.
+.Xr pkill 1
+added;
+find or signal processes by name or other attributes.
 .It
 System upgrades are made easier through the
 .Xr etcupdate 8
@@ -649,11 +684,38 @@ script which is provided to check for or fix configuration changes
 that have occurred in
 .Nx .
 .It
-Added
-.Xr stat 1 ,
+.Xr stat 1
+added;
 a user interface to the information returned by the
 .Xr stat 2
 system call.
+.It
+BSD
+.Xr sort 1
+replaces
+GNU
+.Xr sort 1 .
+.It
+The
+.Dq stop
+operation for
+.Xr rc.d 8
+scripts waits until the service terminates before returning.
+This improves the reliability of
+.Dq restart
+operations as well.
+.It
+Swap devices can be removed at system shutdown by enabling
+.Li swapoff
+in
+.Xr rc.conf 5 .
+.It
+An optional watchdog timer which will terminate
+.Xr rc.shutdown 8
+after the number of seconds provided in
+.Li rcshutdown_timeout
+from
+.Xr rc.conf 5 .
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -663,7 +725,8 @@ Support for multibyte LC_CTYPE locales has been integrated from the
 Citrus project.
 Many Chinese, Japanese, Korean, and other encodings are now available.
 .It
-Full support for cross-compilation of the base system!
+Full support for cross-compilation of the base system, even as a
+non-root user!
 .Pa src/build.sh
 is available for doing arbitrary cross-builds; see
 .Pa src/BUILDING
@@ -679,28 +742,49 @@ amiga, hp300, mac68k, mvme68k, sun2, and x68k).
 .It
 Updates of most third party packages that are shipped in the base
 system to the following latest stable releases:
-amd 6.0.6,
-BIND 8.3.3,
-bzip2 1.0.2,
-cvs 1.11,
-dhcpd 3.0rc10,
-file 3.38,
-groff 1.16.1,
-Heimdal 0.4e,
-IPfilter 3.4.27,
-kerberos4 1.1,
-ksh from pdksh 5.2.14-patches.2,
-less 374,
-nvi 1.79,
-OpenSSH 3.4 ,
-OpenSSL 0.9.6a,
-Postfix 20010228-pl02,
-pppd 2.4.0,
-routed 2.24 ,
-sendmail 8.11.6,
-tcpdump 3.7.1,
-and
-XFree 4.2.0.
+.(bullet -compact -offset indent
+amd 6.0.6
+.It
+BIND 8.3.3
+.It
+bzip2 1.0.2
+.It
+cvs 1.11
+.It
+dhcp 3.0.1rc9
+.It
+file 3.38
+.It
+groff 1.16.1
+.It
+Heimdal 0.4e
+.It
+IPfilter 3.4.27
+.It
+kerberos4 1.1
+.It
+ksh from pdksh 5.2.14p2
+.It
+less 374
+.It
+nvi 1.79
+.It
+OpenSSH 3.4
+.It
+OpenSSL 0.9.6d
+.It
+Postfix 1.1.11
+.It
+ppp 2.4.0
+.It
+routed 2.24
+.It
+sendmail 8.11.6
+.It
+tcpdump 3.7.1
+.It
+XFree86 4.2.0
+.bullet)
 .It
 Many new packages in the
 .Em pkgsrc
@@ -712,14 +796,30 @@ available in pkgsrc.
 Added AGP GART driver
 .Xr agp 4
 for faster access to graphics boards.
+.It
+.Xr init 8
+will create an mfs (memory based file system)
+.Pa /dev
+if
+.Pa /dev/console
+is missing.
+.It
+.Xr vmstat 8
+displays kernel hash statistics with
+.Fl H
+and
+.Fl h Ar hash .
+.It
+.Xr wscons 4
+supports blanking of VGA consoles.
 .bullet)
 .
 .Pp
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports.
 You can look for this trend to continue.
-.Pp
 .
+.Ss2 \*M specific
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
 .
@@ -899,7 +999,6 @@ The source sets are distributed as compressed tar files.
 They may be unpacked into
 .Pa /usr/src
 with the command:
-.Pp
 .Dl # Ic "( cd / ; tar -zxpf - ) \*< set_name.tgz"
 .Pp
 The
@@ -938,22 +1037,26 @@ Historic
 .Bx
 checksums for the various files
 in that directory, in the format produced by the command:
+.br
 .Ic cksum -o 1 Ar file .
 .It Li CKSUM
 .Tn POSIX
 checksums for the various files in that
 directory, in the format produced by the command:
+.br
 .Ic cksum Ar file .
 .It Li MD5
 .Tn MD5
 digests for the various files in that
 directory, in the format produced by the command:
+.br
 .Ic cksum Fl m Ar file .
 .It Li SYSVSUM
 Historic AT\*&T System V
 .Ux
 checksums for the various files in that directory, in the format produced by
 the command:
+.br
 .Ic cksum Fl o 2 Ar file .
 .tag)
 .Pp
@@ -1029,7 +1132,102 @@ Users upgrading from previous versions of
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx \*V .
-.Ss2 General issues
+.
+.Ss2 Issues affecting an upgrade from NetBSD 1.5
+These issues can generally be resolved by extracting the
+system sources, and running:
+.(disp
+cd location-of-source
+\&./etc/postinstall -s `pwd` check
+\&./etc/postinstall -s `pwd` fix
+.disp)
+.(bullet
+Various files in
+.Pa /etc
+need upgrading.
+These include:
+.(bullet -compact -offset indent
+.Pa /etc/defaults/*
+.It
+.Pa /etc/mtree/*
+.It
+.Pa /etc/daily
+.It
+.Pa /etc/weekly
+.It
+.Pa /etc/monthly
+.It
+.Pa /etc/security
+.It
+.Pa /etc/rc.subr
+.It
+.Pa /etc/rc
+.It
+.Pa /etc/rc.shutdown
+.It
+.Pa /etc/rc.d/*
+.bullet)
+.Pp
+The following files are now obsolete:
+.Pa /etc/rc.d/NETWORK
+and
+.Pa /etc/rc.d/gated .
+.
+.It
+The following
+.Xr rc.conf 5
+are now obsolete:
+.Li amd_master ,
+.Li ip6forwarding ,
+.Li defcorename ,
+and
+.Li nfsiod_flags .
+.Li critical_filesystems_beforenet
+has been replaced by
+.Li critical_filesystems_local .
+.Li critical_filesystems
+has been replaced by
+.Li critical_filesystems_remote .
+.
+.It
+The users and groups
+.Sq named ,
+.Sq ntpd ,
+and
+.Sq sshd
+need to be created.
+.
+.It
+The configuration files for
+.Xr ssh 1
+and
+.Xr sshd 8
+were moved from
+.Pa /etc
+to
+.Pa /etc/ssh ,
+including 
+.Pa ssh_known_hosts*
+files and the
+host key files
+.Pa ssh_host*_key* .
+.Pa /etc/ssh_config
+was renamed to
+.Pa /etc/ssh/ssh.conf ,
+and
+.Pa /etc/sshd_config
+was renamed to
+.Pa /etc/ssh/sshd.conf .
+.
+.It
+The
+.Ic mux
+entries in
+.Xr wscons.conf 5
+are now obsolete.
+.bullet)
+.
+.Ss2 Issues affecting an upgrade from NetBSD 1.4 or prior
 .(bullet
 .Pa /etc/rc
 modified to use
@@ -1090,12 +1288,10 @@ Refer to the other scripts in that directory and
 for more information on implementing
 .Pa rc.d
 scripts.
-.bullet)
-.Ss2 Issues affecting an upgrade from NetBSD 1.4 or prior
-.(bullet
-.Xr named 8
-leaks version information
 .
+.It
+.Xr named 8
+leaks version information.
 .Pp
 Previous releases of
 .Nx
@@ -1119,18 +1315,17 @@ pathname changed
 .
 .Pp
 .Xr sysctl 8
-is moved from
+was moved from
 .Pa /usr/sbin/sysctl
 to
 .Pa /sbin/sysctl .
 If you have hardcoded references to the full pathname
 .Pq in shell scripts, for example
 please be sure to update those.
-.\"
+.
 .It
 .Xr sendmail 8
-configuration file pathname changed
-.
+configuration file pathname changed.
 .Pp
 Due to
 .Xr sendmail 8
@@ -1155,21 +1350,6 @@ and friends, you will need to move the files to the new locations.
 See
 .Pa /usr/share/sendmail/README
 for more information.
-.\"
-.It
-.Xr sshd 8
-configuration file pathname changed
-.
-.Pp
-Configuration files for
-.Xr ssh 1
-and
-.Xr sshd 8
-are moved from
-.Pa /etc
-to
-.Pa /etc/ssh ,
-and filename for the main configuration files are changed.
 .bullet)
 .
 .Pp
