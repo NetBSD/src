@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.2 1999/04/19 21:10:00 perry Exp $
+# $NetBSD: obsolete.mi,v 1.3 1999/05/11 20:27:22 veego Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -24,8 +24,11 @@
 /usr/include/dev/mii/tlphy.h
 /usr/include/dev/pci/ncr_reg.h
 /usr/include/dev/ramdisk.h
+/usr/include/dev/rcons/rcons_subr.h
 /usr/include/dev/scsipi/cd_link.h
 /usr/include/dev/tc/clockvar.h
+/usr/include/dev/tc/sticreg.h
+/usr/include/dev/tc/sticvar.h
 /usr/include/dev/vndioctl.h
 /usr/include/dev/vnioctl.h
 /usr/include/g++/ACG.h
