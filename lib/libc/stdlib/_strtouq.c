@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtouq.c,v 1.2 1997/07/17 21:15:34 thorpej Exp $	*/
+/*	$NetBSD: _strtouq.c,v 1.3 1997/11/04 23:53:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_strtouq, strtouq);
+__indr_reference(_strtouq, strtouq)
 #else
 
 #include <stdlib.h>
