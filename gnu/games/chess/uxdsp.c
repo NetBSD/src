@@ -25,16 +25,19 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: uxdsp.c,v 1.2 1993/08/02 17:21:23 mycroft Exp $";
+static char rcsid[] = "$Id: uxdsp.c,v 1.3 1998/04/18 00:48:19 ross Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/times.h>
 #include <sys/file.h>
 #include <curses.h>
 #include <signal.h>
+#include <time.h>
+#include <string.h>
 #include "gnuchess.h"
 #ifdef NEWMOVE
 #include "move.h"
@@ -112,7 +115,7 @@ char s[80];
   if (hint > 0 && !easy && Book == NULL)
     {
       fflush(stdout);
-      time0 = time((long *)0);
+      time0 = time(0);
       algbr(hint>>8,hint & 0xFF,false);
       strcpy(s,mvstr1);
       tmp = epsquare;
