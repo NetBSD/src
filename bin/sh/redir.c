@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)redir.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: redir.c,v 1.9 1994/12/05 19:07:52 cgd Exp $";
+static char *rcsid = "$Id: redir.c,v 1.10 1994/12/23 13:24:13 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: redir.c,v 1.9 1994/12/05 19:07:52 cgd Exp $";
 #include "error.h"
 #include <sys/types.h>
 #include <signal.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
