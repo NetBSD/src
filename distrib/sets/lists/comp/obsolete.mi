@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.62 2001/12/28 18:00:56 augustss Exp $
+# $NetBSD: obsolete.mi,v 1.63 2002/01/02 18:33:07 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -539,6 +539,7 @@
 /usr/include/null.h
 /usr/include/objc/list.h
 /usr/include/readline.h
+/usr/include/smbfs
 /usr/include/sys/dmap.h
 /usr/include/sys/fnv_hash.h
 /usr/include/sys/vcmd.h
