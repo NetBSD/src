@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 1997/12/12 23:34:57 gwr Exp $	*/
+/*	$NetBSD: util.c,v 1.19 1998/01/18 14:23:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.18 1997/12/12 23:34:57 gwr Exp $");
+__RCSID("$NetBSD: util.c,v 1.19 1998/01/18 14:23:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 	char *host;
-	u_int16_t port;
+	in_port_t port;
 
 	if (connected) {
 		printf("Already connected to %s, use close first.\n",
@@ -95,13 +95,13 @@ setpeer(argc, argv)
 		long nport;
 
 		nport = strtol(argv[2], &ep, 10);
-		if (nport < 1 || nport > 0xffff || *ep != '\0') {
+		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
 			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
 			printf("usage: %s host-name [port]\n", argv[0]);
 			code = -1;
 			return;
 		}
-		port = htons(nport);
+		port = htons((in_port_t)nport);
 	}
 
 	if (gatemode) {
@@ -253,6 +253,7 @@ login(host, user, pass)
 			printf("Name (%s:%s): ", host, myname);
 		else
 			printf("Name (%s): ", host);
+		*tmp = '\0';
 		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
 		tmp[strlen(tmp) - 1] = '\0';
 		if (*tmp == '\0')
@@ -592,11 +593,11 @@ progressmeter(flag)
 	len = 0;
 
 	if (flag == -1) {
-		(void)gettimeofday(&start, (struct timezone *)0);
+		(void)gettimeofday(&start, NULL);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	if (!progress || filesize <= 0)
 		return;
 	cursize = bytes + restart_point;
@@ -700,7 +701,7 @@ ptransfer(siginfo)
 	if (!verbose && !siginfo)
 		return;
 
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
