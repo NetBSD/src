@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.25 2000/05/29 12:54:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.25 2000/05/29 12:54:31 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $");
 #include "extern.h"
 
 static struct Info {
-	long	time[CPUSTATES];
+	u_int64_t time[CPUSTATES];
 	struct	uvmexp uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
@@ -104,7 +104,7 @@ static int ucount __P((void));
 
 static	int ut;
 static	char buf[26];
-static	time_t t;
+static	u_int64_t t;
 static	double etime;
 static	float hertz;
 static	int nintr;
@@ -339,8 +339,8 @@ labelkre()
 #define PUTRATE(fld, l, c, w) {Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w);}
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[CPUSTATES] = { '=' , '>', '-', '%', ' ' };
+static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_INTR, CP_IDLE };
 
 void
 showkre()
