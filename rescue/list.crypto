@@ -1,0 +1,4 @@
+#	$NetBSD: list.crypto,v 1.1 2005/01/10 10:04:31 lukem Exp $
+
+PROG	cgdconfig
+LIBS	-lcrypto
