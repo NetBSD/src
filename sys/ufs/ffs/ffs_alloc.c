@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.26 1998/08/18 18:15:41 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.27 1998/11/12 19:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,6 +36,7 @@
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_uvm.h"
 #endif
