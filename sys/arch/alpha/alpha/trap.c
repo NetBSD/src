@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42 1999/03/24 05:50:51 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.43 1999/04/19 23:24:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42 1999/03/24 05:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43 1999/04/19 23:24:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,28 +282,10 @@ trap(a0, a1, a2, entry, framep)
 	case ALPHA_KENTRY_IF:
 		/*
 		 * These are always fatal in kernel, and should never
-		 * happen.
+		 * happen.  (Debugger entry is handled in XentIF.)
 		 */
-		if (!user) {
-#ifdef DDB
-			/*
-			 * ...unless, of course, DDB is configured; BUGCHK
-			 * is used to invoke the kernel debugger, and we
-			 * might have set a breakpoint.
-			 */
-			if (a0 == ALPHA_IF_CODE_BUGCHK ||
-			    a0 == ALPHA_IF_CODE_BPT) {
-				if (ddb_trap(a0, a1, a2, entry, framep))
-					goto out;
-			}
-
-			/*
-			 * If we get here, DDB did _not_ handle the
-			 * trap, and we need to PANIC!
-			 */
-#endif
+		if (!user)
 			goto dopanic;
-		}
 		i = 0;
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
