@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: sfsasl.c,v 8.17.4.14 2001/05/03 17:24:16 gshapiro Exp";
+static char id[] = "@(#)Id: sfsasl.c,v 8.17.4.15 2001/07/11 17:37:07 gshapiro Exp";
 #endif /* ! lint */
 
 #if SFIO
@@ -176,7 +176,7 @@ tls_read(f, buf, size, disc)
 	size_t size;
 	Sfdisc_t *disc;
 # else /* SFIO */
-int
+static int
 tls_read(disc, buf, size)
 	void *disc;
 	char *buf;
@@ -235,7 +235,7 @@ tls_write(f, buf, size, disc)
 	size_t size;
 	Sfdisc_t *disc;
 # else /* SFIO */
-int
+static int
 tls_write(disc, buf, size)
 	void *disc;
 	const char *buf;

@@ -24,8 +24,8 @@ DDEESSCCRRIIPPTTIIOONN
        Available options:
 
        --aa _a_l_i_a_s
-              Handle  messages  for  in  the same manner as those
-              received for the user's login name.
+              Handle  messages  for  _a_l_i_a_s  in the same manner as
+              those received for the user's login name.
 
        --ff _f_i_l_e_n_a_m_e
               Use _f_i_l_e_n_a_m_e as name of  the  database  instead  of
@@ -115,4 +115,4 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/12/29 18:12:23       VACATION(1)
+                   Date: 2001/07/20 04:19:38       VACATION(1)
