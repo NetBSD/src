@@ -36,15 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab_bsd.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab_bsd.c,v 1.5 1994/06/13 20:49:10 mycroft Exp $
+ *	$Id: mtab_bsd.c,v 1.6 1996/02/19 20:57:53 christos Exp $
  *
  */
 
 #include "am.h"
 
 #ifdef READ_MTAB_BSD_STYLE
-
-#include <sys/mount.h>
 
 static struct mntent *mnt_dup(mp)
 struct statfs *mp;

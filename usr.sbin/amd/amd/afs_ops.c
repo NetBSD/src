@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)afs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: afs_ops.c,v 1.3 1994/06/13 20:46:51 mycroft Exp $
+ *	$Id: afs_ops.c,v 1.4 1996/02/19 20:57:40 christos Exp $
  */
 
 #include "am.h"
@@ -51,7 +51,6 @@ typedef nfs_fh fhandle_t;
 #ifdef NFS_HDR
 #include NFS_HDR
 #endif /* NFS_HDR */
-#include <sys/mount.h>
 #include "mount.h"
 
 /*
@@ -141,6 +140,10 @@ char *opts;
 		return EINVAL;
 	}
 
+#if NFS_PROTOCOL_VERSION >= 3
+	nfs_args.fhsize = NFSX_V2FH;
+	nfs_args.version = NFS_ARGSVERSION;
+#endif
 	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp);
 
 	/*
