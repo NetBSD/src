@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.25 2000/04/30 12:22:25 he Exp $
+.\" $NetBSD: main,v 1.6.2.26 2000/04/30 20:21:46 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -242,14 +242,6 @@ The following are the major known issues with
 .Nx
 1.4.3.
 .Bl -bullet
-.It
-As part s part of fixing a kernel bug, ``struct proc'' needed to change
-size.  This will unfortunately, and contrary to tradition for patch
-releases cause incompatibilities for users of
-.Dq kernel-grovellers
-such as top, ps, w, or corresponding binary packages., and these
-need to be upgraded shortly after a kernel upgrade to work as
-advertised.  This change may also affect users of LKMs.
 .El
 .Ss Known caveats with 1.4.2
 The following are the major known issues with
