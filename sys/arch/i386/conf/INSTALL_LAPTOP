@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.43 2003/04/17 22:57:17 thorpej Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.44 2003/06/05 14:33:51 dsl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -17,7 +17,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4600	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=5000	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
