@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1998/12/19 21:11:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1998/12/19 23:01:47 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -278,7 +278,7 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
-void	pmap_changebit	__P((paddr_t, int, boolean_t));
+void	pmap_changebit	__P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
 void	pmap_pinit __P((pmap_t));
@@ -1047,7 +1047,7 @@ pmap_page_protect(pa, prot)
 	/* copy_on_write */
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_changebit(pa, PG_RO, TRUE);
+		pmap_changebit(pa, PG_RO, ~0);
 		return;
 	/* remove_all */
 	default:
@@ -1454,7 +1454,7 @@ validate:
 	 * external VAC.
 	 */
 	if (checkpv && !cacheable) {
-		pmap_changebit(pa, PG_CI, TRUE);
+		pmap_changebit(pa, PG_CI, ~0);
 		DCIA();
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
@@ -1869,7 +1869,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		/*
 		 * Mark it unmodified to avoid pageout
 		 */
-		pmap_changebit(pa, PG_M, FALSE);
+		pmap_changebit(pa, 0, ~PG_M);
 #ifdef DEBUG
 		if ((PHYS_TO_VM_PAGE(pa)->flags & PG_CLEAN) == 0) {
 			printf("pa %lx: flags=%x: not clean\n",
@@ -1897,7 +1897,7 @@ pmap_clear_modify(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
-	pmap_changebit(pa, PG_M, FALSE);
+	pmap_changebit(pa, 0, ~PG_M);
 }
 
 /*
@@ -1913,7 +1913,7 @@ void pmap_clear_reference(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-	pmap_changebit(pa, PG_U, FALSE);
+	pmap_changebit(pa, 0, ~PG_U);
 }
 
 /*
@@ -2154,7 +2154,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			printf("remove: clearing CI for pa %lx\n", pa);
 #endif
 		pv->pv_flags &= ~PV_CI;
-		pmap_changebit(pa, PG_CI, FALSE);
+		pmap_changebit(pa, 0, ~PG_CI);
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
 		    (PDB_CACHE|PDB_PVDUMP))
@@ -2300,10 +2300,9 @@ pmap_testbit(pa, bit)
 
 /* static */
 void
-pmap_changebit(pa, bit, setem)
+pmap_changebit(pa, set, mask)
 	paddr_t pa;
-	int bit;
-	boolean_t setem;
+	int set, mask;
 {
 	struct pv_entry *pv;
 	pt_entry_t *pte, npte;
@@ -2315,19 +2314,19 @@ pmap_changebit(pa, bit, setem)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
-		printf("pmap_changebit(%lx, %x, %s)\n",
-		       pa, bit, setem ? "set" : "clear");
+		printf("pmap_changebit(%lx, %x, %x)\n", pa, set, mask);
 #endif
 	if (PAGE_IS_MANAGED(pa) == 0)
 		return;
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
+
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-	if (!setem)
-		*pa_to_attribute(pa) &= ~bit;
+	*pa_to_attribute(pa) &= mask;
+
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
 	 * If setting RO do we need to clear the VAC?
@@ -2345,7 +2344,7 @@ pmap_changebit(pa, bit, setem)
 			/*
 			 * XXX don't write protect pager mappings
 			 */
-			if (bit == PG_RO) {
+			if (set == PG_RO) {
 #if defined(UVM)
 				if (va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
@@ -2368,10 +2367,7 @@ pmap_changebit(pa, bit, setem)
 				DCIS();
 			}
 #endif
-			if (setem)
-				npte = *pte | bit;
-			else
-				npte = *pte & ~bit;
+			npte = (*pte | set) & mask;
 			if (*pte != npte) {
 #if defined(M68040)
 				/*
@@ -2379,9 +2375,10 @@ pmap_changebit(pa, bit, setem)
 				 * protection make sure the caches are
 				 * flushed (but only once).
 				 */
-				if (firstpage && mmutype == MMU_68040 &&
-				    ((bit == PG_RO && setem) ||
-				    (bit & PG_CMASK))) {
+				if (firstpage && (mmutype == MMU_68040) &&
+				    ((set == PG_RO) ||
+				     (set & PG_CMASK) ||
+				     (mask & PG_CMASK) == 0)) {
 					firstpage = FALSE;
 					DCFP(pa);
 					ICPP(pa);
@@ -2393,7 +2390,7 @@ pmap_changebit(pa, bit, setem)
 			}
 		}
 #if defined(M68K_MMU_HP) && defined(DEBUG)
-		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
+		if (set == PG_RO && (pmapvacflush & PVF_PROTECT)) {
 			if ((pmapvacflush & PVF_TOTAL) || toflush == 3)
 				DCIA();
 			else if (toflush == 2)
@@ -2443,7 +2440,7 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((paddr_t)pmap->pm_stpa, PG_CCB, 0);
+			pmap_changebit((paddr_t)pmap->pm_stpa, 0, ~PG_CCB);
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2597,7 +2594,7 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, PG_CCB, 0);
+		pmap_changebit(ptpa, 0, ~PG_CCB);
 	}
 #endif
 	/*
