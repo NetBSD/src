@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28.10.1 2000/09/12 00:56:57 fvdl Exp $
+#	$NetBSD: Makefile,v 1.28.10.2 2000/09/12 16:54:11 tron Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -32,11 +32,11 @@ $(PROG):
        ${MACHINE_ARCH} == "sparc"))
 
 FILES=		ld.so
-FILESDIR=	${DESTDIR}/usr/libexec
+FILESDIR=	/usr/libexec
 FILESMODE=	${BINMODE}
 CLEANFILES+=	ld.so
 
-all: ${FILES}
+all dependall: ${FILES}
 
 ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
 	uudecode ${.ALLSRC}
