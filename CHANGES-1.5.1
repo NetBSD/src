@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.41 2001/04/01 17:20:09 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.42 2001/04/04 19:28:37 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2096,13 +2096,13 @@ distrib/sets/lists/misc/mi			patch
   last sendmail upgrade.
 
 include/glob.h					1.12-1.13
-lib/libc/gen/__glob13.c				1.14-1.20
+lib/libc/gen/__glob13.c				1.14-1.21
 
   Various updates:
-  o deal with buffer overflows for fixed length buffers
-  o set gl_pathv to NULL after we free it
-  o implement GLOB_LIMIT to limit the amount of memory used to ARG_MAX
-  o squash lint errors by using size_t instead of u_int
+   o deal with buffer overflows for fixed length buffers
+   o set gl_pathv to NULL after we free it
+   o implement GLOB_LIMIT to limit the amount of memory used to ARG_MAX
+   o squash lint errors by using size_t instead of u_int
 
 libexec/ftpd/Makefile				1.43-1.44
 libexec/ftpd/cmds.c				1.7-1.8,  1.10-1.12
@@ -2298,3 +2298,54 @@ sys/kern/vfs_bio.c				1.76
 
   In bwrite(), when deciding whether to convert sync writes into
   delayed writes, examine the correct block device.  Fixes PR#12484.
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.66 via patch
+sys/dev/pcmcia/pcmciadevs			1.100
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+
+  Add support for the Socket Communications LP-E Type II PCMCIA
+  NE2000 clone card.
+
+bin/rcmd/rcmd.1					1.8
+bin/sh/sh.1					1.43 via patch
+crypto/dist/openssl/doc/crypto/des_modes.pod	1.2
+lib/libc/time/strftime.3			1.9
+lib/libc/time/strptime.3			1.10
+lib/libcrypto/man/des_modes.7			1.4
+sbin/fsck/fsck.8				1.21 via patch
+sbin/fsck_lfs/fsck_lfs.8			1.4-1.5
+sbin/newbtconf/newbtconf.8			1.4
+sbin/newfs/newfs.8				1.27
+sbin/routed/routed.8				1.30 via patch
+sbin/savecore/savecore.8			1.19 via patch
+share/man/man4/Makefile				1.189 via patch
+share/man/man4/man4.i386/console.4		1.6
+share/man/man4/man4.i386/ie.4			1.5
+share/man/man4/man4.i386/intro.4		1.17
+share/man/man4/man4.i386/intro.4		1.18
+share/man/man4/man4.i386/opms.4			1.6
+share/man/man4/scsi.4				1.14
+share/man/man9/uvm.9				1.16
+usr.sbin/ac/ac.8				1.11
+usr.sbin/apmd/apmd.8				1.15-1.16
+usr.sbin/mountd/exports.5			1.20
+usr.sbin/ndp/ndp.8				1.11
+usr.sbin/rmt/rmt.8				1.9
+usr.sbin/rpc.bootparamd/bootparams.5		1.10
+usr.sbin/sliplogin/sliplogin.8			1.7
+usr.sbin/syslogd/syslog.conf.5			1.8
+usr.sbin/tcpdump/tcpdump.8			1.15
+usr.sbin/wsconscfg/wsconscfg.8			1.11
+usr.sbin/wsfontload/wsfontload.8		1.12 via patch
+
+  Various minor manual page fixes.
+
+sys/netinet6/icmp6.c				1.63
+
+  Make sure rcvif is sane on call to icmp6_reflect().
+  Fixes panic in certain configurations / instances.
+
+sys/arch/alpha/pci/pci_550.c			1.20-1.21
+
+  Fix a Miata panic-on-boot due to an unusual SRM irq routing.
