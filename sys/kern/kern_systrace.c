@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.7 2002/07/16 19:53:37 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.8 2002/07/19 23:55:01 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.7 2002/07/16 19:53:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.8 2002/07/19 23:55:01 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -395,7 +395,9 @@ systracef_poll(struct file *fp, int events, struct proc *p)
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
+	systrace_lock();
 	SYSTRACE_LOCK(fst, p);
+	systrace_unlock();
 	if (TAILQ_EMPTY(&fst->messages) == 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
@@ -1137,7 +1139,7 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 	fst->npolicies--;
 
 	if (policy->nsysent)
-		FREE(policy->sysent, M_XDATA);
+		free(policy->sysent, M_XDATA);
 
 	TAILQ_REMOVE(&fst->policies, policy, next);
 
@@ -1186,7 +1188,7 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 
 	memset((caddr_t)pol, 0, sizeof(struct str_policy));
 
-	MALLOC(pol->sysent, u_char *, maxents * sizeof(u_char),
+	pol->sysent = (u_char *)malloc(maxents * sizeof(u_char),
 	    M_XDATA, M_WAITOK);
 	pol->nsysent = maxents;
 	for (i = 0; i < maxents; i++)
