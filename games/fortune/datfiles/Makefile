@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.7 1993/09/30 23:57:08 jtc Exp $
+#	$Id: Makefile,v 1.8 1994/01/04 21:40:31 pk Exp $
 
 #
 # set `OBSCENE' to "real" to have obscene fortunes installed,
@@ -14,6 +14,9 @@ DATFILES= ${NORMDAT} ${OBSDAT}
 
 CLEANFILES+=${DATFILES}
 
+STRFILE!=cd $(.CURDIR)/../strfile; \
+	printf "xxx:\n\techo \$${.OBJDIR}/strfile\n" | make -r -s -f - xxx
+
 all: ${DATFILES}
 
 install:
@@ -27,11 +30,9 @@ install:
 		${DESTDIR}/usr/share/games/fortune/${OBSDAT:R})
 
 fortunes-o.dat: ${.TARGET:R}.${OBSCENE}.rot13
-	${.CURDIR}/../strfile/obj/strfile -rsx \
-	    ${.CURDIR}/${.TARGET:R}.${OBSCENE}.rot13 ${.TARGET}
+	${STRFILE} -rsx ${.CURDIR}/${.TARGET:R}.${OBSCENE}.rot13 ${.TARGET}
 
 fortunes.dat startrek.dat zippy.dat: ${.TARGET:R}
-	${.CURDIR}/../strfile/obj/strfile -rs \
-	    ${.CURDIR}/${.TARGET:R} ${.TARGET}
+	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
 
 .include <bsd.prog.mk>
