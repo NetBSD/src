@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.19 1998/05/24 22:37:23 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.20 1998/05/25 21:24:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -464,7 +464,9 @@ typedef mblk_t PDQ_OS_DATABUF_T;
 #define	PDQ_OS_DESC_PRESYNC(pdq, d, s)		do { } while(0)
 #define	PDQ_OS_DESC_POSTSYNC(pdq, d, s)		do { } while(0)
 #define	PDQ_OS_CMDRQST_PRESYNC(pdq, s)		do { } while(0)
+#define	PDQ_OS_CMDRQST_POSTSYNC(pdq, s)		do { } while(0)
 #define	PDQ_OS_CMDRSP_PRESYNC(pdq, s)		do { } while(0)
+#define	PDQ_OS_CMDRSP_POSTSYNC(pdq, s)		do { } while(0)
 #define PDQ_OS_RXPDU_PRESYNC(pdq, b, o, l)	do { } while(0)
 #define PDQ_OS_RXPDU_POSTSYNC(pdq, b, o, l)	do { } while(0)
 #define PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, e)	do { } while(0)
