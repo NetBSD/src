@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.4 1995/05/16 16:32:14 mycroft Exp $
+ *	$Id: crt0.c,v 1.5 1995/05/17 16:00:58 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.4 1995/05/16 16:32:14 mycroft Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.5 1995/05/17 16:00:58 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 extern void exit();
@@ -125,7 +125,7 @@ start(long param)
 	 *	ALL REGISTER VARIABLES!!!
 	 */
 	register struct kframe *kfp;
-	register char **argv;
+	register char **argv, *ap;
 	extern void _mcleanup();
 #ifdef DYNAMIC
 	volatile caddr_t x;
@@ -136,9 +136,9 @@ start(long param)
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if (argv[0])
-		if ((__progname = _strrchr(argv[0], '/')) == NULL)
-			__progname = argv[0];
+	if (ap = argv[0])
+		if ((__progname = _strrchr(ap, '/')) == NULL)
+			__progname = ap;
 		else
 			++__progname;
 
