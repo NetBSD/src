@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.2 1998/05/01 21:13:58 cgd Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.3 1998/05/22 17:43:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -173,13 +173,13 @@ irq_entry:
 /*        mov     r11, #0x00000000*/	/* Trace back stops here */
 
 	/*
-	 *  Can't field this interrupt now if priority is SPL_CLOCK
+	 *  Can't field this interrupt now if priority is _SPL_CLOCK
 	 *  or higher.  For now, we'll just ignore the interrupt.
 	 *  Soon, we will have to schedule it for later action.
 	 */
 	ldr	r0, Lcurrent_spl_level
 	ldr	r0, [r0]
-	cmp	r0, #SPL_CLOCK
+	cmp	r0, #_SPL_CLOCK
 	blt	ofwtakeint
 
 	PULLFRAMEFROMSVCANDEXIT

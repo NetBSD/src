@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.3 1998/05/01 21:18:43 cgd Exp $	*/
+/*	$NetBSD: ofw.c,v 1.4 1998/05/22 17:43:10 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -644,6 +644,7 @@ ofw_getcleaninfo()
   return pclean;
 }
 
+#ifdef DMA_BOUNCE /* XXX */
 /* hack, hack, hack, your DMA,
    gently into the kernel.
    merrily, merrily, merrily, merrily,
@@ -711,6 +712,7 @@ vm_offset_t ofw_getisadmamemory(size, align)
 
     return -1; /* uh, oh. */
 }
+#endif /* DMA_BOUNCE XXX */
 
 void
 ofw_configisa(vm_offset_t *pio, vm_offset_t *pmem)
@@ -840,11 +842,13 @@ ofw_configisadma(vm_offset_t *pdma)
   }
 #endif
 
+#ifdef DMA_BOUNCE /* XXX */
     /* XXX - Snarf physical memory for DMA bounce buffers.  */
 
     if ((*pdma =
 	 ofw_getisadmamemory(DMA_BOUNCE * NBPG, DMA_BOUNCE * NBPG)) == -1)
       panic("no ISA DMA memory: is memory populated in the correct slot?");
+#endif /* DMA_BOUNCE XXX */
 }
 
 int
@@ -1222,9 +1226,56 @@ ofw_callbackhandler(args)
 	    args->nreturns = 4;
 	}
     } else if (strcmp(name, "claim-phys") == 0) {
-	printf("unimplemented ofw callback - %s\n", name);
-	args_n_results[nargs] = -1;
-	args->nreturns = 1;
+	struct pglist alloclist = TAILQ_HEAD_INITIALIZER(alloclist);
+	vm_offset_t low, high;
+	vm_size_t align, size;
+
+	/*
+	 * XXX
+	 * XXX THIS IS A GROSS HACK AND NEEDS TO BE REWRITTEN. -- cgd
+	 * XXX
+	 */
+
+	/* Check format. */
+	if (nargs != 4 || nreturns < 3) {
+	    args_n_results[nargs] = -1;
+	    args->nreturns = 1;
+	    return;
+	}
+	args_n_results[nargs] =	0;		/* properly formatted request */
+
+	low = args_n_results[0];
+	size = args_n_results[2];
+	align = args_n_results[3];
+	high = args_n_results[1] + size;
+
+#if 0
+printf("claim-phys: low = 0x%x, size = 0x%x, align = 0x%x, high = 0x%x\n",
+    low, size, align, high);
+align = size;
+printf("forcing align to be 0x%x\n", align);
+#endif
+
+	args_n_results[nargs + 1] =
+	    vm_page_alloc_memory(size, low, high, align, 0, &alloclist,
+	      1, 0);
+#if 0
+printf(" -> 0x%lx", args_n_results[nargs + 1]);
+#endif
+	if (args_n_results[nargs + 1] != 0) {
+#if 0
+printf("(failed)\n");
+#endif
+	    args_n_results[nargs + 1] = -1;
+	    args->nreturns = 2;
+	    return;
+	} 
+	args_n_results[nargs + 2] = alloclist.tqh_first->phys_addr;
+#if 0
+printf("(succeeded: pa = 0x%lx)\n", args_n_results[nargs + 2]);
+#endif
+	args->nreturns = 3;
+
     } else if (strcmp(name, "release-phys") == 0) {
 	printf("unimplemented ofw callback - %s\n", name);
 	args_n_results[nargs] = -1;
