@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.39 2004/05/23 21:11:01 christos Exp $
+#	$NetBSD: newvers.sh,v 1.40 2005/02/13 09:13:04 christos Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ u=${USER-root}
 h=$(hostname)
 d=$(pwd)
 cwd=$(dirname $0)
-copyright=$(awk '{ print "\""$0"\\n\""}' ${cwd}/copyright)
+copyright=$(awk '{ printf("\"%s\\n\"", $0); }' ${cwd}/copyright)
 
 if [ -f ident ]; then
 	id="$(cat ident)"
