@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.50 1995/04/21 20:29:42 jtc Exp $
+#	$NetBSD: bsd.prog.mk,v 1.51 1995/06/10 20:21:05 mycroft Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -18,6 +18,7 @@ LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
