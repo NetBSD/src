@@ -131,12 +131,11 @@ toggle_le_debug(s, argc, argv)
 #endif
 
 #ifdef NETIF_DEBUG
-int netif_debug = 0;
-
 toggle_netif_debug(s, argc, argv)
 	int s, argc;
 	char *argv[];
 {
+	extern int netif_debug;
 
 	netif_debug = !netif_debug;
 	printf("netif_debug=%d\n", netif_debug);
@@ -324,7 +323,7 @@ main()
 	bootdev = -1;	/* network */
 	
 	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.2 $");
+	       getmachineid(), "$Revision: 1.3 $");
 
 	s = netif_open(NULL);	/* XXX machdep may be "le" */
 	if (s < 0)
