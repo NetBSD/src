@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.46 2001/05/28 04:22:55 assar Exp $	*/
+/*	$NetBSD: inet.c,v 1.47 2001/09/10 15:25:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.46 2001/05/28 04:22:55 assar Exp $");
+__RCSID("$NetBSD: inet.c,v 1.47 2001/09/10 15:25:24 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,6 +233,8 @@ tcp_stats(off, name)
 	p(tcps_sndprobe, "\t\t%llu window probe packet%s\n");
 	p(tcps_sndwinup, "\t\t%llu window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%llu control packet%s\n");
+	p(tcps_selfquench,
+	    "\t\t%llu send attempt%s resulted in self-quench\n");
 	p(tcps_rcvtotal, "\t%llu packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte,
 		"\t\t%llu ack%s (for %llu byte%s)\n");
@@ -692,9 +694,10 @@ tcp_dump(pcbaddr)
 	printf("rcv_adv %u, snd_max %u, snd_cwnd %lu, snd_ssthresh %lu\n",
 	    tcpcb.rcv_adv, tcpcb.snd_max, tcpcb.snd_cwnd, tcpcb.snd_ssthresh);
 
-	printf("idle %d, rtt %d, rtseq %u, srtt %d, rttvar %d, rttmin %d, "
-	    "max_sndwnd %lu\n\n", tcpcb.t_idle, tcpcb.t_rtt, tcpcb.t_rtseq,
-	    tcpcb.t_srtt, tcpcb.t_rttvar, tcpcb.t_rttmin, tcpcb.max_sndwnd);
+	printf("rcvtime %u, rtttime %u, rtseq %u, srtt %d, rttvar %d, "
+	    "rttmin %d, max_sndwnd %lu\n\n", tcpcb.t_rcvtime, tcpcb.t_rtttime,
+	    tcpcb.t_rtseq, tcpcb.t_srtt, tcpcb.t_rttvar, tcpcb.t_rttmin,
+	    tcpcb.max_sndwnd);
 
 	printf("oobflags %d, iobc %d, softerror %d\n\n", tcpcb.t_oobflags,
 	    tcpcb.t_iobc, tcpcb.t_softerror);
