@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.15 1996/03/01 04:08:48 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.16 1996/03/01 04:13:25 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 		 * byte mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & DMAMODE_READ)
-			outb(DMA1_MODE, chan | dmamode[flags]);
-		else
-			outb(DMA1_MODE, chan | dmamode[flags]);
+		outb(DMA1_MODE, chan | dmamode[flags]);
 		outb(DMA1_FFC, 0);
 
 		/* send start address */
@@ -134,10 +131,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 		 * word mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & DMAMODE_READ)
-			outb(DMA2_MODE, chan | dmamode[flags]);
-		else
-			outb(DMA2_MODE, chan | dmamode[flags]);
+		outb(DMA2_MODE, chan | dmamode[flags]);
 		outb(DMA2_FFC, 0);
 
 		/* send start address */
