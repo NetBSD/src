@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.12 1997/11/14 12:47:16 mrg Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.13 1998/02/10 01:26:59 perry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,8 +11,8 @@
  * Id: ip_nat.h,v 2.0.2.23.2.1 1997/11/05 11:08:18 darrenr Exp 
  */
 
-#ifndef	__IP_NAT_H__
-#define	__IP_NAT_H__
+#ifndef _NETINET_IP_NAT_H_
+#define _NETINET_IP_NAT_H_
 
 #ifndef SOLARIS
 #define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -179,4 +179,5 @@ extern	void	ip_natunload __P((void)), ip_natexpire __P((void));
 extern	void	nat_log __P((struct nat *, u_short));
 extern	void	fix_incksum __P((u_short *, u_long));
 extern	void	fix_outcksum __P((u_short *, u_long));
-#endif /* __IP_NAT_H__ */
+
+#endif /* _NETINET_IP_NAT_H_ */

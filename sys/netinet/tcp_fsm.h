@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.7 1997/06/18 10:05:44 kleink Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.8 1998/02/10 01:27:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tcp_fsm.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_TCP_FSM_H_
+#define _NETINET_TCP_FSM_H_
 
 /*
  * TCP FSM state definitions.
@@ -86,3 +89,5 @@ char *tcpstates[] = {
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",
 };
 #endif
+
+#endif /* _NETINET_TCP_FSM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.12 1997/08/26 18:27:53 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.13 1998/02/10 01:26:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ip_icmp.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IP_ICMP_H_
+#define _NETINET_IP_ICMP_H_
 
 
 /*
@@ -183,3 +186,5 @@ void	icmp_send __P((struct mbuf *, struct mbuf *));
 int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
 
+
+#endif /* _NETINET_IP_ICMP_H_ */
