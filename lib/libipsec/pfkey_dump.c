@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey_dump.c,v 1.9 2000/10/03 23:00:54 itojun Exp $	*/
-/*	$KAME: pfkey_dump.c,v 1.22 2000/09/12 07:10:53 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.10 2002/05/14 11:24:21 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.36 2002/05/13 05:30:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -77,7 +77,8 @@ do { \
 } while (0)
 
 static char *str_ipaddr __P((struct sockaddr *));
-static char *str_prefport __P((u_int, u_int, u_int));
+static char *str_prefport __P((u_int, u_int, u_int, u_int));
+static void str_upperspec __P((u_int, u_int, u_int));
 static char *str_time __P((time_t));
 static void str_lifetime_byte __P((struct sadb_lifetime *, char *));
 
@@ -106,22 +107,6 @@ static char *str_mode[] = {
 	"any",
 	"transport",
 	"tunnel",
-};
-
-static char *str_upper[] = {
-/*0*/	"ip", "icmp", "igmp", "ggp", "ip4",
-	"", "tcp", "", "egp", "",
-/*10*/	"", "", "", "", "",
-	"", "", "udp", "", "",
-/*20*/	"", "", "idp", "", "",
-	"", "", "", "", "tp",
-/*30*/	"", "", "", "", "",
-	"", "", "", "", "",
-/*40*/	"", "ip6", "", "rt6", "frag6",
-	"", "rsvp", "gre", "", "",
-/*50*/	"esp", "ah", "", "", "",
-	"", "", "", "icmp6", "none",
-/*60*/	"dst6",
 };
 
 static char *str_state[] = {
@@ -265,17 +250,15 @@ pfkey_sadump(m)
 	}
 
 	/* replay windoe size & flags */
-	printf("\treplay=%u flags=0x%08x ",
+	printf("\tseq=0x%08x replay=%u flags=0x%08x ",
+		m_sa2->sadb_x_sa2_sequence,
 		m_sa->sadb_sa_replay,
 		m_sa->sadb_sa_flags);
 
 	/* state */
 	printf("state=");
 	GETMSGSTR(str_state, m_sa->sadb_sa_state);
-
-	printf("seq=%lu pid=%lu\n",
-		(u_long)m->sadb_msg_seq,
-		(u_long)m->sadb_msg_pid);
+	printf("\n");
 
 	/* lifetime */
 	if (m_lftc != NULL) {
@@ -319,8 +302,12 @@ pfkey_sadump(m)
 			0 : m_lfts->sadb_lifetime_allocations));
 	}
 
+	printf("\tsadb_seq=%lu pid=%lu ",
+		(u_long)m->sadb_msg_seq,
+		(u_long)m->sadb_msg_pid);
+
 	/* XXX DEBUG */
-	printf("\trefcnt=%u\n", m->sadb_msg_reserved);
+	printf("refcnt=%u\n", m->sadb_msg_reserved);
 
 	return;
 }
@@ -333,8 +320,9 @@ pfkey_spdump(m)
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
 	struct sadb_x_policy *m_xpl;
+	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
-	u_int16_t port;
+	u_int16_t sport = 0, dport = 0;
 
 	/* check pfkey message. */
 	if (pfkey_align(m, mhp)) {
@@ -349,6 +337,8 @@ pfkey_spdump(m)
 	m_saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	m_daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	m_xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	m_lftc = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_CURRENT];
+	m_lfth = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
 
 	/* source address */
 	if (m_saddr == NULL) {
@@ -361,12 +351,13 @@ pfkey_spdump(m)
 	case AF_INET6:
 		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
 		    NI_NUMERICSERV) != 0)
-			port = 0;	/*XXX*/
+			sport = 0;	/*XXX*/
 		else
-			port = atoi(pbuf);
+			sport = atoi(pbuf);
 		printf("%s%s ", str_ipaddr(sa),
 			str_prefport(sa->sa_family,
-			    m_saddr->sadb_address_prefixlen, port));
+			    m_saddr->sadb_address_prefixlen, sport,
+			    m_saddr->sadb_address_proto));
 		break;
 	default:
 		printf("unknown-af ");
@@ -384,12 +375,13 @@ pfkey_spdump(m)
 	case AF_INET6:
 		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
 		    NI_NUMERICSERV) != 0)
-			port = 0;	/*XXX*/
+			dport = 0;	/*XXX*/
 		else
-			port = atoi(pbuf);
+			dport = atoi(pbuf);
 		printf("%s%s ", str_ipaddr(sa),
 			str_prefport(sa->sa_family,
-			    m_daddr->sadb_address_prefixlen, port));
+			    m_daddr->sadb_address_prefixlen, dport,
+			    m_saddr->sadb_address_proto));
 		break;
 	default:
 		printf("unknown-af ");
@@ -401,10 +393,7 @@ pfkey_spdump(m)
 		printf("upper layer protocol mismatched.\n");
 		return;
 	}
-	if (m_saddr->sadb_address_proto == IPSEC_ULPROTO_ANY)
-		printf("any");
-	else
-		GETMSGSTR(str_upper, m_saddr->sadb_address_proto);
+	str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 
 	/* policy */
     {
@@ -420,6 +409,21 @@ pfkey_spdump(m)
 	printf("\n\t%s\n", d_xpl);
 	free(d_xpl);
     }
+
+	/* lifetime */
+	if (m_lftc) {
+		printf("\tcreated: %s  ",
+			str_time(m_lftc->sadb_lifetime_addtime));
+		printf("lastused: %s\n",
+			str_time(m_lftc->sadb_lifetime_usetime));
+	}
+	if (m_lfth) {
+		printf("\tlifetime: %lu(s) ",
+			(u_long)m_lfth->sadb_lifetime_addtime);
+		printf("validtime: %lu(s)\n",
+			(u_long)m_lfth->sadb_lifetime_usetime);
+	}
+
 
 	printf("\tspid=%ld seq=%ld pid=%ld\n",
 		(u_long)m_xpl->sadb_x_policy_id,
@@ -458,8 +462,8 @@ str_ipaddr(sa)
  * set "/prefix[port number]" to buffer.
  */
 static char *
-str_prefport(family, pref, port)
-	u_int family, pref, port;
+str_prefport(family, pref, port, ulp)
+	u_int family, pref, port, ulp;
 {
 	static char buf[128];
 	char prefbuf[10];
@@ -490,6 +494,32 @@ str_prefport(family, pref, port)
 	snprintf(buf, sizeof(buf), "%s%s", prefbuf, portbuf);
 
 	return buf;
+}
+
+static void
+str_upperspec(ulp, p1, p2)
+	u_int ulp, p1, p2;
+{
+	if (ulp == IPSEC_ULPROTO_ANY)
+		printf("any");
+	else {
+		struct protoent *ent;
+
+		switch (ulp) {
+		case IPPROTO_IPV4:
+			printf("ip4");
+			break;
+		default:
+			ent = getprotobynumber(ulp);
+			if (ent)
+				printf("%s", ent->p_name);
+			else
+				printf("%d", ulp);
+
+			endprotoent();
+			break;
+		}
+	}
 }
 
 /*

@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.13 2001/11/16 12:10:06 wiz Exp $
-.\"	$KAME: setkey.8,v 1.66 2001/09/04 10:05:07 jinmei Exp $
+.\"	$NetBSD: setkey.8,v 1.14 2002/05/14 11:24:20 itojun Exp $
+.\"	$KAME: setkey.8,v 1.73 2002/05/14 11:05:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -419,23 +419,12 @@ You have to consider and be careful to use them.
 .Pp
 .It Ar policy
 .Ar policy
-is the one of following:
-.Bd -literal -offset
-.Xo
-.Fl P
-.Ar direction
-.Li discard
-.Xc
-.Xo
-.Fl P
-.Ar direction
-.Li none
-.Xc
-.Xo
-.Fl P
-.Ar direction
-.Li ipsec
-.Ar protocol/mode/src-dst/level
+is the one of the following three formats:
+.Bd -literal -offset indent
+.It Fl P Ar direction Li discard
+.It Fl P Ar direction Li none
+.It Xo Fl P Ar direction Li ipsec
+.Ar protocol/mode/src-dst/level Op ...
 .Xc
 .Ed
 .Pp
@@ -452,6 +441,9 @@ means the packet matching indexes will be discarded.
 means that IPsec operation will not take place onto the packet.
 .Li ipsec
 means that IPsec operation will take place onto the packet.
+The part of
+.Ar protocol/mode/src-dst/level
+specifies the rule how to process the packet .
 Either
 .Li ah ,
 .Li esp
@@ -503,19 +495,31 @@ otherwise the kernel keeps normal operation.
 means SA is required whenever the kernel sends a packet matched
 with the policy.
 .Li unique
-is the same to require.
-In addition, it allows the policy to bind with the unique out-bound SA.
-If you use the SA by manual keying,
+is the same to require,
+in addition, it allows the policy to bind with the unique out-bound SA.
+You just specify the policy level
+.Li unique ,
+.Xr racoon 8
+will configure the SA for the policy.
+If you configure the SA by manual keying for that policy,
 you can put the decimal number as the policy identifier after
 .Li unique
 separated by colon
 .Sq \&:
 like the following;
 .Li unique:number .
+in order to bind this policy to the SA .
 .Li number
 must be between 1 and 32767.
 It corresponds to
-.Ar extensions Fl u .
+.Ar extensions Fl u
+of the manual SA configuration.
+When you want to use SA bundle, you can define multiple rules.
+For example, if an IP header was followed by AH header followed by ESP header
+followed by an upper layer protocol header, the rule
+would be:
+.Dl esp/transport//require ah/transport//require ;
+The rule order is very important.
 .Pp
 Note that
 .Dq Li discard
@@ -591,7 +595,7 @@ algorithm
 deflate		rfc2394
 .Ed
 .\"
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 The command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh EXAMPLES

@@ -1,5 +1,5 @@
-/*	$NetBSD: token.l,v 1.6 2001/09/07 04:12:10 itojun Exp $	*/
-/*	$KAME: token.l,v 1.33 2001/08/17 06:21:57 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.7 2002/05/14 11:24:20 itojun Exp $	*/
+/*	$KAME: token.l,v 1.34 2001/09/25 14:15:24 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
