@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145.4.3 1999/08/02 22:19:11 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145.4.4 1999/08/02 23:26:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -421,7 +421,7 @@ main()
 		panic("fork reaper");
 
 	/* Create process 4, the aiodone daemon kernel thread. */
-	if (kthread_create(start_aiodoned, NULL, NULL, "aiodoned"))
+	if (kthread_create1(start_aiodoned, NULL, NULL, "aiodoned"))
 		panic("fork aiodoned");
 
 	/* Create any other deferred kernel threads. */
