@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.11 1993/10/13 21:44:23 jtc Exp $
+#	$Id: Makefile.inc,v 1.12 1993/10/19 00:36:34 cgd Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
@@ -27,8 +27,8 @@ SRCS+=	abs.c div.c labs.c ldiv.c atof.c
 
 MAN3+=	abort.0 abs.0 alloca.0 atexit.0 atof.0 atoi.0 atol.0 bsearch.0 \
 	calloc.0 div.0 exit.0 free.0 getenv.0 getopt.0 labs.0 ldiv.0 \
-	malloc.0 memory.0 qsort.0 radixsort.0 rand.0 random.0 realloc.0 \
-	strtod.0 strtol.0 strtoul.0 system.0
+	malloc.0 memory.0 qsort.0 radixsort.0 rand48.0 rand.0 random.0 \
+	realloc.0 strtod.0 strtol.0 strtoul.0 system.0
 
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=qsort.3 heapsort.3
