@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.39 2000/02/11 00:30:07 abs Exp $	*/
+/*	$NetBSD: su.c,v 1.40 2000/07/10 01:45:24 assar Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.39 2000/02/11 00:30:07 abs Exp $");
+__RCSID("$NetBSD: su.c,v 1.40 2000/07/10 01:45:24 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -452,8 +452,7 @@ kerberos(username, user, uid)
 	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
 	char hostname[MAXHOSTNAMELEN + 1], savehost[MAXHOSTNAMELEN + 1];
 
-	if (krb_get_lrealm(lrealm, 1) != KSUCCESS ||
-	    strcmp(lrealm, KRB_REALM) == 0)
+	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
 		return (1);
 	if (koktologin(username, lrealm, user) && !uid) {
 		warnx("kerberos: not in %s's ACL.", user);
@@ -483,9 +482,30 @@ kerberos(username, user, uid)
 	 * We should have a way to set the ticket lifetime,
 	 * with a system default for root.
 	 */
-	kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
-		(uid == 0 ? "root" : ""), lrealm,
-		"krbtgt", lrealm, DEFAULT_TKT_LIFE, 0);
+	{
+		char prompt[128];
+		char passw[256];
+
+		(void)snprintf (prompt, sizeof(prompt),
+			  "%s's Password: ",
+			  krb_unparse_name_long ((uid == 0 ? username : user),
+						 (uid == 0 ? "root" : ""),
+						 lrealm));
+		if (des_read_pw_string (passw, sizeof (passw), prompt, 0)) {
+			memset (passw, 0, sizeof (passw));
+			return (1);
+		}
+		if (strlen(passw) == 0)
+			return (1); /* Empty passwords are not allowed */
+
+		kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
+					  (uid == 0 ? "root" : ""), lrealm,
+					  KRB_TICKET_GRANTING_TICKET,
+					  lrealm,
+					  DEFAULT_TKT_LIFE,
+					  passw);
+		memset (passw, 0, strlen (passw));
+	}
 
 	if (kerno != KSUCCESS) {
 		if (kerno == KDC_PR_UNKNOWN) {
@@ -516,7 +536,7 @@ kerberos(username, user, uid)
 	}
 	hostname[sizeof(hostname) - 1] = '\0';
 
-	(void)strncpy(savehost, krb_get_phost(hostname), sizeof(savehost));
+	(void)strlcpy(savehost, krb_get_phost(hostname), sizeof(savehost));
 	savehost[sizeof(savehost) - 1] = '\0';
 
 	kerno = krb_mk_req(&ticket, "rcmd", savehost, lrealm, 33);
@@ -559,15 +579,9 @@ static int
 koktologin(name, realm, toname)
 	char *name, *realm, *toname;
 {
-	AUTH_DAT *kdata;
-	AUTH_DAT kdata_st;
-
-	kdata = &kdata_st;
-	memset((char *)kdata, 0, sizeof(*kdata));
-	(void)strncpy(kdata->pname, name, sizeof(kdata->pname) - 1);
-	(void)strncpy(kdata->pinst,
-	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst) - 1);
-	(void)strncpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
-	return (kuserok(kdata, toname));
+	return krb_kuserok(name,
+			   strcmp (toname, "root") == 0 ? "root" : "",
+			   realm,
+			   toname);
 }
 #endif
