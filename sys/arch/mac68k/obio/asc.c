@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.34.4.2 2000/08/06 02:08:05 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.34.4.3 2000/09/13 12:43:25 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -126,6 +126,8 @@ ascmatch(parent, cf, aux)
 
 	if (oa->oa_addr != (-1))
 		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACTV)
+		return 0;
 	else if (current_mac_model->machineid == MACH_MACIIFX)
 		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
 	else
