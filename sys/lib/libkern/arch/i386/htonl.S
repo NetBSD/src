@@ -1,4 +1,4 @@
-/*	$NetBSD: htonl.S,v 1.6 1998/02/22 06:40:17 mycroft Exp $	*/
+/*	$NetBSD: htonl.S,v 1.7 1998/02/22 08:14:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: htonl.S,v 1.6 1998/02/22 06:40:17 mycroft Exp $")
+	RCSID("$NetBSD: htonl.S,v 1.7 1998/02/22 08:14:57 mycroft Exp $")
 #endif
 
 /* netorder = htonl(hostorder) */
