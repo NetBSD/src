@@ -1,6 +1,6 @@
-#	$NetBSD: files.svr4,v 1.7 1996/05/05 17:14:25 mrg Exp $
+#	$NetBSD: files.svr4,v 1.8 1997/07/20 20:35:47 pk Exp $
 #
-# Config.new file description for machine-independent SVR4 compat code.
+# Config file description for machine-independent SVR4 compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their
