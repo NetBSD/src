@@ -1,4 +1,4 @@
-/*      $NetBSD: formtree.h,v 1.4 2001/03/07 10:10:20 garbled Exp $       */
+/*      $NetBSD: formtree.h,v 1.5 2001/12/31 20:00:40 thorpej Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@ extern struct cqForm *cqFormHeadp;
 #define EDIT (RESET+1)
 #define COMMAND (EDIT+1)
 #define FASTBAIL (COMMAND+1)
-#define TREE_ISEMPTY(cqf)	(CIRCLEQ_FIRST(cqf) == (void *)cqf)
 
 int handle_preform __P((char *, char *));
 int handle_form __P((char *, char *, char **));
