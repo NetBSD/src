@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/03/06 20:10:20 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/06/10 03:16:31 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/pte.h>
+#include <powerpc/mpc6xx/pte.h>
 #include <machine/intr.h>
 
 struct device *booted_device;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.4 2001/03/12 20:10:06 manu Exp $
+#	$NetBSD: files.sandpoint,v 1.5 2001/06/10 03:16:29 briggs Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -7,7 +7,7 @@ maxpartitions 16
 maxusers 2 8 64
 
 file	arch/sandpoint/sandpoint/autoconf.c
-file	arch/sandpoint/sandpoint/bus_dma.c
+file	arch/sandpoint/sandpoint/bus_space.c
 file	arch/sandpoint/sandpoint/clock.c
 file	arch/sandpoint/sandpoint/conf.c
 file	arch/sandpoint/sandpoint/disksubr.c		disk

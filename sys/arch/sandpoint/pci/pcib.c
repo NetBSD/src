@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 2001/02/04 18:32:17 briggs Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2 2001/06/10 03:16:31 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@ struct cfattach pcib_ca = {
 void	pcib_callback __P((struct device *));
 int	pcib_print __P((void *, const char *));
 
+extern const struct powerpc_bus_space sandpoint_isa_io_bs_tag;
+extern const struct powerpc_bus_space sandpoint_isa_mem_bs_tag;
+
 int
 pcibmatch(parent, match, aux)
 	struct device *parent;
@@ -119,8 +122,8 @@ pcib_callback(self)
 	bzero(&iba, sizeof(iba));
 	iba.iba_busname = "isa";
 	iba.iba_ic = &sc->sc_chipset;
-	iba.iba_iot = (bus_space_tag_t)SANDPOINT_BUS_SPACE_IO;
-	iba.iba_memt = (bus_space_tag_t)SANDPOINT_BUS_SPACE_MEM;
+	iba.iba_iot = &sandpoint_isa_io_bs_tag;
+	iba.iba_memt = &sandpoint_isa_mem_bs_tag;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif

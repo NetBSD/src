@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2001/02/04 18:32:13 briggs Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2001/06/10 03:16:30 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -168,43 +168,7 @@ void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 #define	isa_outb(x,y)	outb(SANDPOINT_BUS_SPACE_IO + (x), y)
 #define isa_inb(x)	inb(SANDPOINT_BUS_SPACE_IO + (x))
 
-extern struct sandpoint_bus_dma_tag isa_bus_dma_tag;
-
-/*
- * Cookie used by ISA dma.  A pointer to one of these it stashed in
- * the DMA map.
- */
-struct sandpoint_isa_dma_cookie {
-	int	id_flags;		/* flags; see below */
-
-	/*
-	 * Information about the original buffer used during
-	 * DMA map syncs.  Note that origbuflen is only used
-	 * for ID_BUFTYPE_LINEAR.
-	 */
-	void	*id_origbuf;		/* pointer to orig buffer if
-					   bouncing */
-	bus_size_t id_origbuflen;	/* ...and size */
-	int	id_buftype;		/* type of buffer */
-
-	void	*id_bouncebuf;		/* pointer to the bounce buffer */
-	bus_size_t id_bouncebuflen;	/* ...and size */
-	int	id_nbouncesegs;		/* number of valid bounce segs */
-	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
-					       physical memory segments */
-};
-
-/* id_flags */
-#define	ID_MIGHT_NEED_BOUNCE	0x01	/* map could need bounce buffers */
-#define	ID_HAS_BOUNCE		0x02	/* map currently has bounce buffers */
-#define	ID_IS_BOUNCING		0x04	/* map is bouncing current xfer */
-
-/* id_buftype */
-#define	ID_BUFTYPE_INVALID	0
-#define	ID_BUFTYPE_LINEAR	1
-#define	ID_BUFTYPE_MBUF		2
-#define	ID_BUFTYPE_UIO		3
-#define	ID_BUFTYPE_RAW		4
+extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
 
 /*
  * XXX Various seemingly PC-specific constants, some of which may be
@@ -219,24 +183,6 @@ struct sandpoint_isa_dma_cookie {
 #define	CGA_BASE	0x3D4
 #define	CGA_BUF		0xB8000
 #define	IOPHYSMEM	0xA0000
-
-
-/*
- * ISA DMA bounce buffers.
- * XXX should be made partially machine- and bus-mapping-independent.
- *
- * DMA_BOUNCE is the number of pages of low-addressed physical memory
- * to acquire for ISA bounce buffers.
- *
- * isaphysmem is the location of those bounce buffers.  (They are currently
- * assumed to be contiguous.
- */
-
-#ifndef DMA_BOUNCE
-#define	DMA_BOUNCE      8		/* one buffer per channel */
-#endif
-
-extern paddr_t isaphysmem;
 
 /*
  * Miscellanous functions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2001/05/15 14:48:58 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2001/06/10 03:16:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,7 +54,7 @@
 
 #include <uvm/uvm.h>
 
-#define _SANDPOINT_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -66,7 +66,7 @@
 
 #include <sandpoint/isa/icu.h>
 
-struct sandpoint_bus_dma_tag pci_bus_dma_tag = {
+struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
