@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.297 2001/01/22 14:18:42 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.298 2001/01/26 08:04:41 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.294 2001/01/26 08:02:46 rh Exp 
  */
 
 /*
@@ -1748,6 +1748,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Deskpro 4000 5233MMX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
+	    0,
+	    "Compaq",
+	    "Armada M700",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,

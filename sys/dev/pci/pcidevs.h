@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.299 2001/01/22 14:18:42 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.300 2001/01/26 08:04:40 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.294 2001/01/26 08:02:46 rh Exp 
  */
 
 /*
@@ -945,6 +945,7 @@
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
+#define	PCI_PRODUCT_COMPAQ_M700	0xb112		/* Armada M700 */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 
