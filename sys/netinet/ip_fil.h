@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.35 2000/05/03 11:12:06 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.36 2000/05/23 06:07:43 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.29.2.1 2000/04/25 16:18:32 darrenr Exp
+ * Id: ip_fil.h,v 2.29.2.2 2000/05/22 10:26:13 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -509,11 +509,12 @@ extern	int	ipflog_clear __P((minor_t));
 extern	int	ipflog_read __P((minor_t, struct uio *));
 extern	int	ipflog __P((u_int, ip_t *, fr_info_t *, mb_t *));
 extern	int	ipllog __P((int, fr_info_t *, void **, size_t *, int *, int));
+extern	int	send_icmp_err __P((ip_t *, int, fr_info_t *, int));
+extern	int	send_reset __P((ip_t *, fr_info_t *));
 # if	SOLARIS
 extern	int	fr_check __P((ip_t *, int, void *, int, qif_t *, mb_t **));
 extern	int	(*fr_checkp) __P((ip_t *, int, void *,
 				  int, qif_t *, mb_t **));
-extern	int	icmp_error __P((ip_t *, int, int, qif_t *, struct in_addr));
 #  if SOLARIS2 >= 7
 extern	int	iplioctl __P((dev_t, int, intptr_t, int, cred_t *, int *));
 #  else
@@ -522,7 +523,6 @@ extern	int	iplioctl __P((dev_t, int, int *, int, cred_t *, int *));
 extern	int	iplopen __P((dev_t *, int, int, cred_t *));
 extern	int	iplclose __P((dev_t, int, int, cred_t *));
 extern	int	ipfsync __P((void));
-extern	int	send_reset __P((fr_info_t *, ip_t *, qif_t *));
 extern	int	ipfr_fastroute __P((qif_t *, ip_t *, mblk_t *, mblk_t **,
 				   fr_info_t *, frdest_t *));
 extern	void	copyin_mblk __P((mblk_t *, size_t, size_t, char *));
@@ -533,12 +533,8 @@ extern	int	iplread __P((dev_t, struct uio *, cred_t *));
 # else /* SOLARIS */
 extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
 extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
-#  ifdef	linux
-extern	int	send_reset __P((tcpiphdr_t *, struct ifnet *));
-#  else
-extern	int	send_reset __P((fr_info_t *, struct ip *));
-extern	int	send_icmp_err __P((ip_t *, int, int, fr_info_t *, int));
-#  endif
+extern	int	send_reset __P((struct ip *, fr_info_t *));
+extern	int	send_icmp_err __P((ip_t *, int, fr_info_t *, int));
 extern	int	ipfr_fastroute __P((mb_t *, fr_info_t *, frdest_t *));
 extern	size_t	mbufchainlen __P((mb_t *));
 #  ifdef	__sgi
