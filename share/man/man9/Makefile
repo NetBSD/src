@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.40 1998/05/04 07:10:45 mrg Exp $
+#       $NetBSD: Makefile,v 1.41 1998/05/08 16:18:37 kleink Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -109,11 +109,12 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_km_free_wakeup.9 uvm.9 uvm_pagealloc.9 \
 	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
 	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 uvm.9 uvm_pageout.9 \
-	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uao_create.9 \
-	uvm.9 uao_detach.9 uvm.9 uao_reference.9 uvm.9 uvm_chgkprot.9 \
-	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
-	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
-	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
+	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uvm_swapout.9 \
+	uvm.9 uao_create.9 uvm.9 uao_detach.9 uvm.9 uao_reference.9 \
+	uvm.9 uvm_chgkprot.9 uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 \
+	uvm.9 uvm_vslock.9 uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
+	uvm.9 uvm_sysctl.9 uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
+	uvm.9 uvm_coredump.9
 
 SUBDIR= man9.sun3
 
