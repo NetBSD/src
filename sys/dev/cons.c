@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.51 2003/10/17 18:16:43 cdi Exp $	*/
+/*	$NetBSD: cons.c,v 1.52 2003/10/18 21:26:22 cdi Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.51 2003/10/17 18:16:43 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.52 2003/10/18 21:26:22 cdi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -109,7 +109,7 @@ const struct cdevsw cons_cdevsw = {
 };
 
 struct	tty *constty = NULL;	/* virtual console output device */
-struct	consdev *cn_tab = NULL;	/* physical console device info */
+struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
 int
