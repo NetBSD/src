@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.15 2002/07/20 14:18:45 mjl Exp $	*/
+/*	$NetBSD: socket.c,v 1.16 2003/03/30 00:32:52 thorpej Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.15 2002/07/20 14:18:45 mjl Exp $");
+__RCSID("$NetBSD: socket.c,v 1.16 2003/03/30 00:32:52 thorpej Exp $");
 #endif
 #endif
 
@@ -99,20 +99,22 @@ struct request_info *request;
      * XXX the last sentence is untrue as we support AF_INET6 as well :-)
      */
 
-    len = sizeof(client);
-    if (getpeername(fd, (struct sockaddr *) & client, &len) < 0) {
-	request->sink = sock_sink;
-	len = sizeof(client);
-	if (recvfrom(fd, buf, sizeof(buf), MSG_PEEK,
-		     (struct sockaddr *) & client, &len) < 0) {
-	    tcpd_warn("can't get client address: %m");
-	    return;				/* give up */
-	}
+    if (request->client->sin == NULL) {
+        len = sizeof(client);
+        if (getpeername(fd, (struct sockaddr *) & client, &len) < 0) {
+	    request->sink = sock_sink;
+	    len = sizeof(client);
+	    if (recvfrom(fd, buf, sizeof(buf), MSG_PEEK,
+		         (struct sockaddr *) & client, &len) < 0) {
+	        tcpd_warn("can't get client address: %m");
+	        return;				/* give up */
+	    }
 #ifdef really_paranoid
-	memset(buf, 0, sizeof(buf));
+	    memset(buf, 0, sizeof(buf));
 #endif
+        }
+        request->client->sin = (struct sockaddr *)&client;
     }
-    request->client->sin = (struct sockaddr *)&client;
 
     /*
      * Determine the server binding. This is used for client username
@@ -120,12 +122,14 @@ struct request_info *request;
      * address or name.
      */
 
-    len = sizeof(server);
-    if (getsockname(fd, (struct sockaddr *) & server, &len) < 0) {
-	tcpd_warn("getsockname: %m");
-	return;
+    if (request->server->sin == NULL) {
+        len = sizeof(server);
+        if (getsockname(fd, (struct sockaddr *) & server, &len) < 0) {
+	    tcpd_warn("getsockname: %m");
+	    return;
+        }
+        request->server->sin = (struct sockaddr *)&server;
     }
-    request->server->sin = (struct sockaddr *)&server;
 }
 
 /* sock_hostaddr - map endpoint address to printable form */
