@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.18 1999/12/07 02:40:27 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.19 1999/12/07 02:54:08 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -699,13 +699,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
 	struct buf *bp = (struct buf *) bp_in;
-#if DFSTRACE > 0
-	struct {
-		RF_uint64 raidAddr;
-		int     numBlocks;
-		char    type;
-	}       dfsrecord;
-#endif				/* DFSTRACE > 0 */
 
 	raidAddress += rf_raidSectorOffset;
 
@@ -714,14 +707,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		IO_BUF_ERR(bp, EINVAL, raidPtr->raidid);
 		return (EINVAL);
 	}
-#if defined(KERNEL) && DFSTRACE > 0
-	if (rf_DFSTraceAccesses) {
-		dfsrecord.raidAddr = raidAddress;
-		dfsrecord.numBlocks = numBlocks;
-		dfsrecord.type = type;
-		dfs_log(DFS_NOTE, (char *) &dfsrecord, sizeof(dfsrecord), 0);
-	}
-#endif				/* KERNEL && DFSTRACE > 0 */
 
 	rf_get_threadid(tid);
 	if (rf_accessDebug) {
