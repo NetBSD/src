@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.67 2003/05/14 16:43:44 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.68 2003/05/14 16:52:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.67 2003/05/14 16:43:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.68 2003/05/14 16:52:53 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1323,7 +1323,7 @@ ip_mdq(m, ifp, rt)
 		encap_send((ip), (vifp), (m));		\
 	else						\
 		phyint_send((ip), (vifp), (m));		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #ifdef RSVP_ISI
 	/*
