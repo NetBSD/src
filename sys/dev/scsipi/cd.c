@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.203 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.204 2004/09/06 20:38:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.203 2004/08/27 20:37:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.204 2004/09/06 20:38:14 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -762,7 +762,7 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy and scsipi_done
+ * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
  */
 static void 
 cdstart(struct scsipi_periph *periph)

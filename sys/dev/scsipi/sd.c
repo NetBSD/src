@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.221 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.222 2004/09/06 20:38:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.221 2004/08/27 20:37:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.222 2004/09/06 20:38:14 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -784,7 +784,7 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * sdstart() is called at splbio from sdstrategy and scsipi_done
+ * sdstart() is called at splbio from sdstrategy, sdrestart and scsipi_done
  */
 static void
 sdstart(struct scsipi_periph *periph)
