@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.17 1998/08/07 00:53:23 matt Exp $
+#	$NetBSD: files.isapnp,v 1.18 1998/08/12 19:16:24 scottr Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -52,12 +52,12 @@ attach	ym at isapnp with ym_isapnp
 file	dev/isapnp/ym_isapnp.c			ym_isapnp
 
 # WSS compatibles
-attach  wss at isapnp with wss_isapnp
-file    dev/isapnp/wss_isapnp.c                 wss_isapnp
+attach	wss at isapnp with wss_isapnp
+file	dev/isapnp/wss_isapnp.c			wss_isapnp
 
 # ESS compatibles
-attach  ess at isapnp with ess_isapnp
-file    dev/isapnp/ess_isapnp.c                 ess_isapnp
+attach	ess at isapnp with ess_isapnp
+file	dev/isapnp/ess_isapnp.c			ess_isapnp
 
 #
 # ISAPnP SCSI Controller
