@@ -26,12 +26,17 @@ extern int bounce_append_service(char *, char *, char *, char *);
  /*
   * bounce_notify_service.c
   */
-extern int bounce_notify_service(char *, char *, char *, char *, int);
+extern int bounce_notify_service(char *, char *, char *, char *, char *, int);
 
  /*
   * bounce_notify_verp.c
   */
-extern int bounce_notify_verp(char *, char *, char *, char *, char *, int);
+extern int bounce_notify_verp(char *, char *, char *, char *, char *, char *, int);
+
+ /*
+  * bounce_one_service.c
+  */
+extern int bounce_one_service(char *, char *, char *, char *, char *, char *);
 
  /*
   * bounce_cleanup.c
@@ -50,6 +55,7 @@ typedef struct {
     const char *service;		/* bounce or defer */
     const char *queue_name;		/* incoming, etc. */
     const char *queue_id;		/* base name */
+    const char *mime_encoding;		/* null or encoding */
     const char *mime_boundary;		/* for MIME */
     int     flush;			/* 0=defer, other=bounce */
     VSTRING *buf;			/* scratch pad */
@@ -59,7 +65,8 @@ typedef struct {
     BOUNCE_LOG *log_handle;		/* open logfile */
 } BOUNCE_INFO;
 
-extern BOUNCE_INFO *bounce_mail_init(const char *, const char *, const char *, int);
+extern BOUNCE_INFO *bounce_mail_init(const char *, const char *, const char *, const char *, int);
+extern BOUNCE_INFO *bounce_mail_one_init(const char *, const char *, const char *, const char *, const char *);
 extern void bounce_mail_free(BOUNCE_INFO *);
 extern int bounce_header(VSTREAM *, BOUNCE_INFO *, const char *);
 extern int bounce_boilerplate(VSTREAM *, BOUNCE_INFO *);

@@ -1,8 +1,10 @@
 SHELL	= /bin/sh
 SRCS	= bounce.c bounce_append_service.c bounce_notify_service.c \
-	bounce_cleanup.c bounce_notify_util.c bounce_notify_verp.c
+	bounce_cleanup.c bounce_notify_util.c bounce_notify_verp.c \
+	bounce_one_service.c
 OBJS	= bounce.o bounce_append_service.o bounce_notify_service.o \
-	bounce_cleanup.o bounce_notify_util.o bounce_notify_verp.o
+	bounce_cleanup.o bounce_notify_util.o bounce_notify_verp.o \
+	bounce_one_service.o
 HDRS	= 
 TESTSRC	= 
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
@@ -24,6 +26,8 @@ Makefile: Makefile.in
 	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
+
+tests:	test
 
 update: ../../libexec/$(PROG)
 
@@ -136,6 +140,10 @@ bounce_notify_util.o: ../../include/mail_error.h
 bounce_notify_util.o: ../../include/name_mask.h
 bounce_notify_util.o: ../../include/bounce_log.h
 bounce_notify_util.o: ../../include/mail_date.h
+bounce_notify_util.o: ../../include/mail_proto.h
+bounce_notify_util.o: ../../include/iostuff.h
+bounce_notify_util.o: ../../include/attr.h
+bounce_notify_util.o: ../../include/lex_822.h
 bounce_notify_util.o: bounce_service.h
 bounce_notify_verp.o: bounce_notify_verp.c
 bounce_notify_verp.o: ../../include/sys_defs.h
@@ -153,3 +161,17 @@ bounce_notify_verp.o: ../../include/mail_error.h
 bounce_notify_verp.o: ../../include/verp_sender.h
 bounce_notify_verp.o: bounce_service.h
 bounce_notify_verp.o: ../../include/bounce_log.h
+bounce_one_service.o: bounce_one_service.c
+bounce_one_service.o: ../../include/sys_defs.h
+bounce_one_service.o: ../../include/msg.h
+bounce_one_service.o: ../../include/vstream.h
+bounce_one_service.o: ../../include/vbuf.h
+bounce_one_service.o: ../../include/name_mask.h
+bounce_one_service.o: ../../include/mail_params.h
+bounce_one_service.o: ../../include/post_mail.h
+bounce_one_service.o: ../../include/cleanup_user.h
+bounce_one_service.o: ../../include/mail_addr.h
+bounce_one_service.o: ../../include/mail_error.h
+bounce_one_service.o: bounce_service.h
+bounce_one_service.o: ../../include/vstring.h
+bounce_one_service.o: ../../include/bounce_log.h

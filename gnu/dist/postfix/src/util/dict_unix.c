@@ -41,6 +41,7 @@
 
 #include "sys_defs.h"
 #include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <pwd.h>
 #include <grp.h>
@@ -65,14 +66,24 @@ static const char *dict_unix_getpwnam(DICT *unused_dict, const char *key)
 {
     struct passwd *pwd;
     static VSTRING *buf;
+    static int sanity_checked;
 
     dict_errno = 0;
 
     if ((pwd = getpwnam(key)) == 0) {
+	if (sanity_checked == 0) {
+	    sanity_checked = 1;
+	    errno = 0;
+	    if (getpwuid(0) == 0) {
+		msg_warn("cannot access UNIX password database: %m");
+		dict_errno = DICT_ERR_RETRY;
+	    }
+	}
 	return (0);
     } else {
 	if (buf == 0)
 	    buf = vstring_alloc(10);
+	sanity_checked = 1;
 	vstring_sprintf(buf, "%s:%s:%ld:%ld:%s:%s:%s",
 			pwd->pw_name, pwd->pw_passwd, (long) pwd->pw_uid,
 			(long) pwd->pw_gid, pwd->pw_gecos, pwd->pw_dir,
@@ -88,14 +99,24 @@ static const char *dict_unix_getgrnam(DICT *unused_dict, const char *key)
     struct group *grp;
     static VSTRING *buf;
     char  **cpp;
+    static int sanity_checked;
 
     dict_errno = 0;
 
     if ((grp = getgrnam(key)) == 0) {
+	if (sanity_checked == 0) {
+	    sanity_checked = 1;
+	    errno = 0;
+	    if (getgrgid(0) == 0) {
+		msg_warn("cannot access UNIX group database: %m");
+		dict_errno = DICT_ERR_RETRY;
+	    }
+	}
 	return (0);
     } else {
 	if (buf == 0)
 	    buf = vstring_alloc(10);
+	sanity_checked = 1;
 	vstring_sprintf(buf, "%s:%s:%ld:",
 			grp->gr_name, grp->gr_passwd, (long) grp->gr_gid);
 	for (cpp = grp->gr_mem; *cpp; cpp++) {
@@ -144,5 +165,5 @@ DICT   *dict_unix_open(const char *map, int unused_flags, int dict_flags)
     dict_unix->dict.lookup = lp->lookup;
     dict_unix->dict.close = dict_unix_close;
     dict_unix->dict.flags = dict_flags | DICT_FLAG_FIXED;
-    return (DICT_DEBUG(&dict_unix->dict));
+    return (DICT_DEBUG (&dict_unix->dict));
 }

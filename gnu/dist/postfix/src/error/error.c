@@ -47,7 +47,7 @@
 /*	Postmaster for bounce error notices.
 /* .IP \fBnotify_classes\fR
 /*	When this parameter includes the \fBbounce\fR class, send mail to the
-/*	postmaster with with the headers of the bounced mail.
+/*	postmaster with the headers of the bounced mail.
 /* SEE ALSO
 /*	bounce(8) non-delivery status reports
 /*	master(8) process manager
@@ -129,7 +129,7 @@ static int deliver_message(DELIVER_REQUEST *request)
 	rcpt = request->rcpt_list.info + nrcpt;
 	if (rcpt->offset >= 0) {
 	    status = bounce_append(BOUNCE_FLAG_KEEP, request->queue_id,
-				   rcpt->address, "error",
+				   rcpt->orig_addr, rcpt->address, "none",
 				   request->arrival_time,
 				   "%s", request->nexthop);
 	    if (status == 0)

@@ -26,9 +26,23 @@
 /*	by contacting the Postfix \fBqmgr\fR(8) daemon.
 /* .IP \fB-p\fR
 /*	Produce a traditional sendmail-style queue listing.
-/*
 /*	This option implements the traditional \fBmailq\fR command,
 /*	by contacting the Postfix \fBshowq\fR(8) daemon.
+/*
+/*	Each queue entry shows the queue file ID, message
+/*	size, arrival time, sender, and the recipients that still need to
+/*	be delivered.  If mail could not be delivered upon the last attempt,
+/*	the reason for failure is shown. This mode of operation is implemented
+/*	by executing the \fBpostqueue\fR(1) command. The queue ID string
+/*	is followed by an optional status character:
+/* .RS
+/* .IP \fB*\fR
+/*	The message is in the \fBactive\fR queue, i.e. the message is
+/*	selected for delivery.
+/* .IP \fB!\fR
+/*	The message is in the \fBhold\fR queue, i.e. no further delivery
+/*	attempt will be made until the mail is taken off hold.
+/* .RE
 /* .IP "\fB-s \fIsite\fR"
 /*	Schedule immediate delivery of all mail that is queued for the named
 /*	\fIsite\fR. The site must be eligible for the "fast flush" service.
@@ -61,7 +75,7 @@
 /*	standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
 /*	configuration parameter value.
 /*
-/*	Only the super-user is allowed to specify arbitrary directory names.
+/*	Only the superuser is allowed to specify arbitrary directory names.
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -171,7 +185,7 @@ static void show_queue(void)
      * Connect to the show queue service. Terminate silently when piping into
      * a program that terminates early.
      */
-    if ((showq = mail_connect(MAIL_CLASS_PUBLIC, MAIL_SERVICE_SHOWQ, BLOCKING)) != 0) {
+    if ((showq = mail_connect(MAIL_CLASS_PUBLIC, var_showq_service, BLOCKING)) != 0) {
 	while ((n = vstream_fread(showq, buf, sizeof(buf))) > 0) {
 	    if (vstream_fwrite(VSTREAM_OUT, buf, n) != n
 		|| vstream_fflush(VSTREAM_OUT) != 0) {
@@ -191,7 +205,7 @@ static void show_queue(void)
     else if (errno == EACCES) {
 	msg_fatal_status(EX_SOFTWARE,
 			 "Connect to the %s %s service: %m",
-			 var_mail_name, MAIL_SERVICE_SHOWQ);
+			 var_mail_name, var_showq_service);
     }
 
     /*
@@ -204,7 +218,7 @@ static void show_queue(void)
 
 	msg_warn("Mail system is down -- accessing queue directly");
 	argv = argv_alloc(6);
-	argv_add(argv, MAIL_SERVICE_SHOWQ, "-u", "-S", (char *) 0);
+	argv_add(argv, var_showq_service, "-u", "-S", (char *) 0);
 	for (n = 0; n < msg_verbose; n++)
 	    argv_add(argv, "-v", (char *) 0);
 	argv_terminate(argv);
@@ -233,6 +247,9 @@ static void flush_queue(void)
      * Trigger the flush queue service.
      */
     if (mail_flush_deferred() < 0)
+	msg_fatal_status(EX_UNAVAILABLE,
+			 "Cannot flush mail queue - mail system is down");
+    if (mail_flush_maildrop() < 0)
 	msg_fatal_status(EX_UNAVAILABLE,
 			 "Cannot flush mail queue - mail system is down");
 }

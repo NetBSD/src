@@ -92,13 +92,16 @@ static VSTREAM *safe_open_exist(const char *path, int flags,
 {
     struct stat local_statbuf;
     struct stat lstat_st;
+    int     saved_errno;
     VSTREAM *fp;
 
     /*
      * Open an existing file.
      */
     if ((fp = vstream_fopen(path, flags & ~(O_CREAT | O_EXCL), 0)) == 0) {
+	saved_errno = errno;
 	vstring_sprintf(why, "cannot open file: %m");
+	errno = saved_errno;
 	return (0);
     }
 

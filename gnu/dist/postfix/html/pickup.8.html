@@ -19,13 +19,13 @@ PICKUP(8)                                               PICKUP(8)
        world.
 
 <b>SECURITY</b>
-       The <b>pickup</b> daemon runs with superuser privileges  so  that
-       it 1) can open a queue file with the rights of the submit-
-       ting user and 2) can access the Postfix private IPC  chan-
-       nels.  On the positive side, the program can run chrooted,
-       opens no files for writing, is careful about what files it
-       opens  for  reading,  and does not actually touch any data
-       that is sent to its public service endpoint.
+       The <b>pickup</b> daemon is  moderately  security  sensitive.  It
+       runs  with  fixed  low privilege and can run in a chrooted
+       environment.  However, the program reads files from poten-
+       tially  hostile  users.   The <b>pickup</b> daemon opens no files
+       for writing, is careful about  what  files  it  opens  for
+       reading, and does not actually touch any data that is sent
+       to its public service endpoint.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -56,10 +56,6 @@ PICKUP(8)                                               PICKUP(8)
               Address  to send a copy of each message that enters
               the system.
 
-       <b>mail</b><i>_</i><b>owner</b>
-              The process privileges used  while  not  opening  a
-              <b>maildrop</b> file.
-
        <b>queue</b><i>_</i><b>directory</b>
               Top-level directory of the Postfix queue.
 
@@ -70,7 +66,7 @@ PICKUP(8)                                               PICKUP(8)
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

@@ -82,6 +82,7 @@
 
 #include <msg.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <vstream.h>
 #include <msg_vstream.h>
 
@@ -90,7 +91,7 @@ static void usage(char *progname)
     msg_fatal("usage: %s [-v] patterns hostname", progname);
 }
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     DOMAIN_LIST *list;
     char   *host;

@@ -22,6 +22,7 @@
 #define MAC_PARSE_LITERAL	1
 #define MAC_PARSE_VARNAME	2
 
+#define MAC_PARSE_OK		0
 #define MAC_PARSE_ERROR		(1<<0)
 #define MAC_PARSE_UNDEF		(1<<1)
 #define MAC_PARSE_USER		2	/* start user definitions */

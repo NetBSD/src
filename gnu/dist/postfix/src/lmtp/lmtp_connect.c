@@ -92,6 +92,7 @@
 #include <iostuff.h>
 #include <timed_connect.h>
 #include <stringops.h>
+#include <host_port.h>
 
 /* Global library. */
 
@@ -246,7 +247,7 @@ static LMTP_SESSION *lmtp_connect_sock(int sock, struct sockaddr * sa, int len,
      */
     stream = vstream_fdopen(sock, O_RDWR);
     if ((ch = VSTREAM_GETC(stream)) == VSTREAM_EOF) {
-	vstring_sprintf(why, "connect to %s[%s]: server dropped connection",
+	vstring_sprintf(why, "connect to %s[%s]: server dropped connection without sending the initial greeting",
 			name, addr);
 	lmtp_errno = LMTP_RETRY;
 	vstream_fclose(stream);
@@ -298,35 +299,21 @@ static char *lmtp_parse_destination(const char *destination, char *def_service,
 {
     char   *myname = "lmtp_parse_destination";
     char   *buf = mystrdup(destination);
-    char   *host = buf;
     char   *service;
     struct servent *sp;
     char   *protocol = "tcp";		/* XXX configurable? */
     unsigned port;
+    const char *err;
 
     if (msg_verbose)
 	msg_info("%s: %s %s", myname, destination, def_service);
 
     /*
-     * Strip quoting. We're working with a copy of the destination argument
-     * so the stripping can be destructive.
+     * Parse the host/port information. We're working with a copy of the
+     * destination argument so the parsing can be destructive.
      */
-    if (*host == '[') {
-	host++;
-	host[strcspn(host, "]")] = 0;
-    }
-
-    /*
-     * Separate host and service information, or use the default service
-     * specified by the caller. XXX the ":" character is used in the IPV6
-     * address notation, so using split_at_right() is not sufficient. We'd
-     * have to count the number of ":" instances.
-     */
-    if ((service = split_at_right(host, ':')) == 0 || *service == 0)
-	service = def_service;
-    if (*service == 0)
-	msg_fatal("%s: empty service name: %s", myname, destination);
-    *hostp = host;
+    if ((err = host_port(buf, hostp, &service, def_service)) != 0)
+	msg_fatal("%s in LMTP server description: %s", err, destination);
 
     /*
      * Convert service to port number, network byte order. Since most folks

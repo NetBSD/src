@@ -47,11 +47,15 @@ run chrooted at fixed low privilege.
 .na
 .nf
 RFC 821 (SMTP protocol)
+RFC 822 (ARPA Internet Text Messages)
 RFC 1651 (SMTP service extensions)
+RFC 1652 (8bit-MIME transport)
 RFC 1870 (Message Size Declaration)
-RFC 2197 (Pipelining)
+RFC 2045 (MIME: Format of Internet Message Bodies)
+RFC 2046 (MIME: Media Types)
 RFC 2554 (AUTH command)
 RFC 2821 (SMTP protocol)
+RFC 2920 (SMTP Pipelining)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -104,9 +108,16 @@ The network interface addresses that this mail system receives
 mail on. When any of those addresses appears in the list of mail
 exchangers for a remote destination, the list is truncated to
 avoid mail delivery loops.
+See also the \fBproxy_interfaces\fR parameter.
 .IP \fBnotify_classes\fR
 When this parameter includes the \fBprotocol\fR class, send mail to the
 postmaster with transcripts of SMTP sessions with protocol errors.
+.IP \fBproxy_interfaces\fR
+Network interfaces that this mail system receives mail on by way
+of a proxy or network address translator. When any of those addresses
+appears in the list of mail exchangers for a remote destination, the
+list is truncated to avoid mail delivery loops.
+See also the \fBinet_interfaces\fR parameter.
 .IP \fBsmtp_always_send_ehlo\fR
 Always send EHLO at the start of a connection.
 .IP \fBsmtp_never_send_ehlo\fR
@@ -116,6 +127,8 @@ Numerical source network address to bind to when making a connection.
 .IP \fBsmtp_line_length_limit\fR
 Length limit for SMTP message content lines. Zero means no limit.
 Some SMTP servers misbehave on long lines.
+.IP \fBsmtp_helo_name\fR
+The hostname to be used in HELO and EHLO commands.
 .IP \fBsmtp_skip_4xx_greeting\fR
 Skip servers that greet us with a 4xx status code.
 .IP \fBsmtp_skip_5xx_greeting\fR
@@ -128,6 +141,19 @@ around the CISCO PIX firewall <CR><LF>.<CR><LF> bug.
 .IP \fBsmtp_pix_workaround_threshold_time\fR
 The time a message must be queued before the CISCO PIX firewall
 <CR><LF>.<CR><LF> bug workaround is turned on.
+.SH "MIME Conversion"
+.IP \fBdisable_mime_output_conversion\fR
+Disable the conversion of 8BITMIME format to 7BIT format when
+the remote system does not advertise 8BITMIME support.
+.IP \fBmime_boundary_length_limit\fR
+The amount of space that will be allocated for MIME multipart
+boundary strings. The MIME processor is unable to distinguish
+between boundary strings that do not differ in the first
+\fB$mime_boundary_length_limit\fR characters.
+.IP \fBmime_nesting_limit\fR
+The maximal nesting level of multipart mail that the MIME
+processor can handle. Refuse mail that is nested deeper,
+when converting from 8BITMIME format to 7BIT format.
 .SH "Authentication controls"
 .IP \fBsmtp_sasl_auth_enable\fR
 Enable per-session authentication as per RFC 2554 (SASL).

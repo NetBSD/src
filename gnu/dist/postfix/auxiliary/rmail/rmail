@@ -10,4 +10,4 @@ case "$from" in
       *) from="$from@$relay";;
 esac
 
-exec $SENDMAIL -f "$from" -- "$@"
+exec $SENDMAIL -i -f "$from" -- "$@"

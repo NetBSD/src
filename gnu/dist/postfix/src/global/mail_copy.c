@@ -6,8 +6,9 @@
 /* SYNOPSIS
 /*	#include <mail_copy.h>
 /*
-/*	int	mail_copy(sender, delivered, src, dst, flags, eol, why)
+/*	int	mail_copy(sender, orig_to, delivered, src, dst, flags, eol, why)
 /*	const char *sender;
+/*	const char *orig_to;
 /*	const char *delivered;
 /*	VSTREAM	*src;
 /*	VSTREAM	*dst;
@@ -48,6 +49,9 @@
 /* .IP MAIL_COPY_DELIVERED
 /*	Prepend a Delivered-To: header with the name of the
 /*	\fIdelivered\fR attribute.
+/* .IP MAIL_COPY_ORIG_RCPT
+/*	Prepend an X-Original-To: header with the original
+/*	envelope recipient address.
 /* .IP MAIL_COPY_RETURN_PATH
 /*	Prepend a Return-Path: header with the value of the
 /*	\fIsender\fR attribute.
@@ -113,7 +117,9 @@
 
 /* mail_copy - copy message with extreme prejudice */
 
-int     mail_copy(const char *sender, const char *delivered,
+int     mail_copy(const char *sender,
+		          const char *orig_rcpt,
+		          const char *delivered,
 		          VSTREAM *src, VSTREAM *dst,
 		          int flags, const char *eol, VSTRING *why)
 {
@@ -156,12 +162,17 @@ int     mail_copy(const char *sender, const char *delivered,
 			    *sender ? vstring_str(buf) : "", eol);
 	}
     }
+    if (flags & MAIL_COPY_ORIG_RCPT) {
+	if (orig_rcpt == 0)
+	    msg_panic("%s: null orig_rcpt", myname);
+	quote_822_local(buf, orig_rcpt);
+	vstream_fprintf(dst, "X-Original-To: %s%s", vstring_str(buf), eol);
+    }
     if (flags & MAIL_COPY_DELIVERED) {
 	if (delivered == 0)
 	    msg_panic("%s: null delivered", myname);
 	quote_822_local(buf, delivered);
-	vstream_fprintf(dst, "Delivered-To: %s%s",
-			lowercase(vstring_str(buf)), eol);
+	vstream_fprintf(dst, "Delivered-To: %s%s", vstring_str(buf), eol);
     }
 
     /*

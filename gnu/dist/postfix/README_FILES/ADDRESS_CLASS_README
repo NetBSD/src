@@ -1,0 +1,98 @@
+Introduction
+============
+
+Postfix version 2.0 introduces the concept of address classes.
+This is a way of grouping recipient addresses by their delivery
+method.  The idea comes from discussions with Victor Duchovni.
+
+Benefits of address classes are:
+
+- You no longer need to specify all the virtual(8) mailbox domains
+  in the Postfix transport map. The virtual(8) delivery agent has
+  become a first-class citizen just like local(8) or smtp(8).
+
+- On mail gateway systems, separation of inbound mail relay traffic
+  from outbound traffic. This eliminates a problem where inbound
+  mail deliveries could become resource starved in the presence of
+  a high volume of outbound mail.
+
+- The SMTP server rejects unknown recipients in a more consistent
+  manner than was possible with previous Postfix versions.
+
+The list with "bad news" is at the end of this file :-)
+
+What address classes does Postfix implement?
+============================================
+
+Initially the list of address classes is hard coded, but this is
+meant to become extensible:
+
+-------------------------------------------------------------------
+Class	Description
+-------------------------------------------------------------------
+local	For UNIX accounts and for traditional /etc/aliases
+	Domain names are listed in $mydestination (or match the IP
+	    address listed with $inet_interfaces)
+	Known recipients are listed in $local_recipient_maps (this
+	    information is currently used by the Postfix SMTP server
+	    only; if $local_recipient_maps is empty, the Postfix
+	    SMTP server accepts all recipients)
+	Default delivery agent: local
+
+virtual For hosted domains that are aliased to mailboxes in other
+alias	    domains
+	Known recipients are listed in $virtual_alias_maps (default
+	    is $virtual_maps for Postfix 1.1 compatibility)
+	Domain names are listed in $virtual_alias_domains (default
+	    is $virtual_alias_maps for Postfix 1.1 compatibility)
+
+virtual	For hosted domains with their own mailboxes
+mailbox	Known recipients are listed in $virtual_mailbox_maps
+	Domain names are listed in $virtual_mailbox_domains (default
+	    is $virtual_mailbox_maps for Postfix 1.1 compatibility)
+	Default delivery agent: virtual
+
+relay	For remote destinations that list your system as MX host
+	Domain names are listed in $relay_domains
+	Known recipients are listed in $relay_recipient_maps (default
+	    is empty; if $relay_recipient_maps is empty, the Postfix
+	    SMTP server accepts all recipients)
+	Default delivery agent: relay (clone of default smtp agent)
+
+other	Restricted to mail from authorized clients
+	Default delivery agent: smtp
+	No domain table
+	No recipient table
+-------------------------------------------------------------------
+
+Incompatibilities with Postfix 1.1
+==================================
+
+- virtual_maps is replaced by virtual_alias_maps (for address
+  lookups) and virtual_alias_domains (for the names of what were
+  formerly called "Postfix-style virtual domains").
+
+  For backwards compatibility with Postfix version 1.1, the new
+  virtual_alias_maps parameter defaults to $virtual_maps, and the
+  new virtual_alias_domains parameter defaults to $virtual_alias_maps.
+
+- virtual_mailbox_maps now has a companion parameter called
+  virtual_mailbox_domains (for the names of domains served by the
+  virtual delivery agent). virtual_mailbox_maps is now used for
+  address lookups only.
+
+  For backwards compatibility with Postfix version 1.1,, the new
+  virtual_mailbox_domains parameter defaults to $virtual_mailbox_maps.
+
+- Introduction of relay_recipient_maps, so that the Postfix SMTP
+  server can block mail for relay recipients that don't exist. This
+  list is empty by default.
+
+- The local_recipient_maps feature is now turned on by default, so
+  that the Postfix SMTP server rejects mail for unknown local
+  recipients. This is enabled by default. See the LOCAL_RECIPIENT_README
+  file hints and tips.
+
+- Introduction of relay delivery transport in master.cf. This helps
+  to avoid mail delivery scheduling problems on inbound mail relays,
+  but may require that you update your "defer_transports" setting.

@@ -65,6 +65,14 @@ in a later section.
 ==================================================
 
 Postfix can attach a call tracer whenever a daemon process starts.
+Call tracers come in several kinds. 
+
+1) System call tracers such as trace, truss, strace, or ktrace.
+   These show the communication between the process and the kernel.
+
+2) Library call tracers such as sotruss and ltrace. These show
+   calls of library routines, and give a better idea of what is
+   going on within the process.
 
 Append a -D option to the suspect command in /etc/postfix/master.cf,
 for example:
@@ -75,15 +83,13 @@ Edit the debugger_command definition in /etc/postfix/main.cf so
 that it invokes the call tracer of your choice, for example:
 
     debugger_command =
-         PATH=/bin:/usr/bin:/usr/local/bin
+         PATH=/bin:/usr/bin:/usr/local/bin;
          (truss -p $process_id 2>&1 | logger -p mail.info) & sleep 5
-
-Instead of truss use trace or strace.
 
 Type "postfix reload" and watch the logfile.
 
-6 - Running daemon programs under an interactive debugger
-=========================================================
+6 - Running daemon programs under a debugger
+============================================
 
 Append a -D option to the suspect command in /etc/postfix/master.cf,
 for example:
@@ -91,22 +97,49 @@ for example:
     smtp      inet  n       -       n       -       -       smtpd -D
 
 Edit the debugger_command definition in /etc/postfix/main.cf so
-that it invokes the debugger of your choice, for example:
+that it invokes the debugger of your choice.
 
+Two choices are described in detail:
+
+1) If you do not have X Windows installed on the Postfix machine,
+   or if you are not familiar with interactive debuggers, then you
+   can try to run gdb in non-interactive mode:
+
+   /etc/postfix/main.cf:
+   --------------------
     debugger_command =
-         PATH=/usr/bin:/usr/X11R6/bin
+	PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
+	echo where) | gdb $daemon_directory/$process_name $process_id 2>&1
+	>$config_directory/$process_name.$process_id.log & sleep 5
+
+   Type "postfix reload" to make the configuration changes effective.
+
+   Whenever a suspect daemon process is started, an output file
+   is created, named after the daemon and process ID (for example,
+   smtpd.12345.log). When the process crashes, a stack trace (with
+   output from the "where" command) is written to its logfile.
+
+2) If you have X Windows installed on the Postfix machine, then
+   an interactive debugger such as xxgdb can be convenient.
+
+   /etc/postfix/main.cf:
+   --------------------
+    debugger_command =
+         PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
          xxgdb $daemon_directory/$process_name $process_id & sleep 5
 
-If you use xxgdb, be sure that gdb is in the command search path.
-
-Export XAUTHORITY so that X access control works, for example:
+   Be sure that gdb is in the command search path, and export
+   XAUTHORITY so that X access control works, for example:
 
     % setenv XAUTHORITY ~/.Xauthority
 
-Stop and start the Postfix system. 
+   Stop and start the Postfix system.  This is necessary so that
+   Postfix runs with the proper XAUTHORITY and DISPLAY settings.
 
-Whenever the suspect daemon process is started, a debugger window
-pops up and you can watch in detail what happens.
+   Whenever the suspect daemon process is started, a debugger window
+   pops up and you can watch in detail what happens (when using
+   xxgdb) or a file is created (if using gdb in non-interactive
+   mode).
 
 7 - Unreasonable behavior
 =========================

@@ -5,6 +5,9 @@ Let's start with the important warning:
 
 DO NOT USE THE MULTIPLE USERS APPLICATION TO CREATE THE POSTFIX USER!
 
+NOTE: As of 29 September 2002, these instructions and the scripts have changed
+to make the solution more robust for Apple updates.
+
 Run the commands below in the order that they are presented
 
 A. INSTALLING POSTFIX for the first time and selecting it as the active
@@ -12,52 +15,56 @@ A. INSTALLING POSTFIX for the first time and selecting it as the active
 
 	# All these commands are written to be run from this directory.
 
+	# This repairs the previous Oct 2001 setup if any
+	sudo ./repair-oldsetup
+
+	# Prepare for reactivating sendmail
+	sudo ./backup-sendmail-binaries
+
 	# this creates the necessary users & groups for proper operation
 	# of postfix:
 	sudo ./niscript
-
-	# Prepare for reactivating sendmail if you want to
-	sudo ./backup-sendmail-binaries
 
 	# Install postfix:
 	# When the script asks you for setgid (the default will be no) tell it
 	# maildrop
 	(cd ../..; sudo make install)
 
-	# Prepare for reactivating postfix if you want to
+	# Prepare for reactivating postfix
 	sudo ./backup-postfix-binaries
 
 	# edit /etc/postfix/main.cf to suit your requirements
+	### add your own commands here ###
 
-	### add your own command here ###
-
-	# Install the startup item and move the existing sendmail startup item
-	# out of the way
+	# Activate postfix startup at boot time. Deactivates sendmail.
 	sudo ./activate-postfix
-
-	# Restart your computer
 
 	# Test. Read INSTALL for a series of suggested tests.
 
-B. RESTORING Sendmail as the MTA when Postfix is the active MTA
+B. DEACTIVATING POSTFIX
 
-	# Stop postfix
-	# Restore the sendmail binaries
-	# Restore the Sendmail startup item and move the Postfix startup item
-	# out of the way
+	# Deactivate postfix startup at boot time
+	sudo ./deactivate-postfix
+
+C. RESTORING Sendmail as the MTA when Postfix is the active MTA
+
+	# This repairs the previous Oct 2001 setup if any
+	sudo ./repair-oldsetup
+
+	# Deactivate postfix startup at boot time
+	sudo ./deactivate-postfix
+
 	sudo ./activate-sendmail
 
 	# Restart your computer
 
-C. RESTORING postfix as the MTA when Sendmail is the active MTA
+D. RESTORING postfix as the MTA when Sendmail is the active MTA
 
-	# The first time you have to follow the steps of A.
+	# NOTE: The first time you activate postfix you have to follow
+	# the steps of A.
 
-	# Kill the running sendmail daemon if you know how
+	# This repairs the previous Oct 2001 setup if any
+	sudo ./repair-oldsetup
 
-	# Restore the postfix binaries
-	# Restore the Postfix startup item and move the Sendmail startup item
-	# out of the way
 	sudo ./activate-postfix
 
-	# Restart your computer

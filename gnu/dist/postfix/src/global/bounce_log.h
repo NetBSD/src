@@ -34,6 +34,7 @@ typedef struct {
 extern BOUNCE_LOG *bounce_log_open(const char *, const char *, int, int);
 extern BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *);
 extern BOUNCE_LOG *bounce_log_delrcpt(BOUNCE_LOG *);
+extern BOUNCE_LOG *bounce_log_forge(const char *, const char *, const char *);
 extern int bounce_log_close(BOUNCE_LOG *);
 
 #define bounce_log_rewind(bp) vstream_fseek((bp)->fp, 0L, SEEK_SET)
