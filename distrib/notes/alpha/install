@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.7 1998/05/13 19:07:46 ross Exp $	
+	$NetBSD: install,v 1.8 1998/05/15 03:28:55 ross Exp $	
 
 0. Introduction
 
@@ -45,10 +45,9 @@
 
     If you have an MS-DOS or Windows system available, you can use
     the `rawrite.exe' utility to transfer the image to a floppy
-    disk. (Note that rawrite.exe doesn't work under many, if not
-    all, Windows NT systems.) This utility is provided with the
-    NetBSD/i386 install tools, under i386/installation/misc; a
-    documentation file, `rawrite.doc' is available there as well.
+    disk.  This utility is provided with the NetBSD/i386 install
+    tools, under i386/installation/misc; a documentation file,
+    `rawrite.doc' is available there as well.
 
     Once the floppy has been made, you simply need to put it in the
     drive and type
@@ -59,19 +58,19 @@
 
 2.2 Booting over the Network
 
-    Booting NetBSD/alpha _VER over a network requires a BOOTP server,
-    a TFTP server and an NFS server. (These are usually all run on
-    the same machine.) There are three basic stages to the boot:
+    Booting NetBSD/alpha _VER over a network requires a BOOTP or
+    DHCP server, a TFTP server and an NFS server. (These are usually
+    all run on the same machine.) There are three basic stages to
+    the boot:
 
-    1.The Alpha console software sends a BOOTP request to get its own
-    address, the address of the TFTP server and the file to
+    1.The Alpha console software sends a BOOTP request to get its
+    own address, the address of the TFTP server and the file to
     download. It downloads this file, which is the second stage
     bootstrap, via TFTP and then executes it.
 
-    2.The second stage bootstrap uses further information in the BOOTP
-    packet that the console received to find the NFS server and path
-    and retrieve the kernel (the file /netbsd). After loading the
-    kernel into memory, it executes it.
+    2.The secondary boot program resends the BOOTP request, this
+    time also locating the NFS server and root path. It mounts the
+    root path via NFS and reads in and transfers to the kernel: /netbsd.
 
     3.The kernel probes and configures the devices, and then sends
     out another BOOTP request so it can find out its address, the NFS
@@ -147,7 +146,7 @@
     The only Ethernet device the console on most Alpha systems
     knows how to boot from is the onboard Ethernet interface or a
     DEC Tulip (21040, 21041, 21140) based PCI Ethernet card. Some
-    older SMC 100 Mbps card that use this chip have been known to
+    older SMC 100 Mbps cards that use this chip have been known to
     work as well. Many older systems will not be able to use the
     newer 2.0 stepping of the 21140, however. If your system appears
     not to be receiving packets, this may be the problem. (You may
@@ -159,7 +158,8 @@
 
             boot -proto bootp ewa0
 
-    (The command may be different on some very old machines.)
+    Systems with the `old SRM' do not have a -proto option and
+    use different device names.
 
 3. Preparing the Disk
 
@@ -304,7 +304,9 @@
     does only host table lookups.  You can specify all host addresses
     as IP numbers or you can enter the host names and numbers into
     /etc/hosts. For example, you can prepare a hosts table beforehand,
-    and ftp(1) it down (by IP number) to /etc/hosts
+    and ftp(1) it down (by IP number) to /etc/hosts. This is not
+    stored on the floppy but on the temporary ramdisk filesystem,
+    so it must be repeated on any subsequent reboots from floppy.
 
     Once networking has been configured, you may mount the directory
     with the install files via NFS, or download them via FTP.
@@ -358,7 +360,7 @@
     or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
 
 	cd /mnt
-	for file in /mnt/var/tmp/*.tgz; do
+	for file in /mnt/var/tmp/[a-z]*.tgz; do
 	    echo $i
 	    tar xpfz $i
 	done
