@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.11 1998/02/21 22:47:20 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.12 2000/03/10 11:46:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.11 1998/02/21 22:47:20 christos Exp $");
+__RCSID("$NetBSD: find.c,v 1.12 2000/03/10 11:46:04 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: find.c,v 1.11 1998/02/21 22:47:20 christos Exp $");
 #include <stdlib.h>
 
 #include "find.h"
+
+static int ftscompare __P((const FTSENT **, const FTSENT **));
 
 /*
  * find_formplan --
@@ -94,7 +96,7 @@ find_formplan(argv)
 			tail = new;
 		}
 	}
-    
+
 	/*
 	 * if the user didn't specify one of -print, -ok or -exec, then -print
 	 * is assumed so we bracket the current expression with parens, if
@@ -116,7 +118,7 @@ find_formplan(argv)
 			tail = new;
 		}
 	}
-    
+
 	/*
 	 * the command line has been completely processed into a search plan
 	 * except for the (, ), !, and -o operators.  Rearrange the plan so
@@ -145,7 +147,14 @@ find_formplan(argv)
 	plan = or_squish(plan);			/* -o's */
 	return (plan);
 }
- 
+
+static int
+ftscompare(e1, e2)
+	const FTSENT **e1, **e2;
+{
+	return strcmp((*e1)->fts_name, (*e2)->fts_name);
+}
+
 FTS *tree;			/* pointer to top of FTS hierarchy */
 
 /*
@@ -161,8 +170,8 @@ find_execute(plan, paths)
 	register FTSENT *entry;
 	PLAN *p;
 	int rval;
-    
-	if (!(tree = fts_open(paths, ftsoptions, NULL)))
+
+	if (!(tree = fts_open(paths, ftsoptions, issort ? ftscompare : NULL)))
 		err(1, "ftsopen");
 
 	for (rval = 0; (entry = fts_read(tree)) != NULL; ) {
@@ -195,7 +204,7 @@ find_execute(plan, paths)
 			rval = 1;
 			continue;
 		}
-		 
+
 		/*
 		 * Call all the functions in the execution plan until one is
 		 * false or all have been executed.  This is where we do all
