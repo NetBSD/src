@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/11/28 05:47:37 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2001/11/28 05:55:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	if (boothowto & RB_MINIROOT) {
 		size_t fssz;
 		fssz = round_page(mfs_initminiroot((void *)kernend));
-#if MEMORY_DISK_DYNAMIC
+#ifdef MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
 #endif
 		kernend += fssz;
