@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2002/09/04 14:34:01 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2002/09/06 16:20:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,26 +158,30 @@ trap(struct proc *p, struct trapframe *tf)
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
 #ifdef DEBUG
-	if (last_tea == tf->tf_state.sf_tea &&
-	    last_expevt == tf->tf_state.sf_expevt) {
-		if (last_count++ == 10) {
-			printf("Repetitive fault. curvsid = 0x%x\n",
-			    curcpu()->ci_curvsid);
-			printf("\ntrap: %s in %s mode\n", trap_type(traptype),
-			    USERMODE(tf) ? "user" : "kernel");
-			printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
-				(u_int)tf->tf_state.sf_ssr,
-				(uintptr_t)tf->tf_state.sf_spc,
-				(uintptr_t)tf->tf_state.sf_tea,
-				(u_int)tf->tf_state.sf_tra);
-			kdb_trap(traptype, tf);
+	if (sh5_trap_debug) {
+		if (last_tea == tf->tf_state.sf_tea &&
+		    last_expevt == tf->tf_state.sf_expevt) {
+			if (last_count++ == 10) {
+				printf("Repetitive fault. curvsid = 0x%x\n",
+				    curcpu()->ci_curvsid);
+				printf("\ntrap: %s in %s mode\n",
+				    trap_type(traptype),
+				    USERMODE(tf) ? "user" : "kernel");
+				printf(
+				   "SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
+				    (u_int)tf->tf_state.sf_ssr,
+				    (uintptr_t)tf->tf_state.sf_spc,
+				    (uintptr_t)tf->tf_state.sf_tea,
+				    (u_int)tf->tf_state.sf_tra);
+				kdb_trap(traptype, tf);
+				last_count = 0;
+			}
+		} else
 			last_count = 0;
-		}
-	} else
-		last_count = 0;
 
-	last_tea = tf->tf_state.sf_tea;
-	last_expevt = tf->tf_state.sf_expevt;
+		last_tea = tf->tf_state.sf_tea;
+		last_expevt = tf->tf_state.sf_expevt;
+	}
 #endif
 
 	switch (traptype) {
@@ -238,8 +242,16 @@ trap(struct proc *p, struct trapframe *tf)
 		/*
 		 * The page really is read-only. Let UVM deal with it.
 		 */
-		if ((traptype & T_USER) == 0)
+		if (vaddr >= VM_MIN_KERNEL_ADDRESS)
 			goto kernelfault;
+
+		/*
+		 * But catch the kernel writing to a read-only page
+		 * outside of copyin/copyout and friends.
+		 */
+		if ((traptype & T_USER) == 0 &&
+		    p->p_addr->u_pcb.pcb_onfault == NULL)
+			goto dopanic;
 		goto pagefault;
 
 	case T_RTLBMISS:
@@ -308,7 +320,7 @@ trap(struct proc *p, struct trapframe *tf)
 			    p->p_ucred->cr_uid : -1);
 			sig = SIGKILL;
 		} else
-			sig = (rv = EACCES) ? SIGBUS : SIGSEGV;
+			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
 		ucode = vaddr;
 		break;
 	    }
@@ -456,7 +468,7 @@ panic_trap(struct cpu_info *ci, struct trapframe *tf,
 	    trap_type((int)tf->tf_state.sf_expevt),
 	    USERMODE(tf) ? "user" : "kernel");
 
-	printf("PSSR=0x%x, PSPC=0x%lx\n", (u_int)pssr, (u_int)pspc);
+	printf("PSSR=0x%x, PSPC=0x%lx\n", (u_int)pssr, (uintptr_t)pspc);
 	printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n\n",
 	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
 	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_tra);
@@ -511,8 +523,9 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
 			break;
 	}
 
-	printf("STACKPTR=0x%x, SSR=0x%x, SPC=0x%lx\n",
-	    (u_int)tf->tf_caller.r15, (u_int)es->es_ssr, (uintptr_t)es->es_spc);
+	printf("STACKPTR=0x%lx, SSR=0x%x, SPC=0x%lx\n",
+	    (uintptr_t)tf->tf_caller.r15, (u_int)es->es_ssr,
+	    (uintptr_t)es->es_spc);
 	printf("TEA=0x%lx, TRA=0x%x, INTEVT=0x%lx\n\n",
 	    (uintptr_t)es->es_tea, (u_int)es->es_tra, (u_int)es->es_intevt);
 
