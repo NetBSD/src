@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.19 2000/01/22 22:19:22 mycroft Exp $	*/
+/*	$NetBSD: strptime.c,v 1.20 2000/07/07 08:03:41 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.19 2000/01/22 22:19:22 mycroft Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.20 2000/07/07 08:03:41 itohy Exp $");
 #endif
 
 #include "namespace.h"
@@ -63,7 +63,7 @@ __weak_alias(strptime,_strptime)
 #define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
 
 
-static	int conv_num __P((const char **, int *, int, int));
+static	int conv_num __P((const unsigned char **, int *, int, int));
 
 
 char *
@@ -71,8 +71,8 @@ strptime(buf, fmt, tm)
 	const char *buf, *fmt;
 	struct tm *tm;
 {
-	char c;
-	const char *bp;
+	unsigned char c;
+	const unsigned char *bp;
 	size_t len = 0;
 	int alt_format, i, split_year = 0;
 
@@ -368,7 +368,7 @@ literal:
 
 static int
 conv_num(buf, dest, llim, ulim)
-	const char **buf;
+	const unsigned char **buf;
 	int *dest;
 	int llim, ulim;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.29 2000/04/28 02:37:57 itojun Exp $	*/
+/*	$NetBSD: res_query.c,v 1.30 2000/07/07 08:03:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.29 2000/04/28 02:37:57 itojun Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.30 2000/07/07 08:03:40 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -415,17 +415,18 @@ __hostalias(name)
 #endif
 	buf[sizeof(buf) - 1] = '\0';
 	while (fgets(buf, sizeof(buf) - 1, fp)) {
-		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1)
+		for (cp1 = buf; *cp1 && !isspace((u_char) *cp1); ++cp1)
 			;
 		if (!*cp1)
 			break;
 		*cp1 = '\0';
 		if (!strcasecmp(buf, name)) {
-			while (isspace(*++cp1))
+			while (isspace((u_char) *++cp1))
 				;
 			if (!*cp1)
 				break;
-			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
+			for (cp2 = cp1 + 1; *cp2 && !isspace((u_char) *cp2);
+			    ++cp2)
 				;
 			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.26 2000/04/25 13:26:03 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.27 2000/07/07 08:03:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.26 2000/04/25 13:26:03 itojun Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.27 2000/07/07 08:03:39 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,8 +109,8 @@ static const char *deproto __P((int));
 static const u_char *do_rrset __P((const u_char *, int, const u_char *,
     int, int, FILE *, const char *));
 static const char *precsize_ntoa __P((u_int32_t));
-static u_int8_t precsize_aton __P((const char **));
-static u_int32_t latlon2ul __P((const char **, int *));
+static u_int8_t precsize_aton __P((const u_char **));
+static u_int32_t latlon2ul __P((const u_char **, int *));
 
 void __p_query __P((const u_char *));
 void __fp_resstat __P((struct __res_state *, FILE *));
@@ -1205,16 +1205,16 @@ precsize_ntoa(prec)
 /* converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer. */
 static u_int8_t
 precsize_aton(strptr)
-	const char **strptr;
+	const u_char **strptr;
 {
 	u_int8_t retval = 0;
-	const char *cp;
+	const u_char *cp;
 	int exponent = 0;
 	int mantissa = 0;
 
 	_DIAGASSERT(strptr != NULL);
 
-	cp = (const char *)*strptr;
+	cp = (const u_char *)*strptr;
 	while (isdigit(*cp)) {
 		if (mantissa == 0)
 			mantissa = *cp - '0';
@@ -1256,10 +1256,10 @@ precsize_aton(strptr)
 /* converts ascii lat/lon to unsigned encoded 32-bit number.  moves pointer. */
 static u_int32_t
 latlon2ul(latlonstrptr,which)
-	const char **latlonstrptr;
+	const u_char **latlonstrptr;
 	int *which;
 {
-	register const char *cp;
+	register const u_char *cp;
 	u_int32_t retval = 0;
 	int deg = 0, min = 0, secs = 0, secsfrac = 0;
 
@@ -1361,7 +1361,7 @@ loc_aton(ascii, binary)
 	const char *ascii;
 	u_char *binary;
 {
-	const char *cp, *maxcp;
+	const u_char *cp, *maxcp;
 	u_char *bcp;
 
 	u_int32_t latit = 0, longit = 0, alt = 0;

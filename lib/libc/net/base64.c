@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.6 1999/09/20 04:39:10 lukem Exp $	*/
+/*	$NetBSD: base64.c,v 1.7 2000/07/07 08:03:38 itohy Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: base64.c,v 1.6 1999/09/20 04:39:10 lukem Exp $");
+__RCSID("$NetBSD: base64.c,v 1.7 2000/07/07 08:03:38 itohy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -228,7 +228,7 @@ b64_pton(src, target, targsize)
 	state = 0;
 	tarindex = 0;
 
-	while ((ch = *src++) != '\0') {
+	while ((ch = (u_char) *src++) != '\0') {
 		if (isspace(ch))	/* Skip whitespace anywhere. */
 			continue;
 
@@ -300,7 +300,7 @@ b64_pton(src, target, targsize)
 
 		case 2:		/* Valid, means one byte of info */
 			/* Skip any number of spaces. */
-			for (; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = (u_char) *src++)
 				if (!isspace(ch))
 					break;
 			/* Make sure there is another trailing = sign. */
@@ -315,7 +315,7 @@ b64_pton(src, target, targsize)
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
 			 */
-			for (; ch != '\0'; ch = *src++)
+			for (; ch != '\0'; ch = (u_char) *src++)
 				if (!isspace(ch))
 					return (-1);
 

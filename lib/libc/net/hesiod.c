@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.13 2000/06/18 04:07:03 ghudson Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.14 2000/07/07 08:03:39 itohy Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.13 2000/06/18 04:07:03 ghudson Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -341,10 +341,10 @@ read_config_file(ctx, filename)
 			p++;
 		*p++ = 0;
 
-		while (isspace(*p) || *p == '=')
+		while (isspace((u_char) *p) || *p == '=')
 			p++;
 		data = p;
-		while (!isspace(*p))
+		while (!isspace((u_char) *p))
 			p++;
 		*p = 0;
 

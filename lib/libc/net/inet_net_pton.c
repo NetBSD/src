@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.13 2000/07/06 02:56:55 christos Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.14 2000/07/07 08:03:39 itohy Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.13 2000/07/06 02:56:55 christos Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
 #endif
 #endif
 
@@ -116,16 +116,17 @@ inet_net_pton_ipv4(src, dst, size)
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
 
-	ch = *src++;
+	ch = (u_char) *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
-	    && isascii(src[1]) && isxdigit(src[1])) {
+	    && isascii(src[1]) && isxdigit((u_char) src[1])) {
 		/* Hexadecimal: Eat nybble string. */
 		/* size is unsigned */
 		if (size == 0)
 			goto emsgsize;
 		dirty = 0;
 		src++;	/* skip x or X. */
-		while ((ch = *src++) != '\0' && isascii(ch) && isxdigit(ch)) {
+		while ((ch = (u_char) *src++) != '\0' && isascii(ch)
+		    && isxdigit(ch)) {
 			if (isupper(ch))
 				ch = tolower(ch);
 			n = strchr(xdigits, ch) - xdigits;
@@ -153,7 +154,7 @@ inet_net_pton_ipv4(src, dst, size)
 				tmp += n;
 				if (tmp > 255)
 					goto enoent;
-			} while ((ch = *src++) != '\0' &&
+			} while ((ch = (u_char) *src++) != '\0' &&
 				 isascii(ch) && isdigit(ch));
 			if (size-- == 0)
 				goto emsgsize;
@@ -170,16 +171,18 @@ inet_net_pton_ipv4(src, dst, size)
 		goto enoent;
 
 	bits = -1;
-	if (ch == '/' && isascii(src[0]) && isdigit(src[0]) && dst > odst) {
+	if (ch == '/' && isascii(src[0]) && isdigit((u_char) src[0])
+	    && dst > odst) {
 		/* CIDR width specifier.  Nothing can follow it. */
-		ch = *src++;	/* Skip over the /. */
+		ch = (u_char) *src++;	/* Skip over the /. */
 		bits = 0;
 		do {
 			n = strchr(digits, ch) - digits;
 			assert(n >= 0 && n <= 9);
 			bits *= 10;
 			bits += n;
-		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
+		} while ((ch = (u_char) *src++) != '\0' && isascii(ch)
+		    && isdigit(ch));
 		if (ch != '\0')
 			goto enoent;
 		if (bits > 32)
