@@ -1,10 +1,11 @@
-# $NetBSD: obsolete.mi,v 1.39 2001/03/12 12:47:50 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.40 2001/03/20 13:04:54 ad Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
+/usr/include/dev/i2o/iopvar.h
 /usr/include/dev/ic/aic7xxxreg.h
 /usr/include/dev/ic/awictl.h
 /usr/include/dev/ic/isp_netbsd.h
