@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.4 2002/11/27 02:08:18 uwe Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.5 2002/11/29 15:22:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.4 2002/11/27 02:08:18 uwe Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.5 2002/11/29 15:22:47 uwe Exp $");
 #endif
 
 #include <inttypes.h>
@@ -56,31 +56,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	unsigned long *sp;
 	va_list ap;
 
-	/*
-	 * The SUSv2 man page for makecontext says:
-	 * The value of argc must match the number of integer
-	 * arguments passed to func, otherwise the behaviour is
-	 * undefined.
-	 *
-	 * Irix and Digital Unix say roughly the same thing.
-	 *
-	 * Solaris says:
-	 * The integer value of argc must be one-greater-than the
-	 * number of arguments that follow argc; otherwise, the
-	 * behavior is undefined.  For 5 arguments, the value of argc
-	 * must be 6.
-	 *
-	 * The NetBSD implementation follows Solaris. :/
-	 *
-	 * Fortunately, Irix and Digital Unix seem not to blow up if you
-	 * pass in a value that's one greater.
-	 */
-	--argc;			/* normalize */
-
-	sp  = (unsigned long *)
+	sp = (unsigned long *)
 	    ((unsigned long)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* Make room for: rwindow, struct return pointer, argd, argx */
 	sp -= 8 + 8 + 1 + 6 + 1; /* CCFSZ, only in words */
+	/* CCFSZ provides space for up to 7 arguments, add more if necessary */
 	if (argc > 7)
 		sp -= argc - 7;
 	/* Align on double-word boundary. */
