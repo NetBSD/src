@@ -1,3 +1,4 @@
+.\" $NetBSD: vinum.8,v 1.2 2003/10/11 09:12:18 wiz Exp $
 .\"  Hey, Emacs, edit this file in -*- nroff-fill -*- mode
 .\"-
 .\" Copyright (c) 1997, 1998
@@ -34,10 +35,9 @@
 .\" otherwise) arising in any way out of the use of this software, even if
 .\" advised of the possibility of such damage.
 .\"
-.\" $Id: vinum.8,v 1.1.1.1 2003/10/10 03:14:55 grog Exp $
 .\" $FreeBSD: src/sbin/vinum/vinum.8,v 1.60 2002/12/27 12:15:33 schweikh Exp $
 .\"
-.Dd December 20, 2000
+.Dd October 10, 2003
 .Dt VINUM 8
 .Os
 .Sh NAME
@@ -552,7 +552,7 @@ The bit mask is composed of the following values:
 Show buffer information during requests
 .\".It Dv DEBUG_NUMOUTPUT Pq No 2
 .\"Show the value of
-.\".Va vp->v_numoutput .
+.\".Va vp-\*[Gt]v_numoutput .
 .It Dv DEBUG_RESID Pq No 4
 Go into debugger in
 .Fn complete_rqe .
@@ -631,7 +631,7 @@ displays information about the last up to 64 I/O requests handled by the
 driver.  This information is only collected if debug flag 8 is set.  The format
 looks like:
 .Bd -literal
-vinum -> info -V
+vinum -\*[Gt] info -V
 Flags: 0x200    1 opens
 Total of 38 blocks malloced, total memory: 16460
 Maximum allocs:       56, malloc table at 0xf0f72dbc
@@ -1085,13 +1085,13 @@ will ask for confirmation; you must type in the words
 exactly as shown:
 .Bd -unfilled -offset indent
 .No # Nm Ic resetconfig
-
+.br
 WARNING!  This command will completely wipe out your vinum
 configuration.  All data will be lost.  If you really want
 to do this, enter the text
-
+.br
 NO FUTURE
-.No "Enter text ->" Sy "NO FUTURE"
+.No "Enter text -\*[Gt]" Sy "NO FUTURE"
 Vinum configuration obliterated
 .Ed
 .Pp
@@ -1449,7 +1449,7 @@ option, these commands produce no output.
 Use a volume with a single concatenated plex for the largest possible storage
 without resilience to drive failures:
 .Bd -literal
-vinum -> concat -v /dev/da1h /dev/da2h /dev/da3h /dev/da4h
+vinum -\*[Gt] concat -v /dev/da1h /dev/da2h /dev/da3h /dev/da4h
 volume vinum0
   plex name vinum0.p0 org concat
 drive vinumdrive0 device /dev/da1h
@@ -1475,7 +1475,7 @@ A volume with a single striped plex may give better performance than a
 concatenated plex, but restrictions on striped plexes can mean that the volume
 is smaller.  It will also not be resilient to a drive failure:
 .Bd -literal
-vinum -> stripe -v /dev/da1h /dev/da2h /dev/da3h /dev/da4h
+vinum -\*[Gt] stripe -v /dev/da1h /dev/da2h /dev/da3h /dev/da4h
 drive vinumdrive0 device /dev/da1h
 drive vinumdrive1 device /dev/da2h
 drive vinumdrive2 device /dev/da3h
@@ -1499,7 +1499,7 @@ available disk, so the resulting volume is only 1659 MB in size.
 .Ss Mirrored volume with two concatenated plexes
 For more reliability, use a mirrored, concatenated volume:
 .Bd -literal
-vinum -> mirror -v -n mirror /dev/da1h /dev/da2h /dev/da3h /dev/da4h
+vinum -\*[Gt] mirror -v -n mirror /dev/da1h /dev/da2h /dev/da3h /dev/da4h
 drive vinumdrive0 device /dev/da1h
 drive vinumdrive1 device /dev/da2h
 drive vinumdrive2 device /dev/da3h
@@ -1532,7 +1532,7 @@ Alternatively, use the
 .Fl s
 option to create a mirrored volume with two striped plexes:
 .Bd -literal
-vinum -> mirror -v -n raid10 -s /dev/da1h /dev/da2h /dev/da3h /dev/da4h
+vinum -\*[Gt] mirror -v -n raid10 -s /dev/da1h /dev/da2h /dev/da3h /dev/da4h
 drive vinumdrive0 device /dev/da1h
 drive vinumdrive1 device /dev/da2h
 drive vinumdrive2 device /dev/da3h
@@ -2467,7 +2467,59 @@ is being revived,
 .Nm
 writes to subdisks which have been revived up to the point of the write.  It may
 also read from the plex if the area being read has already been revived.
-.Sh GOTCHAS
+.Sh ENVIRONMENT
+.Bl -tag -width VINUM_DATEFORMAT
+.It Ev VINUM_HISTORY
+The name of the log file, by default
+.Pa /var/log/vinum_history .
+.It Ev VINUM_DATEFORMAT
+The format of dates in the log file, by default
+.Qq Li %e %b %Y %H:%M:%S .
+.It Ev EDITOR
+The name of the editor to use for editing configuration files, by default
+.Nm vi .
+.El
+.Sh FILES
+.Bl -tag -width /dev/vinum/control -compact
+.It Pa /dev/vinum
+directory with device nodes for
+.Nm
+objects
+.It Pa /dev/vinum/control
+control device for
+.Nm
+.It Pa /dev/vinum/plex
+directory containing device nodes for
+.Nm
+plexes
+.It Pa /dev/vinum/sd
+directory containing device nodes for
+.Nm
+subdisks
+.El
+.Sh SEE ALSO
+.Xr strftime 3 ,
+.Xr vinum 4 ,
+.Xr disklabel 8 ,
+.Xr newfs 8
+.Pp
+.Pa http://www.vinumvm.org/vinum/ ,
+.Pa http://www.vinumvm.org/vinum/how-to-debug.html .
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Fx 3.0
+and later in
+.Nx 2.0 .
+The RAID-5 component of
+.Nm
+was developed for Cybernet Inc.\&
+.Pq Pa www.cybernet.com
+for its NetMAX product.
+.Sh AUTHORS
+.An Greg Lehey Aq grog@lemis.com
+.Sh CAVEATS
 The following points are not bugs, and they have good reasons for existing, but
 they have shown to cause confusion.  Each is discussed in the appropriate
 section above.
@@ -2589,54 +2641,3 @@ and the arguments must be disk slices, such as
 not partitions such as
 .Pa /dev/da0e .
 .El
-.\"XXX.Sh BUGS
-.Sh FILES
-.Bl -tag -width /dev/vinum/control -compact
-.It Pa /dev/vinum
-directory with device nodes for
-.Nm
-objects
-.It Pa /dev/vinum/control
-control device for
-.Nm
-.It Pa /dev/vinum/plex
-directory containing device nodes for
-.Nm
-plexes
-.It Pa /dev/vinum/sd
-directory containing device nodes for
-.Nm
-subdisks
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width VINUM_DATEFORMAT
-.It Ev VINUM_HISTORY
-The name of the log file, by default
-.Pa /var/log/vinum_history .
-.It Ev VINUM_DATEFORMAT
-The format of dates in the log file, by default
-.Qq Li %e %b %Y %H:%M:%S .
-.It Ev EDITOR
-The name of the editor to use for editing configuration files, by default
-.Nm vi .
-.El
-.Sh SEE ALSO
-.Xr strftime 3 ,
-.Xr vinum 4 ,
-.Xr disklabel 8 ,
-.Xr newfs 8
-.Pp
-.Pa http://www.vinumvm.org/vinum/ ,
-.Pa http://www.vinumvm.org/vinum/how-to-debug.html .
-.Sh AUTHORS
-.An Greg Lehey Aq grog@lemis.com
-.Sh HISTORY
-The
-.Nm
-utility first appeared in
-.Fx 3.0 .
-The RAID-5 component of
-.Nm
-was developed for Cybernet Inc.\&
-.Pq Pa www.cybernet.com
-for its NetMAX product.
