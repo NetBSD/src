@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38 2003/07/03 21:25:45 christos Exp $
+#	$NetBSD: genassym.cf,v 1.39 2003/11/04 10:33:15 dsl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 

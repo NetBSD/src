@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2003/09/12 16:51:04 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1951,17 +1951,8 @@ switch_restored:
  */
 	movl	CPUVAR(CURLWP),%edi
 	movl	L_PROC(%edi),%esi
-	cmpl	$0,P_NRAS(%esi)
-	je	1f
-	movl	L_MD_REGS(%edi),%ebx
-	movl	TF_EIP(%ebx),%eax
-	pushl	%eax
-	pushl	%esi
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	1f
-	movl	%eax,TF_EIP(%ebx)
+	cmpl	$0,P_RASLIST(%esi)
+	jne	2f
 1:
 	movl	$1,%ebx
 
@@ -1980,6 +1971,18 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
+
+2:					# check RAS list
+	movl	L_MD_REGS(%edi),%ebx
+	movl	TF_EIP(%ebx),%eax
+	pushl	%eax
+	pushl	%esi
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	1b
+	movl	%eax,TF_EIP(%ebx)
+	jmp	1b
 
 /*
  * void cpu_switchto(struct lwp *current, struct lwp *next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.4 2003/10/22 21:13:44 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.5 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.4 2003/10/22 21:13:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.5 2003/11/04 10:33:15 dsl Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -177,7 +177,7 @@ cpu_switch_search(struct lwp *oldlwp)
 		pmap_activate(l);
 
 		/* Check for Restartable Atomic Sequences. */
-		if (p->p_nras != 0) {
+		if (!LIST_EMPTY(&p->p_raslist) {
 			caddr_t pc;
 
 			pc = ras_lookup(p, (caddr_t) l->l_md.md_regs->tf_spc);

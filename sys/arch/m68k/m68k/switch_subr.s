@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.7 2003/10/30 05:12:28 mycroft Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.8 2003/11/04 10:33:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -392,7 +392,7 @@ Lsame_mmuctx:
 	 */
 	movl	_C_LABEL(curlwp),%a0
 	movl	%a0@(L_PROC),%a2
-	tstl	%a2@(P_NRAS)
+	tstl	%a2@(P_RASLIST)
 	jeq	1f
 	movl	%a0@(L_MD_REGS),%a1
 	movl	%a1@(TF_PC),%sp@-

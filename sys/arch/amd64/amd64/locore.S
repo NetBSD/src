@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/08/20 21:48:47 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1024,7 +1024,7 @@ switch_restored:
  */
 	movq	CPUVAR(CURLWP),%r12
 	movq	L_PROC(%r12),%rdi
-	cmpl	$0,P_NRAS(%rdi)
+	cmpq	$0,P_RASLIST(%rdi)
 	je	1f
 	movq	L_MD_REGS(%r12),%rbx
 	movq	TF_RIP(%rbx),%rsi

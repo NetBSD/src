@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.66 2003/09/16 12:05:49 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.67 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.66 2003/09/16 12:05:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.67 2003/11/04 10:33:15 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -464,7 +464,7 @@ proc0_insert(struct proc *p, struct lwp *l, struct pgrp *pgrp,
 {
 	int s;
 
-	simple_lock_init(&p->p_lwplock);
+	simple_lock_init(&p->p_lock);
 	LIST_INIT(&p->p_lwps);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 	p->p_nlwps = 1;

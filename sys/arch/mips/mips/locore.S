@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.156 2003/08/07 16:28:32 agc Exp $	*/
+/*	$NetBSD: locore.S,v 1.157 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -354,7 +354,7 @@ cpu_switch_queuescan:
 	 */
 	lw	t1, L_PROC(s7)
 	lw	a0, L_ADDR(s7)
-	lw	v1, P_NRAS(t1)
+	lw	v1, P_RASLIST(t1)
 
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f

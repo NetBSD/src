@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.3 2003/07/14 22:48:20 lukem Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.4 2003/11/04 10:33:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.3 2003/07/14 22:48:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.4 2003/11/04 10:33:15 dsl Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -122,7 +122,7 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 
 	/* Check for Restartable Atomic Sequences. */
 	p2 = l2->l_proc;
-	if (p2->p_nras != 0) {
+	if (!LIST_EMPTY(&p2->p_raslist) {
 		struct trapframe *tf = l2->l_addr->u_pcb.pcb_tf;
 		caddr_t pc;
 

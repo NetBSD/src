@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.38 2003/10/23 08:59:10 scw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.39 2003/11/04 10:33:16 dsl Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -746,7 +746,7 @@ ENTRY(cpu_switch)
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
-	ldr	r2, [r5, #(P_NRAS)]
+	ldr	r2, [r5, #(P_RASLIST)]
 	ldr	r1, [r7, #(PCB_TF)]	/* r1 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
