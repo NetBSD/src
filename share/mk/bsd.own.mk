@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.347 2003/07/28 02:38:33 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.348 2003/07/28 05:52:29 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,7 +33,6 @@ TOOLCHAIN_MISSING=	no
 #
 # Transitional for toolchain upgrade to GCC3.3
 #
-USE_TOOLS_TOOLCHAIN=	yes
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "alpha" || \
