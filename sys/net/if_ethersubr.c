@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.77 2001/04/10 21:47:36 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.78 2001/04/11 03:47:24 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,6 +73,7 @@
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "vlan.h"
+#include "bridge.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -102,6 +103,10 @@
 #include <net/if_ether.h>
 #if NVLAN > 0
 #include <net/if_vlanvar.h>
+#endif
+
+#if NBRIDGE > 0
+#include <net/if_bridgevar.h>
 #endif
 
 #include <netinet/in.h>
@@ -480,6 +485,14 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		return (0);
 #endif
 
+#if NBRIDGE > 0
+	/*
+	 * Bridges require special output handling.
+	 */
+	if (ifp->if_bridge)
+		return (bridge_output(ifp, m, NULL, NULL));
+#endif
+
 #ifdef ALTQ
 	/*
 	 * If ALTQ is enabled on the parent interface, do
@@ -578,7 +591,8 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		 * now (but it shouldn't ever happen, really, anyhow).
 		 * XXX Should use m_pulldown().
 		 */
-		printf("altq_etherclassify: headers span multiple mbufs\n");
+		printf("altq_etherclassify: headers span multiple mbufs: "
+		    "%d < %d\n", m->m_len, (hlen + hdrsize));
 		goto bad;
 	}
 
@@ -640,16 +654,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-#ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
-		return;
-	if (m == NULL)
-		return;
-
-	eh = mtod(m, struct ether_header *);
-	etype = ntohs(eh->ether_type);
-#endif
-
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
@@ -659,12 +663,51 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		else
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
-	} else if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		   memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			  ETHER_ADDR_LEN) != 0) {
+	}
+
+#if NBRIDGE > 0
+	/*
+	 * Tap the packet off here for a bridge.  bridge_input()
+	 * will return NULL if it has consumed the packet, otherwise
+	 * it gets processed as normal.  Note that bridge_input()
+	 * will always return the original packet if we need to
+	 * process it locally.
+	 */
+	if (ifp->if_bridge) {
+		m = bridge_input(ifp, m);
+		if (m == NULL)
+			return;
+
+		/*
+		 * Bridge has determined that the packet is for us.
+		 * Update our interface pointer -- we may have had
+		 * to "bridge" the packet locally.
+		 */
+		ifp = m->m_pkthdr.rcvif;
+	}
+#endif /* NBRIDGE > 0 */
+
+	/*
+	 * XXX This comparison is redundant if we are a bridge
+	 * XXX and processing the packet locally.
+	 */
+	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC) != 0 &&
+	    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+		   ETHER_ADDR_LEN) != 0) {
 		m_freem(m);
 		return;
 	}
+
+#ifdef PFIL_HOOKS
+	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+		return;
+	if (m == NULL)
+		return;
+
+	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+#endif
 
 	/* Check if the mbuf has a VLAN tag */
 	n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN);
