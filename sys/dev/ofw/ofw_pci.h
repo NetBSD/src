@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_pci.h,v 1.1 1999/05/04 20:08:04 thorpej Exp $	*/
+/*	$NetBSD: ofw_pci.h,v 1.2 1999/05/05 08:09:34 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 #define	OFW_PCI_PHYS_HI_SPACEMASK	0x03000000
 #define	OFW_PCI_PHYS_HI_BUSMASK		0x00ff0000
 #define	OFW_PCI_PHYS_HI_BUSSHIFT	16
-#define	OFW_PCI_PHYS_HI_DEVICEMASK	0x0000f100
+#define	OFW_PCI_PHYS_HI_DEVICEMASK	0x0000f800
 #define	OFW_PCI_PHYS_HI_DEVICESHIFT	11
 #define	OFW_PCI_PHYS_HI_FUNCTIONMASK	0x00000700
 #define	OFW_PCI_PHYS_HI_FUNCTIONSHIFT	8
