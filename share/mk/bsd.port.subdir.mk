@@ -1,6 +1,6 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 #	Id: bsd.port.subdir.mk,v 1.19 1997/03/09 23:10:56 wosch Exp 
-#	$NetBSD: bsd.port.subdir.mk,v 1.3 1997/09/25 19:09:35 thorpej Exp $
+#	$NetBSD: bsd.port.subdir.mk,v 1.3.2.1 1998/02/07 00:34:18 mellon Exp $
 #
 # The include file <bsd.port.subdir.mk> contains the default targets
 # for building ports subdirectories. 
@@ -30,7 +30,8 @@
 #
 #	afterinstall, all, beforeinstall, build, checksum, clean,
 #	configure, depend, describe, extract, fetch, fetch-list,
-#	install, package, readmes, realinstall, reinstall, tags
+#	install, package, readmes, realinstall, reinstall, tags,
+#	mirror-distfiles
 #
 
 
@@ -80,7 +81,8 @@ ${SUBDIR}::
 	${MAKE} all
 
 .for __target in all fetch fetch-list package extract configure \
-		 build clean depend describe reinstall tags checksum
+		 build clean depend describe reinstall tags checksum \
+		 mirror-distfiles
 .if !target(__target)
 ${__target}: _SUBDIRUSE
 .endif
@@ -120,27 +122,37 @@ README=	${TEMPLATES}/README.top
 README=	${TEMPLATES}/README.category
 .endif
 
+HTMLIFY=	sed -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
+
 README.html:
-	@echo "===>  Creating README.html"
+	@echo "===>  Creating README.html for ${.CURDIR:T}"
 	@> $@.tmp
 .for entry in ${SUBDIR}
 .if defined(PORTSTOP)
-	@echo -n '<a href="'${entry}/README.html'">${entry}</a>: ' >> $@.tmp
+	@echo -n '<a href="'${entry}/README.html'">'"`echo ${entry} | ${HTMLIFY}`"'</a>: ' >> $@.tmp
 .else
-	@echo -n '<a href="'${entry}/README.html'">'"`cd ${entry}; make package-name`</a>: " >> $@.tmp
+	@echo -n '<a href="'${entry}/README.html'">'"`cd ${entry}; make package-name | ${HTMLIFY}`</a>: " >> $@.tmp
 .endif
 .if exists(${entry}/pkg/COMMENT)
-	@cat ${entry}/pkg/COMMENT >> $@.tmp
+	@${HTMLIFY} ${entry}/pkg/COMMENT >> $@.tmp
 .else
 	@echo "(no description)" >> $@.tmp
 .endif
 .endfor
 	@sort -t '>' +1 -2 $@.tmp > $@.tmp2
+.if exists(${.CURDIR}/pkg/DESCR)
+	@${HTMLIFY} ${.CURDIR}/pkg/DESCR > $@.tmp3
+.else
+	@> $@.tmp3
+.endif
 	@cat ${README} | \
-		sed -e 's%%CATEGORY%%'`echo ${.CURDIR} | sed -e 's.*/\([^/]*\)$$\1'`'g' \
-			-e '/%%DESCR%%/r${.CURDIR}/pkg/DESCR' \
+		sed -e 's/%%CATEGORY%%/'"`basename ${.CURDIR}`"'/g' \
+			-e '/%%DESCR%%/r$@.tmp3' \
 			-e '/%%DESCR%%/d' \
 			-e '/%%SUBDIR%%/r$@.tmp2' \
 			-e '/%%SUBDIR%%/d' \
 		> $@
-	@rm -f $@.tmp $@.tmp2
+	@rm -f $@.tmp $@.tmp2 $@.tmp3
+.for subdir in ${SUBDIR}
+	@cd ${subdir} && make readme
+.endfor
