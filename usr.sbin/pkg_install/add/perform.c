@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.77 2003/01/10 11:55:44 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.78 2003/03/24 13:47:13 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.77 2003/01/10 11:55:44 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.78 2003/03/24 13:47:13 hubertf Exp $");
 #endif
 #endif
 
@@ -309,18 +309,6 @@ pkg_do(const char *pkg)
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				if (upgrade) {
-					/*
-					 * Upgrade step 1/4: Check if the new version is ok with all pkgs
-					 * that require this pkg
-					 */
-					/* TODO */
-
-					/*
-					 * Upgrade step 2/4: Do the actual update by moving aside
-					 * the +REQUIRED_BY file, deinstalling the old pkg, adding
-					 * the new one and moving the +REQUIRED_BY file back
-					 * into place (finished in step 3/4)
-					 */
 					snprintf(upgrade_from, sizeof(upgrade_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
 					snprintf(upgrade_via, sizeof(upgrade_via), "%s/.%s." REQUIRED_BY_FNAME,
@@ -332,8 +320,106 @@ pkg_do(const char *pkg)
 						printf("Upgrading %s to %s.\n", installed, PkgName);
 
 					if (fexists(upgrade_from)) {  /* Are there any dependencies? */
+					  	/*
+						 * Upgrade step 1/4: Check if the new version is ok with all pkgs
+						 * (from +REQUIRED_BY) that require this pkg
+						 */
+						FILE *rb;                     /* +REQUIRED_BY file */
+						char pkg2chk[FILENAME_MAX];
+
+						rb = fopen(upgrade_from, "r");
+						if (! rb) {
+							warnx("Cannot open '%s' for reading%s", upgrade_from,
+							      Force ? " (proceeding anyways)" : "");
+							if (Force)
+								goto ignore_upgrade_depends_check;
+							else
+								goto bomb;
+						}
+						while (fgets(pkg2chk, sizeof(pkg2chk), rb)) {
+							package_t depPlist;
+							FILE *depf;
+							plist_t *depp;
+							char depC[FILENAME_MAX];
+							
+							s = strrchr(pkg2chk, '\n');
+							if (s)
+								*s = '\0'; /* strip trailing '\n' */
+							
+							/* 
+							 * step into pkg2chk, read it's +CONTENTS file and see if
+							 * all @pkgdep lines agree with PkgName (using pmatch()) 
+							 */
+							snprintf(depC, sizeof(depC), "%s/%s/%s", dbdir, pkg2chk, CONTENTS_FNAME);
+							depf = fopen(depC , "r");
+							if (depf == NULL) {
+								warnx("Cannot check depends in '%s'%s", depC, 
+								      Force ? " (proceeding anyways)" : "!" );
+								if (Force)
+									goto ignore_upgrade_depends_check;
+								else
+									goto bomb;
+							}
+							read_plist(&depPlist, depf);
+							fclose(depf);
+							
+							for (depp = depPlist.head; depp; depp = depp->next) {
+								char base_new[FILENAME_MAX];
+								char base_exist[FILENAME_MAX];
+								char *s2;
+								
+								if (depp->type != PLIST_PKGDEP)
+									continue;
+
+								/*  Prepare basename (no versions) of both pkgs,
+								 *  to see if we want to compare against that
+								 *  one at all. 
+								 */
+								strcpy(base_new, PkgName);
+								s2 = strpbrk(base_new, "<>[]?*{");
+								if (s2)
+									*s2 = '\0';
+								else {
+									s2 = strrchr(base_new, '-');
+									if (s2)
+										*s2 = '\0';
+								}
+								strcpy(base_exist, depp->name);
+								s2 = strpbrk(base_exist, "<>[]?*{");
+								if (s2)
+									*s2 = '\0';
+								else {
+									s2 = strrchr(base_exist, '-');
+									if (s2)
+										*s2 = '\0';
+								}
+								if (strcmp(base_new, base_exist) == 0) {
+									/* Same pkg, so do the interesting compare */
+									if (pmatch(depp->name, PkgName)) {
+										if (Verbose)
+											printf("@pkgdep check: %s is ok for %s (in %s pkg)\n",
+											       PkgName, depp->name, pkg2chk);
+									} else {
+										printf("Package %s requires %s, \n\tCannot perform upgrade to %s%s\n",
+										       pkg2chk, depp->name, PkgName,
+										       Force? " (proceeding anyways)" : "!");
+										if (! Force)
+											goto bomb;
+									}
+								}
+							}
+						}
+						fclose(rb);
+						
+ignore_upgrade_depends_check:
+						/*
+						 * Upgrade step 2/4: Do the actual update by moving aside
+						 * the +REQUIRED_BY file, deinstalling the old pkg, adding
+						 * the new one and moving the +REQUIRED_BY file back
+						 * into place (finished in step 3/4)
+						 */
 						if (Verbose)
-							printf("mv %s %s\n", upgrade_from, upgrade_via);
+							printf("mv %s %s\n", upgrade_from, upgrade_via);						
 						rc = rename(upgrade_from, upgrade_via);
 						assert(rc == 0);
 						
