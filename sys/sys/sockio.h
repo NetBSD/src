@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.11 2000/05/13 07:55:05 itojun Exp $	*/
+/*	$NetBSD: sockio.h,v 1.12 2000/07/02 00:20:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -99,4 +99,7 @@
 							   parameters */
 #define SIOCGDRVSPEC    _IOWR('i', 123, struct ifdrv)   /* get driver-specific
 							   parameters */
+#define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
+#define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */
+
 #endif /* !_SYS_SOCKIO_H_ */
