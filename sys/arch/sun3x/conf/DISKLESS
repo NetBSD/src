@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.10 1997/11/17 01:58:35 lukem Exp $
+# $NetBSD: DISKLESS,v 1.11 1997/12/01 16:11:39 kleink Exp $
 
 # DISKLESS Sun3x (3/80, 3/470)
 # Root and swap on NFS
@@ -42,6 +42,7 @@ options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_10	# NetBSD 1.0
 options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
+options 	COMPAT_13	# NetBSD 1.3
 
 # Filesystem options
 #file-system	FFS		# Berkeley Fast Filesystem
