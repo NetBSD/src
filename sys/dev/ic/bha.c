@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.4 1996/10/21 22:34:11 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.5 1996/11/05 03:04:28 jonathan Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -82,8 +82,8 @@
 int     bha_debug = 0;
 #endif /* BHADEBUG */
 
-int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
-	         int, u_char *, int, u_char *));
+int	bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
+		     int, u_char *, int, u_char *));
 integrate void bha_finish_ccbs __P((struct bha_softc *));
 integrate void bha_reset_ccb __P((struct bha_softc *, struct bha_ccb *));
 void bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
@@ -150,6 +150,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];
+	int rbytes;	/* bytes returned in obuf */
 
 	if (sc != NULL)
 		name = sc->sc_dev.dv_xname;
@@ -182,7 +183,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: bha_cmd, host not idle(0x%x)\n",
 			    name, sts);
-			return (1);
+			return (-1);
 		}
 	}
 	/*
@@ -211,7 +212,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 				    name);
 			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
 			    BHA_CTRL_SRST);
-			return (1);
+			return (-1);
 		}
 		bus_space_write_1(iot, ioh, BHA_CMD_PORT, *ibuf++);
 	}
@@ -219,7 +220,8 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 * If we expect input, loop that many times, each time,
 	 * looking for the data register to have valid data
 	 */
-	while (ocnt--) {
+	rbytes = 0;
+	while (rbytes < ocnt) {
 		for (i = wait; i; i--) {
 			sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 			if (sts & BHA_STAT_DF)
@@ -232,9 +234,10 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 				    name, ocnt);
 			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
 			    BHA_CTRL_SRST);
-			return (1);
+			return (-1);
 		}
 		*obuf++ = bus_space_read_1(iot, ioh, BHA_DATA_PORT);
+		rbytes++;
 	}
 	/*
 	 * Wait for the board to report a finished instruction.
@@ -252,11 +255,11 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: bha_cmd, host not finished(0x%x)\n",
 			    name, sts);
-			return (1);
+			return (-1);
 		}
 	}
 	bus_space_write_1(iot, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
-	return (0);
+	return (rbytes);
 }
 
 /*
@@ -727,8 +730,13 @@ bha_find(iot, ioh, sc)
 	struct bha_config config;
 	int irq, drq;
 
+	/* Check something is at the ports we need to access */
+	sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
+	if (sts == 0xFF)
+		return (0);
+
 	/*
-	 * reset board, If it doesn't respond, assume
+	 * Reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
 
@@ -751,17 +759,51 @@ bha_find(iot, ioh, sc)
 	}
 
 	/*
+	 * The BusLogic cards implement an Adaptec 1542 (aha)-compatible
+	 * interface. The native bha interface is not compatible with 
+	 * an aha. 1542. We need to ensure that we never match an
+	 * Adaptec 1542. We must also avoid sending Adaptec-compatible
+	 * commands to a real bha, lest it go into 1542 emulation mode.
+	 * (On an indirect bus like ISA, we should always probe for BusLogic
+	 * interfaces  before Adaptec interfaces).
+	 */
+
+	/*
+	 * Make sure we don't match an AHA-1542A or AHA-1542B, by checking
+	 * for an extended-geometry register.  The 1542[AB] don't have one.
+	 */
+	sts = bus_space_read_1(iot, ioh, BHA_EXTGEOM_PORT);
+	if (sts == 0xFF)
+		return (0);
+
+	/*
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
-	bha_cmd(iot, ioh, sc,
-	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
-	    sizeof(inquire.reply), (u_char *)&inquire.reply);
+	i = bha_cmd(iot, ioh, sc,
+		    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
+		    sizeof(inquire.reply), (u_char *)&inquire.reply);
+
+	/*
+	 * Some 1542Cs (CP, perhaps not CF, may depend on firmware rev)
+	 * have the extended-geometry register and also respond to
+	 * BHA_INQUIRE_EXTENDED.  Make sure we never  match such cards,
+	 * by checking the size of the reply is what a BusLogic card returns.
+	 */
+	if (i != sizeof(inquire.reply)) {
+#ifdef BHADEBUG
+		printf("bha_find: board returned %d instead of %d to %s\n",
+		       i, sizeof(inquire.reply), "INQUIRE_EXTENDED");
+#endif
+		return (0);
+	}
+
+	/* OK, we know we've found a buslogic adaptor. */
+
 	switch (inquire.reply.bus_type) {
 	case BHA_BUS_TYPE_24BIT:
-		/* XXXX How do we avoid conflicting with the aha1542 probe? */
 	case BHA_BUS_TYPE_32BIT:
 		break;
 	case BHA_BUS_TYPE_MCA:
@@ -838,6 +880,26 @@ bha_find(iot, ioh, sc)
 
 	return (1);
 }
+
+
+/*
+ * Disable the ISA-compatiblity ioports on  PCI bha devices,
+ * to ensure they're not autoconfigured a second time as an ISA bha.
+ */
+int
+bha_disable_isacompat(sc)
+	struct bha_softc *sc;
+{
+	struct bha_isadisable isa_disable;
+
+	isa_disable.cmd.opcode = BHA_MODIFY_IOPORT;
+	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
+	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
+	    sizeof(isa_disable.cmd), (u_char*)&isa_disable.cmd,
+	    0, 0);
+	return (0);
+}
+
 
 /*
  * Start the board, ready for normal operation
