@@ -7,6 +7,16 @@ CFLAGS+= ${CPPFLAGS}
 
 .include "${.CURDIR}/arch/${MACHINE}/Makefile.inc"
 .include "${.CURDIR}/pthreads/Makefile.inc"
+
+all: preall
+
+preall:
+	if [ ! -e include/pthread ]; then; \
+		ln -s . include/pthread; \
+	fi
+	if [ ! -e arch/${MACHINE}/pthread ]; then; \
+		ln -s . arch/${MACHINE}/pthread; \
+	fi
 	
 .include <bsd.lib.mk>
 
