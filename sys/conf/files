@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.289 1999/05/20 06:01:16 lukem Exp $
+#	$NetBSD: files,v 1.290 1999/06/05 14:32:08 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -194,10 +194,6 @@ file	dev/ic/adv.c			adv
 device	adw: scsi
 file	dev/ic/adw.c			adw
 
-# AMD 7930 audio/ISDN codec
-device audioamd: audio
-file	dev/ic/am7930.c				audioamd
-
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 # (Must be declared before AHA to ensure bha probes before aha.
 #  Probing AHA first configures bhas as aha, via their AHA
@@ -238,6 +234,10 @@ define le32
 file	dev/ic/am7990.c			le24
 file	dev/ic/am79900.c		le32
 file	dev/ic/lance.c			le24 | le32
+
+# Sun HME Ethernet controllers
+#device	hme: arp, ether, ifnet
+#file	dev/ic/hme.c			hme
 
 # 8390-family Ethernet controllers
 define	dp8390nic
@@ -333,6 +333,14 @@ file	dev/ic/oplinstrs.c		opl
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
 file	dev/ic/ad1848.c			ad1848
+
+# AMD 7930 audio/ISDN codec
+device audioamd: audio
+file	dev/ic/am7930.c			audioamd
+
+# SPARC `SUNW,audiocs'
+device	audiocs: audio, auconv, ad1848
+file	dev/ic/cs4231.c			audiocs
 
 # LSI64854 DMA controller back-end
 define	lsi64854
