@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.543 2004/11/29 06:10:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.544 2004/11/29 06:10:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8125,3 +8125,8 @@ dist/ipf/tools/ipnat_y.y			1.7
 	redirect rule could be either a hostname or an IP address (now it can 
 	only be an IP#)
 	[darrenr, ticket #994]
+
+sys/arch/amiga/dev/isic_supio.c			1.14
+
+	Typo in structure name
+	[is, ticket #996]
