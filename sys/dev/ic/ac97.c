@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.5 1999/11/24 23:21:01 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.6 2000/03/15 22:41:29 augustss Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -574,6 +574,8 @@ ac97_query_devinfo(codec_if, dip)
 			name = si->device;
 		else if (si->class)
 			name = si->class;
+		else
+			name = 0;
 		
 		if (name)
 			strcpy(dip->label.name, name);
