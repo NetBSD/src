@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.13 2003/12/21 15:32:59 lukem Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.14 2003/12/21 16:17:19 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1309,6 +1309,7 @@ lms*)
 	;;
 
 mms*)
+	name=mms
 	major=%mms_chr%
 	unit=${i#mms}
 	rm -f $name$unit
