@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1995/02/13 00:41:04 ragge Exp $
+#	$NetBSD: Makefile,v 1.2 1995/03/29 21:24:01 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -8,25 +8,24 @@ AS=	as
 
 RELOC=	100000
 
-CFLAGS=	-O ${INCPATH} -DSTANDALONE
+CFLAGS=	-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC}
 MACH=	-DVAX750
 
-DRIVERS=autoconf.c hp.c hpmaptype.c ht.c idc.c kdb.c mba.c mt.c qdcons.c \
-	qvcons.c rk.c rl.c tm.c tmscp.c ts.c uba.c uda.c up.c upmaptype.c \
-	ut.c
-DEVS=	autoconf.o hp.o
-LIBS=	libsa.a libkern.a libsvax.a
+DEVS=	autoconf.o hp.o ra.o
+LIBS=	libsa.a libsvax.a libkern.a
 
-all:	boot
+all:	boot xxboot bootxx
 
 libsa.a: ../../../lib/libsa/libsa.a
+	@rm -f libsa.a
 	cd ../../../lib/libsa; rm -f machine; \
 	ln -s ../../arch/vax/include machine;make
-	ln -s ../../../lib/libsa/libsa.a
+	@ln -s ../../../lib/libsa/libsa.a .
 
 libkern.a: ../../../lib/libkern/libkern.a
+	@rm -f libkern.a
 	cd ../../../lib/libkern; make
-	ln -s ../../../lib/libkern/libkern.a
+	@ln -s ../../../lib/libkern/libkern.a .
 
 libsvax.a: consio.o urem.o udiv.o
 	ar crv $@ $?
@@ -53,6 +52,9 @@ boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBS}
 hp.o:	hp.c
 	${CC} -c ${CFLAGS} $*.c
 
+ra.o:	ra.c
+	${CC} -c ${CFLAGS} $*.c
+
 autoconf.o:	autoconf.c
 	${CC} -c ${CFLAGS} $*.c
 
@@ -62,45 +64,32 @@ conf.o:	conf.c
 boot.o:	boot.c
 	${CC} -c ${CFLAGS} $*.c
 
-install:
-	install -c -s -o bin -g bin -m 644 \
-	    format cat copy drtest ls ${DESTDIR}/stand
-	[ -d ../vaxdist/tp ] || mkdir ../vaxdist/tp
-	cp tpcopy ../vaxdist/tp/copy
-	cp tpboot ../vaxdist/tp/boot
-	cp tpformat ../vaxdist/tp/format
-	cp boot a.out; strip a.out; \
-		dd if=a.out of=../floppy/boot bs=32 skip=1; rm a.out
-	cp 730boot a.out; strip a.out; \
-		dd if=a.out of=../cassette/boot.730 bs=32 skip=1; rm a.out
-	cp ../floppy/boot ../cassette/boot.750
-	cp ../floppy/boot ../consolerl/boot
-	cp copy a.out; strip a.out; \
-		dd if=a.out of=../floppy/copy bs=32 skip=1; rm a.out
-	cp 730copy a.out; strip a.out; \
-		dd if=a.out of=../cassette/copy.730 bs=32 skip=1; rm a.out
-	cp ../floppy/copy ../cassette/copy.750
-	cp ../floppy/copy ../consolerl/copy
-	cp format a.out; strip a.out; \
-		dd if=a.out of=../floppy/format bs=32 skip=1; rm a.out
-	cp 730format a.out; strip a.out; \
-		dd if=a.out of=../cassette/format.730 bs=32 skip=1; rm a.out
-	cp ../floppy/format ../cassette/format.750
-	cp ../floppy/format ../consolerl/format
-	cp drtest a.out; strip a.out; \
-		dd if=a.out of=../floppy/drtest bs=32 skip=1; rm a.out
-	cp 730drtest a.out; strip a.out; \
-		dd if=a.out of=../cassette/drtest.730 bs=32 skip=1; rm a.out
-	cp ../floppy/drtest ../cassette/drtest.750
-	cp ../floppy/drtest ../consolerl/drtest
-	install -c -o bin -g bin -m 444 ${MDEC} ${DESTDIR}/usr/mdec
-	rm -f ${DESTDIR}/usr/mdec/bootrd
-	ln ${DESTDIR}/usr/mdec/bootra ${DESTDIR}/usr/mdec/bootrd
+bootblocks:	start.o bootxx.o init.o romread.o ${LIBS}
+	ld -N -T ${RELOC} -o a.out start.o bootxx.o init.o romread.o ${LIBS}
+	@strip a.out
+	@size a.out
+	@dd if=a.out of=bootblocks bs=32 skip=1
+	@rm -f a.out
 
-lint: ${SRCS}
-	lint ${COPTS} -hxbn boot.c ${SRCS} | \
-	    sed -e '/possible pointer alignment/d' \
-		-e '/struct\/union .* never defined/d'
+xxboot:	bootblocks
+	dd if=bootblocks of=xxboot bs=512 count=1
 
-tags: ${SRCS}
-	ctags ${SRCS} ${DUMMIES}
+bootxx:	bootblocks
+	dd if=bootblocks of=bootxx bs=512 skip=1
+
+start.o: start.s
+	${CC} -x assembler-with-cpp -E start.s | as -o start.o
+
+romread.o:	romread.s
+	${CC} -x assembler-with-cpp -E romread.s | as -o romread.o
+
+init.o:	init.c
+	${CC} -c ${CFLAGS} $*.c
+
+bootxx.o: bootxx.c 
+	${CC} -c ${CFLAGS} $*.c
+
+clean:
+	rm -f start.o romread.o bootxx.o init.o xxboot bootxx bootblocks \
+	libsvax.a libsa.a libkern.a udiv.o urem.o consio.o
+	rm -f autoconf.o conf.o boot.o hp.o boot srt0.o devopen.o

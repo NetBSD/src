@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1 1995/02/13 00:41:11 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.2 1995/03/29 21:24:11 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include "sys/disklabel.h"
 #include "vaxstand.h"
 #include "../mba/mbareg.h"
+#include "../mba/hpreg.h"
 #include "../include/pte.h"
 #include "../include/macros.h"
 
@@ -66,7 +67,7 @@ hpopen(f, adapt, ctlr, unit, part)
 	struct disklabel *lp=&hplabel;
 	struct hp_softc *hs=&hp_softc;
 	volatile struct mba_regs *mr=(void *)mbaaddr[ctlr];
-	volatile struct hp_drv *hd=&mr->hp_drv[unit];
+	volatile struct hp_drv *hd=&mr->mba_md[unit];
 	int i,err;
 
 	if(adapt>nsbi) return(EADAPT);
@@ -105,7 +106,7 @@ hpstrategy(hs, func, dblk, size, buf, rsize)
 {
 	u_int i,pfnum, mapnr, nsize, bn, cn, sn, tn;
 	volatile struct mba_regs *mr=(void *)mbaaddr[hs->ctlr];
-	volatile struct hp_drv *hd=&mr->hp_drv[hs->unit];
+	volatile struct hp_drv *hd=&mr->mba_md[hs->unit];
 	struct disklabel *lp=&hplabel;
 
 	pfnum=(u_int)buf>>PGSHIFT;
