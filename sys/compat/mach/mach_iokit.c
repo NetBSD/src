@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.23 2003/11/01 00:32:44 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.24 2003/11/01 18:41:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.23 2003/11/01 00:32:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.24 2003/11/01 18:41:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,12 +62,33 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.23 2003/11/01 00:32:44 manu Exp $")
 #include <compat/darwin/darwin_iokit.h>
 #endif
 
+struct mach_iokit_devclass mach_ioroot_devclass = {
+	"(unknwon)", 
+	{ NULL },
+	"<dict ID=\"0\"></dict>",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"Root",
+	NULL,
+};
+
 struct mach_iokit_devclass *mach_iokit_devclasses[] = {
+	&mach_ioroot_devclass,
 #ifdef COMPAT_DARWIN
 	DARWIN_IOKIT_DEVCLASSES
 #endif
 	NULL,
 };
+
+
+static int mach_fill_child_iterator(struct mach_device_iterator *, int, int,
+    struct mach_iokit_devclass *);
+static int mach_fill_parent_iterator(struct mach_device_iterator *, int, int,
+    struct mach_iokit_devclass *);
 
 int
 mach_io_service_get_matching_services(args)
@@ -80,21 +101,35 @@ mach_io_service_get_matching_services(args)
 	struct mach_port *mp;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid; 
+	struct mach_device_iterator *mdi;
+	size_t size;
 	int i;
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
-	
+
+	mp->mp_data = NULL;
 	i = 0;
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
 		if (memcmp(req->req_string, mid->mid_string, 
 		    strlen(mid->mid_string)) == 0) {
-			mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
-			mp->mp_data = mid;
+			mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
+
+			size = sizeof(*mdi) 
+			    + sizeof(struct mach_device_iterator *);
+			mdi = malloc(size, M_EMULDATA, M_WAITOK);
+			mdi->mdi_devices[0] = mid;
+			mdi->mdi_devices[1] = NULL;
+			mdi->mdi_current = 0;
+
+			mp->mp_data = mdi;
 			break;
 		}
 	}
+
+	if (mp->mp_data == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_ENOENT);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -121,7 +156,6 @@ mach_io_iterator_next(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
-	struct device *dev;
 	struct mach_device_iterator *mdi;
 	mach_port_t mn;
 
@@ -129,58 +163,19 @@ mach_io_iterator_next(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
-	switch (mr->mr_port->mp_datatype) {
-	case MACH_MP_IOKIT_DEVCLASS:
-		/* Do not come here again */
-		mr->mr_port->mp_datatype = MACH_MP_IOKIT_DEVCLASS_DONE;
-
-		mp = mach_port_get();
-		mp->mp_flags |= MACH_MP_INKERNEL;
-		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
-		mp->mp_data = mr->mr_port->mp_data;
-
-		break;
-
-	case MACH_MP_DEVICE_ITERATOR:
-		mdi = mr->mr_port->mp_data;
-
-		/* XXX No lock for the device list? */
-		/* Check that mdi->mdi_parent still exists, else give up */
-		TAILQ_FOREACH(dev, &alldevs, dv_list)
-			if (dev == mdi->mdi_parent)
-				break;
-		if (dev == NULL)
-			return mach_iokit_error(args, MACH_IOKIT_ENODEV);
-
-		/* Check that mdi->mdi_current still exists, else reset it */
-		TAILQ_FOREACH(dev, &alldevs, dv_list)
-			if (dev == mdi->mdi_current)
-				break;
-		if (dev == NULL)
-			mdi->mdi_current = TAILQ_FIRST(&alldevs);
-
-		/* And now, find the next child of mdi->mdi_parent. */
-		do {
-			if (dev->dv_parent == mdi->mdi_parent) {
-				mdi->mdi_current = dev;
-				break;
-			}
-		} while ((dev = TAILQ_NEXT(dev, dv_list)) != NULL);
-
-		if (dev == NULL) 
-			return mach_iokit_error(args, MACH_IOKIT_ENODEV);
-
-		mp = mach_port_get();
-		mp->mp_flags |= MACH_MP_INKERNEL;
-		mp->mp_datatype = MACH_MP_DEVICE;
-		mp->mp_data = mdi->mdi_current;
-		mdi->mdi_current = TAILQ_NEXT(mdi->mdi_current, dv_list);
-		break;
-		
-	default:
+	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE_ITERATOR)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
-		break;
-	}
+
+	mdi = mr->mr_port->mp_data;
+
+	/* Is there something coming next? */
+	if (mdi->mdi_devices[mdi->mdi_current] == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+	mp->mp_data = mdi->mdi_devices[mdi->mdi_current++];
 
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 	
@@ -318,11 +313,54 @@ mach_io_registry_entry_create_iterator(args)
 	size_t *msglen = args->rsize; 
 	struct lwp *l = args->l;
 	struct mach_port *mp;
+	mach_port_t mn;
 	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+	struct mach_device_iterator *mdi;
+	struct mach_iokit_devclass **midp;
+	int maxdev, index;
+	size_t size;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	mid = (struct mach_iokit_devclass *)mr->mr_port->mp_data;
 
 	mp = mach_port_get();
-	mp->mp_flags |= MACH_MP_INKERNEL;
+	mp->mp_flags |= (MACH_MP_INKERNEL | MACH_MP_DATA_ALLOCATED);
+	mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
+
+	maxdev = sizeof(mach_iokit_devclasses);
+	size = sizeof(*mdi) + (maxdev * sizeof(struct mach_iokit_devclass *));
+	mdi = malloc(size, M_EMULDATA, M_WAITOK);
+	mp->mp_data = mdi;
+
+	if (req->req_options & MACH_IOKIT_PARENT_ITERATOR) 
+		index = mach_fill_parent_iterator(mdi, maxdev, 0, mid);
+	else 
+		index = mach_fill_child_iterator(mdi, maxdev, 0, mid);
+
+	/* XXX This is untested */
+	if (req->req_options & MACH_IOKIT_RECURSIVE_ITERATOR) {
+		for (midp = mdi->mdi_devices; *midp != NULL; midp++) {
+			if (req->req_options & MACH_IOKIT_PARENT_ITERATOR) 
+				index = mach_fill_parent_iterator(mdi, 
+				    maxdev, index, *midp);
+			else 
+				index = mach_fill_child_iterator(mdi, 
+				    maxdev, index, *midp);
+		}
+	}
+
+	mdi->mdi_current = 0;
+
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+#ifdef DEBUG_MACH
+	printf("io_registry_entry_create_iterator\n");
+#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -446,8 +484,8 @@ mach_io_registry_get_root_entry(args)
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
-	mp->mp_datatype = MACH_MP_DEVICE;
-	mp->mp_data = TAILQ_FIRST(&alldevs);
+	mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+	mp->mp_data = &mach_ioroot_devclass;
 
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
@@ -477,22 +515,29 @@ mach_io_registry_entry_get_child_iterator(args)
 	struct mach_port *mp;
 	struct mach_right *mr;
 	mach_port_t mn;
+	struct mach_iokit_devclass *mid;
 	struct mach_device_iterator *mdi;
+	int maxdev;
+	size_t size;
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE)
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	mid = (struct mach_iokit_devclass *)mr->mr_port->mp_data;
 
 	mp = mach_port_get();
 	mp->mp_flags |= (MACH_MP_INKERNEL | MACH_MP_DATA_ALLOCATED);
 	mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
 
-	mdi = malloc(sizeof(*mdi), M_EMULDATA, M_WAITOK);
-	mdi->mdi_parent = mr->mr_port->mp_data;
-	mdi->mdi_current = TAILQ_FIRST(&alldevs);
+	maxdev = sizeof(mach_iokit_devclasses);
+	size = sizeof(*mdi) + (maxdev * sizeof(struct mach_iokit_devclass *));
+	mdi = malloc(size, M_EMULDATA, M_WAITOK);
 	mp->mp_data = mdi;
+
+	(void)mach_fill_child_iterator(mdi, maxdev, 0, mid);
+	mdi->mdi_current = 0;
 
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
@@ -521,23 +566,24 @@ mach_io_registry_entry_get_name_in_plane(args)
 	struct lwp *l = args->l;
 	struct mach_right *mr;
 	mach_port_t mn;
-	struct device *dev;
+	struct mach_iokit_devclass *mid;
 
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE)
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
-	dev = mr->mr_port->mp_data;
+	mid = mr->mr_port->mp_data;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	/* XXX Just return a dummy name for now */ 
-	rep->rep_namecount = sizeof(dev->dv_xname);
-	memcpy(&rep->rep_name, dev->dv_xname, sizeof(dev->dv_xname));
+	rep->rep_namecount = strlen(mid->mid_name);
+	if (rep->rep_namecount >= 128)
+		rep->rep_namecount = 128;
+	memcpy(&rep->rep_name, mid->mid_name, rep->rep_namecount);
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -559,8 +605,10 @@ mach_io_object_get_class(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	/* XXX Just return a dummy name for now */ 
-	rep->rep_namecount = sizeof(classname);
-	memcpy(&rep->rep_name, classname, sizeof(classname));
+	rep->rep_namecount = strlen(classname);
+	if (rep->rep_namecount >= 128)
+		rep->rep_namecount = 128;
+	memcpy(&rep->rep_name, classname, rep->rep_namecount);
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -676,7 +724,7 @@ mach_io_registry_entry_get_property(args)
 #ifdef DEBUG_MACH
 	/* 
 	 * We do not handle non zero offset and multiple names,
-	 * but it seems that Darwin binaries just jold random values
+	 * but it seems that Darwin binaries just fold random values
 	 * in theses fields. We have yet to see a real use of 
 	 * non null offset / multiple names.
 	 */
@@ -840,21 +888,11 @@ mach_io_iterator_reset(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 	
-	switch(mr->mr_port->mp_datatype) {
-	case MACH_MP_DEVICE_ITERATOR:
-		mdi = mr->mr_port->mp_data;
-		mdi->mdi_parent = mr->mr_port->mp_data;
-		mdi->mdi_current = TAILQ_FIRST(&alldevs);
-		break;
-	
-	case MACH_MP_IOKIT_DEVCLASS_DONE:
-		mr->mr_port->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
-		break;
+	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE_ITERATOR)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
-	case MACH_MP_IOKIT_DEVCLASS:
-	default:
-		printf("mach_io_iterator_reset: unknown type\n");
-	}
+	mdi = mr->mr_port->mp_data;
+	mdi->mdi_current = 0;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -1080,7 +1118,10 @@ mach_io_registry_entry_get_parent_iterator(args)
 	struct mach_port *mp;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
+	struct mach_device_iterator *mdi;
 	mach_port_t mn;
+	int maxdev;
+	size_t size;
 
 #ifdef DEBUG_MACH
 	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n", 
@@ -1094,13 +1135,22 @@ mach_io_registry_entry_get_parent_iterator(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	mid = mr->mr_port->mp_data;
+
 	mp = mach_port_get();
-	mp->mp_flags |= MACH_MP_INKERNEL;
-	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
-		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
-		mid = (struct mach_iokit_devclass *)mr->mr_port->mp_data;
-		mp->mp_data = mid->mid_parent;
-	}
+	mp->mp_flags |= (MACH_MP_INKERNEL | MACH_MP_DATA_ALLOCATED);
+	mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
+
+	maxdev = sizeof(mach_iokit_devclasses);
+	size = sizeof(*mdi) + (maxdev * sizeof(struct mach_iokit_devclass *));
+	mdi = malloc(size, M_EMULDATA, M_WAITOK);
+	mp->mp_data = mdi;
+
+	(void)mach_fill_parent_iterator(mdi, maxdev, 0, mid);
+	mdi->mdi_current = 0;
+
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
@@ -1131,4 +1181,56 @@ mach_iokit_cleanup_notify(mr)
 			mid->mid_notify = NULL;
 
 	return;
+}
+
+static int
+mach_fill_child_iterator(mdi, size, index, mid)
+	struct mach_device_iterator *mdi;
+	int size;
+	int index;
+	struct mach_iokit_devclass *mid;
+{
+	struct mach_iokit_devclass **midp;
+	struct mach_iokit_devclass **midq;
+
+	for (midp = mach_iokit_devclasses; *midp != NULL; midp++) {
+		for (midq = (*midp)->mid_parent; *midq != NULL; midq++) {
+			if (*midq == mid) {
+				mdi->mdi_devices[index++] = *midp;
+				break;
+			}
+		}
+#ifdef DIAGNOSTIC
+		if (index >= size) {
+			printf("mach_device_iterator overflow\n");
+			break;
+		}
+#endif
+	}
+	mdi->mdi_devices[index] = NULL;
+
+	return index;
+}
+
+static int
+mach_fill_parent_iterator(mdi, size, index, mid)
+	struct mach_device_iterator *mdi;
+	int size;
+	int index;
+	struct mach_iokit_devclass *mid;
+{
+	struct mach_iokit_devclass **midp;
+
+	for (midp = mid->mid_parent; *midp != NULL; midp++) {
+		mdi->mdi_devices[index++] = *midp;
+#ifdef DIAGNOSTIC
+		if (index >= size) {
+			printf("mach_device_iterator overflow\n");
+			break;
+		}
+#endif
+	}
+	mdi->mdi_devices[index] = NULL;
+
+	return index;
 }
