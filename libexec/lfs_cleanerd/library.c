@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: library.c,v 1.1 1994/06/08 18:42:15 mycroft Exp $";
+static char sccsid[] = "@(#)library.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +73,7 @@ int
 fs_getmntinfo(buf, name, type)
 	struct	statfs	**buf;
 	char	*name;
-	const	char	*type;
+	int	type;
 {
 	/* allocate space for the filesystem info */
 	*buf = (struct statfs *)malloc(sizeof(struct statfs));
@@ -88,7 +87,7 @@ fs_getmntinfo(buf, name, type)
 	}
 
 	/* check to see if it's the one we want */
-	if (strncmp(type, (*buf)->f_fstypename, MFSNAMELEN) ||
+	if (((*buf)->f_type != type) ||
 	    strncmp(name, (*buf)->f_mntonname, MNAMELEN)) {
 		/* "this is not the filesystem you're looking for */
 		free(*buf);
@@ -150,7 +149,6 @@ get_superblock (fsp, sbp)
 	struct lfs *sbp;
 {
 	char mntfromname[MNAMELEN+1];
-	char buf[LFS_SBPAD];
         int fid;
 
 	strcpy(mntfromname, "/dev/r");
@@ -161,8 +159,7 @@ get_superblock (fsp, sbp)
 		return (-1);
 	}
 
-	get(fid, LFS_LABELPAD, buf, LFS_SBPAD);
-	bcopy(buf, sbp, sizeof(struct lfs));
+	get(fid, LFS_LABELPAD, sbp, sizeof(struct lfs));
 	close (fid);
 	
 	return (0);
