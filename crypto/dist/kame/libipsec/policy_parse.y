@@ -293,7 +293,7 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	pbuf = malloc(tlen);
+	pbuf = malloc(sizeof(struct sadb_x_policy));
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
