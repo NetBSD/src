@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/09 16:45:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2000/06/10 02:50:34 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,7 +61,6 @@ clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 	rm -f *.core *.o *.cro *.c
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>
