@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 1998/09/30 23:47:36 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 1998/11/11 06:43:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1193,11 +1193,15 @@ Lmainreturned:
 	.asciz	"main() returned"
 	.even
 
+/*
+ * proc_trampoline: call the function in register a2 with a3 as an arg
+ * and then rei.
+ */
 	.globl	_proc_trampoline
 _proc_trampoline:
-	movl	a3,sp@-
-	jbsr	a2@
-	addql	#4,sp
+	movl	a3,sp@-			| push function arg
+	jbsr	a2@			| call function
+	addql	#4,sp			| pop arg
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most user regs

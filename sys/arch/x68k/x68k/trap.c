@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1998/10/01 02:53:55 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1998/11/11 06:43:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,6 @@ extern struct emul emul_sunos;
 int	writeback __P((struct frame *fp, int docachepush));
 void	trap __P((int type, u_int code, u_int v, struct frame frame));
 void	syscall __P((register_t code, struct frame frame));
-void	child_return __P((struct proc *, struct frame));
 
 #if defined(M68040) || defined(M68060)
 #ifdef DEBUG
@@ -1187,16 +1186,18 @@ syscall(code, frame)
 }
 
 void
-child_return(p, frame)
-	struct proc *p;
-	struct frame frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	/* See cpu_fork() */
+	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	frame.f_regs[D0] = 0;
-	frame.f_sr &= ~PSL_C;
-	frame.f_format = FMT0;
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;
+	f->f_format = FMT0;
 
-	userret(p, &frame, 0, (u_int)0, 0);
+	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
