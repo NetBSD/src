@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.111 2001/04/21 16:10:54 tsutsui Exp $	*/
 
 
 /*
@@ -2957,7 +2957,7 @@ acer_pci_intr(arg)
 
 void
 hpt_chip_map(sc, pa)
-        struct pciide_softc *sc;
+	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
@@ -3062,7 +3062,7 @@ void
 hpt_setup_channel(chp)
 	struct channel_softc *chp;
 {
-        struct ata_drive_datas *drvp;
+	struct ata_drive_datas *drvp;
 	int drive;
 	int cable;
 	u_int32_t before, after;
@@ -3086,39 +3086,39 @@ hpt_setup_channel(chp)
 		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
 					HPT_IDETIM(chp->channel, drive));
 
-                /* add timing values, setup DMA if needed */
-                if (drvp->drive_flags & DRIVE_UDMA) {
+		/* add timing values, setup DMA if needed */
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
-                        after = (sc->sc_wdcdev.nchannels == 2) ?
+			after = (sc->sc_wdcdev.nchannels == 2) ?
 			    hpt370_udma[drvp->UDMA_mode] :
 			    hpt366_udma[drvp->UDMA_mode];
-                        idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-                } else if (drvp->drive_flags & DRIVE_DMA) {
-                        /*
-                         * use Multiword DMA.
-                         * Timings will be used for both PIO and DMA, so adjust
-                         * DMA mode if needed
-                         */
-                        if (drvp->PIO_mode >= 3 &&
-                            (drvp->DMA_mode + 2) > drvp->PIO_mode) {
-                                drvp->DMA_mode = drvp->PIO_mode - 2;
-                        }
-                        after = (sc->sc_wdcdev.nchannels == 2) ?
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			/*
+			 * use Multiword DMA.
+			 * Timings will be used for both PIO and DMA, so adjust
+			 * DMA mode if needed
+			 */
+			if (drvp->PIO_mode >= 3 &&
+			    (drvp->DMA_mode + 2) > drvp->PIO_mode) {
+				drvp->DMA_mode = drvp->PIO_mode - 2;
+			}
+			after = (sc->sc_wdcdev.nchannels == 2) ?
 			    hpt370_dma[drvp->DMA_mode] :
 			    hpt366_dma[drvp->DMA_mode];
-                        idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-                } else {
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else {
 			/* PIO only */
-                	after = (sc->sc_wdcdev.nchannels == 2) ?
+			after = (sc->sc_wdcdev.nchannels == 2) ?
 			    hpt370_pio[drvp->PIO_mode] :
 			    hpt366_pio[drvp->PIO_mode];
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
-                    HPT_IDETIM(chp->channel, drive), after);
+		    HPT_IDETIM(chp->channel, drive), after);
 		WDCDEBUG_PRINT(("%s: bus speed register set to 0x%08x "
 		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
 		    after, before), DEBUG_PROBE);
@@ -3172,7 +3172,7 @@ hpt_pci_intr(arg)
 
 void
 pdc202xx_chip_map(sc, pa)
-        struct pciide_softc *sc;
+	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
@@ -3302,7 +3302,7 @@ void
 pdc202xx_setup_channel(chp)
 	struct channel_softc *chp;
 {
-        struct ata_drive_datas *drvp;
+	struct ata_drive_datas *drvp;
 	int drive;
 	pcireg_t mode, st;
 	u_int32_t idedma_ctl, scr, atapi;
