@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.28 2002/01/19 11:44:57 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.29 2002/01/24 03:20:12 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 7, 2001
+.Dd January 24, 2002
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -65,6 +65,9 @@
 .Ek
 .Bk -words
 .Op Fl I Ar tags
+.Ek
+.Bk -words
+.Op Fl N Ar dbdir
 .Ek
 .Bk -words
 .Op Fl s Ar seed
@@ -163,6 +166,18 @@ this is only possible with securelevel less than 1 (i. e. in single user mode
 or while the system is running in insecure mode). See
 .Xr init 8
 for information on security levels.
+.It Fl N Ar dbdir
+Use the user database text file
+.Pa master.passwd
+and group database text file
+.Pa group
+from
+.Ar dbdir ,
+rather than using the results from the system's
+.Xr getpwnam 3
+and
+.Xr getgrnam 3
+(and related) library calls.
 .It Fl p Ar path
 Use the file hierarchy rooted in
 .Ar path  ,
@@ -585,6 +600,7 @@ keywords,
 .Fl I ,
 .Fl l ,
 .Fl L ,
+.Fl N ,
 .Fl P ,
 .Fl R ,
 .Fl W ,
