@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.132.2.3 2004/10/04 06:05:30 jmc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.132.2.4 2005/01/11 06:41:35 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.3 2004/10/04 06:05:30 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.4 2005/01/11 06:41:35 jmc Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1825,15 +1825,17 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		} else {
 			np->n_size = vap->va_size;
 			if (vap->va_type == VREG) {
-				if ((flags & NAC_NOTRUNC)
-				    && np->n_size < vp->v_size) {
-					/*
-					 * we can't free pages now because
-					 * the pages can be owned by ourselves.
-					 */
+				/*
+				 * we can't free pages if NAC_NOTRUNC because
+				 * the pages can be owned by ourselves.
+				 */
+				if (flags & NAC_NOTRUNC) {
 					np->n_flag |= NTRUNCDELAYED;
-				}
-				else {
+				} else {
+					simple_lock(&vp->v_interlock);
+					(void)VOP_PUTPAGES(vp, 0,
+					    0, PGO_SYNCIO | PGO_CLEANIT |
+					    PGO_FREE | PGO_ALLPAGES);
 					uvm_vnp_setsize(vp, np->n_size);
 				}
 			}
@@ -1903,6 +1905,9 @@ nfs_delayedtruncate(vp)
 
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
+		simple_lock(&vp->v_interlock);
+		(void)VOP_PUTPAGES(vp, 0,
+		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
 	}
 }
