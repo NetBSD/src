@@ -1,4 +1,4 @@
-/* $NetBSD: rconsvar.h,v 1.4 1999/04/24 08:01:06 simonb Exp $ */
+/*	$NetBSD: rconsvar.h,v 1.5 1999/12/15 14:44:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,21 +32,19 @@
 
 #ifndef _MACHINE_RCONS_H_
 #define _MACHINE_RCONS_H_
-
 #ifdef _KERNEL
-#define RCONSDEV	85
 
 struct wsdisplay_emulops;
 struct consdev;
 struct fbinfo;
 
-extern void rcons_connect __P((struct fbinfo *));
-extern void rcons_connect_native __P ((struct wsdisplay_emulops *, void *,
-    int, int, int, int));
+void	rcons_connect __P((struct fbinfo *));
+void	rcons_connect_native __P ((struct wsdisplay_emulops *, void *, int, 
+    int, int, int));
 
-extern void rcons_indev __P((struct consdev *));
-extern void rcons_vputc __P((dev_t, int));	/* XXX */
-extern void rcons_input __P((dev_t, int ic));	/*XXX*/
+void	rcons_indev __P((struct consdev *));
+void	rcons_vputc __P((dev_t, int));		/* XXX */
+void	rcons_input __P((dev_t, int ic));	/* XXX */
 
 #endif	/* _KERNEL */
 #endif	/* _MACHINE_RCONS_H_ */
