@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.17 2002/01/31 19:27:53 tv Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.18 2003/02/02 10:21:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.17 2002/01/31 19:27:53 tv Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.18 2003/02/02 10:21:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,9 +203,9 @@ cp_start(void)
  *	start of this record so a flush of this buffer will replace the record
  *	in the archive.
  *	A major problem is rewriting this last record. For archives stored
- *	on disk files, this is trival. However, many devices are really picky
+ *	on disk files, this is trivial. However, many devices are really picky
  *	about the conditions under which they will allow a write to occur.
- *	Often devices restrict the conditions where writes can be made writes,
+ *	Often devices restrict the conditions where writes can be made,
  *	so it may not be feasable to append archives stored on all types of
  *	devices.
  * Return:
@@ -351,7 +351,7 @@ rd_sync(void)
 
 		/*
 		 * Oh well, yet another failed read...
-		 * if error limit reached, ditch. o.w. poke device to move past
+		 * if error limit reached, ditch. otherwise poke device to move past
 		 * bad media and try again. if media is badly damaged, we ask
 		 * the poor (and upset user at this point) for the next archive
 		 * volume. remember the goal on reads is to get the most we

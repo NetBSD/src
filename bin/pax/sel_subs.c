@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.15 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.16 2003/02/02 10:21:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.15 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.16 2003/02/02 10:21:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ trng_add(char *str)
 	}
 
 	/*
-	 * by default we only will check file mtime, but usee can specify
+	 * by default we only will check file mtime, but user can specify
 	 * mtime, ctime (inode change time) or both.
 	 */
 	if ((flgpt == NULL) || (*flgpt == '\0'))
