@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.190 2003/12/25 17:32:54 nonaka Exp $
+$NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -109,7 +109,7 @@ vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
 vendor EMTAC			0xc250	EMTAC Technology Corporation
-vendor ELSA			0xd601  Elsa 
+vendor ELSA			0xd601  Elsa
 
 /*
  * List of known products.  Grouped by vendor, sorted by number within the
@@ -212,7 +212,7 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
 product FUJITSU LA10S		0x1003 Fujitsu Compact Flash Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
-product FUJITSU WL110 		0x2003 PEGA-WL110 Wireless LAN
+product FUJITSU WL110		0x2003 PEGA-WL110 Wireless LAN
 
 /* IBM Products */
 product IBM MICRODRIVE		0x0000 IBM Microdrive
@@ -223,7 +223,7 @@ product IBM TROPIC		0x001e IBM Token Ring 4/16
 product IBM SCSI		0x0026 IBM SCSI PCMCIA
 product IBM PORTABLE_CDROM	0x002d IBM PCMCIA Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
-product IBM WIRELESS_LAN_ENTRY	0x0032 IBM Wireless LAN Entry 
+product IBM WIRELESS_LAN_ENTRY	0x0032 IBM Wireless LAN Entry
 product IBM SMART_CAPTURE_II	0x003c IBM Smart Capture Card II
 product IBM ETHERJET		0x003f IBM EtherJet Ethernet
 
@@ -260,7 +260,7 @@ product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 product MACNICA ME1_JEIDA	0x3300	MACNICA ME1 for JEIDA
 
 /* Megahertz Products */
-product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
+product MEGAHERTZ XJEM3336	0x0006 Megahertz X-JACK Ethernet Modem
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
 product MEGAHERTZ XJ4336	0x0027 Megahertz XJ4336 Modem
 product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
@@ -268,7 +268,7 @@ product MEGAHERTZ2 XJEM1144	0x0101 Megahertz X-JACK
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
 /* Melco Products */
-product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+product MELCO LPC3_TX		0xc1ab Melco LPC3-TX
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
@@ -291,7 +291,7 @@ product NETGEAR FA411		0x0411 Netgear FA411
 product NETGEAR_2 MA401		0x7300 Netgear MA401
 
 /* National Instruments */
-product NI PCMCIA_GPIB	 	0x4882 National Instruments PCMCIA-GPIB
+product NI PCMCIA_GPIB		0x4882 National Instruments PCMCIA-GPIB
 
 /* Nokia Products */
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
@@ -318,9 +318,6 @@ product PSION GOLDCARD		0x0020 Psion Gold Card
 /* Quatech */
 product QUATECH SPP_100		0x0003 Quatech Enhanced Parallel Port
 product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
-
-/* RATOC System Inc. Products */
-product RATOC REX_R280		0x0001	RATOC REX-R280
 
 /* Raylink/WebGear */
 product RAYTHEON WLAN		0x0000 WLAN Adapter
@@ -392,12 +389,12 @@ product ZONET ZEN		0x0100	Zonet Zen 10/10
  * Cards we know only by their cis, sorted by name.
  */
 vendor AMBICOM			-1	AmbiCom Inc
-vendor ACCTON			-1 	ACCTON
+vendor ACCTON			-1	ACCTON
 vendor AMD			-1	AMD
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor CNET			-1	CNet
-vendor DIGITAL			-1 	Digital Equipment Corporation
-vendor DLINK			-1 	D-Link
+vendor DIGITAL			-1	Digital Equipment Corporation
+vendor DLINK			-1	D-Link
 vendor DYNALINK			-1	DynaLink
 vendor EIGERLABS		-1	Eiger labs,Inc.
 vendor EPSON			-1	Seiko Epson Corporation
@@ -408,14 +405,14 @@ vendor INTERSIL			-1	Intersil
 vendor LANTECH			-1	Lantech Computer Company
 vendor NAKAGAWAMETAL		-1	NAKAGAWA METAL
 vendor NDC			-1	NDC
-vendor PLANET			-1 	Planet
+vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex Communications Inc
-vendor PREMAX			-1 	Premax
-vendor RPTI			-1 	RPTI
+vendor PREMAX			-1	Premax
+vendor RPTI			-1	RPTI
 vendor SVEC			-1	SVEC/Hawking Technology
 vendor SYNERGY21		-1	Synergy 21
 vendor TEAC			-1	TEAC
-vendor YEDATA			-1 	Y-E DATA
+vendor YEDATA			-1	Y-E DATA
 
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
 product ACCTON EN2216		{ "ACCTON", "EN2216-PCMCIA-ETHERNET", "EN2216R01", NULL } Accton EN2216
@@ -461,9 +458,9 @@ product TOSHIBA CBIDE2		{ "LOOKMEET", "CBIDE2&sp&sp&sp&sp&sp&sp", NULL, NULL } T
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
 product LANTECH FASTNETTX	{ "ASIX", "AX88190", NULL, NULL } Lantech Fastnet/TX
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
-product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
+product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product MELCO LPC2_TX		{ "MELCO", "LPC2-TX", NULL, NULL } Melco LPC2-TX
-product NAKAGAWAMETAL LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } NAKAGAWA METAL LNT-10TN NE2000 Compatible Card 
+product NAKAGAWAMETAL LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } NAKAGAWA METAL LNT-10TN NE2000 Compatible Card
 product NANOSPEED PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL } NANOSPEED ROOT-RZ2000 WLAN Card
 product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } Sohoware ND5100E NE2000 Compatible Card
 product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01", NULL } NEC Wireless Card CMZ-RT-WP
@@ -476,6 +473,16 @@ product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2
 product PLANEX FNW3600T		-1 Planex FNW-3600-T
 product PLANEX FNW3700T		-1 Planex FNW-3700-T
 product PLANEX GWNS11H		{ "PLANEX", "GW-NS11H&spWireless&spLAN&spPC&spCard", NULL, NULL } PLANEX GW-NS11H Wireless LAN PC Card
+
+/*
+ * RATOC System Inc. uses the same product ID for many different cards.
+ * For such cards, we can't use product ID for identification.
+ */
+/* vendor = 0xc015, product = 0x0001 */
+product RATOC REX_9530		{ "RATOC&spSystem&spInc.", "SCSI2&spCARD&sp37", NULL, NULL } RATOC REX-9530
+product RATOC REX_CFU1		{ "RATOC", "USB&spHOST&spCF+&spCard", NULL, NULL } RATOC REX-CFU1
+product RATOC REX_R280		{ "RATOC&spSystem&spInc.", "10BASE_T&spCARD&spR280", NULL, NULL } RATOC REX-R280
+
 product RPTI EP400		{ "RPTI&spLTD.", "EP400", "CISV100", NULL } RPTI EP400
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
