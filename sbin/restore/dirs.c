@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.35 2001/11/01 08:21:57 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.36 2002/01/04 06:48:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.35 2001/11/01 08:21:57 lukem Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.36 2002/01/04 06:48:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,6 +153,7 @@ extractdirs(genmode)
 	struct inotab *itp;
 	struct direct nulldir;
 
+	mf = NULL;
 	vprintf(stdout, "Extract directories from tape\n");
 	(void) snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d",
 	    tmpdir, (int)dumpdate);
