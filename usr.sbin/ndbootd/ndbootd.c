@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.4 2001/06/13 21:38:30 fredette Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.5 2002/04/09 02:39:14 thorpej Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -77,7 +77,12 @@
  *
  */
 
+#include <sys/cdefs.h>
+#if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
+#else
+__RCSID("$NetBSD: ndbootd.c,v 1.5 2002/04/09 02:39:14 thorpej Exp $");
+#endif
 
 /* includes: */
 #include "ndbootd.h"

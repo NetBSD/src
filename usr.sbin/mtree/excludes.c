@@ -1,3 +1,5 @@
+/*	$NetBSD: excludes.c,v 1.9 2002/04/09 02:35:31 thorpej Exp $	*/
+
 /*
  * Copyright 2000 Massachusetts Institute of Technology
  *
@@ -27,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-static const char rcsid[] =
-  "$FreeBSD: src/usr.sbin/mtree/excludes.c,v 1.5 2000/12/29 18:04:54 ben Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: excludes.c,v 1.9 2002/04/09 02:35:31 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
