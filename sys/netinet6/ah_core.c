@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.24 2001/10/15 03:55:37 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.25 2001/10/29 05:23:17 itojun Exp $	*/
 /*	$KAME: ah_core.c,v 1.45 2001/07/26 06:53:14 jinmei Exp $	*/
 
 /*
@@ -1158,10 +1158,17 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 					goto fail;
 				}
 				optlen = optp[1] + 2;
-
-				if (optp[0] & IP6OPT_MUTABLE)
-					bzero(optp + 2, optlen - 2);
 			}
+
+			if (optp + optlen > optend) {
+				error = EINVAL;
+				m_free(n);
+				n = NULL;
+				goto fail;
+			}
+
+			if (optp[0] & IP6OPT_MUTABLE)
+				bzero(optp + 2, optlen - 2);
 
 			optp += optlen;
 		}
