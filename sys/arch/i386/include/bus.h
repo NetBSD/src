@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 1998/02/04 05:12:56 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 1998/04/26 22:37:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -889,8 +889,6 @@ typedef struct i386_bus_dma_segment	bus_dma_segment_t;
  */
 
 struct i386_bus_dma_tag {
-	void	*_cookie;		/* cookie used in the guts */
-
 	/*
 	 * DMA mapping methods.
 	 */
