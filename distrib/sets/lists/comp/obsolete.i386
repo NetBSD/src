@@ -1,6 +1,0 @@
-# $NetBSD: obsolete.i386,v 1.2 2002/06/21 14:17:36 bouyer Exp $
-/usr/include/i386/endian_machdep.h
-/usr/include/i386/loadfile_machdep.h
-/usr/include/i386/lock.h
-/usr/include/i386/math.h
-/usr/include/i386/pcvt_ioctl.h
