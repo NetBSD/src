@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.201 2004/04/17 11:55:06 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.202 2004/04/17 23:28:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2724,11 +2724,11 @@ sparc_interrupt_common:
  * %l6 = &cpuinfo
  */
 lev14_softint:
-	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %l7
-	inc	%l7
-	st	%l7, [%l4 + %l5]
+	set	_C_LABEL(lev14_evcnt), %l7	! lev14_evcnt.ev_count++;
+	ldd	[%l7 + EV_COUNT], %l4
+	inccc	%l5
+	addx	%l4, %g0, %l4
+	std	%l4, [%l7 + EV_COUNT]
 
 	ld	[%l6 + CPUINFO_XMSG_TRAP], %l7
 #ifdef DIAGNOSTIC
@@ -2869,6 +2869,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
 	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! size
+	add	%l4, 8, %l4			! compensate for alignment
 	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
@@ -2885,7 +2886,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	andn	%l3, 0xfff, %l3			! va &= ~PGOFSET;
 	sub	%l4, %l3, %l4			! and finally: size rounded
 						! to page boundary
-	set	4096, %l7			! N = page size
+	set	4096, %l7			! page size
 
 2:
 	!or	%l3, ASI_SRMMUFP_L3(=0), %l3	!  va |= ASI_SRMMUFP_L3
