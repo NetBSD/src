@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.7 1999/12/18 00:01:26 he Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.8 2000/01/15 17:51:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
+#include "opt_ddb.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -187,7 +188,8 @@ lfs_vflush(vp)
 	struct inode *ip;
 	struct lfs *fs;
 	struct segment *sp;
-	int error;
+	struct buf *bp, *nbp;
+	int error, s;
 
 	ip = VTOI(vp);
 	fs = VFSTOUFS(vp->v_mount)->um_lfs;
@@ -213,6 +215,40 @@ lfs_vflush(vp)
 
 	/* Protect against VXLOCK deadlock in vinvalbuf() */
 	lfs_seglock(fs, SEGM_SYNC);
+
+	/* If we're supposed to flush a freed inode, just toss it */
+	/* XXX - seglock, so these buffers can't be gathered, right? */
+	if(ip->i_ffs_mode == 0) {
+		printf("lfs_vflush: ino %d is freed, not flushing\n",
+			ip->i_number);
+		s = splbio();
+		for(bp=vp->v_dirtyblkhd.lh_first; bp; bp=nbp) {
+			nbp = bp->b_vnbufs.le_next;
+			/* Copied from lfs_writeseg */
+			if (bp->b_flags & B_CALL) {
+				/* if B_CALL, it was created with newbuf */
+				lfs_freebuf(bp);
+			} else {
+				bremfree(bp);
+				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
+                                         B_LOCKED | B_GATHERED);
+				bp->b_flags |= B_DONE;
+				reassignbuf(bp, vp);
+				brelse(bp);  
+			}
+		}
+		splx(s);
+		if(ip->i_flag & IN_CLEANING)
+			fs->lfs_uinodes--;
+		if(ip->i_flag & IN_MODIFIED)
+			fs->lfs_uinodes--;
+		ip->i_flag &= ~(IN_MODIFIED|IN_UPDATE|IN_ACCESS|IN_CHANGE|IN_CLEANING);
+		printf("lfs_vflush: done not flushing ino %d\n",
+			ip->i_number);
+		lfs_segunlock(fs);
+		return 0;
+	}
+
 	SET_FLUSHING(fs,vp);
 	if (fs->lfs_nactive > LFS_MAX_ACTIVE) {
 		error = lfs_segwrite(vp->v_mount, SEGM_SYNC|SEGM_CKP);
@@ -720,6 +756,13 @@ lfs_writeinode(fs, sp, ip)
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = ifp->if_daddr;
 		ifp->if_daddr = bp->b_blkno;
+#ifdef LFS_DEBUG_NEXTFREE
+		if(ino > 3 && ifp->if_nextfree) {
+			vprint("lfs_writeinode",ITOV(ip));
+			printf("lfs_writeinode: updating free ino %d\n",
+				ip->i_number);
+		}
+#endif
 		error = VOP_BWRITE(ibp);
 	}
 	
@@ -830,18 +873,39 @@ loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp && bp->b_vnbufs.le_next != NULL;
 #endif /* LFS_NO_BACKBUF_HACK */
 		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp))
 			continue;
-#ifdef DIAGNOSTIC
-		if (!(bp->b_flags & B_DELWRI))
-			panic("lfs_gather: bp not B_DELWRI");
-		if (!(bp->b_flags & B_LOCKED))
-			panic("lfs_gather: bp not B_LOCKED");
+		if(vp->v_type == VBLK) {
+			/* For block devices, just write the blocks. */
+			/* XXX Do we really need to even do this? */
+#ifdef DEBUG_LFS
+			if(count==0)
+				printf("BLK(");
+			printf(".");
 #endif
-		count++;
-		if (lfs_gatherblock(sp, bp, &s)) {
-			goto loop;
+			/* Get the block before bwrite, so we don't corrupt the free list */
+			bp->b_flags |= B_BUSY;
+			bremfree(bp);
+			bwrite(bp);
+		} else {
+#ifdef DIAGNOSTIC
+			if (!(bp->b_flags & B_DELWRI))
+				panic("lfs_gather: bp not B_DELWRI");
+			if (!(bp->b_flags & B_LOCKED)) {
+				printf("lfs_gather: lbn %d blk %d not B_LOCKED\n", bp->b_lblkno, bp->b_blkno);
+				VOP_PRINT(bp->b_vp);
+				panic("lfs_gather: bp not B_LOCKED");
+			}
+#endif
+			if (lfs_gatherblock(sp, bp, &s)) {
+				goto loop;
+			}
 		}
+		count++;
 	}
 	splx(s);
+#ifdef DEBUG_LFS
+	if(vp->v_type == VBLK && count)
+		printf(")\n");
+#endif
 	lfs_updatemeta(sp);
 	sp->vp = NULL;
 	return count;
