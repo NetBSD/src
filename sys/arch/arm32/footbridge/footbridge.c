@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.1 1998/09/06 02:20:34 mark Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.2 1998/11/10 04:32:03 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -86,6 +86,17 @@ struct footbridge_softc *clock_sc;
 
 /* Set to non-zero to enable verbose reporting of footbridge system ints */
 int footbridge_intr_report = 0;
+
+
+void
+footbridge_pci_bs_tag_init(void)
+{
+	/* Set up the PCI bus tags */
+	footbridge_pci_io_bs_tag = footbridge_bs_tag;
+	footbridge_pci_io_bs_tag.bs_cookie = (void *)DC21285_PCI_IO_VBASE;
+	footbridge_pci_mem_bs_tag = footbridge_bs_tag;
+	footbridge_pci_mem_bs_tag.bs_cookie = (void *)DC21285_PCI_MEM_VBASE;
+}
 
 /*
  * int footbridgeprint(void *aux, const char *name)
