@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_ceilf.S,v 1.3.16.1 2002/03/28 22:55:09 he Exp $")
+RCSID("$NetBSD: s_ceilf.S,v 1.3.16.2 2002/03/30 22:05:47 he Exp $")
 
 ENTRY(ceilf)
 	pushl	%ebp
@@ -22,7 +22,7 @@ ENTRY(ceilf)
 	flds	8(%ebp);		/* round */
 	frndint
 
-	fldcw	-8(%ebp)		/* restore original control word */
+	fldcw	-4(%ebp)		/* restore original control word */
 
 	leave
 	ret
