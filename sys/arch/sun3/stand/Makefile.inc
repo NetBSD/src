@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1995/09/23 03:42:17 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1995/10/13 21:44:11 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -19,9 +19,14 @@ MDEC_DIR?=/usr/mdec
 SRCS?=	${SA_PROG}.c
 OBJS?=	${SRCS:S/.c/.o/g}
 
+CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin
+
+# Make a copy of the executable with its exec header removed,
+# and with its length padded to a multiple of 1k bytes.
+# (The padding is for convenience when making tapes.)
 ${SA_PROG}.bin : ${SA_PROG}
 	cp ${SA_PROG} a.out ; strip a.out
-	tail -c +33 < a.out > $@
+	dd if=a.out ibs=32 skip=1 of=$@ obs=1k conv=osync
 	-rm -f a.out
 
 ${SA_PROG} : ${SRTOBJ} ${OBJS} ${LIBS}
@@ -31,7 +36,7 @@ ${SA_PROG} : ${SRTOBJ} ${OBJS} ${LIBS}
 .if !target(clean)
 clean:
 	-rm -f a.out [Ee]rrs mklog core *.core
-	-rm -f ${SA_PROG} ${SA_PROG}.bin ${OBJS} ${CLEANFILES}
+	-rm -f ${CLEANFILES} *.o
 .endif
 
 .endif
