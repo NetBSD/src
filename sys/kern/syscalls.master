@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.90 1999/03/28 17:29:52 kleink Exp $
+	$NetBSD: syscalls.master,v 1.91 1999/06/08 03:07:39 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -170,7 +170,7 @@
 			    int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	STD		{ int sys_mincore(caddr_t addr, size_t len, \
+78	STD		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	STD		{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
