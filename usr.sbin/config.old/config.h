@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.15 1994/04/05 23:57:26 deraadt Exp $
+ *	$Id: config.h,v 1.16 1994/05/21 08:33:37 cgd Exp $
  */
 
 /*
@@ -207,7 +207,6 @@ int	dst;
 int	profiling;
 int	debugging;
 
-int	maxfdescs;
 int	maxusers;
 u_int	loadaddress;
 int     fatal_errors;

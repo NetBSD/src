@@ -33,7 +33,6 @@
 %token	MAJOR
 %token  	MANUFACTURER
 %token	MASTER
-%token	MAXFDESCS
 %token	MAXUSERS
 %token	MINOR
 %token	MINUS
@@ -107,7 +106,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.13 1994/03/10 19:50:44 mycroft Exp $
+ *	$Id: config.y,v 1.14 1994/05/21 08:33:57 cgd Exp $
  */
 
 #include <ctype.h>
@@ -222,8 +221,6 @@ Config_spec:
 	      = { zone = -$3; dst = $5; check_tz(); } |
 	TIMEZONE MINUS FPNUMBER DST
 	      = { zone = -$3; dst = 1; check_tz(); } |
-	MAXFDESCS NUMBER
-	      = { maxfdescs = $2; }; |
 	MAXUSERS NUMBER
 	      = { maxusers = $2; };
 
