@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.4 2002/03/21 21:33:57 eeh Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.5 2002/03/22 11:52:07 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -310,8 +310,8 @@ cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
 	if (ret != 0)
 		return (ret);
 
-	csr = bus_space_read_4(dh, dh, EBUS_DMAC_DCSR);
-	bus_space_write_4(dh, dh, EBUS_DMAC_DCSR,
+	csr = bus_space_read_4(dt, dh, EBUS_DMAC_DCSR);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR,
 			  csr | EBDMA_EN_NEXT | (iswrite ? EBDMA_WRITE : 0)
 			  | EBDMA_EN_DMA | EBDMA_EN_CNT | EBDMA_INT_EN);
 
