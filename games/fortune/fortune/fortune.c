@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.22 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: fortune.c,v 1.23 2000/04/14 05:58:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.22 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.23 2000/04/14 05:58:02 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,8 +316,6 @@ getargs(argc, argv)
 # ifndef NO_REGEX
 	char	*pat = NULL;
 # endif	/* NO_REGEX */
-	extern char *optarg;
-	extern int optind;
 	int ch;
 
 	ignore_case = FALSE;
