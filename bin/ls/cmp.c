@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.9 1996/07/08 10:22:13 mycroft Exp $	*/
+/*	$NetBSD: cmp.c,v 1.10 1996/07/08 10:32:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cmp.c,v 1.9 1996/07/08 10:22:13 mycroft Exp $";
+static char rcsid[] = "$NetBSD: cmp.c,v 1.10 1996/07/08 10:32:01 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,14 +87,14 @@ int
 revmodcmp(a, b)
 	const FTSENT *a, *b;
 {
-	if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
-		return (1);
-	else if (b->fts_statp->st_mtime > a->fts_statp->st_mtime)
+	if (b->fts_statp->st_mtime > a->fts_statp->st_mtime)
 		return (-1);
-	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
+	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
 		return (1);
 	else if (b->fts_statp->st_mtimensec > a->fts_statp->st_mtimensec)
 		return (-1);
+	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
+		return (1);
 	else
 		return (revnamecmp(a, b));
 }
@@ -119,14 +119,14 @@ int
 revacccmp(a, b)
 	const FTSENT *a, *b;
 {
-	if (b->fts_statp->st_atime < a->fts_statp->st_atime)
-		return (1);
-	else if (b->fts_statp->st_atime > a->fts_statp->st_atime)
+	if (b->fts_statp->st_atime > a->fts_statp->st_atime)
 		return (-1);
-	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
+	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
 		return (1);
 	else if (b->fts_statp->st_atimensec > a->fts_statp->st_atimensec)
 		return (-1);
+	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
+		return (1);
 	else
 		return (revnamecmp(a, b));
 }
@@ -151,14 +151,14 @@ int
 revstatcmp(a, b)
 	const FTSENT *a, *b;
 {
-	if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
-		return (1);
-	else if (b->fts_statp->st_ctime > a->fts_statp->st_ctime)
+	if (b->fts_statp->st_ctime > a->fts_statp->st_ctime)
 		return (-1);
-	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
+	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
 		return (1);
 	else if (b->fts_statp->st_ctimensec > a->fts_statp->st_ctimensec)
 		return (-1);
+	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
+		return (1);
 	else
 		return (revnamecmp(a, b));
 }
@@ -179,10 +179,10 @@ int
 revsizecmp(a, b)
 	const FTSENT *a, *b;
 {
-	if (b->fts_statp->st_size < a->fts_statp->st_size)
-		return (1);
 	if (b->fts_statp->st_size > a->fts_statp->st_size)
 		return (-1);
+	if (b->fts_statp->st_size < a->fts_statp->st_size)
+		return (1);
 	else
 		return (revnamecmp(a, b));
 }
