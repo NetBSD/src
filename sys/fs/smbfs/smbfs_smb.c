@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.9 2003/02/24 09:30:43 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.10 2003/02/24 18:45:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -852,7 +852,7 @@ smbfs_findopenLM1(struct smbfs_fctx *ctx, struct smbnode *dnp,
 		ctx->f_wildcard = NULL;
 		ctx->f_wclen = 0;
 	}
-	ctx->f_name = (char *)ctx->f_fname;
+	ctx->f_name = ctx->f_fname;
 	return 0;
 }
 
@@ -882,7 +882,7 @@ smbfs_findnextLM1(struct smbfs_fctx *ctx, int limit)
 	md_get_uint16le(mbp, &time);
 	md_get_uint16le(mbp, &date);
 	md_get_uint32le(mbp, &size);
-	KASSERT(ctx->f_name == (char *)ctx->f_fname);
+	KASSERT(ctx->f_name == ctx->f_fname);
 	cp = ctx->f_name;
 	md_get_mem(mbp, cp, sizeof(ctx->f_fname), MB_MSYSTEM);
 	cp[sizeof(ctx->f_fname) - 1] = '\0';
