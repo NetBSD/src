@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)db_save.c	4.16 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: db_save.c,v 1.3 1994/12/23 16:55:45 cgd Exp $";
+static char rcsid[] = "$Id: db_save.c,v 1.4 1994/12/27 00:20:36 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -44,7 +44,7 @@ static char rcsid[] = "$Id: db_save.c,v 1.3 1994/12/23 16:55:45 cgd Exp $";
 #include <arpa/nameser.h>
 #include <syslog.h>
 #include <stdio.h>
-#include "ns.h"
+#include <string.h>
 #include "db.h"
 
 #ifdef DEBUG
