@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.42 1997/06/26 04:06:57 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.43 1997/06/26 04:16:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -665,8 +665,30 @@ vndioctl(dev, cmd, data, flag, p)
 
 	vnd = &vnd_softc[unit];
 	vio = (struct vnd_ioctl *)data;
-	switch (cmd) {
 
+	/* Must be open for writes for these commands... */
+	switch (cmd) {
+	case VNDIOCSET:
+	case VNDIOCCLR:
+	case DIOCSDINFO:
+	case DIOCWDINFO:
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
+
+	/* Must be initialized for these... */
+	switch (cmd) {
+	case VNDIOCCLR:
+	case DIOCSDINFO:
+	case DIOCWDINFO:
+	case DIOCGPART:
+	case DIOCWLABEL:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
+			return (ENXIO);
+	}
+
+	switch (cmd) {
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return (EBUSY);
@@ -795,9 +817,6 @@ vndioctl(dev, cmd, data, flag, p)
 		break;
 
 	case VNDIOCCLR:
-		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
@@ -829,16 +848,10 @@ vndioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCGDINFO:
-		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-		
 		*(struct disklabel *)data = *(vnd->sc_dkdev.dk_label);
 		break;
 
 	case DIOCGPART:
-		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-
 		((struct partinfo *)data)->disklab = vnd->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
 		    &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
@@ -846,12 +859,6 @@ vndioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
@@ -875,11 +882,6 @@ vndioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCWLABEL:
-		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 		if (*(int *)data != 0)
 			vnd->sc_flags |= VNF_WLABEL;
 		else
