@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.1 2001/07/22 18:56:34 chris Exp $ */
+/* $NetBSD: __clone.S,v 1.1.4.1 2002/08/27 23:35:14 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -83,7 +83,7 @@ ENTRY(__clone)
 
 Lreturnhere:
 	/* call _exit with the returned value */
-	b	_C_LABEL(_exit)
+	b	PIC_SYM(_C_LABEL(_exit), PLT)
 
 	/* NOTREACHED */
 
