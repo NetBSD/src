@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.28 1995/07/23 17:57:39 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.29 1995/07/23 20:11:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -266,9 +266,6 @@ el_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int iobase = sc->sc_iobase;
-	int s;
-
-	s = splimp();
 
 	/* First, reset the board. */
 	el_hardreset(sc);
@@ -295,8 +292,6 @@ el_init(sc)
 
 	/* And start output. */
 	el_start(ifp);
-
-	splx(s);
 }
 
 /*
