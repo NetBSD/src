@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.428 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.429 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		available diskspace and used disk capacity, similar to df(1).
 		[hubertf 20050216]
 	racoon(8): Switch to ipsec-tools' racoon [manu 20050216]
+	ipf(8): updated to version 4.1.6. [martti 20050219]
