@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.24 1994/03/12 08:04:19 cgd Exp $
+ *	$Id: com.c,v 1.25 1994/03/18 05:13:26 cgd Exp $
  */
 
 /*
@@ -76,6 +76,7 @@ struct com_softc {
 #define	COM_SW_SOFTCAR	0x01
 #define	COM_SW_CLOCAL	0x02
 #define	COM_SW_CRTSCTS	0x04
+#define	COM_SW_MDMBUF	0x08
 	u_char sc_msr, sc_mcr;
 } com_softc[NCOM];
 /* XXXX should be in com_softc, but not ready for that yet */
@@ -278,6 +279,8 @@ comopen(dev, flag, mode, p)
 			tp->t_cflag |= CLOCAL;
 		if (sc->sc_swflags & COM_SW_CRTSCTS)
 			tp->t_cflag |= CRTSCTS;
+		if (sc->sc_swflags & COM_SW_MDMBUF)
+			tp->t_cflag |= MDMBUF;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 		comparam(tp, &tp->t_termios);
@@ -298,7 +301,8 @@ comopen(dev, flag, mode, p)
 		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
 
 		sc->sc_msr = inb(iobase + com_msr);
-		if (sc->sc_swflags & COM_SW_SOFTCAR || sc->sc_msr & MSR_DCD)
+		if (sc->sc_swflags & COM_SW_SOFTCAR || sc->sc_msr & MSR_DCD ||
+		    tp->t_lflag&MDMBUF)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -471,6 +475,8 @@ comioctl(dev, cmd, data, flag, p)
 			bits |= TIOCFLAG_CLOCAL;
 		if (sc->sc_swflags & COM_SW_CRTSCTS)
 			bits |= TIOCFLAG_CRTSCTS;
+		if (sc->sc_swflags & COM_SW_MDMBUF)
+			bits |= TIOCFLAG_MDMBUF;
 
 		*(int *)data = bits;
 		break;
@@ -566,10 +572,27 @@ comparam(tp, t)
 		}
 	}
 
-	/* If CTS is off and CRTSCTS is changed, we must toggle TS_TTSTOP. */
+	/*
+	 * If CTS is off and CRTSCTS is changed, we must toggle TS_TTSTOP.
+	 * XXX should be done at tty layer.
+	 */
 	if ((sc->sc_msr & MSR_CTS) == 0 &&
 	    (tp->t_cflag & CRTSCTS) != (t->c_cflag & CRTSCTS)) {
 		if ((t->c_cflag & CRTSCTS) == 0) {
+			tp->t_state &= ~TS_TTSTOP;
+			ttstart(tp);
+		} else
+			tp->t_state |= TS_TTSTOP;
+	}
+
+	/*
+	 * If DCD is off and MDMBUF is changed, we must toggle TS_TTSTOP.
+	 * XXX should be done at tty layer.
+	 */
+	if ((sc->sc_swflags & COM_SW_SOFTCAR) == 0 &&
+	    (sc->sc_msr & MSR_DCD) == 0 &&
+	    (tp->t_cflag & MDMBUF) != (t->c_cflag & MDMBUF)) {
+		if ((t->c_cflag & MDMBUF) == 0) {
 			tp->t_state &= ~TS_TTSTOP;
 			ttstart(tp);
 		} else
