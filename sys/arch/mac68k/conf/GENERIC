@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 1996/11/11 18:02:57 scottr Exp $
+#	$NetBSD: GENERIC,v 1.49 1996/11/19 00:38:05 scottr Exp $
 #
 # GENERIC
 
@@ -7,7 +7,6 @@ include	"arch/mac68k/conf/std.mac68k"
 maxusers	16
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		DIAGNOSTIC		# DEBUG for extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
@@ -61,7 +60,6 @@ options		COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
-options		MACHINE_NONCONTIG
 options		ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
 
