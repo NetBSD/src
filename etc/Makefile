@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.196 2001/11/29 22:45:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.197 2001/11/30 18:50:09 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -356,6 +356,12 @@ snap_pre:
 #				that are built for inclusion only in
 #				installation disk/CD-ROM/tape images.
 #
+# A port may also specify KERNEL_SUFFIXES, which is an optional list
+# of filename suffixes for kernels to include in the kernel sets and
+# in the binary/kernels area of the release package (e.g. "netbsd" vs.
+# "netbsd.ecoff" and "netbsd.srec").  It is not an error if kernels
+# with these suffixes do not exist in the kernel build directory.
+#
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
@@ -371,14 +377,33 @@ snap_kern:
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # build kernels
 .for configfile in ${KERNEL_SETS}
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} && \
-		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/${configfile}` | \
+	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
+	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
+	cd $${kerndir} && \
+		tarlist=`for kernel in $${kernlist}; do \
+			echo "$${kernel}"; \
+			for s in ${KERNEL_SUFFIXES}; do \
+				if [ -f $${kernel}.$${s} ]; then \
+					echo "$${kernel}.$${s}"; \
+				fi; \
+			done; \
+		done`; \
+		tar cf - $${tarlist} | \
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
 .endfor # make kernel sets
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} &&	\
-		for kernel in `${GETKERNELAWK} \
-			${KERNCONFDIR}/${configfile:C/.*\///}` ; do   \
+	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
+	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
+	cd $${kerndir} &&	\
+		gziplist=`for kernel in $${kernlist}; do \
+			echo "$${kernel}"; \
+			for s in ${KERNEL_SUFFIXES}; do \
+				if [ -f $${kernel}.$${s} ]; then \
+					echo "$${kernel}.$${s}"; \
+				fi; \
+			done; \
+		done`; \
+		for kernel in $${gziplist} ; do \
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
 .endfor # place KERNEL_SETS kernels + EXTRA_KERNELS in binary/kernel/...
