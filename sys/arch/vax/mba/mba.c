@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.29 2002/10/02 16:02:33 thorpej Exp $ */
+/*	$NetBSD: mba.c,v 1.30 2003/01/01 00:16:47 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -243,12 +243,12 @@ mbaprint(void *aux, const char *mbaname)
 
 	if (mbaname) {
 		if (ma->ma_name)
-			printf("%s", ma->ma_name);
+			aprint_normal("%s", ma->ma_name);
 		else
-			printf("device type %o", ma->ma_type);
-		printf(" at %s", mbaname);
+			aprint_normal("device type %o", ma->ma_type);
+		aprint_normal(" at %s", mbaname);
 	}
-	printf(" drive %d", ma->ma_unit);
+	aprint_normal(" drive %d", ma->ma_unit);
 	return (ma->ma_name ? UNCONF : UNSUPP);
 }
 
