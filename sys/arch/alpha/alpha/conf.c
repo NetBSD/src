@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16.2.1 1996/12/07 02:04:50 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.2 1997/01/24 07:05:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,6 +43,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include "fdc.h"
+bdev_decl(fd);
 bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
@@ -54,18 +56,18 @@ bdev_decl(sd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* 0 */
+	bdev_disk_init(NFDC,fd),	/* 0: PC-ish floppy disk driver */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_notdef(),			/* 4 */
 	bdev_notdef(),			/* 5 */
-	bdev_disk_init(NRD,rd),		/* 6: ram disk driver */
+	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	bdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
@@ -130,11 +132,14 @@ cdev_decl(wsmouse);
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
-cdev_decl(rd);
+cdev_decl(md);
 #include "ss.h"
 cdev_decl(ss);
 #include "uk.h"
 cdev_decl(uk);
+cdev_decl(fd);
+#include "ipfilter.h"
+cdev_decl(ipl);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -170,13 +175,15 @@ struct cdevsw	cdevsw[] =
 	    wsdisplay),			/* 25: frame buffers, etc. */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
-	cdev_disk_init(NRD,rd),		/* 28: ram disk driver */
+	cdev_disk_init(NMD,md),		/* 28: memory disk driver */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 29: keyboards */
 	cdev_mouse_init(NWSMOUSE,
 	    wsmouse),			/* 30: mice */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
+	cdev_disk_init(NFDC,fd),	/* 34: PC-ish floppy disk driver */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -246,12 +253,14 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	7,		/* ccd */
-	/* 28 */	6,		/* rd */
+	/* 28 */	6,		/* md */
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
+	/* 34 */	0,		/* fd */
+	/* 35 */	NODEV,
 };
 
 /*

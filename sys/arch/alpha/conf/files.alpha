@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.32.2.2 1996/12/08 19:21:05 cgd Exp $
+#	$NetBSD: files.alpha,v 1.32.2.3 1997/01/24 07:05:54 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -43,11 +43,9 @@ major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
 
-# RAM Disk
-pseudo-device rd
-file	dev/ramdisk.c			rd		needs-flag
-file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
-major { rd = 6 }
+# Memory Disk
+file	arch/alpha/alpha/md_root.c	memory_disk_hooks
+major { md = 6 }
 
 
 #
@@ -136,6 +134,15 @@ file	arch/alpha/isa/pms.c		pms
 attach	vga at isa with vga_isa
 file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 
+# Floppy disk controller
+device	fdc { drive = -1 }
+attach	fdc at isa
+device	fd: disk, isadma
+attach	fd at fdc
+file	arch/alpha/isa/fd.c		fdc needs-flag
+major	{ fd = 0 }
+
+# PC speaker
 #
 # EISA Bus support
 #

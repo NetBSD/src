@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.18.2.1 1996/12/07 02:04:51 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.18.2.2 1997/01/24 07:05:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -103,18 +103,21 @@ dec_2100_a50_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comconsinit, comdefaultrate;		/*XXX*/
+			extern int comdefaultrate;			/*XXX*/
 			extern int comcngetc __P((dev_t));		/*XXX*/
 			extern void comcnputc __P((dev_t, int));	/*XXX*/
 			extern void comcnpollc __P((dev_t, int));	/*XXX*/
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-			/* Delay to allow PROM putchars to complete */
-			DELAY(10000);
+			/*
+			 * Delay to allow PROM putchars to complete.
+			 * FIFO depth * character time,
+			 * character time = (1000000 / (defaultrate / 10))
+			 */
+			DELAY(160000000 / comdefaultrate);
 
 			comconsaddr = 0x3f8;
-			comconsinit = 0;
 			comconstag = acp->ac_iot;
 			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
 			    0, &comconsbah))

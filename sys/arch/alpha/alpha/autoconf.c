@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.2.1 1997/01/24 07:05:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,8 +138,8 @@ struct nam2blk {
 #endif
 };
 
-#ifdef RAMDISK_HOOKS
-static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#ifdef MEMORY_DISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "md0", NULL };
 #endif
 
 static int
@@ -178,7 +178,7 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 		printf(" %s[a-h]", fakerdrootdev.dv_xname);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
@@ -219,7 +219,7 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
 		dv = &fakerdrootdev;
 		goto gotdisk;
@@ -228,7 +228,7 @@ parsedisk(str, len, defpart, devp)
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 gotdisk:
 #endif
 			majdev = findblkmajor(dv);
@@ -279,7 +279,7 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
-#ifdef RAMDISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS
 	bootdv = &fakerdrootdev;
 	bootpartition = 0;
 #else

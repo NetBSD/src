@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.5.2.1 1997/01/24 07:05:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,19 +34,27 @@
 
 #ifdef __ELF__
 
+#define	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
+
+#ifndef __DO_NOT_DO_WEAK__
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
+#endif /* !__DO_NOT_DO_WEAK__ */
 
 #ifdef __STDC__
 
+#ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak " #alias " ; " #alias " = " #sym)
+#endif /* !__DO_NOT_DO_WEAK__ */
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text")
 
 #else /* !__STDC__ */
 
+#ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak alias ; alias = sym")
+#endif /* !__DO_NOT_DO_WEAK__ */
 #define	__warn_references(sym,msg)					\
     __asm__(".section .gnu.warning.sym ; .ascii msg ; .text")
 
