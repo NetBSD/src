@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.c,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.1 2004/04/24 17:35:27 cl Exp $	*/
 
 /*
  *

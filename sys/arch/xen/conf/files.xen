@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.4 2004/04/17 12:56:27 cl Exp $
+#	$NetBSD: files.xen,v 1.5 2004/04/24 17:35:27 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -28,7 +28,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/i386/gdt.c
-file	arch/xen/i386/hypervisor.c
+file	arch/xen/i386/hypervisor_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
@@ -101,18 +101,23 @@ include	"arch/xen/conf/files.compat"
 
 device	mainbus: mainbus
 attach	mainbus at root
-file	arch/xen/i386/mainbus.c	mainbus
+file	arch/xen/i386/mainbus.c		mainbus
+
+# Xen hypervisor
+device	hypervisor { }
+attach	hypervisor at mainbus
+file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
 file	arch/xen/i386/npx.c		npx needs-flag
 
-attach	npx at mainbus with npx_hv
+attach	npx at hypervisor with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv
 
 # Xen console support
 device	xenc: tty
-attach	xenc at mainbus
+attach	xenc at hypervisor
 file	arch/xen/xen/console.c		xenc needs-flag
 
 #include	"dev/wscons/files.wscons"
@@ -188,11 +193,11 @@ include	"compat/ossaudio/files.ossaudio"
 # Xen devices
 
 device	xennet: arp, ether, ifnet
-attach	xennet at mainbus
+attach	xennet at hypervisor
 file	arch/xen/xen/if_xennet.c	xennet needs-flag
 
 device	xbd: disk
-attach	xbd at mainbus
+attach	xbd at hypervisor
 file	arch/xen/xen/xbd.c		xbd needs-flag
 
 include "arch/xen/conf/majors.i386"
