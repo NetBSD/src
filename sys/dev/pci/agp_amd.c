@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.5 2001/10/01 21:54:48 fvdl Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -107,9 +107,10 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat,
 	    AGP_PAGE_SIZE + entries * sizeof(u_int32_t), 0,
-	    &gatt->ag_dmamap, (caddr_t *)&vdir, &gatt->ag_pdir,
+	    &gatt->ag_dmamap, &vdir, &gatt->ag_pdir,
 	    &gatt->ag_dmaseg, 1, &gatt->ag_nseg) != 0) {
 		printf("failed to allocate GATT\n");
+		free(gatt, M_AGP);
 		return NULL;
 	}
 
