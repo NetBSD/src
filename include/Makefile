@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 1996/08/09 04:01:48 jtc Exp $
+#	$NetBSD: Makefile,v 1.61 1996/09/07 17:47:50 mycroft Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -23,7 +23,7 @@ FILES+=	dlfcn.h link.h
 .endif
 
 MFILES=	float.h frame.h stdarg.h varargs.h
-LFILES=	errno.h fcntl.h syslog.h termios.h
+LFILES=	errno.h fcntl.h poll.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
