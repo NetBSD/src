@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.2 1994/12/23 16:50:06 cgd Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.3 1995/03/22 15:56:31 mycroft Exp $";
 #endif
 
 #include <sys/types.h>
@@ -118,10 +118,10 @@ pacct_add(ci)
 {
 	DBT key, data;
 	struct cmdinfo newci;
-	char keydata[sizeof ci->ci_comm];
+	char keydata[sizeof(ci->ci_comm)];
 	int rv;
 
-	bcopy(ci->ci_comm, &keydata, sizeof keydata);
+	memcpy(&keydata, ci->ci_comm, sizeof(keydata));
 	key.data = &keydata;
 	key.size = strlen(keydata);
 
@@ -132,16 +132,16 @@ pacct_add(ci)
 	} else if (rv == 0) {	/* it's there; copy whole thing */
 		/* XXX compare size if paranoid */
 		/* add the old data to the new data */
-		bcopy(data.data, &newci, data.size);
+		memcpy(&newci, data.data, data.size);
 	} else {		/* it's not there; zero it and copy the key */
-		bzero(&newci, sizeof newci);
-		bcopy(key.data, newci.ci_comm, key.size);
+		memset(&newci, 0, sizeof(newci));
+		memcpy(newci.ci_comm, key.data, key.size);
 	}
 	
 	add_ci(ci, &newci);
 
 	data.data = &newci; 
-	data.size = sizeof newci;
+	data.size = sizeof(newci);
 	rv = DB_PUT(pacct_db, &key, &data, 0);
 	if (rv < 0) {
 		warn("add key %s to process accounting stats", ci->ci_comm);
@@ -212,18 +212,18 @@ pacct_print()
 	struct cmdinfo *cip, ci, ci_total, ci_other, ci_junk;
 	int rv;
 
-	bzero(&ci_total, sizeof ci_total);
+	memset(&ci_total, 0, sizeof(ci_total));
 	strcpy(ci_total.ci_comm, "");
-	bzero(&ci_other, sizeof ci_other);
+	memset(&ci_other, 0, sizeof(ci_other));
 	strcpy(ci_other.ci_comm, "***other");
-	bzero(&ci_junk, sizeof ci_junk);
+	memset(&ci_junk, 0, sizeof(ci_junk));
 	strcpy(ci_junk.ci_comm, "**junk**");
 
 	/*
 	 * Retrieve them into new DB, sorted by appropriate key.
 	 * At the same time, cull 'other' and 'junk'
 	 */
-	bzero(&bti, sizeof bti);
+	memset(&bti, 0, sizeof(bti));
 	bti.compare = sa_cmp;
 	output_pacct_db = dbopen(NULL, O_RDWR, 0, DB_BTREE, &bti);
 	if (output_pacct_db == NULL) {
@@ -238,7 +238,7 @@ pacct_print()
 		warn("retrieving process accounting stats");
 	while (rv == 0) {
 		cip = (struct cmdinfo *) data.data;
-		bcopy(cip, &ci, sizeof ci);
+		memcpy(&ci, cip, sizeof(ci));
 
 		/* add to total */
 		add_ci(&ci, &ci_total);
@@ -267,14 +267,14 @@ next:		rv = DB_SEQ(pacct_db, &key, &data, R_NEXT);
 	/* insert **junk** and ***other */
 	if (ci_junk.ci_calls != 0) {
 		data.data = &ci_junk;
-		data.size = sizeof ci_junk;
+		data.size = sizeof(ci_junk);
 		rv = DB_PUT(output_pacct_db, &data, &ndata, 0);
 		if (rv < 0)
 			warn("sorting process accounting stats");
 	}
 	if (ci_other.ci_calls != 0) {
 		data.data = &ci_other;
-		data.size = sizeof ci_other;
+		data.size = sizeof(ci_other);
 		rv = DB_PUT(output_pacct_db, &data, &ndata, 0);
 		if (rv < 0)
 			warn("sorting process accounting stats");
@@ -289,7 +289,7 @@ next:		rv = DB_SEQ(pacct_db, &key, &data, R_NEXT);
 		warn("retrieving process accounting report");
 	while (rv == 0) {
 		cip = (struct cmdinfo *) data.data;
-		bcopy(cip, &ci, sizeof ci);
+		memcpy(&ci, cip, sizeof(ci));
 
 		print_ci(&ci, &ci_total);
 

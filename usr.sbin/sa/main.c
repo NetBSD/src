@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.3 1995/03/22 15:49:18 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1995/03/22 15:56:29 mycroft Exp $";
 #endif
 
 /*
@@ -68,7 +68,7 @@ int Kflag, lflag, mflag, qflag, rflag, sflag, tflag, uflag, vflag;
 int cutoff = 1;
 
 static char	*dfltargv[] = { _PATH_ACCT };
-static int	dfltargc = (sizeof dfltargv/sizeof(char *));
+static int	dfltargc = (sizeof(dfltargv)/sizeof(char *));
 
 /* default to comparing by sum of user + system time */
 cmpf_t   sa_cmp = cmp_usrsys;
@@ -322,7 +322,7 @@ acct_load(pn, wr)
 
 		/* decode it */
 		ci.ci_calls = 1;
-		for (i = 0; i < sizeof ac.ac_comm && ac.ac_comm[i] != '\0';
+		for (i = 0; i < sizeof(ac.ac_comm) && ac.ac_comm[i] != '\0';
 		    i++) {
 			char c = ac.ac_comm[i];
 
