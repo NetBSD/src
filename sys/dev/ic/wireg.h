@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.1 2001/05/06 03:26:39 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.2 2001/05/15 04:14:06 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -71,6 +71,10 @@
 #define WI_DEFAULT_PM_ENABLED	0
 
 #define WI_DEFAULT_MAX_SLEEP	100
+
+#define WI_DEFAULT_ROAMING	1
+
+#define WI_DEFAULT_AUTHTYPE	1
 
 #ifdef __NetBSD__
 #define OS_STRING_NAME	"NetBSD"
@@ -333,6 +337,22 @@ struct wi_ltv_memsz {
 	u_int16_t		wi_type;
 	u_int16_t		wi_mem_ram;
 	u_int16_t		wi_mem_nvram;
+};
+
+/*
+ * NIC Identification (0xFD0B)
+ */
+#define WI_RID_CARDID		0xFD0B
+struct wi_ltv_ver {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int16_t		wi_ver[4];
+#define WI_NIC_EVB2	0x8000
+#define WI_NIC_HWB3763	0x8001
+#define WI_NIC_HWB3163	0x8002
+#define WI_NIC_HWB3163B	0x8003
+#define WI_NIC_EVB3	0x8004
+#define WI_NIC_HWB1153	0x8007
 };
 
 /*

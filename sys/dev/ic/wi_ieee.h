@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.1 2001/05/06 03:26:39 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.2 2001/05/15 04:14:06 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -188,6 +188,7 @@ struct wi_counters {
 
 #define WI_RID_DNLD_BUF		0xFD01
 #define WI_RID_MEMSZ		0xFD02
+#define WI_RID_CARDID		0xFD0B
 #define WI_RID_DOMAINS		0xFD11
 #define WI_RID_CIS		0xFD13
 #define WI_RID_COMMQUAL		0xFD43
@@ -229,6 +230,11 @@ struct wi_counters {
 #define WI_RID_P2_CRYPT_KEY2	0xFC26
 #define WI_RID_P2_CRYPT_KEY3	0xFC27
 #define WI_RID_P2_ENCRYPTION	0xFC28
+#define WI_RID_WEP_MAPTABLE	0xFC29
+#define WI_RID_AUTH_CNTL	0xFC2A
+#define WI_RID_ROAMING_MODE	0xFC2D
+#define WI_RID_BASIC_RATE	0xFCB3
+#define WI_RID_SUPPORT_RATE	0xFCB4
 
 /*
  * Network parameters, dynamic configuration entities
@@ -263,6 +269,8 @@ struct wi_counters {
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
 #define WI_RID_TICK_TIME	0xFCE0
+#define WI_RID_SCAN_REQ		0xFCE1
+#define WI_RID_JOIN_REQ		0xFCE2
 
 struct wi_key {
 	u_int16_t		wi_keylen;
