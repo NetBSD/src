@@ -1,4 +1,4 @@
-/*	$NetBSD: link.c,v 1.1 1999/07/19 09:11:26 kleink Exp $	*/
+/*	$NetBSD: link.c,v 1.2 1999/09/20 15:01:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: link.c,v 1.1 1999/07/19 09:11:26 kleink Exp $");
+__RCSID("$NetBSD: link.c,v 1.2 1999/09/20 15:01:36 kleink Exp $");
 #endif
 
 #include <locale.h>
@@ -76,6 +76,6 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: link file1 file2");
+	(void)fprintf(stderr, "usage: link file1 file2\n");
 	exit(EXIT_FAILURE);
 }
