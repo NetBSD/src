@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsiconf.h,v 1.9 1994/04/20 22:13:35 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.10 1994/05/12 22:16:04 mycroft Exp $
  */
 
 /*
@@ -151,8 +151,7 @@ struct scsi_link {
 /*  6*/	u_int8	opennings;		/* available operations */
 /*  7*/	u_int8	active;			/* operations in progress */
 /*  8*/ u_int8	sparea[1];
-/* 10*/	int	flags;			/* flags that all devices have */
-/* 12*/	u_int8	spareb[2];
+/* 12*/	int	flags;			/* flags that all devices have */
 /* 16*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 /* 20*/	struct	scsi_device *device;	/* device entry points etc. */
 /* 24*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
