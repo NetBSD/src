@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2000/11/11 22:47:57 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2000/11/12 00:59:05 matt Exp $
 #
 #	etc.arm32/Makefile.inc -- arm32-specific etc Makefile targets
 #
@@ -8,6 +8,9 @@
 EXTRA_KERNELS+= A7000  CATS     EBSA285 RISCPC  SHARK
 BUILD_KERNELS=	A7INST CATSINST         RPCINST SHARKINST
 
+INSTALLATION_DIRS+=	installation/kernel \
+			installation/misc
+
 # Build the release notes and boot floppies and install them
 snap_md_post:
 .ifndef UPDATE
@@ -16,4 +19,5 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/arm32 && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppies '*.gz'
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernels '*.gz'
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'
