@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1994/10/26 05:28:10 cgd Exp $
+	$NetBSD: syscalls.master,v 1.5 1994/11/14 06:10:50 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
@@ -51,7 +51,8 @@
 17	STD		{ int svr4_break(caddr_t nsize); }
 18	STD		{ int svr4_stat(char* path, \
 					struct svr4_stat* ub); }
-19	NOARGS		{ long lseek(int fd, long offset, int whence); }
+19	NOARGS		{ long compat_43_lseek(int fd, long offset, \
+					       int whence); }
 20	NOARGS		{ pid_t getpid(void); }
 21	UNIMPL		svr4_old_mount
 22	UNIMPL		System V umount
@@ -71,7 +72,7 @@
 36	NOARGS		{ int sync(void); }
 37	NOARGS		{ int kill(int pid, int signum); }
 38	UNIMPL		svr4_fstatfs
-39	UNIMPL		svr4_pgrpsys
+39	STD		{ int svr4_pgrpsys(int cmd, int pid, int pgid); }
 40	UNIMPL		svr4_xenix
 41	NOARGS		{ int dup(u_int fd); }
 42	NOARGS		{ int pipe(void); }
@@ -111,7 +112,7 @@
 60	NOARGS		{ int umask(int newmask); }
 61	NOARGS		{ int chroot(char *path); }
 62	STD		{ int svr4_fcntl(int fd, int cmd, char *arg); }
-63	UNIMPL		nosys
+63	STD		{ long svr4_ulimit(int cmd, long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc
 66	UNIMPL		reserved for unix/pc
@@ -133,9 +134,14 @@
 82	OBSOL		svr4_libattach
 83	OBSOL		svr4_libdetach
 84	UNIMPL		svr4_sysfs
-85	UNIMPL		svr4_getmsg
-86	UNIMPL		svr4_putmsg
-87	UNIMPL		svr4_poll
+85	STD		{ int svr4_getmsg(int fd, struct svr4_stropts *ctl, \
+					  struct svr4_stropts *dat, \
+					  int *flags); }
+86	STD		{ int svr4_putmsg(int fd, struct svr4_stropts *ctl, \
+					  struct svr4_stropts *dat, \
+					  int flags); }
+87	STD		{ int svr4_poll(struct svr4_pollfd *fds, long nfds, \
+					int timeout); }
 88	STD		{ int svr4_lstat(char *path, \
 					 struct svr4_stat *ub); }
 89	NOARGS		{ int symlink(char *path, char *link); }
@@ -204,7 +210,8 @@
 137	STD		{ int svr4_sysconfig(int name); }
 138	NOARGS		{ int adjtime(struct timeval *delta, \
 				      struct timeval *olddelta); }
-139	UNIMPL		svr4_systeminfo
+139	STD		{ long svr4_systeminfo(int what, char *buf, \
+					       long len); }
 140	UNIMPL		reserved
 141	NOARGS		{ int seteuid(uid_t euid); }
 142	UNIMPL		vtrace
