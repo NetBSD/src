@@ -1,7 +1,7 @@
-/*	$NetBSD: nsswitch.h,v 1.1.4.4 1998/10/31 12:36:35 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.1.4.5 1999/01/13 13:22:58 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,12 +39,13 @@
 #ifndef _NSSWITCH_H
 #define _NSSWITCH_H	1
 
+#include <sys/types.h>
+
 #if __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
-#include <sys/types.h>
 
 #ifndef _PATH_NS_CONF
 #define _PATH_NS_CONF	"/etc/nsswitch.conf"
@@ -53,19 +54,20 @@
 #define	NS_CONTINUE	0
 #define	NS_RETURN	1
 
-#define	NS_SUCCESS	(1<<8)		/* entry was found */
-#define	NS_UNAVAIL	(1<<9)		/* source not responding, or corrupt */
-#define	NS_NOTFOUND	(1<<10)		/* source responded 'no such entry' */
-#define	NS_TRYAGAIN	(1<<11)		/* source busy, may respond to retrys */
-#define	NS_STATUSMASK	0xffffff00	/* bitmask to get the status flags */
+#define	NS_SUCCESS	(1<<0)		/* entry was found */
+#define	NS_UNAVAIL	(1<<1)		/* source not responding, or corrupt */
+#define	NS_NOTFOUND	(1<<2)		/* source responded 'no such entry' */
+#define	NS_TRYAGAIN	(1<<3)		/* source busy, may respond to retrys */
+#define	NS_STATUSMASK	0x000000ff	/* bitmask to get the status flags */
 
-#define NS_FILES	0		/* local files */
-#define	NS_DNS		1		/* DNS; IN for hosts, HS for others */
-#define	NS_NIS		2		/* yp/nis */
-#define	NS_NISPLUS	3		/* nis+ */
-#define	NS_COMPAT	4		/* passwd,group in yp compat mode */
-#define	NS_MAXSOURCE	15		/* last possible source */
-#define	NS_SOURCEMASK	0x000000ff	/* bitmask to get the source */
+/*
+ * currently implemented sources
+ */
+#define NSSRC_FILES	"files"		/* local files */
+#define	NSSRC_DNS	"dns"		/* DNS; IN for hosts, HS for others */
+#define	NSSRC_NIS	"nis"		/* yp/nis */
+#define	NSSRC_NISPLUS	"nisplus"	/* nis+ */
+#define	NSSRC_COMPAT	"compat"	/* passwd,group in yp compat mode */
 
 /*
  * currently implemented databases
@@ -99,72 +101,95 @@
 #define NSDB_TERMCAP		"termcap"
 #define NSDB_TTYS		"ttys"
 
-#define NS_MAXDBLEN	32	/* max len of a database name */
-
-typedef struct {
-	int	(*cb)(void *retval, void *cb_data, va_list ap);
-	void	*cb_data;
-} ns_dtab [NS_MAXSOURCE];
-
-typedef struct {
-	char		name[NS_MAXDBLEN];	/* name of database */
-	int		size;			/* number of entries of map */
-	u_int32_t	map[NS_MAXSOURCE];	/* map, described below */
-} ns_DBT;
 /*
- * ns_DBT.map --
- *	array of sources to try in order. each number is a bitmask:
- *	- lower 8 bits is source type
- *	- upper 24 bits is action bitmap
- *	If source has already been set, don't add again to array
+ * ns_dtab - `nsswitch dispatch table'
+ * contains an entry for each source and the appropriate function to call
  */
+typedef struct ns_dtab {
+	const char	 *src;
+	int		(*callback)(void *retval, void *cb_data, va_list ap);
+	void		 *cb_data;
+} ns_dtab;
 
-#define NS_DEFAULTMAP	(NS_FILES | NS_SUCCESS)
-
-#define NS_CB(D,E,F,C)		{ D[E].cb = F; D[E].cb_data = C; }
-			
-#define NS_FILES_CB(D,F,C)	NS_CB(D, NS_FILES, F, C)
-
+/*
+ * macros to help build an ns_dtab[]
+ */
+#define NS_FILES_CB(F,C)	{ NSSRC_FILES,	F,	NULL }
+ 
 #ifdef HESIOD
-#   define NS_DNS_CB(D,F,C)	NS_CB(D, NS_DNS, F, C)
+#   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	F,	NULL }
 #else
-#   define NS_DNS_CB(D,F,C)	NS_CB(D, NS_DNS, NULL, NULL)
+#   define NS_DNS_CB(F,C)	{ NSSRC_DNS,	NULL,	NULL }
 #endif
 
 #ifdef YP
-#   define NS_NIS_CB(D,F,C)	NS_CB(D, NS_NIS, F, C)
+#   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	F,	NULL }
 #else
-#   define NS_NIS_CB(D,F,C)	NS_CB(D, NS_NIS, NULL, NULL)
+#   define NS_NIS_CB(F,C)	{ NSSRC_NIS,	NULL,	NULL }
 #endif
 
-#ifdef NISPLUS
-#   define NS_NISPLUS_CB(D,F,C)	NS_CB(D, NS_NISPLUS, F, C)
+#if defined(HESIOD) || defined(YP)
+#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	NULL }
 #else
-#   define NS_NISPLUS_CB(D,F,C)	NS_CB(D, NS_NISPLUS, NULL, NULL)
+#   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	NULL,	NULL }
 #endif
 
-#if defined(HESIOD) || defined(YP) || defined(NISPLUS)
-#   define NS_COMPAT_CB(D,F,C)	NS_CB(D, NS_COMPAT, F, C)
-#else
-#   define NS_COMPAT_CB(D,F,C)	NS_CB(D, NS_COMPAT, NULL, NULL)
-#endif
+/*
+ * maximum length of a string (database or source name).
+ * a sanity check more than anything else (the strings
+ * are dynamically allocated; there may be bugs in the
+ * lexer or yaccer with large strings, so we limit the
+ * string length.
+ */
+#define NS_MAXSTR	32
+
+
+#ifdef _NS_PRIVATE
+
+/*
+ * private data structures for back-end nsswitch implementation
+ */
+
+/*
+ * ns_src - `nsswitch source'
+ * used by the nsparser routines to store a mapping between a source
+ * and its dispatch control flags for a given database.
+ */
+typedef struct ns_src {
+	const char	*name;
+	u_int32_t	 flags;
+} ns_src;
+
+/*
+ * ns_dbt - `nsswitch database thang'
+ * for each database in /etc/nsswitch.conf there is a ns_dbt, with its
+ * name and a list of ns_src's containing the source information.
+ */
+typedef struct ns_dbt {
+	const char	*name;		/* name of database */
+	ns_src		*srclist;	/* list of sources */
+	int		 srclistsize;	/* size of srclist */
+} ns_dbt;
+
+#endif /* _NS_PRIVATE */
 
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern	int	nsdispatch	__P((void *, ns_dtab, const char *, ...));
+extern	int	nsdispatch	__P((void *, const ns_dtab [], const char *,
+				    ...));
 
 #ifdef _NS_PRIVATE
-extern	void	__nsdbget __P((ns_DBT *));
-extern	void	__nsdbput __P((const ns_DBT *));
-extern	void	__nsdbput __P((const ns_DBT *));
-extern	void	_nsdumpdbt __P((const ns_DBT *));
-extern	void	_nsgetdbt __P((const char *, ns_DBT *));
-extern	void	_nsyyerror __P((char *));
-extern	int	_nsyylex __P((void));
-extern	int	_nsyylineno;
-#endif
+extern	void		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
+extern	void		 _nsdbtdump __P((const ns_dbt *));
+extern	const ns_dbt	*_nsdbtget __P((const char *));
+extern	void		 _nsdbtput __P((const ns_dbt *));
+extern	void		 _nsyyerror __P((char *));
+extern	int		 _nsyylex __P((void));
+extern	int		 _nsyylineno;
+#endif /* _NS_PRIVATE */
+
 __END_DECLS
 
 #endif /* !_NSSWITCH_H */
