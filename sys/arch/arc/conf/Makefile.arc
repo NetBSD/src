@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile.arc,v 1.29 2000/01/23 20:08:55 soda Exp $
+#	$NetBSD: Makefile.arc,v 1.30 2000/01/23 21:01:52 soda Exp $
+#	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/pica/conf/``machineid''
+#	/sys/arch/arc/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/pica/conf/Makefile.pica
+#	/sys/arch/arc/conf/Makefile.arc
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -30,32 +31,39 @@ LORDER?=lorder
 MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
-SIZE?=	size
 STRIPPROG?=strip
+SIZE?=	size
+ELF2AOUT?=	touch		# XXX
+ELF2ECOFF?=	elf2ecoff
+TOUCH?=	touch -f -c
 TSORT?=	tsort -q
 
-COPTS?=	-O2
+COPTS?= 	-O2 # -mmemcpy # XXX: - profile this
+
+TEXTADDR?=	80100000
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
 #S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-PICA=	$S/arch/pica
+ARC=	$S/arch/arc
 MIPS=	$S/arch/mips
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpica
-CWARNFLAGS?=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darc
+# XXX: -Werror
+CWARNFLAGS?=	-Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 0
+GP?=		-G 0 # -G 30 # XXX: check this
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext 80080000  -e start ${GP}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -mips3 -D_LOCORE
+LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext ${TEXTADDR} -e start ${GP}
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
@@ -95,7 +103,10 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
-		param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
+		 param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
+.if !empty(IDENT:M-DMIPS3)
+SYSTEM_OBJ+=    locore_mips3.o
+.endif
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
@@ -115,9 +126,9 @@ LINKFLAGS+=	-x
 
 SYSTEM_LD_TAIL+=;\
 		mv $@ $@.elf; \
-		elf2aout $@.elf $@; \
+		${ELF2AOUT} $@.elf $@; \
 		chmod 755 $@; \
-		elf2ecoff $@.elf $@.ecoff
+		${ELF2ECOFF} $@.elf $@.ecoff
 
 %LOAD
 
@@ -125,7 +136,6 @@ assym.h: $S/kern/genassym.sh ${MIPS}/mips/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
-
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -143,8 +153,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	rm -f eddep *netbsd netbsd.gdb netbsd.ecoff netbsd.elf \
+	    tags *.[io] [a-z]*.s [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
 	rm -f .depend
@@ -155,7 +165,7 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${PICA}/pica/Locore.c ${CFILES} \
+	    ${ARC}/arc/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -170,17 +180,24 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
+#OBSOLETE:
+#SRCS=	${ARC}/arc/locore.S ${ARC}/arc/fp.S \
+#	param.c ioconf.c ${CFILES} ${SFILES}
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${PICA}/pica/locore_machdep.S \
+	${ARC}/arc/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
+#OBSOLETE:
+#.depend: ${SRCS} assym.h param.c
+#	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore.S ${ARC}/arc/fp.S
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PICA}/pica/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	[ "${SFILES}" = "" ] || \
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
+	  ${CPPFLAGS} ${PROF} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -195,17 +212,24 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration
-machdep.o clock.o: Makefile
+machdep.o mainbus.o trap.o: Makefile
 
+# depend on System V IPC/shmem options
+mips_machdep.o pmap.o: Makefile
 
+locore.o: ${MIPS}/mips/locore.S assym.h
+	${NORMAL_S}
 
-locore.o: ${MIPS}/mips/locore.S ${MIPS}/mips/locore_r2000.S ${MIPS}/mips/locore_r4000.S assym.h
+locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
+	${NORMAL_S}
+
+locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 	${NORMAL_S}
 
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${PICA}/pica/locore_machdep.S assym.h
+locore_machdep.o: ${ARC}/arc/locore_machdep.S assym.h
 	${NORMAL_S}
 
 %RULES

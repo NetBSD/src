@@ -1,4 +1,5 @@
-/*	$NetBSD: if_sn.c,v 1.14 2000/01/23 20:08:12 soda Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.15 2000/01/23 21:01:54 soda Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.9 1997/04/19 17:19:52 pefo Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -13,8 +14,12 @@
 #include "sn.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
+#include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
@@ -24,7 +29,11 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 #include <machine/autoconf.h>
+
+#include <arc/arc/arctype.h>	/* XXX - cputype */
+extern int cputype;
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -39,37 +48,30 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef RMP
-#include <netrmp/rmp.h>
-#include <netrmp/rmp_var.h>
-#endif
-
 #include <vm/vm.h>
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/bus.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
+#include <arc/dev/dma.h>
 
 #define SONICDW 32
 typedef unsigned char uchar;
 
 #include <mips/cpuregs.h>	/* XXX */
-#include <pica/dev/if_sn.h>
+#include <arc/dev/if_snreg.h>
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
 
+#include <machine/cpu.h>
+#include <machine/bus.h>
+#include <mips/locore.h> /* for mips3_HitFlushDCache() */
 
 /*
  * Statistics collected over time
@@ -117,54 +119,33 @@ struct sn_softc {
 	struct	RXpkt *sc_lrxp;		/* last RDA available to chip */
 	struct	sn_stats sc_sum;
 	short	sc_iflags;
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 } sn_softc;
 
-int snmatch __P((struct device *, void *, void *));
+int snmatch __P((struct device *, struct cfdata *, void *));
 void snattach __P((struct device *, struct device *, void *));
 
 struct cfattach sn_ca = {
 	sizeof(struct sn_softc), snmatch, snattach
 };
 
+#undef assert
+#undef _assert
 
-
-void	m_check __P((struct mbuf *m));
-void	m_checkm __P((struct mbuf *m));
-
-void 
-m_check(m)
-	struct mbuf *m;
-{
-	if (m->m_flags & M_EXT) {
-		assert(m->m_len >= 0);
-		assert(m->m_len <= m->m_ext.ext_size);
-		assert(m->m_data >= &m->m_ext.ext_buf[0]);
-		assert(m->m_data <= &m->m_ext.ext_buf[m->m_ext.ext_size]);
-		assert(m->m_data + m->m_len <= &m->m_ext.ext_buf[m->m_ext.ext_size]);
-	} else if (m->m_flags & M_PKTHDR) {
-		assert(m->m_len >= 0);
-		assert(m->m_len <= MHLEN);
-		assert(m->m_data >= m->m_pktdat);
-		assert(m->m_data <= &m->m_pktdat[MHLEN]);
-		assert(m->m_data + m->m_len <= &m->m_pktdat[MHLEN]);
-	} else {
-		assert(m->m_len >= 0);
-		assert(m->m_len <= MLEN);
-		assert(m->m_data >= m->m_dat);
-		assert(m->m_data <= &m->m_dat[MLEN]);
-		assert(m->m_data + m->m_len <= &m->m_dat[MLEN]);
-	}
-}
-
-void 
-m_checkm(m)
-	struct mbuf *m;
-{
-	while (m) {
-		m_check(m);
-		m = m->m_next;
-	}
-}
+#ifdef NDEBUG
+#define	assert(e)	((void)0)
+#define	_assert(e)	((void)0)
+#else
+#define	_assert(e)	assert(e)
+#ifdef __STDC__
+#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
+#else	/* PCC */
+#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
+#endif
+#endif
 
 int ethdebug = 0;
 
@@ -261,9 +242,9 @@ void camdump __P((struct sn_softc *sc));
 int
 snmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct confargs *ca = aux;
 
 	/* XXX CHECK BUS */
@@ -287,7 +268,6 @@ snattach(parent, self, aux)
 	struct sn_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_if;
-	/*struct cfdata *cf = sc->sc_dev.dv_cfdata;*/
 	int p, pp;
 	uchar myaddr[ETHER_ADDR_LEN];
 
@@ -295,8 +275,8 @@ snattach(parent, self, aux)
 
 	sc->dma = &sc->__dma;
 	sn_dma_init(sc->dma, FRAGMAX * NTDA
-			   + (NRBA * RBASIZE / PICA_DMA_PAGE_SIZE) + 1
-			   + (DESC_SIZE * 2 / PICA_DMA_PAGE_SIZE) + 1);
+			   + (NRBA * RBASIZE / R4030_DMA_PAGE_SIZE) + 1
+			   + (DESC_SIZE * 2 / R4030_DMA_PAGE_SIZE) + 1);
 
 /*
  * because the sonic is basicly 16bit device it 'concatenates'
@@ -304,7 +284,7 @@ snattach(parent, self, aux)
  * around problems near the end of 64k !!
  */
 	p = SONICBUF;
-	pp = SONICBUF - (FRAGMAX * NTDA * PICA_DMA_PAGE_SIZE);
+	pp = SONICBUF - (FRAGMAX * NTDA * R4030_DMA_PAGE_SIZE);
 
 	if ((p ^ (p + TDASIZE)) & 0x10000)
 		p = (p + 0x10000) & ~0xffff;
@@ -328,12 +308,13 @@ snattach(parent, self, aux)
 	v_cda = (struct CDA *)(p - pp + sc->dma->dma_va);
 	p += CDASIZE;
 
-	p += PICA_DMA_PAGE_SIZE - (p & (PICA_DMA_PAGE_SIZE -1));
+	p += R4030_DMA_PAGE_SIZE - (p & (R4030_DMA_PAGE_SIZE -1));
 	p_rba = (char *)p;
 	v_rba = (char *)(p - pp + sc->dma->dma_va);
 	p += NRBA * RBASIZE;
 
 	DMA_MAP(sc->dma, (caddr_t)SONICBUF, p - SONICBUF, SONICBUF - pp);
+	printf(": bufsize %d",p - SONICBUF);
 
 #if 0
 	camdump(sc);
@@ -357,11 +338,15 @@ printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 	ifp->if_start = snstart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
+	if_attach(ifp);
+	ether_ifattach(ifp, myaddr);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	if_attach(ifp);
-	ether_ifattach(ifp, myaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
+#endif
 }
 
 int
@@ -387,23 +372,6 @@ snioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_ec.ec_if, ifa);
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-			{
-				struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-				if (ns_nullhost(*ina)) {
-					ina->x_host = *(union ns_host *)(sc->sc_addr);
-				} else {
-					/* XXX
-					 * add an extra i/f address to
-					 * sonic filter
-					 */
-				}
-			}
-			(void)sninit(sc);
-			break;
-#endif	/* NS */
 		default:
 			(void)sninit(sc);
 			break;
@@ -515,7 +483,6 @@ void
 snreset(sc)
 	struct sn_softc *sc;
 {
-	printf("snreset\n");
 	snstop(sc);
 	sninit(sc);
 }
@@ -536,8 +503,8 @@ sninit(sc)
 	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
 
 	/* config it */
-	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | DCR_DMABLOCK |
-	    DCR_RFT16 | DCR_TFT16;
+	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | 
+	    DCR_RFT4 | DCR_TFT28; /*XXX RFT & TFT according to MIPS manual */
 	csr->s_rcr = RCR_BRD | RCR_LBNONE;
 	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_HBLEN | IMR_LCDEN;
 
@@ -559,7 +526,7 @@ sninit(sc)
 
 	/* program the CAM with our address */
 	caminitialise();
-	camentry(0, LLADDR(sc->sc_if.if_sadl));
+	camentry(0, (u_char *)LLADDR(sc->sc_if.if_sadl));
 	camprogram(sc);
 
 	/* get it to read resource descriptors */
@@ -577,12 +544,6 @@ sninit(sc)
 
 	splx(s);
 	return (0);
-
-#if 0
-bad:
-	snstop(sc);
-	return (error);
-#endif
 }
 
 /*
@@ -604,7 +565,7 @@ snstop(sc)
 	/* free all receive buffers (currently static so nothing to do) */
 
 	/* free all pending transmit mbufs */
-	while ((mtd = mtdhead) != 0) {
+	while ((mtd = mtdhead)) {
 		mtdhead = mtdhead->mtd_link;
 		if (mtd->mtd_mbuf)
 			m_freem(mtd->mtd_mbuf);
@@ -636,10 +597,10 @@ snwatchdog(ifp)
 		/* something still pending for transmit */
 		if (mtdhead->mtd_txp->status == 0)
 			log(LOG_ERR, "%s: Tx - timeout\n",
-			    sc->sc_dev.dv_xname);
+			    sc->sc_if.if_xname);
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
-			    sc->sc_dev.dv_xname);
+			    sc->sc_if.if_xname);
 		temp = sc->sc_if.if_flags & IFF_UP;
 		snreset(sc);
 		sc->sc_if.if_flags |= temp;
@@ -668,7 +629,7 @@ sonicput(sc, m0)
 	mtdnext->mtd_mbuf = m0;
 	txp = mtdnext->mtd_txp;
 	SWR(txp->config, 0);
-	fragoffset = (txp - p_tda) * FRAGMAX * PICA_DMA_PAGE_SIZE;
+	fragoffset = (txp - p_tda) * FRAGMAX * R4030_DMA_PAGE_SIZE;
 
 	/*
 	 * Now fill in the fragments. Each fragment maps to it's
@@ -704,7 +665,7 @@ sonicput(sc, m0)
 			fr++;
 			va += n;
 			resid -= n;
-			fragoffset += PICA_DMA_PAGE_SIZE;
+			fragoffset += R4030_DMA_PAGE_SIZE;
 		}
 	}
 	/*
@@ -730,7 +691,7 @@ sonicput(sc, m0)
 		mtd_free(mtdnew);
 		m_freem(m0);
 		log(LOG_ERR, "%s: tx too many fragments %d\n",
-		    sc->sc_dev.dv_xname, fr);
+		    sc->sc_if.if_xname, fr);
 		sc->sc_if.if_oerrors++;
 		return (len);
 	}
@@ -776,8 +737,9 @@ sngetaddr(sc, ap)
 	struct sn_softc *sc;
 	uchar *ap;
 {
-	unsigned i;
-#if 1
+#if 0
+	int i;
+
 	sc->sc_csr->s_cr = CR_RST;
 	wbflush();
 	sc->sc_csr->s_cep = 0;
@@ -797,6 +759,13 @@ sngetaddr(sc, ap)
 	sc->sc_csr->s_cr = 0;
 	wbflush();
 #else
+	if (cputype == MAGNUM) { /* XXX */
+		extern char prodid[];
+
+		bcopy(prodid, ap, ETHER_ADDR_LEN);
+		return (0);
+	}
+
 	ap[0] = 0x08;
 	ap[1] = 0x00;
 	ap[2] = 0x20;
@@ -811,7 +780,7 @@ void sonictxint __P((struct sn_softc *));
 void sonicrxint __P((struct sn_softc *));
 
 int sonic_read __P((struct sn_softc *, struct RXpkt *));
-struct mbuf *sonic_get __P((struct sn_softc *, struct ether_header *, int));
+struct mbuf *sonic_get __P((struct sn_softc *, caddr_t, int));
 
 void 
 mtd_free(mtd)
@@ -1000,8 +969,11 @@ snintr(sc)
 {
 	struct sonic_reg *csr = sc->sc_csr;
 	int	isr;
+#if NRND > 0
+	it	isr_save = 0;
+#endif
 
-	while ((isr = (csr->s_isr & ISR_ALL)) != 0) {
+	while ((isr = (csr->s_isr & ISR_ALL))) {
 		/* scrub the interrupts that we are going to service */
 		csr->s_isr = isr;
 		wbflush();
@@ -1037,7 +1009,14 @@ snintr(sc)
 				sc->sc_mptally++;
 #endif
 		}
+#if NRND > 0
+		isr_save = isr;
+#endif
 	}
+#if NRND > 0
+	if (isr_save)
+		rnd_add_uint32(&sc->rnd_source, isr_save);
+#endif
 	return (1);
 }
 
@@ -1057,7 +1036,7 @@ sonictxint(sc)
 
 	csr = sc->sc_csr;
 
-	while ((mtd = mtdhead) != 0) {
+	while ((mtd = mtdhead)) {
 		struct mbuf *m = mtd->mtd_mbuf;
 
 		if (m == 0)
@@ -1088,7 +1067,7 @@ sonictxint(sc)
 
 			if (mtdhead != mtdnext) {
 				printf("resubmitting remaining packets\n");
-				csr->s_ctda = LOWER(mtdhead->mtd_txp);
+				csr->s_ctda = LOWER(v_tda + (mtdhead->mtd_txp - p_tda));
 				csr->s_cr = CR_TXP;
 				wbflush();
 				return;
@@ -1209,7 +1188,7 @@ sonic_read(sc, rxp)
          * Remember that type was trailer by setting off.
          */
 
-	len = SRD(rxp->byte_count) - sizeof(struct ether_header) - FCSSIZE;
+	len = SRD(rxp->byte_count) - FCSSIZE;
 	pkt = (caddr_t)((SRD(rxp->pkt_ptrhi) << 16) | SRD(rxp->pkt_ptrlo));
 	pkt = pkt - v_rba + p_rba;
 	et = (struct ether_header *)pkt;
@@ -1220,7 +1199,8 @@ sonic_read(sc, rxp)
 		    ether_sprintf(et->ether_shost));
 		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 	}
-	if (len < ETHERMIN || len > ETHERMTU) {
+	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
+	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("sonic: invalid packet length %d bytes\n", len);
 		return (0);
 	}
@@ -1232,8 +1212,7 @@ sonic_read(sc, rxp)
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
 	if (ifp->if_bpf) {
-		bpf_tap(sc->sc_if.if_bpf, pkt,
-		    len + sizeof(struct ether_header));
+		bpf_tap(sc->sc_if.if_bpf, pkt, len);
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
@@ -1241,45 +1220,42 @@ sonic_read(sc, rxp)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, LLADDR(ifp->if_sadl),
+		    bcmp(et->ether_dhost, (void *)LLADDR(ifp->if_sadl),
 			    sizeof(et->ether_dhost)) != 0)
-			return (1);
+			return(1); /* XXX - count this ? */
 	}
 #endif
-	m = sonic_get(sc, et, len);
+	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
 		return (0);
-	ether_input(ifp, et, m);
+	(*ifp->if_input)(ifp, m);
 	return(1);
 }
 
 #define sonicdataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
 
 /*
- * munge the recieved packet into an mbuf chain
- * because we are using stupif buffer management this
+ * munge the received packet into a mbuf chain
+ * because we are using stupid buffer management this
  * is slow.
 */
 struct mbuf *
-sonic_get(sc, eh, datalen)
+sonic_get(sc, pkt, datalen)
 	struct sn_softc *sc;
-	struct ether_header *eh;
+	caddr_t pkt;
 	int datalen;
 {
-	struct mbuf *m;
-	struct mbuf *top = 0, **mp = &top;
+	struct	mbuf *m, *top, **mp;
 	int	len;
-	char   *spkt = sonicdataaddr(eh, 0, caddr_t);
-	char   *epkt = spkt + datalen;
-	char *cp = spkt;
 
-	epkt = cp + datalen;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = datalen;
-	m->m_len = MHLEN;
+	len = MHLEN;
+	top = 0;
+	mp = &top;
 
 	while (datalen > 0) {
 		if (top) {
@@ -1288,33 +1264,33 @@ sonic_get(sc, eh, datalen)
 				m_freem(top);
 				return (0);
 			}
-			m->m_len = MLEN;
+			len = MLEN;
 		}
-		len = min(datalen, epkt - cp);
-		if (len >= MINCLSIZE) {
+		if (datalen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				m->m_len = len = min(len, MCLBYTES);
-			else
-				len = m->m_len;
-		} else {
-			/*
-		         * Place initial small packet/header at end of mbuf.
-		         */
-			if (len < m->m_len) {
-				if (top == 0 && len + max_linkhdr <= m->m_len)
-					m->m_data += max_linkhdr;
-				m->m_len = len;
-			} else
-				len = m->m_len;
+			if ((m->m_flags & M_EXT) == 0) {
+				if (top) m_freem(top);
+				return (0);
+			}
+			len = MCLBYTES;
 		}
-		bcopy(cp, mtod(m, caddr_t), (unsigned) len);
-		cp += len;
+
+		if (mp == &top) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data; 
+			m->m_data = newdata;
+		}
+
+		m->m_len = len = min(datalen, len);
+
+		bcopy(pkt, mtod(m, caddr_t), (unsigned) len);
+		pkt += len;
+		datalen -= len;
 		*mp = m;
 		mp = &m->m_next;
-		datalen -= len;
-		if (cp == epkt)
-			cp = spkt;
 	}
+
 	return (top);
 }

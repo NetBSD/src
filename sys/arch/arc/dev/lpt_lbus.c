@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_lbus.c,v 1.7 2000/01/23 20:08:58 soda Exp $	*/
+/*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -55,430 +55,133 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
-#include <sys/ioctl.h>
-#include <sys/uio.h>
 #include <sys/device.h>
-#include <sys/syslog.h>
 
-#include <machine/cpu.h>
-#include <machine/pio.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
 
-#include <dev/isa/lptreg.h>
+#include <dev/ic/lptreg.h>
+#include <dev/ic/lptvar.h>
 
-#define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
-#define	STEP		hz/4
+int lpt_localbus_probe __P((struct device *, struct cfdata *, void *));
+void lpt_localbus_attach __P((struct device *, struct device *, void *));
 
-#define	LPTPRI		(PZERO+8)
-#define	LPT_BSIZE	1024
-
-#if !defined(DEBUG) || !defined(notdef)
-#define lprintf
-#else
-#define lprintf		if (lptdebug) printf
-int lptdebug = 1;
-#endif
-
-struct lpt_softc {
-	struct device sc_dev;
-	void *sc_ih;
-
-	size_t sc_count;
-	struct buf *sc_inbuf;
-	u_char *sc_cp;
-	int sc_spinmax;
-	int sc_iobase;
-	u_char sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char sc_flags;
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-	u_char sc_control;
-	u_char sc_laststatus;
+struct cfattach lpt_pica_ca = {
+	sizeof(struct lpt_softc), lpt_localbus_probe, lpt_localbus_attach
 };
 
-int lptprobe __P((struct device *, void *, void *));
-void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((void *));
-
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptprobe, lptattach
+struct cfattach lpt_algor_ca = {
+	sizeof(struct lpt_softc), lpt_localbus_probe, lpt_localbus_attach
 };
 
-extern struct cfdriver lpt_cd;
-
-#define	LPTUNIT(s)	(minor(s) & 0x1f)
-#define	LPTFLAGS(s)	(minor(s) & 0xe0)
-
-#define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
-#define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(inb(iobase + lpt_status), sc)
-static int not_ready __P((u_char, struct lpt_softc *));
-
-static void lptwakeup __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
-
+/*
+ * XXX - copied from lpt_isa.c
+ *	sys/arch/arm32/mainbus/lpt_pioc.c also copies this.
+ *	sys/arch/amiga/dev/lpt_supio.c doesn't.
+ */
+static int lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+		bus_size_t, u_char, u_char));
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
-int
-lpt_port_test(port, data, mask)
-	int port;
+static int
+lpt_port_test(iot, ioh, base, off, data, mask)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t base;
+	bus_size_t off;
 	u_char data, mask;
 {
 	int timeout;
 	u_char temp;
 
 	data &= mask;
-	outb(port, data);
+	bus_space_write_1(iot, ioh, off, data);
 	timeout = 1000;
 	do {
-		delay(20);
-		temp = inb(port) & mask;
+		delay(10);
+		temp = bus_space_read_1(iot, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", port, data,
-	    temp, timeout);
 	return (temp == data);
 }
 
-/*
- * Logic:
- *	1) You should be able to write to and read back the same value
- *	   to the data port.  Do an alternating zeros, alternating ones,
- *	   walking zero, and walking one test to check for stuck bits.
- *
- *	2) You should be able to write to and read back the same value
- *	   to the control port lower 5 bits, the upper 3 bits are reserved
- *	   per the IBM PC technical reference manauls and different boards
- *	   do different things with them.  Do an alternating zeros, alternating
- *	   ones, walking zero, and walking one test to check for stuck bits.
- *
- *	   Some printers drag the strobe line down when the are powered off
- * 	   so this bit has been masked out of the control port test.
- *
- *	   XXX Some printers may not like a fast pulse on init or strobe, I
- *	   don't know at this point, if that becomes a problem these bits
- *	   should be turned off in the mask byte for the control port test.
- *
- *	3) Set the data and control ports to a value of 0
- */
 int
-lptprobe(parent, match, aux)
+lpt_localbus_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct confargs *ca = aux;
-	int iobase = (int)BUS_CVTADDR(ca);
-	int port;
-	u_char mask, data;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t base;
+	u_int8_t mask, data;
 	int i;
 
-	if (!BUS_MATCHNAME(ca, "lpt"))
-		return (0);
-
 #ifdef DEBUG
-#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
-		    return 0;} while (0)
+#define	ABORT								     \
+	do {								     \
+		printf("lpt_localbus_probe: mask %x data %x failed\n", mask, \
+		    data);						     \
+		return 0;						     \
+	} while (0)
 #else
 #define	ABORT	return 0
 #endif
 
-	port = iobase + lpt_data;
+	if(!BUS_MATCHNAME(ca, "lpt"))
+		 return(0);
+
+	iot = &arc_bus_io;
+	base = (bus_addr_t)BUS_CVTADDR(ca);
+	ioh = (bus_space_handle_t)base;
+
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
-	outb(iobase + lpt_data, 0);
-	outb(iobase + lpt_control, 0);
+	bus_space_write_1(iot, ioh, lpt_data, 0);
+	bus_space_write_1(iot, ioh, lpt_control, 0);
 
 	return 1;
 }
 
 void
-lptattach(parent, self, aux)
+lpt_localbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct lpt_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	int iobase = (int)BUS_CVTADDR(ca);
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
 	printf("\n");
 
-	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
+	iot = sc->sc_iot = &arc_bus_io;
+	ioh = sc->sc_ioh = (bus_space_handle_t)BUS_CVTADDR(ca);
+
+	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 
 	BUS_INTR_ESTABLISH(ca, lptintr, sc);
-}
-
-/*
- * Reset the printer, then wait until it's selected and not busy.
- */
-int
-lptopen(dev, flag)
-	dev_t dev;
-	int flag;
-{
-	int unit = LPTUNIT(dev);
-	u_char flags = LPTFLAGS(dev);
-	struct lpt_softc *sc;
-	int iobase;
-	u_char control;
-	int error;
-	int spin;
-
-	if (unit >= lpt_cd.cd_ndevs)
-		return ENXIO;
-	sc = lpt_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
-
-#ifdef DIAGNOSTIC
-	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
-		    sc->sc_state);
-#endif
-
-	if (sc->sc_state)
-		return EBUSY;
-
-	sc->sc_state = LPT_INIT;
-	sc->sc_flags = flags;
-	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
-	iobase = sc->sc_iobase;
-
-	if ((flags & LPT_NOPRIME) == 0) {
-		/* assert INIT for 100 usec to start up printer */
-		outb(iobase + lpt_control, LPC_SELECT);
-		delay(100);
-	}
-
-	control = LPC_SELECT | LPC_NINIT;
-	outb(iobase + lpt_control, control);
-
-	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
-		if (spin >= TIMEOUT) {
-			sc->sc_state = 0;
-			return EBUSY;
-		}
-
-		/* wait 1/4 second, give up if we get a signal */
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
-		    STEP) != EWOULDBLOCK) {
-			sc->sc_state = 0;
-			return error;
-		}
-	}
-
-	control |= LPC_IENABLE;
-	if (flags & LPT_AUTOLF)
-		control |= LPC_AUTOLF;
-	sc->sc_control = control;
-	outb(iobase + lpt_control, control);
-
-	sc->sc_inbuf = geteblk(LPT_BSIZE);
-	sc->sc_count = 0;
-	sc->sc_state = LPT_OPEN;
-
-	lptwakeup(sc);
-
-	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
-	return 0;
-}
-
-int
-not_ready(status, sc)
-	u_char status;
-	struct lpt_softc *sc;
-{
-	u_char new;
-
-	status = (status ^ LPS_INVERT) & LPS_MASK;
-	new = status & ~sc->sc_laststatus;
-	sc->sc_laststatus = status;
-
-	if (new & LPS_SELECT)
-		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_NOPAPER)
-		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_NERR)
-		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
-
-	return status;
-}
-
-void
-lptwakeup(arg)
-	void *arg;
-{
-	struct lpt_softc *sc = arg;
-	int s;
-
-	s = spltty();
-	lptintr(sc);
-	splx(s);
-
-	timeout(lptwakeup, sc, STEP);
-}
-
-/*
- * Close the device, and free the local line buffer.
- */
-lptclose(dev, flag)
-	dev_t dev;
-	int flag;
-{
-	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
-	int iobase = sc->sc_iobase;
-
-	if (sc->sc_count)
-		(void) pushbytes(sc);
-
-	untimeout(lptwakeup, sc);
-
-	outb(iobase + lpt_control, LPC_NINIT);
-	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
-	brelse(sc->sc_inbuf);
-
-	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
-	return 0;
-}
-
-int
-pushbytes(sc)
-	struct lpt_softc *sc;
-{
-	int iobase = sc->sc_iobase;
-	int error;
-
-	int s;
-
-	while (sc->sc_count > 0) {
-		/* if the printer is ready for a char, give it one */
-		if ((sc->sc_state & LPT_OBUSY) == 0) {
-			lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
-			    sc->sc_count);
-			s = spltty();
-			(void) lptintr(sc);
-			splx(s);
-		}
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-		    "lptwrite2", 0))
-			return error;
-	}
-	return 0;
-}
-
-/* 
- * Copy a line from user space to a local buffer, then call putc to get the
- * chars moved to the output queue.
- */
-lptwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
-	size_t n;
-	int error = 0;
-
-	while (n = min(LPT_BSIZE, uio->uio_resid)) {
-		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
-		sc->sc_count = n;
-		error = pushbytes(sc);
-		if (error) {
-			/*
-			 * Return accurate residual if interrupted or timed
-			 * out.
-			 */
-			uio->uio_resid += sc->sc_count;
-			sc->sc_count = 0;
-			return error;
-		}
-	}
-	return 0;
-}
-
-/*
- * Handle printer interrupts which occur when the printer is ready to accept
- * another char.
- */
-int
-lptintr(arg)
-	void *arg;
-{
-	struct lpt_softc *sc = arg;
-	int iobase = sc->sc_iobase;
-
-#if 0
-	if ((sc->sc_state & LPT_OPEN) == 0)
-		return 0;
-#endif
-
-	/* is printer online and ready for output */
-	if (NOT_READY() && NOT_READY_ERR())
-		return 0;
-
-	if (sc->sc_count) {
-		u_char control = sc->sc_control;
-		/* send char */
-		outb(iobase + lpt_data, *sc->sc_cp++);
-		outb(iobase + lpt_control, control | LPC_STROBE);
-		sc->sc_count--;
-		outb(iobase + lpt_control, control);
-		sc->sc_state |= LPT_OBUSY;
-	} else
-		sc->sc_state &= ~LPT_OBUSY;
-
-	if (sc->sc_count == 0) {
-		/* none, wake up the top half to get more */
-		wakeup((caddr_t)sc);
-	}
-
-	return 1;
-}
-
-int
-lptioctl(dev, cmd, data, flag)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-{
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return error;
 }

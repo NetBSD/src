@@ -1,4 +1,6 @@
-/*	$NetBSD: clock_mc.c,v 1.4 2000/01/23 20:09:03 soda Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.5 2000/01/23 21:01:50 soda Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.7 1997/04/19 17:19:40 pefo Exp $	*/
+/*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,17 +52,25 @@
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 
-#include <pica/pica/clockvar.h>
-#include <pica/pica/picatype.h>
-#include <pica/pica/pica.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+
+#include <arc/arc/clockvar.h>
+#include <arc/arc/arctype.h>
+#include <arc/pica/pica.h>
+#include <arc/algor/algor.h>
+#include <machine/isa_machdep.h>
+#include <arc/isa/timerreg.h>
 
 extern u_int	cputype;
 extern int	cpu_int_mask;
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
-static void	mcclock_init __P((struct clock_softc *csc));
+static void	mcclock_init_pica __P((struct clock_softc *csc));
+static void	mcclock_init_tyne __P((struct clock_softc *csc));
+static void	mcclock_init_p4032 __P((struct clock_softc *csc));
 static void	mcclock_get __P((struct clock_softc *csc, time_t base,
 		    struct tod_time *ct));
 static void	mcclock_set __P((struct clock_softc *csc,
@@ -70,7 +80,6 @@ struct mcclockdata {
 	void	(*mc_write) __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 	u_int	(*mc_read) __P((struct clock_softc *csc, u_int reg));
-	void	*mc_addr;
 };
 
 #define	mc146818_write(sc, reg, datum)					\
@@ -78,12 +87,23 @@ struct mcclockdata {
 #define	mc146818_read(sc, reg)						\
 	    (*((struct mcclockdata *)sc->sc_data)->mc_read)(sc, reg)
 
-#if defined(MIPS_PICA_61)
+/* Acer Pica clock access code */
 static void	mc_write_pica __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_pica __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_pica = { mc_write_pica, mc_read_pica };
-#endif
+
+/* Deskstation clock access code */
+static void	mc_write_tyne __P((struct clock_softc *csc, u_int reg,
+		    u_int datum));
+static u_int	mc_read_tyne __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_tyne = { mc_write_tyne, mc_read_tyne };
+
+/* Algorithmics P4032 clock access code */
+static void	mc_write_p4032 __P((struct clock_softc *csc, u_int reg,
+		    u_int datum));
+static u_int	mc_read_p4032 __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_p4032 = { mc_write_p4032, mc_read_p4032 };
 
 void
 mcclock_attach(parent, self, aux)
@@ -93,43 +113,73 @@ mcclock_attach(parent, self, aux)
 {
 	struct clock_softc *csc = (struct clock_softc *)self;
 
-	register volatile struct chiptime *c;
-	struct confargs *ca = aux;
-
 	printf(": mc146818 or compatible");
 
-	csc->sc_init = mcclock_init;
 	csc->sc_get = mcclock_get;
 	csc->sc_set = mcclock_set;
 
         switch (cputype) {
 
-        case MIPS_PICA_61:
-		/* 
-		 * XXX should really allocate a new one and copy, or
-		 * something.  unlikely we'll have more than one...
-		 */
+        case ACER_PICA_61:
+	case MAGNUM:
+		csc->sc_init = mcclock_init_pica;
 		csc->sc_data = &mcclockdata_pica;
-		mcclockdata_pica.mc_addr = BUS_CVTADDR(ca);
+		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+		break;
+
+	case DESKSTATION_RPC44:
+	case DESKSTATION_TYNE:
+		csc->sc_init = mcclock_init_tyne;
+		csc->sc_data = &mcclockdata_tyne;
+		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+		break;
+
+	case ALGOR_P4032:
+		csc->sc_init = mcclock_init_p4032;
+		csc->sc_data = &mcclockdata_p4032;
+		mc146818_write(csc, MC_REGB, MC_REGB_BINARY|MC_REGB_24HR|MC_REGB_SQWE);
 		break;
 
 	default:
 		printf("\n");
 		panic("don't know how to set up for other system types.");
 	}
-
-	/* Turn interrupts off, just in case. */
-	mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 }
 
 static void
-mcclock_init(csc)
+mcclock_init_pica(csc)
 	struct clock_softc *csc;
 {
 /* XXX Does not really belong here but for the moment we don't care */
-	out32(PICA_SYS_IT_VALUE, 9); /* 10ms - 1 */
+	out32(R4030_SYS_IT_VALUE, 9); /* 10ms - 1 */
 	/* Enable periodic clock interrupt */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask);
+	out32(R4030_SYS_EXT_IMASK, cpu_int_mask);
+}
+
+static void
+mcclock_init_tyne(csc)
+	struct clock_softc *csc;
+{
+	isa_outb(IO_TIMER1 + TIMER_MODE,
+	    TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
+	isa_outb(IO_TIMER1 + TIMER_CNTR0, TIMER_DIV(hz) % 256);
+	isa_outb(IO_TIMER1 + TIMER_CNTR0, TIMER_DIV(hz) / 256);
+}
+
+static void
+mcclock_init_p4032(csc)
+	struct clock_softc *csc;
+{
+	int s;
+	char cv;
+
+	hz = 256;	/* NOTE! We are going at 256 Hz! */
+	s = splclock();
+	cv = mc146818_read(csc, MC_REGA) & ~MC_REGA_RSMASK;
+	mc146818_write(csc, MC_REGA, cv | MC_RATE_256_Hz);
+	cv = mc146818_read(csc, MC_REGB);
+	mc146818_write(csc, MC_REGB, cv | MC_REGB_PIE);
+	splx(s);
 }
 
 /*
@@ -155,6 +205,8 @@ mcclock_get(csc, base, ct)
 	ct->day = regs[MC_DOM];
 	ct->mon = regs[MC_MONTH];
 	ct->year = regs[MC_YEAR];
+	if(cputype == ALGOR_P4032)
+		ct->year -= 80;
 }
 
 /*
@@ -170,7 +222,7 @@ mcclock_set(csc, ct)
 
 	s = splclock();
 	MC146818_GETTOD(csc, &regs);
-	splx(s);
+printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
 
 	regs[MC_SEC] = ct->sec;
 	regs[MC_MIN] = ct->min;
@@ -178,22 +230,23 @@ mcclock_set(csc, ct)
 	regs[MC_DOW] = ct->dow;
 	regs[MC_DOM] = ct->day;
 	regs[MC_MONTH] = ct->mon;
-	regs[MC_YEAR] = ct->year;
+	if(cputype == ALGOR_P4032)
+		regs[MC_YEAR] = ct->year + 80;
+	else
+		regs[MC_YEAR] = ct->year;
 
-	s = splclock();
 	MC146818_PUTTOD(csc, &regs);
+	MC146818_GETTOD(csc, &regs);
+printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
 	splx(s);
 }
-
-
-#if defined(ACER_PICA_61)
 
 static void
 mc_write_pica(csc, reg, datum)
 	struct clock_softc *csc;
 	u_int reg, datum;
 {
-	int i,as;
+	int as;
 
 	as = in32(PICA_SYS_ISA_AS) & 0x80;
 	out32(PICA_SYS_ISA_AS, as | reg);
@@ -212,4 +265,45 @@ mc_read_pica(csc, reg)
 	i = inb(PICA_SYS_CLOCK);
 	return(i);
 }
-#endif /*ACER_PICA_61*/
+
+static void
+mc_write_tyne(csc, reg, datum)
+	struct clock_softc *csc;
+	u_int reg, datum;
+{
+	isa_outb(IO_RTC, reg);
+	isa_outb(IO_RTC+1, datum);
+}
+
+static u_int
+mc_read_tyne(csc, reg)
+	struct clock_softc *csc;
+	u_int reg;
+{
+	int i;
+
+	isa_outb(IO_RTC, reg);
+	i = isa_inb(IO_RTC+1);
+	return(i);
+}
+
+static void
+mc_write_p4032(csc, reg, datum)
+	struct clock_softc *csc;
+	u_int reg, datum;
+{
+	outb(P4032_CLOCK, reg);
+	outb(P4032_CLOCK+4, datum);
+}
+
+static u_int
+mc_read_p4032(csc, reg)
+	struct clock_softc *csc;
+	u_int reg;
+{
+	int i;
+
+	outb(P4032_CLOCK, reg);
+	i = inb(P4032_CLOCK+4) & 0xff;
+	return(i);
+}

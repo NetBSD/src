@@ -1,3 +1,4 @@
+/*	$NetBSD: algor.h,v 1.2 2000/01/23 21:01:49 soda Exp $	*/
 /*	$OpenBSD: algor.h,v 1.3 1997/04/19 17:19:36 pefo Exp $ */
 
 /*

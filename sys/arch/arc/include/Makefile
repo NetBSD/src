@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2000/01/23 20:08:45 soda Exp $
+#	$NetBSD: Makefile,v 1.9 2000/01/23 21:01:55 soda Exp $
 
-KDIR=	/sys/arch/pica/include
-INCSDIR= /usr/include/pica
+KDIR=	/sys/arch/arc/include
+INCSDIR= /usr/include/arc
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h bswap.h bsd-aout.h bus.h \
 	cdefs.h cpu.h disklabel.h display.h ecoff_machdep.h \

@@ -1,3 +1,4 @@
+/*	$NetBSD: v962pcbreg.h,v 1.2 2000/01/23 21:02:00 soda Exp $	*/
 /*
  * v96xpbc.h: i960 to PCI bridge controller
  */

@@ -1,4 +1,5 @@
-/*	$NetBSD: ascreg.h,v 1.5 2000/01/23 20:08:07 soda Exp $	*/
+/*	$NetBSD: ascreg.h,v 1.6 2000/01/23 21:01:53 soda Exp $	*/
+/*	$OpenBSD: ascreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,6 +137,9 @@ typedef volatile struct {
 	u_char	asc_cnfg2;	/* rw: Configuration 2 */
 	u_char	asc_cnfg3;	/* rw: Configuration 3 */
 	u_char	asc_res_fifo;	/* w: Reserve FIFO byte */
+#define asc_cnfg4 asc_res_fifo	/* rw: Configuration 4 (53CF94) */
+	u_char	asc_tc_high;	/* w: Transfer Counter High: 24bit (53CF94) */
+#define asc_id asc_tc_high	/* r: ID Register */
 } asc_regmap_t;
 
 /*
@@ -148,9 +152,10 @@ typedef volatile struct {
 
 #define ASC_TC_GET(ptr, val)				\
 	val = (ptr)->asc_tc_lsb | ((ptr)->asc_tc_msb << 8)
-#define ASC_TC_PUT(ptr, val)				\
+#define ASC_TC_PUT(ptr, val, is24bit)			\
 	(ptr)->asc_tc_lsb = (val);			\
 	(ptr)->asc_tc_msb = (val) >> 8;			\
+	if (is24bit) (ptr)->asc_tc_high = 0;		\
 	(ptr)->asc_cmd = ASC_CMD_NOP | ASC_CMD_DMA;
 
 /*
@@ -286,7 +291,7 @@ typedef volatile struct {
  * CCF register
  */
 
-#define	ASC_CCF(clk)		((((clk) - 1) / 5) + 1)
+#define	ASC_CCF(clk)		(((((clk) - 1) / 5) + 1) & 0x7)
 
 /*
  * Test register
@@ -303,6 +308,7 @@ typedef volatile struct {
 
 #define ASC_CNFG2_RFB		0x80
 #define ASC_CNFG2_EPL		0x40
+#define	ASC_CNFG2_FE		0x40	/* 53CF94: Features Enable */
 #define ASC_CNFG2_EBC		0x20
 #define ASC_CNFG2_DREQ_HIZ	0x10
 #define ASC_CNFG2_SCSI2		0x08
@@ -314,9 +320,19 @@ typedef volatile struct {
  * Configuration 3
  */
 
-#define ASC_CNFG3_RESERVED	0xf8
+#define ASC_CNFG3_RESERVED	0xf8	/* 53C94 */
+#define	ASC_CNFG3_IMRC		0x40	/* 53CF94: ID Message Reserved Check */
+#define	ASC_CNFG3_QTE		0x40	/* 53CF94: Queue Tag Enable */
+#define	ASC_CNFG3_CDB10		0x20	/* 53CF94: 10byte Group2 CDB */
+#define	ASC_CNFG3_FSCSI		0x10	/* 53CF94: Fast SCSI */
+#define	ASC_CNFG3_FCLK		0x08	/* 53CF94: Fast CLK (clock > 25MHz) */
 #define ASC_CNFG3_SRB		0x04
 #define ASC_CNFG3_ALT_DMA	0x02
 #define ASC_CNFG3_T8		0x01
+
+/*
+ * chip identifier
+ */
+#define ASC_ID_53CF94		0xa2	/* 53CF94-2 or 53CF96-2 */
 
 #define	ST_MASK	0x3e
