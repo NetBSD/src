@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.28 2002/03/21 03:48:24 uwe Exp $	*/
+/*	$NetBSD: record.c,v 1.29 2002/07/20 07:45:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -261,7 +261,7 @@ main(argc, argv)
 
 	info.mode = AUMODE_RECORD;
 	if (ioctl(audiofd, AUDIO_SETINFO, &info) < 0)
-		err(1, "failed to reset audio info");
+		err(1, "failed to set audio info");
 
 	signal(SIGINT, cleanup);
 	write_header();
