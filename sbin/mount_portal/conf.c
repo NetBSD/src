@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1997/09/16 08:37:11 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1997/09/21 02:35:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.6 1997/09/16 08:37:11 mrg Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7 1997/09/21 02:35:41 enami Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -157,7 +157,7 @@ regerror(s)
 	const char *s;
 {
 	syslog(LOG_ERR, "%s:%d: regcomp %s: %s",
-			conf_file, curp->p_lno, curp->p_key, s);
+	    conf_file, curp->p_lno, curp->p_key, s);
 }
 
 static path *
@@ -226,9 +226,8 @@ palloc(cline, lno)
 		curp = p;			/* XXX */
 		p->p_re = regcomp(p->p_key);
 		curp = 0;			/* XXX */
-	} else {
+	} else
 		p->p_re = 0;
-	}
 	p->p_lno = lno;
 
 	return (p);
@@ -327,10 +326,8 @@ conf_read(q, conf)
 		readfp(q, fp);
 		conf_file = 0;		/* XXX */
 		(void) fclose(fp);
-	} else {
-		syslog(LOG_ERR, "open config file \"%s\": %s", conf,
-		    strerror(errno));
-	}
+	} else
+		syslog(LOG_ERR, "open config file \"%s\": %m", conf);
 }
 
 
