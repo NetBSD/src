@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# $NetBSD: zdiff,v 1.2 2003/12/28 12:43:43 wiz Exp $
+#
 # $OpenBSD: zdiff,v 1.2 2003/07/29 07:42:44 otto Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
