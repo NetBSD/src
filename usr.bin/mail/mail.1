@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mail.1	8.2 (Berkeley) 12/30/93
+.\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd December 30, 1993
+.Dd April 28, 1995
 .Dt MAIL 1
 .Os BSD 4
 .Sh NAME
@@ -78,7 +78,7 @@ special
 character when sending mail is only active in interactive mode.
 .It Fl n
 Inhibits reading
-.Pa /usr/share/misc/Mail.rc
+.Pa /etc/mail.rc
 upon startup.
 .It Fl N
 Inhibits the initial display of message headers
@@ -108,7 +108,7 @@ writes undeleted messages back to this file.
 .It Fl u
 Is equivalent to:
 .Pp
-.Dl mail -f /var/spool/mail/user
+.Dl mail -f /var/mail/user
 .El
 .Ss Sending mail
 To send a message to one or more people,
@@ -446,6 +446,7 @@ argument is given, the previous 18\-message group is printed.
 .It Ic help
 A synonym for
 .Ic \&?
+.ne 1i
 .It Ic hold
 .Pf ( Ic ho ,
 also
@@ -475,6 +476,13 @@ If
 .Ic ignore
 is executed with no arguments, it lists the current set of
 ignored fields.
+.It Ic inc
+Incorporate any new messages that have arrived while mail
+is being read.
+The new messages are added to the end of the message list,
+and the current message is reset to be the first new mail message.
+This does not renumber the existing message list, nor does
+does it cause any changes made so far to be saved.
 .It Ic mail
 .Pq Ic m
 Takes as argument login names and distribution group names and sends
@@ -584,6 +592,7 @@ saving a message by
 .Ic save
 or when automatically saving to
 .Ar mbox  .
+.pl +1
 .It Ic saveretain
 .Ic Saveretain
 is to
@@ -711,6 +720,7 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
+.ne 1i
 .It Ic \&~F Ns Ar messages
 Identical to
 .Ic \&~f ,
@@ -795,18 +805,25 @@ Causes messages saved in
 .Ar mbox
 to be appended to the end rather than prepended.
 This should always be set (perhaps in
-.Pa /usr/share/misc/Mail.rc ) .
+.Pa /etc/mail.rc ) .
 .It Ar ask
 Causes
 .Nm mail
 to prompt you for the subject of each message you send.
 If
 you respond with simply a newline, no subject field will be sent.
+.ne 1i
 .It Ar askcc
 Causes you to be prompted for additional carbon copy recipients at the
 end of each message.
 Responding with a newline indicates your
 satisfaction with the current list.
+.It Ar autoinc
+Causes new mail to be automatically incorporated when it arrives.
+Setting this is similar to issuing the
+.Ic inc
+command at each prompt, except that the current message is not
+reset when new mail arrives.
 .It Ar autoprint
 Causes the
 .Ic delete
@@ -882,6 +899,13 @@ Suppresses the printing of the version when first invoked.
 If this option is set, then a message-list specifier in the form ``/x:y''
 will expand to all messages containing the substring ``y'' in the header
 field ``x''.  The string search is case insensitive.
+If ``x'' is ommitted, it will default to the ``Subject'' header field.
+The form ``/to:y'' is a special case, and will expand
+to all messages containing the substring ``y'' in the ``To'', ``Cc''
+or ``Bcc'' header fields.
+The check for "to" is case sensitive, so that
+``/To:y'' can be used to limit the search for ``y'' to just
+the ``To:'' field.
 .It Ar verbose
 Setting the option
 .Ar verbose
@@ -930,6 +954,7 @@ Pathname of the text editor to use in the
 command and
 .Ic \&~v
 escape.
+.ne 1i
 .It Va crt
 The valued option
 .Va crt
@@ -985,17 +1010,20 @@ and
 environment variables.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/Mail.help* -compact
-.It Pa /var/spool/mail/*
+.It Pa /var/mail/*
 Post office.
 .It ~/mbox
 User's old mail.
 .It ~/.mailrc
 File giving initial mail commands.
+This can be overridden by setting the
+.Ev MAILRC
+environment variable.
 .It Pa /tmp/R*
 Temporary files.
 .It Pa /usr/share/misc/Mail.help*
 Help files.
-.It Pa /usr/share/misc/Mail.rc
+.It Pa /etc/mail.rc
 System initialization file.
 .El
 .Sh SEE ALSO
