@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.6 1995/12/13 18:55:27 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.7 1996/02/01 22:33:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -127,7 +127,7 @@ extern caddr_t *nex_vec;
 
 #define	NEX_CFGFLT	(0xfc000000)
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #if defined(VAX780) || defined(VAX8600)
 #define	NEXFLT_BITS \
 "\20\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT"

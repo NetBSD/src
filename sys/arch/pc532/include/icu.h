@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.6 1996/02/01 00:03:29 phil Exp $	*/
+/*	$NetBSD: icu.h,v 1.7 1996/02/01 22:31:58 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -76,11 +76,11 @@
 #define ICUB(n)	*((unsigned char  *)(ICU_ADR + n))
 #define ICUW(n)	*((unsigned short *)(ICU_ADR + n))
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /* Interrupt trigger modes
  */
 enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 
 /* Hardware interrupt request lines.
  */
@@ -114,7 +114,7 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 #define DP8490		1
 #define ICU_SCSI_BIT	0x80
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * Select a SCSI controller.
  */
@@ -130,5 +130,5 @@ scsi_select_ctlr(int ctlr)
 		ICUB(PDAT) |= ICU_SCSI_BIT;	/* select = 1 for AIC6250 */
 	return(old);
 }
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 #endif /* _NS532_ICU_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.h,v 1.1 1996/01/31 23:21:40 mark Exp $ */
+/* $NetBSD: cpus.h,v 1.2 1996/02/01 22:29:38 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,10 +41,10 @@
  * Created      : 26/12/95
  * Last updated : 26/12/95
  *
- *    $Id: cpus.h,v 1.1 1996/01/31 23:21:40 mark Exp $
+ *    $Id: cpus.h,v 1.2 1996/02/01 22:29:38 mycroft Exp $
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/param.h>
 #endif
 
@@ -85,7 +85,7 @@
 #define FPU_TYPE_ARMLTD_FPE	2	/* ARM Ltd FPE */
 #define FPU_TYPE_FPA11		0x81	/* ID of FPA11 */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 
 /* Define the structure used to describe a cpu */
 
@@ -158,6 +158,6 @@ struct cpu_softc {
 extern cpu_t cpus[MAX_CPUS];
 
 #endif	/* _KERNEL */
-#endif	/* LOCORE */
+#endif	/* _LOCORE */
 
 /* End of hydra.h */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.35 1995/11/17 23:31:14 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.36 1996/02/01 22:33:05 mycroft Exp $
 
 #
 # Makefile for NetBSD
@@ -117,7 +117,7 @@ lint: /tmp param.c
 
 locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
 	  ${SUN3}/include/trap.h $S/arch/m68k/include/trap.h
-	${CPP} -DLOCORE ${COPTS} ${SUN3}/sun3/locore.s | ${AS} -o locore.o
+	${CPP} -D_LOCORE ${COPTS} ${SUN3}/sun3/locore.s | ${AS} -o locore.o
 
 # depends on root or device configuration
 autoconf.o conf.o : Makefile

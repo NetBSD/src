@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.1 1996/01/31 23:22:47 mark Exp $ */
+/* $NetBSD: pte.h,v 1.2 1996/02/01 22:29:42 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pte.h,v 1.1 1996/01/31 23:22:47 mark Exp $
+ *	$Id: pte.h,v 1.2 1996/02/01 22:29:42 mycroft Exp $
  */
 
 #ifndef _ARM32_PTE_H_
@@ -42,7 +42,7 @@
 /*# define PDOFSET	(NBPD-1)*/	/* byte offset into page dir */
 #define NPTEPD		(NBPD / NBPG)
 
-#ifndef LOCORE
+#ifndef _LOCORE
 typedef	int	pd_entry_t;		/* page directory entry */
 typedef	int	pt_entry_t;		/* page table entry */
 #endif

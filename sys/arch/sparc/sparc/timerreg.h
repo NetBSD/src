@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.2 1994/11/20 20:54:41 deraadt Exp $ */
+/*	$NetBSD: timerreg.h,v 1.3 1996/02/01 22:32:57 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@
  *
  * and if we want to divide by N we must set the limit register to N+1.
  */
-#ifndef LOCORE
+#ifndef _LOCORE
 struct timer {
 	int	t_counter;		/* counter reg */
 	int	t_limit;		/* limit reg */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.26 1996/01/07 21:48:35 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.27 1996/02/01 22:30:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@
 #define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
 #define	SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK | SIR_TTYMASK)
 
-#ifndef LOCORE
+#ifndef _LOCORE
 
 volatile int cpl, ipending, astpending;
 int imask[5];
@@ -191,7 +191,7 @@ softintr(mask)
 #define	setsoftnet()	softintr(1 << SIR_NET)
 #define	setsofttty()	softintr(1 << SIR_TTY)
 
-#endif /* !LOCORE */
+#endif /* !_LOCORE */
 #endif /* _KERNEL */
 
 #endif /* !_I386_PSL_H_ */

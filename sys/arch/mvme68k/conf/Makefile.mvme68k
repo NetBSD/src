@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.3 1995/09/19 23:50:22 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.4 1996/02/01 22:31:51 mycroft Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -121,7 +121,7 @@ lint: /tmp param.c
 locore.o: assym.s ${MVME68K}/mvme68k/vectors.s ${MVME68K}/mvme68k/locore.s 
 locore.o: ${MVME68K}/include/trap.h ${MVME68K}/include/psl.h ${MVME68K}/include/pte.h
 locore.o: ${MVME68K}/include/cpu.h
-	${CPP} -DLOCORE ${COPTS} ${MVME68K}/mvme68k/locore.s | ${AS} -o locore.o
+	${CPP} -D_LOCORE ${COPTS} ${MVME68K}/mvme68k/locore.s | ${AS} -o locore.o
 
 # depend on maxusers
 assym.s: Makefile

@@ -1,4 +1,4 @@
-/*	$NetBSD: custom.h,v 1.9 1995/03/28 18:14:32 jtc Exp $	*/
+/*	$NetBSD: custom.h,v 1.10 1996/02/01 22:29:10 mycroft Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #ifndef _AMIGA_CUSTOM_
 #define _AMIGA_CUSTOM_
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct Custom {
     /*** read-only registers ***/
 	unsigned short zz1;
@@ -200,7 +200,7 @@ struct Custom {
 
 /* Custom chips as seen by the kernel */
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 vm_offset_t CUSTOMADDR, CUSTOMbase;
 #define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
 #endif

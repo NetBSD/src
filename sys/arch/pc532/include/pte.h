@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1996/01/26 08:06:40 phil Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1996/02/01 22:32:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 #define	PDOFSET		(NBPD-1)	/* byte offset into page dir */
 #define	NPTEPD		(NBPD / NBPG)
 
-#ifndef LOCORE
+#ifndef _LOCORE
 typedef int	pd_entry_t;		/* page directory entry */
 typedef int	pt_entry_t;		/* Mach page table entry */
 #endif
@@ -87,7 +87,7 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PG_URKW		0x00000004
 #define	PG_UW		0x00000006
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #ifdef _KERNEL
 /* utilities defined in pmap.c */
 extern	pt_entry_t *Sysmap;

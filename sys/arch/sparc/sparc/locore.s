@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#define	LOCORE
+#define	_LOCORE
 #include "assym.s"
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>

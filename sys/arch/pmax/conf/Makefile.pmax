@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.19 1996/01/14 21:06:54 thorpej Exp $
+#	$NetBSD: Makefile.pmax,v 1.20 1996/02/01 22:32:10 mycroft Exp $
 
 #	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
@@ -135,11 +135,11 @@ symbols.sort: ${PMAX}/pmax/symbols.raw
 
 locore.o: ${PMAX}/pmax/locore.S ${PMAX}/include/machAsmDefs.h \
 	${PMAX}/include/machConst.h ${PMAX}/include/reg.h assym.h
-	${CC} -c ${COPTS} ${PARAM} -DLOCORE ${PMAX}/pmax/locore.S
+	${CC} -c ${COPTS} ${PARAM} -D_LOCORE ${PMAX}/pmax/locore.S
 
 fp.o: ${PMAX}/pmax/fp.S ${PMAX}/include/machAsmDefs.h \
 	${PMAX}/include/machConst.h ${PMAX}/include/reg.h assym.h
-	${CC} -c ${COPTS} ${PARAM} -DLOCORE ${PMAX}/pmax/fp.S
+	${CC} -c ${COPTS} ${PARAM} -D_LOCORE ${PMAX}/pmax/fp.S
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile
