@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.64 2004/11/10 04:11:34 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.65 2004/11/10 12:57:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.64 2004/11/10 04:11:34 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.65 2004/11/10 12:57:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -150,26 +150,6 @@ static 	mutex_t			_pwmutex = MUTEX_INITIALIZER;
 #endif
 
 const char __yp_token[] = "__YP!";	/* Let pwd_mkdb pull this in. */
-
-static const ns_src defaultcompat[] = {
-	{ NSSRC_COMPAT,	NS_SUCCESS },
-	{ 0 }
-};
-
-static const ns_src defaultcompat_forceall[] = {
-	{ NSSRC_COMPAT,	NS_SUCCESS | NS_FORCEALL },
-	{ 0 }
-};
-
-static const ns_src defaultnis[] = {
-	{ NSSRC_NIS,	NS_SUCCESS },
-	{ 0 }
-};
-
-static const ns_src defaultnis_forceall[] = {
-	{ NSSRC_NIS,	NS_SUCCESS | NS_FORCEALL },
-	{ 0 }
-};
 
 
 /*
@@ -1638,7 +1618,7 @@ _passwdcompat_setpassent(int stayopen)
 	int	rv, result;
 
 	rv = nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "setpassent",
-	    defaultnis_forceall, &result, stayopen);
+	    __nsdefaultnis_forceall, &result, stayopen);
 	return rv;
 }
 
@@ -1658,7 +1638,7 @@ _passwdcompat_endpwent(void)
 	};
 
 	return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "endpwent",
-	    defaultnis_forceall);
+	    __nsdefaultnis_forceall);
 }
 
 /*
@@ -1701,7 +1681,7 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 	case _PW_KEYBYNUM:
 /* XXXREENTRANT: implement & use getpwent_r */
 		rv = nsdispatch(NULL, compatentdtab,
-		    NSDB_PASSWD_COMPAT, "getpwent", defaultnis,
+		    NSDB_PASSWD_COMPAT, "getpwent", __nsdefaultnis,
 		    &cpw);
 		if (rv == NS_SUCCESS &&
 		    ! _pw_copy(cpw, pw, buffer, buflen, NULL, 0)) {
@@ -1712,12 +1692,12 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 	case _PW_KEYBYNAME:
 		_DIAGASSERT(name != NULL);
 		rv = nsdispatch(NULL, compatnamdtab,
-		    NSDB_PASSWD_COMPAT, "getpwnam_r", defaultnis,
+		    NSDB_PASSWD_COMPAT, "getpwnam_r", __nsdefaultnis,
 		    &crv, name, pw, buffer, buflen, &cpw);
 		break;
 	case _PW_KEYBYUID:
 		rv = nsdispatch(NULL, compatuiddtab,
-		    NSDB_PASSWD_COMPAT, "getpwuid_r", defaultnis,
+		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
 		    &crv, uid, pw, buffer, buflen, &cpw);
 		break;
 	default:
@@ -2164,7 +2144,7 @@ getpwent(void)
 	};
 
 	mutex_lock(&_pwmutex);
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent", defaultcompat,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent", __nsdefaultcompat,
 	    &retval);
 	mutex_unlock(&_pwmutex);
 	return (r == NS_SUCCESS) ? retval : NULL;
@@ -2185,7 +2165,7 @@ getpwnam(const char *name)
 	};
 
 	mutex_lock(&_pwmutex);
-	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam", defaultcompat,
+	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam", __nsdefaultcompat,
 	    &retval, name);
 	mutex_unlock(&_pwmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
@@ -2213,7 +2193,7 @@ getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t buflen,
 	*result = NULL;
 	retval = 0;
 	mutex_lock(&_pwmutex);
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam_r", defaultcompat,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam_r", __nsdefaultcompat,
 	    &retval, name, pwd, buffer, buflen, result);
 	mutex_unlock(&_pwmutex);
 	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
@@ -2234,7 +2214,7 @@ getpwuid(uid_t uid)
 	};
 
 	mutex_lock(&_pwmutex);
-	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", defaultcompat,
+	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultcompat,
 	    &retval, uid);
 	mutex_unlock(&_pwmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
@@ -2261,7 +2241,7 @@ getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t buflen,
 	*result = NULL;
 	retval = 0;
 	mutex_lock(&_pwmutex);
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", defaultcompat,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
 	    &retval, uid, pwd, buffer, buflen, result);
 	mutex_unlock(&_pwmutex);
 	return (r == NS_SUCCESS) ? 0 : retval ? retval : ENOENT;
@@ -2281,7 +2261,7 @@ endpwent(void)
 	mutex_lock(&_pwmutex);
 					/* force all endpwent() methods */
 	(void) nsdispatch(NULL, dtab, NSDB_PASSWD, "endpwent",
-	    defaultcompat_forceall);
+	    __nsdefaultcompat_forceall);
 	mutex_unlock(&_pwmutex);
 }
 
@@ -2301,7 +2281,7 @@ setpassent(int stayopen)
 	mutex_lock(&_pwmutex);
 					/* force all setpassent() methods */
 	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "setpassent",
-	    defaultcompat_forceall, &retval, stayopen);
+	    __nsdefaultcompat_forceall, &retval, stayopen);
 	mutex_unlock(&_pwmutex);
 	return (rv == NS_SUCCESS) ? retval : 0;
 }
@@ -2320,6 +2300,6 @@ setpwent(void)
 	mutex_lock(&_pwmutex);
 					/* force all setpwent() methods */
 	(void) nsdispatch(NULL, dtab, NSDB_PASSWD, "setpwent",
-	    defaultcompat_forceall);
+	    __nsdefaultcompat_forceall);
 	mutex_unlock(&_pwmutex);
 }
