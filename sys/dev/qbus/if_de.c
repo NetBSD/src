@@ -1,5 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.1 2000/04/30 11:43:26 ragge Exp $	*/
-
+/*	$NetBSD: if_de.c,v 1.2 2000/05/28 17:23:44 ragge Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -43,7 +42,7 @@
  *	Lou Salkind
  *	New York University
  *
- *	Rewritten by Ragge 000430 to match new world.
+ *	Rewritten by Ragge 30 April 2000 to match new world.
  *
  * TODO:
  *	timeout routine (get statistics)
@@ -51,7 +50,7 @@
 
 #include "opt_inet.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,15 +72,9 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-extern char all_es_snpa[], all_is_snpa[];
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #include <machine/bus.h>
@@ -96,8 +89,7 @@ extern char all_es_snpa[], all_is_snpa[];
  * registers, and there is only 496 on one unibus...
  */
 #define NRCV	10	/* number of receive buffers (must be > 1) */
-#define NXMT	20	/* number of transmit buffers */
-#define NFRAGS	8	/* Number of frags per transmit buffer */
+#define NXMT	10	/* number of transmit buffers */
 
 /*
  * Structure containing the elements that must be in DMA-safe memory.
@@ -108,6 +100,7 @@ struct	de_cdata {
 	struct	de_ring dc_xrent[NXMT]; /* transmit ring entrys */
 	struct	de_ring dc_rrent[NRCV]; /* receive ring entrys */
 	struct	de_udbbuf dc_udbbuf;	/* UNIBUS data buffer */
+	char	dc_xbuf[NXMT][ETHER_MAX_LEN];
 	/* end mapped area */
 };
 
@@ -127,36 +120,38 @@ struct	de_softc {
 	struct	device sc_dev;		/* Configuration common part */
 	struct	ethercom sc_ec;		/* Ethernet common part */
 #define sc_if	sc_ec.ec_if		/* network-visible interface */
-	int	sc_flags;
-#define DSF_RUNNING	2		/* board is enabled */
-#define DSF_SETADDR	4		/* physical address is changed */
 	bus_space_tag_t sc_iot;
 	bus_addr_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_cmap;
 	struct de_cdata *sc_dedata;	/* Control structure */
 	struct de_cdata *sc_pdedata;	/* Bus-mapped control structure */
-	bus_dmamap_t sc_xmtmap[NXMT];	/* unibus receive maps */
-	bus_dmamap_t sc_rcvmap[NRCV];	/* unibus xmt maps */
+#ifdef notdef
+	bus_dmamap_t sc_xmtmap[NXMT];	/* unibus xmit maps */
 	struct mbuf *sc_txmbuf[NXMT];
+#endif
+	bus_dmamap_t sc_rcvmap[NRCV];	/* unibus receive maps */
 	struct mbuf *sc_rxmbuf[NRCV];
-	int sc_nexttx;
-	int sc_nextrx;
-	int sc_inq;
-	int sc_lastack;
+	int sc_nexttx;			/* next tx descriptor to put data on */
+	int sc_nextrx;			/* next rx descriptor for recv */
+	int sc_inq;			/* # if xmit packets in queue */
+	int sc_lastack;			/* Last handled rx descriptor */
+	void *sc_sh;			/* shutdownhook cookie */
 };
 
 static	int dematch(struct device *, struct cfdata *, void *);
 static	void deattach(struct device *, struct device *, void *);
-static	int dewait(struct de_softc *, char *);
+static	void dewait(struct de_softc *, char *);
 static	void deinit(struct de_softc *);
 static	int deioctl(struct ifnet *, u_long, caddr_t);
 static	void dereset(struct device *);
 static	void destart(struct ifnet *);
 static	void derecv(struct de_softc *);
 static	void dexmit(struct de_softc *);
-static	void de_setaddr(u_char *, struct de_softc *);
 static	void deintr(void *);
 static	int de_add_rxbuf(struct de_softc *, int);
+static	void desetup(struct de_softc *sc);
+static	void deshutdown(void *);
 
 struct	cfattach de_ca = {
 	sizeof(struct de_softc), dematch, deattach
@@ -185,8 +180,8 @@ deattach(struct device *parent, struct device *self, void *aux)
 	struct de_softc *sc = (struct de_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	bus_dma_segment_t seg;
 	int csr1, rseg, error, i;
+	bus_dma_segment_t seg;
 	char *c;
 
 	sc->sc_iot = ua->ua_iot;
@@ -213,7 +208,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	DE_WCSR(DE_PCSR0, 0);		/* reset INTE */
 	DELAY(100);
 	DE_WCSR(DE_PCSR0, PCSR0_RSET);
-	(void)dewait(sc, "reset");
+	dewait(sc, "reset");
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct de_cdata), NBPG, 0, &seg, 1, &rseg,
@@ -229,13 +224,33 @@ deattach(struct device *parent, struct device *self, void *aux)
 		goto fail_1;
 	}
 
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct de_cdata),
+	    1, sizeof(struct de_cdata), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_cmap)) != 0) {
+		printf(": unable to create control data DMA map, error = %d\n",
+		    error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
+	    sc->sc_dedata, sizeof(struct de_cdata), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to load control data DMA map, error = %d\n",
+		    error);
+		goto fail_3;
+	}
+
+	bzero(sc->sc_dedata, sizeof(struct de_cdata));
+	sc->sc_pdedata = (struct de_cdata *)sc->sc_cmap->dm_segs[0].ds_addr;
+
+#ifdef notdef
 	/*
 	 * Create the transmit descriptor DMA maps.
 	 *
 	 * XXX - should allocate transmit map pages when needed, not here.
 	 */
 	for (i = 0; i < NXMT; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, NFRAGS,
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_xmtmap[i]))) {
 			printf(": unable to create tx DMA map %d, error = %d\n",
@@ -243,13 +258,14 @@ deattach(struct device *parent, struct device *self, void *aux)
 			goto fail_4;
 		}
 	}
+#endif
 
 	/*
 	 * Create receive buffer DMA maps.
 	 */
 	for (i = 0; i < NRCV; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_rcvmap[i]))) {
 			printf(": unable to create rx DMA map %d, error = %d\n",
 			    i, error);
@@ -268,23 +284,20 @@ deattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	bzero(sc->sc_dedata, sizeof(struct de_cdata));
-	sc->sc_pdedata = (struct de_cdata *)seg.ds_addr;
-
 	/*
 	 * Tell the DEUNA about our PCB
 	 */
 	DE_WCSR(DE_PCSR2, LOWORD(sc->sc_pdedata));
 	DE_WCSR(DE_PCSR3, HIWORD(sc->sc_pdedata));
 	DE_WLOW(CMD_GETPCBB);
-	(void)dewait(sc, "pcbb");
+	dewait(sc, "pcbb");
 
 	sc->sc_dedata->dc_pcbb.pcbb0 = FC_RDPHYAD;
 	DE_WLOW(CMD_GETCMD);
-	(void)dewait(sc, "read addr ");
+	dewait(sc, "read addr ");
 
 	bcopy((caddr_t)&sc->sc_dedata->dc_pcbb.pcbb2, myaddr, sizeof (myaddr));
-	printf("%s: %s, hardware address %s\n", c, sc->sc_dev.dv_xname,
+	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname, c,
 		ether_sprintf(myaddr));
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc);
@@ -300,6 +313,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+	sc->sc_sh = shutdownhook_establish(deshutdown, sc);
 	return;
 
 	/*
@@ -309,20 +323,26 @@ deattach(struct device *parent, struct device *self, void *aux)
 fail_6:
 	for (i = 0; i < NRCV; i++) {
 		if (sc->sc_rxmbuf[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
 			m_freem(sc->sc_rxmbuf[i]);
 		}
 	}
 fail_5:
 	for (i = 0; i < NRCV; i++) {
-		if (sc->sc_xmtmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
-	}
-fail_4: 
-	for (i = 0; i < NXMT; i++) {
 		if (sc->sc_rcvmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
+#ifdef notdef
+fail_4: 
+	for (i = 0; i < NXMT; i++) {
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmap);
+#endif
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
+fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dedata,
 	    sizeof(struct de_cdata));
 fail_1:
@@ -340,9 +360,8 @@ dereset(struct device *dev)
 	struct de_softc *sc = (void *)dev;
 
 	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	sc->sc_flags &= ~DSF_RUNNING;
 	DE_WCSR(DE_PCSR0, PCSR0_RSET);
-	(void)dewait(sc, "reset");
+	dewait(sc, "reset");
 	deinit(sc);
 }
 
@@ -353,10 +372,10 @@ dereset(struct device *dev)
 void
 deinit(struct de_softc *sc)
 {
-	struct de_cdata *dc;
+	struct de_cdata *dc, *pdc;
 	int s, i;
 
-	if (sc->sc_flags & DSF_RUNNING)
+	if (sc->sc_if.if_flags & IFF_RUNNING)
 		return;
 	/*
 	 * Tell the DEUNA about our PCB
@@ -366,42 +385,36 @@ deinit(struct de_softc *sc)
 	DE_WLOW(0);		/* reset INTE */
 	DELAY(500);
 	DE_WLOW(CMD_GETPCBB);
-	(void)dewait(sc, "pcbb");
+	dewait(sc, "pcbb");
 
 	dc = sc->sc_dedata;
+	pdc = sc->sc_pdedata;
 	/* set the transmit and receive ring header addresses */
 	dc->dc_pcbb.pcbb0 = FC_WTRING;
-	dc->dc_pcbb.pcbb2 = LOWORD(&sc->sc_pdedata->dc_udbbuf);
-	dc->dc_pcbb.pcbb2 = HIWORD(&sc->sc_pdedata->dc_udbbuf);
+	dc->dc_pcbb.pcbb2 = LOWORD(&pdc->dc_udbbuf);
+	dc->dc_pcbb.pcbb4 = HIWORD(&pdc->dc_udbbuf);
 
-	dc->dc_udbbuf.b_tdrbl = LOWORD(&sc->sc_pdedata->dc_xrent[0]);
-	dc->dc_udbbuf.b_tdrbh = HIWORD(&sc->sc_pdedata->dc_xrent[0]);
+	dc->dc_udbbuf.b_tdrbl = LOWORD(&pdc->dc_xrent[0]);
+	dc->dc_udbbuf.b_tdrbh = HIWORD(&pdc->dc_xrent[0]);
 	dc->dc_udbbuf.b_telen = sizeof (struct de_ring) / sizeof(u_int16_t);
 	dc->dc_udbbuf.b_trlen = NXMT;
-	dc->dc_udbbuf.b_rdrbl = LOWORD(&sc->sc_pdedata->dc_rrent[0]);
-	dc->dc_udbbuf.b_rdrbh = HIWORD(&sc->sc_pdedata->dc_rrent[0]);
+	dc->dc_udbbuf.b_rdrbl = LOWORD(&pdc->dc_rrent[0]);
+	dc->dc_udbbuf.b_rdrbh = HIWORD(&pdc->dc_rrent[0]);
 	dc->dc_udbbuf.b_relen = sizeof (struct de_ring) / sizeof(u_int16_t);
 	dc->dc_udbbuf.b_rrlen = NRCV;
 
 	DE_WLOW(CMD_GETCMD);
-	(void)dewait(sc, "wtring");
+	dewait(sc, "wtring");
 
-	/* initialize the mode - enable hardware padding */
-	dc->dc_pcbb.pcbb0 = FC_WTMODE;
-	/* let hardware do padding - set MTCH bit on broadcast */
-	dc->dc_pcbb.pcbb2 = MOD_TPAD|MOD_HDX;
-	DE_WLOW(CMD_GETCMD);
-	(void)dewait(sc, "wtmode");
+	desetup(sc);
 
-	/* set up the receive and transmit ring entries */
+	/* Link the transmit buffers to the descriptors */
 	for (i = 0; i < NXMT; i++) {
-		if (sc->sc_txmbuf[i]) {
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
-			m_freem(sc->sc_txmbuf[i]);
-			sc->sc_txmbuf[i] = 0;
-		}
 		dc->dc_xrent[i].r_flags = 0;
+		dc->dc_xrent[i].r_segbl = LOWORD(&pdc->dc_xbuf[i][0]);
+		dc->dc_xrent[i].r_segbh = HIWORD(&pdc->dc_xbuf[i][0]);
 	}
+
 	for (i = 0; i < NRCV; i++)
 		dc->dc_rrent[i].r_flags = RFLG_OWN;
 	sc->sc_nexttx = sc->sc_inq = sc->sc_lastack = sc->sc_nextrx = 0;
@@ -409,12 +422,12 @@ deinit(struct de_softc *sc)
 	/* start up the board (rah rah) */
 	s = splnet();
 	sc->sc_if.if_flags |= IFF_RUNNING;
-	DE_WLOW(PCSR0_INTE);
-	destart(&sc->sc_if);		/* queue output packets */
-	sc->sc_flags |= DSF_RUNNING;		/* need before de_setaddr */
-	if (sc->sc_flags & DSF_SETADDR)
-		de_setaddr(LLADDR(sc->sc_if.if_sadl), sc);
+	DE_WLOW(PCSR0_INTE);		/* Change to interrupts */
+	DELAY(500);
 	DE_WLOW(CMD_START|PCSR0_INTE);
+	dewait(sc, "start");
+	DE_WLOW(CMD_PDMD|PCSR0_INTE);
+	dewait(sc, "initpoll");
 	splx(s);
 }
 
@@ -428,78 +441,54 @@ void
 destart(struct ifnet *ifp)
 {
 	struct de_softc *sc = ifp->if_softc;
-	bus_dmamap_t map;
-	struct de_ring *rp = 0;
-	struct mbuf *m, *m0;
-	int idx, i, err, seg, s;
+	struct de_cdata *dc;
+	struct mbuf *m;
+	int idx, s, running;
 
 	/*
 	 * the following test is necessary, since
 	 * the code is not reentrant and we have
 	 * multiple transmission buffers.
 	 */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE) /* Too much to do already */
 		return;
+
+	if (ifp->if_snd.ifq_head == 0)	 /* Nothing to do at all */
+		return;
+
 	s = splimp();
+	dc = sc->sc_dedata;
+	running = (sc->sc_inq != 0);
 	while (sc->sc_inq < (NXMT - 1)) {
+
 		idx = sc->sc_nexttx;
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			goto out;
-		/*
-		 * Count number of mbufs in chain.
-		 * Always do DMA directly from mbufs.
-		 */
-		for (m0 = m, i = 0; m0; m0 = m0->m_next)
-			if (m0->m_len)
-				i++;
-		if (i >= NFRAGS) { /* XXX pullup */
-			panic("destart");
-		}
 
-		if ((i + sc->sc_inq) >= (NXMT - 1)) {
-			IF_PREPEND(&sc->sc_if.if_snd, m);
-			ifp->if_flags |= IFF_OACTIVE;
-			goto out;
-		}
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/*
-		 * m now points to a mbuf chain that can be loaded.
-		 * Loop around and set it.
-		 */
-		err = bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_xmtmap[idx],
-		    m, BUS_DMA_NOWAIT);
-		if (err) /* Can't fail here */
-			panic("destart: load_mbuf failed, err %d", err);
+		m_copydata(m, 0, m->m_pkthdr.len, &dc->dc_xbuf[idx][0]);
+		dc->dc_xrent[idx].r_slen = m->m_pkthdr.len;
+		dc->dc_xrent[idx].r_tdrerr = 0;
+		dc->dc_xrent[idx].r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
+		m_freem(m);
 
-		sc->sc_txmbuf[idx] = m;
-		map = sc->sc_xmtmap[idx];
-		for (seg = 0; seg < map->dm_nsegs; seg++) {
-			rp = &sc->sc_dedata->dc_xrent[idx];
-
-			rp->r_flags = seg == 0 ? XFLG_STP : 0;
-			rp->r_slen = map->dm_segs[seg].ds_len;
-			rp->r_segbl = LOWORD(map->dm_segs[seg].ds_addr);
-			rp->r_segbh = HIWORD(map->dm_segs[seg].ds_addr);
-			
-			if (++idx == NXMT)
-				idx = 0;
-			sc->sc_inq++;
-		}
-		rp->r_flags |= XFLG_ENP|XFLG_OWN;
-		sc->sc_nexttx = idx;
+		sc->sc_inq++;
+		if (++sc->sc_nexttx == NXMT)
+			sc->sc_nexttx = 0;
+		ifp->if_timer = 5; /* If transmit logic dies */
 	}
 	if (sc->sc_inq == (NXMT - 1))
 		ifp->if_flags |= IFF_OACTIVE;
 
-out:	if (sc->sc_inq)
-		ifp->if_timer = 5; /* If transmit logic dies */
-
-	if (sc->sc_flags & DSF_RUNNING)
+out:	if (running == 0) {
 		DE_WLOW(PCSR0_INTE|CMD_PDMD);
+		dewait(sc, "poll");
+	}
+
 	splx(s);
 }
 
@@ -510,10 +499,11 @@ void
 deintr(void *arg)
 {
 	struct de_softc *sc = arg;
-	short csr0;
+	short csr0, csr1;
 
 	/* save flags right away - clear out interrupt bits */
 	csr0 = DE_RCSR(DE_PCSR0);
+	csr1 = DE_RCSR(DE_PCSR1);
 	DE_WHIGH(csr0 >> 8);
 
 	if (csr0 & PCSR0_RXI)
@@ -522,9 +512,22 @@ deintr(void *arg)
 	if (csr0 & PCSR0_TXI)
 		dexmit(sc);
 
-#ifdef notyet
-	Handle error interrupts
-#endif
+	/* Should never end up here */
+	if (csr0 & PCSR0_PCEI) {
+		printf("%s: Port command error interrupt\n",
+		    sc->sc_dev.dv_xname);
+	}
+
+	if (csr0 & PCSR0_SERI) {
+		printf("%s: Status error interrupt\n", sc->sc_dev.dv_xname);
+	}
+
+	if (csr0 & PCSR0_RCBI) {
+		printf("%s: Receive buffer unavail interrupt\n", 
+		    sc->sc_dev.dv_xname);
+		DE_WLOW(PCSR0_INTE|CMD_PDMD);
+		dewait(sc, "repoll");
+	}
 	destart(&sc->sc_if);
 }
 
@@ -533,23 +536,20 @@ dexmit(struct de_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct de_ring *rp;
-	int midx;
 
 	/*
 	 * Poll transmit ring and check status.
 	 * Then free buffer space and check for
 	 * more transmit requests.
 	 */
-	midx = -1;
 	rp = &sc->sc_dedata->dc_xrent[sc->sc_lastack];
 	while ((rp->r_flags & XFLG_OWN) == 0) {
-		if (sc->sc_txmbuf[sc->sc_lastack])
-			midx = sc->sc_lastack;
-		if (rp->r_flags & XFLG_ENP) {
-			if (midx >= 0)
-				m_freem(sc->sc_txmbuf[midx]);
+		int idx = sc->sc_lastack;
+
+		if (idx == sc->sc_nexttx)
+			break;
+		if (rp->r_flags & XFLG_ENP)
 			ifp->if_opackets++;
-		}
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
 			if (rp->r_flags & XFLG_ERRS) {
 				ifp->if_oerrors++;
@@ -586,7 +586,6 @@ void
 derecv(struct de_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct de_ring *rp;
 	struct mbuf *m;
 	int len;
@@ -594,27 +593,29 @@ derecv(struct de_softc *sc)
 	rp = &sc->sc_dedata->dc_rrent[sc->sc_nextrx];
 	while ((rp->r_flags & RFLG_OWN) == 0) {
 		ifp->if_ipackets++;
-		len = (rp->r_lenerr&RERR_MLEN) - 4; /* don't forget checksum! */
 		/* check for errors */
 		if ((rp->r_flags & (RFLG_ERRS|RFLG_FRAM|RFLG_OFLO|RFLG_CRC)) ||
 		    (rp->r_flags&(RFLG_STP|RFLG_ENP)) != (RFLG_STP|RFLG_ENP) ||
-		    (rp->r_lenerr & (RERR_BUFL|RERR_UBTO|RERR_NCHN)) ||
-		    len < ETHERMIN || len > ETHERMTU) {
+		    (rp->r_lenerr & (RERR_BUFL|RERR_UBTO))) {
 			ifp->if_ierrors++;
 			goto next;
 		}
 		m = sc->sc_rxmbuf[sc->sc_nextrx];
+		len = (rp->r_lenerr&RERR_MLEN) - ETHER_CRC_LEN;
 		de_add_rxbuf(sc, sc->sc_nextrx);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
-		eh = mtod(m, struct ether_header *);
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
+			struct ether_header *eh;
+
+			eh = mtod(m, struct ether_header *);
 			bpf_mtap(ifp->if_bpf, m);
 			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0 &&
-			    ((eh->ether_dhost[0] & 1) == 0)) {
+			    (ETHER_IS_MULTICAST(eh->ether_dhost) == 0)) {
 				m_freem(m);
 				goto next;
 			}
@@ -693,6 +694,7 @@ int
 deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct de_softc *sc = ifp->if_softc;
 	int s = splnet(), error = 0;
 
@@ -700,41 +702,59 @@ deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		deinit(sc);
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+			deinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-			
-			if (ns_nullhost(*ina))
-				ina->x_host = 
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				de_setaddr(ina->x_host.c_host, ds);
-			break;
-		    }
 #endif
 		}
 		break;
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    sc->sc_flags & DSF_RUNNING) {
-			DE_WLOW(0);
-			DELAY(5000);
-			DE_WLOW(PCSR0_RSET);
-			sc->sc_flags &= ~DSF_RUNNING;
-			ifp->if_flags &= ~IFF_OACTIVE;
-		} else if (ifp->if_flags & IFF_UP &&
-		    (sc->sc_flags & DSF_RUNNING) == 0)
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
+			/*
+			 * If interface is marked down and it is running,
+			 * stop it.
+			 */
+			ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+			DE_WCSR(DE_PCSR0, PCSR0_RSET);
+			dewait(sc, "down");
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			/*
+			 * If interface it marked up and it is stopped, then
+			 * start it.
+			 */
 			deinit(sc);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Send a new setup packet to match any new changes.
+			 * (Like IFF_PROMISC etc)
+			 */
+			desetup(sc);
+		}
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/*
+		 * Update our multicast list.
+		 */
+		error = (cmd == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->sc_ec):
+			ether_delmulti(ifr, &sc->sc_ec);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			desetup(sc);
+			error = 0;
+		}
 		break;
 
 	default:
@@ -745,33 +765,15 @@ deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 /*
- * set ethernet address for unit
- */
-void
-de_setaddr(u_char *physaddr, struct de_softc *sc)
-{
-
-	if (! (sc->sc_flags & DSF_RUNNING))
-		return;
-		
-	bcopy((caddr_t) physaddr, (caddr_t) &sc->sc_dedata->dc_pcbb.pcbb2, 6);
-	sc->sc_dedata->dc_pcbb.pcbb0 = FC_WTPHYAD;
-	DE_WLOW(PCSR0_INTE|CMD_GETCMD);
-	if (dewait(sc, "address change") == 0) {
-		sc->sc_flags |= DSF_SETADDR;
-		bcopy((caddr_t) physaddr, LLADDR(sc->sc_if.if_sadl), 6);
-	}
-}
-
-/*
  * Await completion of the named function
  * and check for errors.
  */
-int
+void
 dewait(struct de_softc *sc, char *fn)
 {
-	int csr0;
+	int csr0, s;
 
+	s = splimp();
 	while ((DE_RCSR(DE_PCSR0) & PCSR0_INTR) == 0)
 		;
 	csr0 = DE_RCSR(DE_PCSR0);
@@ -784,7 +786,35 @@ dewait(struct de_softc *sc, char *fn)
 		printf("csr1=%s\n", bitmask_snprintf(DE_RCSR(DE_PCSR1),
 		    PCSR1_BITS, bits, sizeof(bits)));
 	}
-	return (csr0 & PCSR0_PCEI);
+	splx(s);
+}
+
+/*
+ * Changes multicast filter list/promiscous modes etc...
+ */
+void
+desetup(struct de_softc *sc)
+{
+	short mode, intr;
+
+	/*
+	 * XXX - so far use ALLMULTI to receive multicast packets.
+	 */
+	sc->sc_if.if_flags &= ~IFF_ALLMULTI;
+	if (sc->sc_ec.ec_multiaddrs.lh_first)
+		sc->sc_if.if_flags |= IFF_ALLMULTI;
+
+	mode = MOD_TPAD|MOD_HDX|MOD_DRDC;
+	if (sc->sc_if.if_flags & IFF_PROMISC)
+		mode |= MOD_PROM;
+	else if (sc->sc_if.if_flags & IFF_ALLMULTI)
+		mode |= MOD_ENAL;
+
+	sc->sc_dedata->dc_pcbb.pcbb0 = FC_WTMODE;
+	sc->sc_dedata->dc_pcbb.pcbb2 = mode;
+	intr = DE_RCSR(DE_PCSR0) & PCSR0_INTE;
+	DE_WLOW(CMD_GETCMD | intr);
+	dewait(sc, "wtmode");
 }
 
 int
@@ -826,3 +856,13 @@ dematch(struct device *parent, struct cfdata *cf, void *aux)
 
 	return 1;
 }
+
+void
+deshutdown(void *arg)
+{
+	struct de_softc *sc = arg;
+
+	DE_WCSR(DE_PCSR0, PCSR0_RSET);
+	dewait(sc, "shutdown");
+}
+
