@@ -1,20 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/05/18 00:13:27 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:46:01 thorpej Exp $
 #
 #	etc.sun2/Makefile.inc -- sun2-specific etc Makefile targets
 #
 
 BIN3+= etc.sun2/ttyaction
 
-# These are put in ${RELEASEDIR} by "make release" in distrib/sun2
-# after it builds and patches in the installation ramdisk image.
-BUILD_KERNELS= \
- RAMDISK 
+KERNEL_SETS=		GENERIC FOURMEG DISKLESS
 
-# These are just built and copied to the release area.
-EXTRA_KERNELS= \
- INSTALL \
- FOURMEG \
- DISKLESS 
+EXTRA_KERNELS=		INSTALL
+
+BUILD_KERNELS=		RAMDISK
 
 snap_md_post:
 # Build the ramdisk image and patch it into the ramdisk kernels.

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/10/15 16:22:53 uch Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:58 thorpej Exp $
 
-BUILD_KERNELS+= 	RAMDISK
+KERNEL_SETS=		GENERIC
+
+BUILD_KERNELS=	 	RAMDISK
 
 snap_md_post:
 .ifndef UPDATE

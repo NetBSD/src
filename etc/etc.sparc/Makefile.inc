@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.22 2001/03/04 10:14:55 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2001/11/29 22:46:00 thorpej Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
 
 TOP= $(.CURDIR)/..
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+= GENERIC_SCSI3 GENERIC_SUN4U
-BUILD_KERNELS+= INSTALL
+KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U
+
+BUILD_KERNELS=		INSTALL
 
 # Add sparc installation directories
 MD_INSTALLATION_DIRS= \
