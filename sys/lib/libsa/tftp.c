@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.3 1999/02/26 22:46:32 christos Exp $	 */
+/*	$NetBSD: tftp.c,v 1.4 1999/02/28 00:57:07 kim Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -92,7 +92,7 @@ static int tftperrors[8] = {
 	EINVAL			/* ??? */
 };
 
-static ssize_t recvtftp __P((struct iodesc *, void *, ssize_t, time_t));
+static ssize_t recvtftp __P((struct iodesc *, void *, size_t, time_t));
 static int tftp_makereq __P((struct tftp_handle *));
 static int tftp_getnextblock __P((struct tftp_handle *));
 #ifndef TFTP_NOTERMINATE
@@ -103,7 +103,7 @@ static ssize_t
 recvtftp(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void  *pkt;
-	register ssize_t len;
+	register size_t len;
 	time_t          tleft;
 {
 	struct tftphdr *t;
@@ -276,7 +276,7 @@ tftp_open(path, f)
 	tftpfile->off = 0;
 	tftpfile->path = path;	/* XXXXXXX we hope it's static */
 
-	res = tftp_makereq(tftpfile, path);
+	res = tftp_makereq(tftpfile);
 
 	if (res) {
 		free(tftpfile, sizeof(*tftpfile));
