@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.66 2003/09/22 13:00:03 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.67 2003/09/22 20:49:39 cl Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.66 2003/09/22 13:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.67 2003/09/22 20:49:39 cl Exp $");
 
 #include "tun.h"
 
@@ -874,8 +874,8 @@ tunstart(ifp)
 			wakeup((caddr_t)tp);
 		}
 		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-			fownsignal(tp->tun_pgid, POLL_OUT, POLLOUT|POLLWRNORM,
-				NULL);
+			fownsignal(tp->tun_pgid, SIGIO, POLL_OUT,
+				POLLOUT|POLLWRNORM, NULL);
 	
 		selwakeup(&tp->tun_rsel);
 	}
