@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.68.2.3 2003/01/12 12:35:41 tron Exp $
+#	$NetBSD: termcap.src,v 1.68.2.4 2003/01/26 10:00:21 jmc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -433,7 +433,7 @@ pcansi-33-m|pcansi33m|ibm-pc terminal programs with 33 lines (mono mode):\
 pcansi-43-m|ansi43m|ibm-pc terminal programs with 43 lines (mono mode):\
 	:li#43:tc=pcansi-m:
 # The color versions.  All PC emulators do color...
-pcansi|ibm-pc terminal programs claiming to be ansi:\
+pcansi|cygwin|ibm-pc terminal programs claiming to be ansi:\
 	:tc=klone+color:tc=pcansi-m:
 pcansi-25|pcansi25|ibm-pc terminal programs with 25 lines:\
 	:li#25:tc=pcansi:
