@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2000/04/02 20:39:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2000/04/10 01:53:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2000/04/02 20:39:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2000/04/10 01:53:11 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -176,7 +176,7 @@ struct pmap	kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
-vaddr_t virtual_avail;  /* VA of first avail page (after kernel bss)*/
+vaddr_t virtual_avail;	/* VA of first avail page (after kernel bss)*/
 vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 struct pv_entry	*pv_table;
@@ -656,14 +656,14 @@ pmap_activate(p)
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	asid = pmap_alloc_asid(p);
-        if (p == curproc) {
-                MachSetPID(asid);
+	if (p == curproc) {
+		MachSetPID(asid);
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
 			mips3_write_xcontext_upper((u_int32_t)pmap->pm_segtab);
 		}
 #endif
-        }
+	}
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab; /* XXX */
 }
 
@@ -1111,7 +1111,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
-		       pmap, va, pa, prot, wired);
+		    pmap, va, pa, prot, wired);
 #endif
 #ifdef PARANOIADIAG
 	if (!pmap)
@@ -1185,7 +1185,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			    (MIPS3_PG_IOPAGE & ~MIPS3_PG_G) :
 			    ((MIPS3_PG_IOPAGE | MIPS3_PG_RO) &
 			    ~(MIPS3_PG_G | MIPS3_PG_D));
-		} else  {
+		} else {
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS1_PG_D | MIPS1_PG_N) :
 			    (MIPS1_PG_RO | MIPS1_PG_N);
@@ -1223,7 +1223,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if (mips_pg_wired(pte->pt_entry))
 			panic("pmap_enter: kernel wired");
 #endif
-		if (pfn_to_vad(pte->pt_entry) !=  pa) {
+		if (pfn_to_vad(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 			enter_stats.mchange++;
@@ -1488,7 +1488,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-		       dst_pmap, src_pmap, dst_addr, len, src_addr);
+		     dst_pmap, src_pmap, dst_addr, len, src_addr);
 #endif
 }
 
@@ -1587,9 +1587,9 @@ pmap_zero_page(phys)
 	} while (p != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
-	 * If  we have a virtually-indexed, physically-tagged WB cache,
+	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
-	 * writeback of the destination out of the L1  cache.  If we don't,
+	 * writeback of the destination out of the L1 cache.  If we don't,
 	 * later reads (from virtual addresses mapped to the destination PA)
 	 * might read old stale DRAM footprint, not the just-written data.
 	 */
@@ -1626,10 +1626,10 @@ pmap_copy_page(src, dst)
 
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
-	 * If  we have a virtually-indexed, physically-tagged cache,
+	 * If we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings, we must force an
 	 * write-back of all L1 cache lines of the source physical address,
-	 * irrespective of their  virtual address (cache indexes).
+	 * irrespective of their virtual address (cache indexes).
 	 * If we don't, our copy loop might read and copy stale DRAM
 	 * footprint instead of the fresh (but dirty) data in a WB cache.
 	 * XXX invalidate any cached lines of the destination PA
@@ -1689,9 +1689,9 @@ pmap_copy_page(src, dst)
 	} while (s != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
-	 * If  we have a virtually-indexed, physically-tagged WB cache,
+	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
-	 * writeback of the destination out of the L1  cache.  If we don't,
+	 * writeback of the destination out of the L1 cache.  If we don't,
 	 * later reads (from virtual addresses mapped to the destination PA)
 	 * might read old stale DRAM footprint, not the just-written data.
 	 * XXX  Do we need to also invalidate any cache lines matching
@@ -1742,7 +1742,7 @@ pmap_is_referenced(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	if (PAGE_IS_MANAGED(pa))
-		return (*pa_to_attribute(pa)  & PV_REFERENCED);
+		return (*pa_to_attribute(pa) & PV_REFERENCED);
 #ifdef DEBUG
 	else
 		printf("pmap_is_referenced: pa %lx\n", pa);
@@ -1785,7 +1785,7 @@ pmap_is_modified(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	if (PAGE_IS_MANAGED(pa))
-		return (*pa_to_attribute(pa)  & PV_MODIFIED);
+		return (*pa_to_attribute(pa) & PV_MODIFIED);
 #ifdef DEBUG
 	else
 		printf("pmap_is_modified: pa %lx\n", pa);
@@ -1841,8 +1841,8 @@ pmap_alloc_asid(p)
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_asid != PMAP_ASID_RESERVED
-	     && pmap->pm_asidgen == pmap_asid_generation)
+	if (pmap->pm_asid != PMAP_ASID_RESERVED &&
+	    pmap->pm_asidgen == pmap_asid_generation)
 		;
 	else {
 		if (pmap_next_asid == pmap_max_asid) {
@@ -1887,7 +1887,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
-		       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
+		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
 #endif
 	if (pv->pv_pmap == NULL) {
 		/*
@@ -2081,10 +2081,11 @@ pmap_remove_pv(pmap, va, pa)
 		MachFlushDCache(va, PAGE_SIZE);
 		if (mips_L2CachePresent)
 			/*
-			 * mips3_MachFlushDCache() converts the address to a KSEG0
-			 * address, and won't properly flush the Level 2 cache.
-			 * Do another flush using the physical adddress to make
-			 * sure the proper secondary cache lines are flushed.  Ugh!
+			 * mips3_MachFlushDCache() converts the address to a
+			 * KSEG0 address, and won't properly flush the Level 2
+			 * cache.  Do another flush using the physical adddress
+			 * to make sure the proper secondary cache lines are
+			 * flushed.  Ugh!
 			 */
 			MachFlushDCache(pa, PAGE_SIZE);
 	}
