@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.16 2001/11/15 06:46:33 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.17 2002/02/07 07:00:20 ross Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -46,9 +46,9 @@
 .Lb libc
 .\"
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]netdb.h\*[Gt]
 .Ft int
 .Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" \
 "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags"
@@ -200,7 +200,7 @@ Observe that there is no hardcoded reference to particular address family.
 struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
-if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
+if (getnameinfo(sa, sa-\*[Gt]sa_len, hbuf, sizeof(hbuf), sbuf,
     sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
 	errx(1, "could not get numeric hostname");
 	/*NOTREACHED*/
@@ -213,7 +213,7 @@ The following version checks if the socket address has reverse address mapping.
 struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST];
 
-if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+if (getnameinfo(sa, sa-\*[Gt]sa_len, hbuf, sizeof(hbuf), NULL, 0,
     NI_NAMEREQD)) {
 	errx(1, "could not resolve hostname");
 	/*NOTREACHED*/

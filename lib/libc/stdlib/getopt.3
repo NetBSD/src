@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.20 2001/09/16 01:31:51 wiz Exp $
+.\"	$NetBSD: getopt.3,v 1.21 2002/02/07 07:00:28 ross Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.Fd #include \*[Lt]unistd.h\*[Gt]
 .Vt extern char *optarg;
 .Vt extern int   optind;
 .Vt extern int   optopt;
@@ -183,7 +183,7 @@ while ((ch = getopt(argc, argv, "bf:")) != -1)
 		bflag = 1;
 		break;
 	case 'f':
-		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+		if ((fd = open(optarg, O_RDONLY, 0)) \*[Lt] 0) {
 			(void)fprintf(stderr,
 			    "myname: %s: %s\en", optarg, strerror(errno));
 			exit(1);
@@ -212,7 +212,7 @@ This was changed by
 to decouple
 .Fn getopt
 from
-.Pa <stdio.h> .
+.Pa \*[Lt]stdio.h\*[Gt] .
 .Pp
 A single dash
 .Dq Li -
@@ -253,7 +253,7 @@ while ((c = getopt(argc, argv, "0123456789")) != -1)
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
-		if (p[0] == '-' && p[1] == ch && !p[2])
+		if (p[0] == '-' &amp;&amp; p[1] == ch &amp;&amp; !p[2])
 			length = atoi(++p);
 		else
 			length = atoi(argv[optind] + 1);
