@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.5 1994/03/03 12:23:00 deraadt Exp $
+ * $Id: pmap.c,v 1.6 1994/03/03 16:14:57 pk Exp $
  */
 
 /*
@@ -2113,7 +2113,7 @@ pmap_changeprot(pm, va, prot, wired)
 			setcontext(0);
 			/* XXX use per-cpu va? */
 			setsegmap(0, pmeg);
-			va = VA_VPG(va);
+			va = VA_VPG(va) * NBPG;
 			tpte = getpte(va);
 			if ((tpte & PG_PROT) == newprot)
 				goto useless;
