@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.16 1999/09/21 03:39:37 enami Exp $
+#	$NetBSD: files.pcmcia,v 1.17 1999/09/28 17:58:55 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -69,3 +69,11 @@ file	dev/pcmcia/if_cnw.c			cnw
 device wi: arp, ether, ifnet
 attach wi at pcmcia
 file	dev/pcmcia/if_wi.c			wi
+
+# Megaherz combo cards
+device	mhzc { }
+attach	mhzc at pcmcia
+attach	com at mhzc with com_mhzc
+attach	sm at mhzc with sm_mhzc
+file	dev/pcmcia/mhzc.c			mhzc | com_mhzc | sm_mhzc
+						    needs-flag
