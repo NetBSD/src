@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.5 2001/05/15 15:26:11 itojun Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.6 2001/09/27 03:24:07 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: xmalloc.c,v 1.15 2001/04/16 08:05:34 deraadt Exp $");
+RCSID("$OpenBSD: xmalloc.c,v 1.16 2001/07/23 18:21:46 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -59,11 +59,10 @@ xfree(void *ptr)
 char *
 xstrdup(const char *str)
 {
-	size_t len = strlen(str) + 1;
+	size_t len;
 	char *cp;
 
-	if (len == 0)
-		fatal("xstrdup: zero size");
+	len = strlen(str) + 1;
 	cp = xmalloc(len);
 	strlcpy(cp, str, len);
 	return cp;

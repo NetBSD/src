@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.13 2001/06/23 19:37:42 itojun Exp $
+.\"	$NetBSD: ssh.1,v 1.14 2001/09/27 03:24:06 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,7 +35,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.116 2001/06/23 02:34:31 markus Exp $
+.\" $OpenBSD: ssh.1,v 1.138 2001/09/19 19:24:19 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .Nm ssh
 .Op Fl l Ar login_name
-.Op Ar hostname | user@hostname
+.Ar hostname | user@hostname
 .Op Ar command
 .Pp
 .Nm ssh
@@ -58,6 +58,7 @@
 .Op Fl m Ar mac_spec
 .Op Fl o Ar option
 .Op Fl p Ar port
+.Op Fl F Ar configfile
 .Oo Fl L Xo
 .Sm off
 .Ar port :
@@ -74,7 +75,8 @@
 .Sm on
 .Xc
 .Oc
-.Op Ar hostname | user@hostname
+.Op Fl D Ar port
+.Ar hostname | user@hostname
 .Op Ar command
 .Sh DESCRIPTION
 .Nm
@@ -210,12 +212,10 @@ When a user connects using the protocol version 2
 different authentication methods are available.
 Using the default values for
 .Cm PreferredAuthentications ,
-the client will try to authenticate first using the public key method;
-if this method fails password authentication is attempted,
-and finally if this method fails keyboard-interactive authentication
-is attempted.
-If this method fails password authentication is
-tried.
+the client will try to authenticate first using the hostbased method;
+if this method fails public key authentication is attempted,
+and finally if this method fails keyboard-interactive and
+password authentication are tried.
 .Pp
 The public key method is similar to RSA authentication described
 in the previous section and allows the RSA or DSA algorithm to be used:
@@ -270,16 +270,16 @@ of
 .Ss Escape Characters
 .Pp
 When a pseudo terminal has been requested, ssh supports a number of functions
-through the use of an escape character. 
+through the use of an escape character.
 .Pp
 A single tilde character can be sent as
 .Ic ~~
-(or by following the tilde by a character other than those described above).
+or by following the tilde by a character other than those described below.
 The escape character must always follow a newline to be interpreted as
 special.
 The escape character can be changed in configuration files using the
 .Cm EscapeChar
-configuration directive or on the command line by the 
+configuration directive or on the command line by the
 .Fl e
 option.
 .Pp
@@ -350,10 +350,10 @@ sent to the server machine (and no cookies are sent in the plain).
 .Pp
 If the user is using an authentication agent, the connection to the agent
 is automatically forwarded to the remote side unless disabled on
-command line or in a configuration file.
+the command line or in a configuration file.
 .Pp
 Forwarding of arbitrary TCP/IP connections over the secure channel can
-be specified either on command line or in a configuration file.
+be specified either on the command line or in a configuration file.
 One possible application of TCP/IP forwarding is a secure connection to an
 electronic purse; another is going through firewalls.
 .Pp
@@ -392,20 +392,24 @@ This can also be specified on a per-host basis in a configuration file.
 .It Fl b Ar bind_address
 Specify the interface to transmit from on machines with multiple
 interfaces or aliased addresses.
-.It Fl c Ar blowfish|3des
+.It Fl c Ar blowfish|3des|des
 Selects the cipher to use for encrypting the session.
 .Ar 3des
 is used by default.
 It is believed to be secure.
 .Ar 3des
 (triple-des) is an encrypt-decrypt-encrypt triple with three different keys.
-It is presumably more secure than the
-.Ar des
-cipher which is no longer fully supported in
-.Nm ssh .
 .Ar blowfish
 is a fast block cipher, it appears very secure and is much faster than
 .Ar 3des .
+.Ar des
+is only supported in the
+.Nm
+client for interoperability with legacy protocol 1 implementations
+that do not support the
+.Ar 3des
+cipher.  Its use is strongly discouraged due to cryptographic
+weaknesses.
 .It Fl c Ar cipher_spec
 Additionally, for protocol version 2 a comma-separated list of ciphers can
 be specified in order of preference.
@@ -451,6 +455,12 @@ It is possible to have multiple
 .Fl i
 options (and multiple identities specified in
 configuration files).
+.It Fl I Ar smartcard_device
+Specifies which smartcard device to use. The argument is
+the device
+.Nm
+should use to communicate with a smartcard used for storing the user's
+private RSA key.
 .It Fl k
 Disables forwarding of Kerberos tickets and AFS tokens.
 This may also be specified on a per-host basis in the configuration file.
@@ -486,20 +496,19 @@ needs to ask for a password or passphrase; see also the
 option.)
 .It Fl N
 Do not execute a remote command.
-This is useful if you just want to forward ports
+This is useful for just forwarding ports
 (protocol version 2 only).
 .It Fl o Ar option
-Can be used to give options in the format used in the config file.
+Can be used to give options in the format used in the configuration file.
 This is useful for specifying options for which there is no separate
 command-line flag.
-The option has the same format as a line in the configuration file.
 .It Fl p Ar port
 Port to connect to on the remote host.
 This can be specified on a
 per-host basis in the configuration file.
 .It Fl P
 Use a non-privileged port for outgoing connections.
-This can be used if your firewall does
+This can be used if a firewall does
 not permit connections from privileged ports.
 Note that this option turns off
 .Cm RhostsAuthentication
@@ -511,8 +520,8 @@ Quiet mode.
 Causes all warning and diagnostic messages to be suppressed.
 Only fatal errors are displayed.
 .It Fl s
-May be used to request invocation of a subsystem on the remote system. Subsystems are a feature of the SSH2 protocol which facilitate the use 
-of SSH as a secure transport for other applications (eg. sftp). The 
+May be used to request invocation of a subsystem on the remote system. Subsystems are a feature of the SSH2 protocol which facilitate the use
+of SSH as a secure transport for other applications (eg. sftp). The
 subsystem is specified as the remote command.
 .It Fl t
 Force pseudo-tty allocation.
@@ -556,8 +565,16 @@ Compression is desirable on modem lines and other
 slow connections, but will only slow down things on fast networks.
 The default value can be set on a host-by-host basis in the
 configuration files; see the
-.Cm Compress
+.Cm Compression
 option below.
+.It Fl F Ar configfile
+Specifies an alternative per-user configuration file.
+If a configuration file is given on the command line,
+the system-wide configuration file
+.Pq Pa /etc/ssh_config
+will be ignored.
+The default for the per-user configuration file is
+.Pa $HOME/.ssh/config .
 .It Fl L Ar port:host:hostport
 Specifies that the given port on the local (client) host is to be
 forwarded to the given host and port on the remote side.
@@ -591,6 +608,20 @@ Privileged ports can be forwarded only when
 logging in as root on the remote machine.
 IPv6 addresses can be specified with an alternative syntax:
 .Ar port/host/hostport
+.It Fl D Ar port
+Specifies a local
+.Dq dynamic
+application-level port forwarding.
+This works by allocating a socket to listen to
+.Ar port
+on the local side, and whenever a connection is made to this port, the
+connection is forwarded over the secure channel, and the application
+protocol is then used to determine where to connect to from the
+remote machine.  Currently the SOCKS4 protocol is supported, and
+.Nm
+will act as a SOCKS4 server.
+Only root can forward privileged ports.
+Dynamic port forwardings can also be specified in the configuration file.
 .It Fl 1
 Forces
 .Nm
@@ -610,7 +641,8 @@ to use IPv6 addresses only.
 .El
 .Sh CONFIGURATION FILES
 .Nm
-obtains configuration data from the following sources (in this order):
+obtains configuration data from the following sources in
+the following order:
 command line options, user's configuration file
 .Pq Pa $HOME/.ssh/config ,
 and system-wide configuration file
@@ -635,9 +667,21 @@ are comments.
 .Pp
 Otherwise a line is of the format
 .Dq keyword arguments .
+Configuration options may be separated by whitespace or
+optional whitespace and exactly one
+.Ql = ;
+the latter format is useful to avoid the need to quote whitespace
+when specifying configuration options using the
+.Nm ssh ,
+.Nm scp
+and
+.Nm sftp
+.Fl o
+option.
+.Pp
 The possible
-keywords and their meanings are as follows (note that the
-configuration files are case-sensitive):
+keywords and their meanings are as follows (note that
+keywords are case-insensitive and arguments are case-sensitive):
 .Bl -tag -width Ds
 .It Cm Host
 Restricts the following declarations (up to the next
@@ -668,8 +712,8 @@ This option applies to protocol version 1 only.
 If set to
 .Dq yes ,
 passphrase/password querying will be disabled.
-This option is useful in scripts and other batch jobs where you have no
-user to supply the password.
+This option is useful in scripts and other batch jobs where no user
+is present to supply the password.
 The argument must be
 .Dq yes
 or
@@ -699,10 +743,19 @@ The default is
 Specifies the cipher to use for encrypting the session
 in protocol version 1.
 Currently,
-.Dq blowfish 
+.Dq blowfish ,
+.Dq 3des ,
 and
-.Dq 3des
+.Dq des
 are supported.
+.Ar des
+is only supported in the
+.Nm
+client for interoperability with legacy protocol 1 implementations
+that do not support the
+.Ar 3des
+cipher.  Its use is strongly discouraged due to cryptographic
+weaknesses.
 The default is
 .Dq 3des .
 .It Cm Ciphers
@@ -715,6 +768,22 @@ The default is
   ``aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour,
     aes192-cbc,aes256-cbc''
 .Ed
+.It Cm ClearAllForwardings
+Specifies that all local, remote and dynamic port forwardings
+specified in the configuration files or on the command line be
+cleared.  This option is primarily useful when used from the
+.Nm
+command line to clear port forwardings set in
+configuration files, and is automatically set by
+.Xr scp 1
+and
+.Xr sftp 1 .
+The argument must be
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq no .
 .It Cm Compression
 Specifies whether to use compression.
 The argument must be
@@ -735,7 +804,18 @@ Specifies the number of tries (one per second) to make before falling
 back to rsh or exiting.
 The argument must be an integer.
 This may be useful in scripts if the connection sometimes fails.
-The default is 4.
+The default is 1.
+.It Cm DynamicForward
+Specifies that a TCP/IP port on the local machine be forwarded
+over the secure channel, and the application
+protocol is then used to determine where to connect to from the
+remote machine.  The argument must be a port number.
+Currently the SOCKS4 protocol is supported, and
+.Nm
+will act as a SOCKS4 server.
+Multiple forwardings may be specified, and
+additional forwardings can be given on the command line.  Only
+the superuser can forward privileged ports.
 .It Cm EscapeChar
 Sets the escape character (default:
 .Ql ~ ) .
@@ -786,6 +866,15 @@ The default is
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to local
 forwarded ports.
+By default,
+.Nm
+binds local port forwardings to the loopback addresss.  This
+prevents other remote hosts from connecting to forwarded ports.
+.Cm GatewayPorts
+can be used to specify that
+.Nm
+should bind local port forwardings to the wildcard address,
+thus allowing remote hosts to connect to forwarded ports.
 The argument must be
 .Dq yes
 or
@@ -818,7 +907,7 @@ Specifies an alias that should be used instead of the
 real host name when looking up or saving the host key
 in the host key database files.
 This option is useful for tunneling ssh connections
-or if you have multiple servers running on a single host.
+or for multiple servers running on a single host.
 .It Cm HostName
 Specifies the real host name to log into.
 This can be used to specify nicknames or abbreviations for hosts.
@@ -871,9 +960,11 @@ or
 .Dq no .
 .It Cm LocalForward
 Specifies that a TCP/IP port on the local machine be forwarded over
-the secure channel to given host:port from the remote machine.
+the secure channel to the specified host and port from the remote machine.
 The first argument must be a port number, and the second must be
-host:port.
+.Ar host:port .
+IPv6 addresses can be specified with an alternative syntax:
+.Ar host/port .
 Multiple forwardings may be specified, and additional
 forwardings can be given on the command line.
 Only the superuser can forward privileged ports.
@@ -884,7 +975,7 @@ The possible values are:
 QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.
 The default is INFO.
 .It Cm MACs
-Specifies the MAC (message authentication code) algorithms 
+Specifies the MAC (message authentication code) algorithms
 in order of preference.
 The MAC algorithm is used in protocol version 2
 for data integrity protection.
@@ -907,13 +998,13 @@ The default is
 Specifies the port number to connect on the remote host.
 Default is 22.
 .It Cm PreferredAuthentications
-Specifies the order in which the client should try protocol 2 
-authentication methods. This allows a client to prefer one method (e.g. 
+Specifies the order in which the client should try protocol 2
+authentication methods. This allows a client to prefer one method (e.g.
 .Cm keyboard-interactive )
 over another method (e.g.
 .Cm password )
 The default for this option is:
-.Dq publickey,hostbased,password,keyboard-interactive
+.Dq hostbased,publickey,keyboard-interactive,password
 .It Cm Protocol
 Specifies the protocol versions
 .Nm
@@ -965,9 +1056,11 @@ The default is
 This option applies to protocol version 2 only.
 .It Cm RemoteForward
 Specifies that a TCP/IP port on the remote machine be forwarded over
-the secure channel to given host:port from the local machine.
+the secure channel to the specified host and port from the local machine.
 The first argument must be a port number, and the second must be
-host:port.
+.Ar host:port .
+IPv6 addresses can be specified with an alternative syntax:
+.Ar host/port .
 Multiple forwardings may be specified, and additional
 forwardings can be given on the command line.
 Only the superuser can forward privileged ports.
@@ -980,7 +1073,7 @@ Disabling rhosts authentication may reduce
 authentication time on slow connections when rhosts authentication is
 not used.
 Most servers do not permit RhostsAuthentication because it
-is not secure (see 
+is not secure (see
 .Cm RhostsRSAAuthentication ) .
 The argument to this keyword must be
 .Dq yes
@@ -1013,15 +1106,19 @@ The default is
 Note that this option applies to protocol version 1 only.
 .It Cm ChallengeResponseAuthentication
 Specifies whether to use challenge response authentication.
-Currently there is only support for
-.Xr skey 1
-authentication.
 The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
 The default is
-.Dq no .
+.Dq yes .
+.It Cm SmartcardDevice
+Specifies which smartcard device to use. The argument to this keyword is
+the device
+.Nm
+should use to communicate with a smartcard used for storing the user's
+private RSA key. By default, no device is specified and smartcard support
+is not activated.
 .It Cm StrictHostKeyChecking
 If this flag is set to
 .Dq yes ,
@@ -1029,11 +1126,11 @@ If this flag is set to
 will never automatically add host keys to the
 .Pa $HOME/.ssh/known_hosts
 file, and refuses to connect to hosts whose host key has changed.
-This provides maximum protection against trojan horse attacks.
-However, it can be somewhat annoying if you don't have good
+This provides maximum protection against trojan horse attacks,
+however, can be annoying when the
 .Pa /etc/ssh_known_hosts
-files installed and frequently
-connect to new hosts.
+file is poorly maintained, or connections to new hosts are
+frequently made.
 This option forces the user to manually
 add all new hosts.
 If this flag is set to
@@ -1065,16 +1162,16 @@ or
 .Dq no .
 The default is
 .Dq no .
-Note that you need to set this option to
+Note that this option must be set to
 .Dq yes
-if you want to use
+if
 .Cm RhostsAuthentication
 and
 .Cm RhostsRSAAuthentication
-with older servers.
+authentications are needed with older servers.
 .It Cm User
 Specifies the user to log in as.
-This can be useful if you have a different user name on different machines.
+This can be useful when a different user name is used on different machines.
 This saves the trouble of
 having to remember to give the user name on the command line.
 .It Cm UserKnownHostsFile
@@ -1133,14 +1230,37 @@ Synonym for
 .Ev USER ;
 set for compatibility with systems that use this variable.
 .It Ev MAIL
-Set to point the user's mailbox.
+Set to the path of the user's mailbox.
 .It Ev PATH
 Set to the default
 .Ev PATH ,
 as specified when compiling
 .Nm ssh .
+.It Ev SSH_ASKPASS
+If
+.Nm
+needs a passphrase, it will read the passphrase from the current
+terminal if it was run from a terminal.
+If
+.Nm
+does not have a terminal associated with it but
+.Ev DISPLAY
+and
+.Ev SSH_ASKPASS
+are set, it will execute the program specified by
+.Ev SSH_ASKPASS
+and open an X11 window to read the passphrase.
+This is particularly useful when calling
+.Nm
+from a
+.Pa .Xsession
+or related script.
+(Note that on some machines it
+may be necessary to redirect the input from
+.Pa /dev/null
+to make this work.)
 .It Ev SSH_AUTH_SOCK
-indicates the path of a unix-domain socket used to communicate with the
+Identifies the path of a unix-domain socket used to communicate with the
 agent.
 .It Ev SSH_CLIENT
 Identifies the client end of the connection.
@@ -1174,7 +1294,7 @@ to the environment.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa $HOME/.ssh/known_hosts
-Records host keys for all hosts the user has logged into (that are not
+Records host keys for all hosts the user has logged into that are not
 in
 .Pa /etc/ssh_known_hosts .
 See
@@ -1199,7 +1319,7 @@ The contents of the
 file should be added to
 .Pa $HOME/.ssh/authorized_keys
 on all machines
-where you wish to log in using protocol version 1 RSA authentication.
+where the user wishes to log in using protocol version 1 RSA authentication.
 The contents of the
 .Pa $HOME/.ssh/id_dsa.pub
 and
@@ -1207,7 +1327,7 @@ and
 file should be added to
 .Pa $HOME/.ssh/authorized_keys
 on all machines
-where you wish to log in using protocol version 2 DSA/RSA authentication.
+where the user wishes to log in using protocol version 2 DSA/RSA authentication.
 These files are not
 sensitive and can (but need not) be readable by anyone.
 These files are
@@ -1287,9 +1407,9 @@ Note that by default
 .Xr sshd 8
 will be installed so that it requires successful RSA host
 authentication before permitting \s+2.\s0rhosts authentication.
-If your server machine does not have the client's host key in
+If the server machine does not have the client's host key in
 .Pa /etc/ssh_known_hosts ,
-you can store it in
+it can be stored in
 .Pa $HOME/.ssh/known_hosts .
 The easiest way to do this is to
 connect back to the client from the server machine using ssh; this
@@ -1388,7 +1508,7 @@ protocol versions 1.5 and 2.0.
 .%A T. Rinne
 .%A S. Lehtinen
 .%T "SSH Protocol Architecture"
-.%N draft-ietf-secsh-architecture-07.txt
-.%D January 2001
+.%N draft-ietf-secsh-architecture-09.txt
+.%D July 2001
 .%O work in progress material
 .Re

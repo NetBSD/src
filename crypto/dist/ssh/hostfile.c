@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.6 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.7 2001/09/27 03:24:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  *
- * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.27 2001/06/23 15:12:18 itojun Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.28 2001/06/25 08:25:37 markus Exp $");
 
 #include "packet.h"
 #include "match.h"

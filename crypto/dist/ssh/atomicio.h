@@ -1,5 +1,5 @@
-/*	$NetBSD: atomicio.h,v 1.4 2001/04/10 08:07:54 itojun Exp $	*/
-/*	$OpenBSD: atomicio.h,v 1.3 2001/03/02 18:54:30 deraadt Exp $	*/
+/*	$NetBSD: atomicio.h,v 1.5 2001/09/27 03:24:01 itojun Exp $	*/
+/*	$OpenBSD: atomicio.h,v 1.4 2001/06/26 06:32:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.

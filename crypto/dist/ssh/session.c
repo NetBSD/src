@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.18 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.19 2001/09/27 03:24:04 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -10,7 +10,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 support by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.94 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: session.c,v 1.102 2001/09/16 14:46:54 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -67,7 +67,8 @@ typedef struct Session Session;
 struct Session {
 	int	used;
 	int	self;
-	struct	passwd *pw;
+	struct passwd *pw;
+	Authctxt *authctxt;
 	pid_t	pid;
 	/* tty */
 	char	*term;
@@ -162,6 +163,14 @@ do_authenticated(Authctxt *authctxt)
 	/* remove agent socket */
 	if (auth_get_socket_name())
 		auth_sock_cleanup_proc(authctxt->pw);
+#ifdef KRB4
+	if (options.kerberos_ticket_cleanup)
+		krb4_cleanup_proc(authctxt);
+#endif
+#ifdef KRB5
+	if (options.kerberos_ticket_cleanup)
+		krb5_cleanup_proc(authctxt);
+#endif
 }
 
 /*
@@ -180,6 +189,7 @@ do_authenticated1(Authctxt *authctxt)
 	u_int proto_len, data_len, dlen;
 
 	s = session_new();
+	s->authctxt = authctxt;
 	s->pw = authctxt->pw;
 
 	/*
@@ -264,51 +274,58 @@ do_authenticated1(Authctxt *authctxt)
 			if (packet_set_maxsize(packet_get_int()) > 0)
 				success = 1;
 			break;
-
-#if defined(KRB4) || defined(KRB5)
-		/*
-		 * Sucks to do this here, but we're authenticated
-		 * by the time this happens.
-		 *
-		 * XXX Add Krb4 TGT and AFS Token passing.
-		 */
+			
+#if defined(AFS) || defined(KRB5)
 		case SSH_CMSG_HAVE_KERBEROS_TGT:
-		    {
+			if (!options.kerberos_tgt_passing) {
+				verbose("Kerberos TGT passing disabled.");
+			} else {
+				char *kdata = packet_get_string(&dlen);
+				packet_integrity_check(plen, 4 + dlen, type);
+				
+				/* XXX - 0x41, see creds_to_radix version */
+				if (kdata[0] != 0x41) {
 #ifdef KRB5
-			extern int ssh_krb_auth;
-
-			if (ssh_krb_auth == 5) {
-				extern krb5_principal tkt_client;
-				extern char *ssh_krb_user;
-				krb5_data tgt;
-				u_int tgtlen; 
-
-				if (options.krb5_tgt_passing == 0) {
-					log("Kerberos 5 TGT passing disabled\n");
-					break;
-				}
-
-				tgt.data = packet_get_string(&tgtlen);
-				tgt.length = tgtlen;
-
-				temporarily_use_uid(s->pw);
-
-				if (!auth_krb5_tgt(ssh_krb_user, &tgt,
-				    tkt_client))
-					verbose("Kerberos 5 TGT refused for %.100s", ssh_krb_user);
-				else
-					success = 1;
-
-				restore_uid();
-
-				xfree(tgt.data);
-			}
-			else
+					krb5_data tgt;
+					tgt.data = kdata;
+					tgt.length = dlen;
+					
+					if (auth_krb5_tgt(s->authctxt, &tgt))
+						success = 1;
+					else
+						verbose("Kerberos v5 TGT refused for %.100s", s->authctxt->user);
 #endif /* KRB5 */
-				log("Got TGT but didn't use Kerberos\n");
+				} else {
+#ifdef AFS
+					if (auth_krb4_tgt(s->authctxt, kdata))
+						success = 1;
+					else
+						verbose("Kerberos v4 TGT refused for %.100s", s->authctxt->user);
+#endif /* AFS */
+				}
+				xfree(kdata);
+			}
 			break;
-		    }
-#endif /* KRB4 || KRB5 */
+#endif /* AFS || KRB5 */
+			
+#ifdef AFS
+		case SSH_CMSG_HAVE_AFS_TOKEN:
+			if (!options.afs_token_passing || !k_hasafs()) {
+				verbose("AFS token passing disabled.");
+			} else {
+				/* Accept AFS token. */
+				char *token = packet_get_string(&dlen);
+				packet_integrity_check(plen, 4 + dlen, type);
+				
+				if (auth_afs_token(s->authctxt, token))
+					success = 1;
+				else
+					verbose("AFS token refused for %.100s",
+					    s->authctxt->user);
+				xfree(token);
+			}
+			break;
+#endif /* AFS */
 
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
@@ -480,9 +497,9 @@ do_exec_pty(Session *s, const char *command)
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
+
 		/* Child.  Reinitialize the log because the pid has changed. */
 		log_init(__progname, options.log_level, options.log_facility, log_stderr);
-
 		/* Close the master side of the pseudo tty. */
 		close(ptyfd);
 
@@ -665,7 +682,7 @@ int
 check_quietlogin(Session *s, const char *command)
 {
 	char buf[256];
-	struct passwd * pw = s->pw;
+	struct passwd *pw = s->pw;
 	struct stat st;
 
 	/* Return 1 if .hushlogin exists or a command given. */
@@ -771,7 +788,7 @@ void
 do_child(Session *s, const char *command)
 {
 	const char *shell, *hostname = NULL, *cp = NULL;
-	struct passwd * pw = s->pw;
+	struct passwd *pw = s->pw;
 	char buf[256];
 	char cmd[1024];
 	FILE *f = NULL;
@@ -850,18 +867,6 @@ do_child(Session *s, const char *command)
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
 #endif
 
-#ifdef AFS
-	/* Try to get AFS tokens for the local cell. */
-	if (k_hasafs()) {
-		char cell[64];
-
-		if (k_afs_cell_of_file(pw->pw_dir, cell, sizeof(cell)) == 0)
-			krb_afslog(cell, 0);
-
-		krb_afslog(0, 0);
-	}
-#endif /* AFS */
-
 	/* Initialize the environment. */
 	envsize = 100;
 	env = xmalloc(envsize * sizeof(char *));
@@ -917,26 +922,16 @@ do_child(Session *s, const char *command)
 	if (original_command)
 		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
 		    original_command);
-
 #ifdef KRB4
-	{
-		extern char *ticket;
-
-		if (ticket)
-			child_set_env(&env, &envsize, "KRBTKFILE", ticket);
-	}
-#endif /* KRB4 */
-
+	if (s->authctxt->krb4_ticket_file)
+		child_set_env(&env, &envsize, "KRBTKFILE",
+			      s->authctxt->krb4_ticket_file);
+#endif
 #ifdef KRB5
-	{
-		extern const char *ssh_krb5_ccname;
-
-		if (ssh_krb5_ccname)
-			child_set_env(&env, &envsize, "KRB5CCNAME",
-			    ssh_krb5_ccname);
-	}
-#endif /* KRB5 */
-
+	if (s->authctxt->krb5_ticket_file)
+		child_set_env(&env, &envsize, "KRB5CCNAME",
+			      s->authctxt->krb5_ticket_file);
+#endif
 	if (auth_get_socket_name() != NULL)
 		child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME,
 			      auth_get_socket_name());
@@ -1007,6 +1002,18 @@ do_child(Session *s, const char *command)
 	 * xauth are run in the proper environment.
 	 */
 	environ = env;
+
+#ifdef AFS
+	/* Try to get AFS tokens for the local cell. */
+	if (k_hasafs()) {
+		char cell[64];
+		
+		if (k_afs_cell_of_file(pw->pw_dir, cell, sizeof(cell)) == 0)
+			krb_afslog(cell, 0);
+		
+		krb_afslog(0, 0);
+	}
+#endif /* AFS */
 
 	/*
 	 * Run $HOME/.ssh/rc, /etc/sshrc, or xauth (whichever is found first
@@ -1096,25 +1103,6 @@ do_child(Session *s, const char *command)
 		if (!options.use_login) {
 			char buf[256];
 
-			/*
-			 * Check for mail if we have a tty and it was enabled
-			 * in server options.
-			 */
-			if (s->ttyfd != -1 && options.check_mail) {
-				char *mailbox;
-				struct stat mailstat;
-
-				mailbox = getenv("MAIL");
-				if (mailbox != NULL) {
-					if (stat(mailbox, &mailstat) != 0 ||
-					    mailstat.st_size == 0)
-						printf("No mail.\n");
-					else if (mailstat.st_mtime < mailstat.st_atime)
-						printf("You have mail.\n");
-					else
-						printf("You have new mail.\n");
-				}
-			}
 			/* Start the shell.  Set initial character to '-'. */
 			buf[0] = '-';
 			strncpy(buf + 1, cp, sizeof(buf) - 1);
@@ -1133,7 +1121,7 @@ do_child(Session *s, const char *command)
 			/* Launch login(1). */
 
 			execl("/usr/bin/login", "login", "-h", hostname,
-			     "-p", "-f", "--", pw->pw_name, NULL);
+			     "-p", "-f", "--", pw->pw_name, (char *)NULL);
 
 			/* Login couldn't be executed, die. */
 
@@ -1198,7 +1186,7 @@ session_dump(void)
 }
 
 int
-session_open(int chanid)
+session_open(Authctxt *authctxt, int chanid)
 {
 	Session *s = session_new();
 	debug("session_open: channel %d", chanid);
@@ -1206,7 +1194,8 @@ session_open(int chanid)
 		error("no more sessions");
 		return 0;
 	}
-	s->pw = auth_get_user();
+	s->authctxt = authctxt;
+	s->pw = authctxt->pw;
 	if (s->pw == NULL)
 		fatal("no user for session %d", s->self);
 	debug("session_open: session %d: link with channel %d", s->self, chanid);
@@ -1337,7 +1326,7 @@ session_subsystem_req(Session *s)
 		if(strcmp(subsys, options.subsystem_name[i]) == 0) {
 			debug("subsystem: exec() %s", options.subsystem_command[i]);
 			s->is_subsystem = 1;
-			do_exec_no_pty(s, options.subsystem_command[i]);
+			do_exec(s, options.subsystem_command[i]);
 			success = 1;
 		}
 	}
@@ -1590,6 +1579,22 @@ session_close_by_pid(pid_t pid, int status)
 	session_close(s);
 }
 
+int
+session_have_children(void)
+{
+	int i;
+
+	for(i = 0; i < MAX_SESSIONS; i++) {
+		Session *s = &sessions[i];
+		if (s->used && s->pid != -1) {
+			debug("session_have_children: id %d pid %d", i, s->pid);
+			return 1;
+		}
+	}
+	debug("session_have_children: no more children");
+	return 0;
+}
+
 /*
  * this is called when a channel dies before
  * the session 'child' itself dies
@@ -1684,5 +1689,5 @@ session_setup_x11fwd(Session *s)
 static void
 do_authenticated2(Authctxt *authctxt)
 {
-	server_loop2();
+	server_loop2(authctxt);
 }

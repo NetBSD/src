@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.h,v 1.3 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: channels.h,v 1.4 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.39 2001/06/20 13:56:39 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.46 2001/09/17 20:52:47 markus Exp $"); */
 
 #ifndef CHANNEL_H
 #define CHANNEL_H
@@ -59,15 +59,11 @@
 
 #define SSH_CHANNEL_PATH_LEN		30
 
-/*
- * Data structure for channel data.  This is initialized in channel_new
- * and cleared in channel_free.
- */
 struct Channel;
 typedef struct Channel Channel;
 
-typedef void channel_callback_fn(int id, void *arg);
-typedef int channel_filter_fn(struct Channel *c, char *buf, int len);
+typedef void channel_callback_fn(int, void *);
+typedef int channel_filter_fn(struct Channel *, char *, int);
 
 struct Channel {
 	int     type;		/* channel type/state */
@@ -82,6 +78,7 @@ struct Channel {
 	int     efd;		/* extended fd */
 	int     sock;		/* sock fd */
 	int     isatty;		/* rfd is a tty */
+	int     force_drain;		/* force close on iEOF */
 	Buffer  input;		/* data read from socket, to be sent over
 				 * encrypted connection */
 	Buffer  output;		/* data received over encrypted connection for
@@ -107,7 +104,7 @@ struct Channel {
 	channel_callback_fn	*cb_fn;
 	void	*cb_arg;
 	int	cb_event;
-	channel_callback_fn	*dettach_user;
+	channel_callback_fn	*detach_user;
 
 	/* filter */
 	channel_filter_fn	*input_filter;
@@ -140,97 +137,91 @@ struct Channel {
 #define CHAN_CLOSE_SENT			0x01
 #define CHAN_CLOSE_RCVD			0x02
 
-
 /* channel management */
 
-Channel	*channel_lookup(int id);
-Channel *
-channel_new(char *ctype, int type, int rfd, int wfd, int efd,
-    int window, int maxpack, int extusage, char *remote_name, int nonblock);
-void
-channel_set_fds(int id, int rfd, int wfd, int efd,
-    int extusage, int nonblock);
-void    channel_free(Channel *c);
-void    channel_free_all(void);
+Channel	*channel_lookup(int);
+Channel *channel_new(char *, int, int, int, int, int, int, int, char *, int);
+void	 channel_set_fds(int, int, int, int, int, int);
+void	 channel_free(Channel *);
+void	 channel_free_all(void);
+void	 channel_detach_all(void);
+void	 channel_stop_listening(void);
 
-void	channel_send_open(int id);
-void	channel_request(int id, char *service, int wantconfirm);
-void	channel_request_start(int id, char *service, int wantconfirm);
-void	channel_register_callback(int id, int mtype, channel_callback_fn *fn, void *arg);
-void	channel_register_cleanup(int id, channel_callback_fn *fn);
-void	channel_register_filter(int id, channel_filter_fn *fn);
-void	channel_cancel_cleanup(int id);
+void	 channel_send_open(int);
+void	 channel_request(int, char *, int);
+void	 channel_request_start(int, char *, int);
+void	 channel_register_callback(int, int mtype, channel_callback_fn *, void *);
+void	 channel_register_cleanup(int, channel_callback_fn *);
+void	 channel_register_filter(int, channel_filter_fn *);
+void	 channel_cancel_cleanup(int);
+int	 channel_close_fd(int *);
 
 /* protocol handler */
 
-void	channel_input_channel_request(int type, int plen, void *ctxt);
-void	channel_input_close(int type, int plen, void *ctxt);
-void	channel_input_close_confirmation(int type, int plen, void *ctxt);
-void	channel_input_data(int type, int plen, void *ctxt);
-void	channel_input_extended_data(int type, int plen, void *ctxt);
-void	channel_input_ieof(int type, int plen, void *ctxt);
-void	channel_input_oclose(int type, int plen, void *ctxt);
-void	channel_input_open_confirmation(int type, int plen, void *ctxt);
-void	channel_input_open_failure(int type, int plen, void *ctxt);
-void	channel_input_port_open(int type, int plen, void *ctxt);
-void	channel_input_window_adjust(int type, int plen, void *ctxt);
+void	 channel_input_channel_request(int, int, void *);
+void	 channel_input_close(int, int, void *);
+void	 channel_input_close_confirmation(int, int, void *);
+void	 channel_input_data(int, int, void *);
+void	 channel_input_extended_data(int, int, void *);
+void	 channel_input_ieof(int, int, void *);
+void	 channel_input_oclose(int, int, void *);
+void	 channel_input_open_confirmation(int, int, void *);
+void	 channel_input_open_failure(int, int, void *);
+void	 channel_input_port_open(int, int, void *);
+void	 channel_input_window_adjust(int, int, void *);
 
 /* file descriptor handling (read/write) */
 
-void
-channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
-    int rekeying);
-void    channel_after_select(fd_set * readset, fd_set * writeset);
-void    channel_output_poll(void);
+void	 channel_prepare_select(fd_set **, fd_set **, int *, int*, int);
+void     channel_after_select(fd_set *, fd_set *);
+void     channel_output_poll(void);
 
-int     channel_not_very_much_buffered_data(void);
-void    channel_close_all(void);
-void    channel_free_all(void);
-int     channel_still_open(void);
-char   *channel_open_message(void);
-int	channel_find_open(void);
+int      channel_not_very_much_buffered_data(void);
+void     channel_close_all(void);
+void     channel_free_all(void);
+int      channel_still_open(void);
+char	*channel_open_message(void);
+int	 channel_find_open(void);
 
 /* channel_tcpfwd.c */
+void     channel_permit_all_opens(void);
+void	 channel_add_permitted_opens(char *, int);
+void	 channel_clear_permitted_opens(void);
+void     channel_input_port_forward_request(int, int);
+int	 channel_connect_to(const char *, u_short);
+int	 channel_connect_by_listen_address(u_short);
+void	 channel_request_remote_forwarding(u_short, const char *, u_short);
+int	 channel_request_local_forwarding(u_short, const char *, u_short, int);
 int
-channel_request_local_forwarding(u_short listen_port,
-    const char *host_to_connect, u_short port_to_connect, int gateway_ports);
-int
-channel_request_forwarding(const char *listen_address, u_short listen_port,
-    const char *host_to_connect, u_short port_to_connect, int gateway_ports,
-    int remote_fwd);
-void
-channel_request_remote_forwarding(u_short port, const char *host,
-    u_short remote_port);
-void    channel_permit_all_opens(void);
-void	channel_add_permitted_opens(char *host, int port);
-void	channel_clear_permitted_opens(void);
-void    channel_input_port_forward_request(int is_root, int gateway_ports);
-int	channel_connect_to(const char *host, u_short host_port);
-int	channel_connect_by_listen_adress(u_short listen_port);
+channel_request_forwarding(const char *, u_short, const char *, u_short, int,
+    int);
 
 /* x11 forwarding */
 
-int	x11_connect_display(void);
-char   *x11_create_display(int screen);
-char   *x11_create_display_inet(int screen, int x11_display_offset);
-void    x11_input_open(int type, int plen, void *ctxt);
-void    x11_request_forwarding(void);
-void
-x11_request_forwarding_with_spoofing(int client_session_id,
-    const char *proto, const char *data);
-void	deny_input_open(int type, int plen, void *ctxt);
+int	 x11_connect_display(void);
+char	*x11_create_display(int);
+char	*x11_create_display_inet(int, int);
+void     x11_input_open(int, int, void *);
+void     x11_request_forwarding(void);
+void	 x11_request_forwarding_with_spoofing(int, const char *, const char *);
+void	 deny_input_open(int, int, void *);
 
 /* agent forwarding */
 
-void    auth_request_forwarding(void);
-char   *auth_get_socket_name(void);
-void	auth_sock_cleanup_proc(void *pw);
-int     auth_input_request_forwarding(struct passwd * pw);
-void    auth_input_open_request(int type, int plen, void *ctxt);
+void	 auth_request_forwarding(void);
+char	*auth_get_socket_name(void);
+void	 auth_sock_cleanup_proc(void *);
+int	 auth_input_request_forwarding(struct passwd *);
+void	 auth_input_open_request(int, int, void *);
 
 /* channel close */
 
-typedef void    chan_event_fn(Channel * c);
+int	 chan_is_dead(Channel *);
+void	 chan_mark_dead(Channel *);
+void 	 chan_init_iostates(Channel *);
+void	 chan_init(void);
+
+typedef void    chan_event_fn(Channel *);
 
 /* for the input state */
 extern chan_event_fn	*chan_rcvd_oclose;
@@ -241,10 +232,5 @@ extern chan_event_fn	*chan_ibuf_empty;
 extern chan_event_fn	*chan_rcvd_ieof;
 extern chan_event_fn	*chan_write_failed;
 extern chan_event_fn	*chan_obuf_empty;
-
-int	chan_is_dead(Channel * c);
-void	chan_mark_dead(Channel * c);
-void    chan_init_iostates(Channel * c);
-void	chan_init(void);
 
 #endif

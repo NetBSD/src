@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.11 2001/09/03 04:23:10 cjs Exp $	*/
+/*	$NetBSD: servconf.c,v 1.12 2001/09/27 03:24:04 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,16 +11,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.84 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.89 2001/08/16 19:18:34 jakob Exp $");
 
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 #include <krb.h>
 #endif
 #ifdef AFS
 #include <kafs.h>
-#endif
-#ifdef KRB5
-#include <krb5.h>
 #endif
 
 #include "ssh.h"
@@ -61,7 +58,6 @@ initialize_server_options(ServerOptions *options)
 	options->ignore_user_known_hosts = -1;
 	options->print_motd = -1;
 	options->print_lastlog = -1;
-	options->check_mail = -1;
 	options->x11_forwarding = -1;
 	options->x11_display_offset = -1;
 	options->xauth_location = NULL;
@@ -77,16 +73,13 @@ initialize_server_options(ServerOptions *options)
 	options->pubkey_authentication = -1;
 #if defined(KRB4) || defined(KRB5)
 	options->kerberos_authentication = -1;
-#endif /* KRB4 || KRB5 */
-#ifdef KRB4
-	options->krb4_or_local_passwd = -1;
-	options->krb4_ticket_cleanup = -1;
-#endif /* KRB4 */
-#ifdef KRB5
-	options->krb5_tgt_passing = -1;
-#endif /* KRB5 */
+	options->kerberos_or_local_passwd = -1;
+	options->kerberos_ticket_cleanup = -1;
+#endif
+#if defined(AFS) || defined(KRB5)
+	options->kerberos_tgt_passing = -1;
+#endif
 #ifdef AFS
-	options->krb4_tgt_passing = -1;
 	options->afs_token_passing = -1;
 #endif
 	options->password_authentication = -1;
@@ -147,8 +140,6 @@ fill_default_server_options(ServerOptions *options)
 		options->ignore_root_rhosts = options->ignore_rhosts;
 	if (options->ignore_user_known_hosts == -1)
 		options->ignore_user_known_hosts = 0;
-	if (options->check_mail == -1)
-		options->check_mail = 0;
 	if (options->print_motd == -1)
 		options->print_motd = 1;
 	if (options->print_lastlog == -1)
@@ -181,34 +172,22 @@ fill_default_server_options(ServerOptions *options)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
-#if defined(KRB4) && defined(KRB5)
-	if (options->kerberos_authentication == -1)
-		options->kerberos_authentication =
-		    (access(KEYFILE, R_OK) == 0) ||
-		    (access(krb5_defkeyname, R_OK) == 0);
-#elif defined(KRB4)
+#if defined(KRB4) || defined(KRB5)
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = (access(KEYFILE, R_OK) == 0);
-#elif defined(KRB5)
-	if (options->kerberos_authentication == -1)
-	  	options->kerberos_authentication = (access(krb5_defkeyname, R_OK) == 0);
+	if (options->kerberos_or_local_passwd == -1)
+		options->kerberos_or_local_passwd = 1;
+	if (options->kerberos_ticket_cleanup == -1)
+		options->kerberos_ticket_cleanup = 1;
 #endif
-#ifdef KRB4
-	if (options->krb4_or_local_passwd == -1)
-		options->krb4_or_local_passwd = 1;
-	if (options->krb4_ticket_cleanup == -1)
-		options->krb4_ticket_cleanup = 1;
-#endif /* KRB4 */
-#ifdef KRB5
-	if (options->krb5_tgt_passing == -1)
-	  	options->krb5_tgt_passing = 1;
-#endif /* KRB5 */
-#ifdef AFS
-	if (options->krb4_tgt_passing == -1)
-		options->krb4_tgt_passing = 0;
+#if defined(AFS) || defined(KRB5)
+	if (options->kerberos_tgt_passing == -1)
+		options->kerberos_tgt_passing = 0;
+#endif
+#ifdef AFS	
 	if (options->afs_token_passing == -1)
 		options->afs_token_passing = k_hasafs();
-#endif /* AFS */
+#endif
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
@@ -248,22 +227,19 @@ typedef enum {
 	sPermitRootLogin, sLogFacility, sLogLevel,
 	sRhostsAuthentication, sRhostsRSAAuthentication, sRSAAuthentication,
 #if defined(KRB4) || defined(KRB5)
-	sKerberosAuthentication,
-#endif /* KRB4 || KRB5 */
-#ifdef KRB4
-	sKrb4OrLocalPasswd, sKrb4TicketCleanup,
-#endif /* KRB4 */
-#ifdef KRB5
-	sKrb5TgtPassing,
-#endif /* KRB5 */
+	sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
+#endif
+#if defined(AFS) || defined(KRB5)
+	sKerberosTgtPassing,
+#endif
 #ifdef AFS
-	sKrb4TgtPassing, sAFSTokenPassing,
-#endif /* AFS */
+	sAFSTokenPassing,
+#endif
 	sChallengeResponseAuthentication,
 	sPasswordAuthentication, sKbdInteractiveAuthentication, sListenAddress,
 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
 	sX11Forwarding, sX11DisplayOffset,
-	sStrictModes, sEmptyPasswd, sKeepAlives, sCheckMail,
+	sStrictModes, sEmptyPasswd, sKeepAlives,
 	sUseLogin, sAllowTcpForwarding,
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
@@ -271,7 +247,8 @@ typedef enum {
 	sBanner, sReverseMappingCheck, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval, 
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
-	sIgnoreRootRhosts
+	sIgnoreRootRhosts,
+	sDeprecated
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -298,23 +275,20 @@ static struct {
 	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
 #if defined(KRB4) || defined(KRB5)
 	{ "kerberosauthentication", sKerberosAuthentication },
-#endif /* KRB4 || KRB5 */
-#ifdef KRB4
-	{ "kerberosorlocalpasswd", sKrb4OrLocalPasswd },
-	{ "kerberosticketcleanup", sKrb4TicketCleanup },
-#endif /* KRB4 */
-#ifdef KRB5
-	{ "kerberos5tgtpassing", sKrb5TgtPassing },
-#endif /* KRB5 */
+	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
+	{ "kerberosticketcleanup", sKerberosTicketCleanup },
+#endif
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", sKerberosTgtPassing },
+#endif
 #ifdef AFS
-	{ "kerberostgtpassing", sKrb4TgtPassing },
 	{ "afstokenpassing", sAFSTokenPassing },
-#endif /* AFS */
+#endif
 	{ "passwordauthentication", sPasswordAuthentication },
 	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication },
 	{ "challengeresponseauthentication", sChallengeResponseAuthentication },
 	{ "skeyauthentication", sChallengeResponseAuthentication }, /* alias */
-	{ "checkmail", sCheckMail },
+	{ "checkmail", sDeprecated },
 	{ "listenaddress", sListenAddress },
 	{ "printmotd", sPrintMotd },
 	{ "printlastlog", sPrintLastLog },
@@ -414,7 +388,7 @@ read_server_config(ServerOptions *options, const char *filename)
 	int linenum, *intptr, value;
 	int bad_options = 0;
 	ServerOpCodes opcode;
-	int i;
+	int i, n;
 
 	f = fopen(filename, "r");
 	if (!f) {
@@ -622,38 +596,29 @@ parse_flag:
 		case sPubkeyAuthentication:
 			intptr = &options->pubkey_authentication;
 			goto parse_flag;
-
 #if defined(KRB4) || defined(KRB5)
 		case sKerberosAuthentication:
 			intptr = &options->kerberos_authentication;
 			goto parse_flag;
-#endif /* KRB4 || KRB5 */
 
-#ifdef KRB4
-		case sKrb4OrLocalPasswd:
-			intptr = &options->krb4_or_local_passwd;
+		case sKerberosOrLocalPasswd:
+			intptr = &options->kerberos_or_local_passwd;
 			goto parse_flag;
 
-		case sKrb4TicketCleanup:
-			intptr = &options->krb4_ticket_cleanup;
+		case sKerberosTicketCleanup:
+			intptr = &options->kerberos_ticket_cleanup;
 			goto parse_flag;
-#endif /* KRB4 */
-
-#ifdef KRB5
-		case sKrb5TgtPassing:
-			intptr = &options->krb5_tgt_passing;
+#endif
+#if defined(AFS) || defined(KRB5)
+		case sKerberosTgtPassing:
+			intptr = &options->kerberos_tgt_passing;
 			goto parse_flag;
-#endif /* KRB5 */
-
+#endif
 #ifdef AFS
-		case sKrb4TgtPassing:
-			intptr = &options->krb4_tgt_passing;
-			goto parse_flag;
-
 		case sAFSTokenPassing:
 			intptr = &options->afs_token_passing;
 			goto parse_flag;
-#endif /* AFS */
+#endif
 
 		case sPasswordAuthentication:
 			intptr = &options->password_authentication;
@@ -661,10 +626,6 @@ parse_flag:
 
 		case sKbdInteractiveAuthentication:
 			intptr = &options->kbd_interactive_authentication;
-			goto parse_flag;
-
-		case sCheckMail:
-			intptr = &options->check_mail;
 			goto parse_flag;
 
 		case sChallengeResponseAuthentication:
@@ -839,20 +800,22 @@ parse_flag:
 			if (!arg || *arg == '\0')
 				fatal("%s line %d: Missing MaxStartups spec.",
 				      filename, linenum);
-			if (sscanf(arg, "%d:%d:%d",
+			if ((n = sscanf(arg, "%d:%d:%d",
 			    &options->max_startups_begin,
 			    &options->max_startups_rate,
-			    &options->max_startups) == 3) {
+			    &options->max_startups)) == 3) {
 				if (options->max_startups_begin >
 				    options->max_startups ||
 				    options->max_startups_rate > 100 ||
 				    options->max_startups_rate < 1)
+					fatal("%s line %d: Illegal MaxStartups spec.",
+					    filename, linenum);
+			} else if (n != 1)
 				fatal("%s line %d: Illegal MaxStartups spec.",
-				      filename, linenum);
-				break;
-			}
-			intptr = &options->max_startups;
-			goto parse_int;
+				    filename, linenum);
+			else
+				options->max_startups = options->max_startups_begin;
+			break;
 
 		case sBanner:
 			charptr = &options->banner;
@@ -877,6 +840,13 @@ parse_flag:
 		case sClientAliveCountMax:
 			intptr = &options->client_alive_count_max;
 			goto parse_int;
+
+		case sDeprecated:
+			log("%s line %d: Deprecated option %s",
+			    filename, linenum, arg);
+			while(arg)
+			    arg = strdelim(&cp);
+			break;
 
 		default:
 			fatal("%s line %d: Missing handler for opcode %s (%d)",

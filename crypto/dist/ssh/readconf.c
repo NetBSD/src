@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.10 2001/06/23 19:37:40 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.11 2001/09/27 03:24:04 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.81 2001/06/23 02:34:30 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.90 2001/09/19 19:24:18 stevesk Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -99,12 +99,12 @@ typedef enum {
 	oChallengeResponseAuthentication, oXAuthLocation,
 #if defined(KRB4) || defined(KRB5)
 	oKerberosAuthentication,
-#endif /* KRB4 || KRB5 */
-#ifdef KRB5
-	oKrb5TgtPassing,
-#endif /* KRB5 */
+#endif
+#if defined(AFS) || defined(KRB5)
+	oKerberosTgtPassing,
+#endif
 #ifdef AFS
-	oKrb4TgtPassing, oAFSTokenPassing,
+	oAFSTokenPassing,
 #endif
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
 	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
@@ -115,7 +115,8 @@ typedef enum {
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
-	oHostKeyAlgorithms, oBindAddress
+	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
+	oClearAllForwardings
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -143,12 +144,13 @@ static struct {
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
 #if defined(KRB4) || defined(KRB5)
 	{ "kerberosauthentication", oKerberosAuthentication },
-#endif /* KRB4 || KRB5 */
-#ifdef KRB5
-  	{ "kerberos5tgtpassing", oKrb5TgtPassing },
-#endif /* KRB5 */
+#endif
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", oKerberosTgtPassing },
+	{ "kerberos5tgtpassing", oKerberosTgtPassing },		/* alias */
+	{ "kerberos4tgtpassing", oKerberosTgtPassing },		/* alias */
+#endif
 #ifdef AFS
-	{ "kerberos4tgtpassing", oKrb4TgtPassing },
 	{ "afstokenpassing", oAFSTokenPassing },
 #endif
 	{ "fallbacktorsh", oFallBackToRsh },
@@ -185,6 +187,8 @@ static struct {
 	{ "preferredauthentications", oPreferredAuthentications },
 	{ "hostkeyalgorithms", oHostKeyAlgorithms },
 	{ "bindaddress", oBindAddress },
+	{ "smartcarddevice", oSmartcardDevice },
+	{ "clearallforwardings", oClearAllForwardings }, 
 	{ NULL, 0 }
 };
 
@@ -228,6 +232,19 @@ add_remote_forward(Options *options, u_short port, const char *host,
 	fwd->host_port = host_port;
 }
 
+static void
+clear_forwardings(Options *options)
+{
+	int i;
+
+	for (i = 0; i < options->num_local_forwards; i++)
+		xfree(options->local_forwards[i].host);
+	options->num_local_forwards = 0;
+	for (i = 0; i < options->num_remote_forwards; i++)
+		xfree(options->remote_forwards[i].host);
+	options->num_remote_forwards = 0;
+}
+
 /*
  * Returns the number of the token pointed to by cp or oBadOption.
  */
@@ -259,6 +276,7 @@ process_config_line(Options *options, const char *host,
 	char buf[256], *s, *string, **charptr, *endofnumber, *keyword, *arg;
 	int opcode, *intptr, value;
 	u_short fwd_port, fwd_host_port;
+	char sfwd_host_port[6];
 
 	s = line;
 	/* Get the keyword. (Each line is supposed to begin with a keyword). */
@@ -340,29 +358,21 @@ parse_flag:
 	case oChallengeResponseAuthentication:
 		intptr = &options->challenge_response_authentication;
 		goto parse_flag;
-
 #if defined(KRB4) || defined(KRB5)
 	case oKerberosAuthentication:
 		intptr = &options->kerberos_authentication;
 		goto parse_flag;
-#endif /* KRB4 || KRB5 */
-
-#ifdef KRB5
-	case oKrb5TgtPassing:
-		intptr = &options->krb5_tgt_passing;
+#endif
+#if defined(AFS) || defined(KRB5)
+	case oKerberosTgtPassing:
+		intptr = &options->kerberos_tgt_passing;
 		goto parse_flag;
-#endif /* KRB5 */
-
+#endif
 #ifdef AFS
-	case oKrb4TgtPassing:
-		intptr = &options->krb4_tgt_passing;
-		goto parse_flag;
-
 	case oAFSTokenPassing:
 		intptr = &options->afs_token_passing;
 		goto parse_flag;
-#endif /* AFS */
-
+#endif
 	case oFallBackToRsh:
 		intptr = &options->fallback_to_rsh;
 		goto parse_flag;
@@ -475,6 +485,10 @@ parse_string:
 		charptr = &options->bind_address;
 		goto parse_string;
 
+	case oSmartcardDevice:
+		charptr = &options->smartcard_device;
+		goto parse_string;
+
 	case oProxyCommand:
 		charptr = &options->proxy_command;
 		string = xstrdup("");
@@ -580,42 +594,34 @@ parse_int:
 			*intptr = (LogLevel) value;
 		break;
 
+	case oLocalForward:
 	case oRemoteForward:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		fwd_port = a2port(arg);
-		if (fwd_port == 0)
-			fatal("%.200s line %d: Badly formatted port number.",
-			      filename, linenum);
+			fatal("%.200s line %d: Missing port argument.",
+			    filename, linenum);
+		if ((fwd_port = a2port(arg)) == 0)
+			fatal("%.200s line %d: Bad listen port.",
+			    filename, linenum);
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing second argument.",
-			      filename, linenum);
-		if (sscanf(arg, "%255[^:]:%hu", buf, &fwd_host_port) != 2)
-			fatal("%.200s line %d: Badly formatted host:port.",
-			      filename, linenum);
-		if (*activep)
-			add_remote_forward(options, fwd_port, buf, fwd_host_port);
-		break;
-
-	case oLocalForward:
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		fwd_port = a2port(arg);
-		if (fwd_port == 0)
-			fatal("%.200s line %d: Badly formatted port number.",
-			      filename, linenum);
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing second argument.",
-			      filename, linenum);
-		if (sscanf(arg, "%255[^:]:%hu", buf, &fwd_host_port) != 2)
-			fatal("%.200s line %d: Badly formatted host:port.",
-			      filename, linenum);
-		if (*activep)
-			add_local_forward(options, fwd_port, buf, fwd_host_port);
+			    filename, linenum);
+		if (sscanf(arg, "%255[^:]:%5[0-9]", buf, sfwd_host_port) != 2 &&
+		    sscanf(arg, "%255[^/]/%5[0-9]", buf, sfwd_host_port) != 2)
+			fatal("%.200s line %d: Bad forwarding specification.",
+			    filename, linenum);
+		if ((fwd_host_port = a2port(sfwd_host_port)) == 0)
+			fatal("%.200s line %d: Bad forwarding port.",
+			    filename, linenum);
+		if (*activep) {
+			if (opcode == oLocalForward)
+				add_local_forward(options, fwd_port, buf,
+				    fwd_host_port);
+			else if (opcode == oRemoteForward)
+				add_remote_forward(options, fwd_port, buf,
+				    fwd_host_port);
+		}
 		break;
 
 	case oDynamicForward:
@@ -627,8 +633,13 @@ parse_int:
 		if (fwd_port == 0)
 			fatal("%.200s line %d: Badly formatted port number.",
 			    filename, linenum);
-		add_local_forward(options, fwd_port, "socks4", 0);
+		if (*activep)
+			add_local_forward(options, fwd_port, "socks4", 0);
 		break;
+
+	case oClearAllForwardings:
+		intptr = &options->clear_forwardings;
+		goto parse_flag;
 
 	case oHost:
 		*activep = 0;
@@ -679,10 +690,10 @@ parse_int:
 /*
  * Reads the config file and modifies the options accordingly.  Options
  * should already be initialized before this call.  This never returns if
- * there is an error.  If the file does not exist, this returns immediately.
+ * there is an error.  If the file does not exist, this returns 0.
  */
 
-void
+int
 read_config_file(const char *filename, const char *host, Options *options)
 {
 	FILE *f;
@@ -693,7 +704,7 @@ read_config_file(const char *filename, const char *host, Options *options)
 	/* Open the file. */
 	f = fopen(filename, "r");
 	if (!f)
-		return;
+		return 0;
 
 	debug("Reading configuration data %.200s", filename);
 
@@ -713,6 +724,7 @@ read_config_file(const char *filename, const char *host, Options *options)
 	if (bad_options > 0)
 		fatal("%s: terminating, %d bad configuration options",
 		      filename, bad_options);
+	return 1;
 }
 
 /*
@@ -737,14 +749,13 @@ initialize_options(Options * options)
 	options->challenge_response_authentication = -1;
 #if defined(KRB4) || defined(KRB5)
 	options->kerberos_authentication = -1;
-#endif /* KRB4 || KRB5 */
-#ifdef KRB5
-	options->krb5_tgt_passing = -1;
-#endif /* KRB5 */
+#endif
+#if defined(AFS) || defined(KRB5)
+	options->kerberos_tgt_passing = -1;
+#endif
 #ifdef AFS
-	options->krb4_tgt_passing = -1;
 	options->afs_token_passing = -1;
-#endif /* AFS */
+#endif
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
 	options->kbd_interactive_devices = NULL;
@@ -778,9 +789,11 @@ initialize_options(Options * options)
 	options->user_hostfile2 = NULL;
 	options->num_local_forwards = 0;
 	options->num_remote_forwards = 0;
+	options->clear_forwardings = -1;
 	options->log_level = (LogLevel) - 1;
 	options->preferred_authentications = NULL;
 	options->bind_address = NULL;
+	options->smartcard_device = NULL;
 }
 
 /*
@@ -812,21 +825,19 @@ fill_default_options(Options * options)
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
 	if (options->challenge_response_authentication == -1)
-		options->challenge_response_authentication = 0;
+		options->challenge_response_authentication = 1;
 #if defined(KRB4) || defined(KRB5)
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 1;
-#endif /* KRB4 || KRB5 */
-#ifdef KRB5
-	if (options->krb5_tgt_passing == -1)
-		options->krb5_tgt_passing = 1;
-#endif /* KRB5 */
+#endif
+#if defined(AFS) || defined(KRB5)
+	if (options->kerberos_tgt_passing == -1)
+		options->kerberos_tgt_passing = 1;
+#endif
 #ifdef AFS
-	if (options->krb4_tgt_passing == -1)
-		options->krb4_tgt_passing = 1;
 	if (options->afs_token_passing == -1)
 		options->afs_token_passing = 1;
-#endif /* AFS */
+#endif
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
@@ -854,7 +865,7 @@ fill_default_options(Options * options)
 	if (options->port == -1)
 		options->port = 0;	/* Filled in ssh_connect. */
 	if (options->connection_attempts == -1)
-		options->connection_attempts = 4;
+		options->connection_attempts = 1;
 	if (options->number_of_password_prompts == -1)
 		options->number_of_password_prompts = 3;
 	/* Selected in ssh_login(). */
@@ -899,6 +910,8 @@ fill_default_options(Options * options)
 		options->user_hostfile2 = _PATH_SSH_USER_HOSTFILE2;
 	if (options->log_level == (LogLevel) - 1)
 		options->log_level = SYSLOG_LEVEL_INFO;
+	if (options->clear_forwardings == 1)
+		clear_forwardings(options);
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.3 2001/04/10 08:07:54 itojun Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.4 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.22 2001/03/20 18:57:04 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.23 2001/06/26 16:15:23 dugsong Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -65,6 +65,22 @@ auth_password(Authctxt *authctxt, const char *password)
 		return 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
+#ifdef KRB5
+	if (options.kerberos_authentication == 1) {
+		int ret = auth_krb5_password(authctxt, password);
+		if (ret == 1 || ret == 0)
+			return ret;
+		/* Fall back to ordinary passwd authentication. */
+	}
+#endif
+#ifdef KRB4
+	if (options.kerberos_authentication == 1) {
+		int ret = auth_krb4_password(authctxt, password);
+		if (ret == 1 || ret == 0)
+			return ret;
+		/* Fall back to ordinary passwd authentication. */
+	}
+#endif
 #ifdef BSD_AUTH
 	if (auth_userokay(pw->pw_name, authctxt->style, "auth-ssh",
 	    (char *)password) == 0)
@@ -72,24 +88,6 @@ auth_password(Authctxt *authctxt, const char *password)
 	else
 		return 1;
 #endif
-
-#ifdef KRB5
-	if (options.kerberos_authentication == 1) {
-	  	if (auth_krb5_password(pw, password))
-		  	return 1;
-		/* Fall back to ordinary passwd authentication. */
-	}
-
-#endif /* KRB5 */
-#ifdef KRB4
-	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(pw, password);
-		if (ret == 1 || ret == 0)
-			return ret;
-		/* Fall back to ordinary passwd authentication. */
-	}
-#endif
-
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
 		return 1;
