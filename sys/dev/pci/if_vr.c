@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.19.2.2 1999/04/26 23:54:36 perry Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.19.2.3 1999/09/22 03:25:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -856,8 +856,9 @@ vr_rxeof(sc)
 		if (ifp->if_bpf) {
 			bpf_mtap(ifp->if_bpf, m);
 			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    (rxstat & (VR_RXSTAT_RX_PHYS | VR_RXSTAT_RX_BROAD |
-				       VR_RXSTAT_RX_MULTI)) == 0) {
+			    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+				   ETHER_ADDR_LEN) != 0) {
 				m_freem(m);
 				continue;
 			}
