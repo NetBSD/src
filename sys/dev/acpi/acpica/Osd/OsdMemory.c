@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.4 2003/03/05 23:00:57 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.4 2003/03/05 23:00:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $"
 #include <dev/acpi/acpica.h>
 
 #include <machine/acpi_machdep.h>
+
+MALLOC_DECLARE(M_ACPI);
 
 /*
  * AcpiOsMapMemory:
@@ -98,7 +100,7 @@ void *
 AcpiOsAllocate(UINT32 Size)
 {
 
-	return (malloc(Size, M_DEVBUF, M_NOWAIT));
+	return (malloc(Size, M_ACPI, M_NOWAIT));
 }
 
 /*
@@ -110,7 +112,7 @@ void
 AcpiOsFree(void *Memory)
 {
 
-	free(Memory, M_DEVBUF);
+	free(Memory, M_ACPI);
 }
 
 
