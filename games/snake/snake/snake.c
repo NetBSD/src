@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)snake.c	5.10 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #endif /* not lint */
 
 /*
@@ -53,9 +53,12 @@ static char sccsid[] = "@(#)snake.c	5.10 (Berkeley) 2/28/91";
  */
 
 #include <sys/param.h>
+
+#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <errno.h>
+#include <time.h>
+
 #include "snake.h"
 #include "pathnames.h"
 
@@ -97,7 +100,6 @@ char **argv;
 	extern char *optarg;
 	extern int optind;
 	int ch, i, j, k;
-	time_t time();
 	long atol();
 	void stop();
 
@@ -537,7 +539,7 @@ struct point *sp, *np;
 	   snake would get too good */
 	struct point d;
 	int w, i, wt[8];
-	double sqrt(), v1, v2, vp, max;
+	double v1, v2, vp, max;
 	point(&d,you.col-sp->col,you.line-sp->line);
 	v1 = sqrt( (double) (d.col*d.col + d.line*d.line) );
 	w=0; 
