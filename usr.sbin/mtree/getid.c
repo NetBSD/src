@@ -1,4 +1,4 @@
-/*	$NetBSD: getid.c,v 1.1 2002/01/24 03:20:12 lukem Exp $	*/
+/*	$NetBSD: getid.c,v 1.2 2002/01/29 00:29:32 lukem Exp $	*/
 /*	from: NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp */
 /*	from: NetBSD: getgrent.c,v 1.41 2002/01/12 23:51:30 lukem Exp */
 
@@ -112,8 +112,8 @@ static	struct passwd	_pw_passwd;	/* password structure */
 static	int		_pw_stayopen;	/* keep fd's open */
 static	int		_pw_filesdone;
 
-static	char		grfile[MAXPATHLEN] = _PATH_GROUP;
-static	char		pwfile[MAXPATHLEN] = _PATH_MASTERPASSWD;
+static	char		grfile[MAXPATHLEN];
+static	char		pwfile[MAXPATHLEN];
 
 static	char		*members[MAXGRP];
 static	char		grline[MAXLINELENGTH];
@@ -208,6 +208,8 @@ grstart(void)
 		rewind(_gr_fp);
 		return 1;
 	}
+	if (grfile[0] == '\0')			/* sanity check */
+		return 0;
 	return (_gr_fp = fopen(grfile, "r")) ? 1 : 0;
 }
 
@@ -347,6 +349,8 @@ pwstart(void)
 		rewind(_pw_fp);
 		return 1;
 	}
+	if (pwfile[0] == '\0')			/* sanity check */
+		return 0;
 	return (_pw_fp = fopen(pwfile, "r")) ? 1 : 0;
 }
 
