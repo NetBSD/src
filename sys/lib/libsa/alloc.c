@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
+/*	$NetBSD: alloc.c,v 1.7 1997/02/16 13:02:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -122,7 +122,7 @@ void *
 alloc(size)
 	unsigned size;
 {
-	register struct fl **f = &freelist, **bestf;
+	register struct fl **f = &freelist, **bestf = NULL;
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
 	char *help;
 	int failed;
