@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.53 1998/07/25 11:58:49 ross Exp $	*/
+/*	$NetBSD: ld.c,v 1.54 1998/08/13 07:34:05 mycroft Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2169,6 +2169,11 @@ consider_relocation(entry, dataseg)
 					get_file_name(entry));
 			pic_type = RELOC_PIC_TYPE(reloc);
 
+#ifdef DEBUG
+			printf("consider_relocation: baserel symbolnum=%d offset=%#x\n",
+				reloc->r_symbolnum, lsp->nzlist.nz_value);
+#endif
+
 		} else if (RELOC_EXTERN_P(reloc)) {
 
 			/*
@@ -2920,6 +2925,11 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			if (symindex >= entry->nsymbols)
 				errx(1, "%s: relocation symbolnum out of range",
 					get_file_name(entry));
+
+#ifdef DEBUG
+			printf("perform_relocation: baserel symbolnum=%d addend=%#x offset=%#x\n",
+				symindex, addend, lsp->nzlist.nz_value);
+#endif
 
 			if (relocatable_output)
 				relocation = addend;
