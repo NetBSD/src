@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.8 2003/02/18 12:26:50 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.9 2003/03/16 18:04:08 jdolecek Exp $
 #
 # Device majors for i386
 #
@@ -97,3 +97,5 @@ device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		
+device-major	vmmon		char 99			vmmon
+device-major	vmnet		char 100		vmnet
