@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.112 2001/12/04 18:38:08 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.113 2002/07/25 19:03:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.112 2001/12/04 18:38:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.113 2002/07/25 19:03:27 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -560,9 +560,9 @@ nfs_mount(mp, path, data, ndp, p)
 	struct nfs_args args;
 	struct mbuf *nam;
 	struct vnode *vp;
-	char pth[MNAMELEN], hst[MNAMELEN];
+	char *pth=NULL, *hst=NULL;
 	size_t len;
-	u_char nfh[NFSX_V3FHMAX];
+	u_char *nfh=NULL;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
 	if (error)
@@ -591,25 +591,36 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
-	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
-		return (EINVAL);
-	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
-	if (error)
-		return (error);
-	error = copyinstr(path, pth, MNAMELEN-1, &len);
-	if (error)
-		return (error);
-	memset(&pth[len], 0, MNAMELEN - len);
-	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
-	if (error)
-		return (error);
-	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
 	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
 	if (error)
 		return (error);
+	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
+		return (EINVAL);
+	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
+	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
+	if (error)
+		goto out;
+	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
+	error = copyinstr(path, pth, MNAMELEN-1, &len);
+	if (error)
+		goto out;
+	memset(&pth[len], 0, MNAMELEN - len);
+	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
+	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
+	if (error)
+		goto out;
+	memset(&hst[len], 0, MNAMELEN - len);
 	args.fh = nfh;
 	error = mountnfs(&args, mp, nam, pth, hst, &vp, p);
+
+    out:
+	FREE(nfh, M_TEMP);
+	if (pth)
+		FREE(pth, M_TEMP);
+	if (hst)
+		FREE(hst, M_TEMP);
+
 	return (error);
 }
 
@@ -628,7 +639,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
-	struct vattr attrs;
+	struct vattr *attrs;
 	struct ucred *cr;
 
 	/* 
@@ -727,15 +738,17 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
-	VOP_GETATTR(*vpp, &attrs, p->p_ucred, p);
+	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
+	VOP_GETATTR(*vpp, attrs, p->p_ucred, p);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = crget();
-		cr->cr_uid = attrs.va_uid;
-		cr->cr_gid = attrs.va_gid;
+		cr->cr_uid = attrs->va_uid;
+		cr->cr_gid = attrs->va_gid;
 		cr->cr_ngroups = 0;
 		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, p, cr);
 		crfree(cr);
 	}
+	FREE(attrs, M_TEMP);
 
 	/*
 	 * A reference count is needed on the nfsnode representing the
