@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.19 1996/03/04 05:04:43 cgd Exp $    */
+/*      $NetBSD: param.h,v 1.20 1996/07/10 23:51:08 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -160,7 +160,6 @@
 #define splsoftclock()  splx(8)		/* IPL08 */
 #define splsoftnet()    splx(0xc)	/* IPL0C */
 #define	splddb()	splx(0xf)	/* IPL0F */
-#define spl4()          splx(0x14)	/* IPL14 */
 #define splbio()        splx(0x15)	/* IPL15 */
 #define splnet()        splx(0x15)	/* IPL15 */
 #define spltty()        splx(0x15)	/* IPL15 */
@@ -168,6 +167,12 @@
 #define splclock()      splx(0x18)	/* IPL18 */
 #define splhigh()       splx(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()
+
+/* These are better to use when playing with VAX buses */
+#define	spl4()		splx(0x14)
+#define	spl5()		splx(0x15)
+#define	spl6()		splx(0x16)
+#define	spl7()		splx(0x17)
 
 #define	ovbcopy(x,y,z)	bcopy(x,y,z)
 
