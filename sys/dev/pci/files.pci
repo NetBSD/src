@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.212 2004/05/28 23:27:28 thorpej Exp $
+#	$NetBSD: files.pci,v 1.213 2004/07/08 19:39:00 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -388,9 +388,12 @@ attach	mpu at fms with mpu_fms
 file	dev/pci/mpu_fms.c		mpu_fms
 
 # Ensoniq AudioPCI S5016
-device	eap: audiobus, auconv, mulaw, ac97, midibus
+device	eap { }: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+attach	joy at eap with joy_eap
+file	dev/pci/joy_eap.c		joy_eap needs-flag
 
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
