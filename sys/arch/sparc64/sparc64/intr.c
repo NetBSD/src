@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2000/09/28 15:38:49 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.34 2000/09/29 00:27:13 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  */
 
 #include "opt_ddb.h"
+#include "pcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +131,11 @@ int
 softintr(fp)
 	void *fp;
 {
+#if NPCONS >0
 	extern void pcons_dopoll __P((void));
 
 	pcons_dopoll();
+#endif
 	return (1);
 }
 
