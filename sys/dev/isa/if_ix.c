@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.11 2001/11/26 23:31:00 fredette Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.12 2001/12/06 13:18:22 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.11 2001/11/26 23:31:00 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.12 2001/12/06 13:18:22 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ ix_attach(parent, self, aux)
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* write test pattern */
-			for(i = 0; i < memsize; i += 2) {
+			for(i = 0, wpat = 1; i < memsize; i += 2) {
 				bus_space_write_2(iot, ioh, IX_DATAPORT, wpat);
 				wpat += 3;
 			}
