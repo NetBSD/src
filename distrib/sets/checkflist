@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.20 2003/08/12 04:20:08 lukem Exp $
+#	$NetBSD: checkflist,v 1.21 2003/08/13 00:03:00 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -116,11 +116,11 @@ if [ -s $SDIR/extra ]; then
 	echo "============  extra files  ==============="
 	echo "Files in DESTDIR but missing from flist."
 	echo "File is obsolete or flist is out of date ?"
-	echo "This is non-fatal."
 	echo "------------------------------------------"
 	cat $SDIR/extra
 	echo "=========  end of extra files  ==========="
 	echo ""
+	es=1
 fi
 
 if [ -s $SDIR/missing ]; then
