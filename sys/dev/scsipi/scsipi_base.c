@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.8 2000/11/20 09:59:26 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.9 2001/01/15 09:22:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #include <dev/scsipi/scsi_message.h>
 
 int	scsipi_complete __P((struct scsipi_xfer *));
+void	scsipi_request_sense __P((struct scsipi_xfer *));
 int	scsipi_enqueue __P((struct scsipi_xfer *));
 void	scsipi_run_queue __P((struct scsipi_channel *chan));
 
@@ -77,6 +78,7 @@ void	scsipi_async_event_max_openings __P((struct scsipi_channel *,
 	    struct scsipi_max_openings *));
 void	scsipi_async_event_xfer_mode __P((struct scsipi_channel *,
 	    struct scsipi_xfer_mode *));
+void	scsipi_async_event_channel_reset __P((struct scsipi_channel *));
 
 struct pool scsipi_xfer_pool;
 
@@ -388,6 +390,8 @@ scsipi_get_xs(periph, flags)
 	 *	  Exception: URGENT xfers can proceed when
 	 *	  active == openings, because we use the opening
 	 *	  of the command we're recovering for.
+	 *	- if the periph has sense pending, only URGENT & REQSENSE
+	 *	  xfers may proceed.
 	 *
 	 *	- If the periph is recovering, only URGENT xfers may
 	 *	  proceed.
@@ -398,11 +402,17 @@ scsipi_get_xs(periph, flags)
 	 */
 	for (;;) {
 		if (flags & XS_CTL_URGENT) {
-			if (periph->periph_active > periph->periph_openings ||
-			    (periph->periph_flags &
-			     PERIPH_RECOVERY_ACTIVE) != 0)
+			if (periph->periph_active > periph->periph_openings)
 				goto wait_for_opening;
-			periph->periph_flags |= PERIPH_RECOVERY_ACTIVE;
+			if (periph->periph_flags & PERIPH_SENSE) {
+				if ((flags & XS_CTL_REQSENSE) == 0)
+					goto wait_for_opening;
+			} else {
+				if ((periph->periph_flags &
+				    PERIPH_RECOVERY_ACTIVE) != 0)
+					goto wait_for_opening;
+				periph->periph_flags |= PERIPH_RECOVERY_ACTIVE;
+			}
 			break;
 		}
 		if (periph->periph_active >= periph->periph_openings ||
@@ -424,9 +434,10 @@ scsipi_get_xs(periph, flags)
 	xs = pool_get(&scsipi_xfer_pool,
 	    ((flags & XS_CTL_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs == NULL) {
-		if (flags & XS_CTL_URGENT)
-			periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
-		else
+		if (flags & XS_CTL_URGENT) {
+			if ((flags & XS_CTL_REQSENSE) == 0)
+				periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
+		} else
 			periph->periph_active--;
 		scsipi_printaddr(periph);
 		printf("unable to allocate %sscsipi_xfer\n",
@@ -480,9 +491,10 @@ scsipi_put_xs(xs)
 	}
 #endif
 
-	if (flags & XS_CTL_URGENT)
-		periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
-	else
+	if (flags & XS_CTL_URGENT) {
+		if ((flags & XS_CTL_REQSENSE) == 0)
+			periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
+	} else
 		periph->periph_active--;
 	if (periph->periph_active == 0 &&
 	    (periph->periph_flags & PERIPH_WAITDRAIN) != 0) {
@@ -1065,20 +1077,6 @@ scsipi_done(xs)
 	/* Mark the command as `done'. */
 	xs->xs_status |= XS_STS_DONE;
 
-	/*
-	 * If it's a user level request, bypass all usual completion
-	 * processing, let the user work it out..  We take reponsibility
-	 * for freeing the xs (and restarting the device's queue) when
-	 * the user returns.
-	 */
-	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
-		splx(s);
-		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
-		scsipi_user_done(xs);
-		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
-		goto out;
-	}
-
 #ifdef DIAGNOSTIC
 	if ((xs->xs_control & (XS_CTL_ASYNC|XS_CTL_POLL)) ==
 	    (XS_CTL_ASYNC|XS_CTL_POLL))
@@ -1097,6 +1095,15 @@ scsipi_done(xs)
 		freezecnt++;
 	if (freezecnt != 0)
 		scsipi_periph_freeze(periph, freezecnt);
+
+	/*
+	 * record the xfer with a pending sense, in case a SCSI reset is
+	 * received before the thread is waked up.
+	 */
+	if (xs->error == XS_BUSY && xs->status == SCSI_CHECK) {
+		periph->periph_flags |= PERIPH_SENSE;
+		periph->periph_xscheck = xs;
+	}
 
 	/*
 	 * If this was an xfer that was not to complete asynchrnously,
@@ -1188,6 +1195,35 @@ scsipi_complete(xs)
 	if ((xs->xs_control & XS_CTL_ASYNC) != 0 && xs->bp == NULL)
 		panic("scsipi_complete: XS_CTL_ASYNC but no buf");
 #endif
+	/*
+	 * If command terminated with a CHECK CONDITION, we need to issue a
+	 * REQUEST_SENSE command. Once the REQUEST_SENSE has been processed
+	 * we'll have the real status.
+	 * Must be processed at splbio() to avoid missing a SCSI bus reset
+	 * for this command.
+	 */
+	s = splbio();
+	if (xs->error == XS_BUSY && xs->status == SCSI_CHECK) {
+		/* request sense for a request sense ? */
+		if (xs->xs_control & XS_CTL_REQSENSE) {
+			scsipi_printaddr(periph);
+			printf("request sense for request sense\n");
+			return EIO;
+		}
+		scsipi_request_sense(xs);
+	}
+	splx(s);
+	/*
+	 * If it's a user level request, bypass all usual completion
+	 * processing, let the user work it out..  
+	 */
+	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
+		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
+		scsipi_user_done(xs);
+		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
+		return 0;
+	}
+
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -1265,11 +1301,19 @@ scsipi_complete(xs)
 		break;
 
 	case XS_RESET:
-		if (xs->xs_retries != 0) {
-			xs->xs_retries--;
-			error = ERESTART;
-		} else
-			error = EIO;
+		if (xs->xs_control & XS_CTL_REQSENSE) {
+			/*
+			 * request sense interrupted by reset: signal it
+			 * with EINTR return code.
+			 */
+			error = EINTR;
+		} else {
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
+		}
 		break;
 
 	default:
@@ -1325,6 +1369,59 @@ scsipi_complete(xs)
 	splx(s);
 
 	return (error);
+}
+
+/*
+ * Issue a request sense for the given scsipi_xfer. Called when the xfer
+ * returns with a CHECK_CONDITION status. Must be called in valid thread
+ * context and at splbio().
+ */
+
+void
+scsipi_request_sense(xs)
+	struct scsipi_xfer *xs;
+{
+	struct scsipi_periph *periph = xs->xs_periph;
+	int flags, error;
+	struct scsipi_sense cmd;
+
+	periph->periph_flags |= PERIPH_SENSE;
+
+	/* if command was polling, request sense will too */
+	flags = xs->xs_control & XS_CTL_POLL;
+	/* Polling commands can't sleep */
+	if (flags)
+		flags |= XS_CTL_NOSLEEP;
+
+	flags |= XS_CTL_REQSENSE | XS_CTL_URGENT | XS_CTL_DATA_IN |
+	    XS_CTL_THAW_PERIPH | XS_CTL_FREEZE_PERIPH;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = REQUEST_SENSE;
+	cmd.length = sizeof(struct scsipi_sense_data);
+
+	error = scsipi_command(periph,
+	    (struct scsipi_generic *) &cmd, sizeof(cmd),
+	    (u_char*)&xs->sense.scsi_sense, sizeof(struct scsipi_sense_data),
+	    0, 1000, NULL, flags);
+	periph->periph_flags &= ~PERIPH_SENSE;
+	periph->periph_xscheck = NULL;
+	switch(error) {
+	case 0:
+		/* we have a valid sense */
+		xs->error = XS_SENSE;
+		return;
+	case EINTR:
+		/* REQUEST_SENSE interrupted by bus reset. */
+		xs->error = XS_RESET;
+		return;
+	default:
+		 /* Notify that request sense failed. */
+		xs->error = XS_DRIVER_STUFFUP;
+		scsipi_printaddr(periph);
+		printf("request sense failed with error %d\n", error);
+		return;
+	}
 }
 
 /*
@@ -1428,7 +1525,8 @@ scsipi_run_queue(chan)
 			if ((periph->periph_active > periph->periph_openings) ||			    periph->periph_qfreeze != 0)
 				continue;
 
-			if ((periph->periph_flags & PERIPH_RECOVERING) != 0 &&
+			if ((periph->periph_flags &
+			    (PERIPH_RECOVERING | PERIPH_SENSE)) != 0 &&
 			    (xs->xs_control & XS_CTL_URGENT) == 0)
 				continue;
 
@@ -1532,7 +1630,8 @@ scsipi_execute_xs(xs)
 	 *	  the xfer to the appropriate byte for the tag
 	 *	  message.
 	 */
-	if ((PERIPH_XFER_MODE(periph) & PERIPH_CAP_TQING) == 0) {
+	if ((PERIPH_XFER_MODE(periph) & PERIPH_CAP_TQING) == 0 ||
+		(xs->xs_control & XS_CTL_REQSENSE)) {
 		xs->xs_control &= ~XS_CTL_TAGMASK;
 		xs->xs_tag_type = 0;
 	} else {
@@ -1757,6 +1856,9 @@ scsipi_async_event(chan, event, arg)
 		scsipi_async_event_xfer_mode(chan,
 		    (struct scsipi_xfer_mode *)arg);
 		break;
+	case ASYNC_EVENT_RESET:
+		scsipi_async_event_channel_reset(chan);
+		break;
 	}
 	splx(s);
 }
@@ -1952,6 +2054,47 @@ scsipi_set_xfer_mode(chan, target, immed)
 		    XS_CTL_IGNORE_MEDIA_CHANGE);
 	}
 }
+
+/*
+ * scsipi_channel_reset:
+ *
+ *	handle scsi bus reset
+ */
+void
+scsipi_async_event_channel_reset(chan)
+	struct scsipi_channel *chan;
+{
+	struct scsipi_xfer *xs, *xs_next;
+	struct scsipi_periph *periph;
+	int target, lun;
+
+	/*
+	 * Channel has been reset. Also mark as reset pending REQUEST_SENSE
+	 * commands; as the sense is not available any more.
+	 */
+
+	for (xs = TAILQ_FIRST(&chan->chan_queue); xs != NULL; xs = xs_next) {
+		xs_next = TAILQ_NEXT(xs, channel_q);
+		if (xs->xs_control & XS_CTL_REQSENSE) {
+			xs->error = XS_RESET;
+			scsipi_done(xs);
+		}
+	}
+	/* Catch xs with pending sense which may not have a REQSENSE xs yet */
+	for (target = 0; target < chan->chan_ntargets; target++) {
+		if (target == chan->chan_id)
+			continue;
+		for (lun = 0; lun <  chan->chan_nluns; lun++) {
+			periph = chan->chan_periphs[target][lun];
+			if (periph) {
+				xs = periph->periph_xscheck;
+				if (xs)
+					xs->error = XS_RESET;
+			}
+		}
+	}
+}
+
 
 /*
  * scsipi_adapter_addref:
