@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.6 1997/01/11 02:06:40 tls Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.7 1997/07/20 20:32:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: gen_subs.c,v 1.6 1997/01/11 02:06:40 tls Exp $";
+__RCSID("$NetBSD: gen_subs.c,v 1.7 1997/07/20 20:32:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,10 +139,11 @@ ls_list(arcn, now)
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
 #		ifdef NET2_STAT
 		(void)printf("%4u,%4u ", MAJOR(sbp->st_rdev),
-#		else
-		(void)printf("%4lu,%4lu ", MAJOR(sbp->st_rdev),
-#		endif
 		    MINOR(sbp->st_rdev));
+#		else
+		(void)printf("%4lu,%4lu ", (long) MAJOR(sbp->st_rdev),
+		    (long) MINOR(sbp->st_rdev));
+#		endif
 	else {
 #		ifdef NET2_STAT
 		(void)printf("%9lu ", sbp->st_size);
