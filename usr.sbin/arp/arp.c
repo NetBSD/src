@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.19 1997/10/16 23:46:42 lukem Exp $ */
+/*	$NetBSD: arp.c,v 1.20 1997/10/18 07:32:17 lukem Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.19 1997/10/16 23:46:42 lukem Exp $");
+__RCSID("$NetBSD: arp.c,v 1.20 1997/10/18 07:32:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,12 +501,14 @@ atosdl(s, sdl)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: arp [-n] hostname\n");
-	(void)fprintf(stderr, "usage: arp [-n] -a\n");
-	(void)fprintf(stderr, "usage: arp -d hostname\n");
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-n] hostname\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-n] -a\n", __progname);
+	(void)fprintf(stderr, "usage: %s -d hostname\n", __progname);
 	(void)fprintf(stderr,
-	    "usage: arp -s hostname ether_addr [temp] [pub]\n");
-	(void)fprintf(stderr, "usage: arp -f filename\n");
+	    "usage: %s -s hostname ether_addr [temp] [pub]\n", __progname);
+	(void)fprintf(stderr, "usage: %s -f filename\n", __progname);
 	exit(1);
 }
 
