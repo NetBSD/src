@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.135 2003/10/16 10:57:35 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.136 2003/10/17 03:58:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.135 2003/10/16 10:57:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.136 2003/10/17 03:58:23 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2344,7 +2344,6 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	ostate = ic->ic_state;
 	DPRINTF(("wi_newstate: %s -> %s\n", stname[ostate], stname[nstate]));
 
-	ic->ic_state = nstate;
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
@@ -2394,6 +2393,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	}
 
+	ic->ic_state = nstate;
 	/* skip standard ieee80211 handling */
 	return 0;
 }
