@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.41 2003/01/31 05:25:57 thorpej Exp $	*/
+/*	$NetBSD: ehci.c,v 1.42 2003/02/04 18:41:20 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.41 2003/01/31 05:25:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.42 2003/02/04 18:41:20 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1306,7 +1306,7 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 
 	SPLUSBCHECK;
 	/* XXX */
-	for (p = head; p == NULL && p->next != sqh; p = p->next)
+	for (p = head; p != NULL && p->next != sqh; p = p->next)
 		;
 	if (p == NULL)
 		panic("ehci_rem_qh: ED not found");
