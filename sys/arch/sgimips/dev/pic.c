@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.6 2004/04/10 19:07:58 pooka Exp $	 */
+/*	$NetBSD: pic.c,v 1.7 2004/04/11 00:44:47 pooka Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.7 2004/04/11 00:44:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
