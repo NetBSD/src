@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.55 2002/10/23 09:14:01 jdolecek Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.56 2003/01/01 16:32:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.55 2002/10/23 09:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.56 2003/01/01 16:32:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,8 @@ USB_ATTACH(ulpt)
 		    id->bInterfaceNumber == ifcd->bInterfaceNumber) {
 			if (id->bInterfaceClass == UICLASS_PRINTER &&
 			    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
-			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
+			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI /*||
+			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284*/))
 				goto found;
 			altno++;
 		}
