@@ -138,6 +138,8 @@ MY(write_object_contents) (abfd)
     break;
   }
 
+  WRITE_HEADERS(abfd, execp);
+
   /* The NetBSD magic number is always big-endian */
 #ifndef TARGET_IS_BIG_ENDIAN_P
   /* XXX aren't there any macro to change byteorder of a word independent of
@@ -145,9 +147,16 @@ MY(write_object_contents) (abfd)
   execp->a_info
     = (execp->a_info & 0xff) << 24 | (execp->a_info & 0xff00) << 8
       | (execp->a_info & 0xff0000) >> 8 | (execp->a_info & 0xff000000) >> 24;
-#endif
 
-  WRITE_HEADERS(abfd, execp);
+  /* XXX Write a new header with the right endianess for the magic number.
+     We must do it this way, since the WRITE_HEADER macro is dependent on
+     having "wrong" endianess... */
+  NAME(aout,swap_exec_header_out) (abfd, execp, &exec_bytes);
+  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0) return false;
+  if (bfd_write ((PTR) &exec_bytes, 1, EXEC_BYTES_SIZE, abfd)
+      != EXEC_BYTES_SIZE)
+    return false;
+#endif
 
   return true;
 }
