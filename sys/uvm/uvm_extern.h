@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.32 1999/07/02 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.33 1999/07/17 21:35:49 thorpej Exp $	*/
 
 /*
  *
@@ -133,6 +133,12 @@
  * flags for uvm_pagealloc_strat()
  */
 #define UVM_PGA_USERESERVE		0x0001
+
+/*
+ * lockflags that control the locking behavior of various functions.
+ */
+#define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
+#define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
 
 /*
  * structures
@@ -325,7 +331,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t, boolean_t));
+				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
