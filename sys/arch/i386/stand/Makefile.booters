@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.13 1998/03/27 01:32:53 cgd Exp $
+#	$NetBSD: Makefile.booters,v 1.14 1998/07/08 17:47:42 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -47,7 +47,7 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-vers.o:
+vers.o: version
 	sh ${I386_STAND_DIR}/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
