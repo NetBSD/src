@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.8 2002/10/11 21:54:57 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.9 2002/10/17 04:45:04 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.8 2002/10/11 21:54:57 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.9 2002/10/17 04:45:04 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -331,8 +331,7 @@ intercept_run(int bg, int fd, uid_t uid, gid_t gid,
 	/* Choose the pid of the systraced process */
 	pid = bg ? pid : cpid;
 
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		err(1, "intercept_getpid");
+	icpid = intercept_getpid(pid);
 	
 	/* Set up user related information */
 	if (!uid && !gid) {
@@ -439,8 +438,7 @@ intercept_attachpid(int fd, pid_t pid, char *name)
 	if (res == -1)
 		return (-1);
 
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		return (-1);
+	icpid = intercept_getpid(pid);
 
 	if ((icpid->newname = strdup(name)) == NULL)
 		err(1, "strdup");
@@ -582,8 +580,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 	}
 
 	/* Update cwd for process */
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		err(1, "intercept_getpid");
+	icpid = intercept_getpid(pid);
 	if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
 		errx(1, "cwd too long");
 
