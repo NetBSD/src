@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.56 2003/12/28 12:31:30 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.57 2004/01/03 14:11:36 soren Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.56 2003/12/28 12:31:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.57 2004/01/03 14:11:36 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,12 +628,14 @@ auich_reset_codec(void *v)
 		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
 		/* XXX: should not attach the audio device */
 	} else {
+#ifdef DEBUG
 		if (status & ICH_SCR)
 			printf("%s: The 2nd codec is ready.\n",
 			       sc->sc_dev.dv_xname);
 		if (status & ICH_S2CR)
 			printf("%s: The 3rd codec is ready.\n",
 			       sc->sc_dev.dv_xname);
+#endif
 	}
 }
 
