@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.15 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.16 1999/01/29 08:11:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.15 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.16 1999/01/29 08:11:36 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,15 +54,17 @@ __RCSID("$NetBSD: malloc.c,v 1.15 1998/11/15 17:13:51 christos Exp $");
  */
 
 #include "namespace.h"
-#if defined(DEBUG) || defined(RCHECK) || defined(MSTATS)
+#include <sys/types.h>
+#if defined(DEBUG) || defined(RCHECK)
+#include <sys/uio.h>
+#endif
+#if defined(RCHECK) || defined(MSTATS)
 #include <stdio.h>
 #endif
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define	NULL 0
+#include "reentrant.h"
 
 
 /*
@@ -92,7 +94,9 @@ union	overhead {
 };
 
 #define	MAGIC		0xef		/* magic # on accounting info */
+#ifdef RCHECK
 #define RMAGIC		0x5555		/* magic # on range info */
+#endif
 
 #ifdef RCHECK
 #define	RSLOP		sizeof (u_short)
@@ -117,26 +121,53 @@ static	int pagebucket;			/* page size bucket */
  * for a given block size.
  */
 static	u_int nmalloc[NBUCKETS];
-#include <stdio.h>
+#endif
+
+#ifdef _REENT
+static	mutex_t malloc_mutex = MUTEX_INITIALIZER;
 #endif
 
 static void morecore __P((int));
 static int findbucket __P((union overhead *, int));
 #ifdef MSTATS
-void mstats __P((char *));
+void mstats __P((const char *));
 #endif
 
 #if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch(__STRING(p))
 
-static botch __P((char *));
+static void botch __P((const char *));
 
-static
+/*
+ * NOTE: since this may be called while malloc_mutex is locked, stdio must not
+ *       be used in this function.
+ */
+static void
 botch(s)
-	char *s;
+	const char *s;
 {
-	fprintf(stderr, "\r\nassertion botched: %s\r\n", s);
- 	(void) fflush(stderr);		/* just in case user buffered it */
+	struct iovec iov[3];
+
+	iov[0].iov_base	= "\nassertion botched: ";
+	iov[0].iov_len	= 20;
+	iov[1].iov_base	= (void *)s;
+	iov[1].iov_len	= strlen(s);
+	iov[2].iov_base	= "\n";
+	iov[2].iov_len	= 1;
+
+	/*
+	 * This place deserves a word of warning: a cancellation point will
+	 * occur when executing writev(), and we might be still owning
+	 * malloc_mutex.  At this point we need to disable cancellation
+	 * until `after' abort() because i) establishing a cancellation handler
+	 * might, depending on the implementation, result in another malloc()
+	 * to be executed, and ii) it is really not desirable to let execution
+	 * continue.  `Fix me.'
+	 * 
+	 * Note that holding mutex_lock during abort() is safe.
+	 */
+
+	(void)writev(STDERR_FILENO, iov, 3);
 	abort();
 }
 #else
@@ -152,19 +183,24 @@ malloc(nbytes)
   	long n;
 	unsigned amt;
 
+	mutex_lock(&malloc_mutex);
+
 	/*
 	 * First time malloc is called, setup page size and
 	 * align break pointer so all data will be page aligned.
 	 */
 	if (pagesz == 0) {
 		pagesz = n = getpagesize();
+		ASSERT(pagesz > 0);
 		op = (union overhead *)(void *)sbrk(0);
   		n = n - sizeof (*op) - ((long)op & (n - 1));
 		if (n < 0)
 			n += pagesz;
-  		if (n) {
-  			if (sbrk((int)n) == (char *)-1)
+		if (n) {
+			if (sbrk((int)n) == (void *)-1) {
+				mutex_unlock(&malloc_mutex);
 				return (NULL);
+			}
 		}
 		bucket = 0;
 		amt = 8;
@@ -204,8 +240,10 @@ malloc(nbytes)
 	 */
   	if ((op = nextf[bucket]) == NULL) {
   		morecore(bucket);
-  		if ((op = nextf[bucket]) == NULL)
+  		if ((op = nextf[bucket]) == NULL) {
+			mutex_unlock(&malloc_mutex);
   			return (NULL);
+		}
 	}
 	/* remove from linked list */
   	nextf[bucket] = op->ov_next;
@@ -214,6 +252,7 @@ malloc(nbytes)
 #ifdef MSTATS
   	nmalloc[bucket]++;
 #endif
+	mutex_unlock(&malloc_mutex);
 #ifdef RCHECK
 	/*
 	 * Record allocated size of block and
@@ -223,7 +262,7 @@ malloc(nbytes)
 	op->ov_rmagic = RMAGIC;
   	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-  	return ((char *)(void *)(op + 1));
+  	return ((void *)(op + 1));
 }
 
 /*
@@ -276,7 +315,7 @@ void
 free(cp)
 	void *cp;
 {   
-  	long size;
+	long size;
 	union overhead *op;
 
   	if (cp == NULL)
@@ -294,11 +333,13 @@ free(cp)
 #endif
   	size = op->ov_index;
   	ASSERT(size < NBUCKETS);
-	op->ov_next = nextf[(size_t)size];	/* also clobbers ov_magic */
-  	nextf[(size_t)size] = op;
+	mutex_lock(&malloc_mutex);
+	op->ov_next = nextf[(unsigned int)size];/* also clobbers ov_magic */
+  	nextf[(unsigned int)size] = op;
 #ifdef MSTATS
   	nmalloc[(size_t)size]--;
 #endif
+	mutex_unlock(&malloc_mutex);
 }
 
 /*
@@ -322,16 +363,17 @@ realloc(cp, nbytes)
   	u_long onb;
 	long i;
 	union overhead *op;
-  	char *res;
+	char *res;
 	int was_alloced = 0;
 
   	if (cp == NULL)
   		return (malloc(nbytes));
 	if (nbytes == 0) {
 		free (cp);
-		return NULL;
+		return (NULL);
 	}
 	op = (union overhead *)(void *)((caddr_t)cp - sizeof (union overhead));
+	mutex_lock(&malloc_mutex);
 	if (op->ov_magic == MAGIC) {
 		was_alloced++;
 		i = op->ov_index;
@@ -373,14 +415,29 @@ realloc(cp, nbytes)
 			op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
 			*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-			return(cp);
-		} else
+			mutex_unlock(&malloc_mutex);
+			return (cp);
+			
+		}
+#ifndef _REENT
+		else
 			free(cp);
+#endif
 	}
-  	if ((res = malloc(nbytes)) == NULL)
-  		return (NULL);
-  	if (cp != res)		/* common optimization if "compacting" */
-		memmove(res, cp, (size_t)((nbytes < onb) ? nbytes : onb));
+	mutex_unlock(&malloc_mutex);
+	if ((res = malloc(nbytes)) == NULL) {
+#ifdef _REENT
+		free(cp);
+#endif
+		return (NULL);
+	}
+#ifndef _REENT
+	if (cp != res)		/* common optimization if "compacting" */
+		(void)memmove(res, cp, (size_t)((nbytes < onb) ? nbytes : onb));
+#else
+	(void)memmove(res, cp, (size_t)((nbytes < onb) ? nbytes : onb));
+	free(cp);
+#endif
   	return (res);
 }
 
