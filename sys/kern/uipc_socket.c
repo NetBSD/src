@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.51 2000/12/10 23:16:28 fvdl Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.52 2001/01/22 18:14:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -262,7 +262,7 @@ soaccept(so, nam)
 	struct mbuf *nam;
 {
 	int s = splsoftnet();
-	int error;
+	int error = 0;
 
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept: !NOFDREF");
@@ -271,7 +271,8 @@ soaccept(so, nam)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
 		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct proc *)0);
 	else
-		error = 0;
+		nam->m_len = 0;
+
 	splx(s);
 	return (error);
 }
