@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 1997/07/22 07:36:18 jonathan Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 1997/08/12 06:05:28 jonathan Exp $	*/
  
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -35,6 +35,10 @@
  *   15% faster than version 1 ("Usenix version").
  *   150% faster than Ultrix 4.2A checksum routine.
  *
+ * BSD changes: Jonathan Stone, Stanford Distributed Systems Group, 1997-08-11
+ *
+ *   re-written for incremental checksumming of BSD mbufs
+ *   and byteswap out-of-phase mbuf sums.
  */
 
 #include <sys/param.h>
@@ -54,8 +58,17 @@ union memptr {
 static __inline u_int32_t fastsum __P((union memptr, int n, u_int sum, int odd));
 
 
+/*
+ * Compute 1's complement sum over a contiguous block at 'buf' for 'n' bytes.
+ *
+ * Add the resulting checksum into 'oldsum' using 1's complement.
+ * 'odd_aligned' is a boolean which if set, indicate the data in 'buf'
+ * starts at an odd byte alignment within the containing packet,
+ * and so we must byteswap the memory-aligned 1's-complement sum
+ * over the data before adding it to `oldsum'.
+ */
 u_int32_t
-fastsum(buf, n, oldsum, odd)
+fastsum(buf, n, oldsum, odd_aligned)
 	union memptr buf;
 	int n;
 	unsigned int oldsum;
@@ -64,11 +77,23 @@ fastsum(buf, n, oldsum, odd)
 	unsigned long w0, w1;
 	register unsigned int sum = 0;
 
+	/* Align to 32 bits. */
 	if (buf.u & 0x3) {
-		/* 16-bit-align. Have to do this first so short buffers done right. */
+		/*
+	         * 16-bit-align.
+		 * If buf is odd-byte-aligned, add the byte and toggle
+		 * our byte-alignment flag.
+		 *     If we were odd-aligned on entry, an odd-aligned
+		 * byte  makes a 16-bit word with the previous odd byte,
+		 * unaligned, making us aligned again.
+	 	 *     If we were not already odd-aligned, we are now,
+		 * and we must byteswap our 16-bit-aligned sum of
+		 *'buf' before accumulating it.
+		 */
 		if (buf.u & 0x1) {
 			sum += (*(buf.c++) << 8);
 			n -= 1;
+			odd_aligned = !odd_aligned;
 		}
 		
 		/* 32-bit-align */
@@ -182,14 +207,14 @@ fastsum(buf, n, oldsum, odd)
 
 	/*
 	 * compensate for a trailing byte in previous mbuf
-	 * by byteswapping the aligned sum of this mbuf.
+	 * by byteswapping the memory-aligned sum of this mbuf.
  	 */
-	if (odd & 0x01) {
+	if (odd_aligned) {
 		sum = (sum & 0xffff) + (sum >> 16);
 		sum = (sum & 0xffff) + (sum >> 16);
 		sum = oldsum + ((sum >> 8) & 0xff) + ((sum & 0xff) << 8);
 	} else {
-	/* add upper and lower halfwords together to get full sum */
+		/* add upper and lower halfwords together to get full sum */
 		sum = oldsum + sum;
 		sum = (sum & 0xffff) + (sum >> 16);
 	}
@@ -212,7 +237,7 @@ in_cksum(m, len)
 	register /*u_short **/ union memptr w;
 	register u_int32_t sum = 0;
 	register int mlen;
-	register int odd = 0;
+	register int odd_aligned = 0;
 
 	for ( ; m && len; m = m->m_next) {
 
@@ -222,9 +247,9 @@ in_cksum(m, len)
 		if (mlen > len)
 			mlen = len;
 		w.c = mtod(m, u_char *);
-		sum = fastsum(w, mlen, sum, odd);
+		sum = fastsum(w, mlen, sum, odd_aligned);
 		len -= mlen;
-		odd += mlen;
+		odd_aligned = (odd_aligned + mlen) & 0x01;
 	}
 	if (len != 0) {
 		printf("in_cksum: out of data, %d\n", len);
