@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.9 2001/09/17 16:26:56 toshii Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.10 2003/04/21 07:58:55 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.9 2001/09/17 16:26:56 toshii Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.10 2003/04/21 07:58:55 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,6 +224,8 @@ static u_int8_t bootcode[] = {
     0
 };
 
+static int	got_siginfo = 0; /* received a SIGINFO */
+
 static void check_mounted(const char *, mode_t);
 static void getstdfmt(const char *, struct bpb *);
 static void getdiskinfo(int, const char *, const char *, int,
@@ -235,6 +237,7 @@ static int oklabel(const char *);
 static void mklabel(u_int8_t *, const char *);
 static void setstr(u_int8_t *, const char *, size_t);
 static void usage(void);
+static void infohandler(int sig);
 
 /*
  * Construct a FAT12, FAT16, or FAT32 file system.
@@ -567,7 +570,14 @@ main(int argc, char *argv[])
 	if (!(img = malloc(bpb.bps)))
 	    err(1, NULL);
 	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;
+	signal(SIGINFO, infohandler);
 	for (lsn = 0; lsn < dir + (fat == 32 ? bpb.spc : rds); lsn++) {
+	    if (got_siginfo) {
+		fprintf(stderr,"%s: writing sector %u of %u (%u%%)\n",
+		    fname,lsn,(dir + (fat == 32 ? bpb.spc : rds)),
+		    (lsn*100)/(dir + (fat == 32 ? bpb.spc : rds)));
+		got_siginfo = 0;
+	    }
 	    x = lsn;
 	    if (opt_B &&
 		fat == 32 && bpb.bkbs != MAXU16 &&
@@ -958,4 +968,10 @@ usage(void)
     fprintf(stderr, "\t-s file system size (sectors)\n");
     fprintf(stderr, "\t-u sectors/track\n");
     exit(1);
+}
+
+void
+infohandler(int sig)
+{
+    got_siginfo = 1;
 }
