@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.3 1993/10/22 21:00:13 pk Exp $
+ *	$Id: rrs.c,v 1.4 1993/10/27 00:53:49 pk Exp $
  */
 
 #include <sys/param.h>
@@ -234,7 +234,7 @@ struct localsymbol	*lsp;
 			 * If the load address is known (entry_symbol), this
 			 * slot will have its final value set by `claim_got'
 			 */
-			if (!entry_symbol || (link_mode & SYMBOLIC))
+			if ((link_mode & SHAREABLE) || (link_mode & SYMBOLIC))
 				reserved_rrs_relocs++;
 		}
 
@@ -338,7 +338,7 @@ printf("claim_rrs_jmpslot: %s(%d) -> offset %x (textreloc %#x)\n",
 		"internal error: claim_rrs_jmpslot: %s: jmpslot_offset == -1\n",
 		sp->name);
 
-	if (link_mode & SYMBOLIC) {
+	if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
 		if (!sp->defined)
 			error("Cannot reduce symbol %s", sp->name);
 
@@ -352,9 +352,15 @@ printf("claim_rrs_jmpslot: %s(%d) -> offset %x (textreloc %#x)\n",
 		md_make_jmpslot( rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				sp->jmpslot_offset,
 				claimed_rrs_relocs);
-
 	}
 
+	if (rrs_section_type == RRS_PARTIAL)
+		/* PLT is self-contained */
+		return rrs_dyn2.ld_plt + sp->jmpslot_offset;
+
+	/*
+	 * Install a run-time relocation for this PLT entry.
+	 */
 	r = rrs_next_reloc();
 	sp->jmpslot_claimed = 1;
 
@@ -385,7 +391,8 @@ struct localsymbol	*lsp;
 long			addend;
 {
 	struct relocation_info	*r;
-	symbol *sp = lsp->symbol;
+	symbol	*sp = lsp->symbol;
+	int	reloc_type = 0;
 
 #ifdef DEBUG
 printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
@@ -396,42 +403,63 @@ printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
 		"internal error: claim_rrs_gotslot: %s: gotslot_offset == -1\n",
 		sp->name);
 
-	if (entry_symbol || (link_mode & SYMBOLIC)) {
+	if (sp->defined &&
+		(!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))) {
 
-		if (!sp->defined)
-			error("Cannot reduce symbol %s", sp->name);
+		/*
+		 * Reduce to just a base-relative translation.
+		 */
 
 		*(got_t *)((long)rrs_got + sp->gotslot_offset) =
 						sp->value + addend;
-#if 0
-		if (sp->defined == N_TEXT + N_EXT)
-			*(got_t *)((long)rrs_got + sp->gotslot_offset) += addend;
-#endif
+		reloc_type = RELTYPE_RELATIVE;
+
+	} else if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
+		/*
+		 * SYMBOLIC: all symbols must be known.
+		 * RRS_PARTIAL: we don't link against shared objects,
+		 * so again all symbols must be known.
+		 */
+		error("Cannot reduce symbol %s", sp->name);
 
 	} else {
 
-		*(got_t *)((long)rrs_got + sp->gotslot_offset) = addend;
+		/*
+		 * This gotslot will be updated with symbol value at run-rime.
+		 */
 
+		*(got_t *)((long)rrs_got + sp->gotslot_offset) = addend;
+	}
+
+	if (rrs_section_type == RRS_PARTIAL) {
+		/*
+		 * Base address is known, gotslot should be fully
+		 * relocated by now.
+		 * NOTE: RRS_PARTIAL implies !SHAREABLE.
+		 */
+		if (!sp->defined)
+			error("Cannot reduce symbol %s", sp->name);
+		return sp->gotslot_offset;
 	}
 
 	if (sp->gotslot_claimed)
+		/* This symbol already passed here before. */
 		return sp->gotslot_offset;
 
-	/* Claim a relocation entry */
+	/*
+	 * Claim a relocation entry.
+	 * If symbol is defined and in "main" (!SHAREABLE)
+	 * we still put out a relocation as we cannot easily
+	 * undo the allocation.
+	 * `RELTYPE_RELATIVE' relocations have the external bit off
+	 * as no symbol need be looked up at run-time.
+	 */
 	r = rrs_next_reloc();
 	sp->gotslot_claimed = 1;
 	r->r_address = rrs_dyn2.ld_got + sp->gotslot_offset;
 	RELOC_SYMBOL(r) = sp->rrs_symbolnum;
-
-	if (entry_symbol || (link_mode & SYMBOLIC)) {
-		if (!sp->defined)
-			error("Cannot reduce symbol %s", sp->name);
-		RELOC_EXTERN_P(r) = 0;
-		md_make_gotreloc(rp, r, RELTYPE_RELATIVE);
-	} else {
-		RELOC_EXTERN_P(r) = 1;
-		md_make_gotreloc(rp, r, 0);
-	}
+	RELOC_EXTERN_P(r) = !(reloc_type == RELTYPE_RELATIVE);
+	md_make_gotreloc(rp, r, reloc_type);
 
 	return sp->gotslot_offset;
 }
@@ -466,11 +494,12 @@ printf("claim_rrsinternal__gotslot: slot offset %#x, addend = %#x\n",
 
 	*(long *)((long)rrs_got + lsp->gotslot_offset) = addend;
 
-	if (entry_symbol /* || (link_mode & SYMBOLIC)??? */ )
+	if (!(link_mode & SHAREABLE))
 		return lsp->gotslot_offset;
 
-
-	/* Relocation entry needed for this static GOT entry */
+	/*
+	 * Relocation entry needed for this static GOT entry.
+	 */
 	if (lsp->gotslot_claimed)
 		return lsp->gotslot_offset;
 
@@ -581,7 +610,7 @@ consider_rrs_section_lengths()
 
 	if (relocatable_output)
 		rrs_section_type = RRS_NONE;
-	else if (entry_symbol == NULL)
+	else if (link_mode & SHAREABLE)
 		rrs_section_type = RRS_FULL;
 	else if (number_of_shobjs == 0 /*&& !(link_mode & DYNAMIC)*/) {
 		/*
@@ -608,7 +637,7 @@ consider_rrs_section_lengths()
 	 * from crt0), as this is the method used to determine whether the
 	 * run-time linker must be called.
 	 */
-	if (entry_symbol && !dynamic_symbol->referenced)
+	if (!(link_mode & SHAREABLE) && !dynamic_symbol->referenced)
 		fatal("No reference to __DYNAMIC");
 
 	dynamic_symbol->referenced = 1;
@@ -721,7 +750,7 @@ relocate_rrs_addresses()
 		return;
 
 	if (rrs_section_type == RRS_PARTIAL) {
-		rrs_dyn2.ld_got = rrs_data_start;
+		got_symbol->value = rrs_dyn2.ld_got = rrs_data_start;
 		rrs_dyn2.ld_plt = rrs_dyn2.ld_got +
 					number_of_gotslots * sizeof(got_t);
 		return;
@@ -749,7 +778,7 @@ relocate_rrs_addresses()
 	 * Main program's RRS text values are relative to TXTADDR? WHY??
 	 */
 #ifdef SUN_COMPAT
-	if (soversion == LD_VERSION_SUN && entry_symbol)
+	if (soversion == LD_VERSION_SUN && !(link_mode & SHAREABLE))
 		rrs_dyn2.ld_rel -= N_TXTADDR(outheader);
 #endif
 
@@ -790,16 +819,22 @@ write_rrs_data()
 		fatal("write_rrs_data: cant position in output file");
 
 	if (rrs_section_type == RRS_PARTIAL) {
-		if (number_of_gotslots > 1) {
-			md_swapout_got(rrs_got, number_of_gotslots);
-			mywrite(rrs_got, number_of_gotslots,
-						sizeof(got_t), outdesc);
-		}
-		if (number_of_jmpslots > 1) {
-			md_swapout_jmpslot(rrs_plt, number_of_jmpslots);
-			mywrite(rrs_plt, number_of_jmpslots,
-						sizeof(jmpslot_t), outdesc);
-		}
+		/*
+		 * Only a GOT and PLT are needed.
+		 */
+		if (number_of_gotslots <= 1)
+			fatal("write_rrs_data: # gotslots <= 1");
+
+		md_swapout_got(rrs_got, number_of_gotslots);
+		mywrite(rrs_got, number_of_gotslots,
+					sizeof(got_t), outdesc);
+
+		if (number_of_jmpslots <= 1)
+			fatal("write_rrs_data: # jmpslots <= 1");
+
+		md_swapout_jmpslot(rrs_plt, number_of_jmpslots);
+		mywrite(rrs_plt, number_of_jmpslots,
+					sizeof(jmpslot_t), outdesc);
 		return;
 	}
 
@@ -830,7 +865,7 @@ write_rrs_text()
 	struct shobj		*shp;
 	struct link_object	*lo;
 
-	if (rrs_section_type == RRS_NONE)
+	if (rrs_section_type == RRS_PARTIAL)
 		return;
 
 	pos = rrs_text_start + (N_TXTOFF(outheader) - TEXT_START(outheader));
@@ -1007,7 +1042,11 @@ printf("rrs_relocs %d, gotslots %d, jmpslots %d\n",
 #endif
 
 	if (claimed_rrs_relocs != reserved_rrs_relocs) {
-		fatal("internal error: claimed relocs(%d) != allocated(%d)",
+/*
+		fatal("internal error: reserved relocs(%d) != claimed(%d)",
+			reserved_rrs_relocs, claimed_rrs_relocs);
+*/
+		printf("FIX:internal error: reserved relocs(%d) != claimed(%d)\n",
 			reserved_rrs_relocs, claimed_rrs_relocs);
 	}
 

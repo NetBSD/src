@@ -1,4 +1,4 @@
-/*	$Id: ld.h,v 1.2 1993/10/23 00:34:22 pk Exp $	*/
+/*	$Id: ld.h,v 1.3 1993/10/27 00:53:47 pk Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -554,6 +554,7 @@ int number_of_files;
 #define SYMBOLIC	2		/* Force symbolic resolution */
 #define FORCEARCHIVE	4		/* Force inclusion of all members
 					   of archives */
+#define SHAREABLE	8		/* Build a shared object */
 int link_mode;
 
 /*

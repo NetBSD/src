@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.1 1993/10/16 21:52:36 pk Exp $		- symbol table routines
+ * $Id: symbol.c,v 1.2 1993/10/27 00:53:50 pk Exp $		- symbol table routines
  */
 
 /* Create the symbol table entries for `etext', `edata' and `end'.  */
@@ -24,7 +24,7 @@ int	relocatable_output;
 	 */
 
 	dynamic_symbol = getsym ("__DYNAMIC");
-	dynamic_symbol->defined = N_DATA | N_EXT;
+	dynamic_symbol->defined = relocatable_output?N_UNDF:(N_DATA | N_EXT);
 	dynamic_symbol->referenced = 0;
 	dynamic_symbol->value = 0;
 

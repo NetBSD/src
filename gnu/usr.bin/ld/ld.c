@@ -35,7 +35,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    version. (pk) */
 
 /*
- *	$Id: ld.c,v 1.8 1993/10/22 21:00:08 pk Exp $
+ *	$Id: ld.c,v 1.9 1993/10/27 00:53:39 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -199,7 +199,8 @@ main(argc, argv)
 	/* Completely decode ARGV.  */
 	decode_command(argc, argv);
 
-	building_shared_object = (!relocatable_output && !entry_symbol);
+	building_shared_object =
+		(!relocatable_output && (link_mode & SHAREABLE));
 
 	/* Create the symbols `etext', `edata' and `end'.  */
 	symtab_init(relocatable_output);
@@ -381,7 +382,7 @@ decode_command(argc, argv)
 			else if (strcmp(string, "forcearchive") == 0)
 				link_mode |= FORCEARCHIVE;
 			else if (strcmp(string, "shareable") == 0)
-				link_mode |= 0;
+				link_mode |= SHAREABLE;
 		}
 		if (argv[i][1] == 'A') {
 			if (p != file_table)
@@ -1029,10 +1030,10 @@ enter_file_symbols (entry)
 				strcpy (sp->warning, name);
 				warning_count++;
 			}
-		} else if (p->n_type & N_EXT)
+		} else if (p->n_type & N_EXT) {
 			enter_global_ref(lsp,
 				p->n_un.n_strx + entry->strings, entry);
-		else if (p->n_un.n_strx && !(p->n_type & (N_STAB | N_EXT))
+		} else if (p->n_un.n_strx && !(p->n_type & (N_STAB | N_EXT))
 							&& !entry->is_dynamic) {
 			if ((p->n_un.n_strx + entry->strings)[0] != LPREFIX)
 				non_L_local_sym_count++;
@@ -1405,7 +1406,8 @@ digest_pass1()
 			register int    type = p->n_type;
 
 			if ((type & N_EXT) && type != (N_UNDF | N_EXT)
-						&& (type & N_TYPE) != N_FN) {
+						&& (type & N_TYPE) != N_FN
+						&& (type & N_TYPE) != N_SIZE) {
 				/* non-common definition */
 				if (defs++ && sp->value != p->n_value
 				    && entry_symbol) {
@@ -2524,14 +2526,6 @@ write_syms()
 	if (strip_symbols == STRIP_ALL)
 		return;
 
-#if yesterday
-	/* Write the local symbols defined by the various files.  */
-	each_file(write_file_syms, &syms_written);
-
-	file_close();
-
-	/* Now write out the global symbols.  */
-#endif
 	/* First, write out the global symbols.  */
 
 	/*
@@ -2549,14 +2543,18 @@ write_syms()
 	 * ld.so reads the shared object's first symbol. This means that
 	 * (Sun's) shared libraries cannot be stripped! (We only assume
 	 * that __DYNAMIC is the first item in the data segment)
+	 *
+	 * If defined (ie. not relocatable_output), make it look
+	 * like an internal symbol.
 	 */
 	if (dynamic_symbol->referenced) {
 		nl.n_other = 0;
 		nl.n_desc = 0;
 		nl.n_type = dynamic_symbol->defined;
-#ifdef SUN_COMPAT
-		nl.n_type &= ~N_EXT;
-#endif
+		if (nl.n_type == N_UNDF)
+			nl.n_type |= N_EXT;
+		else
+			nl.n_type &= ~N_EXT;
 		nl.n_value = dynamic_symbol->value;
 		nl.n_un.n_strx = assign_string_table_index(dynamic_symbol->name);
 		*bufp++ = nl;
@@ -2657,26 +2655,9 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 	mywrite(buf, bufp - buf, sizeof(struct nlist), outdesc);
 	symbol_table_len += sizeof(struct nlist) * (bufp - buf);
 
-#if yesterday
-	if (syms_written != nsyms)
-		fatal("internal error: wrong number of symbols written into output file", 0);
-
-	if (symbol_table_offset + symbol_table_len != string_table_offset)
-		fatal("internal error: inconsistent symbol table length", 0);
-
-	/*
-	 * Now the total string table size is known, so write it. We are
-	 * already positioned at the right place in the file.
-	 */
-
-	mywrite(&strtab_size, sizeof(int), 1, outdesc);	/* we're at right place */
-#endif
-
 	/* Write the strings for the global symbols.  */
-
 	write_string_table();
 
-/**MOVED HERE YESTERDAY**/
 	/* Write the local symbols defined by the various files.  */
 	each_file(write_file_syms, &syms_written);
 	file_close();
