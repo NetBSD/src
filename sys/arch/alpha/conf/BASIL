@@ -1,10 +1,10 @@
-# $NetBSD: BASIL,v 1.8 2002/02/10 17:36:53 wiz Exp $
+# $NetBSD: BASIL,v 1.9 2002/04/12 08:10:47 gmcgarry Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"BASIL-$Revision: 1.8 $"
+#ident 		"BASIL-$Revision: 1.9 $"
 
 maxusers 64
 
@@ -102,6 +102,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

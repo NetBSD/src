@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2002/04/09 13:20:30 shin Exp $
+# $NetBSD: GENERIC,v 1.118 2002/04/12 08:10:58 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	16
 
@@ -63,7 +63,8 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas

@@ -1,4 +1,4 @@
-#	$NetBSD: MMTANEW,v 1.13 2002/04/02 05:30:44 lukem Exp $
+#	$NetBSD: MMTANEW,v 1.14 2002/04/12 08:11:08 gmcgarry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,6 +39,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.15 2002/01/27 13:23:22 jdolecek Exp $
+# 	$NetBSD: WAPIKO,v 1.16 2002/04/12 08:11:13 gmcgarry Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -16,6 +16,7 @@ options 	CPU_SINGLE
 # Standard system options
 options 	KTRACE			# system call tracing support
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.1 2002/03/13 20:23:45 jandberg Exp $
+# $NetBSD: WSCONS,v 1.2 2002/04/12 08:10:50 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.1 $"
+#ident  		"GENERIC-$Revision: 1.2 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -146,6 +146,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options

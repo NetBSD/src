@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.12 2002/04/02 05:30:48 lukem Exp $
+#	$NetBSD: INSTALL,v 1.13 2002/04/12 08:11:16 gmcgarry Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -33,6 +33,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Networking options

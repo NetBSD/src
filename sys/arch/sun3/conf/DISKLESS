@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.36 2002/01/27 13:23:27 jdolecek Exp $
+# $NetBSD: DISKLESS,v 1.37 2002/04/12 08:11:23 gmcgarry Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -23,6 +23,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

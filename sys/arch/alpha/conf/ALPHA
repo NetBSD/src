@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.161 2002/02/10 17:36:53 wiz Exp $
+# $NetBSD: ALPHA,v 1.162 2002/04/12 08:10:47 gmcgarry Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.161 $"
+ident		"ALPHA-$Revision: 1.162 $"
 
 maxusers 32
 
@@ -131,6 +131,7 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 #options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

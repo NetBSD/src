@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.15 2002/04/02 05:30:45 lukem Exp $
+#	$NetBSD: RAMDISK,v 1.16 2002/04/12 08:11:09 gmcgarry Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -42,6 +42,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT
 options 	MEMORY_DISK_ROOT_SIZE=1600
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## "generic" boot (put root on boot device)

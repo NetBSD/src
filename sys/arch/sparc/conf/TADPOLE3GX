@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.12 2002/01/27 13:23:26 jdolecek Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.13 2002/04/12 08:11:20 gmcgarry Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -50,6 +50,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support; still under development.
 options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol

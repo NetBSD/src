@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9 2002/01/27 13:23:13 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.10 2002/04/12 08:10:54 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,6 +28,7 @@ maxusers	32
 options 	FPSP
 
 # Standard system options
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

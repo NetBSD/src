@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.47 2002/04/02 05:30:43 lukem Exp $
+#	$NetBSD: INSTALL_TINY,v 1.48 2002/04/12 08:11:03 gmcgarry Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -64,6 +64,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
