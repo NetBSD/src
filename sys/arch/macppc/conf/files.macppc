@@ -103,7 +103,7 @@ device akbd: wskbddev
 attach akbd at adb
 file arch/macppc/dev/akbd.c			akbd
 
-device ams
+device ams: wsmousedev
 attach ams at adb
 file arch/macppc/dev/ams.c			ams
 
