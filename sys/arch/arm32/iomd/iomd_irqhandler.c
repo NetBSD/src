@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.19 1998/08/08 23:39:39 mycroft Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.20 1998/08/27 03:58:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -75,12 +75,6 @@ extern u_int intrcnt[];
 
 u_int irqblock[NIRQS];
 
-typedef struct {
-    vm_offset_t physical;
-    vm_offset_t virtual;
-} pv_addr_t;
-             
-extern pv_addr_t systempage;
 extern char *_intrnames;
 
 /* Prototypes */

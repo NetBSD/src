@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.3 1998/08/08 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.4 1998/08/27 03:58:10 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,12 +102,6 @@ extern u_int intrcnt[];
 
 u_int irqblock[NIRQS];
 
-typedef struct {
-    vm_offset_t physical;
-    vm_offset_t virtual;
-} pv_addr_t;
-             
-extern pv_addr_t systempage;
 extern char *_intrnames;
 
 /* Prototypes */
