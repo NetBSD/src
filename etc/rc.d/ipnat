@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# $NetBSD: ipnat,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: ipnat
+# REQUIRE: ipfilter
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="ipnat"
+config="/etc/ipnat.conf"
+
+start_precmd="checkyesno ipnat"
+start_cmd="ipnat_start"
+
+stop_precmd=$start_precmd
+stop_cmd="/usr/sbin/ipnat -F -C"
+
+reload_precmd=$start_precmd
+reload_cmd="/usr/sbin/ipnat -F -C -f ${config}"
+
+ipnat_start()
+{
+	if [ ! -f ${config} ]; then
+		return 0
+	fi
+	echo "Installing NAT rules ..."
+	if ! checkyesno ipfilter || [ ! -f /etc/ipf.conf ]; then
+		echo " (enabling ipfilter)"
+		/sbin/ipf -E -Fa
+	fi
+	/usr/sbin/ipnat -F -f ${config}
+}
+
+run_rc_command "$1" "reload"

@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $NetBSD: portmap,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: portmap
+# REQUIRE: network ntpdate syslogd named ppp
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="portmap"
+command="/usr/sbin/${name}"
+
+run_rc_command "$1"

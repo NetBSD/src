@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $NetBSD: lkm3,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: aftermountlkm
+# REQUIRE: mountall
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="lkm3"
+start_cmd="do_lkm3 start"
+stop_cmd="do_lkm3 stop"
+
+do_lkm3()
+{
+	#	(un)load kernel modules specified in /etc/lkm.conf
+	#
+	if checkyesno lkm && [ -f /etc/rc.lkm ]; then
+		lkmstage=AFTERMOUNT
+		set $1 ; . /etc/rc.lkm
+	fi
+}
+
+run_rc_command "$1"

@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: lpd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: lpd
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="lpd"
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/printcap"
+
+run_rc_command "$1"
