@@ -1,7 +1,7 @@
-/*	$NetBSD: wire-test.c,v 1.1.1.6 2003/03/09 01:14:10 christos Exp $	*/
+/*	$NetBSD: wire-test.c,v 1.1.1.7 2004/11/27 01:01:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wire-test.c,v 1.9 2002/12/27 22:44:13 ezk Exp
+ * Id: wire-test.c,v 1.11 2004/01/22 05:01:06 ezk Exp
  *
  */
 
@@ -80,7 +80,7 @@ main(int argc, char **argv)
   }
 
   /* also print my IP address */
-  amu_get_myaddress(&myipaddr);
+  amu_get_myaddress(&myipaddr, NULL);
   fprintf(stderr, "My IP address is 0x%x.\n", (unsigned int) htonl(myipaddr.s_addr));
 
   /*

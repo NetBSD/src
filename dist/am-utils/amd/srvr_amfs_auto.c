@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.6 2003/03/09 01:13:13 christos Exp $	*/
+/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.7 2004/11/27 01:00:41 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: srvr_amfs_auto.c,v 1.10 2002/12/27 22:43:53 ezk Exp
+ * Id: srvr_amfs_auto.c,v 1.13 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -54,9 +54,9 @@
 #include <amd.h>
 
 /* globals */
-qelem amfs_auto_srvr_list = {&amfs_auto_srvr_list, &amfs_auto_srvr_list};
 
 /* statics */
+static qelem amfs_auto_srvr_list = {&amfs_auto_srvr_list, &amfs_auto_srvr_list};
 static fserver *localhost;
 
 
@@ -64,7 +64,7 @@ static fserver *localhost;
  * Find an nfs server for the local host
  */
 fserver *
-find_amfs_auto_srvr(mntfs *mf)
+amfs_generic_find_srvr(mntfs *mf)
 {
   fserver *fs = localhost;
 
@@ -166,7 +166,7 @@ free_srvr(fserver *fs)
      * removed in AM_TTL seconds if no
      * other mntfs is referencing it.
      */
-    int ttl = (fs->fs_flags & (FSF_DOWN | FSF_ERROR)) ? 19 : AM_TTL;
+    int ttl = (FSRV_ERROR(fs) || FSRV_ISDOWN(fs)) ? 19 : AM_TTL;
 
     dlog("Last hard reference to file server %s - will timeout in %ds", fs->fs_host, ttl);
     if (fs->fs_cid) {

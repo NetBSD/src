@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab_aix.c,v 1.1.1.6 2003/03/09 01:13:23 christos Exp $	*/
+/*	$NetBSD: mtab_aix.c,v 1.1.1.7 2004/11/27 01:00:54 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_aix.c,v 1.9 2002/12/27 22:43:57 ezk Exp
+ * Id: mtab_aix.c,v 1.11 2004/09/01 16:48:44 ezk Exp
  *
  */
 
@@ -117,23 +117,34 @@ mntlist *
 read_mtab(char *fs, const char *mnttabname)
 {
   mntlist **mpp, *mhp;
-
   int i;
   char *mntinfo = 0, *cp;
   struct vmount *vp;
   int ret;
+  int maxtry = 10;		/* maximum number of times to try mntctl */
 
   /*
-   * First figure out size of mount table
-   * and allocate space for a copy...
-   * Then get mount table for real.
+   * Figure out size of mount table and allocate space for a copy.  Then get
+   * mount table for real.  We repeat this loop at most 10 times to minimze
+   * the chance of a race condition (something gets un/mounted in between
+   * calls to mntctl()
    */
-  ret = mntctl(MCTL_QUERY, sizeof(i), &i);
-  if (ret == 0) {
+  i = sizeof(int);
+  do {
+    if (mntinfo)
+      XFREE(mntinfo);
     mntinfo = xmalloc(i);
     ret = mntctl(MCTL_QUERY, i, mntinfo);
-  }
-  if (ret <= 0) {
+    if (ret == 0)
+      i = *(int*) mntinfo;
+    if (--maxtry <= 0) {
+      plog(XLOG_ERROR, "mntctl: could not get a stable result");
+      ret = -1;
+      errno = EINVAL;
+      break;
+    }
+  } while (ret == 0);
+  if (ret < 0) {
     plog(XLOG_ERROR, "mntctl: %m");
     goto out;
   }

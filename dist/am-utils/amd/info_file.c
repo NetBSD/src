@@ -1,7 +1,7 @@
-/*	$NetBSD: info_file.c,v 1.1.1.6 2003/03/09 01:13:14 christos Exp $	*/
+/*	$NetBSD: info_file.c,v 1.1.1.7 2004/11/27 01:00:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_file.c,v 1.9 2002/12/27 22:43:49 ezk Exp
+ * Id: info_file.c,v 1.11 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -88,7 +88,7 @@ read_line(char *buf, int size, FILE *fp)
 	return done;
       }
     }
-  } while (size > 0 && !feof(fp));
+  } while (size > 0 && !feof(fp) && !ferror(fp));
 
   return done;
 }

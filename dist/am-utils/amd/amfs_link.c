@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_link.c,v 1.1.1.6 2003/03/09 01:13:07 christos Exp $	*/
+/*	$NetBSD: amfs_link.c,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_link.c,v 1.15 2002/12/27 22:43:47 ezk Exp
+ * Id: amfs_link.c,v 1.20 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -53,6 +53,9 @@
 #include <am_defs.h>
 #include <amd.h>
 
+/* forward declarations */
+static int amfs_link_mount(am_node *mp, mntfs *mf);
+static int amfs_link_umount(am_node *mp, mntfs *mf);
 
 /*
  * Ops structures
@@ -70,8 +73,9 @@ am_ops amfs_link_ops =
   0,				/* amfs_link_readlink */
   0,				/* amfs_link_mounted */
   0,				/* amfs_link_umounted */
-  find_amfs_auto_srvr,
+  amfs_generic_find_srvr,
   0,				/* nfs_fs_flags */
+  0,				/* amfs_link_get_wchan */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_LINK_FS_FLAGS,
 #endif /* HAVE_FS_AUTOFS */
@@ -91,63 +95,41 @@ amfs_link_match(am_opts *fo)
   }
 
   /*
-   * Bug report (14/12/89) from Jay Plett <jay@princeton.edu>
-   * If an automount point has the same name as an existing
-   * link type mount Amd hits a race condition and either hangs
-   * or causes a symlink loop.
+   * If the link target points to another mount point, then we could
+   * end up with an unpleasant situation, where the link f/s simply
+   * "assumes" the mntfs of that mount point.
    *
-   * If fs begins with a '/' change the opt_fs & opt_sublink
-   * fields so that the fs option doesn't end up pointing at
-   * an existing symlink.
+   * For example, if the link points to /usr, and /usr is a real ufs
+   * filesystem, then the link f/s will use the inherited ufs mntfs,
+   * and the end result will be that it will become unmountable.
    *
-   * If sublink is nil then set sublink to fs
-   * else set sublink to fs / sublink
+   * To prevent this, we use a hack: we prepend a dot ('.') to opt_fs if
+   * its original value was an absolute path, so that it will never match
+   * any other mntfs.
    *
-   * Finally set fs to ".".
+   * XXX: a less hacky solution should be used...
    */
-  if (*fo->opt_fs == '/') {
-    char *fullpath;
-    char *link = fo->opt_sublink;
-    if (link) {
-      if (*link == '/')
-	fullpath = strdup(link);
-      else
-	fullpath = str3cat((char *) 0, fo->opt_fs, "/", link);
-    } else {
-      fullpath = strdup(fo->opt_fs);
-    }
-
-    if (fo->opt_sublink)
-      XFREE(fo->opt_sublink);
-    fo->opt_sublink = fullpath;
-    fo->opt_fs = str3cat(fo->opt_fs, ".", fullpath, "");
+  if (fo->opt_fs[0] == '/') {
+    char *link_hack = str3cat(NULL, ".", fo->opt_fs, "");
+    if (!fo->opt_sublink)
+      fo->opt_sublink = strdup(fo->opt_fs);
+    XFREE(fo->opt_fs);
+    fo->opt_fs = link_hack;
   }
 
   return strdup(fo->opt_fs);
 }
 
 
-int
+static int
 amfs_link_mount(am_node *mp, mntfs *mf)
 {
-#ifdef HAVE_FS_AUTOFS
-  if (mp->am_flags & AMF_AUTOFS) {
-    return autofs_link_mount(mp);
-  }
-#endif /* HAVE_FS_AUTOFS */
-
   return 0;
 }
 
 
-int
+static int
 amfs_link_umount(am_node *mp, mntfs *mf)
 {
-#ifdef HAVE_FS_AUTOFS
-  if (mp->am_flags & AMF_AUTOFS) {
-    return autofs_link_umount(mp);
-  }
-#endif /* HAVE_FS_AUTOFS */
-
   return 0;
 }

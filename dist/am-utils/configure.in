@@ -1,6 +1,6 @@
 dnl configure.in file for am-utils-6.x
 dnl Contains general GNU-autoconf macros.
-dnl Author: Erez Zadok <ezk@cs.columbia.edu>
+dnl Author: Erez Zadok <ezk@cs.sunysb.edu>
 dnl
 dnl ######################################################################
 dnl UNCOMMENT THE NEXT FEW LINES FOR DEBUGGING CONFIGURE
@@ -12,7 +12,7 @@ dnl ######################################################################
 dnl INITIALIZATION
 dnl AC_INIT
 dnl new init style: PACKAGE, VERSION, BUG-REPORTING-ADDRESS
-AC_INIT([am-utils],[6.1b2],[amd-dev@am-utils.org])
+AC_INIT([am-utils],[6.1b5pre],[am-utils@am-utils.org])
 AC_MSG_NOTICE(*** INITIALIZATION ***)
 AC_CONFIG_SRCDIR([amd/amd.c])
 AM_CONFIG_HEADER(config.h)
@@ -53,8 +53,8 @@ AH_BOTTOM([
 dnl
 dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.1.1.4 $)
-AC_COPYRIGHT([Copyright (c) 1997-2003 Erez Zadok])
+AC_REVISION($Revision: 1.1.1.5 $)
+AC_COPYRIGHT([Copyright (c) 1997-2004 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
 dnl run by libtool, but must be kept here because HOST_MACROS depends on it
@@ -85,34 +85,13 @@ dnl
 dnl For sanity, the lower numbers should be set to 0 when a higher number
 dnl is changed.
 dnl last version info was 3:2:1 (am-utils-6.0.2)
-dnl last version info was 4.0.2 (am-utils-6.0.3)
-dnl last version info was 4.1.2 (am-utils-6.0.4)
+dnl last version info was 4:0:2 (am-utils-6.0.3)
+dnl last version info was 4:1:2 (am-utils-6.0.4)
 dnl
-dnl We increase the minor number for am-utils-6.1, because it has a new API
-dnl (get_server_pid) but can be used without problems by am-utils-6.0.3+.
-LIBTOOL_LDFLAGS="-version-info 5:3:3"
+dnl We increase the major number for am-utils-6.1, because it has new API's
+dnl and removes some old API's.
+LIBTOOL_LDFLAGS="-version-info 3:0:0"
 AC_SUBST(LIBTOOL_LDFLAGS)
-dnl ======================================================================
-
-dnl ######################################################################
-dnl OPTION PROCESSING
-AC_MSG_NOTICE(*** OPTION PROCESSING ***)
-dnl Do we want LDAP support ?
-AMU_WITH_ADDON(ldap, LDAP)
-dnl Do we want HESIOD support ?
-AMU_WITH_ADDON(hesiod, HESIOD)
-dnl Debugging options (yes, mem, or no)
-AMU_OPT_DEBUG
-dnl additional preprocessor options for configuration/compilation
-AMU_OPT_CPPFLAGS
-dnl additional linker -l options for configuration/compilation
-AMU_OPT_LIBS
-dnl additional linker -L options for configuration/compilation
-AMU_OPT_LDFLAGS
-dnl Which options to add to CFLAGS for compilation only?
-AMU_OPT_AMU_CFLAGS
-dnl check if a local configuration file exists
-AMU_LOCALCONFIG
 dnl ======================================================================
 
 dnl ######################################################################
@@ -132,6 +111,31 @@ AC_ISC_POSIX
 AC_AIX
 dnl XXX: available in autoconf-2.14
 dnl AC_PROG_CC_STDC
+dnl ======================================================================
+
+dnl ######################################################################
+dnl OPTION PROCESSING
+AC_MSG_NOTICE(*** OPTION PROCESSING ***)
+dnl Do we want LDAP support ?
+AMU_WITH_ADDON(ldap, LDAP)
+dnl Do we want HESIOD support ?
+AMU_WITH_ADDON(hesiod, HESIOD)
+dnl Do we want NDBM support ?
+AMU_WITH_ADDON(ndbm, NDBM)
+dnl Debugging options (yes, mem, or no)
+AMU_OPT_DEBUG
+dnl additional preprocessor options for configuration/compilation
+AMU_OPT_CPPFLAGS
+dnl additional linker -l options for configuration/compilation
+AMU_OPT_LIBS
+dnl additional linker -L options for configuration/compilation
+AMU_OPT_LDFLAGS
+dnl Which options to add to CFLAGS for compilation only?
+AMU_OPT_AMU_CFLAGS
+dnl check if a local configuration file exists
+AMU_LOCALCONFIG
+dnl turn off maintainer-mode Makefile rules, unless using --enable-maintainer-mode
+AM_MAINTAINER_MODE
 dnl ======================================================================
 
 dnl ######################################################################
@@ -218,6 +222,7 @@ AMU_CHECK_LIB2(hesiod, hes_init,,, -lresolv)
 fi
 if test "$with_ldap" = "yes"; then
 AMU_CHECK_LIB2(ldap, ldap_open,,, -llber)
+AC_CHECK_FUNCS(ldap_enable_cache)
 fi
 
 dnl Digital UNIX V4.0 and Solaris 7 have POSIX.1c functions in -lrt
@@ -228,15 +233,6 @@ yes | mem )
      AC_CHECK_LIB(rt, clock_gettime,, AC_CHECK_LIB(posix4, clock_gettime))
      ;;
 esac
-
-dnl some systems replaced old ndbm.h include with GNU ndbm.h, which requires
-dnl libgdbm for dbm_pagfno, so check for this.
-AC_MSG_CHECKING(for GNU ndbm.h)
-AC_TRY_LINK([#include <ndbm.h>], [
-DBM *db;
-dbm_pagfno(db);
-], AC_MSG_RESULT(no), AC_CHECK_LIB(gdbm, dbm_pagfno))
-dnl ======================================================================
 
 dnl ######################################################################
 dnl LIBRARY FUNCTIONS
@@ -263,7 +259,8 @@ AC_CHECK_FUNCS(			\
 	bcopy			\
 	bzero			\
 	clnt_create		\
-	clnt_create_timed	\
+	clnt_create_vers	\
+	clnt_create_vers_timed	\
 	clnt_spcreateerror	\
 	clock_gettime		\
 	cnodeid			\
@@ -286,8 +283,6 @@ AC_CHECK_FUNCS(			\
 	hesiod_init		\
 	hesiod_reload		\
 	hesiod_to_bind		\
-	ldap_open		\
-	ldap_enable_cache	\
 	memcmp			\
 	memcpy			\
 	memmove			\
@@ -363,7 +358,6 @@ AC_CHECK_FUNCS(			\
 	xdr_linkargs		\
 	xdr_mountbody		\
 	xdr_mountlist		\
-	xdr_mountres3		\
 	xdr_name		\
 	xdr_nfs_fh		\
 	xdr_nfscookie		\
@@ -409,6 +403,8 @@ AC_CHECK_HEADERS(			\
 	cdfs/cdfsmount.h		\
  	cdfs/cdfs_mount.h		\
 	db1/ndbm.h			\
+	fs/msdosfs/msdosfsmount.h	\
+	gdbm/ndbm.h			\
 	hsfs/hsfs.h			\
 	isofs/cd9660/cd9660_mount.h	\
 	linux/auto_fs.h			\
@@ -439,6 +435,7 @@ AC_CHECK_HEADERS(			\
 	nfs/nfsv2.h			\
 	nfs/pathconf.h			\
 	nfs/rpcv2.h			\
+	nfsclient/nfsargs.h		\
 	rpc/auth_des.h			\
 	rpc/pmap_clnt.h			\
 	rpc/pmap_prot.h			\
@@ -506,8 +503,9 @@ AC_CHECK_HEADERS(			\
 	sys/vmount.h			\
 	sys/vnode.h			\
 dnl	sys/wait.h			\
-	ufs/ufs_mount.h			\
+	ufs/ufs/extattr.h		\
 	ufs/ufs/ufsmount.h		\
+	ufs/ufs_mount.h			\
 	\
 	assert.h			\
 dnl	cfs.h				\
@@ -547,11 +545,37 @@ dnl	dirent.h			\
 	string.h			\
 	strings.h			\
 	syslog.h			\
+	tcpd.h				\
 	time.h				\
 	tiuser.h			\
 	varargs.h			\
 	unistd.h			\
 	)
+dnl ======================================================================
+
+dnl ======================================================================
+dnl db/ndbm/gdbm: This is serious autoconf-fu...
+dnl ======================================================================
+if test "$with_ndbm" = "yes"
+then
+if test "$ac_cv_lib_new_dbm" = "" -a "$ac_cv_header_ndbm_h" = "yes"; then
+  AC_CHECK_LIB(ndbm, dbm_open,
+dnl some systems replaced old ndbm.h include with GNU ndbm.h, which requires
+dnl libgdbm for dbm_pagfno, so check for this.
+    AC_CHECK_LIB(ndbm, dbm_pagfno, ac_cv_header_new_dbm="ndbm.h"; ac_cv_lib_new_dbm="ndbm",
+      AC_CHECK_LIB(gdbm, dbm_pagfno, ac_cv_header_new_dbm="ndbm.h"; ac_cv_lib_new_dbm="ndbm -lgdbm")))
+fi
+if test "$ac_cv_lib_new_dbm" = "" -a "$ac_cv_header_db1_ndbm_h" = "yes"; then
+  AC_CHECK_LIB(db1, dbm_open, ac_cv_header_new_dbm="db1/ndbm.h"; ac_cv_lib_new_dbm="db1")
+fi
+if test "$ac_cv_lib_new_dbm" = "" -a "$ac_cv_header_gdbm_ndbm_h" = "yes"; then
+  AC_CHECK_LIB(gdbm, dbm_open, ac_cv_header_new_dbm="gdbm/ndbm.h"; ac_cv_lib_new_dbm="gdbm")
+fi
+if test "$ac_cv_header_new_dbm" != "" -a "$ac_cv_lib_new_dbm" != ""; then
+  AC_DEFINE_UNQUOTED(NEW_DBM_H, "$ac_cv_header_new_dbm")
+  LIBS="-l$ac_cv_lib_new_dbm $LIBS"
+fi
+fi
 dnl ======================================================================
 
 dnl *********
@@ -571,17 +595,30 @@ dnl specific header to include.
 AMU_CHECK_NFS_PROT_HEADERS
 AMU_STRUCT_MNTENT
 AMU_STRUCT_MNTTAB
+dnl -----------------------------------------------------------------------
 dnl check for bad hasmntopt() function after struct mntent/mnttab
 dnl but only if hasmntopt() is actually defined.
 if test $ac_cv_func_hasmntopt = yes
 then
 	AMU_FUNC_BAD_HASMNTOPT
 fi
+dnl -----------------------------------------------------------------------
 AMU_STRUCT_NFS_ARGS
 AMU_STRUCT_NFS_GFS_MOUNT
+dnl -----------------------------------------------------------------------
+dnl cannot proceed if struct nfs_args/gfs_mount is not found!
+if test "$ac_cv_have_struct_nfs_args" = notfound && test "$ac_cv_have_struct_nfs_gfs_mount" = no
+then
+AC_MSG_ERROR(
+[Cannot find any definition for struct nfs_args!
+This can be due to a misconfigured system, one for which am-utils
+was not ported to yet, or a bug in the am-utils sources.  Check
+config.log for details and report them to am-utils@am-utils.org please.])
+fi
+dnl -----------------------------------------------------------------------
 AMU_STRUCT_FIELD_NFS_FH
 AMU_STRUCT_NFS_FH
-AMU_STRUCT_NFS_FH3
+AMU_CHECK_FS_MNTENT(nfs3)
 dnl ======================================================================
 
 dnl *********
@@ -658,6 +695,7 @@ AMU_CHECK_EXTERNS(
 	getlogin		\
 	getpagesize		\
 	getwd			\
+	hosts_ctl		\
 	innetgr			\
 	mkstemp			\
 	sbrk			\
@@ -673,6 +711,9 @@ AMU_CHECK_EXTERNS(
 	xdr_callmsg		\
 	xdr_opaque_auth		\
 	)
+dnl Different macro to check for LDAP externs, so as to avoid
+dnl breaking the basic extern-checking macro.
+AMU_CHECK_EXTERN_LDAP(ldap_enable_cache)
 dnl ======================================================================
 
 dnl ######################################################################
@@ -694,6 +735,7 @@ dnl *********
 
 dnl ######################################################################
 AC_MSG_NOTICE(*** FIELDS WITHIN STRUCTURES ***)
+AMU_CHECK_FIELD(fd_set.fds_bits)
 AMU_CHECK_FIELD(mntent_t.mnt_cnode)
 AMU_CHECK_FIELD(mntent_t.mnt_ro)
 AMU_CHECK_FIELD(mntent_t.mnt_time)
@@ -704,6 +746,7 @@ AMU_CHECK_FIELD(cdfs_args_t.iso_flags)
 AMU_CHECK_FIELD(cdfs_args_t.iso_pgthresh)
 AMU_CHECK_FIELD(cdfs_args_t.norrip)
 AMU_CHECK_FIELD(cdfs_args_t.ssector)
+AMU_CHECK_FIELD(pcfs_args_t.dirmask)
 AMU_CHECK_FIELD(pcfs_args_t.dsttime)
 AMU_CHECK_FIELD(pcfs_args_t.fspec)
 AMU_CHECK_FIELD(pcfs_args_t.gid)
@@ -737,6 +780,8 @@ AMU_CHECK_FIELD(struct sockaddr.sa_len)
 AMU_CHECK_FIELD(struct umntrequest.devid)
 dnl This one is for Irix
 AMU_CHECK_FIELD(autofs_args_t.addr)
+dnl For Solaris 2.8+
+AMU_CHECK_FIELD(mounta.optptr)
 
 dnl ======================================================================
 
@@ -756,7 +801,10 @@ if test "$with_ldap" = "yes" && test "$ac_cv_header_ldap_h" = "yes"
 then
 AMU_CHECK_MAP_FUNCS(ldap_open, ldap)
 fi
-AMU_CHECK_MAP_FUNCS(dbm_open, ndbm)
+if test "$with_ndbm" = "yes" -a "$ac_cv_lib_new_dbm" != ""
+then
+AMU_CHECK_MAP_FUNCS(dbm_open, $ac_cv_lib_new_dbm, ndbm)
+fi
 AMU_CHECK_MAP_FUNCS(yp_get_default_domain yp_all, nis)
 AMU_CHECK_MAP_FUNCS(nis_domain_of, nisplus, nisplus)
 AMU_CHECK_MAP_FUNCS(getpwnam, passwd)
@@ -778,7 +826,9 @@ AMU_CHECK_FS_MNTENT(cache)
 AMU_CHECK_FS_MNTENT(lofs lo, lofs)
 AMU_CHECK_FS_MNTENT(mfs)
 AMU_CHECK_FS_MNTENT(nfs)
-AMU_CHECK_FS_MNTENT(nfs3)
+dnl This test for nfs3 was moved up, because other tests depend on it
+dnl especially checking for nfsv3 file handle structure types
+dnl AMU_CHECK_FS_MNTENT(nfs3)
 AMU_CHECK_FS_MNTENT(vfat pcfs pc msdos msdosfs fat, pcfs)
 AMU_CHECK_FS_MNTENT(tfs)
 AMU_CHECK_FS_MNTENT(tmpfs)
@@ -903,8 +953,10 @@ AMU_CHECK_MNTTAB_OPTS(	\
 	pgthresh	\
 	port		\
 	posix		\
+	private		\
 	proplist	\
 	proto		\
+	public		\
 	retrans		\
 	retry		\
 	ro		\
@@ -992,6 +1044,7 @@ AMU_CHECK_MNT2_NFS_OPTS(	\
 	nqnfs		\
 	pgthresh	\
 	posix		\
+	private		\
 	proplist	\
 	rdirplus	\
 	readahead	\
@@ -1026,6 +1079,10 @@ AMU_CHECK_MNT2_CDFS_OPTS(\
 	)
 dnl ======================================================================
 
+dnl *********
+AMU_SAVE_STATE
+dnl *********
+
 dnl ######################################################################
 dnl SYSTEM-SPECIFIC TESTS
 AC_MSG_NOTICE(*** SYSTEM-SPECIFIC TESTS ***)
@@ -1034,6 +1091,20 @@ dnl Mount table style
 AMU_CHECK_MNTTAB_STYLE
 AMU_CHECK_HIDE_MOUNT_TYPE
 AMU_CHECK_MNTTAB_LOCATION
+dnl -----------------------------------------------------------------------
+dnl check if has mnttab/mntent or in-kernel mount tables
+dnl this test must follow AMU_CHECK_MNTTAB_LOCATION and
+dnl	AMU_CHECK_MNT2_GEN_OPTS(nomnttab)
+if test "$ac_cv_have_struct_mnttab" != yes && test "$ac_cv_have_struct_mntent" != yes && test "$ac_cv_mnttab_location" = file
+then
+AC_MSG_ERROR(
+[No definition found for struct mnttab or struct mntent
+and this system stores its mount tables on files (not in kernel).
+This can be due to a misconfigured system, one for which am-utils
+was not ported to yet, or a bug in the am-utils sources.  Check
+config.log for details and report them to am-utils@am-utils.org please.])
+fi
+dnl -----------------------------------------------------------------------
 AMU_CHECK_MNTTAB_FILE_NAME
 AMU_CHECK_MOUNT_TRAP
 AMU_CHECK_MOUNT_STYLE
@@ -1048,6 +1119,28 @@ AMU_CHECK_NFS_SOCKET_CONNECTION
 AMU_CHECK_CHECKMOUNT_STYLE
 AMU_CHECK_RESTARTABLE_SIGNAL_HANDLER
 AMU_CHECK_GNU_GETOPT
+dnl ======================================================================
+
+dnl ######################################################################
+dnl Check for tcpwrappers
+dnl This check is moved this far down because on modern tcpwrapper systems
+dnl such as openbsd, the caller must provide two symbols: deny_severity and
+dnl allow_severity, which determine the logging level of rejected and
+dnl requested requests, respectively.  If this check happens too early, then
+dnl $LIBS includes -lwrap, which causes many subsequent tests to fail with
+dnl missing symbols.
+AC_CHECK_LIB(wrap, hosts_ctl,
+[
+AC_DEFINE(HAVE_LIBWRAP)
+WRAPLIB="-lwrap"
+])
+dnl replace value of WRAPLIB in specific Makefiles
+AC_SUBST(WRAPLIB)
+dnl next, check if libwrap defines allow/deny_severity or expects the caller to define it
+if test "$ac_cv_lib_wrap_hosts_ctl" = "yes"
+then
+AMU_CHECK_LIBWRAP_SEVERITY
+fi
 dnl ======================================================================
 
 dnl *********
