@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.35 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.36 1998/10/23 22:36:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -320,6 +320,12 @@ union mcluster {
 	MBUFLOCK( \
 		(m)->m_ext.ext_buf = \
 		    pool_get(&mclpool, (how) == M_WAIT ? PR_WAITOK : 0); \
+		if ((m)->m_ext.ext_buf == NULL) { \
+			m_reclaim((how)); \
+			(m)->m_ext.ext_buf = \
+			    pool_get(&mclpool, \
+			     (how) == M_WAIT ? PR_WAITOK : 0); \
+		} \
 	); \
 	if ((m)->m_ext.ext_buf != NULL) { \
 		(m)->m_data = (m)->m_ext.ext_buf; \
