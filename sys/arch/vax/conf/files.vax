@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.65 2000/03/04 07:27:47 matt Exp $
+#       $NetBSD: files.vax,v 1.66 2000/03/14 15:56:59 oster Exp $
 #
 # new style config file for vax architecture
 #
@@ -94,6 +94,9 @@ include "dev/wscons/files.wscons"
 # Memory Disk for install floppy
 file arch/vax/vax/md_root.c		memory_disk_hooks
 major	{md = 23}
+
+# RAIDframe
+major	{raid = 25}
 
 # MSCP device drivers
 include "dev/mscp/files.mscp"

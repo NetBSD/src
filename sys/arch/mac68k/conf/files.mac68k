@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.93 2000/02/14 07:01:44 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.94 2000/03/14 15:56:55 oster Exp $
 
 # mac68k-specific configuration info
 
@@ -175,6 +175,9 @@ file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 major	{sd = 4}
 major	{cd = 6}
 major	{md = 13}
+
+# RAIDframe
+major	{raid = 20}
 
 # Compatibility modules
 

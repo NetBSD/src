@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.24 2000/02/14 21:42:54 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.25 2000/03/14 15:56:58 oster Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -142,6 +142,9 @@ major	{ fd = 16 }
 major	{ md = 5 }
 major	{ sd = 7 }
 major	{ wd = 12 }
+
+# RAIDframe
+major 	{ raid = 25 }
 
 # Brooktree DAC attribute
 define bt_dac

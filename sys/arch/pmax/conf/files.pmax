@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.83 2000/02/29 04:44:29 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.84 2000/03/14 15:56:57 oster Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -96,6 +96,9 @@ major { rz = 21 }
 # Memory Disk
 file	arch/pmax/pmax/md_root.c	memory_disk_hooks
 major { md = 17 }
+
+# RAIDframe
+major { raid = 32 }
 
 #
 # Old 4.4BSD pmax-specific SCSI driver (deprecated).
