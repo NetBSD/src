@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.28 1998/08/03 19:10:29 fvdl Exp $	*/
+/*	$NetBSD: fetch.c,v 1.29 1998/08/04 03:35:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.28 1998/08/03 19:10:29 fvdl Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.29 1998/08/04 03:35:24 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -212,9 +212,7 @@ url_get(url, proxyenv, outfile)
 	volatile int s;
 	size_t len;
 	char *cp, *ep;
-	const char *savefile;
-	char *psavefile;
-	char *buf;
+	char *buf, *savefile;
 	volatile sig_t oldintr, oldintp;
 	off_t hashbytes;
 	struct hostent *hp = NULL;
@@ -229,9 +227,8 @@ url_get(url, proxyenv, outfile)
 
 	closefunc = NULL;
 	fin = fout = NULL;
-	psavefile = NULL;
 	s = -1;
-	buf = NULL;
+	buf = savefile = NULL;
 	isredirected = isproxy = 0;
 	retval = -1;
 
@@ -242,7 +239,6 @@ url_get(url, proxyenv, outfile)
 	(void)&buf;
 	(void)&savefile;
 	(void)&retval;
-	(void)&psavefile;
 	(void)&isproxy;
 #endif
 
@@ -268,13 +264,13 @@ url_get(url, proxyenv, outfile)
 	}
 
 	if (outfile)
-		savefile = outfile;
+		savefile = xstrdup(outfile);
 	else {
-		savefile = strrchr(path, '/');		/* find savefile */
-		if (savefile != NULL)
-			savefile++;
+		cp = strrchr(path, '/');		/* find savefile */
+		if (cp != NULL)
+			savefile = xstrdup(cp + 1);
 		else
-			savefile = path;
+			savefile = xstrdup(path);
 	}
 	if (EMPTYSTRING(savefile)) {
 		if (urltype == FTP_URL_T)
@@ -372,8 +368,6 @@ url_get(url, proxyenv, outfile)
 					port = httpport;
 				else
 					port = pport;
-				psavefile = strdup(savefile);
-				savefile = psavefile;
 				FREEPTR(path);
 				FREEPTR(ppath);
 				path = xstrdup(url);
@@ -660,7 +654,7 @@ cleanup_url_get:
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
-	FREEPTR(psavefile);
+	FREEPTR(savefile);
 	FREEPTR(user);
 	FREEPTR(pass);
 	FREEPTR(host);
