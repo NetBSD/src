@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.62 2000/09/20 21:28:51 hubertf Exp $	*/
+/*	$NetBSD: net.c,v 1.63 2000/09/26 13:26:02 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 #ifdef INET6
 #include <sys/sysctl.h>
 #endif
@@ -962,10 +963,8 @@ char *inter;
 		}
 	}
 
-	result = run_prog(0, 0, NULL, "test %s %s", "-f", DHCLIENT_EX);
-	if (result!=0) {
+	if (!file_mode_match(DHCLIENT_EX, S_IFREG))
 		return 0;
-	}
 	process_menu(MENU_dhcpautoconf);
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
