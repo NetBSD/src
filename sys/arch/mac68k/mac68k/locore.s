@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 1996/09/12 21:25:31 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 1996/09/16 18:00:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,7 +278,7 @@ Lstkadj:
  */
 _fpfline:
 #if defined(M68040)
-	cmpl	#0x3,_fpu_type		| 68040? (see fpu.c)
+	cmpl	#FPU_68040,_fputype	| 68040? (see fpu.c)
 	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, treat as illinst
@@ -300,7 +300,7 @@ Lfp_unimp:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#0x3,_fpu_type		| 68040? (see fpu.c)
+	cmpl	#FPU_68040,_fputype	| 68040? (see fpu.c)
 	jne	Lfp_unsupp		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -1347,7 +1347,7 @@ Lsw2:
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
 
-	tstl	_fpu_type		| Do we have an fpu?
+	tstl	_fputype		| Do we have an fpu?
 	jeq	Lswnofpsave		| No?  Then don't attempt save.
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -1410,7 +1410,7 @@ Lcxswdone:
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 
-	tstl	_fpu_type		| If we don't have an fpu,
+	tstl	_fputype		| If we don't have an fpu,
 	jeq	Lnofprest		|  don't try to restore it.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -1443,7 +1443,7 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 
-	tstl	_fpu_type		| Do we have FPU?
+	tstl	_fputype		| Do we have FPU?
 	jeq	Lsavedone		| No?  Then don't save state.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
