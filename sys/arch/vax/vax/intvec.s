@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.47 2000/06/05 03:45:23 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.48 2000/06/10 05:24:46 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -351,7 +351,8 @@ hardclock:
 #if VAX46
 	cmpl	_vax_boardtype,$VAX_BTYP_46
 	bneq	1f
-	clrl	_ka46_cpu+VC_DIAGTIMM
+	movl	_ka46_cpu,r0
+	clrl	VC_DIAGTIMM(r0)
 #endif
 1:	pushl	sp
 	addl2	$24,(sp)
