@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.11 2002/10/18 03:27:30 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.12 2002/10/18 04:07:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	struct proc *ci_fpcurlwp;	/* current owner of the FPU */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
@@ -380,7 +380,7 @@ void	tsc_microset __P((struct cpu_info *));
 void	cpu_probe_features __P((struct cpu_info *));
 
 /* npx.c */
-void	npxsave_proc __P((struct proc *, int));
+void	npxsave_lwp __P((struct lwp *, int));
 void	npxsave_cpu __P((struct cpu_info *, int));
 
 /* vm_machdep.c */
