@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2002/05/11 15:56:03 jdolecek Exp $
 #
 
 # we use compressed tar, SparkPlug doesn't handle gzipped tar
@@ -20,8 +20,8 @@ tmp/BtNetBSD:
 	find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
 	find tmp -name CVS -type d | xargs rmdir
 	find tmp -name '*.uue' | while read filename; do \
-		( cd `dirname $$filename` && uudecode `basename $$filename` ); \
-		rm $$filename; \
+		( cd "`dirname $$filename`" && uudecode "`basename $$filename`" ); \
+		rm "$$filename"; \
 	done;
 	# unixfs is copied into the !BtNetBSD dir at install time
 	cd tmp/BtNetBSD && cp -R '!BtNetBSD/native' unixfs
