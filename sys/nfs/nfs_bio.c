@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.81 2002/05/06 03:20:54 enami Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.82 2002/09/01 10:39:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.81 2002/05/06 03:20:54 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.82 2002/09/01 10:39:38 bouyer Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1077,6 +1077,12 @@ nfs_doio(bp, p)
 			pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 		}
 		simple_unlock(&uobj->vmobjlock);
+	    } else {
+		if (error) {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = np->n_error = error;
+			np->n_flag |= NWRITEERR;
+		}
 	    }
 	}
 	bp->b_resid = uiop->uio_resid;
