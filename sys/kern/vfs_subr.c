@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.218 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.219 2004/04/16 09:59:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.218 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.219 2004/04/16 09:59:32 pk Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1145,7 +1145,7 @@ loop:
 			vgonel(vp, p);
 			goto loop;
 		}
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_NOWAIT)) {
 			simple_unlock(&spechash_slock);
 			goto loop;
 		}
