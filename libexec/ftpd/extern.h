@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1997/06/18 19:05:48 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1997/09/23 13:56:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,7 @@
  */
 
 void	blkfree __P((char **));
+char   *conffilename __P((const char *));
 char  **copyblk __P((char **));
 void	cwd __P((char *));
 void	delete __P((char *));
@@ -67,7 +68,6 @@ void	store __P((char *, char *, int));
 void	upper __P((char *));
 void	user __P((char *));
 void	yyerror __P((char *));
-
 
 #define CLASS_CHROOT	"chroot"
 #define CLASS_GUEST	"guest"

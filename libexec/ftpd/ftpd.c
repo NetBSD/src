@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.33 1997/09/18 07:27:35 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.34 1997/09/23 13:56:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.33 1997/09/18 07:27:35 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.34 1997/09/23 13:56:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ char	remotehost[MAXHOSTNAMELEN];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static char *anondir = NULL;
+static char confdir[MAXPATHLEN];
 
 extern struct ftpclass curclass;
 
@@ -244,14 +245,20 @@ main(argc, argv, envp)
 #endif
 	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
 	debug = 0;
+	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, "a:dlt:T:u:v")) != EOF) {
+	while ((ch = getopt(argc, argv, "a:c:dlt:T:u:v")) != EOF) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
+			break;
+
+		case 'c':
+			(void)strncpy(confdir, optarg, sizeof(confdir));
+			confdir[sizeof(confdir)-1] = '\0';
 			break;
 
 		case 'd':
@@ -314,7 +321,7 @@ main(argc, argv, envp)
 		reply(530, "System not available.");
 		exit(0);
 	}
-	if ((fd = fopen(_PATH_FTPWELCOME, "r")) != NULL) {
+	if ((fd = fopen(conffilename(_PATH_FTPWELCOME), "r")) != NULL) {
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
@@ -436,6 +443,7 @@ user(name)
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
 		return;
 	}
+
 	pw = sgetpwnam(name);
 	if (logging)
 		strncpy(curname, name, sizeof(curname)-1);
@@ -517,7 +525,7 @@ checkaccess(name)
 	int retval = ALLOWED;
 	char *glob, *perm, line[BUFSIZ];
 
-	if ((fd = fopen(_PATH_FTPUSERS, "r")) == NULL)
+	if ((fd = fopen(conffilename(_PATH_FTPUSERS), "r")) == NULL)
 		return NOT_ALLOWED;
 
 	while (fgets(line, sizeof(line), fd) != NULL)  {
@@ -658,7 +666,7 @@ skip:
 	logwtmp(ttyline, pw->pw_name, remotehost);
 	logged_in = 1;
 
-	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
+	dochroot = checkuser(conffilename(_PATH_FTPCHROOT), pw->pw_name);
 
 	/* parse ftpd.conf, setting up various parameters */
 	if (guest)
@@ -700,7 +708,7 @@ skip:
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
 	 */
-	if ((fd = fopen(_PATH_FTPLOGINMESG, "r")) != NULL) {
+	if ((fd = fopen(conffilename(_PATH_FTPLOGINMESG), "r")) != NULL) {
 		char *cp, line[LINE_MAX];
 
 		while (fgets(line, sizeof(line), fd) != NULL) {
@@ -1804,4 +1812,14 @@ out:
 		freeglob = 0;
 		globfree(&gl);
 	}
+}
+
+char *
+conffilename(s)
+	const char *s;
+{
+	static char filename[MAXPATHLEN];
+
+	(void)snprintf(filename, sizeof(filename), "%s/%s", confdir ,s);
+	return filename;
 }

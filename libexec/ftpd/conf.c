@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1997/08/14 02:06:15 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1997/09/23 13:56:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.5 1997/08/14 02:06:15 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 1997/09/23 13:56:39 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ parse_conf(findclass)
 		curclass.modify = 0;
 	}
 
-	infile = _PATH_FTPDCONF;
+	infile = conffilename(_PATH_FTPDCONF);
 	if ((f = fopen(infile, "r")) == NULL)
 		return;
 
