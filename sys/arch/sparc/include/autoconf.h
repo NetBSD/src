@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.19 1997/05/18 21:26:40 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,8 +108,6 @@ struct confargs {
 #define BUS_VME32	3
 #define BUS_SBUS	4
 
-extern int bt2pmt[];
-
 /*
  * mapiodev maps an I/O device to a virtual address, returning the address.
  * mapdev does the real work: you can supply a special virtual address and
@@ -117,21 +115,17 @@ extern int bt2pmt[];
  * you get it from ../sparc/vaddrs.h.
  */
 void	*mapdev __P((struct rom_reg *pa, int va,
-		     int offset, int size, int bustype));
-#define	mapiodev(pa, offset, size, bustype) \
-	mapdev(pa, 0, offset, size, bustype)
+		     int offset, int size));
+#define	mapiodev(pa, offset, size) \
+	mapdev(pa, 0, offset, size)
 /*
  * REG2PHYS is provided for drivers with a `d_mmap' function.
  */
-#define REG2PHYS(rr, offset, bt)				\
-	(((u_int)(rr)->rr_paddr + (offset)) |			\
-		((CPU_ISSUN4M)					\
-			? ((rr)->rr_iospace << PMAP_SHFT4M)	\
-			: bt2pmt[bt])				\
-	)
+#define REG2PHYS(rr, offset) \
+	(((u_int)(rr)->rr_paddr + (offset)) | PMAP_IOENC((rr)->rr_iospace) )
 
 /* For VME and sun4/obio busses */
-void	*bus_map __P((struct rom_reg *, int, int));
+void	*bus_map __P((struct rom_reg *, int));
 void	bus_untmp __P((void));
 
 /*
