@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.44 2003/09/26 11:51:53 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.45 2004/03/12 16:52:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -250,6 +250,8 @@ int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	nfs_kqfilter	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
+
+#define	NFS_INVALIDATE_ATTRCACHE(np)	(np)->n_attrstamp = 0
 
 #endif /* _KERNEL */
 

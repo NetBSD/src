@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.184 2003/12/07 21:15:47 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.185 2004/03/12 16:52:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.184 2003/12/07 21:15:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.185 2004/03/12 16:52:14 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -483,7 +483,7 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
 				np->n_direofoffset = 0;
@@ -509,7 +509,7 @@ nfs_open(v)
 		}
 	}
 	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0)
-		np->n_attrstamp = 0; /* For Open/Close consistency */
+		NFS_INVALIDATE_ATTRCACHE(np); /* For Open/Close consistency */
 	return (0);
 }
 
@@ -568,7 +568,7 @@ nfs_close(v)
 		    np->n_flag &= ~NMODIFIED;
 		} else
 		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
-		np->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(np);
 	    }
 	    if (np->n_flag & NWRITEERR) {
 		np->n_flag &= ~NWRITEERR;
@@ -1535,7 +1535,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	vput(dvp);
 	return (error);
 }
@@ -1665,7 +1665,7 @@ again:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
@@ -1742,7 +1742,7 @@ nfs_remove(v)
 	    vattr.va_nlink == 1) {
 		np->n_flag |= NREMOVED;
 	}
-	np->n_attrstamp = 0;
+	NFS_INVALIDATE_ATTRCACHE(np);
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
@@ -1796,7 +1796,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	nfsm_reqdone;
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	return (error);
 }
 
@@ -1927,9 +1927,9 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	VTONFS(fdvp)->n_flag |= NMODIFIED;
 	VTONFS(tdvp)->n_flag |= NMODIFIED;
 	if (!fwccflag)
-		VTONFS(fdvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(fdvp));
 	if (!twccflag)
-		VTONFS(tdvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(tdvp));
 	return (error);
 }
 
@@ -1996,9 +1996,9 @@ nfs_link(v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
-		VTONFS(vp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(vp));
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -2088,7 +2088,7 @@ nfs_symlink(v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
@@ -2148,7 +2148,7 @@ nfs_mkdir(v)
 	nfsm_reqdone;
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that you have a reply to a retry
 	 * if we can succeed in looking up the directory.
@@ -2223,7 +2223,7 @@ nfs_rmdir(v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	VN_KNOTE(vp, NOTE_DELETE);
 	cache_purge(dvp);
