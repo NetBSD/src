@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.18 1997/03/26 01:49:44 thorpej Exp $ */
+/*	$NetBSD: arp.c,v 1.19 1997/10/16 23:46:42 lukem Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -36,15 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1984, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95"; */
-static char *rcsid = "$NetBSD: arp.c,v 1.18 1997/03/26 01:49:44 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: arp.c,v 1.19 1997/10/16 23:46:42 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -75,17 +78,18 @@ static char *rcsid = "$NetBSD: arp.c,v 1.18 1997/03/26 01:49:44 thorpej Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int delete __P((const char *, const char *));
-void dump __P((u_long));
-void sdl_print __P((const struct sockaddr_dl *));
-int atosdl __P((const char *s, struct sockaddr_dl *sdl));
-int file __P((char *));
-void get __P((const char *));
-int getinetaddr __P((const char *, struct in_addr *));
-void getsocket __P((void));
-int rtmsg __P((int));
-int set __P((int, char **));
-void usage __P((void));
+int	delete __P((const char *, const char *));
+void	dump __P((u_long));
+void	sdl_print __P((const struct sockaddr_dl *));
+int	atosdl __P((const char *s, struct sockaddr_dl *sdl));
+int	file __P((char *));
+void	get __P((const char *));
+int	getinetaddr __P((const char *, struct in_addr *));
+void	getsocket __P((void));
+int	main __P((int, char **));
+int	rtmsg __P((int));
+int	set __P((int, char **));
+void	usage __P((void));
 
 static int pid;
 static int nflag;
@@ -218,10 +222,9 @@ set(argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct sockaddr_inarp *sin;
-	register struct sockaddr_dl *sdl;
-	register struct rt_msghdr *rtm;
-	struct ether_addr *ea;
+	struct sockaddr_inarp *sin;
+	struct sockaddr_dl *sdl;
+	struct rt_msghdr *rtm;
 	char *host = argv[0], *eaddr;
 
 	sin = &sin_m;
@@ -322,8 +325,8 @@ delete(host, info)
 	const char *host;
 	const char *info;
 {
-	register struct sockaddr_inarp *sin;
-	register struct rt_msghdr *rtm;
+	struct sockaddr_inarp *sin;
+	struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
 
 	sin = &sin_m;
@@ -513,9 +516,9 @@ rtmsg(cmd)
 {
 	static int seq;
 	int rlen;
-	register struct rt_msghdr *rtm;
-	register char *cp;
-	register int l;
+	struct rt_msghdr *rtm;
+	char *cp;
+	int l;
 
 	rtm = &m_rtmsg.m_rtm;
 	cp = m_rtmsg.m_space;
