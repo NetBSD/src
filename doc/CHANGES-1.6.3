@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.67 2004/04/06 08:00:37 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.68 2004/04/06 09:48:19 grant Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -421,3 +421,35 @@ sys/dev/ic/com.c				1.225
 	Closes PR#25010.
 	[enami, ticket #1658]
 
+usr.sbin/rpc.lockd/lockd_lock.c			1.12
+
+	- protect from pid reusing.
+	- fix a null dereference on the error.
+	[bouyer, ticket #1654]
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.13
+
+	for fork'ed children, use _exit instead of exit.
+	[bouyer, ticket #1652]
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.17
+
+	for lock/unlock requests, log svid as well as client name.
+	[bouyer, ticket #1653]
+
+usr.sbin/rpc.lockd/lockd_lock.c			patch
+
+	getlock: detect duplicated locks slightly correctly.
+	XXX how should we do for byte range lock?
+	[bouyer, ticket #1655]
+
+usr.sbin/rpc.statd/statd.c			1.22
+
+	reset_host: reset actual host infos rather than reset copies of them.
+	[bouyer, ticket #1656]
+
+usr.sbin/rpc.statd/statd.c			1.23
+
+	init_file: copy status_info from static storage so that
+	statd doesn't always use the same "status" number.
+	[bouyer, ticket #1657]
