@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.417 2001/08/27 12:08:00 augustss Exp $
+#	$NetBSD: GENERIC,v 1.418 2001/08/27 22:23:47 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.417 $"
+#ident 		"GENERIC-$Revision: 1.418 $"
 
 maxusers	32		# estimated number of users
 
@@ -571,19 +571,23 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
@@ -613,6 +617,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
+tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
