@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.13 1993/12/16 05:17:35 deraadt Exp $
+#	$Id: Makefile.inc,v 1.14 1993/12/16 15:50:20 deraadt Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -30,7 +30,7 @@ SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .endif
 
 MAN3+=	byteorder.0 gethostbyname.0 getnetent.0 getprotoent.0 getservent.0 \
-	inet.0 ns.0 rcmd.0 resolver.0 \
+	inet.0 ns.0 rcmd.0 resolver.0 ethers.0
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3
