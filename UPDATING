@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.7 2000/11/26 17:46:28 ad Exp $
+$NetBSD: UPDATING,v 1.8 2001/01/01 14:13:51 sommerfeld Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,12 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20001230:
+	New share/mk files needed to support .WAIT in SUBDIR variables.
+	If you get make errors, 
+		(cd share/mk; make install)
+	Also, PRINTOBJDIR has changed and is now used more heavily.
 
 20001019:
 	The `ca' device driver has been replaced by `ld'; although the
