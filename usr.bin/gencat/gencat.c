@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.8 1998/04/28 15:28:49 mjacob Exp $	*/
+/*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.8 1998/04/28 15:28:49 mjacob Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $");
 #endif
 
 /***********************************************************
@@ -294,11 +294,11 @@ static char *
 wskip(cptr)
 	char   *cptr;
 {
-	if (!*cptr || !isspace(*cptr)) {
+	if (!*cptr || !isspace((unsigned char) *cptr)) {
 		warning(cptr, "expected a space");
 		return (cptr);
 	}
-	while (*cptr && isspace(*cptr))
+	while (*cptr && isspace((unsigned char) *cptr))
 		++cptr;
 	return (cptr);
 }
@@ -307,11 +307,11 @@ static char *
 cskip(cptr)
 	char   *cptr;
 {
-	if (!*cptr || isspace(*cptr)) {
+	if (!*cptr || isspace((unsigned char) *cptr)) {
 		warning(cptr, "wasn't expecting a space");
 		return (cptr);
 	}
-	while (*cptr && !isspace(*cptr))
+	while (*cptr && !isspace((unsigned char) *cptr))
 		++cptr;
 	return (cptr);
 }
@@ -345,7 +345,7 @@ getmsg(fd, cptr, quote)
 		if (quote && *cptr == quote) {
 			char   *tmp;
 			tmp = cptr + 1;
-			if (*tmp && (!isspace(*tmp) || *wskip(tmp))) {
+			if (*tmp && (!isspace((unsigned char) *tmp) || *wskip(tmp))) {
 				warning(cptr, "unexpected quote character, ignoring");
 				*tptr++ = *cptr++;
 			} else {
@@ -395,10 +395,10 @@ getmsg(fd, cptr, quote)
 				default:
 					if (quote && *cptr == quote) {
 						*tptr++ = *cptr++;
-					} else if (isdigit(*cptr)) {
+					} else if (isdigit((unsigned char) *cptr)) {
 						*tptr = 0;
 						for (i = 0; i < 3; ++i) {
-							if (!isdigit(*cptr))
+							if (!isdigit((unsigned char) *cptr))
 								break;
 							if (*cptr > '7')
 								warning(cptr, "octal number greater than 7?!");
@@ -454,7 +454,7 @@ MCParse(fd)
 					else
 						quote = *cptr;
 				}
-			} else if (isspace(*cptr)) {
+			} else if (isspace((unsigned char) *cptr)) {
 				;
 			} else {
 				if (*cptr) {
@@ -473,7 +473,7 @@ MCParse(fd)
 			 * We have a digit? Start of a message. Else,
 			 * syntax error.
 			 */
-			if (isdigit(*cptr)) {
+			if (isdigit((unsigned char) *cptr)) {
 				msgid = atoi(cptr);
 				cptr = cskip(cptr);
 				cptr = wskip(cptr);
