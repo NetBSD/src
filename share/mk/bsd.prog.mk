@@ -71,13 +71,14 @@ MKDEP=	-p
 
 .endif
 
-.if !defined(NOMAN)
 .if	!defined(MAN1) && !defined(MAN2) && !defined(MAN3) && \
 	!defined(MAN4) && !defined(MAN5) && !defined(MAN6) && \
 	!defined(MAN7) && !defined(MAN8)
 MAN1=	${PROG}.0
 .endif
 .endif
+
+.if !defined(NOMAN)
 MANALL=	${MAN1} ${MAN2} ${MAN3} ${MAN4} ${MAN5} ${MAN6} ${MAN7} ${MAN8}
 .endif
 
