@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.39 2000/01/06 02:06:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.40 2000/01/07 13:57:20 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -783,16 +783,18 @@ raidioctl(dev, cmd, data, flag, p)
 
 		retcode = rf_Configure(raidPtrs[unit], k_cfg);
 
-		/* allow this many simultaneous IO's to this RAID device */
-		raidPtrs[unit]->openings = RAIDOUTSTANDING;
-
-		/* XXX should be moved to rf_Configure() */
-
-		raidPtrs[unit]->copyback_in_progress = 0;
-		raidPtrs[unit]->parity_rewrite_in_progress = 0;
-		raidPtrs[unit]->recon_in_progress = 0;
-		
 		if (retcode == 0) {
+
+			/* allow this many simultaneous IO's to 
+			   this RAID device */
+			raidPtrs[unit]->openings = RAIDOUTSTANDING;
+			
+			/* XXX should be moved to rf_Configure() */
+
+			raidPtrs[unit]->copyback_in_progress = 0;
+			raidPtrs[unit]->parity_rewrite_in_progress = 0;
+			raidPtrs[unit]->recon_in_progress = 0;
+		
 			retcode = raidinit(dev, raidPtrs[unit], unit);
 			rf_markalldirty( raidPtrs[unit] );
 		}
