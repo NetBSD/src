@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.4 2003/01/19 20:46:12 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.5 2003/01/19 21:58:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include "namespace.h"
 #include "reentrant.h"
 
+#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -303,12 +304,20 @@ __libc_thr_keydelete_stub(thread_key_t k)
 int	__libc_thr_once_stub(once_t *, void (*)(void));
 int	__libc_thr_sigsetmask_stub(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self_stub(void);
+void	__libc_thr_yield_stub(void);
+int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
+	    void *(*)(void *), void *);
+void	__libc_thr_exit_stub(void *);
 int	*__libc_thr_errno_stub(void);
 
 __weak_alias(__libc_thr_once,__libc_thr_once_stub)
 __weak_alias(__libc_thr_sigsetmask,__libc_thr_sigsetmask_stub)
 __weak_alias(__libc_thr_self,__libc_thr_self_stub)
+__weak_alias(__libc_thr_yield,__libc_thr_yield_stub)
+__weak_alias(__libc_thr_create,__libc_thr_create_stub)
+__weak_alias(__libc_thr_exit,__libc_thr_exit_stub)
 __weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
+
 
 int
 __libc_thr_once_stub(once_t *o, void (*r)(void))
@@ -345,9 +354,41 @@ thr_t
 __libc_thr_self_stub(void)
 {
 
+	return (NULL);
+}
+
+void
+__libc_thr_yield_stub(void)
+{
+
+	/* Nothing to do. */
+}
+
+int
+__libc_thr_create_stub(thr_t *tp, const thrattr_t *ta,
+    void *(*f)(void *), void *a)
+{
+	/* LINTED deliberate lack of effect */
+	(void)tp;
+	/* LINTED deliberate lack of effect */
+	(void)ta;
+	/* LINTED deliberate lack of effect */
+	(void)f;
+	/* LINTED deliberate lack of effect */
+	(void)a;
+
 	DIE();
 
-	return (NULL);
+	return (EOPNOTSUPP);
+}
+
+void
+__libc_thr_exit_stub(void *v)
+{
+	/* LINTED deliberate lack of effect */
+	(void)v;
+
+	exit(0);
 }
 
 int *
