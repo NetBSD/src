@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.59 1998/02/23 10:09:31 jonathan Exp $
+#	$NetBSD: bsd.own.mk,v 1.60 1998/02/25 18:30:11 perry Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -88,6 +88,13 @@ OBJECT_FMT?=a.out
 
 
 # No lint, for now.
+
+# all machines on which we are okay should be added here until we can
+# get rid of the whole "NOLINT by default" thing.
+.if (${MACHINE} == "i386")
+NONOLINT=1
+.endif
+
 .if !defined(NONOLINT)
 NOLINT=
 .endif
