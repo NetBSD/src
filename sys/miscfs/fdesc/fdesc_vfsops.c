@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.48 2004/04/21 02:38:16 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.49 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.48 2004/04/21 02:38:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.49 2004/04/27 17:37:31 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,7 +65,7 @@ int	fdesc_mount __P((struct mount *, const char *, void *,
 			 struct nameidata *, struct proc *));
 int	fdesc_start __P((struct mount *, int, struct proc *));
 int	fdesc_unmount __P((struct mount *, int, struct proc *));
-int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	fdesc_quotactl __P((struct mount *, int, uid_t, void *,
 			    struct proc *));
 int	fdesc_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
@@ -188,7 +188,7 @@ fdesc_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

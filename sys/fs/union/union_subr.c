@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.8 2003/10/15 11:28:59 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.9 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.8 2003/10/15 11:28:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.9 2004/04/27 17:37:30 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ union_init()
 
 	for (i = 0; i < NHASH; i++)
 		LIST_INIT(&unhead[i]);
-	memset((caddr_t) unvplock, 0, sizeof(unvplock));
+	memset(unvplock, 0, sizeof(unvplock));
 }
 
 /*
@@ -162,7 +162,7 @@ union_list_unlock(ix)
 
 	if (unvplock[ix] & UN_WANTED) {
 		unvplock[ix] &= ~UN_WANTED;
-		wakeup((caddr_t) &unvplock[ix]);
+		wakeup(&unvplock[ix]);
 	}
 }
 
