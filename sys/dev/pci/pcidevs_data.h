@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.143 1999/07/20 20:59:04 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.144 1999/07/27 00:24:06 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.138 1999/07/20 20:58:20 drochner Exp 
+ *	NetBSD: pcidevs,v 1.139 1999/07/27 00:23:47 thorpej Exp 
  */
 
 /*
@@ -2516,6 +2516,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "83C170 (\"EPIC/100\") Fast Ethernet",
+	},
+	{
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175,
+	    0,
+	    "Standard Microsystems",
+	    "83C175 (\"EPIC/100\") Fast Ethernet",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
