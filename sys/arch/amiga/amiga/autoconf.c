@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2000/06/01 17:42:59 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77 2000/06/10 19:34:46 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -112,7 +112,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot(&booted_device, &booted_partition);
+	findroot();
 #ifdef DEBUG_KERNEL_START
 	printf("survived findroot()\n");
 #endif
