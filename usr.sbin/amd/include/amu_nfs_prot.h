@@ -1,3 +1,5 @@
+/*	$NetBSD: amu_nfs_prot.h,v 1.1.1.2 1997/10/26 00:02:29 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amu_nfs_prot.h,v 1.1.1.1 1997/07/24 21:20:15 christos Exp $
+ * Id: nfs_prot_netbsd.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
  *
  */
 
@@ -58,6 +60,17 @@
 #ifdef HAVE_NFS_NFS_H
 # include <nfs/nfs.h>
 #endif /* HAVE_NFS_NFS_H */
+
+/* NON-NFS STUFF (doesn't really belong here) */
+#ifndef DEFINED_YPALL_CALLBACK_FXN_T
+# define DEFINED_YPALL_CALLBACK_FXN_T
+/* this is RIGHT for 1.2G and 1.2.1 */
+typedef int (*ypall_callback_fxn_t)(u_long, char *, int, char *, int, void *);
+/*
+ * this one was provided by Christos Zoulas <christos@deshaw.com>:
+ typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
+ */
+#endif /* DEFINED_YPALL_CALLBACK_FXN_T */
 
 
 /*
