@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.10 1998/11/21 15:41:42 drochner Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.11 1998/12/02 15:53:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,9 +129,9 @@ struct wdc_xfer {
 #define C_DMA		0x0040 /* cmd uses DMA */
 #define C_SENSE		0x0080 /* cmd is a internal command */
 
-	/* Information about our location */
+	/* Informations about our location */
+	struct channel_softc *chp;
 	u_int8_t drive;
-	u_int8_t channel;
 
 	/* Information about the current transfer  */
 	void *cmd; /* wdc, ata or scsipi command structure */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.48 1998/12/02 10:52:25 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.49 1998/12/02 15:53:34 bouyer Exp $ */
 
 
 /*
@@ -420,7 +420,6 @@ wdcstart(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_xfer *xfer;
-	struct wdc_softc *wdc = chp->wdc;
 
 #ifdef WDC_DIAGNOSTIC
 	int spl1, spl2;
@@ -440,7 +439,7 @@ wdcstart(chp)
 		return;
 
 	/* adjust chp, in case we have a shared queue */
-	chp = wdc->channels[xfer->channel];
+	chp = xfer->chp;
 
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
@@ -454,7 +453,7 @@ wdcstart(chp)
 			return;
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
-	    xfer->channel, xfer->drive), DEBUG_XFERS);
+	    chp->channel, xfer->drive), DEBUG_XFERS);
 	chp->ch_flags |= WDCF_ACTIVE;
 	if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_RESET) {
 		chp->ch_drive[xfer->drive].drive_flags &= ~DRIVE_RESET;
@@ -673,7 +672,7 @@ wdcwait(chp, mask, bits, timeout)
 			    WDCDELAY * time);
 		else 
 			printf("%s:%d:%d: warning: busy-wait took %dus\n",
-			    chp->wdc->sc_dev.dv_xname, xfer->channel,
+			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive,
 			    WDCDELAY * time);
 	}
@@ -1129,7 +1128,7 @@ wdc_exec_xfer(chp, xfer)
 	    chp->channel, xfer->drive), DEBUG_XFERS);
 
 	/* complete xfer setup */
-	xfer->channel = chp->channel;
+	xfer->chp = chp;
 
 	/*
 	 * If we are a polled command, and the list is not empty,
@@ -1215,7 +1214,7 @@ __wdcerror(chp, msg)
 		    msg);
 	else
 		printf("%s:%d:%d: %s\n", chp->wdc->sc_dev.dv_xname,
-		    xfer->channel, xfer->drive, msg);
+		    chp->channel, xfer->drive, msg);
 }
 
 /* 
