@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.6 1997/10/19 03:17:29 lukem Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.7 2002/05/26 22:53:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr_comment.c,v 1.6 1997/10/19 03:17:29 lukem Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.7 2002/05/26 22:53:38 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: pr_comment.c,v 1.6 1997/10/19 03:17:29 lukem Exp $");
 
 
 void
-pr_comment()
+pr_comment(void)
 {
 	int     now_col;	/* column we are in now */
 	int     adj_max_col;	/* Adjusted max_col for when we decide to
