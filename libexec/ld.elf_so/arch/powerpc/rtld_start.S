@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2002/10/05 11:59:06 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2002/10/31 20:23:25 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -36,41 +36,41 @@
 	.text
 
 _rtld_start:
-	stwu	1,-48(1)
-	stw	3,12(1)			# argc
-	stw	4,16(1)			# argv
-	stw	5,20(1)			# envp
-/*	stw	6,24(1)			# obj		(always 0) */
-/*	stw	7,28(1)			# cleanup	(always 0) */
-	stw	8,32(1)			# ps_strings
+	stwu	%r1,-48(%r1)
+	stw	%r3,12(%r1)		# argc
+	stw	%r4,16(%r1)		# argv
+	stw	%r5,20(%r1)		# envp
+/*	stw	%r6,24(%r1)		# obj		(always 0) */
+/*	stw	%r7,28(%r1)		# cleanup	(always 0) */
+	stw	%r8,32(%r1)		# ps_strings
 
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	31			# r31 = (real) GOT
-	lwz	30,_GLOBAL_OFFSET_TABLE_@got(31)
+	mflr	%r31			# r31 = (real) GOT
+	lwz	%r30,_GLOBAL_OFFSET_TABLE_@got(31)
 					# the linker thought GOT were ...
-	lwz	3,_DYNAMIC@got(31)
+	lwz	%r3,_DYNAMIC@got(%r31)
 
-	subf	4,30,31			# r4 = relocbase
-	add	3,3,4			# r3 = &_DYNAMIC
+	subf	%r4,%r30,%r31		# r4 = relocbase
+	add	%r3,%r3,%r4		# r3 = &_DYNAMIC
 	bl	_rtld_relocate_nonplt_self@plt
 
 	subf	4,30,31			# r4 = relocbase
-	lwz	3,16(1)
-	addi	3,3,-12			# sp = &argv[-3]	/* XXX */
+	lwz	%r3,16(%r1)
+	addi	%r3,%r3,-12		# sp = &argv[-3]	/* XXX */
 	bl	_rtld@plt		# _start = _rtld(sp, relocbase)
-	mtlr	3
+	mtlr	%r3
 
-	lwz	3,12(1)			# argc
-	lwz	4,16(1)			# argv
-	lwz	5,20(1)			# envp
-	lwz	6,-8(4)			# obj = sp[1] (== argv[-2])
-	lwz	7,-12(4)		# cleanup = sp[0] (== argv[-3])
-	lwz	8,32(1)			# ps_strings
+	lwz	%r3,12(%r1)		# argc
+	lwz	%r4,16(%r1)		# argv
+	lwz	%r5,20(%r1)		# envp
+	lwz	%r6,-8(%r4)		# obj = sp[1] (== argv[-2])
+	lwz	%r7,-12(%r4)		# cleanup = sp[0] (== argv[-3])
+	lwz	%r8,32(%r1)		# ps_strings
 
-	addi	1,1,48
+	addi	%r1,%r1,48
 	blrl		# _start(argc, argv, envp, obj, cleanup, ps_strings)
 
-	li	0,1			# _exit()
+	li	%r0,1			# _exit()
 	sc
 
 
@@ -78,44 +78,44 @@ _rtld_start:
 	.globl	_rtld_bind
 
 _rtld_bind_start:
-	stwu	1,-160(1)
+	stwu	%r1,-160(%r1)
 
-	stw	0,20(1)
-	mflr	0
-	stw	0,16(1)			# save lr
-	mfcr	0
-	stw	0,12(1)			# save cr
-	stmw	3,24(1)			# save r3-r31
+	stw	%r0,20(%r1)
+	mflr	%r0
+	stw	%r0,16(%r1)		# save lr
+	mfcr	%r0
+	stw	%r0,12(%r1)		# save cr
+	stmw	%r3,24(%r1)		# save r3-r31
 
-	mr	3,12			# obj
-	mr	4,11			# reloff
+	mr	%r3,%r12		# obj
+	mr	%r4,%r11		# reloff
 	bl	_rtld_bind@plt		# _rtld_bind(obj, reloff)
-	mtctr	3
+	mtctr	%r3
 
-	lmw	3,24(1)			# load r3-r31
-	lwz	0,12(1)			# restore cr
-	mtcr	0
-	lwz	0,16(1)			# restore lr
-	mtlr	0
-	lwz	0,20(1)
+	lmw	%r3,24(%r1)		# load r3-r31
+	lwz	%r0,12(%r1)		# restore cr
+	mtcr	%r0
+	lwz	%r0,16(%r1)		# restore lr
+	mtlr	%r0
+	lwz	%r0,20(%r1)
 
-	addi	1,1,160
+	addi	%r1,%r1,160
 	bctr
 
 	.globl	_rtld_powerpc_pltcall
 	.globl	_rtld_powerpc_pltresolve
 
 _rtld_powerpc_pltcall:
-	slwi	11,11,2
-	addis	11,11,0			# addis	11,11,jmptab@ha
-	lwz	11,0(11)		# lwz	11,jmptab@l(11)
-	mtctr	11
+	slwi	%r11,%r11,2
+	addis	%r11,%r11,0		# addis	11,11,jmptab@ha
+	lwz	%r11,0(%r11)		# lwz	11,jmptab@l(11)
+	mtctr	%r11
 	bctr
 
 _rtld_powerpc_pltresolve:
-	lis	12,0			# lis	12,_rtld_bind_start@ha
-	addi	12,12,0			# addi	12,12,_rtld_bind_start@l
-	mtctr	12
-	lis	12,0			# lis	12,obj@ha
-	addi	12,12,0			# addi	12,12,obj@l
+	lis	%r12,0			# lis	12,_rtld_bind_start@ha
+	addi	%r12,%r12,0		# addi	12,12,_rtld_bind_start@l
+	mtctr	%r12
+	lis	%r12,0			# lis	12,obj@ha
+	addi	%r12,%r12,0		# addi	12,12,obj@l
 	bctr
