@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.2 1999/01/19 21:04:48 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.3 1999/03/13 20:26:50 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -114,7 +114,6 @@ dz_uba_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct uba_softc *uh = (void *)parent;
 	struct	dz_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
 	register dzregs *da;
@@ -130,7 +129,7 @@ dz_uba_attach(parent, self, aux)
 	sc->sc_dr.dr_ring = &da->dz_ring;
 
 #ifdef QBA
-	if (uh->uh_type == QBA)
+	if (((struct uba_softc *)parent)->uh_type == QBA)
 		sc->sc_type = DZ_DZV;
 	else
 #endif
