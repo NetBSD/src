@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.36 1998/03/22 07:56:28 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.37 1998/03/22 09:27:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.36 1998/03/22 07:56:28 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.37 1998/03/22 09:27:07 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -98,11 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.36 1998/03/22 07:56:28 jonathan Exp $");
 #include <dev/cons.h>
 #endif
 
+
 #include <pmax/include/pmioctl.h>
 
-#include <pmax/dev/pdma.h>
 #include <dev/ic/z8530reg.h>
-#include <pmax/dev/lk201.h>
+#include <pmax/dev/pdma.h>
+
+#include <dev/dec/lk201.h>
 #include <pmax/dev/lk201var.h>
 
 #ifdef pmax
@@ -620,7 +622,15 @@ sccattach(parent, self, aux)
 #endif /* HAVE_RCONS */
 	if (SCCUNIT(cn_tab->cn_dev) == unit)
 	{
-		/*XXX console initialization used to go here */
+#ifdef alpha
+		s = spltty();
+		ctty.t_dev = makedev(SCCDEV,
+		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
+		cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+		cterm.c_ospeed = cterm.c_ispeed = 9600;
+		(void) sccparam(&ctty, &cterm);
+		DELAY(1000);
+#endif	/* alpha */
 	}
 
 #ifdef alpha
@@ -1197,7 +1207,7 @@ sccintr(xxxsc)
 		 * Keyboard needs special treatment.
 		 */
 		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && raster_console()) {
-#ifdef DDB
+#if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
 				Debugger();
