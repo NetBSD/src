@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.46 1998/01/08 00:32:39 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.47 1998/01/08 11:56:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -85,7 +85,8 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	    hashinit(bindhashsize, M_PCB, &table->inpt_bindhash);
 	table->inpt_connecthashtbl =
 	    hashinit(connecthashsize, M_PCB, &table->inpt_connecthash);
-	table->inpt_lastport = (u_int16_t)anonportmin;
+	table->inpt_lastlow = IPPORT_RESERVEDMAX;
+	table->inpt_lastport = (u_int16_t)anonportmax;
 }
 
 int
@@ -206,10 +207,10 @@ noname:
 			max = swp;
 		}
 
-		lport = *lastport + 1;
-		for (cnt = max - min + 1; cnt; cnt--, lport++) {
+		lport = *lastport - 1;
+		for (cnt = max - min + 1; cnt; cnt--, lport--) {
 			if (lport < min || lport > max)
-				lport = min;
+				lport = max;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), wild))
 				goto found;
