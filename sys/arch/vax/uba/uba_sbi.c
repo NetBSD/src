@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.12.18.2 2002/06/07 19:32:42 thorpej Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.12.18.3 2002/11/10 15:41:37 he Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -103,6 +103,9 @@ struct	cfattach uba_sbi_ca = {
 	sizeof(struct uba_vsoftc), dw780_match, dw780_attach
 };
 
+static struct evcnt strayint = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "uba","stray intr");
+static int strayinit = 0;
+
 extern	struct vax_bus_space vax_mem_bus_space;
 
 int
@@ -147,6 +150,10 @@ dw780_attach(struct device *parent, struct device *self, void *aux)
 	sc->uv_uba = (void *)sa->sa_ioh;
 	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uv_sc.uh_type = UBA_UBA;
+
+	if (strayinit++ == 0) evcnt_attach_static(&strayint); /* Setup stray
+							         interrupt
+							         counter. */
 
 	/*
 	 * Set up dispatch vectors for DW780.
@@ -208,9 +215,11 @@ uba_dw780int(void *arg)
 	struct	uba_vsoftc *vc = arg;
 	struct	uba_regs *ur = vc->uv_uba;
 	struct	ivec_dsp *ivec;
+	struct  evcnt *uvec;
 	int	br, vec;
 
 	br = mfpr(PR_IPL);
+	uvec = &vc->uv_sc.uh_intrcnt;
 	vec = ur->uba_brrvr[br - 0x14];
 	if (vec <= 0) {
 		ubaerror(&vc->uv_sc, &br, &vec);
@@ -218,10 +227,16 @@ uba_dw780int(void *arg)
 			return;
 	}
 
-	if (cold && scb_vec[(vc->uh_ibase + vec)/4].hoppaddr == scb_stray) {
+	uvec->ev_count--;	/* This interrupt should not be counted against
+				   the uba. */
+	ivec = &scb_vec[(vc->uh_ibase + vec)/4];
+	if (cold && *ivec->hoppaddr == scb_stray) {
 		scb_fake(vec + vc->uh_ibase, br);
 	} else {
-		ivec = &scb_vec[(vc->uh_ibase + vec)/4];
+		if (*ivec->hoppaddr == scb_stray)
+			strayint.ev_count++; /* Count against stray int */
+		else
+			ivec->ev->ev_count++; /* Count against device */
 		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
