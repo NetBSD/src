@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.3 2003/01/10 00:44:23 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.4 2003/01/10 15:01:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -123,6 +123,7 @@ int mpacpi_nintsrc;
 int mpacpi_npci;
 int mpacpi_maxpci;
 static int mpacpi_maxbuslevel;
+static int mpacpi_npciroots;
 #endif
 
 static int mpacpi_intr_index;
@@ -394,10 +395,15 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	if (level == 1) {
 		ret = AcpiUtEvaluateNumericObject(METHOD_NAME__BBN,
 		    node, &val);
-		if (ACPI_FAILURE(ret))
-			mpr->mpr_bus = 0;
-		else
+		if (ACPI_FAILURE(ret)) {
+			mpr->mpr_bus = mpacpi_npciroots;
+			if (mp_verbose)
+				printf("mpacpi: could not get bus number for "
+				       "PCI root bus, assuming %d\n",
+				    mpr->mpr_bus);
+		} else
 			mpr->mpr_bus = ACPI_LOWORD(val);
+		mpacpi_npciroots++;
 		mpr->mpr_parent = NULL;
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d at level %u\n",
@@ -620,12 +626,12 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		mpi->ioapic_pin = i;
 		mpi->ioapic = ioapic;
 		mpi->type = MPS_INTTYPE_INT;
-		mpi->flags = MPS_INTPO_ACTHI | (MPS_INTTR_EDGE << 2);
 		mpi->cpu_id = 0;
-		mpi->redir = (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
 		mpi->ioapic_ih = APIC_INT_VIA_APIC |
 		    (ioapic->sc_apicid << APIC_INT_APIC_SHIFT) |
 		    (i << APIC_INT_PIN_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->flags = MPS_INTPO_DEF | (MPS_INTTR_DEF << 2);
 		ioapic->sc_pins[i].ip_map = mpi;
 		index++;
 	}
@@ -733,9 +739,12 @@ mpacpi_find_interrupts(void *self)
 	 * MADT scan failed for some reason), there's nothing left to
 	 * do here. Same goes for the case where no I/O APICS were found.
 	 */
-	if (mpbios_scanned || mpacpi_nioapic == 0)
+	if (mpbios_scanned)
 		return 0;
 #endif
+
+	if (mpacpi_nioapic == 0)
+		return 0;
 
 	/*
 	 * Switch us into APIC mode by evaluating the _PIC(1).
@@ -752,6 +761,7 @@ mpacpi_find_interrupts(void *self)
 			printf("mpacpi: switch to APIC mode failed\n");
 		return 0;
 	}
+
 #if NPCI > 0
 	mpacpi_find_pcibusses(acpi);
 	if (mp_verbose)
