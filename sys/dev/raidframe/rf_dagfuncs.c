@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.16 2003/12/30 23:40:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.16 2003/12/30 23:40:20 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -598,8 +598,6 @@ rf_bxor(char *src, char *dest, int len, void *bp)
 	}
 	return (retcode);
 }
-/* map a user buffer into kernel space, if necessary */
-#define REMAP_VA(_bp,x,y) (y) = (x)
 
 /* When XORing in kernel mode, we need to map each user page to kernel
  * space before we can access it.  We don't want to assume anything
@@ -618,8 +616,8 @@ rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp)
 	unsigned long *pg_src, *pg_dest;   /* per-page source/dest pointers */
 	int     longs_this_time;/* # longwords to xor in the current iteration */
 
-	REMAP_VA(bp, src, pg_src);
-	REMAP_VA(bp, dest, pg_dest);
+	pg_src = src;
+	pg_dest = dest;
 	if (!pg_src || !pg_dest)
 		return (EFAULT);
 
@@ -655,9 +653,9 @@ rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp)
 		 * (or possibly both) of the pointers */
 		if (len) {
 			if (RF_PAGE_ALIGNED(src))
-				REMAP_VA(bp, src, pg_src);
+				pg_src = src;
 			if (RF_PAGE_ALIGNED(dest))
-				REMAP_VA(bp, dest, pg_dest);
+				pg_dest = dest;
 			if (!pg_src || !pg_dest)
 				return (EFAULT);
 		}
@@ -668,9 +666,9 @@ rf_longword_bxor(unsigned long *src, unsigned long *dest, int len, void *bp)
 		dest++;
 		len--;
 		if (RF_PAGE_ALIGNED(src))
-			REMAP_VA(bp, src, pg_src);
+			pg_src = src;
 		if (RF_PAGE_ALIGNED(dest))
-			REMAP_VA(bp, dest, pg_dest);
+			pg_dest = dest;
 	}
 	RF_ASSERT(len == 0);
 	return (0);
@@ -693,14 +691,14 @@ rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
 	int     longs_this_time;/* # longs to xor in the current iteration */
 	char    dst_is_a = 0;
 
-	REMAP_VA(bp, a, pg_a);
-	REMAP_VA(bp, b, pg_b);
-	REMAP_VA(bp, c, pg_c);
+	pg_a = a;
+	pg_b = b;
+	pg_c = c;
 	if (a == dst) {
 		pg_dst = pg_a;
 		dst_is_a = 1;
 	} else {
-		REMAP_VA(bp, dst, pg_dst);
+		pg_dst = dst;
 	}
 
 	/* align dest to cache line.  Can't cross a pg boundary on dst here. */
@@ -711,17 +709,17 @@ rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
 		b++;
 		c++;
 		if (RF_PAGE_ALIGNED(a)) {
-			REMAP_VA(bp, a, pg_a);
+			pg_a = a;
 			if (!pg_a)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(b)) {
-			REMAP_VA(bp, a, pg_b);
+			pg_b = a;
 			if (!pg_b)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(c)) {
-			REMAP_VA(bp, a, pg_c);
+			pg_c = a;
 			if (!pg_c)
 				return (EFAULT);
 		}
@@ -785,25 +783,25 @@ rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
 
 		if (len) {
 			if (RF_PAGE_ALIGNED(a)) {
-				REMAP_VA(bp, a, pg_a);
+				pg_a = a;
 				if (!pg_a)
 					return (EFAULT);
 				if (dst_is_a)
 					pg_dst = pg_a;
 			}
 			if (RF_PAGE_ALIGNED(b)) {
-				REMAP_VA(bp, b, pg_b);
+				pg_b = b;
 				if (!pg_b)
 					return (EFAULT);
 			}
 			if (RF_PAGE_ALIGNED(c)) {
-				REMAP_VA(bp, c, pg_c);
+				pg_c = c;
 				if (!pg_c)
 					return (EFAULT);
 			}
 			if (!dst_is_a)
 				if (RF_PAGE_ALIGNED(dst)) {
-					REMAP_VA(bp, dst, pg_dst);
+					pg_dst = dst;
 					if (!pg_dst)
 						return (EFAULT);
 				}
@@ -816,25 +814,25 @@ rf_longword_bxor3(unsigned long *dst, unsigned long *a, unsigned long *b,
 		b++;
 		c++;
 		if (RF_PAGE_ALIGNED(a)) {
-			REMAP_VA(bp, a, pg_a);
+			pg_a = a;
 			if (!pg_a)
 				return (EFAULT);
 			if (dst_is_a)
 				pg_dst = pg_a;
 		}
 		if (RF_PAGE_ALIGNED(b)) {
-			REMAP_VA(bp, b, pg_b);
+			pg_b = b;
 			if (!pg_b)
 				return (EFAULT);
 		}
 		if (RF_PAGE_ALIGNED(c)) {
-			REMAP_VA(bp, c, pg_c);
+			pg_c = c;
 			if (!pg_c)
 				return (EFAULT);
 		}
 		if (!dst_is_a)
 			if (RF_PAGE_ALIGNED(dst)) {
-				REMAP_VA(bp, dst, pg_dst);
+				pg_dst = dst;
 				if (!pg_dst)
 					return (EFAULT);
 			}
