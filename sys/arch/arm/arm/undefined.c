@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.11 2001/11/23 21:18:30 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.12 2001/12/20 01:20:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.11 2001/11/23 21:18:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.12 2001/12/20 01:20:22 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -301,16 +301,3 @@ undefinedinstruction(trapframe_t *frame)
 	userret(p);
 #endif
 }
-
-
-void
-resethandler(trapframe_t *frame)
-{
-#ifdef DDB
-	/* Extra info in case panic drops us into the debugger. */
-	printf("Trap frame at %p\n", frame);
-#endif
-	panic("Branch to never-never land (zero)..... we're dead\n");
-}
-
-/* End of undefined.c */

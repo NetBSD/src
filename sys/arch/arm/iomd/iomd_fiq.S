@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.1 2001/10/05 22:27:40 reinoud Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.2 2001/12/20 01:20:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -109,5 +109,3 @@ ENTRY_NP(floppy_write_fiq)
 
 	.global	_C_LABEL(floppy_write_fiq_end)
 _C_LABEL(floppy_write_fiq_end):
-
-/* End of fiq.S */

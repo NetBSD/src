@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.2 2001/11/28 01:06:19 thorpej Exp $	*/
+/*	$NetBSD: exception.S,v 1.3 2001/12/20 01:20:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -105,75 +105,25 @@ do_exit:
 
 	PULLFRAMEFROMSVCANDEXIT		/* Restore the trap frame and exit */
 
-
-/* entry point for CPU data abort */
-
-ASENTRY_NP(data_abort_entry)
-        sub     lr, lr, #0x00000008     /* Adjust the lr */
-
-	PUSHFRAMEINSVC			/* Push trap frame and switch */
-					/* to SVC32 mode */
-
-	mov	r0, sp			/* pass the stack pointer as r0 */
-
-	add	lr, pc, #exception_exit - . - 8
-	ldr	r1, Ldata_abort_handler_address
-	ldr	pc, [r1]
-
-Ldata_abort_handler_address:
-	.word	_C_LABEL(data_abort_handler_address)
-
-	.data
-	.global	_C_LABEL(data_abort_handler_address)
-_C_LABEL(data_abort_handler_address):
-	.word	abortdata
-
-	.text
-abortdata:
-        add     r0, pc, #abortdatamsg - . - 8
-	b	_C_LABEL(panic)
-
-abortdatamsg:
-        .asciz  "abortdata"
-        .align  0
-
-
-ASENTRY_NP(prefetch_abort_entry)
-        sub     lr, lr, #0x00000004     /* Adjust the lr */
-
-	PUSHFRAMEINSVC
-
- 	mov	r0, sp			/* pass the stack pointer as r0 */
-
-	add	lr, pc, #exception_exit - . - 8
-	ldr	r1, Lprefetch_abort_handler_address
-	ldr	pc, [r1]
-	
-Lprefetch_abort_handler_address:
-	.word	_C_LABEL(prefetch_abort_handler_address)
-
-	.data
-	.global	_C_LABEL(prefetch_abort_handler_address)
-
-_C_LABEL(prefetch_abort_handler_address):
-	.word	abortprefetch
-
-	.text
-abortprefetch:
-        add     r0, pc, #abortprefetchmsg - . - 8
-	b	_C_LABEL(panic)
-
-abortprefetchmsg:
-        .asciz  "abortprefetch"
-        .align  0
-
+/*
+ * reset_entry:
+ *
+ *	Handler for Reset exception.
+ */
+ASENTRY_NP(reset_entry)
+	adr	r0, Lreset_panicmsg
+	mov	r1, lr
+	bl	_C_LABEL(panic)
+	/* NOTREACHED */
+Lreset_panicmsg:
+	.asciz	"Reset vector called, LR = 0x%08x"
+	.balign	4
 
 /*
  * swi_entry
  *
- * Main entry point for the SWI vector
+ *	Handler for the Software Interrupt exception.
  */
-
 ASENTRY_NP(swi_entry)
 	PUSHFRAME
 
@@ -210,14 +160,103 @@ do_swi_ast:
 	bl	_C_LABEL(ast)		/* call the AST handler */
 	b	swi_exit_loop		/* Try and exit again */
 
+/*
+ * prefetch_abort_entry:
+ *
+ *	Handler for the Prefetch Abort exception.
+ */
+ASENTRY_NP(prefetch_abort_entry)
+        sub     lr, lr, #0x00000004     /* Adjust the lr */
+
+	PUSHFRAMEINSVC
+
+ 	mov	r0, sp			/* pass the stack pointer as r0 */
+
+	add	lr, pc, #exception_exit - . - 8
+	ldr	r1, Lprefetch_abort_handler_address
+	ldr	pc, [r1]
+	
+Lprefetch_abort_handler_address:
+	.word	_C_LABEL(prefetch_abort_handler_address)
+
+	.data
+	.global	_C_LABEL(prefetch_abort_handler_address)
+
+_C_LABEL(prefetch_abort_handler_address):
+	.word	abortprefetch
+
+	.text
+abortprefetch:
+        add     r0, pc, #abortprefetchmsg - . - 8
+	b	_C_LABEL(panic)
+
+abortprefetchmsg:
+        .asciz  "abortprefetch"
+        .align  0
 
 /*
- * We indirect the undefined vector via the handler address
- * in the data area.
- * Entry to the undefined handler must look like direct
- * entry from the vector.
+ * data_abort_entry:
+ *
+ *	Handler for the Data Abort exception.
  */
+ASENTRY_NP(data_abort_entry)
+        sub     lr, lr, #0x00000008     /* Adjust the lr */
 
+	PUSHFRAMEINSVC			/* Push trap frame and switch */
+					/* to SVC32 mode */
+
+	mov	r0, sp			/* pass the stack pointer as r0 */
+
+	add	lr, pc, #exception_exit - . - 8
+	ldr	r1, Ldata_abort_handler_address
+	ldr	pc, [r1]
+
+Ldata_abort_handler_address:
+	.word	_C_LABEL(data_abort_handler_address)
+
+	.data
+	.global	_C_LABEL(data_abort_handler_address)
+_C_LABEL(data_abort_handler_address):
+	.word	abortdata
+
+	.text
+abortdata:
+        add     r0, pc, #abortdatamsg - . - 8
+	b	_C_LABEL(panic)
+
+abortdatamsg:
+        .asciz  "abortdata"
+        .align  0
+
+/*
+ * address_exception_entry:
+ *
+ *	Handler for the Address Exception exception.
+ *
+ *	NOTE: This exception isn't really used on arm32.  We
+ *	print a warning message to the console and then treat
+ *	it like a Data Abort.
+ */
+ASENTRY_NP(address_exception_entry)
+	mrs	r1, cpsr_all
+	mrs	r2, spsr_all
+	mov	r3, lr
+	adr	r0, Laddress_exception_msg
+	bl	_C_LABEL(printf)	/* XXX CLOBBERS LR!! */
+	b	data_abort_entry
+Laddress_exception_msg:
+	.asciz	"Address Exception CPSR=0x%08x SPSR=0x%08x LR=0x%08x\n"
+	.balign	4
+
+/*
+ * undefined_entry:
+ *
+ *	Handler for the Undefined Instruction exception.
+ *
+ *	We indirect the undefined vector via the handler address
+ *	in the data area.  Entry to the undefined handler must
+ *	look like direct entry from the vector.
+ */
 ASENTRY_NP(undefined_entry)
 #ifdef IPKDB
 /*
@@ -384,5 +423,3 @@ Lundefined_handler_indirection_data:
 	.global	_C_LABEL(undefined_handler_address)
 _C_LABEL(undefined_handler_address):
 	.word	_C_LABEL(undefinedinstruction_bounce)
-
-/* End of exception.S */

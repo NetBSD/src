@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.42 2001/11/29 22:17:16 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.43 2001/12/20 01:20:24 thorpej Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -68,6 +68,7 @@ file	arch/arm26/iobus/iobus.c		iobus
 device	ioc { [bank = -1], [offset = 0] }
 attach	ioc at iobus
 file	arch/arm26/iobus/ioc.c			ioc		needs-flag
+file	arch/arm26/ioc/ioc_fiq_util.S		fiq		needs-flag
 
 # I^2C bus (bit-banged through IOC control register)
 device	iic { addr = -1 }
@@ -208,8 +209,6 @@ file	arch/arm26/arm26/conf.c
 file	arch/arm26/arm26/cons_machdep.c
 file	arch/arm26/arm26/copyinout.S
 file	arch/arm26/arm26/except.c
-file	arch/arm26/arm26/fiq.c			fiq		needs-flag
-file	arch/arm26/arm26/fiq_util.S		fiq
 file	arch/arm26/arm26/irq.c
 file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c

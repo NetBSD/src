@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2001/07/28 15:08:11 chris Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2001/12/20 01:20:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -52,6 +52,9 @@
 ENTRY_NP(kernel_text)
 #endif
 
+	.text
+	.align	0
+
 ASENTRY_NP(start)
 	add	r1, pc, #(Lstart - . - 8)
 	ldmia	r1, {r1, r2, sp}		/* Set initial stack and */
@@ -99,72 +102,7 @@ Lstart:
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
 
-/*
- * Instructions to copy to the bottom of zero page
- * These are the entry point to the system exception routines
- */
-
 	.text
-	.align	0
-	.global	_C_LABEL(page0), _C_LABEL(page0_end)
-_C_LABEL(page0):
-	ldr	pc, [pc, #Lreset - . - 8]
-	ldr	pc, [pc, #Lundefined - . - 8]
-	ldr	pc, [pc, #Lswi - . - 8]
-	ldr	pc, [pc, #Labortpre - . - 8]
-	ldr	pc, [pc, #Labortdata - . - 8]
-	ldr	pc, [pc, #Laddrexc - . - 8]
-	ldr	pc, [pc, #Lirq - . - 8]
-	ldr	pc, [pc, #Lfiq - . - 8]
-
-Lreset:
-	.word	reset_entry
-Lundefined:
-	.word	undefined_entry
-Lswi:
-	.word	swi_entry
-Labortpre:
-	.word	prefetch_abort_entry
-Labortdata:
-	.word	data_abort_entry
-Laddrexc:
-	.word	addrexc
-Lirq:
-	.word	irq_entry
-Lfiq:
-	.word	fiq
-_C_LABEL(page0_end) =	.
-
-/* vector 0x00000000 - RESET */
-
-ASENTRY_NP(reset_entry)
-	PUSHFRAME
-
- 	mov	r0, sp			/* Pass the frame to function */
-	b	_C_LABEL(resethandler)	/* It's a branch throught zero ! */
-
-/* vector 0x00000008 - ADDRESS EXCEPTION */
-
-ASENTRY_NP(addrexc)
-	mrs	r1, cpsr_all
-	mrs	r2, spsr_all
-	mov	r3, lr
-	add	r0, pc, #Laddrexcmsg - . - 8
-	bl	_C_LABEL(printf)
-	b	data_abort_entry
-
-Laddrexcmsg:
-	.asciz	"address exception CPSR=%08x SPSR=%08x lr=%08x\n"
-	.align	0
-
-/* vector 0x0000001C - FIQ */
-
-ASENTRY_NP(fiq)
-	ldr	r0, Lfiqmsg
-	b	_C_LABEL(panic)
-
-Lfiqmsg:
-	.asciz	"fiq"
 	.align	0
 
 #ifndef OFW
@@ -227,40 +165,6 @@ Lcpu_reset_needs_v4_MMU_disable:
 #endif	/* OFW */
 
 #ifdef IPKDB
-#if	0
-/*
- * ipkdbfbyte and ipkdbsbyte are now in ipkdb_glue.c and do not tweak
- * the abort handler anymore
- */
-ENTRY_NP(ipkdbfbyte)
-	ldr	ip, abortp
-	ldr	r2, [ip]
-	add	r3, pc, #ipkdbfault - . - 8
-	str	r3, [ip]
-	ldrb	r0, [r0]
-	str	r2, [ip]
-	mov	pc, lr
-
-ENTRY_NP(ipkdbsbyte)
-	ldr	ip, abortp
-	ldr	r2, [ip]
-	add	r3, pc, #ipkdbfault - . - 8
-	str	r3, [ip]
-	strb	r1, [r0]
-	sub	r0, r0, r0
-	str	r2, [ip]
-	mov	pc, lr
-
-abortp:
-	.word	Labortdata - _C_LABEL(page0)
-ipkdbfault:
-	mov	r0, #0xd3
-	msr	cpsr_all, r0
-	mvn	r0, #0			/* mov	r0, #-1 */
-	str	r2, [ip]
-	mov	pc, lr
-#endif
-
 /*
  * Execute(inst, psr, args, sp)
  *

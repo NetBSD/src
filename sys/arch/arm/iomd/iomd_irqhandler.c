@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.3 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.4 2001/12/20 01:20:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -55,7 +55,6 @@
 #include <arm/arm32/katelib.h>
 
 irqhandler_t *irqhandlers[NIRQS];
-fiqhandler_t *fiqhandlers;
 
 int current_intr_depth;
 u_int current_mask;
@@ -73,8 +72,6 @@ extern char *_intrnames;
 
 extern void zero_page_readonly	__P((void));
 extern void zero_page_readwrite	__P((void));
-extern int fiq_setregs		__P((fiqhandler_t *));
-extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));
 
 /*
@@ -93,9 +90,6 @@ irq_init()
 		irqhandlers[loop] = NULL;
 		irqblock[loop] = 0;
 	}
-
-	/* Clear the FIQ handler */
-	fiqhandlers = NULL;
 
 	/* Clear the IRQ/FIQ masks in the IOMD */
 	IOMD_WRITE_BYTE(IOMD_IRQMSKA, 0x00);
@@ -544,75 +538,3 @@ stray_irqhandler(mask)
 		log(LOG_ERR, "Stray interrupt %08x%s\n", mask,
 		    stray_irqs >= 8 ? ": stopped logging" : "");
 }
-
-
-/*
- * int fiq_claim(fiqhandler_t *handler)
- *
- * Claim FIQ's and install a handler for them.
- */
-
-int
-fiq_claim(handler)
-	fiqhandler_t *handler;
-{
-	/* Fail if the FIQ's are already claimed */
-	if (fiqhandlers)
-		return(-1);
-
-	if (handler->fh_size > 0xc0)
-		return(-1);
-
-	/* Install the handler */
-	fiqhandlers = handler;
-
-	/* Now we have to actually install the FIQ handler */
-
-	/* Eventually we will copy this down but for the moment ... */
-	zero_page_readwrite();
-
-	WriteWord(0x0000003c, (u_int) handler->fh_func);
-    
-	zero_page_readonly();
-    
-	/* We must now set up the FIQ registers */
-	fiq_setregs(handler);
-
-	/* Set up the FIQ mask */
-	IOMD_WRITE_BYTE(IOMD_FIQMSK, handler->fh_mask);
-    
-	/* Make sure that the FIQ's are enabled */
-	enable_interrupts(F32_bit);
-	return(0);
-}
-
-
-/*
- * int fiq_release(fiqhandler_t *handler)
- *
- * Release FIQ's and remove a handler for them.
- */
-
-int
-fiq_release(handler)
-	fiqhandler_t *handler;
-{
-	/* Fail if the handler is wrong */
-	if (fiqhandlers != handler)
-		return(-1);
-
-	/* Disable FIQ interrupts */
-	disable_interrupts(F32_bit);
-
-	/* Clear up the FIQ mask */
-	IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
-
-	/* Retrieve the FIQ registers */
-	fiq_getregs(handler);
-
-	/* Remove the handler */
-	fiqhandlers = NULL;
-	return(0);
-}
-
-/* End of irqhandler.c */
