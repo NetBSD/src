@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.9 2000/08/07 01:08:38 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.10 2000/08/12 16:14:09 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ void		lapic_delay __P((int));
 void		lapic_microtime __P((struct timeval *));
 static u_int32_t lapic_gettick __P((void));
 void		lapic_clockintr __P((void *));
-void		lapic_initclocks __P((void));
 static void 	lapic_map __P((paddr_t));
 
 static void

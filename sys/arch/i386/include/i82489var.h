@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.1.2.3 2000/08/12 16:14:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ extern void lapic_boot_init __P((paddr_t));
 extern void lapic_set_lvt __P((void));
 extern void lapic_enable __P((void));
 extern void lapic_calibrate_timer __P((struct cpu_info *ci));
+extern void lapic_initclocks __P((void));
 
 #endif
 
