@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1996/05/14 10:23:29 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11.4.1 1996/12/05 04:40:51 rat Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -179,7 +179,8 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* Unknown format or unitialised volume? */
 	if (e > 0)
-		uprintf("Warning: unknown disklabel format\n");
+		uprintf("Warning: unknown disklabel format"
+			"- assuming empty disk\n");
 
 	/* Calulate new checksum. */
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
@@ -438,8 +439,16 @@ ahdi_label(dev, strat, dl, cdl)
 	/*
 	 * Perform sanity checks.
 	 */
-	if (apt.at_bslst == 0 || apt.at_bslend == 0)	/* illegal */
-		return(1);
+	if (apt.at_bslst == 0 || apt.at_bslend == 0) {
+		/*
+		 * Illegal according to Atari, however some hd-utils
+		 * use it - notably ICD *sigh*
+		 * Work around it.....
+		 */
+		apt.at_bslst = apt.at_bslend = 0;
+		uprintf("Warning: Illegal 'bad sector list' format"
+			"- assuming non exists\n");
+	}
 	if (apt.at_hdsize == 0 || apt.at_nparts == 0)	/* unlikely */
 		return(1);
 	if (apt.at_nparts > AHDI_MAXPARTS)		/* XXX kludge */
