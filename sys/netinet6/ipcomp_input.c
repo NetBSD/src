@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.7 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.8 2000/01/31 14:19:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -62,7 +62,6 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
@@ -74,11 +73,9 @@
 
 #include <machine/stdarg.h>
 
-#define IPLEN_FLIPPED
+#include <net/net_osdep.h>
 
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
+#define IPLEN_FLIPPED
 
 #ifdef INET
 extern struct protosw inetsw[];
@@ -101,7 +98,7 @@ ipcomp4_input(m, va_alist)
 	size_t hlen;
 	int error;
 	size_t newlen, olen;
-	struct secas *sa = NULL;
+	struct secasvar *sav = NULL;
 	int off, proto;
 	va_list ap;
 
@@ -112,23 +109,27 @@ ipcomp4_input(m, va_alist)
 
 	if (off + sizeof(struct ipcomp) > MHLEN) {
 		/*XXX the restriction should be relaxed*/
-		printf("IPv4 IPComp input: assumption failed (header too long)\n");
+		ipseclog((LOG_DEBUG, "IPv4 IPComp input: assumption failed "
+		    "(header too long)\n"));
+		ipsecstat.in_inval++;
 		goto fail;
 	}
 	if (m->m_len < off + sizeof(struct ipcomp)) {
 		m = m_pullup(m, off + sizeof(struct ipcomp));
 		if (!m) {
-			printf("IPv4 IPComp input: can't pullup;"
-				"dropping the packet for simplicity\n");
-			ipsecstat.in_inval++;
+			ipseclog((LOG_DEBUG, "IPv4 IPComp input: can't pullup;"
+				"dropping the packet for simplicity\n"));
+			ipsecstat.in_nomem++;
 			goto fail;
 		}
 	} else if (m->m_len > off + sizeof(struct ipcomp)) {
 		/* chop header part from the packet header chain */
 		struct mbuf *n;
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		if (!n)
+		if (!n) {
+			ipsecstat.in_nomem++;
 			goto fail;
+		}
 		M_COPY_PKTHDR(n, m);
 		MH_ALIGN(n, off + sizeof(struct ipcomp));
 		n->m_len = off + sizeof(struct ipcomp);
@@ -152,12 +153,12 @@ ipcomp4_input(m, va_alist)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sa = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
+		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
 			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sa != NULL
-		 && (sa->state == SADB_SASTATE_MATURE
-		  || sa->state == SADB_SASTATE_DYING)) {
-			cpi = sa->alg_enc;	/*XXX*/
+		if (sav != NULL
+		 && (sav->state == SADB_SASTATE_MATURE
+		  || sav->state == SADB_SASTATE_DYING)) {
+			cpi = sav->alg_enc;	/*XXX*/
 			/* other parameters to look at? */
 		}
 	}
@@ -166,8 +167,8 @@ ipcomp4_input(m, va_alist)
 	else
 		algo = NULL;
 	if (!algo) {
-		printf("IPv4 IPComp input: unknown cpi %u; "
-			"dropping the packet for simplicity\n", cpi);
+		ipseclog((LOG_WARNING, "IPv4 IPComp input: unknown cpi %u\n",
+			cpi));
 		ipsecstat.in_nosa++;
 		goto fail;
 	}
@@ -186,9 +187,14 @@ ipcomp4_input(m, va_alist)
 	newlen = m->m_pkthdr.len - off;
 	error = (*algo->decompress)(m, m->m_next, &newlen);
 	if (error != 0) {
+		if (error == EINVAL)
+			ipsecstat.in_inval++;
+		else if (error == ENOBUFS)
+			ipsecstat.in_nomem++;
 		m = NULL;
 		goto fail;
 	}
+	ipsecstat.in_comphist[cpi]++;
 
 	/*
 	 * returning decompressed packet onto icmp is meaningless.
@@ -224,10 +230,10 @@ ipcomp4_input(m, va_alist)
 	ip->ip_p = nxt;
     }
 
-	if (sa) {
-		key_sa_recordxfer(sa, m);
-		key_freesa(sa);
-		sa = NULL;
+	if (sav) {
+		key_sa_recordxfer(sav, m);
+		key_freesav(sav);
+		sav = NULL;
 	}
 
 	if (nxt != IPPROTO_DONE)
@@ -240,8 +246,8 @@ ipcomp4_input(m, va_alist)
 	return;
 
 fail:
-	if (sa)
-		key_freesa(sa);
+	if (sav)
+		key_freesav(sav);
 	if (m)
 		m_freem(m);
 	return;
@@ -264,7 +270,7 @@ ipcomp6_input(mp, offp, proto)
 	u_int16_t nxt;
 	int error;
 	size_t newlen;
-	struct secas *sa = NULL;
+	struct secasvar *sav = NULL;
 
 	m = *mp;
 	off = *offp;
@@ -286,11 +292,13 @@ ipcomp6_input(mp, offp, proto)
 		break;
 	}
 	if (!n) {
-		printf("IPv6 IPComp input: wrong mbuf chain\n");
+		ipseclog((LOG_DEBUG, "IPv6 IPComp input: wrong mbuf chain\n"));
+		ipsecstat.in_inval++;
 		goto fail;
 	}
 	if (n->m_len < skip + sizeof(struct ipcomp)) {
-		printf("IPv6 IPComp input: wrong mbuf chain\n");
+		ipseclog((LOG_DEBUG, "IPv6 IPComp input: wrong mbuf chain\n"));
+		ipsecstat.in_inval++;
 		goto fail;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -300,8 +308,10 @@ ipcomp6_input(mp, offp, proto)
 		/* split mbuf to ease the following steps*/
 		l = n->m_len - (skip + sizeof(struct ipcomp));
 		p = m_copym(n, skip + sizeof(struct ipcomp), l , M_DONTWAIT);
-		if (!p)
+		if (!p) {
+			ipsecstat.in_nomem++;
 			goto fail;
+		}
 		for (q = p; q && q->m_next; q = q->m_next)
 			;
 		q->m_next = n->m_next;
@@ -316,12 +326,12 @@ ipcomp6_input(mp, offp, proto)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sa = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
+		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
 			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sa != NULL
-		 && (sa->state == SADB_SASTATE_MATURE
-		  || sa->state == SADB_SASTATE_DYING)) {
-			cpi = sa->alg_enc;	/*XXX*/
+		if (sav != NULL
+		 && (sav->state == SADB_SASTATE_MATURE
+		  || sav->state == SADB_SASTATE_DYING)) {
+			cpi = sav->alg_enc;	/*XXX*/
 			/* other parameters to look at? */
 		}
 	}
@@ -330,8 +340,8 @@ ipcomp6_input(mp, offp, proto)
 	else
 		algo = NULL;
 	if (!algo) {
-		printf("IPv6 IPComp input: unknown cpi %u; "
-			"dropping the packet for simplicity\n", cpi);
+		ipseclog((LOG_WARNING, "IPv6 IPComp input: unknown cpi %u; "
+			"dropping the packet for simplicity\n", cpi));
 		ipsec6stat.in_nosa++;
 		goto fail;
 	}
@@ -339,9 +349,14 @@ ipcomp6_input(mp, offp, proto)
 	newlen = m->m_pkthdr.len - off - sizeof(struct ipcomp);
 	error = (*algo->decompress)(m, md, &newlen);
 	if (error != 0) {
+		if (error == EINVAL)
+			ipsec6stat.in_inval++;
+		else if (error == ENOBUFS)
+			ipsec6stat.in_nomem++;
 		m = NULL;
 		goto fail;
 	}
+	ipsec6stat.in_comphist[cpi]++;
 	m->m_pkthdr.len = off + sizeof(struct ipcomp) + newlen;
 
 	/*
@@ -367,10 +382,10 @@ ipcomp6_input(mp, offp, proto)
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
     }
 
-	if (sa) {
-		key_sa_recordxfer(sa, m);
-		key_freesa(sa);
-		sa = NULL;
+	if (sav) {
+		key_sa_recordxfer(sav, m);
+		key_freesav(sav);
+		sav = NULL;
 	}
 	*offp = off;
 	*mp = m;
@@ -380,8 +395,8 @@ ipcomp6_input(mp, offp, proto)
 fail:
 	if (m)
 		m_freem(m);
-	if (sa)
-		key_freesa(sa);
+	if (sav)
+		key_freesav(sav);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */

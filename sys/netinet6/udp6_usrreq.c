@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.18 2000/01/31 10:39:27 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.19 2000/01/31 14:19:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -825,7 +825,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_cksum = -1;	/* just to be sure */
 #ifdef IPSEC
-		error = ipsec_init_policy(&in6p->in6p_sp);
+		error = ipsec_init_policy(so, &in6p->in6p_sp);
 		if (error != 0) {
 			in6_pcbdetach(in6p);
 			break;

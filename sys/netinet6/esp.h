@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.6 2000/01/06 07:31:11 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.7 2000/01/31 14:19:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,28 +71,27 @@ struct esptail {
 };
 
 struct esp_algorithm_state {
-	struct secas *sa;
+	struct secasvar *sav;
 	void* foo;	/*per algorithm data - maybe*/
 };
 
 /* XXX yet to be defined */
 struct esp_algorithm {
 	size_t padbound;	/* pad boundary, in byte */
-	int (*mature) __P((struct secas *));
+	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	int (*ivlen) __P((struct secas *));
+	int (*ivlen) __P((struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
-		struct secas *, struct esp_algorithm *, int));
+		struct secasvar *, struct esp_algorithm *, int));
 	int (*encrypt) __P((struct mbuf *, size_t, size_t,
-		struct secas *, struct esp_algorithm *, int));
+		struct secasvar *, struct esp_algorithm *, int));
 };
 
 #ifdef _KERNEL
 extern struct esp_algorithm esp_algorithms[];
 
 /* crypt routines */
-struct secasb;
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
 extern void esp4_input __P((struct mbuf *, ...));
 extern size_t esp_hdrsiz __P((struct ipsecrequest *));
@@ -104,8 +103,8 @@ extern int esp6_input __P((struct mbuf **, int *, int));
 #endif /* INET6 */
 #endif /*_KERNEL*/
 
-struct secas;
+struct secasvar;
 extern int esp_auth __P((struct mbuf *, size_t, size_t,
-	struct secas *, u_char *));
+	struct secasvar *, u_char *));
 
 #endif /*_NETINET6_ESP_H_*/
