@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.165 1999/10/29 08:01:57 haya Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.166 1999/10/29 21:31:30 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.160 1999/10/29 07:57:38 haya Exp 
+ *	NetBSD: pcidevs,v 1.161 1999/10/29 21:30:19 matt Exp 
  */
 
 /*
@@ -374,6 +374,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AIC-7860",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_APA1480,
+	    0,
+	    "Adaptec",
+	    "APA-1480 Ultra",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU,
