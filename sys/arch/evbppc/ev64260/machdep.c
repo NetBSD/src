@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/03/06 06:04:22 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2003/03/07 18:24:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,9 +161,9 @@ initppc(startkernel, endkernel, args, btinfo)
 		gtbase = GT_BASE;
 	}
 	{
-		extern struct powerpc_bus_space ev64260_gt_mem_bs_tag;
-		ev64260_gt_mem_bs_tag.pbs_base = GT_BASE;
-		ev64260_gt_mem_bs_tag.pbs_limit = GT_BASE + 4096;
+		extern struct powerpc_bus_space gt_mem_bs_tag;
+		gt_mem_bs_tag.pbs_base = GT_BASE;
+		gt_mem_bs_tag.pbs_limit = GT_BASE + 4096;
 	}
 
 	/*
@@ -204,7 +204,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	boothowto = RB_SINGLE;
 
-	ev64260_bus_space_init();
+	bus_space_init();
 
 	oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M);
 	oea_init((void (*)(void))ext_intr);
@@ -259,7 +259,7 @@ cpu_startup()
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
-	ev64260_bus_space_mallocok();
+	bus_space_mallocok();
 
 	/*
 	 * Now allow hardware interrupts.
