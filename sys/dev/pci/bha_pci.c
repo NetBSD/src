@@ -1,7 +1,7 @@
-/*	$NetBSD: bha_pci.c,v 1.9 1997/03/13 01:04:04 cgd Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.10 1997/03/28 23:47:16 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,6 +115,7 @@ bha_pci_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	bus_space_handle_t ioh;
+	struct bha_probe_data bpd;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -129,14 +130,14 @@ bha_pci_attach(parent, self, aux)
 	printf(": %s\n", model);
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
-		panic("bha_attach: pci_io_find failed!");
+		panic("bha_pci_attach: pci_io_find failed");
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
-		panic("bha_attach: bus_space_map failed!");
+		panic("bha_pci_attach: bus_space_map failed");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!bha_find(iot, ioh, sc))
-		panic("bha_attach: bha_find failed!");
+	if (!bha_find(iot, ioh, &bpd))
+		panic("bha_pci_attach: bha_find failed");
 
 	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
@@ -159,7 +160,7 @@ bha_pci_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	bha_attach(sc);
+	bha_attach(sc, &bpd);
 
 	bha_disable_isacompat(sc);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: ahavar.h,v 1.2 1997/03/15 18:11:23 is Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.3 1997/03/28 23:47:10 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,25 +56,28 @@ struct aha_mbx {
 
 struct aha_softc {
 	struct device sc_dev;
+
 	bus_space_tag_t sc_iot;
-
 	bus_space_handle_t sc_ioh;
-	int sc_irq, sc_drq;
 	void *sc_ih;
-
-	char sc_model[18],
-	     sc_firmware[4];
 
 	struct aha_mbx sc_mbx;		/* all our mailboxes */
 #define	wmbx	(&sc->sc_mbx)
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
-	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
+
+	char sc_model[18],
+	     sc_firmware[4];
+};
+
+struct aha_probe_data {
+	int sc_irq, sc_drq;
+	int sc_scsi_dev;		/* adapters scsi id */
 };
 
 int	aha_find __P((bus_space_tag_t, bus_space_handle_t,
-	    struct aha_softc *));
-void	aha_attach __P((struct aha_softc *));
+	    struct aha_probe_data *));
+void	aha_attach __P((struct aha_softc *, struct aha_probe_data *));
 int	aha_intr __P((void *));
