@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.420 2004/06/08 21:46:52 abs Exp $
+#	$NetBSD: bsd.own.mk,v 1.421 2004/06/11 07:14:16 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -130,7 +130,7 @@ USETOOLS?=	no
 _HOST_OSNAME!=	uname -s
 _HOST_OSREL!=	uname -r
 _HOST_ARCH!=	uname -p 2>/dev/null || uname -m
-HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//}-${_HOST_ARCH}
+HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//g:[*]:C/ /_/g}-${_HOST_ARCH:C/\([^\)]*\)//g:[*]:C/ /_/g}
 .MAKEOVERRIDES+= HOST_OSTYPE
 .endif
 HOST_CYGWIN=	${HOST_OSTYPE:MCYGWIN*}
