@@ -35,10 +35,20 @@
 #include "regcache.h"
 #include "gdbcore.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 extern int arm_apcs_32;
 
-static void
-supply_gregset (struct reg *gregset)
+void
+supply_gregset (gregset_t *gregset)
 {
   int regno;
   CORE_ADDR r_pc;
@@ -59,16 +69,63 @@ supply_gregset (struct reg *gregset)
     supply_register (ARM_PS_REGNUM, (char *) &gregset->r_pc);
 }
 
-static void
-supply_fparegset (struct fpreg *fparegset)
+void
+supply_fpregset (fpregset_t *fpregsetp)
 {
   int regno;
 
   for (regno = ARM_F0_REGNUM; regno <= ARM_F7_REGNUM; regno++)
     supply_register
-      (regno, (char *) &fparegset->fpr[regno - ARM_F0_REGNUM]);
+      (regno, (char *) &fpregsetp->fpr[regno - ARM_F0_REGNUM]);
 
-  supply_register (ARM_FPS_REGNUM, (char *) &fparegset->fpr_fpsr);
+  supply_register (ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
+}
+
+void
+fill_gregset (gregset_t *gregsetp, int regno)
+{
+  if (-1 == regno)
+    {
+      int regnum;
+      for (regnum = ARM_A1_REGNUM; regnum < ARM_SP_REGNUM; regnum++) 
+	regcache_collect (regnum, (char *) &gregsetp->r[regnum]);
+    }
+  else if (regno >= ARM_A1_REGNUM && regno < ARM_SP_REGNUM)
+    regcache_collect (regno, (char *) &gregsetp->r[regno]);
+
+  if (ARM_SP_REGNUM == regno || -1 == regno)
+    regcache_collect (ARM_SP_REGNUM, (char *) &gregsetp->r_sp);
+
+  if (ARM_LR_REGNUM == regno || -1 == regno)
+    regcache_collect (ARM_LR_REGNUM, (char *) &gregsetp->r_lr);
+
+  /* XXX NH ADDR_BITS_REMOVE ? */
+  if (ARM_PC_REGNUM == regno || -1 == regno)
+    regcache_collect (ARM_PC_REGNUM, (char *) &gregsetp->r_pc);
+
+  if (ARM_PS_REGNUM == regno || -1 == regno)
+    {
+      if (arm_apcs_32)
+	regcache_collect (ARM_PS_REGNUM, (char *) &gregsetp->r_cpsr);
+      else
+	regcache_collect (ARM_PS_REGNUM, (char *) &gregsetp->r_pc);
+    }
+}
+
+void
+fill_fpregset (fpregset_t *fpregsetp, int regno)
+{
+  if (-1 == regno)
+    {
+       int regnum;
+       for (regnum = ARM_F0_REGNUM; regnum <= ARM_F7_REGNUM; regnum++)
+         regcache_collect(regnum, (char *) &fpregsetp->fpr[regnum]);
+    }
+  else if (regno >= ARM_F0_REGNUM && regno <= ARM_F7_REGNUM)
+    regcache_collect(regno, (char *) &fpregsetp->fpr[regno]);
+
+  if (ARM_FPS_REGNUM == regno || -1 == regno)
+    regcache_collect (ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
 }
 
 static void
@@ -78,7 +135,7 @@ fetch_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -123,7 +180,7 @@ fetch_regs (void)
   int regno;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -141,7 +198,7 @@ fetch_fp_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -171,7 +228,7 @@ fetch_fp_regs (void)
   int regno;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -179,7 +236,7 @@ fetch_fp_regs (void)
       return;
     }
 
-  supply_fparegset (&inferior_fp_registers);
+  supply_fpregset (&inferior_fp_registers);
 }
 
 void
@@ -207,7 +264,7 @@ store_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -262,7 +319,7 @@ store_register (int regno)
     }
 
   ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning ("unable to write register %d to inferior", regno);
@@ -302,7 +359,7 @@ store_regs (void)
     }
 
   ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning ("unable to store general registers");
@@ -315,7 +372,7 @@ store_fp_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -337,7 +394,7 @@ store_fp_register (int regno)
     }
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning ("unable to write register %d to inferior", regno);
@@ -358,7 +415,7 @@ store_fp_regs (void)
   regcache_collect (ARM_FPS_REGNUM, (char *) &inferior_fp_registers.fpr_fpsr);
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+		(PTRACE_ARG3_TYPE) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning ("unable to store floating-point registers");
@@ -396,7 +453,7 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
   CORE_ADDR r_pc;
 
   supply_gregset (&core_reg->intreg);
-  supply_fparegset (&core_reg->freg);
+  supply_fpregset (&core_reg->freg);
 }
 
 static void
@@ -404,7 +461,7 @@ fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
 			 int which, CORE_ADDR ignore)
 {
   struct reg gregset;
-  struct fpreg fparegset;
+  struct fpreg fpregset;
 
   switch (which)
     {
@@ -427,8 +484,8 @@ fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
 	{
 	  /* The memcpy may be unnecessary, but we can't really be sure
 	     of the alignment of the data in the core file.  */
-	  memcpy (&fparegset, core_reg_sect, sizeof (fparegset));
-	  supply_fparegset (&fparegset);
+	  memcpy (&fpregset, core_reg_sect, sizeof (fpregset));
+	  supply_fpregset (&fpregset);
 	}
       break;
 
