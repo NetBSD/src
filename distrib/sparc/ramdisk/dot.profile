@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.16 2001/06/17 11:57:23 pk Exp $
+# $NetBSD: dot.profile,v 1.17 2002/07/20 07:06:28 lukem Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ umask 022
 MACHINE=sparc
 INSTFS_MP=/instfs
 MINIROOT_FSSIZE=10000
+MINIROOT_BPINODE=1024
 
 if [ "${BOOTFS_DONEPROFILE}" != "YES" ]; then
 
@@ -55,7 +56,7 @@ if [ "${BOOTFS_DONEPROFILE}" != "YES" ]; then
 	mount_ffs -o update /dev/md0a /
 
 	# mount /instfs
-	mount_mfs -s $MINIROOT_FSSIZE swap $INSTFS_MP
+	mount_mfs -s $MINIROOT_FSSIZE -i $MINIROOT_BPINODE swap $INSTFS_MP
 fi
 
 # A cat simulator
