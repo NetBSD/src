@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.16 2000/01/23 23:49:48 chopps Exp $	*/
+/*	$NetBSD: if_media.h,v 1.17 2000/01/24 01:20:21 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
  * IEEE 802.11 Wireless
  */
 #define	IFM_IEEE80211	0x00000080
-#define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 2Mbps */
+#define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 1Mbps */
 #define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
 #define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
