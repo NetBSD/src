@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_id.c,v 1.2 2003/09/06 03:55:35 itojun Exp $	*/
-/*	$KAME: ip6_id.c,v 1.5 2003/09/06 03:54:11 itojun Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.3 2003/09/06 04:13:51 itojun Exp $	*/
+/*	$KAME: ip6_id.c,v 1.6 2003/09/06 04:12:32 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.2 2003/09/06 03:55:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.3 2003/09/06 04:13:51 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,9 +104,9 @@ struct randomtab {
 	const long	ru_out;	/* Time after wich will be reseeded */
 	const u_int32_t ru_max;	/* Uniq cycle, avoid blackjack prediction */
 	const u_int32_t ru_gen;	/* Starting generator */
-	const u_int32_t ru_n;	/* RU_N-1 = 2^2*3^2*59652323 */
-	const u_int32_t ru_agen; /* determine ru_a as RU_AGEN^(2*rand) */
-	const u_int32_t ru_m;	/* RU_M = 2^7*3^15 - don't change */
+	const u_int32_t ru_n;	/* ru_n: prime, ru_n - 1: product of pfacts[] */
+	const u_int32_t ru_agen; /* determine ru_a as ru_agen^(2*rand) */
+	const u_int32_t ru_m;	/* ru_m = 2^x*3^y */
 	const u_int32_t pfacts[4];	/* factors of ru_n */
 
 	u_int32_t ru_counter;
