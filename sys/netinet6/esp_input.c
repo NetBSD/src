@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.6 2001/03/11 21:11:21 he Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.7 2001/04/06 00:27:26 he Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -380,6 +380,11 @@ noreplaycheck:
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 ||
+		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
+			ipsecstat.in_nomem++;
+			goto bad;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
@@ -417,6 +422,10 @@ noreplaycheck:
 		ip->ip_p = nxt;
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0) {
+			ipsecstat.in_nomem++;
+			goto bad;
+		}
 
 		if (nxt != IPPROTO_DONE) {
 			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
@@ -741,6 +750,11 @@ noreplaycheck:
 #endif
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 || 
+		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
+			ipsec6stat.in_nomem++;
+			goto bad;
+		}
 
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
@@ -844,6 +858,10 @@ noreplaycheck:
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 
 		key_sa_recordxfer(sav, m);
+		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0) {
+			ipsec6stat.in_nomem++;
+			goto bad;
+		}
 	}
 
 	*offp = off;
