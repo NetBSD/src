@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $	*/
+/*	$NetBSD: fdc_gsc.c,v 1.5 2003/11/20 03:58:47 chs Exp $	*/
 
 /*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.5 2003/11/20 03:58:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,18 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $");
 #include <hp700/dev/cpudevs.h>
 
 /* controller driver configuration */
-int fdc_gsc_probe __P((struct device *, void *, void *));
-void fdc_gsc_attach __P((struct device *, struct device *, void *));
+int fdc_gsc_probe(struct device *, void *, void *);
+void fdc_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(fdc_gsc, sizeof(struct fdc_softc),
     fdc_gsc_probe, fdc_gsc_attach, NULL, NULL);
 
 int
-fdc_gsc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdc_gsc_probe(struct device *parent, void *match, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
 	int rv;
 
@@ -79,13 +77,11 @@ fdc_gsc_probe(parent, match, aux)
 }
 
 void
-fdc_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdc_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *sc = (void *)self;
 	bus_space_handle_t ioh;
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	/* Re-map the I/O space. */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))

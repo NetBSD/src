@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.7 2003/07/15 02:29:25 lukem Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.8 2003/11/20 03:58:47 chs Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.7 2003/07/15 02:29:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.8 2003/11/20 03:58:47 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -71,19 +71,16 @@ struct com_gsc_softc {
 	void	*sc_ih;			/* interrupt handler */
 }; 
 
-int	com_gsc_probe __P((struct device *, struct cfdata *, void *));
-void	com_gsc_attach __P((struct device *, struct device *, void *));
+int	com_gsc_probe(struct device *, struct cfdata *, void *);
+void	com_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_gsc, sizeof(struct com_gsc_softc),
     com_gsc_probe, com_gsc_attach, NULL, NULL);
 
 int
-com_gsc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 	int rv;
 
@@ -129,13 +126,11 @@ com_gsc_probe(parent, match, aux)
 }
 
 void
-com_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct com_gsc_softc *gsc = (void *)self;
+	struct com_gsc_softc *gsc = (void *)self;
 	struct com_softc *sc = &gsc->sc_com;
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
@@ -162,7 +157,7 @@ com_gsc_attach(parent, self, aux)
 }
 
 #ifdef	KGDB
-int com_gsc_kgdb_attach __P((void));
+int com_gsc_kgdb_attach(void);
 int
 com_gsc_kgdb_attach(void)
 {
