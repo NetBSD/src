@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.1 2001/08/26 16:41:58 manu Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.2 2001/09/02 07:24:49 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ typedef struct linux_siginfo {
  * si_code values
  * Digital reserves positive values for kernel-generated signals.
  */
-#define LINUX__SI_CODE(T,N)  (N)
+#define LINUX__SI_CODE(T,N)  ((T) << 16 | ((N) & 0xffff))
 
 #define LINUX_SI_USER		0
 #define LINUX_SI_KERNEL		0x80
