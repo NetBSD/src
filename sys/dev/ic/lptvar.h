@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.35 1996/03/18 09:14:32 cgd Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.36 1996/04/10 19:03:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -393,6 +393,7 @@ lptwakeup(arg)
 /*
  * Close the device, and free the local line buffer.
  */
+int
 lptclose(dev, flag)
 	dev_t dev;
 	int flag;
@@ -483,6 +484,7 @@ pushbytes(sc)
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */
+int
 lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
