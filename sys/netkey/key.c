@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.117 2004/04/26 04:00:06 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.118 2004/04/26 04:39:17 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.117 2004/04/26 04:00:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118 2004/04/26 04:39:17 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3286,6 +3286,24 @@ key_mature(sav)
 		}
 		checkmask = 4;
 		mustmask = 4;
+		break;
+	case IPPROTO_TCP:
+		if (sav->alg_enc != SADB_EALG_NONE) {
+			ipseclog((LOG_DEBUG, "key_mature: "
+			    "protocol and algorithm mismated.\n"));
+			return (EINVAL);
+		}
+		if (sav->alg_auth != SADB_X_AALG_TCP_MD5) {
+			ipseclog((LOG_DEBUG, "key_mature: "
+			    "protocol and algorithm mismated.\n"));
+			return (EINVAL);
+		}
+		if (ntohl(sav->spi) != 0x1000) {	/*TCP_SIG_SPI*/
+			ipseclog((LOG_DEBUG,
+			    "key_mature: SPI must be 0x1000.\n"));
+			return (EINVAL);
+		}
+		checkmask = 0;
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_mature: Invalid satype.\n"));
