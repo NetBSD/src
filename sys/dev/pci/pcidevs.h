@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.257 2000/08/29 01:18:17 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.258 2000/09/02 00:33:25 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.250 2000/08/21 15:28:17 enami Exp 
+ *	NetBSD: pcidevs,v 1.252 2000/09/02 00:32:15 cgd Exp 
  */
 
 /*
@@ -588,7 +588,7 @@
 #define	PCI_PRODUCT_3COM_3C980CTXM	0x9805		/* 3c980C-TXM 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3CR990-TX-97 10/100 Ethernet */
 
-/* 3Dfx Interactive producs */
+/* 3Dfx Interactive products */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
 #define	PCI_PRODUCT_3DFX_VOODOO2	0x0002		/* Voodoo2 */
 #define	PCI_PRODUCT_3DFX_BANSHEE	0x0003		/* Banshee */
@@ -600,7 +600,7 @@
 #define	PCI_PRODUCT_3DLABS_DELTA	0x0003		/* GLINT DELTA */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA	0x0004		/* GLINT Permedia */
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
-#define	PCI_PRODUCT_3DLABS_PERMEDI2	0x0007		/* GLINT Permedia 2 */
+#define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
