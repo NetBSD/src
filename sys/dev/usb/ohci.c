@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.46 1999/09/13 21:33:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.47 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -283,6 +283,45 @@ struct usbd_pipe_methods ohci_device_isoc_methods = {
 };
 #endif
 
+int
+ohci_activate(self, act)
+	device_ptr_t self;
+	enum devact act;
+{
+	/*struct ohci_softc *sc = (struct ohci_softc *)self;*/
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		break;
+	}
+	return (rv);
+}
+
+int
+ohci_detach(self, flags)
+	device_ptr_t self;
+	int flags;
+{
+	struct ohci_softc *sc = (struct ohci_softc *)self;
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+	
+	if (rv != 0)
+		return (rv);
+
+	powerhook_disestablish(sc->sc_powerhook);
+	/* free data structures XXX */
+
+	return (rv);
+}
+
 ohci_soft_ed_t *
 ohci_alloc_sed(sc)
 	ohci_softc_t *sc;
@@ -539,7 +578,7 @@ ohci_init(sc)
 	sc->sc_bus.methods = &ohci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
-	powerhook_establish(ohci_power, sc);
+	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 
 	return (USBD_NORMAL_COMPLETION);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.40 1999/09/13 21:33:25 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.41 1999/09/15 10:25:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -698,11 +698,10 @@ usbd_ar_pipe(pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-static int usbd_global_init_done = 0;
-
 void
 usbd_init()
 {
+	static int usbd_global_init_done = 0;
 #if defined(__FreeBSD__)
 	dev_t dev;
 #endif

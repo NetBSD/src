@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.13 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.14 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,13 +166,15 @@ typedef struct uhci_softc {
 
 	char sc_vendor[16];
 	int sc_id_vendor;
+
+	void *sc_powerhook;
+	device_ptr_t sc_child;
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
-#if 0
-void		uhci_reset __P((void *));
-#endif
+int		uhci_detach __P((device_ptr_t, int));
+int		uhci_activate __P((device_ptr_t, enum devact));
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (uhcidebug) printf x

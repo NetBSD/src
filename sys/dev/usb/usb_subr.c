@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.46 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.47 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1169,3 +1169,60 @@ usb_free_device(dev)
 		free(dev->subdevs, M_USB);
 	free(dev, M_USB);
 }
+
+/*
+ * The general mechanism for detaching drivers works as follows: Each
+ * driver is responsible for maintaining a reference count on the
+ * number of outstanding references to its softc (e.g.  from
+ * processing hanging in a read or write).  The detach method of the
+ * driver decrements this counter and flags in the softc that the
+ * driver is dying and then wakes any sleepers.  It then sleeps on the
+ * softc.  Each place that can sleep must maintain the reference
+ * count.  When the reference count drops to -1 (0 is the normal value
+ * of the reference count) the a wakeup on the softc is performed
+ * signaling to the detach waiter that all references are gone.
+ */
+
+/*
+ * Called from process context when we discover that a port has
+ * been disconnected.
+ */
+void
+usb_disconnect_port(up)
+	struct usbd_port *up;
+{
+	usbd_device_handle dev = up->device;
+	char *hubname;
+	int i;
+
+	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
+		    up, dev, up->portno));
+
+	if (!dev->cdesc) {
+		/* Partially attached device, just drop it. */
+		dev->bus->devices[dev->address] = 0;
+		up->device = 0;
+		return;
+	}
+
+	if (dev->subdevs) {
+		hubname = USBDEVPTRNAME(up->parent->subdevs[0]);
+		for (i = 0; dev->subdevs[i]; i++) {
+			printf("%s: at %s port %d (addr %d) disconnected\n",
+			       USBDEVPTRNAME(dev->subdevs[i]), hubname,
+			       up->portno, dev->address);
+			config_detach(dev->subdevs[i], DETACH_FORCE);
+		}
+	}
+
+	dev->bus->devices[dev->address] = 0;
+	up->device = 0;
+	usb_free_device(dev);
+
+#if defined(__FreeBSD__)
+      device_delete_child(
+	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
+	  ((struct softc *)dev->softc)->sc_dev);
+#endif
+}
+

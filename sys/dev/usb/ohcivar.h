@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.9 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.10 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,10 +96,15 @@ typedef struct ohci_softc {
 
 	char sc_vendor[16];
 	int sc_id_vendor;
+
+	void *sc_powerhook;
+	device_ptr_t sc_child;
 } ohci_softc_t;
 
 usbd_status	ohci_init __P((ohci_softc_t *));
 int		ohci_intr __P((void *));
+int		ohci_detach __P((device_ptr_t, int));
+int		ohci_activate __P((device_ptr_t, enum devact));
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
 
