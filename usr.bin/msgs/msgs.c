@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)msgs.c	5.8 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: msgs.c,v 1.5 1994/01/07 16:22:20 mycroft Exp $";
+static char rcsid[] = "$Id: msgs.c,v 1.6 1994/02/19 09:11:33 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -65,7 +65,7 @@ static char rcsid[] = "$Id: msgs.c,v 1.5 1994/01/07 16:22:20 mycroft Exp $";
 
 #define V7		/* will look for TERM in the environment */
 #define OBJECT		/* will object to messages without Subjects */
-/* #define REJECT	/* will reject messages without Subjects
+#define REJECT		/* will reject messages without Subjects
 			   (OBJECT must be defined also) */
 /* #define UNBUFFERED	/* use unbuffered output */
 
@@ -82,9 +82,10 @@ static char rcsid[] = "$Id: msgs.c,v 1.5 1994/01/07 16:22:20 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "pathnames.h"
 
-#define CMODE	0666		/* bounds file creation mode */
+#define CMODE	0664		/* bounds file creation mode */
 #define NO	0
 #define YES	1
 #define SUPERUSER	0	/* superuser uid */
@@ -328,6 +329,7 @@ int argc; char *argv[];
 			perror(fname);
 			exit(errno);
 		}
+		chmod(fname, CMODE);
 
 		nextmsg = lastmsg + 1;
 		sprintf(fname, "%s/%d", _PATH_MSGS, nextmsg);
@@ -388,11 +390,12 @@ int argc; char *argv[];
 	use_pager = use_pager && totty;
 
 	sprintf(fname, "%s/%s", getenv("HOME"), MSGSRC);
-	msgsrc = fopen(fname, "r+");
+	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;
-		if (fscanf(msgsrc, "%d\n", &nextmsg) != 1 ||
-		    nextmsg > lastmsg+1) {
+		fscanf(msgsrc, "%d\n", &nextmsg);
+		fclose(msgsrc);
+		if (nextmsg > lastmsg+1) {
 			printf("Warning: bounds have been reset (%d, %d)\n",
 				firstmsg, lastmsg);
 			truncate(fname, (off_t)0);
@@ -401,10 +404,11 @@ int argc; char *argv[];
 		else if (!rcfirst)
 			rcfirst = nextmsg - rcback;
 	}
-	else {
-		msgsrc = fopen(fname, "w+");
+	else
 		newrc = YES;
-	}
+	msgsrc = fopen(fname, "r+");
+	if (msgsrc == NULL)
+		msgsrc = fopen(fname, "w");
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
