@@ -1,4 +1,5 @@
-.\"	$NetBSD: whatis,v 1.6 2000/10/10 12:55:18 lukem Exp $
+.\"	$NetBSD: whatis,v 1.7 2000/10/14 22:27:42 lukem Exp $
 .
-This is the third public release of NetBSD for the HP 9000/300 series of
-computers.
+This is the sixth major release of
+.Nx
+for the HP 9000/300 series of computers.

@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.7 2000/10/10 12:55:24 lukem Exp $
+.\"	$NetBSD: whatis,v 1.8 2000/10/14 22:27:45 lukem Exp $
 .
 .Nx \*V
-is the fourth public major release of
+is the fourth major release of
 .Nx
-for the x68k platform.
+for the \*M platform.

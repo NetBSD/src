@@ -1,4 +1,7 @@
-.\"	$NetBSD: whatis,v 1.2 2000/10/10 12:55:20 lukem Exp $
+.\"	$NetBSD: whatis,v 1.3 2000/10/14 22:27:43 lukem Exp $
 .
-This is the first public release of NetBSD for the Sony's m68k based
-"NET WORK STATION" series of computers.
+This is the first major release of
+.Nx
+for the Sony's \*M based
+.Dq NET WORK STATION
+series of computers.
