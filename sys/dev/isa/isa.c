@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.15 1993/06/06 04:16:42 cgd Exp $
+ *	$Id: isa.c,v 1.16 1993/06/15 20:34:54 mycroft Exp $
  */
 
 /*
@@ -63,6 +63,7 @@
 #include "i386/isa/icu.h"
 #include "i386/isa/ic/i8237.h"
 #include "i386/isa/ic/i8042.h"
+#include "i386/isa/timerreg.h"
 
 /* sorry, has to be here, no place else really suitable */
 #include "machine/pc/display.h"
@@ -536,7 +537,7 @@ int DELAY(n)
 	int usec;
 
 #ifdef DELAYDEBUG
-	int getit_calls = 1;
+	int gettick_calls = 1;
 	int n1;
 	static int state = 0;
 
@@ -553,11 +554,11 @@ int DELAY(n)
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.  Guess the initial overhead is 20 usec (on most systems it
-	 * takes about 1.5 usec for each of the i/o's in getit().  The loop
+	 * takes about 1.5 usec for each of the i/o's in gettick().  The loop
 	 * takes about 6 usec on a 486/33 and 13 usec on a 386/20.  The
 	 * multiplications and divisions to scale the count take a while).
 	 */
-	prev_tick = getit(0, 0);
+	prev_tick = gettick();
 	n -= 20;
 
 	/*
@@ -573,9 +574,9 @@ int DELAY(n)
 
 	counter_limit = TIMER_FREQ / hz;
 	while (ticks_left > 0) {
-		tick = getit(0, 0);
+		tick = gettick();
 #ifdef DELAYDEBUG
-		++getit_calls;
+		++gettick_calls;
 #endif
 		if (tick > prev_tick)
 			ticks_left -= prev_tick - (tick - counter_limit);
@@ -585,12 +586,12 @@ int DELAY(n)
 	}
 #ifdef DELAYDEBUG
 	if (state == 1)
-		printf(" %d calls to getit() at %d usec each\n",
-			getit_calls, (n + 5) / getit_calls);
+		printf(" %d calls to gettick() at %d usec each\n",
+			gettick_calls, (n + 5) / gettick_calls);
 #endif
 }
 
-getit(unit, timer) {
+gettick() {
 	int high;
 	int low;
 
@@ -598,8 +599,6 @@ getit(unit, timer) {
 	 * XXX - isa.h defines bogus timers.  There's no such timer as
 	 * IO_TIMER_2 = 0x48.  There's a timer in the CMOS RAM chip but
 	 * its interface is quite different.  Neither timer is an 8252.
-	 * We actually only call this with unit = 0 and timer = 0.  It
-	 * could be static...
 	 */
 	/*
 	 * Protect ourself against interrupts.
@@ -609,10 +608,9 @@ getit(unit, timer) {
 	/*
 	 * Latch the count for 'timer' (cc00xxxx, c = counter, x = any).
 	 */
-	outb(IO_TIMER1 + 3, timer << 6);
-
-	low = inb(IO_TIMER1 + timer);
-	high = inb(IO_TIMER1 + timer);
+	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	low = inb(TIMER_CNTR0);
+	high = inb(TIMER_CNTR0);
 	enable_intr();
 	return ((high << 8) | low);
 }
@@ -621,33 +619,45 @@ static beeping;
 static
 sysbeepstop(f)
 {
+	int s = splhigh();
+
 	/* disable counter 2 */
+	disable_intr();
 	outb(0x61, inb(0x61) & 0xFC);
+	enable_intr();
 	if (f)
 		timeout(sysbeepstop, 0, f);
 	else
 		beeping = 0;
+
+	splx(s);
 }
 
 void sysbeep(int pitch, int period)
 {
+	int s = splhigh();
+	static int last_pitch, last_period;
 
-	outb(0x61, inb(0x61) | 3);	/* enable counter 2 */
-	/*
-	 * XXX - move timer stuff to clock.c.
-	 * Program counter 2:
-	 * ccaammmb, c counter, a = access, m = mode, b = BCD
-	 * 1011x110, 11 for aa = LSB then MSB, x11 for mmm = square wave.
-	 */
-	outb(0x43, 0xb6);	/* set command for counter 2, 2 byte write */
-	
-	outb(0x42, pitch);
-	outb(0x42, (pitch>>8));
-	
-	if (!beeping) {
-		beeping = period;
-		timeout(sysbeepstop, period/2, period);
+	if (beeping) {
+		untimeout(sysbeepstop, last_period/2);
+		untimeout(sysbeepstop, 0);
 	}
+	if (!beeping || last_pitch != pitch) {
+		/*
+	 	* XXX - move timer stuff to clock.c.
+	 	*/
+		disable_intr();
+		outb(TIMER_MODE, TIMER_SEL2|TIMER_16BIT|TIMER_SQWAVE);
+		outb(TIMER_CNTR2, pitch);
+		outb(TIMER_CNTR2, (pitch>>8));
+		outb(0x61, inb(0x61) | 3);	/* enable counter 2 */
+		enable_intr();
+	}
+	last_pitch = pitch;
+	beeping = last_period = period;
+	timeout(sysbeepstop, period/2, period);
+
+	splx(s);
 }
 
 /*
