@@ -1,4 +1,4 @@
-a$NetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp $
+a$NetBSD: usbdevs,v 1.37 1999/08/24 21:25:22 soren Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
-/* Cypress Semiconduuctor products */
+/* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 
 /* Epson products */
