@@ -1,10 +1,13 @@
-/*	$NetBSD: opt.c,v 1.2.4.1 2002/02/09 16:55:34 he Exp $	*/
+/*	$NetBSD: opt.c,v 1.2.4.2 2002/10/18 13:16:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,8 +29,10 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: opt.c,v 2.2.2.1 2001/06/26 10:43:20 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)opt.c	1.8 4/10/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: opt.c,v 2.2.2.2 2002/02/22 15:32:56 darrenr Exp";
 #endif
 
 extern	int	opts;

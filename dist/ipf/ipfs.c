@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.3.4.1 2002/02/09 16:55:50 he Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.3.4.2 2002/10/18 13:16:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999-2001 by Darren Reed.
@@ -47,7 +47,8 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.8 2001/09/14 18:52:21 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipfs.c,v 2.6.2.11 2002/06/04 14:44:05 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -210,7 +211,7 @@ char *argv[];
 	int c, lock = -1, devfd = -1, err = 0, rw = -1, ns = -1, set = 0;
 	char *dirname = NULL, *filename = NULL, *ifs = NULL;
 
-	while ((c = getopt(argc, argv, "d:f:lNnSRruvWw")) != -1)
+	while ((c = getopt(argc, argv, "d:f:i:lNnSRruvWw")) != -1)
 		switch (c)
 		{
 		case 'd' :
@@ -735,16 +736,16 @@ char *dirname;
 
 	devfd = opendevice(IPL_STATE);
 	if (devfd == -1)
-		return 1;
+		goto bad;
 	if (writestate(devfd, NULL))
-		return 1;
+		goto bad;
 	close(devfd);
 
 	devfd = opendevice(IPL_NAT);
 	if (devfd == -1)
-		return 1;
+		goto bad;
 	if (writenat(devfd, NULL))
-		return 1;
+		goto bad;
 	close(devfd);
 
 	if (setlock(fd, 0)) {
@@ -753,6 +754,11 @@ char *dirname;
 	}
 
 	return 0;
+
+bad:
+	setlock(fd, 0);
+	close(fd);
+	return 1;
 }
 
 

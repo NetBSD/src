@@ -1,10 +1,13 @@
-/*	$NetBSD: printstate.c,v 1.1.1.1.2.2 2002/02/09 16:55:20 he Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.1.2.3 2002/10/18 13:16:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -14,6 +17,9 @@
 #include <netinet/in_systm.h>
 #include <net/if.h>
 #include <stdio.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include "kmem.h"
 #include "netinet/ip_compat.h"
 #include "ipf.h"
@@ -46,15 +52,17 @@ int opts;
 	if (ips.is_p == IPPROTO_TCP)
 #if defined(NetBSD) && (NetBSD >= 199905) && (NetBSD < 1991011) || \
 (__FreeBSD_version >= 220000) || defined(__OpenBSD__)
-		PRINTF("\t%hu -> %hu %x:%x %hu:%hu",
+		PRINTF("\t%hu -> %hu %x:%x %u<<%d:%u<<%d",
 			ntohs(ips.is_sport), ntohs(ips.is_dport),
 			ips.is_send, ips.is_dend,
-			ips.is_maxswin, ips.is_maxdwin);
+			ips.is_maxswin>>ips.is_swscale, ips.is_swscale,
+			ips.is_maxdwin>>ips.is_dwscale, ips.is_dwscale);
 #else
-		PRINTF("\t%hu -> %hu %x:%x %hu:%hu",
+		PRINTF("\t%hu -> %hu %x:%x %u<<%d:%u<<%d",
 			ntohs(ips.is_sport), ntohs(ips.is_dport),
 			ips.is_send, ips.is_dend,
-			ips.is_maxswin, ips.is_maxdwin);
+			ips.is_maxswin>>ips.is_swscale, ips.is_swscale,
+			ips.is_maxdwin>>ips.is_dwscale, ips.is_dwscale);
 #endif
 	else if (ips.is_p == IPPROTO_UDP)
 		PRINTF(" %hu -> %hu", ntohs(ips.is_sport),

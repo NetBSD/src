@@ -1,10 +1,13 @@
-/*	$NetBSD: common.c,v 1.1.1.2.4.1 2002/02/09 16:55:28 he Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.2.4.2 2002/10/18 13:16:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
@@ -40,8 +43,10 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.8 1999/12/28 10:49:46 darrenr Exp $";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)$IPFilter: parse.c,v 2.8 1999/12/28 10:49:46 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.2.2.2 2002/02/09 16:56:14 he Exp $	*/
+/*	$NetBSD: printnat.c,v 1.2.2.3 2002/10/18 13:16:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,6 +7,9 @@
  *
  * Added redirect stuff and a variety of bug fixes. (mcn@EnGarde.com)
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -57,7 +60,8 @@ extern	char	*sys_errlist[];
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.1.2.4 2002/01/02 03:45:07 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: printnat.c,v 1.1.2.10 2002/08/28 12:45:51 darrenr Exp";
 #endif
 
 
@@ -144,14 +148,18 @@ int opts;
 		ftp.ftp_side[0].ftps_buf[FTP_BUFSZ - 1] = '\0';
 		ftp.ftp_side[1].ftps_buf[FTP_BUFSZ - 1] = '\0';
 		printf("\tClient:\n");
-		printf("\t\tseq %x len %d junk %d cmds %d\n",
-			ftp.ftp_side[0].ftps_seq, ftp.ftp_side[0].ftps_len,
+		printf("\t\tseq %08x%08x len %d junk %d cmds %d\n",
+			ftp.ftp_side[0].ftps_seq[1],
+			ftp.ftp_side[0].ftps_seq[0],
+			ftp.ftp_side[0].ftps_len,
 			ftp.ftp_side[0].ftps_junk, ftp.ftp_side[0].ftps_cmds);
 		printf("\t\tbuf [");
 		printbuf(ftp.ftp_side[0].ftps_buf, FTP_BUFSZ, 1);
 		printf("]\n\tServer:\n");
-		printf("\t\tseq %x len %d junk %d cmds %d\n",
-			ftp.ftp_side[1].ftps_seq, ftp.ftp_side[1].ftps_len,
+		printf("\t\tseq %08x%08x len %d junk %d cmds %d\n",
+			ftp.ftp_side[1].ftps_seq[1],
+			ftp.ftp_side[1].ftps_seq[0],
+			ftp.ftp_side[1].ftps_len,
 			ftp.ftp_side[1].ftps_junk, ftp.ftp_side[1].ftps_cmds);
 		printf("\t\tbuf [");
 		printbuf(ftp.ftp_side[1].ftps_buf, FTP_BUFSZ, 1);
@@ -227,9 +235,8 @@ int opts;
 
 	printf(" [%s", inet_ntoa(nat->nat_oip));
 	if ((nat->nat_flags & IPN_TCPUDP) != 0)
-		printf(" %hu]", ntohs(nat->nat_oport));
-	else
-		printf("]");
+		printf(" %hu", ntohs(nat->nat_oport));
+	printf("]");
 
 	if (opts & OPT_VERBOSE) {
 		printf("\n\tage %lu use %hu sumd %s/",
@@ -242,9 +249,10 @@ int opts;
 				  0xffffffff),
 		hv2 = NAT_HASH_FN(nat->nat_oip.s_addr, hv2 + nat->nat_oport,
 				  NAT_TABLE_SZ),
-		printf("%s pr %u bkt %d/%d flags %x\n",
+		printf("%s pr %u bkt %d/%d flags %x drop %d/%d\n",
 			getsumd(nat->nat_sumd[1]), nat->nat_p,
-			hv1, hv2, nat->nat_flags);
+			hv1, hv2, nat->nat_flags,
+			nat->nat_drop[0], nat->nat_drop[1]);
 		printf("\tifp %s ", getifname(nat->nat_ifp));
 #ifdef	USE_QUAD_T
 		printf("bytes %qu pkts %qu",
@@ -297,6 +305,8 @@ int opts;
 	struct	protoent	*pr;
 	struct	servent	*sv;
 	int	bits;
+
+	pr = getprotobynumber(np->in_p);
 
 	switch (np->in_redir)
 	{
@@ -372,12 +382,18 @@ int opts;
 			printf(" udp");
 		else if (np->in_p == 0)
 			printf(" ip");
-		else if (np->in_p != 0)
-			printf(" %d", np->in_p);
+		else if (np->in_p != 0) {
+			if (pr != NULL)
+				printf(" %s", pr->p_name);
+			else
+				printf(" %d", np->in_p);
+		}
 		if (np->in_flags & IPN_ROUNDR)
 			printf(" round-robin");
 		if (np->in_flags & IPN_FRAG)
 			printf(" frag");
+		if (np->in_age[0])
+			printf(" age %d/%d", np->in_age[0], np->in_age[1]);
 		printf("\n");
 		if (opts & OPT_DEBUG)
 			printf("\tspc %lu flg %#x max %u use %d\n",
@@ -389,7 +405,7 @@ int opts;
 			printf("%s/", inet_ntoa(np->in_in[0]));
 			bits = countbits(np->in_in[1].s_addr);
 			if (bits != -1)
-				printf("%d ", bits);
+				printf("%d", bits);
 			else
 				printf("%s", inet_ntoa(np->in_in[1]));
 		}
@@ -401,12 +417,11 @@ int opts;
 			printf("%s/", inet_ntoa(np->in_out[0]));
 			bits = countbits(np->in_out[1].s_addr);
 			if (bits != -1)
-				printf("%d ", bits);
+				printf("%d", bits);
 			else
 				printf("%s", inet_ntoa(np->in_out[1]));
 		}
 		if (*np->in_plabel) {
-			pr = getprotobynumber(np->in_p);
 			printf(" proxy port");
 			if (np->in_dport != 0) {
 				if (pr != NULL)
@@ -426,11 +441,21 @@ int opts;
 			else
 				printf("%d", np->in_p);
 		} else if (np->in_redir == NAT_MAPBLK) {
-			printf(" ports %d", np->in_pmin);
-			if (opts & OPT_VERBOSE)
+			if ((np->in_pmin == 0) &&
+			    (np->in_flags & IPN_AUTOPORTMAP))
+				printf(" ports auto");
+			else
+				printf(" ports %d", np->in_pmin);
+			if (opts & OPT_DEBUG)
 				printf("\n\tip modulous %d", np->in_pmax);
 		} else if (np->in_pmin || np->in_pmax) {
 			printf(" portmap");
+			if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
+				printf(" tcp/udp");
+			else if (np->in_flags & IPN_TCP)
+				printf(" tcp");
+			else if (np->in_flags & IPN_UDP)
+				printf(" udp");
 			if (np->in_flags & IPN_AUTOPORTMAP) {
 				printf(" auto");
 				if (opts & OPT_DEBUG)
@@ -439,18 +464,16 @@ int opts;
 					       ntohs(np->in_pmax),
 					       np->in_ippip, np->in_ppip);
 			} else {
-				if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
-					printf(" tcp/udp");
-				else if (np->in_flags & IPN_TCP)
-					printf(" tcp");
-				else if (np->in_flags & IPN_UDP)
-					printf(" udp");
 				printf(" %d:%d", ntohs(np->in_pmin),
 				       ntohs(np->in_pmax));
 			}
 		}
 		if (np->in_flags & IPN_FRAG)
 			printf(" frag");
+		if (np->in_mssclamp)
+			printf(" mssclamp %u", (unsigned)np->in_mssclamp);
+		if (np->in_age[0])
+			printf(" age %d/%d", np->in_age[0], np->in_age[1]);
 		printf("\n");
 		if (opts & OPT_DEBUG) {
 			printf("\tspace %lu nextip %s pnext %d", np->in_space,

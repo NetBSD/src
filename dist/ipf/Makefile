@@ -3,7 +3,7 @@
 #
 # See the IPFILTER.LICENCE file for details on licencing.
 #
-# Id: Makefile,v 2.11.2.10 2001/09/22 13:11:15 darrenr Exp
+# Id: Makefile,v 2.11.2.13 2002/03/06 09:43:15 darrenr Exp
 #
 BINDEST=/usr/local/bin
 SBINDEST=/sbin
@@ -59,7 +59,7 @@ STATETOP_LIB=-lcurses
 #
 POLICY=-DIPF_DEFAULT_PASS=FR_PASS
 #
-MFLAGS1='CFLAGS=$(CFLAGS) $(ARCHINC) $(SOLARIS2) $(INET6)' \
+MFLAGS1='CFLAGS=$(CFLAGS) $(ARCHINC) $(SOLARIS2) $(INET6) $(IPFLOG)' \
 	"IPFLOG=$(IPFLOG)" "LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" \
 	"SOLARIS2=$(SOLARIS2)" "DEBUG=$(DEBUG)" "DCPU=$(CPU)" \
 	"CPUDIR=$(CPUDIR)" 'STATETOP_CFLAGS=$(STATETOP_CFLAGS)' \
@@ -168,8 +168,8 @@ bsdi bsdos: include
 
 irix IRIX: include
 	make setup "TARGOS=IRIX" "CPUDIR=$(CPUDIR)"
-	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.std build TOP=../.. $(DEST) $(MFLAGS); else smake build TOP=../.. $(DEST) $(MFLAGS); fi;)
-	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.ipsend.std TOP=../.. $(DEST) $(MFLAGS); else smake -f Makefile.ipsend TOP=../.. $(DEST) $(MFLAGS); fi)
+	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.std build TOP=../.. $(DEST) SGI=`../getrev` $(MFLAGS); else smake build SGI=`../getrev` TOP=../.. $(DEST) $(MFLAGS); fi;)
+	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.ipsend.std SGI=`../getrev` TOP=../.. $(DEST) $(MFLAGS); else smake -f Makefile.ipsend SGI=`../getrev` TOP=../.. $(DEST) $(MFLAGS); fi)
 
 linux: include
 	make setup "TARGOS=Linux" "CPUDIR=$(CPUDIR)"
@@ -258,7 +258,7 @@ install-bsd:
 	(cd BSD/$(CPUDIR); make -f Makefile.ipsend INSTALL=$(INSTALL) install "TOP=../.." $(MFLAGS); cd ..)
 
 install-sunos4: solaris
-	(cd SunOS4; $(MAKE) "CPU=$(CPU) TOP=.." install)
+	(cd SunOS4; $(MAKE) "CPU=$(CPU)" "TOP=.." install)
 
 install-sunos5: solaris
 	(cd SunOS5; $(MAKE) "CPUDIR=`uname -p`-`uname -r`" "CPU=$(CPU) TOP=.." install)

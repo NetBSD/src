@@ -1,10 +1,13 @@
-/*	$NetBSD: iptests.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.1.8.2 2002/10/18 13:16:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -74,16 +77,26 @@
 #if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
 # include <sys/sysmacros.h>
 #endif
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 106000000)
+# define USE_NANOSLEEP
+#endif
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.1.4.4 2001/11/01 15:39:27 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: iptests.c,v 2.1.4.5 2002/02/22 15:32:58 darrenr Exp";
 #endif
 
 
+#ifdef USE_NANOSLEEP
+#define	PAUSE()	ts.tv_sec = 0; ts.tv_nsec = 10000000; \
+		  (void) nanosleep(&ts, NULL)
+#else
 #define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
 		  (void) select(0, NULL, NULL, NULL, &tv)
+#endif
 
 
 void	ip_test1(dev, mtu, ip, gwip, ptest)
@@ -93,7 +106,11 @@ ip_t	*ip;
 struct	in_addr	gwip;
 int	ptest;
 {
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	udphdr_t *u;
 	int	nfd, i = 0, len, id = getpid();
 
@@ -437,7 +454,11 @@ ip_t	*ip;
 struct	in_addr	gwip;
 int	ptest;
 {
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	int	nfd;
 	u_char	*s;
 
@@ -528,7 +549,11 @@ int	ptest;
 {
 	static	int	ict1[10] = { 8, 9, 10, 13, 14, 15, 16, 17, 18, 0 };
 	static	int	ict2[8] = { 3, 9, 10, 13, 14, 17, 18, 0 };
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	struct	icmp	*icp;
 	int	nfd, i;
 
@@ -720,7 +745,11 @@ ip_t	*ip;
 struct	in_addr	gwip;
 int	ptest;
 {
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	udphdr_t	*u;
 	int	nfd, i;
 
@@ -878,7 +907,11 @@ ip_t	*ip;
 struct	in_addr	gwip;
 int	ptest;
 {
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	tcphdr_t *t;
 	int	nfd, i;
 
@@ -1221,7 +1254,11 @@ ip_t	*ip;
 struct	in_addr	gwip;
 int	ptest;
 {
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	udphdr_t *u;
 	int	nfd, i, j, k;
 
@@ -1297,7 +1334,11 @@ struct	in_addr	gwip;
 int	ptest;
 {
 	ip_t	*pip;
+#ifdef USE_NANOSLEEP
+	struct	timespec ts;
+#else
 	struct	timeval	tv;
+#endif
 	int	nfd, i, j;
 	u_char	*s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.9.4.3 2002/02/09 16:55:38 he Exp $	*/
+/*	$NetBSD: fils.c,v 1.9.4.4 2002/10/18 13:16:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,6 +13,9 @@
 #   include <osreldate.h>
 #  endif
 # endif
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -31,8 +34,13 @@
      (!defined(__FreeBSD_version) || (__FreeBSD_version < 430000))
 #  undef STATETOP
 # endif
-# if defined(__NetBSD_Version__) && (__NetBSD_Version__ < 105000000)
-#  undef STATETOP
+# if defined(__NetBSD_Version__)
+#  if (__NetBSD_Version__ < 105000000)
+#   undef STATETOP
+#  else
+#   include <poll.h>
+#   define USE_POLL
+#  endif
 # endif
 # if defined(sun)
 #  if defined(__svr4__) || defined(__SVR4)
@@ -92,8 +100,10 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.33 2002/01/13 04:58:10 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: fils.c,v 2.21.2.36 2002/06/27 14:29:16 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -196,7 +206,7 @@ char *argv[];
 	ipfrstat_t *ifrstp = &ifrst;
 	char	*device = IPL_NAME, *memf = NULL;
 	char	*kern = NULL;
-	int	c, fd, myoptind;
+	int	c, myoptind;
 	struct protoent *proto;
 
 	int protocol = -1;		/* -1 = wild card for any protocol */
@@ -353,8 +363,8 @@ char *argv[];
 		bzero((char *)&ipsst, sizeof(ipsst));
 		bzero((char *)&ifrst, sizeof(ifrst));
 
-		fd = ipfstate_live(device, &fiop, &ipsstp, &ifrstp,
-				   &frauthstp, &frf);
+		ipfstate_live(device, &fiop, &ipsstp, &ifrstp,
+			      &frauthstp, &frf);
 	} else
 		ipfstate_dead(kern, &fiop, &ipsstp, &ifrstp, &frauthstp, &frf);
 
@@ -914,10 +924,14 @@ int topclosed;
 	ipstate_t *istab[IPSTATE_SIZE], ips;
 	ips_stat_t ipsst, *ipsstp = &ipsst;
 	statetop_t *tstable = NULL, *tp;
-	struct timeval selecttimeout; 
 	char hostnm[HOSTNMLEN];
 	struct protoent *proto;
+#ifdef USE_POLL
+	struct pollfd set[1];
+#else
+	struct timeval selecttimeout; 
 	fd_set readfd;
+#endif
 	int c = 0;
 	time_t t;
 
@@ -1187,6 +1201,13 @@ int topclosed;
 		}
 
 		/* wait for key press or a 1 second time out period */
+#ifdef USE_POLL
+		set[0].fd = 0;
+		set[0].events = POLLIN;
+		poll(set, 1, refreshtime * 1000);
+
+		if (set[0].revents & POLLIN) {
+#else
 		selecttimeout.tv_sec = refreshtime;
 		selecttimeout.tv_usec = 0;
 		FD_ZERO(&readfd);
@@ -1195,19 +1216,20 @@ int topclosed;
 
 		/* if key pressed, read all waiting keys */
 		if (FD_ISSET(0, &readfd)) {
+#endif
 			c = wgetch(stdscr);
 			if (c == ERR)
 				continue;
 
-			if (tolower(c) == 'l') {
+			if (isalpha(c) && isupper(c))
+				c = tolower(c);
+			if (c == 'l') {
 				redraw = 1;
-			} else if (tolower(c) == 'q') {
-				nocbreak();
-				endwin();
-				exit(0);
-			} else if (tolower(c) == 'r') {
+			} else if (c == 'q') {
+				break;	/* exits while() loop */
+			} else if (c == 'r') {
 				reverse = !reverse;
-			} else if (tolower(c) == 's') {
+			} else if (c == 's') {
 				sorting++;
 				if (sorting > STSORT_MAX)
 					sorting = 0;

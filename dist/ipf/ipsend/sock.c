@@ -1,10 +1,13 @@
-/*	$NetBSD: sock.c,v 1.1.1.1.8.1 2002/02/09 16:55:55 he Exp $	*/
+/*	$NetBSD: sock.c,v 1.1.1.1.8.2 2002/10/18 13:17:00 itojun Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -63,8 +66,10 @@
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.1.4.4 2001/12/24 15:10:49 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: sock.c,v 2.1.4.5 2002/02/22 15:32:58 darrenr Exp";
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_td.c,v 1.2.4.1 2002/02/09 16:55:33 he Exp $	*/
+/*	$NetBSD: ipft_td.c,v 1.2.4.2 2002/10/18 13:16:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -28,6 +28,9 @@ tcpdump -nqte
 8:0:20:f:65:f7 0:0:c:1:8a:c5 81: 128.250.133.13.23 > 128.250.20.20.2419: tcp 27
 
 */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__GNUC__)
@@ -59,8 +62,10 @@ tcpdump -nqte
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_td.c,v 2.2.2.1 2001/06/26 10:43:18 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipft_td.c,v 2.2.2.3 2002/06/27 14:29:17 darrenr Exp";
 #endif
 
 static	int	tcpd_open __P((char *));
@@ -119,7 +124,7 @@ int	cnt, *dir;
 	struct	protoent *p;
 	char	src[32], dst[32], misc[256], time[32], link1[32], link2[32];
 	char	lbuf[160], *s;
-	int	n, dots, slen, extra = 0;
+	int	n, slen, extra = 0;
 
 	if (!fgets(lbuf, sizeof(lbuf) - 1, tfp))
 		return 0;
@@ -141,7 +146,7 @@ int	cnt, *dir;
 					return -1;
 			}
 
-	if ((dots = count_dots(dst)) == 4) {
+	if (count_dots(dst) == 4) {
 		s = strrchr(src, '.');
 		*s++ = '\0';
 		(void) inet_aton(src, &ip->ip_src);

@@ -1,10 +1,13 @@
-/*	$NetBSD: ipft_tx.c,v 1.2.4.1 2002/02/09 16:55:04 he Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.2.4.2 2002/10/18 13:16:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -42,8 +45,10 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.4 2001/06/26 10:43:18 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipft_tx.c,v 2.3.2.7 2002/06/27 14:29:17 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -176,10 +181,8 @@ char	*buf, **ifn;
 int	cnt, *dir;
 {
 	register char *s;
-	ip_t *ip;
 	char	line[513];
 
- 	ip = (ip_t *)buf;
 	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {
 		if ((s = index(line, '\n')))
@@ -196,7 +199,7 @@ int	cnt, *dir;
 		*dir = 0;
 		if (!parseline(line, (ip_t *)buf, ifn, dir))
 #if 0
-			return sizeof(*ip) + sizeof(tcphdr_t);
+			return sizeof(ip_t) + sizeof(tcphdr_t);
 #else
 			return sizeof(ip_t);
 #endif
@@ -263,7 +266,7 @@ int	*out;
 			tx_proto = "udp";
 		} else {
 			ip->ip_p = IPPROTO_ICMP;
-			ip->ip_len += sizeof(struct icmp);
+			ip->ip_len += ICMPERR_IPICMPHLEN;
 			tx_proto = "icmp";
 		}
 		cpp++;

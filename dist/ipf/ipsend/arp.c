@@ -1,10 +1,13 @@
-/*	$NetBSD: arp.c,v 1.1.1.1.8.1 2002/02/09 16:55:14 he Exp $	*/
+/*	$NetBSD: arp.c,v 1.1.1.1.8.2 2002/10/18 13:16:58 itojun Exp $	*/
 
 /*
  * arp.c (C) 1995-1998 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -28,7 +31,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)arp.c	1.4 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: arp.c,v 2.1.4.2 2001/07/15 22:00:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: arp.c,v 2.1.4.3 2002/02/22 15:32:57 darrenr Exp";
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: facpri.c,v 1.2.4.1 2002/02/09 16:55:32 he Exp $	*/
+/*	$NetBSD: facpri.c,v 1.2.4.2 2002/10/18 13:16:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -23,7 +23,8 @@
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: facpri.c,v 1.3.2.4 2001/07/15 22:06:12 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: facpri.c,v 1.3.2.4 2001/07/15 22:06:12 darrenr Exp";
 #endif
 
 typedef	struct	table	{
