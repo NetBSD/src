@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.8 1998/07/02 21:46:19 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.9 1998/07/16 07:08:26 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,11 @@
 
 {
 
-/* Initial code for definitions and includes. */
+#include "msg_defs.h"
+
+/* Initial code for definitions and includes and  prototypes. */
+void do_dynamic (void);
+static int msg_init = 0;
 
 }
 
@@ -49,7 +53,15 @@ allow dynamic menus;
 error action { fprintf (stderr, "Testm: Could not initialize curses.\n");
 	       exit(1); };
 
-menu root, title "  Main Menu of Test System";
+menu root, title "  Main Menu of Test System", x=10;
+	display action {
+		/* Message initialization */
+		if (!msg_init) {
+			msg_window (stdscr);
+			msg_init = 1;
+		}
+		msg_display (MSG_welcome);
+		wrefresh(stdscr); };
 	option  "Do nothing option", 
 		action  { }
 	;
@@ -63,7 +75,11 @@ menu root, title "  Main Menu of Test System";
 		sub menu scrollit2
 	;
 	option  "Big non-scrollable menu, bombs on small screens",
-		sub menu  bigscroll;
+		sub menu  bigscroll
+	;
+	option  "A dynamic menu ...",
+		action { do_dynamic (); }
+	;
 	option  "Run a shell...",
 		action (endwin) { system ("/bin/sh"); }
 	;
