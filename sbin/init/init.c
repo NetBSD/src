@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Header: /cvsroot/src/sbin/init/init.c,v 1.5 1993/04/06 19:33:33 cgd Exp $ */
+/* $Header: /cvsroot/src/sbin/init/init.c,v 1.6 1993/04/26 14:54:43 cgd Exp $ */
 
 
 #include <sys/types.h>
@@ -248,9 +248,7 @@ top:
 					pass = getpass("Password:");
 					if ((pass == 0) || (*pass == '\0'))
 						_exit(0); /* got control-d */
-#ifdef DES
 					pass = crypt(pass, passp->pw_passwd);
-#endif
 				} while (strcmp(pass, passp->pw_passwd) != 0);
 			}
 #endif
