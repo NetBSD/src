@@ -1,12 +1,19 @@
-#	$NetBSD: Makefile.inc,v 1.21 1996/09/23 05:00:45 ghudson Exp $
+#	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 KERNDIR=	$S/lib/libkern
 
 KERNDST?=	${.OBJDIR}/lib/kern
+KERN_AS?=	obj
+
+.if (${KERN_AS} == "library")
+KERNLIB=	${KERNDST}/libkern.a
+KERNLIB_PROF=	${KERNDST}/libkern_p.a
+.else
 KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
+.endif
 
 KERNMAKE= \
 	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
@@ -18,11 +25,19 @@ KERNMAKE= \
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
+.if (${KERN_AS} == "library")
+	@${KERNMAKE} libkern.a
+.else
 	@${KERNMAKE} libkern.o
+.endif
 
 ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
+.if (${KERN_AS} == "library")
+	@${KERNMAKE} libkern_p.a
+.else
 	@${KERNMAKE} libkern.po
+.endif
 
 clean:: 		.NOTMAIN __always_make_kernlib
 	@echo cleaning the kern library objects
