@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
+/*	$NetBSD: mul.S,v 1.2 1998/08/29 18:16:58 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
 #ifdef notdef
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: mul.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $"
+	.asciz "$NetBSD: mul.S,v 1.2 1998/08/29 18:16:58 eeh Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,6 +58,15 @@
 
 #include "DEFS.h"
 FUNC(.mul)
+#if 1
+	cmp	%o0, %o1	! Most efficient if smaller is in rs1
+	blt,a	%icc, 1f
+	 mulx	%o0, %o1, %o0
+	mulx	%o1, %o0, %o0
+	srax	%o0, 32, %o1
+	retl
+	 sll	%o0, 0, %o0	! Sign extend
+#else
 	mov	%o0, %y		! multiplier -> Y
 	andncc	%o0, 0xfff, %g0	! test bits 12..31
 	be	Lmul_shortway	! if zero, can do it the short way
@@ -157,3 +166,4 @@ Lmul_shortway:
 	or	%o5, %o0, %o0	! construct low part of result
 	retl
 	sra	%o4, 20, %o1	! ... and extract high part of result
+#endif

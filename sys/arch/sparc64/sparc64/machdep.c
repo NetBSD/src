@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1998/08/23 15:49:03 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.6 1998/08/29 18:16:56 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -542,8 +542,10 @@ int sigpid = 0;
 struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
+#ifndef __LP64
 	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
+#endif
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 };
 
