@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.57 2000/11/30 23:01:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -403,7 +403,7 @@ ncr53c9x_init(sc, doreset)
 		TAILQ_INIT(&sc->ready_list);
 		sc->sc_nexus = NULL;
 		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
-		for (r=0; r<NCR_NTARG; r++) {
+		for (r = 0; r < NCR_NTARG; r++) {
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
 	} else {
@@ -415,9 +415,9 @@ ncr53c9x_init(sc, doreset)
 			ncr53c9x_done(sc, ecb);
 		}
 		/* Cancel outstanding disconnected commands on each LUN */
-		for (r=0; r<8; r++) {
+		for (r = 0; r < 8; r++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[r].luns, link) {
-				if ((ecb = li->untagged)) {
+				if ((ecb = li->untagged) != NULL) {
 					li->untagged = NULL;
 					/* 
 					 * XXXXXXX
@@ -429,7 +429,7 @@ ncr53c9x_init(sc, doreset)
 					ecb->xs->error = XS_TIMEOUT;
 					ncr53c9x_done(sc, ecb);
 				}
-				for (i=0; i<256; i++)
+				for (i = 0; i < 256; i++)
 					if ((ecb = li->queued[i])) {
 						li->queued[i] = NULL;
 						ecb->xs->error = XS_TIMEOUT;
@@ -606,8 +606,9 @@ ncr53c9x_select(sc, ecb)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
+
 		callout_reset(&ecb->xs->xs_callout, timeout,
-		    ncr53c9x_timeout, ecb);
+			      ncr53c9x_timeout, ecb);
 	}
 
 	/*
@@ -617,7 +618,7 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
-	if (ecb->flags & ECB_SENSE) {
+	if ((ecb->flags & ECB_SENSE) != 0) {
 		/*
 		 * For REQUEST SENSE, we should not send an IDENTIFY or
 		 * otherwise mangle the target.  There should be no MESSAGE IN
@@ -628,7 +629,8 @@ ncr53c9x_select(sc, ecb)
 			dmasize = clen = ecb->clen;
 			sc->sc_cmdlen = clen;
 			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
-			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
+				     &dmasize);
 	
 			/* Program the SCSI counter */
 			NCR_WRITE_REG(sc, NCR_TCL, dmasize);
@@ -962,28 +964,30 @@ ncr53c9x_sched(sc)
 	 * Find first ecb in ready queue that is for a target/lunit
 	 * combinations that is not busy.
 	 */
-	for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
+	for (ecb = TAILQ_FIRST(&sc->ready_list); ecb != NULL;
+	     ecb = TAILQ_NEXT(ecb, chain)) {
 		sc_link = ecb->xs->sc_link;
 		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 		lun = sc_link->scsipi_scsi.lun;
 
 		/* Select type of tag for this command */
-		if (ecb->xs->xs_control & XS_CTL_URGENT)
+		if ((ti->flags & (T_RSELECTOFF|T_TAGOFF)) != 0) 
+			tag = 0;
+		else if ((ecb->flags & ECB_SENSE) != 0)
+			tag = 0;
+		else if (ecb->xs->xs_control & XS_CTL_URGENT)
 			tag = MSG_HEAD_OF_Q_TAG;
 		else
 			tag = MSG_SIMPLE_Q_TAG;
-		if (ti->flags & (T_RSELECTOFF|T_TAGOFF)) 
-			tag = 0;
 #if 0
 		/* XXXX Use tags for polled commands? */
 		if (ecb->xs->xs_control & XS_CTL_POLL)
 			tag = 0;
 #endif
-		if (ecb->flags & ECB_SENSE)
-			tag = 0;
+
 		s = splbio();
 		li = TINFO_LUN(ti, lun);
-		if (!li) {
+		if (li == NULL) {
 			int wait = M_NOWAIT;
 			int flags = ecb->xs->xs_control;
 
@@ -1002,14 +1006,14 @@ ncr53c9x_sched(sc)
 				ti->lun[lun] = li;
 		}
 		li->last_used = time.tv_sec;
-		if (!tag) {
+		if (tag == 0) {
 			/* Try to issue this as an un-tagged command */
-			if (!li->untagged)
+			if (li->untagged == NULL)
 				li->untagged = ecb;
 		}
-		if (li->untagged) {
+		if (li->untagged != NULL) {
 			tag = 0;
-			if ((li->busy != 1) && !li->used) {
+			if ((li->busy != 1) && li->used == 0) {
 				/* We need to issue this untagged command now */
 				ecb = li->untagged;
 				sc_link = ecb->xs->sc_link;
@@ -1021,7 +1025,7 @@ ncr53c9x_sched(sc)
 			}
 		}
 		ecb->tag[0] = tag;
-		if (tag) {
+		if (tag != 0) {
 			int i;
 
 			/* Allocate a tag */
@@ -1031,13 +1035,13 @@ ncr53c9x_sched(sc)
 				continue;
 			}
 			/* Start from the last used location */
-			for (i=li->avail; i<256; i++) {
+			for (i = li->avail; i < 256; i++) {
 				if (li->queued[i] == NULL)
 					break;
 			}
 			/* Couldn't find one, start again from the beginning */
 			if (i == 256) {
-				for (i=0; i<256; i++) {
+				for (i = 0; i < 256; i++) {
 					if (li->queued[i] == NULL)
 						break;
 				}
@@ -1056,7 +1060,7 @@ ncr53c9x_sched(sc)
 			ecb->tag[1] = i;
 		}
 		splx(s);
-		if (li->untagged && (li->busy != 1)) {
+		if (li->untagged != NULL && (li->busy != 1)) {
 			li->busy = 1;
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 			ecb->flags &= ~ECB_READY;
@@ -1064,7 +1068,7 @@ ncr53c9x_sched(sc)
 			ncr53c9x_select(sc, ecb);
 			break;
 		}
-		if (!li->untagged && tag) {
+		if (li->untagged == NULL && tag != 0) {
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 			ecb->flags &= ~ECB_READY;
 			sc->sc_nexus = ecb;
@@ -1134,7 +1138,6 @@ ncr53c9x_done(sc, ecb)
 
 	callout_stop(&ecb->xs->xs_callout);
 
-
 	if (ecb->stat == SCSI_QUEUE_FULL) {
 		/* 
 		 * Set current throttle -- we should reset 
@@ -1197,9 +1200,7 @@ ncr53c9x_done(sc, ecb)
 
 	if (xs->error == XS_SELTIMEOUT) {
 		/* Selection timeout -- discard this LUN if empty */
-		if (!li->untagged && !li->used) {
-printf("ncr53c9x_done: deleting LUN %d target %d\n", 
-       (int)li->lun, sc_link->scsipi_scsi.target);
+		if (li->untagged == NULL && li->used == 0) {
 			if (lun < NCR_NLUN)
 				ti->lun[lun] = NULL;
 			LIST_REMOVE(li, link);
@@ -1224,7 +1225,7 @@ ncr53c9x_dequeue(sc, ecb)
 	
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
-	if ((!li) || (li->lun != lun))
+	if (li == NULL || li->lun != lun)
 		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
 		      (long long) lun, ecb);
 #endif
@@ -1232,9 +1233,10 @@ ncr53c9x_dequeue(sc, ecb)
 		li->busy = 0;
 		li->untagged = NULL;
 	}
-	if (ecb->tag[0] && li->queued[ecb->tag[1]]) {
+	if (ecb->tag[0] && li->queued[ecb->tag[1]] != NULL) {
 #ifdef DIAGNOSTIC
-		if (li->queued[ecb->tag[1]] && (li->queued[ecb->tag[1]] != ecb))
+		if (li->queued[ecb->tag[1]] != NULL &&
+		    (li->queued[ecb->tag[1]] != ecb))
 			panic("ncr53c9x_dequeue: slot %d for lun %qx has %p "
 			      "instead of ecb %p\n", ecb->tag[1],
 			      (long long) lun,
@@ -1242,9 +1244,9 @@ ncr53c9x_dequeue(sc, ecb)
 #endif
 		li->queued[ecb->tag[1]] = NULL;
 		li->used --;
-
 	} 
-	if (ecb->flags & ECB_READY) {
+
+	if ((ecb->flags & ECB_READY) != 0) {
 		ecb->flags &= ~ECB_READY;
 		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 	}
@@ -1308,17 +1310,20 @@ ncr53c9x_reselect(sc, message, tagtype, tagid)
 	 * and wait for a tag message.
 	 */
 	
-	if (li) {
-		if (li->untagged && li->busy) ecb = li->untagged;
+	if (li != NULL) {
+		if (li->untagged != NULL && li->busy)
+			ecb = li->untagged;
 		else if (tagtype != MSG_SIMPLE_Q_TAG) {
 			/* Wait for tag to come by */
 			sc->sc_state = NCR_IDENTIFIED;
 			return (0);
-		} else if (tagtype) ecb = li->queued[tagid];
+		} else if (tagtype)
+			ecb = li->queued[tagid];
 	}
 	if (ecb == NULL) {
 		printf("%s: reselect from target %d lun %d tag %x:%x with no nexus;"
-		    " sending ABORT\n", sc->sc_dev.dv_xname, target, lun, tagtype, tagid);
+		    " sending ABORT\n",
+			sc->sc_dev.dv_xname, target, lun, tagtype, tagid);
 		goto abort;
 	}
 
@@ -1405,7 +1410,7 @@ ncr53c9x_msgin(sc)
 	 * the incoming bytes.  But still, we need to ACK them.
 	 */
 
-	if ((sc->sc_flags & NCR_DROP_MSGI)) {
+	if ((sc->sc_flags & NCR_DROP_MSGI) != 0) {
 		NCRCMD(sc, NCRCMD_MSGOK);
 		printf("<dropping msg byte %x>",
 			sc->sc_imess[sc->sc_imlen]);
@@ -1537,8 +1542,7 @@ gotit:
 					scsi_print_addr(ecb->xs->sc_link);
 					printf("async mode\n");
 #endif
-					if ((sc->sc_flags&NCR_SYNCHNEGO)
-					    == 0) {
+					if ((sc->sc_flags&NCR_SYNCHNEGO) == 0) {
 						/*
 						 * target initiated negotiation
 						 */
@@ -1607,7 +1611,7 @@ gotit:
 		if (MSG_ISIDENTIFY(sc->sc_imess[0])) {
 			sc->sc_msgify = sc->sc_imess[0];
 		} else if (sc->sc_imess[0] == MSG_SIMPLE_Q_TAG) {
-			if (!sc->sc_msgify) {
+			if (sc->sc_msgify == 0) {
 				printf("%s: TAG reselect without IDENTIFY;"
 				       " MSG %x;"
 				       " sending DEVICE RESET\n",
@@ -1777,7 +1781,7 @@ ncr53c9x_msgout(sc)
 	{
 		int i;
 		
-		for (i=0; i<sc->sc_omlen; i++) 
+		for (i = 0; i < sc->sc_omlen; i++) 
 			NCR_MISC(("<msgbyte:0x%02x>", sc->sc_omess[i]));
 	}
 #endif
@@ -1805,7 +1809,6 @@ ncr53c9x_msgout(sc)
  *
  * Most of this needs verifying.
  */
-int sdebug = 0;
 int
 ncr53c9x_intr(arg)
 	void *arg;
@@ -1846,8 +1849,8 @@ again:
 	 */
 
 	/* SCSI Reset */
-	if (sc->sc_espintr & NCRINTR_SBR) {
-		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
+	if ((sc->sc_espintr & NCRINTR_SBR) != 0) {
+		if ((NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) != 0) {
 			NCRCMD(sc, NCRCMD_FLUSH);
 			DELAY(1);
 		}
@@ -1863,7 +1866,7 @@ again:
 			sc->sc_espintr, sc->sc_espstat,
 			sc->sc_espstep);
 #endif
-		if (sc->sc_nexus)
+		if (sc->sc_nexus != NULL)
 			panic("%s: nexus in reset state",
 			      sc->sc_dev.dv_xname);
 		goto sched;
@@ -1875,7 +1878,7 @@ again:
 	if (sc->sc_espintr & NCRINTR_ERR ||
 	    sc->sc_espstat & NCRSTAT_GE) {
 
-		if (sc->sc_espstat & NCRSTAT_GE) {
+		if ((sc->sc_espstat & NCRSTAT_GE) != 0) {
 			/* Gross Error; no target ? */
 			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 				NCRCMD(sc, NCRCMD_FLUSH);
@@ -1889,8 +1892,8 @@ again:
 			return (1);
 		}
 
-		if (sc->sc_espintr & NCRINTR_ILL) {
-			if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
+		if ((sc->sc_espintr & NCRINTR_ILL) != 0) {
+			if ((sc->sc_flags & NCR_EXPECT_ILLCMD) != 0) {
 				/*
 				 * Eat away "Illegal command" interrupt
 				 * on a ESP100 caused by a re-selection
@@ -1990,7 +1993,7 @@ again:
 	/*
 	 * Check for less serious errors.
 	 */
-	if (sc->sc_espstat & NCRSTAT_PE) {
+	if ((sc->sc_espstat & NCRSTAT_PE) != 0) {
 		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
 		if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 			ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
@@ -1998,7 +2001,7 @@ again:
 			ncr53c9x_sched_msgout(SEND_INIT_DET_ERR);
 	}
 
-	if (sc->sc_espintr & NCRINTR_DIS) {
+	if ((sc->sc_espintr & NCRINTR_DIS) != 0) {
 		sc->sc_msgify = 0;
 		NCR_MISC(("<DISC [intr %x, stat %x, step %d]>",
 			sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
@@ -2025,25 +2028,25 @@ again:
 			/* Selection timeout -- discard all LUNs if empty */
 			sc_link = ecb->xs->sc_link;
 			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-			li = ti->luns.lh_first;
-			while (li) {
-				if (!li->untagged && !li->used) {
+			li = LIST_FIRST(&ti->luns);
+			while (li != NULL) {
+				if (li->untagged == NULL && li->used == 0) {
 					if (li->lun < NCR_NLUN)
 						ti->lun[li->lun] = NULL;
 					LIST_REMOVE(li, link);
 					free(li, M_DEVBUF);
 					/* Restart the search at the beginning */
-					li = ti->luns.lh_first;
+					li = LIST_FIRST(&ti->luns);
 					continue;
 				}
-				li = li->link.le_next;
+				li = LIST_NEXT(li, link);
 			}
 			goto finish;
 		}
 		case NCR_CONNECTED:
-			if ((sc->sc_flags & NCR_SYNCHNEGO)) {
+			if ((sc->sc_flags & NCR_SYNCHNEGO) != 0) {
 #ifdef NCR53C9X_DEBUG
-				if (ecb)
+				if (ecb != NULL)
 					scsi_print_addr(ecb->xs->sc_link);
 				printf("sync nego not completed!\n");
 #endif
@@ -2065,7 +2068,7 @@ again:
 				 */     
 				printf("%s: unexpected disconnect; ",
 				    sc->sc_dev.dv_xname);
-				if (ecb->flags & ECB_SENSE) {
+				if ((ecb->flags & ECB_SENSE) != 0) {
 					printf("resetting\n");
 					goto reset;
 				}
@@ -2138,6 +2141,7 @@ printf("<<RESELECT CONT'd>>");
 			goto msgin;
 
 		break;
+
 	case NCR_IDLE:
 	case NCR_SELECTING:
 		sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
@@ -2228,7 +2232,7 @@ printf("<<RESELECT CONT'd>>");
 			 * to determine how far the selection could progress.
 			 */
 			ecb = sc->sc_nexus;
-			if (!ecb)
+			if (ecb == NULL)
 				panic("ncr53c9x: no nexus");
 
 			sc_link = ecb->xs->sc_link;
@@ -2339,14 +2343,13 @@ printf("<<RESELECT CONT'd>>");
 			goto reset;
 		}
 		if (sc->sc_state == NCR_IDLE) {
-			printf("%s: stray interrupt\n",
-			    sc->sc_dev.dv_xname);
-				return (0);
+			printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
+			return (0);
 		}
 		break;
 
 	case NCR_CONNECTED:
-		if (sc->sc_flags & NCR_ICCS) {
+		if ((sc->sc_flags & NCR_ICCS) != 0) {
 			/* "Initiate Command Complete Steps" in progress */
 			u_char msg;
 
@@ -2384,6 +2387,7 @@ printf("<<RESELECT CONT'd>>");
 			goto shortcut; /* ie. wait for disconnect */
 		}
 		break;
+
 	default:
 		panic("%s: invalid state: %d",
 		      sc->sc_dev.dv_xname,
@@ -2404,15 +2408,16 @@ printf("<<RESELECT CONT'd>>");
 		ncr53c9x_msgout(sc);
 		sc->sc_prevphase = MESSAGE_OUT_PHASE;
 		break;
+
 	case MESSAGE_IN_PHASE:
 msgin:
 		NCR_PHASE(("MESSAGE_IN_PHASE "));
 		sc->sc_prevphase = MESSAGE_IN_PHASE;
-		if (sc->sc_espintr & NCRINTR_BS) {
+		if ((sc->sc_espintr & NCRINTR_BS) != 0) {
 			NCRCMD(sc, NCRCMD_FLUSH);
 			sc->sc_flags |= NCR_WAITI;
 			NCRCMD(sc, NCRCMD_TRANS);
-		} else if (sc->sc_espintr & NCRINTR_FC) {
+		} else if ((sc->sc_espintr & NCRINTR_FC) != 0) {
 			if ((sc->sc_flags & NCR_WAITI) == 0) {
 				printf("%s: MSGIN: unexpected FC bit: "
 					"[intr %x, stat %x, step %x]\n",
@@ -2431,6 +2436,7 @@ msgin:
 		}
 		goto shortcut;	/* i.e. expect data to be ready */
 		break;
+
 	case COMMAND_PHASE:
 		/*
 		 * Send the command block. Normally we don't see this
@@ -2477,6 +2483,7 @@ msgin:
 		}
 		sc->sc_prevphase = COMMAND_PHASE;
 		break;
+
 	case DATA_OUT_PHASE:
 		NCR_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
 		NCRCMD(sc, NCRCMD_FLUSH);
@@ -2485,6 +2492,7 @@ msgin:
 			  0, &size);
 		sc->sc_prevphase = DATA_OUT_PHASE;
 		goto setup_xfer;
+
 	case DATA_IN_PHASE:
 		NCR_PHASE(("DATA_IN_PHASE "));
 		if (sc->sc_rev == NCR_VARIANT_ESP100)
@@ -2500,7 +2508,7 @@ msgin:
 		/* Program the SCSI counter */
 		NCR_WRITE_REG(sc, NCR_TCL, size);
 		NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
-		if (sc->sc_cfg2 & NCRCFG2_FE) {
+		if ((sc->sc_cfg2 & NCRCFG2_FE) != 0) {
 			NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
 		}
 		/* load the count in */
@@ -2517,6 +2525,7 @@ msgin:
 		       (size==0?NCRCMD_TRPAD:NCRCMD_TRANS)|NCRCMD_DMA);
 		NCRDMA_GO(sc);
 		return (1);
+
 	case STATUS_PHASE:
 		NCR_PHASE(("STATUS_PHASE "));
 		sc->sc_flags |= NCR_ICCS;
@@ -2524,11 +2533,13 @@ msgin:
 		sc->sc_prevphase = STATUS_PHASE;
 		goto shortcut;	/* i.e. expect status results soon */
 		break;
+
 	case INVALID_PHASE:
 		break;
+
 	default:
 		printf("%s: unexpected bus phase; resetting\n",
-		    sc->sc_dev.dv_xname);
+		       sc->sc_dev.dv_xname);
 		goto reset;
 	}
 
@@ -2671,18 +2682,19 @@ ncr53c9x_watch(arg)
 	s = splbio();
 	for (t=0; t<NCR_NTARG; t++) {
 		ti = &sc->sc_tinfo[t];
-		li = ti->luns.lh_first;
+		li = LIST_FIRST(&ti->luns);
 		while (li) {
-			if (li->last_used < old && !li->untagged && !li->used) {
+			if (li->last_used < old && li->untagged == NULL &&
+			    li->used == 0) {
 				if (li->lun < NCR_NLUN)
 					ti->lun[li->lun] = NULL;
 				LIST_REMOVE(li, link);
 				free(li, M_DEVBUF);
 				/* Restart the search at the beginning */
-				li = ti->luns.lh_first;
+				li = LIST_FIRST(&ti->luns);
 				continue; 
 			}
-			li = li->link.le_next;
+			li = LIST_NEXT(li, link);
 		}
 	}
 	splx(s);
