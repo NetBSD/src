@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.2 1997/05/18 06:08:04 thorpej Exp $	*/
+/*	$NetBSD: espvar.h,v 1.3 1998/01/14 12:17:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -84,7 +84,6 @@ struct esp_softc {
 };
 
 struct esp_probe_data {
-	struct device sc_dev;
 	int sc_irq;
 	int sc_isncr;
 	int sc_rev;
