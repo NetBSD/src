@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86.2.6 1997/10/14 09:05:42 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.86.2.7 1997/10/14 23:35:08 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -204,14 +204,12 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isapnp?
-fe0	at isa? port 0x2a0 irq ?		# AT1700
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
-ne0	at isa? port 0x280 irq 9		# NE[12]000 Ethernet cards
-ne1	at isa? port 0x250 irq 9
-ne2	at isa? port 0x300 irq 10
+ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -219,7 +217,8 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
-ne*	at pci? dev ? function ?		# NE2000-compatible PCI cards
+fe0	at isa? port 0x2a0 irq ?		# AT1700
+ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
