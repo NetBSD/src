@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.12 1998/10/03 11:59:44 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.13 1998/12/28 13:48:24 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,10 +42,17 @@
 /*
  * Keysymbols encoded as 16-bit Unicode. Special symbols
  * are encoded in the private area (0xe000 - 0xf8ff).
- * The area 0xe000 - 0xefff is used in wskbdmap.c and may
- * never be assigned to any keysym.
  * Currently only ISO Latin-1 subset is supported.
+ *
+ * This file is parsed from userland. Encode keysyms as:
+ *
+ *	#define KS_[^ \t]* 0x[0-9a-f]*
+ *
+ * and don't modify the border comments.
  */
+
+
+/*BEGINKEYSYMDECL*/
 
 /*
  * Group Ascii (ISO Latin1) character in low byte
@@ -406,6 +413,8 @@
 
 #define KS_voidSymbol		0xf500
 
+/*ENDKEYSYMDECL*/
+
 /*
  * keysym groups
  */
@@ -418,6 +427,9 @@
 #define KS_GROUP_Dead		0xf801		/* not encoded in keysym */
 #define KS_GROUP_Ascii		0xf802		/* not encoded in keysym */
 #define KS_GROUP_Keycode	0xf803		/* not encoded in keysym */
+
+#define KS_NUMKEYCODES	0x1000
+#define KS_KEYCODE(v)	((v) | 0xe000)
 
 #define KS_GROUP(k)	((k) >= 0x0300 && (k) < 0x0370 ? KS_GROUP_Dead : \
 			    (((k) & 0xf000) == 0xe000 ? KS_GROUP_Keycode : \
@@ -450,6 +462,7 @@
 	{ KB_US,	"us" }, \
 	{ KB_DE,	"de" }, \
 	{ KB_DK,	"dk" }, \
+	{ KB_IT,	"it" }, \
 	{ KB_FR,	"fr" }, \
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
