@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)unix.c	5.11 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: unix.c,v 1.6 1993/08/01 18:10:46 mycroft Exp $";
+static char rcsid[] = "$Id: unix.c,v 1.7 1994/01/11 23:27:10 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ unixdomainpr(so, soaddr)
 	    unp->unp_vnode, unp->unp_conn,
 	    unp->unp_refs, unp->unp_nextref);
 	if (m)
-		printf(" %.*s", m->m_len - sizeof(sa->sun_family),
-		    sa->sun_path);
+		printf(" %.*s", sa->sun_len - sizeof (sa->sun_len) -
+		    sizeof (sa->sun_family), sa->sun_path);
 	putchar('\n');
 }
