@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2003/07/15 01:37:37 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4 2003/07/25 11:44:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/07/15 01:37:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2003/07/25 11:44:21 scw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/07/15 01:37:37 lukem Exp $");
 #include <machine/bus.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -110,13 +111,13 @@ consinit(void)
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = ibm4xx_make_bus_space_tag(0, 0);
+	/* We *know* the com-console attaches to opb */
+	tag = opb_get_bus_space_tag();
 
 	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
 	    COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONADDR);
 	else
-		return;
 #endif
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
@@ -128,7 +129,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = ibm4xx_make_bus_space_tag(0, 2);
+		bus_space_tag_t tag = opb_get_bus_space_tag();
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ * 6,
 		    COM_TYPE_NORMAL, comkgdbmode);
 	}

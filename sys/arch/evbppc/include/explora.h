@@ -15,9 +15,6 @@
 
 #define SIZE_FB		(2*1024*1024)
 
-#define MAKE_BUS_TAG(a)	ibm4xx_make_bus_space_tag(0, \
-			    ((a)&0xff000000) == 0x74000000 ? 1 : 0)
-
 void consinit(void);
 
 #endif /* _EVBPPC_EXPLORA_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: elbvar.h,v 1.1 2003/03/11 10:57:57 hannken Exp $	*/
+/*	$NetBSD: elbvar.h,v 1.2 2003/07/25 11:44:20 scw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -44,3 +44,5 @@ struct elb_attach_args {
 	u_int elb_base2;
 	int elb_irq;
 };
+
+extern bus_space_tag_t elb_get_bus_space_tag(bus_addr_t);
