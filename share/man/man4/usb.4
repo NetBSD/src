@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.62 2003/05/06 18:59:20 wiz Exp $
+.\" $NetBSD: usb.4,v 1.63 2004/01/07 14:31:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -475,6 +475,21 @@ Note that that there is a separation between device and device
 driver events.  A device event is generated when a physical
 USB device is attached or detached.  A single USB device may
 have zero, one, or many device drivers associated with it.
+.Sh KERNEL THREADS
+For each USB bus, i.e., for each host controller, there is
+a kernel thread that handles attach and detach of devices on
+that bus.
+The thread is named
+.Va usbN
+where
+.Va N
+is the bus number.
+.Pp
+In addition there is a kernel thread,
+.Va usbtask ,
+which handles various minor tasks that are initiated from
+an interrupt context, but need to sleep, e.g., time-out
+abort of transfers.
 .Sh SEE ALSO
 The
 .Tn USB
