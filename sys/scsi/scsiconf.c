@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.41 1995/08/21 09:30:09 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.42 1995/09/26 23:37:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -271,6 +271,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "NEC     ", "CD-ROM DRIVE:55 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:83 ", "",     SDEV_NOLUNS},
+	{T_CDROM, T_REMOV,
+	 "NEC     ", "CD-ROM DRIVE:84 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
