@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.42 1994/02/22 23:01:22 mycroft Exp $
+ *	$Id: pccons.c,v 1.43 1994/02/23 00:54:45 mycroft Exp $
  */
 
 /*
@@ -91,11 +91,6 @@ int pc_xmode = 0;
 #define	PCUNIT(x)	(minor(x))
 
 struct	tty *pc_tty[NPC];
-
-struct	pc_softc {
-	char	cs_flags;
-#define	CSF_POLLING	0x1	/* polling for input */
-} pcconsoftc;
 
 static struct video_state {
 	int 	cx, cy;		/* escape parameters */
@@ -650,40 +645,6 @@ pcpoll(onoff)
 {
 }
 #endif
-
-/*
- * cursor():
- *   reassigns cursor position, updated by the rescheduling clock
- *   which is a index (0-1999) into the text area. Note that the
- *   cursor is a "foreground" character, it's color determined by
- *   the fg_at attribute. Thus if fg_at is left as 0, (FG_BLACK),
- *   as when a portion of screen memory is 0, the cursor may dissappear.
- */
-
-cursor(int a)
-{ 	int pos = crtat - Crtat;
-
-#ifdef XSERVER						/* 15 Aug 92*/
-	if (pc_xmode <= 0) {
-#endif /* XSERVER */
-	outb(addr_6845, 14);
-	outb(addr_6845+1, pos>> 8);
-	outb(addr_6845, 15);
-	outb(addr_6845+1, pos);
-#ifdef	FAT_CURSOR
-	outb(addr_6845, 10);
-	outb(addr_6845+1, 0);
-	outb(addr_6845, 11);
-	outb(addr_6845+1, 18);
-#endif	FAT_CURSOR
-	if (a == 0)
-		timeout((timeout_t)cursor, (caddr_t)0, hz/10);
-#ifdef XSERVER						/* 15 Aug 92*/
-	}
-#endif /* XSERVER */
-}
-
-static u_char shift_down, ctrl_down, alt_down, caps, num, scroll;
 
 #define	wrtchar(c, at) do {\
 	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
