@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2000/05/03 10:57:30 itojun Exp $
+# $NetBSD: mi,v 1.33 2000/05/04 00:52:58 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -383,12 +383,10 @@
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
 ./usr/share/sendmail/cf/chimera.mc
-./usr/share/sendmail/cf/clientproto.mc
 ./usr/share/sendmail/cf/ihack.net.mc
+./usr/share/sendmail/cf/minbar.mc
 ./usr/share/sendmail/cf/netbsd-proto.mc
 ./usr/share/sendmail/cf/sun-lamp.mc
-./usr/share/sendmail/cf/tcpproto.mc
-./usr/share/sendmail/cf/uucpproto.mc
 ./usr/share/sendmail/cf/zhadum.mc
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4
@@ -406,8 +404,12 @@
 ./usr/share/sendmail/feature/bestmx_is_local.m4
 ./usr/share/sendmail/feature/bitdomain.m4
 ./usr/share/sendmail/feature/blacklist_recipients.m4
+./usr/share/sendmail/feature/delay_checks.m4
+./usr/share/sendmail/feature/dnsbl.m4
 ./usr/share/sendmail/feature/domaintable.m4
+./usr/share/sendmail/feature/generics_entire_domain.m4
 ./usr/share/sendmail/feature/genericstable.m4
+./usr/share/sendmail/feature/ldap_routing.m4
 ./usr/share/sendmail/feature/limited_masquerade.m4
 ./usr/share/sendmail/feature/local_lmtp.m4
 ./usr/share/sendmail/feature/local_procmail.m4
@@ -415,6 +417,7 @@
 ./usr/share/sendmail/feature/mailertable.m4
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4
 ./usr/share/sendmail/feature/masquerade_envelope.m4
+./usr/share/sendmail/feature/no_default_msa.m4
 ./usr/share/sendmail/feature/nocanonify.m4
 ./usr/share/sendmail/feature/nodns.m4
 ./usr/share/sendmail/feature/notsticky.m4
@@ -427,16 +430,17 @@
 ./usr/share/sendmail/feature/relay_entire_domain.m4
 ./usr/share/sendmail/feature/relay_hosts_only.m4
 ./usr/share/sendmail/feature/relay_local_from.m4
+./usr/share/sendmail/feature/relay_mail_from.m4
 ./usr/share/sendmail/feature/smrsh.m4
 ./usr/share/sendmail/feature/stickyhost.m4
 ./usr/share/sendmail/feature/use_ct_file.m4
 ./usr/share/sendmail/feature/use_cw_file.m4
 ./usr/share/sendmail/feature/uucpdomain.m4
+./usr/share/sendmail/feature/virtuser_entire_domain.m4
 ./usr/share/sendmail/feature/virtusertable.m4
 ./usr/share/sendmail/hack/cssubdomain.m4
 ./usr/share/sendmail/m4/cf.m4
 ./usr/share/sendmail/m4/cfhead.m4
-./usr/share/sendmail/m4/nullrelay.m4
 ./usr/share/sendmail/m4/proto.m4
 ./usr/share/sendmail/m4/version.m4
 ./usr/share/sendmail/mailer/cyrus.m4
@@ -446,6 +450,7 @@
 ./usr/share/sendmail/mailer/phquery.m4
 ./usr/share/sendmail/mailer/pop.m4
 ./usr/share/sendmail/mailer/procmail.m4
+./usr/share/sendmail/mailer/qpage.m4
 ./usr/share/sendmail/mailer/smtp.m4
 ./usr/share/sendmail/mailer/usenet.m4
 ./usr/share/sendmail/mailer/uucp.m4
