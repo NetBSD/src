@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.139 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.140 2004/03/27 12:40:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.139 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140 2004/03/27 12:40:46 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -751,8 +751,8 @@ ffs_mountfs(devvp, mp, p)
 
 
 		/* fs->fs_sblockloc isn't defined for old filesystems */
-		if (!(fs->fs_old_flags & FS_FLAGS_UPDATED)) {
-			if (fstype == UFS1 && sblockloc == SBLOCK_UFS2)
+		if (fstype == UFS1 && !(fs->fs_old_flags & FS_FLAGS_UPDATED)) {
+			if (sblockloc == SBLOCK_UFS2)
 				/*
 				 * This is likely to be the first alternate
 				 * in a filesystem with 64k blocks.
