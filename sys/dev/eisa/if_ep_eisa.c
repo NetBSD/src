@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.12 1997/03/30 22:47:05 jonathan Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -77,7 +77,11 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int ep_eisa_match __P((struct device *, void *, void *));
+#else
+int ep_eisa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void ep_eisa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ep_eisa_ca = {
@@ -93,7 +97,12 @@ struct cfattach ep_eisa_ca = {
 int
 ep_eisa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
 
