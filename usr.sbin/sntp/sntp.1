@@ -1,8 +1,9 @@
-.TH MSNTP 1
+.\" $NetBSD: sntp.1,v 1.3 2003/12/09 11:15:18 drochner Exp $
+.TH SNTP 1
 .SH NAME
-msntp \- a SNTP utility (command and daemon)
+sntp \- a SNTP utility (command and daemon)
 .SH SYNOPSIS
-.B msntp
+.B sntp
 [
 .B \-h
 |
@@ -52,7 +53,7 @@ msntp \- a SNTP utility (command and daemon)
 ] ]
 .SH DESCRIPTION
 .PP
-.I msntp
+.I sntp
 can be used as a SNTP client to query a NTP or SNTP server and either display
 the time or set the local system's time (given suitable privilege).  It can be
 run as an interactive command, in a
@@ -62,7 +63,7 @@ other clients.  NTP is the Network Time Protocol (RFC 1305) and SNTP is the
 Simple Network Time Protocol (RFC 2030, which supersedes RFC 1769).
 .SS Options
 .PP
-.I msntp
+.I sntp
 recognizes the following options:
 .TP
 .B \-h
@@ -141,9 +142,9 @@ option for details).
 .BI \-l " lockfile"
 sets the name of the lock file to ensure that there is only
 one copy of
-.I msntp
+.I sntp
 running at once.  The default is installation-dependent, but will usually be
-.IR /etc/msntp.pid .
+.IR /var/run/sntp.pid .
 .TP
 .BI \-e " minerr"
 sets the maximum ignorable variation between the clocks to
@@ -199,10 +200,10 @@ may be used with the
 .B \-x
 option to store a record of previous packets, which speeds up recalculating
 the drift after
-.I msntp
+.I sntp
 has to be restarted (e.g. because of network or server outages).  In order to
 restart the data,
-.I msntp
+.I sntp
 must be restarted reasonably soon after it died (within a few times the value of
 .IR separation ) ,
 with the same value of the
@@ -214,7 +215,7 @@ be the same for client mode, and with compatible values of other settings.
 Note that the file will be created with the default ownerships and permissions,
 using standard C facilities.  The default is installation-dependent, but will
 usually be
-.IR /etc/msntp.state .
+.IR /var/db/sntp.state .
 .PP
 .B address(es)
 are the DNS names or IP numbers of hosts to use for the challenge and response
@@ -258,13 +259,13 @@ in the NTP protocol (RFC 1305).
 The simplest use of this program is as an unprivileged command to check the
 current time and error in the local clock.  For example:
 .IP
-.B msntp ntpserver.somewhere
+.B sntp ntpserver.somewhere
 .PP
 It can be run as a unprivileged background process to check on the clock drift
 as well as the current error; this will probably fail if the local clock is
 reset while it is running.  For example:
 .IP
-.B msntp -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
+.B sntp -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
 .PP
 With suitable privilege, it can be run as a command or in a
 .I cron
@@ -274,11 +275,11 @@ and
 .I rdate
 commands.  For example:
 .IP
-.B msntp -a ntpserver.somewhere
+.B sntp -a ntpserver.somewhere
 .PP
 It can also be run as a daemon to keep the local clock in step.  For example:
 .IP
-.B msntp -a -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
+.B sntp -a -x ntpserver.somewhere > output 2>\*[Am]1 \*[Am]
 .PP
 More information on how to use this utility is given in the
 .I README
@@ -320,6 +321,6 @@ setting the
 .B \-c
 option to a larger value may help.  Or it may not.
 .SH AUTHOR
-.I msntp
-was developed by N.M. Maclaren of the University of Cambridge Computing
+.I sntp
+was developed as "msntp" by N.M. Maclaren of the University of Cambridge Computing
 Service.
