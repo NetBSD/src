@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.7 2002/05/12 13:12:47 bjh21 Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.8 2003/08/21 02:12:33 uwe Exp $	*/
 
 /* This is a derivative work. */
 
@@ -143,6 +143,9 @@ Software IEC/IEEE single-precision conversion routines.
 */
 int float32_to_int32( float32 );
 int float32_to_int32_round_to_zero( float32 );
+#if defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS)
+unsigned int float32_to_uint32_round_to_zero( float32 );
+#endif
 #ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
 long long float32_to_int64( float32 );
 long long float32_to_int64_round_to_zero( float32 );
@@ -184,6 +187,9 @@ Software IEC/IEEE double-precision conversion routines.
 */
 int float64_to_int32( float64 );
 int float64_to_int32_round_to_zero( float64 );
+#if defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS)
+unsigned int float64_to_uint32_round_to_zero( float64 );
+#endif
 #ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
 long long float64_to_int64( float64 );
 long long float64_to_int64_round_to_zero( float64 );
