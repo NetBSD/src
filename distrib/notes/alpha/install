@@ -1,17 +1,15 @@
-	$NetBSD: install,v 1.1.2.4 1998/05/09 05:12:23 mycroft Exp $	
+	$NetBSD: install,v 1.1.2.5 1998/05/29 04:13:05 mycroft Exp $	
 
 0. Introduction
 
-    This is the first release of NetBSD/alpha with regular packaging
-    and install tools, and the installation program is still rather
-    primitive. It also hasn't been tested very well, so there may
-    be bugs in both it and this document. However, if you have
-    problems, don't despair; most complications you might encounter
-    are very easy to fix. We strongly suggest you join the port-alpha
-    list (see the section on mailing lists on http://www.netbsd.org)
-    and ask questions there if you run into any problems. Also report
-    problem you've gotten around there or by using send-pr so that
-    they can be fixed for the next release.
+    It's getting easier with every release to install NetBSD/alpha.
+    If you do have problems, don't despair; most complications you
+    might encounter are very easy to fix. We strongly suggest you
+    join the port-alpha list (see the section on mailing lists on
+    http://www.netbsd.org) and ask questions there.  Also, please
+    report any problems you've encountered or solved by using the
+    mailing list or by running send-pr(1) so that they can be fixed
+    for the next release.
         
 1. General
 
@@ -47,10 +45,9 @@
 
     If you have an MS-DOS or Windows system available, you can use
     the `rawrite.exe' utility to transfer the image to a floppy
-    disk. (Note that rawrite.exe doesn't work under many, if not
-    all, Windows NT systems.) This utility is provided with the
-    NetBSD/i386 install tools, under i386/installation/misc; a
-    documentation file, `rawrite.doc' is available there as well.
+    disk.  This utility is provided with the NetBSD/i386 install
+    tools, under i386/installation/misc; a documentation file,
+    `rawrite.doc' is available there as well.
 
     Once the floppy has been made, you simply need to put it in the
     drive and type
@@ -61,19 +58,19 @@
 
 2.2 Booting over the Network
 
-    Booting NetBSD/alpha _VER over a network requires a BOOTP server,
-    a TFTP server and an NFS server. (These are usually all run on
-    the same machine.) There are three basic stages to the boot:
+    Booting NetBSD/alpha _VER over a network requires a BOOTP or
+    DHCP server, a TFTP server and an NFS server. (These are usually
+    all run on the same machine.) There are three basic stages to
+    the boot:
 
-    1.The Alpha console software sends a BOOTP request to get its own
-    address, the address of the TFTP server and the file to
+    1.The Alpha console software sends a BOOTP request to get its
+    own address, the address of the TFTP server and the file to
     download. It downloads this file, which is the second stage
     bootstrap, via TFTP and then executes it.
 
-    2.The second stage bootstrap uses further information in the BOOTP
-    packet that the console received to find the NFS server and path
-    and retreive the kernel (the file /netbsd). After loading the
-    kernel into memory, it executes it.
+    2.The secondary boot program resends the BOOTP request, this
+    time also locating the NFS server and root path. It mounts the
+    root path via NFS and reads in and transfers to the kernel: /netbsd.
 
     3.The kernel probes and configures the devices, and then sends
     out another BOOTP request so it can find out its address, the NFS
@@ -149,7 +146,7 @@
     The only Ethernet device the console on most Alpha systems
     knows how to boot from is the onboard Ethernet interface or a
     DEC Tulip (21040, 21041, 21140) based PCI Ethernet card. Some
-    older SMC 100 Mbps card that use this chip have been known to
+    older SMC 100 Mbps cards that use this chip have been known to
     work as well. Many older systems will not be able to use the
     newer 2.0 stepping of the 21140, however. If your system appears
     not to be receiving packets, this may be the problem. (You may
@@ -161,7 +158,8 @@
 
             boot -proto bootp ewa0
 
-    (The command may be different on some very old machines.)
+    Systems with the `old SRM' do not have a -proto option and
+    use different device names.
 
 3. Preparing the Disk
 
@@ -178,7 +176,27 @@
     `install' script from the boot floppy (or boot kernel, if you
     booted it via NFS with the INSTALL kernel).
 
-3.1 Running Install
+3.1 Manual Install from the Shell Prompt
+
+    The normal installation involves running the install shell script
+    and interactively configuring the file systems, and then simply
+    unpacking the tar files into these followed by running MAKEDEV.
+
+    However, it is also possible to do the installation yourself
+    from the shell, and in any case it is helpful to understand
+    what the install script does. The procedure is:
+
+	1. create /etc/disktab(5)
+	2. run disklabel(8),
+	3. run newfs(8)
+	4. mount(8) the new root on /mnt
+	5. cd to /usr/mdec and run ./installboot(8)
+
+    If you are reviewing man pages on NetBSD platforms other than
+    alpha, be sure when reading installboot that you read the alpha
+    version by typing: "man 8 alpha/installboot".
+
+3.2 Running Install
 
     When you first boot the INSTALL kernel you will be given the
     options of `install' or `shell'. Choose `install' and the
@@ -189,7 +207,7 @@
     prompt.  You can then restart the install script by typing
     `/install', or halt the machine by typing `halt'.
 
-3.1 Answering the Install Questions
+3.3 Answering the Install Questions
 
     These will for the most part be fairly obvious. You may install
     on either a SCSI or an IDE disk, and you will be prompted for
@@ -240,7 +258,7 @@
 
     All you need to do is mount the CD-ROM, which will generally
     be device cd0. (The initial boot messages will tell you what
-    the CD-ROM drive as probed as.) This would be done with:
+    the CD-ROM drive is probed as.) This would be done with:
 
         mount -r -t cd9660 /dev/cd0a /mnt2
 
@@ -270,7 +288,7 @@
 
         10base2         BNC connector, 10 Mbps
         AUI             AUI connector, 10 Mbps
-        10baseT         Twisted pair connector, 10 Mbps
+        10baseT/UTP     Twisted pair connector, 10 Mbps
         100baseTX       Twisted pair connector, 100 Mbps
         100baseFX       Fibre-optic connector, 100 Mbps
         100baseT4       T4 twisted pair interface, 100 Mbps
@@ -281,10 +299,14 @@
 
         route add default <gateway-IP-address>
 
-    If you will need name services you can set up a /etc/resolv.conf
-    file for those with a `nameserver <ip-address>' line in it, e.g.:
-
-        echo "nameserver 198.41.0.4" >>/etc/resolv.conf
+    In order to save space on the install floppy, the resolver does
+    not implement the DNS protocol, ignores /etc/resolv.conf and
+    does only host table lookups.  You can specify all host addresses
+    as IP numbers or you can enter the host names and numbers into
+    /etc/hosts. For example, you can prepare a hosts table beforehand,
+    and ftp(1) it down (by IP number) to /etc/hosts. This is not
+    stored on the floppy but on the temporary ramdisk filesystem,
+    so it must be repeated on any subsequent reboots from floppy.
 
     Once networking has been configured, you may mount the directory
     with the install files via NFS, or download them via FTP.
@@ -298,6 +320,7 @@
 
     To download the install sets with ftp, create a directory in
     which to put them and then use the ftp client to download them.
+    Mirror sites are listed at: "http://www.netbsd.org/Sites/net.html".
     A typical session might be:
 
         mkdir /mnt/var/tmp
@@ -306,12 +329,8 @@
         [all the following commmands are given to the ftp program
             after logging in]
         prompt
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/sets
+        cd /pub/NetBSD/NetBSD-1.3.2/alpha/binary/sets
         mget *
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/kernel
-        get netbsd-GENERIC.gz
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/toolchain
-        get netbsd-GENERIC.gz
         bye
 
     Feel free, of course, to leave off the sets that you don't need
@@ -327,23 +346,29 @@
 
         cd /mnt
 
-    Then extract the kernel with:
-
-        zcat /mnt/var/tmp/netbsd-GENERIC.gz >/mnt/netbsd
-
     For this and the following commands, replace `/mnt/var/tmp/'
     with the path to your NFS volume or CD-ROM if that's how you
     chose to access your install files instead.
 
-    The sets are extracted with
+    The sets and kernel are extracted with
 
-        for file in base comp etc games man misc text; do
-            tar --unlink -t -z -f /mnt/var/tmp/$file;
-            done
+	cd /mnt
+        for file in base kern comp etc games man misc text; do
+            tar xpfz /mnt/var/tmp/$file.tgz;
+	done
 
-    and the toolchain with
+    or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
 
-        tar --unlink -t -z -f /mnt/var/tmp/toolchain.tar.gz
+	cd /mnt
+	for file in /mnt/var/tmp/[a-z]*.tgz; do
+	    echo $i
+	    tar xpfz $i
+	done
+
+    Now make the device nodes:
+
+	cd /mnt/dev
+	sh ./MAKEDEV all
 
     You will now be ready to reboot from your hard disk. Type `sync'
     twice to make sure all the data is written out to disk and then
@@ -357,6 +382,18 @@
     in your system). Your system will come up in single-user mode,
     ready for you to configure it.
 
+4.4 Optional Toolchain Source Module
+
+    The source to the toolchain components is available in:
+
+	.../alpha/source/toolchain.tgz
+
+    This module unpacks into ./toolchain, so:
+
+	cd /usr/local
+	tar xpfz .../toolchain.tgz
+
+
 5. Configuring NetBSD
 
     Configuring your NetBSD system requires editing the /etc/rc.conf
@@ -366,7 +403,11 @@
     and possibly `defaultroute', and add an ifconfig_int for your
     interface <int>, along the lines of
 
-        ifconfig_de0="inet myname.my.dom 123.45.67.89 netmask 255.255.255.0"
+        ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+
+    or, if you have myname.my.dom in /etc/hosts:
+
+        ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
 
     You will also want either to run named or add an /etc/resolv.conf
     file (`man resolv.conf' for information on this), use `vipw' to add
