@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.25 2001/04/17 14:30:01 ad Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.26 2001/05/06 19:44:14 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.22 2001/04/17 14:29:47 ad Exp 
+ *	NetBSD: eisadevs,v 1.23 2001/05/06 19:43:54 ad Exp 
  */
 
 /*
@@ -318,6 +318,46 @@ const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "MDG0002",
 	    EISA_PRODUCT_MDG0002,
+	},
+	{
+	    0,
+	    "MLX0070",
+	    EISA_PRODUCT_MLX0070,
+	},
+	{
+	    0,
+	    "MLX0071",
+	    EISA_PRODUCT_MLX0071,
+	},
+	{
+	    0,
+	    "MLX0072",
+	    EISA_PRODUCT_MLX0072,
+	},
+	{
+	    0,
+	    "MLX0073",
+	    EISA_PRODUCT_MLX0073,
+	},
+	{
+	    0,
+	    "MLX0074",
+	    EISA_PRODUCT_MLX0074,
+	},
+	{
+	    0,
+	    "MLX0075",
+	    EISA_PRODUCT_MLX0075,
+	},
+	{
+	    0,
+	    "MLX0076",
+	    EISA_PRODUCT_MLX0076,
+	},
+	{
+	    0,
+	    "MLX0077",
+	    EISA_PRODUCT_MLX0077,
 	},
 	{
 	    0,
