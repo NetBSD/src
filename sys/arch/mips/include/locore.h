@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.10 1997/06/21 04:52:26 mhitch Exp $	*/
+/*	$NetBSD: locore.h,v 1.11 1997/06/22 03:17:41 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -29,7 +29,6 @@
  *	MachTLBFlush
  *	MachTLBFlushAddr __P()
  *	MachTLBUpdate (u_int, (pt_entry_t?) u_int);
- *	MachTLBWriteIndexed
  *	wbflush
  *	proc_trampoline()
  *	switch_exit()
@@ -104,11 +103,6 @@ typedef struct  {
 	void (*tlbFlush)  __P((void));
 	void (*tlbFlushAddr)  __P((vm_offset_t)); /* XXX Really pte highpart ? */
 	int (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
-#ifdef MIPS3
-	void (*tlbWriteIndexed)  __P((u_int, u_int, u_int, u_int));
-#else
-	void (*tlbWriteIndexed)  __P((u_int, u_int, u_int));
-#endif
 	void (*wbflush) __P((void));
 	void (*proc_trampoline) __P((void));
 	void (*mips_switch_exit) __P((struct proc *));
@@ -124,6 +118,39 @@ extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern mips_locore_jumpvec_t r2000_locore_vec;
 extern mips_locore_jumpvec_t r4000_locore_vec;
 
+#if defined(MIPS3) && !defined (MIPS1)
+#define MachConfigCache		mips3_ConfigCache
+#define MachFlushCache		mips3_FlushCache
+#define MachFlushDCache		mips3_FlushDCache
+#define MachFlushICache		mips3_FlushICache
+#define MachForceCacheUpdate	mips3_ForceCacheUpdate
+#define MachSetPID		mips3_SetPID
+#define MachTLBFlush		mips3_TLBFlush
+#define MachTLBFlushAddr	mips3_TLBFlushAddr
+#define MachTLBUpdate		mips3_TLBUpdate
+#define wbflush			mips3_wbflush
+#define proc_trampoline		mips3_proc_trampoline
+#define switch_exit		mips3_mips_switch_exit
+#endif
+
+#if !defined(MIPS3) && defined (MIPS1)
+#define MachConfigCache		mips1_ConfigCache
+#define MachFlushCache		mips1_FlushCache
+#define MachFlushDCache		mips1_FlushDCache
+#define MachFlushICache		mips1_FlushICache
+#define MachForceCacheUpdate	mips1_ForceCacheUpdate
+#define MachSetPID		mips1_SetPID
+#define MachTLBFlush		mips1_TLBFlush
+#define MachTLBFlushAddr	mips1_TLBFlushAddr
+#define MachTLBUpdate		mips1_TLBUpdate
+#define wbflush			mips1_wbflush
+#define proc_trampoline		mips1_proc_trampoline
+#define switch_exit		mips1_switch_exit
+#endif
+
+
+
+#if defined(MIPS3) && defined (MIPS1)
 #define MachConfigCache		(*(mips_locore_jumpvec.configCache))
 #define MachFlushCache		(*(mips_locore_jumpvec.flushCache))
 #define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
@@ -133,10 +160,11 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBFlush		(*(mips_locore_jumpvec.tlbFlush))
 #define MachTLBFlushAddr	(*(mips_locore_jumpvec.tlbFlushAddr))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
-#define MachTLBWriteIndexed	(*(mips_locore_jumpvec.tlbWriteIndexed))
 #define wbflush			(*(mips_locore_jumpvec.wbflush))
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
 #define switch_exit		(*(mips_locore_jumpvec.mips_switch_exit))
+#endif
+
 /* cpu_switch_resume not called directly */
 
 

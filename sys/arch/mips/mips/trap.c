@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 1997/06/21 04:18:29 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 1997/06/22 03:17:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -751,7 +751,7 @@ trap(status, cause, vaddr, opc, frame)
 		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
 		vaddr = (vaddr & ~PGOFSET) |
-			(pmap->pm_tlbpid << VMMACH_TLB_PID_SHIFT);
+			(pmap->pm_tlbpid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);  
 		pa = pfn_to_vad(entry);
 #ifdef ATTR
