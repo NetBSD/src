@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.3 1995/05/21 10:56:54 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.4 1995/05/28 19:45:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -190,12 +190,11 @@ ite_newsize(ip, winsz)
 struct ite_softc	*ip;
 struct itewinsize	*winsz;
 {
-	extern struct view_softc	views[];
-	struct view_size		vs;
-	ipriv_t				*cci = ip->priv;    
-	u_long				fbp, i, j;
-	int				error = 0;
-	view_t				*view;
+	struct view_size	vs;
+	ipriv_t			*cci = ip->priv;    
+	u_long			fbp, i, j;
+	int			error = 0;
+	view_t			*view;
 
 	vs.x      = winsz->x;
 	vs.y      = winsz->y;
@@ -204,7 +203,7 @@ struct itewinsize	*winsz;
 	vs.depth  = winsz->depth;
 
 	error = viewioctl(ip->grf->g_viewdev, VIOCSSIZE, &vs, 0, -1);
-	view  = ip->grf->g_view = views[ip->grf->g_viewdev].view;
+	view  = viewview(ip->grf->g_viewdev);
 
 	/*
 	 * Reinitialize our structs
@@ -283,7 +282,7 @@ struct proc		*p;
 	struct itebell		*ib;
 	int			error = 0;
 	ipriv_t			*cci  = ip->priv;
-	view_t			*view = ip->grf->g_view;
+	view_t			*view = viewview(ip->grf->g_viewdev);
 
 	switch (cmd) {
 	case ITEIOCGWINSZ:
@@ -300,7 +299,7 @@ struct proc		*p;
 		if(ite_newsize(ip, is))
 			error = ENOMEM;
 		else {
-			view         = ip->grf->g_view;
+			view         = viewview(ip->grf->g_viewdev);
 			ws.ws_row    = ip->rows;
 			ws.ws_col    = ip->cols;
 			ws.ws_xpixel = view->display.width;
@@ -462,7 +461,7 @@ static void
 clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
 	ipriv_t	*cci = (ipriv_t *) ip->priv;
-	view_t	*v   = ip->grf->g_view;
+	view_t	*v   = viewview(ip->grf->g_viewdev);
 	bmap_t	*bm  = v->bitmap;
 
 	if((sx == 0) && (w == ip->cols)) {
@@ -508,7 +507,7 @@ register struct ite_softc	*ip;
 register int			sy;
 int				dir, sx, count;
 {
-	bmap_t *bm = ip->grf->g_view->bitmap;
+	bmap_t *bm = viewview(ip->grf->g_viewdev)->bitmap;
 	u_char *pl = ((ipriv_t *)ip->priv)->row_ptr[sy];
 
 	if(dir == SCROLL_UP) {
