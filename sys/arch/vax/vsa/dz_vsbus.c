@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.8 1999/03/09 12:57:58 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.9 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <machine/uvax.h>
 #include <machine/vsbus.h>
 #include <machine/cpu.h>
+#include <machine/scb.h>
 
 #include <machine/../vax/gencons.h>
 
@@ -61,26 +62,27 @@
 static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
 static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
 static	int	dz_print __P((void *, const char *));
-static  void    txon __P((void));
-static  void    rxon __P((void));
 
 static	vaddr_t dz_regs; /* Used for console */
 
 struct  cfattach dz_vsbus_ca = {
-        sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
+	sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
 };
 
-static void
-rxon()
-{
-        vsbus_intr_enable(inr_sr);
-}
+#define REG(name)     short name; short X##name##X;
+static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
+	REG(csr);	/* 00 Csr: control/status register */
+	REG(rbuf);	/* 04 Rbuf/Lpr: receive buffer/line param reg. */
+	REG(tcr);	/* 08 Tcr: transmit console register */
+	REG(tdr);	/* 0C Msr/Tdr: modem status reg/transmit data reg */
+	REG(lpr0);	/* 10 Lpr0: */
+	REG(lpr1);	/* 14 Lpr0: */
+	REG(lpr2);	/* 18 Lpr0: */
+	REG(lpr3);	/* 1C Lpr0: */
+} *dz;
+#undef REG
 
-static void
-txon()
-{
-        vsbus_intr_enable(inr_st);
-}
+cons_decl(dz);
 
 int
 dz_print(aux, name)
@@ -94,64 +96,57 @@ dz_print(aux, name)
 
 static int
 dz_vsbus_match(parent, cf, aux)
-        struct device *parent;
-        struct cfdata *cf;
-        void *aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-        struct vsbus_attach_args *va = aux;
-        if (va->va_type == inr_sr)
-                return 1;
-        return 0;
+	struct vsbus_attach_args *va = aux;
+	struct ss_dz *dzP;
+	short i;
+
+	dzP = (struct ss_dz *)va->va_addr;
+	i = dzP->tcr;
+	dzP->csr = DZ_CSR_MSE;
+	dzP->tcr = 0;
+	DELAY(1000);
+	dzP->tcr = 1;
+	DELAY(100000);
+	dzP->tcr = i;
+	va->va_ivec = dzxint;
+
+	/* If the device doesn't exist, no interrupt has been generated */
+	return 1;
 }
 
 static void
 dz_vsbus_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
-        struct  dz_softc *sc = (void *)self;
+	struct  dz_softc *sc = (void *)self;
+	struct vsbus_attach_args *va = aux;
 
-        sc->sc_dr.dr_csr = (void *)(dz_regs + 0);
-        sc->sc_dr.dr_rbuf = (void *)(dz_regs + 4);
-        sc->sc_dr.dr_dtr = (void *)(dz_regs + 9);
-        sc->sc_dr.dr_break = (void *)(dz_regs + 13);
-        sc->sc_dr.dr_tbuf = (void *)(dz_regs + 12);
-        sc->sc_dr.dr_tcr = (void *)(dz_regs + 8);
-        sc->sc_dr.dr_dcd = (void *)(dz_regs + 13);
-        sc->sc_dr.dr_ring = (void *)(dz_regs + 13);
+	sc->sc_dr.dr_csr = (void *)(dz_regs + 0);
+	sc->sc_dr.dr_rbuf = (void *)(dz_regs + 4);
+	sc->sc_dr.dr_dtr = (void *)(dz_regs + 9);
+	sc->sc_dr.dr_break = (void *)(dz_regs + 13);
+	sc->sc_dr.dr_tbuf = (void *)(dz_regs + 12);
+	sc->sc_dr.dr_tcr = (void *)(dz_regs + 8);
+	sc->sc_dr.dr_dcd = (void *)(dz_regs + 13);
+	sc->sc_dr.dr_ring = (void *)(dz_regs + 13);
 
-        sc->sc_type = DZ_DZV;
+	sc->sc_type = DZ_DZV;
 
-        sc->sc_txon = txon;
-        sc->sc_rxon = rxon;
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-        vsbus_intr_attach(inr_sr, dzrint, 0);
-        vsbus_intr_attach(inr_st, dzxint, 0);
-        printf(": DC367");
+	scb_vecalloc(va->va_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
+	printf("\n%s: 4 lines", self->dv_xname);
 
-        dzattach(sc);
+	dzattach(sc);
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))
 		config_found(self, 0, dz_print);
 }
-
-/*----------------------------------------------------------------------*/
-
-#define REG(name)     short name; short X##name##X;
-static volatile struct {/* base address of DZ-controller: 0x200A0000 */
-  REG(csr);           /* 00 Csr: control/status register */
-  REG(rbuf);          /* 04 Rbuf/Lpr: receive buffer/line param reg. */
-  REG(tcr);           /* 08 Tcr: transmit console register */
-  REG(tdr);           /* 0C Msr/Tdr: modem status reg/transmit data reg */
-  REG(lpr0);          /* 10 Lpr0: */
-  REG(lpr1);          /* 14 Lpr0: */
-  REG(lpr2);          /* 18 Lpr0: */
-  REG(lpr3);          /* 1C Lpr0: */
-} *dz  = (void*)0x200A0000;
-#undef REG
-
-cons_decl(dz);
 
 int
 dzcngetc(dev) 
@@ -160,12 +155,6 @@ dzcngetc(dev)
 	int c = 0;
 	int mino = minor(dev);
 	u_short rbuf;
-#if 0
-	u_char mask;
-
-	mask = vs_cpu->vc_intmsk;	/* save old state */
-	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
-#endif
 
 	do {
 		while ((dz->csr & 0x80) == 0)
@@ -178,11 +167,6 @@ dzcngetc(dev)
 
 	if (c == 13)
 		c = 10;
-
-#if 0
-	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
-	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
-#endif
 
 	return (c);
 }
@@ -201,18 +185,21 @@ dzcnprobe(cndev)
 	case VAX_BTYP_43:
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
-		cndev->cn_dev = makedev(DZMAJOR, 3);
+		if (vax_confdata & 0x20) {
+			cndev->cn_dev = makedev(DZMAJOR, 3);
+			cndev->cn_pri = CN_REMOTE;
+		} else {
+			cndev->cn_dev = makedev(DZMAJOR, 0);
+			cndev->cn_pri = CN_NORMAL;
+		}
 		dz_regs = iospace;
 		ioaccess(iospace, 0x200A0000, 1);
-		cndev->cn_pri = CN_NORMAL;
 		break;
 
 	default:
 		cndev->cn_pri = CN_DEAD;
 		break;
 	}
-
-	return;
 }
 
 void
@@ -222,7 +209,7 @@ dzcninit(cndev)
 	dz = (void*)dz_regs;
 
 	dz->csr = 0;    /* Disable scanning until initting is done */
-	dz->tcr = 8;    /* Turn off all but line 3's xmitter */
+	dz->tcr = (1 << minor(cndev->cn_dev));    /* Turn on xmitter */
 	dz->csr = 0x20; /* Turn scanning back on */
 }
 
@@ -235,17 +222,10 @@ dzcnputc(dev,ch)
 	int timeout = 1<<15;            /* don't hang the machine! */
 	int mino = minor(dev);
 	u_short tcr;
-#if 0
-	u_char mask;
-#endif
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
 
-#if 0
-	mask = vs_cpu->vc_intmsk;	/* save old state */
-	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
-#endif
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
@@ -253,11 +233,12 @@ dzcnputc(dev,ch)
 		if (--timeout < 0)
 			break;
 	dz->tdr = ch;                    /* Put the  character */
+	timeout = 1<<15;
+	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
+		if (--timeout < 0)
+			break;
 
 	dz->tcr = tcr;
-#if 0
-	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
-#endif
 }
 
 void 
@@ -265,6 +246,12 @@ dzcnpollc(dev, pollflag)
 	dev_t dev;
 	int pollflag;
 {
+	static	u_char mask;
+
+	if (pollflag)
+		mask = vsbus_setmask(0);
+	else
+		vsbus_setmask(mask);
 }
 
 #if NLKC
@@ -288,12 +275,10 @@ lkccngetc(dev)
 {
 	int lkc_decode(int);
 	int c;
-#if 0
-	u_char mask;
+//	u_char mask;
 
-	mask = vs_cpu->vc_intmsk;	/* save old state */
-	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
-#endif
+	
+//	mask = vsbus_setmask(0);	/* save old state */
 
 loop:
 	while ((dz->csr & 0x80) == 0)
@@ -303,10 +288,8 @@ loop:
 	if (c < 1)
 		goto loop;
 
-#if 0
-	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
-	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
-#endif
+//	vsbus_clrintr(0x80); /* XXX */
+//	vsbus_setmask(mask);
 
 	return (c);
 }
