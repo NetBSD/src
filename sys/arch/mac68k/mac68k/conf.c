@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 1997/03/24 18:20:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,22 +46,23 @@
 #include <sys/vnode.h>
 #include <dev/cons.h>
 
-bdev_decl(sw);
-#include "st.h"
-bdev_decl(st);
-#include "sd.h"
-bdev_decl(sd);
-#include "cd.h"
-bdev_decl(cd);
-#include "ch.h"
-bdev_decl(ch);
-#include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
+#include "cd.h"
+#include "ch.h"
 #include "md.h"
-bdev_decl(md);
+#include "sd.h"
+#include "st.h"
+#include "vnd.h"
 /* No cdev for md */
+
+bdev_decl(ccd);
+bdev_decl(cd);
+bdev_decl(ch);
+bdev_decl(md);
+bdev_decl(sd);
+bdev_decl(st);
+bdev_decl(sw);
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -88,52 +89,55 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+#define NADB 1 /* #include "adb.h" */
+#include "asc.h"
+#include "bpfilter.h"
+#include "ch.h"
+#include "grf.h"
+#include "ipfilter.h"
+#include "ite.h"
+#include "pty.h"
+#include "se.h"
+#include "ss.h"
+#include "tun.h"
+#include "uk.h"
+#include "zsc.h"
+#include "zstty.h"
+
+cdev_decl(adb);
+cdev_decl(asc);
+cdev_decl(bpf);
+cdev_decl(ccd);
+cdev_decl(ch);
 cdev_decl(cn);
 cdev_decl(ctty);
-
-#include "ite.h"
+cdev_decl(fd);
+cdev_decl(grf);
+cdev_decl(ipl);
 cdev_decl(ite);
+cdev_decl(log);
+cdev_decl(md);
 #define mmread	mmrw
 #define mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(sw);
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
+#define	ptctty		ptytty
 cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(st);
+#define	ptsioctl	ptyioctl
+#define	ptstty		ptytty
+cdev_decl(pts);
 cdev_decl(sd);
-#include "ss.h"
+cdev_decl(se);
 cdev_decl(ss);
-#include "uk.h"
-cdev_decl(uk);
-cdev_decl(fd);
-#include "grf.h"
-cdev_decl(grf);
-#define NADB 1 /* #include "adb.h" */
-cdev_decl(adb);
-#include "zsc.h"
-cdev_decl(zsc);
-#include "zstty.h"
-cdev_decl(zs);
-#include "ch.h"
-cdev_decl(ch);
-cdev_decl(vnd);
-cdev_decl(ccd);
-cdev_decl(md);
-#include "bpfilter.h"
-cdev_decl(bpf);
-#include "tun.h"
+cdev_decl(st);
+cdev_decl(sw);
 cdev_decl(tun);
+cdev_decl(uk);
+cdev_decl(vnd);
+cdev_decl(zs);
+cdev_decl(zsc);
+
 dev_decl(filedesc,open);
-#include "ipfilter.h"
-cdev_decl(ipl);
-#include "asc.h"
-cdev_decl(asc);
 
 struct cdevsw	cdevsw[] =
 {
@@ -174,6 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 	cdev_audio_init(NASC,asc),	/* 36: ASC audio device */
+	cdev_se_init(NSE, se),		/* 37: SCSI ethernet */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
