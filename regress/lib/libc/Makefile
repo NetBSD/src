@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2001/02/18 21:57:16 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.19 2001/05/22 18:57:13 christos Exp $
 
 SUBDIR+= _setjmp db div gen hsearch md5sha popen regex rpc setjmp sigsetjmp \
-	time
+	string time
 .if (${MACHINE_ARCH} != "arm32" && ${MACHINE_ARCH} != "vax")
 SUBDIR+= ieeefp
 .endif
