@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24 2000/09/16 14:07:58 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.25 2000/09/22 21:01:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ extern int bus_type_asi[];
 extern int bus_stream_asi[];
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
+
+#define __BUS_SPACE_HAS_STREAM_METHODS	1
 
 /*
  * Bus address and size types
