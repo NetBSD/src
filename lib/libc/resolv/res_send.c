@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.5 2004/05/21 15:35:05 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.6 2004/05/21 16:03:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.5.2.2.4.3 2004/04/12 06:54:59 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.5 2004/05/21 15:35:05 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.6 2004/05/21 16:03:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,11 +110,13 @@ __RCSID("$NetBSD: res_send.c,v 1.5 2004/05/21 15:35:05 christos Exp $");
 
 #include "port_after.h"
 
+#if 0
 #ifdef __weak_alias
 __weak_alias(res_ourserver_p,__res_ourserver_p)
 __weak_alias(res_nameinquery,__res_nameinquery)
 __weak_alias(res_queriesmatch,__res_queriesmatch)
 __weak_alias(res_nsend,__res_nsend)
+#endif
 #endif
 
 /* Options.  Leave them on. */

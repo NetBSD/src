@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.4 2004/05/21 15:35:05 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.5 2004/05/21 16:03:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -75,7 +75,7 @@
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_comp.c,v 1.1.2.1.4.1 2004/03/09 08:33:54 marka Exp";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.4 2004/05/21 15:35:05 christos Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.5 2004/05/21 16:03:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,6 +93,7 @@ __RCSID("$NetBSD: res_comp.c,v 1.4 2004/05/21 15:35:05 christos Exp $");
 #include <unistd.h>
 #include "port_after.h"
 
+#if 0
 #ifdef __weak_alias
 __weak_alias(dn_expand,_dn_expand)
 __weak_alias(dn_comp,__dn_comp)
@@ -101,6 +102,7 @@ __weak_alias(res_hnok,__res_hnok)
 __weak_alias(res_ownok,__res_ownok)
 __weak_alias(res_mailok,__res_mailok)
 __weak_alias(res_dnok,__res_dnok)
+#endif
 #endif
 
 /*
