@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.15 1995/03/26 20:30:12 jtc Exp $	*/
+/*	$NetBSD: if.h,v 1.16 1995/04/07 22:20:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -115,13 +115,13 @@ struct ifnet {
 	int	(*if_output)		/* output routine (enqueue) */
 		__P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *));
-	int	(*if_start)		/* initiate output routine */
+	void	(*if_start)		/* initiate output routine */
 		__P((struct ifnet *));
 	int	(*if_ioctl)		/* ioctl routine */
 		__P((struct ifnet *, u_long, caddr_t));
 	int	(*if_reset)		/* XXX bus reset routine */
 		__P((int));
-	int	(*if_watchdog)		/* timer routine */
+	void	(*if_watchdog)		/* timer routine */
 		__P((int));
 	struct	ifqueue {
 		struct	mbuf *ifq_head;
