@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.3 2002/10/06 14:28:55 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.4 2002/10/06 20:38:38 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
+#include <machine/mpbiosreg.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
@@ -114,12 +115,12 @@ lapic_enable()
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
-extern struct mp_intr_map *lapic_ints[]; /* XXX header file? */
-
 void
 lapic_set_lvt ()
 {
 	struct cpu_info *ci = curcpu();
+	int i;
+	struct mp_intr_map *mpi;
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
@@ -129,11 +130,22 @@ lapic_set_lvt ()
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
-	if (ci->ci_lapic_ints[0])
-		i82489_writereg(LAPIC_LVINT0, ci->ci_lapic_ints[0]->redir);
-	if (ci->ci_lapic_ints[1])
-		i82489_writereg(LAPIC_LVINT1, ci->ci_lapic_ints[1]->redir);
-
+	for (i = 0; i < mp_nintr; i++) {
+		mpi = &mp_intrs[i];
+		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS
+					    || mpi->cpu_id == ci->ci_cpuid)) {
+#ifdef DIAGNOSTIC
+			if (mpi->ioapic_pin > 1)
+				panic("lapic_set_lvt: bad pin value %d",
+				    mpi->ioapic_pin);
+#endif
+			if (mpi->ioapic_pin == 0)
+				i82489_writereg(LAPIC_LVINT0, mpi->redir);
+			else
+				i82489_writereg(LAPIC_LVINT1, mpi->redir);
+		}
+	}
+			
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,

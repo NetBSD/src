@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.4 2002/10/06 14:28:55 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5 2002/10/06 20:38:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -454,6 +454,7 @@ static struct mpbios_baseentry mp_conf[] =
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
+int mp_nintr;
 
 int mp_isa_bus = -1;		/* XXX */
 int mp_eisa_bus = -1;		/* XXX */
@@ -599,16 +600,8 @@ mpbios_scan(self)
 			 * apics of this type".
 			 */
 			if ((type == MPS_MCT_IOINT) ||
-			    (type == MPS_MCT_LINT)) {
-				const struct mpbios_int *ie =
-				    (const struct mpbios_int *)position;
-				if (ie->dst_apic_id != MPS_ALL_APICS)
-					intr_cnt++;
-				else if (type == MPS_MCT_IOINT)
-					intr_cnt += mp_conf[MPS_MCT_IOAPIC].count;
-				else
-					intr_cnt += mp_conf[MPS_MCT_CPU].count;
-			}
+			    (type == MPS_MCT_LINT))
+				intr_cnt++;
 			position += mp_conf[type].length;
 		}
 
@@ -617,6 +610,7 @@ mpbios_scan(self)
 		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
 		    M_DEVBUF, M_NOWAIT);
+		mp_nintr = intr_cnt;
 
 		/* re-walk the table, recording info of interest */
 		position = (const u_int8_t *) mp_cth + sizeof(*mp_cth);
@@ -999,9 +993,6 @@ mpbios_int(ent, enttype, mpi)
 	u_int32_t type = entry->int_type;
 	u_int32_t flags = entry->int_flags;
 
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
 	switch (type) {
 	case MPS_INTTYPE_INT:
 		mpb = &(mp_busses[bus]);
@@ -1062,10 +1053,7 @@ mpbios_int(ent, enttype, mpi)
 		else {
 			mpi->ioapic = NULL;
 			mpi->ioapic_pin = pin;
-			for (CPU_INFO_FOREACH(cii, ci)) {
-				if (id == MPS_ALL_APICS || ci->ci_cpuid == id)
-					ci->ci_lapic_ints[pin] = mpi;
-			}
+			mpi->cpu_id = id;
 		}
 	}
 	if (mp_verbose) {
