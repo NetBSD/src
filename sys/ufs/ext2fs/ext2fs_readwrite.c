@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.19 2001/10/26 05:56:08 lukem Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.20 2001/11/08 02:39:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.20 2001/11/08 02:39:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.19 2001/10/26 05:56:10 lukem Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.20 2001/11/08 02:39:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_subr.c	8.4 (Berkeley) 5/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.20 2001/11/08 02:39:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

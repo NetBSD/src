@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.57 2001/10/26 05:56:10 lukem Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.58 2001/11/08 02:39:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.58 2001/11/08 02:39:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

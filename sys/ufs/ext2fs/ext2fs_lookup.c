@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.17 2001/10/26 05:56:08 lukem Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.18 2001/11/08 02:39:07 lukem Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -50,6 +50,9 @@
  *
  *	@(#)ufs_lookup.c	8.6 (Berkeley) 4/1/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.18 2001/11/08 02:39:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

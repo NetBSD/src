@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.54 2001/11/06 07:11:29 simonb Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.55 2001/11/08 02:39:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_inode.c	8.9 (Berkeley) 5/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.55 2001/11/08 02:39:11 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.68 2001/09/15 20:36:43 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.69 2001/11/08 02:39:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_vfsops.c	8.20 (Berkeley) 6/10/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.69 2001/11/08 02:39:13 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

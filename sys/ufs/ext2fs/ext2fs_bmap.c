@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.7 2001/11/06 07:11:29 simonb Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.8 2001/11/08 02:39:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -41,6 +41,9 @@
  *	@(#)ufs_bmap.c	8.6 (Berkeley) 1/21/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.8 2001/11/08 02:39:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
