@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.60 1998/11/12 22:39:57 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.61 1999/04/21 22:14:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -377,7 +377,9 @@ vndstrategy(bp)
 	flags = bp->b_flags | B_CALL;
 
 	/* Allocate a header for this transfer and link it to the buffer */
+	s = splbio();
 	vnx = VND_GETXFER(vnd);
+	splx(s);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -429,7 +431,9 @@ vndstrategy(bp)
 			    vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
+		s = splbio();
 		nbp = VND_GETBUF(vnd);
+		splx(s);
 		nbp->vb_buf.b_flags = flags;
 		nbp->vb_buf.b_bcount = sz;
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
