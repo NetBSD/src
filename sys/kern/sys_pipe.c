@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.28 2002/11/01 21:34:30 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.29 2002/11/01 21:46:51 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.28 2002/11/01 21:34:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.29 2002/11/01 21:46:51 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1882,6 +1882,7 @@ filt_pipedetach(struct knote *kn)
 		break;
 	default:
 		/* nothing to do */
+		break;
 	}
 
 #ifdef DIAGNOSTIC
