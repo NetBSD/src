@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 1996/04/07 06:02:20 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.53 1996/04/09 15:24:00 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1041,12 +1041,15 @@ romprop(rp, cp, node)
 
 	}
 #if defined(SUN4M)
-	len = getprop(node, "ranges", (void *)&rp->ra_range,
-		      sizeof rp->ra_range);
-	if (len == -1)
-		len = 0;
-	rp->ra_nrange = len / sizeof(struct rom_range);
+	if (CPU_ISSUN4M) {
+		len = getprop(node, "ranges", (void *)&rp->ra_range,
+			      sizeof rp->ra_range);
+		if (len == -1)
+			len = 0;
+		rp->ra_nrange = len / sizeof(struct rom_range);
+	} else
 #endif
+		rp->ra_nrange = 0;
 
 	return (1);
 }
@@ -1262,9 +1265,8 @@ mainbus_attach(parent, dev, aux)
 				audio = 1;
 			if (strcmp(cp, "zs") == 0)
 				autoconf_nzs++;
-if (/*audio &&*/ autoconf_nzs >= 2) printf("nzs: splxing\n");
-			if (/*audio &&*/ autoconf_nzs >= 2)
-				(void) splx(11 << 8);	/* XXX */
+			if (/*audio &&*/ autoconf_nzs >= 2)	/*XXX*/
+				(void) splx(11 << 8);		/*XXX*/
 #endif
 			oca.ca_bustype = BUS_MAIN;
 			(void) config_found(dev, (void *)&oca, mbprint);
