@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.26 2003/08/07 16:26:42 agc Exp $ */
+/*	$NetBSD: ms.c,v 1.27 2003/09/21 19:16:49 jdolecek Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26 2003/08/07 16:26:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.27 2003/09/21 19:16:49 jdolecek Exp $");
 
 /*
  * Mouse driver.
@@ -418,6 +418,11 @@ msioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
 		return(0);
 	case FIOASYNC:
 		ms->ms_events.ev_async = *(int *)data != 0;
+		return(0);
+	case FIOSETOWN:
+		if (-*(int *)data != ms->ms_events.ev_io->p_pgid
+		    && *(int *)data != ms->ms_events.ev_io->p_pid)
+			return(EPERM);
 		return(0);
 	case TIOCSPGRP:
 		if (*(int *)data != ms->ms_events.ev_io->p_pgid)

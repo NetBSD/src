@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.45 2003/08/07 16:26:42 agc Exp $ */
+/*	$NetBSD: kbd.c,v 1.46 2003/09/21 19:16:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.45 2003/08/07 16:26:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.46 2003/09/21 19:16:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,6 +489,12 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
 
 		case FIOASYNC:
 			k->k_events.ev_async = *(int *)data != 0;
+			return 0;
+
+		case FIOSETOWN:
+			if (-*(int *)data != k->k_events.ev_io->p_pgid
+			    && *(int *)data != k->k_events.ev_io->p_pid)
+				return EPERM;
 			return 0;
 
 		case TIOCSPGRP:

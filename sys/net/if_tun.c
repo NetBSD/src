@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.63 2003/06/29 22:31:51 fvdl Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.64 2003/09/21 19:17:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.63 2003/06/29 22:31:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.64 2003/09/21 19:17:14 jdolecek Exp $");
 
 #include "tun.h"
 
@@ -177,7 +177,6 @@ tun_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
 	struct tun_softc *tp = (void *)ifp;
-	struct proc *p;
 
 	simple_lock(&tun_softc_lock);
 	simple_lock(&tp->tun_lock);
@@ -189,12 +188,9 @@ tun_clone_destroy(ifp)
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
 	}
-	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
-		if (tp->tun_pgrp > 0)
-			gsignal(tp->tun_pgrp, SIGIO);
-		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
-			psignal(p, SIGIO);
-	}
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		fownsignal(tp->tun_pgid, POLL_HUP, 0, NULL);
+
 	selwakeup(&tp->tun_rsel);
 
 #if NBPFILTER > 0
@@ -316,7 +312,7 @@ tunclose(dev, flag, mode, p)
 		}
 		splx(s);
 	}
-	tp->tun_pgrp = 0;
+	tp->tun_pgid = 0;
 	selnotify(&tp->tun_rsel, 0);
 		
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
@@ -435,7 +431,6 @@ tun_output(ifp, m0, dst, rt)
 	struct rtentry *rt;
 {
 	struct tun_softc *tp = ifp->if_softc;
-	struct proc	*p;
 #ifdef INET
 	int		s;
 	int		error;
@@ -519,12 +514,9 @@ tun_output(ifp, m0, dst, rt)
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
 	}
-	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
-		if (tp->tun_pgrp > 0)
-			gsignal(tp->tun_pgrp, SIGIO);
-		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
-			psignal(p, SIGIO);
-	}
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		fownsignal(tp->tun_pgid, POLL_IN, POLLIN|POLLRDNORM, NULL);
+
 	selnotify(&tp->tun_rsel, 0);
 	simple_unlock(&tp->tun_lock);
 	return (0);
@@ -543,8 +535,7 @@ tunioctl(dev, cmd, data, flag, p)
 {
 	int		s;
 	struct tun_softc *tp;
-	pid_t pgid;
-	int error;
+	int error=0;
 
 	tp = tun_find_unit(dev);
 
@@ -613,17 +604,13 @@ tunioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSPGRP:
-		pgid = *(int *)data;
-		if (pgid != 0) {
-			error = pgid_in_session(p, pgid);
-			if (error != 0)
-				return error;
-		}
-		tp->tun_pgrp = pgid;
+	case FIOSETOWN:
+		error = fsetown(p, &tp->tun_pgid, cmd, data);
 		break;
 
 	case TIOCGPGRP:
-		*(int *)data = tp->tun_pgrp;
+	case FIOGETOWN:
+		error = fgetown(p, tp->tun_pgid, cmd, data);
 		break;
 
 	default:
@@ -631,7 +618,7 @@ tunioctl(dev, cmd, data, flag, p)
 		return (ENOTTY);
 	}
 	simple_unlock(&tp->tun_lock);
-	return (0);
+	return (error);
 }
 
 /*
@@ -886,12 +873,10 @@ tunstart(ifp)
 			tp->tun_flags &= ~TUN_RWAIT;
 			wakeup((caddr_t)tp);
 		}
-		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgrp) {
-			if (tp->tun_pgrp > 0)
-				gsignal(tp->tun_pgrp, SIGIO);
-			else if ((p = pfind(-tp->tun_pgrp)) != NULL)
-				psignal(p, SIGIO);
-		}
+		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+			fownsignal(tp->tun_pgid, POLL_OUT, POLLOUT|POLLWRNORM,
+				NULL);
+	
 		selwakeup(&tp->tun_rsel);
 	}
 }

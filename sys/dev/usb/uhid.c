@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.59 2003/06/29 22:30:57 fvdl Exp $	*/
+/*	$NetBSD: uhid.c,v 1.60 2003/09/21 19:16:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59 2003/06/29 22:30:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.60 2003/09/21 19:16:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,6 +446,14 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (sc->sc_async == NULL)
 			return (EINVAL);
 		if (*(int *)addr != sc->sc_async->p_pgid)
+			return (EPERM);
+		break;
+
+	case FIOSETOWN:
+		if (sc->sc_async == NULL)
+			return (EINVAL);
+		if (-*(int *)addr != sc->sc_async->p_pgid
+		    && *(int *)addr != sc->sc_async->p_pid);
 			return (EPERM);
 		break;
 

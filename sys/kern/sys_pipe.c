@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.42 2003/09/14 23:47:09 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.43 2003/09/21 19:17:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.42 2003/09/14 23:47:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.43 2003/09/21 19:17:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,33 +403,26 @@ pipeselwakeup(selp, sigp, data, code)
 	void *data;
 	int code;
 {
-	struct proc *p;
-	pid_t pid;
-	ksiginfo_t ksi;
+	int band;
 
 	selnotify(&selp->pipe_sel, 0);
+
 	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
 		return;
 
-	pid = sigp->pipe_pgid;
-	if (pid == 0)
-		return;
-
-	(void)memset(&ksi, 0, sizeof(ksi));
-	ksi.ksi_signo = SIGIO;
-	switch (ksi.ksi_code = code) {
+	switch (code) {
 	case POLL_IN:
-		ksi.ksi_band = POLLIN|POLLRDNORM;
+		band = POLLIN|POLLRDNORM;
 		break;
 	case POLL_OUT:
-		ksi.ksi_band = POLLOUT|POLLWRNORM;
+		band = POLLOUT|POLLWRNORM;
 		break;
 	case POLL_HUP:
-		ksi.ksi_band = POLLHUP;
+		band = POLLHUP;
 		break;
 #if POLL_HUP != POLL_ERR
 	case POLL_ERR:
-		ksi.ksi_band = POLLERR;
+		band = POLLERR;
 		break;
 #endif
 	default:
@@ -438,10 +431,8 @@ pipeselwakeup(selp, sigp, data, code)
 #endif
 		break;
 	}
-	if (pid > 0)
-		kgsignal(pid, &ksi, data);
-	else if ((p = pfind(-pid)) != NULL)
-		kpsignal(p, &ksi, data);
+
+	fownsignal(sigp->pipe_pgid, code, band, selp);
 }
 
 /* ARGSUSED */
@@ -1123,8 +1114,6 @@ pipe_ioctl(fp, cmd, data, p)
 	struct proc *p;
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
-	pid_t pgid;
-	int error;
 
 	switch (cmd) {
 
@@ -1153,18 +1142,12 @@ pipe_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case TIOCSPGRP:
-		pgid = *(int *)data;
-		if (pgid != 0) {
-			error = pgid_in_session(p, pgid);
-			if (error)
-				return error;
-		}
-		pipe->pipe_pgid = pgid;
-		return (0);
+	case FIOSETOWN:
+		return fsetown(p, &pipe->pipe_pgid, cmd, data);
 
 	case TIOCGPGRP:
-		*(int *)data = pipe->pipe_pgid;
-		return (0);
+	case FIOGETOWN:
+		return fgetown(p, pipe->pipe_pgid, cmd, data);
 
 	}
 	return (EPASSTHROUGH);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.112 2003/09/13 08:32:13 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.113 2003/09/21 19:17:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.112 2003/09/13 08:32:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.113 2003/09/21 19:17:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,31 +352,12 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case F_GETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			*retval = ((struct socket *)fp->f_data)->so_pgid;
-			goto out;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, &tmp, p);
-		*retval = -tmp;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, retval, p);
 		break;
 
 	case F_SETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid =
-			    (long)SCARG(uap, arg);
-			goto out;
-		}
-		if ((long)SCARG(uap, arg) <= 0) {
-			tmp = (-(long)SCARG(uap, arg));
-		} else {
-			struct proc *p1 = pfind((long)SCARG(uap, arg));
-			if (p1 == 0) {
-				error = ESRCH;
-				goto out;
-			}
-			tmp = (long)p1->p_pgrp->pg_id;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSPGRP, &tmp, p);
+		tmp = (int)(intptr_t) SCARG(uap, arg);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp, p);
 		break;
 
 	case F_SETLKW:
@@ -1550,3 +1531,72 @@ restart:
 	return (0);
 }
 #undef CHECK_UPTO
+
+/*
+ * Sets descriptor owner. If the owner is a process, 'pgid'
+ * is set to positive value, process ID. If the owner is process group,
+ * 'pgid' is set to -pg_id.
+ */
+int
+fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
+{
+	int id = *(int *)data;
+	int error;
+
+	switch (cmd) {
+	case TIOCSPGRP:
+		if (id < 0)
+			return (EINVAL);
+		id = -id;
+		break;
+	default:
+		break;
+	}
+
+	if (id > 0 && !pfind(id))
+		return (ESRCH);
+	else if (id < 0 && (error = pgid_in_session(p, -id)))
+		return (error);
+
+	*pgid = id;
+	return (0);
+}
+
+/*
+ * Return descriptor owner information. If the value is positive,
+ * it's process ID. If it's negative, it's process group ID and
+ * needs the sign removed before use.
+ */
+int
+fgetown(struct proc *p, pid_t pgid, int cmd, void *data)
+{
+	switch (cmd) {
+	case TIOCGPGRP:
+		*(int *)data = -pgid;
+		break;
+	default:
+		*(int *)data = pgid;
+		break;
+	}
+	return (0);
+}
+
+/*
+ * Send signal to descriptor owner, either process or process group.
+ */
+void
+fownsignal(pid_t pgid, int code, int band, void *fdescdata)
+{
+	struct proc *p1;
+	ksiginfo_t ksi; 
+
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGIO;
+	ksi.ksi_code = code;
+	ksi.ksi_band = band;
+
+	if (pgid > 0 && (p1 = pfind(pgid)))
+		kpsignal(p1, &ksi, fdescdata);
+	else if (pgid < 0)
+		kgsignal(-pgid, &ksi, fdescdata);
+}

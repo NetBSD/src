@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.78 2003/09/16 15:55:26 drochner Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.79 2003/09/21 19:17:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.78 2003/09/16 15:55:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.79 2003/09/21 19:17:05 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -519,7 +519,6 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	int		error;
 	u_int		size;
 	caddr_t		data, memp;
-	int		tmp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
 
@@ -594,51 +593,19 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		if ((tmp = *(int *)data) != 0)
+		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, p);
 		break;
 
 	case FIOASYNC:
-		if ((tmp = *(int *)data) != 0)
+		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
-		break;
-
-	case FIOSETOWN:
-		tmp = *(int *)data;
-		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid = tmp;
-			error = 0;
-			break;
-		}
-		if (tmp <= 0) {
-			tmp = -tmp;
-		} else {
-			struct proc *p1 = pfind(tmp);
-			if (p1 == 0) {
-				error = ESRCH;
-				break;
-			}
-			tmp = p1->p_pgrp->pg_id;
-		}
-		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCSPGRP, (caddr_t)&tmp, p);
-		break;
-
-	case FIOGETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			error = 0;
-			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
-			break;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
-		if (error == 0)
-			*(int *)data = -*(int *)data;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, p);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.31 2003/09/07 09:31:47 jdolecek Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.32 2003/09/21 19:17:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.31 2003/09/07 09:31:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.32 2003/09/21 19:17:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.31 2003/09/07 09:31:47 jdolecek Exp $
 struct logsoftc {
 	int	sc_state;		/* see above for possibilities */
 	struct	selinfo sc_selp;	/* process waiting on select call */
-	int	sc_pgid;		/* process/group for async I/O */
+	pid_t	sc_pgid;		/* process/group for async I/O */
 } logsoftc;
 
 int	log_open;			/* also used in log() */
@@ -277,18 +277,11 @@ logkqfilter(dev_t dev, struct knote *kn)
 void
 logwakeup()
 {
-	struct proc *p;
-
 	if (!log_open)
 		return;
 	selnotify(&logsoftc.sc_selp, 0);
-	if (logsoftc.sc_state & LOG_ASYNC) {
-		if (logsoftc.sc_pgid < 0)
-			gsignal(-logsoftc.sc_pgid, SIGIO); 
-		else if (logsoftc.sc_pgid > 0 &&
-		    (p = pfind(logsoftc.sc_pgid)) != NULL)
-			psignal(p, SIGIO);
-	}
+	if (logsoftc.sc_state & LOG_ASYNC)
+		fownsignal(logsoftc.sc_pgid, 0, 0, NULL);
 	if (logsoftc.sc_state & LOG_RDWAIT) {
 		wakeup((caddr_t)msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
@@ -306,8 +299,6 @@ logioctl(dev, com, data, flag, p)
 {
 	long l;
 	int s;
-	pid_t pgid;
-	int error;
 
 	switch (com) {
 
@@ -332,18 +323,12 @@ logioctl(dev, com, data, flag, p)
 		break;
 
 	case TIOCSPGRP:
-		pgid = *(int *)data;
-		if (pgid != 0) {
-			error = pgid_in_session(p, pgid);
-			if (error)
-				return error;
-		}
-		logsoftc.sc_pgid = -pgid;
-		break;
+	case FIOSETOWN:
+		return fsetown(p, &logsoftc.sc_pgid, com, data);
 
 	case TIOCGPGRP:
-		*(int *)data = -logsoftc.sc_pgid;
-		break;
+	case FIOGETOWN:
+		return fgetown(p, logsoftc.sc_pgid, com, data);
 
 	default:
 		return (EPASSTHROUGH);
