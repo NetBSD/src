@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.6.7 2002/01/16 10:01:37 he Exp $	*/
+/*	$NetBSD: main.c,v 1.25.6.8 2002/03/28 22:40:03 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25.6.7 2002/01/16 10:01:37 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.6.8 2002/03/28 22:40:03 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,14 +99,15 @@ main(argc, argv)
 	ino_t ino;
 	int dirty; 
 	struct dinode *dp;
-	struct	fstab *dt;
+	struct fstab *dt;
+	struct statfs *mntinfo, fsbuf;
 	char *map;
 	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow, date;
-	int dirlist;
-	char *toplevel;
+	int dirc;
+	char *mountpoint;
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
 
@@ -248,38 +249,46 @@ main(argc, argv)
 		exit(X_ABORT);
 	}
 
+
 	/*
 	 *	determine if disk is a subdirectory, and setup appropriately
 	 */
-	dirlist = 0;
-	toplevel = NULL;
+	getfstab();		/* /etc/fstab snarfed */
+	disk = NULL;
+	mountpoint = NULL;
+	dirc = 0;
 	for (i = 0; i < argc; i++) {
 		struct stat sb;
-		struct statfs fsbuf;
 
-		if (lstat(argv[i], &sb) == -1) {
-			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
-			exit(X_ABORT);
-		}
-		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
+		if (lstat(argv[i], &sb) == -1)
+			quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
+		if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
+			disk = argv[i];
+ multicheck:
+			if (dirc != 0)
+				quit(
+				    "Can't dump a mountpoint and a filelist\n");
 			break;
-		if (statfs(argv[i], &fsbuf) == -1) {
-			msg("Cannot statfs %s: %s\n", argv[i], strerror(errno));
-			exit(X_ABORT);
 		}
-		if (strcmp(argv[i], fsbuf.f_mntonname) == 0) {
-			if (dirlist != 0) {
-				msg("Can't dump a mountpoint and a filelist\n");
+		if ((dt = fstabsearch(argv[i])) != NULL) {
+			disk = dt->fs_spec;
+			if ((mountpoint = strdup(dt->fs_file)) == NULL) {
+				msg("Cannot malloc mountpoint\n");
 				exit(X_ABORT);
 			}
-			break;		/* exit if sole mountpoint */
+			goto multicheck;
 		}
-		if (!disk) {
-			if ((toplevel = strdup(fsbuf.f_mntonname)) == NULL) {
-				msg("Cannot malloc diskname\n");
+		if (statfs(argv[i], &fsbuf) == -1)
+			quit("Cannot statfs %s: %s\n", argv[i],
+			    strerror(errno));
+		disk = fsbuf.f_mntfromname;
+		if (strcmp(argv[i], fsbuf.f_mntonname) == 0)
+			goto multicheck;
+		if (mountpoint == NULL) {
+			if ((mountpoint = strdup(fsbuf.f_mntonname)) == NULL) {
+				msg("Cannot malloc mountpoint\n");
 				exit(X_ABORT);
 			}
-			disk = toplevel;
 			if (uflag) {
 				msg("Ignoring u flag for subdir dump\n");
 				uflag = 0;
@@ -288,18 +297,20 @@ main(argc, argv)
 				msg("Subdir dump is done at level 0\n");
 				level = '0';
 			}
-			msg("Dumping sub files/directories from %s\n", disk);
+			msg("Dumping sub files/directories from %s\n",
+			    mountpoint);
 		} else {
-			if (strcmp(disk, fsbuf.f_mntonname) != 0) {
-				msg("%s is not on %s\n", argv[i], disk);
-				exit(X_ABORT);
-			}
+			if (strcmp(mountpoint, fsbuf.f_mntonname) != 0)
+				quit("%s is not on %s\n", argv[i], mountpoint);
 		}
 		msg("Dumping file/directory %s\n", argv[i]);
-		dirlist++;
+		dirc++;
 	}
-	if (dirlist == 0) {
-		disk = *argv++;
+	if (mountpoint)
+		free(mountpoint);
+
+	if (dirc == 0) {
+		argv++;
 		if (argc != 1) {
 			(void)fprintf(stderr, "Excess arguments to dump:");
 			while (--argc)
@@ -365,28 +376,32 @@ main(argc, argv)
 		signal(SIGINT, SIG_IGN);
 
 	set_operators();	/* /etc/group snarfed */
-	getfstab();		/* /etc/fstab snarfed */
 
 	/*
-	 *	disk can be either the full special file name,
-	 *	the suffix of the special file name,
-	 *	the special name missing the leading '/',
-	 *	the file system name with or without the leading '/'.
+	 *	disk can be either the full special file name, or
+	 *	the file system name.
 	 */
-	dt = fstabsearch(disk);
-	if (dt != NULL) {
+	mountpoint = NULL;
+	if ((dt = fstabsearch(disk)) != NULL) {
 		disk = rawname(dt->fs_spec);
-		(void)strncpy(spcl.c_dev, dt->fs_spec, NAMELEN);
-		if (dirlist != 0)
+		mountpoint = dt->fs_file;
+		msg("Found %s on %s in %s\n", disk, mountpoint, _PATH_FSTAB);
+	} else if ((mntinfo = mntinfosearch(disk)) != NULL) {
+		disk = rawname(mntinfo->f_mntfromname);
+		mountpoint = mntinfo->f_mntonname;
+		msg("Found %s on %s in mount table\n", disk, mountpoint);
+	}
+	if (mountpoint != NULL) {
+		if (dirc != 0)
 			(void)snprintf(spcl.c_filesys, NAMELEN,
-			    "a subset of %s", dt->fs_file);
+			    "a subset of %s", mountpoint);
 		else
-			(void)strncpy(spcl.c_filesys, dt->fs_file, NAMELEN);
+			(void)strncpy(spcl.c_filesys, mountpoint, NAMELEN);
 	} else {
-		(void)strncpy(spcl.c_dev, disk, NAMELEN);
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
 		    NAMELEN);
 	}
+	(void)strncpy(spcl.c_dev, disk, NAMELEN);
 	(void)strncpy(spcl.c_label, labelstr, sizeof(spcl.c_label) - 1);
 	(void)gethostname(spcl.c_host, NAMELEN);
 	spcl.c_host[sizeof(spcl.c_host) - 1] = '\0';
@@ -413,7 +428,7 @@ main(argc, argv)
  	msg("Date of last level %c dump: %s", lastlevel,
 		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&date));
 	msg("Dumping ");
-	if (dt != NULL && dirlist != 0)
+	if (dirc != 0)
 		msgtail("a subset of ");
 	msgtail("%s (%s) ", disk, spcl.c_filesys);
 	if (host)
@@ -444,8 +459,8 @@ main(argc, argv)
 	(void)signal(SIGINFO, statussig);
 
 	msg("mapping (Pass I) [regular files]\n");
-	anydirskipped = mapfiles(maxino, &tapesize, toplevel,
-	    (dirlist ? argv : NULL));
+	anydirskipped = mapfiles(maxino, &tapesize, mountpoint,
+	    (dirc ? argv : NULL));
 
 	msg("mapping (Pass II) [directories]\n");
 	while (anydirskipped) {
