@@ -1,4 +1,4 @@
-.\"	$NetBSD: udp.4,v 1.5 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: udp.4,v 1.6 2000/05/22 02:01:34 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,8 @@
 .Fd #include <netinet/in.h>
 .Ft int
 .Fn socket AF_INET SOCK_DGRAM 0
+.Ft int
+.Fn socket AF_INET6 SOCK_DGRAM 0
 .Sh DESCRIPTION
 .Tn UDP
 is a simple, unreliable datagram protocol which is used
@@ -101,7 +103,9 @@ Options at the
 transport level may be used with
 .Tn UDP ;
 see
-.Xr ip 4 .
+.Xr ip 4
+or
+.Xr ip6 4 .
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
@@ -131,7 +135,9 @@ for which no network interface exists.
 .Xr socket 2 ,
 .Xr intro 4 ,
 .Xr inet 4 ,
-.Xr ip 4
+.Xr inet6 4 ,
+.Xr ip 4 ,
+.Xr ip6 4
 .Rs
 .%R RFC
 .%N 768
