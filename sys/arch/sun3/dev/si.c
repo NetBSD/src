@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.14 1995/01/24 05:55:50 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.15 1995/03/26 19:23:12 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -281,9 +281,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		xs->flags |= INUSE;
 	}
 
-	/* At autoconfig time, do NOT lower the spl! */
-	if ((flags & SCSI_POLL) == 0)
-		s = splbio();
+	s = splbio();
 
 	if ( flags & SCSI_RESET ) {
 		printf("flags & SCSIRESET.\n");
@@ -295,8 +293,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 	}
 
-	if ((flags & SCSI_POLL) == 0)
-		splx(s);
+	splx(s);
 
 	switch(r) {
 	case COMPLETE:
