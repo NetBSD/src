@@ -181,11 +181,9 @@
 #ifdef _KERNEL_OPT
 #include "opt_uvm.h"
 #endif
-#define	__HAVE_TOPDOWN_VM
-#ifdef USE_TOPDOWN_VM
+#define	__USE_TOPDOWN_VM
 #define	VM_DEFAULT_ADDRESS(da, sz) \
 	(((VM_MAXUSER_ADDRESS - MAXSSIZ) & SEGMENT_MASK) - round_page(sz))
-#endif
 
 #ifndef VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX		16
