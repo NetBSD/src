@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adosfs.h,v 1.1 1994/05/11 18:49:10 chopps Exp $
+ *	$Id: adosfs.h,v 1.2 1994/06/17 20:06:08 chopps Exp $
  */
 
 /*
@@ -72,11 +72,6 @@ struct anode {
 	int adprot;		/* (d/f) amigados protection bits */
 	int flags;		/* misc flags */ 
 	char *slinkto;		/* name of file or dir */
-#ifdef DIAGNOSTIC
-	struct proc *plock;	/* process holding the lock */
-	const char *whereat;	/* where lock was obtained */
-	int line;		/* line where lock obtained */
-#endif
 };
 #define VTOA(vp)	((struct anode *)(vp)->v_data)
 #define ATOV(ap)	((ap)->vp)
@@ -123,26 +118,12 @@ struct amount {
  */
 long adoswordn __P((struct buf *, int));
 long adoscksum __P((struct buf *, long));
-void aput __P((struct anode *));
-int aget __P((struct mount *, u_long, struct anode **));
 int adoshash __P((const char *, int, int));
 
-#ifdef DIAGNOSTIC
-int atrylock __P((struct anode *, const char *, int));
-void alock __P((struct anode *, const char *,int));
-#ifdef __GNUC__
-#define ALOCK(ap)	alock((ap), __FUNCTION__ ":" __FILE__, __LINE__)
-#define ATRYLOCK(ap)	atrylock((ap), __FUNCTION__ ":" __FILE__, __LINE__)
-#else /* !__GNUC__ */
-#define ALOCK(ap)	alock((ap), __FILE__, __LINE__)
-#define ATRYLOCK(ap)	atrylock((ap), __FILE__, __LINE__)
-#endif /* !__GNUC__ */
-#else /* !DIAGNOSTIC */
-int atrylock __P((struct anode *));
-void alock __P((struct anode *));
-#define ALOCK(ap)	alock((ap))
-#define ATRYLOCK(ap)	atrylock((ap))
-#endif /* !DIAGNOSTIC */
-void aunlock __P((struct anode *));
-#define AUNLOCK(ap) aunlock(ap)
+struct vnode *adosfs_ahashget __P((struct mount *, ino_t));
+void adosfs_ainshash __P((struct amount *, struct anode *));
+void adosfs_aremhash __P((struct anode *));
 
+int adosfs_lookup __P((struct vop_lookup_args *));
+
+int (**adosfs_vnodeop_p)();

@@ -27,11 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adlookup.c,v 1.4 1994/06/02 23:40:56 chopps Exp $
+ *	$Id: adlookup.c,v 1.5 1994/06/17 20:06:05 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
+#include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <adosfs/adosfs.h>
@@ -51,89 +52,82 @@
  *	LOOKUP always unlocks parent if last element. (not now!?!?)
  */
 int
-adosfs_lookup(pvp, ndp, p)
-	struct vnode *pvp;
-	struct nameidata *ndp;
-	struct proc *p;
+adosfs_lookup(sp)
+	struct vop_lookup_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	} */ *sp;
 {
-	int lockp, wantp, flag, error, last, cvalid, nocache, i;
-	struct amount *amp;
-	struct anode *pap, *ap;
-	struct buf *bp;
-	char *pelt;
+	int nameiop, last, lockp, wantp, flags, error, vpid, nocache, i;
+	struct componentname *cnp;
+	struct vnode **vpp;	/* place to store result */
+	struct anode *ap;	/* anode to find */
+	struct vnode *vdp;	/* vnode of search dir */
+	struct anode *adp;	/* anode of search dir */
+	struct ucred *ucp;	/* lookup credentials */
 	u_long bn, plen, hval;
+	char *pelt;
+
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("(adlookup ");
+	advopprint(sp);
 #endif
-	ndp->ni_dvp = pvp;
-	ndp->ni_vp = NULL;
-	pap = VTOA(pvp);
-	amp = pap->amp;
-	lockp = ndp->ni_nameiop & LOCKPARENT;
-	wantp = ndp->ni_nameiop & (LOCKPARENT | WANTPARENT);
-	flag = ndp->ni_nameiop & OPMASK;
-	pelt = ndp->ni_ptr;
-	plen = ndp->ni_namelen;
-	last = (*ndp->ni_next == 0);
+	cnp = sp->a_cnp;
+	vdp = sp->a_dvp;
+	adp = VTOA(vdp);
+	vpp = sp->a_vpp;
+	*vpp = NULL;
+	ucp = cnp->cn_cred;
+	nameiop = cnp->cn_nameiop;
+	flags = cnp->cn_flags;
+	last = flags & ISLASTCN;
+	lockp = flags & LOCKPARENT;
+	wantp = flags & (LOCKPARENT | WANTPARENT);
+	pelt = cnp->cn_nameptr;
+	plen = cnp->cn_namelen;
 	nocache = 0;
 	
 	/* 
 	 * check that:
 	 * pvp is a dir, and that the user has rights to access 
 	 */
-	if (pvp->v_type != VDIR) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("ENOTDIR)");
-#endif
-		return(ENOTDIR);
-	}
-	if (error = VOP_ACCESS(pvp, VEXEC, ndp->ni_cred, p)) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("[VOP_ACCESS] %d)", error);
-#endif
-		return(error);
-	}
+	if (vdp->v_type != VDIR)
+		return (ENOTDIR);
+	if (error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc))
+		return (error);
 	/*
 	 * cache lookup algorithm borrowed from ufs_lookup()
 	 * its not consistent with otherthings in this function..
 	 */
-	if (error = cache_lookup(ndp)) {
-		if (error == ENOENT) {
-#ifdef ADOSFS_DIAGNOSTIC
-			printf("[cache_lookup] %d)", error);
-#endif
-			return(error);
-		}
+	if (error = cache_lookup(vdp, vpp, cnp)) {
+		if (error == ENOENT)
+			return (error);
 
-		ap = VTOA(ndp->ni_vp);	
-		cvalid = ndp->ni_vp->v_id;
-
-		if (ap == pap) {
-			VREF(pvp);
+		vpid = (*vpp)->v_id;
+		if (vdp == *vpp) {
+			VREF(vdp);
 			error = 0;
-		} else if (ndp->ni_isdotdot) {
-			AUNLOCK(pap);	/* race */
-			error = vget(ATOV(ap), 1);
+		} else if (flags & ISDOTDOT) {
+			VOP_UNLOCK(vdp);	/* race */
+			error = vget(*vpp, 1);
 			if (error == 0 && lockp && last)
-				ALOCK(pap);
+				error = VOP_LOCK(vdp);
 		} else {
-			error = vget(ATOV(ap), 1);
-			if (lockp == 0 || error || last)
-				AUNLOCK(pap);
+			error = vget(*vpp, 1);
+			/* if (lockp == 0 || error || last) */
+			if (lockp == 0 || error || last == 0)
+				VOP_UNLOCK(vdp);
 		}
 		if (error == 0) {
-			if (cvalid == ATOV(ap)->v_id) {
-#ifdef ADOSFS_DIAGNOSTIC
-				printf("[cache_lookup] 0)\n");
-#endif
-				return(0);
-			}
-			aput(ap);
-			if (lockp && pap != ap && last)
-				AUNLOCK(pap);
+			if (vpid == vdp->v_id)
+				return (0);
+			vput(*vpp);
+			if (lockp && vdp != *vpp && last)
+				VOP_UNLOCK(vdp);
 		}
-		ALOCK(pap);
-		ndp->ni_vp = NULL;
+		*vpp = NULL;
+		if (error = VOP_LOCK(vdp))
+			return (error);
 	}
 
 	/*
@@ -141,32 +135,39 @@ adosfs_lookup(pvp, ndp, p)
 	 */
 	if (plen == 1 && pelt[0] == '.') {
 		/* see special cases in prologue. */
-		ap = pap;
+		*vpp = vdp;
 		goto found;
 	}
 	/*
 	 * fake a ".."
 	 */
-	if (ndp->ni_isdotdot) {
-		if (pap->type == AROOT) 
+	if (flags & ISDOTDOT) {
+		if (vdp->v_type == VDIR && (vdp->v_flag & VROOT)) 
 			panic("adosfs .. attemped through root");
 		/*
-		 * cannot get previous entry while later is locked
-		 * eg procA holds lock on previous and wats for pap
-		 * we wait for previous and hold lock on pap. deadlock.
-		 * becuase pap may have been acheived through symlink
+		 * cannot get `..' while `vdp' is locked
+		 * e.g. procA holds lock on `..' and waits for `vdp'
+		 * we wait for `..' and hold lock on `vdp'. deadlock.
+		 * becuase `vdp' may have been acheived through symlink
 		 * fancy detection code that decreases the race
 		 * window size is not reasonably possible.
+		 *
+		 * basically unlock the parent, try and lock the child (..)
+		 * if that fails relock the parent (ignoring error) and 
+		 * fail.  Otherwise we have the child (..) if this is the
+		 * last and the caller requested LOCKPARENT, attempt to
+		 * relock the parent.  If that fails unlock the child (..)
+		 * and fail. Otherwise we have succeded.
+		 * 
 		 */
-		AUNLOCK(pap); /* race */
-		error = aget(amp->mp, pap->pblock, &ap);
-		if (error || (last && lockp))
-			ALOCK(pap);
+		VOP_UNLOCK(vdp); /* race */
+		if (error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock, vpp))
+			VOP_LOCK(vdp);
+		else if (last && lockp && (error = VOP_LOCK(vdp)))
+			vput(*vpp);
 		if (error) {
-#ifdef ADOSFS_DIAGNOSTIC
-			printf("[..] %d)", error);
-#endif
-			return(error);
+			*vpp = NULL;
+			return (error);
 		}
 		goto found_lockdone;
 	}
@@ -176,102 +177,93 @@ adosfs_lookup(pvp, ndp, p)
 	 * then walk the chain. if chain has not been fully
 	 * walked before, track the count in `tabi'
 	 */
-	hval = adoshash(pelt, plen, pap->ntabent);
-	bn = pap->tab[hval];
-	i = min(pap->tabi[hval], 0);
+	hval = adoshash(pelt, plen, adp->ntabent);
+	bn = adp->tab[hval];
+	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if (error = aget(amp->mp, bn, &ap)) {
+		if (error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif
+			/* XXX check to unlock parent possibly? */
 			return(error);
 		}
+		ap = VTOA(*vpp);
 		if (i <= 0) {
-			if (--i < pap->tabi[hval])
-				pap->tabi[hval] = i;	
+			if (--i < adp->tabi[hval])
+				adp->tabi[hval] = i;	
 			/*
 			 * last header in chain lock count down by
 			 * negating it to positive
 			 */
 			if (ap->hashf == 0) {
 #ifdef DEBUG
-				if (i != pap->tabi[hval])
+				if (i != adp->tabi[hval])
 					panic("adlookup: wrong chain count");
 #endif
-				pap->tabi[hval] = -pap->tabi[hval];
+				adp->tabi[hval] = -adp->tabi[hval];
 			}
 		}
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("%s =? %s", pelt, ap->name);
-#endif
 		if (strmatch(pelt, plen, ap->name, strlen(ap->name)))
 			goto found;
 		bn = ap->hashf;
-		aput(ap);
+		vput(*vpp);
 	}
+	*vpp = NULL;
 	/*
 	 * not found
 	 */
-	if ((flag == CREATE || flag == RENAME) && last) {
-		if (error = VOP_ACCESS(pvp, VWRITE, ndp->ni_cred, p)) {
+	if ((nameiop == CREATE || nameiop == RENAME) && last) {
+		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[VOP_ACCESS] %d)", error);
 #endif
-			return(error);
+			return (error);
 		}
 		if (lockp == 0)
-			AUNLOCK(pap);
-		ndp->ni_nameiop |= SAVENAME;
+			VOP_UNLOCK(vdp);
+		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
 #endif
 		return(EJUSTRETURN);
 	}
-	if (ndp->ni_makeentry && flag != CREATE)
-		cache_enter(ndp);
+	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+		cache_enter(vdp, NULL, cnp);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("ENOENT)");
 #endif
 	return(ENOENT);
 
 found:
-	if (last && flag == DELETE)  {
-		if (error = VOP_ACCESS(pvp, VWRITE, ndp->ni_cred, p)) {
-			if (pap != ap)
-				aput(ap);
-#ifdef ADOSFS_DIAGNOSTIC
-			printf("[VOP_ACCESS] %d)", error);
-#endif
-			return(error);
+	if (nameiop == DELETE && last)  {
+		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
+			if (vdp != *vpp)
+				vput(*vpp);
+			*vpp = NULL;
+			return (error);
 		}
 		nocache = 1;
 	} 
-	if (last && flag == RENAME && wantp) {
-		if (pap == ap) {
-#ifdef ADOSFS_DIAGNOSTIC
-			printf("EISDIR)");
-#endif
+	if (nameiop == RENAME && wantp && last) {
+		if (vdp == *vpp)
 			return(EISDIR);
+		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
+			vput(*vpp);
+			*vpp = NULL;
+			return (error);
 		}
-		if (error = VOP_ACCESS(pvp, VWRITE, ndp->ni_cred, p)) {
-			aput(ap);
-#ifdef ADOSFS_DIAGNOSTIC
-			printf("[VOP_ACCESS] %d)", error);
-#endif
-			return(error);
-		}
-		ndp->ni_nameiop |= SAVENAME;
+		cnp->cn_flags |= SAVENAME;
 		nocache = 1;
 	}
-	if (ap == pap)
-		VREF(pvp);
+	if (vdp == *vpp)
+		VREF(vdp);
 	else if (lockp == 0 || last == 0)
-		AUNLOCK(pap);
+		VOP_UNLOCK(vdp);
 found_lockdone:
-	ndp->ni_vp = ATOV(ap);
+	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
+		cache_enter(vdp, *vpp, cnp);
 
-	if (ndp->ni_makeentry && nocache == 0)
-		cache_enter(ndp);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("0)\n");
 #endif
