@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.68 1999/07/27 15:41:49 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.69 1999/08/25 16:23:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.68 1999/07/27 15:41:49 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.69 1999/08/25 16:23:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,8 @@ __RCSID("$NetBSD: ftpd.c,v 1.68 1999/07/27 15:41:49 itojun Exp $");
 #include <skey.h>
 #endif
 #ifdef KERBEROS5
-#include <krb5.h>
+#include <kerberosIV/com_err.h>
+#include <krb5/krb5.h>
 #endif
 
 #include "extern.h"
