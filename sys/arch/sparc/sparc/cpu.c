@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 1996/04/04 23:06:32 abrown Exp $ */
+/*	$NetBSD: cpu.c,v 1.20 1996/04/07 04:48:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,7 +86,9 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_CPU
 };
 
+#if defined(SUN4C) || defined(SUN4M)
 static char *psrtoname __P((int, int, int, char *));
+#endif
 static char *fsrtoname __P((int, int, int, char *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
@@ -162,8 +164,11 @@ cpu_attach(parent, dev, aux)
 	register char *fpuname;
 	struct confargs *ca = aux;
 	struct fpstate fpstate;
-	char iubuf[40], fpbuf[40];
 	char *sep;
+	char fpbuf[40];
+#if defined(SUN4C) || defined(SUN4M)
+	char iubuf[40];
+#endif
 
 	/*
 	 * Get the FSR and clear any exceptions.  If we do not unload
@@ -189,6 +194,7 @@ cpu_attach(parent, dev, aux)
 	/* tell them what we have */
 	node = ca->ca_ra.ra_node;
 
+#ifdef SUN4
 	if (CPU_ISSUN4) {
 		clk = 0;
 		vactype = VAC_WRITEBACK;
@@ -226,8 +232,9 @@ cpu_attach(parent, dev, aux)
 		}
 		printf(": %s\n", cpu_model);
 	}
+#endif /* SUN4 */
 
-
+#if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4C || CPU_ISSUN4M) {
 		clk = getpropint(node, "clock-frequency", 0);
 		if (clk == 0) {
@@ -346,6 +353,7 @@ cpu_attach(parent, dev, aux)
 		 */
 		bug = (getpropint(node, "buserr-type", 0) == 1);
 	}
+#endif /* SUN4C || SUN4M */
 
 	if (bug) {
 		kvm_uncache((caddr_t)trapbase, 1);
@@ -413,6 +421,7 @@ struct info {
 
 #define	ANY	0xff	/* match any FPU version (or, later, IU version) */
 
+#if defined(SUN4C) || defined(SUN4M)
 static struct info iu_types[] = {
 	{ 1, 0x0, 0x0, ANY, "MB86900/1A or L64801" },
 	{ 1, 0x1, 0x0, ANY, "RT601 or L64811 v1" },
@@ -444,6 +453,7 @@ psrtoname(impl, vers, fver, buf)
 	sprintf(buf, "IU impl 0x%x vers 0x%x", impl, vers);
 	return (buf);
 }
+#endif /* SUN4C || SUN4M */
 
 /* NB: table order matters here; specific numbers must appear before ANY. */
 static struct info fpu_types[] = {
