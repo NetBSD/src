@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/19 21:50:46 scw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2001/07/20 17:08:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ ENTRY(__clone)
 	jeq	2f		/* Yup, bomb out */
 	movl	%d0,%a0
 	movl	%sp@(16),%a0@-	/* Push clone's `arg' on its new stack */
+	lea	%a0@(-12),%a0	/* Fake syscall args for the clone */
 	movl	%a0,%sp@-	/* Syscall arg: stack */
 	movl	%sp@(16),%sp@-	/* Syscall arg: flags */
 	clrl	%sp@-		/* Fake return address */
