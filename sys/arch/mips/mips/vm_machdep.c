@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.89 2002/11/09 19:35:52 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.90 2002/11/10 02:27:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2002/11/09 19:35:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2002/11/10 02:27:50 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,37 +286,36 @@ pagemove(from, to, size)
 
 /*
  * Map a user I/O request into kernel virtual address space.
- * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr, off;
-	paddr_t pa;
-	struct proc *p;
+	struct pmap *upmap;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa;	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	p = bp->b_proc;
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
-	off = (vaddr_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_prefer_wait(phys_map, len,
-			trunc_page((vaddr_t)bp->b_data));
-	bp->b_data = (caddr_t)(taddr + off);
-	len = atop(len);
-	while (len--) {
-		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
-		    &pa) == FALSE)
+
+	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	len = mips_round_page(off + len);
+	kva = uvm_km_valloc_prefer_wait(phys_map, len, uva);
+	bp->b_data = (caddr_t)(kva + off);
+
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	do {
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
-	}
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		uva += PAGE_SIZE;
+		kva += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	} while (len);
 	pmap_update(vm_map_pmap(phys_map));
 }
 
@@ -328,16 +327,18 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t addr, off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = trunc_page((vaddr_t)bp->b_data);
-	off = (vaddr_t)bp->b_data - addr;
-	len = round_page(off + len);
-	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	kva = mips_trunc_page(bp->b_data);
+	off = (vaddr_t)bp->b_data - kva;
+	len = mips_round_page(off + len);
+	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
