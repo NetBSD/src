@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.410 2002/02/24 01:44:00 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.411 2002/02/27 16:38:08 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.405 2002/02/24 01:42:36 kleink Exp 
+ *	NetBSD: pcidevs,v 1.406 2002/02/27 16:36:41 junyoung Exp 
  */
 
 /*
@@ -813,34 +813,25 @@
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
-#define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
-#define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
-#define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
-#define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
-#define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
-#define	PCI_PRODUCT_ATI_MACH64_GL	0x474c		/* Mach64 GL */
-#define	PCI_PRODUCT_ATI_RAGEXLAGP2X	0x474d		/* Rage XL AGP 2x */
-#define	PCI_PRODUCT_ATI_MACH64_GN	0x474e		/* Mach64 GN */
-#define	PCI_PRODUCT_ATI_MACH64_GO	0x474f		/* Mach64 GO */
-#define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
-#define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
-#define	PCI_PRODUCT_ATI_MACH64_GR	0x4752		/* Mach64 GR */
-#define	PCI_PRODUCT_ATI_MACH64_GS	0x4753		/* Mach64 GS */
-#define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
-#define	PCI_PRODUCT_ATI_MACH64_GU	0x4755		/* Mach64 GU */
-#define	PCI_PRODUCT_ATI_MACH64_GV	0x4756		/* Mach64 GV */
-#define	PCI_PRODUCT_ATI_MACH64_GW	0x4757		/* Mach64 GW */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_AGP1X	0x4744		/* 3D Rage Pro (AGP 1x) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI	0x4749		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_XL_AGP	0x474d		/* Rage XL (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI	0x4750		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_L	0x4751		/* 3D Rage Pro (limited 3D) */
+#define	PCI_PRODUCT_ATI_RAGE_II	0x4754		/* 3D Rage I/II */
+#define	PCI_PRODUCT_ATI_RAGE_IIP	0x4755		/* 3D Rage II+ */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_PCI	0x4756		/* 3D Rage IIC */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_B	0x4757		/* 3D Rage IIC (AGP) */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
-#define	PCI_PRODUCT_ATI_MACH64_GZ	0x475a		/* Mach64 GZ */
-#define	PCI_PRODUCT_ATI_MACH64_LB	0x4c42		/* Mach64 LB */
-#define	PCI_PRODUCT_ATI_MACH64_LD	0x4c44		/* Mach64 LD */
-#define	PCI_PRODUCT_ATI_MOBILITY_M3_PCI	0x4c45		/* Mobility M3 (PCI) */
-#define	PCI_PRODUCT_ATI_MOBILITY_M3_AGP	0x4c46		/* Mobility M3 (AGP) */
-#define	PCI_PRODUCT_ATI_MACH64_LG	0x4c47		/* Mach64 LG */
-#define	PCI_PRODUCT_ATI_MACH64_LI	0x4c49		/* Mach64 LI */
-#define	PCI_PRODUCT_ATI_MACH64_LM	0x4c4d		/* Mach64 LM */
-#define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
-#define	PCI_PRODUCT_ATI_MACH64_LR	0x4c52		/* Mach64 LR */
+#define	PCI_PRODUCT_ATI_RAGE_IIC_AGP_P	0x475a		/* 3D Rage IIC (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP	0x4c42		/* 3D Rage LT Pro (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI	0x4c45		/* Rage Mobility M3 */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP	0x4c46		/* Rage Mobility M3 (AGP) */
+#define	PCI_PRODUCT_ATI_RAGE_LT	0x4c47		/* 3D Rage LT */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI	0x4c49		/* 3D Rage LT Pro */
+#define	PCI_PRODUCT_ATI_RAGE_MOBILITY	0x4c4d		/* Rage Mobility */
+#define	PCI_PRODUCT_ATI_RAGE_LT_PRO	0x4c50		/* 3D Rage LT Pro */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
@@ -877,6 +868,9 @@
 #define	PCI_PRODUCT_ATI_RAGE24XA2X	0x534c		/* Rage 128 4x AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE24XA4X	0x534d		/* Rage 128 4x AGP 4x */
 #define	PCI_PRODUCT_ATI_RAGE24X	0x534e		/* Rage 128 4x */
+#define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
+#define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
+#define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */

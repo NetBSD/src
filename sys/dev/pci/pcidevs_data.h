@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.408 2002/02/24 01:44:01 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.409 2002/02/27 16:38:09 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.405 2002/02/24 01:42:36 kleink Exp 
+ *	NetBSD: pcidevs,v 1.406 2002/02/27 16:36:41 junyoung Exp 
  */
 
 /*
@@ -1084,106 +1084,64 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 CX",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 ET",
+	    "3D Rage Pro (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP1X,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 VT",
+	    "3D Rage Pro (AGP 1x)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GB,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GB",
+	    "3D Rage Pro",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GD",
+	    "Rage XL (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GI",
+	    "3D Rage Pro",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GL,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_L,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GL",
+	    "3D Rage Pro (limited 3D)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXLAGP2X,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_II,
 	    0,
 	    "ATI Technologies",
-	    "Rage XL AGP 2x",
+	    "3D Rage I/II",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GN,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIP,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GN",
+	    "3D Rage II+",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GO,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GO",
+	    "3D Rage IIC",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_B,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GQ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GR,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GR",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GS,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GS",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GU,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GU",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GV,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GV",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GW,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 GW",
+	    "3D Rage IIC (AGP)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
@@ -1192,64 +1150,52 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 GX",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GZ,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_P,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 GZ",
+	    "3D Rage IIC (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 LB",
+	    "3D Rage LT Pro (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 LD",
+	    "Rage Mobility M3",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3_PCI,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP,
 	    0,
 	    "ATI Technologies",
-	    "Mobility M3 (PCI)",
+	    "Rage Mobility M3 (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3_AGP,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT,
 	    0,
 	    "ATI Technologies",
-	    "Mobility M3 (AGP)",
+	    "3D Rage LT",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 LG",
+	    "3D Rage LT Pro",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOBILITY,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 LI",
+	    "Rage Mobility",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LM,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO,
 	    0,
 	    "ATI Technologies",
-	    "Mach64 LM",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 LP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LR,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 LR",
+	    "3D Rage LT Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
@@ -1466,6 +1412,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Rage 128 4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VTB,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VTB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT4,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 VT4",
 	},
 	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
