@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.24 2004/09/08 10:52:56 simonb Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.25 2004/09/28 11:51:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.24 2004/09/08 10:52:56 simonb Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.25 2004/09/28 11:51:42 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -585,9 +585,12 @@ nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	nss_method	 cb;
 	void		*cb_data;
 
+	/* retval may be NULL */
+	/* disp_tab may be NULL */
 	_DIAGASSERT(database != NULL);
 	_DIAGASSERT(method != NULL);
-	if (database == NULL || method == NULL)
+	_DIAGASSERT(defaults != NULL);
+	if (database == NULL || method == NULL || defaults == NULL)
 		return (NS_UNAVAIL);
 
 	/*
