@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.8 2002/08/26 21:06:01 christos Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.9 2002/11/13 13:37:22 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -96,23 +96,12 @@
  * by PowerPC GNU ld.so). If we use LINUX_SP_WRAP, we also need some extra
  * room for the sp_wrap_code.
  */
-#ifdef LINUX_SP_WRAP
 #define LINUX_ELF_AUX_ARGSIZ \
     ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) \
     + 16 + LINUX_SP_WRAP)
-#else
-#define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) + 16)
-#endif
 
 /* XXX should use ELFNAME2 */
 #define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs
-
-typedef struct {
-	Elf32_Sword a_type;
-	Elf32_Word  a_v;
-} LinuxAux32Info;
-#define LinuxAuxInfo LinuxAux32Info
 
 /* NetBSD/powerpc doesn't use e_syscall, so use the default. */
 #define LINUX_SYSCALL_FUNCTION syscall

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.7 2002/08/26 21:06:01 christos Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.8 2002/11/13 13:37:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.7 2002/08/26 21:06:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.8 2002/11/13 13:37:22 jdolecek Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -85,10 +85,10 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	void *argp;
 {
 	size_t len;
-	LinuxAuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
+	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 #ifdef LINUX_SP_WRAP
-	LinuxAuxInfo *prog_entry = NULL;
+	AuxInfo *prog_entry = NULL;
 	char	linux_sp_wrap_code[LINUX_SP_WRAP];
 	unsigned long*	cga;
 #endif
@@ -116,7 +116,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	    & ~LINUX_SHIFT);
 #endif 
 
-	memset(ai, 0, sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES);
+	memset(ai, 0, sizeof(AuxInfo) * LINUX_ELF_AUX_ENTRIES);
 
 	a = ai;
 
@@ -206,7 +206,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	a->a_v = 0;
 	a++;
 
-	len = (a - ai) * sizeof(LinuxAuxInfo);
+	len = (a - ai) * sizeof(AuxInfo);
 
 #ifdef LINUX_SP_WRAP
 	if (prog_entry != NULL) 
