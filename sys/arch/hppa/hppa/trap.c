@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 2004/03/26 14:11:01 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 2004/05/16 17:07:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2004/03/26 14:11:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2004/05/16 17:07:29 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -494,7 +494,7 @@ trap(int type, struct trapframe *frame)
 	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
-		vftype = VM_PROT_READ;	/* XXX VM_PROT_EXECUTE ??? */
+		vftype = VM_PROT_EXECUTE;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
