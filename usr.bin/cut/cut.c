@@ -42,14 +42,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cut.c	5.4 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: cut.c,v 1.5 1993/08/27 22:30:16 jtc Exp $";
+static char rcsid[] = "$Id: cut.c,v 1.6 1993/12/31 19:24:42 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <locale.h>
 #include <ctype.h>
+#include <err.h>
 
 int	cflag;
 char	dchar;
@@ -66,7 +68,8 @@ main(argc, argv)
 	extern int errno, optind;
 	FILE *fp;
 	int ch, (*fcn)(), c_cut(), f_cut();
-	char *strerror();
+
+	setlocale (LC_ALL, "");
 
 	dchar = '\t';			/* default delimiter is \t */
 
@@ -110,9 +113,8 @@ main(argc, argv)
 	if (*argv)
 		for (; *argv; ++argv) {
 			if (!(fp = fopen(*argv, "r"))) {
-				(void)fprintf(stderr,
-				    "cut: %s: %s\n", *argv, strerror(errno));
-				exit(1);
+				err(1, "%s", *argv);
+				/* NOTREACHED */
 			}
 			fcn(fp, *argv);
 		}
@@ -130,7 +132,7 @@ get_list(list)
 {
 	register char *pos;
 	register int setautostart, start, stop;
-	char *p, *strtok();
+	char *p;
 
 	/*
 	 * set a byte in the positions array to indicate if a field or
