@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.33 2000/03/30 12:45:39 augustss Exp $	*/
+/*	$NetBSD: uda.c,v 1.34 2000/04/30 11:46:49 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -82,9 +82,7 @@ struct	uda_softc {
 
 static	int	udamatch __P((struct device *, struct cfdata *, void *));
 static	void	udaattach __P((struct device *, struct device *, void *));
-static	void	udareset __P((int));
-static	void	mtcreset __P((int));
-static	void	reset __P((struct uda_softc *));
+static	void	reset(struct device *);
 static	void	intr __P((void *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *));
@@ -172,12 +170,6 @@ again:
 	}
 
 	/* should have interrupted by now */
-	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
-		ua->ua_reset = udareset;
-	} else {
-		ua->ua_reset = mtcreset;
-	}
-
 	return 1;
 bad:
 	if (++tries < 2)
@@ -202,6 +194,7 @@ udaattach(parent, self, aux)
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, intr, sc);
+	uba_reset_establish(reset, &sc->sc_dev);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;
@@ -452,26 +445,10 @@ intr(arg)
  * A Unibus reset has occurred on UBA uban.  Reinitialise the controller(s)
  * on that Unibus, and requeue outstanding I/O.
  */
-void
-udareset(ctlr)
-	int ctlr;
-{
-	reset(uda_cd.cd_devs[ctlr]);
-}
-
-void
-mtcreset(ctlr)
-	int ctlr;
-{
-	reset(mtc_cd.cd_devs[ctlr]);
-}
-
 static void
-reset(sc)
-	struct uda_softc *sc;
+reset(struct device *dev)
 {
-	printf(" %s", sc->sc_dev.dv_xname);
-
+	struct uda_softc *sc = (void *)dev;
 	/*
 	 * Our BDP (if any) is gone; our command (if any) is
 	 * flushed; the device is no longer mapped; and the

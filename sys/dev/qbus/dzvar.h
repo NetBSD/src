@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.6 2000/01/24 02:40:29 matt Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.7 2000/04/30 11:46:49 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@ struct	dz_softc {
 	int		sc_rxint;	/* Receive interrupt count XXX */
 	u_char		sc_brk;		/* Break asserted on some lines */
 	u_char		sc_dsr;		/* DSR set bits if no mdm ctrl */
-	int		(*sc_catch) __P((int, int)); /* Fast catch recv */
+	int		(*sc_catch)(int, int); /* Fast catch recv */
 	struct {
 		struct	tty *	dz_tty;		/* what we work on */
 #ifdef notyet
@@ -67,6 +67,7 @@ struct	dz_softc {
 	} sc_dz[NDZLINE];
 };
 
-void	dzattach __P((struct dz_softc *));
-void	dzrint __P((void *));
-void	dzxint __P((void *));
+void	dzattach(struct dz_softc *);
+void	dzrint(void *);
+void	dzxint(void *);
+void	dzreset(struct device *);

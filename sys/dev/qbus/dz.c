@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.21 2000/03/30 12:45:37 augustss Exp $	*/
+/*	$NetBSD: dz.c,v 1.22 2000/04/30 11:46:49 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -113,10 +113,10 @@ static struct speedtab dzspeedtab[] =
   {      -1,	-1		}
 };
 
-static	void	dzstart __P((struct tty *));
-static	int	dzparam __P((struct tty *, struct termios *));
-static unsigned	dzmctl __P((struct dz_softc *, int, int, int));
-static	void	dzscan __P((void *));
+static	void	dzstart(struct tty *);
+static	int	dzparam(struct tty *, struct termios *);
+static unsigned	dzmctl(struct dz_softc *, int, int, int);
+static	void	dzscan(void *);
 cdev_decl(dz);
 
 /*
@@ -130,8 +130,7 @@ struct callout dzscan_ch;
 #define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
 
 void
-dzattach(sc)
-        struct dz_softc *sc;
+dzattach(struct dz_softc *sc)
 {
 	int n;
 
@@ -161,8 +160,7 @@ dzattach(sc)
 /* Receiver Interrupt */
 
 void
-dzrint(arg)
-	void *arg;
+dzrint(void *arg)
 {
 	struct dz_softc *sc = arg;
 	struct tty *tp;
@@ -216,8 +214,7 @@ dzrint(arg)
 /* Transmitter Interrupt */
 
 void
-dzxint(arg)
-	void *arg;
+dzxint(void *arg)
 {
 	struct dz_softc *sc = arg;
 	struct tty *tp;
@@ -279,10 +276,7 @@ dzxint(arg)
 }
 
 int
-dzopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dzopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	int unit, line;
@@ -339,10 +333,7 @@ dzopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dzclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dzclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
@@ -368,9 +359,7 @@ dzclose(dev, flag, mode, p)
 }
 
 int
-dzread (dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
+dzread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
@@ -382,9 +371,7 @@ dzread (dev, uio, flag)
 }
 
 int
-dzwrite (dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
+dzwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
@@ -397,12 +384,7 @@ dzwrite (dev, uio, flag)
 
 /*ARGSUSED*/
 int
-dzioctl (dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
@@ -462,8 +444,7 @@ dzioctl (dev, cmd, data, flag, p)
 }
 
 struct tty *
-dztty (dev)
-        dev_t dev;
+dztty(dev_t dev)
 {
 	struct	dz_softc *sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
         struct tty *tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
@@ -473,8 +454,7 @@ dztty (dev)
 
 /*ARGSUSED*/
 void
-dzstop(tp, flag)
-	struct tty *tp;
+dzstop(struct tty *tp, int flag)
 {
 	if (tp->t_state & TS_BUSY)
 		if (!(tp->t_state & TS_TTSTOP))
@@ -482,8 +462,7 @@ dzstop(tp, flag)
 }
 
 void
-dzstart(tp)
-	struct tty *tp;
+dzstart(struct tty *tp)
 {
 	struct dz_softc *sc;
 	struct clist *cl;
@@ -519,9 +498,7 @@ dzstart(tp)
 }
 
 static int
-dzparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+dzparam(struct tty *tp, struct termios *t)
 {
 	struct	dz_softc *sc;
 	int cflag = t->c_cflag;
@@ -581,9 +558,7 @@ dzparam(tp, t)
 }
 
 static unsigned
-dzmctl(sc, line, bits, how)
-	struct dz_softc *sc;
-	int line, bits, how;
+dzmctl(struct dz_softc *sc, int line, int bits, int how)
 {
 	unsigned status;
 	unsigned mbits;
@@ -660,8 +635,7 @@ dzmctl(sc, line, bits, how)
  * Check to see if modem status bits have changed.
  */
 static void
-dzscan(arg)
-	void *arg;
+dzscan(void *arg)
 {
 	struct dz_softc *sc;
 	struct tty *tp;
@@ -716,4 +690,29 @@ dzscan(arg)
 	(void) splx(s);
 	callout_reset(&dzscan_ch, hz, dzscan, NULL);
 	return;
+}
+
+/*
+ * Called after an ubareset. The DZ card is reset, but the only thing
+ * that must be done is to start the receiver and transmitter again.
+ * No DMA setup to care about.
+ */
+void
+dzreset(struct device *dev)
+{
+	struct dz_softc *sc = (void *)dev;
+	struct tty *tp;
+	int i;
+
+	for (i = 0; i < sc->sc_type; i++) {
+		tp = sc->sc_dz[i].dz_tty;
+
+		if (((tp->t_state & TS_ISOPEN) == 0) || (tp->t_wopen == 0))
+			continue;
+
+		dzparam(tp, &tp->t_termios);
+		dzmctl(sc, i, DML_DTR, DMSET);
+		tp->t_state &= ~TS_BUSY;
+		dzstart(tp);	/* Kick off transmitter again */
+	}
 }
