@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.11 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.11 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.11 2003/11/17 10:07:58 keihan Exp $")
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <sgimips/dev/macevar.h>
+#include <sgimips/mace/macevar.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -109,7 +109,7 @@ com_mace_attach(parent, self, aux)
 	com_attach_subr(sc);
 	delay(10000);
 
-	mace_intr_establish(maa->maa_intr, maa->maa_intrmask, comintr, sc);
+	cpu_intr_establish(maa->maa_intr, maa->maa_intrmask, comintr, sc);
 
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.26 2004/01/18 00:47:21 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.27 2004/01/18 04:06:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26 2004/01/18 00:47:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.27 2004/01/18 04:06:43 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26 2004/01/18 00:47:21 sekiya Exp $");
 #include <mips/locore.h>
 #include <mips/cache.h>
 
-#include <sgimips/dev/macereg.h>
+#include <sgimips/mace/macereg.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
