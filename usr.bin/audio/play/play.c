@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.40 2002/11/04 12:04:23 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.41 2002/12/08 10:49:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -87,7 +87,7 @@ main(argc, argv)
 		case 'b':
 			decode_int(optarg, &balance);
 			if (balance < 0 || balance > 64)
-				errx(1, "balance must be between 0 and 64");
+				errx(1, "balance must be between 0 and 63");
 			break;
 		case 'c':
 			decode_int(optarg, &channels);
