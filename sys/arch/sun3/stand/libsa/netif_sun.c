@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.12 1998/07/02 21:58:25 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.13 1999/03/04 08:13:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
+#include <machine/idprom.h>
 #include <machine/mon.h>
 
 #include <stand.h>
@@ -428,15 +429,6 @@ break2:
 
 /*
  * Copy our Ethernet address into the passed array.
- *
- * On Sun3X machines I want to use the PROM function
- * to get our Ethernet address, though I don't know
- * which PROM versions support the sif->sif_macaddr()
- * function of the Standalone network I/F.  At least
- * PROM version 3.0 supports it.  Maybe earlier ones.
- *
- * Most old Sun3 PROMs do not have sif_macaddr, so
- * just read the Sun3 IDPROM directly.
  */
 void
 netif_getether(sif, ea)
@@ -446,29 +438,37 @@ netif_getether(sif, ea)
 	char *rev;
 
 	if (_is3x == 0) {
-		/* Sun3: read the IDPROM */
-		sun3_etheraddr(ea);
+		/*
+		 * Sun3:  These usually have old PROMs
+		 * without the sif_macaddr function, but
+		 * reading the IDPROM on these machines is
+		 * very easy, so just always do that.
+		 */
+		idprom_etheraddr(ea);
 		return;
 	}
 
 	/*
-	 * Sun3X: try to use sif->sif_macaddr(), but
-	 * check the PROM revision first.  Old PROMs
-	 * prefix the rev string (i.e. "Rev 2.6").
+	 * Sun3X:  Want to use sif->sif_macaddr(), but
+	 * it's only in PROM revisions 3.0 and later,
+	 * so we have to check the PROM rev first.
+	 * Note that old PROMs prefix the rev string
+	 * with "Rev " (i.e. "Rev 2.6").
 	 */
 	rev = romVectorPtr->monId;
 	if (!strncmp(rev, "Rev ", 4))
 		rev += 4;
-	if (strcmp(rev, "3.0") < 0) {
-		printf("netif_getether: Uh oh, PROM Rev %s\n", rev);
-		printf(" sif [%p] %p %p %p %p\n", sif,
-			   sif->sif_xmit,
-			   sif->sif_poll,
-			   sif->sif_reset,
-			   sif->sif_macaddr);
-		printf("Please record those numbers, then do: c<enter>\n");
-		breakpoint();
-		printf("OK, calling sif->sif_macaddr ...\n");
+	if (!strncmp(rev, "3.", 2)) {
+		/* Great!  We can call the PROM. */
+		(*sif->sif_macaddr)(ea);
+		return;
 	}
-	(*sif->sif_macaddr)(ea);
+
+	/*
+	 * Sun3X with PROM rev < 3.0.
+	 * Finding the IDPROM is a pain, but
+	 * we have no choice.  Warn the user.
+	 */
+	printf("netboot: Old PROM Rev (%s)\n", rev);
+	idprom_etheraddr(ea);
 }
