@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.9 2002/09/21 00:37:14 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.10 2002/09/23 04:02:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.9 2002/09/21 00:37:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.10 2002/09/23 04:02:29 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -46,12 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.9 2002/09/21 00:37:14 oster Exp $");
 #include "rf_debugMem.h"
 #include "rf_general.h"
 
-#define DO_CHECK_STATE(_hdr_) CheckCvscanState((_hdr_), __FILE__, __LINE__)
+#define DO_CHECK_STATE(_hdr_) CheckCvscanState((_hdr_))
 
 #define pri_ok(p)  ( ((p) == RF_IO_NORMAL_PRIORITY) || ((p) == RF_IO_LOW_PRIORITY))
 
 static void 
-CheckCvscanState(RF_CvscanHeader_t * hdr, char *file, int line)
+CheckCvscanState(RF_CvscanHeader_t * hdr)
 {
 	long    i, key;
 	RF_DiskQueueData_t *tmp;
