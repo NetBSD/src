@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.26 1998/08/18 06:12:34 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.27 1998/08/28 21:20:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -94,7 +94,7 @@ procinit()
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    0, NULL, NULL, M_PROC);
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
 }
 
 /*
