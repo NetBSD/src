@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.6 1995/06/03 22:37:28 mycroft Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_udp.c,v 1.6 1995/06/03 22:37:28 mycroft Exp $";
+static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
 #endif
 
 /*
@@ -340,6 +340,7 @@ struct udp_cache {
  * Enable use of the cache. 
  * Note: there is no disable.
  */
+int
 svcudp_enablecache(transp, size)
 	SVCXPRT *transp;
 	u_long size;
@@ -443,7 +444,7 @@ cache_set(xprt, replylen)
  * Try to get an entry from the cache
  * return 1 if found, 0 if not found
  */
-static
+static int
 cache_get(xprt, msg, replyp, replylenp)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
