@@ -1,34 +1,31 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/02 22:02:47 tv Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/09 17:50:35 tv Exp $
 #
 
 .include <bsd.own.mk>
-DIST=	${.CURDIR}/../../dist
-TARGET_ARCH ?= ${MACHINE_ARCH}
 
-PROG=	as
-SRCS=	app.c as.c atof-generic.c bignum-copy.c cond.c depend.c ecoff.c \
-	ehopt.c expr.c flonum-konst.c flonum-copy.c flonum-mult.c frags.c \
-	hash.c input-file.c input-scrub.c literal.c messages.c output-file.c \
-	read.c subsegs.c symbols.c write.c listing.c stabs.c \
-	sb.c macro.c
+# Override to make a cross assembler.
+TARGET_ARCH ?=	${MACHINE_ARCH}
 
-.PATH:	${DIST}/gas/config ${DIST}/gas ${DIST}/gas/doc
+PROG=		as
+MAN=		as.1
+SRCS=		app.c as.c atof-generic.c bignum-copy.c cond.c depend.c \
+		ecoff.c ehopt.c expr.c flonum-konst.c flonum-copy.c \
+		flonum-mult.c frags.c hash.c input-file.c input-scrub.c \
+		literal.c messages.c output-file.c read.c subsegs.c symbols.c \
+		write.c listing.c stabs.c sb.c macro.c
+SRCS+=		${TARG_CPU_C} ${OBJ_FORMAT_C} ${ATOF_TARG_C}
 
-CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${TARGET_ARCH} \
-	-I${BFDOBJ} -I${DIST}/gas -I${DIST}/gas/config \
-	-I${DIST}/bfd -I${DIST}/include -I${DIST} \
-	-D_GNU_SOURCE
+CPPFLAGS+=	-I${.CURDIR}/arch/${TARGET_ARCH} \
+		-I${DIST}/gas -I${DIST}/gas/config -I${BFDOBJ} \
+		-I${DIST}/bfd -I${DIST}/include -I${DIST} \
+		-D_GNU_SOURCE
+LDADD+=		-L${BFDOBJ} -lbfd
+DPADD+=		${BFDOBJ}/libbfd_pic.a
 
-BFDOBJ!=cd ${.CURDIR}/../../lib/bfd; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+DIST=		${.CURDIR}/../../dist
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} print-objdir
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.PATH:		${DIST}/gas/config ${DIST}/gas ${DIST}/gas/doc
 
-SRCS+=	${TARG_CPU_C} ${OBJ_FORMAT_C} ${ATOF_TARG_C}
-
-LDADD+= -L${BFDOBJ} -lbfd
-DPADD+= ${BFDOBJ}/libbfd.a
-
-MAN=	as.1
-
+.include "${.CURDIR}/arch/${TARGET_ARCH}/Makefile.inc"
 .include <bsd.prog.mk>
