@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.93 2000/08/17 23:18:56 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.94 2000/11/10 14:11:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1285,6 +1285,7 @@ ohci_softintr(struct usbd_bus *bus)
 				(struct ohci_pipe *)xfer->pipe;
 			if (sitd->flags & OHCI_CALL_DONE) {
 				opipe->u.iso.inuse -= xfer->nframes;
+				/* XXX update frlengths with actual length */
 				/* XXX xfer->actlen = actlen; */
 				xfer->status = USBD_NORMAL_COMPLETION;
 				usb_transfer_complete(xfer);
