@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.7 2002/03/26 07:53:38 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.8 2002/03/27 15:01:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -218,6 +218,7 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 	int err, cnt;
 	size_t siz;
 	const char *s0;
+	size_t mbcurmax;
 
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(ei != NULL);
@@ -233,8 +234,9 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 
 	cnt = 0;
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
+	mbcurmax = _ENCODING_MB_CUR_MAX(ei);
 	while (n > 0) {
-		err = _FUNCNAME(mbrtowc_priv)(ei, pwcs, &s0, MB_CUR_MAX,
+		err = _FUNCNAME(mbrtowc_priv)(ei, pwcs, &s0, mbcurmax,
 					      psenc, &siz);
 		if (siz == (size_t)-2)
 			err = EILSEQ;
@@ -397,7 +399,7 @@ static unsigned
 /*ARGSUSED*/
 _FUNCNAME(ctype_get_mb_cur_max)(void *cl)
 {
-	return _ENCODING_MB_CUR_MAX(cl);
+	return _ENCODING_MB_CUR_MAX(_TO_EI(cl));
 }
 
 static int
@@ -539,8 +541,8 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	_DIAGASSERT(cl != NULL);
 
 	_RESTART_BEGIN(wcrtomb, _TO_CEI(cl), pspriv, psenc);
-	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s, MB_CUR_MAX,
-				      wc, psenc, nresult);
+	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
+						_ENCODING_MB_CUR_MAX(_TO_EI(cl)), wc, psenc, nresult);
 	_RESTART_END(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 
 	return err;
@@ -596,7 +598,7 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	if (s==NULL)
 		s = s0;
 
-	err = _FUNCNAME(wcrtomb_priv)(cl, s, MB_CUR_MAX, wc,
+	err = _FUNCNAME(wcrtomb_priv)(cl, s, _ENCODING_MB_CUR_MAX(_TO_EI(cl)), wc,
 				      &_CEI_TO_STATE(_TO_CEI(cl), wctomb),
 				      &nr);
 	*nresult = (int)nr;
