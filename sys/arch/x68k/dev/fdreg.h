@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1.1.1.24.2 1999/02/10 16:04:08 minoura Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.1.1.1.24.3 1999/02/13 17:54:52 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,11 +43,10 @@
 #include <dev/ic/nec765reg.h>
 
 /* registers */
-#define FDC_ADDR 0xe94000	/* builtin fdc is here */
-#define	fdsts	1	/* NEC 765 Main Status Register (R) */
-#define	fddata	3	/* NEC 765 Data Register (R/W) */
-#define fdout 5		/* Digital Output Register (W) */
-#define	fdctl  7	/* Control Register (W) */
+#define	fdsts	0	/* NEC 765 Main Status Register (R) */
+#define	fddata	1	/* NEC 765 Data Register (R/W) */
+#define fdout	2	/* Digital Output Register (W) */
+#define	fdctl	3	/* Control Register (W) */
 #define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
@@ -58,3 +57,9 @@
 
 /* Floppy disk controller command bytes. */
 #define NE7CMD_RESET       0x36	/* reset command for fdc */
+
+/* default attach args */
+#define FDC_ADDR 0xe94000	/* builtin fdc is here */
+#define FDC_INTR 96		/* interrupt vector */
+#define FDC_DMA 0		/* DMA ch# */
+#define FDC_DMAINTR 100		/* DMA interrupt vector */

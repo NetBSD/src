@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23.6.2 1999/02/10 16:04:08 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.23.6.3 1999/02/13 17:54:51 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -323,6 +323,10 @@ fdc_dmastart(fdc, read, addr, count)
 					  DMAC_SCR_DAC_NO_COUNT),
 					 (u_int8_t*) (fdc->sc_addr +
 						      fddata));	/* XXX */
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040)
+		dma_cachectl(addr, count);
+#endif
 
 	dmac_start_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
 }
@@ -361,6 +365,12 @@ fdcprobe(parent, cf, aux)
 
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
 		ia->ia_addr = FDC_ADDR;
+	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
+		ia->ia_intr = FDC_INTR;
+	if (ia->ia_dma == INTIOCF_DMA_DEFAULT)
+		ia->ia_dma = FDC_DMA;
+	if (ia->ia_dmaintr == INTIOCF_DMAINTR_DEFAULT)
+		ia->ia_dmaintr = FDC_DMAINTR;
 
 	if (ia->ia_intr & 0x03 != 0)
 		return 0;
@@ -416,7 +426,7 @@ fdcattach(parent, self, aux)
 	printf("\n");
 
 	/* Re-map the I/O space. */
-	bus_space_map(iot, ia->ia_addr, 0x2000, 0, &ioh);
+	bus_space_map(iot, ia->ia_addr, 0x2000, BUS_SPACE_MAP_SHIFTED, &ioh);
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
