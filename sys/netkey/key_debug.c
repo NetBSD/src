@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.11 2000/06/15 12:37:09 itojun Exp $	*/
-/*	$KAME: key_debug.c,v 1.21 2000/06/15 11:54:01 sakane Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.11.2.1 2000/07/01 23:45:22 itojun Exp $	*/
+/*	$KAME: key_debug.c,v 1.22 2000/06/22 08:38:34 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,6 @@ kdebug_sadb_identity(ext)
 {
 	struct sadb_ident *id = (struct sadb_ident *)ext;
 	int len;
-	union sadb_x_ident_id *aid;
 
 	/* sanity check */
 	if (ext == NULL)
@@ -232,16 +231,6 @@ kdebug_sadb_identity(ext)
 	printf("sadb_ident_%s{",
 	    id->sadb_ident_exttype == SADB_EXT_IDENTITY_SRC ? "src" : "dst");
 	switch (id->sadb_ident_type) {
-	case SADB_X_IDENTTYPE_ADDR:
-		aid = (union sadb_x_ident_id *)&id->sadb_ident_id;
-
-		printf(" type=%d prefix=%u ul_proto=%u\n",
-			id->sadb_ident_type,
-			aid->sadb_x_ident_id_addr.prefix,
-			aid->sadb_x_ident_id_addr.ul_proto);
-		kdebug_sockaddr((struct sockaddr *)(id + 1));
-		break;
-
 	default:
 		printf(" type=%d id=%lu",
 			id->sadb_ident_type, (u_long)id->sadb_ident_id);
