@@ -32,4 +32,4 @@ all:	includes
 
 includes:	dnload.h
 
-install:
+.include <bsd.kinc.mk>
