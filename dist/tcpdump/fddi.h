@@ -1,4 +1,4 @@
-/*	$NetBSD: fddi.h,v 1.1.1.1 2001/06/25 19:26:31 itojun Exp $	*/
+/*	$NetBSD: fddi.h,v 1.1.1.2 2004/09/27 17:06:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/fddi.h,v 1.9 2000/10/09 02:59:39 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/fddi.h,v 1.11 2002/12/11 07:13:51 guy Exp (LBL)
  */
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: smb.h,v 1.1.1.2 2002/02/18 09:09:06 itojun Exp $	*/
+/*	$NetBSD: smb.h,v 1.1.1.3 2004/09/27 17:07:35 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.7 2002/01/17 04:38:29 guy Exp (LBL) */
-/* 
+/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.8 2002/06/11 17:09:00 itojun Exp (LBL) */
+/*
  * Copyright (C) Andrew Tridgell 1995-1999
  *
  * This software may be distributed either under the terms of the
