@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: common.c,v 1.1.1.1 2000/06/16 18:32:48 thorpej Exp $");
+RCSID("$Id: common.c,v 1.1.1.2 2000/08/02 19:59:11 assar Exp $");
 
 int
 hdb_principal2key(krb5_context context, krb5_principal p, krb5_data *key)
@@ -111,7 +111,7 @@ _hdb_fetch(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 	return code;
     hdb_value2entry(context, &value, entry);
     if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	hdb_unseal_keys (db, entry);
+	hdb_unseal_keys (context, db, entry);
     krb5_data_free(&value);
     return 0;
 }
@@ -123,7 +123,7 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
     int code;
 
     hdb_principal2key(context, entry->principal, &key);
-    hdb_seal_keys(db, entry);
+    hdb_seal_keys(context, db, entry);
     hdb_entry2value(context, entry, &value);
     code = db->_put(context, db, flags & HDB_F_REPLACE, key, value);
     krb5_data_free(&value);

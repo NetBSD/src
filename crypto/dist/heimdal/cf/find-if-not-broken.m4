@@ -1,4 +1,4 @@
-dnl $Id: find-if-not-broken.m4,v 1.1.1.1 2000/06/16 18:32:16 thorpej Exp $
+dnl $Id: find-if-not-broken.m4,v 1.1.1.2 2000/08/02 20:00:29 assar Exp $
 dnl
 dnl
 dnl Mix between AC_FIND_FUNC and AC_BROKEN

@@ -34,7 +34,7 @@
 #include "headers.h"
 #include <getarg.h>
 
-RCSID("$Id: string2key.c,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $");
+RCSID("$Id: string2key.c,v 1.1.1.2 2000/08/02 19:58:56 assar Exp $");
 
 int version5;
 int version4;

@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$Id: pop_stat.c,v 1.1.1.1 2000/06/16 18:32:02 thorpej Exp $");
+RCSID("$Id: pop_stat.c,v 1.1.1.2 2000/08/02 19:58:26 assar Exp $");
 
 /* 
  *  stat:   Display the status of a POP maildrop to its client

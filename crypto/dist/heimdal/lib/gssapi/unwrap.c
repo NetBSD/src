@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: unwrap.c,v 1.1.1.1 2000/06/16 18:32:47 thorpej Exp $");
+RCSID("$Id: unwrap.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
 
 OM_uint32
 gss_krb5_getsomekey(const gss_ctx_id_t context_handle,
@@ -114,7 +114,7 @@ OM_uint32 gss_unwrap
 	  key[i] ^= 0xf0;
       des_set_key (&key, schedule);
       memset (&zero, 0, sizeof(zero));
-      des_cbc_encrypt ((const void *)p,
+      des_cbc_encrypt ((void *)p,
 		       (void *)p,
 		       input_message_buffer->length - len,
 		       schedule,
@@ -134,15 +134,15 @@ OM_uint32 gss_unwrap
   if (i != 0)
     return GSS_S_BAD_MIC;
 
-  MD5_Init (&md5);
-  MD5_Update (&md5, p - 24, 8);
-  MD5_Update (&md5, p, input_message_buffer->length - len);
-  MD5_Final (hash, &md5);
+  MD5Init (&md5);
+  MD5Update (&md5, p - 24, 8);
+  MD5Update (&md5, p, input_message_buffer->length - len);
+  MD5Final (hash, &md5);
 
   memset (&zero, 0, sizeof(zero));
   gss_krb5_getsomekey(context_handle, &key);
   des_set_key (&key, schedule);
-  des_cbc_cksum ((const void *)hash, (void *)hash, sizeof(hash),
+  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 schedule, &zero);
   if (memcmp (p - 8, hash, 8) != 0)
     return GSS_S_BAD_MIC;
@@ -162,7 +162,7 @@ OM_uint32 gss_unwrap
 
   p -= 16;
   des_set_key (&key, schedule);
-  des_cbc_encrypt ((const void *)p, (void *)p, 8,
+  des_cbc_encrypt ((void *)p, (void *)p, 8,
 		   schedule, (des_cblock *)hash, DES_DECRYPT);
 
   memset (key, 0, sizeof(key));

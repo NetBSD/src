@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken-common.h,v 1.1.1.1 2000/06/16 18:32:35 thorpej Exp $ */
+/* $Id: roken-common.h,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
@@ -116,12 +116,16 @@
 #define _PATH_HEQUIV "/etc/hosts.equiv"
 #endif
 
+#ifndef _PATH_VARRUN
+#define _PATH_VARRUN "/var/run/"
+#endif
+
 #ifndef MAXPATHLEN
 #define MAXPATHLEN (1024+4)
 #endif
 
 #ifndef SIG_ERR
-#define SIG_ERR ((RETSIGTYPE (*)())-1)
+#define SIG_ERR ((RETSIGTYPE (*)(int))-1)
 #endif
 
 /*
@@ -289,5 +293,11 @@ strcollect(char *first, ...);
 void timevalfix(struct timeval *t1);
 void timevaladd(struct timeval *t1, const struct timeval *t2);
 void timevalsub(struct timeval *t1, const struct timeval *t2);
+
+char *pid_file_write (const char *progname);
+void pid_file_delete (char **);
+
+int
+read_environment(const char *file, char ***env);
 
 #endif /* __ROKEN_COMMON_H__ */

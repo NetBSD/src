@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 200 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afssys.c,v 1.1.1.1 2000/06/16 18:32:54 thorpej Exp $");
+RCSID("$Id: afssys.c,v 1.1.1.2 2000/08/02 20:00:20 assar Exp $");
 
 int _kafs_debug; /* this should be done in a better way */
 

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: commands.c,v 1.1.1.1 2000/06/16 18:31:55 thorpej Exp $");
+RCSID("$Id: commands.c,v 1.1.1.2 2000/08/02 19:58:20 assar Exp $");
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
@@ -2071,7 +2071,6 @@ tn(int argc, char **argv)
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
-	setuid(getuid());
 	return 0;
     }
     if (argc < 2) {
@@ -2112,7 +2111,6 @@ tn(int argc, char **argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\r\n", cmd);
-	setuid(getuid());
 	return 0;
     }
     if (hostp == 0)
@@ -2147,7 +2145,6 @@ tn(int argc, char **argv)
 		port = sp->s_port;
 	    else {
 		printf("%s: bad port number\r\n", portp);
-		setuid(getuid());
 		return 0;
 	    }
 	} else {
@@ -2158,7 +2155,6 @@ tn(int argc, char **argv)
 	    sp = roken_getservbyname("telnet", "tcp");
 	    if (sp == 0) {
 		fprintf(stderr, "telnet: tcp/telnet: unknown service\r\n");
-		setuid(getuid());
 		return 0;
 	    }
 	    port = sp->s_port;
@@ -2181,7 +2177,6 @@ tn(int argc, char **argv)
 	error = getaddrinfo (hostname, portstr, &hints, &ai);
 	if (error) {
 	    fprintf (stderr, "%s: %s\r\n", hostname, gai_strerror (error));
-	    setuid (getuid ());
 	    return 0;
 	}
 
@@ -2199,7 +2194,6 @@ tn(int argc, char **argv)
 	    printf("Trying %s...\r\n", addrstr);
 
 	    net = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	    setuid (getuid ());
 	    if (net < 0) {
 		warn ("socket");
 		continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: compile_et.h,v 1.1.1.1 2000/06/16 18:32:20 thorpej Exp $ */
+/* $Id: compile_et.h,v 1.1.1.2 2000/08/02 20:00:26 assar Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <roken.h>
 
 extern long base;
 extern int number;
@@ -74,7 +75,5 @@ do {						\
 	(L)->tail = &(V)->next;			\
     }						\
 }while(0)
-
-int yylex (void);
 
 #endif /* __COMPILE_ET_H__ */

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: setegid.c,v 1.1.1.1 2000/06/16 18:32:36 thorpej Exp $");
+RCSID("$Id: setegid.c,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $");
 #endif
 
 #ifdef HAVE_UNISTD_H

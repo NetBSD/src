@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: recvauth.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: recvauth.c,v 1.1.1.2 2000/08/02 19:59:39 assar Exp $");
 
 /*
  * See `sendauth.c' for the format.

@@ -55,7 +55,7 @@
  * or implied warranty.
  */
 
-/* $Id: encrypt.h,v 1.1.1.1 2000/06/16 18:31:54 thorpej Exp $ */
+/* $Id: encrypt.h,v 1.1.1.2 2000/08/02 19:58:18 assar Exp $ */
 
 #ifndef	__ENCRYPT__
 #define	__ENCRYPT__

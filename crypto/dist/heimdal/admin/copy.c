@@ -33,7 +33,7 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: copy.c,v 1.1.1.1 2000/06/16 18:31:39 thorpej Exp $");
+RCSID("$Id: copy.c,v 1.1.1.2 2000/08/02 19:58:04 assar Exp $");
 
 int
 kt_copy (int argc, char **argv)
@@ -89,7 +89,7 @@ kt_copy (int argc, char **argv)
 
     ret = krb5_kt_start_seq_get (context, src_keytab, &cursor);
     if (ret) {
-	krb5_warn (context, ret, "krb5_kt_start_seq_get");
+	krb5_warn (context, ret, "krb5_kt_start_seq_get %s", keytab_string);
 	goto fail;
     }
 

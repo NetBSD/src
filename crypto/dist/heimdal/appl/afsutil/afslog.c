@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: afslog.c,v 1.1.1.1 2000/06/16 18:31:44 thorpej Exp $");
+RCSID("$Id: afslog.c,v 1.1.1.2 2000/08/02 19:58:06 assar Exp $");
 #endif
 #include <ctype.h>
 #include <krb5.h>

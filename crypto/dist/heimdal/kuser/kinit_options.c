@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kinit_options.c,v 1.1.1.1 2000/06/16 18:31:40 thorpej Exp $");
+RCSID("$Id: kinit_options.c,v 1.1.1.2 2000/08/02 19:58:59 assar Exp $");
 
 #ifdef KRB4
 int do_afslog		= 0;

@@ -32,7 +32,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: lex.l,v 1.1.1.1 2000/06/16 18:32:39 thorpej Exp $ */
+/* $Id: lex.l,v 1.1.1.2 2000/08/02 19:59:05 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -46,22 +46,22 @@
 #endif
 #include "symbol.h"
 #include "parse.h"
+#include "lex.h"
 #include "gen_locl.h"
-
-void error_message(const char *, ...)
-#ifdef HAVE___ATTRIBUTE__
-__attribute__ ((format (printf, 1, 2)))
-#endif
-;
 
 static unsigned lineno = 1;
 
-/* ","|"{"|"}"|"("|")"|"["|"]"|"|"	{ return *yytext; } */
+#define YY_NO_UNPUT
+
+#undef ECHO
+
 %}
 
 
 %%
 INTEGER			{ return INTEGER; }
+IMPORTS			{ return IMPORTS; }
+FROM			{ return FROM; }
 SEQUENCE		{ return SEQUENCE; }
 OF			{ return OF; }
 OCTET			{ return OCTET; }
@@ -75,7 +75,7 @@ BEGIN			{ return TBEGIN; }
 END			{ return END; }
 DEFINITIONS		{ return DEFINITIONS; }
 EXTERNAL		{ return EXTERNAL; }
-[,{}()|]		{ return *yytext; }
+[,;{}()|]		{ return *yytext; }
 "["			{ return *yytext; }
 "]"			{ return *yytext; }
 ::=			{ return EEQUAL; }
@@ -105,6 +105,4 @@ error_message (const char *format, ...)
      fprintf (stderr, "%s:%d: ", filename(), lineno);
      vfprintf (stderr, format, args);
      va_end (args);
-     if(0)
-         unput(0);
 }
