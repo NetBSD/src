@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: nfa.c,v 1.10 1998/01/05 05:15:56 perry Exp $ */
+/* $NetBSD: nfa.c,v 1.11 2003/07/14 11:36:49 itojun Exp $ */
 
 #include "flexdef.h"
 
@@ -213,7 +213,7 @@ int mach, variable_trail_rule, headcnt, trailcnt;
 	if ( continued_action )
 		--rule_linenum[num_rules];
 
-	sprintf( action_text, "case %d:\n", num_rules );
+	snprintf(action_text, sizeof(action_text), "case %d:\n", num_rules);
 	add_action( action_text );
 
 	if ( variable_trail_rule )
@@ -245,15 +245,16 @@ int mach, variable_trail_rule, headcnt, trailcnt;
 
 			if ( headcnt > 0 )
 				{
-				sprintf( action_text, "%s = %s + %d;\n",
-				scanner_cp, scanner_bp, headcnt );
+				snprintf(action_text, sizeof(action_text),
+				    "%s = %s + %d;\n", scanner_cp, scanner_bp,
+				    headcnt);
 				add_action( action_text );
 				}
 
 			else
 				{
-				sprintf( action_text, "%s -= %d;\n",
-					scanner_cp, trailcnt );
+				snprintf(action_text, sizeof(action_text),
+				    "%s -= %d;\n", scanner_cp, trailcnt);
 				add_action( action_text );
 				}
 

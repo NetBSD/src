@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.14 2002/01/29 10:20:34 tv Exp $ */
+/* $NetBSD: main.c,v 1.15 2003/07/14 11:36:49 itojun Exp $ */
 
 
 #include "flexdef.h"
@@ -286,8 +286,8 @@ void check_options()
 			else
 				suffix = "c";
 
-			sprintf( outfile_path, outfile_template,
-				prefix, suffix );
+			snprintf(outfile_path, sizeof(outfile_path),
+			    outfile_template, prefix, suffix);
 
 			outfilename = outfile_path;
 			}
@@ -1134,8 +1134,8 @@ _( "%s [-bcdfhilnpstvwBFILTV78+? -C[aefFmr] -ooutput -Pprefix -Sskeleton]\n" ),
 
 	if ( ! did_outfilename )
 		{
-		sprintf( outfile_path, outfile_template,
-			prefix, C_plus_plus ? "cc" : "c" );
+		snprintf(outfile_path, sizeof(outfile_path), outfile_template,
+			prefix, C_plus_plus ? "cc" : "c");
 		outfilename = outfile_path;
 		}
 

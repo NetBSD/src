@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: misc.c,v 1.11 2000/10/11 14:46:11 is Exp $ */
+/* $NetBSD: misc.c,v 1.12 2003/07/14 11:36:49 itojun Exp $ */
 
 #include "flexdef.h"
 
@@ -44,7 +44,7 @@ int value;
 		return;
 		}
 
-	sprintf( buf, "#define %s %d\n", defname, value );
+	snprintf(buf, sizeof(buf), "#define %s %d\n", defname, value);
 	add_action( buf );
 	}
 
@@ -70,7 +70,7 @@ char *new_text;
 			reallocate_character_array( action_array, action_size );
 		}
 
-	strcpy( &action_array[action_index], new_text );
+	strcpy(&action_array[action_index], new_text);
 
 	action_index += len;
 	}
@@ -362,7 +362,7 @@ const char msg[];
 int arg;
 	{
 	char errmsg[MAXLINE];
-	(void) sprintf( errmsg, msg, arg );
+	(void) snprintf(errmsg, sizeof(errmsg), msg, arg);
 	flexerror( errmsg );
 	}
 
@@ -374,7 +374,7 @@ const char msg[], arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) sprintf( errmsg, msg, arg );
+	(void) snprintf(errmsg, sizeof(errmsg), msg, arg);
 	flexerror( errmsg );
 	}
 
@@ -412,14 +412,16 @@ int do_infile;
 	*s2 = '\0';
 
 	if ( do_infile )
-		sprintf( directive, line_fmt, linenum, filename );
+		snprintf(directive, sizeof(directive), line_fmt, linenum,
+		    filename);
 	else
 		{
 		if ( output_file == stdout )
 			/* Account for the line directive itself. */
 			++out_linenum;
 
-		sprintf( directive, line_fmt, out_linenum, filename );
+		snprintf(directive, sizeof(directive), line_fmt, out_linenum,
+		    filename);
 		}
 
 	/* If output_file is nil then we should put the directive in
@@ -731,7 +733,7 @@ register int c;
 #endif
 
 			default:
-				(void) sprintf( rform, "\\%.3o",
+				(void) snprintf(rform, sizeof(rform), "\\%.3o",
 						(unsigned int) c );
 				return rform;
 			}

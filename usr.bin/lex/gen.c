@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.15 2001/01/06 02:09:49 christos Exp $ */
+/* $NetBSD: gen.c,v 1.16 2003/07/14 11:36:48 itojun Exp $ */
 
 #include "flexdef.h"
 
@@ -600,17 +600,18 @@ int worry_about_NULs;
 	if ( worry_about_NULs && ! nultrans )
 		{
 		if ( useecs )
-			(void) sprintf( char_map,
+			(void) snprintf(char_map, sizeof(char_map),
 				"(*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : %d)",
 					NUL_ec );
 		else
-			(void) sprintf( char_map,
+			(void) snprintf(char_map, sizeof(char_map),
 				"(*yy_cp ? YY_SC_TO_UI(*yy_cp) : %d)", NUL_ec );
 		}
 
 	else
-		strcpy( char_map, useecs ?
-			"yy_ec[YY_SC_TO_UI(*yy_cp)]" : "YY_SC_TO_UI(*yy_cp)" );
+		strlcpy(char_map, useecs ?
+		    "yy_ec[YY_SC_TO_UI(*yy_cp)]" : "YY_SC_TO_UI(*yy_cp)",
+		    sizeof(char_map));
 
 	if ( worry_about_NULs && nultrans )
 		{
@@ -707,7 +708,7 @@ void gen_NUL_trans()
 		{
 		char NUL_ec_str[20];
 
-		(void) sprintf( NUL_ec_str, "%d", NUL_ec );
+		(void) snprintf(NUL_ec_str, sizeof(NUL_ec_str), "%d", NUL_ec);
 		gen_next_compressed_state( NUL_ec_str );
 
 		do_indent();
