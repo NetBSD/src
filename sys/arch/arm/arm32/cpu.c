@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2002/03/09 23:49:15 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 2002/03/10 00:09:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpu.c,v 1.20 2002/03/09 23:49:15 bjh21 Exp $");
+__RCSID("$NetBSD: cpu.c,v 1.21 2002/03/10 00:09:24 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -117,10 +117,7 @@ fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
 {
 	u_int fpsr;
     
-	__asm __volatile("stmfd sp!, {r0};"
-	    "rfs r0;"
-	    "mov %0, r0;"
-	    "ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("rfs %0" : "=r" (fpsr));
 
 	printf("FPA exception: fpsr = %08x\n", fpsr);
 
@@ -197,10 +194,7 @@ identify_master_cpu(struct device *dv, int cpu_number)
 
 	undefined_test = 0;
 
-	__asm __volatile("stmfd sp!, {r0};"
-	    "rfs r0;"
-	    "mov %0, r0;"
-	    "ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("rfs %0" : "=r" (fpsr));
 
 	remove_coproc_handler(uh);
 
