@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
 /*static char *sccsid = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_generic.c,v 1.2 1993/12/05 14:36:48 deraadt Exp $";
+static char *rcsid = "$Id: clnt_generic.c,v 1.3 1993/12/10 20:01:45 jtc Exp $";
 #endif
 
 /*
@@ -92,17 +92,12 @@ clnt_create(hostname, prog, vers, proto)
 		if (client == NULL) {
 			return (NULL);
 		}
-		tv.tv_sec = 25;
-		clnt_control(client, CLSET_TIMEOUT, &tv);
 		break;
 	case IPPROTO_TCP:
 		client = clnttcp_create(&sin, prog, vers, &sock, 0, 0);
 		if (client == NULL) {
 			return (NULL);
 		}
-		tv.tv_sec = 25;
-		tv.tv_usec = 0;
-		clnt_control(client, CLSET_TIMEOUT, &tv);
 		break;
 	default:
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
