@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattr.9,v 1.1 2005/01/02 17:34:43 thorpej Exp $
+.\"	$NetBSD: extattr.9,v 1.2 2005/01/02 18:32:38 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001, 2003 Robert N. M. Watson
 .\" All rights reserved.
@@ -39,9 +39,10 @@
 .Sh DESCRIPTION
 Extended attributes allow additional meta-data to be associated
 with vnodes representing files and directories.
-The semantics of this additional data is that of a "name=value" pair, where
-a name may be defined or undefined, and if defined, associated with zero or
-more bytes of arbitrary binary data.
+The semantics of this additional data is that of a
+.Dq name=value
+pair, where a name may be defined or undefined, and if defined,
+associated with zero or more bytes of arbitrary binary data.
 Extended attribute names exist within a set of namespaces; each operation
 on an extended attribute is required to provide the namespace to which to
 operation refers.
@@ -61,8 +62,9 @@ privilege is required to directly access or manipulate these attributes.
 Reads of extended attribute data may return specific contiguous regions of
 the meta-data, in the style of
 .Xr VOP_READ 9 ,
-but writes will replace the entire current "value" associated with
-a given name.
+but writes will replace the entire current
+.Dq value
+associated with a given name.
 As there are a plethora of file systems with differing extended attributes,
 availability and functionality of these functions may be limited, and they
 should be used with awareness of the underlying semantics of the supporting
@@ -71,7 +73,7 @@ Authorization schemes for extended attribute data may also vary by file
 system, as well as maximum attribute size, and whether or not any or
 specific new attributes may be defined.
 .Pp
-Extended attributes are named using a null-terminated character string.
+Extended attributes are named using a nul-terminated character string.
 Depending on underlying file system semantics, this name may or may not be
 case-sensitive.
 Appropriate vnode extended attribute calls are:
@@ -80,5 +82,5 @@ Appropriate vnode extended attribute calls are:
 and
 .Xr VOP_SETEXTATTR 9 .
 .Sh SEE ALSO
-.Xr VFSOPS 9 ,
-.Xr VNODEOPS 9
+.Xr vfsops 9 ,
+.Xr vnodeops 9
