@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.75 2002/04/02 22:32:16 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.76 2002/05/13 05:35:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.75 2002/04/02 22:32:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.76 2002/05/13 05:35:47 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -875,7 +875,6 @@ linux_machdepioctl(p, v, retval)
 			return copyout(&hdg_big, SCARG(uap, data),
 			    sizeof hdg_big);
 		}
-		return 0;
 
 	default:
 		/*
