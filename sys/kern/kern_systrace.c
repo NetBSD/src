@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.12 2002/08/08 14:38:47 itojun Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.13 2002/08/08 14:43:40 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.12 2002/08/08 14:38:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.13 2002/08/08 14:43:40 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -707,12 +707,12 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	callp = p->p_emul->e_sysent + code;
 	switch (policy) {
 	case SYSTR_POLICY_PERMIT:
-		DPRINTF(("policy permit, syscall %d\n", code));
+		DPRINTF(("policy permit, syscall %lu\n", (u_long)code));
 		break;
 	case SYSTR_POLICY_ASK:
 		/* Puts the current process to sleep, return unlocked */
 		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
-		DPRINTF(("policy permit, syscall %d error %d\n", code, error));
+		DPRINTF(("policy permit, syscall %lu error %d\n", (u_long)code, error));
 
 		/* lock has been released in systrace_msg_ask() */
 		fst = NULL;
@@ -745,7 +745,7 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 			error = policy;
 		else
 			error = EPERM;
-		DPRINTF(("policy default, syscall %d, error %d\n", code,
+		DPRINTF(("policy default, syscall %lu, error %d\n", (u_long)code,
 		    error));
 		break;
 	}
@@ -777,7 +777,7 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 		systrace_unlock();
 		return;
 	}
-	DPRINTF(("exit syscall %d, oldemul %p\n", code, strp->oldemul));
+	DPRINTF(("exit syscall %lu, oldemul %p\n", (u_long)code, strp->oldemul));
 
 	if (p->p_flag & P_SUGID) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
@@ -814,13 +814,13 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, p);
 		systrace_unlock();
-		DPRINTF(("will ask syscall %d, strp %p\n", code, strp));
+		DPRINTF(("will ask syscall %lu, strp %p\n", (u_long)code, strp));
 
 		callp = p->p_emul->e_sysent + code;
 		systrace_msg_result(fst, strp, error, code,
 		    callp->sy_argsize, v, retval);
 	} else {
-		DPRINTF(("will not ask syscall %d, strp %p\n", code, strp));
+		DPRINTF(("will not ask syscall %lu, strp %p\n", (u_long)code, strp));
 		systrace_unlock();
 	}
 }
@@ -1005,8 +1005,8 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct iovec iov;
 	int error = 0;
 	
-	DPRINTF(("%s: %u: %p(%d)\n", __func__,
-	    io->strio_pid, io->strio_offs, io->strio_len));
+	DPRINTF(("%s: %u: %p(%lu)\n", __func__,
+	    io->strio_pid, io->strio_offs, (u_long)io->strio_len));
 
 	switch (io->strio_op) {
 	case SYSTR_READ:
@@ -1337,8 +1337,8 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 	if (pol == NULL)
 		return (NULL);
 
-	DPRINTF(("%s: allocating %d -> %d\n", __func__,
-		     maxents, maxents * sizeof(int)));
+	DPRINTF(("%s: allocating %d -> %lu\n", __func__,
+		     maxents, (u_long)maxents * sizeof(int)));
 
 	memset((caddr_t)pol, 0, sizeof(struct str_policy));
 
