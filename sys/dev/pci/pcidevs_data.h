@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.116 1999/03/17 19:21:49 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.117 1999/03/19 06:40:11 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.111 1999/03/17 19:20:51 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.112 1999/03/19 06:39:32 mycroft Exp 
  */
 
 /*
@@ -1076,6 +1076,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ensoniq",
 	    "AudioPCI",
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97,
+	    0,
+	    "Ensoniq",
+	    "AudioPCI 97",
 	},
 	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
