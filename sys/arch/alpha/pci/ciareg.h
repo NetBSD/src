@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.13 1997/10/27 01:08:47 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.14 1998/04/29 03:09:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,6 +70,9 @@
 #define	CIA_PCI_W3BASE	0x8760000700UL
 #define	CIA_PCI_W3MASK	0x8760000740UL
 #define	CIA_PCI_T3BASE	0x8760000780UL
+
+#define	PYXIS_INT_MASK	0x87a0000040UL
+#define	PYXIS_GPO	0x87a0000180UL
 
 /*
  * Values for CIA_PCI_TBIA
