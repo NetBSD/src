@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.48 2001/07/08 18:06:47 wiz Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.49 2001/07/24 16:43:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -288,7 +288,7 @@ putphysbuf(bp)
 {
 	int s;
 
-	/* XXXCDC: is this necesary? */
+	/* XXXCDC: is this necessary? */
 	if (bp->b_vp)
 		brelvp(bp);
 

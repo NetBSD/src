@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.15 2001/03/24 18:18:42 christos Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.16 2001/07/24 16:43:03 wiz Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -301,7 +301,7 @@ int main(int argc, char **argv)
 	if ((skey.val = (char *)malloc(16 + 1)) == NULL)
 		err(1, "Can't allocate memory");
 
-	/* Zero out old key if necesary (entry would change size) */
+	/* Zero out old key if necessary (entry would change size) */
 	if (zerokey) {
 		(void)skeyzero(&skey, pp->pw_name);
 		/* Re-open keys file and seek to the end */
