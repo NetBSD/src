@@ -1,3 +1,4 @@
+/*	$NetBSD: md.c,v 1.6 1994/11/30 06:20:42 phil Exp $  */
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.5 1994/08/16 23:18:20 phil Exp $
  */
 
 #include <sys/param.h>
@@ -251,6 +251,9 @@ unsigned char		*addr;
 	case 2:
 		return put_num(addr, relocation, bytes);
 	}
+#ifdef RTLD
+	_cachectl (addr, bytes); /* maintain cache coherency */
+#endif
 }
 
 /*
@@ -298,6 +301,9 @@ long		index;
 	put_num(sp->code, BSR, 2);
 	put_disp(sp->code + 2, -offset - 1, 4);
 	sp->reloc_index = index;
+#ifdef RTLD
+	_cachectl (sp->code, 6);	/* maintain cache coherency */
+#endif
 }
 
 /*
@@ -315,15 +321,9 @@ u_long		addr;
 {
 	put_num(sp->code, BR, 2);
 	put_disp(sp->code + 2, addr - offset - 1, 4);
-#ifdef RTLD
-/*
- * Selfmodifing code is a problem on systems with
- * instruction cache. If sp->reloc_index is not changed
- * by ld.so, eventually binder will be more then once, but
- * it will work at least.
- */
-#else
 	sp->reloc_index = 0;
+#ifdef RTLD
+	_cachectl (sp->code, 6);	/* maintain cache coherency */
 #endif
 }
 
