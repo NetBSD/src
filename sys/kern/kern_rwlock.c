@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.2.4 2002/03/17 20:18:56 thorpej Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.2.5 2002/03/22 03:27:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,13 +45,47 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.4 2002/03/17 20:18:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.2.5 2002/03/22 03:27:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
+
+/* 
+ * note that stdarg.h and the ansi style va_start macro is used for both
+ * ansi and traditional c complers.
+ * XXX: this requires that stdarg.h define: va_alist and va_dcl 
+ */
+#include <machine/stdarg.h>
+
+#if defined(RWLOCK_DEBUG)
+#define	RWL_LOCKED(rwl)							\
+	(rwl)->rwl_debug.rwl_locked = (vaddr_t) __builtin_return_address(0)
+#define	RWL_UNLOCKED(rwl)						\
+	(rwl)->rwl_debug.rwl_unlocked = (vaddr_t) __builtin_return_address(0)
+#else
+#define	RWL_LOCKED(rwl)		/* nothing */
+#define	RWL_UNLOCKED(rwl)	/* nothing */
+#endif /* RWLOCK_DEBUG */
+
+static void
+rwlock_abort(krwlock_t *rwl, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+
+#if defined(RWLOCK_DEBUG)
+	printf("last locked: 0x%lx  last unlocked: 0x%lx\n",
+	    rwl->rwl_debug.rwl_locked, rwl->rwl_debug.rwl_unlocked);
+#endif
+
+	panic("rwlock_abort");
+}
 
 /*
  * rw_init:
@@ -120,7 +154,7 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		panic("rw_enter: bad rw %d", rw);
+		rwlock_abort(rwl, "rw_enter: bad rw %d", rw);
 #endif
 	}
 
@@ -144,7 +178,7 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 		}
 
 		if (RWLOCK_OWNER(rwl) == curproc)
-			panic("rw_enter: locking against myself");
+			rwlock_abort(rwl, "rw_enter: locking against myself");
 
 		ts = turnstile_lookup(rwl);
 
@@ -179,6 +213,10 @@ rw_enter(krwlock_t *rwl, krw_t rw)
 
 	KASSERT((rw == RW_WRITER && RWLOCK_OWNER(rwl) == curproc) ||
 		(rw == RW_READER && RWLOCK_COUNT(rwl) != 0));
+#if defined(RWLOCK_DEBUG)
+	if (rw == RW_WRITER)
+		RWL_LOCKED(rwl);
+#endif
 }
 
 /*
@@ -203,7 +241,7 @@ rw_tryenter(krwlock_t *rwl, krw_t rw)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		panic("rw_tryenter: bad rw %d", rw);
+		rwlock_abort(rwl, "rw_tryenter: bad rw %d", rw);
 #endif
 	}
 
@@ -221,6 +259,10 @@ rw_tryenter(krwlock_t *rwl, krw_t rw)
 
 	KASSERT((rw == RW_WRITER && RWLOCK_OWNER(rwl) == curproc) ||
 		(rw == RW_READER && RWLOCK_COUNT(rwl) != 0));
+#if defined(RWLOCK_DEBUG)
+	if (rw == RW_WRITER)
+		RWL_LOCKED(rwl);
+#endif
 	return (1);
 }
 
@@ -243,14 +285,15 @@ rw_exit(krwlock_t *rwl)
 	 */
 	if (rwl->rwl_owner & RWLOCK_WRITE_LOCKED) {
 		if (RWLOCK_OWNER(rwl) == NULL)
-			panic("rw_exit: not owned");
+			rwlock_abort(rwl, "rw_exit: not owned");
 		else
-			panic("rw_exit: not owner, owner = %p, "
+			rwlock_abort(rwl, "rw_exit: not owner, owner = %p, "
 			    "current = %p", RWLOCK_OWNER(rwl), curproc);
 		decr = ((unsigned long) curproc) | RWLOCK_WRITE_LOCKED;
+		RWL_UNLOCKED(rwl);
 	} else {
 		if (RWLOCK_COUNT(rwl) == 0)
-			panic("rw_exit: not held\n");
+			rwlock_abort(rwl, "rw_exit: not held\n");
 		decr = RWLOCK_READ_INCR;
 	}
 
@@ -313,11 +356,14 @@ rw_downgrade(krwlock_t *rwl)
 
 	if (RWLOCK_OWNER(rwl) != curproc) {
 		if (RWLOCK_OWNER(rwl) == NULL)
-			panic("rw_downgrade: not owned");
+			rwlock_abort(rwl, "rw_downgrade: not owned");
 		else
-			panic("rw_downgrade: not owner, owner = %p, "
+			rwlock_abort(rwl,
+			    "rw_downgrade: not owner, owner = %p, "
 			    "current = %p", RWLOCK_OWNER(rwl), curproc);
 	}
+
+	RWL_UNLOCKED(rwl);
 
 	/* XXX This algorithm has to change if we do direct-handoff. */
 	for (;;) {
@@ -374,6 +420,7 @@ rw_tryupgrade(krwlock_t *rwl)
 
 	KASSERT(rwl->rwl_owner & RWLOCK_WRITE_LOCKED);
 	KASSERT(RWLOCK_OWNER(rwl) == curproc);
+	RWL_LOCKED(rwl);
 	return (1);
 }
 
@@ -416,7 +463,7 @@ rw_read_locked(krwlock_t *rwl)
 
 #ifdef DIAGNOSTIC
 	if (rv == 0)
-		panic("rw_read_locked: not held");
+		rwlock_abort(rwl, "rw_read_locked: not held");
 #endif
 
 	return (rv);
@@ -434,9 +481,9 @@ rw_write_locked(krwlock_t *rwl)
 
 #ifdef DIAGNOSTIC
 	if (rv == 0)
-		panic("rw_write_locked: not held");
+		rwlock_abort(rwl, "rw_write_locked: not held");
 	else if (RWLOCK_OWNER(rwl) != curproc)
-		panic("rw_write_locked: not owner, owner = %p, "
+		rwlock_abort(rwl, "rw_write_locked: not owner, owner = %p, "
 		    "current = %p", RWLOCK_OWNER(rwl), curproc);
 #endif
 

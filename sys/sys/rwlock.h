@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.4 2002/03/18 01:16:45 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.5 2002/03/22 03:26:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,6 +92,15 @@
  *	RWLOCK_THREAD
  *		Mask of valid thread/count bits.
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_lockdebug.h"
+#endif
+
+struct rwlock_debug_info {
+	vaddr_t		rwl_locked;	/* PC where mutex was locked */
+	vaddr_t		rwl_unlocked;	/* PC where mutex was unlocked */
+};      
 
 typedef int krw_t;
 
