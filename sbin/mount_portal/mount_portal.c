@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.5 1995/06/06 19:51:19 mycroft Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.6 1995/06/08 12:38:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_portal.c,v 1.5 1995/06/06 19:51:19 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mount_portal.c,v 1.6 1995/06/08 12:38:07 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,8 @@ main(argc, argv)
 		 */
 		FD_ZERO(&fdset);
 		FD_SET(so, &fdset);
-		rc = select(so+1, &fdset, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0);
+		rc = select(so+1, &fdset, (fd_set *)0, (fd_set *)0,
+		    (struct timeval *)0);
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;
