@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.131 2004/04/07 22:28:30 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.132 2004/04/07 22:34:00 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2500,3 +2500,8 @@ usr.bin/tftp.1					1.12-1.17
 	Pullup to trunk version w. fixes for 'blksize' option and 
 	timeout/tsize options.
 	[itojun, ticket #98]
+
+sys/netinet6/ip6_forward.c			1.39
+
+	Shouldn't check scope match when encapsulating packet into tunnel mode.
+	[itojun, ticket #99]
