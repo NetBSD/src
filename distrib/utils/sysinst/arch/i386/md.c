@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.42 2000/10/11 22:58:17 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.43 2000/10/11 23:47:59 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -199,7 +199,8 @@ md_post_disklabel(void)
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		msg_display(MSG_dobad144);
-		return run_prog(0, 1, NULL, "/usr/sbin/bad144 %s 0", diskdev);
+		return run_prog(RUN_DISPLAY, NULL, "/usr/sbin/bad144 %s 0",
+		    diskdev);
 	}
 	return 0;
 }
@@ -209,7 +210,7 @@ md_post_newfs(void)
 {
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(0, 1, NULL,
+	return run_prog(RUN_DISPLAY, NULL,
 	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
 	    diskdev);
 }
@@ -403,6 +404,7 @@ custom:		ask_sizemult(dlcylsize);
 	/* Disk name */
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
+	/* Create the disktab.preinstall */
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -519,7 +521,7 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", cmd);
 	do_system(cmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
 	/*
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
@@ -546,11 +548,11 @@ md_cleanup_install(void)
 	if (scripting)
 		(void)fprintf(script, "%s\n", cmd);
 	do_system(cmd);
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int
@@ -784,7 +786,7 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 			n++;
 			break;
 		case LIB_MOVE:
-			run_prog(0, 0, NULL, "mv -f %s %s/%s",
+			run_prog(0, NULL, "mv -f %s %s/%s",
 			    fullname, destdir, dp->d_name);
 			break;
 		}
@@ -835,7 +837,7 @@ move_aout_libs()
 	 * move it out of the way.
 	 */
 	strcpy(src, concat_paths(prefix, "aout"));
-	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	run_prog(0, NULL, "mv -f %s %s", src,
 	    concat_paths(prefix, "aout.old"));
 
 	/*
@@ -844,8 +846,8 @@ move_aout_libs()
 	 * avoid overflowing the root partition.
 	 */
 	strcpy(prefix, target_expand("/usr/aout"));
-	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s", prefix);
-	run_prog(1, 0, MSG_aoutfail, "ln -s %s %s",
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s", prefix);
+	run_prog(RUN_FATAL, MSG_aoutfail, "ln -s %s %s",
 	    "/usr/aout", src);
 
 domove:
@@ -859,18 +861,18 @@ domove:
 	 * and ld.so respectively will find them.
 	 */
 	strcpy(src, concat_paths(prefix, "usr/lib"));
-	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	run_prog(0, NULL, "mv -f %s %s", src,
 	    concat_paths(prefix, "usr/lib.old"));
 	strcpy(src, concat_paths(prefix, "etc/ld.so.conf"));
-	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	run_prog(0, NULL, "mv -f %s %s", src,
 	    concat_paths(prefix, "etc/ld.so.conf.old"));
-	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s ",
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
 	    concat_paths(prefix, "usr/lib"));
-	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s ",
+	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
 	    concat_paths(prefix, "etc"));
 
 	strcpy(src, target_expand("/etc/ld.so.conf"));
-	run_prog(1, 0, MSG_aoutfail, "mv -f %s %s", src,
+	run_prog(RUN_FATAL, MSG_aoutfail, "mv -f %s %s", src,
 	    concat_paths(prefix, "etc/ld.so.conf"));
 
 	strcpy(src, target_expand("/usr/lib"));

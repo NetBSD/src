@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.22 2000/09/27 12:42:04 fvdl Exp $	*/
+/*	$NetBSD: install.c,v 1.23 2000/10/11 23:47:55 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,10 +132,12 @@ do_install()
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
-	if (get_and_unpack_sets(MSG_instcomplete, MSG_abortinst) != 0)
+	if (get_and_unpack_sets(MSG_extractcomplete, MSG_abortinst) != 0)
 		return;
 
 	set_timezone();
+
+	set_root_password();
 	
 	sanity_check();
 
