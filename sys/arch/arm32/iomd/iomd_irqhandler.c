@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.9 1996/10/13 03:05:52 christos Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.10 1996/10/15 23:20:41 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,11 +40,6 @@
  *
  * IRQ/FIQ initialisation, claim, release and handler routines
  *
- * NOTE: Although the irqhandlers support chaining and the claim
- * and release routines install handlers at the top of the chain
- * The low level IRQ handler will only call the top handler in a
- * chain.
- *
  * Created      : 30/09/94
  */
 
@@ -65,10 +60,11 @@
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
 
+int current_intr_depth = 0;
 u_int irqmasks[IRQ_LEVELS];
 u_int current_mask;
 u_int actual_mask;
-u_int disabled_mask;
+u_int disabled_mask = 0;
 u_int spl_mask;
 u_int soft_interrupts;
 extern u_int intrcnt[];
@@ -79,6 +75,7 @@ typedef struct {
 } pv_addr_t;
              
 extern pv_addr_t systempage;
+extern char *_intrnames;
 
 /* Prototypes */
 
@@ -106,27 +103,33 @@ irq_init()
 {
 	int loop;
 
-/* Clear all the IRQ handlers */
+	/* Clear all the IRQ handlers */
 
 	for (loop = 0; loop < NIRQS; ++loop)
 		irqhandlers[loop] = NULL;
 
-/* Clear the FIQ handler */
+	/* Clear the FIQ handler */
 
 	fiqhandlers = NULL;
 
-/* Clear the IRQ/FIQ masks in the IOMD */
+	/* Clear the IRQ/FIQ masks in the IOMD */
 
 	WriteByte(IOMD_IRQMSKA, 0x00);
 	WriteByte(IOMD_IRQMSKB, 0x00);
+
+#ifdef CPU_ARM7500
+	WriteByte(IOMD_IRQMSKC, 0x00);
+	WriteByte(IOMD_IRQMSKD, 0x00);
+#endif	/* CPU_ARM7500 */
+
 	WriteByte(IOMD_FIQMSK, 0x00);
 	WriteByte(IOMD_DMAMSK, 0x00);
 
-/*
- * Setup the irqmasks for the different Interrupt Priority Levels
- * We will start with no bits set and these will be updated as handlers
- * are installed at different IPL's.
- */
+	/*
+	 * Setup the irqmasks for the different Interrupt Priority Levels
+	 * We will start with no bits set and these will be updated as handlers
+	 * are installed at different IPL's.
+	 */
 
 	irqmasks[IPL_BIO]   = 0x00000000;
 	irqmasks[IPL_NET]   = 0x00000000;
@@ -142,7 +145,7 @@ irq_init()
 
 	set_spl_masks();
 
-/* Enable IRQ's and FIQ's */
+	/* Enable IRQ's and FIQ's */
 
 	enable_interrupts(I32_bit | F32_bit); 
 }
@@ -167,15 +170,17 @@ irq_claim(irq, handler)
 		panic("NULL interrupt handler\n");
 	if (handler->ih_func == NULL)
 		panic("Interrupt handler does not have a function\n");
-#endif
+#endif	/* DIAGNOSTIC */
 
-
-/* IRQ_INSTRUCT indicates that we should get the irq number from the irq structure */
+	/*
+	 * IRQ_INSTRUCT indicates that we should get the irq number
+	 * from the irq structure
+	 */
 
 	if (irq == IRQ_INSTRUCT)
 		irq = handler->ih_num;
     
-/* Make sure the irq number is valid */
+	/* Make sure the irq number is valid */
 
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
@@ -185,43 +190,42 @@ irq_claim(irq, handler)
 	handler->ih_next = irqhandlers[irq];
 	irqhandlers[irq] = handler;
 
-/*
- * Reset the flags for this handler.
- * As the handler is now in the chain mark it as active.
- */
+	/*
+	 * Reset the flags for this handler.
+	 * As the handler is now in the chain mark it as active.
+	 */
 	handler->ih_flags = 0 | IRQ_FLAG_ACTIVE;
 
-/*
- * Record the interrupt number for accounting.
- * Done here as the accounting number may not be the same as the IRQ number
- * though for the moment they are
- */
+	/*
+	 * Record the interrupt number for accounting.
+	 * Done here as the accounting number may not be the same as the IRQ number
+	 * though for the moment they are
+	 */
  
 	handler->ih_num = irq;
 
 #ifdef IRQSTATS
 	/* Get the interrupt name from the head of the list */
 
-	if (/*handler->ih_next == NULL && */handler->ih_name) {
-		extern char *_intrnames;
+	if (handler->ih_name) {
 		char *ptr = _intrnames + (irq * 14);
-/*		printf("intrnames=%08x ptr=%08x irq=%d\n", (u_int)_intrnames, (u_int)ptr, irq);*/
 		strcpy(ptr, "             ");
-		strncpy(ptr, handler->ih_name, min(strlen(handler->ih_name), 13));
+		strncpy(ptr, handler->ih_name,
+		    min(strlen(handler->ih_name), 13));
 	} else {
-		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
 		sprintf(ptr, "irq %2d     ", irq);
 	}
-#endif
+#endif	/* IRQSTATS */
 
-/*
- * Update the irq masks.
- * Find the lowest interrupt priority on the irq chain.
- * Interrupt is allowable at priorities lower than this.
- * If ih_level is out of range then don't bother to update
- * the masks.
- */
+	/*
+	 * Update the irq masks.
+	 * Find the lowest interrupt priority on the irq chain.
+	 * Interrupt is allowable at priorities lower than this.
+	 * If ih_level is out of range then don't bother to update
+	 * the masks.
+	 */
+
 	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
 		irqhandler_t *ptr;
 
@@ -246,28 +250,25 @@ irq_claim(irq, handler)
 		irqmasks[IPL_NET] &= irqmasks[IPL_TTY];
 #endif
 	}
-                 
-/*
-	for (level = 0; level < IRQ_LEVELS; ++level)
-		printf("irqmask[%d] = %08x\n", level, irqmasks[level]);
-*/
 
 #if NPODULEBUS > 0
-/*
- * Is this an expansion card IRQ and is there a PODULE IRQ handler
- * installed ?
- * If not panic as the podulebus irq handler should have been installed
- * when the podulebus was attached.
- */
+	/*
+	 * Is this an expansion card IRQ and is there a PODULE IRQ handler
+	 * installed ?
+	 * If not panic as the podulebus irq handler should have been installed
+	 * when the podulebus was attached.
+	 *
+	 * The podule IRQ's need to be fixed ASAP
+	 */
 
 	if (irq >= IRQ_EXPCARD0 && irqhandlers[IRQ_PODULE] == NULL)
 		panic("Podule IRQ %d claimed but no podulebus handler installed\n",
 		    irq);
-#endif
+#endif	/* NPODULEBUS */
 
 	enable_irq(irq);
 	set_spl_masks();
-    
+
 	return(0);
 }
 
@@ -284,22 +285,25 @@ irq_release(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
-
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
+	extern char *_intrnames;
 
-/* IRQ_INSTRUCT indicates that we should get the irq number from the irq structure */
+	/*
+	 * IRQ_INSTRUCT indicates that we should get the irq number
+	 * from the irq structure
+	 */
 
 	if (irq == IRQ_INSTRUCT)
 		irq = handler->ih_num;
 
-/* Make sure the irq number is valid */
+	/* Make sure the irq number is valid */
 
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
 
 
-/* Locate the handler */
+	/* Locate the handler */
 
 	irqhand = irqhandlers[irq];
 	prehand = &irqhandlers[irq];
@@ -309,7 +313,7 @@ irq_release(irq, handler)
 		irqhand = irqhand->ih_next;
 	}
 
-/* Remove the handler if located */
+	/* Remove the handler if located */
       
 	if (irqhand)
 		*prehand = irqhand->ih_next;
@@ -317,11 +321,11 @@ irq_release(irq, handler)
 		return(-1);
 
 
-/* Now the handler has been removed from the chain mark is as inactive */
+	/* Now the handler has been removed from the chain mark is as inactive */
 
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
 
-/* Make sure the head of the handler list is active */
+	/* Make sure the head of the handler list is active */
 
 	if (irqhandlers[irq])
 		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
@@ -329,35 +333,34 @@ irq_release(irq, handler)
 #ifdef IRQSTATS
 	/* Get the interrupt name from the head of the list */
 	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
-		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
 		strcpy(ptr, "             ");
-		strncpy(ptr, irqhandlers[irq]->ih_name, min(strlen(irqhandlers[irq]->ih_name), 13));
+		strncpy(ptr, irqhandlers[irq]->ih_name,
+		    min(strlen(irqhandlers[irq]->ih_name), 13));
 	} else {
-		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
 		sprintf(ptr, "irq %2d     ", irq);
 	}
-#endif
+#endif	/* IRQSTATS */
 
-/*
- * Update the irq masks.
- * If ih_level is out of range then don't bother to update
- * the masks.
- */
+	/*
+	 * Update the irq masks.
+	 * If ih_level is out of range then don't bother to update
+	 * the masks.
+	 */
   
 	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
 		irqhandler_t *ptr;
 
-/* Clean the bit from all the masks */
+	/* Clean the bit from all the masks */
 
 		for (level = 0; level < IRQ_LEVELS; ++level)
 			irqmasks[level] &= ~(1 << irq);
 
-/*
- * Find the lowest interrupt priority on the irq chain.
- * Interrupt is allowable at priorities lower than this.
- */
+	/*
+	 * Find the lowest interrupt priority on the irq chain.
+	 * Interrupt is allowable at priorities lower than this.
+	 */
 
 		ptr = irqhandlers[irq];
 		if (ptr) {
@@ -375,10 +378,10 @@ irq_release(irq, handler)
 		}
 	}
 
-/*
- * Disable the appropriate mask bit if there are no handlers left for
- * this IRQ.
- */
+	/*
+	 * Disable the appropriate mask bit if there are no handlers left for
+	 * this IRQ.
+	 */
 
 	if (irqhandlers[irq] == NULL)
 		disable_irq(irq);
@@ -396,10 +399,6 @@ disable_interrupts(mask)
 	register u_int cpsr;
 
 	cpsr = SetCPSR(mask, mask);
-#ifdef DIAGNOSTIC
-	if ((GetCPSR() & I32_bit) == 0)
-		printf("Alert ! disable_interrupts has failed\n");
-#endif
 	return(cpsr);
 }
 
@@ -472,7 +471,6 @@ void
 stray_irqhandler(mask)
 	u_int mask;
 {
-/*	panic("Stray IRQ received (%08x)\n", mask);*/
 	static u_int stray_irqs = 0;
 
 	if (++stray_irqs <= 8)
@@ -487,43 +485,30 @@ void
 dosoftints()
 {
 	register u_int softints;
-	u_int oldcpsr;
+	int s;
 
 	softints = soft_interrupts & spl_mask;
+	if (softints == 0) return;
 
-/*	if (soft_interrupts) {
-		printf("current_spl_level=%d ", current_spl_level);
-		printf("soft_interrupts=%08x spl_mask=%08x\n", soft_interrupts, spl_mask);
-	}*/
+	s = splsoft();
 
 	/*
 	 * Software clock interrupts
 	 */
 
 	if (softints & IRQMASK_SOFTCLOCK) {
-		int s;
-		
-		s = splhigh();
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTCLOCK];
-		soft_interrupts &= ~IRQMASK_SOFTCLOCK;
-		oldcpsr = enable_interrupts(I32_bit);
+		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
 		softclock();
-		restore_interrupts(oldcpsr);
-		(void)splx(s);
 	}
+
 #if defined(INET) && defined(PLIP) && defined(notyet)
 	if (softints & IRQMASK_SOFTPLIP) {
-		int s;
-		
-/*		oldcpsr = enable_interrupts(I32_bit);  */
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTPLIP];
-		soft_interrupts &= ~IRQMASK_SOFTPLIP;
-/*		s = raisespl(SPL_NET);*/
+		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTPLIP);
 		plipintr();
-/*		(void)splx(s);*/
-/*		restore_interrupts(oldcpsr);  */
 	}
 #endif
 
@@ -532,75 +517,56 @@ dosoftints()
 	 */
 
 	if (softints & IRQMASK_SOFTNET) {
-		register int isr;
-		u_int cpsr;
-
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTNET];
-		soft_interrupts &= ~IRQMASK_SOFTNET;
+		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
 
-		cpsr = disable_interrupts(I32_bit);
-		isr = netisr;
-		netisr = 0;
-		restore_interrupts(cpsr);
-
-/*		oldcpsr = enable_interrupts(I32_bit);  */
-
-/*		if (isr == 0) return;*/
 #ifdef INET
 #include "ether.h"
 #if NETHER > 0
-		if (isr & (1 << NETISR_ARP)) arpintr();
+		if (netisr & (1 << NETISR_ARP)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
+			arpintr();
+		}
 #endif
-		if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef IMP
-		if (isr & (1 << NETISR_IMP)) impintr();
+		if (netisr & (1 << NETISR_IP)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_IP));
+			ipintr();
+		}
 #endif
 #ifdef NS
-		if (isr & (1 << NETISR_NS)) nsintr();
+		if (netisr & (1 << NETISR_NS)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_NS));
+			nsintr();
+		}
+#endif
+#ifdef IMP
+		if (netisr & (1 << NETISR_IMP)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_IMP));
+			impintr();
+		}
 #endif
 #ifdef ISO
-		if (isr & (1 << NETISR_ISO)) clnlintr();
+		if (netisr & (1 << NETISR_ISO)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_ISO));
+			clnlintr();
+		}
 #endif
 #ifdef CCITT
-		if (isr & (1 << NETISR_CCITT)) ccittintr();
+		if (netisr & (1 << NETISR_CCITT)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_CCITT));
+			ccittintr();
+		}
 #endif
 #include "ppp.h"
-#if NPPP > 0
-		if (isr & (1 << NETISR_PPP)) pppintr();
+#ifdef PPP
+		if (netisr & (1 << NETISR_PPP)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
+			pppintr();
+		}
 #endif
-/*		restore_interrupts(oldcpsr);  */
 	}
-
-}
-
-extern vgone();
-extern vfinddev();
-extern idle();
-extern cpu_switch();
-extern switch_exit();
-
-void
-validate_irq_address(irqf, mask)
-	irqframe_t *irqf;
-	u_int mask;
-{
-	return;
-	if (irqf->if_pc > (int)idle && irqf->if_pc < (int)switch_exit)
-		return;
-	if (irqf->if_pc > (int)SetCPSR && irqf->if_pc < (int)GetCPSR)
-		return;
-	if ((irqf->if_spsr & PSR_MODE) != PSR_USR32_MODE) {
-		printf("Alert! IRQ while in non USR mode (%08x) pc=%08x\n",
-		    irqf->if_spsr, irqf->if_pc);
-	}
-	if ((GetCPSR() & I32_bit) == 0) {
-		printf("Alert! IRQ's enabled during IRQ handler\n");
-	}
-	if (irqf->if_pc >= (int)vgone && irqf->if_pc < (int)vfinddev)
-		printf("Alert! IRQ between vgone & vfinddev : pc=%08x\n",
-		    irqf->if_pc);
+	(void)splx(s);
 }
 
 
@@ -614,7 +580,7 @@ int
 fiq_claim(handler)
 	fiqhandler_t *handler;
 {
-/* Fail if the FIQ's are already claimed */
+	/* Fail if the FIQ's are already claimed */
 
 	if (fiqhandlers)
 		return(-1);
@@ -622,13 +588,13 @@ fiq_claim(handler)
 	if (handler->fh_size > 0xc0)
 		return(-1);
 
-/* Install the handler */
+	/* Install the handler */
 
 	fiqhandlers = handler;
 
-/* Now we have to actually install the FIQ handler */
+	/* Now we have to actually install the FIQ handler */
 
-/* Eventually we will copy this down but for the moment ... */
+	/* Eventually we will copy this down but for the moment ... */
 
 	zero_page_readwrite();
 
@@ -636,17 +602,15 @@ fiq_claim(handler)
     
 	zero_page_readonly();
     
-/*	bcopy(handler->fh_func, 0x0000001c, handler->fh_size);*/
-
-/* We must now set up the FIQ registers */
+	/* We must now set up the FIQ registers */
 
 	fiq_setregs(handler);
 
-/* Set up the FIQ mask */
+	/* Set up the FIQ mask */
 
 	WriteWord(IOMD_FIQMSK, handler->fh_mask);
     
-/* Make sure that the FIQ's are enabled */
+	/* Make sure that the FIQ's are enabled */
     
 	enable_interrupts(F32_bit);
 	return(0);
@@ -663,24 +627,24 @@ int
 fiq_release(handler)
 	fiqhandler_t *handler;
 {
-/* Fail if the handler is wrong */
+	/* Fail if the handler is wrong */
 
 	if (fiqhandlers != handler)
 		return(-1);
 
-/* Disable FIQ interrupts */
+	/* Disable FIQ interrupts */
       
 	disable_interrupts(F32_bit);
 
-/* Clear up the FIQ mask */
+	/* Clear up the FIQ mask */
 
 	WriteWord(IOMD_FIQMSK, 0x00);
 
-/* Retrieve the FIQ registers */
+	/* Retrieve the FIQ registers */
 
 	fiq_getregs(handler);
 
-/* Remove the handler */
+	/* Remove the handler */
 
 	fiqhandlers = NULL;
 	return(0);

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.S,v 1.8 1996/10/13 16:52:02 christos Exp $ */
+/* $NetBSD: irq.S,v 1.9 1996/10/15 23:20:40 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,37 +47,52 @@
 #include <machine/cpu.h>
 #include <machine/iomd.h>
 
-#define PUSHFRAME \
-	str	lr, [sp, #-4]!;		/* Push the return address */ \
-	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
+/*
+ * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
+ * This should only be used if the processor is not currently in SVC32
+ * mode. The processor mode is switched to SVC mode and the trap frame is
+ * stored. The SVC R14 field is used to store the previous value of
+ * R14 in SVC mode.  
+ */
+
+#define PUSHFRAMEINSVC \
+	stmdb	sp, {r0-r3};		/* Save 4 registers */ \
+	mov	r0, lr;			/* Save xxx32 r14 */ \
+	mov	r1, sp;			/* Save xxx32 sp */ \
+	mrs	r3, spsr_all;		/* Save xxx32 spsr */ \
+	mrs     r2, cpsr_all; 		/* Get the CPSR */ \
+	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */ \
+	orr     r2, r2, #(PSR_SVC32_MODE); \
+	msr     cpsr_all, r2;		/* Punch into SVC mode */ \
+	str	r0, [sp, #-4]!;		/* Push return address */ \
+	str	lr, [sp, #-4]!;		/* Push SVC r14 */ \
+	msr     spsr_all, r3;		/* Restore correct spsr */ \
+	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	stmdb	sp, {r0-r14}^;		/* Push the user mode registers */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */ \
-	str	r0, [sp, #-4]!;
+	str	r0, [sp, #-4]!
 
-#define PULLFRAME \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-	mov	r0, r0;			/* NOP for previous instruction */ \
-	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
-	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+/*
+ * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
+ * in SVC32 mode and restore the saved processor mode and PC.
+ * This should be used when the SVC R14 register needs to be restored on
+ * exit.
+ */
 
-#define PULLFRAMEANDEXIT \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */ \
-        msr     spsr_all, r0; \
+#define PULLFRAMEFROMSVCANDEXIT \
+	ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */ \
+	msr     spsr_all, r0;		/* restore SPSR */ \
 	add	sp, sp, #(4*15);	/* Adjust the stack pointer */ \
-        ldmdb   sp, {r0-r14}^;		/* Restore the registers (user mode) */ \
-	mov	r0, r0;			/* NOP for previous instruction */ \
-	add	sp, sp, #0x00000004;	/* Skip SVC R14 */ \
-	ldmia	sp!, {pc}^		/* Pull the return address */
+	ldmdb   sp, {r0-r14}^;		/* Restore the registers (usr mode) */ \
+	mov     r0, r0;	  		/* NOP for previous instruction */ \
+	ldmia	sp!, {lr, pc}^		/* Restore lr and exit */
 
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+	.text
 
 /*
  *
@@ -101,6 +116,10 @@ Ldisabled_mask:
 Lcurrent_spl_level:	
 	.word	_current_spl_level
 
+Lcurrent_intr_depth:
+	.word	_current_intr_depth
+
+	.text
 	.global	irq_entry
 
 /*
@@ -116,34 +135,17 @@ Lcurrent_spl_level:
 irq_entry:
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
-	PUSHFRAME
+	PUSHFRAMEINSVC			/* Push an interrupt frame */
 
-/* Raise the spl level and re-enable interrupts */
+/*        mov     r11, #0x00000000*/	/* Trace back stops here */
 
-#if 0
-	ldr	r1, Lcurrent_spl_level
-	ldr	r0, [r1]
-	add	r0, r0, #1
-	bl	_raisespl
-#endif
-#if 0
-        mrs     r0, cpsr_all		/* Enable IRQ's */
-	bic	r0, r0, #I32_bit
-	msr	cpsr_all, r0
-#endif
+	/* Load r8 with the IOMD interrupt requests */
 
-/*
- * If we did not raise the spl level high enough we will get another
- * interrupt here.
- */
-
-        mov     r11, #0x00000000
  	mov	r10, #(IOMD_BASE)	/* Point to the IOMD */
 	ldrb	r8, [r10, #(IOMD_IRQRQA - IOMD_BASE)]	/* Get IRQ request A */
-/*	strb	r8, [r10, #(IOMD_IRQRQA - IOMD_BASE)]*/
 	ldrb	r9, [r10, #(IOMD_IRQRQB - IOMD_BASE)]	/* Get IRQ request B */
 	orr	r8, r8, r9, lsl #8
-#ifdef RC7500
+#ifdef CPU_ARM7500
 	ldrb	r9, [r10, #(IOMD_IRQRQC - IOMD_BASE)]	/* Get IRQ request C */
 	orr	r8, r8, r9, lsl #16
 	ldrb	r9, [r10, #(IOMD_IRQRQD - IOMD_BASE)]	/* Get IRQ request D */
@@ -154,28 +156,38 @@ irq_entry:
 #else
 	ldrb	r9, [r10, #(IOMD_DMARQ - IOMD_BASE)]	/* Get DMA Request */
 	orr	r8, r8, r9, lsl #16
-#endif
+#endif	/* CPU_ARM7500 */
 
-/*#if 0*/
-	mov	r0, #0x7d		/* Clear IOMD IRQ bits */
+	and	r0, r8, #0x7d		/* Clear IOMD IRQA bits */
 	strb	r0, [r10, #(IOMD_IRQRQA - IOMD_BASE)]
-/*#endif*/
 
-/*	ldr	r1, Ldisabled_mask
+	/*
+	 * Note that we have entered the IRQ handler.
+	 * We are in SVC mode so we cannot use the processor mode
+	 * to determine if we are in an IRQ. Instead we will count the
+	 * each time the interrupt handler is nested.
+	 */
+
+	ldr	r0, Lcurrent_intr_depth
+	ldr	r1, [r0]
+	add	r1, r1, #1
+	str	r1, [r0]
+
+	/* Block the current requested interrupts */
+
+	ldr	r1, Ldisabled_mask
 	ldr	r0, [r1]
+	stmfd	sp!, {r0}
 	orr	r0, r0, r8
 	str	r0, [r1]
 
-	bl	_irq_setmasks*/
+	/* Update the IOMD irq masks */
 
-#if 0
+	bl	_irq_setmasks
+
         mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
-#endif
-	mov	r0, sp
-	mov	r1, r8
-	bl	_validate_irq_address
 
 	ldr	r7, [pc, #irqhandlers - . - 8]
         mov	r9, #0x00000001
@@ -184,7 +196,6 @@ irq_entry:
 
 irqloop:
 	tst	r8, r9			/* Is a bit set ? */
-
 	beq	nextirq			/* No ? try next bit */
 
 	ldr	r6, [r7]		/* Get address of first handler structure */
@@ -214,62 +225,44 @@ irqchainloop:
 	ldr	r1, [r0]
 	add	r1, r1, #0x00000001
 	str	r1, [r0]
-#endif
+#endif	/* IRQSTATS */
 
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
-	addeq	r0, sp, #4			/* ... stack frame */
+	addeq	r0, sp, #8		/* ... stack frame */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 nextinchain:
-/*	ldr	r1, Ldisabled_mask
-	ldr	r2, [r1]
-	bic	r2, r2, r9
-	str	r2, [r1]
-	bl	_irq_setmasks*/
-
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
-	beq	nextirq
+	beq	irqdone
 
 	ldr	r6, [r6, #(IH_NEXT)]
 	teq	r6, #0x00000000
 	bne	irqchainloop
 
+irqdone:
 nextirq:
 	add	r7, r7, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
-#ifdef RC7500
+#ifdef CPU_ARM7500
 	teq	r9, #0			/* done the last bit ? */
 #else
 	teq	r9, #(1 << 24)		/* done the last bit ? */
-#endif
+#endif	/* CPU_ARM7500 */
 	bne	irqloop			/* no - loop back. */
 
 	ldmfd	sp!, {r8}
 
-
-
-#if 0
-        mrs     r0, cpsr_all		/* Enable IRQ's */
-	bic	r0, r0, #I32_bit
-	msr	cpsr_all, r0
-#endif
+	/* Restore previous disabled mask */
+	ldmfd	sp!, {r2}
+	ldr	r1, Ldisabled_mask
+	str	r2, [r1]
+	bl	_irq_setmasks
 
 	bl	_dosoftints		/* Handle the soft interrupts */
 
-/* Disable interrupts and lower the spl level */
-
 #if 0
-        mrs     r0, cpsr_all		/* Disable IRQ's */
-	orr	r0, r0, #I32_bit
-	msr	cpsr_all, r0
-#endif
-#if 0
-	ldr	r1, Lcurrent_spl_level
-	ldr	r0, [r1]
-	sub	r0, r0, #1
-	bl	_lowerspl
-#endif
+	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 
@@ -282,73 +275,67 @@ nextirq:
 	streq	r1, [r0]
 
 	moveq	r0, sp			/* arg 0 = irq frame */
-	beq	_irqast			/* exit via the AST handler */
+	bleq	_ast			/* call the AST handler */
+#else
+	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 
-	PULLFRAME
+	ldr	r0, [sp]		/* Get the SPSR from stack */
+
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
+	teq	r0, #(PSR_USR32_MODE)
+	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
+	ldreq	r1, [r0]
+	teqeq	r1, #0x00000001
+
+	beq	irqast			/* call the AST handler */
+#endif
+	/* Kill IRQ's in preparation for exit */
+
+        mrs     r0, cpsr_all
+        orr     r0, r0, #(I32_bit)
+        msr     cpsr_all, r0
+
+	/* Decrement the nest count */
+
+	ldr	r0, Lcurrent_intr_depth
+	ldr	r1, [r0]
+	sub	r1, r1, #1
+	str	r1, [r0]
+
+	PULLFRAMEFROMSVCANDEXIT
 
 	movs	pc, lr			/* Exit */
 
+	/*
+	 * Ok, snag with current intr depth ...
+	 * If ast() calls mi_sleep() the current_intr_depth will not be
+	 * decremented until the process is woken up. This can result
+	 * in the system believing it is still in the interrupt handler.
+	 * If we are calling ast() then correct the current_intr_depth
+	 * before the call.
+	 */
+irqast:
+	mov	r1, #0x00000000		/* Clear ast_pending */
+	str	r1, [r0]
 
-	.global	_irqast
-_irqast:
-/* Punch into SVC32 mode (R0 points to the irqframe) */
-/* We can trash all the registers we like :-) */
+	/* Kill IRQ's so we atomically decrement current_intr_depth */
 
-/* Make sure interrupts are disabled */
-
-#ifdef DIAGNOSTIC
         mrs     r2, cpsr_all
-	tst	r2, #(I32_bit)
-	bne	Lis
+        orr     r3, r2, #(I32_bit)
+        msr     cpsr_all, r3
 
-        orr     r2, r2, #(I32_bit)
+	/* Decrement the nest count */
+
+	ldr	r0, Lcurrent_intr_depth
+	ldr	r1, [r0]
+	sub	r1, r1, #1
+	str	r1, [r0]
+
+	/* Restore IRQ's */
         msr     cpsr_all, r2
 
-	stmfd	sp!, {r0-r3, lr}
-	add	r0, pc, #Lirqtext0 - . - 8
-	bl	_printf
-	ldmfd	sp!, {r0-r3, lr}
-Lis:
-#endif
-	add	sp, sp, #72	/* Correct IRQ32 sp */
-
-/*
- * We have now put IRQ mode back correct so we never need to return to
- * IRQ mode we can just exit via SVC mode. We must copy the trap frame
- * which still lies on the IRQ stack over to the SVC stack.
- */
-
-/* Punch into SVC 32 mode (IRQ's still disabled) */
-
-	mrs     r2, cpsr_all
-	bic     r2, r2, #(PSR_MODE)
-	eor     r2, r2, #(PSR_SVC32_MODE)
-	orr	r2, r2, #(I32_bit)	/* Overkill */
-	msr     cpsr_all, r2
-
-	sub	sp, sp, #72	/* Correct SVC32 sp */
-	mov	r12, sp
-
-/* r0  points to the trap frame on the IRQ stack (SP corrected) */
-/* r12 points to the trap frame on the SVC stack */
-
-	ldmia	r0!, {r1-r9} 	/* Pull 9 regs off the IRQ stack */
-	stmia	r12!, {r1-r9}	/* Store on the SVC stack */
-	ldmia	r0!, {r1-r9} 	/* Pull 9 regs off the IRQ stack */
-	stmia	r12!, {r1-r9}	/* Store on the SVC stack */
-
-/* Ok the IRQ trapframe is now the SVC trapframe */
-
-/* IRQ's can be enabled here */
-
-        mrs     r0, cpsr_all
-        bic     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-/* r0 points to trap frame on entry to ast() */
-
 	mov	r0, sp
-	bl	_ast			/* Lets go do an ast */
+	bl	_ast
 
 /* Kill IRQ's in preparation for exit */
 
@@ -356,31 +343,32 @@ Lis:
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
-	PULLFRAMEANDEXIT
+	PULLFRAMEFROMSVCANDEXIT
 
-Lirqtext0:
-	.asciz	"irqs enabled during ast\n"
-	.align	0
+	movs	pc, lr			/* Exit */
+	
 
 Lspl_mask:
-	.word	_spl_mask
+	.word	_spl_mask		/* irq's allowed at current spl level */
 
 Lcurrent_mask:
-	.word	_current_mask
+	.word	_current_mask		/* irq's that are usable */
 
 	.global	_irq_setmasks
 
 _irq_setmasks:
+	/* Disable interrupts */
 	mrs	r3, cpsr_all
 	orr	r1, r3,  #(I32_bit)
 	msr	cpsr_all, r1
-	
-	ldr	r1, Lcurrent_mask
+
+	/* Calculate IOMD interrupt mask */
+	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
 	ldr	r1, [r1]
-	ldr	r2, Lspl_mask
+	ldr	r2, Lspl_mask		/* Block due to current spl level */
 	ldr	r2, [r2]
 	and	r1, r1, r2
-	ldr	r2, Ldisabled_mask
+	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]
 	bic	r1, r1, r2
 
@@ -389,7 +377,7 @@ _irq_setmasks:
 	mov	r1, r1, lsr #8
 	strb	r1, [r0, #(IOMD_IRQMSKB - IOMD_BASE)]	/* Set IRQ mask B */
 	mov	r1, r1, lsr #8
-#ifdef RC7500
+#ifdef CPU_ARM7500
 	strb	r1, [r0, #(IOMD_IRQMSKC - IOMD_BASE)]
 	mov	r1, r1, lsr #8
 	and	r2, r1, #0xef
@@ -399,10 +387,11 @@ _irq_setmasks:
 	strb	r2, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
 #else
 	strb	r1, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
-#endif
+#endif	/* CPU_ARM7500 */
 
+	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3
-	mov	pc, r14
+	mov	pc, lr
 
 
 Lcnt:
@@ -470,7 +459,7 @@ _intrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
 _eintrcnt:
 
-#else
+#else	/* IRQSTATS */
 /* Dummy entries to keep vmstat happy */
 
 	.text
@@ -482,7 +471,7 @@ _eintrnames:
 _intrcnt:
 	.long	0
 _eintrcnt:
-#endif
+#endif	/* IRQSTATS */
 
 /* FIQ code */
 
