@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.h,v 1.1 2002/10/22 20:15:25 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.h,v 1.2 2002/11/03 21:43:31 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,40 +47,17 @@
 #include <sys/types.h>
 #endif /* _LOCORE */
 
-#define IRQ_INSTRUCT	-1
-#define NIRQS		0x20
-
 #include <machine/intr.h>
 
-#ifndef _LOCORE
-typedef struct irqhandler {
-	int (*ih_func) __P((void *arg));/* handler function */
-	void *ih_arg;			/* Argument to handler */
-	int ih_level;			/* Interrupt level */
-	int ih_num;			/* Interrupt number (for accounting) */
-	const char *ih_name;		/* Name of interrupt (for vmstat -i) */
-	u_int ih_flags;			/* Interrupt flags */
-	u_int ih_maskaddr;		/* mask address for expansion cards */
-	u_int ih_maskbits;		/* interrupt bit for expansion cards */
-	struct irqhandler *ih_next;	/* next handler */
-} irqhandler_t;
+void	footbridge_intr_init(void);
+void	*footbridge_intr_establish(int, int, int (*)(void *), void *);
+void	footbridge_intr_disestablish(void *);
 
 #ifdef _KERNEL
-extern u_int irqmasks[IPL_LEVELS];
-extern irqhandler_t *irqhandlers[NIRQS];
-
-void irq_init __P((void));
-int irq_claim __P((int, irqhandler_t *));
-int irq_release __P((int, irqhandler_t *));
-void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
-int intr_release __P((void *ih));
-void irq_setmasks __P((void));
-void disable_irq __P((int));
-void enable_irq __P((int));
+void *footbridge_intr_claim(int irq, int ipl, char *name, int (*func)(void *), void *arg);
+void footbridge_intr_init(void);
+void footbridge_intr_disestablish(void *cookie);
 #endif	/* _KERNEL */
-#endif	/* _LOCORE */
-
-#define IRQ_FLAG_ACTIVE 0x00000001	/* This is the active handler in list */
 
 #endif	/* _FOOTBRIDGE_IRQHANDLER_H_ */
 

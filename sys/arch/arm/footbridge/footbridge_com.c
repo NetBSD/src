@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.9 2002/10/23 09:10:41 jdolecek Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.10 2002/11/03 21:43:30 chris Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -211,8 +211,8 @@ fcom_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	sc->sc_ih = intr_claim(sc->sc_rx_irq, IPL_SERIAL, "serial rx",
-	    fcom_rxintr, sc);
+	sc->sc_ih = footbridge_intr_claim(sc->sc_rx_irq, IPL_SERIAL,
+		"serial rx", fcom_rxintr, sc);
 	if (sc->sc_ih == NULL)
 		panic("%s: Cannot install rx interrupt handler",
 		    sc->sc_dev.dv_xname);
