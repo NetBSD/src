@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.52 2003/06/12 02:41:32 uwe Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.53 2003/06/13 12:30:04 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -168,18 +168,12 @@ struct user *proc0paddr;
 
 /* Prototypes */
 
-void consinit		__P((void));
+void consinit(void);
+void process_kernel_args(char *);
+void data_abort_handler(trapframe_t *);
+void prefetch_abort_handler(trapframe_t *);
+void undefinedinstruction_bounce(trapframe_t *);
 
-int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
-int fcomcndetach __P((void));
-
-void process_kernel_args	__P((char *));
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
-extern void configure		__P((void));
-extern void parse_mi_bootargs	__P((char *args));
-extern void dumpsys		__P((void));
 
 /* A load of console goo. */
 #include "vga.h"
@@ -233,9 +227,7 @@ static void kcomcnputc(dev_t, int);
  */
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
@@ -261,9 +253,10 @@ cpu_reboot(howto, bootstr)
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the unmount.
-	 * It looks like syslogd is getting woken up only to find that it cannot
-	 * page part of the binary in as the filesystem has been unmounted.
+	 * Note: Unless cold is set to 1 here, syslogd will die during
+	 * the unmount.  It looks like syslogd is getting woken up
+	 * only to find that it cannot page part of the binary in as
+	 * the filesystem has been unmounted.
 	 */
 	if (!(howto & RB_NOSYNC))
 		bootsync();
@@ -858,8 +851,7 @@ initarm(void *arg)
 }
 
 void
-process_kernel_args(args)
-	char *args;
+process_kernel_args(char *args)
 {
 
 	boothowto = 0;
@@ -890,7 +882,7 @@ process_kernel_args(args)
 
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;
-void footbridge_pci_bs_tag_init __P((void));
+extern void footbridge_pci_bs_tag_init(void);
 
 void
 consinit(void)
