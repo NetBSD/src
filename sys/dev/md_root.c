@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.6 2002/04/02 05:30:52 lukem Exp $	*/
+/*	$NetBSD: md_root.c,v 1.7 2003/02/03 23:02:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.6 2002/04/02 05:30:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.7 2003/02/03 23:02:43 matt Exp $");
 
 #include "opt_md.h"
 
@@ -58,6 +58,10 @@ char *md_root_image;
 #define MEMORY_DISK_ROOT_SIZE 512
 #endif
 #define ROOTBYTES (MEMORY_DISK_ROOT_SIZE << DEV_BSHIFT)
+
+#ifndef MEMORY_RBFLAGS
+#define MEMORY_RBFLAGS	RB_SINGLE	/* force single user */
+#endif
 
 /*
  * This array will be patched to contain a file-system image.
@@ -103,6 +107,6 @@ md_open_hook(int unit, struct md_conf *md)
 
 	if (unit == 0) {
 		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
+		boothowto |= MEMORY_RBFLAGS;
 	}
 }
