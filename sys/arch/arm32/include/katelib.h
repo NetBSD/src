@@ -1,4 +1,4 @@
-/*	$NetBSD: katelib.h,v 1.12 1998/02/21 22:49:18 mark Exp $	*/
+/*	$NetBSD: katelib.h,v 1.13 1999/03/01 10:01:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -106,16 +106,6 @@ void outsl	__P((u_int io, void *src, u_int size));
 #define inl(port)		ReadWord((port))
 #define outl(port, lword)	WriteWord((port), (lword))
 
-/* Prototypes that are wandering the streets */
-
-#ifdef _ARM32_FRAME_H_
-void postmortem		__P((trapframe_t *frame));
-#endif
-u_int traceback		__P((void));
-u_int simpletraceback	__P((void));
-u_int irqtraceback	__P((u_int, u_int));
-u_int user_traceback	__P((u_int));
-void kstack_stuff	__P((struct proc */*p*/));
 #endif
 
 /* End of katelib.h */
