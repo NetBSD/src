@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.11 1997/05/24 20:16:01 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.12 1997/07/02 14:39:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -303,7 +303,6 @@ iommu_remove(va, len)
 #endif
 #endif
 		sc->sc_ptes[atop(va - sc->sc_dvmabase)] = 0;
-		sta(sc->sc_ptes + atop(va - sc->sc_dvmabase), ASI_BYPASS, 0);
 		IOMMU_FLUSHPAGE(sc, va);
 		len -= sc->sc_pagesize;
 		va += sc->sc_pagesize;
