@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.33 2000/02/09 15:40:23 enami Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.34 2000/03/22 18:02:59 ws Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -221,8 +221,10 @@ dp8390_stop(sc)
 	int n = 5000;
 
 	/* Stop everything on the interface, and select page 0 registers. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
 
 	/*
 	 * Wait for interface to enter stopped state, but limit # of checks to
@@ -231,7 +233,7 @@ dp8390_stop(sc)
 	 */
 	while (((NIC_GET(regt, regh,
 	    ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
-		;
+		DELAY(1);
 }
 
 /*
@@ -278,8 +280,10 @@ dp8390_init(sc)
 	sc->txb_next_tx = 0;
 
 	/* Set interface for page 0, remote DMA complete, stopped. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
 
 	if (sc->dcr_reg & ED_DCR_LS) {
 		NIC_PUT(regt, regh, ED_P0_DCR, sc->dcr_reg);
@@ -327,8 +331,10 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_ISR, 0xff);
 
 	/* Program command register for page 1. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -348,8 +354,10 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P1_CURR, sc->next_packet);
 
 	/* Program command register for page 0. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P1_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
 
 	/* Accept broadcast and multicast packets by default. */
 	i = ED_RCR_AB | ED_RCR_AM | sc->rcr_proto;
@@ -370,6 +378,7 @@ dp8390_init(sc)
 		(*sc->init_card)(sc);
 
 	/* Fire up the interface. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
@@ -405,8 +414,10 @@ dp8390_xmit(sc)
 	len = sc->txb_len[sc->txb_next_tx];
 
 	/* Set NIC for page 0 register access. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_BARRIER(regt, regh);
 
 	/* Set TX buffer start page. */
 	NIC_PUT(regt, regh, ED_P0_TPSR, sc->tx_page_start +
@@ -417,6 +428,7 @@ dp8390_xmit(sc)
 	NIC_PUT(regt, regh, ED_P0_TBCR1, len >> 8);
 
 	/* Set page 0, remote DMA complete, transmit packet, and *start*. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
 
@@ -511,8 +523,10 @@ dp8390_rint(sc)
 
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
+	NIC_BARRIER(regt, regh);
 
 	/*
 	 * 'sc->next_packet' is the logical beginning of the ring-buffer - i.e.
@@ -527,8 +541,10 @@ loop:
 		return;
 
 	/* Set NIC to page 0 registers to update boundary register. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P1_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_BARRIER(regt, regh);
 
 	do {
 		/* Get pointer to this buffer's header structure. */
@@ -631,8 +647,10 @@ dp8390_intr(arg)
 		return (0);
 
 	/* Set NIC to page 0 registers. */
+	NIC_BARRIER(regt, regh);
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_BARRIER(regt, regh);
 
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
 	if (!isr)
@@ -799,8 +817,10 @@ dp8390_intr(arg)
 		 * set in the transmit routine, is *okay* - it is 'edge'
 		 * triggered from low to high).
 		 */
+		NIC_BARRIER(regt, regh);
 		NIC_PUT(regt, regh, ED_P0_CR,
 		    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+		NIC_BARRIER(regt, regh);
 
 		/*
 		 * If the Network Talley Counters overflow, read them to reset
