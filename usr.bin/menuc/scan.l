@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.3 1998/04/09 00:32:37 tv Exp $	*/
+/*	$NetBSD: scan.l,v 1.4 1998/06/24 06:46:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,6 +73,8 @@ no	{ return NO; }
 box	{ return BOX; }
 
 sub	{ return SUB; }
+
+help	{ return HELP; }
 
 menu	{ return MENU; }
 

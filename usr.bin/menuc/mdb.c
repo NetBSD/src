@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.4 1998/03/30 02:28:37 mrg Exp $	*/
+/*	$NetBSD: mdb.c,v 1.5 1998/06/24 06:46:23 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,6 +102,7 @@ write_menu_file (char *initcode)
 	char cname[1024];
 	char sname[1024];
 	char *sys_prefix;
+	char *tmpstr;
 
 	int nlen;
 
@@ -161,6 +162,7 @@ write_menu_file (char *initcode)
 		"	int	cursel;\n"
 		"	char   **opts;\n"
 		"	WINDOW *mw;\n"
+		"	char   *helpstr;\n"
 		"} menudesc ;\n"
 		"\n"
 		"/* defines for mopt field. */\n"
@@ -214,13 +216,31 @@ write_menu_file (char *initcode)
 
 	/* menus */
 	(void) fprintf (out_file, "static struct menudesc menus[] = {\n");
-	for (i=0; i<menu_no; i++)
+	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file,
-			"\t{%s,%d,%d,%d,%d,%d,%d,0,optstr%d,NULL},\n",
+			"\t{%s,%d,%d,%d,%d,%d,%d,0,optstr%d,NULL,",
 			menus[i]->info->title, 	menus[i]->info->y,
 			menus[i]->info->x, menus[i]->info->h,
 			menus[i]->info->w, menus[i]->info->mopt,
 			menus[i]->info->numopt, i);
+		if (menus[i]->info->helpstr == NULL)
+			(void) fprintf (out_file, "NULL},\n");
+		else {
+			tmpstr = menus[i]->info->helpstr;
+			/* Skip an initial newline. */
+			if (*tmpstr == '\n')
+				tmpstr++;
+			(void) fprintf (out_file, "\n\"");
+			while (*tmpstr)
+				if (*tmpstr != '\n')
+				  fputc (*tmpstr++, out_file);
+				else {
+					(void) fprintf (out_file, "\\n\\\n");
+					tmpstr++;
+				}
+			(void) fprintf (out_file, "\"},\n");
+		}
+	}
 	(void) fprintf (out_file, "{NULL}};\n\n");
 
 	/* num_menus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.h,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: mdb.h,v 1.2 1998/06/24 06:46:24 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,6 +76,7 @@ typedef struct optn_info {
 	
 struct menu_info {
 	char *title;
+	char *helpstr;
 	int mopt;
 	int y, x;
 	int h, w;
