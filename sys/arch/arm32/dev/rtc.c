@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.10 1998/04/19 03:55:44 mark Exp $	*/
+/*	$NetBSD: rtc.c,v 1.10.24.1 2000/11/03 18:41:04 tv Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -41,6 +41,7 @@
  * Routines to read and write the RTC and CMOS RAM
  *
  * Created      : 13/10/94
+ * Updated	: 15/07/2000	DD
  */
 
 #include <sys/param.h>
@@ -107,6 +108,7 @@ cmos_write(location, value)
 	int value;
 {
 	u_char buff[2];
+	int oldvalue, oldsum;
 
 /*
  * This commented code dates from when I was translating CMOS address
@@ -125,9 +127,25 @@ cmos_write(location, value)
 	buff[0] = location;
 	buff[1] = value;
 
+/* Read the old CMOS location value and old checksum */
+	oldvalue = cmos_read(location);
+	if (oldvalue<0)
+		return(-1);
+	oldsum = cmos_read(RTC_ADDR_CHECKSUM);
+	if (oldsum<0)
+		return(-1);
+		
 	if (iic_control(RTC_Write, buff, 2))
 		return(-1);
 
+/* Now update the checksum. This code only modifies the value. It does */
+/* not recalculate it */
+
+	buff[0] = RTC_ADDR_CHECKSUM;
+	buff[1] = oldsum - oldvalue + value;
+	if (iic_control(RTC_Write, buff, 2))
+		return(-1);
+	
 	return(0);
 }
 
