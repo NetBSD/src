@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 2000/07/07 19:59:36 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 2000/07/07 23:28:28 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -242,23 +242,33 @@
 	mov	%l6, %g6; \
 	mov	%l7, %g7
 
+/* Load strings address into register; NOTE: hidden local label 99 */
+#define LOAD_ASCIZ(reg, s)	\
+	set	99f, reg ;	\
+	.data ;			\
+99:	.asciz	s ;		\
+	_ALIGN ;		\
+	.text
+
 /*
  * Handy stack conversion macros.
  * They correctly switch to requested stack type
  * regardless of the current stack.
  */
 
-#define TO_STACK64(size) \
-	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
-	save	%sp, size, %sp; \
-	add	%sp, -BIAS, %o0; /* Convert to 64-bits */ \
+#ifdef _LP64
+#define STACKFRAME(size)					\
+	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
+	save	%sp, size, %sp;					\
+	add	%sp, -BIAS, %o0; /* Convert to 64-bits */	\
 	movz	%icc, %o0, %sp
-
-#define TO_STACK32(size) \
-	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
-	save	%sp, size, %sp; \
-	add	%sp, +BIAS, %o0; /* Convert to 32-bits */ \
+#else
+#define STACKFRAME(size)					\
+	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
+	save	%sp, size, %sp;					\
+	add	%sp, +BIAS, %o0; /* Convert to 32-bits */	\
 	movnz	%icc, %o0, %sp
+#endif
 
 
 	.data
@@ -3871,7 +3881,7 @@ intrpending:
 #define INTRDEBUG_FUNC		0x4
 #define INTRDEBUG_SPUR		0x8
 	.globl	_C_LABEL(intrdebug)
-_C_LABEL(intrdebug):	.word 0
+_C_LABEL(intrdebug):	.word 0xf
 #endif
 	.text
 interrupt_vector:
@@ -3888,15 +3898,18 @@ interrupt_vector:
 	ldxa	[%g0] ASI_IRSR, %g1
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
-#if NOT_DEBUG
+#if DEBUG
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	mov	%g1, %o1
 	mov	%g2, %o2
-	set	7f, %o0
+
+	LOAD_ASCIZ(%o0, "interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n")
 	GLOBTOLOC
-	clr	%g4
 	call	prom_printf
-	 nop
+	 clr	%g4
 	LOCTOGLOB
+	restore
+	 nop
 #endif
 	btst	IRSR_BUSY, %g1
 	set	_C_LABEL(intrlev), %g3
@@ -3956,12 +3969,9 @@ setup_sparcintr:
 	btst	INTRDEBUG_VECTOR, %g4
 	bz,pt	%icc, 1f
 	 nop
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	9f, %o0
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: duplicate handler %p\r\n")
 	GLOBTOLOC
 	clr	%g4
 	call	prom_printf
@@ -3979,12 +3989,8 @@ setup_sparcintr:
 	!! There were no available slots and the interrupt was lost.
 	!! We'll resort to polling in this case.
 #ifdef DIAGNOSTIC
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	8f, %o0
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: level %d out of slots\r\n")
 	mov	%g6, %o1
 	GLOBTOLOC
 	clr	%g4
@@ -4001,12 +4007,10 @@ setup_sparcintr:
 	btst	INTRDEBUG_VECTOR, %g7
 	bz,pt	%icc, 1f
 	 nop
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	4f, %o0
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0,\
+	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n")
 	mov	%g2, %o1
 	rdpr	%pil, %o3
 	mov	%g1, %o4
@@ -4036,12 +4040,9 @@ setup_sparcintr:
 	btst	INTRDEBUG_SPUR, %g7
 	bz,pt	%icc, 5b
 	 nop
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	6f, %o0
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g2, %o1
 	GLOBTOLOC
 	clr	%g4
@@ -4053,16 +4054,7 @@ setup_sparcintr:
 #endif
 	ba	5b
 	 nop
-	.data
-4:	.asciz	"interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n"
-6:	.asciz	"interrupt_vector: spurious vector %lx at pil %d\r\n"
-#ifdef NOT_DEBUG
-7:	.asciz	"interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n"
-#endif
-8:	.asciz	"interrupt_vector: level %d out of slots\r\n"
-9:	.asciz	"interrupt_vector:	duplicate handler %p\r\n"
-	_ALIGN
-	.text
+
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
  * on a soft interrupt, is we should check which bits in ASR_SOFTINT(0x16)
@@ -4124,7 +4116,7 @@ setup_sparcintr:
  */
 
 	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
-	.globl _C_LABEL(sparc_interrupt)		! This is for interrupt debugging
+	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
@@ -4170,7 +4162,8 @@ _C_LABEL(sparc_interrupt):
 1:	
 #endif
 	INTR_SETUP(-CC64FSZ-TF_SIZE)
-	wrpr	%g0, PSTATE_KERN, %pstate		! Switch to normal globals so we can save them
+	! Switch to normal globals so we can save them
+	wrpr	%g0, PSTATE_KERN, %pstate
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
@@ -4178,21 +4171,24 @@ _C_LABEL(sparc_interrupt):
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	
-	!! In the medium anywhere model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
+
+	/*
+	 * In the medium anywhere model %g4 points to the start of the
+	 * data segment.  In our case we need to clear it before calling
+	 * any C-code.
+	 */
 	clr	%g4
 
 #ifdef DEBUG
 	flushw			! DEBUG
 #endif
 	rd	%y, %l6
-	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
-	rdpr	%tt, %l5			! Find out our current IPL
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
 	rdpr	%tnpc, %l2
-	rdpr	%tl, %l3			! Dump our trap frame now we have taken the IRQ
+	rdpr	%tl, %l3		! Dump our trap frame now we have taken the IRQ
 	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	dec	%l3
 	CHKPT(%l4,%l7,0x26)
@@ -4220,10 +4216,11 @@ _C_LABEL(sparc_interrupt):
 	wrpr	%l6, %pil
 	
 	clr	%l5			! Zero handled count
-	mov	1, %l3				! Ack softint
-	sll	%l3, %l6, %l3			! Generate IRQ mask
+	mov	1, %l3			! Ack softint
+	sll	%l3, %l6, %l3		! Generate IRQ mask
+
 sparc_intr_retry:	
-	wr	%l3, 0, CLEAR_SOFTINT		! (don't clear possible %tick IRQ)
+	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
 #ifdef	VECTORED_INTERRUPTS
 	set	intrpending, %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
@@ -4257,8 +4254,8 @@ sparc_intr_retry:
 	bz,a,pt	%icc, 0f
 	 nop
 	
-	save	%sp, -CC64FSZ, %sp
-	set	9f, %o0
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  calling %lx(%lx) sp = %p\r\n")
 	mov	%i0, %o2		! arg
 	mov	%g0, %o3		! sp
 	GLOBTOLOC
@@ -4289,11 +4286,7 @@ sparc_intr_retry:
 	save	%sp, -CC64FSZ, %sp
 	mov	%i5, %o1
 	mov	%i3, %o3
-	set	99f, %o0
-	.data
-99:	.asciz	"sparc_interrupt: ih %p fun %p has %p clear\r\n"
-	_ALIGN
-	.text
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  ih %p fun %p has %p clear\r\n")
 	GLOBTOLOC
 	call	prom_printf
 	 mov	%i4, %o2		! fun
@@ -4308,7 +4301,7 @@ sparc_intr_retry:
 #else
 	stx	%g0, [%l1]		! Clear intr source
 #endif
-	membar	#Sync				! Should not be needed
+	membar	#Sync			! Should not be needed
 0:
 	brnz,pt	%o0, 3b			! Handle any others
 	 nop
@@ -4347,17 +4340,18 @@ sparc_intr_retry:
 	set	EINTSTACK, %o2
 	cmp	%sp, %o2
 	bleu	0f
-	 set	7f, %o0
+
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  stack %p eintstack %p\r\n")
 	call	prom_printf
 	 mov	%sp, %o1
 	ta	1; nop
 0:	
-	set	_C_LABEL(intrdebug), %o0			! Check intrdebug
+	set	_C_LABEL(intrdebug), %o0	! Check intrdebug
 	ld	[%o0], %o0
 	btst	INTRDEBUG_LEVEL, %o0
 	bz,a,pt	%icc, 3f
 	 clr	%l5
-	set	8f, %o0
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  got lev %ld\r\n")
 	call	prom_printf
 	 mov	%l6, %o1
 #endif
@@ -4365,9 +4359,6 @@ sparc_intr_retry:
 	 clr	%l5
 #ifdef DEBUG
 	.data
-7:	.asciz	"sparc_interrupt: stack %p eintstack %p\r\n"
-8:	.asciz	"sparc_interrupt: got lev %ld\r\n"
-9:	.asciz	"sparc_interrupt:            calling %lx(%lx) sp = %p\r\n"
 	_ALIGN
 	.text
 #endif	
@@ -4385,8 +4376,8 @@ sparc_intr_retry:
 	 nop
 #endif
 	
-	save	%sp, -CC64FSZ, %sp
-	set	9b, %o0
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt(2):      calling %lx(%lx) sp = %p\r\n")
 	mov	%i0, %o2		! arg
 	mov	%i6, %o3		! sp
 	GLOBTOLOC
@@ -4403,8 +4394,9 @@ sparc_intr_retry:
 #else
 	LDPTR	[%l4 + IH_CLR], %l3
 #endif
-	add	%sp, CC64FSZ + STKB, %o2		!	tf = %sp + CC64FSZ + STKB
-	brnz,a,pt	%l3, 5f		!		Clear this intr?
+	add	%sp, CC64FSZ + STKB, %o2	! tf = %sp + CC64FSZ + STKB
+	brnz,a,pt	%l3, 5f			! Clear this intr?
+
 #ifdef PHYS_CLEAR
 	 stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
 #else
@@ -4469,16 +4461,13 @@ intrcmplt:
 	 nop
 	
 	save	%sp, -CC64FSZ, %sp
-	set	6f, %o0
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  done\r\n")
 	GLOBTOLOC
 	call	prom_printf
 	 nop
 	LOCTOGLOB
 	restore
-	.data
-6:	.asciz	"sparc_interrupt: done\r\n"
-	_ALIGN
-	.text
+
 7:	
 #endif
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
