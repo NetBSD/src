@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.8 1997/10/17 11:37:03 lukem Exp $	*/
+/*	$NetBSD: crc.c,v 1.9 2001/03/20 18:48:10 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.8 1997/10/17 11:37:03 lukem Exp $");
+__RCSID("$NetBSD: crc.c,v 1.9 2001/03/20 18:48:10 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static const u_int32_t crctab[] = {
 u_int32_t crc_total = ~0;		/* The crc over a number of files. */
 
 int
-crc(fd, cval, clen)
+ccrc(fd, cval, clen)
 	register int fd;
 	u_int32_t *cval, *clen;
 {
