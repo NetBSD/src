@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48.8.5 2003/01/16 10:33:59 martin Exp $ */
+/*	$NetBSD: param.h,v 1.48.8.6 2003/01/16 10:39:49 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,11 +91,7 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#if !(defined(PROM_AT_F0) || defined(MSIIEP)) /* XXX: uwe: original */
 #define	KERNBASE	0xf0000000	/* start of kernel virtual space */
-#else /* XXX: uwe: JS1/OF has prom sitting in f000.0000..f007.ffff */
-#define	KERNBASE	0xe8000000	/* start of kernel virtual space */
-#endif
 #define KERNEND		0xfe000000	/* end of kernel virtual space */
 /* Arbitrarily only use 1/4 of the kernel address space for buffers. */
 #define VM_MAX_KERNEL_BUF	((KERNEND - KERNBASE)/4)
