@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$Id: crypt-sha1.c,v 1.1 2004/07/02 00:05:23 sjg Exp $");
+__RCSID("$Id: crypt-sha1.c,v 1.2 2005/01/11 22:40:22 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -138,7 +138,7 @@ __crypt_sha1 (const char *pw, const char *salt)
      * $<tag>$<iterations>$salt[$]
      * If it does not start with $ we use our default iterations.
      */
-    sp = UNCONST(salt);
+    sp = __UNCONST(salt);
 
     /* If it starts with the magic string, then skip that */
     if (!strncmp(sp, magic, strlen(magic))) {
@@ -169,7 +169,7 @@ __crypt_sha1 (const char *pw, const char *salt)
     /*
      * Then hmac using <pw> as key, and repeat...
      */
-    ep = UNCONST(pw);			/* keep gcc happy */
+    ep = __UNCONST(pw);			/* keep gcc happy */
     hmac_sha1(passwd, dl, ep, pl, hmac_buf);
     for (i = 1; i < iterations; i++) {
 	hmac_sha1(hmac_buf, SHA1_SIZE, ep, pl, hmac_buf);
