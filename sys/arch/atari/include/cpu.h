@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1996/04/18 08:52:17 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 1996/08/23 11:21:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,11 +124,14 @@ extern int	want_resched;	/* resched() was called */
 #define ATARI_68040	(1L<<4)		/* 68040 CPU			*/
 #define	ATARI_TT	(1L<<11)
 #define	ATARI_FALCON	(1L<<12)
+#define	ATARI_HADES	(1L<<13)
 
 #define	ATARI_CLKBROKEN	(1L<<16)
 
 #define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
 			|ATARI_68040)
+
+#define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES)
 
 /*
  * Values for mmutype (assigned for quick testing)
@@ -269,6 +272,8 @@ u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
+void	DCIAS __P((vm_offset_t));
+void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
@@ -278,6 +283,16 @@ void	TBIA __P((void));
 void	TBIS __P((vm_offset_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
+
+#if defined(M68040) || defined(M68060)
+void	DCFA __P((void));
+void	DCFP __P((vm_offset_t));
+void	DCFL __P((vm_offset_t));
+void	DCPL __P((vm_offset_t));
+void	DCPP __P((vm_offset_t));
+void	ICPL __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+#endif
 
 /*
  * Prototypes from machdep.c:
