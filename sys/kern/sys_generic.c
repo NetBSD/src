@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.51 2000/08/20 21:50:11 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.52 2000/08/21 06:27:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -725,7 +725,7 @@ retry:
 		if (timo <= 0)
 			goto done;
 	}
-	s = splhigh();
+	s = splsched();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
@@ -860,7 +860,7 @@ retry:
 		if (timo <= 0)
 			goto done;
 	}
-	s = splhigh();
+	s = splsched();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
