@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.9 2003/03/24 14:24:14 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.10 2003/03/24 15:03:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.7 2002/09/16 10:18:34 bp Exp
+ * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.8 2002/09/16 10:50:38 bp Exp
  */
 
 /*
@@ -273,6 +273,7 @@ struct smb_vc {
 #define vc_maxmux	vc_sopt.sv_maxmux
 #define	vc_flags	obj.co_flags
 
+#define SMB_UNICODE_STRINGS(vcp)	((vcp)->vc_hflags2 & SMB_FLAGS2_UNICODE)
 
 /*
  * smb_share structure describes connection to the given SMB share (tree).
