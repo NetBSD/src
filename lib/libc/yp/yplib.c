@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.9 1994/08/06 23:07:50 jtc Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.10 1994/08/18 00:45:07 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -482,11 +482,11 @@ again:
 	if( !(r=ypprot_err(yprkv.status)) ) {
 		*outkeylen = yprkv.keydat.dsize;
 		*outkey = (char *)malloc(*outkeylen+1);
-		memcpy (*outkey, yprkv.keydat.dptr, *outkeylen);
+		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
 		*outvallen = yprkv.valdat.dsize;
 		*outval = (char *)malloc(*outvallen+1);
-		memcpy (*outval, yprkv.valdat.dptr, *outvallen);
+		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
