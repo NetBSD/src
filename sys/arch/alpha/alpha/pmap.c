@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.181 2001/07/15 05:24:20 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.182 2001/07/15 16:42:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2001/07/15 05:24:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2001/07/15 16:42:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,6 +439,7 @@ struct pmap_tlb_shootdown_q {
 	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
 	int pq_pte;			/* aggregate PTE bits */
 	int pq_count;			/* number of pending requests */
+	int pq_tbia;			/* pending global flush */
 	struct simplelock pq_slock;	/* spin lock on queue */
 } pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
 
@@ -459,6 +460,7 @@ do {									\
 
 struct pool pmap_tlb_shootdown_job_pool;
 
+void	pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *);
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 	    (struct pmap_tlb_shootdown_q *);
 void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
@@ -2223,12 +2225,12 @@ pmap_activate(struct proc *p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
+	PMAP_LOCK(pmap);
+
 	/*
 	 * Mark the pmap in use by this processor.
 	 */
 	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
-
-	PMAP_LOCK(pmap);
 
 	/*
 	 * Allocate an ASN.
@@ -3741,6 +3743,8 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
  * pmap_tlb_shootdown:
  *
  *	Cause the TLB entry for pmap/va to be shot down.
+ *
+ *	NOTE: The pmap must be locked here.
  */
 void
 pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
@@ -3748,42 +3752,76 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
 	struct cpu_info *ci, *self = curcpu();
-	u_long ipinum;
+	u_long cpumask;
 	CPU_INFO_ITERATOR cii;
 	int s;
+
+	LOCK_ASSERT((pmap == pmap_kernel()) ||
+	    simple_lock_held(&pmap->pm_slock));
+
+	cpumask = 0;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == self)
 			continue;
 
+		/*
+		 * The pmap must be locked (unless its the kernel
+		 * pmap, in which case it is okay for it to be
+		 * unlocked), which prevents it from  becoming
+		 * active on any additional processors.  This makes
+		 * it safe to check for activeness.  If it's not
+		 * active on the processor in question, then just
+		 * mark it as needing a new ASN the next time it
+		 * does, saving the IPI.  We always have to send
+		 * the IPI for the kernel pmap.
+		 *
+		 * Note if it's marked active now, and it becomes
+		 * inactive by the time the processor receives
+		 * the IPI, that's okay, because it does the right
+		 * thing with it later.
+		 */
+		if (pmap != pmap_kernel() &&
+		    PMAP_ISACTIVE(pmap, ci->ci_cpuid) == 0) {
+			PMAP_INVALIDATE_ASN(pmap, ci->ci_cpuid);
+			continue;
+		}
+
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		PSJQ_LOCK(pq, s);
 
-		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
+
+		/*
+		 * If a global flush is already pending, we
+		 * don't really have to do anything else.
+		 */
+		if (pq->pq_tbia) {
+			PSJQ_UNLOCK(pq, s);
+			continue;
+		}
+
+		pj = pmap_tlb_shootdown_job_get(pq);
 		if (pj == NULL) {
 			/*
-			 * Couldn't allocate a job entry.  Just do a
-			 * TBIA[P].
+			 * Couldn't allocate a job entry.  Just
+			 * tell the processor to kill everything.
 			 */
-			if (pq->pq_pte & PG_ASM)
-				ipinum = ALPHA_IPI_TBIA;
-			else
-				ipinum = ALPHA_IPI_TBIAP;
-			alpha_send_ipi(ci->ci_cpuid, ipinum);
+			pq->pq_tbia = 1;
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
-			ipinum = ALPHA_IPI_SHOOTDOWN;
 		}
 
-		alpha_send_ipi(ci->ci_cpuid, ipinum);
+		cpumask |= 1UL << ci->ci_cpuid;
 
 		PSJQ_UNLOCK(pq, s);
 	}
+
+	alpha_multicast_ipi(cpumask, ALPHA_IPI_SHOOTDOWN);
 }
 
 /*
@@ -3802,14 +3840,23 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 
 	PSJQ_LOCK(pq, s);
 
-	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-		PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
-		    pj->pj_pte & PG_ASM, pj->pj_pmap->pm_cpus & cpu_mask,
-		    cpu_id);
-		pmap_tlb_shootdown_job_put(pq, pj);
+	if (pq->pq_tbia) {
+		if (pq->pq_pte & PG_ASM)
+			ALPHA_TBIA();
+		else
+			ALPHA_TBIAP();
+		pq->pq_tbia = 0;
+		pmap_tlb_shootdown_q_drain(pq);
+	} else {
+		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+			PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
+			    pj->pj_pte & PG_ASM,
+			    pj->pj_pmap->pm_cpus & cpu_mask, cpu_id);
+			pmap_tlb_shootdown_job_put(pq, pj);
+		}
+		pq->pq_pte = 0;
 	}
-	pq->pq_pte = 0;
 
 	PSJQ_UNLOCK(pq, s);
 }
@@ -3820,28 +3867,19 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
  *	Drain a processor's TLB shootdown queue.  We do not perform
  *	the shootdown operations.  This is merely a convenience
  *	function.
+ *
+ *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_q_drain(u_long cpu_id, boolean_t all)
+pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *pq)
 {
-	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
-	struct pmap_tlb_shootdown_job *pj, *npj;
-	pt_entry_t npte = 0;
-	int s;
+	struct pmap_tlb_shootdown_job *pj;
 
-	PSJQ_LOCK(pq, s);
-
-	for (pj = TAILQ_FIRST(&pq->pq_head); pj != NULL; pj = npj) {
-		npj = TAILQ_NEXT(pj, pj_list);
-		if (all || (pj->pj_pte & PG_ASM) == 0) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-			pmap_tlb_shootdown_job_put(pq, pj);
-		} else
-			npte |= pj->pj_pte;
+	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
+		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		pmap_tlb_shootdown_job_put(pq, pj);
 	}
-	pq->pq_pte = npte;
-
-	PSJQ_UNLOCK(pq, s);
+	pq->pq_pte = 0;
 }
 
 /*
