@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.5 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.6 2000/02/17 10:59:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,6 +74,7 @@
  * Protocol switch table for IPv6.
  * All other definitions should refer to sys/protosw.h
  */
+#include <net/pfil.h>
 
 struct mbuf;
 struct sockaddr;
@@ -125,6 +126,9 @@ struct ip6protosw {
 			__P((void));
 	int	(*pr_sysctl)		/* sysctl for protocol */
 			__P((int *, u_int, void *, size_t *, void *, size_t));
+	struct	pfil_head	pr_pfh;
 };
+
+extern	struct	ip6protosw	inet6sw[];
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */
