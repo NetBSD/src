@@ -496,11 +496,6 @@
 /* Define if you have the `hstrerror' function. */
 #define HAVE_HSTRERROR 1
 
-/* Define if you have the <ieeefp.h> header file. */
-#if !defined(__vax__)
-#define HAVE_IEEEFP_H 1
-#endif
-
 /* Define if you have the `kvm_open' function. */
 #define HAVE_KVM_OPEN 1
 

@@ -495,9 +495,6 @@
 /* Define if you have the `hstrerror' function. */
 #undef HAVE_HSTRERROR
 
-/* Define if you have the <ieeefp.h> header file. */
-#undef HAVE_IEEEFP_H
-
 /* Define if you have the `kvm_open' function. */
 #undef HAVE_KVM_OPEN
 

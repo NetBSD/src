@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.2 2000/04/22 15:49:33 simonb Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.3 2000/05/03 06:08:47 simonb Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -14,10 +14,6 @@
 # include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
-
-#ifdef HAVE_IEEEFP_H
-# include <ieeefp.h>
-#endif
 
 #include "ntpd.h"
 #include "ntp_io.h"
