@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.51 1999/04/27 18:38:44 drochner Exp $
+# $NetBSD: md.i386,v 1.52 1999/05/12 12:06:23 tron Exp $
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/cursor
@@ -22,6 +22,7 @@
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
 ./usr/lkm/nullfs.o
+./usr/lkm/ntfs.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
