@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 2002/05/14 14:27:33 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.7 2003/02/25 08:06:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -115,11 +115,12 @@ net_close(pd)
 int
 net_mountroot_bootparams()
 {
+	printf("Trying BOOTPARAMS protocol... ");
+
 	/* Get our IP address.  (rarp.c) */
 	if (rarp_getipaddress(netdev_sock) == -1)
 		return (errno);
 
-	printf("Using BOOTPARAMS protocol: ");
 	printf("ip address: %s", inet_ntoa(myip));
 
 	/* Get our hostname, server IP address. */
@@ -138,12 +139,13 @@ net_mountroot_bootparams()
 int
 net_mountroot_bootp()
 {
+	printf("Trying BOOTP protocol... ");
+
 	bootp(netdev_sock);
 
 	if (myip.s_addr == 0)
 		return(ENOENT);
 
-	printf("Using BOOTP protocol: ");
 	printf("ip address: %s", inet_ntoa(myip));
 
 	if (hostname[0])
@@ -173,9 +175,9 @@ net_mountroot()
 	 * and the more modern, BOOTP way. (RFC951, RFC1048)
 	 */
 
-		/* Try BOOTP first */
+	/* Try BOOTP first */
 	error = net_mountroot_bootp();
-		/* Historically, we've used BOOTPARAMS, so try that next */
+	/* Historically, we've used BOOTPARAMS, so try that next */
 	if (error != 0)
 		error = net_mountroot_bootparams();
 	if (error != 0)
