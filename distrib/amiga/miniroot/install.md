@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.12 2000/09/17 21:07:10 is Exp $
+#	$NetBSD: install.md,v 1.13 2000/10/24 19:43:23 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ md_installboot() {
 				chroot /mnt /usr/mdec/installboot /usr/mdec/xxboot /dev/r${1}a
 				;;
 			*)
-				echo "No bootblock installed..."
+				echo "No bootblock installed."
 				;;
 		esac
 	elif [ "$MODE" = "install" ]; then
