@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.25 1996/11/09 22:30:55 leo Exp $
+#	$NetBSD: files.atari,v 1.26 1996/12/16 21:25:45 leo Exp $
 #
 
 maxpartitions 16
@@ -58,7 +58,7 @@ major	{fd = 2}
 device	hdfd
 attach	hdfd at fdc
 file	arch/atari/dev/hdfd.c		hdfd needs-flag
-file	arch/atari/dev/hdfd_intr.s
+file	arch/atari/dev/hdfd_intr.s	hdfd
 major	{hdfd = 2}
 
 # graphic devices
