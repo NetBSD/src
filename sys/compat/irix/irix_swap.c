@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.9 2003/01/22 12:58:23 rafal Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.10 2003/07/29 16:18:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.9 2003/01/22 12:58:23 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.10 2003/07/29 16:18:54 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -197,14 +197,15 @@ bad:
 		SCARG(&cup, cmd) = SWAP_NSWAP;
 		SCARG(&cup, arg) = NULL;
 		SCARG(&cup, misc) = 0;
-		if ((error = sys_swapctl(l, &cup, (register_t *)&entries)) != 0)
+		if ((error = sys_swapctl(l, &cup,
+					 (register_t *)(void *)&entries)) != 0)
 			return error;
 
 		sep = (struct swapent *)malloc(
 		    sizeof(struct swapent) * entries, M_TEMP, M_WAITOK);
 		lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 		uvm_swap_stats(SWAP_STATS, sep, entries, 
-		    (register_t *)&dontcare);
+		    (register_t *)(void *)&dontcare);
 		lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 		if (SCARG(uap, cmd) == IRIX_SC_GETFREESWAP)
