@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 2001/01/19 01:31:24 manu Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.2 2001/04/12 19:32:35 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -131,9 +131,9 @@ struct linux_sigregs {
  * linux sigframe in a nutshell (however we don't use it):
  *
  * struct linux_sigframe {
- *		struct linux_sigregs	lsg;
  *		char _gap[LINUX__SIGNAL_FRAMESIZE];
  *		struct sigcontext lsc;
+ *		struct linux_sigregs	lsg;
  * };
  */
 
