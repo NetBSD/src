@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.16 1999/08/15 22:23:54 kleink Exp $
+.\"	$NetBSD: lgamma.3,v 1.17 1999/08/16 12:35:18 kleink Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
@@ -38,8 +38,12 @@
 .Sh NAME
 .Nm lgamma ,
 .Nm lgammaf ,
+.Nm lgamma_r ,
+.Nm lgammaf_r ,
 .Nm gamma ,
-.Nm gammaf
+.Nm gammaf ,
+.Nm gamma_r ,
+.Nm gammaf_r
 .Nd log gamma function
 .Sh LIBRARY
 .Lb libm
@@ -53,9 +57,17 @@
 .Ft float
 .Fn lgammaf "float x"
 .Ft double
+.Fn lgamma_r "double x" "int *sign"
+.Ft float
+.Fn lgammaf_r "float x" "int *sign"
+.Ft double
 .Fn gamma "double x"
 .Ft float
 .Fn gammaf "float x"
+.Ft double
+.Fn gamma_r "double x" "int *sign"
+.Ft float
+.Fn gammaf_r "float x" "int *sign"
 .Sh DESCRIPTION
 .Fn lgamma x
 .if t \{\
@@ -73,6 +85,15 @@ The external integer
 .Fa signgam
 returns the sign of \(*G(x).
 .Pp
+.Fn lgamma_r
+is a reentrant interface that performs identically to
+.Fn lgamma ,
+differing in that the sign of \(*G(x) is stored in the location
+pointed to by the
+.Fa sign
+argument and
+.Fa signgam
+is not modified.
 .Sh IDIOSYNCRASIES
 Do not use the expression
 .Dq Li signgam\(**exp(lgamma(x))
