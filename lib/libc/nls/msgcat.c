@@ -1,8 +1,3 @@
-
-static char rcsid[] = "@(#)$Id: msgcat.c,v 1.1 1994/05/29 21:22:02 jtc Exp $";
-
-/* -*- c++ -*- */
-
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
 
@@ -35,6 +30,10 @@ up-to-date.  Many thanks.
     
 ******************************************************************/
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$Id: msgcat.c,v 1.2 1994/05/29 21:24:05 jtc Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 /* Edit History
 
 03/06/91   4 schulert	remove working directory from nlspath
@@ -53,17 +52,12 @@ up-to-date.  Many thanks.
 #include "nl_types.h"
 #include "msgcat.h"
 
-#ifdef BSD
-#include <sys/file.h>
-#include <sys/param.h>
-#endif
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-
-#ifdef MIPS
+#include <stdlib.h>
 #include <unistd.h>
-#endif
 
 #ifndef True
 # define True	~0
@@ -86,8 +80,6 @@ char	*MCAppPath = NULL;
 static nl_catd loadCat();
 static nl_catd loadSet();
 
-extern char *malloc(), *getenv();
-    
 nl_catd 	catopen( name, type)
 char *name;
 int type;
@@ -106,7 +98,7 @@ int type;
     } else {
 	if ((lang = (char *) getenv("LANG")) == NULL) lang = "C";
 	if ((nlspath = (char *) getenv("NLSPATH")) == NULL) {
-	    nlspath = "/nlslib/%L/%N.cat:/nlslib/%N/%L";
+	    nlspath = "/usr/share/nls/%L/%N.cat";
 	}
 	if (MCAppPath) {
 	    tmppath = (char *) malloc(strlen(nlspath) + strlen(MCAppPath) + 3);
@@ -283,7 +275,7 @@ nl_catd catd;
     for (i = 0; i < cat->numSets; ++i) {
 	set = cat->sets + i;
 	if (!set->invalid) {
-	    free(set->data);
+	    free(set->data.str);
 	    free(set->u.msgs);
 	}
     }
