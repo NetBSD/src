@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.45 1997/10/09 07:57:19 jtc Exp $	*/
+/*	$NetBSD: gus.c,v 1.46 1997/10/11 11:29:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -4122,28 +4122,28 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCInputs);
+	strcpy(dip->label.name, AudioCinputs);
 	break;
 
     case GUSMAX_OUTPUT_CLASS:			/* output class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCOutputs);
+	strcpy(dip->label.name, AudioCoutputs);
 	break;
 
     case GUSMAX_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCMonitor);
+	strcpy(dip->label.name, AudioCmonitor);
 	break;
 	    
     case GUSMAX_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCRecord);
+	strcpy(dip->label.name, AudioCrecord);
 	break;
 
     default:
@@ -4275,21 +4275,21 @@ mute:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCInputs);
+		strcpy(dip->label.name, AudioCinputs);
 		break;
 
 	case GUSICS_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		break;
 
 	case GUSICS_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCRecord);
+		strcpy(dip->label.name, AudioCrecord);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.72 1997/10/06 20:16:25 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.73 1997/10/11 11:29:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2092,7 +2092,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		return 0;
 	}
 
@@ -2189,7 +2189,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCRecord);
+		strcpy(dip->label.name, AudioCrecord);
 		return 0;
 
 	}
@@ -2241,14 +2241,14 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCInputs);
+		strcpy(dip->label.name, AudioCinputs);
 		return 0;
 
 	case SB_EQUALIZATION_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_EQUALIZATION_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCEqualization);
+		strcpy(dip->label.name, AudioCequalization);
 		return 0;
 
 	case SB_CD_IN_MUTE:

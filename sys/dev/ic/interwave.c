@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.2 1997/10/09 08:03:46 jtc Exp $	*/
+/*	$NetBSD: interwave.c,v 1.3 1997/10/11 11:28:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1673,19 +1673,19 @@ iw_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = IW_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCInputs);
+		strcpy(dip->label.name, AudioCinputs);
 		break;
 	case IW_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = IW_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		break;
 	case IW_RECORD_CLASS:	/* record source class */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = IW_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCRecord);
+		strcpy(dip->label.name, AudioCrecord);
 		return 0;
 	default:
 		return ENXIO;
