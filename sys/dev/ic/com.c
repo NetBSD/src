@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.228 2004/07/04 08:09:03 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.229 2004/07/04 09:28:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.228 2004/07/04 08:09:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.229 2004/07/04 09:28:05 mycroft Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2093,18 +2093,13 @@ again:	do {
 				put[1] = lsr;
 				cn_check_magic(sc->sc_tty->t_dev,
 					       put[0], com_cnm_state);
-				if (cn_trapped) {
-					lsr = bus_space_read_1(iot, ioh, com_lsr);
-					if (!ISSET(lsr, LSR_RCV_MASK))
-						break;
-
-					continue;
-				}
+				if (cn_trapped)
+					goto next;
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
 				cc--;
-
+			next:
 				lsr = bus_space_read_1(iot, ioh, com_lsr);
 				if (!ISSET(lsr, LSR_RCV_MASK))
 					break;
@@ -2137,11 +2132,12 @@ again:	do {
 			 */
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				CLR(sc->sc_ier, IER_ERXRDY);
 #ifdef COM_PXA2X0
 				if (sc->sc_type == COM_TYPE_PXA2x0)
-					CLR(sc->sc_ier, IER_ERXTOUT);
+					CLR(sc->sc_ier, IER_ERXRDY|IER_ERXTOUT);
+				else
 #endif
+					CLR(sc->sc_ier, IER_ERXRDY);
 				bus_space_write_1(iot, ioh, com_ier,
 				    sc->sc_ier);
 			}
