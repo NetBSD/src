@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1999/08/03 07:08:36 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2000/07/25 06:26:19 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -171,8 +171,6 @@ chain(entry, args, ssym, esym)
 {
 	extern char end[];
 	int l, machine_tag;
-
-	freeall();
 
 	/*
 	 * Stash pointer to end of symbol table after the argument
