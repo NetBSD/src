@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.73 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.74 1999/03/25 04:45:56 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -352,5 +352,6 @@ int	groupmember __P((gid_t, struct ucred *));
 void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
+int	proc_isunder __P((struct proc *, struct proc*));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
