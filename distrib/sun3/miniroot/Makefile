@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2002/04/12 03:21:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/04/18 15:36:57 bouyer Exp $
+
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 TOP=		${.CURDIR}/..
 
-# This include just sets DISTRIBREV=XX
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	miniroot
