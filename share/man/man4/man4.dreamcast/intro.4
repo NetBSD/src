@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.1 2003/07/04 17:25:58 marcus Exp $
+.\"	$NetBSD: intro.4,v 1.2 2003/07/05 21:53:16 marcus Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,19 +102,32 @@ Not all supported devices are listed.
 .\"
 .Pp
 Standard builtin devices:
-.Bl -tag -width gdrom -offset indent -compact
+.Bl -tag -width gapspci -offset indent -compact
 .\"
 .\"
 .\"
+.It g2bus
+"G2" internal I/O bus
+.It gapspci
+PCI bridge used in expansion port peripherals
 .It gdrom
 Builtin GD-ROM optical disc drive
+.It pvr
+Framebuffer device using the builtin NEC PVR graphics subsystem
 .El
 .\"
 .\"
 .\"
 .Pp
+Controller port peripherals are supported though the
+.Xr maple 4
+bus and associated device drivers.
+.\"
+.\"
+.\"
+.Pp
 Network interfaces:
-.Bl -tag -width gdrom -offset indent -compact
+.Bl -tag -width gapspci -offset indent -compact
 .It rtk
 Ethernet driver for the HIT-0400 Broadband Adapter
 .El
