@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1996/05/12 04:10:15 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1996/05/16 15:53:02 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1186,9 +1186,12 @@ initcpu()
 #if defined(M68060)
 	extern caddr_t vectab[256];
 
+#if defined(M060SP)
 	extern u_int8_t I_CALL_TOP[];
 	extern u_int8_t FP_CALL_TOP[];
+#else
 	extern u_int8_t illinst;
+#endif
 
 	if (machineid & AMIGA_68060) {
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
