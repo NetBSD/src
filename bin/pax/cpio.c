@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.13 2002/02/11 10:57:57 wiz Exp $	*/
+/*	$NetBSD: cpio.c,v 1.14 2003/02/02 10:21:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.13 2002/02/11 10:57:57 wiz Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.14 2003/02/02 10:21:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,7 +967,7 @@ bcpio_endrd(void)
  * bcpio_wr()
  *	copy the data in the ARCHD to buffer in old binary cpio format
  *	There is a real chance of field overflow with this critter. So we
- *	always check the conversion is ok. nobody in his their right mind
+ *	always check the conversion is ok. nobody in their right mind
  *	should write an archive in this format...
  * Return
  *	0 if file has data to be written after the header, 1 if file has NO
