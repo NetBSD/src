@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.60 1998/10/19 22:19:26 tron Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.61 1998/11/11 22:37:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -306,12 +306,6 @@ exit1(p, rv)
 		if (pp->p_children.lh_first == NULL)
 			wakeup((caddr_t)pp);
 	}
-	/*
-	 * Notify parent that we're gone.
-	 */
-	if ((p->p_flag & P_FSTRACE) == 0)
-		psignal(p->p_pptr, SIGCHLD);
-	wakeup((caddr_t)p->p_pptr);
 
 	/*
 	 * Clear curproc after we've done all operations
