@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.37 1998/03/10 19:11:07 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.38 1998/03/23 18:21:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.37 1998/03/10 19:11:07 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.38 1998/03/23 18:21:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,10 +475,8 @@ subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 		for (loc = startp; loc < str; loc++) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp)) {
-				*loc = c;
+			if (patmatch(str, startp))
 				goto recordleft;
-			}
 			*loc = c;
 		}
 		return 0;
@@ -487,32 +485,22 @@ subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 		for (loc = str - 1; loc >= startp; loc--) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp)) {
-				*loc = c;
+			if (patmatch(str, startp))
 				goto recordleft;
-			}
 			*loc = c;
 		}
 		return 0;
 
 	case VSTRIMRIGHT:
-		for (loc = str - 1; loc >= startp; loc--) {
-			if (patmatch(str, loc)) {
-				amount = loc - expdest;
-				STADJUST(amount, expdest);
-				return 1;
-			}
-		}
+		for (loc = str - 1; loc >= startp; loc--)
+			if (patmatch(str, loc))
+				goto recordright;
 		return 0;
 
 	case VSTRIMRIGHTMAX:
-		for (loc = startp; loc < str - 1; loc++) {
-			if (patmatch(str, loc)) {
-				amount = loc - expdest - 1;
-				STADJUST(amount, expdest);
-				return 1;
-			}
-		}
+		for (loc = startp; loc < str - 1; loc++)
+			if (patmatch(str, loc))
+				goto recordright;
 		return 0;
 
 	default:
@@ -520,10 +508,18 @@ subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 	}
 
 recordleft:
+	*loc = c;
 	amount = ((str - 1) - (loc - startp)) - expdest;
 	STADJUST(amount, expdest);
 	while (loc != str - 1)
 		*startp++ = *loc++;
+	return 1;
+
+recordright:
+	amount = loc - expdest;
+	STADJUST(amount, expdest);
+	STPUTC('\0', expdest);
+	STADJUST(-1, expdest);
 	return 1;
 }
 
