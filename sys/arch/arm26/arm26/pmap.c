@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.26 2001/04/25 14:42:31 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.27 2001/04/25 16:30:03 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2001/04/25 14:42:31 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2001/04/25 16:30:03 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -703,20 +703,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	UVMHIST_CALLED(pmaphist);
 	pmap_enter1(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED, 1);
-}
-
-void
-pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
-{
-	UVMHIST_FUNC("pmap_kenter_pgs");
-
-	UVMHIST_CALLED(pmaphist);
-	while (npages > 0) {
-		pmap_kenter_pa(va, (*pages)->phys_addr, VM_PROT_ALL);
-		va += NBPG;
-		pages++;
-		npages--;
-	}
 }
 
 void
