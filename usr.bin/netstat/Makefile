@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 6/18/90
-#	$Id: Makefile,v 1.5 1994/01/11 19:42:48 brezak Exp $
+#	$Id: Makefile,v 1.6 1994/01/28 00:48:33 cgd Exp $
 
 CFLAGS+=-I${DESTDIR}/sys
 PROG=	netstat
@@ -16,7 +16,7 @@ CFLAGS+= -DISO
 
 BINGRP=	kmem
 BINMODE=2555
-LDADD=	-lutil
-DPADD=	${LIBUTIL}
+LDADD=	-lkvm
+DPADD=	${LIBKVM}
 
 .include <bsd.prog.mk>
