@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.2 1999/08/25 02:07:43 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.3 2000/01/19 20:23:46 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.2 1999/08/25 02:07:43 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.3 2000/01/19 20:23:46 christos Exp $");
 #endif
 #endif
 
@@ -119,7 +119,7 @@ static fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
 /*
  * Command-line options.
  */
-static int setifaceid __P((char *arg));
+static int setifaceid __P((char **arg));
 
 static option_t ipv6cp_option_list[] = {
     { "ipv6", o_special, setifaceid,
@@ -174,7 +174,7 @@ struct protent ipv6cp_protent = {
     ipv6cp_close,
     ipv6cp_printpkt,
     NULL,
-    0,
+    1,
     "IPV6CP",
     "IPV6",
     ipv6cp_option_list,
@@ -212,26 +212,27 @@ static pid_t ipv6cp_script_pid;
  */
 static int
 setifaceid(arg)
-    char *arg;
+    char **arg;
 {
-    char *comma;
+    char *p, *comma;
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
     struct in6_addr addr;
-    
+
+#define s6_addr32 __u6_addr.__u6_addr32 /* non-standard */
 #define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \
 			(((a).s6_addr32[2] != 0) || ((a).s6_addr32[3] != 0)) )
-    
-    if ((comma = strchr(arg, ',')) == NULL)
-	comma = arg + strlen(arg);
+    p = *arg; 
+    if ((comma = strchr(p, ',')) == NULL)
+	comma = p + strlen(p);
     
     /* 
      * If comma first character, then no local identifier
      */
-    if (comma != arg) {
+    if (comma != p) {
 	*comma = '\0';
 
-	if (inet_pton(AF_INET6, arg, &addr) == 0 || !VALIDID(addr)) {
-	    option_error("Illegal interface identifier: %s", arg);
+	if (inet_pton(AF_INET6, p, &addr) == 0 || !VALIDID(addr)) {
+	    option_error("Illegal interface identifier: %s", p);
 	    return 0;
 	}
 	
