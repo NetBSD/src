@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.6 1996/11/15 22:53:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,9 @@ struct cfattach uha_isa_ca = {
 	sizeof(struct uha_softc), uha_isa_probe, uha_isa_attach
 };
 
+#ifndef	DDB
+#define Debugger() panic("should call debugger here (uha_isa.c)")
+#endif /* ! DDB */
 #define KVTOPHYS(x)	vtophys(x)
 
 int u14_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));
