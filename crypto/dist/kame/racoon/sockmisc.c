@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.22 2001/01/10 17:24:32 sakane Exp $	*/
+/*	$KAME: sockmisc.c,v 1.23 2001/01/29 10:37:31 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -626,6 +626,46 @@ saddrwop2str(saddr)
 	return buf;
 }
 
+struct sockaddr *
+str2saddr(host, port)
+	char *host;
+	char *port;
+{
+	struct addrinfo hints, *res;
+	struct sockaddr *saddr;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	error = getaddrinfo(host, port, &hints, &res);
+	if (error != 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"getaddrinfo(%s%s%s): %s",
+			host, port ? "," : "", port ? port : "",
+			gai_strerror(error));
+		return NULL;
+	}
+	if (res->ai_next != NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"getaddrinfo(%s%s%s): "
+			"resolved to multiple address, "
+			"taking the first one",
+			host, port ? "," : "", port ? port : "");
+	}
+	saddr = malloc(res->ai_addrlen);
+	if (saddr == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate buffer.\n");
+		freeaddrinfo(res);
+		return NULL;
+	}
+	memcpy(saddr, res->ai_addr, res->ai_addrlen);
+
+	return saddr;
+}
+
 void
 mask_sockaddr(a, b, l)
 	struct sockaddr *a;
@@ -663,3 +703,4 @@ mask_sockaddr(a, b, l)
 	for (i = l / 8 + 1; i < alen; i++)
 		p[i] = 0x00;
 }
+
