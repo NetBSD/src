@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.6 1997/10/18 13:03:08 lukem Exp $	*/
+/*	$NetBSD: column.c,v 1.7 1997/10/18 13:07:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.6 1997/10/18 13:03:08 lukem Exp $");
+__RCSID("$NetBSD: column.c,v 1.7 1997/10/18 13:07:39 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 	char *p;
 
 	if (ioctl(1, TIOCGWINSZ, &win) == -1 || !win.ws_col) {
-		if ((p = getenv("COLUMNS")) == NULL)
+		if ((p = getenv("COLUMNS")) != NULL)
 			termwidth = atoi(p);
 	} else
 		termwidth = win.ws_col;
@@ -115,7 +115,7 @@ main(argc, argv)
 	if (!*argv)
 		input(stdin);
 	else for (; *argv; ++argv)
-		if ((fp = fopen(*argv, "r")) == NULL) {
+		if ((fp = fopen(*argv, "r")) != NULL) {
 			input(fp);
 			(void)fclose(fp);
 		} else {
