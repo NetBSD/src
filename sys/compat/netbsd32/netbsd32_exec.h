@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.17 2003/10/10 23:18:57 matt Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.18 2003/10/11 10:36:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -76,7 +76,7 @@ int netbsd32_sigreturn (struct proc *, void *, register_t *);
 void netbsd32_sendsig (const ksiginfo_t *, const sigset_t *);
 #else
 void netbsd32_sendsig (int, const sigset_t *, u_long);
-#endig
+#endif
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
