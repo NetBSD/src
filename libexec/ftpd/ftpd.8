@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.58 2000/07/26 13:45:52 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.59 2000/07/26 13:53:33 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl dHlrsU
+.Op Fl dHlrsUW
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
@@ -183,6 +183,14 @@ If
 is empty or
 .Sq -
 then don't display any version information.
+.It Fl W
+By default each
+.Tn FTP
+session is logged to
+.Pa /var/run/wtmp ,
+making them visible to commands such as
+.Xr last 1 .
+This option prevents that from occurring.
 .El
 .Pp
 The file
