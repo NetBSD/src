@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.46 1998/08/02 15:09:50 sommerfe Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.47 1998/09/03 14:12:36 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -113,6 +113,10 @@
 #if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
+#endif
+
+#if defined(PPP_FILTER) || NBPFILTER > 0
+#include <net/slip.h>
 #endif
 
 #ifdef VJC
@@ -733,13 +737,16 @@ pppoutput(ifp, m0, dst, rtp)
 	pppdumpm(m0);
     }
 
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m0, u_char *) = SLIPDIR_OUT;
+#endif
+
     if ((protocol & 0x8000) == 0) {
 #ifdef PPP_FILTER
 	/*
 	 * Apply the pass and active filters to the packet,
 	 * but only if it is a data packet.
 	 */
-	*mtod(m0, u_char *) = 1;	/* indicates outbound */
 	if (sc->sc_pass_filt.bf_insns != 0
 	    && bpf_filter(sc->sc_pass_filt.bf_insns, (u_char *) m0,
 			  len, 0) == 0) {
@@ -754,7 +761,6 @@ pppoutput(ifp, m0, dst, rtp)
 	    || bpf_filter(sc->sc_active_filt.bf_insns, (u_char *) m0, len, 0))
 	    sc->sc_last_sent = time.tv_sec;
 
-	*mtod(m0, u_char *) = address;
 #else
 	/*
 	 * Update the time we sent the most recent packet.
@@ -769,6 +775,10 @@ pppoutput(ifp, m0, dst, rtp)
      */
     if (sc->sc_bpf)
 	bpf_mtap(sc->sc_bpf, m0);
+#endif
+
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m0, u_char *) = address;
 #endif
 
     /*
@@ -1374,6 +1384,10 @@ ppp_inproc(sc, m)
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
 
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m, u_char *) = SLIPDIR_IN;
+#endif
+
     if ((proto & 0x8000) == 0) {
 #ifdef PPP_FILTER
 	/*
@@ -1381,7 +1395,6 @@ ppp_inproc(sc, m)
 	 * if it counts as link activity.
 	 */
 	adrs = *mtod(m, u_char *);	/* save address field */
-	*mtod(m, u_char *) = 0;		/* indicate inbound */
 	if (sc->sc_pass_filt.bf_insns != 0
 	    && bpf_filter(sc->sc_pass_filt.bf_insns, (u_char *) m,
 			  ilen, 0) == 0) {
@@ -1393,7 +1406,6 @@ ppp_inproc(sc, m)
 	    || bpf_filter(sc->sc_active_filt.bf_insns, (u_char *) m, ilen, 0))
 	    sc->sc_last_recv = time.tv_sec;
 
-	*mtod(m, u_char *) = adrs;
 #else
 	/*
 	 * Record the time that we received this packet.
@@ -1406,6 +1418,10 @@ ppp_inproc(sc, m)
     /* See if bpf wants to look at the packet. */
     if (sc->sc_bpf)
 	bpf_mtap(sc->sc_bpf, m);
+#endif
+
+#if defined(PPP_FILTER) || NBPFILTER > 0
+    *mtod(m, u_char *) = adrs;
 #endif
 
     rv = 0;
