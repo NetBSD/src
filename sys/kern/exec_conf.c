@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.84 2003/10/19 07:52:22 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.85 2004/07/03 00:14:30 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.84 2003/10/19 07:52:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.85 2004/07/03 00:14:30 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -518,7 +518,7 @@ const struct execsw execsw_builtin[] = {
 	  exec_darwin_copyargs,
 	  NULL,
 	  coredump_netbsd,
-	  exec_setup_stack },
+	  darwin_exec_setup_stack },
 #endif
 
 #ifdef COMPAT_MACH
