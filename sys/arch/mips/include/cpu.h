@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1997/06/16 03:52:37 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1997/06/16 06:17:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,6 +80,15 @@ struct clockframe {
 
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
+
+#ifdef MIPS3
+#define	CLKF_USERMODE(framep)	CLKF_USERMODE_R4K(framep)
+#define	CLKF_BASEPRI(framep)	CLKF_BASEPRI_R4K(framep)
+#else
+#define	CLKF_USERMODE(framep)	CLKF_USERMODE_R3K(framep)
+#define	CLKF_BASEPRI(framep)	CLKF_BASEPRI_R3K(framep)
+#endif
+
 
 /*
  * Preempt the current process if in interrupt from user mode,
