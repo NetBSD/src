@@ -1,6 +1,6 @@
-.\"	$NetBSD: xfer,v 1.13 2000/12/01 08:02:34 minoura Exp $
+.\"	$NetBSD: xfer,v 1.14 2001/04/07 17:44:15 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -501,7 +501,7 @@ installation, the IP address of
 .Sy ftp.netbsd.org
 is
 .Li 204.152.184.75
-(as of October, 2000).
+(as of April, 2001.
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
@@ -676,7 +676,7 @@ on the floppy used for upgrades only knows about
 and
 .Li sd2 .
 If you have more than two IDE drives or more than three SCSI drives, you
-should take care not to place the sets on the high numbered drives.
+should take care not to place the sets on the high-numbered drives.
 .\} \" ! r_pmax
 .Pp
 At a bare minimum, you must upgrade the
