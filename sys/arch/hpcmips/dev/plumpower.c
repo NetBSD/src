@@ -1,7 +1,7 @@
-/*	$NetBSD: plumpower.c,v 1.2 1999/12/07 17:21:45 uch Exp $ */
+/*	$NetBSD: plumpower.c,v 1.3 2000/02/26 15:16:19 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-
+#undef PLUMPOWERDEBUG
 #include "opt_tx39_debug.h"
 
 #include <sys/param.h>
@@ -40,6 +40,15 @@
 #include <hpcmips/dev/plumvar.h>
 #include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumpowerreg.h>
+
+#ifdef PLUMPOWERDEBUG
+int	plumpower_debug = 1;
+#define	DPRINTF(arg) if (plumpower_debug) printf arg;
+#define	DPRINTFN(n, arg) if (plumpower_debug > (n)) printf arg;
+#else
+#define	DPRINTF(arg)
+#define DPRINTFN(n, arg)
+#endif
 
 int	plumpower_match __P((struct device*, struct cfdata*, void*));
 void	plumpower_attach __P((struct device*, struct device*, void*));
@@ -85,9 +94,9 @@ plumpower_attach(parent, self, aux)
 		return;
 	}
 	plum_conf_register_power(sc->sc_pc, (void*)sc);
-
+#ifdef PLUMPOWERDEBUG
 	plumpower_dump(sc);
-
+#endif
 	/* disable all power/clock */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, 
 			PLUM_POWER_PWRCONT_REG, 0);
@@ -98,7 +107,6 @@ plumpower_attach(parent, self, aux)
 	/* enable MCS interface from TX3922 */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_INPENA_REG,
 			PLUM_POWER_INPENA);
-	plumpower_dump(sc);
 }
 
 void
@@ -190,9 +198,9 @@ plum_power_establish(pc, src)
 
 	plum_conf_write(regt, regh, PLUM_POWER_CLKCONT_REG, clkreg);
 	delay(300*1000);	
-
+#ifdef PLUMPOWERDEBUG
 	plumpower_dump(sc);
-
+#endif
 	return (void*)src;
 }
 
@@ -253,8 +261,9 @@ plum_power_disestablish(pc, ph)
 
 	plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
 	plum_conf_write(regt, regh, PLUM_POWER_CLKCONT_REG, clkreg);
-
+#ifdef PLUMPOWERDEBUG
 	plumpower_dump(sc);
+#endif
 }
 
 #define ISPOWERSUPPLY(r, m) __is_set_print(r, PLUM_POWER_PWRCONT_##m, #m)
