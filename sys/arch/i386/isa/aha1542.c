@@ -12,13 +12,17 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.12 1993/07/06 06:06:26 deraadt Exp $
+ *	$Id: aha1542.c,v 1.12.2.1 1993/07/29 21:26:50 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.12  1993/07/06 06:06:26  deraadt
+ * Revision 1.12.2.1  1993/07/29 21:26:50  deraadt
+ * reliability fudge for dealing with drives that do scsi resets very slowly
+ * (or so it seems)
+ *
+ * Revision 1.12  1993/07/06  06:06:26  deraadt
  * clean up code for timeout/untimeout/wakeup prototypes.
  *
  * Revision 1.11  1993/06/14  04:16:03  andrew
@@ -544,6 +548,7 @@ ahaattach(struct isa_device *dev)
 	int r;
 
 	if(!(speedprint & (1<<masunit))) {
+		DELAY(1000000);
 		speedprint |= (1<<masunit);
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
