@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.13 1999/10/01 22:26:00 soren Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.14 1999/10/16 23:53:27 wrstuden Exp $	*/
 
 /*
  * 
@@ -56,6 +56,15 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.14  1999/10/16 23:53:27  wrstuden
+ * In spec_close(), if we're not doing a non-blocking close and VXLOCK is
+ * not set, unlock the vnode before calling the device's close routine and
+ * relock it after it returns. tty close routines will sleep waiting for
+ * buffers to drain, which won't happen often times as the other side needs
+ * to grab the vnode lock first.
+ *
+ * Make all unmount routines lock the device vnode before calling VOP_CLOSE().
+ *
  * Revision 1.13  1999/10/01 22:26:00  soren
  * Account for widened v_usecount in struct vnode.
  *
@@ -561,8 +570,9 @@ coda_close(v)
 #ifdef	hmm
 	    vgone(cp->c_ovp);
 #else
+	    vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
 	    VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
-	    vrele(cp->c_ovp);
+	    vput(cp->c_ovp);
 #endif
 	} else {
 #ifdef	CODA_VERBOSE
@@ -571,8 +581,9 @@ coda_close(v)
 	}
 	return ENODEV;
     } else {
+	vn_lock(cp->c_ovp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(cp->c_ovp, flag, cred, p); /* Do errors matter here? */
-	vrele(cp->c_ovp);
+	vput(cp->c_ovp);
     }
 
     if (--cp->c_ocount == 0)
