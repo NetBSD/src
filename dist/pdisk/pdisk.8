@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.2 2002/08/18 23:41:38 wiz Exp $
+.\"	$NetBSD: pdisk.8,v 1.3 2002/09/09 11:26:29 dbj Exp $
 .Dd August 19, 2002
 .Os
 .Dt PDISK 8
@@ -7,19 +7,18 @@
 .Nd Apple partition table editor
 .Sh SYNOPSIS
 .Nm
-.Op Fl acdhilrv
-.\".Op Fl acdhilLprv
-.Ar device ...
-.\".Op Fl -abbr
-.\".Op Fl -compute_size
-.\".Op Fl -debug
-.\".Op Fl -help
-.\".Op Fl -interactive
-.\".Op Fl -list Ar name ...
-.\".Op Fl -logical
-.\".Op Fl -pname
-.\".Op Fl -readonly
-.\".Op Fl -version
+.Op Fl acdhilLfrv
+.Op Fl -abbr
+.Op Fl -compute_size
+.Op Fl -debug
+.Op Fl -help
+.Op Fl -interactive
+.Op Fl -list Ar name
+.Op Fl -logical
+.Op Fl -fname
+.Op Fl -readonly
+.Op Fl -version
+.Op Ar device ...
 .Sh DESCRIPTION
 .Nm
 is a menu driven program which partitions disks using the standard Apple
@@ -28,29 +27,35 @@ It does not support the Intel/DOS partitioning scheme supported by
 .Xr fdisk 8 .
 .Pp
 Supported options are:
-.Bl -tag -width Fl
+.Bl -tag -width "--compute_size" -compact
 .It Fl a
+.It Fl -abbr
 Abbreviate the partition types shown in the partition list.
 .It Fl c
+.It Fl -compute_size
 Causes
 .Nm
 to always ignore the device size listed in the partition table
 and compute the device size by other means.
 .It Fl d
+.It Fl -debug
 Turns on debugging.  Doesn't add that much output, but does add
 a new command
 .Sq x
 to the editing commands that accesses an eclectic bunch of
 undocumented functionality.
 .It Fl h
+.It Fl -help
 Prints a short help message.
 .It Fl i
+.It Fl -interactive
 Causes
 .Nm
 to go into an interactive mode similar to the MacOS version of the program.
 .It Fl l
+.It Fl -list Ar namep
 If no
-.Ar device
+.Ar name
 argument is given,
 .Nm
 tries to list partition tables for all available hard drives.
@@ -58,20 +63,19 @@ Otherwise,
 .Nm
 lists the partition tables for the specified
 .Ar devices .
-.\".It Fl L
-.\"Show physical limits of partition in the partition list.
-.\"Defaults to on.
-.\".It Fl p
-.\"Since the default behaviour of
-.\".Nm
-.\"is to show the Mac volume name, this flag forces
-.\".Nm
-.\"to show the partition name instead.
+.It Fl L
+.It Fl -logical
+Show partition limits in logical blocks.  Default is physical blocks.
+.It Fl f
+.It Fl -fname
+Show HFS volume names instead of partition name when available
 .It Fl r
+.It Fl -readonly
 Prevents
 .Nm
 from writing to the device.
 .It Fl v
+.It Fl -version
 Prints the version number of
 .Nm "" .
 .El
@@ -116,7 +120,7 @@ after the affected partition.
 You are advised to print the table as frequently as necessary.
 .Pp
 Creating more than fifteen partitions is not advised.
-.\"There is currently a bug in the some (all?) of the kernels which causes
+.\"There may be a bug in old linux kernels which causes
 .\"access to the whole disk fail if more than fifteen partitions are in the map.
 .Pp
 The
@@ -144,6 +148,7 @@ The last argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
 The type of the created partition is the correct type for
+Linux but not for
 .Nx .
 .Pp
 The
@@ -185,7 +190,17 @@ In order to use the new partition map you must reboot.
 .Sh BUGS
 Some people believe there should really be just one disk partitioning utility.
 .Pp
-.Nm
-should be able to create HFS partitions that work.
+.\".Nm
+.\"should be able to create HFS partitions that work.
+.\".Pp
+Filesystem volume names are out of place in a partition utility.
+This utility supports HFS volume names, but not volume names
+of any other filesystem types.
 .Pp
-Even more help should be available during user input.
+The
+.Fl -logical
+option has not been heavily tested.
+.Pp
+.Nm
+cannot create NetBSD partitions.  This is being worked on.
+.Pp
