@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.13 2002/04/02 00:16:33 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.14 2002/04/12 04:52:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct sadata_upcall {
 struct sadata {
 	struct simplelock sa_lock;	/* lock on these fields */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
+	struct lwp	*sa_vp;		/* "virtual processor" allocation */
 	int	sa_concurrency;		/* desired concurrency */
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
 	int	sa_ncached;		/* list length */

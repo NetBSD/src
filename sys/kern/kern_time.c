@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.12 2002/04/02 00:16:00 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.13 2002/04/12 04:52:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.12 2002/04/02 00:16:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.13 2002/04/12 04:52:53 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -737,6 +737,9 @@ realtimerupcall(struct lwp *l, void *arg)
 {
 	struct ptimer *pt;
 
+	/* The LWP that is running doesn't change, so we don't need
+	 * to touch sa_vp.
+	 */
 	pt = (struct ptimer *)arg;
 	sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(siginfo_t), 
 	    &pt->pt_info);
@@ -781,6 +784,7 @@ realtimerexpire(void *arg)
 		
 		if (p->p_nrlwps == 0) {
 			struct sadata_upcall *sd;
+			struct sadata *sa = p->p_sa;
 			struct lwp *l2;
 			int s, ret;
 
@@ -795,6 +799,8 @@ realtimerexpire(void *arg)
 				if (ret == 0) {
 					l2->l_priority = l2->l_usrpri;
 					PRELE(l2);
+					KDASSERT(sa->sa_vp == NULL);
+					sa->sa_vp = l2;
 					setrunnable(l2);
 					notified = 1;
 				} else 
