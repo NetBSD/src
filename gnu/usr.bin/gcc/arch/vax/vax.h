@@ -680,7 +680,7 @@ gen_rtx (PLUS, Pmode, frame, gen_rtx (CONST_INT, VOIDmode, 12))
 
 /* Non-zero if X is an address which can be indirected.  */
 #define INDIRECTABLE_ADDRESS_P(X)  \
-  (CONSTANT_ADDRESS_P (X)						\
+  ((CONSTANT_ADDRESS_P (X) && !flag_pic)				\
    || (GET_CODE (X) == REG && REG_OK_FOR_BASE_P (X))			\
    || (GET_CODE (X) == PLUS						\
        && GET_CODE (XEXP (X, 0)) == REG					\
