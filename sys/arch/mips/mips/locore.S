@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.2 2001/11/17 23:43:42 wdk Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.3 2001/11/18 09:01:31 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -384,31 +384,39 @@ END(mips_idle)
 /*
  * cpu_switch(struct lwp *)
  * Find the highest priority process and resume it.
+ * Arguments:
+ *	a0	'struct lwp *' of the current LWP
+ *
+ * Returns:
+ *      v0	0 = no context switch was done
+ *              1 = switched to another context then restored
  */
 NESTED(cpu_switch, CALLFRAME_SIZ, ra)
-	lw	a0, L_ADDR(a0)
+	lw	a2, L_ADDR(a0)			# a2 = l->l_addr
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
-	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
-	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
-	REG_S	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
-	REG_S	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
-	REG_S	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
-	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
-	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
-	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
-	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
-	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
-	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a2)
+	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(a2)
+	REG_S	s2, U_PCB_CONTEXT+SF_REG_S2(a2)
+	REG_S	s3, U_PCB_CONTEXT+SF_REG_S3(a2)
+	REG_S	s4, U_PCB_CONTEXT+SF_REG_S4(a2)
+	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a2)
+	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a2)
+	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a2)
+	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a2)
+	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a2)
+	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
+	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a2)
 #ifdef IPL_ICU_MASK
 	lw	t0, _C_LABEL(md_imask)	
-	sw	t0, U_PCB_PPL(a0)
+	sw	t0, U_PCB_PPL(a2)
 #endif	
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
+
+	move	s0, a0				# s0 = old proc
 /*
  * Entered here from idle() and switch_exit().  Interrupts are
  * blocked, and sched_lock is held.
@@ -455,7 +463,7 @@ cpu_switch_queuescan:
 	xor	t3, t3, v1			# clear bit in 'whichqs'
 	sw	t3, _C_LABEL(sched_whichqs)
 3:
-	/* Squirrel away proc pointer. */
+	/* Squirrel away proc pointer into s7 */
 	move	s7, a0
 #if defined(LOCKDEBUG)
 	/*
@@ -464,9 +472,32 @@ cpu_switch_queuescan:
 	 */
 	jal	_C_LABEL(sched_unlock_idle)
 	nop
-	move	a0, s7				# restore proc
 #endif
 
+	/*
+	 * regardless of whether a context switch is requites, we need
+	 * to update curproc and other globals.  We must do this even
+	 * if switching to ourselves because we might have re-entered
+	 * cpu_switch() from idle() - in which case curproc would be NULL
+	 * This needs to be set before conext switch on MIPS
+	 */	
+	li	v1, LSONPROC
+	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
+	sw	s7, _C_LABEL(curproc)		# curproc = l
+
+	/*
+	 * Check to see if we're switching to ourself.  If we are,
+	 * don't bother loading the new context.
+	 *
+	 * Note that even if we re-enter cpu_switch() from idle(),
+	 * s0 will still contain the old curproc value because any
+	 * users of that register between then and now must have
+	 * saved it.  Also note that switch_exit() ensures that
+	 * s0 is clear before jumping here to find a new process.
+	 */
+	beq	s0, s7, 4f			# oldproc == newproc ??
+	li	s5, 0				# BDslot: didn't switch 
+	
 /*
  * Switch to new context.
  */
@@ -476,10 +507,7 @@ cpu_switch_queuescan:
 	 * p->p_cpu = curcpu();
 	 */
 #endif
-	li	v1, LSONPROC			# l->l_stat = SONPROC
-	sw	v1, L_STAT(a0)
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
 	nop
 
@@ -494,7 +522,10 @@ cpu_switch_queuescan:
 
 	jal	_C_LABEL(pmap_activate)
 	move	a0, s7				# -BDSLOT-
+	li	s5, 1				# remember that we switched
 
+4:
+	/* New context is now active */
 	lw	a0, L_ADDR(s7)
 	sw	zero, _C_LABEL(want_resched)	# we've context switched
 	sw	a0, _C_LABEL(curpcb)
@@ -502,14 +533,15 @@ cpu_switch_queuescan:
 #ifdef IPL_ICU_MASK
 	# restore ICU state
 	lw	t0, U_PCB_PPL(a0)
-	sw	t0, _C_LABEL(md_imask)	
+	sw	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	lw	a0, L_ADDR(s7)			# restore pcb_context pointer.
 #endif /* IPL_ICU_MASK */
+	move	v0, s5				# Save return value
 	REG_PROLOGUE
-	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
-	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
+	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(t0,ra)		# machine dependent masking
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -522,10 +554,10 @@ cpu_switch_queuescan:
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
-	mtc0	v0, MIPS_COP_0_STATUS
+	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1				# possible return to 'savectx()'
+	nop
 END(cpu_switch)
 
 
@@ -536,74 +568,49 @@ END(cpu_switch)
  *	a0	'struct lwp *' of the current LWP
  *	a1	'struct lwp *' of the LWP to switch to
  */
-/*
- *     XXX XXX XXX XXX XXX
- * Currently a duplicate of cpu_swich
- *     XXX XXX XXX XXX XXX
- */
 NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
-	lw	a0, L_ADDR(a0)
+	lw	a2, L_ADDR(a0)
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
-	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
-	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
-	REG_S	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
-	REG_S	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
-	REG_S	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
-	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
-	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
-	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
-	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
-	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
-	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a2)
+	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(a2)
+	REG_S	s2, U_PCB_CONTEXT+SF_REG_S2(a2)
+	REG_S	s3, U_PCB_CONTEXT+SF_REG_S3(a2)
+	REG_S	s4, U_PCB_CONTEXT+SF_REG_S4(a2)
+	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a2)
+	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a2)
+	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a2)
+	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a2)
+	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a2)
+	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
+	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a2)
 #ifdef IPL_ICU_MASK
 	lw	t0, _C_LABEL(md_imask)	
-	sw	t0, U_PCB_PPL(a0)
+	sw	t0, U_PCB_PPL(a2)
 #endif	
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 
+	move	s0, a0				# s0 = old proc
+	move	a0, a1				# a0 = newproc
 cpu_preempt_queuescan:
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	li	t2, -1				# t2 = lowest bit set
-	bne	t0, zero, 1f
-	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
-	nop					# for r2000/r3000
-	jal	ra, t3
-	nop
-1:
-	move	t3, t0				# t3 = saved whichqs
-1:
-#if defined(MIPS3_5900)	/* work around for branch prediction miss. */
-	nop
-	nop
-	nop
-#endif
-	addu	t2, t2, 1
-	and	t1, t0, 1			# bit set?
-	beq	t1, zero, 1b
-	srl	t0, t0, 1			# try next bit
-/*
- * Remove process from queue.
- */
-	sll	t0, t2, 3
-	la	t1, _C_LABEL(sched_qs)
-	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
-	lw	a0, L_FORW(t0)			# a0 = p = highest pri process
-	nop
-	lw	v0, L_FORW(a0)			# v0 = l->l_forw
-	bne	t0, a0, 2f			# make sure something in queue
-	sw	v0, L_FORW(t0)			# qp->ph_link = p->p_forw;
+	lw	t3, _C_LABEL(sched_whichqs)	# look for non-empty queue
+	bne	t3, zero, 2f
 	PANIC("cpu_preempt")			# nothing in queue
+
 2:
-	sw	t0, L_BACK(v0)			# l->l_forw->l_back = qp
-	bne	v0, t0, 3f			# queue still not empty
-	sw	zero, L_BACK(a0)		## for firewall checking
-	li	v1, 1				# compute bit in 'whichqs'
-	sll	v1, v1, t2
+	lw	t5, L_BACK(a0)			# t5 = l->l_back
+	lw	t6, L_FORW(a0)			# t6 = l->l_forw
+	sw	zero, L_BACK(a0)		# firewalll: l->l_back=NULL
+	sw	t5, L_BACK(t6)			# t6->l_back = t5
+	sw	t6, L_FORW(t5)			# f5->l_forw = t6
+
+	bne	t5, t6, 3f			# Is queue empty??	
+	
+	lw	t2, L_PRIORITY(a1)		# Clear bit for this priority
+	sll	v1, t2, 2			# t2 = t2 << 2
 	xor	t3, t3, v1			# clear bit in 'whichqs'
 	sw	t3, _C_LABEL(sched_whichqs)
 3:
@@ -618,7 +625,30 @@ cpu_preempt_queuescan:
 	nop
 	move	a0, s7				# restore proc
 #endif
+	/*
+	 * regardless of whether a context switch is requites, we need
+	 * to update curproc and other globals.  We must do this even
+	 * if switching to ourselves because we might have re-entered
+	 * cpu_switch() from idle() - in which case curproc would be NULL
+	 * This needs to be set before conext switch on MIPS
+	 */	
+	li	v1, LSONPROC
+	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
+	sw	s7, _C_LABEL(curproc)		# curproc = l
 
+	/*
+	 * Check to see if we're switching to ourself.  If we are,
+	 * don't bother loading the new context.
+	 *
+	 * Note that even if we re-enter cpu_switch() from idle(),
+	 * s0 will still contain the old curproc value because any
+	 * users of that register between then and now must have
+	 * saved it.  Also note that switch_exit() ensures that
+	 * s0 is clear before jumping here to find a new process.
+	 */
+	beq	s0, s7, 4f			# oldproc == newproc ??
+	li	s5, 0				# BDslot: didn't switch 
+	
 /*
  * Switch to new context.
  */
@@ -628,10 +658,7 @@ cpu_preempt_queuescan:
 	 * p->p_cpu = curcpu();
 	 */
 #endif
-	li	v1, LSONPROC			# l->l_stat = SONPROC
-	sw	v1, L_STAT(a0)
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
 	nop
 
@@ -646,7 +673,10 @@ cpu_preempt_queuescan:
 
 	jal	_C_LABEL(pmap_activate)
 	move	a0, s7				# -BDSLOT-
+	li	s5, 1				# remember that we switched
 
+4:
+	/* New context is now active */
 	lw	a0, L_ADDR(s7)
 	sw	zero, _C_LABEL(want_resched)	# we've context switched
 	sw	a0, _C_LABEL(curpcb)
@@ -654,14 +684,15 @@ cpu_preempt_queuescan:
 #ifdef IPL_ICU_MASK
 	# restore ICU state
 	lw	t0, U_PCB_PPL(a0)
-	sw	t0, _C_LABEL(md_imask)	
+	sw	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	lw	a0, L_ADDR(s7)			# restore pcb_context pointer.
 #endif /* IPL_ICU_MASK */
+	move	v0, s5				# Save return value
 	REG_PROLOGUE
-	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
-	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
+	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(t0,ra)		# machine dependent masking
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -674,10 +705,10 @@ cpu_preempt_queuescan:
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
-	mtc0	v0, MIPS_COP_0_STATUS
+	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1				# possible return to 'savectx()'
+	nop
 END(cpu_preempt)
 
 /*
@@ -698,6 +729,14 @@ LEAF(switch_exit)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif
+	/*
+	 * Now jump back into the middle of cpu_switch().  Note that
+	 * we must clear s0 to guarantee that the check for switching
+	 * to ourselves in cpu_switch() will fail.  This is safe since
+	 * s0 will be restored when a new process is resumed.
+	 */
+	li	s0, 0
+	
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
@@ -719,6 +758,14 @@ LEAF(switch_lwp_exit)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif
+	/*
+	 * Now jump back into the middle of cpu_switch().  Note that
+	 * we must clear s0 to guarantee that the check for switching
+	 * to ourselves in cpu_switch() will fail.  This is safe since
+	 * s0 will be restored when a new process is resumed.
+	 */
+	li	s0, 0
+
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
