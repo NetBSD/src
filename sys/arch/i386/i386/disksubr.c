@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1995/01/13 06:51:38 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1995/01/13 08:31:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -386,6 +386,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
 			return (0);
+		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
@@ -403,4 +404,3 @@ bad:
 	bp->b_flags |= B_ERROR;
 	return (-1);
 }
-
