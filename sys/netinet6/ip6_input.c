@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_input.c,v 1.26 2000/08/26 11:03:46 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.119 2000/08/26 10:00:45 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.27 2000/08/31 07:35:44 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -503,7 +503,7 @@ ip6_input(m)
 		} else {
 			/* address is not ready, so discard the packet. */
 			log(LOG_INFO,
-			    "ip6_input: packet to an unready address %s->%s",
+			    "ip6_input: packet to an unready address %s->%s\n",
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst));
 
@@ -828,7 +828,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			if (*(opt + 1) != IP6OPT_JUMBO_LEN - 2)
 				 /* XXX: should we discard the packet? */
 				log(LOG_ERR, "length of jumbopayload opt "
-				    "is inconsistent(%d)",
+				    "is inconsistent(%d)\n",
 				    *(opt + 1));
 			optlen = IP6OPT_JUMBO_LEN;
 
