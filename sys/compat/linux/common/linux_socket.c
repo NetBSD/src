@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.39 2002/05/12 18:30:32 jschauma Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.39.4.1 2003/10/22 03:43:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39 2002/05/12 18:30:32 jschauma Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39.4.1 2003/10/22 03:43:03 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -300,7 +300,7 @@ linux_sys_sendmsg(p, v, retval)
 	struct msghdr	msg;
 	int		error;
 	struct sys_sendmsg_args bsa;
-	struct msghdr *nmsg = NULL;
+	struct msghdr *nmsg = (struct msghdr *)SCARG(uap, msg);
 
 	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof(msg));
 	if (error)
