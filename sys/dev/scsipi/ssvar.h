@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.10 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.11 2004/08/21 20:40:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -43,15 +43,15 @@ struct ss_softc;
 struct scan_io;
 
 struct ss_special {
-	int	(*set_params) __P((struct ss_softc *, struct scan_io *));
-	int	(*trigger_scanner) __P((struct ss_softc *));
-	int	(*get_params) __P((struct ss_softc *));
+	int	(*set_params)(struct ss_softc *, struct scan_io *);
+	int	(*trigger_scanner)(struct ss_softc *);
+	int	(*get_params)(struct ss_softc *);
 	/* some scanners only send line-multiples */
-	void	(*minphys) __P((struct ss_softc *, struct buf *));
-	int	(*read) __P((struct ss_softc *, struct buf *));
-	int	(*rewind_scanner) __P((struct ss_softc *));
-	int	(*load_adf) __P((struct ss_softc *));
-	int	(*unload_adf) __P((struct ss_softc *));
+	void	(*minphys)(struct ss_softc *, struct buf *);
+	int	(*read)(struct ss_softc *, struct buf *);
+	int	(*rewind_scanner)(struct ss_softc *);
+	int	(*load_adf)(struct ss_softc *);
+	int	(*unload_adf)(struct ss_softc *);
 };
 
 /*
@@ -80,5 +80,5 @@ struct ss_softc {
 /*
  * define the special attach routines if configured
  */
-void mustek_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
-void scanjet_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
+void mustek_attach(struct ss_softc *, struct scsipibus_attach_args *);
+void scanjet_attach(struct ss_softc *, struct scsipibus_attach_args *);
