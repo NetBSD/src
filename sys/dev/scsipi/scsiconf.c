@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.81 1997/04/20 00:55:05 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.82 1997/04/20 01:30:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -397,6 +397,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IBMRAID ", "0662S",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "0663H",		 ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
