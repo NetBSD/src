@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.9 1998/02/03 19:12:34 perry Exp $	*/
+/*	$NetBSD: scroll.c,v 1.10 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.9 1998/02/03 19:12:34 perry Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.10 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,7 +52,7 @@ int
 scroll(win)
 	WINDOW *win;
 {
-	int oy, ox;
+	int     oy, ox;
 
 #ifdef DEBUG
 	__CTRACE("scroll: (%0.2o)\n", win);

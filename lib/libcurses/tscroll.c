@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.4 1997/07/22 07:37:08 mikel Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.5 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,16 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.4 1997/07/22 07:37:08 mikel Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.5 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
 #define	MAXRETURNSIZE	64
 
 /*
- * Routine to perform scrolling.  Derived from tgoto.c in tercamp(3)
+ * Routine to perform scrolling.  Derived from tgoto.c in termcap(3)
  * library.  Cap is a string containing printf type escapes to allow
  * scrolling.  The following escapes are defined for substituting n:
  *
@@ -67,14 +67,14 @@ __RCSID("$NetBSD: tscroll.c,v 1.4 1997/07/22 07:37:08 mikel Exp $");
  *
  * all other characters are ``self-inserting''.
  */
-char *
+char   *
 __tscroll(cap, n1, n2)
 	const char *cap;
-	int n1, n2;
+	int     n1, n2;
 {
 	static char result[MAXRETURNSIZE];
-	int c, n;
-	char *dp;
+	int     c, n;
+	char   *dp;
 
 	if (cap == NULL)
 		goto err;
@@ -98,8 +98,8 @@ __tscroll(cap, n1, n2)
 			n %= 100;
 			/* FALLTHROUGH */
 		case '2':
-two:			*dp++ = n / 10 | '0';
-one:			*dp++ = n % 10 | '0';
+	two:		*dp++ = n / 10 | '0';
+	one:		*dp++ = n % 10 | '0';
 			n = n2;
 			continue;
 		case '>':
@@ -126,12 +126,12 @@ one:			*dp++ = n % 10 | '0';
 		case 'D':
 			n = n - 2 * (n % 16);
 			continue;
-		/*
-		 * XXX
-		 * System V terminfo files have lots of extra gunk.
-		 * The only one we've seen in scrolling strings is
-		 * %pN, and it seems to work okay if we ignore it.
-		 */
+			/*
+			 * XXX
+			 * System V terminfo files have lots of extra gunk.
+			 * The only one we've seen in scrolling strings is
+			 * %pN, and it seems to work okay if we ignore it.
+			 */
 		case 'p':
 			++cap;
 			continue;
@@ -142,5 +142,5 @@ one:			*dp++ = n % 10 | '0';
 	*dp = '\0';
 	return (result);
 
-err:	return("curses: __tscroll failed");
+err:	return ("curses: __tscroll failed");
 }
