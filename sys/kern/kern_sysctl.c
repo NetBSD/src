@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.114 2002/11/02 07:25:21 perry Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.115 2002/11/07 00:22:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.114 2002/11/02 07:25:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.115 2002/11/07 00:22:29 manu Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -744,7 +744,34 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 				return EPERM;
 		}
 	}
-	if (name[1] == PROC_PID_CORENAME) {
+	switch(name[1]) {
+	case PROC_PID_STOPFORK: 
+		if (namelen != 2)
+			return EINVAL;
+		i = ((ptmp->p_flag & P_STOPFORK) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+			return error;
+		if (i != 0)
+			ptmp->p_flag |= P_STOPFORK;
+		else
+			ptmp->p_flag &= ~P_STOPFORK;
+		return 0;
+		break;
+	
+	case PROC_PID_STOPEXEC: 
+		if (namelen != 2)
+			return EINVAL;
+		i = ((ptmp->p_flag & P_STOPEXEC) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+			return error;
+		if (i != 0)	
+			ptmp->p_flag |= P_STOPEXEC;
+		else
+			ptmp->p_flag &= ~P_STOPEXEC;
+		return 0;
+		break;
+
+	case PROC_PID_CORENAME:
 		if (namelen != 2)
 			return EINVAL;
 		/*
@@ -814,8 +841,9 @@ cleanup:
 		if (tmps)
 			free(tmps, M_TEMP);
 		return (error);
-	}
-	if (name[1] == PROC_PID_LIMIT) {
+		break;
+
+	case PROC_PID_LIMIT:
 		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
 			return EINVAL;
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
@@ -835,7 +863,13 @@ cleanup:
 			error = dosetrlimit(ptmp, p->p_cred,
 			    name[2] - 1, &alim);
 		return error;
+		break;
+
+	default:
+		return (EINVAL);
+		break;
 	}
+	/* NOTREACHED */
 	return (EINVAL);
 }
 

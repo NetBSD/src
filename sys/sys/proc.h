@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.147 2002/10/23 09:14:59 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.148 2002/11/07 00:22:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -308,6 +308,8 @@ struct proc {
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
 #define	P_SYSTRACE	0x200000 /* Process system call tracing active */
 #define	P_CHTRACED	0x400000 /* Child has been traced & reparented */
+#define	P_STOPFORK	0x800000 /* Child will be stopped on fork(2) */
+#define	P_STOPEXEC	0x1000000 /* Will be stopped on exec(2) */
 
 /*
  * Macro to compute the exit signal to be delivered.

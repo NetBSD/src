@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.161 2002/11/01 19:27:05 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.162 2002/11/07 00:22:30 manu Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.161 2002/11/01 19:27:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.162 2002/11/07 00:22:30 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -738,6 +738,18 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
 	p->p_flag &= ~P_INEXEC;
+
+	if (p->p_flag & P_STOPEXEC) {
+		int s;
+
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_stat = SSTOP;
+		mi_switch(p, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
 	return (EJUSTRETURN);
 
  bad:

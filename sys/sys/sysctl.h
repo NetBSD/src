@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.78 2002/08/26 13:09:39 augustss Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.79 2002/11/07 00:22:28 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -590,12 +590,16 @@ struct kinfo_proc2 {
  */
 #define	PROC_PID_CORENAME	1
 #define	PROC_PID_LIMIT		2
-#define	PROC_PID_MAXID		3
+#define	PROC_PID_STOPFORK	3
+#define	PROC_PID_STOPEXEC	4
+#define	PROC_PID_MAXID		5
 
 #define	PROC_PID_NAMES { \
 	{ 0, 0 }, \
 	{ "corename", CTLTYPE_STRING }, \
 	{ "rlimit", CTLTYPE_NODE }, \
+	{ "stopfork", CTLTYPE_INT }, \
+	{ "stopexec", CTLTYPE_INT }, \
 }
 
 /* Limit types from <sys/resources.h> */

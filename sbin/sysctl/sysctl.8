@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.81 2002/10/03 15:41:47 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.82 2002/11/07 00:22:31 manu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -356,6 +356,8 @@ privilege can change the value.
 .It proc.\*[Lt]pid\*[Gt].rlimit.memoryuse.soft	integer	yes
 .It proc.\*[Lt]pid\*[Gt].rlimit.stacksize.hard	integer	yes
 .It proc.\*[Lt]pid\*[Gt].rlimit.stacksize.soft	integer	yes
+.It proc.\*[Lt]pid\*[Gt].stopexec	int	yes
+.It proc.\*[Lt]pid\*[Gt].stopfork	int	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no

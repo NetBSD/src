@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.96 2002/10/23 09:14:17 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.97 2002/11/07 00:22:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.96 2002/10/23 09:14:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.97 2002/11/07 00:22:29 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -471,14 +471,27 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	proclist_unlock_write(s);
 
 	/*
-	 * Make child runnable, set start time, and add to run queue.
+	 * Make child runnable, set start time, and add to run queue
+	 * except if the parent requested the child to start in SSTOP state.
 	 */
 	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
-	p2->p_stat = SRUN;
-	setrunqueue(p2);
+	if (p1->p_flag & P_STOPFORK) {
+		p2->p_stat = SSTOP;
+	} else {
+		p2->p_stat = SRUN;
+		setrunqueue(p2);
+	}
 	SCHED_UNLOCK(s);
+
+	/*
+	 * Inherit STOPFORK and STOPEXEC flags 
+	 */
+	if (p1->p_flag & P_STOPFORK)
+		p2->p_flag |= P_STOPFORK;
+	if (p1->p_flag & P_STOPEXEC)
+		p2->p_flag |= P_STOPEXEC;
 
 	/*
 	 * Now can be swapped.
