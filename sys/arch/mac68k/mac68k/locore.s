@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 1997/03/16 11:05:04 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 1997/04/09 20:17:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1127,95 +1127,13 @@ _esigcode:
  */
 #include <m68k/m68k/support.s>
 
-/*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs have processes in them.
- * Setrunqueue puts processes into queues, remrunqueue removes them from
- * queues.  The running process is on no queue, other processes are on a queue
- * related to p->p_priority, divided by 4 actually to shrink the 0-127
- * range of priorities into the 32 available queues.
- */
-
 	.globl	_whichqs,_qs,_cnt,_panic
 	.globl	_curproc,_want_resched
 
 /*
- * setrunqueue(p)
- *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * Use common m68k process manipulation routines.
  */
-ENTRY(setrunqueue)
-	movl	sp@(4),a0
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_BACK)
-	jne	Lset1
-	tstl	a0@(P_WCHAN)
-	jne	Lset1
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lset1
-#endif
-	clrl	d0
-	movb	a0@(P_PRIORITY),d0
-	lsrb	#2,d0
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-	lslb	#3,d0
-	addl	#_qs,d0
-	movl	d0,a0@(P_FORW)
-	movl	d0,a1
-	movl	a1@(P_BACK),a0@(P_BACK)
-	movl	a0,a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0,a1@(P_FORW)
-	rts
-#ifdef DIAGNOSTIC
-Lset1:
-	movl	#Lset2,sp@-
-	jbsr	_panic
-Lset2:
-	.asciz	"setrunqueue"
-	.even
-#endif
-
-/*
- * remrunqueue(proc *p)
- *
- * Call should be made at spl6().
- */
-ENTRY(remrunqueue)
-	movl	sp@(4),a0		| proc *p
-	movb	a0@(P_PRIORITY),d0	| d0 = processes priority
-#ifdef DIAGNOSTIC
-	lsrb	#2,d0			| d0 /= 4
-	movl	_whichqs,d1		| d1 = whichqs
-	bclr	d0,d1			| clear bit in whichqs corresponding to
-					|  processes priority
-	jeq	Lrem2			| if (d1 & (1 << d0)) == 0
-#endif
-	movl	a0@(P_BACK),a1
-	clrl	a0@(P_BACK)
-	movl	a0@(P_FORW),a0
-	movl	a0,a1@(P_FORW)
-	movl	a1,a0@(P_BACK)
-	cmpal	a0,a1
-	jne	Lrem1
-#ifndef DIAGNOSTIC
-	lsrb	#2,d0
-	movl	_whichqs,d1
-#endif
-	bclr	d0,d1
-	movl	d1,_whichqs
-Lrem1:
-	rts
-#ifdef DIAGNOSTIC
-Lrem2:
-	movl	#Lrem3,sp@-
-	jbsr	_panic
-Lrem3:
-	.asciz	"remrunqueue"
-	.even
-#endif
+#include <m68k/m68k/proc_subr.s>
 
 Lsw0:
 	.asciz	"cpu_switch"
