@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2002/08/19 14:55:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/03 18:46:22 wiz Exp $
 
-NOMAN=		# defined
 USE_SHLIBDIR=	yes
 
 LIB=		z
@@ -8,6 +7,7 @@ LIB=		z
 SRCS=	adler32.c compress.c crc32.c deflate.c gzio.c infblock.c \
 	infcodes.c inffast.c inflate.c inftrees.c infutil.c trees.c uncompr.c \
 	zutil.c gzio_compat.c
+MAN=	zlib.3
 
 CPPFLAGS+=	-I${.CURDIR}
 CLEANFILES+=	minigzip
