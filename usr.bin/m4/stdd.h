@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -33,25 +33,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	@(#)stdd.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
- * Definitions of diversion files.  If the name of the file is changed,
- * adjust UNIQUE to point to the wildcard (*) character in the filename.
+ * standard defines
  */
 
-#ifdef msdos
-#define _PATH_DIVNAME	"\\M4*XXXXXX"		/* msdos diversion files */
-#define	UNIQUE		3			/* unique char location */
-#endif
+#define max(a,b) ((a) > (b)? (a): (b))
+#define min(a,b) ((a) < (b)? (a): (b))
 
-#ifdef unix
-#define _PATH_DIVNAME	"/tmp/m4.0XXXXXX"	/* unix diversion files */
-#define UNIQUE		8			/* unique char location */
-#endif
+#define iswhite(c) ((c) == ' ' || (c) == '\t')
 
-#ifdef vms
-#define _PATH_DIVNAME	"sys$login:m4*XXXXXX"	/* vms diversion files */
-#define UNIQUE		12			/* unique char location */
-#endif
+/* 
+ * STREQ is an optimised strcmp(a,b)==0 
+ * STREQN is an optimised strncmp(a,b,n)==0; assumes n > 0 
+ */
+#define STREQ(a, b) ((a)[0] == (b)[0] && strcmp(a, b) == 0)
+#define STREQN(a, b, n) ((a)[0] == (b)[0] && strncmp(a, b, n) == 0)
+
+#define YES 1
+#define NO 0

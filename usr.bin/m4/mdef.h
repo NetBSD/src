@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ozan Yigit.
+ * Ozan Yigit at York University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,21 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mdef.h	5.6 (Berkeley) 2/26/91
+ *	@(#)mdef.h	8.1 (Berkeley) 6/6/93
  */
 
-/*
- * mdef.h
- * Facility: m4 macro processor
- * by: oz
- */
-
-/*
- *
- * m4 constants..
- *
- */
- 
 #define MACRTYPE        1
 #define DEFITYPE        2
 #define EXPRTYPE        3
@@ -96,6 +84,10 @@
 #define COMMA           ','
 #define SCOMMT          '#'
 #define ECOMMT          '\n'
+
+#ifdef msdos
+#define system(str)	(-1)
+#endif
 
 /*
  * other important constants
@@ -147,12 +139,10 @@ typedef union {			/* stack structure */
  * macros for readibility and/or speed
  *
  *      gpbc()  - get a possibly pushed-back character
- *      min()   - select the minimum of two elements
  *      pushf() - push a call frame entry onto stack
  *      pushs() - push a string pointer onto stack
  */
-#define gpbc() 	 (bp > buf) ? *--bp : getc(infile[ilevel])
-#define min(x,y) ((x > y) ? y : x)
+#define gpbc() 	 (bp > bufbase) ? *--bp : getc(infile[ilevel])
 #define pushf(x) if (sp < STACKMAX) mstack[++sp].sfra = (x)
 #define pushs(x) if (sp < STACKMAX) mstack[++sp].sstr = (x)
 
