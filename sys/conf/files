@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.101 1996/10/02 05:29:29 cgd Exp $
+#	$NetBSD: files,v 1.102 1996/10/16 19:33:15 ws Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -21,8 +21,23 @@ define	atm
 define	ether
 define	fddi
 
-# kgdb has its own "files" file, but is really machine independent
-include "kgdb/files.kgdb"
+# Device description for machine-independent IPKDB code.
+define	ipkdb
+
+device	ipkdbif: ipkdb
+device	ipkdbslip: ipkdb
+device	ipkdbppp: ipkdb
+
+# Common files for any ipkdb support
+file	ipkdb/ipkdb_ipkdb.c		ipkdb needs-flag
+file	ipkdb/ipkdb_if.c		ipkdb
+
+# Support for slip
+file	ipkdb/ipkdb_slip.c		ipkdbslip needs-flag
+
+# Support for ppp	(for now only fake)
+file	ipkdb/ipkdb_ppp.c		ipkdbppp needs-flag
+
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>

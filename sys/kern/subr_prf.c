@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.31 1996/10/15 21:35:56 cgd Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.32 1996/10/16 19:33:30 ws Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -63,7 +63,7 @@
  */
 #include <machine/stdarg.h>
 
-#include "kgdb.h"
+#include "ipkdb.h"
 
 #ifdef KADB
 #include <machine/kdbparam.h>
@@ -119,8 +119,8 @@ panic(fmt, va_alist)
 	printf("panic: %:\n", fmt, ap);
 	va_end(ap);
 
-#if NKGDB > 0
-	kgdb_panic();
+#if NIPKDB > 0
+	ipkdb_panic();
 #endif
 #ifdef KGDB
 	kgdb_panic();

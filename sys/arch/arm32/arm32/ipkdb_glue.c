@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.5 1996/10/15 02:11:31 mark Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.1 1996/10/16 19:38:49 ws Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-#include <kgdb/kgdb.h>
+#include <ipkdb/ipkdb.h>
 
 #include <vm/vm.h>
 
@@ -45,9 +45,9 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-#include <machine/kgdb.h>
+#include <machine/ipkdb.h>
 
-int kgdbregs[NREG];
+int ipkdbregs[NREG];
 
 dump(p, l)
 	u_char *p;
@@ -73,24 +73,24 @@ dump(p, l)
 }
 
 void
-kgdbinit()
+ipkdbinit()
 {
 }
 
 int
-kgdb_poll()
+ipkdb_poll()
 {
 	return 0;
 }
 
 void
-kgdb_trap()
+ipkdb_trap()
 {
 	__asm(".word 0xe6000010");
 }
 
 int
-kgdb_trap_glue(regs)
+ipkdb_trap_glue(regs)
 	int *regs;
 {
 	int inst;
@@ -99,19 +99,19 @@ kgdb_trap_glue(regs)
 	inst = fetchinst(regs[PC] - 4);
 	switch (inst) {
 	default:
-		/* non KGDB undefined instruction */
+		/* non IPKDB undefined instruction */
 		return 0;
-	case 0xe6000011:	/* KGDB installed breakpoint */
+	case 0xe6000011:	/* IPKDB installed breakpoint */
 		regs[PC] -= 4;
 		break;
-	case 0xe6000010:	/* breakpoint in kgdb_connect */
+	case 0xe6000010:	/* breakpoint in ipkdb_connect */
 		break;
 	}
 	while (1) {
-		kgdbcopy(regs, kgdbregs, sizeof kgdbregs);
-		switch (kgdbcmds()) {
+		ipkdbcopy(regs, ipkdbregs, sizeof ipkdbregs);
+		switch (ipkdbcmds()) {
 		case 1:
-			kgdbcopy(kgdbregs, regs, sizeof kgdbregs);
+			ipkdbcopy(ipkdbregs, regs, sizeof ipkdbregs);
 			if ((cnt = singlestep(regs)) < 0)
 				panic("singlestep");
 			regs[PC] += cnt;
@@ -121,15 +121,15 @@ kgdb_trap_glue(regs)
 		}
 		break;
 	}
-	kgdbcopy(kgdbregs, regs, sizeof kgdbregs);
+	ipkdbcopy(ipkdbregs, regs, sizeof ipkdbregs);
 	if (PSR_IN_USR_MODE(regs[PSR]) ||
 	    !PSR_IN_32_MODE(regs[PSR]))
-		panic("KGDB: invalid mode %x", regs[PSR]);
+		panic("IPKDB: invalid mode %x", regs[PSR]);
 	return 1;
 }
 
 void
-kgdbcopy(vs, vd, n)
+ipkdbcopy(vs, vd, n)
 	void *vs, *vd;
 	int n;
 {
@@ -140,7 +140,7 @@ kgdbcopy(vs, vd, n)
 }
 
 void
-kgdbzero(vd, n)
+ipkdbzero(vd, n)
 	void *vd;
 	int n;
 {
@@ -151,7 +151,7 @@ kgdbzero(vd, n)
 }
 
 int
-kgdbcmp(vs, vd, n)
+ipkdbcmp(vs, vd, n)
 	void *vs, *vd;
 	int n;
 {
@@ -164,7 +164,7 @@ kgdbcmp(vs, vd, n)
 }
 
 
-int kgdbfbyte(src)
+int ipkdbfbyte(src)
 unsigned char *src;
 {
   /* modified db_interface.c source */
@@ -182,10 +182,10 @@ unsigned char *src;
   ch = *src;
   
   return ch;
- } /* kgdbfbyte */
+ } /* ipkdbfbyte */
 
 
-int kgdbsbyte(dst, ch)
+int ipkdbsbyte(dst, ch)
 unsigned char *dst;
 int ch;
 {
@@ -211,4 +211,4 @@ int ch;
   tlbflush();
         
   return 0;
- } /* kgdbsbyte */
+ } /* ipkdbsbyte */

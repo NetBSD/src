@@ -126,14 +126,14 @@ device rtc
 attach rtc at iic
 file	arch/arm32/mainbus/rtc.c		rtc	needs-count
 
-#define	kgdb
+#define	ipkdb
 
-#device kie: kgdb
+#device kie: ipkdb
 #attach kie at podule
-#file	arch/arm32/podulebus/kgdb_ie.c		kie
+#file	arch/arm32/podulebus/ipkdb_ie.c		kie
 
-#file	arch/arm32/arm32/kgdb_glue.c		kgdb
-#file	arch/arm32/arm32/kgdb_step.c		kgdb
+#file	arch/arm32/arm32/ipkdb_glue.c		ipkdb
+#file	arch/arm32/arm32/ipkdb_step.c		ipkdb
 
 #
 # Machine-independent SCSI drivers

@@ -14,7 +14,7 @@ protocol hangs (Is this necessary? easily possible?).
 
 Support handling of pagefaults so the debugger sees the
 same memory contents as the kernel (Extremely questionable,
-since it would need too much interaction between debugger
+since it would need to much interaction between debugger
 and the rest of the kernel, I think).
 
 Support prespecification of debugging host in the config file

@@ -1,6 +1,8 @@
+/*	$NetBSD: ipkdb.h,v 1.1 1996/10/16 19:38:53 ws Exp $	*/
+
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+ * Copyright (C) 1993, 1994 Wolfgang Solfrank.
+ * Copyright (C) 1993, 1994 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,51 +30,16 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* register array */
-#define	FIX	0
-#define	LR	32
-#define	CR	33
-#define	CTR	34
-#define	XER	35
-#define	PC	36
-#define	MSR	37
-#define	NREG	38
 
-extern int kgdbregs[NREG];
+/* define certain registers */
+#define	SP		13
+#define	LR		14
+#define	PC		15
+#define	PSR		16
+#define	SPSR		17
+#define	NREG		18
 
-extern char kgdbstep;
+extern int ipkdbregs[NREG];
 
-/* Doesn't handle overlapping regions */
-__inline extern void
-kgdbcopy(s,d,n)
-	void *s, *d;
-	int n;
-{
-	char *sp = s, *dp = d;
-	
-	while (--n >= 0)
-		*dp++ = *sp++;
-}
-
-__inline extern void
-kgdbzero(d,n)
-	void *d;
-	int n;
-{
-	char *dp = d;
-	
-	while (--n >= 0)
-		*dp++ = 0;
-}
-
-__inline extern int
-kgdbcmp(s,d,n)
-	void *s, *d;
-{
-	char *sp = s, *dp = d;
-	
-	while (--n >= 0)
-		if (*sp++ != *dp++)
-			return *--dp - *--sp;
-	return 0;
-}
+extern int *ipkdb_find_stack();
+extern void ipkdb_free_stack __P((int *));

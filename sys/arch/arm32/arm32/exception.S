@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.6 1996/10/15 22:56:27 mark Exp $ */
+/* $NetBSD: exception.S,v 1.7 1996/10/16 19:32:08 ws Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Based on kate/display/abort.s
  */
 
-#include "kgdb.h"
+#include "ipkdb.h"
 #include <machine/cpu.h>
 #include "assym.h"
 
@@ -304,9 +304,9 @@ do_swi_ast:
 
 	.global	undefined_entry
 undefined_entry:
-#if NKGDB > 0 || NKGDBSLIP > 0
+#if NIPKDB > 0
 /*
- * KGDB must be hooked in at the earliest possible entry point.
+ * IPKDB must be hooked in at the earliest possible entry point.
  *
  */
 /*
@@ -329,7 +329,7 @@ undefined_entry:
 	bne	Lprenotuser_push
 	add	r1, sp, #(8*4)
 	stmia	r1,{r8-r14}^		/* store user mode r8-r14*/
-	b	Lgokgdb
+	b	Lgoipkdb
 /*
  * Switch to previous mode to get r8-r13.
  */
@@ -355,12 +355,12 @@ Lprenotuser_push:
 	str	r1, [sp, #(14*4)]	/* r14 */
 	str	r2, [sp, #(17*4)]	/* spsr */
 /*
- * Now to KGDB.
+ * Now to IPKDB.
  */
-Lgokgdb:
+Lgoipkdb:
 	mov	r0, sp
-	bl	_kgdb_trap_glue
-	ldr	r1, Lkgdb_trap_return
+	bl	_ipkdb_trap_glue
+	ldr	r1, Lipkdb_trap_return
 	str	r0,[r1]
 /*
  * Have to load all registers from the stack.
@@ -407,14 +407,14 @@ Lpull_r0r7:
 /*
  * Now the rest of the registers.
  */
-	ldr	r1,Lkgdb_trap_return
+	ldr	r1,Lipkdb_trap_return
 	ldr	r0,[r1]
 	tst	r0,r0
 	ldmfd	sp!, {r0-r7}		/* r0-r7 */
 	add	sp, sp, #(10*4)		/* adjust sp */
 
 /*
- * Did KGDB handle it?
+ * Did IPKDB handle it?
  */
 	movnes	pc, lr			/* return */
 
@@ -427,9 +427,9 @@ Lpull_r0r7:
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
 
-#if NKGDB > 0 || NKGDBSLIP > 0
-Lkgdb_trap_return:
-	.word	Lkgdb_trap_return_data
+#if NIPKDB > 0
+Lipkdb_trap_return:
+	.word	Lipkdb_trap_return_data
 #endif
 
 Lundefined_handler_indirection:
@@ -452,8 +452,8 @@ _undefinedinstruction_bounce:
 	.data
 	.align	0
 
-#if NKGDB > 0 || NKGDBSLIP > 0
-Lkgdb_trap_return_data:
+#if NIPKDB > 0
+Lipkdb_trap_return_data:
 	.word	0
 #endif
 

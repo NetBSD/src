@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.3 1996/10/13 01:38:14 christos Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,18 +49,18 @@
 
 #include <dev/ofw/openfirm.h>
 
-#if NKGDB_OFN > 0
-#include <kgdb/kgdb.h>
-#include <machine/kgdb.h>
+#if NIPKDB_OFN > 0
+#include <ipkdb/ipkdb.h>
+#include <machine/ipkdb.h>
 
-struct cfattach kgdb_ofn_ca = {
-	0, kgdb_probe, kgdb_attach
+struct cfattach ipkdb_ofn_ca = {
+	0, ipkdb_probe, ipkdb_attach
 };
 
-static struct kgdb_if *kifp;
-static struct ofn_softc *kgdb_of;
+static struct ipkdb_if *kifp;
+static struct ofn_softc *ipkdb_of;
 
-static int kgdbprobe __P((void *, void *));
+static int ipkdbprobe __P((void *, void *));
 #endif
 
 struct ofn_softc {
@@ -99,9 +99,9 @@ ofnprobe(parent, match, aux)
 	char type[32];
 	int l;
 	
-#if NKGDB_OFN > 0
+#if NIPKDB_OFN > 0
 	if (!parent)
-		return kgdbprobe(match, aux);
+		return ipkdbprobe(match, aux);
 #endif
 	if ((l = OF_getprop(ofp->phandle, "device_type", type, sizeof type - 1)) < 0)
 		return 0;
@@ -125,11 +125,11 @@ ofnattach(parent, self, aux)
 	int l;
 	
 	of->sc_phandle = ofp->phandle;
-#if NKGDB_OFN > 0
+#if NIPKDB_OFN > 0
 	if (kifp
 	    && kifp->unit - 1 == of->sc_dev.dv_unit
 	    && OF_instance_to_package(kifp->port) == ofp->phandle)  {
-		kgdb_of = of;
+		ipkdb_of = of;
 		of->sc_ihandle = kifp->port;
 	} else
 #endif
@@ -173,8 +173,8 @@ ofnread(of)
 	int l, len;
 	char *bufp;
 
-#if NKGDB_OFN > 0
-	kgdbrint(kifp, ifp);
+#if NIPKDB_OFN > 0
+	ipkdbrint(kifp, ifp);
 #endif	
 	while (1) {
 		if ((len = OF_read(of->sc_ihandle, buf, sizeof buf)) < 0) {
@@ -376,26 +376,26 @@ ofnwatchdog(ifp)
 	ofninit(of);
 }
 
-#if NKGDB_OFN > 0
+#if NIPKDB_OFN > 0
 static void
-kgdbofstart(kip)
-	struct kgdb_if *kip;
+ipkdbofstart(kip)
+	struct ipkdb_if *kip;
 {
 	int unit = kip->unit - 1;
 	
-	if (kgdb_of)
-		kgdbattach(kip, &kgdb_of->sc_arpcom);
+	if (ipkdb_of)
+		ipkdbattach(kip, &ipkdb_of->sc_arpcom);
 }
 
 static void
-kgdbofleave(kip)
-	struct kgdb_if *kip;
+ipkdbofleave(kip)
+	struct ipkdb_if *kip;
 {
 }
 
 static int
-kgdbofrcv(kip, buf, poll)
-	struct kgdb_if *kip;
+ipkdbofrcv(kip, buf, poll)
+	struct ipkdb_if *kip;
 	u_char *buf;
 	int poll;
 {
@@ -410,8 +410,8 @@ kgdbofrcv(kip, buf, poll)
 }
 
 static void
-kgdbofsend(kip, buf, l)
-	struct kgdb_if *kip;
+ipkdbofsend(kip, buf, l)
+	struct ipkdb_if *kip;
 	u_char *buf;
 	int l;
 {
@@ -419,11 +419,11 @@ kgdbofsend(kip, buf, l)
 }
 
 static int
-kgdbprobe(match, aux)
+ipkdbprobe(match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct kgdb_if *kip = aux;
+	struct ipkdb_if *kip = aux;
 	static char name[256];
 	int len;
 	int phandle;
@@ -442,12 +442,12 @@ kgdbprobe(match, aux)
 	    < 0)
 		return -1;
 	
-	kip->flags |= KGDB_MYHW;
+	kip->flags |= IPKDB_MYHW;
 	kip->name = name;
-	kip->start = kgdbofstart;
-	kip->leave = kgdbofleave;
-	kip->receive = kgdbofrcv;
-	kip->send = kgdbofsend;
+	kip->start = ipkdbofstart;
+	kip->leave = ipkdbofleave;
+	kip->receive = ipkdbofrcv;
+	kip->send = ipkdbofsend;
 
 	kifp = kip;
 	

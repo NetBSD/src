@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.73 1996/10/02 21:41:37 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.74 1996/10/16 19:33:18 ws Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -298,4 +298,5 @@ dev/ccd.c		optional ccd needs-count
 
 # XXX !! These should not be necessary!
 dev/audio.c		optional audio device-driver
-kgdb/kgdb_kgdb.c	optional kgdb device-driver
+# This is here only as a stub! IPKDB doesn't work with old config (yet?).
+ipkdb/ipkdb_ipkdb.c	optional ipkdb device-driver

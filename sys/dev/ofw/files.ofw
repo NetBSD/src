@@ -10,11 +10,11 @@ attach	ofdisk at openfirm
 file	dev/ofw/ofdisk.c		ofdisk needs-flag
 
 # Generic net support
-define	kgdbofn { [ disable = 0 ] }
-device	ofnet: ether, ifnet, kgdbofn
+define	ipkdbofn { [ disable = 0 ] }
+device	ofnet: ether, ifnet, ipkdbofn
 attach	ofnet at openfirm
-file	dev/ofw/ofnet.c			ofnet | kgdb_ofn needs-flag
-attach	kgdbif at kgdbofn with kgdb_ofn
+file	dev/ofw/ofnet.c			ofnet | ipkdb_ofn needs-flag
+attach	ipkdbif at ipkdbofn with ipkdb_ofn
 
 # Generic console support
 device	ofcons: tty

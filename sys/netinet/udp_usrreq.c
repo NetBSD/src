@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.37 1996/09/30 16:16:45 ws Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.38 1996/10/16 19:33:39 ws Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,7 +34,7 @@
  *
  *	@(#)udp_usrreq.c	8.4 (Berkeley) 1/21/94
  */
-#include "kgdb.h"
+#include "ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -281,13 +281,13 @@ udp_input(m, va_alist)
 			}
 			*ip = save_ip;
 			ip->ip_len += iphlen;
-#if NKGDB > 0
-			if (checkkgdb(&ip->ip_src,
-				      uh->uh_sport,
-				      uh->uh_dport,
-				      m,
-				      iphlen + sizeof(struct udphdr),
-				      len - sizeof(struct udphdr)))
+#if NIPKDB > 0
+			if (checkipkdb(&ip->ip_src,
+				       uh->uh_sport,
+				       uh->uh_dport,
+				       m,
+				       iphlen + sizeof(struct udphdr),
+				       len - sizeof(struct udphdr)))
 			/* It was a debugger connect packet, just drop it now */
 				goto bad;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_step.c,v 1.3 1996/10/15 02:11:32 mark Exp $	*/
+/*	$NetBSD: ipkdb_step.c,v 1.1 1996/10/16 19:38:50 ws Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <machine/kgdb.h>
+#include <machine/ipkdb.h>
 
 /*
  * Faults during instruction fetch? XXX
@@ -50,7 +50,7 @@ fetchinst(pc)
 	pc += sizeof(int);
 	for (n = sizeof(int); --n >= 0;) {
 		inst <<= 8;
-		byte = kgdbfbyte(--pc);
+		byte = ipkdbfbyte(--pc);
 		if (byte < 0)
 			return 0xe7ffffff; /* special hack! */
 		inst |= byte;
@@ -72,11 +72,11 @@ execute(inst, args, regs)
 	if (PSR_IN_USR_MODE(regs[PSR]) || !PSR_IN_32_MODE(regs[PSR]))
 		panic("execute");
 	/*
-	sp = kgdb_find_stack();
+	sp = ipkdb_find_stack();
 	*/
 	regs[PSR] = Execute(inst, regs[PSR], args, 0);
 	/*
-	kgdb_free_stack(sp);
+	ipkdb_free_stack(sp);
 	*/
 }
 

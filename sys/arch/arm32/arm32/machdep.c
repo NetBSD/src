@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 1996/10/16 00:35:45 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.13 1996/10/16 19:32:22 ws Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -96,7 +96,7 @@
 #include <machine/undefined.h>
 #include <machine/rtc.h>
 
-#include "kgdb.h"
+#include "ipkdb.h"
 #include "hydrabus.h"
 
 #ifdef RC7500
@@ -1043,8 +1043,8 @@ initarm(bootconf)
 	abtstack.physical = physical_freestart;
 	physical_freestart += NBPG;
 	undstack.physical = physical_freestart;
-#if NKGDB > 0 || NKGDBSLIP > 0
-	/* Use a bigger UND32 stack when running with kgdb */
+#if NIPKDB > 0
+	/* Use a bigger UND32 stack when running with ipkdb */
 
 	physical_freestart += 2*NBPG;
 	bzero((char *)irqstack.physical - physical_start, 4*NBPG);
@@ -1100,8 +1100,8 @@ initarm(bootconf)
 	    abtstack.physical); 
 	map_entry(l2pagetable, undstack.physical-physical_start,
 	    undstack.physical); 
-#if NKGDB > 0 || NKGDBSLIP > 0
-	/* Use a bigger UND32 stack when running with kgdb */
+#if NIPKDB > 0
+	/* Use a bigger UND32 stack when running with ipkdb */
 
 	map_entry(l2pagetable, NBPG+undstack.physical-physical_start,
 	    NBPG+undstack.physical); 
@@ -1335,8 +1335,8 @@ initarm(bootconf)
 
 	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
 	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
-#if NKGDB > 0 || NKGDBSLIP > 0
-	/* Use a bigger UND32 stack when running with kgdb */
+#if NIPKDB > 0
+	/* Use a bigger UND32 stack when running with ipkdb */
 	set_stackptr(PSR_UND32_MODE, undstack.virtual + 2*NBPG);
 #else
 	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
@@ -1423,12 +1423,12 @@ initarm(bootconf)
 	irq_init();
 	printf("done.\n");
 
-	/* Initialise kgdb */
+	/* Initialise ipkdb */
 
-#if NKGDB > 0 || NKGDBSLIP > 0
-	kgdb_init();
+#if NIPKDB > 0
+	ipkdb_init();
 	if (boothowto & RB_KDB)
-		kgdb_connect(0);
+		ipkdb_connect(0);
 #endif
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 1996/09/30 16:34:48 ws Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "kgdb.h"
+#include "ipkdb.h"
 
 #include "assym.h"
 
@@ -401,7 +401,7 @@ _intr_depth:
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, the interrupts, and possibly the debugging traps when using KGDB).
+ * (except ISI/DSI, the interrupts, and possibly the debugging traps when using IPKDB).
  */
 	.text
 	.globl	_trapcode,_trapsize
@@ -729,24 +729,24 @@ _tlbdsmiss:
 	ba	EXC_DSI
 _tlbdsmsize =	.-_tlbdsmiss
 
-#if NKGDB > 0
-#define	kgdbsave	0xde0		/* primary save area for KGDB */
+#if NIPKDB > 0
+#define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
- * In case of KGDB we want a separate trap catcher for it
+ * In case of IPKDB we want a separate trap catcher for it
  */
-.lcomm	kgdbstk,INTSTK			/* kgdb stack */
+.lcomm	ipkdbstk,INTSTK			/* ipkdb stack */
 
-	.globl	_kgdblow,_kgdbsize
-_kgdblow:
+	.globl	_ipkdblow,_ipkdbsize
+_ipkdblow:
 	mtsprg	1,1			/* save SP */
-	stmw	28,kgdbsave(0)		/* free r28-r31 */
-	lis	1,kgdbstk+INTSTK@ha	/* get new SP */
-	addi	1,1,kgdbstk+INTSTK@l
+	stmw	28,ipkdbsave(0)		/* free r28-r31 */
+	lis	1,ipkdbstk+INTSTK@ha	/* get new SP */
+	addi	1,1,ipkdbstk+INTSTK@l
 	mflr	28
 	mfcr	29
-	bla	kgdbtrap
-_kgdbsize =	.-_kgdblow
-#endif	/* NKGDB > 0 */
+	bla	ipkdbtrap
+_ipkdbsize =	.-_ipkdblow
+#endif	/* NIPKDB > 0 */
 
 /*
  * FRAME_SETUP assumes:
@@ -1105,12 +1105,12 @@ decrintr:
 	bl	_decr_intr
 	b	intr_exit
 
-#if NKGDB > 0
+#if NIPKDB > 0
 /*
- * Deliberate entry to kgdbtrap
+ * Deliberate entry to ipkdbtrap
  */
-	.globl	_kgdb_trap
-_kgdb_trap:
+	.globl	_ipkdb_trap
+_ipkdb_trap:
 	mtsprg	1,1
 	mtsprg	2,2
 	mfmsr	3
@@ -1118,7 +1118,7 @@ _kgdb_trap:
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
 	mtmsr	3			/* disable interrupts */
 	isync
-	stmw	28,kgdbsave(0)
+	stmw	28,ipkdbsave(0)
 	mflr	28
 	li	29,EXC_BPT
 	mtlr	29
@@ -1126,33 +1126,33 @@ _kgdb_trap:
 	mtsrr0	28
 
 /*
- * Now the kgdb trap catching code.
+ * Now the ipkdb trap catching code.
  */
-kgdbtrap:
-	FRAME_SETUP(kgdbsave)
+ipkdbtrap:
+	FRAME_SETUP(ipkdbsave)
 /* Call C trap code: */
 	addi	3,1,8
-	bl	_kgdb_trap_glue
+	bl	_ipkdb_trap_glue
 	or.	3,3,3
-	bne	kgdbleave
-/* This wasn't for KGDB, so switch to real trap: */
+	bne	ipkdbleave
+/* This wasn't for IPKDB, so switch to real trap: */
 	lwz	3,FRAME_EXC+8(1)	/* save exception */
-	stw	3,kgdbsave+8(0)
-	FRAME_LEAVE(kgdbsave)
+	stw	3,ipkdbsave+8(0)
+	FRAME_LEAVE(ipkdbsave)
 	mtsprg	1,1			/* prepare for entrance to realtrap */
 	stmw	28,tempsave(0)
 	mflr	28
 	mfcr	29
-	lwz	31,kgdbsave+8(0)
+	lwz	31,ipkdbsave+8(0)
 	mtlr	31
 	b	realtrap
-kgdbleave:
-	FRAME_LEAVE(kgdbsave)
+ipkdbleave:
+	FRAME_LEAVE(ipkdbsave)
 	rfi
 
-kgdbfault:
-	ba	_kgdbfault
-_kgdbfault:
+ipkdbfault:
+	ba	_ipkdbfault
+_ipkdbfault:
 	mfsrr0	3
 	addi	3,3,4
 	mtsrr0	3
@@ -1160,18 +1160,18 @@ _kgdbfault:
 	rfi
 
 /*
- * int kgdbfbyte(unsigned char *p)
+ * int ipkdbfbyte(unsigned char *p)
  */
-	.globl	_kgdbfbyte
-_kgdbfbyte:
+	.globl	_ipkdbfbyte
+_ipkdbfbyte:
 	li	9,EXC_DSI		/* establish new fault routine */
 	lwz	5,0(9)
-	lis	6,kgdbfault@ha
-	lwz	6,kgdbfault@l(6)
+	lis	6,ipkdbfault@ha
+	lwz	6,ipkdbfault@l(6)
 	stw	6,0(9)
-#ifdef	KGDBUSERHACK
-	lis	8,_kgdbsr@ha
-	lwz	8,_kgdbsr@l(8)
+#ifdef	IPKDBUSERHACK
+	lis	8,_ipkdbsr@ha
+	lwz	8,_ipkdbsr@l(8)
 	mtsr	USER_SR,8
 	isync
 #endif
@@ -1186,18 +1186,18 @@ _kgdbfbyte:
 	blr
 
 /*
- * int kgdbsbyte(unsigned char *p, int c)
+ * int ipkdbsbyte(unsigned char *p, int c)
  */
-	.globl	_kgdbsbyte
-_kgdbsbyte:
+	.globl	_ipkdbsbyte
+_ipkdbsbyte:
 	li	9,EXC_DSI		/* establish new fault routine */
 	lwz	5,0(9)
-	lis	6,kgdbfault@ha
-	lwz	6,kgdbfault@l(6)
+	lis	6,ipkdbfault@ha
+	lwz	6,ipkdbfault@l(6)
 	stw	6,0(9)
-#ifdef	KGDBUSERHACK
-	lis	8,_kgdbsr@ha
-	lwz	8,_kgdbsr@l(8)
+#ifdef	IPKDBUSERHACK
+	lis	8,_ipkdbsr@ha
+	lwz	8,_ipkdbsr@l(8)
 	mtsr	USER_SR,8
 	isync
 #endif
@@ -1215,7 +1215,7 @@ _kgdbsbyte:
 	sync
 	icbi	0,9			/* and instruction caches */	
 	blr
-#endif	/* NKGDB > 0 */
+#endif	/* NIPKDB > 0 */
 	
 /*
  * int setfault()

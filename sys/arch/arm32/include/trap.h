@@ -1,4 +1,4 @@
-/* $NetBSD: trap.h,v 1.1 1996/10/14 22:49:23 mark Exp $ */
+/* $NetBSD: trap.h,v 1.2 1996/10/16 19:32:52 ws Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  *
  * This is an undefined instruction.
  * Technically the userspace breakpoint could be a SWI
- * but we want to keep this the same as KGDB which
+ * but we want to keep this the same as IPKDB which
  * needs an undefined instruction as a break point.
  */
 

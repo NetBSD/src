@@ -37,8 +37,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <kgdb/kgdb.h>
-#include <machine/kgdb.h>
+#include <ipkdb/ipkdb.h>
+#include <machine/ipkdb.h>
 
 /* These should be in <net/if_sl.h> or some such! */
 #define	FRAME_END		0xc0		/* Frame End */
@@ -46,27 +46,27 @@
 #define	TRANS_FRAME_END		0xdc		/* transposed frame end */
 #define	TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
 
-struct cfdriver kgdbslip_cd = {
-	NULL, "kgdb", DV_DULL
+struct cfdriver ipkdbslip_cd = {
+	NULL, "ipkdb", DV_DULL
 };
 
 static int
-kgdbrcv(kip, buf, poll)
-	struct kgdb_if *kip;
+ipkdbrcv(kip, buf, poll)
+	struct ipkdb_if *kip;
 	u_char *buf;
 	int poll;
 {
 	int c, len = 0;
 
 	/* Fake an ether header: */
-	kgdbcopy(kip->myenetaddr, buf, sizeof kip->myenetaddr);
+	ipkdbcopy(kip->myenetaddr, buf, sizeof kip->myenetaddr);
 	buf += sizeof kip->myenetaddr;
-	kgdbcopy(kip->hisenetaddr, buf, sizeof kip->hisenetaddr);
+	ipkdbcopy(kip->hisenetaddr, buf, sizeof kip->hisenetaddr);
 	buf += sizeof kip->hisenetaddr;
 	*buf++ = ETHERTYPE_IP >> 8;
 	*buf++ = (u_char)ETHERTYPE_IP;
 	do {
-		switch (c = kip->getc(kip, poll)) {
+		switch ((c = kip->getc(kip, poll))) {
 		case -1:
 			break;
 		case TRANS_FRAME_ESCAPE:
@@ -94,8 +94,8 @@ kgdbrcv(kip, buf, poll)
 }
 
 static void
-kgdbsend(kip, buf, l)
-	struct kgdb_if *kip;
+ipkdbsend(kip, buf, l)
+	struct ipkdb_if *kip;
 	u_char *buf;
 	int l;
 {
@@ -118,20 +118,20 @@ kgdbsend(kip, buf, l)
 }
 
 void
-kgdb_serial(kip)
-	struct kgdb_if *kip;
+ipkdb_serial(kip)
+	struct ipkdb_if *kip;
 {
 	struct cfdata *cf = kip->cfp;
-	
+
 	kip->myenetaddr[0] = 1;	/* make it a local address */
 	kip->myenetaddr[1] = 0;
 	kip->myenetaddr[2] = cf->cf_loc[1] >> 24;
 	kip->myenetaddr[3] = cf->cf_loc[1] >> 16;
 	kip->myenetaddr[4] = cf->cf_loc[1] >> 8;
 	kip->myenetaddr[5] = cf->cf_loc[1];
-	kip->flags |= KGDB_MYHW;
+	kip->flags |= IPKDB_MYHW;
 
 	kip->mtu = 296;
-	kip->receive = kgdbrcv;
-	kip->send = kgdbsend;
+	kip->receive = ipkdbrcv;
+	kip->send = ipkdbsend;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1996/10/13 03:31:36 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "kgdb.h"
+#include "ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -106,8 +106,8 @@ initppc(startkernel, endkernel, args)
 	extern tlbimiss, tlbimsize;
 	extern tlbdlmiss, tlbdlmsize;
 	extern tlbdsmiss, tlbdsmsize;
-#if NKGDB > 0
-	extern kgdblow, kgdbsize;
+#if NIPKDB > 0
+	extern ipkdblow, ipkdbsize;
 #endif
 	extern void consinit __P((void));
 	extern void callback __P((void *));
@@ -193,11 +193,11 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#if NKGDB > 0
+#if NIPKDB > 0
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
-			bcopy(&kgdblow, (void *)exc, (size_t)&kgdbsize);
+			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
 			break;
 #endif
 		}
@@ -232,13 +232,13 @@ initppc(startkernel, endkernel, args)
 		}
 	}			
 
-#if NKGDB > 0
+#if NIPKDB > 0
 	/*
-	 * Now trap to KGDB
+	 * Now trap to IPKDB
 	 */
-	kgdb_init();
+	ipkdb_init();
 	if (boothowto & RB_KDB)
-		kgdb_connect(0);
+		ipkdb_connect(0);
 #endif
 
 	/*
