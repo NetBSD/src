@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.22 2002/07/25 09:38:31 jdolecek Exp $       */
+/*      $NetBSD: scanform.c,v 1.23 2002/07/25 12:42:39 jdolecek Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ form_appenditem(struct cqForm *cqf, char *desc, int type, char *data, int req)
 	fte->required = req;
 	fte->elen = 0;
 	fte->origdata = fte->data;
+	fte->list = NULL;
 
 	CIRCLEQ_INIT(&fte->cqSubFormHead);
 	CIRCLEQ_INSERT_TAIL(cqf, fte, cqFormEntries);
@@ -792,8 +793,7 @@ process_preform(FORM *form, char *path)
 		bailout("malloc: %s", strerror(errno));
 	fc = lcnt = field_count(form);
 	args = realloc(args, sizeof(char *) * (lcnt+1));
-	f = malloc(sizeof(FIELD *) * lcnt);
-	if (f == NULL || args == NULL)
+	if (args == NULL)
 		bailout("malloc: %s", strerror(errno));
 
 	f = form_fields(form);
@@ -896,8 +896,7 @@ process_form(FORM *form, char *path)
 
 	fc = lcnt = field_count(form);
 	args = realloc(args, sizeof(char *) * (lcnt+1+i));
-	f = malloc(sizeof(FIELD *) * lcnt);
-	if (f == NULL || args == NULL)
+	if (args == NULL)
 		bailout("malloc: %s", strerror(errno));
 
 	f = form_fields(form);
@@ -1044,9 +1043,9 @@ gen_list(FTREE_ENTRY *ftp, int max, char **args)
 		if (i == lmax - 2) {
 			lmax += 10;
 			ftp->list = realloc(ftp->list, sizeof(char*) * lmax);
+			if (ftp->list == NULL)
+				bailout("realloc: %s", strerror(errno));
 		}
-		if (ftp->list == NULL)
-			bailout("realloc: %s", strerror(errno));
 	}
 	ftp->list[i] = NULL;
 }
@@ -1590,7 +1589,7 @@ handle_form(char *basedir, char *path, char **args)
 	if (scan_form(cqFormHeadp, path))
 		return(1);
 
-	F = malloc(sizeof(FIELD_RECORD) *
+	F = calloc(sizeof(FIELD_RECORD),
 	    (form_entries(&cqFormHead) * 2 + 1));
 	if (F == NULL)
 		bailout("malloc: %s", strerror(errno));
@@ -1691,7 +1690,7 @@ handle_preform(char *basedir, char *path)
 	if (scan_form(cqFormHeadp, path))
 		return(1);
 
-	F = malloc(sizeof(FIELD_RECORD) *
+	F = calloc(sizeof(FIELD_RECORD),
 	    (form_entries(&cqFormHead) * 2 + 1));
 	if (F == NULL)
 		bailout("malloc: %s", strerror(errno));
