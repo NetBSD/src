@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.30 1994/12/28 09:13:40 chopps Exp $
+#	$NetBSD: GENERIC,v 1.31 1995/02/03 12:24:35 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -147,7 +147,7 @@ mgnsc0		at zbus0		# Magnum scsi
 wesc0		at zbus0		# Warp Engine scsi
 idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
-flz3sc0		at zbus0		# FastlaneZ3 scsi
+#flz3sc0		at zbus0		# FastlaneZ3 scsi
 
 scsibus*	at gtsc0
 scsibus*	at ahsc0
@@ -161,7 +161,7 @@ scsibus*	at mgnsc0
 scsibus*	at wesc0
 scsibus*	at idesc0
 scsibus*	at afsc0
-scsibus*	at flz3sc0
+#scsibus*	at flz3sc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
