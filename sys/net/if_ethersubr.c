@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.76 2001/04/07 18:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -503,6 +503,93 @@ bad:
 		m_freem(m);
 	return (error);
 }
+
+#ifdef ALTQ
+/*
+ * This routine is a slight hack to allow a packet to be classified
+ * if the Ethernet headers are present.  It will go away when ALTQ's
+ * classification engine understands link headers.
+ */
+void
+altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
+    struct altq_pktattr *pktattr)
+{
+	struct ether_header *eh;
+	u_int16_t ether_type;
+	int hlen, af, hdrsize;
+	caddr_t hdr;
+
+	hlen = ETHER_HDR_LEN;
+	eh = mtod(m, struct ether_header *);
+
+	ether_type = htons(eh->ether_type);
+
+	if (ether_type < ETHERMTU) {
+		/* LLC/SNAP */
+		struct llc *llc = (struct llc *)(eh + 1);
+		hlen += 8;
+
+		if (m->m_len < hlen ||
+		    llc->llc_dsap != LLC_SNAP_LSAP ||
+		    llc->llc_ssap != LLC_SNAP_LSAP ||
+		    llc->llc_control != LLC_UI) {
+			/* Not SNAP. */
+			goto bad;
+		}
+
+		ether_type = htons(llc->llc_un.type_snap.ether_type);
+	}
+
+	switch (ether_type) {
+	case ETHERTYPE_IP:
+		af = AF_INET;
+		hdrsize = 20;		/* sizeof(struct ip) */
+		break;
+
+	case ETHERTYPE_IPV6:
+		af = AF_INET6;
+		hdrsize = 40;		/* sizeof(struct ip6_hdr) */
+		break;
+
+	default:
+		af = AF_UNSPEC;
+		hdrsize = 0;
+		break;
+	}
+
+	if (m->m_len < (hlen + hdrsize)) {
+		/*
+		 * Ethernet and protocol header not in a single
+		 * mbuf.  We can't cope with this situation right
+		 * now (but it shouldn't ever happen, really, anyhow).
+		 * XXX Should use m_pulldown().
+		 */
+		printf("altq_etherclassify: headers span multiple mbufs\n");
+		goto bad;
+	}
+
+	m->m_data += hlen;
+	m->m_len -= hlen;
+
+	hdr = mtod(m, caddr_t);
+
+	if (ALTQ_NEEDS_CLASSIFY(ifq))
+		pktattr->pattr_class =
+		    (*ifq->altq_classify)(ifq->altq_clfier, m, af);
+	pktattr->pattr_af = af;
+	pktattr->pattr_hdr = hdr;
+
+	m->m_data -= hlen;
+	m->m_len += hlen;
+
+	return;
+
+ bad:
+	pktattr->pattr_class = NULL;
+	pktattr->pattr_hdr = NULL;
+	pktattr->pattr_af = AF_UNSPEC;
+}
+#endif /* ALTQ */
 
 /*
  * Process a received Ethernet packet;
