@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.6 2002/02/20 11:30:07 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.7 2002/02/20 17:45:42 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -42,10 +42,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-provides a terminal independent form system using the
+library provides a terminal independent form system using the
 .Xr curses 3
 library.  Before using the
-.Xr menus 3
+.Nm
 functions the terminal must be set up by
 .Xr curses 3
 using the
@@ -59,9 +59,9 @@ library
 .Pp
 The
 .Nm
-library provides facilties for defining form fields, placing a form on the
+library provides facilities for defining form fields, placing a form on the
 terminal screen, assign pre and post change operations and setting the
-attributes of both the form and it's fields.
+attributes of both the form and its fields.
 .Ss Defining default attributes for forms and fields
 The
 .Nm
