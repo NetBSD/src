@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.23 2004/03/21 15:09:25 pk Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.24 2004/06/02 20:23:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.23 2004/03/21 15:09:25 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.24 2004/06/02 20:23:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -507,12 +507,14 @@ prom_get_msgbuf(len, align)
 	int rooth;
 	int is_e250 = 1;
 
-	/* E250s tend to have buggy PROMs that break on test-method */
+	/* E250s and E450s tend to have buggy PROMs that break on test-method */
+	/* XXX - need to find the reason why this breaks someday */
 	if ((rooth = OF_finddevice("/")) != -1) {
 		char name[80];
 
 		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250")) 
+			if (strcmp(name, "SUNW,Ultra-250")
+			    && strcmp(name, "SUNW,Ultra-4")) 
 				is_e250 = 0;
 		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
 	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
