@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.18 1997/10/08 19:56:59 pk Exp $	*/
+/*	$NetBSD: fts.c,v 1.19 1997/10/09 22:59:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
+static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.18 1997/10/08 19:56:59 pk Exp $");
+__RCSID("$NetBSD: fts.c,v 1.19 1997/10/09 22:59:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,17 +134,6 @@ fts_open(argv, options, compar)
 			errno = ENOENT;
 			goto mem3;
 		}
-
-		/*
-		 * Special case of "/" at the end of the path so that
-		 * slashes aren't appended which would cause paths to
-		 * be written as "....//foo".
-		 * Note that we cannot handle a single '/' here. That
-		 * case is dealt with specially later (sigh); see the
-		 * NAPPEND() macro below.
-		 */
-		if (len > 1 && (*argv)[len-1] == '/')
-			len--;
 
 		p = fts_alloc(sp, *argv, len);
 		p->fts_level = FTS_ROOTLEVEL;
@@ -278,12 +267,11 @@ fts_close(sp)
 
 /*
  * Special case a root of "/" so that slashes aren't appended which would
- * cause paths to be written as "//foo". Note, this is a special case
- * of the special cases that are dealt with in fts_open()...
+ * cause paths to be written as "//foo".
  */
-#define	NAPPEND(p)						\
-	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&\
-	 p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
+#define	NAPPEND(p)							\
+	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&	\
+	    p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
@@ -585,8 +573,7 @@ fts_build(sp, type)
 	FTSENT *cur, *tail;
 	DIR *dirp;
 	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno,
-	    nostat = 0;
+	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno;
 	char *cp = NULL;	/* pacify gcc */
 
 	/* Set current node pointer. */
@@ -619,13 +606,10 @@ fts_build(sp, type)
 	 */
 	if (type == BNAMES)
 		nlinks = 0;
-	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL)) {
+	else if (ISSET(FTS_NOSTAT) && ISSET(FTS_PHYSICAL))
 		nlinks = cur->fts_nlink - (ISSET(FTS_SEEDOT) ? 0 : 2);
-		nostat = 1;
-	} else {
+	else
 		nlinks = -1;
-		nostat = 0;
-	}
 
 #ifdef notdef
 	(void)printf("nlinks == %d (cur: %d)\n", nlinks, cur->fts_nlink);
@@ -726,7 +710,7 @@ mem1:				saved_errno = errno;
 			p->fts_accpath = cur->fts_accpath;
 		} else if (nlinks == 0
 #ifdef DT_DIR
-		    || (nostat && 
+		    || (nlinks > 0 && 
 		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN)
 #endif
 		    ) {
@@ -944,9 +928,8 @@ fts_alloc(sp, name, namelen)
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
-	/* Copy the name, then append the trailing NULL. */
-	memmove(p->fts_name, name, namelen);
-	p->fts_name[namelen] = '\0';
+	/* Copy the name plus the trailing NULL. */
+	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
