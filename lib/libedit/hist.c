@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.12 2003/01/21 18:40:23 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.13 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.12 2003/01/21 18:40:23 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.13 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -157,7 +157,6 @@ hist_get(EditLine *el)
  *	process a history command
  */
 protected int
-/*ARGSUSED*/
 hist_command(EditLine *el, int argc, const char **argv)
 {
 	const char *str;
