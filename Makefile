@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.226 2004/01/06 07:25:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.227 2004/01/08 07:01:06 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -76,6 +76,7 @@
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
+#   do-x11:          builds and installs X11R6 from src/x11 if ${MKX11} != "no"
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
 
@@ -194,6 +195,9 @@ BUILDTARGETS+=	do-lib-libdes
 BUILDTARGETS+=	do-lib do-gnu-lib
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
+.if ${MKX11} != "no"
+BUILDTARGETS+=	do-x11
+.endif
 BUILDTARGETS+=	do-obsolete
 
 #
@@ -344,6 +348,9 @@ do-build:
 .for targ in dependall install
 	(cd ${.CURDIR} && ${MAKE} ${targ} BUILD_tools=no BUILD_lib=no)
 .endfor
+
+do-x11:
+	(cd ${.CURDIR}/x11 && ${MAKE} build)
 
 do-obsolete:
 	(cd ${.CURDIR}/etc && ${MAKE} install-obsolete-lists)
