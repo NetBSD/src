@@ -32,9 +32,10 @@ Parse_Info (infofile, repository, callproc, all)
     char *line = NULL;
     size_t line_allocated = 0;
     char *default_value = NULL;
-    char *expanded_value= NULL;
+    int default_line = 0;
+    char *expanded_value;
     int callback_done, line_number;
-    char *cp, *exp, *value, *srepos, bad;
+    char *cp, *exp, *value, *srepos;
     const char *regex_err;
 
     if (current_parsed_root == NULL)
@@ -114,10 +115,6 @@ Parse_Info (infofile, repository, callproc, all)
 	if ((cp = strrchr (value, '\n')) != NULL)
 	    *cp = '\0';
 
-	if (expanded_value != NULL)
-	    free (expanded_value);
-	expanded_value = expand_path (value, infofile, line_number);
-
 	/*
 	 * At this point, exp points to the regular expression, and value
 	 * points to the value to call the callback routine with.  Evaluate
@@ -128,12 +125,14 @@ Parse_Info (infofile, repository, callproc, all)
 	/* save the default value so we have it later if we need it */
 	if (strcmp (exp, "DEFAULT") == 0)
 	{
-	    /* Is it OK to silently ignore all but the last DEFAULT
-               expression?  */
-	    if (default_value != NULL && default_value != &bad)
+	    if (default_value != NULL)
+	    {
+		error (0, 0, "Multiple `DEFAULT' lines (%d and %d) in %s file",
+		       default_line, line_number, infofile);
 		free (default_value);
-	    default_value = (expanded_value != NULL ?
-			     xstrdup (expanded_value) : &bad);
+	    }
+	    default_value = xstrdup(value);
+	    default_line = line_number;
 	    continue;
 	}
 
@@ -147,8 +146,11 @@ Parse_Info (infofile, repository, callproc, all)
 	    if (!all)
 		error(0, 0, "Keyword `ALL' is ignored at line %d in %s file",
 		      line_number, infofile);
-	    else if (expanded_value != NULL)
+	    else if ((expanded_value = expand_path (value, infofile, line_number)) != NULL)
+	    {
 		err += callproc (repository, expanded_value);
+		free (expanded_value);
+	    }
 	    else
 		err++;
 	    continue;
@@ -169,8 +171,11 @@ Parse_Info (infofile, repository, callproc, all)
 	    continue;				/* no match */
 
 	/* it did, so do the callback and note that we did one */
-	if (expanded_value != NULL)
+	if ((expanded_value = expand_path (value, infofile, line_number)) != NULL)
+	{
 	    err += callproc (repository, expanded_value);
+	    free (expanded_value);
+	}
 	else
 	    err++;
 	callback_done = 1;
@@ -183,17 +188,18 @@ Parse_Info (infofile, repository, callproc, all)
     /* if we fell through and didn't callback at all, do the default */
     if (callback_done == 0 && default_value != NULL)
     {
-	if (default_value != &bad)
-	    err += callproc (repository, default_value);
+	if ((expanded_value = expand_path (default_value, infofile, default_line)) != NULL)
+	{
+	    err += callproc (repository, expanded_value);
+	    free (expanded_value);
+	}
 	else
 	    err++;
     }
 
     /* free up space if necessary */
-    if (default_value != NULL && default_value != &bad)
+    if (default_value != NULL)
 	free (default_value);
-    if (expanded_value != NULL)
-	free (expanded_value);
     free (infopath);
     if (line != NULL)
 	free (line);

@@ -184,15 +184,14 @@ fi
 
 # set default arg
 if test $# -eq 0; then
-	if test -f src/check.log && test -r src/check.log; then
-		set src/check.log
-	else
-		set check.log
-	fi
+	dcl_argvar=dcl_default
+	dcl_default=check.log
+else
+	dcl_argvar=@
 fi
 
-for file in "$@"; do
-	process_check_log $file;
+eval for file in \"\$$dcl_argvar\"\; do \
+	process_check_log \$file\; \
 done
 
 exit 0

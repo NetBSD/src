@@ -452,7 +452,7 @@ ignore_files (ilist, entries, update_dir, proc)
 #ifdef DT_DIR
 		dp->d_type != DT_UNKNOWN ||
 #endif
-		lstat(file, &sb) != -1) 
+		CVS_LSTAT (file, &sb) != -1) 
 	{
 
 	    if (

@@ -422,7 +422,7 @@ int RCS_merge PROTO((RCSNode *, char *, char *, char *, char *, char *));
 
 extern int RCS_exec_rcsdiff PROTO ((RCSNode *rcsfile,
 				    char *opts, char *options,
-				    char *rev1, char *rev2,
+				    char *rev1, char *rev1_cache, char *rev2,
 				    char *label1, char *label2,
 				    char *workfile));
 extern int diff_exec PROTO ((char *file1, char *file2,
@@ -454,8 +454,8 @@ void Sanitize_Repository_Name PROTO((char *repository));
 
 char *Name_Root PROTO((char *dir, char *update_dir));
 void free_cvsroot_t PROTO((cvsroot_t *root_in));
-cvsroot_t *parse_cvsroot PROTO((char *root));
-cvsroot_t *local_cvsroot PROTO((char *dir));
+cvsroot_t *parse_cvsroot PROTO((const char *root));
+cvsroot_t *local_cvsroot PROTO((const char *dir));
 void Create_Root PROTO((char *dir, char *rootdir));
 void root_allow_add PROTO ((char *));
 void root_allow_free PROTO ((void));
@@ -473,7 +473,7 @@ void xrealloc_and_strcat PROTO ((char **, size_t *, const char *));
 char *xstrdup PROTO((const char *str));
 int xasprintf PROTO((char ** __restrict, const char * __restrict, ...))
 	__attribute__((__format__(__printf__, 2, 3)));
-void strip_trailing_newlines PROTO((char *str));
+int strip_trailing_newlines PROTO((char *str));
 int pathname_levels PROTO ((char *path));
 
 typedef	int (*CALLPROC)	PROTO((char *repository, char *value));
@@ -490,7 +490,10 @@ int isreadable PROTO((const char *file));
 int iswritable PROTO((const char *file));
 int isaccessible PROTO((const char *file, const int mode));
 int isabsolute PROTO((const char *filename));
+#ifdef HAVE_READLINK
 char *xreadlink PROTO((const char *link));
+#endif
+char *xresolvepath PROTO((const char *path));
 char *last_component PROTO((char *path));
 char *get_homedir PROTO ((void));
 char *strcat_filename_onto_homedir PROTO ((const char *, const char *));
@@ -566,9 +569,12 @@ void rename_file PROTO((const char *from, const char *to));
    malloc'd.  It is OK to call it with PARGC == &ARGC or PARGV == &ARGV.  */
 extern void expand_wild PROTO ((int argc, char **argv, 
                                 int *pargc, char ***pargv));
+#if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
+char *locate_file_in_dir PROTO((const char *dir, const char *file ));
+#endif /* SERVER_SUPPORT && !FILENAMES_CASE_INSENSITIVE */
 
 #ifdef SERVER_SUPPORT
-extern int cvs_casecmp PROTO ((char *, char *));
+extern int cvs_casecmp PROTO ((const char *, const char *));
 extern int fopen_case PROTO ((char *, char *, FILE **, char **));
 #endif
 
@@ -645,13 +651,15 @@ int start_recursion PROTO((FILEPROC fileproc, FILESDONEPROC filesdoneproc,
 		     void *callerdat,
 		     int argc, char *argv[], int local, int which,
 		     int aflag, int locktype, char *update_preload,
-		     int dosrcs));
+		     int dosrcs, char *repository));
 void SIG_beginCrSect PROTO((void));
 void SIG_endCrSect PROTO((void));
 int SIG_inCrSect PROTO((void));
 void read_cvsrc PROTO((int *argc, char ***argv, char *cmdname));
 
 char *make_message_rcslegal PROTO((char *message));
+extern int file_has_conflict PROTO ((const struct file_info *,
+				     const char *ts_conflict));
 extern int file_has_markers PROTO ((const struct file_info *));
 extern void get_file PROTO ((const char *, const char *, const char *,
 			     char **, size_t *, size_t *));
@@ -761,7 +769,7 @@ void freevers_ts PROTO ((Vers_TS ** versp));
 /* Miscellaneous CVS infrastructure which layers on top of the recursion
    processor (for example, needs struct file_info).  */
 
-int Checkin PROTO ((int type, struct file_info *finfo, char *rcs, char *rev,
+int Checkin PROTO ((int type, struct file_info *finfo, char *rev,
 		    char *tag, char *options, char *message));
 int No_Difference PROTO ((struct file_info *finfo, Vers_TS *vers));
 /* TODO: can the finfo argument to special_file_mismatch be changed? -twp */

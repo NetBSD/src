@@ -186,7 +186,7 @@ enum rcs_delta_op {RCS_ANNOTATE, RCS_FETCH};
  * exported interfaces
  */
 RCSNode *RCS_parse PROTO((const char *file, const char *repos));
-RCSNode *RCS_parsercsfile PROTO((char *rcsfile));
+RCSNode *RCS_parsercsfile PROTO((const char *rcsfile));
 void RCS_fully_parse PROTO((RCSNode *));
 void RCS_reparsercsfile PROTO((RCSNode *, FILE **, struct rcsbuffer *));
 extern int RCS_setattic PROTO ((RCSNode *, int));
@@ -222,7 +222,8 @@ int RCS_checkout PROTO ((RCSNode *, char *, char *, char *, char *, char *,
 			 RCSCHECKOUTPROC, void *));
 int RCS_checkin PROTO ((RCSNode *rcs, char *workfile, char *message,
 			char *rev, int flags));
-int RCS_cmp_file PROTO ((RCSNode *, char *, char *, const char *));
+int RCS_cmp_file PROTO(( RCSNode *, char *, char **, char *, char *,
+			 const char * ));
 int RCS_settag PROTO ((RCSNode *, const char *, const char *));
 int RCS_deltag PROTO ((RCSNode *, const char *));
 int RCS_setbranch PROTO((RCSNode *, const char *));

@@ -30,7 +30,7 @@
 /* Options in modules file.  Note that it is OK to use GNU getopt features;
    we already are arranging to make sure we are using the getopt distributed
    with CVS.  */
-#define	CVSMODULE_OPTS	"+ad:i:lo:e:s:t:u:"
+#define	CVSMODULE_OPTS	"+ad:lo:e:s:t:"
 
 /* Special delimiter.  */
 #define CVSMODULE_SPEC	'&'
@@ -111,11 +111,9 @@ do_module (db, mname, m_type, msg, callback_proc, where, shorten,
     int build_dirs;
     char *extra_arg;
 {
-    char *checkin_prog = NULL;
     char *checkout_prog = NULL;
     char *export_prog = NULL;
     char *tag_prog = NULL;
-    char *update_prog = NULL;
     struct saved_cwd cwd;
     int cwd_saved = 0;
     char *line;
@@ -158,6 +156,17 @@ do_module (db, mname, m_type, msg, callback_proc, where, shorten,
 	free (buf);
     }
 #endif
+
+    /* Don't process absolute directories.  Anything else could be a security
+     * problem.  Before this check was put in place:
+     *
+     *   $ cvs -d:fork:/cvsroot co /foo
+     *   cvs server: warning: cannot make directory CVS in /: Permission denied
+     *   cvs [server aborted]: cannot make directory /foo: Permission denied
+     *   $
+     */
+    if (isabsolute (mname))
+	error (1, 0, "Absolute module reference invalid: `%s'", mname);
 
     /* if this is a directory to ignore, add it to that list */
     if (mname[0] == '!' && mname[1] != '\0')
@@ -429,12 +438,6 @@ do_module (db, mname, m_type, msg, callback_proc, where, shorten,
 		mwhere = xstrdup (optarg);
 		nonalias_opt = 1;
 		break;
-	    case 'i':
-		if (checkin_prog)
-		    free (checkin_prog);
-		checkin_prog = xstrdup (optarg);
-		nonalias_opt = 1;
-		break;
 	    case 'l':
 		local_specified = 1;
 		nonalias_opt = 1;
@@ -455,12 +458,6 @@ do_module (db, mname, m_type, msg, callback_proc, where, shorten,
 		if (tag_prog)
 		    free (tag_prog);
 		tag_prog = xstrdup (optarg);
-		nonalias_opt = 1;
-		break;
-	    case 'u':
-		if (update_prog)
-		    free (update_prog);
-		update_prog = xstrdup (optarg);
 		nonalias_opt = 1;
 		break;
 	    case '?':
@@ -657,40 +654,6 @@ module `%s' is a request for a file in a module which is not a directory",
     }
 #endif
 
-    /* run/write out the checkin/update prog files if necessary */
-    if (err == 0 && !noexec && m_type == CHECKOUT && run_module_prog)
-    {
-#ifdef SERVER_SUPPORT
-	if (server_active) {
-	    if (checkin_prog != NULL)
-		server_prog (where ? where : mwhere ? mwhere : mname, checkin_prog, PROG_CHECKIN);
-	    if (update_prog != NULL)
-		server_prog (where ? where : mwhere ? mwhere : mname, update_prog, PROG_UPDATE);
-	}
-	else
-	{
-#endif
-	FILE *fp;
-
-	if (checkin_prog != NULL)
-	{
-	    fp = open_file (CVSADM_CIPROG, "w+");
-	    (void) fprintf (fp, "%s\n", checkin_prog);
-	    if (fclose (fp) == EOF)
-		error (1, errno, "cannot close %s", CVSADM_CIPROG);
-	}
-	if (update_prog != NULL)
-	{
-	    fp = open_file (CVSADM_UPROG, "w+");
-	    (void) fprintf (fp, "%s\n", update_prog);
-	    if (fclose (fp) == EOF)
-		error (1, errno, "cannot close %s", CVSADM_UPROG);
-	}
-#ifdef SERVER_SUPPORT
-	}
-#endif
-    }
-
     /* cd back to where we started */
     if (restore_cwd (&cwd, NULL))
 	error_exit ();
@@ -759,16 +722,12 @@ module `%s' is a request for a file in a module which is not a directory",
 	free_names (&xmodargc, xmodargv);
     if (mwhere)
 	free (mwhere);
-    if (checkin_prog)
-	free (checkin_prog);
     if (checkout_prog)
 	free (checkout_prog);
     if (export_prog)
 	free (export_prog);
     if (tag_prog)
 	free (tag_prog);
-    if (update_prog)
-	free (update_prog);
     if (cwd_saved)
 	free_cwd (&cwd);
     if (value != NULL)
@@ -789,7 +748,7 @@ module `%s' is a request for a file in a module which is not a directory",
       files and the comment field: (Including aliases)
 
       modulename	-s switches, one per line, even if
-			-i it has many switches.
+			it has many switches.
 			Directories and files involved, formatted
 			to cover multiple lines if necessary.
 			# Comment, also formatted to cover multiple

@@ -16,8 +16,9 @@
 /* Printable names for things in the current_parsed_root->method enum variable.
    Watch out if the enum is changed in cvs.h! */
 
-char *method_names[] = {
-    "undefined", "local", "server (rsh)", "pserver", "kserver", "gserver", "ext", "fork"
+const char method_names[][16] = {
+    "undefined", "local", "server (rsh)", "pserver",
+    "kserver", "gserver", "ext", "fork"
 };
 
 #ifndef DEBUG
@@ -34,6 +35,7 @@ Name_Root (dir, update_dir)
     char *tmp;
     char *cvsadm;
     char *cp;
+    int len;
 
     if (update_dir && *update_dir)
 	xupdate_dir = update_dir;
@@ -71,18 +73,20 @@ Name_Root (dir, update_dir)
      */
     fpin = open_file (tmp, "r");
 
-    if (getline (&root, &root_allocated, fpin) < 0)
+    if ((len = getline (&root, &root_allocated, fpin)) < 0)
     {
+	int saved_errno = errno;
 	/* FIXME: should be checking for end of file separately; errno
 	   is not set in that case.  */
 	error (0, 0, "in directory %s:", xupdate_dir);
-	error (0, errno, "cannot read %s", CVSADM_ROOT);
+	error (0, saved_errno, "cannot read %s", CVSADM_ROOT);
 	error (0, 0, "please correct this problem");
 	ret = NULL;
 	goto out;
     }
-    (void) fclose (fpin);
-    if ((cp = strrchr (root, '\n')) != NULL)
+    fclose (fpin);
+    cp = root + (len - 1);
+    if (*cp == '\n')
 	*cp = '\0';			/* strip the newline */
 
     /*
@@ -345,7 +349,7 @@ free_cvsroot_t (root)
  */
 cvsroot_t *
 parse_cvsroot (root_in)
-    char *root_in;
+    const char *root_in;
 {
     cvsroot_t *newroot;			/* the new root to be returned */
     char *cvsroot_save;			/* what we allocated so we can dispose
@@ -511,7 +515,14 @@ parse_cvsroot (root_in)
 	*cvsroot_copy = '/';
     }
 
-    /* parse the path for all methods */
+    /*
+     * Parse the path for all methods.
+     */
+    /* Here & local_cvsroot() should be the only places this needs to be
+     * called on a CVSROOT now.  cvsroot->original is saved for error messages
+     * and, otherwise, we want no trailing slashes.
+     */
+    Sanitize_Repository_Name( cvsroot_copy );
     newroot->directory = xstrdup(cvsroot_copy);
 
     /*
@@ -543,7 +554,7 @@ parse_cvsroot (root_in)
     }
 
     check_hostname = 0;
-    no_password = 0;
+    no_password = 1;
     no_port = 0;
     switch (newroot->method)
     {
@@ -567,7 +578,7 @@ parse_cvsroot (root_in)
 	    goto error_exit;
 	}
 	no_port = 1;
-	no_password = 1;
+	/* no_password already set */
 	break;
     case fork_method:
 	/* We want :fork: to behave the same as other remote access
@@ -587,7 +598,7 @@ parse_cvsroot (root_in)
 	    goto error_exit;
 	}
 	no_port = 1;
-	no_password = 1;
+	/* no_password already set */
 	break;
     case kserver_method:
 #ifndef HAVE_KERBEROS
@@ -596,6 +607,7 @@ parse_cvsroot (root_in)
 	goto error_exit;
 #else
 	check_hostname = 1;
+	/* no_password already set */
 	break;
 #endif
     case gserver_method:
@@ -605,15 +617,17 @@ parse_cvsroot (root_in)
 	goto error_exit;
 #else
 	check_hostname = 1;
+	/* no_password already set */
 	break;
 #endif
     case server_method:
     case ext_method:
 	no_port = 1;
-	no_password = 1;
+	/* no_password already set */
 	check_hostname = 1;
 	break;
     case pserver_method:
+	no_password = 0;
 	check_hostname = 1;
 	break;
     default:
@@ -713,14 +727,18 @@ normalize_cvsroot (root)
  * repository DIR.  */
 cvsroot_t *
 local_cvsroot (dir)
-    char *dir;
+    const char *dir;
 {
     cvsroot_t *newroot = new_cvsroot_t();
 
     newroot->original = xstrdup(dir);
     newroot->method = local_method;
     newroot->directory = xstrdup(dir);
-
+    /* Here and parse_cvsroot() should be the only places this needs to be
+     * called on a CVSROOT now.  cvsroot->original is saved for error messages
+     * and, otherwise, we want no trailing slashes.
+     */
+    Sanitize_Repository_Name( newroot->directory );
     return newroot;
 }
 
