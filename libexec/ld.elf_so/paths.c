@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.25 2002/10/06 01:36:36 junyoung Exp $	 */
+/*	$NetBSD: paths.c,v 1.26 2003/06/05 10:41:32 simonb Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -63,6 +63,7 @@ _rtld_find_path(path, pathstr, pathlen)
 	const char *pathstr;
 	size_t pathlen;
 {
+
 	for (; path != NULL; path = path->sp_next) {
 		if (pathlen == path->sp_pathlen &&
 		    memcmp(path->sp_path, pathstr, pathlen) == 0)
