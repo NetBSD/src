@@ -1,4 +1,4 @@
-/*	$NetBSD: intcreg.h,v 1.4 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: intcreg.h,v 1.5 2002/03/24 17:57:33 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -70,6 +70,7 @@
 #define SH4_IPRA		0xffd00004	/* 16bit */
 #define SH4_IPRB		0xffd00008	/* 16bit */
 #define SH4_IPRC		0xffd0000c	/* 16bit */
+#define	SH4_IPRD		0xffd00010	/* 16bit */
 
 #define IPRC_GPIO_MASK		0xf000
 #define IPRC_DMAC_MASK		0x0f00
