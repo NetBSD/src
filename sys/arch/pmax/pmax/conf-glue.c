@@ -21,13 +21,15 @@
  * THIS MAY NOT WORK FOR ALL MACHINES.
  */
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/device.h"
-#include "sys/buf.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
 
-#include "pmax/dev/device.h"
+
 #include <machine/autoconf.h>
+#include <pmax/dev/device.h>
 
 #define C (char *)
 
@@ -43,16 +45,16 @@
 
 /* declarations for glue to 4.4bsd pmax port SCSI drivers and autoconfig */
 #if NASC > 0
-extern struct driver ascdriver;
+extern struct pmax_driver ascdriver;
 #endif
 #if NSII > 0
-extern struct driver siidriver;
+extern struct pmax_driver siidriver;
 #endif
 #if NRZ > 0
-extern struct driver rzdriver;
+extern struct pmax_driver rzdriver;
 #endif
 #if NTZ > 0
-extern struct driver tzdriver;
+extern struct pmax_driver tzdriver;
 #endif
 
 
@@ -95,6 +97,75 @@ struct cfdriver oldscsibuscd = {NULL, "", nomatch, noattach, DV_DULL, 0, 0};
 struct cfdriver rzcd	= {NULL, "rz", nomatch, noattach, DV_DULL, 0, 0};
 struct cfdriver tzcd	= {NULL, "tz", nomatch, noattach, DV_DULL, 0, 0};
 
+
+#define MAX_SCSI 4
+static int nscsi;
+static struct pmax_ctlr pmax_scsi_table[MAX_SCSI+1] = {
+/*	driver,		unit,	addr,		flags */
+
+	{ NULL, },  { NULL, }, { NULL, }, { NULL, },
+	{ NULL, } /* sentinel */
+};
+
+/*
+ * Callback for scsi controllers to register themselves with this
+ * config glue.  Construct an old-style pmax autoconfiguration
+ * SCSI-driver table entry for a  DECstation SCSI controller, and add it
+ * to the table of known SCSI drivers.  Needed for old-style pmax
+ * SCSI-bus probing.  configure() will call us back to probe
+ * each known controller for the statically-configured drives, above.
+ */
+void
+pmax_add_scsi(dp, unit)
+	struct pmax_driver *dp;
+	int unit;
+{
+	struct pmax_ctlr *cp  = &pmax_scsi_table[nscsi++];
+	if (nscsi > MAX_SCSI) {
+		panic("Too many old-style SCSI adaptors\n");
+	}
+	cp->pmax_driver = dp;
+	cp->pmax_unit = unit;
+}
+
+/*
+ * Configure scsi devices on old-style pmax scsi drivers.
+ * Interrupts must be enabled or this will hang.
+ *
+ * Called by configure() after all possible controllers have been
+ * found.  The controllers really should invoke new-style
+ * autoconfiguration on themselves, probing their SCSI buses,
+ * but the pmax drivers don't yet have polled SCSI.
+ */
+void
+configure_scsi()
+{
+	register struct pmax_ctlr *cp;
+	register struct scsi_device *dp;
+	register struct pmax_driver *drp;
+
+	extern int dkn;	/* number of iostat dk numbers assigned */
+
+	/* probe and initialize SCSI buses */
+	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
+
+		/* probe and initialize devices connected to controller */
+		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
+			/* might want to get fancier later */
+			if (dp->sd_cdriver != cp->pmax_driver ||
+			    dp->sd_ctlr != cp->pmax_unit)
+			    continue;	/* not connected */
+			if (!(*drp->d_init)(dp))
+			    continue;
+			dp->sd_alive = 1;
+			/* if device is a disk, assign number for statistics */
+			if (dp->sd_dk && dkn < DK_NDRIVE)
+			    dp->sd_dk = dkn++;
+			else
+			    dp->sd_dk = -1;
+		}
+	}
+}
 
 
 /*
@@ -140,3 +211,4 @@ noattach(parent, self, aux)
 #endif
 	return;
 }
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1995/08/17 06:54:56 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1995/09/11 21:49:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,7 +156,7 @@ void
 configure()
 {
 	register struct pmax_ctlr *cp;
-	register struct driver *drp;
+	int s;
 
 	/*
 	 * Set CPU type for new-style config. 
@@ -171,16 +171,34 @@ configure()
 	/*
 	 * Kick off autoconfiguration
 	 */
-	(void)splhigh();
+	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == 0)
 	    panic("no mainbus found");
 
-	xconsinit();	/* do console init */
+#if 0
+	printf("looking for non-PROM console driver\n");
+#endif
 
-	initcpu(); 	/* causes panic on 3MAX? old-conf wedge on 3max+ */
+	xconsinit();	/* do kludged-up console init */
 
-	/* Configuration is finished,  turn on interrupts. */
-	spl0();
+#ifdef DEBUG
+	if (cputype == DS_3MIN)
+/*FIXME*/	printf("switched to non-PROM console\n");
+#endif
+
+	initcpu();
+
+#ifdef DEBUG
+	printf("autconfiguration done, spl back to 0x%x\n", s);
+#endif
+	/*
+	 * Configuration is finished,  turn on interrupts.
+	 * This is just spl0(), except on the 3MIN, where TURBOChannel
+	 * option cards interrupt at IPLs 0-2, and some dumb drivers like
+	 * the cfb want to just disable interrupts.
+	 */
+	if (cputype != DS_3MIN)
+		spl0();
 
 	/*
 	 * Probe SCSI bus using old-style pmax configuration table.
@@ -199,66 +217,6 @@ configure()
 #endif
 	swapconf();
 	cold = 0;
-}
-
-#define MAX_SCSI 4
-static int nscsi;
-static struct pmax_ctlr pmax_scsi_table[MAX_SCSI+1] = {
-/*	driver,		unit,	addr,		flags */
-
-	{ NULL, },  { NULL, }, { NULL, }, { NULL, },
-	{ NULL, } /* sentinel */
-};
-
-/*
- * Construct an old-style pmax autoconfiguration table entry for a
- * DECstation SCSI driver, and add it to the table of known
- * SCSI drivers.  Needed for old-style pmax SCSI-bus probing.
- */
-void
-pmax_add_scsi(dp, unit)
-	struct driver *dp;
-	int unit;
-{
-	struct pmax_ctlr *cp  = &pmax_scsi_table[nscsi++];
-	if (nscsi > MAX_SCSI) {
-		panic("Too many old-style SCSI adaptors\n");
-	}
-	cp->pmax_driver = dp;
-	cp->pmax_unit = unit;
-}
-
-/*
- * Configure scsi devices on old-style pmax scsi drivers.
- * Interrupts must be enabled or this will hang.
- */
-void
-configure_scsi()
-{
-	register struct pmax_ctlr *cp;
-	register struct scsi_device *dp;
-	register struct driver *drp;
-
-
-	/* probe and initialize SCSI buses */
-	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
-
-		/* probe and initialize devices connected to controller */
-		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
-			/* might want to get fancier later */
-			if (dp->sd_cdriver != cp->pmax_driver ||
-			    dp->sd_ctlr != cp->pmax_unit)
-			    continue;	/* not connected */
-			if (!(*drp->d_init)(dp))
-			    continue;
-			dp->sd_alive = 1;
-			/* if device is a disk, assign number for statistics */
-			if (dp->sd_dk && dkn < DK_NDRIVE)
-			    dp->sd_dk = dkn++;
-			else
-			    dp->sd_dk = -1;
-		}
-	}
 }
 
 /*
