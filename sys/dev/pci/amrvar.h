@@ -1,7 +1,7 @@
-/*	$NetBSD: amrvar.h,v 1.1 2002/01/30 14:35:45 ad Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.2 2003/05/04 16:15:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,11 @@
 
 #include "locators.h"
 
-#define	AMR_MAX_UNITS	16
+#define	AMR_MAX_UNITS		16
+#define	AMR_WDOG_TICKS		(hz * 5)
+#define	AMR_NCCB_RESV		2
+#define	AMR_ENQUIRY_BUFSIZE	2048
+#define	AMR_SGL_SIZE		(sizeof(struct amr_sgentry) * AMR_MAX_SEGS)
 
 /*
  * Logical drive information.
@@ -50,42 +54,59 @@ struct amr_logdrive {
 	u_int		al_size;
 	u_short		al_state;
 	u_short		al_properties;
+	struct device	*al_dv;
 };
 
 /*
  * Per-controller state.
  */
 struct amr_softc {
-	/* Generic device data. */
 	struct device		amr_dv;
 	bus_space_tag_t		amr_iot;
 	bus_space_handle_t	amr_ioh;
+	bus_size_t		amr_ios;
 	bus_dma_tag_t		amr_dmat;
-	bus_dmamap_t		amr_dmamap;
+	pci_chipset_tag_t	amr_pc;
 	void			*amr_ih;
+	struct proc		*amr_thread;
+	int			amr_flags;
 
-	/* Command mailbox. */
 	struct amr_mailbox	*amr_mbox;
 	bus_addr_t		amr_mbox_paddr;
+	bus_dmamap_t		amr_dmamap;
+        bus_dma_segment_t	amr_dmaseg;
+        int			amr_dmasize;
+        void			*amr_enqbuf;
 
-	/* Scatter-gather lists. */
 	struct amr_sgentry	*amr_sgls;
 	bus_addr_t		amr_sgls_paddr;
 
-	/* Command management. */
 	struct amr_ccb		*amr_ccbs;
 	SLIST_HEAD(, amr_ccb)	amr_ccb_freelist;
 	SIMPLEQ_HEAD(, amr_ccb)	amr_ccb_queue;
 	int			amr_maxqueuecnt;
 
-	/* Hardware-specific linkage. */
-	int	(*amr_get_work)(struct amr_softc *, struct amr_mailbox *);
+	int	(*amr_get_work)(struct amr_softc *, struct amr_mailbox_resp *);
 	int	(*amr_submit)(struct amr_softc *sc, struct amr_ccb *);
 
-	/* Logical drive information. */
 	int			amr_numdrives;
 	struct amr_logdrive	amr_drive[AMR_MAX_UNITS];
 };
+
+/* What resources are allocated? */
+#define	AMRF_INTR		0x00000001
+#define	AMRF_DMA_LOAD		0x00000002
+#define	AMRF_DMA_MAP		0x00000004
+#define	AMRF_DMA_ALLOC		0x00000008
+#define	AMRF_DMA_CREATE		0x00000010
+#define	AMRF_PCI_INTR		0x00000020
+#define	AMRF_PCI_REGS		0x00000040
+#define	AMRF_CCBS		0x00000080
+#define	AMRF_ENQBUF		0x00000100
+#define	AMRF_THREAD		0x00000200
+
+/* General flags. */
+#define	AMRF_THREAD_EXIT	0x00010000
 
 /*
  * Command control block.
@@ -99,15 +120,12 @@ struct amr_ccb {
 	u_int		ac_flags;
 	u_int		ac_status;
 	u_int		ac_ident;
-
 	u_int		ac_xfer_size;
 	bus_dmamap_t	ac_xfer_map;
-
-	struct amr_mailbox ac_mbox;
-
 	void		(*ac_handler)(struct amr_ccb *);
 	void 		*ac_context;
 	struct device	*ac_dv;
+	struct amr_mailbox_cmd	ac_cmd;
 };
 #define	AC_XFER_IN	0x01	/* Map describes inbound xfer */
 #define	AC_XFER_OUT	0x02	/* Map describes outbound xfer */
@@ -127,5 +145,9 @@ void	amr_ccb_free(struct amr_softc *, struct amr_ccb *);
 int	amr_ccb_map(struct amr_softc *, struct amr_ccb *, void *, int, int);
 int	amr_ccb_poll(struct amr_softc *, struct amr_ccb *, int);
 void	amr_ccb_unmap(struct amr_softc *, struct amr_ccb *);
+int	amr_ccb_wait(struct amr_softc *, struct amr_ccb *);
+const char	*amr_drive_state(int, int *);
+
+extern int	amr_max_xfer;
 
 #endif	/* !_PCI_AMRVAR_H_ */
