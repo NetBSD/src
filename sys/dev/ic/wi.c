@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.143 2003/11/02 01:55:40 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.144 2003/11/16 09:02:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.143 2003/11/02 01:55:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.144 2003/11/16 09:02:42 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.143 2003/11/02 01:55:40 dyoung Exp $");
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -380,6 +381,19 @@ wi_attach(struct wi_softc *sc)
 	ic->ic_set_tim = wi_set_tim;
 
 	ieee80211_media_init(ifp, wi_media_change, wi_media_status);
+
+#if NBPFILTER > 0
+	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+#endif
+
+	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.wr_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_present = WI_RX_RADIOTAP_PRESENT;
+
+	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.wt_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_present = WI_TX_RADIOTAP_PRESENT;
 
 	/* Attach is successful. */
 	sc->sc_attached = 1;
@@ -860,9 +874,16 @@ wi_start(struct ifnet *ifp)
 		if (sc->sc_drvbpf) {
 			struct mbuf mb;
 
+			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
+
+			tap->wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+			tap->wt_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+
+			/* TBD tap->wt_flags, tap->wt_chan_flags */
+
 			M_COPY_PKTHDR(&mb, m0);
-			mb.m_data = (caddr_t)&frmhdr;
-			mb.m_len = sizeof(frmhdr);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = tap->wt_ihdr.it_len;
 			mb.m_next = m0;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);
@@ -1282,12 +1303,19 @@ wi_rx_intr(struct wi_softc *sc)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
 		struct mbuf mb;
+		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->wr_rate = frmhdr.wi_rx_rate / 5;
+		tap->wr_antsignal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
+		tap->wr_antnoise = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
+
+		tap->wr_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+		if (frmhdr.wi_status & WI_STAT_PCF)
+			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
 		M_COPY_PKTHDR(&mb, m);
-		mb.m_data = (caddr_t)&frmhdr;
-		frmhdr.wi_rx_signal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
-		frmhdr.wi_rx_silence = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
-		mb.m_len = (char *)&frmhdr.wi_whdr - (char *)&frmhdr;
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = tap->wr_ihdr.it_len;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);
