@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.46 2001/09/03 07:51:43 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.47 2002/01/06 01:02:47 sjg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.46 2001/09/03 07:51:43 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.47 2002/01/06 01:02:47 sjg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2740,6 +2740,9 @@ command(top, tbuf, cnt)
 	getline:
 	    if (rlogin != _POSIX_VDISABLE)
 		printf("%s> ", prompt);
+#if defined(TN3270)
+	    fflush(stdout);
+#endif
 	    if (fgets(line, sizeof(line), stdin) == NULL) {
 		if (feof(stdin) || ferror(stdin)) {
 		    (void) quit(0, NULL);
