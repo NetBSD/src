@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 1994/10/26 07:25:20 cgd Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 1995/02/08 14:52:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -232,22 +232,12 @@ swtch() { if (whichqs) whichqs = 0; }
 
 /*ARGSUSED*/
 fubyte(base) caddr_t base; { return (0); }
-#ifdef notdef
-/*ARGSUSED*/
-fuibyte(base) caddr_t base; { return (0); }
-#endif
 /*ARGSUSED*/
 subyte(base, i) caddr_t base; { return (0); }
 /*ARGSUSED*/
-suibyte(base, i) caddr_t base; { return (0); }
-/*ARGSUSED*/
 fuword(base) caddr_t base; { return (0); }
 /*ARGSUSED*/
-fuiword(base) caddr_t base; { return (0); }
-/*ARGSUSED*/
 suword(base, i) caddr_t base; { return (0); }
-/*ARGSUSED*/
-suiword(base, i) caddr_t base; { return (0); }
 
 /*ARGSUSED*/
 copyseg(udaddr, pf)
