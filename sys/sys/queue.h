@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.34 2003/08/07 16:34:11 agc Exp $	*/
+/*	$NetBSD: queue.h,v 1.35 2004/02/26 01:20:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -301,13 +301,6 @@ struct {								\
 #define STAILQ_FIRST(head)	((head)->stqh_first)
 
 #define STAILQ_NEXT(elm, field)	((elm)->field.stqe_next)
-
-/*
- * Simple queue access methods.
- */
-#define	SIMPLEQ_EMPTY(head)		((head)->sqh_first == NULL)
-#define	SIMPLEQ_FIRST(head)		((head)->sqh_first)
-#define	SIMPLEQ_NEXT(elm, field)	((elm)->field.sqe_next)
 
 /*
  * Simple queue definitions.
