@@ -1,6 +1,6 @@
-#	$NetBSD: files.playstation2,v 1.11 2003/07/27 01:19:30 thorpej Exp $
+#	$NetBSD: files.playstation2,v 1.12 2004/03/25 12:38:50 wiz Exp $
 
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 64
 
