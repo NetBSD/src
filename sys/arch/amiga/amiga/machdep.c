@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1996/04/23 22:46:39 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1996/04/27 20:48:52 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -901,6 +901,7 @@ bootsync(void)
 	}
 }
 
+
 void
 boot(howto)
 	register int howto;
@@ -912,20 +913,24 @@ boot(howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0)
 		bootsync();
-	spl7();				/* extreme priority */
+
+	/* Disable interrupts. */
+	spl7();
+
+	/* If rebooting and a dump is requested do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
+		printf("System halted.\n\n");
 		asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		doboot();
-		panic("This reboot failure should never happen");
 		/*NOTREACHED*/
 	}
-	panic("This reboot failure should never happen");
+
+	doboot();
 	/*NOTREACHED*/
 }
+
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1996/04/24 11:41:33 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 1996/04/27 20:48:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -200,7 +200,6 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "ser", simple_devprint);
 	config_found(dp, "par", simple_devprint);
 	config_found(dp, "kbd", simple_devprint);
-	config_found(dp, "ms", simple_devprint);
 	config_found(dp, "ms", simple_devprint);
 	config_found(dp, "grfcc", simple_devprint);
 	config_found(dp, "fdc", simple_devprint);
