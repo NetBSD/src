@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.35 2003/08/22 21:53:12 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.36 2003/10/03 20:57:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.35 2003/08/22 21:53:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.36 2003/10/03 20:57:29 itojun Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -305,6 +305,7 @@ nsipoutput(ifp, m, dst, rt)
 		m0->m_next = m;
 		m0->m_len = sizeof (struct ip);
 		m0->m_pkthdr.len = m0->m_len + m->m_len;
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 	} else {
 		M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
