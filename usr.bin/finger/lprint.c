@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.7 1997/01/09 20:19:22 tls Exp $	*/
+/*	$NetBSD: lprint.c,v 1.8 1997/09/09 02:41:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$NetBSD: lprint.c,v 1.7 1997/01/09 20:19:22 tls Exp $";
+static char rcsid[] = "$NetBSD: lprint.c,v 1.8 1997/09/09 02:41:09 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,6 +103,8 @@ lprint(pn)
 	    pn->name, pn->realname, pn->dir);
 	(void)printf("\tShell: %-s\n", *pn->shell ? pn->shell : _PATH_BSHELL);
 
+	if (gflag)
+		goto no_gecos;
 	/*
 	 * try and print office, office phone, and home phone on one line;
 	 * if that fails, do line filling so it looks nice.
@@ -138,6 +140,7 @@ lprint(pn)
 	if (oddfield)
 		putchar('\n');
 
+no_gecos:
 	/*
 	 * long format con't:
 	 * if logged in

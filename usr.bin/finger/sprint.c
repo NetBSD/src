@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.6 1997/03/28 02:15:21 mycroft Exp $	*/
+/*	$NetBSD: sprint.c,v 1.7 1997/09/09 02:41:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$NetBSD: sprint.c,v 1.6 1997/03/28 02:15:21 mycroft Exp $";
+static char rcsid[] = "$NetBSD: sprint.c,v 1.7 1997/09/09 02:41:10 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ sflag_print()
 #define	MAXREALNAME	20
 #define	MAXHOSTNAME	20
 	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
-	    "Name", "Tty  Idle  Login Time  ",
+	    "Name", "Tty  Idle  Login Time  ", (gflag) ? "" :
 	    (oflag) ? "Office     Office Phone" : "Where");
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
@@ -114,6 +114,8 @@ sflag_print()
 			else
 				(void)printf(" %.5s", p + 11);
 office:
+			if (gflag)
+				goto no_gecos;
 			putchar(' ');
 			if (oflag) {
 				if (pn->office)
@@ -125,6 +127,7 @@ office:
 						    prphone(pn->officephone));
 			} else
 				(void)printf("%.*s", MAXHOSTNAME, w->host);
+no_gecos:
 			putchar('\n');
 		}
 	}
