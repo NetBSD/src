@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.1 2002/11/20 17:52:50 bsh Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.2 2003/01/02 22:30:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -46,7 +46,6 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 /*
  * interrupt dispatch table.
