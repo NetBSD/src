@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1995/09/25 20:27:32 chuck Exp $ */
+/*	$NetBSD: conf.c,v 1.37 1996/03/01 08:11:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,8 +159,12 @@ cdev_decl(fd);
 #include "cgthree.h"
 cdev_decl(cgthree);
 cdev_decl(cd);
+#include "cgfour.h"
+cdev_decl(cgfour);
 #include "cgsix.h"
 cdev_decl(cgsix);
+#include "cgeight.h"
+cdev_decl(cgeight);
 #include "audio.h"
 cdev_decl(audio);
 cdev_decl(openprom);
@@ -219,7 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36 */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
-	cdev_notdef(),			/* 39 */
+	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_disk_init(NXD,xd),		/* 42: SMD disk */
@@ -250,7 +254,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 61 */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
-	cdev_notdef(),			/* 64 */
+	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
