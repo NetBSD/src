@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.154 1999/06/10 00:40:05 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.155 1999/07/14 20:18:07 wrstuden Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -280,10 +280,10 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if defined(DESTDIR)
-	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	$(LD) -nostdlib -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a \
-	    -nostdlib -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
+	    -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
 	    --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 .else
