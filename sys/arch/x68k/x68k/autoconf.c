@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2002/10/02 16:02:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2002/10/04 01:50:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -117,6 +117,7 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
+	const struct cfattach *ca;
 
 	if (x68k_realconfig)
 		return(config_found(pdp, auxp, pfn) != NULL);
@@ -126,9 +127,12 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 
 	pdp->dv_cfdata = pcfp;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
-		cf->cf_attach->ca_attach(pdp, NULL, auxp);
-		pdp->dv_cfdata = NULL;
-		return(1);
+		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+		if (ca != NULL) {
+			(*ca->ca_attach)(pdp, NULL, auxp);
+			pdp->dv_cfdata = NULL;
+			return(1);
+		}
 	}
 	pdp->dv_cfdata = NULL;
 	return(0);
