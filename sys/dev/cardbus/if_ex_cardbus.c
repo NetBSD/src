@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.14 2000/05/19 04:03:58 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.15 2000/08/29 08:54:51 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -106,6 +106,7 @@ struct ex_cardbus_softc {
 	u_int8_t sc_cardtype;
 #define EX_3C575		1
 #define EX_3C575B		2
+#define EX_3C575C		3
 
 	/* CardBus function status space.  575B requests it. */
 	bus_space_tag_t sc_funct;
@@ -134,11 +135,18 @@ const struct ex_cardbus_product {
 	  "3c575-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3C575BTX,
-	  EX_CONF_90XB|EX_CONF_MII,
+	  EX_CONF_90XB|EX_CONF_MII|EX_CONF_INV_LED_POLARITY,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  EX_3C575B,
 	  "3c575B-TX Ethernet" },
+
+	{ CARDBUS_PRODUCT_3COM_3C575CTX,
+	  EX_CONF_90XB|EX_CONF_PHY_POWER,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_3C575C,
+	  "3c575CT Ethernet" },
 
 	{ 0,
 	  0,
@@ -238,7 +246,8 @@ ex_cardbus_attach(parent, self, aux)
 	command |= ecp->ecp_csr;
 	psc->sc_cardtype = ecp->ecp_cardtype;
 
-	if (psc->sc_cardtype == EX_3C575B) {
+	if ((psc->sc_cardtype == EX_3C575B) ||
+	    (psc->sc_cardtype == EX_3C575C)) {
 		/* Map CardBus function status window. */
 		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 		    CARDBUS_MAPREG_TYPE_MEM, 0, &psc->sc_funct,
@@ -315,9 +324,19 @@ ex_cardbus_attach(parent, self, aux)
 
 	ex_config(sc);
 
-	if (psc->sc_cardtype == EX_3C575B)
+	if ((psc->sc_cardtype == EX_3C575B) ||
+	    (psc->sc_cardtype == EX_3C575C))
 		bus_space_write_4(psc->sc_funct, psc->sc_funch,
 		    EX_CB_INTR, EX_CB_INTR_ACK);
+
+	if (psc->sc_cardtype == EX_3C575C) {
+		u_int16_t cbcard_config;
+
+		GO_WINDOW(2);
+		cbcard_config = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x0c);
+		cbcard_config |= 0x4000; /* turn on MII power */
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
+	}
 
 #if !defined EX_POWER_STATIC
 	cardbus_function_disable(psc->sc_ct);  
@@ -358,7 +377,8 @@ ex_cardbus_detach(self, arg)
 		 */
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
-		if (psc->sc_cardtype == EX_3C575B) {
+		if ((psc->sc_cardtype == EX_3C575B) ||
+		    (psc->sc_cardtype == EX_3C575C)) {
 			Cardbus_mapreg_unmap(ct,
 			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 			    psc->sc_funct, psc->sc_funch, psc->sc_funcsize);
