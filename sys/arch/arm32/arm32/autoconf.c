@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1997/10/14 09:59:40 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1998/02/21 22:51:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -65,7 +65,6 @@ static	int booted_partition;
 
 extern dev_t dumpdev;
 
-char *	strstr	__P((char *s1, char *s2));
 void	dumpconf __P(());
 extern void dump_spl_masks	__P((void));
 
