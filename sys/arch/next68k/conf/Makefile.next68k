@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.17 2000/12/17 15:52:43 jdolecek Exp $
+# $NetBSD: Makefile.next68k,v 1.18 2001/05/13 16:55:37 chs Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ NEXT68K=	$S/arch/next68k
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dnext68k
-CWARNFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format \
+CWARNFLAGS=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2000/01/19 02:52:20 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2001/05/13 16:55:39 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -39,6 +39,8 @@
 #include <machine/cpu.h>
 
 #include <next68k/dev/clockreg.h>
+#include <next68k/next68k/rtc.h>
+#include <next68k/next68k/isr.h>
 
 /* @@@ This is pretty bogus and will need fixing once
  * things are working better.
@@ -128,16 +130,15 @@ int
 clock_intr(arg)
      void *arg;
 {
-  if (!INTR_OCCURRED(NEXT_I_TIMER)) return(0);
+	volatile struct timer_reg *timer;
 
-	{
-		volatile struct timer_reg *timer = IIOV(NEXT_P_TIMER);
-		timer->csr |= TIMER_UPDATE;
+	if (!INTR_OCCURRED(NEXT_I_TIMER)) {
+		return(0);
 	}
-
+	timer = (volatile struct timer_reg *)IIOV(NEXT_P_TIMER);
+	timer->csr |= TIMER_UPDATE;
 	hardclock(arg);
-
-  return(1);
+	return(1);
 }
 
 /*
@@ -149,28 +150,21 @@ clock_intr(arg)
 void
 cpu_initclocks()
 {
-  rtc_init();
+	int s, cnt;
+	volatile struct timer_reg *timer;
 
-  hz = 100;
-
-  {
-    int s;
-    s = splclock();
-
-    {
-      volatile struct timer_reg *timer = IIOV(NEXT_P_TIMER);
-      int cnt = 1000000/hz;          /* usec timer */
-      timer->csr = 0;
-      timer->msb = (cnt>>8);
-      timer->lsb = cnt;
-      timer->csr = TIMER_ENABLE|TIMER_UPDATE;
-    }
-
-    isrlink_autovec(clock_intr, NULL, NEXT_I_IPL(NEXT_I_TIMER), 0);
-    INTR_ENABLE(NEXT_I_TIMER);
-
-    splx(s);
-  }
+	rtc_init();
+	hz = 100;
+	s = splclock();
+	timer = (volatile struct timer_reg *)IIOV(NEXT_P_TIMER);
+	cnt = 1000000/hz;          /* usec timer */
+	timer->csr = 0;
+	timer->msb = (cnt >> 8);
+	timer->lsb = cnt;
+	timer->csr = TIMER_ENABLE|TIMER_UPDATE;
+	isrlink_autovec(clock_intr, NULL, NEXT_I_IPL(NEXT_I_TIMER), 0);
+	INTR_ENABLE(NEXT_I_TIMER);
+	splx(s);
 }
 
 
@@ -206,7 +200,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
+	tvp->tv_usec++;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;

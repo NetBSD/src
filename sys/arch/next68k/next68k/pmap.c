@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2001/04/24 04:31:05 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.32 2001/05/13 16:55:39 chs Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -454,9 +454,9 @@ bogons:
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
-		printf("pmap_init: Sysseg %x, Sysmap %x, Sysptmap %x\n",
+		printf("pmap_init: Sysseg %p Sysmap %p Sysptmap %p\n",
 		       Sysseg, Sysmap, Sysptmap);
-		printf("  avail_start %x, avail_end %x, vavail %x, vend %x\n",
+		printf("  avail_start %lx avail_end %lx vavail %lx vend %lx\n",
 		       avail_start, avail_end, virtual_avail, virtual_end);
 	}
 #endif

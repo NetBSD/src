@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.20 2001/04/24 04:31:05 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.21 2001/05/13 16:55:38 chs Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2001/04/24 04:31:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2001/05/13 16:55:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
 			}
 #endif
 			while((p<e)&&(p%NBPG)) {
@@ -475,7 +475,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if (p != e) {
 				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
 			}
 #endif
 		}
@@ -489,7 +489,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if ((p % 16) || (e % 16)) {
 				panic("unaligned address in _bus_dmamap_sync while purging.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
+						"address=0x%08lx, end=0x%08lx, ops=0x%x", p,e,ops);
 			}
 #endif
 			while((p<e)&&(p%NBPG)) {
@@ -507,7 +507,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #ifdef DIAGNOSTIC
 			if (p != e) {
 				panic("overrun in _bus_dmamap_sync while flushing.\n"
-						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
+						"address=0x%08lx, end=0x%08lx, ops=0x%x",p,e,ops);
 			}
 #endif
 		}
