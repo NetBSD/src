@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.28 1998/03/01 02:22:09 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.29 1998/06/22 22:01:03 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,10 @@
  *
  *	@(#)cd9660_vfsops.c	8.18 (Berkeley) 5/22/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_fifo.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

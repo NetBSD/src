@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.35 1998/03/01 02:24:03 fvdl Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.36 1998/06/22 22:01:12 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -49,6 +49,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

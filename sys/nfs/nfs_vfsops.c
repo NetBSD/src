@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.73 1998/06/05 19:53:01 kleink Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.74 1998/06/22 22:01:06 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -37,6 +37,8 @@
  *
  *	@(#)nfs_vfsops.c	8.12 (Berkeley) 5/20/95
  */
+
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.13 1998/03/01 02:21:30 fvdl Exp $	*/
+/*	$NetBSD: fifo.h,v 1.14 1998/06/22 22:01:05 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,6 +34,11 @@
  *
  *	@(#)fifo.h	8.6 (Berkeley) 5/21/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_fifo.h"
+#endif
+
 #ifdef FIFO
 
 /*
