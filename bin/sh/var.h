@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.19 2002/09/27 18:56:58 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.20 2002/11/24 22:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,18 +45,19 @@
 /* flags */
 #define VEXPORT		0x01	/* variable is exported */
 #define VREADONLY	0x02	/* variable cannot be modified */
-#define VSTRFIXED	0x04	/* variable struct is staticly allocated */
-#define VTEXTFIXED	0x08	/* text is staticly allocated */
+#define VSTRFIXED	0x04	/* variable struct is statically allocated */
+#define VTEXTFIXED	0x08	/* text is statically allocated */
 #define VSTACK		0x10	/* text is allocated on the stack */
 #define VUNSET		0x20	/* the variable is not set */
 #define VNOFUNC		0x40	/* don't call the callback function */
+#define VNOSET		0x80	/* do not set variable - just readonly test */
 
 
 struct var {
 	struct var *next;		/* next entry in hash list */
 	int flags;			/* flags are defined above */
 	char *text;			/* name=value */
-	void (*func) __P((const char *));
+	void (*func)(const char *);
 					/* function to be called when  */
 					/* the variable gets set/unset */
 };
@@ -111,21 +112,22 @@ extern struct var vhistsize;
 #endif
 #define mpathset()	((vmpath.flags & VUNSET) == 0)
 
-void initvar __P((void));
-void setvar __P((const char *, const char *, int));
-void setvareq __P((char *, int));
+void initvar(void);
+void setvar(const char *, const char *, int);
+void setvareq(char *, int);
 struct strlist;
-void listsetvar __P((struct strlist *));
-char *lookupvar __P((const char *));
-char *bltinlookup __P((const char *, int));
-char **environment __P((void));
-void shprocvar __P((void));
-int showvarscmd __P((int, char **));
-int exportcmd __P((int, char **));
-int localcmd __P((int, char **));
-void mklocal __P((char *, int));
-void poplocalvars __P((void));
-int setvarcmd __P((int, char **));
-int unsetcmd __P((int, char **));
-int unsetvar __P((const char *));
-int setvarsafe __P((const char *, const char *, int));
+void listsetvar(struct strlist *, int);
+char *lookupvar(const char *);
+char *bltinlookup(const char *, int);
+char **environment(void);
+void shprocvar(void);
+int showvars(const char *, int, int);
+int exportcmd(int, char **);
+int localcmd(int, char **);
+void mklocal(char *, int);
+void poplocalvars(void);
+int setvarcmd(int, char **);
+int unsetcmd(int, char **);
+int unsetvar(const char *, int);
+int setvarsafe(const char *, const char *, int);
+void print_quoted(const char *);

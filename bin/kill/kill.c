@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.19 2001/09/16 13:55:09 wiz Exp $ */
+/* $NetBSD: kill.c,v 1.20 2002/11/24 22:35:44 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if !defined(lint) && !defined(SHELL)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.19 2001/09/16 13:55:09 wiz Exp $");
+__RCSID("$NetBSD: kill.c,v 1.20 2002/11/24 22:35:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,11 +54,20 @@ __RCSID("$NetBSD: kill.c,v 1.19 2001/09/16 13:55:09 wiz Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
+#include <locale.h>
+#include <sys/ioctl.h>
 
-void nosig(char *);
-void printsignals(FILE *);
-int signame_to_signum(char *);
-void usage(void);
+#ifdef SHELL            /* sh (aka ash) builtin */
+#define main killcmd
+#include "../../bin/sh/bltin/bltin.h"
+#endif /* SHELL */ 
+
+static void nosig(char *);
+static void printsignals(FILE *);
+static int signame_to_signum(char *);
+static void usage(void);
 int main(int, char *[]);
 
 int
@@ -68,6 +77,7 @@ main(int argc, char *argv[])
 	char *ep;
 
 	setprogname(argv[0]);
+	setlocale(LC_ALL, "");
 	if (argc < 2)
 		usage();
 
@@ -88,7 +98,7 @@ main(int argc, char *argv[])
 				numsig -= 128;
 			if (numsig <= 0 || numsig >= NSIG)
 				nosig(*argv);
-			(void)printf("%s\n", sys_signame[numsig]);
+			printf("%s\n", sys_signame[numsig]);
 			exit(0);
 		}
 		printsignals(stdout);
@@ -127,11 +137,26 @@ main(int argc, char *argv[])
 		usage();
 
 	for (errors = 0; argc; argc--, argv++) {
-		pid = strtol(*argv, &ep, 10);
-		if (!**argv || *ep) {
-			warnx("illegal process id: %s", *argv);
-			errors = 1;
-		} else if (kill(pid, numsig) == -1) {
+#ifdef SHELL
+		extern int getjobpgrp(const char *);
+		if (*argv[0] == '%') {
+			pid = getjobpgrp(*argv);
+			if (pid == 0) {
+				warnx("illegal job id: %s", *argv);
+				errors = 1;
+				continue;
+			}
+		} else 
+#endif
+		{
+			pid = strtol(*argv, &ep, 10);
+			if (!**argv || *ep) {
+				warnx("illegal process id: %s", *argv);
+				errors = 1;
+				continue;
+			}
+		}
+		if (kill(pid, numsig) == -1) {
 			warn("%s", *argv);
 			errors = 1;
 		}
@@ -141,7 +166,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-int
+static int
 signame_to_signum(char *sig)
 {
 	int n;
@@ -155,7 +180,7 @@ signame_to_signum(char *sig)
 	return (-1);
 }
 
-void
+static void
 nosig(char *name)
 {
 
@@ -165,25 +190,42 @@ nosig(char *name)
 	/* NOTREACHED */
 }
 
-void
+static void
 printsignals(FILE *fp)
 {
-	int n;
+	int sig;
+	int len, nl;
+	const char *name;
+	int termwidth = 80;
 
-	for (n = 1; n < NSIG; n++) {
-		(void)fprintf(fp, "%s", sys_signame[n]);
-		if (n == (NSIG / 2) || n == (NSIG - 1))
-			(void)fprintf(fp, "\n");
-		else
-			(void)fprintf(fp, " ");
+	if (isatty(fileno(fp))) {
+		struct winsize win;
+		if (ioctl(fileno(fp), TIOCGWINSZ, &win) == 0 && win.ws_col > 0)
+			termwidth = win.ws_col;
 	}
+
+	for (len = 0, sig = 1; sig < NSIG; sig++) {
+		name = sys_signame[sig];
+		nl = 1 + strlen(name);
+
+		if (len + nl >= termwidth) {
+			fprintf(fp, "\n");
+			len = 0;
+		} else
+			if (len != 0)
+				fprintf(fp, " ");
+		len += nl;
+		fprintf(fp, "%s", name);
+	}
+	if (len != 0)
+		fprintf(fp, "\n");
 }
 
-void
+static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n"
+	fprintf(stderr, "usage: %s [-s signal_name] pid ...\n"
 	    "       %s -l [exit_status]\n"
 	    "       %s -signal_name pid ...\n"
 	    "       %s -signal_number pid ...\n",

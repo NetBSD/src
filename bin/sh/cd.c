@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.28 2001/11/14 18:04:36 he Exp $	*/
+/*	$NetBSD: cd.c,v 1.29 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.28 2001/11/14 18:04:36 he Exp $");
+__RCSID("$NetBSD: cd.c,v 1.29 2002/11/24 22:35:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,28 +70,50 @@ __RCSID("$NetBSD: cd.c,v 1.28 2001/11/14 18:04:36 he Exp $");
 #include "show.h"
 #include "cd.h"
 
-STATIC int docd __P((char *, int));
-STATIC char *getcomponent __P((void));
-STATIC void updatepwd __P((char *));
+STATIC int docd(char *, int);
+STATIC char *getcomponent(void);
+STATIC void updatepwd(char *);
 
 char *curdir = NULL;		/* current working directory */
 char *prevdir;			/* previous working directory */
 STATIC char *cdcomppath;
 
 int
-cdcmd(argc, argv)
-	int argc;
-	char **argv;
+cdcmd(int argc, char **argv)
 {
 	const char *dest;
 	const char *path;
-	char *p;
+	char *p, *d;
 	struct stat statb;
 	int print = 0;
 
 	nextopt(nullstr);
-	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
-		error("HOME not set");
+
+	/* Try (quite hard) to have 'curdir' defined, nothing has set
+	   it on entry to the shell, but we want 'cd fred; cd -' to work. */
+	getpwd(1);
+	dest = *argptr;
+	if (dest == NULL) {
+		dest = bltinlookup("HOME", 1);
+		if (dest == NULL)
+			error("HOME not set");
+	} else {
+		if (argptr[1]) {
+			/* Do 'ksh' style substitution */
+			if (!curdir)
+				error("PWD not set");
+			p = strstr(curdir, dest);
+			if (!p)
+				error("bad substitution");
+			d = stalloc(strlen(curdir) + strlen(argptr[1]) + 1);
+			memcpy(d, curdir, p - curdir);
+			strcpy(d + (p - curdir), argptr[1]);
+			strcat(d, p + strlen(dest));
+			dest = d;
+			print = 1;
+		}
+	}
+
 	if (*dest == '\0')
 	        dest = ".";
 	if (dest[0] == '-' && dest[1] == '\0') {
@@ -130,9 +152,7 @@ cdcmd(argc, argv)
  */
 
 STATIC int
-docd(dest, print)
-	char *dest;
-	int print;
+docd(char *dest, int print)
 {
 	char *p;
 	char *q;
@@ -196,7 +216,8 @@ docd(dest, print)
  */
 
 STATIC char *
-getcomponent() {
+getcomponent()
+{
 	char *p;
 	char *start;
 
@@ -223,9 +244,8 @@ getcomponent() {
  */
 
 STATIC void
-updatepwd(dir)
-	char *dir;
-	{
+updatepwd(char *dir)
+{
 	char *new;
 	char *p;
 
@@ -242,9 +262,12 @@ updatepwd(dir)
 		INTOFF;
 		prevdir = curdir;
 		curdir = NULL;
-		getpwd();
-		setvar("PWD", curdir, VEXPORT);
+		getpwd(1);
 		INTON;
+		if (curdir)
+			setvar("PWD", curdir, VEXPORT);
+		else
+			unsetvar("PWD", 0);
 		return;
 	}
 	cdcomppath = stalloc(strlen(dir) + 1);
@@ -281,11 +304,9 @@ updatepwd(dir)
 
 
 int
-pwdcmd(argc, argv)
-	int argc;
-	char **argv;
+pwdcmd(int argc, char **argv)
 {
-	getpwd();
+	getpwd(0);
 	out1str(curdir);
 	out1c('\n');
 	return 0;
@@ -301,12 +322,28 @@ pwdcmd(argc, argv)
  * directory, this routine returns immediately.
  */
 void
-getpwd()
+getpwd(int noerror)
 {
-	char buf[MAXPWD];
+	char *pwd;
+	struct stat stdot, stpwd;
+	static int first = 1;
+	int i;
 
 	if (curdir)
 		return;
+
+	if (first) {
+		pwd = getenv("PWD");
+		if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&
+		    stat(pwd, &stpwd) != -1 &&
+		    stdot.st_dev == stpwd.st_dev &&
+		    stdot.st_ino == stpwd.st_ino) {
+			curdir = savestr(pwd);
+			return;
+		}
+	}
+	first = 0;
+
 	/*
 	 * Things are a bit complicated here; we could have just used
 	 * getcwd, but traditionally getcwd is implemented using popen
@@ -320,28 +357,29 @@ getpwd()
 	 * /bin/pwd.
 	 */
 #if defined(__NetBSD__) || defined(__SVR4)
-		
-	if (getcwd(buf, sizeof(buf)) == NULL) {
-		char *pwd = getenv("PWD");
-		struct stat stdot, stpwd;
 
-		if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&
-		    stat(pwd, &stpwd) != -1 &&
-		    stdot.st_dev == stpwd.st_dev &&
-		    stdot.st_ino == stpwd.st_ino) {
-			curdir = savestr(pwd);
-			return;
-		}
-		error("getcwd() failed: %s", strerror(errno));
+	for (i = MAXPWD;; i *= 2) {
+		pwd = stalloc(i);
+		if (getcwd(pwd, i) != NULL)
+			break;
+		stunalloc(pwd);
+		if (errno == ERANGE)
+			continue;
+		if (!noerror)
+			error("getcwd() failed: %s", strerror(errno));
+		pwd = 0;
+		break;
 	}
-	curdir = savestr(buf);
+
+	if (pwd)
+		curdir = savestr(pwd);
 #else
 	{
 		char *p;
-		int i;
 		int status;
 		struct job *jp;
 		int pip[2];
+		char buf[MAXPWD];
 
 		INTOFF;
 		if (pipe(pip) < 0)
@@ -370,8 +408,13 @@ getpwd()
 		status = waitforjob(jp);
 		if (status != 0)
 			error((char *)0);
-		if (i < 0 || p == buf || p[-1] != '\n')
+		if (i < 0 || p == buf || p[-1] != '\n') {
+			if (noerror) {
+				INTON;
+				return;
+			}
 			error("pwd command failed");
+		}
 		p[-1] = '\0';
 	}
 	curdir = savestr(buf);

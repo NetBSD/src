@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.20 2002/10/04 13:15:51 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.21 2002/11/24 22:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mknodes.c,v 1.20 2002/10/04 13:15:51 christos Exp $";
+    "$NetBSD: mknodes.c,v 1.21 2002/11/24 22:35:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,9 +115,7 @@ int main(int, char **);
 
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 
 	/*
@@ -144,7 +142,7 @@ main(argc, argv)
 
 
 static void
-parsenode()
+parsenode(void)
 {
 	char name[BUFLEN];
 	char tag[BUFLEN];
@@ -174,7 +172,7 @@ parsenode()
 
 
 static void
-parsefield()
+parsefield(void)
 {
 	char name[BUFLEN];
 	char type[BUFLEN];
@@ -227,8 +225,7 @@ char writer[] = "\
 \n";
 
 static void
-output(file)
-	char *file;
+output(char *file)
 {
 	FILE *hfile;
 	FILE *cfile;
@@ -285,8 +282,7 @@ output(file)
 
 
 static void
-outsizes(cfile)
-	FILE *cfile;
+outsizes(FILE *cfile)
 {
 	int i;
 
@@ -300,9 +296,7 @@ outsizes(cfile)
 
 
 static void
-outfunc(cfile, calcsize)
-	FILE *cfile;
-	int calcsize;
+outfunc(FILE *cfile, int calcsize)
 {
 	struct str *sp;
 	struct field *fp;
@@ -381,9 +375,7 @@ outfunc(cfile, calcsize)
 
 
 static void
-indent(amount, fp)
-	int amount;
-	FILE *fp;
+indent(int amount, FILE *fp)
 {
 	while (amount >= 8) {
 		putc('\t', fp);
@@ -396,8 +388,7 @@ indent(amount, fp)
 
 
 static int
-nextfield(buf)
-	char *buf;
+nextfield(char *buf)
 {
 	char *p, *q;
 
@@ -414,7 +405,7 @@ nextfield(buf)
 
 
 static void
-skipbl()
+skipbl(void)
 {
 	while (*linep == ' ' || *linep == '\t')
 		linep++;
@@ -422,7 +413,7 @@ skipbl()
 
 
 static int
-readline()
+readline(void)
 {
 	char *p;
 
@@ -461,8 +452,7 @@ error(const char *msg, ...)
 
 
 static char *
-savestr(s)
-	const char *s;
+savestr(const char *s)
 {
 	char *p;
 
