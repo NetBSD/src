@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 1999/08/21 06:27:29 simonb Exp $
+#	$NetBSD: Makefile,v 1.125 1999/09/16 00:30:06 sommerfeld Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -277,7 +277,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 #
 .if !target(snap_kern)
 snap_kern:
-	cd ${KERNCONFDIR} && config \
+	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
@@ -289,7 +289,7 @@ snap_kern:
 # XXX use same loop for ${EXTRA_KERNELS} and ${BUILD_KERNELS} but
 # XXX only install ${EXTRA_KERNELS} in binary/kernel???
 .for configfile in ${EXTRA_KERNELS}
-	cd ${KERNCONFDIR} && config \
+	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
@@ -302,7 +302,7 @@ snap_kern:
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
 .endfor # EXTRA_KERNELS
 .for configfile in ${BUILD_KERNELS}
-	cd ${KERNCONFDIR} && config \
+	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
