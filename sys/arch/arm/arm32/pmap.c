@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2001/04/22 23:42:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2001/04/24 04:30:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -652,6 +652,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
+	pmap_update();
 	return(va);
 }
 
@@ -990,6 +991,7 @@ pmap_alloc_l1pt(void)
 		va += NBPG;
 		m = m->pageq.tqe_next;
 	}
+	pmap_update();
 
 #ifdef DIAGNOSTIC
 	if (m)
@@ -1009,6 +1011,7 @@ pmap_free_l1pt(pt)
 {
 	/* Separate the physical memory for the virtual space */
 	pmap_remove(kernel_pmap, pt->pt_va, pt->pt_va + PD_SIZE);
+	pmap_update();
 
 	/* Return the physical memory */
 	uvm_pglistfree(&pt->pt_plist);
@@ -1158,6 +1161,7 @@ pmap_pinit(pmap)
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
+	pmap_update();
 }
 
 
@@ -1235,6 +1239,7 @@ pmap_release(pmap)
 
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
+	pmap_update();
 
 	/*
 	 * Free any page tables still mapped

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2001/04/19 07:19:48 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2001/04/24 04:30:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -380,6 +380,7 @@ cpu_startup()
 		    (vaddr_t)msgbufaddr + loop * NBPG,
 		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update();
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
@@ -441,6 +442,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

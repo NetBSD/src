@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2000/11/18 03:52:50 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,11 +140,13 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
+			pmap_update();
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
+			pmap_update();
 			break;
 #else
 			/* On v9 we can just use the physical ASI and not bother w/mapin & mapout */

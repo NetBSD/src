@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2001/04/18 01:35:14 ichiro Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2001/04/24 04:30:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -956,6 +956,7 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 		*pte |= m;
 		pmap_update_pg(va);
 	}
+	pmap_update();
  
 	return 0;
 }

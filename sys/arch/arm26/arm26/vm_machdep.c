@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.14 2001/03/04 23:25:01 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.15 2001/04/24 04:30:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.14 2001/03/04 23:25:01 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.15 2001/04/24 04:30:53 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -203,6 +203,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*

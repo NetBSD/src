@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2001/04/23 23:50:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2001/04/24 04:30:53 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -1159,6 +1159,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.

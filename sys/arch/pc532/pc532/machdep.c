@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2001/04/22 23:30:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2001/04/24 04:31:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -165,6 +165,7 @@ cpu_startup()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update();
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -224,6 +225,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

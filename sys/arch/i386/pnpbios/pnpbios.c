@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.21 2000/12/17 07:59:14 jmc Exp $ */
+/* $NetBSD: pnpbios.c,v 1.22 2001/04/24 04:30:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -275,6 +275,7 @@ pnpbios_mapit(addr, len, prot)
 		return (0);
 	for (; pa < endpa; pa += NBPG, va += NBPG)
 		pmap_kenter_pa(va, pa, prot);
+	pmap_update();
 
 	return ((caddr_t)(startva + (addr - startpa)));
 }

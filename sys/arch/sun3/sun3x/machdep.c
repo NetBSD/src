@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2001/03/15 06:10:52 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2001/04/24 04:31:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,6 +257,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -712,8 +713,10 @@ dumpsys()
 			/* Make a temporary mapping for the page. */
 			pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
 					   VM_PROT_READ, 0);
+			pmap_update();
 			error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+			pmap_update();
 			if (error)
 				goto fail;
 			paddr += NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2001/04/24 04:31:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -158,11 +158,13 @@ mmrw(dev, uio, flags)
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
+			pmap_update();
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
+			pmap_update();
 			break;
 
 		case 1:                        /*  /dev/kmem  */

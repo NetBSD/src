@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.30 2000/07/04 22:22:56 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.31 2001/04/24 04:31:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -956,6 +956,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 		va += pagesz;
 		sgsize -= pagesz;
 	}
+	pmap_update();
 
 	return (0);
 }
@@ -987,6 +988,7 @@ sparc_vme4_dmamap_unload(t, map)
 		if (error != 0)
 			printf("warning: %ld of DVMA space lost\n", len);
 	}
+	pmap_update();
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.239 2001/04/23 15:42:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.240 2001/04/24 04:30:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2001/04/23 15:42:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2001/04/24 04:30:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,6 +913,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.

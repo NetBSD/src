@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2001/04/23 01:02:06 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.191 2001/04/24 04:31:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -659,6 +659,7 @@ pgt_page_alloc(sz, flags, mtype)
 	pmap_enter(pmap_kernel(), va, pa | (cacheit ? 0 : PMAP_NC),
 	    VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update();
 
 	return ((void *)va);
 }       
@@ -3419,6 +3420,7 @@ pmap_globalize_boot_cpuinfo(cpi)
 		    VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	}
+	pmap_update();
 }
 
 /*
@@ -3496,6 +3498,7 @@ pmap_alloc_cpu(sc)
 		pa += pagesz;
 		size -= pagesz;
 	}
+	pmap_update();
 
 	/*
 	 * Store the region table pointer (and its corresponding physical
@@ -3622,6 +3625,7 @@ pmap_map(va, pa, endpa, prot)
 		va += pgsize;
 		pa += pgsize;
 	}
+	pmap_update();
 	return (va);
 }
 
@@ -6118,6 +6122,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 			src_addr += NBPG;
 			dst_addr += NBPG;
 		}
+		pmap_update();
 	}
 #endif
 }

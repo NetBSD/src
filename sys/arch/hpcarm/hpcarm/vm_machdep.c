@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2001/02/28 18:15:45 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2001/04/24 04:30:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -241,6 +241,7 @@ cpu_swapin(p)
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+	pmap_update();
 }
 
 
@@ -257,6 +258,7 @@ cpu_swapout(p)
 
 	/* Free the system page mapping */
 	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
+	pmap_update();
 }
 
 

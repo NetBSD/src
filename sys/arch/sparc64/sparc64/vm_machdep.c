@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2000/12/17 21:41:43 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.37 2001/04/24 04:31:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -98,6 +98,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*
@@ -152,6 +153,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
+	pmap_update();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.8 2000/06/29 08:53:00 mrg Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.9 2001/04/24 04:30:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -214,6 +214,7 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 		va += NBPG;
 		startpa += NBPG;
 	}
+	pmap_update();
 
 /*	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
 		panic("footbridge_bs_map: Address out of range (%08lx)\n", bpa);

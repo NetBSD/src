@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2001/03/15 06:10:44 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 2001/04/24 04:31:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -788,12 +788,14 @@ writeback(fp, docachepush)
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
+			pmap_update();
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			fastcopy16(&f->f_pd0, (u_int *)fa);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL_40(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
+			pmap_update();
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);

@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.5 2000/06/29 08:17:26 mrg Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.5 2000/06/29 08:17:26 mrg Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.6 2001/04/24 04:31:00 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.6 2001/04/24 04:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2000/06/29 08:17:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2001/04/24 04:31:00 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -245,6 +245,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*
@@ -334,6 +335,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
+	pmap_update();
 }
 
 /*

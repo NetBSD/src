@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.43 2001/03/15 06:10:58 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.44 2001/04/24 04:31:18 thorpej Exp $	*/
 
 /*
  *
@@ -186,6 +186,7 @@ enter:
 		    prot, PMAP_WIRED | ((pp->flags & PG_FAKE) ? prot :
 					VM_PROT_READ));
 	}
+	pmap_update();
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
 	return(kva);
@@ -236,6 +237,7 @@ remove:
 	pmap_remove(pmap_kernel(), kva, kva + (npages << PAGE_SHIFT));
 	if (entries)
 		uvm_unmap_detach(entries, 0);
+	pmap_update();
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2001/04/22 23:42:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2001/04/24 04:31:13 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3832,6 +3832,7 @@ pmap_testout()
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_update();
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
@@ -3892,6 +3893,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
+	pmap_update();
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3906,6 +3908,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_update();
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3915,6 +3918,7 @@ pmap_testout()
 
 	/* Check pmap_protect() */
 	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
+	pmap_update();
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("pmap_protect(VM_PROT_READ): ref %d, mod %d\n",
@@ -3929,6 +3933,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_update();
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3953,6 +3958,7 @@ pmap_testout()
 
 	/* Modify page */
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_update();
 	*loc = 1;
 
 	ref = pmap_is_referenced(pg);
@@ -3976,6 +3982,7 @@ pmap_testout()
 
 	/* Unmap page */
 	pmap_remove(pmap_kernel(), va, va+1);
+	pmap_update();
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
 	printf("Unmapped page: ref %d, mod %d\n", ref, mod);
@@ -3993,6 +4000,7 @@ pmap_testout()
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va+1);
+	pmap_update();
 	vm_page_free1(pg);
 }
 #endif

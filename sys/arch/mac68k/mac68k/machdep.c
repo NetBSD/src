@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.261 2001/04/18 15:39:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262 2001/04/24 04:31:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,6 +286,7 @@ mac68k_init()
 		    high[numranges - 1] + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	pmap_update();
 }
 
 /*
@@ -455,6 +456,8 @@ cpu_startup(void)
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -645,6 +648,7 @@ cpu_reboot(howto, bootstr)
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
 	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
+	pmap_update();
 
 	printf("rebooting...\n");
 	DELAY(1000000);
@@ -872,6 +876,7 @@ dumpsys()
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update();
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

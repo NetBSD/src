@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2001/03/22 12:46:20 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2001/04/24 04:31:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -245,6 +245,7 @@ cpu_startup()
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update();
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -314,6 +315,8 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -805,6 +808,7 @@ dumpsys()
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update();
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -1123,6 +1127,7 @@ mem_exists(mem, basemax)
 	DPRINTF ((" pmap_enter(%p, %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
 		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
+	pmap_update();
 	DPRINTF ((" done.\n"));
 
 	/* only 24bits are significant on normal X680x0 systems */
@@ -1130,6 +1135,7 @@ mem_exists(mem, basemax)
 	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
 		   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
+	pmap_update();
 	DPRINTF ((" done.\n"));
 
 	m = (void*)mem_v;
@@ -1151,6 +1157,7 @@ mem_exists(mem, basemax)
 		nofault = (int *) 0;
 		pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 		pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+		pmap_update();
 		DPRINTF (("Fault!!! Returning 0.\n"));
 		return 0;
 	}
@@ -1204,6 +1211,7 @@ asm("end_check_mem:");
 	nofault = (int *)0;
 	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
 	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+	pmap_update();
 
 	DPRINTF ((" End.\n"));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2001/01/11 08:44:36 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2001/04/24 04:31:06 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -258,6 +258,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update();
 }
 
 /*
@@ -407,6 +408,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
+	pmap_update();
 }
 
 /*

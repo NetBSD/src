@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2001/04/23 23:58:09 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.100 2001/04/24 04:31:15 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -713,6 +713,7 @@ if (startpmapdebug)
 			bzero((caddr_t)(phys|KERNBASE), NBPG);
 			pmap_kenter_pa(ptaddr, phys,
 			    VM_PROT_READ|VM_PROT_WRITE);
+			pmap_update();
 		}
 	}
 	/*

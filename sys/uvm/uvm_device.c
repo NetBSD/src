@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.32 2001/03/15 06:10:56 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.33 2001/04/24 04:31:17 thorpej Exp $	*/
 
 /*
  *
@@ -461,11 +461,13 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 			 */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
+			pmap_update();	/* sync what we have so far */
 			uvm_wait("udv_fault");
 			return (ERESTART);
 		}
 	}
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	pmap_update();
 	return (retval);
 }
