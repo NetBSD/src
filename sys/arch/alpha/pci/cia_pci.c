@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.20 1998/05/12 18:44:32 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.21 1998/05/12 18:45:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.20 1998/05/12 18:44:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.21 1998/05/12 18:45:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ cia_conf_write(cpv, tag, offset, data)
 
 	if (secondary) {
 		alpha_mb();
-		REGVAL(CIA_CSRS_CFG) = old_cfg;
+		REGVAL(CIA_CSR_CFG) = old_cfg;
 		alpha_mb();
 		splx(s);
 	}
