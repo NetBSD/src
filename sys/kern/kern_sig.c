@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.189 2004/03/26 17:13:37 drochner Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.189.2.1 2004/04/01 23:28:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189 2004/03/26 17:13:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.189.2.1 2004/04/01 23:28:33 jmc Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -87,7 +87,7 @@ static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
 static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 
-sigset_t	contsigmask, stopsigmask, sigcantmask;
+sigset_t	contsigmask, stopsigmask, sigcantmask, sigtrapmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 struct pool	siginfo_pool;	/* memory pool for siginfo structures */
@@ -206,6 +206,12 @@ signal_init(void)
 	    NULL);
 	exithook_establish(ksiginfo_exithook, NULL);
 	exechook_establish(ksiginfo_exithook, NULL);
+
+	sigaddset(&sigtrapmask, SIGSEGV);
+	sigaddset(&sigtrapmask, SIGBUS);
+	sigaddset(&sigtrapmask, SIGILL);
+	sigaddset(&sigtrapmask, SIGFPE);
+	sigaddset(&sigtrapmask, SIGTRAP);
 }
 
 /*
@@ -999,25 +1005,44 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	/*
 	 * If proc is traced, always give parent a chance.
 	 */
-	if (p->p_flag & P_TRACED)
-		action = SIG_DFL;
-	else {
-		/*
-		 * If the signal is being ignored,
-		 * then we forget about it immediately.
-		 * (Note: we don't set SIGCONT in p_sigctx.ps_sigignore,
-		 * and if it is set to SIG_IGN,
-		 * action will be SIG_DFL here.)
-		 */
-		if (sigismember(&p->p_sigctx.ps_sigignore, signum))
-			return;
-		if (sigismember(&p->p_sigctx.ps_sigmask, signum))
-			action = SIG_HOLD;
-		else if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
-			action = SIG_CATCH;
-		else {
-			action = SIG_DFL;
-
+	action = SIG_DFL;
+	if ((p->p_flag & P_TRACED) == 0) {
+		if (KSI_TRAP_P(ksi)) {
+			/*
+			 * If the signal was the result of a trap, only catch
+			 * the signal if it isn't masked and there is a
+			 * non-default non-ignore handler installed for it.
+			 * Otherwise take the default action.
+			 */
+			if (!sigismember(&p->p_sigctx.ps_sigmask, signum) &&
+			    sigismember(&p->p_sigctx.ps_sigcatch, signum))
+				action = SIG_CATCH;
+			/*
+			 * If we are to take the default action, reset the
+			 * signal back to its defaults.
+			 */
+			if (action == SIG_DFL) {
+				sigdelset(&p->p_sigctx.ps_sigignore, signum);
+				sigdelset(&p->p_sigctx.ps_sigcatch, signum);
+				sigdelset(&p->p_sigctx.ps_sigmask, signum);
+				SIGACTION(p, signum).sa_handler = SIG_DFL;
+			}
+		} else {
+			/*
+			 * If the signal is being ignored,
+			 * then we forget about it immediately.
+			 * (Note: we don't set SIGCONT in p_sigctx.ps_sigignore,
+			 * and if it is set to SIG_IGN,
+			 * action will be SIG_DFL here.)
+			 */
+			if (sigismember(&p->p_sigctx.ps_sigignore, signum))
+				return;
+			if (sigismember(&p->p_sigctx.ps_sigmask, signum))
+				action = SIG_HOLD;
+			else if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
+				action = SIG_CATCH;
+		}
+		if (action == SIG_DFL) {
 			if (prop & SA_KILL && p->p_nice > NZERO)
 				p->p_nice = NZERO;
 
