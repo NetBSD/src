@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *      $Id: ite.c,v 1.12 1994/03/11 02:46:49 chopps Exp $
+ *      $Id: ite.c,v 1.13 1994/03/14 01:19:31 chopps Exp $
  */
 
 /*
@@ -694,6 +694,13 @@ ite_filter(c, caller)
 
 		splx(s);
 		return;
+#ifdef DDB
+	} else if (mod == (KBD_MOD_LALT | KBD_MOD_LMETA) && c == 0x59) {
+		extern int Debugger();
+		Debugger();
+		splx(s);
+		return;
+#endif
 	}
 	/* translate modifiers */
 	if (mod & KBD_MOD_SHIFT) {
