@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.31 2002/11/07 07:53:37 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.32 2002/11/07 08:00:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -138,11 +138,10 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
 
 /* Look up a media entry. */
-struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
-	    int mask));
+struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, u_int, u_int));
 
 /* Delete all media for a given media instance */
-void	ifmedia_delete_instance __P((struct ifmedia *, int));
+void	ifmedia_delete_instance __P((struct ifmedia *, u_int));
 
 /* Compute baudrate for a given media. */
 int	ifmedia_baudrate __P((int));
@@ -272,7 +271,7 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
-#define	IFM_INST_ANY	-1
+#define	IFM_INST_ANY	((u_int) -1)
 
 /*
  * Macro to create a media word.
