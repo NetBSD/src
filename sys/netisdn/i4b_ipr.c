@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.1.1.1.2.3 2001/02/11 19:17:31 bouyer Exp $
+ *	$Id: i4b_ipr.c,v 1.1.1.1.2.4 2001/02/15 13:36:12 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -382,6 +382,7 @@ i4biprattach()
 		ether_ifattach(&sc->sc_if, 0);
 #else
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 #endif
 
 #if NBPFILTER > 0 || NBPF > 0

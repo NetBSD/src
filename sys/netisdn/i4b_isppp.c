@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.1.1.1.2.3 2001/02/11 19:17:31 bouyer Exp $
+ *	$Id: i4b_isppp.c,v 1.1.1.1.2.4 2001/02/15 13:36:12 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -323,16 +323,16 @@ i4bispppattach()
 		sc->sc_if_un.scu_sp.pp_con = i4bisppp_negotiation_complete;
 		sc->sc_if_un.scu_sp.pp_chg = i4bisppp_state_changed;
 
-#ifndef USE_ISPPP
-		sppp_attach(&sc->sc_if);
-#else
-		isppp_attach(&sc->sc_if);
-#endif
 #if defined(__FreeBSD_version) && ((__FreeBSD_version >= 500009) || (410000 <= __FreeBSD_version && __FreeBSD_version < 500000))
 		/* do not call bpfattach in ether_ifattach */
 		ether_ifattach(&sc->sc_if, 0);
 #else
 		if_attach(&sc->sc_if);
+#endif
+#ifndef USE_ISPPP
+		sppp_attach(&sc->sc_if);
+#else
+		isppp_attach(&sc->sc_if);
 #endif
 
 #if NBPFILTER > 0 || NBPF > 0
