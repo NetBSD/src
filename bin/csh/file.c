@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.21 2003/01/16 09:38:39 kleink Exp $ */
+/* $NetBSD: file.c,v 1.22 2003/02/08 19:05:19 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.21 2003/01/16 09:38:39 kleink Exp $");
+__RCSID("$NetBSD: file.c,v 1.22 2003/02/08 19:05:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ static void beep(void);
 static void print_recognized_stuff(Char *);
 static void extract_dir_and_name(Char *, Char *, Char *);
 static Char *getentry(DIR *, int);
-static void free_items(Char **);
+static void free_items(Char **, size_t);
 static int tsearch(Char *, COMMAND, int);
 static int recognize(Char *, Char *, int, int);
 static int is_prefix(Char *, Char *);
@@ -458,23 +458,22 @@ getentry(DIR *dir_fd, int looking_for_lognames)
 }
 
 static void
-free_items(Char **items)
+free_items(Char **items, size_t numitems)
 {
-    int i;
+    size_t i;
 
-    for (i = 0; items[i]; i++)
+    for (i = 0; i < numitems; i++)
 	xfree((ptr_t) items[i]);
     xfree((ptr_t) items);
 }
 
-#define FREE_ITEMS(items) { \
+#define FREE_ITEMS(items, numitems) { \
 	sigset_t nsigset, osigset;\
 \
 	sigemptyset(&nsigset);\
 	(void) sigaddset(&nsigset, SIGINT);\
 	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);\
-	free_items(items);\
-	items = NULL;\
+	free_items(items, numitems);\
 	(void) sigprocmask(SIG_SETMASK, &osigset, NULL);\
 }
 
@@ -484,21 +483,17 @@ free_items(Char **items)
 static int
 tsearch(Char *word, COMMAND command, int max_word_length)
 {
-    static Char **items = NULL;
     Char dir[MAXPATHLEN + 1], extended_name[MAXNAMLEN + 1];
     Char name[MAXNAMLEN + 1], tilded_dir[MAXPATHLEN + 1];
     DIR *dir_fd;
     Char *entry;
     int ignoring, looking_for_lognames, name_length, nignored, numitems;
+    Char **items = NULL;
+    size_t maxitems = 0;
 
     numitems = 0;
     ignoring = TRUE;
     nignored = 0;
-
-#define MAXITEMS 1024
-
-    if (items != NULL)
-	FREE_ITEMS(items);
 
     looking_for_lognames = (*word == '~') && (Strchr(word, '/') == NULL);
     if (looking_for_lognames) {
@@ -525,14 +520,14 @@ again:				/* search for matches */
 	    !looking_for_lognames)
 	    continue;
 	if (command == LIST) {
-	    if (numitems >= MAXITEMS) {
-		(void)fprintf(csherr, "\nYikes!! Too many %s!!\n",
-			       looking_for_lognames ?
-			       "names in password file" : "files");
-		break;
-	    }
-	    if (items == NULL)
-		items = (Char **)xcalloc(MAXITEMS, sizeof(items[0]));
+	    if (numitems >= maxitems) {
+		maxitems += 1024;
+		if (items == NULL)
+			items = (Char **) xmalloc(sizeof(*items) * maxitems);
+		else
+			items = (Char **) xrealloc((ptr_t) items,
+			    sizeof(*items) * maxitems);
+ 	    }
 	    items[numitems] = (Char *)xmalloc((size_t) (Strlen(entry) + 1) *
 	        sizeof(Char));
 	    copyn(items[numitems], entry, MAXNAMLEN);
@@ -578,7 +573,7 @@ again:				/* search for matches */
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);
 	if (items != NULL)
-	    FREE_ITEMS(items);
+	    FREE_ITEMS(items, numitems);
     }
     return (0);
 }
