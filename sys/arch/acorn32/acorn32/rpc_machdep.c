@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.10 2002/01/25 19:19:22 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.11 2002/01/31 21:01:40 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -120,7 +120,7 @@ BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
 char *boot_args = NULL;
-char *boot_file = NULL;
+char  booted_kernel[80];
 
 extern int       *vidc_base;
 extern u_int32_t  iomd_base;
@@ -1004,6 +1004,7 @@ parse_rpc_bootargs(args)
 	char *args;
 {
 	int integer;
+	char *kernel_name;
 
 	if (get_bootconf_option(args, "videodram", BOOTOPT_TYPE_INT, &integer)) {
 		videodram_size = integer;
@@ -1012,6 +1013,13 @@ parse_rpc_bootargs(args)
 		videodram_size = round_page(videodram_size);
 		if (videodram_size > 1024*1024)
 			videodram_size = 1024*1024;
+	};
+
+	if (get_bootconf_option(args, "booted_kernel", BOOTOPT_TYPE_STRING, &kernel_name)) {
+		strncpy(booted_kernel, kernel_name, 80);	/* XXX 80 ? */
+	} else {
+		/* no booted kernel name */
+		strcpy(booted_kernel, "");
 	};
 
 #if 0
