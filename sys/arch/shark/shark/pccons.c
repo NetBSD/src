@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.8 2002/09/27 20:35:34 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.9 2002/09/29 23:23:57 wiz Exp $       */
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ extern int msgbufmapped;
 #endif
 
 /*
-** Macro defintions
+** Macro definitions
 */
 
 /*
