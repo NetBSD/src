@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.127 2004/08/14 16:06:39 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.128 2004/08/16 21:04:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,6 +197,7 @@ run_makedev(void)
 {
 	char *owd;
 
+	msg_display_add("\n\n");
 	msg_display_add(MSG_makedev);
 
 	owd = getcwd(NULL, 0);
