@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.20 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.21 2004/11/30 04:25:43 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.20 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.21 2004/11/30 04:25:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int	kqueue_kqfilter(struct file *fp, struct knote *kn);
 static int	kqueue_stat(struct file *fp, struct stat *sp, struct proc *p);
 static int	kqueue_close(struct file *fp, struct proc *p);
 
-static struct fileops kqueueops = {
+static const struct fileops kqueueops = {
 	kqueue_read, kqueue_write, kqueue_ioctl, kqueue_fcntl, kqueue_poll,
 	kqueue_stat, kqueue_close, kqueue_kqfilter
 };
