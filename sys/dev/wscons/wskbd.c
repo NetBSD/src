@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.33 1999/12/01 23:22:59 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.34 1999/12/21 12:02:04 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.33 1999/12/01 23:22:59 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.34 1999/12/21 12:02:04 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,6 +137,12 @@ struct wskbd_internal {
 	int	t_composelen;		/* remaining entries in t_composebuf */
 	keysym_t t_composebuf[2];
 
+	int t_flags;
+#define WSKFL_METAESC 1
+
+#define MAXKEYSYMSPERKEY 2 /* ESC <key> at max */
+	keysym_t t_symbols[MAXKEYSYMSPERKEY];
+
 	struct wskbd_softc *t_sc;	/* back pointer */
 };
 
@@ -162,7 +168,6 @@ struct wskbd_softc {
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
 
 	int	sc_repeating;		/* we've called timeout() */
-	keysym_t sc_repeatsym;		/* repeated symbol */
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
@@ -213,7 +218,7 @@ int	wskbd_set_display __P((struct device *, struct wsmux_softc *));
 static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
 static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
-static keysym_t wskbd_translate __P((struct wskbd_internal *, u_int, int));
+static int wskbd_translate __P((struct wskbd_internal *, u_int, int));
 static int wskbd_enable __P((struct wskbd_softc *, int));
 #if NWSDISPLAY > 0
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
@@ -279,6 +284,20 @@ static void wskbd_repeat __P((void *v));
 static int wskbd_console_initted;
 static struct wskbd_softc *wskbd_console_device;
 static struct wskbd_internal wskbd_console_data;
+
+static void wskbd_update_layout __P((struct wskbd_internal *, kbd_t));
+
+static void
+wskbd_update_layout(id, enc)
+	struct wskbd_internal *id;
+	kbd_t enc;
+{
+
+	if (enc & KB_METAESC)
+		id->t_flags |= WSKFL_METAESC;
+	else
+		id->t_flags &= ~WSKFL_METAESC;
+}
 
 /*
  * Print function (for parent devices).
@@ -355,8 +374,9 @@ wskbd_attach(parent, self, aux)
 	} else {
 		sc->id = malloc(sizeof(struct wskbd_internal),
 				M_DEVBUF, M_WAITOK);
+		bzero(sc->id, sizeof(struct wskbd_internal));
 		sc->id->t_keymap = ap->keymap;
-		sc->id->t_modifiers = 0;
+		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}
 
 	sc->id->t_sc = sc;
@@ -410,6 +430,7 @@ wskbd_cnattach(consops, conscookie, mapdata)
 	KASSERT(!wskbd_console_initted);
 
 	wskbd_console_data.t_keymap = mapdata;
+	wskbd_update_layout(&wskbd_console_data, mapdata->layout);
 
 	wskbd_console_data.t_consops = consops;
 	wskbd_console_data.t_consaccesscookie = conscookie;
@@ -454,8 +475,12 @@ wskbd_repeat(v)
 		splx(s);
 		return;
 	}
-	if (sc->sc_displaydv != NULL)
-		wsdisplay_kbdinput(sc->sc_displaydv, sc->sc_repeatsym);
+	if (sc->sc_displaydv != NULL) {
+		int i;
+		for (i = 0; i < sc->sc_repeating; i++)
+			wsdisplay_kbdinput(sc->sc_displaydv,
+					   sc->id->t_symbols[i]);
+	}
 	timeout(wskbd_repeat, sc,
 		(hz * sc->sc_keyrepeat_data.delN) / 1000);
 	splx(s);
@@ -535,7 +560,7 @@ wskbd_input(dev, type, value)
 	struct wseventvar *evar;
 	struct timeval xxxtime;
 #if NWSDISPLAY > 0
-	keysym_t ks;
+	int num, i;
 #endif
 	int put;
 
@@ -550,14 +575,15 @@ wskbd_input(dev, type, value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
-		ks = wskbd_translate(sc->id, type, value);
-		if (ks != KS_voidSymbol) {
-			sc->sc_repeatsym = ks;
-			if (sc->sc_displaydv != NULL)
-				wsdisplay_kbdinput(sc->sc_displaydv,
-						   sc->sc_repeatsym);
+		num = wskbd_translate(sc->id, type, value);
+		if (num > 0) {
+			if (sc->sc_displaydv != NULL) {
+				for (i = 0; i < num; i++)
+					wsdisplay_kbdinput(sc->sc_displaydv,
+						sc->id->t_symbols[i]);
+			}
 
-			sc->sc_repeating = 1;
+			sc->sc_repeating = num;
 			timeout(wskbd_repeat, sc,
 				(hz * sc->sc_keyrepeat_data.del1) / 1000);
 		}
@@ -834,6 +860,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
 	struct wskbd_mapdata md;
+	kbd_t enc;
 	void *buf;
 	int len, error;
 
@@ -941,7 +968,10 @@ getkeyrepeat:
 			wskbd_init_keymap(umdp->maplen,
 					  &sc->sc_map, &sc->sc_maplen);
 			memcpy(sc->sc_map, buf, len);
-			sc->sc_layout = KB_USER;
+			/* drop the variant bits handled by the map */
+			sc->sc_layout = KB_USER |
+			      (KB_VARIANT(sc->sc_layout) & KB_HANDLEDBYWSKBD);
+			wskbd_update_layout(sc->id, sc->sc_layout);
 		}
 		free(buf, M_TEMP);
 		return(error);
@@ -961,12 +991,25 @@ getkeyrepeat:
 	case WSKBDIO_SETENCODING:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		md = *(sc->id->t_keymap); /* structure assignment */
-		md.layout = *((kbd_t *)data);
-		error = wskbd_load_keymap(&md, &sc->sc_map, &sc->sc_maplen);
-		if (error == 0)
-			sc->sc_layout = *((kbd_t *)data);
-		return(error);
+		enc = *((kbd_t *)data);
+		if (KB_ENCODING(enc) == KB_USER) {
+			/* user map must already be loaded */
+			if (KB_ENCODING(sc->sc_layout) != KB_USER)
+				return (EINVAL);
+			/* map variants make no sense */
+			if (KB_VARIANT(enc) & ~KB_HANDLEDBYWSKBD)
+				return (EINVAL);
+		} else {
+			md = *(sc->id->t_keymap); /* structure assignment */
+			md.layout = enc;
+			error = wskbd_load_keymap(&md, &sc->sc_map,
+						  &sc->sc_maplen);
+			if (error)
+				return (error);
+		}
+		sc->sc_layout = enc;
+		wskbd_update_layout(sc->id, enc);
+		return (0);
 	}
 
 	/*
@@ -1128,6 +1171,8 @@ int
 wskbd_cngetc(dev)
 	dev_t dev;
 {
+	static int num = 0;
+	static int pos;
 	u_int type;
 	int data;
 	keysym_t ks;
@@ -1140,12 +1185,17 @@ wskbd_cngetc(dev)
 		return 0;
 
 	for(;;) {
-		(*wskbd_console_data.t_consops->getc)
-		    (wskbd_console_data.t_consaccesscookie, &type, &data);
-		ks = wskbd_translate(&wskbd_console_data, type, data);
-		
-		if (KS_GROUP(ks) == KS_GROUP_Ascii)
-			return (KS_VALUE(ks));	
+		if (num-- > 0) {
+			ks = wskbd_console_data.t_symbols[pos++];
+			if (KS_GROUP(ks) == KS_GROUP_Ascii)
+				return (KS_VALUE(ks));	
+		} else {
+			(*wskbd_console_data.t_consops->getc)
+				(wskbd_console_data.t_consaccesscookie,
+				 &type, &data);
+			num = wskbd_translate(&wskbd_console_data, type, data);
+			pos = 0;
+		}
 	}
 }
 
@@ -1266,7 +1316,7 @@ internal_command(sc, type, ksym)
 	return (0);
 }
 
-static keysym_t
+static int
 wskbd_translate(id, type, value)
 	struct wskbd_internal *id;
 	u_int type;
@@ -1284,7 +1334,7 @@ wskbd_translate(id, type, value)
 				| MOD_MODESHIFT
 				| MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
 		update_leds(id);
-		return (KS_voidSymbol);
+		return (0);
 	}
 
 	if (sc != NULL) {
@@ -1293,7 +1343,7 @@ wskbd_translate(id, type, value)
 			printf("wskbd_translate: keycode %d out of range\n",
 			       value);
 #endif
-			return (KS_voidSymbol);
+			return (0);
 		}
 		kp = sc->sc_map + value;
 	} else {
@@ -1360,7 +1410,7 @@ wskbd_translate(id, type, value)
 	/* If this is a key release or we are in command mode, we are done */
 	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
 		update_leds(id);
-		return (KS_voidSymbol);
+		return (0);
 	}
 
 	/* Get the keysym */
@@ -1422,7 +1472,7 @@ wskbd_translate(id, type, value)
 
 	if (res == KS_voidSymbol) {
 		update_leds(id);
-		return (res);
+		return (0);
 	}
 
 	if (id->t_composelen > 0) {
@@ -1431,7 +1481,7 @@ wskbd_translate(id, type, value)
 			res = wskbd_compose_value(id->t_composebuf);
 			update_modifier(id, 0, 0, MOD_COMPOSE);
 		} else {
-			return (KS_voidSymbol);
+			return (0);
 		}
 	}
 
@@ -1449,9 +1499,16 @@ wskbd_translate(id, type, value)
 			else if (res == KS_8)
 				res = KS_Delete;
 		}
-		if (MOD_ONESET(id, MOD_ANYMETA))
-			res |= 0x80;
+		if (MOD_ONESET(id, MOD_ANYMETA)) {
+			if (id->t_flags & WSKFL_METAESC) {
+				id->t_symbols[0] = KS_Escape;
+				id->t_symbols[1] = res;
+				return (2);
+			} else
+				res |= 0x80;
+		}
 	}
 
-	return (res);
+	id->t_symbols[0] = res;
+	return (1);
 }
