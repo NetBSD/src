@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.7.4.1 2005/02/12 12:24:12 aymeric Exp $	*/
+/*	$NetBSD: cl_funcs.c,v 1.7.4.2 2005/02/12 12:46:26 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)cl_funcs.c	10.50 (Berkeley) 9/24/96";
 #else
-__RCSID("$NetBSD: cl_funcs.c,v 1.7.4.1 2005/02/12 12:24:12 aymeric Exp $");
+__RCSID("$NetBSD");
 #endif
 #endif /* not lint */
 
