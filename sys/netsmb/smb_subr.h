@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.5 2003/02/15 23:02:30 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.6 2003/02/16 19:48:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -41,8 +41,6 @@
 #endif
 
 MALLOC_DECLARE(M_SMBTEMP);
-
-#define	FB_CURRENT
 
 #define SMBERROR(format, args...) printf("%s: "format, __func__ ,## args)
 #define SMBPANIC(format, args...) printf("%s: "format, __func__ ,## args)
