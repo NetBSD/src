@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138 1999/03/12 22:42:30 perry Exp $ */
+/*	$NetBSD: pmap.c,v 1.139 1999/03/16 03:45:36 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2844,6 +2844,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	int rcookie, scookie;
 	caddr_t p;
 	int lastpage;
+	vaddr_t va;
 	extern char end[];
 #ifdef DDB
 	extern char *esym;
@@ -3125,8 +3126,32 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 			 */
 			for (i = rp->rg_nsegmap; i < NSEGRG; i++, p += NBPSG)
 				setsegmap(p, seginval);
-		}
+
+			/*
+			 * Unmap any kernel regions that we aren't using.
+			 */
+			for (i = 0; i < nctx; i++) {
+				setcontext4(i);
+				for (va = (vaddr_t)p;
+				     va < (OPENPROM_STARTVADDR & ~(NBPRG - 1));
+				     va += NBPRG)
+					setregmap(va, reginval);
+			}
+
+		} else
 #endif
+		{
+			/*
+			 * Unmap any kernel segments that we aren't using.
+			 */
+			for (i = 0; i < nctx; i++) {
+				setcontext4(i);
+				for (va = (vaddr_t)p;
+				     va < (OPENPROM_STARTVADDR & ~(NBPSG - 1));
+				     va += NBPSG)
+					setsegmap(va, seginval);
+			}
+		}
 		break;
 	}
 
