@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.16 2004/02/27 04:20:38 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.17 2004/04/27 00:04:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -294,6 +294,8 @@ RootWindow::isDialogMessage(MSG &msg)
 }
 
 //
+// XXX !!! XXX !!! XXX !!! XXX !!!
+//
 // WinCE 2.11 doesn't support keyboard focus traversal for nested
 // dialogs, so implement poor man focus manager for our root window.
 // This function handles focus transition from boot/cancel buttons.
@@ -301,13 +303,14 @@ RootWindow::isDialogMessage(MSG &msg)
 // above.
 //
 // XXX: This is a very smplistic implementation that doesn't handle
-// <TAB> auto-repeat count in LOWORD(msg.lParam).
+// <TAB> auto-repeat count in LOWORD(msg.lParam), WS_GROUP, etc...
 //
 BOOL
 RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 {
 	HWND next, prev;
 	HWND dst = 0;
+	LRESULT dlgcode = 0;
 
 	if (msg.message != WM_KEYDOWN)
 		return FALSE;
@@ -323,25 +326,36 @@ RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 	} else {
 		// last focusable control in the tab_window (XXX: WS_GROUP?)
 		HWND last = GetNextDlgTabItem(tab_window, NULL, TRUE);
-		if (!last || msg.hwnd != last)
+		if (last == NULL ||
+		    !(last == msg.hwnd || IsChild(last, msg.hwnd)))
 			return FALSE;
-		// XXX: handle DLGC_WANTARROWS &c
+		dlgcode = SendMessage(last, WM_GETDLGCODE, NULL, (LPARAM)&msg);
 		next = _base->_window; // out of the tab window
 		prev = 0;	// let IsDialogMessage handle it
 	}
-
+ 
+#if 0 // XXX: breaks tabbing out of the console window
+	if (dlgcode & DLGC_WANTALLKEYS)
+		return FALSE;
+#endif
 	switch (msg.wParam) {
 	case VK_RIGHT:
 	case VK_DOWN:
+		if (dlgcode & DLGC_WANTARROWS)
+			return FALSE;
 		dst = next;
 		break;
 
 	case VK_LEFT:
 	case VK_UP:
+		if (dlgcode & DLGC_WANTARROWS)
+			return FALSE;
 		dst = prev;
 		break;
 
 	case VK_TAB:
+		if (dlgcode & DLGC_WANTTAB)
+			return FALSE;
 		if (GetKeyState(VK_SHIFT) & 0x8000) // Shift-Tab
 			dst = prev;
 		else
