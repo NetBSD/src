@@ -1,7 +1,7 @@
-/*	$NetBSD: mkservdb.c,v 1.1.1.1.8.1 2001/01/28 15:52:17 he Exp $	*/
+/*	$NetBSD: mkservdb.c,v 1.1.1.1.8.2 2002/07/01 17:14:33 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: mkservdb.c,v 1.9 2001/01/26 06:54:11 vixie Exp";
+static const char rcsid[] = "Id: mkservdb.c,v 1.10 2001/06/18 14:42:46 marka Exp";
 #endif /* not lint */
 
 /*
@@ -71,9 +71,9 @@ main(int argc, char **argv) {
 	DB *db;
 	DBT key;
 	DBT data;
-	char *filename = _PATH_SERVICES;
-	char *tmpdatabase = _PATH_SERVICES_DB_TMP;
-	char *database = _PATH_SERVICES_DB;
+	const char *filename = _PATH_SERVICES;
+	const char *tmpdatabase = _PATH_SERVICES_DB_TMP;
+	const char *database = _PATH_SERVICES_DB;
 	char dbuf[1024];
 	char kbuf[512];
 	u_short *ports;
@@ -154,7 +154,7 @@ main(int argc, char **argv) {
 		if (sv->s_aliases != NULL)
 			for (n = 0; sv->s_aliases[n] != NULL; n++)
 				if ((p + strlen(sv->s_aliases[n]) + 1) - dbuf
-				    <= sizeof dbuf) {
+				    <= (int)sizeof dbuf) {
 					strcpy(p, sv->s_aliases[n]);
 					p += strlen(p) + 1;
 				}

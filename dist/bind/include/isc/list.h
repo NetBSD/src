@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.1.1.8.1 2001/01/28 15:52:20 he Exp $	*/
+/*	$NetBSD: list.h,v 1.1.1.1.8.2 2002/07/01 17:14:46 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
@@ -26,11 +26,13 @@
 	do { (list).head = NULL; (list).tail = NULL; } while (0)
 
 #define LINK(type) struct { type *prev, *next; }
-#define INIT_LINK(elt, link) \
+#define INIT_LINK_TYPE(elt, link, type) \
 	do { \
-		(elt)->link.prev = (void *)(-1); \
-		(elt)->link.next = (void *)(-1); \
+		(elt)->link.prev = (type *)(-1); \
+		(elt)->link.next = (type *)(-1); \
 	} while (0)
+#define INIT_LINK(elt, link) \
+	INIT_LINK_TYPE(elt, link, void)
 #define LINKED(elt, link) ((void *)((elt)->link.prev) != (void *)(-1))
 
 #define HEAD(list) ((list).head)
@@ -61,7 +63,7 @@
 		(list).tail = (elt); \
 	} while (0)
 
-#define UNLINK(list, elt, link) \
+#define UNLINK_TYPE(list, elt, link, type) \
 	do { \
 		INSIST(LINKED(elt, link));\
 		if ((elt)->link.next != NULL) \
@@ -72,8 +74,10 @@
 			(elt)->link.prev->link.next = (elt)->link.next; \
 		else \
 			(list).head = (elt)->link.next; \
-		INIT_LINK(elt, link); \
+		INIT_LINK_TYPE(elt, link, type); \
 	} while (0)
+#define UNLINK(list, elt, link) \
+	UNLINK_TYPE(list, elt, link, void)
 
 #define PREV(elt, link) ((elt)->link.prev)
 #define NEXT(elt, link) ((elt)->link.next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1.1.1.8.1 2001/01/28 15:52:24 he Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.1.1.1.8.2 2002/07/01 17:14:55 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_mkupdate.c,v 1.25 2000/11/22 01:20:46 marka Exp";
+static const char rcsid[] = "Id: res_mkupdate.c,v 1.26 2001/05/29 05:49:47 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -330,7 +330,7 @@ res_nmkupdate(res_state statp, ns_updrec *rrecp_in, u_char *buf, int buflen) {
 			break;
 		case T_WKS: {
 			char bm[MAXPORT/8];
-			int maxbm = 0;
+			unsigned int maxbm = 0;
 
 			if (!getword_str(buf2, sizeof buf2, &startp, endp))
 				return (-1);
@@ -892,7 +892,7 @@ struct valuelist {
 };
 static struct valuelist *servicelist, *protolist;
 
-void
+static void
 res_buildservicelist() {
 	struct servent *sp;
 	struct valuelist *slp;
@@ -938,7 +938,7 @@ res_destroyservicelist() {
 }
 
 void
-res_buildprotolist() {
+res_buildprotolist(void) {
 	struct protoent *pp;
 	struct valuelist *slp;
 
@@ -967,7 +967,7 @@ res_buildprotolist() {
 }
 
 void
-res_destroyprotolist() {
+res_destroyprotolist(void) {
 	struct valuelist *plp, *plp_next;
 
 	for (plp = protolist; plp != NULL; plp = plp_next) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: irs.h,v 1.1.1.1.8.1 2001/01/28 15:52:20 he Exp $	*/
+/*	$NetBSD: irs.h,v 1.1.1.1.8.2 2002/07/01 17:14:44 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: irs.h,v 8.5 2000/12/23 08:14:49 vixie Exp
+ * Id: irs.h,v 8.6 2001/05/29 05:47:00 marka Exp
  */
 
 #ifndef _IRS_H_INCLUDED
@@ -32,6 +32,7 @@
 #include <netdb.h>
 #include <resolv.h>
 #include <pwd.h>
+#include <netgroup.h>
 
 /*
  * This is the group map class.
@@ -116,6 +117,8 @@ struct irs_ho {
 	struct __res_state * (*res_get) __P((struct irs_ho *));
 	void		(*res_set) __P((struct irs_ho *, res_state,
 					void (*)(void *)));
+	struct addrinfo *(*addrinfo) __P((struct irs_ho *, const char *,
+					  const struct addrinfo *));
 };
 
 /*
@@ -140,8 +143,8 @@ struct irs_nw {
 struct irs_ng {
 	void *		private;
 	void		(*close) __P((struct irs_ng *));
-	int		(*next) __P((struct irs_ng *, char **, char **,
-				     char **));
+	int		(*next) __P((struct irs_ng *, const char **,
+				     const char **, const char **));
 	int		(*test) __P((struct irs_ng *, const char *,
 				     const char *, const char *,
 				     const char *));
@@ -263,6 +266,12 @@ extern struct hostent 	*gethostent_p __P((struct net_data *net_data));
 extern void 		sethostent_p __P((int stayopen,
 					  struct net_data *net_data));
 extern void 		endhostent_p __P((struct net_data *net_data));
+extern struct hostent 	*getipnodebyname_p __P((const char *name, int af,
+					       int flags, int *errp,
+					       struct net_data *net_data));
+extern struct hostent 	*getipnodebyaddr_p __P((const void *addr, size_t len,
+					      int af, int *errp,
+					      struct net_data *net_data));
 
 extern struct netent 	*getnetent_p __P((struct net_data *net_data));
 extern struct netent 	*getnetbyname_p __P((const char *name,
@@ -281,8 +290,8 @@ extern int		innetgr_p __P((const char *netgroup,
 				       const char *user,
 				       const char *domain,
 				       struct net_data *net_data));
-extern int		getnetgrent_p __P((char **host, char **user,
-					   char **domain,
+extern int		getnetgrent_p __P((const char **host, const char **user,
+					   const char **domain,
 					   struct net_data *net_data));
 
 extern struct protoent  *getprotoent_p __P((struct net_data *net_data));

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.1.1.1.8.1 2001/01/28 15:52:22 he Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.1.1.1.8.2 2002/07/01 17:14:49 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: getnetent.c,v 1.18 2000/12/23 08:14:53 vixie Exp";
+static const char rcsid[] = "Id: getnetent.c,v 1.19 2001/05/29 05:48:47 marka Exp";
 #endif
 
 /* Imports */
@@ -261,10 +261,11 @@ fakeaddr(const char *name, int af, struct net_data *net_data) {
 		RES_SET_H_ERRNO(net_data->res, NETDB_INTERNAL);
 		return (NULL);
 	}
-	if (!isascii(name[0]) || !isdigit(name[0]))
+	if (!isascii((unsigned char)(name[0])) ||
+	    !isdigit((unsigned char)(name[0])))
 		return (NULL);
 	for (cp = name; *cp; ++cp)
-		if (!isascii(*cp) || (!isdigit(*cp) && *cp != '.'))
+		if (!isascii(*cp) || (!isdigit((unsigned char)*cp) && *cp != '.'))
 			return (NULL);
 	if (*--cp == '.')
 		return (NULL);
