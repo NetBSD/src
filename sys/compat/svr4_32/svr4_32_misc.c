@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.19 2003/05/16 14:36:35 itojun Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.20 2003/05/17 01:35:55 nakayama Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.19 2003/05/16 14:36:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.20 2003/05/17 01:35:55 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,6 @@ svr4_32_sys_mmap(l, v, retval)
 {
 	struct svr4_32_sys_mmap_args	*uap = v;
 	struct sys_mmap_args		 mm;
-	void				*rp;
 	int				 error;
 	/*
          * Verify the arguments.
@@ -545,12 +544,12 @@ svr4_32_sys_mmap(l, v, retval)
 	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	error = sys_mmap(l, &mm, (register_t *)&rp);
-	if ((u_long)rp > (u_long)UINT_MAX) {
-		printf("svr4_32_mmap: retval out of range: %p", rp);
+	error = sys_mmap(l, &mm, retval);
+	if ((u_long)*retval > (u_long)UINT_MAX) {
+		printf("svr4_32_mmap: retval out of range: 0x%lx",
+		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
-	*retval = (netbsd32_voidp)(u_long)rp;
 	return (error);
 }
 
@@ -563,7 +562,6 @@ svr4_32_sys_mmap64(l, v, retval)
 {
 	struct svr4_32_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args		 mm;
-	void				*rp;
 	int				 error;
 	/*
          * Verify the arguments.
@@ -583,12 +581,12 @@ svr4_32_sys_mmap64(l, v, retval)
 	SCARG(&mm, addr) = (void *)(u_long)SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	error = sys_mmap(l, &mm, (register_t *)&rp);
-	if ((u_long)rp > (u_long)UINT_MAX) {
-		printf("svr4_32_mmap64: retval out of range: %p", rp);
+	error = sys_mmap(l, &mm, retval);
+	if ((u_long)*retval > (u_long)UINT_MAX) {
+		printf("svr4_32_mmap64: retval out of range: 0x%lx",
+		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
-	*retval = (netbsd32_voidp)(u_long)rp;
 	return (error);
 }
 
