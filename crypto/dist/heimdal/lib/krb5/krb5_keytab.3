@@ -1,6 +1,6 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
 .\" $Heimdal: krb5_keytab.3,v 1.5 2002/08/28 15:30:54 joda Exp $
-.\" $NetBSD: krb5_keytab.3,v 1.6 2003/01/01 22:06:27 jschauma Exp $
+.\" $NetBSD: krb5_keytab.3,v 1.7 2003/01/02 12:59:59 wiz Exp $
 .Dd February 5, 2001
 .Dt KRB5_KEYTAB 3
 .Os
@@ -288,7 +288,7 @@ releases all resources associated with
 .Fn krb5_kt_get_entry
 retrieves the keytab entry for
 .Fa principal ,
-.Fa kvno,
+.Fa kvno ,
 .Fa enctype
 into
 .Fa entry
@@ -318,7 +318,7 @@ Returns 0 or an error.
 registers a new keytab type
 .Fa ops .
 Returns 0 or an error.
-.Sh EXAMPLE
+.Sh EXAMPLES
 This is a minimalistic version of
 .Nm ktutil .
 .Pp
