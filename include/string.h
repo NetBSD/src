@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)string.h	5.10 (Berkeley) 3/9/91
- *	$Id: string.h,v 1.4 1994/05/21 09:42:34 cgd Exp $
+ *	$Id: string.h,v 1.5 1994/08/02 05:03:46 jtc Exp $
  */
 
 #ifndef _STRING_H_
@@ -87,6 +87,7 @@ char	*strdup __P((const char *));
 void	 strmode __P((int, char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
+char	*strsignal __P((int));
 void	 swab __P((const void *, void *, size_t));
 #endif 
 __END_DECLS
