@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.38 1996/07/17 21:54:06 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -598,8 +598,8 @@ mi_switch()
 				rlim->rlim_cur += 5;
 		}
 	}
-	if (s > 10 * 60 && p->p_ucred->cr_uid && p->p_nice == NZERO) {
-		p->p_nice = NZERO + 4;
+	if (autonicetime && s > autonicetime && p->p_ucred->cr_uid && p->p_nice == NZERO) {
+		p->p_nice = autoniceval;
 		resetpriority(p);
 	}
 
