@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.45 2000/12/07 20:16:56 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.46 2000/12/07 21:30:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1741,6 +1741,8 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 		}
 		if (free_groups) {
 			TAILQ_REMOVE(&pc->pc_grouplist, pcg, pcg_list);
+			if (pc->pc_freeto == pcg)
+				pc->pc_freeto = NULL;
 			pool_put(&pcgpool, pcg);
 		}
 	}
