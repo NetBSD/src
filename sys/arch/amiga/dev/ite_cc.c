@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.33 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.34 2003/05/31 03:05:45 kristerw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.33 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.34 2003/05/31 03:05:45 kristerw Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -93,15 +93,15 @@ extern u_char kernel_font[], kernel_cursor[];
 #endif
 
 #if !defined(USE_C_BFOPS)
-#define BFEXT(v,p,o,w)	asm("bfextu %1@{%2:%3},%0" : "=d" (v) : \
+#define BFEXT(v,p,o,w)	__asm("bfextu %1@{%2:%3},%0" : "=d" (v) : \
 		"a"(p), "d"(o), "d"(w))
-#define BFINS(v,p,o,w)	asm("bfins %0,%1@{%2:%3}" : /* no output */ : \
+#define BFINS(v,p,o,w)	__asm("bfins %0,%1@{%2:%3}" : /* no output */ : \
 		"d"(v), "a"(p), "d"(o), "d"(w))
-#define BFCLR(p,o,w)	asm("bfclr %0@{%1:%2}" : /* no output */ : \
+#define BFCLR(p,o,w)	__asm("bfclr %0@{%1:%2}" : /* no output */ : \
 		"a"(p), "d"(o), "d"(w))
-#define BFCHG(p,o,w)	asm("bfchg %0@{%1:%2}" : /* no output */ : \
+#define BFCHG(p,o,w)	__asm("bfchg %0@{%1:%2}" : /* no output */ : \
 		"a"(p), "d"(o), "d"(w))
-#define BFSET(p,o,w)	asm("bfset %0@{%1:%2}" : /* no output */ : \
+#define BFSET(p,o,w)	__asm("bfset %0@{%1:%2}" : /* no output */ : \
 		"a"(p), "d"(o), "d"(w))
 #else
 #define BFEXT(v,p,o,w)	do {v = ((u_int8_t *)(p))[(o)>>3];} while (0)
