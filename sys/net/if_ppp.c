@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.40 1997/06/16 17:01:36 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.41 1998/05/02 14:34:24 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -161,7 +161,7 @@ static void	pppdumpm __P((struct mbuf *m0));
  */
 
 extern struct compressor ppp_bsd_compress;
-extern struct compressor ppp_deflate;
+extern struct compressor ppp_deflate, ppp_deflate_draft;
 
 struct compressor *ppp_compressors[8] = {
 #if DO_BSD_COMPRESS && defined(PPP_BSDCOMP)
@@ -169,6 +169,7 @@ struct compressor *ppp_compressors[8] = {
 #endif
 #if DO_DEFLATE && defined(PPP_DEFLATE)
     &ppp_deflate,
+    &ppp_deflate_draft,
 #endif
     NULL
 };

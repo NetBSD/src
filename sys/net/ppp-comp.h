@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.3 1997/03/12 20:26:55 christos Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.4 1998/05/02 14:34:25 christos Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -143,7 +143,9 @@ struct compressor {
 /*
  * Definitions for Deflate.
  */
-#define CI_DEFLATE		24	/* config option for Deflate */
+#define CI_DEFLATE		26	/* config option for Deflate */
+#define CI_DEFLATE_DRAFT	24	/* value used in original draft RFC */
+
 #define CILEN_DEFLATE		4	/* length of its config option */
 
 #define DEFLATE_MIN_SIZE	8
