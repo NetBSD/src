@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.3 1995/04/29 05:54:48 cgd Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netcmds.c,v 1.3 1995/04/29 05:54:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -152,15 +152,14 @@ changeitems(args, onoff)
 			selectport(sp->s_port, onoff);
 			continue;
 		}
-		hp = gethostbyname(args);
-		if (hp == 0) {
-			in.s_addr = inet_addr(args);
-			if (in.s_addr == -1) {
+		if (inet_aton(args, &in) == 0) {
+			hp = gethostbyname(args);
+			if (hp == 0) {
 				error("%s: unknown host or port", args);
 				continue;
 			}
-		} else
-			in = *(struct in_addr *)hp->h_addr;
+			memcpy(&in, hp->h_addr, hp->h_length);
+		}
 		selecthost(&in, onoff);
 	}
 }
