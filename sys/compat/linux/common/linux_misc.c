@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.8 2002/02/28 04:12:56 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.9 2002/02/28 23:59:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.8 2002/02/28 04:12:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.9 2002/02/28 23:59:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,31 +1179,6 @@ linux_sys_getfsuid(l, v, retval)
 #endif
 
 int
-linux_sys___sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys___sysctl_args /* {
-		syscallarg(struct linux___sysctl *) lsp;
-	} */ *uap = v;
-	struct linux___sysctl ls;
-	struct sys___sysctl_args bsa;
-	int error;
-
-	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
-		return error;
-	SCARG(&bsa, name) = ls.name;
-	SCARG(&bsa, namelen) = ls.namelen;
-	SCARG(&bsa, old) = ls.old;
-	SCARG(&bsa, oldlenp) = ls.oldlenp;
-	SCARG(&bsa, new) = ls.new;
-	SCARG(&bsa, newlen) = ls.newlen;
-
-	return sys___sysctl(l, &bsa, retval);
-}
-
-int
 linux_sys_setresuid(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -1565,8 +1540,8 @@ linux_to_bsd_limit(lim)
 
 
 int
-linux_sys_getrlimit(p, v, retval)
-	struct proc *p;
+linux_sys_getrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1574,6 +1549,7 @@ linux_sys_getrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p->p_emul);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
@@ -1584,7 +1560,7 @@ linux_sys_getrlimit(p, v, retval)
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
 	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
-	if ((error = sys_getrlimit(p, &ap, retval)) != 0)
+	if ((error = sys_getrlimit(l, &ap, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
 		return error;
@@ -1593,8 +1569,8 @@ linux_sys_getrlimit(p, v, retval)
 }
 
 int
-linux_sys_setrlimit(p, v, retval)
-	struct proc *p;
+linux_sys_setrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1602,6 +1578,7 @@ linux_sys_setrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p->p_emul);
 	struct sys_setrlimit_args ap;
 	struct rlimit rl;
@@ -1618,18 +1595,18 @@ linux_sys_setrlimit(p, v, retval)
 	/* XXX: alpha complains about this */
 	if ((error = copyout(&rl, (void *)SCARG(&ap, rlp), sizeof(rl))) != 0)
 		return error;
-	return sys_setrlimit(p, &ap, retval);
+	return sys_setrlimit(l, &ap, retval);
 }
 
 #ifndef __mips__
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
-linux_sys_ugetrlimit(p, v, retval)
-	struct proc *p;
+linux_sys_ugetrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return linux_sys_getrlimit(p, v, retval);
+	return linux_sys_getrlimit(l, v, retval);
 }
 #endif
 
