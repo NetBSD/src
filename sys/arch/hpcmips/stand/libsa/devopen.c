@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2000/01/03 05:59:40 takemura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2000/01/16 03:07:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

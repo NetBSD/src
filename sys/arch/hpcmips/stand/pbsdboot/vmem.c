@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.c,v 1.3 1999/09/26 02:42:52 takemura Exp $	*/
+/*	$NetBSD: vmem.c,v 1.4 2000/01/16 03:07:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
