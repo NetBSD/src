@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.1.1.1 1997/01/14 20:57:06 gwr Exp $	*/
+/*	$NetBSD: mon.h,v 1.2 1997/02/05 14:36:46 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -225,22 +225,25 @@ typedef struct {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 	int	(*exitToMon)__P((void)); /* Exit from user program */
+	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 
 	/****************************************************************
 	 * Note: from here on, things vary per-architecture!
 	 ****************************************************************/
 
-	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
-
 #ifdef	sun3
 	/* Set seg in all contexts */
 	void	(*setcxsegmap)__P((int,int,int));
-#endif	/* sun3 */
 
 	/* V2: Handler for 'v' cmd */
 	void	(**vector_cmd)__P((int, char*));
 
+	int	pad[6];
+#endif	/* sun3 */
 #ifdef	sun3x
+
+	/* V2: Handler for 'v' cmd */
+	void	(**vector_cmd)__P((int, char*));
 
 	/* Address of low memory PTEs (maps at least 4MB) */
 	int	**lomemptaddr;
@@ -274,13 +277,9 @@ typedef struct {
 
 	struct physmemory *v_physmemory; /* Ptr to memory list for 3/80 */
 
-#endif	/* sun3x */
+	int pad[1];
 
-	/* Why? */
-	int	dummy1z;
-	int	dummy2z;
-	int	dummy3z;
-	int	dummy4z;
+#endif	/* sun3x */
 } MachMonRomVector;
 
 /*
@@ -364,7 +363,7 @@ typedef struct {
  */
 
 #define	romVectorPtr	((MachMonRomVector *) PROM_BASE)
-/* #define romp romVectorPtr XXX */
+/* #define romp romVectorPtr XXX - Too prone to conflicts. */
 
 /*
  * Functions and defines to access the monitor.
@@ -437,6 +436,5 @@ typedef struct {
 #define MON_DVMA_SIZE	  0x100000	/* 1MB */
 
 #endif	/* sun3x */
-
-#endif /* _MACHMON */
-#endif /* MACHINE_MON_H */     
+#endif	/* _MACHMON */
+#endif	/* MACHINE_MON_H */
