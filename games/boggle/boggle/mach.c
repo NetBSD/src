@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.10 1999/09/08 21:45:26 jsm Exp $	*/
+/*	$NetBSD: mach.c,v 1.11 2001/02/05 00:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.10 1999/09/08 21:45:26 jsm Exp $");
+__RCSID("$NetBSD: mach.c,v 1.11 2001/02/05 00:27:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,10 @@ int ncols, nlines;
 
 extern const char *pword[], *mword[];
 extern int ngames, nmwords, npwords, tnmwords, tnpwords;
+extern char board[];
+extern int usedbits, wordpath[];
+extern time_t start_t;
+extern int debug;
 
 static void	cont_catcher __P((int));
 static int	prwidth __P((const char *const [], int));
@@ -91,8 +95,6 @@ setup(sflag, seed)
 	int sflag;
 	time_t seed;
 {
-	extern int debug;
-
 	if (tty_setup() < 0)
 		return(-1);
 
@@ -293,7 +295,6 @@ static int gone;
 void
 stoptime()
 {
-	extern time_t start_t;
 	time_t t;
 
 	(void)time(&t);
@@ -306,7 +307,6 @@ stoptime()
 void
 starttime()
 {
-	extern time_t start_t;
 	time_t t;
 
 	(void)time(&t);
@@ -408,9 +408,6 @@ findword()
 {
 	int c, col, found, i, r, row;
 	char buf[MAXWORDLEN + 1];
-	extern char board[];
-	extern int usedbits, wordpath[];
-	extern int nmwords, npwords;
 
 	getyx(stdscr, r, c);
 	getword(buf);

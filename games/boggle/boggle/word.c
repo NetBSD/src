@@ -1,4 +1,4 @@
-/*	$NetBSD: word.c,v 1.5 1999/09/08 21:17:45 jsm Exp $	*/
+/*	$NetBSD: word.c,v 1.6 2001/02/05 00:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: word.c,v 1.5 1999/09/08 21:17:45 jsm Exp $");
+__RCSID("$NetBSD: word.c,v 1.6 2001/02/05 00:27:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,9 @@ static char *sp;
 
 static int first = 1, lastch = 0;
 
+extern struct dictindex dictindex[];
+extern int wordlen;
+
 /*
  * Return the next word in the compressed dictionary in 'buffer' or
  * NULL on end-of-file
@@ -69,7 +72,6 @@ char *
 nextword(fp)
 	FILE *fp;
 {
-	extern int wordlen;
 	int ch, pcount;
 	char *p;
 	static char buf[MAXWORDLEN + 1];
@@ -193,7 +195,6 @@ loadindex(indexfile)
 	int i, j;
 	char buf[BUFSIZ];
 	FILE *fp;
-	extern struct dictindex dictindex[];
  
 	if ((fp = fopen(indexfile, "r")) == NULL) {
 		warn("Can't open '%s'", indexfile);
