@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/26 23:49:34 christos Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.2 1999/08/23 08:45:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/09/26 23:49:34 christos Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.2 1999/08/23 08:45:11 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -51,7 +51,7 @@
 #ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
-	.globl _/**/x; .align 2; _/**/x:  pusha ; \
+	.globl _/**/x; _ALIGN_TEXT; _/**/x:  pusha ; \
 	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
 #endif /* GPROF */
 

@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.7 1995/04/28 22:58:00 jtc Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.8 1999/08/23 08:45:10 kleink Exp $")
 #endif
 
 ENTRY(ffs)
@@ -15,6 +15,6 @@ ENTRY(ffs)
 	incl	%eax			/* bits numbered from 1, not 0 */
 	ret
 
-	.align 2
+	_ALIGN_TEXT
 L1:	xorl	%eax,%eax		/* clear result */
 	ret

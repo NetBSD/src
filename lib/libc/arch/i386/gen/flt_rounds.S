@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.5 1998/01/09 03:45:03 perry Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.6 1999/08/23 08:45:09 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 	.text
-	.align 2
+	_ALIGN_TEXT
 _map:
 	.byte 1		/* round to nearest */
 	.byte 3		/* round to negative infinity */
