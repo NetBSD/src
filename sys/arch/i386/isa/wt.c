@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.16 1994/06/16 01:08:37 mycroft Exp $
+ *	$Id: wt.c,v 1.17 1994/07/25 04:29:56 mycroft Exp $
  */
 
 /*
@@ -71,7 +71,7 @@
 /*
  * Uncomment this to enable internal device tracing.
  */
-#define DEBUG(s)		/* printf s */
+#define DEBUG(x)		/* printf x */
 
 #define WTPRI			(PZERO+10)	/* sleep priority */
 
@@ -601,11 +601,11 @@ int
 wtintr(sc)
 	struct wt_softc *sc;
 {
-	u_char s;
+	u_char x;
 
-	s = inb(sc->STATPORT);			/* get status */
-	DEBUG(("wtintr() status=0x%x -- ", s));
-	if ((s & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP)) {
+	x = inb(sc->STATPORT);			/* get status */
+	DEBUG(("wtintr() status=0x%x -- ", x));
+	if ((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP)) {
 		DEBUG(("busy\n"));
 		return 0;			/* device is busy */
 	}
@@ -614,7 +614,7 @@ wtintr(sc)
 	 * Check if rewind finished.
 	 */
 	if (sc->flags & TPREW) {
-		DEBUG(((s & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
+		DEBUG(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
 		    "rewind busy?\n" : "rewind finished\n"));
 		sc->flags &= ~TPREW;		/* rewind finished */
 		wtsense(sc, 1, TP_WRP);
@@ -626,9 +626,9 @@ wtintr(sc)
 	 * Check if writing/reading of file mark finished.
 	 */
 	if (sc->flags & (TPRMARK | TPWMARK)) {
-		DEBUG(((s & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
+		DEBUG(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
 		    "marker r/w busy?\n" : "marker r/w finished\n"));
-		if ((s & sc->NOEXCEP) == 0)	/* operation failed */
+		if ((x & sc->NOEXCEP) == 0)	/* operation failed */
 			wtsense(sc, 1, (sc->flags & TPRMARK) ? TP_WRP : 0);
 		sc->flags &= ~(TPRMARK | TPWMARK); /* operation finished */
 		wakeup((caddr_t)sc);
@@ -660,7 +660,7 @@ wtintr(sc)
 	/*
 	 * On exception, check for end of file and end of volume.
 	 */
-	if ((s & sc->NOEXCEP) == 0) {
+	if ((x & sc->NOEXCEP) == 0) {
 		DEBUG(("i/o exception\n"));
 		wtsense(sc, 1, (sc->dmaflags & B_READ) ? TP_WRP : 0);
 		if (sc->error & (TP_EOM | TP_FIL))
@@ -754,26 +754,26 @@ wtpoll(sc, mask, bits)
 	struct wt_softc *sc;
 	int mask, bits;
 {
-	u_char s;
+	u_char x;
 	int i;
 
 	/* Poll status port, waiting for specified bits. */
 	for (i = 0; i < 1000; ++i) {	/* up to 1 msec */
-		s = inb(sc->STATPORT);
-		if ((s & mask) != bits)
-			return s;
+		x = inb(sc->STATPORT);
+		if ((x & mask) != bits)
+			return x;
 		delay(1);
 	}
 	for (i = 0; i < 100; ++i) {	/* up to 10 msec */
-		s = inb(sc->STATPORT);
-		if ((s & mask) != bits)
-			return s;
+		x = inb(sc->STATPORT);
+		if ((x & mask) != bits)
+			return x;
 		delay(100);
 	}
 	for (;;) {			/* forever */
-		s = inb(sc->STATPORT);
-		if ((s & mask) != bits)
-			return s;
+		x = inb(sc->STATPORT);
+		if ((x & mask) != bits)
+			return x;
 		tsleep((caddr_t)wtpoll, WTPRI, "wtpoll", 1);
 	}
 }
@@ -786,12 +786,16 @@ wtcmd(sc, cmd)
 	struct wt_softc *sc;
 	int cmd;
 {
-	u_char s;
+	u_char x;
+	int s;
 
 	DEBUG(("wtcmd() cmd=0x%x\n", cmd));
-	s = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
-	if ((s & sc->NOEXCEP) == 0)			/* error */
+	s = splbio();
+	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	if ((x & sc->NOEXCEP) == 0) {			/* error */
+		splx(s);
 		return 0;
+	}
 	
 	outb(sc->CMDPORT, cmd);				/* output the command */
 
@@ -799,6 +803,7 @@ wtcmd(sc, cmd)
 	wtpoll(sc, sc->BUSY, sc->BUSY);			/* wait for ready */
 	outb(sc->CTLPORT, sc->IEN | sc->ONLINE);	/* reset request */
 	wtpoll(sc, sc->BUSY, 0);			/* wait for not ready */
+	splx(s);
 	return 1;
 }
 
@@ -848,11 +853,11 @@ wtstart(sc, flag, vaddr, len)
 	void *vaddr;
 	size_t len;
 {
-	u_char s;
+	u_char x;
 
 	DEBUG(("wtstart()\n"));
-	s = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
-	if ((s & sc->NOEXCEP) == 0) {
+	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	if ((x & sc->NOEXCEP) == 0) {
 		sc->flags |= TPEXCEP;	/* error */
 		return 0;
 	}
@@ -919,7 +924,7 @@ int
 wtreset(sc)
 	struct wt_softc *sc;
 {
-	u_char s;
+	u_char x;
 	int i;
 
 	outb(sc->CTLPORT, sc->RESET | sc->ONLINE); /* send reset */
@@ -928,18 +933,18 @@ wtreset(sc)
 	delay(30);
 
 	/* Read the controller status. */
-	s = inb(sc->STATPORT);
-	if (s == 0xff)			/* no port at this address? */
+	x = inb(sc->STATPORT);
+	if (x == 0xff)			/* no port at this address? */
 		return 0;
 
 	/* Wait 3 sec for reset to complete. Needed for QIC-36 boards? */
 	for (i = 0; i < 3000; ++i) {
-		if ((s & sc->BUSY) == 0 || (s & sc->NOEXCEP) == 0)
+		if ((x & sc->BUSY) == 0 || (x & sc->NOEXCEP) == 0)
 			break;
 		delay(1000);
-		s = inb(sc->STATPORT);
+		x = inb(sc->STATPORT);
 	}
-	return (s & sc->RESETMASK) == sc->RESETVAL;
+	return (x & sc->RESETMASK) == sc->RESETVAL;
 }
 
 /*
@@ -1003,7 +1008,9 @@ wtstatus(sc)
 	struct wt_softc *sc;
 {
 	char *p;
+	int s;
 
+	s = splbio();
 	wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	outb(sc->CMDPORT, QIC_RDSTAT);	/* send `read status' command */
 
@@ -1014,9 +1021,11 @@ wtstatus(sc)
 
 	p = (char *)&sc->error;
 	while (p < (char *)&sc->error + 6) {
-		u_char s = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP);
-		if ((s & sc->NOEXCEP) == 0)	/* error */
+		u_char x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP);
+		if ((x & sc->NOEXCEP) == 0) {	/* error */
+			splx(s);
 			return 0;
+		}
 
 		*p++ = inb(sc->DATAPORT);	/* read status byte */
 
@@ -1024,5 +1033,6 @@ wtstatus(sc)
 		wtpoll(sc, sc->BUSY, 0);	/* wait for not ready */
 		outb(sc->CTLPORT, sc->ONLINE);	/* unset request */
 	}
+	splx(s);
 	return 1;
 }
