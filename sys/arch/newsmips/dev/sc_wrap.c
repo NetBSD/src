@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.4 1998/06/10 16:27:30 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.5 1998/08/21 13:19:43 tsubai Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -190,6 +190,13 @@ sc_scsi_cmd(xs)
 		return TRY_AGAIN_LATER;
 
 	scb->xs = xs;
+	scb->flags = 0;
+	scb->sc_ctag = 0;
+	scb->sc_coffset = 0;
+	scb->istatus = 0;
+	scb->tstatus = 0;
+	scb->message = 0;
+	bzero(scb->msgbuf, sizeof(scb->msgbuf));
 
 	s = splbio();
 
@@ -257,7 +264,7 @@ sc_sched(sc)
 	int ie = 0;
 	int flags;
 	int chan, lun;
-	struct sc_scb *scb;
+	struct sc_scb *scb, *nextscb;
 
 	scb = sc->ready_list.tqh_first;
 start:
@@ -283,7 +290,6 @@ start:
 
 	lun = sc_link->scsipi_scsi.lun;
 
-	scb->xs = xs;
 	scb->identify = MSG_IDENT | sc_disconnect | (lun & IDT_DRMASK);
 	scb->sc_ctrnscnt = xs->datalen;
 
@@ -326,7 +332,12 @@ start:
 	sc_send(scb, chan, ie);
 	untimeout(cxd1185_timeout, scb);
 
-	scb = scb->chain.tqe_next;
+	nextscb = scb->chain.tqe_next;
+
+	TAILQ_REMOVE(&sc->ready_list, scb, chain);
+
+	scb = nextscb;
+
 	goto start;
 }
 
@@ -373,12 +384,8 @@ sc_done(scb)
 	}
 
 	scsipi_done(xs);
-
-	TAILQ_REMOVE(&sc->ready_list, scb, chain);
 	free_scb(sc, scb);
-
 	sc->inuse[sc_link->scsipi_scsi.target] = 0;
-
 	sc_sched(sc);
 }
 
