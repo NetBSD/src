@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.2 1996/03/30 07:40:11 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.3 1996/04/10 23:01:13 cgd Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -71,6 +71,10 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/wdsreg.h>
+
+#ifndef DDB
+#define Debugger() panic("should call debugger here (wds.c)")
+#endif /* ! DDB */
 
 #define WDS_MBX_SIZE	16
 
