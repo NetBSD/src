@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.89 2003/06/16 20:01:06 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.90 2003/06/19 10:48:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.89 2003/06/16 20:01:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90 2003/06/19 10:48:58 msaitoh Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1018,7 +1018,7 @@ pccbbintr(arg)
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
 		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
-		if (CB_SOCKET_STAT_CD == (sockstate & CB_SOCKET_STAT_CD)) {
+		if (0x00 != (sockstate & CB_SOCKET_STAT_CD)) {
 			/* A card should be removed. */
 			if (sc->sc_flags & CBB_CARDEXIST) {
 				DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname,
