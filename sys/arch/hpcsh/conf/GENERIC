@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.37 2004/06/26 07:32:06 abs Exp $
+# $NetBSD: GENERIC,v 1.38 2004/07/02 18:05:23 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -40,29 +40,12 @@ options		SH3
 #	HITACHI HPW50PA		25MHz		100MHz
 #
 
-options 	DDB			# in-kernel debugger
-#options 	KGDB			# in-kernel debugger
-#makeoptions	DEBUG="-g"	# compile full symbol table
-#options	KGDB_DEVRATE=19200
-# HP Jornada
-#options 	"KGDB_DEVNAME=\"scif\""
-# HITACHI PERSONA (SH3)
-#options 	"KGDB_DEVNAME=\"hd64461uart\""
-# HITACHI PERSONA (SH4)
-#options 	"KGDB_DEVNAME=\"hd64465uart\""
-
-#options	HPC_DEBUG_INTERRUPT_MONITOR
-#options	KSTACK_DEBUG
-options 	DIAGNOSTIC		# extra kernel debugging checks
-options 	DEBUG			# extra kernel debugging support
-#options 	KTRACE			# system call tracing support
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
 #options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 				# (overrides tz info that hpcboot.exe passes)
 
-#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
@@ -87,6 +70,10 @@ file-system 	PROCFS		# /proc
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
 #options 	ALTQ_CBQ	# Class-Based Queueing
@@ -110,6 +97,11 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x10
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 #
 # Device configuration
@@ -127,7 +119,7 @@ hpcfb*		at hd64461video?
 wsdisplay*	at hpcfb?
 
 hpckbd*		at pfckbd?
-wskbd*		at hpckbd? mux 1
+wskbd0		at hpckbd? mux 1
 
 #
 # HP Jornada
@@ -147,13 +139,12 @@ j6x0tp*		at adc?			# '680 touch panel
 wsmouse*	at j6x0tp? mux 0	# - as a pointing device
 wskbd1		at j6x0tp? mux 1	# - "hard icons" as keys
 # Do not convert hard icons to key presses while serving mouse input.
-#options 	J6X0TP_WSMOUSE_EXCLUSIVE
+options 	J6X0TP_WSMOUSE_EXCLUSIVE
 # Customization for the mini-keymap of hard icons.
-#options 	J6X0TP_SETTINGS_ICON_KEYSYM="KS_Home"
-#options 	J6X0TP_PGUP_ICON_KEYSYM="KS_Prior"
-#options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
-#options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
-
+options 	J6X0TP_SETTINGS_ICON_KEYSYM="KS_Home"
+options 	J6X0TP_PGUP_ICON_KEYSYM="KS_Prior"
+options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
+options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
 
 hd64461if* at shb?
 hd64461pcmcia*	at hd64461if?
@@ -188,11 +179,16 @@ wdc0	at pcmcia1 function ?
 atabus0 at wdc0 channel ?
 wd*	at atabus0 drive ? flags 0x0000
 
+# PCMCIA Serial Devices
+com*	at pcmcia? function ?		# Modems and serial cards
+
 # Network Interfaces
 
 # network pseudo-devices
-pseudo-device	bpfilter	2	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+pseudo-device	ppp		1	# serial-line IP ports
+pseudo-device	bpfilter	2	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter, NAT
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
