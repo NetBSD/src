@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.62 1999/12/03 21:43:20 ragge Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.63 2000/01/21 23:22:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -451,6 +451,18 @@ bawrite(bp)
 }
 
 /*
+ * Ordered block write; asynchronous, but I/O will occur in order queued.
+ */
+void
+bowrite(bp)
+	struct buf *bp;
+{
+
+	SET(bp->b_flags, B_ASYNC | B_ORDERED);
+	VOP_BWRITE(bp);
+}
+
+/*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  */
 void
@@ -563,7 +575,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
 
 	/* Allow disk interrupts. */
 	splx(s);
