@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.24 1997/10/20 00:00:49 thorpej Exp $	*/
+/*	$NetBSD: fstat.c,v 1.25 1998/07/03 15:49:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.24 1997/10/20 00:00:49 thorpej Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.25 1998/07/03 15:49:25 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ socktrans(sock, i)
 	}
 
 	if ((len = kvm_read(kd, (u_long)dom.dom_name, dname,
-	    sizeof(dname) - 1)) < 0) {
+	    sizeof(dname) - 1)) != sizeof(dname) -1) {
 		dprintf(stderr, "can't read domain name at %lx\n",
 			(long)dom.dom_name);
 		dname[0] = '\0';

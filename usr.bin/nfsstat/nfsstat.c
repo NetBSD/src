@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.11 1998/03/27 02:40:38 hubertf Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.12 1998/07/03 15:49:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.11 1998/03/27 02:40:38 hubertf Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.12 1998/07/03 15:49:25 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,8 +168,8 @@ intpr(nfsstataddr)
 {
 	struct nfsstats nfsstats;
 
-	if (kvm_read(kd, (u_long)nfsstataddr,
-	    (char *)&nfsstats, sizeof(struct nfsstats)) < 0)
+	if (kvm_read(kd, (u_long)nfsstataddr, (char *)&nfsstats,
+				 sizeof(struct nfsstats)) != sizeof(struct nfsstats))
 		errx(1, "kvm_read failed");
 	if (printall || clientinfo){
 	  printf("Client Info:\n");
@@ -339,7 +339,8 @@ sidewaysintpr(interval, off)
 			printhdr();
 			hdrcnt = 20;
 		}
-		if (kvm_read(kd, off, (char *)&nfsstats, sizeof nfsstats) < 0)
+		if (kvm_read(kd, off, (char *)&nfsstats, sizeof(nfsstats))
+			!= sizeof(nfsstats))
 			errx(1, "kvm_read failed");
 		if (printall || clientinfo)
 		  printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
