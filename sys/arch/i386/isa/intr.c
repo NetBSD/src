@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.9 1993/10/31 18:36:21 mycroft Exp $
+ *	$Id: intr.c,v 1.10 1993/10/31 20:05:43 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ isa_defaultirq()
 	outb(IO_ICU1+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x0a);		/* default to IRR on read */ 
+	outb(IO_ICU1, 0x6b);		/* special mask mode, IRR on read */ 
 #ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
@@ -208,7 +208,7 @@ isa_defaultirq()
 	outb(IO_ICU2+1, 1);		/* 8086 mode */
 #endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
+	outb(IO_ICU1, 0x6b);		/* special mask mode, IRR on read */ 
 
 	/* enable interrupts, but all masked */
 	splhigh();
@@ -266,8 +266,8 @@ isa_discoverintr(force, aux)
  * Caught a stray interrupt, notify
  */
 void
-isa_strayintr(d)
-	int d;
+isa_strayintr(irq)
+	int irq;
 {
 	extern u_long intrcnt_stray[],
 		      intrcnt_wild;
@@ -282,13 +282,27 @@ isa_strayintr(d)
 	 * since we don't really want 208 little vectors.  (It wouldn't be
 	 * all that much code, but why bother?)
 	 */
-	if (d == -1) {
+	if (irq == -1) {
 		intrcnt_wild++;
 		log(LOG_ERR, "wild interrupt\n");
 	} else {
-		if (intrcnt_stray[d]++ < 5)
-			log(LOG_ERR, "stray interrupt %d%s\n", d,
-			    intrcnt_stray[d] == 5 ? "; stopped logging" : "");
+#ifdef DIAGNOSTIC
+		register u_char a, b, c, d;
+		disable_intr();
+		outb(IO_ICU1, 0x0a);
+		a = inb(IO_ICU1);
+		outb(IO_ICU1, 0x0b);
+		b = inb(IO_ICU1);
+		outb(IO_ICU2, 0x0a);
+		c = inb(IO_ICU2);
+		outb(IO_ICU2, 0x0b);
+		d = inb(IO_ICU2);
+		enable_intr();
+		printf("irr1=%02x isr1=%02x irr2=%02x isr2=%02x\n", a, b, c, d);
+#endif
+		if (intrcnt_stray[irq]++ < 5)
+			log(LOG_ERR, "stray interrupt %d%s\n", irq,
+			    intrcnt_stray[irq] == 5 ? "; stopped logging" : "");
 	}
 }
 
