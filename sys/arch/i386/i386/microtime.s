@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.14 1994/11/06 21:51:47 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.15 1994/11/06 22:05:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -121,7 +121,7 @@ ENTRY(microtime)
 	subl	$1000000,%eax	# adjust usec
 	incl	%edx		# bump sec
 	
-3:	movl	16(%esp),%ecx	# load timeval pointer arg
+3:	movl	4(%esp),%ecx	# load timeval pointer arg
 	movl	%edx,(%ecx)	# tvp->tv_sec = sec
 	movl	%eax,4(%ecx)	# tvp->tv_usec = usec
 
