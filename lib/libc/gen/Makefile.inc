@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.21 1993/10/22 17:51:51 jtc Exp $
+#	$Id: Makefile.inc,v 1.22 1993/11/11 01:22:33 jtc Exp $
 
 # gen sources
-.PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
+.PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
 
 SRCS+=	alarm.c assert.c clock.c ctermid.c ctime.c ctype_.c cuserid.c \
 	difftime.c \
@@ -21,9 +21,6 @@ SRCS+=	alarm.c assert.c clock.c ctermid.c ctime.c ctype_.c cuserid.c \
 	toupper_.c \
 	ualarm.c unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
-
-# gen/regexp sources
-SRCS+=	regerror.c regexp.c regsub.c
 
 .if   (${MACHINE} == "hp300")
 SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
@@ -54,7 +51,7 @@ MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 lsearch.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
-	raise.0 regexp.0 scandir.0 setjmp.0 setmode.0 setuid.0 \
+	raise.0 scandir.0 setjmp.0 setmode.0 setuid.0 \
 	siginterrupt.0 signal.0 sigsetops.0 sleep.0 syslog.0 tcgetpgrp.0 \
 	tcsendbreak.0 tcsetattr.0 tcsetpgrp.0 time.0 times.0 timezone.0 \
 	tolower.0 toupper.0 ttyname.0 tzset.0 \
