@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.9 1997/06/17 07:26:38 mikel Exp $	*/
+/*	$NetBSD: strings.c,v 1.10 1997/10/19 23:29:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -33,23 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$NetBSD: strings.c,v 1.9 1997/06/17 07:26:38 mikel Exp $";
+__RCSID("$NetBSD: strings.c,v 1.10 1997/10/19 23:29:25 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <a.out.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -73,16 +74,17 @@ static int	hcnt,			/* head count */
 		read_len;		/* length to read */
 static EXEC	hbfr;			/* buffer for struct exec */
 
-static void usage();
+int	getch __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
-	register int ch, cnt;
-	register u_char *C;
+	int ch, cnt;
+	u_char *C;
 	EXEC *head;
 	int exitcode, minlen;
 	short asdata, fflg;
@@ -90,6 +92,7 @@ main(argc, argv)
 	char *file, *p;
 	char *offset_format;
 
+	C = NULL;
 	setlocale(LC_ALL, "");
 
 	/*
@@ -153,23 +156,18 @@ main(argc, argv)
 
 	if (minlen == -1)
 		minlen = DEF_LEN;
-	else if (minlen < 1) {
-		(void)fprintf(stderr, "strings: length less than 1\n");
-		exit (1);
-	}
+	else if (minlen < 1)
+		errx(1, "length less than 1");
 
-	if (!(bfr = malloc(minlen + 1))) {
-		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (!(bfr = malloc(minlen + 1)))
+		err(1, "malloc");
 	bfr[minlen] = '\0';
 	file = "stdin";
 	do {
 		if (*argv) {
 			file = *argv++;
 			if (!freopen(file, "r", stdin)) {
-				(void)fprintf(stderr,
-				    "strings: %s: %s\n", file, strerror(errno));
+				warn("%s", file);
 				exitcode = 1;
 				goto nextfile;
 			}
@@ -226,6 +224,7 @@ nextfile: ;
  * getch --
  *	get next character from wherever
  */
+int
 getch()
 {
 	++foff;
@@ -239,7 +238,7 @@ getch()
 	return(EOF);
 }
 
-static void
+void
 usage()
 {
 	(void)fprintf(stderr,
