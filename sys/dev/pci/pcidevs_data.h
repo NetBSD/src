@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.21 2003/06/19 11:22:00 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.22 2003/06/30 02:35:47 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.23 2003/06/19 11:20:09 grant Exp 
+ *	NetBSD: pcidevs,v 1.428.2.24 2003/06/30 02:33:36 grant Exp 
  */
 
 /*
@@ -3512,6 +3512,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "PRO/100 VM (MOB) Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
+	    0,
+	    "Intel",
+	    "PRO/100 M Network Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
