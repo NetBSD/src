@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.21 1996/06/14 17:22:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.22 1996/08/13 20:11:18 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
-	libm libpcap libresolv librpcsvc libskey libterm libutil liby
+	libm libpcap libresolv librmt librpcsvc libskey libterm libutil liby
 
 # XXX Temporarely until all ports are able to use libkvm (leo)
 .if	(${MACHINE} == "amiga") || \
