@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/03/06 03:31:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.12 2004/03/06 11:36:05 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,10 @@ SUBDIR=	ddc doc drivers dummy etc fbdevhw i2c input int10 loader \
 	xf24_32bpp xf4bpp xf86 xf86_os xf86config xf8_16bpp \
 	xf8_32bpp xloader \
 	.WAIT bin
+
+.if ${X11DRI} != "no"
+SUBDIR+=	drm
+.endif
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
 
