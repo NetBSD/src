@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.h,v 1.3 1996/03/14 23:11:08 mark Exp $ */
+/* $NetBSD: cpus.h,v 1.4 1996/10/14 22:32:45 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -140,6 +140,7 @@ typedef struct _cpu {
 		cpu_sarm_t	cpu_sarm;
 		cpu_i486_t	cpu_i486;
 	} cpu_local;
+	void *cpu_cd;		/* CPU dependant data */
 } cpu_t;
 
 
