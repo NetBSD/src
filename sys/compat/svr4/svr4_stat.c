@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.10 1995/06/24 20:29:26 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.11 1995/06/27 22:12:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -58,6 +58,14 @@
 
 #define syscallarg(x)	union { x datum; register_t pad; }
 
+#ifdef sparc
+/* 
+ * Solaris-2.4 on the sparc has the old stat call using the new
+ * stat data structure...
+ */
+# define SVR4_NO_OSTAT
+#endif
+
 static void
 bsd_to_svr4_stat(st, st4)
 	struct stat		*st;
@@ -107,6 +115,14 @@ svr4_stat(p, uap, retval)
 	register struct svr4_stat_args	*uap;
 	register_t			*retval;
 {
+#ifdef SVR4_NO_OSTAT
+	struct svr4_xstat_args cup;
+
+	SCARG(&cup, two) = 2;
+	SCARG(&cup, path) = SCARG(uap, path);
+	SCARG(&cup, ub) = (struct svr4_xstat *) SCARG(uap, ub);
+	return svr4_xstat(p, &cup, retval);
+#else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
 	struct stat_args	cup;
@@ -131,17 +147,26 @@ svr4_stat(p, uap, retval)
 		return error;
 
 	return 0;
+#endif
 }
 
 int
 svr4_lstat(p, uap, retval)
 	register struct proc		*p;
-	register struct svr4_stat_args 	*uap;
+	register struct svr4_lstat_args *uap;
 	register_t			*retval;
 {
+#ifdef SVR4_NO_OSTAT
+	struct svr4_lxstat_args cup;
+
+	SCARG(&cup, two) = 2;
+	SCARG(&cup, path) = SCARG(uap, path);
+	SCARG(&cup, ub) = (struct svr4_xstat *) SCARG(uap, ub);
+	return svr4_lxstat(p, &cup, retval);
+#else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
-	struct stat_args	cup;
+	struct lstat_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -162,6 +187,7 @@ svr4_lstat(p, uap, retval)
 		return error;
 
 	return 0;
+#endif
 }
 
 int
@@ -170,6 +196,14 @@ svr4_fstat(p, uap, retval)
 	register struct svr4_fstat_args	*uap;
 	register_t			*retval;
 {
+#ifdef SVR4_NO_OSTAT
+	struct svr4_fxstat_args cup;
+
+	SCARG(&cup, two) = 2;
+	SCARG(&cup, fd) = SCARG(uap, fd);
+	SCARG(&cup, sb) = (struct svr4_xstat *) SCARG(uap, sb);
+	return svr4_fxstat(p, &cup, retval);
+#else
 	struct stat		st;
 	struct svr4_stat	svr4_st;
 	struct fstat_args	cup;
@@ -192,6 +226,7 @@ svr4_fstat(p, uap, retval)
 		return error;
 
 	return 0;
+#endif
 }
 
 
@@ -228,13 +263,13 @@ svr4_xstat(p, uap, retval)
 
 int
 svr4_lxstat(p, uap, retval)
-	register struct proc		*p;
-	register struct svr4_xstat_args	*uap;
-	register_t			*retval;
+	register struct proc			*p;
+	register struct svr4_lxstat_args	*uap;
+	register_t				*retval;
 {
 	struct stat		st;
 	struct svr4_xstat	svr4_st;
-	struct stat_args	cup;
+	struct lstat_args	cup;
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
