@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.64 2000/12/17 03:29:03 briggs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.65 2000/12/17 04:38:29 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -617,8 +617,6 @@ ncr53c9x_select(sc, ecb)
 	 */
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP100:
-	case NCR_VARIANT_NCR53C94:
-	case NCR_VARIANT_NCR53C96:
 		/* Don't have NCRCMD_SELATN3 */
 		selatn3 = 0;
 		break;
