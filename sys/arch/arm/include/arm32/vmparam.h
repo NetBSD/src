@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2003/05/04 01:54:32 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -82,7 +82,6 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
-#ifdef ARM32_PMAP_NEW
 /*
  * Mach derived constants
  */
@@ -92,27 +91,6 @@
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
-#else /* ! ARM32_PMAP_NEW */
-/*
- * Linear page table space: number of PTEs required to map the 4G address
- * space * size of each PTE.
- */
-#define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
-
-/* Address where the page talbles are mapped. */
-#define	PTE_BASE		(KERNEL_BASE - PAGE_TABLE_SPACE)
-
-/*
- * Mach derived constants
- */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) (PTE_BASE - UPAGES * PAGE_SIZE))
-#define	VM_MAX_ADDRESS		((vaddr_t) (PTE_BASE + \
-					    (KERNEL_BASE >> PGSHIFT) * \
-					    sizeof(pt_entry_t)))
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
-#endif /* ARM32_PMAP_NEW */
 
 /*
  * pmap-specific data store in the vm_page structure.
@@ -122,14 +100,6 @@ struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
-#ifndef ARM32_PMAP_NEW
-#ifdef PMAP_ALIAS_DEBUG
-	u_int ro_mappings;
-	u_int rw_mappings;
-	u_int kro_mappings;
-	u_int krw_mappings;
-#endif /* PMAP_ALIAS_DEBUG */
-#else  /* ARM32_PMAP_NEW */
 	u_int uro_mappings;
 	u_int urw_mappings;
 	union {
@@ -139,17 +109,8 @@ struct vm_page_md {
 #define	kro_mappings	k_u.s_mappings[0]
 #define	krw_mappings	k_u.s_mappings[1]
 #define	k_mappings	k_u.i_mappings
-#endif
 };
 
-#ifndef ARM32_PMAP_NEW
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
-	(pg)->mdpage.pvh_attrs = 0;					\
-} while (/*CONSTCOND*/0)
-#else
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
@@ -159,7 +120,6 @@ do {									\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
-#endif
 
 #endif /* _KERNEL */
 
