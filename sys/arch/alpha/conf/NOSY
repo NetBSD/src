@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.24 1998/03/26 02:58:48 thorpej Exp $
+# $NetBSD: NOSY,v 1.25 1998/04/15 21:19:22 drochner Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -58,6 +58,9 @@ options 	COMPAT_13
 # Disable kernel security.
 options 	INSECURE
 
+# WS console uses SUN terminal emulation
+options 	WSEMUL_SUN
+
 config		netbsd root on ? type ?
 
 mainbus0 at	root
@@ -97,7 +100,7 @@ cd*	at	scsibus? target ? lun ?
 ch*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
-wscons*	at	sfb?
+wsdisplay*	at	sfb?
 
 pseudo-device	bpfilter	16
 pseudo-device	loop

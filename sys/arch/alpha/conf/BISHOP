@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.1 1998/03/26 03:00:36 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.2 1998/04/15 21:19:21 drochner Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -67,6 +67,9 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
+# WS console uses SUN terminal emulation
+options 	WSEMUL_SUN
+
 config		netbsd	root on ? type ?
 
 mainbus0 at	root
@@ -104,9 +107,9 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
-pms*	at	pcppi?				# PS/2-style mouse (aux port)
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
+psm*	at	pckbc?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -142,10 +145,12 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 fd*	at	fdc? drive ?
 
 # Workstation Console attachments
-#wscons* at	cfb?
-wscons*	at	vga?
-#wscons* at	sfb?
-wscons*	at	tga?
+#wsdisplay* at	cfb?
+wsdisplay*	at	vga?
+#wsdisplay* at	sfb?
+wsdisplay*	at	tga?
+wskbd*	at	pckbd?
+wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
