@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.23 1998/08/01 20:25:12 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.23 1998/08/01 20:25:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.24 1999/02/12 06:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -256,8 +256,8 @@ dec_eb164_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > EB164_MAX_IRQ)
-                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%x\n", ih);
-        sprintf(irqstr, "eb164 irq %d", ih);
+                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx\n", ih);
+        sprintf(irqstr, "eb164 irq %ld", ih);
         return (irqstr);
 }
 
@@ -274,7 +274,7 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
 	if (ih > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%x\n", ih);
+		panic("dec_eb164_intr_establish: bogus eb164 IRQ 0x%lx\n", ih);
 
 	cookie = alpha_shared_intr_establish(eb164_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "eb164 irq");
@@ -346,7 +346,7 @@ eb164_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (EB164_MAX_IRQ << 4))
-			panic("eb164_iointr: vec 0x%x out of range\n", vec);
+			panic("eb164_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
 
 #ifdef EVCNT_COUNTERS
@@ -371,7 +371,7 @@ eb164_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("eb164_iointr: weird vec 0x%x\n", vec);
+	panic("eb164_iointr: weird vec 0x%lx\n", vec);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb164_intr.S. */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.159 1999/01/10 03:16:21 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.160 1999/02/12 06:30:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 1999/01/10 03:16:21 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 1999/02/12 06:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ nobootinfo:
 	mddtweird = 0;
 	if (mddtp->mddt_cluster_cnt < 2) {
 		mddtweird = 1;
-		printf("WARNING: weird number of mem clusters: %d\n",
+		printf("WARNING: weird number of mem clusters: %lu\n",
 		    mddtp->mddt_cluster_cnt);
 	}
 
@@ -769,7 +769,7 @@ nobootinfo:
 
 		/* warn if the message buffer had to be shrunk */
 		if (sz != round_page(MSGBUFSIZE))
-			printf("WARNING: %d bytes not available for msgbuf in last cluster (%d used)\n",
+			printf("WARNING: %ld bytes not available for msgbuf in last cluster (%ld used)\n",
 			    round_page(MSGBUFSIZE), sz);
 
 	}
@@ -1551,7 +1551,7 @@ dumpsys()
 
 			/* Print out how many MBs we to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%d ", totalbytesleft / (1024 * 1024));
+				printf("%ld ", totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;

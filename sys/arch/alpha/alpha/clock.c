@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.22 1998/09/29 18:23:55 drochner Exp $ */
+/* $NetBSD: clock.c,v 1.23 1999/02/12 06:30:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 1998/09/29 18:23:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 1999/02/12 06:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,8 +234,9 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+		printf("WARNING: clock %s %ld days",
+		    time.tv_sec < base ? "lost" : "gained",
+		    (long)deltat / SECDAY);
 	}
 bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");

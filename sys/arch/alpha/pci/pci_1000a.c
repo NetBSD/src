@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.6 1998/11/19 02:33:37 ross Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.7 1999/02/12 06:25:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.6 1998/11/19 02:33:37 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.7 1999/02/12 06:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +210,7 @@ dec_1000a_intr_string(ccv, ih)
 
 
         if (ih >= INTRCNT_DEC_1000A_IRQ_LEN)
-                panic("dec_1000a_intr_string: bogus dec_1000a IRQ 0x%x\n", ih);
+                panic("dec_1000a_intr_string: bogus dec_1000a IRQ 0x%lx\n", ih);
 
         sprintf(irqstr, irqmsg_fmt, ih);
         return (irqstr);
@@ -226,7 +226,7 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
         if (ih >= INTRCNT_DEC_1000A_IRQ_LEN)
-                panic("dec_1000a_intr_establish: IRQ too high, 0x%x\n", ih);
+                panic("dec_1000a_intr_establish: IRQ too high, 0x%lx\n", ih);
 
 	cookie = alpha_shared_intr_establish(dec_1000a_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "dec_1000a irq");
@@ -267,7 +267,8 @@ dec_1000a_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (INTRCNT_DEC_1000A_IRQ_LEN << 4))
-			panic("dec_1000a_iointr: vec 0x%x out of range\n", vec);
+			panic("dec_1000a_iointr: vec 0x%lx out of range\n",
+			    vec);
 		irq = (vec - 0x900) >> 4;
 		intrcnt[INTRCNT_DEC_1000A_IRQ + irq]++;
 		if (!alpha_shared_intr_dispatch(dec_1000a_pci_intr, irq)) {
@@ -284,7 +285,7 @@ dec_1000a_iointr(framep, vec)
 		return;
 	} 
 #endif
-	panic("dec_1000a_iointr: weird vec 0x%x\n", vec);
+	panic("dec_1000a_iointr: weird vec 0x%lx\n", vec);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.78 1999/02/08 19:37:29 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.79 1999/02/12 06:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 1999/02/08 19:37:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 1999/02/12 06:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1226,8 +1226,8 @@ pmap_remove(pmap, sva, eva)
 
 #ifdef DIAGNOSTIC
 	if (sva > VM_MAXUSER_ADDRESS || eva > VM_MAXUSER_ADDRESS)
-		panic("pmap_remove: (%p - %p) user pmap, kernel address range",
-			sva, eva);
+		panic("pmap_remove: (0x%lx - 0x%lx) user pmap, kernel "
+		    "address range", sva, eva);
 #endif
 
 	PMAP_MAP_TO_HEAD_LOCK();
