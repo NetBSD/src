@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.112 1999/02/19 19:12:12 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.113 1999/03/09 11:48:59 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.107 1999/02/19 19:11:33 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.108 1999/03/09 11:48:03 drochner Exp 
  */
 
 /*
@@ -562,6 +562,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ALG2302",
 	},
 	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
+	    0,
+	    "AVM",
+	    "Fritz! Card ISDN Interface",
+	},
+	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
 	    0,
 	    "Bit3 Computer Corp.",
@@ -1052,6 +1058,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Dolphin Interconnect Solutions",
 	    "PCI-SCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
+	    0,
+	    "Elsa",
+	    "QuickStep 1000 ISDN card",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
@@ -5293,6 +5305,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DO, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "The 3D0 Company",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AVM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "AVM",
 	    NULL,
 	},
 	{
