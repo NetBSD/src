@@ -1,36 +1,28 @@
-# $NetBSD: Makefile,v 1.3 2002/08/19 10:17:00 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2005/02/19 16:55:05 thorpej Exp $
+
+WARNS=	0	# Will be fixed later
 
 .include <bsd.own.mk>
 
 PROG=	setkey
 SRCS=	setkey.c parse.y token.l
-
-#CFLAGS+=-g
-LDADD+=	-ll -ly
-DPADD+=	${LIBL} ${LIBY}
-CLEANFILES+=	y.tab.c y.tab.h key_test.o keytest
-YHEADER=	yes
-
-#SCRIPTS=	scriptdump
-
-all: ${PROG} scriptdump
-
-CPPFLAGS+=-DIPSEC_DEBUG -DINET6 -DYY_NO_UNPUT
-CPPFLAGS+=-I. -I${.CURDIR}
-LDADD+= -lipsec
-DPADD+=	${LIBIPSEC}
-CLEANFILES+=	scriptdump
-
-# libpfkey.
-# ipsec_strerror.c is for avoiding shlib reference to non-exported function.
-.PATH: ${NETBSDSRCDIR}/lib/libipsec ${NETBSDSRCDIR}/sys/netkey
-SRCS+= pfkey.c pfkey_dump.c key_debug.c ipsec_strerror.c
-CPPFLAGS+=-I${NETBSDSRCDIR}/lib/libipsec -I${NETBSDSRCDIR}/sys/netkey
-
 MAN=	setkey.8
-LOCALPREFIX=	/usr/pkg
 
-scriptdump: scriptdump.pl
-	sed -e 's#@LOCALPREFIX@#${LOCALPREFIX}#' < $> > scriptdump
+YHEADER=parse.h
+
+DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
+CFLAGS+=-g
+CPPFLAGS+=	-I${DIST}/src/setkey -I${DIST}/src/libipsec	\
+		-I${NETBSDSRCDIR}/lib/libipsec -I.		\
+		-DIPSEC_DEBUG -DHAVE_CONFIG_H
+LDADD+= -ll -ly -lipsec
+DPADD+=	${LIBL} ${LIBY} ${LIBIPSEC}
+CLEANFILES+=	setkey.cat8
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DINET6
+.endif
+
+.PATH:	${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/setkey 
 
 .include <bsd.prog.mk>

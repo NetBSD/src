@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.525 2005/02/12 00:33:34 kleink Exp $
+# $NetBSD: mi,v 1.526 2005/02/19 16:55:02 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1084,6 +1084,7 @@
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
 ./usr/sbin/racoon				base-netutil-bin	crypto
+./usr/sbin/racoonctl				base-netutil-bin	crypto
 ./usr/sbin/rarpd				base-bootserver-bin
 ./usr/sbin/rbootd				base-bootserver-bin
 ./usr/sbin/rdate				base-netutil-bin
