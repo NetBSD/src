@@ -23,14 +23,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.42 2001/02/13 22:49:40 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.46 2001/03/11 13:25:36 markus Exp $");
 
 #include <openssl/evp.h>
 
 #include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
-#include "pty.h"
+#include "sshpty.h"
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
@@ -47,6 +47,7 @@ RCSID("$OpenBSD: auth2.c,v 1.42 2001/02/13 22:49:40 markus Exp $");
 #include "pathnames.h"
 #include "uidswap.h"
 #include "auth-options.h"
+#include "misc.h"
 
 /* import */
 extern ServerOptions options;
@@ -71,7 +72,6 @@ void	protocol_error(int type, int plen, void *ctxt);
 
 /* helper */
 Authmethod	*authmethod_lookup(const char *name);
-struct passwd	*pwcopy(struct passwd *pw);
 int	user_key_allowed(struct passwd *pw, Key *key);
 char	*authmethods_get(void);
 
@@ -580,7 +580,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 		}
 		if (fail) {
 			fclose(f);
-			log("%s",buf);
+			log("%s", buf);
 			restore_uid();
 			return 0;
 		}
@@ -628,5 +628,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 	restore_uid();
 	fclose(f);
 	key_free(found);
+	if (!found_key)
+		debug2("key not found");
 	return found_key;
 }

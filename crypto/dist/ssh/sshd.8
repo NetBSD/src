@@ -10,9 +10,9 @@
 .\" incompatible with the protocol description in the RFC file, it must be
 .\" called by a name other than "ssh" or "Secure Shell".
 .\"
-.\" Copyright (c) 1999,2000 Markus Friedl. All rights reserved.
-.\" Copyright (c) 1999 Aaron Campbell. All rights reserved.
-.\" Copyright (c) 1999 Theo de Raadt. All rights reserved.
+.\" Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+.\" Copyright (c) 1999 Aaron Campbell.  All rights reserved.
+.\" Copyright (c) 1999 Theo de Raadt.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,13 +34,13 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.95 2001/02/17 23:48:48 deraadt Exp $
+.\" $OpenBSD: sshd.8,v 1.107 2001/03/19 12:10:17 djm Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
 .Sh NAME
 .Nm sshd
-.Nd OpenSSH secure shell daemon
+.Nd OpenSSH ssh daemon
 .Sh SYNOPSIS
 .Nm sshd
 .Op Fl diqD46
@@ -54,7 +54,7 @@
 .Op Fl V Ar client_protocol_id
 .Sh DESCRIPTION
 .Nm
-(Secure Shell Daemon) is the daemon program for
+(SSH Daemon) is the daemon program for
 .Xr ssh 1 .
 Together these programs replace rlogin and rsh, and
 provide secure encrypted communications between two untrusted hosts
@@ -134,9 +134,8 @@ Each host has a host-specific DSA key used to identify the host.
 However, when the daemon starts, it does not generate a server key.
 Forward security is provided through a Diffie-Hellman key agreement.
 This key agreement results in a shared session key.
-The rest of the session is encrypted
-using a symmetric cipher, currently
-Blowfish, 3DES or CAST128 in CBC mode or Arcfour.
+The rest of the session is encrypted using a symmetric cipher, currently
+Blowfish, 3DES, CAST128, Arcfour, 128 bit AES, or 256 bit AES.
 The client selects the encryption algorithm
 to use from those offered by the server.
 Additionally, session integrity is provided
@@ -174,7 +173,9 @@ configuration file.
 .Pp
 .Nm
 rereads its configuration file when it receives a hangup signal,
-.Dv SIGHUP .
+.Dv SIGHUP ,
+by executing itself with the name it was started as, ie.
+.Pa /usr/sbin/sshd .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -338,11 +339,20 @@ The contents of the specified file are sent to the remote user before
 authentication is allowed.
 This option is only available for protocol version 2.
 .Pp
+.It Cm ChallengeResponseAuthentication
+Specifies whether
+challenge response
+authentication is allowed.
+Currently there is only support for
+.Xr skey 1
+authentication.
+The default is
+.Dq yes .
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
 The default is
-.Dq 3des-cbc,blowfish-cbc,cast128-cbc,arcfour,aes128-cbc .
+.Dq aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour.
 .It Cm CheckMail
 Specifies whether
 .Nm
@@ -372,11 +382,6 @@ and
 can be used as wildcards in the patterns.
 Only user names are valid; a numerical user ID isn't recognized.
 By default login is allowed regardless of the user name.
-.It Cm PubkeyAuthentication
-Specifies whether public key authentication is allowed.
-The default is
-.Dq yes .
-Note that this option applies to protocol version 2 only.
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to ports
 forwarded for the client.
@@ -509,7 +514,7 @@ Multiple algorithms must be comma-separated.
 The default is
 .Pp
 .Bd -literal
-  ``hmac-sha1,hmac-md5,hmac-ripemd160,hmac-ripemd160@openssh.com,
+  ``hmac-md5,hmac-sha1,hmac-ripemd160,hmac-ripemd160@openssh.com,
     hmac-sha1-96,hmac-md5-96''
 .Ed
 .It Cm MaxStartups
@@ -548,7 +553,7 @@ server allows login to accounts with empty password strings.
 The default is
 .Dq no .
 .It Cm PermitRootLogin
-Specifies whether the root can log in using
+Specifies whether root can login using
 .Xr ssh 1 .
 The argument must be
 .Dq yes ,
@@ -572,6 +577,10 @@ option has been specified
 (which may be useful for taking remote backups even if root login is
 normally not allowed). All other authentication methods are disabled
 for root.
+.Pp
+If this option is set to
+.Dq no
+root is not allowed to login.
 .It Cm PidFile
 Specifies the file that contains the process identifier of the
 .Nm
@@ -606,9 +615,11 @@ and
 Multiple versions must be comma-separated.
 The default is
 .Dq 1 .
-.It Cm RandomSeed
-Obsolete.
-Random number generation uses other techniques.
+.It Cm PubkeyAuthentication
+Specifies whether public key authentication is allowed.
+The default is
+.Dq yes .
+Note that this option applies to protocol version 2 only.
 .It Cm ReverseMappingCheck
 Specifies whether
 .Nm
@@ -640,15 +651,6 @@ Note that this option applies to protocol version 1 only.
 .It Cm ServerKeyBits
 Defines the number of bits in the server key.
 The minimum value is 512, and the default is 768.
-.It Cm ChallengeResponseAuthentication
-Specifies whether
-challenge reponse
-authentication is allowed.
-Currently there is only support for
-.Xr skey 1
-authentication.
-The default is
-.Dq yes .
 .It Cm StrictModes
 Specifies whether
 .Nm
@@ -850,6 +852,15 @@ Forbids authentication agent forwarding when this key is used for
 authentication.
 .It Cm no-pty
 Prevents tty allocation (a request to allocate a pty will fail).
+.It Cm permitopen="host:port"
+Limit local 
+.Li ``ssh -L''
+port-forwading such that it may only connect to the specified host and
+port. Multiple 
+.Cm permitopen
+options may be applied seperated by commas. No pattern matching is 
+performed on the specified hostnames, they must be literal domains or 
+addresses.
 .El
 .Ss Examples
 1024 33 12121.\|.\|.\|312314325 ylo@foo.bar
@@ -857,6 +868,8 @@ Prevents tty allocation (a request to allocate a pty will fail).
 from="*.niksula.hut.fi,!pc.niksula.hut.fi" 1024 35 23.\|.\|.\|2334 ylo@niksula
 .Pp
 command="dump /home",no-pty,no-port-forwarding 1024 33 23.\|.\|.\|2323 backup.hut.fi
+.Pp
+permitopen="10.2.1.55:80",permitopen="10.2.1.56:25" 1024 33 23.\|.\|.\|2323
 .Sh SSH_KNOWN_HOSTS FILE FORMAT
 The
 .Pa /etc/ssh_known_hosts ,
@@ -919,22 +932,24 @@ Contains configuration data for
 .Nm sshd .
 This file should be writable by root only, but it is recommended
 (though not necessary) that it be world-readable.
-.It Pa /etc/ssh_host_key
-Contains the private part of the host key.
-This file should only be owned by root, readable only by root, and not
+.It Pa /etc/ssh_host_key, /etc/ssh_host_dsa_key, /etc/ssh_host_rsa_key
+These three files contain the private parts of the
+(SSH1, SSH2 DSA, and SSH2 RSA) host keys.
+These files should only be owned by root, readable only by root, and not
 accessible to others.
 Note that
 .Nm
 does not start if this file is group/world-accessible.
-.It Pa /etc/ssh_host_key.pub
-Contains the public part of the host key.
-This file should be world-readable but writable only by
+.It Pa /etc/ssh_host_key.pub, /etc/ssh_host_dsa_key.pub, /etc/ssh_host_rsa_key.pub
+There three files contain the public parts of the
+(SSH1, SSH2 DSA, and SSH2 RSA) host keys.
+These files should be world-readable but writable only by
 root.
-Its contents should match the private part.
-This file is not
-really used for anything; it is only provided for the convenience of
-the user so its contents can be copied to known hosts files.
-These two files are created using
+Their contents should match the respective private parts.
+These files are not
+really used for anything; they are provided for the convenience of
+the user so their contents can be copied to known hosts files.
+These files are created using
 .Xr ssh-keygen 1 .
 .It Pa /etc/primes
 Contains Diffie-Hellman groups used for the "Diffie-Hellman Group Exchange".
@@ -972,7 +987,7 @@ These files are consulted when using rhosts with RSA host
 authentication to check the public key of the host.
 The key must be listed in one of these files to be accepted.
 The client uses the same files
-to verify that the remote host is the one it intended to connect.
+to verify that it is connecting to the correct remote host.
 These files should be writable only by root/the owner.
 .Pa /etc/ssh_known_hosts
 should be world-readable, and
