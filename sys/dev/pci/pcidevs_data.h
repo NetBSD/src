@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.301 2001/02/02 03:56:21 hubertf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.302 2001/02/04 18:16:43 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.297 2001/02/02 03:51:52 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
  */
 
 /*
@@ -3368,6 +3368,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Motorola",
 	    "MPC106 \"Grackle\" Host Bridge",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8240,
+	    0,
+	    "Motorola",
+	    "MPC8240 \"Kahlua\" Host Bridge",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
