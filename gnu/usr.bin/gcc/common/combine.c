@@ -8863,8 +8863,9 @@ simplify_comparison (code, pop0, pop1)
     }
      
   /* If the first operand is a constant, swap the operands and adjust the
-     comparison code appropriately.  */
-  if (CONSTANT_P (op0))
+     comparison code appropriately, but don't do this if the second operand
+     is already a constant integer.  */
+  if (CONSTANT_P (op0) && GET_CODE (op1) != CONST_INT)
     {
       tem = op0, op0 = op1, op1 = tem;
       code = swap_condition (code);
@@ -9006,7 +9007,8 @@ simplify_comparison (code, pop0, pop1)
 	    }
 
 	  /* (unsigned) < 0x80000000 is equivalent to >= 0.  */
-	  else if (const_op == (HOST_WIDE_INT) 1 << (mode_width - 1))
+          else if ((mode_width <= HOST_BITS_PER_WIDE_INT)
+                   && (const_op == (HOST_WIDE_INT) 1 << (mode_width - 1)))
 	    {
 	      const_op = 0, op1 = const0_rtx;
 	      code = GE;
@@ -9021,7 +9023,8 @@ simplify_comparison (code, pop0, pop1)
 	    code = EQ;
 
 	  /* (unsigned) <= 0x7fffffff is equivalent to >= 0. */
-	  else if (const_op == ((HOST_WIDE_INT) 1 << (mode_width - 1)) - 1)
+          else if ((mode_width <= HOST_BITS_PER_WIDE_INT)
+                   && (const_op == ((HOST_WIDE_INT) 1 << (mode_width - 1)) - 1))
 	    {
 	      const_op = 0, op1 = const0_rtx;
 	      code = GE;
@@ -9039,7 +9042,8 @@ simplify_comparison (code, pop0, pop1)
 	    }
 
 	  /* (unsigned) >= 0x80000000 is equivalent to < 0.  */
-	  else if (const_op == (HOST_WIDE_INT) 1 << (mode_width - 1))
+          else if ((mode_width <= HOST_BITS_PER_WIDE_INT)
+                   && (const_op == (HOST_WIDE_INT) 1 << (mode_width - 1)))
 	    {
 	      const_op = 0, op1 = const0_rtx;
 	      code = LT;
@@ -9054,7 +9058,8 @@ simplify_comparison (code, pop0, pop1)
 	    code = NE;
 
 	  /* (unsigned) > 0x7fffffff is equivalent to < 0.  */
-	  else if (const_op == ((HOST_WIDE_INT) 1 << (mode_width - 1)) - 1)
+          else if ((mode_width <= HOST_BITS_PER_WIDE_INT)
+                   && (const_op == ((HOST_WIDE_INT) 1 << (mode_width - 1)) - 1))
 	    {
 	      const_op = 0, op1 = const0_rtx;
 	      code = LT;
