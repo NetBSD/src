@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.7 2001/09/27 03:24:03 itojun Exp $	*/
-/*	$OpenBSD: misc.c,v 1.12 2001/06/26 17:27:24 markus Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.12 2001/06/26 17:27:24 markus Exp $");
+RCSID("$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -38,7 +38,7 @@ chop(char *s)
 {
 	char *t = s;
 	while (*t) {
-		if(*t == '\n' || *t == '\r') {
+		if (*t == '\n' || *t == '\r') {
 			*t = '\0';
 			return s;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.7 2001/09/27 03:24:02 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.8 2001/12/06 03:54:05 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.45 2001/09/19 19:35:30 stevesk Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.46 2001/12/05 10:06:12 deraadt Exp $");
 
 #include <openssl/evp.h>
 
@@ -218,7 +218,7 @@ ssh_get_num_identities(AuthenticationConnection *auth, int version)
 	int type, code1 = 0, code2 = 0;
 	Buffer request;
 
-	switch(version){
+	switch (version) {
 	case 1:
 		code1 = SSH_AGENTC_REQUEST_RSA_IDENTITIES;
 		code2 = SSH_AGENT_RSA_IDENTITIES_ANSWER;
@@ -287,7 +287,7 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 	 * Get the next entry from the packet.  These will abort with a fatal
 	 * error if the packet is too short or contains corrupt data.
 	 */
-	switch(version){
+	switch (version) {
 	case 1:
 		key = key_new(KEY_RSA1);
 		bits = buffer_get_int(&auth->identities);
@@ -439,7 +439,7 @@ ssh_encode_identity_ssh2(Buffer *b, Key *key, const char *comment)
 	buffer_clear(b);
 	buffer_put_char(b, SSH2_AGENTC_ADD_IDENTITY);
 	buffer_put_cstring(b, key_ssh_name(key));
-	switch(key->type){
+	switch (key->type) {
 	case KEY_RSA:
 		buffer_put_bignum2(b, key->rsa->n);
 		buffer_put_bignum2(b, key->rsa->e);

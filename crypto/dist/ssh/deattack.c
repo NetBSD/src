@@ -1,5 +1,5 @@
-/*	$NetBSD: deattack.c,v 1.9 2001/11/27 04:10:23 itojun Exp $	*/
-/*	$OpenBSD: deattack.c,v 1.15 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$NetBSD: deattack.c,v 1.10 2001/12/06 03:54:05 itojun Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.16 2001/12/05 03:56:39 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
