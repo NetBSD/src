@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 2004/02/20 18:04:06 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.14.2.1 2004/05/09 08:30:39 jdc Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2004/02/20 18:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14.2.1 2004/05/09 08:30:39 jdc Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -265,7 +265,7 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
-		pin = PPB_INTERRUPT_SWIZZLE(pin, dev);
+		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
 		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
 		    &dev, &func);
 		pin |= (dev << 2);
