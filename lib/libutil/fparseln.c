@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.4 1997/11/24 13:05:38 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.5 1997/12/01 02:58:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.4 1997/11/24 13:05:38 lukem Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.5 1997/12/01 02:58:41 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: fparseln.c,v 1.4 1997/11/24 13:05:38 lukem Exp $");
 #include <stdlib.h>
 #include <util.h>
 
-static int isescaped __P((const char *, const char *, int));
+static int isescaped __P((const char *, const char *, char));
 
 /* isescaped():
  *	Return true if the character in *p that belongs to a string
@@ -48,10 +48,10 @@ static int isescaped __P((const char *, const char *, int));
 static int
 isescaped(sp, p, esc)
 	const char *sp, *p;
-	int esc;
+	char esc;
 {
-	const char *cp;
-	size_t ne;
+	const char     *cp;
+	size_t		ne;
 
 	/* No escape character */
 	if (esc == '\0')
@@ -72,17 +72,24 @@ isescaped(sp, p, esc)
  *	the comment char.
  */
 char *
-fparseln(fp, size, lineno, str)
-	FILE *fp;
-	size_t *size, *lineno;
-	const char str[3];
+fparseln(fp, size, lineno, str, flags)
+	FILE		*fp;
+	size_t		*size;
+	size_t		*lineno;
+	const char	 str[3];
+	int		 flags;
 {
-	size_t s, len = 0;
-	char *buf = NULL;
-	char *ptr, *cp;
-	int cnt = 1;
-	static const char dstr[3] = "\\\\#";
-	char esc, con, nl, com;
+	static const char dstr[3] = { '\\', '\\', '#' };
+
+	size_t	s, len;
+	char   *buf;
+	char   *ptr, *cp;
+	int	cnt;
+	char	esc, con, nl, com;
+
+	len = 0;
+	buf = NULL;
+	cnt = 1;
 
 	if (str == NULL)
 		str = dstr;
@@ -144,6 +151,37 @@ fparseln(fp, size, lineno, str)
 		buf[len] = '\0';
 	}
 
+	if ((flags & FPARSELN_UNESCALL) != 0 && esc && buf != NULL &&
+	    strchr(buf, esc) != NULL) {
+		ptr = cp = buf;
+		while (cp[0] != '\0') {
+			int skipesc;
+
+			while (cp[0] != '\0' && cp[0] != esc)
+				*ptr++ = *cp++;
+			if (cp[0] == '\0' || cp[1] == '\0')
+				break;
+
+			skipesc = 0;
+			if (cp[1] == com)
+				skipesc += (flags & FPARSELN_UNESCCOMM);
+			if (cp[1] == con)
+				skipesc += (flags & FPARSELN_UNESCCONT);
+			if (cp[1] == esc) 
+				skipesc += (flags & FPARSELN_UNESCESC);
+			if (cp[1] != com && cp[1] != con && cp[1] != esc)
+				skipesc = (flags & FPARSELN_UNESCREST);
+
+			if (skipesc)
+				cp++;
+			else
+				*ptr++ = *cp++;
+			*ptr++ = *cp++;
+		}
+		*ptr = '\0';
+		len = strlen(buf);
+	}
+
 	if (size)
 		*size = len;
 	return buf;
@@ -158,12 +196,13 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *ptr;
-	size_t size, line;
+	char   *ptr;
+	size_t	size, line;
 
 	line = 0;
-	while ((ptr = fparseln(stdin, &size, &line, NULL)) != NULL)
-		printf("line %d (%d) %s\n", line, size, ptr);
+	while ((ptr = fparseln(stdin, &size, &line, NULL,
+	    FPARSELN_UNESCALL)) != NULL)
+		printf("line %d (%d) |%s|\n", line, size, ptr);
 	return 0;
 }
 
