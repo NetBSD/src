@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7.2.1 1999/09/26 13:35:10 he Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.2.2 2000/10/19 16:28:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -78,7 +78,8 @@ void	 die __P((int));
 void	 display __P((int));
 int	 dkinit __P((int, gid_t));
 int	 dkcmd __P((char *, char *));
-void	 error __P((const char *fmt, ...));
+void	 error __P((const char *fmt, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 void	 fetchiostat __P((void));
 void	 fetchkre __P((void));
 void	 fetchmbufs __P((void));
