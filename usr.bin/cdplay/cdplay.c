@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.24 2003/02/28 05:48:58 matt Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.25 2003/07/14 09:18:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.24 2003/02/28 05:48:58 matt Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.25 2003/07/14 09:18:22 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,7 +193,8 @@ main(int argc, char **argv)
 		usage();
 
 	if (cdname == NULL) {
-		sprintf(defdev, "cd0%c", 'a' + getrawpartition());
+		snprintf(defdev, sizeof(defdev), "cd0%c",
+		    'a' + getrawpartition());
 		cdname = defdev;
 	}
 
@@ -723,9 +724,9 @@ skip(int dir, int fromuser)
 	}
 
 	if (shuffle)
-		sprintf(str, "%d %d", trk, trk);
+		snprintf(str, sizeof(str), "%d %d", trk, trk);
 	else
-		sprintf(str, "%d", trk);
+		snprintf(str, sizeof(str), "%d", trk);
 
 	return (play(str, 0));
 }
