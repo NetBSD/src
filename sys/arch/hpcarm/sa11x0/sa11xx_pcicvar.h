@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.2 2001/03/27 18:06:39 toshii Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.3 2001/07/07 08:10:15 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct sapcic_socket {
 	int shutdown;
 
 	/* private data for pcictag functions */
-	struct saip_softc *saip_sc;
+	struct sa11x0_softc *saip_sc;
 	struct sacc_softc *sacc_sc;
 	void *pddata;
 };
