@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.31 2004/03/22 18:57:10 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.32 2004/03/25 07:35:40 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.31 2004/03/22 18:57:10 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.32 2004/03/25 07:35:40 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,7 +48,13 @@ __RCSID("$NetBSD: tstp.c,v 1.31 2004/03/22 18:57:10 jdc Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-static struct sigaction	otsa, owsa;
+static int tstp_set = 0;
+static int winch_set = 0;
+
+static void (*otstpfn)
+__P((int)) = SIG_DFL;
+
+static struct sigaction	owsa;
 
 /*
  * stop_signal_handler --
@@ -97,11 +103,13 @@ __stop_signal_handler(/*ARGSUSED*/int signo)
 void
 __set_stophandler(void)
 {
-	struct sigaction sa;
-	sa.sa_handler = __stop_signal_handler;
-	sa.sa_flags = SA_RESTART;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGTSTP, &sa, &otsa);
+#ifdef DEBUG
+	__CTRACE("__set_stophandler: %d\n", tstp_set);
+#endif
+	if (!tstp_set) {
+		otstpfn = signal(SIGTSTP, __stop_signal_handler);
+		tstp_set = 1;
+	}
 }
 
 /*
@@ -110,7 +118,13 @@ __set_stophandler(void)
 void
 __restore_stophandler(void)
 {
-	sigaction(SIGTSTP, &otsa, NULL);
+#ifdef DEBUG
+	__CTRACE("__restore_stophandler: %d\n", tstp_set);
+#endif
+	if (tstp_set) {
+		(void) signal(SIGTSTP, otstpfn);
+		tstp_set = 0;
+	}
 }
 
 /*
@@ -131,7 +145,7 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 	 * If there was a previous handler, call that,
 	 * otherwise tell getch() to send KEY_RESIZE.
 	 */
-	if (owsa.sa_handler != __winch_signal_handler)
+	if (owsa.sa_handler !=  NULL)
 		owsa.sa_handler(signo);
 	else
 		_cursesi_screen->resized = 1;
@@ -143,20 +157,33 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 void
 __set_winchhandler(void)
 {
-	struct sigaction sa;
-	sa.sa_handler = __winch_signal_handler;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGWINCH, &sa, &owsa);
+#ifdef DEBUG
+	__CTRACE("__set_winchhandler: %d\n", winch_set);
+#endif
+	if (!winch_set) {
+		struct sigaction sa;
+
+		sa.sa_handler = __winch_signal_handler;
+		sa.sa_flags = 0;
+		sigemptyset(&sa.sa_mask);
+		sigaction(SIGWINCH, &sa, &owsa);
+		winch_set = 1;
+	}
 }
 
 /*
- * Restore the TSTP handler.
+ * Restore the WINCH handler.
  */
 void
 __restore_winchhandler(void)
 {
-	sigaction(SIGTSTP, &owsa, NULL);
+#ifdef DEBUG
+	__CTRACE("__restore_winchhandler: %d\n", winch_set);
+#endif
+	if (winch_set) {
+		sigaction(SIGWINCH, &owsa, NULL);
+		winch_set = 0;
+	}
 }
 
 /* To allow both SIGTSTP and endwin() to come back nicely, we provide
