@@ -290,8 +290,8 @@ showallscores()
 	register int i,j;
 	lflush();  lcreat((char*)0);  if (readboard()<0) return;
 	c[WEAR] = c[WIELD] = c[SHIELD] = -1;  /* not wielding or wearing anything */
-	for (i=0; i<MAXPOTION; i++) potionname[i][0]=' ';
-	for (i=0; i<MAXSCROLL; i++) scrollname[i][0]=' ';
+	for (i=0; i<MAXPOTION; i++) potionname[i]=potionhide[i];
+	for (i=0; i<MAXSCROLL; i++) scrollname[i]=scrollhide[i];
 	i=winshou();  j=shou(1);
 	if (i+j==0) lprcat(esb); else lprc('\n');
 	lflush();
