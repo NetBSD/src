@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_lookup.c,v 1.6 1994/02/14 21:46:31 mycroft Exp $
+ *	$Id: msdosfs_lookup.c,v 1.7 1994/02/14 21:47:57 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ msdosfs_lookup(vdp, ndp, p)
 #ifdef DIAGNOSTIC
 		if (vdp == ndp->ni_rootdir && ndp->ni_isdotdot)
 			panic("msdosfs_lookup: .. thru root");
-#endif				/* PARANOID */
+#endif
 		pdp = dp;
 		vdp = ndp->ni_vp;
 		dp = VTODE(vdp);
