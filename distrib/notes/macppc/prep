@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1.2.2 2000/02/22 00:25:19 he Exp $
+.\"	$NetBSD: prep,v 1.1.2.3 2000/02/22 23:42:12 he Exp $
 .
 .(Note
 Currently
@@ -41,8 +41,11 @@ The various Apple Macintosh machines have slightly different versions
 of OpenFirmware, and they vary somewhat in their capabilities, so
 the documentation provided here is more hints than the definitive
 all-encompassing truth about OpenFirmware on Macintosh machines.
-Some versions of OpenFirmware also has bugs -- check with Apple if
-a firmware update is available for your particular model.
+Some versions of OpenFirmware also have bugs -- check with Apple at
+.Pp
+.Lk http://asu.info.apple.com/
+.Pp
+if a firmware update is available for your particular model.
 .Pp
 To get into OpenFirmware, reset the Macintosh and hold down
 Command-Option-O-F while booting.  The firmware checks the state
@@ -97,7 +100,7 @@ or possibly simply
 .Ed
 .Pp
 When booting from the network the Macintosh will issue a BOOTP/DHCP
-query to get it's IP address, and load the file given in the reply
+query to get its IP address, and load the file given in the reply
 using TFTP.  The file loaded is typically
 .Dq ofwboot.elf.
 This second-stage boot loader will in turn use DHCP again to
@@ -105,6 +108,11 @@ get the Mac's IP address, the IP address of an NFS file server,
 and the root path to mount.  ofwboot.elf will then use NFS to load
 the kernel, typically
 .Dq netbsd.
+.Pp
+You may want to inspect the Diskless NetBSD HOWTO for further
+information about setting up the environment for diskless use at
+.Pp
+.Lk http://www.netbsd.org/Documentation/network/netboot/
 .Pp
 .(Note
 Older Macintosh machines' OpenFirmware may not have support for loading
