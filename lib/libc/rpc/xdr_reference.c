@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_reference.c,v 1.4 1995/04/14 19:48:33 jtc Exp $	*/
+/*	$NetBSD: xdr_reference.c,v 1.5 1995/04/14 20:30:18 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)xdr_reference.c 1.11 87/08/11 SMI";*/
 /*static char *sccsid = "from: @(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_reference.c,v 1.4 1995/04/14 19:48:33 jtc Exp $";
+static char *rcsid = "$NetBSD: xdr_reference.c,v 1.5 1995/04/14 20:30:18 jtc Exp $";
 #endif
 
 /*
@@ -49,8 +49,6 @@ static char *rcsid = "$NetBSD: xdr_reference.c,v 1.4 1995/04/14 19:48:33 jtc Exp
 #include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-
-#define LASTUNSIGNED	((u_int)0-1)
 
 /*
  * XDR an indirect pointer
@@ -87,7 +85,7 @@ xdr_reference(xdrs, pp, size, proc)
 			break;
 	}
 
-	stat = (*proc)(xdrs, loc, LASTUNSIGNED);
+	stat = (*proc)(xdrs, loc);
 
 	if (xdrs->x_op == XDR_FREE) {
 		mem_free(loc, size);
