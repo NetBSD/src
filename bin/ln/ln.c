@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
+/*	$NetBSD: ln.c,v 1.11 1997/05/16 02:59:39 jtk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static char rcsid[] = "$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: ln.c,v 1.11 1997/05/16 02:59:39 jtk Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $";
 
 int	dirflag;			/* Undocumented directory flag. */
 int	fflag;				/* Unlink existing files. */
+int	lflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
 int (*linkf) __P((const char *, const char *));
@@ -75,7 +76,7 @@ main(argc, argv)
 	int ch, exitval;
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "Ffs")) != -1)
+	while ((ch = getopt(argc, argv, "hnFfs")) != -1)
 		switch (ch) {
 		case 'F':
 			dirflag = 1;	/* XXX: deliberately undocumented. */
@@ -85,6 +86,10 @@ main(argc, argv)
 			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'h':
+		case 'n':		/* GNU compat; undocumented */
+			lflag = 1;
 			break;
 		case '?':
 		default:
@@ -106,6 +111,12 @@ main(argc, argv)
 	}
 					/* ln target1 target2 directory */
 	sourcedir = argv[argc - 1];
+	if (lflag && lstat(sourcedir, &sb) == 0 && S_ISLNK(sb.st_mode)) {
+		/* we were asked not to follow symlinks, but found one at
+		   the target--simulate "not a directory" error */
+		errno = ENOTDIR;
+		err(1, "%s", sourcedir);
+	}
 	if (stat(sourcedir, &sb))
 		err(1, "%s", sourcedir);
 	if (!S_ISDIR(sb.st_mode))
@@ -136,8 +147,11 @@ linkit(target, source, isdir)
 		}
 	}
 
-	/* If the source is a directory, append the target's name. */
-	if (isdir || !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
+	/* If the source is a directory (and not a symlink if lflag),
+	   append the target's name. */
+	if (isdir ||
+	    !lstat(source, &sb) && S_ISDIR(sb.st_mode) ||
+	    !lflag && !stat(source, &sb) && S_ISDIR(sb.st_mode)) {
 		if ((p = strrchr(target, '/')) == NULL)
 			p = target;
 		else
@@ -164,6 +178,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage:\tln [-fs] file1 file2\n\tln [-fs] file ... directory\n");
+	    "usage:\tln [-fsh] file1 file2\n\tln [-fsh] file ... directory\n");
 	exit(1);
 }
