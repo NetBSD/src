@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.10 1998/06/25 06:45:46 ross Exp $ */
+/* $NetBSD: loadfile.c,v 1.11 1998/08/14 16:50:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@ static int elf_exec __P((int, Elf_Ehdr *, u_int64_t *));
 #endif
 int loadfile __P((char *, u_int64_t *));
 
-vm_offset_t ffp_save, ptbr_save;
-vm_offset_t ssym, esym;
+paddr_t ffp_save, ptbr_save;
+vaddr_t ssym, esym;
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.

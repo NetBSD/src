@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.12 1998/08/14 16:50:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.12 1998/08/14 16:50:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ apecs_dma_init(acp)
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		extern paddr_t alpha_XXX_dmamap_or;		/* XXX */
 		alpha_XXX_dmamap_or = APECS_DIRECT_MAPPED_BASE;	/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */

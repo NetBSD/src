@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.34 1998/07/04 22:18:14 jonathan Exp $ */
+/* $NetBSD: trap.c,v 1.35 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 1998/07/04 22:18:14 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 1998/08/14 16:50:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
-			register vm_offset_t va;
+			register vaddr_t va;
 			register struct vmspace *vm = NULL;
 			register vm_map_t map;
 			vm_prot_t ftype;
@@ -402,7 +402,7 @@ trap(a0, a1, a2, entry, framep)
 #endif
 			}
 	
-			va = trunc_page((vm_offset_t)a0);
+			va = trunc_page((vaddr_t)a0);
 #if defined(UVM)
 			rv = uvm_fault(map, va, 0, ftype);
 #else
