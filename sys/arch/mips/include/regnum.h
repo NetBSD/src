@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.3 1998/07/05 04:14:56 jonathan Exp $	*/
+/*	$NetBSD: regnum.h,v 1.4 2002/11/02 02:00:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,16 @@
 #define A1	5
 #define A2	6
 #define A3	7
+#if defined(__mips_n32) || defined(__mips_n64)
+#define A4	8
+#define A5	9
+#define A6	10
+#define A7	11
+#define T0	12
+#define T1	13
+#define T2	14
+#define T3	15
+#else
 #define T0	8
 #define T1	9
 #define T2	10
@@ -63,6 +73,7 @@
 #define T5	13
 #define T6	14
 #define T7	15
+#endif /* __mips_n32 || __mips_n64 */
 #define S0	16
 #define S1	17
 #define S2	18
@@ -124,16 +135,3 @@
 #define F30	(FPBASE+30)
 #define F31	(FPBASE+31)
 #define	FSR	(FPBASE+32)
-
-#ifdef IPCREG
-#define	NIPCREG (FSR + 1)
-int ipcreg[NIPCREG] = {
-	ZERO, AST, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7,
-	S0, S1, S2, S3, S4, S5, S6, S7, T8, T9, K0, K1, GP, SP, S8, RA,
-	SR, MULLO, MULHI, BADVADDR, CAUSE, PC,
-	F0, F1, F2, F3, F4, F5, F6, F7,
-	F8, F9, F10, F11, F12, F13, F14, F15,
-	F16, F17, F18, F19, F20, F21, F22, F23,
-	F24, F25, F26, F27, F28, F29, F30, F31, FSR,
-};
-#endif
