@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.17 1994/04/07 17:00:55 mycroft Exp $
+ *	$Id: intr.c,v 1.18 1994/04/24 01:34:08 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include <i386/isa/isa.h>
+#include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 
