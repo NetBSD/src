@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 2000/08/31 19:12:45 eeh Exp $ */
+/*	$NetBSD: vmparam.h,v 1.13 2000/09/28 19:56:14 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,10 +56,16 @@
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x2000			/* Start of user text */
-#define	USRSTACK	KERNBASE		/* Start of user stack */
+#ifdef __arch64__
+#define USRSTACK	0xffffffffffffe000L
+#else
+#define USRSTACK	0xffffe000L
+#endif
 
 /*
  * Virtual memory related constants, all in bytes
+ *
+ * XXXX -- These need to be updated to 64-bits.
  */
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(64*1024*1024)		/* max text size */
@@ -103,8 +109,9 @@
  * User/kernel map constants.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_ADDRESS		((vaddr_t)-1)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)-1)
+
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
 
