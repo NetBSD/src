@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.22 2003/08/11 15:17:31 itojun Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.23 2004/04/17 15:18:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.22 2003/08/11 15:17:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.23 2004/04/17 15:18:53 christos Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -574,13 +574,13 @@ tp_mss(tpcb, nhdr_size)
 	if ((bufsize = rt->rt_rmx.rmx_sendpipe) > 0) {
 #endif
 		bufsize = min(bufsize, so->so_snd.sb_hiwat);
-		(void) sbreserve(&so->so_snd, bufsize);
+		(void) sbreserve(&so->so_snd, bufsize, so);
 	}
 #ifdef RTV_SPIPE
 	if ((bufsize = rt->rt_rmx.rmx_recvpipe) > 0) {
 #endif
 		bufsize = min(bufsize, so->so_rcv.sb_hiwat);
-		(void) sbreserve(&so->so_rcv, bufsize);
+		(void) sbreserve(&so->so_rcv, bufsize, so);
 	} else
 		bufsize = so->so_rcv.sb_hiwat;
 #ifdef RTV_SSTHRESH
