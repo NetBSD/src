@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.4 1996/03/14 19:02:33 christos Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.5 1996/10/10 21:19:55 christos Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -182,7 +182,7 @@ rcons_init(rc)
 	rp->height = rc->rc_height;
 	rp->depth = rc->rc_depth;
 	if (rc->rc_linebytes & 0x3) {
-		printf("rcons_init: linebytes assumption botched (0x%x)\n",
+		kprintf("rcons_init: linebytes assumption botched (0x%x)\n",
 		    rc->rc_linebytes);
 		return;
 	}
