@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.70 1999/03/27 08:15:29 simonb Exp $
+#	$NetBSD: Makefile.pmax,v 1.71 1999/04/06 06:16:07 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -118,8 +118,6 @@ LINKFLAGS+=	-x
 .endif
 
 SYSTEM_LD_TAIL+=;\
-		echo elf2aout $@ $@.aout; elf2aout $@ $@.aout; \
-		chmod 755 $@.aout; \
 		echo elf2ecoff $@ $@.ecoff; elf2ecoff $@ $@.ecoff; \
 		chmod 755 $@.ecoff
 
@@ -147,7 +145,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f eddep *netbsd netbsd.aout netbsd.ecoff netbsd.gdb tags *.[io] \
+	rm -f eddep *netbsd netbsd.ecoff netbsd.gdb tags *.[io] \
 	  [a-z]*.s [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
