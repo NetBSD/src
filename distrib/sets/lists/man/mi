@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.483 2002/06/01 06:35:35 grant Exp $
+# $NetBSD: mi,v 1.484 2002/06/02 18:57:11 jmcneill Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1161,6 +1161,7 @@
 ./usr/share/man/cat5/man.conf.0			man-man-catman
 ./usr/share/man/cat5/map3270.0			man-tn3270-catman
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman
+./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman
 ./usr/share/man/cat5/moduli.0			man-secsh-catman
 ./usr/share/man/cat5/monthly.conf.0		man-sys-catman
 ./usr/share/man/cat5/motd.0			man-sys-catman
@@ -2878,6 +2879,7 @@
 ./usr/share/man/man5/man.conf.5			man-man-man
 ./usr/share/man/man5/map3270.5			man-tn3270-man
 ./usr/share/man/man5/master.passwd.5		man-sys-man
+./usr/share/man/man5/mixerctl.conf.5		man-audio-man
 ./usr/share/man/man5/moduli.5			man-secsh-man
 ./usr/share/man/man5/monthly.conf.5		man-sys-man
 ./usr/share/man/man5/motd.5			man-sys-man
