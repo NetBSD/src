@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.30 2005/01/19 20:19:04 xtraeme Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.31 2005/02/05 14:26:05 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.30 2005/01/19 20:19:04 xtraeme Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.31 2005/02/05 14:26:05 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
-#define CMDFUNC(func) static int func __P((int argc, char *argv[]))
+#define CMDFUNC(func) static int func (int argc, char *argv[])
 #define CMDFUNCSTART(func) static int func(argc, argv)		\
 				int argc;			\
 				char *argv[];
