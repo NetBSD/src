@@ -411,7 +411,7 @@ void pmsintr(unit)
 	case 2:
 		dy = inb(ioport + DATA) << 2;
 		dy >>= 2;
-		++state;
+		state = 0;
 
 		dy = -dy;
 
