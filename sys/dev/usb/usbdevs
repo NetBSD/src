@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.132 2000/12/06 21:38:03 jdolecek Exp $
+$NetBSD: usbdevs,v 1.133 2000/12/07 01:02:12 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -350,6 +350,9 @@ product ATEN UC1284		0x2001	Parallel printer adapter
 product ATEN UC10T		0x2002	10Mbps ethernet adapter
 product ATEN UC232A		0x2008	Serial adapter
 
+/* Atmel Comp. products */
+product ATMEL UHB124		0x3301	UHB124 hub
+
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
 
@@ -576,6 +579,7 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
+product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
