@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.278 2002/10/20 13:49:46 itojun Exp $
+$NetBSD: usbdevs,v 1.279 2002/10/31 10:36:42 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -930,6 +930,7 @@ product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
+product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
