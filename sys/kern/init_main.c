@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.125 1998/07/31 22:50:49 perry Exp $	*/
+/*	$NetBSD: init_main.c,v 1.126 1998/08/01 01:20:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -201,13 +201,6 @@ main()
 	vm_page_physrehash();
 #endif
 #endif /* UVM */
-
-	/*
-	 * Initialize mbuf's.  Do this now because we might attempt to
-	 * allocate mbufs or mbuf clusters during autoconfiguration.
-	 */
-	mbinit();
-
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
 #if NRND > 0
@@ -313,6 +306,9 @@ main()
 
 	/* Start real time and statistics clocks. */
 	initclocks();
+
+	/* Initialize mbuf's. */
+	mbinit();
 
 #ifdef REAL_CLISTS
 	/* Initialize clists. */
