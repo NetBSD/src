@@ -1,9 +1,10 @@
-# $NetBSD: ad.powerpc,v 1.26 2002/08/07 21:20:50 briggs Exp $
+# $NetBSD: ad.powerpc,v 1.27 2002/08/08 13:42:22 briggs Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
 ./usr/include/powerpc/aout_machdep.h	comp-c-include
 ./usr/include/powerpc/asm.h	comp-c-include
+./usr/include/powerpc/atomic.h	comp-c-include
 ./usr/include/powerpc/bat.h	comp-c-include
 ./usr/include/powerpc/bswap.h	comp-c-include
 ./usr/include/powerpc/byte_swap.h	comp-c-include
