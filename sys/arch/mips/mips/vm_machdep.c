@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85 2001/11/14 18:15:27 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86 2001/11/28 08:49:19 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2001/11/14 18:15:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2001/11/28 08:49:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
+	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
 #endif
 }
 
