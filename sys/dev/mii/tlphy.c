@@ -1,4 +1,4 @@
-/*  $NetBSD: tlphy.c,v 1.1 1997/10/17 17:34:05 bouyer Exp $   */
+/*  $NetBSD: tlphy.c,v 1.2 1997/10/21 05:54:21 bouyer Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* Driver for Texas Instruments's thunderland internal PHY */
+ /* Driver for Texas Instruments's ThunderLAN internal PHY */
 
 #include <sys/param.h>
 #include <sys/systm.h>
