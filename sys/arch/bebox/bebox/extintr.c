@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.13 2000/06/29 08:22:17 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.14 2000/08/14 10:09:06 kleink Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -317,7 +317,7 @@ intr_calculatemasks()
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFTCLOCK] = SINT_SERIAL;
+	imask[IPL_SOFTCLOCK] = SINT_CLOCK;
 	imask[IPL_SOFTNET] = SINT_NET;
 	imask[IPL_SOFTSERIAL] = SINT_SERIAL;
 
