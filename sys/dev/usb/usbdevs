@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.107 2000/08/12 14:51:01 augustss Exp $
+$NetBSD: usbdevs,v 1.108 2000/08/17 15:17:00 darrenr Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ vendor ACERP		0x04a5	Acer Peripherals, Inc.
 vendor CANON		0x04a9	Canon, Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
+vendor RAINBOW		0x04b9	Rainbow Technologies
 vendor IODATA		0x04bb	I/O Data
 vendor 3COMUSR		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
@@ -582,14 +583,17 @@ product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
 
+/* Qtronix products */
+product QTRONIX 980N		0x2011	Scorpion-980N keyboard
+
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 
+/* Rainbow Technologies products */
+product	RAINBOW IKEY2000	0x1200	i-Key 2000  
+
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
-
-/* Qtronix products */
-product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* SanDisk products */
 product SANDISK IMAGEMATE	0x0001	USB ImageMate
