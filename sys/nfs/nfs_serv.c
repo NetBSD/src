@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.39 1997/12/22 00:09:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.40 1998/02/05 08:00:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,6 +74,10 @@
 #include <ufs/ufs/dir.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>
@@ -1724,7 +1728,11 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 		}
 out:
 		if (!error) {
+#if defined(UVM)
+			(void)uvm_vnp_uncache(vp);
+#else
 			(void)vnode_pager_uncache(vp);
+#endif
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			nqsrv_getl(vp, ND_WRITE);
 			error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
@@ -1898,7 +1906,11 @@ out:
 		nqsrv_getl(fromnd.ni_dvp, ND_WRITE);
 		nqsrv_getl(tdvp, ND_WRITE);
 		if (tvp) {
+#if defined(UVM)
+			(void)uvm_vnp_uncache(tvp);
+#else
 			(void)vnode_pager_uncache(tvp);
+#endif
 			nqsrv_getl(tvp, ND_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
@@ -3425,8 +3437,13 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 		 * the inode, try to free it up once.  If
 		 * we fail, we can't allow writing.
 		 */
+#if defined(UVM)
+		if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+			return (ETXTBSY);
+#else
 		if ((vp->v_flag & VTEXT) && !vnode_pager_uncache(vp))
 			return (ETXTBSY);
+#endif
 	}
 	error = VOP_GETATTR(vp, &vattr, cred, p);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.36 1998/01/06 21:15:41 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.37 1998/02/05 07:59:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,10 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 int	nprocs = 1;		/* process 0 */
 
@@ -270,7 +274,11 @@ again:
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
+#if defined(UVM)
+	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+#else
 	vm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
@@ -290,11 +298,19 @@ again:
 	/*
 	 * Update stats now that we know the fork was successful.
 	 */
+#if defined(UVM)
+	uvmexp.forks++;
+	if (flags & FORK_PPWAIT)
+		uvmexp.forks_ppwait++;
+	if (flags & FORK_SHAREVM)
+		uvmexp.forks_sharevm++;
+#else
 	cnt.v_forks++;
 	if (flags & FORK_PPWAIT)
 		cnt.v_forks_ppwait++;
 	if (flags & FORK_SHAREVM)
 		cnt.v_forks_sharevm++;
+#endif
 
 	/*
 	 * Pass a pointer to the new process to the caller.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.50 1998/01/22 00:53:59 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.51 1998/02/05 08:00:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,6 +59,10 @@
 #include <sys/dirent.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -1640,7 +1644,11 @@ nfs_loadattrcache(vpp, fp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, np->n_size);
+#else
 			vnode_pager_setsize(vp, np->n_size);
+#endif
 		} else
 			np->n_size = vap->va_size;
 	}
@@ -1685,7 +1693,11 @@ nfs_getattrcache(vp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
+#if defined(UVM)
+			uvm_vnp_setsize(vp, np->n_size);
+#else
 			vnode_pager_setsize(vp, np->n_size);
+#endif
 		} else
 			np->n_size = vap->va_size;
 	}

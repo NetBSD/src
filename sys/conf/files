@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.167 1998/01/22 01:32:14 thorpej Exp $
+#	$NetBSD: files,v 1.168 1998/02/05 07:59:32 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -261,6 +261,7 @@ file kern/kern_descrip.c
 file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
+file kern/kern_fthread.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lkm.c			lkm
 file kern/kern_lock.c
@@ -529,20 +530,41 @@ file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
 file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
-file vm/device_pager.c			devpager
-file vm/swap_pager.c			swappager
-file vm/vm_fault.c
-file vm/vm_glue.c
-file vm/vm_init.c
-file vm/vm_kern.c
-file vm/vm_map.c
-file vm/vm_meter.c
-file vm/vm_mmap.c
-file vm/vm_object.c
-file vm/vm_page.c
-file vm/vm_pageout.c
-file vm/vm_pager.c
-file vm/vm_swap.c
-file vm/vm_unix.c
-file vm/vm_user.c
-file vm/vnode_pager.c			vnodepager
+file vm/device_pager.c			!uvm & devpager
+file vm/swap_pager.c			!uvm & swappager
+file vm/vm_fault.c			!uvm
+file vm/vm_glue.c			!uvm
+file vm/vm_init.c			!uvm
+file vm/vm_kern.c			!uvm
+file vm/vm_map.c			!uvm
+file vm/vm_meter.c			!uvm
+file vm/vm_mmap.c			!uvm
+file vm/vm_object.c			!uvm
+file vm/vm_page.c			!uvm
+file vm/vm_pageout.c			!uvm
+file vm/vm_pager.c			!uvm
+file vm/vm_swap.c			!uvm
+file vm/vm_unix.c			!uvm
+file vm/vm_user.c			!uvm
+file vm/vnode_pager.c			!uvm & vnodepager
+file uvm/uvm_amap.c			uvm
+file uvm/uvm_aobj.c			uvm
+file uvm/uvm_device.c			uvm
+file uvm/uvm_fault.c			uvm
+file uvm/uvm_glue.c			uvm
+file uvm/uvm_init.c			uvm
+file uvm/uvm_io.c			uvm
+file uvm/uvm_km.c			uvm
+file uvm/uvm_loan.c			uvm
+file uvm/uvm_map.c			uvm
+file uvm/uvm_meter.c			uvm
+file uvm/uvm_mmap.c			uvm
+file uvm/uvm_page.c			uvm
+file uvm/uvm_pager.c			uvm
+file uvm/uvm_pdaemon.c			uvm
+file uvm/uvm_pglist.c			uvm
+file uvm/uvm_stat.c			uvm
+file uvm/uvm_swap.c			uvm
+file uvm/uvm_unix.c			uvm
+file uvm/uvm_user.c			uvm
+file uvm/uvm_vnode.c			uvm

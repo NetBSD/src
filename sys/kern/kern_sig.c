@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.68 1997/11/29 18:38:24 kleink Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.69 1998/02/05 07:59:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -69,6 +69,10 @@
 
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
@@ -1124,7 +1128,11 @@ coredump(p)
 		 * vm_coredump() spits out all appropriate segments.
 		 * All that's left to do is to write the core header.
 		 */
+#if defined(UVM)
+		error = uvm_coredump(p, vp, cred, &core);
+#else
 		error = vm_coredump(p, vp, cred, &core);
+#endif
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.9 1996/09/07 12:41:39 mycroft Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.10 1998/02/05 08:00:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,6 +50,10 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

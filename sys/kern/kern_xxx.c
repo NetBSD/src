@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.40 1997/09/20 19:32:15 pk Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.41 1998/02/05 07:59:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,7 +83,11 @@ sys_reboot(p, v, retval)
 #define	SCDEBUG_ALL		0x0004	/* even syscalls that are implemented */
 #define	SCDEBUG_SHOWARGS	0x0008	/* show arguments to calls */
 
+#if 0
 int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
+#else
+int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS|SCDEBUG_ALL;
+#endif
 
 void
 scdebug_call(p, code, args)

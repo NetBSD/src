@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.109 1998/02/03 09:11:55 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.110 1998/02/05 08:00:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,6 +58,10 @@
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_mode __P((struct vnode *, int, struct proc *p));
@@ -429,7 +433,9 @@ dounmount(mp, flags, p)
 		vfs_setpublicfs(NULL, NULL, NULL);
 
 	mp->mnt_flag &=~ MNT_ASYNC;
+#if !defined(UVM)
 	vnode_pager_umount(mp);	/* release cached vnodes */
+#endif
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
 	if ((error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0 ||
 	    (flags & MNT_FORCE))
@@ -485,7 +491,11 @@ sys_sync(p, v, retval)
 		    !vfs_busy(mp)) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
+#if defined(UVM)
+			uvm_vnp_sync(mp);
+#else
 			vnode_pager_sync(mp);
+#endif
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
@@ -1135,7 +1145,11 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
+#if defined(UVM)
+	(void)uvm_vnp_uncache(vp);
+#else
 	(void)vnode_pager_uncache(vp);
+#endif
 
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
@@ -2002,7 +2016,11 @@ out:
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		if (tvp) {
+#if defined(UVM)
+			(void)uvm_vnp_uncache(tvp);
+#else
 			(void)vnode_pager_uncache(tvp);
+#endif
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,

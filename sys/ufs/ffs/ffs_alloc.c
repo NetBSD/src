@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.15 1997/06/11 10:09:37 bouyer Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.16 1998/02/05 08:00:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -266,7 +266,11 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	    			     ffs_alloccg);
 	if (bno > 0) {
 		bp->b_blkno = fsbtodb(fs, bno);
+#if defined(UVM)
+		(void) uvm_vnp_uncache(ITOV(ip));
+#else
 		(void) vnode_pager_uncache(ITOV(ip));
+#endif
 		ffs_blkfree(ip, bprev, (long)osize);
 		if (nsize < request)
 			ffs_blkfree(ip, bno + numfrags(fs, nsize),

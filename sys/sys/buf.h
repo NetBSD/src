@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.27 1997/10/10 08:19:47 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.28 1998/02/05 08:00:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -155,9 +155,13 @@ int	nbuf;			/* The number of buffer headers */
 struct	buf *buf;		/* The buffer headers. */
 char	*buffers;		/* The buffer contents. */
 int	bufpages;		/* Number of memory pages in the buffer pool. */
+
+/* XXXCDC: SWAP STUFF: swbuf and bswlist are dead */
+extern int nswbuf;		/* Number of swap I/O buffer headers. */
+#if !defined(UVM)
 struct	buf *swbuf;		/* Swap I/O buffer headers. */
-int	nswbuf;			/* Number of swap I/O buffer headers. */
 struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
+#endif
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));

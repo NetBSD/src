@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.5 1997/10/17 02:05:34 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.6 1998/02/05 08:00:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,6 +59,9 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -387,8 +390,13 @@ ext2fs_chmod(vp, mode, cred, p)
 	ip->i_e2fs_mode &= ~ALLPERMS;
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
+#if defined(UVM)
+	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
+		(void) uvm_vnp_uncache(vp);
+#else
 	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
 		(void) vnode_pager_uncache(vp);
+#endif
 	return (0);
 }
 

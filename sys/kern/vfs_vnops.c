@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.24 1998/01/14 22:08:44 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.25 1998/02/05 08:00:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,6 +55,10 @@
 #include <sys/poll.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_closefile };
@@ -180,8 +184,13 @@ vn_writechk(vp)
 	 * the vnode, try to free it up once.  If
 	 * we fail, we can't allow writing.
 	 */
+#if defined(UVM)
+	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+		return (ETXTBSY);
+#else
 	if ((vp->v_flag & VTEXT) && !vnode_pager_uncache(vp))
 		return (ETXTBSY);
+#endif
 	return (0);
 }
 

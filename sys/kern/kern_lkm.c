@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.40 1998/02/03 09:18:03 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.41 1998/02/05 07:59:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -61,6 +61,11 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG
@@ -154,7 +159,12 @@ lkmunreserve()
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
+#if defined(UVM)
+		uvm_km_free(kernel_map, curp->area, curp->size);/**/
+#else
+		/* XXXCDC: unwise to use kmem_map */
 		kmem_free(kmem_map, curp->area, curp->size);/**/
+#endif
 		curp->area = 0;
 	}
 
@@ -240,7 +250,12 @@ lkmioctl(dev, cmd, data, flag, p)
 		 */
 		curp->size = resrvp->size;
 
+#if defined(UVM)
+		curp->area = uvm_km_alloc(kernel_map, curp->size);/**/
+#else
+		/* XXXCDC: unwise to use kmem_map */
 		curp->area = kmem_alloc(kmem_map, curp->size);/**/
+#endif
 
 		curp->offset = 0;		/* load offset */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 1997/08/01 19:44:11 leo Exp $	*/
+/*	$NetBSD: md.c,v 1.15 1998/02/05 07:59:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -441,7 +441,11 @@ md_ioctl_kalloc(sc, umd, proc)
 
 	/* Sanity check the size. */
 	size = umd->md_size;
+#if defined(UVM)
+	addr = uvm_km_zalloc(kernel_map, size);
+#else
 	addr = kmem_alloc(kernel_map, size);
+#endif
 	if (!addr)
 		return ENOMEM;
 

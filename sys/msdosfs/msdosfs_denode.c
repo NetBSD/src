@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.25 1997/11/17 15:36:45 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.26 1998/02/05 08:00:16 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -59,6 +59,10 @@
 #include <sys/namei.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/msdosfsmount.h>
@@ -355,7 +359,11 @@ detrunc(dep, length, flags, cred, p)
 		return (EINVAL);
 	}
 
+#if defined(UVM)
+	uvm_vnp_setsize(DETOV(dep), length);
+#else
 	vnode_pager_setsize(DETOV(dep), length);
+#endif
 
 	if (dep->de_FileSize < length)
 		return (deextend(dep, length, cred));
@@ -408,7 +416,11 @@ detrunc(dep, length, flags, cred, p)
 #endif
 			return (error);
 		}
+#if defined(UVM)
+		uvm_vnp_uncache(DETOV(dep));	/* what's this for? */
+#else
 		vnode_pager_uncache(DETOV(dep));	/* what's this for? */
+#endif
 		/*
 		 * is this the right place for it?
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.11 1998/01/04 03:53:35 thorpej Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.12 1998/02/05 08:00:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -94,7 +94,11 @@ struct vmmeter {
 	u_int v_forks_sharevm;	/* number of forks that share address space */
 };
 #ifdef _KERNEL
+#if defined(UVM)
+extern struct	vmmeter cnt;
+#else
 struct	vmmeter cnt;
+#endif
 #endif
 
 /* systemwide totals computed every five seconds */

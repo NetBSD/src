@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.13 1997/03/24 00:35:17 thorpej Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.14 1998/02/05 07:59:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -97,8 +97,13 @@ enum _pdq_type_t {
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	vm_page_alloc_contig(n, 0, 0xffffffff, PAGE_SIZE)
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
 #else
+#if defined(UVM)
+#define	PDQ_OS_MEMALLOC_CONTIG(n)	uvm_km_alloc(kernel_map, round_page(n))
+#define	PDQ_OS_MEMFREE_CONTIG(p, n)	uvm_km_free(kernel_map, (vm_offset_t) p, n)
+#else
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_alloc(kernel_map, round_page(n))
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
+#endif
 #endif /* __FreeBSD__ */
 
 #if defined(__FreeBSD__)

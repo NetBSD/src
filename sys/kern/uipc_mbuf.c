@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.22 1997/11/20 04:28:18 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.23 1998/02/05 07:59:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -49,6 +49,10 @@
 
 #include <vm/vm.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 struct mbuf *mbutl;
 struct mbstat mbstat;
 union mcluster *mclfree;
@@ -92,7 +96,12 @@ m_clalloc(ncl, nowait)
 	int npg, s;
 
 	npg = ncl * CLSIZE;
+#if defined(UVM)
+	p = (caddr_t)uvm_km_kmemalloc(mb_map, uvmexp.mb_object, ctob(npg),
+	    (nowait == M_DONTWAIT) ? UVM_KMF_NOWAIT : 0);
+#else
 	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), nowait == 0);
+#endif
 	if (p == NULL) {
 		s = splclock();
 		curtime = time;

@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.13 1997/06/12 17:59:30 mrg Exp $	*/
+/*	$NetBSD: map.h,v 1.14 1998/02/05 08:00:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -77,7 +77,6 @@ struct mapent {
 };
 
 #ifdef _KERNEL
-extern int	nswapmap;
 
 long	rmalloc __P((struct map *, long));
 void	rmfree __P((struct map *, long, long));

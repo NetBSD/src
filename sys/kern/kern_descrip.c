@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.48 1998/01/05 04:51:16 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.49 1998/02/05 07:59:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -361,8 +361,15 @@ fdrelease(p, fd)
 	if (fp == NULL)
 		return (EBADF);
 	pf = &fdp->fd_ofileflags[fd];
+#if defined(UVM)
+	if (*pf & UF_MAPPED) {
+		/* XXX: USELESS? XXXCDC check it */
+		p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
+	}
+#else
 	if (*pf & UF_MAPPED)
 		(void) munmapfd(p, fd);
+#endif
 	*fpp = NULL;
 	*pf = 0;
 	fd_unused(fdp, fd);

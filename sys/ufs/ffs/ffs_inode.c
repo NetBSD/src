@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.15 1997/07/04 20:22:16 drochner Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.16 1998/02/05 08:00:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,6 +48,10 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -185,7 +189,11 @@ ffs_truncate(v)
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
 #endif
+#if defined(UVM)
+	uvm_vnp_setsize(ovp, length);
+#else
 	vnode_pager_setsize(ovp, length);
+#endif
 	fs = oip->i_fs;
 	osize = oip->i_ffs_size;
 	/*
@@ -206,7 +214,11 @@ ffs_truncate(v)
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
+#if defined(UVM)
+		(void) uvm_vnp_uncache(ovp);
+#else
 		(void) vnode_pager_uncache(ovp);
+#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -234,7 +246,11 @@ ffs_truncate(v)
 			return (error);
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
+#if defined(UVM)
+		(void) uvm_vnp_uncache(ovp);
+#else
 		(void) vnode_pager_uncache(ovp);
+#endif
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
