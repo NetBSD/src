@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.8 2000/07/01 01:39:01 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.9 2000/07/01 01:53:37 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
 
@@ -122,19 +122,10 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 
-#ifdef __NetBSD__
-#include <uvm/uvm_extern.h>
-#else
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
-#endif
-
-/*******************/
-/* *** FreeBSD *** */
-/*******************/
-#ifdef __FreeBSD__
 
 #if (__FreeBSD_version >=400000) || (NSMBUS > 0)
 #include <sys/bus.h>		/* used by smbus and newbus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.10 2000/07/01 01:39:02 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.11 2000/07/01 01:53:38 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.10 2000/06/28 15:09:12 roger Exp */
 
@@ -77,17 +77,10 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 
-#ifndef __NetBSD__
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
-#endif
-
-/*******************/
-/* *** FreeBSD *** */
-/*******************/
-#ifdef __FreeBSD__
 
 #if (__FreeBSD_version < 400000)
 #ifdef DEVFS
@@ -164,9 +157,8 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <sys/select.h>
 #include <sys/vnode.h>
 
-#include <vm/vm.h>
-
 #ifndef __NetBSD__
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
