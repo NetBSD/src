@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.90 1998/08/04 11:26:14 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.91 1998/08/05 16:38:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1716,10 +1716,11 @@ audiostartp(sc)
  * When the play interrupt routine finds that the write isn't keeping
  * the buffer filled it will insert silence in the buffer to make up
  * for this.  The part of the buffer that is filled with silence
- * is kept track of in a very approcimate way: it starts at sc_sil_start
- * and extends sc_sil_count bytes.  If the writer doesn't write sc_sil_count
- * get to encompass the whole buffer after which no more filling needs
- * to be done.  When the writer starts again sc_sil_count is set to 0.
+ * is kept track of in a very approximate way: it starts at sc_sil_start
+ * and extends sc_sil_count bytes.  If there is already silence in
+ * the requested area nothing is done; so when the whole buffer is
+ * silent nothing happens.  When the writer starts again sc_sil_count
+ * is set to 0.
  */
 /* XXX
  * Putting silence into the output buffer should not really be done
