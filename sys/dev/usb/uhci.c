@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.146 2001/11/20 21:12:46 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.147 2001/11/21 02:38:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.146 2001/11/20 21:12:46 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.147 2001/11/21 02:38:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,9 +789,9 @@ uhci_dump_td(uhci_soft_td_t *p)
 		     (long)le32toh(p->td.td_token),
 		     (long)le32toh(p->td.td_buffer)));
 
-	bitmask_snprintf((int)le32toh(p->td.td_link), "\20\1T\2Q\3VF",
+	bitmask_snprintf((u_int32_t)le32toh(p->td.td_link), "\20\1T\2Q\3VF",
 			 sbuf, sizeof(sbuf));
-	bitmask_snprintf((int)le32toh(p->td.td_status),
+	bitmask_snprintf((u_int32_t)le32toh(p->td.td_status),
 			 "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
 			 "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
 			 sbuf2, sizeof(sbuf2));
@@ -1431,7 +1431,8 @@ uhci_idone(uhci_intr_info_t *ii)
 #ifdef UHCI_DEBUG
 		char sbuf[128];
 
-		bitmask_snprintf((int)status, "\20\22BITSTUFF\23CRCTO\24NAK\25"
+		bitmask_snprintf((u_int32_t)status,
+				 "\20\22BITSTUFF\23CRCTO\24NAK\25"
 				 "BABBLE\26DBUFFER\27STALLED\30ACTIVE",
 				 sbuf, sizeof(sbuf));
 
