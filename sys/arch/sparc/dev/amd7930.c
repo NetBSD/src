@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.25.2.2 1997/08/27 22:40:46 thorpej Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.25.2.3 1997/09/01 20:17:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -48,6 +48,8 @@
 
 #include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
+
+#define AUDIO_ROM_NAME "audio"
 
 #ifdef AUDIO_DEBUG
 extern void Dprintf __P((const char *, ...));
@@ -206,7 +208,7 @@ static const u_short ger_coeff[] = {
 int	amd7930_open __P((void *, int));
 void	amd7930_close __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int	amd7930_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	amd7930_round_blocksize __P((void *, int));
 int	amd7930_set_out_port __P((void *, int));
 int	amd7930_get_out_port __P((void *));
@@ -274,7 +276,7 @@ amd7930match(parent, cf, aux)
 
 	if (CPU_ISSUN4)
 		return (0);
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (strcmp(AUDIO_ROM_NAME, ra->ra_name) == 0);
 }
 
 /*

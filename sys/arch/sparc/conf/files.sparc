@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.40.2.2 1997/08/27 22:39:22 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.40.2.3 1997/09/01 20:17:20 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -204,7 +204,7 @@ file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/emul.c
 file	arch/sparc/sparc/in_cksum.c
 file	arch/sparc/sparc/intr.c
-file	arch/sparc/sparc/kgdb_stub.c
+file	arch/sparc/sparc/kgdb_machdep.c	kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc/sparc/locore2.c
@@ -223,7 +223,7 @@ file	arch/sparc/sparc/disksubr.c
 
 file	kludge_for_in_proto.c		hy needs-flag
 
-file	arch/sparc/sparc/db_interface.c	ddb
+file	arch/sparc/sparc/db_interface.c	ddb | kgdb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
 

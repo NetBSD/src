@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91.2.1 1997/08/23 07:12:14 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.91.2.2 1997/09/01 20:17:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6618,12 +6618,15 @@ pmap_writetext(dst, ch)
 	unsigned char *dst;
 	int ch;
 {
-	int s, pte0, pte;
+	int s, pte0, pte, ctx;
 	vm_offset_t va;
 
 	s = splpmap();
 	va = (unsigned long)dst & (~PGOFSET);
 	cpuinfo.cache_flush(dst, 1);
+
+	ctx = getcontext();
+	setcontext(0);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -6653,6 +6656,7 @@ pmap_writetext(dst, ch)
 	}
 #endif
 	cpuinfo.cache_flush(dst, 1);
+	setcontext(ctx);
 	splx(s);
 }
 
