@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2000/11/20 08:24:14 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2001/04/20 16:58:19 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -68,7 +68,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
+	lp->d_npartitions = RAW_PART + 1;
 	if (lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
