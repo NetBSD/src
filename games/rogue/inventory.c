@@ -1,6 +1,8 @@
+/*	$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Timothy C. Stoehr.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)inventory.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: inventory.c,v 1.2 1993/08/01 18:52:29 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
