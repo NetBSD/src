@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142 2002/10/08 20:19:16 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.143 2002/10/11 17:30:39 fvdl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2002/10/08 20:19:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2002/10/11 17:30:39 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2038,10 +2038,8 @@ pmap_zero_page(pa)
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
+#ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-#ifdef MULTIPROCESSOR
-	/* Using per-cpu VA; no shootdown required here. */
 #endif
 }
 
@@ -2085,10 +2083,8 @@ pmap_pageidlezero(pa)
 		*ptr++ = 0;
 	}
 
+#ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-#ifdef MULTIPROCESSOR
-	/* Using per-cpu VA; no shootdown required here. */
 #endif
 	return (rv);
 }
@@ -2118,10 +2114,8 @@ pmap_copy_page(srcpa, dstpa)
 	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 	memcpy(cdstva, csrcva, PAGE_SIZE);
+#ifdef DIAGNOSTIC
 	*spte = *dpte = 0;			/* zap! */
-	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
-#ifdef MULTIPROCESSOR
-	/* Using per-cpu VA; no shootdown required here. */
 #endif
 }
 
