@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.12 2003/03/31 09:27:52 wiz Exp $
+.\"	$NetBSD: ntpq.8,v 1.13 2003/06/30 10:42:04 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -81,15 +81,15 @@ within the
 program itself and do not result in NTP mode 6
 requests being sent to a server. These are described following.
 .Bl -tag -width indent
-.It Ar ? [ command_keyword ]
+.It Ar \&? [ command_keyword ]
 .It Ar helpl [ command_keyword ]
 A
-.Pa "?"
+.Pa \&?
 by itself will print a list of all the command keywords
 known to this incarnation of
 .Pa ntpq .
 A
-.Pa "?"
+.Pa \&?
 followed by
 a command keyword will print function and usage information about the
 command. This command is probably a better source of information about
@@ -135,7 +135,7 @@ consumption. Variables which
 .Pa ntpq
 thinks should have a decodeable
 value but didn't are marked with a trailing
-.Pa "?"
+.Pa \&?
 .
 .It Ar debug more | less | off
 Turns internal query program debugging on and off.
