@@ -1,9 +1,9 @@
-#	$NetBSD: files.tc,v 1.25 2001/10/01 10:22:43 simonb Exp $
+#	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
 
-defopt	TCVERBOSE
+defflag	TCVERBOSE
 
 device	tc {[slot = -1], [offset = -1]}
 #attach	tc at tcbus

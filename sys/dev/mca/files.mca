@@ -1,9 +1,9 @@
-# $NetBSD: files.mca,v 1.14 2001/11/23 22:35:46 jdolecek Exp $
+# $NetBSD: files.mca,v 1.15 2001/11/28 10:21:22 lukem Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
 
-defopt	MCAVERBOSE
+defflag	MCAVERBOSE
 
 #device	mca {[slot = -1]}
 attach	mca at mcabus

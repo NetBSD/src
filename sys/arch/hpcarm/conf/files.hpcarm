@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.31 2001/11/27 00:24:44 thorpej Exp $
+#	$NetBSD: files.hpcarm,v 1.32 2001/11/28 10:21:14 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -7,10 +7,10 @@ maxpartitions	8
 maxusers 2 8 64
 
 # Maintain Interrupt statistics
-defopt	IRQSTATS
+defflag	IRQSTATS
 
 # X server support in console drivers
-defopt	XSERVER
+defflag	XSERVER
 
 define todservice {}
 

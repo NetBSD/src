@@ -1,18 +1,18 @@
-#	$NetBSD: files.pci,v 1.144 2001/11/18 03:16:02 someya Exp $
+#	$NetBSD: files.pci,v 1.145 2001/11/28 10:21:23 lukem Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
+defflag	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
 			PCI_NETBSD_ENABLE_IDE
 
-defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
+defflag	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
 			BKTR_USE_PLL BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
 			BKTR_430_FX_MODE BKTR_SIS_VIA_MODE
 
-defopt	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
+defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA
 
 device	pci {[dev = -1], [function = -1]}
@@ -183,7 +183,7 @@ file	dev/pci/if_gem_pci.c		gem_pci
 
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI
-defopt	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
+defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci | IPKDB_NE_PCI
 
@@ -346,7 +346,7 @@ attach	com at puc with com_puc
 file	dev/pci/com_puc.c		com_puc
 
 # Console device support for puc drivers
-defopt	opt_puccn.h			PUCCN
+defflag	opt_puccn.h	PUCCN
 file	dev/pci/puccn.c			puccn
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
@@ -403,7 +403,7 @@ file	dev/pci/if_rtk_pci.c		rtk_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
-defopt	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
+defflag	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
 			TLP_MATCH_21140 TLP_MATCH_21142
 
 file	dev/pci/if_tlp_pci.c		tlp_pci
@@ -471,7 +471,7 @@ file	dev/pci/if_wi_pci.c		wi_pci
 attach	isic at pci with isic_pci
 file	dev/pci/isic_pci.c		isic_pci
 
-defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
+defflag	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 file	dev/pci/isic_pci_avm_fritz_pci.c isic_pci

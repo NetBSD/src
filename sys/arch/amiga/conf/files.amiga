@@ -1,30 +1,30 @@
-#	$NetBSD: files.amiga,v 1.112 2001/11/20 14:34:19 lukem Exp $
+#	$NetBSD: files.amiga,v 1.113 2001/11/28 10:21:11 lukem Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-defopt	opt_amigaccgrf.h	GRF_PAL:GRF_NTSC	# temporary workaround
-defopt	opt_amigaccgrf.h	GRF_NTSC
-defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
-defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
-defopt	opt_amigaccgrf.h	USE_C_BFOPS
+defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
+defflag	opt_amigaccgrf.h	GRF_NTSC
+defflag	opt_amigaccgrf.h	GRF_ECS GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
+defflag	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
+defflag	opt_amigaccgrf.h	USE_C_BFOPS
 
-defopt	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
-defopt	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
-defopt	opt_amigacons.h		CV3DONZORRO2
-defopt	opt_amigacons.h		SERCONSOLE
+defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
+defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
+defflag	opt_amigacons.h		CV3DONZORRO2
+defflag	opt_amigacons.h		SERCONSOLE
 
 defparam opt_retina.h		RH_MEMCLK
-defopt	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
-defopt	opt_retina.h		RETINA_SPEED_HACK
+defflag	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
+defflag	opt_retina.h		RETINA_SPEED_HACK
 
-defopt				BB060STUPIDROM
-defopt				P5PPC68KBOARD
-defopt				LEV6_DEFER
+defflag				BB060STUPIDROM
+defflag				P5PPC68KBOARD
+defflag				LEV6_DEFER
 
 defparam			IOBZCLOCK
 

@@ -1,8 +1,8 @@
-#	$NetBSD: files.mvme68k,v 1.48 2001/11/20 12:56:34 lukem Exp $
+#	$NetBSD: files.mvme68k,v 1.49 2001/11/28 10:21:16 lukem Exp $
 
 # config file for mvme68k
 
-defopt	opt_m060sp.h		M060SP
+defflag	opt_m060sp.h		M060SP
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.17 2001/10/29 19:04:24 thorpej Exp $
+#	$NetBSD: files.ofppc,v 1.18 2001/11/28 10:21:18 lukem Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -9,10 +9,10 @@ maxpartitions 16
 maxusers 8 16 64
 
 # Platform support option headers
-defopt	FIREPOWER_ES			# Firepower ES
-defopt	FIREPOWER_MX			# Firepower MX
-defopt	FIREPOWER_LX			# Firepower LX
-defopt	TOTALIMPACT_BRIQ		# Total Impact briQ
+defflag	FIREPOWER_ES			# Firepower ES
+defflag	FIREPOWER_MX			# Firepower MX
+defflag	FIREPOWER_LX			# Firepower LX
+defflag	TOTALIMPACT_BRIQ		# Total Impact briQ
 
 file	arch/ofppc/ofppc/autoconf.c
 file	arch/ofppc/ofppc/clock.c

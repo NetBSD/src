@@ -1,16 +1,16 @@
-#	$NetBSD: files.x68k,v 1.42 2001/11/20 14:34:24 lukem Exp $
+#	$NetBSD: files.x68k,v 1.43 2001/11/28 10:21:20 lukem Exp $
 #
 # new style config file for x68k architecture
 #
 
-defopt	opt_fpuemulate.h	FPU_EMULATE
-defopt	opt_m060sp.h		M060SP
+defflag				FPU_EMULATE
+defflag				M060SP
 
-defopt	opt_m680x0.h		M68020 M68030 M68040 M68060
+defflag	opt_m680x0.h		M68020 M68030 M68040 M68060
 
-defopt	opt_jupiter.h		JUPITER
-defopt	opt_panicbutton.h	PANICBUTTON
-defopt	opt_extmem.h		EXTENDED_MEMORY
+defflag				JUPITER
+defflag				PANICBUTTON
+defflag	opt_extmem.h		EXTENDED_MEMORY
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -107,7 +107,7 @@ device dmac
 attach	dmac at intio
 file	arch/x68k/dev/intio_dmac.c	dmac needs-flag
 
-defopt	opt_zsc.h	ZSCONSOLE
+defflag	opt_zsc.h	ZSCONSOLE
 defparam opt_zsc.h	ZSCN_SPEED
 device zsc {channel = -1}
 attach zsc at intio

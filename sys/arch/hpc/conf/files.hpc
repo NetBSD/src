@@ -1,13 +1,13 @@
-#	$NetBSD: files.hpc,v 1.4 2001/11/20 12:56:27 lukem Exp $
+#	$NetBSD: files.hpc,v 1.5 2001/11/28 10:21:14 lukem Exp $
 
 #
 # STANDALONE BOOT or BOOT from WinCE
 #
-defopt	BOOT_STANDALONE
+defflag	BOOT_STANDALONE
 #
 # Specified platform only?
 #
-defopt	SPEC_PLATFORM
+defflag	SPEC_PLATFORM
 
 #
 # hpc support functions

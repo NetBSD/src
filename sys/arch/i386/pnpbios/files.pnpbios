@@ -1,6 +1,6 @@
-# $NetBSD: files.pnpbios,v 1.10 2001/02/24 02:13:34 lukem Exp $
+# $NetBSD: files.pnpbios,v 1.11 2001/11/28 10:21:15 lukem Exp $
 
-defopt	PNPBIOSVERBOSE
+defflag	PNPBIOSVERBOSE
 
 device	pnpbios { [index = -1] }
 attach	pnpbios at mainbus
