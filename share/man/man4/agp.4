@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.5 2001/09/21 09:11:40 gmcgarry Exp $
+.\"     $NetBSD: agp.4,v 1.6 2001/11/12 07:33:40 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 The
 .Nm
 driver provides machine-independent support for the accelerated
-graphics port found on many PC-based and PCI systems.  The AGP
+graphics port (AGP) found on many PC-based and PCI systems.  The AGP
 specification was designed by Intel.
 .Pp
 The AGP chipset is positioned between the PCI-Host bridge and the
@@ -56,15 +56,16 @@ bus.  The specification currently supports a peak bandwidth of 528 MB/s.
 The
 .Nm
 driver supports the following chipsets:
+.Pp
 .Bl -dash -compact indent
 .It
-ALI
+ALI M1541 host-to-AGP bridge
 .It
-AMD (AMD751)
+AMD 751 and 761 host-to-AGP bridges
 .It
-Intel (82810, 82810E)
+Intel 82810, 82810-DC100, 82810E, and 82815 SVGA controllers
 .It
-SiS
+SiS 5591 host-to-AGP bridge
 .It
 VIA
 .El
@@ -145,9 +146,11 @@ typedef struct _agp_unbind {
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width /dev/agp? -compact
+.Bl -tag -width /dev/agpgart -compact
 .It Pa /dev/agp?
-device special file
+AGP GART device special files
+.It Pa /dev/agpgart
+AGP GART device special file
 .El
 .Sh EXAMPLES
 This short code fragment is an example of opening the AGP device
@@ -239,6 +242,6 @@ main(int argc, char **argv)
 The
 .Nm
 driver first appeared in
-.Fx 5.0 .
+.Fx 4.1 .
 It was adopted in
 .Nx 1.6 .
