@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.18 1999/10/09 14:27:42 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.19 1999/10/10 14:19:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -745,9 +745,9 @@ ntfs_lookup(ap)
 #if NTFS_DEBUG
 	int wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
 #endif
-	dprintf(("ntfs_lookup: %s (%ld bytes) in %d, lp: %d, wp: %d \n",
-		cnp->cn_nameptr, cnp->cn_namelen,
-		dip->i_number,lockparent, wantparent));
+	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %d, lp: %d, wp: %d \n",
+		(int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
+		dip->i_number, lockparent, wantparent));
 
 	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_proc);
 	if(error)
@@ -818,8 +818,10 @@ ntfs_lookup(ap)
 		}
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
-		if(error)
+		if (error) {
+			dprintf(("ntfs_ntlookupfile: returned %d\n", error));
 			return (error);
+		}
 
 		dprintf(("ntfs_lookup: found ino: %d\n", 
 			VTONT(*ap->a_vpp)->i_number));
