@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.3 1994/06/09 18:59:10 phil Exp $
+	$Id: tm.h,v 1.4 1994/12/21 11:25:35 cgd Exp $
 */
 
 #if 0
@@ -70,7 +70,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dpc532 -Dns32k -Dns32532 -D__NetBSD__ -Dunix"
+#define CPP_PREDEFINES "-Dpc532 -Dns32k -Dns32532 -Dunix -D__NetBSD__ -D__ns32k__"
 
 /* Specify -k to assembler for pic generation. PIC needs -K too. */
 

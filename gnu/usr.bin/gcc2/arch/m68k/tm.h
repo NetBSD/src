@@ -1,4 +1,4 @@
-/*	$Id: tm.h,v 1.3 1993/12/05 00:50:03 cgd Exp $ */
+/*	$Id: tm.h,v 1.4 1994/12/21 11:25:22 cgd Exp $ */
 
 #include <machine/ansi.h>
 #include "m68k/m68k.h"
@@ -14,7 +14,7 @@
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#define CPP_PREDEFINES "-Dm68k -Dmc68000 -Dmc68020 -D__NetBSD__ -Dunix"
+#define CPP_PREDEFINES "-Dm68k -Dmc68000 -Dmc68020 -Dunix -D__NetBSD__ -D__m68k__"
 
 /* Specify -k to assembler for PIC code generation. */
 
