@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.10 1998/03/27 01:47:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.11 1998/03/30 06:24:42 mycroft Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -269,7 +269,7 @@ void			uvm_chgkprot __P((caddr_t, int, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, int, int));
-void			uvm_scheduler __P((void));
+__dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
 void			uvm_swapin __P((struct proc *));
 boolean_t		uvm_useracc __P((caddr_t, int, int));
 void			uvm_vslock __P((caddr_t, u_int));
