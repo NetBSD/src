@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.17 2000/12/01 02:19:44 simonb Exp $  */
+/*      $NetBSD: ps.c,v 1.18 2000/12/20 01:17:49 cgd Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.17 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.18 2000/12/20 01:17:49 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -338,11 +338,11 @@ start2str(struct kinfo_proc *kp)
 	        time(&now);
 	if (now - u_start.tv_sec < 24 * SECSPERHOUR) {
 		/* I *hate* SCCS... */
-	        static char fmt[] = __CONCAT("%l:%", "M%p");
+	        static char fmt[] = "%l:%" "M%p";
 	        strftime(startstr, sizeof(startstr) - 1, fmt, tp);
 	} else if (now - u_start.tv_sec < 7 * SECSPERDAY) {
 	        /* I *hate* SCCS... */
-	        static char fmt[] = __CONCAT("%a%", "I%p");
+	        static char fmt[] = "%a%" "I%p";
 	        strftime(startstr, sizeof(startstr) - 1, fmt, tp);
 	} else  
 	        strftime(startstr, sizeof(startstr) - 1, "%e%b%y", tp);
