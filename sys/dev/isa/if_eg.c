@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.17 1995/07/23 21:14:31 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.18 1995/07/24 02:02:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -119,15 +119,15 @@ struct cfdriver egcd = {
 };
 
 int egintr __P((void *));
-static void eginit __P((struct eg_softc *));
-static int egioctl __P((struct ifnet *, u_long, caddr_t));
-static int egrecv __P((struct eg_softc *));
-static void egstart __P((struct ifnet *));
-static void egwatchdog __P((int));
-static void egreset __P((struct eg_softc *));
-static inline void egread __P((struct eg_softc *, caddr_t, int));
-static struct mbuf *egget __P((caddr_t, int, struct ifnet *));
-static void egstop __P((struct eg_softc *));
+void eginit __P((struct eg_softc *));
+int egioctl __P((struct ifnet *, u_long, caddr_t));
+int egrecv __P((struct eg_softc *));
+void egstart __P((struct ifnet *));
+void egwatchdog __P((int));
+void egreset __P((struct eg_softc *));
+void egread __P((struct eg_softc *, caddr_t, int));
+struct mbuf *egget __P((struct eg_softc *, caddr_t, int));
+void egstop __P((struct eg_softc *));
 
 /*
  * Support stuff
@@ -413,7 +413,7 @@ egattach(parent, self, aux)
 	    egintr, sc);
 }
 
-static void
+void
 eginit(sc)
 	register struct eg_softc *sc;
 {
@@ -461,7 +461,7 @@ eginit(sc)
 	egstart(ifp);
 }
 
-static void
+void
 egrecv(sc)
 	struct eg_softc *sc;
 {
@@ -483,7 +483,7 @@ egrecv(sc)
 	}
 }
 
-static void
+void
 egstart(ifp)
 	struct ifnet *ifp;
 {
@@ -572,7 +572,6 @@ egintr(arg)
 			}
 
 			len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
-			sc->sc_arpcom.ac_if.if_ipackets++;
 			egread(sc, sc->eg_inbuf, len);
 
 			sc->eg_incount--;
@@ -616,31 +615,32 @@ egintr(arg)
 /*
  * Pass a packet up to the higher levels.
  */
-static inline void
+void
 egread(sc, buf, len)
 	struct eg_softc *sc;
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		dprintf(("Unacceptable packet size %d\n", len));
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		printf("%s: invalid packet size %d; dropping\n",
+		    sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
 		return;
 	}
 
 	/* Pull packet off interface. */
-	ifp = &sc->sc_arpcom.ac_if;
-	m = egget(buf, len, ifp);
+	m = egget(sc, buf, len);
 	if (m == 0) {
-		dprintf(("egget returned 0\n"));
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		ifp->if_ierrors++;
 		return;
 	}
+
+	ifp->if_ipackets++;
 
 	/* We assume the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
@@ -669,30 +669,26 @@ egread(sc, buf, len)
 #endif
 
 	/* We assume the header fit entirely in one mbuf. */
-	m->m_pkthdr.len -= sizeof(*eh);
-	m->m_len -= sizeof(*eh);
-	m->m_data += sizeof(*eh);
-
+	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
 }
 
 /*
  * convert buf into mbufs
  */
-static struct mbuf *
-egget(buf, totlen, ifp)
+struct mbuf *
+egget(sc, buf, totlen)
+	struct eg_softc *sc;
 	caddr_t buf;
 	int totlen;
-	struct ifnet *ifp;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0) {
-		dprintf(("MGETHDR returns 0\n"));
+	if (m == 0)
 		return 0;
-	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -704,7 +700,6 @@ egget(buf, totlen, ifp)
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
-				dprintf(("MGET returns 0\n"));
 				return 0;
 			}
 			len = MLEN;
@@ -725,20 +720,20 @@ egget(buf, totlen, ifp)
 	return top;
 }
 
-static int
-egioctl(ifp, command, data)
+int
+egioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	caddr_t data;
 {
 	struct eg_softc *sc = egcd.cd_devs[ifp->if_unit];
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splimp();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -804,13 +799,14 @@ egioctl(ifp, command, data)
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
 	return error;
 }
 
-static void
+void
 egreset(sc)
 	struct eg_softc *sc;
 {
@@ -823,7 +819,7 @@ egreset(sc)
 	splx(s);
 }
 
-static void
+void
 egwatchdog(unit)
 	int     unit;
 {
@@ -833,10 +829,9 @@ egwatchdog(unit)
 	sc->sc_arpcom.ac_if.if_oerrors++;
 
 	egreset(sc);
-	return 0;
 }
 
-static void
+void
 egstop(sc)
 	register struct eg_softc *sc;
 {
