@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.8 1998/01/31 04:14:47 ross Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.9 1998/12/04 20:18:05 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  * This module can handle multiple symbol tables
  */
 typedef struct {
-	char		*name;		/* symtab name */
+	const char	*name;		/* symtab name */
 	char		*start;		/* symtab location */
 	char		*end;
 	char		*private;	/* optional machdep pointer */
@@ -61,6 +61,24 @@ typedef int		db_strategy_t;	/* search strategy */
 #define DB_STGY_XTRN	1			/* only external symbols */
 #define DB_STGY_PROC	2			/* only procedures */
 
+/*
+ * A symbol table may be in one of many formats.  All symbol tables
+ * must be of the same format as the master kernel symbol table.
+ */
+typedef struct {
+	const char *sym_format;
+	boolean_t (*sym_init) __P((int, void *, void *, const char *));
+	db_sym_t (*sym_lookup) __P((db_symtab_t *, char *));
+	db_sym_t (*sym_search) __P((db_symtab_t *, db_addr_t, db_strategy_t,
+		db_expr_t *));
+	void	(*sym_value) __P((db_symtab_t *, db_sym_t, char **,
+		db_expr_t *));
+	boolean_t (*sym_line_at_pc) __P((db_symtab_t *, db_sym_t,
+		char **, int *, db_expr_t));
+	boolean_t (*sym_numargs) __P((db_symtab_t *, db_sym_t, int *,
+		char **));
+} db_symformat_t;
+
 extern boolean_t	db_qualify_ambiguous_names;
 					/* if TRUE, check across symbol tables
 					 * for multiple occurrences of a name.
@@ -70,7 +88,7 @@ extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 /*
  * Functions exported by the symtable module
  */
-int db_add_symbol_table __P((char *, char *, char *, char *));
+int db_add_symbol_table __P((char *, char *, const char *, char *));
 					/* extend the list of symbol tables */
 
 void db_del_symbol_table __P((char *));
@@ -106,3 +124,10 @@ void db_printsym __P((db_expr_t, db_strategy_t));
 boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
 
 int db_sym_numargs __P((db_sym_t, int *, char **));
+
+#ifdef DB_AOUT_SYMBOLS
+extern	db_symformat_t db_symformat_aout;
+#endif
+#ifdef DB_ELF_SYMBOLS
+extern	db_symformat_t db_symformat_elf;
+#endif

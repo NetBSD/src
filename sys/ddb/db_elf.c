@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.6 1998/08/13 02:10:50 eeh Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.7 1998/12/04 20:18:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,16 +68,38 @@ static char *db_elf_find_strtab __P((db_symtab_t *));
 #define	STAB_TO_EHDR(stab)	((Elf_Ehdr *)((stab)->private))
 #define	STAB_TO_SHDR(stab, e)	((Elf_Shdr *)((stab)->private + (e)->e_shoff))
 
+boolean_t	db_elf_sym_init __P((int, void *, void *, const char *));
+db_sym_t	db_elf_lookup __P((db_symtab_t *, char *));
+db_sym_t	db_elf_search_symbol __P((db_symtab_t *, db_addr_t,
+		    db_strategy_t, db_expr_t *));
+void		db_elf_symbol_values __P((db_symtab_t *, db_sym_t,
+		    char **, db_expr_t *));
+boolean_t	db_elf_line_at_pc __P((db_symtab_t *, db_sym_t,
+		    char **, int *, db_expr_t));
+boolean_t	db_elf_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
+		    char **));
+
+db_symformat_t db_symformat_elf = {
+	"ELF",
+	db_elf_sym_init,
+	db_elf_lookup,
+	db_elf_search_symbol,
+	db_elf_symbol_values,
+	db_elf_line_at_pc,
+	db_elf_sym_numargs,
+};
+
 /*
  * Find the symbol table and strings; tell ddb about them.
  */
-void
-X_db_sym_init(symtab, esymtab, name)
+boolean_t
+db_elf_sym_init(symsize, symtab, esymtab, name)
+	int symsize;		/* size of symbol table */
 	void *symtab;		/* pointer to start of symbol table */
 	void *esymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
 				   boundary */
-	char *name;
+	const char *name;
 {
 	Elf_Ehdr *elf;
 	Elf_Shdr *shp;
@@ -86,8 +108,9 @@ X_db_sym_init(symtab, esymtab, name)
 	int i;
 
 	if (ALIGNED_POINTER(symtab, long) == 0) {
-		printf("DDB: bad symbol table start address %p\n", symtab);
-		return;
+		printf("[ %s symbol table has bad start address %p ]\n",
+		    name, symtab);
+		return (FALSE);
 	}
 
 	symtab_start = symtab_end = NULL;
@@ -178,22 +201,25 @@ X_db_sym_init(symtab, esymtab, name)
 	 * Link the symbol table into the debugger.
 	 */
 	if (db_add_symbol_table((char *)symtab_start,
-	    (char *)symtab_end, name, (char *)symtab) != -1)
-		printf("[ preserving %lu bytes of %s symbol table ]\n",
+	    (char *)symtab_end, name, (char *)symtab) != -1) {
+		printf("[ preserving %lu bytes of %s ELF symbol table ]\n",
 		    (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
-	return;
+		return (TRUE);
+	}
+
+	return (FALSE);
 
  badheader:
-	printf("[ %s symbol table not valid ]\n", name);
-	return;
+	printf("[ %s ELF symbol table not valid ]\n", name);
+	return (FALSE);
 
  multiple_strtab:
-	printf("[ %s has multiple string tables ]\n", name);
-	return;
+	printf("[ %s has multiple ELF string tables ]\n", name);
+	return (FALSE);
 
  multiple_symtab:
-	printf("[ %s has multiple symbol tables ]\n", name);
-	return;
+	printf("[ %s has multiple ELF symbol tables ]\n", name);
+	return (FALSE);
 }
 
 /*
@@ -220,7 +246,7 @@ db_elf_find_strtab(stab)
  * Lookup the symbol with the given name.
  */
 db_sym_t
-X_db_lookup(stab, symstr)
+db_elf_lookup(stab, symstr)
 	db_symtab_t *stab;
 	char *symstr;
 {
@@ -248,7 +274,7 @@ X_db_lookup(stab, symstr)
  * provided threshold).
  */
 db_sym_t
-X_db_search_symbol(symtab, off, strategy, diffp)
+db_elf_search_symbol(symtab, off, strategy, diffp)
 	db_symtab_t *symtab;
 	db_addr_t off;
 	db_strategy_t strategy;
@@ -314,7 +340,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
  * Return the name and value for a symbol.
  */
 void
-X_db_symbol_values(symtab, sym, namep, valuep)
+db_elf_symbol_values(symtab, sym, namep, valuep)
 	db_symtab_t *symtab;
 	db_sym_t sym;
 	char **namep;
@@ -340,7 +366,7 @@ X_db_symbol_values(symtab, sym, namep, valuep)
  * if we can find the appropriate debugging symbol.
  */
 boolean_t
-X_db_line_at_pc(symtab, cursym, filename, linenum, off)
+db_elf_line_at_pc(symtab, cursym, filename, linenum, off)
 	db_symtab_t *symtab;
 	db_sym_t cursym;
 	char **filename;
@@ -359,7 +385,7 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
  * names if we can find the appropriate debugging symbol.
  */
 boolean_t
-X_db_sym_numargs(symtab, cursym, nargp, argnamep)
+db_elf_sym_numargs(symtab, cursym, nargp, argnamep)
 	db_symtab_t *symtab;
 	db_sym_t cursym;
 	int *nargp;
@@ -371,17 +397,4 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 	 */
 	return (FALSE);
 }
-
-/*
- * Initialization routine for Elf files.
- */
-void
-ddb_init(sym_start, sym_end)
-	void *sym_start, *sym_end;
-{
-
-	if (sym_end > sym_start)
-		X_db_sym_init(sym_start, sym_end, "netbsd");
-}
-
 #endif /* DB_ELF_SYMBOLS */
