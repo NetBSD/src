@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.91 2003/05/17 17:16:20 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.92 2003/06/29 18:58:27 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.91 2003/05/17 17:16:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.92 2003/06/29 18:58:27 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -446,7 +446,44 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
+		struct mbuf *m0;
+
+		/*
+		 * To avoid traversing the whole sb_mb chain for correct
+		 * data to send, remember last sent mbuf,  its offset and
+		 * the sent size. When called the next time, see if the
+		 * data to send is the directly following the previous
+		 * transfer.  This is important for large TCP windows.
+		 */
+		if (off > 8*1024) { /* Only for long chains */
+			if (tp->t_lastm == NULL ||
+			    (tp->t_lastoff + tp->t_lastlen) != off) {
+				/* Prediction failed */
+				tp->t_lastm = so->so_snd.sb_mb;
+				tp->t_inoff = off;
+			} else {
+				tp->t_inoff += tp->t_lastlen;
+				tp->t_lastoff = off - tp->t_lastoff;
+			}
+
+			/* Traverse forward to next packet */
+			while (tp->t_inoff > 0) {
+				if (tp->t_lastm == NULL)
+					panic("tp->t_lastm == NULL");
+				if (tp->t_inoff < tp->t_lastm->m_len)
+					break;
+				tp->t_inoff -= tp->t_lastm->m_len;
+				tp->t_lastm = tp->t_lastm->m_next;
+			}
+
+			tp->t_lastoff = off;
+			tp->t_lastlen = len;
+			m0 = tp->t_lastm;
+			off = tp->t_inoff;
+		} else
+			m0 = so->so_snd.sb_mb;
+
+		m->m_next = m_copy(m0, off, (int) len);
 		if (m->m_next == NULL) {
 			m_freem(m);
 			return (ENOBUFS);

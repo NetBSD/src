@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.100 2003/06/28 14:22:09 darrenr Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.101 2003/06/29 18:58:28 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -261,6 +261,12 @@ struct tcpcb {
 
 /* pointer for syn cache entries*/
 	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
+
+/* prediction of next mbuf when using large window sizes */
+	struct	mbuf *t_lastm;		/* last mbuf that data was sent from */
+	int	t_inoff;		/* data offset in previous mbuf */
+	int	t_lastoff;		/* last data address in mbuf chain */
+	int	t_lastlen;		/* last length read from mbuf chain */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.140 2003/06/23 11:02:15 martin Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.141 2003/06/29 18:58:27 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.140 2003/06/23 11:02:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.141 2003/06/29 18:58:27 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -915,6 +915,9 @@ tcp_newtcpcb(family, aux)
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
 	LIST_INIT(&tp->t_sc);
+
+	tp->t_lastm = NULL;
+	tp->t_lastoff = 0;
 
 	callout_init(&tp->t_delack_ch);
 	for (i = 0; i < TCPT_NTIMERS; i++)
