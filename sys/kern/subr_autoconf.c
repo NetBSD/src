@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.55 2000/07/08 18:11:02 sommerfeld Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.56 2001/05/28 16:40:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55 2000/07/08 18:11:02 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.56 2001/05/28 16:40:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,8 +131,11 @@ struct deferred_config_head interrupt_config_queue;
 static void config_process_deferred(struct deferred_config_head *,
 	struct device *);
 
-struct devicelist alldevs;		/* list of all devices */
-struct evcntlist allevents;		/* list of all event counters */
+/* list of all devices */
+struct devicelist alldevs;
+
+/* list of all events */
+struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 
 __volatile int config_pending;		/* semaphore for mountroot */
 
@@ -146,7 +149,6 @@ configure(void)
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&alldevs); 
-	TAILQ_INIT(&allevents);
 
 	/*
 	 * Do the machine-dependent portion of autoconfiguration.  This
