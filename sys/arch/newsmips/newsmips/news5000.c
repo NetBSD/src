@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.2 1999/12/23 06:52:31 tsubai Exp $	*/
+/*	$NetBSD: news5000.c,v 1.3 1999/12/23 11:45:32 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -135,7 +135,7 @@ level1_intr()
 
 	if (int1stat) {
 		if (apbus_intr_call(1, int1stat) == 0)
-			printf("level1_intr: no andler (mask 0x%04x)\n",
+			printf("level1_intr: no handler (mask 0x%04x)\n",
 			       int1stat);
 	} else
 		printf("level1 stray interrupt?\n");
