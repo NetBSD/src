@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1995/01/18 06:53:38 mellon Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1995/06/28 10:22:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,9 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <stand.h>
 #include <pmax/stand/dec_prom.h>
+
 
 #include "byteswap.h"
 
@@ -61,6 +63,15 @@ main(argc, argv)
 {
 	register char *cp;
 	int ask, entry;
+
+#ifdef DIAGNOSTIC
+	extern int prom_id; /* hack, saved by standalone startup */
+
+	(*(callvec._printf))("hello, world\n");
+
+	printf ((callv == &callvec)?  "No REX %x\n" : "have REX %x\n",
+		 prom_id);
+#endif
 
 #ifdef JUSTASK
 	ask = 1;
@@ -106,21 +117,25 @@ loadfile(fname)
 	struct exec aout;
 
 	if ((fd = open(fname, 0)) < 0) {
+		printf("open(%s) failed: %d\n", fname, errno);
 		goto err;
 	}
 
 	/* read the exec header */
 	i = read(fd, (char *)&aout, sizeof(aout));
 	if (i != sizeof(aout)) {
+		printf("no aout header\n");
 		goto cerr;
 	} else if ((N_GETMAGIC(aout) != OMAGIC)
 		   && (aout.a_midmag & 0xfff) != OMAGIC) {
+		printf("%s: bad magic %x\n", fname, aout.a_midmag);
 		goto cerr;
 	}
 
 	/* read the code and initialized data */
 	printf("Size: %d+%d", aout.a_text, aout.a_data);
-#if 0	/* In an OMAGIC file, we're already there. */
+#if 0
+	/* In an OMAGIC file, we're already there. */
 	if (lseek(fd, (off_t)N_TXTOFF(aout), 0) < 0) {
 		goto cerr;
 	}
@@ -131,9 +146,12 @@ loadfile(fname)
 	(void) close(fd);
 #endif
 	if (n < 0) {
+		printf("read error %d\n", errno);
 		goto err;
 	} else if (n != i) {
+		printf("read() short %d bytes\n", i - n);
 		goto err;
+		
 	}
 
 	/* kernel will zero out its own bss */

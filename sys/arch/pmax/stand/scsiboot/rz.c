@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.5 1995/01/18 06:53:46 mellon Exp $	*/
+/*	$NetBSD: rz.c,v 1.6 1995/06/28 10:22:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,8 @@
  *	@(#)rz.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <stdarg.h>
+
 #include <stand.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -69,7 +71,7 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	offset = bn * DEV_BSIZE;
 
 #ifdef DEBUG
-/*XXX*/printf("zs:%x %d\n", offset, reqcnt);
+/*XXX*/printf("rz:%x %d\n", offset, reqcnt);
 #endif
 
 	/*
@@ -81,13 +83,14 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	}
 
 	offset += pp->p_offset * DEV_BSIZE;
-#if 0
-	if (prom_lseek(sc->sc_fd, offset, 0) < 0)
-		return (EIO);
-	s = prom_read(sc->sc_fd, addr, reqcnt);
-#else
-	s = bootread (offset / 512, addr, reqcnt);
-#endif
+
+	if (callv == &callvec) {
+		/* No REX on this machine */
+		if (prom_lseek(sc->sc_fd, offset, 0) < 0)
+			return (EIO);
+		s = prom_read(sc->sc_fd, addr, reqcnt);
+	} else
+		s = bootread (offset / 512, addr, reqcnt);
 	if (s < 0)
 		return (EIO);
 
@@ -96,10 +99,10 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 }
 
 int
-rzopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+rzopen(struct open_file *f, ...)
 {
+	register int ctlr, unit, part;
+
 	register struct rz_softc *sc;
 	register struct disklabel *lp;
 	register int i;
@@ -107,7 +110,13 @@ rzopen(f, ctlr, unit, part)
 	char buf[DEV_BSIZE];
 	int cnt;
 	static char device[] = "rz(0,0,0)";
+	va_list ap;
 
+	va_start(ap, f);
+
+	ctlr = va_arg(ap, int);
+	unit = va_arg(ap, int);
+	part = va_arg(ap, int);
 	if (unit >= 8 || part >= 8)
 		return (ENXIO);
 	device[5] = '0' + unit;
@@ -117,11 +126,13 @@ rzopen(f, ctlr, unit, part)
 	   the DS3100 PROMs.   As a consequence, it may be possible to
 	   boot from some other drive with these bootblocks on the 3100,
 	   but will not be possible on any TurboChannel machine. */
-#if 0
-	if ((i = prom_open(device, 0)) < 0) {
-#else
-	if ((i = bootinit (device)) < 0) {
-#endif
+
+	if (callv == &callvec)
+		i = prom_open(device, 0);
+	else
+		i = bootinit (device);
+	if (i < 0) {
+		printf("boot init failed\n");
 		return (ENXIO);
 	}
 
