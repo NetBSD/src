@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.12 1996/05/29 06:29:08 mhitch Exp $	*/
+/*	$NetBSD: scc.c,v 1.13 1996/06/16 16:49:07 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -370,9 +370,7 @@ sccattach(parent, self, aux)
 	struct termios cterm;
 	struct tty ctty;
 	int s;
-#ifdef alpha
 	extern int cputype;
-#endif
 	int unit, flags;
 
 	unit = sc->sc_dv.dv_unit;
@@ -420,6 +418,8 @@ sccattach(parent, self, aux)
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)sccaddr;
 		tp = scc_tty[unit * 2 + cntr] = ttymalloc();
+		if (cputype == DS_MAXINE || cntr == 0)
+			tty_attach(tp);	/* XXX */
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)())0;
 		tp->t_dev = (dev_t)((unit << 1) | cntr);
@@ -546,6 +546,7 @@ sccattach(parent, self, aux)
 	} else
 		printf("\n");
 #endif /* !alpha */
+	printf("\n");
 }
 
 /*
@@ -671,8 +672,10 @@ sccopen(dev, flag, mode, p)
 		return (ENXIO);
 
 	tp = scc_tty[minor(dev)];
-	if (tp == NULL)
+	if (tp == NULL) {
 		tp = scc_tty[minor(dev)] = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
