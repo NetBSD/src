@@ -1,4 +1,4 @@
-.\" $NetBSD: cpio.1,v 1.1 2002/10/12 15:30:54 christos Exp $
+.\" $NetBSD: cpio.1,v 1.2 2002/10/12 22:36:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	OpenBSD: cpio.1,v 1.14 2000/11/10 17:52:02 aaron Exp 
+.\"	OpenBSD: cpio.1,v 1.14 2000/11/10 17:52:02 aaron Exp
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -44,8 +44,8 @@
 .Op Fl F Ar archive
 .Op Fl H Ar format
 .Op Fl O Ar archive
-.Ar "< name-list"
-.Op Ar "> archive"
+.Ar "\*[Lt] name-list"
+.Op Ar "\*[Gt] archive"
 .Nm cpio
 .Fl i
 .Op Fl bBcdfmrsStuvzZ6
@@ -55,12 +55,12 @@
 .Op Fl H Ar format
 .Op Fl I Ar archive
 .Op Ar "pattern ..."
-.Op Ar "< archive"
+.Op Ar "\*[Lt] archive"
 .Nm cpio
 .Fl p
 .Op Fl adlLmuv
 .Ar destination-directory
-.Ar "< name-list"
+.Ar "\*[Lt] name-list"
 .Sh DESCRIPTION
 The
 .Nm
