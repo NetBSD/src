@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.43 2003/03/01 08:36:05 enami Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.44 2003/03/18 01:30:54 fvdl Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.43 2003/03/01 08:36:05 enami Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.44 2003/03/18 01:30:54 fvdl Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -884,9 +884,8 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_SRCDIR=%s\n", p->ident, p->srcdir);
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
-	fprintf(outmk, "${%s_OBJPATHS}: %s_make\n", p->ident, p->ident);
-	fprintf(outmk, ".PHONY: %s_make\n", p->ident);
-	fprintf(outmk, "%s_make:\n", p->ident);
+	fprintf(outmk, "%s_make: ${%s_OBJPATHS}\n", p->ident, p->ident);
+	fprintf(outmk, "${%s_OBJPATHS}: \n", p->ident);
 	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
