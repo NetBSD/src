@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.15 2003/03/04 18:09:48 thorpej Exp $	*/
+/*	$NetBSD: atexit.c,v 1.16 2003/03/19 22:26:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -212,7 +212,9 @@ __cxa_finalize(void *dso)
 			prevp = &ah->ah_next;
 	}
 
-	if (call_depth > 1)
+	call_depth--;
+
+	if (call_depth > 0)
 		return;
 
 	mutex_unlock(&atexit_mutex);
