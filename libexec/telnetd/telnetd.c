@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.31 2001/09/02 18:56:26 wiz Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.32 2002/01/31 07:54:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.31 2001/09/02 18:56:26 wiz Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.32 2002/01/31 07:54:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -925,8 +925,12 @@ doit(who)
 #endif	/* _SC_CRAY_SECURE_SYS */
 
 	/* get name of connected client */
-	error = getnameinfo(who, who->sa_len, remote_host_name, 
-			    sizeof(remote_host_name), NULL, 0, 0);
+	error = getnameinfo(who, who->sa_len, remote_host_name,
+	    sizeof(remote_host_name), NULL, 0, 0);
+
+	if (!error && strlen(remote_host_name) > utmp_len)
+		error = getnameinfo(who, who->sa_len, remote_host_name,
+		    sizeof(remote_host_name), NULL, 0, NI_NUMERICHOST);
 
 	if (error) {
 		fatal(net, "Couldn't resolve your address into a host name.\r\n\
