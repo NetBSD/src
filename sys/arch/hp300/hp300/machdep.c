@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.16 1994/01/06 17:16:34 mycroft Exp $
+ *	$Id: machdep.c,v 1.17 1994/01/06 17:23:56 mycroft Exp $
  */
 
 #include "param.h"
@@ -1657,10 +1657,10 @@ ptrace_getregs (p, addr)
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
 
-	bcopy(frame->f_regs, ipcreg, sizeof(frame->f_regs));
+	bcopy(frame->f_regs, ipcreg.r_regs, sizeof(frame->f_regs));
 	ipcreg.r_sr = frame->f_sr;
 	ipcreg.r_pc = frame->f_pc;
-	return copyout(ipcreg, addr, sizeof(reg));
+	return copyout(&ipcreg, addr, sizeof(ipcreg));
 }
 
 int
@@ -1673,10 +1673,10 @@ ptrace_setregs (p, addr)
 	struct frame *frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
 
-	if (error = copyin(addr, ipcreg, sizeof(reg)))
+	if (error = copyin(addr, &ipcreg, sizeof(ipcreg)))
 		return error;
 
-	bcopy(ipcreg, frame->f_regs, sizeof(frame->f_regs));
+	bcopy(ipcreg.r_regs, frame->f_regs, sizeof(frame->f_regs));
 	frame->f_sr = (ipcreg.r_sr | PSL_USERSET) & ~PSL_USERCLR;
 	frame->f_pc = ipcreg.r_pc;
 	return 0;
