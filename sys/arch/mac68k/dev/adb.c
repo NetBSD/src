@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.14 1997/04/08 03:19:04 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -39,13 +39,12 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
-#include <machine/adbsys.h>
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 
+#include <arch/mac68k/mac68k/macrom.h>
 #include "adbvar.h"
 #include "itevar.h"
-#include "../mac68k/macrom.h"
 
 /*
  * Function declarations.

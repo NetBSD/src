@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.10 1997/04/08 03:21:16 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -95,64 +95,44 @@ typedef struct {
 	unsigned char	devType;
 	unsigned char	origADBAddr;
 	Ptr		dbServiceRtPtr;
-	Ptr		dbDataAreaAdd;
+	Ptr		dbDataAreaAddr;
 } ADBDataBlock;
 
 
 	/* Trap Flesh; these functions are C, not Pascal */
 
 /* trap tests */
-int MyOwnTrap(
-	void);
-void KnownRTS(
-	void);
+int	MyOwnTrap __P((void));
+void	KnownRTS __P((void));
 
+#ifdef MRG_ADB
+/*
+ * These functions are defined in adb_direct.c if we are not using
+ * the MRG method of accessing the ADB/PRAM/RTC.
+ */
 /* ADB Manager */
-int SetADBInfo(
-	ADBSetInfoBlock *info,
-	int		adbAddr);
-int CountADBs(  
-	void);
-int GetIndADB(
-	ADBDataBlock	*info,
-	int		index);
-int GetADBInfo(
-	ADBDataBlock	*info,
-	int		adbAddr);
-void ADBReInit(
-	void);
-int ADBOp(
-	Ptr	buffer, 	/* note different order of parameters */
-	Ptr	compRout,
-	Ptr	data,
-	short	commandNum);
-void ADBAlternateInit(
-	void);
+int	SetADBInfo __P((ADBSetInfoBlock *info, int adbAddr));
+int	CountADBs __P((void));
+int	GetIndADB __P((ADBDataBlock *info, int index));
+int	GetADBInfo __P((ADBDataBlock *info, int adbAddr));
+void	ADBReInit __P((void));
+	/* note different order of parameters */
+int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
+void	ADBAlternateInit __P((void));
+#endif
 
 /* Memory Manager */
-Ptr NewPtr(
-	int size);
-int DisposPtr(
-	Ptr ptr);
-int GetPtrSize(
-	Ptr ptr);
-int SetPtrSize(
-	Ptr ptr,
-	int newbytes);
+Ptr	NewPtr __P((int size));
+int	DisposPtr __P((Ptr ptr));
+int	GetPtrSize __P((Ptr ptr));
+int	SetPtrSize __P((Ptr ptr, int newbytes));
 
 /* Resource Manager */
-Handle GetResource(
-	u_int theType,
-	short	theID);
-short ResError(
-	void);
-short mrg_CountResources(
-	u_int32_t type);
-short Count_Resources(
-	u_int32_t rsrc_type);
-caddr_t *mrg_GetIndResource(
-	u_int16_t index,
-	u_int32_t type);
+Handle	GetResource __P((u_int theType, short theID));
+short	ResError __P((void));
+short	mrg_CountResources __P((u_int32_t type));
+short	Count_Resources __P((u_int32_t rsrc_type));
+caddr_t	*mrg_GetIndResource __P((u_int16_t index, u_int32_t type));
 
 
 	/* Mac ROM Glue globals for BSD kernel */
@@ -171,7 +151,7 @@ extern u_char mrg_ResError[];
 
 
 	/* Dump instruction trace */
-void dumptrace(void);
+void	dumptrace __P((void));
 
 
 	/* Stuff for configuring ROM Glue */

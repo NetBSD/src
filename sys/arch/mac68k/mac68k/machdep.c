@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 1997/04/03 16:04:28 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 1997/04/08 03:21:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -132,7 +132,8 @@
 #include <dev/cons.h>
 
 #include <machine/viareg.h>
-#include "macrom.h"
+#include <arch/mac68k/mac68k/macrom.h>
+#include <arch/mac68k/dev/adbvar.h>
 #include "arp.h"
 
 /* The following is used externally (sysctl_hw) */
@@ -833,6 +834,14 @@ cpu_reboot(howto, bootstr)
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 		via_shutdown();
+#ifndef MRG_ADB
+		/*
+		 * Shut down machines whose power functions are accessed
+		 * via modified ADB calls.  adb_poweroff() is available
+		 * only when the MRG ADB is not being used.
+		 */
+		adb_poweroff();
+#endif
 	} else {
 		if (howto & RB_DUMP) {
 			savectx(&dumppcb);
