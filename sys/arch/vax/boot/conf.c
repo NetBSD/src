@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1997/04/10 21:25:21 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.9 1998/03/11 22:13:55 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -94,7 +94,7 @@ extern struct netif_driver qe_driver;
 extern struct netif_driver le_driver;
  
 struct netif_driver *netif_drivers[] = {
-/*	&qe_driver,  */
+	&qe_driver,
 	&le_driver,
 }; 
 int     n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
