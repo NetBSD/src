@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.17 2001/04/08 10:16:17 pooka Exp $
+#	$NetBSD: airport,v 1.18 2002/02/18 16:27:10 pooka Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -46,8 +46,10 @@ BNE:Brisbane, Queensland, Australia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
+BSD:Baoshan, China
 BTR:Baton Rouge, Louisiana, USA
 BTV:Burlington International, Vermont, USA
+BUD:Budapest Ferihegy, Hungary
 BUE:All Airports around Buenos Aires, Argentina
 BUF:Buffalo International, New York, USA
 BUH:All Airports around Bucharest, Romania
@@ -55,6 +57,7 @@ BUR:Burbank/Glendale/Pasadena, California, USA
 BWI:Baltimore-Washington International, Maryland, USA
 BWU:Bankstown, New South Wales, Australia
 CAE:Columbia Metropolitan, South Carolina, USA
+CAI:Cairo International Airport, Egypt
 CAK:Akron/Canton Regional, Ohio, USA
 CBR:Canberra, Australian Capital Territory, Australia
 CDG:Charles de Gaulle, Paris, France
