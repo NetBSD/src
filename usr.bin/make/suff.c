@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.37 2002/02/03 21:41:44 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.37 2002/02/03 21:41:44 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.37 2002/02/03 21:41:44 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.38 2002/02/04 17:24:57 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2095,7 +2095,7 @@ sfnd_abort:
 	 * on the lhs of a dependency operator or [XXX] it has neither
 	 * children or commands) as the old pmake did.
 	 */
-	if ((gn->type & (OP_PHONY|OP_NOPATH|OP_NOSUFF)) == 0) {
+	if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
 	    free(gn->path);
 	    gn->path = Dir_FindFile(gn->name,
 				    (targ == NULL ? dirSearchPath :
@@ -2301,7 +2301,7 @@ SuffFindDeps (gn, slst)
     GNode         *gn;	      	/* node we're dealing with */
     Lst		  slst;
 {
-    if (gn->type & (OP_DEPS_FOUND|OP_PHONY|OP_NOSUFF)) {
+    if (gn->type & (OP_DEPS_FOUND|OP_PHONY)) {
 	/*
 	 * If dependencies already found, no need to do it again...
 	 * If this is a .PHONY target, we do not apply suffix rules.
