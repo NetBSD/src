@@ -27,7 +27,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: scan.l,v 1.12 2003/07/14 11:36:49 itojun Exp $ */
+/* $NetBSD: scan.l,v 1.13 2003/07/16 14:57:29 itojun Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
@@ -278,6 +278,7 @@ LEXOPT		[aceknopr]
 
 	\"[^"\n]*\"	{
 			strlcpy(nmstr, yytext + 1, sizeof(nmstr));
+			nmstr[strlen( nmstr ) - 1] = '\0';
 			return NAME;
 			}
 
