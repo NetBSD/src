@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.9 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.10 1999/11/15 09:54:42 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -102,6 +102,6 @@ dc_ds_attach(parent, self, aux)
 			0x0,
 			0, DCCOMM_PORT);
 
-	ibus_intr_establish((void*)iba->ia_cookie, IPL_TTY, dcintr, sc);
+	ibus_intr_establish(parent, (void*)iba->ia_cookie, IPL_TTY, dcintr, sc);
 	printf("\n");
 }
