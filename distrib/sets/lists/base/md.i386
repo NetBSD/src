@@ -3,10 +3,10 @@
 ./usr/bin/fdformat
 ./usr/lib/libamu.so.0.1
 ./usr/lib/libbfd.so.0.1
-./usr/lib/libc.so.12.27
+./usr/lib/libc.so.12.28
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.2
-./usr/lib/libedit.so.2.0
+./usr/lib/libedit.so.2.1
 ./usr/lib/libg++.so.4.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libi386.so.0.2
