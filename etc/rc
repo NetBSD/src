@@ -176,8 +176,9 @@ if [ X${nfs_client} = X"YES" ]; then
 fi
 
 # $sendmail_flags is imported from /etc/netstart;
-# If $sendmail_flags == NO, routed isn't run.
-if [ "X${sendmail_flags}" != X"NO" ]; then
+# If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
+# sendmail isn't run.
+if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
 	echo -n ' sendmail';		sendmail ${sendmail_flags}
 fi
 
