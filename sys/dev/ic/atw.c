@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.29 2004/05/31 11:28:03 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.30 2004/05/31 11:28:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.29 2004/05/31 11:28:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.30 2004/05/31 11:28:48 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3373,7 +3373,6 @@ atw_start(struct ifnet *ifp)
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
 	       sc->sc_txfree != 0) {
 
-		do_encrypt = 0;
 		/*
 		 * Grab a packet off the management queue, if it
 		 * is not empty. Otherwise, from the data queue.
