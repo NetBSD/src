@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.4 1994/10/26 21:09:09 cgd Exp $	*/
+/*	$NetBSD: mfb.c,v 1.5 1995/04/10 07:31:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -316,7 +316,7 @@ mfbioctl(dev, cmd, data, flag, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
-mfbmap(dev, off, prot)
+mfbmmap(dev, off, prot)
 	dev_t dev;
 {
 	int len;
