@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.156 2001/12/29 08:32:07 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.157 2001/12/29 15:01:24 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -804,6 +804,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications EA",	}
+	,
+	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_WLAN_CF,
+	    PCMCIA_CIS_SOCKET_LP_WLAN_CF,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications Low Power WLAN Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
