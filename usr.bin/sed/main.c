@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/10/19 23:05:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2002/01/23 19:07:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1997/10/19 23:05:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2002/01/23 19:07:34 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ struct s_flist {
  */
 static struct s_flist *files, **fl_nextp = &files;
 
-int aflag, eflag, nflag;
+int aflag, eflag, nflag, ere;
 
 /*
  * Current file and line number; line numbers restart across compilation
@@ -117,7 +117,7 @@ main(argc, argv)
 	int c, fflag;
 
 	fflag = 0;
-	while ((c = getopt(argc, argv, "ae:f:n")) != -1)
+	while ((c = getopt(argc, argv, "ae:f:nE")) != -1)
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -133,10 +133,14 @@ main(argc, argv)
 		case 'n':
 			nflag = 1;
 			break;
+		case 'E':
+			ere = REG_EXTENDED;
+			break;
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\tsed script [-an] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n");
+"usage:\t%p script [-anE] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n",
+			    getprogname());
 			exit(1);
 		}
 	argc -= optind;
