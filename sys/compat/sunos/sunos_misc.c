@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.4 1993/10/15 11:28:29 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.5 1993/11/10 10:14:19 deraadt Exp $
  */
 
 /*
@@ -362,7 +362,12 @@ out:
  * NetBSD ones. We must remap them the bits.
  */
 
+#if defined(sparc)
 #define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
+#endif
+#elif defined(sun3) || defined(amiga) || defined(mac) || defined(hp300)
+1#define	DEVZERO	makedev(2, 12)		/* major,minor of /dev/zero */
+#endif
 
 #define SUN_PROT_READ	1
 #define SUN_PROT_WRITE	2
