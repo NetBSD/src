@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:18:10 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -32,8 +32,8 @@
  *
  */
 
-/* bootfile from tftp overrides!
- TODO: pass (net) device to net_open
+/*
+ * bootfile from tftp overrides! TODO: pass (net) device to net_open
  */
 
 #include <sys/param.h>
@@ -41,26 +41,26 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
-#include <lib/libsa/net.h>  /* global "bootfile" */
+#include <lib/libsa/net.h>	/* global "bootfile" */
 
 int
 devopen(f, fname, file)
-struct open_file *f;
-const char *fname;
-char **file;
+	struct open_file *f;
+	const char     *fname;
+	char          **file;
 {
-  struct devsw *dp;
-  int error=0;
+	struct devsw   *dp;
+	int             error = 0;
 
-  dp = &devsw[0];
-  f->f_dev = dp;
+	dp = &devsw[0];
+	f->f_dev = dp;
 
-  error = (*dp->dv_open)(f, 0);
+	error = (*dp->dv_open) (f, 0);
 
-  if(bootfile[0])
-    *file = bootfile;
-  else
-    *file = (char*)fname;
+	if (bootfile[0])
+		*file = bootfile;
+	else
+		*file = (char *) fname;
 
-  return (error);
+	return (error);
 }
