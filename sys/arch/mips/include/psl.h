@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: psl.h,v 1.11 1999/01/18 02:11:07 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  * configured CPU types.
  */
 
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 
 /*
  * mips3-specific  definitions
