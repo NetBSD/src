@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.3 2001/11/25 11:22:09 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.4 2001/12/05 11:08:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -39,10 +39,15 @@
 
 
 /*
- * fsnode - a component of the tree which contains information about the
- * file system.
+ * fsnode -
+ *	a component of the tree; contains a filename, a pointer to
+ *	fsinode, optional symlink name, and tree pointers
  *
- * A tree of these looks like this:
+ * fsinode - 
+ *	equivalent to an inode, containing target file system inode number,
+ *	refcount (nlink), and stat buffer
+ *
+ * A tree of fsnodes looks like this:
  *
  *	name	"."		"bin"		"netbsd"
  *	type	S_IFDIR		S_IFDIR		S_IFREG
@@ -61,22 +66,32 @@
  *	    must be "." when the tree has been built; during build it may
  *	    not be if "." hasn't yet been found by readdir(2).
  *
- *	-   if dup is not NULL, it points to an fsnode that this is a
+ *	-   if dup is not NULL, it points to an fsent that this is a
  *	    duplicate of; only relevant for non directories with > 1 link
  */
+
+enum fi_flags {
+	FI_SIZED =	1<<0,		/* inode sized */
+	FI_ALLOCATED =	1<<1,		/* fsinode->ino allocated */
+	FI_WRITTEN =	1<<2,		/* inode written */
+};
+
+typedef struct {
+	uint32_t	 ino;		/* inode number used on target fs */
+	uint32_t	 nlink;		/* number of links to this entry */
+	enum fi_flags	 flags;		/* flags used by fs specific code */
+	struct stat	 st;		/* stat entry */
+} fsinode;
+
 typedef struct _fsnode {
 	struct _fsnode	*parent;	/* parent (NULL if root) */
 	struct _fsnode	*child;		/* child (if type == S_IFDIR) */
 	struct _fsnode	*next;		/* next */
 	struct _fsnode	*first;		/* first node of current level (".") */
-	struct stat	 statbuf;	/* stat entry */
+	uint32_t	 type;		/* type of entry */
+	fsinode		*inode;		/* actual inode data */
 	char		*symlink;	/* symlink target */
 	char		*name;		/* file name */
-	struct _fsnode	*dup;		/* entry this is a duplicate of
-					   (when statbuf.st_nlink > 1) */
-	uint32_t	 nlink;		/* number of links to this entry */
-	uint32_t	 type;		/* type of entry */
-	uint32_t	 ino;		/* inode number used on target fs */
 } fsnode;
 
 
@@ -151,7 +166,7 @@ void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 
 
-extern	u_int		debug;
+extern	uint		debug;
 extern	struct timespec	start_time;
 
 #define	DEBUG_TIME			0x00000001
