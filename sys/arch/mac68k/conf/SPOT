@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.16 1996/10/15 07:25:57 scottr Exp $
+#	$NetBSD: SPOT,v 1.17 1996/10/29 04:26:58 briggs Exp $
 #
 # SPOT
 
@@ -82,7 +82,7 @@ grf*		at macvid?
 ite0		at grf?
 
 #ncrscsi0	at obio?		# SCSI NCR 5380
-#ncr96scsi0	at obio?		# SCSI NCR 53C96
+#esp		at obio?		# SCSI NCR 53C96
 sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at scsi?
