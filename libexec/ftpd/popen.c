@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.16 1999/08/25 20:07:33 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.17 1999/12/07 05:30:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.16 1999/08/25 20:07:33 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.17 1999/12/07 05:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: popen.c,v 1.16 1999/08/25 20:07:33 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stringlist.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -78,24 +79,18 @@ static int fds;
 extern int ls_main __P((int, char *[]));
 
 FILE *
-ftpd_popen(program, type, stderrfd)
-	char *program, *type;
+ftpd_popen(argv, type, stderrfd)
+	char *argv[];
+	const char *type;
 	int stderrfd;
 {
-	char *cp;
-	FILE *iop = NULL;
-	int argc, gargc, pdes[2], pid, isls;
-	char **pop, **np;
-	char **argv = NULL, **gargv = NULL;
-	size_t nargc = 100, ngargc = 100;
-#ifdef __GNUC__
-	(void) &iop;
-	(void) &gargc;
-	(void) &gargv;
-	(void) &argv;
-#endif
-	isls = 0;
+	FILE *iop;
+	int argc, pdes[2], pid, isls;
+	char **pop;
+	StringList *sl;
 
+	iop = NULL;
+	isls = 0;
 	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
 
@@ -109,51 +104,31 @@ ftpd_popen(program, type, stderrfd)
 	if (pipe(pdes) < 0)
 		return (NULL);
 
-	if ((argv = malloc(nargc * sizeof(char *))) == NULL)
-		return NULL;
-
-#define CHECKMORE(c, v, n) \
-	if (c >= n + 2) { \
-		n += INCR; \
-		if ((np = realloc(v, n * sizeof(char *))) == NULL) \
-			goto pfree; \
-		else \
-			v = np; \
-	}
-
-	/* break up string into pieces */
-	for (argc = 0, cp = program;; cp = NULL) {
-		CHECKMORE(argc, argv, nargc)
-		if (!(argv[argc++] = strtok(cp, " \t\n")))
-			break;
-	}
-
-	if ((gargv = malloc(ngargc * sizeof(char *))) == NULL)
+	if ((sl = sl_init()) == NULL)
 		goto pfree;
 
-	/* glob each piece */
-	gargv[0] = argv[0];
-	for (gargc = argc = 1; argv[argc]; argc++) {
+					/* glob each piece */
+	if (sl_add(sl, xstrdup(argv[0])) == -1)
+		goto pfree;
+	for (argc = 1; argv[argc]; argc++) {
 		glob_t gl;
 		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 		memset(&gl, 0, sizeof(gl));
 		if (glob(argv[argc], flags, NULL, &gl)) {
-			CHECKMORE(gargc, gargv, ngargc)
-			if ((gargv[gargc++] = strdup(argv[argc])) == NULL)
+			if (sl_add(sl, xstrdup(argv[argc])) == -1)
 				goto pfree;
-		}
-		else
+		} else
 			for (pop = gl.gl_pathv; *pop; pop++) {
-				CHECKMORE(gargc, gargv, ngargc)
-				if ((gargv[gargc++] = strdup(*pop)) == NULL)
+				if (sl_add(sl, xstrdup(*pop)) == -1)
 					goto pfree;
 			}
 		globfree(&gl);
 	}
-	gargv[gargc] = NULL;
+	if (sl_add(sl, NULL) == -1)
+		goto pfree;
 
-	isls = (strcmp(gargv[0], INTERNAL_LS) == 0);
+	isls = (strcmp(sl->sl_str[0], INTERNAL_LS) == 0);
 
 	pid = isls ? fork() : vfork();
 	switch (pid) {
@@ -183,9 +158,9 @@ ftpd_popen(program, type, stderrfd)
 		if (isls) {	/* use internal ls */
 			optreset = optind = optopt = 1;
 			closelog();
-			exit(ls_main(gargc, gargv));
+			exit(ls_main(sl->sl_cur - 1, sl->sl_str));
 		}
-		execv(gargv[0], gargv);
+		execv(sl->sl_str[0], sl->sl_str);
 		_exit(1);
 	}
 	/* parent; assume fdopen can't fail...  */
@@ -198,14 +173,8 @@ ftpd_popen(program, type, stderrfd)
 	}
 	pids[fileno(iop)] = pid;
 
-pfree:	if (gargv) {
-		for (argc = 1; argc < gargc; argc++)
-			free(gargv[argc]);
-		free(gargv);
-	}
-	if (argv)
-		free(argv);
-
+pfree:	if (sl)
+		sl_free(sl, 1);
 	return (iop);
 }
 
