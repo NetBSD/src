@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.18 2000/10/04 13:53:55 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.19 2000/10/22 10:33:02 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/cons.h> /* consdev */
+
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
@@ -80,6 +82,7 @@ int	tx3912video_debug = 1;
 struct tx3912video_softc {
 	struct device sc_dev;
 	void *sc_powerhook;	/* power management hook */
+	int sc_console;
 	struct hpcfb_fbconf sc_fbconf;
 	struct hpcfb_dspconf sc_dspconf;
 	struct video_chip *sc_chip;
@@ -121,7 +124,7 @@ struct hpcfb_accessops tx3912video_ha = {
 int
 tx3912video_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return (1);
+	return ATTACH_NORMAL;
 }
 
 void
@@ -138,8 +141,9 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 	struct hpcfb_attach_args ha;
 	tx_chipset_tag_t tc;
 	txreg_t val;
-	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
+	int console;
 
+	sc->sc_console = console = cn_tab ? 0 : 1;
 	sc->sc_chip = chip = &tx3912video_chip;
 
 	/* print video module information */
@@ -158,13 +162,9 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 	tx3912video_clut_init(sc);
 
 	/* if serial console, power off video module */
-#ifndef TX3912VIDEO_DEBUG
-	if (!console)
-		tx3912video_power(sc, 0, 0, (void *)PWR_SUSPEND);
-	else
-#endif /* TX3912VIDEO_DEBUG */
-		tx3912video_power(sc, 0, 0, (void *)PWR_RESUME);
-
+	tx3912video_power(sc, 0, 0, (void *)
+			  (console ? PWR_RESUME : PWR_SUSPEND));
+	
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
 				       CONFIG_HOOK_PMEVENT_HARDPOWER,
@@ -210,6 +210,9 @@ tx3912video_power(void *ctx, int type, long id, void *msg)
 
 	switch (why) {
 	case PWR_RESUME:
+		if (!sc->sc_console)
+			return 0; /* serial console */
+
 		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
 		val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 		val |= (TX3912_VIDEOCTRL1_DISPON | TX3912_VIDEOCTRL1_ENVID);
@@ -291,9 +294,9 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 	struct video_chip *chip = &tx3912video_chip;
 	tx_chipset_tag_t tc;
 	txreg_t reg;
-	int fbdepth;
-	int error;
+	int fbdepth, reverse, error;
 	
+	reverse = video_reverse_color();
 	chip->vc_v = tc = tx_conf_get_tag();
 	
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
@@ -301,12 +304,12 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 
 	switch (fbdepth) {
 	case 2:
-		bootinfo->fb_type = BIFB_D2_M2L_0;
+		bootinfo->fb_type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
 		break;
 	case 4:
 		/* XXX should implement rasops4.c */
 		fbdepth = 2;
-		bootinfo->fb_type = BIFB_D2_M2L_0;
+		bootinfo->fb_type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
 		TX3912_VIDEOCTRL1_BITSEL_CLR(reg);
 		reg = TX3912_VIDEOCTRL1_BITSEL_SET(
@@ -314,7 +317,7 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 		break;
 	case 8:
-		bootinfo->fb_type = BIFB_D8_FF;
+		bootinfo->fb_type = reverse ? BIFB_D8_FF : BIFB_D8_00;
 		break;
 	}
 
