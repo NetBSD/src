@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 1998/04/17 17:39:22 veego Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.8.1 1999/04/28 22:44:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -304,6 +304,7 @@ readdisklabel(dev, strat, lp, clp)
 		case ADT_NETBSDUSER:
 		case ADT_AMIGADOS:
 		case ADT_AMIX:
+		case ADT_EXT2:
 		case ADT_UNKNOWN:
 			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
@@ -570,6 +571,7 @@ getadostype(dostype)
 		else
 			adt.fstype = FS_ADOS;
 		return(adt);
+	
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;
 		if (b1 == 2)
@@ -595,6 +597,12 @@ getadostype(dostype)
 		printf(" using: 0x%lx instead\n", dostype);
 #endif
 		return(getadostype(dostype));
+
+	case DOST_EXT2:
+		adt.archtype = ADT_EXT2;
+		adt.fstype = FS_EX2FS;
+		return(adt);
+
 	default:
 #ifdef DIAGNOSTIC
 		printf("warning unknown dostype: 0x%lx marking unused\n",
