@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.3 2004/03/15 05:31:46 minoura Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4 2004/03/29 15:57:28 jwise Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.3 2004/03/15 05:31:46 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4 2004/03/29 15:57:28 jwise Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,7 +192,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 					LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
 			printf("%s: TCO timer reboot disabled by hardware; "
-			       "hope SMBIOS properly handle it.\n",
+			       "hope SMBIOS properly handles it.\n",
 			       sc->sc_dev.dv_xname);
 	}
 
