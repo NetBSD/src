@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.11 1999/02/21 15:07:49 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.12 1999/05/07 15:10:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -381,8 +381,8 @@ bootpcheck(m, context)
 	 */
 	if (bootp->bp_yiaddr.s_addr == INADDR_ANY ||
 	    bootp->bp_yiaddr.s_addr == INADDR_BROADCAST) {
-		printf("nfs_boot: wrong IP addr 0x%x",
-		       INTOHL(bootp->bp_yiaddr));
+		printf("nfs_boot: wrong IP addr %s",
+		       inet_ntoa(bootp->bp_yiaddr));
 		goto warn;
 	}
 
@@ -426,7 +426,7 @@ bootpcheck(m, context)
 	return (0);
 
 warn:
-	printf(" (bad reply from 0x%x)\n", INTOHL(bootp->bp_siaddr));
+	printf(" (bad reply from %s)\n", inet_ntoa(bootp->bp_siaddr));
 	return (-1);
 }
 
@@ -601,12 +601,12 @@ bootpc_call(nd, procp)
 	 * the buffer at bpc.replybuf.
 	 */
 #ifdef NFS_BOOT_DHCP
-	printf("nfs_boot: %s server: 0x%x\n",
+	printf("nfs_boot: %s server: %s\n",
 	       (bpc.dhcp_ok ? "DHCP" : "BOOTP"),
 #else
-	printf("nfs_boot: BOOTP server: 0x%x\n",
+	printf("nfs_boot: BOOTP server: %s\n",
 #endif
-	       INTOHL(bpc.replybuf->bp_siaddr));
+	       inet_ntoa(bpc.replybuf->bp_siaddr));
 
 	bootp_extract(bpc.replybuf, bpc.replylen, nd);
 
@@ -726,13 +726,13 @@ bootp_extract(bootp, replylen, nd)
 	}
 	nd->nd_myip = bootp->bp_yiaddr;
 	if (nd->nd_myip.s_addr)
-		printf("nfs_boot: my_addr=0x%x\n", INTOHL(nd->nd_myip));
+		printf("nfs_boot: my_addr=%s\n", inet_ntoa(nd->nd_myip));
 	nd->nd_mask = netmask;
 	if (nd->nd_mask.s_addr)
-		printf("nfs_boot: my_mask=0x%x\n", INTOHL(nd->nd_mask));
+		printf("nfs_boot: my_mask=%s\n", inet_ntoa(nd->nd_mask));
 	nd->nd_gwip = gateway;
 	if (nd->nd_gwip.s_addr)
-		printf("nfs_boot: gateway=0x%x\n", INTOHL(nd->nd_gwip));
+		printf("nfs_boot: gateway=%s\n", inet_ntoa(nd->nd_gwip));
 
 	/*
 	 * Store the information about our NFS root mount.
@@ -754,8 +754,8 @@ bootp_extract(bootp, replylen, nd)
 			strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);
 		} else {
 			/* Show the server IP address numerically. */
-			sprintf(ndm->ndm_host, "0x%8x",
-				INTOHL(rootserver));
+			strncpy(ndm->ndm_host, inet_ntoa(rootserver),
+				BP_SNAME_LEN-1);
 		}
 		len = strlen(ndm->ndm_host);
 		if (rootpath &&
