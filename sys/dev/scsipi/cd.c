@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.195 2003/09/13 14:44:50 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.196 2003/09/13 15:49:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.195 2003/09/13 14:44:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.196 2003/09/13 15:49:04 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -441,7 +441,7 @@ cdopen(dev, flag, fmt, p)
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_SILENT_NODEV | silent);
+		    silent);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
