@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
+/*	$NetBSD: reboot.c,v 1.9 1996/08/09 10:32:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.9 1996/08/09 10:32:26 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ main(argc, argv)
 {
 	register int i;
 	struct passwd *pw;
-	int ch, howto, lflag, nflag, qflag, sverrno;
-	char *p, *user;
+	int ch, howto, lflag, nflag, qflag, sverrno, len;
+	char *p, *user, *bootstr, **av;
 
 	if (!strcmp((p = rindex(*argv, '/')) ? p + 1 : *argv, "halt")) {
 		dohalt = 1;
@@ -100,11 +100,21 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc) {
+		for (av = argv, len = 0; *av; av++)
+			len += strlen(*av);
+		bootstr = malloc(len + 1);
+		*bootstr = '\0';
+		for (av = argv; *av; av++)
+			strcpy(bootstr, *av);
+	} else
+		bootstr = NULL;
+
 	if (geteuid())
 		err("%s", strerror(EPERM));
 
 	if (qflag) {
-		reboot(howto);
+		reboot(howto, bootstr);
 		err("%s", strerror(errno));
 	}
 
@@ -118,7 +128,7 @@ main(argc, argv)
 			syslog(LOG_CRIT, "halted by %s", user);
 		} else {
 			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
-			syslog(LOG_CRIT, "rebooted by %s", user);
+			syslog(LOG_CRIT, "rebooted by %s: %s", user, bootstr);
 		}
 	}
 	logwtmp("~", "shutdown", "");
@@ -166,7 +176,7 @@ main(argc, argv)
 		(void)sleep(2 * i);
 	}
 
-	reboot(howto);
+	reboot(howto, bootstr);
 	/* FALLTHROUGH */
 
 restart:
@@ -179,7 +189,7 @@ restart:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-nqd]\n", dohalt ? "halt" : "reboot");
+	(void)fprintf(stderr, "usage: %s [-nqd] [-- <boot string>]\n", dohalt ? "halt" : "reboot");
 	exit(1);
 }
 

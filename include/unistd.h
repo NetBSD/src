@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.28 1996/06/23 11:56:25 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.29 1996/08/09 10:32:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -141,7 +141,7 @@ int	 rcmd __P((char **, int, const char *,
 char	*re_comp __P((const char *));
 int	 re_exec __P((const char *));
 int	 readlink __P((const char *, char *, int));
-int	 reboot __P((int));
+int	 reboot __P((int, char *));
 int	 revoke __P((const char *));
 int	 rresvport __P((int *));
 int	 ruserok __P((const char *, int, const char *, const char *));
