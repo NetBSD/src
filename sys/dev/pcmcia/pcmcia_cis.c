@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.14 2000/01/14 23:09:53 cgd Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.15 2000/01/20 08:47:59 enami Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -1238,11 +1238,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				idx++;
 
 				if (reg & PCMCIA_TPCE_MI_PWRDOWN)
-					cfe->flags = PCMCIA_CFE_POWERDOWN;
+					cfe->flags |= PCMCIA_CFE_POWERDOWN;
 				if (reg & PCMCIA_TPCE_MI_READONLY)
-					cfe->flags = PCMCIA_CFE_READONLY;
+					cfe->flags |= PCMCIA_CFE_READONLY;
 				if (reg & PCMCIA_TPCE_MI_AUDIO)
-					cfe->flags = PCMCIA_CFE_AUDIO;
+					cfe->flags |= PCMCIA_CFE_AUDIO;
 				cfe->maxtwins = reg & PCMCIA_TPCE_MI_MAXTWINS;
 
 				while (reg & PCMCIA_TPCE_MI_EXT) {
