@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.3 1998/10/09 18:27:31 agc Exp $ */
+/* $NetBSD: add.h,v 1.3.2.1 1999/09/13 21:07:37 he Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -25,22 +25,24 @@
 #ifndef _INST_ADD_H_INCLUDE
 #define _INST_ADD_H_INCLUDE
 
-typedef enum { NORMAL, MASTER, SLAVE } add_mode_t;
+typedef enum {
+	NORMAL, MASTER, SLAVE
+}       add_mode_t;
 
-extern char	*Prefix;
-extern Boolean	NoInstall;
-extern Boolean	NoRecord;
-extern Boolean	Force;
-extern char	*Mode;
-extern char	*Owner;
-extern char	*Group;
-extern char	*Directory;
-extern char	*PkgName;
-extern char	FirstPen[];
+extern char *Prefix;
+extern Boolean NoInstall;
+extern Boolean NoRecord;
+extern Boolean Force;
+extern char *Mode;
+extern char *Owner;
+extern char *Group;
+extern char *Directory;
+extern char *PkgName;
+extern char FirstPen[];
 extern add_mode_t AddMode;
 
-int		make_hierarchy(char *);
-void		extract_plist(char *, package_t *);
-void		apply_perms(char *, char *);
+int     make_hierarchy(char *);
+void    extract_plist(char *, package_t *);
+void    apply_perms(char *, char *);
 
-#endif	/* _INST_ADD_H_INCLUDE */
+#endif				/* _INST_ADD_H_INCLUDE */
