@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)utilities.c	5.30 (Berkeley) 7/26/91";
+static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
-#include <ufs/dir.h>
+#include <sys/time.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +47,6 @@ static char sccsid[] = "@(#)utilities.c	5.30 (Berkeley) 7/26/91";
 #include "fsck.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
-long	lseek();
 
 ftypeok(dp)
 	struct dinode *dp;
@@ -230,6 +230,10 @@ ckfini()
 	register struct bufarea *bp, *nbp;
 	int cnt = 0;
 
+	if (fswritefd < 0) {
+		(void)close(fsreadfd);
+		return;
+	}
 	flush(fswritefd, &sblk);
 	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
@@ -239,7 +243,7 @@ ckfini()
 	}
 	flush(fswritefd, &cgblk);
 	free(cgblk.b_un.b_buf);
-	for (bp = bufhead.b_prev; bp != &bufhead; bp = nbp) {
+	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {
 		cnt++;
 		flush(fswritefd, bp);
 		nbp = bp->b_prev;
@@ -264,20 +268,23 @@ bread(fd, buf, blk, size)
 {
 	char *cp;
 	int i, errs;
+	off_t offset;
 
-	if (lseek(fd, blk * dev_bsize, 0) < 0)
+	offset = blk;
+	offset *= dev_bsize;
+	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
 	else if (read(fd, buf, (int)size) == size)
 		return (0);
 	rwerror("READ", blk);
-	if (lseek(fd, blk * dev_bsize, 0) < 0)
+	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
 	errs = 0;
 	bzero(buf, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
 		if (read(fd, cp, (int)secsize) != secsize) {
-			(void)lseek(fd, blk * dev_bsize + i + secsize, 0);
+			(void)lseek(fd, offset + i + secsize, 0);
 			if (secsize != dev_bsize && dev_bsize != 1)
 				printf(" %ld (%ld),",
 				    (blk * dev_bsize + i) / secsize,
@@ -299,22 +306,25 @@ bwrite(fd, buf, blk, size)
 {
 	int i;
 	char *cp;
+	off_t offset;
 
 	if (fd < 0)
 		return;
-	if (lseek(fd, blk * dev_bsize, 0) < 0)
+	offset = blk;
+	offset *= dev_bsize;
+	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
 	else if (write(fd, buf, (int)size) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
-	if (lseek(fd, blk * dev_bsize, 0) < 0)
+	if (lseek(fd, offset, 0) < 0)
 		rwerror("SEEK", blk);
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
 		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
-			(void)lseek(fd, blk * dev_bsize + i + dev_bsize, 0);
+			(void)lseek(fd, offset + i + dev_bsize, 0);
 			printf(" %ld,", blk + i / dev_bsize);
 		}
 	printf("\n");
@@ -378,6 +388,10 @@ getpathname(namebuf, curdir, ino)
 	static int busy = 0;
 	extern int findname();
 
+	if (curdir == ino && ino == ROOTINO) {
+		(void)strcpy(namebuf, "/");
+		return;
+	}
 	if (busy ||
 	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
 		(void)strcpy(namebuf, "?");
@@ -423,7 +437,8 @@ getpathname(namebuf, curdir, ino)
 void
 catch()
 {
-	ckfini();
+	if (!doinglevel2)
+		ckfini();
 	exit(12);
 }
 
@@ -513,11 +528,11 @@ pfatal(s, a1, a2, a3)
 {
 
 	if (preen) {
-		printf("%s: ", devname);
+		printf("%s: ", cdevname);
 		printf(s, a1, a2, a3);
 		printf("\n");
 		printf("%s: UNEXPECTED INCONSISTENCY; RUN fsck MANUALLY.\n",
-			devname);
+			cdevname);
 		exit(8);
 	}
 	printf(s, a1, a2, a3);
@@ -533,7 +548,7 @@ pwarn(s, a1, a2, a3, a4, a5, a6)
 {
 
 	if (preen)
-		printf("%s: ", devname);
+		printf("%s: ", cdevname);
 	printf(s, a1, a2, a3, a4, a5, a6);
 }
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	6.4 (Berkeley) 6/1/90
+ *	@(#)pathnames.h	8.2 (Berkeley) 3/27/94
  */
 
-#define _PATH_EXECDIR	"/sbin"
-#define	_PATH_EXPORTS	"/etc/exports"
+#define _PATH_SBIN	"/sbin"
+#define _PATH_USRSBIN	"/usr/sbin"
 #define	_PATH_MOUNTDPID	"/var/run/mountd.pid"

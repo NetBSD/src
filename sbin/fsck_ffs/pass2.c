@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,15 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)pass2.c	5.17 (Berkeley) 12/28/90";
+static char sccsid[] = "@(#)pass2.c	8.2 (Berkeley) 2/27/94";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
-#define KERNEL
-#include <ufs/dir.h>
-#undef KERNEL
+#include <sys/time.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"
@@ -114,7 +113,6 @@ pass2()
 	bzero((char *)&curino, sizeof(struct inodesc));
 	curino.id_type = DATA;
 	curino.id_func = pass2check;
-	dino.di_mode = IFDIR;
 	dp = &dino;
 	inpend = &inpsort[inplast];
 	for (inpp = inpsort; inpp < inpend; inpp++) {
@@ -144,6 +142,8 @@ pass2()
 				dp = &dino;
 			}
 		}
+		bzero((char *)&dino, sizeof(struct dinode));
+		dino.di_mode = IFDIR;
 		dp->di_size = inp->i_isize;
 		bcopy((char *)&inp->i_blks[0], (char *)&dp->di_db[0],
 			(size_t)inp->i_numblks);
@@ -175,7 +175,7 @@ pass2()
 			continue;
 		}
 		fileerror(inp->i_parent, inp->i_number,
-			"BAD INODE NUMBER FOR '..'");
+		    "BAD INODE NUMBER FOR '..'");
 		if (reply("FIX") == 0)
 			continue;
 		lncntp[inp->i_dotdot]++;
@@ -201,6 +201,13 @@ pass2check(idesc)
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
 
+	/*
+	 * If converting, set directory entry type.
+	 */
+	if (doinglevel2 && dirp->d_ino > 0 && dirp->d_ino < maxino) {
+		dirp->d_type = typemap[dirp->d_ino];
+		ret |= ALTERED;
+	}
 	/* 
 	 * check for "."
 	 */
@@ -213,13 +220,23 @@ pass2check(idesc)
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
+		if (newinofmt && dirp->d_type != DT_DIR) {
+			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
+			dirp->d_type = DT_DIR;
+			if (reply("FIX") == 1)
+				ret |= ALTERED;
+		}
 		goto chk1;
 	}
 	direrror(idesc->id_number, "MISSING '.'");
 	proto.d_ino = idesc->id_number;
+	if (newinofmt)
+		proto.d_type = DT_DIR;
+	else
+		proto.d_type = 0;
 	proto.d_namlen = 1;
 	(void)strcpy(proto.d_name, ".");
-	entrysize = DIRSIZ(&proto);
+	entrysize = DIRSIZ(0, &proto);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
@@ -247,11 +264,15 @@ chk1:
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
 	proto.d_ino = inp->i_parent;
+	if (newinofmt)
+		proto.d_type = DT_DIR;
+	else
+		proto.d_type = 0;
 	proto.d_namlen = 2;
 	(void)strcpy(proto.d_name, "..");
-	entrysize = DIRSIZ(&proto);
+	entrysize = DIRSIZ(0, &proto);
 	if (idesc->id_entryno == 0) {
-		n = DIRSIZ(dirp);
+		n = DIRSIZ(0, dirp);
 		if (dirp->d_reclen < n + entrysize)
 			goto chk2;
 		proto.d_reclen = dirp->d_reclen - n;
@@ -264,6 +285,12 @@ chk1:
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
 		inp->i_dotdot = dirp->d_ino;
+		if (newinofmt && dirp->d_type != DT_DIR) {
+			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
+			dirp->d_type = DT_DIR;
+			if (reply("FIX") == 1)
+				ret |= ALTERED;
+		}
 		goto chk2;
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") != 0) {
@@ -330,10 +357,14 @@ again:
 		case FCLEAR:
 			if (idesc->id_entryno <= 2)
 				break;
-			if (statemap[dirp->d_ino] == DCLEAR)
-				errmsg = "ZERO LENGTH DIRECTORY";
-			else
+			if (statemap[dirp->d_ino] == FCLEAR)
 				errmsg = "DUP/BAD";
+			else if (!preen)
+				errmsg = "ZERO LENGTH DIRECTORY";
+			else {
+				n = 1;
+				break;
+			}
 			fileerror(idesc->id_number, dirp->d_ino, errmsg);
 			if ((n = reply("REMOVE")) == 1)
 				break;
@@ -367,6 +398,13 @@ again:
 			/* fall through */
 
 		case FSTATE:
+			if (newinofmt && dirp->d_type != typemap[dirp->d_ino]) {
+				fileerror(idesc->id_number, dirp->d_ino,
+				    "BAD TYPE VALUE");
+				dirp->d_type = typemap[dirp->d_ino];
+				if (reply("FIX") == 1)
+					ret |= ALTERED;
+			}
 			lncntp[dirp->d_ino]--;
 			break;
 

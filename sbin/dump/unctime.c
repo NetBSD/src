@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,15 +32,20 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)unctime.c	5.4 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)unctime.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <time.h>
+
 #include <stdio.h>
+#include <time.h>
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
+#endif
+
+#ifndef __P
+#include <sys/cdefs.h>
 #endif
 
 /*
@@ -61,20 +66,21 @@ static char sccsid[] = "@(#)unctime.c	5.4 (Berkeley) 3/7/91";
 #define	E_SECOND	17
 #define	E_YEAR		20
 
-static int lookup();
+static	int dcmp __P((struct tm *, struct tm *));
+static	time_t emitl __P((struct tm *));
+static	int lookup __P((char *));
+
 
 time_t
 unctime(str)
 	char *str;
 {
 	struct tm then;
-	char dbuf[30];
-	time_t emitl();
+	char dbuf[26];
 
-	if (strlen(str) != 25)
-		str[25] = 0;
-	strcpy(dbuf, str);
-	dbuf[E_MONTH+3] = 0;
+	(void) strncpy(dbuf, str, sizeof(dbuf) - 1);
+	dbuf[sizeof(dbuf) - 1] = '\0';
+	dbuf[E_MONTH+3] = '\0';
 	if ((then.tm_mon = lookup(&dbuf[E_MONTH])) < 0)
 		return (-1);
 	then.tm_mday = atoi(&dbuf[E_DAY]);
@@ -94,7 +100,7 @@ lookup(str)
 {
 	register char *cp, *cp2;
 
-	for (cp = months, cp2 = str; *cp != 0; cp += 3)
+	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
 		if (strncmp(cp, cp2, 3) == 0)
 			return((cp-months) / 3);
 	return(-1);
@@ -106,10 +112,7 @@ lookup(str)
  *	Use a binary search.
  */
 
-struct tm *localtime();
-static int dcmp();
-
-time_t
+static time_t
 emitl(dp)
 	struct tm *dp;
 {

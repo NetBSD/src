@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dump.h	5.16 (Berkeley) 5/29/91
+ *	@(#)dump.h	8.1 (Berkeley) 6/5/93
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
@@ -73,76 +73,93 @@ long	tapesize;	/* estimated tape size, blocks */
 long	tsize;		/* tape size in 0.1" units */
 long	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
+int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
 int	notify;		/* notify operator flag */
 int	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
-char	*processname;
 struct	fs *sblock;	/* the file system super block */
-char	buf[MAXBSIZE];
+char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 
+#ifndef __P
+#include <sys/cdefs.h>
+#endif
+
 /* operator interface functions */
-void	broadcast();
-void	lastdump();
-void	msg();
-void	msgtail();
-int	query();
-void	set_operators();
-void	timeest();
+void	broadcast __P((char *message));
+void	lastdump __P((int arg));	/* int should be char */
+void	msg __P((const char *fmt, ...));
+void	msgtail __P((const char *fmt, ...));
+int	query __P((char *question));
+void	quit __P((const char *fmt, ...));
+void	set_operators __P((void));
+void	timeest __P((void));
+time_t	unctime __P((char *str));
 
 /* mapping rouintes */
-long	blockest();
-int	mapfiles();
-int	mapdirs();
+struct	dinode;
+long	blockest __P((struct dinode *dp));
+int	mapfiles __P((ino_t maxino, long *tapesize));
+int	mapdirs __P((ino_t maxino, long *tapesize));
 
 /* file dumping routines */
-void	dirdump();
-void	blksout();
-void	dumpmap();
-void	writeheader();
-void	bread();
+void	blksout __P((daddr_t *blkp, int frags, ino_t ino));
+void	bread __P((daddr_t blkno, char *buf, int size));	
+void	dumpino __P((struct dinode *dp, ino_t ino));
+void	dumpmap __P((char *map, int type, ino_t ino));
+void	writeheader __P((ino_t ino));
 
 /* tape writing routines */
-int	alloctape();
-void	writerec();
-void	dumpblock();
-void	flushtape();
-void	trewind();
-void	close_rewind();
-void	startnewtape();
+int	alloctape __P((void));
+void	close_rewind __P((void));
+void	dumpblock __P((daddr_t blkno, int size));
+void	startnewtape __P((int top));
+void	trewind __P((void));
+void	writerec __P((char *dp, int isspcl));
 
-void	dumpabort();
-void	Exit();
-void	getfstab();
-void	quit();
+__dead void Exit __P((int status));
+void	dumpabort __P((int signo));
+void	getfstab __P((void));
 
-char	*rawname();
-struct dinode *getino();
+char	*rawname __P((char *cp));
+struct	dinode *getino __P((ino_t inum));
 
-void	interrupt();		/* in case operator bangs on console */
+/* rdump routines */
+#ifdef RDUMP
+void	rmtclose __P((void));
+int	rmthost __P((char *host));
+int	rmtopen __P((char *tape, int mode));
+int	rmtwrite __P((char *buf, int count));
+#endif /* RDUMP */
+
+void	interrupt __P((int signo));	/* in case operator bangs on console */
 
 /*
  *	Exit status codes
  */
 #define	X_FINOK		0	/* normal exit */
 #define	X_REWRITE	2	/* restart writing from the check point */
-#define	X_ABORT		3	/* abort all of dump; don't attempt checkpointing*/
+#define	X_ABORT		3	/* abort dump; don't attempt checkpointing */
 
 #define	OPGRENT	"operator"		/* group entry to notify */
 #define DIALUP	"ttyd"			/* prefix for dialups */
 
-struct	fstab	*fstabsearch();	/* search in fs_file and fs_spec */
+struct	fstab *fstabsearch __P((char *key));	/* search fs_file and fs_spec */
+
+#ifndef NAME_MAX
+#define NAME_MAX 255
+#endif
 
 /*
  *	The contents of the file _PATH_DUMPDATES is maintained both on
  *	a linked list, and then (eventually) arrayified.
  */
 struct dumpdates {
-	char	dd_name[MAXNAMLEN+3];
+	char	dd_name[NAME_MAX+3];
 	char	dd_level;
 	time_t	dd_ddate;
 };
@@ -154,34 +171,42 @@ struct	dumptime *dthead;	/* head of the list version */
 int	nddates;		/* number of records (might be zero) */
 int	ddates_in;		/* we have read the increment file */
 struct	dumpdates **ddatev;	/* the arrayfied version */
-void	initdumptimes();
-void	getdumptime();
-void	putdumptime();
+void	initdumptimes __P((void));
+void	getdumptime __P((void));
+void	putdumptime __P((void));
 #define	ITITERATE(i, ddp) \
 	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
-/*
- *	We catch these interrupts
- */
-void	sighup();
-void	sigquit();
-void	sigill();
-void	sigtrap();
-void	sigfpe();
-void	sigkill();
-void	sigbus();
-void	sigsegv();
-void	sigsys();
-void	sigalrm();
-void	sigterm();
+void	sig __P((int signo));
 
 /*
  * Compatibility with old systems.
  */
-#ifndef __STDC__
+#ifdef COMPAT
 #include <sys/file.h>
-#define _PATH_FSTAB	"/etc/fstab"
-extern char *index(), *strdup();
+extern char *index(), *rindex(), *strdup();
 extern char *ctime();
+extern int read(), write();
 extern int errno;
+#endif
+
+#ifndef	_PATH_UTMP
+#define	_PATH_UTMP	"/etc/utmp"
+#endif
+#ifndef	_PATH_FSTAB
+#define	_PATH_FSTAB	"/etc/fstab"
+#endif
+
+#ifdef sunos
+extern char *calloc();
+extern char *malloc();
+extern long atol();
+extern char *strcpy();
+extern char *strncpy();
+extern char *strcat();
+extern time_t time();
+extern void endgrent();
+extern __dead void exit();
+extern off_t lseek();
+extern const char *strerror();
 #endif

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsck.h	5.17 (Berkeley) 7/27/90
+ *	@(#)fsck.h	8.1 (Berkeley) 6/5/93
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
@@ -99,7 +99,7 @@ struct inodesc {
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
 	int id_numfrags;	/* number of frags contained in block */
-	long id_filesize;	/* for DATA nodes, the size of the directory */
+	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
@@ -161,14 +161,17 @@ struct inoinfo {
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
-char	*devname;		/* name of device being checked */
+char	*cdevname;		/* name of device being checked */
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */
 int	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
-int	cvtflag;		/* convert to old file system format */
+int	cvtlevel;		/* convert to newer file system format */
+int	doinglevel1;		/* converting to new cylinder group format */
+int	doinglevel2;		/* converting to new inode format */
+int	newinofmt;		/* filesystem has new inode format */
 char	preen;			/* just fix normal inconsistencies */
 char	hotroot;		/* checking root device */
 char	havesb;			/* superblock has been read */
@@ -181,6 +184,7 @@ char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
 char	*statemap;		/* ptr to inode state table */
+char	*typemap;		/* ptr to inode type table */
 short	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
