@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.18 2000/12/14 06:27:25 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.19 2001/04/30 03:53:19 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -667,7 +667,7 @@ lemac_ifstart(
 	/*
 	 * The first four bytes of each transmit buffer are for
 	 * control information.  The first byte is the control
-	 * byte, then the length (why not word aligned??), then
+	 * byte, then the length (why not word aligned?), then
 	 * the offset to the buffer.
 	 */
 
