@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.11 1996/04/08 00:57:44 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.11.4.1 1996/05/30 04:03:55 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -156,17 +156,17 @@ sfbmatch(parent, match, aux)
 	void *aux;
 {
 	/*struct cfdata *cf = match;*/
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
 	/* make sure that we're looking for this type of device. */
-	if (!TC_BUS_MATCHNAME(ca, "PMAGB-BA"))
+	if (!TC_BUS_MATCHNAME(ta, "PMAGB-BA"))
 		return (0);
 
 	/*
 	 * if the TC rom ident matches, assume the VRAM is present too.
 	 */
 #if 0
-	if (badaddr( ((caddr_t)ca->ca_addr) + SFB_OFFSET_VRAM, 4))
+	if (badaddr( ((caddr_t)ta->ta_addr) + SFB_OFFSET_VRAM, 4))
 		return (0);
 #endif
 
@@ -183,14 +183,14 @@ sfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t sfbaddr = (caddr_t)ca->ca_addr;
+	struct tc_attach_args *ta = aux;
+	caddr_t sfbaddr = (caddr_t)ta->ta_addr;
 	int unit = self->dv_unit;
 	struct fbinfo *fi = (struct fbinfo *) self;
 
 #ifdef notyet
 	/* if this is the console, it's already configured. */
-	if (ca->ca_slotpri == cons_slot)
+	if (ta->ta_cookie == cons_slot)
 		return;	/* XXX patch up f softc pointer */
 #endif
 

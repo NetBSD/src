@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.13 1996/05/19 01:18:57 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.13.4.1 1996/05/30 04:03:53 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ mfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
 #ifdef FBDRIVER_DOES_ATTACH
 	/* leave configuration  to the fb driver */
@@ -218,7 +218,7 @@ mfbmatch(parent, match, aux)
 #endif
 
 	/* make sure that we're looking for this type of device. */
-	if (!TC_BUS_MATCHNAME(ca, "PMAG-AA "))
+	if (!TC_BUS_MATCHNAME(ta, "PMAG-AA "))
 		return (0);
 
 	return (1);
@@ -230,15 +230,15 @@ mfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t mfbaddr = (caddr_t) ca->ca_addr;
+	struct tc_attach_args *ta = aux;
+	caddr_t mfbaddr = (caddr_t) ta->ta_addr;
 	int unit = self->dv_unit;
 
 #ifdef notyet
 	struct fbinfo *fi = &mfbfi;
 
 	/* if this is the console, it's already configured. */
-	if (ca->ca_slotpri == cons_slot)
+	if (ta->ta_cookie == cons_slot)
 		return;	/* XXX patch up f softc pointer */
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.16 1996/05/19 00:58:03 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.16.4.1 1996/05/30 04:03:47 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,6 +78,8 @@
 #include <sys/device.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
@@ -89,10 +91,12 @@
 #include <pmax/dev/lk201.h>
 
 #include "dcvar.h"
+#include "tc.h"
 
 #include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
 
 extern int pmax_boardtype;
+extern struct cfdriver mainbus_cd;
 
 struct dc_softc {
 	struct device sc_dv;
@@ -203,9 +207,20 @@ dcmatch(parent, match, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 
 	static int nunits = 0;
 
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd &&
+	    strcmp(d->iada_modname, "dc") != 0 &&
+	    strcmp(d->iada_modname, "mdc") != 0 &&
+	    strcmp(d->iada_modname, "dc7085") != 0)
+		return (0);
+	else
+#endif
 	if (strcmp(ca->ca_name, "dc") != 0 &&
 	    strcmp(ca->ca_name, "mdc") != 0 &&
 	    strcmp(ca->ca_name, "dc7085") != 0)
@@ -230,15 +245,32 @@ dcattach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 	caddr_t dcaddr;
 
-	dcaddr = (caddr_t)ca->ca_addr;
-	(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
-			  self->dv_unit, self->dv_cfdata->cf_flags,
-			  ca->ca_slot);
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd) {
+		dcaddr = (caddr_t)d->iada_addr;
+		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  self->dv_unit, self->dv_cfdata->cf_flags,
+				  (int)d->iada_cookie);
+		/* tie pseudo-slot to device */
+		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
+		    dcintr, self);
+	}
+	else
+#endif
+	{
+		dcaddr = (caddr_t)ca->ca_addr;
+		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  self->dv_unit, self->dv_cfdata->cf_flags,
+				  ca->ca_slot);
 
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dcintr, self);
+		/* tie pseudo-slot to device */
+		BUS_INTR_ESTABLISH(ca, dcintr, self);
+	}
 	printf("\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.14 1996/05/19 01:12:40 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.14.4.1 1996/05/30 04:03:50 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -120,7 +120,8 @@ SOFTWARE.
 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/maxine.h>
-
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 #include <pmax/dev/dtopreg.h>
 #include <pmax/dev/lk201.h>
@@ -239,12 +240,12 @@ dtopmatch(parent, match, aux)
 	void *aux;
 {
 	/*struct cfdata *cf = match;*/
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 
-	if (badaddr((caddr_t)(ca->ca_addr), 2))
+	if (badaddr((caddr_t)(d->iada_addr), 2))
 		return (0);
 
-	if (strcmp(ca->ca_name, "dtop") != 0)
+	if (strcmp(d->iada_modname, "dtop") != 0)
 		return (0);
 
 	return (1);
@@ -256,13 +257,13 @@ dtopattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	register struct ioasicdev_attach_args *d = aux;
 	struct dtop_softc *sc = (struct dtop_softc*) self;
 	int i;
 
 
 	sc->poll = (poll_reg_t)MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
-	sc->data = (data_reg_t)ca->ca_addr;
+	sc->data = (data_reg_t)d->iada_addr;
 
 	for (i = 0; i < DTOP_MAX_DEVICES; i++)
 		sc->device[i].handler = dtop_null_device_handler;
@@ -276,7 +277,7 @@ dtopattach(parent, self, aux)
 	sc->probed_once = 1;
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dtopintr, (void*)sc);
+	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_NONE, dtopintr, sc);
 	printf("\n");
 }
 
@@ -884,7 +885,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		    if (dtopDivertXInput) {
 			(*dtopDivertXInput)(*ns);
 			c = -1; /* consumed by X */
-		    } else if (c >= 0)
+		    } else if (c >= 0 && tp != NULL)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 		    dev->keyboard.k_ar_state = K_AR_ACTIVE;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.1 1996/02/27 22:28:08 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.1.4.1 1996/05/30 04:13:31 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -378,7 +378,7 @@ tc_consprobeslot(tc_slotaddr)
 	if (tc_badaddr(slotaddr))
 		return (0);
 
-	if (tc_checkslot(slotaddr, name) == 0)
+	if (tc_checkslot(tc_slotaddr, name) == 0)
 		return (0);
 
 	/*

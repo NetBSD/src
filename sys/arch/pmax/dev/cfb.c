@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.18 1996/04/08 00:57:45 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.18.4.1 1996/05/30 04:03:43 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -182,7 +182,7 @@ cfbmatch(parent, match, aux)
 	void *aux;
 {
 	/*struct cfdata *cf = match;*/
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
 #ifdef FBDRIVER_DOES_ATTACH
 	/* leave configuration  to the fb driver */
@@ -190,7 +190,7 @@ cfbmatch(parent, match, aux)
 #endif
 
 	/* make sure that we're looking for this type of device. */
-	if (!TC_BUS_MATCHNAME(ca, "PMAG-BA "))
+	if (!TC_BUS_MATCHNAME(ta, "PMAG-BA "))
 		return (0);
 
 	return (1);
@@ -207,8 +207,8 @@ cfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t base = 	(caddr_t)(ca->ca_addr);
+	struct tc_attach_args *ta = aux;
+	caddr_t base = 	(caddr_t)(ta->ta_addr);
 	int unit = self->dv_unit;
 	struct fbinfo *fi = (struct fbinfo *) self;
 
@@ -230,7 +230,7 @@ cfbattach(parent, self, aux)
 	 * disabling of TC option interrupts doesn't work.
 	 */
 	if (pmax_boardtype == DS_3MIN) {
-		tc_intr_establish(parent, (void*)ca->ca_slotpri, TC_IPL_NONE,
+		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 				  cfb_intr, fi);
 	}
 }

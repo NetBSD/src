@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.10 1996/05/19 15:57:16 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.10.4.1 1996/05/30 04:10:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/sccreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kmin.h>
@@ -85,6 +84,7 @@
 #include "dtop.h"
 #include "scc.h"
 #include "asc.h"
+#include "tc.h"
 
 #if NDC > 0
 #include <machine/dc7085cons.h>
@@ -286,6 +286,7 @@ consinit()
 	    /*
 	     * Check for a suitable turbochannel frame buffer.
 	     */
+#if NTC>0
 	    if (tc_findconsole(crt)) {
 			cd.cn_pri = CN_NORMAL;
 #ifdef RCONS_HACK
@@ -295,6 +296,7 @@ consinit()
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 	    } else
+#endif
 		printf("No crt console device in slot %d\n", crt);
 	}
 
