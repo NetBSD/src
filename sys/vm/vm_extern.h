@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.35 1998/03/30 06:24:43 mycroft Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.36 1998/04/30 06:28:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -167,8 +167,8 @@ void		 vnode_pager_sync __P((struct mount *));
 void		 vnode_pager_umount __P((struct mount *));
 boolean_t	 vnode_pager_uncache __P((struct vnode *));
 #if !defined(UVM)
-void		 vslock __P((caddr_t, u_int));
-void		 vsunlock __P((caddr_t, u_int));
+void		 vslock __P((struct proc *, caddr_t, u_int));
+void		 vsunlock __P((struct proc *, caddr_t, u_int));
 #endif
 
 /* Machine dependent portion */
