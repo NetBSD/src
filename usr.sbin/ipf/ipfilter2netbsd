@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -76,7 +76,7 @@ mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -103,7 +103,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -127,7 +127,7 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c
@@ -152,7 +152,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -177,7 +177,7 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
@@ -200,7 +200,7 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
@@ -215,6 +215,8 @@ __eof_makefile
 ### start of ipsend ##############################
 cd $r
 echo ipsend:
+# XXX Want to also include tcpip.h, but can't right now because
+# XXX the license on that file does not allow redistribution!
 src='44arp.c ip.c ip_compat.h ipsend.c ipsend.h ipsopt.c sbpf.c'
 
 cd ipsend; pax -rvw $src $d/src/usr.sbin/ipf/ipsend
@@ -223,7 +225,7 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c
@@ -246,7 +248,7 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
@@ -277,7 +279,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -303,7 +305,7 @@ find $d -name '*.[ch]' -print | while read c; do
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.5 1997/05/27 22:24:25 thorpej Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.6 1997/05/28 03:05:55 thorpej Exp $	*/
 
 __eof_header
 cat $c
