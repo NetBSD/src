@@ -1,5 +1,4 @@
-#define	UMASS_DEBUG
-/*	$NetBSD: umass.c,v 1.9 1999/08/30 01:04:31 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.10 1999/08/30 01:05:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -125,7 +124,7 @@
 #define UDMASS_USB	0x00040000
 #define UDMASS_BULK	0x00080000
 #define UDMASS_ALL	0xffff0000
-int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ UDMASS_USB;
+int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ 0;
 #else
 #define	DPRINTF(m, x)
 #endif
