@@ -1,0 +1,48 @@
+# $NetBSD: TODO,v 1.1 2005/02/20 00:02:53 christos Exp $
+
+Status:
+
+Programs
+-------------------------------------------------------------------------------
+ftpd		- No code yet
+gdm		- Pkgsrc, nothing to do
+imap		- Pkgsrc, nothing to do
+kde		- Pkgsrc, nothing to do
+login		- Done, needs testing and review, working
+other		- Internal
+passwd		- No code yet
+pop3		- Pkgsrc, nothing to do
+pppd		- No code yet. A new version may already have it?
+racoon		- Switch to ipsec-tools will bring some PAM support.
+rexecd		- No code yet
+rsh		- No code yet
+sshd		- Done, needs testing and review, not working
+su		- Done, needs testing and review, working
+system		- Internal
+telnetd		- Done, needs testing and review, working
+xdm		- Done, needs testing and review
+
+Library:
+-------------------------------------------------------------------------------
+radius		- manu is importing
+
+
+To enable pam support, recompile with USE_PAM=yes and:
+-------------------------------------------------------------------------------
+ftpd		- Not done
+gdm		- Pkgsrc, nothing to do
+imap		- Pkgsrc, nothing to do
+kde		- Pkgsrc, nothing to do
+login		- Nothing
+other		- Internal
+passwd		- Not done
+pop3		- Pkgsrc, nothing to do
+pppd		- Not done
+racoon		- Not done
+rexecd		- Not done
+rsh		- Not done
+sshd		- add "UsePam yes" in /etc/ssh/sshd_config
+su		- Nothing
+system		- Internal
+telnetd		- add "-a valid" in /etc/inetd.conf telnet invocations
+xdm		- XXX?
