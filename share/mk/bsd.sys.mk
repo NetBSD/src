@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.15 1997/11/04 20:31:56 gwr Exp $
+#	$NetBSD: bsd.sys.mk,v 1.16 1997/11/04 21:12:45 gwr Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -23,9 +23,6 @@ HOST_CPPFLAGS?=
 HOST_LD?=	ld
 HOST_LDFLAGS?=
 
-NM?=		nm
-LORDER?=	lorder
-TSORT?= 	tsort -q
 
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
