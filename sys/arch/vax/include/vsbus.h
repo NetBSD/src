@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.7 1999/03/13 15:16:47 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.8 1999/04/14 23:14:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,6 +37,11 @@
  * used by all VAXstations.
  */
 
+#ifndef _VAX_VSBUS_H_
+#define _VAX_VSBUS_H_
+
+#include <machine/bus.h>
+
 struct	vsbus_attach_args {
 	vaddr_t	va_addr;		/* virtual CSR address */
 	paddr_t	va_paddr;		/* physical CSR address */
@@ -44,6 +49,7 @@ struct	vsbus_attach_args {
 	short	va_br;			/* Interrupt level */
 	short	va_cvec;		/* Interrupt vector address */
 	u_char	va_maskno;		/* Interrupt vector in mask */
+	bus_dma_tag_t va_dmat;
 };
 
 /*
@@ -66,3 +72,4 @@ struct	vsbus_attach_args {
 
 u_char	vsbus_setmask __P((unsigned char));
 void	vsbus_clrintr __P((unsigned char));
+#endif /* _VAX_VSBUS_H_ */
