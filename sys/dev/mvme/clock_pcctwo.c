@@ -1,7 +1,7 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.8 2001/08/12 18:33:13 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.1 2002/02/12 20:38:40 scw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 /*
  * Glue for the Peripheral Channel Controller Two (PCCChip2) timers,
  * the Memory Controller ASIC (MCchip, and the Mostek clock chip found
- * on the MVME-1[67]7 and MVME-162 series of boards.
+ * on the MVME-1[67]7, MVME-1[67]2 and MVME-187 series of boards.
  */
 
 #include <sys/param.h>
@@ -50,9 +50,9 @@
 #include <machine/psl.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/clockvar.h>
-#include <mvme68k/dev/pcctwovar.h>
-#include <mvme68k/dev/pcctworeg.h>
+#include <dev/mvme/clockvar.h>
+#include <dev/mvme/pcctwovar.h>
+#include <dev/mvme/pcctworeg.h>
 
 
 int clock_pcctwo_match __P((struct device *, struct cfdata *, void *));

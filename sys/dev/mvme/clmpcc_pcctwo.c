@@ -1,7 +1,7 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.7 2001/05/31 18:46:07 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.1 2002/02/12 20:38:40 scw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,9 +60,15 @@
 
 #include <dev/ic/clmpccvar.h>
 
+#include <dev/mvme/pcctwovar.h>
+#include <dev/mvme/pcctworeg.h>
+
+/* XXXXSCW: Fixme */
+#ifdef MVME68K
 #include <mvme68k/dev/mainbus.h>
-#include <mvme68k/dev/pcctwovar.h>
-#include <mvme68k/dev/pcctworeg.h>
+#else
+#error Need consiack hook
+#endif
 
 
 /* Definition of the driver for autoconfig. */
@@ -97,14 +103,14 @@ clmpcc_pcctwo_match(parent, cf, aux)
 
 	pa = aux;
 
-	if (strcmp(pa->pa_name, clmpcc_cd.cd_name) ||
-	    (machineid != MVME_167 && machineid != MVME_177))
+	if (strcmp(pa->pa_name, clmpcc_cd.cd_name))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
 
 	return (1);
 }
+
 /*
  * Attach a found CD2401.
  */
@@ -175,6 +181,7 @@ clmpcc_pcctwo_iackhook(sc, which)
 
 	foo = pcc2_reg_read(sys_pcctwo, offset);
 }
+
 /*
  * This routine is only used prior to clmpcc_attach() being called
  */
@@ -207,6 +214,7 @@ clmpcc_pcctwo_consiackhook(sc, which)
 #endif
 	}
 
+#ifdef MVME68K
 	/*
 	 * We need to fake the tag and handle since 'sys_pcctwo' will
 	 * be NULL during early system startup...
@@ -215,6 +223,9 @@ clmpcc_pcctwo_consiackhook(sc, which)
 		PCCTWO_REG_OFF]);
 
 	foo = bus_space_read_1(&_mainbus_space_tag, bush, offset);
+#else
+#error Need consiack hook
+#endif
 }
 
 
@@ -231,7 +242,12 @@ clmpcccnprobe(cp)
 {
 	int maj;
 
-	if (machineid != MVME_167 && machineid != MVME_177) {
+#if defined(MVME68K)
+	if (machineid != MVME_167 && machineid != MVME_177)
+#elif defined(MVME88K)
+	if (machineid != MVME_187)
+#endif
+	{
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
