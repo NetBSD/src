@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.131 2000/02/28 09:52:42 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.132 2000/02/28 20:07:23 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3580,3 +3580,50 @@ sys/conf/osrelease.sh				patch
 sys/miscfs/procfs/procfs_subr.c			1.30
 
   Fix a critical typo in the earlier procfs security fix.
+
+usr.sbin/pkg_install/lib/ftpio.c		1.18
+
+  Bump timeout in select() to 10 minutes.  Make sure ftp_cmd()
+  properly passes up an error value when appropriate.
+
+sys/arch/sparc/stand/boot/Makefile		1.18
+ 
+  Make sure ``make obj'' works.
+
+domestic/usr.bin/su/Makefile			1.2
+
+  Make sure the SUROOTAUTH change works properly here too.
+
+share/man/man4/dpt.4				1.10
+
+  Document that this driver does use features like RAID, and briefly
+  explain how it's accomplished.
+
+sys/dev/scsipi/scsipi_base.h			1.10
+
+  Make sure to initialize the ``req_sense_length'' field.  Fixes
+  a serious problem with the PCI ``ncr'' driver.
+
+distrib/notes/vax/hardware			patch
+distrib/notes/vax/install			patch
+distrib/notes/vax/prep				patch
+distrib/notes/vax/xfer				patch
+
+  Update the VAX install notes to closer reflect reality.
+
+distrib/sets/lists/base/md.vax			patch
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/comp/md.vax			patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/misc/mi			patch
+
+  Update set lists to reflect reality.  Specifically:
+   o vax boot code
+   o user management files
+   o new timezone files
+   o new vax include files
+   o ratecheck(9)
+
+sys/arch/sparc/stand/boot/Makefile		patch
+
+  Add an include target so that ``make build'' works.
