@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.4 1994/10/20 04:23:04 cgd Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.5 1995/03/19 23:44:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -68,7 +68,7 @@ kmstartup()
 	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
-	printf("Profiling kernel, textsize=%d [%x..%x]\n",
+	printf("Profiling kernel, textsize=%d [%p..%p]\n",
 	       p->textsize, p->lowpc, p->highpc);
 	p->kcountsize = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
