@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.13 2000/07/07 10:52:41 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.14 2000/07/10 11:15:07 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Nd maintain system log files to manageable sizes
 .Sh SYNOPSIS
 .Nm newsyslog
-.Op Fl Frv
+.Op Fl nrvF
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm Newsyslog
@@ -182,11 +182,14 @@ Instruct newsyslog to use
 instead of
 .Pa /etc/newsyslog.conf
 as its configuration file.
-.It Fl v
-Place 
+.It Fl n
+Cause
 .Nm
-in verbose mode.  In this mode it will print out each log and its
-reasons for either trimming that log or skipping it.
+not to trim the logs, but to print out what it would do if this option
+were not specified: 
+.Fl n
+implies
+.Fl v .
 .It Fl r
 Remove the restriction that
 .Nm
@@ -196,6 +199,11 @@ will not be able to send a HUP signal to
 .Xr syslogd 8 ,
 so this option should be used only when debugging or trimming user generated
 logs.
+.It Fl v
+Place 
+.Nm
+in verbose mode.  In this mode it will print out each log and its
+reasons for either trimming that log or skipping it.
 .It Fl F
 Force
 .Nm
