@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.6 1997/10/12 14:07:06 mycroft Exp $	*/
+/*	$NetBSD: k5login.c,v 1.7 1999/07/12 21:36:10 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.6 1997/10/12 14:07:06 mycroft Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.7 1999/07/12 21:36:10 aidan Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: k5login.c,v 1.6 1997/10/12 14:07:06 mycroft Exp $");
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -67,6 +68,101 @@ extern char *krbtkfile_env;
 extern char *tty;
 
 static char tkt_location[MAXPATHLEN];
+static krb5_creds forw_creds;
+int have_forward;
+static krb5_principal me, server;
+
+/*
+ * Attempt to read forwarded kerberos creds
+ *
+ * return 0 on success (forwarded creds in memory)
+ *        1 if no forwarded creds.
+ */
+int
+k5_read_creds(username)
+	char *username;
+{
+	krb5_error_code code;
+	krb5_creds mcreds;
+	krb5_ccache ccache;
+
+	have_forward = 0;
+	memset((char*) &mcreds, 0, sizeof(forw_creds));
+	memset((char*) &forw_creds, 0, sizeof(forw_creds));
+
+	code = krb5_cc_default(kcontext, &ccache);
+	if (code) {
+		com_err("login", code, "while getting default ccache");
+		return(1);
+	}
+
+	code = krb5_parse_name(kcontext, username, &me);
+	if (code) {
+		com_err("login", code, "when parsing name %s", username);
+		return(1);
+	}
+
+	mcreds.client = me;
+	code = krb5_build_principal_ext(kcontext, &mcreds.server,
+					krb5_princ_realm(kcontext, me)->length,
+					krb5_princ_realm(kcontext, me)->data,
+					tgtname.length, tgtname.data,
+					krb5_princ_realm(kcontext, me)->length,
+					krb5_princ_realm(kcontext, me)->data,
+					0);
+	if (code) {
+		com_err("login", code, "while building server name");
+		goto nuke_ccache;
+	}
+
+	code = krb5_cc_retrieve_cred(kcontext, ccache, 0,
+				       &mcreds, &forw_creds);
+	if (code) {
+		com_err("login", code, "while retrieving V5 initial ticket for copy");
+		goto nuke_ccache;
+	}
+	have_forward = 1;
+
+	strcpy(tkt_location, getenv("KRB5CCNAME"));
+	krbtkfile_env = tkt_location;
+	notickets = 0;
+
+nuke_ccache:
+	krb5_cc_destroy(kcontext, ccache);
+	return(!have_forward);
+}
+
+int
+k5_write_creds()
+{
+	krb5_error_code code;
+	krb5_ccache ccache;
+	char buf[256];
+
+	if (!have_forward)
+		return(1);
+	code = krb5_cc_default(kcontext, &ccache);
+	if (code) {
+		com_err("login", code, "while getting default ccache");
+		return(1);
+	}
+
+	code = krb5_cc_initialize(kcontext, ccache, me);
+	if (code) {
+		com_err("login", code, "while re-initializing V5 ccache as user");
+		goto nuke_ccache_contents;
+	}
+
+	code = krb5_cc_store_cred(kcontext, ccache, &forw_creds);
+	if (code) {
+		com_err("login", code, "while re-storing V5 ccache as user");
+		goto nuke_ccache_contents;
+	}
+
+nuke_ccache_contents:
+	krb5_free_cred_contents(kcontext, &forw_creds);
+	return(code != 0);
+}
 
 /*
  * Attempt to log the user in using Kerberos authentication
@@ -81,7 +177,6 @@ klogin(pw, instance, localhost, password)
 {
         krb5_error_code kerror;
 	krb5_address **my_addresses;
-	krb5_principal me, server;
 	krb5_creds my_creds;
 	krb5_timestamp now;
 	krb5_ccache ccache = NULL;
@@ -91,8 +186,6 @@ klogin(pw, instance, localhost, password)
 	int i;
 	char *realm, *client_name;
 	char *principal;
-	
-	krb5_init_ets(kcontext);
 
 	/*
 	 * Root logins don't use Kerberos.
