@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.14 2001/08/18 17:10:05 ad Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.15 2002/07/06 00:55:29 wiz Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.14 2001/08/18 17:10:05 ad Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.15 2002/07/06 00:55:29 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,13 +52,11 @@ __RCSID("$NetBSD: stdhosts.c,v 1.14 2001/08/18 17:10:05 ad Exp $");
 
 #include "protos.h"
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct in_addr host_addr;
 	FILE	*data_file;
@@ -133,7 +131,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-n] [file]\n", getprogname());
