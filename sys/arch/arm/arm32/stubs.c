@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: stubs.c,v 1.11 2002/12/28 20:40:21 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -54,7 +54,6 @@
 #include <arm/arm32/machdep.h>
 
 extern dev_t dumpdev;
-extern BootConfig bootconfig;
 
 /*
  * These variables are needed by /sbin/savecore
