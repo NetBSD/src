@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.4 2000/04/15 22:53:05 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.5 2000/04/17 12:25:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ can_change_colors(void)
  *	Initialise colour support.
  */
 int
-start_color()
+start_color(void)
 {
 	int	i;
 	attr_t	temp_nc;
