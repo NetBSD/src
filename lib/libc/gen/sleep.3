@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sleep.3	6.3 (Berkeley) 4/19/91
-.\"	$Id: sleep.3,v 1.4 1993/10/14 23:25:31 jtc Exp $
+.\"	$Id: sleep.3,v 1.5 1994/05/28 16:11:27 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt SLEEP 3
@@ -45,13 +45,13 @@
 .Sh DESCRIPTION
 The
 .Fn sleep
-function
-suspends execution of the calling process
-for
+function suspends execution of the calling process until either the
+number of seconds specified by
 .Fa seconds
-of time.
-System activity or time spent in processing the
-call may lengthen the sleep by a second.
+have elapsed or a signal is delivered to the calling process and its
+action is to invoke a signal-catching function or to terminate the
+process.  The suspension time my be longer than requested due to the
+scheduling of other activity by the system.
 .Pp
 If a timer is already running on the process its state is saved.
 If the value
@@ -72,9 +72,21 @@ A similar but less compatible function can be obtained with a single
 such a function would not restart after signals, but would not interfere
 with other uses of
 .Xr setitimer .
+.Sh RETURN VALUE
+If the 
+.Fn sleep
+function returns because the requested time has elapsed, the value
+returned will be zero.  If the 
+.Fn sleep
+function returns due to the delivery of a signal, the value returned
+will be the unslept amount (the request time minus the time actually
+slept) in seconds.
 .Sh SEE ALSO
 .Xr setitimer 2 ,
-.Xr sigpause 2 ,
+.Xr sigaction 2 ,
+.Xr sigsuspend 2 ,
+.Xr alarm 3 ,
+.Xr pause 3 ,
 .Xr usleep 3
 .Sh STANDARDS
 The 
