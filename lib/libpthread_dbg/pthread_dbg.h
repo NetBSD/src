@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.1.2.3 2002/10/16 19:32:24 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.1.2.4 2002/12/06 20:58:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -96,6 +96,11 @@ typedef struct {
 		struct {
 			td_thread_t *thread;
 		} join;
+		struct {
+			int	locked;
+			int	readlocks;
+			td_thread_t *writeowner;
+		} rwlock;
 		int pad[8];
 	} sync_data;
 } td_sync_info_t;
@@ -105,6 +110,7 @@ typedef struct {
 #define TD_SYNC_COND	2	/* pthread_cond_t */
 #define TD_SYNC_SPIN	3	/* pthread_spinlock_t */
 #define TD_SYNC_JOIN	4	/* thread being joined */
+#define TD_SYNC_RWLOCK	5	/* pthread_rwlock_t */
 
 /* Error return codes */
 #define TD_ERR_OK		0

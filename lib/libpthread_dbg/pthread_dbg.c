@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.7 2002/10/16 19:34:15 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.8 2002/12/06 20:58:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -437,7 +437,7 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 int
 td_sync_info(td_sync_t *s, td_sync_info_t *info)
 {
-	int val, magic;
+	int val, magic, n;
 	struct pthread_queue_t queue;
 	pthread_spin_t slock;
 	pthread_t taddr;
@@ -515,6 +515,42 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		if (!PTQ_EMPTY(&queue))
 			info->sync_haswaiters = 1;
 		break;
+	case _PT_RWLOCK_MAGIC:
+		info->sync_type = TD_SYNC_RWLOCK;
+		info->sync_size = sizeof(struct pthread_rwlock_st);
+		if ((val = READ(s->proc, 
+		    s->addr + offsetof(struct pthread_rwlock_st, ptr_rblocked),
+		    &queue, sizeof(struct pthread_queue_t))) != 0)
+			return val;
+		if (!PTQ_EMPTY(&queue))
+			info->sync_haswaiters = 1;
+
+		if ((val = READ(s->proc, 
+		    s->addr + offsetof(struct pthread_rwlock_st, ptr_wblocked),
+		    &queue, sizeof(struct pthread_queue_t))) != 0)
+			return val;
+		if (!PTQ_EMPTY(&queue))
+			info->sync_haswaiters = 1;
+
+
+		info->sync_data.rwlock.locked = 0;
+		if ((val = READ(s->proc, 
+		    s->addr + offsetof(struct pthread_rwlock_st, ptr_nreaders),
+		    &n, sizeof(int))) != 0)
+			return val;
+		info->sync_data.rwlock.readlocks = n;
+		if (n > 0)
+			info->sync_data.rwlock.locked = 1;
+	
+		if ((val = READ(s->proc, 
+		    s->addr + offsetof(struct pthread_rwlock_st, ptr_writer)
+		    &taddr, sizeof(pthread_t))) != 0)
+			return val;
+		if (taddr != 0) {
+			info->sync_data.rwlock.locked = 1;
+			td__getthread(s->proc, (caddr_t)taddr, 
+			    &info->sync_data.rwlock.writer);
+		}
 	default:
 		return (0);
 	}
