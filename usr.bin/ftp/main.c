@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 1999/10/12 06:05:01 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.64 1999/10/13 02:47:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.63 1999/10/12 06:05:01 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 1999/10/13 02:47:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, top, rval;
+	int ch, rval;
 	struct passwd *pw = NULL;
 	char *cp, *ep;
 	int dumbterm, s, len;
@@ -449,15 +449,12 @@ main(argc, argv)
 #ifndef NO_EDITCOMPLETE
 	controlediting();
 #endif /* !NO_EDITCOMPLETE */
-	top = sigsetjmp(toplevel, 1) == 0;
-	if (top) {
-		(void)xsignal(SIGINT, intr);
-		(void)xsignal(SIGPIPE, (sig_t)lostpeer);
-	}
-	for (;;) {
-		cmdscanner(top);
-		top = 1;
-	}
+
+	(void)sigsetjmp(toplevel, 1);
+	(void)xsignal(SIGINT, intr);
+	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
+	for (;;)
+		cmdscanner();
 }
 
 void
@@ -466,7 +463,7 @@ intr(dummy)
 {
 
 	alarmtimer(0);
-	if (editing)		/* ugly hack to cleanup after editline */
+	if (fromatty)
 		write(fileno(ttyout), "\n", 1);
 	siglongjmp(toplevel, 1);
 }
@@ -517,18 +514,11 @@ prompt()
  * Command parser.
  */
 void
-cmdscanner(top)
-	int top;
+cmdscanner()
 {
 	struct cmd *c;
 	int num;
 
-	if (!top
-#ifndef NO_EDITCOMPLETE
-	    && !editing
-#endif /* !NO_EDITCOMPLETE */
-	    )
-		(void)putc('\n', ttyout);
 	for (;;) {
 #ifndef NO_EDITCOMPLETE
 		if (!editing) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.74 1999/10/12 06:04:59 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.75 1999/10/13 02:47:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.74 1999/10/12 06:04:59 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.75 1999/10/13 02:47:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,8 +176,6 @@ confirm(cmd, file)
 				fprintf(ttyout,
 				    "Prompting off for duration of %s.\n", cmd);
 				break;
-			case 'n':
-				return (0);
 			case 'p':
 				interactive = 0;
 				fputs("Interactive mode: off.\n", ttyout);
@@ -185,10 +183,9 @@ confirm(cmd, file)
 			case 'q':
 				mflag = 0;
 				fprintf(ttyout, "%s aborted\n", mname);
+				/* FALLTHROUGH */
+			case 'n':
 				return (0);
-			case 'y':
-			default:
-				return (1);
 			case '?':
 				fprintf(ttyout,
 				    " confirmation options:\n"
@@ -199,8 +196,9 @@ confirm(cmd, file)
 				    "\ty  answer `yes' for this file\n"
 				    "\t?  this help list\n",
 				    cmd, cmd);
-				break;
+				continue;	/* back to while(1) */
 		}
+		return (1);
 	}
 	/* NOTREACHED */
 }
