@@ -35,16 +35,17 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
- *    $Id: bootp.c,v 1.2 1993/10/14 04:53:36 glass Exp $
+ *    $Id: bootp.c,v 1.3 1993/10/16 07:57:40 cgd Exp $
  */
 
 #include <sys/types.h>
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
 #include <errno.h>
 #include <string.h>
+
+#include "salibc.h"
 
 #include "netboot.h"
 #include "bootbootp.h"
@@ -98,8 +99,10 @@ bootp(d)
 #define rbootp  xrbuf.xrbootp
 	} rbuf;
 
+#ifdef DEBUG
  	if (debug)
  	    printf("bootp: called\n");
+#endif
 	bp = &wbuf.wbootp;
 	pkt = &rbuf.rbootp;
 	pkt -= HEADER_SIZE;
@@ -116,8 +119,10 @@ bootp(d)
 	d->destip = INADDR_BROADCAST;
 
  	while ((have & need) != need) {
+#ifdef DEBUG
 	        if (debug)
  		    printf("bootp: sendrecv\n");
+#endif
 		(void)sendrecv(d, bootpsend, bp, sizeof(*bp),
 		    bootprecv, pkt, RECV_SIZE);
 	}
@@ -132,8 +137,10 @@ bootpsend(d, pkt, len)
 {
 	register struct bootp *bp;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("bootpsend: called\n");
+#endif
 	bp = pkt;
 	bzero(bp->bp_file, sizeof(bp->bp_file));
 	if ((have & BOOT_ROOT) == 0)
@@ -146,8 +153,10 @@ bootpsend(d, pkt, len)
 		nvend = (nvend + 1) % (sizeof(vend) / sizeof(vend[0]));
 	bp->bp_xid = d->xid;
 	bp->bp_secs = (u_long)(getsecs() - bot);
+#ifdef DEBUG
 	if (debug)
 	    printf("bootpsend: calling sendudp\n");
+#endif
 	return (sendudp(d, pkt, len));
 }
 
@@ -161,8 +170,10 @@ bootprecv(d, pkt, len)
 	register struct bootp *bp;
 	u_long ul;
 
+#ifdef DEBUG
 	if (debug)
 	    printf("bootprecv: called\n");
+#endif
 	bp = (struct bootp *)checkudp(d, pkt, &len);
 	if (bp == NULL || len < sizeof(*bp) || bp->bp_xid != d->xid) {
 		errno = 0;
