@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 2003/09/30 00:35:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.11 2003/12/05 23:56:20 he Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2003/09/30 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2003/12/05 23:56:20 he Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -242,22 +242,6 @@ cpu_startup()
 	*(volatile int *)(0x00008000) = 0; /* data abort */
 	*(volatile int *)(0x10000000) = 0; /* address exception */
 #endif
-}
-
-/*
- * machine dependent system variables.
- */
-
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	return (EOPNOTSUPP);
 }
 
 /* Read a byte from CMOS RAM. */
