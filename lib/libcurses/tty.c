@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.30 2003/01/09 12:48:06 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.31 2003/01/09 21:47:39 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.30 2003/01/09 12:48:06 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.31 2003/01/09 21:47:39 atatat Exp $");
 #endif
 #endif				/* not lint */
 
@@ -244,15 +244,15 @@ nocbreak(void)
  *
  */
 int
-halfdelay(int timeout)
+halfdelay(int duration)
 {
-	if ((timeout < 1) || (timeout > 255))
+	if ((duration < 1) || (duration > 255))
 		return ERR;
 
 	if (cbreak() == ERR)
 		return ERR;
 
-	if (__timeout(timeout) == ERR)
+	if (__timeout(duration) == ERR)
 		return ERR;
 
 	_cursesi_screen->half_delay = TRUE;
