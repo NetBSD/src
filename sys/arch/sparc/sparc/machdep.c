@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 2003/01/16 11:33:21 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.221 2003/01/16 16:20:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -709,28 +709,6 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * xcall function to stop this cpu completely; used by cpu_reboot and DDB.
- */
-static void
-cpu_halt(void)
-{
-
-	/*
-	 * This CPU is no longer available, mark it so.  We do this before
-	 * posting GOTMSG so that we can never ever get another xcall().
-	 */
-	cpuinfo.flags &= ~CPUFLG_READY;
-	cpuinfo.flags |= CPUFLG_GOTMSG;
-
-	printf("cpu%d halted\n", cpu_number());
-
-	spl0();
-	prom_cpustop(0);
-}
-#endif /* MULTIPROCESSOR */
-
 int	waittime = -1;
 
 void
@@ -798,11 +776,6 @@ cpu_reboot(howto, user_boot_string)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-#if defined(MULTIPROCESSOR)
-	XCALL0(cpu_halt, CPUSET_ALL & ~(1 << cpu_number()));
-	delay(100);
-#endif /* MULTIPROCESSOR */
-
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NPOWER > 0
@@ -821,6 +794,7 @@ cpu_reboot(howto, user_boot_string)
 
 	if (howto & RB_HALT) {
 #if defined(MULTIPROCESSOR)
+		mp_halt_cpus();
 		printf("cpu%d halted\n\n", cpu_number());
 #else
 		printf("halted\n\n");
