@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.40 2000/05/08 20:01:05 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.41 2000/05/26 21:20:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -230,7 +230,7 @@ ktrgenio(v, fd, rw, iov, len, error)
 	buflen -= sizeof(struct ktr_genio);
 
 	while (resid > 0) {
-		if (p->p_schedflags & PSCHED_SHOULDYIELD)
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(NULL);
 
 		cnt = min(iov->iov_len, buflen);

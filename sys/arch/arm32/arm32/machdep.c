@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2000/03/26 20:42:24 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2000/05/26 21:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -101,6 +101,9 @@ pv_addr_t kernelstack;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;

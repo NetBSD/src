@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2000/05/26 00:36:48 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2000/05/26 21:19:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1210,7 +1210,7 @@ ENTRY(switch_exit)
 ASENTRY_NOPROFILE(Idle)
 	stop	#PSL_LOWIPL
 	movw	#PSL_HIGHIPL,sr
-	movl    _C_LABEL(whichqs),d0
+	movl    _C_LABEL(sched_whichqs),d0
 	jeq     _ASM_LABEL(Idle)
 	jra	Lsw1
 
@@ -1242,7 +1242,7 @@ ENTRY(cpu_switch)
 	 * then take the first proc from that queue.
 	 */
 	movw    #PSL_HIGHIPL,sr         | lock out interrupts
-	movl    _C_LABEL(whichqs),d0
+	movl    _C_LABEL(sched_whichqs),d0
 	jeq     _ASM_LABEL(Idle)
 Lsw1:
 	movl    d0,d1
@@ -1253,7 +1253,7 @@ Lsw1:
 
 	movl    d1,d0
 	lslb    #3,d1                   | convert queue number to index
-	addl    #_C_LABEL(qs),d1        | locate queue (q)
+	addl    #_C_LABEL(sched_qs),d1  | locate queue (q)
 	movl    d1,a1
 	movl    a1@(P_FORW),a0          | p = q->p_forw
 	cmpal   d1,a0                   | anyone on queue?
@@ -1269,9 +1269,9 @@ Lsw1:
 	movl    d1,a1@(P_BACK)          | n->p_back = q
 	cmpal   d1,a1                   | anyone left on queue?
 	jne     Lsw2                    | yes, skip
-	movl    _C_LABEL(whichqs),d1
+	movl    _C_LABEL(sched_whichqs),d1
 	bclr    d0,d1                   | no, clear bit
-	movl    d1,_C_LABEL(whichqs)
+	movl    d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)

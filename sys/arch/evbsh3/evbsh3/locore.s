@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 2000/05/26 12:57:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 2000/05/26 21:19:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -494,7 +494,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_C_LABEL(whichqs), _C_LABEL(qs), _C_LABEL(panic)
+	.globl	_C_LABEL(sched_whichqs), _C_LABEL(sched_qs), _C_LABEL(panic)
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -519,7 +519,7 @@ ENTRY(idle)
 
 	.align	2
 XXLwhichqs:
-	.long	_C_LABEL(whichqs)
+	.long	_C_LABEL(sched_whichqs)
 
 
 #define	PUSHALL	\
@@ -702,7 +702,7 @@ switch_search:
 
 	.align	2
 XXXLwhichqs:
-	.long	_C_LABEL(whichqs)
+	.long	_C_LABEL(sched_whichqs)
 1:
 
 
@@ -1018,9 +1018,9 @@ switch_return:
 	nop
 
 	.align	2
-XLqs:		.long	_C_LABEL(qs)
+XLqs:		.long	_C_LABEL(sched_qs)
 XLP_ADDR:	.long	P_ADDR
-XLwhichqs:	.long	_C_LABEL(whichqs)
+XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP

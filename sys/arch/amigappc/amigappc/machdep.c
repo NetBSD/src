@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2000/05/25 22:11:57 is Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2000/05/26 21:19:27 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,9 @@ extern struct user *proc0paddr;
 char cpu_model[80];
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
