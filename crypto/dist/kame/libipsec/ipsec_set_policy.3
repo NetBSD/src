@@ -1,4 +1,4 @@
-.\"	$KAME: ipsec_set_policy.3,v 1.13 2001/02/21 09:31:11 sakane Exp $
+.\"	$KAME: ipsec_set_policy.3,v 1.14 2001/04/06 07:00:46 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ It is caller's responsibility to reclaim the region, by using
 .Fa policy
 is formatted as either of the following:
 .Bl -tag  -width "discard"
-.It Ar direction Li entrust
+.It Ar direction Li discard
 .Ar direction
 must be
 .Li in
@@ -99,6 +99,10 @@ or
 .Li out .
 .Ar direction
 specifies which direction the policy needs to be applied.
+With
+.Li discard
+policy, packets will be dropped if they match the policy.
+.It Ar direction Li entrust
 .Li entrust
 means to consult to SPD defined by
 .Xr setkey 8 .

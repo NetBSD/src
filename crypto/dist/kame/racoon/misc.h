@@ -1,4 +1,4 @@
-/*	$KAME: misc.h,v 1.10 2000/12/17 23:03:48 sakane Exp $	*/
+/*	$KAME: misc.h,v 1.11 2001/07/14 05:48:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -42,3 +42,5 @@ extern char *bit2str __P((int, int));
 extern void *get_newbuf __P((void *, size_t));
 extern const char *debug_location __P((char *, int, char *));
 extern int getfsize __P((char *));
+struct timeval;
+extern double timedelta __P((struct timeval *, struct timeval *));

@@ -9,6 +9,10 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
 AC_CANONICAL_HOST
+case $host in
+*netbsd*)
+	CFLAGS="-Wl,-R/usr/pkg/lib $CFLAGS" ;;
+esac
 
 AC_SUBST(OPTFLAG)
 OPTFLAG="-O -DYIPS_DEBUG"
@@ -53,13 +57,30 @@ AC_MSG_RESULT($enable_idea)
 
 AC_MSG_CHECKING(if --enable-gssapi option is specified)
 AC_ARG_ENABLE(rc5,
-        [  --enable-gssapi            enable GSS-API authentication],
+        [  --enable-gssapi         enable GSS-API authentication],
         [], [enable_gssapi=no])
-if test $enable_gssapi = "yes"; then
+if test "x$enable_gssapi" = "xyes"; then
 	AC_DEFINE(HAVE_GSSAPI)
 fi
 AC_MSG_RESULT($enable_gssapi)
 
+AC_MSG_CHECKING(if --enable-stats option is specified)
+AC_ARG_ENABLE(stats,
+        [  --enable-stats          enable statistics logging function],
+        [], [enable_stats=no])
+if test "x$enable_stats" = "xyes"; then
+	AC_DEFINE(ENABLE_STATS)
+fi
+AC_MSG_RESULT($enable_stats)
+
+AC_MSG_CHECKING(if --enable-samode-unspec option is specified)
+AC_ARG_ENABLE(samode-unspec,
+        [  --enable-samode-unspec  enable to use unspecified a mode of SA],
+        [], [enable_samode_unspec=no])
+if test "x$enable_samode_unspec" = "xyes"; then
+	AC_DEFINE(ENABLE_SAMODE_UNSPECIFIED)
+fi
+AC_MSG_RESULT($enable_samode_unspec)
 
 efence_dir=
 AC_MSG_CHECKING(if --with-efence option is specified)
@@ -88,6 +109,20 @@ if test "$gc_dir" != "no"; then
 	fi
 fi
 
+dmalloc_dir=
+AC_MSG_CHECKING(if --with-dmalloc option is specified)
+AC_ARG_WITH(dmalloc, [  --with-dmalloc=DIR      specify Dmalloc directory],
+	[dmalloc_dir=$withval], [dmalloc_dir=no])
+AC_MSG_RESULT(${dmalloc_dir})
+if test "$dmalloc_dir" != "no"; then
+	AC_DEFINE(DMALLOC)
+	if test "x$dmalloc_dir" = "x"; then
+		RACOON_PATH_LIBS(dmalloc_log_unfreed, dmalloc)
+	else
+		RACOON_PATH_LIBS(dmalloc_log_unfreed, dmalloc, $dmalloc_dir)
+	fi
+fi
+
 AC_MSG_CHECKING(if you have KAME tcpdump in $srcdir/../tcpdump)
 if test -f "$srcdir/../tcpdump/print-isakmp.c"; then
 	LIBOBJS="$LIBOBJS print-isakmp.o"
@@ -106,193 +141,6 @@ AC_TRY_COMPILE(dnl
 	[AC_MSG_RESULT(no)])
 
 dnl Checks for libraries.
-AC_MSG_CHECKING(if --with-ssleay option is specified)
-AC_ARG_WITH(ssleay, [  --with-ssleay=DIR       specify SSLeay directory],
-	[crypto_dir=$withval])
-AC_MSG_RESULT(${crypto_dir-"default"})
-
-dnl if test "$crypto_dir" != "default"; then
-dnl 	LIBS="-L$crypto_dir/lib $LIBS"
-dnl 	if test -f $crypto_dir/include/md5.h; then
-dnl 		CFLAGS="-I$crypto_dir/include $CFLAGS"
-dnl 	elif test -d $crypto_dir/include/ssleay -a -f $dir/include/ssleay/md5.h; then
-dnl 		CFLAGS="-I$crypto_dir/include/ssleay -I$crypto_dir/include $CFLAGS"
-dnl 	elif test -d $crypto_dir/include/openssl -a -f $dir/include/openssl/md5.h; then
-dnl 		CFLAGS="-I$crypto_dir/include/openssl -I$crypto_dir/include $CFLAGS"
-dnl 	fi
-dnl fi
-
-if test "x$crypto_dir" = "x"; then
-	case $host_os in
-	netbsd*)	crypto_dir="/usr/pkg";;
-	freebsd*)
-		if test -d /usr/local/ssl; then
-			crypto_dir="/usr/local/ssl"
-		else
-			crypto_dir="/usr/local"
-		fi
-		;;
-	esac
-fi
-if test "x$krb5_incdir" = "x"; then
-	case $host_os in
-	netbsd*)	krb5_incdir="/usr/include/krb5";;
-	esac
-fi
-if test "x$krb5_libs" = "x"; then
-	case $host_os in
-	netbsd*)	krb5_libs="-lgssapi -lkrb5 -lcom_err -lroken -lasn1";;
-	esac
-fi
-if test "$enable_gssapi" = "yes"; then
-	LIBS="$LIBS $krb5_libs"
-	CPPFLAGS="-I$krb5_incdir $CPPFLAGS"
-fi
-dnl for some reason, past version of freebsd port requires us to set -I for
-dnl BOTH openssl/cast.h and cast.h.  who should I blame (or am I mistaken?)
-RACOON_PATH_LIBS(CAST_cfb64_encrypt, crypto, ${crypto_dir}/lib)
-AC_TRY_COMPILE([#include <sys/types.h>
-#include <stdio.h>
-#include <openssl/bn.h>
-#include <openssl/dh.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/des.h>], [], [], [openssl_compile_failed=yes])
-
-if test "x$openssl_compile_failed" = "xyes"; then
-	echo
-	echo "Fatal: crypto library and headers not found."
-	echo Specify proper directory by using --with-ssleay.
-	if test `uname -s` = FreeBSD; then
-		echo Use ports/security/SSLeay to install SSLeay, or visit
-	elif test `uname -s` = NetBSD; then
-		echo Use pkgsrc/security/SSLeay to install SSLeay, or visit
-	else
-		echo -n "Visit "
-	fi
-	echo ftp://psych.psy.uq.oz.au/pub/Crypto/SSL/, or visit
-	echo http://www.openssl.org/
-	exit 1
-fi
-dnl AC_MSG_RESULT("$ssleay_lib and $ssleay_include")
-
-AC_MSG_CHECKING(openssl version)
-AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
-#if OPENSSL_VERSION_NUMBER >= 0x00904100L
-yes
-#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
-	echo
-	echo "FATAL: OpenSSL version must be 0.9.4 or higher."
-	exit 1])
-
-dnl AC_MSG_CHECKING(for libssl)
-AC_CHECK_LIB(ssl, ssl_ok, [], [], -lcrypto)
-
-AC_CHECK_LIB(crypto, des_cbc_encrypt)
-AC_CHECK_LIB(l, yywrap)
-AC_CHECK_LIB(y, yyerror)
-
-dnl PF_KEYv2 support check
-AC_MSG_CHECKING(for PF_KEYv2 support)
-AC_CACHE_VAL(ac_cv_pfkey, [dnl
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/pfkeyv2.h>],
-        [int x = PF_KEY, y = PF_KEY_V2;],
-        [ac_cv_pfkey="yes"], [ac_cv_pfkey="no"])])
-AC_MSG_RESULT($ac_cv_pfkey)
-if test "$ac_cv_pfkey" = yes; then
-        OPTFLAG="-DHAVE_PFKEYV2 $OPTFLAG"
-fi
-
-dnl old KAME header check
-if test "$ac_cv_pfkey" = "yes"; then
-	AC_MSG_CHECKING(for old KAME PF_KEYv2 header file)
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/pfkeyv2.h>],
-		[struct sadb_msg m; m.sadb_msg_reserved2 = 0;],
-		[AC_MSG_RESULT(old)
-		echo "FATAL: obsolete KAME PF_KEYv2 declaration (non-PF_KEY sadb_msg)"
-		exit 1])
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/pfkeyv2.h>],
-		[struct sadb_x_policy m; m.sadb_x_policy_id = 0;], [],
-		[AC_MSG_RESULT(old)
-		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_policy_id)"
-		exit 1])
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/pfkeyv2.h>],
-		[struct sadb_x_sa2 m;], [],
-		[AC_MSG_RESULT(old)
-		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_sa2)"
-		exit 1])
-	AC_MSG_RESULT(fine)
-fi
-
-ipsectype=unknown
-ipseclib=none
-ipseclibdir=none
-AC_MSG_CHECKING([ipsec library path])
-for i in inria kame; do
-	ipsectrylibc=no
-	case $i in
-	inria)
-		dnl http://www.kame.net/
-		AC_EGREP_CPP(yes, [dnl
-#include <netinet/in.h>
-#ifdef IPV6_INRIA_VERSION
-yes
-#endif],
-			[ipsectype=$i;
-			ipseclib=ipsec;
-			ipseclibdir=/usr/lib])
-		;;
-	kame)
-		dnl http://www.kame.net/
-		AC_EGREP_CPP(yes, [dnl
-#include <netinet/in.h>
-#ifdef __KAME__
-yes
-#endif],
-			[ipsectype=$i;
-			ipseclib=ipsec;
-			ipseclibdir=/usr/local/v6/lib])
-		;;
-	esac
-	if test "$ipsectype" != "unknown"; then
-		break
-	fi
-done
-AC_MSG_RESULT($ipseclibdir)
-
-dnl this is gross, but we need to invoke either AC_CHECK LIB or AC_CHECK_FUNCS.
-if test "$ipseclib" != "none"; then
-	if test "$ipseclibdir" != "none"; then
-		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib, $ipseclibdir)
-	else
-		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib)
-	fi
-fi
-
-AC_MSG_CHECKING(if --with-libpfkey option is specified)
-AC_ARG_WITH(libpfkey, [  --with-libpfkey=DIR     specify libpfkey],
-	[libpfkey_dir=$withval], [libpfkey_dir=no])
-AC_MSG_RESULT(${libpfkey_dir})
-if test "$libpfkey_dir" != "no"; then
-	if test "x$libpfkey_dir" = "x"; then
-		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey)
-	else
-		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey, $libpfkey_dir)
-	fi
-fi
-
 AC_MSG_CHECKING([whether to enable ipv6])
 AC_ARG_ENABLE(ipv6,
 [  --enable-ipv6           Enable ipv6 (with ipv4) support
@@ -551,6 +399,212 @@ if test "$buggygetaddrinfo" = "yes"; then
 fi
 AC_REPLACE_FUNCS(getaddrinfo getnameinfo)
 
+AC_MSG_CHECKING(if --with-ssleay option is specified)
+AC_ARG_WITH(ssleay, [  --with-ssleay=DIR       specify SSLeay directory],
+	[crypto_dir=$withval])
+AC_MSG_RESULT(${crypto_dir-"default"})
+
+dnl if test "$crypto_dir" != "default"; then
+dnl 	LIBS="-L$crypto_dir/lib $LIBS"
+dnl 	if test -f $crypto_dir/include/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include $CFLAGS"
+dnl 	elif test -d $crypto_dir/include/ssleay -a -f $dir/include/ssleay/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include/ssleay -I$crypto_dir/include $CFLAGS"
+dnl 	elif test -d $crypto_dir/include/openssl -a -f $dir/include/openssl/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include/openssl -I$crypto_dir/include $CFLAGS"
+dnl 	fi
+dnl fi
+
+if test "x$crypto_dir" = "x"; then
+	case $host_os in
+	netbsd*)	crypto_dir="/usr/pkg";;
+	freebsd*)
+		if test -d /usr/local/ssl; then
+			crypto_dir="/usr/local/ssl"
+		else
+			crypto_dir="/usr/local"
+		fi
+		;;
+	esac
+fi
+if test "x$krb5_incdir" = "x"; then
+	case $host_os in
+	netbsd*)	krb5_incdir="/usr/include/krb5";;
+	esac
+fi
+if test "x$krb5_libs" = "x"; then
+	case $host_os in
+	netbsd*)	krb5_libs="-lgssapi -lkrb5 -lcom_err -lroken -lasn1";;
+	esac
+fi
+if test "$enable_gssapi" = "yes"; then
+	LIBS="$LIBS $krb5_libs"
+	CPPFLAGS="-I$krb5_incdir $CPPFLAGS"
+fi
+dnl for some reason, past version of freebsd port requires us to set -I for
+dnl BOTH openssl/cast.h and cast.h.  who should I blame (or am I mistaken?)
+RACOON_PATH_LIBS(CAST_cfb64_encrypt, crypto, ${crypto_dir}/lib)
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+#include <openssl/des.h>], [], [], [openssl_compile_failed=yes])
+
+if test "x$openssl_compile_failed" = "xyes"; then
+	echo
+	echo "Fatal: crypto library and headers not found."
+	echo Specify proper directory by using --with-ssleay.
+	if test `uname -s` = FreeBSD; then
+		echo Use ports/security/SSLeay to install SSLeay, or visit
+	elif test `uname -s` = NetBSD; then
+		echo Use pkgsrc/security/SSLeay to install SSLeay, or visit
+	else
+		echo -n "Visit "
+	fi
+	echo ftp://psych.psy.uq.oz.au/pub/Crypto/SSL/, or visit
+	echo http://www.openssl.org/
+	exit 1
+fi
+dnl AC_MSG_RESULT("$ssleay_lib and $ssleay_include")
+
+AC_MSG_CHECKING(openssl version)
+AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x00904100L
+yes
+#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
+	echo
+	echo "FATAL: OpenSSL version must be 0.9.4 or higher."
+	exit 1])
+
+dnl AC_MSG_CHECKING(for libssl)
+AC_CHECK_LIB(ssl, ssl_ok, [], [], -lcrypto)
+
+AC_CHECK_LIB(crypto, des_cbc_encrypt)
+AC_CHECK_LIB(l, yywrap)
+AC_CHECK_LIB(y, yyerror)
+
+dnl PF_KEYv2 support check
+AC_MSG_CHECKING(for PF_KEYv2 support)
+AC_CACHE_VAL(ac_cv_pfkey, [dnl
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+        [int x = PF_KEY, y = PF_KEY_V2;],
+        [ac_cv_pfkey="yes"], [ac_cv_pfkey="no"])])
+AC_MSG_RESULT($ac_cv_pfkey)
+if test "$ac_cv_pfkey" = yes; then
+        OPTFLAG="-DHAVE_PFKEYV2 $OPTFLAG"
+fi
+
+dnl old KAME header check
+if test "$ac_cv_pfkey" = "yes"; then
+	AC_MSG_CHECKING(for old KAME PF_KEYv2 header file)
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_msg m; m.sadb_msg_reserved2 = 0;],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (non-PF_KEY sadb_msg)"
+		exit 1])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_x_policy m; m.sadb_x_policy_id = 0;], [],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_policy_id)"
+		exit 1])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_x_sa2 m;], [],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_sa2)"
+		exit 1])
+	AC_MSG_RESULT(fine)
+fi
+
+ipsectype=unknown
+ipseclib=none
+ipseclibdir=none
+AC_MSG_CHECKING([ipsec library path])
+for i in inria kame; do
+	ipsectrylibc=no
+	case $i in
+	inria)
+		dnl http://www.kame.net/
+		AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef IPV6_INRIA_VERSION
+yes
+#endif],
+			[ipsectype=$i;
+			ipseclib=ipsec;
+			ipseclibdir=/usr/lib])
+		;;
+	kame)
+		dnl http://www.kame.net/
+		AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef __KAME__
+yes
+#endif],
+			[ipsectype=$i;
+			ipseclib=ipsec;
+			ipseclibdir=/usr/local/v6/lib])
+		;;
+	esac
+	if test "$ipsectype" != "unknown"; then
+		break
+	fi
+done
+AC_MSG_RESULT($ipseclibdir)
+
+dnl this is gross, but we need to invoke either AC_CHECK LIB or AC_CHECK_FUNCS.
+if test "$ipseclib" != "none"; then
+	if test "$ipseclibdir" != "none"; then
+		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib, $ipseclibdir)
+	else
+		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib)
+	fi
+fi
+
+AC_MSG_CHECKING(if --with-libpfkey option is specified)
+AC_ARG_WITH(libpfkey, [  --with-libpfkey=DIR     specify libpfkey.a dir],
+	[libpfkey_dir=$withval], [libpfkey_dir=no])
+AC_MSG_RESULT(${libpfkey_dir})
+if test "$libpfkey_dir" != "no"; then
+	if test "x$libpfkey_dir" = "x"; then
+		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey)
+	else
+		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey, $libpfkey_dir)
+	fi
+fi
+
+AC_MSG_CHECKING(if --with-liblwres option is specified)
+AC_ARG_WITH(liblwres, [  --with-lwres=DIR        specify liblwres path (like /usr/pkg)],
+	[liblwres_dir=$withval], [liblwres_dir=no])
+AC_MSG_RESULT(${liblwres_dir})
+if test "$liblwres_dir" != "no"; then
+	if test -d "$liblwres_dir/lib" -a -d "$liblwres_dir/lib"; then
+		if test "x$liblwres_dir" = "x"; then
+			RACOON_PATH_LIBS(lwres_getrrsetbyname, lwres)
+		else
+			RACOON_PATH_LIBS(lwres_getrrsetbyname, lwres, "$liblwres_dir/lib")
+		fi
+		CFLAGS="$CFLAGS -I$liblwres_dir/include"
+		AC_CHECK_FUNCS(lwres_getrrsetbyname)
+	else
+		echo "FATAL: $liblwres_dir/lib or $liblwres_dir/include not found"
+		exit 1
+	fi
+fi
+
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
@@ -600,5 +654,11 @@ AC_SUBST(sysconfdir_x)
 
 dnl Checks for getifaddrs
 AC_CHECK_FUNCS(getifaddrs)
+
+dnl defines package version
+AC_MSG_CHECKING(if --with-pkgversion option is specified)
+AC_ARG_WITH(pkgversion, [  --with-pkgversion=VERSION   specify package version],
+	[CPPFLAGS="$CPPFLAGS -DRACOON_PKG_VERSION=\"\\\"$withval\\\"\""],
+	[pkgversion=no])
 
 AC_OUTPUT(Makefile samples/psk.txt samples/racoon.conf)

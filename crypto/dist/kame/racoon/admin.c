@@ -1,4 +1,4 @@
-/*	$KAME: admin.c,v 1.22 2001/04/03 15:51:54 thorpej Exp $	*/
+/*	$KAME: admin.c,v 1.23 2001/06/01 10:12:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
+#include <sys/un.h>
 
 #include <net/pfkeyv2.h>
 #include <netkey/key_var.h>
@@ -69,6 +70,7 @@
 #include "session.h"
 #include "gcmalloc.h"
 
+static struct sockaddr_un sunaddr;
 static int admin_process __P((int, char *));
 static int admin_reply __P((int, struct admin_com *, vchar_t *));
 
@@ -441,77 +443,36 @@ admin2pfkey_proto(proto)
 int
 admin_init()
 {
-	struct addrinfo hints, *res;
-	char *paddr = "127.0.0.1";	/* XXX */
-	char pbuf[10];
-	const int yes = 1;
-	int error;
+	memset(&sunaddr, 0, sizeof(sunaddr));
+	sunaddr.sun_family = AF_UNIX;
+	snprintf(sunaddr.sun_path, sizeof(sunaddr.sun_path),
+		"%s", PORT_ADMIN);
 
-	snprintf(pbuf, sizeof(pbuf), "%d", lcconf->port_admin);
-	memset(&hints, 0, sizeof(hints));
-	switch (lcconf->default_af) {
-	case 4:
-		hints.ai_family = PF_INET;
-		break;
-#ifdef INET6
-	case 6:
-		hints.ai_family = PF_INET6;
-		break;
-#endif
-	default:
-		hints.ai_family = PF_UNSPEC;
-		break;
-	}
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-	error = getaddrinfo(paddr, pbuf, &hints, &res);
-	if (error) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"getaddrinfo: %s\n", gai_strerror(error));
-		return -1;
-	}
-	if (res->ai_next) {
-		/* warning */
-		plog(LLV_WARNING, LOCATION, NULL,
-			"resolved to multiple addresses, "
-			"using the first one\n");
-	}
-
-	lcconf->sock_admin = socket(res->ai_family, res->ai_socktype, 0);
+	lcconf->sock_admin = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (lcconf->sock_admin < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"socket: %s\n", strerror(errno));
-		freeaddrinfo(res);
 		return -1;
 	}
 
-	if (setsockopt(lcconf->sock_admin, SOL_SOCKET, SO_REUSEPORT,
-		       (void *)&yes, sizeof(yes)) < 0) {
+	if (bind(lcconf->sock_admin, (struct sockaddr *)&sunaddr,
+			sizeof(sunaddr)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"setsockopt: %s\n", strerror(errno));
-		freeaddrinfo(res);
-		return -1;
-	}
-
-	if (bind(lcconf->sock_admin, res->ai_addr, res->ai_addrlen) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"bind(port:%u): %s\n",
-			lcconf->port_admin, strerror(errno));
+			"bind(sockname:%s): %s\n",
+			sunaddr.sun_path, strerror(errno));
 		(void)close(lcconf->sock_admin);
-		freeaddrinfo(res);
 		return -1;
 	}
-	freeaddrinfo(res);
 
 	if (listen(lcconf->sock_admin, 5) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"listen(port:%u): %s\n",
-			lcconf->port_admin, strerror(errno));
+			"listen(sockname:%s): %s\n",
+			sunaddr.sun_path, strerror(errno));
 		(void)close(lcconf->sock_admin);
 		return -1;
 	}
 	plog(LLV_DEBUG, LOCATION, NULL,
-		"open %s[%s] as racoon management.\n", paddr, pbuf);
+		"open %s as racoon management.\n", sunaddr.sun_path);
 
 	return 0;
 }
@@ -519,6 +480,7 @@ admin_init()
 int
 admin_close()
 {
-	return(close(lcconf->sock_admin));
+	close(lcconf->sock_admin);
+	unlink(sunaddr.sun_path);
+	return 0;
 }
-

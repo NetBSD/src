@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.39 2001/03/05 18:22:17 thorpej Exp $	*/
+/*	$KAME: pfkey.c,v 1.40 2001/06/28 12:55:44 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -1537,7 +1537,7 @@ pfkey_send_x5(so, type, spid)
 		return -1;
 	}
 	memset(&xpl, 0, sizeof(xpl));
-	xpl.sadb_x_policy_len = PFKEY_UNUNIT64(sizeof(xpl));
+	xpl.sadb_x_policy_len = PFKEY_UNIT64(sizeof(xpl));
 	xpl.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	xpl.sadb_x_policy_id = spid;
 	memcpy(p, &xpl, sizeof(xpl));
