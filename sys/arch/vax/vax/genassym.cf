@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2000/05/27 20:02:58 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.17 2000/05/29 20:00:55 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -68,15 +68,14 @@ define	KERNBASE	KERNBASE
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
-ifdef MULTIPROCESSOR
-# Multiprocessor struct members
 define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-endif
+define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
 define	PR_ESP		PR_ESP
+define	PR_SSP		PR_SSP
 define	PR_USP		PR_USP
 define	PR_ICCS		PR_ICCS
 define	PR_PCBB		PR_PCBB
