@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.9 2003/08/07 16:34:02 agc Exp $	*/
+/*	$NetBSD: dkio.h,v 1.10 2004/09/25 03:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -87,5 +87,11 @@
 		/* bad sector list */
 #define	DIOCBSLIST	_IOWR('d', 119, struct disk_badsecinfo)	/* get list */
 #define	DIOCBSFLUSH	_IO('d', 120)			/* flush list */
+
+		/* wedges */
+#define	DIOCAWEDGE	_IOWR('d', 121, struct dkwedge_info) /* add wedge */
+#define	DIOCGWEDGEINFO	_IOR('d', 122, struct dkwedge_info)  /* get wedge inf */
+#define	DIOCDWEDGE	_IOW('d', 123, struct dkwedge_info)  /* del wedge */
+#define	DIOCLWEDGES	_IOWR('d', 124, struct dkwedge_list) /* list wedges */
 
 #endif /* _SYS_DKIO_H_ */
