@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.19 1999/08/22 20:12:40 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.20 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -541,19 +541,19 @@ usbd_bulk_transfer(reqh, pipe, flags, timeout, buf, size, lbl)
 
 void
 usb_detach_wait(dv)
-	bdevice *dv;
+	device_ptr_t dv;
 {
-	DPRINTF(("usb_detach_wait: waiting for %s\n", USBDEVNAME(*dv)));
+	DPRINTF(("usb_detach_wait: waiting for %s\n", USBDEVPTRNAME(dv)));
 	if (tsleep(dv, PZERO, "usbdet", hz * 60))
 		printf("usb_detach_wait: %s didn't detach\n",
-		        USBDEVNAME(*dv));
-	DPRINTF(("usb_detach_wait: %s done\n", USBDEVNAME(*dv)));
+		        USBDEVPTRNAME(dv));
+	DPRINTF(("usb_detach_wait: %s done\n", USBDEVPTRNAME(dv)));
 }       
 
 void
 usb_detach_wakeup(dv)
-	bdevice *dv;
+	device_ptr_t dv;
 {
-	DPRINTF(("usb_detach_wakeup: for %s\n", USBDEVNAME(*dv)));
+	DPRINTF(("usb_detach_wakeup: for %s\n", USBDEVPTRNAME(dv)));
 	wakeup(dv);
 }       

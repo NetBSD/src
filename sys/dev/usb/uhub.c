@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.25 1999/09/02 18:13:50 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.26 1999/09/05 19:32:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ extern int	usbdebug;
 #endif
 
 struct uhub_softc {
-	bdevice			sc_dev;		/* base device */
+	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
 	u_int8_t		sc_status[1];	/* XXX more ports */
@@ -180,8 +180,7 @@ USB_ATTACH(uhub)
 	if (!dev->self_powered && dev->powersrc->parent &&
 	    !dev->powersrc->parent->self_powered) {
 		printf("%s: bus powered hub connected to bus powered hub, "
-		       "ignored\n",
-		       USBDEVNAME(sc->sc_dev));
+		       "ignored\n", USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
 
@@ -395,7 +394,7 @@ uhub_explore(dev)
 			continue;
 
 		/* Get device info and set its address. */
-		r = usbd_new_device(&sc->sc_dev, dev->bus, 
+		r = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
 				    dev->depth + 1, status & UPS_LOW_SPEED, 
 				    port, up);
 		/* XXX retry a few times? */
@@ -467,10 +466,10 @@ uhub_disconnect_port(up)
 	}
 
 	if (dev->subdevs) {
-		hubname = USBDEVNAME(*up->parent->subdevs[0]);
+		hubname = USBDEVPTRNAME(up->parent->subdevs[0]);
 		for (i = 0; dev->subdevs[i]; i++) {
 			printf("%s: at %s port %d (addr %d) disconnected\n",
-			       USBDEVNAME(*dev->subdevs[i]), hubname,
+			       USBDEVPTRNAME(dev->subdevs[i]), hubname,
 			       up->portno, dev->address);
 			config_detach(dev->subdevs[i], DETACH_FORCE);
 		}
@@ -489,7 +488,7 @@ uhub_disconnect_port(up)
 
 int
 uhub_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	switch (act) {
@@ -509,7 +508,7 @@ uhub_activate(self, act)
  */
 int
 uhub_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.30 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.31 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ int	umsdebug = 0;
 #define PS2BUTMASK 0x0f
 
 struct ums_softc {
-	bdevice sc_dev;			/* base device */
+	USBBASEDEVICE sc_dev;		/* base device */
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
 	int sc_ep_addr;
@@ -297,7 +297,7 @@ USB_ATTACH(ums)
 
 int
 ums_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
@@ -316,7 +316,7 @@ ums_activate(self, act)
 
 int
 ums_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct ums_softc *sc = (struct ums_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.27 1999/08/29 17:57:25 thorpej Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.28 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct usb_softc;
 
 struct usbd_bus {
 	/* Filled by HC driver */
-	bdevice			bdev; /* base device, host adapter */
+	USBBASEDEVICE		bdev; /* base device, host adapter */
 	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	void		      (*do_poll)__P((struct usbd_bus *));
@@ -111,7 +111,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
-	bdevice		      **subdevs;	/* sub-devices, 0 terminated */
+	device_ptr_t	       *subdevs;	/* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -176,7 +176,7 @@ usbd_status	usbd_setup_pipe __P((usbd_device_handle dev,
 				     usbd_interface_handle iface,
 				     struct usbd_endpoint *,
 				     usbd_pipe_handle *pipe));
-usbd_status	usbd_new_device __P((bdevice *parent, 
+usbd_status	usbd_new_device __P((device_ptr_t parent, 
 				     usbd_bus_handle bus, int depth,
 				     int lowspeed, int port, 
 				     struct usbd_port *));
