@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.27 1997/06/06 23:14:36 veego Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.28 1997/09/19 13:56:39 leo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,6 +57,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/msgbuf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -310,6 +311,16 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_ROOT_DEVICE:
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    root_device->dv_xname));
+	case KERN_MSGBUFSIZE:
+		/*
+		 * deal with cases where the message buffer has
+		 * become corrupted.
+		 */
+		if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+			msgbufenabled = 0;
+			return (ENXIO);
+		}
+		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
 	default:
 		return (EOPNOTSUPP);
 	}

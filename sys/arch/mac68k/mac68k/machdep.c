@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 1997/09/16 15:51:09 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 1997/09/19 13:54:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -197,7 +197,7 @@ int     bufpages = BUFPAGES;
 int     bufpages = 0;
 #endif
 
-int     msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t msgbufaddr;
 int     maxmem;			/* max memory per process */
 int     physmem = MAXMEM;	/* max supported memory, changes to actual */
 
@@ -291,10 +291,10 @@ cpu_startup(void)
 	 * Initialize error message buffer (at end of core).
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	initmsgbuf(msgbufaddr, atari_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
