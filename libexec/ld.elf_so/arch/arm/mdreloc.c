@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.15 2002/09/13 05:45:46 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.16 2002/09/15 00:52:08 thorpej Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -42,6 +42,30 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 	}
 }
 
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static __inline Elf_Addr
+load_ptr(void *where)
+{
+	Elf_Addr res;
+
+	memcpy(&res, where, sizeof(res));
+
+	return (res);
+}
+
+static __inline void
+store_ptr(void *where, Elf_Addr val)
+{
+
+	memcpy(where, &val, sizeof(val));
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
@@ -69,11 +93,17 @@ _rtld_relocate_nonplt_objects(obj, self)
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC24): {	/* word32 S - P + A */
 			Elf32_Sword addend;
+			Elf_Addr val;
 
 			/*
 			 * Extract addend and sign-extend if needed.
 			 */
-			addend = *where;
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				val = *where;
+			else
+				val = load_ptr(where);
+
+			addend = val;
 			if (addend & 0x00800000)
 				addend |= 0xff000000;
 
@@ -93,10 +123,14 @@ _rtld_relocate_nonplt_objects(obj, self)
 				return -1;
 			}
 			tmp >>= 2;
-			*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
+			val = (val & 0xff000000) | (tmp & 0x00ffffff);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = val;
+			else
+				store_ptr(where, val);
 			rdbg(("PC24 %s in %s --> %p @ %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, where, defobj->path));
+			    obj->path, (void *)val, where, defobj->path));
 			break;
 		}
 #endif
@@ -106,16 +140,32 @@ _rtld_relocate_nonplt_objects(obj, self)
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
-			*where += (Elf_Addr)defobj->relocbase + def->st_value;
+			if (__predict_true(RELOC_ALIGNED_P(where))) {
+				tmp = *where + (Elf_Addr)defobj->relocbase +
+				    def->st_value;
+				*where = tmp;
+			} else {
+				tmp = load_ptr(where) +
+				    (Elf_Addr)defobj->relocbase +
+				    def->st_value;
+				store_ptr(where, tmp);
+			}
 			rdbg(("ABS32/GLOB_DAT %s in %s --> %p @ %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, where, defobj->path));
+			    obj->path, (void *)tmp, where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
-			*where += (Elf_Addr)obj->relocbase;
+			if (__predict_true(RELOC_ALIGNED_P(where))) {
+				tmp = *where + (Elf_Addr)obj->relocbase;
+				*where = tmp;
+			} else {
+				tmp = load_ptr(where) +
+				    (Elf_Addr)obj->relocbase;
+				store_ptr(where, tmp);
+			}
 			rdbg(("RELATIVE in %s --> %p", obj->path,
-			    (void *)*where));
+			    (void *)tmp));
 			break;
 
 		case R_TYPE(COPY):
@@ -138,7 +188,7 @@ _rtld_relocate_nonplt_objects(obj, self)
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
-			    (void *)rel->r_offset, (void *)*where,
+			    (void *)rel->r_offset, (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
