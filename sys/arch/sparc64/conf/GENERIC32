@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.20 2001/09/16 00:14:35 eeh Exp $
+# 	$NetBSD: GENERIC32,v 1.21 2001/09/21 22:08:41 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 maxusers	64
 
@@ -301,8 +301,12 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*     at pciide? channel ? drive ? flags 0x0000 #flags 0x0ff0
 atapibus* at pciide? channel ?
+
+## Disable UDMA 4 which causes data corruption on the Acer Labs
+## chipset on Sun Blade 100 and Netra X1 machines.
+wd*     at pciide? channel ? drive ? flags 0x0a00 # Disable UDMA 4
+						
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
