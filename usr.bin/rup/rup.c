@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rup.c,v 1.10 1994/02/05 14:58:14 pk Exp $";
+static char rcsid[] = "$Id: rup.c,v 1.11 1996/09/27 01:44:58 thorpej Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -216,9 +216,9 @@ print_rup_data(host, host_stat)
 			hours_buf[0] = '\0';
 
 	if (printtime)
-		printf(" %2d:%02d%cm", host_time.tm_hour % 12,
-			host_time.tm_min,
-			(host_time.tm_hour >= 12) ? 'p' : 'a');
+		printf(" %2d:%02d%cm",
+		    (host_time.tm_hour % 12) ? (host_time.tm_hour % 12) : 12,
+		    host_time.tm_min, (host_time.tm_hour >= 12) ? 'p' : 'a');
 
 	printf(" up %9.9s%9.9s load average: %.2f %.2f %.2f\n",
 		days_buf, hours_buf,
