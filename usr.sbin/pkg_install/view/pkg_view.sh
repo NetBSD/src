@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.6 2003/07/14 12:19:10 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.7 2003/07/14 12:28:36 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -95,10 +95,12 @@ case "$view" in
 "")
 	pkg_dbdir=${dflt_pkg_dbdir}
 	targetdir=${prefix}
+	viewstr="the standard view"
 	;;
 *)
 	pkg_dbdir=${prefix}/${view}/.pkgdb
 	targetdir=${prefix}/${view}
+	viewstr="view \"${view}\""
 	;;
 esac
 
@@ -106,7 +108,7 @@ while [ $# -gt 0 ]; do
 	case $action in
 	add)
 		if [ -f ${pkg_dbdir}/$1/+CONTENTS ]; then
-			echo "Package $1 already exists in view \"${view}\""
+			echo "Package $1 already exists in $viewstr."
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 			env PLIST_IGNORE_FILES="${PLIST_IGNORE_FILES} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
@@ -127,7 +129,7 @@ while [ $# -gt 0 ]; do
 		;;
 	delete)
 		if [ ! -f ${pkg_dbdir}/$1/+CONTENTS ]; then
-			echo "Package $1 does not exist in view \"${view}\""
+			echo "Package $1 does not exist in $viewstr."
 		else
 			$linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
