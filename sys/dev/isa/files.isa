@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.59 1998/05/20 16:19:42 augustss Exp $
+#	$NetBSD: files.isa,v 1.60 1998/05/28 16:51:50 drochner Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -306,6 +306,11 @@ file    dev/isa/pckbc.c          pckbc	needs-flag
 # generic ISA VGA
 attach	vga at isa with vga_isa
 file	dev/isa/vga_isa.c	vga_isa	needs-flag
+
+# generic PC graphics adapter (MGA, CGA, ...)
+device pcdisplay: wsemuldisplaydev, pcdisplayops
+attach	pcdisplay at isa
+file	dev/isa/pcdisplay.c	pcdisplay	needs-flag
 
 # PC PPI + TIMER 1 (speaker interface)
 device  pcppi {}
