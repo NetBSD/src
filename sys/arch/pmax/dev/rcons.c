@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.30 1999/08/05 18:08:13 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.31 1999/08/24 11:16:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -122,9 +122,11 @@ rcons_connect (info)
 	/* TC mfb has special needs; 8-bits per pel, but monochrome */
 	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
 		ri.ri_depth = 8;
-		ri.ri_forcemono = 1;
-	} else
+		ri.ri_flg = RI_CLEAR | RI_FORCEMONO;
+	} else {
 		ri.ri_depth = info->fi_type.fb_depth;
+		ri.ri_flg = RI_CLEAR;
+	}
 
 	ri.ri_width = info->fi_type.fb_width;
 	ri.ri_height = info->fi_type.fb_height;
@@ -138,7 +140,7 @@ rcons_connect (info)
 		wsfont_lock(cookie, &ri.ri_font, WSFONT_L2R, WSFONT_L2R);
 
 	/* Get operations set and set framebugger colormap */
-	if (rasops_init(&ri, 0, 80, 1, 0))
+	if (rasops_init(&ri, 5000, 80))
 		panic("rcons_connect: rasops_init failed");
 
 	if (ri.ri_depth == 8 && info->fi_type.fb_boardtype != PMAX_FBTYPE_MFB)
@@ -502,7 +504,7 @@ rcons_input (dev, ic)
 	int unit = minor (dev);
 
 #ifdef RCONS_DEBUG
-	printf("rcons_input: dev %d.%d gives %c on \n", major(dev), unit, ic);
+	printf("rcons_input: dev %d.%d gives %c\n", major(dev), unit, ic);
 #endif
 
 	if (unit > NRASTERCONSOLE)
