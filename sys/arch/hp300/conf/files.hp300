@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.50 2001/11/28 10:21:14 lukem Exp $
+#	$NetBSD: files.hp300,v 1.51 2001/12/02 01:28:54 gmcgarry Exp $
 #
 # hp300-specific configuration info
 
@@ -212,7 +212,6 @@ file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
 file	dev/clock_subr.c
 file	dev/cons.c
-file	dev/cninit.c
 
 #
 # HP-UX binary compatibility
