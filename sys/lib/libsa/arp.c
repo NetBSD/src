@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.11 1995/09/23 03:36:06 gwr Exp $	*/
+/*	$NetBSD: arp.c,v 1.12 1995/09/27 23:14:57 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -59,7 +59,8 @@ static struct arp_list {
 	struct in_addr	addr;
 	u_char		ea[6];
 } arp_list[ARP_NUM] = {
-	{ INADDR_BROADCAST, BA }
+	/* XXX - net order `INADDR_BROADCAST' must be a constant */
+	{ {0xffffffff}, BA }
 };
 static	int arp_num = 1;
 
