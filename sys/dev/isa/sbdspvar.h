@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.27 1997/07/31 22:33:38 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.28 1997/08/04 09:29:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -127,7 +127,9 @@ struct sbdsp_softc {
 #define SBM_NONE	0
 #define SBM_CT1335	1
 #define SBM_CT1345	2
-#define SBM_CT1745	3
+#define SBM_CT1XX5	3
+#define SBM_CT1745	4
+#define ISSBM1745(x) ((x)->sc_mixer_model >= SBM_CT1XX5)
 
 	u_int	sc_model;		/* DSP model */
 #define SB_UNK	-1
