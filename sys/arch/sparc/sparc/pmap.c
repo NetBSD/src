@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.208 2002/06/02 14:44:39 drochner Exp $ */
+/*	$NetBSD: pmap.c,v 1.209 2002/07/17 04:55:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -956,14 +956,14 @@ pgt_page_free(struct pool *pp, void *v)
 #define CTX_USABLE(pm,rp)	((pm)->pm_ctx != NULL )
 #endif
 
-#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4OR4C) {	\
-	if (vr + 1 == pm->pm_gap_start)			\
-		pm->pm_gap_start = vr;			\
-	if (vr == pm->pm_gap_end)			\
-		pm->pm_gap_end = vr + 1;		\
+#define GAP_WIDEN(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {	\
+	if (vr + 1 == pm->pm_gap_start)				\
+		pm->pm_gap_start = vr;				\
+	if (vr == pm->pm_gap_end)				\
+		pm->pm_gap_end = vr + 1;			\
 } while (0)
 
-#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4OR4C) {			\
+#define GAP_SHRINK(pm,vr) do if (CPU_ISSUN4 || CPU_ISSUN4C) {		\
 	int x;								\
 	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;	\
 	if (vr > x) {							\
@@ -1950,7 +1950,7 @@ ctx_alloc(pm)
 	if (pmapdebug & PDB_CTX_ALLOC)
 		printf("ctx_alloc(%p)\n", pm);
 #endif
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		gap_start = pm->pm_gap_start;
 		gap_end = pm->pm_gap_end;
 	}
@@ -1979,7 +1979,7 @@ ctx_alloc(pm)
 #endif
 		c->c_pmap->pm_ctx = NULL;
 		doflush = (CACHEINFO.c_vactype != VAC_NONE);
-		if (CPU_ISSUN4OR4C) {
+		if (CPU_ISSUN4 || CPU_ISSUN4C) {
 			if (gap_start < c->c_pmap->pm_gap_start)
 				gap_start = c->c_pmap->pm_gap_start;
 			if (gap_end > c->c_pmap->pm_gap_end)
@@ -1992,7 +1992,7 @@ ctx_alloc(pm)
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Write pmap's region (3-level MMU) or segment table into
 		 * the MMU.
@@ -2769,7 +2769,7 @@ pv_uncache(pv0)
 		pv_changepte4m(pv, 0, SRMMU_PG_C);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		pv_changepte4_4c(pv, PG_NC, 0);
 #endif
 }
@@ -2881,7 +2881,7 @@ pmap_bootstrap(nctx, nregion, nsegment)
 #if defined(SUN4M)
 		pmap_bootstrap4m();
 #endif
-	} else if (CPU_ISSUN4OR4C) {
+	} else if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4) || defined(SUN4C)
 		pmap_bootstrap4_4c(nctx, nregion, nsegment);
 #endif
@@ -3843,7 +3843,7 @@ pmap_quiet_check(struct pmap *pm)
 {
 	int vs, vr;
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4_MMU3L)
 		if (pm->pm_reglist.tqh_first)
 			panic("pmap_destroy: region list not empty");
@@ -3855,7 +3855,7 @@ pmap_quiet_check(struct pmap *pm)
 	for (vr = 0; vr < NUREG; vr++) {
 		struct regmap *rp = &pm->pm_regmap[vr];
 
-		if (CPU_ISSUN4OR4C) {
+		if (CPU_ISSUN4 || CPU_ISSUN4C) {
 #if defined(SUN4_MMU3L)
 			if (HASSUN4_MMU3L) {
 				if (rp->rg_smeg != reginval)
@@ -3923,7 +3923,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
 
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		TAILQ_INIT(&pm->pm_seglist);
 #if defined(SUN4_MMU3L)
 		TAILQ_INIT(&pm->pm_reglist);
@@ -7369,7 +7369,7 @@ pmap_dumpsize()
 	sz += npmemarr * sizeof(phys_ram_seg_t);
 	sz += sizeof(kernel_segmap_store);
 
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		/* For each pmeg in the MMU, we'll write NPTESG PTEs. */
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
@@ -7440,7 +7440,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0;
+	kcpup->npmeg = (CPU_ISSUN4 || CPU_ISSUN4C) ? seginval + 1 : 0;
 	kcpup->pmegoffset = pmegoffset =
 		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 

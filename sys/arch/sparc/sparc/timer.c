@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.4 2002/07/14 19:42:58 thorpej Exp $ */
+/*	$NetBSD: timer.c,v 1.5 2002/07/17 04:55:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,7 +378,7 @@ timerattach(cntreg, limreg)
 	printf(": delay constant %d\n", timerblurb);
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		timer_init = timer_init_4;
 		level10.ih_fun = clockintr_4;
 		level14.ih_fun = statintr_4;
