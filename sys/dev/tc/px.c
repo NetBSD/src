@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.17 2002/10/02 16:53:04 thorpej Exp $	*/
+/* 	$NetBSD: px.c,v 1.18 2003/06/29 15:07:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.17 2002/10/02 16:53:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 2003/06/29 15:07:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.17 2002/10/02 16:53:04 thorpej Exp $");
 
 void	px_attach(struct device *, struct device *, void *);
 void	px_init(struct stic_info *, int);
-int	px_ioctl(struct stic_info *, u_long, caddr_t, int, struct proc *);
+int	px_ioctl(struct stic_info *, u_long, caddr_t, int, struct lwp *);
 int	px_match(struct device *, struct cfdata *, void *);
 
 int	px_intr(void *);
@@ -360,7 +360,7 @@ px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 
 int
 px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
-	 struct proc *p)
+	 struct lwp *l)
 {
 	volatile struct stic_xcomm *sxc;
 	volatile struct stic_regs *sr;

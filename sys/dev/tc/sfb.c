@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.57 2002/10/02 16:53:05 thorpej Exp $ */
+/* $NetBSD: sfb.c,v 1.58 2003/06/29 15:07:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.57 2002/10/02 16:53:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.58 2003/06/29 15:07:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int	sfbioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static paddr_t	sfbmmap __P((void *, off_t, int));
 
 static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -378,12 +378,12 @@ sfb_common_init(ri)
 }
 
 static int
-sfbioctl(v, cmd, data, flag, p)
+sfbioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;

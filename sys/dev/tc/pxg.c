@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.13 2002/10/02 16:53:05 thorpej Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.14 2003/06/29 15:07:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.13 2002/10/02 16:53:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.14 2003/06/29 15:07:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ int	pxg_intr(void *);
 int	pxg_match(struct device *, struct cfdata *, void *);
 
 void	pxg_init(struct stic_info *);
-int	pxg_ioctl(struct stic_info *, u_long, caddr_t, int, struct proc *);
+int	pxg_ioctl(struct stic_info *, u_long, caddr_t, int, struct lwp *);
 u_int32_t	*pxg_pbuf_get(struct stic_info *);
 int	pxg_pbuf_post(struct stic_info *, u_int32_t *);
 int	pxg_probe_planes(struct stic_info *);
@@ -357,9 +357,10 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 
 int
 pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
-	  struct proc *p)
+	  struct lwp *l)
 {
 	struct stic_xinfo *sxi;
+	struct proc *p = l->l_proc;
 	volatile u_int32_t *ptr;
 	int rv, s;
 
