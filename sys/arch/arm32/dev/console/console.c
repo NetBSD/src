@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.2 1996/02/05 16:49:01 mark Exp $ */
+/* $NetBSD: console.c,v 1.3 1996/02/15 22:54:45 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,7 +41,7 @@
  * Created      : 17/09/94
  * Last updated : 15/11/95
  *
- *    $Id: console.c,v 1.2 1996/02/05 16:49:01 mark Exp $
+ *    $Id: console.c,v 1.3 1996/02/15 22:54:45 mark Exp $
  */
 
 #include <sys/types.h>
@@ -907,11 +907,12 @@ physconputstring(string, length)
  * Get a character from the physical console
  */
 
+int getkey_polled __P(());
+
 char
 physcongetchar(void)
 {
-	panic("physcongetchar called\n");
-	return 0;
+	return(getkey_polled());
 }
 
 void
