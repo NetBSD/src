@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.9 1996/02/09 14:46:06 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.10 1996/02/09 22:28:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/signalvar.h>
 
 #include <vm/vm.h>
 
@@ -64,7 +65,7 @@
 #include <ufs/lfs/lfs_extern.h>
 
 /* Global vfs data structures for lfs. */
-int (**lfs_vnodeop_p)();
+int (**lfs_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
@@ -109,12 +110,12 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc lfs_vnodeop_opv_desc =
 	{ &lfs_vnodeop_p, lfs_vnodeop_entries };
 
-int (**lfs_specop_p)();
+int (**lfs_specop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -158,13 +159,13 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc lfs_specop_opv_desc =
 	{ &lfs_specop_p, lfs_specop_entries };
 
 #ifdef FIFO
-int (**lfs_fifoop_p)();
+int (**lfs_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -208,7 +209,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
@@ -222,14 +223,16 @@ struct vnodeopv_desc lfs_fifoop_opv_desc =
  * Synch an open file.
  */
 /* ARGSUSED */
-lfs_fsync(ap)
+int
+lfs_fsync(v)
+	void *v;
+{
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct timeval tv;
 
 	tv = time;
@@ -258,15 +261,16 @@ lfs_fsync(ap)
 #define	MARK_VNODE(dvp)	(dvp)->v_flag |= VDIROP
 
 int
-lfs_symlink(ap)
+lfs_symlink(v)
+	void *v;
+{
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 		char *a_target;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -277,14 +281,15 @@ lfs_symlink(ap)
 }
 
 int
-lfs_mknod(ap)
+lfs_mknod(v)
+	void *v;
+{
 	struct vop_mknod_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -295,14 +300,15 @@ lfs_mknod(ap)
 }
 
 int
-lfs_create(ap)
+lfs_create(v)
+	void *v;
+{
 	struct vop_create_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -313,14 +319,15 @@ lfs_create(ap)
 }
 
 int
-lfs_mkdir(ap)
+lfs_mkdir(v)
+	void *v;
+{
 	struct vop_mkdir_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -331,13 +338,14 @@ lfs_mkdir(ap)
 }
 
 int
-lfs_remove(ap)
+lfs_remove(v)
+	void *v;
+{
 	struct vop_remove_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -349,14 +357,15 @@ lfs_remove(ap)
 }
 
 int
-lfs_rmdir(ap)
+lfs_rmdir(v)
+	void *v;
+{
 	struct vop_rmdir_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -368,13 +377,14 @@ lfs_rmdir(ap)
 }
 
 int
-lfs_link(ap)
+lfs_link(v)
+	void *v;
+{
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
@@ -383,9 +393,11 @@ lfs_link(ap)
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
 	return (ret);
 }
-
+  
 int
-lfs_rename(ap)
+lfs_rename(v)
+	void *v;
+{
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
@@ -393,8 +405,7 @@ lfs_rename(ap)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int ret;
 
 	SET_DIROP(VTOI(ap->a_fdvp)->i_lfs);
@@ -406,14 +417,15 @@ lfs_rename(ap)
 }
 /* XXX hack to avoid calling ITIMES in getattr */
 int
-lfs_getattr(ap)
+lfs_getattr(v)
+	void *v;
+{
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
@@ -457,14 +469,15 @@ lfs_getattr(ap)
  */
 /* ARGSUSED */
 int
-lfs_close(ap)
+lfs_close(v)
+	void *v;
+{
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	int mod;
@@ -484,11 +497,12 @@ lfs_close(ap)
 int lfs_no_inactive = 0;
 
 int
-lfs_inactive(ap)
+lfs_inactive(v)
+	void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	
 	if (lfs_no_inactive)
 		return (0);
@@ -499,15 +513,16 @@ lfs_inactive(ap)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-lfs_reclaim(ap)
+lfs_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	int error;
 
-	if (error = ufs_reclaim(vp))
+	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	FREE(vp->v_data, M_LFSNODE);
 	vp->v_data = NULL;

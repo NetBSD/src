@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.6 1994/12/21 20:01:01 mycroft Exp $	*/
+/*	$NetBSD: lfs.h,v 1.7 1996/02/09 22:28:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -263,9 +263,9 @@ struct segsum {
 #define	LFS_IENTRY(IP, F, IN, BP) {					\
 	int _e;								\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if (_e = bread((F)->lfs_ivnode,					\
+	if ((_e = bread((F)->lfs_ivnode,				\
 	    (IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,\
-	    (F)->lfs_bsize, NOCRED, &(BP)))				\
+	    (F)->lfs_bsize, NOCRED, &(BP))) != 0)			\
 		panic("lfs: ifile read %d", _e);			\
 	(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;		\
 }
@@ -274,11 +274,11 @@ struct segsum {
 #define	LFS_SEGENTRY(SP, F, IN, BP) {					\
 	int _e;								\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if (_e = bread((F)->lfs_ivnode,					\
+	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) >> (F)->lfs_sushift) + (F)->lfs_cleansz,		\
-	    (F)->lfs_bsize, NOCRED, &(BP)))				\
+	    (F)->lfs_bsize, NOCRED, &(BP))) != 0)			\
 		panic("lfs: ifile read: %d", _e);			\
-	(SP) = (SEGUSE *)(BP)->b_data + ((IN) & (F)->lfs_sepb - 1);	\
+	(SP) = (SEGUSE *)(BP)->b_data + ((IN) & ((F)->lfs_sepb - 1));	\
 }
 
 /* 
