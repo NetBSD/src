@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 1999/05/20 08:21:46 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.148 1999/05/20 20:15:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ void
 cpu_startup()
 {
 	unsigned i;
-	caddr_t v, sz;
+	caddr_t v;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -203,12 +203,12 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = allocsys(NULL, NULL);
+	size = (vsize_t)allocsys(NULL, NULL);
 
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
 
-	if (allocsys(v, NULL) - v != sz)
+	if ((vsize_t)(allocsys(v, NULL) - v) != size)
 		panic("startup: table size inconsistency");
 
 	if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
