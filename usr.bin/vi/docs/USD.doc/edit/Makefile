@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/03/31 11:37:47 aymeric Exp $
+#	$NetBSD: Makefile,v 1.7 2002/08/13 20:10:54 pooka Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
@@ -9,7 +9,7 @@ MACROS=	-ms
 all: paper.ps
 
 paper.ps: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	${TBL} ${SRCS} | ${ROFF} ${MACROS} > ${.TARGET}
 
 # index for versatec is different from the one in edit.tut
 # because the fonts are different and entries reference page
