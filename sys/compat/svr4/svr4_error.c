@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_error.c,v 1.2 1994/11/18 02:53:41 christos Exp $	 */
+/*	$NetBSD: svr4_error.c,v 1.3 1998/02/06 08:26:06 mikel Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -117,4 +117,5 @@ int svr4_error[] = {
 	SVR4_EFTYPE,
 	SVR4_EAUTH,
 	SVR4_ENEEDAUTH,
+	SVR4_EIDRM,
 };

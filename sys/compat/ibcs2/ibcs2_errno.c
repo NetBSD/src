@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_errno.c,v 1.2 1996/05/03 17:05:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_errno.c,v 1.3 1998/02/06 08:31:53 mikel Exp $	*/
 
 /*
  * ibcs2_errno.c
@@ -116,5 +116,5 @@ int bsd2ibcs_errno[] = {
 	0,			/* 79 */
 	0,			/* 80 */
 	0,			/* 81 */
+	IBCS2_EIDRM,		/* 82 */
 };
-
