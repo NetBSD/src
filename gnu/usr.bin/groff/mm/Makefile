@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2001/04/19 14:41:31 wiz Exp $
+
+.include "../Makefile.path"
+
+DIST=		${IDIST}/contrib/mm
+.PATH:		${DIST}
 
 .include <bsd.own.mk>
 
@@ -9,6 +14,7 @@ TMACOWN?=	${FILESOWN}
 TMACGRP?=	${FILESGRP}
 TMACMODE?=	${FILESMODE}
 
+# XXX: Following comment seems bogus [wiz 2001-02-25]
 # The Swedish man page is temporarily disabled. We will soon implement
 # a scheme for internationalized man pages and turn it on again.
 #MAN=		groff_mm.7 groff_mmse.7
@@ -24,6 +30,5 @@ FILESDIR=	${TMACDIR}
 
 SUBDIR=		mm
 
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
