@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.32 2003/11/26 08:36:51 he Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.33 2003/12/03 20:24:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.32 2003/11/26 08:36:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.33 2003/12/03 20:24:51 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -104,6 +104,7 @@ const struct emul emul_irix = {
 #endif
 	irix_sendsig,
 	trapsignal,
+	NULL,
 	irix_sigcode,
 	irix_sigcode,
 	NULL,
