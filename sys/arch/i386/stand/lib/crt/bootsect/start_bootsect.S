@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.8 1999/01/22 22:43:44 thorpej Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.9 1999/01/29 18:45:12 christos Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -69,12 +69,12 @@ BOOTSTACK	=	0xfffc	# boot stack
 LOADSZ		=	PRIM_LOADSZ	# size of first loaded chunk
 
 SIGNATURE		=	0xaa55
-PARTSTART		=	DOSPARTOFF	# starting address of partition table
-NUMPART		=	NDOSPART	# number of partitions in partition table
+PARTSTART		=	MBR_PARTOFF	# starting address of partition table
+NUMPART		=	NMBRPART	# number of partitions in partition table
 PARTSZ		=	16	# sizeof(struct dos_partition)
-NETBSDPART	=	DOSPTYP_NETBSD
+NETBSDPART	=	MBR_PTYPE_NETBSD
 #ifdef COMPAT_386BSD_MBRPART
-OLDBSDPART	= 	DOSPTYP_386BSD
+OLDBSDPART	= 	MBR_PTYPE_386BSD
 #endif
 BOOTABLE		=	0x80	# value of dp_flag, means bootable partition
 
