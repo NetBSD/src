@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.81 2002/04/25 09:20:26 aymeric Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.81.2.1 2002/05/16 16:14:13 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81 2002/04/25 09:20:26 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81.2.1 2002/05/16 16:14:13 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,15 +329,19 @@ mbprint(auxp, pnp)
 
 #if NFD > 0
 extern  struct cfdriver fd_cd;
+extern	const struct bdevsw fd_bdevsw;
 #endif
 #if NSD > 0
 extern  struct cfdriver sd_cd;
+extern	const struct bdevsw sd_bdevsw;
 #endif
 #if NCD > 0
 extern  struct cfdriver cd_cd;
+extern	const struct bdevsw cd_bdevsw;
 #endif
 #if NWD > 0
 extern  struct cfdriver wd_cd;
+extern	const struct bdevsw wd_bdevsw;
 #endif
 
 struct cfdriver *genericconf[] = {
@@ -363,6 +367,7 @@ findroot(void)
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
+	const struct bdevsw *bdp;
 
 #if NSD > 0
 	/*
@@ -373,7 +378,6 @@ findroot(void)
 	printf("Boot partition offset is %ld\n", boot_partition);
 #endif
 	if (boot_partition != 0) {
-	 	struct bdevsw *bdp;
 		int i;
 
 		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
@@ -394,14 +398,12 @@ findroot(void)
 			if (dkp->dk_driver == NULL ||
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
-			for (bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
-				if (bdp->d_strategy ==
-				    dkp->dk_driver->d_strategy)
-					break;
-			if (bdp->d_open(MAKEDISKDEV(4, unit, RAW_PART),
+			bdp = &sd_bdevsw;
+			maj = bdevsw_lookup_major(bdp);
+			if ((*bdp->d_open)(MAKEDISKDEV(maj, unit, RAW_PART),
 			    FREAD | FNONBLOCK, 0, curproc))
 				continue;
-			bdp->d_close(MAKEDISKDEV(4, unit, RAW_PART),
+			(*bdp->d_close)(MAKEDISKDEV(maj, unit, RAW_PART),
 			    FREAD | FNONBLOCK, 0, curproc);
 			pp = &dkp->dk_label->d_partitions[0];
 			for (i = 0; i < dkp->dk_label->d_npartitions;
@@ -446,20 +448,33 @@ findroot(void)
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
 
-			for (maj = 0; maj < nblkdev; maj++)
-				if (bdevsw[maj].d_strategy ==
-				    dkp->dk_driver->d_strategy)
-					break;
+#if NFD > 0
+			if (fd_bdevsw.d_strategy == dkp->dk_driver->d_strategy)
+				bdp = &fd_bdevsw;
+#endif
+#if NSD > 0
+			if (sd_bdevsw.d_strategy == dkp->dk_driver->d_strategy)
+				bdp = &sd_bdevsw;
+#endif
+#if NWD > 0
+			if (wd_bdevsw.d_strategy == dkp->dk_driver->d_strategy)
+				bdp = &wd_bdevsw;
+#endif
+#if NCD > 0
+			if (cd_bdevsw.d_strategy == dkp->dk_driver->d_strategy)
+				bdp = &cd_bdevsw;
+#endif
 #ifdef DIAGNOSTIC
-			if (maj >= nblkdev)
+			if (bdp == NULL)
 				panic("findroot: impossible");
 #endif
+			maj = bdevsw_lookup_major(bdp);
 
 			/* Open disk; forces read of disklabel. */
-			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			if ((*bdp->d_open)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
 				continue;
-			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
+			(void)(*bdp->d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 
 			pp = &dkp->dk_label->d_partitions[0];
