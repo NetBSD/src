@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.1 2001/02/23 03:48:07 ichiro Exp $
+#	$NetBSD: IPAQ,v 1.2 2001/02/24 11:08:31 ichiro Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -116,7 +116,7 @@ options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ? type ?
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0
 
 # The main bus device
 mainbus0 at root
@@ -127,6 +127,7 @@ cpu0 at mainbus?
 saip0	at mainbus?
 
 # Serial
+options	CONSPEED=19200
 sacom*  at saip? addr 0xd000d000 size 0x24	intr 17
 
 #OS Timer
