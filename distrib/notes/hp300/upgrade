@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.11 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.12 2000/11/02 01:37:47 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,13 +131,13 @@ the
 binary set:
 .Pp
 .Dl # Ic "cd /"
-.Dl # Ic "pax -zrvpe -f " Ar /path/to/ Ns Ic base.tgz"
+.Dl # Ic "pax -zrvpe -f" Em /path/to/ Ns Ic base.tgz"
 .It
 Install a new boot block:
 .Pp
 .Dl # Ic "cd /usr/mdec"
 .ie r_hp300 \{\
-.Dl # Ic "disklabel -B Ar root-disk"
+.Dl # Ic "disklabel -B" Ar root-disk
 E.g.:
 .Ar root-disk
 could be
@@ -145,7 +145,7 @@ could be
 .\}
 .el \{\
 .Dl # Ic "cp bootsd /.bootsd"
-.Dl # Ic "./installboot /.bootsd bootxx \*< Ar root-disk"
+.Dl # Ic "./installboot /.bootsd bootxx \*<" Ar root-disk
 .Pp
 E.g.:
 .Ar root-disk
@@ -163,7 +163,7 @@ wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
 .Pp
 .Dl # Ic "cd /"
-.Dl # Ic "pax -zrvpe -f Ar path_to_set"
+.Dl # Ic "pax -zrvpe -f" Ar path_to_set
 .enum)
 .(Note
 You
