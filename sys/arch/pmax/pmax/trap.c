@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 1996/09/18 11:16:20 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 1996/10/07 02:17:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,8 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
-#if #defined(CPU_R4000) && !defined(CPU_R3000)
-#error Must define at least one of CPU_R3000 or CPU_R4000.
+#if #defined(MIPS1) && !defined(MIPS3)
+#error  Neither  "MIPS1" (r2000 family), "MIP3" (r4000 family) was configured.
 #endif
 
 #include <sys/param.h>
@@ -1480,7 +1480,7 @@ specialframe:
 
 
 	/* Backtraces should contine through interrupts from kernel mode */
-#ifdef CPU_R3000
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
@@ -1495,9 +1495,9 @@ specialframe:
 		sp = sp + 108;
 		goto specialframe;
 	}
-#endif	/* CPU_R3000 */
+#endif	/* MIPS1 */
 
-#ifdef CPU_R4000
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
@@ -1512,7 +1512,7 @@ specialframe:
 		sp = sp + 108;
 		goto specialframe;
 	}
-#endif	/* cpu_r4000 */
+#endif	/* MIPS3 */
 
 
 
@@ -1538,7 +1538,7 @@ specialframe:
 		subr = (unsigned) mips_r2000_UserIntr;
 
 	/* R4000  exception handlers */
-#ifdef CPU_R4000
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	else if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
 		subr = (unsigned) mips_r4000_KernGenException;
 	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
@@ -1549,7 +1549,7 @@ specialframe:
 
 	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
 		subr = (unsigned) mips_r4000_UserIntr;
-#endif /* CPU_R4000 */
+#endif /* MIPS3 */
 
 
 	else if (pcBetween(splx, MachEmptyWriteBuffer))
@@ -1728,19 +1728,20 @@ static struct { void *addr; char *name;} names[] = {
 #ifdef pmax
 	Name(am7990_meminit),
 #endif
-#ifdef CPU_R3000
+
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	Name(mips_r2000_KernGenException),
 	Name(mips_r2000_UserGenException),
 	Name(mips_r2000_KernIntr),
 	Name(mips_r2000_UserIntr),
-#endif	/* CPU_R3000 */
+#endif	/* MIPS1 */
 
-#ifdef CPU_R4000
+#ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	Name(mips_r4000_KernGenException),
 	Name(mips_r4000_UserGenException),
 	Name(mips_r4000_KernIntr),
 	Name(mips_r4000_UserIntr),
-#endif	/* CPU_R4000 */
+#endif	/* MIPS3 */
 
 	Name(splx),
 	Name(idle),
