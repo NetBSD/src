@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4 2003/05/12 11:01:17 joda Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.5 2003/07/14 22:13:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.5 2003/07/14 22:13:10 lukem Exp $");
 
 #include "opt_cputype.h"
 
