@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.25 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.26 2005/01/09 17:41:19 christos Exp $
 .\"
 .\" This file is in the public domain.
-.Dd November 7, 1994
+.Dd January 9, 2005
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -385,6 +385,24 @@ pointed to by
 .\" can usefully be changed; they are set to the values returned by the
 .\" syscall and will be passed back to the traced process by the normal
 .\" syscall return mechanism.
+.It Dv PT_DUMPCORE
+Cause the traced process to dump core.
+If the
+.Fa addr
+argument is not
+.Dv NULL
+it is taken to be the pathname of the core file to be generated and the
+.Fa data
+argument should contain the length of the pathname.
+The pathname may contain 
+.Dv %
+patterns that are expanded as described in
+.Xr sysctl 8 .
+If the
+.Fa data
+argument is
+.Dv NULL ,
+the default core file path generation rules are followed.
 .El
 .Sh ERRORS
 Some requests can cause
