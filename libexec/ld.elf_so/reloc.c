@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.50 2002/01/06 03:54:42 eeh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.51 2002/02/03 23:34:42 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -159,7 +159,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
 #if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
-    defined(__m68k__) || defined(__powerpc__) || defined(__vax__)
+    defined(__m68k__) || defined(__powerpc__) || defined(__sh__) || \
+    defined(__vax__)
 	Elf_Addr         tmp;
 #endif
 
@@ -263,6 +264,54 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __m68k__ */
 
+#if defined(__sh__)
+	case R_TYPE(GOT32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
+		if (*where != tmp) 
+			*where = tmp;
+		rdbg(dodebug, ("GOT32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(REL32):  
+		/*
+		 * I don't think the dynamic linker should ever see this
+		 * type of relocation, but some versions of Binutils
+		 * generate it.
+		 */
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		*where += (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend) - (Elf_Addr)where;
+		rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+
+	case R_TYPE(DIR32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		*where += (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
+		rdbg(dodebug, ("32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+#endif /* __sh__ */
+
 #if defined(__alpha__)
 	case R_TYPE(REFQUAD):
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -298,7 +347,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	    }
 #endif /* __alpha__ */
 
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
+    defined(__sh__)
 	case R_TYPE(GLOB_DAT):
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, false);
@@ -313,8 +363,16 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
 		break;
-
-#if !defined(__alpha__)
+#if defined(__sh__)
+	case R_TYPE(RELATIVE):
+		if (rela->r_addend)
+			*where = (Elf_Addr)obj->relocbase + rela->r_addend;
+		else
+			*where += (Elf_Addr)obj->relocbase;
+		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+		    (void *)*where));
+		break;
+#elif !defined(__alpha__)
 	case R_TYPE(RELATIVE):
 		*where += (Elf_Addr)obj->relocbase;
 		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
@@ -337,7 +395,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		}
 		rdbg(dodebug, ("COPY (avoid in main)"));
 		break;
-#endif /* __i386__ || __alpha__ || __m68k__ */
+#endif /* __i386__ || __alpha__ || __m68k__ || defined(__sh__) */
 
 #if defined(__mips__)
 	case R_TYPE(REL32):
@@ -557,7 +615,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	/* Fully resolve procedure addresses now */
 
 #if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
-    defined(__m68k__) || defined(__vax__)
+    defined(__m68k__) || defined(__sh__) || defined(__vax__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
@@ -574,7 +632,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 			return -1;
 
 		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-#if defined(__vax__)
+#if defined(__sh__) || defined(__vax__)
 		new_value += rela->r_addend;
 #endif
 		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
@@ -582,7 +640,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		    defobj->strtab + def->st_name,
 		    (void *)*where, (void *)new_value));
 	} else
-#endif /* __alpha__ || __i386__ || __m68k__ || __vax__ */
+#endif /* __alpha__ || __i386__ || __m68k__ || __sh__ || __vax__ */
 	if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
@@ -809,7 +867,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL) {
 #if defined(__arm__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__x86_64__)
+    defined(__sh__) || defined(__x86_64__)
 			obj->pltgot[1] = (Elf_Addr) obj;
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
 #endif
