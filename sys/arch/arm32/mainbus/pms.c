@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.7 1996/10/29 23:28:12 mark Exp $ */
+/* $NetBSD: pms.c,v 1.8 1996/11/23 03:37:38 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -195,7 +195,7 @@ pmsinit()
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 

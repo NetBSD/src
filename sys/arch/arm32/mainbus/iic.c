@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.6 1996/10/15 19:37:06 mark Exp $ */
+/* $NetBSD: iic.c,v 1.7 1996/11/23 03:37:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -242,7 +242,7 @@ iicmatch(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 
@@ -350,6 +350,9 @@ iicclose(dev, flag, mode, p)
 	return(0);
 }
 
+/*
+ * No support for device reads, writes or ioctls yet
+ */
 
 int
 iicread(dev, uio, flag)
@@ -387,8 +390,7 @@ iicioctl(dev, cmd, data, flag, p)
 {
 /*	struct iic_softc *sc = iic_cd.cd_devs[minor(dev)];*/
 
-/*
-	switch (cmd) {
+/*	switch (cmd) {
 	case IICIOC_CONTROL:
 		if (iiccontrol() != 0) {
 			return(EIO);
@@ -396,7 +398,6 @@ iicioctl(dev, cmd, data, flag, p)
 		return(0);
 	}
 */
-
 	return(EINVAL);
 }
 
