@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.2 1997/03/13 06:19:08 mikel Exp $	*/
+/*	$NetBSD: compat.c,v 1.3 1998/01/31 14:40:15 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -17,9 +17,13 @@
  * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
-/*static char rcsid[] = "Id: compat.c,v 1.6 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: compat.c,v 1.2 1997/03/13 06:19:08 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: compat.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
+#else
+__RCSID("$NetBSD: compat.c,v 1.3 1998/01/31 14:40:15 christos Exp $");
+#endif
 #endif
 
 /* vix 30dec93 [broke this out of misc.c - see RCS log for history]
