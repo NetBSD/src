@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1999/09/16 14:37:47 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 1999/09/16 14:37:47 takemura Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -87,7 +87,7 @@ static void get_device __P((char *name, struct device **devpp, int *partp));
  * for attached scsi devices.
  */
 void
-configure()
+cpu_configure()
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
