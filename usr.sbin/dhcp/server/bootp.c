@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.6 1999/03/26 17:52:45 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.7 1999/03/26 20:15:01 drochner Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -288,15 +288,9 @@ void bootp (packet)
 			 (sizeof raw.sname) - 1);
 		raw.sname [(sizeof raw.sname) - 1] = 0;
 	}
-
-	/* If the client requested a specific boot file, echo it 
-	   back per RFC951; some clients are unable to boot properly
-	   without this (e.g. DECstations). */
-	if (packet -> raw -> file[0] != '\0')
-		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
-	else if (hp -> group -> filename) {
+	if (hp -> group -> filename) {
 		strncpy (raw.file, hp -> group -> filename,
-			(sizeof raw.file) - 1); 
+			 (sizeof raw.file) - 1);
 		raw.file [(sizeof raw.file) - 1] = 0;
 	} else
 		memcpy (raw.file, packet -> raw -> file, sizeof raw.file);
