@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 1999/07/10 19:41:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.47 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.46 1999/07/10 19:41:15 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 1999/07/11 20:37:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,7 @@ main(argc, argv)
 	rate_get_incr = DEFAULTINCR;
 	rate_put = 0;
 	rate_put_incr = DEFAULTINCR;
+	epsv4 = 1;
 
 	marg_sl = sl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 1999/07/02 08:07:41 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.33 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -168,6 +168,7 @@ void	setcase __P((int, char **));
 void	setcr __P((int, char **));
 void	setdebug __P((int, char **));
 void	setedit __P((int, char **));
+void	setepsv4 __P((int, char **));
 void	setform __P((int, char **));
 void	setftmode __P((int, char **));
 void	setgate __P((int, char **));

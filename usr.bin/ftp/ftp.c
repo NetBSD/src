@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.53 1999/07/11 00:41:59 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.54 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.53 1999/07/11 00:41:59 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.54 1999/07/11 20:37:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1284,9 +1284,11 @@ reinit:
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			       sizeof(on)) < 0)
 			warn("setsockopt (ignored)");
+		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
-			result = command(pasvcmd = "EPSV");
+			if (epsv4)
+				result = command(pasvcmd = "EPSV");
 			if (result != COMPLETE)
 				result = command(pasvcmd = "PASV");
 			break;
@@ -1296,7 +1298,7 @@ reinit:
 				result = command(pasvcmd = "LPSV");
 			break;
 		default:
-			result = COMPLETE + 1;
+			break;
 		}
 		if (result != COMPLETE) {
 			if (activefallback) {
@@ -1471,6 +1473,11 @@ noport:
 
 		switch (data_addr.su_family) {
 		case AF_INET:
+			if (!epsv4) {
+				result = COMPLETE + 1;
+				break;
+			}
+			/* FALLTHROUGH */
 		case AF_INET6:
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&data_addr,
