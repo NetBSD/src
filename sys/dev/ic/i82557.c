@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.44 2000/12/19 00:06:01 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.45 2001/05/16 04:20:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1650,7 +1650,7 @@ fxp_add_rfabuf(sc, rxmap, unload)
 	return (0);
 }
 
-volatile int
+int
 fxp_mdi_read(self, phy, reg)
 	struct device *self;
 	int phy;
