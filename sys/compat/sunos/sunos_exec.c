@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.26 2000/12/01 19:24:36 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.27 2000/12/09 07:10:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -66,5 +66,5 @@ struct emul emul_sunos = {
 	NULL,
 	NULL,
 	NULL,
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
+	0,
 };

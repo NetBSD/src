@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.40 2000/12/02 16:09:45 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.41 2000/12/09 07:10:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -77,7 +77,7 @@ const struct emul emul_ibcs2 = {
 	ibcs2_e_proc_exec,
 	NULL,
 	NULL,
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
+	0,
 #ifdef IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
 	ibcs2_syscall,
 #else

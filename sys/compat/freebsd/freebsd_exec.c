@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.10 2000/12/01 19:13:47 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.11 2000/12/09 07:10:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -56,5 +56,5 @@ const struct emul emul_freebsd = {
 	NULL,
 	NULL,
 	NULL,
-	EMUL_HAS_SYS___syscall|EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
+	EMUL_HAS_SYS___syscall,
 };

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2000/12/09 05:27:29 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.33 2000/12/09 07:10:35 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -88,13 +88,13 @@
 			    int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	STD		{ int freebsd_sys_mount(int type, const char *path, \
 			    int flags, caddr_t data); }
 22	STD		{ int freebsd_sys_unmount(const char *path, \
 			    int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
 26	STD		{ int freebsd_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data); }
@@ -133,7 +133,7 @@
 46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    int mask); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
