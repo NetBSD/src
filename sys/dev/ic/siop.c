@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.42 2001/04/25 17:53:34 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.43 2001/04/30 02:17:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -623,9 +623,9 @@ scintr:
 		 */
 		if ((irqcode & 0x80) == 0) {
 			if (siop_cmd == NULL) {
-				printf("%s: script interrupt (0x%x) with
-				    invalid DSA !!!\n", sc->sc_dev.dv_xname,
-				    irqcode);
+				printf(
+			"%s: script interrupt (0x%x) with invalid DSA !!!\n",
+				    sc->sc_dev.dv_xname, irqcode);
 				goto reset;
 			}
 			if (siop_cmd->status != CMDST_ACTIVE) {
