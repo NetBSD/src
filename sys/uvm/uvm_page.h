@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.4 1998/02/10 02:34:52 perry Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.5 1998/02/10 14:12:24 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -76,8 +76,6 @@
 /*
  * uvm_page.h
  */
-
-UVMHIST_DECL(maphist);
 
 /*
  * macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.186 1998/02/06 07:21:54 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.187 1998/02/10 14:11:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -44,6 +44,8 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
 
 #include "npx.h"
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.56 1998/02/05 07:59:30 mrg Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.57 1998/02/10 14:10:28 mrg Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,6 +33,9 @@
  * SVR4 system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.h,v 1.10 1998/02/06 00:14:51 mrg Exp $	*/
+/*	$NetBSD: vm_kern.h,v 1.11 1998/02/10 14:08:58 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -65,6 +65,10 @@
  */
 
 /* Kernel memory management definitions. */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #if defined(UVM)
 extern vm_map_t	buffer_map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.5 1998/02/07 17:00:42 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.6 1998/02/10 14:12:11 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,6 +38,8 @@
  * from: Id: uvm_fault.c,v 1.1.2.23 1998/02/06 05:29:05 chs Exp
  */
 
+#include "opt_uvmhist.h"
+
 /*
  * uvm_fault.c: fault handler
  */
@@ -57,8 +59,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  *

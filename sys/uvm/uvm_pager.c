@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.4 1998/02/08 06:15:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.5 1998/02/10 14:12:25 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,6 +38,9 @@
  * from: Id: uvm_pager.c,v 1.1.2.23 1998/02/02 20:38:06 chuck Exp
  */
 
+#include "opt_uvmhist.h"
+#include "opt_pmap_new.h"
+
 /*
  * uvm_pager.c: generic functions used to assist the pagers.
  */
@@ -56,8 +59,6 @@
 
 #define UVM_PAGER
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  * list of uvm pagers in the system

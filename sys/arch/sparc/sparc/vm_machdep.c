@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 1998/02/05 07:58:03 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.34 1998/02/10 14:11:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,8 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

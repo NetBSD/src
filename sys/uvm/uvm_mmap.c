@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.3 1998/02/07 11:09:14 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.4 1998/02/10 14:12:21 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -242,7 +242,7 @@ register_t *retval;
 #ifdef DEBUG
     printf("mmap: pos=%qx, size=%x too big\n", pos, (int)size);
 #endif
-    return(EINVAL);
+    return (EINVAL);
   }
 
   /*
@@ -254,7 +254,7 @@ register_t *retval;
   size += pageoff;			/* add offset */
   size = (vm_size_t) round_page(size);	/* round up */
   if ((ssize_t) size < 0)
-    return(EINVAL);			/* don't allow wrap */
+    return (EINVAL);			/* don't allow wrap */
 
   /*
    * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr" 
@@ -265,12 +265,12 @@ register_t *retval;
     /* ensure address and file offset are aligned properly */
     addr -= pageoff;
     if (addr & PAGE_MASK)
-      return(EINVAL);
+      return (EINVAL);
 
     if (VM_MAXUSER_ADDRESS > 0 && (addr + size) > VM_MAXUSER_ADDRESS)
-      return(EINVAL);
+      return (EINVAL);
     if (vm_min_address > 0 && addr < vm_min_address)
-      return(EINVAL);
+      return (EINVAL);
     if (addr > addr + size)
       return (EINVAL);		/* no wrapping! */
 
@@ -297,7 +297,7 @@ register_t *retval;
       return(EBADF);
 
     if (fp->f_type != DTYPE_VNODE)
-      return(EINVAL);		/* only mmap vnodes! */
+      return (EINVAL);		/* only mmap vnodes! */
     vp = (struct vnode *)fp->f_data;	/* convert to vnode */
     if (vp->v_type != VREG && vp->v_type != VCHR)
       return (EINVAL);		/* only REG/CHR support mmap */
@@ -331,7 +331,7 @@ register_t *retval;
 #else
 
     if ((flags & (MAP_SHARED|MAP_PRIVATE|MAP_COPY)) == 0) 
-      return(EINVAL);   /* sorry, old timer */
+      return (EINVAL);   /* sorry, old timer */
 
 #endif
 
@@ -381,7 +381,7 @@ register_t *retval;
   } else /* MAP_ANON case */ {
 
     if (fd != -1)
-      return(EINVAL);
+      return (EINVAL);
 
 is_anon:		/* label for SunOS style /dev/zero */
     handle = NULL;

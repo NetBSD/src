@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.74 1998/02/07 02:45:02 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.75 1998/02/10 14:08:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -70,6 +70,10 @@
 
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 struct device;
 struct proc;

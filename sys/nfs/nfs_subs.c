@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.53 1998/02/07 02:45:00 chs Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.54 1998/02/10 14:10:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
  *	@(#)nfs_subs.c	8.8 (Berkeley) 5/22/95
  */
 
+#include "opt_uvm.h"
 
 /*
  * These functions support the macros and help fiddle mbuf chains for

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.24 1998/02/05 07:59:35 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.25 1998/02/10 14:09:16 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_uvm.h"
 
 /*
  * Command dispatcher.

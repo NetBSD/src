@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.56 1998/02/05 08:00:42 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.57 1998/02/10 14:08:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -42,6 +42,10 @@
 
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.28 1998/02/05 08:00:38 mrg Exp $	*/
+/*	$NetBSD: buf.h,v 1.29 1998/02/10 14:08:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,11 @@
 
 #ifndef _SYS_BUF_H_
 #define	_SYS_BUF_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
+
 #include <sys/queue.h>
 
 #define NOLIST ((struct buf *)0x87654321)

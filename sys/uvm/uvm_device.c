@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.4 1998/02/07 11:08:17 mrg Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.5 1998/02/10 14:12:07 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -39,6 +39,8 @@
  * from: Id: uvm_device.c,v 1.1.2.9 1998/02/06 05:11:47 chs Exp
  */
 
+#include "opt_uvmhist.h"
+
 /*
  * uvm_device.c: the device pager.
  */
@@ -59,8 +61,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  * private global data structure

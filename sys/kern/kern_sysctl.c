@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.31 1998/02/05 07:59:56 mrg Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.32 1998/02/10 14:09:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,7 @@
  */
 
 #include "opt_insecure.h"
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

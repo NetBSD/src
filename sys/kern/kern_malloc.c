@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.30 1998/02/08 06:15:57 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.31 1998/02/10 14:09:34 mrg Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,8 @@
  *
  *	@(#)kern_malloc.c	8.3 (Berkeley) 1/4/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

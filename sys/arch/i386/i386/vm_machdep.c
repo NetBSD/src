@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 1998/02/06 07:22:01 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68 1998/02/10 14:11:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,8 @@
  */
 
 #include "opt_user_ldt.h"
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

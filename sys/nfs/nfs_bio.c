@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.41 1998/02/05 08:00:19 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.42 1998/02/10 14:10:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
 
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

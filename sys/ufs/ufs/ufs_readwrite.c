@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.14 1998/02/05 08:00:36 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.15 1998/02/10 14:10:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
  */
+
+#include "opt_uvm.h"
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a)

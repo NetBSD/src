@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.6 1998/02/10 02:35:03 perry Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.7 1998/02/10 14:12:30 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -40,6 +40,8 @@
 
 #ifndef _UVM_UVM_STAT_H_
 #define _UVM_UVM_STAT_H_
+
+#include "opt_uvmhist.h"
 
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
