@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.2.1 2001/11/28 10:12:07 wdk Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.2.2 2001/11/29 11:08:37 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,12 +64,11 @@ struct sigframe {
  */
 
 struct saframe {
-#if 0 /* in registers on entry to upcallcode */
-	int		sa_type;
-	struct sa_t **	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-#endif
+	/* first 4 arguments passed in registers on entry to upcallcode */
+	int		sa_type;	/* A0 */
+	struct sa_t **	sa_sas;		/* A1 */
+	int		sa_events;	/* A2 */
+	int		sa_interrupted;	/* A3 */
 	void *		sa_arg;
 	sa_upcall_t	sa_upcall;
 };
