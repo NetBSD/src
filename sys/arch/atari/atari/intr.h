@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1996/12/26 23:25:04 leo Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1997/06/06 13:15:57 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _ATARI_ATARI_INTR_H_
+#define _ATARI_ATARI_INTR_H_
+
+#include <machine/cpu.h>	/* XXX: for clockframe */
 
 #define	AUTO_VEC	0x0001	/* We're dealing with an auto-vector	*/
 #define	USER_VEC	0x0002	/* We're dealing with an user-vector	*/
@@ -72,3 +76,5 @@ extern u_long	autovects[];
 extern u_long	intrcnt_auto[];
 extern u_long	uservects[];
 extern u_long	intrcnt_user[];
+
+#endif /* _ATARI_ATARI_INTR_H_ */
