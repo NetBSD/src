@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.33 2003/09/06 12:45:01 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.34 2003/09/23 10:50:51 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.33 2003/09/06 12:45:01 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.34 2003/09/23 10:50:51 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -307,6 +307,8 @@ get_netmask(int s, u_int32_t dst)
 	return (retval);
     }
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr->sa_family != AF_INET)
+	    continue;
 	if_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	if_mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
 	if ((dst & if_mask) == (if_addr & if_mask)) {
