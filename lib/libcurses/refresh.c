@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.32 2000/05/19 04:15:55 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.33 2000/05/19 07:39:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.32 2000/05/19 04:15:55 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.33 2000/05/19 07:39:02 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -80,7 +80,8 @@ refresh(void)
 int
 wnoutrefresh(WINDOW *win)
 {
-	short	wy, wx, y_off, x_off;
+	short	wy, wx, x_off;
+	__LINE	*wlp, *vlp;
 
 #ifdef DEBUG
 	__CTRACE("wnoutrefresh: win %0.2o, flags 0x%08x\n", win, win->flags);
@@ -92,92 +93,84 @@ wnoutrefresh(WINDOW *win)
 	__virtscr->curx = win->curx + win->begx;
 
 	/* Copy the window flags from "win" to "__virtscr" */
-	if (!(win->flags & __FULLWIN) && (win->flags & __CLEAROK))
+	if (win->flags & __CLEAROK) {
+		if (win->flags & __FULLWIN)
+			__virtscr->flags |= __CLEAROK;
 		win->flags &= ~__CLEAROK;
+	}
 	__virtscr->flags &= ~__LEAVEOK;
 	__virtscr->flags |= win->flags;
-	if (win->flags & __CLEAROK)
-		win->flags &= ~__CLEAROK;
 
-	for (wy = 0, y_off = win->begy; wy < win->maxy &&
-	    y_off < __virtscr->maxy; wy++, y_off++) {
+	for (wy = 0; wy < win->maxy && wy < __virtscr->maxy - win->begy; wy++) {
+		wlp = win->lines[wy];
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
-		    *win->lines[wy]->firstchp,
-		    *win->lines[wy]->lastchp,
-		    win->lines[wy]->flags);
+		    *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
-		y_off = wy + win->begy;
-		if (*win->lines[wy]->firstchp <= win->maxx + win->ch_off &&
-		    *win->lines[wy]->lastchp >= win->ch_off) {
+		if ((wlp->flags & (__FORCEPAINT | __ISDIRTY)) == 0)
+			continue;
+		vlp = __virtscr->lines[wy + win->begy];
+
+		if (*wlp->firstchp < win->maxx + win->ch_off &&
+		    *wlp->lastchp >= win->ch_off) {
 			/* Copy line from "win" to "__virtscr". */
 			for (wx = 0, x_off = win->begx; wx < win->maxx &&
 			    x_off < __virtscr->maxx; wx++, x_off++) {
-				__virtscr->lines[y_off]->line[x_off].attr =
-				    win->lines[wy]->line[wx].attr;
-				if (!(win->lines[wy]->line[wx].attr & __COLOR)
-				    && (win->lines[wy]->line[wx].battr &
-				    __COLOR))
-					__virtscr->lines[y_off]->line[x_off].
-					    attr |=
-					    win->lines[wy]->line[wx].battr &
-					    __COLOR;
-				if (win->lines[wy]->line[wx].ch == ' ' &&
-				    win->lines[wy]->line[wx].bch != ' ')
-					__virtscr->lines[y_off]->line[x_off].ch
-					    = win->lines[wy]->line[wx].bch;
+				vlp->line[x_off].attr = wlp->line[wx].attr;
+				if (!(wlp->line[wx].attr & __COLOR) &&
+				    (wlp->line[wx].battr & __COLOR))
+					vlp->line[x_off].attr |=
+					    wlp->line[wx].battr & __COLOR;
+				if (wlp->line[wx].ch == ' ' &&
+				    wlp->line[wx].bch != ' ')
+					vlp->line[x_off].ch
+					    = wlp->line[wx].bch;
 				else
-					__virtscr->lines[y_off]->line[x_off].ch
-					    = win->lines[wy]->line[wx].ch;
+					vlp->line[x_off].ch
+					    = wlp->line[wx].ch;
 			}
 
 			/* Set flags on "__virtscr" and unset on "win". */
-			if (win->lines[wy]->flags & __FORCEPAINT) {
-				__virtscr->lines[y_off]->flags |= __FORCEPAINT;
-				win->lines[wy]->flags &= ~__FORCEPAINT;
+			if (wlp->flags & __FORCEPAINT) {
+				vlp->flags |= __FORCEPAINT;
+				wlp->flags &= ~__FORCEPAINT;
 			}
-			if (win->lines[wy]->flags & __ISPASTEOL)
-				__virtscr->lines[y_off]->flags |= __ISPASTEOL;
+			if (wlp->flags & __ISPASTEOL)
+				vlp->flags |= __ISPASTEOL;
 			else
-				__virtscr->lines[y_off]->flags &= ~__ISPASTEOL;
-			if (win->lines[wy]->flags & __ISDIRTY)
-				__virtscr->lines[y_off]->flags |= __ISDIRTY;
+				vlp->flags &= ~__ISPASTEOL;
+			if (wlp->flags & __ISDIRTY)
+				vlp->flags |= __ISDIRTY;
 
 #ifdef DEBUG
 			__CTRACE("win: firstch = %d, lastch = %d\n",
-			    *win->lines[wy]->firstchp,
-			    *win->lines[wy]->lastchp);
+			    *wlp->firstchp, *wlp->lastchp);
 #endif
 			/* Set change pointers on "__virtscr". */
-			if (*__virtscr->lines[y_off]->firstchp >
-			    *win->lines[wy]->firstchp + win->begx - win->ch_off)
-				*__virtscr->lines[y_off]->firstchp =
-				    *win->lines[wy]->firstchp + win->begx -
-				    win->ch_off;
-			if (*__virtscr->lines[y_off]->lastchp <
-			    *win->lines[wy]->lastchp + win->begx - win->ch_off)
-				*__virtscr->lines[y_off]->lastchp =
-				    *win->lines[wy]->lastchp + win->begx -
-				    win->ch_off;
+			if (*vlp->firstchp >
+			    *wlp->firstchp + win->begx - win->ch_off)
+				*vlp->firstchp =
+				    *wlp->firstchp + win->begx - win->ch_off;
+			if (*vlp->lastchp <
+			    *wlp->lastchp + win->begx - win->ch_off)
+				*vlp->lastchp =
+				    *wlp->lastchp + win->begx - win->ch_off;
 #ifdef DEBUG
 			__CTRACE("__virtscr: firstch = %d, lastch = %d\n",
-			    *__virtscr->lines[y_off]->firstchp,
-			    *__virtscr->lines[y_off]->lastchp);
+			    *vlp->firstchp, *vlp->lastchp);
 #endif
 
 			/* Set change pointers on "win". */
-			if (*win->lines[wy]->firstchp >= win->ch_off)
-				*win->lines[wy]->firstchp = win->maxx +
-				    win->ch_off;
-			if (*win->lines[wy]->lastchp < win->maxx + win->ch_off)
-			*win->lines[wy]->lastchp = win->ch_off;
-			if (*win->lines[wy]->lastchp <
-			    *win->lines[wy]->firstchp) {
+			if (*wlp->firstchp >= win->ch_off)
+				*wlp->firstchp = win->maxx + win->ch_off;
+			if (*wlp->lastchp < win->maxx + win->ch_off)
+				*wlp->lastchp = win->ch_off;
+			if (*wlp->lastchp < *wlp->firstchp) {
 #ifdef DEBUG
 				__CTRACE("wnoutrefresh: line %d notdirty\n",
 				    wy);
 #endif
-				win->lines[wy]->flags &= ~__ISDIRTY;
+				wlp->flags &= ~__ISDIRTY;
 			}
 		}
 	}
@@ -317,38 +310,33 @@ doupdate(void)
 #endif				/* DEBUG */
 
 	for (wy = 0; wy < win->maxy; wy++) {
+		wlp = win->lines[wy];
 /* XXX: remove this debug */
 #ifdef DEBUG
 		__CTRACE("doupdate: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
-		    *win->lines[wy]->firstchp,
-		    *win->lines[wy]->lastchp,
-		    win->lines[wy]->flags);
+		    *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
 		if (!curwin)
-			curscr->lines[wy]->hash = win->lines[wy]->hash;
-		if (win->lines[wy]->flags & (__ISDIRTY | __FORCEPAINT)) {
+			curscr->lines[wy]->hash = wlp->hash;
+		if (wlp->flags & (__ISDIRTY | __FORCEPAINT)) {
 			if (makech(wy) == ERR)
 				return (ERR);
 			else {
-				if (*win->lines[wy]->firstchp >= 0)
-					*win->lines[wy]->firstchp =
-					    win->maxx;
-				if (*win->lines[wy]->lastchp <
-				    win->maxx)
-					*win->lines[wy]->lastchp = 0;
-				if (*win->lines[wy]->lastchp <
-				    *win->lines[wy]->firstchp) {
+				if (*wlp->firstchp >= 0)
+					*wlp->firstchp = win->maxx;
+				if (*wlp->lastchp < win->maxx)
+					*wlp->lastchp = 0;
+				if (*wlp->lastchp < *wlp->firstchp) {
 #ifdef DEBUG
 					__CTRACE("doupdate: line %d notdirty\n", wy);
 #endif
-					win->lines[wy]->flags &= ~__ISDIRTY;
+					wlp->flags &= ~__ISDIRTY;
 				}
 			}
 
 		}
 #ifdef DEBUG
-		__CTRACE("\t%d\t%d\n", *win->lines[wy]->firstchp,
-		    *win->lines[wy]->lastchp);
+		__CTRACE("\t%d\t%d\n", *wlp->firstchp, *wlp->lastchp);
 #endif
 	}
 
