@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.16 1996/09/09 14:51:08 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.16.14.1 1998/10/01 17:56:28 cgd Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -264,7 +264,7 @@ igmp_input(m, va_alist)
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
-			IFP_TO_IA(ifp, ia);
+			IFP_TO_IA(ifp, ia);		/* XXX */
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
 		}
@@ -303,7 +303,7 @@ igmp_input(m, va_alist)
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
-		IFP_TO_IA(ifp, ia);
+		IFP_TO_IA(ifp, ia);			/* XXX */
 		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
 			break;
 #endif
@@ -331,7 +331,7 @@ igmp_input(m, va_alist)
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
-			IFP_TO_IA(ifp, ia);
+			IFP_TO_IA(ifp, ia);		/* XXX */
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
