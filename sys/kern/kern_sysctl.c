@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.3 1994/08/30 03:05:46 mycroft Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.4 1994/09/16 23:57:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -671,9 +671,7 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = 0;
 		ep->e_vm.vm_dsize = 0;
 		ep->e_vm.vm_ssize = 0;
-#ifndef sparc
 		/* ep->e_vm.vm_pmap = XXX; */
-#endif
 	} else {
 		register struct vmspace *vm = p->p_vmspace;
 
@@ -685,9 +683,7 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
-#ifndef sparc
 		ep->e_vm.vm_pmap = vm->vm_pmap;
-#endif
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
