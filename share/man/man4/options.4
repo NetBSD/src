@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.192 2002/12/13 22:44:09 abs Exp $
+.\"	$NetBSD: options.4,v 1.193 2003/02/02 22:53:57 jmmv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1778,21 +1778,21 @@ down and will only restart after a keyboard reset or a power cycle.
 .El
 .Ss arm32-specific Options
 .Bl -ohang
-.It Cd options FRENCH_KEYBOARD
+.It Cd options FRENCH_KBD
 Include translation for French keyboards when using
-.Xr pccons 4
+.Em pccons
 on a Shark.
-.It Cd options FINNISH_KEYBOARD
+.It Cd options FINNISH_KBD
 Include translation for Finnish keyboards when using
-.Xr pccons 4
+.Em pccons
 on a Shark.
-.It Cd options GERMAN_KEYBOARD
+.It Cd options GERMAN_KBD
 Include translation for German keyboards when using
-.Xr pccons 4
+.Em pccons
 on a Shark.
-.It Cd options NORWEGIAN_KEYBOARD
+.It Cd options NORWEGIAN_KBD
 Include translation for French keyboards when using
-.Xr pccons 4
+.Em pccons
 on a Shark.
 .El
 .Ss atari-specific Options
@@ -2088,6 +2088,7 @@ bolded
 .Xr pcmcia 4 ,
 .Xr ppp 4 ,
 .Xr userconf 4 ,
+.Xr wscons 4 ,
 .Xr config 8 ,
 .Xr edquota 8 ,
 .Xr init 8 ,
