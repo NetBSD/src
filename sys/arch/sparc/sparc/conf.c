@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1994/12/06 00:18:10 deraadt Exp $ */
+/*	$NetBSD: conf.c,v 1.19 1994/12/06 14:39:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -295,10 +295,8 @@ cdev_decl(lkm);
 cdev_decl(ch);
 /* open, close, ioctl */
 #define	cdev_ch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	(dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+	dev_init(c,n,open), dev_init(c,n,close), error_read, error_write, \
+	dev_init(c,n,ioctl), 0, 0, 0, error_select, 0, 0 }
 
 #include "cgsix.h"
 cdev_decl(cgsix);
