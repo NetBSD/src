@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 2002/09/11 08:30:48 simonb Exp $ */
+/* $NetBSD: autoconf.c,v 1.3 2002/09/26 20:21:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_driver->cd_name;
 	struct aubus_attach_args *aa = aux;
 
 	/*
@@ -90,7 +90,7 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	/* Fetch the MAC addresses from YAMON. */
-	if (strcmp(cd->cd_name, "aumac") == 0) {
+	if (strcmp(name, "aumac") == 0) {
 		uint8_t ethaddr[ETHER_ADDR_LEN];
 		char prop_name[sizeof("0xffffffff:mac-addr") + 1];
 		const char *cp;
