@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.34 1996/02/04 02:16:17 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.35 1996/02/09 18:59:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -51,10 +51,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/cpu.h>
 
 #include <machine/cpu.h>
-
-#include <kern/kern_extern.h>
 
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */

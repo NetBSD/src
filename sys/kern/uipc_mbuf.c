@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.14 1996/02/04 02:17:46 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.15 1996/02/09 19:00:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -48,8 +48,6 @@
 #include <sys/protosw.h>
 
 #include <vm/vm.h>
-
-#include <kern/kern_extern.h>
 
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;

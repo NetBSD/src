@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.38 1996/02/04 02:15:17 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.39 1996/02/09 18:59:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -62,7 +62,6 @@
 
 #include <vm/vm.h>
 
-#include <kern/kern_extern.h>
 #include <kern/kern_conf.h>
 
 /*

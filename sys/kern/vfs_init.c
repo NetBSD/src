@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.5 1996/02/04 02:18:17 christos Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <kern/kern_extern.h>
 /*
  * Sigh, such primitive tools are these...
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.9 1996/02/04 02:18:13 christos Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.10 1996/02/09 19:00:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,8 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
-
-#include <kern/kern_extern.h>
+#include <sys/cpu.h>
 
 #ifdef DEBUG
 #include <vm/vm.h>

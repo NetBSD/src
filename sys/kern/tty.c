@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.65 1996/02/04 02:17:15 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.66 1996/02/09 19:00:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -59,8 +59,6 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
-
-#include <kern/kern_extern.h>
 
 static int ttnread __P((struct tty *));
 static void ttyblock __P((struct tty *));
@@ -171,8 +169,7 @@ ttyopen(device, tp)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		tp->t_flags = 0;
 #endif
 	}
@@ -647,8 +644,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case  TIOCSTAT:
 	case  TIOCSTI:
 	case  TIOCSWINSZ:
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 	case  TIOCLBIC:
 	case  TIOCLBIS:
 	case  TIOCLSET:
@@ -896,8 +892,7 @@ ttioctl(tp, cmd, data, flag, p)
 		}
 		break;
 	default:
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		return (ttcompat(tp, cmd, data, flag, p));
 #else
 		return (-1);
@@ -1897,7 +1892,7 @@ ttyinfo(tp)
 
 #define	pgtok(a)	(((a) * NBPG) / 1024)
 		/* Print percentage cpu, resident set size. */
-		tmp = pick->p_pctcpu * 10000 + FSCALE / 2 >> FSHIFT;
+		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf(tp, "%d%% %dk\n",
 		    tmp / 100,
 		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.13 1996/02/04 02:15:55 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -75,6 +75,9 @@ struct proclist allproc;
 struct proclist zombproc;
 
 static void orphanpg __P((struct pgrp *));
+#ifdef DEBUG
+void pgrpdump __P((void));
+#endif
 
 /*
  * Initialize global process hashing structures.
@@ -351,6 +354,7 @@ orphanpg(pg)
 }
 
 #ifdef DEBUG
+void
 pgrpdump()
 {
 	register struct pgrp *pgrp;
@@ -358,7 +362,7 @@ pgrpdump()
 	register i;
 
 	for (i = 0; i <= pgrphash; i++) {
-		if (pgrp = pgrphashtbl[i].lh_first) {
+		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
 				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
