@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.1 2002/06/26 23:13:10 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.2 2002/06/27 15:07:53 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.1 2002/06/26 23:13:10 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.2 2002/06/27 15:07:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -115,9 +115,9 @@ static void
 open_files(void)
 {
 	/* Open wsdisplay status device */
-	mouse.stat_fd = open(_PATH_WSDISPLAYSTAT, O_RDONLY | O_NONBLOCK, 0);
+	mouse.stat_fd = open(_PATH_TTYSTAT, O_RDONLY | O_NONBLOCK, 0);
 	if (mouse.stat_fd == -1)
-		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_WSDISPLAYSTAT);
+		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_TTYSTAT);
 
 	mouse.fd = -1;
 	mouse_open_device(&mouse, 0);
