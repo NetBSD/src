@@ -1,5 +1,9 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.16 2003/03/28 21:03:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 2003/07/16 19:35:34 itojun Exp $
+
+NOPIC=		# defined
+NOPROFILE=	# defined
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
@@ -21,5 +25,7 @@ CPPFLAGS+= -DKRB5
 CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
 CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
 .endif
+
+libinstall::
 
 .include <bsd.lib.mk>
