@@ -1,9 +1,9 @@
-.\"	$NetBSD: nl_langinfo.3,v 1.9 2003/02/12 02:46:57 gmcgarry Exp $
+.\"	$NetBSD: nl_langinfo.3,v 1.10 2003/02/12 18:52:12 wiz Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd July 14, 1994
+.Dd February 12, 2003
 .Dt NL_LANGINFO 3
 .Os
 .Sh NAME
@@ -30,9 +30,9 @@ The entries under Category indicate in which
 category each item is defined.
 .sp
 .nf
-.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (eg: Tuesday)'u
+.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (e.g.: Tuesday)'u
 \fIConstant\fP	\fICategory\fP	\fIMeaning\fP
-.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (eg: Tuesday)'u+1nC
+.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (e.g.: Tuesday)'u+1nC
 .sp 5p
 CODESET	LC_CTYPE	Codeset name
 D_T_FMT	LC_TIME	String for formatting date and time
@@ -41,13 +41,13 @@ T_FMT	LC_TIME	Time format string
 T_FMT_AMPM	LC_TIME	a.m. or p.m. time format string
 AM_STR	LC_TIME	Ante-meridiem affix
 PM_STR	LC_TIME	Post-meridiem affix
-DAY_1	LC_TIME	Name of the first day of the week (eg: Sunday)
-DAY_2	LC_TIME	Name of the second day of the week (eg: Monday)
-DAY_3	LC_TIME	Name of the third day of the week (eg: Tuesday)
-DAY_4	LC_TIME	Name of the fourth day of the week (eg: Wednesday)
-DAY_5	LC_TIME	Name of the fifth day of the week (eg: Thursday)
-DAY_6	LC_TIME	Name of the sixth day of the week (eg: Friday)
-DAY_7	LC_TIME	Name of the seventh day of the week (eg: Saturday)
+DAY_1	LC_TIME	Name of the first day of the week (e.g.: Sunday)
+DAY_2	LC_TIME	Name of the second day of the week (e.g.: Monday)
+DAY_3	LC_TIME	Name of the third day of the week (e.g.: Tuesday)
+DAY_4	LC_TIME	Name of the fourth day of the week (e.g.: Wednesday)
+DAY_5	LC_TIME	Name of the fifth day of the week (e.g.: Thursday)
+DAY_6	LC_TIME	Name of the sixth day of the week (e.g.: Friday)
+DAY_7	LC_TIME	Name of the seventh day of the week (e.g.: Saturday)
 ABDAY_1	LC_TIME	Abbreviated name of the first day of the week
 ABDAY_2	LC_TIME	Abbreviated name of the second day of the week
 ABDAY_3	LC_TIME	Abbreviated name of the third day of the week
@@ -142,7 +142,7 @@ to obtain the date and time format for the current locale:
 The
 .Fn nl_langinfo
 function conforms to
-.St -p1003.1-2001
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn nl_langinfo
