@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.11 1999/06/05 21:58:18 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.12 1999/06/08 10:35:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -907,5 +907,5 @@ __asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 #endif
 
 #ifndef _LOCORE
-extern next_tick __P((long));
+extern void next_tick __P((long));
 #endif
