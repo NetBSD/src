@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.330 2001/04/17 14:43:09 jdolecek Exp $
+#	$NetBSD: mi,v 1.331 2001/04/18 05:59:40 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3090,6 +3090,7 @@
 ./usr/share/man/cat9/splsoftserial.0		comp-sys-catman
 ./usr/share/man/cat9/splstatclock.0		comp-sys-catman
 ./usr/share/man/cat9/spltty.0		comp-sys-catman
+./usr/share/man/cat9/splvm.0		comp-sys-catman
 ./usr/share/man/cat9/splx.0		comp-sys-catman
 ./usr/share/man/cat9/sprintf.0		comp-sys-catman
 ./usr/share/man/cat9/store.0		comp-sys-catman
@@ -5028,6 +5029,7 @@
 ./usr/share/man/man9/splsoftserial.9		comp-sys-man
 ./usr/share/man/man9/splstatclock.9		comp-sys-man
 ./usr/share/man/man9/spltty.9		comp-sys-man
+./usr/share/man/man9/splvm.9		comp-sys-man
 ./usr/share/man/man9/splx.9		comp-sys-man
 ./usr/share/man/man9/sprintf.9		comp-sys-man
 ./usr/share/man/man9/store.9		comp-sys-man
