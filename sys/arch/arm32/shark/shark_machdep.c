@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.13 1999/01/09 22:56:06 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.14 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -69,7 +69,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
-#include <arm32/isa/isa_machdep.h>
+#include <machine/isa_machdep.h>
 #include <arm32/shark/sequoia.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.3 1998/05/01 21:18:41 cgd Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.4 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -49,7 +49,7 @@
 
 
 #include <dev/isa/isareg.h>
-#include <arm32/isa/isa_machdep.h>
+#include <machine/isa_machdep.h>
 #include <arm32/shark/sequoia.h>
 #include <arm32/shark/fiq.h>
 #include <machine/cpufunc.h>
