@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.21 2000/07/06 11:05:06 ad Exp $	*/
+/*	$NetBSD: pwd.h,v 1.22 2000/09/18 16:27:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -63,7 +63,7 @@
 #define	_PW_KEYBYNUM		'2'	/* stored by entry in the "file" */
 #define	_PW_KEYBYUID		'3'	/* stored by uid */
 
-#define	_PASSWORD_EFMT1		'_'	/* extended encryption format */
+#define	_PASSWORD_EFMT1		'_'	/* extended DES encryption format */
 #define	_PASSWORD_NONDES	'$'	/* non-DES encryption formats */
 
 #define	_PASSWORD_LEN		128	/* max length, not counting NUL */
