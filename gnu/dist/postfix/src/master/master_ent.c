@@ -287,6 +287,7 @@ MASTER_SERV *get_master_ent()
 	} else if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
 #ifdef INET6
 	    serv->addr_list.inet = wildcard_inet_addr_list();
+	    serv->addr_list_buf.inet = NULL;
 	    serv->listen_fd_count = serv->addr_list.inet->used;
 #else
 	    serv->addr_list.inet = 0;		/* wild-card */
