@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.6 2001/03/15 06:10:58 chs Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.7 2001/03/21 03:16:06 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -145,7 +145,7 @@ typedef int	boolean_t;
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
 extern int		ubc_nwins;	/* number of UBC mapping windows */
-extern int		ubc_winsize;	/* size of a UBC mapping window */
+extern int		ubc_winshift;	/* shift for a UBC mapping window */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
