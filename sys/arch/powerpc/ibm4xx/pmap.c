@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2003/05/10 21:10:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2003/07/03 13:18:42 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -200,20 +200,28 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 {
 	int seg = STIDX(va);
 	int ptn = PTIDX(va);
+	u_int oldpte;
 	paddr_t pa;
 
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
-		if (!pte) return (1);
+		if (!pte) return (0);
 		/* Allocate a page XXXX this will sleep! */
 		pa = 0;
 		pm->pm_ptbl[seg] =
 		    (uint *)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
 	}
+	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
 
 	/* Flush entry. */
 	ppc4xx_tlb_flush(va, pm->pm_ctx);
+	if (oldpte != pte) {
+		if (pte == 0)
+			pm->pm_stats.resident_count--;
+		else
+			pm->pm_stats.resident_count++;
+	}
 	return (1);
 }
 
@@ -874,7 +882,6 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	s = splvm();
-	pm->pm_stats.resident_count++;
 
 	/* Insert page into page table. */
 	pte_enter(pm, va, tte);
@@ -972,7 +979,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	s = splvm();
-	pm->pm_stats.resident_count++;
 
 	/* Insert page into page table. */
 	pte_enter(pm, va, tte);
