@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.14 2000/04/11 01:01:26 jwise Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.15 2000/04/11 01:18:35 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.14 2000/04/11 01:01:26 jwise Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.15 2000/04/11 01:18:35 jwise Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -118,10 +118,10 @@ struct mode modes[] = {
 	{ "inet.ip",	showip,		fetchip,	labelip,
 	  initip,	openip,		closeip,	0,
 	  CF_LOADAV },
-	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
+	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
-	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
+	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
 #ifdef INET6
