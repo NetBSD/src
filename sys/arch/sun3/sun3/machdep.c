@@ -41,7 +41,7 @@
 extern char *cpu_string;
 int physmem;
 int cold;
-
+extern char kstack[];
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -56,8 +56,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-
-char *kstack = (char *) MONSHORTSEG;
 
 extern vm_offset_t u_area_va;
 

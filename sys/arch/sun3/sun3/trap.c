@@ -430,6 +430,8 @@ out:
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		splx(s);
+		printf("trap: survived the switch\n");
+		tracedump();
 		while (i = CURSIG(p))
 			psig(i);
 	}

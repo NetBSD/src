@@ -68,6 +68,7 @@ main()
     printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
     printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
+    printf("#define\tPSL_USER %d\n", PSL_USER);
     printf("#define\tSPL1 %d\n", PSL_S | PSL_IPL1);
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
 
@@ -82,9 +83,10 @@ main()
 				/* sun3 memory map */
     printf("#define\tMAINMEM_MONMAP %d\n",    MAINMEM_MONMAP);
     printf("#define\tMONSHORTSEG %d\n",       MONSHORTSEG);
+    printf("#define\tUSRSTACK %d\n",          USRSTACK);
 				/* kernel-isms */
-    printf("#define\tKERNBASE %d\n",    KERNBASE);
-    printf("#define\tUPAGES %d\n",      UPAGES);
+    printf("#define\tKERNBASE %d\n",        KERNBASE);
+    printf("#define\tUPAGES %d\n",          UPAGES);
     printf("#define\tUPAGE_ADDR %d\n",      MONSHORTSEG);
     printf("#define\tKSTACK_ADDR %d\n",     MONSHORTSEG);
 				/* errno-isms */

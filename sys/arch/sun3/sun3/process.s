@@ -133,6 +133,7 @@ Lbadsw:
 /*
  * Swtch()
  *
+ * Hacked for sun3	
  */
 ENTRY(swtch)
 	movl	_curpcb,a0		| current pcb
@@ -203,6 +204,7 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
+/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE no-cmap shit*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -237,53 +239,17 @@ Lswnofpsave:
 	addql	#8,sp
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
-#if 0
-/* this stuff was ifdefed out because it can't work under our clock level
- * configuration + it knows about the hp300 clock hardware
- */
-#ifdef PROFTIMER
-#ifdef notdef
-	movw	#SPL6,sr		| protect against clock interrupts
-#endif
-	bclr	#0,_profon		| clear user profiling bit, was set?
-	jeq	Lskipoff		| no, clock off or doing kernel only
-#ifdef GPROF
-	tstb	_profon			| kernel profiling also enabled?
-	jlt	Lskipoff		| yes, nothing more to do
-#endif
-	CLKADDR(a0)
-	movb	#0,a0@(CLKCR2)		| no, just user, select CR3
-	movb	#0,a0@(CLKCR3)		| and turn it off
-Lskipoff:
-#endif /* PROFTIMER */
-#endif /* if 0*/
-	pea 	a1@
-	jbsr    _load_u_area
-	addql	#8,sp	
-	movl	_curpcb,a1		| restore p_addr
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
+	pea 	a1@			| push essentially p_addr
+	jbsr    _load_u_area		| load_u_area(pcb_addr)
+	addql	#4,sp			| pop argument
+	movl	_curpcb,a1		| restore p_addr (just in case
+					| load_u_area() trashes a1
+
 Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#if 0
-/* profiling support currently borken */
-#ifdef PROFTIMER
-	tstl	a1@(U_PROFSCALE)	| process being profiled?
-	jeq	Lskipon			| no, do nothing
-	orb	#1,_profon		| turn on user profiling bit
-#ifdef GPROF
-	jlt	Lskipon			| already profiling kernel, all done
-#endif
-	CLKADDR(a0)
-	movl	_profint,d1		| profiling interval
-	subql	#1,d1			|   adjusted
-	movepw	d1,a0@(CLKMSB3)		| set interval
-	movb	#0,a0@(CLKCR2)		| select CR3
-	movb	#64,a0@(CLKCR3)		| turn it on
-Lskipon:
-#endif /*proftimer*/
-#endif /* if 0 */
 
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
@@ -309,6 +275,7 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
+/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -321,7 +288,7 @@ Lsvnofpsave:
 	tstl	sp@(8)			| altreturn?
 	jeq	Lsavedone
 	movl	sp,d0			| relocate current sp relative to a1
-	subl	#KSTACK_ADDR,d0		|   (sp is relative to kstack):
+	subl	#_kstack,d0		|   (sp is relative to kstack):
 	addl	d0,a1			|   a1 += sp - kstack;
 	movl	sp@,a1@			| write return pc at (relocated) sp@
 Lsavedone:

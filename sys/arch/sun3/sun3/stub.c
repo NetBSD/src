@@ -1,10 +1,7 @@
 
-char	*memcpy(char *from, char *to, unsigned int size)
+char	*memcpy(char *to, char *from, unsigned int size)
 {
-    bcopy(to, from, size);
+    bcopy(from, to, size);
     return to;
 }
-
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
      
