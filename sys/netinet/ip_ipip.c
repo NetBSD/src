@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.2 1999/01/13 23:01:20 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.3 1999/02/02 07:20:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ ipip_ioctl(ifp, cmd, data)
 		if (cmd == SIOCSIFADDR)
 			sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
 		else
-			sc->sc_dst = (satosin(ifa->ifa_addr))->sin_addr;
+			sc->sc_dst = (satosin(ifa->ifa_dstaddr))->sin_addr;
 
 		if (!in_nullhost(sc->sc_src) && !in_nullhost(sc->sc_dst)) {
 			ipip_compute_route(sc);
