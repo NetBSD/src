@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.7 1996/12/19 06:35:52 cgd Exp $	*/
+/*	$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -39,11 +39,12 @@
  *	@(#)regexec.c	8.3 (Berkeley) 3/20/94
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$NetBSD: regexec.c,v 1.7 1996/12/19 06:35:52 cgd Exp $";
+__RCSID("$NetBSD: regexec.c,v 1.8 1997/07/13 20:06:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,8 +65,6 @@ static char rcsid[] = "$NetBSD: regexec.c,v 1.7 1996/12/19 06:35:52 cgd Exp $";
 
 #include "utils.h"
 #include "regex2.h"
-
-static int nope = 0;		/* for use in asserts; shuts lint up */
 
 /* macros for manipulating states, small version */
 #define	states	long
