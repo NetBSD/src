@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.40 1994/02/18 19:56:46 mycroft Exp $
+#	$Id: ALL,v 1.41 1994/03/09 02:57:21 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -11,6 +11,7 @@ ident		ALL
 # different CPU types; you must have at least the correct one; REQUIRED
 cpu		"I386_CPU"
 cpu		"I486_CPU"
+cpu		"I586_CPU"
 
 # floating point emulation
 options		MATH_EMULATE
