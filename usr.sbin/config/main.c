@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1996/11/02 01:02:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ main(argc, argv)
 			/*
 			 * Essentially the same as makeoptions PROF="-pg",
 			 * but also changes the path from ../../compile/FOO
-			 * to ../../compile/FOO.prof; i.e., compile a
+			 * to ../../compile/FOO.PROF; i.e., compile a
 			 * profiling kernel based on a typical "regular"
 			 * kernel.
 			 *
