@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.45 1999/01/19 18:18:42 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.46 1999/03/23 15:48:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ i386_get_ldt(p, args, retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-#ifdef	DEBUG
+#ifdef	LDT_DEBUG
 	printf("i386_get_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
@@ -263,7 +263,7 @@ i386_set_ldt(p, args, retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-#ifdef	DEBUG
+#ifdef	LDT_DEBUG
 	printf("i386_set_ldt: start=%d num=%d descs=%p\n", ua.start,
 	    ua.num, ua.desc);
 #endif
@@ -313,7 +313,7 @@ i386_set_ldt(p, args, retval)
 		if (old_ldt != ldt)
 			kmem_free(kernel_map, (vaddr_t)old_ldt, old_len);
 #endif
-#ifdef DEBUG
+#ifdef LDT_DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
 #endif
 	}
