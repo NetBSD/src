@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.5 2003/10/23 23:26:06 kleink Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.6 2003/10/26 16:44:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -29,6 +29,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)float.h	8.1 (Berkeley) 6/10/93
+ */
+
+/*
+ * NOTICE: This is not a standalone file.  To use it, #include it in
+ * your port's float.h header.
  */
 
 #ifndef _SYS_FLOAT_IEEE754_H_
