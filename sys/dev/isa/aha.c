@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.1 1996/03/24 22:20:41 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.2 1996/03/24 22:23:56 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -941,7 +941,7 @@ aha_init(sc)
 		aha_cmd(iobase, sc, sizeof(extbios.cmd), (u_char *)&extbios.cmd,
 		    sizeof(extbios.reply), (u_char *)&extbios.reply);
 
-#if 1 /* XXXX */
+#ifdef AHADEBUG
 		printf("%s: flags=%02x, mailboxlock=%02x\n",
 		    sc->sc_dev.dv_xname,
 		    extbios.reply.flags, extbios.reply.mailboxlock);
@@ -975,8 +975,7 @@ aha_init(sc)
 	printf("%s: %s, %s\n",
 	    sc->sc_dev.dv_xname,
 	    setup.reply.sync_neg ? "sync" : "async",
-	    setup.reply.parity ? "parity" : "no parity",
-	    setup.reply.num_mbx);
+	    setup.reply.parity ? "parity" : "no parity");
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
@@ -1049,7 +1048,7 @@ aha_inquire_setup_information(sc)
 		goto noinquire;
 	}
 
-#if 1 /* XXXX */
+#ifdef AHADEBUG
 	printf("%s: inquire %x, %x, %x, %x\n",
 	    sc->sc_dev.dv_xname,
 	    revision.reply.boardid, revision.reply.spec_opts,
