@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.16 1994/06/22 15:14:08 pk Exp $
+#	$NetBSD: Makefile,v 1.17 1995/04/23 07:58:35 cgd Exp $
+#	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
 .include "config/Makefile.$(MACHINE_ARCH)"
 

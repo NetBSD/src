@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/10/07 07:25:03 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1995/04/23 07:58:41 cgd Exp $
 
 PROG=	grep
 SRCS=	dfa.c grep.c getopt.c kwset.c obstack.c regex.c search.c
