@@ -874,6 +874,7 @@
 ./usr/include/vm/vm_param.h
 ./usr/include/vm/vm_prot.h
 ./usr/include/vm/vnode_pager.h
+./usr/include/zconf.h
 ./usr/include/zlib.h
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
