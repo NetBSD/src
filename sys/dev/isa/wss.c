@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.32 1997/08/19 23:50:06 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.33 1997/08/20 15:26:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -128,7 +128,8 @@ struct wss_softc {
 
 	int 	mic_mute, cd_mute, dac_mute;
 	int	mad_chip_type;		/* chip type if MAD emulation of WSS */
-	bus_space_handle_t sc_mad_ioh;	/* handle */
+	bus_space_handle_t sc_mad_ioh;	/* MAD handle */
+	bus_space_handle_t sc_mad_ioh1, sc_mad_ioh2, sc_mad_ioh3;
 };
 
 struct audio_device wss_device = {
@@ -150,8 +151,11 @@ int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
 static int wss_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 static int wss_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
 
+static int	wssfind __P((struct device *, struct wss_softc *, struct isa_attach_args *));
+
 static int 	madprobe __P((struct wss_softc *, int));
-static void	madprobedone __P((struct wss_softc *));
+static void	madattach __P((struct wss_softc *));
+static void	madunmap __P((struct wss_softc *));
 
 /*
  * Define our interface to the higher level audio driver.
@@ -207,10 +211,31 @@ struct cfdriver wss_cd = {
 int
 wssprobe(parent, match, aux)
     struct device *parent;
-    void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+    void *match;
+#else
+    struct cfdata *match;
+#endif
+    void *aux;
 {
-    struct wss_softc *sc = match;
-    struct isa_attach_args *ia = aux;
+    struct wss_softc probesc, *sc = &probesc;
+
+    if (wssfind(parent, sc, aux)) {
+        bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
+        ad1848_unmap(&sc->sc_ad1848);
+        madunmap(sc);
+        return 1;
+    } else
+        /* Everything is already unmapped */
+        return 0;
+}
+
+static int
+wssfind(parent, sc, ia)
+    struct device *parent;
+    struct wss_softc *sc;
+    struct isa_attach_args *ia;
+{
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
@@ -224,12 +249,12 @@ wssprobe(parent, match, aux)
 
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
 	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
-	return 0;
+	goto bad1;
     }
 
     /* Map the ports upto the AD1848 port */
     if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
-	return 0;
+	goto bad1;
 
     sc->sc_ad1848.sc_iot = sc->sc_iot;
     sc->sc_ad1848.sc_iobase = ia->ia_iobase + WSS_CODEC;
@@ -274,15 +299,12 @@ wssprobe(parent, match, aux)
     bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
 		      (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
 
-    if (sc->mad_chip_type != MAD_NONE)
-	madprobedone(sc);
-
     return 1;
 
 bad:
     bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
-    if (sc->mad_chip_type != MAD_NONE)
-	bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
+bad1:
+    madunmap(sc);
     return 0;
 }
 
@@ -299,6 +321,13 @@ wssattach(parent, self, aux)
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     int version;
     
+    if (!wssfind(parent, sc, ia)) {
+        printf("wssattach: wssfind failed\n");
+        return;
+    }
+
+    madattach(sc);
+
     sc->sc_ad1848.sc_recdrq = ia->ia_drq;
     sc->sc_ad1848.sc_isa = parent;
 
@@ -846,15 +875,17 @@ madprobe(sc, iobase)
         { M_WSS_PORT0, M_WSS_PORT1, M_WSS_PORT2, M_WSS_PORT3 };
     int i;
     int chip_type;
-    bus_space_handle_t hdl1, hdl2, hdl3;
 
     if (bus_space_map(sc->sc_iot, MAD_BASE, MAD_NPORT, 0, &sc->sc_mad_ioh))
 	return MAD_NONE;
 
     /* Allocate bus space that the MAD chip wants */
-    if (bus_space_map(sc->sc_iot, MAD_REG1, MAD_LEN1, 0, &hdl1)) goto bad1;
-    if (bus_space_map(sc->sc_iot, MAD_REG2, MAD_LEN2, 0, &hdl2)) goto bad2;
-    if (bus_space_map(sc->sc_iot, MAD_REG3, MAD_LEN3, 0, &hdl3)) goto bad3;
+    if (bus_space_map(sc->sc_iot, MAD_REG1, MAD_LEN1, 0, &sc->sc_mad_ioh1))
+        goto bad1;
+    if (bus_space_map(sc->sc_iot, MAD_REG2, MAD_LEN2, 0, &sc->sc_mad_ioh2))
+        goto bad2;
+    if (bus_space_map(sc->sc_iot, MAD_REG3, MAD_LEN3, 0, &sc->sc_mad_ioh3))
+        goto bad3;
 
     DPRINTF(("mad: Detect using password = 0xE2\n"));
     if (!detect_mad16(sc, MAD_82C928)) {
@@ -896,22 +927,37 @@ madprobe(sc, iobase)
 
     return chip_type;
 bad:
-    bus_space_unmap(sc->sc_iot, hdl3, MAD_LEN3);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh3, MAD_LEN3);
 bad3:
-    bus_space_unmap(sc->sc_iot, hdl2, MAD_LEN2);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh2, MAD_LEN2);
 bad2:
-    bus_space_unmap(sc->sc_iot, hdl1, MAD_LEN1);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh1, MAD_LEN1);
 bad1:
     bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
     return MAD_NONE;
 }
 
 static void
-madprobedone(sc)
+madunmap(sc)
+    struct wss_softc *sc;
+{
+    if (sc->mad_chip_type == MAD_NONE)
+        return;
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh1, MAD_LEN1);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh2, MAD_LEN2);
+    bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh3, MAD_LEN3);
+}
+
+static void
+madattach(sc)
     struct wss_softc *sc;
 {
     int chip_type = sc->mad_chip_type;
     unsigned char cs4231_mode;
+
+    if (chip_type == MAD_NONE)
+        return;
 
     cs4231_mode = 
 	strncmp(sc->sc_ad1848.chip_name, "CS4248", 6) == 0 ||

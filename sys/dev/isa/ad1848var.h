@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.18 1997/07/31 22:33:25 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.19 1997/08/20 15:26:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -107,6 +107,7 @@ struct ad1848_softc {
 
 #ifdef _KERNEL
 int	ad1848_probe __P((struct ad1848_softc *));
+void	ad1848_unmap __P((struct ad1848_softc *));
 void	ad1848_attach __P((struct ad1848_softc *));
 
 int	ad1848_open __P((void *, int));
