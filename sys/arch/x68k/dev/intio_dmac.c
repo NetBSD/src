@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.9 2001/05/02 12:48:24 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.10 2001/05/22 00:16:49 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -627,6 +627,7 @@ dmac_abort_xfer(self, xf)
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR,
 			  DMAC_CCR_INT | DMAC_CCR_HLT);
+	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 
 	return 0;
 }
