@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.17 2000/03/23 06:47:32 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.18 2000/11/02 00:42:41 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -556,7 +556,7 @@ comopen(dev, flag, mode, p)
 	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 
 	if (!error)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+		error = (*tp->t_linesw->l_open)(dev, tp);
 
 	/* XXX cleanup on error */
 
@@ -579,7 +579,7 @@ comclose(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	s = spltty();
 	CLR(sc->sc_lcr, LCR_SBREAK);
 	outb(pio(iobase , com_lcr), sc->sc_lcr);
@@ -612,7 +612,7 @@ comread(dev, uio, flag)
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -624,7 +624,7 @@ comwrite(dev, uio, flag)
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -664,7 +664,7 @@ comioctl(dev, cmd, data, flag, p)
 	int iobase = sc->sc_iobase;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -865,7 +865,7 @@ comparam(tp, t)
 	if (!ISSET(sc->sc_msr, MSR_DCD) &&
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
 	    ISSET(oldcflag, MDMBUF) != ISSET(tp->t_cflag, MDMBUF) &&
-	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+	    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
 		CLR(sc->sc_mcr, sc->sc_dtr);
 		outb(pio(iobase , com_mcr), sc->sc_mcr);
 	}
@@ -1052,7 +1052,7 @@ compoll(arg)
 			}
 			/* This is ugly, but fast. */
 			c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
-			(*linesw[tp->t_line].l_rint)(c, tp);
+			(*tp->t_linesw->l_rint)(c, tp);
 		}
 	}
 
@@ -1128,14 +1128,14 @@ comintr(arg)
 			sc->sc_msr = msr;
 			if (ISSET(delta, MSR_DCD) &&
 			    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
-			    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
+			    (*tp->t_linesw->l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
 				CLR(sc->sc_mcr, sc->sc_dtr);
 				outb(pio(iobase , com_mcr), sc->sc_mcr);
 			}
 			if (ISSET(delta & msr, MSR_CTS) &&
 			    ISSET(tp->t_cflag, CRTSCTS)) {
 				/* the line is up and we want to do rts/cts flow control */
-				(*linesw[tp->t_line].l_start)(tp);
+				(*tp->t_linesw->l_start)(tp);
 			}
 		}
 
@@ -1143,7 +1143,7 @@ comintr(arg)
 			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
 				wakeup(&tp->t_outq);
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		}
 
 		if ((iir = ISSET(inb(pio(iobase , com_iir)), IIR_NOPEND)))
