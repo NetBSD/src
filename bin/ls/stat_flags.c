@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.16 2003/08/07 09:05:16 agc Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.17 2003/08/13 03:29:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.16 2003/08/07 09:05:16 agc Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.17 2003/08/13 03:29:07 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,8 @@ __RCSID("$NetBSD: stat_flags.c,v 1.16 2003/08/07 09:05:16 agc Exp $");
 
 #define	SAPPEND(s) do {							\
 	if (prefix != NULL)						\
-		(void)strcat(string, prefix);				\
-	(void)strcat(string, s);					\
+		(void)strlcat(string, prefix, sizeof(string));		\
+	(void)strlcat(string, s, sizeof(string));			\
 	prefix = ",";							\
 } while (/* CONSTCOND */ 0)
 
