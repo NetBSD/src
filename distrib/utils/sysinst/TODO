@@ -7,6 +7,47 @@ Things we should try and do before 1.3 release....
 	   jump back to disklabel edit if any overlaps found.
 	   needs to  skip getrawpartition() (and  c on i386).
 
+	-- Allow ^L to redraw the screen to get rid of error messages.
+
+	-- Also on error messages, do something to allow the user to
+	   see any errors from anything run by run_prog().  Ideas are:
+
+		if (run_prog("foo") != 0)
+			sleep(5);
+	   
+	   or:
+
+		endwin();
+		run_prog("foo");
+		printf("press return to continue");
+		getchar();
+		initscr();
+
+	   or (modification of above):
+
+		endwin();
+		if (run_prog("foo") != 0) {
+			printf("press return to continue");
+			getchar();
+		}
+		initscr();
+
+	   or:
+
+		Manually fork and exec everything, dup2 fd's 1 and 2
+		onto sockets in the child, and paginate the output in
+		your curses app :-)
+
+	   Ideas from maximum entropy.
+
+        -- From "local" distribution set choice, have a separate
+           option for an already mounted filesystem (or a new option
+           all together?). "browse" for a local directory to get the
+           distribution set from.  Maybe just allowing the user to shell
+           out and look around is good enough (this needs more thought).
+
+        -- Trap SIGINT and restore tty setting on exit.
+
 	-- check for already-mouned fileystems before install newfs.
 	   Abort with message.
 
