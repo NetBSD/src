@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.23 1994/06/01 19:34:32 chopps Exp $
+ *	$Id: locore.s,v 1.24 1994/06/02 08:32:06 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1597,14 +1597,21 @@ Ltbiau040:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
+#if defined(M68030) || defined(M68020)
+#if defined(M68040)
 	tstl	_cpu040
 	jne	Licia040
+#endif
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
 	rts
 Licia040:
+#endif
+#if defined(M68040)
+ENTRY(ICPA)
 	.word	0xf498		| cinva ic
 	rts
+#endif
 
 /*
  * Invalidate data cache.
@@ -1647,47 +1654,52 @@ __DCIAS:
 	.word	0xf468		| cpushl dc,a0@
 Ldciasx:
 	rts
-/*
- * 040 only stuff from hp300 (380) locore.s
- */
+#ifdef M68040
 ENTRY(ICPL)	/* invalidate instruction physical cache line */
-        movl    sp@(4),a0               | address
-        .word   0xf488                  | cinvl ic,a0@
-        rts
+	movl    sp@(4),a0		| address
+	.word   0xf488			| cinvl ic,a0@
+	rts
 ENTRY(ICPP)	/* invalidate instruction physical cache page */
-        movl    sp@(4),a0               | address
-        .word   0xf490                  | cinvp ic,a0@
-        rts
+	movl    sp@(4),a0		| address
+	.word   0xf490			| cinvp ic,a0@
+	rts
 ENTRY(DCPL)	/* invalidate data physical cache line */
-        movl    sp@(4),a0               | address
-        .word   0xf448                  | cinvl dc,a0@
-        rts
+	movl    sp@(4),a0		| address
+	.word   0xf448			| cinvl dc,a0@
+	rts
 ENTRY(DCPP)	/* invalidate data physical cache page */
-        movl    sp@(4),a0               | address
-        .word   0xf450                  | cinvp dc,a0@
-        rts
+	movl    sp@(4),a0		| address
+	.word   0xf450			| cinvp dc,a0@
+	rts
 ENTRY(DCPA)	/* invalidate data physical all */
-        .word   0xf458                  | cinva dc
-        rts
-ENTRY(DCFL)
-        movl    sp@(4),a0               | address
-        .word   0xf468                  | cpushl dc,a0@
-        rts
-ENTRY(DCFP)
-        movl    sp@(4),a0               | address
-        .word   0xf470                  | cpushp dc,a0@
-        rts
-/* end of 040 only stuff */
+	.word   0xf458			| cinva dc
+	rts
+ENTRY(DCFL)	/* data cache flush line */
+	movl    sp@(4),a0		| address
+	.word   0xf468			| cpushl dc,a0@
+	rts
+ENTRY(DCFP)	/* data cache flush page */
+	movl    sp@(4),a0		| address
+	.word   0xf470			| cpushp dc,a0@
+	rts
+#endif	/* M68040 */
 
 ENTRY(PCIA)
+#if defined(M68030) || defined(M68030)
+#if defined(M68040)
 	tstl	_cpu040
 	jne	Lpcia040
+#endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
+#endif
+#if defined(M68040)
+ENTRY(DCFA)
 Lpcia040:
 	.word	0xf478		| cpusha dc
 	rts
+#endif
 
 ENTRY(ecacheon)
 	rts
