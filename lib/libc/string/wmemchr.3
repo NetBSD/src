@@ -1,4 +1,4 @@
-.\"	$NetBSD: wmemchr.3,v 1.2 2000/12/29 15:26:33 kleink Exp $
+.\"	$NetBSD: wmemchr.3,v 1.3 2001/01/02 11:24:39 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@
 .Nm wcsrchr ,
 .Nm wcsspn ,
 .Nm wcsstr
-.Nd wide character string manipulation utilities
+.Nd wide character string manipulation operations
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -101,15 +101,16 @@
 .Ft wchar_t *
 .Fn wcspbrk "const wchar_t *s1" "const wchar_t *s2"
 .Ft wchar_t *
-.Fn wcsrchr "const wchar_t *s" "wchar_tc c"
+.Fn wcsrchr "const wchar_t *s" "wchar_t c"
 .Ft size_t
 .Fn wcsspn "const wchar_t *s1" "const wchar_t *s2"
 .Ft wchar_t *
 .Fn wcsstr "const wchar_t *s1" "const wchar_t *s2"
 .Sh DESCRIPTION
-The functions implement string manipulation operation over wide character
+The functions implement string manipulation operations over wide character
 strings.
-For detailed description, refer to documents for singlebyte counterpart, like
+For detailed a description, refer to documents for the respective single-byte
+counterpart, such as
 .Xr memchr 3 .
 .Sh SEE ALSO
 .Xr memchr 3 ,
@@ -133,9 +134,12 @@ For detailed description, refer to documents for singlebyte counterpart, like
 .Xr strspn 3 ,
 .Xr strstr 3
 .Sh STANDARDS
-The functions,
-except
-.Nm wcslcat
+These functions conform to
+.St -isoC99
+and were first introduced in
+.St -isoC-amd1 ,
+with the exception of
+.Fn wcslcat
 and
-.Nm wcslcpy ,
-conform to ISO/IEC 9899:1999(E).
+.Fn wcslcpy ,
+which are extensions,
