@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.9 2000/03/01 12:49:34 itojun Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.10 2000/04/19 06:30:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,11 +43,6 @@
  * See: RFC 2003.
  */
 
-#include "ipip.h"
-#include "opt_mrouting.h"
-
-#if NIPIP > 0 || defined(MROUTING)
-
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -70,27 +65,24 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_ipip.h>
+#include <netinet/ip_encap.h>
 #else
 #error IPIP without INET?
 #endif
 
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif
+#include <machine/stdarg.h>
 
-#if NIPIP > 0
 struct ipip_softc *ipip_softc;
 int ipip_nsoftc;
 
-struct ipip_softc *ipip_lookup __P((struct mbuf *));
+static int ipip_encapcheck __P((const struct mbuf *, int, int, void *));
 void	ipipattach __P((int));
 int	ipip_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *));
 int	ipip_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	ipip_compute_route __P((struct ipip_softc *));
-#endif /* NIPIP > 0 */
 
-#include <machine/stdarg.h>
+extern struct protosw ipip_protosw;
 
 /*
  * Note this is a common IP-in-IP input for both ipip `interfaces'
@@ -105,9 +97,7 @@ ipip_input(m, va_alist)
 	va_dcl
 #endif
 {
-#if NIPIP > 0
 	struct ipip_softc *sc;
-#endif
 	int hlen, proto;
 	va_list ap;
 
@@ -116,11 +106,8 @@ ipip_input(m, va_alist)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-#if NIPIP > 0
-	/*
-	 * First, we try to match an ipip tunnel.
-	 */
-	if ((sc = ipip_lookup(m)) != NULL) {
+	sc = (struct ipip_softc *)encap_getarg(m);
+	if (sc != NULL) {
 		int s;
 
 		sc->sc_if.if_ipackets++;
@@ -146,47 +133,38 @@ ipip_input(m, va_alist)
 		/* No more processing at this level. */
 		return;
 	}
-#endif /* NIPIP > 0 */
 
-#ifdef MROUTING
-	/*
-	 * Next, give the multicast routing code a chance to grab
-	 * this packet.
-	 */
-	if (mrt_ipip_input(m, hlen)) {
-		/*
-		 * Multicast routing code claimed this one.  No
-		 * more processing at this level.
-		 */
-		return;
-	}
-#endif /* MROUTING */
-
-	/* Last try: give it to raw IP. */
-	rip_input(m, hlen, proto);
+	m_freem(m);
 }
 
-#if NIPIP > 0
 /*
  * Find the ipip interface associated with our src/dst.
  */
-struct ipip_softc *
-ipip_lookup(m)
-	struct mbuf *m;
+static int
+ipip_encapcheck(m, off, proto, arg)
+	const struct mbuf *m;
+	int off;
+	int proto;
+	void *arg;
 {
-	struct ip *ip = mtod(m, struct ip *);
 	struct ipip_softc *sc;
-	int i;
+	struct ip ip;
 
-	for (i = 0; i < ipip_nsoftc; i++) {
-		sc = &ipip_softc[i];
-		if ((sc->sc_if.if_flags & IFF_UP) != 0 &&
-		    in_hosteq(sc->sc_dst, ip->ip_src) &&
-		    in_hosteq(sc->sc_src, ip->ip_dst))
-			return (sc);
-	}
+	sc = (struct ipip_softc *)arg;
+	if (sc == NULL)
+		return 0;
+	if ((sc->sc_if.if_flags & IFF_UP) == 0)
+		return 0;
 
-	return (NULL);
+	/* LINTED const cast */
+	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+
+	if (!in_hosteq(sc->sc_dst, ip.ip_src) ||
+	    !in_hosteq(sc->sc_src, ip.ip_dst))
+		return 0;
+
+	/* both address matched */
+	return 32 * 2;
 }
 
 /*
@@ -210,6 +188,14 @@ ipipattach(count)
 		sc = &ipip_softc[i];
 
 		sprintf(sc->sc_if.if_xname, "ipip%d", i);
+
+		sc->sc_cookie = encap_attach_func(AF_INET, IPPROTO_IPIP,
+		    ipip_encapcheck, &ipip_protosw, sc);
+		if (sc->sc_cookie == NULL) {
+			printf("%s: attach failed\n", sc->sc_if.if_xname);
+			continue;
+		}
+
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_type = IFT_OTHER;
 		sc->sc_if.if_addrlen = sizeof(struct in_addr);
@@ -418,7 +404,3 @@ ipip_compute_route(sc)
 	 */
 	((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->sc_dst;
 }
-
-#endif /* NIPIP > 0 */
-
-#endif /* NIPIP > 0 || MROUTING */

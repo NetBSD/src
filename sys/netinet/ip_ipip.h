@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.h,v 1.1 1999/01/11 21:26:53 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.h,v 1.2 2000/04/19 06:30:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,11 +40,14 @@
 #ifndef _NETINET_IP_IPIP_H_
 #define	_NETINET_IP_IPIP_H_
 
+struct encaptab;
+
 struct ipip_softc {
 	struct ifnet sc_if;		/* our ifnet structure */
 	struct in_addr sc_src;		/* tunnel source address */
 	struct in_addr sc_dst;		/* tunnel destination address */
 	struct route sc_route;		/* route to destination */
+	const struct encaptab *sc_cookie;
 };
 
 #ifdef _KERNEL
