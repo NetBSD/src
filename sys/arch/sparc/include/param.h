@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 1996/02/22 21:59:08 pk Exp $ */
+/*	$NetBSD: param.h,v 1.22 1996/03/04 05:04:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,9 @@
 /*
  * Machine dependent constants for Sun-4c (SPARCstation)
  */
+#define	_MACHINE	sparc
 #define	MACHINE		"sparc"
+#define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
