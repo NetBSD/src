@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.10 2003/04/16 13:35:36 wiz Exp $
+.\"     $NetBSD: wskbd.9,v 1.11 2004/06/05 15:24:04 rumble Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,7 +146,7 @@ it contains the following members:
         const struct wscons_keydesc *keydesc;
         kbd_t layout;
 .Ed
-.It Fa struct wskbd_attach_args
+.It Fa struct wskbddev_attach_args
 A structure used to attach the
 .Xr wskbd 4
 child device.
@@ -274,7 +274,7 @@ device and provide an attachment interface.
 To attach the
 .Xr wskbd 4
 device, the keyboard driver must allocate and populate a
-.Fa wskbd_attach_args
+.Fa wskbddev_attach_args
 structure with the supported operations and callbacks and call
 .Fn config_found
 to perform the attach (see
