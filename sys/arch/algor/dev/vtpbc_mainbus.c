@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.1 2001/05/28 16:22:17 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.2 2001/06/10 06:17:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ vtpbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		pba.pba_iot = &acp->ac_iot;
 		pba.pba_memt = &acp->ac_memt;
-		pba.pba_dmat = &acp->ac_dmat;
+		pba.pba_dmat = &acp->ac_pci_dmat;
 		pba.pba_pc = &acp->ac_pc;
 	    }
 #elif defined(ALGOR_P5064)
