@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2000/07/27 13:57:23 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.39 2000/08/02 22:47:44 nathanw Exp $ */
 
 /*
  * Mach Operating System
@@ -593,8 +593,7 @@ db_ctx_cmd(addr, have_addr, count, modif)
 	struct proc *p;
 
 	/* XXX LOCKING XXX */
-	p = allproc.lh_first;
-	while (p != 0) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_stat) {
 			db_printf("process %p:", p);
 			db_printf("pid:%d pmap:%p ctx:%x tf:%p lastcall:%s\n",
@@ -603,7 +602,6 @@ db_ctx_cmd(addr, have_addr, count, modif)
 				  p->p_md.md_tf, 
 				  (p->p_addr->u_pcb.lastcall)?p->p_addr->u_pcb.lastcall:"Null");
 		}
-		p = p->p_list.le_next;
 	}
 	return;
 }
@@ -671,8 +669,7 @@ db_setpcb(addr, have_addr, count, modif)
 		return;
 	}
     
-	p = allproc.lh_first;
-	while (p != 0) {
+	for (p = allproc.lh_first; p != 0; p->p_list.le_next) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
@@ -684,7 +681,6 @@ db_setpcb(addr, have_addr, count, modif)
 			db_printf("PID %d has a null context.\n", addr);
 			return;
 		}
-		p = p->p_list.le_next;
 	}
 	db_printf("PID %d not found.\n", addr);
 }
