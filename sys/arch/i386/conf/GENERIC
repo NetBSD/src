@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.293 2000/01/23 23:46:12 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.294 2000/01/24 01:09:57 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.293 $"
+#ident 		"GENERIC-$Revision: 1.294 $"
 
 maxusers	32		# estimated number of users
 
@@ -506,6 +506,7 @@ cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #xe*	at pcmcia? function ?		# Xircom PCMCIA cards
