@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.52 2001/12/08 04:09:18 gmcgarry Exp $
+#	$NetBSD: files.hp300,v 1.53 2001/12/14 08:39:11 gmcgarry Exp $
 #
 # hp300-specific configuration info
 
@@ -32,12 +32,6 @@ device	intio { }
 attach	intio at mainbus
 file	arch/hp300/dev/intio.c		intio
 
-# Human (Hilarious) Interface Loop
-device	hil { }
-attach	hil at intio
-file	arch/hp300/dev/hil.c			hil	needs-flag
-file	arch/hp300/dev/hil_keymaps.c		hil
-
 #
 # DIO bus
 #
@@ -49,6 +43,17 @@ file	arch/hp300/dev/dio.c		dio
 #
 # Devices in Internal i/o space
 #
+
+# Real-time clock (not optional)
+device	rtc
+attach	rtc at intio
+file	arch/hp300/dev/rtc.c			rtc
+
+# Human (Hilarious) Interface Loop
+device	hil { }
+attach	hil at intio
+file	arch/hp300/dev/hil.c			hil	needs-flag
+file	arch/hp300/dev/hil_keymaps.c		hil
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo { offset = -1 }
@@ -179,11 +184,6 @@ file	arch/hp300/dev/ac.c		ac needs-flag
 
 # RAIDframe
 major	{raid = 15}
-
-# Real-time clock (not optional)
-device	rtc
-attach	rtc at intio
-file	arch/hp300/dev/rtc.c			rtc
 
 #
 # Non-device files
