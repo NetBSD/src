@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ndbm.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: ndbm.c,v 1.4 1993/08/26 00:43:49 jtc Exp $";
+/* from: static char sccsid[] = "@(#)ndbm.c	8.2 (Berkeley) 9/11/93"; */
+static char *rcsid = "$Id: ndbm.c,v 1.5 1993/09/17 01:06:48 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -73,7 +73,7 @@ dbm_open(file, flags, mode)
 	info.lorder = 0;
 	(void)strcpy(path, file);
 	(void)strcat(path, DBM_SUFFIX);
-	return ((DBM *)__hash_open(path, flags, mode, &info));
+	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 }
 
 extern void
