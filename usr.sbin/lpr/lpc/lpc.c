@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.10 2000/08/24 17:40:16 sommerfeld Exp $	*/
+/*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.10 2000/08/24 17:40:16 sommerfeld Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,9 +156,9 @@ cmdscanner(top)
 		}
 		if (fgets(cmdline, MAX_CMDLINE, stdin) == 0)
 			quit(0, NULL);
-		if (cmdline[0] == 0 || cmdline[0] == '\n')
-			break;
 		makeargv();
+		if (margc == 0)
+			break;
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
 			printf("?Ambiguous command\n");
