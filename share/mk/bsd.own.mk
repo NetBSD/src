@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.88 1998/09/15 20:26:50 matthias Exp $
+#	$NetBSD: bsd.own.mk,v 1.89 1998/09/28 08:13:39 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -59,6 +59,7 @@ KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
 
 COPY?=		-c
+PRESERVE?=	-p
 STRIPFLAG?=	-s
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
