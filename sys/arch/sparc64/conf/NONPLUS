@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.41 2004/07/15 03:53:52 atatat Exp $
+# 	$NetBSD: NONPLUS,v 1.42 2004/09/04 23:29:57 manu Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -164,6 +164,7 @@ options 	INET6		# IPV6
 #options 	TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

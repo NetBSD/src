@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6 2004/07/15 03:53:51 atatat Exp $
+# $NetBSD: GENERIC,v 1.7 2004/09/04 23:29:56 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -49,6 +49,7 @@ options 	MALLOC_DEBUG
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

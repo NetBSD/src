@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.89 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.90 2004/09/04 23:30:07 manu Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.89 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.90 2004/09/04 23:30:07 manu Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -242,6 +242,7 @@ MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
 MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
 MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
 MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
+MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
 
 struct simplelock malloc_slock = SIMPLELOCK_INITIALIZER;
