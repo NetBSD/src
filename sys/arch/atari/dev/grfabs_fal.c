@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.10 1997/06/10 18:45:05 veego Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.10.8.1 1998/10/30 17:21:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -450,6 +450,7 @@ colormap_t	*cm;
 	colormap_t		*vcm;
 	u_long			*vcreg;
 	u_short			ncreg;
+	int			last_streg;
 	int			i;
 
 	dm  = v->mode;
@@ -481,12 +482,17 @@ colormap_t	*cm;
 	 * A little tricky, the actual colormap pointer will be NULL
 	 * when view is not displaying, valid otherwise.
 	 */
-	if (v->flags & VF_DISPLAY)
+	if (v->flags & VF_DISPLAY) {
 		creg = &creg[cm->first];
-	else creg = NULL;
+		fcreg = &fcreg[cm->first];
+	} else {
+		creg = NULL;
+		fcreg = NULL;
+	}
 
 	vcreg  = &vcm->entry[cm->first];
 	ncreg -= cm->first;
+	last_streg = 16 - cm->first;
 	if (cm->size > ncreg)
 		return (EINVAL);
 	ncreg = cm->size;
@@ -497,9 +503,9 @@ colormap_t	*cm;
 		/*
 		 * If displaying, also update actual color register.
 		 */
-		if (creg != NULL) {
+		if (fcreg != NULL) {
 			*fcreg++ = CM_L2FAL(*vcreg);
-			if (i < 16 )
+			if (i < last_streg)
 				*creg++ = CM_L2ST(*vcreg);
 		}
 	}
