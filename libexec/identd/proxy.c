@@ -1,6 +1,6 @@
+/*	$NetBSD: proxy.c,v 1.4 1997/10/08 07:07:55 mrg Exp $	*/
+
 /*
-**	$NetBSD: proxy.c,v 1.3 1996/08/30 17:41:42 thorpej Exp $
-**
 ** proxy.c                         This file implements the proxy() call.
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -11,20 +11,21 @@
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
 
+#include <sys/types.h>
+#include <sys/time.h>
+
+#include <netinet/in.h>
+
+#ifdef INCLUDE_PROXY
+#include <ident.h>
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 
 #include "identd.h"
 
-
-#ifdef INCLUDE_PROXY
-#include <sys/types.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-
-#include <ident.h>
-#endif
-
+int proxy __P((struct in_addr *, struct in_addr *, int, int, struct timeval *));
 
 /*
 ** This function should establish a connection to a remote IDENT

@@ -1,6 +1,6 @@
+/*	$NetBSD: identd.c,v 1.8 1997/10/08 07:07:49 mrg Exp $	*/
+
 /*
-**	$NetBSD: identd.c,v 1.7 1997/08/04 18:00:14 mycroft Exp $
-**
 ** identd.c                       A TCP/IP link identification protocol server
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -22,14 +22,6 @@
 #  define STRNET
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -39,6 +31,16 @@
 #endif
 #include <sys/time.h>
 #include <sys/wait.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <pwd.h>
 #include <grp.h>
@@ -74,10 +76,6 @@ extern int errno;
 
 extern char *version;
 
-extern void *calloc();
-extern void *malloc();
-
-
 char *path_unix = NULL;
 char *path_kmem = NULL;
 
@@ -102,6 +100,10 @@ static int child_pid;
 #ifdef LOG_DAEMON
 static int syslog_facility = LOG_DAEMON;
 #endif
+
+char *clearmem __P((char *, int));
+static SIGRETURN_TYPE alarm_handler __P((int));
+int main __P((int, char *[]));
 
 /*
 ** The structure passing convention for GCC is incompatible with
@@ -156,7 +158,8 @@ char *gethost(addr)
 ** Exit cleanly after our time's up.
 */
 static SIGRETURN_TYPE
-alarm_handler()
+alarm_handler(dummy)
+  int dummy;
 {
   if (syslog_flag)
     syslog(LOG_DEBUG, "SIGALRM triggered, exiting");
@@ -186,7 +189,6 @@ child_handler()
 #endif
 }
 #endif
-
 
 char *clearmem(bp, len)
   char *bp;
@@ -412,7 +414,7 @@ int main(argc,argv)
     if (fd != 0)
       dup2(fd, 0);
 
-    clearmem(&addr, sizeof(addr));
+    clearmem((char *)&addr, sizeof(addr));
     
     addr.sin_len = sizeof(struct sockaddr_in);
     addr.sin_family = AF_INET;

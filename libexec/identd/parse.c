@@ -1,6 +1,6 @@
+/*	$NetBSD: parse.c,v 1.8 1997/10/08 07:07:53 mrg Exp $	*/
+
 /*
-**	$NetBSD: parse.c,v 1.7 1996/08/30 17:41:38 thorpej Exp $
-**
 ** parse.c                         This file contains the protocol parser
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <pwd.h>
+#include <stdlib.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -37,7 +38,8 @@ extern int errno;
 #include "identd.h"
 #include "error.h"
 
-extern void *malloc();
+static int eat_whitespace __P((void));
+static int check_noident __P((char *));
 
 /*
 ** This function will eat whitespace characters until

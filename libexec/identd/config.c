@@ -1,6 +1,6 @@
+/*	$NetBSD: config.c,v 1.4 1997/10/08 07:07:44 mrg Exp $	*/
+
 /*
-**	$NetBSD: config.c,v 1.3 1996/08/30 17:41:30 thorpej Exp $
-**
 ** config.c                         This file handles the config file
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -10,6 +10,11 @@
 **
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
 
 #include <stdio.h>
 #include <errno.h>
