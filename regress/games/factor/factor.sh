@@ -16,4 +16,10 @@ function test_factor {
 test_factor '8675309' '8675309: 8675309'
 test_factor '6172538568' '6172538568: 2 2 2 3 7 17 2161253'
 
+# Test algorithm bugs fixed by Joseph Myers from test cases from David A Bagley.
+echo "Warning: the following test will loop endlessly with old factor program"
+test_factor '99999999999991' '99999999999991: 7 13 769231 1428571'
+echo "Warning: the following test will loop endlessly with old factor program"
+test_factor '2147483647111311' '2147483647111311: 3 3 3 131 607148331103'
+
 exit 0
