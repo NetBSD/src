@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.25 1994/04/07 06:49:57 mycroft Exp $
+ *	$Id: aha1542.c,v 1.26 1994/04/08 18:22:15 mycroft Exp $
  */
 
 /*
@@ -649,7 +649,7 @@ ahaintr(aha)
 	stat = inb(AHA_INTR_PORT);
 	outb(AHA_CTRL_STAT_PORT, AHA_IRST);
 	if (!(stat & AHA_MBIF))
-		return 1;
+		return -1;	/* XXX */
 #ifdef	AHADEBUG
 	printf("mbxin ");
 #endif /*AHADEBUG */

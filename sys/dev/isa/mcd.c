@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.9 1994/04/07 06:51:02 mycroft Exp $
+ *	$Id: mcd.c,v 1.10 1994/04/08 18:22:26 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -825,6 +825,8 @@ mcdintr(sc)
 	/* Just read out status and ignore the rest. */
 	if (inb(iobase + mcd_xfer) != 0xff)
 		(void) inb(iobase + mcd_status);
+
+	return -1;
 }
 
 /*
