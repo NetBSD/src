@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.13 1997/05/07 15:53:30 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.14 1997/05/07 17:06:19 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -9,7 +9,7 @@
 .MAIN:		all
 .PHONY:		cleankmod kmodinstall load unload
 install:	kmodinstall
-clean:		cleankmod
+clean cleandir:	cleankmod
 
 S!=		cd ${.CURDIR}/..;pwd
 KERN=		$S/kern
@@ -35,7 +35,7 @@ ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 MAN=	${KMOD}.4
 .endif
 
-all: machine ${PROG} _SUBDIRUSE
+all: machine ${PROG}
 
 machine:
 	ln -s $S/arch/${MACHINE}/include machine

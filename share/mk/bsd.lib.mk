@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.97 1997/05/07 15:53:30 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.98 1997/05/07 17:06:22 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -10,7 +10,7 @@
 .MAIN:		all
 .PHONY:		cleanlib libinstall
 install:	libinstall
-clean:		cleanlib
+clean cleandir:	cleanlib
 
 .if exists(${.CURDIR}/shlib_version)
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
@@ -155,7 +155,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 _LIBS+=llib-l${LIB}.ln
 .endif
 
-all: ${_LIBS} _SUBDIRUSE
+all: ${_LIBS}
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 

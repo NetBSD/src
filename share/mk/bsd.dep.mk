@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.16 1997/05/07 16:44:04 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.17 1997/05/07 17:06:16 mycroft Exp $
 
 .PHONY:		cleandepend
 cleandir:	cleandepend
@@ -34,7 +34,7 @@ depend: .depend
 	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
 .endif
-depend: _SUBDIRUSE afterdepend
+depend: afterdepend
 .if !target(beforedepend)
 beforedepend:
 .endif
@@ -45,7 +45,7 @@ afterdepend:
 
 .if !target(tags)
 .if defined(SRCS)
-tags: ${SRCS} _SUBDIRUSE
+tags: ${SRCS}
 	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    sed "s;\${.CURDIR}/;;" > tags
 .else
