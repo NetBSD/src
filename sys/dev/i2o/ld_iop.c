@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.2 2000/12/03 13:17:03 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.3 2000/12/03 15:51:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ ld_iop_match(struct device *parent, struct cfdata *match, void *aux)
 
 	ia = aux;
 
-	return (ia->ia_class != I2O_CLASS_RANDOM_BLOCK_STORAGE);
+	return (ia->ia_class == I2O_CLASS_RANDOM_BLOCK_STORAGE);
 }
 
 static void
@@ -551,10 +551,8 @@ static void
 ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
-	struct iop_softc *sc;
 	u_int event;
 
-	sc = (struct iop_softc *)dv;
 	rb = reply;
 	event = le32toh(rb->event);
 
