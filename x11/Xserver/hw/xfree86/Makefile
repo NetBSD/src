@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/01/08 04:20:27 lukem Exp $
-
-XTODO=	xf1bpp
+#	$NetBSD: Makefile,v 1.9 2004/01/08 04:22:11 rtr Exp $
 
 SUBDIR=	ddc doc drivers dummy etc fbdevhw \
 	i2c input int10 loader pcidata \
@@ -10,4 +8,10 @@ SUBDIR=	ddc doc drivers dummy etc fbdevhw \
 	.WAIT \
 	bin
 
+FILES=			XF86Config XF98Config
+FILESNAME_XF86Config=	XF86Config.eg
+FILESNAME_XF98Config=	XF86Config.98
+FILESDIR=		${X11LIBDIR}
+
+.include <bsd.files.mk>
 .include <bsd.subdir.mk>
