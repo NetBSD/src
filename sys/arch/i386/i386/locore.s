@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.6 2000/04/17 01:43:22 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.7 2000/05/03 14:42:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1940,6 +1940,13 @@ ENTRY(idle)
 	testl	%ecx,%ecx
 	jnz	sw1
 	sti
+
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
+	testl	%ecx,%ecx
+	jz	1f
+	call	_C_LABEL(uvm_pageidlezero)
+1:
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_idle)
 	cli
