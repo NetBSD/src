@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.48 2003/08/15 19:22:08 jonathan Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.49 2003/11/13 01:48:13 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.48 2003/08/15 19:22:08 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.49 2003/11/13 01:48:13 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -258,6 +258,8 @@ looutput(ifp, m, dst, rt)
 		return (error);
 	}
 #endif /* ALTQ */
+
+	m_tag_delete_nonpersistent(m);
 
 	switch (dst->sa_family) {
 
