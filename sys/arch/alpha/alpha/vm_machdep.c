@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73 2001/08/19 17:34:01 chs Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.74 2001/09/06 21:20:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2001/08/19 17:34:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2001/09/06 21:20:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 */
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
-	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
-		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
 
 	/*
