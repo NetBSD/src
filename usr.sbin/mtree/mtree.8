@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.17 2001/10/04 04:51:27 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.18 2001/10/04 11:24:05 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,7 +130,7 @@ set of keywords.
 Use the ``type'' keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 .It Fl l
-Do 
+Do
 .Dq loose
 permissions checks, in which more stringent permissions
 will match less stringent ones. For example, a file marked mode 0444
@@ -174,7 +174,7 @@ to be created.
 Note that unless the
 .Fl i
 option is given, the schg and sappnd flags will not be set, even if
-specified. If 
+specified. If
 .Fl m
 is given, these flags will be reset.
 Exit with a status of 0 on success, 1 if any error occurred;
@@ -182,7 +182,7 @@ a mismatch is not considered to be an error if it was corrected.
 .It Fl u
 Same as
 .Fl U
-except a status of 2 is returned if the file hierarchy did not match 
+except a status of 2 is returned if the file hierarchy did not match
 the specification.
 .It Fl x
 Don't descend below mount points in the file hierarchy.
@@ -329,6 +329,11 @@ The
 .Nm
 utility exits with a status of 0 on success, 1 if any error occurred,
 and 2 if the file hierarchy did not match the specification.
+.Sh FILES
+.Bl -tag -width /etc/mtree -compact
+.It Pa /etc/mtree
+system specification directory
+.El
 .Sh EXAMPLES
 To detect system binaries that have been ``trojan horsed'', it is recommended
 that
@@ -355,11 +360,6 @@ and
 .Fl u
 options can be used in combination to create directory hierarchies
 for distributions and other such things.
-.Sh FILES
-.Bl -tag -width /etc/mtree -compact
-.It Pa /etc/mtree
-system specification directory
-.El
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
