@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.4 1995/03/31 03:06:45 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.5 1995/10/07 06:27:55 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -433,11 +433,11 @@ svr4_termios_to_termio(ts, t)
 
 int
 svr4_termioctl(fp, cmd, data, p, retval)
-	struct file 	*fp;
-	int		 cmd;
-	caddr_t		 data;
-	struct proc	*p;
-	register_t	*retval;
+	struct file *fp;
+	u_long cmd;
+	caddr_t data;
+	struct proc *p;
+	register_t *retval;
 {
 	struct termios 		bt;
 	struct svr4_termios	st;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1995/09/26 04:02:22 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1995/10/07 06:26:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -618,13 +618,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-
-sigreturn(p, v, retval)
+int
+sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sigreturn_args *uap = v;
+	struct sys_sigreturn_args *uap = v;
 	register struct sigcontext *scp;
 	register struct frame *frame;
 	register int rf;

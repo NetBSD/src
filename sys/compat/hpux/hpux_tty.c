@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.10 1995/09/19 22:53:51 thorpej Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.11 1995/10/07 06:26:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -343,7 +343,7 @@ hpux_termio(fd, com, data, p)
 			 * were implemented.
 			 */
 			{
-				struct hpux_fcntl_args {
+				struct hpux_sys_fcntl_args {
 					int fdes, cmd, arg;
 				} args;
 				int flags, nbio;
@@ -355,14 +355,14 @@ hpux_termio(fd, com, data, p)
 					args.fdes = fd;
 					args.cmd = F_GETFL;
 					args.arg = 0;
-					(void) hpux_fcntl(p, &args, &flags);
+					(void) hpux_sys_fcntl(p, &args, &flags);
 					if (nbio)
 						flags |= HPUXNDELAY;
 					else
 						flags &= ~HPUXNDELAY;
 					args.cmd = F_SETFL;
 					args.arg = flags;
-					(void) hpux_fcntl(p, &args, &flags);
+					(void) hpux_sys_fcntl(p, &args, &flags);
 				}
 			}
 		}
@@ -472,23 +472,23 @@ hpuxtobsdbaud(hpux_speed)
 #ifdef COMPAT_HPUX_6X
 
 int
-compat_hpux_6x_gtty(p, v, retval)
+compat_hpux_6x_sys_gtty(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_gtty_args *uap = v;
+	struct compat_hpux_6x_sys_gtty_args *uap = v;
 
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
-compat_hpux_6x_stty(p, v, retval)
+compat_hpux_6x_sys_stty(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_stty_args *uap = v;
+	struct compat_hpux_6x_sys_stty_args *uap = v;
 
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }

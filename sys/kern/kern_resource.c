@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.30 1995/09/19 21:45:04 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.31 1995/10/07 06:28:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -61,12 +61,12 @@ int	dosetrlimit __P((struct proc *p, u_int which, struct rlimit *limp));
  */
 
 int
-getpriority(curp, v, retval)
+sys_getpriority(curp, v, retval)
 	struct proc *curp;
 	void *v;
 	register_t *retval;
 {
-	register struct getpriority_args /* {
+	register struct sys_getpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 	} */ *uap = v;
@@ -119,12 +119,12 @@ getpriority(curp, v, retval)
 
 /* ARGSUSED */
 int
-setpriority(curp, v, retval)
+sys_setpriority(curp, v, retval)
 	struct proc *curp;
 	void *v;
 	register_t *retval;
 {
-	register struct setpriority_args /* {
+	register struct sys_setpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 		syscallarg(int) prio;
@@ -202,12 +202,12 @@ donice(curp, chgp, n)
 
 /* ARGSUSED */
 int
-setrlimit(p, v, retval)
+sys_setrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct setrlimit_args /* {
+	register struct sys_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
@@ -306,12 +306,12 @@ dosetrlimit(p, which, limp)
 
 /* ARGSUSED */
 int
-getrlimit(p, v, retval)
+sys_getrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getrlimit_args /* {
+	register struct sys_getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
@@ -381,12 +381,12 @@ calcru(p, up, sp, ip)
 
 /* ARGSUSED */
 int
-getrusage(p, v, retval)
+sys_getrusage(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getrusage_args /* {
+	register struct sys_getrusage_args /* {
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;

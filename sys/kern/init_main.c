@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.77 1995/04/22 19:42:47 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.78 1995/10/07 06:28:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -319,7 +319,7 @@ main(framep)
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork(p, NULL, rval))
+	if (sys_fork(p, NULL, rval))
 		panic("fork init");
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
@@ -335,7 +335,7 @@ main(framep)
 #endif
 
 	/* Create process 2 (the pageout daemon). */
-	if (fork(p, NULL, rval))
+	if (sys_fork(p, NULL, rval))
 		panic("fork pager");
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
@@ -372,7 +372,7 @@ start_init(p)
 	struct proc *p;
 {
 	vm_offset_t addr;
-	struct execve_args /* {
+	struct sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char **) argp;
 		syscallarg(char **) envp;
@@ -390,7 +390,7 @@ start_init(p)
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	/*
 	 * We need to set the system call frame as if we were entered through
-	 * a syscall() so that when we call execve() below, it will be able
+	 * a syscall() so that when we call sys_execve() below, it will be able
 	 * to set the entry point (see setregs) when it tries to exec.  The
 	 * startup code in "locore.s" has allocated space for the frame and
 	 * passed a pointer to that space as main's argument.
@@ -471,7 +471,7 @@ start_init(p)
 		 * Now try to exec the program.  If can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
-		if ((error = execve(p, &args, retval)) == 0)
+		if ((error = sys_execve(p, &args, retval)) == 0)
 			return;
 		if (error != ENOENT)
 			printf("exec %s: error %d\n", path, error);

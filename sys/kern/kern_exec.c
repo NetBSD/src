@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.71 1995/09/19 21:44:57 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.72 1995/10/07 06:28:11 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -200,12 +200,12 @@ bad1:
  * exec system call
  */
 /* ARGSUSED */
-execve(p, v, retval)
+sys_execve(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct execve_args /* {
+	register struct sys_execve_args /* {
 		syscallarg(char *) path;
 		syscallarg(char * *) argp;
 		syscallarg(char * *) envp;

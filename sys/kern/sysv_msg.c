@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.16 1995/09/19 21:45:17 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.17 1995/10/07 06:28:40 mycroft Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -118,12 +118,12 @@ msg_freehdr(msghdr)
 }
 
 int
-msgctl(p, v, retval)
+sys_msgctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct msgctl_args /* {
+	register struct sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
@@ -252,12 +252,12 @@ msgctl(p, v, retval)
 }
 
 int
-msgget(p, v, retval)
+sys_msgget(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct msgget_args /* {
+	register struct sys_msgget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
@@ -356,12 +356,12 @@ found:
 }
 
 int
-msgsnd(p, v, retval)
+sys_msgsnd(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct msgsnd_args /* {
+	register struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -689,12 +689,12 @@ msgsnd(p, v, retval)
 }
 
 int
-msgrcv(p, v, retval)
+sys_msgrcv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct msgrcv_args /* {
+	register struct sys_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;

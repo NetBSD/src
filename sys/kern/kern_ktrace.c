@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.19 1995/09/19 21:45:00 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.20 1995/10/07 06:28:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -252,12 +252,12 @@ ktrcsw(vp, out, user)
  */
 /* ARGSUSED */
 int
-ktrace(curp, v, retval)
+sys_ktrace(curp, v, retval)
 	struct proc *curp;
 	void *v;
 	register_t *retval;
 {
-	register struct ktrace_args /* {
+	register struct sys_ktrace_args /* {
 		syscallarg(char *) fname;
 		syscallarg(int) ops;
 		syscallarg(int) facs;

@@ -3125,7 +3125,7 @@ _svr4_sigcode:
 	mov	%l6, %g6
 	mov	%l7, %g7
 
-	restore	%g0, SVR4_SYS_svr4_context, %g1	! get registers & set syscall #
+	restore	%g0, SVR4_SYS_context, %g1	! get registers & set syscall #
 	mov	1, %o0
 	add	%sp, 64 + 16, %o1	! compute ucontextp
 	t	ST_SYSCALL		! svr4_context(1, ucontextp)

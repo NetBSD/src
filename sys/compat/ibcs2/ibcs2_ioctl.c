@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.7 1995/09/19 22:19:03 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.8 1995/10/07 06:26:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -312,12 +312,16 @@ stio2stios(t, ts)
 }
 
 int
-ibcs2_ioctl(p, v, retval)
+ibcs2_sys_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
-	struct ibcs2_ioctl_args *uap = v;
+	struct ibcs2_sys_ioctl_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(caddr_t) data;
+	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl)();
@@ -444,11 +448,11 @@ ibcs2_ioctl(p, v, retval)
 
 	case IBCS2_TIOCGWINSZ:
 		SCARG(uap, cmd) = TIOCGWINSZ;
-		return ioctl(p, uap, retval);
+		return sys_ioctl(p, uap, retval);
 
 	case IBCS2_TIOCSWINSZ:
 		SCARG(uap, cmd) = TIOCSWINSZ;
-		return ioctl(p, uap, retval);
+		return sys_ioctl(p, uap, retval);
 
 	case IBCS2_TIOCGPGRP:
 		return copyout((caddr_t)&p->p_pgrp->pg_id, SCARG(uap, data),
@@ -456,11 +460,11 @@ ibcs2_ioctl(p, v, retval)
 
 	case IBCS2_TIOCSPGRP:	/* XXX - is uap->data a pointer to pgid? */
 	    {
-		struct setpgid_args sa;
+		struct sys_setpgid_args sa;
 
 		SCARG(&sa, pid) = 0;
 		SCARG(&sa, pgid) = (int)SCARG(uap, data);
-		if (error = setpgid(p, &sa, retval))
+		if (error = sys_setpgid(p, &sa, retval))
 			return error;
 		return 0;
 	    }
@@ -476,7 +480,7 @@ ibcs2_ioctl(p, v, retval)
 
 	case IBCS2_I_NREAD:     /* STREAMS */
 	        SCARG(uap, cmd) = FIONREAD;
-		return ioctl(p, uap, retval);
+		return sys_ioctl(p, uap, retval);
 
 	default:
 		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%lx ",

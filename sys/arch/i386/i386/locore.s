@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 1995/08/06 17:54:35 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 1995/10/07 06:25:37 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -561,7 +561,7 @@ ENTRY(svr4_sigcode)
 1:	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p) 
 	pushl	%eax			# junk to fake return address
-	movl	$SVR4_SYS_svr4_context,%eax
+	movl	$SVR4_SYS_context,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SVR4_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
@@ -588,7 +588,7 @@ ENTRY(linux_sigcode)
 	movl	%cx,%fs
 	movl	%dx,%gs
 1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_linux_sigreturn,%eax
+	movl	$LINUX_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18 1995/10/02 12:33:33 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.19 1995/10/07 06:26:15 mycroft Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -353,21 +353,20 @@ consinit()
 #endif
 }
 
-struct sigretargs {
-	struct sigcontext *cntxp;
-};
-
-sigreturn(p, v, retval)
-	struct proc    *p;
+int
+sys_sigreturn(p, v, retval)
+	struct proc *p;
 	void *v;
-	int            *retval;
+	register_t *retval;
 {
-	struct sigretargs *uap = v;
+	struct sys_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
 	struct trapframe *scf;
 	struct sigcontext *cntx;
 
 	scf = p->p_addr->u_pcb.framep;
-	cntx = uap->cntxp;
+	cntx = uap->sigcntxp;
 
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||

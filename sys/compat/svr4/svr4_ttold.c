@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.5 1995/03/31 03:06:46 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.6 1995/10/07 06:27:56 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -147,11 +147,11 @@ bsd_ltchars_to_svr4_ltchars(bl, sl)
 
 int
 svr4_ttoldioctl(fp, cmd, data, p, retval)
-	struct file 	*fp;
-	int		 cmd;
-	caddr_t		 data;
-	struct proc	*p;
-	register_t	*retval;
+	struct file *fp;
+	u_long cmd;
+	caddr_t data;
+	struct proc *p;
+	register_t *retval;
 {
 	int			error;
 	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =

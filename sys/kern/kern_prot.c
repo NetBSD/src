@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.29 1995/09/19 21:45:02 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.30 1995/10/07 06:28:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -57,9 +57,9 @@
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */
-getpid(p, uap, retval)
+sys_getpid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -71,9 +71,9 @@ getpid(p, uap, retval)
 }
 
 /* ARGSUSED */
-getppid(p, uap, retval)
+sys_getppid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -82,9 +82,9 @@ getppid(p, uap, retval)
 }
 
 /* Get process group ID; note that POSIX getpgrp takes no parameter */
-getpgrp(p, uap, retval)
+sys_getpgrp(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -93,9 +93,9 @@ getpgrp(p, uap, retval)
 }
 
 /* ARGSUSED */
-getuid(p, uap, retval)
+sys_getuid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -107,9 +107,9 @@ getuid(p, uap, retval)
 }
 
 /* ARGSUSED */
-geteuid(p, uap, retval)
+sys_geteuid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -118,9 +118,9 @@ geteuid(p, uap, retval)
 }
 
 /* ARGSUSED */
-getgid(p, uap, retval)
+sys_getgid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -137,9 +137,9 @@ getgid(p, uap, retval)
  * correctly in a library function.
  */
 /* ARGSUSED */
-getegid(p, uap, retval)
+sys_getegid(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -147,12 +147,12 @@ getegid(p, uap, retval)
 	return (0);
 }
 
-getgroups(p, v, retval)
+sys_getgroups(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getgroups_args /* {
+	register struct sys_getgroups_args /* {
 		syscallarg(u_int) gidsetsize;
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
@@ -175,9 +175,9 @@ getgroups(p, v, retval)
 }
 
 /* ARGSUSED */
-setsid(p, uap, retval)
+sys_setsid(p, v, retval)
 	register struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -204,12 +204,12 @@ setsid(p, uap, retval)
  * pid must not be session leader (EPERM)
  */
 /* ARGSUSED */
-setpgid(curp, v, retval)
+sys_setpgid(curp, v, retval)
 	struct proc *curp;
 	void *v;
 	register_t *retval;
 {
-	register struct setpgid_args /* {
+	register struct sys_setpgid_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
@@ -242,12 +242,12 @@ setpgid(curp, v, retval)
 }
 
 /* ARGSUSED */
-setuid(p, v, retval)
+sys_setuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct setuid_args /* {
+	struct sys_setuid_args /* {
 		syscallarg(uid_t) uid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -278,12 +278,12 @@ setuid(p, v, retval)
 }
 
 /* ARGSUSED */
-seteuid(p, v, retval)
+sys_seteuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct seteuid_args /* {
+	struct sys_seteuid_args /* {
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -309,12 +309,12 @@ seteuid(p, v, retval)
 }
 
 /* ARGSUSED */
-setgid(p, v, retval)
+sys_setgid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct setgid_args /* {
+	struct sys_setgid_args /* {
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -337,12 +337,12 @@ setgid(p, v, retval)
 }
 
 /* ARGSUSED */
-setegid(p, v, retval)
+sys_setegid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct setegid_args /* {
+	struct sys_setegid_args /* {
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -364,12 +364,12 @@ setegid(p, v, retval)
 }
 
 /* ARGSUSED */
-setgroups(p, v, retval)
+sys_setgroups(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct setgroups_args /* {
+	struct sys_setgroups_args /* {
 		syscallarg(u_int) gidsetsize;
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
@@ -493,12 +493,12 @@ crdup(cr)
  * Get login name, if available.
  */
 /* ARGSUSED */
-getlogin(p, v, retval)
+sys_getlogin(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct getlogin_args /* {
+	struct sys_getlogin_args /* {
 		syscallarg(char *) namebuf;
 		syscallarg(u_int) namelen;
 	} */ *uap = v;
@@ -513,12 +513,12 @@ getlogin(p, v, retval)
  * Set login name.
  */
 /* ARGSUSED */
-setlogin(p, v, retval)
+sys_setlogin(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct setlogin_args /* {
+	struct sys_setlogin_args /* {
 		syscallarg(char *) namebuf;
 	} */ *uap = v;
 	int error;

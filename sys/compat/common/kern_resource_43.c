@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.2 1995/09/19 22:02:02 thorpej Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.3 1995/10/07 06:26:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -55,12 +55,12 @@
 
 /* ARGSUSED */
 int
-compat_43_getrlimit(p, v, retval)
+compat_43_sys_getrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_getrlimit_args /* {
+	register struct compat_43_sys_getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct ogetrlimit *) rlp;
 	} */ *uap = v;
@@ -80,12 +80,12 @@ compat_43_getrlimit(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_setrlimit(p, v, retval)
+compat_43_sys_setrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_43_setrlimit_args /* {
+	struct compat_43_sys_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct ogetrlimit *) rlp;
 	} */ *uap = v;

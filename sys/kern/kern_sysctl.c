@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.11 1995/09/19 21:45:07 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.12 1995/10/07 06:28:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,12 +80,12 @@ static struct sysctl_lock {
 } memlock;
 
 int
-__sysctl(p, v, retval)
+sys___sysctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct __sysctl_args /* {
+	register struct sys___sysctl_args /* {
 		syscallarg(int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;

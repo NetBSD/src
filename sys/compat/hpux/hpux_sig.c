@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.13 1995/09/19 22:53:50 thorpej Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.14 1995/10/07 06:26:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,12 +81,12 @@ char bsdtohpuxsigmap[NSIG] = {
  * doubt any program of interest mixes the two semantics.
  */
 int
-hpux_sigvec(p, v, retval)
+hpux_sys_sigvec(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sigvec_args *uap = v;
+	register struct hpux_sys_sigvec_args *uap = v;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct sigvec *sv;
@@ -106,11 +106,9 @@ hpux_sigvec(p, v, retval)
 			sv->sv_flags |= SV_ONSTACK;
 		if ((ps->ps_sigintr & bit) != 0)
 			sv->sv_flags |= SV_INTERRUPT;
-#if 0
-/* XXX -- SOUSIG no longer exists, do something here */
-		if (p->p_flag & SOUSIG)
-			sv->sv_flags |= HPUXSV_RESET;		/* XXX */
-#endif
+		if ((ps->ps_sigreset & bit) != 0)
+			sv->sv_flags |= HPUXSV_RESET;
+		sv->sv_mask &= ~bit;
 		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
 		    sizeof (vec));
 		if (error)
@@ -135,12 +133,12 @@ hpux_sigvec(p, v, retval)
 }
 
 int
-hpux_sigblock(p, v, retval)
+hpux_sys_sigblock(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigblock_args *uap = v;
+	struct hpux_sys_sigblock_args *uap = v;
 
 	(void) splhigh();
 	*retval = bsdtohpuxmask(p->p_sigmask);
@@ -150,12 +148,12 @@ hpux_sigblock(p, v, retval)
 }
 
 int
-hpux_sigsetmask(p, v, retval)
+hpux_sys_sigsetmask(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigsetmask_args *uap = v;
+	struct hpux_sys_sigsetmask_args *uap = v;
 
 	(void) splhigh();
 	*retval = bsdtohpuxmask(p->p_sigmask);
@@ -165,32 +163,32 @@ hpux_sigsetmask(p, v, retval)
 }
 
 int
-hpux_sigpause(p, v, retval)
+hpux_sys_sigpause(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigpause_args *uap = v;
+	struct hpux_sys_sigpause_args *uap = v;
 
 	SCARG(uap, mask) = hpuxtobsdmask(SCARG(uap, mask));
-	return (sigsuspend(p, uap, retval));
+	return (sys_sigsuspend(p, uap, retval));
 }
 
 /* not totally correct, but close enuf' */
 int
-hpux_kill(p, v, retval)
+hpux_sys_kill(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_kill_args *uap = v;
+	struct hpux_sys_kill_args *uap = v;
 
 	if (SCARG(uap, signo)) {
 		SCARG(uap, signo) = hpuxtobsdsig(SCARG(uap, signo));
 		if (SCARG(uap, signo) == 0)
 			SCARG(uap, signo) = NSIG;
 	}
-	return (kill(p, uap, retval));
+	return (sys_kill(p, uap, retval));
 }
 
 /*
@@ -206,12 +204,12 @@ hpux_kill(p, v, retval)
  * the library stub does the rest.
  */
 int
-hpux_sigprocmask(p, v, retval)
+hpux_sys_sigprocmask(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigprocmask_args *uap = v;
+	struct hpux_sys_sigprocmask_args *uap = v;
 	int mask, error = 0;
 	hpux_sigset_t sigset;
 
@@ -252,12 +250,12 @@ hpux_sigprocmask(p, v, retval)
 }
 
 int
-hpux_sigpending(p, v, retval)
+hpux_sys_sigpending(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigpending_args *uap = v;
+	struct hpux_sys_sigpending_args *uap = v;
 	hpux_sigset_t sigset;
 
 	sigset.sigset[0] = bsdtohpuxmask(p->p_siglist);
@@ -266,12 +264,12 @@ hpux_sigpending(p, v, retval)
 }
 
 int
-hpux_sigsuspend(p, v, retval)
+hpux_sys_sigsuspend(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sigsuspend_args *uap = v;
+	struct hpux_sys_sigsuspend_args *uap = v;
 	register struct sigacts *ps = p->p_sigacts;
 	hpux_sigset_t sigset;
 	int mask;
@@ -288,12 +286,12 @@ hpux_sigsuspend(p, v, retval)
 }
 
 int
-hpux_sigaction(p, v, retval)
+hpux_sys_sigaction(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sigaction_args *uap = v;
+	register struct hpux_sys_sigaction_args *uap = v;
 	struct hpux_sigaction action;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct hpux_sigaction *sa;
@@ -313,11 +311,8 @@ hpux_sigaction(p, v, retval)
 		sa->sa_flags = 0;
 		if ((ps->ps_sigonstack & bit) != 0)
 			sa->sa_flags |= HPUXSA_ONSTACK;
-#if 0
-/* XXX -- SOUSIG no longer exists, do something here */
-		if (p->p_flag & SOUSIG)
-			sa->sa_flags |= HPUXSA_RESETHAND;	/* XXX */
-#endif
+		if ((ps->ps_sigreset & bit) != 0)
+			sa->sa_flags |= HPUXSA_RESETHAND;
 		if (p->p_flag & P_NOCLDSTOP)
 			sa->sa_flags |= HPUXSA_NOCLDSTOP;
 		if (copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
@@ -354,12 +349,12 @@ hpux_sigaction(p, v, retval)
 
 #ifdef COMPAT_HPUX_6X
 int
-compat_hpux_6x_ssig(p, v, retval)
+compat_hpux_6x_sys_ssig(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_ssig_args *uap = v;
+	struct compat_hpux_6x_sys_ssig_args *uap = v;
 	register int a;
 	struct sigaction vec;
 	register struct sigaction *sa = &vec;
