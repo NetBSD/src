@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 1995/06/19 03:55:15 briggs Exp $
+#	$NetBSD: GENERIC,v 1.27 1995/07/17 01:21:29 briggs Exp $
 #
 # GENERIC
 
@@ -62,6 +62,7 @@ options		COMPAT_10
 options		MACHINE_NONCONTIG
 
 config		netbsd	swap generic
+options		GENERIC
 
 ae0	at nubus0	slot -1   id ?   claimed 0
 
