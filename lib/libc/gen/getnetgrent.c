@@ -1,9 +1,8 @@
-/*	$NetBSD: getnetgrent.c,v 1.11.2.3 1998/11/02 03:33:14 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.11.2.4 1999/01/14 07:02:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
- * Portions Copyright (c) 1997 Luke Mewburn. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.11.2.3 1998/11/02 03:33:14 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.11.2.4 1999/01/14 07:02:16 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -298,12 +297,11 @@ lookup(name, line, bywhat)
 	int	  bywhat;
 {
 	int		r;
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_lookup, NULL);
-		NS_NIS_CB(dtab, _nis_lookup, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_lookup, NULL),
+		NS_DNS_CB(_nis_lookup, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, name, line, bywhat);
 	return (r == NS_SUCCESS) ? 1 : 0;

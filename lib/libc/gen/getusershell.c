@@ -1,10 +1,8 @@
-/*	$NetBSD: getusershell.c,v 1.5.10.5 1998/11/02 03:33:15 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.5.10.6 1999/01/14 07:02:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
- * Portions Copyright (c) 1997
- *	Luke Mewburn <lukem@netbsd.org>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.5.10.5 1998/11/02 03:33:15 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.5.10.6 1999/01/14 07:02:17 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -259,13 +257,12 @@ _nis_initshells(rv, cb_data, ap)
 static const char *const *
 initshells()
 {
-	static ns_dtab dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_initshells, NULL);
-		NS_DNS_CB(dtab, _dns_initshells, NULL);
-		NS_NIS_CB(dtab, _nis_initshells, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_initshells, NULL),
+		NS_DNS_CB(_dns_initshells, NULL),
+		NS_NIS_CB(_nis_initshells, NULL),
+		{ NULL, NULL, NULL }
+	};
 
 	if (sl)
 		sl_free(sl, 1);
