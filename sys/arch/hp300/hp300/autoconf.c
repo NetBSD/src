@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1996/12/09 03:07:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1996/12/17 08:41:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -85,6 +85,10 @@
 
 #include <hp300/hp300/isr.h>
 
+#include <hp300/dev/dioreg.h>
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+
 #include <hp300/dev/device.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
@@ -95,17 +99,12 @@
  * the machine.
  */
 int	cold;		    /* if 1, still working on cold-start */
-struct	hp_hw sc_table[MAXCTLRS];
 
 /* XXX must be allocated statically because of early console init */
 struct	map extiomap[EIOMAPSIZE/16];
 
 extern	caddr_t internalhpib;
 extern	char *extiobase;
-
-#ifdef DEBUG
-int	acdebug = 0;
-#endif
 
 /* The boot device. */
 struct	device *booted_device;
@@ -161,14 +160,7 @@ ddlist_t	dev_data_list;	  	/* all dev_datas */
 ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
-#ifndef NEWCONFIG	/* XXX */
-struct	devicelist alldevs;
-struct	evcntlist allevents;
-
-struct dio_attach_args {
-	int	da_scode;
-};
-
+#if 1			/* XXX for now */
 struct scsi_link {
 	int	target;
 	int	lun;
@@ -182,14 +174,23 @@ struct hpib_attach_args {
 	int	ha_slave;
 	int	ha_punit;
 };
+#endif /* XXX */
+
+#ifndef NEWCONFIG	/* XXX */
+struct	hp_hw sc_table[MAXCTLRS];
+
+#ifdef DEBUG
+int	acdebug = 0;
+#endif
+
+struct	devicelist alldevs;
+struct	evcntlist allevents;
 
 struct	dio_attach_args hp300_dio_attach_args;
 struct	scsi_link hp300_scsi_link;
 struct	scsibus_attach_args hp300_scsibus_attach_args;
 struct	hpib_attach_args hp300_hpib_attach_args;
-
-void	device_register __P((struct device *, void *));	/* here for now */
-#endif
+#endif /* ! NEWCONFIG */
 
 void	setroot __P((void));
 void	swapconf __P((void));
@@ -208,6 +209,60 @@ static	int findblkmajor __P((struct device *dv));
 static	char *findblkname __P((int));
 static	int getstr __P((char *cp, int size));  
 
+#ifdef NEWCONFIG
+int	mainbusmatch __P((struct device *, struct cfdata *, void *));
+void	mainbusattach __P((struct device *, struct device *, void *));
+int	mainbussearch __P((struct device *, struct cfdata *, void *));
+
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbusmatch, mainbusattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
+
+int
+mainbusmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	static int mainbus_matched = 0;
+
+	/* Allow only one instance. */
+	if (mainbus_matched)
+		return (0);
+
+	mainbus_matched = 1;
+	return (1);
+}
+
+void
+mainbusattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+
+	printf("\n");
+
+	/* Search for and attach children. */
+	config_search(mainbussearch, self, NULL);
+}
+
+int
+mainbussearch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+
+	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+		config_attach(parent, cf, NULL, NULL);
+	return (0);
+}
+#endif /* NEWCONFIG */
+
 /*
  * Determine the device configuration for the running system.
  */
@@ -223,12 +278,6 @@ configure()
 	LIST_INIT(&dev_data_list);
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
-
-	/*
-	 * Find out what hardware is attached to the machine.
-	 * XXX goes away with new config.
-	 */
-	find_devs();
 
 	/* Initialize the interrupt system. */
 	isrinit();
@@ -246,6 +295,17 @@ configure()
 	hilinit(0, HILADDR);
 	dmainit();
 
+#ifdef NEWCONFIG
+	(void)splhigh();
+	if (config_rootfound("mainbus", "mainbus") == NULL)
+		panic("no mainbus found");
+	(void)spl0();
+#else
+	/*
+	 * Find out what hardware is attached to the machine.
+	 */
+	find_devs();
+
 	/*
 	 * Look over each hardware device actually found and attempt
 	 * to match it with an ioconf.c table entry.
@@ -257,19 +317,28 @@ configure()
 			found = find_device(hw);
 
 		if (!found) {
-			int sc = patosc(hw->hw_pa);
+			extern char *dio_devinfo __P((struct dio_attach_args *,
+			    char *, size_t));
+			int sc = hw->hw_sc;
+			char descbuf[80];
 
-			printf("unconfigured card id %x ", hw->hw_id);
-			if (sc < 256)
-				printf("at sc%d\n", sc);
+			bzero(&hp300_dio_attach_args,
+			    sizeof(hp300_dio_attach_args));
+			hp300_dio_attach_args.da_scode = sc;
+			hp300_dio_attach_args.da_id = hw->hw_id;
+			hp300_dio_attach_args.da_secid = hw->hw_secid;
+			printf("%s", dio_devinfo(&hp300_dio_attach_args,
+			    descbuf, sizeof(descbuf)));
+			if (sc >= 0 && sc < 256)
+				printf(" at scode %d", sc);
 			else
-				printf("csr at %x\n", sc);
+				printf(" csr at 0x%lx", (u_long)hw->hw_pa);
+			printf(" not configured\n");
 		}
 	}
+#endif /* NEWCONFIG */
 
 	isrprintlevels();
-
-	/* XXX Should enable interrupts here. */
 
 	/*
 	 * Find boot device.
@@ -1130,7 +1199,7 @@ console_scan(func, arg)
 	 * Scan all select codes.  Check each location for some
 	 * hardware.  If there's something there, call (*func)().
 	 */
-	sctop = (machineid == HP_320) ? 32 : 256;
+	sctop = DIO_SCMAX(machineid);
 	for (scode = 0; scode < sctop; ++scode) {
 		/*
 		 * Abort mission if console has been forced.
@@ -1147,7 +1216,7 @@ console_scan(func, arg)
 			continue;
 
 		/* Map current PA. */
-		pa = sctopa(scode);
+		pa = dio_scodetopa(scode);
 		va = iomap(pa, NBPG);
 		if (va == 0)
 			continue;
@@ -1215,7 +1284,7 @@ hp300_cninit()
 }
 
 /**********************************************************************
- * Misc. mapping and select code conversion functions
+ * Mapping functions
  **********************************************************************/
 
 /*
@@ -1262,42 +1331,6 @@ iounmap(kva, size)
 	physunaccess(kva, size);
 	ix = btoc(kva - extiobase) + 1;
 	rmfree(extiomap, btoc(size), ix);
-}
-
-/*
- * Convert a select code to a system physical address.
- */
-caddr_t
-sctopa(sc)
-	register int sc;
-{
-	register caddr_t addr;
-
-	if (sc == 7 && internalhpib)
-		addr = internalhpib;
-	else if (sc < 32)
-		addr = (caddr_t) (DIOBASE + sc * DIOCSIZE);
-	else if (sc >= 132)
-		addr = (caddr_t) (DIOIIBASE + (sc - 132) * DIOIICSIZE);
-	else
-		addr = 0;
-	return(addr);
-}
-
-/*
- * Convert a system physcal address to a select code.
- */
-int
-patosc(addr)
-	register caddr_t addr;
-{
-	if (addr == (caddr_t)0x478000)
-		return(7);
-	if (addr >= (caddr_t)DIOBASE && addr < (caddr_t)DIOTOP)
-		return(((unsigned)addr - DIOBASE) / DIOCSIZE);
-	if (addr >= (caddr_t)DIOIIBASE && addr < (caddr_t)DIOIITOP)
-		return(((unsigned)addr - DIOIIBASE) / DIOIICSIZE + 132);
-	return((int)addr);
 }
 
 /**********************************************************************
@@ -1401,11 +1434,11 @@ find_controller(hw)
 
 		/* Print what we've found. */
 		printf("%s at ", hc->hp_xname);
-		sc = patosc(hw->hw_pa);
-		if (sc < 256)
-			printf("scode%d", sc);
+		sc = hw->hw_sc;
+		if (sc >= 0 && sc < 256)
+			printf("scode %d", sc);
 		else
-			printf("addr 0x%x,", sc);
+			printf("addr 0x%lx,", (u_long)hw->hw_pa);
 		printf(" ipl %d", hc->hp_ipl);
 		if (hc->hp_flags)
 			printf(" flags 0x%x", hc->hp_flags);
@@ -1521,11 +1554,11 @@ find_device(hw)
 
 		/* Print what we've found. */
 		printf("%s at ", hd->hp_xname);
-		sc = patosc(hw->hw_pa);
-		if (sc < 256)
-			printf("scode%d", sc);
+		sc = hw->hw_sc;
+		if (sc >= 0 && sc < 256)
+			printf("scode %d", sc);
 		else
-			printf("addr 0x%x", sc);
+			printf("addr 0x%lx", (u_long)hw->hw_pa);
 		if (hd->hp_ipl)
 			printf(" ipl %d", hd->hp_ipl);
 		if (hd->hp_flags)
@@ -1853,7 +1886,7 @@ find_devs()
 	/*
 	 * Probe all select codes + internal display addr
 	 */
-	sctop = machineid == HP_320 ? 32 : 256;
+	sctop = DIO_SCMAX(machineid);
 	for (sc = -1; sc < sctop; sc++) {
 		/*
 		 * Invalid select codes
@@ -1866,7 +1899,7 @@ find_devs()
 			addr = (caddr_t) IIOV(hw->hw_pa);
 			didmap = 0;
 		} else if (sc == 7 && internalhpib) {
-			hw->hw_pa = (caddr_t) 0x478000;
+			hw->hw_pa = (caddr_t)DIO_IHPIBADDR;
 			addr = internalhpib = (caddr_t) IIOV(hw->hw_pa);
 			didmap = 0;
 		} else if (sc == conscode) {
@@ -1874,11 +1907,11 @@ find_devs()
 			 * If this is the console, it's already been
 			 * mapped, and the address is known.
 			 */
-			hw->hw_pa = sctopa(sc);
+			hw->hw_pa = dio_scodetopa(sc);
 			addr = conaddr;
 			didmap = 0;
 		} else {
-			hw->hw_pa = sctopa(sc);
+			hw->hw_pa = dio_scodetopa(sc);
 			addr = iomap(hw->hw_pa, NBPG);
 			if (addr == 0) {
 				printf(notmappedmsg);
@@ -1891,14 +1924,14 @@ find_devs()
 				iounmap(addr, NBPG);
 			continue;
 		}
-		id_reg = (u_char *) addr;
-		if (sc >= 132)
-			hw->hw_size = (id_reg[0x101] + 1) * 0x100000;
-		else
-			hw->hw_size = DIOCSIZE;
+
+		hw->hw_size = DIO_SIZE(sc, addr);
 		hw->hw_kva = addr;
-		hw->hw_id = id_reg[1];
+		hw->hw_id = DIO_ID(addr);
+		if (DIO_ISFRAMEBUFFER(hw->hw_id))
+			hw->hw_secid = DIO_SECID(addr);
 		hw->hw_sc = sc;
+
 		/*
 		 * Internal HP-IB on some machines (345/375) doesn't return
 		 * consistant id info so we use the info gleaned from the

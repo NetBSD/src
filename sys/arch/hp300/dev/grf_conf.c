@@ -1,4 +1,8 @@
-/*	$NetBSD: grf_conf.c,v 1.3 1996/02/24 00:55:08 thorpej Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.4 1996/12/17 08:41:06 thorpej Exp $	*/
+
+/*
+ * XXX This file is old config only!
+ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -50,6 +54,7 @@
 #if NGRF > 0
 
 #include <sys/types.h>
+#include <sys/device.h>
 
 #include <hp300/dev/grfioctl.h>		/* XXX */
 #include <hp300/dev/grfvar.h>
