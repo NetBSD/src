@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.23 2001/04/25 17:53:26 bouyer Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.23 2001/04/25 17:53:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -250,7 +250,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	    ASC_MAXXFERSIZE, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap);
 
 	switch (vax_boardtype) {
-#if defined(VAX46)
+#if VAX46 || VAXANY
 	case VAX_BTYP_46:
 		sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
 		break;

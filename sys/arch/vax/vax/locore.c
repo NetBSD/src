@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.58 2001/05/01 11:13:46 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.59 2001/05/16 05:36:56 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -106,7 +106,7 @@ _start(struct rpb *prpb)
 		strcpy(cpu_model, "VAXstation ");
 
 	switch (vax_boardtype) {
-#if VAX780
+#if VAX780 || VAXANY
 	case VAX_BTYP_780:
 		dep_call = &ka780_calls;
 		strcpy(cpu_model,"VAX 11/780");
@@ -114,13 +114,13 @@ _start(struct rpb *prpb)
 			cpu_model[9] = '5';
 		break;
 #endif
-#if VAX750
+#if VAX750 || VAXANY
 	case VAX_BTYP_750:
 		dep_call = &ka750_calls;
 		strcpy(cpu_model, "VAX 11/750");
 		break;
 #endif
-#if VAX8600
+#if VAX8600 || VAXANY
 	case VAX_BTYP_790:
 		dep_call = &ka860_calls;
 		strcpy(cpu_model,"VAX 8600");
@@ -128,7 +128,7 @@ _start(struct rpb *prpb)
 			cpu_model[6] = '5';
 		break;
 #endif
-#if VAX410
+#if VAX410 || VAXANY
 	case VAX_BTYP_420: /* They are very similar */
 		dep_call = &ka410_calls;
 		strcat(cpu_model, "3100");
@@ -143,19 +143,19 @@ _start(struct rpb *prpb)
 		strcat(cpu_model, "2000");
 		break;
 #endif
-#if VAX43
+#if VAX43 || VAXANY
 	case VAX_BTYP_43:
 		dep_call = &ka43_calls;
 		strcat(cpu_model, "3100/m76");
 		break;
 #endif
-#if VAX46
+#if VAX46 || VAXANY
 	case VAX_BTYP_46:
 		dep_call = &ka46_calls;
 		strcat(cpu_model, "4000/60");
 		break;
 #endif
-#if VAX48
+#if VAX48 || VAXANY
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
 		if (vax_confdata & 0x80)
@@ -164,13 +164,13 @@ _start(struct rpb *prpb)
 			strcat(cpu_model, "4000 VLC");
 		break;
 #endif
-#if VAX49
+#if VAX49 || VAXANY
 	case VAX_BTYP_49:
 		dep_call = &ka49_calls;
 		strcat(cpu_model, "4000/90");
 		break;
 #endif
-#if VAX53
+#if VAX53 || VAXANY
 	case VAX_BTYP_53:
 		dep_call = &ka53_calls;
 		switch((vax_siedata & 0xff00) >> 8) {
@@ -187,19 +187,19 @@ _start(struct rpb *prpb)
 		}
 		break;
 #endif
-#if VAX610
+#if VAX610 || VAXANY
 	case VAX_BTYP_610:
 		dep_call = &ka610_calls;
 		strcpy(cpu_model,"MicroVAX I");
 		break;
 #endif
-#if VAX630
+#if VAX630 || VAXANY
 	case VAX_BTYP_630:
 		dep_call = &ka630_calls;
 		strcpy(cpu_model,"MicroVAX II");
 		break;
 #endif
-#if VAX650
+#if VAX650 || VAXANY
 	case VAX_BTYP_650:
 		dep_call = &ka650_calls;
 		strcpy(cpu_model,"MicroVAX ");
@@ -222,19 +222,19 @@ _start(struct rpb *prpb)
 		}
 		break;
 #endif
-#if VAX660
+#if VAX660 || VAXANY
 	case VAX_BTYP_660:
 		dep_call = &ka660_calls;
 		strcpy(cpu_model,"VAX 4000/200");
 		break;
 #endif
-#if VAX670
+#if VAX670 || VAXANY
 	case VAX_BTYP_670:
 		dep_call = &ka670_calls;
 		strcpy(cpu_model,"VAX 4000/300");
 		break;
 #endif
-#if VAX680
+#if VAX680 || VAXANY
 	case VAX_BTYP_680:
 		dep_call = &ka680_calls;
 		switch((vax_siedata & 0xff00) >> 8) {
@@ -260,20 +260,20 @@ _start(struct rpb *prpb)
 		}
 		break;
 #endif
-#if VAX8200
+#if VAX8200 || VAXANY
 	case VAX_BTYP_8000:
 		dep_call = &ka820_calls;
 		strcpy(cpu_model, "VAX 8200");
 		break;
 #endif
-#if VAX8800
+#if VAX8800 || VAXANY
 	case VAX_BTYP_8PS:
 	case VAX_BTYP_8800: /* Matches all other KA88-machines also */
 		strcpy(cpu_model, "VAX 8800");
 		dep_call = &ka88_calls;
 		break;
 #endif
-#if VAX6400
+#if VAX6400 || VAXANY
 	case VAX_BTYP_9RR:
 		/* cpu_model set in steal_pages */
 		dep_call = &ka6400_calls;
