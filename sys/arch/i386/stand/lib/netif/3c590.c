@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.2 1997/03/15 22:18:55 perry Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.3 1997/06/13 13:44:37 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -38,6 +38,9 @@ Author: Martin Renters.
 #include "etherdrv.h"
 #include "3c509.h"
 
+#define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
+#define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
+
 char etherdev[20];
 
 int ether_medium;
@@ -48,6 +51,16 @@ extern int ep_get_e __P((int));
 
 u_char eth_myaddr[6];
 
+static struct mtabentry {
+    int address_cfg; /* configured connector */
+    int config_bit; /* connector present */
+    char *name;
+} mediatab[] = { /* indexed by media type - etherdrv.h */
+    {3, 0x10, "BNC"},
+    {0, 0x08, "UTP"},
+    {1, 0x20, "AUI"},
+};
+
 /**************************************************************************
 ETH_PROBE - Look for an adapter
 ***************************************************************************/
@@ -55,9 +68,10 @@ int EtherInit(myadr)
 char *myadr;
 {
 	/* common variables */
-	int i;
+	int i, j;
 	/* variables for 3C509 */
 	short *p;
+	struct mtabentry *m;
 
 	/*********************************************************
 			Search for 3Com 590 card
@@ -84,8 +98,29 @@ char *myadr;
 
 	ether_medium = ETHERMEDIUM_BNC; /* XXX */
 
+	/* test for presence of connectors */
+	GO_WINDOW(3);
+	i = inb(IS_BASE + EP_W3_RESET_OPTIONS);
+	j = (inw(IS_BASE + EP_W3_INTERNAL_CONFIG + 2) >> 4) & 7;
+
 	GO_WINDOW(0);
 
+	for(ether_medium = 0, m = mediatab;
+	    ether_medium < sizeof(mediatab) / sizeof(mediatab[0]);
+	    ether_medium++, m++) {
+	    if(j == m->address_cfg) {
+		if(!(i & m->config_bit)) {
+		    printf("%s not present\n", m->name);
+		    return(0);
+		}
+		printf("using %s\n", m->name);
+		goto ok;
+	    }
+	}
+	printf("unknown connector\n");
+	return(0);
+
+ok:
 	/*
 	* Read the station address from the eeprom
 	*/
