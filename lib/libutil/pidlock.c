@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.2 1997/10/12 09:58:23 cjs Exp $ */
+/*	$NetBSD: pidlock.c,v 1.3 1997/10/19 18:10:58 mycroft Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.2 1997/10/12 09:58:23 cjs Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.3 1997/10/19 18:10:58 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>
@@ -202,7 +202,7 @@ ttylock(tty, flags, locker)
 	if (stat(ttyfile, &sb))  {
 		errno = ENOENT; return -1;
 	}
-	if (!(sb.st_mode & S_IFCHR))  {
+	if (!S_ISCHR(sb.st_mode))  {
 		errno = ENOENT; return -1;
 	}
 
@@ -226,7 +226,7 @@ ttyunlock(tty)
 	if (stat(ttyfile, &sb))  {
 		errno = ENOENT; return -1;
 	}
-	if (!(sb.st_mode & S_IFCHR))  {
+	if (!S_ISCHR(sb.st_mode))  {
 		errno = ENOENT; return -1;
 	}
 
