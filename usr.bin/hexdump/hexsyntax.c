@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.9 2003/03/12 18:32:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hexsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $");
+__RCSID("$NetBSD: hexsyntax.c,v 1.9 2003/03/12 18:32:51 augustss Exp $");
 #endif
 #endif /* not lint */
 
