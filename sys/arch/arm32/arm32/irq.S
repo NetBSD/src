@@ -1,4 +1,4 @@
-/* $NetBSD: irq.S,v 1.3 1996/03/08 20:44:13 mark Exp $ */
+/* $NetBSD: irq.S,v 1.4 1996/03/27 20:42:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -98,6 +98,8 @@ pc	.req	r15
 Ldisabled_mask:
 	.word	_disabled_mask
 
+Lcurrent_spl_level:	
+	.word	_current_spl_level
 
 	.global	irq_entry
 
@@ -115,6 +117,25 @@ irq_entry:
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAME
+
+/* Raise the spl level and re-enable interrupts */
+
+#if 0
+	ldr	r1, Lcurrent_spl_level
+	ldr	r0, [r1]
+	add	r0, r0, #1
+	bl	_raisespl
+#endif
+#if 0
+        mrs     r0, cpsr_all		/* Enable IRQ's */
+	bic	r0, r0, #I32_bit
+	msr	cpsr_all, r0
+#endif
+
+/*
+ * If we did not raise the spl level high enough we will get another
+ * interrupt here.
+ */
 
         mov     r11, #0x00000000
  	mov	r10, #(IOMD_BASE)	/* Point to the IOMD */
@@ -215,6 +236,20 @@ nextirq:
 #endif
 
 	bl	_dosoftints		/* Handle the soft interrupts */
+
+/* Disable interrupts and lower the spl level */
+
+#if 0
+        mrs     r0, cpsr_all		/* Enable IRQ's */
+	orr	r0, r0, #I32_bit
+	msr	cpsr_all, r0
+#endif
+#if 0
+	ldr	r1, Lcurrent_spl_level
+	ldr	r0, [r1]
+	sub	r0, r0, #1
+	bl	_lowerspl
+#endif
 
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 
@@ -383,40 +418,47 @@ Lastpending:
 #ifdef IRQSTATS
 /* These symbols are used by vmstat */
 
+	.text
+	.global	__intrnames
+__intrnames:
+	.word	_intrnames
+
+	.data
+
         .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
 _intrnames:
-	.asciz	"printer"
-	.asciz	"softnet"	/* reserved0 */
-	.asciz	"floppy idx"
-	.asciz	"vsync"
-	.asciz	"pwr on reset"
-	.asciz	"timer 0"
-	.asciz	"timer 1"
-	.asciz	"softclock"	/* reserved1 */
-	.asciz	"reserved 2"
-	.asciz	"wdc"
-	.asciz	"serial"
-	.asciz	"network slot"
-	.asciz	"fdc"
-	.asciz	"podule"
-	.asciz	"kbdtx"
-	.asciz	"kbdrx"
+	.asciz	"interrupt  0 "
+	.asciz	"softnet      "	/* reserved0 */
+	.asciz	"interrupt  2 "
+	.asciz	"interrupt  3 "
+	.asciz	"interrupt  4 "
+	.asciz	"interrupt  5 "
+	.asciz	"interrupt  6 "
+	.asciz	"softclock    "	/* reserved1 */
+	.asciz	"reserved 2   "
+	.asciz	"interrupt  9 "
+	.asciz	"interrupt 10 "
+	.asciz	"interrupt 11 "
+	.asciz	"interrupt 12 "
+	.asciz	"interrupt 13 "
+	.asciz	"interrupt 14 "
+	.asciz	"interrupt 15 "
 	.asciz	"dma channel 0"
 	.asciz	"dma channel 1"
 	.asciz	"dma channel 2"
 	.asciz	"dma channel 3"
-	.asciz	"dma snd ch 0"
-	.asciz	"dma snd ch 1"
-	.asciz	"reserved 3"
-	.asciz	"reserved 4"
-	.asciz	"exp card 0"
-	.asciz	"exp card 1"
-	.asciz	"exp card 2"
-	.asciz	"exp card 3"
-	.asciz	"exp card 4"
-	.asciz	"exp card 5"
-	.asciz	"exp card 6"
-	.asciz	"exp card 7"
+	.asciz	"interrupt 20 "
+	.asciz	"interrupt 21 "
+	.asciz	"reserved 3   "
+	.asciz	"reserved 4   "
+	.asciz	"exp card 0   "
+	.asciz	"exp card 1   "
+	.asciz	"exp card 2   "
+	.asciz	"exp card 3   "
+	.asciz	"exp card 4   "
+	.asciz	"exp card 5   "
+	.asciz	"exp card 6   "
+	.asciz	"exp card 7   "
 _eintrnames:
 
 	.bss
@@ -428,6 +470,7 @@ _eintrcnt:
 #else
 /* Dummy entries to keep vmstat happy */
 
+	.text
         .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
 _intrnames:
 	.long	0
