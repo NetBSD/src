@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.28 1996/05/23 22:47:31 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.29 1996/07/01 10:22:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -808,7 +808,8 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 }
 
 /*
- * copies a uio scatter/gather list to an mbuf chain...
+ * copies a uio scatter/gather list to an mbuf chain.
+ * NOTE: can ony handle iovcnt == 1
  */
 int
 nfsm_uiotombuf(uiop, mq, siz, bpos)
@@ -823,6 +824,11 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	int uiosiz, clflg, rem;
 	char *cp;
 
+#ifdef DIAGNOSTIC
+	if (uiop->uio_iovcnt != 1)
+		panic("nfsm_uiotombuf: iovcnt != 1");
+#endif
+
 	if (siz > MLEN)		/* or should it >= MCLBYTES ?? */
 		clflg = 1;
 	else
@@ -830,8 +836,6 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	rem = nfsm_rndup(siz)-siz;
 	mp = mp2 = *mq;
 	while (siz > 0) {
-		if (uiop->uio_iovcnt <= 0 || uiop->uio_iov == NULL)
-			return (EINVAL);
 		left = uiop->uio_iov->iov_len;
 		uiocp = uiop->uio_iov->iov_base;
 		if (left > siz)
@@ -866,13 +870,8 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			uiop->uio_offset += xfer;
 			uiop->uio_resid -= xfer;
 		}
-		if (uiop->uio_iov->iov_len <= siz) {
-			uiop->uio_iovcnt--;
-			uiop->uio_iov++;
-		} else {
-			uiop->uio_iov->iov_base += uiosiz;
-			uiop->uio_iov->iov_len -= uiosiz;
-		}
+		uiop->uio_iov->iov_base += uiosiz;
+		uiop->uio_iov->iov_len -= uiosiz;
 		siz -= uiosiz;
 	}
 	if (rem > 0) {
