@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2.14.2 2001/11/29 11:12:18 wdk Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.14.3 2002/07/14 01:23:43 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,15 +85,19 @@ __cpu_simple_lock(__cpu_simple_lock_t *lp)
 		"	.set mips2		\n"
 		"1:	ll	%0, %3		\n"
 		"	bnez	%0, 2f		\n"
+		"	nop	       # BDslot	\n"
 		"	li	%0, %2		\n"
 		"	sc	%0, %1		\n"
 		"	beqz	%0, 1b		\n"
 		"	nop	       # BDslot	\n"
+		"	nop			\n"
 		"	sync			\n"
 		"	j	3f		\n"
 		"	nop			\n"
-		"2:	bnez	%0, 2b		\n"
-		"	lw	%0, %3 # BDslot	\n"
+		"	nop			\n"
+		"2:	lw	%0, %3		\n"
+		"	bnez	%0, 2b		\n"
+		"	nop	       # BDslot	\n"
 		"	j	1b		\n"
 		"	nop			\n"
 		"3:				\n"
@@ -114,12 +118,15 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 		"	.set mips2		\n"
 		"1:	ll	%0, %4		\n"
 		"	bnez	%0, 2f		\n"
+		"	nop	       # BDslot	\n"
 		"	li	%0, %3		\n"
 		"	sc	%0, %2		\n"
 		"	beqz	%0, 2f		\n"
+		"	nop	       # BDslot	\n"
 		"	li	%1, 1		\n"
 		"	sync			\n"
 		"	j	3f		\n"
+		"	nop			\n"
 		"	nop			\n"
 		"2:	li	%1, 0		\n"
 		"3:				\n"
