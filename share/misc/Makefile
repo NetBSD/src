@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.13 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.3 1993/07/31 15:27:42 mycroft Exp $
 
 FILES=	airport ascii birthtoken eqnchar inter.phone man.template \
 	mdoc.template na.phone operator zipcodes

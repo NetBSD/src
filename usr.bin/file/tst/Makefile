@@ -1,6 +1,8 @@
+#	$Id: Makefile,v 1.3 1993/07/31 15:23:22 mycroft Exp $
+
 # Make up some fake test files that are easily produced.
 # By no means an exhaustive test!
-# @(#) $Id: Makefile,v 1.2 1993/06/10 00:38:32 jtc Exp $
+
 all:	ar cmd emp i tarf x
 ar:
 	echo '<ar> fake fake fake' >$@

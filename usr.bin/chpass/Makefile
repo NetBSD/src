@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.5 (Berkeley) 2/19/91
+#	from: @(#)Makefile	5.5 (Berkeley) 2/19/91
+#	$Id: Makefile,v 1.3 1993/07/31 15:25:07 mycroft Exp $
 
 PROG=	chpass
 SRCS=	chpass.c edit.c field.c pw_copy.c pw_scan.c pw_util.c pw_yp.c table.c util.c getpwent.c

@@ -1,4 +1,5 @@
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
+#	$Id: Makefile,v 1.2 1993/07/31 15:26:53 mycroft Exp $
 
 COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
 	../netiso/*.[ch] ../netccitt/*.[ch] \

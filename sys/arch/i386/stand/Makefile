@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	7.9 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.3 1993/05/22 08:02:04 cgd Exp $
+#	$Id: Makefile,v 1.4 1993/07/31 15:26:30 mycroft Exp $
 
 DESTDIR=/usr
 LD=/usr/bin/ld

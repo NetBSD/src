@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.3 (Berkeley) 6/8/90
+#	from: @(#)Makefile	5.3 (Berkeley) 6/8/90
+#	$Id: Makefile,v 1.3 1993/07/31 15:27:30 mycroft Exp $
 
 FILES=	dot.cshrc dot.login dot.mailrc dot.profile dot.rhosts
 NOOBJ=	noobj

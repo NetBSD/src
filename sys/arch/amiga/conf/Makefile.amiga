@@ -1,4 +1,5 @@
-#	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
+#	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
+#	$Id: Makefile.amiga,v 1.2 1993/07/31 15:26:06 mycroft Exp $
 #
 # Makefile for 4.4 BSD
 #

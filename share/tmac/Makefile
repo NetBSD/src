@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.13 (Berkeley) 3/20/91
+#	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
+#	$Id: Makefile,v 1.7 1993/07/31 15:27:12 mycroft Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc tmac.an.old 

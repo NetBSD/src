@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.16 (Berkeley) 6/19/91
+#	from: @(#)Makefile	5.16 (Berkeley) 6/19/91
+#	$Id: Makefile,v 1.2 1993/07/31 15:19:49 mycroft Exp $
 
 PROG=	mail
 CFLAGS+=-R -DUSE_OLD_TTY

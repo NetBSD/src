@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.2 (Berkeley) 4/27/91
+#	from: @(#)Makefile	5.2 (Berkeley) 4/27/91
+#	$Id: Makefile,v 1.5 1993/07/31 15:21:40 mycroft Exp $
 
 PROG=	kdump
 CFLAGS+=-I/sys -I${.CURDIR}/../ktrace
