@@ -80,10 +80,6 @@ L1:	movb	(%edx),%al		/* unroll loop, but not too much */
 	je	L2
 	movb	7(%edx),%al
 	movb	%al,7(%ecx)
-	testb	%al,%al
-	je	L2
-	movb	8(%edx),%al
-	movb	%al,8(%ecx)
 	addl	$8,%edx
 	addl	$8,%ecx
 	testb	%al,%al
