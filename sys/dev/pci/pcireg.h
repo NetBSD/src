@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.6 1996/03/27 00:13:57 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.7 1996/03/27 04:08:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_PCIREG_H_
+#define	_DEV_PCI_PCIREG_H_
 
 /*
  * Standardized PCI configuration information
@@ -247,3 +250,5 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_PIN_B			0x02
 #define	PCI_INTERRUPT_PIN_C			0x03
 #define	PCI_INTERRUPT_PIN_D			0x04
+
+#endif /* _DEV_PCI_PCIREG_H_ */
