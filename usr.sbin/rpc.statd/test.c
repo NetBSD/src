@@ -1,4 +1,9 @@
-/*	$NetBSD: test.c,v 1.1 1997/03/10 06:28:32 scottr Exp $	*/
+/*	$NetBSD: test.c,v 1.2 1997/10/17 16:03:09 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: test.c,v 1.2 1997/10/17 16:03:09 lukem Exp $");
+#endif
 
 #include <stdio.h>
 #include <rpc/rpc.h>
