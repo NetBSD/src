@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.29 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: pwd.h,v 1.30 2003/09/09 22:05:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -143,6 +143,7 @@ int		 uid_from_user __P((const char *, uid_t *));
 int		 pwcache_userdb __P((int (*)(int), void (*)(void),
 				    struct passwd * (*)(const char *),
 				    struct passwd * (*)(uid_t)));
+struct passwd	*pw_dup __P((const struct passwd *));
 #endif
 __END_DECLS
 
