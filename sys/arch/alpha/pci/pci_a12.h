@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.h,v 1.1 1998/01/29 21:42:54 ross Exp $ */
+/* $NetBSD: pci_a12.h,v 1.2 1998/03/02 07:03:20 ross Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -35,8 +35,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ALPHA_PCI_PCI_A12_H_
+
+#define	PCI_A12_H()	/* Generate ctags(1) key */
+
 void	pci_a12_pickintr __P((struct a12c_config *));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt a12_intr_evcnt;
+#endif
+
 #endif

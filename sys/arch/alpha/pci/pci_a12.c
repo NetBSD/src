@@ -1,7 +1,7 @@
-/* $NetBSD: pci_a12.c,v 1.1 1998/01/29 21:42:53 ross Exp $ */
+/* $NetBSD: pci_a12.c,v 1.2 1998/03/02 07:03:20 ross Exp $ */
 
 /* [Notice revision 2.0]
- * Copyright (c) 1997 Avalon Computer Systems, Inc.
+ * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
  * All rights reserved.
  *
  * Author: Ross Harvey
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.1 1998/01/29 21:42:53 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.2 1998/03/02 07:03:20 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,6 +65,48 @@ __KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.1 1998/01/29 21:42:53 ross Exp $");
 #include <machine/intrcnt.h>
 #endif
 
+#define	PCI_A12()	/* Generate ctags(1) key */
+
+#define	LOADGSR() (REGVAL(A12_GSR) & 0x7fc0)
+
+static int pci_serr __P((void *));
+static int a12_xbar_flag __P((void *));
+
+struct a12_intr_vect_t {
+	int	on;
+	int	(*f) __P((void *));
+	void	 *a;
+} 	a12_intr_pci	= { 0 },
+	a12_intr_serr	= { 1, pci_serr },
+	a12_intr_flag	= { 1, a12_xbar_flag },
+	a12_intr_iei	= { 0 },
+	a12_intr_dc	= { 0 },
+
+	a12_intr_xb	= { 0 };
+
+static struct gintcall {
+	char	flag;
+	char	needsclear;
+	char	intr_index;	/* XXX implicit crossref */
+	struct	a12_intr_vect_t *f;
+	char	*msg;
+} gintcall[] = {
+	{	6,	0,	2,	&a12_intr_pci,	"PCI Device"	},
+	{	7,	1,	3,	&a12_intr_serr,	"PCI SERR#"	},
+	{	8,	1,	4,	&a12_intr_flag,	"XB Frame MCE"	},
+	{	9,	1,	5,	&a12_intr_flag,	"XB Frame ECE"	},
+		/* skip 10, gsr.TEI */
+	{	11,	1,	6,	&a12_intr_iei,	"Interval Timer"},
+	{	12,	1,	7,	&a12_intr_flag,	"XB FIFO Overrun"},
+	{	13,	1,	8,	&a12_intr_flag,	"XB FIFO Underrun"},
+	{	14,	1,	9,	&a12_intr_dc,	"DC Control Word"},
+	{	0  }
+};
+
+#ifdef EVCNT_COUNTERS
+struct evcnt a12_intr_evcnt;
+#endif
+
 int	avalon_a12_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *avalon_a12_intr_string __P((void *, pci_intr_handle_t));
@@ -73,18 +115,7 @@ void	*avalon_a12_intr_establish __P((void *, pci_intr_handle_t,
 void	avalon_a12_intr_disestablish __P((void *, void *));
 
 static void clear_gsr_interrupt __P((long));
-static void a12_pci_icall __P((int));
-static void pci_serr __P((int));
-static void a12_xbar_flag __P((int));
-static void a12_interval __P((int));
-static void a12_check_cdr __P((int));
-
-#ifdef EVCNT_COUNTERS
-struct evcnt a12_intr_evcnt;
-#endif
-
-static int (*a12_established_device) __P((void *));
-static void *ih_arg;
+static void a12_GInt(void);
 
 void	a12_iointr __P((void *framep, unsigned long vec));
 
@@ -130,11 +161,12 @@ avalon_a12_intr_establish(ccv, ih, level, func, arg)
         int level;
         int (*func) __P((void *));
 {
-	if(a12_established_device)
-		panic("avalon_a12_intr_establish");
-	a12_established_device = func;
-	ih_arg = arg;
-	REGVAL(A12_OMR) |= 1<<7;
+	a12_intr_pci.f = func;
+	a12_intr_pci.a = arg;
+	a12_intr_pci.on= 1;
+	alpha_wmb();
+	REGVAL(A12_OMR) |= A12_OMR_PCI_ENABLE;
+	alpha_mb();
 	return (void *)func;
 }
 
@@ -142,9 +174,34 @@ void
 avalon_a12_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	if(cookie==a12_established_device)
-		a12_established_device = 0;
-	else	What();
+	if(cookie == a12_intr_pci.f) {
+		alpha_wmb();
+		REGVAL(A12_OMR) &= ~A12_OMR_PCI_ENABLE;
+		alpha_mb();
+		a12_intr_pci.f = 0;
+		a12_intr_pci.on= 0;
+	} else	What();
+}
+
+void a12_intr_register_xb(f)
+	int (*f) __P((void *));
+{
+	a12_intr_xb.f  = f;
+	a12_intr_xb.on = 1;
+}
+
+void a12_intr_register_icw(f)
+	int (*f) __P((void *));
+{
+long	t;
+
+	t = REGVAL(A12_OMR) & ~A12_OMR_ICW_ENABLE;
+	if ((a12_intr_dc.on = (f != NULL)) != 0)
+		t |= A12_OMR_ICW_ENABLE;
+	a12_intr_dc.f = f;
+	alpha_wmb();
+	REGVAL(A12_OMR) = t;
+	alpha_mb();
 }
 
 long	a12_nothing;
@@ -158,53 +215,34 @@ clear_gsr_interrupt(write_1_to_clear)
 	a12_nothing = REGVAL(A12_GSR);
 }
 
-
-static void a12_pci_icall(i)
+static int
+pci_serr(p)
+	void *p;
 {
-	if(a12_established_device) {
-		(*a12_established_device)(ih_arg);
-		return;
-	}
-	printf("PCI irq rcvd, but no handler established.\n");
+	panic("pci_serr");
 }
 
-static void pci_serr(i) { panic("pci_serr"); }
-
-static void a12_xbar_flag(i) { panic("a12_xbar_flag"); }
-
-static void a12_interval(i) { panic("a12_interval"); }
-
-static void a12_check_cdr(i)
+static int
+a12_xbar_flag(p)
+	void *p;
 {
+	panic("a12_xbar_flag: %s", p);
 }
 
-
-static struct gintcall {
-	char	flag;
-	char	needsclear;
-	char	intr_index;	/* XXX implicit crossref */
-	void	(*f)(int);
-} gintcall[] = {
-	{	6,	0,	2,	a12_pci_icall	},
-	{	7,	1,	3,	pci_serr	},
-	{	8,	1,	4,	a12_xbar_flag	},
-	{	9,	1,	5,	a12_xbar_flag	},
-		/* skip 10, gsr.TEI */
-	{	11,	1,	6,	a12_interval	},
-	{	12,	1,	7,	a12_xbar_flag	},
-	{	13,	1,	8,	a12_xbar_flag	},
-	{	14,	1,	9,	a12_check_cdr	},
-	{	0  }
-};
-
-static void a12_GInt(void);
-static void a12_GInt(void)
+static void
+a12_GInt(void)
 {
 struct	gintcall *gic;
-long	gsrvalue = REGVAL(A12_GSR) & 0x7fc0;
+long	gsrsource,
+	gsrvalue = LOADGSR();
+void	*s;
 
+	/*
+	 * Switch interrupts do not go through this function
+	 */
 	for(gic=gintcall; gic->f; ++gic) {
-		if(gsrvalue & 1L<<gic->flag) {
+		gsrsource = gsrvalue & 1L<<gic->flag;
+		if (gsrsource && gic->f->on) {
 #ifndef EVCNT_COUNTERS
 			if (gic->intr_index >= INTRCNT_A12_IRQ_LEN)
 				panic("A12 INTRCNT");
@@ -212,24 +250,35 @@ long	gsrvalue = REGVAL(A12_GSR) & 0x7fc0;
 #endif
 			if(gic->needsclear)
 				clear_gsr_interrupt(1L<<gic->flag);
-			(*gic->f)(gic->flag);
+
+			s = gic->f->a;
+			if (s == NULL)
+				s = gic->msg;
+			if (gic->f->f == NULL)
+				printf("Stray interrupt: %s OMR=%lx\n",
+					gic->msg, REGVAL(A12_OMR) & 0xffc0);
+			else	gic->f->f(s);
 			alpha_wmb();
 		}
 	}
 }
 
-static void a12_xbar_omchint(void);
-static void a12_xbar_omchint() { panic("a12_xbar_omchint"); };
-
-static void a12_xbar_imchint(void);
-static void a12_xbar_imchint() { panic("a12_xbar_imchint"); };
+/*
+ *      IRQ_H              3     2     1         0
+ *      EV5(10)           23    22    21        20
+ *      EV5(16)           17    16    15        14
+ *      OSF IPL            6     5     4         3
+ *      VECTOR(16)       940   930   920       900      note: no 910 or 940
+ *      f(VECTOR)          4     3     2         0      note: no   1 or   4
+ *      EVENT           Never  Clk   Misc     Xbar
+ */
 
 void
 a12_iointr(framep, vec)
 	void *framep;
 	unsigned long vec;
 {
-	unsigned irq = (vec-0x900) >> 4;
+	unsigned irq = (vec-0x900) >> 4;  /* this is the f(vector) above */
 	/*
 	 * Xbar device is in the A12 CPU core logic, so its interrupts
 	 * might as well be hardwired.
@@ -247,10 +296,9 @@ a12_iointr(framep, vec)
 
 	switch(irq) {
 	    case 0:
-		a12_xbar_omchint();
-		return;
-	    case 1:
-		a12_xbar_imchint();
+		if (a12_intr_xb.f == NULL)
+			panic("no switch interrupt registered");
+		else	a12_intr_xb.f(NULL);
 		return;
 	    case 2:
 		a12_GInt();
