@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.67 1997/10/09 20:40:25 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.67.2.1 1997/11/12 23:45:23 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -21,12 +21,19 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-CC?=	cc
+AR?=	ar
 AS?=	as
+CC?=	cc
+CPP?=	cpp
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
+NM?=	nm
+RANLIB?=ranlib
 SIZE?=	size
 STRIP?=	strip
+TSORT?=	tsort -q
+
 COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory

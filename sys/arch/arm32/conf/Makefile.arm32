@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.28 1997/10/18 04:20:17 mark Exp $
+#	$NetBSD: Makefile.arm32,v 1.28.2.1 1997/11/12 23:45:25 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -21,11 +21,19 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
+AR?=	ar
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
+NM?=	nm
+RANLIB?=ranlib
 SIZE?=	size
 STRIP?=	strip
+TSORT?=	tsort -q
+
 COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
