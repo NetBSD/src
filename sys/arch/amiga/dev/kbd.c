@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.27 1996/11/30 01:30:37 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28 1996/12/23 09:10:22 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -71,7 +71,7 @@ struct kbd_softc {
 };
 struct kbd_softc kbd_softc;
 
-int kbdmatch __P((struct device *, void *, void *));
+int kbdmatch __P((struct device *, struct cfdata *, void *));
 void kbdattach __P((struct device *, struct device *, void *));
 void kbdintr __P((int));
 void kbdstuffchar __P((u_char));
@@ -86,9 +86,10 @@ struct cfdriver kbd_cd = {
 
 /*ARGSUSED*/
 int
-kbdmatch(pdp, match, auxp)
+kbdmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 
 	if (matchname((char *)auxp, "kbd"))

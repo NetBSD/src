@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.23 1996/10/13 03:07:16 christos Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.24 1996/12/23 09:10:16 veego Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -95,7 +95,7 @@ struct ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int ed_zbus_match __P((struct device *, void *, void *));
+int ed_zbus_match __P((struct device *, struct cfdata *, void *));
 void ed_zbus_attach __P((struct device *, struct device *, void *));
 int edintr __P((void *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -185,9 +185,10 @@ word_copy(a, b, len)
 }
 
 int
-ed_zbus_match(parent, match, aux)
+ed_zbus_match(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap = aux;
 

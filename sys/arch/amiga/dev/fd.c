@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 1996/10/13 03:06:55 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -180,10 +180,10 @@ struct fdcargs {
 	int unit;
 };
 
-int	fdcmatch __P((struct device *, void *, void *));
+int	fdcmatch __P((struct device *, struct cfdata *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
 int	fdcprint __P((void *, const char *));
-int	fdmatch __P((struct device *, void *, void *));
+int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
 void	fdintr __P((int));
@@ -308,11 +308,11 @@ struct cfdriver fdc_cd = {
 
 
 int
-fdcmatch(pdp, match, auxp)
+fdcmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
 		return(0);
@@ -360,11 +360,11 @@ fdcprint(auxp, pnp)
 
 /*ARGSUSED*/
 int
-fdmatch(pdp, match, auxp)
+fdmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 
 #define cf_unit	cf_loc[0]
 	struct fdcargs *fdap;
