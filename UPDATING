@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.78 2002/12/04 12:50:43 lukem Exp $
+$NetBSD: UPDATING,v 1.79 2002/12/09 18:59:07 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -44,7 +44,7 @@ Recent changes:
 	NetBSD ARM ELF uses the soft-VFP floating point model by
 	default.  However, the assembler lacked support for marking
 	objects as using the VFP floating point format, and the
-	compiler was no properly passing the flag indicating "soft-VFP"
+	compiler was not properly passing the flag indicating "soft-VFP"
 	to the assembler.
 
 	Unfortunately, this means that the linker will now consider
@@ -59,7 +59,7 @@ Recent changes:
 
 	The only work-around for the problem is to recompile all of
 	the libraries on the system.  The easiest way to do this for
-	system libraries is to install a binary snapshot; there are
+	system libraries is to install a binary snapshot; they are
 	generally available on releng.netbsd.org.  Any packages you
 	have installed which supply libraries will have to be recompiled
 	if you wish to link new programs against those libraries.
@@ -70,7 +70,7 @@ Recent changes:
 20021011:
 	Systrace has been improved to support privilege elevation.
 	Updating the kernel requires the userland part of systrace
-	to be rebuild.
+	to be rebuilt.
 
 20021010:
 	The config(8) grammar was changed to allow options to register
@@ -113,13 +113,13 @@ Recent changes:
 		there is no working in-tree toolchain (hppa, ns32k, sh5,
 		x86_64).
 	    -	EXTERNAL_TOOLCHAIN -- if defined by the user, points to the
-		root ofan external toolchain (e.g. /usr/local/gnu).  This
+		root of an external toolchain (e.g. /usr/local/gnu).  This
 		enables the cross-build framework even for TOOLCHAIN_MISSING
 		platforms.
 
 20020906:
 	gehenna-devsw has been merged into the trunk. Need to update and
-	reinstall usr.sbin/config before build the kernel.
+	reinstall usr.sbin/config before building the kernel.
 
 20020822:
 	Crunched rescue tools (contents of /bin and /sbin, plus others)
@@ -147,8 +147,8 @@ Recent changes:
 
 	sshd:*:16:16::0:0:& pseudo-user:/var/chroot/sshd:/sbin/nologin
 	
-	also /var/chroot/sshd directory needs to be present (digged as a part of
-	build process).
+	Also /var/chroot/sshd directory needs to be present (digged as part of
+	the build process).
 
 20020426:
 	NBUILDJOBS obsoleted in favor of just using -j.
@@ -161,12 +161,12 @@ Recent changes:
 	configuration from earlier systems (as far back as NetBSD 1.5).
 
 20020320:
-	<bsd.lib.mk> needs a new install(1) for it's "-a cmd" support.
-	build and install at usr.bin/xinstall before the build.
+	<bsd.lib.mk> needs a new install(1) for its "-a cmd" support.
+	Build and install at usr.bin/xinstall before the build.
 
 20020319:
-	raw IPv6 socket now makes strict checking for sa_family and sa_len
-	on send(2) operation.  be sure to have sbin/rtsol and usr.sbin/rtsold
+	Raw IPv6 socket now makes strict checking for sa_family and sa_len
+	on send(2) operation.  Be sure to have sbin/rtsol and usr.sbin/rtsold
 	newer than November 2001 when you upgrade the kernel.
 
 20020311:
@@ -180,7 +180,6 @@ Recent changes:
 	the VAX assembly files.
 
 20020118:
-
 	ntpd user/group has been added.  Need to hand add this in or builds
 	will break as mtree aborts early.
 
@@ -193,7 +192,6 @@ Recent changes:
 	ntpd:*:15:15::0:0:Ntpd pseudo-user:/var/chroot/ntpd:/sbin/nologin
 
 20011207:
-
 	If you're attempting to build a snapshot on sparc64 and are getting
 	reloc errors from the toolchain groff binary this means your native
 	toolchain has some broken C++ bits.
