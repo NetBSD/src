@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2.2.1 2000/06/21 06:36:24 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.2 2001/04/05 23:25:31 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	kadm5clnt
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && make print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/kadm5/kadm5_err.et
@@ -17,6 +20,7 @@ ERR_FILES = kadm5_err.c
 SRCS	 =		\
 	chpass_c.c	\
 	common_glue.c	\
+	client_glue.c	\
 	create_c.c	\
 	delete_c.c	\
 	destroy_c.c	\
@@ -32,15 +36,16 @@ SRCS	 =		\
 	randkey_c.c	\
 	rename_c.c	\
 	send_recv.c	\
+	client_glue.c	\
 	$(ERR_FILES)
 
 INCSDIR= /usr/include/kadm5
 
-INCS=	kadm5_err.h admin.h private.h
+INCS=	kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
-HDB!=	cd ${.CURDIR}/../libhdb && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+HDB!=	cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
