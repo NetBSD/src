@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 1998/12/02 21:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.18 1999/05/01 19:20:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,14 +77,28 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ASM_H_
-#define _ASM_H_
+#ifndef _M68K_ASM_H_
+#define _M68K_ASM_H_
 
-#ifdef __STDC__
-#define	_C_LABEL(name)		_ ## name
+#if defined(__ELF__) && defined(PIC)
+#define PIC_PLT(name)	name@PLTPC
 #else
-#define	_C_LABEL(name)		_/**/name
+#define PIC_PLT(name)	name
+#endif
+
+#ifdef __ELF__
+# if __STDC__
+#  define _C_LABEL(name)	name
+# else
+#  define _C_LABEL(name)	name
 #endif /* __STDC__ */
+#else /* __ELF__ */
+# if __STDC__
+#  define _C_LABEL(name)	_ ## name
+# else
+#  define _C_LABEL(name)	_/**/name
+# endif /* __STDC__ */
+#endif /* __ELF__ */
 
 #define	_ASM_LABEL(name)	name
 
@@ -192,4 +206,4 @@
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 
-#endif /* _ASM_H_ */
+#endif /* _M68K_ASM_H_ */
