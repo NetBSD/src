@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.18 1999/01/29 12:56:17 bouyer Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.19 1999/03/04 06:48:54 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -294,12 +294,12 @@ uvn_attach(arg, accessprot)
 	 */
 #ifdef DEBUG
 	if (vp->v_type == VBLK)
-		printf("used_vnode_size = %qu\n", used_vnode_size);
+		printf("used_vnode_size = %qu\n", (long long)used_vnode_size);
 #endif
 	if (used_vnode_size > (vaddr_t) -PAGE_SIZE) {
 #ifdef DEBUG
 		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
-		    used_vnode_size, -PAGE_SIZE);
+		    (long long)used_vnode_size, -PAGE_SIZE);
 #endif    
 		used_vnode_size = (vaddr_t) -PAGE_SIZE;
 	}
@@ -1923,7 +1923,8 @@ uvm_vnp_setsize(vp, newsize)
 		if (newsize > (vaddr_t) -PAGE_SIZE) {
 #ifdef DEBUG
 			printf("uvm_vnp_setsize: vn %p size truncated "
-			    "%qx->%lx\n", vp, newsize, (vaddr_t)-PAGE_SIZE);
+			       "%qx->%lx\n", vp, (long long)newsize,
+			       (vaddr_t)-PAGE_SIZE);
 #endif
 			newsize = (vaddr_t)-PAGE_SIZE;
 		}
