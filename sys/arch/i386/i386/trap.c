@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 1994/11/06 20:28:57 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 1994/11/06 20:30:09 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -207,8 +207,6 @@ trap(frame)
 
 	case T_PROTFLT:
 	case T_ALIGNFLT:
-		if (p == 0)
-			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault == 0)
 			goto we_re_toast;
@@ -270,8 +268,6 @@ trap(frame)
 		break;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
-			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
