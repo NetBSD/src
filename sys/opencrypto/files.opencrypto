@@ -1,0 +1,26 @@
+#	$NetBSD: files.opencrypto,v 1.1 2003/07/25 21:12:47 jonathan Exp $
+#
+#
+defpseudo opencrypto
+
+file	opencrypto/criov.c		opencrypto
+file	opencrypto/cryptodev.c		opencrypto
+file	opencrypto/cryptosoft.c		opencrypto
+file	opencrypto/xform.c		opencrypto
+file	opencrypto/crypto.c		opencrypto
+file	opencrypto/crypto_mbuf.c	opencrypto
+
+# crypto  algorithms
+file	opencrypto/blf.c		opencrypto
+file	crypto/sha2/sha2.c		opencrypto
+file	opencrypto/skipjack.c		opencrypto
+file	opencrypto/rmd160.c		opencrypto
+file	opencrypto/cast.c		opencrypto
+file	opencrypto/rijndael.c		opencrypto
+
+file	opencrypto/deflate.c		opencrypto
+
+# old pre-OpenCryptoFramework/fast-ipsec crypto hooks.
+
+#file	crypto/des/des_ecb.c		opencrypto
+#file	crypto/des/des_setkey.c		opencrypto
