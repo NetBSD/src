@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.14 2003/04/05 21:18:02 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.15 2003/09/06 23:52:26 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ typedef mach_natural_t mach_port_mscount_t;
 typedef mach_natural_t mach_port_msgcount_t;
 typedef mach_natural_t mach_port_rights_t;
 typedef mach_natural_t mach_task_flavor_t;
+typedef mach_natural_t mach_thread_flavor_t;
 typedef int mach_policy_t;
 
 
