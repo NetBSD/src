@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.14 2002/09/25 07:27:52 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.15 2002/09/26 20:42:11 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,14 +44,10 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self)
+_rtld_relocate_nonplt_objects(obj)
 	const Obj_Entry *obj;
-	bool self;
 {
 	const Elf_Rela *rela;
-
-	if (self)
-		return 0;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
