@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1997/10/19 08:55:07 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1997/11/06 00:57:02 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -102,9 +102,9 @@ extern int max_processes;
 extern int cpu_cache;
 int cpu_ctrl;
 #endif
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
 
 /* XXX - this needs to be properly defined elsewhere */
 typedef struct {
@@ -948,6 +948,9 @@ get_bootconf_option(opts, opt, type, result)
 		while (*ptr == ' ' || *ptr == '\t')
 			++ptr;
 
+		if (*ptr == 0)
+			break;
+
 		not = 0;
 
 		/* Is it a negate option */
@@ -1041,7 +1044,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -1051,7 +1054,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
 }
 
 /* End of machdep.c */
