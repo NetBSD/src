@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.5 1998/08/30 09:19:40 veego Exp $	*/
+/*	$NetBSD: kill.c,v 1.6 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.5 1998/08/30 09:19:40 veego Exp $");
+__RCSID("$NetBSD: kill.c,v 1.6 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
 {
 	struct quad	*q;
 	struct event	*e;
-	char		*name;
+	const char	*name;
 
 	if (f)
 	{

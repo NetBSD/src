@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.5 1997/10/12 21:24:34 christos Exp $	*/
+/*	$NetBSD: computer.c,v 1.6 1999/07/21 13:19:10 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.5 1997/10/12 21:24:34 christos Exp $");
+__RCSID("$NetBSD: computer.c,v 1.6 1999/07/21 13:19:10 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ computer(v)
 	int		ix, iy;
 	int		i, j;
 	int		tqx, tqy;
-	struct cvntab	*r;
+	const struct cvntab	*r;
 	int		cost;
 	int		course;
 	double		dist, time;

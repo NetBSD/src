@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.4 1997/10/12 21:25:07 christos Exp $	*/
+/*	$NetBSD: play.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.4 1997/10/12 21:25:07 christos Exp $");
+__RCSID("$NetBSD: play.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: play.c,v 1.4 1997/10/12 21:25:07 christos Exp $");
 **	on how we are doing after the move.
 */
 
-struct cvntab	Comtab[] =
+const struct cvntab	Comtab[] =
 {
 	{ "abandon",		"",		abandon,	0 },
 	{ "ca",			"pture",	capture,	0 },
@@ -99,7 +99,7 @@ myreset(v)
 void
 play()
 {
-	struct cvntab		*r;
+	const struct cvntab		*r;
 
 	while (1)
 	{

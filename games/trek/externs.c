@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.c,v 1.4 1997/10/12 21:24:48 christos Exp $	*/
+/*	$NetBSD: externs.c,v 1.5 1999/07/21 13:19:10 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: externs.c,v 1.4 1997/10/12 21:24:48 christos Exp $");
+__RCSID("$NetBSD: externs.c,v 1.5 1999/07/21 13:19:10 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: externs.c,v 1.4 1997/10/12 21:24:48 christos Exp $");
 **	global variable definitions
 */
 
-struct device	Device[NDEV] =
+const struct device	Device[NDEV] =
 {
 	{ "warp drive",		"Scotty" },
 	{ "S.R. scanners",	"Scotty" },
@@ -68,7 +68,7 @@ struct device	Device[NDEV] =
 	{ "*ERR 15*",		"Nobody" }
 };
 
-char	*Systemname[NINHAB] =
+const char	*const Systemname[NINHAB] =
 {
 	"ERROR",
 	"Talos IV",

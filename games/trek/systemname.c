@@ -1,4 +1,4 @@
-/*	$NetBSD: systemname.c,v 1.4 1997/10/12 21:25:21 christos Exp $	*/
+/*	$NetBSD: systemname.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)systemname.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: systemname.c,v 1.4 1997/10/12 21:25:21 christos Exp $");
+__RCSID("$NetBSD: systemname.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ __RCSID("$NetBSD: systemname.c,v 1.4 1997/10/12 21:25:21 christos Exp $");
 **	starsystems, etc.
 */
 
-char *systemname(q1)
-struct quad	*q1;
+const char *systemname(q1)
+	const struct quad	*q1;
 {
-	struct quad	*q;
+	const struct quad	*q;
 	int		i;
 
 	q = q1;

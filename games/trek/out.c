@@ -1,4 +1,4 @@
-/*	$NetBSD: out.c,v 1.5 1997/10/13 22:20:35 cjs Exp $	*/
+/*	$NetBSD: out.c,v 1.6 1999/07/21 13:19:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)out.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: out.c,v 1.5 1997/10/13 22:20:35 cjs Exp $");
+__RCSID("$NetBSD: out.c,v 1.6 1999/07/21 13:19:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ void
 out(dev)
 int	dev;
 {
-	struct device	*d;
+	const struct device	*d;
 
 	d = &Device[dev];
 	printf("%s reports %s ", d->person, d->name);
