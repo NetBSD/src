@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.57 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.58 2003/02/15 18:10:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.57 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.58 2003/02/15 18:10:16 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -429,6 +429,7 @@ enterpgrp(p, pgid, mksess)
 			sess->s_count = 1;
 			sess->s_ttyvp = NULL;
 			sess->s_ttyp = NULL;
+			sess->s_flags = p->p_session->s_flags & ~S_LOGIN_SET;
 			memcpy(sess->s_login, p->p_session->s_login,
 			    sizeof(sess->s_login));
 			p->p_flag &= ~P_CONTROLT;
