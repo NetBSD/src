@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1997/04/03 15:59:54 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1997/05/10 09:29:26 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -148,6 +148,8 @@ int _mapped = 0;
 char machine[] = "pc532";
 char cpu_model[] = "ns32532";
 
+struct user *proc0paddr;
+
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -175,7 +177,6 @@ vm_map_t buffer_map;
 extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
 extern	int ieee_handler_disable;
-extern	struct user *proc0paddr;
 
 static vm_offset_t alloc_pages __P((int));
 static caddr_t 	allocsys __P((caddr_t));
