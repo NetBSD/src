@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.56 2000/11/17 22:47:30 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.57 2000/11/18 17:45:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2000/11/17 22:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2000/11/18 17:45:31 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -370,9 +370,12 @@ recognized:
 		ci->ci_flags |= CPUF_PRIMARY;
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
-#endif /* MULTIPROCESSOR */
 
 	ci->ci_softc = sc;
+#else /* ! MULTIPROCESSOR */
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		ci->ci_softc = sc;
+#endif /* MULTIPROCESSOR */
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_clock, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "clock");
