@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.5.6.3 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.5.6.4 2004/12/18 09:32:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.5.6.3 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.5.6.4 2004/12/18 09:32:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ mpu_sb_attach(parent, self, aux)
 {
 	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;
+
+	printf("\n");
 
 	sc->ioh = ssc->sc_mpu_ioh;
 	sc->iot = ssc->sc_mpu_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.6 2004/10/12 05:57:51 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.7 2004/12/18 09:33:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@ struct file {
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
 	struct ucred	*f_cred;	/* creds associated with descriptor */
-	struct fileops {
+	const struct fileops {
 		int	(*fo_read)	(struct file *, off_t *, struct uio *,
 					    struct ucred *, int);
 		int	(*fo_write)	(struct file *, off_t *, struct uio *,
@@ -152,7 +152,7 @@ extern struct filelist	filehead;	/* head of list of open files */
 extern int		maxfiles;	/* kernel limit on # of open files */
 extern int		nfiles;		/* actual number of open files */
 
-extern struct fileops	vnops;		/* vnode operations for files */
+extern const struct fileops vnops;	/* vnode operations for files */
 
 int	dofileread(struct lwp *, int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
@@ -167,6 +167,15 @@ int	dofilewritev(struct lwp *, int, struct file *,
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);
 void	fownsignal(pid_t, int, int, int, void *);
+
+int	fdclone(struct lwp *, struct file *, int, const struct fileops *,
+    void *);
+
+/* Commonly used fileops */
+int	fnullop_fcntl(struct file *, u_int, void *, struct lwp *);
+int	fnullop_poll(struct file *, int, struct lwp *);
+int	fnullop_kqfilter(struct file *, struct knote *);
+int	fbadop_stat(struct file *, struct stat *, struct lwp *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.86.2.3 2004/09/21 13:37:36 skrll Exp $	*/
+/*	$NetBSD: nd6.c,v 1.86.2.4 2004/12/18 09:33:06 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86.2.3 2004/09/21 13:37:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86.2.4 2004/12/18 09:33:06 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -68,9 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.86.2.3 2004/09/21 13:37:36 skrll Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif
-
-#include "loop.h"
-extern struct ifnet loif[NLOOP];
 
 #include <net/net_osdep.h>
 
@@ -1177,7 +1174,7 @@ nd6_rtrequest(req, rt, info)
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
 			if (nd6_useloopback) {
-				rt->rt_ifp = &loif[0];	/* XXX */
+				rt->rt_ifp = lo0ifp;	/* XXX */
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.

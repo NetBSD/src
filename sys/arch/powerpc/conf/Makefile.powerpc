@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.27.2.3 2004/09/21 13:20:34 skrll Exp $
+#	$NetBSD: Makefile.powerpc,v 1.27.2.4 2004/12/18 09:31:26 skrll Exp $
 #
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ GENASSYM=	${POWERPC}/${PPCDIR}/genassym.cf
 ##
 CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
-CFLAGS+=	-msoft-float ${CCPUOPTS}
+CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
 AFLAGS+=	${AOPTS}
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.15.2.4 2004/10/19 15:58:10 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.15.2.5 2004/12/18 09:32:50 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.15.2.4 2004/10/19 15:58:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.15.2.5 2004/12/18 09:32:50 skrll Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -168,7 +168,7 @@ struct pool bridge_rtnode_pool;
 void	bridgeattach(int);
 
 int	bridge_clone_create(struct if_clone *, int);
-void	bridge_clone_destroy(struct ifnet *);
+int	bridge_clone_destroy(struct ifnet *);
 
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 int	bridge_init(struct ifnet *);
@@ -401,7 +401,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
  *
  *	Destroy a bridge instance.
  */
-void
+int
 bridge_clone_destroy(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
@@ -425,6 +425,8 @@ bridge_clone_destroy(struct ifnet *ifp)
 	bridge_rtable_fini(sc);
 
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 /*

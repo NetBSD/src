@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.81.2.5 2004/11/12 16:27:03 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.81.2.6 2004/12/18 09:32:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.5 2004/11/12 16:27:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.6 2004/12/18 09:32:35 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.5 2004/11/12 16:27:03 skrll
 /*
  * System call interface to the socket abstraction.
  */
-extern	struct fileops socketops;
+extern const struct fileops socketops;
 
 int
 sys_socket(struct lwp *l, void *v, register_t *retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.24.22.3 2004/09/21 13:36:40 skrll Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.24.22.4 2004/12/18 09:32:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,7 @@ struct sl_softc {
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
 	struct timeval sc_lastpacket;	/* for watchdog */
+	LIST_ENTRY(sl_softc) sc_iflist;
 };
 
 /* internal flags */

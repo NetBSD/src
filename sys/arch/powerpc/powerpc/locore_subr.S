@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.13.2.3 2004/09/21 13:20:49 skrll Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.13.2.4 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,10 +164,10 @@ ASENTRY(Idle)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	li	%r3,0			/* go IPL_SCHED to IPL_NONE */
-	bl	_C_LABEL(lcsplx)
-	mr	%r31,%r3		/* save returned IPL mask */
-
+	/*
+	 * Re-enable interrupts before lowering IPL so we won't
+	 * block them when we shouldn't.
+	 */
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* reenable ints again */
 #else /* PPC_OEA */
@@ -176,6 +176,10 @@ ASENTRY(Idle)
 	mtmsr	%r4
 	isync
 #endif
+
+	li	%r3,0			/* go IPL_SCHED to IPL_NONE */
+	bl	_C_LABEL(lcsplx)
+	mr	%r31,%r3		/* save returned IPL mask */
 
 /*
  * At this point, other routines can be called (such as uvm_pageidlezero).

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.10.2.3 2004/09/21 13:21:37 skrll Exp $	*/
+/*	$NetBSD: scif.c,v 1.10.2.4 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.3 2004/09/21 13:21:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.4 2004/12/18 09:31:27 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -459,13 +459,6 @@ scif_getc(bus_space_tag_t bt, bus_space_handle_t bh)
 	return (c);
 #endif
 }
-
-#if 0
-#define	SCIF_MAX_UNITS 2
-#else
-#define	SCIF_MAX_UNITS 1
-#endif
-
 
 static int
 scif_match(struct device *parent, struct cfdata *cf, void *args)

@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.1.24.3 2004/09/21 13:11:28 skrll Exp $ */
+/* $NetBSD: sbicvar.h,v 1.1.24.4 2004/12/18 09:31:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@ struct sbic_acb {
 #define ACB_DONE	0x02
 #define ACB_DATAIN	0x04		/* DMA direction flag */
 #define	ACB_DMA		0x08		/* ACB using DMA this time */
-	struct scsi_generic cmd;	/* SCSI command block */
+	struct scsipi_generic cmd;	/* SCSI command block */
 	int	 	clen;
 	bus_dmamap_t	dmamap_xfer;	/* Handle for dma */
 	u_char	       *data;		/* Data buffer... */

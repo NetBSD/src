@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.5 2004/10/19 15:56:37 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.6 2004/12/18 09:31:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -262,19 +262,23 @@ int kvtop(caddr_t);
 #endif
 
 /* physical memory sections */
-#define ROMBASE		(0xe0000000)
+#define ROMBASE		0xe0000000
 
-#define INTIOBASE1700	(0xe0c00000)
-#define INTIOTOP1700	(0xe1d00000) /* XXX */
-#define EXTIOBASE1700	(0xf0f00000)
-#define EXTIOTOP1700	(0xf1000000) /* XXX */
+#define INTIOBASE1700	0xe0c00000
+#define INTIOTOP1700	0xe1d00000 /* XXX */
+#define EXTIOBASE1700	0xf0f00000
+#define EXTIOTOP1700	0xf1000000 /* XXX */
+#define CTRL_POWER1700	0xe1380000
+#define CTRL_LED1700	0xe0dc0000
 
-#define INTIOBASE1200	(0xe1000000)
-#define INTIOTOP1200	(0xe1d00000) /* XXX */
-#define EXTIOBASE1200	(0xe4000000)
-#define EXTIOTOP1200	(0xe4020000) /* XXX */
+#define INTIOBASE1200	0xe1000000
+#define INTIOTOP1200	0xe1d00000 /* XXX */
+#define EXTIOBASE1200	0xe4000000
+#define EXTIOTOP1200	0xe4020000 /* XXX */
+#define CTRL_POWER1200	0xe1000000
+#define CTRL_LED1200	0xe1500001
 
-#define MAXADDR		(0xfffff000)
+#define MAXADDR		0xfffff000
 
 /*
  * Internal IO space:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.10.4.4 2004/09/21 13:38:44 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10.4.5 2004/12/18 09:33:17 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.4 2004/09/21 13:38:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.5 2004/12/18 09:33:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,21 +97,17 @@ static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 static int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *, int);
 static int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *, int);
 static int	cryptof_ioctl(struct file *, u_long, void*, struct lwp *l);
-static int	cryptof_fcntl(struct file *, u_int, void*, struct lwp *l);
-static int	cryptof_poll(struct file *, int, struct lwp *);
-static int	cryptof_kqfilter(struct file *, struct knote *);
-static int	cryptof_stat(struct file *, struct stat *, struct lwp *);
 static int	cryptof_close(struct file *, struct lwp *);
 
-static struct fileops cryptofops = {
+static const struct fileops cryptofops = {
     cryptof_read,
     cryptof_write,
     cryptof_ioctl,
-    cryptof_fcntl,
-    cryptof_poll,
-    cryptof_stat,
+    fnullop_fcntl,
+    fnullop_poll,
+    fbadop_stat,
     cryptof_close,
-    cryptof_kqfilter
+    fnullop_kqfilter
 };
 
 static struct	csession *csefind(struct fcrypt *, u_int);
@@ -325,13 +321,6 @@ bail:
 		error = EINVAL;
 	}
 	return (error);
-}
-
-/* ARGSUSED */
-int
-cryptof_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
-{
-  return (0);
 }
 
 static int
@@ -594,29 +583,6 @@ fail:
 		free(krp, M_XDATA);
 	}
 	return (error);
-}
-
-/* ARGSUSED */
-static int
-cryptof_poll(struct file *fp, int which, struct lwp *l)
-{
-	return (0);
-}
-
-
-/* ARGSUSED */
-static int
-cryptof_kqfilter(struct file *fp, struct knote *kn)
-{
-
-	return (0);
-}
-
-/* ARGSUSED */
-static int
-cryptof_stat(struct file *fp, struct stat *sb, struct lwp *l)
-{
-	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */

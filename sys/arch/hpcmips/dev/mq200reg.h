@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.7.10.3 2004/09/21 13:16:04 skrll Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.7.10.4 2004/12/18 09:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -52,8 +52,8 @@
 #define MQ200_GE		0x00c000	/* graphics engine	*/
 #define MQ200_FP		0x00e000	/* flat panel controller*/
 #define MQ200_CP1		0x010000	/* color palette 1	*/
-#define MQ200_DC		0x014000	/* device configration	*/
-#define MQ200_PC		0x016000	/* PCI configration	*/
+#define MQ200_DC		0x014000	/* device configuration	*/
+#define MQ200_PC		0x016000	/* PCI configuration	*/
 
 /*
  * Power Management
@@ -612,7 +612,7 @@
 		    ((((unsigned long)(b))&0xff)<<16))
 
 /*
- * Device Configration
+ * Device Configuration
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.27.2.4 2004/09/21 13:11:47 skrll Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.27.2.5 2004/12/18 09:31:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.27.2.4 2004/09/21 13:11:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.27.2.5 2004/12/18 09:31:01 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -272,9 +272,12 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++)
+	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++) {
+		if (m->m_len == 0)
+			continue;
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
 		    m->m_data, m->m_len, NULL, flags, seg, sgmap);
+	}
 
 	alpha_mb();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.32.2.3 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: errno.h,v 1.32.2.4 2004/12/18 09:33:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -171,6 +171,8 @@
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #define	ERESTART	-3		/* restart syscall */
 #define	EPASSTHROUGH	-4		/* ioctl not handled by this layer */
+#define	EDUPFD		-5		/* Dup given fd */
+#define	EMOVEFD		-6		/* Move given fd */
 #endif
 
 #endif /* !_SYS_ERRNO_H_ */

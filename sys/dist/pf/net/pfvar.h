@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.4.2.6 2004/11/29 07:24:33 skrll Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.4.2.7 2004/12/18 09:32:35 skrll Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.202 2004/07/12 00:50:22 itojun Exp $ */
 
 /*
@@ -136,8 +136,6 @@ struct pf_addr_wrap {
 	u_int8_t		 iflags;	/* PFI_AFLAG_* */
 };
 
-#ifdef _KERNEL
-
 #ifdef __NetBSD__
 struct hook_desc {
 	TAILQ_ENTRY(hook_desc) hd_list;
@@ -146,6 +144,8 @@ struct hook_desc {
 };
 TAILQ_HEAD(hook_desc_head, hook_desc);
 #endif
+
+#ifdef _KERNEL
 
 struct pfi_dynaddr {
 	struct pf_addr		 pfid_addr4;
@@ -843,7 +843,7 @@ struct pfi_kif {
 	int				 pfik_states;
 	int				 pfik_rules;
 #ifdef __NetBSD__
-	struct hook_desc_head		*pfik_ifaddrhooks;
+	struct hook_desc_head		 pfik_ifaddrhooks;
 #endif
 };
 #define pfik_name	pfik_if.pfif_name

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.20.2.3 2004/09/21 13:12:31 skrll Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.20.2.4 2004/12/18 09:31:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@ struct sbic_acb {
 #define ACB_DONE	0x04
 #define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
 #define	ACB_DATAIN	0x20	/* DMA direction flag */
-	struct scsi_generic cmd;	/* SCSI command block */
+	struct scsipi_generic cmd;	/* SCSI command block */
 	int	 clen;
 	struct	dma_chain sc_kv;	/* Virtual address of whole DMA */
 	struct	dma_chain sc_pa;	/* Physical address of DMA segment */

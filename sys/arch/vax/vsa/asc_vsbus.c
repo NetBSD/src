@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.29.2.3 2004/09/21 13:24:07 skrll Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.29.2.4 2004/12/18 09:31:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_cputype.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.29.2.3 2004/09/21 13:24:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.29.2.4 2004/12/18 09:31:44 skrll Exp $");
+
+#include "locators.h"
+#include "opt_cputype.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,11 +149,11 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
-		if (cf->cf_loc[0] != 0x200c0080)
+		if (cf->cf_loc[VSBUSCF_CSR] != 0x200c0080)
 			return 0;
 	} else if (vax_boardtype == VAX_BTYP_49 ||
 	    vax_boardtype == VAX_BTYP_53) {
-		if (cf->cf_loc[0] != 0x26000080)
+		if (cf->cf_loc[VSBUSCF_CSR] != 0x26000080)
 			return 0;
 	} else {
 		return 0;

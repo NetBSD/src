@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.12.6.3 2004/09/21 13:16:00 skrll Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.12.6.4 2004/12/18 09:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.12.6.3 2004/09/21 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.12.6.4 2004/12/18 09:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,7 +506,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 	case HPCFBIO_GDSPCONF:
@@ -529,7 +529,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		/*
 		 * nothing to do
-		 * because we have only one unit and one configration
+		 * because we have only one unit and one configuration
 		 */
 		return (0);
 	case HPCFBIO_GOP:

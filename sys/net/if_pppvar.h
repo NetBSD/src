@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.16.6.3 2004/09/21 13:36:40 skrll Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.16.6.4 2004/12/18 09:32:50 skrll Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -143,10 +143,10 @@ struct ppp_softc {
 	u_int16_t sc_outfcs;		/* FCS so far for output packet */
 	u_char sc_rawin_start;		/* current char start */
 	struct ppp_rawin sc_rawin;	/* chars as received */
+	LIST_ENTRY(ppp_softc) sc_iflist;
 };
 
 #ifdef _KERNEL
-extern	struct	ppp_softc ppp_softc[];
 
 struct	ppp_softc *pppalloc __P((pid_t));
 void	pppdealloc __P((struct ppp_softc *));

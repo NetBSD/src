@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.37.2.5 2004/09/21 13:30:41 skrll Exp $	*/
+/*	$NetBSD: miivar.h,v 1.37.2.6 2004/12/18 09:32:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_IS_1000X	0x0080		/* is a 1000BASE-X device */
 #define	MIIF_DOPAUSE	0x0100		/* advertise PAUSE capability */
 #define	MIIF_IS_HPNA	0x0200		/* is a HomePNA device */
-#define	MIIF_FORCEANEG	0x0400		/* is a HomePNA device */
+#define	MIIF_FORCEANEG	0x0400		/* force auto-negotiation */
 
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.23.2.3 2004/09/21 13:33:23 skrll Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.23.2.4 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -159,9 +159,9 @@ struct scsi_rezero_unit {
 	u_int8_t control;
 };
 
-#define	SCSI_READ_COMMAND		0x08
-#define SCSI_WRITE_COMMAND		0x0a
-struct scsi_rw {
+#define	SCSI_READ_6_COMMAND		0x08
+#define SCSI_WRITE_6_COMMAND		0x0a
+struct scsi_rw_6 {
 	u_int8_t opcode;
 	u_int8_t addr[3];
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
@@ -172,15 +172,26 @@ struct scsi_rw {
 /*
  * XXX Does ATAPI have an equivalent?
  */
-#define	SCSI_SYNCHRONIZE_CACHE		0x35
-struct scsi_synchronize_cache {
+#define	SCSI_SYNCHRONIZE_CACHE_10	0x35
+struct scsi_synchronize_cache_10 {
 	u_int8_t opcode;
 	u_int8_t flags;
-#define	SSC_RELADR	0x01
+#define	SSC_RELADR	0x01		/* obsolete */
 #define	SSC_IMMED	0x02
+#define	SSC_SYNC_NV	0x04
 	u_int8_t addr[4];
-	u_int8_t reserved;
+	u_int8_t byte7;
 	u_int8_t length[2];
+	u_int8_t control;
+};
+
+#define	SCSI_SYNCHRONIZE_CACHE_16	0x91
+struct scsi_synchronize_cache_16 {
+	u_int8_t opcode;
+	u_int8_t flags;			/* see SYNCHRONIZE CACHE (10) */
+	u_int8_t addr[8];
+	u_int8_t length[4];
+	u_int8_t byte15;
 	u_int8_t control;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.60.2.3 2004/09/21 13:22:42 skrll Exp $ */
+/*	$NetBSD: sbus.c,v 1.60.2.4 2004/12/18 09:31:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60.2.3 2004/09/21 13:22:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60.2.4 2004/12/18 09:31:35 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -435,8 +435,8 @@ sbus_bus_addr(t, btype, offset)
 		if (rp->or_child_space != slot)
 			continue;
 
-		return BUS_ADDR(rp->or_parent_base + offset,
-				rp->or_parent_space);
+		return BUS_ADDR(rp->or_parent_space,
+				rp->or_parent_base + offset);
 	}
 
 	return (0);

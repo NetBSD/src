@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31.6.3 2004/09/21 13:22:56 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.31.6.4 2004/12/18 09:31:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -281,7 +281,7 @@ extern int cputyp;
  * early in locore.s after the machine type has been detected.
  *
  * Note that whenever the macros defined below evaluate to expressions
- * involving variables, the kernel will perform slighly worse due to the
+ * involving variables, the kernel will perform slightly worse due to the
  * extra memory references they'll generate.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.13.2.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: keydb.h,v 1.13.2.4 2004/12/18 09:33:17 skrll Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ struct secasindex {
 	struct sockaddr_storage dst;	/* destination address for SA */
 	u_int16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
 	u_int8_t mode;			/* mode of protocol, see ipsec.h */
-	u_int32_t reqid;		/* reqid id who owned this SA */
+	u_int16_t reqid;		/* reqid id who owned this SA */
 					/* see IPSEC_MANUAL_REQID_MAX. */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.34.2.3 2004/10/19 15:56:57 skrll Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34.2.4 2004/12/18 09:31:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -132,6 +132,10 @@ struct wi_softc	{
 	int			sc_txqueued;	/* FIDs currently queued */
 	int			sc_txstart;	/* next FID to start */
 	int			sc_txstarted;	/* FIDs currently started */
+	int			sc_txcmds;
+
+	int			sc_status;
+
 	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
 	wi_rssdescq_t		sc_rssdfree;
 	int			sc_tx_timer;

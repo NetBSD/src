@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.76.2.5 2004/09/21 13:33:24 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.76.2.6 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -727,6 +727,20 @@ _lto4b(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = val & 0xff;
 }
 
+static __inline void __unused
+_lto8b(u_int64_t val, u_int8_t *bytes)
+{
+
+	bytes[0] = (val >> 56) & 0xff;
+	bytes[1] = (val >> 48) & 0xff;
+	bytes[2] = (val >> 40) & 0xff;
+	bytes[3] = (val >> 32) & 0xff;
+	bytes[4] = (val >> 24) & 0xff;
+	bytes[5] = (val >> 16) & 0xff;
+	bytes[6] = (val >> 8)  & 0xff;
+	bytes[7] = val         & 0xff;
+}
+
 static __inline u_int32_t __unused
 _2btol(const u_int8_t *bytes)
 {
@@ -770,6 +784,22 @@ _5btol(const u_int8_t *bytes)
 	     ((u_int64_t)bytes[2] << 16) |
 	     ((u_int64_t)bytes[3] << 8) |
 	     (u_int64_t)bytes[4];
+	return (rv);
+}
+
+static __inline u_int64_t __unused
+_8btol(const u_int8_t *bytes)
+{
+	u_int64_t rv;
+
+	rv = ((u_int64_t)bytes[0] << 56) |
+	     ((u_int64_t)bytes[1] << 48) |
+	     ((u_int64_t)bytes[2] << 40) |
+	     ((u_int64_t)bytes[3] << 32) |
+	     ((u_int64_t)bytes[4] << 24) |
+	     ((u_int64_t)bytes[5] << 16) |
+	     ((u_int64_t)bytes[6] << 8) |
+	     (u_int64_t)bytes[7];
 	return (rv);
 }
 

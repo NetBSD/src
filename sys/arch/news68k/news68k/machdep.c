@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.2.4 2004/09/21 13:19:30 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.5 2004/12/18 09:31:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.4 2004/09/21 13:19:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.5 2004/12/18 09:31:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -498,7 +498,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Initialize pointer to kernel segment table.
 	 */
-	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
+	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
 
 	/*
 	 * Initialize relocation value such that:
@@ -510,7 +510,7 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)&end;
+	m->relocend = (uint32_t)&end;
 
 	/*
 	 * news68k has one contiguous memory segment.
@@ -560,7 +560,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
@@ -830,7 +830,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 static volatile u_char *dip_switch, *int_status;
 
 volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
-volatile u_char *lance_mem, *ctrl_led, *sccport0a;
+volatile u_char *lance_mem, *sccport0a;
 
 #ifdef news1700
 static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
@@ -901,7 +901,6 @@ news1700_init(void)
 	ctrl_int2	= (u_char *)IIOV(0xe1180000);
 
 	lance_mem	= (u_char *)IIOV(0xe0e00000);
-	ctrl_led	= (u_char *)IIOV(0xe0dc0000);
 	sccport0a	= (u_char *)IIOV(0xe0d40002);
 
 	p = (u_char *)idrom_addr;
@@ -992,7 +991,6 @@ news1200_init(void)
 	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
 
 	lance_mem	= (u_char *)IIOV(0xe1a00000);
-	ctrl_led	= (u_char *)IIOV(0xe1500001);
 	sccport0a	= (u_char *)IIOV(0xe1780002);
 
 	p = (u_char *)idrom_addr;

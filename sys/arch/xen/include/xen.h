@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.8.2.4 2004/09/21 13:24:37 skrll Exp $	*/
+/*	$NetBSD: xen.h,v 1.8.2.5 2004/12/18 09:31:45 skrll Exp $	*/
 
 /*
  *
@@ -56,7 +56,7 @@ void	xenvfr_init(void);
 
 #ifdef XENDEBUG
 void printk(const char *, ...);
-void vprintk(const char *, va_list);
+void vprintk(const char *, _BSD_VA_LIST_);
 #endif
 
 #endif

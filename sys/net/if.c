@@ -1,11 +1,11 @@
-/*	$NetBSD: if.c,v 1.123.2.5 2004/09/21 13:36:35 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.123.2.6 2004/12/18 09:32:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by William Studnemund and Jason R. Thorpe.
+ * by William Studenmund and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.5 2004/09/21 13:36:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.6 2004/12/18 09:32:50 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -271,6 +271,7 @@ struct ifnet_head ifnet;
 size_t if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
+struct ifnet *lo0ifp;
 
 /*
  * Allocate the link level name for the specified interface.  This
@@ -806,8 +807,7 @@ if_clone_destroy(name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
-	(*ifc->ifc_destroy)(ifp);
-	return (0);
+	return ((*ifc->ifc_destroy)(ifp));
 }
 
 /*

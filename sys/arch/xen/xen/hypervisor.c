@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.7.4.4 2004/09/21 13:24:45 skrll Exp $ */
+/* $NetBSD: hypervisor.c,v 1.7.4.5 2004/12/18 09:31:45 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.4 2004/09/21 13:24:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.5 2004/12/18 09:31:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7.4.4 2004/09/21 13:24:45 skrll Exp
 #if NXBD > 0
 #include <sys/buf.h>
 #include <sys/disk.h>
+#include <sys/bufq.h>
 #include <dev/dkvar.h>
 #include <machine/xbdvar.h>
 #endif

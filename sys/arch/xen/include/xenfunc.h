@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.2.2.4 2004/09/21 13:24:37 skrll Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.2.2.5 2004/12/18 09:31:45 skrll Exp $	*/
 
 /*
  *
@@ -117,18 +117,6 @@ ldr6(u_int val)
 {
 
 	HYPERVISOR_set_debugreg(6, val);
-}
-
-static __inline void
-disable_intr(void)
-{
-	__cli();
-}
-
-static __inline void
-enable_intr(void)
-{
-	__sti();
 }
 
 #endif /* _XEN_XENFUNC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6.2.4 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6.2.5 2004/12/18 09:31:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.4 2004/09/21 13:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.5 2004/12/18 09:31:45 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -442,7 +442,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 		devinfo = buf.Pointer;
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
-			rv = acpi_eval_integer(current, METHOD_NAME__BBN, &val);
+			rv = acpi_eval_integer(parent, METHOD_NAME__BBN, &val);
 			AcpiOsFree(buf.Pointer);
 			if (ACPI_SUCCESS(rv))
 				bus = ACPI_LOWORD(val);

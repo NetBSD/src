@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.8.6.1 2004/08/03 10:34:47 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.8.6.2 2004/12/18 09:31:02 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8.6.1 2004/08/03 10:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8.6.2 2004/12/18 09:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
     pdcmatch, pdcattach, NULL, NULL);
 
 extern struct cfdriver pdc_cd;
+
+static int pdc_attached;
 
 dev_type_open(pdcopen);
 dev_type_close(pdcclose);
@@ -139,7 +141,7 @@ pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct confargs *ca = aux;
 
 	/* there could be only one */
-	if (cf->cf_unit > 0 || strcmp(ca->ca_name, "pdc"))
+	if (pdc_attached || strcmp(ca->ca_name, "pdc"))
 		return 0;
 
 	return 1;
@@ -149,6 +151,8 @@ void
 pdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_softc *sc = (struct pdc_softc *)self;
+
+	pdc_attached = 1;
 
 	if (!pdc)
 		pdc_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.35.2.4 2004/11/18 21:20:22 skrll Exp $	*/
+/*	$NetBSD: ofb.c,v 1.35.2.5 2004/12/18 09:31:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.35.2.4 2004/11/18 21:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.35.2.5 2004/12/18 09:31:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -154,7 +154,7 @@ ofbattach(parent, self, aux)
 		node = dc->dc_node;
 		sc->nscreens = 1;
 	} else {
-		int i, len, screenbytes;
+		int len;
 
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
 		memset(dc, 0, sizeof(struct ofb_devconfig));
@@ -172,10 +172,6 @@ ofbattach(parent, self, aux)
 			node = OF_child(node);
 
 		ofb_common_init(node, dc);
-
-		screenbytes = dc->dc_ri.ri_stride * dc->dc_ri.ri_height;
-		for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
-			*(u_int32_t *)(dc->dc_paddr + i) = 0xffffffff;
 	}
 	sc->sc_dc = dc;
 
@@ -193,6 +189,18 @@ ofbattach(parent, self, aux)
 	if (dc->dc_paddr == 0) {
 		printf(": cannot map framebuffer\n");
 		return;
+	}
+
+	/*
+	 * Clear the screen here, instead of above, in case
+	 * ofb_common_init() failed to map the framebuffer.
+	 */
+	if (!console) {
+		int i, screenbytes;
+
+		screenbytes = dc->dc_ri.ri_stride * dc->dc_ri.ri_height;
+		for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
+			*(u_int32_t *)(dc->dc_paddr + i) = 0xffffffff;
 	}
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.77.2.5 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77.2.6 2004/12/18 09:32:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.5 2004/09/21 13:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.6 2004/12/18 09:32:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ fdesc_open(v)
 		 * VOP_OPEN will simply report the error.
 		 */
 		curlwp->l_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
-		return (ENODEV);
+		return EDUPFD;
 
 	case Fctty:
 		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_l));

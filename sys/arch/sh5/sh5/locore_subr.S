@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.18.2.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.18.2.4 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@ Lsh5_init_env:
 	 * Need to convert sh5_resvec_vector_table to a physical
 	 * address.
 	 */
-	LEA(_C_LABEL(sh5_resvec_vector_table) - SH5_KSEG0_BASE, r0)
+	LEA(_C_LABEL(sh5_resvec_vector_table) + (-1 * SH5_KSEG0_BASE), r0)
 	add	r0, r2, r0		/* Convert to phys address */
 	ori	r0, 1, r0		/* MMU off when handling exceptions */
 	putcon  r0, resvec

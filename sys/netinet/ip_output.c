@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.4 2004/10/19 15:58:15 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.5 2004/12/18 09:33:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.4 2004/10/19 15:58:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.5 2004/12/18 09:33:05 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -745,7 +745,10 @@ spd_done:
 	INADDR_TO_IA(ip->ip_src, ia);
 #endif
 
-	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	/* Maybe skip checksums on loopback interfaces. */
+	if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
+			   ip_do_loopback_cksum))
+		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
 	 * If small enough for mtu of path, can just send directly.
@@ -1832,7 +1835,7 @@ ip_freemoptions(imo)
  * Routine called from ip_output() to loop back a copy of an IP multicast
  * packet to the input queue of a specified interface.  Note that this
  * calls the output routine of the loopback "driver", but with an interface
- * pointer that might NOT be &loif -- easier than replicating that code here.
+ * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 static void
 ip_mloopback(ifp, m, dst)

@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.3.6.3 2004/09/21 13:19:44 skrll Exp $        */
+/*      $NetBSD: sd.c,v 1.3.6.4 2004/12/18 09:31:26 skrll Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -115,8 +115,8 @@ sdprobe(char target, char lun)
 int
 sdgetinfo(struct sd_softc *ss)
 {
-    struct scsipi_read_capacity cdb;
-    struct scsipi_read_cap_data cap;
+    struct scsipi_read_capacity_10 cdb;
+    struct scsipi_read_capacity_10_data cap;
     struct sdminilabel *pi = &ss->sc_pinfo;
     struct next68k_disklabel *label;
     int error, i, blklen;
@@ -125,7 +125,7 @@ sdgetinfo(struct sd_softc *ss)
     int sc_blkshift = 0;
 
     bzero(&cdb, sizeof(cdb));
-    cdb.opcode = READ_CAPACITY;
+    cdb.opcode = READ_CAPACITY_10;
     count = sizeof(cap);
     error = scsiicmd(ss->sc_unit, ss->sc_lun, (u_char *)&cdb, sizeof(cdb),
 		     (char *)&cap, &count);
@@ -240,7 +240,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 	   void *buf, size_t *rsize)
 {
     u_long blk = dblk + ss->sc_pinfo.offset[ss->sc_part];
-    struct scsipi_rw_big cdb;
+    struct scsipi_rw_10 cdb;
     int error;
     
     if (size == 0)
@@ -267,7 +267,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 		     blk, tsize, nblks, ss->sc_dev_bsize));
 
 	    bzero(&cdb, sizeof(cdb));
-	    cdb.opcode = READ_BIG;
+	    cdb.opcode = READ_10;
 	    cdb.addr[0] = (blk & 0xff000000) >> 24;
 	    cdb.addr[1] = (blk & 0xff0000) >> 16;
 	    cdb.addr[2] = (blk & 0xff00) >> 8;

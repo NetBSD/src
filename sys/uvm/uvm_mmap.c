@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.74.2.4 2004/09/21 13:39:28 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.74.2.5 2004/12/18 09:33:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.4 2004/09/21 13:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.5 2004/12/18 09:33:32 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -935,6 +935,8 @@ sys_mlock(l, v, retval)
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
 	    0);
+	if (error == EFAULT)
+		error = ENOMEM;
 	return error;
 }
 
@@ -984,6 +986,8 @@ sys_munlock(l, v, retval)
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
 	    0);
+	if (error == EFAULT)
+		error = ENOMEM;
 	return error;
 }
 

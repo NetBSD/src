@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.202.2.8 2004/11/02 07:52:46 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.202.2.9 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.8 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.9 2004/12/18 09:32:21 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -773,8 +773,9 @@ sdstart(struct scsipi_periph *periph)
 	struct sd_softc *sd = (void *)periph->periph_dev;
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
-	struct scsipi_rw_big cmd_big;
-	struct scsi_rw cmd_small;
+	struct scsipi_rw_16 cmd16;
+	struct scsipi_rw_10 cmd_big;
+	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
 	int nblks, cmdlen, error, flags;
@@ -829,33 +830,38 @@ sdstart(struct scsipi_periph *periph)
 			nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 		/*
-		 *  Fill out the scsi command.  If the transfer will
-		 *  fit in a "small" cdb, use it.
+		 * Fill out the scsi command.  Use the smallest CDB possible
+		 * (6-byte, 10-byte, or 16-byte).
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) &&
 		    !(periph->periph_quirks & PQUIRK_ONLYBIG)) {
-			/*
-			 * We can fit in a small cdb.
-			 */
+			/* 6-byte CDB */
 			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
-			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
+			    SCSI_READ_6_COMMAND : SCSI_WRITE_6_COMMAND;
 			_lto3b(bp->b_rawblkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else {
-			/*
-			 * Need a large cdb.
-			 */
+		} else if ((bp->b_rawblkno & 0xffffffff) == bp->b_rawblkno) {
+			/* 10-byte CDB */
 			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
-			    READ_BIG : WRITE_BIG;
+			    READ_10 : WRITE_10;
 			_lto4b(bp->b_rawblkno, cmd_big.addr);
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsipi_generic *)&cmd_big;
+		} else {
+			/* 16-byte CDB */
+			memset(&cmd16, 0, sizeof(cmd16));
+			cmd16.opcode = (bp->b_flags & B_READ) ?
+			    READ_16 : WRITE_16;
+			_lto8b(bp->b_rawblkno, cmd16.addr);
+			_lto4b(nblks, cmd16.length);
+			cmdlen = sizeof(cmd16);
+			cmdp = (struct scsipi_generic *)&cmd16;
 		}
 
 		/* Instrumentation. */
@@ -1462,7 +1468,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	int	sectoff;	/* sector offset of partition */
 	int	totwrt;		/* total number of sectors left to write */
 	int	nwrt;		/* current number of sectors to write */
-	struct scsipi_rw_big cmd;	/* write command */
+	struct scsipi_rw_10 cmd;	/* write command */
 	struct scsipi_xfer *xs;	/* ... convenience */
 	struct scsipi_periph *periph;
 	struct scsipi_channel *chan;
@@ -1518,7 +1524,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		 *  Fill out the scsi command
 		 */
 		memset(&cmd, 0, sizeof(cmd));
-		cmd.opcode = WRITE_BIG;
+		cmd.opcode = WRITE_10;
 		_lto4b(blkno, cmd.addr);
 		_lto2b(nwrt, cmd.length);
 		/*
@@ -1954,7 +1960,7 @@ static int
 sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsi_synchronize_cache cmd;
+	struct scsi_synchronize_cache_10 cmd;
 
 	/*
 	 * If the device is SCSI-2, issue a SYNCHRONIZE CACHE.
@@ -1976,7 +1982,7 @@ sd_flush(struct sd_softc *sd, int flags)
 
 	sd->flags |= SDF_FLUSHING;
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
+	cmd.opcode = SCSI_SYNCHRONIZE_CACHE_10;
 
 	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.5.2.5 2004/11/29 07:24:33 skrll Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.5.2.6 2004/12/18 09:32:35 skrll Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.20 2004/08/15 15:31:46 henning Exp $ */
 
 /*
@@ -133,15 +133,9 @@ pfi_initialize(void)
 void
 pfi_destroy(void)
 {
-	struct pfi_kif *p;
-
-	while ((p = TAILQ_FIRST(&pfi_statehead)) != NULL) {
-		TAILQ_REMOVE(&pfi_statehead, p, pfik_w_states);
-		free(p, PFI_MTYPE);
-	}
 	pool_destroy(&pfi_addr_pl);
 
-	pfi_self = NULL;
+	free(pfi_buffer, PFI_MTYPE);
 }
 #endif
 
@@ -216,7 +210,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	    hook_establish(ifp->if_addrhooks, 1, pfi_kifaddr_update, p);
 #else
 	p->pfik_ah_cookie =
-	    hook_establish(p->pfik_ifaddrhooks, 1, pfi_kifaddr_update, p);
+	    hook_establish(&p->pfik_ifaddrhooks, 1, pfi_kifaddr_update, p);
 #endif
 	pfi_index2kif[ifp->if_index] = p;
 	pfi_dohooks(p);
@@ -242,7 +236,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 #ifdef __OpenBSD__
 	hook_disestablish(p->pfik_ifp->if_addrhooks, p->pfik_ah_cookie);
 #else
-	hook_disestablish(p->pfik_ifaddrhooks, p->pfik_ah_cookie);
+	hook_disestablish(&p->pfik_ifaddrhooks, p->pfik_ah_cookie);
 #endif
 	q = p->pfik_parent;
 	p->pfik_ifp = NULL;
@@ -616,20 +610,11 @@ pfi_if_create(const char *name, struct pfi_kif *q, int flags)
 		return (NULL);
 	}
 	bzero(p->pfik_ah_head, sizeof(*p->pfik_ah_head));
-#ifdef __NetBSD__
-	p->pfik_ifaddrhooks = malloc(sizeof(*p->pfik_ifaddrhooks), PFI_MTYPE,
-	    M_DONTWAIT);
-	if (p->pfik_ifaddrhooks == NULL) {
-		free(p->pfik_ah_head, PFI_MTYPE);
-		free(p, PFI_MTYPE);
-		return (NULL);
-	}
-	bzero(p->pfik_ifaddrhooks, sizeof(*p->pfik_ifaddrhooks));
-#endif
 	TAILQ_INIT(p->pfik_ah_head);
 	TAILQ_INIT(&p->pfik_grouphead);
 #ifdef __NetBSD__
-	TAILQ_INIT(p->pfik_ifaddrhooks);
+	bzero(&p->pfik_ifaddrhooks, sizeof(p->pfik_ifaddrhooks));
+	TAILQ_INIT(&p->pfik_ifaddrhooks);
 #endif
 	strlcpy(p->pfik_name, name, sizeof(p->pfik_name));
 	RB_INIT(&p->pfik_lan_ext);

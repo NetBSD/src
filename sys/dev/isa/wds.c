@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.55.2.3 2004/09/21 13:29:49 skrll Exp $	*/
+/*	$NetBSD: wds.c,v 1.55.2.4 2004/12/18 09:32:08 skrll Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55.2.3 2004/09/21 13:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.55.2.4 2004/12/18 09:32:08 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1080,8 +1080,8 @@ wds_inquire_setup_information(sc)
 
 	/* Print the version number. */
 	printf("%s: version %x.%02x ", sc->sc_dev.dv_xname,
-	    scb->cmd.targ, scb->cmd.scb.opcode);
-	sc->sc_revision = (scb->cmd.targ << 8) | scb->cmd.scb.opcode;
+	    scb->cmd.targ, scb->cmd.scb[0]);
+	sc->sc_revision = (scb->cmd.targ << 8) | scb->cmd.scb[0];
 	/* Print out the version string. */
 	j = 2 + &(scb->cmd.targ);
 	while ((*j >= 32) && (*j < 128)) {
@@ -1176,9 +1176,14 @@ wds_scsipi_request(chan, req, arg)
 		scb->timeout = xs->timeout;
 
 		/* Zero out the command structure. */
+		if (xs->cmdlen > sizeof(scb->cmd.scb)) {
+			printf("%s: cmdlen %d too large for SCB\n",
+			    sc->sc_dev.dv_xname, xs->cmdlen);
+			xs->error = XS_DRIVER_STUFFUP;
+			goto out_bad;
+		}
 		memset(&scb->cmd, 0, sizeof scb->cmd);
-		memcpy(&scb->cmd.scb, xs->cmd,
-		    xs->cmdlen < 12 ? xs->cmdlen : 12);
+		memcpy(&scb->cmd.scb, xs->cmd, xs->cmdlen);
 
 		/* Set up some of the command fields. */
 		scb->cmd.targ = (periph->periph_target << 5) |

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.5 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.6 2004/12/18 09:31:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.5 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.6 2004/12/18 09:31:57 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -3056,6 +3056,7 @@ tlp_idle(sc, bits)
 			switch (sc->sc_chip) {
 			case TULIP_CHIP_AN983:
 			case TULIP_CHIP_AN985:
+			case TULIP_CHIP_DM9102A:
 				/*
 				 * Filter the message out on noisy chips.
 				 */

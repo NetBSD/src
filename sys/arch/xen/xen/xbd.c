@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.9.4.5 2004/11/02 07:51:06 skrll Exp $ */
+/* $NetBSD: xbd.c,v 1.9.4.6 2004/12/18 09:31:45 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.4.5 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.9.4.6 2004/12/18 09:31:45 skrll Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -839,7 +839,7 @@ unmap_align(struct xbdreq *xr)
 		memcpy(xr->xr_bp->b_data, (void *)xr->xr_aligned,
 		    xr->xr_bp->b_bcount);
 	DPRINTF(XBDB_IO, ("unmap_align(%p): bp %p addr %p align 0x%08lx "
-	    "size 0x%04lx\n", xr, xr->xr_bp, xr->xr_bp->b_data,
+	    "size 0x%04x\n", xr, xr->xr_bp, xr->xr_bp->b_data,
 	    xr->xr_aligned, xr->xr_bp->b_bcount));
 	s = splvm();
 	uvm_km_free(kmem_map, xr->xr_aligned, xr->xr_bp->b_bcount);
@@ -1003,7 +1003,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
 	DPRINTF(XBDB_IO, ("xbdstart: addr %p, sector %llu, "
-	    "count %ld [%s]\n", bp->b_data, (unsigned long long)bn,
+	    "count %d [%s]\n", bp->b_data, (unsigned long long)bn,
 	    bp->b_bcount, bp->b_flags & B_READ ? "read" : "write"));
 
 	GET_XBDREQ(pxr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.22.2.3 2004/09/21 13:36:41 skrll Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.22.2.4 2004/12/18 09:32:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.3 2004/09/21 13:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.4 2004/12/18 09:32:51 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -732,7 +732,9 @@ token_input(ifp, m)
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */
 		ifp->if_noproto++;
+#if defined(INET) || defined(NS) || defined(DECNET)
 	dropanyway:
+#endif
 		m_freem(m);
 		return;
 	}

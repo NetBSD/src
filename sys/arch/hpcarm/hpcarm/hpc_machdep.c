@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.68.2.4 2004/09/21 13:16:00 skrll Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.68.2.5 2004/12/18 09:31:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.68.2.4 2004/09/21 13:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.68.2.5 2004/12/18 09:31:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -644,7 +644,7 @@ initarm(argc, argv, bi)
 	 * handler. Until then we will use a handler that just panics but
 	 * tells us why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 	printf("vectors ");
 	data_abort_handler_address = (u_int)data_abort_handler;

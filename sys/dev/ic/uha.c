@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.31.16.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: uha.c,v 1.31.16.4 2004/12/18 09:31:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.31.16.3 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.31.16.4 2004/12/18 09:31:57 skrll Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -469,6 +469,12 @@ uha_scsipi_request(chan, req, arg)
 			mscp->opcode = UHA_SDR;
 			mscp->ca = 0x01;
 		} else {
+			if (xs->cmdlen > sizeof(mscp->scsi_cmd)) {
+				printf("%s: cmdlen %d too large for MSCP\n",
+				    sc->sc_dev.dv_xname, xs->cmdlen);
+				xs->error = XS_DRIVER_STUFFUP;
+				goto out_bad;
+			}
 			mscp->opcode = UHA_TSP;
 			/* XXX Not for tapes. */
 			mscp->ca = 0x01;

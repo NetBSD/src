@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90.2.4 2004/09/21 13:36:35 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.5 2004/12/18 09:32:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ struct if_clone {
 	size_t ifc_namelen;		/* length of name */
 
 	int	(*ifc_create)(struct if_clone *, int);
-	void	(*ifc_destroy)(struct ifnet *);
+	int	(*ifc_destroy)(struct ifnet *);
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
@@ -733,9 +733,7 @@ MALLOC_DECLARE(M_IFMADDR);
 
 extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
-#if 0
-struct ifnet loif[];
-#endif
+extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
 
 char	*ether_sprintf __P((const u_char *));

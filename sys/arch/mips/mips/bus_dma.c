@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9.2.4 2004/09/21 13:18:47 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9.2.5 2004/12/18 09:31:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9.2.4 2004/09/21 13:18:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9.2.5 2004/12/18 09:31:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer(t, map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
