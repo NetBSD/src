@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 1996/04/23 22:54:49 veego Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1996/04/27 20:55:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -241,7 +241,7 @@ struct user;
 struct pcb;
 
 void	clearseg __P((vm_offset_t));
-void	doboot __P((void));
+void	doboot __P((void)) __attribute__((__noreturn__));
 u_long	getdfc __P((void));
 u_long	getsfc __P((void));
 void	loadustp __P((int));
