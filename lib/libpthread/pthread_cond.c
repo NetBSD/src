@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.10 2002/05/20 17:47:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.11 2002/07/16 01:15:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -214,6 +214,8 @@ pthread_cond_wait__callback(void *arg)
 
 	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
 	PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
+	if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
+		a->ptw_cond->ptc_mutex = NULL;
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
 	pthread__sched(self, a->ptw_thread);
 }
