@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2000/08/27 19:34:41 leo Exp $
+#	$NetBSD: list,v 1.16 2000/08/28 07:48:04 leo Exp $
 
 SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -37,7 +37,7 @@ LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/newfs sbin/mount_mfs
 LINK	instbin			sbin/x_ping sbin/ping
-LINK	instbin			sbin/x_route
+LINK	instbin			sbin/x_route sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
