@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.78 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.79 2004/05/30 20:49:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.78 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.79 2004/05/30 20:49:04 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -555,6 +555,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	int s = 0;
 
 	error = 0;
+
+	KASSERT((flags & LK_RETRY) == 0);
 
 	INTERLOCK_ACQUIRE(lkp, lkp->lk_flags, s);
 	if (flags & LK_INTERLOCK)
