@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.9 2001/08/22 15:39:05 hubertf Exp $
+#	$NetBSD: PCCONS,v 1.10 2001/09/02 08:27:07 tsutsui Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -262,8 +262,8 @@ scsibus*	at ahc?
 iha*		at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 scsibus*	at iha?
 
-#siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-#scsibus* 	at siop?
+siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
+scsibus* 	at siop?
 
 #de*		at pci? dev ? function ?
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
