@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.24 2001/06/15 08:24:17 kleink Exp $
+.\"	$NetBSD: install.1,v 1.25 2001/10/11 02:06:32 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd October 11, 2001
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -47,6 +47,9 @@
 .Ek
 .Bk -words
 .Op Fl f Ar flags
+.Ek
+.Bk -words
+.Op Fl M Ar log
 .Ek
 .Bk -words
 .Op Fl m Ar mode
@@ -73,6 +76,9 @@
 .Op Fl f Ar flags
 .Ek
 .Bk -words
+.Op Fl M Ar log
+.Ek
+.Bk -words
 .Op Fl m Ar mode
 .Ek
 .Bk -words
@@ -92,6 +98,9 @@
 .Nm ""
 .Op Fl Up
 .Fl d
+.Bk -words
+.Op Fl M Ar log
+.Ek
 .Bk -words
 .Op Fl m Ar mode
 .Ek
@@ -156,6 +165,15 @@ Specify the target's file flags.
 for a list of possible flags and their meanings.)
 .It Fl g
 Specify a group.
+.It Fl M Ar log
+Write the metadata associated with each item installed to
+.Ar log
+in an
+.Xr mtree 8
+.Dq full path
+compatible format.
+The metadata includes: the file name and file type, and depending upon
+other options, the owner, group, file flags, and modification time.
 .It Fl m
 Specify an alternative mode.
 The default mode is set to rwxr-xr-x (0755).
@@ -220,9 +238,10 @@ Create directories.
 Missing parent directories are created as required.
 .It Fl U
 Indicate that install is running unprivileged, and that it should not
-try to change the owner or the group of the destination.
-A future version of this file may log the owner/group information
-elsewhere; currently, it's just discarded.
+try to change the owner, the group, or the file flags of the destination.
+The information that would have been updated can be stored in a log
+file with
+.Fl M Ar log.
 .El
 .Pp
 By default,
