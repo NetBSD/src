@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1996/10/03 18:42:41 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1996/10/03 19:57:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,10 @@ struct nam2blk {
 #endif
 };
 
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
+
 static int
 findblkmajor(dv)
 	struct device *dv;
@@ -169,6 +173,9 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
+#ifdef RAMDISK_HOOKS
+		printf(" %s[a-h]", fakerdrootdev.dv_xname);
+#endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
@@ -207,9 +214,18 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
+#ifdef RAMDISK_HOOKS
+	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+		dv = &fakerdrootdev;
+		goto gotdisk;
+	}
+#endif
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
+#ifdef RAMDISK_HOOKS
+gotdisk:
+#endif
 			majdev = findblkmajor(dv);
 			if (majdev < 0)
 				panic("parsedisk");
@@ -257,8 +273,13 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
+#ifdef RAMDISK_HOOKS
+	bootdv = &fakerdrootdev;
+	bootpartition = 0;
+#else
 	bootdv = booted_device;
 	bootpartition = booted_partition;
+#endif
 
 	/*
 	 * If 'swap generic' and we couldn't determine root device,
@@ -372,7 +393,7 @@ gotswap:
 		swdevt[1].sw_dev = NODEV;
         } else {
 		/*
-		 * `root DEV swap DEV': honour rootdev/swdevt.
+		 * `root DEV swap DEV': honor rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
 
