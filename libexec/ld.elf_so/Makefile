@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/02/13 02:54:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/21 18:10:24 kleink Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -29,7 +29,8 @@ DPADD+=	${LIBC_PIC}
 
 .if (${OBJECT_FMT} == "ELF")
 # to be installed
-HDRS=	link.h
+INCS=	link.h
+INCSDIR=/usr/include
 .endif
 
 STRIPFLAG=
@@ -38,15 +39,6 @@ STRIPFLAG=
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
-
-includes:
-	@cd ${.CURDIR}; for i in $(HDRS); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include"; \
-	    echo $$j; \
-	    eval "$$j"; \
-	done
 .endif
 
 MKMAN=	no
