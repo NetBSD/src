@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.102 2004/01/09 19:36:28 dbj Exp $
+$NetBSD: UPDATING,v 1.103 2004/01/12 05:01:22 dbj Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -14,7 +14,7 @@ Recent changes:
 	when using those layouts.  If you have been using -current
 	since 20030402, you may find that fsck again signals fatal
 	superblock mismatches.  To work around, you can use
-	fsck -b 32 to restore an alternate superblock.
+	fsck_ffs -b 32 to restore an alternate superblock.
 
 20031203:
 	New binutils builds may fail due to old dependencies.
