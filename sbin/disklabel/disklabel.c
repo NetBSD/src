@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.100 2001/11/29 23:08:53 bjh21 Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.101 2001/12/13 13:52:13 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.100 2001/11/29 23:08:53 bjh21 Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.101 2001/12/13 13:52:13 reinoud Exp $");
 #endif
 #endif	/* not lint */
 
@@ -469,7 +469,7 @@ confirm(const char *txt)
 #endif	/* USE_MBR || USE_ACORN && notyet */
 
 int
-writelabel(int f, const char *boot, struct disklabel *lp)
+writelabel(int f, char *boot, struct disklabel *lp)
 {
 	int	writeable;
 	off_t	sectoffset;
