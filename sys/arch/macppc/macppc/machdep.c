@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1999/05/26 19:16:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1999/06/14 06:22:50 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1021,6 +1021,7 @@ cninit()
 	struct consdev *cp;
 	int l, node;
 	int stdout;
+	int akbd_ih;
 	char type[16];
 
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
@@ -1066,6 +1067,19 @@ cninit()
 			printf("WARNING: stdin is not a keyboard: %s\n",
 			    type);
 			return;
+		}
+
+		/*
+		 * Newer PowerBook G3 has /psuedo-hid and ADB keyboard.
+		 * So, test "`adb-kbd-ihandle" method and use the value if
+		 * it succeeded.
+		 */
+		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1) {
+			int akbd;
+
+			if ((akbd = OF_instance_to_package(akbd_ih)) != -1)
+				node = akbd;
 		}
 
 		node = OF_parent(node);
@@ -1127,6 +1141,7 @@ cninit()
 		 */
 		ofkbd_ihandle = stdin;
 		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc);
+		return;
 	}
 #endif /* NOFB > 0 */
 
