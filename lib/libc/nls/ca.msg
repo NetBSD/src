@@ -181,6 +181,10 @@ $ ENOSR
 90 No hi ha recursos de tipus STREAM
 $ ENOSTR
 91 No és un STREAM
+$ ETIME
+92 Temps d'espera esgotat en el ioctl STREAM
+$ ENOATTR
+93 Atribut inexistent
 $set 2
 $ SIGHUP
 1 Fí de línia (hangup)
