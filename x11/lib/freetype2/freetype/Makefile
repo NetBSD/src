@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/06 03:05:40 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/03/11 16:13:30 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,9 @@ CONFIG_SUBST=	sed -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@exec_prefix@%${X11BINDIR}%' \
 		-e 's%@libdir@%${X11USRLIBDIR}%g' \
 		-e 's%@includedir@%${X11INCDIR}%' \
-		-e 's%@ft_version@%9.0.3%'
+		-e 's%@ft_version@%9.0.3%' \
+		-e 's%@hardcode_libdir_flag_spec@%-Wl,-rpath,${X11USRLIBDIR}%' \
+		-e 's%@LIBZ@%-lz%' \
 
 freetype-config:
 	${CONFIG_SUBST} < ${X11SRCDIR.xc}/extras/freetype2/builds/unix/freetype-config.in > ${.TARGET}
