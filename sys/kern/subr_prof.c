@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.22 2000/12/10 19:29:31 mycroft Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.23 2001/04/28 12:56:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -119,6 +119,10 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
+
+	/* Check we got the necessary memory at startup. */
+	if (gp->kcount == NULL)
+		return (EOPNOTSUPP);
 
 	switch (name[0]) {
 	case GPROF_STATE:
