@@ -752,7 +752,7 @@ semop(p, uap, retval)
 	    
 	    sopptr = &sops[i];
 
-	    if ( sopptr->sem_num < 0 || sopptr->sem_num >= semaptr->sem_nsems ) {
+	    if ( sopptr->sem_num >= semaptr->sem_nsems ) {
 		return(EFBIG);
 	    }
 
