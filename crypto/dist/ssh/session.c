@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.28 2002/12/06 03:39:10 thorpej Exp $	*/
+/*	$NetBSD: session.c,v 1.29 2003/03/24 18:25:22 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -675,6 +675,11 @@ do_login(Session *s, const char *command)
 		if (pw->pw_expire && pw->pw_expire - tv.tv_sec < pw_warntime)
 			printf("Warning: your account expires on %s",
 			    ctime(&pw->pw_expire));
+#ifdef _PASSWORD_CHGNOW
+		if (pw->pw_change == _PASSWORD_CHGNOW) {
+			printf("Warning: your password has expired.  Please change it as soon as possible.\n");
+		} else
+#endif
 		if (pw->pw_change && pw->pw_change - tv.tv_sec < pw_warntime)
 			printf("Warning: your password expires on %s",
 			    ctime(&pw->pw_change));
