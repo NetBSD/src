@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2000/12/19 16:28:07 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2001/01/14 03:26:44 thorpej Exp $	*/
 
 /*
  *
@@ -1027,7 +1027,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splimp();   /* must protect kmem_map/kmem_object with splimp! */
+	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
 	if (pv_cachedva == NULL) {
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
@@ -1039,7 +1039,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	/*
 	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splimp to protect kmem_object
+	 * note: we are still holding splvm to protect kmem_object
 	 */
 
 	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
@@ -1055,7 +1055,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	simple_unlock(&uvmexp.kmem_object->vmobjlock);
 	splx(s);
-	/* splimp now dropped */
+	/* splvm now dropped */
 
 	if (pg == NULL)
 		goto steal_one;
@@ -1321,7 +1321,7 @@ pmap_free_pvpage()
 	vm_map_entry_t dead_entries;
 	struct pv_page *pvp;
 
-	s = splimp(); /* protect kmem_map */
+	s = splvm(); /* protect kmem_map */
 
 	pvp = pv_unusedpgs.tqh_first;
 
@@ -1668,7 +1668,7 @@ pmap_pinit(pmap)
 
 	/*
 	 * we need to lock pmaps_lock to prevent nkpde from changing on
-	 * us.   note that there is no need to splimp to protect us from
+	 * us.   note that there is no need to splvm to protect us from
 	 * malloc since malloc allocates out of a submap and we should have
 	 * already allocated kernel PTPs to cover the range...
 	 */
