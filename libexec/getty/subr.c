@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: subr.c,v 1.7 1994/04/28 22:12:31 pk Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.8 1994/08/15 15:46:44 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -231,15 +231,16 @@ setflags(n)
 	if (NP) {
 		iflag |= IGNPAR;
 		cflag |= CS8;
-	} else if (AP) {
-		iflag |= IGNPAR|ISTRIP;
-		cflag |= CS7;
-	} else if (OP) {
+	} else if (OP && !EP) {
 		iflag |= INPCK|ISTRIP;
 		cflag |= PARENB|PARODD|CS7;
-	} else if (EP) {
+	} else if (EP && !OP) {
 		iflag |= INPCK|ISTRIP;
 		cflag |= PARENB|CS7;
+	} else {
+		/* Other combinations, including `AP' and `EP && OP' */
+		iflag |= IGNPAR|ISTRIP;
+		cflag |= CS7;
 	}
 
 #if 0
@@ -325,103 +326,116 @@ register long flags;
 	cflag = (CREAD);
 	lflag = (ICANON|ISIG|IEXTEN);
 
+	if (flags & TANDEM)
+		iflag |= IXOFF;
+	else
+		iflag &= ~IXOFF;
+	if (flags & ECHO)
+		lflag |= ECHO;
+	else
+		lflag &= ~ECHO;
+	if (flags & CRMOD) {
+		iflag |= ICRNL;
+		oflag |= ONLCR;
+	} else {
+		iflag &= ~ICRNL;
+		oflag &= ~ONLCR;
+	}
+	if (flags & XTABS)
+		oflag |= OXTABS;
+	else
+		oflag &= ~OXTABS;
+
 	if (flags & RAW) {
-		iflag &= IXOFF|IXANY;
-		oflag &= ~OPOST;
-		lflag &= ~(ECHOCTL|ISIG|ICANON|IEXTEN);
+		iflag &= IXOFF;
+		lflag &= ~(ISIG|ICANON|IEXTEN);
 	} else {
 		iflag |= BRKINT|IXON|IMAXBEL;
-		oflag |= OPOST;
-		lflag |= ISIG|IEXTEN|ECHOCTL;	/* XXX was echoctl on ? */
-		if (flags & XTABS)
-			oflag |= OXTABS;
-		else
-			oflag &= ~OXTABS;
+		lflag |= ISIG|IEXTEN;
 		if (flags & CBREAK)
 			lflag &= ~ICANON;
 		else
 			lflag |= ICANON;
-		if (flags&CRMOD) {
-			iflag |= ICRNL;
-			oflag |= ONLCR;
-		} else {
-			iflag &= ~ICRNL;
-			oflag &= ~ONLCR;
-		}
 	}
-	if (flags&ECHO)
-		lflag |= ECHO;
-	else
-		lflag &= ~ECHO;
 		
-	if (flags&(RAW|LITOUT|PASS8)) {
+	switch (flags & ANYP) {
+	case EVENP:
+		iflag |= INPCK;
+		cflag &= ~PARODD;
+		break;
+	case ODDP:
+		iflag |= INPCK;
+		cflag |= PARODD;
+		break;
+	default:
+		iflag &= ~INPCK;
+		break;
+	}
+
+	if (flags & (RAW|LITOUT|PASS8)) {
 		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-		if ((flags&(RAW|PASS8)) == 0)
+		if ((flags & (RAW|PASS8)) == 0)
 			iflag |= ISTRIP;
 		else
 			iflag &= ~ISTRIP;
+		if ((flags & (RAW|LITOUT)) == 0)
+			oflag |= OPOST;
+		else
+			oflag &= ~OPOST;
 	} else {
 		cflag &= ~CSIZE;
 		cflag |= CS7|PARENB;
 		iflag |= ISTRIP;
+		oflag |= OPOST;
 	}
-	if ((flags&(EVENP|ODDP)) == EVENP) {
-		iflag |= INPCK;
-		cflag &= ~PARODD;
-	} else if ((flags&(EVENP|ODDP)) == ODDP) {
-		iflag |= INPCK;
-		cflag |= PARODD;
-	} else 
-		iflag &= ~INPCK;
-	if (flags&LITOUT)
-		oflag &= ~OPOST;	/* move earlier ? */
-	if (flags&TANDEM)
-		iflag |= IXOFF;
-	else
-		iflag &= ~IXOFF;
 
-	if (flags&CRTERA)
-		lflag |= ECHOE;
-	else
-		lflag &= ~ECHOE;
-	if (flags&CRTKIL)
-		lflag |= ECHOKE;
-	else
-		lflag &= ~ECHOKE;
-	if (flags&PRTERA)
+	if (flags & PRTERA)
 		lflag |= ECHOPRT;
 	else
 		lflag &= ~ECHOPRT;
-	if (flags&CTLECH)
-		lflag |= ECHOCTL;
+	if (flags & CRTERA)
+		lflag |= ECHOE;
 	else
-		lflag &= ~ECHOCTL;
-	if ((flags&DECCTQ) == 0)
-		lflag |= IXANY;
-	else
-		lflag &= ~IXANY;
+		lflag &= ~ECHOE;
 	if (flags & MDMBUF)
 		cflag |= MDMBUF;
 	else
 		cflag &= ~MDMBUF;
-	if (flags&NOHANG)
+	if (flags & NOHANG)
 		cflag &= ~HUPCL;
 	else
 		cflag |= HUPCL;
+	if (flags & CRTKIL)
+		lflag |= ECHOKE;
+	else
+		lflag &= ~ECHOKE;
+	if (flags & CTLECH)
+		lflag |= ECHOCTL;
+	else
+		lflag &= ~ECHOCTL;
+	if ((flags & DECCTQ) == 0)
+		lflag |= IXANY;
+	else
+		lflag &= ~IXANY;
 	lflag &= ~(TOSTOP|FLUSHO|PENDIN|NOFLSH);
-	lflag |= flags&(TOSTOP|FLUSHO|PENDIN|NOFLSH);
-	if (flags&(LITOUT|PASS8)) {
-		iflag &= ~ISTRIP;
+	lflag |= flags & (TOSTOP|FLUSHO|PENDIN|NOFLSH);
+
+	if (flags & (RAW|LITOUT|PASS8)) {
 		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-		if (flags&LITOUT)
+		if ((flags & (RAW|PASS8)) == 0)
+			iflag |= ISTRIP;
+		else
+			iflag &= ~ISTRIP;
+		if ((flags & (RAW|LITOUT)) == 0)
+			oflag |= OPOST;
+		else
 			oflag &= ~OPOST;
-		if ((flags&(PASS8|RAW)) == 0)
-  			iflag |= ISTRIP;
-	} else if ((flags&RAW) == 0) {
+	} else {
 		cflag &= ~CSIZE;
 		cflag |= CS7|PARENB;
+		iflag |= ISTRIP;
 		oflag |= OPOST;
 	}
 
