@@ -91,3 +91,5 @@ YFLAGS=-d
 	${LEX} ${LFLAGS} ${.IMPSRC}
 	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
 	rm -f lex.yy.c
+
+.include <bsd.own.mk>

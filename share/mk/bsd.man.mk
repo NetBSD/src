@@ -10,7 +10,7 @@ MANMODE?=	444
 
 MANDIR?=	/usr/share/man/cat
 
-MINSTALL=	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
+MINSTALL=	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
 
 maninstall:
 .if defined(MAN1) && !empty(MAN1)
