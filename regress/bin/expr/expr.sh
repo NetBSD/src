@@ -17,6 +17,14 @@ test_expr '4611686018427387904 + 4611686018427387904' "expr: integer overflow or
 test_expr '4611686018427387904 - -4611686018427387904' "expr: integer overflow or underflow occurred for operation '4611686018427387904 - -4611686018427387904'"
 test_expr '-4611686018427387904 - 4611686018427387903' '-9223372036854775807'
 test_expr '-4611686018427387904 - 4611686018427387905' "expr: integer overflow or underflow occurred for operation '-4611686018427387904 - 4611686018427387905'"
+test_expr '-4611686018427387904 \* 1' '-4611686018427387904'
+test_expr '-4611686018427387904 \* -1' '4611686018427387904'
+test_expr '-4611686018427387904 \* 2' '-9223372036854775808'
+test_expr '-4611686018427387904 \* 3' "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * 3'"
+test_expr '-4611686018427387904 \* -2' "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * -2'"
+test_expr '4611686018427387904 \* 1' '4611686018427387904'
+test_expr '4611686018427387904 \* 2' "expr: integer overflow or underflow occurred for operation '4611686018427387904 * 2'"
+test_expr '4611686018427387904 \* 3' "expr: integer overflow or underflow occurred for operation '4611686018427387904 * 3'"
 
 # Test from gtk-- configure that cause problems on old expr
 test_expr '3 \> 3 \| 3 = 3 \& 4 \> 4 \| 3 = 3 \& 4 = 4 \& 5 \>= 5' '1'
