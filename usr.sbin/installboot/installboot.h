@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.24 2004/03/13 22:51:50 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.25 2004/08/15 22:00:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ typedef enum {
 	IB_TIMEOUT =	1<<17,		/* i386 boot timeout */
 	IB_PASSWORD =	1<<18,		/* i386 boot password */
 	IB_KEYMAP = 	1<<19,		/* i386 console keymap */
+	IB_CONSADDR = 	1<<20,		/* i386 console io address */
 } ib_flags;
 
 typedef struct {
@@ -88,6 +89,7 @@ typedef struct {
 	const char	*command;	/* name of command string */
 	const char	*console;	/* name of console */
 	int		 conspeed;	/* console baud rate */
+	int		 consaddr;	/* console io address */
 	const char	*password;	/* boot password */
 	int		 timeout;	/* interactive boot timeout */
 	const char	*keymap;	/* keyboard translations */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.42 2004/06/25 15:08:45 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.43 2004/08/15 22:00:12 dsl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,6 +251,12 @@ Modify the default boot command line.
 .Sy i386 ]
 Set the console device, \*[Lt]console name\*[Gt] must be one of:
 pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd or com3kbd.
+.
+.It Sy ioaddr=\*[Lt]ioaddr\*[Gt]
+.Sy [ amd64 ,
+.Sy i386 ]
+Set the IO address to be used for the console serial port.
+Defaults to the IO address used by the system BIOS for the specified port.
 .
 .It Sy keymap=\*[Lt]keymap\*[Gt]
 .Sy [ amd64 ,

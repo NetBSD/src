@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.16 2004/06/20 22:20:17 jmc Exp $ */
+/* $NetBSD: i386.c,v 1.17 2004/08/15 22:00:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.16 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: i386.c,v 1.17 2004/08/15 22:00:12 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -63,10 +63,11 @@ i386_setboot(ib_params *params)
 {
 	int		retval, i, bpbsize;
 	uint8_t		*bootstrapbuf;
-	u_int		bootstrapsize;
+	uint		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
-	struct x86_boot_params	*bp;
+	struct x86_boot_params	bp, *bpp;
+	int		bplen;
 	struct mbr_sector	mbr;
 
 	assert(params != NULL);
@@ -182,21 +183,26 @@ i386_setboot(ib_params *params)
 
 	/*
 	 * Fill in any user-specified options into the
-	 *	struct x86_boot_params
+	 *      struct x86_boot_params
 	 * that's 8 bytes in from the start of the third sector.
 	 * See sys/arch/i386/stand/bootxx/bootxx.S for more information.
 	 */
-	bp = (void *)(bootstrapbuf + 512 * 2 + 8);
-	if (le32toh(bp->bp_length) < sizeof *bp) {
-		warnx("Patch area in stage1 bootstrap is too small");
-		goto done;
-	}
+	bpp = (void *)(bootstrapbuf + 512 * 2 + 8);
+	bplen = le32toh(bpp->bp_length);
+	if (bplen > sizeof bp)
+		/* Ignore pad space in bootxx */
+		bplen = sizeof bp;
+	/* Take (and update) local copy so we handle size mismatches */
+	memset(&bp, 0, sizeof bp);
+	memcpy(&bp, bpp, bplen);
 	if (params->flags & IB_TIMEOUT)
-		bp->bp_timeout = htole32(params->timeout);
+		bp.bp_timeout = htole32(params->timeout);
 	if (params->flags & IB_RESETVIDEO)
-		bp->bp_flags |= htole32(X86_BP_FLAGS_RESET_VIDEO);
+		bp.bp_flags |= htole32(X86_BP_FLAGS_RESET_VIDEO);
 	if (params->flags & IB_CONSPEED)
-		bp->bp_conspeed = htole32(params->conspeed);
+		bp.bp_conspeed = htole32(params->conspeed);
+	if (params->flags & IB_CONSADDR)
+		bp.bp_consaddr = htole32(params->consaddr);
 	if (params->flags & IB_CONSOLE) {
 		static const char *names[] = {
 			"pc", "com0", "com1", "com2", "com3",
@@ -214,17 +220,25 @@ i386_setboot(ib_params *params)
 			if (strcmp(names[i], params->console) == 0)
 				break;
 		}
-		bp->bp_consdev = htole32(i);
+		bp.bp_consdev = htole32(i);
 	}
 	if (params->flags & IB_PASSWORD) {
 		MD5_CTX md5ctx;
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, params->password, strlen(params->password));
-		MD5Final(bp->bp_password, &md5ctx);
-		bp->bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
+		MD5Final(bp.bp_password, &md5ctx);
+		bp.bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
 	}
 	if (params->flags & IB_KEYMAP)
-		strlcpy(bp->bp_keymap, params->keymap, sizeof bp->bp_keymap);
+		strlcpy(bp.bp_keymap, params->keymap, sizeof bp.bp_keymap);
+	/* Check we aren't trying to set anything we can't save */
+	if (bplen < sizeof bp && memcmp((char *)&bp + bplen,
+					(char *)&bp + bplen + 1,
+					sizeof bp - bplen - 1) != 0) {
+		warnx("Patch area in stage1 bootstrap is too small");
+		goto done;
+	}
+	memcpy(bpp, &bp, bplen);
 
 	if (params->flags & IB_NOWRITE) {
 		retval = 1;
