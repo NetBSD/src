@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.29 2002/08/29 16:35:04 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.30 2002/08/29 17:46:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -286,8 +286,18 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 		}
 		splx(s);
 	} else {
+		SCHED_LOCK(s);
 		sa->sa_vp = NULL;
-		lwp_exit(l);
+		p->p_nrlwps--;
+		sa_putcachelwp(p, l);
+		mi_switch(l, NULL);
+		/*
+		 * This isn't quite a NOTREACHED; we may get here if
+		 * the process exits before this LWP is reused. In
+		 * that case, we want to call lwp_exit(), which will
+		 * be done by the userret() hooks.
+		 */
+		KDASSERT(p->p_flag & P_WEXIT);
 		/* NOTREACHED */
 	}
 	return (0);
