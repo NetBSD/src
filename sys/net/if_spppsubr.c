@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.31 2001/12/08 19:46:39 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.32 2001/12/10 00:22:21 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.31 2001/12/08 19:46:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.32 2001/12/10 00:22:21 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2006,6 +2006,10 @@ sppp_lcp_up(struct sppp *sp)
 			lcp.Open(sp);
 		} else if (debug)
 			addlog("\n");
+	} else if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0 &&
+		   (sp->state[IDX_LCP] == STATE_INITIAL)) {
+			ifp->if_flags |= IFF_RUNNING;
+			lcp.Open(sp);
 	}
 
 	sppp_up_event(&lcp, sp);
