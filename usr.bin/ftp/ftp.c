@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.79 1999/10/05 13:44:39 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.80 1999/10/05 22:04:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.79 1999/10/05 13:44:39 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.80 1999/10/05 22:04:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -750,6 +750,7 @@ sendrequest(cmd, local, remote, printnames)
 		code = -1;
 		goto cleanupsend;
 	}
+	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, abortsend);
 	if (strcmp(local, "-") == 0) {
 		fin = stdin;
@@ -944,9 +945,19 @@ sendrequest(cmd, local, remote, printnames)
 	goto cleanupsend;
 
 abort:
+	(void)xsignal(SIGINT, oldintr);
+	oldintr = NULL;
 	if (!cpend) {
 		code = -1;
 		goto cleanupsend;
+	}
+	if (data >= 0) {
+		(void)close(data);
+		data = -1;
+	}
+	if (dout) {
+		(void)fclose(dout);
+		dout = NULL;
 	}
 	(void)getreply(0);
 	code = -1;
@@ -954,18 +965,18 @@ abort:
 		ptransfer(0);
 
 cleanupsend:
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
-	if (oldintr)
-		(void)xsignal(SIGINT, oldintr);
-	if (closefunc != NULL && fin != NULL)
-		(*closefunc)(fin);
-	if (dout)
-		(void)fclose(dout);
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
 	}
+	if (oldintr)
+		(void)xsignal(SIGINT, oldintr);
+	if (oldintp)
+		(void)xsignal(SIGPIPE, oldintp);
+	if (closefunc != NULL && fin != NULL)
+		(*closefunc)(fin);
+	if (dout)
+		(void)fclose(dout);
 	progress = oprogress;
 	restart_point = 0;
 	bytes = 0;
@@ -1045,6 +1056,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		code = -1;
 		goto cleanuprecv;
 	}
+	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, abortrecv);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
 		if (access(local, W_OK) < 0) {
@@ -1314,28 +1326,29 @@ abort:
 			/*
 			 * abort using RFC 959 recommended IP,SYNC sequence
 			 */
-	code = -1;
 	(void)xsignal(SIGINT, SIG_IGN);
 	if (!cpend) {
+		code = -1;
 		goto cleanuprecv;
 	}
 	abort_remote(din);
+	code = -1;
 	if (bytes > 0)
 		ptransfer(0);
 
 cleanuprecv:
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
-	if (oldintr)
-		(void)xsignal(SIGINT, oldintr);
-	if (closefunc != NULL && fout != NULL)
-		(*closefunc)(fout);
-	if (din)
-		(void)fclose(din);
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
 	}
+	if (oldintr)
+		(void)xsignal(SIGINT, oldintr);
+	if (oldintp)
+		(void)xsignal(SIGPIPE, oldintp);
+	if (closefunc != NULL && fout != NULL)
+		(*closefunc)(fout);
+	if (din)
+		(void)fclose(din);
 	progress = oprogress;
 	preserve = opreserve;
 	bytes = 0;
