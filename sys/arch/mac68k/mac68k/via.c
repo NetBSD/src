@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.20 1995/04/29 20:23:53 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.21 1995/06/20 05:13:19 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -334,10 +334,11 @@ slot_noint(void *client_data, int slot)
 }
 
 
-void via_shutdown()
+void
+via_shutdown()
 {
 	if(VIA2 == VIA2OFF){
-		via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2/
+		via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2 */
 		via_reg(VIA2, vBufB) &= ~0x04; /* Shut down */
 	}else if(VIA2 == RBVOFF){
 		via_reg(VIA2, rBufB) &= ~0x04;
