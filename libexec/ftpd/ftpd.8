@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.36 1999/05/17 15:14:54 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.37 1999/07/02 05:52:14 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,9 +120,13 @@ The case of the requests is ignored.
 .It CDUP Ta "change to parent of current working directory"
 .It CWD Ta "change working directory"
 .It DELE Ta "delete a file"
+.It EPSV Ta "prepare for server-to-server transfer"
+.It EPRT Ta "specify data connection port"
 .It FEAT Ta "list extra features that are not defined in" Cm "RFC 959"
 .It HELP Ta "give help information"
 .It LIST Ta "give list files in a directory" Pq Dq Li "ls -lgA"
+.It LPSV Ta "prepare for server-to-server transfer"
+.It LPRT Ta "specify data connection port"
 .It MKD Ta "make a directory"
 .It MDTM Ta "show last modification time of file"
 .It MODE Ta "specify data transfer" Em mode
@@ -447,7 +451,8 @@ If class is
 .Dq none
 or
 .Sy off
-is given, disallow passive (PASV) connections.  Otherwise, enable them.
+is given, disallow passive (PASV/LPSV/EPSV) connections.
+Otherwise, enable them.
 .It Sy timeout Ar class Ar time
 Set the inactivity timeout period.
 (the default is fifteen minutes).
@@ -664,8 +669,17 @@ Use of this option is
 .Em strongly
 recommended.
 .Pp
+When running on IPv6, connection from IPv4 mapped address
+.Pq IPv4 connection to IPv6 socket
+is not supported yet.
+Please run two daemons, one for IPv4 and one for IPv6, for the moment.
+.Pp
 Don't create
 .Pa ~ftp/tmp
 if you don't want anonymous users to upload files there.
 That directory is only necessary if you want to display the error
 messages of conversion commands to the user.
+.Pp
+.Nm
+Does not accept LPSV on IPv4 at this moment, which it should.
+.\" EPSV/EPRT is the way to go so it is non-issue.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.31 1999/05/26 13:30:10 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.32 1999/07/02 05:52:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.31 1999/05/26 13:30:10 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.32 1999/07/02 05:52:14 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.31 1999/05/26 13:30:10 lukem Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #ifdef KERBEROS5
 #include <krb5.h>
@@ -100,6 +101,7 @@ extern	jmp_buf		errcatch;
 %token
 	A	B	C	E	F	I
 	L	N	P	R	S	T
+	ALL
 
 	SP	CRLF	COMMA
 
@@ -117,6 +119,8 @@ extern	jmp_buf		errcatch;
 
 	SIZE	MDTM
 
+	LPRT	LPSV	EPRT	EPSV
+
 	MAIL	MLFL	MRCP	MRSQ	MSAM	MSND
 	MSOM
 
@@ -125,6 +129,7 @@ extern	jmp_buf		errcatch;
 	LEXERR
 
 %token	<s> STRING
+%token	<s> ALL
 %token	<i> NUMBER
 
 %type	<i> check_login check_modify octal_number byte_size
@@ -218,11 +223,14 @@ cmd
 			if ($2) {
 					/* be paranoid, if told so */
 			if (curclass.checkportcmd &&
-			    ((ntohs(data_dest.sin_port) < IPPORT_RESERVED) ||
-			    memcmp(&data_dest.sin_addr, &his_addr.sin_addr,
-			    sizeof(data_dest.sin_addr)) != 0)) {
+			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
+			    memcmp(&data_dest.su_sin.sin_addr,
+			    &his_addr.su_sin.sin_addr,
+			    sizeof(data_dest.su_sin.sin_addr)) != 0)) {
 				reply(500,
 				    "Illegal PORT command rejected");
+			} else if (epsvall) {
+				reply(501, "PORT disallowed after EPSV ALL");
 			} else {
 				usedefault = 0;
 				if (pdata >= 0) {
@@ -231,7 +239,140 @@ cmd
 				}
 				reply(200, "PORT command successful.");
 			}
+
 			}
+		}
+
+	| LPRT check_login SP host_long_port CRLF
+		{
+			/* be paranoid, if told so */
+			if (curclass.checkportcmd &&
+			    ((ntohs(data_dest.su_port) <
+			      IPPORT_RESERVED) ||
+			    memcmp(&data_dest.su_sin6.sin6_addr,
+				   &his_addr.su_sin6.sin6_addr,
+			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)) {
+				reply(500, "Illegal LPRT command rejected");
+				return (NULL);
+			}
+			if (epsvall)
+				reply(501, "LPRT disallowed after EPSV ALL");
+			else {
+				usedefault = 0;
+				if (pdata >= 0) {
+					(void) close(pdata);
+					pdata = -1;
+				}
+				reply(200, "LPRT command successful.");
+			}
+		}
+
+	| EPRT check_login SP STRING CRLF
+		{
+			char *tmp = NULL;
+			char *result[3];
+			char *p, *q;
+			char delim;
+			struct addrinfo hints;
+			struct addrinfo *res;
+			int i;
+
+			if (epsvall) {
+				reply(501, "EPRT disallowed after EPSV ALL");
+				goto eprt_done;
+			}
+			usedefault = 0;
+			if (pdata >= 0) {
+				(void) close(pdata);
+				pdata = -1;
+			}
+
+			/*XXX checks for login */
+
+			tmp = strdup($4);
+			if (!tmp) {
+				fatal("not enough core.");
+				/*NOTREACHED*/
+			}
+			p = tmp;
+			delim = p[0];
+			p++;
+			memset(result, 0, sizeof(result));
+			for (i = 0; i < 3; i++) {
+				q = strchr(p, delim);
+				if (!q || *q != delim) {
+		parsefail:
+					reply(500, "Invalid argument, rejected.");
+					if (tmp)
+						free(tmp);
+					usedefault = 1;
+					goto eprt_done;
+				}
+				*q++ = '\0';
+				result[i] = p;
+				p = q;
+			}
+
+			/* some more sanity check */
+			p = result[0];
+			while (*p) {
+				if (!isdigit(*p))
+					goto parsefail;
+				p++;
+			}
+			p = result[2];
+			while (*p) {
+				if (!isdigit(*p))
+					goto parsefail;
+				p++;
+			}
+
+			memset(&hints, 0, sizeof(hints));
+			if (atoi(result[0]) == 1)
+				hints.ai_family = PF_INET;
+			if (atoi(result[0]) == 2)
+				hints.ai_family = PF_INET6;
+			else
+				hints.ai_family = PF_UNSPEC;	/*XXX*/
+			hints.ai_socktype = SOCK_STREAM;
+			if (getaddrinfo(result[1], result[2], &hints, &res))
+				goto parsefail;
+			memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
+			/* be paranoid, if told so */
+			if (curclass.checkportcmd) {
+				int fail;
+				fail = 0;
+				if (ntohs(data_dest.su_port) < IPPORT_RESERVED)
+					fail++;
+				if (data_dest.su_family != his_addr.su_family)
+					fail++;
+				if (data_dest.su_len != his_addr.su_len)
+					fail++;
+				switch (data_dest.su_family) {
+				case AF_INET:
+					fail += memcmp(&data_dest.su_sin.sin_addr,
+					    &his_addr.su_sin.sin_addr,
+					    sizeof(data_dest.su_sin.sin_addr));
+					break;
+				case AF_INET6:
+					fail += memcmp(&data_dest.su_sin6.sin6_addr,
+					    &his_addr.su_sin6.sin6_addr,
+					    sizeof(data_dest.su_sin6.sin6_addr));
+					break;
+				default:
+					fail++;
+				}
+				if (fail) {
+					reply(500,
+					    "Illegal EPRT command rejected");
+					return (NULL);
+				}
+			}
+			free(tmp);
+			tmp = NULL;
+
+			reply(200, "EPRT command successful.");
+		eprt_done:;
 		}
 
 	| PASV check_login CRLF
@@ -241,6 +382,47 @@ cmd
 			} else {
 				reply(500, "PASV mode not available.");
 			}
+		}
+
+	| LPSV CRLF
+		{
+			if (epsvall)
+				reply(501, "LPSV disallowed after EPSV ALL");
+			else
+				long_passive("LPSV", AF_INET6);
+		}
+
+	| EPSV SP NUMBER CRLF
+		{
+			int pf;
+			switch ($3) {
+			case 1:
+				pf = PF_INET;
+				break;
+			case 2:
+				pf = PF_INET6;
+				break;
+			default:
+				pf = -1;	/*junk*/
+				break;
+			}
+			long_passive("EPSV", pf);
+		}
+
+	| EPSV SP ALL CRLF
+		{
+			if (!logged_in) {
+				syslog(LOG_NOTICE, "long passive but not logged in");
+				reply(503, "Login with USER first.");
+			} else {
+				reply(200, "EPSV ALL command successful.");
+				epsvall++;
+			}
+		}
+
+	| EPSV CRLF
+		{
+			long_passive("EPSV", PF_UNSPEC);
 		}
 
 	| TYPE SP type_code CRLF
@@ -699,12 +881,35 @@ host_port
 		{
 			char *a, *p;
 
-			data_dest.sin_len = sizeof(struct sockaddr_in);
-			data_dest.sin_family = AF_INET;
-			p = (char *)&data_dest.sin_port;
+			data_dest.su_len = sizeof(struct sockaddr_in);
+			data_dest.su_family = AF_INET;
+			p = (char *)&data_dest.su_sin.sin_port;
 			p[0] = $9; p[1] = $11;
-			a = (char *)&data_dest.sin_addr;
+			a = (char *)&data_dest.su_sin.sin_addr;
 			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
+		}
+	;
+
+host_long_port
+	: NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER COMMA NUMBER COMMA NUMBER COMMA NUMBER COMMA
+		NUMBER
+		{
+			char *a, *p;
+
+			data_dest.su_sin6.sin6_len =
+				sizeof(struct sockaddr_in6);
+			data_dest.su_family = AF_INET6;
+			p = (char *)&data_dest.su_port;
+			p[0] = $39; p[1] = $41;
+			a = (char *)&data_dest.su_sin6.sin6_addr;
+			 a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
+			 a[4] = $13;  a[5] = $15;  a[6] = $17;  a[7] = $19;
+			 a[8] = $21;  a[9] = $23; a[10] = $25; a[11] = $27;
+			a[12] = $29; a[13] = $31; a[14] = $33; a[15] = $35;
 		}
 	;
 
@@ -953,7 +1158,11 @@ struct tab cmdtab[] = {
 	{ "QUIT", QUIT, NOARGS,	1, 0,	"(terminate service)", },
 	{ "REIN", REIN, NOARGS,	0, 0,	"(reinitialize server state)" },
 	{ "PORT", PORT, ARGS,	1, 0,	"<sp> b0, b1, b2, b3, b4" },
+	{ "LPRT", LPRT, ARGS,	1, 0,	"<sp> af, hal, h1, h2, h3,..., pal, p1, p2..." },
+	{ "EPRT", EPRT, STR1,	1, 0,	"<sp> |af|addr|port|" },
 	{ "PASV", PASV, NOARGS,	1, 0,	"(set server in passive mode)" },
+	{ "LPSV", LPSV, ARGS,	1, 0,	"(set server in passive mode)" },
+	{ "EPSV", EPSV, ARGS,	1, 0,	"[<sp> af|ALL]" },
 	{ "TYPE", TYPE, ARGS,	1, 0,	"<sp> [ A | E | I | L ]" },
 	{ "STRU", STRU, ARGS,	1, 0,	"(specify file structure)" },
 	{ "MODE", MODE, ARGS,	1, 0,	"(specify transfer mode)" },
@@ -1027,6 +1236,8 @@ static	void		opts __P((const char *));
 static	void		sizecmd __P((char *));
 static	void		toolong __P((int));
 static	int		yylex __P((void));
+
+extern int epsvall;
 
 static struct tab *
 lookup(p, cmd)
@@ -1291,6 +1502,12 @@ yylex()
 			yylval.i = atoi(cp);
 			cbuf[cpos] = c;
 			return (NUMBER);
+		}
+		if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0
+		 && !isalnum(cbuf[cpos + 3])) {
+			yylval.s = xstrdup("ALL");
+			cpos += 3;
+			return ALL;
 		}
 		switch (cbuf[cpos++]) {
 
