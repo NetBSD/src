@@ -1,4 +1,4 @@
-/*	$NetBSD: pef.h,v 1.3 1999/06/28 00:56:31 sakamoto Exp $	*/
+/*	$NetBSD: pef.h,v 1.4 1999/06/28 01:03:55 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.4 1999/06/28 00:51:10 sakamoto Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.5 1999/06/28 01:03:55 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -44,28 +44,16 @@
 #include <sys/uio.h>
 #include <sys/exec_elf.h>
 #include <machine/endian.h>
+#include <machine/bswap.h>
 #include "pef.h"
 #include "magic.h"
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-unsigned long
-_BE_long(val)
-	unsigned long val;
-{
-	unsigned char *p = (unsigned char *)&val;
-	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0));
-}
-
-unsigned short
-_BE_short(val)
-	unsigned short val;
-{
-	unsigned char *p = (unsigned char *)&val;
-	return ((p[0] << 8) | (p[1] << 0));
-}
+#define	_BE_long(x)	bswap32(x)
+#define	_BE_short(x)	bswap16(x)
 #else
-#define _BE_long(x) (x)
-#define _BE_short(x) (x)
+#define	_BE_long(x) (x)
+#define	_BE_short(x) (x)
 #endif
 
 /*
@@ -119,9 +107,9 @@ main(argc, argv)
 			exit(2);
 		}
 		break;
-	
+
 	default:
-		fprintf(stderr, "usage: %s <ELF> <PEF> [<kernel.gz>]\n",
+		fprintf(stderr, "usage: %s <ELF> <PEF> [<kernel>]\n",
 			argv[0]);
 		exit(1);
 	}
@@ -185,27 +173,27 @@ main(argc, argv)
 		}
 	}
 
-	ldrOffset = align(sizeof(fileHdr) + sizeof(textHdr) +
-		sizeof(dataHdr) + sizeof(ldrHdr));
-	dataOffset = align(ldrOffset + sizeof(lh));
-	textOffset = align(dataOffset + sizeof(entry_vector) + kern_len);
+	ldrOffset = align(sizeof (fileHdr) + sizeof (textHdr) +
+		sizeof (dataHdr) + sizeof (ldrHdr));
+	dataOffset = align(ldrOffset + sizeof (lh));
+	textOffset = align(dataOffset + sizeof (entry_vector) + kern_len);
 
 	/*
 	 * Create the File Header
 	 */
-	bzero(&fileHdr, sizeof(fileHdr));
+	bzero(&fileHdr, sizeof (fileHdr));
 	fileHdr.magic = _BE_long(PEF_MAGIC);
 	fileHdr.fileTypeID = _BE_long(PEF_FILE);
 	fileHdr.archID = _BE_long(PEF_PPC);
 	fileHdr.versionNumber = _BE_long(1);
 	fileHdr.numSections = _BE_short(3);
 	fileHdr.loadableSections = _BE_short(2);
-	write(pef_fd, &fileHdr, sizeof(fileHdr));
+	write(pef_fd, &fileHdr, sizeof (fileHdr));
 
 	/*
 	 * Create the Section Header for TEXT
 	 */
-	bzero(&textHdr, sizeof(textHdr));
+	bzero(&textHdr, sizeof (textHdr));
 	textHdr.sectionName = _BE_long(-1);
 	textHdr.sectionAddress = _BE_long(0);
 	textHdr.execSize = _BE_long(elf_image_len);
@@ -215,42 +203,42 @@ main(argc, argv)
 	textHdr.regionKind = CodeSection;
 	textHdr.shareKind = ContextShare;
 	textHdr.alignment = 4;  /* 16 byte alignment */
-	write(pef_fd, &textHdr, sizeof(textHdr));
+	write(pef_fd, &textHdr, sizeof (textHdr));
 
 	/*
 	 * Create the Section Header for DATA
 	 */
-	bzero(&dataHdr, sizeof(dataHdr));
+	bzero(&dataHdr, sizeof (dataHdr));
 	dataHdr.sectionName = _BE_long(-1);
 	dataHdr.sectionAddress = _BE_long(0);
-	dataHdr.execSize = _BE_long(sizeof(entry_vector) + kern_len);
-	dataHdr.initSize = _BE_long(sizeof(entry_vector) + kern_len);
-	dataHdr.rawSize = _BE_long(sizeof(entry_vector) + kern_len);
+	dataHdr.execSize = _BE_long(sizeof (entry_vector) + kern_len);
+	dataHdr.initSize = _BE_long(sizeof (entry_vector) + kern_len);
+	dataHdr.rawSize = _BE_long(sizeof (entry_vector) + kern_len);
 	dataHdr.fileOffset = _BE_long(dataOffset);
 	dataHdr.regionKind = DataSection;
 	dataHdr.shareKind = ContextShare;
 	dataHdr.alignment = 4;  /* 16 byte alignment */
-	write(pef_fd, &dataHdr, sizeof(dataHdr));
+	write(pef_fd, &dataHdr, sizeof (dataHdr));
 
 	/*
 	 * Create the Section Header for loader stuff
 	 */
-	bzero(&ldrHdr, sizeof(ldrHdr));
+	bzero(&ldrHdr, sizeof (ldrHdr));
 	ldrHdr.sectionName = _BE_long(-1);
 	ldrHdr.sectionAddress = _BE_long(0);
-	ldrHdr.execSize = _BE_long(sizeof(lh)); 
-	ldrHdr.initSize = _BE_long(sizeof(lh)); 
-	ldrHdr.rawSize = _BE_long(sizeof(lh)); 
+	ldrHdr.execSize = _BE_long(sizeof (lh));
+	ldrHdr.initSize = _BE_long(sizeof (lh));
+	ldrHdr.rawSize = _BE_long(sizeof (lh));
 	ldrHdr.fileOffset = _BE_long(ldrOffset);
 	ldrHdr.regionKind = LoaderSection;
 	ldrHdr.shareKind = GlobalShare;
 	ldrHdr.alignment = 4;  /* 16 byte alignment */
-	write(pef_fd, &ldrHdr, sizeof(ldrHdr));
+	write(pef_fd, &ldrHdr, sizeof (ldrHdr));
 
 	/*
 	 * Create the Loader Header
 	 */
-	bzero(&lh, sizeof(lh));
+	bzero(&lh, sizeof (lh));
 	lh.entryPointSection = _BE_long(1);	/* Data */
 	lh.entryPointOffset = _BE_long(0);
 	lh.initPointSection = _BE_long(-1);
@@ -258,15 +246,15 @@ main(argc, argv)
 	lh.termPointSection = _BE_long(-1);
 	lh.termPointOffset = _BE_long(0);
 	lseek(pef_fd, ldrOffset, 0);
-	write(pef_fd, &lh, sizeof(lh));
+	write(pef_fd, &lh, sizeof (lh));
 
 	/*
 	 * Copy the pseudo-DATA
 	 */
-	bzero(entry_vector, sizeof(entry_vector));
+	bzero(entry_vector, sizeof (entry_vector));
 	entry_vector[0] = _BE_long(ENTRY);	/* Magic */
 	lseek(pef_fd, dataOffset, 0);
-	write(pef_fd, entry_vector, sizeof(entry_vector));
+	write(pef_fd, entry_vector, sizeof (entry_vector));
 
 	if (kern_len) {
 		int tmp;
@@ -276,7 +264,7 @@ main(argc, argv)
 			exit(3);
 		}
 		if (read(kern_fd, (void *)kern_image, kern_stat.st_size) !=
-		     kern_stat.st_size) {
+		    kern_stat.st_size) {
 			fprintf(stderr, "Can't read kernel '%s' : %s\n",
 				argv[3], strerror(errno));
 			exit(3);
