@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.754 2005/01/12 00:09:48 reinoud Exp $
+# $NetBSD: mi,v 1.755 2005/01/20 04:26:00 ginsbach Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -374,6 +374,7 @@
 ./usr/share/man/cat1/sed.0			man-util-catman		.cat
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman	.cat
 ./usr/share/man/cat1/setextattr.0		man-util-catman		.cat
+./usr/share/man/cat1/seq.0			man-util-catman		.cat
 ./usr/share/man/cat1/sftp.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat1/sh.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
@@ -2560,6 +2561,7 @@
 ./usr/share/man/man1/sed.1			man-util-man		.man
 ./usr/share/man/man1/send-pr.1			man-gnats-man		.man
 ./usr/share/man/man1/setextattr.1		man-util-man		.man
+./usr/share/man/man1/seq.1			man-util-man		.man
 ./usr/share/man/man1/sftp.1			man-secsh-man		crypto,.man
 ./usr/share/man/man1/sh.1			man-util-man		.man
 ./usr/share/man/man1/sha1.1			man-util-man		.man
