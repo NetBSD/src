@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.29 1996/10/13 03:47:36 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.30 1996/10/30 00:24:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -99,6 +99,12 @@
 #include "sireg.h"
 #include "sivar.h"
 
+/*
+ * Transfers smaller than this are done using PIO
+ * (on assumption they're not worth DMA overhead)
+ */
+#define	MIN_DMA_LEN 128
+
 int si_debug = 0;
 #ifdef	DEBUG
 static int si_link_flags = 0 /* | SDEV_DB2 */ ;
@@ -142,6 +148,22 @@ si_attach(sc)
 	struct ncr5380_softc *ncr_sc = (void *)sc;
 	volatile struct si_regs *regs = sc->sc_regs;
 	int i;
+
+	/*
+	 * Support the "options" (config file flags).
+	 */
+	if ((sc->sc_options & SI_DO_RESELECT) != 0)
+		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
+	if ((sc->sc_options & SI_DMA_INTR) == 0)
+		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+#if 1	/* XXX - Temporary */
+	/* XXX - In case we think DMA is completely broken... */
+	if ((sc->sc_options & SI_ENABLE_DMA) == 0) {
+		/* Override this function pointer. */
+		ncr_sc->sc_dma_alloc = NULL;
+	}
+#endif
+	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	/*
 	 * Fill in the prototype scsi_link.

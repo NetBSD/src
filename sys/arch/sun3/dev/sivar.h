@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.1 1996/03/26 15:01:15 gwr Exp $	*/
+/*	$NetBSD: sivar.h,v 1.2 1996/10/30 00:24:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,11 +71,18 @@ struct si_softc {
 	volatile struct si_regs	*sc_regs;
 	int		sc_adapter_type;
 	int		sc_adapter_iv_am;	/* int. vec + address modifier */
+	int 	sc_options;			/* options for this instance */
 	int 	sc_reqlen;  		/* requested transfer length */
 	struct si_dma_handle *sc_dma;
 	/* DMA command block for the OBIO controller. */
 	void *sc_dmacmd;
 };
+
+/* Options.  Interesting values are: 1,3,7 */
+#define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
+#define SI_DMA_INTR 	2	/* DMA completion interrupts */
+#define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
+/* The options are taken from the config file (PR#1929) */
 
 extern int si_debug;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.4 1996/10/13 03:47:37 christos Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.5 1996/10/30 00:24:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -103,12 +103,6 @@
 #include "sireg.h"
 #include "sivar.h"
 
-/*
- * Transfers smaller than this are done using PIO
- * (on assumption they're not worth DMA overhead)
- */
-#define	MIN_DMA_LEN 128
-
 void si_vme_dma_setup __P((struct ncr5380_softc *));
 void si_vme_dma_start __P((struct ncr5380_softc *));
 void si_vme_dma_eop __P((struct ncr5380_softc *));
@@ -130,9 +124,6 @@ struct cfattach si_vmes_ca = {
 
 /* Options.  Interesting values are: 1,3,7 */
 int si_vme_options = 3;
-#define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
-#define SI_DMA_INTR 	2	/* DMA completion interrupts */
-#define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
 
 
 static int
@@ -142,7 +133,7 @@ si_vmes_match(parent, vcf, args)
 {
 	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
-	int x, probe_addr;
+	int probe_addr;
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {
@@ -151,13 +142,6 @@ si_vmes_match(parent, vcf, args)
 	}
 #endif
 
-	if ((cpu_machine_id == SUN3_MACH_50) ||
-	    (cpu_machine_id == SUN3_MACH_60) )
-	{
-		/* Sun3/50 or Sun3/60 do not have VME. */
-		return(0);
-	}
-
 	/*
 	 * Other Sun3 models may have VME "si" or "sc".
 	 * This driver has no default address.
@@ -165,13 +149,9 @@ si_vmes_match(parent, vcf, args)
 	if (ca->ca_paddr == -1)
 		return (0);
 
-	/* Default interrupt priority always splbio==2 */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 2;
-
 	/* Make sure there is something there... */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1);
-	if (x == -1)
+	probe_addr = ca->ca_paddr + 1;
+	if (bus_peek(ca->ca_bustype, probe_addr, 1) == -1)
 		return (0);
 
 	/*
@@ -181,8 +161,8 @@ si_vmes_match(parent, vcf, args)
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
 	/* Note: the "si" board should NOT respond here. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 0x801, 1);
-	if (x != -1) {
+	probe_addr = ca->ca_paddr + 0x801;
+	if (bus_peek(ca->ca_bustype, probe_addr, 1) != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
 		printf("si_vmes_match: May be an `sc' board at pa=0x%x\n",
@@ -191,9 +171,12 @@ si_vmes_match(parent, vcf, args)
 		return(0);
 	}
 
-    return (1);
-}
+	/* Default interrupt priority (always splbio==2) */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 2;
 
+	return (1);
+}
 
 static void
 si_vmes_attach(parent, self, args)
@@ -201,33 +184,26 @@ si_vmes_attach(parent, self, args)
 	void		*args;
 {
 	struct si_softc *sc = (struct si_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int s;
 
-	/* XXX: Get options from flags... */
-	printf(" : options=%d\n", si_vme_options);
-
-	ncr_sc->sc_flags = 0;
-	if (si_vme_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
-	if ((si_vme_options & SI_DMA_INTR) == 0)
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+	/* Get options from config flags... */
+	sc->sc_options = si_vme_options;
+	printf(": options=%d\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
-	sc->sc_adapter_iv_am =
-		VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
-
 	sc->sc_regs = (struct si_regs *)
 		bus_mapin(ca->ca_bustype, ca->ca_paddr,
 				sizeof(struct si_regs));
+	sc->sc_adapter_iv_am =
+		VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
 
 	/*
 	 * MD function pointers used by the MI code.
 	 */
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 	ncr_sc->sc_pio_in =  ncr5380_pio_in;
-
 	ncr_sc->sc_dma_alloc = si_dma_alloc;
 	ncr_sc->sc_dma_free  = si_dma_free;
 	ncr_sc->sc_dma_setup = si_vme_dma_setup;
@@ -237,16 +213,6 @@ si_vmes_attach(parent, self, args)
 	ncr_sc->sc_dma_stop  = si_vme_dma_stop;
 	ncr_sc->sc_intr_on   = si_vme_intr_on;
 	ncr_sc->sc_intr_off  = si_vme_intr_off;
-
-	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
-
-#if 1	/* XXX - Temporary */
-	/* XXX - In case we think DMA is completely broken... */
-	if ((si_vme_options & SI_ENABLE_DMA) == 0) {
-		/* Override this function pointer. */
-		ncr_sc->sc_dma_alloc = NULL;
-	}
-#endif
 
 	/* Attach interrupt handler. */
 	isr_add_vectored(si_intr, (void *)sc,

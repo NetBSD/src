@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.31 1996/10/13 03:47:31 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.32 1996/10/30 00:24:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -109,22 +109,16 @@ le_match(parent, vcf, aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
-	int pa, x;
 
-	/*
-	 * OBIO match functions may be called for every possible
-	 * physical address, so match only our physical address.
-	 */
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_AMD_ETHER;
-	}
-	if (pa != ca->ca_paddr)
+	/* Make sure there is something there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
-	/* The peek returns -1 on bus error. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
-	return (x != -1);
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 3;
+
+	return (1);
 }
 
 void
@@ -136,12 +130,6 @@ le_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
-	int intpri;
-
-	/* Default interrupt level. */
-	if ((intpri = cf->cf_intpri) == -1)
-		intpri = 3;
-	printf(" level %d", intpri);
 
 	lesc->sc_r1 = (struct lereg1 *)
 	    obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);
@@ -166,5 +154,5 @@ le_attach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Install interrupt handler. */
-	isr_add_autovect(am7990_intr, (void *)sc, intpri);
+	isr_add_autovect(am7990_intr, (void *)sc, ca->ca_intpri);
 }

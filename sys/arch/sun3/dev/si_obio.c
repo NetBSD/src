@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.4 1996/10/13 03:47:37 christos Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.5 1996/10/30 00:24:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -128,9 +128,6 @@ struct cfattach si_obio_ca = {
 /* Options.  Interesting values are: 1,3,7 */
 /* XXX: Using 1 for now to mask a (pmap?) bug not yet found... */
 int si_obio_options = 1;	/* XXX */
-#define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
-#define SI_DMA_INTR 	2	/* DMA completion interrupts */
-#define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
 
 
 static int
@@ -140,38 +137,16 @@ si_obio_match(parent, vcf, args)
 {
 	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
-	int pa, x;
-
-#ifdef	DIAGNOSTIC
-	if (ca->ca_bustype != BUS_OBIO) {
-		printf("si_obio_match: bustype %d?\n", ca->ca_bustype);
-		return (0);
-	}
-#endif
-
-	/*
-	 * OBIO match functions may be called for every possible
-	 * physical address, so match only our physical address.
-	 */
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_NCR_SCSI;
-	}
-	if (pa != ca->ca_paddr)
-		return (0);
-
-#if 0
-	if ((cpu_machine_id != SUN3_MACH_50) &&
-	    (cpu_machine_id != SUN3_MACH_60) )
-	{
-		/* Only 3/50 and 3/60 have the obio si. */
-		return (0);
-	}
-#endif
 
 	/* Make sure there is something there... */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1);
-	return (x != -1);
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1) == -1)
+		return (0);
+
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 2;
+
+	return (1);
 }
 
 static void
@@ -183,21 +158,10 @@ si_obio_attach(parent, self, args)
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int intpri;
 
-	/* Default interrupt level. */
-	if ((intpri = cf->cf_intpri) == -1)
-		intpri = 2;
-	printf(" level %d", intpri);
-
-	/* XXX: Get options from flags... */
-	printf(" : options=%d\n", si_obio_options);
-
-	ncr_sc->sc_flags = 0;
-	if (si_obio_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
-	if ((si_obio_options & SI_DMA_INTR) == 0)
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+	/* Get options from config flags... */
+	sc->sc_options = si_obio_options;
+	printf(": options=%d\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
 	sc->sc_regs = (struct si_regs *)
@@ -218,21 +182,11 @@ si_obio_attach(parent, self, args)
 	ncr_sc->sc_intr_on   = NULL;
 	ncr_sc->sc_intr_off  = NULL;
 
-	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
-
-#if 1	/* XXX - Temporary */
-	/* XXX - In case we think DMA is completely broken... */
-	if ((si_obio_options & SI_ENABLE_DMA) == 0) {
-		/* Override this function pointer. */
-		ncr_sc->sc_dma_alloc = NULL;
-	}
-#endif
-
 	/* Need DVMA-capable memory for the UDC command block. */
 	sc->sc_dmacmd = dvma_malloc(sizeof (struct udc_table));
 
 	/* Attach interrupt handler. */
-	isr_add_autovect(si_intr, (void *)sc, intpri);
+	isr_add_autovect(si_intr, (void *)sc, ca->ca_intpri);
 
 	/* Do the common attach stuff. */
 	si_attach(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.3 1996/10/13 03:47:49 christos Exp $	*/
+/*	$NetBSD: intreg.c,v 1.4 1996/10/30 00:24:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -93,15 +93,8 @@ intreg_match(parent, vcf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_INTERREG;
-	} else {
-		/* Validate the given PA. */
-		if (pa != OBIO_INTERREG)
-			panic("clock: wrong address");
-	}
-	if (pa != ca->ca_paddr)
+	/* Validate the given address. */
+	if (ca->ca_paddr != OBIO_INTERREG)
 		return (0);
 
 	return (1);
