@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.47.4.2 2001/06/17 22:27:07 he Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.47.4.3 2001/11/25 20:07:35 he Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -224,7 +224,8 @@ svr4_setmcontext(p, mc, flags)
 		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_fs = r[SVR4_X86_FS];
+		tf->tf_gs = r[SVR4_X86_GS];
 		tf->tf_es = r[SVR4_X86_ES];
 		tf->tf_ds = r[SVR4_X86_DS];
 		tf->tf_eflags = r[SVR4_X86_EFL];
