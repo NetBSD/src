@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/12 18:55:28 cjs Exp $
+#	$NetBSD: Makefile,v 1.4 2001/06/03 13:42:12 simonb Exp $
 
 PROG=       bzip2recover
-WARNS=	    0
-CWARNFLAGS=-Wall -Wstrict-prototypes -Wpointer-arith
 LDSTATIC?= -static
-MKMAN=no
+MKMAN=	   no
+
+DIST=	   ${.CURDIR}/../../dist/bzip2
+.PATH:	   ${DIST}
 
 .include <bsd.prog.mk>

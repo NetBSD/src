@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 2001/02/05 01:35:45 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2001/06/03 13:42:11 simonb Exp $
 
-PROG=      bzip2
+PROG=	   bzip2
 LDSTATIC?= -static
-LDADD+=	   -lbz2
+LDDIR!=	   cd ${.CURDIR}/../../lib/libbz2 ; make print-objdir
+LDADD+=	   -L${LDDIR} -lbz2
 DPADD+=	   ${LIBBZ2}
+
+DIST=	   ${.CURDIR}/../../dist/bzip2
+.PATH:	   ${DIST}
 
 .include <bsd.own.mk>
 
