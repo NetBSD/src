@@ -1,4 +1,4 @@
-/*	$NetBSD: hpftodit.cpp,v 1.2 2004/08/01 10:19:26 martin Exp $	*/
+/*	$NetBSD: hpftodit.cpp,v 1.3 2004/08/02 13:03:17 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1994, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
@@ -158,7 +158,7 @@ struct entry {
   char present;
   uint16 type;
   uint32 count;
-  intptr_t value;
+  uint32 value;
   entry() : present(0) { }
 };
 
@@ -550,7 +550,8 @@ output_font_name(File &f)
       *p++ = f.get_byte();
   }
   else			// value contains the string
-    sprintf(font_name, "%.*s", count, (char*)(tag_info(font_name_tag).value));
+    sprintf(font_name, "%.*s",
+	    count, (char*)&(tag_info(font_name_tag).value));
 
   // remove any trailing space
   p = font_name + count - 1;
@@ -719,13 +720,17 @@ read_and_output_pcltypeface(File &f)
 {
   printf("pcltypeface ");
   require_tag(typeface_tag);
-  f.seek(tag_info(typeface_tag).value);
-  for (uint32 i = 0; i < tag_info(typeface_tag).count; i++) {
-    unsigned char c = f.get_byte();
-    if (c == '\0')
-      break;
-    putchar(c);
+  if (tag_info(typeface_tag).count > 4) {
+    f.seek(tag_info(typeface_tag).value);
+    for (uint32 i = 0; i < tag_info(typeface_tag).count; i++) {
+      unsigned char c = f.get_byte();
+      if (c == '\0')
+	break;
+      putchar(c);
+    }
   }
+  else
+    printf("%.4s", (char *)&(tag_info(typeface_tag).value));
   printf("\n");
 }
 
@@ -1170,7 +1175,7 @@ dump_ascii(File &f, tag_type t)
       printf("%c", f.get_byte());
   }
   else
-    printf("%.4s", (char*)(tag_info(t).value));
+    printf("%.4s", (char*)&(tag_info(t).value));
   putchar('"');
 }
 
