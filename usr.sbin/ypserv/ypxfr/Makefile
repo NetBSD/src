@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/08/09 10:15:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/06 20:46:48 gwr Exp $
 
 PROG=	ypxfr
 SRCS=	ypxfr.c ypdb.c yplog.c yplib_host.c ypresp_xdr.c
 MAN=	ypxfr.8
-.PATH:	${.CURDIR}/../common
+.PATH.c: ${.CURDIR}/../common
 CFLAGS+=-I${.CURDIR}/../common
 
 .include <bsd.prog.mk>

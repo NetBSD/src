@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/27 08:59:22 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 1997/05/06 20:45:53 gwr Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
@@ -29,7 +29,7 @@ SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 MLINKS= vi.1 ex.1 vi.1 view.1
 
-.PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
+.PATH.c: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
 cat=	dutch english german ru_SU.KOI8-R swedish
 FILES=${cat:S@^@${.CURDIR}/../catalog/@g}

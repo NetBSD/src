@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/03/21 15:06:07 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/06 20:45:01 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	teachgammon
@@ -10,7 +10,7 @@ LDADD=	-ltermcap -lcompat
 HIDEGAME=hidegame
 NOMAN=	noman
 
-.PATH:	${.CURDIR}/../common_source
+.PATH.c: ${.CURDIR}/../common_source
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
