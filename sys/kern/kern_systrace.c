@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.39 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.40 2004/05/26 16:28:05 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.39 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.40 2004/05/26 16:28:05 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -1191,7 +1191,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	iov.iov_len = io->strio_len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(long)io->strio_offs;
+	uio.uio_offset = (off_t)(unsigned long)io->strio_offs;
 	uio.uio_resid = io->strio_len;
 	uio.uio_segflg = UIO_USERSPACE;
 	uio.uio_procp = p;
