@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.11 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.12 2004/03/14 12:49:31 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.11 2004/03/14 01:19:42 cl Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.12 2004/03/14 12:49:31 he Exp $");
 
+#include <sys/types.h>
 #include <sys/lock.h>
 #include <sys/ras.h>
 
