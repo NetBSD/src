@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.120 1999/11/23 08:38:30 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.121 1999/12/15 12:09:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -217,7 +217,8 @@ audioattach(parent, self, aux)
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, oclass;
+	int iclass, oclass, props;
+	const char *sep = "";
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -240,10 +241,23 @@ audioattach(parent, self, aux)
         }
 #endif
 
-	if (hwp->get_props(hdlp) & AUDIO_PROP_FULLDUPLEX)
-		printf(": full duplex\n");
+#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+
+	props = hwp->get_props(hdlp);
+
+	if (props & AUDIO_PROP_FULLDUPLEX)
+		PRINT(": full duplex");
 	else
-		printf(": half duplex\n");
+		PRINT(": half duplex");
+
+	if (props & AUDIO_PROP_MMAP)
+		PRINT("mmap");
+	if (props & AUDIO_PROP_INDEPENDENT)
+		PRINT("independent");
+
+	printf("\n");
+
+#undef PRINT
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
