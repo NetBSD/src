@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.14 2003/09/07 15:59:39 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.15 2003/09/12 07:38:11 itojun Exp $	*/
 /*	$KAME: keydb.c,v 1.81 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.14 2003/09/07 15:59:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.15 2003/09/12 07:38:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -110,6 +110,10 @@ keydb_delsecpolicy(p)
 	TAILQ_REMOVE(&sptailq, p, tailq);
 	if (p->spidx)
 		free(p->spidx, M_SECA);
+#ifdef SADB_X_EXT_TAG
+	if (p->tag)
+		m_nametag_unref(p->tag);
+#endif
 	free(p, M_SECA);
 }
 
