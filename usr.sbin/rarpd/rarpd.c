@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.21.2.2 1998/05/08 08:50:13 mycroft Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.21.2.3 1998/07/29 16:14:41 mellon Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,15 +28,15 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.21.2.2 1998/05/08 08:50:13 mycroft Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.21.2.3 1998/07/29 16:14:41 mellon Exp $");
 #endif
 
 
 /*
  * rarpd - Reverse ARP Daemon
  *
- * Usage:	rarpd -a [ -d -f ]
- *		rarpd [ -d -f ] interface
+ * Usage:	rarpd -a [-d|-f] [-l]
+ *		rarpd [-d|-f] [-l] interface
  */
 
 #include <sys/types.h>
@@ -70,6 +70,8 @@ __RCSID("$NetBSD: rarpd.c,v 1.21.2.2 1998/05/08 08:50:13 mycroft Exp $");
 #include <syslog.h>
 #include <unistd.h>
 
+#include "pathnames.h"
+
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
 
@@ -100,13 +102,14 @@ int	main __P((int, char **));
 void	rarp_loop __P((void));
 int	rarp_open __P((char *));
 void	rarp_process __P((struct if_info *, u_char *));
-void	rarp_reply __P((struct if_info *, struct ether_header *, u_long));
+void	rarp_reply __P((struct if_info *, struct ether_header *, u_long,
+			struct hostent *));
 void	rarperr __P((int, const char *,...));
 
 #if defined(__NetBSD__)
 #include "mkarp.h"
 #else
-void  update_arptab __P((u_char *, u_long));
+void	update_arptab __P((u_char *, u_long));
 #endif
 
 void	usage __P((void));
@@ -121,6 +124,7 @@ int	rarp_bootable __P((u_long));
 int     aflag = 0;		/* listen on "all" interfaces  */
 int     dflag = 0;		/* print debugging messages */
 int     fflag = 0;		/* don't fork */
+int	lflag = 0;		/* log all replies */
 
 int
 main(argc, argv)
@@ -129,14 +133,14 @@ main(argc, argv)
 {
 	extern char *__progname;
 
-	int     op, pid, devnull, f;
+	int     op, pid, devnull;
 	char   *ifname, *hostname;
 
 	/* All error reporting is done through syslogs. */
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "adf")) != -1) {
+	while ((op = getopt(argc, argv, "adfl")) != -1) {
 		switch (op) {
 		case 'a':
 			++aflag;
@@ -148,6 +152,10 @@ main(argc, argv)
 
 		case 'f':
 			++fflag;
+			break;
+
+		case 'l':
+			++lflag;
 			break;
 
 		default:
@@ -166,6 +174,8 @@ main(argc, argv)
 		init_one(ifname);
 
 	if ((!fflag) && (!dflag)) {
+		FILE *fp;
+
 		pid = fork();
 		if (pid > 0)
 			/* Parent exits, leaving child in background. */
@@ -175,25 +185,23 @@ main(argc, argv)
 				rarperr(FATAL, "cannot fork");
 				/* NOTREACHED */
 			}
-		/* Fade into the background */
-		f = open("/dev/tty", O_RDWR);
-		if (f >= 0) {
-			if (ioctl(f, TIOCNOTTY, 0) < 0) {
-				rarperr(FATAL,
-				    "TIOCNOTTY: %s", strerror(errno));
-				/* NOTREACHED */
-			}
-			(void) close(f);
+
+		/* write pid file */
+		if ((fp = fopen(_PATH_RARPDPID, "w")) != NULL) {
+			fprintf(fp, "%u\n", getpid());
+			(void)fclose(fp);
 		}
-		(void) chdir("/");
-		(void) setpgrp(0, getpid());
+
+		/* Fade into the background */
+		(void)setsid();
+		(void)chdir("/");
 		devnull = open("/dev/null", O_RDWR);
 		if (devnull >= 0) {
-			(void) dup2(devnull, 0);
-			(void) dup2(devnull, 1);
-			(void) dup2(devnull, 2);
+			(void)dup2(devnull, 0);
+			(void)dup2(devnull, 1);
+			(void)dup2(devnull, 2);
 			if (devnull > 2)
-				(void) close(devnull);
+				(void)close(devnull);
 		}
 	}
 	rarp_loop();
@@ -237,7 +245,7 @@ init_one(ifname)
 void
 init_all()
 {
-	char inbuf[8192];
+	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	int fd;
@@ -273,14 +281,14 @@ init_all()
 			continue;
 		init_one(ifr->ifr_name);
 	}
-	(void) close(fd);
+	(void)close(fd);
 }
 
 void
 usage()
 {
-	(void) fprintf(stderr, "usage: rarpd -a [ -d -f ]\n");
-	(void) fprintf(stderr, "       rarpd [ -d -f ] interface\n");
+	(void) fprintf(stderr, "usage: rarpd -a [-d|-f] [-l]\n");
+	(void) fprintf(stderr, "       rarpd [-d|-f] [-l] interface\n");
 	exit(1);
 }
 
@@ -293,7 +301,7 @@ bpf_open()
 
 	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void) sprintf(device, "/dev/bpf%d", n++);
+		(void)sprintf(device, "/dev/bpf%d", n++);
 		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
 
@@ -340,7 +348,8 @@ rarp_open(device)
 		rarperr(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
+	(void)strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name - 1);
+	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
 		if (aflag) {	/* for -a skip non-ethernet interfaces */
 			close(fd);
@@ -487,7 +496,7 @@ rarp_loop()
 			fd = ii->ii_fd;
 			if (!FD_ISSET(fd, &listeners))
 				continue;
-	again:
+		again:
 			cc = read(fd, (char *) buf, bufsize);
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
@@ -498,7 +507,7 @@ rarp_loop()
 			if (cc < 0) {
 				if (errno == EINVAL &&
 				    (lseek(fd, 0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(fd, 0, 0);
+					(void)lseek(fd, 0, 0);
 					goto again;
 				}
 				rarperr(FATAL, "read: %s", strerror(errno));
@@ -541,7 +550,7 @@ rarp_bootable(addr)
 	char    ipname[9];
 	static DIR *dd = 0;
 
-	(void) sprintf(ipname, "%08X", addr);
+	(void)sprintf(ipname, "%08X", addr);
 	/* If directory is already open, rewind it.  Otherwise, open it. */
 	if (d = dd)
 		rewinddir(d);
@@ -575,6 +584,7 @@ choose_ipaddr(alist, net, netmask)
 	u_int32_t net;
 	u_int32_t netmask;
 {
+
 	for (; *alist; ++alist) {
 		if ((**alist & netmask) == net)
 			return **alist;
@@ -628,7 +638,7 @@ rarp_process(ii, pkt)
 #ifdef REQUIRE_TFTPBOOT
 	if (rarp_bootable(htonl(target_ipaddr)))
 #endif
-		rarp_reply(ii, ep, target_ipaddr);
+		rarp_reply(ii, ep, target_ipaddr, hp);
 #ifdef REQUIRE_TFTPBOOT
 	else
 		debug("%08X not bootable", htonl(target_ipaddr));
@@ -643,7 +653,7 @@ lookup_eaddr(ifname, eaddr)
 	char *ifname;
 	u_char *eaddr;
 {
-	char inbuf[8192];
+	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
@@ -703,7 +713,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 		rarperr(FATAL, "socket: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	(void) strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
+	(void)strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	if (ioctl(fd, SIOCGIFADDR, (char *) &ifr) < 0) {
 		rarperr(FATAL, "SIOCGIFADDR: %s", strerror(errno));
 		/* NOTREACHED */
@@ -711,6 +721,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 	*addrp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
 	if (ioctl(fd, SIOCGIFNETMASK, (char *) &ifr) < 0) {
 		perror("SIOCGIFNETMASK");
+		unlink(_PATH_RARPDPID);
 		exit(1);
 	}
 	*netmaskp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
@@ -719,7 +730,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 	if (*netmaskp == 0)
 		*netmaskp = ipaddrtonetmask(*addrp);
 
-	(void) close(fd);
+	(void)close(fd);
 }
 /*
  * Poke the kernel arp tables with the ethernet/ip address combinataion
@@ -752,7 +763,7 @@ update_arptab(ep, ipaddr)
 	if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
 		rarperr(NONFATAL, "SIOCSARP: %s", strerror(errno));
 	}
-	(void) close(s);
+	(void)close(s);
 #endif
 }
 #endif
@@ -791,10 +802,11 @@ update_arptab(ep, ipaddr)
  * ARP request.
  */
 void
-rarp_reply(ii, ep, ipaddr)
+rarp_reply(ii, ep, ipaddr, hp)
 	struct if_info *ii;
 	struct ether_header *ep;
 	u_long  ipaddr;
+	struct hostent *hp;
 {
 	int     n;
 #ifdef __NetBSD__
@@ -849,6 +861,9 @@ rarp_reply(ii, ep, ipaddr)
 	len = sizeof(*ep) + sizeof(*ap);
 #endif
 
+	if (lflag)
+		syslog(LOG_INFO, "%s asked; %s replied", hp->h_name, 
+		    ether_ntoa((struct ether_addr *)ar_tha(ap)));
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len) {
 		rarperr(NONFATAL, "write: only %d of %d bytes written", n, len);
@@ -862,6 +877,7 @@ u_long
 ipaddrtonetmask(addr)
 	u_long  addr;
 {
+
 	if (IN_CLASSA(addr))
 		return IN_CLASSA_NET;
 	if (IN_CLASSB(addr))
@@ -890,6 +906,7 @@ va_dcl
 #endif
 {
 	va_list ap;
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -897,16 +914,18 @@ va_dcl
 #endif
 	if (dflag) {
 		if (fatal)
-			(void) fprintf(stderr, "rarpd: error: ");
+			(void)fprintf(stderr, "rarpd: error: ");
 		else
-			(void) fprintf(stderr, "rarpd: warning: ");
-		(void) vfprintf(stderr, fmt, ap);
-		(void) fprintf(stderr, "\n");
+			(void)fprintf(stderr, "rarpd: warning: ");
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-	if (fatal)
+	if (fatal) {
+		unlink(_PATH_RARPDPID);
 		exit(1);
+	}
 	/* NOTREACHED */
 }
 
@@ -927,9 +946,9 @@ va_dcl
 	va_start(ap);
 #endif
 	if (dflag) {
-		(void) fprintf(stderr, "rarpd: ");
-		(void) vfprintf(stderr, fmt, ap);
-		(void) fprintf(stderr, "\n");
+		(void)fprintf(stderr, "rarpd: ");
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_WARNING, fmt, ap);
 	va_end(ap);
