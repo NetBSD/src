@@ -1,10 +1,8 @@
-/*	$NetBSD: irframe_tty.c,v 1.14 2001/12/13 15:09:07 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.15 2001/12/13 17:14:21 augustss Exp $	*/
 
 /*
  * TODO
- * Implement dongle support.
- * Test!!!
- * Get rid of MAX_IRDA_FRAME
+ *  Test dongle code.
  */
 
 /*
