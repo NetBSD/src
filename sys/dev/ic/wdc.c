@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.115 2002/06/12 09:55:47 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.116 2002/07/26 14:10:22 wiz Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.115 2002/06/12 09:55:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.116 2002/07/26 14:10:22 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -847,7 +847,7 @@ __wdcwait_reset(chp, drv_mask)
 		}
 		delay(WDCDELAY);
 	}
-	/* Reset timed out. Maybe it's because drv_mask was not rigth */
+	/* Reset timed out. Maybe it's because drv_mask was not right */
 	if (st0 & WDCS_BSY)
 		drv_mask &= ~0x01;
 	if (st1 & WDCS_BSY)
@@ -1063,7 +1063,7 @@ wdc_probe_caps(drvp)
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
 		 * SET FEATURE, limit it to 7 (so limit i to 4).
-		 * If higther mode than 7 is found, abort.
+		 * If higher mode than 7 is found, abort.
 		 */
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
