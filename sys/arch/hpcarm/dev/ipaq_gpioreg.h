@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.4 2001/07/15 13:29:38 ichiro Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.5 2001/07/15 20:19:31 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -83,6 +83,8 @@ Extended GPIO
  */
 
 #define GPIO_H3600_POWER_BUTTON	GPIO (0)
+#define GPIO_H3600_CLK_SET0	GPIO (12)
+#define GPIO_H3600_CLK_SET1	GPIO (13)
 #define GPIO_H3600_PCMCIA_CD0	GPIO (17)
 #define GPIO_H3600_PCMCIA_CD1	GPIO (10)
 #define GPIO_H3600_PCMCIA_IRQ0	GPIO (21)

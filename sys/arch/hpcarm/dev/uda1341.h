@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.h,v 1.1 2001/07/15 08:34:36 ichiro Exp $	*/
+/*	$NetBSD: uda1341.h,v 1.2 2001/07/15 20:19:32 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -106,18 +106,19 @@
 #define DATA2_MODE_MIN		(2<<0)	/* Mode filter is minimum */
 #define DATA2_MODE_MAX		(3<<0)	/* Mode filter is maximum */
 #define DATA2_MUTE		(1<<2)	/* Mute on */
+#define DATA2_PP		(1<<5)	/* Peak Detection */
 #define DATA2_COMMON		(2<<6)	/* DATA0_2 common bits(6-7) */
 
 /* Data0 extended programming registers (16 bits) */
-#define EXT_ADDR_COMMON		(3<<14)	/* Extended Address Common bits */
-# define EXT_ADDR_E0		(0<<8)	/* Extended Address of E0 */
-# define EXT_ADDR_E1		(1<<8)	/* Extended Address of E1 */
-# define EXT_ADDR_E2		(2<<8)	/* Extended Address of E2 */
-# define EXT_ADDR_E3		(4<<8)	/* Extended Address of E3 */
-# define EXT_ADDR_E4		(5<<8)	/* Extended Address of E4 */
-# define EXT_ADDR_E5		(6<<8)	/* Extended Address of E5 */
+#define EXT_ADDR_COMMON		(3<<6)	/* Extended Address Common bits */
+# define EXT_ADDR_E0		0	/* Extended Address of E0 */
+# define EXT_ADDR_E1		1	/* Extended Address of E1 */
+# define EXT_ADDR_E2		2	/* Extended Address of E2 */
+# define EXT_ADDR_E3		4	/* Extended Address of E3 */
+# define EXT_ADDR_E4		5	/* Extended Address of E4 */
+# define EXT_ADDR_E5		6	/* Extended Address of E5 */
 
-#define EXT_DATA_COMMN		(7<<13) /* Extended Data Common bits */
+#define EXT_DATA_COMMN		(7<<5) /* Extended Data Common bits */
 #define DATA_E0_MA(val)		((((val) + 1) * 31) / 100)
 					/* mixer gain control val=(0<->100) */
 #define DATA_E1_MB(val)		((((val) + 1) * 31) / 100)
