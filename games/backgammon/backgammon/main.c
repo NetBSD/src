@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/07/19 00:33:58 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/07/28 23:15:51 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1999/07/19 00:33:58 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1999/07/28 23:15:51 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,7 +69,7 @@ const char   *const contin[] = {		/* pause message */
 	0
 };
 static const char rules[] = "\nDo you want the rules of the game?";
-static const char noteach[] = "Teachgammon not available!\n\007";
+static const char noteach[] = "Teachgammon not available!\n\a";
 static const char need[] = "Do you need instructions for this program?";
 static const char askcol[] =
 "Enter 'r' to play red, 'w' to play white, 'b' to play both:";
