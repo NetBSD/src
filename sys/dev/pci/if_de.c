@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.56 1997/10/20 14:32:46 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.57 1997/10/27 02:10:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5295,25 +5295,29 @@ tulip_pci_attach(
 	    pci_intr_handle_t intrhandle;
 	    const char *intrstr;
 
+	    printf("\n");
+
 	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			     pa->pa_intrline, &intrhandle)) {
-		printf(": couldn't map interrupt\n");
+		printf("%s: couldn't map interrupt\n", sc->tulip_dev.dv_xname);
 		return;
 	    }
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc);
-	    if (sc->tulip_ih == NULL)
-		printf(": couldn't establish interrupt");
-	    if (intrstr != NULL)
-		printf(" at %s", intrstr);
-	    printf("\n");
-	    if (sc->tulip_ih == NULL)
+	    if (sc->tulip_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		       sc->tulip_dev.dv_xname);
+		if (intrstr != NULL)
+		    printf(" at %s", intrstr);
+		printf("\n");
 		return;
+	    }
+	    printf("%s: interrupting at %s\n", sc->tulip_dev.dv_xname, intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)
-	    printf("\n%s: warning: couldn't establish shutdown hook\n",
+	    printf("%s: warning: couldn't establish shutdown hook\n",
 		   sc->tulip_xname);
 #endif
 #if defined(__FreeBSD__)
