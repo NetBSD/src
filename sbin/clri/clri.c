@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $	*/
+/*	$NetBSD: clri.c,v 1.10 1997/09/14 08:44:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $";
+__RCSID("$NetBSD: clri.c,v 1.10 1997/09/14 08:44:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,14 +64,16 @@ static char rcsid[] = "$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $";
 #include <stdio.h>
 #include <unistd.h>
 
+int	main __P((int, char *[]));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fs *sbp;
-	register struct dinode *ip;
-	register int fd;
+	struct fs *sbp;
+	struct dinode *ip;
+	int fd;
 	struct dinode ibuf[MAXBSIZE / sizeof (struct dinode)];
 	int32_t generation;
 	off_t offset;
