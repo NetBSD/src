@@ -1,9 +1,10 @@
-# $NetBSD: mi,v 1.281 2000/11/05 16:41:03 thorpej Exp $
+# $NetBSD: mi,v 1.282 2000/11/08 02:15:13 wiz Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
+./usr/share/info/bzip2.info
 ./usr/share/info/cpp.info
 ./usr/share/info/cvs.info
 ./usr/share/info/cvsclient.info
