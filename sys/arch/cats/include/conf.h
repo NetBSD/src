@@ -4,6 +4,8 @@
 /*
  * CATS specifc device includes go in here
  */
+#include "fcom.h"
+
 #define	CONF_HAVE_SCSIPI
 #define	CONF_HAVE_WSCONS
 #define	CONF_HAVE_USB
