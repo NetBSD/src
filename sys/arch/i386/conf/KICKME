@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.23 1995/04/17 07:23:50 cgd Exp $
+#	$NetBSD: KICKME,v 1.24 1995/05/12 21:08:41 cgd Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -71,3 +71,4 @@ ed1	at isa? port 0x300 iomem 0xcc000 irq 10
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter
 pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	vnd	16		# vnode-disk driver
