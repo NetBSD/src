@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.43 2002/12/23 12:13:44 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.44 2003/03/30 07:38:42 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 11, 1999
+.Dd March 26, 2003
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -85,6 +85,10 @@ must be called before any of the other routines that deal with color are used.
 .It addstr Ta Xr curses_addstr 3
 .It addnstr Ta Xr curses_addstr 3
 .It assume_default_colors Ta Xr curses_default_colors 3
+.It attr_get Ta Xr curses_attributes 3
+.It attr_on Ta Xr curses_attributes 3
+.It attr_off Ta Xr curses_attributes 3
+.It attr_set Ta Xr curses_attributes 3
 .It attron Ta Xr curses_attributes 3
 .It attroff Ta Xr curses_attributes 3
 .It attrset Ta Xr curses_attributes 3
@@ -100,6 +104,7 @@ must be called before any of the other routines that deal with color are used.
 .It clrtobot Ta Xr curses_clear 3
 .It clrtoeol Ta Xr curses_clear 3
 .It color_content Ta Xr curses_color 3
+.It color_set Ta Xr curses_attributes 3
 .It copywin Ta Xr curses_window 3
 .It curs_set Ta Xr curses_tty 3
 .It delay_output Ta Xr curses_tty 3
@@ -232,6 +237,10 @@ must be called before any of the other routines that deal with color are used.
 .It waddch Ta Xr curses_addch 3
 .It waddstr Ta Xr curses_addstr 3
 .It waddnstr Ta Xr curses_addstr 3
+.It wattr_get Ta Xr curses_attributes 3
+.It wattr_on Ta Xr curses_attributes 3
+.It wattr_off Ta Xr curses_attributes 3
+.It wattr_set Ta Xr curses_attributes 3
 .It wattron Ta Xr curses_attributes 3
 .It wattroff Ta Xr curses_attributes 3
 .It wattrset Ta Xr curses_attributes 3
@@ -241,6 +250,7 @@ must be called before any of the other routines that deal with color are used.
 .It wclear Ta Xr curses_clear 3
 .It wclrtobot Ta Xr curses_clear 3
 .It wclrtoeol Ta Xr curses_clear 3
+.It wcolor_set Ta Xr curses_attributes 3
 .It wdelch Ta Xr curses_delch 3
 .It wdeleteln Ta Xr curses_deleteln 3
 .It werase Ta Xr curses_clear 3
