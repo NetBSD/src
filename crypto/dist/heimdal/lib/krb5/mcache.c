@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mcache.c,v 1.6 2001/02/11 14:13:12 assar Exp $");
+RCSID("$Id: mcache.c,v 1.7 2001/02/11 16:08:42 assar Exp $");
 
 typedef struct krb5_mcache {
     char *name;
@@ -115,7 +115,6 @@ static krb5_error_code
 mcc_gen_new(krb5_context context, krb5_ccache *id)
 {
     krb5_mcache *m;
-    char *file;
 
     m = mcc_alloc(NULL);
 

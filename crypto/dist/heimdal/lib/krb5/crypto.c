@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: crypto.c,v 1.3 2001/02/11 14:13:12 assar Exp $");
+RCSID("$Id: crypto.c,v 1.4 2001/02/11 16:08:41 assar Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -439,11 +439,11 @@ ARCFOUR_string_to_key(krb5_context context,
 	*p++ = ((char *)password.data)[i];
 	*p++ = 0;
     }
-    MD4_Init (&m);
-    MD4_Update (&m, s, len);
+    MD4Init (&m);
+    MD4Update (&m, s, len);
     key->keytype = enctype;
     krb5_data_alloc (&key->keyvalue, 16);
-    MD4_Final (key->keyvalue.data, &m);
+    MD4Final (key->keyvalue.data, &m);
     memset (s, 0, len);
     free (s);
     return 0;
@@ -838,9 +838,9 @@ RSA_MD4_checksum(krb5_context context,
 {
     MD4_CTX m;
 
-    MD4_Init (&m);
-    MD4_Update (&m, data, len);
-    MD4_Final (C->checksum.data, &m);
+    MD4Init (&m);
+    MD4Update (&m, data, len);
+    MD4Final (C->checksum.data, &m);
 }
 
 static void
@@ -856,10 +856,10 @@ RSA_MD4_DES_checksum(krb5_context context,
     unsigned char *p = cksum->checksum.data;
     
     krb5_generate_random_block(p, 8);
-    MD4_Init (&md4);
-    MD4_Update (&md4, p, 8);
-    MD4_Update (&md4, data, len);
-    MD4_Final (p + 8, &md4);
+    MD4Init (&md4);
+    MD4Update (&md4, p, 8);
+    MD4Update (&md4, data, len);
+    MD4Final (p + 8, &md4);
     memset (&ivec, 0, sizeof(ivec));
     des_cbc_encrypt((const void *)p, 
 		    (void *)p, 
@@ -890,10 +890,10 @@ RSA_MD4_DES_verify(krb5_context context,
 		    key->schedule->data,
 		    &ivec,
 		    DES_DECRYPT);
-    MD4_Init (&md4);
-    MD4_Update (&md4, tmp, 8); /* confounder */
-    MD4_Update (&md4, data, len);
-    MD4_Final (res, &md4);
+    MD4Init (&md4);
+    MD4Update (&md4, tmp, 8); /* confounder */
+    MD4Update (&md4, data, len);
+    MD4Final (res, &md4);
     if(memcmp(res, tmp + 8, sizeof(res)) != 0)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     memset(tmp, 0, sizeof(tmp));
