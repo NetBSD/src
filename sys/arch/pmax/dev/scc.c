@@ -1,4 +1,31 @@
-/*	$NetBSD: scc.c,v 1.10 1995/08/10 04:21:41 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.11 1995/08/21 21:42:10 jonathan Exp $	*/
+
+/* 
+ * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * All rights reserved.
+ * 
+ * Author: Chris G. Demetriou and Jonathan Stone
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,34 +63,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
- *      $Id: scc.c,v 1.10 1995/08/10 04:21:41 jonathan Exp $
  */
 
-/* 
- * Mach Operating System
- * Copyright (c) 1991,1990,1989 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+/*
+ * Old, non-rcons Pmax console-redirection won't compile on Alphas.
  */
+#ifdef pmax
+#define TK_NOTYET
+#endif
 
 #include <scc.h>
 #if NSCC > 0
@@ -87,52 +94,61 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-
 #include <sys/device.h>
-#include <machine/autoconf.h>
-#include <machine/machConst.h>
 
-#include <machine/pmioctl.h>
+#ifdef alpha
+#include <dev/cons.h>
+#endif
+
+#include <pmax/include/pmioctl.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/pdma.h>
-#include <pmax/dev/sccreg.h>
+#include <dev/ic/z8530reg.h>
 #include <pmax/dev/fbreg.h>
 
+#include <machine/autoconf.h>
+
+#ifdef pmax
+#include <machine/machConst.h>
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
+#include <pmax/dev/sccreg.h>
+#include <pmax/dev/sccvar.h>	/* XXX */
+#endif
 
-#include "sccvar.h"
 
-extern int pmax_boardtype;
+#ifdef alpha
+#include <alpha/tc/sccreg.h>
+#include <alpha/tc/sccvar.h>
+#include <machine/rpb.h>
+#include <alpha/tc/asic.h>
+#include <alpha/tc/tc.h>
+#endif
+
+
 extern struct consdev cn_tab;
 extern void ttrstrt	__P((void *));
 
-/*
- * Autoconfiguration data for config.new.
- * Use the statically-allocated softc until old autoconfig code and
- * config.old are completely gone.
- * 
- */
-int	sccmatch  __P((struct device * parent, void *cfdata, void *aux));
-void	sccattach __P((struct device *parent, struct device *self, void *aux));
-void	sccintr __P((int unit));
-int scc_doprobe __P((void *addr, int unit, int flags, int priority));
-
-extern struct cfdriver scccd;
-struct  cfdriver scccd = {
-	NULL, "scc", sccmatch, sccattach, DV_DULL, sizeof(struct device), 0
-};
+#ifdef alpha
+#undef	SCCDEV
+#define	SCCDEV		15			/* XXX */
+#endif
 
 /*
- * Autoconfiguration data for config.old
+ * Support old-style pmax console redirection, with
+ * macros that also work on Alphas with serial consoles.
+ * (Should be replaced with rcons?)
  */
+#ifdef pmax
+#define CONSOLE_ON_FRAMEBUFFER() (cn_tab.cn_screen)
+#endif
 
-void	sccintr(), sccstart();
-int sccGetc __P((dev_t));
-void sccPutc __P((dev_t, int));
+#ifdef alpha
+#define CONSOLE_ON_FRAMEBUFFER() 1	/* Treat test for cn_screen as true */
+#endif
 
 
 #define	NSCCLINE 	(NSCC*2)
@@ -146,9 +162,9 @@ void	(*sccMouseButtons)();	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;
 #endif
-static void scc_modem_intr(), sccreset();
 
 struct scc_softc {
+	struct device sc_dv;
 	struct pdma scc_pdma[2];
 	struct {
 		u_char	wr1;
@@ -158,25 +174,34 @@ struct scc_softc {
 		u_char	wr14;
 	} scc_wreg[2];
 	int	scc_softCAR;
-} scc_softc[NSCC];
+};
 
+/*
+ * BRG formula is:
+ *				ClockFrequency
+ *	BRGconstant = 	---------------------------  -  2
+ *			2 * BaudRate * ClockDivider
+ *
+ * Speed selections with Pclk=7.3728Mhz, clock x16
+ */
 struct speedtab sccspeedtab[] = {
-	0,	0,
-	50,	4606,
-	75,	3070,
-	110,	2093,
-	134,	1711,
-	150,	1534,
-	300,	766,
-	600,	382,
-	1200,	190,
-	1800,	126,
-	2400,	94,
-	4800,	46,
-	9600,	22,
-	19200,	10,
-	38400,	4,
-	-1,	-1
+	{ 0,		0,	},
+	{ 50,		4606,	},
+	{ 75,		3070,	},
+	{ 110,		2093,	},
+	{ 134.5,	1711,	},
+	{ 150,		1534,	},
+	{ 200,		1150,	},
+	{ 300,		766,	},
+	{ 600,		382,	},
+	{ 1200,		190,	},
+	{ 1800,		126,	},
+	{ 2400,		94,	},
+	{ 4800,		46,	},
+	{ 9600,		22,	},
+	{ 19200,	10,	},
+	{ 38400,	4,	},
+	{ -1,		-1,	},
 };
 
 #ifndef	PORTSELECTOR
@@ -187,10 +212,34 @@ struct speedtab sccspeedtab[] = {
 #define	LFLAG	(TTYDEF_LFLAG & ~ECHO)
 #endif
 
-/*
- * Match driver based on name
- */
+/* Definition of the driver for autoconfig. */
+int   sccmatch  __P((struct device * parent, void *cfdata, void *aux));
+void sccattach __P((struct device *parent, struct device *self, void *aux));
+extern struct cfdriver scccd;
+struct cfdriver scccd = {
+	NULL, "scc", sccmatch, sccattach, DV_TTY, sizeof (struct scc_softc)
+};
 
+int		sccGetc __P((dev_t));
+void		sccPutc __P((dev_t, int));
+void		sccPollc __P((dev_t, int));
+int		sccparam __P((struct tty *, struct termios *));
+void		sccstart __P((struct tty *));
+int		sccmctl __P((dev_t, int, int));
+
+
+static void	scc_modem_intr __P((dev_t));
+static void	sccreset __P((struct scc_softc *));
+
+void		sccintr __P((void *));
+#ifdef alpha
+void	scc_alphaintr __P((int));
+#endif
+
+/*
+ * Test to see if device is present.
+ * Return true if found.
+ */
 int
 sccmatch(parent, match, aux)
 	struct device *parent;
@@ -199,23 +248,65 @@ sccmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
+	void *sccaddr;
 
-	static int nunits = 0;
+	extern struct cfdriver ioasiccd;
 
-	if (!BUS_MATCHNAME(ca, "scc"))
-		return (0);
 
-	/*
-	 * Use statically-allocated softc and attach code until
-	 * old config is completely gone.  Don't  over-run softc.
-	 */
-	if (nunits > NSCC) {
-		printf("scc: too many units for old config\n");
-		return (0);
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+		/* Make sure that we're looking for this type of device. */
+		if (!BUS_MATCHNAME(ca, "scc"))
+			return (0);
 	}
-	nunits++;
+	else {
+#ifdef DIAGNOSTIC
+		printf("Cannot attach scc on %s\n", parent->dv_xname);
+#endif
+		return 0;
+	}
+
+
+	/* Don't  over-run softc. */
+	if (cf->cf_unit >= NSCC)
+		return (0);
+
+	/* Get the address, and check it for validity. */
+	sccaddr = BUS_CVTADDR(ca);
+#ifdef alpha
+	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
+#endif /*alpha*/
+
+	if (badaddr(sccaddr, 2))
+		return (0);
+
 	return (1);
 }
+
+#ifdef alpha
+void
+scc_alphaintr(onoff)
+	int onoff;
+{
+	if (onoff) {
+		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |=
+		    ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0;
+#if !defined(DEC_3000_300) && defined(SCC_DMA)
+		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
+		    ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
+		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2;
+#endif
+	} else {
+		*(volatile u_int *)ASIC_REG_IMSK(asic_base) &=
+		    ~(ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0);
+#if !defined(DEC_3000_300) && defined(SCC_DMA)
+		*(volatile u_int *)ASIC_REG_CSR(asic_base) &=
+		    ~(ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
+		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2);
+#endif
+	}
+	wbflush();
+}
+#endif /*alpha*/
 
 void
 sccattach(parent, self, aux)
@@ -223,63 +314,58 @@ sccattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-
-	(void) scc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
-			   self->dv_unit, self->dv_cfdata->cf_flags,
-			   ca->ca_slot);
-
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);
-	printf("\n");
-}
-
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-int
-scc_doprobe(addr, unit, flags, priority)
-	void *addr;
-	int unit, flags, priority;
-{
-	register struct scc_softc *sc;
-	register struct pdma *pdp;
-	register struct tty *tp;
-	register int cntr;
-	struct tty ctty;
+	struct scc_softc *sc = (struct scc_softc *)self;
+	struct confargs *ca = aux;
+	struct pdma *pdp;
+	struct tty *tp;
+	void *sccaddr;
+	int cntr;
 	struct termios cterm;
+	struct tty ctty;
 	int s;
+#ifdef alpha
+	extern int cputype;
+#endif
+	int unit, flags;
 
+	unit = sc->sc_dv.dv_unit;
+	flags = sc->sc_dv.dv_cfdata->cf_flags;
 
-	if (unit >= NSCC)
-		return (0);
+	sccaddr = MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+#ifdef alpha
+	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
+#endif	/*alpha*/
 
-	if (badaddr(addr, 2))
-		return (0);
+	/* Register the interrupt handler. */
+	BUS_INTR_ESTABLISH(ca, sccintr, (void *)(long)sc->sc_dv.dv_unit);
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
+#ifdef TK_NOTYET
 	if (major(cn_tab.cn_dev) == SCCDEV && cn_tab.cn_screen == 0 &&
 		SCCUNIT(cn_tab.cn_dev) == unit)
 		DELAY(10000);
+#else
+	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
+		DELAY(10000);
+#endif
 
-	sc = &scc_softc[unit];
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
 	for (cntr = 0; cntr < 2; cntr++) {
-		pdp->p_addr = (void *)addr;
+		pdp->p_addr = (void *)sccaddr;
 		tp = scc_tty[unit * 2 + cntr] = ttymalloc();
-		pdp->p_arg = (int)tp;
+		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)())0;
 		tp->t_dev = (dev_t)((unit << 1) | cntr);
 		pdp++;
 	}
-
-       	sc->scc_softCAR = flags | 0x2;
+	/* What's the warning here? Defaulting to softCAR on line 2? */
+       	sc->scc_softCAR = flags | 0x2;		/* XXX */
 
 	/* reset chip */
 	sccreset(sc);
@@ -287,12 +373,17 @@ scc_doprobe(addr, unit, flags, priority)
 	/*
 	 * Special handling for consoles.
 	 */
+#ifdef TK_NOTYET
 	if (cn_tab.cn_screen) {
 		if (cn_tab.cn_kbdgetc == sccGetc) {
 			if (unit == 1) {
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
 				cterm.c_cflag = CS8;
+#ifdef pmax
+				/* XXX -- why on pmax, not on Alpha? */
+				cterm.c_cflag |= CLOCAL;
+#endif
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
 				DELAY(10000);
@@ -312,23 +403,58 @@ scc_doprobe(addr, unit, flags, priority)
 				cterm.c_cflag = CS8 | PARENB | PARODD;
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
+#ifdef TK_NOTYET
 				DELAY(10000);
 				MouseInit(ctty.t_dev, sccPutc, sccGetc);
 				DELAY(10000);
+#endif
 				splx(s);
 			}
 		}
-	} else if (SCCUNIT(cn_tab.cn_dev) == unit) {
+	} else if (SCCUNIT(cn_tab.cn_dev) == unit)
+#endif /* TK_NOTYET */
+	 {
 		s = spltty();
+#ifdef pmax
 		ctty.t_dev = cn_tab.cn_dev;
-		cterm.c_cflag = CS8 | CLOCAL;
+#else
+                ctty.t_dev = makedev(SCCDEV,
+                    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
+#endif
+		cterm.c_cflag = CS8;
+#ifdef pmax
+		/* XXX -- why on pmax, not on Alpha? */
+		cterm.c_cflag  |= CLOCAL;
+#endif
 		cterm.c_ospeed = cterm.c_ispeed = 9600;
 		(void) sccparam(&ctty, &cterm);
 		DELAY(1000);
+#ifdef TK_NOTYET
 		cn_tab.cn_disabled = 0;
+#endif
 		splx(s);
 	}
-	return (1);
+
+#ifdef alpha
+	/*
+	 * XXX
+	 * Unit 1 is the remote console, wire it up now.
+	 */
+	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
+		static struct consdev scccons = {
+		    NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
+		};
+		cn_tab = &scccons;
+		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
+
+		printf(": console\n");
+
+		/* wire carrier for console. */
+		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
+	} else
+#endif
+		printf("\n");
 }
 
 /*
@@ -364,35 +490,45 @@ sccreset(sc)
 	 */
 	SCC_INIT_REG(regs, SCC_CHANNEL_A);
 	SCC_INIT_REG(regs, SCC_CHANNEL_B);
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, SCC_WR9_HW_RESET);
+
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, ZSWR9_HARD_RESET);
 	DELAY(50000);	/*enough ? */
 	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, 0);
 
 	/* program the interrupt vector */
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR2, 0xf0);
-	SCC_WRITE_REG(regs, SCC_CHANNEL_B, SCC_WR2, 0xf0);
-	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, SCC_WR9_VIS);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, ZSWR_IVEC, 0xf0);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_B, ZSWR_IVEC, 0xf0);
+	SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR9, ZSWR9_VECTOR_INCL_STAT);
+
+	/* receive parameters and control */
+	sc->scc_wreg[SCC_CHANNEL_A].wr3 = 0;
+	sc->scc_wreg[SCC_CHANNEL_B].wr3 = 0;
 
 	/* timing base defaults */
-	sc->scc_wreg[SCC_CHANNEL_A].wr4 = SCC_WR4_CLK_x16;
-	sc->scc_wreg[SCC_CHANNEL_B].wr4 = SCC_WR4_CLK_x16;
+	sc->scc_wreg[SCC_CHANNEL_A].wr4 = ZSWR4_CLK_X16;
+	sc->scc_wreg[SCC_CHANNEL_B].wr4 = ZSWR4_CLK_X16	;
 
 	/* enable DTR, RTS and SS */
-	sc->scc_wreg[SCC_CHANNEL_B].wr5 = SCC_WR5_RTS;
-	sc->scc_wreg[SCC_CHANNEL_A].wr5 = SCC_WR5_RTS | SCC_WR5_DTR;
+#ifdef alpha
+	/* XXX -- who changed the alpha driver to do this, and why? */
+	sc->scc_wreg[SCC_CHANNEL_B].wr5 = 0;
+#else
+	sc->scc_wreg[SCC_CHANNEL_B].wr5 = ZSWR5_RTS;
+#endif
+	sc->scc_wreg[SCC_CHANNEL_A].wr5 = ZSWR5_RTS | ZSWR5_DTR;
 
 	/* baud rates */
-	val = SCC_WR14_BAUDR_ENABLE|SCC_WR14_BAUDR_SRC;
+	val = ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK;
 	sc->scc_wreg[SCC_CHANNEL_B].wr14 = val;
 	sc->scc_wreg[SCC_CHANNEL_A].wr14 = val;
 
 	/* interrupt conditions */
-	val =	SCC_WR1_RXI_ALL_CHAR | SCC_WR1_PARITY_IE |
-		SCC_WR1_EXT_IE;
+	val =	ZSWR1_RIE | ZSWR1_PE_SC | ZSWR1_SIE | ZSWR1_TIE;
 	sc->scc_wreg[SCC_CHANNEL_A].wr1 = val;
 	sc->scc_wreg[SCC_CHANNEL_B].wr1 = val;
 }
 
+int
 sccopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -404,12 +540,16 @@ sccopen(dev, flag, mode, p)
 	int s, error = 0;
 
 	unit = SCCUNIT(dev);
-	if (unit >= NSCC)
+	if (unit >= scccd.cd_ndevs)
 		return (ENXIO);
+	sc = scccd.cd_devs[unit];
+	if (!sc)
+		return (ENXIO);
+
 	line = SCCLINE(dev);
-	sc = &scc_softc[unit];
-	if (sc->scc_pdma[line].p_addr == (void *)0)
+	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
+
 	tp = scc_tty[minor(dev)];
 	if (tp == NULL)
 		tp = scc_tty[minor(dev)] = ttymalloc();
@@ -437,36 +577,35 @@ sccopen(dev, flag, mode, p)
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	(void) sccmctl(dev, DML_DTR, DMSET);
-#ifdef FOO
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
+		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0)) != 0)
 			break;
 	}
 	splx(s);
-#endif
 	if (error)
 		return (error);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 /*ARGSUSED*/
+int
 sccclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	register struct scc_softc *sc = &scc_softc[SCCUNIT(dev)];
+	register struct scc_softc *sc =  scccd.cd_devs[SCCUNIT(dev)];
 	register struct tty *tp;
 	register int bit, line;
 
 	tp = scc_tty[minor(dev)];
 	line = SCCLINE(dev);
-	if (sc->scc_wreg[line].wr5 & SCC_WR5_SEND_BREAK) {
-		sc->scc_wreg[line].wr5 &= ~SCC_WR5_SEND_BREAK;
+	if (sc->scc_wreg[line].wr5 & ZSWR5_BREAK) {
+		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
 		ttyoutput(0, tp);
 	}
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -476,9 +615,11 @@ sccclose(dev, flag, mode, p)
 	return (ttyclose(tp));
 }
 
+int
 sccread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp;
 
@@ -486,9 +627,11 @@ sccread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
+int
 sccwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp;
 
@@ -500,14 +643,17 @@ struct tty *
 scctty(dev)
         dev_t dev;
 {
-        struct tty *tp = scc_tty [minor (dev)];
+        /* What's the warning here?  */
+	struct tty *tp = scc_tty[minor(dev)];		/* XXX */
+
         return (tp);
 }
 
 /*ARGSUSED*/
+int
 sccioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -525,16 +671,16 @@ sccioctl(dev, cmd, data, flag, p)
 		return (error);
 
 	line = SCCLINE(dev);
-	sc = &scc_softc[SCCUNIT(dev)];
+	sc = scccd.cd_devs[SCCUNIT(dev)];
 	switch (cmd) {
 
 	case TIOCSBRK:
-		sc->scc_wreg[line].wr5 |= SCC_WR5_SEND_BREAK;
+		sc->scc_wreg[line].wr5 |= ZSWR5_BREAK;
 		ttyoutput(0, tp);
 		break;
 
 	case TIOCCBRK:
-		sc->scc_wreg[line].wr5 &= ~SCC_WR5_SEND_BREAK;
+		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
 		ttyoutput(0, tp);
 		break;
 
@@ -568,6 +714,7 @@ sccioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+int
 sccparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -581,9 +728,6 @@ sccparam(tp, t)
 
         if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
                 return (EINVAL);
-	sc = &scc_softc[SCCUNIT(tp->t_dev)];
-	line = SCCLINE(tp->t_dev);
-	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	ospeed = ttspeedtab(t->c_ospeed, sccspeedtab);
         if (ospeed < 0)
                 return (EINVAL);
@@ -595,6 +739,7 @@ sccparam(tp, t)
 	/*
 	 * Handle console specially.
 	 */
+#ifdef TK_NOTYET
 	if (cn_tab.cn_screen) {
 		if (minor(tp->t_dev) == SCCKBD_PORT) {
 			cflag = CS8;
@@ -603,7 +748,9 @@ sccparam(tp, t)
 			cflag = CS8 | PARENB | PARODD;
 			ospeed = ttspeedtab(4800, sccspeedtab);
 		}
-	} else if (tp->t_dev == cn_tab.cn_dev) {
+	} else if (tp->t_dev == cn_tab.cn_dev)
+#endif /*TK_NOTYET*/
+	{
 		cflag = CS8;
 		ospeed = ttspeedtab(9600, sccspeedtab);
 	}
@@ -612,81 +759,120 @@ sccparam(tp, t)
 		return (0);
 	}
 
+	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
+	line = SCCLINE(tp->t_dev);
+	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
+
+	/*
+	 * pmax driver used to reset the SCC here. That reset causes the
+	 * other channel on the SCC to drop outpur chars: at least that's
+	 * what CGD reports for the Alpha.  It's a bug.
+	 */
+#if 0
 	/* reset line */
 	if (line == SCC_CHANNEL_A)
-		value = SCC_WR9_RESET_CHA_A;
+		value = ZSWR9_A_RESET;
 	else
-		value = SCC_WR9_RESET_CHA_B;
+		value = ZSWR9_B_RESET;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	DELAY(25);
+#endif
 
 	/* stop bits, normally 1 */
 	value = sc->scc_wreg[line].wr4 & 0xf0;
 	if (cflag & CSTOPB)
-		value |= SCC_WR4_2_STOP;
+		value |= ZSWR4_TWOSB;
 	else
-		value |= SCC_WR4_1_STOP;
+		value |= ZSWR4_ONESB;
 	if ((cflag & PARODD) == 0)
-		value |= SCC_WR4_EVEN_PARITY;
+		value |= ZSWR4_EVENP;
 	if (cflag & PARENB)
-		value |= SCC_WR4_PARITY_ENABLE;
+		value |= ZSWR4_PARENB;
 
 	/* set it now, remember it must be first after reset */
 	sc->scc_wreg[line].wr4 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR4, value);
 
 	/* vector again */
-	SCC_WRITE_REG(regs, line, SCC_WR2, 0xf0);
+	SCC_WRITE_REG(regs, line, ZSWR_IVEC, 0xf0);
 
 	/* clear break, keep rts dtr */
-	wvalue = sc->scc_wreg[line].wr5 & (SCC_WR5_DTR|SCC_WR5_RTS);
+	wvalue = sc->scc_wreg[line].wr5 & (ZSWR5_DTR|ZSWR5_RTS);
 	switch (cflag & CSIZE) {
 	case CS5:
-		value = SCC_WR3_RX_5_BITS;
-		wvalue |= SCC_WR5_TX_5_BITS;
+		value = ZSWR3_RX_5;
+		wvalue |= ZSWR5_TX_5;
 		break;
 	case CS6:
-		value = SCC_WR3_RX_6_BITS;
-		wvalue |= SCC_WR5_TX_6_BITS;
+		value = ZSWR3_RX_6;
+		wvalue |= ZSWR5_TX_6;
 		break;
 	case CS7:
-		value = SCC_WR3_RX_7_BITS;
-		wvalue |= SCC_WR5_TX_7_BITS;
+		value = ZSWR3_RX_7;
+		wvalue |= ZSWR5_TX_7;
 		break;
 	case CS8:
 	default:
-		value = SCC_WR3_RX_8_BITS;
-		wvalue |= SCC_WR5_TX_8_BITS;
+		value = ZSWR3_RX_8;
+		wvalue |= ZSWR5_TX_8;
 	};
 	sc->scc_wreg[line].wr3 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR3, value);
+
 	sc->scc_wreg[line].wr5 = wvalue;
 	SCC_WRITE_REG(regs, line, SCC_WR5, wvalue);
-	SCC_WRITE_REG(regs, line, SCC_WR6, 0);
-	SCC_WRITE_REG(regs, line, SCC_WR7, 0);
-	SCC_WRITE_REG(regs, line, SCC_WR9, SCC_WR9_VIS);
+
+	/*
+	 * XXX Does the SCC chip require us to refresh the WR5 register
+	 * for the other channel after writing the other, or not?
+	 */
+#ifdef notdef
+	/* XXX */
+	{
+	int otherline = (line + 1) & 1;
+	SCC_WRITE_REG(regs, otherline, SCC_WR5, sc->scc_wreg[otherline].wr5);
+	}
+#endif
+
+	SCC_WRITE_REG(regs, line, ZSWR_SYNCLO, 0);
+	SCC_WRITE_REG(regs, line, ZSWR_SYNCHI, 0);
+	SCC_WRITE_REG(regs, line, SCC_WR9, ZSWR9_VECTOR_INCL_STAT);
 	SCC_WRITE_REG(regs, line, SCC_WR10, 0);
-	value = SCC_WR11_RCLK_BAUDR | SCC_WR11_XTLK_BAUDR |
-		SCC_WR11_TRc_OUT | SCC_WR11_TRcOUT_BAUDR;
+	value = ZSWR11_RXCLK_BAUD | ZSWR11_TXCLK_BAUD |
+		ZSWR11_TRXC_OUT_ENA | ZSWR11_TRXC_BAUD;
 	SCC_WRITE_REG(regs, line, SCC_WR11, value);
 	SCC_SET_TIMING_BASE(regs, line, ospeed);
 	value = sc->scc_wreg[line].wr14;
 	SCC_WRITE_REG(regs, line, SCC_WR14, value);
-	value = SCC_WR15_BREAK_IE | SCC_WR15_CTS_IE | SCC_WR15_DCD_IE;
+
+#ifdef alpha
+	if (SCCUNIT(tp->t_dev) == 1) {
+		/* On unit one, on the flamingo, modem control is floating! */
+		value = ZSWR15_BREAK_IE;
+	} else
+#endif
+	{
+		value = ZSWR15_BREAK_IE | ZSWR15_CTS_IE | ZSWR15_DCD_IE;
+	}
 	SCC_WRITE_REG(regs, line, SCC_WR15, value);
 
 	/* and now the enables */
-	value = sc->scc_wreg[line].wr3 | SCC_WR3_RX_ENABLE;
+	value = sc->scc_wreg[line].wr3 | ZSWR3_RX_ENABLE;
 	SCC_WRITE_REG(regs, line, SCC_WR3, value);
-	value = sc->scc_wreg[line].wr5 | SCC_WR5_TX_ENABLE;
+	value = sc->scc_wreg[line].wr5 | ZSWR5_TX_ENABLE;
 	sc->scc_wreg[line].wr5 = value;
 	SCC_WRITE_REG(regs, line, SCC_WR5, value);
 
 	/* master inter enable */
-	value = SCC_WR9_MASTER_IE | SCC_WR9_VIS;
+	value = ZSWR9_MASTER_IE | ZSWR9_VECTOR_INCL_STAT;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	SCC_WRITE_REG(regs, line, SCC_WR1, sc->scc_wreg[line].wr1);
-	MachEmptyWriteBuffer();
+	wbflush();
+
+#ifdef	alpha
+ 	scc_alphaintr(1);
+#endif	/*alpha*/
+
 	return (0);
 }
 
@@ -694,9 +880,10 @@ sccparam(tp, t)
  * Check for interrupts from all devices.
  */
 void
-sccintr(unit)
-	register int unit;
+sccintr(xxxunit)
+	void * xxxunit;
 {
+	register int unit = (long)xxxunit;
 	register scc_regmap_t *regs;
 	register struct tty *tp;
 	register struct pdma *dp;
@@ -704,21 +891,20 @@ sccintr(unit)
 	register int cc, chan, rr1, rr2, rr3;
 	int overrun = 0;
 
-
-	sc = &scc_softc[unit];
+	sc = scccd.cd_devs[unit];
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 	for (;;) {
-	    SCC_READ_REG(regs, SCC_CHANNEL_B, SCC_RR2, rr2);
+	    SCC_READ_REG(regs, SCC_CHANNEL_B, ZSRR_IVEC, rr2);
 	    rr2 = SCC_RR2_STATUS(rr2);
 	    /* are we done yet ? */
 	    if (rr2 == 6) {	/* strange, distinguished value */
-		SCC_READ_REG(regs, SCC_CHANNEL_A, SCC_RR3, rr3);
+		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
 		if (rr3 == 0)
 			return;
 	    }
 
-	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, SCC_RESET_HIGHEST_IUS);
+	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
 	    if ((rr2 == SCC_RR2_A_XMIT_DONE) || (rr2 == SCC_RR2_B_XMIT_DONE)) {
 		chan = (rr2 == SCC_RR2_A_XMIT_DONE) ?
 			SCC_CHANNEL_A : SCC_CHANNEL_B;
@@ -726,7 +912,7 @@ sccintr(unit)
 		dp = &sc->scc_pdma[chan];
 		if (dp->p_mem < dp->p_end) {
 			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
-			MachEmptyWriteBuffer();
+			wbflush();
 		} else {
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
@@ -742,12 +928,12 @@ sccintr(unit)
 				sccstart(tp);
 			if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 				SCC_READ_REG(regs, chan, SCC_RR15, cc);
-				cc &= ~SCC_WR15_TX_UNDERRUN_IE;
+				cc &= ~ZSWR15_TXUEOM_IE;
 				SCC_WRITE_REG(regs, chan, SCC_WR15, cc);
-				cc = sc->scc_wreg[chan].wr1 & ~SCC_WR1_TX_IE;
+				cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
 				SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
 				sc->scc_wreg[chan].wr1 = cc;
-				MachEmptyWriteBuffer();
+				wbflush();
 			}
 		}
 	    } else if (rr2 == SCC_RR2_A_RECV_DONE ||
@@ -762,8 +948,8 @@ sccintr(unit)
 		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
 			rr2 == SCC_RR2_B_RECV_SPECIAL) {
 			SCC_READ_REG(regs, chan, SCC_RR1, rr1);
-			SCC_WRITE_REG(regs, chan, SCC_RR0, SCC_RESET_ERROR);
-			if ((rr1 & SCC_RR1_RX_OVERRUN) && overrun == 0) {
+			SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_ERRORS);
+			if ((rr1 & ZSRR1_DO) && overrun == 0) {
 				log(LOG_WARNING, "scc%d,%d: silo overflow\n",
 					unit >> 1, chan);
 				overrun = 1;
@@ -773,7 +959,7 @@ sccintr(unit)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
+		if (tp == scc_tty[SCCKBD_PORT] && CONSOLE_ON_FRAMEBUFFER()) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
@@ -788,8 +974,10 @@ sccintr(unit)
 				(*sccDivertXInput)(cc);
 				continue;
 			}
+#ifdef TK_NOTYET
 			if ((cc = kbdMapChar(cc)) < 0)
 				continue;
+#endif
 		/*
 		 * Now for mousey
 		 */
@@ -837,16 +1025,16 @@ sccintr(unit)
 		}
 		if (rr2 == SCC_RR2_A_RECV_SPECIAL ||
 			rr2 == SCC_RR2_B_RECV_SPECIAL) {
-			if (rr1 & SCC_RR1_PARITY_ERR)
+			if (rr1 & ZSRR1_PE)
 				cc |= TTY_PE;
-			if (rr1 & SCC_RR1_FRAME_ERR)
+			if (rr1 & ZSRR1_FE)
 				cc |= TTY_FE;
 		}
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	    } else if ((rr2 == SCC_RR2_A_EXT_STATUS) || (rr2 == SCC_RR2_B_EXT_STATUS)) {
 		chan = (rr2 == SCC_RR2_A_EXT_STATUS) ?
 			SCC_CHANNEL_A : SCC_CHANNEL_B;
-		SCC_WRITE_REG(regs, chan, SCC_RR0, SCC_RESET_EXT_IP);
+		SCC_WRITE_REG(regs, chan, SCC_RR0, ZSWR0_RESET_STATUS);
 		scc_modem_intr(unit | chan);
 	    }
 	}
@@ -863,7 +1051,7 @@ sccstart(tp)
 	u_char temp;
 	int s, sendone;
 
-	sc = &scc_softc[SCCUNIT(tp->t_dev)];
+	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
 	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
 	regs = (scc_regmap_t *)dp->p_addr;
 	s = spltty();
@@ -879,7 +1067,7 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == scc_tty[SCCKBD_PORT] && cn_tab.cn_screen) {
+	if (tp == scc_tty[SCCKBD_PORT] && CONSOLE_ON_FRAMEBUFFER()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -897,11 +1085,8 @@ sccstart(tp)
 		}
 		goto out;
 	}
-#ifdef FOO
 	if (tp->t_flags & (RAW|LITOUT))
-#endif
 		cc = ndqb(&tp->t_outq, 0);
-#ifdef FOO
 	else {
 		cc = ndqb(&tp->t_outq, 0200);
 		if (cc == 0) {
@@ -911,7 +1096,6 @@ sccstart(tp)
 			goto out;
 		}
 	}
-#endif
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
@@ -921,11 +1105,11 @@ sccstart(tp)
 	 */
 	chan = SCCLINE(tp->t_dev);
 	SCC_READ_REG(regs, chan, SCC_RR0, temp);
-	sendone = (temp & SCC_RR0_TX_EMPTY);
+	sendone = (temp & ZSRR0_TX_READY);
 	SCC_READ_REG(regs, chan, SCC_RR15, temp);
-	temp |= SCC_WR15_TX_UNDERRUN_IE;
+	temp |= ZSWR15_TXUEOM_IE;
 	SCC_WRITE_REG(regs, chan, SCC_WR15, temp);
-	temp = sc->scc_wreg[chan].wr1 | SCC_WR1_TX_IE;
+	temp = sc->scc_wreg[chan].wr1 | ZSWR1_TIE;
 	SCC_WRITE_REG(regs, chan, SCC_WR1, temp);
 	sc->scc_wreg[chan].wr1 = temp;
 	if (sendone) {
@@ -935,7 +1119,7 @@ sccstart(tp)
 #endif
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
 	}
-	MachEmptyWriteBuffer();
+	wbflush();
 out:
 	splx(s);
 }
@@ -944,14 +1128,16 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+int
 sccstop(tp, flag)
 	register struct tty *tp;
+	int flag;
 {
 	register struct pdma *dp;
 	register struct scc_softc *sc;
 	register int s;
 
-	sc = &scc_softc[SCCUNIT(tp->t_dev)];
+	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
 	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
@@ -960,8 +1146,11 @@ sccstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+
+	return 0;				/* XXX should be void */
 }
 
+int
 sccmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -972,7 +1161,7 @@ sccmctl(dev, bits, how)
 	register u_char value;
 	int s;
 
-	sc = &scc_softc[SCCUNIT(dev)];
+	sc = scccd.cd_devs[SCCUNIT(dev)];
 	line = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	s = spltty();
@@ -983,12 +1172,12 @@ sccmctl(dev, bits, how)
 	 */
 	mbits = DML_DTR | DML_DSR | DML_CAR;
 	if (line == SCC_CHANNEL_B) {
-		if (sc->scc_wreg[SCC_CHANNEL_A].wr5 & SCC_WR5_DTR)
+		if (sc->scc_wreg[SCC_CHANNEL_A].wr5 & ZSWR5_DTR)
 			mbits = DML_DTR | DML_DSR;
 		else
 			mbits = 0;
 		SCC_READ_REG_ZERO(regs, SCC_CHANNEL_B, value);
-		if (value & SCC_RR0_DCD)
+		if (value & ZSRR0_DCD)
 			mbits |= DML_CAR;
 	}
 	switch (how) {
@@ -1010,13 +1199,13 @@ sccmctl(dev, bits, how)
 	}
 	if (line == SCC_CHANNEL_B) {
 		if (mbits & DML_DTR)
-			sc->scc_wreg[SCC_CHANNEL_A].wr5 |= SCC_WR5_DTR;
+			sc->scc_wreg[SCC_CHANNEL_A].wr5 |= ZSWR5_DTR;
 		else
-			sc->scc_wreg[SCC_CHANNEL_A].wr5 &= ~SCC_WR5_DTR;
+			sc->scc_wreg[SCC_CHANNEL_A].wr5 &= ~ZSWR5_DTR;
 		SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR5,
 			sc->scc_wreg[SCC_CHANNEL_A].wr5);
 	}
-	if ((mbits & DML_DTR) && (sc->scc_softCAR & (1 << line)))
+	if ((mbits & DML_DTR) || (sc->scc_softCAR & (1 << line)))
 		scc_tty[minor(dev)]->t_state |= TS_CARR_ON;
 	(void) splx(s);
 	return (mbits);
@@ -1036,7 +1225,7 @@ scc_modem_intr(dev)
 	register u_char value;
 	int s;
 
-	sc = &scc_softc[SCCUNIT(dev)];
+	sc = scccd.cd_devs[SCCUNIT(dev)];
 	tp = scc_tty[minor(dev)];
 	chan = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[chan].p_addr;
@@ -1047,14 +1236,24 @@ scc_modem_intr(dev)
 		car = 1;
 	else {
 		SCC_READ_REG_ZERO(regs, chan, value);
-		car = value & SCC_RR0_DCD;
+		car = value & ZSRR0_DCD;
 	}
+
+	/*
+	 * XXX  Why doesn't the Alpha driver follow carrier-detect?
+	 * (in the Alpha driver, this is an "#ifdef notdef").
+	 * Is it related to  console handling?
+	 */
+#ifndef alpha
+#ifdef	notyet	/*XXX -does this help pmax console? */
 	if (car) {
 		/* carrier present */
 		if (!(tp->t_state & TS_CARR_ON))
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	} else if (tp->t_state & TS_CARR_ON)
 		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
+#endif /*notyet*/
+#endif
 	splx(s);
 }
 
@@ -1068,26 +1267,32 @@ sccGetc(dev)
 	register scc_regmap_t *regs;
 	register int c, line;
 	register u_char value;
+	struct scc_softc *sc;
 	int s;
 
 	line = SCCLINE(dev);
-	regs = (scc_regmap_t *)scc_softc[SCCUNIT(dev)].scc_pdma[line].p_addr;
+	sc = scccd.cd_devs[SCCUNIT(dev)];
+	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	if (!regs)
 		return (0);
-	s = spltty();
+#ifdef pmax
+	s = spltty();	/* XXX  why different spls? */
+#else
+	s = splhigh();
+#endif
 	for (;;) {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
-		if (value & SCC_RR0_RX_AVAIL) {
+		if (value & ZSRR0_RX_READY) {
 			SCC_READ_REG(regs, line, SCC_RR1, value);
 			SCC_READ_DATA(regs, line, c);
-			if (value & (SCC_RR1_PARITY_ERR | SCC_RR1_RX_OVERRUN |
-				SCC_RR1_FRAME_ERR)) {
-				SCC_WRITE_REG(regs, line, SCC_WR0, SCC_RESET_ERROR);
+			if (value & (ZSRR1_PE | ZSRR1_DO | ZSRR1_FE)) {
+				SCC_WRITE_REG(regs, line, SCC_WR0,
+					ZSWR0_RESET_ERRORS);
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					SCC_RESET_HIGHEST_IUS);
+					ZSWR0_CLR_INTR);
 			} else {
 				SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_WR0,
-					SCC_RESET_HIGHEST_IUS);
+					ZSWR0_CLR_INTR);
 				splx(s);
 				return (c & 0xff);
 			}
@@ -1107,18 +1312,24 @@ sccPutc(dev, c)
 	register scc_regmap_t *regs;
 	register int line;
 	register u_char value;
+	struct scc_softc *sc;
 	int s;
 
-	s = spltty();
+#ifdef pmax
+	s = spltty();	/* XXX  why different spls? */
+#else
+	s = splhigh();
+#endif
 	line = SCCLINE(dev);
-	regs = (scc_regmap_t *)scc_softc[SCCUNIT(dev)].scc_pdma[line].p_addr;
+	sc = scccd.cd_devs[SCCUNIT(dev)];
+	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
 	/*
 	 * Wait for transmitter to be not busy.
 	 */
 	do {
 		SCC_READ_REG(regs, line, SCC_RR0, value);
-		if (value & SCC_RR0_TX_EMPTY)
+		if (value & ZSRR0_TX_READY)
 			break;
 		DELAY(100);
 	} while (1);
@@ -1127,7 +1338,56 @@ sccPutc(dev, c)
 	 * Send the char.
 	 */
 	SCC_WRITE_DATA(regs, line, c);
-	MachEmptyWriteBuffer();
+	wbflush();
 	splx(s);
+
+	return;
 }
+
+/*
+ * Enable/disable polling mode
+ */
+void
+sccPollc(dev, on)
+	dev_t dev;
+	int on;
+{
+}
+
+#ifdef	SCC_DEBUG
+static void
+rr(msg, regs)
+	char *msg;
+	scc_regmap_t *regs;
+{
+	u_char value;
+	int r0, r1, r2, r3, r10, r15;
+
+	printf("%s: register: %lx\n", msg, regs);
+#define	L(reg, r) {							\
+	SCC_READ_REG(regs, SCC_CHANNEL_A, reg, value);			\
+	r = value;							\
+}
+	L(SCC_RR0, r0);
+	L(SCC_RR1, r1);
+	L(ZSRR_IVEC, r2);
+	L(ZSRR_IPEND, r3);
+	L(SCC_RR10, r10);
+	L(SCC_RR15, r15);
+	printf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
+	    r0, r1, r2, r3, r10, r15);
+#undef L
+#define	L(reg, r) {							\
+	SCC_READ_REG(regs, SCC_CHANNEL_B, reg, value);			\
+	r = value;							\
+}
+	L(SCC_RR0, r0);
+	L(SCC_RR1, r1);
+	L(ZSRR_IVEC, r2);
+	L(SCC_RR10, r10);
+	L(SCC_RR15, r15);
+	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
+	    r0, r1, r2, r10, r15);
+}
+#endif
 #endif /* NSCC */
