@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.1 2002/08/12 02:06:20 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.2 2002/08/14 12:29:50 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,8 +72,6 @@ com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 	return (comfound < 2);
 }
-
-struct com_softc *com0; /* XXX */
 
 void
 com_opb_attach(struct device *parent, struct device *self, void *aux)
