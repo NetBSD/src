@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.3 1998/10/15 14:48:47 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.4 1998/11/19 15:38:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -315,7 +315,7 @@ ofb_mmap(v, offset, prot)
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
 
-	if (offset > (dc->dc_linebytes * dc->dc_height))
+	if (offset >= (dc->dc_linebytes * dc->dc_height) || offset < 0)
 		return -1;
 
 	return dc->dc_paddr + offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.8 1998/08/10 14:47:16 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.9 1998/11/19 15:38:25 mrg Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -377,7 +377,7 @@ smg_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	if (offset > SMSIZE)
+	if (offset >= SMSIZE || offset < 0)
 		return -1;
 	return (SMADDR + offset) >> CLSHIFT;
 }

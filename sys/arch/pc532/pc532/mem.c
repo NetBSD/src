@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 1998/09/12 19:14:59 matthias Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 1998/11/19 15:38:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,10 +204,10 @@ mmmmap(dev, off, prot)
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
-		if (off > ctob(physmem) &&
+		if ((u_int)off > ctob(physmem) &&
 		    suser(p->p_ucred, &p->p_acflag) != 0)
 			return -1;
-		return ns532_btop(off);
+		return ns532_btop((u_int)off);
 
 /* minor device 1 is kernel memory */
 	case 1:
@@ -219,7 +219,7 @@ mmmmap(dev, off, prot)
 		if (!kernacc((caddr_t)off, NBPG, B_READ))
 			return -1;
 #endif
-		return ns532_btop(vtophys(off));
+		return ns532_btop(vtophys((u_int)off));
 
 	default:
 		return -1;

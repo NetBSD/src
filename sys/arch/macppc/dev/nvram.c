@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.1 1998/07/03 11:50:32 tsubai Exp $	*/
+/*	$NetBSD: nvram.c,v 1.2 1998/11/19 15:38:23 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -216,5 +216,5 @@ nvrammmap(dev, off, prot)
         dev_t dev;
         int off, prot;
 {
-	return EOPNOTSUPP;
+	return -1;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.4 1998/11/18 12:26:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,7 @@ tfbmmap(v, offset, prot)
 {
 	struct tfb_softc *sc = v;
 
-	if (offset > TX_8FB_SIZE) /* XXX */
+	if (offset >= TX_8FB_SIZE || offset < 0)
 		return (-1);
 	return machine_btop(sc->sc_dc->dc_paddr + TX_8FB_OFFSET + offset);
 }

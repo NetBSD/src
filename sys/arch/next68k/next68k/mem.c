@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1998/11/10 22:45:45 dbj Exp $ */
+/*	$NetBSD: mem.c,v 1.3 1998/11/19 15:38:23 mrg Exp $ */
 
 /*
  * This file was taken from from mvme68k/mvme68k/mem.c
@@ -235,7 +235,7 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
+	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
 		return (-1);
-	return (m68k_btop(off));
+	return (m68k_btop((u_int)off));
 }

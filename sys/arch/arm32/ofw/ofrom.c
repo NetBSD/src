@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.4 1998/07/07 00:48:12 mark Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.5 1998/11/19 15:38:21 mrg Exp $	*/
 
 /*
  * Copyright 1998
@@ -213,7 +213,7 @@ ofrommmap(dev, off, prot)
 	if (!sc || !sc->enabled)
 		return (-1);			/* XXX PANIC */
 
-	if (off >= sc->size)
+	if ((u_int)off >= sc->size)
 		return (-1);
 
 	return arm_byte_to_page(sc->base + off);

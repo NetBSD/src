@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $ */
+/* $NetBSD: cfb.c,v 1.21 1998/11/19 15:38:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.20 1998/10/22 01:03:08 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.21 1998/11/19 15:38:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,8 +307,8 @@ cfbmmap(v, offset, prot)
 {
 	struct cfb_softc *sc = v;
 
-	if (offset > CFB_SIZE)
-		return -1;
+	if (offset >= CFB_SIZE || offset < 0)
+		return (-1);
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
 

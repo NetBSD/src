@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 1998/11/10 07:29:59 scottr Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 1998/11/19 15:38:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,8 +226,8 @@ mmmmap(dev, off, prot)
 	/*
 	 * Only allow access to physical RAM.
 	 */
-	if ((unsigned)off >= maxaddr)
+	if ((u_int)off >= maxaddr)
 		return (-1);
 
-	return (m68k_btop(off));
+	return (m68k_btop((u_int)off));
 }

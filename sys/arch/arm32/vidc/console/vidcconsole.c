@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.18 1998/06/02 20:41:57 mark Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.19 1998/11/19 15:38:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -813,7 +813,7 @@ vidcconsole_mmap(vc, offset, nprot)
 	int offset;
 	int nprot;
 {
-	if (offset > videomemory.vidm_size)
+	if ((u_int)offset >= videomemory.vidm_size)
 		return (-1);
 	return(arm_byte_to_page(((videomemory.vidm_pbase) + (offset))));
 }

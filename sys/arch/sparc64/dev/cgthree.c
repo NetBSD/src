@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.3 1998/09/05 16:50:37 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.4 1998/11/19 15:38:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -436,6 +436,8 @@ cgthreemmap(dev, off, prot)
 #define START		(128*1024 + 128*1024)
 #define NOOVERLAY	(0x04000000)
 
+	if (off < 0)
+		return (-1);
 	if (off & PGOFSET)
 		panic("cgthreemmap");
 	if ((u_int)off >= NOOVERLAY)

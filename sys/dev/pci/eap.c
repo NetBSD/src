@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.17 1998/08/25 04:56:01 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.18 1998/11/19 15:38:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1315,6 +1315,8 @@ eap_mappage(addr, mem, off, prot)
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
 
+	if (off < 0)
+		return (-1);
 	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
 		;
 	if (!p)

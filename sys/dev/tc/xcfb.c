@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.4 1998/11/19 06:52:49 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.4 1998/11/19 06:52:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ xcfbmmap(v, offset, prot)
 {
 	struct xcfb_softc *sc = v;
 
-	if (offset > XCFB_FB_SIZE)
+	if (offset >= XCFB_FB_SIZE || offset < 0)
 		return -1;
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 }
