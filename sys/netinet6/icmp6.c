@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.103 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.104 2003/12/17 18:49:38 lha Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.103 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.104 2003/12/17 18:49:38 lha Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2843,10 +2843,11 @@ static int
 sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 {
 
-	if (namelen != 1)
+	if (namelen != 0)
 		return (EINVAL);
 
-	return (nd6_sysctl(name[0], oldp, oldlenp, (void*)newp, newlen));
+	return (nd6_sysctl(rnode->sysctl_num, oldp, oldlenp,
+	    (void*)newp, newlen));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
