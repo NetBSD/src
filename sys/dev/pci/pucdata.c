@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.17 2001/03/04 21:30:24 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.18 2001/03/13 17:23:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -520,7 +520,7 @@ const struct puc_device_description puc_devices[] = {
 	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 Mhz crystal
 	 * instead of the standart 1.8432Mhz.
 	 */
-	{   "VScom PCI-800H",
+	{   "Titan PCI-800H",
 	    {	0x14d2,	0xa003,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -530,7 +530,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 14745600 },
 	    },
 	},
-	{   "VScom PCI-800H",
+	{   "Titan PCI-800H",
 	    {	0x14d2,	0xa004,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
