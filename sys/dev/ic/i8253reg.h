@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: i8253reg.h,v 1.2 1993/05/22 08:01:39 cgd Exp $
+ *	$Id: i8253reg.h,v 1.3 1993/06/15 21:37:19 mycroft Exp $
  */
 
 /*
@@ -66,6 +66,15 @@
  * Timer 0 is used to call hardclock.
  * Timer 2 is used to generate console beeps.
  */
+
+/*
+ * Frequency of all three count-down timers; (TIMER_FREQ/freq) is the
+ * appropriate count to generate a frequency of freq hz.
+ */
+#ifndef TIMER_FREQ
+#define	TIMER_FREQ	1193182
+#endif
+#define TIMER_DIV(x) ((TIMER_FREQ+(x)/2)/(x))
 
 /*
  * Macros for specifying values to be written into a mode register.

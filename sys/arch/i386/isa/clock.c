@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.7 1993/06/06 04:16:28 cgd Exp $
+ *	$Id: clock.c,v 1.8 1993/06/15 21:37:14 mycroft Exp $
  */
 
 /*
@@ -53,10 +53,6 @@
 #define DAYST 119
 #define DAYEN 303
 
-#ifndef	TIMER_FREQ
-#define TIMER_FREQ 1193182
-#endif
-
 startrtclock() {
 	int s;
 
@@ -66,8 +62,8 @@ startrtclock() {
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb (IO_TIMER1, (TIMER_FREQ+hz/2)/hz);
-	outb (IO_TIMER1, ((TIMER_FREQ+hz/2)/hz)/256);
+	outb (IO_TIMER1, TIMER_DIV(hz)%256);
+	outb (IO_TIMER1, TIMER_DIV(hz)/256);
 
 	/* initialize brain-dead battery powered clock */
 	outb (IO_RTC, RTC_STATUSA);
@@ -103,7 +99,7 @@ findcpuspeed()
 	/* Formula for delaycount is :
 	 *  (loopcount * timer clock speed)/ (counter ticks * 1000)
 	 */
-	delaycount = (FIRST_GUESS * (TIMER_FREQ/1000)) / (0xffff-remainder);
+	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
 
 

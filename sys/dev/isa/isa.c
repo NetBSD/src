@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.16 1993/06/15 20:34:54 mycroft Exp $
+ *	$Id: isa.c,v 1.17 1993/06/15 21:37:16 mycroft Exp $
  */
 
 /*
@@ -516,13 +516,12 @@ isa_strayintr(d) {
 /*
  * Wait "n" microseconds.
  * Relies on timer 1 counting down from (TIMER_FREQ / hz) at
- * (2 * TIMER_FREQ) Hz.
+ * (1 * TIMER_FREQ) Hz.
  * Note: timer had better have been programmed before this is first used!
- * (The standard programming causes the timer to generate a square wave and
- * the counter is decremented twice every cycle.)
+ * (Note that we use `rate generator' mode, which counts at 1:1; `square
+ * wave' mode counts at 2:1).
  */
-#define       CF              (2 * TIMER_FREQ)
-#define       TIMER_FREQ      1193182 /* XXX - should be elsewhere */
+#define       CF              (1 * TIMER_FREQ)
 
 extern int hz;                        /* XXX - should be elsewhere */
 
