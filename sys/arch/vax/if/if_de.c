@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.5 1995/03/30 20:26:32 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.6 1995/04/11 06:16:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -104,7 +104,8 @@ struct	uba_device *deinfo[NDE];
 u_short destd[] = { 0 };
 struct	uba_driver dedriver =
 	{ deprobe, 0, deattach, 0, destd, "de", deinfo };
-int	deinit(),ether_output(),deioctl(),dereset(),destart();
+int	deinit(),deioctl(),dereset();
+void	destart();
 
 
 /*
@@ -206,8 +207,7 @@ deattach(ui)
 
 	ifp->if_unit = ui->ui_unit;
 	ifp->if_name = "de";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
 
 	/*
 	 * What kind of a board is this?
@@ -247,7 +247,6 @@ deattach(ui)
 	    sizeof (ds->ds_addr));
 	printf("de%d: hardware address %s\n", ui->ui_unit,
 		ether_sprintf(ds->ds_addr));
-	ifp->if_output = ether_output;
 	ifp->if_ioctl = deioctl;
 	ifp->if_reset = dereset;
 	ifp->if_start = destart;
@@ -257,6 +256,7 @@ deattach(ui)
 	ds->ds_deuba.iff_flags |= UBA_NEEDBDP;
 #endif
 	if_attach(ifp);
+	ether_ifattach(ifp);
 }
 
 /*
@@ -390,6 +390,7 @@ deinit(unit)
  * and map it to the interface before starting the output.
  * Must be called from ipl >= our interrupt level.
  */
+void
 destart(ifp)
 	struct ifnet *ifp;
 {
@@ -577,7 +578,6 @@ deread(ds, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int off, resid;
 	int s;
 	register struct ifqueue *inq;
 
@@ -588,19 +588,6 @@ deread(ds, ifrw, len)
 	 */
 	eh = (struct ether_header *)ifrw->ifrw_addr;
 /*	eh->ether_type = ntohs((u_short)eh->ether_type); */
-#define	dedataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
-	if (eh->ether_type >= ETHERTYPE_TRAIL &&
-	    eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (eh->ether_type - ETHERTYPE_TRAIL) * 512;
-		if (off >= ETHERMTU)
-			return;		/* sanity */
-		eh->ether_type = ntohs(*dedataaddr(eh, off, u_short *));
-		resid = ntohs(*(dedataaddr(eh, off+2, u_short *)));
-		if (off + resid > len)
-			return;		/* sanity */
-		len = off + resid;
-	} else
-		off = 0;
 	if (len == 0)
 		return;
 
@@ -609,7 +596,7 @@ deread(ds, ifrw, len)
 	 * has trailing header; if_ubaget will then force this header
 	 * information to be at the front.
 	 */
-	m = if_ubaget(&ds->ds_deuba, ifrw, len, off, &ds->ds_if);
+	m = if_ubaget(&ds->ds_deuba, ifrw, len, &ds->ds_if);
 	if (m)
 		ether_input(&ds->ds_if, eh, m);
 }
@@ -634,9 +621,7 @@ deioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&ds->ds_ac, ifa);
 			break;
 #endif
 #ifdef NS
