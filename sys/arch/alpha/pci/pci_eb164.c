@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.20 1998/07/07 21:49:47 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.21 1998/07/07 22:02:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.20 1998/07/07 21:49:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.21 1998/07/07 22:02:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ pci_eb164_pickintr(ccp)
 		 * I hate buggy hardware.
 		 */
 		alpha_shared_intr_set_maxstrays(eb164_pci_intr, i,
-			(ccp->cc_flags & CCF_PYXIS) ? 0 : PCI_STRAY_MAX);
+			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
 	}
 
 #if NSIO
