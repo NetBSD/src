@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 2002/10/30 18:34:15 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 2002/11/13 09:33:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,18 +106,25 @@ trap(struct trapframe *frame)
 		break;
 	case EXC_DSI: {
 		faultbuf *fb;
+		vaddr_t va = frame->dar;
+		ci->ci_ev_kdsi.ev_count++;
+
+		/*
+		 * Try to spill an evicted pte into the page table if this
+		 * wasn't a protection fault and the pmap has some evicted
+		 * pte's.  Note that this is done regardless of whether
+		 * interrupts are active or not.
+		 */
+		if ((frame->dsisr & DSISR_NOTFOUND) &&
+		    vm_map_pmap(kernel_map)->pm_evictions > 0 &&
+		    (va >> ADDR_SR_SHFT) != USER_SR &&
+		    pmap_pte_spill(vm_map_pmap(kernel_map), trunc_page(va)))
+			return;
+
 		/*
 		 * Only query UVM if no interrupts are active.
 		 */
-		ci->ci_ev_kdsi.ev_count++;
 		if (intr_depth < 0) {
-			vaddr_t va;
-
-			if (frame->dsisr & DSISR_STORE)
-				ftype = VM_PROT_WRITE;
-			else
-				ftype = VM_PROT_READ;
-			va = frame->dar;
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				sr_t user_sr;
@@ -128,21 +135,23 @@ trap(struct trapframe *frame)
 				va |= user_sr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
 				/* KERNEL_PROC_LOCK(p); */
+
+				if ((frame->dsisr & DSISR_NOTFOUND) &&
+				    vm_map_pmap(map)->pm_evictions > 0 &&
+				    pmap_pte_spill(vm_map_pmap(map),
+					    trunc_page(va))) {
+					/* KERNEL_PROC_UNLOCK(p); */
+					KERNEL_UNLOCK();
+					return;
+				}
 			} else {
 				map = kernel_map;
 			}
 
-			/*
-			 * Try to spill an evicted pte into the page table
-			 * if this wasn't a protection fault and the pmap
-			 * has some evicted pte's.
-			 */
-			if ((frame->dsisr & DSISR_NOTFOUND) &&
-			    vm_map_pmap(map)->pm_evictions > 0 &&
-			    pmap_pte_spill(vm_map_pmap(map), trunc_page(va))) {
-				KERNEL_UNLOCK();
-				return;
-			}
+			if (frame->dsisr & DSISR_STORE)
+				ftype = VM_PROT_WRITE;
+			else
+				ftype = VM_PROT_READ;
 
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			if (map != kernel_map) {
@@ -159,6 +168,10 @@ trap(struct trapframe *frame)
 			if (rv == EACCES)
 				rv = EFAULT;
 		} else {
+			/*
+			 * Note that this implies that access to the USER
+			 * segment is not allowed in interrupt context.
+			 */
 			rv = EFAULT;
 		}
 		if ((fb = pcb->pcb_onfault) != NULL) {
@@ -171,9 +184,9 @@ trap(struct trapframe *frame)
 				      19 * sizeof(register_t));
 			return;
 		}
-		printf("trap: kernel %s DSI @ %#x by %#x (DSISR %#x, err=%d)\n",
-		    (frame->dsisr & DSISR_STORE) ? "write" : "read",
-		    frame->dar, frame->srr0, frame->dsisr, rv);
+		printf("trap: kernel %s DSI @ %#lx by %#x (DSISR %#x, err"
+		    "=%d)\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
+		    va, frame->srr0, frame->dsisr, rv);
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
