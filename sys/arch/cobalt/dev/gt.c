@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.10 2004/08/28 12:32:48 tsutsui Exp $	*/
+/*	$NetBSD: gt.c,v 1.11 2004/08/28 13:33:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.10 2004/08/28 12:32:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.11 2004/08/28 13:33:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ struct gt_softc {
 
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	struct cobalt_pci_chipset sc_pc;
 };
 
 static int	gt_match(struct device *, struct cfdata *, void *);
@@ -92,6 +93,7 @@ gt_attach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	struct gt_softc *sc = (void *)self;
 #if NPCI > 0
+	pci_chipset_tag_t pc;
 	struct pcibus_attach_args pba;
 #endif
 
@@ -111,6 +113,10 @@ gt_attach(parent, self, aux)
 	    ~PCI_SYNCMODE) | PCI_PCLK_HIGH);
 
 #if NPCI > 0
+	pc = &sc->sc_pc;
+	pc->pc_bst = sc->sc_bst;
+	pc->pc_bsh = sc->sc_bsh;
+
 	pba.pba_busname = "pci";
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
@@ -119,6 +125,7 @@ gt_attach(parent, self, aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		PCI_FLAGS_MRL_OKAY | /*PCI_FLAGS_MRM_OKAY|*/ PCI_FLAGS_MWI_OKAY;
+	pba.pba_pc = pc;
 	config_found(self, &pba, gt_print);
 #endif
 }
