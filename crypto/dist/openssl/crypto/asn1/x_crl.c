@@ -61,22 +61,24 @@
 #include <openssl/asn1_mac.h>
 #include <openssl/x509.h>
 
-static int X509_REVOKED_cmp(X509_REVOKED **a,X509_REVOKED **b);
-static int X509_REVOKED_seq_cmp(X509_REVOKED **a,X509_REVOKED **b);
+static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b);
+static int X509_REVOKED_seq_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b);
 int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
 	M_ASN1_I2D_len(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(a->revocationDate,i2d_ASN1_TIME);
-	M_ASN1_I2D_len_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+	M_ASN1_I2D_len_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					 i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(a->serialNumber,i2d_ASN1_INTEGER);
 	M_ASN1_I2D_put(a->revocationDate,i2d_ASN1_TIME);
-	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+	M_ASN1_I2D_put_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					 i2d_X509_EXTENSION);
 
 	M_ASN1_I2D_finish();
@@ -100,7 +102,8 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 	{
 	int v1=0;
 	long l=0;
-	int (*old_cmp)(X509_REVOKED **,X509_REVOKED **);
+	int (*old_cmp)(const X509_REVOKED * const *,
+			const X509_REVOKED * const *);
 	M_ASN1_I2D_vars(a);
 	
 	old_cmp=sk_X509_REVOKED_set_cmp_func(a->revoked,X509_REVOKED_seq_cmp);
@@ -118,7 +121,7 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 		{ M_ASN1_I2D_len(a->nextUpdate,i2d_ASN1_TIME); }
 	M_ASN1_I2D_len_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
 					 i2d_X509_REVOKED);
-	M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+	M_ASN1_I2D_len_EXP_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
 					     V_ASN1_SEQUENCE,v1);
 
@@ -135,7 +138,7 @@ int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **pp)
 		{ M_ASN1_I2D_put(a->nextUpdate,i2d_ASN1_TIME); }
 	M_ASN1_I2D_put_SEQUENCE_opt_type(X509_REVOKED,a->revoked,
 					 i2d_X509_REVOKED);
-	M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(X509_EXTENSION,a->extensions,
+	M_ASN1_I2D_put_EXP_SEQUENCE_opt_ex_type(X509_EXTENSION,a->extensions,
 					     i2d_X509_EXTENSION,0,
 					     V_ASN1_SEQUENCE,v1);
 
@@ -257,7 +260,7 @@ X509_CRL_INFO *X509_CRL_INFO_new(void)
 	M_ASN1_New(ret->lastUpdate,M_ASN1_UTCTIME_new);
 	ret->nextUpdate=NULL;
 	M_ASN1_New(ret->revoked,sk_X509_REVOKED_new_null);
-	M_ASN1_New(ret->extensions,sk_X509_EXTENSION_new_null);
+	ret->extensions = NULL;
 	sk_X509_REVOKED_set_cmp_func(ret->revoked,X509_REVOKED_cmp);
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_CRL_INFO_NEW);
@@ -283,7 +286,7 @@ void X509_REVOKED_free(X509_REVOKED *a)
 	M_ASN1_INTEGER_free(a->serialNumber);
 	M_ASN1_UTCTIME_free(a->revocationDate);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_CRL_INFO_free(X509_CRL_INFO *a)
@@ -297,7 +300,7 @@ void X509_CRL_INFO_free(X509_CRL_INFO *a)
 		M_ASN1_UTCTIME_free(a->nextUpdate);
 	sk_X509_REVOKED_pop_free(a->revoked,X509_REVOKED_free);
 	sk_X509_EXTENSION_pop_free(a->extensions,X509_EXTENSION_free);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
 void X509_CRL_free(X509_CRL *a)
@@ -322,17 +325,19 @@ void X509_CRL_free(X509_CRL *a)
 	X509_CRL_INFO_free(a->crl);
 	X509_ALGOR_free(a->sig_alg);
 	M_ASN1_BIT_STRING_free(a->signature);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
-static int X509_REVOKED_cmp(X509_REVOKED **a, X509_REVOKED **b)
+static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
+			const X509_REVOKED * const *b)
 	{
 	return(ASN1_STRING_cmp(
 		(ASN1_STRING *)(*a)->serialNumber,
 		(ASN1_STRING *)(*b)->serialNumber));
 	}
 
-static int X509_REVOKED_seq_cmp(X509_REVOKED **a, X509_REVOKED **b)
+static int X509_REVOKED_seq_cmp(const X509_REVOKED * const *a,
+				const X509_REVOKED * const *b)
 	{
 	return((*a)->sequence-(*b)->sequence);
 	}
