@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.9 1993/12/15 18:26:40 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.10 1993/12/17 23:55:57 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -142,7 +142,7 @@ MainParseArgs(argc, argv)
 	char c;
 
 	optind = 1;	/* since we're called more than once */
-rearg:	while((c = getopt(argc, argv, "D:I:d:ef:ij:knqrst")) != EOF) {
+rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
 		switch(c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
@@ -164,11 +164,11 @@ rearg:	while((c = getopt(argc, argv, "D:I:d:ef:ij:knqrst")) != EOF) {
 			usePipes = FALSE;
 			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
 			break;
+#endif
 		case 'S':
 			keepgoing = FALSE;
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 			break;
-#endif
 		case 'd': {
 			char *modules = optarg;
 
