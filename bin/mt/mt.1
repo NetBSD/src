@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.5 1995/07/25 19:37:16 jtc Exp $
+.\"	$NetBSD: mt.1,v 1.6 1995/08/22 19:36:00 jtc Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ If a tape name is not specified, and the environment variable
 does not exist;
 .Nm mt
 uses the device
-.Pa /dev/rmt12 .
+.Pa /dev/rst0 .
 .Pp
 .Nm Mt
 returns a 0 exit status when the operation(s) were successful,
@@ -120,7 +120,9 @@ argument
 .Ar tapename
 is not given.
 .Sh FILES
-.Bl -tag -width /dev/rmt* -compact
+.Bl -tag -width /dev/rst* -compact
+.It Pa /dev/rst*
+Raw SCSI tape interface
 .It Pa /dev/rmt*
 Raw magnetic tape interface
 .El
