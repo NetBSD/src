@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.5 2002/05/31 11:13:23 augustss Exp $
+#	$NetBSD: PMPPC,v 1.6 2002/06/05 06:31:51 augustss Exp $
 #
 #	PMPPC
 #
@@ -250,7 +250,7 @@ sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
 stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
-#ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
@@ -399,7 +399,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
-#neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
