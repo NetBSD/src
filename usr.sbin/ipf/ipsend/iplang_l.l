@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.1.1.2 1997/10/30 05:30:18 mrg Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.2 1997/11/01 09:12:21 enami Exp $	*/
 
 %e 1500
 %p 4000
@@ -176,6 +176,8 @@ icmpid		{ return next_state(IL_ICMP_SEQ, -1); }
 [^ {}\n\t;]*	{ return next_item(IL_TOKEN); }
 \"[^\"]*\"	{ return next_item(IL_TOKEN); }
 %%
+void yyerror __P((char *));
+
 void    yyerror(msg)
 char    *msg;
 {
