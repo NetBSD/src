@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.9 2001/09/11 22:52:54 wiz Exp $
+.\" $NetBSD: uhid.4,v 1.10 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,6 @@
 .Nd USB generic HID support
 .Sh SYNOPSIS
 .Cd "uhid* at uhub?"
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
@@ -115,9 +114,9 @@ size prescribed by the report descriptor.
 .It Pa /dev/uhid?
 .El
 .Sh SEE ALSO
+.Xr usbhidctl 1 ,
 .Xr usb 3 ,
-.Xr usb 4 ,
-.Xr usbhidctl 1
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm

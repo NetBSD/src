@@ -1,4 +1,4 @@
-.\" $NetBSD: vga.4,v 1.8 2001/06/10 15:51:02 wiz Exp $
+.\" $NetBSD: vga.4,v 1.9 2001/09/11 23:18:55 wiz Exp $
 .Dd March 20, 1999
 .Os
 .Dt VGA 4
@@ -87,7 +87,7 @@ type and ISO-8859-1 encoded fonts. As an experimental feature, the
 .Dq higher half
 fonts of the former
 .Nx Ns /i386
-.Xr pcvt 4
+.Nm pcvt
 driver distribution can be used too if the kernel option
 .Dq WSCONS_SUPPORT_PCVTFONTS
 was set at compile time. This is only useful with the
@@ -95,6 +95,13 @@ was set at compile time. This is only useful with the
 screen types; a font containing the
 .Tn ASCII
 range of characters must be available too on this screen.
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr pcdisplay 4 ,
+.Xr pci 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsfontload 8
 .Sh BUGS
 Only a subset of the possible text modes is supported.
 .Pp
@@ -112,10 +119,3 @@ and
 .Dq 80x24bf
 screen types will not be available. This mode of operation
 is not tested.
-.Sh SEE ALSO
-.Xr isa 4 ,
-.Xr pcdisplay 4 ,
-.Xr pci 4 ,
-.Xr wscons 4 ,
-.Xr wsconscfg 8 ,
-.Xr wsfontload 8
