@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.h,v 1.1.2.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.1.2.2 2000/03/14 15:59:51 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,6 +55,6 @@ struct mainbus_attach_args {
  * Mainbus offsets for devices on MVME167 and MVME177
  */
 #define MAINBUS_VMETWO_OFFSET	0x0000u
-#define	MAINBUS_PCCTWO_OFFSET	0x0000u
+#define	MAINBUS_PCCTWO_OFFSET	0x2000u
 
 #endif /* _MVME68K_MAINBUS_H */

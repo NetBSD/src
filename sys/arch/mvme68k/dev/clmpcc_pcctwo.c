@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.16.1 2000/03/11 20:51:48 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.16.2 2000/03/14 15:59:50 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ clmpcc_pcctwo_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa = aux;
 
 	if ( strcmp(pa->pa_name, clmpcc_cd.cd_name) )
 		return (0);
@@ -115,7 +115,7 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	void *aux;
 {
 	struct clmpcc_softc *sc = (void *) self;
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa = aux;
 	int level = pa->pa_ipl;
 
 	sc->sc_iot = pa->pa_bust;
@@ -162,23 +162,8 @@ clmpcc_pcctwo_iackhook(sc, which)
 	struct clmpcc_softc *sc;
 	int which;
 {
-	bus_space_tag_t bust;
-	bus_space_handle_t bush;
 	bus_size_t offset;
 	volatile u_char foo;
-
-	if ( sys_pcctwo == NULL ) {
-		/*
-		 * This is necessary to get the console working when the
-		 * PCCChip2 driver is not yet attached.
-		 */
-		bust = MVME68K_INTIO_BUS_SPACE;
-		bus_space_map(bust, MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
-		    PCC2REG_SIZE, 0, &bush);
-	} else {
-		bust = sys_pcctwo->sc_bust;
-		bush = sys_pcctwo->sc_bush;
-	}
 
 	switch ( which ) {
 	  case CLMPCC_IACK_MODEM:
@@ -200,10 +185,51 @@ clmpcc_pcctwo_iackhook(sc, which)
 #endif
 	}
 
-	foo = bus_space_read_1(bust, bush, offset);
+	foo = pcc2_reg_read(sys_pcctwo, offset);
+}
 
-	if ( sys_pcctwo == NULL )
-		bus_space_unmap(bust, bush, PCC2REG_SIZE);
+/*
+ * This routine is only used prior to clmpcc_attach() being called
+ */
+void
+clmpcc_pcctwo_consiackhook(sc, which)
+	struct clmpcc_softc *sc;
+	int which;
+{
+	bus_space_tag_t bust;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	volatile u_char foo;
+
+	/*
+	 * We need to fake the tag and handle since 'sys_pcctwo' will
+	 * be NULL during early system startup...
+	 */
+	bust = MVME68K_INTIO_BUS_SPACE;
+	bush = (bus_space_tag_t) &(intiobase[MAINBUS_PCCTWO_OFFSET +
+					     PCCTWO_REG_OFF]);
+
+	switch ( which ) {
+	  case CLMPCC_IACK_MODEM:
+		offset = PCC2REG_SCC_MODEM_PIACK;
+		break;
+
+	  case CLMPCC_IACK_RX:
+		offset = PCC2REG_SCC_RX_PIACK;
+		break;
+
+	  case CLMPCC_IACK_TX:
+		offset = PCC2REG_SCC_TX_PIACK;
+		break;
+#ifdef DEBUG
+	  default:
+		printf("%s: Invalid IACK number '%d'\n",
+		    sc->sc_dev.dv_xname, which);
+		panic("clmpcc_pcctwo_consiackhook");
+#endif
+	}
+
+	foo = bus_space_read_1(bust, bush, offset);
 }
 
 
@@ -244,12 +270,13 @@ clmpcccninit(cp)
 {
 	static struct clmpcc_softc cons_sc;
 
-	cons_sc.sc_iot = (bus_space_tag_t)0;
-	cons_sc.sc_ioh = (bus_space_handle_t) PCCTWO_VADDR(PCCTWO_SCC_OFF);
+	cons_sc.sc_iot = MVME68K_INTIO_BUS_SPACE;
+	bus_space_map(cons_sc.sc_iot, MAINBUS_PCCTWO_OFFSET + PCCTWO_SCC_OFF,
+	    PCC2REG_SIZE, 0, &cons_sc.sc_ioh);
 	cons_sc.sc_clk = 20000000;
 	cons_sc.sc_byteswap = CLMPCC_BYTESWAP_LOW;
 	cons_sc.sc_swaprtsdtr = 1;
-	cons_sc.sc_iackhook = clmpcc_pcctwo_iackhook;
+	cons_sc.sc_iackhook = clmpcc_pcctwo_consiackhook;
 	cons_sc.sc_vector_base = PCCTWO_SCC_VECBASE;
 	cons_sc.sc_rpilr = 0x03;
 	cons_sc.sc_tpilr = 0x02;

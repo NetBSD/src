@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.12.16.1 2000/03/11 20:51:50 scw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.12.16.2 2000/03/14 15:59:52 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ pccintr_establish(pccvec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
-
+#ifdef DEBUG
 	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
 		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_establish");
@@ -243,6 +243,7 @@ pccintr_establish(pccvec, hand, lvl, arg)
 		printf("pcc: illegal interrupt level: %d\n", lvl);
 		panic("pccintr_establish");
 	}
+#endif
 
 	isrlink_vectored(hand, arg, lvl, pccvec + PCC_VECBASE);
 }
@@ -251,11 +252,12 @@ void
 pccintr_disestablish(pccvec)
 	int pccvec;
 {
-
+#ifdef DEBUG
 	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
 		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_disestablish");
 	}
+#endif
 
 	/* Disable the interrupt */
 	pcc_reg_write(sys_pcc, pcc_vec2intctrl[pccvec], PCC_ICLEAR);

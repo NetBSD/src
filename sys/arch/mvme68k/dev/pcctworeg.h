@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.3.16.1 2000/03/11 20:51:50 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.3.16.2 2000/03/14 15:59:53 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,15 +55,12 @@
 #define PCCTWO_NVRAM_OFF    0x7e000	/* Offset of MK48T18 NVRAM */
 #define PCCTWO_RTC_OFF      0x7fff8	/* Offset of MK48T18 RTC registers */
 
-
-#if 1
 /*
- * XXXSCW: Temp. needed until all onboard drivers are bus-spaced
+ * This is needed to figure out the boot device.
+ * (The physical address of the boot device's registers are passed in
+ * from the Boot ROM)
  */
-#define PCCTWO_BASE 0xfff42000u
-#define PCCTWO_VADDR(off)	((void *)IIOV(PCCTWO_BASE + (off))) 
-#define PCCTWO_PADDR(off)	((void *)(PCCTWO_BASE + (off)))
-#endif
+#define PCCTWO_PADDR(off)	((void *)(0xfff40000u + (off)))
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.3.2.1 2000/03/11 20:51:50 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.3.2.2 2000/03/14 15:59:51 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ ncrsc_pcctwo_match(parent, cf, args)
 	struct cfdata *cf;
 	void *args;
 {
-	struct pcc_attach_args *pa = args;
+	struct pcctwo_attach_args *pa = args;
 
 	if ( strcmp(pa->pa_name, ncrsc_cd.cd_name) )
 		return 0;
@@ -114,7 +114,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct pcc_attach_args *pa;
+	struct pcctwo_attach_args *pa;
 	struct siop_softc *sc;
 	bus_space_handle_t bush;
 	int clk, ctest7;
