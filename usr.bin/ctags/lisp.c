@@ -1,4 +1,4 @@
-/*	$NetBSD: lisp.c,v 1.5 1998/11/06 23:06:38 christos Exp $	*/
+/*	$NetBSD: lisp.c,v 1.6 2002/01/31 19:26:35 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)lisp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: lisp.c,v 1.5 1998/11/06 23:06:38 christos Exp $");
+__RCSID("$NetBSD: lisp.c,v 1.6 2002/01/31 19:26:35 tv Exp $");
 #endif
 #endif /* not lint */
 
