@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.427 2003/09/14 06:40:04 lukem Exp $
+# $NetBSD: mi,v 1.428 2003/09/23 23:10:08 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -304,6 +304,8 @@
 ./usr/X11R6/lib/X11/xkb/types			base-x11-root
 ./usr/X11R6/lib/X11/xserver			base-x11-root
 ./usr/X11R6/lib/X11/xsm				base-x11-root
+./usr/X11R6/lib/modules				base-x11-root
+./usr/X11R6/lib/modules/extensions		base-x11-root
 ./usr/X11R6/man					base-x11-root
 ./usr/X11R6/man/cat1				base-x11-root
 ./usr/X11R6/man/cat3				base-x11-root
