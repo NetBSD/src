@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.9 1999/01/31 09:28:26 mrg Exp $
+#	$NetBSD: list,v 1.10 1999/03/25 13:14:42 pk Exp $
 
-SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin/grep gnu/usr.bin gnu/usr.bin/binutils
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
