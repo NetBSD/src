@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.32 2000/01/26 12:48:44 soda Exp $
+#	$NetBSD: Makefile.arc,v 1.33 2000/02/01 05:25:27 tsutsui Exp $
 #	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
 
 # Makefile for NetBSD
@@ -31,7 +31,7 @@ LORDER?=lorder
 MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
-STRIPPROG?=strip
+STRIP?=	strip
 SIZE?=	size
 ELF2AOUT?=	touch		# XXX
 ELF2ECOFF?=	elf2ecoff
@@ -118,8 +118,8 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-x
 .endif
