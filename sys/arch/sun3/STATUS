@@ -1,7 +1,7 @@
-						<$Revision: 1.2 $> 
+						<$Revision: 1.3 $> 
 
 This is to be a summary of the status of code, its problems,
-and the directions it should and needs to take in the future.
+and the directions it should and take in the future.
 
 The major bugs:
 	
@@ -27,7 +27,15 @@ The major bugs:
 	there is an insane hack in 'swapnfs', and the
 	TIMESINK.nfsdiskless stuff because we don't have any way of
 	getting nfsdiskless information yet.  
-	
+
+	my tree doesn't have the non-contig phys memory changes.  This port
+	needs them on the 3/50 or maybe its the 3/60 where the framebuffer
+	is plop at 1mb in phys mem.  The only reason this hasn't been a problem
+	is that the kernel is still *relatively* small.
+
+Note:
+
+	the only ok config file is 'TIMESINK'.  the others need to be updated.
 
 Core code: (i.e sun3/sun3, sun3/include)
 ----------
