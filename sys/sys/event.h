@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10.2.4 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: event.h,v 1.10.2.5 2004/10/30 09:21:37 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -198,7 +198,7 @@ struct knote {
 #define	kn_fp		kn_ptr.p_fp
 };
 
-struct proc;
+struct lwp;
 
 void	knote(struct klist *, long);
 void	knote_remove(struct lwp *, struct klist *);
