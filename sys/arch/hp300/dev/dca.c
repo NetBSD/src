@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.38 1998/03/28 23:49:06 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.39 1998/07/20 17:35:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ dcaintr(arg)
 #ifdef KGDB
 #define	RCVBYTE() \
 			code = dca->dca_data; \
-			if ((tp->t_state & TS_ISOPEN) == 0) { \
+			if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0) { \
 				if (code == FRAME_END && \
 				    kgdb_dev == makedev(dcamajor, unit)) \
 					kgdb_connect(0); /* trap into kgdb */ \
@@ -538,7 +538,7 @@ dcaintr(arg)
 #else
 #define	RCVBYTE() \
 			code = dca->dca_data; \
-			if ((tp->t_state & TS_ISOPEN) != 0) \
+			if (tp != NULL && (tp->t_state & TS_ISOPEN) != 0) \
 				(*linesw[tp->t_line].l_rint)(code, tp)
 #endif
 			RCVBYTE();
@@ -562,13 +562,16 @@ dcaintr(arg)
 					fifoin[fifocnt]++;
 #endif
 			}
-			if (!iflowdone && (tp->t_cflag&CRTS_IFLOW) &&
+			if (!iflowdone && tp != NULL &&
+			    (tp->t_cflag&CRTS_IFLOW) &&
 			    tp->t_rawq.c_cc > TTYHOG/2) {
 				dca->dca_mcr &= ~MCR_RTS;
 				iflowdone = 1;
 			}
 			break;
 		case IIR_TXRDY:
+			if (tp == NULL)
+				break;
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
 				(*linesw[tp->t_line].l_start)(tp);
@@ -601,7 +604,7 @@ dcaeint(sc, stat)
 	int c;
 
 	c = dca->dca_data;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
 		/* we don't care about parity errors */
 		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
@@ -632,6 +635,8 @@ dcamint(sc)
 #ifdef DEBUG
 	dcamintcount[stat & 0xf]++;
 #endif
+	if (tp == NULL)
+		return;
 	if ((stat & MSR_DDCD) &&
 	    (sc->sc_flags & DCA_SOFTCAR) == 0) {
 		if (stat & MSR_DCD)
