@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.8 1994/12/13 22:33:32 mycroft Exp $	*/
+/*	$NetBSD: iso.h,v 1.9 1995/01/18 09:23:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -148,7 +148,6 @@ struct iso_mnt {
 	int im_bmask;
 	
 	int volume_space_size;
-	char im_fsmnt[50];
 	struct netexport im_export;
 	
 	char root[ISODCL (157, 190)];
