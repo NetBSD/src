@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.4 1995/05/28 19:45:36 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.5 1995/06/09 19:55:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -417,7 +417,18 @@ grfmmap(dev, off, prot)
 dev_t	dev;
 int	off, prot;
 {
-panic("No grfmmap\n"); /* LWP */
+	struct grf_softc	*gp;
+	struct grfinfo		*gi;
+	
+	gp = grfsp[GRFUNIT(dev)];
+	gi = &gp->g_display;
+
+	/*
+	 * frame buffer
+	 */
+	if ((off >= 0) && (off < gi->gd_fbsize))
+		return (((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
+	return(-1);
 }
 
 int
