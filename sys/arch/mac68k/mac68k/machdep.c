@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 2003/04/02 00:44:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.286 2003/04/26 11:05:14 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,6 +108,7 @@
 #include <sys/syscallargs.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/ksyms.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -146,6 +147,8 @@
 #include <mac68k/dev/macfbvar.h>
 #endif
 #include <mac68k/dev/zs_cons.h>
+
+#include "ksyms.h"
 
 int symsize, end, *ssym, *esym;
 
@@ -347,12 +350,12 @@ consinit(void)
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
-#ifdef  DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
 
-		ddb_init(symsize, ssym, esym);
+		ksyms_init(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {

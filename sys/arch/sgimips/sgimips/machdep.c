@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2003/04/02 04:27:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2003/04/26 11:05:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -58,6 +58,7 @@
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -82,7 +83,9 @@
 
 #include <sgimips/dev/crimereg.h>
 
-#if defined(DDB) || defined(KGDB)
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -93,7 +96,6 @@
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
 
 /* For sysctl_hw. */
 extern char cpu_model[];
@@ -356,8 +358,10 @@ mach_init(argc, argv, magic, btinfo)
 	/* Set up DDB hook to turn off watchdog on entry */
 	db_trap_callback = ddb_trap_hook;
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(nsym, ssym, esym);
+#endif
 #  ifdef DDB
-	ddb_init(nsym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #  endif

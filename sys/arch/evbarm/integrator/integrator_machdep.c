@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.31 2003/04/02 03:49:25 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.32 2003/04/26 11:05:10 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -79,6 +79,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,6 +103,7 @@
 
 #include "opt_ipkdb.h"
 #include "pci.h"
+#include "ksyms.h"
 
 void ifpga_reset(void) __attribute__((noreturn));
 /*
@@ -818,12 +820,13 @@ initarm(void *arg)
 		ipkdb_connect(0);
 #endif
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* Firmware doesn't load symbols. */
+	ksyms_init(0, NULL, NULL);
+#endif
+
 #ifdef DDB
 	db_machine_init();
-
-	/* Firmware doesn't load symbols. */
-	ddb_init(0, NULL, NULL);
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

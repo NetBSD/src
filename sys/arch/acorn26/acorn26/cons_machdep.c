@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.3 2003/04/26 11:05:05 ragge Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,15 +31,17 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cons_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__RCSID("$NetBSD: cons_machdep.c,v 1.3 2003/04/26 11:05:05 ragge Exp $");
 
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
 #include "arcvideo.h"
 #include "opt_ddb.h"
+#include "ksyms.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -63,8 +65,10 @@ consinit()
 
 #ifdef DDB
 	db_machine_init();
-	ddb_init(bootconfig.esym - bootconfig.ssym,
+#endif /* DDB */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(bootconfig.esym - bootconfig.ssym,
 		 MEMC_PHYS_BASE + bootconfig.ssym,
 		 MEMC_PHYS_BASE + bootconfig.esym);
-#endif /* DDB */
+#endif
 }

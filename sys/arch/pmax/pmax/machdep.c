@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2003/04/02 04:19:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.204 2003/04/26 11:05:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2003/04/02 04:19:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2003/04/26 11:05:18 ragge Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2003/04/02 04:19:50 thorpej Exp $"
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -76,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2003/04/02 04:19:50 thorpej Exp $"
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -85,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2003/04/02 04:19:50 thorpej Exp $"
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 extern char	cpu_model[];
@@ -170,7 +172,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	int i;
 	caddr_t kernend, v;
 	unsigned size;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
 	caddr_t ssym = 0;
 	struct btinfo_symtab *bi_syms;
@@ -194,7 +196,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		bootinfo_msg = "invalid bootinfo pointer (old bootblocks?)\n";
 
 	/* clear the BSS segment */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 	aout = (struct exec *)edata;
 
@@ -299,10 +301,12 @@ mach_init(argc, argv, code, cv, bim, bip)
 		kernend += round_page(mfs_initminiroot(kernend));
 #endif
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ddb_init(esym - ssym, ssym, esym);
+		ksyms_init(esym - ssym, ssym, esym);
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

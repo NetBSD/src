@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27 2003/04/02 00:08:14 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.28 2003/04/26 11:05:14 ragge Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2003/04/02 00:08:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2003/04/26 11:05:14 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2003/04/02 00:08:14 thorpej Exp $")
 #include <sys/vnode.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -87,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2003/04/02 00:08:14 thorpej Exp $")
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "ksyms.h"
 
 /*
  * Info for CTL_HW
@@ -222,13 +225,15 @@ consinit()
 		ws_cnattach();
 	}
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		cpu_Debugger();
 #endif

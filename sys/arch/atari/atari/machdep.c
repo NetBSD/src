@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2003/04/01 23:47:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2003/04/26 11:05:08 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 
 #include <sys/exec.h>
 #if defined(DDB) && defined(__ELF__)
@@ -89,6 +90,8 @@
 #include <machine/pte.h>
 
 #include <dev/cons.h>
+
+#include "ksyms.h"
 
 static void bootsync __P((void));
 static void call_sicallbacks __P((void));
@@ -161,18 +164,20 @@ consinit()
 	 */
 	cninit();
 
-#if defined (DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 
 #ifndef __ELF__
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 #else
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 			(void *)&end, esym);
 #endif
 	}
+#endif
+#if defined (DDB)
         if(boothowto & RB_KDB)
                 Debugger();
 #endif
