@@ -8,7 +8,7 @@
  *
  * S/KEY initialization and seed update
  *
- * $Id: skeyinit.c,v 1.1 1994/05/24 06:48:14 deraadt Exp $
+ * $Id: skeyinit.c,v 1.2 1994/05/29 22:38:39 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -30,6 +30,7 @@ main(argc, argv)
 {
 	int     rval, n, nn, i, defaultsetup, l;
 	time_t  now;
+	char	hostname[MAXHOSTNAMELEN];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
 	char    passwd[256], passwd2[256], tbuf[27], buf[60];
 	char    lastc, me[80], user[8], *salt, *p, *pw;
@@ -43,10 +44,10 @@ main(argc, argv)
 	tm = localtime(&now);
 	strftime(tbuf, sizeof(tbuf), "%M%j", tm);
 
-	if (gethostname(defaultseed, sizeof(defaultseed)) < 0)
-		exit(-1);
-
-	strcpy(&defaultseed[NAMELEN], tbuf);
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		err(1, "gethostname");
+	for (i = 0; i < sizeof(defaultseed); i++)
+		defaultseed[i] = tbuf[i] ^ hostname[i];
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %d", getuid());
