@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.477 2004/05/16 10:25:13 lukem Exp $
+# $NetBSD: mi,v 1.478 2004/05/18 00:36:03 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -844,7 +844,7 @@
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin
-./usr/libexec/named-xfer			base-bind-bin
+./usr/libexec/named-xfer			base-bind-bin		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/postfix				base-postfix-usr
 ./usr/libexec/postfix/bounce			base-postfix-bin	postfix
@@ -986,6 +986,7 @@
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
+./usr/sbin/lwresd				base-bind-bin
 ./usr/sbin/mailstats				base-mailwrapper-bin	sendmail
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
@@ -1015,11 +1016,11 @@
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
 ./usr/sbin/named				base-bind-bin
-./usr/sbin/named-bootconf			base-bind-bin
-./usr/sbin/named.reload				base-bind-bin
-./usr/sbin/named.restart			base-bind-bin
+./usr/sbin/named-bootconf			base-bind-bin		obsolete
+./usr/sbin/named.reload				base-bind-bin		obsolete
+./usr/sbin/named.restart			base-bind-bin		obsolete
 ./usr/sbin/ndbootd				base-bootserver-bin
-./usr/sbin/ndc					base-bind-bin
+./usr/sbin/ndc					base-bind-bin		obsolete
 ./usr/sbin/ndp					base-netutil-bin
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
@@ -1081,6 +1082,7 @@
 ./usr/sbin/repquota				base-sysutil-bin
 ./usr/sbin/revnetgroup				base-nis-bin		yp
 ./usr/sbin/rip6query				base-netutil-bin
+./usr/sbin/rndc					base-bind-bin
 ./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/route6d				base-router-bin
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin

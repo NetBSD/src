@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.693 2004/05/10 12:48:19 wiz Exp $
+# $NetBSD: mi,v 1.694 2004/05/18 00:36:04 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1763,6 +1763,7 @@
 ./usr/share/man/cat8/lpd.0			man-lpr-catman		.cat
 ./usr/share/man/cat8/luna68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/luna68k/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/lwresd.0			man-bind-catman		.cat
 ./usr/share/man/cat8/mac68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/mac68k/makedev.0		man-obsolete		obsolete
@@ -1837,13 +1838,13 @@
 ./usr/share/man/cat8/mvme68k/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mvmeppc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mvmeppc/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/named-bootconf.0		man-bind-catman		.cat
-./usr/share/man/cat8/named-xfer.0		man-bind-catman		.cat
+./usr/share/man/cat8/named-bootconf.0		man-bind-catman		obsolete
+./usr/share/man/cat8/named-xfer.0		man-bind-catman		obsolete
 ./usr/share/man/cat8/named.0			man-bind-catman		.cat
-./usr/share/man/cat8/named.reload.0		man-bind-catman		.cat
-./usr/share/man/cat8/named.restart.0		man-bind-catman		.cat
+./usr/share/man/cat8/named.reload.0		man-bind-catman		obsolete
+./usr/share/man/cat8/named.restart.0		man-bind-catman		obsolete
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman	.cat
-./usr/share/man/cat8/ndc.0			man-bind-catman		.cat
+./usr/share/man/cat8/ndc.0			man-bind-catman		obsolete
 ./usr/share/man/cat8/ndp.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/netbsd32.0			man-sys-catman		.cat
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman		.cat
@@ -1947,6 +1948,7 @@
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rmail.0			man-uucp-catman		.cat
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/route6d.0			man-router-catman	.cat
@@ -3863,6 +3865,7 @@
 ./usr/share/man/man8/lpd.8			man-lpr-man		.man
 ./usr/share/man/man8/luna68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/luna68k/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/lwresd.8			man-bind-man		.man
 ./usr/share/man/man8/mac68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man		.man
 ./usr/share/man/man8/mac68k/makedev.8		man-obsolete		obsolete
@@ -3937,11 +3940,11 @@
 ./usr/share/man/man8/mvme68k/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/mvmeppc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mvmeppc/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/named-bootconf.8		man-bind-man		.man
-./usr/share/man/man8/named-xfer.8		man-bind-man		.man
+./usr/share/man/man8/named-bootconf.8		man-bind-man		obsolete
+./usr/share/man/man8/named-xfer.8		man-bind-man		obsolete
 ./usr/share/man/man8/named.8			man-bind-man		.man
-./usr/share/man/man8/named.reload.8		man-bind-man		.man
-./usr/share/man/man8/named.restart.8		man-bind-man		.man
+./usr/share/man/man8/named.reload.8		man-bind-man		obsolete
+./usr/share/man/man8/named.restart.8		man-bind-man		obsolete
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ndc.8			man-bind-man		.man
 ./usr/share/man/man8/ndp.8			man-netutil-man		.man
@@ -4047,6 +4050,7 @@
 ./usr/share/man/man8/rlogind.8			man-netutil-man		.man
 ./usr/share/man/man8/rmail.8			man-uucp-man		.man
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
+./usr/share/man/man8/rndc.8			man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
 ./usr/share/man/man8/route6d.8			man-router-man		.man
