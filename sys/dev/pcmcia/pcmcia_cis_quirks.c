@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.5 1999/10/11 17:50:21 thorpej Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.6 2000/04/12 21:07:55 scw Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -154,6 +154,27 @@ static struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
+static struct pcmcia_function pcmcia_ndc_nd5100_func0 = {
+	0,			/* function number */
+	PCMCIA_FUNCTION_NETWORK,
+	0x23,			/* last cfe number */
+	0x3f8,			/* ccr_base */
+	0x3,			/* ccr_mask */
+};
+
+static struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
+	0x20,			/* cfe number */
+	PCMCIA_CFE_MWAIT_REQUIRED | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_IFTYPE_IO,
+	1,			/* num_iospace */
+	5,			/* iomask */
+	{ { 0x20, 0x300 } },	/* iospace */
+	0xdeb8,			/* irqmask */
+	0,			/* num_memspace */
+	{ },			/* memspace */
+	0,			/* maxtwins */
+};
+
 static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID, 
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
@@ -171,6 +192,8 @@ static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  &pcmcia_3ccfem556bi_func1, &pcmcia_3ccfem556bi_func1_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_SVEC_LANCARD,
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_NDC_ND5100_E,
+	  &pcmcia_ndc_nd5100_func0, &pcmcia_ndc_nd5100_func0_cfe0 },
 };
 	
 static int n_pcmcia_cis_quirks =

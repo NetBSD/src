@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.59 2000/03/20 18:39:32 tron Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.60 2000/04/12 21:07:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -318,6 +318,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_BILLIONTON_LNT10TN,
       0, -1, { 0x00, 0x00, 0x00 } },
+
+    { PCMCIA_STR_NDC_ND5100_E,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_NDC_ND5100_E,
+      0, -1, { 0x00, 0x80, 0xc6 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
