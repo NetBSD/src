@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.15 1993/12/20 09:05:17 mycroft Exp $
+ *	$Id: aha1542.c,v 1.16 1993/12/20 23:27:28 davidb Exp $
  */
 
 /*
@@ -315,15 +315,7 @@ struct isa_driver ahadriver = {
 	"aha"
 };
 
-struct scsi_switch aha_switch = {
-	"aha",
-	aha_scsi_cmd,
-	ahaminphys,
-	0,
-	0,
-	aha_adapter_info,
-	0, 0, 0
-};
+struct scsi_switch aha_switch[NAHA];
 
 /*
  * aha_cmd(unit, icnt, ocnt,wait, retval, ...)
@@ -485,17 +477,32 @@ int
 ahaattach(struct isa_device *dev)
 {
 	static int firsttime;
+	static int firstswitch[NAHA];
 	static u_long speedprint;	/* max 32 aha controllers */
 	int masunit = dev->id_masunit;
 	int r;
 
+	if (!firstswitch[masunit]) {
+		firstswitch[masunit] = 1;
+		aha_switch[masunit].name = "aha";
+		aha_switch[masunit].scsi_cmd = aha_scsi_cmd;
+		aha_switch[masunit].scsi_minphys = ahaminphys;
+		aha_switch[masunit].open_target_lu = 0;
+		aha_switch[masunit].close_target_lu = 0;
+		aha_switch[masunit].adapter_info = aha_adapter_info;
+		for (r = 0; r < 8; r++) {
+			aha_switch[masunit].empty[r] = 0;
+			aha_switch[masunit].used[r] = 0;
+			aha_switch[masunit].printed[r] = 0;
+		}
+	}
 	if(!(speedprint & (1<<masunit))) {
 		DELAY(1000000);
 		speedprint |= (1<<masunit);
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}
 
-	r = scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch,
+	r = scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch[masunit],
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */

@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.15 1993/12/20 09:06:46 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.16 1993/12/20 23:27:39 davidb Exp $
  */
  
 #include <sys/types.h>
@@ -291,16 +291,7 @@ int     uha_debug = 0;
 #define SUCCESS 0
 #define PAGESIZ 4096
 
-struct  scsi_switch     uha_switch = 
-{
-	"uha",
-	uha_scsi_cmd,
-	uhaminphys,
-	0,
-	0,
-	uha_adapter_info,
-	0,0,0
-};
+struct  scsi_switch     uha_switch[NUHA];
 
 /**/
 /***********************************************************************\
@@ -438,10 +429,25 @@ uha_attach(dev)
 struct  isa_dev *dev;
 {
 	static int firsttime;
+	static int firstswitch[NUHA];
 	int masunit = dev->id_masunit;
 	int r;
 
-	r = scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch,
+	if (!firstswitch[masunit]) {
+		firstswitch[masunit] = 1;
+		uha_switch[masunit].name = "uha";
+		uha_switch[masunit].scsi_cmd = uha_scsi_cmd;
+		uha_switch[masunit].scsi_minphys = uhaminphys;
+		uha_switch[masunit].open_target_lu = 0;
+		uha_switch[masunit].close_target_lu = 0;
+		uha_switch[masunit].adapter_info = uha_adapter_info;
+		for (r = 0; r < 8; r++) {
+			uha_switch[masunit].empty[r] = 0;
+			uha_switch[masunit].used[r] = 0;
+			uha_switch[masunit].printed[r] = 0;
+		}
+	}
+	r = scsi_attach(masunit, uha_data[masunit].our_id, &uha_switch[masunit],
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */

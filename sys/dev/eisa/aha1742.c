@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.15 1993/12/20 09:05:24 mycroft Exp $
+ *	$Id: aha1742.c,v 1.16 1993/12/20 23:27:33 davidb Exp $
  */
 
 #include "ahb.h"
@@ -298,16 +298,7 @@ struct isa_driver ahbdriver = {
 	"ahb"
 };
 
-struct scsi_switch ahb_switch = {
-	"ahb",
-	ahb_scsi_cmd,
-	ahbminphys,
-	0,
-	0,
-	ahb_adapter_info,
-	0, 0, 0
-};
-
+struct scsi_switch ahb_switch[NAHB];
 
 /*
  * Function to send a command out through a mailbox
@@ -460,10 +451,25 @@ int
 ahb_attach(struct isa_device *dev)
 {
 	static int firsttime;
+	static int firstswitch[NAHB];
 	int masunit = dev->id_masunit;
 	int r;
 
-	r = scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch,
+	if (!firstswitch[masunit]) {
+		firstswitch[masunit] = 1;
+		ahb_switch[masunit].name = "ahb";
+		ahb_switch[masunit].scsi_cmd = ahb_scsi_cmd;
+		ahb_switch[masunit].scsi_minphys = ahbminphys;
+		ahb_switch[masunit].open_target_lu = 0;
+		ahb_switch[masunit].close_target_lu = 0;
+		ahb_switch[masunit].adapter_info = ahb_adapter_info;
+		for (r = 0; r < 8; r++) {
+			ahb_switch[masunit].empty[r] = 0;
+			ahb_switch[masunit].used[r] = 0;
+			ahb_switch[masunit].printed[r] = 0;
+		}
+	}
+	r = scsi_attach(masunit, ahb_data[masunit].our_id, &ahb_switch[masunit],
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
