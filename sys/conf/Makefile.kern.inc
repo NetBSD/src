@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.14 2002/05/26 00:15:25 fvdl Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.15 2002/05/29 16:12:54 tv Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -22,6 +22,7 @@
 ## (0) toolchain settings for things that aren't part of the standard
 ## toolchain
 ##
+DBSYM?=		dbsym
 MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
