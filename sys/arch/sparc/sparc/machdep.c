@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 2002/12/10 13:44:50 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.209 2002/12/12 09:34:04 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -926,7 +926,7 @@ dumpsys()
 					VM_PROT_READ);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
 				break;
