@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.35 2002/09/25 03:57:15 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.36 2002/09/26 20:41:34 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -35,31 +35,11 @@
 #include "debug.h"
 #include "rtld.h"
 
+#define SUPPORT_OLD_BROKEN_LD
+
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind_mips(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
-
-caddr_t
-_rtld_bind_mips(a0, a1, a2, a3)
-	Elf_Word a0;
-	Elf_Addr a1, a2, a3;
-{
-	Elf_Addr *u = (Elf_Addr *)(a2 - 0x7ff0);
-	const Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Addr new_value;
-
-	def = _rtld_find_symdef(a0, obj, &defobj, true);
-	if (def == NULL)
-		_rtld_die();
-
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> new=%p",
-	    defobj->strtab + def->st_name, (void *)new_value));
-	u[obj->local_gotno + a0 - obj->gotsym] = new_value;
-	return ((caddr_t)new_value);
-}
+caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 
 void
 _rtld_setup_pltgot(obj)
@@ -169,18 +149,26 @@ store_ptr(void *where, Elf_Addr val)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self)
+_rtld_relocate_nonplt_objects(obj)
 	const Obj_Entry *obj;
-	bool self;
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
 	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
 	int i;
+#ifdef SUPPORT_OLD_BROKEN_LD
+	int broken;
+#endif
 
-	if (self)
-		return 0;
+#ifdef SUPPORT_OLD_BROKEN_LD
+	broken = 0;
+	sym = obj->symtab;
+	for (i = 1; i < 12; i++)
+		if (sym[i].st_info == ELF_ST_INFO(STB_LOCAL, STT_NOTYPE))
+			broken = 1;
+	dbg(("%s: broken=%d", obj->path, broken));
+#endif
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
 	/* Relocate the local GOT entries */
@@ -193,8 +181,9 @@ _rtld_relocate_nonplt_objects(obj, self)
 		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
 		    sym->st_name + obj->strtab, *got));
 
+#ifdef SUPPORT_OLD_BROKEN_LD
 		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    sym->st_shndx == SHN_UNDEF) {
+		    broken && sym->st_shndx == SHN_UNDEF) {
 			/*
 			 * XXX DANGER WILL ROBINSON!
 			 * You might think this is stupid, as it intentionally
@@ -204,13 +193,16 @@ _rtld_relocate_nonplt_objects(obj, self)
 			 * function pointers to be resolved immediately.  This
 			 * is supposed to be done automatically by the linker,
 			 * by not outputting a PLT slot and setting st_value
-			 * to 0, but GNU ld does not do so reliably.
+			 * to 0 if there are non-PLT references, but older
+			 * versions of GNU ld do not do this.
 			 */
 			def = _rtld_find_symdef(i, obj, &defobj, true);
 			if (def == NULL)
 				return -1;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
-		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		} else
+#endif
+		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
 		    sym->st_value != 0) {
 			/*
 			 * If there are non-PLT references to the function,
@@ -274,18 +266,16 @@ _rtld_relocate_nonplt_objects(obj, self)
 				 * zero, so we need to add in the start address
 				 * of the section.
 				 *
-				 * We assume that all section-relative relocs
-				 * with contents less than the start of the
-				 * section need to be adjusted; this should
-				 * work with both old and new shlibs.
-				 *
 				 * --rkb, Oct 6, 2001
 				 */
 				tmp = *where;
 
 				if (def->st_info ==
-				    ELF_ST_INFO(STB_LOCAL, STT_SECTION) &&
-				    tmp < def->st_value)
+				    ELF_ST_INFO(STB_LOCAL, STT_SECTION)
+#ifdef SUPPORT_OLD_BROKEN_LD
+				    && !broken
+#endif
+				    )
 					tmp += (Elf_Addr)def->st_value;
 
 				tmp += (Elf_Addr)obj->relocbase;
@@ -319,4 +309,26 @@ _rtld_relocate_plt_lazy(obj)
 {
 	/* PLT fixups were done above in the GOT relocation. */
 	return 0;
+}
+
+caddr_t
+_rtld_bind(a0, a1, a2, a3)
+	Elf_Word a0;
+	Elf_Addr a1, a2, a3;
+{
+	Elf_Addr *got = (Elf_Addr *)(a2 - 0x7ff0);
+	const Obj_Entry *obj = (Obj_Entry *)(got[1] & 0x7fffffff);
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr new_value;
+
+	def = _rtld_find_symdef(a0, obj, &defobj, true);
+	if (def == NULL)
+		_rtld_die();
+
+	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> new=%p",
+	    defobj->strtab + def->st_name, (void *)new_value));
+	got[obj->local_gotno + a0 - obj->gotsym] = new_value;
+	return ((caddr_t)new_value);
 }

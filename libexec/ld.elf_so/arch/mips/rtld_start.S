@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/09/24 21:57:20 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2002/09/26 20:41:34 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -89,7 +89,7 @@ _rtld_bind_start:
 	move	a1,t7			# old RA
 	move	a2,v1			# old GP
 	move	a3,ra			# current RA
-	jal	_C_LABEL(_rtld_bind_mips)
+	jal	_C_LABEL(_rtld_bind)
 	nop
 	move	sp,s0
 	lw	ra,40(sp)
