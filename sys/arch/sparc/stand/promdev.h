@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.1 1995/09/16 23:20:36 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.2 1995/09/17 00:51:00 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -56,8 +56,8 @@ extern int	cputyp, nbpg, pgofset, pgshift;
 extern int	debug;
 
 /* Note: dvma_*() routines are for "oldmon" machines only */
-extern char	*dvma_mapin __P((char *, int));
-extern void	dvma_mapout __P((char *, int));
+extern char	*dvma_mapin __P((char *, size_t));
+extern char	*dvma_mapout __P((char *, size_t));
 extern char	*dvma_alloc __P((int));
 
 /*
