@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "eqn.h"
@@ -34,14 +34,15 @@ struct definition {
   ~definition();
 };
 
-definition::definition() : is_macro(1), contents(0), is_simple(0)
+definition::definition() : is_macro(1), is_simple(0)
 {
+  contents = 0;
 }
 
 definition::~definition()
 {
   if (is_macro)
-    delete contents;
+    a_delete contents;
 }
 
 declare_ptable(definition)
@@ -109,6 +110,7 @@ static struct {
   "gbfont", GBFONT,
   "split", SPLIT,
   "nosplit", NOSPLIT,
+  "special", SPECIAL,
 };
 
 static struct {
@@ -217,7 +219,7 @@ static struct {
   "partial", "\\(pd",
   "nothing", "\"\"",
   "half", "{1 smallover 2}",
-  "hat_def", "\"^\"",
+  "hat_def", "roman \"^\"",
   "hat", "accent { hat_def }",
   "dot_def", "back 15 \"\\v'-52M'.\\v'52M'\"",
   "dot", "accent { dot_def }",
@@ -243,7 +245,8 @@ static struct {
   "approx", "type \"relation\" \"\\(~=\"",
   "grad", "\\(gr",
   "del", "\\(gr",
-  "cdot", "type \"binary\" vcenter ."
+  "cdot", "type \"binary\" vcenter .",
+  "dollar", "$",
 };  
 
 void init_table(const char *device)
@@ -353,7 +356,7 @@ file_input::file_input(FILE *f, const char *fn, input *p)
 
 file_input::~file_input()
 {
-  delete filename;
+  a_delete filename;
   fclose(fp);
 }
 
@@ -417,7 +420,7 @@ macro_input::macro_input(const char *str, input *x) : input(x)
 
 macro_input::~macro_input()
 {
-  delete s;
+  a_delete s;
 }
 
 int macro_input::get()
@@ -444,7 +447,7 @@ top_input::top_input(const char *str, const char *fn, int ln, input *x)
 
 top_input::~top_input()
 {
-  delete filename;
+  a_delete filename;
 }
 
 int top_input::get()
@@ -462,7 +465,8 @@ int top_input::get_location(char **fnp, int *lnp)
   return 1;
 }
 
-#define ARG1 11
+// Character respresenting $1.  Must be illegal input character.
+#define ARG1 14
 
 argument_macro_input::argument_macro_input(const char *body, int ac, 
 					   char **av, input *x)
@@ -486,8 +490,8 @@ argument_macro_input::argument_macro_input(const char *body, int ac,
 argument_macro_input::~argument_macro_input()
 {
   for (int i = 0; i < argc; i++)
-    delete argv[i];
-  delete s;
+    a_delete argv[i];
+  a_delete s;
 }
 
 int argument_macro_input::get()
@@ -650,7 +654,7 @@ void get_delimited_text()
   int lineno;
   int got_location = get_location(&filename, &lineno);
   int start = get_char();
-  while (start == ' ' || start == '\n')
+  while (start == ' ' || start == '\t' || start == '\n')
     start = get_char();
   token_buffer.clear();
   if (start == EOF) {
@@ -870,6 +874,7 @@ void do_include()
   }
   token_buffer += '\0';
   const char *filename = token_buffer.contents();
+  errno = 0;
   FILE *fp = fopen(filename, "r");
   if (fp == 0) {
     lex_error("can't open included file `%1'", filename);
@@ -903,7 +908,7 @@ void do_definition(int is_simple)
     macro_table.define(name, def);
   }
   else if (def->is_macro) {
-    delete def->contents;
+    a_delete def->contents;
   }
   get_delimited_text();
   token_buffer += '\0';
@@ -931,12 +936,8 @@ void do_gsize()
     return;
   }
   token_buffer += '\0';
-  char *ptr;
-  long n = strtol(token_buffer.contents(), &ptr, 10);
-  if (n == 0 && ptr == token_buffer.contents())
-    lex_error("bad argument `%1' to gsize command");
-  else
-    set_gsize(int(n));
+  if (!set_gsize(token_buffer.contents()))
+    lex_error("invalid size `%1'", token_buffer.contents());
 }
 
 void do_gfont()
@@ -1047,14 +1048,14 @@ void do_set()
 {
   int t = get_token(2);
   if (t != TEXT && t != QUOTED_TEXT) {
-    lex_error("bad chartype");
+    lex_error("bad set");
     return;
   }
   token_buffer += '\0';
   string param = token_buffer;
   t = get_token();
   if (t != TEXT && t != QUOTED_TEXT) {
-    lex_error("bad chartype");
+    lex_error("bad set");
     return;
   }
   token_buffer += '\0';
@@ -1077,12 +1078,20 @@ int yylex()
     case SDEFINE:
       do_definition(1);
       break;
-    case TDEFINE:
     case DEFINE:
       do_definition(0);
       break;
+    case TDEFINE:
+      if (!nroff)
+	do_definition(0);
+      else
+	ignore_definition();
+      break;
     case NDEFINE:
-      ignore_definition();
+      if (nroff)
+	do_definition(0);
+      else
+	ignore_definition();
       break;
     case GSIZE:
       do_gsize();

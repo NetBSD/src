@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "eqn.h"
@@ -58,7 +58,7 @@ int sqrt_box::compute_metrics(int style)
   printf(".ds " SQRT_STRING_FORMAT " " SQRT_CHAR "\n", uid);
   printf(".ds " BAR_STRING " " RADICAL_EXTENSION_CHAR "\n");
   printf(".nr " SQRT_WIDTH_FORMAT
-	 " \\w" DELIMITER_CHAR SQRT_CHAR DELIMITER_CHAR "\n",
+	 " 0\\w" DELIMITER_CHAR SQRT_CHAR DELIMITER_CHAR "\n",
 	 uid);
   printf(".if \\n[rst]-\\n[rsb]-%dM<\\n[" TEMP_REG "] \\{",
 	 default_rule_thickness);
@@ -70,7 +70,7 @@ int sqrt_box::compute_metrics(int style)
 	 ".ie c" BAR_CHAIN " .ds " BAR_STRING " " BAR_CHAIN "\n"
 	 ".el .ds " BAR_STRING " " RADICAL_EXTENSION_CHAR "\n"
 	 ".nr " SQRT_WIDTH_FORMAT
-	 " \\w" DELIMITER_CHAR SQRT_CHAIN DELIMITER_CHAR "\n"
+	 " 0\\w" DELIMITER_CHAR SQRT_CHAIN DELIMITER_CHAR "\n"
 	 ".if \\\\n[rst]-\\\\n[rsb]-%dM<\\n[" TEMP_REG "] \\{"
 	 ".nr " INDEX_REG " +1\n"
 	 "." TEMP_MACRO "\n"
@@ -91,7 +91,7 @@ int sqrt_box::compute_metrics(int style)
   // the maximum point size.
   printf(".de " TEMP_MACRO "\n"
 	 ".nr " SQRT_WIDTH_FORMAT
-	 " \\w" DELIMITER_CHAR "\\*[" SQRT_STRING_FORMAT "]" DELIMITER_CHAR "\n"
+	 " 0\\w" DELIMITER_CHAR "\\*[" SQRT_STRING_FORMAT "]" DELIMITER_CHAR "\n"
 	 ".if \\\\n[rst]-\\\\n[rsb]-%dM<\\n[" TEMP_REG "]"
 	 "&(\\\\n[.s]<\\n[" MAX_SIZE_REG "]) \\{"
 	 ".ps +1\n"

@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "eqn.h"
@@ -161,7 +161,7 @@ void box::set_spacing_type(char *type)
     error("unrecognised type `%1'", type);
   else
     spacing_type = t;
-  delete type;
+  a_delete type;
 }
 
 char_box::char_box(unsigned char cc)
@@ -232,7 +232,7 @@ special_char_box::special_char_box(const char *t)
 
 special_char_box::~special_char_box()
 {
-  delete s;
+  a_delete s;
 }
 
 void special_char_box::output()
@@ -276,7 +276,7 @@ void set_char_type(const char *type, char *ch)
   int ft = lookup_font_type(type);
   if (st < 0 && ft < 0) {
     error("bad character type `%1'", type);
-    delete ch;
+    a_delete ch;
     return;
   }
   box *b = split_text(ch);
@@ -318,7 +318,7 @@ int prime_box::compute_metrics(int style)
 {
   int res = p->compute_metrics(style);
   pb->compute_metrics(style);
-  printf(".nr " WIDTH_FORMAT " \\n[" WIDTH_FORMAT "]"
+  printf(".nr " WIDTH_FORMAT " 0\\n[" WIDTH_FORMAT "]"
 	 "+\\n[" WIDTH_FORMAT "]\n",
 	 uid, p->uid, pb->uid);
   printf(".nr " HEIGHT_FORMAT " \\n[" HEIGHT_FORMAT "]"
@@ -333,8 +333,8 @@ int prime_box::compute_metrics(int style)
 void prime_box::compute_subscript_kern()
 {
   p->compute_subscript_kern();
-  printf(".nr " SUB_KERN_FORMAT " \\n[" WIDTH_FORMAT "]"
-	 "+\\n[" SUB_KERN_FORMAT "]\n",
+  printf(".nr " SUB_KERN_FORMAT " 0\\n[" WIDTH_FORMAT "]"
+	 "+\\n[" SUB_KERN_FORMAT "]>?0\n",
 	 uid, pb->uid, p->uid);
 }
 
@@ -418,14 +418,16 @@ box *split_text(char *text)
 	}
 	break;
       case '[':
-	char *ch = s;
-	while (*s != ']' && *s != '\0')
-	  s++;
-	if (*s == '\0')
-	  lex_error("bad escape");
-	else {
-	  *s++ = '\0';
-	  b = new special_char_box(ch);
+	{
+	  char *ch = s;
+	  while (*s != ']' && *s != '\0')
+	    s++;
+	  if (*s == '\0')
+	    lex_error("bad escape");
+	  else {
+	    *s++ = '\0';
+	    b = new special_char_box(ch);
+	  }
 	}
 	break;
       case 'f':
