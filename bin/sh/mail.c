@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.9 1995/05/11 21:29:22 christos Exp $	*/
+/*	$NetBSD: mail.c,v 1.9.6.1 1997/01/26 04:57:24 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mail.c,v 1.9 1995/05/11 21:29:22 christos Exp $";
+static char rcsid[] = "$NetBSD: mail.c,v 1.9.6.1 1997/01/26 04:57:24 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,10 @@ void
 chkmail(silent)
 	int silent;
 {
-	register int i;
+	int i;
 	char *mpath;
 	char *p;
-	register char *q;
+	char *q;
 	struct stackmark smark;
 	struct stat statb;
 

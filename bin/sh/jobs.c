@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $	*/
+/*	$NetBSD: jobs.c,v 1.17.6.1 1997/01/26 04:57:23 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.17.6.1 1997/01/26 04:57:23 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,15 @@ static char rcsid[] = "$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $";
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+#include <sys/ioctl.h>
 
 #include "shell.h"
 #if JOBS
+#if OLD_TTY_DRIVER
 #include "sgtty.h"
+#else
+#include <termios.h>
+#endif
 #undef CEOF			/* syntax.h redefines this */
 #endif
 #include "redir.h"
@@ -107,7 +112,7 @@ STATIC void cmdputs __P((char *));
 MKINIT int jobctl;
 
 void
-setjobctl(on) 
+setjobctl(on)
 	int on;
 {
 #ifdef OLD_TTY_DRIVER
@@ -118,7 +123,12 @@ setjobctl(on)
 		return;
 	if (on) {
 		do { /* while we are in the background */
+#ifdef OLD_TTY_DRIVER
 			if (ioctl(2, TIOCGPGRP, (char *)&initialpgrp) < 0) {
+#else
+			initialpgrp = tcgetpgrp(2);
+			if (initialpgrp < 0) {
+#endif
 				out2str("sh: can't access tty; job control turned off\n");
 				mflag = 0;
 				return;
@@ -141,10 +151,18 @@ setjobctl(on)
 		setsignal(SIGTTOU);
 		setsignal(SIGTTIN);
 		setpgid(0, rootpid);
+#ifdef OLD_TTY_DRIVER
 		ioctl(2, TIOCSPGRP, (char *)&rootpid);
+#else
+		tcsetpgrp(2, rootpid);
+#endif
 	} else { /* turning job control off */
 		setpgid(0, initialpgrp);
+#ifdef OLD_TTY_DRIVER
 		ioctl(2, TIOCSPGRP, (char *)&initialpgrp);
+#else
+		tcsetpgrp(2, initialpgrp);
+#endif
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
 		setsignal(SIGTTIN);
@@ -171,7 +189,7 @@ SHELLPROC {
 int
 fgcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 	int pgrp;
@@ -181,7 +199,11 @@ fgcmd(argc, argv)
 	if (jp->jobctl == 0)
 		error("job not created under job control");
 	pgrp = jp->ps[0].pid;
+#ifdef OLD_TTY_DRIVER
 	ioctl(2, TIOCSPGRP, (char *)&pgrp);
+#else
+	tcsetpgrp(2, pgrp);
+#endif
 	restartjob(jp);
 	INTOFF;
 	status = waitforjob(jp);
@@ -193,7 +215,7 @@ fgcmd(argc, argv)
 int
 bgcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 
@@ -232,7 +254,7 @@ restartjob(jp)
 int
 jobscmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	showjobs(0);
 	return 0;
@@ -249,7 +271,7 @@ jobscmd(argc, argv)
  */
 
 void
-showjobs(change) 
+showjobs(change)
 	int change;
 {
 	int jobno;
@@ -345,9 +367,9 @@ freejob(jp)
 
 
 int
-waitcmd(argc, argv) 
+waitcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *job;
 	int status;
@@ -390,9 +412,9 @@ waitcmd(argc, argv)
 
 
 int
-jobidcmd(argc, argv)  
+jobidcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 	int i;
@@ -416,7 +438,7 @@ getjob(name)
 	char *name;
 	{
 	int jobno;
-	register struct job *jp;
+	struct job *jp;
 	int pid;
 	int i;
 
@@ -440,7 +462,7 @@ currentjob:
 			goto currentjob;
 #endif
 		} else {
-			register struct job *found = NULL;
+			struct job *found = NULL;
 			for (jp = jobtab, i = njobs ; --i >= 0 ; jp++) {
 				if (jp->used && jp->nprocs > 0
 				 && prefix(name + 1, jp->ps[0].cmd)) {
@@ -519,7 +541,7 @@ makejob(node, nprocs)
 	TRACE(("makejob(0x%lx, %d) returns %%%d\n", (long)node, nprocs,
 	    jp - jobtab + 1));
 	return jp;
-}	
+}
 
 
 /*
@@ -579,8 +601,13 @@ forkshell(jp, n, mode)
 			setpgid(0, pgrp);
 			if (mode == FORK_FG) {
 				/*** this causes superfluous TIOCSPGRPS ***/
+#ifdef OLD_TTY_DRIVER
 				if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
-					error("TIOCSPGRP failed, errno=%d\n", errno);
+					error("TIOCSPGRP failed, errno=%d", errno);
+#else
+				if (tcsetpgrp(2, pgrp) < 0)
+					error("tcsetpgrp failed, errno=%d", errno);
+#endif
 			}
 			setsignal(SIGTSTP);
 			setsignal(SIGTTOU);
@@ -658,7 +685,7 @@ forkshell(jp, n, mode)
 
 int
 waitforjob(jp)
-	register struct job *jp;
+	struct job *jp;
 	{
 #if JOBS
 	int mypgrp = getpgrp();
@@ -673,8 +700,13 @@ waitforjob(jp)
 	}
 #if JOBS
 	if (jp->jobctl) {
+#ifdef OLD_TTY_DRIVER
 		if (ioctl(2, TIOCSPGRP, (char *)&mypgrp) < 0)
 			error("TIOCSPGRP failed, errno=%d\n", errno);
+#else
+		if (tcsetpgrp(2, mypgrp) < 0)
+			error("tcsetpgrp failed, errno=%d\n", errno);
+#endif
 	}
 	if (jp->state == JOBSTOPPED)
 		curjob = jp - jobtab + 1;
@@ -874,8 +906,8 @@ int job_warning = 0;
 int
 stoppedjobs()
 {
-	register int jobno;
-	register struct job *jp;
+	int jobno;
+	struct job *jp;
 
 	if (job_warning)
 		return (0);
@@ -1047,8 +1079,8 @@ STATIC void
 cmdputs(s)
 	char *s;
 	{
-	register char *p, *q;
-	register char c;
+	char *p, *q;
+	char c;
 	int subtype = 0;
 
 	if (cmdnleft <= 0)
@@ -1068,7 +1100,7 @@ cmdputs(s)
 			subtype = 0;
 		} else if (c == CTLENDVAR) {
 			*q++ = '}';
-		} else if (c == CTLBACKQ | c == CTLBACKQ+CTLQUOTE)
+		} else if (c == CTLBACKQ || c == CTLBACKQ+CTLQUOTE)
 			cmdnleft++;		/* ignore it */
 		else
 			*q++ = c;

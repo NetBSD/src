@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.17.2.1 1997/01/26 04:57:25 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: memalloc.c,v 1.17.2.1 1997/01/26 04:57:25 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,10 +58,10 @@ static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $"
  */
 
 pointer
-ckmalloc(nbytes) 
+ckmalloc(nbytes)
 	int nbytes;
 {
-	register pointer p;
+	pointer p;
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
@@ -75,7 +75,7 @@ ckmalloc(nbytes)
 
 pointer
 ckrealloc(p, nbytes)
-	register pointer p;
+	pointer p;
 	int nbytes;
 {
 
@@ -93,7 +93,7 @@ char *
 savestr(s)
 	char *s;
 	{
-	register char *p;
+	char *p;
 
 	p = ckmalloc(strlen(s) + 1);
 	scopy(s, p);
@@ -128,10 +128,10 @@ int herefd = -1;
 
 
 pointer
-stalloc(nbytes) 
+stalloc(nbytes)
 	int nbytes;
 {
-	register char *p;
+	char *p;
 
 	nbytes = ALIGN(nbytes);
 	if (nbytes > stacknleft) {
@@ -237,7 +237,7 @@ growstackblock() {
 
 
 void
-grabstackblock(len) 
+grabstackblock(len)
 	int len;
 {
 	len = ALIGN(len);
