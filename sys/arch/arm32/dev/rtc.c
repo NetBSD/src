@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.1 1996/04/19 19:49:06 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.2 1996/04/26 22:02:03 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -313,6 +313,7 @@ rtcopen(dev, flag, mode, p)
     
 	if (!sc) return(ENXIO);
 
+	if (sc->sc_flags & RTC_BROKEN) return(ENXIO);
 	if (sc->sc_flags & RTC_OPEN) return(EBUSY);
 
 	sc->sc_flags |= RTC_OPEN;
@@ -343,8 +344,8 @@ rtcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int unit = minor(dev);
-	struct rtc_softc *sc = rtc_cd.cd_devs[unit];
+/*	int unit = minor(dev);*/
+/*	struct rtc_softc *sc = rtc_cd.cd_devs[unit];*/
 
 	return(ENXIO);
 }
@@ -356,8 +357,8 @@ rtcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	int unit = minor(dev);
-	struct rtc_softc *sc = rtc_cd.cd_devs[unit];
+/*	int unit = minor(dev);*/
+/*	struct rtc_softc *sc = rtc_cd.cd_devs[unit];*/
 
 	return(ENXIO);
 }
@@ -371,7 +372,7 @@ rtcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];
+/*	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];*/
 
 /*	switch (cmd) {
 	case RTCIOC_READ:

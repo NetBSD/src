@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 1996/03/18 20:50:00 mark Exp $ */
+/* $NetBSD: cpu.c,v 1.5 1996/04/26 22:01:54 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -80,6 +80,9 @@ void identify_master_cpu __P((int /*cpu_number*/));
 void identify_arm_cpu	__P((int /*cpu_number*/));
 void identify_arm_fpu	__P((int /*cpu_number*/));
 char *strstr		__P((char */*s1*/, char */*s2*/));
+
+extern int initialise_arm_fpe	__P((cpu_t *cpu));
+extern int initialise_fpe	__P((cpu_t *cpu));
 
 
 /*
@@ -193,6 +196,11 @@ identify_master_cpu(cpu_number)
 
 	identify_arm_cpu(cpu_number);
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
+
+	if (cpus[cpu_number].cpu_class == CPU_CLASS_SARM)
+		panic("NetBSD/arm32 does not fully support the StrongARM yet.\n"
+		    "If this is a problem, send mark at SA-110 cpu card and he "
+		    "will be happy to complete the support.\n");
 
 /*
  * Ok now we test for an FPA
@@ -335,19 +343,37 @@ identify_arm_cpu(cpu_number)
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		break;
 
+	case ID_SARM110 :
+		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		cpu->cpu_class = CPU_CLASS_SARM;
+		sprintf(cpu->cpu_model, "SA-110 rev %d",
+		    cpuid & CPU_ID_REVISION_MASK);
+		break;
+
 	default :
 		printf("Unrecognised processor ID = %08x\n", cpuid);
 		cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
 		break;
 	}
 
-	sprintf(cpu->cpu_model, "ARM%x rev %d", cpu->cpu_type, cpuid & CPU_ID_REVISION_MASK);
+	if (cpu->cpu_class == CPU_CLASS_ARM) {
+		sprintf(cpu->cpu_model, "ARM%x rev %d", cpu->cpu_type,
+		    cpuid & CPU_ID_REVISION_MASK);
 
-	if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-		strcat(cpu->cpu_model, " IDC disabled");
-	else
-		strcat(cpu->cpu_model, " IDC enabled");
-
+		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
+			strcat(cpu->cpu_model, " IDC disabled");
+		else
+			strcat(cpu->cpu_model, " IDC enabled");
+	} else if (cpu->cpu_class == CPU_CLASS_SARM) {
+		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
+			strcat(cpu->cpu_model, " DC disabled");
+		else
+			strcat(cpu->cpu_model, " DC enabled");
+		if ((cpu->cpu_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
+			strcat(cpu->cpu_model, " IC disabled");
+		else
+			strcat(cpu->cpu_model, " IC enabled");
+	}
 	if ((cpu->cpu_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
 		strcat(cpu->cpu_model, " WB disabled");
 	else
