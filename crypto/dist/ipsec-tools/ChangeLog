@@ -1,6 +1,20 @@
+2005-03-16  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/{cftoken.l|localconf.h|privsep.c|racoon.conf.5}
+	  src/racoon/remoteconf.c: When running in privsep mode, check that
+	  private key and script paths match those given in the path section.
+
+2005-03-15  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/{isakmp_cfg|isakmp_cfg.h|isakmp_xauth.c}: initialize 
+	  RADIUS accounting at startup
+	* src/racoon/privsep.c: fix minor bug in PAM cleanup
+	* src/racoon/isakmp_cfg.c: only call cleanup_pam if PAM is used
+
 2005-03-14  Emmanuel Dreyfus <manu@netbsd.org>
 
 	* configure.ac: handle correctly dynamic libradius
+	* src/racoon/cfparse.y: correctly initialize address pool
 
 2005-03-13  Yvan Vanhullebus  <vanhu@free.fr>
 
