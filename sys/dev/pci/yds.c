@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.11 2002/01/10 10:17:55 someya Exp $	*/
+/*	$NetBSD: yds.c,v 1.11.10.1 2003/06/19 14:12:03 grant Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.11 2002/01/10 10:17:55 someya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.11.10.1 2003/06/19 14:12:03 grant Exp $");
 
 #include "mpu.h"
 
@@ -566,6 +566,7 @@ yds_configure_legacy (arg)
 	reg |= ((YDS_PCI_EX_LEGACY_IMOD) |
 		(YDS_PCI_LEGACY_FMEN |
 		 YDS_PCI_LEGACY_MEN /*| YDS_PCI_LEGACY_MIEN*/));
+	reg |= YDS_PCI_EX_LEGACY_SMOD_DISABLE;
 	if (FLEXIBLE) {
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, YDS_PCI_LEGACY, reg);
 		delay(100*1000);
