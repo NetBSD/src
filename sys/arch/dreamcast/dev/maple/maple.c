@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.5 2001/02/03 23:25:51 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.6 2001/03/16 19:57:49 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -217,7 +217,7 @@ maple_scanbus(sc)
 	  for (p = 0; p < MAPLE_PORTS; p++)
 	    if ((sc->sc_rxbuf[p][0][0] & 0xff) == MAPLE_RESPONSE_DEVINFO)
 
-	      sc->sc_port_units[p] = ((sc->sc_rxbuf[p][0][0]>>16)&0x1f)|1;
+	      sc->sc_port_units[p] = ((sc->sc_rxbuf[p][0][0]>>15)&0x3e)|1;
 
 	    else
 
