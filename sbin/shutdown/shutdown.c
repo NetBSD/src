@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.18 1998/01/20 22:14:09 mycroft Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.19 1998/01/20 22:30:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.18 1998/01/20 22:14:09 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.19 1998/01/20 22:30:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: shutdown.c,v 1.18 1998/01/20 22:14:09 mycroft Exp $");
 #include <sys/syslog.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -111,19 +112,16 @@ main(argc, argv)
 {
 	char *p, *endp;
 	struct passwd *pw;
-	int arglen, ch, len, readstdin;
+	int arglen, ch, len;
 
 #ifndef DEBUG
-	if (geteuid()) {
-		(void)fprintf(stderr, "shutdown: NOT super-user\n");
-		exit(1);
-	}
+	if (geteuid())
+		errx(1, "NOT super-user");
 #endif
-	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknrd")) != -1)
+	while ((ch = getopt(argc, argv, "dfhknr")) != -1)
 		switch (ch) {
-		case '-':
-			readstdin = 1;
+		case 'd':
+			dodump = 1;
 			break;
 		case 'f':
 			dofast = 1;
@@ -140,9 +138,6 @@ main(argc, argv)
 		case 'r':
 			doreboot = 1;
 			break;
-		case 'd':
-			dodump = 1;
-			break;
 		case '?':
 		default:
 			usage();
@@ -154,50 +149,43 @@ main(argc, argv)
 		usage();
 
 	if (dofast && nosync) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -f and -n.\n");
+		warnx("incompatible switches -f and -n\n");
 		usage();
 	}
 	if (doreboot && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -r.\n");
+		warnx("incompatible switches -h and -r\n");
 		usage();
 	}
-	if (dodump && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -d.\n");
-		usage();
-	}
+
 	getoffset(*argv++);
 
-	if (*argv) {
-		for (p = mbuf, len = sizeof(mbuf); *argv; ++argv) {
-			arglen = strlen(*argv);
-			if ((len -= arglen) <= 2)
-				break;
-			if (p != mbuf)
-				*p++ = ' ';
-			memmove(p, *argv, arglen);
-			p += arglen;
-		}
-		*p = '\n';
-		*++p = '\0';
-	}
-
-	if (readstdin) {
-		p = mbuf;
-		endp = mbuf + sizeof(mbuf) - 2;
-		for (;;) {
-			if (!fgets(p, endp - p + 1, stdin))
-				break;
-			for (; *p &&  p < endp; ++p);
-			if (p == endp) {
-				*p = '\n';
-				*++p = '\0';
-				break;
+	if (*argv)
+		if (strcmp(*argv, "-")) {
+			for (p = mbuf, len = sizeof(mbuf); *argv; ++argv) {
+				arglen = strlen(*argv);
+				if ((len -= arglen) <= 2)
+					break;
+				if (p != mbuf)
+					*p++ = ' ';
+				memmove(p, *argv, arglen);
+				p += arglen;
+			}
+			*p = '\n';
+			*++p = '\0';
+		} else {
+			p = mbuf;
+			endp = mbuf + sizeof(mbuf) - 2;
+			for (;;) {
+				if (!fgets(p, endp - p + 1, stdin))
+					break;
+				for (; *p &&  p < endp; ++p);
+				if (p == endp) {
+					*p = '\n';
+					*++p = '\0';
+					break;
+				}
 			}
 		}
-	}
 	mbuflen = strlen(mbuf);
 
 	if (offset)
@@ -365,13 +353,13 @@ die_you_gravy_sucking_pig_dog()
 		execle(_PATH_REBOOT, "reboot",
 		       dodump ? (nosync ? "-ldn" : "-ld") :
 		       (nosync ? "-ln" : "-l"), 0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
+		syslog(LOG_ERR, "shutdown: can't exec %s: %m", _PATH_REBOOT);
 		perror("shutdown");
 	}
 	else if (dohalt) {
 		execle(_PATH_HALT, "halt", nosync ? "-ln" : "-l",
 		    (char *)0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
+		syslog(LOG_ERR, "shutdown: can't exec %s: %m", _PATH_HALT);
 		perror("shutdown");
 	}
 	(void)kill(1, SIGTERM);		/* to single user */
@@ -459,10 +447,8 @@ getoffset(timearg)
 
 	if ((shuttime = mktime(lt)) == -1)
 		badtime();
-	if ((offset = shuttime - now) < 0) {
-		(void)fprintf(stderr, "shutdown: that time is already past.\n");
-		exit(1);
-	}
+	if ((offset = shuttime - now) < 0)
+		errx(1, "time is already past");
 }
 
 #define	FSMSG	"fastboot file for fsck\n"
@@ -513,13 +499,16 @@ finish(signo)
 void
 badtime()
 {
-	(void)fprintf(stderr, "shutdown: bad time format.\n");
-	exit(1);
+	warnx("illegal time format");
+	usage();
 }
 
 void
 usage()
 {
-	fprintf(stderr, "usage: shutdown [-fhknrd] shutdowntime [ message ]\n");
+	(void)fprintf(stderr,
+	    "usage: shutdown [-dfhknr] [[[[[cc]yy]mm]dd]hh]mm [message|-]\n");
+	(void)fprintf(stderr,
+	    "       shutdown [-dfhknr] +time [message|-]\n");
 	exit(1);
 }
