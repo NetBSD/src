@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:37 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 LEAF_NOPROFILE(__sigtramp_sigcontext_1)
 	move	a0, sp			/* address of sigcontext */
-	SYSTRAP(__sigreturn14)		/* and do sigreturn */
+	SYSTRAP(compat_16___sigreturn14) /* and do sigreturn */
 	move	a0, v0			/* exit with errno */
 	SYSTRAP(exit)			/* if sigreturn fails */
 END(__sigtramp_sigcontext_1)

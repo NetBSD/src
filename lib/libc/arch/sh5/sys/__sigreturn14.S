@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.1 2002/07/05 13:31:33 scw Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.2 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,4 +41,4 @@
  * We must preserve the state of the registers as the user has set them up.
  * Since system calls do this anyway on sh5.
  */
-RSYSCALL(__sigreturn14)
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

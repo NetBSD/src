@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/11 17:41:40 scw Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,5 +47,5 @@
  */
 ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
 	or	r15, r63, r2
-	SYSTRAP(__sigreturn14)
+	SYSTRAP(compat_16___sigreturn14)
 	SYSTRAP(exit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.3 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigreturn.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __sigreturn14.S,v 1.3 2003/08/07 16:42:17 agc Exp $")
+	ASMSTR("$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
 
-RSYSCALL(__sigreturn14)
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

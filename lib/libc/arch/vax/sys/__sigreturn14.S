@@ -29,7 +29,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigreturn.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __sigreturn14.S,v 1.3 2003/08/07 16:42:33 agc Exp $"
+	.asciz "$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -42,5 +42,4 @@
 #define	ENTRY(x, y)	_ENTRY(x, y); pushr $0x3f; _PROF_PROLOGUE; popr $0x3f
 #endif /* GPROF */
 
-SYSCALL(__sigreturn14)
-	ret
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

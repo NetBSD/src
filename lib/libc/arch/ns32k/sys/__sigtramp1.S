@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:37 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,6 +52,6 @@
 ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
 	addr	12(sp),4(sp)		/* get pointer to sigcontext */
 					/* and put it in argument slot */
-	SYSTRAP(__sigreturn14)		/* call sigreturn */
+	SYSTRAP(compat_16___sigreturn14) /* call sigreturn */
 	movd	r0,4(sp)		/* exit with errno */
 	SYSTRAP(exit)			/* if sigreturn failed */

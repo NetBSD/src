@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/09/27 21:43:29 matt Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson, (ragge@NetBSD.org).
@@ -45,5 +45,5 @@ _C_LABEL(__sigtramp_sigcontext_2):
 	callg (%ap),(%fp)		# use global arg list
 	popr $(R0|R1|R2|R3|R4|R5)	# restore regs
 	movab 8(%ap),%ap		# arg is pointer to sigctx
-	SYSTRAP(__sigreturn14)		# exit from here
+	SYSTRAP(compat_16___sigreturn14) # exit from here
 	halt				# illegal insn
