@@ -1,4 +1,4 @@
-/*	$KAME: backupsa.c,v 1.11 2001/04/03 15:51:54 thorpej Exp $	*/
+/*	$KAME: backupsa.c,v 1.12 2001/08/20 06:46:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -120,6 +120,8 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 		goto err;
 
 	l = snprintf(p, len, "%%");
+	if (l < 0 || l >= len)
+		goto err;
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -135,6 +137,8 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 		goto err;
 
 	l = snprintf(p, len, " ");
+	if (l < 0 || l >= len)
+		goto err;
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -158,6 +162,8 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 		l_alloc, (unsigned long long)l_bytes,
 		(unsigned long long)l_addtime, (unsigned long long)l_usetime,
 		seq);
+	if (l < 0 || l >= len)
+		goto err;
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -165,6 +171,8 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 
 	k = val2str(keymat, e_keylen + a_keylen);
 	l = snprintf(p, len, " %s", k);
+	if (l < 0 || l >= len)
+		goto err;
 	racoon_free(k);
 	p += l;
 	len -= l;

@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.136 2001/07/13 13:50:01 itojun Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.146 2001/08/17 12:18:02 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -258,34 +258,9 @@ found:
 		oakley_dhgrp_free(sa->dhgrp);
 	}
 
-	sa->dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
-	if (!sa->dhgrp) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to get buffer\n");
+	if (oakley_setdhgroup(sa->dh_group, &sa->dhgrp) == -1) {
+		sa->dhgrp = NULL;
 		return NULL;
-	}
-	switch (sa->dh_group) {
-	case OAKLEY_ATTR_GRP_DESC_MODP768:
-	case OAKLEY_ATTR_GRP_DESC_MODP1024:
-	case OAKLEY_ATTR_GRP_DESC_MODP1536:
-		if (sa->dh_group > ARRAYLEN(dhgroup)
-		 || dhgroup[sa->dh_group].type == 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"invalid DH parameter grp=%d.\n",
-				sa->dh_group);
-			racoon_free(sa->dhgrp);
-			sa->dhgrp = NULL;
-			return NULL;
-		}
-		/* set defined dh vlaues */
-		memcpy(sa->dhgrp, &dhgroup[sa->dh_group],
-			sizeof(dhgroup[sa->dh_group]));
-		sa->dhgrp->prime = vdup(dhgroup[sa->dh_group].prime);
-		break;
-	default:
-		if (!sa->dhgrp->type || !sa->dhgrp->prime || !sa->dhgrp->gen1) {
-			break;
-		}
 	}
 
 saok:
@@ -307,7 +282,7 @@ saok:
 				    vdup(iph1->rmconf->proposal->gssid);
 			else
 				iph1->gi_i = gssapi_get_default_id(iph1);
-			if (sa->gssid == NULL)
+			if (sa->gssid == NULL && iph1->gi_i != NULL)
 				sa->gssid = vdup(iph1->gi_i);
 		}
 		iph1->approval = sa;
@@ -393,12 +368,16 @@ get_ph1approvalx(p, proposal, sap)
 		/* XXX to be considered */
 		if (tsap->lifetime > s->lifetime) ;
 		if (tsap->lifebyte > s->lifebyte) ;
-		if (tsap->encklen >= s->encklen) ;
 #endif
+		/*
+		 * if responder side and peer's key length in proposal
+		 * is bigger than mine, it might be accepted.
+		 */
 		if(tsap->enctype == s->enctype 
 		 && tsap->authmethod == s->authmethod
 		 && tsap->hashtype == s->hashtype
-		 && tsap->dh_group == s->dh_group)
+		 && tsap->dh_group == s->dh_group
+		 && tsap->encklen == s->encklen)
 			break;
 	}
 
@@ -544,11 +523,11 @@ t2isakmpsa(trns, sa)
 
 		switch (type) {
 		case OAKLEY_ATTR_ENC_ALG:
-			sa->enctype = (u_int8_t)ntohs(d->lorv);
+			sa->enctype = (u_int16_t)ntohs(d->lorv);
 			break;
 
 		case OAKLEY_ATTR_HASH_ALG:
-			sa->hashtype = (u_int8_t)ntohs(d->lorv);
+			sa->hashtype = (u_int16_t)ntohs(d->lorv);
 			break;
 
 		case OAKLEY_ATTR_AUTH_METHOD:
@@ -556,7 +535,7 @@ t2isakmpsa(trns, sa)
 			break;
 
 		case OAKLEY_ATTR_GRP_DESC:
-			sa->dh_group = (u_int8_t)ntohs(d->lorv);
+			sa->dh_group = (u_int16_t)ntohs(d->lorv);
 			break;
 
 		case OAKLEY_ATTR_GRP_TYPE:
@@ -667,7 +646,7 @@ t2isakmpsa(trns, sa)
 					len);
 				goto err;
 			}
-			sa->encklen = (u_int8_t)len;
+			sa->encklen = (u_int16_t)len;
 			keylen++;
 			break;
 		}
@@ -709,28 +688,16 @@ t2isakmpsa(trns, sa)
 
 	/* key length must not be specified on some algorithms */
 	if (keylen) {
-		switch (sa->enctype) {
-		case OAKLEY_ATTR_ENC_ALG_DES:
+		if (sa->enctype == OAKLEY_ATTR_ENC_ALG_DES
 #ifdef HAVE_OPENSSL_IDEA_H
-		case OAKLEY_ATTR_ENC_ALG_IDEA:
+		 || sa->enctype == OAKLEY_ATTR_ENC_ALG_IDEA
 #endif
-		case OAKLEY_ATTR_ENC_ALG_3DES:
+		 || sa->enctype == OAKLEY_ATTR_ENC_ALG_3DES) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"keylen must not be specified "
 				"for encryption algorithm %d\n",
 				sa->enctype);
-			goto err;
-		case OAKLEY_ATTR_ENC_ALG_BLOWFISH:
-#ifdef HAVE_OPENSSL_RC5_H
-		case OAKLEY_ATTR_ENC_ALG_RC5:
-#endif
-		case OAKLEY_ATTR_ENC_ALG_CAST:
-			break;
-		default:
-			plog(LLV_ERROR, LOCATION, NULL,
-				"unknown encryption algorithm %d\n",
-				sa->enctype);
-			goto err;
+			return -1;
 		}
 	}
 
@@ -1936,39 +1903,18 @@ check_attr_isakmp(trns)
 
 		switch (type) {
 		case OAKLEY_ATTR_ENC_ALG:
-			switch (lorv) {
-			case OAKLEY_ATTR_ENC_ALG_DES:
-			case OAKLEY_ATTR_ENC_ALG_3DES:
-#ifdef HAVE_OPENSSL_IDEA_H
-			case OAKLEY_ATTR_ENC_ALG_IDEA:
-#endif
-			case OAKLEY_ATTR_ENC_ALG_BLOWFISH:
-#ifdef HAVE_OPENSSL_RC5_H
-			case OAKLEY_ATTR_ENC_ALG_RC5:
-#endif
-			case OAKLEY_ATTR_ENC_ALG_CAST:
-				break;
-			default:
+			if (!alg_oakley_encdef_ok(lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"invalied enc algorithm=%d.\n",
+					"invalied encryption algorithm=%d.\n",
 					lorv);
 				return -1;
 			}
 			break;
 
 		case OAKLEY_ATTR_HASH_ALG:
-			switch (lorv) {
-			case OAKLEY_ATTR_HASH_ALG_MD5:
-			case OAKLEY_ATTR_HASH_ALG_SHA:
-				break;
-			case OAKLEY_ATTR_HASH_ALG_TIGER:
+			if (!alg_oakley_hashdef_ok(lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"hash algorithm %d isn't supported.\n",
-					lorv);
-				return -1;
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"invalid hash algorithm %d.\n",
+					"invalied hash algorithm=%d.\n",
 					lorv);
 				return -1;
 			}
@@ -1996,20 +1942,7 @@ check_attr_isakmp(trns)
 			break;
 
 		case OAKLEY_ATTR_GRP_DESC:
-			switch (lorv) {
-			case OAKLEY_ATTR_GRP_DESC_MODP768:
-			case OAKLEY_ATTR_GRP_DESC_MODP1024:
-			case OAKLEY_ATTR_GRP_DESC_MODP1536:
-				break;
-			case OAKLEY_ATTR_GRP_DESC_EC2N155:
-			case OAKLEY_ATTR_GRP_DESC_EC2N185:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"DH group %d isn't supported.\n",
-					lorv);
-				return -1;
-			default:
-				if (lorv >= 32768)	/*private group*/
-					break;
+			if (!alg_oakley_dhdef_ok(lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"invalid DH group %d.\n",
 					lorv);
@@ -2048,8 +1981,7 @@ check_attr_isakmp(trns)
 				break;
 			default:
 				plog(LLV_ERROR, LOCATION, NULL,
-					"invalid life type %d.\n",
-					lorv);
+					"invalid life type %d.\n", lorv);
 				return -1;
 			}
 			break;
@@ -2237,18 +2169,7 @@ ahmismatch:
 				return -1;
 			}
 
-			switch (lorv) {
-			case OAKLEY_ATTR_GRP_DESC_MODP768:
-			case OAKLEY_ATTR_GRP_DESC_MODP1024:
-			case OAKLEY_ATTR_GRP_DESC_MODP1536:
-				break;
-			case OAKLEY_ATTR_GRP_DESC_EC2N155:
-			case OAKLEY_ATTR_GRP_DESC_EC2N185:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"DH group %d isn't supported.\n",
-					lorv);
-				return -1;
-			default:
+			if (!alg_oakley_dhdef_ok(lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"invalid group description=%u.\n",
 					lorv);
@@ -2384,18 +2305,7 @@ check_attr_ipcomp(trns)
 				return -1;
 			}
 
-			switch (lorv) {
-			case OAKLEY_ATTR_GRP_DESC_MODP768:
-			case OAKLEY_ATTR_GRP_DESC_MODP1024:
-			case OAKLEY_ATTR_GRP_DESC_MODP1536:
-				break;
-			case OAKLEY_ATTR_GRP_DESC_EC2N155:
-			case OAKLEY_ATTR_GRP_DESC_EC2N185:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"DH group %d isn't supported.\n",
-					lorv);
-				return -1;
-			default:
+			if (!alg_oakley_dhdef_ok(lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"invalid group description=%u.\n",
 					lorv);
@@ -2630,6 +2540,10 @@ setph1attr(sa, buf)
 	case OAKLEY_ATTR_GRP_DESC_MODP768:
 	case OAKLEY_ATTR_GRP_DESC_MODP1024:
 	case OAKLEY_ATTR_GRP_DESC_MODP1536:
+	case OAKLEY_ATTR_GRP_DESC_MODP2048:
+	case OAKLEY_ATTR_GRP_DESC_MODP3072:
+	case OAKLEY_ATTR_GRP_DESC_MODP4096:
+	case OAKLEY_ATTR_GRP_DESC_MODP8192:
 		/* don't attach group type for known groups */
 		attrlen += sizeof(struct isakmp_data);
 		if (buf) {
@@ -2683,7 +2597,7 @@ setph2proposal0(iph2, pp, pr)
 	size_t trnsoff;
 	caddr_t x0, x;
 	u_int8_t *np_t; /* pointer next trns type in previous header */
-	u_int8_t *spi;
+	const u_int8_t *spi;
 
 	p = vmalloc(sizeof(*prop) + sizeof(pr->spi));
 	if (p == NULL)
@@ -2696,7 +2610,7 @@ setph2proposal0(iph2, pp, pr)
 	prop->proto_id = pr->proto_id;
 	prop->num_t = 1;
 
-	spi = (u_int8_t *)&pr->spi;
+	spi = (const u_int8_t *)&pr->spi;
 	switch (pr->proto_id) {
 	case IPSECDOI_PROTO_IPCOMP:
 		/*
@@ -2771,16 +2685,8 @@ setph2proposal0(iph2, pp, pr)
 			return NULL;
 		}
 
-		switch (iph2->sainfo->pfs_group) {
-		case OAKLEY_ATTR_GRP_DESC_MODP768:
-		case OAKLEY_ATTR_GRP_DESC_MODP1024:
-		case OAKLEY_ATTR_GRP_DESC_MODP1536:
+		if (alg_oakley_dhdef_ok(iph2->sainfo->pfs_group))
 			attrlen += sizeof(struct isakmp_data);
-			break;
-		case 0:
-		default:
-			break;
-		}
 
 		p = vrealloc(p, p->l + sizeof(*trns) + attrlen);
 		if (p == NULL)
@@ -2832,17 +2738,9 @@ setph2proposal0(iph2, pp, pr)
 		 || pr->proto_id == IPSECDOI_PROTO_IPSEC_AH)
 			x = isakmp_set_attr_l(x, IPSECDOI_ATTR_AUTH, tr->authtype);
 
-		switch (iph2->sainfo->pfs_group) {
-		case OAKLEY_ATTR_GRP_DESC_MODP768:
-		case OAKLEY_ATTR_GRP_DESC_MODP1024:
-		case OAKLEY_ATTR_GRP_DESC_MODP1536:
+		if (alg_oakley_dhdef_ok(iph2->sainfo->pfs_group))
 			x = isakmp_set_attr_l(x, IPSECDOI_ATTR_GRP_DESC,
 				iph2->sainfo->pfs_group);
-			break;
-		case 0:
-		default:
-			break;
-		}
 
 		/* update length of this transform. */
 		trns = (struct isakmp_pl_t *)(p->v + trnsoff);
@@ -3176,6 +3074,7 @@ ipsecdoi_setid1(iph1)
 	vchar_t *ret = NULL;
 	struct ipsecdoi_id_b id_b;
 	vchar_t *ident = NULL;
+	struct sockaddr *ipid = NULL;
 
 	/* init */
 	id_b.proto_id = 0;
@@ -3212,25 +3111,36 @@ ipsecdoi_setid1(iph1)
 		break;
 #endif
 	case IDTYPE_ADDRESS:
+		/*
+		 * if the value of the id type was set by the configuration
+		 * file, then use it.  otherwise the value is get from local
+		 * ip address by using ike negotiation.
+		 */
+		if (iph1->rmconf->idv)
+			ipid = (struct sockaddr *)iph1->rmconf->idv->v;
+		/*FALLTHROUGH*/
 	default:
 	    {
 		int l;
 		caddr_t p;
 
+		if (ipid == NULL)
+			ipid = iph1->local;
+
 		/* use IP address */
-		switch (iph1->local->sa_family) {
+		switch (ipid->sa_family) {
 		case AF_INET:
 			id_b.type = IPSECDOI_ID_IPV4_ADDR;
-			id_b.port = ((struct sockaddr_in *)iph1->local)->sin_port;
+			id_b.port = ((struct sockaddr_in *)ipid)->sin_port;
 			l = sizeof(struct in_addr);
-			p = (caddr_t)&((struct sockaddr_in *)iph1->local)->sin_addr;
+			p = (caddr_t)&((struct sockaddr_in *)ipid)->sin_addr;
 			break;
 #ifdef INET6
 		case AF_INET6:
 			id_b.type = IPSECDOI_ID_IPV6_ADDR;
-			id_b.port = ((struct sockaddr_in6 *)iph1->local)->sin6_port;
+			id_b.port = ((struct sockaddr_in6 *)ipid)->sin6_port;
 			l = sizeof(struct in6_addr);
-			p = (caddr_t)&((struct sockaddr_in6 *)iph1->local)->sin6_addr;
+			p = (caddr_t)&((struct sockaddr_in6 *)ipid)->sin6_addr;
 			break;
 #endif
 		default:
@@ -3340,9 +3250,26 @@ set_identifier(vpp, type, value)
 		break;
 	}
 	case IDTYPE_ADDRESS:
-		/* XXX get from node's address */
-		/* but should be defined here */
+	{
+		struct sockaddr *sa;
+
+		/* length is adjusted since QUOTEDSTRING teminates NULL. */
+		if (value->l == 0)
+			break;
+
+		sa = str2saddr(value->v, NULL);
+		if (sa == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"invalid ip address %s\n", value->v);
+			return -1;
+		}
+
+		new = vmalloc(sa->sa_len);
+		if (new == NULL)
+			return -1;
+		memcpy(new->v, sa, new->l);
 		break;
+	}
 	case IDTYPE_ASN1DN:
 		new = eay_str2asn1dn(value->v, value->l - 1);
 		if (new == NULL)
@@ -3816,8 +3743,8 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 			 *   Appendix A of [IKE].
 			 */
 			if (pp->pfs_group == 0)
-				pp->pfs_group = (u_int8_t)ntohs(d->lorv);
-			else if (pp->pfs_group != (u_int8_t)ntohs(d->lorv)) {
+				pp->pfs_group = (u_int16_t)ntohs(d->lorv);
+			else if (pp->pfs_group != (u_int16_t)ntohs(d->lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"pfs_group mismatched "
 					"in a proposal.\n");
@@ -3827,13 +3754,13 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 
 		case IPSECDOI_ATTR_ENC_MODE:
 			if (pr->encmode
-			 && pr->encmode != (u_int8_t)ntohs(d->lorv)) {
+			 && pr->encmode != (u_int16_t)ntohs(d->lorv)) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"multiple encmode exist "
 					"in a transform.\n");
 				goto end;
 			}
-			pr->encmode = (u_int8_t)ntohs(d->lorv);
+			pr->encmode = (u_int16_t)ntohs(d->lorv);
 			break;
 
 		case IPSECDOI_ATTR_AUTH:
@@ -3843,7 +3770,7 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 					"in a transform.\n");
 				goto end;
 			}
-			tr->authtype = (u_int8_t)ntohs(d->lorv);
+			tr->authtype = (u_int16_t)ntohs(d->lorv);
 			break;
 
 		case IPSECDOI_ATTR_KEY_LENGTH:
