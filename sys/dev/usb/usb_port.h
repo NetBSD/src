@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.29 2000/03/30 17:04:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -182,6 +183,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
 #endif
 
 #define Static
