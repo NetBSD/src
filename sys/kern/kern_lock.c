@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.64 2002/09/27 15:37:44 provos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.65 2002/11/01 01:13:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.64 2002/09/27 15:37:44 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.65 2002/11/01 01:13:32 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -147,7 +147,7 @@ do {									\
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
 do {									\
 	if ((flags) & LK_SPIN)						\
-		s = splsched();						\
+		s = spllock();						\
 	simple_lock(&(lkp)->lk_interlock);				\
 } while (0)
 
