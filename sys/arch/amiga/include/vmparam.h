@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 1998/10/02 19:29:49 is Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20.6.1 2000/02/15 10:07:28 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,5 +187,5 @@ struct pmap_physseg {
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)4)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)8)		/* XXX: SYSPTSIZE */
 #endif /* !_MACHINE_VMPARAM_H_ */
