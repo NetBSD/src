@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.61 2002/07/01 22:05:08 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.62 2002/08/22 16:32:14 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.61 2002/07/01 22:05:08 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.62 2002/08/22 16:32:14 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1261,6 +1261,14 @@ getanswer(answer, anslen, qname, qtype, pai)
 			if (type == T_AAAA && n != IN6ADDRSZ) {
 				cp += n;
 				continue;
+			}
+			if (type == T_AAAA) {
+				struct in6_addr in6;
+				memcpy(&in6, cp, IN6ADDRSZ);
+				if (IN6_IS_ADDR_V4MAPPED(&in6)) {
+					cp += n;
+					continue;
+				}
 			}
 			if (!haveanswer) {
 				int nn;
