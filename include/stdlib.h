@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.51 2000/12/20 18:35:21 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.52 2001/02/19 22:12:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -258,6 +258,8 @@ int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...))
 	    __attribute__((__format__(__printf__, 1, 2)));
+const char *getprogname __P((void)) __attribute__((__const__));
+void	setprogname __P((const char *));
 
 quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
