@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.12.2.2 2004/12/17 12:19:53 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.12.2.3 2005/01/18 14:49:33 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.2.2 2004/12/17 12:19:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.2.3 2005/01/18 14:49:33 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -368,6 +368,8 @@ static BLKIF_RING_IDX last_req_prod;  /* Request producer at last trap. */
 #define STATE_DISCONNECTED	1
 #define STATE_CONNECTED		2
 static unsigned int state = STATE_CLOSED;
+
+static int in_autoconf; /* are we still in autoconf ? */
 static unsigned int blkif_evtchn = 0;
 static unsigned int blkif_irq = 0;
 static unsigned int blkif_handle = 0;
@@ -375,14 +377,22 @@ static unsigned int blkif_handle = 0;
 static int blkif_control_rsp_valid = 0;
 static blkif_response_t blkif_control_rsp;
 
-/** Network interface info. */
+/* block device interface info. */
 struct xbd_ctrl {
 
 	cfprint_t xc_cfprint;
 	struct device *xc_parent;
+#define BLK_CTRL_NMSGS 8
+	ctrl_msg_t *msgs[BLK_CTRL_NMSGS]; /* ring of pending messages */
+	volatile int msg_producer, msg_consumer;
+	struct proc *sc_thread;
+
 };
 
 static struct xbd_ctrl blkctrl;
+
+static void xbdc_create_thread(void *);
+static void xbdc_thread(void *);
 
 #define XBDUNIT(x)		DISKUNIT(x)
 #define GETXBD_SOFTC(_xs, x)	if (!((_xs) = getxbd_softc(x))) return ENXIO
@@ -600,11 +610,19 @@ connect_interface(blkif_fe_interface_status_t *status)
 	// simple_unlock(&blkif_io_lock);
 	restore_flags(flags);
 #endif
+	if (in_autoconf) {
+		in_autoconf = 0;
+		config_pending_decr();
+	}
 	return;
 
  out:
 	FREE(vbd_info, M_DEVBUF);
 	vbd_info = NULL;
+	if (in_autoconf) {
+		in_autoconf = 0;
+		config_pending_decr();
+	}
 	return;
 }
 
@@ -708,6 +726,29 @@ blkif_status(blkif_fe_interface_status_t *status)
 	}
 }
 
+static void
+xbdc_thread(void *arg)
+{
+	struct xbd_ctrl *xbdc_sc = arg;
+	int s;
+
+	for (;;) {
+		s = splbio();
+		/* get messages from ring */
+		while(xbdc_sc->msg_consumer != xbdc_sc->msg_producer) {
+			blkif_status((blkif_fe_interface_status_t *)
+			    &(xbdc_sc->msgs[xbdc_sc->msg_consumer]->msg[0]));
+			ctrl_if_send_response(
+			    xbdc_sc->msgs[xbdc_sc->msg_consumer]);
+			xbdc_sc->msg_consumer++;
+			if (xbdc_sc->msg_consumer == BLK_CTRL_NMSGS)
+				xbdc_sc->msg_consumer = 0;
+		}
+		(void) tsleep(&xbdc_sc->msgs, PRIBIO, "xbdc", 0);
+		splx(s);
+	}
+}
+
 
 static void
 xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
@@ -716,14 +757,19 @@ xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	case CMSG_BLKIF_FE_INTERFACE_STATUS:
 		if (msg->length != sizeof(blkif_fe_interface_status_t))
 			goto parse_error;
-		blkif_status((blkif_fe_interface_status_t *)
-		    &msg->msg[0]);
+		/* store messages in ring, and wakeup thread */
+		blkctrl.msgs[blkctrl.msg_producer] = msg;
+		blkctrl.msg_producer++;
+		if (blkctrl.msg_producer == BLK_CTRL_NMSGS)
+			blkctrl.msg_producer = 0;
+		if (blkctrl.msg_producer == blkctrl.msg_consumer)
+			panic("xbdc: ring too small");
+		wakeup(&blkctrl.msgs);
 		break;        
 	default:
 		goto parse_error;
 	}
 
-	ctrl_if_send_response(msg);
 	return;
 
  parse_error:
@@ -763,6 +809,7 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
 
  retry:
 	while ((req_prod - resp_cons) == BLKIF_RING_SIZE) {
+		/* XXX where is the wakeup ? */
 		tsleep((caddr_t) &req_prod, PUSER | PCATCH,
 		    "blkfront", 0);
 	}
@@ -790,16 +837,8 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
 	restore_flags(flags);
 
 	while (!blkif_control_rsp_valid) {
-		/* XXXcl: sleep/wakeup not ready yet - busy wait for now.
-		 * interrupts are still of, so we pick up the control
-		 * channel response on return from HYPERVISOR_yield().
-		 */
-#if 0
 		tsleep((caddr_t)&blkif_control_rsp_valid, PUSER | PCATCH,
 		    "blkfront", 0);
-#else
-		HYPERVISOR_yield();
-#endif
 	}
 
 	memcpy(rsp, &blkif_control_rsp, sizeof(*rsp));
@@ -873,15 +912,6 @@ setup_sysctl(void)
 		diskcookies = pnode;
 }
 
-static int
-xbd_wait_for_interfaces(void)
-{
-
-	while (state != STATE_CONNECTED)
-		HYPERVISOR_yield();
-	return 0;
-}
-
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
     cfprint_t print)
@@ -926,20 +956,26 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	(void)ctrl_if_register_receiver(CMSG_BLKIF_FE, xbd_ctrlif_rx,
 	    CALLBACK_IN_BLOCKING_CONTEXT);
 
+	in_autoconf = 1;
+	config_pending_incr();
+	blkctrl.msg_producer = blkctrl.msg_consumer = 0;
+	kthread_create(xbdc_create_thread, &blkctrl);
+
 	send_driver_status(1);
 
 	return 0;
 }
 
-void
-xbd_scan_finish(struct device *parent)
+static void
+xbdc_create_thread(void *arg)
 {
-	int err;
-
-	err = xbd_wait_for_interfaces();
-	if (err)
-		ctrl_if_unregister_receiver(CMSG_NETIF_FE, xbd_ctrlif_rx);
-}
+	struct xbd_ctrl *xbdc_sc = arg;
+	int error;
+	if ((error = kthread_create1(xbdc_thread, xbdc_sc, &xbdc_sc->sc_thread,
+	    "%s", "xbdc")) != 0)
+		aprint_error("xbdc: unable to create kernel thread: error %d\n",
+		    error);
+}	
 
 #if NXBD > 0
 int
