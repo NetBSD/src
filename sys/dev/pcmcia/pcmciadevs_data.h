@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.72 2000/01/25 15:44:21 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.73 2000/01/25 21:58:23 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp 
  */
 
 /*-
@@ -239,6 +239,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "I-O DATA PCLA/TE"	},
+	},
+	{
+	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH,
+	    PCMCIA_CIS_LEXARMEDIA_COMPATFLASH,
+	    0,
+	    "Lexar Media",
+	    "Lexar Media CompactFlash"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -826,6 +833,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Lasat Communications A/S",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_LEXARMEDIA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Lexar Media",
 	    NULL,
 	},
 	{
