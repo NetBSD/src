@@ -1,4 +1,4 @@
-#	$Id: HP-UX.11.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: HP-UX.11.x,v 8.11 1999/07/02 23:54:55 rand Exp
 
 # +z is to generate position independant code
 define(`confCC', `cc -Ae +z')

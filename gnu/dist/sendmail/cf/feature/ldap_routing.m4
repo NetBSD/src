@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: ldap_routing.m4,v 1.1.1.1 2000/05/03 09:27:31 itojun Exp $')
+VERSIONID(`Id: ldap_routing.m4,v 8.5 2000/02/26 01:32:03 gshapiro Exp')
 divert(-1)
 
 # Check first two arguments.  If they aren't set, may need to warn in proto.m4

@@ -9,7 +9,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: rbl.m4,v 1.1.1.2 2000/05/03 09:27:31 itojun Exp $')
+VERSIONID(`Id: rbl.m4,v 8.17 1999/04/04 00:51:12 ca Exp')
 divert(-1)
 
 define(`_RBL_', ifelse(defn(`_ARG_'), `', `rbl.maps.vix.com', `_ARG_'))dnl
