@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.4 2004/03/28 06:51:12 jmc Exp $
+# $NetBSD: md.cats,v 1.5 2004/10/07 13:50:18 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -167,11 +167,13 @@
 ./usr/X11R6/lib/modules/libfb.a
 ./usr/X11R6/lib/modules/libi2c.a
 ./usr/X11R6/lib/modules/libint10.a
+./usr/X11R6/lib/modules/liblayer.a 
 ./usr/X11R6/lib/modules/libmfb.a
 ./usr/X11R6/lib/modules/libpcidata.a
 ./usr/X11R6/lib/modules/librac.a
 ./usr/X11R6/lib/modules/libramdac.a
 ./usr/X11R6/lib/modules/libscanpci.a
+./usr/X11R6/lib/modules/libshadow.a
 ./usr/X11R6/lib/modules/libshadowfb.a
 ./usr/X11R6/lib/modules/libvbe.a
 ./usr/X11R6/lib/modules/libvgahw.a
