@@ -42,7 +42,7 @@
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bwtwo.c,v 1.14 92/11/26 02:28:04 torek Exp 
- * $Id: bwtwo.c,v 1.3 1994/07/04 21:37:20 deraadt Exp $
+ * $Id: bwtwo.c,v 1.4 1994/09/17 23:57:31 deraadt Exp $
  */
 
 /*
@@ -65,8 +65,8 @@
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 
-#include <sparc/sbus/bwtworeg.h>
-#include <sparc/sbus/sbusvar.h>
+#include <sparc/dev/bwtworeg.h>
+#include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
 struct bwtwo_softc {
@@ -79,6 +79,7 @@ struct bwtwo_softc {
 
 /* autoconfiguration driver */
 static void	bwtwoattach(struct device *, struct device *, void *);
+static int	bwtwomatch(struct device *, struct cfdata *, void *);
 struct cfdriver bwtwocd =
     { NULL, "bwtwo", matchbyname, bwtwoattach,
       DV_DULL, sizeof(struct bwtwo_softc) };
@@ -107,8 +108,8 @@ bwtwoattach(parent, self, args)
 	void *args;
 {
 	register struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
-	register struct sbus_attach_args *sa = args;
-	register int node = sa->sa_ra.ra_node, ramsize;
+	register struct confargs *ca = args;
+	register int node = ca->ca_ra.ra_node, ramsize;
 	register struct bwtwo_all *p;
 	int isconsole;
 
@@ -138,8 +139,8 @@ bwtwoattach(parent, self, args)
 	 * going to print characters via rconsole.
 	 */
 	isconsole = node == fbnode && fbconstty != NULL;
-	p = (struct bwtwo_all *)sa->sa_ra.ra_paddr;
-	if ((sc->sc_fb.fb_pixels = sa->sa_ra.ra_vaddr) == NULL && isconsole) {
+	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
+	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize);
 	}
