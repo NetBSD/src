@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.29.4.1 2000/08/03 11:38:26 itojun Exp $	*/
+/*	$NetBSD: getch.c,v 1.29.4.2 2000/08/03 11:40:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.29.4.1 2000/08/03 11:38:26 itojun Exp $");
+__RCSID("$NetBSD: getch.c,v 1.29.4.2 2000/08/03 11:40:01 itojun Exp $");
 #endif
 #endif					/* not lint */
 
@@ -379,6 +379,7 @@ __init_getch(void)
 	size_t limit;
 	key_entry_t *tmp_key;
 	keymap_t *current;
+	char *cp;
 #ifdef DEBUG
 	int k;
 #endif
@@ -396,7 +397,9 @@ __init_getch(void)
 	for (i = 0; i < num_tcs; i++) {
 		p = entry;
 		limit = 1023;
-		if (t_getstr(_cursesi_genbuf, tc[i].name, &p, &limit) != NULL) {
+		cp = t_getstr(_cursesi_genbuf, tc[i].name, &p, &limit);
+		if (cp != NULL) {
+			free(cp);
 			current = base_keymap;	/* always start with
 						 * base keymap. */
 			length = (int) strlen(entry);
