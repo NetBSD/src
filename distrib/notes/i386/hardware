@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.67 2000/03/15 14:08:44 tsutsui Exp $	
+.\"	$NetBSD: hardware,v 1.68 2000/03/20 18:25:20 ad Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -244,6 +244,10 @@ Supported devices include:
 		[ Note: will work with most laptops as well as 
 		  with ISA cards which provide PCMCIA 
 		  slots for desktops ]
+	RAID Controllers:
+		Compaq Integrated Array (PCI) [b]
+		Compaq Smart Array 221, 3100ES, 3200, 4200, 4250ES (PCI) [b]
+		Compaq SMART 2/E, 2/P, 2DH, 2SL (PCI) [b]
 .Ed
 .Pp
 Drivers for hardware marked with "[*]" are NOT present in kernels on the
