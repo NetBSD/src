@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2001/07/22 11:29:46 wiz Exp $ */
+/*	$NetBSD: mem.c,v 1.11 2001/09/29 23:36:54 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,7 +91,7 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	static caddr_t zeropage;
 	
-	while (uio->uio_resid > 0 && error == 0) {
+	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -106,49 +106,42 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			c = uio->uio_resid;
-			/* This doesn't allow device mapping!	XXX */
-			pmap_real_memory(&v, (psize_t *) &c);
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
-			return 0;
+			return (0);
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, NBPG);
+				zeropage = (caddr_t)
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
 
 		default:
-			return ENXIO;
+			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base = (caddr_t)iov->iov_base + c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
-	return error;
+	return (error);
 }
 
 paddr_t
@@ -157,5 +150,12 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	return -1;
+	struct proc *p = curproc;
+
+	if (minor(dev) != 0)
+		return (-1);
+
+	if (atop(off) >= physmem && suser(p->p_ucred, &p->p_acflag) != 0)
+		return (-1);
+	return (atop(off));
 }
