@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.7 2000/01/23 23:46:14 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.8 2000/02/23 21:14:12 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	16		# estimated number of users
 
@@ -24,8 +24,6 @@ options		INITTODR_ALWAYS_USE_RTC
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	PMAP_NEW	# new pmap interface
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
