@@ -1,8 +1,14 @@
-/*	$NetBSD: c_sh.c,v 1.6 2003/01/20 08:49:00 dsl Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.7 2003/06/23 11:38:53 agc Exp $	*/
 
 /*
  * built-in Bourne commands
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: c_sh.c,v 1.7 2003/06/23 11:38:53 agc Exp $");
+#endif
+
 
 #include "sh.h"
 #include "ksh_stat.h" 	/* umask() */
