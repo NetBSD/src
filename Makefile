@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.21 1995/02/19 12:20:06 cgd Exp $
+#	$Id: Makefile,v 1.22 1995/02/26 01:10:19 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -18,26 +18,26 @@ SUBDIR+= regress
 
 regression-tests:
 	@echo Running regression tests...
-	@(cd regress && ${MAKE} regress)
+	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
 
 afterinstall:
 .ifndef NOMAN
-	(cd share/man && ${MAKE} makedb)
+	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
 
 build:
-	(cd include && ${MAKE} install)
+	(cd ${.CURDIR}/include && ${MAKE} install)
 	${MAKE} cleandir
-	(cd lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic)
-	(cd domestic/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/domestic/libcrypt && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
 .if exists(kerberosIV)
-	(cd kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/kerberosIV && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 
