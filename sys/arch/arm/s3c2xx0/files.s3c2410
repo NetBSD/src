@@ -1,0 +1,16 @@
+#	$NetBSD: files.s3c2410,v 1.1 2003/07/31 19:49:41 bsh Exp $
+#
+# Configuration info for Samsung S3C2410
+#
+
+# Pull in common info for s3c2800/2400X/2410X
+include arch/arm/s3c2xx0/files.s3c2xx0
+
+
+file	arch/arm/s3c2xx0/s3c2410_intr.c
+file	arch/arm/s3c2xx0/s3c24x0_clk.c
+file	arch/arm/s3c2xx0/s3c2410.c
+
+# UART
+file	arch/arm/s3c2xx0/sscom_s3c2410.c	sscom
+

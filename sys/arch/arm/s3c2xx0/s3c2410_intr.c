@@ -1,0 +1,327 @@
+/* $NetBSD: s3c2410_intr.c,v 1.1 2003/07/31 19:49:42 bsh Exp $ */
+
+/*
+ * Copyright (c) 2003  Genetec corporation.  All rights reserved.
+ * Written by Hiroyuki Bessho for Genetec corporation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Genetec corporation may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY GENETEC CORP. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL GENETEC CORP.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * IRQ handler for Samsung S3C2410 processor.
+ * It has integrated interrupt controller.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.1 2003/07/31 19:49:42 bsh Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <uvm/uvm_extern.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
+#include <arm/cpufunc.h>
+
+#include <arm/s3c2xx0/s3c2410reg.h>
+#include <arm/s3c2xx0/s3c2410var.h>
+
+/*
+ * interrupt dispatch table.
+ */
+
+struct s3c2xx0_intr_dispatch handler[ICU_LEN];
+
+__volatile int softint_pending;
+
+__volatile int current_spl_level;
+__volatile int intr_mask;
+__volatile int soft_intr_mask;
+__volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
+
+/* interrupt masks for each level */
+int s3c2xx0_imask[NIPL];
+int s3c2xx0_ilevel[ICU_LEN];
+int s3c24x0_soft_imask[NIPL];
+
+vaddr_t intctl_base;		/* interrupt controller registers */
+#define icreg(offset) \
+	(*(volatile uint32_t *)(intctl_base+(offset)))
+
+/*
+ * Map a software interrupt queue to an interrupt priority level.
+ */
+static const int si_to_ipl[SI_NQUEUES] = {
+	IPL_SOFT,		/* SI_SOFT */
+	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTNET,		/* SI_SOFTNET */
+	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+};
+
+/*
+ *   Clearing interrupt pending bits affects some built-in
+ * peripherals.  For example, IIC starts transmitting next data when
+ * its interrupt pending bit is cleared.
+ *   We need to leave those bits to peripheral handlers.
+ */
+#define PENDING_CLEAR_MASK	(~(1<<S3C24X0_INT_IIC))
+
+/*
+ * called from irq_entry.
+ */
+void s3c2410_irq_handler(struct clockframe *);
+void
+s3c2410_irq_handler(struct clockframe *frame)
+{
+	uint32_t irqbits;
+	int irqno;
+	int saved_spl_level;
+
+	saved_spl_level = current_spl_level;
+
+	while ((irqbits = icreg(INTCTL_INTPND)) != 0) {
+
+		/* XXX: Use INTOFFSET register */
+
+		for (irqno = ICU_LEN-1; irqno >= 0; --irqno)
+			if (irqbits & (1<<irqno))
+				break;
+
+		if (irqno < 0)
+			break;
+
+		/* raise spl to stop interrupts of lower priorities */
+		if (saved_spl_level < handler[irqno].level)
+			s3c2xx0_setipl(handler[irqno].level);
+
+		/* clear pending bit */
+		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
+
+		enable_interrupts(I32_bit); /* allow nested interrupts */
+
+		(*handler[irqno].func) (
+		    handler[irqno].cookie == 0
+		    ? frame : handler[irqno].cookie);
+
+		disable_interrupts(I32_bit);
+
+		/* restore spl to that was when this interrupt happen */
+		s3c2xx0_setipl(saved_spl_level);
+	}
+
+
+	if (get_pending_softint())
+		s3c2xx0_do_pending(1);
+}
+
+/*
+ * Handler for main IRQ of cascaded interrupts.
+ */
+static int
+cascade_irq_handler(void *cookie)
+{
+	int index = (int)cookie;
+	uint32_t irqbits;
+	int irqno, i;
+	int save = disable_interrupts(I32_bit);
+
+	irqbits = icreg(INTCTL_SUBSRCPND) & (0x07 << (3*index));
+
+	for (irqno = 3*index; irqbits; ++irqno) {
+		if ((irqbits & (1<<irqno)) == 0)
+			continue;
+
+		/* clear pending bit */
+		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
+
+		/* allow nested interrupts. SPL is already set
+		 * correctly by main handler. */
+		restore_interrupts(save);
+
+		i = S3C2410_SUBIRQ_MIN + irqno;
+		(* handler[i].func)(handler[i].cookie);
+
+		disable_interrupts(I32_bit);
+	}
+
+	return 1;
+}
+
+
+static const u_char s3c24x0_ist[] = {
+	EXTINTR_LOW,		/* NONE */
+	EXTINTR_FALLING,	/* PULSE */
+	EXTINTR_FALLING,	/* EDGE */
+	EXTINTR_LOW,		/* LEVEL */
+	EXTINTR_HIGH,
+	EXTINTR_RISING,
+	EXTINTR_BOTH,
+};
+
+const static uint8_t subirq_to_main[] = {
+	S3C2410_INT_UART0,
+	S3C2410_INT_UART0,
+	S3C2410_INT_UART0,
+	S3C2410_INT_UART1,
+	S3C2410_INT_UART1,
+	S3C2410_INT_UART1,
+	S3C2410_INT_UART2,
+	S3C2410_INT_UART2,
+	S3C2410_INT_UART2,
+	S3C24X0_INT_ADCTC,
+	S3C24X0_INT_ADCTC,
+};
+
+void *
+s3c24x0_intr_establish(int irqno, int level, int type,
+    int (* func) (void *), void *cookie)
+{
+	int save;
+
+	if (irqno < 0 || irqno >= ICU_LEN ||
+	    type < IST_NONE || IST_EDGE_BOTH < type)
+		panic("intr_establish: bogus irq or type");
+
+	save = disable_interrupts(I32_bit);
+
+	handler[irqno].cookie = cookie;
+	handler[irqno].func = func;
+	handler[irqno].level = level;
+
+	if (irqno >= S3C2410_SUBIRQ_MIN) {
+		/* cascaded interrupts. */
+		int main_irqno;
+
+		/* unmask it in submask register */
+		icreg(INTCTL_INTSUBMSK) &= ~(1<<(irqno - S3C2410_SUBIRQ_MIN));
+
+		restore_interrupts(save);
+
+		main_irqno = subirq_to_main[irqno - S3C2410_SUBIRQ_MIN];
+
+		/* establish main irq if first time */
+		if (handler[main_irqno].func != cascade_irq_handler)
+			s3c24x0_intr_establish(main_irqno, level, type,
+			    cascade_irq_handler, (void *)(irqno/3));
+
+		return &handler[irqno];
+	}
+
+	s3c2xx0_update_intr_masks(irqno, level);
+
+	if (irqno <= S3C24X0_INT_EXT(3)) {
+		/*
+		 * Update external interrupt control
+		 */
+		uint32_t reg;
+		u_int 	trig;
+
+		trig = s3c24x0_ist[type];
+
+		reg = bus_space_read_4(s3c2xx0_softc->sc_iot,
+				       s3c2xx0_softc->sc_gpio_ioh,
+				       GPIO_EXTINT(0));
+
+		reg = reg & ~(0x0f << (4*irqno));
+		reg |= trig << (4*irqno);
+
+		bus_space_write_4(s3c2xx0_softc->sc_iot, s3c2xx0_softc->sc_gpio_ioh,
+				  GPIO_EXTINT(0), reg);
+	}
+
+	s3c2xx0_setipl(current_spl_level);
+
+	restore_interrupts(save);
+
+	return &handler[irqno];
+}
+
+
+static void
+init_interrupt_masks(void)
+{
+	int i;
+
+	for (i=0; i < NIPL; ++i)
+		s3c2xx0_imask[i] = 0;
+
+	s3c24x0_soft_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
+		SI_TO_IRQBIT(SI_SOFT);
+
+	s3c24x0_soft_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK);
+
+	/*
+	 * splsoftclock() is the only interface that users of the
+	 * generic software interrupt facility have to block their
+	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
+	 */
+	s3c24x0_soft_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET);
+
+	/*
+	 * splsoftnet() must also block splsoftclock(), since we don't
+	 * want timer-driven network events to occur while we're
+	 * processing incoming packets.
+	 */
+	s3c24x0_soft_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+
+	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
+		s3c24x0_soft_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+}
+
+void
+s3c2410_intr_init(struct s3c24x0_softc *sc)
+{
+	intctl_base = (vaddr_t) bus_space_vaddr(sc->sc_sx.sc_iot,
+	    sc->sc_sx.sc_intctl_ioh);
+
+	s3c2xx0_intr_mask_reg = (uint32_t *)(intctl_base + INTCTL_INTMSK);
+
+	/* clear all pending interrupt */
+	icreg(INTCTL_SRCPND) = 0xffffffff;
+
+	init_interrupt_masks();
+
+	s3c2xx0_intr_init(handler, ICU_LEN);
+
+}
+
+
+/*
+ * mask/unmask sub interrupts
+ */
+void
+s3c2410_mask_subinterrupts(int bits)
+{
+	atomic_set_bit((uint32_t *)&icreg(INTCTL_INTSUBMSK), bits);
+}
+
+void
+s3c2410_unmask_subinterrupts(int bits)
+{
+	atomic_clear_bit((uint32_t *)&icreg(INTCTL_INTSUBMSK), bits);
+}

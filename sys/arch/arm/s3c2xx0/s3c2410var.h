@@ -1,7 +1,7 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.2 2003/07/31 19:49:43 bsh Exp $ */
+/* $NetBSD: s3c2410var.h,v 1.1 2003/07/31 19:49:43 bsh Exp $ */
 
 /*
- * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.
+ * Copyright (c) 2003  Genetec corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _S3C24X0_INTR_H_
-#define	_S3C24X0_INTR_H_
+#ifndef _ARM_S3C2410VAR_H_
+#define _ARM_S3C2410VAR_H_
 
-#ifndef _LOCORE
+#include <arm/s3c2xx0/s3c24x0var.h>
 
-#define	SI_TO_IRQBIT(si)  (1<<(si))
+int	s3c2410_sscom_cnattach(bus_space_tag_t, int, int, int, tcflag_t);
+int	s3c2410_sscom_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
+void	s3c2410_intr_init(struct s3c24x0_softc *);
+void	s3c2410_softreset(void);
 
-#define	get_pending_softint()	(softint_pending & soft_intr_mask)
-#define	update_softintr_mask()	\
-	(soft_intr_mask = s3c24x0_soft_imask[current_spl_level])
+void	s3c2410_mask_subinterrupts(int);
+void	s3c2410_unmask_subinterrupts(int);
 
-/* no room for softinterrupts in intr_mask. */
-extern int soft_intr_mask;
-extern int s3c24x0_soft_imask[];
-
-
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
-
-#endif /* ! _LOCORE */
-
-#endif /* _S3C24X0_INTR_H_ */
+#endif /* _ARM_S3C2410VAR_H_ */
