@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104 1999/08/04 07:17:50 nisimura Exp $
+# $NetBSD: files.alpha,v 1.105 1999/12/03 01:13:51 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -392,7 +392,6 @@ file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
-file	arch/alpha/alpha/lock_machdep.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
