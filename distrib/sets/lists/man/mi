@@ -307,8 +307,10 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
+./usr/share/man/cat4/ipfilter.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
+./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/lkm.0
@@ -476,6 +478,7 @@
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
 ./usr/share/man/cat8/fsinfo.0
+./usr/share/man/cat8/fsirand.0
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/genassym.sh.0
 ./usr/share/man/cat8/gettable.0
@@ -498,6 +501,7 @@
 ./usr/share/man/cat8/lfs_cleanerd.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
+./usr/share/man/cat8/lockd.0
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/mailstats.0
@@ -541,6 +545,7 @@
 ./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
+./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newlfs.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
@@ -552,6 +557,7 @@
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
+./usr/share/man/cat8/pppd.cbcp.0
 ./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/praliases.0
 ./usr/share/man/cat8/pstat.0
@@ -577,12 +583,14 @@
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
+./usr/share/man/cat8/rpc.lockd.0
 ./usr/share/man/cat8/rpc.pcnfsd.0
 ./usr/share/man/cat8/rpc.rquotad.0
 ./usr/share/man/cat8/rpc.rstatd.0
 ./usr/share/man/cat8/rpc.rusersd.0
 ./usr/share/man/cat8/rpc.rwalld.0
 ./usr/share/man/cat8/rpc.sprayd.0
+./usr/share/man/cat8/rpc.statd.0
 ./usr/share/man/cat8/rpc.yppasswdd.0
 ./usr/share/man/cat8/rpcinfo.0
 ./usr/share/man/cat8/rquotad.0
@@ -606,6 +614,7 @@
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
+./usr/share/man/cat8/statd.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
@@ -702,6 +711,21 @@
 ./usr/share/man/cat9/shutdownhook_disestablish.0
 ./usr/share/man/cat9/shutdownhook_establish.0
 ./usr/share/man/cat9/sleep.0
+./usr/share/man/cat9/spl.0
+./usr/share/man/cat9/spl0.0
+./usr/share/man/cat9/splbio.0
+./usr/share/man/cat9/splclock.0
+./usr/share/man/cat9/splhigh.0
+./usr/share/man/cat9/splimp.0
+./usr/share/man/cat9/splnet.0
+./usr/share/man/cat9/splsched.0
+./usr/share/man/cat9/splserial.0
+./usr/share/man/cat9/splsoftclock.0
+./usr/share/man/cat9/splsoftnet.0
+./usr/share/man/cat9/splsoftserial.0
+./usr/share/man/cat9/splstatclock.0
+./usr/share/man/cat9/spltty.0
+./usr/share/man/cat9/splx.0
 ./usr/share/man/cat9/store.0
 ./usr/share/man/cat9/subyte.0
 ./usr/share/man/cat9/suibyte.0
