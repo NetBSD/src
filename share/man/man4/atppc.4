@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.3 2004/01/23 15:38:48 wiz Exp $
+.\"	$NetBSD: atppc.4,v 1.4 2004/01/28 09:13:55 jdolecek Exp $
 .\"
 .\" Copyright (C) Gary Thorpe 2003
 .\" All rights reserved.
@@ -10,7 +10,10 @@
 .Nm atppc
 .Nd driver for AT-style parallel port chip sets
 .Sh SYNOPSIS
-.Cd "atppc0 at isa? port 0x378 irq 7 drq 3 flags 0x00"
+.Cd "atppc* at isa? port 0x378 irq 7 drq 3 flags 0x00"
+.Cd "atppc* at acpi?"
+.Cd "atppc* at pnpbios? index ?"
+.Cd "atppc* at puc? port ?"
 .Cd options ATPPC_VERBOSE
 .Cd options ATPPC_DEBUG
 .Sh DESCRIPTION
@@ -96,10 +99,7 @@ port by Gary Thorpe.
 .Sh BUGS
 .Bl -item
 .It
-ISA PnP, PnP BIOS, ACPI attachments are missing.
-Support is being planned.
-.It
-Only standard and FAST mode writes are tested.
+Only standard, FAST and ECP mode writes are tested.
 Nibble reads also tested.
 .It
 Only generic chip sets are currently supported.
