@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.4 1998/07/27 01:57:26 mycroft Exp $	*/
+/*	$NetBSD: termcap.h,v 1.5 1999/08/14 13:56:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,6 +48,11 @@ int   tgetflag	__P((const char *));
 int   tgetnum	__P((const char *));
 char *tgoto	__P((const char *, int, int));
 void  tputs	__P((const char *, int, void (*)(int)));
+
+extern	char PC;
+extern	char *BC;
+extern	char *UP;
+extern	short ospeed;
 __END_DECLS
 
 #endif /* _TERMCAP_H_ */
