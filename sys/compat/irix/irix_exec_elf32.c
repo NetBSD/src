@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.9 2003/10/31 14:04:04 drochner Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.10 2003/11/08 21:33:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.9 2003/10/31 14:04:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.10 2003/11/08 21:33:34 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -74,7 +74,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	int error;
+	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32()\n");
@@ -112,7 +112,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	char *itp; 
 	vaddr_t *pos; 
 {
-	int error;
+	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32()\n");
