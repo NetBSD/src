@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.112 1999/02/19 17:09:16 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.113 1999/02/26 01:18:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1021,8 +1021,8 @@ audio_read(dev, uio, ioflag)
 	if (cb->mmapped)
 		return EINVAL;
 
-	DPRINTFN(1,("audio_read: cc=%d mode=%d\n", 
-                    uio->uio_resid, sc->sc_mode));
+	DPRINTFN(1,("audio_read: cc=%lu mode=%d\n", 
+                    (unsigned long)uio->uio_resid, sc->sc_mode));
 
 	error = 0;
 	/*
@@ -1253,8 +1253,8 @@ audio_write(dev, uio, ioflag)
 	u_char *inp, *einp;
 	int error, s, n, cc, used;
 
-	DPRINTFN(2,("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", 
-		    sc, unit, uio->uio_resid, sc->sc_pr.used, 
+	DPRINTFN(2,("audio_write: sc=%p(unit=%d) count=%lu used=%d(hi=%d)\n", 
+		    sc, unit, (unsigned long)uio->uio_resid, sc->sc_pr.used, 
 		    sc->sc_pr.usedhigh));
 
 	if (cb->mmapped)
@@ -1337,8 +1337,8 @@ audio_write(dev, uio, ioflag)
 			return EINVAL;
 		}
 #endif
-		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%d\n", 
-                             cc, inp, uio->uio_resid));
+		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%lu\n", 
+                             cc, inp, (unsigned long)uio->uio_resid));
 		n = uio->uio_resid;
 		error = uiomove(inp, cc, uio);
 		cc = n - uio->uio_resid; /* number of bytes actually moved */

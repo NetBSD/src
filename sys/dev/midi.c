@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
+/*	$NetBSD: midi.c,v 1.11 1999/02/26 01:18:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -421,7 +421,8 @@ midiread(dev, uio, ioflag)
 	int used, cc, n, resid;
 	int s;
 
-	DPRINTF(("midiread: %p, count=%d\n", sc, uio->uio_resid));
+	DPRINTF(("midiread: %p, count=%lu\n", sc, 
+		 (unsigned long)uio->uio_resid));
 
 	error = 0;
 	resid = uio->uio_resid;
@@ -536,8 +537,8 @@ midiwrite(dev, uio, ioflag)
 	int used, cc, n;
 	int s;
 
-	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%d\n", sc, unit, 
-		     uio->uio_resid));
+	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
+		     (unsigned long)uio->uio_resid));
 
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
