@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.32 2001/01/07 13:15:11 jdc Exp $
+# $NetBSD: shl.elf,v 1.33 2001/01/10 19:22:08 jmc Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2
 ./usr/lib/libasn1.so.3
@@ -11,7 +11,7 @@
 ./usr/lib/libcurses.so.4
 ./usr/lib/libdes.so.5
 ./usr/lib/libedit.so.2
-./usr/lib/libform.so.1
+./usr/lib/libform.so.0
 ./usr/lib/libg2c.so.0
 ./usr/lib/libgnumalloc.so.0
 ./usr/lib/libgssapi.so.2
