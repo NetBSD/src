@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.27 2002/12/19 10:27:19 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.28 2003/01/20 21:43:38 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -137,10 +137,10 @@ extern int cache_alias_bits;
 extern u_long dvma_cachealign;
 
 /* Optimize cache alias macros on single architecture kernels */
-#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
+#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M) && !defined(SUN4D)
 #define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4
 #define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4
-#elif !defined(SUN4) && defined(SUN4C) && !defined(SUN4M)
+#elif !defined(SUN4) && defined(SUN4C) && !defined(SUN4M) && !defined(SUN4D)
 #define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4C
 #define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4C
 #else
