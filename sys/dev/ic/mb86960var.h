@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.30 2002/10/04 21:19:34 tsutsui Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.31 2002/10/05 15:16:12 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -106,7 +106,11 @@ enum fe_type {
 
 	/* Fujitsu FMV-180 series. */
 	FE_TYPE_FMV181,
+	FE_TYPE_FMV181A,
 	FE_TYPE_FMV182,
+	FE_TYPE_FMV182A,
+	FE_TYPE_FMV183,
+	FE_TYPE_FMV184,
 
 	/* Allied-Telesis AT1700 series and RE2000 series. */
 	FE_TYPE_AT1700T,
