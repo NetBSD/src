@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.3 2004/07/03 17:29:17 manu Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.4 2004/07/03 22:17:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.3 2004/07/03 17:29:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.4 2004/07/03 22:17:18 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ darwin_commpage_map(p)
 
 		error = uvm_map(kernel_map, &kvaddr, memsize,
 		    darwin_commpage_uao, 0, PAGE_SIZE,
-		    UVM_MAPFLAG(UVM_PROT_RWX, UVM_PROT_RWX,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 		if (error != 0) {
 			uao_detach(darwin_commpage_uao);
@@ -108,7 +108,7 @@ darwin_commpage_map(p)
 
 	if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr,
 	    memsize, darwin_commpage_uao, 0, 0,
-	    UVM_MAPFLAG(UVM_PROT_RWX, UVM_PROT_RWX,
+	    UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
 	    UVM_INH_SHARE, UVM_ADV_NORMAL, UVM_FLAG_FIXED))) != 0) {
 #ifdef DEBUG_DARWIN
 		printf("uvm_map darwin_commpage failed (error %d)\n", error);
@@ -123,6 +123,18 @@ darwin_commpage_map(p)
 	return 0;
 }
 
+#define DCP_MEMCPY(x) {							\
+	size_t len;							\
+									\
+	len = (size_t)darwin_commpage_##x##_size;			\
+									\
+	if (len > sizeof(dcp->dcp_##x)) {				\
+		printf("darwin_commpage: %s too big (%d/%d)\n", #x,	\
+			len, sizeof(dcp->dcp_##x));			\
+	} else {							\
+		memcpy(dcp->dcp_##x, (void *)darwin_commpage_##x, len);	\
+	}								\
+}
 
 void
 darwin_commpage_init(dcp)
@@ -131,8 +143,6 @@ darwin_commpage_init(dcp)
 	int ncpu, name[2];
 	size_t sz;
 	int error;
-	int bcopy_glue[2];
-	int pthread_self[3];
 
 	/* 
 	 * XXX Only one page is mapped yet (see higher in the file)
@@ -187,41 +197,24 @@ darwin_commpage_init(dcp)
 	dcp->dcp_timestamp = 0; /* XXX */	
 	dcp->dcp_secpertick = hz; /* XXX Not sure */	
 
-	/* dcp->dcp_mach_absolute_time */
-	/* dcp->dcp_spinlock_try */
-	/* dcp->dcp_spinlock_lock */
-	/* dcp->dcp_spinlock_unlock */
-	/* dcp->dcp_pthread_specific */
-	/* dcp->dcp_gettimeofday */
-	/* dcp->dcp_sys_dcache_flush */
-	/* dcp->dcp_sys_icache_invalidate */
+	DCP_MEMCPY(mach_absolute_time);
+	DCP_MEMCPY(spinlock_try);
+	DCP_MEMCPY(spinlock_lock);
+	DCP_MEMCPY(spinlock_unlock);
+	DCP_MEMCPY(pthread_specific);
+	DCP_MEMCPY(gettimeofday);
+	DCP_MEMCPY(sys_dcache_flush);
+	DCP_MEMCPY(sys_icache_invalidate);
+	DCP_MEMCPY(pthread_self);
+	DCP_MEMCPY(spinlock_relinquish);
+	DCP_MEMCPY(bzero);
+	DCP_MEMCPY(memcpy);
 
-	/* 
-	 * XXX hack until we write something better
-	 */
-#ifdef __powerpc__
-	pthread_self[0] = 0x38007ff2; /* li r0,32754 */
-	pthread_self[1] = 0x44000002; /* sc */
-	pthread_self[2] = 0x4e800020; /* blr */
-	memcpy(&dcp->dcp_pthread_self[0], 
-	    (void *)pthread_self, sizeof(pthread_self));	
+	/* XXX we only map one page yet */
+#ifdef notyet
+	DCP_MEMCPY(bigcopy);
 #endif
 
-	/* dcp->dcp_spinlock_relinquish */
-
-#ifdef __powerpc__
-	bcopy_glue[1] = 0x7c852378;	/* mr r5,r4 */
-	bcopy_glue[0] = 0x38800000;	/* li r4,0 */
-	memcpy(&dcp->dcp_bzero[0], (void *)bcopy_glue, sizeof(bcopy_glue));	
-	memcpy(&dcp->dcp_bzero[8], (void *)memset, sizeof(dcp->dcp_bzero) - 8);
-#endif
-
-#ifdef __i386__
-#error implement me
-#endif
-
-	memcpy(&dcp->dcp_memcpy[0], (void *)memcpy, sizeof(dcp->dcp_memcpy));
-
-	/* dcp->dcp_bigcopy */
 	return;
 }
+

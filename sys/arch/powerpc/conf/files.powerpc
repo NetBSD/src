@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.57 2004/04/18 23:31:45 matt Exp $
+#	$NetBSD: files.powerpc,v 1.58 2004/07/03 22:17:18 manu Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -67,6 +67,7 @@ file	arch/powerpc/powerpc/macho_machdep.c		exec_macho
 include "compat/darwin/files.darwin"
 include "compat/freebsd/files.freebsd" 
 file	arch/powerpc/powerpc/darwin_machdep.c		compat_darwin
+file	arch/powerpc/powerpc/darwin_commpage_machdep.S	compat_darwin
 
 include "compat/netbsd32/files.netbsd32"
 file	arch/powerpc/powerpc/netbsd32_sigcode.S		compat_netbsd32
