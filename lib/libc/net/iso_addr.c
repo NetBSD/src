@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.5 1997/07/13 19:57:52 christos Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.6 1998/07/26 13:03:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.5 1997/07/13 19:57:52 christos Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.6 1998/07/26 13:03:43 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,8 @@ iso_addr(addr)
 	out_addr.isoa_len = cp - out_addr.isoa_genaddr;
 	return (&out_addr);
 }
-static char hexlist[] = "0123456789abcdef";
+
+static const char hexlist[16] = "0123456789abcdef";
 
 char *
 iso_ntoa(isoa)
