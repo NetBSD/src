@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2000/10/02 09:36:24 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.41 2000/10/11 11:04:43 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,12 +38,14 @@
 
 /* md.c -- Machine specific code for i386 */
 
-#include <stdio.h>
-#include <util.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/exec.h>
 #include <sys/utsname.h>
 #include <machine/cpu.h>
-#include <sys/sysctl.h>
+#include <stdio.h>
+#include <util.h>
+#include <dirent.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -67,6 +69,8 @@ static int mbr_partstart_above_chs __P((struct mbr_partition *));
 static void configure_bootsel __P((void));
 static void md_upgrade_mbrtype __P((void));
 static char *get_bootmodel __P((void));
+static int move_aout_libs __P((void));
+static int handle_aout_libs(const char *dir, int op, const void *arg);
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -381,9 +385,6 @@ custom:		ask_sizemult(dlcylsize);
 		return 0;
 	}
 
-	/*
-	 * XXX check for int13 extensions.
-	 */
 	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024 &&
 	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
 		process_menu(MENU_cyl1024);
@@ -452,6 +453,7 @@ md_pre_update(void)
 int
 md_update(void)
 {
+	move_aout_libs();
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
@@ -708,11 +710,174 @@ md_init()
 	char *bootmodel;
 
 	bootmodel = get_bootmodel();
-	if (strcmp(bootmodel, "") != 0 && strcmp(bootmodel, "small") != 0) {
+	if (strcmp(bootmodel, "tiny") == 0 || strcmp(bootmodel, "laptop")
+	    == 0) {
 		/*
 		 * XXX assumes the kernset is the first in the array.
 		 */
 		snprintf(kernstr, sizeof kernstr, "kern-%s", bootmodel);
 		dist_list[0].name = &kernstr[0];
 	}
+}
+
+/*
+ * Function to count or move a.out shared libraries.
+ */
+static int
+handle_aout_libs(const char *dir, int op, const void *arg)
+{
+	DIR *dd;
+	struct dirent *dp;
+	struct exec ex;
+	struct stat st;
+	int fd;
+	char *fullname;
+	const char *destdir;
+	int n;
+
+	dd = opendir(dir);
+	if (dd == NULL)
+		return -1;
+
+	n = 0;
+
+	switch (op) {
+	case LIB_COUNT:
+		break;
+	case LIB_MOVE:
+		destdir = (const char *)arg;
+		break;
+	default:
+		return -1;
+	}
+
+	while ((dp = readdir(dd)) != NULL) {
+		/*
+		 * strlen("libX.so")
+		 */
+		if (dp->d_namlen < 7)
+			continue;
+		if (strncmp(dp->d_name, "lib", 3) != 0)
+			continue;
+
+		asprintf(&fullname, "%s/%s", dir, dp->d_name);
+		if (stat(fullname, &st) < 0)
+			goto endloop;
+		if ((st.st_mode & (S_IFREG|S_IFLNK)) == 0)
+			goto endloop;
+
+	
+		fd = open(fullname, O_RDONLY);
+		if (fd < 0) {
+			close(fd);
+			goto endloop;
+		}
+		if (read(fd, &ex, sizeof ex) < sizeof ex) {
+			close(fd);
+			goto endloop;
+		}
+		close(fd);
+		if (N_GETMAGIC(ex) != ZMAGIC ||
+		    (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
+			continue;
+
+		switch (op) {
+		case LIB_COUNT:
+			n++;
+			break;
+		case LIB_MOVE:
+			run_prog(0, 0, NULL, "mv -f %s %s/%s",
+			    fullname, destdir, dp->d_name);
+			break;
+		}
+		
+endloop:
+		free(fullname);
+	}
+
+	closedir(dd);
+
+	return n;
+}
+
+static int
+move_aout_libs()
+{
+	int n;
+	char prefix[MAXPATHLEN], src[MAXPATHLEN];
+	struct stat st;
+
+	n = handle_aout_libs(target_expand("/usr/lib"), LIB_COUNT, NULL);
+	if (n <= 0)
+		return n;
+
+	/*
+	 * See if /emul/aout already exists, taking symlinks into
+	 * account. If so, no need to create it, just use it.
+	 */
+	if (target_realpath("/emul/aout", prefix) != NULL && stat(prefix, &st) == 0)
+		goto domove;
+
+	/*
+	 * See if /emul exists. If not, create it.
+	 */
+	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
+		strcpy(prefix, target_expand("/emul"));
+		if (scripting)
+			fprintf(script, "mkdir %s\n", prefix);
+		mkdir(prefix, 0755);
+	}
+
+	/*
+	 * Can use strcpy, target_expand has made sure it fits into
+	 * MAXPATHLEN. XXX all this copying is because concat_paths
+	 * returns a pointer to a static buffer.
+	 *
+	 * If an old aout link exists (apparently pointing to nowhere),
+	 * move it out of the way.
+	 */
+	strcpy(src, concat_paths(prefix, "aout"));
+	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "aout.old"));
+
+	/*
+	 * We have created /emul if needed. Since no previous /emul/aout
+	 * existed, we'll use a symbolic link in /emul to /usr/aout, to
+	 * avoid overflowing the root partition.
+	 */
+	strcpy(prefix, target_expand("/usr/aout"));
+	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s", prefix);
+	run_prog(1, 0, MSG_aoutfail, "ln -s %s %s",
+	    "/usr/aout", src);
+
+domove:
+	/*
+	 * Rename etc and usr/lib if they already existed, so that we
+	 * do not overwrite old files.
+	 *
+	 * Then, move /etc/ld.so.conf to /emul/aout/etc/ld.so.conf,
+	 * and all a.out dynamic libraries from /usr/lib to
+	 * /emul/aout/usr/lib. This is where the a.out code in ldconfig
+	 * and ld.so respectively will find them.
+	 */
+	strcpy(src, concat_paths(prefix, "usr/lib"));
+	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "usr/lib.old"));
+	strcpy(src, concat_paths(prefix, "etc/ld.so.conf"));
+	run_prog(0, 0, NULL, "mv -f %s %s", src,
+	    concat_paths(prefix, "etc/ld.so.conf.old"));
+	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s ",
+	    concat_paths(prefix, "usr/lib"));
+	run_prog(1, 0, MSG_aoutfail, "mkdir -p %s ",
+	    concat_paths(prefix, "etc"));
+
+	strcpy(src, target_expand("/etc/ld.so.conf"));
+	run_prog(1, 0, MSG_aoutfail, "mv -f %s %s", src,
+	    concat_paths(prefix, "etc/ld.so.conf"));
+
+	strcpy(src, target_expand("/usr/lib"));
+	n = handle_aout_libs(src, LIB_MOVE,
+	    concat_paths(prefix, "usr/lib"));
+
+	return n;
 }
