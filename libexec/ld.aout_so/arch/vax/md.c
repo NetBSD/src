@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1998/12/17 20:14:44 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1999/03/13 17:09:51 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -286,7 +286,6 @@ md_convert_textreloc(r)
 	r->r_baserel = 1;
 	return 1;
 }
-#endif
 
 #ifdef __FreeBSD__
 int	netzmagic;
