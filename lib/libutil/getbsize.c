@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getbsize.c	5.3 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: getbsize.c,v 1.2 1994/01/25 20:06:03 cgd Exp $";
+static char rcsid[] = "$Id: getbsize.c,v 1.3 1994/01/25 21:03:26 cgd Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -42,10 +42,9 @@ static char rcsid[] = "$Id: getbsize.c,v 1.2 1994/01/25 20:06:03 cgd Exp $";
 #include <string.h>
 
 char *
-getbsize(headerlenp, blocksizep, force)
+getbsize(headerlenp, blocksizep)
 	int *headerlenp;
 	long *blocksizep;
-	int force;
 {
 	static char header[20];
 	long n, max, mul, blocksize;
@@ -56,21 +55,7 @@ getbsize(headerlenp, blocksizep, force)
 #define	GB	(1024L * 1024L * 1024L)
 #define	MAXB	GB		/* No tera, peta, nor exa. */
 	form = "";
-	if (force) {
-		blocksize = *blocksizep;
-		if ((blocksize % GB) == 0) {
-			form = "G";
-			n = blocksize / GB;
-		} else if ((blocksize % MB) == 0) {
-			form = "M";
-			n = blocksize / MB;
-		} else if ((blocksize % KB) == 0) {
-			form = "K";
-			n = blocksize / KB;
-		} else {
-			n = blocksize;
-		}
-	} else if ((p = getenv("BLOCKSIZE")) != NULL && *p != '\0') {
+	if ((p = getenv("BLOCKSIZE")) != NULL && *p != '\0') {
 		if ((n = strtol(p, &ep, 10)) < 0)
 			goto underflow;
 		if (n == 0)
