@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.1 2000/06/14 15:45:37 soren Exp $
+#	$NetBSD: INDY,v 1.2 2000/06/14 15:56:21 soren Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -71,8 +71,8 @@ pci0 		at macepci0 bus 0
 mec0 		at mace0 offset 0x280000 intr 3
 pckbc0		at mace0 offset 0x320000 intr 5
 lpt0 		at mace0 offset 0x380000 intr 4
-com0 		at mace0 offset 0x390000 intr 4 # stride 8
-com1 		at mace0 offset 0x398000 intr 4 # stride 8
+com0 		at mace0 offset 0x390000 intr 4
+com1 		at mace0 offset 0x398000 intr 4
 tlp* 		at pci? dev ? function ?
 ne* 		at pci? dev ? function ?
 fxp* 		at pci? dev ? function ?
