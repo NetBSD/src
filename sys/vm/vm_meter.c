@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.18 1996/02/05 01:53:59 christos Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.19 1997/02/21 20:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -197,7 +197,7 @@ vmtotal(totalp)
 			    entry->object.vm_object == NULL)
 				continue;
 			entry->object.vm_object->flags |= OBJ_ACTIVE;
-			paging |= entry->object.vm_object->paging_in_progress;
+			paging |= vm_object_paging(entry->object.vm_object);
 		}
 		if (paging)
 			totalp->t_pw++;
