@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.406 2004/08/16 17:46:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.407 2004/08/17 18:12:07 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6513,6 +6513,7 @@ libexec/ftpd/version.h				1.57
 	  We now examine urgflag at appropriate locations and call 
 	  handleoobcmd() if it's set.  Since the only OOB commands we currently
 	  implement are ABOR and STAT, this isn't an issue.
+	SA#2004-009
 	[lukem, ticket #757]
 
 sys/netinet/Makefile				1.7
