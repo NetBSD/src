@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.16 1999/01/18 11:51:43 pk Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.17 1999/01/18 19:17:00 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,10 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#if BYTE_ORDER == BIG_ENDIAN
+#include <machine/bswap.h>
+#endif
 
 int	ne2000_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
 int	ne2000_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
