@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.17 1998/05/24 19:32:49 is Exp $	*/
+/*	$NetBSD: fd.c,v 1.18 1998/06/30 11:59:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -127,6 +127,8 @@ int fdprint __P((void *, const char *));
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
 };
+
+extern struct cfdriver fdc_cd;
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how

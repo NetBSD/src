@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1998/06/25 23:59:18 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1998/06/30 11:59:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
-#include "opt_compat_hpux.h"
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,17 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
+#include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -80,7 +85,7 @@ cpu_fork(p1, p2)
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
 
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
@@ -106,7 +111,7 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (int) pc;	/* A2 */
 }
 
 /*
@@ -122,10 +127,18 @@ cpu_exit(p)
 	struct proc *p;
 {
 
+#if defined(UVM)
+	uvmspace_free(p->p_vmspace);
+#else
 	vmspace_free(p->p_vmspace);
+#endif
 
 	(void) splimp();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -148,18 +161,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	int error;
 
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-
-	/*
-	 * If we loaded from an HP-UX format binary file we dump enough
-	 * of an HP-UX style user struct so that the HP-UX debuggers can
-	 * grok it.
-	 */
-	if (p->p_emul == &emul_hpux)
-		return (hpux_dumpu(vp, cred));
-#endif
-
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
@@ -170,10 +171,15 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
-	if (error)
-		return error;
+	if (fputype) {
+		/* Save floating point registers. */
+		error = process_read_fpregs(p, &md_core.freg);
+		if (error)
+			return error;
+	} else {
+		/* Make sure these are clear. */
+		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
 	cseg.c_addr = 0;
@@ -306,7 +312,11 @@ vmapbuf(bp, len)
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, len);
+#else
 	kva = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -344,7 +354,11 @@ vunmapbuf(bp, len)
 	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
 	 * will do it for us.
 	 */
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, kva, len);
+#else
 	kmem_free_wakeup(phys_map, kva, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

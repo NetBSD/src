@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 1997/07/12 16:20:50 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 1998/06/30 11:59:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
+
+#ifndef _X68K_VMPARAM_H_
+#define	_X68K_VMPARAM_H_
 
 /*
  * Machine dependent constants for X68K
@@ -233,3 +236,24 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+/* Use new VM page bootstrap interface. */
+#ifdef	MACHINE_NEW_NONCONTIG
+
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ */
+#define	VM_PHYSSEG_MAX		3
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM	/* ??? */
+#define	VM_PHYSSEG_NOADD
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+#endif
+
+#endif /* _X68K_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.8 1998/01/12 21:13:49 thorpej Exp $ */
+/*	$NetBSD: zs.c,v 1.9 1998/06/30 11:59:11 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,8 @@
 
 #define	ZSMAJOR	12		/* XXX */
 
+#define	ZSUNIT(x)	(minor(x) & 0x7f)
+#define	ZSDIALOUT(x)	(minor(x) & 0x80)
 #define	ZS_MOUSE	1	/* XXX */
 
 #define PCLK	(5*1000*1000)	/* PCLK pin input clock rate */
@@ -136,6 +138,7 @@ cdev_decl(zs);
 
 static void	zsiopen __P((struct tty *));
 static void	zsiclose __P((struct tty *));
+static void	zs_shutdown __P((struct zs_chanstate *cs));
 static void	zsstart __P((struct tty *));
 void		zsstop __P((struct tty *, int));
 static int	zsparam __P((struct tty *, struct termios *));
@@ -510,6 +513,34 @@ zsiclose(tp)
 }
 
 
+static void
+zs_shutdown(cs)
+	struct zs_chanstate *cs;
+{
+	struct tty *tp = cs->cs_ttyp;
+	int s;
+
+	s = splzs();
+
+	/* XXX not yet */
+
+	/* Clear any break condition set with TIOCSBRK. */
+	cs->cs_preg[5] &= ~ZSWR5_BREAK;
+	cs->cs_creg[5] &= ~ZSWR5_BREAK;
+	ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if (tp->t_cflag & HUPCL) {
+		zs_modem(cs, 0);
+		(void) tsleep(cs, TTIPRI, ttclos, hz);
+	}
+
+	splx(s);
+}
+
 /*
  * Open a zs serial port.  This interface may not be used to open
  * the keyboard and mouse ports. (XXX)
@@ -524,7 +555,7 @@ zsopen(dev, flags, mode, p)
 	register struct tty *tp;
 	register struct zs_chanstate *cs;
 	struct zs_softc *zi;
-	int unit = minor(dev), zs = unit >> 1, error, s;
+	int unit = ZSUNIT(dev), zs = unit >> 1, error, s;
 
 	if (zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL ||
 	    unit == ZS_MOUSE)
@@ -535,54 +566,45 @@ zsopen(dev, flags, mode, p)
 	if (cs->cs_consio)
 		return (ENXIO);		/* ??? */
 	tp = cs->cs_ttyp;
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
 	s = spltty();
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		(void) zsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
-		splx(s);
-		return (EBUSY);
 	}
-	error = 0;
-	for (;;) {
-		register int rr0;
 
-		/* loop, turning on the device, until carrier present */
-		zs_modem(cs, 1);
-		/* May never get status intr if carrier already on. -gwr */
-		rr0 = cs->cs_zc->zc_csr;
-		ZS_DELAY();
-		if ((rr0 & ZSRR0_DCD) || cs->cs_softcar)
-			tp->t_state |= TS_CARR_ON;
-		if (flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
-		    tp->t_state & TS_CARR_ON)
-			break;
-		tp->t_state |= TS_WOPEN;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-				 ttopen, 0);
-		if (error) {
-			if (!(tp->t_state & TS_ISOPEN)) {
-				zs_modem(cs, 0);
-				tp->t_state &= ~TS_WOPEN;
-				ttwakeup(tp);
-			}
-			splx(s);
-			return error;
-		}
-	}
 	splx(s);
-	if (error == 0)
-		error = linesw[tp->t_line].l_open(dev, tp);
+
+	error = ttyopen(tp, ZSDIALOUT(dev), flags & O_NONBLOCK);
 	if (error)
-		zs_modem(cs, 0);
+		goto bad;
+
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	if (error)
+		goto bad;
+
+	return (0);
+
+bad:
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		zs_shutdown(cs);
+	}
+
 	return (error);
 }
 
@@ -599,25 +621,19 @@ zsclose(dev, flags, mode, p)
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
 	struct zs_softc *zi;
-	int unit = minor(dev), s;
+	int unit = ZSUNIT(dev), s;
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 	linesw[tp->t_line].l_close(tp, flags);
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0) {
-		zs_modem(cs, 0);
-		/* hold low for 1 second */
-		(void) tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
-	}
-	if (cs->cs_creg[5] & ZSWR5_BREAK)
-	{
-		s = splzs();
-		cs->cs_preg[5] &= ~ZSWR5_BREAK;
-		cs->cs_creg[5] &= ~ZSWR5_BREAK;
-		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
-		splx(s);
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		zs_shutdown(cs);
 	}
 	ttyclose(tp);
 #ifdef KGDB
@@ -642,7 +658,7 @@ zsread(dev, uio, flags)
 	register struct zs_chanstate *cs;
 	register struct zs_softc *zi;
 	register struct tty *tp;
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
@@ -661,7 +677,7 @@ zswrite(dev, uio, flags)
 	register struct zs_chanstate *cs;
 	register struct zs_softc *zi;
 	register struct tty *tp;
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
@@ -676,7 +692,7 @@ zstty(dev)
 {
 	register struct zs_chanstate *cs;
 	register struct zs_softc *zi;
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
@@ -1088,7 +1104,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 	struct zs_softc *zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 	register struct tty *tp = cs->cs_ttyp;
@@ -1205,7 +1221,7 @@ zsstart(tp)
 {
 	register struct zs_chanstate *cs;
 	register int s, nch;
-	int unit = minor(tp->t_dev);
+	int unit = ZSUNIT(tp->t_dev);
 	struct zs_softc *zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
@@ -1266,7 +1282,7 @@ zsstop(tp, flag)
 	int flag;
 {
 	register struct zs_chanstate *cs;
-	register int s, unit = minor(tp->t_dev);
+	register int s, unit = ZSUNIT(tp->t_dev);
 	struct zs_softc *zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
@@ -1293,7 +1309,7 @@ zsparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
 {
-	int unit = minor(tp->t_dev);
+	int unit = ZSUNIT(tp->t_dev);
 	struct zs_softc *zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 	register int tmp, tmp5, cflag, s;
@@ -1433,7 +1449,7 @@ zshwiflow(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	int unit = minor(tp->t_dev);
+	int unit = ZSUNIT(tp->t_dev);
 	struct zs_softc *zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 	int s;
@@ -1548,7 +1564,7 @@ zs_kgdb_init()
 
 	if (major(kgdb_dev) != ZSMAJOR)
 		return;
-	unit = minor(kgdb_dev);
+	unit = ZSUNIT(kgdb_dev);
 	zs = unit >> 1;
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = findzs(zs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1998/06/30 11:59:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Masaru Oki
@@ -49,7 +49,7 @@ struct dos_partition {
   unsigned int  dp_flag:8;	/* state of partition */
   unsigned int  dp_start:24;	/* start position (1024bytes/block) */
   unsigned long dp_size;	/* partition size (1024bytes/block) */
-} dos_partitions[NDOSPART];
+};
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
