@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atanh.c,v 1.5 1999/07/02 15:37:36 simonb Exp $ */
+/*      $NetBSD: n_atanh.c,v 1.5.10.1 2002/06/18 13:37:59 lukem Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,8 +70,8 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
 #include <errno.h>
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-double atanh(x)
-double x;
+double
+atanh(double x)
 {
 	double z;
 	z = copysign(0.5,x);
