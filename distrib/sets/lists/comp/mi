@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.226 2000/06/07 01:31:38 thorpej Exp $
+#	$NetBSD: mi,v 1.227 2000/06/09 05:59:43 onoe Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -94,7 +94,6 @@
 ./usr/include/dev/ic/am7930reg.h	comp-c-include
 ./usr/include/dev/ic/am7990reg.h	comp-c-include
 ./usr/include/dev/ic/am7990var.h	comp-c-include
-./usr/include/dev/ic/awictl.h	comp-c-include
 ./usr/include/dev/ic/bhareg.h	comp-c-include
 ./usr/include/dev/ic/bhavar.h	comp-c-include
 ./usr/include/dev/ic/bt431reg.h	comp-c-include
