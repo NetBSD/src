@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.138 1999/09/09 03:52:21 itohy Exp $
+#	$NetBSD: files.i386,v 1.139 1999/10/15 06:10:38 haya Exp $
 #
 # new style config file for i386 architecture
 #
@@ -274,6 +274,12 @@ include "compat/ossaudio/files.ossaudio"
 
 # network devices MII bus
 include "dev/mii/files.mii"
+
+#
+# CARDBUS
+#
+include "dev/cardbus/files.cardbus"
+file	arch/i386/i386/rbus_machdep.c	cardbus
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it

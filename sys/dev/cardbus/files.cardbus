@@ -1,0 +1,33 @@
+#	$Id: files.cardbus,v 1.1 1999/10/15 06:07:23 haya Exp $
+#
+# files.cardbus
+#
+
+device	cardslot: cbbus, pcmciabus
+attach	cardslot at pcmciaslot
+file	dev/cardbus/cardslot.c		cardslot	needs-flag
+
+device	cardbus {[dev = -1], [function = -1]}
+attach	cardbus at cbbus
+file	dev/cardbus/cardbus.c		cardbus		needs-flag
+file	dev/cardbus/cardbus_map.c	cardbus
+file	dev/cardbus/rbus.c		cardbus
+
+
+#
+# 3Com 3C575TX and 3C575BTX
+#
+attach	ex at cardbus with ex_cardbus
+file	dev/cardbus/if_ex_cardbus.c		ex_cardbus
+
+#
+# Intel PRO/100 8255x based CardBus cards.
+#
+#
+#
+#attach	fxp at cardbus with fxp_cardbus
+#file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
+
+
+#attach	com at cardbus with com_cardbus
+#file	dev/cardbus/com_cardbus.c		com_cardbus
