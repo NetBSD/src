@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.23.2.2 2001/02/04 19:22:08 he Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.23.2.3 2001/02/26 17:01:56 he Exp $	*/
 /*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
@@ -787,7 +787,7 @@ skip_ipsec2:;
 		 * passed to looutput, and the kernel would hang.
 		 * The following last resort would prevent such disaster.
 		 */
-		if (origifp == NULL);
+		if (origifp == NULL)
 			origifp = ifp;
 	}
 	else
