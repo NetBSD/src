@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72.2.2 2001/04/09 01:58:12 nathanw Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.3 2001/06/21 20:08:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -445,7 +445,7 @@ sloutput(ifp, m, dst, rtp)
 		struct timeval tv;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_if.if_lastchange, &tv);
+		timersub(&time, &sc->sc_lastpacket, &tv);
 		if (tv.tv_sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
@@ -474,7 +474,7 @@ sloutput(ifp, m, dst, rtp)
 		ifp->if_oerrors++;
 		return (error);
 	}
-	sc->sc_if.if_lastchange = time;
+	sc->sc_lastpacket = time;
 	splx(s);
 
 	s = spltty();
@@ -516,7 +516,7 @@ slstart(tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_SLIP);
 	splx(s);
     }
@@ -532,10 +532,6 @@ sl_btom(sc, len)
 	int len;
 {
 	struct mbuf *m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
 
 	/*
 	 * Allocate a new input buffer and swap.
@@ -648,7 +644,7 @@ slinput(c, tp)
 		softintr_schedule(sc->sc_si);
 #else
 	    {
-		int s = splimp();
+		int s = splhigh();
 		schednetisr(NETISR_SLIP);
 		splx(s);
 	    }
@@ -793,7 +789,7 @@ slintr(void *arg)
 			m_freem(bpf_m);
 		}
 #endif
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
 		s = spltty();
 
@@ -992,9 +988,9 @@ slintr(void *arg)
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_if.if_lastchange = time;
+		sc->sc_lastpacket = time;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77.2.1 2001/04/09 01:58:33 nathanw Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77.2.2 2001/06/21 20:08:45 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -117,7 +117,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _NETINET_TCP_VAR_H_
 #define _NETINET_TCP_VAR_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 
@@ -140,7 +140,7 @@ struct tcpcb {
 	u_short	t_ourmss;		/* our's maximum segment size */
 	u_short t_segsz;		/* current segment size in use */
 	char	t_force;		/* 1 if forcing out a byte */
-	u_short	t_flags;
+	u_int	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
 #define	TF_DELACK	0x0002		/* ack, but try to delay it */
 #define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
@@ -245,7 +245,11 @@ tcp_reass_lock_try(tp)
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're blocking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (tp->t_flags & TF_REASSEMBLING) {
 		splx(s);
 		return (0);
@@ -261,7 +265,7 @@ tcp_reass_unlock(tp)
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	tp->t_flags &= ~TF_REASSEMBLING;
 	splx(s);
 }

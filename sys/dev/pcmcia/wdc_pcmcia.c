@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.40.2.1 2001/04/09 01:57:20 nathanw Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.40.2.2 2001/06/21 20:05:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,9 +158,7 @@ const struct wdc_pcmcia_product {
 const struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
-int	wdc_pcmcia_enable __P((void *, int));
-
-
+int	wdc_pcmcia_enable __P((struct device *, int));
 
 const struct wdc_pcmcia_product *
 wdc_pcmcia_lookup(pa)
@@ -362,7 +360,7 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
 
 	/* We can enable and disable the controller. */
-	sc->sc_wdcdev.sc_atapi_adapter._generic.scsipi_enable =
+	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
@@ -434,11 +432,11 @@ wdc_pcmcia_detach(self, flags)
 }
 
 int
-wdc_pcmcia_enable(arg, onoff)
-	void *arg;
+wdc_pcmcia_enable(self, onoff)
+	struct device *self;
 	int onoff;
 {
-	struct wdc_pcmcia_softc *sc = arg;
+	struct wdc_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
 		/* See the comment in aic_pcmcia_enable */

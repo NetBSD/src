@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.1 2001/03/05 22:49:23 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.2 2001/06/21 19:59:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #endif
@@ -91,13 +91,13 @@
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY > 0)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_xserver.h"
 #endif
 #endif
@@ -175,8 +175,8 @@ linux_sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_gs = tf->tf_gs;
+		frame.sf_sc.sc_fs = tf->tf_fs;		
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;
@@ -628,9 +628,7 @@ linux_machdepioctl(p, v, retval)
 
 	fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	switch (com) {

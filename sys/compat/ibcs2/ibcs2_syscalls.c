@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscalls.c,v 1.31.2.1 2001/03/05 22:49:22 nathanw Exp $ */
+/* $NetBSD: ibcs2_syscalls.c,v 1.31.2.2 2001/06/21 19:59:20 nathanw Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.25 2000/12/09 07:10:35 mycroft Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 #include <sys/param.h>
@@ -20,7 +20,7 @@
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_statfs.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const ibcs2_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

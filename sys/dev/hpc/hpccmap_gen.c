@@ -1,4 +1,4 @@
-/* $Id: hpccmap_gen.c,v 1.1 2001/02/22 18:37:55 uch Exp $ */
+/*	$NetBSD: hpccmap_gen.c,v 1.1.2.1 2001/06/21 20:01:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,9 +45,7 @@ unsigned char compo6[6] = {   0,  51, 102, 153, 204, 255 };
 unsigned char compo7[7] = {   0,  42,  85, 127, 170, 212, 255 };
 
 void
-main(ac, av)
-	int ac;
-	char *av[];
+main(int ac, char *av[])
 {
 	int i;
 	char *rgb = "rgb";
@@ -65,10 +63,8 @@ main(ac, av)
 }
 
 void
-rgb_separate_out(ctxx, idx, r, g, b)
-	void* ctxx;
-	int idx;
-	unsigned char r, g, b;
+rgb_separate_out(void *ctxx, int idx, unsigned char r, unsigned char g,
+    unsigned char b)
 {
 	int rgb = (int)ctxx;
 
@@ -90,9 +86,7 @@ rgb_separate_out(ctxx, idx, r, g, b)
 }
 
 void
-cmap_gen(func, ctx)
-	output_func func;
-	void *ctx;
+cmap_gen(output_func func, void *ctx)
 {
 	int i, r, g, b;
 

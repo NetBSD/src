@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.1 2001/03/05 22:49:34 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.2 2001/06/21 20:02:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,9 +80,10 @@
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
 
+#include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
-#include "opt_com.h"
+#include "opt_kgdb.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)
@@ -984,6 +985,21 @@ comwrite(dev, uio, flag)
 		return (EIO);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+compoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

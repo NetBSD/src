@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.11.2.1 2001/04/09 01:58:58 nathanw Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.11.2.2 2001/06/21 20:09:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 /*#define NTFS_DEBUG 1*/
-#if defined(__NetBSD__) && defined(_KERNEL) && !defined(_LKM)
+#if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
 #endif
 
@@ -240,6 +240,8 @@ struct bootfile {
 	u_int32_t       bf_volsn;	/* volume ser. num. */
 };
 
+#pragma pack()
+
 typedef wchar (ntfs_wget_func_t) __P((const char **));
 typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
 typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
@@ -270,8 +272,6 @@ struct ntfsmount {
 #define	ntm_mftrecsz	ntm_bootfile.bf_mftrecsz
 #define	ntm_spc		ntm_bootfile.bf_spc
 #define	ntm_bps		ntm_bootfile.bf_bps
-
-#pragma pack()
 
 #define	NTFS_NEXTREC(s, type) ((type)(((caddr_t) s) + (s)->reclen))
 

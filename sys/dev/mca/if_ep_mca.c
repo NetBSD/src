@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.2.2.2 2001/04/09 01:56:47 nathanw Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.2.2.3 2001/06/21 20:04:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,15 +70,9 @@
 /*
  * Driver for 3Com 3c529 cards.
  *
- * Known issues:
- * - on my 386DX, speed of network is like 100KB/s at best; for bigger
- *   files fetched e.g. via ftp, I get as low as 5KB/s, mostly due
- *   to excessive number of overrun packets. Configuring system to
- *   use smaller TCP window might help, though the performance is
- *   still expected to be very dependant on CPU speed, especially
- *   since ISA and PCI attachments are reported to work OK on pentium
- *   class systems.
- *   Changing ic/elink3.c to use RX Early might help here potentially.
+ * If you encouter sucky performance, try kernel without DEBUG/DIAGNOSTIC.
+ * This helped on my test machine to change the performance of the card
+ * from like 5KB/s to like 800 KB/s.
  */
 
 #include <sys/param.h>
@@ -199,10 +193,11 @@ ep_mca_attach(parent, self, aux)
 	 */
 
 	iobase = MCA_CBIO + (((pos4 & 0xfc) >> 2) * 0x400);
+	irq = (pos5 & 0x0f);
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, MCA_IOSZ, 0, &ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf(": unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -215,7 +210,8 @@ ep_mca_attach(parent, self, aux)
 		panic("ep_mca_attach: impossible");
 	}
 
-	printf(" slot %d: 3Com %s\n", ma->ma_slot + 1, epp->epp_name);
+	printf(" slot %d irq %d: 3Com %s\n", ma->ma_slot + 1,
+		irq, epp->epp_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
@@ -228,14 +224,12 @@ ep_mca_attach(parent, self, aux)
 		return;
 
 	/* Map and establish the interrupt. */
-	irq = (pos5 & 0x0f);
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 
 	/*
 	 * Set default media to be same as the one selected in POS.

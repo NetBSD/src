@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.4.6.1 2001/06/21 20:03:07 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -82,7 +82,7 @@ struct pckbc_attach_args {
 	pckbc_slot_t pa_slot;
 };
 
-extern const char *pckbc_slot_names[];
+extern const char * const pckbc_slot_names[];
 extern struct pckbc_internal pckbc_consdata;
 extern int pckbc_console_attached;
 

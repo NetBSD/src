@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.63.2.1 2001/03/05 22:49:41 nathanw Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63.2.2 2001/06/21 20:06:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -706,12 +706,9 @@ void
 crfree(cr)
 	struct ucred *cr;
 {
-	int s;
 
-	s = splimp();				/* ??? */
 	if (--cr->cr_ref == 0)
 		FREE((caddr_t)cr, M_CRED);
-	(void) splx(s);
 }
 
 /*

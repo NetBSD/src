@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41.2.2 2001/04/09 01:59:06 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.3 2001/06/21 20:10:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #endif
@@ -249,7 +249,9 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	}
 #ifdef QUOTA
 	if ((error = chkdq(ip, (long)btodb(nsize - osize), cred, 0)) != 0) {
-		brelse(bp);
+		if (bpp != NULL) {
+			brelse(bp);
+		}
 		return (error);
 	}
 #endif

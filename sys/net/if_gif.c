@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.c,v 1.26.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
-/*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.26.2.2 2001/06/21 20:08:03 nathanw Exp $	*/
+/*	$KAME: if_gif.c,v 1.49 2001/06/04 12:03:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -299,7 +299,6 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
-	ifp->if_lastchange = time;	
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
@@ -453,7 +452,7 @@ gif_input(m, af, gifp)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);	/* update statistics */
 		m_freem(m);
@@ -483,6 +482,7 @@ gif_ioctl(ifp, cmd, data)
 	int error = 0, size;
 	struct sockaddr *dst, *src;
 	struct sockaddr *sa;
+	int s;
 	struct gif_softc *sc2;
 		
 	switch (cmd) {
@@ -667,8 +667,10 @@ gif_ioctl(ifp, cmd, data)
 		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
 
-		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
+		s = splsoftnet();
+		ifp->if_flags |= IFF_RUNNING;
 		if_up(ifp);		/* send up RTM_IFINFO */
+		splx(s);
 
 		error = 0;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.39 2000/12/06 18:05:57 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.39.2.1 2001/06/21 20:06:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ ltsleep(chan,pri,str,timo,lck)	(EWOULDBLOCK)
 #define	\
 wakeup(chan)			((void)0)
 #define	\
-pool_get(pool, flags)		malloc(pool->pr_size,0,0)
+pool_get(pool, flags)		malloc((pool)->pr_size,0,0)
 #define	\
 pool_put(pool, rp)		free(rp,0)
 #define	\
@@ -100,7 +100,6 @@ simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
-static	struct pool *expool_create __P((void));
 static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
 	    int, struct extent_region *, struct extent_region *));
 static	struct extent_region *extent_alloc_region_descriptor
@@ -108,7 +107,9 @@ static	struct extent_region *extent_alloc_region_descriptor
 static	void extent_free_region_descriptor __P((struct extent *,
 	    struct extent_region *));
 
-static struct pool *expool;
+static struct pool expool;
+static struct simplelock expool_init_slock = SIMPLELOCK_INITIALIZER;
+static int expool_initialized;
 
 /*
  * Macro to align to an arbitrary power-of-two boundary.
@@ -121,16 +122,25 @@ static struct pool *expool;
  * (This is deferred until one of our callers thinks we can malloc()).
  */
 
-static struct pool *expool_create()
+static __inline void
+expool_init(void)
 {
+
+	simple_lock(&expool_init_slock);
+	if (expool_initialized) {
+		simple_unlock(&expool_init_slock);
+		return;
+	}
+
 #if defined(_KERNEL)
-	expool = pool_create(sizeof(struct extent_region), 0, 0,
-			     0, "extent", 0, 0, 0, 0);
+	pool_init(&expool, sizeof(struct extent_region), 0, 0, 0,
+	    "extent", 0, 0, 0, 0);
 #else
-	expool = (struct pool *)malloc(sizeof(*expool),0,0);
-	expool->pr_size = sizeof(struct extent_region);
+	expool.pr_size = sizeof(struct extent_region);
 #endif
-	return (expool);
+
+	expool_initialized = 1;
+	simple_unlock(&expool_init_slock);
 }
 
 /*
@@ -197,11 +207,9 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 		}
 	} else {
 		s = splhigh();
-		if (expool == NULL)
-			expool_create();
+		if (expool_initialized == 0)
+			expool_init();
 		splx(s);
-		if (expool == NULL)
-			return (NULL);
 
 		ex = (struct extent *)malloc(sizeof(struct extent),
 		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
@@ -395,6 +403,11 @@ extent_alloc_region(ex, start, size, flags)
 		panic("extent_alloc_region: overflow");
 	}
 #endif
+#ifdef LOCKDEBUG
+	if (flags & EX_WAITSPACE)
+		simple_lock_only_held(NULL,
+		    "extent_alloc_region(EX_WAITSPACE)");
+#endif
 
 	/*
 	 * Make sure the requested region lies within the
@@ -557,10 +570,15 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		panic("extent_alloc_subregion: bad alignment");
 	if (boundary && (boundary < size)) {
 		printf(
-		    "extent_alloc_subregion: extent `%s', size 0x%lx,
-		    boundary 0x%lx\n", ex->ex_name, size, boundary);
+		    "extent_alloc_subregion: extent `%s', size 0x%lx, "
+		    "boundary 0x%lx\n", ex->ex_name, size, boundary);
 		panic("extent_alloc_subregion: bad boundary");
 	}
+#endif
+#ifdef LOCKDEBUG
+	if (flags & EX_WAITSPACE)
+		simple_lock_only_held(NULL,
+		    "extent_alloc_subregion1(EX_WAITSPACE)");
 #endif
 
 	/*
@@ -1082,12 +1100,9 @@ extent_alloc_region_descriptor(ex, flags)
 
  alloc:
 	s = splhigh();
-	if (expool == NULL && !expool_create()) {
-		splx(s);
-		return (NULL);
-	}
-
-	rp = pool_get(expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	if (expool_initialized == 0)
+		expool_init();
+	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
 	splx(s);
 
 	if (rp != NULL)
@@ -1124,7 +1139,7 @@ extent_free_region_descriptor(ex, rp)
 				goto wake_em_up;
 			} else {
 				s = splhigh();
-				pool_put(expool, rp);
+				pool_put(&expool, rp);
 				splx(s);
 			}
 		} else {
@@ -1145,7 +1160,7 @@ extent_free_region_descriptor(ex, rp)
 	 * We know it's dynamically allocated if we get here.
 	 */
 	s = splhigh();
-	pool_put(expool, rp);
+	pool_put(&expool, rp);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28.2.1 2001/03/05 22:50:03 nathanw Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.2 2001/06/21 20:09:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -93,7 +93,7 @@ struct	sigctx {
 do {									\
 	(p)->p_sigctx.ps_sigcheck = 1;					\
 	signotify(p);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -162,6 +162,13 @@ const int sigprop[NSIG] = {
 #ifdef _KERNEL
 
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
+
+/*
+ * Set if we need to short-cut coredump() with the 32-bit version
+ * on a 64-bit platform.
+ */
+struct vnode;
+extern	int (*coredump32_hook)(struct proc *p, struct vnode *vp);
 
 /*
  * Machine-independent functions:

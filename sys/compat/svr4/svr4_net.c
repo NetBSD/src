@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.24.2.2 2001/04/09 01:55:49 nathanw Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.24.2.3 2001/06/21 20:00:40 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ svr4_netopen(dev, flag, mode, p)
 	DPRINTF(("ok);\n"));
 
 	p->p_dupfd = fd;
+	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return ENXIO;
 }

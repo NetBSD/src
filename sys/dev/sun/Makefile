@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/20 14:00:43 pk Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2001/06/21 20:06:09 nathanw Exp $
 
 INCSDIR= /usr/include/dev/sun
 
-INCS=	event_var.h kbd_tables.h kbd_xlate.h disklabel.h fbio.h
+# Only install includes which are used by userland
+INCS=	disklabel.h fbio.h
 
 .include <bsd.kinc.mk>

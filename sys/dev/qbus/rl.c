@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.7 2001/01/08 02:03:47 fvdl Exp $	*/
+/*	$NetBSD: rl.c,v 1.7.2.1 2001/06/21 20:05:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -364,7 +364,7 @@ rlstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 
-	s = splimp();
+	s = splbio();
 	disksort_cylinder(&sc->sc_q, bp);
 	rlcstart(sc, 0);
 	splx(s);
@@ -488,7 +488,7 @@ static char *rlerr[] = {
 	"header not found",
 	"",
 	"",
-	"non-existant memory",
+	"non-existent memory",
 	"memory parity error",
 	"",
 	"",

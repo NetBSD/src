@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61 2001/02/22 10:39:31 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.1 2001/06/21 20:05:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -317,6 +317,8 @@ const struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1211), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI12XX,
@@ -463,7 +465,7 @@ pccbbattach(parent, self, aux)
 			    NULL)) {
 				printf("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
-				    sockbase);
+				    (unsigned long)sockbase);
 				/* give up... allocate reg space via rbus. */
 				sc->sc_base_memh = 0;
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
@@ -1042,7 +1044,7 @@ pccbbintr_function(sc)
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
 		} else if (pil->pil_level == IPL_IMP) {
-			s = splimp();
+			s = splvm();	/* XXX */
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 		} else if (pil->pil_level == IPL_SOFTSERIAL) {
@@ -3066,9 +3068,9 @@ pccbb_winlist_delete(head, bsh, size)
 		if ((chainp->wc_end - chainp->wc_start) != (size - 1)) {
 			printf("pccbb_winlist_delete: window 0x%lx size "
 			    "inconsistent: 0x%lx, 0x%lx\n",
-			    chainp->wc_start,
-			    chainp->wc_end - chainp->wc_start,
-			    size - 1);
+			    (unsigned long)chainp->wc_start,
+			    (unsigned long)(chainp->wc_end - chainp->wc_start),
+			    (unsigned long)(size - 1));
 			return 1;
 		}
 

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/20 05:32:47 simonb Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2001/06/21 20:06:35 nathanw Exp $
 
 INCSDIR= /usr/include/dev/wscons
-INCS=	wsconsio.h wsdisplay_usl_io.h wsksymdef.h wsksymvar.h
+
+# Only install includes which are used by userland
+INCS=	wsconsio.h wsdisplay_usl_io.h wsksymdef.h wsksymdef.h wsksymvar.h
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.26.4.1 2001/04/09 01:59:03 nathanw Exp $	*/
+/*	$NetBSD: shm.h,v 1.26.4.2 2001/06/21 20:09:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,14 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#define	SHMLBA		NBPG	/* Segment low boundry address multiple XXX */
+/* Segment low boundry address multiple */
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#define	SHMLBA		PAGE_SIZE
+#else
+/* Use libc's internal __sysconf() to retrieve the machine's page size */
+long			__sysconf __P((int));
+#define	SHMLBA		(__sysconf(_SC_PAGESIZE))
+#endif
 
 typedef unsigned int	shmatt_t;
 

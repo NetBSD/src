@@ -1,6 +1,6 @@
-/*	$NetBSD: uvm_pmap.h,v 1.1.4.1 2001/03/05 22:50:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.1.4.2 2001/06/21 20:10:46 nathanw Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,17 +42,17 @@
  * All rights reserved.
  *
  * Author: Avadis Tevanian, Jr.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -99,7 +99,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
-void		*pmap_bootstrap_alloc __P((int));
+#if !defined(pmap_kernel)
+struct pmap	*pmap_kernel __P((void));
+#endif
+
 void		 pmap_activate __P((struct lwp *));
 void		 pmap_deactivate __P((struct lwp *));
 void		 pmap_unwire __P((pmap_t, vaddr_t));
@@ -127,7 +130,6 @@ vaddr_t		 pmap_growkernel __P((vaddr_t));
 void		 pmap_init __P((void));
 
 void		 pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
-void		 pmap_kenter_pgs __P((vaddr_t, struct vm_page **, int));
 void		 pmap_kremove __P((vaddr_t, vsize_t));
 #if !defined(pmap_is_modified)
 boolean_t	 pmap_is_modified __P((struct vm_page *));
@@ -139,19 +141,24 @@ boolean_t	 pmap_is_referenced __P((struct vm_page *));
 void		 pmap_page_protect __P((struct vm_page *, vm_prot_t));
 
 #if !defined(pmap_phys_address)
-paddr_t	 pmap_phys_address __P((int));
+paddr_t		pmap_phys_address __P((int));
 #endif
 void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		 pmap_update __P((void));
+#if !defined(pmap_resident_count)
+long		 pmap_resident_count __P((pmap_t));
+#endif
+#if !defined(pmap_wired_count)
+long		 pmap_wired_count __P((pmap_t));
+#endif
 void		 pmap_zero_page __P((paddr_t));
 
+void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #if defined(PMAP_STEAL_MEMORY)
 vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
-#else
-void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #endif
 
 #if defined(PMAP_FORK)

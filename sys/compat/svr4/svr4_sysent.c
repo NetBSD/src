@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.69.2.1 2001/03/05 22:49:31 nathanw Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.69.2.2 2001/06/21 20:00:45 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.50 2001/02/11 01:13:01 eeh Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #endif

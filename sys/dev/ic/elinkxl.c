@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47 2001/01/30 19:27:39 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47.2.1 2001/06/21 20:02:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -62,19 +60,6 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -446,6 +431,13 @@ ex_config(sc)
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
+	/*
+	 * The 3c90xB has hardware IPv4/TCPv4/UDPv4 checksum support.
+	 */
+	if (sc->ex_conf & EX_CONF_90XB)
+		sc->sc_ethercom.ec_if.if_capabilities |= IFCAP_CSUM_IPv4 |
+		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
 
@@ -467,7 +459,7 @@ ex_config(sc)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 			sc->sc_dev.dv_xname);
 
-	/* Add a suspend hook to make sure we com back up after a resume. */
+	/* Add a suspend hook to make sure we come back up after a resume. */
 	sc->sc_powerhook = powerhook_establish(ex_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -943,6 +935,7 @@ ex_start(ifp)
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
 	int offset, totlen, segment, error;
+	u_int32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
 		return;
@@ -1044,6 +1037,25 @@ ex_start(ifp)
 		dpd = txp->tx_dpd;
 		dpd->dpd_nextptr = 0;
 		dpd->dpd_fsh = htole32(totlen);
+
+		/* Byte-swap constants to compiler can optimize. */
+
+		if (sc->ex_conf & EX_CONF_90XB) {
+			csum_flags = 0;
+
+			if (mb_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+				csum_flags |= htole32(EX_DPD_IPCKSUM);
+
+			if (mb_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+				csum_flags |= htole32(EX_DPD_TCPCKSUM);
+			else if (mb_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+				csum_flags |= htole32(EX_DPD_UDPCKSUM);
+
+			dpd->dpd_fsh |= csum_flags;
+		} else {
+			KDASSERT((mb_head->m_pkthdr.csum_flags &
+			    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) == 0);
+		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
@@ -1249,6 +1261,26 @@ ex_intr(arg)
 					if (ifp->if_bpf)
 						bpf_mtap(ifp->if_bpf, m);
 #endif
+		/*
+		 * Set the incoming checksum information for the packet.
+		 */
+		if ((sc->ex_conf & EX_CONF_90XB) != 0 &&
+		    (pktstat & EX_UPD_IPCHECKED) != 0) {
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (pktstat & EX_UPD_IPCKSUMERR)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (pktstat & EX_UPD_TCPCHECKED) {
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				if (pktstat & EX_UPD_TCPCKSUMERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			} else if (pktstat & EX_UPD_UDPCHECKED) {
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				if (pktstat & EX_UPD_UDPCKSUMERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
+		}
 					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
@@ -1402,9 +1434,14 @@ ex_reset(sc)
 	u_int16_t val = GLOBAL_RESET;
 
 	if (sc->ex_conf & EX_CONF_RESETHACK)
-		val |= 0xff;
+		val |= 0x10;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, val);
-	delay(400);
+	/*
+	 * XXX apparently the command in progress bit can't be trusted
+	 * during a reset, so we just always wait this long. Fortunately
+	 * we normally only reset the chip during autoconfig.
+	 */
+	delay(100000);
 	ex_waitcmd(sc);
 }
 
@@ -1574,6 +1611,7 @@ ex_detach(sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }
@@ -1832,14 +1870,24 @@ ex_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		ex_stop(ifp, 0);
 		if (sc->power != NULL)
 			(*sc->power)(sc, why);
-	} else if (ifp->if_flags & IFF_UP) {
-		if (sc->power != NULL)
-			(*sc->power)(sc, why);
-		ex_init(ifp);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->power != NULL)
+				(*sc->power)(sc, why);
+			ex_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:		
+	case PWR_SOFTSTANDBY:		
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }

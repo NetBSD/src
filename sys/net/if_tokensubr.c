@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.16 2001/02/28 14:08:35 wiz Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.16.2.1 2001/06/21 20:08:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -167,7 +167,6 @@ token_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = RTALLOC1(dst, 1)))
@@ -459,7 +458,7 @@ send:
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -506,7 +505,6 @@ token_input(ifp, m)
 
 	trh = mtod(m, struct token_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (bcmp((caddr_t)tokenbroadcastaddr, (caddr_t)trh->token_dhost,
 	    sizeof(tokenbroadcastaddr)) == 0)
@@ -676,7 +674,7 @@ token_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

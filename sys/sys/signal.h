@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.1 2001/03/05 22:50:03 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.2 2001/06/21 20:09:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -165,21 +165,21 @@ typedef struct {
 		(t)->__bits[1] |= (s)->__bits[1];	\
 		(t)->__bits[2] |= (s)->__bits[2];	\
 		(t)->__bits[3] |= (s)->__bits[3];	\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	__sigminusset(s, t) \
 	do {						\
 		(t)->__bits[0] &= ~(s)->__bits[0];	\
 		(t)->__bits[1] &= ~(s)->__bits[1];	\
 		(t)->__bits[2] &= ~(s)->__bits[2];	\
 		(t)->__bits[3] &= ~(s)->__bits[3];	\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	__sigandset(s, t) \
 	do {						\
 		(t)->__bits[0] &= (s)->__bits[0];	\
 		(t)->__bits[1] &= (s)->__bits[1];	\
 		(t)->__bits[2] &= (s)->__bits[2];	\
 		(t)->__bits[3] &= (s)->__bits[3];	\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)

@@ -1,11 +1,11 @@
-/*	$NetBSD: layer_subr.c,v 1.7 2000/11/27 08:39:45 chs Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.7.2.1 2001/06/21 20:07:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

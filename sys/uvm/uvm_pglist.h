@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_pglist.h,v 1.1 2000/06/26 14:21:19 mrg Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.1.4.1 2001/06/21 20:10:46 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
  * This defines the type of a page queue, e.g. active list, inactive
  * list, etc.
  */
-TAILQ_HEAD(pglist, vm_page); 
+TAILQ_HEAD(pglist, vm_page);
 
 /*
  * A page free list consists of free pages of unknown contents and free
@@ -53,8 +53,12 @@ TAILQ_HEAD(pglist, vm_page);
 #define	PGFL_ZEROS	1
 #define	PGFL_NQUEUES	2
 
-struct pgfreelist {
+struct pgflbucket {
 	struct pglist pgfl_queues[PGFL_NQUEUES];
 };
 
-#endif
+struct pgfreelist {
+	struct pgflbucket *pgfl_buckets;
+};
+
+#endif /* _PGLIST_H_ */

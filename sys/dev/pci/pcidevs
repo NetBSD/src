@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.2 2001/04/09 01:57:04 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.3 2001/06/21 20:05:03 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -520,6 +520,7 @@ vendor FORTEMEDIA	0x1319	Forte Media
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
+vendor LEVELONE		0x1394	Level One
 vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -546,6 +547,7 @@ vendor ADDTRON		0x4033	Addtron Technology
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
+vendor MEDIAQ		0x4d51	MediaQ Inc.
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
@@ -623,7 +625,7 @@ product ACC 2051_ISA 	0x5842	2051 PCI Single Chip Solution (ISA bridge)
 /* Acard products */
 product ACARD ATP850U	0x0005	ATP850U/UF UDMA IDE Controller 
 product ACARD ATP860	0x0006	ATP860 UDMA IDE Controller 
-product ACARD ATP860R	0x0007	ATP860R UDMA IDE Controller 
+product ACARD ATP860A	0x0007	ATP860-A UDMA IDE Controller 
 product ACARD AEC6710	0x8002	AEC6710 SCSI
 product ACARD AEC6712UW	0x8010	AEC6712UW SCSI
 product ACARD AEC6712U	0x8020	AEC6712U SCSI
@@ -699,6 +701,7 @@ product	ADVSYS U3W	0x2700	ASB-3940U3W
 
 /* Aironet Wireless Communicasions products */
 product	AIRONET PC4xxx		0x0001	Aironet PC4500/PC4800 Wireless LAN Adapter
+product	AIRONET 350		0x0350	Aironet 350 Wireless LAN Adapter
 product	AIRONET PC4500		0x4500	Aironet PC4500 Wireless LAN Adapter
 product	AIRONET PC4800		0x4800	Aironet PC4800 Wireless LAN Adapter
 
@@ -721,6 +724,10 @@ product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
 product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
+product AMD PBC766_ISA	0x7410	AMD766 PCI-to-ISA Bridge
+product AMD PBC766_IDE	0x7411	AMD766 IDE controller
+product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
+product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -742,6 +749,11 @@ product APPLE UNINORTH2		0x001f	UniNorth Host-PCI Bridge
 product APPLE UNINORTH_AGP	0x0020	UniNorth AGP Interface
 product APPLE GMAC		0x0021	GMAC Ethernet
 product APPLE KEYLARGO		0x0022	MAC-IO I/O Controller (KeyLargo)
+product APPLE GMAC2		0x0024	GMAC Ethernet
+product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
+product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
+product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
+product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI Bridge
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -1020,7 +1032,8 @@ product DELTA 8139	0x1360	8139 Ethernet
 product DIAMOND VIPER	0x9001	Viper/PCI
 
 /* D-Link Systems products */
-product DLINK DFE550TX	0x1002	DFE-550TX 10/100 Ethernet
+product DLINK DFE550TX		0x1002	DFE-550TX 10/100 Ethernet
+product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID
@@ -1110,10 +1123,13 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
+product IBM 405GP	0x0156	IBM 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
+product IDT RC32334	0x0204	RC32334 System Controller
+product IDT RC32332	0x0205	RC32332 System Controller
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	PCI-WDT50x Watchdog Timer
@@ -1139,6 +1155,14 @@ product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
 product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
 product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
+product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
+product INTEL PRO_100_VM_0	0x1033	PRO/100 VM Network Controller
+product INTEL PRO_100_VM_1	0x1034	PRO/100 VM Network Controller
+product INTEL 82562EH_HPNA_0	0x1035	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_1	0x1036	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_2	0x1037	82562EH HomePNA Network Controller
+product INTEL PRO_100_VM_2	0x1038	PRO/100 VM Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -1176,6 +1200,7 @@ product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
 product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
 product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
 product INTEL 82439HX		0x1250	82439HX System Controller (TXC)
+product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
@@ -1257,10 +1282,13 @@ product KTI NE2KETHER	0x3000	Ethernet
 product	LMC HSSI	0x0003	HSSI Interface
 product	LMC DS3		0x0004	DS3 Interface
 product	LMC SSI		0x0005	SSI
-product	LMC T1		0x0006	T1 Interface
+product	LMC DS1		0x0006	DS1
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
+
+/* Level One products */
+product LEVELONE LXT1001	0x0001	LXT-1001 10/100/1000 Ethernet
 
 /* Linear Systems / CompuModules */
 product	LINEARSYS DVB_TX	0x7629	DVB Transmitter
@@ -1320,6 +1348,9 @@ product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
 
+/* MediaQ Inc. products */
+product MEDIAQ MQ200		0x0200	MQ200
+
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
@@ -1349,9 +1380,13 @@ product NETVIN 5000	0x5000	5000 Ethernet
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
 
+/* National Instruments products */
+product NATIONALINST MXI3	0x2c30	MXI-3 PCI extender
+
 /* National Semiconductor products */
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
+product NS DP83820	0x0022	DP83820 10/100/1000 Ethernet
 product NS NS87410	0xd001	NS87410
 
 /* NCR/Symbios Logic products */
@@ -1378,8 +1413,11 @@ product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 
 /* NEC products */
 product NEC USB		0x0035	USB Host Controller
+product NEC VRC4173_CARDU 0x003e VRC4173 PC-Card Unit
 product NEC POWERVR2	0x0046	PowerVR PCX2
 product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI Host Controller
+product NEC VRC4173_BCU	0x00a5	VRC4173 Bus Control Unit
+product NEC VRC4173_AC97U 0x00a6 VRC4173 AC97 Unit
 product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
 product NEC VA26D	0x803c	NEC Versa Pro LX VA26D
@@ -1504,7 +1542,6 @@ product RNS FDDI	0x2200	2200 FDDI
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
-product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 VIRGE_VX	0x883d	ViRGE/VX
@@ -1619,6 +1656,7 @@ product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
+product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
@@ -1641,6 +1679,7 @@ product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
 product TEKRAM2	DC690C		0x690c	DC-690C
+product	TEKRAM2	DC315		0x0391	DC-315/DC-395
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
@@ -1671,6 +1710,7 @@ product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Cont
 product TI	PCI1410		0xac50	PCI1410 PCI-CardBus Bridge
 product TI	PCI1420		0xac51	PCI1420 PCI-CardBus Bridge
 product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
+product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
 
 /* Titan Electronics products */
 product TITAN PCI800H		0xa003	PCI-800H
@@ -1680,7 +1720,7 @@ product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
 /* Toshiba products */
-product TOSHIBA2 PROTEGE	0x0001  Protege Notebook
+product TOSHIBA2 PORTEGE	0x0001  Portege Notebook
 product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602  ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
@@ -1703,6 +1743,7 @@ product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
+product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */

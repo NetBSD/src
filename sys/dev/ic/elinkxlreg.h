@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.4 2000/10/17 16:16:52 bouyer Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.4.2.1 2001/06/21 20:02:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,8 +212,8 @@ struct ex_fraghdr {
 #define EX_FR_LENMASK	0x00001fff	/* mask for length in fr_len field */
 #define EX_FR_LAST	0x80000000	/* indicates last fragment */
 
-#define EX_NDPD		128
-#define EX_NUPD		64
+#define EX_NDPD		256
+#define EX_NUPD		128
 
 /*
  * Note: the number of receive fragments in an UPD is 1, since we're
@@ -304,6 +304,8 @@ struct ex_txdesc {
 
 /*
  * upd_pktstatus bitfields.
+ * The *CKSUMERR fields are only valid if the matching *CHECKED field
+ * is set.
  */
 #define EX_UPD_PKTLENMASK	0x00001fff	/* 12:0 -> packet length */
 #define EX_UPD_ERROR		0x00004000	/* rcv error */
@@ -318,6 +320,9 @@ struct ex_txdesc {
 #define EX_UPD_IPCKSUMERR	0x02000000	/* IP cksum error (90xB) */
 #define EX_UPD_TCPCKSUMERR	0x04000000	/* TCP cksum error (90xB) */
 #define EX_UPD_UDPCKSUMERR	0x08000000	/* UDP cksum error (90xB) */
+#define EX_UPD_IPCHECKED	0x20000000	/* IP cksum done */
+#define EX_UPD_TCPCHECKED	0x40000000	/* TCP cksum done */
+#define EX_UPD_UDPCHECKED	0x80000000	/* UDP cksum done */
 
 #define EX_UPD_ERR		0x001f4000	/* Errors we check for */
 #define EX_UPD_ERR_VLAN		0x000f0000	/* same for 802.1q */

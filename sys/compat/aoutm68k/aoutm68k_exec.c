@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.4 2000/12/11 05:29:00 mycroft Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.4.4.1 2001/06/21 19:58:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 
@@ -70,6 +70,7 @@ struct emul emul_netbsd_aoutm68k = {
 	NULL,
 #endif
 	sendsig,
+	trapsignal,
 	sigcode,
 	esigcode,
 	NULL,

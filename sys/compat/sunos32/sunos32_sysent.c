@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_sysent.c,v 1.4 2001/02/06 15:42:34 mrg Exp $ */
+/* $NetBSD: sunos32_sysent.c,v 1.4.4.1 2001/06/21 20:00:35 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from;	NetBSD: syscalls.master,v 1.4 2001/02/06 15:41:53 mrg Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "fs_nfs.h"

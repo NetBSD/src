@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.28 2001/01/22 07:00:39 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.28.2.1 2001/06/21 20:03:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX for atapi_adapter */
+/* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapiconf.h>
 
@@ -75,6 +75,7 @@ struct channel_softc { /* Per channel data */
 	struct ata_drive_datas ch_drive[2];
 
 	struct device *atapibus;
+	struct scsipi_channel ch_atapi_channel;
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
@@ -100,6 +101,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
+#define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -210,4 +212,3 @@ void	wdc_print_modes (struct channel_softc *);
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
-int   atapi_print       __P((void *, const char *));

@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.19.2.1 2001/06/21 20:10:40 nathanw Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -44,17 +44,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -112,6 +112,11 @@
  * seperated things back out again.
  *
  * note the page structure has no lock of its own.
+ *
+ * XXX the use of locked u_short fields is dangerous, as they are not
+ *     addressable on all architectures and hence cannot be individually
+ *     locked. Right now it works because each aligned pair uses the same
+ *     lock and all current ports can lock an int32_t.
  */
 
 #include <uvm/uvm_extern.h>
@@ -135,6 +140,11 @@ struct vm_page {
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
 	paddr_t			phys_addr;	/* physical address of page */
+
+#ifdef __HAVE_VM_PAGE_MD
+	struct vm_page_md	mdpage;		/* pmap-specific data */
+#endif
+
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
 	pid_t			owner;		/* proc that set PG_BUSY */
@@ -144,14 +154,12 @@ struct vm_page {
 
 /*
  * These are the flags defined for vm_page.
- *
- * Note: PG_FILLED and PG_DIRTY are added for the filesystems.
  */
 
 /*
  * locking rules:
  *   PG_ ==> locked by object lock
- *   PQ_ ==> lock by page queue lock 
+ *   PQ_ ==> lock by page queue lock
  *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
  *
  * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
@@ -208,7 +216,9 @@ struct vm_physseg {
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
+#ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
+#endif
 };
 
 #ifdef _KERNEL
@@ -222,7 +232,7 @@ extern boolean_t vm_page_zero_enable;
 /*
  *	Each pageable resident page falls into one of three lists:
  *
- *	free	
+ *	free
  *		Available for allocation now.
  *	inactive
  *		Not referenced in any map, but still has an
@@ -252,7 +262,7 @@ extern int vm_nphysseg;
 
 #ifdef UVM_PAGE_INLINE
 #define PAGE_INLINE static __inline
-#else 
+#else
 #define PAGE_INLINE /* nothing */
 #endif /* UVM_PAGE_INLINE */
 
@@ -268,6 +278,7 @@ void uvm_page_own __P((struct vm_page *, char *));
 boolean_t uvm_page_physget __P((paddr_t *));
 #endif
 void uvm_page_rehash __P((void));
+void uvm_page_recolor __P((int));
 void uvm_pageidlezero __P((void));
 
 PAGE_INLINE int uvm_lock_fpageq __P((void));
@@ -304,6 +315,12 @@ static int vm_physseg_find __P((paddr_t, int *));
 #define	UVM_PAGEZERO_TARGET	(uvmexp.free)
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+
+/*
+ * Compute the page color bucket for a given page.
+ */
+#define	VM_PGCOLOR_BUCKET(pg) \
+	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
 
 /*
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions

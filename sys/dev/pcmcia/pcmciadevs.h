@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.1 2001/04/09 01:57:19 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.2 2001/06/21 20:05:22 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -61,6 +61,7 @@
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK Corporation */
 #define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
+#define	PCMCIA_VENDOR_NI	0x010b	/* National Instruments */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_OLICOM	0x0121	/* Olicom */
@@ -81,6 +82,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
@@ -240,6 +242,9 @@
 #define	PCMCIA_CIS_INTEL_EEPRO100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
 #define	PCMCIA_STR_INTEL_EEPRO100	"Intel EtherExpress PRO/100"
+#define	PCMCIA_CIS_INTEL_PRO_WLAN_2011	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011	0x0001
+#define	PCMCIA_STR_INTEL_PRO_WLAN_2011	"Intel PRO/Wireless 2011 LAN PC Card"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
@@ -295,6 +300,11 @@
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
 #define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
 
+/* National Instruments */
+#define	PCMCIA_CIS_NI_PCMCIA_GPIB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NI_PCMCIA_GPIB	0x4882
+#define	PCMCIA_STR_NI_PCMCIA_GPIB	"National Instruments PCMCIA-GPIB"
+
 /* Nokia Products */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
@@ -333,6 +343,9 @@
 #define	PCMCIA_STR_SIMPLETECH_SPECTRUM24	"Symbol Spectrum24 WLAN Adapter"
 
 /* Socket Communications Products */
+#define	PCMCIA_CIS_SOCKET_EA_ETHER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_EA_ETHER	0x0000
+#define	PCMCIA_STR_SOCKET_EA_ETHER	"Socket Communications EA"
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_STR_SOCKET_PAGECARD	"Socket Communications PageCard"
@@ -486,6 +499,11 @@
 #define	PCMCIA_PRODUCT_EMTAC_WLAN	0x0002
 #define	PCMCIA_STR_EMTAC_WLAN	"EMTAC A2424i 11Mbps WLAN Card"
 
+/* BUFFALO */
+#define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11	0x0305
+#define	PCMCIA_STR_BUFFALO_WLI_PCM_S11	"BUFFALO AirStation 11Mbps WLAN"
+
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -562,6 +580,12 @@
 #define	PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX	{ "corega K.K.", "corega FastEther PCC-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX	-1
 #define	PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX	"Corega FastEther PCC-TX"
+#define	PCMCIA_CIS_COREGA_FETHER_PCC_TXD	{ "corega K.K.", "corega FEther PCC-TXD", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXD	-1
+#define	PCMCIA_STR_COREGA_FETHER_PCC_TXD	"Corega FEther PCC-TXD"
+#define	PCMCIA_CIS_COREGA_FETHER_PCC_TXF	{ "corega", "FEther PCC-TXF", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXF	-1
+#define	PCMCIA_STR_COREGA_FETHER_PCC_TXF	"Corega FEther PCC-TXF"
 #define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11	{ "corega K.K.", "Wireless LAN PCC-11", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11	-1
 #define	PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11	"Corega Wireless LAN PCC-11"

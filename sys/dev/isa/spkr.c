@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.4 2001/02/21 21:39:59 jdolecek Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4.2.1 2001/06/21 20:03:53 nathanw Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -84,8 +84,6 @@ typedef int	bool;
 #define TRUE	1
 #define FALSE	0
 
-#define toupper(c)	((c) - ' ' * (((c) >= 'a') && ((c) <= 'z')))
-#define isdigit(c)	(((c) >= '0') && ((c) <= '9'))
 #define dtoi(c)		((c) - '0')
 
 static int octave;	/* currently selected octave */

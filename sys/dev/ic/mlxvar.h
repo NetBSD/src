@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.1 2001/02/04 17:05:12 ad Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.1.4.1 2001/06/21 20:02:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ struct mlx_softc {
 	int	(*mlx_findcomplete)(struct mlx_softc *, u_int *, u_int *);
 	void	(*mlx_intaction)(struct mlx_softc *, int);
 	int	(*mlx_fw_handshake)(struct mlx_softc *, int *, int *, int *);
+	int	(*mlx_reset)(struct mlx_softc *);
 
 	int			mlx_max_queuecnt;
 	struct mlx_enquiry2	*mlx_enq2;
@@ -160,6 +161,7 @@ struct mlx_softc {
 	int			mlx_flags;
 
 	struct mlx_sysdrive	mlx_sysdrive[MLX_MAX_DRIVES];
+	int			mlx_numsysdrives;
 };
 
 #define MLX_BG_CHECK		1	/* we started a check */

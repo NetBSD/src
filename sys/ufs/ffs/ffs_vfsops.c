@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.1 2001/03/05 22:50:06 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.2 2001/06/21 20:10:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -35,7 +35,7 @@
  *	@(#)ffs_vfsops.c	8.31 (Berkeley) 5/20/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_compat_netbsd.h"

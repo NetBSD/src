@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.2.8.1 2001/04/09 01:56:49 nathanw Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.2.8.2 2001/06/21 20:04:08 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.7 2001/03/24 09:48:11 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp 
  */
 
 /*-
@@ -57,10 +57,14 @@
 #define	MCA_PRODUCT_3C529_TM	0x62DB	/* 3Com 3C529 Ethernet Adapter (test mode) */
 #define	MCA_PRODUCT_3C529_2T	0x62F6	/* 3Com 3C529 Ethernet Adapter (10base2/T) */
 #define	MCA_PRODUCT_3C529_T	0x62F7	/* 3Com 3C529 Ethernet Adapter (10baseT) */
+#define	MCA_PRODUCT_ARCOAE	0x6354	/* Arco Electronics AE/2 Ethernet Adapter */
 #define	MCA_PRODUCT_AT1720T	0x6410	/* ATI AT1720T */
 #define	MCA_PRODUCT_AT1720BT	0x6413	/* ATI AT1720BT */
 #define	MCA_PRODUCT_AT1720AT	0x6416	/* ATI AT1720AT */
 #define	MCA_PRODUCT_AT1720FT	0x6419	/* ATI AT1720FT */
+#define	MCA_PRODUCT_NEOCOM1	0x6791	/* NeoTecH Single RS-232 Async. Adapter, SM110 */
+#define	MCA_PRODUCT_SKNETG	0x6AFD	/* SKNET MC2+ Ethernet Adapter/G */
+#define	MCA_PRODUCT_SKNETPER	0x6BE9	/* SKNET Personal Ethernet Adapter */
 #define	MCA_PRODUCT_WD_8003E	0x6FC0	/* WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A) */
 #define	MCA_PRODUCT_WD_8003ST	0x6FC1	/* WD StarCard PLUS/A (WD8003ST/A) */
 #define	MCA_PRODUCT_WD_8003W	0x6FC2	/* WD EtherCard PLUS 10T/A (WD8003W/A) */
@@ -72,11 +76,16 @@
 #define	MCA_PRODUCT_KINGRAM8	0x708F	/* Kingston KTM-8000/386 Memory Expansion */
 #define	MCA_PRODUCT_KINGRAM16	0x70D0	/* Kingston KTM-16000/386 Memory Expansion */
 #define	MCA_PRODUCT_KINGRAM609	0x70D4	/* Kingston KTM-609/16 Memory Expansion */
+#define	MCA_PRODUCT_CENET16	0x70DE	/* Compex Inc. PS/2 ENET16-MC/P Microchannel Ad. */
+#define	MCA_PRODUCT_NE2	0x7154	/* Novell NE/2 Ethernet Adapter */
 #define	MCA_PRODUCT_HYPRAM	0x72F3	/* HyperRAM MC 32/16 SIMM-MF Memory Expansion */
 #define	MCA_PRODUCT_QRAM1	0x76DA	/* Quadmeg PS/Q Memory Adapter */
 #define	MCA_PRODUCT_QRAM2	0x76DE	/* Quadmeg PS/Q Memory Adapter */
 #define	MCA_PRODUCT_EVERAM	0x77FB	/* Everex EV-136 4Mb Memory Expansion */
 #define	MCA_PRODUCT_BOCARAM	0x7A7A	/* Boca BOCARAM/2 PLUS Memory Expansion */
+#define	MCA_PRODUCT_IBM_ESDIC	0xDDFF	/* IBM ESDI Fixed Disk Controller */
+#define	MCA_PRODUCT_IBM_MPCOM	0xDEFF	/* IBM Multi-Protocol Communications Adapter */
+#define	MCA_PRODUCT_IBM_ESDIC_IG	0xDF9F	/* IBM Integ. ESDI Fixed Disk & Controller */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */
 #define	MCA_PRODUCT_IBM_MOD	0xEDFF	/* IBM Internal Modem */
 #define	MCA_PRODUCT_IBM_WD_2	0xEFD4	/* IBM PS/2 Adapter/A for Ethernet Networks (UTP) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.37 2001/02/20 07:58:17 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.37.2.1 2001/06/21 20:08:07 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -186,7 +186,6 @@ looutput(ifp, m, dst, rt)
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-	ifp->if_lastchange = time;
 #if NBPFILTER > 0
 	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK)) {
 		/*
@@ -290,7 +289,7 @@ looutput(ifp, m, dst, rt)
 			return (ENOBUFS);
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
-		s = splimp();
+		s = splnet();
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 		(*ifp->if_start)(ifp);
 		splx(s);
@@ -343,7 +342,7 @@ looutput(ifp, m, dst, rt)
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -419,7 +418,7 @@ lostart(struct ifnet *ifp)
 			return;
 		}
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
 			splx(s);

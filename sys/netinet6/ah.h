@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.15 2000/10/19 00:40:44 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.15.2.1 2001/06/21 20:08:47 nathanw Exp $	*/
 /*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #ifndef _NETINET6_AH_H_
 #define _NETINET6_AH_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.19 2000/02/21 05:11:09 mjacob Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.19.6.1 2001/06/21 20:05:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -240,4 +240,4 @@ struct scsi_tape_locate {
 #define DDS		0x13
 #define DAT_1		0x13
 #define QIC_3095	0x45
-#define	QIC_3220	0x47
+#define QIC_3220	0x47

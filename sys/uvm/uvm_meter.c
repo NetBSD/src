@@ -1,9 +1,9 @@
-/*	$NetBSD: uvm_meter.c,v 1.16.2.2 2001/04/09 01:59:18 nathanw Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.16.2.3 2001/06/21 20:10:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1982, 1986, 1989, 1993
- *      The Regents of the University of California.  
+ *      The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Charles D. Cranor,
- *      Washington University, and the University of California, Berkeley 
+ *      Washington University, and the University of California, Berkeley
  *      and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -56,7 +56,7 @@ int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
 /*
- * constants for averages over 1, 5, and 15 minutes when sampling at 
+ * constants for averages over 1, 5, and 15 minutes when sampling at
  * 5 second intervals.
  */
 
@@ -87,7 +87,7 @@ uvm_meter()
 }
 
 /*
- * uvm_loadav: compute a tenex style load average of a quantity on 
+ * uvm_loadav: compute a tenex style load average of a quantity on
  * 1, 5, and 15 minute internvals.
  */
 static void
@@ -287,6 +287,8 @@ sysctl_uvmexp(oldp, oldlenp)
 	u.anonpages = uvmexp.anonpages;
 	u.vnodepages = uvmexp.vnodepages;
 	u.vtextpages = uvmexp.vtextpages;
+	u.colorhit = uvmexp.colorhit;
+	u.colormiss = uvmexp.colormiss;
 
 	return (sysctl_rdminstruct(oldp, oldlenp, NULL, &u, sizeof(u)));
 }
@@ -300,8 +302,8 @@ uvm_total(totalp)
 {
 	struct lwp *l;
 #if 0
-	vm_map_entry_t	entry;
-	vm_map_t map;
+	struct vm_map_entry *	entry;
+	struct vm_map *map;
 	int paging;
 #endif
 

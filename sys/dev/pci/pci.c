@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51 2001/03/02 06:24:17 mrg Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.1 2001/06/21 20:05:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -197,6 +197,7 @@ pci_probe_bus(self)
 			csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 
 			/* Invalid vendor ID value? */
 			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -209,6 +210,7 @@ pci_probe_bus(self)
 			pa.pa_memt = memt;
 			pa.pa_dmat = sc->sc_dmat;
 			pa.pa_pc = pc;
+			pa.pa_bus = bus;
 			pa.pa_device = device;
 			pa.pa_function = function;
 			pa.pa_tag = tag;
@@ -224,6 +226,14 @@ pci_probe_bus(self)
 				pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
 			if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
 				pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
+
+			/*
+			 * If the cache line size is not configured, then
+			 * clear the MRL/MRM/MWI command-ok flags.
+			 */
+			if (PCI_CACHELINE(bhlcr) == 0)
+				pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
+				    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
 
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;

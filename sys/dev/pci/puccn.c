@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.2 2000/12/09 06:54:27 imp Exp $ */
+/*	$NetBSD: puccn.c,v 1.2.2.1 2001/06/21 20:05:12 nathanw Exp $ */
 
 /*
  * Derived from  pci.c
@@ -40,6 +40,8 @@
  *
  * Scan the PCI bus for something which resembles a 16550
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

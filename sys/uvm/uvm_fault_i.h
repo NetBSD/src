@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.11 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.11.2.1 2001/06/21 20:10:29 nathanw Exp $	*/
 
 /*
  *
@@ -137,7 +137,7 @@ uvmfault_check_intrsafe(ufi)
  * => if the lookup is a success we will return with the maps locked
  * => if "write_lock" is TRUE, we write_lock the map, otherwise we only
  *	get a read lock.
- * => note that submaps can only appear in the kernel and they are 
+ * => note that submaps can only appear in the kernel and they are
  *	required to use the same virtual addresses as the map they
  *	are referenced by (thus address translation between the main
  *	map and the submap is unnecessary).
@@ -148,7 +148,7 @@ uvmfault_lookup(ufi, write_lock)
 	struct uvm_faultinfo *ufi;
 	boolean_t write_lock;
 {
-	vm_map_t tmpmap;
+	struct vm_map *tmpmap;
 
 	/*
 	 * init ufi values for lookup.
@@ -176,7 +176,7 @@ uvmfault_lookup(ufi, write_lock)
 		/*
 		 * lookup
 		 */
-		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr, 
+		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr,
 								&ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
 			return(FALSE);
@@ -238,7 +238,7 @@ uvmfault_relock(ufi)
 	uvmexp.fltrelck++;
 
 	/*
-	 * relock map.   fail if version mismatch (in which case nothing 
+	 * relock map.   fail if version mismatch (in which case nothing
 	 * gets locked).
 	 */
 

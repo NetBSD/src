@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.46 2000/12/03 05:56:27 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.46.2.1 2001/06/21 20:10:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  *	@(#)lfs_alloc.c	8.4 (Berkeley) 1/4/94
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
 

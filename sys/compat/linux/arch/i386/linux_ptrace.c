@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.5.2.1 2001/03/05 22:49:23 nathanw Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.5.2.2 2001/06/21 19:59:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,14 +69,14 @@ struct linux_reg {
 	long edi;
 	long ebp;
 	long eax;
-	long xds, xes;	// unsigned short ds, __ds, es, __es;
-	long __fs, __gs;	// unsigned short fs, __fs, gs, __gs;
+	long xds, xes;		/* unsigned short ds, __ds, es, __es; */
+	long __fs, __gs;	/* unsigned short fs, __fs, gs, __gs; */
 	long orig_eax;
 	long eip;
-	long xcs;	// unsigned short cs, __cs;
+	long xcs;		/* unsigned short cs, __cs; */
 	long eflags;
 	long esp;
-	long xss;	// unsigned short ss, __ss 
+	long xss;		/* unsigned short ss, __ss; */
 };
 
 /* structure used for storing floating point context */

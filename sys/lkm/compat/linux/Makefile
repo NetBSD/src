@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/01/10 02:29:42 fvdl Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2001/06/21 20:07:24 nathanw Exp $
 
 .include "../Makefile.inc"
 
@@ -25,7 +25,7 @@ SRCS+=	lkminit_emul.c
 SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_ioctl.c linux_ipc.c linux_misc.c linux_pipe.c \
 	linux_sched.c linux_sigaction.c linux_sigarray.c linux_signal.c \
-	linux_socket.c linux_termios.c linux_uselib.c
+	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c
 
@@ -43,7 +43,7 @@ SRCS+=	compat_util.c
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
 	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
-SRCS+=	linux_ptrace.c linux_syscall.c
+SRCS+=	linux_ptrace.c linux_syscall.c linux_trap.c
 SRCS+=	linux_sigcode.s
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.57 2001/02/11 21:12:24 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.57.2.1 2001/06/21 20:01:08 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,7 @@
 
 #include <machine/db_machdep.h>		/* type definitions */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 #ifdef MULTIPROCESSOR
@@ -353,7 +353,10 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-        uvm_map_printit((vm_map_t) addr, full, db_printf);
+	if (have_addr == FALSE)
+		addr = (db_expr_t) kernel_map;
+
+        uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.1.2.1 2001/06/21 20:01:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -159,16 +159,28 @@ static void dotbpp_unimpl(struct video_chip *, int, int);
 
 int
 cmap_work_alloc(u_int8_t **r, u_int8_t **g, u_int8_t **b, u_int32_t **rgb,
-		int cnt)
+    int cnt)
 {
-	KASSERT(r && g && b && rgb && LEGAL_CLUT_INDEX(cnt - 1));
+	KASSERT(LEGAL_CLUT_INDEX(cnt - 1));
 
-	*r = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*g = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*b = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*rgb = malloc(cnt * sizeof(u_int32_t), M_DEVBUF, M_WAITOK);	
+#define	ALLOC_BUF(x, bit)						\
+	if (x) {							\
+		*x = malloc(cnt * sizeof(u_int ## bit ## _t),		\
+		    M_DEVBUF, M_WAITOK);				\
+		if (*x == 0)						\
+			goto errout;					\
+	}
+	ALLOC_BUF(r, 8);
+	ALLOC_BUF(g, 8);
+	ALLOC_BUF(b, 8);
+	ALLOC_BUF(rgb, 32);
+#undef	ALLOCBUF
 
-	return (!(*r && *g && *b && *rgb));
+	return (0);
+errout:
+	cmap_work_free(*r, *g, *b, *rgb);
+
+	return (1);
 }
 
 void
@@ -197,7 +209,7 @@ rgb24_compose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b, int cnt)
 
 void
 rgb24_decompose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b,
-		int cnt)
+    int cnt)
 {
 	int i;
 	KASSERT(rgb24 && r && g && b && LEGAL_CLUT_INDEX(cnt - 1));

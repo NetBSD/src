@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23.2.1 2001/03/05 22:50:05 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23.2.2 2001/06/21 20:10:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -244,7 +244,7 @@ ext2fs_truncate(v)
 	 * Shorten the size of the file. If the file is not being
 	 * truncated to a block boundry, the contents of the
 	 * partial block following the end of the file must be
-	 * zero'ed in case it ever become accessable again because
+	 * zero'ed in case it ever become accessible again because
 	 * of subsequent file growth.
 	 */
 	offset = blkoff(fs, length);

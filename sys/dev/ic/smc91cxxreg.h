@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxreg.h,v 1.3 2000/07/30 21:34:48 briggs Exp $	*/
+/*	$NetBSD: smc91cxxreg.h,v 1.3.2.1 2001/06/21 20:03:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Gardner Buchanan <gbuchanan@shl.com>
@@ -147,7 +147,7 @@
 #define	RCR_RX_ABORT	0x0001	/* Received huge packet */
 #define	RCR_PROMISC	0x0002	/* enable promiscuous mode */
 #define	RCR_ALMUL	0x0004	/* receive all multicast packets */
-#define	RCR_ENABLE	0x0100	/* IFF this is set, we can recieve packets */
+#define	RCR_ENABLE	0x0100	/* IFF this is set, we can receive packets */
 #define	RCR_STRIP_CRC	0x0200	/* strips CRC */
 #define	RCR_GAIN_BITS	0x0c00	/* PLL Gain control (for testing) */
 #define	RCR_FILT_CAR	0x4000	/* Enable 12 bit carrier filter */

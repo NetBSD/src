@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.23 2000/10/03 04:32:00 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.23.2.1 2001/06/21 20:03:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  *		- No SIO facility (due to the above two differences).
  *		- GPIO interface is different than the 21140's.
  *		- Boards that lack PHYs use the internal NWay block
- *		  and transciever.
+ *		  and transceiver.
  *
  *	- Winbond 89C840F
  *
@@ -1038,7 +1038,7 @@ struct tulip_desc {
 #define	CSR_PNIC_NWAY		0xb8
 #define	PNIC_NWAY_RS		0x00000001	/* reset NWay block */
 #define	PNIC_NWAY_PD		0x00000002	/* power down NWay block */
-#define	PNIC_NWAY_BX		0x00000004	/* bypass transciever */
+#define	PNIC_NWAY_BX		0x00000004	/* bypass transceiver */
 #define	PNIC_NWAY_LC		0x00000008	/* AUI low current mode */
 #define	PNIC_NWAY_UV		0x00000010	/* low squelch voltage */
 #define	PNIC_NWAY_DX		0x00000020	/* disable TP pol. correction */
@@ -1341,7 +1341,7 @@ struct tulip_desc {
 #define	CSR_ADM_CR		0x88
 #define	ADM_CR_ATUR		0x00000001	/* auto. tx underrun recover */
 #define	ADM_CR_SINT		0x00000002	/* software interrupt */
-#define	ADM_CR_DRT		0x0000000c	/* drain recieve threshold */
+#define	ADM_CR_DRT		0x0000000c	/* drain receive threshold */
 #define	ADM_CR_DRT_8LW		0x00000000	/*   8 longwords */
 #define	ADM_CR_DRT_16LW		0x00000004	/*   16 longwords */
 #define	ADM_CR_DRT_SF		0x00000008	/*   store-and-forward */

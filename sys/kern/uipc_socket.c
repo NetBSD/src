@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.2 2001/04/09 01:57:58 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.3 2001/06/21 20:07:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -864,7 +864,7 @@ sorflush(struct socket *so)
 	pr = so->so_proto;
 	sb->sb_flags |= SB_NOINTR;
 	(void) sblock(sb, M_WAITOK);
-	s = splimp();
+	s = splnet();
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;

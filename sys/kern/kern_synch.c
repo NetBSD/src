@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.2 2001/04/08 20:53:05 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.3 2001/06/21 20:06:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -360,7 +360,7 @@ int safepri;
  * call should be restarted if possible, and EINTR is returned if the system
  * call should be interrupted by the signal (return EINTR).
  *
- * The interlock is held until the scheduler_slock is held.  The
+ * The interlock is held until the scheduler_slock is acquired.  The
  * interlock will be locked before returning back to the caller
  * unless the PNORELOCK flag is specified, in which case the
  * interlock will always be unlocked upon return.
@@ -400,6 +400,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		return (0);
 	}
 
+	KASSERT(p != NULL);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
@@ -479,7 +480,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	else
 		mi_switch(l, NULL);
 
-#ifdef	DDB
+#if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
 	asm(".globl bpendtsleep ; bpendtsleep:");
 #endif

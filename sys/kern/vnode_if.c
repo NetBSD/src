@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.c,v 1.33 2001/01/22 09:53:31 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.33.2.1 2001/06/21 20:07:13 nathanw Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.28 2001/01/22 09:52:21 jdolecek Exp 
+ *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 
-struct vnodeop_desc vop_default_desc = {
+const struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
@@ -1614,7 +1614,7 @@ int
 VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
 	struct vnode *vp;
 	voff_t offset;
-	vm_page_t *m;
+	struct vm_page **m;
 	int *count;
 	int centeridx;
 	vm_prot_t access_type;
@@ -1654,7 +1654,7 @@ const struct vnodeop_desc vop_putpages_desc = {
 int
 VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	struct vnode *vp;
-	vm_page_t *m;
+	struct vm_page **m;
 	int count;
 	int flags;
 	int *rtvals;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.11.2.1 2001/03/05 22:49:28 nathanw Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.11.2.2 2001/06/21 19:59:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -325,6 +325,13 @@ linux_termios_to_bsd_termios(lts, bts)
 	if (index & LINUX_CBAUDEX)
 		index = (index & ~LINUX_CBAUDEX) + LINUX_NSPEEDS - 1;
 	bts->c_ispeed = bts->c_ospeed = linux_speeds[index];
+	/*
+	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * Linux does not do this, and it sets c_ospeed to zero
+	 * sometimes. If it is null, we store -1 in the kernel
+	 */ 
+	if (bts->c_ospeed == 0)
+		bts->c_ospeed = -1;
 
 	bts->c_cc[VINTR] = lts->c_cc[LINUX_VINTR];
 	bts->c_cc[VQUIT] = lts->c_cc[LINUX_VQUIT];
@@ -419,6 +426,13 @@ bsd_termios_to_linux_termios(bts, lts)
 			break;
 		}
 	}
+	/*
+	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * Linux does not do this, and it sets c_ospeed to zero
+	 * sometimes. If it is null, we store -1 in the kernel
+	 */ 
+	if (bts->c_ospeed == -1)
+		bts->c_ospeed = 0;
 	lts->c_cflag |= mask;
 
 	lts->c_cc[LINUX_VINTR] = bts->c_cc[VINTR];
@@ -466,8 +480,7 @@ linux_ioctl_termios(p, uap, retval)
 	int (*bsdioctl) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)

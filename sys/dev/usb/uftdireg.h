@@ -1,3 +1,5 @@
+/*	$NetBSD: uftdireg.h,v 1.1.8.1 2001/06/21 20:06:21 nathanw Exp $ */
+
 /*
  * Definitions for the FTDI USB Single Port Serial Converter - 
  * known as FTDI_SIO (Serial Input/Output application of the chipset) 
@@ -259,7 +261,7 @@ enum {
  *         1 = active 
  *
  * FTDI_SIO_GET_MODEM_STATUS
- * Retreive the current value of the modem status register.
+ * Retrieve the current value of the modem status register.
  */
 #define FTDI_SIO_CTS_MASK 0x10
 #define FTDI_SIO_DSR_MASK 0x20

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.41.2.1 2001/03/05 22:49:30 nathanw Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.41.2.2 2001/06/21 20:00:41 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1519,17 +1519,12 @@ svr4_sys_putmsg(l, v, retval)
 	int error;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return EBADF;
-
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), SCARG(uap, flags));
 #endif /* DEBUG_SVR4 */
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
@@ -1581,7 +1576,7 @@ svr4_sys_putmsg(l, v, retval)
 				 * Hmm, expedited data seems to be sc.cmd = 4.
 				 * I think 3 is normal data. (christos)
 				 */
-				DPRINTF(("sending expedited data (???)\n"));
+				DPRINTF(("sending expedited data (?)\n"));
 				SCARG(&wa, fd) = SCARG(uap, fd);
 				SCARG(&wa, buf) = dat.buf;
 				SCARG(&wa, nbyte) = dat.len;
@@ -1694,19 +1689,14 @@ svr4_sys_getmsg(l, v, retval)
 	int fl;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return EBADF;
-
 	memset(&sc, 0, sizeof(sc));
 
 #ifdef DEBUG_SVR4
 	show_msg(">getmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), 0);
 #endif /* DEBUG_SVR4 */
-			
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {

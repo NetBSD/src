@@ -1,7 +1,7 @@
-/*	$NetBSD: if.c,v 1.86.2.1 2001/03/05 22:49:53 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.2 2001/06/21 20:07:55 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -106,6 +106,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -325,7 +326,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splimp();
+	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFAFREE(ifa);
@@ -401,12 +402,23 @@ if_attach(ifp)
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
 
+	ifp->if_capenable = 0;
+	ifp->if_csum_flags = 0;
+
 #ifdef ALTQ
 	ifp->if_snd.altq_type = 0;
 	ifp->if_snd.altq_disc = NULL;
 	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
 	ifp->if_snd.altq_tbr  = NULL;
 	ifp->if_snd.altq_ifp  = ifp;
+#endif
+
+#ifdef PFIL_HOOKS
+	ifp->if_pfil.ph_type = PFIL_TYPE_IFNET;
+	ifp->if_pfil.ph_ifnet = ifp;
+	if (pfil_head_register(&ifp->if_pfil) != 0)
+		printf("%s: WARNING: unable to register pfil hook\n",
+		    ifp->if_xname);
 #endif
 
 	/* Announce the interface. */
@@ -423,7 +435,7 @@ if_deactivate(ifp)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->if_input	 = if_nullinput;
@@ -467,7 +479,7 @@ if_detach(ifp)
 	 */
 	memset(&so, 0, sizeof(so));
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -479,6 +491,10 @@ if_detach(ifp)
 		altq_disable(&ifp->if_snd);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
+#endif
+
+#ifdef PFIL_HOOKS
+	(void) pfil_head_unregister(&ifp->if_pfil);
 #endif
 
 	if_free_sadl(ifp);
@@ -978,6 +994,7 @@ if_down(ifp)
 	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
+	microtime(&ifp->if_lastchange);
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
@@ -999,6 +1016,7 @@ if_up(ifp)
 #endif
 
 	ifp->if_flags |= IFF_UP;
+	microtime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
@@ -1021,7 +1039,7 @@ if_slowtimo(arg)
 	void *arg;
 {
 	struct ifnet *ifp;
-	int s = splimp();
+	int s = splnet();
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1119,7 +1137,8 @@ ifioctl(so, cmd, data, p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	int error = 0;
+	struct ifcapreq *ifcr;
+	int s, error = 0;
 	short oif_flags;
 
 	switch (cmd) {
@@ -1129,6 +1148,7 @@ ifioctl(so, cmd, data, p)
 		return (ifconf(cmd, data));
 	}
 	ifr = (struct ifreq *)data;
+	ifcr = (struct ifcapreq *)data;
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -1169,12 +1189,12 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			int s = splimp();
+			s = splnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			int s = splimp();
+			s = splnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -1182,6 +1202,52 @@ ifioctl(so, cmd, data, p)
 			(ifr->ifr_flags &~ IFF_CANTCHANGE);
 		if (ifp->if_ioctl)
 			(void) (*ifp->if_ioctl)(ifp, cmd, data);
+		break;
+
+	case SIOCGIFCAP:
+		ifcr->ifcr_capabilities = ifp->if_capabilities;
+		ifcr->ifcr_capenable = ifp->if_capenable;
+		break;
+
+	case SIOCSIFCAP:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		if ((ifcr->ifcr_capenable & ~ifp->if_capabilities) != 0)
+			return (EINVAL);
+		if (ifp->if_ioctl == NULL)
+			return (EOPNOTSUPP);
+
+		/* Must prevent race with packet reception here. */
+		s = splnet();
+		if (ifcr->ifcr_capenable != ifp->if_capenable) {
+			struct ifreq ifrq;
+
+			ifrq.ifr_flags = ifp->if_flags;
+			ifp->if_capenable = ifcr->ifcr_capenable;
+
+			/* Pre-compute the checksum flags mask. */
+			ifp->if_csum_flags = 0;
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+				ifp->if_csum_flags |= M_CSUM_IPv4;
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4)
+				ifp->if_csum_flags |= M_CSUM_TCPv4;
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4)
+				ifp->if_csum_flags |= M_CSUM_UDPv4;
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6)
+				ifp->if_csum_flags |= M_CSUM_TCPv6;
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6)
+				ifp->if_csum_flags |= M_CSUM_UDPv6;
+
+			/*
+			 * Only kick the interface if it's up.  If it's
+			 * not up now, it will notice the cap enables
+			 * when it is brought up later.
+			 */
+			if (ifp->if_flags & IFF_UP)
+				(void) (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
+				    (caddr_t) &ifrq);
+		}
+		splx(s);
 		break;
 
 	case SIOCSIFMETRIC:
@@ -1243,7 +1309,7 @@ ifioctl(so, cmd, data, p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4)
+#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(LKM)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, p));
@@ -1304,7 +1370,7 @@ ifioctl(so, cmd, data, p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splimp();
+			s = splnet();
 			in6_if_up(ifp);
 			splx(s);
 		}

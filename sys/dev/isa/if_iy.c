@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.45.2.1 2001/04/09 01:56:41 nathanw Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.45.2.2 2001/06/21 20:03:48 nathanw Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -525,6 +525,7 @@ struct iy_softc *sc;
 		temp = (temp & ~BNC_BIT) | TPE_BIT;
 		break;
 	default:
+		;
 		/* nothing; leave as it is */
 	}
 	switch (temp & (BNC_BIT | TPE_BIT)) {

@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.23 2000/10/19 15:29:14 ad Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.23.2.1 2001/06/21 20:01:30 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp 
+ *	NetBSD: eisadevs,v 1.23 2001/05/06 19:43:54 ad Exp 
  */
 
 /*
@@ -61,6 +61,7 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
+#define	EISA_PRODUCT_BUS6001	"BusLogic Bt760 Ethernet"
 #define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
 /* Compaq products */
@@ -124,6 +125,16 @@
 
 /* Madge products */
 #define	EISA_PRODUCT_MDG0002	"Madge Networks Smart 16/4 EISA Ringnode"
+
+/* Mylex products */
+#define	EISA_PRODUCT_MLX0070	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0071	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0072	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0073	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0074	"Mylex DAC960 RAID controller"
+#define	EISA_PRODUCT_MLX0075	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0076	"Mylex DAC960-A RAID controller"
+#define	EISA_PRODUCT_MLX0077	"Mylex DAC960-A RAID controller"
 
 /* NEC products */
 #define	EISA_PRODUCT_NEC8200	"NEC EATA SCSI controller"

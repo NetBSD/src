@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.1 2001/03/05 22:49:24 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.2 2001/06/21 19:59:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
+#include <sys/socketvar.h>
 #include <sys/conf.h>
 
 #include <sys/syscallargs.h>
@@ -203,10 +204,12 @@ linux_sys_open(l, v, retval)
 	 */ 
         if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
-                struct file     *fp = fdp->fd_ofiles[*retval];
+                struct file     *fp;
+
+		fp = fd_getfile(fdp, *retval);
 
                 /* ignore any error, just give it a try */
-                if (fp->f_type == DTYPE_VNODE)
+                if (fp != NULL && fp->f_type == DTYPE_VNODE)
                         (fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
         }
 	return 0;
@@ -323,7 +326,58 @@ linux_sys_fcntl(l, v, retval)
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_SETFL;
 		SCARG(&fca, arg) = (caddr_t) val;
-		return sys_fcntl(l, &fca, retval);
+		error = sys_fcntl(l, &fca, retval);
+		/*
+		 * Linux does not send a SIGIO to the write end of a socket,
+		 * neither it does send any SIGIO for pipes. If async I/O
+		 * was requested, we keep the SS_ASYNC in struct socket flag 
+		 * set, but we clear SB_ASYNC flags on the sending buffer 
+		 * (for socket), and on the sending and the receiving buffer 
+		 * (for pipes). 
+		 * 
+		 * Because we do not alter to SS_ASYNC in struct socket, 
+		 * the Linux process keeps a consistent view of async I/O
+		 * status if it attemps to read the async flag (SS_ASYNC)
+		 * 
+		 * This async I/O problem does matters, since some Linux 
+		 * programs such as the JDK request async I/O on pipes, 
+		 * but they fail if they happen to get a SIGIO to the write
+		 * end of the pipe.
+		 */
+		if ((error == 0) && (val & O_ASYNC)) {
+			struct filedesc	*fdp;
+			struct file	*fp;
+			struct socket *so;
+
+			fdp = p->p_fd;
+
+			if (((fp = fd_getfile(fdp, fd)) == NULL) ||
+			    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+			    return (EBADF);
+
+			FILE_USE(fp);
+
+			if ((fp->f_type == DTYPE_SOCKET) && 
+			    (so = (struct socket*)fp->f_data)) {
+				/*
+				 * Clear async I/O on sending buffer 
+				 * This will disable SIGIO for the 
+				 * write end of sockets and pipes.
+				 */
+				so->so_snd.sb_flags &= ~SB_ASYNC;
+				/*
+				 * If it's a pipe, also clear
+				 * it on the receiving buffer.
+				 * This will disable SIGIO for the
+				 * read end of pipes.
+				 */
+				if (so->so_state & SS_ISAPIPE)
+					so->so_rcv.sb_flags &= ~SB_ASYNC;
+			}
+
+			FILE_UNUSE(fp, p);
+		}
+		return error;
 	case LINUX_F_GETLK:
 		sg = stackgap_init(p->p_emul);
 		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
@@ -366,8 +420,7 @@ linux_sys_fcntl(l, v, retval)
 		 * does not exist.
 		 */
 		fdp = p->p_fd;
-		if ((u_int)fd >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[fd]) == NULL)
+		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return EBADF;
 		if (fp->f_type == DTYPE_SOCKET) {
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;

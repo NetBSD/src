@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.3 2001/04/09 01:58:41 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.4 2001/06/21 20:08:59 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -102,10 +102,6 @@
 #include "loop.h"
 
 #include <net/net_osdep.h>
-
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet6_pfil_hook;	/* XXX */
@@ -2011,10 +2007,12 @@ ip6_setpktoptions(control, opt, priv)
 
 			/*
 			 * Check if the requested source address is indeed a
-			 * unicast address assigned to the node.
+			 * unicast address assigned to the node, and can be
+			 * used as the packet's source address.
 			 */
 			if (!IN6_IS_ADDR_UNSPECIFIED(&opt->ip6po_pktinfo->ipi6_addr)) {
 				struct ifaddr *ia;
+				struct in6_ifaddr *ia6;
 				struct sockaddr_in6 sin6;
 
 				bzero(&sin6, sizeof(sin6));
@@ -2029,6 +2027,11 @@ ip6_setpktoptions(control, opt, priv)
 				      opt->ip6po_pktinfo->ipi6_ifindex))) {
 					return(EADDRNOTAVAIL);
 				}
+				ia6 = (struct in6_ifaddr *)ia;
+				if ((ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) != 0) {
+					return(EADDRNOTAVAIL);
+				}
+
 				/*
 				 * Check if the requested source address is
 				 * indeed a unicast address assigned to the

@@ -1,7 +1,7 @@
-/*	$NetBSD: nsphyter.c,v 1.7.4.1 2001/04/09 01:56:55 nathanw Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.7.4.2 2001/06/21 20:04:24 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,6 +69,9 @@
 /*
  * driver for National Semiconductor's DP83843 `PHYTER' ethernet 10/100 PHY
  * Data Sheet available from www.national.com
+ *
+ * We also support the DP83815 MacPHYER internal PHY since, for our
+ * purposes, they are compatible.
  */
 
 #include <sys/param.h>
@@ -103,6 +106,17 @@ const struct mii_phy_funcs nsphyter_funcs = {
 	nsphyter_service, nsphyter_status, mii_phy_reset,
 };
 
+const struct mii_phydesc nsphyters[] = {
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83843,
+	  MII_STR_xxNATSEMI_DP83843 },
+
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83815,
+	  MII_STR_xxNATSEMI_DP83815 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 nsphytermatch(parent, match, aux)
 	struct device *parent;
@@ -111,8 +125,7 @@ nsphytermatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83843)
+	if (mii_phy_match(ma, nsphyters) != NULL)
 		return (10);
 
 	return (0);
@@ -126,15 +139,17 @@ nsphyterattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_xxNATSEMI_DP83843,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, nsphyters);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &nsphyter_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.25 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.25.2.1 2001/06/21 20:07:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  * Portal Filesystem
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.49 2001/01/23 17:04:30 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.49.2.1 2001/06/21 20:06:31 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ typedef enum {		/* keep in sync with usbd_status_msgs */
 	USBD_STALLED,
 	USBD_INTERRUPTED,
 
-	USBD_ERROR_MAX,		/* must be last */
+	USBD_ERROR_MAX		/* must be last */
 } usbd_status;
 
 typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
@@ -84,9 +84,6 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */
-
-/* XXX Temporary hack XXX */
-#define USBD_NO_TSLEEP		0x80	/* XXX use busy wait */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -260,9 +257,13 @@ int usbd_driver_load(module_t mod, int what, void *arg);
 
 /* XXX Perhaps USB should have its own levels? */
 #ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #define splusb splsoftnet
 #else
+#define	splusb splsoftclock
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
+#else
 #define splusb splbio
-#endif
+#endif /* USB_USE_SOFTINTR */
 #define splhardusb splbio
 #define IPL_USB IPL_BIO

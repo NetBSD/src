@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.17.2.1 2001/04/09 01:59:23 nathanw Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.17.2.2 2001/06/21 20:10:48 nathanw Exp $	 */
 
 /*
  *
@@ -137,7 +137,7 @@ restart:
 					cur[lcv] = -1;
 				goto restart;
 			}
-				
+
 			/*
 			 * if the time hasn't been set yet, or this entry is
 			 * earlier than the current tv, set the time and history
@@ -160,7 +160,7 @@ restart:
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
 	}
-	
+
 	/* done! */
 	splx(s);
 }

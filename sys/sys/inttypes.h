@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.3 2000/06/27 05:51:55 kleink Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.3.2.1 2001/06/21 20:09:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,34 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Provide integral types of a fixed size.
- */
-
 #ifndef _SYS_INTTYPES_H_
 #define _SYS_INTTYPES_H_
 
-#include <machine/int_types.h>
-#include <machine/types.h>
-
 /*
- * The signed counterparts of these types have already been defined in
- * <machine/types.h>.
+ * 7.8  Format conversion of integer types
  */
 
-typedef	u_int8_t		 uint8_t;
-typedef	u_int16_t		uint16_t;
-typedef	u_int32_t		uint32_t;
-typedef	u_int64_t		uint64_t;
+#include <sys/stdint.h>
 
-#ifndef	intptr_t
-typedef	__intptr_t		intptr_t;
-#define	intptr_t		intptr_t
+#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS)
+#include <machine/int_fmtio.h>
 #endif
 
-#ifndef	uintptr_t
-typedef	__uintptr_t		uintptr_t;
-#define	uintptr_t		uintptr_t
-#endif
-
-#endif /* !defined(_SYS_INTTYPES_H_) */
+#endif /* !_SYS_INTTYPES_H_ */

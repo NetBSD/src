@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.19 2001/02/24 02:13:33 lukem Exp $
+#	$NetBSD: files.mii,v 1.19.2.1 2001/06/21 20:04:18 nathanw Exp $
 
 file	dev/mii/mii.c				mii
 
@@ -9,6 +9,14 @@ file	dev/mii/mii_physubr.c			mii_phy
 
 define	ukphy_subr
 file	dev/mii/ukphy_subr.c			ukphy_subr
+
+device	bmtphy: mii_phy
+attach	bmtphy at mii
+file	dev/mii/bmtphy.c			bmtphy
+
+device	brgphy: mii_phy
+attach	brgphy at mii
+file	dev/mii/brgphy.c			brgphy
 
 device	tlphy: mii_phy
 attach	tlphy at mii
@@ -21,6 +29,10 @@ file	dev/mii/nsphy.c				nsphy
 device	nsphyter: mii_phy
 attach	nsphyter at mii
 file	dev/mii/nsphyter.c			nsphyter
+
+device	gphyter: mii_phy
+attach	gphyter at mii
+file	dev/mii/gphyter.c			gphyter
 
 device	qsphy: mii_phy
 attach	qsphy at mii

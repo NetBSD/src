@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.68 2001/01/15 21:33:52 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.68.2.1 2001/06/21 20:00:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -79,7 +79,7 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #endif
@@ -93,7 +93,7 @@
  * handled here.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
 #endif
 
@@ -185,6 +185,7 @@ const struct emul emul_ultrix = {
 	ultrix_sysent,
 	ultrix_syscallnames,
 	sendsig,
+	trapsignal,
 	ultrix_sigcode,
 	ultrix_esigcode,
 	NULL,
@@ -372,8 +373,7 @@ ultrix_sys_mmap(p, v, retval)
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
 	fdp = p->p_fd;
-	if ((unsigned)SCARG(&ouap, fd) < fdp->fd_nfiles &&		/*XXX*/
-	    (fp = fdp->fd_ofiles[SCARG(&ouap, fd)]) != NULL &&		/*XXX*/
+	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    iszerodev(vp->v_rdev)) {					/*XXX*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.37 2001/02/27 05:19:15 lukem Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.37.2.1 2001/06/21 20:07:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -290,7 +290,7 @@ sb_lock(struct sockbuf *sb)
 /*
  * Wakeup processes waiting on a socket buffer.
  * Do asynchronous notification via SIGIO
- * if the socket has the SS_ASYNC flag set.
+ * if the socket buffer has the SB_ASYNC flag set.
  */
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
@@ -303,7 +303,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((caddr_t)&sb->sb_cc);
 	}
-	if (so->so_state & SS_ASYNC) {
+	if (sb->sb_flags & SB_ASYNC) {
 		if (so->so_pgid < 0)
 			gsignal(-so->so_pgid, SIGIO);
 		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
@@ -375,7 +375,8 @@ int
 sbreserve(struct sockbuf *sb, u_long cc)
 {
 
-	if (cc == 0 || cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	if (cc == 0 || 
+	    (u_quad_t) cc > (u_quad_t) sb_max * MCLBYTES / (MSIZE + MCLBYTES))
 		return (0);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max);

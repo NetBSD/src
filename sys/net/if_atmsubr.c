@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.27 2001/01/17 00:30:50 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.27.2.1 2001/06/21 20:07:59 nathanw Exp $       */
 
 /*
  *
@@ -113,7 +113,6 @@ atm_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 
 	/*
 	 * If the queueing discipline needs packet classification,
@@ -229,7 +228,7 @@ atm_output(ifp, m0, dst, rt0)
 	 */
 
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 	if (error) {
 		splx(s);
@@ -266,13 +265,12 @@ atm_input(ifp, ah, m, rxhand)
 		m_freem(m);
 		return;
 	}
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (rxhand) {
 #ifdef NATM
 	  struct natmpcb *npcb = rxhand;
-	  s = splimp();			/* in case 2 atm cards @ diff lvls */
+	  s = splnet();			/* in case 2 atm cards @ diff lvls */
 	  npcb->npcb_inq++;			/* count # in queue */
 	  splx(s);
 	  schednetisr(NETISR_NATM);
@@ -330,7 +328,7 @@ atm_input(ifp, ah, m, rxhand)
 	  }
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

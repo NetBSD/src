@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.4 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.4.4.1 2001/06/21 20:08:33 nathanw Exp $	*/
 /*	$KAME: ip_encap.c,v 1.39 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
@@ -210,17 +210,6 @@ encap4_input(m, va_alist)
 			m_freem(m);
 		return;
 	}
-
-	/* for backward compatibility */
-#ifdef MROUTING
-	if (proto == IPPROTO_IPV4 && mrt_ipip_input(m, off)) {
-		/*
-		 * Multicast routing code claimed this one.  No
-		 * more processing at this level.
-		 */
-  		return;
-	}
-#endif
 
 	/* last resort: inject to raw socket */
 	rip_input(m, off, proto);

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.2 2001/04/09 01:57:05 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.3 2001/06/21 20:05:04 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp 
+ *	NetBSD: pcidevs,v 1.330 2001/06/18 13:18:08 onoe Exp 
  */
 
 /*
@@ -527,6 +527,7 @@
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_LEVELONE	0x1394		/* Level One */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -553,6 +554,7 @@
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_MEDIAQ	0x4d51		/* MediaQ Inc. */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
@@ -630,7 +632,7 @@
 /* Acard products */
 #define	PCI_PRODUCT_ACARD_ATP850U	0x0005		/* ATP850U/UF UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_ATP860	0x0006		/* ATP860 UDMA IDE Controller */
-#define	PCI_PRODUCT_ACARD_ATP860R	0x0007		/* ATP860R UDMA IDE Controller */
+#define	PCI_PRODUCT_ACARD_ATP860A	0x0007		/* ATP860-A UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_AEC6710	0x8002		/* AEC6710 SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712UW	0x8010		/* AEC6712UW SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712U	0x8020		/* AEC6712U SCSI */
@@ -706,6 +708,7 @@
 
 /* Aironet Wireless Communicasions products */
 #define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* Aironet PC4500/PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_350	0x0350		/* Aironet 350 Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* Aironet PC4500 Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* Aironet PC4800 Wireless LAN Adapter */
 
@@ -728,6 +731,10 @@
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* AMD756 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
+#define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 PCI-to-ISA Bridge */
+#define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
+#define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
+#define	PCI_PRODUCT_AMD_PBC766_USB	0x7414		/* AMD766 USB Host Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
@@ -749,6 +756,11 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH_AGP	0x0020		/* UniNorth AGP Interface */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC Ethernet */
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MAC-IO I/O Controller (KeyLargo) */
+#define	PCI_PRODUCT_APPLE_GMAC2	0x0024		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_PANGEA_MACIO	0x0025		/* MAC-IO I/O Controller (Pangea) */
+#define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP Interface */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI Bridge */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1028,6 +1040,7 @@
 
 /* D-Link Systems products */
 #define	PCI_PRODUCT_DLINK_DFE550TX	0x1002		/* DFE-550TX 10/100 Ethernet */
+#define	PCI_PRODUCT_DLINK_DFE530TXPLUS	0x1300		/* DFE-530TXPLUS 10/100 Ethernet */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID */
@@ -1117,10 +1130,13 @@
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
+#define	PCI_PRODUCT_IBM_405GP	0x0156		/* IBM 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
+#define	PCI_PRODUCT_IDT_RC32334	0x0204		/* RC32334 System Controller */
+#define	PCI_PRODUCT_IDT_RC32332	0x0205		/* RC32332 System Controller */
 
 /* Industrial Computer Source */
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
@@ -1146,6 +1162,14 @@
 #define	PCI_PRODUCT_INTEL_82452	0x1000		/* PRO/1000 Gigabit Ethernet (i82452) */
 #define	PCI_PRODUCT_INTEL_82453	0x1001		/* PRO/1000 Gigabit Ethernet (i82453) */
 #define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* PRO/1000 Gigabit Ethernet (i82453-SC) */
+#define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_VM_0	0x1033		/* PRO/100 VM Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_VM_1	0x1034		/* PRO/100 VM Network Controller */
+#define	PCI_PRODUCT_INTEL_82562EH_HPNA_0	0x1035		/* 82562EH HomePNA Network Controller */
+#define	PCI_PRODUCT_INTEL_82562EH_HPNA_1	0x1036		/* 82562EH HomePNA Network Controller */
+#define	PCI_PRODUCT_INTEL_82562EH_HPNA_2	0x1037		/* 82562EH HomePNA Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_VM_2	0x1038		/* PRO/100 VM Network Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
@@ -1183,6 +1207,7 @@
 #define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-to-ISA Bridge (MISA) */
 #define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-to-PCI Bridge (MPCI2) */
 #define	PCI_PRODUCT_INTEL_82439HX	0x1250		/* 82439HX System Controller (TXC) */
+#define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
 #define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
@@ -1264,10 +1289,13 @@
 #define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI Interface */
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 Interface */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
-#define	PCI_PRODUCT_LMC_T1	0x0006		/* T1 Interface */
+#define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Level One products */
+#define	PCI_PRODUCT_LEVELONE_LXT1001	0x0001		/* LXT-1001 10/100/1000 Ethernet */
 
 /* Linear Systems / CompuModules */
 #define	PCI_PRODUCT_LINEARSYS_DVB_TX	0x7629		/* DVB Transmitter */
@@ -1327,6 +1355,9 @@
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
 
+/* MediaQ Inc. products */
+#define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
+
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 \"Eagle\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
@@ -1356,9 +1387,13 @@
 /* Newbridge / Tundra products */
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
 
+/* National Instruments products */
+#define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI extender */
+
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
+#define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NCR/Symbios Logic products */
@@ -1385,8 +1420,11 @@
 
 /* NEC products */
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB Host Controller */
+#define	PCI_PRODUCT_NEC_VRC4173_CARDU	0x003e		/* VRC4173 PC-Card Unit */
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 #define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_VRC4173_BCU	0x00a5		/* VRC4173 Bus Control Unit */
+#define	PCI_PRODUCT_NEC_VRC4173_AC97U	0x00a6		/* VRC4173 AC97 Unit */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
@@ -1511,7 +1549,6 @@
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
 #define	PCI_PRODUCT_S3_TRIO32	0x8810		/* Trio32 */
 #define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio32/64 */
-#define	PCI_PRODUCT_TRIDENT_CYBERBLADE	0x9910		/* CyberBlade */
 #define	PCI_PRODUCT_S3_AURORA64P	0x8812		/* Aurora64V+ */
 #define	PCI_PRODUCT_S3_TRIO64UVP	0x8814		/* Trio64UV+ */
 #define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE/VX */
@@ -1626,6 +1663,7 @@
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
+#define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */
@@ -1648,6 +1686,7 @@
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
+#define	PCI_PRODUCT_TEKRAM2_DC315	0x0391		/* DC-315/DC-395 */
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
@@ -1678,6 +1717,7 @@
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-to-DSP Bridge */
 
 /* Titan Electronics products */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
@@ -1687,7 +1727,7 @@
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (\"Meteor\") */
 
 /* Toshiba products */
-#define	PCI_PRODUCT_TOSHIBA2_PROTEGE	0x0001		/* Protege Notebook */
+#define	PCI_PRODUCT_TOSHIBA2_PORTEGE	0x0001		/* Portege Notebook */
 #define	PCI_PRODUCT_TOSHIBA2_HOST	0x0601		/* Host Bridge/Controller */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
@@ -1710,6 +1750,7 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9680	0x9680		/* TGUI 9680 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9682	0x9682		/* TGUI 9682 */
+#define	PCI_PRODUCT_TRIDENT_CYBERBLADE	0x9910		/* CyberBlade */
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */

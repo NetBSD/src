@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.19 2000/06/18 19:22:33 pk Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.19.4.1 2001/06/21 20:03:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -38,14 +38,15 @@
  */
 
 /*
- * Only the i386 uses real bus space:
- *	arm32: oak and csa drivers; easy to convert
+ * Only arm26, i386, vax, mips and sparc use real bus space:
+ *	arm32: csa driver; easy to convert
  *	mac68k: sbc driver; easy to convert
  *	pc532: ncr driver; need bus.h first
  *	sparc: si and sw drivers; easy to convert
  *	sun3: si driver; need bus.h first
  */
-#if defined(__i386__) || defined(__vax__) || defined(__mips__) || defined(__sparc__)
+#if defined(__arm26__) || defined(__i386__) || defined(__vax__) || \
+	defined(__mips__) || defined(__sparc__)
 # define NCR5380_USE_BUS_SPACE
 #endif
 
@@ -105,8 +106,8 @@ struct sci_req {
 
 struct ncr5380_softc {
 	struct device		sc_dev;
-	struct scsipi_link	sc_link;
 	struct scsipi_adapter	sc_adapter;
+	struct scsipi_channel	sc_channel;
 
 #ifdef NCR5380_USE_BUS_SPACE
 	/* Pointers to bus_space */
@@ -221,7 +222,8 @@ struct ncr5380_softc {
 void	ncr5380_attach __P((struct ncr5380_softc *));
 int	ncr5380_detach __P((struct ncr5380_softc *, int));
 int 	ncr5380_intr __P((void *));
-int 	ncr5380_scsi_cmd __P((struct scsipi_xfer *));
+void	ncr5380_scsipi_request __P((struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
 void	ncr5380_init __P((struct ncr5380_softc *));

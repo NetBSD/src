@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.45.2.1 2001/04/09 01:58:18 nathanw Exp $	*/
+/*	$NetBSD: fil.c,v 1.45.2.2 2001/06/21 20:08:29 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.45.2.1 2001/04/09 01:58:18 nathanw Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.45.2.2 2001/06/21 20:08:29 nathanw Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp";
@@ -763,6 +763,21 @@ fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	struct ip *ip = mtod(*mp, struct ip *);
 	int rv, hlen = ip->ip_hl << 2;
+
+#if defined(M_CSUM_TCPv4)
+	/*
+	 * If the packet is out-bound, we can't delay checksums
+	 * here.  For in-bound, the checksum has already been
+	 * validated.
+	 */
+	if (dir == PFIL_OUT) {
+		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			in_delayed_cksum(*mp);
+			(*mp)->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+	}
+#endif /* M_CSUM_TCPv4 */
 
 	/*
 	 * We get the packet with all fields in network byte

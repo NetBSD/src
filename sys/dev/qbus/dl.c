@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.15.2.1 2001/04/09 01:57:21 nathanw Exp $	*/
+/*	$NetBSD: dl.c,v 1.15.2.2 2001/06/21 20:05:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,12 +119,8 @@ static	void	dlstart (struct tty *);
 static	int	dlparam (struct tty *, struct termios *);
 static	void	dlbrk (struct dl_softc *, int);
 struct	tty *	dltty (dev_t);
-	int	dlopen (dev_t, int, int, struct proc *);
-	int	dlclose (dev_t, int, int, struct proc *);
-	int	dlread (dev_t, struct uio *, int);
-	int	dlwrite (dev_t, struct uio *, int);
-	int	dlioctl (dev_t, unsigned long, caddr_t, int, struct proc *);
-	void	dlstop (struct tty *, int);
+
+cdev_decl(dl);
 
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
@@ -353,6 +349,15 @@ dlwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dlpoll(dev_t dev, int events, struct proc *p)
+{
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

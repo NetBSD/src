@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.72 2001/01/26 11:40:32 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.72.2.1 2001/06/21 20:08:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ static	void arprequest __P((struct ifnet *,
 	    struct in_addr *, struct in_addr *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
 static	void arptimer __P((void *));
-static	struct llinfo_arp *arplookup __P((struct in_addr *, int, int));
+static	struct llinfo_arp *arplookup __P((struct mbuf *, struct in_addr *,
+					  int, int));
 static	void in_arpinput __P((struct mbuf *));
 
 #if NLOOP > 0
@@ -186,7 +187,9 @@ lla_snprintf(adrp, len)
 	u_int8_t *adrp;
 	int len;
 {
-	static char buf[16*3];
+#define NUMBUFS 3
+	static char buf[NUMBUFS][16*3];
+	static int bnum = 0;
 	static const char hexdigits[] = {
 	    '0','1','2','3','4','5','6','7',
 	    '8','9','a','b','c','d','e','f'
@@ -195,7 +198,7 @@ lla_snprintf(adrp, len)
 	int i;
 	char *p;
 
-	p = buf;
+	p = buf[bnum];
 
 	*p++ = hexdigits[(*adrp)>>4];
 	*p++ = hexdigits[(*adrp++)&0xf];
@@ -207,7 +210,9 @@ lla_snprintf(adrp, len)
 	}
 
 	*p = 0;
-	return buf;
+	p = buf[bnum];
+	bnum = (bnum + 1) % NUMBUFS;
+	return p;
 }
 
 struct protosw arpsw[] = {
@@ -230,7 +235,7 @@ struct domain arpdomain =
  * to prevent lossage vs. the arp_drain routine (which may be called at
  * any time, including in a device driver context), we do two things:
  *
- * 1) manipulation of la->la_hold is done at splimp() (for all of
+ * 1) manipulation of la->la_hold is done at splnet() (for all of
  * about two instructions).
  *
  * 2) manipulation of the arp table's linked list is done under the
@@ -248,7 +253,11 @@ arp_lock_try(int recurse)
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're blocking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (!recurse && arp_locked) {
 		splx(s);
 		return (0);
@@ -263,7 +272,7 @@ arp_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	arp_locked--;
 	splx(s);
 }
@@ -292,7 +301,7 @@ do {									\
 
 /*
  * ARP protocol drain routine.  Called when memory is in short supply.
- * Called at splimp();
+ * Called at splvm();
  */
 
 void
@@ -307,8 +316,8 @@ arp_drain()
 		return;
 	}
 	
-	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
-		nla = la->la_list.le_next;
+	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+		nla = LIST_NEXT(la, la_list);
 
 		mold = la->la_hold;
 		la->la_hold = 0;
@@ -343,10 +352,10 @@ arptimer(arg)
 	}
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
-	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
 		struct rtentry *rt = la->la_rt;
 
-		nla = la->la_list.le_next;
+		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
 			arptfree(la); /* timer has expired; clear */
 	}
@@ -515,7 +524,7 @@ arp_rtrequest(req, rt, info)
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
@@ -593,7 +602,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
-		if ((la = arplookup(&SIN(dst)->sin_addr, 1, 0)) != NULL)
+		if ((la = arplookup(m, &SIN(dst)->sin_addr, 1, 0)) != NULL)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
@@ -622,7 +631,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	 */
 
 	arpstat.as_dfrtotal++;
-	s = splimp();
+	s = splnet();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
@@ -674,7 +683,7 @@ arpintr()
 	int s;
 
 	while (arpintrq.ifq_head) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
@@ -808,7 +817,7 @@ in_arpinput(m)
 		itaddr = myaddr;
 		goto reply;
 	}
-	la = arplookup(&isaddr, in_hosteq(itaddr, myaddr), 0);
+	la = arplookup(m, &isaddr, in_hosteq(itaddr, myaddr), 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
@@ -891,7 +900,7 @@ in_arpinput(m)
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
@@ -915,7 +924,7 @@ reply:
 		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
 		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	} else {
-		la = arplookup(&itaddr, 0, SIN_PROXY);
+		la = arplookup(m, &itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
@@ -968,14 +977,18 @@ arptfree(la)
  * Lookup or enter a new address in arptab.
  */
 static struct llinfo_arp *
-arplookup(addr, create, proxy)
+arplookup(m, addr, create, proxy)
+	struct mbuf *m;
 	struct in_addr *addr;
 	int create, proxy;
 {
+	struct arphdr *ah;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct rtentry *rt;
 	static struct sockaddr_inarp sin;
 	const char *why = 0;
 
+	ah = mtod(m, struct arphdr *);
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = *addr;
@@ -997,8 +1010,9 @@ arplookup(addr, create, proxy)
 
 	if (create)
 		log(LOG_DEBUG, "arplookup: unable to enter address"
-		    " for %s (%s)\n",
-		    in_fmtaddr(*addr), why);
+		    " for %s@%s on %s (%s)\n",
+		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
+		    ifp->if_xname, why);
 	return (0);
 }
 

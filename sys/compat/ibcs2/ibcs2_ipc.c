@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.12.2.1 2001/03/05 22:49:21 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.12.2.2 2001/06/21 19:59:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 

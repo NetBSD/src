@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.20 2001/02/26 16:37:38 lukem Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.20.2.1 2001/06/21 20:09:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -90,7 +90,6 @@ struct filedesc0 {
  * Per-process open flags.
  */
 #define	UF_EXCLOSE 	0x01		/* auto-close on exec */
-#define	UF_MAPPED 	0x02		/* mapped from device */
 
 /*
  * Storage required per open file descriptor.
@@ -103,6 +102,7 @@ struct filedesc0 {
  */
 int	dupfdopen(struct proc *p, int indx, int dfd, int mode, int error);
 int	fdalloc(struct proc *p, int want, int *result);
+void	fdexpand(struct proc *p);
 int	fdavail(struct proc *p, int n);
 int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
 void	ffree(struct file *);
@@ -116,6 +116,8 @@ void	fdfree(struct proc *p);
 void	fdremove(struct filedesc *, int);
 int	fdrelease(struct proc *p, int);
 void	fdcloseexec(struct proc *);
+
+struct file *fd_getfile(struct filedesc *, int);
 
 struct cwdinfo *cwdinit(struct proc *);
 void	cwdshare(struct proc *, struct proc *);

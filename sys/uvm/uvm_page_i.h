@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_page_i.h,v 1.16 2001/01/28 23:30:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.16.2.1 2001/06/21 20:10:40 nathanw Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -44,17 +44,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -160,10 +160,7 @@ uvm_pagewire(pg)
 			uvmexp.active--;
 		}
 		if (pg->pqflags & PQ_INACTIVE) {
-			if (pg->pqflags & PQ_SWAPBACKED)
-				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-			else
-				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 			pg->pqflags &= ~PQ_INACTIVE;
 			uvmexp.inactive--;
 		}
@@ -173,12 +170,12 @@ uvm_pagewire(pg)
 }
 
 /*
- * uvm_pageunwire: unwire the page.   
+ * uvm_pageunwire: unwire the page.
  *
  * => activate if wire count goes to zero.
  * => caller must lock page queues
  */
- 
+
 PAGE_INLINE void
 uvm_pageunwire(pg)
 	struct vm_page *pg;
@@ -212,10 +209,7 @@ uvm_pagedeactivate(pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
-		if (pg->pqflags & PQ_SWAPBACKED)
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
 
@@ -242,10 +236,7 @@ uvm_pageactivate(pg)
 	struct vm_page *pg;
 {
 	if (pg->pqflags & PQ_INACTIVE) {
-		if (pg->pqflags & PQ_SWAPBACKED)
-			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		uvmexp.inactive--;
 	}

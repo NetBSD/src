@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.35.2.1 2001/06/21 20:00:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -26,7 +26,7 @@
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
 #include "opt_execfmt.h"
 #endif
@@ -421,8 +421,7 @@ sunos_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.8 2000/12/14 07:15:45 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.8.2.1 2001/06/21 20:05:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,6 +81,7 @@
 
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_dereg.h>
+#include <dev/qbus/if_uba.h>
 
 #include "ioconf.h"
 
@@ -88,8 +89,8 @@
  * Be careful with transmit/receive buffers, each entry steals 4 map
  * registers, and there is only 496 on one unibus...
  */
-#define NRCV	10	/* number of receive buffers (must be > 1) */
-#define NXMT	10	/* number of transmit buffers */
+#define NRCV	7	/* number of receive buffers (must be > 1) */
+#define NXMT	3	/* number of transmit buffers */
 
 /*
  * Structure containing the elements that must be in DMA-safe memory.
@@ -100,7 +101,6 @@ struct	de_cdata {
 	struct	de_ring dc_xrent[NXMT]; /* transmit ring entrys */
 	struct	de_ring dc_rrent[NRCV]; /* receive ring entrys */
 	struct	de_udbbuf dc_udbbuf;	/* UNIBUS data buffer */
-	char	dc_xbuf[NXMT][ETHER_MAX_LEN];
 	/* end mapped area */
 };
 
@@ -124,11 +124,15 @@ struct	de_softc {
 	bus_space_tag_t sc_iot;
 	bus_addr_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_cmap;
+	int	sc_flags;
+#define	DSF_MAPPED	1
+	struct ubinfo sc_ui;
 	struct de_cdata *sc_dedata;	/* Control structure */
 	struct de_cdata *sc_pdedata;	/* Bus-mapped control structure */
-	bus_dmamap_t sc_rcvmap[NRCV];	/* unibus receive maps */
-	struct mbuf *sc_rxmbuf[NRCV];
+	struct	ifubinfo sc_ifuba;      /* UNIBUS resources */
+	struct	ifrw sc_ifr[NRCV];      /* UNIBUS receive buffer maps */
+	struct	ifxmt sc_ifw[NXMT];     /* UNIBUS receive buffer maps */
+
 	int	sc_xindex;		/* UNA index into transmit chain */
 	int	sc_rindex;		/* UNA index into receive chain */
 	int	sc_xfree;		/* index for next transmit buffer */
@@ -139,13 +143,13 @@ struct	de_softc {
 static	int dematch(struct device *, struct cfdata *, void *);
 static	void deattach(struct device *, struct device *, void *);
 static	void dewait(struct de_softc *, char *);
-static	void deinit(struct de_softc *);
+static	int deinit(struct ifnet *);
 static	int deioctl(struct ifnet *, u_long, caddr_t);
 static	void dereset(struct device *);
+static	void destop(struct ifnet *, int);
 static	void destart(struct ifnet *);
 static	void derecv(struct de_softc *);
 static	void deintr(void *);
-static	int de_add_rxbuf(struct de_softc *, int);
 static	void deshutdown(void *);
 
 struct	cfattach de_ca = {
@@ -175,8 +179,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	struct de_softc *sc = (struct de_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	int csr1, rseg, error, i;
-	bus_dma_segment_t seg;
+	int csr1, error;
 	char *c;
 
 	sc->sc_iot = ua->ua_iot;
@@ -205,68 +208,16 @@ deattach(struct device *parent, struct device *self, void *aux)
 	DE_WCSR(DE_PCSR0, PCSR0_RSET);
 	dewait(sc, "reset");
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct de_cdata), NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate control data, error = %d\n",
-		    error);
-		goto fail_0;
-	}
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct de_cdata), (caddr_t *)&sc->sc_dedata,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf(": unable to map control data, error = %d\n", error);
-		goto fail_1;
-	}
-
-	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct de_cdata),
-	    1, sizeof(struct de_cdata), 0, BUS_DMA_NOWAIT,
-	    &sc->sc_cmap)) != 0) {
-		printf(": unable to create control data DMA map, error = %d\n",
-		    error);
-		goto fail_2;
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
-	    sc->sc_dedata, sizeof(struct de_cdata), NULL,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load control data DMA map, error = %d\n",
-		    error);
-		goto fail_3;
-	}
-
-	bzero(sc->sc_dedata, sizeof(struct de_cdata));
-	sc->sc_pdedata = (struct de_cdata *)sc->sc_cmap->dm_segs[0].ds_addr;
-
-	/*
-	 * Create receive buffer DMA maps.
-	 */
-	for (i = 0; i < NRCV; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-		    &sc->sc_rcvmap[i]))) {
-			printf(": unable to create rx DMA map %d, error = %d\n",
-			    i, error);
-			goto fail_5;
-		}
-	}
-
-	/*
-	 * Pre-allocate the receive buffers.
-	 */
-	for (i = 0; i < NRCV; i++) {
-		if ((error = de_add_rxbuf(sc, i)) != 0) {
-			printf(": unable to allocate or map rx buffer %d\n,"
-			    " error = %d\n", i, error);
-			goto fail_6;
-		}
-	}
+	sc->sc_ui.ui_size = sizeof(struct de_cdata);
+	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0)))
+		return printf(": failed ubmemalloc(), error = %d\n", error);
+	sc->sc_dedata = (struct de_cdata *)sc->sc_ui.ui_vaddr;
 
 	/*
 	 * Tell the DEUNA about our PCB
 	 */
-	DE_WCSR(DE_PCSR2, LOWORD(sc->sc_pdedata));
-	DE_WCSR(DE_PCSR3, HIWORD(sc->sc_pdedata));
+	DE_WCSR(DE_PCSR2, LOWORD(sc->sc_ui.ui_baddr));
+	DE_WCSR(DE_PCSR3, HIWORD(sc->sc_ui.ui_baddr));
 	DE_WLOW(CMD_GETPCBB);
 	dewait(sc, "pcbb");
 
@@ -289,41 +240,27 @@ deattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI;
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
+	ifp->if_init = deinit;
+	ifp->if_stop = destop;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
+	ubmemfree((struct uba_softc *)parent, &sc->sc_ui);
 
 	sc->sc_sh = shutdownhook_establish(deshutdown, sc);
-	return;
-
-	/*
-	 * Free any resources we've allocated during the failed attach
-	 * attempt.  Do this in reverse order and fall through.
-	 */
-fail_6:
-	for (i = 0; i < NRCV; i++) {
-		if (sc->sc_rxmbuf[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
-			m_freem(sc->sc_rxmbuf[i]);
-		}
-	}
-fail_5:
-	for (i = 0; i < NRCV; i++) {
-		if (sc->sc_rcvmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
-	}
-
-fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dedata,
-	    sizeof(struct de_cdata));
-fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-fail_0:
-	return;
 }
+
+void
+destop(struct ifnet *ifp, int a)
+{
+	struct de_softc *sc = ifp->if_softc;
+
+	DE_WLOW(0);
+	DELAY(5000);
+	DE_WLOW(PCSR0_RSET);
+}
+
 
 /*
  * Reset of interface after UNIBUS reset.
@@ -334,24 +271,47 @@ dereset(struct device *dev)
 	struct de_softc *sc = (void *)dev;
 
 	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_flags &= ~DSF_MAPPED;
 	sc->sc_pdedata = NULL;	/* All mappings lost */
 	DE_WCSR(DE_PCSR0, PCSR0_RSET);
 	dewait(sc, "reset");
-	deinit(sc);
+	deinit(&sc->sc_if);
 }
 
 /*
  * Initialization of interface; clear recorded pending
  * operations, and reinitialize UNIBUS usage.
  */
-void
-deinit(struct de_softc *sc)
+int
+deinit(struct ifnet *ifp)
 {
+	struct de_softc *sc = ifp->if_softc;
 	struct de_cdata *dc, *pdc;
-	int s, i;
+	struct ifrw *ifrw;
+	struct ifxmt *ifxp;
+	struct de_ring *rp;
+	int s, error;
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
-		return;
+	if (ifp->if_flags & IFF_RUNNING)
+		return 0;
+	if ((sc->sc_flags & DSF_MAPPED) == 0) {
+		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
+			printf("%s: can't initialize\n", sc->sc_dev.dv_xname);
+			ifp->if_flags &= ~IFF_UP;
+			return 0;
+		}
+		sc->sc_ui.ui_size = sizeof(struct de_cdata);
+		if ((error = ubmemalloc((void *)sc->sc_dev.dv_parent,
+		    &sc->sc_ui, 0))) {
+			printf(": unable to ubmemalloc(), error = %d\n", error);
+			return 0;
+		}
+		sc->sc_pdedata = (struct de_cdata *)sc->sc_ui.ui_baddr;
+		sc->sc_dedata = (struct de_cdata *)sc->sc_ui.ui_vaddr;
+		sc->sc_flags |= DSF_MAPPED;
+	}
+
 	/*
 	 * Tell the DEUNA about our PCB
 	 */
@@ -387,14 +347,21 @@ deinit(struct de_softc *sc)
 	dewait(sc, "wtmode");
 
 	/* set up the receive and transmit ring entries */
-	for (i = 0; i < NXMT; i++) {
-		dc->dc_xrent[i].r_flags = 0;
-		dc->dc_xrent[i].r_segbl = LOWORD(&pdc->dc_xbuf[i][0]);
-		dc->dc_xrent[i].r_segbh = HIWORD(&pdc->dc_xbuf[i][0]);
+	ifxp = &sc->sc_ifw[0];
+	for (rp = &dc->dc_xrent[0]; rp < &dc->dc_xrent[NXMT]; rp++) {
+		rp->r_segbl = LOWORD(ifxp->ifw_info);
+		rp->r_segbh = HIWORD(ifxp->ifw_info);
+		rp->r_flags = 0;
+		ifxp++;
 	}
-
-	for (i = 0; i < NRCV; i++)
-		dc->dc_rrent[i].r_flags = RFLG_OWN;
+	ifrw = &sc->sc_ifr[0];
+	for (rp = &dc->dc_rrent[0]; rp < &dc->dc_rrent[NRCV]; rp++) {
+		rp->r_slen = MCLBYTES - 2;
+		rp->r_segbl = LOWORD(ifrw->ifrw_info);
+		rp->r_segbh = HIWORD(ifrw->ifrw_info);
+		rp->r_flags = RFLG_OWN;
+		ifrw++;
+	}
 
 	/* start up the board (rah rah) */
 	s = splnet();
@@ -404,6 +371,7 @@ deinit(struct de_softc *sc)
 	destart(&sc->sc_if);		/* queue output packets */
 	DE_WLOW(CMD_START|PCSR0_INTE);
 	splx(s);
+	return 0;
 }
 
 /*
@@ -419,7 +387,7 @@ destart(struct ifnet *ifp)
 	struct de_cdata *dc;
 	struct de_ring *rp;
 	struct mbuf *m;
-	int nxmit;
+	int nxmit, len;
 
 	/*
 	 * the following test is necessary, since
@@ -433,20 +401,20 @@ destart(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
+
 		rp = &dc->dc_xrent[sc->sc_xfree];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
-		m_copydata(m, 0, m->m_pkthdr.len, &dc->dc_xbuf[sc->sc_xfree][0]);
-		rp->r_slen = m->m_pkthdr.len;
-		rp->r_tdrerr = 0;
-		rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		m_freem(m);
+		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->sc_xfree], m);
+		rp->r_slen = len;
+		rp->r_tdrerr = 0;
+		rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
+
 		sc->sc_xfree++;
 		if (sc->sc_xfree == NXMT)
 			sc->sc_xfree = 0;
@@ -464,6 +432,7 @@ destart(struct ifnet *ifp)
 void
 deintr(void *arg)
 {
+	struct ifxmt *ifxp;
 	struct de_cdata *dc;
 	struct de_softc *sc = arg;
 	struct de_ring *rp;
@@ -492,7 +461,9 @@ deintr(void *arg)
 		rp = &dc->dc_xrent[sc->sc_xindex];
 		if (rp->r_flags & XFLG_OWN)
 			break;
+
 		sc->sc_if.if_opackets++;
+		ifxp = &sc->sc_ifw[sc->sc_xindex];
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
 			if (rp->r_flags & XFLG_ERRS) {
@@ -506,6 +477,7 @@ deintr(void *arg)
 				sc->sc_if.if_collisions += 2;	/* guess */
 			}
 		}
+		if_ubaend(&sc->sc_ifuba, ifxp);
 		/* check if next transmit buffer also finished */
 		sc->sc_xindex++;
 		if (sc->sc_xindex == NXMT)
@@ -548,18 +520,18 @@ derecv(struct de_softc *sc)
 			sc->sc_if.if_ierrors++;
 			goto next;
 		}
-		m = sc->sc_rxmbuf[sc->sc_rindex];
+		m = if_ubaget(&sc->sc_ifuba, &sc->sc_ifr[sc->sc_rindex],
+		    ifp, len);
+		if (m == 0) {
+			sc->sc_if.if_ierrors++;
+			goto next;
+		}
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		if (de_add_rxbuf(sc, sc->sc_rindex) == 0) {
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = len;
-			(*ifp->if_input)(ifp, m);
-		} else
-			sc->sc_if.if_ierrors++;
+		(*ifp->if_input)(ifp, m);
 
 		/* hang the receive buffer again */
 next:		rp->r_lenerr = 0;
@@ -574,137 +546,19 @@ next:		rp->r_lenerr = 0;
 }
 
 /*
- * Add a receive buffer to the indicated descriptor.
- */
-int
-de_add_rxbuf(sc, i) 
-	struct de_softc *sc;
-	int i;
-{
-	struct mbuf *m;
-	struct de_ring *rp;
-	vaddr_t addr;
-	int error;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (ENOBUFS);
-
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	if (sc->sc_rxmbuf[i] != NULL)
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
-	if (error)
-		panic("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, i, error);
-	sc->sc_rxmbuf[i] = m;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rcvmap[i], 0,
-	    sc->sc_rcvmap[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
-
-	/*
-	 * We know that the mbuf cluster is page aligned. Also, be sure
-	 * that the IP header will be longword aligned.
-	 */
-	m->m_data += 2;
-	addr = sc->sc_rcvmap[i]->dm_segs[0].ds_addr + 2;
-	rp = &sc->sc_dedata->dc_rrent[i];
-	rp->r_lenerr = 0;
-	rp->r_segbl = LOWORD(addr);
-	rp->r_segbh = HIWORD(addr);
-	rp->r_slen = m->m_ext.ext_size - 2;
-	rp->r_flags = RFLG_OWN;
-
-	return (0);
-}
-
-
-/*
  * Process an ioctl request.
  */
 int
 deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
-	struct de_softc *sc = ifp->if_softc;
-	int s = splnet(), error = 0;
+	int s, error = 0;
 
-	switch (cmd) {
+	s = splnet();
 
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			deinit(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET)
+		error = 0;
 
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running,
-			 * stop it.
-			 */
-			DE_WLOW(0);
-			DELAY(5000);
-			DE_WLOW(PCSR0_RSET);
-			ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface it marked up and it is stopped, then
-			 * start it.
-			 */
-			deinit(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Send a new setup packet to match any new changes.
-			 * (Like IFF_PROMISC etc)
-			 */
-			sc->sc_dedata->dc_pcbb.pcbb0 = FC_WTMODE;
-			sc->sc_dedata->dc_pcbb.pcbb2 =
-			    MOD_TPAD|MOD_HDX|MOD_DRDC|MOD_ENAL;
-			if (ifp->if_flags & IFF_PROMISC)
-				sc->sc_dedata->dc_pcbb.pcbb2 |= MOD_PROM;
-			DE_WLOW(CMD_GETCMD|PCSR0_INTE);
-			dewait(sc, "chgmode");
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		/*
-		 * Update our multicast list.
-		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			error = 0;
-		}
-		break;
-
-	default:
-		error = EINVAL;
-	}
 	splx(s);
 	return (error);
 }

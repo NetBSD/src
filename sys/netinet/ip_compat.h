@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.21.2.1 2001/04/09 01:58:20 nathanw Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.21.2.2 2001/06/21 20:08:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -361,7 +361,6 @@ typedef struct {
 #  define	IWCOPYPTR	iwcopyptr
 #  define	FREE_MB_T(m)	freemsg(m)
 #  define	SPL_NET(x)	;
-#  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
 #  ifdef sparc
@@ -516,7 +515,6 @@ extern	vm_map_t	kmem_map;
 #  define	SPL_X(x)	(void) splx(x)
 # else
 #  if !SOLARIS && !defined(linux)
-#   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
@@ -538,7 +536,6 @@ extern	vm_map_t	kmem_map;
 # define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
-# define	SPL_IMP(x)	;
 # undef		SPL_X
 # define	SPL_X(x)	;
 # define	KMALLOC(a,b)	(a) = (b)malloc(sizeof(*a))
@@ -755,7 +752,7 @@ typedef	struct	{
 	__u32	th_seq;
 	__u32	th_ack;
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(vax)
+    defined(__vax__)
 	__u8	th_res:4;
 	__u8	th_off:4;
 #else
@@ -777,7 +774,7 @@ typedef	struct	{
 
 typedef	struct	{
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(vax)
+    defined(__vax__)
 	__u8	ip_hl:4;
 	__u8	ip_v:4;
 # else
@@ -881,7 +878,6 @@ typedef	struct	uio	{
 #  include <linux/netdevice.h>
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
-#  define	SPL_IMP(x)
  
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)

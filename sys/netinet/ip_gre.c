@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.15 2000/12/12 18:00:31 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.15.2.1 2001/06/21 20:08:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
 
-	s = splimp();		/* possible */
+	s = splnet();		/* possible */
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -315,7 +315,7 @@ gre_mobile_input(m, va_alist)
 #endif /*NBPFILTER > 0*/
 
 	ifq = &ipintrq;
-	s = splimp();       /* possible */
+	s = splnet();       /* possible */
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

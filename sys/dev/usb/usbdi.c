@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.79 2001/01/21 02:39:53 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.79.2.1 2001/06/21 20:06:30 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -294,28 +294,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (!xfer->done) {
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done\n");
-		/* XXX Temporary hack XXX */
-		if (xfer->flags & USBD_NO_TSLEEP) {
-			int i;
-			usbd_bus_handle bus = pipe->device->bus;
-			int to = xfer->timeout * 1000;
-			DPRINTFN(2,("usbd_transfer: polling\n"));
-			for (i = 0; i < to; i += 10) {
-				delay(10);
-				bus->methods->do_poll(bus);
-				if (xfer->done)
-					break;
-			}
-			DPRINTFN(2,("usbd_transfer: polling done =\n",
-			    xfer->done));
-			/* XXX Is this right, what about the HC timeout? */
-			if (!xfer->done) {
-				pipe->methods->abort(xfer);
-				xfer->status = USBD_TIMEOUT;
-			}
-		} else
-		/* XXX End hack XXX */
-			tsleep(xfer, PRIBIO, "usbsyn", 0);
+		tsleep(xfer, PRIBIO, "usbsyn", 0);
 	}
 	splx(s);
 	return (xfer->status);
@@ -1017,6 +996,12 @@ usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
 const struct usbd_quirks *
 usbd_get_quirks(usbd_device_handle dev)
 {
+#ifdef DIAGNOSTIC
+	if (dev == NULL) {
+		printf("usbd_get_quirks: dev == NULL\n");
+		return 0;
+	}
+#endif
 	return (dev->quirks);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.4 1999/03/27 01:24:50 aidan Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.4.20.1 2001/06/21 20:08:22 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -65,7 +65,7 @@ atintr()
 	int             s;
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 
 		IF_DEQUEUE(&atintrq2, m);
 
@@ -87,7 +87,7 @@ atintr()
 	}
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 
 		IF_DEQUEUE(&atintrq1, m);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: seeq8003reg.h,v 1.1 2000/09/22 05:48:50 soren Exp $	*/
+/*	$NetBSD: seeq8003reg.h,v 1.1.4.1 2001/06/21 20:03:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -28,7 +28,8 @@
 /*
  * Register definitions for the Seeq 8003 and 80C03 ethernet controllers
  *
- * Based on documentation at http://www.lsilogic.com/techlib/seeq/80c03.pdf .
+ * Based on documentation available at
+ * http://www.lsilogic.com/techlib/techdocs/networking/eol/80c03.pdf .
  */
 
 #define	SEEQ_ADDR0	0		/* Station Address Byte 0 */
@@ -56,7 +57,7 @@
 #define RXCMD_IE_SHORT	0x08		/* Interrupt on Short Frame */
 #define RXCMD_IE_END	0x10		/* Interrupt on End of Frame */
 #define RXCMD_IE_GOOD	0x20		/* Interrupt on Good Frame */
-#define RXCMD_REC_MASK	0xf0		/* Receiver Match Mode Mask */
+#define RXCMD_REC_MASK	0xc0		/* Receiver Match Mode Mask */
 #define RXCMD_REC_NONE	0x00		/* Receiver Disabled */
 #define RXCMD_REC_ALL	0x40		/* Receive All Frames */
 #define RXCMD_REC_BROAD	0x80		/* Receive Station/Broadcast Frames */

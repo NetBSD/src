@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.1 2001/03/05 22:49:48 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.2 2001/06/21 20:07:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -462,8 +462,16 @@ sys_unmount(l, v, retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, 0, 0))
+	/*
+	 * XXX Freeze syncer.  Must do this before locking the
+	 * mount point.  See dounmount() for details.
+	 */
+	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+
+	if (vfs_busy(mp, 0, 0)) {
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		return (EBUSY);
+	}
 
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
@@ -488,13 +496,21 @@ dounmount(mp, flags, p)
 	used_syncer = (mp->mnt_syncer != NULL);
 
 	/*
-	 * XXX Freeze syncer. This should really be done on a mountpoint
-	 * basis, but especially the softdep code possibly called from
-	 * the syncer doesn't exactly work on a per-mountpoint basis,
-	 * so the softdep code would become a maze of vfs_busy calls.
+	 * XXX Syncer must be frozen when we get here.  This should really
+	 * be done on a per-mountpoint basis, but especially the softdep
+	 * code possibly called from the syncer doens't exactly work on a
+	 * per-mountpoint basis, so the softdep code would become a maze
+	 * of vfs_busy() calls.
+	 *
+	 * The caller of dounmount() must acquire syncer_lock because
+	 * the syncer itself acquires locks in syncer_lock -> vfs_busy
+	 * order, and we must preserve that order to avoid deadlock.
+	 *
+	 * So, if the file system did not use the syncer, now is
+	 * the time to release the syncer_lock.
 	 */
-	if (used_syncer)
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	if (used_syncer == 0)
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 
 	mp->mnt_flag |= MNT_UNMOUNT;
 	mp->mnt_unmounter = p;
@@ -1063,6 +1079,7 @@ sys_open(l, v, retval)
 	}
 	VOP_UNLOCK(vp, 0);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return (0);
 }
@@ -1234,6 +1251,7 @@ sys_fhopen(l, v, retval)
 	}
 	VOP_UNLOCK(vp, 0);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return (0);
 
@@ -1641,9 +1659,7 @@ sys_lseek(l, v, retval)
 	off_t newoff;
 	int error;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1702,10 +1718,10 @@ sys_pread(l, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1756,10 +1772,10 @@ sys_preadv(l, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1810,10 +1826,10 @@ sys_pwrite(l, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1864,10 +1880,10 @@ sys_pwritev(l, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -3134,9 +3150,7 @@ getvnode(fdp, fd, fpp)
 	struct vnode *vp;
 	struct file *fp;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

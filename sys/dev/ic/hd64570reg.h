@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.6 2001/03/01 00:40:41 itojun Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.6.2.1 2001/06/21 20:02:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -318,7 +318,7 @@ struct hdlc_llc_header {
 #define	SCA_CTL_IDLC_MASK	0x10	/* control idle state */
 #define	SCA_CTL_IDLC_MARK	0x00	/* transmit mark in idle state */
 #define SCA_CTL_IDLC_PATTERN	0x10	/* tranmist idle pattern */
-#define SCA_CTL_UDRNC_MASK	0x20	/* control underun state */
+#define SCA_CTL_UDRNC_MASK	0x20	/* control underrun state */
 #define	SCA_CTL_UDRNC_AFTER_ABORT	0x00	/* idle after aborting trans */
 #define SCA_CTL_UDRNC_AFTER_FCS	0x20	/* idle after FCS and flag trans */
 
@@ -354,7 +354,7 @@ struct hdlc_llc_header {
 #define SCA_TXS_CLK_MASK	0x70	/* which clock source */
 #define SCA_TXS_CLK_LINE	0x00	/* TXC line input */
 #define SCA_TXS_CLK_INTERNAL	0x40	/* Baud Rate Gen. output */
-#define SCA_TXS_CLK_RXCLK	0x60	/* Recieve clock */
+#define SCA_TXS_CLK_RXCLK	0x60	/* Receive clock */
 
 #define SCA_ST0_RXRDY           0x01
 #define SCA_ST0_TXRDY           0x02

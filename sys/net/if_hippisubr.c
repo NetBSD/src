@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.10 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.10.2.1 2001/06/21 20:08:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -107,7 +107,6 @@ hippi_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 
 	/* HIPPI doesn't really do broadcast or multicast right now */
 	if (m->m_flags & (M_BCAST | M_MCAST))
@@ -219,7 +218,7 @@ hippi_output(ifp, m0, dst, rt0)
 	}
 
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -268,7 +267,6 @@ hippi_input(ifp, m)
 
 	hh = mtod(m, struct hippi_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (hh->hi_le.le_dest_addr[0] & 1) {
 		if (bcmp((caddr_t)etherbroadcastaddr, 
@@ -309,7 +307,7 @@ hippi_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
@@ -337,7 +335,7 @@ hippi_ip_input(ifp, m)
 	schednetisr(NETISR_IP);
 	inq = &ipintrq;
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

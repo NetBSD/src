@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.30 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.30.2.1 2001/06/21 20:04:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,11 +91,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -119,7 +114,7 @@ struct cfattach le_pci_ca = {
 	sizeof(struct le_softc), le_pci_match, le_pci_attach
 };
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
@@ -205,7 +200,7 @@ le_pci_mediachange(sc)
 				sc->sc_initmodemedia = 1; /* UTP */
 			else
 				sc->sc_initmodemedia = 0; /* AUI */
-			lance_init(sc);
+			lance_init(&sc->sc_ethercom.ec_if);
 
 			if (IFM_SUBTYPE(lesc->sc_currentmedia) == IFM_AUTO) {
 				/* take away autoselect - BCR2 bit 1 */

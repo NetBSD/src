@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.44.2.1 2001/04/09 01:57:10 nathanw Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.44.2.2 2001/06/21 20:05:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -86,6 +86,7 @@ struct pci_attach_args {
 	pci_chipset_tag_t pa_pc;
 	int		pa_flags;	/* flags; see below */
 
+	u_int		pa_bus;
 	u_int		pa_device;
 	u_int		pa_function;
 	pcitag_t	pa_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.2 2001/06/21 20:06:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -423,9 +423,10 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
 	struct file *fp = NULL;
 	struct filedesc *fdp = curp->p_fd;
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	return ktrace_common(curp, SCARG(uap, ops),
@@ -491,6 +492,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
 		fp->f_data = (caddr_t)vp;
+		FILE_SET_MATURE(fp);
 		vp = NULL;
 	}
 	error = ktrace_common(curp, SCARG(uap, ops), SCARG(uap, facs),

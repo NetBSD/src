@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.57 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.57.2.1 2001/06/21 20:06:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -48,7 +48,7 @@
 #include <uvm/uvm_extern.h>
 
 static struct vm_map_intrsafe kmem_map_store;
-vm_map_t kmem_map = NULL;
+struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"
 
@@ -230,6 +230,10 @@ malloc(size, type, flags)
 
 	if (__predict_false(((unsigned long)type) > M_LAST))
 		panic("malloc - bogus type");
+#endif
+#ifdef LOCKDEBUG
+	if ((flags & M_NOWAIT) == 0)
+		simple_lock_only_held(NULL, "malloc");
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
@@ -569,6 +573,11 @@ realloc(curaddr, newsize, type, flags)
 		free(curaddr, type);
 		return (NULL);
 	}
+
+#ifdef LOCKDEBUG
+	if ((flags & M_NOWAIT) == 0)
+		simple_lock_only_held(NULL, "realloc");
+#endif
 
 	/*
 	 * Find out how large the old allocation was (and do some

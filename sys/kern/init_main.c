@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.2 2001/04/09 01:57:51 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.3 2001/06/21 20:06:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
+#include "opt_new_pipe.h"
 #include "opt_syscall_debug.h"
 
 #include "rnd.h"
@@ -92,6 +93,9 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+#ifdef NEW_PIPE
+#include <sys/pipe.h>
+#endif
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -108,13 +112,12 @@
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-const char copyright[] = "\
-Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
-    The NetBSD Foundation, Inc.  All rights reserved.
-Copyright (c) 1982, 1986, 1989, 1991, 1993
-    The Regents of the University of California.  All rights reserved.
-
-";
+const char copyright[] = "\n"
+"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001\n"
+"    The NetBSD Foundation, Inc.  All rights reserved.\n"
+"Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
+"    The Regents of the University of California.  All rights reserved.\n"
+"\n";
 
 /* Components of the first process -- never freed. */
 struct	session session0;
@@ -366,7 +369,7 @@ main(void)
 	 * Initialize protocols.  Block reception of incoming packets
 	 * until everything is ready.
 	 */
-	s = splimp();
+	s = splnet();
 	ifinit();
 	domaininit();
 	splx(s);
@@ -502,6 +505,11 @@ main(void)
 
 	/* Initialize exec structures */
 	exec_init(1);
+
+#ifdef NEW_PIPE
+	/* Initialize pipe structures */
+	pipe_init();
+#endif
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.10.2.1 2001/03/05 22:50:03 nathanw Exp $ */
+/* $NetBSD: sched.h,v 1.10.2.2 2001/06/21 20:09:52 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
@@ -162,8 +162,8 @@ struct schedstate_percpu {
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
 
-int	schedhz;			/* ideally: 16 */
-int	rrticks;			/* ticks per roundrobin() */
+extern int schedhz;			/* ideally: 16 */
+extern int rrticks;			/* ticks per roundrobin() */
 
 /*
  * Global scheduler state.  We would like to group these all together
@@ -194,7 +194,7 @@ void roundrobin(struct cpu_info *);
 #define	scheduler_fork_hook(parent, child)				\
 do {									\
 	(child)->p_estcpu = (parent)->p_estcpu;				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * scheduler_wait_hook:
@@ -206,7 +206,7 @@ do {									\
 	/* XXX Only if parent != init?? */				\
 	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu +		\
 	    (child)->p_estcpu);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>
@@ -220,13 +220,13 @@ extern struct simplelock sched_lock;
 do {									\
 	s = splsched();							\
 	simple_lock(&sched_lock);					\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	SCHED_UNLOCK(s)							\
 do {									\
 	simple_unlock(&sched_lock);					\
 	splx(s);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 void	sched_lock_idle(void);
 void	sched_unlock_idle(void);

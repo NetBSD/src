@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.37.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.37.2.2 2001/06/21 20:09:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,8 @@
 #include <sys/stat.h>
 #include <sys/protosw.h>
 #include <sys/signalvar.h>
+
+#include <miscfs/syncfs/syncfs.h>
 
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
@@ -1051,8 +1053,14 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	sleepreturn = 0;
 	while ((nmp->nm_iflag & NFSMNT_DISMNT) == 0) {
 	    if (sleepreturn == EINTR || sleepreturn == ERESTART) {
-		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) == 0 &&
-		    dounmount(nmp->nm_mountp, 0, p) != 0)
+		/*
+		 * XXX Freeze syncer.  Must do this before locking
+		 * the mount point.  See dounmount() for details.
+		 */
+		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) != 0)
+			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		else if (dounmount(nmp->nm_mountp, 0, p) != 0)
 			CLRSIG(p, CURSIG(l));
 		sleepreturn = 0;
 		continue;

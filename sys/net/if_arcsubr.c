@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.34 2001/01/17 00:30:50 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.34.2.1 2001/06/21 20:07:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -139,7 +139,6 @@ arc_output(ifp, m0, dst, rt0)
 
 	myself = *LLADDR(ifp->if_sadl);
 
-	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1)))
@@ -298,7 +297,7 @@ arc_output(ifp, m0, dst, rt0)
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
-			s = splimp();
+			s = splnet();
 			/*
 			 * Queue message on interface, and start output if 
 			 * interface not yet active.
@@ -358,7 +357,7 @@ arc_output(ifp, m0, dst, rt0)
 		ah->arc_dhost = adst;
 		ah->arc_shost = myself;
 	}
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -576,7 +575,6 @@ arc_input(ifp, m)
 
 	ah = mtod(m, struct arc_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (arcbroadcastaddr == ah->arc_dhost) {
@@ -630,7 +628,7 @@ arc_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.7 2000/03/20 22:53:36 enami Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.7.6.1 2001/06/21 20:02:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -117,8 +117,8 @@ struct aic_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct scsipi_link sc_link;	/* prototype for subdevs */
 	struct scsipi_adapter sc_adapter;
+	struct scsipi_channel sc_channel;
 
 	TAILQ_HEAD(, aic_acb) free_list, ready_list, nexus_list;
 	struct aic_acb *sc_nexus;	/* current command */
@@ -185,13 +185,24 @@ struct aic_softc {
 #define AIC_SHOWSTART	0x20
 #define AIC_DOBREAK	0x40
 extern int aic_debug; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
-#define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
-#define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
-#define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	AIC_PRINT(b, s)	do { \
+				if ((aic_debug & (b)) != 0) \
+					printf s; \
+			} while (/* CONSTCOND */ 0)
+#define	AIC_BREAK()	do { \
+				if ((aic_debug & AIC_DOBREAK) != 0) \
+					Debugger(); \
+		    	} while (/* CONSTCOND */ 0)
+#define	AIC_ASSERT(x)	do { \
+			if (! (x)) { \
+				printf("%s at line %d: assertion failed\n", \
+				    sc->sc_dev.dv_xname, __LINE__); \
+				Debugger(); \
+			} } while (/* CONSTCOND */ 0)
 #else
-#define	AIC_PRINT(b, s)
-#define	AIC_BREAK()
-#define	AIC_ASSERT(x)
+#define	AIC_PRINT(b, s)	/* NOTHING */
+#define	AIC_BREAK()	/* NOTHING */
+#define	AIC_ASSERT(x)	/* NOTHING */
 #endif
 
 #define AIC_ACBS(s)	AIC_PRINT(AIC_SHOWACBS, s)

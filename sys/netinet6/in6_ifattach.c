@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.34 2001/02/07 08:59:48 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.34.2.1 2001/06/21 20:08:54 nathanw Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.100 2001/02/07 08:25:45 itojun Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ in6_ifattach_addaddr(ifp, ia)
 	 */
 	if (ifp->if_ioctl != NULL) {
 		int s;
-		s = splimp();
+		s = splnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia);
 		splx(s);
 	} else
@@ -434,7 +434,10 @@ in6_ifattach_addaddr(ifp, ia)
 		llsol.s6_addr32[2] = htonl(1);
 		llsol.s6_addr32[3] = ia->ia_addr.sin6_addr.s6_addr32[3];
 		llsol.s6_addr8[12] = 0xff;
-		(void)in6_addmulti(&llsol, ifp, &error);
+		if (!in6_addmulti(&llsol, ifp, &error)) {
+			nd6log((LOG_ERR, "%s: failed to join %s (errno=%d)\n",
+			    if_name(ifp), ip6_sprintf(&llsol), error));
+		}
 
 		/* XXX should we run DAD on other interface types? */
 		switch (ifp->if_type) {
@@ -736,7 +739,12 @@ in6_ifattach(ifp, altifp)
 				  (struct sockaddr *)&mltmask,
 				  RTF_UP|RTF_CLONING,  /* xxx */
 				  (struct rtentry **)0);
-			(void)in6_addmulti(&mltaddr.sin6_addr, ifp, &error);
+			if (!in6_addmulti(&mltaddr.sin6_addr, ifp, &error)) {
+				nd6log((LOG_ERR, "%s: failed to join %s "
+				    "(errno=%d)\n", if_name(ifp),
+				    ip6_sprintf(&mltaddr.sin6_addr),
+				    error));
+			}
 		}
 
 		if (ifp->if_flags & IFF_LOOPBACK) {
@@ -755,7 +763,13 @@ in6_ifattach(ifp, altifp)
 					  (struct sockaddr *)&mltmask,
 					  RTF_UP,
 					  (struct rtentry **)0);
-				(void)in6_addmulti(&mltaddr.sin6_addr, ifp, &error);
+				if (!in6_addmulti(&mltaddr.sin6_addr, ifp,
+				    &error)) {
+					nd6log((LOG_ERR, "%s: failed to join "
+					    "%s (errno=%d)\n", if_name(ifp),
+					    ip6_sprintf(&mltaddr.sin6_addr),
+					    error));
+				}
 			}
 		}
 	}

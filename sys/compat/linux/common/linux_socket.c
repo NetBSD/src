@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.2 2001/04/09 01:55:43 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.3 2001/06/21 19:59:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -480,9 +480,7 @@ linux_getifhwaddr(p, retval, fd, data)
 	 */
 
 	fdp = p->p_fd;
-	if (fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -603,9 +601,7 @@ linux_ioctl_socket(p, uap, retval)
 	struct ioctl_pt pt;
 
         fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.h,v 1.33 2001/01/22 09:53:31 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.33.2.1 2001/06/21 20:10:01 nathanw Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.28 2001/01/22 09:52:21 jdolecek Exp 
+ *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
 
 /*
@@ -1520,7 +1520,7 @@ struct vop_getpages_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	voff_t a_offset;
-	vm_page_t *a_m;
+	struct vm_page **a_m;
 	int *a_count;
 	int a_centeridx;
 	vm_prot_t a_access_type;
@@ -1531,8 +1531,8 @@ extern const struct vnodeop_desc vop_getpages_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_GETPAGES(struct vnode *, voff_t, vm_page_t *, int *, int, vm_prot_t, 
-    int, int)
+int VOP_GETPAGES(struct vnode *, voff_t, struct vm_page **, int *, int, 
+    vm_prot_t, int, int)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
@@ -1541,7 +1541,7 @@ __attribute__((__unused__))
 static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
 	struct vnode *vp;
 	voff_t offset;
-	vm_page_t *m;
+	struct vm_page **m;
 	int *count;
 	int centeridx;
 	vm_prot_t access_type;
@@ -1565,7 +1565,7 @@ static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, a
 struct vop_putpages_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	vm_page_t *a_m;
+	struct vm_page **a_m;
 	int a_count;
 	int a_flags;
 	int *a_rtvals;
@@ -1574,7 +1574,7 @@ extern const struct vnodeop_desc vop_putpages_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_PUTPAGES(struct vnode *, vm_page_t *, int, int, int *)
+int VOP_PUTPAGES(struct vnode *, struct vm_page **, int, int, int *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
@@ -1582,7 +1582,7 @@ __attribute__((__unused__))
 #ifndef VNODE_OP_NOINLINE
 static __inline int VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	struct vnode *vp;
-	vm_page_t *m;
+	struct vm_page **m;
 	int count;
 	int flags;
 	int *rtvals;

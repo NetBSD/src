@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.30 2000/06/05 00:09:18 matt Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.30.4.1 2001/06/21 20:05:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -79,6 +79,7 @@ struct	uba_softc {
 	void	(*uh_ubainit) __P((struct uba_softc *));
 	void	(*uh_ubapurge) __P((struct uba_softc *, int));
 	short	uh_nr;			/* Unibus sequential number */
+	short	uh_type;		/* Type of bus */
 	bus_space_tag_t	uh_iot;		/* Tag for this Unibus */
 	bus_space_handle_t uh_ioh;	/* Handle for I/O space */
 	bus_dma_tag_t	uh_dmat;
@@ -135,6 +136,24 @@ struct uba_attach_args {
 #define	UBA_DONTQUE	0x10		/* Do not enqueue xfer */
 
 /*
+ * Type of adapter.
+ */
+#define	UBA_UBA		0		/* Traditional unibus adapter */
+#define	UBA_MVI		1		/* MVI direct-mapped unibus */
+#define	UBA_QBUS	2		/* Qbus with map registers */
+/*
+ * Struct for unibus allocation.
+ */
+struct ubinfo {
+	bus_dmamap_t ui_dmam;
+	bus_dma_segment_t ui_seg;
+	int ui_rseg;
+	caddr_t ui_vaddr;
+	bus_addr_t ui_baddr;
+	bus_size_t ui_size;
+};
+
+/*
  * Some common defines for all subtypes of U/Q-buses/adapters.
  */
 #define	MAXUBAXFER	(63*1024)	/* Max transfer size in bytes */
@@ -147,6 +166,10 @@ void uba_attach(struct uba_softc *, unsigned long);
 void uba_enqueue(struct uba_unit *);
 void uba_done(struct uba_softc *);
 void ubareset(struct uba_softc *);
+int uballoc(struct uba_softc *, struct ubinfo *, int);
+int ubmemalloc(struct uba_softc *, struct ubinfo *, int);
+void ubfree(struct uba_softc *, struct ubinfo *);
+void ubmemfree(struct uba_softc *, struct ubinfo *);
 #endif /* _KERNEL */
 
 #endif /* _QBUS_UBAVAR_H */

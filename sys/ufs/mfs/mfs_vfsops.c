@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32.2.1 2001/03/05 22:50:08 nathanw Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.32.2.2 2001/06/21 20:10:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -35,7 +35,7 @@
  *	@(#)mfs_vfsops.c	8.11 (Berkeley) 6/19/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -50,6 +50,8 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+
+#include <miscfs/syncfs/syncfs.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -323,8 +325,14 @@ mfs_start(mp, flags, p)
 		 * "processed"), otherwise we will loop here, as tsleep
 		 * will always return EINTR/ERESTART.  */
 		if (sleepreturn != 0) {
-			if (vfs_busy(mp, LK_NOWAIT, 0) ||
-			    dounmount(mp, 0, p) != 0)
+			/*
+			 * XXX Freeze syncer.  Must do this before locking
+			 * the mount point.  See dounmount() for details.
+			 */
+			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
+				lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			else if (dounmount(mp, 0, p) != 0)
 				CLRSIG(p, CURSIG(l));
 			sleepreturn = 0;
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.57 2001/02/08 13:19:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.1 2001/06/21 20:00:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
@@ -96,7 +96,7 @@ extern struct sysent netbsd32_sysent[];
 extern const char * const netbsd32_syscallnames[];
 #endif
 #ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern __P((struct proc *));
+void netbsd32_syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
@@ -117,13 +117,14 @@ const struct emul emul_netbsd32 = {
 	NULL,
 #endif
 	netbsd32_sendsig,
+	trapsignal,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
 	NULL,
 	NULL,
 	NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	netbsd32_syscall_intern,
 #else
 	syscall,
 #endif

@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_gif.c,v 1.18 2001/02/20 10:41:48 itojun Exp $	*/
-/*	$KAME: in6_gif.c,v 1.45 2001/02/20 08:37:00 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.18.2.1 2001/06/21 20:08:54 nathanw Exp $	*/
+/*	$KAME: in6_gif.c,v 1.48 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,34 +150,19 @@ in6_gif_output(ifp, family, m, rt)
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_gif_hlim;
 	ip6->ip6_src	= sin6_src->sin6_addr;
-	if (ifp->if_flags & IFF_LINK0) {
-		/* multi-destination mode */
-		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
-			ip6->ip6_dst = sin6_dst->sin6_addr;
-		else if (rt) {
-			if (family != AF_INET6) {
-				m_freem(m);
-				return EINVAL;	/*XXX*/
-			}
-			ip6->ip6_dst = ((struct sockaddr_in6 *)(rt->rt_gateway))->sin6_addr;
-		} else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	} else {
-		/* bidirectional configured tunnel mode */
-		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
-			ip6->ip6_dst = sin6_dst->sin6_addr;
-		else  {
-			m_freem(m);
-			return ENETUNREACH;
-		}
+	/* bidirectional configured tunnel mode */
+	if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
+		ip6->ip6_dst = sin6_dst->sin6_addr;
+	else  {
+		m_freem(m);
+		return ENETUNREACH;
 	}
-	if (ifp->if_flags & IFF_LINK1) {
-		otos = 0;
+	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
-		ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
-	}
+	else
+		ip_ecn_ingress(ECN_NOCARE, &otos, &itos);
+	ip6->ip6_flow &= ~ntohl(0xff00000);
+	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	if (dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
@@ -264,6 +249,8 @@ int in6_gif_input(mp, offp, proto)
 		ip = mtod(m, struct ip *);
 		if (gifp->if_flags & IFF_LINK1)
 			ip_ecn_egress(ECN_ALLOWED, &otos8, &ip->ip_tos);
+		else
+			ip_ecn_egress(ECN_NOCARE, &otos8, &ip->ip_tos);
 		break;
 	    }
 #endif /* INET */
@@ -280,6 +267,8 @@ int in6_gif_input(mp, offp, proto)
 		ip6 = mtod(m, struct ip6_hdr *);
 		if (gifp->if_flags & IFF_LINK1)
 			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6->ip6_flow);
+		else
+			ip6_ecn_egress(ECN_NOCARE, &otos, &ip6->ip6_flow);
 		break;
 	    }
 #endif
@@ -328,10 +317,6 @@ gif_encapcheck6(m, off, proto, arg)
 		addrmatch |= 1;
 	if (IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6.ip6_src))
 		addrmatch |= 2;
-	else if ((sc->gif_if.if_flags & IFF_LINK0) != 0 &&
-		 IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr)) {
-		addrmatch |= 2; /* we accept any source */
-	}
 	if (addrmatch != 3)
 		return 0;
 
@@ -362,6 +347,5 @@ gif_encapcheck6(m, off, proto, arg)
 		rtfree(rt);
 	}
 
-	/* prioritize: IFF_LINK0 mode is less preferred */
-	return (sc->gif_if.if_flags & IFF_LINK0) ? 128 : 128 * 2;
+	return 128 * 2;
 }

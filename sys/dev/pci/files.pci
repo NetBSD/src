@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123.2.1 2001/04/09 01:56:58 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.2 2001/06/21 20:04:36 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -132,6 +132,10 @@ file	dev/pci/siop_pci_common.c	siop_pci_common
 # device declaration in sys/conf/files
 attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c		siop_pci
+
+# Initio INIC-940/950 SCSI controllers
+attach	iha at pci with iha_pci
+file	dev/pci/iha_pci.c		iha_pci
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
@@ -349,6 +353,11 @@ file	dev/pci/if_vr.c			vr
 device	sip: ether, ifnet, arp, mii
 attach	sip at pci
 file	dev/pci/if_sip.c		sip
+
+# National Semiconductor DP83820 Gigabit Ethernet
+device	gsip: ether, ifnet, arp, mii, mii_bitbang
+attach	gsip at pci
+file	dev/pci/if_gsip.c		gsip
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci

@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.32 2001/02/06 11:40:03 fvdl Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.32.2.1 2001/06/21 20:09:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -208,7 +208,7 @@ int	nfsfifo_write	__P((void *));
 #define	nfs_ioctl	genfs_enoioctl
 #define	nfs_poll	genfs_poll
 #define nfs_revoke	genfs_revoke
-int	nfs_mmap	__P((void *));
+#define	nfs_mmap	genfs_mmap
 int	nfs_fsync	__P((void *));
 #define nfs_seek	genfs_seek
 int	nfs_remove	__P((void *));

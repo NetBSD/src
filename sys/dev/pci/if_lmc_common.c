@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_common.c,v 1.4 2000/06/28 16:08:44 mrg Exp $	*/
+/*	$NetBSD: if_lmc_common.c,v 1.4.2.1 2001/06/21 20:04:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -48,7 +48,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -230,8 +230,7 @@ lmc_reset(lmc_softc_t * const sc)
 	/*
 	 * busy wait for the chip to reset
 	 */
-	while ((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0)
-		;
+	while ((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0);
 
 	/*
 	 * Call media specific init routine

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.47 2000/04/28 08:51:42 jdolecek Exp $	*/
+/*	$NetBSD: pas.c,v 1.47.6.1 2001/06/21 20:03:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -166,8 +166,8 @@ static struct audio_device pas_device = {
 };
 
 /*XXX assume default I/O base address */
-#define pasread(p) inb(p)
-#define paswrite(d, p) outb(p, d)
+#define pasread(p) inb((p))
+#define paswrite(d, p) outb((p), (d))
 
 void
 pasconf(model, sbbase, sbirq, sbdrq)

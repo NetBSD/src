@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.2 2001/04/09 01:56:27 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.3 2001/06/21 20:03:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -845,7 +845,7 @@ esh_fpopen(dev, oflags, devtype, p)
 	 * Create the ring:
 	 *
 	 * XXX:  HTF are we gonna deal with the fact that we don't know
-	 *	 if the open succeeded until we get a responce from 
+	 *	 if the open succeeded until we get a response from 
 	 *	 the event handler?  I guess we could go to sleep waiting
 	 *	 for the interrupt, and get woken up by the eshintr
 	 *       case handling it.
@@ -3222,7 +3222,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 				  (misc_host_ctl & RR_MH_NO_SWAP) | 
 				  RR_MH_HALT_PROC);
 
-		/* Make the EEPROM accessable */
+		/* Make the EEPROM accessible */
 
 		misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
 		value = misc_local_ctl & 

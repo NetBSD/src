@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.57.2.1 2001/03/05 22:49:47 nathanw Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.57.2.2 2001/06/21 20:07:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,6 +36,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_new_pipe.h"
 
 /*
  * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
@@ -103,6 +104,7 @@ sys_socket(struct lwp *l, void *v, register_t *retval)
 		ffree(fp);
 	} else {
 		fp->f_data = (caddr_t)so;
+		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, p);
 		*retval = fd;
 	}
@@ -256,6 +258,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	}
 	m_freem(nam);
 	splx(s);
+	FILE_SET_MATURE(fp);
 	return (error);
 }
 
@@ -364,6 +367,8 @@ sys_socketpair(struct lwp *l, void *v, register_t *retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof(int));
+	FILE_SET_MATURE(fp1);
+	FILE_SET_MATURE(fp2);
 	FILE_UNUSE(fp1, p);
 	FILE_UNUSE(fp2, p);
 	return (error);
@@ -936,6 +941,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 	return (error);
 }
 
+#ifndef NEW_PIPE
 /* ARGSUSED */
 int
 sys_pipe(struct lwp *l, void *v, register_t *retval)
@@ -952,6 +958,9 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0)
 		goto free1;
+	/* remember this socket pair implements a pipe */
+	wso->so_state |= SS_ISAPIPE;
+	rso->so_state |= SS_ISAPIPE;
 	/* falloc() will use the descriptor for us */
 	if ((error = falloc(p, &rf, &fd)) != 0)
 		goto free2;
@@ -969,6 +978,8 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	retval[1] = fd;
 	if ((error = unp_connect2(wso, rso)) != 0)
 		goto free4;
+	FILE_SET_MATURE(rf);
+	FILE_SET_MATURE(wf);
 	FILE_UNUSE(rf, p);
 	FILE_UNUSE(wf, p);
 	return (0);
@@ -986,6 +997,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	(void)soclose(rso);
 	return (error);
 }
+#endif /* !NEW_PIPE */
 
 /*
  * Get socket name.
@@ -1132,9 +1144,7 @@ getsock(struct filedesc *fdp, int fdes, struct file **fpp)
 {
 	struct file	*fp;
 
-	if ((unsigned)fdes >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fdes]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fdes)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

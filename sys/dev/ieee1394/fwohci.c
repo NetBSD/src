@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.1 2001/04/09 01:56:36 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.2 2001/06/21 20:03:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/callout.h>
@@ -62,6 +63,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ieee1394/ieee1394reg.h>
 #include <dev/ieee1394/fwohcireg.h>
@@ -72,9 +74,13 @@
 static const char * const ieee1394_speeds[] = { IEEE1394_SPD_STRINGS };
 
 #if 0
-static int fwohci_dnamem_alloc(struct fwohci_softc *sc, int size, int alignment,
-			       bus_dmamap_t *mapp, caddr_t *kvap, int flags);
+static int fwohci_dnamem_alloc(struct fwohci_softc *sc, int size,
+    int alignment, bus_dmamap_t *mapp, caddr_t *kvap, int flags);
 #endif
+static void fwohci_create_event_thread(void *);
+static void fwohci_thread_init(void *);
+
+static void fwohci_event_thread(struct fwohci_softc *);
 static void fwohci_hw_init(struct fwohci_softc *);
 static void fwohci_power(int, void *);
 static void fwohci_shutdown(void *);
@@ -84,7 +90,7 @@ static struct fwohci_desc *fwohci_desc_get(struct fwohci_softc *, int);
 static void fwohci_desc_put(struct fwohci_softc *, struct fwohci_desc *, int);
 
 static int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
-		int, int);
+    int, int);
 static void fwohci_ctx_free(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_ctx_init(struct fwohci_softc *, struct fwohci_ctx *);
 
@@ -95,9 +101,9 @@ static void fwohci_buf_start(struct fwohci_softc *);
 static void fwohci_buf_stop(struct fwohci_softc *);
 static void fwohci_buf_next(struct fwohci_softc *, struct fwohci_ctx *);
 static int  fwohci_buf_pktget(struct fwohci_softc *, struct fwohci_ctx *,
-		caddr_t *, int);
+    caddr_t *, int);
 static int  fwohci_buf_input(struct fwohci_softc *, struct fwohci_ctx *,
-		struct fwohci_pkt *);
+    struct fwohci_pkt *);
 
 static u_int8_t fwohci_phy_read(struct fwohci_softc *, u_int8_t);
 static void fwohci_phy_write(struct fwohci_softc *, u_int8_t, u_int8_t);
@@ -105,43 +111,61 @@ static void fwohci_phy_busreset(struct fwohci_softc *);
 static void fwohci_phy_input(struct fwohci_softc *, struct fwohci_pkt *);
 
 static int  fwohci_handler_set(struct fwohci_softc *, int, u_int32_t, u_int32_t,
-		int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *),
-		void *);
+    int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *), void *);
 
 static void fwohci_arrq_input(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_arrs_input(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_ir_input(struct fwohci_softc *, struct fwohci_ctx *);
 
 static int  fwohci_at_output(struct fwohci_softc *, struct fwohci_ctx *,
-		struct fwohci_pkt *);
+    struct fwohci_pkt *);
 static void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *, int);
 static void fwohci_atrs_output(struct fwohci_softc *, int, struct fwohci_pkt *,
-		struct fwohci_pkt *);
+    struct fwohci_pkt *);
 
 static int  fwohci_guidrom_init(struct fwohci_softc *);
 static void fwohci_configrom_init(struct fwohci_softc *);
-
+static int  fwohci_configrom_input(struct fwohci_softc *, void *,
+    struct fwohci_pkt *);
 static void fwohci_selfid_init(struct fwohci_softc *);
 static int  fwohci_selfid_input(struct fwohci_softc *);
 
 static void fwohci_csr_init(struct fwohci_softc *);
 static int  fwohci_csr_input(struct fwohci_softc *, void *,
-		struct fwohci_pkt *);
+    struct fwohci_pkt *);
 
 static void fwohci_uid_collect(struct fwohci_softc *);
 static int  fwohci_uid_input(struct fwohci_softc *, void *,
-		struct fwohci_pkt *);
+    struct fwohci_pkt *);
 static int  fwohci_uid_lookup(struct fwohci_softc *, const u_int8_t *);
+static void fwohci_check_nodes(struct fwohci_softc *);
 
 static int  fwohci_if_inreg(struct device *, u_int32_t, u_int32_t,
-		void (*)(struct device *, struct mbuf *));
+    void (*)(struct device *, struct mbuf *));
 static int  fwohci_if_input(struct fwohci_softc *, void *, struct fwohci_pkt *);
 static int  fwohci_if_output(struct device *, struct mbuf *,
-		void (*)(struct device *, struct mbuf *));
+    void (*)(struct device *, struct mbuf *));
+static int  fwohci_read(struct ieee1394_abuf *);
+static int  fwohci_write(struct ieee1394_abuf *);
+static int  fwohci_read_resp(struct fwohci_softc *, void *, struct fwohci_pkt *);
+static int  fwohci_write_ack(struct fwohci_softc *, void *, struct fwohci_pkt *);
+static int  fwohci_read_multi_resp(struct fwohci_softc *, void *,
+    struct fwohci_pkt *);
+static int  fwohci_inreg(struct ieee1394_abuf *, int);
+static int  fwohci_parse_input(struct fwohci_softc *, void *,
+    struct fwohci_pkt *);
+static int  fwohci_submatch(struct device *, struct cfdata *, void *);
 
 #ifdef FW_DEBUG
-int fw_verbose = 1;
-int fw_dump = 0;
+
+/* 1 is normal debug, 2 is verbose debug, 3 is complete (packet dumps). */
+
+#define DPRINTF(x)      if (fwdebug) printf x
+#define DPRINTFN(n,x)   if (fwdebug>(n)) printf x
+int     fwdebug = 0;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 
 int
@@ -171,6 +195,8 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	printf("%s: OHCI %u.%u", sc->sc_sc1394.sc1394_dev.dv_xname,
 	    OHCI_Version_GET_Version(val), OHCI_Version_GET_Revision(val));
 
+	LIST_INIT(&sc->sc_nodelist);
+
 	if (fwohci_guidrom_init(sc) != 0) {
 		printf("\n%s: fatal: no global UID ROM\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname);
@@ -189,11 +215,12 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	sc->sc_sc1394.sc1394_link_speed =
 	    OHCI_BITVAL(val, OHCI_BusOptions_LinkSpd);
 	if (sc->sc_sc1394.sc1394_link_speed < IEEE1394_SPD_MAX) {
-		printf(", %s", ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed]);
+		printf(", %s",
+		    ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed]);
 	} else {
 		printf(", unknown speed %u", sc->sc_sc1394.sc1394_link_speed);
 	}
-
+	
 	/* MaxRec is encoded as log2(max_rec_octets)-1
 	 */
 	sc->sc_sc1394.sc1394_max_receive =
@@ -212,27 +239,180 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	}
 	sc->sc_isoctx = i;
 	printf(", %d iso_ctx", sc->sc_isoctx);
-
+	
 	printf("\n");
 
 #if 0
-	error = fwohci_dnamem_alloc(sc, OHCI_CONFIG_SIZE, OHCI_CONFIG_ALIGNMENT,
-				    &sc->sc_configrom_map,
-				    (caddr_t *) &sc->sc_configrom,
-				    BUS_DMA_WAITOK|BUS_DMA_COHERENT);
+	error = fwohci_dnamem_alloc(sc, OHCI_CONFIG_SIZE,
+	    OHCI_CONFIG_ALIGNMENT, &sc->sc_configrom_map,
+	    (caddr_t *) &sc->sc_configrom, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	return error;
 #endif
 
-	/*
-	 * Enable Link Power
-	 */
-	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet, OHCI_HCControl_LPS);
+	sc->sc_dying = 0;
+
+	kthread_create(fwohci_create_event_thread, sc);
+	return 0;
+}
+
+int
+fwohci_intr(void *arg)
+{
+	struct fwohci_softc * const sc = arg;
+	int progress = 0;
+	u_int32_t intmask, iso;
+
+	for (;;) {
+		intmask = OHCI_CSR_READ(sc, OHCI_REG_IntEventClear);
+
+		/*
+		 * On a bus reset, everything except bus reset gets
+		 * cleared.  That can't get cleared until the selfid
+		 * phase completes (which happens outside the
+		 * interrupt routines). So if just a bus reset is left
+		 * in the mask and it's already in the sc_intmask,
+		 * just return.
+		 */
+
+		if ((intmask == 0) ||
+		    (progress && (intmask == OHCI_Int_BusReset) &&
+			(sc->sc_intmask & OHCI_Int_BusReset))) {
+			if (progress)
+				wakeup(fwohci_event_thread);
+			return progress;
+		}
+		OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
+		    intmask & ~OHCI_Int_BusReset);
+#ifdef FW_DEBUG
+		DPRINTFN(1, ("%s: intmask=0x%08x:",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, intmask));
+		if (intmask & OHCI_Int_CycleTooLong)
+			DPRINTFN(1, (" CycleTooLong"));
+		if (intmask & OHCI_Int_UnrecoverableError)
+			DPRINTFN(1, (" UnrecoverableError"));
+		if (intmask & OHCI_Int_CycleInconsistent)
+			DPRINTFN(1, (" CycleInconsistent"));
+		if (intmask & OHCI_Int_BusReset)
+			DPRINTFN(1, (" BusReset"));
+		if (intmask & OHCI_Int_SelfIDComplete)
+			DPRINTFN(1, (" SelfIDComplete"));
+		if (intmask & OHCI_Int_LockRespErr)
+			DPRINTFN(1, (" LockRespErr"));
+		if (intmask & OHCI_Int_PostedWriteErr)
+			DPRINTFN(1, (" PostedWriteErr"));
+		if (intmask & OHCI_Int_ReqTxComplete)
+			DPRINTFN(1, (" ReqTxComplete(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_REQUEST,
+				OHCI_SUBREG_ContextControlClear)));
+		if (intmask & OHCI_Int_RespTxComplete)
+			DPRINTFN(1, (" RespTxComplete(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_RESPONSE,
+				OHCI_SUBREG_ContextControlClear)));
+		if (intmask & OHCI_Int_ARRS)
+			DPRINTFN(1, (" ARRS(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
+				OHCI_SUBREG_ContextControlClear)));
+		if (intmask & OHCI_Int_ARRQ)
+			DPRINTFN(1, (" ARRQ(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
+				OHCI_SUBREG_ContextControlClear)));
+		if (intmask & OHCI_Int_IsochRx)
+			DPRINTFN(1, (" IsochRx(0x%08x)",
+			    OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear)));
+		if (intmask & OHCI_Int_IsochTx)
+			DPRINTFN(1, (" IsochTx(0x%08x)",
+			    OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear)));
+		if (intmask & OHCI_Int_RQPkt)
+			DPRINTFN(1, (" RQPkt(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
+				OHCI_SUBREG_ContextControlClear)));
+		if (intmask & OHCI_Int_RSPkt)
+			DPRINTFN(1, (" RSPkt(0x%04x)",
+			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
+				OHCI_SUBREG_ContextControlClear)));
+		DPRINTFN(1, ("\n"));
+#endif /* FW_DEBUG */
+
+		if (intmask & OHCI_Int_BusReset) {
+			/*
+			 * According to OHCI spec 6.1.1 "busReset",
+			 * All asynchronous transmit must be stopped before
+			 * clearing BusReset.  Moreover, the BusReset
+			 * interrupt bit should not be cleared during the
+			 * SelfID phase.  Thus we turned off interrupt mask
+			 * bit of BusReset instead until SelfID completion
+			 * or SelfID timeout.
+			 */
+			intmask &= OHCI_Int_SelfIDComplete;
+			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskClear,
+			    OHCI_Int_BusReset);
+			sc->sc_intmask = intmask;
+			sc->sc_intmask |= OHCI_Int_BusReset;
+		}
+
+		if (intmask & OHCI_Int_SelfIDComplete) 
+			sc->sc_intmask |= OHCI_Int_SelfIDComplete;
+
+		if (intmask & OHCI_Int_ReqTxComplete)
+			sc->sc_intmask |= OHCI_Int_ReqTxComplete;
+		if (intmask & OHCI_Int_RespTxComplete)
+			sc->sc_intmask |= OHCI_Int_RespTxComplete;
+		if (intmask & OHCI_Int_RQPkt)
+			sc->sc_intmask |= OHCI_Int_RQPkt;
+		if (intmask & OHCI_Int_RSPkt)
+			sc->sc_intmask |= OHCI_Int_RSPkt;
+		if (intmask & OHCI_Int_IsochTx) {
+			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear);
+			OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntEventClear, iso);
+			sc->sc_intmask |= OHCI_Int_IsochTx;
+		}
+		if (intmask & OHCI_Int_IsochRx) {
+			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear);
+			OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear, iso);
+			sc->sc_iso |= iso;
+			sc->sc_intmask |= OHCI_Int_IsochRx;
+		}
+
+		if (!progress) {
+			sc->sc_intrcnt.ev_count++;
+			progress = 1;
+		}
+	}
+}
+
+static void
+fwohci_create_event_thread(void *arg)
+{
+	struct fwohci_softc  *sc = arg;
+
+	if (kthread_create1(fwohci_thread_init, sc, &sc->sc_event_thread, "%s",
+	    sc->sc_sc1394.sc1394_dev.dv_xname)) {
+		printf("%s: unable to create event thread\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname);
+		panic("fwohci_create_event_thread");
+	}
+}
+
+static void
+fwohci_thread_init(void *arg)
+{
+	struct fwohci_softc *sc = arg;
+	int i;
 
 	/*
 	 * Allocate descriptors
 	 */
-	if (fwohci_desc_alloc(sc))
-		return -1;
+	if (fwohci_desc_alloc(sc)) {
+		printf("%s: not enabling interrupts\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname);
+		kthread_exit(1);
+	}
+
+	/*
+	 * Enable Link Power
+	 */
+
+	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet, OHCI_HCControl_LPS);
 
 	/*
 	 * Allocate DMA Context
@@ -254,204 +434,172 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	fwohci_buf_alloc(sc, &sc->sc_buf_cnfrom);
 	fwohci_buf_alloc(sc, &sc->sc_buf_selfid);
 
+	callout_init(&sc->sc_selfid_callout);
+
+	sc->sc_sc1394.sc1394_ifinreg = fwohci_if_inreg;
+	sc->sc_sc1394.sc1394_ifoutput = fwohci_if_output;
+
 	/*
-	 * establish hooks for shutdown and suspend/resume
+	 * establish hooks for shutdown and suspend/resume 
 	 */
 	sc->sc_shutdownhook = shutdownhook_establish(fwohci_shutdown, sc);
 	sc->sc_powerhook = powerhook_establish(fwohci_power, sc);
-	callout_init(&sc->sc_selfid_callout);
+
+	sc->sc_sc1394.sc1394_if = config_found(&sc->sc_sc1394.sc1394_dev, "fw",
+	    fwohci_print);
+
+	/* Main loop. It's not coming back normally. */
+
+	fwohci_event_thread(sc);
+
+	kthread_exit(0);
+}
+
+static void
+fwohci_event_thread(struct fwohci_softc *sc)
+{
+	int i, s;
+	u_int32_t intmask, iso;
+
+	s = splbio();
 
 	/*
 	 * Initialize hardware registers.
 	 */
+
 	fwohci_hw_init(sc);
 
-	/*
-	 * Initiate Bus Reset
-	 */
-	config_defer(&sc->sc_sc1394.sc1394_dev,
-	    (void (*)(struct device *))fwohci_phy_busreset);
+	/* Initial Bus Reset */
+	fwohci_phy_busreset(sc);
+	tsleep(fwohci_event_thread, PZERO, "fwohci_event", 0);
+	splx(s);
 
-	sc->sc_sc1394.sc1394_ifinreg = fwohci_if_inreg;
-	sc->sc_sc1394.sc1394_ifoutput = fwohci_if_output;
-	sc->sc_sc1394.sc1394_if = config_found(&sc->sc_sc1394.sc1394_dev,
-	    "fw", fwohci_print);
+	while (!sc->sc_dying) {
+		while (1) {
+			s = splbio();
+			intmask = sc->sc_intmask;
+			if (intmask) {
+				splx(s);
+				if (intmask & OHCI_Int_BusReset) {
+					s = splbio();
+					sc->sc_intmask &= ~OHCI_Int_BusReset;
+					splx(s);
+					fwohci_buf_stop(sc);
+					fwohci_buf_init(sc);
+					if (sc->sc_uidtbl != NULL) {
+						free(sc->sc_uidtbl, M_DEVBUF);
+						sc->sc_uidtbl = NULL;
+					}
 
-	return 0;
-}
-
-int
-fwohci_intr(void *arg)
-{
-	struct fwohci_softc * const sc = arg;
-	int i;
-	int progress = 0;
-	u_int32_t intmask, iso;
-
-	for (;;) {
-		intmask = OHCI_CSR_READ(sc, OHCI_REG_IntEventClear);
-		if (intmask == 0)
-			return progress;
-		OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
-		    intmask & ~OHCI_Int_BusReset);
-#ifdef FW_DEBUG
-		if (fw_verbose > 1) {
-			printf("%s: intmask=0x%08x:",
-			    sc->sc_sc1394.sc1394_dev.dv_xname, intmask);
-			if (intmask & OHCI_Int_CycleTooLong)
-				printf(" CycleTooLong");
-			if (intmask & OHCI_Int_UnrecoverableError)
-				printf(" UnrecoverableError");
-			if (intmask & OHCI_Int_CycleInconsistent)
-				printf(" CycleInconsistent");
-			if (intmask & OHCI_Int_BusReset)
-				printf(" BusReset");
-			if (intmask & OHCI_Int_SelfIDComplete)
-				printf(" SelfIDComplete");
-			if (intmask & OHCI_Int_LockRespErr)
-				printf(" LockRespErr");
-			if (intmask & OHCI_Int_PostedWriteErr)
-				printf(" PostedWriteErr");
-			if (intmask & OHCI_Int_ReqTxComplete)
-				printf(" ReqTxComplete(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_TX_REQUEST,
-				    OHCI_SUBREG_ContextControlClear));
-			if (intmask & OHCI_Int_RespTxComplete)
-				printf(" RespTxComplete(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_TX_RESPONSE,
-				    OHCI_SUBREG_ContextControlClear));
-			if (intmask & OHCI_Int_ARRS)
-				printf(" ARRS(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_RX_RESPONSE,
-				    OHCI_SUBREG_ContextControlClear));
-			if (intmask & OHCI_Int_ARRQ)
-				printf(" ARRQ(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_RX_REQUEST,
-				    OHCI_SUBREG_ContextControlClear));
-			if (intmask & OHCI_Int_IsochRx)
-				printf(" IsochRx(0x%08x)",
-				    OHCI_CSR_READ(sc,
-				    OHCI_REG_IsoRecvIntEventClear));
-			if (intmask & OHCI_Int_IsochTx)
-				printf(" IsochTx(0x%08x)",
-				    OHCI_CSR_READ(sc,
-				    OHCI_REG_IsoXmitIntEventClear));
-			if (intmask & OHCI_Int_RQPkt)
-				printf(" RQPkt(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_RX_REQUEST,
-				    OHCI_SUBREG_ContextControlClear));
-			if (intmask & OHCI_Int_RSPkt)
-				printf(" RSPkt(0x%04x)",
-				    OHCI_ASYNC_DMA_READ(sc,
-				    OHCI_CTX_ASYNC_RX_RESPONSE,
-				    OHCI_SUBREG_ContextControlClear));
-			printf("\n");
+					callout_reset(&sc->sc_selfid_callout,
+					    OHCI_SELFID_TIMEOUT,
+					    (void (*)(void *))
+					    fwohci_phy_busreset, sc);
+					sc->sc_nodeid = 0xffff;	/* indicate
+								   invalid */
+					sc->sc_rootid = 0;
+					sc->sc_irmid = IEEE1394_BCAST_PHY_ID;
+				}
+				if (intmask & OHCI_Int_SelfIDComplete) {
+					s = splbio();
+					sc->sc_intmask &=
+					    ~OHCI_Int_SelfIDComplete;
+					OHCI_CSR_WRITE(sc,
+					    OHCI_REG_IntEventClear,
+					    OHCI_Int_BusReset);
+					OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
+					    OHCI_Int_BusReset);
+					splx(s);
+					callout_stop(&sc->sc_selfid_callout);
+					if (fwohci_selfid_input(sc) == 0) {
+						fwohci_buf_start(sc);
+						fwohci_uid_collect(sc);
+					}
+				}
+				if (intmask & OHCI_Int_ReqTxComplete) {
+					s = splbio();
+					sc->sc_intmask &=
+					    ~OHCI_Int_ReqTxComplete;
+					splx(s);
+					fwohci_at_done(sc, sc->sc_ctx_atrq, 0);
+				}
+				if (intmask & OHCI_Int_RespTxComplete) {
+					s = splbio();
+					sc->sc_intmask &=
+					    ~OHCI_Int_RespTxComplete;
+					splx(s);
+					fwohci_at_done(sc, sc->sc_ctx_atrs, 0);
+				}
+				if (intmask & OHCI_Int_RQPkt) {
+					s = splbio();
+					sc->sc_intmask &= ~OHCI_Int_RQPkt;
+					splx(s);
+					fwohci_arrq_input(sc, sc->sc_ctx_arrq);
+				}
+				if (intmask & OHCI_Int_RSPkt) {
+					s = splbio();
+					sc->sc_intmask &= ~OHCI_Int_RSPkt;
+					splx(s);
+					fwohci_arrs_input(sc, sc->sc_ctx_arrs);
+				}
+				if (intmask & OHCI_Int_IsochTx) {
+					s = splbio();
+					sc->sc_intmask &= ~OHCI_Int_IsochTx;
+					splx(s);
+				}
+				if (intmask & OHCI_Int_IsochRx) {
+					s = splbio();
+					sc->sc_intmask &= ~OHCI_Int_IsochRx;
+					iso = sc->sc_iso;
+					sc->sc_iso = 0;
+					splx(s);
+					for (i = 0; i < sc->sc_isoctx; i++) {
+						if ((iso & (1 << i)) &&
+						    sc->sc_ctx_ir[i] != NULL)
+							fwohci_ir_input(sc,
+							    sc->sc_ctx_ir[i]);
+					}
+				}
+			} else
+				break;
 		}
-#endif /* FW_DEBUG */
-		if (intmask & OHCI_Int_BusReset) {
-			/*
-			 * According to OHCI spec 6.1.1 "busReset",
-			 * All asynchronous transmit must be stopped before
-			 * clearing BusReset.  Moreover, the BusReset
-			 * interrupt bit should not be cleared during the
-			 * SelfID phase.  Thus we turned off interrupt mask
-			 * bit of BusReset instead until SelfID completion
-			 * or SelfID timeout.
-			 */
-			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskClear,
-			    OHCI_Int_BusReset);
-			intmask &= OHCI_Int_SelfIDComplete;
-			fwohci_buf_stop(sc);
-			fwohci_buf_init(sc);
-			if (sc->sc_uidtbl != NULL) {
-				free(sc->sc_uidtbl, M_DEVBUF);
-				sc->sc_uidtbl = NULL;
-			}
-			callout_reset(&sc->sc_selfid_callout,
-			    OHCI_SELFID_TIMEOUT,
-			    (void (*)(void *))fwohci_phy_busreset, sc);
-			sc->sc_nodeid = 0xffff;		/* indicate invalid */
-			sc->sc_rootid = 0;
-			sc->sc_irmid = IEEE1394_BCAST_PHY_ID;
-		}
-
-		if (intmask & OHCI_Int_SelfIDComplete) {
-			OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
-			    OHCI_Int_BusReset);
-			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
-			    OHCI_Int_BusReset);
-			callout_stop(&sc->sc_selfid_callout);
-			if (fwohci_selfid_input(sc) == 0) {
-				fwohci_buf_start(sc);
-				fwohci_uid_collect(sc);
-			}
-		}
-
-		if (intmask & OHCI_Int_ReqTxComplete)
-			fwohci_at_done(sc, sc->sc_ctx_atrq, 0);
-		if (intmask & OHCI_Int_RespTxComplete)
-			fwohci_at_done(sc, sc->sc_ctx_atrs, 0);
-		if (intmask & OHCI_Int_RQPkt)
-			fwohci_arrq_input(sc, sc->sc_ctx_arrq);
-		if (intmask & OHCI_Int_RSPkt)
-			fwohci_arrs_input(sc, sc->sc_ctx_arrs);
-
-		if (intmask & OHCI_Int_IsochTx) {
-			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear);
-			OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntEventClear, iso);
-		}
-		if (intmask & OHCI_Int_IsochRx) {
-			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear);
-			OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear, iso);
-			for (i = 0; i < sc->sc_isoctx; i++) {
-				if ((iso & (1<<i)) && sc->sc_ctx_ir[i] != NULL)
-					fwohci_ir_input(sc, sc->sc_ctx_ir[i]);
-			}
-		}
-
-		if (!progress) {
-			sc->sc_intrcnt.ev_count++;
-			progress = 1;
-		}
+		tsleep(fwohci_event_thread, PZERO, "fwohci_event", 0);
+		splx(s);
 	}
 }
 
 #if 0
 static int
 fwohci_dnamem_alloc(struct fwohci_softc *sc, int size, int alignment,
-		    bus_dmamap_t *mapp, caddr_t *kvap, int flags)
+    bus_dmamap_t *mapp, caddr_t *kvap, int flags)
 {
 	bus_dma_segment_t segs[1];
 	int error, nsegs, steps;
 
 	steps = 0;
 	error = bus_dmamem_alloc(sc->sc_dmat, size, alignment, alignment,
-				 segs, 1, &nsegs, flags);
+	    segs, 1, &nsegs, flags);
 	if (error)
 		goto cleanup;
 
 	steps = 1;
 	error = bus_dmamem_map(sc->sc_dmat, segs, nsegs, segs[0].ds_len,
-			       kvap, flags);
+	    kvap, flags);
 	if (error)
 		goto cleanup;
 
 	if (error == 0)
 		error = bus_dmamap_create(sc->sc_dmat, size, 1, alignment,
-					  size, flags, mapp);
+		    size, flags, mapp);
 	if (error)
 		goto cleanup;
 	if (error == 0)
-		error = bus_dmamap_load(sc->sc_dmat, *mapp, *kvap, size, NULL, flags);
+		error = bus_dmamap_load(sc->sc_dmat, *mapp, *kvap, size, NULL,
+		    flags);
 	if (error)
 		goto cleanup;
 
-cleanup:
+ cleanup:
 	switch (steps) {
 	case 1:
 		bus_dmamem_free(sc->sc_dmat, segs, nsegs);
@@ -469,7 +617,7 @@ fwohci_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", name, pnp);
 
-	return UNCONF;
+	return QUIET;
 }
 
 static void
@@ -559,7 +707,7 @@ fwohci_power(int why, void *arg)
 	struct fwohci_softc *sc = arg;
 	int s;
 
-	s = splimp();
+	s = splbio();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -647,7 +795,7 @@ fwohci_phy_busreset(struct fwohci_softc *sc)
 	int s;
 	u_int8_t val;
 
-	s = splimp();
+	s = splbio();
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
 	    OHCI_Int_BusReset | OHCI_Int_SelfIDComplete);
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet, OHCI_Int_BusReset);
@@ -673,11 +821,8 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 	if (val != ~pkt->fp_hdr[2]) {
 		if (val == 0 && ((*pkt->fp_trail & 0x001f0000) >> 16) ==
 		    OHCI_CTXCTL_EVENT_BUS_RESET) {
-#ifdef FW_DEBUG
-			if (fw_verbose > 1)
-				printf("fwohci_phy_input: BusReset: 0x%08x\n",
-				    pkt->fp_hdr[2]);
-#endif
+			DPRINTFN(1, ("fwohci_phy_input: BusReset: 0x%08x\n",
+			    pkt->fp_hdr[2]));
 		} else {
 			printf("%s: phy packet corrupted (0x%08x, 0x%08x)\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname, val,
@@ -690,43 +835,36 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 	switch (key) {
 	case 0:
 #ifdef FW_DEBUG
-		if (fw_verbose > 1) {
-			printf("fwohci_phy_input: PHY Config from %d:", phyid);
-			if (val & 0x00800000)
-				printf(" ForceRoot");
-			if (val & 0x00400000)
-				printf(" Gap=%x", (val & 0x003f0000) >> 16);
-			printf("\n");
-		}
+		DPRINTFN(1, ("fwohci_phy_input: PHY Config from %d:", phyid));
+		if (val & 0x00800000)
+			DPRINTFN(1, (" ForceRoot"));
+		if (val & 0x00400000)
+			DPRINTFN(1, (" Gap=%x", (val & 0x003f0000) >> 16));
+		printf("\n");
 #endif
 		break;
 	case 1:
-#ifdef FW_DEBUG
-		if (fw_verbose > 1) 
-			printf("fwohci_phy_input: Link-on from %d\n", phyid);
-#endif
+		DPRINTFN(1, ("fwohci_phy_input: Link-on from %d\n", phyid));
 		break;
 	case 2:
 #ifdef FW_DEBUG
-		if (fw_verbose > 1) {
-			printf("fwohci_phy_input: SelfID from %d:", phyid);
-			if (val & 0x00800000) {
-				printf(" #%d", (val & 0x00700000) >> 20);
-			} else {
-				if (val & 0x00400000)
-					printf(" LinkActive");
-				printf(" Gap=%x", (val & 0x003f0000) >> 16);
-				printf(" Spd=S%d",
-				    100 << ((val & 0x0000c000) >> 14));
-				if (val & 0x00000800)
-					printf(" Cont");
-				if (val & 0x00000002)
-					printf(" InitiateBusReset");
-			}
-			if (val & 0x00000001)
-				printf(" +");
-			printf("\n");
+		DPRINTFN(1, ("fwohci_phy_input: SelfID from %d:", phyid));
+		if (val & 0x00800000) {
+			DPRINTFN(1, (" #%d", (val & 0x00700000) >> 20));
+		} else {
+			if (val & 0x00400000)
+				DPRINTFN(1, (" LinkActive"));
+			DPRINTFN(1, (" Gap=%x", (val & 0x003f0000) >> 16));
+			DPRINTFN(1, (" Spd=S%d",
+			    100 << ((val & 0x0000c000) >> 14)));
+			if (val & 0x00000800)
+				DPRINTFN(1, (" Cont"));
+			if (val & 0x00000002)
+				DPRINTFN(1, (" InitiateBusReset"));
 		}
+		if (val & 0x00000001)
+			DPRINTFN(1, (" +"));
+		DPRINTFN(1, ("\n"));
 #endif
 		break;
 	default:
@@ -823,7 +961,7 @@ fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 
 	n = fd - sc->sc_desc;
 	for (i = 0; i < ndesc; i++, n++) {
-#ifdef DIAGNOSTICS
+#ifdef DIAGNOSTIC
 		if (isclr(sc->sc_descmap, n))
 			panic("fwohci_desc_put: duplicated free");
 #endif
@@ -1096,14 +1234,10 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
 	fb = TAILQ_FIRST(&fc->fc_buf);
   again:
 	fd = fb->fb_desc;
-#ifdef FW_DEBUG
-	if (fw_verbose > 1)
-		printf("fwohci_buf_pktget: desc %ld, off %d, req %d, res %d,"
-		    " len %d, avail %d\n",
-		    (long)(fd - sc->sc_desc), fb->fb_off, fd->fd_reqcount,
-		    fd->fd_rescount, len,
-		    fd->fd_reqcount - fd->fd_rescount - fb->fb_off);
-#endif
+	DPRINTFN(1, ("fwohci_buf_pktget: desc %ld, off %d, req %d, res %d,"
+	    " len %d, avail %d\n", (long)(fd - sc->sc_desc), fb->fb_off,
+	    fd->fd_reqcount, fd->fd_rescount, len,
+	    fd->fd_reqcount - fd->fd_rescount - fb->fb_off));
 	bufend = fd->fd_reqcount - fd->fd_rescount;
 	if (fb->fb_off >= bufend) {
 		if (fc->fc_isoch && fb->fb_off > 0) {
@@ -1147,11 +1281,8 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
 		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
-#ifdef FW_DEBUG
-			if (fw_verbose > 1)
-				printf("fwohci_buf_input: no input for is#%d\n",
-				    fc->fc_ctx);
-#endif
+			DPRINTFN(1, ("fwohci_buf_input: no input for is#%d\n",
+			    fc->fc_ctx));
 			return 0;
 		}
 		*pkt->fp_trail = (*pkt->fp_trail & 0xffff) |
@@ -1159,11 +1290,8 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	}
 	len = fwohci_buf_pktget(sc, fc, &p, count);
 	if (len <= 0) {
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf("fwohci_buf_input: no input for %d\n",
-			    fc->fc_ctx);
-#endif
+		DPRINTFN(1, ("fwohci_buf_input: no input for %d\n",
+		    fc->fc_ctx));
 		return 0;
 	}
 	pkt->fp_hdr[0] = *(u_int32_t *)p;
@@ -1173,6 +1301,10 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	case IEEE1394_TCODE_READ_RESP_QUAD:
 		pkt->fp_hlen = 12;
 		pkt->fp_dlen = 4;
+		break;
+	case IEEE1394_TCODE_READ_REQ_BLOCK:
+		pkt->fp_hlen = 16;
+		pkt->fp_dlen = 0;
 		break;
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 	case IEEE1394_TCODE_READ_RESP_BLOCK:
@@ -1201,13 +1333,11 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		memcpy((caddr_t)pkt->fp_hdr + count, p, len);
 		count += len;
 	}
-	if (pkt->fp_hlen == 16)
+	if ((pkt->fp_hlen == 16) &&
+	    pkt->fp_tcode != IEEE1394_TCODE_READ_REQ_BLOCK)
 		pkt->fp_dlen = pkt->fp_hdr[3] >> 16;
-#ifdef FW_DEBUG
-	if (fw_verbose > 1)
-		printf("fwohci_buf_input: tcode=0x%x, hlen=%d, dlen=%d\n",
-		    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen);
-#endif
+	DPRINTFN(1, ("fwohci_buf_input: tcode=0x%x, hlen=%d, dlen=%d\n",
+	    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen));
 
 	/* get data */
 	count = 0;
@@ -1273,11 +1403,8 @@ fwohci_handler_set(struct fwohci_softc *sc,
 			if (handler == NULL)
 				return 0;
 			if (j == sc->sc_isoctx) {
-#ifdef FW_DEBUG
-				if (fw_verbose)
-					printf("fwohci_handler_set: "
-					    "no more free context\n");
-#endif
+				DPRINTF(("fwohci_handler_set: no more free "
+				    "context\n"));
 				return ENOMEM;
 			}
 			if ((fc = sc->sc_ctx_ir[j]) == NULL) {
@@ -1323,9 +1450,7 @@ fwohci_handler_set(struct fwohci_softc *sc,
 		return 0;
 	}
 	if (fh == NULL) {
-		fh = malloc(sizeof(*fh), M_DEVBUF, M_NOWAIT);
-		if (fh == NULL)
-			return ENOMEM;
+		fh = malloc(sizeof(*fh), M_DEVBUF, M_WAITOK);
 		LIST_INSERT_HEAD(&fc->fc_handler, fh, fh_list);
 	}
 	fh->fh_tcode = tcode;
@@ -1333,20 +1458,13 @@ fwohci_handler_set(struct fwohci_softc *sc,
 	fh->fh_key2 = key2;
 	fh->fh_handler = handler;
 	fh->fh_handarg = arg;
-#ifdef FW_DEBUG
-	if (fw_verbose > 1)
-		printf("fwohci_handler_set: ctx %d, tcode %x, key 0x%x, 0x%x\n",
-		    fc->fc_ctx, tcode, key1, key2);
-#endif
+	DPRINTFN(1, ("fwohci_handler_set: ctx %d, tcode %x, key 0x%x, 0x%x\n",
+	    fc->fc_ctx, tcode, key1, key2));
 
 	if (tcode == IEEE1394_TCODE_STREAM_DATA) {
 		fwohci_ctx_init(sc, fc);
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf("fwohci_handler_set: SYNC desc %ld\n",
-			    (long)(TAILQ_FIRST(&fc->fc_buf)->fb_desc -
-			    sc->sc_desc));
-#endif
+		DPRINTFN(1, ("fwohci_handler_set: SYNC desc %ld\n",
+		    (long)(TAILQ_FIRST(&fc->fc_buf)->fb_desc - sc->sc_desc)));
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
 		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 	}
@@ -1367,7 +1485,7 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	while (fwohci_buf_input(sc, fc, &pkt)) {
 		if (pkt.fp_tcode == OHCI_TCODE_PHY) {
 			fwohci_phy_input(sc, &pkt);
-			continue;
+			return;
 		}
 		key1 = pkt.fp_hdr[1] & 0xffff;
 		key2 = pkt.fp_hdr[2];
@@ -1386,23 +1504,21 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		}
 		if (fh == NULL) {
 			rcode = IEEE1394_RCODE_ADDRESS_ERROR;
-#ifdef FW_DEBUG
-			if (fw_verbose > 1)
-				printf("fwohci_arrq_input: no listener:"
-				    " tcode 0x%x, addr=0x%04x %08x\n",
-				    pkt.fp_tcode, key1, key2);
-#endif
+			DPRINTFN(1, ("fwohci_arrq_input: no listener: tcode "
+			    "0x%x, addr=0x%04x %08x\n", pkt.fp_tcode, key1,
+			    key2));
 		}
 		if (((*pkt.fp_trail & 0x001f0000) >> 16) !=
 		    OHCI_CTXCTL_EVENT_ACK_PENDING)
-			continue;
-		if (rcode != -1)
+			return;
+		if (rcode != -1) 
 			fwohci_atrs_output(sc, rcode, &pkt, &res);
 	}
 	fwohci_buf_next(sc, fc);
 	OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
 	    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_WAKE);
 }
+
 
 /*
  * Asynchronous Receive Response input frontend.
@@ -1419,13 +1535,10 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		srcid = pkt.fp_hdr[1] >> 16;
 		rcode = (pkt.fp_hdr[1] & 0x0000f000) >> 12;
 		tlabel = (pkt.fp_hdr[0] & 0x0000fc00) >> 10;
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf("fwohci_arrs_input: tcode 0x%x, from 0x%04x,"
-			    " tlabel 0x%x, rcode 0x%x, hlen %d, dlen %d\n",
-			    pkt.fp_tcode, srcid, tlabel, rcode, pkt.fp_hlen,
-			    pkt.fp_dlen);
-#endif
+		DPRINTFN(1, ("fwohci_arrs_input: tcode 0x%x, from 0x%04x,"
+		    " tlabel 0x%x, rcode 0x%x, hlen %d, dlen %d\n",
+		    pkt.fp_tcode, srcid, tlabel, rcode, pkt.fp_hlen,
+		    pkt.fp_dlen));
 		for (fh = LIST_FIRST(&fc->fc_handler); fh != NULL;
 		    fh = LIST_NEXT(fh, fh_list)) {
 			if (pkt.fp_tcode == fh->fh_tcode &&
@@ -1437,11 +1550,8 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 				break;
 			}
 		}
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			if (fh == NULL)
-				printf("fwohci_arrs_input: no lister\n");
-#endif
+		if (fh == NULL) 
+			DPRINTFN(1, ("fwohci_arrs_input: no listner\n"));
 	}
 	fwohci_buf_next(sc, fc);
 	OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
@@ -1462,12 +1572,9 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	while (fwohci_buf_input(sc, fc, &pkt)) {
 		chan = (pkt.fp_hdr[0] & 0x00003f00) >> 8;
 		tag  = (pkt.fp_hdr[0] & 0x0000c000) >> 14;
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf("fwohci_ir_input: hdr 0x%08x, tcode %d,"
-			    " hlen %d, dlen %d\n", pkt.fp_hdr[0],
-			    pkt.fp_tcode, pkt.fp_hlen, pkt.fp_dlen);
-#endif
+		DPRINTFN(1, ("fwohci_ir_input: hdr 0x%08x, tcode %d, hlen %d, "
+		    "dlen %d\n", pkt.fp_hdr[0], pkt.fp_tcode, pkt.fp_hlen,
+		    pkt.fp_dlen));
 		if (tag == IEEE1394_TAG_GASP) {
 			/*
 			 * The pkt with tag=3 is GASP format.
@@ -1494,11 +1601,10 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			}
 		}
 #ifdef FW_DEBUG
-		if (fw_verbose > 1) {
-			if (fh == NULL)
-				printf("fwohci_ir_input: no handler\n");
-			else
-				printf("fwohci_ir_input: rcode %d\n", rcode);
+		if (fh == NULL) {
+			DPRINTFN(1, ("fwohci_ir_input: no handler\n"));
+		} else {
+			DPRINTFN(1, ("fwohci_ir_input: rcode %d\n", rcode));
 		}
 #endif
 	}
@@ -1519,31 +1625,28 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	struct mbuf *m, *m0;
 	int i, ndesc, error, off, len;
 	u_int32_t val;
-
-	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) > sc->sc_rootid) {
+#ifdef FW_DEBUG
+	struct iovec *iov;
+#endif
+	
+	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) > sc->sc_rootid) 
 		/* We can't send anything during selfid duration */
 		return EAGAIN;
-	}
+
 #ifdef FW_DEBUG
-	if (fw_verbose > 1) {
-		struct iovec *iov;
-		printf("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
-		    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen);
-		if (fw_dump) {
-			for (i = 0; i < pkt->fp_hlen/4; i++)
-				printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
-			printf("$");
-			for (ndesc = 0, iov = pkt->fp_iov;
-			    ndesc < pkt->fp_uio.uio_iovcnt; ndesc++, iov++) {
-				for (i = 0; i < iov->iov_len; i++)
-					printf("%s%02x",
-					    (i%32)?((i%4)?"":" "):"\n\t",
-					    ((u_int8_t *)iov->iov_base)[i]);
-				printf("$");
-			}
-		}
-		printf("\n");
+	DPRINTFN(1, ("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
+	    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen));
+	for (i = 0; i < pkt->fp_hlen/4; i++) 
+		DPRINTFN(2, ("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]));
+	DPRINTFN(2, ("$"));
+	for (ndesc = 0, iov = pkt->fp_iov;
+	     ndesc < pkt->fp_uio.uio_iovcnt; ndesc++, iov++) {
+		for (i = 0; i < iov->iov_len; i++)
+			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
+			    ((u_int8_t *)iov->iov_base)[i]));
+		DPRINTFN(2, ("$"));
 	}
+	DPRINTFN(1, ("\n"));
 #endif
 
 	if ((m = pkt->fp_m) != NULL) {
@@ -1587,8 +1690,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 	if (fc->fc_bufcnt > 50)			/*XXX*/
 		return ENOBUFS;
-	if ((fb = malloc(sizeof(*fb), M_DEVBUF, M_NOWAIT)) == NULL)
-		return ENOBUFS;
+	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
 	fb->fb_nseg = ndesc;
 	fb->fb_desc = fwohci_desc_get(sc, ndesc);
 	if (fb->fb_desc == NULL) {
@@ -1599,10 +1701,12 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	    ((caddr_t)fb->fb_desc - (caddr_t)sc->sc_desc);
 	fb->fb_m = pkt->fp_m;
 	fb->fb_callback = pkt->fp_callback;
-
+	fb->fb_statuscb = pkt->fp_statuscb;
+	fb->fb_statusarg = pkt->fp_statusarg;
+	
 	if (ndesc > 2) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, ndesc,
-		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &fb->fb_dmamap)) != 0) {
+		    PAGE_SIZE, 0, BUS_DMA_WAITOK, &fb->fb_dmamap)) != 0) {
 			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
 			return error;
@@ -1610,10 +1714,10 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 		if (pkt->fp_m != NULL)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, fb->fb_dmamap,
-			    pkt->fp_m, BUS_DMA_NOWAIT);
+			    pkt->fp_m, BUS_DMA_WAITOK);
 		else
 			error = bus_dmamap_load_uio(sc->sc_dmat, fb->fb_dmamap,
-			    &pkt->fp_uio, BUS_DMA_NOWAIT);
+			    &pkt->fp_uio, BUS_DMA_WAITOK);
 		if (error != 0) {
 			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
 			fwohci_desc_put(sc, fb->fb_desc, ndesc);
@@ -1651,14 +1755,12 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
 
 #ifdef FW_DEBUG
-	if (fw_verbose > 1) {
-		printf("fwohci_at_output: desc %ld",
-		    (long)(fb->fb_desc - sc->sc_desc));
-		for (i = 0; i < ndesc * 4; i++)
-			printf("%s%08x", i&7?" ":"\n\t",
-			    ((u_int32_t *)fb->fb_desc)[i]);
-		printf("\n");
-	}
+	DPRINTFN(1, ("fwohci_at_output: desc %ld",
+	    (long)(fb->fb_desc - sc->sc_desc)));
+	for (i = 0; i < ndesc * 4; i++)
+		DPRINTFN(1, ("%s%08x", i&7?" ":"\n\t",
+		    ((u_int32_t *)fb->fb_desc)[i]));
+	DPRINTFN(1, ("\n"));
 #endif
 
 	val = OHCI_ASYNC_DMA_READ(sc, fc->fc_ctx,
@@ -1693,20 +1795,19 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 {
 	struct fwohci_buf *fb;
 	struct fwohci_desc *fd;
+	struct fwohci_pkt pkt;
 	int i;
 
 	while ((fb = TAILQ_FIRST(&fc->fc_buf)) != NULL) {
 		fd = fb->fb_desc;
 #ifdef FW_DEBUG
-		if (fw_verbose > 1) {
-			printf("fwohci_at_done: %sdesc %ld (%d)",
-			    force ? "force " : "",
-			    (long)(fd - sc->sc_desc), fb->fb_nseg);
-			for (i = 0; i < fb->fb_nseg * 4; i++)
-				printf("%s%08x", i&7?" ":"\n    ",
-				    ((u_int32_t *)fd)[i]);
-			printf("\n");
-		}
+		DPRINTFN(1, ("fwohci_at_done: %sdesc %ld (%d)",
+		    force ? "force " : "", (long)(fd - sc->sc_desc),
+		    fb->fb_nseg));
+		for (i = 0; i < fb->fb_nseg * 4; i++)
+			DPRINTFN(1, ("%s%08x", i&7?" ":"\n    ",
+			    ((u_int32_t *)fd)[i]));
+		DPRINTFN(1, ("\n"));
 #endif
 		if (fb->fb_nseg > 2)
 			fd += fb->fb_nseg - 1;
@@ -1724,11 +1825,23 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 					break;
 			}
 		}
+
+		if (fb->fb_statuscb) {
+			memset(&pkt, 0, sizeof(pkt));
+			pkt.fp_status = fd->fd_status; 
+			memcpy(pkt.fp_hdr, fd + 1, sizeof(pkt.fp_hdr[0]));
+			
+			/* Indicate this is just returning the status bits. */
+			pkt.fp_tcode = -1;
+			(*fb->fb_statuscb)(sc, fb->fb_statusarg, &pkt);
+			fb->fb_statuscb = NULL;
+			fb->fb_statusarg = NULL;
+		}
 		fwohci_desc_put(sc, fb->fb_desc, fb->fb_nseg);
 		if (fb->fb_nseg > 2)
 			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
 		fc->fc_bufcnt--;
-		if (fb->fb_callback != NULL) {
+		if (fb->fb_callback) {
 			(*fb->fb_callback)(sc->sc_sc1394.sc1394_if, fb->fb_m);
 			fb->fb_callback = NULL;
 		} else if (fb->fb_m != NULL)
@@ -1746,7 +1859,7 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 {
 
 	if (((*req->fp_trail & 0x001f0000) >> 16) !=
-	    OHCI_CTXCTL_EVENT_ACK_PENDING)
+	    OHCI_CTXCTL_EVENT_ACK_PENDING) 
 		return;
 
 	res->fp_hdr[0] = (req->fp_hdr[0] & 0x0000fc00) | 0x00000100;
@@ -1914,7 +2027,7 @@ fwohci_crc16(u_int32_t *ptr, int len)
 static void
 fwohci_configrom_init(struct fwohci_softc *sc)
 {
-	int i;
+	int i, val;
 	struct fwohci_buf *fb;
 	u_int32_t *hdr;
 	struct configromctx cfr;
@@ -2000,26 +2113,63 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_END_UNIT(&cfr);
 #endif /* INET6 */
 
+	fb->fb_off = cfr.ptr - hdr;
 #ifdef FW_DEBUG
-	if (fw_dump) {
-		printf("%s: Config ROM:", sc->sc_sc1394.sc1394_dev.dv_xname);
-		for (i = 0; i < cfr.ptr - hdr; i++)
-			printf("%s%08x", i&7?" ":"\n    ", hdr[i]);
-		printf("\n");
-	}
+	DPRINTFN(2, ("%s: Config ROM:", sc->sc_sc1394.sc1394_dev.dv_xname));
+	for (i = 0; i < fb->fb_off; i++)
+		DPRINTFN(2, ("%s%08x", i&7?" ":"\n    ", hdr[i]));
+	DPRINTFN(2, ("\n"));
 #endif /* FW_DEBUG */
 
 	/*
 	 * Make network byte order for DMA
 	 */
-	for (i = 0; i < cfr.ptr - hdr; i++)
+	for (i = 0; i < fb->fb_off; i++)
 		HTONL(hdr[i]);
 	bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0,
 	    (caddr_t)cfr.ptr - fb->fb_buf, BUS_DMASYNC_PREWRITE);
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_ConfigROMmap,
 	    fb->fb_dmamap->dm_segs[0].ds_addr);
-	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet, OHCI_HCControl_BIBImageValid);
+
+	/* This register is only valid on OHCI 1.1. */
+	val = OHCI_CSR_READ(sc, OHCI_REG_Version);
+	if ((OHCI_Version_GET_Version(val) == 1) &&
+	    (OHCI_Version_GET_Revision(val) == 1))
+		OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet,
+		    OHCI_HCControl_BIBImageValid);
+	
+	/* Just allow quad reads of the rom. */
+	for (i = 0; i < fb->fb_off; i++) 
+		fwohci_handler_set(sc, IEEE1394_TCODE_READ_REQ_QUAD,
+		    CSR_BASE_HI, CSR_BASE_LO + CSR_CONFIG_ROM + (i * 4),
+		    fwohci_configrom_input, NULL);
+}
+
+static int
+fwohci_configrom_input(struct fwohci_softc *sc, void *arg,
+    struct fwohci_pkt *pkt)
+{
+	struct fwohci_pkt res;
+	u_int32_t loc, *rom;
+
+	/* This will be used as an array index so size accordingly. */
+	loc = pkt->fp_hdr[2] - (CSR_BASE_LO + CSR_CONFIG_ROM);
+	if ((loc & 0x03) != 0) {
+		/* alignment error */
+		return IEEE1394_RCODE_ADDRESS_ERROR;
+	}
+	else
+		loc /= 4;
+	rom = (u_int32_t *)sc->sc_buf_cnfrom.fb_buf;
+
+	DPRINTFN(1, ("fwohci_configrom_input: ConfigRom[0x%04x]: 0x%08x\n", loc,
+	    ntohl(rom[loc])));
+
+	memset(&res, 0, sizeof(res));
+	res.fp_hdr[3] = rom[loc];
+	fwohci_atrs_output(sc, IEEE1394_RCODE_COMPLETE, pkt, &res);
+	return -1;
 }
 
 /*
@@ -2031,11 +2181,11 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 	struct fwohci_buf *fb;
 
 	fb = &sc->sc_buf_selfid;
-#ifdef DIAGNOSTICS
+#ifdef DIAGNOSTIC
 	if ((fb->fb_dmamap->dm_segs[0].ds_addr & 0x7ff) != 0)
 		panic("fwohci_selfid_init: not aligned: %p (%ld) %p",
 		    (caddr_t)fb->fb_dmamap->dm_segs[0].ds_addr,
-		    fb->fb_dmamap->dm_segs[0].ds_len, fb->fb_buf);
+		    (unsigned long)fb->fb_dmamap->dm_segs[0].ds_len, fb->fb_buf);
 #endif
 	memset(fb->fb_buf, 0, fb->fb_dmamap->dm_segs[0].ds_len);
 	bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0,
@@ -2066,13 +2216,11 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	gen = OHCI_BITVAL(buf[0], OHCI_SelfID_Gen);
 
 #ifdef FW_DEBUG
-	if (fw_verbose > 1) {
-		printf("%s: SelfID: 0x%08x", sc->sc_sc1394.sc1394_dev.dv_xname,
-		    val);
-		for (i = 0; i < count; i++)
-			printf("%s%08x", i&7?" ":"\n    ", buf[i]);
-		printf("\n");
-	}
+	DPRINTFN(1, ("%s: SelfID: 0x%08x", sc->sc_sc1394.sc1394_dev.dv_xname,
+	    val));
+	for (i = 0; i < count; i++)
+		DPRINTFN(1, ("%s%08x", i&7?" ":"\n    ", buf[i]));
+	DPRINTFN(1, ("\n"));
 #endif /* FW_DEBUG */
 
 	for (i = 1; i < count; i += 2) {
@@ -2092,12 +2240,9 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 		if (OHCI_BITVAL(val, OHCI_SelfID_Gen) !=
 		    OHCI_BITVAL(buf[0], OHCI_SelfID_Gen))
 			goto again;
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("%s: SelfID Gen mismatch (%d, %d)\n",
-			    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
-			    OHCI_BITVAL(val, OHCI_SelfID_Gen));
-#endif
+		DPRINTF(("%s: SelfID Gen mismatch (%d, %d)\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, gen,
+		    OHCI_BITVAL(val, OHCI_SelfID_Gen)));
 		return -1;
 	}
 	if (i != count) {
@@ -2124,14 +2269,11 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 		return -1;
 	}
 	sc->sc_nodeid = val & 0xffff;
-
-#ifdef FW_DEBUG
-	if (fw_verbose)
-		printf("%s: nodeid=0x%04x(%d), rootid=%d, irmid=%d\n",
-		    sc->sc_sc1394.sc1394_dev.dv_xname,
-		    sc->sc_nodeid, sc->sc_nodeid & OHCI_NodeId_NodeNumber,
-		    sc->sc_rootid, sc->sc_irmid);
-#endif
+	
+	DPRINTF(("%s: nodeid=0x%04x(%d), rootid=%d, irmid=%d\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname, sc->sc_nodeid,
+	    sc->sc_nodeid & OHCI_NodeId_NodeNumber, sc->sc_rootid,
+	    sc->sc_irmid));
 
 	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) > sc->sc_rootid)
 		return -1;
@@ -2183,24 +2325,15 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		/* alignment error */
 		return IEEE1394_RCODE_ADDRESS_ERROR;
 	}
-#ifdef FW_DEBUG
-	if (fw_verbose > 1)
-		printf("fwohci_csr_input: CSR[0x%04x]: 0x%08x",
-		    reg, *(u_int32_t *)(&sc->sc_csr[reg]));
-#endif
+	DPRINTFN(1, ("fwohci_csr_input: CSR[0x%04x]: 0x%08x", reg,
+	    *(u_int32_t *)(&sc->sc_csr[reg])));
 	if (pkt->fp_tcode == IEEE1394_TCODE_WRITE_REQ_QUAD) {
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf(" -> 0x%08x\n",
-			    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base));
-#endif
+		DPRINTFN(1, (" -> 0x%08x\n",
+		    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base)));
 		*(u_int32_t *)&sc->sc_csr[reg] =
 		    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base);
 	} else {
-#ifdef FW_DEBUG
-		if (fw_verbose > 1)
-			printf("\n");
-#endif
+		DPRINTFN(1, ("\n"));
 		res.fp_hdr[3] = htonl(*(u_int32_t *)&sc->sc_csr[reg]);
 		res.fp_iov[0].iov_base = &res.fp_hdr[3];
 		res.fp_iov[0].iov_len = 4;
@@ -2214,6 +2347,9 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 /*
  * Mapping between nodeid and unique ID (EUI-64).
+ *
+ * Track old mappings and simply update their devices with the new id's when
+ * they match an existing EUI. This allows proper renumeration of the bus.
  */
 static void
 fwohci_uid_collect(struct fwohci_softc *sc)
@@ -2221,13 +2357,15 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 	int i;
 	struct fwohci_uidtbl *fu;
 	struct fwohci_pkt pkt;
+	struct ieee1394_softc *iea;
+
+	LIST_FOREACH(iea, &sc->sc_nodelist, sc1394_node)
+		iea->sc1394_node_id = 0xffff;
 
 	if (sc->sc_uidtbl != NULL)
 		free(sc->sc_uidtbl, M_DEVBUF);
-	sc->sc_uidtbl = malloc(sizeof(*fu) * (sc->sc_rootid + 1),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_uidtbl == NULL)
-		return;
+	sc->sc_uidtbl = malloc(sizeof(*fu) * (sc->sc_rootid + 1), M_DEVBUF,
+	    M_WAITOK);
 	memset(sc->sc_uidtbl, 0, sizeof(*fu) * (sc->sc_rootid + 1));
 
 	memset(&pkt, 0, sizeof(pkt));
@@ -2235,13 +2373,21 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 		if (i == (sc->sc_nodeid & OHCI_NodeId_NodeNumber)) {
 			memcpy(fu->fu_uid, sc->sc_sc1394.sc1394_guid, 8);
 			fu->fu_valid = 3;
+
+			iea = (struct ieee1394_softc *)sc->sc_sc1394.sc1394_if;
+			if (iea) {
+				iea->sc1394_node_id = i;
+				DPRINTF(("%s: Updating nodeid to %d\n", 
+				    iea->sc1394_dev.dv_xname,
+				    iea->sc1394_node_id));
+			}
 			continue;
 		}
 		fu->fu_valid = 0;
 		pkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 		pkt.fp_hlen = 12;
 		pkt.fp_dlen = 0;
-		pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
+		pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) | 
 		    (pkt.fp_tcode << 4);
 		pkt.fp_hdr[1] = ((0xffc0 | i) << 16) | CSR_BASE_HI;
 		pkt.fp_hdr[2] = CSR_BASE_LO + CSR_CONFIG_ROM + 12;
@@ -2250,21 +2396,28 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
 		fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
 
-		pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
+		pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) | 
 		    (pkt.fp_tcode << 4);
 		pkt.fp_hdr[2] = CSR_BASE_LO + CSR_CONFIG_ROM + 16;
 		fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD, i,
 		    sc->sc_tlabel, fwohci_uid_input, (void *)1);
 		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
 		fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
+
 	}
+	if (sc->sc_rootid == 0)
+		fwohci_check_nodes(sc);
 }
 
 static int
 fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 {
-	int n, rcode;
 	struct fwohci_uidtbl *fu;
+	struct ieee1394_softc *iea;
+	struct ieee1394_attach_args fwa;
+	int i, n, done, rcode, found;
+
+	found = 0;
 
 	n = (res->fp_hdr[1] >> 16) & OHCI_NodeId_NodeNumber;
 	rcode = (res->fp_hdr[1] & 0x0000f000) >> 12;
@@ -2281,13 +2434,79 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 		fu->fu_valid |= 0x2;
 	}
 #ifdef FW_DEBUG
-	if (fw_verbose && fu->fu_valid == 0x3)
-		printf("fwohci_uid_input: "
+	if (fu->fu_valid == 0x3)
+		DPRINTFN(1, ("fwohci_uid_input: "
 		    "Node %d, UID %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n", n,
 		    fu->fu_uid[0], fu->fu_uid[1], fu->fu_uid[2], fu->fu_uid[3],
-		    fu->fu_uid[4], fu->fu_uid[5], fu->fu_uid[6], fu->fu_uid[7]);
+		    fu->fu_uid[4], fu->fu_uid[5], fu->fu_uid[6], fu->fu_uid[7]));
 #endif
+	if (fu->fu_valid == 0x3) {
+		LIST_FOREACH(iea, &sc->sc_nodelist, sc1394_node)
+			if (memcmp(iea->sc1394_guid, fu->fu_uid, 8) == 0) {
+				found = 1;
+				iea->sc1394_node_id = n;
+				DPRINTF(("%s: Updating nodeid to %d\n", 
+				    iea->sc1394_dev.dv_xname,
+				    iea->sc1394_node_id));
+				break;
+			}
+		if (!found) {
+			strcpy(fwa.name, "fwnode");
+			memcpy(fwa.uid, fu->fu_uid, 8);
+			fwa.nodeid = n;
+			fwa.read = fwohci_read;
+			fwa.write = fwohci_write;
+			fwa.inreg = fwohci_inreg;
+			iea = (struct ieee1394_softc *)
+			    config_found_sm(&sc->sc_sc1394.sc1394_dev, &fwa, 
+			    fwohci_print, fwohci_submatch);
+			if (iea != NULL)
+				LIST_INSERT_HEAD(&sc->sc_nodelist, iea,
+				    sc1394_node);
+		}
+	}
+	done = 1;
+
+	for (i = 0; i < sc->sc_rootid + 1; i++) {
+		fu = &sc->sc_uidtbl[i];
+		if (fu->fu_valid != 0x3) {
+			done = 0;
+			break;
+		}
+	}
+	if (done)
+		fwohci_check_nodes(sc);
+
 	return 0;
+}
+
+static void
+fwohci_check_nodes(struct fwohci_softc *sc)
+{
+	struct device *detach = NULL;
+	struct ieee1394_softc *iea;
+
+	LIST_FOREACH(iea, &sc->sc_nodelist, sc1394_node) {
+
+		/*
+		 * Have to defer detachment until the next
+		 * loop iteration since config_detach
+		 * free's the softc and the loop iterator
+		 * needs data from the softc to move
+		 * forward.
+		 */
+
+		if (detach) {
+			config_detach(detach, 0);
+			detach = NULL;
+		}
+		if (iea->sc1394_node_id == 0xffff) {
+			detach = (struct device *)iea;
+			LIST_REMOVE(iea, sc1394_node);
+		}
+	}
+	if (detach) 
+		config_detach(detach, 0);
 }
 
 static int
@@ -2323,15 +2542,12 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
     void (*handler)(struct device *, struct mbuf *))
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
-	int s;
 
-	s = splimp();
 	fwohci_handler_set(sc, IEEE1394_TCODE_WRITE_REQ_BLOCK, offhi, offlo, 
 	    fwohci_if_input, handler);
 	fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
 	    sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] & OHCI_NodeId_NodeNumber,
 	    IEEE1394_TAG_GASP, fwohci_if_input, handler);
-	splx(s);
 	return 0;
 }
 
@@ -2344,25 +2560,20 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
 #ifdef FW_DEBUG
-	if (fw_verbose > 1) {
-		int i;
-		printf("fwohci_if_input: tcode=0x%x, dlen=%d",
-		    pkt->fp_tcode, pkt->fp_dlen);
-		if (fw_dump) {
-			for (i = 0; i < pkt->fp_hlen/4; i++)
-				printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
-			printf("$");
-			for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
-				iov = &pkt->fp_iov[n];
-				for (i = 0; i < iov->iov_len; i++)
-					printf("%s%02x",
-					    (i%32)?((i%4)?"":" "):"\n\t",
-					    ((u_int8_t *)iov->iov_base)[i]);
-				printf("$");
-			}
-		}
-		printf("\n");
+	int i;
+	DPRINTFN(1, ("fwohci_if_input: tcode=0x%x, dlen=%d", pkt->fp_tcode,
+	    pkt->fp_dlen));
+	for (i = 0; i < pkt->fp_hlen/4; i++)
+		DPRINTFN(2, ("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]));
+	DPRINTFN(2, ("$"));
+	for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
+		iov = &pkt->fp_iov[n];
+		for (i = 0; i < iov->iov_len; i++)
+			DPRINTFN(2, ("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
+			    ((u_int8_t *)iov->iov_base)[i]));
+		DPRINTFN(2, ("$"));
 	}
+	DPRINTFN(1, ("\n"));
 #endif /* FW_DEBUG */
 	len = pkt->fp_dlen;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -2418,8 +2629,8 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	while (len > 0) {
 		memcpy(mtod(m, caddr_t) + m->m_len, iov->iov_base,
 		    iov->iov_len);
-	        m->m_len += iov->iov_len;
-	        len -= iov->iov_len;
+		m->m_len += iov->iov_len;
+		len -= iov->iov_len;
 		iov++;
 	}
 	(*handler)(sc->sc_sc1394.sc1394_if, m);
@@ -2433,7 +2644,10 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
 	struct fwohci_pkt pkt;
 	u_int8_t *p;
-	int s, n, error, spd, hdrlen, maxrec;
+	int n, error, spd, hdrlen, maxrec;
+#ifdef FW_DEBUG
+	struct mbuf *m;
+#endif
 
 	p = mtod(m0, u_int8_t *);
 	if (m0->m_flags & (M_BCAST | M_MCAST)) {
@@ -2454,18 +2668,15 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 			printf("%s: broadcast with !M_MCAST\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname);
 #ifdef FW_DEBUG
-			if (fw_dump) {
-				struct mbuf *m;
-				printf("packet:");
-				for (m = m0; m != NULL; m = m->m_next) {
-					for (n = 0; n < m->m_len; n++)
-						printf("%s%02x", (n%32)?
-						    ((n%4)?"":" "):"\n\t",
-						    mtod(m, u_int8_t *)[n]);
-					printf("$");
-				}
-				printf("\n");
+			DPRINTFN(2, ("packet:"));
+			for (m = m0; m != NULL; m = m->m_next) {
+				for (n = 0; n < m->m_len; n++)
+					DPRINTFN(2, ("%s%02x", (n%32)?
+					    ((n%4)?"":" "):"\n\t",
+					    mtod(m, u_int8_t *)[n]));
+				DPRINTFN(2, ("$"));
 			}
+			DPRINTFN(2, ("\n"));
 #endif
 			error = EHOSTUNREACH;
 			goto end;
@@ -2475,46 +2686,30 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 		hdrlen = 0;
 	}
 	if (spd > sc->sc_sc1394.sc1394_link_speed) {
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("fwohci_if_output: spd (%d) is faster than %d\n",
-			    spd, sc->sc_sc1394.sc1394_link_speed);
-#endif
+		DPRINTF(("fwohci_if_output: spd (%d) is faster than %d\n",
+		    spd, sc->sc_sc1394.sc1394_link_speed));
 		spd = sc->sc_sc1394.sc1394_link_speed;
 	}
 	if (maxrec > (512 << spd)) {
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("fwohci_if_output: maxrec (%d) is larger for"
-			" spd (%d)\n", maxrec, spd);
-#endif
+		DPRINTF(("fwohci_if_output: maxrec (%d) is larger for spd (%d)"
+		    "\n", maxrec, spd));
 		maxrec = 512 << spd;
 	}
 	while (maxrec > sc->sc_sc1394.sc1394_max_receive) {
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("fwohci_if_output: maxrec (%d) is larger than"
-			    " %d\n", maxrec, sc->sc_sc1394.sc1394_max_receive);
-#endif
+		DPRINTF(("fwohci_if_output: maxrec (%d) is larger than"
+		    " %d\n", maxrec, sc->sc_sc1394.sc1394_max_receive));
 		maxrec >>= 1;
 	}
 	if (maxrec < 512) {
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("fwohci_if_output: maxrec (%d) is smaller"
-			    " than minimum\n", maxrec);
-#endif
+		DPRINTF(("fwohci_if_output: maxrec (%d) is smaller than "
+		    "minimum\n", maxrec));
 		maxrec = 512;
 	}
 
 	m_adj(m0, 16 - hdrlen);
 	if (m0->m_pkthdr.len > maxrec) {
-#ifdef FW_DEBUG
-		if (fw_verbose)
-			printf("fwohci_if_output: packet too big:"
-			    " hdr %d, pktlen %d, maxrec %d\n",
-			    hdrlen, m0->m_pkthdr.len, maxrec);
-#endif
+		DPRINTF(("fwohci_if_output: packet too big: hdr %d, pktlen "
+		    "%d, maxrec %d\n", hdrlen, m0->m_pkthdr.len, maxrec));
 		error = E2BIG;	/*XXX*/
 		goto end;
 	}
@@ -2523,7 +2718,6 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	pkt.fp_uio.uio_iov = pkt.fp_iov;
 	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
 	pkt.fp_uio.uio_rw = UIO_WRITE;
-	s = splimp();
 	if (m0->m_flags & (M_BCAST | M_MCAST)) {
 		/* construct GASP header */
 		p = mtod(m0, u_int8_t *);
@@ -2554,7 +2748,6 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	pkt.fp_m = m0;
 	pkt.fp_callback = callback;
 	error = fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
-	splx(s);
 	m0 = pkt.fp_m;
   end:
 	if (m0 != NULL) {
@@ -2564,4 +2757,595 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 			m_freem(m0);
 	}
 	return error;
+}
+
+/*
+ * High level routines to provide abstraction to attaching layers to
+ * send/receive data.
+ */
+
+/*
+ * These break down into 4 routines as follows:
+ *
+ * int fwohci_read(struct ieee1394_abuf *)
+ *
+ * This routine will attempt to read a region from the requested node.
+ * A callback must be provided which will be called when either the completed
+ * read is done or an unrecoverable error occurs. This is mainly a convenience
+ * routine since it will encapsulate retrying a region as quadlet vs. block reads
+ * and recombining all the returned data. This could also be done with a series
+ * of write/inreg's for each packet sent.
+ *
+ * int fwohci_write(struct ieee1394_abuf *)
+ *
+ * The work horse main entry point for putting packets on the bus. This is the
+ * generalized interface for fwnode/etc code to put packets out onto the bus.
+ * It accepts all standard ieee1394 tcodes (XXX: only a few today) and optionally
+ * will callback via a func pointer to the calling code with the resulting ACK
+ * code from the packet. If the ACK code is to be ignored (i.e. no cb) then the
+ * write routine will take care of free'ing the abuf since the fwnode/etc code
+ * won't have any knowledge of when to do this. This allows for simple one-off
+ * packets to be sent from the upper-level code without worrying about a callback
+ * for cleanup.
+ *
+ * int fwohci_inreg(struct ieee1394_abuf *, int)
+ *
+ * This is very simple. It evals the abuf passed in and registers an internal
+ * handler as the callback for packets received for that operation.
+ * The integer argument specifies whether on a block read/write operation to
+ * allow sub-regions to be read/written (in block form) as well.
+ *
+ * XXX: This whole structure needs to be redone as a list of regions and
+ * operations allowed on those regions.
+ *
+ * int fwohci_unreg(struct ieee1394_abuf *, int)
+ *
+ * XXX: TBD. For now passing in a NULL ab_cb to inreg will unregister. This
+ * routine will simply verify ab_cb is NULL and call inreg.
+ *
+ * This simply unregisters the respective callback done via inreg for items
+ * which only need to register an area for a one-time operation (like a status
+ * buffer a remote node will write to when the current operation is done). The
+ * int argument specifies the same behavior as inreg, except in reverse (i.e.
+ * it unregisters).
+ */
+ 
+static int
+fwohci_read(struct ieee1394_abuf *ab)
+{
+	struct fwohci_pkt pkt;
+	struct ieee1394_softc *sc = ab->ab_req;
+	struct fwohci_softc *psc =
+	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent;
+	struct fwohci_cb *fcb;
+	u_int32_t high, lo;
+	int rv, tcode;
+
+	/* Have to have a callback when reading. */
+	if (ab->ab_cb == NULL)
+		return -1;
+
+	fcb = malloc(sizeof(struct fwohci_cb), M_DEVBUF, M_WAITOK);
+	fcb->ab = ab;
+	fcb->count = 0;
+	fcb->abuf_valid = 1;
+	
+	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
+	lo = (ab->ab_csr & 0x00000000ffffffff);
+
+	memset(&pkt, 0, sizeof(pkt));
+	pkt.fp_hdr[1] = ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
+	pkt.fp_hdr[2] = lo;
+	pkt.fp_dlen = 0;
+
+	if (ab->ab_length == 4) {
+		pkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
+		tcode = IEEE1394_TCODE_READ_RESP_QUAD;
+		pkt.fp_hlen = 12;
+	} else {
+		pkt.fp_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+		pkt.fp_hlen = 16;
+		tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+		pkt.fp_hdr[3] = (ab->ab_length << 16);
+	}
+	pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
+	    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
+
+	pkt.fp_statusarg = fcb;
+	pkt.fp_statuscb = fwohci_read_resp;
+
+	rv = fwohci_handler_set(psc, tcode, ab->ab_req->sc1394_node_id,
+	    psc->sc_tlabel, fwohci_read_resp, fcb);
+	if (rv) 
+		return rv;
+	rv = fwohci_at_output(psc, psc->sc_ctx_atrq, &pkt);
+	if (rv)
+		fwohci_handler_set(psc, tcode, ab->ab_req->sc1394_node_id,
+		    psc->sc_tlabel, NULL, NULL);
+	psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
+	fcb->count = 1;
+	return rv;
+}
+
+static int
+fwohci_write(struct ieee1394_abuf *ab)
+{
+	struct fwohci_pkt pkt;
+	struct ieee1394_softc *sc = ab->ab_req;
+	struct fwohci_softc *psc =
+	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent; 
+	u_int32_t high, lo;
+	int rv;
+
+	if (ab->ab_length > sc->sc1394_max_receive) {
+		DPRINTF(("Packet too large: %d\n", ab->ab_length));
+		return E2BIG;
+	}
+
+	memset(&pkt, 0, sizeof(pkt));
+
+	pkt.fp_tcode = ab->ab_tcode;
+	pkt.fp_uio.uio_iov = pkt.fp_iov;
+	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
+	pkt.fp_uio.uio_rw = UIO_WRITE;
+
+	pkt.fp_statusarg = ab;
+	pkt.fp_statuscb = fwohci_write_ack;
+
+	switch (ab->ab_tcode) {
+	case IEEE1394_TCODE_WRITE_RESP:
+		pkt.fp_hlen = 12;
+	case IEEE1394_TCODE_READ_RESP_QUAD:
+	case IEEE1394_TCODE_READ_RESP_BLOCK:
+		if (!pkt.fp_hlen)
+			pkt.fp_hlen = 16;
+		high = ab->ab_retlen;
+		ab->ab_retlen = 0;
+		lo = 0;
+		pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
+		    (ab->ab_tlabel << 10) | (pkt.fp_tcode << 4);
+		break;
+	default:
+		pkt.fp_hlen = 16;
+		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_csr & 0x00000000ffffffff);
+		pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
+		    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
+		break;
+	}
+
+	pkt.fp_hdr[1] = ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
+	pkt.fp_hdr[2] = lo;
+	if (pkt.fp_hlen == 16) {
+		if (ab->ab_length == 4) {
+			pkt.fp_hdr[3] = ab->ab_data[0];
+			pkt.fp_dlen = 0;
+		}  else {
+			pkt.fp_hdr[3] = (ab->ab_length << 16);
+			pkt.fp_dlen = ab->ab_length;
+			pkt.fp_uio.uio_iovcnt = 1;
+			pkt.fp_uio.uio_resid = ab->ab_length;
+			pkt.fp_iov[0].iov_base = ab->ab_data;
+			pkt.fp_iov[0].iov_len = ab->ab_length;
+		}
+	}
+	switch (ab->ab_tcode) {
+	case IEEE1394_TCODE_WRITE_RESP:
+	case IEEE1394_TCODE_READ_RESP_QUAD:
+	case IEEE1394_TCODE_READ_RESP_BLOCK:
+		rv = fwohci_at_output(psc, psc->sc_ctx_atrs, &pkt);
+		break;
+	default:
+		rv = fwohci_at_output(psc, psc->sc_ctx_atrq, &pkt);
+		break;
+	}
+	return rv;
+}
+
+static int
+fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+{
+	struct fwohci_cb *fcb = arg;
+	struct ieee1394_abuf *ab = fcb->ab;
+	struct fwohci_pkt newpkt;
+	u_int32_t *cur, high, lo;
+	int i, tcode, rcode, status, rv;
+
+	/*
+	 * Both the ACK handling and normal response callbacks are handled here.
+	 * The main reason for this is the various error conditions that can
+	 * occur trying to block read some areas and the ways that gets reported
+	 * back to calling station. This is a variety of ACK codes, responses,
+	 * etc which makes it much more difficult to process if both aren't
+	 * handled here.
+	 */
+	
+	/* Check for status packet. */
+
+	if (pkt->fp_tcode == -1) {
+		status = pkt->fp_status & OHCI_DESC_STATUS_ACK_MASK;
+		rcode = -1;
+		tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
+		if ((status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+		    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))
+			DPRINTF(("Got status packet: 0x%02x\n",
+			    (unsigned int)status));
+		fcb->count--;
+
+		/*
+		 * Got all the ack's back and the buffer is invalid (i.e. the
+		 * callback has been called. Clean up.
+		 */
+		
+		if (fcb->abuf_valid == 0) {
+			if (fcb->count == 0)
+				free(fcb, M_DEVBUF);
+			return IEEE1394_RCODE_COMPLETE;
+		}
+	} else {
+		status = -1;
+		tcode = pkt->fp_tcode;
+		rcode = (pkt->fp_hdr[1] & 0x0000f000) >> 12;
+	}
+
+	/*
+	 * Some area's (like the config rom want to be read as quadlets only.
+	 *
+	 * The current ideas to try are:
+	 *
+	 * Got an ACK_TYPE_ERROR on a block read.
+	 *
+	 * Got either RCODE_TYPE or RCODE_ADDRESS errors in a block read
+	 * response.
+	 *
+	 * In all cases construct a new packet for a quadlet read and let
+	 * mutli_resp handle the iteration over the space.
+	 */
+
+	if (((status == OHCI_CTXCTL_EVENT_ACK_TYPE_ERROR) &&
+	     (tcode == IEEE1394_TCODE_READ_REQ_BLOCK)) ||
+	    (((rcode == IEEE1394_RCODE_TYPE_ERROR) ||
+	     (rcode == IEEE1394_RCODE_ADDRESS_ERROR)) &&
+	      (tcode == IEEE1394_TCODE_READ_RESP_BLOCK))) {
+
+		/* Read the area in quadlet chunks (internally track this). */
+
+		memset(&newpkt, 0, sizeof(newpkt));
+
+		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_csr & 0x00000000ffffffff);
+
+		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
+		newpkt.fp_hlen = 12;
+		newpkt.fp_dlen = 0;
+		newpkt.fp_hdr[1] =
+		    ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
+		newpkt.fp_hdr[2] = lo;
+		newpkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
+		    (newpkt.fp_tcode << 4);
+
+		rv = fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
+		    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
+		    fwohci_read_multi_resp, fcb);
+		if (rv) {
+			(*ab->ab_cb)(ab, -1);
+			goto cleanup;
+		}
+		newpkt.fp_statusarg = fcb;
+		newpkt.fp_statuscb = fwohci_read_resp;
+		rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
+		if (rv) {
+			fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
+			    ab->ab_req->sc1394_node_id, sc->sc_tlabel, NULL,
+			    NULL);
+			(*ab->ab_cb)(ab, -1);
+			goto cleanup;
+		}
+		fcb->count++;
+		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
+		return IEEE1394_RCODE_COMPLETE;
+	} else if ((rcode != -1) || ((status != -1) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))) {
+
+		/*
+		 * Recombine all the iov data into 1 chunk for higher
+		 * level code.
+		 */
+
+		if (rcode != -1) {
+			cur = ab->ab_data;
+			for (i = 0; i < pkt->fp_uio.uio_iovcnt; i++) {
+				/*
+				 * Make sure and don't exceed the buffer
+				 * allocated for return.
+				 */
+				if ((ab->ab_retlen + pkt->fp_iov[i].iov_len) >
+				    ab->ab_length) {
+					memcpy(cur, pkt->fp_iov[i].iov_base,
+					    (ab->ab_length - ab->ab_retlen));
+					ab->ab_retlen = ab->ab_length;
+					break;
+				}
+				memcpy(cur, pkt->fp_iov[i].iov_base,
+				    pkt->fp_iov[i].iov_len);
+				cur += pkt->fp_iov[i].iov_len;
+				ab->ab_retlen += pkt->fp_iov[i].iov_len;
+			}
+		}
+		if (status != -1) 
+			/* XXX: Need a complete tlabel interface. */
+			for (i = 0; i < 64; i++)
+				fwohci_handler_set(sc,
+				    IEEE1394_TCODE_READ_RESP_QUAD,
+				    ab->ab_req->sc1394_node_id, i, NULL, NULL);
+		(*ab->ab_cb)(ab, rcode);
+		goto cleanup;
+	} else
+		/* Good ack packet. */
+		return IEEE1394_RCODE_COMPLETE;
+
+	/* Can't get here unless ab->ab_cb has been called. */
+	
+ cleanup:
+	fcb->abuf_valid = 0;
+	if (fcb->count == 0)
+		free(fcb, M_DEVBUF);
+	return IEEE1394_RCODE_COMPLETE;
+}
+
+static int
+fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
+    struct fwohci_pkt *pkt)
+{
+	struct fwohci_cb *fcb = arg;
+	struct ieee1394_abuf *ab = fcb->ab;
+	struct fwohci_pkt newpkt;
+	u_int32_t high, lo;
+	int rcode, rv;
+
+	/*
+	 * Bad return codes from the wire, just return what's already in the
+	 * buf.
+	 */
+
+	/* Make sure a response packet didn't arrive after a bad ACK. */
+	if (fcb->abuf_valid == 0)
+		return IEEE1394_RCODE_COMPLETE;
+
+	rcode = (pkt->fp_hdr[1] & 0x0000f000) >> 12;
+
+	if (rcode) {
+		(*ab->ab_cb)(ab, rcode);
+		goto cleanup;
+	}
+
+	if ((ab->ab_retlen + pkt->fp_iov[0].iov_len) > ab->ab_length) {
+		memcpy(((char *)ab->ab_data + ab->ab_retlen),
+		    pkt->fp_iov[0].iov_base, (ab->ab_length - ab->ab_retlen));
+		ab->ab_retlen = ab->ab_length;
+	} else {
+		memcpy(((char *)ab->ab_data + ab->ab_retlen),
+		    pkt->fp_iov[0].iov_base, 4);
+		ab->ab_retlen += 4;
+	}
+	/* Still more, loop and read 4 more bytes. */
+	if (ab->ab_retlen < ab->ab_length) {
+		memset(&newpkt, 0, sizeof(newpkt));
+
+		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_csr & 0x00000000ffffffff) + ab->ab_retlen;
+
+		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
+		newpkt.fp_hlen = 12;
+		newpkt.fp_dlen = 0;
+		newpkt.fp_hdr[1] =
+		    ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
+		newpkt.fp_hdr[2] = lo;
+		newpkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
+		    (newpkt.fp_tcode << 4);
+
+		newpkt.fp_statusarg = fcb;
+		newpkt.fp_statuscb = fwohci_read_resp;
+
+		/*
+		 * Bad return code.  Just give up and return what's
+		 * come in now.
+		 */
+		rv = fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
+		    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
+		    fwohci_read_multi_resp, fcb);
+		if (rv) 
+			(*ab->ab_cb)(ab, -1);
+		else {
+			rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
+			if (rv) {
+				fwohci_handler_set(sc,
+				    IEEE1394_TCODE_READ_RESP_QUAD,
+				    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
+				    NULL, NULL);
+				(*ab->ab_cb)(ab, -1);
+			} else {
+				sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
+				fcb->count++;
+				return IEEE1394_RCODE_COMPLETE;
+			}
+		}
+	} else
+		(*ab->ab_cb)(ab, IEEE1394_RCODE_COMPLETE);
+
+ cleanup:
+	/* Can't get here unless ab_cb has been called. */
+	fcb->abuf_valid = 0;
+	if (fcb->count == 0)
+		free(fcb, M_DEVBUF);
+	return IEEE1394_RCODE_COMPLETE;
+}
+
+static int
+fwohci_write_ack(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+{
+	struct ieee1394_abuf *ab = arg;
+	u_int16_t status;
+
+
+	status = pkt->fp_status & OHCI_DESC_STATUS_ACK_MASK;
+	if ((status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))
+		DPRINTF(("Got status packet: 0x%02x\n",
+		    (unsigned int)status));
+
+	/* No callback means this level should free the buffers. */
+	if (ab->ab_cb)
+		(*ab->ab_cb)(ab, status);
+	else {
+		if (ab->ab_data)
+			free(ab->ab_data, M_1394DATA);
+		free(ab, M_1394DATA);
+	}
+	return IEEE1394_RCODE_COMPLETE;
+}
+
+static int
+fwohci_inreg(struct ieee1394_abuf *ab, int allow)
+{
+	struct ieee1394_softc *sc = ab->ab_req;
+	struct fwohci_softc *psc =
+	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent; 
+	u_int32_t high, lo;
+	int i, j, rv;
+
+	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
+	lo = (ab->ab_csr & 0x00000000ffffffff);
+
+	rv = 0;
+	switch (ab->ab_tcode) {
+	case IEEE1394_TCODE_READ_REQ_QUAD:
+	case IEEE1394_TCODE_WRITE_REQ_QUAD:
+		if (ab->ab_cb)
+			rv = fwohci_handler_set(psc, ab->ab_tcode, high, lo,
+			    fwohci_parse_input, ab);
+		else
+			fwohci_handler_set(psc, ab->ab_tcode, high, lo, NULL,
+			    NULL);
+		break;
+	case IEEE1394_TCODE_READ_REQ_BLOCK:
+	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
+		if (allow) {
+			for (i = 0; i < (ab->ab_length / 4); i++) {
+				if (ab->ab_cb) {
+					rv = fwohci_handler_set(psc,
+					    ab->ab_tcode, high, lo + (i * 4),
+					    fwohci_parse_input, ab);
+					if (rv)
+						break;
+				} else
+					fwohci_handler_set(psc, ab->ab_tcode,
+					    high, lo + (i * 4), NULL, NULL);
+			}
+			if (i != (ab->ab_length / 4)) {
+				j = i + 1;
+				for (i = 0; i < j; i++) 
+					fwohci_handler_set(psc, ab->ab_tcode,
+					    high, lo + (i * 4), NULL, NULL);
+			} else
+				ab->ab_data = (void *)1;
+		} else {
+			if (ab->ab_cb) 
+				rv = fwohci_handler_set(psc, ab->ab_tcode, high,
+				    lo, fwohci_parse_input, ab);
+			else
+				fwohci_handler_set(psc, ab->ab_tcode, high, lo,
+				    NULL, NULL);
+		}
+		break;
+	default:
+		DPRINTF(("Invalid registration tcode: %d\n", ab->ab_tcode));
+		return -1;
+		break;
+	}
+	return rv;
+}
+
+static int
+fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+{
+	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
+	u_int64_t csr;
+	u_int32_t *cur;
+	int i, count;
+
+	ab->ab_tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
+	ab->ab_tlabel = (pkt->fp_hdr[0] >> 10) & 0x3f;
+	csr = (((u_int64_t)(pkt->fp_hdr[1] & 0xffff) << 32) | pkt->fp_hdr[2]);
+
+	switch (ab->ab_tcode) {
+	case IEEE1394_TCODE_READ_REQ_QUAD:
+		ab->ab_retlen = 4;
+		break;
+	case IEEE1394_TCODE_READ_REQ_BLOCK:
+		ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
+		if (ab->ab_data) {
+			if ((csr + ab->ab_retlen) >
+			    (ab->ab_csr + ab->ab_length))
+				return IEEE1394_RCODE_ADDRESS_ERROR;
+			ab->ab_data = NULL;
+		} else
+			if (ab->ab_retlen != ab->ab_length)
+				return IEEE1394_RCODE_ADDRESS_ERROR;
+		break;
+	case IEEE1394_TCODE_WRITE_REQ_QUAD:
+		ab->ab_retlen = 4;
+	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
+		if (!ab->ab_retlen) 
+			ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
+		if (ab->ab_data) {
+			if ((csr + ab->ab_retlen) >
+			    (ab->ab_csr + ab->ab_length))
+				return IEEE1394_RCODE_ADDRESS_ERROR;
+			ab->ab_data = NULL;
+		} else
+			if (ab->ab_retlen != ab->ab_length)
+				return IEEE1394_RCODE_ADDRESS_ERROR;
+
+		ab->ab_data = malloc(ab->ab_retlen, M_1394DATA, M_WAITOK);
+		if (ab->ab_tcode == IEEE1394_TCODE_WRITE_REQ_QUAD)
+			ab->ab_data[0] = pkt->fp_hdr[3];
+		else {
+			count = 0;
+			cur = ab->ab_data;
+			for (i = 0; i < pkt->fp_uio.uio_iovcnt; i++) {
+				memcpy(cur, pkt->fp_iov[i].iov_base,
+				    pkt->fp_iov[i].iov_len);
+				cur += pkt->fp_iov[i].iov_len;
+				count += pkt->fp_iov[i].iov_len;
+			}
+			if (ab->ab_retlen != count)
+				panic("Packet claims %d length "
+				    "but only %d bytes returned\n",
+				    ab->ab_retlen, count);
+		}
+		break;
+	default:
+		panic("Got a callback for a tcode that wasn't requested: %d\n",
+		    ab->ab_tcode);
+		break;
+	}
+	ab->ab_csr = csr;
+	ab->ab_cb(ab, IEEE1394_RCODE_COMPLETE);
+	return -1;
+}
+
+static int
+fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct ieee1394_attach_args *fwa = aux;
+
+	/* Both halves must be filled in for a match. */
+	if ((cf->fwbuscf_idhi == FWBUS_UNK_IDHI &&
+	    cf->fwbuscf_idlo == FWBUS_UNK_IDLO) ||
+	    (cf->fwbuscf_idhi == ntohl(*((u_int32_t *)&fwa->uid[0])) &&
+	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
+		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.29 2000/12/11 05:29:02 mycroft Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.29.2.1 2001/06/21 20:00:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 
@@ -63,6 +63,7 @@ struct emul emul_sunos = {
 	NULL,
 #endif
 	sunos_sendsig,
+	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
 	NULL,

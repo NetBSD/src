@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.1 2001/04/09 01:57:32 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.2 2001/06/21 20:06:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -544,6 +544,26 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
  
 	sc->sc_refcnt++;
 	error = ((*tp->t_linesw->l_write)(tp, uio, flag));
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	return (error);
+}
+
+int
+ucompoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+	int error;
+
+	if (sc->sc_dying)
+		return (EIO);
+ 
+	sc->sc_refcnt++;
+	error = ((*tp->t_linesw->l_poll)(tp, events, p));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);

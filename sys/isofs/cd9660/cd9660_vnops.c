@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.63 2001/02/27 04:37:45 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.63.2.1 2001/06/21 20:06:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -337,20 +337,6 @@ cd9660_read(v)
 
 out:
 	return (error);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-cd9660_mmap(v)
-	void *v;
-{
-
-	return (EINVAL);
 }
 
 int

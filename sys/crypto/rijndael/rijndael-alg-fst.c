@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.2 2000/10/02 17:19:15 itojun Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.2.6.1 2001/06/21 20:01:05 nathanw Exp $	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.6 2000/10/02 17:14:26 itojun Exp $	*/
 
 /*
@@ -15,6 +15,11 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
+#include <string.h>
+#endif
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael_local.h>
 
@@ -25,7 +30,11 @@ int rijndaelKeySched(word8 k[MAXKC][4], word8 W[MAXROUNDS+1][4][4], int ROUNDS) 
 	 * The number of calculations depends on keyBits and blockBits
 	 */ 
 	int j, r, t, rconpointer = 0;
-	word8 tk[MAXKC][4];
+	union {
+		word8	x8[MAXKC][4];
+		word32	x32[MAXKC];
+	} xtk;
+#define	tk	xtk.x8
 	int KC = ROUNDS - 6;
 
 	for (j = KC-1; j >= 0; j--) {
@@ -80,6 +89,7 @@ int rijndaelKeySched(word8 k[MAXKC][4], word8 W[MAXROUNDS+1][4][4], int ROUNDS) 
 		}
 	}		
 	return 0;
+#undef tk
 }
 
 int rijndaelKeyEncToDec(word8 W[MAXROUNDS+1][4][4], int ROUNDS) {
@@ -121,9 +131,21 @@ int rijndaelKeyEncToDec(word8 W[MAXROUNDS+1][4][4], int ROUNDS) {
 /**
  * Encrypt a single block. 
  */
-int rijndaelEncrypt(word8 a[16], word8 b[16], word8 rk[MAXROUNDS+1][4][4], int ROUNDS) {
+int rijndaelEncrypt(word8 in[16], word8 out[16], word8 rk[MAXROUNDS+1][4][4], int ROUNDS) {
 	int r;
-	word8 temp[4][4];
+	union {
+		word8	x8[16];
+		word32	x32[4];
+	} xa, xb;
+#define	a	xa.x8
+#define	b	xb.x8
+	union {
+		word8	x8[4][4];
+		word32	x32[4];
+	} xtemp;
+#define	temp	xtemp.x8
+
+    memcpy(a, in, sizeof a);
 
     *((word32*)temp[0]) = *((word32*)(a   )) ^ *((word32*)rk[0][0]);
     *((word32*)temp[1]) = *((word32*)(a+ 4)) ^ *((word32*)rk[0][1]);
@@ -194,7 +216,12 @@ int rijndaelEncrypt(word8 a[16], word8 b[16], word8 rk[MAXROUNDS+1][4][4], int R
 	*((word32*)(b+ 8)) ^= *((word32*)rk[ROUNDS][2]);
 	*((word32*)(b+12)) ^= *((word32*)rk[ROUNDS][3]);
 
+	memcpy(out, b, sizeof b /* XXX out */);
+
 	return 0;
+#undef a
+#undef b
+#undef temp
 }
 
 #ifdef INTERMEDIATE_VALUE_KAT
@@ -269,10 +296,22 @@ int rijndaelEncryptRound(word8 a[4][4], word8 rk[MAXROUNDS+1][4][4], int ROUNDS,
 /**
  * Decrypt a single block.
  */
-int rijndaelDecrypt(word8 a[16], word8 b[16], word8 rk[MAXROUNDS+1][4][4], int ROUNDS) {
+int rijndaelDecrypt(word8 in[16], word8 out[16], word8 rk[MAXROUNDS+1][4][4], int ROUNDS) {
 	int r;
-	word8 temp[4][4];
+	union {
+		word8	x8[16];
+		word32	x32[4];
+	} xa, xb;
+#define	a	xa.x8
+#define	b	xb.x8
+	union {
+		word8	x8[4][4];
+		word32	x32[4];
+	} xtemp;
+#define	temp	xtemp.x8
 	
+    memcpy(a, in, sizeof a);
+
     *((word32*)temp[0]) = *((word32*)(a   )) ^ *((word32*)rk[ROUNDS][0]);
     *((word32*)temp[1]) = *((word32*)(a+ 4)) ^ *((word32*)rk[ROUNDS][1]);
     *((word32*)temp[2]) = *((word32*)(a+ 8)) ^ *((word32*)rk[ROUNDS][2]);
@@ -342,7 +381,12 @@ int rijndaelDecrypt(word8 a[16], word8 b[16], word8 rk[MAXROUNDS+1][4][4], int R
 	*((word32*)(b+ 8)) ^= *((word32*)rk[0][2]);
 	*((word32*)(b+12)) ^= *((word32*)rk[0][3]);
 
+	memcpy(out, b, sizeof b /* XXX out */);
+
 	return 0;
+#undef a
+#undef b
+#undef temp
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212 2001/01/08 02:03:45 fvdl Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.1 2001/06/21 20:01:18 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -380,7 +380,7 @@ wddetach(self, flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
@@ -404,9 +404,11 @@ wddetach(self, flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = WDMINOR(self->dv_unit, 0);
-	vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-	vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = WDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
@@ -571,6 +573,8 @@ wddone(v)
 	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
+	if (bp == NULL)
+		return;
 	bp->b_resid = wd->sc_wdc_bio.bcount;
 	errbuf[0] = '\0';
 	switch (wd->sc_wdc_bio.error) {
@@ -1217,6 +1221,7 @@ wddump(dev, blkno, va, size)
   
 	while (nblks > 0) {
 again:
+		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wddumpmulti == 1)

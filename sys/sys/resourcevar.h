@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.15.2.1 2001/03/05 22:50:03 nathanw Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.15.2.2 2001/06/21 20:09:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@ struct plimit {
 		    (p)->p_stats->p_prof.pr_addr,			\
 		    (p)->p_stats->p_prof.pr_ticks);			\
 		(p)->p_stats->p_prof.pr_ticks = 0;			\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 extern char defcorename[];

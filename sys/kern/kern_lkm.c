@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.55.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.55.2.2 2001/06/21 20:06:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -397,6 +397,11 @@ lkmioctl(dev, cmd, data, flag, p)
 			lkm_state = LKMS_UNLOADING;	/* for lkmunreserve */
 			lkmunreserve();			/* free memory */
 			curp->used = 0;			/* free slot */
+#ifdef DEBUG
+			if (lkmdebug & LKMDB_INFO)
+				printf("lkm entry point failed with error %d\n",
+				   error);
+#endif /* DEBUG */
 			break;
 		}
 
