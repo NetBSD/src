@@ -34,8 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.13 1994/03/08 06:57:28 mycroft Exp $
+ *	$Id: cpu.h,v 1.14 1994/04/03 22:36:41 mycroft Exp $
  */
+
+#ifndef _I386_CPU_H_
+#define _I386_CPU_H_
 
 /*
  * Definitions unique to i386 cpu support.
@@ -117,3 +120,5 @@ extern int cpu;
 extern int cpu_class;
 extern struct cpu_nameclass i386_cpus[];
 #endif
+
+#endif /* !_I386_CPU_H_ */
