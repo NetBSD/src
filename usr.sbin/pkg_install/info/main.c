@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.6 1997/11/17 12:08:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/08/23 10:16:19 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/11/17 12:08:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1998/08/23 10:16:19 tron Exp $");
 #endif
 #endif
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: main.c,v 1.6 1997/11/17 12:08:59 agc Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "acdDe:fikrRpLqImvhl:";
+static char Options[] = "acDde:fIikLl:mpqRrvh";
 
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
@@ -58,35 +58,28 @@ main(int argc, char **argv)
 	    AllInstalled = TRUE;
 	    break;
 
-	case 'v':
-	    Verbose = TRUE;
-	    /* Reasonable definition of 'everything' */
-	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
-		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
-	    break;
-
-	case 'I':
-	    Flags |= SHOW_INDEX;
-	    break;
-
-	case 'p':
-	    Flags |= SHOW_PREFIX;
-	    break;
-
 	case 'c':
 	    Flags |= SHOW_COMMENT;
-	    break;
-
-	case 'd':
-	    Flags |= SHOW_DESC;
 	    break;
 
 	case 'D':
 	    Flags |= SHOW_DISPLAY;
 	    break;
 
+	case 'd':
+	    Flags |= SHOW_DESC;
+	    break;
+
+	case 'e':
+	    CheckPkg = optarg;
+	    break;
+
 	case 'f':
 	    Flags |= SHOW_PLIST;
+	    break;
+
+	case 'I':
+	    Flags |= SHOW_INDEX;
 	    break;
 
 	case 'i':
@@ -97,43 +90,46 @@ main(int argc, char **argv)
 	    Flags |= SHOW_DEINSTALL;
 	    break;
 
-	case 'r':
-	    Flags |= SHOW_REQUIRE;
-	    break;
-
-	case 'R':
-	    Flags |= SHOW_REQBY;
-	    break;
-
 	case 'L':
 	    Flags |= SHOW_FILES;
-	    break;
-
-	case 'm':
-	    Flags |= SHOW_MTREE;
 	    break;
 
 	case 'l':
 	    InfoPrefix = optarg;
 	    break;
 
+	case 'm':
+	    Flags |= SHOW_MTREE;
+	    break;
+
+	case 'p':
+	    Flags |= SHOW_PREFIX;
+	    break;
+
 	case 'q':
 	    Quiet = TRUE;
 	    break;
 
-	case 't':
-	    strcpy(PlayPen, optarg);
+	case 'R':
+	    Flags |= SHOW_REQBY;
 	    break;
 
-	case 'e':
-	    CheckPkg = optarg;
+	case 'r':
+	    Flags |= SHOW_REQUIRE;
+	    break;
+
+	case 'v':
+	    Verbose = TRUE;
+	    /* Reasonable definition of 'everything' */
+	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
+		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
 	    break;
 
 	case 'h':
 	case '?':
 	default:
 	    usage();
-	    break;
+	    /* NOTREACHED */
 	}
 
     argc -= optind;
@@ -164,7 +160,7 @@ static void
 usage()
 {
     fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-cdDikrRpLqImv] [-e package] [-l prefix]",
+	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
 	"                pkg-name [pkg-name ...]",
 	"       pkg_info -a [flags]");
     exit(1);
