@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.9 2000/06/25 17:21:56 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.10 2001/04/19 18:02:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.9 2000/06/25 17:21:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.10 2001/04/19 18:02:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,13 +204,22 @@ dec_1000a_cons_init()
 		/* XXX */
 		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
 
-		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
-		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(iot, memt);
-		else
-			pci_display_console(iot, memt,
-			    pcichipset, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
+		/*
+		 * AlphaServer 1000s have a firmware bug whereby the
+		 * built-in ISA VGA is reported incorrectly -- ctb_turboslot
+		 * is mostly 0.
+		 */
+		switch (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot)) {
+		case CTB_TURBOSLOT_TYPE_PCI:
+			pci_display_console(iot, memt, pcichipset,
+			    CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
 			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
+			break;
+
+		default:
+			isa_display_console(iot, memt);
+			break;
+		}
 #else
 		panic("not configured to use display && keyboard console");
 #endif
