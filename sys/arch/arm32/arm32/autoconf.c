@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 1996/03/06 23:11:36 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.3 1996/04/26 20:22:52 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -193,7 +193,6 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 	int swapsize = -1;
-	char *ptr;
 	int maj;
 	int s;		/* The spl stuff was here for debugging reaons */
 
