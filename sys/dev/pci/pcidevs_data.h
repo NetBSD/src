@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.423 2002/04/26 14:21:29 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.424 2002/04/29 18:21:33 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.420 2002/04/26 14:20:59 ad Exp 
+ *	NetBSD: pcidevs,v 1.421 2002/04/29 18:18:29 nonaka Exp 
  */
 
 /*
@@ -3010,10 +3010,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82660 PowerPC to PCI Bridge and Memory Controller",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC,
+	    0,
+	    "IBM",
+	    "MPIC",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TURBOWAYS25,
 	    0,
 	    "IBM",
 	    "Turboways 25 ATM",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT800P,
+	    0,
+	    "IBM",
+	    "GXT-800P",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
