@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.16 2003/03/29 00:12:12 thorpej Exp $	*/
+/*	$NetBSD: makefs.c,v 1.17 2003/03/30 00:05:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.16 2003/03/29 00:12:12 thorpej Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.17 2003/03/30 00:05:07 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -69,8 +69,6 @@ static fstype_t fstypes[] = {
 
 uint		debug;
 struct timespec	start_time;
-
-int		x_flag;
 
 static	fstype_t *get_fstype(const char *);
 static	void	usage(void);
@@ -225,7 +223,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'x':
-			x_flag = 1;
+			fsoptions.onlyspec = 1;
 			break;
 
 		case '?':
@@ -248,7 +246,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* -x must be accompanied by -F */
-	if (x_flag != 0 && specfile == NULL)
+	if (fsoptions.onlyspec != 0 && specfile == NULL)
 		errx(1, "-x requires -F mtree-specfile.");
 
 				/* walk the tree */
@@ -315,8 +313,8 @@ usage(void)
 	fprintf(stderr,
 "Usage: %s [-t fs-type] [-o fs-options] [-d debug-mask] [-B endian]\n"
 "\t[-S sector-size] [-M minimum-size] [-m maximum-size] [-s image-size]\n"
-"\t[-b free-blocks] [-f free-files] [-F mtree-specfile] [-N userdb-dir]\n"
-"\timage-file directory\n",
+"\t[-b free-blocks] [-f free-files] [-F mtree-specfile] [-x]\n"
+"\t[-N userdb-dir] image-file directory\n",
 	    prog);
 	exit(1);
 }

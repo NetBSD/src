@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.17 2003/03/29 00:12:12 thorpej Exp $	*/
+/*	$NetBSD: ffs.c,v 1.18 2003/03/30 00:05:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.17 2003/03/29 00:12:12 thorpej Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.18 2003/03/30 00:05:07 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -541,7 +541,7 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 	curdirsize = 0;
 	for (node = root; node != NULL; node = node->next) {
 		ADDDIRENT(node->name);
-		if (FSNODE_EXCLUDE_P(node))
+		if (FSNODE_EXCLUDE_P(fsopts, node))
 			continue;
 		if (node == root) {			/* we're at "." */
 			assert(strcmp(node->name, ".") == 0);
@@ -597,7 +597,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		 * pass 1: allocate inode numbers, build directory `file'
 		 */
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (FSNODE_EXCLUDE_P(cur))
+		if (FSNODE_EXCLUDE_P(fsopts, cur))
 			continue;
 		if ((cur->inode->flags & FI_ALLOCATED) == 0) {
 			cur->inode->flags |= FI_ALLOCATED;
@@ -633,7 +633,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_POPULATE)
 		printf("ffs_populate_dir: PASS 2  dir %s\n", dir);
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (FSNODE_EXCLUDE_P(cur))
+		if (FSNODE_EXCLUDE_P(fsopts, cur))
 			continue;
 		if (cur->inode->flags & FI_WRITTEN)
 			continue;		/* skip hard-linked entries */
@@ -712,7 +712,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_POPULATE)
 		printf("ffs_populate_dir: PASS 3  dir %s\n", dir);
 	for (cur = root; cur != NULL; cur = cur->next) {
-		if (FSNODE_EXCLUDE_P(cur))
+		if (FSNODE_EXCLUDE_P(fsopts, cur))
 			continue;
 		if (cur->child == NULL)
 			continue;
