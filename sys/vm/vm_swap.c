@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.48 1997/11/04 21:24:22 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.49 1997/11/29 00:35:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -261,6 +261,9 @@ struct vndxfer {
 	struct swapdev	*vx_sdp;
 	int		vx_error;
 	int		vx_pending;		/* # of pending aux buffers */
+	int		vx_flags;
+#define VX_BUSY		1
+#define VX_DEAD		2
 };
 
 
@@ -1037,7 +1040,6 @@ sw_reg_strategy(sdp, bp, bn)
 	int		bn;
 {
 	struct vnode	*vp;
-	struct vndbuf	*nbp;
 	struct vndxfer	*vnx;
 	daddr_t		nbn;
 	caddr_t		addr;
@@ -1053,12 +1055,16 @@ sw_reg_strategy(sdp, bp, bn)
 
 	/* Allocate a header for this transfer and link it to the buffer */
 	getvndxfer(vnx);
+	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 	vnx->vx_sdp = sdp;
 
+	error = 0;
 	for (resid = bp->b_resid; resid; resid -= sz) {
+		struct vndbuf	*nbp;
+
 		nra = 0;
 		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
@@ -1076,16 +1082,9 @@ sw_reg_strategy(sdp, bp, bn)
 		 * a hassle (in the write case).
 		 */
 		if (error) {
-			vnx->vx_error = error;
 			s = splbio();
-			if (vnx->vx_pending == 0) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				putvndxfer(vnx);
-				biodone(bp);
-			}
-			splx(s);
-			return;
+			vnx->vx_error = error;
+			goto out;
 		}
 
 		if ((off = bn % sdp->swd_bsize) != 0)
@@ -1144,18 +1143,33 @@ sw_reg_strategy(sdp, bp, bn)
 		 */
 		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 		s = splbio();
+		if (vnx->vx_error != 0) {
+			putvndbuf(nbp);
+			goto out;
+		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
 		disksort(&sdp->swd_tab, &nbp->vb_buf);
-		if (sdp->swd_tab.b_active < sdp->swd_maxactive) {
-			sdp->swd_tab.b_active++;
-			sw_reg_start(sdp);
-		}
+		sw_reg_start(sdp);
 		splx(s);
 
 		bn   += sz;
 		addr += sz;
 	}
+
+	s = splbio();
+
+out: /* Arrive here at splbio */
+	vnx->vx_flags &= ~VX_BUSY;
+	if (vnx->vx_pending == 0) {
+		if (vnx->vx_error != 0) {
+			bp->b_error = vnx->vx_error;
+			bp->b_flags |= B_ERROR;
+		}
+		putvndxfer(vnx);
+		biodone(bp);
+	}
+	splx(s);
 }
 
 /*
@@ -1169,18 +1183,31 @@ sw_reg_start(sdp)
 	struct swapdev	*sdp;
 {
 	struct buf	*bp;
+static	int		busy;	/* Recursion control */
 
-	bp = sdp->swd_tab.b_actf;
-	sdp->swd_tab.b_actf = bp->b_actf;
+	if (busy != 0)
+		return;
+
+	busy = 1;
+
+	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
+		bp = sdp->swd_tab.b_actf;
+		if (bp == NULL)
+			break;
+		sdp->swd_tab.b_actf = bp->b_actf;
+		sdp->swd_tab.b_active++;
 
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("sw_reg_start:  bp %p vp %p blkno %x addr %p cnt %lx\n",
+		if (vmswapdebug & VMSDB_SWFLOW)
+		    printf(
+			"sw_reg_start:  bp %p vp %p blkno %x addr %p cnt %lx\n",
 			bp, bp->b_vp, bp->b_blkno,bp->b_data, bp->b_bcount);
 #endif
-	if ((bp->b_flags & B_READ) == 0)
-		bp->b_vp->v_numoutput++;
-	VOP_STRATEGY(bp);
+		if ((bp->b_flags & B_READ) == 0)
+			bp->b_vp->v_numoutput++;
+		VOP_STRATEGY(bp);
+	}
+	busy = 0;
 }
 
 static void
@@ -1226,24 +1253,32 @@ sw_reg_iodone(bp)
 	 * Wrap up this transaction if it has run to completion or, in
 	 * case of an error, when all auxiliary buffers have returned.
 	 */
-	if (pbp->b_resid == 0 || (vnx->vx_error && vnx->vx_pending == 0)) {
-
-		if (vnx->vx_error != 0) {
-			pbp->b_flags |= B_ERROR;
-			pbp->b_error = vnx->vx_error;
+	if (vnx->vx_error != 0) {
+		pbp->b_flags |= B_ERROR;
+		pbp->b_error = vnx->vx_error;
+		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
+			putvndxfer(vnx);
+			biodone(pbp);
 		}
-		putvndxfer(vnx);
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("swiodone: pbp %p iodone\n", pbp);
-#endif
-		biodone(pbp);
 	}
 
-	if (sdp->swd_tab.b_actf)
-		sw_reg_start(sdp);
-	else
-		sdp->swd_tab.b_active--;
+	if (pbp->b_resid == 0) {
+
+		if (vnx->vx_pending != 0)
+			panic("swiodone: vnx pending: %d", vnx->vx_pending);
+
+		if ((vnx->vx_flags & VX_BUSY) == 0) {
+			putvndxfer(vnx);
+#ifdef SWAPDEBUG
+			if (vmswapdebug & VMSDB_SWFLOW)
+				printf("swiodone: pbp %p iodone\n", pbp);
+#endif
+			biodone(pbp);
+		}
+	}
+
+	sdp->swd_tab.b_active--;
+	sw_reg_start(sdp);
 
 	splx(s);
 }
