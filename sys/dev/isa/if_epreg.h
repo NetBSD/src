@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.4 1994/04/15 10:51:36 deraadt Exp $
+ *	$Id: if_epreg.h,v 1.5 1994/07/01 23:08:15 deraadt Exp $
  */
 
 /*
@@ -219,7 +219,7 @@
  *
  *     15:     Incomplete or FIFO empty.
  *     14:     1: Error in RX Packet   0: Incomplete or no error.
- *     13-11:  Type of error.
+ *     14-11:  Type of error. [14-11]
  *	      1000 = Overrun.
  *	      1011 = Run Packet Error.
  *	      1100 = Alignment Error.
@@ -232,13 +232,13 @@
  */
 #define ERR_INCOMPLETE  (u_short) (0x8000)
 #define ERR_RX		(u_short) (0x4000)
-#define ERR_RX_PACKET	(u_short) (0x2000)
-#define ERR_OVERRUN	(u_short) (0x1000)
-#define ERR_RUNT	(u_short) (0x1300)
-#define ERR_ALIGNMENT	(u_short) (0x1400)
-#define ERR_CRC		(u_short) (0x1500)
-#define ERR_OVERSIZE	(u_short) (0x1100)
-#define ERR_DRIBBLE	(u_short) (0x0200)
+#define ERR_MASK	(u_short) (0x7800)
+#define ERR_OVERRUN	(u_short) (0x4000)
+#define ERR_RUNT	(u_short) (0x5800)
+#define ERR_ALIGNMENT	(u_short) (0x6000)
+#define ERR_CRC		(u_short) (0x6800)
+#define ERR_OVERSIZE	(u_short) (0x4800)
+#define ERR_DRIBBLE	(u_short) (0x1000)
 
 /*
  * TX Status

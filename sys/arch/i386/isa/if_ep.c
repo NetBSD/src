@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.41 1994/06/04 01:52:28 deraadt Exp $
+ *	$Id: if_ep.c,v 1.42 1994/07/01 23:08:11 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -459,7 +459,7 @@ epstart(ifp)
 {
 	register struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
 	struct mbuf *m, *top;
-	int     s, len, pad;
+	int     s, sh, len, pad;
 
 	s = splimp();
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) {
@@ -496,15 +496,14 @@ startagain:
 		goto readcheck;
 	}
 
-	outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 	if (inw(BASE + EP_W1_FREE_TX) < len + pad + 4) {
+		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
 		/* not enough room in FIFO */
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
 		splx(s);
 		return (0);
 	} else {
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | 2044);
-		outw(BASE + EP_COMMAND, ACK_INTR | S_TX_AVAIL);
 	}
 
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
@@ -517,6 +516,8 @@ startagain:
 
 	outw(BASE + EP_W1_TX_PIO_WR_1, len);
 	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
+
+	sh = splhigh();
 
 	for (top = m; m != 0; m = m->m_next) {
 		if (sc->bus32bit) {
@@ -533,8 +534,11 @@ startagain:
 				    *(mtod(m, caddr_t) + m->m_len - 1));
 		}
 	}
+
 	while (pad--)
 		outb(BASE + EP_W1_TX_PIO_WR_1, 0);	/* Padding */
+
+	splx(sh);
 
 #if NBPFILTER > 0
 	if (sc->sc_arpcom.ac_if.if_bpf)
@@ -556,6 +560,48 @@ readcheck:
 	goto startagain;
 }
 
+
+static void
+eptxstat(sc)
+	register struct ep_softc *sc;
+{
+	int i;
+	/*
+	 * We need to read+write TX_STATUS until we get a 0 status
+	 * in order to turn off the interrupt flag.
+	 */
+	while ((i = inb(BASE + EP_W1_TX_STATUS)) & TXS_COMPLETE) {
+		outb(BASE + EP_W1_TX_STATUS, 0x0);
+
+		if (i & TXS_JABBER) {
+			++sc->sc_arpcom.ac_if.if_oerrors;
+			untimeout(epmbuffill, sc);
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("%s: jabber (%x)\n",
+				       sc->sc_dev.dv_xname, i);
+			epreset(sc);
+		} else if (i & TXS_UNDERRUN) {
+			++sc->sc_arpcom.ac_if.if_oerrors;
+			untimeout(epmbuffill, sc);
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("%s: fifo underrun (%x) @%d\n",
+				       sc->sc_dev.dv_xname, i,
+				       sc->tx_start_thresh);
+			if (sc->tx_succ_ok < 100)
+				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
+					    sc->tx_start_thresh + 20);
+			sc->tx_succ_ok = 0;
+			epreset(sc);
+		} else if (i & TXS_MAX_COLLISION) {
+			++sc->sc_arpcom.ac_if.if_collisions;
+			outw(BASE + EP_COMMAND, TX_ENABLE);
+			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+		} else
+			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
+			
+	}
+}
+
 int
 epintr(sc)
 	register struct ep_softc *sc;
@@ -574,7 +620,6 @@ epintr(sc)
 		if (status & S_RX_COMPLETE)
 			epread(sc);
 		if (status & S_TX_AVAIL) {
-			inw(BASE + EP_W1_FREE_TX);
 			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 			epstart(&sc->sc_arpcom.ac_if);
 		}
@@ -586,37 +631,7 @@ epintr(sc)
 			return (1);
 		}
 		if (status & S_TX_COMPLETE) {
-			/*
-			 * We need to read+write TX_STATUS until we get a 0 status
-			 * in order to turn off the interrupt flag.
-			 */
-			while ((i = inb(BASE + EP_W1_TX_STATUS)) & TXS_COMPLETE) {
-				outb(BASE + EP_W1_TX_STATUS, 0x0);
-	
-				if (i & TXS_JABBER) {
-					++sc->sc_arpcom.ac_if.if_oerrors;
-					untimeout(epmbuffill, sc);
-					printf("%s: jabber (%x %x)\n",
-					    sc->sc_dev.dv_xname, status, i);
-					epreset(sc);
-				} else if (i & TXS_UNDERRUN) {
-					++sc->sc_arpcom.ac_if.if_oerrors;
-					untimeout(epmbuffill, sc);
-					printf("%s: fifo underrun (%x %x), correcting\n",
-					    sc->sc_dev.dv_xname, status, i);
-					if (sc->tx_succ_ok < 100)
-						sc->tx_start_thresh = min(ETHER_MAX_LEN,
-						    sc->tx_start_thresh + 20);
-					sc->tx_succ_ok = 0;
-					epreset(sc);
-				} else if (i & TXS_MAX_COLLISION) {
-					++sc->sc_arpcom.ac_if.if_collisions;
-					outw(BASE + EP_COMMAND, TX_ENABLE);
-					sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
-				} else
-					sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
-					
-			}
+			eptxstat(sc);
 			epstart(ifp);
 		}
 		status = inw(BASE + EP_STATUS) &
@@ -634,15 +649,39 @@ epread(sc)
 	struct ether_header *eh;
 	struct mbuf *mcur, *m, *m0, *top;
 	int     totlen, lenthisone;
-	int     save_totlen;
+	int     save_totlen, sh;
 
 	totlen = inw(BASE + EP_W1_RX_STATUS);
 	top = 0;
 
-	if (totlen & ERR_RX) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) {
+		int err = totlen & ERR_MASK;
+		char *s = NULL;
+
+		if (totlen & ERR_INCOMPLETE)
+			s = "incomplete packet";
+		else if (err == ERR_OVERRUN)
+			s = "packet overrun";
+		else if (err == ERR_RUNT)
+			s = "runt packet";
+		else if (err == ERR_ALIGNMENT)
+			s = "bad alignment";
+		else if (err == ERR_CRC)
+			s = "bad crc";
+		else if (err == ERR_OVERSIZE)
+			s = "oversized packet";
+		else if (err == ERR_DRIBBLE)
+			s = "dribble bits";
+
+		if (s)
+			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
+	}
+
+	if (totlen & (ERR_INCOMPLETE|ERR_RX)) {
 		++sc->sc_arpcom.ac_if.if_ierrors;
 		goto out;
 	}
+
 	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
 	m = sc->mb[sc->next_mb];
@@ -662,6 +701,9 @@ epread(sc)
 #define EROUND  ((sizeof(struct ether_header) + 3) & ~3)
 #define EOFF    (EROUND - sizeof(struct ether_header))
 	m0->m_data += EOFF;
+
+	sh = splhigh();
+
 	/* Read what should be the header. */
 	insw(BASE + EP_W1_RX_PIO_RD_1,
 	    mtod(m0, caddr_t), sizeof(struct ether_header) / 2);
@@ -676,8 +718,10 @@ epread(sc)
 			sc->mb[sc->next_mb] = 0;
 			if (!m) {
 				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0)
+				if (m == 0) {
+					splx(sh);
 					goto out;
+				}
 			} else {
 				timeout(epmbuffill, sc, 1);
 				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
@@ -710,6 +754,7 @@ epread(sc)
 	top->m_pkthdr.len = save_totlen;
 	top->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
+	splx(sh);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
 	++sc->sc_arpcom.ac_if.if_ipackets;
