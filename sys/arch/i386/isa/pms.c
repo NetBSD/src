@@ -1,7 +1,7 @@
-/*	$NetBSD: pms.c,v 1.34 1997/11/15 20:18:50 carrel Exp $	*/
+/*	$NetBSD: pms.c,v 1.35 1997/12/18 16:49:10 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994, 1997 Charles Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *
@@ -69,12 +69,10 @@
 
 /* controller commands */
 #define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
-#define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
+#define	PMS_INT_DISABLE	0x45	/* disable controller interrupts */
 #define	PMS_AUX_ENABLE	0xa8	/* enable auxiliary port */
 #define	PMS_AUX_DISABLE	0xa7	/* disable auxiliary port */
 #define	PMS_AUX_TEST	0xa9	/* test auxiliary port */
-
-#define	PMS_8042_CMD	0x65
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
@@ -117,54 +115,98 @@ struct cfdriver pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev))
 
-static __inline void pms_flush __P((void));
+static __inline int pms_wait_output __P((void));
+static __inline int pms_wait_input __P((void));
+static __inline void pms_flush_input __P((void));
 static __inline void pms_dev_cmd __P((u_char));
 static __inline void pms_pit_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
 
-static __inline void
-pms_flush()
-{
-	u_char c;
+#define	PMS_DELAY \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; }
 
-	while ((c = inb(PMS_STATUS) & 0x03) != 0)
-		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
-			/* XXX - delay is needed to prevent some keyboards from
-			   wedging when the system boots */
-			delay(6);
-			(void) inb(PMS_DATA);
+static __inline int
+pms_wait_output()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(PMS_STATUS) & PMS_IBUF_FULL) == 0) {
+			PMS_DELAY;
+			return (1);
 		}
+	return (0);
+}
+
+static __inline int
+pms_wait_input()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(PMS_STATUS) & PMS_OBUF_FULL) != 0) {
+			PMS_DELAY;
+			return (1);
+		}
+	return (0);
+}
+
+static __inline void
+pms_flush_input()
+{
+	u_int i;
+
+	pms_wait_output();
+	delay(10000);
+	for (i = 10; i; i--) {
+		if ((inb(PMS_STATUS) & PMS_OBUF_FULL) == 0)
+			return;
+		PMS_DELAY;
+		(void) inb(PMS_DATA);
+	}
 }
 
 static __inline void
 pms_dev_cmd(value)
 	u_char value;
 {
+	int s;
 
-	pms_flush();
+	s = spltty();
+	pms_wait_output();
 	outb(PMS_CNTRL, 0xd4);
-	pms_flush();
+	pms_wait_output();
 	outb(PMS_DATA, value);
+	splx(s);
 }
 
 static __inline void
 pms_aux_cmd(value)
 	u_char value;
 {
+	int s;
 
-	pms_flush();
+	s = spltty();
+	pms_wait_output();
 	outb(PMS_CNTRL, value);
+	splx(s);
 }
 
 static __inline void
 pms_pit_cmd(value)
 	u_char value;
 {
+	int s;
 
-	pms_flush();
+	s = spltty();
+	pms_wait_output();
 	outb(PMS_CNTRL, 0x60);
-	pms_flush();
+	pms_wait_output();
 	outb(PMS_DATA, value);
+	splx(s);
 }
 
 /*
@@ -193,11 +235,16 @@ pmsprobe(parent, match, aux)
 	if (cf->cf_loc[PCKBDCF_IRQ] == PCKBDCF_IRQ_DEFAULT)
 		return (0);
 
-#ifdef PMS_RESET_AND_DISABLE
+	pms_flush_input();
+#if 0
 	pms_dev_cmd(PMS_RESET);
+	if (!pms_wait_input())
+		return 0;
+	x = inb(PMS_DATA);
 #endif
 	pms_aux_cmd(PMS_AUX_TEST);
-	delay(1000);
+	if (!pms_wait_input())
+		return 0;
 	x = inb(PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
@@ -251,8 +298,12 @@ pmsopen(dev, flag, mode, p)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	pms_dev_cmd(PMS_DEV_ENABLE);
 	pms_aux_cmd(PMS_AUX_ENABLE);
+	pms_pit_cmd(PMS_INT_ENABLE);
+	pms_dev_cmd(PMS_DEV_ENABLE);
+	if (pms_wait_input())
+		pms_flush_input();
+
 #if 0
 	pms_dev_cmd(PMS_SET_RES);
 	pms_dev_cmd(3);		/* 8 counts/mm */
@@ -261,7 +312,6 @@ pmsopen(dev, flag, mode, p)
 	pms_dev_cmd(100);	/* 100 samples/sec */
 	pms_dev_cmd(PMS_SET_STREAM);
 #endif
-	pms_pit_cmd(PMS_INT_ENABLE);
 
 	return 0;
 }
@@ -276,9 +326,9 @@ pmsclose(dev, flag, mode, p)
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
-#ifdef PMS_RESET_AND_DISABLE
 	pms_dev_cmd(PMS_DEV_DISABLE);
-#endif
+	if (pms_wait_input())
+		pms_flush_input();
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
 
@@ -408,7 +458,7 @@ pmsintr(arg)
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
-		pms_flush();
+		pms_flush_input();
 		return 0;
 	}
 
