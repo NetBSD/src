@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.73 2003/08/15 15:24:21 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.74 2003/08/21 14:55:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.73 2003/08/15 15:24:21 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.74 2003/08/21 14:55:03 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,9 @@ void
 mkfs(struct partition *pp, const char *fsys, int fi, int fo,
     mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
-	int fragsperinode, optimalfpg, origdensity, minfpg, lastminfpg;
+	uint fragsperinodeblk, ncg;
+	uint cgzero;
+	uint64_t inodeblks, cgall;
 	int32_t cylno, i, csfrags;
 	struct timeval tv;
 	long long sizepb;
@@ -295,7 +297,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		exit(21);
 	}
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
-	sblock.fs_size = fssize = dbtofsb(&sblock, fssize);
+	sblock.fs_size = dbtofsb(&sblock, fssize);
 	if (Oflag <= 1) {
 		if (sblock.fs_size >= 1ull << 31) {
 			printf("Too many fragments (0x%" PRIx64
@@ -345,87 +347,104 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/*
 	 * Calculate the number of blocks to put into each cylinder group.
 	 *
-	 * This algorithm selects the number of blocks per cylinder
-	 * group. The first goal is to have at least enough data blocks
-	 * in each cylinder group to meet the density requirement. Once
-	 * this goal is achieved we try to expand to have at least
-	 * MINCYLGRPS cylinder groups. Once this goal is achieved, we
-	 * pack as many blocks into each cylinder group map as will fit.
+	 * The cylinder group size is limited because the data structure
+	 * must fit into a single block.
+	 * We try to have as few cylinder groups as possible, with a proviso
+	 * that we create at least MINCYLGRPS (==4) except for small
+	 * filesystems.
 	 *
-	 * We start by calculating the smallest number of blocks that we
-	 * can put into each cylinder group. If this is too big, we reduce
-	 * the density until it fits.
+	 * This algorithm works out how many blocks of inodes would be
+	 * needed to fill the entire volume at the specified density.
+	 * It then looks at how big the 'cylinder block' would have to
+	 * be and, assuming that it is linearly related to the number
+	 * of inodes and blocks how many cylinder groups are needed to
+	 * keep the cylinder block below the filesystem block size.
+	 *
+	 * The cylinder groups are then all created with the average size.
+	 *
+	 * Space taken by the red tape on cylinder groups other than the
+	 * first is ignored.
 	 */
-	origdensity = density;
-	for (;;) {
-		fragsperinode = MAX(numfrags(&sblock, density), 1);
-		minfpg = fragsperinode * INOPB(&sblock);
-		if (minfpg > sblock.fs_size)
-			minfpg = sblock.fs_size;
-		sblock.fs_ipg = INOPB(&sblock);
-		sblock.fs_fpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
-		if (sblock.fs_fpg < minfpg)
-			sblock.fs_fpg = minfpg;
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
-		sblock.fs_fpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
-		if (sblock.fs_fpg < minfpg)
-			sblock.fs_fpg = minfpg;
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
-		if (CGSIZE(&sblock) < (unsigned long)sblock.fs_bsize)
-			break;
-		density -= sblock.fs_fsize;
-	}
-	if (density != origdensity)
-		printf("density reduced from %d to %d\n", origdensity, density);
-	/*
-	 * Start packing more blocks into the cylinder group until
-	 * it cannot grow any larger, the number of cylinder groups
-	 * drops below MINCYLGRPS, or we reach the size requested.
-	 */
-	for ( ; sblock.fs_fpg < maxblkspercg; sblock.fs_fpg += sblock.fs_frag) {
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
-		if (sblock.fs_size / sblock.fs_fpg < MINCYLGRPS)
-			break;
-		if (CGSIZE(&sblock) < (unsigned long)sblock.fs_bsize)
-			continue;
-		if (CGSIZE(&sblock) == (unsigned long)sblock.fs_bsize)
-			break;
-		sblock.fs_fpg -= sblock.fs_frag;
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
-		break;
+
+	/* There must be space for 1 inode block and 2 data blocks */
+	if (sblock.fs_size < sblock.fs_iblkno + 3 * sblock.fs_frag) {
+		printf("Filesystem size %lld < minimum size of %d\n",
+		    (long long)sblock.fs_size, sblock.fs_iblkno + 3 * sblock.fs_frag);
+		exit(23);
 	}
 	/*
-	 * Check to be sure that the last cylinder group has enough blocks
-	 * to be viable. If it is too small, reduce the number of blocks
-	 * per cylinder group which will have the effect of moving more
-	 * blocks into the last cylinder group.
+	 * Calculate 'per inode block' so we can allocate less than 1 fragment
+	 * per inode - useful for /dev.
 	 */
-	optimalfpg = sblock.fs_fpg;
-	for (;;) {
-		sblock.fs_ncg = howmany(sblock.fs_size, sblock.fs_fpg);
-		lastminfpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
-		if (sblock.fs_size < lastminfpg) {
-			printf("Filesystem size %lld < minimum size of %d\n",
-			    (long long)sblock.fs_size, lastminfpg);
-			exit(28);
-		}
-		if (sblock.fs_size % sblock.fs_fpg >= lastminfpg ||
-		    sblock.fs_size % sblock.fs_fpg == 0)
-			break;
-		sblock.fs_fpg -= sblock.fs_frag;
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+	fragsperinodeblk = MAX(numfrags(&sblock, density * INOPB(&sblock)), 1);
+	inodeblks = (sblock.fs_size - sblock.fs_iblkno - 2 * sblock.fs_frag) /	
+		(sblock.fs_frag + fragsperinodeblk);
+	if (inodeblks == 0)
+		inodeblks = 1;
+	/* Even UFS2 limits number of inodes to 2^31 (fs_ipg is int32_t) */
+	if (inodeblks * INOPB(&sblock) >= 1ull << 31)
+		inodeblks = ((1ull << 31) - NBBY) / INOPB(&sblock);
+	/*
+	 * See what would happen if we tried to use 1 cylinder group.
+	 * Assume space linear, so work out number of cylinder groups needed.
+	 * Subtract one from the allowed size to compensate for rounding
+	 * a number of bits up to a complete byte.
+	 */
+	cgzero = CGSIZE_IF(&sblock, 0, 0);
+	cgall = CGSIZE_IF(&sblock, inodeblks * INOPB(&sblock), sblock.fs_size);
+	ncg = howmany(cgall - cgzero, sblock.fs_bsize - cgzero - 1);
+	if (ncg < MINCYLGRPS) {
+		/*
+		 * We would like to allocate MINCLYGRPS cylinder groups,
+		 * but for small file sytems (especially ones with a lot
+		 * of inodes) this is not desirable (or possible).
+		 */
+		i = sblock.fs_size / 2 / (sblock.fs_iblkno +
+						inodeblks * sblock.fs_frag);
+		if (i > ncg)
+			ncg = i;
+		if (ncg > MINCYLGRPS)
+			ncg = MINCYLGRPS;
+		if (ncg > inodeblks)
+			ncg = inodeblks;
 	}
-	if (optimalfpg != sblock.fs_fpg)
-		printf("Reduced frags per cylinder group from %d to %d %s\n",
-		   optimalfpg, sblock.fs_fpg, "to enlarge last cyl group");
+	/*
+	 * Put an equal number of blocks in each cylinder group.
+	 * Round up so we don't have more fragments in the last CG than
+	 * the earlier ones (does that matter?), but kill a block if the
+	 * CGSIZE becomes too big (only happens if there are a lot of CGs).
+	 */
+	sblock.fs_fpg = roundup(howmany(sblock.fs_size, ncg), sblock.fs_frag);
+	i = CGSIZE_IF(&sblock, inodeblks * INOPB(&sblock) / ncg, sblock.fs_fpg);
+	if (i > sblock.fs_bsize)
+		sblock.fs_fpg -= (i - sblock.fs_bsize) * NBBY;
+	/* ... and recalculate how many cylinder groups we now need */
+	ncg = howmany(sblock.fs_size, sblock.fs_fpg);
+	inodeblks /= ncg;
+	if (inodeblks == 0)
+		inodeblks = 1;
+	sblock.fs_ipg = inodeblks * INOPB(&sblock);
+	/* Sanity check on our sums... */
+	if (CGSIZE(&sblock) > sblock.fs_bsize) {
+		printf("CGSIZE miscalculated %d > %d\n",
+		    (int)CGSIZE(&sblock), sblock.fs_bsize);
+		exit(24);
+	}
+	/* Check that the last cylinder group has enough space for the inodes */
+	i = sblock.fs_size - sblock.fs_fpg * (ncg - 1ull);
+	if (i < sblock.fs_iblkno + inodeblks * sblock.fs_frag) {
+		/*
+		 * Since we make all the cylinder groups the same size, the
+		 * last will only be small if there are a large number of
+		 * cylinder groups. If we pull even a fragment from each
+		 * of the other groups then the last CG will be overfull.
+		 * So we just kill the last CG.
+		 */
+		ncg--;
+		sblock.fs_size -= i;
+	}
+	sblock.fs_ncg = ncg;
+
 	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	if (Oflag <= 1) {
