@@ -1,7 +1,11 @@
-# $NetBSD: std.next68k,v 1.6 1999/03/24 06:06:11 mrg Exp $
+# $NetBSD: std.next68k,v 1.7 1999/11/15 19:00:29 fvdl Exp $
 
 # Standard information for next68k
 machine	next68k m68k
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 # Standard defines
 options 	EXEC_AOUT
