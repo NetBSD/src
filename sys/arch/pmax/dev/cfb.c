@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.24 1996/10/13 13:13:52 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.25 1997/06/22 07:42:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -313,7 +313,7 @@ cfbinit(fi, cfbaddr, unit, silent)
 	 * mapped into the user's address space uncached.
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
-		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&cfbu));
+		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&cfbu));
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
 	fi->fi_fbu->scrInfo.max_row = 56;
