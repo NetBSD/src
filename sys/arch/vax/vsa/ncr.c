@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.16 1998/12/06 13:55:09 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.17 1999/02/02 18:37:21 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ static struct scsipi_device si_dev = {
 	NULL,	/* Use default "done" routine. */
 };
 
+static	caddr_t sca_regs;
+
 static int si_match(struct device *, struct cfdata *, void *);
 static void si_attach(struct device *, struct device *, void *);
 static void si_minphys(struct buf *);
@@ -124,6 +126,8 @@ si_match(parent, cf, aux)
 {
 	struct vsbus_attach_args *va = aux;
 
+	if (sca_regs == 0)
+		sca_regs = (caddr_t)vax_map_physmem(SCA_REGS, 1);
 	if (va->va_type == 0x200C0080)
 		return 1;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.13 1999/01/19 21:04:49 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.14 1999/02/02 18:37:21 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -67,7 +67,6 @@
 
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
-void *bi_nodebase;	/* virtual base address for all possible bi nodes */
 
 static	int ka820_match __P((struct device *, struct cfdata *, void *));
 static	void ka820_attach __P((struct device *, struct device *, void*));
@@ -75,7 +74,7 @@ static	void rxcdintr __P((int));
 void crxintr __P((int));
 
 struct	cpu_dep ka820_calls = {
-	ka820_steal_pages,
+	0,
 	generic_clock,
 	ka820_mchk,
 	ka820_memerr,
@@ -96,51 +95,6 @@ extern struct pte EEPROMmap[];
 char bootram[KA820_BRPAGES * VAX_NBPG];
 char eeprom[KA820_EEPAGES * VAX_NBPG];
 #endif
-
-void
-ka820_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail;
-	extern	short *clk_page;
-	extern	int clk_adrshift, clk_tweak;
-	struct	scb *sb;
-	int	junk;
-
-	/*
-	 * On the ka820, we map in the port CSR, the clock registers
-	 * and the console RX50 register. We also map in the BI nodespace
-	 * for all possible (16) nodes. It would only be needed with
-	 * the existent nodes, but we only loose 1K so...
-	 * Another waste of memory is the 8K block after SCB, which is
-	 * used for (eventually) DWBUA and KLESI interrupt vectors.
-	 * This is only needed for the existing devices, but is allocated
-	 * for all possible devices.
-	 */
-	sb = (void *)avail_start;
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
-	MAPPHYS(junk, NNODEBI, VM_PROT_READ|VM_PROT_WRITE); /* BI ivec's */
-	clk_adrshift = 0;	/* clk regs are addressed at short's */
-	clk_tweak = 1; 		/* ...but not exactly in each short */
-	MAPVIRT(clk_page, 1);
-	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA820_CLOCKADDR,
-	    KA820_CLOCKADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(ka820port_ptr, 1);
-	pmap_map((vm_offset_t)ka820port_ptr, (vm_offset_t)KA820_PORTADDR,
-	    KA820_PORTADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(rx50device_ptr, 1);
-	pmap_map((vm_offset_t)rx50device_ptr, (vm_offset_t)KA820_RX50ADDR,
-	    KA820_RX50ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(bi_nodebase, NNODEBI * (sizeof(struct bi_node) / VAX_NBPG));
-	pmap_map((vm_offset_t)bi_nodebase, (vm_offset_t)BI_BASE(0,0),
-	    BI_BASE(0,0) + sizeof(struct bi_node) * NNODEBI,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	/* Steal the interrupt vectors that are unique for us */
-	scb_vecalloc(KA820_INT_RXCD, rxcdintr, 0, SCB_ISTACK);
-}
 
 int
 ka820_match(parent, cf, aux)
@@ -170,6 +124,8 @@ ka820_attach(parent, self, aux)
 {
 	struct bi_attach_args *ba = aux;
 	register int csr;
+	extern	short *clk_page;
+	extern	int clk_adrshift, clk_tweak;
 	u_short rev = ba->ba_node->biic.bi_revs;
 	extern	char cpu_model[];
 
@@ -190,6 +146,16 @@ ka820_attach(parent, self, aux)
 
 	/* XXX - should be done somewhere else */
 	scb_vecalloc(SCB_RX50, crxintr, 0, SCB_ISTACK);
+
+	clk_adrshift = 0;	/* clk regs are addressed at short's */
+	clk_tweak = 1; 		/* ...but not exactly in each short */
+	clk_page = (short *)vax_map_physmem((paddr_t)KA820_CLOCKADDR, 1);
+
+	/* Steal the interrupt vectors that are unique for us */
+	scb_vecalloc(KA820_INT_RXCD, rxcdintr, 0, SCB_ISTACK);
+
+	rx50device_ptr = (void *)vax_map_physmem(KA820_RX50ADDR, 1);
+	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
 }
 
 /*

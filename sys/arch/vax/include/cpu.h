@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.33 1999/01/19 21:04:48 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.34 1999/02/02 18:37:22 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -106,6 +106,11 @@ extern	int     want_resched;   /* resched() was called */
  */
 #define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
 
+/*
+ * This defines the I/O device register space size in pages.
+ */
+#define	IOSPSZ	((1*1024*1024) / VAX_NBPG)	/* 1 MB  == 2k pages */
+
 struct device;
 
 /* Some low-level prototypes */
@@ -118,6 +123,10 @@ void	dumpsys __P((void));
 void	swapconf __P((void));
 void	disk_printtype __P((int, int));
 void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
+vaddr_t	vax_map_physmem __P((paddr_t, int));
+void	vax_unmap_physmem __P((vaddr_t, int));
+void	ioaccess __P((vaddr_t, paddr_t, int));
+void	iounaccess __P((vaddr_t, int));
 #ifdef DDB
 int	kdbrint __P((int));
 #endif
