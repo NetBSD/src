@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1996/05/22 17:52:48 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 1996/05/25 14:45:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1720,7 +1720,7 @@ static romvec_t romvecs[] =
 		"Quadra AV ROMs",
 		(caddr_t) 0x4080cac6,	/* ADB int */
 		(caddr_t) 0x0,		/* PM int */
-		(caddr_t) 0x0,		/* ADBBase + 130 */
+		(caddr_t) 0x40805cd4,	/* ADBBase + 130 */
 		(caddr_t) 0x40839600,	/* CountADBs */
 		(caddr_t) 0x4083961a,	/* GetIndADB */
 		(caddr_t) 0x40839646,	/* GetADBInfo */
@@ -1728,19 +1728,19 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408397b8,	/* ADBReInit */
 		(caddr_t) 0x4083967c,	/* ADBOp */
 		(caddr_t) 0x0,		/* PMgrOp */
-		(caddr_t) 0x0,		/* WriteParam */
-		(caddr_t) 0x0,		/* SetDateTime */
-		(caddr_t) 0x0,		/* InitUtil */
-		(caddr_t) 0x0,		/* ReadXPRam */
-		(caddr_t) 0x0,		/* WriteXPRam */
-		(caddr_t) 0x0,		/* jClkNoMem */
-		(caddr_t) 0x0,		/* ADBAlternateInit */
-		(caddr_t) 0x0,		/* Egret */
-		(caddr_t) 0x0,		/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
-		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
-		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
+		(caddr_t) 0x4081141c,	/* WriteParam */
+		(caddr_t) 0x4081144e,	/* SetDateTime */
+		(caddr_t) 0x40811930,	/* InitUtil */
+		(caddr_t) 0x4080b624,	/* ReadXPRam */
+		(caddr_t) 0x4080b62e,	/* WriteXPRam */
+		(caddr_t) 0x40806884,	/* jClkNoMem */
+		(caddr_t) 0x408398c2,	/* ADBAlternateInit */
+		(caddr_t) 0x4080cada,	/* Egret */
+		(caddr_t) 0x4080de14,	/* InitEgret */
+		(caddr_t) 0x408143b8,	/* ADBReInit_JTBL */
+		(caddr_t) 0x409bdb60,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4083b3d8,	/* FixDiv */
+		(caddr_t) 0x4083b2e4,	/* FixMul */
 	},
 	/*
 	 * PB 540 (but ADBBase + 130 intr and PMgrOp is unknown)
@@ -1918,8 +1918,8 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSQ, &romvecs[7]},
-	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSQ, &romvecs[7]},
+	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSAV, &romvecs[7]},
+	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSAV, &romvecs[7]},
 
 /* The Powerbooks/Duos... */
 	{MACH_MACPB100, "PowerBook", " 100 ", MACH_CLASSPB, &romvecs[1]},
@@ -2204,6 +2204,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable VIA2 int */
 		break;
 	case MACH_CLASSQ:
+	case MACH_CLASSAV:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
@@ -2267,42 +2268,18 @@ mac68k_set_io_offsets(base)
 	extern volatile u_char *ASCBase;
 
 	switch (current_mac_model->class) {
-	case MACH_CLASSII:
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
-		break;
-	case MACH_CLASSPB:
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
-		break;
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
 		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base;
 		break;
+	case MACH_CLASSII:
+	case MACH_CLASSPB:
+	case MACH_CLASSAV:
 	case MACH_CLASSIIci:
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
-		break;
 	case MACH_CLASSIIsi:
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
-		break;
 	case MACH_CLASSIIvx:
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
-		break;
 	case MACH_CLASSLC:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
