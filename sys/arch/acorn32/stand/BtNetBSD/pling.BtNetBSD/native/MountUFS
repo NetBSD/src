@@ -1,0 +1,102 @@
+REM >Mountufs
+REM $NetBSD: MountUFS,v 1.1 2001/10/05 22:28:03 reinoud Exp $
+REM
+REM Copyright (c) 1997 Mark Brinicombe
+REM All rights reserved
+REM
+REM Redistribution and use in source and binary forms, with or without
+REM modification, are permitted provided that the following conditions
+REM are met:
+REM 1. Redistributions of source code must retain the above copyright
+REM    notice, this list of conditions and the following disclaimer.
+REM 2. Redistributions in binary form must reproduce the above copyright
+REM    notice, this list of conditions and the following disclaimer in the
+REM    documentation and/or other materials provided with the distribution.
+REM 3. All advertising materials mentioning features or use of this software
+REM    must display the following acknowledgement:
+REM        This product includes software developed by Mark Brinicombe.
+REM 4. The name of the company nor the name of the author may be used to
+REM    endorse or promote products derived from this software without specific
+REM    prior written permission.
+REM
+REM THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+REM IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+REM OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+REM IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+REM INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+REM BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+REM OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+REM ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+REM OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+REM THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+REM DAMAGE.
+REM
+REM Created      : 26/01/97
+REM Last updated : 26/01/97
+REM
+REM Decodes filesystem and device arguments and mounts the correct
+REM FFS partition with unixfs
+REM
+
+REM Get environment
+SYS "OS_GetEnv" TO env$
+
+REM Skipprogram path etc.
+IF (INSTR(env$, "-quit")) THEN
+  I% = INSTR(env$, """")
+  I% = INSTR(env$, """", I% + 1)
+  REPEAT
+    I% += 1
+  UNTIL MID$(env$, I%, 1) <> " "
+  env$ = MID$(env$, I%)
+ENDIF
+
+REM Extract the first argument as the filesystem
+I% = INSTR(env$, " ")
+filesys$ = FNupper(LEFT$(env$, I% - 1))
+
+REM Skip to the next argument
+REPEAT
+  I% += 1
+UNTIL MID$(env$, I%, 1) <> " "
+env$ = MID$(env$, I%)
+
+REM The drive is the next argument
+I% = INSTR(env$, " ")
+IF (I% = 0) THEN
+  drive$ = env$
+ELSE
+  drive$ = LEFT$(env$, I% - 1)
+  REM Skip to the next argument
+  REPEAT
+    I% += 1
+  UNTIL MID$(env$, I%, 1) <> " "
+  env$ = MID$(env$, I%)
+ENDIF
+
+drive% = VAL(drive$)
+
+REM Lookup the SWI Number for the DiscOp SWI
+swi$ = filesys$ + "_DiscOp"
+SYS "OS_SWINumberFromString",, swi$ TO swi%
+
+REM Assemble the unixfs_mount argument
+REM Assumes the filesystem is on the a partition
+swi% = swi% AND NOT(&3F)
+swi% += drive% * 8
+
+REM PRINT filesys$;" (";~swi%;") ";dev$;unit%;CHR$(part%+ASC("a"))
+
+REM Mount the filesystem
+OSCLI("<BtNetBSD$Dir>.native.unixfs_res")
+OSCLI("unixfs_mount " + STR$~(swi%))
+END
+
+REM Convert a string to upper case
+DEF FNupper(A$)
+R$ = ""
+FOR A% = 1 TO LEN(A$)
+  R$ = R$ + CHR$(ASC(MID$(A$, A%, 1)) AND &DF)
+NEXT
+
+= R$

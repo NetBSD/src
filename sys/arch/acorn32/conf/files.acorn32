@@ -1,0 +1,338 @@
+#	$NetBSD: files.acorn32,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	8
+maxusers 2 8 64
+
+# Maintain Interrupt statistics
+defopt	IRQSTATS
+
+# X server support in console drivers
+defopt	XSERVER
+
+# Bootloader options (COMPAT... to be dropped ASAP)
+# (!)
+defopt	COMPAT_OLD_BOOTLOADER
+
+#
+# predefine some variables ... not that we have one but the arm framework
+# needs it to compile ... esp. the isadma bothers me (used by pmap.c)
+# it is never included but i need the isadma.h it generates
+#
+defopt	FOOTBRIDGE
+define	isadma
+file	dev/isa/isadma.c		isadma		needs-flag
+
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+major	{wd = 16}
+
+# PIOC (Peripheral IO Controller) device
+# parent to wdc, fdc, com and lpt
+device	pioc { [offset = -1], [dack = -1], [irq = -1] }
+attach	pioc at mainbus
+file	arch/acorn32/mainbus/pioc.c
+
+# Standard NetBSD wdc driver
+attach	wdc at pioc with wdc_pioc
+file	arch/acorn32/mainbus/wdc_pioc.c		wdc_pioc
+
+# Standard parallel driver
+# including dev/ic/lpt.c from the ISA file ... this sux
+device	lpt
+file	dev/ic/lpt.c				lpt		needs-flag
+
+attach  lpt at pioc with lpt_pioc
+file    arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc	needs-flag
+
+# Standard NetBSD fd driver
+device  fdc {drive = -1}
+attach	fdc at pioc
+device  fd: disk
+attach	fd at fdc
+file    arch/acorn32/mainbus/fd.c			fdc needs-flag
+major   {fd = 17}
+
+# Standard serial driver
+attach	com at pioc with com_pioc
+file    arch/acorn32/mainbus/com_pioc.c		com_pioc
+
+# Memory disk driver
+file	arch/acorn32/dev/md_hooks.c		md & memory_disk_hooks
+major   {md = 18}
+
+# RAIDframe
+major	{raid = 71}
+
+# IOMD device
+# parent to kbd, qms, pms, iic
+# also provides irq and timer services
+device	iomd {}
+attach	iomd at mainbus
+file	arch/arm/iomd/iomd.c			iomd needs-flag
+file	arch/arm/iomd/iomd_io.c		iomd
+file	arch/arm/iomd/iomd_io_asm.S		iomd
+file	arch/arm/iomd/iomd_irq.S		iomd
+file	arch/arm/iomd/iomd_irqhandler.c	iomd
+file	arch/arm/iomd/iomd_fiq.S		iomd
+file	arch/arm/iomd/iomd_dma.c		iomd
+
+# IIC device
+device	iic { addr = -1 }
+file	arch/arm/iomd/iic.c			iic	needs-flag
+
+attach iic at iomd with iic_iomd
+file	arch/arm/iomd/iic_iomd.c		iic_iomd
+file	arch/arm/iomd/iomd_iic.S		iic_iomd
+
+# IIC based RTC
+define todservice {}
+device	rtc : todservice
+attach	rtc at iic
+file	arch/arm/iomd/rtc.c			rtc	needs-flag
+
+device	todclock
+attach	todclock at todservice
+file	arch/arm/iomd/todclock.c		todclock	needs-count
+
+# IOMD mouse devices
+# clock device
+device  clock
+attach	clock at iomd
+file	arch/arm/iomd/iomd_clock.c		iomd
+
+# quadmouse device
+device  qms
+file    arch/arm/iomd/qms.c			qms needs-flag
+
+attach	qms at iomd with qms_iomd
+file    arch/arm/iomd/qms_iomd.c		qms_iomd
+
+# PS/2 mouse device
+device	opms: tty
+file	arch/arm/iomd/pms.c			opms & opms_iomd needs-flag
+
+attach	opms at iomd with opms_iomd
+file	arch/arm/iomd/pms_iomd.c		opms_iomd
+
+# Standard keyboard driver (obsolete ... old vidc console)
+device	kbd
+file	arch/arm/iomd/kbd.c			kbd needs-flag
+
+attach	kbd at iomd with kbd_iomd
+file	arch/arm/iomd/kbd_iomd.c		kbd_iomd
+
+#
+# wscons
+#
+
+# Include MI WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+# wscons quadmouse device
+device	wsqms : wsmousedev
+file	arch/arm/iomd/wsqms.c			wsqms needs-flag
+
+attach wsqms at iomd with wsqms_iomd  
+file	arch/arm/iomd/wsqms_iomd.c		wsqms_iomd
+
+# RPC wscons keyboard driver
+device rpckbd : wskbddev
+file   arch/arm/iomd/rpckbd.c			rpckbd  needs-flag
+file   arch/acorn32/dev/wskbdmap_mfii.c		rpckbd
+
+attach rpckbd at iomd with rpckbd_iomd
+file   arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
+
+# VIDC device
+# parent to vidcconsole, vidcaudio, beep
+device	vidc { [base = -1], [dack = -1], [irq = -1] }
+attach	vidc at mainbus
+file	arch/arm/iomd/vidc20.c		vidc needs-count
+
+# VIDC video wscons device
+device vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
+attach vidcvideo at vidc
+file	arch/arm/iomd/vidc20config.c		vidcvideo needs-flag
+file	arch/arm/iomd/vidcvideo.c		vidcvideo needs-flag
+
+# Audio devices
+device	beep
+attach	beep at vidc
+file	arch/arm/iomd/beep.c			beep needs-flag
+
+device	vidcaudio: audio
+attach	vidcaudio at vidc
+file	arch/arm/iomd/vidcaudio.c		vidcaudio needs-flag
+
+device	lmcaudio: audio
+attach	lmcaudio at vidc
+file	arch/arm/iomd/lmcaudio.c		lmcaudio needs-flag
+file	arch/arm/iomd/lmc1982.S		lmcaudio
+
+# Podule bus device
+include "dev/podulebus/files.podulebus"
+
+attach	podulebus at root
+file	arch/acorn32/podulebus/podulebus.c	podulebus needs-flag
+file	arch/acorn32/podulebus/podulebus_io.c	podulebus
+file	arch/acorn32/podulebus/podulebus_io_asm.S	podulebus
+file	arch/acorn32/podulebus/netslot.c		podulebus
+
+
+# Ethernet devices
+
+# Novell NE1000 and NE2000 clones (EtherM, EtherH)
+attach	ne at podulebus with ne_pbus
+file	arch/acorn32/podulebus/if_ne_pbus.c	ne_pbus
+
+device	ie: ether, ifnet, arp
+attach	ie at podulebus
+file	arch/acorn32/podulebus/if_ie.c		ie
+
+#define	ipkdb
+
+#device kie: ipkdb
+#attach kie at podule
+#file	arch/acorn32/podulebus/ipkdb_ie.c		kie
+
+#file	arch/arm32/arm32/ipkdb_glue.c		ipkdb
+#file	arch/arm32/arm32/ipkdb_step.c		ipkdb
+
+#
+# Machine-independent SCSI drivers
+#
+
+include "dev/scsipi/files.scsipi"
+major   {sd = 24}
+major   {cd = 26}
+
+#
+# Miscelanious podulebus devices not moved yet to dev/podules
+#
+
+# Generic sbic (WD3393) driver
+define	sbic
+file	arch/acorn32/podulebus/sbic.c		sbic
+
+# Acorn SCSI I specific layer for sbic
+device  asc: scsi, sbic, podloader
+attach	asc at podulebus
+file	arch/acorn32/podulebus/asc.c		asc needs-flag
+
+# Generic AMD AM53C94 driver
+define	esc
+file	arch/acorn32/podulebus/esc.c		esc
+
+# Connect32 specific layer for esc
+device	cosc: scsi, esc
+attach	cosc at podulebus
+file	arch/acorn32/podulebus/cosc.c		cosc
+
+# Generic fas216 + esp216 driver
+define	sfas
+file	arch/acorn32/podulebus/sfas.c		sfas
+
+device	ptsc: scsi, sfas, podloader
+attach	ptsc at podulebus
+file	arch/acorn32/podulebus/ptsc.c		ptsc
+
+device	csc: scsi, sfas, podloader
+attach	csc at podulebus
+file	arch/acorn32/podulebus/csc.c		csc
+
+# Cumana SCSI1 specific layer for ncr5380
+device	csa: scsi, ncr5380sbc, podloader
+attach	csa at podulebus
+file	arch/acorn32/podulebus/csa.c		csa
+
+# ICS IDE driver
+device	icside {[channel = -1]}: wdc_base, ata, atapi
+attach	icside at podulebus
+file	arch/acorn32/podulebus/icside.c		icside
+file	arch/acorn32/podulebus/icside_io_asm.S	icside
+
+# Yellowstone RapIDE driver
+device	rapide {[channel = -1]}: wdc_base, ata, atapi
+attach	rapide at podulebus
+file	arch/acorn32/podulebus/rapide.c		rapide
+file	arch/acorn32/podulebus/rapide_io_asm.S	rapide
+
+# Simtec IDE driver
+device	simide {[channel = -1]}: wdc_base, ata, atapi
+attach	simide at podulebus
+file	arch/acorn32/podulebus/simide.c		simide
+file	arch/acorn32/podulebus/simide_io_asm.S	simide
+
+# Atomwide Multi-Port Serial driver
+device	amps {}
+attach	amps at podulebus
+attach	com at amps with com_amps
+file	arch/acorn32/podulebus/amps.c		amps
+
+
+#
+# VIDC console stuff (old)
+#
+
+device  vidcconsole   
+attach  vidcconsole at vidc   
+file	arch/arm/iomd/console/vidcconsole.c	vidcconsole needs-count
+file	arch/arm/iomd/console/consinit.c	vidc needs-count
+device  vt: tty
+attach  vt at vidc
+
+file	dev/cninit.c				vt
+file    arch/arm/iomd/console/console.c	vt needs-count
+file    arch/arm/iomd/console/vidcrender.c	vt
+file	arch/arm/iomd/console/vidc_mc.S	vt
+file    arch/arm/iomd/console/vidc.c		vt
+file    arch/arm/iomd/console/vt220.c		vt
+file	arch/arm/iomd/console/debugconsole.c 	vt
+file	arch/arm/iomd/console/dumb.c 		vt
+
+# Generic MD files
+file	arch/acorn32/acorn32/autoconf.c
+file	arch/acorn32/acorn32/conf.c
+
+file	arch/arm/arm/disksubr.c			disk
+file	arch/arm/arm/disksubr_acorn.c		disk
+file	arch/arm/arm/disksubr_mbr.c		disk
+
+# ARM FPE
+file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
+file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
+file	arch/arm32/fpe-arm/armfpe.s		armfpe
+
+# RiscPC specific files
+file	arch/acorn32/acorn32/rpc_machdep.c	riscpc
+file    arch/acorn32/acorn32/rpc_kbd_map.c	riscpc & kbd
+
+device	sysbeep
+attach	sysbeep at vidc with sysbeep_vidc
+file	arch/arm/iomd/sysbeep_vidc.c	sysbeep_vidc
+
+#
+# Machine-independent I2O drivers.
+#
+include "dev/i2o/files.i2o"
+
+
+#
+# maybe we will use these later one time :
+#
+# Include USB stuff
+#include "dev/usb/files.usb"
+
+#
+# we need this for rpcwskbd.c to compile
+#
+include "dev/pckbc/files.pckbc"
+
