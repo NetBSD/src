@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/12/08 05:34:50 jmc Exp $
+#	$NetBSD: Makefile,v 1.7 2005/03/02 01:06:15 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,9 @@ XINITDIR=	${X11ETCDIR}/xinit
 CPPFLAGS+=	-DHAS_VFORK ${X11FLAGS.CONNECTION} -DBINDIR=\"${X11BINDIR}\" \
 
 CPPFLAGS+=	-DXFREE86
+.if (${USE_PAM} != "no")
+CPPFLAGS+=	-DUSE_PAM
+.endif
 
 CPPSCRIPTS=	startx xinitrc
 CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR}
