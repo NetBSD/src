@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.90 2000/06/03 11:23:54 fvdl Exp $
+#	$NetBSD: Makefile,v 1.91 2000/06/20 06:00:32 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
-
-SRCTOP=	..
-.include <bsd.crypto.mk>
 
 # Doing a make includes builds /usr/include
 
@@ -31,10 +28,6 @@ INCSDIR=/usr/include
 MKOBJ=	no
 
 SUBDIR=	rpc
-
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/include/Makefile.frag"
-.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

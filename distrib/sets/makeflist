@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.20 2000/01/23 20:31:17 jwise Exp $
+# $NetBSD: makeflist,v 1.21 2000/06/20 06:00:28 thorpej Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -18,14 +18,6 @@ lists=$nlists
 # handle args
 while : ; do
 	case $1 in
-	-d*)
-		nlists="$nlists secr"
-		lists=$nlists
-		;;
-	-i*)
-		nlists="$nlists cryptint"
-		lists=$nlists
-		;;
 	-b*)
 		lists="$xlists $nlists"
 		;;
@@ -45,8 +37,6 @@ while : ; do
 		cat 1>&2 <<USAGE
 Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 	-b		make netbsd + x11 lists
-	-d		do domestic ("secr") sets
-	-i		do international crypto ("cryptint") sets
 	-x		only make x11 lists
 	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]
 	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]

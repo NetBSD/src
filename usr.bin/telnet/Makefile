@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1999/07/20 09:35:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2000/06/20 06:00:38 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,8 +34,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-SRCTOP=	../..
-.include <bsd.crypto.mk>
+DIST=	${.CURDIR}/../../crypto/dist
+.PATH:	${DIST}/heimdal/appl/telnet/telnet .DOTLAST
+
+# XXX XXX XXX
+WARNS=0
 
 PROG=	telnet
 
@@ -47,24 +50,21 @@ LDADD+= -ltermcap -ltelnet
 DPADD+=	${LIBTERMCAP} ${LIBTELNET}
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
-	terminal.c tn3270.c utilities.c
+	terminal.c utilities.c
 
-# These are the sources that have encryption stuff in them.
-CRYPT_SRC= authenc.c commands.c externs.h main.c network.c
-CRYPT_SRC+= ring.c ring.h telnet.c terminal.c utilities.c Makefile
-NOCRYPT_DIR=${.CURDIR}/Nocrypt
-
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/usr.bin/telnet/Makefile.frag"
-.endif
+CPPFLAGS+= -I${DIST}/heimdal/appl/telnet
+CPPFLAGS+= -I${DIST}/heimdal/appl/telnet/telnet
+CPPFLAGS+= -I${.CURDIR}/../../include/heimdal
+CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
+CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+= -I${DESTDIR}/usr/include/openssl
+CPPFLAGS+= -DHAVE_CONFIG_H
 
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CPPFLAGS+=-DINET6
 
-LIBTELNETINCS?=-I${.CURDIR}/../../lib
-
-CPPFLAGS+=${LIBTELNETINCS}
+LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lroken
 
 .include <bsd.prog.mk>

@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.24 2000/01/12 05:13:32 mjl Exp $
+#	$NetBSD: Makefile,v 1.25 2000/06/20 06:00:37 thorpej Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
-
-SRCTOP=	../..
-.include <bsd.crypto.mk>
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c
@@ -19,9 +16,9 @@ BINMODE=4555
 INSTALLFLAGS=-fschg
 .endif
 
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/usr.bin/passwd/Makefile.frag"
-.endif
+CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
+SRCS+=	krb5_passwd.c
+LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
 
 .include <bsd.prog.mk>
 
