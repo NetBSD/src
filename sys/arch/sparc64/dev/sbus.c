@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.64 2003/10/26 19:15:00 christos Exp $ */
+/*	$NetBSD: sbus.c,v 1.65 2003/11/09 14:28:56 martin Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.64 2003/10/26 19:15:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65 2003/11/09 14:28:56 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -333,7 +333,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int	error;
 	int n;
 
-	bzero(sa, sizeof(struct sbus_attach_args));
+	memset(sa, 0, sizeof(struct sbus_attach_args));
 	error = PROM_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
@@ -391,7 +391,7 @@ sbus_destroy_attach_args(sa)
 	if (sa->sa_promvaddrs)
 		free((void *)sa->sa_promvaddrs, M_DEVBUF);
 
-	bzero(sa, sizeof(struct sbus_attach_args)); /*DEBUG*/
+	memset(sa, 0, sizeof(struct sbus_attach_args)); /*DEBUG*/
 }
 
 
@@ -707,7 +707,7 @@ sbus_alloc_bustag(sc)
 	if (sbt == NULL)
 		return (NULL);
 
-	bzero(sbt, sizeof *sbt);
+	memset(sbt, 0, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 	sbt->type = SBUS_BUS_SPACE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.66 2003/08/27 15:59:54 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.67 2003/11/09 14:28:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.66 2003/08/27 15:59:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.67 2003/11/09 14:28:56 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -988,7 +988,7 @@ psycho_alloc_bus_tag(pp, type)
 	if (bt == NULL)
 		panic("could not allocate psycho bus tag");
 
-	bzero(bt, sizeof *bt);
+	memset(bt, 0, sizeof *bt);
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
 	bt->type = type;
@@ -1010,7 +1010,7 @@ psycho_alloc_dma_tag(pp)
 	if (dt == NULL)
 		panic("could not allocate psycho DMA tag");
 
-	bzero(dt, sizeof *dt);
+	memset(dt, 0, sizeof *dt);
 	dt->_cookie = pp;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
