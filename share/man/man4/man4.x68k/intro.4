@@ -31,11 +31,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: intro.4,v 1.3 1999/03/16 01:19:25 garbled Exp $
+.\"	$NetBSD: intro.4,v 1.4 1999/03/17 12:27:22 minoura Exp $
 .\"
 .Dd Sep 11, 1997
 .Dt INTRO 4 x68k
-.Os
+.Os NetBSD 1.3
 .Sh NAME
 .Nm intro
 .Nd introduction to special files and hardware support
@@ -97,18 +97,25 @@ A list of the supported devices is given below.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr autoconf 4 ,
-.Xr config 8 .
+.Xr config 8 ,
+.Xr intio 4 ,
+.Xr mfp 4 ,
+.Xr neptune 4 .
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Bl -tag -width "okiadpcm" -compact -offset indent
+.It Em intio
+Internal I/O virtual device
+.It Em mfp
+MC68901 MFP (Multi-Function Periferal)
 .It Em spc
 Sharp genuin MB89352 SCSI host adaptor
 .It Em mha
 MK-HA1 Mankai-Seisakusho Mach-2 SCSI host adaptor
-.It Em ed
+.It Em neptune
 Neptune-X Ethernet interface
 .It Em fdc
 Built-in floppy disk controller device
@@ -132,7 +139,7 @@ Z8530 built-in serial interface
 .\"Oki MSM6258V AD-PCM
 .It Em kbd
 x68k Keyboard device
-.It Em mouse
+.It Em ms
 x68k mouse / trackball
 .It Em bell
 The keyboard bell emulator
