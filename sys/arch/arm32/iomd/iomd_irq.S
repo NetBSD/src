@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.13 1997/02/10 03:50:56 mark Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.14 1997/10/14 11:05:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "assym.h"
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/iomd.h>
+#include <arm32/iomd/iomdreg.h>
 
 sp	.req	r13
 lr	.req	r14
@@ -102,24 +102,24 @@ irq_entry:
 	/* Load r8 with the IOMD interrupt requests */
 
  	mov	r10, #(IOMD_BASE)	/* Point to the IOMD */
-	ldrb	r8, [r10, #(IOMD_IRQRQA - IOMD_BASE)]	/* Get IRQ request A */
-	ldrb	r9, [r10, #(IOMD_IRQRQB - IOMD_BASE)]	/* Get IRQ request B */
+	ldrb	r8, [r10, #(IOMD_IRQRQA << 2)]	/* Get IRQ request A */
+	ldrb	r9, [r10, #(IOMD_IRQRQB << 2)]	/* Get IRQ request B */
 	orr	r8, r8, r9, lsl #8
 #ifdef CPU_ARM7500
-	ldrb	r9, [r10, #(IOMD_IRQRQC - IOMD_BASE)]	/* Get IRQ request C */
+	ldrb	r9, [r10, #(IOMD_IRQRQC << 2)]	/* Get IRQ request C */
 	orr	r8, r8, r9, lsl #16
-	ldrb	r9, [r10, #(IOMD_IRQRQD - IOMD_BASE)]	/* Get IRQ request D */
+	ldrb	r9, [r10, #(IOMD_IRQRQD << 2)]	/* Get IRQ request D */
 	orr	r8, r8, r9, lsl #24
-	ldrb	r9, [r10, #(IOMD_DMARQ - IOMD_BASE)]	/* Get DMA Request */
+	ldrb	r9, [r10, #(IOMD_DMARQ << 2)]	/* Get DMA Request */
 	tst	r9, #0x10
 	orrne	r8, r8, r9, lsl #27
 #else
-	ldrb	r9, [r10, #(IOMD_DMARQ - IOMD_BASE)]	/* Get DMA Request */
+	ldrb	r9, [r10, #(IOMD_DMARQ << 2)]	/* Get DMA Request */
 	orr	r8, r8, r9, lsl #16
 #endif	/* CPU_ARM7500 */
 
 	and	r0, r8, #0x7d		/* Clear IOMD IRQA bits */
-	strb	r0, [r10, #(IOMD_IRQRQA - IOMD_BASE)]
+	strb	r0, [r10, #(IOMD_IRQRQA << 2)]
 
 	/*
 	 * Note that we have entered the IRQ handler.
@@ -353,20 +353,20 @@ _irq_setmasks:
 	bic	r1, r1, r2
 
  	mov	r0, #(IOMD_BASE)	/* Point to the IOMD */
-	strb	r1, [r0, #(IOMD_IRQMSKA - IOMD_BASE)]	/* Set IRQ mask A */
+	strb	r1, [r0, #(IOMD_IRQMSKA << 2)]	/* Set IRQ mask A */
 	mov	r1, r1, lsr #8
-	strb	r1, [r0, #(IOMD_IRQMSKB - IOMD_BASE)]	/* Set IRQ mask B */
+	strb	r1, [r0, #(IOMD_IRQMSKB << 2)]	/* Set IRQ mask B */
 	mov	r1, r1, lsr #8
 #ifdef CPU_ARM7500
-	strb	r1, [r0, #(IOMD_IRQMSKC - IOMD_BASE)]
+	strb	r1, [r0, #(IOMD_IRQMSKC << 2)]
 	mov	r1, r1, lsr #8
 	and	r2, r1, #0xef
-	strb	r2, [r0, #(IOMD_IRQMSKD - IOMD_BASE)]
+	strb	r2, [r0, #(IOMD_IRQMSKD << 2)]
 	mov	r1, r1, lsr #3
 	and	r2, r1, #0x10
-	strb	r2, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
+	strb	r2, [r0, #(IOMD_DMAMSK << 2)]	/* Set DMA mask */
 #else
-	strb	r1, [r0, #(IOMD_DMAMSK - IOMD_BASE)]	/* Set DMA mask */
+	strb	r1, [r0, #(IOMD_DMAMSK << 2)]	/* Set DMA mask */
 #endif	/* CPU_ARM7500 */
 
 	/* Restore old cpsr and exit */
