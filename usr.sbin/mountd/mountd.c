@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.52 1999/01/12 15:11:53 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.53 1999/06/06 01:50:23 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.52 1999/01/12 15:11:53 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.53 1999/06/06 01:50:23 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
@@ -269,7 +269,6 @@ main(argc, argv)
 	char **argv;
 {
 	SVCXPRT *udptransp, *tcptransp;
-	FILE *pidfile;
 	int c;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
@@ -310,11 +309,7 @@ main(argc, argv)
 	}
 	(void)signal(SIGHUP, get_exportlist);
 	(void)signal(SIGTERM, send_umntall);
-	pidfile = fopen(_PATH_MOUNTDPID, "w");
-	if (pidfile != NULL) {
-		(void)fprintf(pidfile, "%d\n", getpid());
-		(void)fclose(pidfile);
-	}
+	pidfile(NULL);
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
 		syslog(LOG_ERR, "Can't create socket");

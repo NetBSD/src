@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.26 1999/02/28 11:46:26 tron Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.27 1999/06/06 01:55:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,6 @@ __RCSID("$NetBSD: syslogd.c,v 1.26 1999/02/28 11:46:26 tron Exp $");
 #include <sys/syslog.h>
 
 char	*ConfFile = _PATH_LOGCONF;
-char	*PidFile = _PATH_LOGPID;
 char	ctty[] = _PATH_CONSOLE;
 
 #define FDMASK(fd)	(1 << (fd))
@@ -224,7 +223,6 @@ main(argc, argv)
 	int funixsize = 0, funixmaxsize = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
-	FILE *fp;
 	char *p, *line, **pp;
 	struct pollfd *readfds;
 
@@ -349,13 +347,8 @@ main(argc, argv)
 	}
 
 	/* tuck my process id away, if i'm not in debug mode */
-	if (Debug == 0) {
-		fp = fopen(PidFile, "w");
-		if (fp != NULL) {
-			fprintf(fp, "%d\n", getpid());
-			(void) fclose(fp);
-		}
-	}
+	if (Debug == 0)
+		pidfile(NULL);
 
 	dprintf("off & running....\n");
 
