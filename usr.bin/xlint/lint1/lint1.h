@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.4 1995/10/02 17:14:35 jpo Exp $	*/
+/*	$NetBSD: lint1.h,v 1.5 1995/10/02 17:21:39 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -311,7 +311,6 @@ typedef	struct dinfo {
 	u_int	d_notyp : 1;	/* set if no type specifier was present */
 	type_t	*d_tagtyp;	/* tag during member declaration */
 	sym_t	*d_fargs;	/* list of arguments during function def. */
-	type_t	*d_ftype;	/* type as specified in function def. */
 	pos_t	d_fdpos;	/* position of function definition */
 	sym_t	*d_dlsyms;	/* first symbol declared at this level */
 	sym_t	**d_ldlsym;	/* points to s_dlnxt in last symbol decl.

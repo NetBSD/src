@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.4 1995/10/02 17:19:01 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.5 1995/10/02 17:21:30 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.4 1995/10/02 17:19:01 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.5 1995/10/02 17:21:30 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -321,7 +321,7 @@ const	char *msgs[] = {
 	"\\\" inside character constants undefined in traditional C", /* 262 */
 	"\\? undefined in traditional C",			      /* 263 */
 	"\\v undefined in traditional C",			      /* 264 */
-	"",							      /* 265 */
+	"%s C does not support 'long long'",			      /* 265 */
 	"'long double' is illegal in traditional C",		      /* 266 */
 	"shift equal to size of object",			      /* 267 */
 	"variable declared inline: %s",				      /* 268 */
@@ -511,7 +511,7 @@ message(n, va_alist)
 	va_end(ap);
 }
 
-void
+int
 #ifdef __STDC__
 gnuism(int n, ...)
 #else
@@ -521,6 +521,7 @@ gnuism(n, va_alist)
 #endif
 {
 	va_list	ap;
+	int	msg;
 
 #ifdef __STDC__
 	va_start(ap, n);
@@ -529,8 +530,14 @@ gnuism(n, va_alist)
 #endif
 	if (sflag && !gflag) {
 		verror(n, ap);
-	} else if (!(!sflag && gflag)) {
+		msg = 1;
+	} else if (!sflag && gflag) {
+		msg = 0;
+	} else {
 		vwarning(n, ap);
+		msg = 1;
 	}
 	va_end(ap);
+
+	return (msg);
 }
