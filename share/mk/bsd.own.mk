@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.400 2003/12/05 12:14:42 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.401 2003/12/07 22:23:00 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -420,8 +420,12 @@ NOPIC=		# defined
 
 #
 # On VAX using ELF, all objects are PIC, not just shared libraries,
-# so don't build the _pic version.
+# so don't build the _pic version.  Unless we are using GCC3 which
+# doesn't support PIC yet.
 #
+.if ${MACHINE_ARCH} == "vax" && && ${HAVE_GCC3} != "no"
+NOPIC=		# defined
+.endif
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
 MKPICLIB:=	no
 .endif
