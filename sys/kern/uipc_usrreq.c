@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.44 1999/05/05 20:01:10 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.45 1999/06/17 23:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1175,15 +1175,16 @@ unp_gc()
 		}
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
-		FILE_USE(fp);
 		fp = *fpp;
+		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
 		FILE_UNUSE(fp, NULL);
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
+		fp = *fpp;
 		FILE_USE(fp);
-		(void) closef(*fpp, (struct proc *)0);
+		(void) closef(fp, (struct proc *)0);
 	}
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
