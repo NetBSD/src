@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.22 2001/01/05 03:27:26 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.23 2001/02/23 08:52:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.22 2001/01/05 03:27:26 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.23 2001/02/23 08:52:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ dumpfs(name)
 	const char *name;
 {
 	int fd, c, i, j, k, size;
+	time_t t;
 
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
 		goto err;
@@ -149,7 +150,8 @@ dumpfs(name)
 		afs.fs_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	printf("magic\t%x\ttime\t%s", afs.fs_magic,
-	    ctime(&afs.fs_time));
+	    ctime(&t));
+	afs.fs_time = t;
 	i = 0;
 	if (afs.fs_postblformat != FS_42POSTBLFMT) {
 		i++;
@@ -271,6 +273,7 @@ dumpcg(name, fd, c)
 {
 	off_t cur;
 	int i, j;
+	time_t t;
 
 	printf("\ncg %d:\n", c);
 	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
@@ -285,7 +288,8 @@ dumpcg(name, fd, c)
 	printf("magic\t%x\ttell\t%llx\ttime\t%s",
 	    afs.fs_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
-	    (long long)cur, ctime(&acg.cg_time));
+	    (long long)cur, ctime(&t));
+	acg.cg_time = t;
 	printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
 	    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
