@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.34 2000/12/07 17:44:03 wiz Exp $ */
+/* $NetBSD: user.c,v 1.35 2000/12/23 16:29:35 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.34 2000/12/07 17:44:03 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.35 2000/12/23 16:29:35 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1002,9 +1002,10 @@ adduser(char *login, user_t *up)
 static int
 moduser(char *login, char *newlogin, user_t *up)
 {
-	struct passwd	*pwp, *newpwp;
+	struct passwd	*pwp;
 	struct group	*grp;
 	struct tm	tm;
+	const char	*homedir;
 	size_t		colonc, len, loginc;
 	FILE		*master;
 	char		*buf, *colon, *line;
@@ -1017,7 +1018,9 @@ moduser(char *login, char *newlogin, user_t *up)
 	if ((pwp = getpwnam(login)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login);
 	}
-	newpwp = pwp;
+	/* keep dir name in case we need it for '-m' */
+	homedir = pwp->pw_dir;
+
 	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
 		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
@@ -1043,11 +1046,11 @@ moduser(char *login, char *newlogin, user_t *up)
 				(void) pw_abort();
 				errx(EXIT_FAILURE, "already a `%s' user", newlogin);
 			}
-			newpwp->pw_name = newlogin;
+			pwp->pw_name = newlogin;
 		}
 		if (up->u_flags & F_PASSWORD) {
 			if (up->u_password != NULL && strlen(up->u_password) == PasswordLength)
-				newpwp->pw_passwd = up->u_password;
+				pwp->pw_passwd = up->u_password;
 		}
 		if (up->u_flags & F_UID) {
 			/* check uid isn't already allocated */
@@ -1056,7 +1059,7 @@ moduser(char *login, char *newlogin, user_t *up)
 				(void) pw_abort();
 				errx(EXIT_FAILURE, "uid %d is already in use", up->u_uid);
 			}
-			newpwp->pw_uid = up->u_uid;
+			pwp->pw_uid = up->u_uid;
 		}
 		if (up->u_flags & F_GROUP) {
 			/* if -g=uid was specified, check gid is unused */
@@ -1066,12 +1069,12 @@ moduser(char *login, char *newlogin, user_t *up)
 					(void) pw_abort();
 					errx(EXIT_FAILURE, "gid %d is already in use", up->u_uid);
 				}
-				newpwp->pw_gid = up->u_uid;
+				pwp->pw_gid = up->u_uid;
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
-				newpwp->pw_gid = grp->gr_gid;
+				pwp->pw_gid = grp->gr_gid;
 			} else if (is_number(up->u_primgrp) &&
 				   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != NULL) {
-				newpwp->pw_gid = grp->gr_gid;
+				pwp->pw_gid = grp->gr_gid;
 			} else {
 				(void) close(ptmpfd);
 				(void) pw_abort();
@@ -1079,20 +1082,20 @@ moduser(char *login, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags |= F_INACTIVE)
-			newpwp->pw_change = up->u_inactive;
+			pwp->pw_change = up->u_inactive;
 		if (up->u_flags & F_EXPIRE) {
 			(void) memset(&tm, 0, sizeof(tm));
 			if (strptime(up->u_expire, "%c", &tm) == NULL)
 				warnx("invalid time format `%s'", optarg);
 			else
-				newpwp->pw_expire = mktime(&tm);
+				pwp->pw_expire = mktime(&tm);
 		}
 		if (up->u_flags & F_COMMENT)
-			newpwp->pw_gecos = up->u_comment;
+			pwp->pw_gecos = up->u_comment;
 		if (up->u_flags & F_HOMEDIR)
-			newpwp->pw_dir = up->u_home;
+			pwp->pw_dir = up->u_home;
 		if (up->u_flags & F_SHELL)
-			newpwp->pw_shell = up->u_shell;
+			pwp->pw_shell = up->u_shell;
 	}
 	loginc = strlen(login);
 	while ((line = fgetln(master, &len)) != NULL) {
@@ -1105,14 +1108,14 @@ moduser(char *login, char *newlogin, user_t *up)
 			if (up != NULL) {
 				len = (int)asprintf(&buf, "%s:%s:%d:%d::%ld:%ld:%s:%s:%s\n",
 					newlogin,
-					newpwp->pw_passwd,
-					newpwp->pw_uid,
-					newpwp->pw_gid,
-					(long)newpwp->pw_change,
-					(long)newpwp->pw_expire,
-					newpwp->pw_gecos,
-					newpwp->pw_dir,
-					newpwp->pw_shell);
+					pwp->pw_passwd,
+					pwp->pw_uid,
+					pwp->pw_gid,
+					(long)pwp->pw_change,
+					(long)pwp->pw_expire,
+					pwp->pw_gecos,
+					pwp->pw_dir,
+					pwp->pw_shell);
 				if (write(ptmpfd, buf, len) != len) {
 					(void) close(ptmpfd);
 					(void) pw_abort();
@@ -1131,11 +1134,11 @@ moduser(char *login, char *newlogin, user_t *up)
 	}
 	if (up != NULL) {
 		if ((up->u_flags & F_MKDIR) &&
-		    asystem("%s %s %s", MV, pwp->pw_dir, newpwp->pw_dir) != 0) {
+		    asystem("%s %s %s", MV, homedir, pwp->pw_dir) != 0) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			err(EXIT_FAILURE, "can't move `%s' to `%s'",
-					pwp->pw_dir, newpwp->pw_dir);
+				homedir, pwp->pw_dir);
 		}
 		if (up->u_groupc > 0 &&
 		    !append_group(newlogin, up->u_groupc, up->u_groupv)) {
@@ -1439,6 +1442,11 @@ usermod(int argc, char **argv)
 #endif
 		}
 	}
+	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR)) {
+		warnx("option 'm' useless without 'd' -- ignored");
+		u.u_flags &= !F_MKDIR;
+	}
+
 	if (argc == optind) {
 		usermgmt_usage("usermod");
 	}
