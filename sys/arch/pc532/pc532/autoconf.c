@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1996/10/13 03:30:28 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1996/10/23 07:46:04 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,6 +67,7 @@ extern int cold;	/* cold start flag initialized in locore.s */
 /*
  * Determine i/o configuration for a machine.
  */
+void
 configure()
 {
 	extern int safepri;
