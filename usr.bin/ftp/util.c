@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.78 1999/10/13 02:47:54 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.79 1999/10/24 12:31:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.78 1999/10/13 02:47:54 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.79 1999/10/24 12:31:42 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -118,6 +118,8 @@ setpeer(argc, argv)
 	char *host;
 	char *port;
 
+	if (argc == 0)
+		goto usage;
 	if (connected) {
 		fprintf(ttyout, "Already connected to %s, use close first.\n",
 		    hostname);
@@ -127,6 +129,7 @@ setpeer(argc, argv)
 	if (argc < 2)
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
+ usage:
 		fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
 		code = -1;
 		return;
@@ -226,6 +229,87 @@ setpeer(argc, argv)
 }
 
 /*
+ * Reset the various variables that indicate connection state back to
+ * disconnected settings.
+ * The caller is responsible for issuing any commands to the remote server
+ * to perform a clean shutdown before this is invoked.
+ */
+void
+cleanuppeer()
+{
+
+	if (cout)
+		(void)fclose(cout);
+	cout = NULL;
+	connected = 0;
+			/*
+			 * determine if anonftp was specifically set with -a
+			 * (1), or implicitly set by auto_fetch() (2). in the
+			 * latter case, disable after the current xfer
+			 */
+	if (anonftp == 2)
+		anonftp = 0;
+	data = -1;
+	epsv4bad = 0;
+	if (!proxy)
+		macnum = 0;
+}
+
+/*
+ * Top-level signal handler for interrupted commands.
+ */
+void
+intr(dummy)
+	int dummy;
+{
+
+	alarmtimer(0);
+	if (fromatty)
+		write(fileno(ttyout), "\n", 1);
+	siglongjmp(toplevel, 1);
+}
+
+/*
+ * Signal handler for lost connections; cleanup various elements of
+ * the connection state, and call cleanuppeer() to finish it off.
+ */
+void
+lostpeer(dummy)
+	int dummy;
+{
+	int oerrno = errno;
+
+	alarmtimer(0);
+	if (connected) {
+		if (cout != NULL) {
+			(void)shutdown(fileno(cout), 1+1);
+			(void)fclose(cout);
+			cout = NULL;
+		}
+		if (data >= 0) {
+			(void)shutdown(data, 1+1);
+			(void)close(data);
+			data = -1;
+		}
+		connected = 0;
+	}
+	pswitch(1);
+	if (connected) {
+		if (cout != NULL) {
+			(void)shutdown(fileno(cout), 1+1);
+			(void)fclose(cout);
+			cout = NULL;
+		}
+		connected = 0;
+	}
+	proxflag = 0;
+	pswitch(0);
+	cleanuppeer();
+	errno = oerrno;
+}
+
+
+/*
  * login to remote host, using given username & password if supplied
  */
 int
@@ -236,7 +320,7 @@ ftp_login(host, user, pass)
 	char tmp[80];
 	const char *acct;
 	struct passwd *pw;
-	int n, aflag, rval, freeuser, freepass, freeacct, len;
+	int n, aflag, rval, freeuser, freepass, freeacct;
 
 	acct = NULL;
 	aflag = rval = freeuser = freepass = freeacct = 0;
@@ -245,34 +329,8 @@ ftp_login(host, user, pass)
 	 * Set up arguments for an anonymous FTP session, if necessary.
 	 */
 	if (anonftp) {
-		/*
-		 * Set up anonymous login password.
-		 */
-		if ((pass = getenv("FTPANONPASS")) == NULL) {
-			char *anonpass;
-
-			if ((pass = getlogin()) == NULL) {
-				if ((pw = getpwuid(getuid())) == NULL)
-					pass = "anonymous";
-				else
-					pass = pw->pw_name;
-			}
-			/*
-			 * Every anonymous FTP server I've encountered
-			 * will accept the string "username@", and will
-			 * append the hostname itself.  We do this by default
-			 * since many servers are picky about not having
-			 * a FQDN in the anonymous password.
-			 * - thorpej@netbsd.org
-			 */
-			len = strlen(pass) + 2;
-			anonpass = xmalloc(len);
-			(void)strlcpy(anonpass, pass, len);
-			(void)strlcat(anonpass, "@",  len);
-			pass = anonpass;
-			freepass = 1;
-		}
 		user = "anonymous";	/* as per RFC 1635 */
+		pass = getoptionvalue("anonpass");
 	}
 
 	if (user == NULL)
@@ -372,7 +430,7 @@ cleanup_ftp_login:
 
 /*
  * `another' gets another argument, and stores the new argc and argv.
- * It reverts to the top level (via main.c's intr()) on EOF/error.
+ * It reverts to the top level (via intr()) on EOF/error.
  *
  * Returns false if no new arguments have been added.
  */
@@ -422,7 +480,7 @@ remglob(argv, doswitch, errbuf)
         int oldverbose, oldhash, fd, len;
         char *cp, *mode;
 
-        if (!mflag) {
+        if (!mflag || !connected) {
                 if (!doglob)
                         args = NULL;
                 else {
@@ -653,7 +711,7 @@ static const char prefixes[] = " KMGTP";
 static struct timeval start;
 static struct timeval lastupdate;
 
-#define BUFLEFT	(sizeof(buf) - len)
+#define	BUFLEFT	(sizeof(buf) - len)
 
 void
 progressmeter(flag)
@@ -675,7 +733,7 @@ progressmeter(flag)
 			 *	these appropriately.
 			 */
 	char		buf[256];	/* workspace for progress bar */
-#define BAROVERHEAD	43		/* non `*' portion of progress bar */
+#define	BAROVERHEAD	43		/* non `*' portion of progress bar */
 					/*
 					 * stars should contain at least
 					 * sizeof(buf) - BAROVERHEAD entries
@@ -1282,8 +1340,7 @@ xsignal(sig, func)
 		 * This is unpleasant, but I don't know what would be better.
 		 * Right now, this "can't happen"
 		 */
-		errx(1, "xsignal_restart called with signal %d\n",
-		sig);
+		errx(1, "xsignal_restart called with signal %d", sig);
 	}
 
 	return(xsignal_restart(sig, func, restartable));

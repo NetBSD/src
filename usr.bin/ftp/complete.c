@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.33 1999/10/05 01:16:12 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.34 1999/10/24 12:31:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.33 1999/10/05 01:16:12 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.34 1999/10/24 12:31:37 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static int	     comparstr		__P((const void *, const void *));
 static unsigned char complete_ambiguous	__P((char *, int, StringList *));
 static unsigned char complete_command	__P((char *, int));
 static unsigned char complete_local	__P((char *, int));
+static unsigned char complete_option	__P((char *, int));
 static unsigned char complete_remote	__P((char *, int));
 
 static int
@@ -250,6 +251,37 @@ complete_local(word, list)
 	sl_free(words, 1);
 	return (rv);
 }
+/*
+ * Complete an option
+ */
+static unsigned char
+complete_option(word, list)
+	char *word;
+	int list;
+{
+	struct option *o;
+	StringList *words;
+	size_t wordlen;
+	unsigned char rv;
+
+	words = sl_init();
+	wordlen = strlen(word);
+
+	for (o = optiontab; o->name != NULL; o++) {
+		if (wordlen > strlen(o->name))
+			continue;
+		if (strncmp(word, o->name, wordlen) == 0)
+			sl_add(words, o->name);
+	}
+
+	rv = complete_ambiguous(word, list, words);
+	if (rv == CC_REFRESH) {
+		if (el_insertstr(el, " ") == -1)
+			rv = CC_ERROR;
+	}
+	sl_free(words, 0);
+	return (rv);
+}
 
 /*
  * Complete a remote file
@@ -342,7 +374,7 @@ complete(el, ch)
 
 	struct cmd *c;
 	const LineInfo *lf;
-	int celems, dolist;
+	int celems, dolist, cmpltype;
 	size_t len;
 
 	lf = el_line(el);
@@ -383,10 +415,20 @@ complete(el, ch)
 	if (cursor_argc > celems)
 		return (CC_ERROR);
 
-	switch (c->c_complete[cursor_argc - 1]) {
+	cmpltype = c->c_complete[cursor_argc - 1];
+	switch (cmpltype) {
+		case 'c':			/* command complete */
+		case 'C':
+			return (complete_command(word, dolist));
 		case 'l':			/* local complete */
 		case 'L':
 			return (complete_local(word, dolist));
+		case 'n':			/* no complete */
+		case 'N':			/* no complete */
+			return (CC_ERROR);
+		case 'o':			/* local complete */
+		case 'O':
+			return (complete_option(word, dolist));
 		case 'r':			/* remote complete */
 		case 'R':
 			if (connected != -1) {
@@ -395,11 +437,8 @@ complete(el, ch)
 				return (CC_REDISPLAY);
 			}
 			return (complete_remote(word, dolist));
-		case 'c':			/* command complete */
-		case 'C':
-			return (complete_command(word, dolist));
-		case 'n':			/* no complete */
 		default:
+			errx(1, "unknown complete type `%c'", cmpltype);
 			return (CC_ERROR);
 	}
 	/* NOTREACHED */
