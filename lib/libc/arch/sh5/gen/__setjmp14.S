@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 2002/07/11 14:23:05 scw Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 2002/09/06 15:33:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -59,6 +59,7 @@ ENTRY_NOPROFILE(__setjmp14)
 	st.q	r2, _JB_R14, r14
 	st.q	r2, _JB_R15, r15
 	st.q	r2, _JB_R18, r18
+	st.q	r2, _JB_PC, r18
 	LDUC32(0xACEBABE5, r0)
 	st.q	r2, _JB_R24, r0		/* sigcontext magic number */
 	st.q	r2, _JB_R26, r26
@@ -87,12 +88,11 @@ ENTRY_NOPROFILE(__setjmp14)
 	st.q	r2, _JB_R57, r57
 	st.q	r2, _JB_R58, r58
 	st.q	r2, _JB_R59, r59
-	movi	1, r0
-	st.q	r2, _JB_TR0, r0		/* Ensure caller-saved copies of */
-	st.q	r2, _JB_TR1, r0		/* branch-target registers have valid */
-	st.q	r2, _JB_TR2, r0		/* (albeit, pointing to nothing) */
-	st.q	r2, _JB_TR3, r0		/* SHmedia addresses. */
-	st.q	r2, _JB_TR4, r0
+	st.q	r2, _JB_TR0, r18	/* Ensure caller-saved copies of */
+	st.q	r2, _JB_TR1, r18	/* branch-target registers have valid */
+	st.q	r2, _JB_TR2, r18	/* SHmedia addresses for the caller's */
+	st.q	r2, _JB_TR3, r18	/* address space. */
+	st.q	r2, _JB_TR4, r18
 	gettr	tr5, r0
 	st.q	r2, _JB_TR5, r0
 	gettr	tr6, r0
@@ -141,7 +141,7 @@ ENTRY_NOPROFILE(__setjmp14)
 	/* Prepare to fetch the current signal stack state */
 	pta/l	_C_LABEL(__sigaltstack14), tr0
 #ifndef _LP64
-	addi	r15, -12, r15		/* sizeof(struct sigaltstack) */
+	addi	r15, -16, r15		/* ALIGN(sizeof(struct sigaltstack)) */
 #else
 	addi	r15, -24, r15		/* sizeof(struct sigaltstack) */
 #endif
@@ -150,7 +150,7 @@ ENTRY_NOPROFILE(__setjmp14)
 	blink	tr0, r18
 #ifndef _LP64
 	ld.l	r15, 8, r0		/* Fetch oss->ss_flags */
-	addi	r15, 12, r15		/* Clear stack */
+	addi	r15, 16, r15		/* Clear stack */
 #else
 	ld.l	r15, 16, r0		/* Fetch oss->ss_flags */
 	addi	r15, 24, r15		/* Clear stack */
@@ -162,20 +162,24 @@ ENTRY_NOPROFILE(__setjmp14)
 	st.l	r28, _JB_SIGONSTACK, r0	/* Save it in sc_onstack */
 	st.l	r28, _JB_SIGMASK13, r63	/* Zero unused fields */
 	st.l	r28, _JB_SIGPAD, r63
-	ld.l	r28, _JB_R18, r18	/* Restore return address */
-	ld.l	r28, _JB_R28, r28	/* Restore r28 */
+	ld.q	r28, _JB_R28, r28	/* Restore r28 */
 	ptabs/l	r18, tr0
 	movi	0, r2
 	blink	tr0, r63
 
 
 ENTRY_NOPROFILE(__longjmp14)
-	LINK_FRAME(0)
 	pta/l	_C_LABEL(__sigreturn14), tr0
-	cmpeq	r3, r63, r3		/* Ensure a non-zero return value */
+	movi	1, r1
+	cmveq	r3, r1, r3		/* Ensure a non-zero return value */
 	st.q	r2, _JB_R2, r3		/* Modify jmp_buf's copy of r2 */
 	blink	tr0, r18
-	UNLINK_FRAME(0)
+
+	/*
+	 * The call to __sigreturn14 will only return here on error.
+	 * This usually happens if the kernel determines that the jmp_buf
+	 * is invalid in some way.
+	 */
 
 Lbotch:	pta/l	_C_LABEL(longjmperror), tr0
 	blink	tr0, r18

@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.3 2002/07/11 14:23:05 scw Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.4 2002/09/06 15:33:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -59,6 +59,7 @@ ENTRY_NOPROFILE(_setjmp)
 	st.q	r2, _JB_R14, r14
 	st.q	r2, _JB_R15, r15
 	st.q	r2, _JB_R18, r18
+	st.q	r2, _JB_PC, r18
 	LDUC32(0xBADBABE5, r0)
 	st.q	r2, _JB_R24, r0		/* sigcontext magic number */
 	st.q	r2, _JB_R26, r26
@@ -87,12 +88,11 @@ ENTRY_NOPROFILE(_setjmp)
 	st.q	r2, _JB_R57, r57
 	st.q	r2, _JB_R58, r58
 	st.q	r2, _JB_R59, r59
-	movi	1, r0
-	st.q	r2, _JB_TR0, r0		/* Ensure caller-saved copies of */
-	st.q	r2, _JB_TR1, r0		/* branch-target registers have valid */
-	st.q	r2, _JB_TR2, r0		/* (albeit, pointing to nothing) */
-	st.q	r2, _JB_TR3, r0		/* SHmedia addresses. */
-	st.q	r2, _JB_TR4, r0
+	st.q	r2, _JB_TR0, r18	/* Ensure caller-saved copies of */
+	st.q	r2, _JB_TR1, r18	/* branch-target registers have valid */
+	st.q	r2, _JB_TR2, r18	/* SHmedia addresses in the caller's */
+	st.q	r2, _JB_TR3, r18	/* address space. */
+	st.q	r2, _JB_TR4, r18
 	gettr	tr5, r0
 	st.q	r2, _JB_TR5, r0
 	gettr	tr6, r0
@@ -137,7 +137,8 @@ ENTRY_NOPROFILE(_longjmp)
 	ld.q	r2, _JB_R24, r0		/* Check if jmp_buf was saved by a */
 	LDUC32(0xBADBABE5, r1)		/* call to _setjmp, above */
 	bne/u	r0, r1, tr0		/* Punt if not */
-	cmpeq	r3, r63, r3		/* Ensure a non-zero return value */
+	movi	1, r1
+	cmveq	r3, r1, r3		/* Ensure a non-zero return value */
 
 	/* Restore callee-saved register */
 	ld.q	r2, _JB_R10, r10
