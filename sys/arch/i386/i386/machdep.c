@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.511 2003/02/13 21:34:03 ross Exp $	*/
+/*	$NetBSD: machdep.c,v 1.512 2003/02/14 01:11:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.511 2003/02/13 21:34:03 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.512 2003/02/14 01:11:21 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2482,9 +2482,12 @@ haltsys:
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cnpollc(1);	/* for proper keyboard command handling */
-		if (cngetc() == 0)	// no console attached
-			for (;;)
-				continue;
+		if (cngetc() == 0) {
+			/* no console attached, so just hlt */
+			for(;;) {
+				__asm __volatile("hlt");
+			}
+		}
 		cnpollc(0);
 	}
 
