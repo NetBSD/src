@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.4 2002/09/27 20:35:28 thorpej Exp $	*/
+/*	$NetBSD: femi.c,v 1.5 2002/10/01 19:24:48 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,9 +65,8 @@ struct femi_softc {
 	bus_addr_t sc_top;
 };
 
-const struct cfattach femi_ca = {
-	sizeof(struct femi_softc), femimatch, femiattach
-};
+CFATTACH_DECL(femi, sizeof(struct femi_softc),
+    femimatch, femiattach, NULL, NULL)
 extern struct cfdriver femi_cd;
 
 
