@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.7 1998/03/24 23:25:31 sommerfe Exp $	*/
+/*	$NetBSD: xlint.c,v 1.8 1998/10/08 08:20:37 itohy Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.7 1998/03/24 23:25:31 sommerfe Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.8 1998/10/08 08:20:37 itohy Exp $");
 #endif
 
 #include <sys/param.h>
@@ -144,8 +144,7 @@ appstrg(lstp, s)
 
 	olst = *lstp;
 	for (i = 0; olst[i] != NULL; i++) ;
-	lst = xmalloc((i + 2) * sizeof (char *));
-	(void)memcpy(lst, olst, i * sizeof (char *));
+	lst = xrealloc(olst, (i + 2) * sizeof (char *));
 	lst[i] = s;
 	lst[i + 1] = NULL;
 	*lstp = lst;
@@ -170,13 +169,11 @@ applst(destp, src)
 	odest = *destp;
 	for (i = 0; odest[i] != NULL; i++) ;
 	for (k = 0; src[k] != NULL; k++) ;
-	dest = xmalloc((i + k + 1) * sizeof (char *));
-	(void)memcpy(dest, odest, i * sizeof (char *));
+	dest = xrealloc(odest, (i + k + 1) * sizeof (char *));
 	for (k = 0; src[k] != NULL; k++)
 		dest[i + k] = xstrdup(src[k]);
 	dest[i + k] = NULL;
 	*destp = dest;
-	free(odest);
 }
 
 static void
@@ -454,7 +451,7 @@ main(argc, argv)
 			dflag = 1;
 			appcstrg(&cppflags, "-nostdinc");
 			appcstrg(&cppflags, "-idirafter");
-			appstrg(&cppflags, optarg);
+			appcstrg(&cppflags, optarg);
 			break;
 			
 		case 'D':
