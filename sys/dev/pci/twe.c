@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.11 2001/02/25 17:46:42 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.12 2001/03/04 17:50:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -461,12 +461,17 @@ twe_intr(void *arg)
 	 * state change has occured.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
-		rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
-		    2, twe_aen_handler, NULL);
-		if (rv != 0) {
-			printf("%s: unable to retrieve AEN (%d)\n",
-			    sc->sc_dv.dv_xname, rv);
-			TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+		if ((sc->sc_flags & TWEF_AEN) == 0) {
+			rv = twe_param_get(sc, TWE_PARAM_AEN,
+			    TWE_PARAM_AEN_UnitCode, 2, twe_aen_handler,
+			    NULL);
+			if (rv != 0) {
+				printf("%s: unable to retrieve AEN (%d)\n",
+				    sc->sc_dv.dv_xname, rv);
+				TWE_OUTL(sc, TWE_REG_CTL,
+				    TWE_CTL_CLEAR_ATTN_INTR);
+			} else
+				sc->sc_flags |= TWEF_AEN;
 		}
 		caught = 1;
 	}
@@ -519,6 +524,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 
 	if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY) {
 		TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+		sc->sc_flags &= ~TWEF_AEN;
 		return;
 	}
 
