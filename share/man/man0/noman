@@ -1,0 +1,5 @@
+#	$NetBSD: noman,v 1.1 2001/06/24 02:34:49 hubertf Exp $
+# troff files that are no manpages - ready for fgrep -v
+USD.doc/csh
+libcurses/PSD.doc
+/intro

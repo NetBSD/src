@@ -1,0 +1,24 @@
+#!/bin/sh
+#	$NetBSD: mkman,v 1.1 2001/06/24 02:34:49 hubertf Exp $
+
+#
+# Find all manpage sources
+# Todo: filter out known non-manpages like src/bin/csh/USD.doc/csh.*
+#
+
+echo Preparing data ...
+
+find ../../.. -name '*.[1-9]' -print	\
+| xargs file				\
+| grep troff				\
+| sed 's/:[ 	]*.*$//'		\
+| fgrep -v -f noman			\
+>/tmp/mkman.$$
+
+for i in 1 2 3 4 5 6 7 8 9
+do
+	echo Creating man$i
+	grep "${i}\$"	</tmp/mkman.$$ >man${i}
+done
+
+rm /tmp/mkman.$$
