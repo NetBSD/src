@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.7 1999/07/31 17:20:22 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.8 1999/07/31 21:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,8 +89,16 @@ ASENTRY_NOPROFILE(begin)
 	movl	#_ASM_LABEL(__trap),a0@	| make it direct to __trap
 	addql	#6,a0			| move to next vector addr
 	dbf	d0,1b			| go til done
+#ifdef ITECONSOLE
 	movl	#NMIRESET,a0		| NMI keyboard reset addr
 	movl	#nmi,a0@		| catch in reset routine
+#else
+	/*
+	 * Built without ITE console support; leave the ROM's NMI
+	 * vector in place, so the system will still reset if a
+	 * keyboard NMI is issued.
+	 */
+#endif
 
 /*
  * Determine our SPU type and look for internal HP-IB
@@ -317,11 +325,13 @@ ASENTRY_NOPROFILE(__trap)
 Lstop:
 	stop	#0x2700			| stop cold
 
+#ifdef ITECONSOLE
 ASENTRY_NOPROFILE(nmi)
 	movw	#18,BOOTTYPE		| mark as system switch
 	jsr	_C_LABEL(kbdnmi)	| clear the interrupt, and
 					|   reset the system
 	stop	#0			| SCREEEECH!
+#endif
 
 ENTRY_NOPROFILE(call_req_reboot)
 	jmp	0x1A4			| call ROM reboot function
