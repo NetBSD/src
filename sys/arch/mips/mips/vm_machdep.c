@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85.2.9 2002/12/11 06:11:15 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.85.2.10 2003/01/03 21:34:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.9 2002/12/11 06:11:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.10 2003/01/03 21:34:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,18 +219,14 @@ cpu_exit(l, proc)
 	struct lwp *l;
 	int proc;
 {
-	void switch_exit(struct lwp *);
-	void switch_lwp_exit (struct lwp *);
+	void switch_exit(struct lwp *, void (*)(struct lwp *));
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = (struct lwp *)0;
 
 	uvmexp.swtch++;
 	(void)splhigh();
-	if (proc)
-		switch_exit(l);
-	else
-		switch_lwp_exit(l);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
 }
 
