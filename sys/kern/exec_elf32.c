@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.74 2002/09/27 15:37:42 provos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.75 2002/10/04 03:17:37 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.74 2002/09/27 15:37:42 provos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.75 2002/10/04 03:17:37 junyoung Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -611,7 +611,6 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			FREE((char *)ap, M_TEMP);
 			goto bad;
 		}
-		pos += phsize;
 		ap->arg_phaddr = phdr;
 
 		ap->arg_phentsize = eh->e_phentsize;
