@@ -1,7 +1,7 @@
-/*	$NetBSD: tm.h,v 1.1 1999/10/07 17:27:36 msaitoh Exp $	*/
+/*	$NetBSD: tm.h,v 1.2 1999/11/26 07:36:48 msaitoh Exp $	*/
 
 #ifdef DEFAULT_ELF
-#include "sparc/netbsdelf.h"
+#include "sh/netbsdelf.h"
 #else
-#include "sparc/netbsdcoff.h"
+#include "sh/netbsdcoff.h"
 #endif
