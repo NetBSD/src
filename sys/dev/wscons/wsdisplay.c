@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.62 2002/03/17 19:41:05 atatat Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.63 2002/04/07 09:25:47 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.62 2002/03/17 19:41:05 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.63 2002/04/07 09:25:47 hannken Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -965,7 +965,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    return (0);
 #undef d
 
-	case WSDISPLAYIO_USEFONT:
+	case WSDISPLAYIO_SFONT:
 #define d ((struct wsdisplay_usefontdata *)data)
 		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
