@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.60 2003/05/03 18:11:30 wiz Exp $	*/
+/*	$NetBSD: wt.c,v 1.61 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.60 2003/05/03 18:11:30 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.61 2003/05/09 23:51:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,6 +311,12 @@ ok:
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
 		printf("%s: max DMA size %lu is less than required %d\n",
 		    sc->sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
+		return;
+	}
+
+	if (isa_drq_alloc(sc->sc_ic, sc->chan) != 0) {
+		printf("%s: can't reserve drq %d\n",
+		    sc->sc_dev.dv_xname, sc->chan);
 		return;
 	}
 

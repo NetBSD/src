@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.51 2003/02/01 06:23:37 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.52 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.51 2003/02/01 06:23:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.52 2003/05/09 23:51:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +252,28 @@ _isa_dmacascade(ids, chan)
 	return (0);
 }
 
+int
+_isa_drq_alloc(ids, chan)
+	struct isa_dma_state *ids;
+	int chan;
+{
+	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0)
+		return EBUSY;
+	ISA_DMA_DRQ_ALLOC(ids, chan);
+	return 0;
+}
+
+int
+_isa_drq_free(ids, chan)
+	struct isa_dma_state *ids;
+	int chan;
+{
+	if (ISA_DMA_DRQ_ISFREE(ids, chan))
+		return EINVAL;
+	ISA_DMA_DRQ_FREE(ids, chan);
+	return 0;
+}
+
 bus_size_t
 _isa_dmamaxsize(ids, chan)
 	struct isa_dma_state *ids;
@@ -283,19 +305,8 @@ _isa_dmamap_create(ids, chan, size, flags)
 	if (size > ids->ids_maxsize[chan])
 		return (EINVAL);
 
-	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0) {
-		printf("%s: drq %d is not free\n", ids->ids_dev->dv_xname,
-		    chan);
-		return (EAGAIN);
-	}
-
-	ISA_DMA_DRQ_ALLOC(ids, chan);
-
 	error = bus_dmamap_create(ids->ids_dmat, size, 1, size,
 	    ids->ids_maxsize[chan], flags, &ids->ids_dmamaps[chan]);
-
-	if (error)
-		ISA_DMA_DRQ_FREE(ids, chan);
 
 	return (error);
 }
@@ -310,14 +321,6 @@ _isa_dmamap_destroy(ids, chan)
 		printf("%s: bogus drq %d\n", ids->ids_dev->dv_xname, chan);
 		goto lose;
 	}
-
-	if (ISA_DMA_DRQ_ISFREE(ids, chan)) {
-		printf("%s: drq %d is already free\n",
-		    ids->ids_dev->dv_xname, chan);
-		goto lose;
-	}
-
-	ISA_DMA_DRQ_FREE(ids, chan);
 
 	bus_dmamap_destroy(ids->ids_dmat, ids->ids_dmamaps[chan]);
 	return;
@@ -356,6 +359,12 @@ _isa_dmastart(ids, chan, addr, nbytes, p, flags, busdmaflags)
 	    "flags 0x%x, dmaflags 0x%x\n",
 	    chan, addr, nbytes, p, flags, busdmaflags);
 #endif
+
+	if (ISA_DMA_DRQ_ISFREE(ids, chan)) {
+		printf("%s: dma start on free channel %d\n",
+		    ids->ids_dev->dv_xname, chan);
+		goto lose;
+	}
 
 	if (chan & 4) {
 		if (nbytes > (1 << 17) || nbytes & 1 || (u_long)addr & 1) {

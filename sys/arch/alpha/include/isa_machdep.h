@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.7 2000/06/04 19:14:19 cgd Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.8 2003/05/09 23:51:25 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -133,6 +133,10 @@ struct alpha_isa_chipset {
 	_isa_dmamem_unmap(&(ic)->ic_dmastate, (c), (k), (s))
 #define	isa_dmamem_mmap(ic, c, a, s, o, p, f)				\
 	_isa_dmamem_mmap(&(ic)->ic_dmastate, (c), (a), (s), (o), (p), (f))
+#define isa_drq_alloc(ic, c)						\
+	_isa_drq_alloc(&(ic)->ic_dmastate, c)
+#define isa_drq_free(ic, c)						\
+	_isa_drq_free(&(ic)->ic_dmastate, c)
 #define	isa_drq_isfree(ic, c)						\
 	_isa_drq_isfree(&(ic)->ic_dmastate, (c))
 #define	isa_malloc(ic, c, s, p, f)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.39 2002/01/07 21:47:10 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.40 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -267,5 +267,11 @@ char	*isa_intr_typename __P((int type));
  * flag is passed to bus_dmamap_create() to indicate that fact.
  */
 #define	ISABUS_DMA_32BIT	BUS_DMA_BUS1
+
+/*
+ * This flag indicates that the DMA channel should not yet be reserved,
+ * even if BUS_DMA_ALLOCNOW is specified.
+ */
+#define ISABUS_DMA_DEFERCHAN	BUS_DMA_BUS2
 
 #endif /* _DEV_ISA_ISAVAR_H_ */
