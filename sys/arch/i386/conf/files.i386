@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.196 2001/09/15 01:32:11 thorpej Exp $
+#	$NetBSD: files.i386,v 1.197 2001/09/19 01:26:18 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -75,6 +75,7 @@ file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
 file	arch/i386/i386/mtrr_i686.c	mtrr
+file	arch/i386/i386/mtrr_k6.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
