@@ -49,16 +49,25 @@ breaking the lines to have maximum of 80 characters.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl b
+Count
+.Ar width
+in bytes rather than column positions.
+.It Fl s
+Fold line after the last blank character within the first
+.Ar width
+column positions (or bytes).  
 .It Fl w
 Specifies a line width to use instead of the default 80 characters.
+.El
+.Sh SEE ALSO
+.Xr expand 1
+.Sh BUGS
+If underlining is present it may be messed up by folding.
+.Pp
 .Ar Width
 should be a multiple of 8 if tabs are present, or the tabs should
 be expanded using
 .Xr expand 1
 before using
 .Nm fold .
-.El
-.Sh SEE ALSO
-.Xr expand 1
-.Sh BUGS
-If underlining is present it may be messed up by folding.
