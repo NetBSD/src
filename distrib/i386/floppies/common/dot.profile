@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 2002/02/03 16:22:22 lukem Exp $
+#	$NetBSD: dot.profile,v 1.2 2002/06/24 17:36:27 lukem Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,6 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=pc3
-export TERM
 HOME=/
 export HOME
 BLOCKSIZE=1k
@@ -45,6 +44,11 @@ EDITOR=ed
 export EDITOR
 BOOTMODEL=@BOOTMODEL@
 export BOOTMODEL
+
+if [ "${BOOTMODEL}" = "big" ]; then
+	TERM=wsvt25
+fi
+export TERM
 
 umask 022
 
