@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.8 1994/11/29 22:35:20 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.9 1994/12/14 22:17:18 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -227,7 +227,7 @@ struct ie_softc {
 	struct intrhand sc_ih;	/* interrupt info */
 
 	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
-	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
+	caddr_t sc_maddr;	/* KVA of base of chip's RAM (16bit addr sp.)*/
 	u_int   sc_msize;	/* how much RAM we have/use */
 	caddr_t sc_reg;		/* KVA of card's register */
 
@@ -333,7 +333,6 @@ struct cfdriver iecd = {
 			    u_char *t = (u_char *)&(to), *f = (u_char *)&fval; \
 			    t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*t[3] = f[0];*/ \
 			}
-#define MEM sc->sc_maddr
 
 /*
  * zero/copy functions: OBIO can use the normal functions, but VME
@@ -729,9 +728,10 @@ ierint(sc)
 		} else {
 			if ((status & IE_FD_RNR) != 0 &&
 			    (scb->ie_status & IE_RU_READY) == 0) {
-				sc->rframes[0]->ie_fd_next = MK_16(MEM,
+					sc->rframes[0]->ie_fd_next = MK_16(sc->sc_maddr,
 				    sc->rbuffs[0]);
-				scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
+				scb->ie_recv_list = MK_16(sc->sc_maddr, 
+					sc->rframes[0]);
 				command_and_wait(sc, IE_RU_START, 0, 0);
 			}
 			break;
@@ -811,7 +811,7 @@ iernr(sc)
 	command_and_wait(sc, IE_RU_DISABLE, 0, 0);	/* just in case */
 	setup_bufs(sc);
 
-	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
+	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
 	command_and_wait(sc, IE_RU_START, 0, 0);	/* was ENABLE */
 
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1341,14 +1341,14 @@ iestart(ifp)
 		    IE_XMIT_LAST | SWAP(len);
 		sc->xmit_buffs[sc->xmit_count]->ie_xmit_next = SWAP(0xffff);
 		ST_24(sc->xmit_buffs[sc->xmit_count]->ie_xmit_buf,
-		    MK_24(MEM, sc->xmit_cbuffs[sc->xmit_count]));
+		    MK_24(sc->sc_iobase, sc->xmit_cbuffs[sc->xmit_count]));
 
 		sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_cmd = IE_CMD_XMIT;
 		sc->xmit_cmds[sc->xmit_count]->ie_xmit_status = SWAP(0);
 		sc->xmit_cmds[sc->xmit_count]->ie_xmit_desc =
-		    MK_16(MEM, sc->xmit_buffs[sc->xmit_count]);
+		    MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xmit_count]);
 
-		*bptr = MK_16(MEM, sc->xmit_cmds[sc->xmit_count]);
+		*bptr = MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xmit_count]);
 		bptr = &sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_link;
 	} while (++sc->xmit_count < NTXBUF);
 
@@ -1533,7 +1533,7 @@ run_tdr(sc, cmd)
 	cmd->com.ie_cmd_cmd = IE_CMD_TDR | IE_CMD_LAST;
 	cmd->com.ie_cmd_link = SWAP(0xffff);
 
-	sc->scb->ie_command_list = MK_16(MEM, cmd);
+	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	cmd->ie_tdr_time = SWAP(0);
 
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1569,7 +1569,7 @@ start_receiver(sc)
 {
 	int     s = splimp();
 
-	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
+	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
 	command_and_wait(sc, IE_RU_START, 0, 0);
 
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1647,7 +1647,7 @@ setup_bufs(sc)
 	 */
 	for (n = 0; n < sc->nframes; n++) {
 		sc->rframes[n]->ie_fd_next =
-		    MK_16(MEM, sc->rframes[(n + 1) % sc->nframes]);
+		    MK_16(sc->sc_maddr, sc->rframes[(n + 1) % sc->nframes]);
 	}
 	sc->rframes[sc->nframes - 1]->ie_fd_last |= IE_FD_LAST;
 
@@ -1669,7 +1669,7 @@ setup_bufs(sc)
 	 */
 	for (n = 0; n < sc->nrxbuf; n++) {
 		sc->rbuffs[n]->ie_rbd_next =
-		    MK_16(MEM, sc->rbuffs[(n + 1) % sc->nrxbuf]);
+		    MK_16(sc->sc_maddr, sc->rbuffs[(n + 1) % sc->nrxbuf]);
 	}
 	sc->rbuffs[sc->nrxbuf - 1]->ie_rbd_length |= IE_RBD_LAST;
 
@@ -1685,7 +1685,7 @@ setup_bufs(sc)
 	for (n = 0; n < sc->nrxbuf; n++) {
 		sc->cbuffs[n] = (char *) ptr;	/* XXX why char vs uchar? */
 		sc->rbuffs[n]->ie_rbd_length = SWAP(IE_RBUF_SIZE);
-		ST_24(sc->rbuffs[n]->ie_rbd_buffer, MK_24(MEM, ptr));
+		ST_24(sc->rbuffs[n]->ie_rbd_buffer, MK_24(sc->sc_iobase, ptr));
 		ptr = Align(ptr + IE_RBUF_SIZE);
 	}
 
@@ -1700,8 +1700,8 @@ setup_bufs(sc)
 	sc->rbhead = 0;
 	sc->rbtail = sc->nrxbuf - 1;
 
-	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
-	sc->rframes[0]->ie_fd_buf_desc = MK_16(MEM, sc->rbuffs[0]);
+	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
+	sc->rframes[0]->ie_fd_buf_desc = MK_16(sc->sc_maddr, sc->rbuffs[0]);
 
 #ifdef IEDEBUG
 	printf("IE_DEBUG: reserved %d bytes\n", ptr - sc->buf_area);
@@ -1729,7 +1729,7 @@ mc_setup(sc, ptr)
 	cmd->ie_mcast_bytes =
 	    SWAP(sc->mcast_count * ETHER_ADDR_LEN);	/* grrr... */
 
-	sc->scb->ie_command_list = MK_16(MEM, cmd);
+	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 		printf("%s: multicast address setup command failed\n",
@@ -1767,7 +1767,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_CONFIG | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		scb->ie_command_list = MK_16(MEM, cmd);
+		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
@@ -1789,7 +1789,7 @@ ieinit(sc)
 		(sc->memcopy)(sc->sc_arpcom.ac_enaddr,
 		    (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
-		scb->ie_command_list = MK_16(MEM, cmd);
+		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 			printf("%s: individual address setup command failed\n",
