@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.3 2002/02/17 23:58:35 bjh21 Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.4 2003/02/08 17:45:49 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -91,7 +91,9 @@
 #define IRQ_MSDRX	0x18
 #define IRQ_MSDTX	0x19
 #define IRQ_ATOD	0x1A
+#define IRQ_NEVENT1	0x1A
 #define IRQ_CLOCK	0x1B
+#define IRQ_NEVENT2	0x1B
 #define IRQ_PANIC	0x1C
 /*#define IRQ_RESERVED2	0x1D*/
 /*#define IRQ_RESERVED3	0x1E*/
