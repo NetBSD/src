@@ -39,7 +39,7 @@ options		MSDOSFS		# MS-DOS file system
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 #options		NULLFS		# loopback file system
-#options		PORTAL		# ?
+#options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
 #options		UMAPFS		# NULLFS + uid and gid remapping
 #options		UNION		# union file system

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.21 1996/05/20 00:50:37 thorpej Exp $
+#	$NetBSD: GENERICOTHER,v 1.22 1996/05/20 18:17:34 mrg Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -69,7 +69,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PORTAL		# ?
+options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system

@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.61 1996/03/25 05:45:08 perry Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.62 1996/05/20 18:17:06 mrg Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -62,7 +62,7 @@ options		MSDOSFS		# MS-DOS file system
 options		FIFO		# FIFOs; RECOMMENDED
 #options	KERNFS		# /kern
 #options	NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options	PORTAL		# portal filesystem (still experimental)
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 #options	UNION		# union file system

@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.65 1996/03/25 05:45:41 perry Exp $
+#	$NetBSD: PAIN,v 1.66 1996/05/20 18:17:41 mrg Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -63,7 +63,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 #options	NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options	PORTAL		# portal filesystem (still experimental)
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
