@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.13 1997/09/17 16:25:29 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.13.2.1 1998/05/08 06:56:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -139,16 +139,16 @@ bootp(sock)
 	dhcp_ok = 0;
 #endif
 
-	if(sendrecv(d,
+	if (sendrecv(d,
 		    bootpsend, bp, sizeof(*bp),
 		    bootprecv, &rbuf.rbootp, sizeof(rbuf.rbootp))
 	   == -1) {
-	    printf("bootp: no reply\n");
-	    return;
+		printf("bootp: no reply\n");
+		return;
 	}
 
 #ifdef SUPPORT_DHCP
-	if(dhcp_ok) {
+	if (dhcp_ok) {
 		u_int32_t leasetime;
 		bp->bp_vend[6] = DHCPREQUEST;
 		bp->bp_vend[7] = TAG_REQ_ADDR;
@@ -165,7 +165,7 @@ bootp(sock)
 
 		expected_dhcpmsgtype = DHCPACK;
 
-		if(sendrecv(d,
+		if (sendrecv(d,
 			    bootpsend, bp, sizeof(*bp),
 			    bootprecv, &rbuf.rbootp, sizeof(rbuf.rbootp))
 		   == -1) {
@@ -177,7 +177,8 @@ bootp(sock)
 
 	myip = d->myip = rbuf.rbootp.bp_yiaddr;
 	servip = rbuf.rbootp.bp_siaddr;
-	if(rootip.s_addr == INADDR_ANY) rootip = servip;
+	if (rootip.s_addr == INADDR_ANY)
+		rootip = servip;
 	bcopy(rbuf.rbootp.bp_file, bootfile, sizeof(bootfile));
 	bootfile[sizeof(bootfile) - 1] = '\0';
 
@@ -258,10 +259,10 @@ bootpsend(d, pkt, len)
 
 static ssize_t
 bootprecv(d, pkt, len, tleft)
-register struct iodesc *d;
-register void *pkt;
-register size_t len;
-time_t tleft;
+	register struct iodesc *d;
+	register void *pkt;
+	register size_t len;
+	time_t tleft;
 {
 	register ssize_t n;
 	register struct bootp *bp;
@@ -292,6 +293,11 @@ time_t tleft;
 		goto bad;
 	}
 
+	/* protect against bogus addresses sent by DHCP servers */
+	if (bp->bp_yiaddr.s_addr == INADDR_ANY ||
+	    bp->bp_yiaddr.s_addr == INADDR_BROADCAST)
+		goto bad;
+
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("bootprecv: got one!\n");
@@ -299,8 +305,8 @@ time_t tleft;
 
 	/* Suck out vendor info */
 	if (bcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0) {
-		if(vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend)) != 0)
-		    goto bad;
+		if (vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend)) != 0)
+			goto bad;
 	}
 #ifdef BOOTP_VEND_CMU
 	else if (bcmp(vm_cmu, bp->bp_vend, sizeof(vm_cmu)) == 0)
@@ -309,7 +315,7 @@ time_t tleft;
 	else
 		printf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
 
-	return(n);
+	return (n);
 bad:
 	errno = 0;
 	return (-1);
@@ -359,8 +365,8 @@ vend_rfc1048(cp, len)
 		}
 #ifdef SUPPORT_DHCP
 		if (tag == TAG_DHCP_MSGTYPE) {
-			if(*cp != expected_dhcpmsgtype)
-			    return(-1);
+			if (*cp != expected_dhcpmsgtype)
+				return (-1);
 			dhcp_ok = 1;
 		}
 		if (tag == TAG_SERVERID) {
@@ -370,7 +376,7 @@ vend_rfc1048(cp, len)
 #endif
 		cp += size;
 	}
-	return(0);
+	return (0);
 }
 
 #ifdef BOOTP_VEND_CMU
