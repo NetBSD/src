@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.4 1997/10/03 23:08:08 gwr Exp $	*/
+/*	$NetBSD: kbd.h,v 1.5 1997/10/05 20:37:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
 #define	KBD_CMD_CLICK	10		/* turn keyclick on */
 #define	KBD_CMD_NOCLICK	11		/* turn keyclick off */
 #define	KBD_CMD_SETLED	14		/* set LED state (type 4 kbd) */
-#define	KBD_CMD_GETLAYOUT	15		/* get DIP switch (type 4 kbd) */
+#define	KBD_CMD_GETLAYOUT 15		/* get DIP switch (type 4 kbd) */
 
 #define	LED_NUM_LOCK	0x1
 #define	LED_COMPOSE	0x2
