@@ -1,4 +1,4 @@
-/* $NetBSD: latches.c,v 1.1 2001/04/22 00:26:36 bjh21 Exp $ */
+/* $NetBSD: latches.c,v 1.2 2001/04/22 15:00:13 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.1 2001/04/22 00:26:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.2 2001/04/22 15:00:13 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -97,3 +97,21 @@ latches_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LATCH_B, sc->sc_latchb);
 	printf("\n");
 }
+
+void
+latcha_update(u_int8_t mask, u_int8_t value)
+{
+	struct latches_softc *sc = (void *)the_latches;
+
+	sc->sc_latcha = (sc->sc_latcha & ~mask) | value;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LATCH_A, sc->sc_latcha);
+}	
+
+void
+latchb_update(u_int8_t mask, u_int8_t value)
+{
+	struct latches_softc *sc = (void *)the_latches;
+
+	sc->sc_latchb = (sc->sc_latchb & ~mask) | value;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LATCH_B, sc->sc_latcha);
+}	
