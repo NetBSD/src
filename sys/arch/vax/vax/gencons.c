@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.23 2000/05/08 17:53:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -272,6 +272,7 @@ gencnprobe(cndev)
 {
 	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
 	    (vax_boardtype == VAX_BTYP_630) ||
+	    (vax_boardtype == VAX_BTYP_660) ||
 	    (vax_boardtype == VAX_BTYP_670) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
