@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.3 1998/07/21 00:10:11 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.4 1998/07/21 00:18:35 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -56,12 +56,6 @@
 
 #ifndef __IF_CSVAR_H__
 #define __IF_CSVAR_H__
-
-/* Individual Address (Ethernet Address) */
-typedef struct
-{
-   ushort word[3];
-} ia, *pia;
 
 /*
  * Ethernet software status per interface.
