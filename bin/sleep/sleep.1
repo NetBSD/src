@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sleep.1	6.6 (Berkeley) 7/27/91
-.\"	$Id: sleep.1,v 1.5 1993/12/31 19:30:00 jtc Exp $
+.\"	$Id: sleep.1,v 1.6 1994/01/11 02:17:49 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt SLEEP 1
@@ -61,7 +61,7 @@ The
 utility exits with one of the following values:
 .Bl -tag -width flag
 .It Li \&0
-On successful completetion, or if the signal
+On successful completion, or if the signal
 .Dv SIGALRM
 was received.
 .It Li \&>\&0
@@ -103,7 +103,7 @@ another program start processing the files created by the first
 program as soon as it is finished (when zzz.rawdata is created).
 The script checks every five minutes for the file zzz.rawdata,
 when the file is found, then another portion processing
-is done curteously by sleeping for 70 seconds in between each
+is done courteously by sleeping for 70 seconds in between each
 awk job.
 .Sh SEE ALSO
 .Xr setitimer 2 ,
