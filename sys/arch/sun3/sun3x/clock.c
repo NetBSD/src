@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1997/01/23 04:13:39 jeremy Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1997/01/23 22:30:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,8 +44,7 @@
  */
 
 /*
- * Machine-dependent clock routines for the Intersil 7170:
- * Original by Adam Glass;  partially rewritten by Gordon Ross.
+ * Machine-dependent clock routines for the Mostek48t02
  */
 
 #include <sys/param.h>
@@ -58,10 +57,10 @@
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 
-#include "intersil7170.h"
-#include "interreg.h"
-#include "machdep.h"
+#include <sun3/sun3/interreg.h>
+#include "mostek48t02.h"
 
 #define	CLOCK_PRI	5
 
@@ -69,15 +68,7 @@ void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
 
 /* Note: this is used by locore.s:__isr_clock */
-static volatile char *clock_va;
-
-#define intersil_clock ((volatile struct intersil7170 *) clock_va)
-
-#define intersil_command(run, interrupt) \
-	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-	 INTERSIL_CMD_NORMAL_MODE)
-
-#define intersil_clear() (void)intersil_clock->clk_intr_reg
+static volatile void *clock_va;
 
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
@@ -150,7 +141,7 @@ set_clk_mode(on, off, enable)
 	if ((s & PSL_IPL) < PSL_IPL7)
 		panic("set_clk_mode: ipl");
 
-	if (!intersil_clock)
+	if (!clock_va)
 		panic("set_clk_mode: map");
 
 	/*
@@ -174,9 +165,8 @@ set_clk_mode(on, off, enable)
 	 * to clear any pending signals there.
 	 */
 	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
+
+	/* XXX - hit the clock? */
 
 	/*
 	 * Now we set all the desired bits
@@ -186,9 +176,7 @@ set_clk_mode(on, off, enable)
 	 */
 	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
 
-	if (enable)
-		intersil_clock->clk_cmd_reg =
-			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	/* XXX - hit the clock? */
 
 	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 }
@@ -196,7 +184,8 @@ set_clk_mode(on, off, enable)
 /* Called very early by internal_configure. */
 void clock_init()
 {
-	clock_va = obio_find_mapping(OBIO_CLOCK2, sizeof(struct intersil7170));
+	/* XXX - Yes, use the EEPROM address.  Same H/W device. */
+	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
 
 	if (!clock_va)
 		mon_panic("clock_init: clock_va\n");
@@ -205,9 +194,6 @@ void clock_init()
 
 	/* Turn off clock interrupts until cpu_initclocks() */
 	/* isr_init() already set the interrupt reg to zero. */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
 }
 
 /*
@@ -220,7 +206,7 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!intersil_clock)
+	if (!clock_va)
 		panic("cpu_initclocks");
 	s = splhigh();
 
@@ -228,11 +214,12 @@ cpu_initclocks(void)
 	isr_add_custom(5, (void*)_isr_clock);
 
 	/* Set the clock to interrupt 100 time per second. */
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	/* XXX - Hard wired? */
 
 	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+
+	/* XXX enable the clock? */
+
 	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 	splx(s);
 }
@@ -249,23 +236,21 @@ setstatclockrate(newhz)
 }
 
 /*
- * This is is called by the "custom" interrupt handler
- * after it has reset the pending bit in the clock.
+ * This is is called by the "custom" interrupt handler.
  */
 void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	register volatile struct intersil7170 *clk = intersil_clock;
+	/* volatile struct clockreg *clk = clock_va; */
 
-	/* Read the clock interrupt register. */
-	(void) clk->clk_intr_reg;
+#if 1	/* XXX - Needed? */
 	/* Pulse the clock intr. enable low. */
 	*interrupt_reg &= ~IREG_CLOCK_ENAB_5;
 	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
-	/* Read the clock intr. reg AGAIN! */
-	(void) clk->clk_intr_reg;
+#endif
 
+	/* XXX - Need to do anything? */
 	hardclock(&cf);
 }
 
@@ -377,92 +362,170 @@ void resettodr()
 	clk_set_secs(time.tv_sec);
 }
 
+
 /*
- * Machine dependent base year:
- * Note: must be < 1970
+ * XXX - Todo: take one of the implementations of
+ * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
+ * and put that in libkern (or somewhere).
+ * Also put this stuct in some header...
  */
-#define	CLOCK_BASE_YEAR	1968
+struct date_time {
+    u_char dt_year;	/* since POSIX_BASE_YEAR (1970) */
+    u_char dt_mon;
+    u_char dt_day;
+    u_char dt_hour;
+    u_char dt_min;
+    u_char dt_sec;
+	u_char dt_csec;	/* hundredths of a second */
+	u_char dt_wday;	/* Day of week (needed?) */
+};
+void gmt_to_dt __P((long gmt, struct date_time *dt));
+long dt_to_gmt __P((struct date_time *dt));
+/* Traditional UNIX base year */
+#define	POSIX_BASE_YEAR	1970
+/*
+ * XXX - End of stuff that should move to a header.
+ */
 
 
 /*
- * Routine to copy state into and out of the clock.
- * The clock registers have to be read or written
- * in sequential order (or so it appears). -gwr
+ * Routines to copy state into and out of the clock.
+ * The clock CSR has to be set for read or write.
  */
-static void clk_get_dt(struct date_time *dt)
+
+static void
+clk_get_dt(struct date_time *dt)
 {
+	volatile struct clockreg *cl = clock_va;
 	int s;
-	register volatile char *src, *dst;
-
-	src = (char *) &intersil_clock->counters;
 
 	s = splhigh();
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	/* enable read (stop time) */
+	cl->cl_csr |= CLK_READ;
 
-	dst = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (dst < (char*)dt);
+	/* Copy the info */
+	dt->dt_sec  = cl->cl_sec;
+	dt->dt_min  = cl->cl_min;
+	dt->dt_hour = cl->cl_hour;
+	dt->dt_wday = cl->cl_wday;
+	dt->dt_day  = cl->cl_mday;
+	dt->dt_mon  = cl->cl_month;
+	dt->dt_year = cl->cl_year;
 
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	/* Done reading (time wears on) */
+	cl->cl_csr &= ~CLK_READ;
 	splx(s);
 }
 
-static void clk_set_dt(struct date_time *dt)
+static void
+clk_set_dt(struct date_time *dt)
 {
+	volatile struct clockreg *cl = clock_va;
 	int s;
-	register volatile char *src, *dst;
-
-	dst = (char *) &intersil_clock->counters;
 
 	s = splhigh();
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	/* enable write */
+	cl->cl_csr |= CLK_WRITE;
 
-	src = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (src < (char *)dt);
+	/* Copy the info */
+	cl->cl_sec = dt->dt_sec;
+	cl->cl_min = dt->dt_min;
+	cl->cl_hour = dt->dt_hour;
+	cl->cl_wday = dt->dt_wday;
+	cl->cl_mday = dt->dt_day;
+	cl->cl_month = dt->dt_mon;
+	cl->cl_year = dt->dt_year;
 
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	/* load them up */
+	cl->cl_csr &= ~CLK_WRITE;
 	splx(s);
+}
+
+
+/*
+ * Now routines to get and set clock as POSIX time.
+ * Our clock keeps "years since 1/1/1968", so we must
+ * convert to/from "years since 1/1/1970" before the
+ * common time conversion functions are used.
+ */
+#define	CLOCK_YEAR_ADJUST (POSIX_BASE_YEAR - 1968)
+static long
+clk_get_secs()
+{
+	struct date_time dt;
+	long gmt;
+
+	clk_get_dt(&dt);
+	dt.dt_year -= CLOCK_YEAR_ADJUST;
+	gmt = dt_to_gmt(&dt);
+	return (gmt);
+}
+static void
+clk_set_secs(secs)
+	long secs;
+{
+	struct date_time dt;
+	long gmt;
+
+	gmt = secs;
+	gmt_to_dt(gmt, &dt);
+	dt.dt_year += CLOCK_YEAR_ADJUST;
+	clk_set_dt(&dt);
 }
 
 
 
-/*
+/*****************************************************************
+ *
  * Generic routines to convert to or from a POSIX date
  * (seconds since 1/1/1970) and  yr/mo/day/hr/min/sec
  *
  * These are organized this way mostly to so the code
  * can easily be tested in an independent user program.
  * (These are derived from the hp300 code.)
+ *
+ * XXX - Should move these to libkern or somewhere...
  */
-
-/* Traditional UNIX base year */
-#define	POSIX_BASE_YEAR	1970
+static inline int leapyear __P((int year));
 #define FEBRUARY	2
-
-#define	leapyear(year)  ((((year)%4==0) && ((year)%100!=0)) || ((year)%400==0))
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])
 
-static int month_days[12] = {
+/*
+ * Note:  This array may be modified by gmt_to_dt(),
+ * but these functions DO NOT need to be reentrant.
+ * If we ever DO need reentrance, we should just make
+ * gmt_to_dt() copy this to a local before use. -gwr
+ */
+static char month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-void gmt_to_dt(long *tp, struct date_time *dt)
+/* Use an inline to make the logic more obvious. */
+static inline int
+leapyear(year)
+	int year;
 {
-	register int i;
-	register long days, secs;
+	int rv = 0;
 
-	days = *tp / SECDAY;
-	secs = *tp % SECDAY;
+	if ((year % 4) == 0) {
+		rv = 1;
+		if ((year % 100) == 0) {
+			rv = 0;
+			if ((year % 400) == 0)
+				rv = 1;
+		}
+	}
+	return rv;
+}
+
+void gmt_to_dt(long gmt, struct date_time *dt)
+{
+	long secs;
+	int i, days;
+
+	days = gmt / SECDAY;
+	secs = gmt % SECDAY;
 
 	/* Hours, minutes, seconds are easy */
 	dt->dt_hour = secs / 3600;
@@ -472,112 +535,70 @@ void gmt_to_dt(long *tp, struct date_time *dt)
 	dt->dt_sec  = secs;
 
 	/* Day of week (Note: 1/1/1970 was a Thursday) */
-	dt->dt_dow = (days + 4) % 7;
+	dt->dt_wday = (days + 4) % 7;
 
-	/* Number of years in days */
+	/* Subtract out whole years... */
 	i = POSIX_BASE_YEAR;
 	while (days >= days_in_year(i)) {
 		days -= days_in_year(i);
 		i++;
 	}
-	dt->dt_year = i - CLOCK_BASE_YEAR;
+	dt->dt_year = i - POSIX_BASE_YEAR;
 
-	/* Number of months in days left */
+	/* Subtract out whole months... */
+	/* XXX - Note temporary change to month_days */
 	if (leapyear(i))
 		days_in_month(FEBRUARY) = 29;
 	for (i = 1; days >= days_in_month(i); i++)
 		days -= days_in_month(i);
+	/* XXX - Undo temporary change to month_days */
 	days_in_month(FEBRUARY) = 28;
-	dt->dt_month = i;
+	dt->dt_mon = i;
 
 	/* Days are what is left over (+1) from all that. */
 	dt->dt_day = days + 1;
 }
 
-void dt_to_gmt(struct date_time *dt, long *tp)
+long dt_to_gmt(struct date_time *dt)
 {
-	register int i;
-	register long tmp;
-	int year;
+	long gmt;
+	int i, year;
 
 	/*
 	 * Hours are different for some reason. Makes no sense really.
 	 */
 
-	tmp = 0;
+	gmt = 0;
 
 	if (dt->dt_hour >= 24) goto out;
 	if (dt->dt_day  >  31) goto out;
-	if (dt->dt_month > 12) goto out;
+	if (dt->dt_mon   > 12) goto out;
 
-	year = dt->dt_year + CLOCK_BASE_YEAR;
+	year = dt->dt_year + POSIX_BASE_YEAR;
 
 	/*
 	 * Compute days since start of time
 	 * First from years, then from months.
 	 */
 	for (i = POSIX_BASE_YEAR; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && dt->dt_month > FEBRUARY)
-		tmp++;
+		gmt += days_in_year(i);
+	if (leapyear(year) && dt->dt_mon > FEBRUARY)
+		gmt++;
 
 	/* Months */
-	for (i = 1; i < dt->dt_month; i++)
-	  	tmp += days_in_month(i);
-	tmp += (dt->dt_day - 1);
+	for (i = 1; i < dt->dt_mon; i++)
+	  	gmt += days_in_month(i);
+	gmt += (dt->dt_day - 1);
 
 	/* Now do hours */
-	tmp = tmp * 24 + dt->dt_hour;
+	gmt = gmt * 24 + dt->dt_hour;
 
 	/* Now do minutes */
-	tmp = tmp * 60 + dt->dt_min;
+	gmt = gmt * 60 + dt->dt_min;
 
 	/* Now do seconds */
-	tmp = tmp * 60 + dt->dt_sec;
+	gmt = gmt * 60 + dt->dt_sec;
 
  out:
-	*tp = tmp;
+	return gmt;
 }
-
-/*
- * Now routines to get and set clock as POSIX time.
- */
-
-static long clk_get_secs()
-{
-	struct date_time dt;
-	long gmt;
-
-	clk_get_dt(&dt);
-	dt_to_gmt(&dt, &gmt);
-	return (gmt);
-}
-
-static void clk_set_secs(long secs)
-{
-	struct date_time dt;
-	long gmt;
-
-	gmt = secs;
-	gmt_to_dt(&gmt, &dt);
-	clk_set_dt(&dt);
-}
-
-
-#ifdef	DEBUG
-/* Call this from DDB or whatever... */
-int clkdebug()
-{
-	struct date_time dt;
-	long gmt;
-	long *lp;
-
-	bzero((char*)&dt, sizeof(dt));
-	clk_get_dt(&dt);
-	lp = (long*)&dt;
-	printf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
-
-	dt_to_gmt(&dt, &gmt);
-	printf("clkdebug: gmt=%x\n", gmt);
-}
-#endif
