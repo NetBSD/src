@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2000/12/22 10:12:15 mrg Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2001/07/14 07:57:17 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,16 +179,21 @@ EXTERN	char *disk_names[]
 
 /*
  * Machine-specific command to write a new label to a disk.
- * For example, i386  uses "/sbin/disklabel -w -r", just like i386
+ * For example, i386 uses "/sbin/disklabel -w -r", just like i386
  * miniroot scripts, though this may leave a bogus incore label.
- * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
- * to get incore  to ondisk inode translation for the Sun proms.
- * If not defined, we assume the port does not support disklabels and  
+ * Sun ports should probably use DISKLABEL_CMD "/sbin/disklabel -w"
+ * to get incore to ondisk inode translation for the Sun proms.
+ * If not defined, we assume the port does not support disklabels and
  * hand-edited disklabel will NOT be written by MI code.
  *
  * The mac68k port doesn't support real disklabels so we don't define the
- * command string.  The Mac Disk Partition Map gets written in the
- * md_pre_disklabel() routine.
+ * command string. The Apple Disk Partition Map gets written in the
+ * md_pre_disklabel() routine, which also forces the incore copy to be
+ * updated. If native disklabels are supported or if disklabel() is
+ * fixed to work for writing labels, this command should be defined
+ * to a value that will force the writing of the label. In that case,
+ * the code in md_pre_disklabel() which forces the incore update can be
+ * removed, though its presence won't hurt.
  *
  * #define DISKLABEL_CMD
  */
