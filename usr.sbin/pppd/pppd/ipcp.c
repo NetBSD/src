@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.13 1997/09/26 19:52:46 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.14 1998/05/02 14:19:14 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ipcp.c,v 1.32 1997/07/14 03:52:56 paulus Exp ";
+static char rcsid[] = "Id: ipcp.c,v 1.33 1998/03/25 03:08:47 paulus Exp ";
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.13 1997/09/26 19:52:46 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.14 1998/05/02 14:19:14 christos Exp $");
 #endif
 #endif
 
@@ -1164,6 +1164,8 @@ ipcp_up(f)
 	ipcp_close(f->unit, "Could not determine local IP address");
 	return;
     }
+    script_setenv("IPLOCAL", ip_ntoa(go->ouraddr));
+    script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr));
 
     /*
      * Check that the peer is allowed to use the IP address it wants.

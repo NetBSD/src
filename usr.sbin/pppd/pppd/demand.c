@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.6 1997/09/26 19:52:40 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.7 1998/05/02 14:19:14 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: demand.c,v 1.6 1997/04/30 05:51:56 paulus Exp ";
+static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp ";
 #else
-__RCSID("$NetBSD: demand.c,v 1.6 1997/09/26 19:52:40 christos Exp $");
+__RCSID("$NetBSD: demand.c,v 1.7 1998/05/02 14:19:14 christos Exp $");
 #endif
 #endif
 
@@ -42,8 +42,8 @@ __RCSID("$NetBSD: demand.c,v 1.6 1997/09/26 19:52:40 christos Exp $");
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <net/if.h>
 #ifdef PPP_FILTER
+#include <net/if.h>
 #include <net/bpf.h>
 #include <pcap.h>
 #endif

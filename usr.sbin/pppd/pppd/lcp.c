@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.16 1997/09/26 20:24:12 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.17 1998/05/02 14:19:15 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
+static char rcsid[] = "Id: lcp.c,v 1.31 1997/11/27 06:08:44 paulus Exp ";
 #else
-__RCSID("$NetBSD: lcp.c,v 1.16 1997/09/26 20:24:12 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.17 1998/05/02 14:19:15 christos Exp $");
 #endif
 #endif
 
@@ -273,7 +273,7 @@ lcp_lowerup(unit)
      */
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, PPP_MRU, 0x00000000,
+    ppp_recv_config(unit, PPP_MRU, 0xffffffff,
 		    wo->neg_pcompression, wo->neg_accompression);
     peer_mru[unit] = PPP_MRU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
@@ -1491,13 +1491,8 @@ lcp_up(f)
     ppp_send_config(f->unit, MIN(ao->mru, (ho->neg_mru? ho->mru: PPP_MRU)),
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
-    /*
-     * If the asyncmap hasn't been negotiated, we really should
-     * set the receive asyncmap to ffffffff, but we set it to 0
-     * for backwards contemptibility.
-     */
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU),
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
@@ -1526,7 +1521,7 @@ lcp_down(f)
 
     ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(f->unit, PPP_MRU,
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
     peer_mru[f->unit] = PPP_MRU;
 }
@@ -1814,7 +1809,7 @@ LcpSendEchoRequest (f)
      * Detect the failure of the peer at this point.
      */
     if (lcp_echo_fails != 0) {
-        if (lcp_echos_pending++ >= lcp_echo_fails) {
+        if (lcp_echos_pending >= lcp_echo_fails) {
             LcpLinkFailure(f);
 	    lcp_echos_pending = 0;
 	}
@@ -1828,6 +1823,7 @@ LcpSendEchoRequest (f)
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
         fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+	++lcp_echos_pending;
     }
 }
 
