@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.110 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.111 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -309,3 +309,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		is now done directly into the file. [dogcow 20030304]
 	sysctl: Make hw.physmem and hw.usermem saturate if they are used
 		on a system with >=4G RAM.  [thorpej 20030306]
+	postfix: update to 2.0.6 [perry 20030308]
