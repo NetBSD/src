@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.4 2000/06/03 15:18:54 he Exp $
+#	$NetBSD: Makefile,v 1.10.2.5 2000/07/09 21:49:46 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -48,7 +48,7 @@ all:	netbsd.ram.gz
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	/usr/mdec/binstall -v -b boot.700000 ffs ${MOUNT_POINT}
+	/usr/mdec/binstall -v -b boot.3E0000 ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
