@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 2001/03/04 16:21:05 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 2001/03/04 16:24:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1568,10 +1568,9 @@ GLOBAL(intrnames)
 	.asciz	"lev5"		| lev5: kb, ms, zs
 	.asciz	"clock"		| lev6: clock
 	.asciz	"nmi"		| parity error
-	.asciz	"statclock"
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
