@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.65 2002/08/20 00:35:46 itojun Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.66 2002/08/21 03:59:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.65 2002/08/20 00:35:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.66 2002/08/21 03:59:31 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1499,7 +1499,8 @@ SIP_DECL(intr)(void *arg)
 			break;
 
 #if NRND > 0
-		rnd_add_uint32(&sc->rnd_source, isr);
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, isr);
 #endif
 
 		handled = 1;
