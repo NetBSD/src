@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.28 2002/01/03 05:37:39 thorpej Exp $ */
+/* $NetBSD: decl.c,v 1.29 2002/01/18 21:01:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.28 2002/01/03 05:37:39 thorpej Exp $");
+__RCSID("$NetBSD: decl.c,v 1.29 2002/01/18 21:01:39 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -45,9 +45,6 @@ __RCSID("$NetBSD: decl.c,v 1.28 2002/01/03 05:37:39 thorpej Exp $");
 #include "lint1.h"
 
 const	char *unnamed = "<unnamed>";
-
-/* contains various information and classification on types */
-ttab_t	ttab[NTSPEC];
 
 /* shared type structures for arithmtic types and void */
 static	type_t	*typetab;
@@ -87,81 +84,7 @@ static	void	glchksz(sym_t *);
 void
 initdecl(void)
 {
-	int	i;
-	static	struct {
-		tspec_t	it_tspec;
-		ttab_t	it_ttab;
-	} ittab[] = {
-		{ SIGNED,   { 0, 0,
-			      SIGNED, UNSIGN,
-			      0, 0, 0, 0, 0, "signed" } },
-		{ UNSIGN,   { 0, 0,
-			      SIGNED, UNSIGN,
-			      0, 0, 0, 0, 0, "unsigned" } },
-		{ CHAR,	    { CHAR_SIZE, CHAR_BIT,
-			      SCHAR, UCHAR,
-			      1, 0, 0, 1, 1, "char" } },
-		{ SCHAR,    { CHAR_SIZE, CHAR_BIT,
-			      SCHAR, UCHAR,
-			      1, 0, 0, 1, 1, "signed char" } },
-		{ UCHAR,    { CHAR_SIZE, CHAR_BIT,
-			      SCHAR, UCHAR,
-			      1, 1, 0, 1, 1, "unsigned char" } },
-		{ SHORT,    { SHORT_SIZE, 2 * CHAR_BIT,
-			      SHORT, USHORT,
-			      1, 0, 0, 1, 1, "short" } },
-		{ USHORT,   { SHORT_SIZE, 2 * CHAR_BIT,
-			      SHORT, USHORT,
-			      1, 1, 0, 1, 1, "unsigned short" } },
-		{ INT,      { INT_SIZE, 3 * CHAR_BIT,
-			      INT, UINT,
-			      1, 0, 0, 1, 1, "int" } },
-		{ UINT,     { INT_SIZE, 3 * CHAR_BIT,
-			      INT, UINT,
-			      1, 1, 0, 1, 1, "unsigned int" } },
-		{ LONG,     { LONG_SIZE, 4 * CHAR_BIT,
-			      LONG, ULONG,
-			      1, 0, 0, 1, 1, "long" } },
-		{ ULONG,    { LONG_SIZE, 4 * CHAR_BIT,
-			      LONG, ULONG,
-			      1, 1, 0, 1, 1, "unsigned long" } },
-		{ QUAD,     { QUAD_SIZE, 8 * CHAR_BIT,
-			      QUAD, UQUAD,
-			      1, 0, 0, 1, 1, "long long" } },
-		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
-			      QUAD, UQUAD,
-			      1, 1, 0, 1, 1, "unsigned long long" } },
-		{ FLOAT,    { sizeof (float) * CHAR_BIT, 4 * CHAR_BIT,
-			      FLOAT, FLOAT,
-			      0, 0, 1, 1, 1, "float" } },
-		{ DOUBLE,   { sizeof (double) * CHAR_BIT, 8 * CHAR_BIT,
-			      DOUBLE, DOUBLE,
-			      0, 0, 1, 1, 1, "double" } },
-		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT,
-			      LDOUBLE, LDOUBLE,
-			      0, 0, 1, 1, 1, "long double" } },
-		{ VOID,     { -1, -1,
-			      VOID, VOID,
-			      0, 0, 0, 0, 0, "void" } },
-		{ STRUCT,   { -1, -1,
-			      STRUCT, STRUCT,
-			      0, 0, 0, 0, 0, "struct" } },
-		{ UNION,    { -1, -1,
-			      UNION, UNION,
-			      0, 0, 0, 0, 0, "union" } },
-		{ ENUM,     { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
-			      ENUM, ENUM,
-			      1, 0, 0, 1, 1, "enum" } },
-		{ PTR,      { PTR_SIZE, 4 * CHAR_BIT,
-			      PTR, PTR,
-			      0, 1, 0, 0, 1, "pointer" } },
-		{ ARRAY,    { -1, -1,
-			      ARRAY, ARRAY,
-			      0, 0, 0, 0, 0, "array" } },
-		{ FUNC,     { -1, -1,
-			      FUNC, FUNC,
-			      0, 0, 0, 0, 0, "function" } },
-	};
+	int i;
 
 	/* declaration stack */
 	dcs = xcalloc(1, sizeof (dinfo_t));
@@ -169,12 +92,7 @@ initdecl(void)
 	dcs->d_ldlsym = &dcs->d_dlsyms;
 
 	/* type information and classification */
-	for (i = 0; i < sizeof (ittab) / sizeof (ittab[0]); i++)
-		STRUCT_ASSIGN(ttab[ittab[i].it_tspec], ittab[i].it_ttab);
-	if (!pflag) {
-		for (i = 0; i < NTSPEC; i++)
-			ttab[i].tt_psz = ttab[i].tt_sz;
-	}
+	inittyp();
 
 	/* shared type structures */
 	typetab = xcalloc(NTSPEC, sizeof (type_t));

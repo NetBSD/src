@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.7 2001/05/28 12:40:38 lukem Exp $ */
+/* $NetBSD: externs2.h,v 1.8 2002/01/18 21:01:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -39,7 +39,6 @@ extern	int	xflag;
 extern	int	uflag;
 extern	int	Cflag;
 extern	const	char *libname;
-extern	int	pflag;
 extern	int	sflag;
 extern	int	tflag;
 extern	int	Hflag;

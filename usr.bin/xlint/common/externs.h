@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.1 2002/01/18 20:39:23 thorpej Exp $	*/
+/*	$NetBSD: externs.h,v 1.2 2002/01/18 21:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,6 +30,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * main[12].c
+ */
+extern	int	pflag;
+
+/*
+ * inittyp.c
+ */
+extern	void	inittyp(void);
 
 /*
  * mem.c
