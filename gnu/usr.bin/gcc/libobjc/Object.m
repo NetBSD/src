@@ -25,9 +25,9 @@ Boston, MA 02111-1307, USA.  */
    executable file might be covered by the GNU General Public License. */
 
 #include <stdarg.h>
-#include "Object.h"
-#include "Protocol.h"
-#include "objc-api.h"
+#include "objc/Object.h"
+#include "objc/Protocol.h"
+#include "objc/objc-api.h"
 
 extern void (*_objc_error)(id object, const char *format, va_list);
 
