@@ -57,6 +57,8 @@
 
 #include <machine/bus.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/lsuvar.h>
 
 #include <dev/pci/twereg.h>
