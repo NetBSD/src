@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.16 2000/10/02 03:29:06 taca Exp $	*/
+/*	$NetBSD: wall.c,v 1.17 2001/01/05 04:00:34 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.16 2000/10/02 03:29:06 taca Exp $");
+__RCSID("$NetBSD: wall.c,v 1.17 2001/01/05 04:00:34 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: wall.c,v 1.16 2000/10/02 03:29:06 taca Exp $");
 
 void	makemsg __P((char *));
 int	main __P((int, char *[]));
-
-#define	IGNOREUSER	"sleeper"
 
 int nobanner;
 int mbufsize;
@@ -115,8 +113,7 @@ usage:
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
 	while (fread((char *)&utmp, sizeof(utmp), 1, fp) == 1) {
-		if (!utmp.ut_name[0] ||
-		    !strncmp(utmp.ut_name, IGNOREUSER, sizeof(utmp.ut_name)))
+		if (!utmp.ut_name[0])
 			continue;
 		strncpy(line, utmp.ut_line, sizeof(utmp.ut_line));
 		line[sizeof(utmp.ut_line)] = '\0';
