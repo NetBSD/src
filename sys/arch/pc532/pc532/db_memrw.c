@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 1997/03/20 12:00:42 matthias Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 1997/04/21 16:17:32 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -49,9 +49,9 @@
 
 #include <vm/vm.h>
 
-#include <machine/pte.h>
-#include <machine/db_machdep.h>
 #include <machine/cpufunc.h>
+#include <machine/db_machdep.h>
+#include <machine/pte.h>
 
 #include <ddb/db_access.h>
 
@@ -190,8 +190,10 @@ db_write_bytes(addr, size, data)
 	}
 }
 
+#ifdef DDB
 void
 Debugger()
 {
-	asm("bpt");
+	breakpoint();
 }
+#endif
