@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.9 1996/12/09 09:57:45 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.10 1997/07/10 06:26:44 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* not lint */
 
 /*
@@ -346,7 +350,7 @@ doit()
 		if (lflag) {
 			if (*cp >= '\1' && *cp <= '\5')
 				syslog(LOG_INFO, "%s requests %s %s",
-					from, cmdnames[*cp], cp+1);
+					from, cmdnames[(int)*cp], cp+1);
 			else
 				syslog(LOG_INFO, "bad request (%d) from %s",
 					*cp, from);
