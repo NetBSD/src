@@ -29,16 +29,14 @@
 
 #define USE_REL
 
-#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_vec
-#define TARGET_LITTLE_NAME              "elf32-littlearm"
-#define TARGET_BIG_SYM                  bfd_elf32_bigarm_vec
-#define TARGET_BIG_NAME                 "elf32-bigarm"
-
 #define elf_info_to_howto               0
 #define elf_info_to_howto_rel           elf32_arm_info_to_howto
 
 #define ARM_ELF_ABI_VERSION		0
 #define ARM_ELF_OS_ABI_VERSION		ELFOSABI_ARM
+
+#define ARM_ELF_ABI_VERSION_NBSD	0
+#define ARM_ELF_OS_ABI_VERSION_NBSD	ELFOSABI_NETBSD
 
 static reloc_howto_type * elf32_arm_reloc_type_lookup
   PARAMS ((bfd * abfd, bfd_reloc_code_real_type code));
@@ -674,4 +672,23 @@ elf32_arm_reloc_type_lookup (abfd, code)
    }
 }
 
+#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_vec
+#define TARGET_LITTLE_NAME              "elf32-littlearm"
+#define TARGET_BIG_SYM                  bfd_elf32_bigarm_vec
+#define TARGET_BIG_NAME                 "elf32-bigarm"
+
 #include "elf32-arm.h"
+
+#define INCLUDED_TARGET_FILE 1
+
+#undef TARGET_LITTLE_SYM
+#undef TARGET_LITTLE_NAME
+#undef TARGET_BIG_SYM
+#undef TARGET_BIG_NAME
+
+#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_nbsd_vec
+#define TARGET_LITTLE_NAME              "elf32-littlearm-nbsd"
+#define TARGET_BIG_SYM                  bfd_elf32_bigarm_nbsd_vec
+#define TARGET_BIG_NAME                 "elf32-bigarm-nbsd"
+
+#include "elf32-target.h"
