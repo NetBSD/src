@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.8 1998/12/02 19:29:57 thorpej Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.9 1999/05/02 20:52:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: Ovfork.S,v 1.8 1998/12/02 19:29:57 thorpej Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.9 1999/05/02 20:52:02 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,8 +87,12 @@ err:
 #else
 	jbsr	_C_LABEL(__errno)
 #endif	/* PIC */
+#ifdef	__SVR4_ABI__
+	movl	sp@+,a0@
+#else
 	movl	d0,a1
 	movl	sp@+,a1@
+#endif	/* __SVR4_ABI__ */
 	movl	sp@+,a0
 #else
 	.globl	_C_LABEL(errno)

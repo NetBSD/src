@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.6 1999/01/14 22:48:20 kleink Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7 1999/05/02 20:52:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.6 1999/01/14 22:48:20 kleink Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.7 1999/05/02 20:52:03 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,9 @@ ENTRY(ptrace)
 #else
 	jbsr	_C_LABEL(__errno)
 #endif	/* PIC */
+#ifndef	__SVR4_ABI__
 	movl	d0,a0
+#endif
 	clrl	a0@
 #else
 #ifdef	PIC
