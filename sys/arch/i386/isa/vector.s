@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.12 1993/10/31 18:39:01 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.13 1993/11/01 00:15:09 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -54,16 +54,16 @@
 #endif
 
 #define	MASK(irq_num, icu) \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
+	movb	_imask + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
 	orb	$IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
+	movb	%al,_imask + IRQ_BYTE(irq_num) ; \
 	outb	%al,$(icu+1) ;
 
 #define	UNMASK(irq_num, icu) \
 	cli ; \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; \
+	movb	_imask + IRQ_BYTE(irq_num),%al ; \
 	andb	$~IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
+	movb	%al,_imask + IRQ_BYTE(irq_num) ; \
 	outb	%al,$(icu+1) ; \
 	sti ;
 
