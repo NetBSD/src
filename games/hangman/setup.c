@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.4 1997/10/11 01:16:42 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.5 1997/10/11 08:01:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.4 1997/10/11 01:16:42 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.5 1997/10/11 08:01:06 lukem Exp $");
 #endif
 #endif				/* not lint */
 
+#include	<err.h>
 #include	"hangman.h"
 
 /*
@@ -71,9 +72,8 @@ setup()
 
 	srand(time(NULL) + getpid());
 	if ((Dict = fopen(_PATH_DICT, "r")) == NULL) {
-		perror(_PATH_DICT);
 		endwin();
-		exit(1);
+		err(1, "fopen %s", _PATH_DICT);
 	}
 	fstat(fileno(Dict), &sbuf);
 	Dict_size = sbuf.st_size;
