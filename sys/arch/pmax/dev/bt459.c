@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.20 2000/01/10 03:24:31 simonb Exp $	*/
+/*	$NetBSD: bt459.c,v 1.21 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.20 2000/01/10 03:24:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.21 2001/07/07 14:21:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ bt459GetColorMap(fi, bits, index, count)
 	cmap_bits = (u_char *)bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
-	bcopy (cmap, cmap_bits, count * 3);
+	memcpy(cmap_bits, cmap, count * 3);
 	return 0;
 }
 

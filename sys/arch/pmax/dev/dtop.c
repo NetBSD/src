@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.55 2001/05/02 10:32:18 scw Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.55 2001/05/02 10:32:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56 2001/07/07 14:21:00 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -331,8 +331,7 @@ dtopopen(dev, flag, mode, p)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-				      TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 		if (error != 0)
 			break;
@@ -511,7 +510,7 @@ dtopstart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -533,7 +532,7 @@ dtopstart(tp)
 		if (tp->t_outq.c_cc <= tp->t_lowat) {
 			if (tp->t_state & TS_ASLEEP) {
 				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
+				wakeup(&tp->t_outq);
 			}
 			selwakeup(&tp->t_wsel);
 		}
@@ -900,7 +899,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	if (msg_len == 1)
 		save[0] = msg->body[0];
 	else if (msg_len > 0)
-		bcopy(msg->body, save, msg_len);
+		memcpy(save, msg->body, msg_len);
 
 	/*
 	 * Cancel out any keys in both the last and current message as
@@ -975,7 +974,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	if (msg_len == 1)
 		dev->keyboard.last_codes[0] = save[0];
 	else if (msg_len > 0)
-		bcopy(save, dev->keyboard.last_codes, msg_len);
+		memcpy(dev->keyboard.last_codes, save, msg_len);
 	dev->keyboard.last_codes_count = msg_len;
 	if (dev->keyboard.k_ar_state == K_AR_ACTIVE)
 		callout_reset(&dev->keyboard.repeat_ch, hz / 2,

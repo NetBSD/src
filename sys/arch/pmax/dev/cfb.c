@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.38 2000/02/03 04:09:13 nisimura Exp $	*/
+/*	$NetBSD: cfb.c,v 1.39 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -177,7 +177,7 @@ cfbattach(parent, self, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-	caddr_t base = 	(caddr_t)(ta->ta_addr);
+	caddr_t base = (caddr_t)(ta->ta_addr);
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 	

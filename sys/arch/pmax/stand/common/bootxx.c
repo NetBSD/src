@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.23 1999/11/27 06:34:06 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.24 2001/07/07 14:21:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ int main __P((int, char **));
 entrypt loadfile __P((char *path, char *name));
 
 extern int clear_cache __P((char *addr, int len));
-extern int bcmp __P((const void *, const void *, size_t));	/* XXX */
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -182,7 +181,7 @@ loadfile(path, name)
 	/* read the exec header */
 	i = read(fd, (char *)&ehdr, sizeof(ehdr));
 	if ((i != sizeof(ehdr)) ||
-	    (bcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
+	    (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
 	    (ehdr.e_ident[EI_CLASS] != ELFCLASS32)) {
 		printf("%s: No ELF header\n", bootfname);
 		goto cerr;
