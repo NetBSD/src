@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.5 2002/08/02 22:52:50 manu Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.6 2002/08/25 19:03:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
   
 #include <compat/irix/irix_types.h>
@@ -73,6 +74,7 @@ int	irix_usema_ioctl	__P((void *));
 int	irix_usema_poll		__P((void *));
 int	irix_usema_inactive	__P((void *));
 
+void	irix_usema_exit_cleanup	__P((struct proc *, struct proc *));
 #ifdef DEBUG_IRIX
 void	irix_usema_debug	__P((void));
 #endif
@@ -88,7 +90,7 @@ struct irix_semaphore {
 	int is_uk3;	/* unknown, usually equal to 0 */
 	int is_uk4;	/* unknown, usually equal to 0 */
 	int is_shid;	/* unique ID for the shared arena ? */
-	int is_oid;	/* owned id? usually equal to -1 */
+	int is_oid;	/* owner id? usually equal to -1 */
 	int is_uk7;	/* unknown, usually equal to -1 */
 	int is_uk8;	/* unknown, usually equal to 0 */
 	int is_uk9;	/* unknown, usually equal to 0 */
@@ -103,7 +105,7 @@ struct irix_usema_idaddr {
 	int *iui_oidp;	/* pointer to is_oid field in struct irix_semaphore */
 };
 
-/* waitint processes list */
+/* waiting processes list */
 struct irix_waiting_proc_rec {
 	TAILQ_ENTRY(irix_waiting_proc_rec) iwpr_list;
 	struct proc *iwpr_p;
@@ -119,6 +121,7 @@ struct irix_usema_rec {
 	int iur_waiting_count;
 	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
 	TAILQ_HEAD(iur_released_p, irix_waiting_proc_rec) iur_released_p;
+	struct lock iur_lock; 		/* lock for both lists */
 };
 
 /* From IRIX's <sys/usioctl.h> */
