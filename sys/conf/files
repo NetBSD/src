@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.253 1998/11/04 00:28:05 fvdl Exp $
+#	$NetBSD: files,v 1.254 1998/11/11 22:46:32 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -449,6 +449,7 @@ file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_fthread.c
+file kern/kern_kthread.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lkm.c			lkm
 file kern/kern_lock.c
