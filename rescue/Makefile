@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/08/23 03:25:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/10/03 01:11:37 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,9 +29,18 @@ PARSELISTENV+=	LDD_CMD=ldd_aout
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"		# {
+
+realall install:
+	@echo "WARNING: src/rescue not built on ${MACHINE_ARCH} due to broken crunchgen"
+
+.else									# } {
+
 realall: ${CRUNCHBIN}
 
 install: ${CRUNCHBIN}
 	${PARSELIST} -v mode=install ${LISTS} | ${MAKE} -f - install
+
+.endif									# }
 
 .include <bsd.prog.mk>
