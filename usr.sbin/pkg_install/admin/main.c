@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.11 2000/02/22 01:24:26 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2000/03/19 17:24:28 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 2000/02/22 01:24:26 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2000/03/19 17:24:28 hubertf Exp $");
 #endif
 
 /*
@@ -53,6 +53,7 @@ void    usage(void);
 extern const char *__progname;	/* from crt0.o */
 
 int     filecnt;
+int     pkgcnt;
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -144,6 +145,8 @@ check1pkg(const char *pkgdir)
 	}
 	free_plist(&Plist);
 	fclose(f);
+
+	pkgcnt++;
 }
 
 static void 
@@ -155,8 +158,8 @@ rebuild(void)
 	plist_t *p;
 	char   *PkgName, dir[FILENAME_MAX], *dirp = NULL;
 	char   *PkgDBDir = NULL, file[FILENAME_MAX];
-	int     pkgcnt = 0;
 
+	pkgcnt = 0;
 	filecnt = 0;
 
 	if (unlink(_pkgdb_getPKGDB_FILE()) != 0 && errno != ENOENT)
@@ -275,8 +278,8 @@ checkall(void)
 {
 	DIR    *dp;
 	struct dirent *de;
-	int     pkgcnt = 0;
 
+	pkgcnt = 0;
 	filecnt = 0;
 
 	setbuf(stdout, NULL);
@@ -346,7 +349,6 @@ main(int argc, char *argv[])
 
 		if (*argv != NULL) {
 			/* args specified */
-			int     pkgcnt = 0;
 			int     rc;
 
 			filecnt = 0;
@@ -363,16 +365,27 @@ main(int argc, char *argv[])
 						errx(1, "No matching pkg for %s.", *argv);
 				} else {
 					rc = chdir(*argv);
-					if (rc == -1)
-						err(1, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), *argv);
+					if (rc == -1) {
+						/* found nothing - try 'pkg-[0-9]*' */
+						char try[FILENAME_MAX];
+					
+						snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
+						if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+								     checkpattern_fn, NULL) <= 0) {
 
-					check1pkg(*argv);
-					printf(".");
+							errx(1, "cannot find package %s", *argv);
+						} else {
+							/* nothing to do - all the work is/was
+							 * done in checkpattern_fn() */
+						}
+					} else {
+						check1pkg(*argv);
+						printf(".");
 
-					chdir("..");
+						chdir("..");
+					}
 				}
 
-				pkgcnt++;
 				argv++;
 			}
 
