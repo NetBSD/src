@@ -1,11 +1,11 @@
-/*	$NetBSD: ports.c,v 1.4 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: ports.c,v 1.5 2005/02/08 07:01:54 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ports.c,v 1.9 2002/01/28 06:50:47 darrenr Exp
+ * Id: ports.c,v 1.9.4.1 2004/12/09 19:41:22 darrenr Exp
  */
 
 #include <ctype.h>
