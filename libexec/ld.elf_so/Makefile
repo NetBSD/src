@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2001/12/28 01:32:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.42 2001/12/28 05:30:24 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -48,6 +48,10 @@ STRIPFLAG=
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 
+.endif
+
+.if ${SHLINKDIR} != "/usr/libexec"
+SYMLINKS+=	${SHLINKDIR}/${PROG} /usr/libexec/${PROG}
 .endif
 
 .include <bsd.prog.mk>
