@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.34 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.35 2003/05/31 03:05:45 kristerw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.34 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.35 2003/05/31 03:05:45 kristerw Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -311,7 +311,7 @@ cvintr(void *arg)
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
 		vgaw(ba, CRT_ADDRESS, CRT_ID_END_VER_RETR);
-		asm volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
+		__asm __volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
 
 #ifndef CV_NO_HARDWARE_CURSOR
@@ -330,13 +330,13 @@ cvintr(void *arg)
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
 		/* I don't trust the optimizer here... */
-		asm volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
+		__asm __volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
 		cv_setspritepos (gp, NULL);
 
 		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
-		asm volatile("nop");
+		__asm __volatile("nop");
 #endif  /* !CV_NO_HARDWARE_CURSOR */
 		return (1);
 	}
@@ -358,7 +358,7 @@ cv_has_4mb(volatile caddr_t fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)(fb + 0x02000000);
 	*testfbw = 0x87654321;
-	asm volatile("nop");
+	__asm __volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -366,15 +366,15 @@ cv_has_4mb(volatile caddr_t fb)
 	testfbw = (volatile unsigned long *)(fb + 0x00200000);
 	testfbr = (volatile unsigned long *)(fb + 0x02200000);
 	*testfbw = 0x87654321;
-	asm volatile("nop");
+	__asm __volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
-	asm volatile("nop");
+	__asm __volatile("nop");
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
-	asm volatile("nop");
+	__asm __volatile("nop");
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
@@ -1848,10 +1848,10 @@ cv_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
+	__asm __volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	asm volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 
@@ -1863,10 +1863,10 @@ cv_setup_hwc(struct grf_softc *gp)
 
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
+	__asm __volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
-	asm volatile ("moveb #0x45, %1@(0x3d4); \
+	__asm __volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
@@ -2105,7 +2105,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		asm volatile("nop");
+		__asm __volatile("nop");
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -2124,7 +2124,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		asm volatile("nop");
+		__asm __volatile("nop");
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.5 2002/04/25 09:20:31 aymeric Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.6 2003/05/31 03:05:45 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -77,14 +77,14 @@ struct grfcv3dtext_mode {
 		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x01 & 0xffff); \
-			asm volatile ("nop"); \
+			__asm __volatile ("nop"); \
 		} \
 		*((volatile caddr_t)(((caddr_t)cv3d_special_register_base) + \
 		    ( ByteAccessIO(reg) & 0xffff ))) = ((val) & 0xff); \
 		if (!cv3d_zorroIII) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x02 & 0xffff); \
-			asm volatile ("nop"); \
+			__asm __volatile ("nop"); \
 		} \
 	} while (0)
 
@@ -107,7 +107,7 @@ struct grfcv3dtext_mode {
 	do { \
 		*((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 		    0x08)) = ((flag * 0x40) & 0xffff); \
-		asm volatile ("nop"); \
+		__asm __volatile ("nop"); \
 } while (0)
 
 int grfcv3d_cnprobe(void);
@@ -567,7 +567,7 @@ GfxBusyWait (ba)
 
 	do {
 		test = vgar32(ba, MR_SUBSYSTEM_STATUS_CNTL);
-		asm volatile ("nop");
+		__asm __volatile ("nop");
 	} while (!(test & (1 << 13)));
 }
 
