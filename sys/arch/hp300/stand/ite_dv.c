@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,19 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: ite_dv.c 1.1 89/02/28
- *	from: @(#)ite_dv.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_dv.c,v 1.5 1994/02/19 17:55:16 hpeyerl Exp $
+ * from: Utah $Hdr: ite_dv.c 1.2 92/01/20$
+ *
+ *	@(#)ite_dv.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
-#include <hp300/dev/grfvar.h>
 #include <hp300/dev/grf_dvreg.h>
 
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
@@ -58,7 +57,7 @@ dvbox_init(ip)
 {
 	int i;
 	
-	dv_reset(REGADDR);
+	dv_reset(ip->regbase);
 	DELAY(4000);
 
 	/*
@@ -68,13 +67,13 @@ dvbox_init(ip)
 	 * Lastly, turn on the box.
 	 */
 	REGBASE->interrupt = 0x04;
-	REGBASE->drive	   = 0x10;		
-	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
-	REGBASE->opwen	   = 0x01;
-	REGBASE->fbwen	   = 0x0;
-	REGBASE->fold	   = 0x01;
-	REGBASE->vdrive	   = 0x0;
-	REGBASE->dispen	   = 0x01;
+	REGBASE->drive     = 0x10;		
+ 	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
+	REGBASE->opwen     = 0x01;
+	REGBASE->fbwen     = 0x0;
+	REGBASE->fold      = 0x01;
+	REGBASE->vdrive    = 0x0;
+	REGBASE->dispen    = 0x01;
 
 	/*
 	 * Video enable top overlay plane.
@@ -85,10 +84,10 @@ dvbox_init(ip)
 	/*
 	 * Make sure that overlay planes override frame buffer planes.
 	 */
-	REGBASE->ovly0p	 = 0x0;
-	REGBASE->ovly0s	 = 0x0;
-	REGBASE->ovly1p	 = 0x0;
-	REGBASE->ovly1s	 = 0x0;
+	REGBASE->ovly0p  = 0x0;
+	REGBASE->ovly0s  = 0x0;
+	REGBASE->ovly1p  = 0x0;
+	REGBASE->ovly1s  = 0x0;
 	REGBASE->fv_trig = 0x1;
 	DELAY(400);
 
@@ -108,16 +107,16 @@ dvbox_init(ip)
 	}
 	REGBASE->cmapbank = 0;
 	
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 
-	ite_devinfo(ip);
+	ite_fontinfo(ip);
 	ite_fontinit(ip);
 
 	/*
 	 * Clear the (visible) framebuffer.
 	 */
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 
 	/*
 	 * Stash the inverted cursor.
@@ -125,12 +124,12 @@ dvbox_init(ip)
 	dvbox_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
 			 ip->cblanky, ip->cblankx, ip->ftheight,
 			 ip->ftwidth, RR_COPYINVERTED);
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 }
 
 dvbox_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-	register int dy, dx;
+        register int dy, dx;
 	int c, mode;
 {
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -140,7 +139,7 @@ dvbox_putc(ip, c, dy, dx, mode)
 
 dvbox_cursor(ip, flag)
 	register struct ite_softc *ip;
-	register int flag;
+        register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -163,9 +162,9 @@ dvbox_clear(ip, sy, sx, h, w)
 }
 
 dvbox_scroll(ip, sy, sx, count, dir)
-	register struct ite_softc *ip;
-	register int sy, count;
-	int dir, sx;
+        register struct ite_softc *ip;
+        register int sy, count;
+        int dir, sx;
 {
 	register int dy = sy - count;
 	register int height = ip->rows - sy;
@@ -186,7 +185,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	if (h == 0 || w == 0)
 		return;
 	
-	db_waitbusy(REGADDR);
+	db_waitbusy(ip->regbase);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;
 	dp->source_x = sx;
@@ -200,7 +199,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 dv_reset(dbp)
 	register struct dvboxfb *dbp;
 {
-	dbp->reset = 0x80;
+  	dbp->reset = 0x80;
 	DELAY(400);
 
 	dbp->interrupt = 0x04;
