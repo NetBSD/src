@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.83 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.84 2005/03/29 02:41:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.83 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.84 2005/03/29 02:41:06 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -141,6 +141,7 @@ struct vfsops ext2fs_vfsops = {
 	vfs_stdextattrctl,
 	ext2fs_vnodeopv_descs,
 };
+VFS_ATTACH(ext2fs_vfsops);
 
 struct genfs_ops ext2fs_genfsops = {
 	genfs_size,

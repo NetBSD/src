@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.26 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.27 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.26 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.27 2005/03/29 02:41:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -319,8 +319,8 @@ struct vattr va_null;
 void
 vfsinit()
 {
-	extern struct vfsops * const vfs_list_initial[];
-	int i;
+	__link_set_decl(vfsops, struct vfsops);
+	struct vfsops * const *vfsp;
 
 	/*
 	 * Initialize the namei pathname buffer pool and cache.
@@ -356,10 +356,10 @@ vfsinit()
 	 * included in the kernel.
 	 */
 	vattr_null(&va_null);
-	for (i = 0; vfs_list_initial[i] != NULL; i++) {
-		if (vfs_attach(vfs_list_initial[i])) {
+	__link_set_foreach(vfsp, vfsops) {
+		if (vfs_attach(*vfsp)) {
 			printf("multiple `%s' file systems",
-			    vfs_list_initial[i]->vfs_name);
+			    (*vfsp)->vfs_name);
 			panic("vfsinit");
 		}
 	}
