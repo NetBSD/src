@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2002/03/08 20:48:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2002/03/23 02:22:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2002/03/08 20:48:29 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2002/03/23 02:22:57 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1458,7 +1458,7 @@ pmap_allocpagedir(pmap)
 	*pte = *pte & ~(PT_C | PT_B);
 
 	/* Wire in this page table */
-	pmap_map_in_l1(pmap, PROCESS_PAGE_TBLS_BASE, pmap->pm_pptpt, TRUE);
+	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
 
 	pt->pt_flags &= ~PTFLAG_CLEAN;	/* L1 is dirty now */
 	
@@ -1467,8 +1467,8 @@ pmap_allocpagedir(pmap)
 	 * into the page table used to map the
 	 * pmap's page tables
 	 */
-	bcopy((char *)(PROCESS_PAGE_TBLS_BASE
-	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2))
+	bcopy((char *)(PTE_BASE
+	    + (PTE_BASE >> (PGSHIFT - 2))
 	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
 	    (char *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
@@ -2932,8 +2932,8 @@ pmap_unwire(pmap, va)
  * entry is returned.
  *
  * The way this works is that that the kernel page tables are mapped
- * into the memory map at ALT_PAGE_TBLS_BASE to ALT_PAGE_TBLS_BASE+4MB.
- * This allows page tables to be located quickly.
+ * into the memory map at APTE_BASE to APTE_BASE+4MB.  This allows
+ * page tables to be located quickly.
  */
 pt_entry_t *
 pmap_pte(pmap, va)
@@ -2959,22 +2959,22 @@ pmap_pte(pmap, va)
 	}
 
 	PDEBUG(10, printf("pmap pagetable = P%08lx current = P%08x\n",
-	    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
-	    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)));
+	    pmap->pm_pptpt, (*((pt_entry_t *)(PTE_BASE
+	    + (PTE_BASE >> (PGSHIFT - 2)) +
+	    (PTE_BASE >> PDSHIFT))) & PG_FRAME)));
 
 	/*
 	 * If the pmap is the kernel pmap or the pmap is the active one
 	 * then we can just return a pointer to entry relative to
-	 * PROCESS_PAGE_TBLS_BASE.
+	 * PTE_BASE.
 	 * Otherwise we need to map the page tables to an alternative
 	 * address and reference them there.
 	 */
 	if (pmap == pmap_kernel() || pmap->pm_pptpt
-	    == (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-	    + ((PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) &
-	    ~3) + (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)) {
-		ptp = (pt_entry_t *)PROCESS_PAGE_TBLS_BASE;
+	    == (*((pt_entry_t *)(PTE_BASE
+	    + ((PTE_BASE >> (PGSHIFT - 2)) &
+	    ~3) + (PTE_BASE >> PDSHIFT))) & PG_FRAME)) {
+		ptp = (pt_entry_t *)PTE_BASE;
 	} else {
 		struct proc *p = curproc;
 
@@ -2997,21 +2997,21 @@ pmap_pte(pmap, va)
 		 * is not then we have a problem.
 		 */
 		if (p->p_vmspace->vm_map.pmap->pm_pptpt !=
-		    (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-		    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
-		    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) & PG_FRAME)) {
+		    (*((pt_entry_t *)(PTE_BASE
+		    + (PTE_BASE >> (PGSHIFT - 2)) +
+		    (PTE_BASE >> PDSHIFT))) & PG_FRAME)) {
 			printf("pmap pagetable = P%08lx current = P%08x ",
-			    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-			    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2)) +
-			    (PROCESS_PAGE_TBLS_BASE >> PDSHIFT))) &
+			    pmap->pm_pptpt, (*((pt_entry_t *)(PTE_BASE
+			    + (PTE_BASE >> (PGSHIFT - 2)) +
+			    (PTE_BASE >> PDSHIFT))) &
 			    PG_FRAME));
 			printf("pptpt=%lx\n", p->p_vmspace->vm_map.pmap->pm_pptpt);
 			panic("pmap_pte: current and pmap mismatch\n");
 		}
 #endif
 
-		ptp = (pt_entry_t *)ALT_PAGE_TBLS_BASE;
-		pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
+		ptp = (pt_entry_t *)APTE_BASE;
+		pmap_map_in_l1(p->p_vmspace->vm_map.pmap, APTE_BASE,
 		    pmap->pm_pptpt, FALSE);
 		cpu_tlb_flushD();
 		cpu_cpwait();
@@ -3138,12 +3138,12 @@ pmap_map_ptes(struct pmap *pmap)
 
     	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
-		return (pt_entry_t *)PROCESS_PAGE_TBLS_BASE ;
+		return (pt_entry_t *)PTE_BASE ;
 	}
 	
 	if (pmap_is_curpmap(pmap)) {
 		simple_lock(&pmap->pm_obj.vmobjlock);
-		return (pt_entry_t *)PROCESS_PAGE_TBLS_BASE;
+		return (pt_entry_t *)PTE_BASE;
 	}
 	
 	p = curproc;
@@ -3160,11 +3160,11 @@ pmap_map_ptes(struct pmap *pmap)
 		simple_lock(&pmap->pm_obj.vmobjlock);
 	}
     
-	pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
+	pmap_map_in_l1(p->p_vmspace->vm_map.pmap, APTE_BASE,
 			pmap->pm_pptpt, FALSE);
 	cpu_tlb_flushD();
 	cpu_cpwait();
-	return (pt_entry_t *)ALT_PAGE_TBLS_BASE;
+	return (pt_entry_t *)APTE_BASE;
 }
 
 /*

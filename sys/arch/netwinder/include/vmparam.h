@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2002/03/03 11:23:01 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 2002/03/23 02:22:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -53,7 +53,7 @@
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0xc000)
-#define	ALT_PAGE_TBLS_BASE	0xf0c00000
+#define	APTE_BASE		0xf0c00000
 #define	KERNEL_VM_BASE		0xf1000000
 /*
  * The Kernel VM Size varies depending on the machine depending on how
@@ -69,7 +69,6 @@
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
-#define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
  * Override the default pager_map size, there's not enough KVA.
