@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_fmod.c,v 1.1 1996/06/26 14:36:14 jtc Exp $")
+RCSID("$NetBSD: e_fmod.S,v 1.1 1996/07/08 03:27:25 thorpej Exp $")
 
 ENTRY(__ieee754_fmod)
 	fmoved	sp@(4),fp0
