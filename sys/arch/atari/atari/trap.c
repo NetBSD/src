@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1996/09/10 09:05:40 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1996/10/04 07:04:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,9 @@ void trap __P((int, u_int, u_int, struct frame));
 static void panictrap __P((int, u_int, u_int, struct frame *));
 static void trapcpfault __P((struct proc *, struct frame *));
 static void userret __P((struct proc *, struct frame *fp, u_quad_t, u_int,int));
+#ifdef M68040
 static int  writeback __P((struct frame *, int));
+#endif /* M68040 */
 
 char	*trap_type[] = {
 	"Bus error",
