@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.43 2001/09/24 13:22:38 wiz Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.44 2002/01/11 05:33:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.43 2001/09/24 13:22:38 wiz Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.44 2002/01/11 05:33:22 itojun Exp $");
 #endif
 
 
@@ -172,16 +172,17 @@ main(argc, argv)
 	if ((aflag && ifname) || (!aflag && ifname == 0))
 		usage();
 
-	if (aflag)
-		init_all();
-	else
-		init_one(ifname, INADDR_ANY);
-
 	if ((!fflag) && (!dflag)) {
 		if (daemon(0, 0))
 			rarperr(FATAL, "daemon");
 		pidfile(NULL);
 	}
+
+	if (aflag)
+		init_all();
+	else
+		init_one(ifname, INADDR_ANY);
+
 	rarp_loop();
 	/* NOTREACHED */
 	return (0);
