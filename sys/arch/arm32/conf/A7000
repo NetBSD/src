@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.16 1998/01/05 06:28:45 perry Exp $
+#	$NetBSD: A7000,v 1.17 1998/01/15 02:26:26 cgd Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -177,6 +177,7 @@ wdc0	at pioc? offset 0x01f0 irq 9
 wd*	at wdc? drive ?
 atapibus* at wdc?
 cd*	at atapibus? drive ?
+sd*	at atapibus? drive ?
 
 # Floppy disk controller
 fdc*    at pioc? offset 0x03f0 irq 12 dack 0x2000

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.33 1998/01/05 06:28:46 perry Exp $
+#	$NetBSD: GENERIC,v 1.34 1998/01/15 02:26:29 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -178,6 +178,7 @@ wdc0	at pioc? offset 0x01f0 irq 9
 wd*	at wdc? drive ?
 atapibus* at wdc?
 cd*	at atapibus? drive ?
+sd*	at atapibus? drive ?
 
 # Floppy disk controller
 fdc*    at pioc? offset 0x03f0 irq 12 dack 0x2000
