@@ -1,1 +1,1 @@
-#include "powerpc/xm-netbsd.h"
+#include "rs6000/xm-netbsd.h"
