@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.5 2004/04/21 17:07:47 dbj Exp $
+# $NetBSD: fixsb,v 1.6 2004/04/21 17:26:42 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -26,6 +26,13 @@ stop_cmd=":"
 fstab=/etc/fstab
 #verbose=1
 
+verbose()
+{
+  if [ -n "${verbose}" ]; then
+    echo "$@" 1>&2
+  fi
+}
+
 # This shell function extracts the `ffs superblock' of the file
 # provided as its argument and tests for the following condition:
 # ((fs_magic == FS_UFS1_MAGIC) || fs_magic == FS_UFS1_MAGIC_SWAPPED) &&
@@ -49,9 +56,7 @@ check_part()
   # The second dd extracts the exact field from the superblock that we with to
   # read.  The data is put through cat -v to avoid having binary data in shell strings.
 
-  if [ -n "${verbose}" ]; then
-    echo -n "Checking $1 ... " 1>&2
-  fi
+  verbose -n "Checking $1 ... "
 
   # First we extract the superblock magic number field:
   magic="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=1372 | cat -v) 2> /dev/null)"
@@ -64,10 +69,6 @@ check_part()
     maxbsize="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=4 skip=860 | cat -v) 2> /dev/null)"
     oldflags="$( (dd if="$1" bs=8192 skip=1 count=1 | dd bs=1 count=1 skip=211 | cat -v) 2> /dev/null)"
 
-    if [ -n "${debug}" ]; then
-      echo "$1: magic=${magic} bsize=${bsize} maxbsize=${maxbsize} oldflags=${oldflags}" 1>&2
-    fi
-
     # Compare the fs_bsize with fs_maxbsize to see if they are the same
     if [ "${bsize}" = "${maxbsize}" ]; then
 
@@ -77,17 +78,13 @@ check_part()
         # Since the shell variable is the cat -v output, the
         # high bit is indicated in the variable with the prefix M-
         M-*)
-        if [ -n "${verbose}" ]; then
-          echo "file system looks ok at fslevel 4." 1>&2
-        fi
+        verbose "file system looks ok at fslevel 4."
         return 4
         ;;
 
         # if the high bit of fs_old_flags is not set, then there is a problem
         *)
-        if [ -n "${verbose}" ]; then
-          echo "file system has botched superblock upgrade." 1>&2
-        fi
+        verbose "file system has botched superblock upgrade."
         return 0
         ;;
       esac
@@ -95,14 +92,10 @@ check_part()
     fi # [ "${bsize}" = "${maxbsize}" ]
 
   else # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
-    if [ -n "${verbose}" ]; then
-      echo "does not appear to be an ffs1 filesystem." 1>&2
-    fi
+    verbose "does not appear to be an ffs1 filesystem."
     return 1
   fi  # ! [ "${magic}" = "${fsmagicn}" -o "${magic}" = "${fsmagics}" ]
-  if [ -n "${verbose}" ]; then
-    echo "file system looks ok at fslevel 3." 1>&2
-  fi
+  verbose "file system looks ok at fslevel 3."
   return 3
 }
 
