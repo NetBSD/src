@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.13 1999/09/20 04:48:04 lukem Exp $	*/
+/*	$NetBSD: rexec.c,v 1.14 2001/11/05 14:59:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.13 1999/09/20 04:48:04 lukem Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.14 2001/11/05 14:59:21 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,7 +67,7 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 	char *name, *pass, *cmd;
 	int *fd2p;
 {
-	struct sockaddr_in sin, from;
+	struct sockaddr_in rsin, from;
 	socklen_t fromlen;
 	struct hostent *hp;
 	u_short port;
@@ -94,16 +94,16 @@ retry:
 		warn("Cannot create socket");
 		return (-1);
 	}
-	sin.sin_family = hp->h_addrtype;
-	sin.sin_len = sizeof(sin);
-	sin.sin_port = rport;
+	rsin.sin_family = hp->h_addrtype;
+	rsin.sin_len = sizeof(rsin);
+	rsin.sin_port = rport;
 	/* Avoid data corruption from bogus DNS results */
-	if (hp->h_length > sizeof(sin.sin_addr))
-		len = sizeof(sin.sin_addr);
+	if (hp->h_length > sizeof(rsin.sin_addr))
+		len = sizeof(rsin.sin_addr);
 	else
 		len = hp->h_length;
-	memcpy(&sin.sin_addr, hp->h_addr, len);
-	if (connect(s, (struct sockaddr *)(void *)&sin, sizeof(sin)) == -1) {
+	memcpy(&rsin.sin_addr, hp->h_addr, len);
+	if (connect(s, (struct sockaddr *)(void *)&rsin, sizeof(rsin)) == -1) {
 		if (errno == ECONNREFUSED && timo <= 16) {
 			(void)close(s);
 			sleep(timo);
