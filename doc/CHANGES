@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.162 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.163 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -128,8 +128,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[grant 20020929]
 	sendmail(8): Include DOMAIN(generic) in prototype configuration
 		to enable standard sendmail features. [grant 20020930]
-	mrouted(8): moved to gnusrc, as it is not under BSD license.
-		[itojun 20021001]
 	i386: merge the sommerfeld_i386mp_1 branch [fvdl 20021001]
 	ssh(1): upgrade OpenBSD-based Secure Shell, based on OpenSSH 3.5
 		around 20021001.  [itojun 20021001]
