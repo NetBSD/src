@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.10 1999/09/09 17:27:59 jsm Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.11 1999/09/10 00:18:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.10 1999/09/09 17:27:59 jsm Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.11 1999/09/10 00:18:21 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,10 +105,8 @@ main(ac, av)
 	if (CC_D.offsets == NULL || CH_D.offsets == NULL)
 		errx(1, "out of memory");
 	fseek(inf, 0L, SEEK_SET);
-	if ((outf = fopen(outfile, "w")) == NULL) {
-		perror(outfile);
-		exit(0);
-	}
+	if ((outf = fopen(outfile, "w")) == NULL)
+		err(1, "fopen %s", outfile);
 
 	/*
 	 * these fields will be overwritten after the offsets are calculated,
@@ -143,6 +141,9 @@ main(ac, av)
 	fwrite(CC_D.offsets, sizeof (off_t), CC_D.num_cards, outf);
 	fwrite(CH_D.offsets, sizeof (off_t), CH_D.num_cards, outf);
 
+	fflush(outf);
+	if (ferror(outf))
+		err(1, "fwrite %s", outfile);
 	fclose(outf);
 	printf("There were %d com. chest and %d chance cards\n",
 	    CC_D.num_cards, CH_D.num_cards);
