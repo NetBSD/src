@@ -62,8 +62,8 @@ then
 		exit
 	fi
 	case "$#" in
-	0) sendmail -t -oi $BUGADDR  < $TEMP ;;
-	*) sendmail -t -oi "$@" < $TEMP ;;
+	0) (echo "To: $BUGADDR"; cat $TEMP) | sendmail -t -oi ;;
+	*) (echo "To: $@"; cat $TEMP ) | sendmail -t -oi ;;
 	esac
 fi
 
