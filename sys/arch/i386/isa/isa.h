@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.2 1993/09/24 08:49:17 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.3 1993/09/30 20:17:56 mycroft Exp $
  */
 
 /*
@@ -46,14 +46,14 @@
 
 void sysbeep __P((int, int));
 unsigned kbd_8042cmd __P((int));
-struct isa_device;
-int isa_irq_pending __P((struct isa_device *dvp));
 #endif
 
 
 /*
  * Input / Output Port Assignments
  */
+
+#define	IOBASEUNK	0xffff
 
 #define	IO_ISABEGIN	0x000		/* 0x000 - Beginning of I/O Registers */
 
