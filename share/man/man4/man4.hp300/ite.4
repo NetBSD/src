@@ -1,4 +1,4 @@
-.\"	$NetBSD: ite.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: ite.4,v 1.6 2001/09/11 06:30:05 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     from: @(#)ite.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd September 10, 2001
 .Dt ITE 4 hp300
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Nd
 .Tn HP
 Internal Terminal Emulator graphics driver
+.Sh SYNOPSIS
+.Cd "ite* at grf?"
 .Sh DESCRIPTION
 .Tn TTY
 special files of the form ``ttye?''
@@ -162,6 +164,4 @@ None under
 .Sh SEE ALSO
 .Xr grf 4 ,
 .Xr hil 4 ,
-.Xr gb 4 ,
-.Xr rb 4 ,
-.Xr tc 4
+.Xr tty 4
