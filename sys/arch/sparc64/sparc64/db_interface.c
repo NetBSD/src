@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2000/07/18 20:15:36 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.38 2000/07/27 13:57:23 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -191,7 +191,7 @@ kdb_trap(type, tf)
 			OF_enter();
 			/*NOTREACHED*/
 		}
-		db_recover = 1;
+		db_recover = (label_t *)1;
 	}
 
 	/* Should switch to kdb`s own stack here. */
@@ -289,7 +289,7 @@ db_write_bytes(addr, size, data)
 		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
 			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			/* Read Only mapping -- need to do a bypass access */
-			stba(dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
+			stba((u_long)dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
 		else
 			subyte(dst, *data);
 		dst++, data++;
