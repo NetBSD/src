@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.17 2000/09/08 17:20:47 matt Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.18 2000/10/30 09:55:09 garbled Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.17 2000/09/08 17:20:47 matt Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.18 2000/10/30 09:55:09 garbled Exp $");
 #endif
 
 #include <stdlib.h>
@@ -96,6 +96,7 @@ int verbose, readcache;	/* options */
 int reading_cache;
 char *machine;
 char *makeobjdirprefix;
+char *makebin;
 
 /* general library routines */
 
@@ -116,6 +117,9 @@ int main(int argc, char **argv)
 {
     char *p;
     int optc;
+
+    if ((makebin = getenv("MAKE")) == NULL)
+	makebin = strdup("make");
 
     if ((machine = getenv("MACHINE")) == NULL) {
 	struct utsname utsname;
@@ -590,7 +594,7 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     fclose(f);
 
     (void)snprintf(line, sizeof(line),
-	"cd %s && make -f %s crunchgen_objs 2>&1", dirpath, tempfname);
+	"cd %s && %s -f %s crunchgen_objs 2>&1", dirpath, makebin, tempfname);
     if((f = popen(line, "r+")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
@@ -821,8 +825,8 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
 	fprintf(outmk, "%s_make:\n", p->ident);
-	fprintf(outmk, "\t(cd $(%s_SRCDIR); make $(%s_OBJS))\n\n", 
-		p->ident, p->ident);
+	fprintf(outmk, "\t(cd $(%s_SRCDIR); %s $(%s_OBJS))\n\n", 
+		p->ident, makebin, p->ident);
     }
     else
 	fprintf(outmk, "%s_make:\n\t@echo \"** cannot make objs for %s\"\n\n", 
