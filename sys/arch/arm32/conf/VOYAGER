@@ -116,12 +116,12 @@ cpu0 at mainbus?
 iomd0 at mainbus?
 
 # The hydra multiprocessor device
-hydrabus0 at mainbus?
+#hydrabus0 at mainbus?
 
-hcpu0 at hydrabus? # slot 0
-hcpu1 at hydrabus?
-hcpu2 at hydrabus?
-hcpu3 at hydrabus?
+#hcpu0 at hydrabus? # slot 0
+#hcpu1 at hydrabus?
+#hcpu2 at hydrabus?
+#hcpu3 at hydrabus?
 
 # The vidc
 vidcvideo0	at mainbus?
@@ -137,9 +137,6 @@ vt5     at mainbus?
 # IDE disk controller
 wdc0    at mainbus? base 0x002107c0 irq 9
 wd*     at wdc? drive ?
-
-atapibus* at wdc?
-acd* at atapibus? drive?
 
 # Floppy disk controller
 fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
@@ -183,8 +180,8 @@ scsibus* at asc?
 cosc0	at podulebus?			# MCS Connect32 SCSI II card
 scsibus* at cosc?
 
-csc0	at podulebus?			# Cumana SCSI II card
-scsibus* at csc?
+#csc0	at podulebus?			# Cumana SCSI II card
+#scsibus* at csc?
 
 ptsc0	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
