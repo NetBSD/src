@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.7.2.1 1999/09/21 04:57:26 cgd Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.7.2.2 2000/10/19 17:04:39 he Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -949,7 +949,7 @@ fatal(char *mess)
 #endif
     }
   }
-  plog(XLOG_FATAL, mess);
+  plog(XLOG_FATAL, "%s", mess);
 
   hlfsd_going_down(1);
 }
