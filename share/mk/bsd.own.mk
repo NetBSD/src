@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.403 2003/12/07 22:52:56 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.404 2003/12/07 23:07:37 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -414,9 +414,11 @@ MKPICLIB:=	no
 
 #
 # Shared libraries are not supported on ns32k with current GNU tools.
+# Disable native gdb too.
 #
 .if ${MACHINE_ARCH} == "ns32k"
 NOPIC=		# defined
+MKGDB=		no
 .endif
 
 #
