@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.510 2003/03/03 10:57:36 soren Exp $
+$NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1987,15 +1987,38 @@ product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host to PCI Bridge
+product SIS 540HB		0x0540	540 Host to PCI Bridge
+product SIS 550HB		0x0550	550 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
+product SIS 620			0x0620	SiS 620 Host Bridge
 product SIS 630			0x0630	SiS 630 Host Bridge
+product SIS 633			0x0633	SiS 633 Host Bridge
+product SIS 635			0x0635	SiS 635 Host Bridge
+product SIS 640			0x0640	SiS 640 Host Bridge
+product SIS 645			0x0645	SiS 645 Host Bridge
+product SIS 646			0x0646	SiS 646 Host Bridge
+product SIS 648			0x0648	SiS 648 Host Bridge
 product SIS 645			0x0645	SiS 645 Host Bridge
 product SIS 650			0x0650	SiS 650 Host Bridge
 product SIS 651			0x0651	SiS 651 Host Bridge
+product SIS 652			0x0652	SiS 652 Host Bridge
+product SIS 655			0x0655	SiS 655 Host Bridge
+product SIS 658			0x0658	SiS 658 Host Bridge
 product SIS 730			0x0730	SiS 730 Host Bridge
+product SIS 733			0x0733	SiS 733 Host Bridge
 product SIS 735			0x0735	SiS 735 Host Bridge
+product SIS 740			0x0740	SiS 740 Host Bridge
 product SIS 745			0x0745	SiS 745 Host Bridge
+product SIS 746			0x0746	SiS 746 Host Bridge
+product SIS 748			0x0748	SiS 748 Host Bridge
+product SIS 750			0x0750	SiS 750 Host Bridge
+product SIS 751			0x0751	SiS 751 Host Bridge
+product SIS 752			0x0752	SiS 752 Host Bridge
+product SIS 755			0x0755	SiS 755 Host Bridge
 product SIS 900			0x0900	SiS 900 10/100 Ethernet
+product SIS 961			0x0961	SiS 961 Host Bridge
+product SIS 962			0x0962	SiS 962 Host Bridge
+product SIS 963			0x0963	SiS 963 Host Bridge
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
