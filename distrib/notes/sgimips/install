@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1.2.2 2002/07/02 04:20:16 lukem Exp $
+.\"	$NetBSD: install,v 1.1.2.3 2002/07/11 18:41:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ CD-ROM is not ISO-formatted.
 Since the older SGI PROMs do not understand ISO/CD-9660 formats,
 the CD-ROM image is generated with an SGI Volume Header and an
 FFS-formatted (BSD4.2) partition for the distribution.
-Furthermore, since the filesystem is FFS, the CD cannot be mounted under IRIX.
+Furthermore, since the file system is FFS, the CD cannot be mounted under IRIX.
 .Pp
 To install from a
 .Nx*M

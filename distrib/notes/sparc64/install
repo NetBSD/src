@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12.2.2 2002/07/02 04:20:18 lukem Exp $
+.\"	$NetBSD: install,v 1.12.2.3 2002/07/11 18:41:51 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,7 +224,7 @@ directory, into the root directory for your machine.
 The
 .Pa netbsd.INSTALL.gz
 file contains a kernel with an embedded ramdisk that has the basic
-installer filesystem that is part of the normal miniroot.
+installer file system that is part of the normal miniroot.
 Now you need to boot your workstation
 from the server by entering the following command at the monitor prompt:
 .Pp
@@ -538,11 +538,11 @@ but of course you can layout the disk however you see fit.
 .Dl "   6     backup   wm     0 - 8185     4.25GB  (8186/0/0) 8922740"
 .Dl "   7 unassigned   wm     0            0       (0/0/0)          0"
 .Pp
-After your disk has been labeled you need to create filesystems on
+After your disk has been labeled you need to create file systems on
 your slices.
-The Solaris newfs command will create ffs filesystems that can be used by
+The Solaris newfs command will create ffs file systems that can be used by
 .Nx .
-You should create filesystems for all of
+You should create file systems for all of
 your slices except for root with a command similar to below, given we have
 root on c1t2d0s0 and /usr on c1t2d0s4.
 .Pp
@@ -554,7 +554,7 @@ You should now mount your
 .Nx
 root and
 .Pa /usr partitions under
-Solaris so that you can populate the filesystems with
+Solaris so that you can populate the file systems with
 .Nx NetBSD
 binaries.
 .Pp
@@ -564,7 +564,7 @@ binaries.
 .Pp
 First, you should uncompress all of the binary distribution sets for
 sparc64 into a temporary directory and then extract them into the
-filesystems you just mounted.
+file systems you just mounted.
 .Pp
 .Dl # Ic "cd ~/netbsd/binary/sets"
 .Dl # Ic "gunzip *.tar.gz"

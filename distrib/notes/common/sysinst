@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.9 2002/07/09 08:51:14 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.10 2002/07/11 18:41:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -476,7 +476,7 @@ make sure to use the 'existing' disk layout.
 .It
 After your disk has been prepared, choose
 .if r_sgimips \{\
-.Me Unmounted filesystem
+.Me Unmounted file system
 as the medium.
 The CD-ROM device is usually cd0 and the partition
 .Sq a
@@ -757,7 +757,7 @@ disklabel: boot block size 0
 disklabel: super block size 0
 .disp)
 .Pp
-Now, you need to create filesystems on the partitions that
+Now, you need to create file systems on the partitions that
 .Nx
 will be using.
 .Pp
@@ -820,7 +820,7 @@ to erase everything on the current line, or
 .Key CONTROL-C
 to cancel the file creation, so you can start over.
 .Pp
-Great, now create the mountpoints for the filesystems you listed in the
+Great, now create the mountpoints for the file systems you listed in the
 .Pa fstab No Ns :
 .Dl # Ic "mkdir /mnt/usr"
 .Pp

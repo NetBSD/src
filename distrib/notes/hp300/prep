@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13.2.1 2002/07/02 04:20:07 lukem Exp $
+.\"	$NetBSD: prep,v 1.13.2.2 2002/07/11 18:41:46 thorpej Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -292,12 +292,12 @@ to write to an HP-IB tape:
 .No # Ic "dd if=SYS_UBOOT of=/dev/rmt/0mnb obs=20b conv=sync"
 .disp)
 .
-.Ss2 Installing the miniroot filesystem locally
+.Ss2 Installing the miniroot file system locally
 .
 This step is only necessary if you are not loading the miniroot
 installer from a netboot server.
 Follow the same procedure for the bootstrap program, except use the
-uncompressed miniroot filesystem
+uncompressed miniroot file system
 .No ( Pa installation/miniroot/miniroot.fs.gz No )
 instead of the bootstrap program.
 The only quirk is that you should place it at the offset of the swap
@@ -599,7 +599,7 @@ Next, you will be asked to fill out the partition map.
 You must provide responses for all 8 partitions.
 Remember, you must have the sector offset for the
 .Sq Li b
-partition match the location you dumped the miniroot filesystem image.
+partition match the location you dumped the miniroot file system image.
 Set the size and
 offset of any unused partition to 0.
 Note that sizes and offsets are expressed in
