@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.43 1999/07/02 07:59:56 itojun Exp $
+.\" 	$NetBSD: ftp.1,v 1.44 1999/07/02 08:07:41 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1338,6 +1338,13 @@ instead of
 .Pp
 If WWW or proxy WWW authentication is required, you will be prompted
 to enter a username and password to authenticate with.
+.Pp
+When specifying IPv6 numeric address into URL, one need to follow
+.Li draft-ietf-ipngwg-url-literal-01.txt
+and put the address into square bracket, like
+.Li ftp://[::1]:21/ .
+This is because colons are used in IPv6 numeric address as well as
+separator for port number.
 .Sh ABORTING A FILE TRANSFER
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
@@ -1670,8 +1677,9 @@ attempts to be compliant with
 .Cm RFC 959 ,
 .Cm RFC 1123 ,
 .Cm RFC 1738 ,
+.Cm RFC 2068 ,
 and
-.Cm RFC 2068 .
+.Cm RFC 2428 .
 .Sh HISTORY
 The
 .Nm

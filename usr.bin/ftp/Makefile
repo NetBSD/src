@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1999/04/16 23:01:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 1999/07/02 08:07:40 itojun Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 PROG=	ftp
@@ -12,5 +12,7 @@ SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c ruserpass.c \
 CPPFLAGS+= -DHAVE_TIMEGM	# system has timegm(3), a UTC version of mktime
 LDADD+=	-ledit -ltermcap -lutil
 DPADD+=	${LIBEDIT} ${LIBTERMCAP} ${LIBUTIL}
+
+CPPFLAGS+= -DINET6
 
 .include <bsd.prog.mk>
