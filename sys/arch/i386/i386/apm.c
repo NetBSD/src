@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.48 2000/04/28 04:48:51 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.49 2000/05/08 18:22:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -279,10 +279,13 @@ apm_perror(const char *str, struct bioscallregs *regs, ...) /* XXX cgd */
 {
 	va_list ap;
 
+	printf("APM ");
+
 	va_start(ap, regs);
-	printf("APM %:: %s (0x%x)\n", str, ap, /* XXX cgd */
-	    apm_strerror(APM_ERR_CODE(regs)), regs->AX);
+	vprintf(str, ap);			/* XXX cgd */
 	va_end(ap);
+
+	printf(": %s (0x%x)\n", apm_strerror(APM_ERR_CODE(regs)), regs->AX);
 }
 
 #ifdef APM_POWER_PRINT
