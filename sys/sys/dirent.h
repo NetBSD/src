@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1982, 1986, 1989 The Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	7.3 (Berkeley) 2/5/91
- *	$Id: dirent.h,v 1.3 1994/05/07 00:41:52 cgd Exp $
+ *	from: @(#)dir.h	8.1 (Berkeley) 6/2/93
+ *	$Id: dirent.h,v 1.4 1994/05/21 03:15:05 cgd Exp $
  */
 
 /*
+ * The dirent structure defines the format of directory entries returned by 
+ * the getdirentries(2) system call.
+ *
  * A directory entry has a struct dirent at the front of it, containing its
  * inode number, the length of the entry, and the length of the name
  * contained in the entry.  These are followed by the name padded to a 4
@@ -45,7 +48,12 @@
 struct dirent {
 	unsigned long	d_fileno;	/* file number of entry */
 	unsigned short	d_reclen;	/* length of this record */
+#ifdef notdef
+	unsigned char	d_type; 	/* file type, see below */
+	unsigned char	d_namlen;	/* length of string in d_name */
+#else
 	unsigned short	d_namlen;	/* length of string in d_name */
+#endif
 #ifdef _POSIX_SOURCE
 	char	d_name[255 + 1];	/* name must be no longer than this */
 #else
@@ -53,3 +61,21 @@ struct dirent {
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
 #endif
 };
+
+/*
+ * File types
+ */
+#define	DT_UNKNOWN	 0
+#define	DT_FIFO		 1
+#define	DT_CHR		 2
+#define	DT_DIR		 4
+#define	DT_BLK		 6
+#define	DT_REG		 8
+#define	DT_LNK		10
+#define	DT_SOCK		12
+
+/*
+ * Convert between stat structure types and directory types.
+ */
+#define	IFTODT(mode)	(((mode) & 0170000) >> 12)
+#define	DTTOIF(dirtype)	((dirtype) << 12)
