@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fuser.h,v 1.2 1994/10/26 05:27:49 cgd Exp $	*/
+/*	$NetBSD: svr4_fuser.h,v 1.3 1994/10/29 00:43:20 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,9 +33,9 @@
 #include <compat/svr4/svr4_types.h>
 
 struct svr4_f_user {
-    svr4_pid_t	fu_pid;
-    int		fu_flags;
-    uid_t	fu_uid;
+	svr4_pid_t	fu_pid;
+	int		fu_flags;
+	uid_t		fu_uid;
 };
 
 
