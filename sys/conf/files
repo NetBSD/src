@@ -1,147 +1,157 @@
-#	$NetBSD: files,v 1.473 2001/11/28 01:13:21 lukem Exp $
+#	$NetBSD: files,v 1.474 2001/11/28 10:21:20 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 #
-defopt	INSECURE
-defopt	KMEMSTATS
-defopt	KTRACE
-defparam MAXUPRC
-defparam RTC_OFFSET
-defparam DEFCORENAME
-defopt	UCONSOLE
-defopt	NEW_PIPE
+defflag				INSECURE
+defflag				KMEMSTATS
+defflag				KTRACE
+defparam			MAXUPRC
+defparam			RTC_OFFSET
+defparam			DEFCORENAME
+defflag				UCONSOLE
+defflag				NEW_PIPE
 
-defopt	MULTIPROCESSOR
+defflag				MULTIPROCESSOR
 
-defopt	opt_callout.h	CALLWHEEL_STATS
+defflag	opt_callout.h		CALLWHEEL_STATS
 
-defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
+defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
-defopt	opt_ntp.h	PPS_SYNC NTP 
+defflag	opt_ntp.h		PPS_SYNC NTP
 
-defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
-			NFS_BOOT_GATEWAY NFS_BOOT_TCP
-defparam opt_nfs_boot.h	NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
-defopt	opt_nfs.h	NFS_V2_ONLY
-defopt	NFSSERVER
+defflag	opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
+				NFS_BOOT_GATEWAY NFS_BOOT_TCP
+defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS
+				NFS_BOOT_RWSIZE
+defflag	opt_nfs.h		NFS_V2_ONLY
+defflag				NFSSERVER
 
 defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
-defopt	opt_malloclog.h		MALLOCLOG
+defflag	opt_malloclog.h		MALLOCLOG
 defparam opt_malloclog.h	MALLOCLOGSIZE
-defopt	opt_malloc_debug.h	MALLOC_DEBUG
-defopt	opt_pool.h		POOL_DIAGNOSTIC
+defflag	opt_malloc_debug.h	MALLOC_DEBUG
+defflag	opt_pool.h		POOL_DIAGNOSTIC
 defparam opt_poollog.h		POOL_LOGSIZE
 
-defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
+defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64
-			EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
+defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
+				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
+				EXEC_ELF_CATCHALL
 
 # compatibility options
 #
-defopt	COMPAT_FREEBSD
-defopt	COMPAT_HPUX
-defopt	COMPAT_IBCS2
-defopt	COMPAT_IRIX
-defopt	COMPAT_LINUX
-defopt	COMPAT_OSF1
-defopt	COMPAT_SUNOS
-defopt	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
-defopt	COMPAT_ULTRIX
-defopt	COMPAT_NETBSD32
-defopt	COMPAT_AOUT
-defopt	COMPAT_AOUT_M68K
-defopt	COMPAT_M68K4K
-defopt	COMPAT_MACH
-defopt	COMPAT_VAX1K
-defopt	COMPAT_43
-defopt	COMPAT_PECOFF
-defopt	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
+defflag				COMPAT_FREEBSD
+defflag				COMPAT_HPUX
+defflag				COMPAT_IBCS2
+defflag				COMPAT_IRIX
+defflag				COMPAT_LINUX
+defflag				COMPAT_OSF1
+defflag				COMPAT_SUNOS
+defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
+defflag				COMPAT_ULTRIX
+defflag				COMPAT_NETBSD32
+defflag				COMPAT_AOUT
+defflag				COMPAT_AOUT_M68K
+defflag				COMPAT_M68K4K
+defflag				COMPAT_MACH
+defflag				COMPAT_VAX1K
+defflag				COMPAT_43
+defflag				COMPAT_PECOFF
+defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
 #
-defopt	opt_tcp_debug.h		TCP_DEBUG
+defflag	opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
-defopt	opt_inet.h		INET INET6 INET6_MD_CKSUM
-defopt	opt_ipsec.h		IPSEC IPSEC_ESP
+defflag	opt_inet.h		INET INET6 INET6_MD_CKSUM
+defflag	opt_ipsec.h		IPSEC IPSEC_ESP
 defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
-defopt	opt_atalk.h		NETATALK
-defopt	opt_ns.h		NS NSIP		# NS network stack,
+defflag	opt_atalk.h		NETATALK
+defflag	opt_ns.h		NS NSIP		# NS network stack,
 						# XNS tunneled over IP
-defopt	opt_iso.h		ISO TPIP	# ISO network stack
-defopt	IPX					# IPX network stack
-defopt	EON					# ISO clnp over IP
-defopt	CCITT					# 
-defopt	HDLC					# CCITT over HDLC
-defopt	LLC					# CCITT over LLC2 (& IEEE LLC?)
-defopt	NATM					# "native" ATM protocols
-defopt	PFIL_HOOKS				# pfil(9)
-defopt	IPFILTER_LOG				# logging of ip packets
-# Include deflate or bsd compression, enable pppd packet filtering support
-defopt	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
+defflag	opt_iso.h		ISO TPIP	# ISO network stack
+defflag				IPX		# IPX network stack
+defflag				EON		# ISO clnp over IP
+defflag				CCITT		#
+defflag				HDLC		# CCITT over HDLC
+defflag				LLC		# CCITT over LLC2 (& IEEE LLC?)
+defflag				NATM		# "native" ATM protocols
+defflag				PFIL_HOOKS	# pfil(9)
+defflag				IPFILTER_LOG	# logging of ip packets
+defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
+						# Include deflate or bsd
+						# compression, enable pppd
+						# packet filtering support
 
 # networking options
 #
-defopt	GATEWAY
-defopt	MROUTING
-defopt	TCP_COMPAT_42
+defflag				GATEWAY
+defflag				ROUTING
+defflag				CP_COMPAT_42
 
 defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
-defopt	opt_inet_csum.h	INET_CSUM_COUNTERS TCP_CSUM_COUNTERS UDP_CSUM_COUNTERS
+defflag	opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
+				UDP_CSUM_COUNTERS
 
-defopt	opt_altq_enabled.h ALTQ
-defopt	opt_altq.h	ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_FLOWVALVE
-			ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC ALTQ_CDNR ALTQ_BLUE
-			ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
+defflag	opt_altq_enabled.h	ALTQ
+defflag	opt_altq.h		ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_BLUE
+				ALTQ_FLOWVALVE ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC
+				ALTQ_CDNR ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
 
-defparam SB_MAX
+defparam			SB_MAX
 
 # UVM options
 #
-defopt	opt_uvmhist.h	UVMHIST UVMHIST_PRINT
+defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
 
 # file systems
 #
-deffs	FFS EXT2FS
-deffs	fs_mfs.h MFS			# XXX
-deffs	fs_lfs.h LFS
-deffs	fs_ntfs.h NTFS
-deffs	CD9660
-deffs	ADOSFS
-deffs	MSDOSFS
-deffs	FILECORE
-deffs	fs_nfs.h NFS
-deffs	NULLFS OVERLAY FDESC PORTAL UMAPFS PROCFS
-deffs	fs_kernfs.h KERNFS		# XXX
-deffs	fs_union.h UNION
-deffs	fs_coda.h CODA
+deffs				FFS EXT2FS
+deffs	fs_mfs.h		MFS			# XXX
+deffs	fs_lfs.h		LFS
+deffs	fs_ntfs.h		NTFS
+deffs				CD9660
+deffs				ADOSFS
+deffs				MSDOSFS
+deffs				FILECORE
+deffs	fs_nfs.h		NFS
+deffs				NULLFS
+deffs				OVERLAY
+deffs				FDESC
+deffs				PORTAL
+deffs				UMAPFS
+deffs				PROCFS
+deffs	fs_kernfs.h		KERNFS		# XXX
+deffs	fs_union.h		UNION
+deffs	fs_coda.h		CODA
 
 # file system options
 #
-defopt	SOFTDEP
-defopt	QUOTA
-defopt	opt_ffs.h	FFS_EI
-defopt	opt_ntfs.h	NTFS_DEBUG
-defopt	VNODE_OP_NOINLINE
+defflag				SOFTDEP
+defflag				QUOTA
+defflag	opt_ffs.h		FFS_EI
+defflag	opt_ntfs.h		NTFS_DEBUG
+defflag				VNODE_OP_NOINLINE
 
 # RAIDframe options
 #
-defopt	RAID_AUTOCONFIG
-defopt	RAID_DIAGNOSTIC
+defflag				RAID_AUTOCONFIG
+defflag				RAID_DIAGNOSTIC
 
 # buffer cache size options
 #
-defparam opt_bufcache.h	BUFCACHE BUFPAGES
+defparam opt_bufcache.h		BUFCACHE BUFPAGES
 
 # userconf
 #
-defopt opt_userconf.h	USERCONF
+defflag				USERCONF
 
 
 #
@@ -150,26 +160,26 @@ defopt opt_userconf.h	USERCONF
 
 # PC-style MBR handling
 #
-defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
+defflag	opt_mbr.h		COMPAT_386BSD_MBRPART
 
 # debugging options
 #
-defopt	opt_ddb.h	DDB
-defparam opt_ddb.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
-			DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
-defopt	opt_kgdb.h 	KGDB
-defparam opt_kgdb.h	KGDB_DEV KGDB_DEVNAME
-			KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
-defopt	LOCKDEBUG
-defopt	SYSCALL_DEBUG
+defflag	opt_ddb.h		DDB
+defparam opt_ddb.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
+defflag	opt_kgdb.h		KGDB
+defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
+				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
+defflag				LOCKDEBUG
+defflag				SYSCALL_DEBUG
 
 # memory (ram) disk options
 #
-defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
-			MEMORY_DISK_DYNAMIC
-defparam opt_md.h	MEMORY_DISK_SERVER
+defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
+				MEMORY_DISK_DYNAMIC
+defparam opt_md.h		MEMORY_DISK_SERVER
 
-defparam opt_mdsize.h	MINIROOTSIZE
+defparam opt_mdsize.h		MINIROOTSIZE
 
 # device classes
 #
@@ -180,14 +190,14 @@ devclass tty
 
 # generic attributes
 #
-define	audio { }
-define	midibus { }
+define	audio		{ }
+define	midibus		{ }
 define	midisyn
 define	wdc_base
-define	scsi {[channel = -1]}
-define	ata {[channel = -1], [drive = -1]}
-define	atapi {[channel = -1]}
-define	mii {[phy = -1]}
+define	scsi		{[channel = -1]}
+define	ata		{[channel = -1], [drive = -1]}
+define	atapi		{[channel = -1]}
+define	mii		{[phy = -1]}
 
 # audio device attributes
 #
@@ -233,9 +243,9 @@ define	arp
 
 # Device description for machine-independent IPKDB code.
 #
-defopt	opt_ipkdb.h	IPKDB					: IPKDBKEY
-defopt	opt_ipkdb.h	IPKDBSECURE				: IPKDB
-defparam opt_ipkdb.h	IPKDBKEY				: IPKDB
+defflag	opt_ipkdb.h		IPKDB				: IPKDBKEY
+defflag	opt_ipkdb.h		IPKDBSECURE			: IPKDB
+defparam opt_ipkdb.h		IPKDBKEY			: IPKDB
 
 # Common files for any ipkdb support
 #
@@ -280,8 +290,8 @@ file	dev/ic/smc93cx6.c		smc93cx6
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 #
-defparam opt_ahc.h	AHC_DEBUG
-defopt	opt_ahc.h	AHC_NO_TAGS
+defparam opt_ahc.h		AHC_DEBUG
+defflag	opt_ahc.h		AHC_NO_TAGS
 device	ahc: scsi
 define	ahc_seeprom
 define	ahc_aic77xx
@@ -343,9 +353,12 @@ file	dev/ic/iha.c			iha
 
 # Qlogic ISP 10x0 SCSI Controllers
 #
-defopt	opt_isp.h	ISP_DISABLE_1020_SUPPORT ISP_DISABLE_1080_SUPPORT
-			ISP_DISABLE_2100_SUPPORT ISP_DISABLE_2200_SUPPORT
-			ISP_DISABLE_FW ISP_LOGDEFAULT ISP_TARGET_MODE
+defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
+				ISP_DISABLE_1080_SUPPORT
+				ISP_DISABLE_2100_SUPPORT
+				ISP_DISABLE_2200_SUPPORT
+				ISP_DISABLE_FW ISP_TARGET_MODE
+defparam opt_isp.h		ISP_LOGDEFAULT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
@@ -429,7 +442,7 @@ file	dev/ic/gem.c			gem
 
 # 8390-family Ethernet controllers
 #
-defopt	opt_ipkdb.h	IPKDB_DP8390				: IPKDB
+defflag	opt_ipkdb.h		IPKDB_DP8390			: IPKDB
 define	dp8390nic
 file	dev/ic/dp8390.c			dp8390nic | IPKDB_DP8390
 
@@ -456,7 +469,7 @@ define	pdq
 file	dev/ic/pdq.c			pdq
 file	dev/ic/pdq_ifsubr.c		pdq
 
-# Cyclades Cyclom-8/16/32 
+# Cyclades Cyclom-8/16/32
 #
 device	cy: tty
 file	dev/ic/cy.c			cy			needs-flag
@@ -533,14 +546,14 @@ file	dev/ic/tms320av110.c		tms320av110
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 #
-defopt	opt_ipkdb.h	IPKDB_NE				: IPKDB_DP8390
+defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
 file	dev/ic/ne2000.c			ne | IPKDB_NE
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
 #
-defopt	opt_com.h	COM16650 COM_HAYESP COM_DEBUG COM_MPLOCK
+defflag	opt_com.h		COM16650 COM_HAYESP COM_DEBUG COM_MPLOCK
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 
@@ -706,16 +719,16 @@ file	dev/ic/cs89x0.c		cs
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
-define	wsdisplaydev {[kbdmux = -1]}
-define	wsemuldisplaydev {[console = -1], [kbdmux = -1]}
-define	wskbddev {[console = -1], [mux = -1]}
-define	wsmousedev {[mux = -1]}
+define	wsdisplaydev		{[kbdmux = -1]}
+define	wsemuldisplaydev	{[console = -1], [kbdmux = -1]}
+define	wskbddev		{[console = -1], [mux = -1]}
+define	wsmousedev		{[mux = -1]}
 # attribute to pull in raster support
 #
 define	wsrasteremulops
 # common PC display functions
 #
-defopt	opt_pcdisplay.h		PCDISPLAY_SOFTCURSOR
+defflag	opt_pcdisplay.h		PCDISPLAY_SOFTCURSOR
 define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
@@ -734,18 +747,18 @@ file	dev/ic/cyberpro.c		cprofb needs-flag
 # devices which provide these attributes, and we'd like to avoid hairy
 # ordering constraints on inclusion of the busses' "files" files.
 #
-define	isabus { }			# ISA attachment
-define	eisabus { }			# EISA attachment
-define	pcibus {[bus = -1]}		# PCI attachment
-define	tcbus { }			# TurboChannel attachment
-define	mcabus { }			# MicroChannel attachment
-define	usbus { }			# USB attachment
-define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
-define	vmebus { }			# VME bus attachment
-define	acpibus { }			# ACPI "bus" attachment
+define	isabus	{ }			# ISA attachment
+define	eisabus	{ }			# EISA attachment
+define	pcibus	{[bus = -1]}		# PCI attachment
+define	tcbus	{ }			# TurboChannel attachment
+define	mcabus	{ }			# MicroChannel attachment
+define	usbus	{ }			# USB attachment
+define	fwbus	{[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
+define	vmebus	{ }			# VME bus attachment
+define	acpibus	{ }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
-define	cbbus {[slot = -1]}		# CardBus attachment
-define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:
+define	cbbus	{[slot = -1]}		# CardBus attachment
+define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
@@ -799,45 +812,45 @@ file	dev/ic/daic.c			daic
 
 # legitimate pseudo-devices
 #
-defpseudo vnd: disk
-defpseudo ccd: disk
-defpseudo raid: disk
-defpseudo md: disk
+defpseudo vnd:		disk
+defpseudo ccd:		disk
+defpseudo raid:		disk
+defpseudo md:		disk
 defpseudo vcoda
 
-defpseudo pty: tty
-defpseudo tb: tty
+defpseudo pty:		tty
+defpseudo tb:		tty
 defpseudo rnd
 
-defpseudo loop: ifnet
-defpseudo sl: ifnet
-defpseudo ppp: ifnet, bpf_filter
-defpseudo pppoe: ifnet, ether, sppp
-defpseudo sppp: ifnet
-defpseudo tun: ifnet
-defpseudo vlan: ifnet, ether
-defpseudo bridge: ifnet, ether
-defpseudo bpfilter: ifnet, bpf_filter
-defpseudo strip: ifnet
-defpseudo ipfilter: ifnet
-defpseudo ipip: ifnet
-defpseudo gre: ifnet
-defpseudo gif: ifnet
-defpseudo faith: ifnet
-defpseudo stf: ifnet
+defpseudo loop:		ifnet
+defpseudo sl:		ifnet
+defpseudo ppp:		ifnet, bpf_filter
+defpseudo pppoe:	ifnet, ether, sppp
+defpseudo sppp:		ifnet
+defpseudo tun:		ifnet
+defpseudo vlan:		ifnet, ether
+defpseudo bridge:	ifnet, ether
+defpseudo bpfilter:	ifnet, bpf_filter
+defpseudo strip:	ifnet
+defpseudo ipfilter:	ifnet
+defpseudo ipip:		ifnet
+defpseudo gre:		ifnet
+defpseudo gif:		ifnet
+defpseudo faith:	ifnet
+defpseudo stf:		ifnet
 
 defpseudo sequencer
 defpseudo clockctl
 
 # ISDN userland pseudo devices
 #
-defpseudo i4btrc: isdn
-defpseudo i4brbch: isdn
-defpseudo i4btel: isdn
-defpseudo i4bipr: isdn
-defpseudo i4bisppp: isdn, sppp
-defpseudo i4bctl: isdn
-defpseudo i4b:	isdn
+defpseudo i4btrc:	isdn
+defpseudo i4brbch:	isdn
+defpseudo i4btel:	isdn
+defpseudo i4bipr:	isdn
+defpseudo i4bisppp:	isdn, sppp
+defpseudo i4bctl:	isdn
+defpseudo i4b:		isdn
 
 # kernel sources
 #
@@ -846,7 +859,7 @@ file	adosfs/adutil.c			adosfs
 file	adosfs/advfsops.c		adosfs
 file	adosfs/advnops.c		adosfs
 file	altq/altq_conf.c		altq
-file	altq/altq_afmap.c		altq 
+file	altq/altq_afmap.c		altq
 file	altq/altq_blue.c		altq
 file	altq/altq_cbq.c			altq
 file	altq/altq_cdnr.c		altq
@@ -903,66 +916,66 @@ file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw
-file	dev/raidframe/rf_acctrace.c	raid			needs-flag
-file	dev/raidframe/rf_alloclist.c	raid			needs-flag
-file	dev/raidframe/rf_aselect.c	raid			needs-flag
-file	dev/raidframe/rf_callback.c	raid			needs-flag
-file	dev/raidframe/rf_chaindecluster.c raid			needs-flag
-file	dev/raidframe/rf_copyback.c	raid			needs-flag
-file	dev/raidframe/rf_cvscan.c	raid			needs-flag
-file	dev/raidframe/rf_dagdegrd.c	raid			needs-flag
-file	dev/raidframe/rf_dagdegwr.c	raid			needs-flag
-file	dev/raidframe/rf_dagffrd.c	raid			needs-flag
-file	dev/raidframe/rf_dagffwr.c	raid			needs-flag
-file	dev/raidframe/rf_dagfuncs.c	raid			needs-flag
-file	dev/raidframe/rf_dagutils.c	raid			needs-flag
-file	dev/raidframe/rf_debugMem.c	raid			needs-flag
-file	dev/raidframe/rf_debugprint.c	raid			needs-flag
-file	dev/raidframe/rf_decluster.c	raid			needs-flag
-file	dev/raidframe/rf_declusterPQ.c	raid			needs-flag
-file	dev/raidframe/rf_diskqueue.c	raid			needs-flag
-file	dev/raidframe/rf_disks.c	raid			needs-flag
-file	dev/raidframe/rf_driver.c	raid			needs-flag
-file	dev/raidframe/rf_engine.c	raid			needs-flag
-file	dev/raidframe/rf_evenodd.c	raid			needs-flag
-file	dev/raidframe/rf_evenodd_dagfuncs.c raid		needs-flag
-file	dev/raidframe/rf_evenodd_dags.c	raid			needs-flag
-file	dev/raidframe/rf_fifo.c	raid	needs-flag
-file	dev/raidframe/rf_interdecluster.c raid			needs-flag
-file	dev/raidframe/rf_invertq.c	raid			needs-flag
-file	dev/raidframe/rf_layout.c	raid			needs-flag
-file	dev/raidframe/rf_map.c		raid			needs-flag
-file	dev/raidframe/rf_mcpair.c	raid			needs-flag
-file	dev/raidframe/rf_memchunk.c	raid			needs-flag
-file	dev/raidframe/rf_netbsdkintf.c	raid			needs-flag
-file	dev/raidframe/rf_nwayxor.c	raid			needs-flag
-file	dev/raidframe/rf_options.c	raid			needs-flag
-file	dev/raidframe/rf_paritylog.c	raid			needs-flag
-file	dev/raidframe/rf_paritylogDiskMgr.c raid		needs-flag
-file	dev/raidframe/rf_paritylogging.c raid			needs-flag
-file	dev/raidframe/rf_parityloggingdags.c raid		needs-flag
-file	dev/raidframe/rf_parityscan.c	raid			needs-flag
-file	dev/raidframe/rf_pq.c		raid			needs-flag
-file	dev/raidframe/rf_pqdeg.c	raid			needs-flag
-file	dev/raidframe/rf_pqdegdags.c	raid			needs-flag
-file	dev/raidframe/rf_psstatus.c	raid			needs-flag
-file	dev/raidframe/rf_raid0.c	raid			needs-flag
-file	dev/raidframe/rf_raid1.c	raid			needs-flag
-file	dev/raidframe/rf_raid4.c	raid			needs-flag
-file	dev/raidframe/rf_raid5.c	raid			needs-flag
-file	dev/raidframe/rf_raid5_rotatedspare.c raid		needs-flag
-file	dev/raidframe/rf_reconbuffer.c	raid			needs-flag
-file	dev/raidframe/rf_reconmap.c	raid			needs-flag
-file	dev/raidframe/rf_reconstruct.c	raid			needs-flag
-file	dev/raidframe/rf_reconutil.c	raid			needs-flag
-file	dev/raidframe/rf_revent.c	raid			needs-flag
-file	dev/raidframe/rf_shutdown.c	raid			needs-flag
-file	dev/raidframe/rf_sstf.c		raid			needs-flag
-file	dev/raidframe/rf_states.c	raid			needs-flag
-file	dev/raidframe/rf_stripelocks.c	raid			needs-flag
-file	dev/raidframe/rf_strutils.c	raid			needs-flag
-file	dev/raidframe/rf_threadstuff.c	raid			needs-flag
-file	dev/raidframe/rf_utils.c	raid			needs-flag
+file	dev/raidframe/rf_acctrace.c		raid		needs-flag
+file	dev/raidframe/rf_alloclist.c		raid		needs-flag
+file	dev/raidframe/rf_aselect.c		raid		needs-flag
+file	dev/raidframe/rf_callback.c		raid		needs-flag
+file	dev/raidframe/rf_chaindecluster.c	raid		needs-flag
+file	dev/raidframe/rf_copyback.c		raid		needs-flag
+file	dev/raidframe/rf_cvscan.c		raid		needs-flag
+file	dev/raidframe/rf_dagdegrd.c		raid		needs-flag
+file	dev/raidframe/rf_dagdegwr.c		raid		needs-flag
+file	dev/raidframe/rf_dagffrd.c		raid		needs-flag
+file	dev/raidframe/rf_dagffwr.c		raid		needs-flag
+file	dev/raidframe/rf_dagfuncs.c		raid		needs-flag
+file	dev/raidframe/rf_dagutils.c		raid		needs-flag
+file	dev/raidframe/rf_debugMem.c		raid		needs-flag
+file	dev/raidframe/rf_debugprint.c		raid		needs-flag
+file	dev/raidframe/rf_decluster.c		raid		needs-flag
+file	dev/raidframe/rf_declusterPQ.c		raid		needs-flag
+file	dev/raidframe/rf_diskqueue.c		raid		needs-flag
+file	dev/raidframe/rf_disks.c		raid		needs-flag
+file	dev/raidframe/rf_driver.c		raid		needs-flag
+file	dev/raidframe/rf_engine.c		raid		needs-flag
+file	dev/raidframe/rf_evenodd.c		raid		needs-flag
+file	dev/raidframe/rf_evenodd_dagfuncs.c	raid		needs-flag
+file	dev/raidframe/rf_evenodd_dags.c		raid		needs-flag
+file	dev/raidframe/rf_fifo.c			raid		needs-flag
+file	dev/raidframe/rf_interdecluster.c	raid		needs-flag
+file	dev/raidframe/rf_invertq.c		raid		needs-flag
+file	dev/raidframe/rf_layout.c		raid		needs-flag
+file	dev/raidframe/rf_map.c			raid		needs-flag
+file	dev/raidframe/rf_mcpair.c		raid		needs-flag
+file	dev/raidframe/rf_memchunk.c		raid		needs-flag
+file	dev/raidframe/rf_netbsdkintf.c		raid		needs-flag
+file	dev/raidframe/rf_nwayxor.c		raid		needs-flag
+file	dev/raidframe/rf_options.c		raid		needs-flag
+file	dev/raidframe/rf_paritylog.c		raid		needs-flag
+file	dev/raidframe/rf_paritylogDiskMgr.c	raid		needs-flag
+file	dev/raidframe/rf_paritylogging.c	raid		needs-flag
+file	dev/raidframe/rf_parityloggingdags.c	raid		needs-flag
+file	dev/raidframe/rf_parityscan.c		raid		needs-flag
+file	dev/raidframe/rf_pq.c			raid		needs-flag
+file	dev/raidframe/rf_pqdeg.c		raid		needs-flag
+file	dev/raidframe/rf_pqdegdags.c		raid		needs-flag
+file	dev/raidframe/rf_psstatus.c		raid		needs-flag
+file	dev/raidframe/rf_raid0.c		raid		needs-flag
+file	dev/raidframe/rf_raid1.c		raid		needs-flag
+file	dev/raidframe/rf_raid4.c		raid		needs-flag
+file	dev/raidframe/rf_raid5.c		raid		needs-flag
+file	dev/raidframe/rf_raid5_rotatedspare.c	raid		needs-flag
+file	dev/raidframe/rf_reconbuffer.c		raid		needs-flag
+file	dev/raidframe/rf_reconmap.c		raid		needs-flag
+file	dev/raidframe/rf_reconstruct.c		raid		needs-flag
+file	dev/raidframe/rf_reconutil.c		raid		needs-flag
+file	dev/raidframe/rf_revent.c		raid		needs-flag
+file	dev/raidframe/rf_shutdown.c		raid		needs-flag
+file	dev/raidframe/rf_sstf.c			raid		needs-flag
+file	dev/raidframe/rf_states.c		raid		needs-flag
+file	dev/raidframe/rf_stripelocks.c		raid		needs-flag
+file	dev/raidframe/rf_strutils.c		raid		needs-flag
+file	dev/raidframe/rf_threadstuff.c		raid		needs-flag
+file	dev/raidframe/rf_utils.c		raid		needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
@@ -1142,7 +1155,7 @@ file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
-file	net/slcompress.c		sl | ppp | strip | i4bipr 
+file	net/slcompress.c		sl | ppp | strip | i4bipr
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
 file	netatalk/aarp.c			netatalk
 file	netatalk/at_control.c		netatalk

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.200 2001/11/26 02:55:39 itojun Exp $
+#	$NetBSD: files.i386,v 1.201 2001/11/28 10:21:15 lukem Exp $
 #
 # new style config file for i386 architecture
 #
@@ -9,52 +9,52 @@ maxpartitions 8
 maxusers 2 16 128
 
 # APM options
-defopt	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
+defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
 			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
 defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
-defopt	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
+defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
-defparam CPURESET_DELAY
+defparam		CPURESET_DELAY
 
 # VM86 emulation
-defopt	VM86
+defflag			VM86
 
 # Floating point emulation
-defopt	MATH_EMULATE
+defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
-defopt	USER_LDT
+defflag			USER_LDT
 
 # Speed hack; make NOPs dummies (might break on some machines)
-defopt	DUMMY_NOPS
+defflag			DUMMY_NOPS
 
 # Performance counter support
-defopt	PERFCTRS
+defflag			PERFCTRS
 
 # MTRR support
-defopt	MTRR
+defflag			MTRR
 
 # X server support in console drivers
-defopt	opt_xserver.h	XSERVER XSERVER_DDB
+defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # understand boot device passed by pre-1.3 bootblocks
-defopt	COMPAT_OLDBOOT
+defflag			COMPAT_OLDBOOT
 
 # PCI BIOS options
-defopt	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
-	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
-	PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
-	PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
+defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
+			PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
+			PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
+			PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
 
 # Large page size
-defopt	LARGEPAGES
+defflag			LARGEPAGES
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
@@ -165,7 +165,7 @@ file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
-defparam PCI_CONF_MODE
+defparam		PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
@@ -391,9 +391,9 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defparam PCIC_ISA_ALLOC_IOBASE
-defparam PCIC_ISA_ALLOC_IOSIZE
-defparam PCIC_ISA_INTR_ALLOC_MASK
+defparam		PCIC_ISA_ALLOC_IOBASE
+defparam		PCIC_ISA_ALLOC_IOSIZE
+defparam		PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
@@ -422,9 +422,9 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defparam TCIC_ISA_ALLOC_IOBASE
-defparam TCIC_ISA_ALLOC_IOSIZE
-defparam TCIC_ISA_INTR_ALLOC_MASK
+defparam		TCIC_ISA_ALLOC_IOBASE
+defparam		TCIC_ISA_ALLOC_IOSIZE
+defparam		TCIC_ISA_INTR_ALLOC_MASK
 
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
