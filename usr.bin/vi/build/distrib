@@ -1,0 +1,73 @@
+#! /bin/sh
+# @(#)distrib	8.3 (Berkeley) 5/16/96
+
+# Clean
+make -f Makefile.in distclean
+rm -f configure config.h.in
+
+# Build autoconf structure.
+autoheader
+chmod 444 config.h.in
+autoconf
+chmod 555 configure
+
+# Build include files.
+f=../include/cl_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../cl/*.c > $f
+chmod 444 $f
+
+f=../include/common_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../clib/*.c ../common/*.c > $f
+chmod 444 $f
+
+f=../include/ex_def.h
+echo "Building $f ..."
+rm -f $f
+awk -f ../ex/ex.awk ../ex/ex_cmd.c > $f
+chmod 444 $f
+
+f=../include/ex_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../ex/*.c > $f
+chmod 444 $f
+
+f=../include/options_def.h
+echo "Building $f ..."
+rm -f $f
+awk -f ../common/options.awk ../common/options.c > $f
+chmod 444 $f
+
+f=../include/perl_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../perl_api/*.c > $f
+chmod 444 $f
+
+f=../include/tcl_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../tcl_api/*.c > $f
+chmod 444 $f
+
+f=../include/tk_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../tk/*.c > $f
+chmod 444 $f
+
+f=../include/vi_extern.h
+echo "Building $f ..."
+rm -f $f
+sed -n "s/^ \* PUBLIC: \(.*\)/\1/p" ../vi/*.c > $f
+chmod 444 $f
+
+# Build tags files.
+rm -f tags
+ctags ../cl/*.[ch] ../common/*.[ch] ../ex/*.[ch] ../perl_api/*.[ch] \
+    ../tcl_api/*.[ch] ../tk/*.[ch] ../vi/*.[ch]
+chmod 444 tags
