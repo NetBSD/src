@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.168 2003/02/01 22:43:04 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.169 2003/02/04 15:58:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8771,13 +8771,13 @@ ENTRY(pseg_get)
 /*
  * In 32-bit mode:
  *
- * extern int pseg_set(struct pmap* %i0, vaddr_t addr %i1, int64_t tte %i2:%i3,
- *			 paddr_t spare %i4:%i5);
+ * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
+ *			 paddr_t spare %o4:%o5);
  *
  * In 64-bit mode:
  *
- * extern int pseg_set(struct pmap* %i0, vaddr_t addr %i1, int64_t tte %i2,
- *			paddr_t spare %i3);
+ * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
+ *			paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Return values are:
  *
@@ -8901,26 +8901,26 @@ ENTRY(pseg_set)
 	brgez,pn %o3, 5f			! has resident changed? (we predict it has)
 	 btst	%g5, %o3			! has wired changed?
 
-	LDPTR	[%o0 + PM_RESIDENT], %g6	! gonna update resident count
+	LDPTR	[%o0 + PM_RESIDENT], %o1	! gonna update resident count
 	brlz	%o2, 0f
 	 mov	1, %o4
 	neg	%o4				! new is not resident -> decrement
-0:	add	%g6, %o4, %g6
-	STPTR	%g6, [%o0 + PM_RESIDENT]
+0:	add	%o1, %o4, %o1
+	STPTR	%o1, [%o0 + PM_RESIDENT]
 	btst	%g5, %o3			! has wired changed?
 5:	bz,pt	%xcc, 8f			! we predict it's not
 	 btst	%g5, %o2			! don't waste delay slot, check if new one is wired
-	LDPTR	[%o0 + PM_WIRED], %g6		! gonna update wired count
+	LDPTR	[%o0 + PM_WIRED], %o1		! gonna update wired count
 	bnz,pt	%xcc, 0f			! if wired changes, we predict it increments
 	 mov	1, %o4
 	neg	%o4				! new is not wired -> decrement
-0:	add	%g6, %o4, %g6
-	STPTR	%g6, [%o0 + PM_WIRED]
+0:	add	%o1, %o4, %o1
+	STPTR	%o1, [%o0 + PM_WIRED]
 8:	retl
 	 mov	%g1, %o0			! return %g1
 
 9:	retl
-	 mov	1, %o0				! spare needed, return 1
+	 or	%g1, 1, %o0			! spare needed, return flags + 1
 
 
 /*
