@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.267 2003/11/07 04:10:56 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.268 2003/11/30 13:57:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.267 2003/11/07 04:10:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.268 2003/11/30 13:57:12 yamt Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -332,7 +332,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	    wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* 48-bit LBA addressing */
-	if ((wd->sc_params.atap_cmd2_en & WDC_CAP_LBA48) != 0)
+	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0)
 		wd->sc_flags |= WDF_LBA48;
 
 	/* Prior to ATA-4, LBA was optional. */
