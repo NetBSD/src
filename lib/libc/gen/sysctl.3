@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.39 1999/10/10 12:32:16 hwr Exp $
+.\"	$NetBSD: sysctl.3,v 1.40 1999/10/14 09:33:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -927,6 +927,7 @@ privilege may change the value.
 .It DBCTL\_LINES	integer	yes
 .It DBCTL\_TABSTOPS	integer	yes
 .It DBCTL\_ONPANIC	integer	yes
+.It DBCTL\_FROMCONSOLE	integer	yes
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -940,6 +941,9 @@ Number of display lines.
 Tab width.
 .It Li DBCTL_ONPANIC
 If non-zero, DDB will be entered when the kernel panics.
+.It Li DBCTL_FROMCONSOLE
+If not zero, DDB may be entered by sending a break on a serial
+console or by a special key sequence on a graphics console.
 .El
 .Pp
 These MIB nodes are also available as variables from within the
