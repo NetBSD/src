@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.4 1998/09/26 16:02:56 dante Exp $        */
+/*      $NetBSD: advlib.c,v 1.5 1998/10/13 22:57:26 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -123,6 +123,8 @@ static void AscWriteLramDWord __P((bus_space_tag_t, bus_space_handle_t,
 static void AscMemWordSetLram __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t, int));
 static void AscMemWordCopyToLram __P((bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t *, int));
+static void AscMCodeCopyToLram __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t *, int));
 static void AscMemWordCopyFromLram __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, u_int16_t *, int));
@@ -617,7 +619,7 @@ AscLoadMicroCode(iot, ioh, s_addr, mcode_buf, mcode_size)
 	/* clear board memory */
 	AscMemWordSetLram(iot, ioh, s_addr, 0, mcode_word_size);
 	/* copy uCode to board memory */
-	AscMemWordCopyToLram(iot, ioh, s_addr, mcode_buf, mcode_word_size);
+	AscMCodeCopyToLram(iot, ioh, s_addr, mcode_buf, mcode_word_size);
 	chksum = AscMemSumLramWord(iot, ioh, s_addr, mcode_word_size);
 	mcode_chksum = AscMemSumLramWord(iot, ioh, ASC_CODE_SEC_BEG,
 			   ((mcode_size - s_addr - ASC_CODE_SEC_BEG) >> 1));
@@ -1154,6 +1156,29 @@ AscMemWordCopyToLram(iot, ioh, s_addr, s_buffer, words)
 
 
 static void
+AscMCodeCopyToLram(iot, ioh, s_addr, s_buffer, words)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int16_t       s_addr;
+	u_int16_t      *s_buffer;
+	int             words;
+{
+	u_int16_t	uCodeWord;
+	int             i;
+
+	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
+	for (i = 0; i < words; i++, s_buffer++) {
+#if BYTE_ORDER == BIG_ENDIAN
+		uCodeWord = SWAPBYTES(*s_buffer);
+#else
+		uCodeWord = *s_buffer;
+#endif
+		ASC_SET_CHIP_LRAM_DATA(iot, ioh, uCodeWord);
+	}
+}
+
+
+static void
 AscMemWordCopyFromLram(iot, ioh, s_addr, s_buffer, words)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -1199,10 +1224,17 @@ AscMemSumLramWord(iot, ioh, s_addr, words)
 {
 	u_int32_t       sum = 0L;
 	u_int16_t       i;
+	u_int16_t	w;
 
 
-	for (i = 0; i < words; i++, s_addr += 2)
-		sum += AscReadLramWord(iot, ioh, s_addr);
+	printf("\nreading\n");
+	for (i = 0; i < words; i++, s_addr += 2) {
+		w = AscReadLramWord(iot, ioh, s_addr);
+		if(i < 5)
+			printf("0x%x ", w);
+		sum += w;
+	}
+	printf("\n");
 
 	return (sum);
 }
