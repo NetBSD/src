@@ -1,5 +1,5 @@
 /*
- * $NetBSD: start.s,v 1.6 2000/11/30 22:26:27 scw Exp $
+ * $NetBSD: start.s,v 1.7 2000/12/04 20:31:16 scw Exp $
  *
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <m68k/asm.h>
 
 	.text
+ASENTRY_NOPROFILE(_start)
 ASENTRY_NOPROFILE(start)
 	movb	#0,_C_LABEL(reboot)
 	jra	Ldoit
