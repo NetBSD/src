@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.40 2000/04/29 12:18:52 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.40 2000/04/29 12:18:52 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.40 2000/04/29 12:18:52 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.41 2000/05/11 03:32:56 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -171,6 +171,15 @@ typedef struct {
     int	    	  rightLen; /* Length of replacement */
     int	    	  flags;
 } VarPattern;
+
+typedef struct {
+    GNode	*ctxt;		/* variable context */
+    char	*tvar;		/* name of temp var */
+    int		tvarLen;	
+    char	*str;		/* string to expand */
+    int		strLen;		
+    int		err;		/* err for not defined */
+} VarLoop_t;
 
 #ifndef NO_REGEX
 typedef struct {
@@ -1209,18 +1218,18 @@ VarRESubstitute(word, addSpace, buf, patternp)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarLoopExpand (word, addSpace, buf, patternp)
+VarLoopExpand (word, addSpace, buf, loopp)
     char    	  	*word;	    /* Word to modify */
     Boolean 	  	addSpace;   /* True if space should be added before
 				     * other characters */
     Buffer  	  	buf;	    /* Buffer for result */
-    ClientData	        patternp;   /* Pattern for substitution */
+    ClientData	        loopp;      /* Data for substitution */
 {
-    VarPattern	*pattern = (VarPattern *) patternp;
+    VarLoop_t	*loop = (VarLoop_t *) loopp;
     char *s;
     
-    Var_Set(pattern->lhs, word, VAR_GLOBAL);
-    s = Var_Subst(NULL, pattern->rhs, VAR_GLOBAL, pattern->flags);
+    Var_Set(loop->tvar, word, loop->ctxt);
+    s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
     if (s != NULL && *s != '\0') {
 	if (addSpace)
 	    Buf_AddByte(buf, ' ');
@@ -1848,30 +1857,30 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    switch (*tstr) {
 	        case '@':
 		{
-		    VarPattern 	pattern;
+		    VarLoop_t	loop;
 		    int flags = VAR_NOSUBST;
 
-		    pattern.flags = 0;
 		    cp = ++tstr;
 		    delim = '@';
-		    if ((pattern.lhs = VarGetPattern(ctxt, err, &cp, delim,
-						     &flags, &pattern.leftLen,
-						     NULL)) == NULL)
+		    if ((loop.tvar = VarGetPattern(ctxt, err, &cp, delim,
+						   &flags, &loop.tvarLen,
+						   NULL)) == NULL)
 			goto cleanup;
 
-		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
-						     &flags, &pattern.rightLen,
-						     NULL)) == NULL)
+		    if ((loop.str = VarGetPattern(ctxt, err, &cp, delim,
+						  &flags, &loop.strLen,
+						  NULL)) == NULL)
 			goto cleanup;
 
 		    termc = *cp;
 		    delim = '\0';
 
-		    pattern.flags = err;
+		    loop.err = err;
+		    loop.ctxt = ctxt;
 		    newStr = VarModify(str, VarLoopExpand,
-				       (ClientData)&pattern);
-		    free(pattern.lhs);
-		    free(pattern.rhs);
+				       (ClientData)&loop);
+		    free(loop.tvar);
+		    free(loop.str);
 		    break;
 		}
 	        case 'D':
