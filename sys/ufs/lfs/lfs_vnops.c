@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.96 2003/03/15 06:58:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.97 2003/03/21 06:16:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.96 2003/03/15 06:58:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.97 2003/03/21 06:16:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,6 +360,15 @@ lfs_inactive(void *v)
 	KASSERT(VTOI(ap->a_vp)->i_ffs_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
 
 	lfs_unmark_vnode(ap->a_vp);
+
+	/*
+	 * The Ifile is only ever inactivated on unmount.
+	 * Streamline this process by not giving it more dirty blocks.
+	 */
+	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM) {
+		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
+		return 0;
+	}
 
 	return ufs_inactive(v);
 }
@@ -914,7 +923,11 @@ lfs_close(void *v)
 	struct inode *ip = VTOI(vp);
 	struct timespec ts;
 
-	if (vp->v_usecount > 1) {
+	if (vp == ip->i_lfs->lfs_ivnode &&
+	    vp->v_mount->mnt_flag & MNT_UNMOUNT)
+		return 0;
+
+	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
 	}
@@ -1311,6 +1324,10 @@ lfs_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 
+	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM &&
+	    (ap->a_access_type & VM_PROT_WRITE) != 0) {
+		return EPERM;
+	}
 	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
 		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
 	}
@@ -1855,61 +1872,6 @@ lfs_putpages(void *v)
 		splx(s);
 	}
 	return error;
-}
-
-/*
- * Find out whether the vnode has any blocks or pages waiting to be written.
- * We used to just check LIST_EMPTY(&vp->v_dirtyblkhd), but there is not
- * presently as simple a mechanism for the page cache.
- */
-int
-lfs_checkifempty(struct vnode *vp)
-{
-	struct vm_page *pg;
-	struct buf *bp;
-	int r, s;
-
-	if (vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
-		return LIST_EMPTY(&vp->v_dirtyblkhd);
-
-	/*
-	 * For vnodes with pages it is a little more complex.
-	 * Pages that have been written (i.e. are "clean" for our purposes)
-	 * might be in seemingly dirty buffers, so we have to troll
-	 * looking for indirect block buffers as well as pages.
-	 */
-	simple_lock(&vp->v_interlock);
-	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
-	     bp = LIST_NEXT(bp, b_vnbufs)) {
-		if (bp->b_lblkno < 0) {
-			splx(s);
-			simple_unlock(&vp->v_interlock);
-			return 0;
-		}
-	}
-	splx(s);
-	
-	/*
-	 * Run through the page list to find dirty pages.
-	 * Right now I just walk the memq. 
-	 */
-	pg = TAILQ_FIRST(&vp->v_uobj.memq);
-	r = 1;
-	while(pg) {
-		if ((pg->flags & PG_CLEAN) == 0 || pmap_is_modified(pg)) {
-			r = 0;
-			break;
-		}
-		pg = TAILQ_NEXT(pg, listq);
-	}
-#if 0
-	if (r != !(vp->v_flag & VONWORKLST)) {
-		printf("nope, VONWORKLST isn't good enough!\n");
-	}
-#endif
-	simple_unlock(&vp->v_interlock);
-	return r;
 }
 
 /*

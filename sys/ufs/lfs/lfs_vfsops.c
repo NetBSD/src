@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.108 2003/03/21 06:09:08 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.109 2003/03/21 06:16:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.108 2003/03/21 06:09:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.109 2003/03/21 06:16:55 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1345,6 +1345,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	struct ufsmount *ump;
 	struct lfs *fs;
 	int error, flags, ronly;
+	int s;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -1373,13 +1374,10 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 	if ((error = VFS_SYNC(mp, 1, p->p_ucred, p)) != 0)
 		return (error);
+	s = splbio();
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
 		panic("lfs_unmount: still dirty blocks on ifile vnode");
-
-	/* Explicitly write the superblock, to update serial and pflags */
-	fs->lfs_pflags |= LFS_PF_CLEAN;
-	lfs_writesuper(fs, fs->lfs_sboffs[0]);
-	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+	splx(s);
 
 	/* Comment on ifile size if it has become too large */
 	if (!(fs->lfs_flags & LFS_WARNED)) {
@@ -1396,13 +1394,16 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 				bufpages / LFS_MAX_BYTES);
 	}
 
+	/* Explicitly write the superblock, to update serial and pflags */
+	fs->lfs_pflags |= LFS_PF_CLEAN;
+	lfs_writesuper(fs, fs->lfs_sboffs[0]);
+	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+	while (fs->lfs_iocount)
+		tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0);
+
 	/* Finish with the Ifile, now that we're done with it */
 	vrele(fs->lfs_ivnode);
 	vgone(fs->lfs_ivnode);
-
-	/* Wait for superblock writes to complete */
-	while (fs->lfs_iocount)
-		tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0);
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
