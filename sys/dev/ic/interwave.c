@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.6 1998/04/20 20:58:05 augustss Exp $	*/
+/*	$NetBSD: interwave.c,v 1.7 1998/06/10 10:24:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1015,7 +1015,7 @@ iw_init_output(addr, buf, cc)
 
 	DPRINTF(("iw_init_output\n"));
 
-	isa_dmastart(sc->sc_isa, sc->sc_playdrq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buf,
 		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
@@ -1030,7 +1030,7 @@ iw_init_input(addr, buf, cc)
 
 	DPRINTF(("iw_init_input\n"));
 
-	isa_dmastart(sc->sc_isa, sc->sc_playdrq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buf,
 		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
@@ -1069,7 +1069,7 @@ iw_start_output(addr, p, cc, intr, arg)
 
 	counter = 0;
 
-	isa_dmastart(sc->sc_isa, sc->sc_playdrq, sc->sc_playdma_bp,
+	isa_dmastart(sc->sc_ic, sc->sc_playdrq, sc->sc_playdma_bp,
 		     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 
@@ -1136,7 +1136,7 @@ iw_start_input(addr, p, cc, intr, arg)
 
 	counter = 0;
 
-	isa_dmastart(sc->sc_isa, sc->sc_recdrq, sc->sc_recdma_bp,
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, sc->sc_recdma_bp,
 		     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 
@@ -1619,7 +1619,7 @@ iw_malloc(addr, size, pool, flags)
 {
 	struct iw_softc *sc = addr;
 
-	return isa_malloc(sc->sc_isa, 4, size, pool, flags);
+	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
 }
 
 void

@@ -1,7 +1,7 @@
 #ifndef INTERWAVEVAR_H
 #define INTERWAVEVAR_H
 
-/*	$NetBSD: interwavevar.h,v 1.3 1997/10/19 07:42:11 augustss Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.4 1998/06/10 10:24:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ typedef struct iw_port_info {
 struct iw_softc {
         struct	device sc_dev;
 	bus_space_tag_t sc_iot;         /* bus cookie     */
-	struct	device *sc_isa;
+	isa_chipset_tag_t sc_ic;
 
 	int	vers;
 	int	revision;
