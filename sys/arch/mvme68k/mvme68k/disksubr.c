@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1996/05/16 17:59:57 chuck Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7.4.1 1996/05/29 05:19:10 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -32,9 +32,15 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/autoconf.h>
 
 #define b_cylin b_resid
 
@@ -57,6 +63,37 @@ dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
+	struct scsibus_softc *sbsc;
+	int target, lun;
+
+	if (bootpart == -1) /* ignore flag from controller driver? */
+		return;
+
+	/*
+ 	 * scsi: sd,cd
+ 	 */
+
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+
+        	sbsc = (struct scsibus_softc *)dev->dv_parent;
+		target = bootctrllun % 8; /* XXX: 147 only */
+		lun = bootdevlun; /* XXX: 147, untested */
+
+		/* 
+		 * XXX: on the 167: 
+		 * ignore bootctrllun
+		 * target = bootdevlun / 10
+		 * lun = bootdevlun % 10
+		 */
+
+        	if (sbsc->sc_link[target][lun] != NULL &&
+            	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+			bootdv = dev;
+                	return;
+		}
+        }
+
 	return;
 }
 
