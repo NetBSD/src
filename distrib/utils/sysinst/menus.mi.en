@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.51.2.8 2002/10/13 23:20:14 lukem Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.51.2.9 2003/02/10 06:03:52 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -467,3 +467,7 @@ menu dhcpautoconf, title "Perform DHCP autoconfiguration?";
 	option "Yes", exit, action  {yesno = 1;};
 	option "No",  exit, action  {yesno = 0;};
 
+menu extract, title "Select set extraction verbosity";
+	option "Progress bar (recommended)", exit, action  { yesno = 1; };
+	option "Silent", exit, action  { yesno = 0; };
+	option "Verbose file name listing (slow)", exit, action { yesno = 2; };
