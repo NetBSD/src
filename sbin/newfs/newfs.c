@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.38.8.3 2001/11/25 19:32:54 he Exp $	*/
+/*	$NetBSD: newfs.c,v 1.38.8.4 2001/11/25 19:57:16 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.38.8.3 2001/11/25 19:32:54 he Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.38.8.4 2001/11/25 19:57:16 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,8 @@ int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
+int	avgfilesize = AVFILESIZ;/* expected average file size */
+int	avgfpdir = AFPDIR;	/* expected number of files per directory */
 int	bbsize = BBSIZE;	/* boot block size */
 int	sbsize = SBSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
@@ -215,8 +217,8 @@ main(int argc, char *argv[])
 		errx(1, "insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "B:NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
+	    "NT:a:b:c:d:e:f:g:h:i:m:o:s:" :
+	    "B:NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:x:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -272,6 +274,15 @@ main(int argc, char *argv[])
 		case 'f':
 			if ((fsize = atoi(optarg)) <= 0)
 				errx(1, "%s: bad fragment size", optarg);
+			break;
+		case 'g':
+			if ((avgfilesize = atoi(optarg)) <= 0)
+				errx(1, "%s: bad average file size", optarg);
+			break;
+		case 'h':
+			if ((avgfpdir = atoi(optarg)) <= 0)
+				errx(1, "%s: bad expected files per directory",
+				    optarg);
 			break;
 		case 'i':
 			if ((density = atoi(optarg)) <= 0)
@@ -733,6 +744,8 @@ usage(void)
 	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-f frag size\n");
+	fprintf(stderr, "\t-g average file size\n");
+	fprintf(stderr, "\t-h average files per directory\n");
 	fprintf(stderr, "\t-i number of bytes per inode\n");
 	fprintf(stderr, "\t-k sector 0 skew, per track\n");
 	fprintf(stderr, "\t-l hardware sector interleave\n");
