@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.13.2.2 2002/07/02 04:20:06 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.13.2.3 2002/07/09 14:49:56 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,19 +139,6 @@ not, you can just cd into
 and run the command:
 .Pp
 .Dl # Ic "sh MAKEDEV all"
-.Pp
-You must also deal with certain changes in the formats of
-some of the configuration files.
-The most notable change is that the options given to many of the
-file systems in
-.Pa /etc/fstab
-have changed, and some of the file
-systems have changed names.
-To find out what the new options are,
-it's suggested that you read the manual page
-for the file system's mount commands, for example
-.Xr mount_nfs 8
-for NFS.
 .Pp
 Finally, you will want to delete old binaries that were part
 of the version of
