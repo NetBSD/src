@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.21 2003/10/05 11:10:25 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.22 2003/10/11 09:09:15 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.21 2003/10/05 11:10:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.22 2003/10/11 09:09:15 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -781,7 +781,11 @@ primary_cache_is_2way:
 				mips_cache_ops.mco_sdcache_inv_range =
 				    r4k_sdcache_inv_range_generic;
 				mips_cache_ops.mco_sdcache_wb_range =
+#if 0 /* XXX needs real wb functions for r10k 2way L2 cache */
 				    r4k_sdcache_wb_range_generic;
+#else
+				    r4k_sdcache_wbinv_range_generic;
+#endif
 				break;
 
 			case 128:
@@ -794,7 +798,11 @@ primary_cache_is_2way:
 				mips_cache_ops.mco_sdcache_inv_range =
 				    r4k_sdcache_inv_range_128;
 				mips_cache_ops.mco_sdcache_wb_range =
+#if 0 /* XXX needs real wb functions for r10k 2way L2 cache */
 				    r4k_sdcache_wb_range_128;
+#else
+				    r4k_sdcache_wbinv_range_128;
+#endif
 				break;
 
 			default:
