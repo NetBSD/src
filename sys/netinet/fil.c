@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.2 1997/03/27 15:14:07 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.3 1997/05/25 12:07:04 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,12 +9,13 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.1.1.2 1997/03/27 15:14:07 darrenr Exp $";
+static	char	rcsid[] = "$Id: fil.c,v 1.1.1.3 1997/05/25 12:07:04 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #if defined(_KERNEL) || defined(KERNEL)
@@ -46,11 +47,12 @@ static	char	rcsid[] = "$Id: fil.c,v 1.1.1.2 1997/03/27 15:14:07 darrenr Exp $";
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/ip_compat.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_nat.h>
-#include <netinet/ip_frag.h>
-#include <netinet/ip_state.h>
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
+#include "netinet/ip_proxy.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ip_frag.h"
+#include "netinet/ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
@@ -68,9 +70,9 @@ extern	int	opts;
 # define	FR_DEBUG(verb_pr)			debug verb_pr
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
 # define	SEND_RESET(ip, qif, q, if)		send_reset(ip, if)
+# define	IPLLOG(a, c, d, e)		ipllog()
 # if SOLARIS
 #  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(ip)
-#  define	bcmp	memcmp
 # else
 #  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(b, ip, if)
 # endif
@@ -81,6 +83,7 @@ extern	int	opts;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+# define	IPLLOG(a, c, d, e)		ipllog(a, IPL_LOGIPF, c, d, e)
 # if SOLARIS
 extern	kmutex_t	ipf_mutex;
 #  define	SEND_RESET(ip, qif, q, if)	send_reset(ip, qif, q)
@@ -99,19 +102,12 @@ extern	kmutex_t	ipf_mutex;
 # endif
 #endif
 
-#ifndef	IPF_LOGGING
-#define	IPF_LOGGING	0
-#endif
-#ifdef	IPF_DEFAULT_PASS
-#define	IPF_NOMATCH	(IPF_DEFAULT_PASS|FR_NOMATCH)
-#else
-#define	IPF_NOMATCH	(FR_PASS|FR_NOMATCH)
-#endif
 
 struct	filterstats frstats[2] = {{0,0,0,0,0},{0,0,0,0,0}};
 struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
 int	fr_flags = IPF_LOGGING, fr_active = 0;
+int	fr_pass = (IPF_DEFAULT_PASS|FR_NOMATCH);
 
 fr_info_t	frcache[2];
 
@@ -416,7 +412,7 @@ void *m;
 #endif
 		{
 			register u_long	*ld, *lm, *lip;
-			register int i;
+			register int i, j;
 
 			lip = (u_long *)fi;
 			lm = (u_long *)&fr->fr_mip;
@@ -424,10 +420,10 @@ void *m;
 			i = ((lip[0] & lm[0]) != ld[0]);
 			FR_IFDEBUG(i,continue,("0. %#08x & %#08x != %#08x\n",
 				   lip[0], lm[0], ld[0]));
-			i |= ((lip[1] & lm[1]) != ld[1]);
+			i |= ((lip[1] & lm[1]) != ld[1]) << 21;
 			FR_IFDEBUG(i,continue,("1. %#08x & %#08x != %#08x\n",
 				   lip[1], lm[1], ld[1]));
-			i |= ((lip[2] & lm[2]) != ld[2]);
+			i |= ((lip[2] & lm[2]) != ld[2]) << 22;
 			FR_IFDEBUG(i,continue,("2. %#08x & %#08x != %#08x\n",
 				   lip[2], lm[2], ld[2]));
 			i |= ((lip[3] & lm[3]) != ld[3]);
@@ -436,6 +432,7 @@ void *m;
 			i |= ((lip[4] & lm[4]) != ld[4]);
 			FR_IFDEBUG(i,continue,("4. %#08x & %#08x != %#08x\n",
 				   lip[4], lm[4], ld[4]));
+			i ^= (fi->fi_fl & (FR_NOTSRCIP|FR_NOTDSTIP));
 			if (i)
 				continue;
 		}
@@ -472,7 +469,7 @@ void *m;
 			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
 		if ((pass & FR_LOGMASK) == FR_LOG) {
-			if (!ipllog(fr->fr_flags, 0, ip, fin, m))
+			if (!IPLLOG(fr->fr_flags, ip, fin, m))
 				frstats[fin->fin_out].fr_skip++;
 			frstats[fin->fin_out].fr_pkl++;
 		}
@@ -480,7 +477,7 @@ void *m;
 		FR_DEBUG(("pass %#x\n", pass));
 		fr->fr_hits++;
 		if (pass & FR_ACCOUNT)
-			fr->fr_bytes += ip->ip_len;
+			fr->fr_bytes += (U_QUAD_T)ip->ip_len;
 		else
 			fin->fin_icode = fr->fr_icode;
 		fin->fin_rule = rulen;
@@ -556,6 +553,7 @@ int out;
 	fr_makefrip(hlen, ip, fin);
 	fin->fin_ifp = ifp;
 	fin->fin_out = out;
+	fin->fin_mp = mp;
 
 	MUTEX_ENTER(&ipf_mutex);
 	if (!out) {
@@ -565,24 +563,8 @@ int out;
 			frstats[0].fr_acct++;
 	}
 
-	if ((pass = ipfr_knownfrag(ip, fin))) {
-		if ((pass & FR_KEEPSTATE)) {
-			if (fr_addstate(ip, fin, pass) == -1)
-				frstats[out].fr_bads++;
-			else
-				frstats[out].fr_ads++;
-		}
-	} else if ((pass = fr_checkstate(ip, fin))) {
-		if ((pass & FR_KEEPFRAG)) {
-			if (fin->fin_fi.fi_fl & FI_FRAG) {
-				if (ipfr_newfrag(ip, fin, pass) == -1)
-					frstats[out].fr_bnfr++;
-				else
-					frstats[out].fr_nfr++;
-			} else
-				frstats[out].fr_cfr++;
-		}
-	} else {
+	if (!(pass = ipfr_knownfrag(ip, fin)) &&
+	    !(pass = fr_checkstate(ip, fin))) {
 		fc = frcache + out;
 		if (fc->fin_fr && !bcmp((char *)fin, (char *)fc, FI_CSIZE)) {
 			/*
@@ -593,16 +575,16 @@ int out;
 			frstats[out].fr_chit++;
 			pass = fin->fin_fr->fr_flags;
 		} else {
-			pass = IPF_NOMATCH;
+			pass = fr_pass;
 			if ((fin->fin_fr = ipfilter[out][fr_active]))
-				pass = FR_SCANLIST(IPF_NOMATCH, ip, fin, m);
+				pass = FR_SCANLIST(fr_pass, ip, fin, m);
 			bcopy((char *)fin, (char *)fc, FI_CSIZE);
 			if (pass & FR_NOMATCH)
 				frstats[out].fr_nom++;
 		}
 		fr = fin->fin_fr;
 
-		if ((pass & FR_KEEPFRAG)) {
+		if (pass & FR_KEEPFRAG) {
 			if (fin->fin_fi.fi_fl & FI_FRAG) {
 				if (ipfr_newfrag(ip, fin, pass) == -1)
 					frstats[out].fr_bnfr++;
@@ -650,7 +632,7 @@ int out;
 				pass |= FF_LOGBLOCK;
 			frstats[out].fr_bpkl++;
 logit:
-			if (!ipllog(pass, 0, ip, fin, m)) {
+			if (!IPLLOG(pass, ip, fin, m)) {
 				frstats[out].fr_skip++;
 				if ((pass & (FR_PASS|FR_LOGORBLOCK)) ==
 				    (FR_PASS|FR_LOGORBLOCK))
@@ -659,6 +641,19 @@ logit:
 		}
 	}
 #endif /* IPFILTER_LOG */
+#ifdef	_KERNEL
+	/*
+	 * Only allow FR_DUP to work if a rule matched - it makes no sense to
+	 * set FR_DUP as a "default" as there are no instructions about where
+	 * to send the packet.
+	 */
+	if (fr && (pass & FR_DUP))
+# if	SOLARIS
+		mc = dupmsg(m);
+# else
+		mc = m_copy(m, 0, M_COPYALL);
+# endif
+#endif
 
 	if (pass & FR_PASS)
 		frstats[out].fr_pass++;
@@ -702,10 +697,16 @@ logit:
 #endif
 		}
 	}
+
+	/*
+	 * If we didn't drop off the bottom of the list of rules (and thus
+	 * the 'current' rule fr is not NULL), then we may have some extra
+	 * instructions about what to do with a packet.
+	 * Once we're finished return to our caller, freeing the packet if
+	 * we are dropping it (* BSD ONLY *).
+	 */
 #ifdef	_KERNEL
 # if	!SOLARIS
-	if (pass & FR_DUP)
-		mc = m_copy(m, 0, M_COPYALL);
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -721,8 +722,6 @@ logit:
 		m_freem(m);
 	return (pass & FR_PASS) ? 0 : -1;
 # else
-	if (pass & FR_DUP)
-		mc = dupmsg(m);
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -752,25 +751,150 @@ int dev;
 char *buf;
 int len;
 {
-	int	clen, tail;
+	register char	*bufp = iplbuf[dev], *tp = iplt[dev], *hp = iplh[dev];
+	register int	clen, tail;
 
-	tail = (iplh[dev] >= iplt[dev]) ? (iplbuf[dev] + IPLLOGSIZE - iplh[dev]) : (iplt[dev] - iplh[dev]);
+	tail = (hp >= tp) ? (bufp + IPLLOGSIZE - hp) : (tp - hp);
 	clen = MIN(tail, len);
-	bcopy(buf, iplh[dev], clen);
+	bcopy(buf, hp, clen);
 	len -= clen;
 	tail -= clen;
-	iplh[dev] += clen;
+	hp += clen;
 	buf += clen;
-	if (iplh[dev] == iplbuf[dev] + IPLLOGSIZE) {
-		iplh[dev] = iplbuf[dev];
-		tail = iplt[dev] - iplh[dev];
+	if (hp == bufp + IPLLOGSIZE) {
+		hp = bufp;
+		tail = tp - hp;
 	}
 	if (len && tail) {
 		clen = MIN(tail, len);
-		bcopy(buf, iplh[dev], clen);
+		bcopy(buf, hp, clen);
 		len -= clen;
-		iplh[dev] += clen;
+		hp += clen;
 	}
+	iplh[dev] = hp;
 	return len;
 }
 #endif
+
+
+u_short ipf_cksum(addr, len)
+register u_short *addr;
+register int len;
+{
+	register u_long sum = 0;
+
+	for (sum = 0; len > 1; len -= 2)
+		sum += *addr++;
+
+	/* mop up an odd byte, if necessary */
+	if (len == 1)
+		sum += *(u_char *)addr;
+
+	/*
+	 * add back carry outs from top 16 bits to low 16 bits
+	 */
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);			/* add carry */
+	return (u_short)(~sum);
+}
+
+
+/*
+ * NB: This function assumes we've pullup'd enough for all of the IP header
+ * and the TCP header.  We also assume that data blocks aren't allocated in
+ * odd sizes.
+ */
+u_short fr_tcpsum(m, ip, tcp)
+#if SOLARIS
+mblk_t *m;
+#else
+struct mbuf *m;
+#endif
+ip_t *ip;
+tcphdr_t *tcp;
+{
+	union {
+		u_char	c[2];
+		u_short	s;
+	} bytes;
+	u_long sum;
+	u_short	*sp;
+	int len, add, hlen, ilen;
+
+	/*
+	 * Add up IP Header portion
+	 */
+	ilen = len = ip->ip_len - (ip->ip_hl << 2);
+	bytes.c[0] = 0;
+	bytes.c[1] = IPPROTO_TCP;
+	sum = bytes.s;
+	sum += htons((u_short)len);
+	sp = (u_short *)&ip->ip_src;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	if (sp != (u_short *)tcp)
+		sp = (u_short *)tcp;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp++;
+	sum += *sp;
+	sp += 2;	/* Skip over checksum */
+	sum += *sp++;
+
+#if SOLARIS
+	/*
+	 * In case we had to copy the IP & TCP header out of mblks,
+	 * skip over the mblk bits which are the header
+	 */
+	if ((caddr_t)ip != (caddr_t)m->b_rptr) {
+		hlen = (caddr_t)sp - (caddr_t)ip;
+		while (hlen) {
+			add = MIN(hlen, m->b_wptr - m->b_rptr);
+			sp = (u_short *)((caddr_t)m->b_rptr + add);
+			if ((hlen -= add))
+				m = m->b_cont;
+		}
+	}
+#endif
+
+	if (!(len -= sizeof(*tcp)))
+		goto nodata;
+	while (len > 1) {
+		sum += *sp++;
+		len -= 2;
+#if SOLARIS
+		if ((caddr_t)sp > (caddr_t)m->b_wptr) {
+			m = m->b_cont;
+			PANIC((!m),("fr_tcpsum: not enough data"));
+			sp = (u_short *)m->b_rptr;
+		}
+#else
+# ifdef	m_data
+		if ((caddr_t)sp > (m->m_data + m->m_len))
+# else
+		if ((caddr_t)sp > (caddr_t)(m->m_dat + m->m_off + m->m_len))
+# endif
+		{
+			m = m->m_next;
+			PANIC((!m),("fr_tcpsum: not enough data"));
+			sp = mtod(m, u_short *);
+		}
+#endif /* SOLARIS */
+	}
+	if (len) {
+		bytes.c[1] = 0;
+		bytes.c[0] = *(u_char *)sp;
+		sum += bytes.s;
+	}
+nodata:
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	sum = (u_short)((~sum) & 0xffff);
+	return sum;
+}

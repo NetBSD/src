@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.1 1997/03/27 15:14:19 darrenr Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.2 1997/05/25 12:07:12 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -24,9 +24,6 @@
 #  define NETBSD_PF
 #endif
 
-#if defined(__FreeBSD__) && (__FreeBSD__ > 1)
-# include <osreldate.h>
-#endif
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -40,8 +37,9 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/mbuf.h>
-#if defined(__NetBSD__) || (defined(__FreeBSD_version) && \
-    (__FreeBSD_version >= 199511))
+#if	BSD > 199506
+# include <sys/sysctl.h>
+#endif
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -50,12 +48,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
-#endif
-#ifndef	__NetBSD__
-#include <sys/sysent.h>
-#endif
 #include <sys/lkm.h>
 #include "ipl.h"
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 
 #ifndef	IPL_NAME
@@ -87,7 +82,7 @@ extern	int	lkmenodev __P((void));
 #endif
 
 #ifdef NETBSD_PF
-int        (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)) = NULL;
+int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)) = NULL;
 #endif
 
 static	int	ipl_unload __P((void));
@@ -127,20 +122,29 @@ struct	cdevsw	ipldevsw =
 	NULL			/* strategy */
 };
 #endif
-static	struct	cdevsw	cdev_sav;
+
 int	ipl_major = 0;
 
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
 
-extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
+extern int vd_unuseddev __P((void));
 extern int nchrdev;
+
+
+int xxxinit(lkmtp, cmd, ver)
+struct lkm_table *lkmtp;
+int cmd, ver;
+{
+        DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
+}
+
 
 static int iplaction(lkmtp, cmd)
 struct lkm_table *lkmtp;
 int cmd;
 {
-	int i;
+	int i = ipl_major;
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int err = 0;
 
@@ -163,6 +167,7 @@ int cmd;
 		args->lkm_offset = i;   /* slot in cdevsw[] */
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
 		return ipl_load();
+		break;
 	case LKM_E_UNLOAD :
 		printf("IP Filter: unloaded from slot %d\n", ipl_major);
 		return ipl_unload();
@@ -209,7 +214,7 @@ static int ipl_remove __P((void))
 
 static int ipl_unload()
 {
-	int error;
+	int error = 0;
 
 	error = ipldetach();
 #ifdef NETBSD_PF
@@ -225,7 +230,7 @@ static int ipl_load()
 {
 	struct nameidata nd;
 	struct vattr vattr;
-	int error, fmode = S_IFCHR|0600;
+	int error = 0, fmode = S_IFCHR|0600;
 
 	error = iplattach();
 #ifdef NETBSD_PF
@@ -234,7 +239,6 @@ static int ipl_load()
 	if (error)
 		return error;
 	(void) ipl_remove();
-	error = 0;
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
 	if (error = namei(&nd))
@@ -298,12 +302,5 @@ static int ipl_load()
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
 		return error;
-}
-
-
-int xxxinit(lkmtp, cmd, ver)
-struct lkm_table *lkmtp;
-int cmd, ver;
-{
-	DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
+	return 0;
 }

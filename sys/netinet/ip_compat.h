@@ -1,17 +1,17 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.2 1997/03/27 15:14:14 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.3 1997/05/25 12:07:09 darrenr Exp $	*/
 
 /*
- * (C)opyright 1993, 1994, 1995 by Darren Reed.
+ * (C)opyright 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_compat.h,v 1.1.1.2 1997/03/27 15:14:14 darrenr Exp $
+ * $Id: ip_compat.h,v 1.1.1.3 1997/05/25 12:07:09 darrenr Exp $
  */
 
-#ifndef	__IP_COMPAT_H_
+#ifndef	__IP_COMPAT_H__
 #define	__IP_COMPAT_H__
 
 #ifndef	__P
@@ -25,6 +25,23 @@
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
+
+#if defined(_KERNEL) && !defined(KERNEL)
+#define	KERNEL
+#endif
+#if defined(KERNEL) && !defined(_KERNEL)
+#define	_KERNEL
+#endif
+
+#if defined(__SVR4) || defined(__svr4__)
+#define index   strchr
+# ifndef	_KERNEL
+#  define	bzero(a,b)	memset(a,0,b)
+#  define	bcmp		memcmp
+#  define	bcopy(a,b,c)	memmove(b,a,c)
+# endif
+#endif
+
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
 # include	<sys/ioccom.h>
@@ -54,6 +71,15 @@
 
 #ifndef	IP_OFFMASK
 #define	IP_OFFMASK	0x1fff
+#endif
+
+#if	BSD > 199306
+# define	USE_QUAD_T
+# define	U_QUAD_T	u_quad_t
+# define	QUAD_T		quad_t
+#else
+# define	U_QUAD_T	u_long
+# define	QUAD_T		long
 #endif
 
 #ifndef	MAX
@@ -118,14 +144,17 @@
 
 
 #ifdef	__FreeBSD__
-#include <machine/spl.h>
+# include <machine/spl.h>
+# if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
+#  define	ACTUALLY_LKM_NOT_KERNEL
+# endif
 #endif
 
 /*
  * Build some macros and #defines to enable the same code to compile anywhere
  * Well, that's the idea, anyway :-)
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(KERNEL)
 # if SOLARIS
 #  define	MUTEX_ENTER(x)	mutex_enter(x)
 #  define	MUTEX_EXIT(x)	mutex_exit(x)
@@ -158,6 +187,7 @@ extern	ill_t	*get_unit __P((char *));
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
+#  define	KFREES(x,s)	kmem_free((char *)(x), (s))
 #  if SOLARIS
 typedef	struct	qif	{
 	struct	qif	*qf_next;
@@ -199,7 +229,7 @@ typedef	struct	qif	{
 # endif
 # if BSD >= 199306 || defined(__FreeBSD__)
 #  include <vm/vm.h>
-#  if !defined(__FreeBSD__)
+#  if !defined(__FreeBSD__) || (defined (__FreeBSD__) && __FreeBSD__>=3)
 #   include <vm/vm_extern.h>
 #   include <sys/proc.h>
 extern	vm_map_t	kmem_map;
@@ -210,13 +240,16 @@ extern	vm_map_t	kmem_map;
 #  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc(kmem_map, (c))
 #  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
 					  sizeof(*(x)))
+#  define	KFREES(x,s)	kmem_free(kmem_map, (vm_offset_t)(x), (s))
 */
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_PFIL)
+#   define	KFREES(x,s)	FREE((x), M_PFIL)
 #  else
 #   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_TEMP)
+#   define	KFREES(x,s)	FREE((x), M_TEMP)
 #  endif
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
@@ -229,7 +262,9 @@ extern	vm_map_t	kmem_map;
 #   define	SPLX(x)		(void) splx(x)
 #  endif
 # endif
+# define	PANIC(x,y)	if (x) panic y
 #else
+# define	PANIC(x,y)	;
 # define	MUTEX_ENTER(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPLNET(x)	;
@@ -237,6 +272,7 @@ extern	vm_map_t	kmem_map;
 # define	SPLX(x)		;
 # define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
 # define	KFREE(x)	free(x)
+# define	KFREES(x,s)	free(x)
 # define	GETUNIT(x)	get_unit(x)
 # define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
 # define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
@@ -356,6 +392,7 @@ struct ipovly {
 
 # define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
 # define	KFREE(x)	kfree_s((x), sizeof(*(x)))
+# define	KFREES(x,s)	kfree_s((x), (s))
 # define	IRCOPY(a,b,c)	{ \
 				 error = verify_area(VERIFY_READ, \
 						     (b) ,sizeof((b))); \
