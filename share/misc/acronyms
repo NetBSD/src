@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.50 1999/11/16 13:23:47 tron Exp $
+$NetBSD: acronyms,v 1.51 1999/11/17 20:02:07 sommerfeld Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -66,6 +66,7 @@ NFC	no fucking clue
 NFI	no fucking idea
 NIH	not invented here
 NP	no problem
+NRFPT	not ready for prime time
 NRN	no reply necessary
 OIC	oh, I see
 OTOH	on the other hand
