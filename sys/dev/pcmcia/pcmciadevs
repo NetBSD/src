@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.52 1999/10/28 07:21:28 jun Exp $
+$NetBSD: pcmciadevs,v 1.53 1999/10/28 08:12:14 jun Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,6 +199,7 @@ product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL } Corega
+product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL } Corega
 product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
 product SVEC LANCARD	{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
