@@ -1,4 +1,4 @@
-/* $NetBSD: undefined.c,v 1.2 1996/03/08 20:54:25 mark Exp $ */
+/* $NetBSD: undefined.c,v 1.3 1996/06/03 21:53:40 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -58,8 +58,8 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/katelib.h>
 #include <machine/frame.h>
+#include <machine/katelib.h>
 #include <machine/undefined.h>
 #include <machine/irqhandler.h>
 
@@ -100,6 +100,10 @@ install_coproc_handler(coproc, handler)
 		handler = default_undefined_handler;
       
 	undefined_handlers[coproc] = handler;
+#ifdef SA110
+	idcflush();
+	tlbflush();
+#endif
 	return(0);
 }
 
@@ -124,7 +128,7 @@ undefinedinstruction(frame)
 	int fault_instruction;
 	int s;
 	int fault_code;
-	u_quad_t sticks;
+	u_quad_t sticks = 0;
 	int coprocessor;
 
 #ifndef BLOCK_IRQS

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.6 1996/04/26 20:28:28 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.7 1996/06/03 21:53:34 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -45,9 +45,13 @@
 #include <machine/db_machdep.h>
 #include <machine/katelib.h>
 #include <machine/pte.h>
+#include <machine/undefined.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#include <dev/cons.h>
 
 static int nil;
 
@@ -96,19 +100,6 @@ extern char *trap_type[];
 #endif
 
 /*
- * Received keyboard interrupt sequence.
- */
-void
-kdb_kbd_trap(tf)
-	struct trapframe *tf;
-{
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, tf);
-	}
-}
-
-/*
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
@@ -148,6 +139,21 @@ kdb_trap(type, tf)
 
 	return (1);
 }
+
+
+/*
+ * Received keyboard interrupt sequence.
+ */
+void
+kdb_kbd_trap(tf)
+	struct trapframe *tf;
+{
+	if (db_active == 0 && (boothowto & RB_KDB)) {
+		printf("\n\nkernel: keyboard interrupt\n");
+		kdb_trap(-1, tf);
+	}
+}
+
 
 /*
  * Read bytes from kernel address space for debugger.
