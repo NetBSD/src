@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13 2001/09/17 17:03:45 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.14 2001/11/14 18:15:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/cache.h>
 #include <mips/pte.h>
 #include <machine/bus.h>
 
@@ -137,12 +138,13 @@ __hpcmips_cacheable(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	pt_entry_t *pte;
 	u_int32_t opte, npte;
 
-	MachFlushCache();
 	if (t->t_base >= MIPS_KSEG2_START) {
 		va = mips_trunc_page(bpa);
 		endva = mips_round_page(bpa + size);
 		npte = CPUISMIPS3 ? MIPS3_PG_UNCACHED : MIPS1_PG_N;
 		
+		mips_dcache_wbinv_range(va, endva - va);
+
 		for (; va < endva; va += NBPG) {
 			pte = kvtopte(va);
 			opte = pte->pt_entry;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/10/16 15:38:46 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2001/11/14 18:15:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,10 +155,6 @@ extern int splraise(int);
 extern void splset(int);
 extern void spl0(void);
 extern int _splset(int);
-
-/* fast interrupt locking for MD use. */
-extern int _intr_suspend(void);
-extern void _intr_resume(int);
 
 #endif /* _KERNEL */
 #endif /* _PLAYSTATION2_INTR_H_ */

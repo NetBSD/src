@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.6 2001/11/11 17:21:41 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.7 2001/11/14 18:15:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -41,6 +41,8 @@
 #include <machine/machtype.h>
 #include <mips/locore.h>
 
+#include <mips/cache.h>
+
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
@@ -63,6 +65,11 @@ void		ip22_intr_establish(int, int, int (*)(void *), void *);
 
 unsigned long 	ip22_clkread(void);
 unsigned long	ip22_cal_timer(u_int32_t, u_int32_t);
+
+/* ip22_cache.S */
+extern void	ip22_sdcache_do_wbinv(vaddr_t, vaddr_t);
+extern void	ip22_sdcache_enable(void);
+extern void	ip22_sdcache_disable(void);
 
 void 
 ip22_init(void)
@@ -433,6 +440,23 @@ ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 	splx(s);
 
 	return (endctr - startctr) / roundtime * roundtime;
+}
+
+void	ip22_cache_init(struct device *);
+
+void
+ip22_cache_init(struct device *self)
+{
+
+	/*
+	 * If we don't have an R4000-style cache, then initialize the
+	 * IP22 SysAD L2 cache.
+	 */
+	if (mips_sdcache_line_size == 0) {
+		/* XXX */
+		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
+		ip22_sdcache_disable();
+	}
 }
 
 #endif	/* IP22 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.1 2001/10/16 15:38:36 uch Exp $	*/
+/*	$NetBSD: dmac.c,v 1.2 2001/11/14 18:15:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <mips/cache.h>
 
 #include <playstation2/ee/eevar.h>
 #include <playstation2/ee/dmacvar.h>
@@ -306,9 +308,8 @@ dmac_stop_channel(enum dmac_channel ch)
 void
 dmac_sync_buffer()
 {
-	extern void r5900_FlushCache(void);
 
-	r5900_FlushCache();
+	mips_dcache_wbinv_all();
 	__asm__ __volatile("sync.l");
 }
 

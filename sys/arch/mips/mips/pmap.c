@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2001/11/04 14:07:13 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2001/11/14 18:15:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2001/11/04 14:07:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138 2001/11/14 18:15:25 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2001/11/04 14:07:13 tsutsui Exp $");
 
 #include <uvm/uvm.h>
 
+#include <mips/cache.h>
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
@@ -260,11 +261,11 @@ mips_flushcache_allpvh(paddr_t pa)
 		return;
 
 	/* Only one index is allowed at a time */
-	if (mips_indexof(pa) != mips_indexof(pv->pv_va))
-		MachFlushDCache(pv->pv_va, NBPG);
+	if (mips_cache_indexof(pa) != mips_cache_indexof(pv->pv_va))
+		mips_dcache_wbinv_range_index(pv->pv_va, NBPG);
 #else
 	while (pv) {
-		MachFlushDCache(pv->pv_va, NBPG);
+		mips_dcache_wbinv_range_index(pv->pv_va, NBPG);
 		pv = pv->pv_next;
 	}
 #endif
@@ -617,7 +618,8 @@ pmap_destroy(pmap)
 			 * cause problems on machines without secondary caches.
 			 */
 			if (CPUISMIPS3)
-				MachHitFlushDCache((vaddr_t)pte, PAGE_SIZE);
+				mips_dcache_wbinv_range((vaddr_t) pte,
+				    PAGE_SIZE);
 #endif
 			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
 
@@ -941,6 +943,9 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
+/*
+ * XXXJRT -- need a version for each cache type.
+ */
 void
 pmap_procwr(p, va, len)
 	struct proc	*p;
@@ -956,8 +961,10 @@ pmap_procwr(p, va, len)
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
-		MachFlushDCache(va, len);
-		MachFlushICache(va, len);
+		if (p == curproc)
+			mips_icache_sync_range(va, len);
+		else
+			mips_icache_sync_range_index(va, len);
 #endif /* MIPS3 */
 	} else {
 #ifdef MIPS1
@@ -976,7 +983,11 @@ printf("pmap_procwr: va %lx", va);
 #if 0
 printf(" flush %llx", (long long)mips_tlbpfn_to_paddr(entry) + (va & PGOFSET));
 #endif
-		mips1_FlushICache(
+		/*
+		 * XXXJRT -- Wrong -- since page is physically-indexed, we
+		 * XXXJRT need to loop.
+		 */
+		mips_icache_sync_range(
 		    MIPS_PHYS_TO_KSEG0(mips1_tlbpfn_to_paddr(entry)
 		    + (va & PGOFSET)),
 		    len);
@@ -1172,7 +1183,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 #ifdef MIPS1
 	if ((!CPUISMIPS3) && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
-		MachFlushICache(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
+		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
 	}
 #endif
 
@@ -1302,7 +1313,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 			printf("pmap_enter: flush I cache va %lx (%lx)\n",
 			    va - NBPG, (u_long)pa);
 #endif
-		MachFlushICache(va, PAGE_SIZE);
+		/* XXXJRT */
+		mips_icache_sync_range_index(va, PAGE_SIZE);
 	}
 #endif
 
@@ -1378,7 +1390,7 @@ pmap_kremove(va, len)
 			continue;
 		}
 		if (CPUISMIPS3) {
-			MachHitFlushDCache(va, PAGE_SIZE);
+			mips_dcache_wbinv_range(va, PAGE_SIZE);
 			pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
 		} else {
 			pte->pt_entry = MIPS1_PG_NV;
@@ -1554,13 +1566,11 @@ pmap_zero_page(phys)
 	 * writeback of the destination out of the L1 cache.  If we don't,
 	 * later reads (from virtual addresses mapped to the destination PA)
 	 * might read old stale DRAM footprint, not the just-written data.
+	 *
+	 * XXXJRT This is totally disgusting.
 	 */
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		if (mips3_L1TwoWayCache)
-			MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-		else
-			MachFlushDCache(phys, NBPG);
-	}
+	if (CPUISMIPS3 && mips_sdcache_line_size == 0) 
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
 #endif
 }
 
@@ -1596,7 +1606,7 @@ pmap_copy_page(src, dst)
 	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
+	if (CPUISMIPS3 && mips_sdcache_line_size == 0) {
 		/*XXX FIXME Not very sophisticated */
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
@@ -1615,10 +1625,12 @@ pmap_copy_page(src, dst)
 	 * might read old stale DRAM footprint, not the just-written data.
 	 * XXX  Do we need to also invalidate any cache lines matching
 	 *      the destination as well?
+	 *
+	 * XXXJRT -- This is totally disgusting.
 	 */
 	if (CPUISMIPS3) {
-		MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(src), NBPG);
-		MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(dst), NBPG);
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
 #endif
 }
@@ -1715,9 +1727,9 @@ pmap_clear_modify(pg)
 		}
 		if (CPUISMIPS3) {
 			if (PMAP_IS_ACTIVE(pmap)) {
-				MachHitFlushDCache(va, PAGE_SIZE);
+				mips_dcache_wbinv_range(va, PAGE_SIZE);
 			} else {
-				MachFlushDCache(va, PAGE_SIZE);
+				mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 			}
 		}
 		pte->pt_entry &= ~mips_pg_m_bit();
@@ -1846,8 +1858,7 @@ again:
 		pv->pv_next = NULL;
 	} else {
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-		if (CPUISMIPS3 && !mips_L2CachePresent) {
-
+		if (CPUISMIPS3 && mips_sdcache_line_size == 0) {
 			/*
 			 * There is at least one other VA mapping this page.
 			 * Check if they are cache index compatible.
@@ -1864,8 +1875,8 @@ again:
 			 */
 
 			for (npv = pv; npv; npv = npv->pv_next) {
-				if (mips_indexof(npv->pv_va) !=
-				    mips_indexof(va)) {
+				if (mips_cache_indexof(npv->pv_va) !=
+				    mips_cache_indexof(va)) {
 					pmap_remove(npv->pv_pmap, npv->pv_va,
 						    npv->pv_va + PAGE_SIZE);
 					pmap_update(npv->pv_pmap);
@@ -1877,15 +1888,16 @@ again:
 				for (npv = pv; npv; npv = npv->pv_next) {
 
 					/*
-					 * Check cache aliasing incompatibility.  If one
-					 * exists, re-map this page uncached until all
-					 * mappings have the same index again.
+					 * Check cache aliasing incompatibility.
+					 * If one exists, re-map this page
+					 * uncached until all mappings have
+					 * the same index again.
 					 */
-
-					if (mips_indexof(npv->pv_va) !=
-					    mips_indexof(va)) {
+					if (mips_cache_indexof(npv->pv_va) !=
+					    mips_cache_indexof(va)) {
 						pmap_page_cache(pa,PV_UNCACHED);
-						MachFlushDCache(pv->pv_va, PAGE_SIZE);
+						mips_dcache_wbinv_range_index(
+						    pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 #ifdef DEBUG
 						enter_stats.ci++;
@@ -2037,27 +2049,15 @@ pmap_remove_pv(pmap, va, pa)
 
 		pv = pa_to_pvh(pa);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (mips_indexof(pv->pv_va ^ npv->pv_va))
+			if (mips_cache_indexof(pv->pv_va ^ npv->pv_va))
 				break;
 		}
 		if (npv == NULL)
 			pmap_page_cache(pa, 0);
 	}
 #endif
-	if (CPUISMIPS3 && last != 0) {
-		MachFlushDCache(va, PAGE_SIZE);
-		if (mips_L2CachePresent)
-
-			/*
-			 * mips3_MachFlushDCache() converts the address to a
-			 * KSEG0 address, and won't properly flush the Level 2
-			 * cache.  Do another flush using the physical adddress
-			 * to make sure the proper secondary cache lines are
-			 * flushed.  Ugh!
-			 */
-
-			MachFlushDCache(pa, PAGE_SIZE);
-	}
+	if (CPUISMIPS3 && last != 0)
+		mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 #endif
 }
 
@@ -2120,7 +2120,7 @@ pmap_prefer(foff, vap)
 		va = *vap;
 
 		d = foff - va;
-		d &= mips_CachePreferMask;
+		d &= mips_cache_prefer_mask;
 		*vap = va + d;
 	}
 }
