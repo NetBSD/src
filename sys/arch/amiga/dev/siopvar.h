@@ -34,10 +34,25 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
- *	$Id: siopvar.h,v 1.2 1994/02/11 07:02:20 chopps Exp $
+ *	$Id: siopvar.h,v 1.3 1994/05/12 05:57:25 chopps Exp $
  */
+#ifndef _SIOPVAR_H_
+#define _SIOPVAR_H_
 
-struct siop_ds {			/* Data Structure */
+/*
+ * The largest single request will be MAXPHYS bytes which will require
+ * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
+ * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
+ * buffer is not page aligned (+1).
+ */
+#define	DMAMAXIO	(MAXPHYS/NBPG+1)
+
+struct	siop_pending {
+	TAILQ_ENTRY(siop_pending) link;
+	struct scsi_xfer *xs;
+};
+
+struct siop_ds {			/* Data Structure for SCRIPTS */
 	long	scsi_addr;		/* SCSI ID & sync */
 	long	idlen;			/* Identify message */
 	char	*idbuf;
@@ -54,13 +69,11 @@ struct siop_ds {			/* Data Structure */
 	struct {
 		long datalen;
 		char *databuf;
-	} chain[MAXPHYS/NBPG+1];
+	} chain[DMAMAXIO];
 };
 
 struct	siop_softc {
-	struct	amiga_ctlr *sc_ac;
-	struct	devqueue sc_dq;
-	struct	devqueue sc_sq;
+	struct	device sc_dev;
 
 	/* should have one for each target? */
 	u_char	sc_istat;
@@ -68,6 +81,12 @@ struct	siop_softc {
 	u_char	sc_sstat0;
 	u_char	sc_sstat1;
 	struct siop_ds sc_ds;
+	struct	scsi_link sc_link;	/* proto for sub devices */
+	siop_regmap_p	sc_siopp;	/* the SIOP */
+	volatile void 	*sc_cregs;	/* driver specific regs */
+	TAILQ_HEAD(,siop_pending) sc_xslist;	/* LIFO */
+	struct	siop_pending sc_xsstore[8][8];	/* one for every unit */
+	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
 	u_char	sc_flags;
 	u_char	sc_lun;
 	u_long	sc_clock_freq;
@@ -93,3 +112,30 @@ struct	siop_softc {
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
 				   or it rejected the request and we stay async */
+
+#define	MSG_CMD_COMPLETE	0x00
+#define MSG_EXT_MESSAGE		0x01
+#define	MSG_SAVE_DATA_PTR	0x02
+#define	MSG_RESTORE_PTR		0x03
+#define	MSG_DISCONNECT		0x04
+#define	MSG_INIT_DETECT_ERROR	0x05
+#define	MSG_ABORT		0x06
+#define	MSG_REJECT		0x07
+#define	MSG_NOOP		0x08
+#define	MSG_PARITY_ERROR	0x09
+#define	MSG_BUS_DEVICE_RESET	0x0C
+#define	MSG_IDENTIFY		0x80
+#define	MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
+#define	MSG_SYNC_REQ 		0x01
+
+#define	STS_CHECKCOND	0x02	/* Check Condition (ie., read sense) */
+#define	STS_CONDMET	0x04	/* Condition Met (ie., search worked) */
+#define	STS_BUSY	0x08
+#define	STS_INTERMED	0x10	/* Intermediate status sent */
+#define	STS_EXT		0x80	/* Extended status valid */
+
+void siop_minphys __P((struct buf *bp));
+u_int siop_adinfo __P((void));
+int siop_scsicmd __P((struct scsi_xfer *));
+
+#endif /* _SIOPVAR_H */
