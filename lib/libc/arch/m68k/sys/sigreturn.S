@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: sigreturn.S,v 1.1 1993/11/25 23:39:36 paulus Exp $"
+	.asciz "$Id: sigreturn.S,v 1.2 1994/08/04 05:02:48 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -56,7 +56,4 @@
 
 ENTRY(sigreturn)
 	trap	#1		/* signals sigreturn() */
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
 	jra	cerror
