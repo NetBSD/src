@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.30 1995/01/04 06:03:15 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.31 1995/01/04 06:32:23 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -337,7 +337,7 @@ msdosfs_setattr(ap)
 			return (error);
 	}
 	/*
-	 * DOS files only have the ability to have thier writability
+	 * DOS files only have the ability to have their writability
 	 * attribute set, so we use the owner write bit to set the readonly
 	 * attribute.
 	 */
@@ -1672,7 +1672,6 @@ msdosfs_strategy(ap)
 {
 	struct buf *bp = ap->a_bp;
 	struct denode *dep = VTODE(bp->b_vp);
-	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vnode *vp;
 	int error = 0;
 

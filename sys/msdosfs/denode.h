@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.12 1995/01/04 06:03:11 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.13 1995/01/04 06:32:19 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -163,10 +163,10 @@ struct denode {
 /*
  * Values for the de_flag field of the denode.
  */
-#define	DE_LOCKED	0x0001	/* directory entry is locked */
-#define	DE_WANTED	0x0002	/* someone wants this de */
-#define	DE_UPDATE	0x0004	/* file has been modified */
-#define	DE_MODIFIED	0x0080	/* denode wants to be written back to disk */
+#define	DE_LOCKED	0x0001	/* Denode lock. */
+#define	DE_WANTED	0x0002	/* Denode is wanted by a process. */
+#define	DE_UPDATE	0x0004	/* Modification time update request. */
+#define	DE_MODIFIED	0x0008	/* Denode has been modified. */
 
 /*
  * Transfer directory entries between internal and external form.
@@ -206,7 +206,7 @@ struct denode {
 	}
 
 /*
- * This overlays the fid sturcture (see mount.h)
+ * This overlays the fid structure (see mount.h)
  */
 struct defid {
 	u_short defid_len;	/* length of structure */

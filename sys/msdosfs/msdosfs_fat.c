@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.14 1994/10/29 07:59:35 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.15 1995/01/04 06:32:21 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -361,7 +361,7 @@ updatefats(pmp, bp, fatbn)
  * Where n is even. m = n + (n >> 2)
  * 
  */
-__inline void
+static __inline void
 usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
@@ -371,7 +371,7 @@ usemap_alloc(pmp, cn)
 	pmp->pm_freeclustercount--;
 }
 
-__inline void
+static __inline void
 usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
