@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.108 2000/11/16 20:04:33 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.109 2000/11/19 00:54:50 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -358,9 +358,6 @@ extern struct proc *curproc;		/* Current running proc. */
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
-/* Process list lock; see kern_proc.c for locking protocol details. */
-extern struct lock proclist_lock;
-
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
 
@@ -418,10 +415,24 @@ void	child_return __P((void *));
 
 int	proc_isunder __P((struct proc *, struct proc*));
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* Process list lock; see kern_proc.c for locking protocol details. */
+extern struct lock proclist_lock;
+
 void	proclist_lock_read __P((void));
 void	proclist_unlock_read __P((void));
 int	proclist_lock_write __P((void));
 void	proclist_unlock_write __P((int));
+
+#else
+
+#define	proclist_lock_read()	/* nothing */
+#define	proclist_unlock_read()
+#define	proclist_lock_write() splclock()
+#define	proclist_unlock_write(s) splx(s)
+
+#endif
+
 void	p_sugid __P((struct proc*));
 
 /* Compatbility with old, non-interlocked tsleep call. */
