@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr_bootsel.S,v 1.4 1999/05/02 12:20:01 fvdl Exp $	*/
+/*	$NetBSD: mbr_bootsel.S,v 1.5 2002/08/04 20:29:44 ross Exp $	*/
 
 
 /*-
@@ -209,12 +209,12 @@
 ENTRY(start)
 	data32
 	xorl	%eax, %eax
-	movl	%ax, %ss
-	movl	$BOOTADDR, %sp
-	movl	%ax, %es
-	movl	%ax, %ds
-	xorl	%si,%si
-	movl	%sp, %si
+	movl	%eax, %ss
+	movl	$BOOTADDR, %esp
+	movl	%eax, %es
+	movl	%eax, %ds
+	xorl	%esi,%esi
+	movl	%esp, %esi
 	movw_imm_reg(_C_LABEL(start),DI)
 	movw_imm_reg(0x100,CX)
 	rep
@@ -256,7 +256,7 @@ bootsel:
 	call16(putasciz)
 2:
 	incb	%al
-	addl	$TABENTRYSIZE,%di
+	addl	$TABENTRYSIZE,%edi
 	loop	1b
 
 /*
