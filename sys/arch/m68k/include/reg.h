@@ -37,11 +37,11 @@
  *
  *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	from: @(#)reg.h	7.2 (Berkeley) 11/3/90
- *	$Id: reg.h,v 1.6 1994/01/06 17:05:34 mycroft Exp $
+ *	$Id: reg.h,v 1.7 1994/01/08 10:41:23 cgd Exp $
  */
 
-#ifndef _HP300_REG_H_
-#define _HP300_REG_H_
+#ifndef _M68K_REG_H_
+#define _M68K_REG_H_
 
 /*
  * Register set accessible via /proc/$pid/reg and ptrace()
@@ -52,7 +52,7 @@ struct reg {
 	int	r_sr;
 };
 
-/* XXXX this is historical */
+/* XXXX this is historical (but it can't be deprecated quite yet) */
 
 /*
  * Location of the users' stored
@@ -80,13 +80,6 @@ struct reg {
 #define	PC	(17)
 #define	PS	(16)
 
-#define	NIPCREG 17
-
-#ifdef IPCREG
-int ipcreg[NIPCREG] =
-	{D0,D1,D2,D3,D4,D5,D6,D7,A0,A1,A2,A3,A4,A5,A6,A7,PC};
-#endif
-
 #ifdef KERNEL
 /*
  * Due to a mental lapse somewhere down the line, wait returns its values
@@ -97,4 +90,4 @@ int ipcreg[NIPCREG] =
 #define	R1	A0
 #endif
 
-#endif /* !_HP300_REG_H_ */
+#endif /* !_M68K_REG_H_ */
