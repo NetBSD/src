@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.10 2003/10/18 08:30:14 lukem Exp $
+# 	$NetBSD: config.playstation2,v 1.11 2005/02/18 21:12:36 dsl Exp $
 #
 
 maxusers	16
@@ -19,6 +19,7 @@ file-system 	PROCFS		# /proc
 
 options 	SOFTDEP		# FFS soft updates support.
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
