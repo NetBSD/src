@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.1 2002/02/12 20:38:51 scw Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.2 2002/03/24 17:22:32 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -194,6 +194,9 @@ vmetwo_intr_init(struct vmetwo_softc *sc)
 	/* Set the Master Interrupt Enable bit now */
 	reg = vme2_lcsr_read(sc, VME2LCSR_MISC_STATUS) | VME2_MISC_STATUS_MIEN;
 	vme2_lcsr_write(sc, VME2LCSR_MISC_STATUS, reg);
+
+	/* Allow the MD code the chance to do some initialising */
+	vmetwo_md_intr_init(sc);
 
 #if defined(MVME167) || defined(MVME177)
 #if defined(MVME162) || defined(MVME172)
