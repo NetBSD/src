@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.20 2001/11/23 17:10:29 christos Exp $	*/
+/*	$NetBSD: statd.c,v 1.20.2.1 2003/01/06 04:52:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.20 2001/11/23 17:10:29 christos Exp $");
+__RCSID("$NetBSD: statd.c,v 1.20.2.1 2003/01/06 04:52:53 jmc Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -99,6 +99,7 @@ main(argc, argv)
 {
 	int ch;
 	struct sigaction nsa;
+	int maxrec = RPC_MAXDATASIZE;
 
 	sigemptyset(&nsa.sa_mask);
 	nsa.sa_flags = SA_NOCLDSTOP|SA_NOCLDWAIT;
@@ -119,6 +120,8 @@ main(argc, argv)
 		}
 	}
 	(void)rpcb_unset(SM_PROG, SM_VERS, NULL);
+
+	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 
 	if (!svc_create(sm_prog_1, SM_PROG, SM_VERS, "udp")) {
 		errx(1, "cannot create udp service.");
