@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.8.2.1 2001/11/13 22:24:11 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.8.2.2 2001/11/13 22:32:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -337,6 +338,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -390,6 +392,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 	return error;
 }
@@ -448,6 +451,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return error;
 }
@@ -485,6 +489,7 @@ _bus_dmamap_unload(t, map)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_flags &= ~NEWSMIPS_DMAMAP_COHERENT;
+	map->_dm_proc = NULL;
 }
 
 #ifdef MIPS1
