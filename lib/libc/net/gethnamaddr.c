@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.40 2001/04/26 12:55:32 kleink Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.41 2002/05/17 22:40:31 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.40 2001/04/26 12:55:32 kleink Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.41 2002/05/17 22:40:31 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -682,6 +682,12 @@ gethostbyaddr(addr, len, af)
 	_DIAGASSERT(addr != NULL);
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
+	    (IN6_IS_ADDR_LINKLOCAL((const struct in6_addr *)(const void *)uaddr) ||
+	     IN6_IS_ADDR_SITELOCAL((const struct in6_addr *)(const void *)uaddr))) {
+		h_errno = HOST_NOT_FOUND;
+		return NULL;
+	}
+	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)(const void *)uaddr) ||
 	     IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)(const void *)uaddr))) {
 		/* Unmap. */
@@ -834,7 +840,7 @@ _gethtbyname(rv, cb_data, ap)
 	hp = _gethtbyname2(name, af);
 #endif
 	*((struct hostent **)rv) = hp;
-	if (hp==NULL) {
+	if (hp == NULL) {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
