@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.19 2001/11/13 06:24:57 lukem Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.20 2001/11/23 10:31:54 enami Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.19 2001/11/13 06:24:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.20 2001/11/23 10:31:54 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_640U },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1650 },
+	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_GT9700F },
 
 	/* UMAX */
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1220U },
