@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.20 2001/10/16 16:31:32 uch Exp $
+#	$NetBSD: Makefile.mips,v 1.21 2001/10/23 18:57:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -41,13 +41,13 @@ TEXTADDR?=	${DEFTEXTADDR}
 .ifndef S
 S=	../../../..
 .endif
-THISMIPS=	$S/arch/${TARGET_MACHINE}
+THISMIPS=	$S/arch/${MACHINE}
 MIPS=		$S/arch/mips
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
-		-D${TARGET_MACHINE}
+		-D${MACHINE}
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -70,7 +70,7 @@ LINKFLAGS+=	--oformat elf32-littlemips
 .endif
 STRIPFLAGS=	-g -X -x
 
-.-include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
+.-include "${THISMIPS}/conf/Makefile.${MACHINE}.inc"
 
 %INCLUDES
 
@@ -212,7 +212,7 @@ SRCS+=	${MIPS}/mips/r5900/locore_r5900.S ${MIPS}/mips/r5900/r5900_machdep.c
 SFILES+=${MIPS}/mips/fp.S
 .endif
 SFILES+=${MIPS}/mips/locore.S \
-	${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
+	${THISMIPS}/${MACHINE}/locore_machdep.S
 SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend: .depend
@@ -262,7 +262,7 @@ fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 .endif
 
-locore_machdep.o: ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S assym.h
+locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.12 2001/05/29 02:20:25 mrg Exp $
+#	$NetBSD: Makefile.sh3,v 1.13 2001/10/23 18:57:33 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -39,12 +39,12 @@ COPTS?=	-O1
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-THISSH3=$S/arch/${TARGET_MACHINE}
+THISSH3=$S/arch/${MACHINE}
 SH3=	$S/arch/sh3
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -D${TARGET_MACHINE}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -D${MACHINE}
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -58,8 +58,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS?=	-e start -T ${THISSH3}/conf/${LDSCRIPTBASE}
 STRIPFLAGS=	--strip-debug
 
-.if exists(${THISSH3}/conf/Makefile.${TARGET_MACHINE}.inc)
-.include "${THISSH3}/conf/Makefile.${TARGET_MACHINE}.inc"
+.if exists(${THISSH3}/conf/Makefile.${MACHINE}.inc)
+.include "${THISSH3}/conf/Makefile.${MACHINE}.inc"
 .endif
 
 %INCLUDES
@@ -118,9 +118,9 @@ LINKFLAGS+=
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${THISSH3}/${TARGET_MACHINE}/genassym.cf
+assym.h: $S/kern/genassym.sh ${THISSH3}/${MACHINE}/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${THISSH3}/${TARGET_MACHINE}/genassym.cf > assym.h.tmp && \
+	    < ${THISSH3}/${MACHINE}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -168,17 +168,17 @@ links:
 	sh makelinks && rm -f dontlink
 
 # ${SH3}/sh3/locore.s ?
-SRCS=	${THISSH3}/${TARGET_MACHINE}/locore.s \
+SRCS=	${THISSH3}/${MACHINE}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${THISSH3}/${TARGET_MACHINE}/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${THISSH3}/${MACHINE}/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${THISSH3}/${TARGET_MACHINE}/genassym.cf
+	  ${CPPFLAGS} < ${THISSH3}/${MACHINE}/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -197,7 +197,7 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${THISSH3}/${TARGET_MACHINE}/locore.s assym.h
+locore.o: ${THISSH3}/${MACHINE}/locore.s assym.h
 	${NORMAL_S}
 
 # XXX compile ffs_inode.c always with -O0 to avoid egcs-1.1.2 bug.
