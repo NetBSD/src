@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.9 2002/03/31 22:22:44 christos Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.10 2002/04/01 13:42:36 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.9 2002/03/31 22:22:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.10 2002/04/01 13:42:36 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.9 2002/03/31 22:22:44 christos Exp
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/wait.h>
+#include <sys/user.h>
 
 #include <machine/regnum.h>
 
@@ -189,15 +190,13 @@ irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	/*
 	 * Do we need to jump onto the signal stack?
 	 */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/*
-	 * not sure it works yet.
-	 */
-	onstack=0;
-
+	onstack = 
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 
+		&& (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0; 
+#ifdef DEBUG_IRIX
+	if (onstack)
+		printf("irix_sendsig: using signal stack\n");
+#endif
 	/*
 	 * Allocate space for the signal handler context.
 	 */
@@ -224,13 +223,29 @@ irix_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	sc.isc_mdhi = f->f_regs[MULHI];
 	sc.isc_mdlo = f->f_regs[MULLO];
 	sc.isc_pc = f->f_regs[PC];
-	sc.isc_ownedfp = 0;
-	sc.isc_ssflags = 0;
 
-	/*
-	 * Save signal stack.  XXX broken
+	/* 
+	 * Save the floating-pointstate, if necessary, then copy it. 
 	 */
-	/* kregs.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK; */
+#ifndef SOFTFLOAT
+	sc.isc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
+	if (sc.isc_ownedfp) {
+		/* if FPU has current state, save it first */
+		if (p == fpcurproc)
+			savefpregs(p);
+		(void)memcpy(&sc.isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+		    sizeof(sc.isc_fpregs));
+		sc.isc_fpc_csr = p->p_addr->u_pcb.pcb_fpregs.r_regs[32];
+	}
+#else
+	(void)memcpy(&sc.isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
+	    sizeof(sc.isc_fpregs));
+#endif 
+	/*
+	 * Save signal stack
+	 */
+	sc.isc_ssflags = 
+	    (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) ? IRIX_SS_ONSTACK : 0;
 
 	/*
 	 * Install the sigframe onto the stack
@@ -290,6 +305,7 @@ irix_sys_sigreturn(p, v, retval)
 	sigset_t mask;
 	int i, error;
 
+	irix_debug_hack = 0;
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sigreturn()\n");
 	printf("scp = %p, ucp = %p, sig = %d (%p)\n", 
@@ -317,8 +333,27 @@ irix_sys_sigreturn(p, v, retval)
 	f->f_regs[MULHI] = ksc.isc_mdhi;
 	f->f_regs[PC] = ksc.isc_pc;
 
+#ifndef SOFTFLOAT
+	if (ksc.isc_ownedfp) {
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+		if (p == fpcurproc) 
+			fpcurproc = (struct proc *)0;
+		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &ksc.isc_fpregs,
+		    sizeof(ksc.isc_fpregs));
+		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = ksc.isc_fpc_csr;
+	}
+#else	
+	(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &ksc.isc_fpregs,
+	    sizeof(p->p_addr->u_pcb.pcb_fpregs));
+#endif
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	if (ksc.isc_ssflags & IRIX_SS_ONSTACK)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		
 
 	/* Restore signal mask. */
 	irix_to_native_sigset((irix_sigset_t *)&ksc.isc_sigset, &mask);
