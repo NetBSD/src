@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)ffs.3	5.3 (Berkeley) 4/19/91
+.\"     @(#)ffs.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1991
+.Dd April 19, 1994
 .Dt FFS 3
 .Os
 .Sh NAME
@@ -46,8 +46,7 @@
 .Sh DESCRIPTION
 The
 .Fn ffs
-fucntion
-finds the first bit set in
+function finds the first bit set in
 .Fa value
 and returns the index of that bit.
 Bits are numbered starting from 1, starting at the right-most

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)memccpy.c	5.8 (Berkeley) 5/30/91";
+static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -49,9 +49,8 @@ memccpy(t, f, c, n)
 	if (n) {
 		register unsigned char *tp = t;
 		register const unsigned char *fp = f;
-		register unsigned char uc = c;
 		do {
-			if ((*tp++ = *fp++) == uc)
+			if ((*tp++ = *fp++) == c)
 				return (t);
 		} while (--n != 0);
 	}
