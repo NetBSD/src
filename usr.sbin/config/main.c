@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2001/11/28 05:03:31 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2001/12/05 23:42:37 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -569,6 +569,7 @@ void
 defoption(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
 
+	warn("The use of `defopt' is deprecated");
 	defopt(defopttab, fname, opts, deps);
 }
 
