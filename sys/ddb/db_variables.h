@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.9 2001/01/17 19:50:04 jdolecek Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.10 2001/01/18 10:54:29 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -47,8 +47,8 @@ struct db_variable {
 
 extern const struct db_variable	db_vars[];	/* debugger variables */
 extern const struct db_variable	* const db_evars;
-extern struct db_variable	db_regs[];	/* machine registers */
-extern struct db_variable	*db_eregs;
+extern const struct db_variable	db_regs[];	/* machine registers */
+extern const struct db_variable	* const db_eregs;
 
 int db_find_variable __P((const struct db_variable **));
 int db_get_variable __P((db_expr_t *));

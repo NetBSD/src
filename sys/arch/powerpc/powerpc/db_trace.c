@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2000/06/29 07:48:18 mrg Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2001/01/18 10:54:28 jdolecek Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -39,7 +39,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "r0",  (long *)&ddb_regs.r[0],  FCN_NULL },
 	{ "r1",  (long *)&ddb_regs.r[1],  FCN_NULL },
 	{ "r2",  (long *)&ddb_regs.r[2],  FCN_NULL },
@@ -75,7 +75,7 @@ struct db_variable db_regs[] = {
 	{ "iar", (long *)&ddb_regs.iar,   FCN_NULL },
 	{ "msr", (long *)&ddb_regs.msr,   FCN_NULL },
 };
-struct db_variable *db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
 
 extern label_t	*db_recover;
 
