@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.2.2.1 1998/11/23 04:23:43 cgd Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.2.2.2 1998/11/23 07:57:29 cgd Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -69,7 +69,8 @@ LOADSZ		=	PRIM_LOADSZ	# size of unix boot
 PARTSTART	=	0x1be	# starting address of partition table
 NUMPART		=	4	# number of partitions in partition table
 PARTSZ		=	16	# each partition table entry is 16 bytes
-BSDPART		=	0xA5	# value of boot_ind, means bootable partition
+OLDBSDPART	=	0xA5	# value of boot_ind, means bootable partition
+NETBSDPART	=	0xA9	# new NetBSD BSD partition
 BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
 
 	.text
@@ -133,13 +134,30 @@ hd:	/**** load sector 0 into the BOOTSEG ****/
 again:
 	addr32
 	movb    %es:4(%ebx), %al
-	cmpb	$BSDPART, %al
+	cmpb	$NETBSDPART, %al
 	data32
 	je	found
 	data32
 	addl	$PARTSZ, %ebx
 	data32
 	loop	again
+
+	/* didn't find a NetBSD partition, look for a 386BSD one */
+	data32
+	movl	$PARTSTART, %ebx
+	data32
+	movl	$NUMPART, %ecx
+again1:
+	addr32
+	movb    %es:4(%ebx), %al	/* dp_typ */
+	cmpb	$OLDBSDPART, %al
+	data32
+	je	found
+	data32
+	addl	$PARTSZ, %ebx
+	data32
+	loop	again1
+
 	data32
 	movl	$enoboot, %esi
 	data32
@@ -348,7 +366,7 @@ endofcode:
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
-	.byte	BOOTABLE,0,1,0,BSDPART,0,16,0
+	.byte	BOOTABLE,0,1,0,NETBSDPART,0,16,0
 	.long	0,16
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = _C_LABEL(boot1) + 0x1fe
