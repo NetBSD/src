@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.104 2000/06/10 02:43:49 soren Exp $	*/
+/*	$NetBSD: locore.S,v 1.105 2000/07/17 07:37:51 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -987,17 +987,6 @@ XLEAF(baderr)
 	j	ra
 	li	v0, -1
 END(fswintrberr)
-
-#if 1
-/*
- * temporary glue for bcopy
- */
-bcopy:
-	move	v0, a0
-	move	a0, a1
-	j	_C_LABEL(memcpy)
-	move	a1, v0
-#endif
 
 #if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
 /*
