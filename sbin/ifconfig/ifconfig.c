@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.65 2000/01/25 01:46:57 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.66 2000/01/25 02:16:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.65 2000/01/25 01:46:57 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.66 2000/01/25 02:16:57 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1338,7 +1338,7 @@ status(ap, alen)
 			for (ifms = ifm_status_descriptions;
 			     ifms->ifms_valid != 0; ifms++) {
 				if (ifms->ifms_type !=
-				      IFM_TYPE(ifmr.ifm_current) &&
+				      IFM_TYPE(ifmr.ifm_current) ||
 				    ifms->ifms_valid !=
 				      ifm_status_valid_list[bitno])
 					continue;
