@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.19 1994/01/06 15:57:25 cgd Exp $
+#	$Id: Makefile,v 1.20 1994/02/10 23:59:51 cgd Exp $
 
-SUBDIR+=	bc cpio diff diff3 grep groff gzip tar gas
-SUBDIR+=	gawk gcc2 gdb ld rcs send-pr sort sdiff
+SUBDIR+=	bc cpio diff diff3 gas gawk gcc2 gdb grep
+SUBDIR+=	groff gzip ld rcs sdiff send-pr sort tar
 
 .include <bsd.subdir.mk>
