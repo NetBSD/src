@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.15 2003/06/23 11:02:09 martin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.16 2003/07/13 08:51:36 jdc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,9 +82,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.15 2003/06/23 11:02:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.16 2003/07/13 08:51:36 jdc Exp $");
 
 #include "opt_bridge_ipf.h"
+#include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 #include "bpfilter.h"
 
@@ -2131,7 +2132,7 @@ static int
 bridge_ip6_checkbasic(struct mbuf **mp)
 {
 	struct mbuf *m = *mp;
-	struct ip6 *ip6;
+	struct ip6_hdr *ip6;
 
         /*
          * If the IPv6 header is not aligned, slurp it up into a new
