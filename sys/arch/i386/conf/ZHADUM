@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.19 1999/09/27 23:59:51 ad Exp $
+#	$NetBSD: ZHADUM,v 1.20 2000/01/13 19:10:23 ad Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -262,6 +262,7 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+#dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.8 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: UNDERWORLD,v 1.9 2000/01/13 19:10:23 ad Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -305,6 +305,7 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 #@ ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #@ ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #@ bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+#@ dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 #@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
