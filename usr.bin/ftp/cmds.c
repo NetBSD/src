@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.102 2003/08/07 11:13:52 agc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.103 2004/06/06 01:37:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.102 2003/08/07 11:13:52 agc Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.103 2004/06/06 01:37:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -780,6 +780,7 @@ status(int argc, char *argv[])
 		code = -1;
 		return;
 	}
+#ifdef NO_STATUS
 	if (connected)
 		fprintf(ttyout, "Connected %sto %s.\n",
 		    connected == -1 ? "and logged in" : "", hostname);
@@ -843,13 +844,14 @@ status(int argc, char *argv[])
 	    onoff(editing)
 #endif	/* !def NO_EDITCOMPLETE */
 	    );
-	fprintf(ttyout, "Version: %s %s\n", FTP_PRODUCT, FTP_VERSION);
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
 			fprintf(ttyout, "\t%s\n", macros[i].mac_name);
 		}
 	}
+#endif
+	fprintf(ttyout, "Version: %s %s\n", FTP_PRODUCT, FTP_VERSION);
 	code = 0;
 }
 
