@@ -73,6 +73,10 @@ HEADERS = \
   eval-plural.h \
   localcharset.h \
   relocatable.h \
+  xsize.h \
+  printf-args.h printf-args.c \
+  printf-parse.h wprintf-parse.h printf-parse.c \
+  vasnprintf.h vasnwprintf.h vasnprintf.c \
   os2compat.h \
   libgnuintl.h.in
 SOURCES = \
@@ -96,6 +100,7 @@ SOURCES = \
   relocatable.c \
   localename.c \
   log.c \
+  printf.c \
   osdep.c \
   os2compat.c \
   intl-compat.c
@@ -120,6 +125,7 @@ OBJECTS = \
   relocatable.$lo \
   localename.$lo \
   log.$lo \
+  printf.$lo \
   osdep.$lo \
   intl-compat.$lo
 DISTFILES.common = Makefile.in \
@@ -127,7 +133,8 @@ config.charset locale.alias ref-add.sin ref-del.sin $(HEADERS) $(SOURCES)
 DISTFILES.generated = plural.c
 DISTFILES.normal = VERSION
 DISTFILES.gettext = COPYING.LIB-2.0 COPYING.LIB-2.1 libintl.glibc \
-Makefile.vms libgnuintl.h.msvc-shared README.woe32 Makefile.msvc
+libgnuintl.h_vms Makefile.vms \
+libgnuintl.h.msvc-static libgnuintl.h.msvc-shared README.woe32 Makefile.msvc
 DISTFILES.obsolete = xopen-msg.sed linux-msg.sed po2tbl.sed.in cat-compat.c \
 COPYING.LIB-2 gettext.h libgettext.h plural-eval.c libgnuintl.h
 
@@ -155,9 +162,9 @@ libintl.la libgnuintl.la: $(OBJECTS)
 # according to the libtool documentation, section "Library interface versions".
 # Maintainers of other packages that include the intl directory must *not*
 # change these values.
-LTV_CURRENT=5
+LTV_CURRENT=7
 LTV_REVISION=0
-LTV_AGE=3
+LTV_AGE=4
 
 .SUFFIXES:
 .SUFFIXES: .c .y .o .lo .sin .sed
@@ -209,6 +216,8 @@ localename.lo: $(srcdir)/localename.c
 	$(LIBTOOL) --mode=compile $(COMPILE) $(srcdir)/localename.c
 log.lo: $(srcdir)/log.c
 	$(LIBTOOL) --mode=compile $(COMPILE) $(srcdir)/log.c
+printf.lo: $(srcdir)/printf.c
+	$(LIBTOOL) --mode=compile $(COMPILE) $(srcdir)/printf.c
 osdep.lo: $(srcdir)/osdep.c
 	$(LIBTOOL) --mode=compile $(COMPILE) $(srcdir)/osdep.c
 intl-compat.lo: $(srcdir)/intl-compat.c
@@ -224,7 +233,11 @@ ref-del.sed: $(srcdir)/ref-del.sin
 INCLUDES = -I. -I$(srcdir) -I..
 
 libgnuintl.h: $(srcdir)/libgnuintl.h.in
-	cp $(srcdir)/libgnuintl.h.in libgnuintl.h
+	sed -e 's,@''HAVE_POSIX_PRINTF''@,@HAVE_POSIX_PRINTF@,g' \
+	    -e 's,@''HAVE_ASPRINTF''@,@HAVE_ASPRINTF@,g' \
+	    -e 's,@''HAVE_SNPRINTF''@,@HAVE_SNPRINTF@,g' \
+	    -e 's,@''HAVE_WPRINTF''@,@HAVE_WPRINTF@,g' \
+	  < $(srcdir)/libgnuintl.h.in > libgnuintl.h
 
 libintl.h: libgnuintl.h
 	cp libgnuintl.h libintl.h
@@ -250,7 +263,7 @@ install-exec: all
 	    $(INSTALL_DATA) libintl.$la $(DESTDIR)$(libdir)/libintl.$la; \
 	  if test "@RELOCATABLE@" = yes; then \
 	    dependencies=`sed -n -e 's,^dependency_libs=\(.*\),\1,p' < $(DESTDIR)$(libdir)/libintl.la | sed -e "s,^',," -e "s,'\$$,,"`; \
-	    if test -n "$dependencies"; then \
+	    if test -n "$$dependencies"; then \
 	      rm -f $(DESTDIR)$(libdir)/libintl.la; \
 	    fi; \
 	  fi; \
@@ -412,6 +425,7 @@ dcigettext.$lo loadmsgcat.$lo plural.$lo plural-exp.$lo: $(srcdir)/plural-exp.h
 dcigettext.$lo: $(srcdir)/eval-plural.h
 localcharset.$lo: $(srcdir)/localcharset.h
 localealias.$lo localcharset.$lo relocatable.$lo: $(srcdir)/relocatable.h
+printf.$lo: $(srcdir)/printf-args.h $(srcdir)/printf-args.c $(srcdir)/printf-parse.h $(srcdir)/wprintf-parse.h $(srcdir)/xsize.h $(srcdir)/printf-parse.c $(srcdir)/vasnprintf.h $(srcdir)/vasnwprintf.h $(srcdir)/vasnprintf.c
 
 tags: TAGS
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: plural-exp.c,v 1.1.1.1 2003/01/17 14:54:20 wiz Exp $	*/
+/*	$NetBSD: plural-exp.c,v 1.1.1.2 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Expression parsing for plural form selection.
-   Copyright (C) 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 2000-2001, 2003 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
    This program is free software; you can redistribute it and/or modify it
@@ -98,10 +98,8 @@ init_germanic_plural ()
 
 void
 internal_function
-EXTRACT_PLURAL_EXPRESSION (nullentry, pluralp, npluralsp)
-     const char *nullentry;
-     struct expression **pluralp;
-     unsigned long int *npluralsp;
+EXTRACT_PLURAL_EXPRESSION (const char *nullentry, struct expression **pluralp,
+			   unsigned long int *npluralsp)
 {
   if (nullentry != NULL)
     {

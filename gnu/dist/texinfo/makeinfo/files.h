@@ -1,7 +1,7 @@
-/*	$NetBSD: files.h,v 1.1.1.3 2003/07/03 14:58:53 wiz Exp $	*/
+/*	$NetBSD: files.h,v 1.1.1.4 2004/07/12 23:26:51 wiz Exp $	*/
 
 /* files.h -- declarations for files.c.
-   Id: files.h,v 1.2 2003/03/06 14:05:30 karl Exp
+   Id: files.h,v 1.7 2004/02/28 10:42:50 dirt Exp
 
    Copyright (C) 1998, 2002 Free Software Foundation, Inc.
 
@@ -36,14 +36,37 @@ typedef struct fstack
 } FSTACK;
 extern FSTACK *filestack;
 
-extern void pushfile (), popfile ();
-extern void flush_file_stack ();
-extern char *get_file_info_in_path ();
-extern char *find_and_load ();
-extern char *output_name_from_input_name ();
-extern char *expand_filename ();
-extern char *filename_part ();
-extern char *pathname_part ();
-extern char *normalize_filename ();
+extern void pushfile (void);
+extern void popfile (void);
+extern void flush_file_stack (void);
+extern char *get_file_info_in_path (char *filename, char *path,
+    struct stat *finfo);
+extern char *find_and_load (char *filename);
+extern char *output_name_from_input_name (char *name);
+extern char *expand_filename (char *filename, char *input_name);
+extern char *filename_part (char *filename);
+extern char *pathname_part (char *filename);
+extern char *normalize_filename (char *fname);
+extern void append_to_include_path (char *path);
+extern void prepend_to_include_path (char *path);
+extern void pop_path_from_include_path (void);
+extern void register_delayed_write (char *delayed_command);
+extern void handle_delayed_writes (void);
+
+typedef struct delayed_write
+{
+  struct delayed_write *next;
+  char *command;
+  char *filename;
+  char *input_filename;
+  char *node;
+  int position;
+  int calling_line;
+
+  int node_order;
+  int index_order;
+} DELAYED_WRITE;
+
+extern int handling_delayed_writes;
 
 #endif /* !FILES_H */
