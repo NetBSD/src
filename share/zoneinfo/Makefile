@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.8 1993/09/02 01:10:03 cgd Exp $
+#	$Id: Makefile,v 1.9 1993/09/17 23:58:57 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -106,7 +106,7 @@ MAN8=	zic.0
 SRCS=	zic.c scheck.c ialloc.c
 
 YDATA=	africa antarctica asia australasia europe northamerica \
-	southamerica pacificnew etcetera factory
+	russia southamerica pacificnew etcetera factory
 NDATA=	systemv
 #SDATA=	solar87 solar88 solar89
 TDATA=	${YDATA} ${NDATA} ${SDATA}
