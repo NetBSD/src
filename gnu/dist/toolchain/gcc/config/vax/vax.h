@@ -486,8 +486,12 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
        mask |= 1 << regno;					\
   fprintf (FILE, "\t.word 0x%x\n", mask);			\
   MAYBE_VMS_FUNCTION_PROLOGUE(FILE)				\
-  if ((size) >= 64) fprintf (FILE, "\tmovab %d(sp),sp\n", -size);\
-  else if (size) fprintf (FILE, "\tsubl2 $%d,sp\n", (size)); }
+  if ((size) >= 64)						\
+    fprintf (FILE, "\tmovab %d(%ssp),%ssp\n", -size,		\
+             REGISTER_PREFIX, REGISTER_PREFIX);			\
+  else if (size)						\
+    fprintf (FILE, "\tsubl2 $%d,%ssp\n",			\
+	     (size), REGISTER_PREFIX); }
 
 /* vms.h redefines this.  */
 #define MAYBE_VMS_FUNCTION_PROLOGUE(FILE)
@@ -515,8 +519,9 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 */
 
 #define BLOCK_PROFILER(FILE, BLOCKNO)	\
-  fprintf (FILE, "\tmovpsl -(sp)\n\tmovw (sp),2(sp)\n\taddl2 $2,sp\n\taddl2 $1,LPBX2+%d\n\tbicpsw $255\n\tbispsw (sp)+\n", \
-		4 * BLOCKNO)
+  fprintf (FILE, "\tmovpsl -(%ssp)\n\tmovw (%ssp),2(%ssp)\n\taddl2 $2,%ssp\n\taddl2 $1,LPBX2+%d\n\tbicpsw $255\n\tbispsw (%ssp)+\n", \
+	   4 * BLOCKNO, REGISTER_PREFIX, REGISTER_PREFIX, REGISTER_PREFIX, \
+	   REGISTER_PREFIX, REGISTER_PREFIX)
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -568,12 +573,16 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
 
+/* This is separated out so register prefixes can be added by a target
+   if it requires them */
+#define	VAX_ISTREAM_SYNC	"movpsl -(sp)\n\tpushal 1(pc)\n\trei"
+
 /* We copy the register-mask from the function's pure code
    to the start of the trampoline.  */
+
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_insn (gen_rtx_ASM_INPUT (VOIDmode,				\
-		      "movpsl -(sp)\n\tpushal 1(pc)\n\trei"));		\
+  emit_insn (gen_rtx_ASM_INPUT (VOIDmode, VAX_ISTREAM_SYNC));		\
   emit_move_insn (gen_rtx_MEM (HImode, TRAMP),				\
 		  gen_rtx_MEM (HImode, FNADDR));			\
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 4)), CXT);\
@@ -968,7 +977,10 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define DATA_SECTION_ASM_OP "\t.data"
 
 /* How to refer to registers in assembler output.
-   This sequence is indexed by compiler's hard-register-number (see above).  */
+   This sequence is indexed by compiler's hard-register-number (see above).
+   The register names will be prefixed by REGISTER_PREFIX, if any.  */
+
+#define	REGISTER_PREFIX ""
 
 #define REGISTER_NAMES \
 {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", \
@@ -1079,13 +1091,14 @@ do { char dstr[30];							\
    It need not be very fast code.  */
 
 #define ASM_OUTPUT_REG_PUSH(FILE,REGNO)  \
-  fprintf (FILE, "\tpushl %s\n", reg_names[REGNO])
+  fprintf (FILE, "\tpushl %s%s\n", REGISTER_PREFIX, reg_names[REGNO])
 
 /* This is how to output an insn to pop a register from the stack.
    It need not be very fast code.  */
 
 #define ASM_OUTPUT_REG_POP(FILE,REGNO)  \
-  fprintf (FILE, "\tmovl (sp)+,%s\n", reg_names[REGNO])
+  fprintf (FILE, "\tmovl (%ssp)+,%s%s\n", REGISTER_PREFIX, REGISTER_PREFIX, \
+	   reg_names[REGNO])
 
 /* This is how to output an element of a case-vector that is absolute.
    (The Vax does not use such vectors,
@@ -1247,7 +1260,7 @@ VAX operand formatting codes:
   else if (CODE == 'M' && GET_CODE (X) == CONST_INT)			\
     fprintf (FILE, "$%d", ~((1 << INTVAL (x)) - 1));			\
   else if (GET_CODE (X) == REG)						\
-    fprintf (FILE, "%s", reg_names[REGNO (X)]);				\
+    fprintf (FILE, "%s%s", REGISTER_PREFIX, reg_names[REGNO (X)]);	\
   else if (GET_CODE (X) == MEM)						\
     output_address (XEXP (X, 0));					\
   else if (GET_CODE (X) == CONST_DOUBLE && GET_MODE (X) == SFmode)	\

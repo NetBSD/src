@@ -110,15 +110,15 @@ print_operand_address (file, addr)
 	  debug_rtx (orig_addr);
 	  abort ();
 	}
-      fprintf (file, "(%s)", reg_names[REGNO (addr)]);
+      fprintf (file, "(%s%s)", REGISTER_PREFIX, reg_names[REGNO (addr)]);
       break;
 
     case PRE_DEC:
-      fprintf (file, "-(%s)", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "-(%s%s)", REGISTER_PREFIX, reg_names[REGNO (XEXP (addr, 0))]);
       break;
 
     case POST_INC:
-      fprintf (file, "(%s)+", reg_names[REGNO (XEXP (addr, 0))]);
+      fprintf (file, "(%s%s)+", REGISTER_PREFIX, reg_names[REGNO (XEXP (addr, 0))]);
       break;
 
     case PLUS:
@@ -307,7 +307,7 @@ print_operand_address (file, addr)
 	      debug_rtx (orig_addr);
 	      abort ();
 	    }
-	  fprintf (file, "(%s)", reg_names[REGNO (breg)]);
+	  fprintf (file, "(%s%s)", REGISTER_PREFIX, reg_names[REGNO (breg)]);
 	}
 
       if (ireg != 0)
@@ -319,7 +319,7 @@ print_operand_address (file, addr)
 	      debug_rtx (orig_addr);
 	      abort ();
 	    }
-	  fprintf (file, "[%s]", reg_names[REGNO (ireg)]);
+	  fprintf (file, "[%s%s]", REGISTER_PREFIX, reg_names[REGNO (ireg)]);
 	}
       break;
 
