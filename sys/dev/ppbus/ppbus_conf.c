@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.5 2004/09/08 20:12:20 drochner Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.6 2004/09/13 12:49:58 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.5 2004/09/08 20:12:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.6 2004/09/13 12:49:58 drochner Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -53,7 +53,6 @@ static void ppbus_attach(struct device *, struct device *, void *);
 static int ppbus_detach(struct device *, int);
 
 /* Utility function prototypes */
-static int ppbus_print_child(void *, const char *); 
 static int ppbus_search_children(struct device *, struct cfdata *,
 				 const locdesc_t *, void *);
 
@@ -226,22 +225,6 @@ ppbus_detach(struct device *self, int flag)
 	return 1;
 }
 
-
-/* Utility functions */
-
-/* Used by config_found_sm() to print out result of child probe */
-static int 
-ppbus_print_child(void *aux, const char *name)
-{
-
-	if (name != NULL) {
-		printf("%s: child devices", name);
-		return UNCONF;
-	} else {
-		return QUIET;
-	}
-}
-
 /* Search for children device and add to list */
 static int
 ppbus_search_children(struct device *parent, struct cfdata *cf,
@@ -253,7 +236,7 @@ ppbus_search_children(struct device *parent, struct cfdata *cf,
 
 	if (config_match(parent, cf, aux) > 0) {
 		child = (struct ppbus_device_softc *) config_attach(parent, 
-			cf, aux, ppbus_print_child);
+			cf, aux, NULL);
 		if (child) {
 			SLIST_INSERT_HEAD(&(ppbus->sc_childlist_head), child, 
 				entries);
