@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.24 1999/12/07 07:20:17 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.25 1999/12/07 07:32:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ const struct tulip_pci_product {
 #endif
 #ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0 },
+	  TULIP_CHIP_21142,		0xe0 },
 #endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
@@ -445,6 +445,8 @@ tlp_pci_attach(parent, self, aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
 	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
