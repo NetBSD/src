@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1997/04/01 16:37:43 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1997/04/03 15:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -99,6 +99,9 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -1243,6 +1246,9 @@ softnet(arg)
 	if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
 	if (isr & (1 << NETISR_IP)) ipintr();
+#endif
+#ifdef NETATALK
+	if (isr & (1 << NETISR_ATALK)) atintr();
 #endif
 #ifdef NS
 	if (isr & (1 << NETISR_NS)) nsintr();

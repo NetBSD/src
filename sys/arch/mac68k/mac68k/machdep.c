@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 1997/03/27 21:01:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 1997/04/03 16:04:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1214,6 +1214,7 @@ badladdr(addr)
 
 void arpintr __P((void));
 void ipintr __P((void));
+void atintr __P((void));
 void nsintr __P((void));
 void clnlintr __P((void));
 void pppintr __P((void));
@@ -1232,6 +1233,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
