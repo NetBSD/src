@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 2002/09/27 20:34:32 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 2002/10/02 04:22:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,9 +171,8 @@ static int  zs_print __P((void *, const char *name));
 extern int  zs_getc __P((void *arg));
 extern void zs_putc __P((void *arg, int c));
 
-const struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 

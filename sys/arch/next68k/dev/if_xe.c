@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.10 2002/10/01 20:41:22 provos Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.11 2002/10/02 04:22:52 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -102,9 +102,8 @@ void xe_dma_tx_shutdown __P((void *));
 
 static void	findchannel_defer __P((struct device *));
 
-const struct cfattach xe_ca = {
-	sizeof(struct xe_softc), xe_match, xe_attach
-};
+CFATTACH_DECL(xe, sizeof(struct xe_softc),
+    xe_match, xe_attach, NULL, NULL);
 
 static int xe_dma_medias[] = {
 	IFM_ETHER|IFM_AUTO,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.2 2002/09/27 20:34:41 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.3 2002/10/02 04:17:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -86,9 +86,8 @@ struct wdc_spd_softc {
 STATIC int wdc_spd_match(struct device *, struct cfdata *, void *);
 STATIC void wdc_spd_attach(struct device *, struct device *, void *);
 
-const struct cfattach wdc_spd_ca = {
-	sizeof (struct wdc_spd_softc), wdc_spd_match, wdc_spd_attach
-};
+CFATTACH_DECL(wdc_spd, sizeof (struct wdc_spd_softc),
+    wdc_spd_match, wdc_spd_attach, NULL, NULL);
 
 extern struct cfdriver wdc_cd;
 
