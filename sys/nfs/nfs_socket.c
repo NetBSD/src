@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.71 2002/01/22 09:37:59 minoura Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.72 2002/02/27 03:46:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.71 2002/01/22 09:37:59 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.72 2002/02/27 03:46:36 lukem Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -167,7 +167,6 @@ nfs_connect(nmp, rep)
 	struct sockaddr_in6 *sin6;
 #endif
 	struct mbuf *m;
-	u_int16_t tport;
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
@@ -182,32 +181,36 @@ nfs_connect(nmp, rep)
 	 * Some servers require that the client port be a reserved port number.
 	 */
 	if (saddr->sa_family == AF_INET && (nmp->nm_flag & NFSMNT_RESVPORT)) {
+		MGET(m, M_WAIT, MT_SOOPTS);
+		*mtod(m, int32_t *) = IP_PORTRANGE_LOW;
+		m->m_len = sizeof(int32_t);
+		if ((error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, m)))
+			goto bad;
 		MGET(m, M_WAIT, MT_SONAME);
 		sin = mtod(m, struct sockaddr_in *);
 		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
-		tport = IPPORT_RESERVED - 1;
-		sin->sin_port = htons(tport);
-		while ((error = sobind(so, m, &proc0)) == EADDRINUSE &&
-		       --tport > IPPORT_RESERVED / 2)
-			sin->sin_port = htons(tport);
+		sin->sin_port = 0;
+		error = sobind(so, m, &proc0);
 		m_freem(m);
 		if (error)
 			goto bad;
 	}
 #ifdef INET6
 	if (saddr->sa_family == AF_INET6 && (nmp->nm_flag & NFSMNT_RESVPORT)) {
+		MGET(m, M_WAIT, MT_SOOPTS);
+		*mtod(m, int32_t *) = IPV6_PORTRANGE_LOW;
+		m->m_len = sizeof(int32_t);
+		if ((error = sosetopt(so, IPPROTO_IPV6, IPV6_PORTRANGE, m)))
+			goto bad;
 		MGET(m, M_WAIT, MT_SONAME);
 		sin6 = mtod(m, struct sockaddr_in6 *);
 		sin6->sin6_len = m->m_len = sizeof (struct sockaddr_in6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_addr = in6addr_any;
-		tport = IPV6PORT_RESERVED - 1;
-		sin6->sin6_port = htons(tport);
-		while ((error = sobind(so, m, &proc0)) == EADDRINUSE &&
-		       --tport > IPV6PORT_RESERVED / 2)
-			sin6->sin6_port = htons(tport);
+		sin6->sin6_port = 0;
+		error = sobind(so, m, &proc0);
 		m_freem(m);
 		if (error)
 			goto bad;
