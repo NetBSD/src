@@ -144,8 +144,11 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 %{march=arm9:-D__ARM_ARCH_4T__} \
 %{march=arm9tdmi:-D__ARM_ARCH_4T__} \
 %{march=strongarm:-D__ARM_ARCH_4__} \
+%{march=strongarm:-D__STRONGARM__} \
 %{march=strongarm110:-D__ARM_ARCH_4__} \
+%{march=strongarm110:-D__STRONGARM__} \
 %{march=strongarm1100:-D__ARM_ARCH_4__} \
+%{march=strongarm1100:-D__STRONGARM__} \
 %{march=xscale:-D__ARM_ARCH_5TE__} \
 %{march=xscale:-D__XSCALE__} \
 %{march=armv2:-D__ARM_ARCH_2__} \
@@ -180,8 +183,11 @@ Unrecognized value in TARGET_CPU_DEFAULT.
  %{mcpu=arm9:-D__ARM_ARCH_4T__} \
  %{mcpu=arm9tdmi:-D__ARM_ARCH_4T__} \
  %{mcpu=strongarm:-D__ARM_ARCH_4__} \
+ %{mcpu=strongarm:-D__STRONGARM__} \
  %{mcpu=strongarm110:-D__ARM_ARCH_4__} \
+ %{mcpu=strongarm110:-D__STRONGARM__} \
  %{mcpu=strongarm1100:-D__ARM_ARCH_4__} \
+ %{mcpu=strongarm1100:-D__STRONGARM__} \
  %{mcpu=xscale:-D__ARM_ARCH_5TE__} \
  %{mcpu=xscale:-D__XSCALE__} \
  %{!mcpu*:%(cpp_cpu_arch_default)}} \
