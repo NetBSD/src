@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.29 2000/07/26 07:40:52 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.30 2000/08/27 17:41:12 itojun Exp $	*/
 /*	$KAME: key.c,v 1.144 2000/07/25 20:16:54 sakane Exp $	*/
 
 /*
@@ -2615,6 +2615,7 @@ key_setsaval(sav, m, mhp)
 	const struct esp_algorithm *algo;
 #endif
 	int error = 0;
+	struct timeval tv;
 
 	/* sanity check */
 	if (m == NULL || mhp == NULL || mhp->msg == NULL)
@@ -2760,7 +2761,14 @@ key_setsaval(sav, m, mhp)
 			error = ENOBUFS;
 			goto fail;
 		}
-		/* initialize ? */
+
+		/* initialize */
+	    {
+		int i;
+		u_int8_t *p = (u_int8_t *)sav->iv;
+		for (i = 0; i < sav->ivlen; i++)
+			p[i] = key_random() & 0xff;
+	    }
 		break;
 #else
 		break;
@@ -2782,9 +2790,6 @@ key_setsaval(sav, m, mhp)
 	sav->tick = 0;
 
 	/* make lifetime for CURRENT */
-    {
-	struct timeval tv;
-
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
 	    sizeof(struct sadb_lifetime));
 	if (sav->lft_c == NULL) {
@@ -2804,7 +2809,6 @@ key_setsaval(sav, m, mhp)
 	sav->lft_c->sadb_lifetime_bytes = 0;
 	sav->lft_c->sadb_lifetime_addtime = tv.tv_sec;
 	sav->lft_c->sadb_lifetime_usetime = 0;
-    }
 
 	/* lifetimes for HARD and SOFT */
     {
