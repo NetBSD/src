@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcp.1,v 1.19 2005/03/09 03:11:22 ginsbach Exp $
+.\"	$NetBSD: rcp.1,v 1.20 2005/03/11 02:55:23 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,9 +51,26 @@ Each
 or
 .Ar directory
 argument is either a remote file name of the
-form ``rname@rhost:path'', or a local file name (containing no `:' characters,
-or a `/' before any `:'s).
+form ``rname@rhost:path'', or a local file name (containing no `:'
+(colon) characters,
+or a `/' (slash) before any `:' (colon) characters).
 .Pp
+The
+.Ar rhost
+can be an IPv4 or an IPv6 address string.
+Since IPv6 addresses already contain `:' (colon) characters,
+an IPv6 address string must be enclosed between `[' (left square bracket)
+and `]' (right square bracket) characters.
+Otherwise, the first occurrence of a `:' (colon) character would be
+interpreted as the separator between the
+.Ar rhost
+and the
+.Ar path.
+For example,
+.Pp
+.Dl [2001:DB8::800:200C:417A]:tmp/file
+.Pp
+Options:
 .Bl -tag -width flag
 .It Fl 4
 Use IPv4 addresses only.

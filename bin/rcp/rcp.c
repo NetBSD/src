@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.38 2005/03/09 17:09:39 wiz Exp $	*/
+/*	$NetBSD: rcp.c,v 1.39 2005/03/11 02:55:23 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.38 2005/03/09 17:09:39 wiz Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.39 2005/03/11 02:55:23 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,6 +267,7 @@ toremote(char *targ, int argc, char *argv[])
 		thost = argv[argc - 1];
 		tuser = NULL;
 	}
+	thost = unbracket(thost);
 
 	for (i = 0; i < argc - 1; i++) {
 		src = colon(argv[i]);
@@ -282,6 +283,7 @@ toremote(char *targ, int argc, char *argv[])
 				err(1, NULL);
 			if (host) {
 				*host++ = 0;
+				host = unbracket(host);
 				suser = argv[i];
 				if (*suser == '\0')
 					suser = pwname;
@@ -292,12 +294,14 @@ toremote(char *targ, int argc, char *argv[])
 				    _PATH_RSH, host, suser, cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
-			} else
+			} else {
+				host = unbracket(argv[i]);
 				(void)snprintf(bp, len,
 				    "exec %s %s -n %s %s '%s%s%s:%s'",
 				    _PATH_RSH, argv[i], cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
+			}
 			(void)susystem(bp);
 			(void)free(bp);
 		} else {			/* local to remote */
@@ -361,6 +365,7 @@ tolocal(int argc, char *argv[])
 			else if (!okname(suser))
 				continue;
 		}
+		host = unbracket(host);
 		len = strlen(src) + CMDNEEDS + 20;
 		if ((bp = malloc(len)) == NULL)
 			err(1, NULL);
