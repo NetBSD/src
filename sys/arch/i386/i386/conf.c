@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.132 2000/11/26 17:44:10 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.133 2000/12/03 13:19:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -298,6 +298,8 @@ cdev_decl(i4btel);
 
 #include "vmegeneric.h"
 cdev_decl(vmegeneric);
+#include "iop.h"
+cdev_decl(iop);
 
 struct cdevsw	cdevsw[] =
 {
@@ -393,6 +395,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
+	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -510,6 +513,7 @@ static int chrtoblktbl[] = {
 	/* 73 */	NODEV,
 	/* 74 */	NODEV,
 	/* 75 */	NODEV,
+	/* 76 */	NODEV
 };
 
 /*
