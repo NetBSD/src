@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.91.4.4 2001/04/06 00:26:34 he Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.91.4.5 2003/09/09 11:07:06 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -287,6 +287,7 @@ tcp_template(tp)
 	    {
 		struct ipovly *ipov;
 		mtod(m, struct ip *)->ip_v = 4;
+		mtod(m, struct ip *)->ip_hl = hlen >> 2;
 		ipov = mtod(m, struct ipovly *);
 		ipov->ih_pr = IPPROTO_TCP;
 		ipov->ih_len = htons(sizeof(struct tcphdr));
