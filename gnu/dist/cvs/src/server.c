@@ -5218,9 +5218,8 @@ error 0 %s: no such system user\n", username);
     if (getuid() != geteuid())
 	rc = setuid (geteuid ());
     else
-#else
-	rc = setuid (pw->pw_uid);
 #endif
+	rc = setuid (pw->pw_uid);
     if (rc < 0)
     {
 	/* Note that this means that if run as a non-root user,
