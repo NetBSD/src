@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.6 2000/04/10 07:46:51 haya Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.7 2000/04/13 10:13:12 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.8 2000/04/10 07:42:57 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.9 2000/04/13 10:12:46 joda Exp 
  */
 
 /*
@@ -80,7 +80,7 @@
 /* Intel products */
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
 /* XXX product name? */
-#define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* Modem */
+#define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* 56k Modem */
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 USB Host Controller (OHCI) */
@@ -91,6 +91,7 @@
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
+#define	CARDBUS_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
 
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
