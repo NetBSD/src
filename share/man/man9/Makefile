@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.163 2004/07/05 11:08:38 sketch Exp $
+#       $NetBSD: Makefile,v 1.164 2004/09/06 09:45:27 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -268,6 +268,8 @@ MLINKS+=malloc.9 MALLOC_DECLARE.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
+	mbuf.9 m_copyback_cow.9 \
+	mbuf.9 m_makewritable.9 \
 	mbuf.9 m_pulldown.9 \
 	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
 	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
