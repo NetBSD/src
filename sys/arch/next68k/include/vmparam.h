@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 1998/11/14 04:32:50 dbj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 1999/01/16 20:33:38 chuck Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -242,9 +242,6 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
-
-/* Use new VM page bootstrap interface. */
-#define MACHINE_NEW_NONCONTIG
 
 /*
  * Constants which control the way the VM system deals with memory segments.
