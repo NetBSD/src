@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.1 1998/09/24 23:28:17 thorpej Exp $ */
+/* $NetBSD: cpuvar.h,v 1.2 1998/09/26 00:01:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,8 +45,14 @@ struct cpu_softc {
 	u_long sc_cpuid;		/* CPU ID */
 	caddr_t sc_idle_stack;		/* our idle stack */
 	u_long sc_flags;		/* flags; see below */
+	u_long sc_ipis;			/* interprocessor interrupts pending */
 	TAILQ_ENTRY(cpu_softc) sc_q;	/* processing queue */
 };
 
 #define	CPUF_PRIMARY	0x00000001	/* CPU is primary CPU */
 #define	CPUF_HATCHED	0x00000002	/* CPU has hatched */
+
+#ifdef _KERNEL
+extern	struct cpu_softc **cpus;
+extern	struct cpu_softc *primary_cpu;
+#endif
