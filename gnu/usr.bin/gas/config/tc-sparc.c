@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.1 1993/10/02 20:59:40 pk Exp $";
+static char rcsid[] = "$Id: tc-sparc.c,v 1.2 1993/10/27 00:14:52 pk Exp $";
 #endif
 
 #define cypress 1234
@@ -1099,7 +1099,7 @@ char *str;
 	case RELOC_BASE13:
 	case RELOC_BASE22:
 		if (the_insn.exp.X_add_symbol)
-			the_insn.exp.X_add_symbol->forceout = 1;
+			the_insn.exp.X_add_symbol->sy_forceout = 1;
 		break;
 	default:
 		break;
@@ -1428,6 +1428,13 @@ relax_addressT segment_address_in_file;
 				if (S_IS_EXTERNAL(fixP->fx_addsy))
 					r_extern = 1;
 				kflag = 1;
+				break;
+
+			case RELOC_32:
+				if (!S_IS_EXTERNAL(fixP->fx_addsy))
+					break;
+				r_index = fixP->fx_addsy->sy_number;
+				/*kflag = 1;*/
 				break;
 
 			default:

@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.5 1993/10/25 21:54:37 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.6 1993/10/27 00:14:14 pk Exp $";
 #endif
 
 #include "as.h"
@@ -724,7 +724,7 @@ segT		segment; /* SEG_DATA or SEG_TEXT */
 						offset = lie->add->sy_frag->fr_address+ S_GET_VALUE(lie->add) + lie->addnum -
 						    (lie->sub->sy_frag->fr_address+ S_GET_VALUE(lie->sub));
 						if (offset <= -32768 || offset >= 32767) {
-							if (flagseen['k'])
+							if (flagseen['K'])
 							    as_warn(".word %s-%s+%ld didn't fit",
 								    S_GET_NAME(lie->add),
 								    S_GET_NAME(lie->sub),
@@ -1059,9 +1059,14 @@ segT this_segment_type; /* N_TYPE bits for segment. */
  			        default:
 					seg_reloc_count ++;
 #ifdef PIC
-					if (fixP->fx_r_type != RELOC_GLOB_DAT &&
+					/*
+					 * Do not fixup refs to global data
+					 * even if defined here.
+					 */
+					if (!flagseen['k'] ||
+					   (fixP->fx_r_type != RELOC_GLOB_DAT &&
 						(fixP->fx_r_type != RELOC_32 ||
-						!S_IS_EXTERNAL(add_symbolP)))
+						!S_IS_EXTERNAL(add_symbolP))))
 #endif
 						add_number += S_GET_VALUE(add_symbolP);
 					break;
