@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.34.2.2 2000/08/29 01:47:42 scottb Exp $	 */
+/*	$NetBSD: rtld.c,v 1.34.2.3 2001/12/09 17:21:33 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -94,8 +94,6 @@ Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 #endif
 
-Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 
@@ -122,8 +120,6 @@ static void _rtld_call_init_functions __P((Obj_Entry *));
 static Obj_Entry *_rtld_dlcheck __P((void *));
 static void _rtld_init_dag __P((Obj_Entry *));
 static void _rtld_init_dag1 __P((Obj_Entry *, Obj_Entry *));
-static void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
-static Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
 static void _rtld_objlist_remove __P((Objlist *, Obj_Entry *));
 static void _rtld_unload_object __P((Obj_Entry *, bool));
 static void _rtld_unref_dag __P((Obj_Entry *));
@@ -338,12 +334,40 @@ _rtld(sp)
 	}
 	aux = (const AuxInfo *) sp;
 
-	/* Digest the auxiliary vector. */
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
 #ifdef	VARPSZ
 	pAUX_pagesz = NULL;
 #endif
+	/*
+	 * First pass through the the auxiliary vector, avoiding the use
+	 * of a `switch() {}' statement at this stage. A `switch()' may
+	 * be translated into code utilizing a jump table approach which
+	 * references the equivalent of a global variable. This must be
+	 * avoided until _rtld_init() has done its job.
+	 * 
+	 * _rtld_init() only needs `pAUX_base' and possibly `pAUX_pagesz',
+	 * so we look for just those in this pass.
+	 */
+	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
+		if (auxp->a_type == AT_BASE)
+			pAUX_base = auxp;
+#ifdef	VARPSZ
+		if (auxp->a_type == AT_PAGESZ)
+			pAUX_pagesz = auxp;
+#endif
+	}
+
+	/* Initialize and relocate ourselves. */
+	assert(pAUX_base != NULL);
+#ifdef	VARPSZ
+	assert(pAUX_pagesz != NULL);
+	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
+#else
+	_rtld_init((caddr_t) pAUX_base->a_v, 0);
+#endif
+
+	/* Digest the auxiliary vector (full pass now that we can afford it). */
 	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
 		case AT_BASE:
@@ -371,15 +395,6 @@ _rtld(sp)
 #endif
 		}
 	}
-
-	/* Initialize and relocate ourselves. */
-	assert(pAUX_base != NULL);
-#ifdef	VARPSZ
-	assert(pAUX_pagesz != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
-#else
-	_rtld_init((caddr_t) pAUX_base->a_v, 0);
-#endif
 
 #ifdef	VARPSZ
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
@@ -478,7 +493,7 @@ _rtld(sp)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, true) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL, true) == -1)
 		_rtld_die();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
@@ -615,6 +630,7 @@ _rtld_unload_object(root, do_fini_funcs)
 				dbg(("unloading \"%s\"", obj->path));
 #endif
 				munmap(obj->mapbase, obj->mapsize);
+				_rtld_objlist_remove(&_rtld_list_global, obj);
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
 				_rtld_obj_free(obj);
@@ -689,18 +705,15 @@ _rtld_dlopen(name, mode)
 	} else {
 		char *path = _rtld_find_library(name, _rtld_objmain);
 		if (path != NULL)
-			obj = _rtld_load_object(path, true);
+			obj = _rtld_load_object(path, mode, true);
 	}
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
-		if ((mode & RTLD_GLOBAL) &&
-		    _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
-			_rtld_objlist_add(&_rtld_list_global, obj);
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, true) == -1 ||
+			if (_rtld_load_needed_objects(obj, mode, true) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
 			    ((mode & 3) == RTLD_NOW), true)) == -1) {
@@ -945,30 +958,6 @@ _rtld_obj_from_addr(const void *addr)
 			continue; /* No "end" symbol?! */
 		if (addr < (void *) (obj->relocbase + endsym->st_value))
 			return obj;
-	}
-	return NULL;
-}
-
-static void
-_rtld_objlist_add(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
-{
-	Objlist_Entry *elm;
-
-	elm = NEW(Objlist_Entry);
-	elm->obj = obj;
-	SIMPLEQ_INSERT_TAIL(list, elm, link);
-}
-
-static Objlist_Entry *
-_rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
-{
-	Objlist_Entry *elm;
-
-	for (elm = SIMPLEQ_FIRST(list); elm; elm = SIMPLEQ_NEXT(elm, link)) {
-		if (elm->obj == obj)
-			return elm;
 	}
 	return NULL;
 }
