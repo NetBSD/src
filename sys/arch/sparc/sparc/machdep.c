@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1997/09/23 08:16:30 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.89 1997/10/16 10:35:49 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
+#include <sys/exec.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -72,12 +73,12 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#include <sys/exec.h>
-#include <sys/sysctl.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
