@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.4 1997/08/07 19:44:54 christos Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.5 1997/09/30 22:10:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,12 +87,15 @@ joy_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
-	    &ioh) < 0) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
+	if (ipa->ipa_io[0].length == 8) {
+		if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
+		    &ioh) < 0) {
+			printf("%s: error in region allocation\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	} else
+		ioh = ipa->ipa_io[0].h;
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ioh;
