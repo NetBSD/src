@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.16 1998/07/06 07:50:19 mrg Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.17 1998/07/06 10:16:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -87,7 +87,7 @@ char   *
 fmt_perm(mode)
 	u_short mode;
 {
-	static char buffer[100];
+	static char buffer[12];
 
 	buffer[0] = '-';
 	buffer[1] = '-';
@@ -114,6 +114,7 @@ cvt_time(t, buf, buflen)
 
 	if (t == 0) {
 		(void)strncpy(buf, "no-entry", buflen - 1);
+		buf[buflen - 1] = '\0';
 	} else {
 		tm = localtime(&t);
 		(void)snprintf(buf, buflen, "%2d:%02d:%02d",
@@ -145,6 +146,7 @@ main(argc, argv)
 	int     i;
 	gid_t	egid = getegid();
 
+	(void)setegid(getgid());
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
 		case 'M':
