@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.55 2000/01/16 13:22:18 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.56 2000/01/16 13:34:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -307,7 +307,8 @@ usbd_transfer(xfer)
 		if (xfer->flags & USBD_NO_TSLEEP) {
 			int i;
 			usbd_bus_handle bus = pipe->device->bus;
-			for (i = 0; i < xfer->timeout; i += 10) {
+			int to = xfer->timeout * 1000;
+			for (i = 0; i < to; i += 10) {
 				delay(10);
 				bus->methods->do_poll(bus);
 				if (xfer->done)
@@ -316,6 +317,7 @@ usbd_transfer(xfer)
 			if (!xfer->done)
 				pipe->methods->abort(xfer);
 		} else
+		/* XXX End hack XXX */
 			tsleep(xfer, PRIBIO, "usbsyn", 0);
 	}
 	splx(s);
