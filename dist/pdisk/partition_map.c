@@ -491,9 +491,11 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	    size = PBLOCK_SIZE;
 	}
     }
+#if 0
     if (size > map->physical_block) {
 	size = map->physical_block;
     }
+#endif
     map->logical_block = size;
 
     map->blocks_in_map = 0;
