@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2001/06/08 00:16:24 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2001/06/28 20:31:37 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,7 +88,7 @@ int pmap_pte_spill(vaddr_t va);
 #define	PMAP_NC			0x1000
 
 #define PMAP_STEAL_MEMORY
-#if 0
+#if 1
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  *
