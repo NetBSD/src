@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/02/27 20:38:34 scw Exp $
+#	$NetBSD: Makefile,v 1.24 2003/03/16 08:39:58 he Exp $
 
 LIB=sa
 
@@ -17,7 +17,7 @@ SRC_net= arp.c \
 SRC_sa= alloc.c \
 	close.c closeall.c \
 	dev.c dev_net.c dkcksum.c \
-	exit.c \
+	ether_sprintf.c exit.c \
 	files.c fstat.c \
 	getfile.c gets.c globals.c \
 	intoa.c \
