@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2001/08/12 18:33:13 scw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2002/03/17 10:04:47 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
 #if defined(MVME162) || defined(MVME172) || defined(MVME167) || defined(MVME177)
 #if NVMETWO == 0
 #include <dev/vme/vmevar.h>
-#include <mvme68k/dev/mvmebus.h>
-#include <mvme68k/dev/vme_twovar.h>
+#include <dev/mvme/mvmebus.h>
+#include <dev/mvme/vme_twovar.h>
 #endif
 #endif
 
