@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1999/01/31 09:21:20 mrg Exp $ */
+/*	$NetBSD: signal.h,v 1.8 1999/03/26 04:29:21 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,6 +94,7 @@ struct sigcontext {
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
 #else /* _LOCORE */
+/* XXXXX These values don't work for _LP64 */
 #define	SC_SP_OFFSET	8
 #define	SC_PC_OFFSET	12
 #define	SC_NPC_OFFSET	16

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1999/01/31 09:21:20 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.7 1999/03/26 04:29:21 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,6 +378,7 @@ SPLHOLD(splfd, PIL_FD)
 
 /* zs hardware interrupts are at level 12 */
 SPLHOLD(splzs, PIL_SER)
+SPLHOLD(splserial, PIL_SER)
 
 /* audio hardware interrupts are at level 13 */
 SPLHOLD(splaudio, PIL_AUD)
@@ -414,6 +415,7 @@ static __inline void splx(newpil)
 #define	splclock()	splclockX(__FILE__, __LINE__)
 #define	splfd()		splfdX(__FILE__, __LINE__)
 #define	splzs()		splzsX(__FILE__, __LINE__)
+#define	splserial()	splzerialX(__FILE__, __LINE__)
 #define	splaudio()	splaudioX(__FILE__, __LINE__)
 #define	splstatclock()	splstatclockX(__FILE__, __LINE__)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
