@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/02/21 18:10:24 kleink Exp $
+#	$NetBSD: Makefile,v 1.22 1999/02/24 18:31:00 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -8,7 +8,7 @@ PROG=	ld.elf_so
 
 .if (${MACHINE} == "alpha") || (${MACHINE_ARCH} == "mips") || \
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "sparc64") || \
-    (${MACHINE} == "i386")
+    (${MACHINE} == "i386") || (${MACHINE} == "sparc")
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
@@ -21,11 +21,13 @@ CLIBOBJ!=cd ${.CURDIR}/../../lib/libc; \
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
 CPPFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
+CPPFLAGS+= -I${.CURDIR}
 CPPFLAGS+= -DDEBUG -DRTLD_LOADER
 #CPPFLAGS+= -DRTLD_DEBUG -DRTLD_DEBUG_RELOC
 
 LDADD+=	-L${DESTDIR}/${LIBDIR} -L${CLIBOBJ} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
+CFLAGS+=-g
 
 .if (${OBJECT_FMT} == "ELF")
 # to be installed
