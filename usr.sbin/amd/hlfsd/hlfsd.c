@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.c,v 1.1.1.2 1997/09/22 21:12:32 christos Exp $
+ * $Id: hlfsd.c,v 1.1.1.3 1997/09/26 16:07:39 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -107,6 +107,9 @@ char *mnttab_file_name = NULL;
 #ifdef DEBUG
 int debug_flags = 0;
 #endif /* DEBUG */
+
+/* forward declarations */
+void hlfsd_going_down(int rc);
 
 
 static void
