@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.708 2005/01/19 10:17:00 cube Exp $
+#	$NetBSD: files,v 1.709 2005/01/21 12:32:18 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -783,6 +783,7 @@ file	dev/ic/rtl81x9.c		rtk | re
 # Realtek 8169 Ethernet controllers
 #
 device	re: ether, ifnet, arp, mii
+file	dev/ic/rtl8169.c		re
 
 # Common code for ESDI/IDE/etc. controllers
 #
