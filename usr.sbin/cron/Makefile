@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.5 1994/12/22 11:33:57 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/03/13 06:19:07 mikel Exp $
 
 PROG=	cron
-SRCS=	cron.c database.c user.c entry.c job.c do_command.c \
-	misc.c env.c popen.c 
+SRCS=	cron.c database.c do_command.c entry.c env.c job.c \
+	misc.c popen.c user.c
 CFLAGS+=-I${.CURDIR}
 MAN=	cron.8
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: cron.h,v 1.2 1997/03/13 06:19:12 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -17,7 +19,7 @@
 
 /* cron.h - header for vixie's cron
  *
- * $Id: cron.h,v 1.1.1.4 1994/01/20 02:47:12 jtc Exp $
+ * Id: cron.h,v 2.10 1994/01/15 20:43:43 vixie Exp
  *
  * vix 14nov88 [rest of log is in RCS]
  * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]

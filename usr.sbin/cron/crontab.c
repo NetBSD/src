@@ -1,3 +1,5 @@
+/*	$NetBSD: crontab.c,v 1.4 1997/03/13 06:19:14 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,8 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.3 1996/12/16 22:30:43 thorpej Exp $";
+/*static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";*/
+static char rcsid[] = "$NetBSD: crontab.c,v 1.4 1997/03/13 06:19:14 mikel Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files

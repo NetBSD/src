@@ -1,3 +1,5 @@
+/*	$NetBSD: externs.h,v 1.2 1997/03/13 06:19:18 mikel Exp $	*/
+
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: env.c,v 1.4 1997/03/13 06:19:17 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,8 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.3 1997/03/06 23:37:04 thorpej Exp $";
+/*static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";*/
+static char rcsid[] = "$NetBSD: env.c,v 1.4 1997/03/13 06:19:17 mikel Exp $";
 #endif
 
 

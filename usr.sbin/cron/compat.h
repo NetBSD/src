@@ -1,3 +1,5 @@
+/*	$NetBSD: compat.h,v 1.2 1997/03/13 06:19:09 mikel Exp $	*/
+
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,7 @@
  */
 
 /*
- * $Id: compat.h,v 1.1.1.3 1994/01/20 02:47:05 jtc Exp $
+ * Id: compat.h,v 1.8 1994/01/15 20:43:43 vixie Exp
  */
 
 #ifndef __P
