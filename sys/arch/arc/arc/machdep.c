@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2001/06/02 18:09:09 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2001/06/13 15:39:13 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <machine/bus.h>
 #include <machine/trap.h>
 #include <machine/autoconf.h>
+#include <machine/platform.h>
 #include <mips/pte.h>
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
@@ -97,70 +98,22 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/isa/isareg.h>
 
-#include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
 #include <arc/arc/wired_map.h>
-#include <arc/jazz/pica.h>
-#include <arc/jazz/rd94.h>
-#include <arc/jazz/pckbc_jazzioreg.h>
-#include <arc/dti/desktech.h>
-#include <arc/algor/algor.h>
-
-#include "rasdisplay_jazzio.h"
-#if NRASDISPLAY_JAZZIO > 0
-#include <arc/jazz/rasdisplay_jazziovar.h>
-#endif
-
-#include "tga.h"
-#if NTGA > 0
-#include <dev/pci/pcivar.h>
-#include <dev/pci/tgavar.h>
-#include <arc/pci/necpbvar.h>
-#endif
-
-#include "pc.h"
-#if NPC > 0
-#include <machine/pccons.h>
-#endif
-
-#include "vga_jazzio.h"
-#if NVGA_JAZZIO > 0
-#include <arc/jazz/vga_jazziovar.h>
-#endif
-
-#include "vga_isa.h"
-#if NVGA_ISA > 0
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/isa/vga_isavar.h>
-#endif
-
-#include "pckbc_jazzio.h"
-
-#include "pckbc.h"
-#if NPCKBC > 0
-#include <dev/ic/pckbcvar.h>
-#endif
 
 #include "com.h"
 #if NCOM > 0
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#endif
 
 #ifndef COMCONSOLE
 #define COMCONSOLE	0
 #endif
 
-#if NCOM > 0
-#ifndef COM_FREQ_MAGNUM
-#if 0
-#define COM_FREQ_MAGNUM	4233600 /* 4.2336MHz - ARC? */
-#else
-#define COM_FREQ_MAGNUM	8192000	/* 8.192 MHz - NEC RISCstation M402 */
+#ifndef CONADDR
+#define CONADDR	0	/* use default address if CONADDR isn't configured */
 #endif
-#endif /* COM_FREQ_MAGNUM */
 
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -173,7 +126,7 @@
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[30];
+char	cpu_model[80];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -185,39 +138,37 @@ struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
+int	cpuspeed = 150;		/* approx CPU clock [MHz] */
 vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
-struct arc_bus_space pica_bus;	/* picabus for com.c/com_lbus.c */
+
 #if NCOM > 0
 int	com_freq = COM_FREQ;	/* unusual clock frequency of dev/ic/com.c */
-int	com_console_address;	/* Well, ain't it just plain stupid... */
-bus_space_tag_t comconstag = &arc_bus_io;	/* com console bus */
-struct arc_bus_space *arc_bus_com = &arc_bus_io; /* com bus */
-#endif
 int	com_console = COMCONSOLE;
-char   **environment;		/* On some arches, pointer to environment */
-char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
+int	com_console_address = CONADDR;
+int	com_console_speed = CONSPEED;
+int	com_console_mode = CONMODE;
+#else
+#ifndef COMCONSOLE
+#error COMCONSOLE is defined without com driver configured.
+#endif
+int	com_console = 0;
+#endif /* NCOM */
+
+char **environment;		/* On some arches, pointer to environment */
 
 int mem_reserved[VM_PHYSSEG_MAX]; /* the cluster is reserved, i.e. not free */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-extern void mach_init __P((int argc, char *argv[], char *envv[]));
+extern void mach_init __P((int, char **argv, char **));
 
 void machine_ConfigCache __P((void));
-static void tlb_init_pica __P((void));
-static void tlb_init_nec_eisa __P((void));
-static void tlb_init_nec_pci __P((void));
-static void tlb_init_tyne __P((void));
-static int get_simm_size __P((int *, int));
-static char *getenv __P((char *env));
-static void arc_sysreset __P((bus_addr_t, bus_size_t));
-static void get_eth_hw_addr __P((char *));
-static int atoi __P((const char *, int));
+char *firmware_getenv __P((char *env));
+void arc_sysreset __P((bus_addr_t, bus_size_t));
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -263,267 +214,37 @@ mach_init(argc, argv, envv)
 
 	environment = &argv[1];
 
-	/* Initialize the CPU type */
-	cputype = bios_ident();
-
-	if (cputype >= 0) { /* ARC BIOS present */
+	if (bios_ident()) { /* ARC BIOS present */
 		bios_init_console();
 		bios_save_info();
 		physmem = bios_configure_memory(mem_reserved, mem_clusters,
 		    &mem_cluster_cnt);
 	}
 
-	/*
-	 * Get config register now as mapped from BIOS since we are
-	 * going to demap these addresses later. We want as may TLB
-	 * entries as possible to do something useful :-).
-	 */
-
-	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
-	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
-		switch (cputype) {
-		case ACER_PICA_61:
-			strcpy(cpu_model, "Acer Pica-61");
-			break;
-		case MAGNUM:
-			strcpy(cpu_model, "MIPS Magnum");
-#if NCOM > 0
-			com_freq = COM_FREQ_MAGNUM;
-#endif
-			break;
-		}
-
-		arc_bus_space_init(&pica_bus, "picabus",
-		    R4030_P_LOCAL_IO_BASE, R4030_V_LOCAL_IO_BASE,
-		    R4030_V_LOCAL_IO_BASE, R4030_S_LOCAL_IO_BASE);
-		arc_bus_space_init(&arc_bus_io, "picaisaio",
-		    PICA_P_ISA_IO, PICA_V_ISA_IO, 0, PICA_S_ISA_IO);
-		arc_bus_space_init(&arc_bus_mem, "picaisamem",
-		    PICA_P_ISA_MEM, PICA_V_ISA_MEM, 0, PICA_S_ISA_MEM);
-
-#if NCOM > 0
-		arc_bus_com = &pica_bus;
-		comconstag = &pica_bus;
-		com_console_address = PICA_SYS_COM1;
-#endif
-
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-		splvec.splnet = MIPS_INT_MASK_SPL3;
-		splvec.splbio = MIPS_INT_MASK_SPL3;
-		splvec.splvm = MIPS_INT_MASK_SPL3;
-		splvec.spltty = MIPS_INT_MASK_SPL3;
-		splvec.splclock = MIPS_INT_MASK_SPL5;
-		splvec.splstatclock = MIPS_INT_MASK_SPL5;
-		break;
-
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		switch (cputype) {
-		case NEC_R94:
-			strcpy(cpu_model, "NEC-R94");
-			break;
-		case NEC_RAx94:
-			strcpy(cpu_model, "NEC-RA'94");
-			break;
-		case NEC_RD94:
-			strcpy(cpu_model, "NEC-RD94");
-			break;
-		case NEC_R96:
-			strcpy(cpu_model, "NEC-R96");
-			break;
-		case NEC_JC94:
-			strcpy(cpu_model, "NEC-JC94");
-			break;
-		}
-
-		arc_bus_space_init(&pica_bus, "picabus",
-		    RD94_P_LOCAL_IO_BASE, RD94_V_LOCAL_IO_BASE,
-		    RD94_V_LOCAL_IO_BASE, RD94_S_LOCAL_IO_BASE);
-
-		switch (cputype) {
-		/* EISA machines */
-		case NEC_R94:
-		case NEC_R96:
-			/* XXX - not really confirmed */
-			arc_bus_space_init(&arc_bus_io, "rd94pciio",
-			    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
-			arc_bus_space_init(&arc_bus_mem, "rd94pcimem",
-			    RD94_P_PCI_MEM, RD94_V_PCI_MEM, 0, RD94_S_PCI_MEM);
-			break;
-
-		/* PCI machines */		
-		case NEC_RAx94: /* XXX - not really confirmed */
-		case NEC_RD94:
-		case NEC_JC94:
-			arc_bus_space_init(&arc_bus_io, "rd94pciio",
-			    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
-			arc_bus_space_init(&arc_bus_mem, "rd94pcimem",
-			    RD94_P_PCI_MEM, RD94_V_PCI_MEM, 0, RD94_S_PCI_MEM);
-		/*
-		 * By default, reserve 32MB in KSEG2 for PCI memory space.
-		 * Since kseg2iobufsize/NBPG*4 bytes are used for Sysmap,
-		 * this consumes 32KB physical memory.
-		 *
-		 * If a kernel with "options DIAGNOSTIC" panics with
-		 * the message "pmap_enter: kva too big", you have to
-		 * increase this value by a option like below:
-		 *     options KSEG2IOBUFSIZE=0x1b000000 # 432MB consumes 432KB
-		 * If you met this symptom, please report it to
-		 * port-arc-maintainer@netbsd.org.
-		 *
-		 * kseg2iobufsize will be refered from pmap_bootstrap().
-		 */
-			kseg2iobufsize = 0x02000000;
-			/* 32MB: consumes 32KB for PTEs */
-			break;
-		}
-
-#if NCOM > 0
-		arc_bus_com = &pica_bus;
-		comconstag = &pica_bus;
-		com_console_address = RD94_SYS_COM1;
-#endif
-
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-		splvec.splnet = MIPS_INT_MASK_SPL2;
-		splvec.splbio = MIPS_INT_MASK_SPL2;
-		splvec.splvm = MIPS_INT_MASK_SPL2;
-		splvec.spltty = MIPS_INT_MASK_SPL2;
-		splvec.splclock = MIPS_INT_MASK_SPL5;
-		splvec.splstatclock = MIPS_INT_MASK_SPL5;
-		break;
-
-	case DESKSTATION_RPC44:
-		strcpy(cpu_model, "Deskstation rPC44");
-
-		arc_bus_space_init(&arc_bus_io, "rpc44isaio",
-		    RPC44_P_ISA_IO, RPC44_V_ISA_IO, 0, RPC44_S_ISA_IO);
-		arc_bus_space_init(&arc_bus_mem, "rpc44isamem",
-		    RPC44_P_ISA_MEM, RPC44_V_ISA_MEM, 0, RPC44_S_ISA_MEM);
-
-#if NCOM > 0
-		com_console_address = 0; /* Don't screew the mouse... */
-#endif
-
-		/*
-		 * XXX
-		 *	- rewrite spl handling to allow ISA clock > bio|tty|net
-		 * or
-		 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
-		 */
-
-		break;
-
-	case DESKSTATION_TYNE:
-		strcpy(cpu_model, "Deskstation Tyne");
-
-		arc_bus_space_init(&arc_bus_io, "tyneisaio",
-		    TYNE_P_ISA_IO, TYNE_V_ISA_IO, 0, TYNE_S_ISA_IO);
-		arc_bus_space_init(&arc_bus_mem, "tyneisamem",
-		    TYNE_P_ISA_MEM, TYNE_V_ISA_MEM, 0, TYNE_S_ISA_MEM);
-
-#if NCOM > 0
-		com_console_address = 0; /* Don't screew the mouse... */
-#endif
-
-		/*
-		 * XXX
-		 *	- rewrite spl handling to allow ISA clock > bio|tty|net
-		 * or
-		 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
-		 */
-
-		break;
-
-	case SNI_RM200:
-		strcpy(cpu_model, "Siemens Nixdorf RM200");
-#if 0
-		arc_bus_space_init(&arc_bus_io, "rm200isaio",
-		    RM200_P_ISA_IO, RM200_V_ISA_IO, 0, RM200_S_ISA_IO);
-		arc_bus_space_init(&arc_bus_mem, "rm200isamem",
-		    RM200_P_ISA_MEM, RM200_V_ISA_MEM, 0, RM200_S_ISA_MEM);
-#endif
-#if NCOM > 0
-		com_console_address = 0; /* Don't screew the mouse... */
-#endif
-		break;
-
-	case -1:	/* Not identified as an ARC system. We have a couple */
-			/* of other options. Systems not having an ARC Bios  */
-
-			/* Make this more fancy when more comes in here */
-		environment = envv;
-#if 0
-		cputype = ALGOR_P4032;
-		strcpy(cpu_model, "Algorithmics P-4032");
-		arc_bus_space_init(&arc_bus_io, "p4032bus",
-		    0LL, MIPS_KSEG1_START,
-		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
-		/* stride: (1 << 2) == 4 byte alignment */
-		arc_bus_space_set_aligned_stride(&arc_bus_io, 2);
-#if NCOM > 0
-		com_console_address = P4032_COM1;
-#endif
+	/* Initialize the CPU type */
+	ident_platform();
+	if (platform == NULL) { 
+		/* This is probably the best we can do... */
+		printf("kernel not configured for this system:\n");
+		printf("ID [%s] Vendor [%8.8s] Product [%02x",
+		    arc_id, arc_vendor_id, arc_product_id[0]);
+		for (i = 1; i < sizeof(arc_product_id); i++)
+			printf(":%02x", arc_product_id[i]);
+		printf("]\n");
+		printf("DisplayController [%s]\n", arc_displayc_id);
+#if 1
+		for (;;)
+			;
 #else
-		cputype = ALGOR_P5064;
-		strcpy(cpu_model, "Algorithmics P-5064");
-		arc_bus_space_init(&arc_bus_io, "p5064bus",
-		    0LL, MIPS_KSEG1_START,
-		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
-#if NCOM > 0
-		com_console_address = P5064_COM1;
-#endif
-#endif
-
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size =
-		    mips_trunc_page(MIPS_KSEG0_TO_PHYS(kernel_text));
-		mem_clusters[1].start = MIPS_KSEG0_TO_PHYS((int)kernend);
-		if (getenv("memsize") != 0) {
-			i = atoi(getenv("memsize"), 10);
-			i = 1024 * 1024 * i;
-			mem_clusters[1].size =
-			    i - (int)(MIPS_KSEG0_TO_PHYS(kernend));
-			mem_cluster_cnt = 2;
-			physmem = i;
-		} else {
-			i = get_simm_size((int *)0, 128*1024*1024);
-			mem_clusters[1].size =
-			    i - (int)(MIPS_KSEG0_TO_PHYS(kernend));
-			physmem = i;
-/*XXX Ouch!!! */
-			mem_clusters[2].start = i;
-			mem_clusters[2].size = get_simm_size((int *)(i), 0);
-			physmem += mem_clusters[2].size;
-			mem_clusters[3].start = i+i/2;
-			mem_clusters[3].size = get_simm_size((int *)(i+i/2), 0);
-			mem_cluster_cnt = 4;
-			physmem += mem_clusters[3].size;
-		}
-/*XXX*/
-		argv[0] = getenv("bootdev");
-		if(argv[0] == 0)
-			argv[0] = "unknown";
-
-
-		break;
-
-	default:	/* This is probably the best we can do... */
-		printf("kernel not configured for this system\n");
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
+#endif
 	}
+
 	physmem = btoc(physmem);
 
-	/* look at argv[0] and compute bootdev for autoconfig setup */
-	makebootdev(argv[0]);
+	/* compute bootdev for autoconfig setup */
+	cp = firmware_getenv("OSLOADPARTITION");
+	makebootdev(cp != NULL ? cp : argv[0]);
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -538,10 +259,10 @@ mach_init(argc, argv, envv)
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
-	get_eth_hw_addr(getenv("ethaddr"));
-	cp = getenv("osloadoptions");
-	if(cp) {
-		while(*cp) {
+
+	cp = firmware_getenv("OSLOADOPTIONS");
+	if (cp) {
+		while (*cp) {
 			switch (*cp++) {
 			case 'a': /* autoboot */
 				boothowto &= ~RB_SINGLE;
@@ -607,38 +328,10 @@ mach_init(argc, argv, envv)
 
 	arc_init_wired_map();
 
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-		tlb_init_pica();
-		break;
-
-	case NEC_R94:
-	case NEC_R96:
-		tlb_init_nec_eisa();
-		break;
-
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_JC94:
-		tlb_init_nec_pci();
-		break;
-
-	case DESKSTATION_TYNE:
-		tlb_init_tyne();
-		break;
-
-	case DESKSTATION_RPC44:
-		break;
-
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		break;
-
-	case SNI_RM200:
-		/*XXX*/
-		break;
-	}
+	(*platform->init)();
+	cpuspeed = platform->clock;
+	sprintf(cpu_model, "%s %s%s",
+	    platform->vendor, platform->model, platform->variant);
 
 #ifdef MFS
 	/*
@@ -755,195 +448,27 @@ mach_init(argc, argv, envv)
 void
 machine_ConfigCache()
 {
-	switch (cputype) {
-	case ACER_PICA_61:
-#if 0	/* doesn't work */
-		mips_L2CachePresent = 1;
-		mips_L2CacheSize = 128 * 1024;
-#endif
-		/*
-		 * if page zero in the idle loop is enabled,
-		 * commands dump core due to incoherent cache.
-		 */
-		vm_page_zero_enable = FALSE; /* XXX - should be enabled */
-		break;
-	case DESKSTATION_RPC44:
-	case DESKSTATION_TYNE:
-	case SNI_RM200:
-	case ALGOR_P4032:
-	case ALGOR_P5064:
-		/* XXX - use safe default, since those are not tested. */
-		vm_page_zero_enable = FALSE; /* XXX - should be enabled */
-		break;
-	case NEC_R94:
-		mips_L2CacheSize = 512 * 1024;
-		break;
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_JC94:
-		mips_L2CacheSize = 1024 * 1024;
-		break;
-	case NEC_R96:
-#if 0
-		mips_L2CacheSize = 1 * 1024 * 1024;
-#else	/* bigger is safer - XXX use arc bios to get the size */
-		mips_L2CacheSize = 2 * 1024 * 1024;
-#endif
-		break;
-	}
-}
-
-void
-tlb_init_pica()
-{
-	arc_enter_wired(R4030_V_LOCAL_IO_BASE, R4030_P_LOCAL_IO_BASE,
-	    PICA_P_INT_SOURCE, MIPS3_PG_SIZE_256K);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL, PICA_P_LOCAL_VIDEO_CTRL,
-	    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL, PICA_P_EXTND_VIDEO_CTRL,
-	    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO, PICA_P_LOCAL_VIDEO,
-	    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2, MIPS3_PG_SIZE_4M);
-	arc_enter_wired(PICA_V_ISA_IO, PICA_P_ISA_IO, PICA_P_ISA_MEM,
-	    MIPS3_PG_SIZE_16M);
-}
-
-void
-tlb_init_nec_eisa()
-{
-	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
-	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO_CTRL, PICA_P_LOCAL_VIDEO_CTRL,
-	    PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_EXTND_VIDEO_CTRL, PICA_P_EXTND_VIDEO_CTRL,
-	    PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2,
-	    MIPS3_PG_SIZE_1M);
-	arc_enter_wired(PICA_V_LOCAL_VIDEO, PICA_P_LOCAL_VIDEO,
-	    PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2, MIPS3_PG_SIZE_4M);
-	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
-	    MIPS3_PG_SIZE_16M);
-}
-
-void
-tlb_init_nec_pci()
-{
-	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
-	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
-	    MIPS3_PG_SIZE_16M);
-}
-
-void
-tlb_init_tyne()
-{
-	arc_enter_wired(TYNE_V_BOUNCE, TYNE_P_BOUNCE, 0, MIPS3_PG_SIZE_256K);
-	arc_enter_wired(TYNE_V_ISA_IO, TYNE_P_ISA_IO, 0, MIPS3_PG_SIZE_1M);
-	arc_enter_wired(TYNE_V_ISA_MEM, TYNE_P_ISA_MEM, 0, MIPS3_PG_SIZE_1M);
-	arc_enter_wired(0xe3000000, 0xfff00000, 0, MIPS3_PG_SIZE_4K);
-}
-
-/*
- * Simple routine to figure out SIMM module size.
- * This code is a real hack and can surely be improved on... :-)
- */
-static int
-get_simm_size(fadr, max)
-	int *fadr;
-	int max;
-{
-	int msave;
-	int msize;
-	int ssize;
-	static int a1 = 0, a2 = 0;
-	static int s1 = 0, s2 = 0;
-
-	if(!max) {
-		if(a1 == (int)fadr)
-			return(s1);
-		else if(a2 == (int)fadr)
-			return(s2);
-		else
-			return(0);
-	}
-	fadr = (int *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS((int)fadr));
-
-	msize = max - 0x400000;
-	ssize = msize - 0x400000;
-
-	/* Find bank size of last module */
-	while(ssize >= 0) {
-		msave = fadr[ssize / 4];
-		fadr[ssize / 4] = 0xC0DEB00F;
-		if(fadr[msize /4 ] == 0xC0DEB00F) {
-			fadr[ssize / 4] = msave;
-			if(fadr[msize/4] == msave) {
-				break;	/* Wrap around */
-			}
-		}
-		fadr[ssize / 4] = msave;
-		ssize -= 0x400000;
-	}
-	msize = msize - ssize;
-	if(msize == max)
-		return(msize);	/* well it never wrapped... */
-
-	msave = fadr[0];
-	fadr[0] = 0xC0DEB00F;
-	if(fadr[msize / 4] == 0xC0DEB00F) {
-		fadr[0] = msave;
-		if(fadr[msize / 4] == msave)
-			return(msize);	/* First module wrap = size */
-	}
-
-	/* Ooops! Two not equal modules. Find size of first + second */
-	s1 = s2 = msize;
-	ssize = 0;
-	while(ssize < max) {
-		msave = fadr[ssize / 4];
-		fadr[ssize / 4] = 0xC0DEB00F;
-		if(fadr[msize /4 ] == 0xC0DEB00F) {
-			fadr[ssize / 4] = msave;
-			if(fadr[msize/4] == msave) {
-				break;	/* Found end of module 1 */
-			}
-		}
-		fadr[ssize / 4] = msave;
-		ssize += s2;
-		msize += s2;
-	}
-
-	/* Is second bank dual sided? */
-	fadr[(ssize+ssize/2)/4] = ~fadr[ssize];
-	if(fadr[(ssize+ssize/2)/4] != fadr[ssize]) {
-		a2 = ssize+ssize/2;
-	}
-	a1 = ssize;
-
-	return(ssize);
+	mips_L2CacheSize = arc_cpu_l2cache_size;
 }
 
 /*
  * Return a pointer to the given environment variable.
  */
-static char *
-getenv(envname)
+char *
+firmware_getenv(envname)
 	char *envname;
 {
-	char **env = environment;
-	int i;
+	char **env;
+	int l;
 
-	i = strlen(envname);
+	l = strlen(envname);
 
-	while(*env) {
-		if(strncasecmp(envname, *env, i) == 0 && (*env)[i] == '=') {
-			return(&(*env)[i+1]);
+	for (env = environment; env[0]; env++) {
+		if (strncasecmp(envname, env[0], l) == 0 && env[0][l] == '=') {
+			return (&env[0][l + 1]);
 		}
-		env++;
 	}
-	return(NULL);
+	return (NULL);
 }
 
 /*
@@ -960,125 +485,7 @@ consinit()
 		return;
 	initted = 1;
 
-	if (!com_console) {
-		switch (cputype) {
-		case ACER_PICA_61:
-#if NPC_JAZZIO > 0
-			pccnattach();
-			return;
-#endif
-#if NVGA_JAZZIO > 0
-			if (vga_jazzio_cnattach() == 0) {
-#if NPCKBC_JAZZIO > 0
-				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
-#endif
-				return;
-			}
-#endif
-			break;
-
-		case MAGNUM:
-		case NEC_R94:
-#if NRASDISPLAY_JAZZIO > 0
-			if (rasdisplay_jazzio_cnattach()) {
-#if NPCKBC_JAZZIO > 0
-				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
-#endif
-				return;
-			}
-#endif
-			break;
-
-		case NEC_RAx94:
-#if 0				/* XXX - physical address unknown */
-#if NPC_JAZZIO > 0
-			pccnattach();
-			return;
-#endif
-#endif
-			break;
-
-		case NEC_RD94:
-		case NEC_JC94:
-#if NTGA > 0
-			necpb_init(&necpb_configuration);
-			 /* XXX device number is hardcoded */
-			if (tga_cnattach(&necpb_configuration.nc_iot,
-			    &necpb_configuration.nc_memt,
-			    &necpb_configuration.nc_pc, 0, 3, 0) == 0) {
-#if NPCKBC_JAZZIO > 0
-				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
-#endif
-				return;
-			}
-#endif
-			break;
-
-		case NEC_R96:
-			/* XXX - some machines have jazz, and others have vga */
-#if NPC_JAZZIO > 0
-			pccnattach();
-			return;
-#endif
-#if NVGA_JAZZIO > 0
-			if (vga_jazzio_cnattach() == 0) {
-#if NPCKBC_JAZZIO > 0
-				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
-#endif
-				return;
-			}
-#endif
-#if NRASDISPLAY_JAZZIO > 0
-			if (rasdisplay_jazzio_cnattach()) {
-#if NPCKBC_JAZZIO > 0
-				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
-#endif
-				return;
-			}
-#endif
-			break;
-
-		case DESKSTATION_TYNE:
-		case DESKSTATION_RPC44:
-#if NPC_ISA > 0
-			pccnattach();
-			return;
-#endif
-#if NVGA_ISA > 0
-			if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
-#if NPCKBC > 0
-				pckbc_cnattach(&arc_bus_io, IO_KBD, KBCMDP,
-				    PCKBC_KBD_SLOT);
-#endif
-			}
-			return;
-#endif
-			break;
-
-		case ALGOR_P4032:
-		case ALGOR_P5064:
-			/* XXX For now... */
-			break;
-
-		default:
-#if NVGA > 0
-			vga_localbus_console();
-			return;
-#endif
-			break;
-		}
-	}
-
-#if NCOM > 0
-	if (com_console_address)
-		comcnattach(arc_bus_com, com_console_address,
-		    CONSPEED, com_freq, CONMODE);
-#endif
+	(*platform->cons_init)();
 }
 
 /*
@@ -1186,11 +593,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 }
 
 /*
@@ -1280,24 +682,8 @@ cpu_reboot(howto, bootstr)
 	printf("rebooting...\n");
 	delay(1000000);
 
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_R96:
-	case NEC_RD94:
-	case NEC_JC94:
-		arc_sysreset(PICA_SYS_KBD, JAZZIO_KBCMDP);
-		break;
-	case DESKSTATION_TYNE:
-		arc_sysreset(TYNE_V_ISA_IO + IO_KBD, KBCMDP);
-		break;
-	case DESKSTATION_RPC44:
-		arc_sysreset(RPC44_V_ISA_IO + IO_KBD, KBCMDP);
-		break;
-	default:
-		break;
-	}
+	(*platform->reset)();
+
 	__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
 	for (;;)
 		; /* Forever */
@@ -1307,7 +693,7 @@ cpu_reboot(howto, bootstr)
 /*
  * Pass system reset command to keyboard controller (8042).
  */
-static void
+void
 arc_sysreset(addr, cmd_offset)
 	bus_addr_t addr; 
 	bus_size_t cmd_offset;
@@ -1352,110 +738,4 @@ microtime(tvp)
 	}
 	lasttime = *tvp;
 	splx(s);
-}
-
-void
-initcpu()
-{
-
-	switch(cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-		/*
-		 * Disable all interrupts. New masks will be set up
-		 * during system configuration
-		 */
-		out16(PICA_SYS_LB_IE,0x000);
-		out32(R4030_SYS_EXT_IMASK, 0x00);
-		break;
-
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		out16(RD94_SYS_LB_IE1, 0);
-		out16(RD94_SYS_LB_IE2, 0);
-		out32(RD94_SYS_EXT_IMASK, 0);
-		break;
-	}
-}
-/*
- * Convert "xx:xx:xx:xx:xx:xx" string to ethernet hardware address.
- */
-static void
-get_eth_hw_addr(s)
-	char *s;
-{
-	int i;
-	if(s != NULL) {
-		for(i = 0; i < 6; i++) {
-			eth_hw_addr[i] = atoi(s, 16);
-			s += 3;		/* Don't get to fancy here :-) */
-		}
-	}
-}
-
-/*
- * Convert an ASCII string into an integer.
- */
-static int
-atoi(s, b)
-	const char *s;
-	int   b;
-{
-	int c;
-	unsigned base = b, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			c = *s++;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			c = *s++;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;	
 }
