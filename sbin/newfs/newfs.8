@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.13 1996/06/06 15:23:47 mrg Exp $
+.\"	$NetBSD: newfs.8,v 1.14 1996/12/26 04:37:18 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nm newfs
 .Op Fl NO
 .Op Fl S Ar sector-size
-.Op Fl a maxcontig
+.Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
 .Op Fl d Ar rotdelay
@@ -65,7 +65,7 @@
 .Ar special
 .Nm mount_mfs
 .Op Fl N
-.Op Fl a maxcontig
+.Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
 .Op Fl d Ar rotdelay
@@ -79,7 +79,7 @@
 .Sh DESCRIPTION
 .Nm Newfs
 replaces the more obtuse
-.Xr mkfs 8
+mkfs
 program.
 Before running 
 .Nm newfs
@@ -199,7 +199,7 @@ different type of disk than the one on which it is initially created
 (for example on a write-once disk).
 Note that changing any of these values from their defaults will make
 it impossible for 
-.Xr fsck
+.Xr fsck_ffs
 to find the alternate superblocks if the standard superblock is lost.
 .Bl -tag -width Fl
 .It Fl S Ar sector-size
@@ -268,7 +268,7 @@ man page for possible options and their meanings.
 .Xr dumpfs 8 ,
 .Xr disklabel 8 ,
 .Xr diskpart 8 ,
-.Xr fsck 8 ,
+.Xr fsck_ffs 8 ,
 .Xr format 8 ,
 .Xr mount 8 ,
 .Xr tunefs 8
