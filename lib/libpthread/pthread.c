@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.31 2003/12/18 15:39:56 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.32 2003/12/31 16:45:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.31 2003/12/18 15:39:56 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.32 2003/12/31 16:45:48 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -397,6 +397,12 @@ pthread_suspend_np(pthread_t thread)
 	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p (state %d).\n",
 		     self, thread, thread->pt_state));
 	pthread_spinlock(self, &thread->pt_statelock);
+	if (thread->pt_blockgen != thread->pt_unblockgen) {
+		/* XXX flaglock? */
+		thread->pt_flags |= PT_FLAG_SUSPENDED;
+		pthread_spinunlock(self, &thread->pt_statelock);
+		return 0;
+	}
 	switch (thread->pt_state) {
 	case PT_STATE_RUNNING:
 		pthread__abort();	/* XXX */
@@ -414,11 +420,6 @@ pthread_suspend_np(pthread_t thread)
 		PTQ_REMOVE(thread->pt_sleepq, thread, pt_sleep);
 		pthread_spinunlock(self, thread->pt_sleeplock);
 		break;
-	case PT_STATE_BLOCKED_SYS:
-		/* XXX flaglock? */
-		thread->pt_flags |= PT_FLAG_SUSPENDED;
-		pthread_spinunlock(self, &thread->pt_statelock);
-		return 0;
 	default:
 		break;			/* XXX */
 	}
@@ -787,8 +788,7 @@ pthread_cancel(pthread_t thread)
 
 	if (!(thread->pt_state == PT_STATE_RUNNING ||
 	    thread->pt_state == PT_STATE_RUNNABLE ||
-	    thread->pt_state == PT_STATE_BLOCKED_QUEUE ||
-	    thread->pt_state == PT_STATE_BLOCKED_SYS))
+	    thread->pt_state == PT_STATE_BLOCKED_QUEUE))
 		return ESRCH;
 
 	self = pthread__self();
@@ -799,7 +799,7 @@ pthread_cancel(pthread_t thread)
 		thread->pt_cancel = 1;
 		pthread_spinunlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &thread->pt_statelock);
-		if (thread->pt_state == PT_STATE_BLOCKED_SYS) {
+		if (thread->pt_blockgen != thread->pt_unblockgen) {
 			/*
 			 * It's sleeping in the kernel. If we can wake
 			 * it up, it will notice the cancellation when

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.31 2003/11/25 23:55:27 cl Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.32 2003/12/31 16:45:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.31 2003/11/25 23:55:27 cl Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.32 2003/12/31 16:45:48 cl Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -658,7 +658,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 				self, target, target->pt_state, target->pt_sigmask.__bits[0]));
 			if (!__sigismember14(&target->pt_sigmask,
 			    si->si_signo)) {
-				if (target->pt_state != PT_STATE_BLOCKED_SYS) {
+				if (target->pt_blockgen == target->pt_unblockgen) {
 					good = target;
 					/* Leave target locked */
 					break;
@@ -775,13 +775,30 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	 * XXX As long as this is uniprocessor, encountering a running
 	 * target process is a bug.
 	 */
-	pthread__assert(target->pt_state != PT_STATE_RUNNING);
+	pthread__assert(target->pt_state != PT_STATE_RUNNING ||
+		target->pt_blockgen != target->pt_unblockgen);
 
 	/*
 	 * Holding the state lock blocks out cancellation and any other
 	 * attempts to set this thread up to take a signal.
 	 */
 	pthread_spinlock(self, &target->pt_statelock);
+	if (target->pt_blockgen != target->pt_unblockgen) {
+		/*
+		 * The target is not on a queue at all, and
+		 * won't run again for a while. Try to wake it
+		 * from its torpor, then mark the signal for
+		 * later processing.
+		 */
+		__sigaddset14(&target->pt_sigblocked, si->si_signo);
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
+		pthread_spinlock(self, &target->pt_flaglock);
+		target->pt_flags |= PT_FLAG_SIGDEFERRED;
+		pthread_spinunlock(self, &target->pt_flaglock);
+		pthread_spinunlock(self, &target->pt_statelock);
+		_lwp_wakeup(target->pt_blockedlwp);
+		return;
+	}
 	switch (target->pt_state) {
 	case PT_STATE_SUSPENDED:
 		pthread_spinlock(self, &pthread__runqueue_lock);
@@ -798,20 +815,6 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		PTQ_REMOVE(target->pt_sleepq, target, pt_sleep);
 		pthread_spinunlock(self, target->pt_sleeplock);
 		break;
-	case PT_STATE_BLOCKED_SYS:
-		/*
-		 * The target is not on a queue at all, and won't run
-		 * again for a while. Try to wake it from its torpor, then
-		 * mark the signal for later processing.
-		 */
-		__sigaddset14(&target->pt_sigblocked, si->si_signo);
-		__sigaddset14(&target->pt_sigmask, si->si_signo);
-		pthread_spinlock(self, &target->pt_flaglock);
-		target->pt_flags |= PT_FLAG_SIGDEFERRED;
-		pthread_spinunlock(self, &target->pt_flaglock);
-		pthread_spinunlock(self, &target->pt_statelock);
-		_lwp_wakeup(target->pt_blockedlwp);
-		return;
 	default:
 		;
 	}
