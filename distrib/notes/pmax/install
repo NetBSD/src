@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.25 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: install,v 1.26 2001/05/21 00:31:08 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -378,11 +378,11 @@ Then boot using one of:
 .Pp
 .(tag 12n -offset indent -compact
 .It "2100 or 3100:"
-.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)install"
+.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)netbsd"
 .It "5000/200:"
-.Ic "boot 5/rz" Ns Ar X Ns Ic "/install"
+.Ic "boot 5/rz" Ns Ar X Ns Ic "/netbsd"
 .It "other 5000s:"
-.Ic "boot 3/rz" Ns Ar X Ns Ic "/install"
+.Ic "boot 3/rz" Ns Ar X Ns Ic "/netbsd"
 .tag)
 .Pp
 where
@@ -506,7 +506,7 @@ section.
 .
 Once you'e booted the installation kernel you will need to
 select your terminal type.  Use
-.Ic \*M
+.Ic rcons
 for a framebuffer console,
 .Ic vt100
 for a serial console with a vt100-compatible terminal, or
