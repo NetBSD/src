@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/05/08 21:44:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/12/11 15:52:47 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,11 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	be
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
 IMAGEDEPENDS=	netbsd-INSTALL.gz ${DESTDIR}/usr/mdec/boot ${PRIMARYBOOT}
-IMAGEPOSTBUILD=	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${PRIMARYBOOT}	# XXXDISTRIB
+
+# XXXDISTRIB: disabled because it's not cross friendly...
+# C.f, [port-mips/19349]
+#
+#IMAGEPOSTBUILD=	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${PRIMARYBOOT}
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
