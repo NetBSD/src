@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.25 1995/01/13 14:38:13 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.26 1995/01/16 21:34:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -336,7 +336,7 @@ scsi_start_and_wait(sc_link, n, flags)
 		sc_print_addr(sc_link);
 		printf("waiting for device to come ready\n");
 	}
-	while (n--) {
+	for (; n; n--) {
 		if ((flags & SCSI_POLL) != 0)
 			delay(1000000);
 		else
@@ -344,17 +344,12 @@ scsi_start_and_wait(sc_link, n, flags)
 		if ((error = scsi_execute_xs(xs)) != EIO ||
 		    xs->error != XS_SENSE ||
 		    (xs->sense.error_code & SSD_ERRCODE) != 0x70 ||
-		    (xs->sense.extended_flags & SSD_KEY) != 0x2) {
-			if (!silent) {
-				sc_print_addr(sc_link);
-				printf("ready\n");
-			}
-			goto out;
-		}
+		    (xs->sense.extended_flags & SSD_KEY) != 0x2)
+			break;
 	}
 	if (!silent) {
 		sc_print_addr(sc_link);
-		printf("not ready\n");
+		printf("%sready\n", n ? "" : "not ");
 	}
 out:
 	scsi_free_xs(xs, SCSI_NOSLEEP);
