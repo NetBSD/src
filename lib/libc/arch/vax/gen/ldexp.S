@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/*.asciz "@(#)ldexp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ldexp.S,v 1.3 2000/02/05 19:53:54 kleink Exp $"
+	.asciz "$NetBSD: ldexp.S,v 1.4 2000/06/28 19:20:17 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,7 +58,7 @@
  */
 #define	ERANGE	34
 
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 
 ENTRY(ldexp, 0)
 	movd	4(ap),r0	/* fetch "value" */
@@ -82,11 +82,11 @@ ENTRY(ldexp, 0)
 1:
 #ifdef _REENTRANT
 	pushl	r0
-	calls	$0,___errno
+	calls	$0,_C_LABEL(__errno)
 	movl	$ ERANGE,(r0)
 	movl	(sp)+,r0
 #else
-	movl	$ ERANGE,_errno
+	movl	$ ERANGE,_C_LABEL(errno)
 #endif
 	ret
 

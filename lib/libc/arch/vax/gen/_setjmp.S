@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.2 1998/10/13 00:02:19 matt Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.3 2000/06/28 19:20:17 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -81,7 +81,7 @@ loop:
 	ret				# pop another frame
 
 done:
-	cmpb	*16(fp),reiins		# returning to an "rei"?
+	cmpb	*16(fp),$2		# returning to an "rei"?
 	bneq	1f
 	movab	3f,16(fp)		# do return w/ psl-pc pop
 	brw	2f
@@ -95,8 +95,5 @@ done:
 	jmp	*4(r1)			# done, return....
 
 botch:
-	calls	$0,_longjmperror
+	calls	$0,_C_LABEL(longjmperror)
 	halt
-
-	.data
-reiins: rei

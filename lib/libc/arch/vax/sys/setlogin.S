@@ -35,11 +35,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* ASMSTR "@(#)setlogin.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: setlogin.S,v 1.1 1995/04/17 12:24:06 ragge Exp $"
+	.asciz "$NetBSD: setlogin.S,v 1.2 2000/06/28 19:20:18 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
-.globl	___logname_valid		/* in getlogin() */
+.globl	_C_LABEL(__logname_valid)		/* in getlogin() */
 
 SYSCALL(setlogin)
-	movl	$0,___logname_valid
+	movl	$0,_C_LABEL(__logname_valid)
 	ret			/* setlogin(name); */

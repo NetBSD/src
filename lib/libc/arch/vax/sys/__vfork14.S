@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __vfork14.S,v 1.2 2000/02/05 21:02:51 kleink Exp $"
+	.asciz "$NetBSD: __vfork14.S,v 1.3 2000/06/28 19:20:18 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -69,12 +69,12 @@ here:
 err:
 #ifdef _REENTRANT
 	pushr	$0x5
-	calls	$0,___errno
+	calls	$0,_C_LABEL(__errno)
 	movl	(sp)+,(r0)
 	mnegl	$1,r0
 	rsb
 #else
-	movl	r0,_errno
+	movl	r0,_C_LABEL(errno)
 	mnegl	$1,r0
 	jmp	(r2)
 #endif
