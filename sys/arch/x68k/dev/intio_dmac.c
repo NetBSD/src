@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.1.2.2 1999/02/02 23:45:40 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.1.2.3 1999/02/10 16:02:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/dmacvar.h>
-
-#define DMAC_DEBUG
 
 #ifdef DMAC_DEBUG
 #define DPRINTF(n,x)	if (dmacdebug>(n)&0x0f) printf x
@@ -186,7 +184,7 @@ dmac_alloc_channel(self, ch, name,
 	strcpy(chan->ch_name, name);
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = (DMAC_OCR_SIZE_BYTE | DMAC_OCR_CHAIN_ARRAY |
+	chan->ch_ocr = (DMAC_OCR_SIZE_BYTE_NOPACK | DMAC_OCR_CHAIN_ARRAY |
 			DMAC_OCR_REQG_EXTERNAL);
 	chan->ch_normalv = normalv;
 	chan->ch_errorv = errorv;
@@ -283,6 +281,12 @@ dmac_prepare_xfer (chan, dmat, dmamap, dir, scr, dar)
 static struct dmac_channel_stat *debugchan = 0;
 #endif
 
+#ifdef DMAC_DEBUG
+static u_int8_t dcsr, dcer, ddcr, docr, dscr, dccr, dcpr, dgcr,
+  dnivr, deivr, ddfcr, dmfcr, dbfcr;
+static u_int16_t dmtcr, dbtcr;
+static u_int32_t ddar, dmar, dbar;
+#endif
 /*
  * Do the actual transfer.
  */
@@ -320,11 +324,32 @@ dmac_start_xfer(self, xf)
 			  DMAC_REG_BTCR, c);
 
 	/* START!! */
+	DDUMPREGS (3, ("first start\n"));
+#ifdef DMAC_DEBUG
+	dcsr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR);
+	dcer = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER);
+	ddcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_DCR);
+	docr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_OCR);
+	dscr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_SCR);
+	dccr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR);
+	dcpr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR);
+	dgcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_GCR);
+	dnivr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR);
+	deivr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR);
+	ddfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_DFCR);
+	dmfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_MFCR);
+	dbfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_BFCR);
+	dmtcr = bus_space_read_2(sc->sc_bst, chan->ch_bht, DMAC_REG_MTCR);
+	dbtcr = bus_space_read_2(sc->sc_bst, chan->ch_bht, DMAC_REG_BTCR);
+	ddar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_DAR);
+	dmar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_MAR);
+	dbar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_BAR);
+#endif
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040)
-		DCIA();		/* XXX: granularity */
+		dma_cachectl((caddr_t) &dmac_map[chan->ch_channel],
+			     sizeof(struct dmac_sg_array)*DMAC_MAPSIZE);
 #endif
-	DDUMPREGS (3, ("first start\n"));
 	bus_space_write_1(sc->sc_bst, chan->ch_bht,
 			  DMAC_REG_CCR, DMAC_CCR_STR|DMAC_CCR_INT);
 	chan->ch_xfer_in_progress = xf;
@@ -345,7 +370,7 @@ dmac_program_arraychain(self, xf)
 
 	for (i=0, j=xf->dx_done; i<DMAC_MAPSIZE && j<map->dm_nsegs;
 	     i++, j++) {
-		dmac_map[ch][i].da_addr = (void*) map->dm_segs[j].ds_addr;
+		dmac_map[ch][i].da_addr = map->dm_segs[j].ds_addr;
 #ifdef DIAGNOSTIC
 		if (map->dm_segs[j].ds_len > 0xff00)
 			panic ("dmac_program_arraychain: wrong map: %d", map->dm_segs[j].ds_len);
@@ -372,10 +397,6 @@ dmac_done(arg)
 
 	DPRINTF (3, ("dmac_done\n"));
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040)
-		DCIA();		/* XXX: granularity */
-#endif
 
 	if (xf->dx_done == map->dm_nsegs) {
 		/* Done */
@@ -414,6 +435,20 @@ dmac_error(arg)
 	printf ("DMAC transfer error CSR=%02x, CER=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER));
+	DPRINTF(5, ("registers were:\n"));
+#ifdef DMAC_DEBUG
+	if ((dmacdebug & 0x0f) > 5) {
+		printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x,"
+			"CCR=%02x, CPR=%02x, GCR=%02x\n",
+			dcsr, dcer, ddcr, docr, dscr, dccr, dcpr, dgcr);
+		printf ("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, "
+			"DFCR=%02x, MFCR=%02x, BFCR=%02x\n",
+			dnivr, deivr, dmtcr, dbtcr, ddfcr, dmfcr, dbfcr);
+		printf ("DAR=%08x, MAR=%08x, BAR=%08x\n",
+			ddar, dmar, dbar);
+	}
+#endif
+
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	DDUMPREGS(3, ("dmac_error\n"));
 
