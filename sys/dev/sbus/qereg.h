@@ -1,4 +1,4 @@
-/*	$NetBSD: qereg.h,v 1.2 1999/04/20 20:24:39 pk Exp $	*/
+/*	$NetBSD: qereg.h,v 1.3 2000/07/24 04:28:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,24 +65,26 @@
 
 /*
  * QE Channel registers
- *-
+ */
+#if 0
 struct qe_cregs {
-	u_int32_t ctrl;		// control
-	u_int32_t stat;		// status
-	u_int32_t rxds;		// rx descriptor ring ptr
-	u_int32_t txds;		// tx descriptor ring ptr
-	u_int32_t rimask;	// rx interrupt mask
-	u_int32_t timask;	// tx interrupt mask
-	u_int32_t qmask;	// qec error interrupt mask
-	u_int32_t mmask;	// mace error interrupt mask
-	u_int32_t rxwbufptr;	// local memory rx write ptr
-	u_int32_t rxrbufptr;	// local memory rx read ptr
-	u_int32_t txwbufptr;	// local memory tx write ptr
-	u_int32_t txrbufptr;	// local memory tx read ptr
-	u_int32_t ccnt;		// collision counter
-	u_int32_t pipg;		// inter-frame gap
+	u_int32_t ctrl;		/* control */
+	u_int32_t stat;		/* status */
+	u_int32_t rxds;		/* rx descriptor ring ptr */
+	u_int32_t txds;		/* tx descriptor ring ptr */
+	u_int32_t rimask;	/* rx interrupt mask */
+	u_int32_t timask;	/* tx interrupt mask */
+	u_int32_t qmask;	/* qec error interrupt mask */
+	u_int32_t mmask;	/* mace error interrupt mask */
+	u_int32_t rxwbufptr;	/* local memory rx write ptr */
+	u_int32_t rxrbufptr;	/* local memory rx read ptr */
+	u_int32_t txwbufptr;	/* local memory tx write ptr */
+	u_int32_t txrbufptr;	/* local memory tx read ptr */
+	u_int32_t ccnt;		/* collision counter */
+	u_int32_t pipg;		/* inter-frame gap */
 };
- * register indices: */
+#endif
+/* register indices: */
 #define QE_CRI_CTRL	(0*4)
 #define QE_CRI_STAT	(1*4)
 #define QE_CRI_RXDS	(2*4)
@@ -186,69 +188,71 @@ struct qe_cregs {
 
 /*
  * MACE registers
- *-
+ */
+#if 0
 struct qe_mregs {
-	u_int8_t rcvfifo;	[0]	// receive fifo
-	u_int8_t xmtfifo;	[1]	// transmit fifo
-	u_int8_t xmtfc;		[2]	// transmit frame control
-	u_int8_t xmtfs;		[3]	// transmit frame status
-	u_int8_t xmtrc;		[4]	// tx retry count
-	u_int8_t rcvfc;		[5]	// receive frame control
-	u_int8_t rcvfs;		[6]	// receive frame status
-	u_int8_t fifofc;	[7]	// fifo frame count
-	u_int8_t ir;		[8]	// interrupt register
-	u_int8_t imr;		[9]	// interrupt mask register
-	u_int8_t pr;		[10]	// poll register
-	u_int8_t biucc;		[11]	// biu config control
-	u_int8_t fifocc;	[12]	// fifo config control
-	u_int8_t maccc;		[13]	// mac config control
-	u_int8_t plscc;		[14]	// pls config control
-	u_int8_t phycc;		[15]	// phy config control
-	u_int8_t chipid1;	[16]	// chipid, low byte
-	u_int8_t chipid2;	[17]	// chipid, high byte
-	u_int8_t iac;		[18]	// internal address config
-	u_int8_t _reserved0;	[19]	// reserved
-	u_int8_t ladrf;		[20]	// logical address filter
-	u_int8_t padr;		[21]	// physical address
-	u_int8_t _reserved1;	[22]	// reserved
-	u_int8_t _reserved2;	[23]	// reserved
-	u_int8_t mpc;		[24]	// missed packet count
-	u_int8_t _reserved3;	[25]	// reserved
-	u_int8_t rntpc;		[26]	// runt packet count
-	u_int8_t rcvcc;		[27]	// receive collision count
-	u_int8_t _reserved4;	[28]	// reserved
-	u_int8_t utr;		[29]	// user test register
-	u_int8_t rtr1;		[30]	// reserved test register 1
-	u_int8_t rtr2;		[31]	// reserved test register 2
+	u_int8_t rcvfifo;	[0]	/* receive fifo */
+	u_int8_t xmtfifo;	[1]	/* transmit fifo */
+	u_int8_t xmtfc;		[2]	/* transmit frame control */
+	u_int8_t xmtfs;		[3]	/* transmit frame status */
+	u_int8_t xmtrc;		[4]	/* tx retry count */
+	u_int8_t rcvfc;		[5]	/* receive frame control */
+	u_int8_t rcvfs;		[6]	/* receive frame status */
+	u_int8_t fifofc;	[7]	/* fifo frame count */
+	u_int8_t ir;		[8]	/* interrupt register */
+	u_int8_t imr;		[9]	/* interrupt mask register */
+	u_int8_t pr;		[10]	/* poll register */
+	u_int8_t biucc;		[11]	/* biu config control */
+	u_int8_t fifocc;	[12]	/* fifo config control */
+	u_int8_t maccc;		[13]	/* mac config control */
+	u_int8_t plscc;		[14]	/* pls config control */
+	u_int8_t phycc;		[15]	/* phy config control */
+	u_int8_t chipid1;	[16]	/* chipid, low byte */
+	u_int8_t chipid2;	[17]	/* chipid, high byte */
+	u_int8_t iac;		[18]	/* internal address config */
+	u_int8_t _reserved0;	[19]	/* reserved */
+	u_int8_t ladrf;		[20]	/* logical address filter */
+	u_int8_t padr;		[21]	/* physical address */
+	u_int8_t _reserved1;	[22]	/* reserved */
+	u_int8_t _reserved2;	[23]	/* reserved */
+	u_int8_t mpc;		[24]	/* missed packet count */
+	u_int8_t _reserved3;	[25]	/* reserved */
+	u_int8_t rntpc;		[26]	/* runt packet count */
+	u_int8_t rcvcc;		[27]	/* receive collision count */
+	u_int8_t _reserved4;	[28]	/* reserved */
+	u_int8_t utr;		[29]	/* user test register */
+	u_int8_t rtr1;		[30]	/* reserved test register 1 */
+	u_int8_t rtr2;		[31]	/* reserved test register 2 */
 };
- * register indices: */
-#define QE_MRI_RCVFIFO	0	// receive fifo
-#define QE_MRI_XMTFIFO	1	// transmit fifo
-#define QE_MRI_XMTFC	2	// transmit frame control
-#define QE_MRI_XMTFS	3	// transmit frame status
-#define QE_MRI_XMTRC	4	// tx retry count
-#define QE_MRI_RCVFC	5	// receive frame control
-#define QE_MRI_RCVFS	6	// receive frame status
-#define QE_MRI_FIFOFC	7	// fifo frame count
-#define QE_MRI_IR	8	// interrupt register
-#define QE_MRI_IMR	9	// interrupt mask register
-#define QE_MRI_PR	10	// poll register
-#define QE_MRI_BIUCC	11	// biu config control
-#define QE_MRI_FIFOCC	12	// fifo config control
-#define QE_MRI_MACCC	13	// mac config control
-#define QE_MRI_PLSCC	14	// pls config control
-#define QE_MRI_PHYCC	15	// phy config control
-#define QE_MRI_CHIPID1	16	// chipid, low byte
-#define QE_MRI_CHIPID2	17	// chipid, high byte
-#define QE_MRI_IAC	18	// internal address config
-#define QE_MRI_LADRF	20	// logical address filter
-#define QE_MRI_PADR	21	// physical address
-#define QE_MRI_MPC	24	// missed packet count
-#define QE_MRI_RNTPC	26	// runt packet count
-#define QE_MRI_RCVCC	27	// receive collision count
-#define QE_MRI_UTR	29	// user test register
-#define QE_MRI_RTR1	30	// reserved test register 1
-#define QE_MRI_RTR2	31	// reserved test register 2
+#endif
+/* register indices: */
+#define QE_MRI_RCVFIFO	0	/* receive fifo */
+#define QE_MRI_XMTFIFO	1	/* transmit fifo */
+#define QE_MRI_XMTFC	2	/* transmit frame control */
+#define QE_MRI_XMTFS	3	/* transmit frame status */
+#define QE_MRI_XMTRC	4	/* tx retry count */
+#define QE_MRI_RCVFC	5	/* receive frame control */
+#define QE_MRI_RCVFS	6	/* receive frame status */
+#define QE_MRI_FIFOFC	7	/* fifo frame count */
+#define QE_MRI_IR	8	/* interrupt register */
+#define QE_MRI_IMR	9	/* interrupt mask register */
+#define QE_MRI_PR	10	/* poll register */
+#define QE_MRI_BIUCC	11	/* biu config control */
+#define QE_MRI_FIFOCC	12	/* fifo config control */
+#define QE_MRI_MACCC	13	/* mac config control */
+#define QE_MRI_PLSCC	14	/* pls config control */
+#define QE_MRI_PHYCC	15	/* phy config control */
+#define QE_MRI_CHIPID1	16	/* chipid, low byte */
+#define QE_MRI_CHIPID2	17	/* chipid, high byte */
+#define QE_MRI_IAC	18	/* internal address config */
+#define QE_MRI_LADRF	20	/* logical address filter */
+#define QE_MRI_PADR	21	/* physical address */
+#define QE_MRI_MPC	24	/* missed packet count */
+#define QE_MRI_RNTPC	26	/* runt packet count */
+#define QE_MRI_RCVCC	27	/* receive collision count */
+#define QE_MRI_UTR	29	/* user test register */
+#define QE_MRI_RTR1	30	/* reserved test register 1 */
+#define QE_MRI_RTR2	31	/* reserved test register 2 */
 
 /* qe_mregs.xmtfc: transmit frame control. */
 #define	QE_MR_XMTFC_DRETRY	0x80		/* disable retries */
