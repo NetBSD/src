@@ -1,4 +1,4 @@
-.\"	$NetBSD: ulimit.3,v 1.5 2002/10/01 16:48:35 wiz Exp $
+.\"	$NetBSD: ulimit.3,v 1.6 2002/10/01 16:59:48 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,14 +87,14 @@ instead.
 If successful, the
 .Fn ulimit
 function returns the value of the requested limit.
-Otherwise, it returns -1, sets
+Otherwise, it returns \-1, sets
 .Va errno
 to indicate an error, and the limit is not changed.
 Therefore, to detect an error condition applications should set
 .Va errno
 to 0, call
 .Fn ulimit ,
-and check if -1 is returned and
+and check if \-1 is returned and
 .Va errno
 is non-zero.
 .Sh ERRORS
