@@ -1,4 +1,4 @@
-#	$NetBSD: std.alpha,v 1.10 1996/11/13 20:43:19 cgd Exp $
+#	$NetBSD: std.alpha,v 1.11 1996/11/15 19:37:34 cgd Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
@@ -6,6 +6,14 @@ machine		alpha
 
 makeoptions	DEBUG="-g"
 
-options		EXEC_ECOFF
-options		EXEC_ELF64
-options		EXEC_SCRIPT
+# standard ("mandatory") kernel options.
+
+# Executable support: once transitioned to ELF, EXEC_ECOFF will become optional
+options		EXEC_ECOFF	# (native) ECOFF binary support
+options		EXEC_ELF64	# (native) ELF64 binary support
+options		EXEC_SCRIPT	# shell script support
+
+# VM pager support
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files; REQUIRED
+options		DEVPAGER	# mmap() of devices; REQUIRED
