@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.27 1997/10/03 07:17:34 lukem Exp $
+#	$NetBSD: Makefile.arm32,v 1.28 1997/10/18 04:20:17 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -39,8 +39,8 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Darm32 -Wcomment
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext F0000020 -e start
+AFLAGS=		-x assembler-with-cpp -D_LOCORE
+LINKFLAGS=	-Ttext F0000000 -e start
 STRIPFLAGS=	-d
 
 HOSTED_CC=	${CC}
@@ -155,17 +155,23 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
+.ifdef MONITOR
 SRCS=	${ARM32}/arm32/locore.S modedefs.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
+.else
+SRCS=	${ARM32}/arm32/locore.S \
+	param.c ioconf.c ${CFILES} ${SFILES}
+.endif
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
 	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/arm32/genassym.c
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/arm32/makemodes.c
-
+.ifdef MONITOR
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM32}/vidc/makemodes.c
+.endif
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -192,7 +198,7 @@ modedefs.o: modedefs.c
 makemodes: makemodes.o
 	${CC} -o $@ makemodes.o
 
-makemodes.o: ${ARM32}/arm32/makemodes.c
+makemodes.o: ${ARM32}/vidc/makemodes.c
 	${HOSTED_C}
 
 %RULES
