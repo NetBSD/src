@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.15 1999/04/19 21:37:23 kleink Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.16 2000/09/05 00:57:04 hubertf Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -110,6 +110,8 @@ Make the necessary directories:
 .It (me@netbsd) mkdir -p /emul/svr4/usr/{bin,lib}
 .br
 .It (me@netbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
+.br
+.It (me@netbsd) mkdir -p /emul/svr4/usr/dt/{bin,lib}
 .El
 .Pp
 .It 2.
@@ -132,6 +134,12 @@ If you are running openwindows:
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
 .It rsh netbsd 'cd /emul/svr4/usr/openwin/lib; tar -xpf -'
+.in -5
+.It (me@svr4) cd /usr/dt/lib
+.br
+.It (me@svr4) tar -cf -\ . | \e
+.in +5
+.It rsh netbsd 'cd /emul/svr4/usr/dt/lib; tar -xpf -'
 .in -5
 .El
 .Pp
