@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.86 2003/05/21 14:41:26 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.87 2003/05/22 14:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.86 2003/05/21 14:41:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.87 2003/05/22 14:11:50 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -407,7 +407,7 @@ nfs_safedisconnect(nmp)
 	dummyreq.r_nmp = nmp;
 	nfs_rcvlock(&dummyreq); /* XXX ignored error return */
 	nfs_disconnect(nmp);
-	nfs_rcvunlock(&nmp->nm_iflag);
+	nfs_rcvunlock(nmp);
 }
 
 /*
@@ -761,7 +761,7 @@ nfs_reply(myrep)
 		 */
 		nmp->nm_waiters++;
 		error = nfs_receive(myrep, &nam, &mrep);
-		nfs_rcvunlock(&nmp->nm_iflag);
+		nfs_rcvunlock(nmp);
 		if (error) {
 
 			if (nmp->nm_iflag & NFSMNT_DISMNT) {
@@ -1591,6 +1591,7 @@ nfs_rcvlock(rep)
 	struct nfsmount *nmp = rep->r_nmp;
 	int *flagp = &nmp->nm_iflag;
 	int slpflag, slptimeo = 0;
+	int error = 0;
 
 	if (*flagp & NFSMNT_DISMNT)
 		return EIO;
@@ -1599,42 +1600,52 @@ nfs_rcvlock(rep)
 		slpflag = PCATCH;
 	else
 		slpflag = 0;
+	simple_lock(&nmp->nm_slock);
 	while (*flagp & NFSMNT_RCVLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp))
-			return (EINTR);
+		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp)) {
+			error = EINTR;
+			goto quit;
+		}
 		*flagp |= NFSMNT_WANTRCV;
 		nmp->nm_waiters++;
-		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsrcvlk",
-			slptimeo);
+		(void) ltsleep(flagp, slpflag | (PZERO - 1), "nfsrcvlk",
+			slptimeo, &nmp->nm_slock);
 		nmp->nm_waiters--;
 		if (*flagp & NFSMNT_DISMNT) {
 			wakeup(&nmp->nm_waiters);
-			return EIO;
+			error = EIO;
+			goto quit;
 		}
 		/* If our reply was received while we were sleeping,
 		 * then just return without taking the lock to avoid a
 		 * situation where a single iod could 'capture' the
 		 * receive lock.
 		 */
-		if (rep->r_mrep != NULL)
-			return (EALREADY);
+		if (rep->r_mrep != NULL) {
+			error = EALREADY;
+			goto quit;
+		}
 		if (slpflag == PCATCH) {
 			slpflag = 0;
 			slptimeo = 2 * hz;
 		}
 	}
 	*flagp |= NFSMNT_RCVLOCK;
-	return (0);
+quit:
+	simple_unlock(&nmp->nm_slock);
+	return error;
 }
 
 /*
  * Unlock the stream socket for others.
  */
 void
-nfs_rcvunlock(flagp)
-	int *flagp;
+nfs_rcvunlock(nmp)
+	struct nfsmount *nmp;
 {
+	int *flagp = &nmp->nm_iflag;
 
+	simple_lock(&nmp->nm_slock);
 	if ((*flagp & NFSMNT_RCVLOCK) == 0)
 		panic("nfs rcvunlock");
 	*flagp &= ~NFSMNT_RCVLOCK;
@@ -1642,6 +1653,7 @@ nfs_rcvunlock(flagp)
 		*flagp &= ~NFSMNT_WANTRCV;
 		wakeup((caddr_t)flagp);
 	}
+	simple_unlock(&nmp->nm_slock);
 }
 
 /*
