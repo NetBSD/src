@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.6 2001/06/19 00:40:57 fvdl Exp $	*/
+/*	$NetBSD: elf.c,v 1.7 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.6 2001/06/19 00:40:57 fvdl Exp $");
+__RCSID("$NetBSD: elf.c,v 1.7 2001/11/08 15:33:15 christos Exp $");
 
 #include <sys/param.h>
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: elf.c,v 1.6 2001/06/19 00:40:57 fvdl Exp $");
 #include <fcntl.h>
 
 #include "modload.h"
+
+char *strtab;
 
 static void
 read_section_header(int fd, Elf_Ehdr *ehdr, int num, Elf_Shdr *shdr)
@@ -95,7 +97,7 @@ add_section(struct elf_section **head, struct elf_section *s)
 
 /* make a linked list of all sections containing ALLOCatable data */
 static void
-read_sections(int fd, Elf_Ehdr *ehdr, char *strtab, struct elf_section **head)
+read_sections(int fd, Elf_Ehdr *ehdr, char *shstrtab, struct elf_section **head)
 {
 	int i;
 	Elf_Shdr shdr;
@@ -104,13 +106,17 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *strtab, struct elf_section **head)
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		struct elf_section *s;
 		read_section_header(fd, ehdr, i, &shdr);
-		if ((shdr.sh_flags & SHF_ALLOC) == 0)
+		if (((shdr.sh_flags & SHF_ALLOC) == 0)
+		    && (shdr.sh_type != SHT_STRTAB)
+		    && (shdr.sh_type != SHT_SYMTAB)
+		    && (shdr.sh_type != SHT_DYNSYM)) {
 			/* skip non-ALLOC sections */
 			continue;
+		}
 		s = malloc(sizeof(*s));
 		if (s == NULL)
 			errx(1, "failed to allocate %lu bytes", (u_long)sizeof(*s));
-		s->name = strtab + shdr.sh_name;
+		s->name = shstrtab + shdr.sh_name;
 		s->type = shdr.sh_type;
 		s->addr = (void*)shdr.sh_addr;
 		s->offset = shdr.sh_offset;
@@ -118,6 +124,38 @@ read_sections(int fd, Elf_Ehdr *ehdr, char *strtab, struct elf_section **head)
 		s->align = shdr.sh_addralign;
 		add_section(head, s);
 	}
+}
+
+/* get the symbol table sections and free the rest of them */
+static void
+get_symtab(struct elf_section **symtab)
+{
+	struct elf_section *head, *cur, *prev;
+
+	head = NULL;
+	prev = NULL;
+	cur = *symtab;
+	while (cur) {
+		if ((cur->type == SHT_SYMTAB) || (cur->type == SHT_DYNSYM)) {
+			if (head == NULL) {
+				head = cur;
+			}
+			if (prev != NULL) {
+				prev->next = cur;
+			}
+			prev = cur;
+			cur = cur->next;
+		} else {
+			struct elf_section *p = cur;
+			cur = cur->next;
+			p->next = NULL;
+			free(p);
+		}
+	}
+	if (prev) {
+		prev->next = NULL;
+	}
+	*symtab = head;
 }
 
 /* free a list of section headers */
@@ -132,21 +170,47 @@ free_sections(struct elf_section *head)
 	}
 }
 
-/* read string table */
+/* read section header's string table */
 static char *
-read_string_table(int fd, Elf_Ehdr *ehdr)
+read_shstring_table(int fd, Elf_Ehdr *ehdr)
 {
 	Elf_Shdr shdr;
-	char *strtab;
+	char *shstrtab;
 	read_section_header(fd, ehdr, ehdr->e_shstrndx, &shdr);
-	strtab = malloc(shdr.sh_size);
-	if (strtab == NULL)
+	shstrtab = malloc(shdr.sh_size);
+	if (shstrtab == NULL)
 		errx(1, "failed to allocate %lu bytes", (u_long)shdr.sh_size);
 	if (lseek(fd, shdr.sh_offset, SEEK_SET) < 0)
 		err(1, "lseek");
-	if (read(fd, strtab, shdr.sh_size) != shdr.sh_size)
+	if (read(fd, shstrtab, shdr.sh_size) != shdr.sh_size)
 		err(1, "read");
-	return strtab;
+	return shstrtab;
+}
+
+/* read string table */
+static char *
+read_string_table(int fd, struct elf_section *head, int *strtablen)
+{
+	char *string_table;
+
+	while (head) {
+		if ((strcmp(head->name, ".strtab") == 0 )
+		    && (head->type == SHT_STRTAB)) {
+			string_table = malloc(head->size);
+			if (string_table == NULL)
+				errx(1, "failed to allocate %lu bytes",
+				    (u_long)head->size);
+			if (lseek(fd, head->offset, SEEK_SET) < 0)
+				err(1, "lseek");
+			if (read(fd, string_table, head->size) != head->size)
+				err(1, "read");
+			*strtablen = head->size;
+			break;
+		} else {
+			head = head->next;
+		}
+	}
+	return string_table;
 }
 
 static int
@@ -188,15 +252,19 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	Elf_Ehdr ehdr;
 	ssize_t off = 0;
 	size_t data_hole = 0;
-	char *strtab;
-	struct elf_section *head, *s;
+	char *shstrtab, *strtab;
+	struct elf_section *head, *s, *symtab;
 	
 	if (read_elf_header(fd, &ehdr) < 0)
 		return -1;
-	strtab = read_string_table(fd, &ehdr);
-	read_sections(fd, &ehdr, strtab, &head);
+	shstrtab = read_shstring_table(fd, &ehdr);
+	read_sections(fd, &ehdr, shstrtab, &head);
 
 	for (s = head; s; s = s->next) {
+                if ((s->type == SHT_STRTAB) && (s->type == SHT_SYMTAB)
+                    && (s->type == SHT_DYNSYM)) {
+			continue;
+		}
 		if (debug)
 			fprintf(stderr, 
 			    "%s: addr = %p size = %#lx align = %#lx\n", 
@@ -218,18 +286,24 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	}
 	off -= data_hole;
 	
-	/* cleanup */
-	free_sections(head);
-	free(strtab);
-
 	/* XXX round to pagesize? */
 	*modsize = ROUND(off, sysconf(_SC_PAGESIZE));
+	free(shstrtab);
 
-	/*
-	 * XXX no symbol table support
-	 */
-	*strtablen = 0;
-	resrvp->sym_size = resrvp->sym_symsize = 0;
+	/* get string table length */
+	strtab = read_string_table(fd, head, strtablen);
+	free(strtab);
+
+	/* get symbol table sections */
+	get_symtab(&head);
+	symtab = head;
+	resrvp->sym_symsize = 0;
+	while (symtab) {
+		resrvp->sym_symsize += symtab->size;
+		symtab = symtab->next;
+	}
+	resrvp->sym_size = resrvp->sym_symsize + *strtablen;
+	free_sections(head);
 
 	return (0);
 }
@@ -280,7 +354,7 @@ elf_mod_load(int fd)
 	size_t zero_size = 0;
 	size_t b;
 	ssize_t n;
-	char *strtab;
+	char *shstrtab;
 	struct elf_section *head, *s;
 	char buf[10 * BUFSIZ];
 	void *addr = NULL;
@@ -288,55 +362,127 @@ elf_mod_load(int fd)
 	if (read_elf_header(fd, &ehdr) < 0)
 		return NULL;
 
-	strtab = read_string_table(fd, &ehdr);
-	read_sections(fd, &ehdr, strtab, &head);
+	shstrtab = read_shstring_table(fd, &ehdr);
+	read_sections(fd, &ehdr, shstrtab, &head);
 	
 	for (s = head; s; s = s->next) {
-		if (debug)
-			fprintf(stderr, "loading `%s': addr = %p, "
-				"size = %#lx\n", 
-				s->name, s->addr, (u_long)s->size);
-		if (s->type == SHT_NOBITS)
-			/* skip some space */
-			zero_size += s->size;
-		else {
-			if (addr != NULL) {
-				/* if there is a gap in the prelinked
-                                   module, transfer some empty
-                                   space... */
-				zero_size += (char*)s->addr - (char*)addr;
+		if ((s->type != SHT_STRTAB) && (s->type != SHT_SYMTAB)
+		    && (s->type != SHT_DYNSYM)) {
+			if (debug)
+				fprintf(stderr, "loading `%s': addr = %p, "
+					"size = %#lx\n", 
+					s->name, s->addr, (u_long)s->size);
+			if (s->type == SHT_NOBITS) {
+				/* skip some space */
+				zero_size += s->size;
+			} else {
+				if (addr != NULL) {
+					/* if there is a gap in the prelinked
+                                   	module, transfer some empty
+                                   	space... */
+					zero_size += (char*)s->addr
+					 		- (char*)addr;
+				}
+				if (zero_size) {
+					loadspace(zero_size);
+					zero_size = 0;
+				}
+				b = s->size;
+				if (lseek(fd, s->offset, SEEK_SET) == -1)
+					err(1, "lseek");
+				while (b) {
+					n = read(fd, buf, MIN(b, sizeof(buf)));
+					if (n == 0)
+						errx(1, "unexpected EOF");
+					if (n < 0)
+						err(1, "read");
+					loadbuf(buf, n);
+					b -= n;
+				}
+				addr = (char*)s->addr + s->size;
 			}
-			if (zero_size) {
-				loadspace(zero_size);
-				zero_size = 0;
-			}
-			b = s->size;
-			if (lseek(fd, s->offset, SEEK_SET) == -1)
-				err(1, "lseek");
-			while (b) {
-				n = read(fd, buf, MIN(b, sizeof(buf)));
-				if (n == 0)
-					errx(1, "unexpected EOF");
-				if (n < 0)
-					err(1, "read");
-				loadbuf(buf, n);
-				b -= n;
-			}
-			addr = (char*)s->addr + s->size;
 		}
 	}
 	if (zero_size)
 		loadspace(zero_size);
 	
 	free_sections(head);
-	free(strtab);
+	free(shstrtab);
 	return (void*)ehdr.e_entry;
 }
+
+extern int devfd, modfd;
 
 void
 elf_mod_symload(strtablen)
 	int strtablen;
 {
+	Elf_Ehdr ehdr;
+        char *shstrtab;
+        struct elf_section *head, *s;
+	char *symbuf, *strbuf;
 
-	warnx("ELF can not load symbols");
+        /*
+         * Seek to the text offset to start loading...
+         */
+        if (lseek(modfd, 0, SEEK_SET) == -1)
+                err(12, "lseek");
+        if (read_elf_header(modfd, &ehdr) < 0)
+                return;
+ 
+        shstrtab = read_shstring_table(modfd, &ehdr);
+        read_sections(modfd, &ehdr, shstrtab, &head);
+
+        for (s = head; s; s = s->next) {
+		struct elf_section *p = s;
+
+                if ((p->type == SHT_SYMTAB) || (p->type == SHT_DYNSYM)) {
+                        if (debug)
+                                fprintf(stderr, "loading `%s': addr = %p, "
+                                        "size = %#lx\n",
+                                        s->name, s->addr, (u_long)s->size);
+			/*
+         		 * Seek to the file offset to start loading it...
+         		 */
+        		if (lseek(modfd, p->offset, SEEK_SET) == -1)
+                		err(12, "lseek");
+			symbuf = malloc(p->size);
+			if (symbuf == 0)
+                		err(13, "malloc");
+			if (read(modfd, symbuf, p->size) != p->size)
+                		err(14, "read");
+
+			loadsym(symbuf, p->size);
+			free(symbuf);
+                }
+        }
+
+	for (s = head; s; s = s->next) {
+                struct elf_section *p = s;
+ 
+                if ((p->type == SHT_STRTAB)
+		    && (strcmp(p->name, ".strtab") == 0 )) {
+                        if (debug)
+                                fprintf(stderr, "loading `%s': addr = %p, "
+                                        "size = %#lx\n",
+                                        s->name, s->addr, (u_long)s->size);
+                        /*
+                         * Seek to the file offset to start loading it...
+                         */
+                        if (lseek(modfd, p->offset, SEEK_SET) == -1)
+                                err(12, "lseek");
+                        strbuf = malloc(p->size);
+                        if (strbuf == 0)
+                                err(13, "malloc");
+                        if (read(modfd, strbuf, p->size) != p->size)
+                                err(14, "read");
+ 
+                        loadsym(strbuf, p->size);
+                        free(strbuf);
+                }
+        }
+
+        free(shstrtab);
+        free_sections(head);
+        return;
 }
