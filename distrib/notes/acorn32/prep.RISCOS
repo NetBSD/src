@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.9 2002/03/12 19:33:54 reinoud Exp $
+	$NetBSD: prep.RISCOS,v 1.9.2.1 2002/05/29 16:27:46 tv Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -36,7 +36,7 @@ You will need the following RiscOS software:
 	A program that will unpack sparchives. We recommend that you
 	get David Pilling's !SparkPlug. A self-extracting version of this
 	can be found at David Pilling's W3 site
-	(http://www.pilling.demon.co.uk/free.html).
+	(http://pilling.users.netlink.co.uk/free.html).
 
 	A program that can uncompress gzip files, because the current bootloader
 	can't read gzip'ed kernels (yet!).
