@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.22 2002/02/25 12:05:13 lukem Exp $
+.\" 	$NetBSD: rc.8,v 1.23 2002/03/22 04:32:10 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2002
+.Dd March 22, 2002
 .Dt RC 8
 .Os
 .Sh NAME
@@ -81,7 +81,9 @@ and as necessary during system operation to stop, start, restart, reload,
 .It
 Source
 .Pa /etc/rc.subr
-to load various shell functions to use.
+to load various
+.Xr rc.subr 8
+shell functions to use.
 .It
 If autobooting, set
 .Dv $autoboot
@@ -108,7 +110,7 @@ flag),
 and assigns the result to a variable.
 .It
 Calls each script in turn using run_rc_script() (from
-.Pa /etc/rc.subr ) ,
+.Xr rc.subr 8 ) ,
 which sets
 .Dv $1
 to
@@ -123,7 +125,9 @@ suffix then it is sourced directly into the current shell.
 .It
 Source
 .Pa /etc/rc.subr
-to load various shell functions to use.
+to load various
+.Xr rc.subr 8
+shell functions to use.
 .It
 Invoke
 .Xr rcorder 8
@@ -138,7 +142,7 @@ flag),
 reverses that order, and assigns the result to a variable.
 .It
 Calls each script in turn using run_rc_script() (from
-.Pa /etc/rc.subr ) ,
+.Xr rc.subr 8 ) ,
 which sets
 .Dv $1
 to
@@ -236,7 +240,9 @@ scripts if the system is starting directly to multi-user mode, to
 speed up the boot process.
 If
 .Sq forcestart
-is given, ignore the rc.conf check and start anyway.
+is given, ignore the
+.Xr rc.conf 5
+check and start anyway.
 .It stop
 If the service is to be started as specified by
 .Xr rc.conf 5 ,
@@ -244,7 +250,9 @@ stop the service.
 This should check that the service is running and complain if it's not.
 If
 .Sq forcestop
-is given, ignore the rc.conf check and attempt to stop.
+is given, ignore the
+.Xr rc.conf 5
+check and attempt to stop.
 .It restart
 Effectively perform a stop then a start.
 .It status
@@ -254,7 +262,7 @@ Otherwise it's not necessary to support this argument.
 Defaults to displaying the process ID of the program (if running).
 .It rcvar
 Display which
-.Pa /etc/rc.conf
+.Xr rc.conf 5
 variables are used to control the startup of the service (if any).
 .El
 .Pp
@@ -264,7 +272,7 @@ Other arguments (such as
 etc) can be added if necessary.
 .Pp
 In order to simplify scripts, the run_rc_command() function from
-.Pa /etc/rc.subr
+.Xr rc.subr 8
 may be used.
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
@@ -277,7 +285,11 @@ Directory containing control scripts for each service.
 Shutdown script called by
 .Xr shutdown 8 .
 .It Pa /etc/rc.subr
-Contains functions used by various scripts.
+Contains
+.Xr rc.subr 8
+functions used by various scripts.
+.It Pa /etc/rc.conf
+System startup configuration file.
 .El
 .Sh SEE ALSO
 .Xr rc.conf 5 ,
