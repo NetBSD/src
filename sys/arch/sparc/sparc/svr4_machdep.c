@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.14 1996/03/14 21:09:30 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.15 1996/03/16 23:31:50 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -102,7 +102,7 @@ svr4_printcontext(fun, uc)
 	printf("Signal Stack: sp %p, size %d, flags %x\n",
 	       s->ss_sp, s->ss_size, s->ss_flags);
 
-	printf("Flags: %x\n", uc->uc_flags);
+	printf("Flags: %lx\n", uc->uc_flags);
 }
 #endif
 
@@ -446,7 +446,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	default:
 		si->si_code = 0;
 #ifdef DIAGNOSTIC
-		printf("sig %d code %d\n", sig, code);
+		printf("sig %d code %ld\n", sig, code);
 		panic("svr4_getsiginfo");
 #endif
 		break;
