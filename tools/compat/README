@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2002/09/22 01:26:39 lukem Exp $
+$NetBSD: README,v 1.8 2002/09/29 07:05:28 lukem Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -6,7 +6,7 @@ are listed.
 
 =====
 
-HP/UX:
+HP-UX:
 
 * zlib must be available.
   This will be fixed in the future to include zlib in libnbcompat.
