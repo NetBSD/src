@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1996/03/17 00:58:34 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1996/03/26 13:44:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -39,6 +39,11 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+
+/*
+ * Supported busses: DEC IOCTL asic baseboard device, TurboChannel option,
+ * plus baseboard device on   "busless"  DECstations.
+ */
 #ifdef alpha
 #define	CAN_HAVE_IOASIC	1
 #define	CAN_HAVE_TC	1
@@ -47,9 +52,14 @@
 #define	CAN_HAVE_IOASIC	1
 #define	CAN_HAVE_TC	1
 #define	CAN_HAVE_MAINBUS 1
-#endif
+#endif /* pmax */
 
-#include "bpfilter.h"
+
+/*
+ * For each bus on which a LANCE device might appear, determine
+ * if that bus was configured into the current kernel.
+ */
+
 #ifdef CAN_HAVE_MAINBUS
 /*XXX TEST FOR KN01 OR MIPSFAIR? */
 #endif
@@ -59,6 +69,8 @@
 #ifdef CAN_HAVE_IOASIC
 #include "ioasic.h"
 #endif
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +96,7 @@
 #endif
 #if CAN_HAVE_MAINBUS
 #include <pmax/pmax/kn01.h>
+#include <pmax/pmax/kn01var.h>
 extern struct cfdriver mainbus_cd; /* XXX */
 #endif
 
@@ -151,27 +164,33 @@ le_tc_match(parent, match, aux)
 {
 
 #if CAN_HAVE_IOASIC && (NIOASIC > 0)
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		struct ioasicdev_attach_args *d = aux;
 
-		if (!ioasic_submatch(match, aux))
+		if (!ioasic_submatch(match, aux)) {
 			return (0);
-		if (strncmp("lance   ", d->iada_modname, TC_ROM_LLEN))
+		}
+		if (strncmp("lance", d->iada_modname, TC_ROM_LLEN)) {
 			return (0);
+		}
 	} else
 #endif /* IOASIC */
-#if CAN_HAVE_TC && (NTC > 0)
-	if (parent->dv_cfdata->cf_driver == &tccd) {
-		struct tcdev_attach_args *d = aux;
 
-		if (strncmp("PMAD-AA ", d->tcda_modname, TC_ROM_LLEN) &&
-		    strncmp("PMAD-BA ", d->tcda_modname, TC_ROM_LLEN))
+#if CAN_HAVE_TC && (NTC > 0)
+	if (parent->dv_cfdata->cf_driver == &tc_cd) {
+		struct tc_attach_args *d = aux;
+
+		if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) &&
+		    strncmp("PMAD-BA ", d->ta_modname, TC_ROM_LLEN))
 			return (0);
 	} else
 #endif /* TC */
-#if CAN_HAVE_MAINBUS /* XXX TEST FOR KN01 OR MIPSFAIR? */
-	if (parent->dv_cfdata->cf_driver == &mainbuscd) {
-		/* XXX VARIOUS PMAX BASEBOARD CASES? */
+
+#if CAN_HAVE_MAINBUS && defined(DS3100)
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
+	  	struct confargs *d = aux;
+		if (strcmp("lance", d->ca_name) != 0)
+			return (0);
 	} else
 #endif /* MAINBUS */
 		return (0);
@@ -179,19 +198,21 @@ le_tc_match(parent, match, aux)
 	return (1);
 }
 
+typedef void (*ie_fn_t) __P((struct device *, void *,
+			     tc_intrlevel_t, int (*)(void *), void *));
+
 void
 le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	register struct le_softc *sc = (void *)self;
-	void (*ie_fn) __P((struct device *, void *, tc_intrlevel_t,
-	    int (*)(void *), void *));
+	ie_fn_t ie_fn;
 	u_char *cp;	/* pointer to MAC address */
 	int i;
 
 #if CAN_HAVE_IOASIC && (NIOASIC > 0)
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		struct ioasicdev_attach_args *d = aux;
 
 		/* It's on the system IOCTL ASIC */
@@ -212,16 +233,16 @@ le_tc_attach(parent, self, aux)
 	} else
 #endif /* IOASIC */
 #if CAN_HAVE_TC && (NTC > 0)
-	if (parent->dv_cfdata->cf_driver == &tccd) {
-		struct tcdev_attach_args *d = aux;
+	if (parent->dv_cfdata->cf_driver == &tc_cd) {
+		struct tc_attach_args *d = aux;
 
 		/*
 		 * It's on the turbochannel proper, or a kn02
 		 * baseboard implementation of a TC option card.
 		 */
-		sc->sc_r1 = (struct lereg1 *)(d->tcda_addr + LE_OFFSET_LANCE);
-		sc->sc_mem = (void *)(d->tcda_addr + LE_OFFSET_RAM);
-		cp = (u_char *)(d->tcda_addr + LE_OFFSET_ROM + 2);
+		sc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
+		sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
+		cp = (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2);
 
 		sc->sc_copytodesc = copytobuf_contig;
 		sc->sc_copyfromdesc = copyfrombuf_contig;
@@ -229,7 +250,7 @@ le_tc_attach(parent, self, aux)
 		sc->sc_copyfrombuf = copyfrombuf_contig;
 		sc->sc_zerobuf = zerobuf_contig;
 
-		sc->sc_cookie = d->tcda_cookie;
+		sc->sc_cookie = d->ta_cookie;
 		/*
 	 	 * TC lance boards have onboard SRAM buffers.  DMA
 		 * between the onbard RAM and main memory is not possible,
@@ -238,8 +259,8 @@ le_tc_attach(parent, self, aux)
 		ie_fn = tc_intr_establish;
 	} else
 #endif /* TC */
-#if CAN_HAVE_MAINBUS  /* XXX TEST FOR KN01 OR MIPSFAIR? */
-	if (parent->dv_cfdata->cf_driver == &mainbuscd) {
+#if CAN_HAVE_MAINBUS && defined(DS3100)
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		struct confargs *ca = aux;
 
 		/*
@@ -256,7 +277,7 @@ le_tc_attach(parent, self, aux)
 		sc->sc_zerobuf = zerobuf_gap2;
 
 		sc->sc_cookie = (void *)ca->ca_slotpri; /*XXX more thought */
-		/* XXX BASEBOARD INTERRUPT ESTABLISH FUNCTION? */
+		ie_fn = (ie_fn_t) kn01_intr_establish;
 	} else
 #endif /* MAINBUS */
 
