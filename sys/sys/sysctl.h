@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.65 2001/07/09 10:25:21 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.66 2001/07/14 06:36:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -174,7 +174,8 @@ struct ctlname {
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
 #define	KERN_PIPE		56	/* node: pipe limits */
-#define	KERN_MAXID		57	/* number of valid kern ids */
+#define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
+#define	KERN_MAXID		58	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -234,6 +235,7 @@ struct ctlname {
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "maxptys", CTLTYPE_INT }, \
 	{ "pipe", CTLTYPE_NODE }, \
+	{ "maxphys", CTLTYPE_INT }, \
 }
 
 /*

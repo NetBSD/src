@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91 2001/07/09 23:35:56 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.92 2001/07/14 06:36:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -534,6 +534,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
+	case KERN_MAXPHYS:
+		return sysctl_rdint(oldp, oldlenp, newp, MAXPHYS);
 	default:
 		return (EOPNOTSUPP);
 	}
