@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.9 1999/01/31 00:55:41 castor Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.10 1999/03/20 01:40:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,43 +40,5 @@
 #define	_MIPS_BSD_API_LP32_64CLEAN	_MIPS_SIM_ABIX32
 #define	_MIPS_BSD_API_N32	_MIPS_SIM_NABI32
 #define	_MIPS_BSD_API_LP64	_MIPS_SIM_ABI64
-
-
-#define	_C_LABEL(x)	x
-
-#ifdef __GNUC__
-#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
-#endif
-
-#define	__indr_references(sym,msg)	/* nothing */
-
-#if defined __GNUC__ && defined __STDC__
-#define __warn_references(sym, msg)                  \
-  static const char __evoke_link_warning_##sym[]     \
-    __attribute__ ((section (".gnu.warning." #sym))) = msg;
-#else
-#define	__warn_references(sym,msg)	/* nothing */
-#endif
-
-/* Kernel-only .sections for kernel copyright */
-#ifdef _KERNEL
-
-#ifdef __STDC__
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .text")
-#else
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	__asm__(".section _sec ; .asciz _str ; .text")
-#endif
-
-#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
-#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
-
-#ifdef NO_KERNEL_RCSIDS
-#undef __KERNEL_RCSID
-#define	__KERNEL_RCSID(_n, _s)		/* nothing */
-#endif
-
-#endif /* _KERNEL */
 
 #endif /* !_MIPS_CDEFS_H_ */
