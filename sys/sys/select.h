@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.21 2005/03/10 00:25:45 kleink Exp $	*/
+/*	$NetBSD: select.h,v 1.21.2.1 2005/03/19 13:23:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,11 +78,13 @@ selnotify(struct selinfo *sip, long knhint)
 #include <sys/sigtypes.h>
 #include <time.h>
 
+__BEGIN_DECLS
 int	pselect(int, fd_set * __restrict, fd_set * __restrict,
 	    fd_set * __restrict, const struct timespec * __restrict,
 	    const sigset_t * __restrict);
 int	select(int, fd_set * __restrict, fd_set * __restrict,
 	    fd_set * __restrict, struct timeval * __restrict);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */
