@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.5 2002/03/30 19:13:45 martin Exp $
+ *	$Id: ifpci.c,v 1.6 2002/04/06 22:26:38 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5 2002/03/30 19:13:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.6 2002/04/06 22:26:38 martin Exp $");
 
 
 #include <sys/param.h>
@@ -951,8 +951,7 @@ avma1pp_intr(void * parm)
 			u_int8_t isac_irq_stat = ISAC_READ(I_ISTA);
 			if (!isac_irq_stat)
 				break;
-			if (isic_isac_irq(sc, isac_irq_stat))
-				break;	/* bad IRQ */
+			isic_isac_irq(sc, isac_irq_stat);
 		}
 		OURS;
 	}
