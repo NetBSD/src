@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.389 2002/01/21 18:51:44 eeh Exp $
+$NetBSD: pcidevs,v 1.390 2002/01/21 21:43:55 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1131,7 +1131,7 @@ product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
 /* Eumitcom products */
-product EUMITCOM WL11000P	0x1100	WL11000P
+product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 
 /* O2 Micro Inc */
 product O2MICRO  OZ6729 0x6729	OZ6729 PCI-PCMCIA Bridge
@@ -1175,8 +1175,8 @@ product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
 
 /* Global Sun Tech products */
-product GLOBALSUN GL24110P	0x1101	GL24110P
-product GLOBALSUN GL24110P02	0x1102	GL24110P
+product GLOBALSUN GL24110P	0x1101	GL24110P PCI IEEE 802.11b
+product GLOBALSUN GL24110P02	0x1102	GL24110P PCI IEEE 802.11b
 
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
@@ -1546,7 +1546,7 @@ product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 /* Netgear products */
 product NETGEAR GA620		0x620a	GA620 1000baseSX Gigabit Ethernet
 product NETGEAR GA620T		0x630a	GA620 1000baseT Gigabit Ethernet
-product NETGEAR MA301		0x4100	MA301
+product NETGEAR MA301		0x4100	MA301 PCI IEEE 802.11b
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
