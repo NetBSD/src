@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.82 2001/12/29 13:46:23 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.83 2001/12/31 12:15:46 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.82 2001/12/29 13:46:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.83 2001/12/31 12:15:46 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1713,11 +1713,13 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
-	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen = %d "
-		"(0x%02x%02x%02x%02x%02x%02x%s), "
+	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen=%d "
+		"(0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%s), "
 		"data = %d bytes, dir = %s\n",
 		USBDEVNAME(sc->sc_dev), tag, clen,
-		c[0], c[1], c[2], c[3], c[4], c[5], (clen > 6? "...":""),
+		c[0], c[1], c[2], c[3], c[4], c[5],
+		c[6], c[7], c[8], c[9],
+		(clen > 10? "...":""),
 		dlen, (flags == CBWFLAGS_IN? "in":
 		       (flags == CBWFLAGS_OUT? "out":"<invalid>"))));
 }
