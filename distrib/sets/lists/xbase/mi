@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2004/03/06 03:54:22 rtr Exp $
+# $NetBSD: mi,v 1.40 2004/03/11 06:28:59 rtr Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -718,6 +718,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/ro
 ./usr/X11R6/lib/X11/xkb/symbols/ro2
 ./usr/X11R6/lib/X11/xkb/symbols/ru
+./usr/X11R6/lib/X11/xkb/symbols/ru_yawerty	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xkb/symbols/sapmi
 ./usr/X11R6/lib/X11/xkb/symbols/se
 ./usr/X11R6/lib/X11/xkb/symbols/se_FI
