@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscall.h,v 1.9 2002/05/03 00:24:22 eeh Exp $ */
+/* $NetBSD: aoutm68k_syscall.h,v 1.10 2002/11/01 20:39:17 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -821,3 +821,4 @@
 #define	AOUTM68K_SYS_issetugid	305
 
 #define	AOUTM68K_SYS_MAXSYSCALL	306
+#define	AOUTM68K_SYS_NSYSENT	512
