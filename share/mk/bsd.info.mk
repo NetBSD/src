@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.16 2000/06/08 03:51:56 mycroft Exp $
+#	$NetBSD: bsd.info.mk,v 1.17 2000/06/10 04:56:59 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -42,12 +42,12 @@ infoinstall:: ${INFOFILES:@F@${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${
 .endif
 
 __infoinstall: .USE
-	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${.ALLSRC}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
 	    -o ${INFOOWN_${.ALLSRC}:U${INFOOWN}} \
 	    -g ${INFOGRP_${.ALLSRC}:U${INFOGRP}} \
 	    -m ${INFOMODE_${.ALLSRC}:U${INFOMODE}} \
 	    ${.ALLSRC} ${.TARGET}
+	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${.ALLSRC}
 	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${.ALLSRC}
 
 .for F in ${INFOFILES}
