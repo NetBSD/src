@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.4.2.1 1996/01/31 16:57:11 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.4.2.2 1996/01/31 17:12:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,7 @@ extern void set_segmap __P((int, int));
 #define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
 
 /* This points to the end of the free DVMA space. */
-int dvma_end = DVMA_BASE + DVMA_MAPLEN;
+u_int dvma_end = DVMA_BASE + DVMA_MAPLEN;
 
 void
 dvma_init()
@@ -110,7 +110,7 @@ dvma_alloc(int len)
 {
 	len = sun3_round_page(len);
 	dvma_end -= len;
-	return(dvma_end);
+	return((char*)dvma_end);
 }
 
 void
