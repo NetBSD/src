@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.40 2000/11/07 17:37:07 matt Exp $
+#	$NetBSD: INSTALL,v 1.41 2000/12/20 00:12:19 matt Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -78,6 +78,7 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 #gm*	at pci? dev ? function ?	# gmac ethernet
+pciide*	at pci? dev ? function ?	# PCI IDE Controller
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 options 	TLP_MATCH_21040
@@ -136,8 +137,10 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 wdc*	at obio? flags 0x1
 wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
+atapibus* at pciide? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
