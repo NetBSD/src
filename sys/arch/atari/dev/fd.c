@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28 1998/02/24 13:02:54 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.29 1999/08/06 08:27:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -297,9 +297,9 @@ void		*auxp;
 		/*
 		 * enable disk related interrupts
 		 */
-		MFP->mf_ierb  |= IB_DINT;
-		MFP->mf_iprb  &= ~IB_DINT;
-		MFP->mf_imrb  |= IB_DINT;
+		MFP->mf_ierb |= IB_DINT;
+		MFP->mf_iprb  = (u_int8_t)~IB_DINT;
+		MFP->mf_imrb |= IB_DINT;
 	}
 }
 
