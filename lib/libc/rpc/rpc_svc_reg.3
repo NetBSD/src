@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_call 1.6 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_reg.3,v 1.5 2002/10/01 17:22:02 wiz Exp $
+.\"	$NetBSD: rpc_svc_reg.3,v 1.6 2003/01/01 22:24:29 jschauma Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_REG 3
 .Sh NAME
@@ -25,7 +25,7 @@
 .Ft void
 .Fn svc_unreg "const rpcprog_t prognum" "const rpcvers_t versnum"
 .Ft int
-.Fn svc_auth_reg "const int cred_flavor" "const enum auth_stat (*handler(struct svc_req *, truct rpc_msg *))"
+.Fn svc_auth_reg "const int cred_flavor" "const enum auth_stat (*handler(struct svc_req *, struct rpc_msg *))"
 .Ft void
 .Fn xprt_register "const SVCXPRT *xprt"
 .Ft void
