@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.6 2002/03/22 03:33:30 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.7 2002/03/22 18:49:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ struct mutex {
 			  .mtx_lock = __SIMPLELOCK_UNLOCKED,		\
 	  		  .mtx_minspl = (ipl) } } }
 
+#if defined(__MUTEX_PRIVATE)
+
 #define	m_owner			mtx_un.mtx_owner
 #define	m_spinlock		mtx_un.mtx_spin.mtx_lock
 #define	m_oldspl		mtx_un.mtx_spin.mtx_oldspl
@@ -127,5 +129,7 @@ do {									\
 	alpha_mb();							\
 	(mtx)->m_owner = 0;						\
 } while (/*CONSTCOND*/0)
+
+#endif /* __MUTEX_PRIVATE */
 
 #endif /* _ALPHA_MUTEX_IMPL_H_ */

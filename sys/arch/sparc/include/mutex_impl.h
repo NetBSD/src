@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/22 03:33:31 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.4 2002/03/22 18:49:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ struct mutex {
 			  .mtx_minspl = (ipl),				\
 			  .mtx_type = MUTEX_SPIN } } }
 
+#if defined(__MUTEX_PRIVATE)
+
 #define	m_owner			mtx_un.mtx_adapt.mtx_owner
 #define	m_spinlock		mtx_un.mtx_spin.mtx_lock
 #define	m_oldspl		mtx_un.mtx_spin.mtx_oldspl
@@ -136,5 +138,7 @@ do {									\
 	(mtx)->mtx_un.mtx_adapt.mtx_waiters = 0;			\
 	(mtx)->m_owner = 0;						\
 } while (/*CONSTCOND*/0)
+
+#endif /* __MUTEX_PRIVATE */
 
 #endif /* _SPARC_MUTEX_IMPL_H_ */
