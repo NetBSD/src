@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.100 2002/03/13 02:55:13 simonb Exp $
+#	$NetBSD: files.pmax,v 1.101 2002/04/03 13:16:13 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -87,6 +87,7 @@ file	dev/dec/mcclock.c		mcclock
 file	dev/dec/mcclock_pad32.c		mcclock
 file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
+file	arch/mips/mips/mips_mcclock.c	mcclock # CPU speed via mcclock
 
 include "dev/scsipi/files.scsipi"
 major { sd = 19 }
