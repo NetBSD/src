@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.21 1999/12/22 21:26:19 kleink Exp $	*/
+/*	$NetBSD: string.h,v 1.22 2000/01/10 16:58:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-#include <null.h>
+#include <sys/null.h>
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
