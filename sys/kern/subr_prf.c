@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.52 1998/08/31 02:47:00 mrg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.53 1998/09/12 13:12:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -618,7 +618,6 @@ bitmask_snprintf(val, p, buf, buflen)
 		if (--(l) == 0)		\
 			goto out;	\
 	}				\
-	(p)++;				\
 } while (0)
 
 	/*
