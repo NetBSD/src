@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 1996/09/16 18:00:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -194,11 +194,6 @@ int     physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int     safepri = PSL_LOWIPL;
-
-/*
- * For the fpu emulation and fpu driver.
- */
-int     fpu_type;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
@@ -468,7 +463,7 @@ setregs(p, pack, sp, retval)
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 
-	if (fpu_type) {
+	if (fputype) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
 }
@@ -606,7 +601,7 @@ sendsig(catcher, sig, mask, code)
 			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
-	if (fpu_type) {
+	if (fputype) {
 		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
 	}

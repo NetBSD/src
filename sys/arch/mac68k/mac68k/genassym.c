@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.19 1996/09/12 21:25:29 scottr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.20 1996/09/16 18:00:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -183,6 +183,10 @@ main(void)
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
+
+	printf("#define\tFPU_68881 %d\n", FPU_68881);
+	printf("#define\tFPU_68882 %d\n", FPU_68882);
+	printf("#define\tFPU_68040 %d\n", FPU_68040);
 
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
 	printf("#define\tMMU_68030 %d\n", MMU_68030);
