@@ -1,4 +1,4 @@
-/*	$NetBSD: nan.c,v 1.1 2001/10/28 10:41:56 simonb Exp $	*/
+/*	$NetBSD: nan.c,v 1.2 2003/10/22 23:57:04 kleink Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -21,7 +21,7 @@ int
 main(int argc, char **argv)
 {
 
-	/* NAN is meant to be an infinity. */
+	/* NAN is meant to be a NaN. */
 	if (!isnan(NAN))
 		errx(1, "NAN is a number");
 	return 0;
