@@ -11,7 +11,7 @@
 
 CFLAGS+=${COPTS}
 
-STRIP?=	-s
+STRIP?=		-s
 
 BINGRP?=	bin
 BINOWN?=	bin
@@ -144,14 +144,7 @@ depend: .depend _PROGSUBDIR
 .if !target(beforeinstall)
 beforeinstall:
 .if defined(DESTDIR) || defined(BINDIR)
-	@if [ ! -d "${DESTDIR}${BINDIR}" ]; then \
-                /bin/rm -f ${DESTDIR}${BINDIR} ; \
-                mkdir -p ${DESTDIR}${BINDIR} ; \
-                chown root.wheel ${DESTDIR}${BINDIR} ; \
-                chmod 755 ${DESTDIR}${BINDIR} ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
 .endif
 .endif
 .if !target(afterinstall)
@@ -196,32 +189,6 @@ lint: ${SRCS} _PROGSUBDIR
 .endif
 .endif
 
-.if !target(obj)
-.if defined(NOOBJ)
-obj: _PROGSUBDIR
-.else
-obj: _PROGSUBDIR
-	@cd ${.CURDIR}; rm -f obj > /dev/null 2>&1 || true; \
-	here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
-	if test $$here != $$subdir ; then \
-		dest=/usr/obj/$$subdir ; \
-		echo "$$here -> $$dest"; ln -s $$dest obj; \
-		if test -d /usr/obj -a ! -d $$dest; then \
-			mkdir -p $$dest; \
-		else \
-			true; \
-		fi; \
-	else \
-		true ; \
-		dest=$$here/obj ; \
-		if test ! -d obj ; then \
-			echo "making $$dest" ; \
-			mkdir $$dest; \
-		fi ; \
-	fi;
-.endif
-.endif
-
 .if !target(tags)
 tags: ${SRCS} _PROGSUBDIR
 .if defined(PROG)
@@ -233,3 +200,6 @@ tags: ${SRCS} _PROGSUBDIR
 .if !defined(NOMAN)
 .include <bsd.man.mk>
 .endif
+
+.include <bsd.obj.mk>
+obj: _PROGSUBDIR
