@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.1.1.1 2005/01/11 18:24:26 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.2 2005/01/11 18:49:05 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: if_iwi.c,v 1.1.1.1 2005/01/11 18:24:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.2 2005/01/11 18:49:05 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2005/01/11 18:28:37 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2005/01/11 18:52:11 skrll Exp $
 
 .if ${MACHINE} == "i386"
 PROG	= iwictl

@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.1.1.1 2005/01/11 18:24:24 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.2 2005/01/11 18:49:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
