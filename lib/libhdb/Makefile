@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2001/10/06 21:55:57 perry Exp $
+# $NetBSD: Makefile,v 1.11 2001/10/25 16:15:03 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -43,10 +43,13 @@ INCS=	hdb.h hdb_err.h hdb_asn1.h hdb-protos.h hdb-private.h
 
 INCSDIR= /usr/include/krb5
 
-ASN1COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${PRINTOBJDIR}
+.if !defined(USETOOLS) || (${USETOOLS} == "no")
+ASN1_COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${PRINTOBJDIR}
+ASN1_COMPILE:=${ASN1_COMPILE}/asn1_compile
+.endif
 
 asn1_files hdb_asn1.hx: hdb.asn1
-	${ASN1COMPILE}/asn1_compile ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
+	${ASN1_COMPILE} ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
 
 ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
