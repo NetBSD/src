@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkeyv2.h,v 1.5.2.2 2000/07/25 04:24:45 itojun Exp $	*/
-/*	$KAME: pfkeyv2.h,v 1.18 2000/07/15 16:07:47 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.5.2.3 2000/10/04 17:39:36 itojun Exp $	*/
+/*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -313,13 +313,12 @@ struct sadb_x_ipsecrequest {
 #define SADB_EALG_DESCBC	2
 #define SADB_EALG_3DESCBC	3
 #define SADB_EALG_NULL		11
-#define SADB_EALG_MAX		11
-/* private allocations - based on RFC2407 */
-#if 0	/*disabled due to possible patent issue*/
-#define SADB_X_EALG_RC5CBC	4
-#endif
+#define SADB_EALG_MAX		12
+/* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_EALG_CAST128CBC	6
-#define SADB_X_EALG_BLOWFISHCBC 7
+#define SADB_X_EALG_BLOWFISHCBC	7
+#define SADB_X_EALG_RIJNDAELCBC	12
+#define SADB_X_EALG_AES		12
 /* private allocations should use 249-255 (RFC2407) */
 
 #if 1	/*nonstandard */
