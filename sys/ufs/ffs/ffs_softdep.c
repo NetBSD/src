@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.6 2000/09/19 22:04:09 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.7 2000/11/08 14:28:16 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -893,13 +893,14 @@ softdep_initialize()
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
 	max_softdeps = desiredvnodes * 4;
-	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
-	    &pagedep_hash);
+	pagedep_hashtbl = hashinit(desiredvnodes / 5, HASH_LIST, M_PAGEDEP,
+	    M_WAITOK, &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
-	inodedep_hashtbl = hashinit(desiredvnodes, M_INODEDEP, M_WAITOK,
-	    &inodedep_hash);
+	inodedep_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_INODEDEP,
+	    M_WAITOK, &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
-	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);
+	newblk_hashtbl = hashinit(64, HASH_LIST, M_NEWBLK, M_WAITOK,
+	    &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
 }
 

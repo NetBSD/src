@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.25 2000/06/10 18:27:04 assar Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.26 2000/11/08 14:28:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -188,8 +188,8 @@ umapfs_mount(mp, path, data, ndp, p)
 	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	amp->umapm_vnodeop_p = umap_vnodeop_p;
 	simple_lock_init(&amp->umapm_hashlock);
-	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, M_WAITOK,
-			&amp->umapm_node_hash);
+	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, M_CACHE,
+	    M_WAITOK, &amp->umapm_node_hash);
 
 
 	/*

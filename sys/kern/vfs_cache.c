@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.25 2000/04/16 21:41:49 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.26 2000/11/08 14:28:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -399,8 +399,10 @@ nchinit()
 {
 
 	TAILQ_INIT(&nclruhead);
-	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
-	ncvhashtbl = hashinit(desiredvnodes/8, M_CACHE, M_WAITOK, &ncvhash);	
+	nchashtbl =
+	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
+	ncvhashtbl =
+	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
 	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
 	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_CACHE);

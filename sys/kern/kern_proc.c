@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.42 2000/08/17 14:37:54 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.43 2000/11/08 14:28:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -179,9 +179,12 @@ procinit()
 	LIST_INIT(&deadproc);
 	simple_lock_init(&deadproc_slock);
 
-	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
-	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
-	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
+	pidhashtbl =
+	    hashinit(maxproc / 4, HASH_LIST, M_PROC, M_WAITOK, &pidhash);
+	pgrphashtbl =
+	    hashinit(maxproc / 4, HASH_LIST, M_PROC, M_WAITOK, &pgrphash);
+	uihashtbl =
+	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
