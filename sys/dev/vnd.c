@@ -359,34 +359,6 @@ vniodone(bp)
 	splx(s);
 }
 
-vnread(dev, uio, flags, p)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-	struct proc *p;
-{
-
-#ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnread(%x, %x, %x, %x)\n", dev, uio, flags, p);
-#endif
-	return(physio(vnstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-vnwrite(dev, uio, flags, p)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-	struct proc *p;
-{
-
-#ifdef DEBUG
-	if (vndebug & VDB_FOLLOW)
-		printf("vnwrite(%x, %x, %x, %x)\n", dev, uio, flags, p);
-#endif
-	return(physio(vnstrategy, NULL, dev, B_WRITE, minphys, uio));
-}
-
 /* ARGSUSED */
 vnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
