@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.3 1995/02/27 12:54:39 cgd Exp $	*/
+/*	$NetBSD: gmon.c,v 1.4 1995/11/04 00:11:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.3 1995/02/27 12:54:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.4 1995/11/04 00:11:40 cgd Exp $";
 #endif
 #endif
 
@@ -227,7 +227,7 @@ moncontrol(mode)
 
 	if (mode) {
 		/* start */
-		profil((char *)p->kcount, p->kcountsize, (int)p->lowpc,
+		profil((char *)p->kcount, p->kcountsize, p->lowpc,
 		    s_scale);
 		p->state = GMON_PROF_ON;
 	} else {
