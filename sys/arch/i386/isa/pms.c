@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.11 1994/07/17 19:35:32 mycroft Exp $
+ *	$Id: pms.c,v 1.12 1994/07/18 07:18:57 mycroft Exp $
  */
 
 /*
@@ -364,9 +364,10 @@ pmsintr(sc)
 {
 	u_short iobase = sc->sc_iobase;
 	static int state = 0;
-	u_char buttons, changed;
-	char dx, dy;
-	static u_char buffer[5];
+	static u_char buttons;
+	u_char changed;
+	static char dx, dy;
+	u_char buffer[5];
 
 	if ((sc->sc_state & PMS_OPEN) == 0)
 		/* Interrupts are not expected. */
@@ -375,29 +376,25 @@ pmsintr(sc)
 	switch (state) {
 
 	case 0:
-		buffer[0] = inb(iobase + PMS_DATA);
-		if ((buffer[0] & 0xc0) == 0)
+		buttons = inb(iobase + PMS_DATA);
+		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		buffer[1] = inb(iobase + PMS_DATA);
+		dx = inb(iobase + PMS_DATA);
+		/* Bounding at -127 avoids a bug in XFree86. */
+		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		buffer[2] = inb(iobase + PMS_DATA);
+		dy = inb(iobase + PMS_DATA);
+		dy = (dy == -128) ? 127 : -dy;
 		state = 0;
 
-		dx = (buffer[0] & 0x10) ? buffer[1]-256 : buffer[1];
-		/* Bounding at -127 avoids a bug in XFree86. */
-		dx = (dx == -128) ? -127 : dx;
-
-		dy = (buffer[0] & 0x20) ? buffer[2]-256 : buffer[2];
-		dy = (dy == -128) ? 127 : -dy;
-
-		buttons = ~(((buffer[0] & PS2LBUTMASK) << 2) |
-			    ((buffer[0] & (PS2RBUTMASK | PS2MBUTMASK)) >> 1));
+		buttons = ((buttons & PS2LBUTMASK) << 2) |
+			  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
 		changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
 		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
