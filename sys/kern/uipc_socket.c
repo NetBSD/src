@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.83.2.6 2004/09/21 13:35:17 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.83.2.7 2005/01/24 14:34:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.6 2004/09/21 13:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.7 2005/01/24 14:34:28 skrll Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -936,7 +936,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf **mp0, struct mbuf **controlp, int *flagsp)
 {
 	struct lwp *l;
-	struct proc *p;
 	struct mbuf	*m, **mp;
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	const struct protosw	*pr;
@@ -948,7 +947,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	type = 0;
 	orig_resid = uio->uio_resid;
 	l = uio->uio_lwp;
-	p = l->l_proc;
 
 	if (paddr)
 		*paddr = 0;
@@ -1056,8 +1054,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 * While we process the initial mbufs containing address and control
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
-	if (p)
-		p->p_stats->p_ru.ru_msgrcv++;
+	if (l)
+		l->l_proc->p_stats->p_ru.ru_msgrcv++;
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
@@ -1096,7 +1094,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			mbuf_removed = 1;
 			if (controlp) {
 				struct domain *dom = pr->pr_domain;
-				if (dom->dom_externalize && p &&
+				if (dom->dom_externalize && l &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
 				    SCM_RIGHTS)
 					error = (*dom->dom_externalize)(m, l);
