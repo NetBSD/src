@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.49 2003/03/29 13:57:43 he Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.50 2003/03/31 18:47:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -77,7 +77,7 @@ struct audio_params {
 };
 
 /* The default audio mode: 8 kHz mono ulaw */
-extern struct audio_params audio_default;
+extern const struct audio_params audio_default;
 
 struct malloc_type;
 struct audio_hw_if {
