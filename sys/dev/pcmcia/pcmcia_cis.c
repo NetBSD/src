@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.11 1999/07/11 00:26:29 bad Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.12 1999/07/11 00:34:37 bad Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -1128,8 +1128,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					reg = pcmcia_tuple_read_1(tuple, idx);
 					idx++;
 
-					cfe->num_memspace = reg &
-					    PCMCIA_TPCE_MS_COUNT;
+					cfe->num_memspace = (reg &
+					    PCMCIA_TPCE_MS_COUNT) + 1;
 
 					if (cfe->num_memspace >
 					    (sizeof(cfe->memspace) /
