@@ -1,4 +1,4 @@
-/*	$NetBSD: echo-area.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: echo-area.c,v 1.2 2004/07/13 18:30:49 he Exp $	*/
 
 /* echo-area.c -- how to read a line in the echo area.
    Id: echo-area.c,v 1.3 2004/03/14 00:57:29 karl Exp
@@ -938,7 +938,7 @@ DECLARE_INFO_COMMAND (ea_possible_completions, _("List possible completions"))
       printf_to_message_buffer (completions_found_index == 1
                                 ? (char *) _("One completion:\n")
                                 : (char *) _("%d completions:\n"),
-				(void *) completions_found_index, NULL, NULL);
+				(void*)((intptr_t)completions_found_index), NULL, NULL);
 
       /* Find the maximum length of a label. */
       for (i = 0; i < completions_found_index; i++)
