@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.2 1993/10/11 02:44:08 deraadt Exp $
+ * $Id: sun_misc.c,v 1.3 1993/10/13 02:31:47 deraadt Exp $
  */
 
 /*
@@ -557,4 +557,12 @@ sun_fchroot(p, uap, retval)
 		vrele(fdp->fd_rdir);
 	fdp->fd_rdir = vp;
 	return (0);
+}
+
+/*
+ * XXX: This needs cleaning up.
+ */
+auditsys(...)
+{
+	return 0;
 }
