@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.10 1999/03/02 09:37:35 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.11 1999/03/02 12:23:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.10 1999/03/02 09:37:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.11 1999/03/02 12:23:58 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -406,6 +406,9 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			wbflush();
 		    splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_3));
 		}
+
+		if (intr_depth > 1)
+			 goto done;
 
 		if ((intr & KMIN_INTR_SCC_0) &&
 		    tc_slot_info[KMIN_SCC0_SLOT].intr) {
