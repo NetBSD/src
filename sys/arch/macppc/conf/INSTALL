@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 1998/10/28 21:06:27 dante Exp $
+#	$NetBSD: INSTALL,v 1.5 1998/12/10 20:21:28 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -80,6 +80,14 @@ zstty1	at zsc0 channel 1
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+wdc*	at obio0 flags 0x0
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+atapibus* at wdc? channel ?
+
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
