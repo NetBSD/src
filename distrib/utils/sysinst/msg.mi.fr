@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.17 1999/04/13 20:17:47 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.18 1999/05/18 18:07:25 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@ message yes {Oui}
 message no {Non}
 
 message install
-{installation}
+{installer}
 
 message reinstall
 {réinstaller des composants de}
@@ -111,8 +111,8 @@ au menu précédent.
 }
 
 message onedisk
-{J'ai juste trouvé un disque : %s. Je suppose donc que vous voulez %s NetBSD
-dessus.
+{J'ai juste trouvé un disque : %s. Je suppose donc que vous voulez %s
+NetBSD dessus.
 }
 
 message askdisk
@@ -738,3 +738,12 @@ message cmdfail
 {La commande
         %s
 ne s'est pas executée correctement. Impossible de continuer.}
+
+message noactivepart
+{Vous n'avez pas choisi de partition active. Cela peut empêcher votre système
+de démarrer correctement. Dois-je marquer la partition NetBSD active?}
+
+message upgradeparttype
+{La seule partition disponible pour installer NetBSD est de l'ancien type
+NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau type
+dédié à NetBSD ?}
