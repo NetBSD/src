@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.24 2003/05/10 21:13:27 thorpej Exp $
+.\"	$NetBSD: pmap.9,v 1.25 2004/01/20 10:40:03 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 27, 2002
+.Dd January 20, 2004
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -90,9 +90,9 @@
 .Ft void
 .Fn "pmap_update" "pmap_t pmap"
 .Ft void
-.Fn "pmap_activate" "struct proc *p"
+.Fn "pmap_activate" "struct lwp *l"
 .Ft void
-.Fn "pmap_deactivate" "struct proc *p"
+.Fn "pmap_deactivate" "struct lwp *l"
 .Ft void
 .Fn "pmap_zero_page" "paddr_t pa"
 .Ft void
@@ -718,9 +718,9 @@ implementation does not delay virtual-to-physical mapping updates,
 has no operation.
 In this case, the call may be deleted using a C pre-processor macro in
 .Aq Pa machine/pmap.h .
-.It void Fn "pmap_activate" "struct proc *p"
-Activate the physical map used by process
-.Fa p .
+.It void Fn "pmap_activate" "struct lwp *l"
+Activate the physical map used by the process behind lwp
+.Fa l .
 This is called by the virtual memory system when the the
 virtual memory context for a process is changed, and is also
 often used by machine-dependent context switch code to program
@@ -729,21 +729,21 @@ base, etc.
 Note that
 .Fn pmap_activate
 may not always be called when
-.Fa p
-is the current process.
+.Fa l
+is the current lwp.
 .Fn pmap_activate
 must be able to handle this scenario.
-.It void Fn "pmap_deactivate" "struct proc *p"
-Deactivate the physical map used by process
-.Fa p .
+.It void Fn "pmap_deactivate" "struct lwp *l"
+Deactivate the physical map used by the process behind lwp
+.Fa l .
 It is generally used in conjunction with
 .Fn pmap_activate .
 Like
 .Fn pmap_activate ,
 .Fn pmap_deactivate
 may not always be called when
-.Fa p
-is the current process.
+.Fa l
+is the current lwp.
 .It void Fn "pmap_zero_page" "paddr_t pa"
 Zero the PAGE_SIZE sized region starting at physical address
 .Fa pa .
