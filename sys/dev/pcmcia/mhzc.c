@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.14 2003/01/01 00:10:23 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.15 2004/08/06 19:07:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14 2003/01/01 00:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.15 2004/08/06 19:07:13 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -156,8 +156,8 @@ const struct mhzc_product {
 	/* Perform any special `enable' magic. */
 	int		(*mp_enable) __P((struct mhzc_softc *));
 } mhzc_products[] = {
-	{ { PCMCIA_STR_MEGAHERTZ_XJEM3336,	PCMCIA_VENDOR_MEGAHERTZ,
-	    PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,	0 },
+	{ { "",	PCMCIA_VENDOR_MEGAHERTZ,
+	    PCMCIA_PRODUCT_MEGAHERTZ_EM3336,	0 },
 	  mhzc_em3336_enaddr,		mhzc_em3336_enable },
 
 	/*
@@ -204,17 +204,15 @@ mhzc_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 
+	printf("\n");
+
 	sc->sc_pf = pa->pf;
 
 	sc->sc_product = (const struct mhzc_product *)pcmcia_product_lookup(pa,
             (const struct pcmcia_product *)mhzc_products,
             sizeof mhzc_products[0], NULL);
-	if (sc->sc_product == NULL) {
-		printf("\n");
+	if (sc->sc_product == NULL)
 		panic("mhzc_attach: impossible");
-	}
-
-	printf(": %s\n", sc->sc_product->mp_product.pp_name);
 
 	/*
 	 * The address decoders on these cards are wacky.  The configuration
