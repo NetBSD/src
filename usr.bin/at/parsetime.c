@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.5 1997/10/18 12:04:18 lukem Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.6 1998/02/04 15:16:29 christos Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <ctype.h>
 
@@ -120,7 +121,7 @@ static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 
 #ifndef lint
-__RCSID("$NetBSD: parsetime.c,v 1.5 1997/10/18 12:04:18 lukem Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.6 1998/02/04 15:16:29 christos Exp $");
 #endif
 
 /* Local functions */
@@ -407,21 +408,25 @@ assign_date(tm, mday, mon, year)
 	long mday, mon, year;
 {
     if (year > 99) {
-	if (year > 1899)
-	    year -= 1900;
+	if (year >= TM_YEAR_BASE)
+	    year -= TM_YEAR_BASE;
 	else
 	    panic("garbled time");
     }
 
-    if (year < 0 &&
-	(tm->tm_mon > mon ||(tm->tm_mon == mon && tm->tm_mday > mday)))
-	year = tm->tm_year + 1;
+    if (year >= 0) {
+	if (year < 69)
+	    tm->tm_year = year + 2000 - TM_YEAR_BASE;
+	else
+	    tm->tm_year = year + 1900 - TM_YEAR_BASE;
+    }
+    else { /* year < 0 */
+	if (tm->tm_mon > mon || (tm->tm_mon == mon && tm->tm_mday > mday))
+	    tm->tm_year++;
+    }
 
     tm->tm_mday = mday;
     tm->tm_mon = mon;
-
-    if (year >= 0)
-	tm->tm_year = year;
 } /* assign_date */
 
 
