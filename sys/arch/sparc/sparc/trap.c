@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 1995/04/13 14:50:26 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.29 1995/04/13 20:48:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -713,7 +713,7 @@ syscall(code, tf, pc)
 		break;
 #endif
 #ifdef COMPAT_SVR4
-	case EMUL_IBCS2_ELF:
+	case EMUL_SVR4:
 		callp = svr4_sysent;
 		nsys = nsvr4_sysent;
 		break;
@@ -822,7 +822,7 @@ bad:
 		/* nothing to do */
 
 #ifdef COMPAT_SVR4
-	if (p->p_emul == EMUL_IBCS2_ELF)
+	if (p->p_emul == EMUL_SVR4)
 		error = svr4_error[error];
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.8 1995/03/31 03:06:17 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.9 1995/04/13 20:49:02 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -542,7 +542,7 @@ exec_svr4_elf_makecmds(p, epp)
 				    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
-	epp->ep_emul = EMUL_IBCS2_ELF;
+	epp->ep_emul = EMUL_SVR4;
 	epp->ep_tsize = ~0;
 	epp->ep_dsize = ~0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.5 1995/03/15 08:14:28 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.6 1995/04/13 20:49:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -112,7 +112,7 @@ exec_ibcs2_coff_makecmds(p, epp)
 	}
 
 	if (error == 0) {
-		epp->ep_emul = EMUL_IBCS2_COFF;
+		epp->ep_emul = EMUL_IBCS2;
 		epp->ep_setup = cpu_exec_ibcs2_coff_setup;
 	}
 
@@ -572,7 +572,7 @@ exec_ibcs2_xout_makecmds(p, epp)
 		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
 	if (error == 0) {
-		epp->ep_emul = EMUL_IBCS2_XOUT;
+		epp->ep_emul = EMUL_IBCS2;
 		epp->ep_setup = cpu_exec_ibcs2_xout_setup;
 	}
 

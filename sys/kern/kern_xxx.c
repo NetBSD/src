@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.22 1995/03/09 08:54:37 mycroft Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.23 1995/04/13 20:49:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -298,12 +298,11 @@ static struct os_syscall {
 	{ NULL, },
 #endif
 #ifdef COMPAT_IBCS2
-	{ "iBCS2/COFF", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
-	{ "iBCS2/x.out", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
+	{ "iBCS2", &nibcs2_sysent, ibcs2_sysent, ibcs2_syscallnames },
 #else
 	{ NULL, },
-	{ NULL, },
 #endif
+	{ NULL, },
 #ifdef COMPAT_OSF1
 	{ "OSF/1", &nosf1_sysent, osf1_sysent, osf1_syscallnames },
 #else

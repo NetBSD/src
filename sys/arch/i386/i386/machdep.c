@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 1995/04/13 19:36:00 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 1995/04/13 20:48:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -478,12 +478,12 @@ sendsig(catcher, sig, mask, code)
 	 */
 	switch (p->p_emul) {
 #ifdef COMPAT_IBCS2
-	case EMUL_IBCS2_COFF:
+	case EMUL_IBCS2:
 		frame.sf_signum = bsd2ibcs_sig(sig);
 		break;
 #endif
 #ifdef COMPAT_SVR4
-	case EMUL_IBCS2_ELF:
+	case EMUL_SVR4:
 		svr4_sendsig(catcher, sig, mask, code);
 		return;
 #endif
