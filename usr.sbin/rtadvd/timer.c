@@ -1,4 +1,5 @@
-/*	$NetBSD: timer.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.3 2000/05/23 11:37:59 itojun Exp $	*/
+/*	$KAME: timer.c,v 1.3 2000/05/22 22:23:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -35,7 +36,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <search.h>
 #endif
 #include "timer.h"
