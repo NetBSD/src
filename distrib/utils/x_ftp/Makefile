@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2001/08/20 12:19:45 martin Exp $
+# $NetBSD: Makefile,v 1.12 2001/10/05 01:17:30 jmc Exp $
 # Build a smaller ftp (i.e. for boot media)
 
 PROG=	ftp
@@ -18,7 +18,7 @@ CPPFLAGS+= -DNO_EDITCOMPLETE -DNO_ABOUT -I${SRCDIR}
 CPPFLAGS+= -DINET6
 .endif
 .if ${MACHINE_ARCH} != "sparc64"
-COPTS+= -Os
+DBG= -Os
 .endif
 LDSTATIC?=-static
 
