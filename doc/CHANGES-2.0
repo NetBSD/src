@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.294 2004/06/22 15:34:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.295 2004/06/22 21:45:30 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4400,4 +4400,11 @@ sys/dev/pci/pcidevs_data.h			regen
 	Netelligent 10/100 TX variant found on the Compaq Proliant Professional
 	Workstation 5100.
 	[bouyer, ticket #537]
+
+tools/compat/compat_defs.h			patch
+lib/libc/gen/pwcache.c				patch
+lib/libc/stdio/fparseln.c			patch
+
+	Fix build problems caused by changes for ticket #527.
+	[jmc, ticket #538]
 
