@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.67 2000/05/31 14:23:58 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.68 2000/06/01 04:26:38 itojun Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1985,10 +1985,13 @@ assumes that all IPv4 mapped addresses
 IPv6 addresses with a form like
 .Li ::ffff:10.1.1.1
 .Pc
-indicate IPv4 destination.
-However, in certain IPv6 network configuration that include SIIT translator,
-the assumption is not true.
-In such an environment, IPv4 mapped address must be treated as a normal IPv6
-destination.
+indicate IPv4 destination which can be handled by
+.Dv AF_INET
+sockets.
+However, in certain IPv6 network configuration, the assumption is not true.
+In such an environment, IPv4 mapped address must be passed to
+.Dv AF_INET6
+sockets directly.
+For example, if your site uses SIIT translator for IPv6-to-IPv4 translation,
 .Nm
-is unable to support such an environment.
+is unable to support your configuration.
