@@ -77,7 +77,11 @@
 
 /* The configure script defines this for some targets based on the
    target name used.  It is not always defined.  */
-/* #define TARGET_BYTES_BIG_ENDIAN 1 */
+#ifdef TARGET_LITTLE_ENDIAN_DEFAULT
+#define TARGET_BYTES_BIG_ENDIAN 0
+#else
+#define TARGET_BYTES_BIG_ENDIAN 1
+#endif
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
