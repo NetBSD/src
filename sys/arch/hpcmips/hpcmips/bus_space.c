@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.17 2001/12/02 10:37:53 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.18 2002/04/14 07:59:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,10 @@ static struct bus_space_tag_hpcmips __sys_bus_space = {
 
 			/* barrier */
 			__bs_barrier,
+
+			/* probe */
+			__bs_peek,
+			__bs_poke,
 
 			/* read (single) */
 			__bs_r_1,
@@ -266,9 +270,12 @@ __bs_map(bus_space_tag_t tx, bus_addr_t bpa, bus_size_t size, int flags,
 	int err;
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
+	DPRINTF(("\tbus_space_map:%#lx(%#lx)+%#lx\n",
+	    bpa, bpa - t->base, size));
+
 	if (!t->extent) { /* Before autoconfiguration, can't use extent */
 		DPRINTF(("bus_space_map: map temporary region:"
-		    "0x%08x-0x%08x\n", bpa, bpa+size));
+		    "0x%08lx-0x%08lx\n", bpa, bpa+size));
 		bpa += t->base;
 	} else {
 		bpa += t->base;
@@ -278,9 +285,6 @@ __bs_map(bus_space_tag_t tx, bus_addr_t bpa, bus_size_t size, int flags,
 		}
 	}
 	*bshp = __hpcmips_cacheable(t, bpa, size, cacheable);
-
-	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n",
-	    bpa, bpa - t->base, size));
 
 	return (0);
 }
@@ -304,7 +308,7 @@ __bs_unmap(bus_space_tag_t tx, bus_space_handle_t bsh, bus_size_t size)
 	}
 
 	if ((err = extent_free(t->extent, addr, size, EX_NOWAIT))) {
-		DPRINTF(("warning: %#x-%#x of %s space lost\n",
+		DPRINTF(("warning: %#lx-%#lx of %s space lost\n",
 		    bsh, bsh+size, t->name));
 	}
 }
@@ -334,6 +338,9 @@ __bs_alloc(bus_space_tag_t tx, bus_addr_t rstart, bus_addr_t rend,
 	if (!t->extent)
 		panic("bus_space_alloc: no extent");
 
+	DPRINTF(("\tbus_space_alloc:%#lx(%#lx)+%#lx\n", bpa,
+	    bpa - t->base, size));
+
 	rstart += t->base;
 	rend += t->base;
 	if ((err = extent_alloc_subregion(t->extent, rstart, rend, size,
@@ -346,9 +353,6 @@ __bs_alloc(bus_space_tag_t tx, bus_addr_t rstart, bus_addr_t rend,
 	if (bpap) {
 		*bpap = bpa;
 	}
-
-	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa,
-	    (unsigned)(bpa - t->base), size));
 
 	return (0);
 }
@@ -366,6 +370,60 @@ __bs_barrier(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	wbflush();
+}
+
+int
+__bs_peek(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset,
+    size_t size, void *ptr)
+{
+	u_int32_t tmp;
+
+	if (badaddr((void *)(bsh + offset), size))
+		return (-1);
+
+	if (ptr == NULL)
+		ptr = &tmp;
+
+	switch(size) {
+	case 1:
+		*((u_int8_t *)ptr) = bus_space_read_1(t, bsh, offset);
+		break;
+	case 2:
+		*((u_int16_t *)ptr) = bus_space_read_2(t, bsh, offset);
+		break;
+	case 4:
+		*((u_int32_t *)ptr) = bus_space_read_4(t, bsh, offset);
+		break;
+	default:
+		panic("bus_space_peek: bad size, %d\n", size);
+	}
+
+	return (0);
+}
+
+int
+__bs_poke(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset,
+    size_t size, u_int32_t val)
+{
+
+	if (badaddr((void *)(bsh + offset), size))
+		return (-1);
+
+	switch(size) {
+	case 1:
+		bus_space_write_1(t, bsh, offset, val);
+		break;
+	case 2:
+		bus_space_write_2(t, bsh, offset, val);
+		break;
+	case 4:
+		bus_space_write_4(t, bsh, offset, val);
+		break;
+	default:
+		panic("bus_space_poke: bad size, %d\n", size);
+	}
+
+	return (0);
 }
 
 u_int8_t

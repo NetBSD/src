@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.1 2002/03/22 09:18:09 takemura Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.2 2002/04/14 08:00:00 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -103,8 +103,13 @@ vrc4172pci_write(struct vrc4172pci_softc *sc, int offset, u_int32_t val)
 static inline u_int32_t
 vrc4172pci_read(struct vrc4172pci_softc *sc, int offset)
 {
+	u_int32_t res;
 
-	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset));
+	if (bus_space_peek(sc->sc_iot, sc->sc_ioh, offset, 4, &res) < 0) {
+		res = 0xffffffff;
+	}
+
+	return (res);
 }
 
 static int
@@ -245,10 +250,8 @@ vrc4172pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 
 	vrc4172pci_write(sc, VRC4172PCI_CONFAREG, tag | reg);
 	val = vrc4172pci_read(sc, VRC4172PCI_CONFDREG);
-#if 0
-	printf("%s: conf_read: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, val);
-#endif
+	DPRINTF(("%s: conf_read: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
+	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, val));
 
 	return (val);
 }
@@ -259,10 +262,8 @@ vrc4172pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 {
 	struct vrc4172pci_softc *sc = (struct vrc4172pci_softc *)pc->pc_dev;
 
-#if 0
-	printf("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, (u_int32_t)data);
-#endif
+	DPRINTF(("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
+	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, (u_int32_t)data));
 	tag |= VRC4172PCI_CONFADDR_CONFIGEN;
 
 	vrc4172pci_write(sc, VRC4172PCI_CONFAREG, tag | reg);
