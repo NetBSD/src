@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.19 2003/01/18 11:29:52 thorpej Exp $
+.\"	$NetBSD: fopen.3,v 1.20 2003/03/28 17:00:49 pooka Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,14 +69,15 @@ points to a string beginning with one of the following
 sequences (Additional characters may follow these sequences.):
 .Bl -tag -width indent
 .It Dq Li r
-Open text file for reading.
+Open for reading.
 .It Dq Li r+
 Open for reading and writing.
 .It Dq Li w
-Truncate file to zero length or create text file for writing.
+Open for writing.
+Truncate file to zero length or create file.
 .It Dq Li w+
 Open for reading and writing.
-The file is created if it does not exist, otherwise it is truncated.
+Truncate file to zero length or create file.
 .It Dq Li a
 Append; open for writing.
 The file is created if it does not exist.
