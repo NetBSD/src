@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.135 1998/07/08 04:35:23 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.136 1998/07/08 16:28:26 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 1998/07/08 04:35:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 1998/07/08 16:28:26 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,21 +774,6 @@ nobootinfo:
 	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE, NULL, NULL);
 
 	/*
-	 * Figure out the number of cpus in the box, from RPB fields.
-	 * Really.  We mean it.
-	 * 
-	 * Do it here because we need to know this in allocsys.
-	 */
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		struct pcs *pcsp;
-
-		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-		    (i * hwrpb->rpb_pcs_size));
-		if ((pcsp->pcs_flags & PCS_PP) != 0)
-			ncpus++;
-	}
-
-	/*
 	 * Allocate space for system data structures.  These data structures
 	 * are allocated here instead of cpu_startup() because physical
 	 * memory is directly addressable.  We don't have to map these into
@@ -891,6 +876,20 @@ nobootinfo:
 		}
 	}
 
+
+	/*
+	 * Figure out the number of cpus in the box, from RPB fields.
+	 * Really.  We mean it.
+	 */
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		struct pcs *pcsp;
+
+		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+		    (i * hwrpb->rpb_pcs_size));
+		if ((pcsp->pcs_flags & PCS_PP) != 0)
+			ncpus++;
+	}
+
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
@@ -976,7 +975,14 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	valloc(mchkinfo, struct mchkinfo, ncpus);
+
+	/*
+	 * There appears to be a correlation between the number
+	 * of processor slots defined in the HWRPB and the whami
+	 * value that can be returned.
+	 */
+	valloc(mchkinfo, struct mchkinfo, hwrpb->rpb_pcs_cnt);
+
 	return (v);
 #undef valloc
 }

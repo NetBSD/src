@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.6 1998/07/08 05:25:40 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.7 1998/07/08 16:28:25 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.6 1998/07/08 05:25:40 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.7 1998/07/08 16:28:25 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,11 +427,7 @@ kn300_mcheck(mces, type, logout, framep)
 	/*
 	 * If we expected a machine check, just go handle it in common code.
 	 */
-#if	0	/* TO BE FIXED */
 	mcp = &mchkinfo[alpha_pal_whami()];
-#else
-	mcp = &mchkinfo[0];
-#endif
 	if (mcp->mc_expected) {
 		machine_check(mces, framep, type, logout);
 		return;
