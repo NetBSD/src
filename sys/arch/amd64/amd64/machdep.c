@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2003/10/06 22:53:47 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/10/08 19:58:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/10/06 22:53:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/10/08 19:58:54 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -565,7 +565,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		    sizeof (frame.sf_uc.uc_mcontext.__fpregs);
 
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
-	frame.sf_si._info = *ksi;
+	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
