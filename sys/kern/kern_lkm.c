@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.77 2004/10/25 23:06:41 peter Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.78 2004/10/25 23:37:58 peter Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.77 2004/10/25 23:06:41 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.78 2004/10/25 23:37:58 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -141,11 +141,7 @@ lkm_init(void)
 
 /*ARGSUSED*/
 int
-lkmopen(dev, flag, devtype, p)
-	dev_t dev;
-	int flag;
-	int devtype;
-	struct proc *p;
+lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 {
 	int error;
 
@@ -294,11 +290,7 @@ lkmunreserve(void)
 }
 
 int
-lkmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+lkmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	if (!(lkm_v & LKM_ALLOC)) {
@@ -328,12 +320,7 @@ lkmclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-lkmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int i, error = 0;
 	struct lmc_resrv *resrvp;
@@ -627,10 +614,7 @@ lkmioctl(dev, cmd, data, flag, p)
  * Place holder for system call slots reserved for loadable modules.
  */
 int
-sys_lkmnosys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_lkmnosys(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (sys_nosys(l, v, retval));
@@ -641,17 +625,14 @@ sys_lkmnosys(l, v, retval)
  * Used where people don't want to specify a special function.
  */
 int
-lkm_nofunc(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+lkm_nofunc(struct lkm_table *lkmtp, int cmd)
 {
 
 	return (0);
 }
 
 int
-lkmexists(lkmtp)
-	struct lkm_table *lkmtp;
+lkmexists(struct lkm_table *lkmtp)
 {
 	struct lkm_table *p;
 
@@ -670,9 +651,7 @@ lkmexists(lkmtp)
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_syscall(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_syscall(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_syscall *args = lkmtp->private.lkm_syscall;
 	int i;
@@ -735,9 +714,7 @@ _lkm_syscall(lkmtp, cmd)
  * to by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_vfs(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_vfs(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
 	int error = 0;
@@ -773,9 +750,7 @@ _lkm_vfs(lkmtp, cmd)
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_dev(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_dev(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int error;
@@ -815,9 +790,7 @@ _lkm_dev(lkmtp, cmd)
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_strmod(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_strmod(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_strmod *args = lkmtp->private.lkm_strmod;
 	int i;
@@ -846,9 +819,7 @@ _lkm_strmod(lkmtp, cmd)
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_exec(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_exec(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_exec *args = lkmtp->private.lkm_exec;
 	int error = 0;
@@ -880,9 +851,7 @@ _lkm_exec(lkmtp, cmd)
  * by lkmtp, load/unload/stat it depending on the cmd requested.
  */
 static int
-_lkm_compat(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_compat(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_compat *args = lkmtp->private.lkm_compat;
 	int error = 0;
@@ -1001,9 +970,7 @@ drvlkm_unload(struct cfdriver **cd, const struct cfattachlkminit *cai,
 }
 
 static int
-_lkm_drv(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+_lkm_drv(struct lkm_table *lkmtp, int cmd)
 {
 	struct lkm_drv *args = lkmtp->private.lkm_drv;
 	int error = 0;
@@ -1039,9 +1006,7 @@ _lkm_drv(lkmtp, cmd)
  * itself.
  */
 int
-lkmdispatch(lkmtp, cmd)
-	struct lkm_table *lkmtp;
-	int cmd;
+lkmdispatch(struct lkm_table *lkmtp, int cmd)
 {
 	int error = 0;		/* default = success */
 #ifdef DEBUG
