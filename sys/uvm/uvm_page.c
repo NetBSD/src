@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.75.4.1 2002/06/01 22:44:00 tv Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.75.4.2 2002/06/20 02:49:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.75.4.1 2002/06/01 22:44:00 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.75.4.2 2002/06/20 02:49:12 lukem Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -865,6 +865,11 @@ uvm_page_recolor(int newncolors)
 
 	if (newncolors <= uvmexp.ncolors)
 		return;
+
+	if (uvm.page_init_done == FALSE) {
+		uvmexp.ncolors = newncolors;
+		return;
+	}
 
 	bucketcount = newncolors * VM_NFREELIST;
 	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
