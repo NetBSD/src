@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.29 2003/08/07 16:31:57 agc Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.30 2004/03/23 13:22:05 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.29 2003/08/07 16:31:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.30 2004/03/23 13:22:05 junyoung Exp $");
 
 #include "tb.h"
 
@@ -63,7 +63,7 @@ struct	tbconf {
 	short	tbc_uiosize;	/* size of data record returned user */
 	int	tbc_sync;	/* mask for finding sync byte/bit */
 				/* decoding routine */
-    	void    (*tbc_decode) __P((const struct tbconf *, char *, union tbpos *));
+    	void    (*tbc_decode)(const struct tbconf *, char *, union tbpos *);
 	u_char	*tbc_run;	/* enter run mode sequence */
 	u_char	*tbc_point;	/* enter point mode sequence */
 	u_char	*tbc_stop;	/* stop sequence */
@@ -73,11 +73,11 @@ struct	tbconf {
 #define	TBF_INPROX	0x2	/* tablet has proximity info */
 };
 
-static void gtcodecode __P((const struct tbconf *, char *, union tbpos *));
-static void tbolddecode __P((const struct tbconf *, char *, union tbpos *));
-static void tblresdecode __P((const struct tbconf *, char *, union tbpos *));
-static void tbhresdecode __P((const struct tbconf *, char *, union tbpos *));
-static void poldecode __P((const struct tbconf *, char *, union tbpos *));
+static void gtcodecode(const struct tbconf *, char *, union tbpos *);
+static void tbolddecode(const struct tbconf *, char *, union tbpos *);
+static void tblresdecode(const struct tbconf *, char *, union tbpos *);
+static void tbhresdecode(const struct tbconf *, char *, union tbpos *);
+static void poldecode(const struct tbconf *, char *, union tbpos *);
 
 
 static const struct	tbconf tbconf[TBTYPE] = {
@@ -108,12 +108,12 @@ struct tb {
 } tb[NTB];
 
 
-int	tbopen __P((dev_t, struct tty *));
-void	tbclose __P((struct tty *));
-int	tbread __P((struct tty *, struct uio *));
-void	tbinput __P((int, struct tty *));
-int	tbtioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
-void	tbattach __P((int));
+int	tbopen(dev_t, struct tty *);
+void	tbclose(struct tty *);
+int	tbread(struct tty *, struct uio *);
+void	tbinput(int, struct tty *);
+int	tbtioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+void	tbattach(int);
 
 /*
  * Open as tablet discipline; called on discipline change.
