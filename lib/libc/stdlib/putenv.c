@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.5 1995/12/28 08:52:31 thorpej Exp $	*/
+/*	$NetBSD: putenv.c,v 1.5.2.1 1996/09/18 02:42:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,12 +37,17 @@
 #if 0
 static char *sccsid = "from: @(#)putenv.c	5.4 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: putenv.c,v 1.5 1995/12/28 08:52:31 thorpej Exp $";
+static char *rcsid = "$NetBSD: putenv.c,v 1.5.2.1 1996/09/18 02:42:54 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(putenv,_putenv);
+#endif
 
 int
 putenv(str)

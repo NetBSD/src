@@ -11,9 +11,12 @@
  * to anyone/anything when using this software.
  */
 
+#include "namespace.h"
 #include "rand48.h"
 
-extern unsigned short __rand48_seed[3];
+#ifdef __weak_alias
+__weak_alias(drand48,_drand48);
+#endif
 
 double
 drand48(void)

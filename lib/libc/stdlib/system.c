@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.11 1995/12/28 08:52:58 thorpej Exp $	*/
+/*	$NetBSD: system.c,v 1.11.2.1 1996/09/18 02:43:02 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,10 +37,11 @@
 #if 0
 static char *sccsid = "from: @(#)system.c	5.10 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: system.c,v 1.11 1995/12/28 08:52:58 thorpej Exp $";
+static char *rcsid = "$NetBSD: system.c,v 1.11.2.1 1996/09/18 02:43:02 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
