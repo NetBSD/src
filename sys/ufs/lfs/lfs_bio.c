@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.40 2001/11/23 21:44:26 chs Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.41 2002/02/11 02:47:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.40 2001/11/23 21:44:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.41 2002/02/11 02:47:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,6 +389,9 @@ lfs_flush(struct lfs *fs, int flags)
 	lfs_writing = 0;
 }
 
+#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, INOPB(fs))
+#define INOBYTES(fs) ((fs)->lfs_uinodes * DINODE_SIZE)
+
 int
 lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 {
@@ -415,8 +418,8 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 	 * Note that a dirop cannot ever reach this code!
 	 */
 	while (fs->lfs_dirops > 0 &&
-	       (locked_queue_count > LFS_MAX_BUFS ||
-                locked_queue_bytes > LFS_MAX_BYTES ||
+	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
+                locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
                 lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0))
 	{
 		++fs->lfs_diropwait;
@@ -424,8 +427,8 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 		--fs->lfs_diropwait;
 	}
 
-	if (locked_queue_count > LFS_MAX_BUFS ||
-	    locked_queue_bytes > LFS_MAX_BYTES ||
+	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
+	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;
@@ -434,8 +437,8 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 			wakeup(&fs->lfs_dirops);
 	}
 
-	while (locked_queue_count > LFS_WAIT_BUFS
-	       || locked_queue_bytes > LFS_WAIT_BYTES)
+	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS
+	       || locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES)
 	{
 		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
@@ -453,8 +456,8 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 		 * and we weren't asked to checkpoint.  Try flushing again
 		 * to keep us from blocking indefinitely.
 		 */
-		if (locked_queue_count > LFS_MAX_BUFS ||
-		    locked_queue_bytes > LFS_MAX_BYTES)
+		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
+		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
 		{
 			++fs->lfs_writer;
 			lfs_flush(fs, flags | SEGM_CKP);
