@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.32 2000/08/07 01:47:04 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.33 2000/10/11 20:46:07 dan Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -425,9 +425,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)rela->r_offset, (void *)rela->r_addend,
 		    (void *)*where,
 		    def ? defobj->strtab + def->st_name : "??"));
-		_rtld_error("%s: Unsupported relocation type %d "
+		_rtld_error("%s: Unsupported relocation type %ld "
 		    "in non-PLT relocations\n",
-		    obj->path, ELF_R_TYPE(rela->r_info));
+		    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
 		return -1;
 	}
 	return 0;
