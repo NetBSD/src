@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.35 2002/10/02 16:02:37 thorpej Exp $ */
+/*	$NetBSD: smg.c,v 1.36 2002/12/29 20:01:17 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -409,7 +409,8 @@ smg_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 static void
 setcursor(struct wsdisplay_cursor *v)
 {
-	u_short red, green, blue, curfg[16], curmask[16];
+	u_short red, green, blue;
+	u_int32_t curfg[16], curmask[16];
 	int i;
 
 	/* Enable cursor */
@@ -441,12 +442,13 @@ setcursor(struct wsdisplay_cursor *v)
 		WRITECUR(CUR_CMD, curcmd | CUR_CMD_LODSA);
 		copyin(v->image, curfg, sizeof(curfg));
 		copyin(v->mask, curmask, sizeof(curmask));
-		for (i = 0; i < sizeof(curfg)/2; i++) {
-			WRITECUR(CUR_LOAD, (curfg[i] & fgmask) |
-			    ((curmask[i] & ~curfg[i]) & bgmask));
+		for (i = 0; i < sizeof(curfg)/sizeof(curfg[0]); i++) {
+			WRITECUR(CUR_LOAD, ((u_int16_t)curfg[i] & fgmask) |
+			    (((u_int16_t)curmask[i] & (u_int16_t)~curfg[i])
+			    & bgmask));
 		}
-		for (i = 0; i < sizeof(curmask)/2; i++) {
-			WRITECUR(CUR_LOAD, curmask[i]);
+		for (i = 0; i < sizeof(curmask)/sizeof(curmask[0]); i++) {
+			WRITECUR(CUR_LOAD, (u_int16_t)curmask[i]);
 		}
 		WRITECUR(CUR_CMD, curcmd);
 	}
@@ -500,6 +502,11 @@ smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURPOS:
 		((struct wsdisplay_curpos *)data)->x = curx;
 		((struct wsdisplay_curpos *)data)->y = cury;
+		break;
+
+	case WSDISPLAYIO_GCURMAX:
+		((struct wsdisplay_curpos *)data)->x = 16;
+		((struct wsdisplay_curpos *)data)->y = 16;
 		break;
 
 	default:
