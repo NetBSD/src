@@ -25,7 +25,7 @@ pseudo-device imp
 
 # legitimate pseudo-devices
 pseudo-device vn: disk
-pseudo-device cd: disk
+#pseudo-device cd: disk
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -56,11 +56,11 @@ file ddb/db_write_cmd.c	 	ddb
 file isofs/isofs_bmap.c	 	isofs
 file isofs/isofs_lookup.c	isofs
 file isofs/isofs_node.c	 	isofs
+file isofs/isofs_rrip.c	 	isofs
 file isofs/isofs_util.c	 	isofs
 file isofs/isofs_vfsops.c	isofs
 file isofs/isofs_vnops.c	isofs
-file kern/dead_vnops.c	
-file kern/fifo_vnops.c	 	fifo
+file kern/exec_aout.c	
 file kern/init_main.c	
 file kern/init_sysent.c	
 file kern/kern_acct.c	
@@ -82,8 +82,6 @@ file kern/kern_subr.c
 file kern/kern_synch.c	
 file kern/kern_time.c	
 file kern/kern_xxx.c		
-file kern/spec_vnops.c	
-file kern/subr_acct.c	 	accounting
 file kern/subr_autoconf.c
 file kern/subr_log.c		
 file kern/subr_mcount.c	 	profiling-routine
@@ -93,6 +91,9 @@ file kern/subr_xxx.c
 file kern/sys_generic.c	
 file kern/sys_process.c	
 file kern/sys_socket.c	
+file kern/sysv_ipc.c		sysvshm sysvsem sysvmsg
+file kern/sysv_msg.c		sysvmsg
+file kern/sysv_sem.c		sysvsem
 file kern/sysv_shm.c		sysvshm
 file kern/tty.c		
 file kern/tty_compat.c	
@@ -117,8 +118,14 @@ file kern/vfs_syscalls.c
 file kern/vfs_vnops.c	
 file miscfs/fdesc/fdesc_vfsops.c	 fdesc
 file miscfs/fdesc/fdesc_vnops.c		 fdesc
+file miscfs/deadfs/dead_vnops.c
+file miscfs/fifofs/fifo_vnops.c		 fifo
 file miscfs/kernfs/kernfs_vfsops.c	 kernfs
 file miscfs/kernfs/kernfs_vnops.c	 kernfs
+file miscfs/procfs/procfs_vfsops.c	 procfs
+file miscfs/procfs/procfs_vnops.c	 procfs
+file miscfs/procfs/procfs_subr.c	 procfs
+file miscfs/specfs/spec_vnops.c
 file net/af.c		
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
@@ -151,7 +158,7 @@ file netccitt/pk_usrreq.c	ccitt
 file netimp/if_imp.c		imp needs-count
 file netimp/if_imphost.c	imp needs-count
 file netimp/raw_imp.c	 	imp needs-count
-file netinet/if_ether.c	 	ether inet
+file netinet/if_ether.c		ether
 file netinet/in.c		inet
 file netinet/in_pcb.c	 	inet
 file netinet/in_proto.c	 	inet
@@ -217,12 +224,12 @@ file nfs/nfs_subs.c		nfsserver nfsclient
 file nfs/nfs_syscalls.c	 	nfsserver nfsclient
 file nfs/nfs_vfsops.c	 	nfsclient
 file nfs/nfs_vnops.c		nfsclient
-file pcfs/pcfs_conv.c	 	pcfs
-file pcfs/pcfs_denode.c	 	pcfs
-file pcfs/pcfs_fat.c		pcfs
-file pcfs/pcfs_lookup.c	 	pcfs
-file pcfs/pcfs_vfsops.c	 	pcfs
-file pcfs/pcfs_vnops.c	 	pcfs
+file msdosfs/msdosfs_conv.c 	msdosfs
+file msdosfs/msdosfs_denode.c 	msdosfs
+file msdosfs/msdosfs_fat.c	msdosfs
+file msdosfs/msdosfs_lookup.c 	msdosfs
+file msdosfs/msdosfs_vfsops.c 	msdosfs
+file msdosfs/msdosfs_vnops.c 	msdosfs
 file ufs/mfs_vfsops.c	 	mfs
 file ufs/mfs_vnops.c		mfs
 file ufs/ufs_alloc.c		
