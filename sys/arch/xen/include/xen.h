@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.6 2004/05/07 13:56:48 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.7 2004/05/07 15:51:04 cl Exp $	*/
 
 /*
  *
@@ -49,6 +49,10 @@ union xen_cmdline_parseinfo {
 void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
+
+void	xenmachmem_init(void);
+void	xenprivcmd_init(void);
+void	xenvfr_init(void);
 
 typedef uint16_t u16;
 typedef uint32_t u32;
