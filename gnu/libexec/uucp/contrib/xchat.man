@@ -359,7 +359,7 @@ This is not yet implemented, the test always fails.
 Change to state
 .I ns
 if the port is ``blind'' without carrier (CD) asserted, and counter
-is greater then
+is greater than
 .I int.
 .I 
 This is not yet implemented, the test always fails.
