@@ -1,8 +1,8 @@
-$NetBSD: README,v 1.5 1999/05/31 14:52:11 kleink Exp $
+$NetBSD: README,v 1.6 1999/08/20 21:12:47 christos Exp $
 
 BUGS/PROBLEMS:
 
-* rtld.c around line 147:
+* rtld.c around line 184:
 
 	#iffdef __alpha__
 	/* XXX XXX XXX */
