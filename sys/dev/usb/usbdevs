@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.183 2001/10/05 00:24:25 thorpej Exp $
+$NetBSD: usbdevs,v 1.184 2001/10/06 15:02:22 pooka Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -452,6 +452,7 @@ product CHIC CYPRESS		0x0003	Cypress USB Mouse
 product CHICONY KB8933		0x0001	KB-8933 keyboard
 
 /* Compaq products */
+product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 
 /* Connectix products */
