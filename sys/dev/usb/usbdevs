@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.371 2004/03/15 11:16:23 augustss Exp $
+$NetBSD: usbdevs,v 1.372 2004/04/07 18:11:07 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -389,6 +389,7 @@ vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
 vendor IODATA2		0x40bb	I-O Data
+vendor DELL		0x413c	Dell
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
