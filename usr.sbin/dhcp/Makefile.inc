@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2002/06/10 00:30:33 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.17 2002/06/16 21:40:03 augustss Exp $
 
 WARNS?=	1
 
@@ -12,7 +12,7 @@ OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
 MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
 DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
 
-CPPFLAGS+= -I${DIST} -I${DIST}/includes -Dlint
+CPPFLAGS+= -I${DIST} -I${DIST}/includes -Wno-unused
 LDADD+= ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
 LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 DPADD+= ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
