@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:02:00 tron Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/08 07:41:57 tron Exp $
 
 .PATH:	${.CURDIR}/../named \
 	${.CURDIR}/../man
@@ -10,6 +10,7 @@ CPPFLAGS+= ${INCLUDE}
 LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
+BINDIR=	/usr/libexec
 
 tmp_version.c: ../named/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
