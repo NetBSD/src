@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.17 2002/06/11 04:39:53 lukem Exp $       */
+/*      $NetBSD: catman.c,v 1.18 2002/09/13 20:40:04 mycroft Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <unistd.h>
 #include <glob.h>
 
-#include "config.h"
+#include "manconf.h"
 #include "pathnames.h"
 
 int f_nowhatis = 0;
