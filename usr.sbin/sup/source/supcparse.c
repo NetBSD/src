@@ -32,13 +32,11 @@
  *	across the network to save BandWidth
  *
  * $Log: supcparse.c,v $
- * Revision 1.3  1995/06/03 21:21:59  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
+ * Revision 1.4  1995/06/09 04:33:34  christos
+ * fixed bug related to the ascii `when' files previous fix, where the -t
+ * option would fail to read the timestamp files.
  *
- * Revision 1.2  1993/08/04 17:46:20  brezak
+ * Revision 1.2  1993/08/04  17:46:20  brezak
  * Changes from nate for gzip'ed sup
  *
  * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
@@ -246,7 +244,7 @@ getwhen(collection, relsuffix)
 	FILE *fp;
 	long tstamp;
 
-	(void) sprintf (buf,FILEWHEN,collname,relsuffix);
+	(void) sprintf (buf,FILEWHEN,collection,relsuffix);
 
 	if ((fp = fopen(buf, "r")) == NULL)
 		return 0;
