@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2002/04/20 20:35:00 leo Exp $ */
+/*	$NetBSD: md.c,v 1.3 2002/04/25 20:16:08 leo Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -472,6 +472,7 @@ md_make_bsd_partitions(void)
 int
 md_update(void)
 {
+	move_aout_libs();
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
