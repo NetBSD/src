@@ -1,7 +1,7 @@
-/*	$NetBSD: common.c,v 1.7 2000/04/02 15:35:47 minoura Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.1 2000/04/02 15:35:52 minoura Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 2000 Takuya SHIOZAKI
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,54 +25,29 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * NOT A STANDALONE FILE!
- */
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.1 2000/04/02 15:35:52 minoura Exp $");
+#endif /* LIBC_SCCS and not lint */
 
-static char *
-_strrchr(p, ch)
-char *p, ch;
-{
-	char *save;
+#if defined(PIC) || defined(lint)
+#include "namespace.h"
 
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-/* NOTREACHED */
-}
+#define ELFSIZE ARCH_ELFSIZE
+#include "rtld.h"
 
-#ifdef MCRT0
-asm ("  .text");
-asm ("_eprol:");
+#ifdef __weak_extern
+__weak_extern(__mainprog_obj)
 #endif
-
-#ifdef DYNAMIC
-
-void
-_rtld_setup(cleanup, obj)
-	void (*cleanup) __P((void));
-	const Obj_Entry *obj;
-{
-
-	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
-		_FATAL("Corrupt Obj_Entry pointer in GOT");
-	if (obj->version != RTLD_VERSION)
-		_FATAL("Dynamic linker version mismatch");
-
-	__mainprog_obj = obj;
-	atexit(cleanup);
-}
+extern const Obj_Entry *__mainprog_obj;
 
 #ifdef __weak_alias
-__weak_alias(dlopen,_dlopen);
-__weak_alias(dlclose,_dlclose);
-__weak_alias(dlsym,_dlsym);
-__weak_alias(dlerror,_dlerror);
-__weak_alias(dladdr,_dladdr);
+__weak_alias(dlopen,__dlopen);
+__weak_alias(dlclose,__dlclose);
+__weak_alias(dlsym,__dlsym);
+__weak_alias(dlerror,__dlerror);
+__weak_alias(dladdr,__dladdr);
 #endif
 
 #include <dlfcn_stubs.c>
-#endif /* DYNAMIC */
+#endif /* PIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.7 2000/04/02 15:35:47 minoura Exp $	*/
+/*	$NetBSD: dlfcn_stubs.c,v 1.1 2000/04/02 15:35:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -35,50 +35,65 @@
  * NOT A STANDALONE FILE!
  */
 
-static char *
-_strrchr(p, ch)
-char *p, ch;
-{
-	char *save;
-
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-/* NOTREACHED */
-}
-
-#ifdef MCRT0
-asm ("  .text");
-asm ("_eprol:");
-#endif
-
-#ifdef DYNAMIC
-
-void
-_rtld_setup(cleanup, obj)
-	void (*cleanup) __P((void));
-	const Obj_Entry *obj;
+void *
+dlopen(name, mode)
+	const char *name;
+	int mode;
 {
 
-	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
-		_FATAL("Corrupt Obj_Entry pointer in GOT");
-	if (obj->version != RTLD_VERSION)
-		_FATAL("Dynamic linker version mismatch");
-
-	__mainprog_obj = obj;
-	atexit(cleanup);
+	if (__mainprog_obj == NULL)
+		return NULL;
+	return (__mainprog_obj->dlopen)(name, mode);
 }
 
-#ifdef __weak_alias
-__weak_alias(dlopen,_dlopen);
-__weak_alias(dlclose,_dlclose);
-__weak_alias(dlsym,_dlsym);
-__weak_alias(dlerror,_dlerror);
-__weak_alias(dladdr,_dladdr);
+int
+dlclose(fd)
+	void *fd;
+{
+
+	if (__mainprog_obj == NULL)
+		return -1;
+	return (__mainprog_obj->dlclose)(fd);
+}
+
+void *
+dlsym(fd, name)
+	void *fd;
+	const char *name;
+{
+
+	if (__mainprog_obj == NULL)
+		return NULL;
+	return (__mainprog_obj->dlsym)(fd, name);
+}
+
+#if 0 /* not supported for ELF shlibs, apparently */
+int
+dlctl(fd, cmd, arg)
+	void *fd, *arg;
+	int cmd;
+{
+
+	if (__mainprog_obj == NULL)
+		return -1;
+	return (__mainprog_obj->dlctl)(fd, cmd, arg);
+}
 #endif
 
-#include <dlfcn_stubs.c>
-#endif /* DYNAMIC */
+__aconst char *
+dlerror()
+{
+
+	if (__mainprog_obj == NULL)
+		return ("Dynamic linker interface not available");
+	return (__mainprog_obj->dlerror)();
+}
+
+int
+dladdr(const void *addr, Dl_info *dli)
+{
+
+	if (__mainprog_obj == NULL)
+		return -1;
+	return (__mainprog_obj->dladdr)(addr, dli);
+}
