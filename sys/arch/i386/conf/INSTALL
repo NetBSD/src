@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.220 2003/06/05 14:33:51 dsl Exp $
+#	$NetBSD: INSTALL,v 1.221 2003/08/07 12:06:16 soren Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -323,7 +323,7 @@ ld*	at iop? tid ?			# Block devices
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-#ahd*	at pci? dev ? function ?	# Adaptec 29320, 39320 (aic790x) SCSI
+ahd*	at pci? dev ? function ?	# Adaptec 29320, 39320 (aic790x) SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
