@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13 2004/06/12 17:14:55 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.14 2004/06/12 17:16:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2004/06/12 17:14:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2004/06/12 17:16:44 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -135,10 +135,9 @@ static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	    bus_size_t size, int flags);
 static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-	    void *buf, bus_size_t buflen, struct proc *p, int flags,
-	    paddr_t *lastaddrp, int *segp);
+	    void *buf, bus_size_t buflen, struct proc *p, int flags);
 static __inline int _bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
-    paddr_t, int, paddr_t * __restrict, int * __restrict);
+    paddr_t, int);
 
 
 /*
@@ -267,8 +266,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
-	int error, seg;
-	paddr_t lastaddr;
+	int error;
 
 	STAT_INCR(bus_dma_stats_loads);
 
@@ -281,12 +279,9 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return EINVAL;
 
-	seg = -1;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg);
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
-		map->dm_nsegs = seg + 1;
 		return 0;
 	}
 
@@ -318,6 +313,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	cookie->id_origbuf = buf;
 	cookie->id_origbuflen = buflen;
 	cookie->id_buftype = X86_DMA_ID_BUFTYPE_LINEAR;
+	map->dm_nsegs = 0;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
 	    p, flags);
 	if (error)
@@ -330,18 +326,18 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 static __inline int
 _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    paddr_t paddr, int size,
-    paddr_t * __restrict lastaddrp, int * __restrict nsegp)
+    paddr_t paddr, int size)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
-	int nseg = *nsegp;
-	bus_addr_t lastaddr = *lastaddrp;
+	int nseg = map->dm_nsegs;
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
+	bus_addr_t lastaddr = 0xdead; /* XXX gcc */
 	int sgsize;
 	int error = 0;
 
+	if (nseg > 0)
+		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
 again:
-	KASSERT(nseg < 0 || segs[nseg].ds_addr + segs[nseg].ds_len == lastaddr);
 	sgsize = size;
 	/*
 	 * Make sure we don't cross any boundaries.
@@ -358,19 +354,19 @@ again:
 	 * Insert chunk into a segment, coalescing with
 	 * previous segment if possible.
 	 */
-	if (nseg >= 0 && paddr == lastaddr &&
-	    segs[nseg].ds_len + sgsize <= map->_dm_maxsegsz &&
+	if (nseg > 0 && paddr == lastaddr &&
+	    segs[nseg-1].ds_len + sgsize <= map->_dm_maxsegsz &&
 	    (map->_dm_boundary == 0 ||
-	     (segs[nseg].ds_addr & bmask) == (paddr & bmask))) {
+	     (segs[nseg-1].ds_addr & bmask) == (paddr & bmask))) {
 		/* coalesce */
-		KASSERT(segs[nseg].ds_addr + segs[nseg].ds_len == paddr);
-		segs[nseg].ds_len += sgsize;
-	} else if (++nseg >= map->_dm_segcnt) {
+		segs[nseg-1].ds_len += sgsize;
+	} else if (nseg >= map->_dm_segcnt) {
 		return EFBIG;
 	} else {
 		/* new segment */
 		segs[nseg].ds_addr = paddr;
 		segs[nseg].ds_len = sgsize;
+		nseg++;
 	}
 
 	lastaddr = paddr + sgsize;
@@ -382,8 +378,7 @@ again:
 	if (size > 0)
 		goto again;
 
-	*nsegp = nseg;
-	*lastaddrp = lastaddr;
+	map->dm_nsegs = nseg;
 	return error;
 }
 
@@ -398,8 +393,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	int flags;
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
-	int seg, error;
-	paddr_t lastaddr;
+	int error;
 	struct mbuf *m;
 
 	/*
@@ -416,7 +410,6 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	seg = -1;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		int offset;
@@ -436,8 +429,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map,
-			    paddr, size, &lastaddr, &seg);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size);
 			break;
 
 		case M_EXT|M_EXT_PAGES:
@@ -466,7 +458,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 				paddr = VM_PAGE_TO_PHYS(pg) + offset;
 
 				error = _bus_dmamap_load_paddr(t, map,
-				    paddr, size, &lastaddr, &seg);
+				    paddr, size);
 				if (error)
 					break;
 				offset = 0;
@@ -478,20 +470,20 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map,
-			    paddr, size, &lastaddr, &seg);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size);
 			break;
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags, &lastaddr, &seg);
+			    m->m_len, NULL, flags);
 		}
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
-		map->dm_nsegs = seg + 1;
 		return 0;
 	}
+
+	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
 	    ((cookie->id_flags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0))
@@ -540,8 +532,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	paddr_t lastaddr;
-	int seg, i, error;
+	int i, error;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
@@ -565,7 +556,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 #endif
 	}
 
-	seg = -1;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
@@ -576,15 +566,16 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg);
+		    p, flags);
 
 		resid -= minlen;
 	}
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
-		map->dm_nsegs = seg + 1;
 		return 0;
 	}
+
+	map->dm_nsegs = 0;
 
 	if (cookie == NULL ||
 	    ((cookie->id_flags & X86_DMA_ID_MIGHT_NEED_BOUNCE) == 0))
@@ -1148,20 +1139,17 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 static int
-_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
+_bus_dmamap_load_buffer(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	paddr_t *lastaddrp;
-	int *segp;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr;
+	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
 	pmap_t pmap;
 
 	if (p != NULL)
@@ -1169,9 +1157,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 	else
 		pmap = pmap_kernel();
 
-	lastaddr = *lastaddrp;
-
-	for (seg = *segp; buflen > 0 ; ) {
+	while (buflen > 0) {
 		int error;
 
 		/*
@@ -1194,8 +1180,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
-		    &lastaddr, &seg);
+		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
 		if (error)
 			return error;
 
@@ -1203,14 +1188,6 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp)
 		buflen -= sgsize;
 	}
 
-	*segp = seg;
-	*lastaddrp = lastaddr;
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
 	return (0);
 }
 
