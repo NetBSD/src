@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.69 2000/07/07 15:54:16 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.70 2000/07/24 03:46:57 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -231,7 +231,7 @@ udp_input(m, va_alist)
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (ip->ip_len != iphlen + len) {
-		if (ip->ip_len < iphlen + len) {
+		if (ip->ip_len < iphlen + len || len < sizeof(struct udphdr)) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
@@ -914,7 +914,7 @@ udp_input(m, va_alist)
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (ip->ip_len != iphlen + len) {
-		if (ip->ip_len < iphlen + len) {
+		if (ip->ip_len < iphlen + len || len < sizeof(struct udphdr)) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
