@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.52 1999/09/03 20:06:46 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.53 2000/03/29 03:43:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>

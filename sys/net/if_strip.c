@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.17 2000/03/23 07:03:26 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.18 2000/03/29 03:43:33 simonb Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -109,7 +109,6 @@
 #include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.86 2000/03/16 18:08:30 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.87 2000/03/29 03:43:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -43,7 +43,6 @@
 #endif
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
