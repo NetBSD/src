@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2003/07/15 01:37:38 lukem Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2003/07/25 14:34:33 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.3 2003/07/15 01:37:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4 2003/07/25 14:34:33 scw Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -67,6 +67,23 @@ CFATTACH_DECL(pchb, sizeof(struct device),
     pchbmatch, pchbattach, NULL, NULL);
 
 static int pcifound = 0;
+
+/* IO window located @ e8000000 and maps to 0-0xffff */
+static struct powerpc_bus_space pchb_io_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_IO_TYPE,
+	MIN_PLB_PCI_IOADDR,		/* offset */
+	MIN_PCI_PCI_IOADDR,		/* extent base */
+	MIN_PCI_PCI_IOADDR + 0xffff,	/* extent limit */
+};
+
+/* PCI memory window is directly mapped */
+static struct powerpc_bus_space pchb_mem_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+	0x00000000,					/* offset */
+	MIN_PCI_MEMADDR_NOPREFETCH,			/* extent base */
+	MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff,	/* extent limit */
+};
+
 
 static int
 pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -107,6 +124,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
+	struct plb_attach_args *paa = aux;
 	struct pcibus_attach_args pba;
 	char devinfo[256];
 #ifdef PCI_NETBSD_CONFIGURE
@@ -145,6 +163,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	ibm4xx_show_pci_map();
 #endif
 
+	if (bus_space_init(&pchb_io_tag, "pchbio", NULL, 0))
+		panic("pchbattach: can't init IO tag");
+	if (bus_space_init(&pchb_mem_tag, "pchbmem", NULL, 0))
+		panic("pchbattach: can't init MEM tag");
+
 #ifdef PCI_NETBSD_CONFIGURE
 	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
 	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
@@ -161,10 +184,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #endif
 	pba.pba_busname = "pci";
 	/* IO window located @ e8000000 and maps to 0-0xffff */
-	pba.pba_iot = ibm4xx_make_bus_space_tag(MIN_PLB_PCI_IOADDR, 0);
+	pba.pba_iot = &pchb_io_tag;
 	/* PCI memory window is directly mapped */
-	pba.pba_memt = ibm4xx_make_bus_space_tag(0, 0);
-	pba.pba_dmat = &ibm4xx_default_bus_dma_tag;
+	pba.pba_memt = &pchb_mem_tag;
+	pba.pba_dmat = paa->plb_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
