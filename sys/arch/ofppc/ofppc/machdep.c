@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2002/04/23 12:41:07 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2002/05/13 07:12:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,8 +84,6 @@ struct proc *fpuproc;
 extern struct user *proc0paddr;
 
 struct bat battable[16];
-
-int astpending;
 
 char *bootpath;
 
@@ -286,7 +284,6 @@ initppc(startkernel, endkernel, args)
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
