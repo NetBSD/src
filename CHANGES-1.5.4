@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.55 2002/09/23 05:13:52 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.56 2002/09/23 13:48:36 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1524,3 +1524,7 @@ lib/libdes/shlib_version			1.4
 
   Belatedly bump libdes shared library major number, due to bump of
   libcrypto shared major when we moved from OpenSSL 0.9.5 to 0.9.6.
+
+sys/netinet6/ip6_output.c			1.58
+  
+  Correct length field on PADN option, before jumbo payload option.
