@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.c,v 1.2 2003/08/07 09:21:11 agc Exp $	*/
+/*	$NetBSD: memmove.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -15,7 +15,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,6 +49,8 @@ static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #include <sys/types.h>
 #endif
 #include <string.h>
+
+#include "l_stdlib.h"
 
 /*
  * sizeof(word) MUST BE A POWER OF TWO
@@ -101,7 +107,8 @@ memmove(
 		 * Copy whole words, then mop up any trailing bytes.
 		 */
 		t = length / wsize;
-		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
+		TLOOP(*(word *)dst = *(const word *)src; src += wsize;
+		    dst += wsize);
 		t = length & wmask;
 		TLOOP(*dst++ = *src++);
 	} else {
@@ -122,7 +129,8 @@ memmove(
 			TLOOP1(*--dst = *--src);
 		}
 		t = length / wsize;
-		TLOOP(src -= wsize; dst -= wsize; *(word *)dst = *(word *)src);
+		TLOOP(src -= wsize; dst -= wsize;
+		    *(word *)dst = *(const word *)src);
 		t = length & wmask;
 		TLOOP(*--dst = *--src);
 	}

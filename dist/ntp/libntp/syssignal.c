@@ -1,4 +1,4 @@
-/*	$NetBSD: syssignal.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: syssignal.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

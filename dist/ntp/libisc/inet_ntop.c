@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996-2001  Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_msfees.c,v 1.1.1.2 2003/12/04 16:05:28 drochner Exp $	*/
+/*	$NetBSD: refclock_msfees.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /* refclock_ees - clock driver for the EES M201 receiver */
 

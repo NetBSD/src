@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.2 2002/12/06 15:09:38 thorpej Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/ntpd/refclock_parse.c,v 4.36 1999/11/28 17:18:20 kardel RELEASE_19991128_A
@@ -769,8 +769,6 @@ static poll_info_t rcc8000_pollinfo = { RCC_POLLRATE, RCC_POLLCMD, RCC_CMDSIZE }
 #define COMPUTIME_SAMPLES     5
 #define COMPUTIME_KEEP        3
 
-static poll_info_t we400a_pollinfo = { 60, "T", 1 };
-
 /*
  * Varitext Radio Clock Receiver
  */
@@ -806,7 +804,7 @@ static struct parse_clockinfo
 	const char *cl_description;		/* device name */
 	const char *cl_format;		/* fixed format */
 	u_char  cl_type;		/* clock type (ntp control) */
-	u_long  cl_maxunsync;		/* time to trust oscillator after loosing synch */
+	u_long  cl_maxunsync;		/* time to trust oscillator after losing synch */
 	u_long  cl_speed;		/* terminal input & output baudrate */
 	u_long  cl_cflag;             /* terminal control flags */
 	u_long  cl_iflag;             /* terminal input flags */
@@ -1171,21 +1169,21 @@ static struct parse_clockinfo
 	},
 	{				/* mode 15 */
 		0,				/* operation flags (io modes) */
-  		poll_dpoll,			/* active poll routine */
-		poll_init,			/* active poll init routine */
+  		NO_POLL,			/* active poll routine */
+		NO_INIT,			/* active poll init routine */
   		NO_EVENT,		        /* special event handling (e.g. reset clock) */
   		NO_END,				/* active poll end routine */
   		NO_MESSAGE,			/* process a lower layer message */
-		((void *)(&we400a_pollinfo)),   /* local data area for "poll" mechanism */
+		NO_DATA,			/* local data area for "poll" mechanism */
 		0,				/* rootdelay */
-		1.0 / 960,			/* current offset by which the RS232
+		11.0 /* bits */ / 9600,		/* current offset by which the RS232
 				           	time code is delayed from the actual time */
 		DCF_ID,				/* ID code */
 		"WHARTON 400A Series clock",	/* device name */
-		"WHARTON 400A Series clock Output Format 5",	/* fixed format */
+		"WHARTON 400A Series clock Output Format 1",	/* fixed format */
 			/* Must match a format-name in a libparse/clk_xxx.c file */
 		DCF_TYPE,			/* clock type (ntp control) */
-		(1*60*60),		        /* time to trust oscillator after loosing synch */
+		(1*60*60),		        /* time to trust oscillator after losing synch */
 		B9600,				/* terminal input & output baudrate */
 		(CS8|CREAD|PARENB|CLOCAL|HUPCL),/* terminal control flags */
 		0,				/* terminal input flags */
@@ -3099,7 +3097,7 @@ parse_event(
 			NLOG(NLOG_CLOCKEVENT) /* conditional if clause for conditional syslog */
 				ERR(ERR_BADEVENT)
 				msyslog(LOG_ERR,
-					"clock %s fault '%s' (0x%02x)", refnumtoa(parse->peer->srcadr.sin_addr.s_addr), ceventstr(event),
+					"clock %s fault '%s' (0x%02x)", refnumtoa(&parse->peer->srcadr), ceventstr(event),
 					(u_int)event);
 		}
 		else
@@ -3107,7 +3105,7 @@ parse_event(
 			NLOG(NLOG_CLOCKEVENT) /* conditional if clause for conditional syslog */
 				if (event == CEVNT_NOMINAL || list_err(parse, ERR_BADEVENT))
 				    msyslog(LOG_INFO,
-					    "clock %s event '%s' (0x%02x)", refnumtoa(parse->peer->srcadr.sin_addr.s_addr), ceventstr(event),
+					    "clock %s event '%s' (0x%02x)", refnumtoa(&parse->peer->srcadr), ceventstr(event),
 					    (u_int)event);
 		}
 
@@ -3732,11 +3730,11 @@ gps16x_message(
 			case GPS_ANT_INFO:
 				{
 					ANT_INFO antinfo;
-					char buffer[512];
-					char *p;
+					u_char buffer[512];
+					u_char *p;
 					
 					get_mbg_antinfo(&bufp, &antinfo);
-					sprintf((char *)buffer, "meinberg_antenna_status=\"");
+					sprintf(buffer, "meinberg_antenna_status=\"");
 					p = buffer + strlen(buffer);
 					
 					switch (antinfo.status)
@@ -3754,20 +3752,20 @@ gps16x_message(
 								CLK_UNIT(parse->peer), p);
 						
 						p += strlen(p);
-						mbg_tm_str((void *)&p, &antinfo.tm_disconn);
+						mbg_tm_str(&p, &antinfo.tm_disconn);
 						*p = '\0';
 						break;
 		    
 					case ANT_RECONN:
 						strcat(p, "RECONNECTED on ");
 						p += strlen(p);
-						mbg_tm_str((void *)&p, &antinfo.tm_reconn);
+						mbg_tm_str(&p, &antinfo.tm_reconn);
 						sprintf(p, ", reconnect clockoffset %c%ld.%07ld s, disconnect time ",
 							(antinfo.delta_t < 0) ? '-' : '+',
 							ABS(antinfo.delta_t) / 10000,
 							ABS(antinfo.delta_t) % 10000);
 						p += strlen(p);
-						mbg_tm_str((void *)&p, &antinfo.tm_disconn);
+						mbg_tm_str(&p, &antinfo.tm_disconn);
 						*p = '\0';
 						break;
 		    
@@ -3790,8 +3788,8 @@ gps16x_message(
 			case GPS_CFGH:
 				{
 					CFGH cfgh;
-					char buffer[512];
-					char *p;
+					u_char buffer[512];
+					u_char *p;
 					
 					get_mbg_cfgh(&bufp, &cfgh);
 					if (cfgh.valid)
@@ -3801,7 +3799,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_tot_51=\"");
 						p += strlen(p);
-						mbg_tgps_str((void *)&p, &cfgh.tot_51);
+						mbg_tgps_str(&p, &cfgh.tot_51);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
@@ -3809,7 +3807,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_tot_63=\"");
 						p += strlen(p);
-						mbg_tgps_str((void *)&p, &cfgh.tot_63);
+						mbg_tgps_str(&p, &cfgh.tot_63);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
@@ -3817,7 +3815,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_t0a=\"");
 						p += strlen(p);
-						mbg_tgps_str((void *)&p, &cfgh.t0a);
+						mbg_tgps_str(&p, &cfgh.t0a);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
@@ -5152,16 +5150,24 @@ rawdcf_init_1(
 	struct parseunit *parse
 	)
 {
+	/* fixed 2000 for using with Linux by Wolfram Pienkoss <wp@bszh.de> */
 	/*
 	 * You can use the RS232 to supply the power for a DCF77 receiver.
 	 * Here a voltage between the DTR and the RTS line is used. Unfortunately
 	 * the name has changed from CIOCM_DTR to TIOCM_DTR recently.
 	 */
-	
+	int sl232;
+
+	if (ioctl(parse->generic->io.fd, TIOCMGET, (caddr_t)&sl232) == -1)
+	{
+		msyslog(LOG_NOTICE, "PARSE receiver #%d: rawdcf_init_1: WARNING: ioctl(fd, TIOCMGET, [C|T]IOCM_DTR): %m", CLK_UNIT(parse->peer));
+		return 0;
+	}
+
 #ifdef TIOCM_DTR
-	int sl232 = TIOCM_DTR;	/* turn on DTR for power supply */
+	sl232 = (sl232 & ~TIOCM_RTS) | TIOCM_DTR;	/* turn on DTR, clear RTS for power supply */
 #else
-	int sl232 = CIOCM_DTR;	/* turn on DTR for power supply */
+	sl232 = (sl232 & ~CIOCM_RTS) | CIOCM_DTR;	/* turn on DTR, clear RTS for power supply */
 #endif
 
 	if (ioctl(parse->generic->io.fd, TIOCMSET, (caddr_t)&sl232) == -1)
@@ -5172,7 +5178,7 @@ rawdcf_init_1(
 }
 #else
 static int
-rawdcfdtr_init(
+rawdcfdtr_init_1(
 	struct parseunit *parse
 	)
 {
@@ -5191,16 +5197,24 @@ rawdcf_init_2(
 	struct parseunit *parse
 	)
 {
+	/* fixed 2000 for using with Linux by Wolfram Pienkoss <wp@bszh.de> */
 	/*
 	 * You can use the RS232 to supply the power for a DCF77 receiver.
 	 * Here a voltage between the DTR and the RTS line is used. Unfortunately
 	 * the name has changed from CIOCM_DTR to TIOCM_DTR recently.
 	 */
-	
+	int sl232;
+
+	if (ioctl(parse->generic->io.fd, TIOCMGET, (caddr_t)&sl232) == -1)
+	{
+		msyslog(LOG_NOTICE, "PARSE receiver #%d: rawdcf_init_2: WARNING: ioctl(fd, TIOCMGET, [C|T]IOCM_RTS): %m", CLK_UNIT(parse->peer));
+		return 0;
+	}
+
 #ifdef TIOCM_RTS
-	int sl232 = TIOCM_RTS;	/* turn on RTS, clear DTR for power supply */
+	sl232 = (sl232 & ~TIOCM_DTR) | TIOCM_RTS;	/* turn on RTS, clear DTR for power supply */
 #else
-	int sl232 = CIOCM_RTS;	/* turn on DTR for power supply */
+	sl232 = (sl232 & ~CIOCM_DTR) | CIOCM_RTS;	/* turn on RTS, clear DTR for power supply */
 #endif
 
 	if (ioctl(parse->generic->io.fd, TIOCMSET, (caddr_t)&sl232) == -1)

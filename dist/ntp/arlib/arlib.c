@@ -1,4 +1,4 @@
-/*	$NetBSD: arlib.c,v 1.1.1.1 2003/12/04 16:05:21 drochner Exp $	*/
+/*	$NetBSD: arlib.c,v 1.2 2003/12/04 16:23:34 drochner Exp $	*/
 
 /*
  * arlib.c (C)opyright 1993 Darren Reed. All rights reserved.

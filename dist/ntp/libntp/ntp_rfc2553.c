@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_rfc2553.c,v 1.1.1.1 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: ntp_rfc2553.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

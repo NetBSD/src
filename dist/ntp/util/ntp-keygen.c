@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.1 2003/12/04 16:05:35 drochner Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers

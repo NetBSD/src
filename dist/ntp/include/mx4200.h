@@ -1,4 +1,4 @@
-/*	$NetBSD: mx4200.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: mx4200.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 
 /* records transmitted from extern CDU to MX 4200 */

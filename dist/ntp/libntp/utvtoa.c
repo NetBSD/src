@@ -1,4 +1,4 @@
-/*	$NetBSD: utvtoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: utvtoa.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * utvtoa - return an asciized representation of an unsigned struct timeval

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.2 2001/04/21 21:57:16 thorpej Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_rawdcf.c,v 4.9 1999/12/06 13:42:23 kardel Exp
@@ -21,9 +21,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE) && defined(CLOCK_RAWDCF)
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
@@ -551,7 +548,7 @@ inp_rawdcf(
 {
 	static struct timeval timeout = { 1, 500000 }; /* 1.5 secongs denote second #60 */
 	
-	parseprintf(DD_PARSE, ("inp_rawdcf(0x%lx, 0x%x, ...)\n", (unsigned long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_rawdcf(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
 	
 	parseio->parse_dtime.parse_stime = *tstamp; /* collect timestamp */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp_mul.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: mfp_mul.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libntp/mfp_mul.c,v 4.3 1999/02/21 12:17:37 kardel RELEASE_19990228_A

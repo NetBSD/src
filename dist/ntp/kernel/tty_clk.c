@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_clk.c,v 1.2 2002/05/16 19:41:36 wiz Exp $	*/
+/*	$NetBSD: tty_clk.c,v 1.3 2003/12/04 16:23:36 drochner Exp $	*/
 
 /* tty_clk.c,v 3.1 1993/07/06 01:07:33 jbj Exp
  * tty_clk.c - Generic line driver for receiving radio clock timecodes
@@ -316,4 +316,4 @@ clkioctl(tp, cmd, data, flag)
 	}
 	return (ENOTTY);	/* not quite appropriate */
 }
-#endif /* NCLK */
+#endif NCLK

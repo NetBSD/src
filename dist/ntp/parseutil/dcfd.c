@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.1.1.2 2003/12/04 16:05:32 drochner Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/parseutil/dcfd.c,v 4.9 1999/02/28 13:06:27 kardel RELEASE_19990228_A

@@ -1,5 +1,5 @@
 #! @PATH_PERL@ -w
-# $Id: plot_summary.in,v 1.1.1.2 2003/12/04 16:05:32 drochner Exp $
+# $Id: plot_summary.in,v 1.2 2003/12/04 16:23:38 drochner Exp $
 #
 # Use Gnuplot to display data in summary files produced by summary.pl.
 # This script requires GNUPLOT 3.7!

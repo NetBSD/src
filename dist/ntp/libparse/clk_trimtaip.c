@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtaip.c,v 1.2 2001/04/21 21:57:16 thorpej Exp $	*/
+/*	$NetBSD: clk_trimtaip.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_trimtaip.c,v 4.7 1999/11/28 09:13:51 kardel RELEASE_19991128_A
@@ -13,8 +13,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE) && defined(CLOCK_TRIMTAIP)
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
@@ -130,7 +128,7 @@ inp_trimtaip(
 {
 	unsigned int rtc;
 	
-	parseprintf(DD_PARSE, ("inp_trimtaip(0x%lx, 0x%x, ...)\n", (unsigned long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_trimtaip(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
 	
 	switch (ch)
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: log.h,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * log.h - Used only under Windows NT by msyslog.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arbiter.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
+/*	$NetBSD: refclock_arbiter.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite

@@ -1,4 +1,4 @@
-/*	$NetBSD: testrs6000.c,v 1.1.1.1 2000/03/29 12:38:59 simonb Exp $	*/
+/*	$NetBSD: testrs6000.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /* Checks for the RS/6000 AIX adjtime() bug, in which if a negative
  * offset is given, the system gets messed up and never completes the

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcl720.h,v 1.1.1.2 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: pcl720.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /* Copyright (c) 1995 Vixie Enterprises
  *
