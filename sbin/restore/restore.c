@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.7 1996/09/27 03:23:34 thorpej Exp $	*/
+/*	$NetBSD: restore.c,v 1.8 1997/03/19 08:42:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.7 1996/09/27 03:23:34 thorpej Exp $";
+static char rcsid[] = "$NetBSD: restore.c,v 1.8 1997/03/19 08:42:53 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ addfile(name, ino, type)
 	ino_t ino;
 	int type;
 {
-	register struct entry *ep;
+	struct entry *ep;
 	long descend = hflag ? GOOD : FAIL;
 	char buf[100];
 
@@ -165,8 +165,8 @@ static struct entry *removelist;
 void
 removeoldleaves()
 {
-	register struct entry *ep, *nextep;
-	register ino_t i, mydirino;
+	struct entry *ep, *nextep;
+	ino_t i, mydirino;
 
 	vprintf(stdout, "Mark entries to be removed.\n");
 	if (ep = lookupino(WINO)) {
@@ -221,7 +221,7 @@ nodeupdates(name, ino, type)
 	ino_t ino;
 	int type;
 {
-	register struct entry *ep, *np, *ip;
+	struct entry *ep, *np, *ip;
 	long descend = GOOD;
 	int lookuptype = 0;
 	int key = 0;
@@ -525,8 +525,8 @@ keyval(key)
 void
 findunreflinks()
 {
-	register struct entry *ep, *np;
-	register ino_t i;
+	struct entry *ep, *np;
+	ino_t i;
 
 	vprintf(stdout, "Find unreferenced names.\n");
 	for (i = ROOTINO; i < maxino; i++) {
@@ -573,7 +573,7 @@ findunreflinks()
 void
 removeoldnodes()
 {
-	register struct entry *ep, **prev;
+	struct entry *ep, **prev;
 	long change;
 
 	vprintf(stdout, "Remove old nodes (directories).\n");
@@ -603,7 +603,7 @@ void
 createleaves(symtabfile)
 	char *symtabfile;
 {
-	register struct entry *ep;
+	struct entry *ep;
 	ino_t first;
 	long curvol;
 
@@ -682,8 +682,8 @@ createleaves(symtabfile)
 void
 createfiles()
 {
-	register ino_t first, next, last;
-	register struct entry *ep;
+	ino_t first, next, last;
+	struct entry *ep;
 	long curvol;
 
 	vprintf(stdout, "Extract requested files\n");
@@ -770,8 +770,8 @@ createfiles()
 void
 createlinks()
 {
-	register struct entry *np, *ep;
-	register ino_t i;
+	struct entry *np, *ep;
+	ino_t i;
 	char name[BUFSIZ];
 
 	if (ep = lookupino(WINO)) {
@@ -810,8 +810,8 @@ createlinks()
 void
 checkrestore()
 {
-	register struct entry *ep;
-	register ino_t i;
+	struct entry *ep;
+	ino_t i;
 
 	vprintf(stdout, "Check the symbol table.\n");
 	for (i = WINO; i < maxino; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.10 1996/09/27 03:23:35 thorpej Exp $	*/
+/*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.10 1996/09/27 03:23:35 thorpej Exp $";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ void
 pathcheck(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 	struct entry *ep;
 	char *start;
 
@@ -90,7 +90,7 @@ pathcheck(name)
  */
 void
 mktempname(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
 	char oldname[MAXPATHLEN];
 
@@ -164,7 +164,7 @@ newnode(np)
  */
 void
 removenode(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
 	char *cp;
 
@@ -187,7 +187,7 @@ removenode(ep)
  */
 void
 removeleaf(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
 	char *cp;
 
@@ -257,7 +257,7 @@ addwhiteout(name)
  */
 void
 delwhiteout(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
 	char *name;
 
@@ -281,7 +281,7 @@ ino_t
 lowerbnd(start)
 	ino_t start;
 {
-	register struct entry *ep;
+	struct entry *ep;
 
 	for ( ; start < maxino; start++) {
 		ep = lookupino(start);
@@ -300,7 +300,7 @@ ino_t
 upperbnd(start)
 	ino_t start;
 {
-	register struct entry *ep;
+	struct entry *ep;
 
 	for ( ; start > ROOTINO; start--) {
 		ep = lookupino(start);
@@ -317,7 +317,7 @@ upperbnd(start)
  */
 void
 badentry(ep, msg)
-	register struct entry *ep;
+	struct entry *ep;
 	char *msg;
 {
 
@@ -344,7 +344,7 @@ badentry(ep, msg)
  */
 char *
 flagvalues(ep)
-	register struct entry *ep;
+	struct entry *ep;
 {
 	static char flagbuf[BUFSIZ];
 
