@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.106 2003/03/22 10:35:01 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.107 2003/03/22 10:39:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.106 2003/03/22 10:35:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.107 2003/03/22 10:39:47 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,20 +329,30 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		tmp = FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
 		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, &tmp, p);
 		if (error)
-			goto out;
-		fp->f_flag &= ~FCNTLFLAGS;
-		fp->f_flag |= tmp;
-		tmp = fp->f_flag & FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &tmp, p);
-		if (error)
-			goto out;
-		tmp = fp->f_flag & FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &tmp, p);
-		if (error == 0)
-			goto out;
-		fp->f_flag &= ~FNONBLOCK;
-		tmp = 0;
-		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &tmp, p);
+			break;
+		i = tmp ^ fp->f_flag;
+		if (i & FNONBLOCK) {
+			int fl = tmp & FNONBLOCK;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &fl, p);
+			if (error)
+				goto reset_fcntl;
+		}
+		if (i & FASYNC) {
+			int fl = tmp & FASYNC;
+			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &fl, p);
+			if (error) {
+				if (i & FNONBLOCK) {
+					tmp = fp->f_flag & FNONBLOCK;
+					(void)(*fp->f_ops->fo_ioctl)(fp,
+						FIONBIO, &tmp, p);
+				}
+				goto reset_fcntl;
+			}
+		}
+		fp->f_flag = (fp->f_flag & ~FCNTLFLAGS) | tmp;
+		break;
+	    reset_fcntl:
+		(void)(*fp->f_ops->fo_fcntl)(fp, F_SETFL, &fp->f_flag, p);
 		break;
 
 	case F_GETOWN:
