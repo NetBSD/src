@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2003/02/27 00:30:31 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2003/04/28 20:26:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1 2003/02/27 00:30:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/04/28 20:26:18 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1 2003/02/27 00:30:31 fvdl Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include "ioapic.h"
+#include "eisa.h"
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
