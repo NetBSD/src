@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.1 1998/08/21 13:25:47 ragge Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.2 1999/03/24 05:51:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -45,9 +43,7 @@
 
 #include <compat/vax1k/vax1k_exec.h>
 
-#if defined(UVM)
-#include <uvm/uvm.h>
-#endif
+#include <uvm/uvm_extern.h>
 
 /*
  * vax1k_map_readvn():
@@ -63,7 +59,6 @@ vax1k_map_readvn(p, cmd)
 	vm_offset_t oaddr;
 	int error;
 
-#if defined(UVM)
 	if (cmd->ev_len == 0)
 		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
 	
@@ -76,10 +71,6 @@ vax1k_map_readvn(p, cmd)
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
-#else
-	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
-	    cmd->ev_len, 0);
-#endif
 	if (error)
 		return error;
 
@@ -89,7 +80,6 @@ vax1k_map_readvn(p, cmd)
 	if (error)
 		return error;
 
-#if defined(UVM)
 	if (cmd->ev_prot != (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) {
 		/*
 		 * we had to map in the area at PROT_ALL so that vn_rdwr()
@@ -104,8 +94,4 @@ vax1k_map_readvn(p, cmd)
 	} else {
 		return(KERN_SUCCESS);
 	}
-#else
-	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
-	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
-#endif
 }

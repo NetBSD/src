@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.3 1998/09/05 16:50:37 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.4 1999/03/24 05:51:13 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,6 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,15 +343,9 @@ cgsixioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
-#if defined(UVM)
 			if (!uvm_useracc(p->image, count, B_READ) ||
 			    !uvm_useracc(p->mask, count, B_READ))
 				return (EFAULT);
-#else
-			if (!useracc(p->image, count, B_READ) ||
-			    !useracc(p->mask, count, B_READ))
-				return (EFAULT);
-#endif
 		}
 
 		/* parameters are OK; do it */

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.12 1999/01/11 22:11:36 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.13 1999/03/24 05:51:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,8 +26,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,13 +560,8 @@ tga_builtin_set_cursor(dc, cursorp)
 			return (EINVAL);
 		/* The cursor is 2 bits deep, and there is no mask */
 		count = (cursorp->size.y * 64 * 2) / NBBY;
-#if defined(UVM)
 		if (!uvm_useracc(cursorp->image, count, B_READ))
 			return (EFAULT);
-#else
-		if (!useracc(cursorp->image, count, B_READ))
-			return (EFAULT);
-#endif
 	}
 	if (v & WSDISPLAY_CURSOR_DOHOT)		/* not supported */
 		return EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.53 1999/02/23 02:57:18 ross Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.54 1999/03/24 05:51:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +64,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 int	nprocs = 1;		/* process 0 */
 
@@ -155,11 +152,7 @@ fork1(p1, flags, retval, rnewprocp)
 	 * kernel virtual address space.  The actual U-area pages will
 	 * be allocated and wired in vm_fork().
 	 */
-#if defined(UVM)
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
-#else
-	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
-#endif
 	if (uaddr == 0) {
 		(void)chgproccnt(uid, -1);
 		return (ENOMEM);
@@ -329,11 +322,7 @@ again:
 	 * different path later.
 	 */
 	p2->p_addr = (struct user *)uaddr;
-#if defined(UVM)
 	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
-#else
-	vm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
-#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
@@ -353,19 +342,11 @@ again:
 	/*
 	 * Update stats now that we know the fork was successful.
 	 */
-#if defined(UVM)
 	uvmexp.forks++;
 	if (flags & FORK_PPWAIT)
 		uvmexp.forks_ppwait++;
 	if (flags & FORK_SHAREVM)
 		uvmexp.forks_sharevm++;
-#else
-	cnt.v_forks++;
-	if (flags & FORK_PPWAIT)
-		cnt.v_forks_ppwait++;
-	if (flags & FORK_SHAREVM)
-		cnt.v_forks_sharevm++;
-#endif
 
 	/*
 	 * Pass a pointer to the new process to the caller.

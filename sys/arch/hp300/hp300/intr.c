@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 1998/08/12 06:46:57 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.12 1999/03/24 05:50:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#include "opt_uvm.h"
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -54,10 +53,9 @@
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <net/netisr.h>
 
@@ -265,11 +263,7 @@ intr_dispatch(evec)
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;
-#if defined(UVM)
 	uvmexp.intrs++;
-#else
-	cnt.v_intr++;
-#endif
 
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {

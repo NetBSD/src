@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1999/03/15 03:25:33 nisimura Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 1999/03/24 05:51:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,8 +44,6 @@
  * Memory special file
  */
 
-#include "opt_uvm.h"
-
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
@@ -58,9 +56,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #define mmread  mmrw
 #define mmwrite mmrw
@@ -133,13 +129,8 @@ mmrw(dev, uio, flags)
 			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end +
 						mips_round_page(MSGBUFSIZE)) &&
 			    (v < MIPS_KSEG2_START ||
-#if defined(UVM)
 			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
-#else
-			    !kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
-#endif
 				return (EFAULT);
 			error = uiomove((void *)v, c, uio);
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1999/03/24 05:51:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include "ite.h"
 #include "fd.h"
@@ -524,11 +523,7 @@ _audiotrap:
 #endif
 #endif
 	addql	#1,_C_LABEL(intrcnt)+44
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _partrap:
@@ -540,11 +535,7 @@ _partrap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+48
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _audioerrtrap:
@@ -554,11 +545,7 @@ _audioerrtrap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+32
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _powtrap:
@@ -569,11 +556,7 @@ _powtrap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+52
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _com0trap:
@@ -586,11 +569,7 @@ _com0trap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+56
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _com1trap:
@@ -602,11 +581,7 @@ _com1trap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+56
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _intiotrap:
@@ -618,11 +593,7 @@ _intiotrap:
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _lev1intr:
@@ -642,11 +613,7 @@ Lnotdma:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	INTERRUPT_RESTOREREG
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	jra	rei
 
 _timertrap:
@@ -661,11 +628,7 @@ _timertrap:
 #if NMS > 0
 	jbsr	_ms_modem
 #endif
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR	| chalk up another interrupt
-#endif
 	moveml	sp@+,#0x0303		| restore scratch registers
 	jra	rei			| all done
 
@@ -995,11 +958,7 @@ Lenab1:
 	movc	d0,vbr
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-#if defined(UVM)
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-#else
-	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -1081,11 +1040,7 @@ _proc_trampoline:
 
 	.globl	_whichqs,_qs,_panic
 	.globl	_curproc,_want_resched
-#if defined(UVM)
 	.globl	_uvmexp
-#else
-	.globl	_cnt
-#endif
 
 /*
  * Use common m68k process manipulation routines.

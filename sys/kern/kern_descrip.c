@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.56 1999/03/22 17:39:44 sommerfe Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.57 1999/03/24 05:51:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,8 +39,6 @@
  *
  *	@(#)kern_descrip.c	8.8 (Berkeley) 2/14/95
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,15 +363,10 @@ fdrelease(p, fd)
 	if (fp == NULL)
 		return (EBADF);
 	pf = &fdp->fd_ofileflags[fd];
-#if defined(UVM)
 	if (*pf & UF_MAPPED) {
 		/* XXX: USELESS? XXXCDC check it */
 		p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
 	}
-#else
-	if (*pf & UF_MAPPED)
-		(void) munmapfd(p, fd);
-#endif
 	*fpp = NULL;
 	*pf = 0;
 	fd_unused(fdp, fd);

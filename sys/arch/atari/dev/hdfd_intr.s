@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.5 1998/05/12 21:09:23 leo Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.6 1999/03/24 05:50:58 mrg Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -37,7 +37,6 @@
  *
  */
 
-#include "opt_uvm.h"
 #include "assym.h"
 #include <machine/asm.h>
 #define ASSEMBLER /* XXX */
@@ -127,11 +126,7 @@ hdfdc1:
 	 * seems wrong....
 	 */
 hdfdc_xit:
-#if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
 	moveml	sp@+,d0-d1/a0-a1
 	rte
 
@@ -145,11 +140,7 @@ hdfdc_norm:
 	movl	nintr,d0
 	clrl	nintr
 	addl	d0, _intrcnt_user+88	|  add another interrupt
-#if defined(UVM)
 	addl	d0,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addl	d0,_C_LABEL(cnt)+V_INTR
-#endif
 0:	jbsr	_fdc_ctrl_intr		|  handle interrupt
 	moveml	sp@+,d0-d1/a0-a1	|    and saved registers
 	jra	rei

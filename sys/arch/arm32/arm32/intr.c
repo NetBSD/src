@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 1998/09/05 03:59:29 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 1999/03/24 05:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -35,7 +35,6 @@
  * Soft interrupt and other generic interrupt functions.
  */
 
-#include "opt_uvm.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
@@ -51,9 +50,7 @@
 #include <sys/socket.h>
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
@@ -105,11 +102,7 @@ extern u_int sintrcnt[];
 #define INC_SINTRCNT(x)
 #endif	/* IRQSTATS */
 
-#if defined(UVM)
 #define	COUNT	uvmexp.softs;
-#else
-#define	COUNT	cnt.v_soft;
-#endif
 
 /* Prototypes */
 

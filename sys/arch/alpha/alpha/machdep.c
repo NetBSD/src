@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $ */
+/* $NetBSD: machdep.c,v 1.163 1999/03/24 05:50:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
@@ -83,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 1999/03/24 05:50:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $")
 
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/cons.h>
 
@@ -195,13 +192,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 1999/02/27 06:39:34 scottr Exp $")
 extern void comsoft __P((void));
 #endif
 
-#if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
-#else
-vm_map_t buffer_map;
-#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -482,11 +475,7 @@ nobootinfo:
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
-#if defined(UVM)
 	uvm_setpagesize();
-#else
-	vm_set_page_size();
-#endif
 
 	/*
 	 * Find the beginning and end of the kernel (and leave a
@@ -602,13 +591,8 @@ nobootinfo:
 				printf("Loading chunk before kernel: "
 				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
 #endif
-#if defined(UVM)
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
-#else
-				vm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn);
-#endif
 			}
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 		    }
@@ -621,13 +605,8 @@ nobootinfo:
 				printf("Loading chunk after kernel: "
 				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
 #endif
-#if defined(UVM)
 				uvm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
-#else
-				vm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1);
-#endif
 			}
 		} else {
 			/*
@@ -637,12 +616,8 @@ nobootinfo:
 			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
 			    pfn0, pfn1);
 #endif
-#if defined(UVM)
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
-#else
-			vm_page_physload(pfn0, pfn1, pfn0, pfn1);
-#endif
 		}
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	    }
@@ -979,9 +954,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 
 	/*
@@ -1064,24 +1036,14 @@ cpu_startup()
 	 * and usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-#if defined(UVM)
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
-#else
-	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
-	    &maxaddr, size, TRUE);
-	minaddr = (vaddr_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-#endif /* UVM */
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-#if defined(UVM)
 		vsize_t curbufsize;
 		vaddr_t curbuf;
 		struct vm_page *pg;
@@ -1109,56 +1071,25 @@ cpu_startup()
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
-#else /* ! UVM */
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-#endif /* UVM */
 	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if defined(UVM)
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   16 * NCARGS, TRUE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for physio
 	 */
-#if defined(UVM)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
-#else
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
-#endif
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-#if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
-#endif
 	/*
 	 * Initialize callouts
 	 */
@@ -1170,11 +1101,7 @@ cpu_startup()
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-#if defined(UVM)
 	printf("avail mem = %ld\n", (long)ptoa(uvmexp.free));
-#else
-	printf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
-#endif
 #if 0
 	{
 		extern u_long pmap_pages_stolen;
@@ -2075,11 +2002,7 @@ do_sir()
 		ssir = 0;
 		splsoft();		/* don't recurse through spl0() */
 
-#if defined(UVM)
 #define	COUNT_SOFT	uvmexp.softs++
-#else
-#define	COUNT_SOFT	cnt.v_soft++
-#endif
 
 #define	DO_SIR(bit, fn)							\
 		do {							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.15 1998/07/04 22:18:17 jonathan Exp $	*/
+/*	$NetBSD: ast.c,v 1.16 1999/03/24 05:50:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,11 +56,9 @@
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 
-#if defined(UVM)
-/*#include <sys/types.h>*/
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 int want_resched = 0;
 
@@ -159,13 +156,8 @@ ast(frame)
 {
 	struct proc *p = curproc;
 
-#if defined(UVM)
 	uvmexp.traps++;
 	uvmexp.softs++;
-#else
-	cnt.v_trap++;
-	cnt.v_soft++;
-#endif
 
 #ifdef DIAGNOSTIC
 	if (p == NULL) {

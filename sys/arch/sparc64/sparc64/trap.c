@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1999/03/18 04:56:03 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.26 1999/03/24 05:51:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,7 +50,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sparc32.h"
 
@@ -93,11 +92,6 @@
 
 #ifndef offsetof
 #define	offsetof(s, f) ((int)&((s *)0)->f)
-#endif
-
-#if defined(UVM)
-/* We can either do this or really ugly up the code. */
-#define	vm_fault(m,v,t,w)	uvm_fault((m),(v),(w),(t))
 #endif
 
 #ifdef DEBUG
@@ -539,11 +533,7 @@ trap(type, tstate, pc, tf)
 #endif
 #endif
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 #ifdef DEBUG
 	if ((trapdebug&(TDB_FOLLOW|TDB_TRAP)) || ((trapdebug & TDB_TL) && tl())) {
 		extern int trap_trace_dis;
@@ -1002,11 +992,7 @@ data_access_fault(type, addr, pc, tf)
 	}
 #endif
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1026,7 +1012,7 @@ data_access_fault(type, addr, pc, tf)
 #endif
 	tstate = tf->tf_tstate;
 
-	/* Find the faulting va to give to vm_fault */
+	/* Find the faulting va to give to uvm_fault */
 	va = trunc_page(addr);
 
 #ifdef DEBUG
@@ -1062,25 +1048,25 @@ data_access_fault(type, addr, pc, tf)
 			goto kfault;
 		if (!(addr&TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
-			if ((rv=vm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
+			if ((rv=uvm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-					printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- success\n",
+					printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- success\n",
 					       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 				return;
 			}
-			if ((rv=vm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
+			if ((rv=uvm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-					printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- success\n",
+					printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- success\n",
 					       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 				return;
 			}
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-				printf("data_access_fault: kernel vm_fault(%x, %x, %x, 0) sez %x -- failure\n",
+				printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- failure\n",
 				       kernel_map, (vaddr_t)va, ftype, rv);
 #endif
 			goto kfault;
@@ -1090,16 +1076,16 @@ data_access_fault(type, addr, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-		printf("data_access_fault: user vm_fault(%x, %x, %x, FALSE) sez %x\n",
+		printf("data_access_fault: user uvm_fault(%x, %x, %x, FALSE) sez %x\n",
 		       &vm->vm_map, (vaddr_t)va, ftype, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if vm_fault gets a protection
+	 * accessed stack size.  Also, if uvm_fault gets a protection
 	 * failure it is due to accessing the stack region outside
 	 * the current limit and we need to reflect that as an access
 	 * error.
@@ -1233,11 +1219,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	}
 #endif
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1351,7 +1333,7 @@ DEBUGGER(type, tf);
 			goto kfault;
 		if (SFSR_CTXT_IS_PRIM(sfsr) || SFSR_CTXT_IS_NUCLEUS(sfsr)) {
 			/* NUCLEUS context */
-			if (vm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
 				return;
 			if (SFSR_CTXT_IS_NUCLEUS(sfsr))
 				goto kfault;
@@ -1363,13 +1345,13 @@ DEBUGGER(type, tf);
 	/* alas! must call the horrible vm code */
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-		printf("data_access_error: calling vm_fault\n");
+		printf("data_access_error: calling uvm_fault\n");
 #endif
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if vm_fault gets a protection
+	 * accessed stack size.  Also, if uvm_fault gets a protection
 	 * failure it is due to accessing the stack region outside
 	 * the current limit and we need to reflect that as an access
 	 * error.
@@ -1479,11 +1461,7 @@ text_access_fault(type, pc, tf)
 	}
 #endif
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1506,16 +1484,16 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
-		printf("text_access_fault: vm_fault(%x, %x, %x, FALSE) sez %x\n",
+		printf("text_access_fault: uvm_fault(%x, %x, %x, FALSE) sez %x\n",
 		       &vm->vm_map, (vaddr_t)va, ftype, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if vm_fault gets a protection
+	 * accessed stack size.  Also, if uvm_fault gets a protection
 	 * failure it is due to accessing the stack region outside
 	 * the current limit and we need to reflect that as an access
 	 * error.
@@ -1620,11 +1598,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		Debugger();
 	}
 #endif
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -1680,11 +1654,11 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if vm_fault gets a protection
+	 * accessed stack size.  Also, if uvm_fault gets a protection
 	 * failure it is due to accessing the stack region outside
 	 * the current limit and we need to reflect that as an access
 	 * error.
@@ -1806,11 +1780,7 @@ syscall(code, tf, pc)
 	}
 #endif
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)

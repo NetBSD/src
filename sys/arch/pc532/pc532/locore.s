@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 1998/09/30 20:17:29 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 1999/03/24 05:51:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "opt_pmap_new.h"
 
 #include "assym.h"
@@ -416,7 +415,6 @@ KENTRY(copystr, 16)
 3:	exit	[r4]
 	ret	ARGS
 
-#if defined(UVM)
 /*
  * int kcopy(const void *src, void *dst, size_t len);
  *
@@ -512,7 +510,6 @@ KENTRY(kcopy, 12)
 	movqd	0,r0
 	exit	[r3,r4]
 	ret	ARGS
-#endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);
@@ -1136,11 +1133,7 @@ ASENTRY_NOPROFILE(interrupt)
 	 * Increment interrupt counters.
 	 */
 	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
-#ifdef UVM
 	addqd	1,_C_LABEL(uvmexp)+V_INTR(pc)
-#else
-	addqd	1,_C_LABEL(cnt)+V_INTR(pc)
-#endif
 	addqd	1,_C_LABEL(ivt)+IV_CNT(r0)
 
 	movd	_C_LABEL(ivt)+IV_ARG(r0),r1 /* Get argument */

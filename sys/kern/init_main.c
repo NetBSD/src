@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.142 1999/03/05 07:26:21 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.143 1999/03/24 05:51:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,6 @@
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
-#include "opt_uvm.h"
 #include "opt_sysv.h"
 
 #include "rnd.h"
@@ -100,9 +99,7 @@
 #include <vm/vm.h>
 #include <vm/vm_pageout.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -199,13 +196,7 @@ main()
 	consinit();
 	printf("%s", copyright);
 
-#if defined(UVM)
 	uvm_init();
-#else
-	vm_mem_init();
-	kmeminit();
-	vm_page_physrehash();
-#endif /* UVM */
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
@@ -279,11 +270,7 @@ main()
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
 	    maxproc < MAXUPRC ? maxproc : MAXUPRC;
 
-#if defined(UVM)
 	i = ptoa(uvmexp.free);
-#else
-	i = ptoa(cnt.v_free_count);
-#endif
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
@@ -294,13 +281,8 @@ main()
 	 * All kernel processes (which never have user space mappings)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
-#if defined(UVM)
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS), TRUE);
-#else
-	vmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS), TRUE);
-#endif
 	p->p_vmspace = &vmspace0;
 
 	p->p_addr = proc0paddr;				/* XXX */
@@ -320,11 +302,7 @@ main()
 	rqinit();
 
 	/* Configure virtual memory system, set vm rlimits. */
-#if defined(UVM)
 	uvm_init_limits(p);
-#else
-	vm_init_limits(p);
-#endif
 
 	/* Initialize the file systems. */
 #if defined(NFSSERVER) || defined(NFS)
@@ -406,11 +384,7 @@ main()
 	VREF(filedesc0.fd_fd.fd_cdir);
 	VOP_UNLOCK(rootvnode, 0);
 	filedesc0.fd_fd.fd_rdir = NULL;
-#if defined(UVM)
 	uvm_swap_init();
-#else
-	swapinit();
-#endif
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
@@ -440,11 +414,7 @@ main()
 	kthread_run_deferred_queue();
 
 	/* The scheduler is an infinite loop. */
-#if defined(UVM)
 	uvm_scheduler();
-#else
-	scheduler();
-#endif
 	/* NOTREACHED */
 }
 
@@ -512,7 +482,6 @@ start_init(arg)
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
 	 */
 	addr = USRSTACK - PAGE_SIZE;
-#if defined(UVM)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
                     NULL, UVM_UNKNOWN_OFFSET, 
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
@@ -520,11 +489,6 @@ start_init(arg)
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
 		!= KERN_SUCCESS)
 		panic("init: couldn't allocate argument space");
-#else
-	if (vm_allocate(&p->p_vmspace->vm_map, &addr, (vsize_t)PAGE_SIZE,
-	    FALSE) != 0)
-		panic("init: couldn't allocate argument space");
-#endif
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
@@ -612,11 +576,7 @@ start_pagedaemon(arg)
 	void *arg;
 {
 
-#if defined(UVM)
 	uvm_pageout();
-#else
-	vm_pageout();
-#endif
 	/* NOTREACHED */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.12 1998/07/05 06:49:07 jonathan Exp $	*/
+/*	$NetBSD: isr.c,v 1.13 1999/03/24 05:51:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,17 +45,15 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 
-#ifdef UVM
 #include <vm/vm.h>
+
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <net/netisr.h>
 
@@ -227,11 +225,7 @@ isrdispatch_autovec(evec)
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
-#ifdef UVM
 	uvmexp.intrs++;
-#else
-	cnt.v_intr++;
-#endif
 
 	list = &isr_autovec[ipl];
 	if (list->lh_first == NULL) {
@@ -269,11 +263,7 @@ isrdispatch_vectored(pc, evec, frame)
 	ipl = (getsr() >> 8) & 7;
 
 	intrcnt[ipl]++;
-#ifdef UVM
 	uvmexp.intrs++;
-#else
-	cnt.v_intr++;
-#endif
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
 		panic("isrdispatch_vectored: bad vec 0x%x\n", vec);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.86 1999/02/13 15:25:51 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.87 1999/03/24 05:51:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,6 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_sunos.h"
 
 #define	SIGPROP		/* include signal properties table */
@@ -74,9 +73,7 @@
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
@@ -1280,14 +1277,10 @@ coredump(p)
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	} else {
 		/*
-		 * vm_coredump() spits out all appropriate segments.
+		 * uvm_coredump() spits out all appropriate segments.
 		 * All that's left to do is to write the core header.
 		 */
-#if defined(UVM)
 		error = uvm_coredump(p, vp, cred, &core);
-#else
-		error = vm_coredump(p, vp, cred, &core);
-#endif
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,

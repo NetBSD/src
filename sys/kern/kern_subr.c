@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.44 1999/02/10 17:03:28 kleink Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.45 1999/03/24 05:51:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
  */
 
 #include "opt_md.h"
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,19 +154,12 @@ uiomove(buf, n, uio)
 			break;
 
 		case UIO_SYSSPACE:
-#if defined(UVM)
 			if (uio->uio_rw == UIO_READ)
 				error = kcopy(cp, iov->iov_base, cnt);
 			else
 				error = kcopy(iov->iov_base, cp, cnt);
 			if (error)
 				return(error);
-#else
-			if (uio->uio_rw == UIO_READ)
-				memcpy(iov->iov_base, cp, cnt);
-			else
-				memcpy(cp, iov->iov_base, cnt);
-#endif
 			break;
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
