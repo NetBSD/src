@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557var.h,v 1.16 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.16.2.1 2002/06/06 19:42:18 he Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,19 +76,19 @@
 /*
  * Transmit descriptor list size.
  */
-#define	FXP_NTXCB		128
+#define	FXP_NTXCB		256
 #define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
 #define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
-#define	FXP_NTXSEG		16
+#define	FXP_NTXSEG		8
 
 /*
  * Number of receive frame area buffers.  These are large, so
  * choose wisely.
  */
-#define	FXP_NRFABUFS		64
+#define	FXP_NRFABUFS		128
 
 /*
- * Maximum number of seconds that the reciever can be idle before we
+ * Maximum number of seconds that the receiver can be idle before we
  * assume it's dead and attempt to reset it by reprogramming the
  * multicast filter.  This is part of a work-around for a bug in the
  * NIC.  See fxp_stats_update().
@@ -102,17 +102,14 @@
  */
 struct fxp_control_data {
 	/*
-	 * The transmit control blocks.  The first if these
-	 * is also used as the config CB.
+	 * The transmit control blocks and transmit buffer descriptors.
+	 * We arrange them like this so that everything is all lined
+	 * up to use the extended TxCB feature.
 	 */
-	struct fxp_cb_tx fcd_txcbs[FXP_NTXCB];
-
-	/*
-	 * The transmit buffer descriptors.
-	 */
-	struct fxp_tbdlist {
-		struct fxp_tbd tbd_d[FXP_NTXSEG];
-	} fcd_tbdl[FXP_NTXCB];
+	struct fxp_txdesc {
+		struct fxp_cb_tx txd_txcb;
+		struct fxp_tbd txd_tbd[FXP_NTXSEG];
+	} fcd_txdescs[FXP_NTXCB];
 
 	/*
 	 * The configuration CB.
@@ -136,8 +133,8 @@ struct fxp_control_data {
 };
 
 #define	FXP_CDOFF(x)	offsetof(struct fxp_control_data, x)
-#define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txcbs[(x)])
-#define	FXP_CDTBDOFF(x)	FXP_CDOFF(fcd_tbdl[(x)])
+#define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txdescs[(x)].txd_txcb)
+#define	FXP_CDTBDOFF(x)	FXP_CDOFF(fcd_txdescs[(x)].txd_tbd)
 #define	FXP_CDCONFIGOFF	FXP_CDOFF(fcd_configcb)
 #define	FXP_CDIASOFF	FXP_CDOFF(fcd_iascb)
 #define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
@@ -180,6 +177,7 @@ struct fxp_softc {
 	 */
 	struct fxp_txsoft sc_txsoft[FXP_NTXCB];
 
+	int	sc_rfa_size;		/* size of the RFA structure */
 	struct ifqueue sc_rxq;		/* receive buffer queue */
 	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
 	int	sc_rxfree;		/* free map index */
@@ -190,26 +188,36 @@ struct fxp_softc {
 	 */
 	struct fxp_control_data *sc_control_data;
 
+#ifdef FXP_EVENT_COUNTERS
+	struct evcnt sc_ev_txstall;	/* Tx stalled */
+	struct evcnt sc_ev_txintr;	/* Tx interrupts */
+	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+#endif /* FXP_EVENT_COUNTERS */
+
 	bus_dma_segment_t sc_cdseg;	/* control dma segment */
 	int	sc_cdnseg;
 
+	int	sc_rev;			/* chip revision */
 	int	sc_flags;		/* misc. flags */
 
-#define	FXPF_WANTINIT		0x01	/* want a re-init */
-#define	FXPF_MII		0x02	/* device uses MII */
-#define FXPF_ATTACHED		0x04	/* attach has succeeded */
+#define	FXPF_MII		0x0001	/* device uses MII */
+#define	FXPF_ATTACHED		0x0002	/* attach has succeeded */
+#define	FXPF_WANTINIT		0x0004	/* want a re-init */
+#define	FXPF_HAS_RESUME_BUG	0x0008	/* has the resume bug */
+#define	FXPF_MWI		0x0010	/* enable PCI MWI */
+#define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
+#define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
+#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */
 	int	sc_txlast;		/* last used TX descriptor */
 
-	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
-	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
-	int	(*sc_enable) __P((struct fxp_softc *));
-	void	(*sc_disable) __P((struct fxp_softc *));
+	int	(*sc_enable)(struct fxp_softc *);
+	void	(*sc_disable)(struct fxp_softc *);
 
 	int	sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
@@ -218,24 +226,25 @@ struct fxp_softc {
 	
 };
 
+#ifdef FXP_EVENT_COUNTERS
+#define	FXP_EVCNT_INCR(ev)	(ev)->ev_count++
+#else
+#define	FXP_EVCNT_INCR(ev)	/* nothing */
+#endif
+
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
 #define	FXP_RXMAP_PUT(sc, map)	(sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map)
 
 #define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
 #define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
 
-#define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txcbs[(x)])
-#define	FXP_CDTBD(sc, x)	(&(sc)->sc_control_data->fcd_tbdl[(x)])
+#define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txdescs[(x)])
 
 #define	FXP_DSTX(sc, x)		(&(sc)->sc_txsoft[(x)])
 
 #define	FXP_CDTXSYNC(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
-	    FXP_CDTXOFF((x)), sizeof(struct fxp_cb_tx), (ops))
-
-#define	FXP_CDTBDSYNC(sc, x, ops)					\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
-	    FXP_CDTBDOFF((x)), sizeof(struct fxp_tbdlist), (ops))
+	    FXP_CDTXOFF((x)), sizeof(struct fxp_txdesc), (ops))
 
 #define	FXP_CDCONFIGSYNC(sc, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
@@ -253,18 +262,18 @@ struct fxp_softc {
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDSTATSOFF, sizeof(struct fxp_stats), (ops))
 
-#define	FXP_RXBUFSIZE(m)	((m)->m_ext.ext_size -			\
-				 (sizeof(struct fxp_rfa) +		\
+#define	FXP_RXBUFSIZE(sc, m)	((m)->m_ext.ext_size -			\
+				 (sc->sc_rfa_size +			\
 				  RFA_ALIGNMENT_FUDGE))
 
 #define	FXP_RFASYNC(sc, m, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
-	    RFA_ALIGNMENT_FUDGE, sizeof(struct fxp_rfa), (ops))
+	    RFA_ALIGNMENT_FUDGE, (sc)->sc_rfa_size, (ops))
 
 #define	FXP_RXBUFSYNC(sc, m, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
-	    RFA_ALIGNMENT_FUDGE + sizeof(struct fxp_rfa),		\
-	    FXP_RXBUFSIZE((m)), (ops))
+	    RFA_ALIGNMENT_FUDGE + (sc)->sc_rfa_size,			\
+	    FXP_RXBUFSIZE((sc), (m)), (ops))
 
 #define	FXP_MTORFA(m)	(struct fxp_rfa *)((m)->m_ext.ext_buf +		\
 					   RFA_ALIGNMENT_FUDGE)
@@ -276,11 +285,11 @@ do {									\
 	struct fxp_rfa *__rfa, *__p_rfa;				\
 	u_int32_t __v;							\
 									\
-	(m)->m_data = (m)->m_ext.ext_buf + sizeof(struct fxp_rfa) +	\
+	(m)->m_data = (m)->m_ext.ext_buf + (sc)->sc_rfa_size +		\
 	    RFA_ALIGNMENT_FUDGE;					\
 									\
 	__rfa = FXP_MTORFA((m));					\
-	__rfa->size = htole16(FXP_RXBUFSIZE((m)));			\
+	__rfa->size = htole16(FXP_RXBUFSIZE((sc), (m)));		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
 	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
@@ -327,10 +336,10 @@ do {									\
 #define	CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
-void	fxp_attach __P((struct fxp_softc *));
-int	fxp_activate __P((struct device *, enum devact));
-int	fxp_detach __P((struct fxp_softc *));
-int	fxp_intr __P((void *));
+void	fxp_attach(struct fxp_softc *);
+int	fxp_activate(struct device *, enum devact);
+int	fxp_detach(struct fxp_softc *);
+int	fxp_intr(void *);
 
-int	fxp_enable __P((struct fxp_softc*));
-void	fxp_disable __P((struct fxp_softc*));
+int	fxp_enable(struct fxp_softc*);
+void	fxp_disable(struct fxp_softc*);
