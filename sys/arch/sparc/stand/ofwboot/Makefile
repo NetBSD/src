@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/05/17 02:30:15 nakayama Exp $
+#	$NetBSD: Makefile,v 1.8 2003/06/01 00:43:47 thorpej Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -13,6 +13,7 @@ PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 .PATH:		${S}/arch/sparc64/sparc64
 
+COPTS+=		-ffreestanding
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
