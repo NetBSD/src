@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.36 2002/03/27 07:37:56 lukem Exp $
+# $NetBSD: network,v 1.37 2002/04/29 12:13:14 lukem Exp $
 #
 
 # PROVIDE: network
@@ -122,20 +122,6 @@ network_start()
 
 		sysctl -qw net.inet6.ip6.forwarding=0
 		sysctl -qw net.inet6.ip6.accept_rtadv=0
-
-		# backward compatibility
-		#
-		if [ -z "$ip6mode" ] && [ -n "$ip6forwarding" ]; then
-			warn 'Please migrate to newer rc.conf' \
-			    '(use ip6mode, not ip6forwarding)'
-			if checkyesno ip6forwarding; then
-				ip6mode=router
-			elif checkyesno rtsol; then
-				ip6mode=autohost
-			else
-				ip6mode=host
-			fi
-		fi
 
 		case $ip6mode in
 		router)
