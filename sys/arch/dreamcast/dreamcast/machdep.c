@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2001/07/22 15:46:41 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/01/27 09:02:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ dumpsys()
 extern int nkpde;
 extern char MonTrap100[], MonTrap100_end[];
 extern char MonTrap600[], MonTrap600_end[];
-extern char _start[], etext[], edata[], end[];
+extern char _start[], _etext[], _edata[], _end[];
 extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
 
 void
@@ -543,7 +543,7 @@ initSH3(pc)
 	int x;
 	char *p;
 
-	avail = sh3_round_page(end);
+	avail = sh3_round_page(_end);
 
 	/* XXX nkpde = kernel page dir area (IOM_RAM_SIZE*2 Mbyte (why?)) */
 	nkpde = IOM_RAM_SIZE >> (PDSHIFT - 1);
@@ -553,7 +553,7 @@ initSH3(pc)
 	 *	process0 stack, page table area
 	 */
 	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * (1 + nkpde); /* XXX */
-	memset(edata, 0, p - edata);
+	memset(_edata, 0, p - _edata);
 
 	/*
 	 * install trap handler
@@ -668,7 +668,7 @@ initSH3(pc)
 	u_short *p, sum;
 	int size;
 
-	size = etext - _start;
+	size = _etext - _start;
 	p = (u_short *)_start;
 	sum = 0;
 	size >>= 1;
