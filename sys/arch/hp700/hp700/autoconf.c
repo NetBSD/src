@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2004/06/15 20:43:41 jkunz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2004/07/29 19:10:23 jkunz Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2004/06/15 20:43:41 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2004/07/29 19:10:23 jkunz Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2004/06/15 20:43:41 jkunz Exp $");
 
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -319,30 +321,90 @@ device_register(struct device *dev, void *aux)
 	if (dev->dv_parent == NULL || dev->dv_parent->dv_parent == NULL)
 		return;
 	pagezero_cookie = hp700_pagezero_map();
-	/* Currently only GSC devices are supported. */
-#if NPCI > 0
-#error Root device identification code needs PCI support.
-#endif
-	/* 
-	 * The boot device is described in PAGE0->mem_boot. 
-	 * The bit PCL_NET_MASK is set in PAGE0->mem_boot.pz_class if it 
-	 * is a network interface. All we need to compare in that case is 
-	 * the HPA to get the boot device. 
-	 * If it is a SCSI device we need the HPA of the controller and 
-	 * the SCSI target / lun. Target and lun are stored in the device 
-	 * path layer array. When booting from disk / cdrom / tape remember 
-	 * the controller of the boot device in boot_device when the HPA 
-	 * matches. Later, when SCSI devices are attached, look if the 
-	 * SCSI device hangs below the boot controller. If so, look for 
-	 * the target and lun of the SCSI device. If they match the layer 
-	 * of the boot device path in PAGE0 we found the boot device.
+	/* Currently only GSC and PCI devices are supported. */
+	/*
+	 * The boot device is described in PAGE0->mem_boot. We need to do it 
+	 * this way as the MD device path (DP) information in struct confargs 
+	 * is only available in hp700 MD devices. So boot_device is used to 
+	 * propagate information down the device tree.
+	 * 
+	 * If the boot device is a GSC network device all we need to compare 
+	 * is the HPA or device path (DP) to get the boot device. 
+	 * If the boot device is a SCSI device below a GSC attached SCSI 
+	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI 
+	 * controller. In that case we remember the the pointer to the 
+	 * controller's struct dev in boot_device. The SCSI device is located 
+	 * later, see below.
 	 */
 	if (strcmp(dev->dv_parent->dv_cfdata->cf_name, "gsc") == 0
 	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa == 
 	    ((struct gsc_attach_args *)aux)->ga_ca.ca_hpa)
 		/* This is (the controller of) the boot device. */
 		boot_device = dev;
-	if ((PAGE0->mem_boot.pz_class & PCL_NET_MASK) == 0
+	/*
+	 * If the boot device is a PCI device the HPA is the address where the 
+	 * firmware has maped the PCI memory of the PCI device. This is quite 
+	 * device dependent, so we compare the DP. It encodes the bus routing 
+	 * information to the PCI bus bridge in the DP head and the PCI device 
+	 * and PCI function in the last two DP components. So we compare the 
+	 * head of the DP when a PCI bridge attaches and remember the struct 
+	 * dev of the PCI bridge in boot_dev if it machtes. Later, when PCI 
+	 * devices are attached, we look if this PCI device hangs below the 
+	 * boot PCI bridge. If yes we compare the PCI device and PCI function 
+	 * to the DP tail. In case of a network boot we found the boot device 
+	 * on a match. In case of a SCSI boot device we have to do the same 
+	 * check when SCSI devices are attached like on GSC SCSI controllers.
+	 */
+	if (strcmp(dev->dv_cfdata->cf_name, "dino") == 0) {
+		struct confargs *ca = (struct confargs *)aux;
+		int i, n;
+
+		for (n = 0 ; ca->ca_dp.dp_bc[n] < 0 ; n++) {
+			/* Skip unused DP components. */
+		}
+		for (i = 0 ; i < 6 && n < 6 ; i++) {
+			/* Skip unused DP components... */
+			if (PAGE0->mem_boot.pz_dp.dp_bc[i] < 0)
+				continue;
+			/* and compare the rest. */
+			if (PAGE0->mem_boot.pz_dp.dp_bc[i] 
+			    != ca->ca_dp.dp_bc[n]) {
+				hp700_pagezero_unmap(pagezero_cookie);
+				return;
+			}
+			n++;
+		}
+		if (PAGE0->mem_boot.pz_dp.dp_bc[i] != ca->ca_dp.dp_mod) {
+			hp700_pagezero_unmap(pagezero_cookie);
+			return;
+		}
+		/* This is the PCI host bridge in front of the boot device. */
+		boot_device = dev;
+	}
+	/* XXX Guesswork. No hardware to test how firmware handles a ppb. */
+	if (strcmp(dev->dv_cfdata->cf_name, "ppb") == 0
+	    && boot_device == dev->dv_parent->dv_parent
+	    && ((struct pci_attach_args*)aux)->pa_device
+	    == PAGE0->mem_boot.pz_dp.dp_bc[3]
+	    && ((struct pci_attach_args*)aux)->pa_function
+	    == PAGE0->mem_boot.pz_dp.dp_bc[4])
+		/* This is the PCI - PCI bridge in front of the boot device. */
+		boot_device = dev;
+	if (strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0
+	    && boot_device == dev->dv_parent->dv_parent
+	    && ((struct pci_attach_args*)aux)->pa_device
+	    == PAGE0->mem_boot.pz_dp.dp_bc[5]
+	    && ((struct pci_attach_args*)aux)->pa_function
+	    == PAGE0->mem_boot.pz_dp.dp_mod)
+		/* This is (the controller of) the boot device. */
+		boot_device = dev;
+	/* 
+	 * When SCSI devices are attached, we look if the SCSI device hangs 
+	 * below the controller remembered in boot_device. If so, we compare 
+	 * the SCSI ID and LUN with the DP layer information. If they match 
+	 * we found the boot device.
+	 */
+	if (strcmp(dev->dv_parent->dv_cfdata->cf_name, "scsibus") == 0
 	    && boot_device == dev->dv_parent->dv_parent 
 	    && ((struct scsipibus_attach_args *)aux)->sa_periph->periph_target
 	    == PAGE0->mem_boot.pz_dp.dp_layers[0]
@@ -369,7 +431,7 @@ cpu_rootconf(void)
 	pagezero_cookie = hp700_pagezero_map();
 	printf("PROM boot device: hpa %p path ", PAGE0->mem_boot.pz_hpa);
 	for (n = 0 ; n < 6 ; n++) {
-		if (PAGE0->mem_boot.pz_dp.dp_bc[n] > 0)
+		if (PAGE0->mem_boot.pz_dp.dp_bc[n] >= 0)
 			printf("%d/", PAGE0->mem_boot.pz_dp.dp_bc[n]);
 	}
 	printf("%d dp_layers ", PAGE0->mem_boot.pz_dp.dp_mod);
