@@ -1,8 +1,3 @@
-/*	$NetBSD: signal.h,v 1.1.1.1 1995/03/26 07:12:07 leo Exp $	*/
-
-#ifndef _MACHINE_SIGNAL_H_
-#define _MACHINE_SIGNAL_H_
+/*	$NetBSD: signal.h,v 1.2 1998/09/13 12:01:41 mycroft Exp $	*/
 
 #include <m68k/signal.h>
-
-#endif

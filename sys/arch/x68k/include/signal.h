@@ -1,4 +1,3 @@
-/*	$NetBSD: signal.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 1998/09/13 12:01:42 mycroft Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/signal.h>
