@@ -1,4 +1,4 @@
-/* $NetBSD: term_chk.c,v 1.5 2004/10/26 19:24:00 christos Exp $ */
+/* $NetBSD: term_chk.c,v 1.6 2004/10/27 17:48:47 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: term_chk.c,v 1.5 2004/10/26 19:24:00 christos Exp $");
+__RCSID("$NetBSD: term_chk.c,v 1.6 2004/10/27 17:48:47 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,8 +89,10 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 		errno = EPERM;
 		goto error;
 	}
-	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
-	*atimeP = s.st_atime;
+	if (msgsokP)
+		*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
+	if (atimeP)
+		*atimeP = s.st_atime;
 	if (ismytty)
 		(void)close(fd);
 	return ismytty ? 0 : fd;
@@ -118,7 +120,7 @@ check_sender(time_t *atime, uid_t myuid, gid_t saved_egid)
 		myttyfd = fileno(stdout);
 	else if (isatty(fileno(stderr)))
 		myttyfd = fileno(stderr);
-	else if (myuid == 0)
+	else if (atime == NULL)
 		return NULL;
 	else
 		errx(1, "Cannot find your tty");
