@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.30 1999/08/20 09:20:20 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.31 1999/08/23 15:17:04 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.30 1999/08/20 09:20:20 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.31 1999/08/23 15:17:04 hubertf Exp $");
 #endif
 #endif
 
@@ -207,7 +207,7 @@ fileURLHost(char *fname, char *where, int max)
 	char	*ret;
 	int	 i;
 
-	if ((i = URLlength(fname)) < 0) {
+	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
@@ -233,7 +233,7 @@ fileURLFilename(char *fname, char *where, int max)
 	char	*ret;
 	int	 i;
 
-	if ((i = URLlength(fname)) < 0) {
+	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
@@ -273,7 +273,7 @@ fileGetURL(char *base, char *spec)
     rp = NULL;
     /* Special tip that sysinstall left for us */
     hint = getenv("PKG_ADD_BASE");
-    if (URLlength(spec) < 0) {
+    if (!IS_URL(spec)) {
 	if (!base && !hint)
 	    return NULL;
 	/* We've been given an existing URL (that's known-good) and now we need
