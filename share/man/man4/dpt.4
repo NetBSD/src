@@ -1,4 +1,4 @@
-.\"	$NetBSD: dpt.4,v 1.9 2000/02/28 06:54:50 soren Exp $
+.\"	$NetBSD: dpt.4,v 1.10 2000/02/28 09:46:57 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -34,6 +34,18 @@
 .Cd "dpt* at eisa? slot ?"
 .Cd "dpt* at pci? dev ? function ?"
 .Cd "scsibus* at dpt?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for third and fourth generation DPT SCSI
+controllers.  All communication with the controllers is conducted via the
+EATA (Enhanced AT Bus Attachment) protocol (CAM committee standard
+CAM/89-004).
+.Pp
+DPT adapters examine and interpret all SCSI commands received before passing
+them to any underlying physical device(s).  In this way, caching, RAID and
+other transformations are achieved while remaining transparent to the host
+operating system.
 .Sh HARDWARE
 The
 .Nm
@@ -48,14 +60,14 @@ adapters:
 .It Tn DPT SmartRAID IV
 .El
 .Sh DIAGNOSTICS
-None of these messages should be encountered under normal circumstances. It
+None of these messages should be encountered under normal circumstances.  It
 should be noted that the list below is not complete.
 .Pp
 .Bl -tag -width indent 
 .It dpt0: readcfg failed - see dpt(4)
 .br
-The EATA configuration data did not appear upon request. This may be caused
-by older firmware. Generally the solution is to power-cycle the affected
+The EATA configuration data did not appear upon request.  This may be caused
+by older firmware.  Generally the solution is to power-cycle the affected
 machine.
 .br
 .It dpt0: spurious intr
@@ -95,8 +107,8 @@ EATA adapters other than listed may function correctly with the
 .Nm 
 driver, however a definitive list is not avaiable.
 .Pp
-Older firmware may prove problematic. It is recommended that the latest
-available firmware be used. Contact DPT for a firmware update.
+Older firmware may prove problematic.  It is recommended that the latest
+available firmware be used.  Contact DPT for a firmware update.
 .Pp
 Older boards that do not suppport scatter-gather I/O or DMA are not supported.
 .Pp
