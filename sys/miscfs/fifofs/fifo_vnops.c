@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.4.5 2002/09/22 11:24:46 jdolecek Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.6 2002/09/24 11:47:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.5 2002/09/22 11:24:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.6 2002/09/24 11:47:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,16 +69,6 @@ struct fifoinfo {
 	long		fi_readers;
 	long		fi_writers;
 };
-
-static void	filt_fifordetach(struct knote *kn);
-static int	filt_fiforead(struct knote *kn, long hint);
-static void	filt_fifowdetach(struct knote *kn);
-static int	filt_fifowrite(struct knote *kn, long hint);
-
-const struct filterops fiforead_filtops =
-	{ 1, NULL, filt_fifordetach, filt_fiforead };
-const struct filterops fifowrite_filtops =
-	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
 
 int (**fifo_vnodeop_p) __P((void *));
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -523,38 +513,6 @@ fifo_pathconf(void *v)
 	/* NOTREACHED */
 }
 
-/* ARGSUSED */
-int
-fifo_kqfilter(void *v)
-{
-	struct vop_kqfilter_args /* {
-		struct vnode *a_vp;
-		struct knote *a_kn;
-	} */ *ap = v;
-	struct socket	*so;
-	struct sockbuf	*sb;
-
-	so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
-	switch (ap->a_kn->kn_filter) {
-	case EVFILT_READ:
-		ap->a_kn->kn_fop = &fiforead_filtops;
-		sb = &so->so_rcv;
-		break;
-	case EVFILT_WRITE:
-		ap->a_kn->kn_fop = &fifowrite_filtops;
-		sb = &so->so_snd;
-		break;
-	default:
-		return (1);
-	}
-
-	ap->a_kn->kn_hook = (caddr_t)so;
-
-	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, ap->a_kn, kn_selnext);
-	sb->sb_flags |= SB_KNOTE;
-	return (0);
-}
-
 static void
 filt_fifordetach(struct knote *kn)
 {
@@ -605,4 +563,41 @@ filt_fifowrite(struct knote *kn, long hint)
 	}
 	kn->kn_flags &= ~EV_EOF;
 	return (kn->kn_data >= so->so_snd.sb_lowat);
+}
+
+static const struct filterops fiforead_filtops =
+	{ 1, NULL, filt_fifordetach, filt_fiforead };
+static const struct filterops fifowrite_filtops =
+	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
+
+/* ARGSUSED */
+int
+fifo_kqfilter(void *v)
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	struct socket	*so;
+	struct sockbuf	*sb;
+
+	so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
+	switch (ap->a_kn->kn_filter) {
+	case EVFILT_READ:
+		ap->a_kn->kn_fop = &fiforead_filtops;
+		sb = &so->so_rcv;
+		break;
+	case EVFILT_WRITE:
+		ap->a_kn->kn_fop = &fifowrite_filtops;
+		sb = &so->so_snd;
+		break;
+	default:
+		return (1);
+	}
+
+	ap->a_kn->kn_hook = (caddr_t)so;
+
+	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, ap->a_kn, kn_selnext);
+	sb->sb_flags |= SB_KNOTE;
+	return (0);
 }
