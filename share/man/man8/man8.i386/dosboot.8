@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.8 2000/05/13 05:27:21 jhawk Exp $
+.\"	$NetBSD: dosboot.8,v 1.9 2000/07/30 08:36:06 jdolecek Exp $
 .Dd June 20, 1997
 .Os
 .Dt DOSBOOT 8 i386
@@ -10,7 +10,7 @@
 .Op Fl u
 .Op Fl c Ar command
 .Op Fl i
-.Op Ar path Op Fl adrs
+.Op Ar path Op Fl ads
 .Sh DESCRIPTION
 .Nm
 is an 
@@ -32,7 +32,7 @@ shares common code with the standard boot loader,
 .Xr boot 8 .
 .Pp
 The recognized options are:
-.Bl -tag -width -adrs
+.Bl -tag -width -ads
 .It Fl u
 Boot from a UFS filesystem instead of an 
 .Tn MS-DOS
@@ -67,7 +67,7 @@ followed
 by a colon (see 
 .Xr boot 8
 and examples).
-.It Fl adrs
+.It Fl ads
 Flags passed to the kernel, see
 .Xr boot 8 .
 .El
@@ -81,7 +81,7 @@ flag or in interactive mode are:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl adrs
+.Op Fl ads
 .Xc
 Boot
 .Nx . See
