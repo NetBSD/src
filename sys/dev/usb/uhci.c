@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.114 2000/05/03 18:14:49 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.115 2000/05/03 18:21:36 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -3118,7 +3118,7 @@ uhci_root_ctrl_start(xfer)
 			break;
 		case UHF_PORT_POWER:
 			/* Pretend we turned on power */
-			err = 0;
+			err = USBD_NORMAL_COMPLETION;
 			goto ret;
 		case UHF_C_PORT_CONNECTION:
 		case UHF_C_PORT_ENABLE:
