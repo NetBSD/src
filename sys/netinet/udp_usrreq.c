@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.25 1995/11/21 01:07:46 cgd Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.26 1996/01/31 03:49:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -68,17 +68,21 @@ int	udpcksum = 0;		/* XXX */
 #endif
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
-struct	inpcb *udp_last_inpcb = 0;
 
 static	void udp_detach __P((struct inpcb *));
 static	void udp_notify __P((struct inpcb *, int));
 static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 
+#ifndef UDBHASHSIZE
+#define	UDBHASHSIZE	128
+#endif
+int	udbhashsize = UDBHASHSIZE;
+
 void
 udp_init()
 {
 
-	in_pcbinit(&udbtable);
+	in_pcbinit(&udbtable, udbhashsize);
 }
 
 void
@@ -246,13 +250,10 @@ udp_input(m, iphlen)
 	/*
 	 * Locate pcb for datagram.
 	 */
-	inp = udp_last_inpcb;
-	if (inp == 0 ||
-	    inp->inp_lport != uh->uh_dport ||
-	    inp->inp_fport != uh->uh_sport ||
-	    inp->inp_faddr.s_addr != ip->ip_src.s_addr ||
-	    inp->inp_laddr.s_addr != ip->ip_dst.s_addr) {
-		udpstat.udpps_pcbcachemiss++;
+	inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
+	    ip->ip_dst, uh->uh_dport);
+	if (inp == 0) {
+		++udpstat.udps_pcbhashmiss;
 		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
 		    ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
 		if (inp == 0) {
@@ -266,7 +267,6 @@ udp_input(m, iphlen)
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}
-		udp_last_inpcb = inp;
 	}
 
 	/*
@@ -621,8 +621,6 @@ udp_detach(inp)
 {
 	int s = splsoftnet();
 
-	if (inp == udp_last_inpcb)
-		udp_last_inpcb = 0;
 	in_pcbdetach(inp);
 	splx(s);
 }
