@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.8 1998/06/15 14:45:06 lukem Exp $
+# $NetBSD: makeflist,v 1.9 1998/07/02 06:36:35 jonathan Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -54,6 +54,15 @@ if [ -n "$1" ]; then
 	lists="$@"
 fi
 
+# Compute toolchain  used on target cpu.
+if [ "$machine" = "vax" ]; then
+	shlib=
+elif [ "$arch" = "mips" -o "$machine" = "alpha" ]; then
+        shlib=elf
+else
+        shlib=aout
+fi
+
 # EXTRA SPECIAL (not done here): secr
 
 for setname in $lists; do
@@ -63,6 +72,14 @@ for setname in $lists; do
 	fi
 	if [ -f $setd/lists/$setname/md.${machine} ]; then
 		cat $setd/lists/$setname/md.${machine}
+	fi
+	if [ "$shlib" != "" ]; then
+		if [ -f $setd/lists/$setname/shl.mi ]; then
+			cat $setd/lists/$setname/shl.mi
+		fi
+		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
+			cat $setd/lists/$setname/shl.${shlib}
+		fi
 	fi
 
 	# Split man/md_share into: this machine, other machine

@@ -1,0 +1,3 @@
+./sbin/ldconfig
+./usr/lib/crtn.o
+./usr/libexec/ld.so
