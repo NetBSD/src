@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 2001/10/16 15:38:55 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.2 2001/11/14 18:15:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,33 +44,6 @@
 	.set	noreorder
 	.text
 	.align 6	/* align cache line size (64B) */
-	
-/*
- * _intr_resume, _intr_suspend:	
- *	 Fast interrupt locking functions.
- */	
-LEAF_NOPROFILE(_intr_resume)
-	beqz	a0, 1f
-	nop
-	ei
-1:	
-	j	ra
-	 nop
-END(_intr_resume)
-
-LEAF_NOPROFILE(_intr_suspend)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	
-	lui	t0, 0x1		/* EIE bit */
-	and	v0, v0, t0
-1:	di
-	sync.p
-	mfc0	t1, MIPS_COP_0_STATUS_REG
-	and	t2, t0, t1
-	beq	t2, t0, 1b
-	 nop
-	j	ra
-	 nop
-END(_intr_suspend)
 
 /*
  * md_imask_update:

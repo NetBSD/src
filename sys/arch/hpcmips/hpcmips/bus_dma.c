@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2001/09/28 12:36:49 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2001/11/14 18:15:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
+#include <mips/cache.h>
 
 #define _HPCMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -471,12 +472,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		    addr + offset + minlen - 1);
 #endif
 		if (CPUISMIPS3)
-			MachFlushDCache(addr + offset, minlen);
+			mips_dcache_wbinv_range(addr + offset, minlen);
 		else {
 			/*
 			 * We can't have a TLB miss; use KSEG0.
 			 */
-			MachFlushDCache(
+			mips_dcache_wbinv_range(
 				MIPS_PHYS_TO_KSEG0(map->dm_segs[i].ds_addr + offset),
 				minlen);
 		}

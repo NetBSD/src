@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2001/11/14 18:15:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -32,9 +32,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_machtypes.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <mips/cache.h>
 
 #include <machine/cpu.h>
 #include <machine/locore.h>
@@ -67,11 +71,11 @@ cpu_attach(parent, self, aux)
 
 	switch (mach_type) {
 	case MACH_SGI_IP22:
-		mips_L2CacheSize = 1024 * 1024;		/* XXX Indy */
+		mips_sdcache_size = 1024 * 1024;	/* XXX Indy */
 		break;
 
 	case MACH_SGI_IP32:
-		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
+		mips_sdcache_size = 512 * 1024;		/* XXX O2 */
 		break;
 	}
 
@@ -84,36 +88,10 @@ cpu_attach(parent, self, aux)
 	printf(": ");
 	cpu_identify();
 
+#ifdef IP22
 	if (mach_type == MACH_SGI_IP22) {		/* XXX Indy */
-		unsigned long tmp1, tmp2, tmp3;
-
-		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
-
-	        __asm__ __volatile__("
-                .set noreorder
-                .set mips3
-                li      %0, 0x1
-                dsll    %0, 31
-                lui     %1, 0x9000
-                dsll32  %1, 0
-                or      %0, %1, %0
-                mfc0    %2, $12
-                nop; nop; nop; nop;
-                li      %1, 0x80
-                mtc0    %1, $12
-                nop; nop; nop; nop;
-                sh      $0, 0(%0)
-                mtc0    $0, $12
-                nop; nop; nop; nop;  
-                mtc0    %2, $12 
-                nop; nop; nop; nop;
-                .set mips2
-                .set reorder
-        	" : "=r" (tmp1), "=r" (tmp2), "=r" (tmp3));
+		extern void ip22_cache_init(struct device *);
+		ip22_cache_init(self);
 	}
-
-#if 0
-	mips_L2CacheSize = 0;
-	mips_L2CachePresent = 0;
 #endif
 }
