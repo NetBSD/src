@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.19.4.1 2001/06/10 18:23:18 he Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.19.4.2 2002/04/26 17:52:15 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -114,8 +114,9 @@ void	fdinit1 __P((struct filedesc0 *newfdp));
 void	fdclear __P((struct proc *p));
 void	fdfree __P((struct proc *p));
 void	fdremove __P((struct filedesc *, int));
-int	fdrelease __P((struct proc *p, int));
+int	fdrelease __P((struct proc *, int));
 void	fdcloseexec __P((struct proc *));
+int	fdcheckstd __P((struct proc*));
 
 struct cwdinfo *cwdinit __P((struct proc *));
 void	cwdshare __P((struct proc *, struct proc *));
