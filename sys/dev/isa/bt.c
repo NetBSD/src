@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.2 1996/03/24 22:23:58 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.3 1996/03/25 00:18:09 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -944,6 +944,7 @@ bt_init(sc)
 	struct bt_devices devices;
 	struct bt_setup setup;
 	struct bt_mailbox mailbox;
+	struct bt_period period;
 	int i;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
@@ -972,13 +973,23 @@ bt_init(sc)
 	    setup.reply.sync_neg ? "sync" : "async",
 	    setup.reply.parity ? "parity" : "no parity");
 
+	for (i = 0; i < 8; i++)
+		period.reply.period[i] = setup.reply.sync[i].period * 5 + 20;
+
+	if (sc->sc_firmware[0] >= '3') {
+		period.cmd.opcode = BT_INQUIRE_PERIOD;
+		period.cmd.len = sizeof(period.reply);
+		bt_cmd(iobase, sc, sizeof(period.cmd), (u_char *)&period.cmd,
+		    sizeof(period.reply), (u_char *)&period.reply);
+	}
+
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
 		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
 		    sc->sc_dev.dv_xname, i,
-		    setup.reply.sync[i].offset, setup.reply.sync[i].period * 50 + 200);
+		    setup.reply.sync[i].offset, period.reply.period[i] * 10);
 	}
 
 	/*
