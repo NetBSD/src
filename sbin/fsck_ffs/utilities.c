@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: utilities.c,v 1.11 1994/12/05 20:16:07 cgd Exp $";
+static char *rcsid = "$Id: utilities.c,v 1.12 1995/02/10 23:26:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -528,6 +528,7 @@ dofix(idesc, msg)
 /* VARARGS1 */
 errexit(s1, s2, s3, s4)
 	char *s1;
+	long s2, s3, s4;
 {
 	printf(s1, s2, s3, s4);
 	exit(8);
@@ -540,6 +541,7 @@ errexit(s1, s2, s3, s4)
 /* VARARGS1 */
 pfatal(s, a1, a2, a3)
 	char *s;
+	long a1, a2, a3;
 {
 
 	if (preen) {
@@ -560,6 +562,7 @@ pfatal(s, a1, a2, a3)
 /* VARARGS1 */
 pwarn(s, a1, a2, a3, a4, a5, a6)
 	char *s;
+	long a1, a2, a3, a4, a5, a6;
 {
 
 	if (preen)
