@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.9 2000/07/14 05:26:05 itohy Exp $	*/
+/*	$NetBSD: options.c,v 1.10 2000/10/04 16:24:49 sommerfeld Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.9 2000/07/14 05:26:05 itohy Exp $");
+__RCSID("$NetBSD: options.c,v 1.10 2000/10/04 16:24:49 sommerfeld Exp $");
 #endif
 #endif
 
@@ -397,8 +397,6 @@ static void twist_option(value, request)
 char   *value;
 struct request_info *request;
 {
-    char   *error;
-
     if (dry_run != 0) {
 	dry_run = 0;
     } else {
@@ -414,17 +412,15 @@ struct request_info *request;
 	if (maybe_dup2(request->fd, 0) != 0 ||
 	    maybe_dup2(request->fd, 1) != 1 ||
 	    maybe_dup2(request->fd, 2) != 2) {
-	    error = "twist_option: dup: %m";
+	    tcpd_warn("twist_option: dup: %m");
 	} else {
 	    if (request->fd > 2)
 		close(request->fd);
 	    (void) execl("/bin/sh", "sh", "-c", value, (char *) 0);
-	    error = "twist_option: /bin/sh: %m";
+	    tcpd_warn("twist_option: /bin/sh: %m");
 	}
 
 	/* Something went wrong: we MUST terminate the process. */
-
-	tcpd_warn(error);
 	clean_exit(request);
     }
 }
