@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.3 1999/11/01 08:58:45 haya Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.4 2000/01/13 08:46:46 joda Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -50,6 +50,10 @@
 #define CB_SOCKET_FORCE 0x0c	/* offset of cardbus socket force event */
 #define CB_SOCKET_CTRL  0x10	/* offset of cardbus socket control reg */
 
+#define PCCBB_SOCKEVENT_BITS "\020\001CSTS\002CD1\003CD2\004PWR"
+#define PCCBB_SOCKSTATE_BITS "\020\001CSTS\002CD1\003CD3\004PWR" \
+          "\00516BIT\006CB\007CINT\010NOTA\011DLOST\012BADVCC" \
+          "\0135v\0143v\015Xv\016Yv\0355vS\0363vS\037XvS\040YvS"
 
 /* CardBus latency timer, Subordinate bus no, CardBus bus no and PCI bus no */
 #define PCI_CB_LSCP_REG  0x18
