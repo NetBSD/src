@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:55:49 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 12:30:49 cgd Exp $
 
 PROG = rwall
-MAN1 = rwall.0
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

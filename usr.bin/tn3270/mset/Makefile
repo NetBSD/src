@@ -1,11 +1,10 @@
-#	$Id: Makefile,v 1.9 1994/01/22 01:52:56 cgd Exp $
+#	$Id: Makefile,v 1.10 1994/12/22 12:31:07 cgd Exp $
 
 .include <../../Makefile.inc>
 
 CFLAGS += -I${.CURDIR} -I.
 
-MAN1 = mset.0
-MAN5 = map3270.0
+MAN = mset.1 map3270.5
 
 SRCS += astosc.c map3270.c mset.c
 

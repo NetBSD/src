@@ -1,12 +1,10 @@
-#	$Id: Makefile,v 1.10 1994/01/22 01:53:09 cgd Exp $
+#	$Id: Makefile,v 1.11 1994/12/22 12:31:10 cgd Exp $
 
 .include <../../Makefile.inc>
 
 CFLAGS += -I${.CURDIR} -I.
 LDADD += -lcurses -ltermcap -ltelnet -lcrypt
 DPADD += ${LIBCURSES} ${LIBTERMCAP} /usr/lib/libtelnet.a ${LIBCRYPT}
-
-MAN1 = tn3270.0
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
 SRCS += disp_asc.c ebc_disp.c
