@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1996/10/15 07:00:32 veego Exp $
+#	$NetBSD: Makefile,v 1.6 1997/03/24 22:06:42 christos Exp $
 
 PROG=	rcs
 CFLAGS+= -I${.CURDIR}/../lib
 LDADD=	${LIBRCS} -lgnumalloc
-DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
+DPADD=	${LIBRCS} ${LIBGNUMALLOC}
 
 MAN=	rcs.1 rcsfile.5 rcsintro.1
 

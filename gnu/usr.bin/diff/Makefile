@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1996/02/05 06:07:31 jtc Exp $
+#	$NetBSD: Makefile,v 1.10 1997/03/24 22:06:10 christos Exp $
 
 PROG=	diff
 SRCS=	diff.c analyze.c cmpbuf.c io.c context.c ed.c normal.c util.c dir.c \
@@ -6,6 +6,6 @@ SRCS=	diff.c analyze.c cmpbuf.c io.c context.c ed.c normal.c util.c dir.c \
 
 CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR} -DPR_PROGRAM=\"/usr/bin/pr\"
 LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+DPADD+=	${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>

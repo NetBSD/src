@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1996/10/15 07:00:44 veego Exp $
+#	$NetBSD: Makefile,v 1.5 1997/03/24 22:06:46 christos Exp $
 
 PROG=	rcsmerge
 CFLAGS+= -I${.CURDIR}/../lib
 LDADD=	${LIBRCS} -lgnumalloc
-DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
+DPADD=	${LIBRCS} ${LIBGNUMALLOC}
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

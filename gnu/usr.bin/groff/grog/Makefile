@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1996/10/18 03:03:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1997/03/24 22:06:29 christos Exp $
 
 MAN=		grog.1
-
-beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		$(.CURDIR)/grog.sh $(DESTDIR)$(BINDIR)/grog
+SCRIPTS=	grog.sh
 
 .include <../../Makefile.inc>
 .include <bsd.prog.mk>

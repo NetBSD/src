@@ -4,6 +4,7 @@ PROG=	tcpdchk
 SRCS=	tcpdchk.c fakelog.c inetcf.c scaffold.c percent_m.c
 MAN=	tcpdchk.8
 LDADD=	-lwrap
+DPADD=	${LIBWRAP}
 
 CFLAGS+= -I${.CURDIR}/../../lib/libwrap
 

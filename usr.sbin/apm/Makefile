@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/25 23:40:51 jtk Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/24 22:02:40 christos Exp $
 
 SRCS=	apm.c apmsubr.c
 #LDADD+=	-lutil
+#DPADD+=	${LIBUTIL}
 
 .PATH:	${.CURDIR}/../apmd
 

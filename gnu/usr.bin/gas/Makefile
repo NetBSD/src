@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1995/04/23 07:58:35 cgd Exp $
+#	$NetBSD: Makefile,v 1.18 1997/03/24 22:06:13 christos Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
 .include "config/Makefile.$(MACHINE_ARCH)"
@@ -26,7 +26,7 @@ CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DOLD_GAS -DSIGTY=void -Derror=as_fatal \
 		-DNETBSD_AOUT
 #LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
+#DPADD+=		${LIBGNUMALLOC}
 
 CONF_HEADERS=	targ-cpu.h obj-format.h host.h targ-env.h
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/23 07:58:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 22:06:09 christos Exp $
 
 PROG= cpio
 CFLAGS+= -I${.CURDIR} -DRETSIGTYPE=void -DHAVE_SYS_MTIO_H=1 -DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DHAVE_STRING_H=1 -DHAVE_FCNTL_H=1 -DHAVE_UTIME_H=1 -DHAVE_STRERROR=1 -DHAVE_VPRINTF=1 -DDIRENT=1
@@ -9,6 +9,6 @@ SRCS =	copyin.c copyout.c copypass.c defer.c dstring.c fnmatch.c global.c \
 	userspec.c xstrdup.c
 
 LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+DPADD+=	${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1996/12/27 01:54:07 cjs Exp $
+#	$NetBSD: Makefile,v 1.28 1997/03/24 22:03:00 christos Exp $
 #
 #  NetBSD Makefile
 #
@@ -20,6 +20,7 @@ DBMDEF=	-DNEWDB -DNIS
 
 CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO -DTCPWRAPPERS
 LDADD+=-lwrap
+DPADD+=${LIBWRAP}
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
@@ -33,13 +34,11 @@ BINDIR=	/usr/sbin
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
+FILES=sendmail.hf
+FILESDIR=/usr/share/misc
 
-beforeinstall:
-#	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-#	    ${DESTDIR}/etc/sendmail.fc
+proginstall::
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/sendmail.hf \
-	    ${DESTDIR}/usr/share/misc
 
 .include <bsd.prog.mk>

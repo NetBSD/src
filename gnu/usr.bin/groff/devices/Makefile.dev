@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.dev	6.2 (Berkeley) 3/16/91
-#	$Id: Makefile.dev,v 1.15 1996/10/18 03:02:32 thorpej Exp $
+#	$Id: Makefile.dev,v 1.16 1997/03/24 22:06:27 christos Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
@@ -27,11 +27,15 @@ COPY=	-c
 .endif
 
 .if !target(install)
-install:
-	for f in $(FONTFILES); do \
-		${INSTALL} ${COPY} -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) \
-		    $$f $(DEVICEDIR)/$$f; \
-	done
+FILES=${FONTFILES}
+FILESDIR=${DEVICEDIR}
+FILESOWN=${FONTOWN}
+FILESGRP=${FONTGRP}
+FILESMODE=${FONTMODE}
+GENFILES=${FONTFILES:Mgenerate/*}
+.for i in ${GENFILES}
+FILESDIR_$i=${DEVICEDIR}/generate
+.endfor
 .endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1995/04/29 05:37:13 cgd Exp $
+#	$NetBSD: Makefile,v 1.14 1997/03/24 22:06:52 christos Exp $
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -14,7 +14,7 @@ CFLAGS+= -DSTDC_HEADERS
 
 LDSTATIC= -static
 LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+DPADD+=	${LIBGNUMALLOC}
 
 MAN=tar.1
 CLEANFILES+=y.tab.h

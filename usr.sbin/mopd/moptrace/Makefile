@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1997/03/16 22:23:39 cjs Exp $
+#	$Id: Makefile,v 1.2 1997/03/24 22:02:47 christos Exp $
 
 PROG=	moptrace
 SRCS=	moptrace.c print.c cmp.c get.c mopdef.c nma.c device.c version.c pf.c \
@@ -7,6 +7,7 @@ MAN=	moptrace.1
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/.. -I${.CURDIR}/../common
 CLEANFILES= version.c version.h
 LDADD=	-lkvm
+DPADD=	${LIBKVM}
 .PATH:	${.CURDIR}/../common
 
 version.c version.h: ${.CURDIR}/../common/VERSION

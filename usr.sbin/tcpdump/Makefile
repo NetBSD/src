@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/03/07 23:18:39 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/24 22:03:04 christos Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 #  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 #  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# @(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/Makefile,v 1.6 1995/03/07 23:18:39 mycroft Exp $ (LBL)
+# @(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/Makefile,v 1.7 1997/03/24 22:03:04 christos Exp $ (LBL)
 
 PROG=	tcpdump
 MAN=	tcpdump.8
@@ -27,7 +27,7 @@ MAN=	tcpdump.8
 CFLAGS+=-DCSLIP -DPPP -DFDDI -DETHER_SERVICE
 
 LDADD+=	-lpcap -ll
-DPADD+=	${LIBL} ${LIBPCAP}
+DPADD+=	${LIBPCAP} ${LIBL}
 
 SRCS=	tcpdump.c addrtoname.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \

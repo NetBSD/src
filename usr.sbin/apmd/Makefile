@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/25 23:40:57 jtk Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/24 22:02:42 christos Exp $
 
 SRCS=	apmd.c apmsubr.c
 #LDADD+=	-lutil
+#DPADD+=	${LIBUTIL}
 
 CFLAGS+=	-g  -O2 -Wmissing-prototypes -Wall
 PROG=	apmd

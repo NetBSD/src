@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/10/18 06:28:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/03/24 22:02:52 christos Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:48 vixie Exp 
 
 .PATH:	${.CURDIR}/../nslookup \
@@ -11,12 +11,9 @@ DPADD=	${LIBL}
 LDADD=	-ll
 CLEANFILES+=	commands.c lex.yy.c lex.yy.o
 MAN=	nslookup.8
+FILES=	nslookup.help
+FILESDIR=/usr/share/misc
 
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-		${.CURDIR}/../nslookup/nslookup.help \
-		${DESTDIR}/usr/share/misc/nslookup.help
-
-.include <bsd.prog.mk>
 .include "../Makefile.inc"
 .include "../../Makefile.inc"
+.include <bsd.prog.mk>

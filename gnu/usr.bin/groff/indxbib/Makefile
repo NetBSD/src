@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/10/18 03:03:38 thorpej Exp $
+#	$Id: Makefile,v 1.7 1997/03/24 22:06:30 christos Exp $
 
 PROG=		indxbib
 SRCS=		indxbib.cc dirnamemax.c signal.c
@@ -6,12 +6,12 @@ CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+= 	$(LIBBIB) $(LIBGROFF) -lm
 DPADD+= 	$(LIBBIB) $(LIBGROFF) $(LIBM)
 
-# XXX -- this depends on ../include/defs.h
-COMMON_WORDS_FILE=	"/usr/share/dict/eign"
+COMMON_WORDS_FILE!=awk -F\" '/COMMON_WORDS_FILE/ { print $$2 }' ${.CURDIR}/../include/defs.h
 
-afterinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/eign \
-		$(DESTDIR)$(COMMON_WORDS_FILE)
+FILES=eign
+FILESNAME=${COMMON_WORDS_FILE:T}
+FILESDIR=${COMMON_WORDS_FILE:H}
+
 
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"

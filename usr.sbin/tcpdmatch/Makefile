@@ -6,6 +6,7 @@ MAN=	tcpdmatch.8
 .PATH:	${.CURDIR}/../tcpdchk
 CFLAGS+= -I${.CURDIR}/../tcpdchk -I${.CURDIR}/../../lib/libwrap
 LDADD=	-lwrap
+DPADD=	${LIBWRAP}
 
 .include "${.CURDIR}/../../lib/libwrap/Makefile.cflags"
 
