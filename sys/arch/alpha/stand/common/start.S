@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.12 1999/04/11 03:36:21 cgd Exp $ */
+/* $NetBSD: start.S,v 1.13 2003/08/29 12:58:39 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -121,9 +121,10 @@ Lstartgp:
 	or	a0,zero,s0
 #endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
 	lda	a0,_edata
-	lda	a1,_end
-	subq	a1,a0,a1
-	CALL(bzero)
+	xor	a1,a1,a1
+	lda	a2,_end
+	subq	a2,a0,a2
+	CALL(memset)
 #if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	or	s0,zero,a0
 #endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
