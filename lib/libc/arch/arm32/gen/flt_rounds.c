@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.1 1996/05/12 20:29:09 mark Exp $ */
+/*	$NetBSD: flt_rounds.c,v 1.2 1997/10/06 00:22:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -69,5 +69,5 @@ static const int map[] = {
 int
 __flt_rounds()
 {
-	return(map[0]);
+	return(map[fpgetround()]);
 }
