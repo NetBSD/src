@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.3 1994/12/21 08:48:10 jtc Exp $	*/
+/*	$NetBSD: showmount.c,v 1.4 1994/12/24 17:38:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: showmount.c,v 1.3 1994/12/21 08:48:10 jtc Exp $";
+static char rcsid[] = "$NetBSD: showmount.c,v 1.4 1994/12/24 17:38:52 cgd Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: showmount.c,v 1.3 1994/12/21 08:48:10 jtc Exp $"
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Constant defs */
