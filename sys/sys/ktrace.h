@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.15 1998/05/02 18:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -44,11 +44,13 @@
 #define KTROP_SET		0	/* set trace points */
 #define KTROP_CLEAR		1	/* clear trace points */
 #define KTROP_CLEARFILE		2	/* stop all tracing to file */
-#define	KTROP(o)		((o)&3)	/* macro to extract operation */
+#define	KTROP_MASK		0x3
+#define	KTROP(o)		((o)&KTROP_MASK) /* macro to extract operation */
 /*
  * flags (ORed in with operation)
  */
 #define KTRFLAG_DESCEND		4	/* perform op on all children too */
+#define	KTRFLAG_FD		8	/* flag indicating fd - kernel only */
 
 /*
  * ktrace record header
@@ -156,6 +158,7 @@ struct ktr_csw {
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
+#define	KTRFAC_FD	0x10000000	/* vp is a file pointer, not vnode */
 
 #ifndef	_KERNEL
 
@@ -163,17 +166,20 @@ struct ktr_csw {
 
 __BEGIN_DECLS
 int	ktrace __P((const char *, int, int, pid_t));
+int	fktrace __P((int, int, int, pid_t));
 __END_DECLS
 
 #else
 
-void ktrcsw __P((struct vnode *, int, int));
-void ktremul __P((struct vnode *, char *));
-void ktrgenio __P((struct vnode *, int, enum uio_rw, struct iovec *, int, int));
-void ktrnamei __P((struct vnode *, char *));
-void ktrpsig __P((struct vnode *, int, sig_t, int, int));
-void ktrsyscall __P((struct vnode *, register_t, size_t, register_t []));
-void ktrsysret __P((struct vnode *, register_t, int, register_t));
+void ktrcsw __P((void *, int, int));
+void ktremul __P((void *, struct proc *, char *));
+void ktrgenio __P((void *, int, enum uio_rw, struct iovec *, int, int));
+void ktrnamei __P((void *, char *));
+void ktrpsig __P((void *, int, sig_t, int, int));
+void ktrsyscall __P((void *, register_t, size_t, register_t []));
+void ktrsysret __P((void *, register_t, int, register_t));
+void ktrderef __P((struct proc *));
+void ktradref __P((struct proc *));
 
 #endif	/* !_KERNEL */
 
