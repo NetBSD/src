@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.1.2.3 1997/06/04 00:19:33 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.1.2.4 1997/06/04 05:45:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.3 1997/06/04 00:19:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.4 1997/06/04 05:45:57 thorpej Exp $");
 
 int
 __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -84,15 +84,14 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 			return (error);
 	}
 
-	pteidx = (a->apdc_sgva >> PGSHIFT) * SGMAP_PTE_SPACING;
-	pte = &page_table[pteidx];
+	pteidx = a->apdc_sgva >> PGSHIFT;
+	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
 
 	/*
 	 * Generate the DMA address.
 	 */
 	map->dm_segs[0].ds_addr = sgmap->aps_wbase |
-	    ((pteidx << SGMAP_PTE_OFFSET_SHIFT) << SGMAP_ADDR_PTEOFF_SHIFT) |
-	    dmaoffset;
+	    (pteidx << SGMAP_ADDR_PTEIDX_SHIFT) | dmaoffset;
 	map->dm_segs[0].ds_len = dmalen;
 
 	a->apdc_pteidx = pteidx;
@@ -116,7 +115,6 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 	alpha_mb();
 
 	map->dm_nsegs = 1;
-	a->apdc_flags |= APDC_USING_SGMAP;
 	return (0);
 }
 
@@ -171,7 +169,8 @@ __C(SGMAP_TYPE,_sgmap_unload)(t, map, sgmap)
 	/*
 	 * Invalidate the PTEs for the mapping.
 	 */
-	for (ptecnt = a->apdc_ptecnt, pte = &page_table[a->apdc_pteidx];
+	for (ptecnt = a->apdc_ptecnt,
+	    pte = &page_table[a->apdc_pteidx * SGMAP_PTE_SPACING];
 	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING)
 		*pte = 0;
 
@@ -181,6 +180,4 @@ __C(SGMAP_TYPE,_sgmap_unload)(t, map, sgmap)
 	 */
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
 		alpha_sgmap_free(sgmap, a);
-
-	a->apdc_flags &= ~APDC_USING_SGMAP;
 }
