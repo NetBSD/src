@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.9 1999/04/14 09:38:37 matthias Exp $	*/
+/*	$NetBSD: expr.c,v 1.10 2000/10/17 18:51:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.9 1999/04/14 09:38:37 matthias Exp $");
+__RCSID("$NetBSD: expr.c,v 1.10 2000/10/17 18:51:32 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -520,10 +520,10 @@ num()
 		ndig++;
 	}
 	ungetch();
-	
+
 	if (ndig == 0)
 		experr("bad constant");
-	
+
 	return rval;
 
 }

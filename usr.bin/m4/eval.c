@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.12 2000/10/11 14:46:11 is Exp $	*/
+/*	$NetBSD: eval.c,v 1.13 2000/10/17 18:51:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.12 2000/10/11 14:46:11 is Exp $");
+__RCSID("$NetBSD: eval.c,v 1.13 2000/10/17 18:51:32 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,17 +433,17 @@ expand(argv, argc)
 				}
 				pbstr(argv[2]);
 				break;
-                        case '@':
-                                for (n = argc - 1; n > 2; n--) {
-                                        pbstr(rquote);
-                                        pbstr(argv[n]);
-                                        pbstr(lquote);
+			case '@':
+				for (n = argc - 1; n > 2; n--) {
+					pbstr(rquote);
+					pbstr(argv[n]);
+					pbstr(lquote);
 					putback(COMMA);
-                                }
+				}
 				pbstr(rquote);
-                                pbstr(argv[2]);
+				pbstr(argv[2]);
 				pbstr(lquote);
-                                break;
+				break;
 			default:
 				putback(*p);
 				putback('$');
