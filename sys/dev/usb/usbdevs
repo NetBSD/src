@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.304 2003/02/11 00:00:43 ichiro Exp $
+$NetBSD: usbdevs,v 1.305 2003/02/12 15:34:18 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1287,6 +1287,7 @@ product	SUNCOMM MB_ADAPTOR	0x0003	Mobile Adaptor
 product SUNTAC DS96L		0x0003	SUNTAC U-Cable type D2
 product SUNTAC PS64P1		0x0005	SUNTAC U-Cable type P1
 product SUNTAC VS10U		0x0009	SUNTAC Slipper U
+product SUNTAC IS96U		0x000a	SUNTAC Ir-Trinity
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB keyboard
