@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 1998/11/29 15:06:02 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
  *
  */
 
-#define USRTEXT		0x1000
+#define USRTEXT		NBPG
 #define USRSTACK	KERNBASE
 
 /*
@@ -86,7 +86,7 @@
  * Note: This is just a hint, if we mmap() more than this the page
  * table will be expanded. (at the cost of speed).
  */
-#define MMAPSPACE	(24*1024*1024)
+#define MMAPSPACE	(8*1024*1024)
 
 /* 
  * Size of shared memory map
@@ -134,9 +134,6 @@
 #define SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
 
-#define mapin(pte, v, pfnum, prot) \
-	{(*(int *)(pte) = ((pfnum)<<PGSHIFT) | (prot)) ; }
-
 #if defined(UVM)
 #define MACHINE_NEW_NONCONTIG
 
@@ -167,8 +164,5 @@ struct pmap_physseg {
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-/* pcb base */
-#define pcbb(p)		((u_int)(p)->p_addr)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 1998/11/29 15:04:05 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.40 1999/01/01 21:43:19 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -186,14 +186,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			pm = p->p_vmspace->vm_map.pmap;
 			if (frame->code < 0x40000000) {
 				addr = trunc_page((unsigned)&pm->pm_p0br[
-				    frame->code >> PGSHIFT]);
+				    frame->code >> VAX_PGSHIFT]);
 #ifdef DEBUG
 			} else if (frame->code < 0) {
 				panic("ptefetch in kernel");
 #endif
 			} else {
 				addr = trunc_page((unsigned)&pm->pm_p1br[
-				    (frame->code & 0x3fffffff) >> PGSHIFT]);
+				    (frame->code & 0x3fffffff) >> VAX_PGSHIFT]);
 			}
 #if defined(UVM)
 			rv = uvm_fault(pte_map, addr, 0,

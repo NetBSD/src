@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 1998/11/29 14:48:53 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 1999/01/01 21:43:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -263,7 +263,7 @@ disk_reallymapin(bp, map, reg, flag)
 	int pfnum, npf, o, i;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & PGOFSET;
+	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
 	p = bp->b_proc;
@@ -291,11 +291,11 @@ disk_reallymapin(bp, map, reg, flag)
 			int rv;
 #if defined(UVM)
 			rv = uvm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG, 0,
+			    (unsigned)addr + i * VAX_NBPG, 0,
 			    VM_PROT_READ|VM_PROT_WRITE);
 #else
 			rv = vm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG,
+			    (unsigned)addr + i * VAX_NBPG,
 			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
 #endif
 			if (rv)

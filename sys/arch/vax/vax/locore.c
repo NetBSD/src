@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.31 1998/11/29 15:12:23 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.32 1999/01/01 21:43:19 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -257,7 +257,7 @@ start()
          */
         if (avail_end == 0)
                 while (badaddr((caddr_t)avail_end, 4) == 0)
-                        avail_end += NBPG * 128;
+                        avail_end += VAX_NBPG * 128;
 
         avail_end = TRUNC_PAGE(avail_end); /* be sure */
 

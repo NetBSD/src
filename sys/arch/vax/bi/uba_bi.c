@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.1 1998/10/18 18:47:18 ragge Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.2 1999/01/01 21:43:17 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -179,7 +179,7 @@ uba_bi_attach(parent, self, aux)
 	    (BUA(sc->uh_uba)->bn_biic.bi_csr&~BICSR_ARB_MASK) | BICSR_ARB_HIGH;
 	BUA(sc->uh_uba)->bn_vor = (int)sc->uh_iarea - (int)&scb[0];
 
-	uba_attach(sc, BUA(sc->uh_uba)->bn_biic.bi_sadr + UBAPAGES * NBPG);
+	uba_attach(sc, BUA(sc->uh_uba)->bn_biic.bi_sadr + UBAPAGES * VAX_NBPG);
 }
 
 

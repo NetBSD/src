@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.13 1998/11/29 14:48:51 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.14 1999/01/01 21:43:17 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -189,7 +189,7 @@ kdbgo(usc, bp)
 	unsigned info = 0;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & PGOFSET;
+	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
 
@@ -214,11 +214,11 @@ kdbgo(usc, bp)
 			int rv;
 #if defined(UVM)
 			rv = uvm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG, 0,
+			    (unsigned)addr + i * VAX_NBPG, 0,
 			    VM_PROT_READ|VM_PROT_WRITE);
 #else
 			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG,
+			    (unsigned)addr + i * VAX_NBPG,
 			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
 #endif
 			if (rv)
@@ -237,9 +237,9 @@ kdbgo(usc, bp)
 		unsigned k;
 
 		if (trunc_page(i) != trunc_page(kvtophys(pte) + npf * 4)) {
-			info = (unsigned)malloc(2 * NBPG, M_DEVBUF, M_WAITOK);
-			k = (info + PGOFSET) & ~PGOFSET;
-			bcopy(pte, (void *)k, NBPG);
+			info = (unsigned)malloc(2 * VAX_NBPG, M_DEVBUF, M_WAITOK);
+			k = (info + VAX_PGOFSET) & ~VAX_PGOFSET;
+			bcopy(pte, (void *)k, VAX_NBPG);
 			i = kvtophys(k);
 		}
 		mp->mscp_seq.seq_mapbase = i;
@@ -316,5 +316,5 @@ kdbctlrdone(usc, info)
 	int info;
 {
 	if (info)
-		free((void *)info, NBPG * 2);
+		free((void *)info, VAX_NBPG * 2);
 }

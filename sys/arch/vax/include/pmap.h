@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.29 1998/11/29 14:55:04 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.30 1999/01/01 21:43:18 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -56,14 +56,14 @@ struct pte;
  */
 
 typedef struct pmap {
-	vm_offset_t		 pm_stack; /* Base of alloced p1 pte space */
-	int                      ref_count;   /* reference count        */
-	struct pte		*pm_p0br; /* page 0 base register */
-	long			 pm_p0lr; /* page 0 length register */
-	struct pte		*pm_p1br; /* page 1 base register */
-	long			 pm_p1lr; /* page 1 length register */
-	int			 pm_lock; /* Lock entry in MP environment */
-	struct pmap_statistics	 pm_stats;/* Some statistics */
+	vaddr_t		 pm_stack;	/* Base of alloced p1 pte space */
+	int		 ref_count;	/* reference count        */
+	struct pte	*pm_p0br;	/* page 0 base register */
+	long		 pm_p0lr;	/* page 0 length register */
+	struct pte	*pm_p1br;	/* page 1 base register */
+	long		 pm_p1lr;	/* page 1 length register */
+	int		 pm_lock;	/* Lock entry in MP environment */
+	struct pmap_statistics	 pm_stats;	/* Some statistics */
 } *pmap_t;
 
 /*
@@ -71,25 +71,27 @@ typedef struct pmap {
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  */
 
-typedef struct pv_entry {
+struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pte	*pv_pte;	/* pte for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
-} *pv_entry_t;
+};
 
 /* ROUND_PAGE used before vm system is initialized */
-#define ROUND_PAGE(x)   (((uint)(x) + CLOFSET)& ~CLOFSET)
-#define	TRUNC_PAGE(x)	((uint)(x) & ~CLOFSET)
+#define ROUND_PAGE(x)   (((uint)(x) + PGOFSET) & ~PGOFSET)
+#define	TRUNC_PAGE(x)	((uint)(x) & ~PGOFSET)
+#define	LTOHPS		(PGSHIFT - VAX_PGSHIFT)
+#define	LTOHPN		(1 << LTOHPS)
 
 /* Mapping macros used when allocating SPT */
 #define	MAPVIRT(ptr, count)					\
 	(vm_offset_t)ptr = virtual_avail;			\
-	virtual_avail += (count) * NBPG;
+	virtual_avail += (count) * VAX_NBPG;
 
 #define	MAPPHYS(ptr, count, perm)				\
 	(vm_offset_t)ptr = avail_start + KERNBASE;		\
-	avail_start += (count) * NBPG;
+	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL
 
@@ -100,7 +102,7 @@ extern	struct pmap kernel_pmap_store;
 #endif	/* _KERNEL */
 
 /* Routines that are best to define as macros */
-#define	pmap_phys_address(phys) 	((u_int)(phys)<<PAGE_SHIFT)
+#define	pmap_phys_address(phys) 	((u_int)(phys) << PGSHIFT)
 #define	pmap_pageable(a,b,c,d)		/* Dont do anything */
 #define pmap_change_wiring(pmap, v, w)  /* no need */
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
@@ -108,6 +110,7 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_deactivate(p)		/* Dont do anything */
 #ifdef UVM
 #define	pmap_reference(pmap)		(pmap)->ref_count++
 #else

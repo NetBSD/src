@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.10 1998/08/10 14:31:07 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.11 1999/01/01 21:43:19 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -338,32 +338,32 @@ ka43_steal_pages()
         clk_tweak = 2;          /* ...and shift two */
         MAPVIRT(clk_page, 2);
         pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA43_WAT_BASE,
-            (vm_offset_t)KA43_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+            (vm_offset_t)KA43_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* LANCE CSR */
 	MAPVIRT(lance_csr, 1);
 	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(vs_cpu, 1);
 	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(dz_regs, 2);
 	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(lance_addr, 1);
 	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* 2nd level CCR */
 	MAPVIRT(ka43_creg, 1);
 	pmap_map((vm_offset_t)ka43_creg, (vm_offset_t)KA43_CH2_CREG,
-	    (vm_offset_t)KA43_CH2_CREG + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)KA43_CH2_CREG + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* 2nd level CTA */
-	MAPVIRT(ka43_ctag, KA43_CT2_SIZE/NBPG);
+	MAPVIRT(ka43_ctag, KA43_CT2_SIZE/VAX_NBPG);
 	pmap_map((vm_offset_t)ka43_ctag, (vm_offset_t)KA43_CT2_BASE,
 	    (vm_offset_t)KA43_CT2_BASE + KA43_CT2_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
@@ -378,13 +378,13 @@ ka43_steal_pages()
 	 * been some more years...  ;-)
 	 */
 #define	LEMEM (((int)le_iomem & ~KERNBASE)|KA43_DIAGMEM)
-	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)le_iomem, LEMEM, LEMEM + NI_IOSIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 #if NSMG > 0
 	if ((vax_confdata & 0x80) == 0) {
-		MAPVIRT(sm_addr, (SMSIZE / NBPG));
+		MAPVIRT(sm_addr, (SMSIZE / VAX_NBPG));
 		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
 		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
 		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;

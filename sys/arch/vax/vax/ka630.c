@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.11 1998/11/29 15:09:10 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.12 1999/01/01 21:43:19 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -148,13 +148,13 @@ ka630_steal_pages()
 
 	MAPVIRT(uvaxIIcpu_ptr, 1);
 	pmap_map((vaddr_t)uvaxIIcpu_ptr, (vaddr_t)UVAXIICPU,
-	    (vaddr_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vaddr_t)UVAXIICPU + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	clk_adrshift = 0;	/* Addressed at short's... */
 	clk_tweak = 0;		/* ...and no shifting */
 	MAPVIRT(clk_page, 1);
 	pmap_map((vaddr_t)clk_page, (vaddr_t)KA630CLK,
-	    (vaddr_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vaddr_t)KA630CLK + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * Enable memory parity error detection and clear error bits.

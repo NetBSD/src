@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.4 1998/08/10 14:33:34 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.5 1999/01/01 21:43:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -87,7 +87,7 @@ struct	vsbus_attach_args {
 #define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
 #define VS_CLOCK        0x200b0000      /* clock chip address */
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
-#define NI_IOSIZE       (128 * NBPG)    /* IO address size */
+#define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 #define VS_REGS         0x20080000      /* Misc cpu internal regs */
 
 /*

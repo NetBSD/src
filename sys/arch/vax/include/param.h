@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.33 1998/11/29 14:48:51 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.34 1999/01/01 21:43:18 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -66,34 +66,36 @@
 #define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
-#define	PGSHIFT	 9                             /* LOG2(NBPG) */
-#define	NBPG     (1<<PGSHIFT)                  /* (1 << PGSHIFT) bytes/page */
-#define	PGOFSET	 (NBPG-1)	               /* byte offset into page */
-#define	NPTEPG	 (NBPG/(sizeof (struct pte)))
+#define	PGSHIFT		12			/* LOG2(NBPG) */
+#define	NBPG		(1 << PGSHIFT)		/* (1 << PGSHIFT) bytes/page */
+#define	PGOFSET		(NBPG - 1)               /* byte offset into page */
 
-#define	KERNBASE     0x80000000	               /* start of kernel virtual */
-#define	BTOPKERNBASE ((u_long)KERNBASE >> PGSHIFT)
+#define	VAX_PGSHIFT	9
+#define	VAX_NBPG	(1 << VAX_PGSHIFT)
+#define	VAX_PGOFSET	(VAX_NBPG - 1)
 
-#define	DEV_BSHIFT   9		               /* log2(DEV_BSIZE) */
-#define	DEV_BSIZE    (1 << DEV_BSHIFT)
+#define	KERNBASE	0x80000000		/* start of kernel virtual */
 
-#define BLKDEV_IOSIZE 2048
+#define	DEV_BSHIFT	9		               /* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+
+#define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
 #define	MAXBSIZE	0x4000		/* max FS block size - XXX */
 
-#define	CLSIZELOG2    3
-#define	CLSIZE	      8
+#define	CLSIZELOG2	0		/* XXX - die */
+#define	CLSIZE		1		/* XXX - die */
 
-#define	UPAGES	1		/* pages of u-area */
-#define USPACE  (CLBYTES*UPAGES)
+#define	UPAGES		1		/* pages of u-area */
+#define USPACE		(NBPG*UPAGES)
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	CLBYTES		/* default message buffer size */
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -123,11 +125,11 @@
 #endif	/* NMBCLUSTERS */
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in NBPG-sized logical pages
  */ 
 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(4096*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(4096*1024/NBPG)
 #endif
 
 /*
@@ -135,20 +137,21 @@
  */
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (CLSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (CLSHIFT - DEV_BSHIFT))
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* clicks to bytes */
-#define	ctob(x)		((x) << CLSHIFT)
-#define	btoc(x)		(((unsigned)(x) + CLOFSET) >> CLSHIFT)
-#define	btop(x)		(((unsigned)(x)) >> CLSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 
-#define	vax_btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-#define	vax_btop(x)	(((unsigned)(x)) >> PGSHIFT)
+/* MD conversion macros */
+#define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)
+#define	vax_btop(x)	(((unsigned)(x)) >> VAX_PGSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -157,7 +160,7 @@
  * For now though just use DEV_BSIZE.
  */
 
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+// #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 #ifdef _KERNEL
 #ifndef lint
