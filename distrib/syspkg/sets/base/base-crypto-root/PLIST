@@ -1,5 +1,0 @@
-@cwd /
-./etc/openssl
-./etc/openssl/certs
-./etc/openssl/misc
-./etc/openssl/private
