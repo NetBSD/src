@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.21 2001/04/05 22:55:46 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.22 2001/04/06 00:02:49 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.21 2001/04/05 22:55:46 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.22 2001/04/06 00:02:49 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -895,24 +895,20 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 	/*
 	 * Copy the datagram to the packet buffer.
 	 */
-	ea_writebuf(sc, NULL, bufstart + 4, 0);
-
 	len = 0;
 	for (m = m0; m; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		ea_writebuf(sc, mtod(m, caddr_t), -1, m->m_len);
+		ea_writebuf(sc, mtod(m, caddr_t), bufstart + 4 + len,
+		    m->m_len);
 		len += m->m_len;
 	}
 
-	/* If packet size is odd round up to the next 16 bit boundry */
-	if (len % 2)
-		++len;
-
 	len = max(len, ETHER_MIN_LEN);
 
-	ea_writebuf(sc, NULL, bufstart + 4 + len, 0);
 	/* Follow it with a NULL packet header */
+	memset(hdr, 0, 4);
+	ea_writebuf(sc, hdr, bufstart + 4 + len, 4);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
 
