@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.139 2000/09/05 05:13:43 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.140 2000/09/19 22:00:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -636,7 +636,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	int s, error;
 
 	if (flags & V_SAVE) {
-		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, p);
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, p);
 		if (error)
 		        return (error);
 #ifdef DIAGNOSTIC
