@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.79 2000/03/24 10:30:12 hannken Exp $	*/
+/*	$NetBSD: fd.c,v 1.80 2000/04/07 16:58:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -239,7 +239,8 @@ struct fd_softc {
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
 
-	struct callout sc_motor_ch;
+	struct callout sc_motoron_ch;
+	struct callout sc_motoroff_ch;
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
@@ -761,7 +762,8 @@ fdattach(parent, self, aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motor_ch);
+	callout_init(&fd->sc_motoron_ch);
+	callout_init(&fd->sc_motoroff_ch);
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -870,7 +872,7 @@ fdstrategy(bp)
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort_cylinder(&fd->sc_q, bp);
-	callout_stop(&fd->sc_motor_ch);		/* a good idea */
+	callout_stop(&fd->sc_motoroff_ch);		/* a good idea */
 	if (fd->sc_active == 0)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -935,7 +937,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	callout_reset(&fd->sc_motor_ch, 5 * hz, fd_motor_off, fd);
+	callout_reset(&fd->sc_motoroff_ch, 5 * hz, fd_motor_off, fd);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -1445,7 +1447,7 @@ loop:
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
 		fd->sc_blkno = (bp->b_blkno * DEV_BSIZE) / FD_BSIZE(fd);
-		callout_stop(&fd->sc_motor_ch);
+		callout_stop(&fd->sc_motoroff_ch);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return (1);
@@ -1454,7 +1456,7 @@ loop:
 			/* Turn on the motor, being careful about pairing. */
 			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				callout_stop(&ofd->sc_motor_ch);
+				callout_stop(&ofd->sc_motoroff_ch);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
@@ -1462,7 +1464,7 @@ loop:
 			fdc->sc_state = MOTORWAIT;
 			if ((fdc->sc_flags & FDC_NEEDMOTORWAIT) != 0) { /*XXX*/
 				/* Allow .25s for motor to stabilize. */
-				callout_reset(&fd->sc_motor_ch, hz / 4,
+				callout_reset(&fd->sc_motoron_ch, hz / 4,
 				    fd_motor_on, fd);
 			} else {
 				fd->sc_flags &= ~FD_MOTOR_WAIT;
