@@ -1,7 +1,7 @@
-/* $NetBSD: seeq8005.c,v 1.26 2001/06/23 17:32:21 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.27 2001/06/26 22:00:44 bjh21 Exp $ */
 
 /*
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1995-1998 Mark Brinicombe
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.26 2001/06/23 17:32:21 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.27 2001/06/26 22:00:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -108,7 +108,7 @@ int seeq8005_debug = 0;
 #define DPRINTF(f, x)
 #endif
 
-#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> MAX_ETHER_LEN) */
+#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> ETHER_MAX_LEN) */
 
 #define SEEQ_READ16(sc, iot, ioh, reg)					\
 	((sc)->sc_flags & SF_8BIT ?					\
@@ -267,6 +267,9 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	}
+
+	/* We can support 802.1Q VLAN-sized frames. */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Now we can attach the interface. */
 
@@ -754,8 +757,12 @@ ea_init(struct ifnet *ifp)
 	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_BUFWIN, (sc->sc_tx_bufsize>> 8) - 1);
 
-	if (sc->sc_variant == SEEQ_8004)
+	if (sc->sc_variant == SEEQ_8004) {
+		/* Make the interface IFF_SIMPLEX. */
 		sc->sc_config2 |= SEEQ_CFG2_RX_TX_DISABLE;
+		/* Enable reception of long packets (for vlan(4)). */
+		sc->sc_config2 |= SEEQ_CFG2_PASS_LONGSHORT;
+	}
 
 	/* Configure rx. */
 	ea_mc_reset(sc);
@@ -1033,8 +1040,9 @@ ea_txint(struct seeq8005_softc *sc)
 	 * occurred and the packet transmission was aborted.
 	 * This situation is untested as present.
 	 *
-	 * The SEEQ_TXSTAT_BABBLE should never be set and is untested
-	 * as we should never xmit oversized packets.
+	 * The SEEQ_TXSTAT_BABBLE is untested as it should only be set
+	 * when we deliberately transmit oversized packets (e.g. for
+	 * 802.1Q).
 	 */
 	if (txstatus & SEEQ_TXSTAT_COLLISION) {
 		switch (sc->sc_variant) {
@@ -1065,8 +1073,6 @@ ea_txint(struct seeq8005_softc *sc)
 	} else if (txstatus & SEEQ_TXSTAT_COLLISION16) {
 		printf("seeq_intr: col16 %x\n", txstatus);
 		ifp->if_collisions += 16;
-		ifp->if_oerrors++;
-	} else if (txstatus & SEEQ_TXSTAT_BABBLE) {
 		ifp->if_oerrors++;
 	}
 
@@ -1149,9 +1155,10 @@ ea_rxint(struct seeq8005_softc *sc)
 		 * Did we have any errors? then note error and go to
 		 * next packet
 		 */
-		if (__predict_false(status & SEEQ_RXSTAT_ERROR_MASK)) {
+		if (__predict_false(status &
+			(SEEQ_RXSTAT_CRC_ERROR | SEEQ_RXSTAT_DRIBBLE_ERROR |
+			 SEEQ_RXSTAT_SHORT_FRAME))) {
 			++ifp->if_ierrors;
-			/* XXX oversize packets may be OK */
 			log(LOG_WARNING,
 			    "%s: rx packet error at %04x (err=%02x)\n",
 			    sc->sc_dev.dv_xname, addr, status & 0x0f);
@@ -1160,11 +1167,11 @@ ea_rxint(struct seeq8005_softc *sc)
 			return;
 		}
 		/*
-		 * Is the packet too big ? - this will probably be trapped
-		 * above as a receive error.  If it's not, this is indicative
-		 * of buffer corruption.
+		 * Is the packet too big?  We allow slightly oversize packets
+		 * for vlan(4) and tcpdump purposes, but the rest of the world
+		 * wants incoming packets in a single mbuf cluster.
 		 */
-		if (__predict_false(len > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
+		if (__predict_false(len > MCLBYTES)) {
 			++ifp->if_ierrors;
 			log(LOG_ERR,
 			    "%s: rx packet size error at %04x (len=%d)\n",
