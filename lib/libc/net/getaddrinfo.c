@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.42.4.1 2000/07/13 01:10:58 thorpej Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.42.4.2 2000/07/13 05:51:20 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.24 2000/07/09 04:19:22 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.42.4.1 2000/07/13 01:10:58 thorpej Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.42.4.2 2000/07/13 05:51:20 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -207,7 +207,7 @@ typedef union {
 struct res_target {
 	struct res_target *next;
 	const char *name;	/* domain name */
-	int class, type;	/* class and type of query */
+	int qclass, qtype;	/* class and type of query */
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer buffer */
 	int n;			/* result length */
@@ -489,9 +489,9 @@ getaddrinfo(hostname, servname, hints, res)
 		goto good;
 
 	if (pai->ai_flags & AI_NUMERICHOST)
-		ERR(EAI_NONAME);
+		ERR(EAI_NODATA);
 	if (hostname == NULL)
-		ERR(EAI_NONAME);
+		ERR(EAI_NODATA);
 
 	/*
 	 * hostname as alphabetical name.
@@ -822,7 +822,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
 			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
 				free(hostname2);
-				return(EAI_NONAME); /* XXX: is return OK? */
+				return(EAI_NODATA); /* XXX: is return OK? */
 			}
 			sin6->sin6_scope_id = scopeid;
 		}
@@ -1259,25 +1259,25 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
 		/* prefer IPv6 */
-		q.class = C_IN;
-		q.type = T_AAAA;
+		q.qclass = C_IN;
+		q.qtype = T_AAAA;
 		q.answer = buf.buf;
 		q.anslen = sizeof(buf);
 		q.next = &q2;
-		q2.class = C_IN;
-		q2.type = T_A;
+		q2.qclass = C_IN;
+		q2.qtype = T_A;
 		q2.answer = buf2.buf;
 		q2.anslen = sizeof(buf2);
 		break;
 	case AF_INET:
-		q.class = C_IN;
-		q.type = T_A;
+		q.qclass = C_IN;
+		q.qtype = T_A;
 		q.answer = buf.buf;
 		q.anslen = sizeof(buf);
 		break;
 	case AF_INET6:
-		q.class = C_IN;
-		q.type = T_AAAA;
+		q.qclass = C_IN;
+		q.qtype = T_AAAA;
 		q.answer = buf.buf;
 		q.anslen = sizeof(buf);
 		break;
@@ -1286,14 +1286,14 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	}
 	if (res_searchN(name, &q) < 0)
 		return NS_NOTFOUND;
-	ai = getanswer(&buf, q.n, q.name, q.type, pai);
+	ai = getanswer(&buf, q.n, q.name, q.qtype, pai);
 	if (ai) {
 		cur->ai_next = ai;
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
 	}
 	if (q.next) {
-		ai = getanswer(&buf2, q2.n, q2.name, q2.type, pai);
+		ai = getanswer(&buf2, q2.n, q2.name, q2.qtype, pai);
 		if (ai)
 			cur->ai_next = ai;
 	}
@@ -1612,8 +1612,8 @@ res_queryN(name, target)
 		hp->rcode = NOERROR;	/* default */
 
 		/* make it easier... */
-		class = t->class;
-		type = t->type;
+		class = t->qclass;
+		type = t->qtype;
 		answer = t->answer;
 		anslen = t->anslen;
 #ifdef DEBUG
