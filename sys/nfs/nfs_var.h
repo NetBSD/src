@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.5 1996/10/25 23:14:11 cgd Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.6 1996/12/11 00:01:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -182,7 +182,8 @@ int nfsrv_null __P((struct nfsrv_descript *, struct nfssvc_sock *,
 		    struct proc *, struct mbuf **));
 int nfsrv_noop __P((struct nfsrv_descript *, struct nfssvc_sock *,
 		    struct proc *, struct mbuf **));
-int nfsrv_access __P((struct vnode *, int, struct ucred *, int, struct proc *));
+int nfsrv_access __P((struct vnode *, int, struct ucred *, int, struct proc *,
+		      int));
 
 /* nfs_socket.c */
 int nfs_connect __P((struct nfsmount *, struct nfsreq *));
