@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.184 1998/01/23 00:44:04 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.185 1998/01/24 15:50:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -2040,7 +2040,7 @@ IDTVEC(trap0e)
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
-	subl	_idt,%eax
+	subl	_pentium_idt,%eax
 	cmpl	$(6*8),%eax
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
