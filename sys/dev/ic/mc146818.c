@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.1 2003/10/29 17:00:40 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.2 2003/10/29 17:41:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.1 2003/10/29 17:00:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.2 2003/10/29 17:41:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,12 +175,12 @@ mc146818_settime(handle, tv)
 	(*sc->sc_mcwrite)(sc, MC_DOM, dt.dt_day);
 	(*sc->sc_mcwrite)(sc, MC_MONTH, dt.dt_mon);
 
+	year = dt.dt_year - sc->sc_year0;
 	if (sc->sc_setcent) {
 		cent = year / 100;
 		(*sc->sc_setcent)(sc, cent);
 		year -= cent * 100;
 	}
-	year = dt.dt_year - sc->sc_year0;
 	if (year > 99 && (sc->sc_flag & NO_CENTURY_ADJUST) == 0)
 		year -= 100;
 	(*sc->sc_mcwrite)(sc, MC_YEAR, year);
