@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.45 1998/03/31 03:04:59 chuck Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.46 1998/08/09 21:58:53 perry Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -308,7 +308,7 @@ vm_page_bootstrap(startp, endp)
 		    (PAGE_SIZE + sizeof(struct vm_page));
 	pagearray = (vm_page_t)
 	    vm_bootstrap_steal_memory(pagecount * sizeof(struct vm_page));
-	bzero(pagearray, pagecount * sizeof(struct vm_page));
+	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 
 	/*
 	 * now init the page frames
@@ -329,7 +329,7 @@ vm_page_bootstrap(startp, endp)
 		pagecount -= n;
 		vm_physmem[lcv].lastpg = vm_physmem[lcv].pgs + (n - 1);
 
-		/* init and free vm_pages (we've already bzero'd them) */
+		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0; i < n; i++, paddr += PAGE_SIZE) {
 			vm_physmem[lcv].pgs[i].phys_addr = paddr;
@@ -576,7 +576,7 @@ vm_page_physload(start, end, avail_start, avail_end)
 			return;
 		}
 		/* zero data, init phys_addr, and free pages */
-		bzero(pgs, sizeof(struct vm_page) * npages);
+		memset(pgs, 0, sizeof(struct vm_page) * npages);
 		for (lcv = 0, paddr = ptoa(start); lcv < npages;
 		    lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
@@ -833,7 +833,7 @@ vm_page_bootstrap(startp, endp)
 	/*
 	 *	Validate these zone addresses.
 	 */
-	bzero((caddr_t) kentry_data, kentry_data_size);
+	memset((caddr_t) kentry_data, 0, kentry_data_size);
 
 	/*
 	 *	Allocate (and initialize) the virtual-to-physical
@@ -892,7 +892,7 @@ vm_page_bootstrap(startp, endp)
 
 	vm_page_array = (vm_page_t)
 	    vm_bootstrap_steal_memory(vm_page_count * sizeof(*vm_page_array));
-	bzero(vm_page_array, vm_page_count * sizeof(*vm_page_array));
+	memset(vm_page_array, 0, vm_page_count * sizeof(*vm_page_array));
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1131,7 +1131,7 @@ vm_page_startup(start, end)
 	 */
 	m = vm_page_array = (vm_page_t)
 		pmap_bootstrap_alloc(vm_page_count * sizeof(struct vm_page));
-	bzero(vm_page_array, vm_page_count * sizeof(struct vm_page));
+	memset(vm_page_array, 0, vm_page_count * sizeof(struct vm_page));
 
 	/*
 	 *	Initialize the mem entry structures now, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.22 1998/03/01 02:24:01 fvdl Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.23 1998/08/09 21:58:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -144,7 +144,7 @@ vmtotal(totalp)
 	register vm_map_t map;
 	int paging;
 
-	bzero(totalp, sizeof *totalp);
+	memset(totalp, 0, sizeof *totalp);
 	/*
 	 * Mark all objects as inactive.
 	 */

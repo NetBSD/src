@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.39 1998/07/12 17:14:08 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.40 1998/08/09 21:58:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -714,7 +714,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 		if (count == 0)
 			error = EINVAL;
 		else if (count != PAGE_SIZE && rw == UIO_READ)
-			bzero((void *)(kva + count), PAGE_SIZE - count);
+			memset((void *)(kva + count), 0, PAGE_SIZE - count);
 	}
 	vm_pager_unmap_pages(kva, npages);
 	return (error ? VM_PAGER_ERROR : VM_PAGER_OK);

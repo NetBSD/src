@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.34 1998/02/06 00:14:45 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.35 1998/08/09 21:58:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -313,7 +313,7 @@ swap_pager_alloc(handle, size, prot, foff)
 #endif
 		return(FALSE);
 	}
-	bzero((caddr_t)swp->sw_blocks,
+	memset((caddr_t)swp->sw_blocks, 0,
 	      swp->sw_nblocks * sizeof(*swp->sw_blocks));
 	swp->sw_poip = swp->sw_cnt = 0;
 	if (handle) {
