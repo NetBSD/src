@@ -1,3 +1,5 @@
+/*	$NetBSD: archive.h,v 1.6 1995/03/25 06:39:43 glass Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)archive.h	8.3 (Berkeley) 4/2/94
- *	$Id: archive.h,v 1.5 1994/12/24 15:55:54 cgd Exp $
+ *	@(#)archive.h	8.3 (Berkeley) 4/2/94
  */
 
 /* Ar(1) options. */

@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.4 1995/03/25 06:39:46 glass Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.3 (Berkeley) 4/2/94
- *	$Id: extern.h,v 1.3 1994/09/19 03:34:14 mycroft Exp $
+ *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
 
 int	append __P((char **));

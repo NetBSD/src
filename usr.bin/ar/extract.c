@@ -1,3 +1,5 @@
+/*	$NetBSD: extract.c,v 1.4 1995/03/25 06:39:47 glass Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)extract.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: extract.c,v 1.3 1994/09/19 03:34:15 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
+#else 
+static char *rcsid = "$NetBSD: extract.c,v 1.4 1995/03/25 06:39:47 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
