@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.58 2003/02/15 18:10:16 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.59 2003/03/12 16:39:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.58 2003/02/15 18:10:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.59 2003/03/12 16:39:01 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -187,7 +187,7 @@ void pgrpdump __P((void));
  * Initialize global process hashing structures.
  */
 void
-procinit()
+procinit(void)
 {
 	const struct proclist_desc *pd;
 
@@ -241,7 +241,7 @@ procinit()
  * Acquire a read lock on the proclist.
  */
 void
-proclist_lock_read()
+proclist_lock_read(void)
 {
 	int error;
 
@@ -256,7 +256,7 @@ proclist_lock_read()
  * Release a read lock on the proclist.
  */
 void
-proclist_unlock_read()
+proclist_unlock_read(void)
 {
 
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
@@ -266,7 +266,7 @@ proclist_unlock_read()
  * Acquire a write lock on the proclist.
  */
 int
-proclist_lock_write()
+proclist_lock_write(void)
 {
 	int s, error;
 
@@ -283,8 +283,7 @@ proclist_lock_write()
  * Release a write lock on the proclist.
  */
 void
-proclist_unlock_write(s)
-	int s;
+proclist_unlock_write(int s)
 {
 
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
@@ -296,9 +295,7 @@ proclist_unlock_write(s)
  * a given user is using.
  */
 int
-chgproccnt(uid, diff)
-	uid_t	uid;
-	int	diff;
+chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
 	struct uihashhead *uipp;
@@ -335,9 +332,7 @@ chgproccnt(uid, diff)
  * Is p an inferior of q?
  */
 int
-inferior(p, q)
-	struct proc *p;
-	struct proc *q;
+inferior(struct proc *p, struct proc *q)
 {
 
 	for (; p != q; p = p->p_pptr)
@@ -350,8 +345,7 @@ inferior(p, q)
  * Locate a process by number
  */
 struct proc *
-pfind(pid)
-	pid_t pid;
+pfind(pid_t pid)
 {
 	struct proc *p;
 
@@ -368,8 +362,7 @@ pfind(pid)
  * Locate a process group by number
  */
 struct pgrp *
-pgfind(pgid)
-	pid_t pgid;
+pgfind(pid_t pgid)
 {
 	struct pgrp *pgrp;
 
@@ -383,10 +376,7 @@ pgfind(pgid)
  * Move p to a new or existing process group (and session)
  */
 int
-enterpgrp(p, pgid, mksess)
-	struct proc *p;
-	pid_t pgid;
-	int mksess;
+enterpgrp(struct proc *p, pid_t pgid, int mksess)
 {
 	struct pgrp *pgrp = pgfind(pgid);
 
@@ -469,8 +459,7 @@ enterpgrp(p, pgid, mksess)
  * remove process from process group
  */
 int
-leavepgrp(p)
-	struct proc *p;
+leavepgrp(struct proc *p)
 {
 
 	LIST_REMOVE(p, p_pglist);
@@ -484,8 +473,7 @@ leavepgrp(p)
  * delete a process group
  */
 void
-pgdelete(pgrp)
-	struct pgrp *pgrp;
+pgdelete(struct pgrp *pgrp)
 {
 
 	/* Remove reference (if any) from tty to this process group */
@@ -508,10 +496,7 @@ pgdelete(pgrp)
  * entering == 1 => p is entering specified group.
  */
 void
-fixjobc(p, pgrp, entering)
-	struct proc *p;
-	struct pgrp *pgrp;
-	int entering;
+fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 {
 	struct pgrp *hispgrp;
 	struct session *mysession = pgrp->pg_session;
@@ -551,8 +536,7 @@ fixjobc(p, pgrp, entering)
  * hang-up all process in that group.
  */
 static void
-orphanpg(pg)
-	struct pgrp *pg;
+orphanpg(struct pgrp *pg)
 {
 	struct proc *p;
 
@@ -569,8 +553,7 @@ orphanpg(pg)
 
 /* mark process as suid/sgid, reset some values do defaults */
 void
-p_sugid(p)
-	struct proc *p;
+p_sugid(struct proc *p)
 {
 	struct plimit *newlim;
 
@@ -590,7 +573,7 @@ p_sugid(p)
 
 #ifdef DEBUG
 void
-pgrpdump()
+pgrpdump(void)
 {
 	struct pgrp *pgrp;
 	struct proc *p;
