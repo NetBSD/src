@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.18 2001/05/26 19:48:32 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.19 2001/10/19 01:16:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.18 2001/05/26 19:48:32 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.19 2001/10/19 01:16:38 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -622,7 +622,7 @@ dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 		printf("%s%s", i == 0 ? "" : ", ", list[i]);
 	puts("");
 #endif
-	(void)qsort((void *)list, numentries, sizeof(char *), alphacmp);
+	(void)qsort(list, numentries, sizeof(char *), alphacmp);
 	width++;		/* want two spaces between items */
 	width = (width + 8) &~ 7;
 
