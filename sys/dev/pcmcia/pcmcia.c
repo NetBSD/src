@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.64 2004/08/11 20:57:40 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.65 2004/08/12 16:04:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.64 2004/08/11 20:57:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.65 2004/08/12 16:04:20 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -523,14 +523,15 @@ pcmcia_function_enable(pf)
 
 	if (pcmcia_mfc(sc)) {
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
-				 (pf->pf_mfc_iobase[0] >> 0) & 0xff);
+				 (pf->pf_mfc_iobase >>  0) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
-				 (pf->pf_mfc_iobase[0] >> 8) & 0xff);
+				 (pf->pf_mfc_iobase >>  8) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2,
-				 (pf->pf_mfc_iobase[1] >> 0) & 0xff);
+				 (pf->pf_mfc_iobase >> 16) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3,
-				 (pf->pf_mfc_iobase[1] >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, pf->pf_mfc_iomask);
+				 (pf->pf_mfc_iobase >> 24) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOLIMIT,
+				 pf->pf_mfc_iomax - pf->pf_mfc_iobase);
 	}
 
 	reg = (pf->cfe->number & PCMCIA_CCR_OPTION_CFINDEX);
@@ -673,19 +674,22 @@ pcmcia_io_map(pf, width, pcihp, windowp)
 	 */
 
 	if (pcmcia_mfc(pf->sc)) {
-		int win;
-		long iomask;
+		bus_addr_t iobase = pcihp->addr;
+		bus_addr_t iomax = pcihp->addr + pcihp->size - 1;
 
-		/* round up to nearest (2^n)-1 */
-		for (iomask = 1; iomask < pcihp->size; iomask <<= 1)
-			;
-		iomask--;
-
-		win = pf->pf_mfc_windows;
-		KASSERT(win < 2);
-printf("win %d = addr %lx size %lx iomask %lx\n", win, (long)pcihp->addr, (long)pcihp->size, (long)iomask);
-		pf->pf_mfc_iobase[win] = pcihp->addr;
-		pf->pf_mfc_iomask = iomask;
+		DPRINTF(("window iobase %lx iomax %lx\n", (long)iobase,
+		    (long)iomax));
+		if (pf->pf_mfc_iobase == 0) {
+			pf->pf_mfc_iobase = iobase;
+			pf->pf_mfc_iomax = iomax;
+		} else {
+			if (iobase < pf->pf_mfc_iobase)
+				pf->pf_mfc_iobase = iobase;
+			if (iomax > pf->pf_mfc_iomax)
+				pf->pf_mfc_iomax = iomax;
+		}
+		DPRINTF(("function iobase %lx iomax %lx\n",
+		    (long)pf->pf_mfc_iobase, (long)pf->pf_mfc_iomax));
 	}
 
 	return (0);
@@ -706,7 +710,7 @@ pcmcia_io_unmap(pf, window)
 		 * because we generally get called when a card has been
 		 * ejected, and the CCR isn't there any more.
 		 */
-		--pf->pf_mfc_windows;
+		;
 	}
 
 	pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, window);
