@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.22 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.23 2005/02/20 15:56:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.22 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.23 2005/02/20 15:56:03 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -817,8 +817,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * See if we have any VLAN stuff.
 		 */
-		mtag = sc->sc_ethercom.ec_nvlans ?
-		    m_tag_find(m0, PACKET_TAG_VLAN, NULL) : NULL;
+		mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -934,7 +933,7 @@ stge_start(struct ifnet *ifp)
 #ifdef	STGE_VLAN_CFI
 			    TFD_CFI |
 #endif
-			    TFD_VID((*(u_int *)(mtag + 1)));
+			    TFD_VID(VLAN_TAG_VALUE(mtag));
 		}
 		tfd->tfd_control = htole64(tfc);
 
@@ -1361,18 +1360,9 @@ stge_rxintr(struct stge_softc *sc)
 		/*
 		 * Check for VLAN tagged packets
 		 */
-		if (status & RFD_VLANDetected) {
-			struct m_tag *mtag =
-			    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
-			if (mtag == NULL) {
-				printf("%s: no mbuf for VLAN tag\n",
-				    ifp->if_xname);
-				m_freem(m);
-				continue;
-			}
-			*(u_int *)(mtag + 1) = RFD_TCI(status);
-			m_tag_prepend(m, mtag);
-		}
+		if (status & RFD_VLANDetected)
+			VLAN_INPUT_TAG(ifp, m, RFD_TCI(status), continue);
+
 #endif
 #if	0
 		if (status & RFD_VLANDetected) {
