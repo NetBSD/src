@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/03/21 15:04:24 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/21 15:04:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ main(ac, av)
 	int			f_printpath = 0;
 	char			*file = NULL;
 	char			*name, *ptr;
+	struct sigaction	sa;
 #ifdef BSD
 	struct itimerval	itv;
 #endif
@@ -164,25 +165,19 @@ main(ac, av)
 	signal(SIGHUP, log_score);
 	signal(SIGTERM, log_score);
 
-#ifdef BSD
-	ioctl(fileno(stdin), TIOCGETP, &tty_start);
-	bcopy(&tty_start, &tty_new, sizeof(tty_new));
-	tty_new.sg_flags |= CBREAK;
-	tty_new.sg_flags &= ~ECHO;
-	ioctl(fileno(stdin), TIOCSETP, &tty_new);
-#endif
-
-#ifdef SYSV
-	ioctl(fileno(stdin), TCGETA, &tty_start);
-	bcopy(&tty_start, &tty_new, sizeof(tty_new));
-	tty_new.c_lflag &= ~ICANON;
-	tty_new.c_lflag &= ~ECHO;
+	tcgetattr(fileno(stdin), &tty_start);
+	tty_new = tty_start;
+	tty_new.c_lflag &= ~(ICANON|ECHO);
 	tty_new.c_cc[VMIN] = 1;
 	tty_new.c_cc[VTIME] = 0;
-	ioctl(fileno(stdin), TCSETAW, &tty_new);
-#endif
+	tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
 
-	signal(SIGALRM, update);
+	sa.sa_handler = update;
+	sigemptyset(&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGALRM);
+	sigaddset(&sa.sa_mask, SIGINT);
+	sa.sa_flags = 0;
+	sigaction(SIGALRM, &sa, (struct sigaction *)0);
 
 #ifdef BSD
 	itv.it_value.tv_sec = 0;
