@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
+/*	$NetBSD: exit.c,v 1.12 1997/06/26 19:11:38 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -28,9 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef __STDC__
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #else
-#include <varargs.h>
+#include <machine/varargs.h>
 #endif
 
 #include "stand.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.16 1997/03/15 18:12:13 is Exp $	*/
+/*	$NetBSD: arp.c,v 1.17 1997/06/26 19:11:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -46,7 +46,11 @@
 
 #include <netinet/in_systm.h>
 
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
 #include <string.h>
+#endif
 
 #include "if_ether.h"
 #include "stand.h"
