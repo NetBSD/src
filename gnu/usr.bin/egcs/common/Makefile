@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/04/09 00:52:06 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1998/04/15 11:51:54 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -20,9 +20,8 @@ CPPFLAGS+=	-DTARGET_NAME=\"${target_alias}\"
 
 SRCS= \
 	${MACHINE_ARCH}.c alias.c bc-arity.h bc-emit.c bc-opcode.h \
-	bc-opname.h bc-optab.c bitmap.c c-aux-info.c \
-	c-convert.c c-iterate.c c-parse.h c-pragma.c \
-	caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
+	bc-opname.h bc-optab.c bitmap.c c-aux-info.c c-convert.c c-parse.h \
+	c-pragma.c caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
 	dwarf2out.c dwarfout.c emit-rtl.c explow.c expmed.c expr.c except.c \
 	final.c flow.c fold-const.c function.c getpwd.c global.c insn-attr.h \
 	insn-attrtab.c insn-codes.h insn-config.h insn-emit.c insn-extract.c \
@@ -30,9 +29,8 @@ SRCS= \
 	integrate.c jump.c local-alloc.c loop.c obstack.c optabs.c \
 	print-rtl.c print-tree.c profile.c real.c recog.c reg-stack.c \
 	regclass.c regmove.c reload.c reload1.c reorg.c rtl.c rtlanal.c \
-	sched.c \
-	sdbout.c stmt.c stor-layout.c stupid.c toplev.c tree.c unroll.c \
-	varasm.c version.c xcoffout.c
+	sched.c sdbout.c stmt.c stor-layout.c stupid.c toplev.c tree.c \
+	unroll.c varasm.c version.c xcoffout.c
 
 insn-attr.h: genattr ${MD}
 	./genattr ${MD} > insn-attr.h
