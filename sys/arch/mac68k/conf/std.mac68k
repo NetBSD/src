@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.8 1995/11/21 05:05:51 briggs Exp $
+#	$NetBSD: std.mac68k,v 1.9 1996/02/14 04:26:38 briggs Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -21,3 +21,4 @@ grf1	at nubus0	slot -1 id ? claimed 0
 
 options	TIMEZONE=0		# minutes west of GMT--read from booter
 options	DST=0			# daylight savings rules--obsolete
+options HZ=60			# mac clock runs at 60hz
