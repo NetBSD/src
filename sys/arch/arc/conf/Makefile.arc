@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.34 2000/02/22 11:25:58 soda Exp $
+#	$NetBSD: Makefile.arc,v 1.35 2000/02/25 13:20:43 soda Exp $
 #	$OpenBSD: Makefile.arc,v 1.13 1999/08/15 20:43:57 niklas Exp $
 
 # Makefile for NetBSD
@@ -33,8 +33,8 @@ NM?=	nm
 RANLIB?=ranlib
 STRIP?=	strip
 SIZE?=	size
-ELF2AOUT?=	touch		# XXX
-ELF2ECOFF?=	elf2ecoff
+OBJCOPY?=objcopy
+ELF2ECOFF?=${OBJCOPY} -O ecoff-littlemips
 TOUCH?=	touch -f -c
 TSORT?=	tsort -q
 
@@ -62,7 +62,7 @@ CWARNFLAGS+=	-Wno-main
 GP?=		-G 0 # -G 30 # XXX: check this
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -mips3 -D_LOCORE
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -mips2 -D_LOCORE
 LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext ${TEXTADDR} -e start ${GP}
 STRIPFLAGS=	-g -X -x
 
@@ -103,7 +103,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
-		 param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
+		param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=	locore_mips3.o
 .endif
@@ -125,10 +125,7 @@ LINKFLAGS+=	-x
 .endif
 
 SYSTEM_LD_TAIL+=;\
-		mv $@ $@.elf; \
-		${ELF2AOUT} $@.elf $@; \
-		chmod 755 $@; \
-		${ELF2ECOFF} $@.elf $@.ecoff
+		${ELF2ECOFF} $@ $@.ecoff
 
 %LOAD
 
@@ -180,9 +177,6 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-#OBSOLETE:
-#SRCS=	${ARC}/arc/locore.S ${ARC}/arc/fp.S \
-#	param.c ioconf.c ${CFILES} ${SFILES}
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 	${ARC}/arc/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
