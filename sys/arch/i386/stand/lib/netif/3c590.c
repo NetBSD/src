@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.2 1997/03/15 22:18:55 perry Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -40,7 +40,7 @@ Author: Martin Renters.
 
 char etherdev[20];
 
-char bnc=0, utp=0; /* for 3C509 */
+int ether_medium;
 unsigned short eth_base;
 
 extern void epreset __P((void));
@@ -82,7 +82,7 @@ char *myadr;
 	}
 	eth_base = iobase & 0xfffffffc;
 
-	bnc = 1; /* XXX */
+	ether_medium = ETHERMEDIUM_BNC; /* XXX */
 
 	GO_WINDOW(0);
 
