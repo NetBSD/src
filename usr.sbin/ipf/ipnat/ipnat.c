@@ -1,3 +1,5 @@
+/*	$NetBSD: ipnat.c,v 1.4 1997/03/29 04:31:55 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -38,25 +40,22 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_compat.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 #include <resolv.h>
+#include <ctype.h>
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #include <netinet/ip_nat.h>
-#include <ctype.h>
+#include "kmem.h"
 
-#include <pathnames.h>
-#define IPL_NAME _PATH_IPL
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.3 1997/01/29 01:49:28 mark Exp $";
+static	char	rcsid[] = "Id: ipnat.c,v 2.0.2.4 1997/03/29 02:50:02 darrenr Exp ";
 #endif
 
 #if	SOLARIS
@@ -64,15 +63,32 @@ static	char	rcsid[] = "$Id: ipnat.c,v 1.3 1997/01/29 01:49:28 mark Exp $";
 #endif
 
 extern	char	*optarg;
-extern	int	kmemcpy();
 
-void	dostats(), printnat(), parsefile();
+ipnat_t	*parse __P((char *));
+u_long	hostnum __P((char *, int *));
+u_long	hostmask __P((char *));
+u_short	portnum __P((char *, char *));
+void	dostats __P((int, int)), flushtable __P((int, int));
+void	printnat __P((ipnat_t *, int, void *));
+void	parsefile __P((int, char *, int));
+void	usage __P((char *));
+int	countbits __P((u_long));
+char	*getnattype __P((ipnat_t *));
+int	main __P((int, char*[]));
+
+#define	OPT_REM		1
+#define	OPT_NODO	2
+#define	OPT_STAT	4
+#define	OPT_LIST	8
+#define	OPT_VERBOSE	16
+#define	OPT_FLUSH	32
+#define	OPT_CLEAR	64
 
 
 void usage(name)
 char *name;
 {
-	fprintf(stderr, "%s: [-lnrsv] [-f filename]\n", name);
+	fprintf(stderr, "%s: [-CFlnrsv] [-f filename]\n", name);
 	exit(1);
 }
 
@@ -85,40 +101,48 @@ char *argv[];
 	int	c;
 	int	fd, opts = 1;
 
-	while ((c = getopt(argc, argv, "f:lnrsv")) != -1)
+	while ((c = getopt(argc, argv, "CFf:lnrsv")) != -1)
 		switch (c)
 		{
+		case 'C' :
+			opts |= OPT_CLEAR;
+			break;
 		case 'f' :
 			file = optarg;
 			break;
+		case 'F' :
+			opts |= OPT_FLUSH;
+			break;
 		case 'l' :
-			opts |= 8;
+			opts |= OPT_LIST;
 			break;
 		case 'n' :
-			opts |= 2;
+			opts |= OPT_NODO;
 			break;
 		case 'r' :
-			opts &= ~1;
+			opts &= ~OPT_REM;
 			break;
 		case 's' :
-			opts |= 4;
+			opts |= OPT_STAT;
 			break;
 		case 'v' :
-			opts |= 16;
+			opts |= OPT_VERBOSE;
 			break;
 		default :
 			usage(argv[0]);
 		}
 
-	if (((fd = open(IPL_NAME, O_RDWR)) == -1) &&
+	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAME, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAME, O_RDONLY)) == -1)) {
 		perror("open");
 		exit(-1);
 	}
 
+	if (opts & (OPT_FLUSH|OPT_CLEAR))
+		flushtable(fd, opts);
 	if (file)
 		parsefile(fd, file, opts);
-	if (opts & 12)
+	if (opts & (OPT_LIST|OPT_STAT))
 		dostats(fd, opts);
 	return 0;
 }
@@ -153,9 +177,10 @@ u_long	ip;
 }
 
 
-void printnat(np, verbose)
+void printnat(np, verbose, ptr)
 ipnat_t *np;
 int verbose;
+void *ptr;
 {
 	int	bits;
 
@@ -179,8 +204,9 @@ int verbose;
 			printf(" udp");
 		printf("\n");
 		if (verbose)
-			printf("\t%lx %u %x %u", (u_long)np->in_ifp,
-			       np->in_space, np->in_flags, np->in_pnext);
+			printf("\t%p %u %x %u %x %d\n", (u_int)np->in_ifp,
+			       np->in_space, np->in_flags, np->in_pnext, np,
+			       np->in_use);
 	} else {
 		np->in_nextip.s_addr = htonl(np->in_nextip.s_addr);
 		printf("map %s %s/", np->in_ifname, inet_ntoa(np->in_in[0]));
@@ -195,7 +221,7 @@ int verbose;
 			printf("%d ", bits);
 		else
 			printf("%s", inet_ntoa(np->in_out[1]));
-		if (np->in_port[0] || np->in_port[1]) {
+		if (np->in_pmin || np->in_pmax) {
 			printf(" portmap");
 			if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
 				printf(" tcp/udp");
@@ -203,15 +229,31 @@ int verbose;
 				printf(" tcp");
 			else if (np->in_flags & IPN_UDP)
 				printf(" udp");
-			printf(" %d:%d", ntohs(np->in_port[0]),
-			       ntohs(np->in_port[1]));
+			printf(" %d:%d", ntohs(np->in_pmin),
+			       ntohs(np->in_pmax));
 		}
 		printf("\n");
 		if (verbose)
-			printf("\t%lx %u %s %d %x\n", (u_long)np->in_ifp,
+			printf("\t%p %u %s %d %x\n", (u_int)np->in_ifp,
 			       np->in_space, inet_ntoa(np->in_nextip),
 			       np->in_pnext, np->in_flags);
 	}
+}
+
+
+/*
+ * Get a nat filter type given its kernel address.
+ */
+char *getnattype(ipnat)
+ipnat_t *ipnat;
+{
+	ipnat_t ipnatbuff;
+
+	if (ipnat && kmemcpy((char *)&ipnatbuff, (long)ipnat,
+			     sizeof(ipnatbuff)))
+		return "???";
+
+	return (ipnatbuff.in_redir == NAT_MAP) ? "MAP" : "RDR";
 }
 
 
@@ -220,53 +262,70 @@ int fd, opts;
 {
 	natstat_t ns;
 	ipnat_t	ipn;
-	nat_t	**nt, *np, nat;
-	int	i;
+	nat_t	**nt[2], *np, nat;
+	int	i = 0;
 
-	if (ioctl(fd, SIOCGNATS, &ns) == -1) {
+	bzero((char *)&ns, sizeof(ns));
+
+	if (!(opts & OPT_NODO) && ioctl(fd, SIOCGNATS, &ns) == -1) {
 		perror("ioctl(SIOCGNATS)");
 		return;
 	}
-	if (opts & 4) {
+
+	if (opts & OPT_STAT) {
 		printf("mapped\tin\t%lu\tout\t%lu\n",
 			ns.ns_mapped[0], ns.ns_mapped[1]);
 		printf("added\t%lu\texpired\t%lu\n",
 			ns.ns_added, ns.ns_expire);
 		printf("inuse\t%lu\n", ns.ns_inuse);
-		if (opts & 16)
-			printf("table %#lx list %#lx\n",
-				(u_long)ns.ns_table, (u_long)ns.ns_list);
+		if (opts & OPT_VERBOSE)
+			printf("table %p list %p\n",
+				(u_int)ns.ns_table, (u_int)ns.ns_list);
 	}
-	if (opts & 8) {
+	if (opts & OPT_LIST) {
+		printf("List of active MAP/Redirect filters:\n");
 		while (ns.ns_list) {
-			if (kmemcpy(&ipn, ns.ns_list, sizeof(ipn))) {
+			if (kmemcpy((char *)&ipn, (long)ns.ns_list,
+				    sizeof(ipn))) {
 				perror("kmemcpy");
 				break;
 			}
-			printnat(&ipn, opts & 16);
+			printnat(&ipn, opts & OPT_VERBOSE, (void *)ns.ns_list);
 			ns.ns_list = ipn.in_next;
 		}
 
-		nt = (nat_t **)malloc(sizeof(*nt) * NAT_SIZE);
-		if (kmemcpy(nt, ns.ns_table, sizeof(*nt) * NAT_SIZE)) {
+		nt[0] = (nat_t **)malloc(sizeof(*nt) * NAT_SIZE);
+		if (kmemcpy((char *)nt[0], (long)ns.ns_table[0],
+			    sizeof(**nt) * NAT_SIZE)) {
 			perror("kmemcpy");
 			return;
 		}
+
+		printf("\nList of active sessions:\n");
+
 		for (i = 0; i < NAT_SIZE; i++)
-			for (np = nt[i]; np; np = nat.nat_next) {
-				if (kmemcpy(&nat, np, sizeof(nat)))
+			for (np = nt[0][i]; np; np = nat.nat_hnext[0]) {
+				if (kmemcpy((char *)&nat, (long)np,
+					    sizeof(nat)))
 					break;
-				printf("%s %hu <- -> ",
+
+				printf("%s %-15s %-5hu <- ->",
+					getnattype(nat.nat_ptr),
 					inet_ntoa(nat.nat_inip),
 					ntohs(nat.nat_inport));
-				printf("%s %hu %hu %hu %lx [",
+				printf(" %-15s %-5hu",
 					inet_ntoa(nat.nat_outip),
-					ntohs(nat.nat_outport),
-					nat.nat_age, nat.nat_use,
-					nat.nat_sumd);
-				printf("%s %hu]\n", inet_ntoa(nat.nat_oip),
+					ntohs(nat.nat_outport));
+				printf(" [%s %hu]", inet_ntoa(nat.nat_oip),
 					ntohs(nat.nat_oport));
+				printf(" %d %hu %lx", nat.nat_age,
+					nat.nat_use, nat.nat_sumd);
+#if SOLARIS
+				printf(" %lx", nat.nat_ipsumd);
+#endif
+				putchar('\n');
 			}
+		free(nt[0]);
 	}
 }
 
@@ -343,7 +402,7 @@ int	*resolved;
 	struct	netent	*np;
 
 	*resolved = 0;
-	if (!strcasecmp("any",host))
+	if (!strcasecmp("any", host))
 		return 0L;
 	if (isdigit(*host))
 		return inet_addr(host);
@@ -613,10 +672,10 @@ int opts;
 			if (*line)
 				fprintf(stderr, "%d: syntax error in \"%s\"\n",
 					linenum, line);
-		} else if (!(opts & 2)) {
-			if ((opts &16) && np)
-				printnat(np, opts & 16);
-			if (opts & 1) {
+		} else if (!(opts & OPT_NODO)) {
+			if ((opts & OPT_VERBOSE) && np)
+				printnat(np, opts &  OPT_VERBOSE, NULL);
+			if (opts & OPT_REM) {
 				if (ioctl(fd, SIOCADNAT, np) == -1)
 					perror("ioctl(SIOCADNAT)");
 			} else if (ioctl(fd, SIOCRMNAT, np) == -1)
@@ -625,4 +684,27 @@ int opts;
 		linenum++;
 	}
 	fclose(stdin);
+}
+
+
+void flushtable(fd, opts)
+int fd, opts;
+{
+	int n = 0;
+
+	if (opts & OPT_FLUSH) {
+		n = 0;
+		if (!(opts & OPT_NODO) && ioctl(fd, SIOCFLNAT, &n) == -1)
+			perror("ioctl(SIOCFLNAT)");
+		else
+			printf("%d entries flushed from NAT table\n", n);
+	}
+
+	if (opts & OPT_CLEAR) {
+		n = 0;
+		if (!(opts & OPT_NODO) && ioctl(fd, SIOCCNATL, &n) == -1)
+			perror("ioctl(SIOCCNATL)");
+		else
+			printf("%d entries flushed from NAT list\n", n);
+	}
 }
