@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.1 2001/07/07 04:55:21 eeh Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2 2001/08/01 05:52:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memcpy.S,v 1.1 2001/07/07 04:55:21 eeh Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.2 2001/08/01 05:52:12 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -107,7 +107,7 @@ ENTRY(bcopy) /* src, dest, size */
 	sub	%o1, %o0, %o3
 
 	cmp	%o3, %o2
-	bl,pn	%xcc, Lovbcopy
+	blu,pn	%xcc, Lovbcopy
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
