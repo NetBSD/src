@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.21 2001/04/30 19:49:08 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.22 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -202,9 +202,10 @@ mii_phy_tick(sc)
 	}
 
 	/*
-	 * Only retry autonegotiation every 5 seconds.
+	 * Only retry autonegotiation every N seconds.
 	 */
-	if (++sc->mii_ticks != 5)
+	KASSERT(sc->mii_anegticks != 0);
+	if (++sc->mii_ticks != sc->mii_anegticks)
 		return (EJUSTRETURN);
 
 	sc->mii_ticks = 0;
@@ -368,24 +369,32 @@ mii_phy_add_media(sc)
 	if (sc->mii_extcapabilities & EXTSR_MEDIAMASK) {
 		/*
 		 * XXX Right now only handle 1000SX and 1000TX.  Need
-		 * XXX to hnalde 1000LX and 1000CX some how.
+		 * XXX to handle 1000LX and 1000CX some how.
+		 *
+		 * Note since it can take 5 seconds to auto-negotiate
+		 * a gigabit link, we make anegticks 10 seconds for
+		 * all the gigabit media types.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
 			    sc->mii_inst), MII_MEDIA_1000);
 			PRINT("1000baseSX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_FDX);
 			PRINT("1000baseSX-FDX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
 			    sc->mii_inst), MII_MEDIA_1000);
 			PRINT("1000baseTX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_FDX);
 			PRINT("1000baseTX-FDX");

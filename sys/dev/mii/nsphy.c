@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.29 2001/03/28 14:16:49 drochner Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.30 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ nsphyattach(parent, self, aux)
 	sc->mii_funcs = &nsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 

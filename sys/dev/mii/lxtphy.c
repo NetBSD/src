@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.22 2001/05/17 17:29:54 drochner Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.23 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ lxtphyattach(parent, self, aux)
 	sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags | ma->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 

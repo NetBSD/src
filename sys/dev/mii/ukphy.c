@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.14 2001/04/30 19:49:08 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.15 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ ukphyattach(parent, self, aux)
 	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	/*
 	 * Don't do loopback on unknown PHYs.  It might confuse some of them.

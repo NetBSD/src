@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.8 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.9 2001/05/31 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ dmphyattach(parent, self, aux)
 	sc->mii_funcs = &dmphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 
