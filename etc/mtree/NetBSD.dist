@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.76 1999/02/05 18:51:47 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.77 1999/02/09 17:35:27 tv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -122,11 +122,6 @@ include
 # ./usr/include/arpa
 arpa
 # ./usr/include/arpa
-..
-
-# ./usr/include/bfd
-bfd
-# ./usr/include/bfd
 ..
 
 # ./usr/include/g++
