@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.23 1997/03/13 02:55:25 hpeyerl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.24 1997/05/08 10:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -370,7 +370,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 		goto badunlock;
 	}
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
-		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
+		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/*
 	 * Similarly, if it's not marked as executable, we don't allow
