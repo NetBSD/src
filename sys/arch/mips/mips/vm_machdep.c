@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1996/10/13 03:39:57 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1997/05/18 17:26:31 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,7 +114,7 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
-	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 
 	/*
 	 * Arrange for a non-local goto when the new process
