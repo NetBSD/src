@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: newwin.c,v 1.11 1999/04/22 22:39:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.11 1999/04/22 22:39:09 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -141,8 +141,8 @@ __set_subwin(orig, win)
 	/* Point line pointers to line space. */
 	for (lp = win->lspace, i = 0; i < win->maxy; i++, lp++) {
 		win->lines[i] = lp;
-		olp = orig->lines[i + win->begy];
-		lp->line = &olp->line[win->begx];
+		olp = orig->lines[i + win->begy - orig->begy];
+		lp->line = &olp->line[win->begx - orig->begx];
 		lp->firstchp = &olp->firstch;
 		lp->lastchp = &olp->lastch;
 		lp->hash = __hash((char *) lp->line, (int) (win->maxx * __LDATASIZE));
