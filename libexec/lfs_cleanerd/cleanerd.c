@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.38 2002/06/06 00:56:49 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.39 2002/06/14 00:58:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.38 2002/06/06 00:56:49 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.39 2002/06/14 00:58:40 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,12 +108,6 @@ typedef struct {
 } SEGS_AND_BLOCKS;
 
 #define	CLEAN_BYTES	0x1
-
-/* function prototypes for system calls; not sure where they should go */
-int	 lfs_segwait(fsid_t *, struct timeval *);
-int	 lfs_segclean(fsid_t *, u_long);
-int	 lfs_bmapv(fsid_t *, BLOCK_INFO_15 *, int);
-int	 lfs_markv(fsid_t *, BLOCK_INFO_15 *, int);
 
 /* function prototypes */
 int	 bi_tossold(const void *, const void *, const void *);
@@ -687,9 +681,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	error = 0;
 	tba = NULL;
 
-	if (debug)
-		syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
-		    (unsigned long)sp->su_nbytes);
+	syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
+	       (unsigned long)sp->su_nbytes);
 
 	/* XXX could add debugging to verify that segment is really empty */
 	if (sp->su_nbytes == 0) {
@@ -914,7 +907,6 @@ clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 	}
 	/* If we're writing more than we're saving, try coalescing */
 	if (ebytes + nbytes > fsp->fi_lfs.lfs_fsize * fsp->fi_lfs.lfs_fsbpseg * sbp->nsegs) {
-		syslog(LOG_NOTICE, "starting coalescing process");
 		fork_coalesce(fsp);
 	}
 

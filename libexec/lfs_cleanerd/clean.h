@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.13 2002/06/06 00:56:49 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.14 2002/06/14 00:58:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,6 +147,11 @@ typedef struct fs_info {
 }
 
 __BEGIN_DECLS
+int		 lfs_segwait(fsid_t *, struct timeval *);
+int		 lfs_segclean(fsid_t *, u_long);
+int		 lfs_bmapv(fsid_t *, BLOCK_INFO_15 *, int); 
+int		 lfs_markv(fsid_t *, BLOCK_INFO_15 *, int);
+
 int		 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
 int		 fs_getmntinfo(struct statfs **, char *, const char *);
 void		 get(int, off_t, void *, size_t);
