@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.18 1994/07/02 13:04:03 briggs Exp $
+ *	$Id: machdep.c,v 1.19 1994/07/08 07:57:53 lkestel Exp $
  */
 
 #include <param.h>
@@ -1602,36 +1602,38 @@ void gray_bar()
    asm("movl sp@+, a0");
 }
 
+#if 0
 extern void	macserputchar(unsigned char c);
+#endif
 
 void dprintf(unsigned long value)
 {
    static int count = 1, i;
    static char hex[] = "0123456789ABCDEF";
-   void macputchar(dev_t,int);
+   void itecnputc(dev_t,int);
 
-   macputchar((dev_t)0,(count/10)+'0');
-   macputchar((dev_t)0,(count%10)+'0');
+   itecnputc((dev_t)0,(count/10)+'0');
+   itecnputc((dev_t)0,(count%10)+'0');
    count++;
-   macputchar((dev_t)0,':');
-   macputchar((dev_t)0,' ');
-   macputchar((dev_t)0,'0');
-   macputchar((dev_t)0,'x');
+   itecnputc((dev_t)0,':');
+   itecnputc((dev_t)0,' ');
+   itecnputc((dev_t)0,'0');
+   itecnputc((dev_t)0,'x');
    for (i = 7; i >= 0; i--)
-     macputchar((dev_t)0,hex[(value >> (i*4)) & 0xF]);
-   macputchar((dev_t)0,'\n');
-   macputchar((dev_t)0,'\r');
+     itecnputc((dev_t)0,hex[(value >> (i*4)) & 0xF]);
+   itecnputc((dev_t)0,'\n');
+   itecnputc((dev_t)0,'\r');
 }
 
 void strprintf(char *str, unsigned long value)
 {
    static int i;
-   void macputchar(dev_t,int);
+   void itecnputc(dev_t,int);
 
    while (*str)
-     macputchar((dev_t)0,*str++); 
-   macputchar((dev_t)0,':');
-   macputchar((dev_t)0,' ');
+     itecnputc((dev_t)0,*str++); 
+   itecnputc((dev_t)0,':');
+   itecnputc((dev_t)0,' ');
    dprintf(value);
 }
 
@@ -2073,6 +2075,7 @@ pmap_page_index(pa)
 
 void ddprintf (char *fmt, int val)
 {
+#if 0
   char buf[128], *s;
 
   if (!serial_boot_echo) return;
@@ -2083,10 +2086,12 @@ void ddprintf (char *fmt, int val)
       macserputchar ('\r');
     }
   }
+#endif
 }
 
 void dddprintf (char *fmt, int val1, int val2)
 {
+#if 0
   char buf[128], *s;
 
   if (!serial_boot_echo) return;
@@ -2097,6 +2102,7 @@ void dddprintf (char *fmt, int val1, int val2)
       macserputchar ('\r');
     }
   }
+#endif
 }
 
 static char *envbuf = NULL;
