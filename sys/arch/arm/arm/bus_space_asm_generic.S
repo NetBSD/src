@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.2 2002/08/29 17:27:48 briggs Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -225,6 +225,20 @@ ENTRY(generic_bs_rr_4)
  * write region.
  */
 
+ENTRY(generic_bs_wr_1)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+1:	ldrb	r3, [r1], #1
+	strb	r3, [r0], #1
+	subs	r2, r2, #1
+	bne	1b
+
+	mov	pc, lr
+
 #if (ARM_ARCH_4 + ARM_ARCH_5) > 0
 ENTRY(generic_armv4_bs_wr_2)
 	add	r0, r1, r2
@@ -258,6 +272,19 @@ ENTRY(generic_bs_wr_4)
 /*
  * set region
  */
+
+ENTRY(generic_bs_sr_1)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+1:	strb	r1, [r0], #1
+	subs	r2, r2, #1
+	bne	1b
+
+	mov	pc, lr
 
 #if (ARM_ARCH_4 + ARM_ARCH_5) > 0
 ENTRY(generic_armv4_bs_sr_2)
