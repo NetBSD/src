@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.27 1996/02/27 04:20:37 jonathan Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.28 1996/02/29 02:48:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -271,23 +271,28 @@ long clock_cpu = 0;		/* CPU clock adjust */
  * timekeeping code in kern_clock.c. 
  * Alphas use 1024.  Decstations use 256, which covers all the powers
  * of 2 from 64 to 1024, inclusive.
+ * Precision timekeeping does not support 48 Hz, so Ataris at 48Hz are
+ * out of luck.
  */
-#if HZ == 64 || HZ == 60 /* Precision timekeeping does not support 48 Hz */
-# define SHIFT_HZ 6		/* log2(hz) */
-#if HZ == 128 || HZ == 100  HZ == 96
-# define SHIFT_HZ 7		/* log2(hz) */
+
+#if HZ == 64 || HZ == 60
+# define SHIFT_HZ 6		/* log2(64) */
 #else
-#if HZ == 256 /* || !defined(HZ)*/
-# define SHIFT_HZ 8		/* log2(hz) (default) */
+#if HZ == 128 || HZ == 100 ||  HZ == 96
+# define SHIFT_HZ 7		/* log2(128), 100 and 96 are fudged. */
+#else
+#if HZ == 256
+# define SHIFT_HZ 8		/* log2(256) */
 #else
 #if HZ == 1024
-# define SHIFT_HZ 10
+# define SHIFT_HZ 10		/* log2(1024) */
 #else
 #error HZ is not a supported value. Please change HZ in your kernel config file
 #endif /* 1024Hz */
 #endif /* 256Hz */
-#endif /* 128HZ or 100Hz or 96Hz*/
-#endif /* 64Hz or 60Hz or 48Hz*/
+#endif /* 128HZ or 100Hz (or 96Hz, untested) */
+#endif /* 64Hz or 60Hz */
+
 /*
  * End of SHIFT_HZ computation
  */
