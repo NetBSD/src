@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.5 1993/10/10 09:35:59 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.6 1993/10/15 03:21:11 mycroft Exp $
  */
 
 /*
@@ -89,7 +89,7 @@
 
 #include "machine/cpu.h"
 #include "machine/cpufunc.h"
-#include "isa.h"
+#include "dma.h"
 #include "i386/isa/isa.h"
 
 /*
@@ -292,7 +292,7 @@ pmap_bootstrap(virtual_start)
 	 * reserve special hunk of memory for use by bus dma as a bounce
 	 * buffer (contiguous virtual *and* physical memory).
 	 */
-#if	NISA > 0
+#if	NDMA > 0
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
