@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.8 1998/03/01 02:23:15 fvdl Exp $	*/
+/*	$NetBSD: fs.h,v 1.9 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -153,7 +153,7 @@ struct csum {
 };
 
 /*
- * Super block for an FFS file system.
+ * Super block for an FFS file system in memory.
  */
 struct fs {
 	int32_t	 fs_firstfield;		/* historic file system linked list, */
@@ -341,29 +341,37 @@ struct cg {
 /*
  * Macros for access to cylinder group array structures
  */
-#define cg_blktot(cgp) \
-    (((cgp)->cg_magic != CG_MAGIC) \
+#define cg_blktot(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_btot) \
-    : ((int32_t *)((u_int8_t *)(cgp) + (cgp)->cg_btotoff)))
-#define cg_blks(fs, cgp, cylno) \
-    (((cgp)->cg_magic != CG_MAGIC) \
+    : ((int32_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_btotoff, (ns)))))
+#define cg_blks(fs, cgp, cylno, ns) \
+    ((ufs_rw32((cgp)->cg_magic, ns) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_b[cylno]) \
     : ((int16_t *)((u_int8_t *)(cgp) + \
-	(cgp)->cg_boff) + (cylno) * (fs)->fs_nrpos))
-#define cg_inosused(cgp) \
-    (((cgp)->cg_magic != CG_MAGIC) \
+	ufs_rw32((cgp)->cg_boff, (ns))) + \
+	(cylno) * (fs)->fs_nrpos))
+#define cg_inosused(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_iused) \
-    : ((u_int8_t *)((u_int8_t *)(cgp) + (cgp)->cg_iusedoff)))
-#define cg_blksfree(cgp) \
-    (((cgp)->cg_magic != CG_MAGIC) \
+    : ((u_int8_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_iusedoff, (ns)))))
+#define cg_blksfree(cgp, ns) \
+    ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_free) \
-    : ((u_int8_t *)((u_int8_t *)(cgp) + (cgp)->cg_freeoff)))
-#define cg_chkmagic(cgp) \
-    ((cgp)->cg_magic == CG_MAGIC || ((struct ocg *)(cgp))->cg_magic == CG_MAGIC)
-#define cg_clustersfree(cgp) \
-    ((u_int8_t *)((u_int8_t *)(cgp) + (cgp)->cg_clusteroff))
-#define cg_clustersum(cgp) \
-    ((int32_t *)((u_int8_t *)(cgp) + (cgp)->cg_clustersumoff))
+    : ((u_int8_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_freeoff, (ns)))))
+#define cg_chkmagic(cgp, ns) \
+    (ufs_rw32((cgp)->cg_magic, (ns)) == CG_MAGIC || \
+	ufs_rw32(((struct ocg *)(cgp))->cg_magic, (ns)) == \
+	CG_MAGIC)
+#define cg_clustersfree(cgp, ns) \
+    ((u_int8_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_clusteroff, (ns))))
+#define cg_clustersum(cgp, ns) \
+    ((int32_t *)((u_int8_t *)(cgp) + \
+	ufs_rw32((cgp)->cg_clustersumoff, (ns))))
 
 /*
  * The following structure is defined

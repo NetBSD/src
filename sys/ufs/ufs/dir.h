@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.9 1998/03/01 02:23:36 fvdl Exp $	*/
+/*	$NetBSD: dir.h,v 1.10 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -113,13 +113,15 @@ struct	direct {
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-#define DIRSIZ(oldfmt, dp) \
-    ((oldfmt) ? \
+#define DIRSIZ(oldfmt, dp, needswap) \
+    (((oldfmt) && !(needswap)) ? \
     ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_type+1 + 3) &~ 3)) : \
     ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3)))
 #else
-#define DIRSIZ(oldfmt, dp) \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+#define DIRSIZ(oldfmt, dp, needswap)  \
+	(((oldfmt) && (needswap)) ? \
+	((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_type+1 + 3) &~ 3)) : \
+    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3)))
 #endif
 #define OLDDIRFMT	1
 #define NEWDIRFMT	0

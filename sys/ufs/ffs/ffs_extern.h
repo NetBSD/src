@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.7 1998/03/01 02:23:14 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.8 1998/03/18 15:57:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,7 @@ struct buf;
 struct fid;
 struct fs;
 struct inode;
+struct dinode;
 struct mount;
 struct nameidata;
 struct proc;
@@ -80,11 +81,16 @@ int ffs_valloc __P((void *));
 ufs_daddr_t ffs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
 void ffs_blkfree __P((struct inode *, ufs_daddr_t, long));
 int ffs_vfree __P((void *));
-void ffs_clusteracct __P((struct fs *, struct cg *, ufs_daddr_t, int));
+void ffs_clusteracct __P((int, struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
 		    struct buf **, int));
+
+/* ffs_bswap.c */
+void ffs_sb_swap __P((struct fs*, struct fs *, int));
+void ffs_dinode_swap __P((struct dinode *, struct dinode *));
+void ffs_csum_swap __P((struct csum *, struct csum *, int));
 
 /* ffs_inode.c */
 void ffs_init __P((void));
@@ -93,7 +99,7 @@ int ffs_truncate __P((void *));
 
 /* ffs_subr.c */
 int ffs_blkatoff __P((void *));
-void ffs_fragacct __P((struct fs *, int, int32_t[], int));
+void ffs_fragacct __P((struct fs *, int, int32_t[], int, int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
 #endif

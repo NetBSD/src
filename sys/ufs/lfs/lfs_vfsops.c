@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.17 1998/03/01 22:16:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.18 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -355,6 +355,7 @@ lfs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
 	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
+	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
