@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.37 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.38 2003/11/13 03:09:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.37 2003/10/20 00:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.38 2003/11/13 03:09:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -563,28 +563,33 @@ ofb_putcmap(sc, cm)
 	struct ofb_devconfig *dc = sc->sc_dc;
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int i;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
 	u_char *r, *g, *b;
 
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
-	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
-	    !uvm_useracc(cm->green, cm->count, B_READ) ||
-	    !uvm_useracc(cm->blue, cm->count, B_READ))
-		return EFAULT;
-	copyin(cm->red,   &sc->sc_cmap_red[index],   count);
-	copyin(cm->green, &sc->sc_cmap_green[index], count);
-	copyin(cm->blue,  &sc->sc_cmap_blue[index],  count);
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
 
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
-
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
-
 	return 0;
 }

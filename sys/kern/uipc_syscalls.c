@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.83 2003/09/04 04:33:49 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.84 2003/11/13 03:09:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.83 2003/09/04 04:33:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.84 2003/11/13 03:09:30 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -175,13 +175,9 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
-	    (caddr_t)&namelen, sizeof(namelen))))
+	if (SCARG(uap, name) && (error = copyin(SCARG(uap, anamelen),
+	    &namelen, sizeof(namelen))))
 		return (error);
-	if (SCARG(uap, name) != NULL &&
-	    uvm_useracc((caddr_t)SCARG(uap, name), sizeof(struct sockaddr),
-	     B_WRITE) == FALSE)
-		return (EFAULT);
 
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(fdp, SCARG(uap, s), &fp)) != 0)

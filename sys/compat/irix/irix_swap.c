@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.10 2003/07/29 16:18:54 mrg Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.11 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.10 2003/07/29 16:18:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.11 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -189,10 +189,6 @@ bad:
 		int entries;
 		struct swapent *sep;
 		int i, dontcare, sum = 0;
-
-		if (!uvm_useracc((caddr_t)SCARG(uap, arg), 
-		    sizeof(sum), B_WRITE))
-			return EACCES;
 
 		SCARG(&cup, cmd) = SWAP_NSWAP;
 		SCARG(&cup, arg) = NULL;

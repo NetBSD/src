@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.37 2003/07/29 16:18:54 mrg Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.38 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.37 2003/07/29 16:18:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.38 2003/11/13 03:09:29 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -217,9 +217,6 @@ irix_sys_syssgi(l, v, retval)
 		arg1 = SCARG(uap, arg1); /* PID of the process */
 		arg2 = SCARG(uap, arg2); /* Address of user buffer */
 		arg3 = SCARG(uap, arg3); /* Length of user buffer */
-		if (!uvm_useracc((caddr_t)arg2, (size_t)arg2, B_WRITE))
-			return EACCES;
-
 		tp = pfind((pid_t)arg1);
 		if (tp == NULL || \
 		    tp->p_psstr == NULL || \
@@ -317,13 +314,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
 
-	/* Check that the program header array is readable by the process */
-	if (!uvm_useracc((caddr_t)ph, sizeof(Elf_Phdr) * count, B_READ))
-		return EACCES;
-
-	kph = (Elf_Phdr *)malloc(sizeof(Elf_Phdr) * count,
-	    M_TEMP, M_WAITOK);
-
+	kph = (Elf_Phdr *)malloc(sizeof(Elf_Phdr) * count, M_TEMP, M_WAITOK);
 	error = copyin(ph, kph, sizeof(Elf_Phdr) * count);
 	if (error)
 		goto bad;

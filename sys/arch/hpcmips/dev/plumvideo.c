@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.33 2003/10/25 18:56:48 mycroft Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.34 2003/11/13 03:09:28 chs Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.33 2003/10/25 18:56:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.34 2003/11/13 03:09:28 chs Exp $");
 
 #undef PLUMVIDEODEBUG
 
@@ -433,71 +433,62 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    !LEGAL_CLUT_INDEX(idx) ||
-		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    !LEGAL_CLUT_INDEX(idx + cnt - 1)) {
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, rgb);
-			return  (ENOMEM);
-		}
+		if (error)
+			goto out;
 		plumvideo_clut_get(sc, rgb, idx, cnt);
 		rgb24_decompose(rgb, r, g, b, cnt);
 
-		copyout(r, cmap->red, cnt);
-		copyout(g, cmap->green,cnt);
-		copyout(b, cmap->blue, cnt);
+		error = copyout(r, cmap->red, cnt);
+		if (error)
+			goto out;
+		error = copyout(g, cmap->green, cnt);
+		if (error)
+			goto out;
+		error = copyout(b, cmap->blue, cnt);
 
+out:
 		cmap_work_free(r, g, b, rgb);
-
-		return (0);
+		return error;
 		
 	case WSDISPLAYIO_PUTCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    !LEGAL_CLUT_INDEX(idx) ||
-		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    !LEGAL_CLUT_INDEX(idx + cnt - 1)) {
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, rgb);
-			return  (ENOMEM);
-		}
-		copyin(cmap->red,   r, cnt);
-		copyin(cmap->green, g, cnt);
-		copyin(cmap->blue,  b, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->red, r, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->green, g, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->blue, b, cnt);
+		if (error)
+			goto out;
 		rgb24_compose(rgb, r, g, b, cnt);
 		plumvideo_clut_set(sc, rgb, idx, cnt);
-
-		cmap_work_free(r, g, b, rgb);
-
-		return (0);
+		goto out;
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;

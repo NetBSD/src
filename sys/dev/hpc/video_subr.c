@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.5 2003/08/02 22:14:13 uwe Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.6 2003/11/13 03:09:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.5 2003/08/02 22:14:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.6 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ cmap_work_alloc(u_int8_t **r, u_int8_t **g, u_int8_t **b, u_int32_t **rgb,
 errout:
 	cmap_work_free(*r, *g, *b, *rgb);
 
-	return (1);
+	return (ENOMEM);
 }
 
 void

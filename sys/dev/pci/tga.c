@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.56 2003/10/29 04:43:18 mycroft Exp $ */
+/* $NetBSD: tga.c,v 1.57 2003/11/13 03:09:29 chs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.56 2003/10/29 04:43:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.57 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,6 +810,7 @@ tga_builtin_set_cursor(dc, cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
+	u_char image[512];
 	u_int count, v;
 	int error;
 
@@ -825,8 +826,9 @@ tga_builtin_set_cursor(dc, cursorp)
 			return (EINVAL);
 		/* The cursor is 2 bits deep, and there is no mask */
 		count = (cursorp->size.y * 64 * 2) / NBBY;
-		if (!uvm_useracc(cursorp->image, count, B_READ))
-			return (EFAULT);
+		error = copyin(cursorp->image, image, count);
+		if (error)
+			return error;
 	}
 	if (v & WSDISPLAY_CURSOR_DOHOT)		/* not supported */
 		return EINVAL;
@@ -835,26 +837,28 @@ tga_builtin_set_cursor(dc, cursorp)
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		if (cursorp->enable)
 			/* XXX */
-			TGAWREG(dc, TGA_REG_VVVR, TGARREG(dc, TGA_REG_VVVR) | 0x04);
+			TGAWREG(dc, TGA_REG_VVVR,
+				TGARREG(dc, TGA_REG_VVVR) | 0x04);
 		else
 			/* XXX */
-			TGAWREG(dc, TGA_REG_VVVR, TGARREG(dc, TGA_REG_VVVR) & ~0x04);
+			TGAWREG(dc, TGA_REG_VVVR,
+				TGARREG(dc, TGA_REG_VVVR) & ~0x04);
 	}
 	if (v & WSDISPLAY_CURSOR_DOPOS) {
-		TGAWREG(dc, TGA_REG_CXYR, 
-				((cursorp->pos.y & 0xfff) << 12) | (cursorp->pos.x & 0xfff));
+		TGAWREG(dc, TGA_REG_CXYR, ((cursorp->pos.y & 0xfff) << 12) |
+			(cursorp->pos.x & 0xfff));
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		/* can't fail. */
 		dcrf->ramdac_set_curcmap(dcrc, cursorp);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		count = ((64 * 2) / NBBY) * cursorp->size.y;
 		TGAWREG(dc, TGA_REG_CCBR,
-		    (TGARREG(dc, TGA_REG_CCBR) & ~0xfc00) | (cursorp->size.y << 10));
-		copyin(cursorp->image, (char *)(dc->dc_vaddr +
-		    (TGARREG(dc, TGA_REG_CCBR) & 0x3ff)),
-		    count);				/* can't fail. */
+		    (TGARREG(dc, TGA_REG_CCBR) & ~0xfc00) |
+		     (cursorp->size.y << 10));
+		memcpy((char *)(dc->dc_vaddr +
+				(TGARREG(dc, TGA_REG_CCBR) & 0x3ff)),
+		       image, count);
 	}
 	return (0);
 }

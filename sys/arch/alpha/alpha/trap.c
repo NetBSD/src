@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.88 2003/10/29 05:16:26 mycroft Exp $ */
+/* $NetBSD: trap.c,v 1.89 2003/11/13 03:09:28 chs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/10/29 05:16:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/11/13 03:09:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -872,14 +872,13 @@ struct unaligned_fixup_data {
 	const char *type;	/* opcode name */
 	int fixable;		/* fixable, 0 if fixup not supported */
 	int size;		/* size, 0 if unknown */
-	int acc;		/* useracc type; B_READ or B_WRITE */
 };
 
-#define	UNKNOWN()	{ "0x%lx", 0, 0, 0 }
-#define	FIX_LD(n,s)	{ n, 1, s, B_READ }
-#define	FIX_ST(n,s)	{ n, 1, s, B_WRITE }
-#define	NOFIX_LD(n,s)	{ n, 0, s, B_READ }
-#define	NOFIX_ST(n,s)	{ n, 0, s, B_WRITE }
+#define	UNKNOWN()	{ "0x%lx", 0, 0 }
+#define	FIX_LD(n,s)	{ n, 1, s }
+#define	FIX_ST(n,s)	{ n, 1, s }
+#define	NOFIX_LD(n,s)	{ n, 0, s }
+#define	NOFIX_ST(n,s)	{ n, 0, s }
 
 int
 unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
@@ -943,21 +942,6 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 		selected_tab = tab_unknown;
 
 	/*
-	 * See if the user can access the memory in question.
-	 * If it's an unknown opcode, we don't know whether to
-	 * read or write, so we don't check.
-	 *
-	 * We adjust the PC backwards so that the instruction will
-	 * be re-run.
-	 */
-	if (selected_tab->size != 0 &&
-	   !uvm_useracc((caddr_t)va, selected_tab->size, selected_tab->acc)) {
-		l->l_md.md_tf->tf_regs[FRAME_PC] -= 4;
-		signal = SIGSEGV;
-		goto out;
-	}
-
-	/*
 	 * If we're supposed to be noisy, squawk now.
 	 */
 	if (doprint) {
@@ -975,16 +959,16 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	/*
 	 * If we should try to fix it and know how, give it a shot.
 	 *
-	 * We never allow bad data to be unknowingly used by the
-	 * user process.  That is, if we decide not to fix up an
-	 * access we cause a SIGBUS rather than letting the user
-	 * process go on without warning.
+	 * We never allow bad data to be unknowingly used by the user process.
+	 * That is, if we can't access the address needed to fix up the trap,
+	 * we cause a SIGSEGV rather than letting the user process go on
+	 * without warning.
 	 *
 	 * If we're trying to do a fixup, we assume that things
 	 * will be botched.  If everything works out OK, 
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
-	signal = SIGBUS;
+	signal = SIGSEGV;
 	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
 		case 0x0c:			/* ldwu */
@@ -1062,7 +1046,6 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	if (dosigbus)
 		signal = SIGBUS;
 
-out:
 	/*
 	 * Write back USP.
 	 */

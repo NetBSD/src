@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.4 2003/07/14 15:47:10 lukem Exp $ */
+/* $NetBSD: ibm561.c,v 1.5 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.4 2003/07/14 15:47:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.5 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,22 +277,30 @@ ibm561_set_cmap(rc, cmapp)
 {
 	struct ibm561data *data = (struct ibm561data *)rc;
 	u_int count, index;
-	int s;
+	uint8_t r[IBM561_NCMAP_ENTRIES];
+	uint8_t g[IBM561_NCMAP_ENTRIES];
+	uint8_t b[IBM561_NCMAP_ENTRIES];
+	int s, error;
 
 	if (cmapp->index >= IBM561_NCMAP_ENTRIES ||
 	    cmapp->count > IBM561_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
-	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
-		return (EFAULT);
 
-	s = spltty();
 	index = cmapp->index;
 	count = cmapp->count;
-	copyin(cmapp->red, &data->cmap_r[index], count);
-	copyin(cmapp->green, &data->cmap_g[index], count);
-	copyin(cmapp->blue, &data->cmap_b[index], count);
+	error = copyin(cmapp->red, &r[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->green, &g[index], count);
+	if (error)
+		return error;
+	error = copyin(cmapp->blue, &b[index], count);
+	if (error)
+		return error;
+	s = spltty();
+	memcpy(&data->cmap_r[index], &r[index], count);
+	memcpy(&data->cmap_g[index], &g[index], count);
+	memcpy(&data->cmap_b[index], &b[index], count);
 	data->changed |= CHANGED_CMAP;
 	data->ramdac_sched_update(data->cookie, ibm561_update);
 	splx(s);

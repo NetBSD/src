@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.25 2003/10/27 07:07:35 chs Exp $	*/
+/*	$NetBSD: stic.c,v 1.26 2003/11/13 03:09:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.25 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.26 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,8 +490,9 @@ stic_setup_vdac(struct stic_info *si)
 	s = spltty();
 
 	ip = (u_int8_t *)si->si_cursor.cc_image;
-	mp = ip + (sizeof(si->si_cursor.cc_image) >> 1);
+	mp = (u_int8_t *)si->si_cursor.cc_mask;
 	memset(ip, 0, sizeof(si->si_cursor.cc_image));
+	memset(mp, 0, sizeof(si->si_cursor.cc_mask));
 
 	for (r = 0; r < si->si_fonth; r++) {
 		for (c = r & 1; c < si->si_fontw; c += 2) {
@@ -1216,7 +1217,7 @@ stic_flush(struct stic_info *si)
 		int bcnt;
 
 		ip = (u_int8_t *)si->si_cursor.cc_image;
-		mp = (u_int8_t *)(si->si_cursor.cc_image + CURSOR_MAX_SIZE);
+		mp = (u_int8_t *)si->si_cursor.cc_mask;
 
 		bcnt = 0;
 		SELECT(vdac, BT459_IREG_CRAM_BASE);
@@ -1257,30 +1258,28 @@ stic_flush(struct stic_info *si)
 int
 stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
-	u_int index, count;
-	
-	index = p->index;
-	count = p->count;
+	u_int index = p->index, count = p->count;
+	int error;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-
-	copyout(&si->si_cmap.r[index], p->red, count);
-	copyout(&si->si_cmap.g[index], p->green, count);
-	copyout(&si->si_cmap.b[index], p->blue, count);
-	return (0);
+	error = copyout(&si->si_cmap.r[index], p->red, count);
+	if (error)
+		return error;
+	error = copyout(&si->si_cmap.g[index], p->green, count);
+	if (error)
+		return error;
+	error = copyout(&si->si_cmap.b[index], p->blue, count);
+	return error;
 }
 
 int
 stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
+	struct stic_hwcmap256 cmap;
 	u_int index, count;
-	int s;
+	int s, error;
 
 	index = p->index;
 	count = p->count;
@@ -1288,15 +1287,20 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
+	error = copyin(p->red, &cmap.r[index], count);
+	if (error)
+		return error;
+	error = copyin(p->green, &cmap.g[index], count);
+	if (error)
+		return error;
+	error = copyin(p->blue, &cmap.b[index], count);
+	if (error)
+		return error;
 
 	s = spltty();
-	copyin(p->red, &si->si_cmap.r[index], count);
-	copyin(p->green, &si->si_cmap.g[index], count);
-	copyin(p->blue, &si->si_cmap.b[index], count);
+	memcpy(&si->si_cmap.r[index], &cmap.r[index], count);
+	memcpy(&si->si_cmap.g[index], &cmap.g[index], count);
+	memcpy(&si->si_cmap.b[index], &cmap.b[index], count);
 	si->si_flags |= SI_CMAP_CHANGED;
 	splx(s);
 
@@ -1316,31 +1320,37 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 #define	cc (&si->si_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
 	struct stic_screen *ss;
-	int s;
+	uint8_t r[2], g[2], b[2], image[512], mask[512];
+	int s, error;
 
 	v = p->which;
 	ss = si->si_curscreen;
-
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)			
 			return (EINVAL);
-		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
-		    !uvm_useracc(p->cmap.green, count, B_READ) ||
-		    !uvm_useracc(p->cmap.blue, count, B_READ))
-			return (EFAULT);
+		error = copyin(p->cmap.red, &r[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.green, &g[index], count);
+		if (error)
+			return error;
+		error = copyin(p->cmap.blue, &b[index], count);
+		if (error)
+			return error;
 	}
-
 	if ((v & WSDISPLAY_CURSOR_DOSHAPE) != 0) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!uvm_useracc(p->image, icount, B_READ) ||
-		    !uvm_useracc(p->mask, icount, B_READ))
-			return (EFAULT);
+		error = copyin(p->image, image, icount);
+		if (error)
+			return error;
+		error = copyin(p->mask, mask, icount);
+		if (error)
+			return error;
 	}
-
 	if ((v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) != 0) {
 		if (v & WSDISPLAY_CURSOR_DOCUR)
 			cc->cc_hot = p->hot;
@@ -1349,7 +1359,6 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	}
 
 	s = spltty();
-
 	if ((v & WSDISPLAY_CURSOR_DOCUR) != 0) {
 		if (p->enable)
 			ss->ss_flags |= SS_CURENB;
@@ -1357,21 +1366,19 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 			ss->ss_flags &= ~SS_CURENB;
 		si->si_flags |= SI_CURENB_CHANGED;
 	}
-
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
-		copyin(p->cmap.red, &cc->cc_color[index], count);
-		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
-		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
+		memcpy(&cc->cc_color[index], &r[index], count);
+		memcpy(&cc->cc_color[index + 2], &g[index], count);
+		memcpy(&cc->cc_color[index + 4], &b[index], count);
 		si->si_flags |= SI_CURCMAP_CHANGED;
 	}
-
 	if ((v & WSDISPLAY_CURSOR_DOSHAPE) != 0) {
-		memset(cc->cc_image, 0, sizeof(cc->cc_image));
-		copyin(p->image, cc->cc_image, icount);
-		copyin(p->mask, cc->cc_image + CURSOR_MAX_SIZE, icount);
+		memset(cc->cc_image, 0, sizeof cc->cc_image);
+		memcpy(cc->cc_image, image, icount);
+		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
+		memcpy(cc->cc_mask, mask, icount);
 		si->si_flags |= SI_CURSHAPE_CHANGED;
 	}
-
 	splx(s);
 
 	/*

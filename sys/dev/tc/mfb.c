@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.38 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: mfb.c,v 1.39 2003/11/13 03:09:29 chs Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.38 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.39 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,8 @@ struct hwcursor64 {
 	struct wsdisplay_curpos cc_magic;
 #define	CURSOR_MAX_SIZE	64
 	u_int8_t cc_color[6];
-	u_int64_t cc_image[64 + 64];
+	u_int64_t cc_image[CURSOR_MAX_SIZE];
+	u_int64_t cc_mask[CURSOR_MAX_SIZE];
 };
 
 struct mfb_softc {
@@ -539,7 +540,7 @@ mfbintr(arg)
 		int bcnt;
 
 		ip = (u_int8_t *)sc->sc_cursor.cc_image;
-		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
+		mp = (u_int8_t *)(sc->sc_cursor.cc_mask);
 		bcnt = 0;
 		SELECT431(curs, BT431_REG_CRAM_BASE);
 
@@ -625,7 +626,11 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	u_int v, count = 0, index = 0;
+	u_int v, count = 0, icount = 0, index = 0;
+	uint64_t image[CURSOR_MAX_SIZE];
+	uint64_t mask[CURSOR_MAX_SIZE];
+	uint8_t color[6];
+	int error;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -633,16 +638,20 @@ set_cursor(sc, p)
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
-		if (!uvm_useracc(p->cmap.red, count, B_READ))
-			return (EFAULT);
+		error = copyin(p->cmap.red, &color[index], count);
+		if (error)
+			return error;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!uvm_useracc(p->image, count, B_READ) ||
-		    !uvm_useracc(p->mask, count, B_READ))
-			return (EFAULT);
+		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
+		error = copyin(p->image, image, icount);
+		if (error)
+			return error;
+		error = copyin(p->mask, mask, icount);
+		if (error)
+			return error;
 	}
 
 	if (v & WSDISPLAY_CURSOR_DOCUR)
@@ -652,12 +661,13 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOHOT)
 		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP)
-		copyin(p->cmap.red, &cc->cc_color[index], count);
+		memcpy(&cc->cc_color[index], &color[index], count);
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, cc->cc_image, count);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
+		memcpy(cc->cc_image, image, icount);
+		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
+		memcpy(cc->cc_mask, mask, icount);
 	}
 	sc->sc_changed = v;
 

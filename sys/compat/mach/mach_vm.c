@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.32 2003/11/03 20:58:18 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.33 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.32 2003/11/03 20:58:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.33 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -692,10 +692,6 @@ mach_vm_copy(args)
 
 	src = (caddr_t)req->req_src;
 	dst = (caddr_t)req->req_addr;
-
-	if ((uvm_useracc(src, req->req_size, B_READ) == 0) ||
-	    (uvm_useracc(dst, req->req_size, B_WRITE) == 0))
-		return mach_msg_error(args, EPERM);
 
 	/* Is there an easy way of dealing with that efficiently? */
 	do {
