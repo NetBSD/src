@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sscanf.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: sscanf.c,v 1.3 1993/08/26 00:47:26 jtc Exp $";
+static char *rcsid = "$Id: sscanf.c,v 1.4 1993/10/05 21:06:04 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -60,9 +60,9 @@ eofread(cookie, buf, len)
 }
 
 #if __STDC__
-sscanf(char *str, char const *fmt, ...)
+sscanf(const char *str, char const *fmt, ...)
 #else
-sscanf(str, fmt, va_alist)
+sscanf(const str, fmt, va_alist)
 	char *str;
 	char *fmt;
 	va_dcl
