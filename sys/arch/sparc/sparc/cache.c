@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.20 1997/03/21 14:30:19 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.21 1997/03/21 15:35:51 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -214,17 +214,19 @@ void
 cypress_cache_enable()
 {
 	u_int scr;
+
 	cache_alias_dist = CACHEINFO.c_totalsize;
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	scr = lda(SRMMU_PCR, ASI_SRMMU);
+	scr &= ~(SRMMU_PCR_CE | SRMMU_PCR_CM);
 	scr |= SRMMU_PCR_CE;
 	/* If put in write-back mode, turn it on */
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 		scr |= SRMMU_PCR_CM;
 	sta(SRMMU_PCR, ASI_SRMMU, scr);
 	CACHEINFO.c_enabled = 1;
-	printf("cache WRITE-THRU enabled\n");
+	printf("cache enabled\n");
 }
 
 /*
