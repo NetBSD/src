@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.36 2003/10/09 00:42:28 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.37 2003/10/15 18:08:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.36 2003/10/09 00:42:28 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.37 2003/10/15 18:08:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1838,7 +1838,8 @@ rl_add_defun(const char *name, Function *fun, int c)
 		return -1;
 	map[(unsigned char)c] = fun;
 	el_set(e, EL_ADDFN, name, name, rl_bind_wrapper);
-	el_set(e, EL_BIND, vis(dest, c, VIS_WHITE, 0), name);
+	vis(dest, c, VIS_WHITE|VIS_NOSLASH, 0);
+	el_set(e, EL_BIND, dest, name);
 	return 0;
 }
 
