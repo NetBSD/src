@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.23 2004/03/31 11:19:39 tron Exp $
+#	$NetBSD: files.acpi,v 1.24 2004/05/03 07:44:36 kochi Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -27,7 +27,7 @@ attach	acpibut at acpi
 file	dev/acpi/acpi_button.c		acpibut
 
 # ACPI AC Adapter
-device	acpiacad: sysmon_envsys
+device	acpiacad: sysmon_envsys, sysmon_power
 attach	acpiacad at acpi
 file	dev/acpi/acpi_acad.c		acpiacad
 
