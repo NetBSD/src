@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.17 2004/09/27 07:41:54 wiz Exp $
+.\" $NetBSD: tar.1,v 1.18 2004/10/17 18:49:55 dsl Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHLOPSXZ014578
+.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHOPSXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -235,6 +235,14 @@ Compress archive using compress.
 Do not enable GNU tar extensions such as long filenames and long link names.
 .It Fl -atime-preserve
 Preserve file access times.
+.It Fl -chroot
+.Fn chroot
+to the current directory before extracting files.
+Use with
+.Fl x
+and
+.Fl h
+to make absolute symlinks be relative to the current directory.
 .It Fl -unlink
 Ignored, only accepted for compatibility with other
 .Nm

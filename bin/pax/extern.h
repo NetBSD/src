@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.45 2004/09/22 15:03:18 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.46 2004/10/17 18:49:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -203,6 +203,7 @@ int opt_add(const char *);
 int bad_opt(void);
 int mkpath(char *);
 char *chdname;
+int do_chroot;
 
 /*
  * pat_rep.c
