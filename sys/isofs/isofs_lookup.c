@@ -309,8 +309,8 @@ found:
 	 * in the cache as to where the entry was found.
 	 */
 	if (*ndp->ni_next == '\0' && flag == LOOKUP)
-		dp->i_diroff = ndp->ni_ufs.ufs_offset
-			&~ (imp->logical_block_size - 1);
+		dp->i_diroff = ndp->ni_ufs.ufs_offset;
+			/* &~ (imp->logical_block_size - 1); */
 
 	/*
 	 * Step through the translation in the name.  We do not `iput' the
