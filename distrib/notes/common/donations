@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.8 1999/05/06 11:29:14 jtk Exp $	
+.\"	$NetBSD: donations,v 1.9 1999/05/14 15:44:48 jwise Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,6 +71,7 @@ Ted Spradley
 Kimmo Suominen
 Jason R. Thorpe
 Steve Wadlow
+Jim Wise
 .Ed
 
 .Bd -unfilled -offset indent
