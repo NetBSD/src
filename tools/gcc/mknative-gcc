@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.11 2004/01/02 11:58:32 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.12 2004/02/10 09:37:58 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -44,11 +44,11 @@ get_libgcc () {
 	# XXX we should probably grab everything Just In Case for
 	# the future.
 	getvars gcc/Makefile \
-		CXX_EXTRA_HEADERS CXX_LIB2FUNCS CXX_LIB2SRCS \
 		INCLUDES LIB2ADD LIB2ADDEH LIB2FUNCS_1 LIB2FUNCS_2 \
-		LIB2FUNCS_EXTRA \
+		LIB1ASMFUNCS LIB1ASMSRC \
 		LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
-		LIBGCC2_CFLAGS MAYBE_USE_COLLECT2 \
+		LIBGCC2_CFLAGS USE_COLLECT2 \
+		EXTRA_HEADERS \
 		tm_defines xm_file xm_defines \
 		| write_mk gnu/lib/libgcc3/arch/$MACHINE_ARCH.mk
 }
@@ -141,6 +141,8 @@ get_gcc () {
 			CXX_OBJS CXX_C_OBJS | sed 's/cp\///g'
 		getvars gcc/Makefile \
 			F77_OBJS | sed 's/f\///g'
+		getvars gcc/Makefile \
+			ENABLE_SHARED SHLIB_LINK SHLIB_MULTILIB
 	} | write_mk gnu/usr.bin/gcc3/arch/$MACHINE_ARCH/defs.mk
 
 	for f in auto-host configargs cs-hconfig gencheck hconfig gthr-default; do
