@@ -9,15 +9,15 @@ Usage: pass a single argument, which is the disk device or file you
 wish to read/write the label to/from.  sunlabel reads/writes only the
 first 512 bytes of its argument.  There are also some flags supported:
 
-	-disk
+	-d
 		takes an argument specifying the disk device (in case
 		you want to give something beginning with a -)
-	-fixmagic
+	-m
 		says to ignore an incorrect magic number in the disk
 		label
-	-fixsum
+	-s
 		says to ignore checksum errors when reading the label
-	-new
+	-n
 		says to synthesize a new label rather than reading
 		what's there
 	-q
