@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.2 2002/10/01 12:56:54 fvdl Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.3 2002/10/07 07:58:26 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 #include <machine/cpu.h>
 
 #include <ddb/db_output.h>
-
-#ifdef LOCKDEBUG
 
 void
 __cpu_simple_lock_init(lockp)
@@ -143,5 +141,3 @@ __cpu_simple_unlock(lockp)
 	__lockbarrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
-
-#endif
