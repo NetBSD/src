@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1994/12/05 19:14:27 phil Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1995/01/02 04:20:58 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@ int y;
 	y -= 70;
 	for(i=0;i<y;i++) {
 	    ret += SECYR;
-	    if (LEAPYEAR(i))
+	    if (LEAPYEAR(70+i))
 		ret += SECDAY;
 	}
 	return ret;
