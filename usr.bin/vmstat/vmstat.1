@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.9 2003/02/25 10:36:00 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.10 2003/05/06 10:17:02 dsl Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 26, 2001
+.Dd May 6, 2003
 .Dt VMSTAT 1
 .Os
 .Sh NAME
@@ -136,6 +136,7 @@ and
 .It Fl m
 Report on the usage of kernel dynamic memory listed first by size of
 allocation and then by type of usage.
+Followed by a list of the kernel memory pools and their usage.
 .It Fl s
 Display the contents of the
 .Dv uvmexp
@@ -148,11 +149,11 @@ Dump all UVM histories.
 .It Fl v
 Print more verbose information.
 When used with the
-.Fl i
-or
+.Fl i ,
 .Fl e
-options, prints out all interrupts or event counters, not just those with
-non-zero values.
+or
+.Fl m
+options prints out all counters, not just those with non-zero values.
 .It Fl w Ar wait
 Pause
 .Ar wait
