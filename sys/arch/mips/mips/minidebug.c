@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.1 1997/06/28 03:59:46 mhitch Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.2 1997/06/30 14:42:34 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,8 +60,11 @@ extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
 			     unsigned instPC,
 			     unsigned fpcCSR,
 			     int allowNonBranch));
-#ifdef DEBUG
+
+#if defined(DEBUG) || defined(MDB)
 extern void stacktrace __P((void)); /*XXX*/
+#endif
+#ifdef DEBUG
 extern void trapDump __P((char * msg));
 #endif
 
@@ -816,7 +819,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			return TRUE;
 				
 		case 'S':
-#ifdef DEBUG
+#if defined(DEBUG) || defined(MDB)
 			printf("Stack traceback:\n");
 			stacktrace();
 #else
