@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.15 1998/05/23 13:37:26 tv Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.16 1998/07/26 14:17:56 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.15 1998/05/23 13:37:26 tv Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.16 1998/07/26 14:17:56 mycroft Exp $");
 #endif
 #endif
 
@@ -80,7 +80,7 @@ __weak_alias(xdr_rmtcallres,_xdr_rmtcallres);
 
 static int getbroadcastnets __P((struct in_addr *, int, char *));
 
-static struct timeval timeout = { 3, 0 };
+static const struct timeval timeout = { 3, 0 };
 
 /*
  * pmapper remote-call-service interface.

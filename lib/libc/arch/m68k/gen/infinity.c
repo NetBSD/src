@@ -1,8 +1,8 @@
-/*	$NetBSD: infinity.c,v 1.3 1997/07/13 18:45:21 christos Exp $	*/
+/*	$NetBSD: infinity.c,v 1.4 1998/07/26 14:14:15 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: infinity.c,v 1.3 1997/07/13 18:45:21 christos Exp $");
+__RCSID("$NetBSD: infinity.c,v 1.4 1998/07/26 14:14:15 mycroft Exp $");
 #endif /* not lint */
 
 /* infinity.c */
@@ -10,4 +10,4 @@ __RCSID("$NetBSD: infinity.c,v 1.3 1997/07/13 18:45:21 christos Exp $");
 #include <math.h>
 
 /* bytes for +Infinity on a 68k */
-char __infinity[] = { 0x7f, 0xf0, 0, 0, 0, 0, 0, 0 };
+const char __infinity[] = { 0x7f, 0xf0, 0, 0, 0, 0, 0, 0 };
