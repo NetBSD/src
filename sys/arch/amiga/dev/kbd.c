@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.32 1998/03/08 19:59:15 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.33 1998/07/26 06:45:19 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -174,7 +174,7 @@ kbdenable()
 		if (drkbdputc(0xf4))		/* enable */
 			goto LnoMFII;
 		kbd_softc.k_mf2 = 1;
-		draco_ioct->io_control &= ~DRCNTRL_KBDINTENA;
+		single_inst_bclr_b(draco_ioct->io_control, DRCNTRL_KBDINTENA);
 
 		ciaa.icr = CIA_ICR_SP;  /* CIA SP interrupt disable */
 		ciaa.cra &= ~(1<<6);	/* serial line == input */
@@ -183,7 +183,7 @@ kbdenable()
 
 	LnoMFII:
 		kbd_softc.k_mf2 = 0;
-		*draco_intena |= DRIRQ_INT2;
+		single_inst_bset_b(*draco_intena, DRIRQ_INT2);
 		ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
 					/* SP interrupt enable */
 		ciaa.cra &= ~(1<<6);	/* serial line == input */
@@ -526,7 +526,8 @@ kbdgetcn ()
 			draco_ioct->io_kbdrst = 0;
 			if (in == 0xF0) { /* release prefix */
 				c = 0x80;
-				while ((draco_ioct->io_status & DRSTAT_KBDRECV) == 0);
+				while ((draco_ioct->io_status &
+				    DRSTAT_KBDRECV) == 0);
 				in = draco_ioct->io_kbddata;
 				draco_ioct->io_kbdrst = 0;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 1998/07/03 22:25:35 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61 1998/07/26 06:45:18 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -545,13 +545,3 @@ is_a1200()
 		return (1);		/* It's an A1200 */
 	return (0);			/* Machine type not set */
 }
-
-#ifdef DRACO
-int
-is_draco()
-{
-	if ((machineid >> 24) == 0x7D)
-		return ((machineid >> 16) & 0xFF);
-	return (0);
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 1998/07/10 20:24:33 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 1998/07/26 06:45:17 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,6 +112,7 @@
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
+#include <m68k/include/asm_single.h>
 #endif
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
@@ -1469,10 +1470,10 @@ add_isr(isr)
 	if (is_draco())
 		switch(isr->isr_ipl) {
 			case 6:
-				*draco_intena |= DRIRQ_INT6;
+				single_inst_bset_b(*draco_intena, DRIRQ_INT6);
 				break;
 			case 2:
-				*draco_intena |= DRIRQ_INT2;
+				single_inst_bset_b(*draco_intena, DRIRQ_INT2);
 				break;
 			default:
 				break;
@@ -1539,10 +1540,12 @@ remove_isr(isr)
 		if (is_draco()) {
 			switch(isr->isr_ipl) {
 				case 2:
-					*draco_intena &= ~DRIRQ_INT2;
+					single_inst_bclr_b(*draco_intena,
+					    DRIRQ_INT2);
 					break;
 				case 6:
-					*draco_intena &= ~DRIRQ_INT6;
+					single_inst_bclr_b(*draco_intena,
+					    DRIRQ_INT6);
 					break;
 				default:
 					break;
@@ -1659,7 +1662,7 @@ intrhand(sr)
 			ciaa_intr ();
 #ifdef DRACO
 		if (is_draco())
-			*draco_intpen &= ~DRIRQ_INT2;
+			single_inst_bclr_b(*draco_intpen, DRIRQ_INT2);
 		else
 #endif
 			custom.intreq = INTF_PORTS;
@@ -1675,7 +1678,7 @@ intrhand(sr)
 				break;
 			p = &q->isr_forw;
 		}
-		*draco_intpen &= ~DRIRQ_INT6;
+		single_inst_bclr_b(*draco_intpen, DRIRQ_INT6);
 		break;
 #endif
 
@@ -1715,7 +1718,7 @@ intrhand(sr)
 #if NDRSC > 0
 			drsc_handler();
 #else
-			*draco_intpen &= ~DRIRQ_SCSI;
+			single_inst_bclr_b(*draco_intpen, DRIRQ_SCSI);
 #endif
 		else
 #endif
