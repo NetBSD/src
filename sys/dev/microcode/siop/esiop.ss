@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.7 2002/04/23 20:41:16 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.8 2002/04/24 08:00:08 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -74,7 +74,8 @@ ABSOLUTE f_c_sdp	= 0x10 ; got save data pointer message
 
 ; scratchD: current DSA in start cmd ring
 ; scratchE0: index in start cmd ring
-ABSOLUTE ncmd_slots	= 64 ; number of slots in CMD ring
+ABSOLUTE ncmd_slots	= 256 ; number of slots in CMD ring
+ABSOLUTE ncmd_slots_last = 0 ; == ncmd_slots in a 8bit counter
 ; flags in a cmd slot
 ABSOLUTE f_cmd_free	= 0x01 ; this slot is free
 ABSOLUTE f_cmd_ignore	= 0x02 ; this slot is not free but don't start it
@@ -210,7 +211,7 @@ ignore_cmd:
 	MOVE SCRATCHD2 + 0 to SCRATCHD2 WITH CARRY;
 	MOVE SCRATCHD3 + 0 to SCRATCHD3 WITH CARRY;
 	MOVE SCRATCHE0 TO SFBR;
-	JUMP REL(handle_cmd), IF  NOT ncmd_slots;
+	JUMP REL(handle_cmd), IF  NOT ncmd_slots_last;
 ; reset pointers to beggining of area
 cmdr0:
 	MOVE 0xff to SCRATCHD0; correct value will be patched by driver
