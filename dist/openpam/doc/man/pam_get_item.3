@@ -33,7 +33,7 @@
 .\"
 .\" $P4$
 .\"
-.Dd February 10, 2004
+.Dd February 1, 2005
 .Dt PAM_GET_ITEM 3
 .Os
 .Sh NAME
@@ -89,6 +89,8 @@ authentication token.
 .It Dv PAM_OLDAUTHTOK_PROMPT
 The prompt to use when asking the applicant for an
 expired authentication token prior to changing it.
+.It Dv PAM_SOCKADDR
+The sockaddr_storage of the applicants's host.
 .El
 .Pp
 See
