@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ray.c,v 1.48 2004/08/09 21:30:18 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.49 2004/08/10 02:54:19 mycroft Exp $	*/
+
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.48 2004/08/09 21:30:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.49 2004/08/10 02:54:19 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -156,11 +157,11 @@ struct ray_softc {
 	struct ifmedia	sc_media;
 
 	struct pcmcia_function		*sc_pf;
-	struct pcmcia_mem_handle	sc_mem;
-	int				sc_window;
 	void				*sc_ih;
 	void				*sc_sdhook;
 	void				*sc_pwrhook;
+	int				sc_attached;
+
 	int				sc_flags;	/*. misc flags */
 #define RAY_FLAGS_RESUMEINIT	0x0001
 	int				sc_resetloop;
@@ -214,12 +215,13 @@ struct ray_softc {
 	struct ray_param_req	*sc_repreq;
 	struct ray_param_req	*sc_updreq;
 
+	bus_space_tag_t	sc_memt;
+	bus_space_handle_t sc_memh;
+
 #ifdef RAY_DO_SIGLEV
 	struct ray_siglev	sc_siglevs[RAY_NSIGLEVRECS];
 #endif
 };
-#define	sc_memt	sc_mem.memt
-#define	sc_memh	sc_mem.memh
 #define	sc_ccrt	sc_pf->pf_ccrt
 #define	sc_ccrh	sc_pf->pf_ccrh
 #define	sc_ccroff sc_pf->pf_ccr_offset
@@ -280,6 +282,7 @@ typedef	void (*ray_cmd_func_t)(struct ray_softc *);
 static int ray_alloc_ccs __P((struct ray_softc *, bus_size_t *, u_int, u_int));
 static bus_size_t ray_fill_in_tx_ccs __P((struct ray_softc *, size_t,
     u_int, u_int));
+static int ray_validate_config __P((struct pcmcia_config_entry *));
 static void ray_attach __P((struct device *, struct device *, void *));
 static ray_cmd_func_t ray_ccs_done __P((struct ray_softc *, bus_size_t));
 static void ray_check_ccs __P((void *));
@@ -491,6 +494,17 @@ ray_match(parent, match, aux)
 	    && pa->product == PCMCIA_PRODUCT_RAYTHEON_WLAN);
 }
 
+static int
+ray_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 1 ||
+	    cfe->num_iospace != 0 ||
+	    cfe->memspace[0].length != RAY_SRAM_MEM_SIZE)
+		return (EINVAL);
+	return (0);
+}
 
 static void
 ray_attach(parent, self, aux)
@@ -502,45 +516,32 @@ ray_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct pcmcia_config_entry *cfe;
 	struct ray_ecf_startup *ep;
-	bus_size_t memoff;
-
-	sc->sc_window = -1;
+	int error;
 
 	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 1)
-			continue;
-		if (cfe->num_iospace != 0)
-			continue;
-
-		if (pcmcia_mem_alloc(pa->pf, cfe->memspace[0].length,
-		    &sc->sc_mem) == 0)
-			break;
-	}
-	if (!cfe) {
-		aprint_error("%s: can't alloc shared memory\n", self->dv_xname);
-		goto fail1;
+	/*XXXmem8|common*/
+	error = pcmcia_function_configure(pa->pf, ray_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	/* enable the card */
-	pcmcia_function_init(sc->sc_pf, cfe);
-
-	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
-	    RAY_SRAM_MEM_BASE, RAY_SRAM_MEM_SIZE, &sc->sc_mem, &memoff,
-	    &sc->sc_window)) {
-		aprint_error("%s: can't map shared memory\n", self->dv_xname);
-		goto fail2;
-	}
+	cfe = pa->pf->cfe;
+	sc->sc_memt = cfe->memspace[0].handle.memt;
+	sc->sc_memh = cfe->memspace[0].handle.memh;
 
 	callout_init(&sc->sc_reset_resetloop_ch);
 	callout_init(&sc->sc_disable_ch);
 	callout_init(&sc->sc_start_join_timo_ch);
 
-	if (ray_enable(sc)) {
-		aprint_error("%s: failed to enable the card\n", self->dv_xname);
-		goto fail3;
+	error = ray_enable(sc);
+	if (error) {
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
+		goto fail;
 	}
 
 	/* get startup results */
@@ -552,14 +553,14 @@ ray_attach(parent, self, aux)
 	if (ep->e_status != RAY_ECFS_CARD_OK) {
 		aprint_error("%s: card failed self test: status %d\n",
 		    self->dv_xname, sc->sc_ecf_startup.e_status);
-		goto fail4;
+		goto fail2;
 	}
 
 	/* check firmware version */
 	if (sc->sc_version != SC_BUILD_4 && sc->sc_version != SC_BUILD_5) {
 		aprint_error("%s: unsupported firmware version %d\n",
 		    self->dv_xname, ep->e_fw_build_string);
-		goto fail4;
+		goto fail2;
 	}
 
 	/* clear any interrupt if present */
@@ -620,17 +621,14 @@ ray_attach(parent, self, aux)
 	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
 
 	/* The attach is successful. */
+	sc->sc_attached = 1;
 	ray_disable(sc);
 	return;
 
-fail4:
-	ray_disable(sc);
-fail3:
-	pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
 fail2:
-	pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
-fail1:
-	sc->sc_window = -1;
+	ray_disable(sc);
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 static int
@@ -671,8 +669,7 @@ ray_detach(self, flags)
 	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
 
-	if (sc->sc_window == -1)
-                /* Nothing to detach. */
+	if (!sc->sc_attached)
                 return (0);
 
 	if (sc->sc_pwrhook)
@@ -686,8 +683,7 @@ ray_detach(self, flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	pcmcia_mem_unmap(sc->sc_pf, sc->sc_window);
-	pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -709,8 +705,10 @@ ray_enable(sc)
 		return (EIO);
 
 	error = ray_init(sc);
-	if (error)
+	if (error) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
+	}
 
 	return (error);
 }
@@ -732,9 +730,10 @@ ray_disable(sc)
 	sc->sc_rxhcksum = 0;
 	sc->sc_rxnoise = 0;
 
-	if (sc->sc_ih)
+	if (sc->sc_ih) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-	sc->sc_ih = 0;
+		sc->sc_ih = 0;
+	}
 }
 
 /*
