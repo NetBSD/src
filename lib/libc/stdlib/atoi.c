@@ -33,11 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)atoi.c	5.7 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: atoi.c,v 1.4 1995/02/28 01:46:32 jtc Exp $";
+static char *rcsid = "$Id: atoi.c,v 1.5 1995/06/14 05:19:52 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
+int
 atoi(str)
 	const char *str;
 {
