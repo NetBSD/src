@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.4 2000/03/31 11:50:06 soda Exp $
+# $NetBSD: md.arc,v 1.5 2000/04/29 03:46:26 thorpej Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/arc/kcore.h		comp-c-include
 ./usr/include/arc/kdbparam.h		comp-c-include
 ./usr/include/arc/limits.h		comp-c-include
+./usr/include/arc/lock.h		comp-c-include
 ./usr/include/arc/math.h		comp-c-include
 ./usr/include/arc/mips_opcode.h		comp-c-include
 ./usr/include/arc/mouse.h		comp-c-include

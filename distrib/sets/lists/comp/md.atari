@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.34 2000/03/17 22:54:05 tron Exp $
+# $NetBSD: md.atari,v 1.35 2000/04/29 03:46:26 thorpej Exp $
 ./usr/include/atari			comp-c-include
 ./usr/include/atari/_G_config.h		comp-c-include
 ./usr/include/atari/ahdilabel.h		comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/atari/kbdreg.h		comp-c-include
 ./usr/include/atari/kcore.h		comp-c-include
 ./usr/include/atari/limits.h		comp-c-include
+./usr/include/atari/lock.h		comp-c-include
 ./usr/include/atari/math.h		comp-c-include
 ./usr/include/atari/msioctl.h		comp-c-include
 ./usr/include/atari/mtpr.h		comp-c-include

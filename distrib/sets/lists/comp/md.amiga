@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.33 2000/03/17 22:54:04 tron Exp $
+# $NetBSD: md.amiga,v 1.34 2000/04/29 03:46:26 thorpej Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -23,6 +23,7 @@
 ./usr/include/amiga/intr.h	comp-c-include
 ./usr/include/amiga/kcore.h	comp-c-include
 ./usr/include/amiga/limits.h	comp-c-include
+./usr/include/amiga/lock.h	comp-c-include
 ./usr/include/amiga/math.h	comp-c-include
 ./usr/include/amiga/mtpr.h	comp-c-include
 ./usr/include/amiga/param.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.29 2000/03/17 22:54:05 tron Exp $
+# $NetBSD: md.arm32,v 1.30 2000/04/29 03:46:26 thorpej Exp $
 ./usr/include/arm32		comp-c-include
 ./usr/include/arm32/_G_config.h		comp-c-include
 ./usr/include/arm32/ansi.h		comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/arm32/katelib.h		comp-c-include
 ./usr/include/arm32/kbd.h		comp-c-include
 ./usr/include/arm32/limits.h		comp-c-include
+./usr/include/arm32/lock.h		comp-c-include
 ./usr/include/arm32/math.h		comp-c-include
 ./usr/include/arm32/mouse.h		comp-c-include
 ./usr/include/arm32/param.h		comp-c-include

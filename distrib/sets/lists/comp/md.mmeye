@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.5 2000/04/21 13:13:47 tsubai Exp $
+# $NetBSD: md.mmeye,v 1.6 2000/04/29 03:46:29 thorpej Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/mmeye/intr.h	comp-c-include
 ./usr/include/mmeye/limits.h	comp-c-include
 ./usr/include/mmeye/loadfile_machdep.h	comp-c-include
+./usr/include/mmeye/lock.h	comp-c-include
 ./usr/include/mmeye/math.h	comp-c-include
 ./usr/include/mmeye/mmeye.h	comp-c-include
 ./usr/include/mmeye/param.h	comp-c-include

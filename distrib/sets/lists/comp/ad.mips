@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.17 2000/02/28 16:31:08 jwise Exp $
+# $NetBSD: ad.mips,v 1.18 2000/04/29 03:46:25 thorpej Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/mips/kcore.h		comp-c-include
 ./usr/include/mips/kdbparam.h		comp-c-include
 ./usr/include/mips/limits.h		comp-c-include
+./usr/include/mips/lock.h		comp-c-include
 ./usr/include/mips/locore.h		comp-c-include
 ./usr/include/mips/math.h		comp-c-include
 ./usr/include/mips/mips1_pte.h		comp-c-include
