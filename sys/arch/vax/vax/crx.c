@@ -1,4 +1,4 @@
-/*	$Id: crx.c,v 1.2 1999/01/19 21:04:48 ragge Exp $	*/
+/*	$NetBSD: crx.c,v 1.3 1999/02/15 07:07:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
