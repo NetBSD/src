@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/03 02:20:31 tv Exp $
 
 LIB=	objc
 INCSDIR=/usr/include/objc
@@ -14,4 +14,4 @@ SRCS=	NXConstStr.m Object.m Protocol.m archive.c class.c \
 
 .include <bsd.lib.mk>
 
-.PATH: $(DIST)/objc
+.PATH: ${DIST}/objc
