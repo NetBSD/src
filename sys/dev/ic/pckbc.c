@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.9 2001/06/02 00:01:04 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.10 2001/06/02 00:46:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -526,20 +526,6 @@ pckbc_set_poll(self, slot, on)
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 
 	t->t_slotdata[slot]->polling = on;
-
-	/*
-	 * Some kbd controllers seem to not clear the interrupt condition
-	 * when the status word is read, which leads to loop calling
-	 * pckbcintr(). Thus, raise interrupt level when polling.
-	 */
-	if (!cold) {
-		static int s;
-
-		if (on)
-			s = spltty();
-		else
-			splx(s);
-	}
 
 	if (!on) {
                 int s;
