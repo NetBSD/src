@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppd.8,v 1.28 2000/07/16 22:10:14 tron Exp $
+.\"	$NetBSD: pppd.8,v 1.29 2000/08/01 18:46:22 hubertf Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.51 1999/12/23 01:29:11 paulus Exp 
 .\" SH section heading
@@ -661,6 +661,7 @@ settings.
 .B nolog
 Do not send log messages to a file or file descriptor.  This option
 cancels the \fBlogfd\fR and \fBlogfile\fR options.
+.TP
 .B nomagic
 Disable magic number negotiation.  With this option, pppd cannot
 detect a looped-back line.  This option should only be needed if the
