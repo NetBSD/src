@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.9 2000/06/29 09:02:53 mrg Exp $ */
+/* $NetBSD: db_interface.c,v 1.10 2000/11/22 02:03:48 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2000/06/29 09:02:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2000/11/22 02:03:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,44 +95,68 @@ struct db_command db_machine_cmds[] = {
 	{ (char *)0, },
 };
 
+int	db_alpha_regop __P((struct db_variable *, db_expr_t *, int));
+
+#define	dbreg(xx)	((long *)(xx))
+
 struct db_variable db_regs[] = {
-	{	"v0",	&ddb_regs.tf_regs[FRAME_V0],	FCN_NULL	},
-	{	"t0",	&ddb_regs.tf_regs[FRAME_T0],	FCN_NULL	},
-	{	"t1",	&ddb_regs.tf_regs[FRAME_T1],	FCN_NULL	},
-	{	"t2",	&ddb_regs.tf_regs[FRAME_T2],	FCN_NULL	},
-	{	"t3",	&ddb_regs.tf_regs[FRAME_T3],	FCN_NULL	},
-	{	"t4",	&ddb_regs.tf_regs[FRAME_T4],	FCN_NULL	},
-	{	"t5",	&ddb_regs.tf_regs[FRAME_T5],	FCN_NULL	},
-	{	"t6",	&ddb_regs.tf_regs[FRAME_T6],	FCN_NULL	},
-	{	"t7",	&ddb_regs.tf_regs[FRAME_T7],	FCN_NULL	},
-	{	"s0",	&ddb_regs.tf_regs[FRAME_S0],	FCN_NULL	},
-	{	"s1",	&ddb_regs.tf_regs[FRAME_S1],	FCN_NULL	},
-	{	"s2",	&ddb_regs.tf_regs[FRAME_S2],	FCN_NULL	},
-	{	"s3",	&ddb_regs.tf_regs[FRAME_S3],	FCN_NULL	},
-	{	"s4",	&ddb_regs.tf_regs[FRAME_S4],	FCN_NULL	},
-	{	"s5",	&ddb_regs.tf_regs[FRAME_S5],	FCN_NULL	},
-	{	"s6",	&ddb_regs.tf_regs[FRAME_S6],	FCN_NULL	},
-	{	"a0",	&ddb_regs.tf_regs[FRAME_A0],	FCN_NULL	},
-	{	"a1",	&ddb_regs.tf_regs[FRAME_A1],	FCN_NULL	},
-	{	"a2",	&ddb_regs.tf_regs[FRAME_A2],	FCN_NULL	},
-	{	"a3",	&ddb_regs.tf_regs[FRAME_A3],	FCN_NULL	},
-	{	"a4",	&ddb_regs.tf_regs[FRAME_A4],	FCN_NULL	},
-	{	"a5",	&ddb_regs.tf_regs[FRAME_A5],	FCN_NULL	},
-	{	"t8",	&ddb_regs.tf_regs[FRAME_T8],	FCN_NULL	},
-	{	"t9",	&ddb_regs.tf_regs[FRAME_T9],	FCN_NULL	},
-	{	"t10",	&ddb_regs.tf_regs[FRAME_T10],	FCN_NULL	},
-	{	"t11",	&ddb_regs.tf_regs[FRAME_T11],	FCN_NULL	},
-	{	"ra",	&ddb_regs.tf_regs[FRAME_RA],	FCN_NULL	},
-	{	"t12",	&ddb_regs.tf_regs[FRAME_T12],	FCN_NULL	},
-	{	"at",	&ddb_regs.tf_regs[FRAME_AT],	FCN_NULL	},
-	{	"gp",	&ddb_regs.tf_regs[FRAME_GP],	FCN_NULL	},
-	{	"sp",	&ddb_regs.tf_regs[FRAME_SP],	FCN_NULL	},
-	{	"pc",	&ddb_regs.tf_regs[FRAME_PC],	FCN_NULL	},
-	{	"ps",	&ddb_regs.tf_regs[FRAME_PS],	FCN_NULL	},
-	{	"ai",	&ddb_regs.tf_regs[FRAME_T11],	FCN_NULL	},
-	{	"pv",	&ddb_regs.tf_regs[FRAME_T12],	FCN_NULL	},
+	{	"v0",	dbreg(FRAME_V0),	db_alpha_regop	},
+	{	"t0",	dbreg(FRAME_T0),	db_alpha_regop	},
+	{	"t1",	dbreg(FRAME_T1),	db_alpha_regop	},
+	{	"t2",	dbreg(FRAME_T2),	db_alpha_regop	},
+	{	"t3",	dbreg(FRAME_T3),	db_alpha_regop	},
+	{	"t4",	dbreg(FRAME_T4),	db_alpha_regop	},
+	{	"t5",	dbreg(FRAME_T5),	db_alpha_regop	},
+	{	"t6",	dbreg(FRAME_T6),	db_alpha_regop	},
+	{	"t7",	dbreg(FRAME_T7),	db_alpha_regop	},
+	{	"s0",	dbreg(FRAME_S0),	db_alpha_regop	},
+	{	"s1",	dbreg(FRAME_S1),	db_alpha_regop	},
+	{	"s2",	dbreg(FRAME_S2),	db_alpha_regop	},
+	{	"s3",	dbreg(FRAME_S3),	db_alpha_regop	},
+	{	"s4",	dbreg(FRAME_S4),	db_alpha_regop	},
+	{	"s5",	dbreg(FRAME_S5),	db_alpha_regop	},
+	{	"s6",	dbreg(FRAME_S6),	db_alpha_regop	},
+	{	"a0",	dbreg(FRAME_A0),	db_alpha_regop	},
+	{	"a1",	dbreg(FRAME_A1),	db_alpha_regop	},
+	{	"a2",	dbreg(FRAME_A2),	db_alpha_regop	},
+	{	"a3",	dbreg(FRAME_A3),	db_alpha_regop	},
+	{	"a4",	dbreg(FRAME_A4),	db_alpha_regop	},
+	{	"a5",	dbreg(FRAME_A5),	db_alpha_regop	},
+	{	"t8",	dbreg(FRAME_T8),	db_alpha_regop	},
+	{	"t9",	dbreg(FRAME_T9),	db_alpha_regop	},
+	{	"t10",	dbreg(FRAME_T10),	db_alpha_regop	},
+	{	"t11",	dbreg(FRAME_T11),	db_alpha_regop	},
+	{	"ra",	dbreg(FRAME_RA),	db_alpha_regop	},
+	{	"t12",	dbreg(FRAME_T12),	db_alpha_regop	},
+	{	"at",	dbreg(FRAME_AT),	db_alpha_regop	},
+	{	"gp",	dbreg(FRAME_GP),	db_alpha_regop	},
+	{	"sp",	dbreg(FRAME_SP),	db_alpha_regop	},
+	{	"pc",	dbreg(FRAME_PC),	db_alpha_regop	},
+	{	"ps",	dbreg(FRAME_PS),	db_alpha_regop	},
+	{	"ai",	dbreg(FRAME_T11),	db_alpha_regop	},
+	{	"pv",	dbreg(FRAME_T12),	db_alpha_regop	},
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+int
+db_alpha_regop(struct db_variable *vp, db_expr_t *val, int opcode)
+{
+
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = DDB_REGS->tf_regs[(u_long)vp->valuep];
+		break;
+
+	case DB_VAR_SET:
+		DDB_REGS->tf_regs[(u_long)vp->valuep] = *val;
+		break;
+
+	default:
+		panic("db_alpha_regop: unknown op %d", opcode);
+	}
+
+	return (0);
+}
 
 /*
  * ddb_trap - field a kernel trap
