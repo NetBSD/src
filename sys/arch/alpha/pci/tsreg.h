@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
+/* $NetBSD: tsreg.h,v 1.2 2000/06/26 02:42:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -67,6 +67,13 @@
  *	...after PA sign ext:	0xffff##ff00##a000##0000
  *	(PA<42:41> ignored)
  */
+
+/*
+ * This hack allows us to map the I/O address space without using
+ * the KSEG sign extention hack.
+ */
+#define	TS_PHYSADDR(x)							\
+	(((x) & ~0x0100##0000##0000) | 0x0800##0000##0000)
 
 /*
  * Cchip CSR Map
