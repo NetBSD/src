@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.16 2001/11/14 00:58:49 tv Exp $
+#	$NetBSD: Makefile.buildboot,v 1.17 2001/12/03 05:44:36 gmcgarry Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -37,6 +37,9 @@ CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD
 CPPFLAGS+=		-DDOMAIN_KEYBOARD
 CPPFLAGS+=		-D_STANDALONE -DCOMPAT_NOLABEL -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
+
+# if sun bootparams is desired
+#CPPFLAGS+=     -DSUN_BOOTPARAMS
 
 # Limit the alloc() heap to below the msgbuf and ROM scratch pages.
 CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
