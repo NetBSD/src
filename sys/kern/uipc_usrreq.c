@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.28 1997/10/17 17:35:08 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.28.2.1 1998/01/29 09:49:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -689,7 +689,7 @@ unp_externalize(rights)
 	for (i = 0; i < nfds; i++) {
 		if (fdalloc(p, 0, &f))
 			panic("unp_externalize");
-		fp = *rp;
+		fp = *rp++;
 		p->p_fd->fd_ofiles[f] = fp;
 		fp->f_msgcount--;
 		unp_rights--;
