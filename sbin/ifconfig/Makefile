@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/20 21:21:53 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2004/10/28 20:10:29 dsl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	ifconfig
@@ -11,5 +11,7 @@ CPPFLAGS+=-DKAME_SCOPEID
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
+
+SRCS= ifconfig.c 
 
 .include <bsd.prog.mk>
