@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.42 1999/07/22 18:16:05 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.42 1999/07/22 18:16:05 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.43 1999/07/23 08:56:14 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ state(k, ve)
 		break;
 
 	case SZOMB:
-	case SDYING:
+	case SDEAD:
 		*cp = 'Z';
 		break;
 
