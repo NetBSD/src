@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.4 1996/12/09 17:43:36 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.5 1997/04/03 16:11:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -284,6 +284,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
