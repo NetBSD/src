@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.20 1999/04/12 17:29:31 drochner Exp $	*/
+/*	$NetBSD: portmap.c,v 1.21 1999/06/06 03:29:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.20 1999/04/12 17:29:31 drochner Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.21 1999/06/06 03:29:14 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #ifdef LIBWRAP
 # include <tcpd.h>
@@ -211,6 +212,7 @@ main(argc, argv)
 
 	if (!debugging && daemon(0, 0))
 		err(1, "fork failed");
+	pidfile(NULL);
 
 	openlog(__progname, debugging ? LOG_PID | LOG_PERROR : LOG_PID,
 	    LOG_DAEMON);
