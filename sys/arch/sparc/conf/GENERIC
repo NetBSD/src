@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.56 1998/01/20 22:12:51 pk Exp $
+# 	$NetBSD: GENERIC,v 1.57 1998/01/23 22:47:20 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -141,18 +141,28 @@ options 	QUOTA		# FFS quotas
 options 	FIFO		# POSIX fifo support (in all filesystems)
 
 ## Network protocol support.  In most environments, INET is required.
-options 	INET		# IP stack
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-#options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
+options 	INET		# IP (Internet Protocol) v4
+options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
+#options 	GATEWAY		# packet forwarding ("router switch")
+#options 	MROUTING	# packet forwarding of multicast packets
+#options 	DIRECTED_BROADCAST	# allow broadcasts through routers
+options 	NS		# Xerox NS networking
+#options 	NSIP		# Xerox NS tunneling over IP
+options 	ISO,TPIP	# OSI networking
+options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
+options 	NETATALK	# AppleTalk (over Ethernet) protocol
+#options 	NTP		# Network Time Protocol in-kernel support
+#options 	PPS_SYNC	# Add serial line synchronization for NTP
+#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	PPP_BSDCOMP	# Add BSD compression to ppp device
+#options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
+#options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
 
 
-
-# Main bus and CPU .. all systems.
+#### Main bus and CPU .. all systems.
 mainbus0 at root
 cpu0	at mainbus0
 
