@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.21.6.3 2004/09/21 13:16:04 skrll Exp $	*/
+/*	$NetBSD: mq200.c,v 1.21.6.4 2004/12/18 09:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.3 2004/09/21 13:16:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.4 2004/12/18 09:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -669,7 +669,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 	case HPCFBIO_GDSPCONF:
@@ -692,7 +692,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 		}
 		/*
 		 * nothing to do
-		 * because we have only one unit and one configration
+		 * because we have only one unit and one configuration
 		 */
 		return (0);
 	case HPCFBIO_GOP:

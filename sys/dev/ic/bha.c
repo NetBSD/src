@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.54.2.4 2004/09/21 13:27:53 skrll Exp $	*/
+/*	$NetBSD: bha.c,v 1.54.2.5 2004/12/18 09:31:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54.2.4 2004/09/21 13:27:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54.2.5 2004/12/18 09:31:56 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -319,6 +319,12 @@ bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			ccb->scsi_cmd_length = 0;
 		} else {
 			/* can't use S/G if zero length */
+			if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
+				printf("%s: cmdlen %d too large for CCB\n",
+				    sc->sc_dev.dv_xname, xs->cmdlen);
+				xs->error = XS_DRIVER_STUFFUP;
+				goto out_bad;
+			}
 			ccb->opcode = (xs->datalen ? BHA_INIT_SCAT_GATH_CCB
 						   : BHA_INITIATOR_CCB);
 			memcpy(&ccb->scsi_cmd, xs->cmd,
@@ -1553,10 +1559,9 @@ bha_finish_ccbs(struct bha_softc *sc)
 
 #ifdef BHADEBUG
 		if (bha_debug) {
-			struct scsi_generic *cmd = &ccb->scsi_cmd;
+			u_char *cp = &ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
-			    cmd->opcode, cmd->bytes[0], cmd->bytes[1],
-			    cmd->bytes[2], cmd->bytes[3], cmd->bytes[4]);
+			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("comp_stat %x for mbi addr = 0x%p, ",
 			    mbi->comp_stat, mbi);
 			printf("ccb addr = %p\n", ccb);

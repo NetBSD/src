@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.45.2.4 2004/09/21 13:36:37 skrll Exp $ */
+/*	$NetBSD: if_gre.c,v 1.45.2.5 2004/12/18 09:32:50 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,12 +46,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45.2.4 2004/09/21 13:36:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45.2.5 2004/12/18 09:32:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
+#ifdef INET
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -111,24 +112,12 @@ struct gre_softc_head gre_softc_list;
 int ip_gre_ttl = GRE_TTL;
 
 int	gre_clone_create __P((struct if_clone *, int));
-void	gre_clone_destroy __P((struct ifnet *));
+int	gre_clone_destroy __P((struct ifnet *));
 
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
 int gre_compute_route(struct gre_softc *sc);
-
-void	greattach __P((int));
-
-/* ARGSUSED */
-void
-greattach(count)
-	int count;
-{
-
-	LIST_INIT(&gre_softc_list);
-	if_clone_attach(&gre_cloner);
-}
 
 int
 gre_clone_create(ifc, unit)
@@ -163,7 +152,7 @@ gre_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 gre_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -175,6 +164,8 @@ gre_clone_destroy(ifp)
 #endif
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 /*
@@ -604,4 +595,18 @@ gre_in_cksum(u_int16_t *p, u_int len)
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
 	return (~sum);
+}
+#endif
+
+void	greattach __P((int));
+
+/* ARGSUSED */
+void
+greattach(count)
+	int count;
+{
+#ifdef INET
+	LIST_INIT(&gre_softc_list);
+	if_clone_attach(&gre_cloner);
+#endif
 }

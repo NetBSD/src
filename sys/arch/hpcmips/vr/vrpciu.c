@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.13.2.4 2004/09/21 13:16:14 skrll Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.13.2.5 2004/12/18 09:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.13.2.4 2004/09/21 13:16:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.13.2.5 2004/12/18 09:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (platid_match(&platid, &platid_mask_MACH_LASER5_L_BOARD)) {
 		/*
-		 * fix PCI device configration for L-Router.
+		 * fix PCI device configuration for L-Router.
 		 */
 		/* change IDE controller to native mode */
 		reg = pci_conf_read(pc, pci_make_tag(pc, 0, 16, 0),

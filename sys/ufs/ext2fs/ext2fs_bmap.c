@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.4 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.5 2004/12/18 09:33:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.4 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.5 2004/12/18 09:33:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	if (bn >= 0 && bn < NDADDR) {
 		/* XXX ondisk32 */
-		*bnp = blkptrtodb(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
+		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.9 2004/11/29 07:24:16 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.10 2004/12/18 09:32:09 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2164,6 +2164,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "FZ Juelich / ZEL",
 	},
 	{
+	    PCI_VENDOR_BELKIN,
+	    "Belkin",
+	},
+	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
 	},
@@ -2308,7 +2312,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 567;
+const int pci_nvendors = 568;
 
 const struct pci_product pci_products[] = {
 	{
@@ -3360,6 +3364,22 @@ const struct pci_product pci_products[] = {
 	    "Radeon Mobility M6",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_200,
+	    "IXP AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
+	    "IXP AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
+	    "IXP AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE,
+	    "IXP IDE Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
 	    "Mach64 CT",
 	},
@@ -3530,6 +3550,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600,
 	    "Radeon 9600TX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_MOB_T2,
+	    "Radeon Mobility T2 (M10) NT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S,
@@ -3870,6 +3894,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
+	    "F5D6020v3 802.11b",
 	},
 	{
 	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
@@ -6362,6 +6390,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
 	    "IT8152 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212,
+	    "IT8212 IDE controller",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
@@ -9153,7 +9185,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
-	    "VT8363 KT133 System Controller",
+	    "VT8363 (Apollo KT133) Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
@@ -9161,7 +9193,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4,
-	    "VT8501 MVP4 System Controller",
+	    "VT8501 (Apollo MVP4) Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
@@ -9185,7 +9217,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA,
-	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	    "VT82C586 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
@@ -9193,7 +9225,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A,
-	    "VT82C596A (Apollo Pro) PCI-ISA Bridge",
+	    "VT82C596A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
@@ -9209,7 +9241,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
-	    "VT82C686A (Apollo KX133) PCI-ISA Bridge",
+	    "VT82C686A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
@@ -9233,7 +9265,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
-	    "VT82C586 (Apollo VP) IDE Controller",
+	    "VT82C586 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
@@ -9245,7 +9277,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
-	    "VT82C586 (Apollo VP) Power Management Controller",
+	    "VT82C586 Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
@@ -9337,7 +9369,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
-	    "VT8363 KT133 PCI to AGP Bridge",
+	    "VT8363 (Apollo KT133) PCI to AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
@@ -9345,7 +9377,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
-	    "VT8501 CPU-AGP Bridge",
+	    "VT8501 (Apollo MVP4) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
@@ -9365,7 +9397,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
-	    "VT8366 CPU-AGP Bridge",
+	    "VT8366 (Apollo KT266) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP,
@@ -9840,4 +9872,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1882;
+const int pci_nproducts = 1889;

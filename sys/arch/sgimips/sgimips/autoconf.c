@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.2.5 2004/11/02 07:50:47 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.6 2004/12/18 09:31:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.5 2004/11/02 07:50:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.6 2004/12/18 09:31:27 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -186,7 +186,7 @@ device_register(struct device *dev, void *aux)
 
 	/*
 	 * Handle SCSI boot device definitions
-	 * wdsc -- IP22/24
+	 * wdsc -- IP12/22/24
 	 * ahc -- IP32
 	 */
 	if ( (scsiboot && strcmp(name, "wdsc") == 0) ||
@@ -217,7 +217,8 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * Check if netboot device.
 	 */
-	if (netboot && strcmp(name, "sq") == 0) {
+	if (netboot && (strcmp(name, "sq") == 0 ||
+	    strcmp(name, "mec") == 0)) {
 		/* XXX Check unit number? (Which we don't parse yet) */
 		booted_device = dev;
 		found = 1;

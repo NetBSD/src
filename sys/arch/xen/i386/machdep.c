@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.2.5 2004/11/02 07:51:06 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.6 2004/12/18 09:31:45 skrll Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.5 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.6 2004/12/18 09:31:45 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -847,12 +847,14 @@ haltsys:
 		 */
 #endif
 	}
-
+#if 0
 	if (howto & RB_HALT) {
+#endif
 		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
+		printf("The guest operating system has halted.\n");
+		printf("To reboot, recreate this Xen domain.\n\n");
 
+#if 0
 #ifdef BEEP_ONHALT
 		{
 			int c;
@@ -877,8 +879,9 @@ haltsys:
 	}
 
 	printf("rebooting...\n");
+#endif
 	if (cpureset_delay > 0)
-		delay(cpureset_delay * 1000);
+		delay(cpureset_delay * 1000);	/* XXX not nice under Xen! */
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -955,7 +958,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->pdppaddr = PTDpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*

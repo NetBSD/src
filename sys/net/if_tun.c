@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.63.2.5 2004/09/21 13:36:41 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.63.2.6 2004/12/18 09:32:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,9 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.63.2.5 2004/09/21 13:36:41 skrll Exp $");
-
-#include "tun.h"
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.63.2.6 2004/12/18 09:32:51 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -80,7 +78,7 @@ int	tun_ioctl __P((struct ifnet *, u_long, caddr_t));
 int	tun_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *rt));
 int	tun_clone_create __P((struct if_clone *, int));
-void	tun_clone_destroy __P((struct ifnet *));
+int	tun_clone_destroy __P((struct ifnet *));
 
 struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
@@ -230,7 +228,7 @@ tunattach0(tp)
 #endif
 }
 
-void
+int
 tun_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -271,6 +269,8 @@ tun_clone_destroy(ifp)
 
 	if (!zombie)
 		free(tp, M_DEVBUF);
+
+	return (0);
 }
 
 /*
@@ -290,9 +290,6 @@ tunopen(dev, flag, mode, l)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-
-	if (NTUN < 1)
-		return (ENXIO);
 
 	s = splnet();
 	tp = tun_find_unit(dev);
@@ -495,11 +492,11 @@ tun_output(ifp, m0, dst, rt)
 	struct rtentry *rt;
 {
 	struct tun_softc *tp = ifp->if_softc;
-#ifdef INET
 	int		s;
 	int		error;
-#endif
+#ifdef INET
 	int		mlen;
+#endif
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.4.2.3 2004/11/29 07:24:33 skrll Exp $	*/
+/*	$NetBSD: fil.c,v 1.4.2.4 2004/12/18 09:32:21 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4.2.3 2004/11/29 07:24:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4.2.4 2004/12/18 09:32:21 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -419,7 +419,7 @@ fr_info_t *fin;
 			 * Actually, hop by hop header is only allowed right
 			 * after IPv6 header!
 			 */
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -430,7 +430,7 @@ fr_info_t *fin;
 				frpr_hopopts6(fin);
 			break;
 		case IPPROTO_DSTOPTS :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -438,7 +438,7 @@ fr_info_t *fin;
 			frpr_dstopts6(fin);
 			break;
 		case IPPROTO_ROUTING :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -460,7 +460,7 @@ fr_info_t *fin;
 			go = 0;
 			break;
 		case IPPROTO_FRAGMENT :
-			if (coalesced == 0) {
+			if ((fin->fin_m != NULL) && (coalesced == 0)) {
 				coalesced = fr_coalesce(fin);
 				if (coalesced == -1)
 					return;
@@ -2765,7 +2765,11 @@ void *l4hdr;
 	m->m_off += hlen;
 #   endif
 	m->m_len -= hlen;
+#ifdef INET
 	sum2 = in_cksum(m, slen);
+#else
+	sum2 = 0;
+#endif
 	m->m_len += hlen;
 #   if BSD >= 199103
 	m->m_data -= hlen;

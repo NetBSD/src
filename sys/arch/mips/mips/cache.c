@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19.2.3 2004/09/21 13:18:48 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.19.2.4 2004/12/18 09:31:15 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.3 2004/09/21 13:18:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.19.2.4 2004/12/18 09:31:15 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -738,12 +738,13 @@ primary_cache_is_2way:
 	case MIPS_R5000:
 #endif
 	case MIPS_RM5200:
+		mips_sdcache_write_through = 1;
 		mips_cache_ops.mco_sdcache_wbinv_all =
 		    r5k_sdcache_wbinv_all;
 		mips_cache_ops.mco_sdcache_wbinv_range =
 		    r5k_sdcache_wbinv_range;
 		mips_cache_ops.mco_sdcache_wbinv_range_index =
-		    r5k_sdcache_wbinv_rangeall;	/* XXX? */
+		    r5k_sdcache_wbinv_range_index;
 		mips_cache_ops.mco_sdcache_inv_range =
 		    r5k_sdcache_wbinv_range;
 		mips_cache_ops.mco_sdcache_wb_range =

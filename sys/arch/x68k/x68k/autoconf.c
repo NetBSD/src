@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37.6.4 2004/11/02 07:50:57 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.6.5 2004/12/18 09:31:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.4 2004/11/02 07:50:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.5 2004/12/18 09:31:45 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -307,18 +307,19 @@ find_dev_byname(name)
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
 
+static int mb_attached;
+
 int
 mbmatch(pdp, cfp, auxp)
 	struct device *pdp;
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if (cfp->cf_unit > 0)
-		return(0);
-	/*
-	 * We are always here
-	 */
-	return(1);
+
+	if (mb_attached)
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -329,7 +330,10 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	printf ("\n");
+
+	mb_attached = 1;
+
+	printf("\n");
 
 	config_found(dp, "intio"  , NULL);
 	config_found(dp, "grfbus" , NULL);

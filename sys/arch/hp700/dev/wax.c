@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.3.6.2 2004/12/18 09:31:02 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.3.6.2 2004/12/18 09:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,8 @@ CFATTACH_DECL(wax_mainbus, sizeof(struct wax_softc),
 CFATTACH_DECL(wax_phantomas, sizeof(struct wax_softc),
     waxmatch, waxattach, NULL, NULL);
 
+static int wax_attached;
+
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.
  */
@@ -101,7 +103,7 @@ waxmatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct confargs *ca = aux;
 
 	/* there will be only one */
-	if (cf->cf_unit > 0 ||
+	if (wax_attached ||
 	    ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_WAX)
 		return 0;
@@ -127,7 +129,10 @@ waxattach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	int s, in;
 
+	wax_attached = 1;
+
 	aprint_normal("\n");
+
 	/*
 	 * Map the WAX interrupt registers.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.14.2.3 2004/09/21 13:37:13 skrll Exp $	*/
+/*	$NetBSD: tcp.h,v 1.14.2.4 2004/12/18 09:33:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -85,13 +85,11 @@ struct tcphdr {
 #define	TCPOPT_TIMESTAMP	8
 #define	   TCPOLEN_TIMESTAMP		10
 #define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
-#define	TCPOPT_MD5SIGNATURE	19		/* RFC 2385 */
-#define    TCPOLEN_MD5SIGNATURE		18
 
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
-#define	TCPOPT_SIGNATURE		19	/* Keyed MD5: RFC 2385 */
+#define	TCPOPT_SIGNATURE	19		/* Keyed MD5: RFC 2385 */
 #define	   TCPOLEN_SIGNATURE		18
 
 /*

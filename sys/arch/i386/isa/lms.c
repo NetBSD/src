@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.44.6.2 2004/09/21 13:16:57 skrll Exp $	*/
+/*	$NetBSD: lms.c,v 1.44.6.3 2004/12/18 09:31:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.44.6.2 2004/09/21 13:16:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.44.6.3 2004/12/18 09:31:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ CFATTACH_DECL(lms, sizeof(struct lms_softc),
     lmsprobe, lmsattach, NULL, NULL);
 
 int	lms_enable __P((void *));
-int	lms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	lms_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 void	lms_disable __P((void *));
 
 const struct wsmouse_accessops lms_accessops = {
@@ -205,12 +205,12 @@ lms_disable(v)
 }
 
 int
-lms_ioctl(v, cmd, data, flag, p)
+lms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 #if 0
 	struct lms_softc *sc = v;

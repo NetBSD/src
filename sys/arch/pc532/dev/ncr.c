@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.48.6.3 2004/09/21 13:19:55 skrll Exp $	*/
+/*	$NetBSD: ncr.c,v 1.48.6.4 2004/12/18 09:31:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.48.6.3 2004/09/21 13:19:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.48.6.4 2004/12/18 09:31:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ int ncr_default_options = 0;
 CFATTACH_DECL(ncr, sizeof(struct ncr5380_softc),
     ncr_match, ncr_attach, NULL, NULL);
 
+static int ncr_attached;
+
 static int
 ncr_match(parent, cf, aux)
 	struct device *parent;
@@ -94,9 +96,8 @@ ncr_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int unit = cf->cf_unit;
 
-	if (unit != 0)	/* Only one unit */
+	if (ncr_attached)	/* Only one unit */
 		return(0);
 
 	ca->ca_addr = (int)NCR5380;
@@ -112,6 +113,8 @@ ncr_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
 	int flags;
+
+	ncr_attached = 1;
 
 	/*
 	 * For now we only support the DP8490.

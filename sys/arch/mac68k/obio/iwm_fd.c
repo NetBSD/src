@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.5 2004/11/02 07:50:36 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.6 2004/12/18 09:31:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.5 2004/11/02 07:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.6 2004/12/18 09:31:14 skrll Exp $");
+
+#ifndef _LKM
+#include "locators.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,11 +432,15 @@ fd_match(parent, match, auxp)
 
 	cfp = match;
 	fdParams = (iwmAttachArgs_t *)auxp;
+#ifdef _LKM
 	cfUnit = cfp->cf_loc[0];
+#else
+	cfUnit = cfp->cf_loc[IWMCF_DRIVE];
+#endif
 	matched = (cfUnit == fdParams->unit || cfUnit == -1) ? 1 : 0;
 	if (TRACE_CONFIG) {
 		printf("fdMatch() drive %d ? cfUnit = %d\n",
-		    fdParams->unit, cfp->cf_loc[0]);
+		    fdParams->unit, cfUnit);
 	}
 	return matched;
 }

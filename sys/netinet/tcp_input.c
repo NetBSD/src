@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.171.2.3 2004/09/21 13:37:13 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.171.2.4 2004/12/18 09:33:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.3 2004/09/21 13:37:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.4 2004/12/18 09:33:05 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1135,10 +1135,18 @@ findpcb:
 			break;
 
 		default:
-			/* Must compute it ourselves. */
-			TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
-			if (in4_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
-				goto badcsum;
+			/*
+			 * Must compute it ourselves.  Maybe skip checksum
+			 * on loopback interfaces.
+			 */
+			if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+					     IFF_LOOPBACK) ||
+					   tcp_do_loopback_cksum)) {
+				TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
+				if (in4_cksum(m, IPPROTO_TCP, toff,
+					      tlen + off) != 0)
+					goto badcsum;
+			}
 			break;
 		}
 		break;

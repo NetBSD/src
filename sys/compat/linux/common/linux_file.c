@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.61.2.5 2004/09/21 13:25:38 skrll Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.61.2.6 2004/12/18 09:31:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.5 2004/09/21 13:25:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.6 2004/12/18 09:31:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ linux_sys_fcntl(l, v, retval)
 		val = linux_to_bsd_ioflags((unsigned long)SCARG(uap, arg));
 		/*
 		 * Linux seems to have same semantics for sending SIGIO to the
-		 * read side of socket, but slighly different semantics
+		 * read side of socket, but slightly different semantics
 		 * for SIGIO to the write side.  Rather than sending the SIGIO
 		 * every time it's possible to write (directly) more data, it
 		 * only sends SIGIO if last write(2) failed due to insufficient
