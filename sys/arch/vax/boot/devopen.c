@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1996/03/16 11:02:28 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.5 1996/08/02 11:22:07 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -64,7 +64,7 @@ devlookup(d,len)
 	int i;
     
 	for (i = 0; i < ndevs; i++, dp++)
-		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
+		if (dp->dv_name && bcmp(dp->dv_name, d, len) == 0)
 	    		return(i);
 
 	printf("No such device - Configured devices are:\n");
