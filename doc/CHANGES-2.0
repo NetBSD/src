@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.45 2004/04/07 04:47:12 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.46 2004/04/07 04:51:31 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -511,3 +511,10 @@ sys/dev/hpc/hpckbdkeymap.h			1.27
 	positioning of the cursor keys to match the keycaps, and make the cmdmap
 	work correctly.
 	[tv, ticket #74]
+
+sys/arch/hpcmips/conf/Makefile.hpcmips.inc	1.2
+
+	Allow the codegen option to be specified in the config file rather than
+	being fixed at -mips2, by setting "makeoptions MIPSFLAGS"
+
+	[tv, ticket #75]
