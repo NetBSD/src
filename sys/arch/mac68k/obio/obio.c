@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.18 2004/12/15 04:09:29 jmc Exp $	*/
+/*	$NetBSD: obio.c,v 1.19 2005/01/15 16:01:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.18 2004/12/15 04:09:29 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.19 2005/01/15 16:01:00 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,19 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.18 2004/12/15 04:09:29 jmc Exp $");
 
 #include <mac68k/obio/obiovar.h>
 
-static int	obio_match __P((struct device *, struct cfdata *, void *));
-static void	obio_attach __P((struct device *, struct device *, void *));
-static int	obio_print __P((void *, const char *));
-static int	obio_search __P((struct device *, struct cfdata *, void *));
+static int	obio_match(struct device *, struct cfdata *, void *);
+static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_print(void *, const char *);
+static int	obio_search(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
 
 static int
-obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int obio_matched = 0;
 
@@ -74,10 +71,7 @@ obio_match(parent, cf, aux)
 }
 
 static void
-obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
@@ -86,9 +80,7 @@ obio_attach(parent, self, aux)
 }
 
 int
-obio_print(args, name)
-	void *args;
-	const char *name;
+obio_print(void *args, const char *name)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)args;
 
@@ -99,10 +91,7 @@ obio_print(args, name)
 }
 
 int
-obio_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+obio_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct obio_attach_args oa;

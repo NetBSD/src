@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.14 2005/01/15 16:01:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.14 2005/01/15 16:01:00 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,24 +61,21 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $");
 #define MACE_REG_BASE	0x50F1C000
 #define MACE_PROM_BASE	0x50F08000
 
-hide int	mc_obio_match __P((struct device *, struct cfdata *, void *));
-hide void	mc_obio_attach __P((struct device *, struct device *, void *));
-hide void	mc_obio_init __P((struct mc_softc *sc));
-hide void	mc_obio_put __P((struct mc_softc *sc, u_int len));
-hide int	mc_dmaintr __P((void *arg));
-hide void	mc_reset_rxdma __P((struct mc_softc *sc));
-hide void	mc_reset_rxdma_set __P((struct mc_softc *, int set));
-hide void	mc_reset_txdma __P((struct mc_softc *sc));
-hide int	mc_obio_getaddr __P((struct mc_softc *, u_int8_t *));
+hide int	mc_obio_match(struct device *, struct cfdata *, void *);
+hide void	mc_obio_attach(struct device *, struct device *, void *);
+hide void	mc_obio_init(struct mc_softc *);
+hide void	mc_obio_put(struct mc_softc *, u_int);
+hide int	mc_dmaintr(void *);
+hide void	mc_reset_rxdma(struct mc_softc *);
+hide void	mc_reset_rxdma_set(struct mc_softc *, int);
+hide void	mc_reset_txdma(struct mc_softc *);
+hide int	mc_obio_getaddr(struct mc_softc *, u_int8_t *);
 
 CFATTACH_DECL(mc_obio, sizeof(struct mc_softc),
     mc_obio_match, mc_obio_attach, NULL, NULL);
 
 hide int
-mc_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 	bus_space_handle_t bsh;
@@ -109,9 +106,7 @@ mc_obio_match(parent, cf, aux)
 }
 
 hide void
-mc_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void	*aux;
+mc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct mc_softc *sc = (void *)self;
@@ -215,17 +210,14 @@ mc_obio_attach(parent, self, aux)
 
 /* Bus-specific initialization */
 hide void
-mc_obio_init(sc)
-	struct mc_softc *sc;
+mc_obio_init(struct mc_softc *sc)
 {
 	mc_reset_rxdma(sc);
 	mc_reset_txdma(sc);
 }
 
 hide void
-mc_obio_put(sc, len)
-	struct mc_softc *sc;
-	u_int len;
+mc_obio_put(struct mc_softc *sc, u_int len)
 {
 	psc_reg4(PSC_ENETWR_ADDR + sc->sc_txset) = sc->sc_txbuf_phys;
 	psc_reg4(PSC_ENETWR_LEN + sc->sc_txset) = len;
@@ -238,8 +230,7 @@ mc_obio_put(sc, len)
  * Interrupt handler for the MACE DMA completion interrupts
  */
 int
-mc_dmaintr(arg)
-	void *arg;
+mc_dmaintr(void *arg)
 {
 	struct mc_softc *sc = arg;
 	u_int16_t status;
@@ -329,8 +320,7 @@ mc_dmaintr(arg)
 
 
 hide void
-mc_reset_rxdma(sc)
-	struct mc_softc *sc;
+mc_reset_rxdma(struct mc_softc *sc)
 {
 	u_int8_t maccc;
 
@@ -354,9 +344,7 @@ mc_reset_rxdma(sc)
 }
 
 hide void
-mc_reset_rxdma_set(sc, set)
-	struct mc_softc *sc;
-	int set;
+mc_reset_rxdma_set(struct mc_softc *sc, int set)
 {
 	/* disable DMA while modifying the registers, then reenable DMA */
 	psc_reg2(PSC_ENETRD_CMD + set) = 0x0100;
@@ -367,8 +355,7 @@ mc_reset_rxdma_set(sc, set)
 }
 
 hide void
-mc_reset_txdma(sc)
-	struct mc_softc *sc;
+mc_reset_txdma(struct mc_softc *sc)
 {
 	u_int8_t maccc;
 
@@ -381,9 +368,7 @@ mc_reset_txdma(sc)
 }
 
 hide int
-mc_obio_getaddr(sc, lladdr)
-	struct mc_softc *sc;
-	u_int8_t *lladdr;
+mc_obio_getaddr(struct mc_softc *sc, u_int8_t *lladdr)
 {
 	bus_space_handle_t bsh;
 	u_char csum;

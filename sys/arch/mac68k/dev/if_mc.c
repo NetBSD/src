@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.25 2005/01/15 16:00:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.25 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -93,19 +93,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $");
 #include <mac68k/dev/if_mcreg.h>
 #include <mac68k/dev/if_mcvar.h>
 
-hide void	mcwatchdog __P((struct ifnet *));
-hide int	mcinit __P((struct mc_softc *sc));
-hide int	mcstop __P((struct mc_softc *sc));
-hide int	mcioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
-hide void	mcstart __P((struct ifnet *ifp));
-hide void	mcreset __P((struct mc_softc *sc));
+hide void	mcwatchdog(struct ifnet *);
+hide int	mcinit(struct mc_softc *);
+hide int	mcstop(struct mc_softc *);
+hide int	mcioctl(struct ifnet *, u_long, caddr_t);
+hide void	mcstart(struct ifnet *);
+hide void	mcreset(struct mc_softc *);
 
-integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
-integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mace_read __P((struct mc_softc *, caddr_t, int));
-integrate struct mbuf *mace_get __P((struct mc_softc *, caddr_t, int));
-static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
-static inline u_int16_t ether_cmp __P((void *, void *));
+integrate u_int	maceput(struct mc_softc *, struct mbuf *);
+integrate void	mc_tint(struct mc_softc *);
+integrate void	mace_read(struct mc_softc *, caddr_t, int);
+integrate struct mbuf *mace_get(struct mc_softc *, caddr_t, int);
+static void mace_calcladrf(struct ethercom *, u_int8_t *);
+static inline u_int16_t ether_cmp(void *, void *);
 
 
 /*
@@ -123,12 +123,11 @@ static inline u_int16_t ether_cmp __P((void *, void *));
  * assembly code generated before and after your tweaks!
  */
 static inline u_int16_t
-ether_cmp(one, two)
-	void *one, *two;
+ether_cmp(void *one, void *two)
 {
-	register u_int16_t *a = (u_short *) one;
-	register u_int16_t *b = (u_short *) two;
-	register u_int16_t diff;
+	u_int16_t *a = (u_short *) one;
+	u_int16_t *b = (u_short *) two;
+	u_int16_t diff;
 
 #ifdef	m68k
 	/*
@@ -159,9 +158,7 @@ ether_cmp(one, two)
  * to accept packets.
  */
 int
-mcsetup(sc, lladdr)
-	struct mc_softc	*sc;
-	u_int8_t *lladdr;
+mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
@@ -170,10 +167,10 @@ mcsetup(sc, lladdr)
 	DELAY(100);
 	NIC_PUT(sc, MACE_IMR, ~0);
 
-	bcopy(lladdr, sc->sc_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_enaddr, lladdr, ETHER_ADDR_LEN);
 	printf(": address %s\n", ether_sprintf(lladdr));
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = mcioctl;
 	ifp->if_start = mcstart;
@@ -188,10 +185,7 @@ mcsetup(sc, lladdr)
 }
 
 hide int
-mcioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+mcioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mc_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
@@ -214,14 +208,14 @@ mcioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host,
 				    sizeof(sc->sc_enaddr));
 			}
 			/* Set new address. */
@@ -289,11 +283,10 @@ mcioctl(ifp, cmd, data)
  * Encapsulate a packet of type family for the local net.
  */
 hide void
-mcstart(ifp)
-	struct ifnet *ifp;
+mcstart(struct ifnet *ifp)
 {
 	struct mc_softc	*sc = ifp->if_softc;
-	struct mbuf	*m;
+	struct mbuf *m;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -330,16 +323,14 @@ mcstart(ifp)
  * hardware/software errors.
  */
 hide void
-mcreset(sc)
-	struct mc_softc *sc;
+mcreset(struct mc_softc *sc)
 {
 	mcstop(sc);
 	mcinit(sc);
 }
 
 hide int
-mcinit(sc)
-	struct mc_softc *sc;
+mcinit(struct mc_softc *sc)
 {
 	int s;
 	u_int8_t maccc, ladrf[8];
@@ -412,10 +403,11 @@ mcinit(sc)
  * part way through.
  */
 hide int
-mcstop(sc)
-	struct mc_softc *sc;
+mcstop(struct mc_softc *sc)
 {
-	int	s = splnet();
+	int s;
+	
+	s = splnet();
 
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
 	DELAY(100);
@@ -433,8 +425,7 @@ mcstop(sc)
  * will be handled by higher level protocol timeouts.
  */
 hide void
-mcwatchdog(ifp)
-	struct ifnet *ifp;
+mcwatchdog(struct ifnet *ifp)
 {
 	struct mc_softc *sc = ifp->if_softc;
 
@@ -446,9 +437,7 @@ mcwatchdog(ifp)
  * stuff packet into MACE (at splnet)
  */
 integrate u_int
-maceput(sc, m)
-	struct mc_softc *sc;
-	struct mbuf *m;
+maceput(struct mc_softc *sc, struct mbuf *m)
 {
 	struct mbuf *n;
 	u_int len, totlen = 0;
@@ -460,7 +449,7 @@ maceput(sc, m)
 		u_char *data = mtod(m, u_char *);
 		len = m->m_len;
 		totlen += len;
-		bcopy(data, buff, len);
+		memcpy(buff, data, len);
 		buff += len;
 		MFREE(m, n);
 	}
@@ -471,7 +460,7 @@ maceput(sc, m)
 #if 0
 	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
 		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
-		bzero(sc->sc_txbuf + totlen, pad);
+		memset(sc->sc_txbuf + totlen, 0, pad);
 		totlen = ETHERMIN + sizeof(struct ether_header);
 	}
 #endif
@@ -483,8 +472,7 @@ maceput(sc, m)
 }
 
 void
-mcintr(arg)
-	void *arg;
+mcintr(void *arg)
 {
 struct mc_softc *sc = arg;
 	u_int8_t ir;
@@ -525,8 +513,7 @@ struct mc_softc *sc = arg;
 }
 
 integrate void
-mc_tint(sc)
-	struct mc_softc *sc;
+mc_tint(struct mc_softc *sc)
 {
 	u_int8_t xmtrc, xmtfs;
 
@@ -571,8 +558,7 @@ mc_tint(sc)
 }
 
 void
-mc_rint(sc)
-	struct mc_softc *sc;
+mc_rint(struct mc_softc *sc)
 {
 #define	rxf	sc->sc_rxframe
 	u_int len;
@@ -616,10 +602,7 @@ mc_rint(sc)
 }
 
 integrate void
-mace_read(sc, pkt, len)
-	struct mc_softc *sc;
-	caddr_t pkt;
-	int len;
+mace_read(struct mc_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
@@ -659,12 +642,9 @@ mace_read(sc, pkt, len)
  * we copy into clusters.
  */
 integrate struct mbuf *
-mace_get(sc, pkt, totlen)
-	struct mc_softc *sc;
-	caddr_t pkt;
-	int totlen;
+mace_get(struct mc_softc *sc, caddr_t pkt, int totlen)
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *top, **mp;
 	int len;
 
@@ -696,7 +676,7 @@ mace_get(sc, pkt, totlen)
 			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(pkt, mtod(m, caddr_t), len);
+		memcpy(mtod(m, caddr_t), pkt, len);
 		pkt += len;
 		totlen -= len;
 		*mp = m;
@@ -711,21 +691,19 @@ mace_get(sc, pkt, totlen)
  * address filter.
  */
 void
-mace_calcladrf(ac, af)
-	struct ethercom *ac;
-	u_int8_t *af;
+mace_calcladrf(struct ethercom *ac, u_int8_t *af)
 {
 	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp;
-	register u_int32_t crc;
+	u_char *cp;
+	u_int32_t crc;
 	static const u_int32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
 		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 	};
-	register int len;
+	int len;
 	struct ether_multistep step;
 
 	/*
@@ -778,11 +756,8 @@ static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)  ((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 u_char
-mc_get_enaddr(t, h, o, dst)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	u_char *dst;
+mc_get_enaddr(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_char *dst)
 {
 	int	i;
 	u_char	b, csum;

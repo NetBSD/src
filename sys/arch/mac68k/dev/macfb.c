@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.10 2003/07/15 02:43:18 lukem Exp $ */
+/* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.10 2003/07/15 02:43:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.10 2003/07/15 02:43:18 lukem Exp $");
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-int macfb_match __P((struct device *, struct cfdata *, void *));
-void macfb_attach __P((struct device *, struct device *, void *));
+int macfb_match(struct device *, struct cfdata *, void *);
+void macfb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(macfb, sizeof(struct macfb_softc),
     macfb_match, macfb_attach, NULL, NULL);
@@ -90,13 +90,13 @@ const struct wsscreen_list macfb_screenlist = {
 	_macfb_scrlist
 };
 
-static int	macfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	macfb_mmap __P((void *, off_t, int));
-static int	macfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-		    void **, int *, int *, long *));
-static void	macfb_free_screen __P((void *, void *));
-static int	macfb_show_screen __P((void *, void *, int,
-		    void (*)(void *, int, int), void *));
+static int	macfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	macfb_mmap(void *, off_t, int);
+static int	macfb_alloc_screen(void *, const struct wsscreen_descr *,
+		    void **, int *, int *, long *);
+static void	macfb_free_screen(void *, void *);
+static int	macfb_show_screen(void *, void *, int,
+		    void (*)(void *, int, int), void *);
 
 const struct wsdisplay_accessops macfb_accessops = {
 	macfb_ioctl,
@@ -107,12 +107,12 @@ const struct wsdisplay_accessops macfb_accessops = {
 	0 /* load_font */
 };
 
-void macfb_init __P((struct macfb_devconfig *));
+void macfb_init(struct macfb_devconfig *);
 
 paddr_t macfb_consaddr;
-static int macfb_is_console __P((paddr_t addr));
+static int macfb_is_console(paddr_t);
 #ifdef WSDISPLAY_COMPAT_ITEFONT
-static void	init_itefont __P((void));
+static void	init_itefont(void);
 #endif /* WSDISPLAY_COMPAT_ITEFONT */
 
 static struct macfb_devconfig macfb_console_dc;
@@ -147,8 +147,7 @@ macfb_is_console(paddr_t addr)
 }
 
 void
-macfb_clear(dc)
-	struct macfb_devconfig *dc;
+macfb_clear(struct macfb_devconfig *dc)
 {
 	int i, rows;
 
@@ -160,8 +159,7 @@ macfb_clear(dc)
 }
 
 void
-macfb_init(dc)
-	struct macfb_devconfig *dc;
+macfb_init(struct macfb_devconfig *dc)
 {
 	struct raster *rap;
 	struct rcons *rcp;
@@ -192,19 +190,13 @@ macfb_init(dc)
 }
 
 int
-macfb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+macfb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-macfb_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+macfb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;
@@ -254,12 +246,7 @@ macfb_attach(parent, self, aux)
 
 
 int
-macfb_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;
@@ -295,10 +282,7 @@ macfb_ioctl(v, cmd, data, flag, p)
 }
 
 static paddr_t
-macfb_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+macfb_mmap(void *v, off_t offset, int prot)
 {
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;
@@ -314,12 +298,8 @@ macfb_mmap(v, offset, prot)
 }
 
 int
-macfb_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *defattrp;
+macfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *defattrp)
 {
 	struct macfb_softc *sc = v;
 	long defattr;
@@ -337,9 +317,7 @@ macfb_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 }
 
 void
-macfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+macfb_free_screen(void *v, void *cookie)
 {
 	struct macfb_softc *sc = v;
 
@@ -350,19 +328,14 @@ macfb_free_screen(v, cookie)
 }
 
 int
-macfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
+macfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return 0;
 }
 
 int
-macfb_cnattach(addr)
-	paddr_t addr;
+macfb_cnattach(paddr_t addr)
 {
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
@@ -396,9 +369,9 @@ macfb_cnattach(addr)
 #include <mac68k/dev/6x10.h>
 
 void
-init_itefont()
+init_itefont(void)
 {
-	static int itefont_initted = 0;
+	static int itefont_initted;
 	int i, j;
 
 	extern struct raster_font gallant19;		/* XXX */

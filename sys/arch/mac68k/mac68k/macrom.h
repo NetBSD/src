@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.13 2001/12/09 19:07:01 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.14 2005/01/15 16:00:59 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -40,16 +40,16 @@ extern caddr_t		ROMBase;	/* Base address of ROM space */
 extern caddr_t		ADBBase;	/* Base address of ADB scratch */
 extern caddr_t		ADBYMM; 	/* Base address of yet more ADB mem */
 extern caddr_t		ADBState;	/* Base address of ADB scratch ? */
-extern void	(*JADBProc) __P((void)); /* ADBReInit pre/post processing */
-extern void	(*Lvl1DT[8]) __P((void)); /* VIA1 interrupt table by bit */
-extern void	(*Lvl2DT[8]) __P((void)); /* VIA2 interrupt table by bit */
-extern void	(*jADBOp) __P((void));	/* low memory pointer to ADBOp */
-extern void	(*jUnimplTrap) __P((void));	/* Unimplemented trap */
+extern void	(*JADBProc)(void); /* ADBReInit pre/post processing */
+extern void	(*Lvl1DT[8])(void); /* VIA1 interrupt table by bit */
+extern void	(*Lvl2DT[8])(void); /* VIA2 interrupt table by bit */
+extern void	(*jADBOp)(void);	/* low memory pointer to ADBOp */
+extern void	(*jUnimplTrap)(void);	/* Unimplemented trap */
 	/* loglob(KbdLast, 0x218)	* addr of last kbd to send */
 	/* loglob(KbdType, 0x21E)	* type of last kbd to send */
-extern void	(*JKybdTask) __P((void)); /* Keyboard task ptr? */
+extern void	(*JKybdTask)(void); /* Keyboard task ptr? */
 extern u_char		CPUFlag;	/* Type of CPU in this machine */
-extern void	(*MacJmp) __P((void));	/* ??? */
+extern void	(*MacJmp)(void);	/* ??? */
 extern u_long		Lo3Bytes;	/* 0x00ffffff */
 extern u_long		MinusOne;	/* 0xffffffff */
 extern u_short		MMU32Bit;	/* MMU mode; short? */
@@ -64,13 +64,13 @@ extern caddr_t		VIA;		/* VIA1 base address */
 extern caddr_t		mrg_VIA2;	/* VIA2 base address */
 extern caddr_t		SCCRd;		/* SCC read base address */
 extern u_char		FinderName[20]; /* FinderName - Pascal string */
-extern void	(*jSwapMMU) __P((void)); /* Pointer to MMU Swap routine */
-extern void	(*jEgret) __P((void));	/* Pointer to MMU Swap routine */
+extern void	(*jSwapMMU)(void); /* Pointer to MMU Swap routine */
+extern void	(*jEgret)(void);	/* Pointer to MMU Swap routine */
 extern u_int16_t	HwCfgFlags;	/* Hardware config flags */
 extern u_int32_t	HwCfgFlags2;	/* more hardware config flags */
 extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
 extern u_int32_t	ADBReInit_JTBL;	/* pointer to patch table */
-extern void	(*jClkNoMem) __P((void)); /* pointer to ClkNoMem */
+extern void	(*jClkNoMem)(void); /* pointer to ClkNoMem */
 extern u_char		SysParam[20];	/* Place where PRam data gets stored */
 extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 					/*  newer ADB routines (since LCIII) */
@@ -103,8 +103,8 @@ typedef struct {
 	/* Trap Flesh; these functions are C, not Pascal */
 
 /* trap tests */
-int	MyOwnTrap __P((void));
-void	KnownRTS __P((void));
+int	MyOwnTrap(void);
+void	KnownRTS(void);
 
 #ifdef MRG_ADB
 /*
@@ -112,28 +112,28 @@ void	KnownRTS __P((void));
  * the MRG method of accessing the ADB/PRAM/RTC.
  */
 /* ADB Manager */
-int	SetADBInfo __P((ADBSetInfoBlock *info, int adbAddr));
-int	CountADBs __P((void));
-int	GetIndADB __P((ADBDataBlock *info, int index));
-int	GetADBInfo __P((ADBDataBlock *info, int adbAddr));
-void	ADBReInit __P((void));
+int	SetADBInfo(ADBSetInfoBlock *, int);
+int	CountADBs(void);
+int	GetIndADB(ADBDataBlock *, int);
+int	GetADBInfo(ADBDataBlock *, int);
+void	ADBReInit(void);
 	/* note different order of parameters */
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-void	ADBAlternateInit __P((void));
+int	ADBOp(Ptr, Ptr, Ptr, short);
+void	ADBAlternateInit(void);
 #endif
 
 /* Memory Manager */
-Ptr	NewPtr __P((int size));
-int	DisposPtr __P((Ptr ptr));
-int	GetPtrSize __P((Ptr ptr));
-int	SetPtrSize __P((Ptr ptr, int newbytes));
+Ptr	NewPtr(int);
+int	DisposPtr(Ptr);
+int	GetPtrSize(Ptr);
+int	SetPtrSize(Ptr, int);
 
 /* Resource Manager */
-Handle	GetResource __P((u_int theType, short theID));
-short	ResError __P((void));
-short	mrg_CountResources __P((u_int32_t type));
-short	Count_Resources __P((u_int32_t rsrc_type));
-caddr_t	*mrg_GetIndResource __P((u_int16_t index, u_int32_t type));
+Handle	GetResource(u_int, short);
+short	ResError(void);
+short	mrg_CountResources(u_int32_t);
+short	Count_Resources(u_int32_t);
+caddr_t	*mrg_GetIndResource(u_int16_t, u_int32_t);
 
 
 	/* Mac ROM Glue globals for BSD kernel */
@@ -152,7 +152,7 @@ extern u_char mrg_ResError[];
 
 
 	/* Dump instruction trace */
-void	dumptrace __P((void));
+void	dumptrace(void);
 
 
 	/* Stuff for configuring ROM Glue */
@@ -199,41 +199,41 @@ typedef struct romvec_s {
  */
 
 /* macrom.c */
-void	mrg_setvectors __P((romvec_t *rom_vectors));
-int	mrg_romready __P((void));
-caddr_t	*Get_Ind_Resource __P((u_int32_t, u_int16_t));
-void	mrg_initadbintr __P((void));
-long	mrg_adbintr __P((void));
-long	mrg_pmintr __P((void));
-void	mrg_fixupROMBase __P((caddr_t, caddr_t));
-int	mrg_Delay __P((void));
-void	mrg_DTInstall __P((void));
-void	mrg_execute_deferred __P((void));
-void	mrg_VBLQueue __P((void));
-void	mrg_init_stub_1 __P((void));
-void	mrg_init_stub_2 __P((void));
-void	mrg_1sec_timer_tick __P((void));
-void	mrg_lvl1dtpanic __P((void));
-void	mrg_lvl2dtpanic __P((void));
-void	mrg_jadbprocpanic __P((void));
-void	mrg_jswapmmupanic __P((void));
-void	mrg_jkybdtaskpanic __P((void));
-void	mrg_notrap __P((void));
-int	myowntrap __P((void));
-int	mrg_NewPtr __P((void));
-int	mrg_DisposPtr __P((void));
-int	mrg_GetPtrSize __P((void));
-int	mrg_SetPtrSize __P((void));
-int	mrg_PostEvent __P((void));
-int	mrg_SetTrapAddress __P((void));
-void	mrg_StripAddress __P((void));
-void	mrg_aline_super __P((struct frame *));
-void	mrg_init __P((void));
-void	mrg_FixDiv __P((void));
-void	mrg_FixMul __P((void));
+void	mrg_setvectors(romvec_t *);
+int	mrg_romready(void);
+caddr_t	*Get_Ind_Resource(u_int32_t, u_int16_t);
+void	mrg_initadbintr(void);
+long	mrg_adbintr(void);
+long	mrg_pmintr(void);
+void	mrg_fixupROMBase(caddr_t, caddr_t);
+int	mrg_Delay(void);
+void	mrg_DTInstall(void);
+void	mrg_execute_deferred(void);
+void	mrg_VBLQueue(void);
+void	mrg_init_stub_1(void);
+void	mrg_init_stub_2(void);
+void	mrg_1sec_timer_tick(void);
+void	mrg_lvl1dtpanic(void);
+void	mrg_lvl2dtpanic(void);
+void	mrg_jadbprocpanic(void);
+void	mrg_jswapmmupanic(void);
+void	mrg_jkybdtaskpanic(void);
+void	mrg_notrap(void);
+int	myowntrap(void);
+int	mrg_NewPtr(void);
+int	mrg_DisposPtr(void);
+int	mrg_GetPtrSize(void);
+int	mrg_SetPtrSize(void);
+int	mrg_PostEvent(void);
+int	mrg_SetTrapAddress(void);
+void	mrg_StripAddress(void);
+void	mrg_aline_super(struct frame *);
+void	mrg_init(void);
+void	mrg_FixDiv(void);
+void	mrg_FixMul(void);
 
 /* machdep.c */
-int	mach_cputype __P((void));
+int	mach_cputype(void);
 
 /* Tracing aids */
 
