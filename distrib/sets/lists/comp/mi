@@ -1,26 +1,26 @@
-#	$NetBSD: mi,v 1.754 2005/01/08 22:28:51 cube Exp $
+#	$NetBSD: mi,v 1.755 2005/01/09 19:55:26 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
 ./usr/bin/asa					comp-fortran-bin
-./usr/bin/c++					comp-cxx-bin
+./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		bfd
 ./usr/bin/c89					comp-c-bin
-./usr/bin/cc					comp-c-bin
+./usr/bin/cc					comp-c-bin		gcccmds
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
-./usr/bin/f77					comp-fortran-bin
+./usr/bin/f77					comp-fortran-bin	gcccmds
 ./usr/bin/fgen					comp-util-bin
 ./usr/bin/flex					comp-c-bin
 ./usr/bin/flex++				comp-cxx-bin
 ./usr/bin/fort77				comp-fortran-bin
 ./usr/bin/fpr					comp-fortran-bin
-./usr/bin/g++					comp-cxx-bin
-./usr/bin/g77					comp-fortran-bin
-./usr/bin/gcc					comp-c-bin
+./usr/bin/g++					comp-cxx-bin		gcccmds
+./usr/bin/g77					comp-fortran-bin	gcccmds
+./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin
 ./usr/bin/gdb					comp-debug-bin		gdb
@@ -1738,11 +1738,11 @@
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lz.ln			comp-c-lintlib		lint
-./usr/libexec/cc1				comp-c-bin
-./usr/libexec/cc1obj				comp-objc-bin
-./usr/libexec/cc1plus				comp-cxx-bin
+./usr/libexec/cc1				comp-c-bin		gcccmds
+./usr/libexec/cc1obj				comp-objc-bin		gcccmds
+./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/collect2				comp-obsolete		obsolete
-./usr/libexec/f771				comp-fortran-bin
+./usr/libexec/f771				comp-fortran-bin	gcccmds
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
 ./usr/sbin/config				comp-sysutil-sbin

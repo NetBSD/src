@@ -1,6 +1,6 @@
-# $NetBSD: ad.powerpc,v 1.38 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: ad.powerpc,v 1.39 2005/01/09 19:55:26 matt Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
-./usr/include/altivec.h				comp-c-include
+./usr/include/altivec.h				comp-c-include		gcccmds
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include
