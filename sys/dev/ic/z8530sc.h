@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.6 1997/02/24 16:01:39 gwr Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.7 1997/10/17 23:02:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -107,7 +107,7 @@ struct zs_chanstate {
 	/* the above is set only while CRTSCTS is enabled. */
 
 	char	cs_softreq;		/* need soft interrupt call */
-	char	cs_pad[1];
+	char	cs_spare1;  	/* (for skippy :) */
 	/* MD code might define a larger variant of this. */
 };
 
