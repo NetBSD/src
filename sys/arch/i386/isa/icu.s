@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.10 1993/06/06 05:06:50 cgd Exp $
+ *	$Id: icu.s,v 1.11 1993/06/14 19:29:30 mycroft Exp $
  */
 
 /*
@@ -192,6 +192,9 @@ none_to_unpend:
 #ifdef NS
 	DONET(NETISR_NS, _nsintr, 8)
 #endif
+#ifdef ISO
+	DONET(NETISR_ISO, _isointr, 25)
+#endif
 	FASTSPL($0)
 test_ASTs:
 	btrl	$NETISR_SCLK,_netisr
@@ -255,17 +258,23 @@ _spl0:
 in_spl0:
 	movl	_cpl,%eax
 	pushl   %eax	# save old priority
-	testl   $(1 << NETISR_RAW) | (1 << NETISR_IP),_netisr
-	je	over_net_stuff_for_spl0
+	cmpl	$0,_netisr
+	jz	over_net_stuff_for_spl0
 	movl	_netmask,%eax	# mask off those network devices
 	movl	%eax,_cpl	# set new priority
 	SHOW_CPL
-/*
- * XXX - what about other net intrs?
- */
 	DONET(NETISR_RAW, _rawintr, 20)
 #ifdef INET
 	DONET(NETISR_IP, _ipintr, 21)
+#endif
+#ifdef IMP
+	DONET(NETISR_IMP, _impintr, 26)
+#endif
+#ifdef NS
+	DONET(NETISR_NS, _nsintr, 27)
+#endif
+#ifdef ISO
+	DONET(NETISR_ISO, _isointr, 28)
 #endif
 over_net_stuff_for_spl0:
 	movl	$0,_cpl	# set new priority
