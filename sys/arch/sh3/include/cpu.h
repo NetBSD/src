@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2002/02/24 18:19:42 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2002/02/28 16:54:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -175,6 +175,7 @@ void sh3_startup(void);
 void delay(int);
 struct pcb;
 void savectx(struct pcb *);
+void dumpsys(void);
 #endif /* _KERNEL */
 
 /*
