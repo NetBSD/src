@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.38 2000/04/24 09:27:31 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.39 2000/04/24 10:40:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,6 +75,11 @@
  *	  This would result in a bit of code duplicate with _dns_ghbyname() and
  *	  friends.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: getaddrinfo.c,v 1.39 2000/04/24 10:40:24 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>

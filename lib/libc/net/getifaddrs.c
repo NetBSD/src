@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.3 2000/04/24 09:27:31 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.4 2000/04/24 10:40:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -24,6 +24,12 @@
  *
  *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: getifaddrs.c,v 1.4 2000/04/24 10:40:25 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
