@@ -1,9 +1,9 @@
 #
-# $NetBSD: Makefile.inc,v 1.3 1997/09/28 20:49:56 is Exp $
+# $NetBSD: Makefile.inc,v 1.4 1997/10/09 20:40:36 is Exp $
 #
 SPDIR		= $S/arch/m68k/060sp
 
-M060SPAS	= as -m68060 -I${SPDIR} -o ${.TARGET} ${.IMPSRC}
+M060SPAS	= $(AS) -m68060 -I${SPDIR} -o ${.TARGET} ${.IMPSRC}
 
 netbsd.o:	${SPDIR}/netbsd.S .NOTMAIN
 
