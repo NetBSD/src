@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.5 1997/01/05 18:49:12 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1997/02/04 19:24:36 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -35,6 +35,7 @@
 #	dmf*	unibus dmf32
 #	dhu*    unibus dhu11
 #	dmz*    unibus dmz32
+#	dl*	unibus dl11
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -68,6 +69,7 @@ all)
 	sh $0 std vnd0 ccd0 pty0 pty1 lkm
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
+	sh $0 dz0 dl0 dhu0
 	;;
 
 std)
@@ -329,6 +331,17 @@ dhu*|dh*|dmf*|dmz*)
 		printf("mknod tty%s%x c %d %d; ",ch,i,m,u+i);
 	      else
 		printf("mknod tty%s%c c %d %d; ",ch,87+i,m,u+i); }'`
+	;;
+
+dl*)
+	unit=${i#dl}
+	major=66
+	eval `echo $unit $major |
+	  awk '{unit = $1; major = $2} END {
+	    if (unit < 10)
+	      printf("mknod ttyJ%x c %d %d", unit, major, unit);
+	    else
+	      printf("mknod ttyJ%c c %d %d", 87+unit, major, unit); }'`
 	;;
 
 lp*|va*|vp*)
