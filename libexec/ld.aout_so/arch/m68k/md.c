@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1998/10/19 03:09:32 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1998/12/17 20:14:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,10 @@
 #include <string.h>
 
 #include "ld.h"
+#ifndef RTLD
+/* Pull in the ld(1) bits as well */
+#include "ld_i.h"
+#endif
 
 /*
  * Get relocation addend corresponding to relocation record RP
@@ -53,8 +57,8 @@
  */
 long
 md_get_addend(rp, addr)
-struct relocation_info	*rp;
-unsigned char		*addr;
+	struct relocation_info	*rp;
+	unsigned char		*addr;
 {
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
@@ -74,10 +78,10 @@ unsigned char		*addr;
  */
 void
 md_relocate(rp, relocation, addr, relocatable_output)
-struct relocation_info	*rp;
-long			relocation;
-unsigned char		*addr;
-int			relocatable_output;
+	struct relocation_info	*rp;
+	long			relocation;
+	unsigned char		*addr;
+	int			relocatable_output;
 {
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
@@ -99,13 +103,50 @@ int			relocatable_output;
 }
 
 /*
+ * Set up a "direct" transfer (ie. not through the run-time binder) from
+ * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
+ * and by `ld.so' after resolving the symbol.
+ * On the m68k, we use the BRA instruction which is PC relative, so no
+ * further RRS relocations will be necessary for such a jmpslot.
+ */
+void
+md_fix_jmpslot(sp, offset, addr, first)
+	jmpslot_t	*sp;
+	long		offset;
+	u_long		addr;
+	int		first;
+{
+	u_long	fudge = addr - (sizeof(sp->opcode) + offset);
+
+	sp->opcode = BRAL;
+	sp->addr[0] = fudge >> 16;
+	sp->addr[1] = fudge;
+	sp->reloc_index = 0;
+#ifdef RTLD
+	_cachectl (sp, 6);		/* maintain cache coherency */
+#endif
+}
+
+void
+md_set_breakpoint(where, savep)
+	long	where;
+	long	*savep;
+{
+	*savep = *(long *)where;
+	*(short *)where = BPT;
+}
+
+
+
+#ifndef RTLD
+/*
  * Machine dependent part of claim_rrs_reloc().
  * Set RRS relocation type.
  */
 int
 md_make_reloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	/* Relocation size */
 	r->r_length = rp->r_length;
@@ -128,9 +169,9 @@ int			type;
  */
 void
 md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
+	jmpslot_t	*sp;
+	long		offset;
+	long		index;
 {
 	/*
 	 * On m68k machines, a long branch offset is relative to
@@ -148,37 +189,12 @@ long		index;
 }
 
 /*
- * Set up a "direct" transfer (ie. not through the run-time binder) from
- * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
- * and by `ld.so' after resolving the symbol.
- * On the m68k, we use the BRA instruction which is PC relative, so no
- * further RRS relocations will be necessary for such a jmpslot.
- */
-void
-md_fix_jmpslot(sp, offset, addr, first)
-jmpslot_t	*sp;
-long		offset;
-u_long		addr;
-int		first;
-{
-	u_long	fudge = addr - (sizeof(sp->opcode) + offset);
-
-	sp->opcode = BRAL;
-	sp->addr[0] = fudge >> 16;
-	sp->addr[1] = fudge;
-	sp->reloc_index = 0;
-#ifdef RTLD
-	_cachectl (sp, 6);		/* maintain cache coherency */
-#endif
-}
-
-/*
  * Update the relocation record for a RRS jmpslot.
  */
 void
 md_make_jmpreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	jmpslot_t	*sp;
 
@@ -203,8 +219,8 @@ int			type;
  */
 void
 md_make_gotreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
@@ -219,7 +235,7 @@ int			type;
  */
 void
 md_make_cpyreloc(rp, r)
-struct relocation_info	*rp, *r;
+	struct relocation_info	*rp, *r;
 {
 	/* Relocation size */
 	r->r_length = 2;
@@ -227,24 +243,14 @@ struct relocation_info	*rp, *r;
 	r->r_copy = 1;
 }
 
-void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
-{
-	*savep = *(long *)where;
-	*(short *)where = BPT;
-}
-
-#ifndef RTLD
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
  */
 void
 md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+	struct exec	*hp;
+	int		magic, flags;
 {
 	if (oldmagic)
 		hp->a_midmag = oldmagic;
@@ -261,7 +267,7 @@ int		magic, flags;
  */
 int
 md_midcompat(hp)
-struct exec *hp;
+	struct exec *hp;
 {
 	int	mid = N_GETMID(*hp);
 
@@ -287,7 +293,7 @@ struct exec *hp;
 
 void
 md_swapin_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	int skip = 0;
 
@@ -299,7 +305,7 @@ struct exec *h;
 
 void
 md_swapout_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -314,8 +320,8 @@ struct exec *h;
 
 void
 md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
+	struct relocation_info *r;
+	int n;
 {
 	int	bits;
 
@@ -338,8 +344,8 @@ int n;
 
 void
 md_swapout_reloc(r, n)
-struct relocation_info *r;
-int n;
+	struct relocation_info *r;
+	int n;
 {
 	int	bits;
 
@@ -361,8 +367,8 @@ int n;
 
 void
 md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+	jmpslot_t	*j;
+	int		n;
 {
 	for (; n; n--, j++) {
 		j->opcode = md_swap_short(j->opcode);

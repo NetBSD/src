@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1998/10/19 03:09:32 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1998/12/17 20:14:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,10 @@
 #include <string.h>
 
 #include "ld.h"
+#ifndef RTLD
+/* Pull in the ld(1) bits as well */
+#include "ld_i.h"
+#endif
 
 static int reloc_target_rightshift[] = {
 	-1,  0,  2,  0,  0, 16, 16,  2,
@@ -139,6 +143,32 @@ md_relocate(rp, relocation, addr, relocatable_output)
 	}
 }
 
+/*
+ * Set up a "direct" transfer (ie. not through the run-time binder) from
+ * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
+ * and by `ld.so' after resolving the symbol.
+ */
+void
+md_fix_jmpslot(sp, offset, addr, first)
+	jmpslot_t	*sp;
+	long		offset;
+	u_long		addr;
+	int		first;
+{
+	errx(1, "md_fix_jmpslot unimplemented");
+}
+
+void
+md_set_breakpoint(where, savep)
+	long	where;
+	long	*savep;
+{
+	*savep = *(long *)where;
+	*(char *)where = TRAP;
+}
+
+
+
 #ifndef	RTLD
 /*
  * Machine dependent part of claim_rrs_reloc().
@@ -157,7 +187,6 @@ md_make_reloc(rp, r, type)
 
 	return 1;
 }
-#endif
 
 /*
  * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
@@ -170,21 +199,6 @@ md_make_jmpslot(sp, offset, index)
 	long		index;
 {
 	errx(1, "md_make_jmpslot unimplemented");
-}
-
-/*
- * Set up a "direct" transfer (ie. not through the run-time binder) from
- * jmpslot at OFFSET to ADDR. Used by `ld' when the SYMBOLIC flag is on,
- * and by `ld.so' after resolving the symbol.
- */
-void
-md_fix_jmpslot(sp, offset, addr, first)
-	jmpslot_t	*sp;
-	long		offset;
-	u_long		addr;
-	int		first;
-{
-	errx(1, "md_fix_jmpslot unimplemented");
 }
 
 /*
@@ -219,16 +233,6 @@ md_make_cpyreloc(rp, r)
 	errx(1, "md_make_cpyreloc unimplemented");
 }
 
-void
-md_set_breakpoint(where, savep)
-	long	where;
-	long	*savep;
-{
-	*savep = *(long *)where;
-	*(char *)where = TRAP;
-}
-
-#ifndef RTLD
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
@@ -290,5 +294,4 @@ md_swapout_jmpslot(j, n)
 {
 	errx(1, "md_swapout_jmpslot unimplemented");
 }
-
 #endif /* NEED_SWAP */
