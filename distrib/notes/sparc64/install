@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1.2.4 2000/11/01 03:48:35 tv Exp $
+.\"	$NetBSD: install,v 1.1.2.5 2000/11/30 03:45:44 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,10 @@ for a diskless setup which is a convenient way to install on a machine
 whose disk does not currently hold a usable operating system (see the
 section `Installing
 .Nx
-by using a diskless setup' below).
+by using a diskless setup' below).  If you have problems with these, it
+is possible to install NetBSD from Solaris (see the section `Installing
+.Nx
+using Solaris' below).
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot
 .
@@ -414,8 +417,190 @@ extraction of the distribution tar files
 .It
 installation of boot programs
 .bullet)
+.
+.Ss2 Installing NetBSD using Solaris
+.
+These instructions were kindly contributed by Murray Stokely <murray@osd.bsdi.com>
 .Pp
-Now try a reboot.  Initially we'd suggest you
+.Ss2 Preparing the disk
+The first step is to format and label the disk that you would like to
+use with
+.Nx .
+This can be accomplished with the format command in Solaris. The format
+command should allow you to create disk slices and
+write a disklabel. You will probably at least want to create a root
+partition and a swap partition, plus potentially a /usr or /var partitions,
+but of course you can layout the disk however you see fit.
+.Pp
+.Dl "partition> pr"
+.Dl " Current partition table (original):"
+.Dl " Total disk cylinders available: 8186 + 2 (reserved cylinders)"
+.Dl " "
+.Dl " Part      Tag   Flag   Cylinders     Size               Blocks"
+.Dl "   0       root   wm     0 - 1923     1.00GB  (1924/0/0) 2097160"
+.Dl "   1       swap   wu  1924 - 2863   500.29MB  (940/0/0)  1024600"
+.Dl "   2     backup   wu     0 - 8185     4.25GB  (8186/0/0) 8922740"
+.Dl "   3 unassigned   wm     0            0       (0/0/0)          0"
+.Dl "   4        usr   wm  2864 - 8184     2.77GB  (5321/0/0) 5799890"
+.Dl "   5 unassigned   wm     0            0       (0/0/0)          0"
+.Dl "   6     backup   wm     0 - 8185     4.25GB  (8186/0/0) 8922740"
+.Dl "   7 unassigned   wm     0            0       (0/0/0)          0"
+.Pp
+After your disk has been labelled you need to create filesystems on
+your slices. The Solaris newfs command will create ffs filesystems
+that can be used by
+.Nx .
+You should create filesystems for all of
+your slices except for root with a command similar to below, given we have
+root on c1t2d0s0 and /usr on c1t2d0s4.
+.Pp
+.Dl # Ic "newfs /dev/dsk/c1t2d0s0"
+.Dl # Ic "newfs /dev/dsk/c1t2d0s4"
+.Pp
+.Ss2 Installing NetBSD Software
+You should now mount your
+.Nx
+root and
+.Pa /usr partitions under
+Solaris so that you can populate the filesystems with
+.Nx NetBSD
+binaries.
+.Pp
+.Dl # Ic "mount /dev/dsk/c1t2d0s0 /mnt"
+.Dl # Ic "mkdir /mnt/usr"
+.Dl # Ic "mount /dev/dsk/c1t2d0s4 /mnt/usr"
+.Pp
+First, you should uncompress all of the binary distribution sets for
+sparc64 into a temporary directory and then extract them into the
+filesystems you just mounted.
+.Pp
+.Dl # Ic "cd ~/netbsd/binary/sets"
+.Dl # Ic "gunzip *.tar.gz"
+.Dl # Ic "mkdir ~/netbsd/temp"
+.Dl # Ic "cd ~/netbsd/temp"
+.Dl # Ic "echo ~/netbsd/binary/sets/*.tar | (cd /mnt; xargs -n1 pax -rpe)"
+.Pp
+Now you should copy the
+.Nx
+kernel and second stage bootloader into
+your new
+.Nx
+root partition and install the bootblocks using
+Solaris's installboot command.
+.Pp
+.Dl # Ic "cp ~/netbsd/binary/kernel/netbsd.GENERIC /mnt"
+.Dl # Ic "cp /mnt/netbsd.GENERIC /mnt/netbsd"
+.Dl # Ic "cp ~/netbsd/installation/misc/ofwboot /mnt"
+.Dl # Ic "installboot ~/netbsd/installation/misc/bootblk /dev/c1t2d0s0"
+.Pp
+.Ss2 Creating NetBSD Device Nodes under Solaris
+Now you will need to create a minimum set of device nodes so that
+.Nx
+can boot correctly. You should create all of the devices listed
+in the 'std' section of
+.Nx 's
+.Pa /dev/MAKEDEV .
+You can use the Solaris
+version of mknod to create device nodes but you must be careful to use
+numeric group id's since the groups are numbered differently between
+the two systems.
+.Pp
+.Dl # Ic "mknod console    c 0 0"
+.Dl # Ic "mknod tty        c 2 0   ; chmod 666 tty"
+.Dl # Ic "mknod kmem       c 3 1   ; chmod 640 kmem ; chgrp 2 kmem"
+.Dl # Ic "mknod mem        c 3 0   ; chmod 640 mem ; chgrp 2 mem"
+.Dl # Ic "mknod null       c 3 2   ; chmod 666 null"
+.Dl # Ic "mknod zero       c 3 12  ; chmod 666 zero"
+.Dl # Ic "mknod eeprom     c 3 11  ; chmod 640 eeprom ; chgrp 2 eeprom"
+.Dl # Ic "mknod openprom   c 70 0  ; chmod 640 openprom;chgrp 2 openprom"
+.Dl # Ic "mknod drum       c 7 0   ; chmod 640 drum ; chgrp 2 drum"
+.Dl # Ic "mknod klog       c 16 0  ; chmod 600 klog"
+.Dl # Ic "mknod stdin      c 24 0  ; chmod 666 stdin"
+.Dl # Ic "mknod stdout     c 24 1  ; chmod 666 stdout"
+.Dl # Ic "mknod stderr     c 24 2  ; chmod 666 stderr"
+.Dl # Ic "mknod fb         c 22 0  ; chmod 666 fb"
+.Dl # Ic "mknod mouse      c 13 0  ; chmod 666 mouse"
+.Dl # Ic "mknod kbd        c 29 0  ; chmod 666 kbd"
+.Pp
+You also must create device nodes for the disk devices that you are installing
+.Nx
+onto, again you can use
+.Nx 's
+.Pa /dev/MAKEDEV
+as a reference.
+.Pp
+.Dl # Ic "mknod sd0a       b 7 0"
+.Dl # Ic "mknod sd0b       b 7 1"
+.Dl # Ic "mknod sd0c       b 7 2"
+.Dl # Ic "mknod sd0d       b 7 3"
+.Dl # Ic "mknod sd0e       b 7 4"
+.Dl # Ic "mknod sd0f       b 7 5"
+.Dl # Ic "mknod sd0g       b 7 6"
+.Dl # Ic "mknod sd0h       b 7 7"
+.Dl # Ic "mknod sd1a       b 7 8"
+.Dl # Ic "mknod sd1b       b 7 9"
+.Dl # Ic "mknod sd1c       b 7 10"
+.Dl # Ic "mknod sd1d       b 7 11"
+.Dl # Ic "mknod sd1e       b 7 12"
+.Dl # Ic "mknod sd1f       b 7 13"
+.Dl # Ic "mknod sd1g       b 7 14"
+.Dl # Ic "mknod sd1h       b 7 15"
+.Dl # Ic "mknod rsd0a      c 17 0"
+.Dl # Ic "mknod rsd0b      c 17 1"
+.Dl # Ic "mknod rsd0c      c 17 2"
+.Dl # Ic "mknod rsd0d      c 17 3"
+.Dl # Ic "mknod rsd0e      c 17 4"
+.Dl # Ic "mknod rsd0f      c 17 5"
+.Dl # Ic "mknod rsd0g      c 17 6"
+.Dl # Ic "mknod rsd0h      c 17 7"
+.Dl # Ic "mknod rsd1a      c 17 8"
+.Dl # Ic "mknod rsd1b      c 17 9"
+.Dl # Ic "mknod rsd1c      c 17 10"
+.Dl # Ic "mknod rsd1d      c 17 11"
+.Dl # Ic "mknod rsd1e      c 17 12"
+.Dl # Ic "mknod rsd1f      c 17 13"
+.Dl # Ic "mknod rsd1g      c 17 14"
+.Dl # Ic "mknod rsd1h      c 17 15"
+.Dl # Ic "chgrp 5 *sd[0-1][a-h]"
+.Dl # Ic "chmod 640 *sd[0-1][a-h]"
+.Pp
+For IDE disks, use 12 instead of 7 and 26 instead of 17, for
+.Pa wd0a
+and
+.Pa rwd0a ,
+etc.
+.Ss2 Configuring the NetBSD system (still under Solaris)
+.Pp
+You will now need to configure some of the files in
+.Pa /mnt/etc
+to allow the system to work properly. In particular, you will need to modify
+.Pa /etc/rc.conf
+or else you will only get to single user mode. Read through the examples in
+.Pa /etc/defaults/rc.conf
+and override any settings in
+.Pa /etc/rc.conf .
+You will also need to create a
+.Pa /etc/fstab
+file to tell the system which slice to mount as
+.Pa /usr ,
+etc. You should follow the examples in
+.Pa /etc/fstab.wd
+or
+.Pa /etc/fstab.sd
+depending on whether you are using IDE or SCSI disks. You may also want
+to setup your
+.Pa /etc/resolv.conf
+file for name services and your
+.Pa /etc/hosts file
+if you are confident that you will get networking setup on your first try.
+.Pp
+.
+.Ss Booting NetBSD for the first time
+.
+.Pp
+Now it is time to boot
+.Nx
+for the first time.  Initially we'd suggest you
 .Ic "boot netbsd -bs" ,
 then try multiuser after that. If you boot single-user the
 .Nx
