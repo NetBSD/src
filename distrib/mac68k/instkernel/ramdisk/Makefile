@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/10 05:13:53 enami Exp $
+#	$NetBSD: Makefile,v 1.10 2001/10/13 06:15:17 jmc Exp $
 
 .ifndef NOTESOBJDIR
 NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} -V .OBJDIR
@@ -25,6 +25,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MTREE?=		mtree
 
 all: notes ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=5120
@@ -32,7 +33,7 @@ all: notes ${CBIN}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
+	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
