@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.13 1997/05/02 14:24:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@ void Suff_ClearSuffixes __P((void));
 Boolean Suff_IsTransform __P((char *));
 GNode *Suff_AddTransform __P((char *));
 int Suff_EndTransform __P((ClientData, ClientData));
-void Suff_AddSuffix __P((char *));
+void Suff_AddSuffix __P((char *, GNode **));
 Lst Suff_GetPath __P((char *));
 void Suff_DoPaths __P((void));
 void Suff_AddInclude __P((char *));
@@ -120,6 +120,7 @@ void Suff_PrintAll __P((void));
 /* targ.c */
 void Targ_Init __P((void));
 void Targ_End __P((void));
+Lst Targ_List __P((void));
 GNode *Targ_NewGN __P((char *));
 GNode *Targ_FindNode __P((char *, int));
 Lst Targ_FindList __P((Lst, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.12 1997/05/02 14:24:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $";
+static char *rcsid = "$NetBSD: targ.c,v 1.12 1997/05/02 14:24:33 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ static char *rcsid = "$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $"
  *	Targ_Init 	    	Initialization procedure.
  *
  *	Targ_End 	    	Cleanup the module
+ *
+ *	Targ_List 	    	Return the list of all targets so far.
  *
  *	Targ_NewGN	    	Create a new GNode for the passed target
  *	    	  	    	(string). The node is *not* placed in the
@@ -142,6 +144,24 @@ Targ_End ()
     if (allGNs)
 	Lst_Destroy(allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Targ_List --
+ *	Return the list of all targets
+ *
+ * Results:
+ *	The list of all targets.
+ *
+ * Side Effects:
+ *	None
+ *-----------------------------------------------------------------------
+ */
+Lst
+Targ_List ()
+{
+    return allTargets;
 }
 
 /*-

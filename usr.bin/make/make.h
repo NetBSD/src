@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.16 1997/05/02 14:24:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -226,6 +226,8 @@ typedef struct GNode {
  * object of a dependency operator
  */
 #define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
+
+#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
 /*
  * The TARG_ constants are used when calling the Targ_FindNode and

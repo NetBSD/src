@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.14 1997/03/28 22:31:21 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.15 1997/05/02 14:24:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.14 1997/03/28 22:31:21 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.15 1997/05/02 14:24:27 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -636,14 +636,7 @@ MakeAddAllSrc (cgnp, pgnp)
 	char *child;
 	char *p1 = NULL;
 
-	if (OP_NOP(cgn->type) ||
-	    (child = Var_Value(TARGET, cgn, &p1)) == NULL) {
-	    /*
-	     * this node is only source; use the specific pathname for it
-	     */
-	    child = cgn->path ? cgn->path : cgn->name;
-	}
-
+	child = cgn->path ? cgn->path : cgn->name;
 	Var_Append (ALLSRC, child, pgn);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {
@@ -905,7 +898,8 @@ Make_ExpandUse (targs)
 	     * Make sure that the TARGET is set, so that we can make
 	     * expansions.
 	     */
-	    Var_Set (TARGET, gn->name, gn);
+	    Dir_MTime(gn);
+	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
 	    Suff_FindDeps (gn);
 
