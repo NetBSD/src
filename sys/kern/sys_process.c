@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.85 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.85 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -716,7 +716,7 @@ process_domem(curp, p, uio)
 	uvmspace_free(p->p_vmspace);
 
 #ifdef PMAP_NEED_PROCWR
-	if (uio->uio_rw == UIO_WRITE)
+	if (error == 0 && uio->uio_rw == UIO_WRITE)
 		pmap_procwr(p, addr, len);
 #endif
 	return (error);
