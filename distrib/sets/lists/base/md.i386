@@ -1,6 +1,6 @@
 ./sbin/fdisk
 ./usr/bin/fdformat
-./usr/lib/libc.so.12.15
+./usr/lib/libc.so.12.16
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -32,12 +32,9 @@
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
-./usr/mdec/bootfd
-./usr/mdec/bootsd
-./usr/mdec/bootwd
-./usr/mdec/fdboot
-./usr/mdec/sdboot
-./usr/mdec/wdboot
+./usr/mdec/biosboot.sym
+./usr/mdec/dosboot.com
+./usr/mdec/installboot
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/bad144
