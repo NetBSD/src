@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.24 1996/05/25 16:42:24 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.25 1996/06/07 01:45:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -273,7 +273,7 @@ extern	u_char	ncr5380_no_parchk;
 
 	PID("pdma_ready0");
 	if (pdma_5380_dir) {
-		PID("pdma_ready1.")
+		PID("pdma_ready1.");
 		/*
 		 * For a phase mis-match, ATN is a "don't care," IRQ is 1 and
 		 * all other bits in the Bus & Status Register are 0.  Also,
@@ -529,7 +529,6 @@ ncr5380_drq_intr(p)
 		scsi_clear_drq();
 	}
 }
-
 
 #if USE_PDMA
 
