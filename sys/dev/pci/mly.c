@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.1 2001/07/30 19:59:06 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.2 2001/07/30 23:29:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,6 +229,9 @@ mly_find_ident(struct pci_attach_args *pa)
 
 	mpi = mly_ident;
 	maxmpi = mpi + sizeof(mly_ident) / sizeof(mly_ident[0]);
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O)
+		return (NULL);
 
 	for (; mpi < maxmpi; mpi++) {
 		if (PCI_VENDOR(pa->pa_id) != mpi->vendor ||
