@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.10 2001/03/23 19:32:32 jdolecek Exp $
+.\"	$NetBSD: we.4,v 1.11 2001/06/10 15:43:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ driver fail or send invalid Ethernet packets.
 force adapter to be treated as 16bit, even if it probes
 as a 8bit interface. For example the COMPEX ENT/U boards
 identify as WD8003 compatibles, but are in fact 16bit cards.
-Using this flag on a board that realy is a 8bit board will
+Using this flag on a board that really is a 8bit board will
 result in bogus packets being sent.
 .It 8
 disable the use of double transmit buffers to save space in
@@ -85,11 +85,11 @@ WD8003S, WD8003E, and WD8013EBT.
 .Pp
 Other WD/SMC 80x3 interfaces support two types of media on a single card.
 All support the AUI media type.  The other media is either BNC or UTP
-beind a transciever.  Sofware cannot differentiate between BNC and UTP
+behind a transceiver.  Software cannot differentiate between BNC and UTP
 cards.  On some models, the AUI port is always active.
 .Pp
 The SMC Elite Ultra and SMC EtherEZ interfaces support three media
-a single card: AUI, BNC, and UTP.  If the transciever is active, the BNC
+a single card: AUI, BNC, and UTP.  If the transceiver is active, the BNC
 media is selected.  Otherwise, the AUI and UTP ports are both active.
 .Pp
 To enable the AUI media, select the
@@ -99,7 +99,7 @@ or
 media type with
 .Xr ifconfig 8 's
 .Sq media
-directive.  To select the other media (transciever), select the
+directive.  To select the other media (transceiver), select the
 .Em 10base2
 or
 .Em bnc
@@ -135,7 +135,7 @@ packets.  This can sometimes be a problem, especially on the original
 WD8003E, because these boards' shared-memory access speed is quite
 slow; typically only about 1MB/second.  The overhead of this slow
 memory access, and the fact that there is only room for 4 full-sized
-packets means that the ring-buffer will occassionally overrun.  When
+packets means that the ring-buffer will occasionally overrun.  When
 this happens, the board must be reset to avoid a lockup problem in
 early revision 8390's.  Resetting the board causes all of the data in
 the ring-buffer to be lost, requiring it to be retransmitted/received,

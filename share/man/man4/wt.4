@@ -1,4 +1,4 @@
-.\"	$NetBSD: wt.4,v 1.9 2000/07/31 11:45:49 ad Exp $
+.\"	$NetBSD: wt.4,v 1.10 2001/06/10 15:43:56 wiz Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -28,7 +28,7 @@
 .Sh NAME
 .Nm wt
 .Nd
-Archive/Wangtek cartrige tape driver
+Archive/Wangtek cartridge tape driver
 .Sh SYNOPSIS
 .Cd "wt0 at isa? port 0x300 irq 5 drq 1"
 .Sh DESCRIPTION
@@ -37,8 +37,8 @@ The
 driver provides support for the following Archive and Wangtek boards:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It QIC-02 
-.It QIC-36 
+.It QIC-02
+.It QIC-36
 .El
 .Pp
 Raw devices are indicated by an
@@ -55,7 +55,7 @@ For example, for the wt0 device's raw rewind on close device nodes,
 .Pa /dev/rwt0
 is the 150 MByte density device,
 .Pa /dev/rwt8
-is the 120 MByte density device, and 
+is the 120 MByte density device, and
 .Pa /dev/rwt16
 is the 60 MByte device.
 .Pp
