@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.4 2001/12/24 13:43:25 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.5 2001/12/24 19:24:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 Static usbd_status umass_init_insystem(struct umass_softc *);
 Static usbd_status umass_init_shuttle(struct umass_softc *);
 
-Static void umass_fixup_iomega(struct umass_softc *);
-Static void umass_fixup_microtech(struct umass_softc *);
 Static void umass_fixup_sony(struct umass_softc *);
 Static void umass_fixup_yedata(struct umass_softc *);
 
@@ -76,21 +74,21 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_TEST_UNIT_READY,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, umass_fixup_iomega
+	  NULL, NULL
 	},
 
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP250 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_TEST_UNIT_READY,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, umass_fixup_iomega
+	  NULL, NULL
 	},
 
 	{ { USB_VENDOR_MICROTECH, USB_PRODUCT_MICROTECH_DPCM },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
-	  NULL, umass_fixup_microtech
+	  NULL, NULL
 	},
 
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
@@ -237,18 +235,6 @@ umass_init_shuttle(struct umass_softc *sc)
 }
 
 Static void
-umass_fixup_iomega(struct umass_softc *sc)
-{
-	sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED;
-}
-
-Static void
-umass_fixup_microtech(struct umass_softc *sc)
-{
-	sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED * 2;
-}
-
-Static void
 umass_fixup_sony(struct umass_softc *sc)
 {
 	usb_interface_descriptor_t *id;
@@ -256,7 +242,6 @@ umass_fixup_sony(struct umass_softc *sc)
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id->bInterfaceSubClass == 0xff) {
 		sc->sc_cmd = UMASS_CPROTO_RBC;
-		sc->transfer_speed = 500;
 	}
 }
 

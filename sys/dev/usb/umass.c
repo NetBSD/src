@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.80 2001/12/24 13:43:24 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.81 2001/12/24 19:24:33 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.80 2001/12/24 13:43:24 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.81 2001/12/24 19:24:33 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -291,9 +291,6 @@ USB_ATTACH(umass)
 		sc->sc_quirks = 0;
 	}
 
-	if (sc->transfer_speed == 0)
-		sc->transfer_speed = UMASS_DEFAULT_TRANSFER_SPEED;
-
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id == NULL)
 		USB_ATTACH_ERROR_RETURN;
@@ -347,18 +344,6 @@ USB_ATTACH(umass)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
-
-	/*
-	 * The timeout is based on the maximum expected transfer size
-	 * divided by the expected transfer speed.
-	 * We multiply by 4 to make sure a busy system doesn't make things
-	 * fail.
-	 */
-	sc->timeout = 4 * UMASS_MAX_TRANSFER_SIZE / sc->transfer_speed;
-	sc->timeout += UMASS_SPINUP_TIME;	/* allow for spinning up */
-#ifdef UMASS_DEBUG
-	printf("%s: timeout=%d ms\n", USBDEVNAME(sc->sc_dev), sc->timeout);
-#endif
 
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

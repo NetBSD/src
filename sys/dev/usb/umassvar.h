@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.12 2001/12/24 13:43:25 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.13 2001/12/24 19:24:33 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -58,13 +58,6 @@ extern int umassdebug;
 #define DIR_NONE	0
 #define DIR_IN		1
 #define DIR_OUT		2
-
-/* The transfer speed determines the timeout value */
-#define UMASS_DEFAULT_TRANSFER_SPEED	150	/* in kb/s, conservative est. */
-#define UMASS_FLOPPY_TRANSFER_SPEED	20
-#define UMASS_ZIP100_TRANSFER_SPEED	650
-
-#define UMASS_SPINUP_TIME 10000	/* ms */
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)			      
 
@@ -260,7 +253,6 @@ struct umass_softc {
 #define TSTATE_STATES			18	/* # of states above */
 
 
-	int			transfer_speed;		/* in kb/s */
 	int			timeout;		/* in msecs */
 
 	u_int8_t		maxlun;			/* max lun supported */
