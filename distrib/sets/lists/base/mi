@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 2000/02/20 03:31:06 mycroft Exp $
+# $NetBSD: mi,v 1.147 2000/02/20 06:19:37 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -158,7 +158,6 @@
 ./usr/bin/bzcat
 ./usr/bin/bzip2
 ./usr/bin/bzip2recover
-./usr/bin/c++filt
 ./usr/bin/cal
 ./usr/bin/calendar
 ./usr/bin/cap_mkdb
@@ -209,7 +208,6 @@
 ./usr/bin/fsplit
 ./usr/bin/fstat
 ./usr/bin/ftp
-./usr/bin/gcov
 ./usr/bin/gcpp
 ./usr/bin/gencat
 ./usr/bin/getconf
@@ -283,11 +281,9 @@
 ./usr/bin/nfsstat
 ./usr/bin/nice
 ./usr/bin/nl
-./usr/bin/nm
 ./usr/bin/nohup
 ./usr/bin/nslookup
 ./usr/bin/nsupdate
-./usr/bin/objdump
 ./usr/bin/od
 ./usr/bin/page
 ./usr/bin/pagesize
@@ -355,13 +351,11 @@
 ./usr/bin/tr
 ./usr/bin/true
 ./usr/bin/tset
-./usr/bin/tsort
 ./usr/bin/tty
 ./usr/bin/ul
 ./usr/bin/uname
 ./usr/bin/uncompress
 ./usr/bin/unexpand
-./usr/bin/unifdef
 ./usr/bin/uniq
 ./usr/bin/units
 ./usr/bin/unvis
