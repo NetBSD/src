@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: setlogin.S,v 1.3 1994/03/07 23:20:49 phil Exp $
+ *	$Id: setlogin.S,v 1.4 1994/03/09 07:50:56 phil Exp $
  */
 
 #include "SYS.h"
@@ -26,5 +26,5 @@
 .globl  EX(__logname_valid)         /* in getlogin() */
 
 SYSCALL(setlogin)
-	movqd	0, EX(__logname_valid)
+	movqd	0, EX(__logname_valid)(pc)
 	ret	0			/* setlogin(name) */
