@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.16 1995/06/13 06:43:51 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.17 1995/08/16 01:04:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -129,18 +129,11 @@ struct mbuf {
 #define	MT_FREE		0	/* should be on free list */
 #define	MT_DATA		1	/* dynamic (data) allocation */
 #define	MT_HEADER	2	/* packet header */
-#define	MT_SOCKET	3	/* socket structure */
-#define	MT_PCB		4	/* protocol control block */
-#define	MT_RTABLE	5	/* routing tables */
-#define	MT_HTABLE	6	/* IMP host tables */
-#define	MT_ATABLE	7	/* address resolution tables */
-#define	MT_SONAME	8	/* socket name */
-#define	MT_SOOPTS	10	/* socket options */
-#define	MT_FTABLE	11	/* fragment reassembly header */
-#define	MT_RIGHTS	12	/* access rights */
-#define	MT_IFADDR	13	/* interface address */
-#define MT_CONTROL	14	/* extra-data protocol message */
-#define MT_OOBDATA	15	/* expedited data  */
+#define	MT_SONAME	3	/* socket name */
+#define	MT_SOOPTS	4	/* socket options */
+#define	MT_FTABLE	5	/* fragment reassembly header */
+#define MT_CONTROL	6	/* extra-data protocol message */
+#define MT_OOBDATA	7	/* expedited data  */
 
 /* flags to m_get/MGET */
 #define	M_DONTWAIT	M_NOWAIT
@@ -386,19 +379,11 @@ int mbtypes[] = {				/* XXX */
 	M_FREE,		/* MT_FREE	0	   should be on free list */
 	M_MBUF,		/* MT_DATA	1	   dynamic (data) allocation */
 	M_MBUF,		/* MT_HEADER	2	   packet header */
-	M_SOCKET,	/* MT_SOCKET	3	   socket structure */
-	M_PCB,		/* MT_PCB	4	   protocol control block */
-	M_RTABLE,	/* MT_RTABLE	5	   routing tables */
-	M_HTABLE,	/* MT_HTABLE	6	   IMP host tables */
-	0,		/* MT_ATABLE	7	   address resolution tables */
-	M_MBUF,		/* MT_SONAME	8	   socket name */
-	0,		/* 		9 */
-	M_SOOPTS,	/* MT_SOOPTS	10	   socket options */
-	M_FTABLE,	/* MT_FTABLE	11	   fragment reassembly header */
-	M_MBUF,		/* MT_RIGHTS	12	   access rights */
-	M_IFADDR,	/* MT_IFADDR	13	   interface address */
-	M_MBUF,		/* MT_CONTROL	14	   extra-data protocol message */
-	M_MBUF,		/* MT_OOBDATA	15	   expedited data  */
+	M_MBUF,		/* MT_SONAME	3	   socket name */
+	M_SOOPTS,	/* MT_SOOPTS	4	   socket options */
+	M_FTABLE,	/* MT_FTABLE	5	   fragment reassembly header */
+	M_MBUF,		/* MT_CONTROL	6	   extra-data protocol message */
+	M_MBUF,		/* MT_OOBDATA	7	   expedited data  */
 #ifdef DATAKIT
 	25, 26, 27, 28, 29, 30, 31, 32		/* datakit ugliness */
 #endif
