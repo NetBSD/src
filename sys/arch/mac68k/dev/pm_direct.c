@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.10 1999/11/07 00:12:56 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.11 2000/03/19 07:37:58 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1164,7 +1164,7 @@ pm_adb_poll_next_device_pm1(pmdata)
 
 	/* find another existent ADB device to poll */
 	for (i = 1; i < 16; i++) {
-		ndid = (((pmdata->data[3] & 0xf0) >> 4) + i) & 0xf;
+		ndid = (ADB_CMDADDR(pmdata->data[3]) + i) & 0xf;
 		bendid <<= ndid;
 		if ((pm_existent_ADB_devices & bendid) != 0)
 			break;

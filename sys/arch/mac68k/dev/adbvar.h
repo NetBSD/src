@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.17 1999/11/07 08:22:50 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.18 2000/03/19 07:44:58 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -86,6 +86,11 @@ void	extdms_complete __P((void));
 #define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
 #define ADB_HW_IOP		0x5	/* Machines with an IOP */
 #define	MAX_ADB_HW		5	/* Number of ADB hardware types */
+
+#define	ADB_CMDADDR(cmd)	((u_int8_t)(cmd & 0xf0) >> 4)
+#define	ADBFLUSH(dev)		((((u_int8_t)dev & 0x0f) << 4) | 0x01)
+#define	ADBLISTEN(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x08 | reg)
+#define	ADBTALK(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x0c | reg)
 
 #ifndef MRG_ADB
 /* adb_direct.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.6 2000/02/17 02:07:07 ender Exp $	*/
+/*	$NetBSD: akbd.c,v 1.7 2000/03/19 07:37:58 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -161,7 +161,7 @@ akbdattach(parent, self, aux)
 		break;
 	case ADB_EXTKBD:
 		kbd_done = 0;
-		cmd = (((sc->adbaddr << 4) & 0xf0) | 0x0d ); /* talk R1 */
+		cmd = ADBTALK(sc->adbaddr, 1);
 		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 		    (Ptr)&kbd_done, cmd);
 
@@ -278,7 +278,7 @@ kbd_adbcomplete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	ksc = (struct akbd_softc *)data_area;
 
 	event.addr = adbaddr;
@@ -356,8 +356,7 @@ getleds(addr)
 	buffer[0] = 0;
 	kbd_done = 0;
 
-	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
+	cmd = ADBTALK(addr, 2);
 	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
 	while (!kbd_done)
 		/* busy-wait until done */ ;
@@ -390,8 +389,7 @@ setleds(ksc, leds)
 	buffer[0] = 0;
 	kbd_done = 0;
 
-	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
+	cmd = ADBTALK(addr, 2);
 	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
 	while (!kbd_done)
 		/* busy-wait until done */ ;
@@ -403,14 +401,13 @@ setleds(ksc, leds)
 	buffer[2] &= 0xf8;
 	buffer[2] |= leds;
 
-	/* listen R2 */
-	cmd = ((addr & 0xf) << 4) | 0x08 | 0x02;
+	cmd = ADBLISTEN(addr, 2);
 	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
 	while (!kbd_done)
 		/* busy-wait until done */ ;
 
 	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
+	cmd = ADBTALK(addr, 2);
 	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
 	while (!kbd_done)
 		/* busy-wait until done */ ;

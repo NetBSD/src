@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.42 1999/11/07 08:08:10 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.43 2000/03/19 07:44:58 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -65,7 +65,7 @@ adb_complete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	error = GetADBInfo(&adbdata, adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -110,7 +110,7 @@ adb_msa3_complete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	error = GetADBInfo(&adbdata, adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -156,7 +156,7 @@ adb_mm_nonemp_complete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	error = GetADBInfo(&adbdata, adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -228,7 +228,7 @@ extdms_init(totaladbs)
 		    (adbdata.devType == ADBMS_USPEED ||
 		     adbdata.devType == ADBMS_UCONTOUR)) {
 			/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
-			cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
+			cmd = ADBLISTEN(adbaddr, 1);
 
 			/*
 			 * To setup the MicroSpeed or the Contour, it appears
@@ -264,10 +264,8 @@ extdms_init(totaladbs)
 		    (adbdata.devType == ADBMS_100DPI ||
 		    adbdata.devType == ADBMS_200DPI)) {
 			/* found a mouse */
-			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
-
+			cmd = ADBTALK(adbaddr, 3);
 			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, cmd);
 
@@ -287,7 +285,7 @@ extdms_init(totaladbs)
 			/* Attempt to initialize Extended Mouse Protocol */
 			buffer[2] = '\004'; /* make handler ID 4 */
 			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x08; /* listen command */
+			cmd = ADBLISTEN(adbaddr, 3);
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
@@ -297,9 +295,8 @@ extdms_init(totaladbs)
 			 * Check to see if successful, if not
 			 * try to initialize it as other types
 			 */
-			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+			cmd = ADBTALK(adbaddr, 3);
 			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
@@ -309,7 +306,7 @@ extdms_init(totaladbs)
 				/* Attempt to initialize as an A3 mouse */
 				buffer[2] = 0x03; /* make handler ID 3 */
 				extdms_done = 0;
-				cmd = (cmd & 0xf3) | 0x08; /* listen command */
+				cmd = ADBLISTEN(adbaddr, 3);
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, cmd);
 				while (!extdms_done)
@@ -319,9 +316,8 @@ extdms_init(totaladbs)
 				 * Check to see if successful, if not
 				 * try to initialize it as other types
 				 */
-				cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+				cmd = ADBTALK(adbaddr, 3);
 				extdms_done = 0;
-				cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 				      (Ptr)&extdms_done, cmd);
 				while (!extdms_done)
@@ -329,7 +325,7 @@ extdms_init(totaladbs)
 					
 				if (buffer[2] == ADBMS_MSA3) {
 					/* Initialize as above */
-					cmd = ((adbaddr << 4) & 0xF0) | 0xA;
+					cmd = ADBLISTEN(adbaddr, 2);
 					/* listen 2 */
 					buffer[0] = 3;
 					buffer[1] = 0x00;
