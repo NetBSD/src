@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.39 1997/04/14 02:33:17 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.40 1997/04/15 22:45:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -776,7 +776,7 @@ dcmreadbuf(sc, port)
 	dsp->rints++;
 #endif
 	tp = sc->sc_tty[port];
-	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+	if (tp == NULL)
 		return;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
