@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.1 2004/05/22 15:57:52 he Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -91,6 +91,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
+	int	ci_fpused;		/* FPU was used by curlwp */
 
 	volatile u_int32_t	ci_tlb_ipi_mask;
 
@@ -348,19 +349,13 @@ extern int i386_use_fxsave;
 extern int i386_has_sse;
 extern int i386_has_sse2;
 
-struct xen_netinfo {
-	uint32_t xi_ifno;
-	char *xi_root;
-	uint32_t xi_ip[5];
-};
-
 /* machdep.c */
 void	dumpconf(void);
 int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
-void	xen_parse_cmdline(char *, struct xen_netinfo *xi);
+void	i386_switch_context(struct pcb *);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;
@@ -443,6 +438,10 @@ void kgdb_port_init(void);
 /* bus_machdep.c */
 void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
+
+/* xen_machdep.c */
+void	xpmap_init(void);
+paddr_t	find_pmap_mem_end(vaddr_t);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
