@@ -2,7 +2,7 @@
 # Distribution kernel (any model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.37 1999/03/27 15:31:50 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.38 1999/03/28 06:17:40 simonb Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -72,6 +72,12 @@ options 	GATEWAY		# IP packet forwarding
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
 # NetBSD backwards compatibility
 #options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
