@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)pty.c	5.6 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: pty.c,v 1.3 1994/04/06 08:54:35 andrew Exp $";
+/* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: pty.c,v 1.4 1994/05/04 10:56:04 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
