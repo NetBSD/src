@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.60 2002/09/16 23:40:57 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.61 2002/09/17 03:54:42 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.60 2002/09/16 23:40:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.61 2002/09/17 03:54:42 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.60 2002/09/16 23:40:57 oster Exp $")
 #include "rf_kintf.h"
 
 #include <sys/buf.h>
+
+#ifndef RF_ACCESS_DEBUG
+#define RF_ACCESS_DEBUG 0
+#endif
 
 /* rad == RF_RaidAccessDesc_t */
 static RF_FreeList_t *rf_rad_freelist;
@@ -654,6 +658,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 
 	raidAddress += rf_raidSectorOffset;
 
+#if RF_ACCESS_DEBUG
 	if (rf_accessDebug) {
 
 		printf("logBytes is: %d %d %d\n", raidPtr->raidid,
@@ -667,6 +672,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		    (int) rf_RaidAddressToByte(raidPtr, numBlocks),
 		    (long) bufPtr);
 	}
+#endif
 	if (raidAddress + numBlocks > raidPtr->totalSectors) {
 
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
@@ -754,10 +760,12 @@ rf_SignalQuiescenceLock(raidPtr, reconDesc)
 	RF_Raid_t *raidPtr;
 	RF_RaidReconDesc_t *reconDesc;
 {
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug) {
 		printf("raid%d: Signalling quiescence lock\n", 
 		       raidPtr->raidid);
 	}
+#endif
 	raidPtr->access_suspend_release = 1;
 
 	if (raidPtr->waiting_for_quiescence) {
@@ -769,9 +777,10 @@ int
 rf_SuspendNewRequestsAndWait(raidPtr)
 	RF_Raid_t *raidPtr;
 {
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
 		printf("raid%d: Suspending new reqs\n", raidPtr->raidid);
-
+#endif
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended++;
 	raidPtr->waiting_for_quiescence = (raidPtr->accs_in_flight == 0) ? 0 : 1;
@@ -797,8 +806,10 @@ rf_ResumeNewRequests(raidPtr)
 {
 	RF_CallbackDesc_t *t, *cb;
 
+#if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
 		printf("Resuming new reqs\n");
+#endif
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended--;

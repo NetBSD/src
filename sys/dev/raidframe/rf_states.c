@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.17 2002/07/13 20:14:34 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.17 2002/07/13 20:14:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.18 2002/09/17 03:54:43 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -299,9 +299,10 @@ rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.suspend_ovhd_us += RF_ETIMER_VAL_US(timer);
 
+#if RF_DEBUG_QUIESCE
 	if (suspended && rf_quiesceDebug)
 		printf("Stalling access due to quiescence lock\n");
-
+#endif
 	desc->state++;
 	return suspended;
 }
