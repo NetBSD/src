@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.9 2002/11/14 21:17:30 christos Exp $ */
+/*	$NetBSD: mach_host.c,v 1.10 2002/11/16 20:00:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.9 2002/11/14 21:17:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.10 2002/11/16 20:00:30 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -84,7 +84,15 @@ mach_host_info(p, msgh)
 		    = (struct mach_host_basic_info *)&rep.rep_data[0];
 
 		DPRINTF(("mach_host_info(BASIC_INFO);\n"));
+		rep.rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep.rep_trailer) + sizeof(*info);
+		rep.rep_count = sizeof(*info) / sizeof(int);
 		mach_host_basic_info(info);
+		/* 
+		 * XXX this is the trailer, the way it 
+		 * is filled should be improved 
+		 */
+		rep.rep_data[rep.rep_count + 1] = 8;
 		break;
 	}
 

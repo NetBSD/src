@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.7 2002/11/14 21:17:31 christos Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.8 2002/11/16 20:00:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.7 2002/11/14 21:17:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.8 2002/11/16 20:00:30 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,8 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.7 2002/11/14 21:17:31 christos Exp $")
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/exec.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_map.h>
  
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -176,3 +182,82 @@ mach_vm_deallocate(p, msgh)
 		return error;
 	return 0;
 }
+
+
+/* XXX The findspace argument is not handled correctly */
+int
+mach_sys_map_fd(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct mach_sys_map_fd_args /* {
+		syscallarg(int) fd;
+		syscallarg(mach_vm_offset_t) offset;
+		syscallarg(mach_vm_offset_t *) va;
+		syscallarg(mach_boolean_t) findspace;
+		syscallarg(mach_vm_size_t) size;
+	} */ *uap = v;
+	struct file *fp; 
+	struct filedesc *fdp;
+	struct vnode *vp;
+	struct exec_vmcmd evc;
+	struct vm_map_entry *ret;
+	void *va;
+	int error;
+
+	if ((error = copyin(SCARG(uap, va), (void *)&va, sizeof(va))) != 0)
+		return error;
+
+	fdp = p->p_fd;
+	fp = fd_getfile(fdp, SCARG(uap, fd));
+	if (fp == NULL)
+		return EBADF;
+
+	FILE_USE(fp);
+	vp = (struct vnode *)fp->f_data;
+
+	bzero(&evc, sizeof(evc));
+	evc.ev_addr = (u_long)va;
+	evc.ev_len = SCARG(uap, size);
+	evc.ev_prot = VM_PROT_ALL;
+	evc.ev_flags = 0;
+	evc.ev_proc = vmcmd_map_readvn;
+	evc.ev_offset = SCARG(uap, offset);
+	evc.ev_vp = vp;
+
+	if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
+		DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", 
+		    (void *)evc.ev_addr));
+
+		if (SCARG(uap, findspace) == 0)
+			goto bad;
+
+		if ((ret = uvm_map_findspace(&p->p_vmspace->vm_map,
+		    0x8000, evc.ev_len, (vaddr_t *)&evc.ev_addr,
+		    NULL, 0, PAGE_SIZE, 0)) == NULL)
+			goto bad;
+
+		DPRINTF(("mach_sys_map_fd: trying at %p\n",
+		    (void *)evc.ev_addr));
+		if ((error = (*evc.ev_proc)(p, &evc)) != 0) 
+			goto bad;
+	}
+
+	FILE_UNUSE(fp, p);
+	DPRINTF(("mach_sya_map_fd: mapping at %p\n", (void *)evc.ev_addr));
+
+	va = (mach_vm_offset_t *)evc.ev_addr;
+
+	if ((error = copyout((void *)&va, SCARG(uap, va), sizeof(va))) != 0)
+		return error;
+	
+	return 0;
+
+bad:
+	FILE_UNUSE(fp, p);
+	DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", 
+	    (void *)evc.ev_addr));
+	return error;
+}
+ 
