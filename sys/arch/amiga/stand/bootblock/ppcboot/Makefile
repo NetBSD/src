@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/17 05:49:41 mhitch Exp $
+#	$NetBSD: Makefile,v 1.3 2002/01/26 13:21:11 aymeric Exp $
 
 ### what we need:
 
@@ -24,7 +24,7 @@ COBJS+=  ufs.o ppcstart.o
 
 SOBJS = alloc.o ashrdi3.o bcopy.o muldi3.o printf.o
 SOBJS += strlen.o strcmp.o
-SOBJS += libstubs.o 
+SOBJS += libstubs.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
