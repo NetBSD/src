@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36 1999/08/19 14:37:37 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.37 1999/08/23 10:34:53 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36 1999/08/19 14:37:37 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37 1999/08/23 10:34:53 agc Exp $");
 #endif
 #endif
 
@@ -405,7 +405,7 @@ pkg_do(char *pkg)
 
     /* Look for the requirements file */
     if (fexists(REQUIRE_FNAME)) {
-	vsystem("chmod +x %s", REQUIRE_FNAME);	/* be sure */
+	vsystem("%s +x %s", CHMOD, REQUIRE_FNAME);	/* be sure */
 	if (Verbose)
 	    printf("Running requirements file first for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
@@ -420,7 +420,7 @@ pkg_do(char *pkg)
 
     /* If we're really installing, and have an installation file, run it */
     if (!NoInstall && fexists(INSTALL_FNAME)) {
-	vsystem("chmod +x %s", INSTALL_FNAME);	/* make sure */
+	vsystem("%s +x %s", CHMOD, INSTALL_FNAME);	/* make sure */
 	if (Verbose)
 	    printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
@@ -486,7 +486,7 @@ pkg_do(char *pkg)
 	    goto success;	/* close enough for government work */
 	}
 	/* Make sure pkg_info can read the entry */
-	vsystem("chmod a+rx %s", LogDir);
+	vsystem("%s a+rx %s", CHMOD, LogDir);
 	if (fexists(DEINSTALL_FNAME))
 	    move_file(".", DEINSTALL_FNAME, LogDir);
 	if (fexists(REQUIRE_FNAME))
