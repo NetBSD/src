@@ -52,6 +52,9 @@ Boston, MA 02111-1307, USA.  */
 /* NetBSD uses the SVR4 convention for user-visible assembler symbols,
    not the SH convention.  */
 
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX ""
+
 #undef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX "."
 
