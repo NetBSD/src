@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.38 1998/12/22 02:51:32 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.39 1999/01/11 21:31:03 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1441,41 +1441,23 @@ encap_send(ip, vifp, m)
  * De-encapsulate a packet and feed it back through ip input (this
  * routine is called whenever IP gets a packet with proto type
  * ENCAP_PROTO and a local destination address).
+ *
+ * Return 1 if we handled the packet, 0 if we did not.
+ *
+ * Called from ipip_input().
  */
-void
-#if __STDC__
-mrt_ipip_input(struct mbuf *m, ...)
-#else
-mrt_ipip_input(m, va_alist)
+int
+mrt_ipip_input(m, hlen)
 	struct mbuf *m;
-	va_dcl
-#endif
+	int hlen;
 {
-	register int hlen;
 	register struct ip *ip = mtod(m, struct ip *);
 	register int s;
 	register struct ifqueue *ifq;
 	register struct vif *vifp;
-	va_list ap;
 
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	va_end(ap);
-
-#if NGRE > 0
-	/*
-	 * check if packet came in on a if_gre with IPIP encaps.
-	 * If yes, then process it.
-	 * If the box is also Mrouter, this will slow mrouting (over
-	 * tunnels) down ;-(
-	 */
-	if ((ret=gre_input2(m,hlen,IPPROTO_IPIP))==1)
-		return;
-#endif
-	if (!have_encap_tunnel) {
-		rip_input(m);
-		return;
-	}
+	if (!have_encap_tunnel)
+		return (0);
 
 	/*
 	 * dump the packet if it's not to a multicast destination or if
@@ -1486,8 +1468,7 @@ mrt_ipip_input(m, va_alist)
 	 */
 	if (!IN_MULTICAST(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr)) {
 		++mrtstat.mrts_bad_tunnel;
-		m_freem(m);
-		return;
+		return (0);
 	}
 
 	if (!in_hosteq(ip->ip_src, last_encap_src)) {
@@ -1501,11 +1482,11 @@ mrt_ipip_input(m, va_alist)
 				break;
 		if (vifp == vife) {
 			mrtstat.mrts_cant_tunnel++; /*XXX*/
-			m_freem(m);
 			if (mrtdebug)
-				log(LOG_DEBUG, "ip_mforward: no tunnel with %x\n",
+				log(LOG_DEBUG,
+				    "ip_mforward: no tunnel with %x\n",
 				    ntohl(ip->ip_src.s_addr));
-			return;
+			return (0);
 		}
 		last_encap_vif = vifp;
 		last_encap_src = ip->ip_src;
@@ -1532,6 +1513,7 @@ mrt_ipip_input(m, va_alist)
 		 */
 	}
 	splx(s);
+	return (1);
 }
 
 /*
