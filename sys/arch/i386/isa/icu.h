@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.7.2.3 1993/09/30 20:17:40 mycroft Exp $
+ *	$Id: icu.h,v 1.7.2.4 1993/10/09 08:45:28 mycroft Exp $
  */
 
 /*
@@ -82,5 +82,7 @@ extern	unsigned imen;		/* interrupt mask enable */
 /*
  * Interrupt Control offset into Interrupt descriptor table (IDT)
  */
-#define	ICU_OFFSET	NRSVIDT		/* 0-31 are processor exceptions */
+#define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
 #define	ICU_LEN		NIRQ		/* 32-47 are ISA interrupts */
+
+#define	ICU_EOI		0x20		/* end of interrupt */
