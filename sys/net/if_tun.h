@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.9 2000/12/12 18:00:31 thorpej Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.10 2001/10/31 20:08:17 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -21,6 +21,8 @@
 
 #ifdef _KERNEL
 struct tun_softc {
+	struct	ifnet tun_if;		/* the interface */
+
 	u_short	tun_flags;		/* misc flags */
 #define	TUN_OPEN	0x0001
 #define	TUN_INITED	0x0002
@@ -34,10 +36,12 @@ struct tun_softc {
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
 
-	struct	ifnet tun_if;		/* the interface */
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
+	int	tun_unit;		/* the tunnel unit number */
+	struct	simplelock tun_lock;	/* lock for this tunnel */
+	LIST_ENTRY(tun_softc) tun_list;	/* list of all tuns */
 };
 #endif	/* _KERNEL */
 

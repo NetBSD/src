@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.10 2001/09/22 16:36:24 wiz Exp $
+.\" $NetBSD: tun.4,v 1.11 2001/10/31 20:08:18 atatat Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -37,6 +37,21 @@ and a character-special device
 .Dq control
 interface.
 .Pp
+To use a
+.Nm tun
+device, the administrator must first create the interface.  This can
+be done by using the
+.Xr ifconfig 8
+`create' command, or via the 
+.Dv SIOCIFCREATE
+ioctl.  Note that an
+.Fn open
+call on
+.Pa /dev/tun Ns Sy N ,
+will indicate that the device is not configured
+.Pq Er ENXIO
+unless the corresponding network interface has been created.
+.Pp
 The network interfaces are named
 .Sy tun Ns Ar 0 ,
 .Sy tun Ns Ar 1 ,
@@ -58,9 +73,8 @@ interfaces, but this can be changed; see the description of the control
 device, below.  When the system chooses to transmit a packet on the
 network interface, the packet can be read from the control device
 .Po
-it appears as
-.Dq input
-there
+it appears there as
+.Dq output
 .Pc ;
 writing a packet to the control device generates an input
 packet on the network interface, as if the
@@ -73,14 +87,17 @@ is exclusive-open
 .Po
 it cannot be opened if it is already open
 .Pc
-and is restricted to the super-user. A
+and is restricted to the super-user
+.Po
+regardless of file system permissions
+.Pc . A
 .Fn read
 call will return an error
 .Pq Er EHOSTDOWN
 if the interface is not
 .Dq ready
-(which means that the control device is open and the interface
-address has been set).
+(which means that the interface
+address has not been set).
 Once the interface is ready,
 .Fn read
 will return a packet if one is available; if not, it will either block
