@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.5 1998/09/13 15:27:30 hubertf Exp $	*/
+/*	$NetBSD: tetris.c,v 1.6 1999/01/03 02:00:18 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,6 +67,10 @@ static	void	setup_board __P((void));
 	void	onintr __P((int)) __attribute__((__noreturn__));
 	void	usage __P((void)) __attribute__((__noreturn__));
 
+struct shape *curshape;
+struct shape *nextshape;
+
+
 /*
  * Set up the initial board.  The bottom display row is completely set,
  * along with another (hidden) row underneath that.  Also, the left and
@@ -121,7 +125,6 @@ main(argc, argv)
 	char *argv[];
 {
 	register int pos, c;
-	register struct shape *curshape;
 	register char *keys;
 	register int level = 2;
 	char key_write[6][10];
@@ -190,6 +193,7 @@ main(argc, argv)
 	scr_set();
 
 	pos = A_FIRST*B_COLS + (B_COLS/2)-1;
+	nextshape = randshape();
 	curshape = randshape();
 
 	scr_msg(key_msg, 1);
@@ -220,7 +224,8 @@ main(argc, argv)
 			 * Choose a new shape.  If it does not fit,
 			 * the game is over.
 			 */
-			curshape = randshape();
+			curshape = nextshape;
+			nextshape = randshape();
 			pos = A_FIRST*B_COLS + (B_COLS/2)-1;
 			if (!fits_in(curshape, pos))
 				break;
@@ -278,8 +283,10 @@ main(argc, argv)
 			}
 			continue;
 		}
-		if (c == '\f')
+		if (c == '\f') {
 			scr_clear();
+			scr_msg(key_msg, 1);
+		}
 	}
 
 	scr_clear();
