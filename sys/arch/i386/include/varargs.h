@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.11 1995/12/25 21:41:09 mycroft Exp $	*/
+/*	$NetBSD: varargs.h,v 1.12 1995/12/25 22:22:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,6 @@
 
 #undef va_start
 #define	va_start(ap) \
-	ap = (char *)&va_alist
+	((ap) = (va_list)&va_alist)
 
 #endif /* !_I386_VARARGS_H_ */
