@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2002/02/01 17:52:55 uch Exp $
+# $NetBSD: GENERIC,v 1.18 2002/02/11 17:18:35 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -44,7 +44,7 @@ options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
@@ -113,6 +113,10 @@ hd64461if0 at shb0 irq 4
 hd64461pcmcia*	at hd64461if0
 hd64461video*	at hd64461if0
 
+#
+# HITACHI PERSONA (HPW-50PAD, HPQ-650PA)
+#
+com*		at hd64461if?
 #
 # machine independent part
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.13 2002/01/27 13:23:17 jdolecek Exp $
+#	$NetBSD: JORNADA690,v 1.14 2002/02/11 17:18:35 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -6,6 +6,8 @@
 include "arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
+
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 options 	SH7709A			# 133MHz
 options 	SH7709A_BROKEN_IPR
@@ -16,7 +18,10 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=65534
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# in-kernel bootloader
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
 
