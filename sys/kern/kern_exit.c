@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.45 1997/04/28 13:17:05 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.45.8.1 1999/02/04 06:23:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -332,6 +332,11 @@ loop:
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
+
+			/* Charge us for our child's sins */
+			curproc->p_estcpu = min(curproc->p_estcpu +
+						p->p_estcpu, UCHAR_MAX);
+
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			FREE(p->p_ru, M_ZOMBIE);
