@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.23 1997/09/05 17:57:19 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.24 1997/12/12 22:44:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2385,7 +2385,7 @@ do_actions:
 		ncr5380_reset_scsibus(sc);
 	busfree:
 		NCR_TRACE("machine: discon, waited %d\n",
-			ncr5380_wait_nrq_timo - timo);
+			ncr5380_wait_req_timo - timo);
 
 		*sc->sci_icmd = 0;
 		*sc->sci_mode = 0;
