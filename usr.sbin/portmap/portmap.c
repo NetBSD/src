@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.12 1997/10/18 11:06:08 lukem Exp $	*/
+/*	$NetBSD: portmap.c,v 1.13 1998/02/10 07:04:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.12 1997/10/18 11:06:08 lukem Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.13 1998/02/10 07:04:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ main(argc, argv)
 
 	(void)signal(SIGCHLD, reap);
 	svc_run();
-	syslog(LOG_ERR, "run_svc returned unexpectedly");
+	syslog(LOG_ERR, "svc_run returned unexpectedly");
 	abort();
 }
 
@@ -249,9 +249,6 @@ find_service(prog, vers, prot)
 	return (hit);
 }
 
-/* 
- * 1 OK, 0 not
- */
 void
 reg_service(rqstp, xprt)
 	struct svc_req *rqstp;
@@ -287,7 +284,8 @@ reg_service(rqstp, xprt)
 			 * find_service returns a hit even if
 			 * the versions don't match, so check for it
 			 */
-			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
+			fnd = find_service(reg.pm_prog, reg.pm_vers,
+			    reg.pm_prot);
 			if (fnd && fnd->pml_map.pm_vers == reg.pm_vers) {
 				if (fnd->pml_map.pm_port == reg.pm_port) {
 					ans = 1;
@@ -364,7 +362,8 @@ reg_service(rqstp, xprt)
 		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
 			svcerr_decode(xprt);
 		else {
-			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
+			fnd = find_service(reg.pm_prog, reg.pm_vers,
+			    reg.pm_prot);
 			if (fnd)
 				port = fnd->pml_map.pm_port;
 			else
@@ -463,7 +462,7 @@ xdr_opaque_parms(xdrs, cap)
 }
 
 /*
- * This routine finds and sets the length of incoming opaque paraters
+ * This routine finds and sets the length of incoming opaque parameters
  * and then calls xdr_opaque_parms.
  */
 static bool_t
