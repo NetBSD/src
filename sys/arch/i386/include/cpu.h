@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 1999/08/10 21:08:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 1999/10/06 20:04:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -199,7 +199,8 @@ void	child_return __P((void *));
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
 #define CPU_DISKINFO		6	/* disk geometry information */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
+#define CPU_FPU_PRESENT		7	/* FPU is present */
+#define	CPU_MAXID		8	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -209,6 +210,7 @@ void	child_return __P((void *));
 	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "diskinfo", CTLTYPE_STRUCT }, \
+	{ "fpu_present", CTLTYPE_INT }, \
 }
 
 
