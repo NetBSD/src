@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.158 2002/10/23 09:13:51 jdolecek Exp $ */
+/*	$NetBSD: st.c,v 1.159 2003/02/03 23:51:01 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.158 2002/10/23 09:13:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.159 2003/02/03 23:51:01 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -2105,7 +2105,7 @@ st_interpret_sense(xs)
 
 	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
 		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */
-		if (!callout_active(&periph->periph_callout))
+		if (!callout_pending(&periph->periph_callout))
 			scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    hz, scsipi_periph_timed_thaw, periph);

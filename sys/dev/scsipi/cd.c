@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.176 2003/01/23 00:00:33 bad Exp $	*/
+/*	$NetBSD: cd.c,v 1.177 2003/02/03 23:50:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.176 2003/01/23 00:00:33 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.177 2003/02/03 23:50:59 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -966,7 +966,7 @@ int cd_interpret_sense(xs)
 
 		SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
 						"spinup\n"));
-		if (!callout_active(&periph->periph_callout))
+		if (!callout_pending(&periph->periph_callout))
 			scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    5 * hz, scsipi_periph_timed_thaw, periph);
