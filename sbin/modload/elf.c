@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.9 2002/04/03 19:03:09 jdolecek Exp $	*/
+/*	$NetBSD: elf.c,v 1.10 2002/07/24 14:14:10 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.9 2002/04/03 19:03:09 jdolecek Exp $");
+__RCSID("$NetBSD: elf.c,v 1.10 2002/07/24 14:14:10 joda Exp $");
 
 #include <sys/param.h>
 
@@ -76,7 +76,7 @@ struct elf_section {
 };
 
 /* adds the section `s' at the correct (sorted by address) place in
-   the list ponted to by head; *head may be NULL */
+   the list pointed to by head; *head may be NULL */
 static void
 add_section(struct elf_section **head, struct elf_section *s)
 {
@@ -318,7 +318,7 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
  * -e		entry point
  * -o		output file
  * -Ttext	address to link text segment to in hex (assumes it's 
- *		a page boundry)
+ *		a page boundary)
  * -Tdata	address to link data segment to in hex
  * <target>	object file */
 
@@ -349,7 +349,7 @@ elf_linkcmd(char *buf,
 		errx(1, "link command longer than %lu bytes", (u_long)len);
 }
 
-/* load a prelinked module; returns entry point */
+/* load a pre-linked module; returns entry point */
 void *
 elf_mod_load(int fd)
 {
