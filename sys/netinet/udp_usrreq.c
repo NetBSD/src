@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.39 1996/10/25 06:35:16 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.40 1997/01/11 05:21:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -76,7 +76,6 @@ int	udpcksum = 0;		/* XXX */
 #endif
 
 static	void udp_notify __P((struct inpcb *, int));
-static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
@@ -174,7 +173,7 @@ udp_input(m, va_alist)
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
-		struct socket *last;
+		struct inpcb *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -226,16 +225,24 @@ udp_input(m, va_alist)
 				struct mbuf *n;
 
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
-					if (sbappendaddr(&last->so_rcv,
-						sintosa(&udpsrc), n,
-						(struct mbuf *)0) == 0) {
+					if (last->inp_flags & INP_CONTROLOPTS
+					    || last->inp_socket->so_options &
+					       SO_TIMESTAMP) {
+						ip_savecontrol(last, &opts,
+						    ip, n);
+					}
+					if (sbappendaddr(
+					    &last->inp_socket->so_rcv,
+					    sintosa(&udpsrc), n, opts) == 0) {
 						m_freem(n);
-						udpstat.udps_fullsock++;
+						if (opts)
+							m_freem(opts);
 					} else
-						sorwakeup(last);
+						sorwakeup(last->inp_socket);
+					opts = 0;
 				}
 			}
-			last = inp->inp_socket;
+			last = inp;
 			/*
 			 * Don't look for additional matches if this one does
 			 * not have either the SO_REUSEPORT or SO_REUSEADDR
@@ -244,7 +251,8 @@ udp_input(m, va_alist)
 			 * port.  It * assumes that an application will never
 			 * clear these options after setting them.
 			 */
-			if ((last->so_options&(SO_REUSEPORT|SO_REUSEADDR)) == 0)
+			if ((last->inp_socket->so_options &
+			    (SO_REUSEPORT|SO_REUSEADDR)) == 0)
 				break;
 		}
 
@@ -257,12 +265,15 @@ udp_input(m, va_alist)
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
-		if (sbappendaddr(&last->so_rcv, sintosa(&udpsrc), m,
-		    (struct mbuf *)0) == 0) {
+		if (last->inp_flags & INP_CONTROLOPTS ||
+		    last->inp_socket->so_options & SO_TIMESTAMP)
+			ip_savecontrol(last, &opts, ip, m);
+		if (sbappendaddr(&last->inp_socket->so_rcv,
+		    sintosa(&udpsrc), m, opts) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
 		}
-		sorwakeup(last);
+		sorwakeup(last->inp_socket);
 		return;
 	}
 	/*
@@ -306,32 +317,9 @@ udp_input(m, va_alist)
 	udpsrc.sin_port = uh->uh_sport;
 	bzero((caddr_t)udpsrc.sin_zero, sizeof(udpsrc.sin_zero));
 
-	if (inp->inp_flags & INP_CONTROLOPTS) {
-		struct mbuf **mp = &opts;
-
-		if (inp->inp_flags & INP_RECVDSTADDR) {
-			*mp = udp_saveopt((caddr_t) &ip->ip_dst,
-			    sizeof(struct in_addr), IP_RECVDSTADDR);
-			if (*mp)
-				mp = &(*mp)->m_next;
-		}
-#ifdef notyet
-		/* options were tossed above */
-		if (inp->inp_flags & INP_RECVOPTS) {
-			*mp = udp_saveopt((caddr_t) opts_deleted_above,
-			    sizeof(struct in_addr), IP_RECVOPTS);
-			if (*mp)
-				mp = &(*mp)->m_next;
-		}
-		/* ip_srcroute doesn't do what we want here, need to fix */
-		if (inp->inp_flags & INP_RECVRETOPTS) {
-			*mp = udp_saveopt((caddr_t) ip_srcroute(),
-			    sizeof(struct in_addr), IP_RECVRETOPTS);
-			if (*mp)
-				mp = &(*mp)->m_next;
-		}
-#endif
-	}
+	if (inp->inp_flags & INP_CONTROLOPTS ||
+	    inp->inp_socket->so_options & SO_TIMESTAMP)
+		ip_savecontrol(inp, &opts, ip, m);
 	iphlen += sizeof(struct udphdr);
 	m->m_len -= iphlen;
 	m->m_pkthdr.len -= iphlen;
@@ -347,31 +335,6 @@ bad:
 	m_freem(m);
 	if (opts)
 		m_freem(opts);
-}
-
-/*
- * Create a "control" mbuf containing the specified data
- * with the specified type for presentation with a datagram.
- */
-struct mbuf *
-udp_saveopt(p, size, type)
-	caddr_t p;
-	register int size;
-	int type;
-{
-	register struct cmsghdr *cp;
-	struct mbuf *m;
-
-	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
-		return ((struct mbuf *) NULL);
-	cp = (struct cmsghdr *) mtod(m, struct cmsghdr *);
-	bcopy(p, CMSG_DATA(cp), size);
-	size += sizeof(*cp);
-	m->m_len = size;
-	cp->cmsg_len = size;
-	cp->cmsg_level = IPPROTO_IP;
-	cp->cmsg_type = type;
-	return (m);
 }
 
 /*

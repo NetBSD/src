@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.36 1996/12/20 09:08:16 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.37 1997/01/11 05:21:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -546,6 +546,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
+		case IP_RECVIF:
 			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else {
@@ -575,6 +576,10 @@ ip_ctloutput(op, so, level, optname, mp)
 
 				case IP_RECVDSTADDR:
 					OPTSET(INP_RECVDSTADDR);
+					break;
+
+				case IP_RECVIF:
+					OPTSET(INP_RECVIF);
 					break;
 				}
 			}
@@ -615,6 +620,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
+		case IP_RECVIF:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
 			switch (optname) {
@@ -639,6 +645,10 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_RECVDSTADDR:
 				optval = OPTBIT(INP_RECVDSTADDR);
+				break;
+
+			case IP_RECVIF:
+				optval = OPTBIT(INP_RECVIF);
 				break;
 			}
 			*mtod(m, int *) = optval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.35 1996/10/25 06:33:36 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.36 1997/01/11 05:21:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -100,7 +100,8 @@ rip_input(m, va_alist)
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct inpcb *inp;
-	struct socket *last = 0;
+	struct inpcb *last = 0;
+	struct mbuf *opts = 0;
 	struct sockaddr_in ripsrc;
 
 	ripsrc.sin_family = AF_INET;
@@ -123,23 +124,32 @@ rip_input(m, va_alist)
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
-				if (sbappendaddr(&last->so_rcv,
-				    sintosa(&ripsrc), n,
-				    (struct mbuf *)0) == 0)
+				if (last->inp_flags & INP_CONTROLOPTS ||
+				    last->inp_socket->so_options & SO_TIMESTAMP)
+					ip_savecontrol(last, &opts, ip, n);
+				if (sbappendaddr(&last->inp_socket->so_rcv,
+				    sintosa(&ripsrc), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
-				else
-					sorwakeup(last);
+					if (opts)
+						m_freem(opts);
+				} else
+					sorwakeup(last->inp_socket);
 			}
 		}
-		last = inp->inp_socket;
+		last = inp;
 	}
 	if (last) {
-		if (sbappendaddr(&last->so_rcv, sintosa(&ripsrc), m,
-		    (struct mbuf *)0) == 0)
+		if (last->inp_flags & INP_CONTROLOPTS ||
+		    last->inp_socket->so_options & SO_TIMESTAMP)
+			ip_savecontrol(last, &opts, ip, m);
+		if (sbappendaddr(&last->inp_socket->so_rcv,
+		    sintosa(&ripsrc), m, opts) == 0) {
 			m_freem(m);
-		else
-			sorwakeup(last);
+			if (opts)
+				m_freem(opts);
+		} else
+			sorwakeup(last->inp_socket);
 	} else {
 		m_freem(m);
 		ipstat.ips_noproto++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.18 1996/10/25 06:24:16 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.19 1997/01/11 05:21:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -158,6 +158,8 @@ LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
 u_int16_t ip_id;			/* ip packet ctr, for ids */
 int	  ip_defttl;			/* default IP ttl */
 
+struct	 inpcb;
+
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	 ip_dooptions __P((struct mbuf *));
 void	 ip_drain __P((void));
@@ -174,6 +176,8 @@ struct ip *
 	 ip_reass __P((struct ipqent *, struct ipq *));
 struct in_ifaddr *
 	 ip_rtaddr __P((struct in_addr));
+void	 ip_savecontrol __P((struct inpcb *, struct mbuf **, struct ip *,
+	   struct mbuf *));
 int	 ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
 void	 ip_slowtimo __P((void));
 struct mbuf *
