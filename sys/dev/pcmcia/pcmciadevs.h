@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.150 2001/11/27 03:25:53 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.151 2001/12/04 18:46:51 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.150 2001/11/27 03:25:16 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.151 2001/12/04 18:46:30 christos Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -767,6 +767,9 @@
 #define	PCMCIA_CIS_PREMAX_PE200	{ "PMX   ", "PE-200", NULL, NULL }
 #define	PCMCIA_PRODUCT_PREMAX_PE200	-1
 #define	PCMCIA_STR_PREMAX_PE200	"PreMax PE-200"
+#define	PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT	{ "Symbol Technologies", "LA4111 Spectrum24 Wireless LAN PC Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT	-1
+#define	PCMCIA_STR_SIMPLETECH_SPECTRUM24_ALT	"LA4111 Spectrum24 Wireless LAN PC Card"
 #define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_SMC_2632W	-1
 #define	PCMCIA_STR_SMC_2632W	"SMC 2632 EZ Connect Wireless PC Card"
