@@ -87,7 +87,7 @@ vax_print_insn (memaddr, info)
   unsigned char buffer[MAXLEN];
   register int i;
   register unsigned char *p;
-  register char *d;
+  register const char *d;
 
   int status = (*info->read_memory_func) (memaddr, buffer, MAXLEN, info);
   if (status != 0)
