@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.61 2004/01/15 13:29:05 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.62 2004/01/16 14:13:15 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,10 +86,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.61 2004/01/15 13:29:05 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.62 2004/01/16 14:13:15 onoe Exp $");
 #endif
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.29 2004/01/15 10:04:20 onoe Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2086,8 +2086,11 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	return (*sc->sc_newstate)(ic, nstate, arg);
 out:
-	if (error != 0)
+	if (error != 0) {
+		if (error == EINPROGRESS)
+			error = 0;
 		return error;
+	}
 	return (*sc->sc_newstate)(ic, nstate, arg);
 }
 
