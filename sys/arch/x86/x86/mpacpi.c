@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.25 2004/05/21 16:17:48 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.26 2004/05/21 16:19:25 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.25 2004/05/21 16:17:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.26 2004/05/21 16:19:25 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -74,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.25 2004/05/21 16:17:48 kochi Exp $");
 #define _COMPONENT ACPI_HARDWARE
 #define _THIS_MODULE "mpacpi"
 #endif
+
+/* XXX room for PCI-to-PCI bus */
+#define BUS_BUFFER (16)
 
 #if NPCI > 0
 struct mpacpi_pcibus {
@@ -123,7 +126,7 @@ int mpacpi_nintsrc;			/* number of non-device interrupts */
 
 #if NPCI > 0
 int mpacpi_npci;
-int mpacpi_maxpci;
+static int mpacpi_maxpci;
 static int mpacpi_maxbuslevel;
 static int mpacpi_npciroots;
 static int mpacpi_npciknown;
@@ -434,7 +437,6 @@ mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	struct mpacpi_pcibus *mpr, *mparent;
 	struct mpacpi_walk_status *mpw = ct;
 	int bus;
-	int maxdev;
 
 	mparent = mpw->mpw_mpr;
 	acpi = mpw->mpw_acpi;
@@ -619,7 +621,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		}
 	}
 
-	mp_isa_bus = mpacpi_maxpci + 1;
+	mp_isa_bus = mpacpi_maxpci + BUS_BUFFER; /* XXX */
 #else
 	mp_isa_bus = 0;
 #endif
@@ -762,7 +764,6 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 }
 
 
-
 int
 mpacpi_find_interrupts(void *self)
 {
@@ -815,9 +816,6 @@ mpacpi_find_interrupts(void *self)
 
 #if NPCI > 0
 
-/*
- * These are the same as their MPBIOS equivalents, but might not be someday.
- */
 int
 mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 		       struct pcibus_attach_args *pba)
@@ -829,21 +827,36 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 		return ENOENT;
 #endif
 
-	if (pba->pba_bus >= mp_nbus) {
-		intr_add_pcibus(pba);
-		return 0;
-	}
+	/*
+	 * If this bus is not found in mpacpi_find_pcibusses
+	 * (i.e. behind PCI-to-PCI bridge), register as an extra bus.
+	 *
+	 * at this point, mp_busses[] are as follows:
+	 *  mp_busses[0 .. mpacpi_maxpci] : PCI
+	 *  mp_busses[mpacpi_maxpci + BUS_BUFFER] : ISA
+	 */
+	if (pba->pba_bus >= mp_isa_bus)
+		panic("Increase BUS_BUFFER in mpacpi.c!");
 
 	mpb = &mp_busses[pba->pba_bus];
 	if (mpb->mb_name != NULL) {
 		if (strcmp(mpb->mb_name, "pci"))
 			return EINVAL;
 	} else
+		/*
+		 * As we cannot find all PCI-to-PCI bridge in
+		 * mpacpi_find_pcibusses, some of the MP_busses may remain
+		 * uninitialized.
+		 */
 		mpb->mb_name = "pci";
 
 	mpb->mb_configured = 1;
 	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
+
+	if (pba->pba_bus > mpacpi_maxpci)
+		mpacpi_maxpci = pba->pba_bus;
+
 	return 0;
 }
 
