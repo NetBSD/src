@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.174 2000/08/03 00:30:47 jeffs Exp $	*/
+/*	$NetBSD: com.c,v 1.175 2000/08/18 13:22:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -712,10 +712,14 @@ com_shutdown(sc)
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
+	 * Avoid tsleeping above splhigh().
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		com_modem(sc, 0);
+		splx(s);
+		/* XXX tsleep will only timeout */
 		(void) tsleep(sc, TTIPRI, ttclos, hz);
+		s = splserial();
 	}
 
 	/* Turn off interrupts. */
