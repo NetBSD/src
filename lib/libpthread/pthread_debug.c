@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.3 2001/07/25 23:56:06 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.4 2001/07/27 17:27:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,8 @@ pthread__debuglog_init(void)
 		buf->msg_magic = BUF_MAGIC;
 		buf->msg_bufw = 0;
 		buf->msg_bufr = 0;
-		buf->msg_bufs = PTHREAD__DEBUG_SHMSIZE;
+		buf->msg_bufs = PTHREAD__DEBUG_SHMSIZE - 
+		    sizeof (struct pthread_msgbuf);
 	}
 
 	return buf;
