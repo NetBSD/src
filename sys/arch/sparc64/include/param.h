@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1999/11/20 18:10:44 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.13 1999/11/21 00:17:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,7 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#define	KERNBASE	0xf8000000	/* start of kernel virtual space */
+#define	KERNBASE	0xf1000000	/* start of kernel virtual space */
 #define	KERNEND		0xfe000000	/* start of kernel virtual space */
 #define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
