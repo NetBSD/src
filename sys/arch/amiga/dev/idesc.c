@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.48 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: idesc.c,v 1.49 2002/01/28 09:56:57 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -68,6 +68,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.49 2002/01/28 09:56:57 aymeric Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.6 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: event.c,v 1.7 2002/01/28 09:56:54 aymeric Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,9 @@
  *
  * Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7 2002/01/28 09:56:54 aymeric Exp $");
 
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.

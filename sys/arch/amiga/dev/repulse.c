@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.3 2002/01/26 13:40:59 aymeric Exp $ */
+/*	$NetBSD: repulse.c,v 1.4 2002/01/28 09:57:02 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.4 2002/01/28 09:57:02 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

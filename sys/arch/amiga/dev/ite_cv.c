@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv.c,v 1.5 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ite_cv.c,v 1.6 2002/01/28 09:57:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -38,6 +38,10 @@
  */
 
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_cv.c,v 1.6 2002/01/28 09:57:00 aymeric Exp $");
+
 #include "grfcv.h"
 #if NGRFCV > 0
 

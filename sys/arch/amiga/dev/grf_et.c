@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.13 2002/01/26 13:40:54 aymeric Exp $ */
+/*	$NetBSD: grf_et.c,v 1.14 2002/01/28 09:56:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -35,6 +35,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_amigacons.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.14 2002/01/28 09:56:56 aymeric Exp $");
+
 #include "grfet.h"
 #if NGRFET > 0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.7 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.8 2002/01/28 09:57:04 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.8 2002/01/28 09:57:04 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

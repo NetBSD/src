@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.30 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: atzsc.c,v 1.31 2002/01/28 09:56:51 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,10 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.31 2002/01/28 09:56:51 aymeric Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
