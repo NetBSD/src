@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.17 2000/03/04 10:27:59 elric Exp $ */
+/* $NetBSD: tga.c,v 1.18 2000/03/05 02:30:57 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -212,7 +212,7 @@ tga_getdevconfig(memt, pc, tag, dc, tga2)
 	if (tga2) {
 		int	monitor;
 
-		monitor = (dc->dc_regs[TGA_REG_GREV] >> 16) & 0x0f;
+		monitor = (~dc->dc_regs[TGA_REG_GREV] >> 16) & 0x0f;
 		tga2_init(dc, monitor);
 	}
 
