@@ -84,11 +84,21 @@
 #include "st.h"
 #if NST > 0
 
+/*
+ * Current drive can only handle 4 tape units, so if more were
+ * configured, redefine NST to reduce unusable data space.
+ */
+
+#if NST > 4
+#undef NST
+#define NST	4
+#endif
+
 #include "param.h"
 #include "systm.h"
 #include "buf.h"
 #include "device.h"
-#include "scsireg.h"
+#include "scsidefs.h"
 #include "file.h"
 #include "tty.h"
 #include "proc.h"
@@ -124,9 +134,9 @@ extern int dumpxsense (struct st_xsense *sensebuf, struct st_softc *sc);
 extern int prtmodsel (struct mode_select_data *msd, int modlen);
 extern int prtmodstat (struct mode_sense *mode);
 
-int	stinit(), ststart(), stgo(), stintr();
 struct	driver stdriver = {
-	stinit, "st", ststart, stgo, stintr, 0,
+	(int (*)(void *)) stinit, "st", ststart, (int (*)(int,...)) stgo,
+	stintr, 0,
 };
 
 struct	st_softc {
@@ -273,11 +283,46 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 				/* sensing so TTi display gets updated */
 #endif
 
+int st_pretend_tobe_mt = 0;	/* patchable to force an unknown tape */
+
+#ifndef MT_ISGENERIC		/* XXX define Generic tape */
+#define MT_ISGENERIC	0
+#endif
+
+/* XXX don't want to change for all of netbsd right now. */
+/* should go in /sys/sys/mtio.h */
+#define MT_ISTZ30	0x15		/* DEC TZ30 */
+
+struct st_tape_parm {
+	char	*venid;		/* vendor ID */
+	short	venlen;		/* length of vendor ID */
+	short	tapeid;		/* tape ID from mtio.h */
+	u_char	senselen;	/* length of request sense data */
+	u_char	inquirylen;	/* length of inquiry data */
+	u_char	modeselectlen;	/* length of mode select data */
+	u_char	modesenselen;	/* length of mode sense data */
+} st_tape_table[] = {
+	{"GENERIC",	7,	MT_ISGENERIC,	14, 36, 12, 12},
+	{"EXB-8200",	8,	MT_ISEXABYTE,	26, 52, 17, 17},
+	{"VIPER 2525",	10,	MT_ISVIPER2525,	14, 36, 12, 12},
+	{"VIPER 150",	9,	MT_ISVIPER1,	14, 36, 12, 12},
+	{"Python 27216", 12,	MT_ISPYTHON,	14, 36, 12, 12},
+	{"Python 25501", 12,	MT_ISPYTHON,	14, 36, 12, 12},
+	{"HP35450A",	8,	MT_ISHPDAT,	14, 36, 12, 12},
+	{"5150ES",	6,	MT_ISWANGTEK,	14, 36, 12, 12},
+	{"CP150",	5,	MT_ISCALIPER,	14, 36, 12, 12},
+	{"5099ES",	6,	MT_ISWTEK5099,	14, 36, 12, 12},
+	{"TZ30",	4,	MT_ISTZ30,	14, 36, 14, 14}
+};
+#define	NST_TYPES (sizeof(st_tape_table)/sizeof(struct st_tape_parm))
+
 stinit(ad)
 	register struct amiga_device *ad;
 {
 	register struct st_softc *sc = &st_softc[ad->amiga_unit];
 
+	if (sc->sc_flags & STF_ALIVE)
+		return (0);		/* unit already configured */
 	sc->sc_ad = ad;
 	sc->sc_punit = stpunit(ad->amiga_flags);
 	sc->sc_type = stident(sc, ad);
@@ -299,9 +344,10 @@ stident(sc, ad)
 	int unit;
 	int ctlr, slave;
 	int i, stat, inqlen;
+	struct st_tape_parm *parm;
 	char idstr[32];
 #ifdef ADD_DELAY
-	static int havest = 0;
+	static struct driver *havest = NULL;
 #endif
 	struct st_inquiry {
 		struct	scsi_inquiry inqbuf;
@@ -315,20 +361,20 @@ stident(sc, ad)
 	ctlr = ad->amiga_ctlr;
 	slave = ad->amiga_slave;
 	unit = sc->sc_punit;
-	scsi_delay(-1);
+	(ad->amiga_cdriver->d_delay)(-1);
 
 	inqlen = 0x05; /* min */
 	st_inq.cdb[4] = 0x05;
-	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
+	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 	/* do twice as first command on some scsi tapes always fails */
-	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
+	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 	if (stat == -1)
 		goto failed;
 
 	if (st_inqbuf.inqbuf.type != 0x01 ||  /* sequential access device */
-	    st_inqbuf.inqbuf.qual != 0x80 ||  /* removable media */
+	    (st_inqbuf.inqbuf.qual & 0x80) == 0 ||  /* removable media */
 	    (st_inqbuf.inqbuf.version != 0x01 && /* current ANSI SCSI spec */
 	     st_inqbuf.inqbuf.version != 0x02))  /* 0x02 is for HP DAT */
 		goto failed;
@@ -337,7 +383,7 @@ stident(sc, ad)
 	inqlen = 0x05 + st_inqbuf.inqbuf.len;
 	st_inq.cdb[4] = inqlen;
 	bzero(&st_inqbuf, sizeof(st_inqbuf));
-	stat = scsi_immed_command(ctlr, slave, unit, &st_inq, 
+	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
 
 	if (st_inqbuf.inqbuf.len >= 28) {
@@ -367,64 +413,37 @@ stident(sc, ad)
 		goto failed;
 	}
 
-#define IS_ATAPE(x) (bcmp(x,&idstr[8],sizeof(x) -1) == 0)
-
-	if (IS_ATAPE("EXB-8200")) {
-		sc->sc_tapeid = MT_ISEXABYTE;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 26;
-		sc->sc_datalen[CMD_INQUIRY] = 52;
-		sc->sc_datalen[CMD_MODE_SELECT] = 17;
-		sc->sc_datalen[CMD_MODE_SENSE] = 17;
-     	} else if (IS_ATAPE("VIPER 2525")) {
-		sc->sc_tapeid = MT_ISVIPER2525;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (IS_ATAPE("VIPER 150")) {
-		sc->sc_tapeid = MT_ISVIPER1;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (IS_ATAPE("Python 27216") ||
-                   IS_ATAPE("Python 25501")) {
-		sc->sc_tapeid = MT_ISPYTHON;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (IS_ATAPE("HP35450A")) {
+	sc->sc_tapeid = MT_ISGENERIC;
+	/* Kludge for DEC TZ30 which doesn't have any identification text */
+	if (st_inqbuf.inqbuf.len == 0 &&
+	    (st_inqbuf.inqbuf.qual & 0x7f) == 0x30) {
+		sc->sc_tapeid = MT_ISTZ30;
+		printf ("st%d: tape drive is DEC TZ30\n", ad->amiga_unit);
+	}
+	if (st_pretend_tobe_mt != 0)
+		sc->sc_tapeid = st_pretend_tobe_mt;
+	for (i = 0, parm = st_tape_table; i < NST_TYPES; ++i, ++parm) {
+		if (bcmp (&idstr[8], parm->venid, parm->venlen) == 0 ||
+		    parm->tapeid == sc->sc_tapeid) {
+			sc->sc_tapeid = parm->tapeid;
+			sc->sc_datalen[CMD_REQUEST_SENSE] = parm->senselen;
+			sc->sc_datalen[CMD_INQUIRY] = parm->inquirylen;
+			sc->sc_datalen[CMD_MODE_SELECT] = parm->modeselectlen;
+			sc->sc_datalen[CMD_MODE_SENSE] = parm->modesenselen;
+			if (parm->tapeid != MT_ISGENERIC)
+				break;		/* Stop if not GENERIC */
+		}
+	}
+	if (sc->sc_tapeid == MT_ISHPDAT) {
 		/* XXX "extra" stat makes the HP drive happy at boot time */
-		stat = scsi_test_unit_rdy(ctlr, slave, unit);
-		sc->sc_tapeid = MT_ISHPDAT;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (IS_ATAPE("5150ES")) {
-		sc->sc_tapeid = MT_ISWANGTEK;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (IS_ATAPE("CP150")) {
-		sc->sc_tapeid = MT_ISCALIPER;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("5099ES", &idstr[8], 6) == 0) {
-	        sc->sc_tapeid = MT_ISWTEK5099;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else {
+		stat = (ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
+	}
+	if (sc->sc_tapeid <= 0) {
 		if (idstr[8] == '\0')
-			printf("st%d: No ID, assuming Wangtek\n", ad->amiga_unit);
+			printf("st%d: No ID, using GENERIC\n", ad->amiga_unit);
 		else
-			printf("st%d: Unsupported tape device\n", ad->amiga_unit);
+			printf("st%d: Unsupported tape device, using GENERIC\n", ad->amiga_unit);
+#if 0
 #if 0
 		sc->sc_tapeid = MT_ISAR;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
@@ -438,6 +457,7 @@ stident(sc, ad)
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 #endif
+#endif
 	}
 
 	sc->sc_filepos = 0;
@@ -445,17 +465,17 @@ stident(sc, ad)
 	/* load xsense */
 	stxsense(ctlr, slave, unit, sc);
 
-	scsi_delay(0);
+	(ad->amiga_cdriver->d_delay)(0);
 #ifdef ADD_DELAY
 	/* XXX if we have a tape, we must up the delays in the HA driver */
-	if (!havest) {
-		havest = 1;
-		scsi_delay(20000);
+	if (havest != ad->amiga_cdriver) {
+		havest = ad->amiga_cdriver;
+		(ad->amiga_cdriver->d_delay)(20000);
 	}
 #endif
 	return(st_inqbuf.inqbuf.type);
 failed:
-	scsi_delay(0);
+	(ad->amiga_cdriver->d_delay)(0);
 	return(-1);
 }
 
@@ -499,18 +519,19 @@ stopen(dev, flag, type, p)
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
+	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
+	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 
 printf("st: stat = %d, blklen = %d\n", stat, 
        (mode.md.blklen2 << 16 | mode.md.blklen1 << 8 | mode.md.blklen0));
 
+/* XXX - use tape table data? */
 	/* set record length */
 	switch (sc->sc_tapeid) {
 	case MT_ISAR:
@@ -535,6 +556,7 @@ printf("st: stat = %d, blklen = %d\n", stat,
 		else
 		  sc->sc_blklen = 512;
 		break;
+	case MT_ISGENERIC:
 	case MT_ISWANGTEK:
 	case MT_ISCALIPER:
  		stxsense(ctlr, slave, unit, sc);
@@ -547,6 +569,12 @@ printf("st: stat = %d, blklen = %d\n", stat,
 		break;
 	case MT_ISWTEK5099:
 		sc->sc_blklen = 512;
+		break;
+	case MT_ISTZ30:
+		if (minor(dev) & STDEV_FIXEDBLK)
+			sc->sc_blklen = 512;
+		else
+			sc->sc_blklen = st_exblklen;
 		break;
 	default:
 		if ((mode.md.blklen2 << 16 |
@@ -578,6 +606,7 @@ printf("st: stat = %d, blklen = %d\n", stat,
 	msd.blklen1 = (sc->sc_blklen >> 8) & 0xff;
 	msd.blklen0 = sc->sc_blklen & 0xff;
 
+/* XXX - use tape table data? */
 	switch (sc->sc_tapeid) {
 	case MT_ISAR:
 		if (DSTY(dev))
@@ -590,6 +619,7 @@ printf("st: stat = %d, blklen = %d\n", stat,
 			msd.density = QIC_11;
 		}
 		break;
+	case MT_ISGENERIC:
 	case MT_ISCALIPER:
 	case MT_ISWANGTEK:
 		if (DSTY(dev))
@@ -611,6 +641,7 @@ printf("st: stat = %d, blklen = %d\n", stat,
 	case MT_ISVIPER1:
 	case MT_ISPYTHON:
 	case MT_ISWTEK5099:
+	case MT_ISTZ30:
 		if (DSTY(dev))
 			uprintf("Only one density supported\n");
 		break;
@@ -652,7 +683,7 @@ printf("st: stat = %d, blklen = %d\n", stat,
 	/* mode select */
 	count = 0;
 retryselect:
-	stat = scsi_immed_command(ctlr, slave, unit, &modsel,
+	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsel,
 				  (u_char *)&msd, modlen, B_WRITE);
 	/*
 	 * First command after power cycle, bus reset or tape change 
@@ -661,7 +692,7 @@ retryselect:
 	if (stat == STS_CHECKCOND) {
 		sc->sc_filepos = 0;
 		stxsense(ctlr, slave, unit, sc);
-		stat = scsi_immed_command(ctlr, slave, unit, &modsel,
+		stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsel,
 					  (u_char *)&msd, modlen, B_WRITE);
 #ifdef DEBUG
 		if (stat && (st_debug & ST_OPEN))
@@ -694,7 +725,7 @@ retryselect:
 
 mode_selected:
 	/* drive ready ? */
-	stat = scsi_test_unit_rdy(ctlr, slave, unit);
+	stat = (sc->sc_ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
 
 	if (stat == STS_CHECKCOND) {
 		stxsense(ctlr, slave, unit, sc);
@@ -716,7 +747,7 @@ mode_selected:
 			break;
 		case MT_ISAR:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
-				stat = scsi_test_unit_rdy(ctlr, slave, unit);
+				stat = (sc->sc_ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
 			if (stat == STS_CHECKCOND) {
 				stxsense(ctlr, slave, unit, sc);
 				if (xsense->sc_xsense.key)
@@ -733,8 +764,9 @@ mode_selected:
 		case MT_ISCALIPER:
 		case MT_ISWANGTEK:
 		case MT_ISWTEK5099:
+		case MT_ISGENERIC:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
-				stat = scsi_test_unit_rdy(ctlr, slave, unit);
+				stat = (sc->sc_ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
 			if (stat == STS_CHECKCOND) {
 				stxsense(ctlr, slave, unit, sc);
 				if (xsense->sc_xsense.key)
@@ -753,7 +785,7 @@ mode_selected:
 	/* mode sense */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = scsi_immed_command(ctlr, slave, unit, &modsense,
+	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
 				  (u_char *)&mode, modlen, B_READ);
 #ifdef DEBUG
 	if (st_debug & ST_OPENSTAT)
@@ -861,7 +893,7 @@ ststrategy(bp)
 stustart(unit)
 	int unit;
 {
-	if (scsireq(&st_softc[unit].sc_dq))
+	if ((st_softc[unit].sc_ad->amiga_cdriver->d_req)(&st_softc[unit].sc_dq))
 		ststart(unit);
 }
 
@@ -870,7 +902,7 @@ ststart(unit)
 {
 	struct amiga_device *am = st_softc[unit].sc_ad;
 
-	if (scsiustart(am->amiga_ctlr))
+	if ((am->amiga_cdriver->d_ustart)(am->amiga_ctlr))
 		stgo(unit);
 }
 
@@ -941,7 +973,7 @@ stgo(unit)
 			printf("stgo%d: odd count %d using manual transfer\n",
 			       unit, bp->b_bcount);
 #endif
-		stat = scsi_tt_oddio(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
+		stat = (am->amiga_cdriver->d_ttoddio)(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
 				     bp->b_un.b_addr, bp->b_bcount,
 				     bp->b_flags, 1);
 		if (stat == 0) {
@@ -949,7 +981,7 @@ stgo(unit)
 			stfinish(unit, sc, bp);
 		}
 	} else
-		stat = scsigo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
+		stat = (am->amiga_cdriver->d_go)(am->amiga_ctlr, am->amiga_slave, sc->sc_punit,
 			      bp, cmd, pad);
 	if (stat) {
 		bp->b_error = EIO;
@@ -969,7 +1001,7 @@ stfinish(unit, sc, bp)
 	sttab[unit].b_errcnt = 0;
 	sttab[unit].b_actf = bp->b_actf;
 	iodone(bp);
-	scsifree(&sc->sc_dq);
+	(sc->sc_ad->amiga_cdriver->d_free)(&sc->sc_dq);
 	if (sttab[unit].b_actf)
 		stustart(unit);
 	else
@@ -1182,10 +1214,10 @@ stintr(unit, stat)
 					       UNIT(bp->b_dev),
 					       bp->b_bcount - bp->b_resid);
 #endif
-				stat = scsi_tt_oddio(am->amiga_ctlr, am->amiga_slave,
+				stat = (am->amiga_cdriver->d_ttoddio)(am->amiga_ctlr, am->amiga_slave,
 						     sc->sc_punit, 0, -1, 0, 0);
 				if (stat == 0)
-					stat = scsi_tt_oddio(am->amiga_ctlr,
+					stat = (am->amiga_cdriver->d_ttoddio)(am->amiga_ctlr,
 							     am->amiga_slave,
 							     sc->sc_punit,
 							     bp->b_un.b_addr,
@@ -1392,7 +1424,7 @@ stxsense(ctlr, slave, unit, sc)
 
 	sensebuf = (u_char *)&st_xsense[sc->sc_dq.dq_unit];
 	len = sc->sc_datalen[CMD_REQUEST_SENSE];
-	scsi_request_sense(ctlr, slave, unit, sensebuf, len);
+	(sc->sc_ad->amiga_cdriver->d_rqs)(ctlr, slave, unit, sensebuf, len);
 }
 
 prtkey(unit, sc)
@@ -1541,6 +1573,7 @@ dumpxsense(sensebuf, sc)
 				(xp->exb_xsense.tplft0)) );
 		break;
 
+	case MT_ISGENERIC:
 	case MT_ISWANGTEK:
 	case MT_ISCALIPER:
 		printf("b8 0x%x (wp 0x%x) b9 0x%x b10 0x%x b11 0x%x b12 0x%x b13 0x%x\n",

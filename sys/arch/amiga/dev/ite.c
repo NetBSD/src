@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.5 1994/01/26 21:05:54 mw Exp $
+ *	$Id: ite.c,v 1.6 1994/02/01 11:52:19 chopps Exp $
  *
  * Original author: unknown
  * Amiga author:: Markus Wild
@@ -174,7 +174,6 @@ static int delayed_con_tty = -1;  /* if >= 0 set cn_tp later to that tty.. */
 struct  ite_softc ite_softc[NITE];
 
 int	itestart();
-extern	int ttrstrt();
 extern	struct tty *constty;
 
 /* These are (later..) settable via an ioctl */
@@ -344,7 +343,7 @@ iteopen(dev, mode, devtype, p)
 			return (error);
 		first = 1;
 	}
-	tp->t_oproc = itestart;
+	tp->t_oproc = (void (*)(struct tty *)) itestart;
 	tp->t_param = NULL;
 	tp->t_dev = dev;
 	if ((tp->t_state&TS_ISOPEN) == 0) {

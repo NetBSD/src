@@ -36,11 +36,23 @@
  *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
  */
 
+/*
+ * The largest single request will be MAXPHYS bytes which will require
+ * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
+ * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
+ * buffer is not page aligned (+1).
+ */
+#define	DMAMAXIO	(MAXPHYS/NBPG+1)
+
+struct	dma_chain {
+	int	dc_count;
+	char	*dc_addr;
+};
+
 struct	scsi_softc {
 	struct	amiga_ctlr *sc_ac;
 	struct	devqueue sc_dq;
 	struct	devqueue sc_sq;
-	dmareq_t  dmareq;
 	dmafree_t dmafree;
 	dmago_t   dmago;
 	dmanext_t dmanext;
@@ -48,6 +60,7 @@ struct	scsi_softc {
 	char	  *dmabuffer;
 	char	  *dmausrbuf;
 	u_long	  dmausrlen;
+	u_long    dmamask;
 	u_char	sc_flags;
 	u_long	sc_clock_freq;
 	/* one for each target */
@@ -58,6 +71,13 @@ struct	scsi_softc {
 	u_char	sc_scsi_addr;
 	u_char	sc_stat[2];
 	u_char	sc_msg[7];
+	void	*sc_hwaddr;	/* pointer to controller-specific DMA registers */
+	u_short	dmatimo;
+	u_short	sc_cmd;
+	int	sc_tc;
+	struct	dma_chain *sc_cur;
+	struct	dma_chain *sc_last;
+	struct	dma_chain sc_chain[DMAMAXIO];
 };
 
 /* sc_flags */
@@ -72,11 +92,14 @@ struct	scsi_softc {
 				   address space */
 #define SCSI_READ24	0x20	/* DMA input needs to be copied from
 				   ZorroII buffer to real buffer */
+#define	SCSI_INTR	0x40	/* SCSI interrupt expected */
 
 /* sync states */
 #define SYNC_START	0	/* no sync handshake started */
 #define SYNC_SENT	1	/* we sent sync request, no answer yet */
 #define SYNC_DONE	2	/* target accepted our (or inferior) settings,
 				   or it rejected the request and we stay async */
-
-
+#ifdef DEBUG
+#define	DDB_FOLLOW	0x04
+#define DDB_IO		0x08
+#endif
