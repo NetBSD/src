@@ -1,7 +1,7 @@
-/*	$NetBSD: file_fat.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
+/*	$NetBSD: file_fat.cpp,v 1.3 2002/02/04 17:31:05 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,17 +43,20 @@
 FatFile::FatFile(Console *&cons)
 	: File(cons)
 {
+
 	_debug = TRUE;
-	DPRINTF((TEXT("File: FAT\n")));
+	DPRINTF((TEXT("FileManager: FAT\n")));
 }
 
 FatFile::~FatFile(void)
 {
+
 }
 
 BOOL
 FatFile::setRoot(TCHAR *drive)
 {
+
 	wcsncpy(_drive, drive, MAX_PATH);
 	wcsncpy(_filename, drive, MAX_PATH);
 
@@ -64,14 +67,14 @@ BOOL
 FatFile::open(const TCHAR *name, u_int32_t flags)
 {
 	// drive + filename
-	wcsncpy(_filename, _drive, MAX_PATH);
-	wcscat(_filename, name);
+	wsprintf(_filename, TEXT("%s%s"), _drive, name);
+
 	// open it.
-	_handle = CreateFile(_filename, GENERIC_READ | GENERIC_WRITE,
-	    0, 0, flags, 0, 0);
+	_handle = CreateFile(_filename, GENERIC_READ, 0, 0,
+	    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 	if (_handle == INVALID_HANDLE_VALUE) {
 		DPRINTF((TEXT("can't open \"%s\". cause = %d\n"),
-		    name, GetLastError()));
+		    _filename, GetLastError()));
 		return FALSE;
 	}
 
@@ -113,6 +116,7 @@ FatFile::write(const void *buf, size_t bytes, off_t ofs)
 BOOL
 FatFile::seek(off_t ofs)
 {
+
 	SetFilePointer(_handle, ofs, 0, FILE_BEGIN);
 
 	return TRUE;
