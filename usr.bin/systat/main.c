@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1996/12/13 19:26:21 scottr Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/03/03 22:19:37 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -43,12 +43,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.9 1996/12/13 19:26:21 scottr Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/03/03 22:19:37 explorer Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 
 #include <err.h>
+#include <limits.h>
 #include <nlist.h>
 #include <signal.h>
 #include <stdio.h>
@@ -93,7 +94,7 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
-	char errbuf[80];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	while ((ch = getopt(argc, argv, "M:N:w:")) != EOF)
 		switch(ch) {
