@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.21 1999/07/21 03:15:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.22 1999/08/10 18:18:30 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -988,7 +988,9 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* borrow the thread of the requesting process */
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
+		s = splbio();
 		retcode = rf_RewriteParity(raidPtrs[unit]);
+		splx(s);
 		/* return I/O Error if the parity rewrite fails */
 
 		if (retcode) {
@@ -1083,7 +1085,9 @@ raidioctl(dev, cmd, data, flag, p)
 			return (retcode);
 		}
 		break;
-
+	case RAIDFRAME_CHECK_PARITY:
+		*(int *) data = raidPtrs[unit]->parity_good;
+		return (0);
 	case RAIDFRAME_RESET_ACCTOTALS:
 		{
 			RF_Raid_t *raid = raidPtrs[unit];
