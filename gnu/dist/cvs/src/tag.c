@@ -856,7 +856,7 @@ Numeric tag %s contains characters other than digits and '.'", name);
 	/* The tags is valid but not mentioned in val-tags.  Add it.  */
 	datum value;
 
-	if (noexec)
+	if (nolock)
 	{
 	    if (db != NULL)
 		dbm_close (db);

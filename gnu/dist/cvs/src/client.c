@@ -4419,6 +4419,16 @@ the :server: access method is not supported by this port of CVS");
 		error (1, 0,
 		       "This server does not support the global -n option.");
 	}
+	if (nolock && !noexec)
+	{
+	    if (have_global)
+	    {
+		send_to_server ("Global_option -u\012", 0);
+	    }
+	    else
+		error (1, 0,
+		       "This server does not support the global -u option.");
+	}
 	if (quiet)
 	{
 	    if (have_global)
