@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.5 1999/03/04 20:15:53 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.6 1999/08/16 02:01:12 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -684,7 +684,7 @@ typedef struct adw_dvc_cfg {
  */
 #define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
 #define	CCB_HASH_SHIFT	9
-#define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
+#define CCB_HASH(x)	((((x)) >> CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
 typedef int (* ADW_CALLBACK) (int);
 
@@ -749,7 +749,7 @@ typedef struct adw_sg_block {
 	u_int8_t	reserved2;
 	u_int8_t	first_entry_no;		/* starting entry number */
 	u_int8_t	last_entry_no;		/* last entry number */
-	struct adw_sg_block *sg_ptr;		/* links to the next sg block */
+	u_int32_t	sg_ptr;			/* links to next sg block */
 	struct {
 		u_int32_t sg_addr;		/* SG element address */
 		u_int32_t sg_count;		/* SG element count */
@@ -769,10 +769,10 @@ typedef struct adw_scsi_req_q {
 	u_int8_t	sg_entry_cnt;	/* SG element count. Zero for no SG. */
 	u_int8_t	target_id;	/* Device target identifier. */
 	u_int8_t	target_lun;	/* Device target logical unit number. */
-	ulong		data_addr;	/* Data buffer physical address. */
+	u_int32_t	data_addr;	/* Data buffer physical address. */
 	u_int32_t	data_cnt;	/* Data count. Ucode sets to residual. */
-	ulong		sense_addr;	/* Sense buffer physical address. */
-	ulong		ccb_ptr;	/* Driver request physical address. */
+	u_int32_t	sense_addr;	/* Sense buffer physical address. */
+	u_int32_t	ccb_ptr;	/* Driver request physical address. */
 	u_int8_t	a_flag;		/* Adv Library flag field. */
 	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
 	u_int8_t	cdb_len;	/* SCSI CDB length. */
@@ -782,10 +782,10 @@ typedef struct adw_scsi_req_q {
 	u_int8_t	host_status;	/* Ucode host status. */
 	u_int8_t	ux_sg_ix;	/* Ucode working SG variable. */
 	u_int8_t	cdb[12];	/* SCSI command block. */
-	ulong		sg_real_addr;	/* SG list physical address. */
+	u_int32_t	sg_real_addr;	/* SG list physical address. */
 	u_int32_t	free_scsiq_link;/* Iternal pointer to ADW_SCSI_REQ_Q */
-	ulong		ux_wk_data_cnt;	/* Saved data count at disconnection. */
-	ulong		ccb_scsiq_ptr;	/* Pointer to ADW_SCSI_REQ_Q */
+	u_int32_t	ux_wk_data_cnt;	/* Saved data count at disconnection. */
+	u_int32_t	ccb_scsiq_ptr;	/* Pointer to ADW_SCSI_REQ_Q */
 	u_int32_t	sg_list_ptr;	/* SG list v-address. (ADW_SG_BLOCK* - unused) */
 	/*
 	 * End of microcode structure - 60 bytes. The rest of the structure
@@ -930,8 +930,7 @@ do { \
  *      ADW_FALSE(0) - Queue was not found on the active queue list.
  */
 #define ADW_ABORT_CCB(sc, ccb_ptr) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, \
-		(ulong) (ccb_ptr), 0)
+	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey, 0)
 
 /*
  * Send a Bus Device Reset Message to the specified target ID.
@@ -945,8 +944,7 @@ do { \
  *                     are not purged.
  */
 #define ADW_RESET_DEVICE(sc, target_id) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, \
-		(ulong) (target_id), 0)
+	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, (target_id), 0)
 
 /*
  * SCSI Wide Type definition.
