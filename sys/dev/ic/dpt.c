@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.2 1999/09/28 09:18:00 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.3 1999/09/28 23:39:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -52,9 +52,6 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *
- * commenced: Sun Sep 27 18:14:01 PDT 1992
- * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  */
 
 /*
@@ -72,12 +69,11 @@
  * o An interface to userland applications.
  * o A port of DPT Storage Manager included in the base system would be nice.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
- * o Commit the manpage.
  * o Code needs KNF in places and sanity in others.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.2 1999/09/28 09:18:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.3 1999/09/28 23:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -885,6 +881,11 @@ dpt_scsi_cmd(xs)
 			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
+		
+		/* Synchronous xfers musn't write-back through the cache */
+		if (xs->bp != NULL && 
+		    (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
+			ccb->ccb_flg |= CCB_SYNC;
 
 		/* 
 		 * Stuff request into the queue, in front if we came off 
@@ -924,6 +925,7 @@ dpt_scsi_cmd(xs)
 	cp->cp_dispri = 1;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
+	cp->cp_nocache = ((ccb->ccb_flg & CCB_SYNC) != 0);
 	cp->cp_datain = ((flags & SCSI_DATA_IN) != 0);
 	cp->cp_dataout = ((flags & SCSI_DATA_OUT) != 0);
 	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
@@ -1124,6 +1126,7 @@ dpt_hba_inquire(sc, ei)
 	cp->cp_identify = 1;
 	cp->cp_autosense = 0;
 	cp->cp_interpret = 1;
+	cp->cp_nocache = 0;
 	cp->cp_datain = 1;
 	cp->cp_dataout = 0;
 	cp->cp_senseaddr = 0;
