@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.12 2002/12/11 05:53:03 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.13 2002/12/31 02:37:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -86,6 +86,21 @@ extern void proc_trampoline	__P((void));
  *		 the amount of stack used.
  */
 
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+#if defined(PERFCTRS)
+	if (PMC_ENABLED(p1))
+		pmc_md_fork(p1, p2);
+	else {
+		p2->p_md.pmc_enabled = 0;
+		p2->p_md.pmc_state = NULL;
+	}
+#endif
+}
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -126,15 +141,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
-	}
-#endif
-
-#if defined(PERFCTRS)
-	if (PMC_ENABLED(p1))
-		pmc_md_fork(p1, p2);
-	else {
-		p2->p_md.pmc_enabled = 0;
-		p2->p_md.pmc_state = NULL;
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.12 2002/10/18 02:35:27 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.13 2002/12/31 02:37:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -218,8 +218,12 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
 #endif
-#define	cpu_proc_fork(p1, p2)
 
+#ifdef __PROG32
+void	cpu_proc_fork(struct proc *, struct proc *);
+#else
+#define	cpu_proc_fork(p1, p2)
+#endif
 
 /*
  * Scheduling glue
