@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.2 1999/02/28 18:46:13 pk Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.3 1999/03/15 23:50:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,9 +67,11 @@ aout_sys_open(p, v, retval)
 	struct aout_sys_open_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-        if (SCARG(uap, flags) & O_CREAT)
+#if 0
+	if (SCARG(uap, flags) & O_CREAT)
 		AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	else 
+#endif
 		AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_open(p, v, retval);
@@ -82,10 +84,12 @@ aout_sys_creat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_creat_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return compat_43_sys_creat(p, v, retval);
 }
@@ -101,7 +105,9 @@ aout_sys_link(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#if 0
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+#endif
 
 	return sys_link(p, v, retval);
 }
@@ -143,10 +149,12 @@ aout_sys_mknod(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_mknod_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_mknod(p, v, retval);
 }
@@ -284,10 +292,12 @@ aout_sys_ktrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_ktrace_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, fname));
+#endif
 
 	return sys_ktrace(p, v, retval);
 }
@@ -300,10 +310,12 @@ aout_sys_acct(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_acct_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_acct(p, v, retval);
 }
@@ -334,7 +346,9 @@ aout_sys_symlink(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#if 0
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+#endif
 
 	return sys_symlink(p, v, retval);
 }
@@ -395,7 +409,9 @@ aout_sys_rename(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+#if 0
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+#endif
 
 	return sys_rename(p, v, retval);
 }
@@ -422,10 +438,12 @@ aout_sys_mkfifo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_mkfifo_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_mkfifo(p, v, retval);
 }
@@ -437,10 +455,12 @@ aout_sys_mkdir(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_mkdir_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_mkdir(p, v, retval);
 }
@@ -482,10 +502,12 @@ aout_sys_quotactl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct aout_sys_quotactl_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+#endif
 
 	return sys_quotactl(p, v, retval);
 }
@@ -608,7 +630,9 @@ aout_sys___posix_rename(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	AOUT_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+#if 0
 	AOUT_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+#endif
 
 	return sys___posix_rename(p, v, retval);
 }
