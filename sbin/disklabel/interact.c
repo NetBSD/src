@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.21 2003/10/20 13:20:20 pooka Exp $	*/
+/*	$NetBSD: interact.c,v 1.22 2003/12/29 19:12:29 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.21 2003/10/20 13:20:20 pooka Exp $");
+__RCSID("$NetBSD: interact.c,v 1.22 2003/12/29 19:12:29 jdc Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -474,19 +474,35 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 	}
 	for (;;) {
 		defnum(lp, def, p->p_offset);
-		i = getinput(":", "Start offset", def, line);
+		i = getinput(":",
+		    "Start offset ('x' to start after partition 'x)",
+		    def, line);
 		if (i == -1)
 			return;
 		else if (i == 0)
 			break;
-		if ((i = getnum(lp, line, 0)) == -1) {
-			printf("Bad offset `%s'\n", line);
-			continue;
-		} else if (i > lp->d_secperunit) {
-			printf("Offset `%s' out of range\n", line);
-			continue;
+		if (line[1] == '\0' &&
+	    		line[0] >= 'a' && line[0] < 'a' + getmaxpartitions()) {
+			struct partition *cp = lp->d_partitions;
+
+			if ((cp[line[0] - 'a'].p_offset +
+			    cp[line[0] - 'a'].p_size) >= lp->d_secperunit) {
+				printf("Bad offset `%s'\n", line);
+				continue;
+			} else {
+				p->p_offset = cp[line[0] - 'a'].p_offset +
+				    cp[line[0] - 'a'].p_size;
+			}
+		} else {
+			if ((i = getnum(lp, line, 0)) == -1) {
+				printf("Bad offset `%s'\n", line);
+				continue;
+			} else if (i > lp->d_secperunit) {
+				printf("Offset `%s' out of range\n", line);
+				continue;
+			}
+			p->p_offset = i;
 		}
-		p->p_offset = i;
 		break;
 	}
 	for (;;) {
@@ -510,19 +526,21 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 		break;
 	}
 
+	if (memcmp(&ps, p, sizeof(ps)))
+		showpartition(stdout, lp, part, Cflag);
 	if (chaining) {
 		int offs = -1;
 		struct partition *cp = lp->d_partitions;
 		for (i = 0; i < lp->d_npartitions; i++) {
 			if (cp[i].p_fstype != FS_UNUSED) {
-				if (offs != -1)
+				if (offs != -1 && cp[i].p_offset != offs) {
 					cp[i].p_offset = offs;
+					showpartition(stdout, lp, i, Cflag);
+					}
 				offs = cp[i].p_offset + cp[i].p_size;
 			}
 		}
 	}
-	if (memcmp(&ps, p, sizeof(ps)))
-		showpartition(stdout, lp, part, Cflag);
 }
 
 
