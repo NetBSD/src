@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sunsi.h,v 1.1 1995/01/24 05:55:48 gwr Exp $	*/
+/*	$NetBSD: scsi_sunsi.h,v 1.2 1995/06/01 20:22:27 gwr Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -44,8 +44,8 @@ struct si_regs {
 	/* The rest of these are on the VME interface only: */
 	u_short			bprh;		/* byte pack, high (VME only) */
 	u_short			bprl;		/* byte pack, low  (VME only) */
-	u_short			iv_am;		/* bits 0-7: addr modifier (VME only) */
-						/* bits 8-13: intr vector */
+	u_short			iv_am;		/* bits 0-7: intr vector */
+						/* bits 8-13: addr modifier (VME only) */
 						/* bits 14-15: unused */
 	u_short			bcrh;		/* high portion of bcr (VME only) */
 };
