@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.4 2002/11/24 08:47:28 yamt Exp $  */
+/*      $NetBSD: coalesce.c,v 1.5 2002/12/15 08:38:17 yamt Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ enum coalesce_returncodes {
 	COALESCE_NOTWORTHIT,
 	COALESCE_NOTHINGLEFT,
 	COALESCE_NOTHINGLEFT2,
+	COALESCE_EIO,
 
 	COALESCE_MAXERROR
 };
@@ -109,6 +110,7 @@ char *coalesce_return[] = {
 	"Not broken enough to fix",
 	"Too many blocks not found",
 	"Too many blocks found in active segments",
+	"I/O error",
 
 	"No such error"
 };
@@ -120,13 +122,14 @@ char *coalesce_return[] = {
 int clean_inode(struct fs_info *fsp, ino_t ino)
 {
 	int i, error;
-	BLOCK_INFO_15 *bip, *tbip;
+	BLOCK_INFO_15 *bip = NULL, *tbip;
 	struct dinode *dip;
 	int nb, onb, noff;
 	ufs_daddr_t toff;
 	struct lfs *lfsp;
 	int bps;
-        SEGUSE *sup;
+	SEGUSE *sup;
+	int retval;
 
 	lfsp = &fsp->fi_lfs;
 
@@ -169,9 +172,17 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	}
 	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, bip, nb)) < 0) { 
                 syslog(LOG_WARNING, "lfs_bmapv: %m");
-		free(bip);
-		return COALESCE_BADBMAPV;
+		retval = COALESCE_BADBMAPV;
+		goto out;
 	}
+#if 0
+	for (i = 0; i < nb; i++) {
+		printf("bi_size = %d, bi_ino = %d, "
+		    "bi_lbn = %d, bi_daddr = %d\n",
+		    bip[i].bi_size, bip[i].bi_inode, bip[i].bi_lbn,
+		    bip[i].bi_daddr);
+	}
+#endif
 	noff = toff = 0;
 	for (i = 1; i < nb; i++) {
 		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + lfsp->lfs_frag)
@@ -189,8 +200,8 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	 */
 	if (nb <= 1 || noff == 0 || noff < log2int(nb) ||
 	    segtod(lfsp, noff) * 2 < nb) {
-		free(bip);
-		return COALESCE_NOTWORTHIT;
+		retval = COALESCE_NOTWORTHIT;
+		goto out;
 	} else if (debug)
 		syslog(LOG_DEBUG, "ino %d total discontinuity "
 			"%d (%d) for %d blocks", ino, noff, toff, nb);
@@ -213,8 +224,8 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
         if (nb && tossdead(NULL, bip + nb - 1, NULL))
                 --nb;
         if (nb == 0) {
-		free(bip);
-		return COALESCE_NOTHINGLEFT;
+		retval = COALESCE_NOTHINGLEFT;
+		goto out;
 	}
 
 	/*
@@ -233,7 +244,17 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	 */
 	for (i = 0; i < nb; i++) {
 		bip[i].bi_bp = malloc(bip[i].bi_size);
-                get_rawblock(fsp, bip[i].bi_bp, bip[i].bi_size, bip[i].bi_daddr);
+		if (bip[i].bi_bp == NULL) {
+			syslog(LOG_WARNING, "allocate block buffer size=%d: %m",
+			    bip[i].bi_size);
+			retval = COALESCE_NOMEM;
+			goto out;
+		}
+                if (get_rawblock(fsp, bip[i].bi_bp, bip[i].bi_size,
+		    bip[i].bi_daddr) != bip[i].bi_size) {
+			retval = COALESCE_EIO;
+			goto out;
+		}
 	}
 	if (debug)
 		syslog(LOG_DEBUG, "ino %d markv %d blocks", ino, nb);
@@ -254,11 +275,15 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
                           (tbip + bps < bip + nb ? bps : nb % bps));
 	}
 
-	for (i = 0; i < nb; i++)
-		if (bip[i].bi_bp)
-			free(bip[i].bi_bp);
-	free(bip);
-	return COALESCE_OK;
+	retval = COALESCE_OK;
+out:
+	if (bip) {
+		for (i = 0; i < onb; i++)
+			if (bip[i].bi_bp)
+				free(bip[i].bi_bp);
+		free(bip);
+	}
+	return retval;
 }
 
 /*
