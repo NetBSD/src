@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58 1997/05/30 21:36:26 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.58.2.1 1997/06/15 09:43:55 cjs Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 .include <bsd.own.mk>	# for BUILDDIR
@@ -19,7 +19,7 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 # we can avoid bumping libc's minor number as functions are added to the
 # kernel.
 SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
-	timer_getoverrun.c
+	timer_getoverrun.c swapon.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
@@ -45,7 +45,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setpriority.o setregid.o setreuid.o \
 	setrlimit.o setsid.o setsockopt.o settimeofday.o \
 	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
-	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapon.o \
+	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapctl.o \
 	symlink.o sysarch.o umask.o undelete.o unlink.o unmount.o \
 	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
 	__sysctl.o
@@ -168,7 +168,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	shmat.2 shmctl.2 shmget.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
 	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 socket.2 \
-	socketpair.2 stat.2 statfs.2 swapon.2 symlink.2 sync.2 sysarch.2 \
+	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 sync.2 sysarch.2 \
 	syscall.2 truncate.2 umask.2 unlink.2 utimes.2 vfork.2 wait.2 write.2
 
 MLINKS+=brk.2 sbrk.2
