@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.6 2000/11/08 21:50:25 is Exp $ */
+/*	$NetBSD: gvpio.c,v 1.7 2002/01/26 13:40:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -63,10 +63,10 @@ struct gvpio_softc {
 	struct isr sc_comisr;
 };
 
-int gvpiomatch __P((struct device *, struct cfdata *, void *));
-void gvpioattach __P((struct device *, struct device *, void *));
-int gvpioprint __P((void *auxp, const char *));
-int gvp_com_intr __P((void *));
+int gvpiomatch(struct device *, struct cfdata *, void *);
+void gvpioattach(struct device *, struct device *, void *);
+int gvpioprint(void *auxp, const char *);
+int gvp_com_intr(void *);
 void gvp_com_intr_establish(struct device *, struct gvpcom_int_hdl *);
 
 struct cfattach gvpio_ca = {
@@ -74,10 +74,7 @@ struct cfattach gvpio_ca = {
 };
 
 int
-gvpiomatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+gvpiomatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 
 	struct gvpbus_args *gap;
@@ -103,9 +100,7 @@ struct gvpio_devs {
 };
 
 void
-gvpioattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+gvpioattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct gvpio_softc *giosc;
 	struct gvpio_devs  *giosd;
@@ -160,9 +155,7 @@ gvpioattach(parent, self, auxp)
 }
 
 int
-gvpioprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+gvpioprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;
@@ -187,8 +180,7 @@ gvp_com_intr_establish(struct device *self, struct gvpcom_int_hdl *p) {
 }
 
 int
-gvp_com_intr(p)
-	void *p;
+gvp_com_intr(void *p)
 {
 	struct gvpio_softc *sc;
 	struct gvpcom_int_hdl *np;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.16 1998/01/12 10:39:43 thorpej Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.17 2002/01/26 13:40:56 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,9 +36,9 @@
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
 
-void gvpbusattach __P((struct device *, struct device *, void *));
-int gvpbusmatch __P((struct device *, struct cfdata *, void *));
-int gvpbusprint __P((void *auxp, const char *));
+void gvpbusattach(struct device *, struct device *, void *);
+int gvpbusmatch(struct device *, struct cfdata *, void *);
+int gvpbusprint(void *auxp, const char *);
 
 extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
@@ -47,10 +47,7 @@ struct cfattach gvpbus_ca = {
 };
 
 int
-gvpbusmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+gvpbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -69,9 +66,7 @@ gvpbusmatch(pdp, cfp, auxp)
 }
 
 void
-gvpbusattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+gvpbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct zbus_args *zap;
 	struct gvpbus_args ga;
@@ -79,7 +74,7 @@ gvpbusattach(pdp, dp, auxp)
 	zap = auxp;
 	bcopy(zap, &ga.zargs, sizeof(struct zbus_args));
 	ga.flags = 0;
-	
+
 	/*
 	 * grab secondary type (or fake it if we have a series I)
 	 */
@@ -94,7 +89,7 @@ gvpbusattach(pdp, dp, auxp)
 		ga.flags |= GVP_NOBANK;
 #endif
 	}
-	
+
 
 	switch (ga.prod) {
 	/* no scsi */
@@ -143,15 +138,13 @@ gvpbusattach(pdp, dp, auxp)
 	 */
 	config_found(dp, &ga, gvpbusprint);
 	/*
-	 * eventually when io support is added we need to 
+	 * eventually when io support is added we need to
 	 * configure that too.
 	 */
 }
 
 int
-gvpbusprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+gvpbusprint(void *auxp, const char *pnp)
 {
 	struct gvpbus_args *gap;
 
@@ -161,7 +154,7 @@ gvpbusprint(auxp, pnp)
 	/*
 	 * doesn't support io yet.
 	 */
-	if (gap->prod == GVP_IOEXTEND) 
+	if (gap->prod == GVP_IOEXTEND)
 		printf("gio at %s", pnp);
 	else
 		printf("gtsc at %s", pnp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.23 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.24 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,16 +48,16 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void mlhscattach __P((struct device *, struct device *, void *));
-int mlhscmatch __P((struct device *, struct cfdata *, void *));
+void mlhscattach(struct device *, struct device *, void *);
+int mlhscmatch(struct device *, struct cfdata *, void *);
 
-int mlhsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int mlhsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
+int mlhsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int mlhsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
 
 #ifdef DEBUG
-extern int sci_debug;  
+extern int sci_debug;
 #define QPRINTF(a) if (sci_debug > 1) printf a
 #else
 #define QPRINTF(a)
@@ -73,10 +73,7 @@ struct cfattach mlhsc_ca = {
  * if we are my Hacker's SCSI board we are here.
  */
 int
-mlhscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+mlhscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -92,9 +89,7 @@ mlhscmatch(pdp, cfp, auxp)
 }
 
 void
-mlhscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mlhscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc = (struct sci_softc *)dp;
@@ -105,7 +100,7 @@ mlhscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	sc = (struct sci_softc *)dp;
 	rp = zap->va;
 	sc->sci_data = rp + 1;
@@ -156,11 +151,8 @@ mlhscattach(pdp, dp, auxp)
 }
 
 int
-mlhsc_dma_xfer_in (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+mlhsc_dma_xfer_in(struct sci_softc *dev, int len, register u_char *buf,
+                  int phase)
 {
 	int wait = sci_data_wait;
 	u_char csr;
@@ -244,11 +236,8 @@ mlhsc_dma_xfer_in (dev, len, buf, phase)
 }
 
 int
-mlhsc_dma_xfer_out (dev, len, buf, phase)
-	struct sci_softc *dev;
-	int len;
-	register u_char *buf;
-	int phase;
+mlhsc_dma_xfer_out(struct sci_softc *dev, int len, register u_char *buf,
+                   int phase)
 {
 	int wait = sci_data_wait;
 	u_char csr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kf_8x11.c,v 1.4 1997/10/21 12:29:30 is Exp $	*/
+/*	$NetBSD: kf_8x11.c,v 1.5 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  *	From ftp.funet.fi:pub/amiga/system/fonts/Systemfonts1.lha

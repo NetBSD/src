@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.8 2000/03/16 16:37:20 kleink Exp $ */
+/*	$NetBSD: drsupio.c,v 1.9 2002/01/26 13:40:53 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,20 +62,17 @@ struct drsupio_softc {
 	struct bus_space_tag sc_bst;
 };
 
-int drsupiomatch __P((struct device *, struct cfdata *, void *));
-void drsupioattach __P((struct device *, struct device *, void *));
-int drsupprint __P((void *auxp, const char *));
-void drlptintack __P((void *));
+int drsupiomatch(struct device *, struct cfdata *, void *);
+void drsupioattach(struct device *, struct device *, void *);
+int drsupprint(void *auxp, const char *);
+void drlptintack(void *);
 
 struct cfattach drsupio_ca = {
 	sizeof(struct drsupio_softc), drsupiomatch, drsupioattach
 };
 
 int
-drsupiomatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+drsupiomatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 	static int drsupio_matched = 0;
 
@@ -101,9 +98,7 @@ struct drsupio_devs {
 };
 
 void
-drsupioattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+drsupioattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct drsupio_softc *drsc;
 	struct drsupio_devs  *drsd;
@@ -118,7 +113,7 @@ drsupioattach(parent, self, auxp)
 
 	drsc->sc_bst.base = DRCCADDR + NBPG * DRSUPIOPG + 1;
 	drsc->sc_bst.absm = &amiga_bus_stride_4;
-	
+
 	supa.supio_iot = &drsc->sc_bst;
 	supa.supio_ipl = 5;
 
@@ -136,8 +131,7 @@ drsupioattach(parent, self, auxp)
 }
 
 void
-drlptintack(p)
-	void *p;
+drlptintack(void *p)
 {
 	struct drioct *ioct;
 
@@ -148,9 +142,7 @@ drlptintack(p)
 }
 
 int
-drsupprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+drsupprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.10 2000/03/15 20:40:00 kleink Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.11 2002/01/26 13:40:52 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,22 +56,19 @@
 
 #include <dev/clock_subr.h>
 
-int a2kbbc_match __P((struct device *, struct cfdata *, void *));
-void a2kbbc_attach __P((struct device *, struct device *, void *));
+int a2kbbc_match(struct device *, struct cfdata *, void *);
+void a2kbbc_attach(struct device *, struct device *, void *);
 
 struct cfattach a2kbbc_ca = {
         sizeof(struct device), a2kbbc_match, a2kbbc_attach
-};  
+};
 
 void *a2kclockaddr;
-int a2kugettod __P((struct timeval *));
-int a2kusettod __P((struct timeval *));
+int a2kugettod(struct timeval *);
+int a2kusettod(struct timeval *);
 
 int
-a2kbbc_match(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int a2kbbc_matched = 0;
 
@@ -82,7 +79,7 @@ a2kbbc_match(pdp, cfp, auxp)
 	if (a2kbbc_matched)
 		return (0);
 
-	if (/* is_a1200() || */ is_a3000() || is_a4000() 
+	if (/* is_a1200() || */ is_a3000() || is_a4000()
 #ifdef DRACO
 	    || is_draco()
 #endif
@@ -101,9 +98,7 @@ a2kbbc_match(pdp, cfp, auxp)
  * Attach us to the rtc function pointers.
  */
 void
-a2kbbc_attach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+a2kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 {
 	printf("\n");
 	a2kclockaddr = (void *)ztwomap(0xdc0000);
@@ -113,8 +108,7 @@ a2kbbc_attach(pdp, dp, auxp)
 }
 
 int
-a2kugettod(tvp)
-	struct timeval *tvp;
+a2kugettod(struct timeval *tvp)
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
@@ -167,8 +161,8 @@ a2kugettod(tvp)
 			dt.dt_hour += 12;
 	}
 
-	/* 
-	 * release the clock 
+	/*
+	 * release the clock
 	 */
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
@@ -177,11 +171,11 @@ a2kugettod(tvp)
 		dt.dt_year += 100;
 
 	if ((dt.dt_hour > 23) ||
-	    (dt.dt_day  > 31) || 
+	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12) ||
 	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
-  
+
 	secs = clock_ymdhms_to_secs(&dt);
 	if (tvp) {
 		tvp->tv_sec = secs;
@@ -191,8 +185,7 @@ a2kugettod(tvp)
 }
 
 int
-a2kusettod(tvp)
-	struct timeval *tvp;
+a2kusettod(struct timeval *tvp)
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
@@ -201,7 +194,7 @@ a2kusettod(tvp)
 
 	secs = tvp->tv_sec;
 	rt = a2kclockaddr;
-	/* 
+	/*
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
 	 */
@@ -244,8 +237,8 @@ a2kusettod(tvp)
 	rt->year2   = dt.dt_year % 10;
 	rt->weekday = dt.dt_wday;
 
-	/* 
-	 * release the clock 
+	/*
+	 * release the clock
 	 */
 	rt->control2 &= ~A2CONTROL1_HOLD;
 

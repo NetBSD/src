@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.26 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: wesc.c,v 1.27 2002/01/26 13:41:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,11 +51,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void wescattach __P((struct device *, struct device *, void *));
-int wescmatch __P((struct device *, struct cfdata *, void *));
-int wesc_dmaintr __P((void *));
+void wescattach(struct device *, struct device *, void *);
+int wescmatch(struct device *, struct cfdata *, void *);
+int wesc_dmaintr(void *);
 #ifdef DEBUG
-void wesc_dump __P((void));
+void wesc_dump(void);
 #endif
 
 
@@ -70,10 +70,7 @@ struct cfattach wesc_ca = {
  * if we are an MacroSystemsUS Warp Engine
  */
 int
-wescmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+wescmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -84,9 +81,7 @@ wescmatch(pdp, cfp, auxp)
 }
 
 void
-wescattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+wescattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
@@ -114,7 +109,7 @@ wescattach(pdp, dp, auxp)
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &sc->sc_dev;
 	adapt->adapt_nchannels = 1;
-	adapt->adapt_openings = 7;    
+	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
 	adapt->adapt_request = siop_scsipi_request;
 	adapt->adapt_minphys = siop_minphys;
@@ -126,7 +121,7 @@ wescattach(pdp, dp, auxp)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 8;      
+	chan->chan_ntargets = 8;
 	chan->chan_nluns = 8;
 	chan->chan_id = 7;
 
@@ -144,8 +139,7 @@ wescattach(pdp, dp, auxp)
 }
 
 int
-wesc_dmaintr(arg)
-	void *arg;
+wesc_dmaintr(void *arg)
 {
 	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
@@ -170,7 +164,7 @@ wesc_dmaintr(arg)
 
 #ifdef DEBUG
 void
-wesc_dump()
+wesc_dump(void)
 {
 	extern struct cfdriver wesc_cd;
 	int i;

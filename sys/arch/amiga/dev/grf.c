@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.38 2001/09/19 18:10:33 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.39 2002/01/26 13:40:54 aymeric Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,20 +82,20 @@
 #define ite_reinit(d)
 #endif
 
-int grfon __P((dev_t));
-int grfoff __P((dev_t));
-int grfsinfo __P((dev_t, struct grfdyninfo *));
+int grfon(dev_t);
+int grfoff(dev_t);
+int grfsinfo(dev_t, struct grfdyninfo *);
 #ifdef BANKEDDEVPAGER
-int grfbanked_get __P((dev_t, off_t, int));
-int grfbanked_cur __P((dev_t));
-int grfbanked_set __P((dev_t, int));
+int grfbanked_get(dev_t, off_t, int);
+int grfbanked_cur(dev_t);
+int grfbanked_set(dev_t, int);
 #endif
 
-void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, struct cfdata *, void *));
-int grfprint __P((void *, const char *));
+void grfattach(struct device *, struct device *, void *);
+int grfmatch(struct device *, struct cfdata *, void *);
+int grfprint(void *, const char *);
 /*
- * pointers to grf drivers device structs 
+ * pointers to grf drivers device structs
  */
 struct grf_softc *grfsp[NGRF];
 
@@ -109,14 +109,11 @@ struct cfattach grf_ca = {
 static struct cfdata *cfdata;
 
 /*
- * match if the unit of grf matches its perspective 
+ * match if the unit of grf matches its perspective
  * low level board driver.
  */
 int
-grfmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 
 	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
@@ -131,9 +128,7 @@ grfmatch(pdp, cfp, auxp)
  * durring console init.
  */
 void
-grfattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+grfattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct grf_softc *gp;
 	int maj;
@@ -142,7 +137,7 @@ grfattach(pdp, dp, auxp)
 	grfsp[gp->g_unit] = (struct grf_softc *)pdp;
 
 	/*
-	 * find our major device number 
+	 * find our major device number
 	 */
 	for(maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == grfopen)
@@ -157,7 +152,7 @@ grfattach(pdp, dp, auxp)
 		else
 			printf(" colors %d\n", gp->g_display.gd_colors);
 	}
-	
+
 	/*
 	 * try and attach an ite
 	 */
@@ -165,9 +160,7 @@ grfattach(pdp, dp, auxp)
 }
 
 int
-grfprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+grfprint(void *auxp, const char *pnp)
 {
 	if (pnp)
 		printf("ite at %s", pnp);
@@ -176,10 +169,7 @@ grfprint(auxp, pnp)
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+grfopen(dev_t dev, int flags, int devtype, struct proc *p)
 {
 	struct grf_softc *gp;
 
@@ -197,11 +187,7 @@ grfopen(dev, flags, devtype, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+grfclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct grf_softc *gp;
 
@@ -213,12 +199,7 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct grf_softc *gp;
 	int error;
@@ -289,7 +270,7 @@ grfioctl(dev, cmd, data, flag, p)
 		/*
 		 * check to see whether it's a command recognized by the
 		 * view code if the unit is 0
-		 * XXX 
+		 * XXX
 		 */
 		if (GRFUNIT(dev) == 0)
 			return(viewioctl(dev, cmd, data, flag, p));
@@ -303,31 +284,25 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-grfpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+grfpoll(dev_t dev, int events, struct proc *p)
 {
 	return(events & (POLLOUT | POLLWRNORM));
 }
 
 /*
- * map the contents of a graphics display card into process' 
+ * map the contents of a graphics display card into process'
  * memory space.
  */
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *gp;
 	struct grfinfo *gi;
-	
+
 	gp = grfsp[GRFUNIT(dev)];
 	gi = &gp->g_display;
 
-	/* 
+	/*
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
@@ -349,8 +324,7 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfon(dev)
-	dev_t dev;
+grfon(dev_t dev)
 {
 	struct grf_softc *gp;
 
@@ -368,8 +342,7 @@ grfon(dev)
 }
 
 int
-grfoff(dev)
-	dev_t dev;
+grfoff(dev_t dev)
 {
 	struct grf_softc *gp;
 	int error;
@@ -393,9 +366,7 @@ grfoff(dev)
 }
 
 int
-grfsinfo(dev, dyninfo)
-	dev_t dev;
-	struct grfdyninfo *dyninfo;
+grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 {
 	struct grf_softc *gp;
 	int error;
@@ -414,10 +385,7 @@ grfsinfo(dev, dyninfo)
 #ifdef BANKEDDEVPAGER
 
 int
-grfbanked_get (dev, off, prot)
-     dev_t dev;
-     off_t off;
-     int   prot;
+grfbanked_get(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *gp;
 	struct grfinfo *gi;
@@ -435,8 +403,7 @@ grfbanked_get (dev, off, prot)
 }
 
 int
-grfbanked_cur (dev)
-	dev_t dev;
+grfbanked_cur(dev_t dev)
 {
 	struct grf_softc *gp;
 	int error, bank;
@@ -448,9 +415,7 @@ grfbanked_cur (dev)
 }
 
 int
-grfbanked_set (dev, bank)
-	dev_t dev;
-	int bank;
+grfbanked_set(dev_t dev, int bank)
 {
 	struct grf_softc *gp;
 

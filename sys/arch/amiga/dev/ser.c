@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.58 2001/11/05 21:30:16 aymeric Exp $	*/
+/*	$NetBSD: ser.c,v 1.59 2002/01/26 13:41:00 aymeric Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -69,8 +69,8 @@
 #include "ser.h"
 #if NSER > 0
 
-void serattach __P((struct device *, struct device *, void *));
-int sermatch __P((struct device *, struct cfdata *, void *));
+void serattach(struct device *, struct device *, void *);
+int sermatch(struct device *, struct cfdata *, void *);
 
 struct ser_softc {
 	struct device dev;
@@ -92,22 +92,22 @@ extern struct cfdriver ser_cd;
 
 #define splser() spl5()
 
-void	serstart __P((struct tty *));
-void	ser_shutdown __P((struct ser_softc *));
-int	serparam __P((struct tty *, struct termios *)); 
-void	serintr __P((void));
-int	serhwiflow __P((struct tty *, int));
-int	sermctl __P((dev_t dev, int, int));
-void	ser_fastint __P((void));
-void	sereint __P((int));
-static	void ser_putchar __P((struct tty *, u_short));
-void	ser_outintr __P((void));
-void	sercnprobe __P((struct consdev *));
-void	sercninit __P((struct consdev *));
-void	serinit __P((int));          
-int	sercngetc __P((dev_t dev));
-void	sercnputc __P((dev_t, int));
-void	sercnpollc __P((dev_t, int));
+void	serstart(struct tty *);
+void	ser_shutdown(struct ser_softc *);
+int	serparam(struct tty *, struct termios *);
+void	serintr(void);
+int	serhwiflow(struct tty *, int);
+int	sermctl(dev_t dev, int, int);
+void	ser_fastint(void);
+void	sereint(int);
+static	void ser_putchar(struct tty *, u_short);
+void	ser_outintr(void);
+void	sercnprobe(struct consdev *);
+void	sercninit(struct consdev *);
+void	serinit(int);
+int	sercngetc(dev_t dev);
+void	sercnputc(dev_t, int);
+void	sercnpollc(dev_t, int);
 
 int	nser = NSER;
 #ifdef SERCONSOLE
@@ -131,7 +131,7 @@ static u_short sbcnt;
 static u_short sbovfl;
 static u_char serdcd;
 
-/* 
+/*
  * Since this UART is not particularly bright (to put it nicely), we'll
  * have to do parity stuff on our own.	This table contains the 8th bit
  * in 7bit character mode, for even parity.  If you want odd parity,
@@ -149,7 +149,7 @@ u_char	even_parity[] = {
 	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
 };
 
-/* 
+/*
  * Since we don't get interrupts for changes on the modem control line,
  * we'll have to fake them by comparing current settings to the settings
  * we remembered on last invocation.
@@ -176,13 +176,10 @@ long	serintrcount[16];
 long	sermintcount[16];
 #endif
 
-void	sermint __P((register int unit));
+void	sermint(register int unit);
 
 int
-sermatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	static int ser_matched = 0;
 	static int ser_matched_real = 0;
@@ -209,9 +206,7 @@ sermatch(pdp, cfp, auxp)
 
 
 void
-serattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+serattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct ser_softc *sc;
 	struct tty *tp;
@@ -266,10 +261,7 @@ serattach(pdp, dp, auxp)
 
 /* ARGSUSED */
 int
-seropen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+seropen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ser_softc *sc;
 	struct tty *tp;
@@ -366,10 +358,7 @@ bad:
 
 /*ARGSUSED*/
 int
-serclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+serclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ser_softc *sc;
 	struct tty *tp;
@@ -391,8 +380,7 @@ serclose(dev, flag, mode, p)
 }
 
 void
-ser_shutdown(sc)
-	struct ser_softc *sc;
+ser_shutdown(struct ser_softc *sc)
 {
 	struct tty *tp = sc->ser_tty;
 	int s;
@@ -401,7 +389,7 @@ ser_shutdown(sc)
 
 	custom.adkcon = ADKCONF_UARTBRK;	/* clear break */
 #if 0 /* XXX fix: #ifdef KGDB */
-	/* 
+	/*
 	 * do not disable interrupts if debugging
 	 */
 	if (dev != kgdb_dev)
@@ -415,7 +403,7 @@ ser_shutdown(sc)
 	if (tp->t_cflag & HUPCL) {
 		(void)sermctl(tp->t_dev, TIOCM_DTR, DMBIC);
 		/*
-		 * Idea from dev/ic/com.c: 
+		 * Idea from dev/ic/com.c:
 		 * sleep a bit so that other side will notice, even if we
 		 * reopen immediately.
 		 */
@@ -434,10 +422,7 @@ ser_shutdown(sc)
 }
 
 int
-serread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+serread(dev_t dev, struct uio *uio, int flag)
 {
 	/* ARGSUSED */
 
@@ -445,10 +430,7 @@ serread(dev, uio, flag)
 }
 
 int
-serwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+serwrite(dev_t dev, struct uio *uio, int flag)
 {
 	/* ARGSUSED */
 
@@ -456,19 +438,15 @@ serwrite(dev, uio, flag)
 }
 
 int
-serpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+serpoll(dev_t dev, int events, struct proc *p)
 {
 	/* ARGSUSED */
- 
+
 	return ser_tty->t_linesw->l_poll(ser_tty, events, p);
 }
 
 struct tty *
-sertty(dev)
-	dev_t dev;
+sertty(dev_t dev)
 {
 	/* ARGSUSED */
 
@@ -490,12 +468,12 @@ sertty(dev)
  * accumulate).
  */
 void
-ser_fastint()
+ser_fastint(void)
 {
-	/* 
+	/*
 	 * We're at RBE-level, which is higher than VBL-level which is used
 	 * to periodically transmit contents of this buffer up one layer,
-	 * so no spl-raising is necessary. 
+	 * so no spl-raising is necessary.
 	 */
 	u_short code;
 
@@ -511,8 +489,8 @@ ser_fastint()
 	if ((code & SERDATRF_RBF) == 0)
 		return;
 
-	/* 
-	 * clear interrupt 
+	/*
+	 * clear interrupt
 	 */
 	custom.intreq = INTF_RBF;
 
@@ -536,7 +514,7 @@ ser_fastint()
 
 
 void
-serintr()
+serintr(void)
 {
 	int s1, s2, ovfl;
 	struct tty *tp = ser_tty;
@@ -551,7 +529,7 @@ serintr()
 	 * pass along any acumulated information
 	 */
 	while (sbcnt > 0 && (tp->t_state & TS_TBLOCK) == 0) {
-		/* 
+		/*
 		 * no collision with ser_fastint()
 		 */
 		sereint(*sbrpt++);
@@ -579,8 +557,7 @@ serintr()
 }
 
 void
-sereint(stat)
-	int stat;
+sereint(int stat)
 {
 	struct tty *tp;
 	u_char ch;
@@ -622,8 +599,7 @@ sereint(stat)
  * up into the tty layer.
  */
 void
-sermint(unit)
-	int unit;
+sermint(int unit)
 {
 	struct tty *tp;
 	u_char stat, last, istat;
@@ -679,12 +655,7 @@ sermint(unit)
 }
 
 int
-serioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	register struct tty *tp;
 	register int error;
@@ -737,9 +708,9 @@ serioctl(dev, cmd, data, flag, p)
 		*(int *)data = serswflags;
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error != 0)
-			return(EPERM); 
+			return(EPERM);
 
 		serswflags = *(int *)data;
                 serswflags &= /* only allow valid flags */
@@ -753,12 +724,10 @@ serioctl(dev, cmd, data, flag, p)
 }
 
 int
-serparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+serparam(struct tty *tp, struct termios *t)
 {
 	int cflag, ospeed = 0;
-	
+
 	if (t->c_ospeed > 0) {
 		if (t->c_ospeed < 110)
 			return(EINVAL);
@@ -787,7 +756,7 @@ serparam(tp, t)
 
 	/* TODO: support multiple flow control protocols like com.c */
 
-	/* 
+	/*
 	 * copy to tty
 	 */
 	tp->t_ispeed = t->c_ispeed;
@@ -804,7 +773,7 @@ serparam(tp, t)
 	if (t->c_ospeed == 0)
 		(void)sermctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
-		/* 
+		/*
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
@@ -812,13 +781,11 @@ serparam(tp, t)
 		custom.serper = (0 << 15) | ospeed;
 	}
 	(void)tp->t_linesw->l_modem(tp, ISDCD(last_ciab_pra));
-	
+
 	return(0);
 }
 
-int serhwiflow(tp, flag)
-        struct tty *tp;
-        int flag;
+int serhwiflow(struct tty *tp, int flag)
 {
 #if 0
 	printf ("serhwiflow %d\n", flag);
@@ -831,9 +798,7 @@ int serhwiflow(tp, flag)
 }
 
 static void
-ser_putchar(tp, c)
-	struct tty *tp;
-	u_short c;
+ser_putchar(struct tty *tp, u_short c)
 {
 	if ((tp->t_cflag & CSIZE) == CS7 || (tp->t_cflag & PARENB))
 		c &= 0x7f;
@@ -847,7 +812,7 @@ ser_putchar(tp, c)
 		if (tp->t_cflag & PARODD)
 			c ^= 0x80;
 	}
-	/* 
+	/*
 	 * add stop bit(s)
 	 */
 	if (tp->t_cflag & CSTOPB)
@@ -863,7 +828,7 @@ static u_char ser_outbuf[SEROBUF_SIZE];
 static u_char *sob_ptr = ser_outbuf, *sob_end = ser_outbuf;
 
 void
-ser_outintr()
+ser_outintr(void)
 {
 	struct tty *tp;
 	int s;
@@ -894,7 +859,7 @@ ser_outintr()
 	/*
 	 * Do hardware flow control here.  if the CTS line goes down, don't
 	 * transmit anything.  That way, we'll be restarted by the periodic
-	 * interrupt when CTS comes back up. 
+	 * interrupt when CTS comes back up.
 	 */
 	if (ISCTS(ciab.pra))
 		ser_putchar(tp, *sob_ptr++);
@@ -905,14 +870,13 @@ out:
 }
 
 void
-serstart(tp)
-	struct tty *tp;
+serstart(struct tty *tp)
 {
 	int cc, s, hiwat;
 #ifdef DIAGNOSTIC
 	int unit;
 #endif
-	
+
 	hiwat = 0;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
@@ -964,7 +928,7 @@ serstart(tp)
 		/*
 		 * Get first character out, then have TBE-interrupts blow out
 		 * further characters, until buffer is empty, and TS_BUSY gets
-		 * cleared. 
+		 * cleared.
 		 */
 		ser_putchar(tp, *sob_ptr++);
 	}
@@ -977,9 +941,7 @@ out:
  */
 /*ARGSUSED*/
 void
-serstop(tp, flag)
-	struct tty *tp;
-	int flag;
+serstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -992,9 +954,7 @@ serstop(tp, flag)
 }
 
 int
-sermctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+sermctl(dev_t dev, int bits, int how)
 {
 	int s;
 	u_char ub = 0;
@@ -1062,17 +1022,16 @@ sermctl(dev, bits, how)
  * Following are all routines needed for SER to act as console
  */
 void
-sercnprobe(cp)
-	struct consdev *cp;
+sercnprobe(struct consdev *cp)
 {
 	int unit;
-	
+
 	/* locate the major number */
 	for (sermajor = 0; sermajor < nchrdev; sermajor++)
 		if (cdevsw[sermajor].d_open == (void *)seropen)
 			break;
 
-	
+
 	unit = CONUNIT;			/* XXX: ick */
 
 	/*
@@ -1081,7 +1040,7 @@ sercnprobe(cp)
 	cp->cn_dev = makedev(sermajor, unit);
 	if (serconsole == unit)
 		cp->cn_pri = CN_REMOTE;
-	else 
+	else
 		cp->cn_pri = CN_NORMAL;
 #ifdef KGDB
 	if (major(kgdb_dev) == 1)	/* XXX */
@@ -1090,8 +1049,7 @@ sercnprobe(cp)
 }
 
 void
-sercninit(cp)
-	struct consdev *cp;
+sercninit(struct consdev *cp)
 {
 	int unit;
 
@@ -1103,8 +1061,7 @@ sercninit(cp)
 }
 
 void
-serinit(rate)
-	int rate;
+serinit(int rate)
 {
 	int s;
 
@@ -1117,8 +1074,7 @@ serinit(rate)
 }
 
 int
-sercngetc(dev)
-	dev_t dev;
+sercngetc(dev_t dev)
 {
 	u_short stat;
 	int c, s;
@@ -1142,9 +1098,7 @@ sercngetc(dev)
  * Console kernel output character routine.
  */
 void
-sercnputc(dev, c)
-	dev_t dev;
-	int c;
+sercnputc(dev_t dev, int c)
 {
 	register int timo;
 	int s;
@@ -1157,7 +1111,7 @@ sercnputc(dev, c)
 	}
 
 	/*
-	 * wait for any pending transmission to finish 
+	 * wait for any pending transmission to finish
 	 */
 	timo = 50000;
 	while (!(custom.serdatr & SERDATRF_TBE) && --timo);
@@ -1167,7 +1121,7 @@ sercnputc(dev, c)
 	 */
 	custom.serdat = (c & 0xff) | 0x100;
 
-	/* 
+	/*
 	 * wait for this transmission to complete
 	 */
 	timo = 1500000;
@@ -1181,7 +1135,7 @@ sercnputc(dev, c)
 	for (timo = 0; timo < 30000; timo++)
 		;
 
-	/* 
+	/*
 	 * We set TBE so that ser_outintr() is called right after to check
 	 * whether there still are chars to process.
 	 * We used to clear this, but it hung the tty output if the kernel
@@ -1192,9 +1146,7 @@ sercnputc(dev, c)
 }
 
 void
-sercnpollc(dev, on)
-	dev_t dev;
-	int on;
+sercnpollc(dev_t dev, int on)
 {
 }
 #endif

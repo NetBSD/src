@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.10 1999/12/30 20:56:45 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.11 2002/01/26 13:40:56 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@ struct hyper_softc {
 	struct bus_space_tag sc_bst;
 };
 
-int hypermatch __P((struct device *, struct cfdata *, void *));
-void hyperattach __P((struct device *, struct device *, void *));
-int hyperprint __P((void *auxp, const char *));
+int hypermatch(struct device *, struct cfdata *, void *);
+void hyperattach(struct device *, struct device *, void *);
+int hyperprint(void *auxp, const char *);
 
 struct cfattach hyper_ca = {
 	sizeof(struct hyper_softc), hypermatch, hyperattach
@@ -87,10 +87,7 @@ struct hyper_prods {
 };
 
 int
-hypermatch(parent, cfp, auxp)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *auxp;
+hypermatch(struct device *parent, struct cfdata *cfp, void *auxp)
 {
 
 	struct zbus_args *zap;
@@ -133,9 +130,7 @@ struct hyper_devs {
 };
 
 void
-hyperattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+hyperattach(struct device *parent, struct device *self, void *auxp)
 {
 	struct hyper_softc *hprsc;
 	struct hyper_devs  *hprsd;
@@ -170,9 +165,7 @@ hyperattach(parent, self, auxp)
 }
 
 int
-hyperprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
+hyperprint(void *auxp, const char *pnp)
 {
 	struct supio_attach_args *supa;
 	supa = auxp;

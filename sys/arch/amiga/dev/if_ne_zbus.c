@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.7 2001/02/12 18:49:03 thorpej Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.8 2002/01/26 13:40:56 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
- 
+
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
 
@@ -69,8 +69,8 @@
 
 #include <amiga/dev/zbusvar.h>
 
-int	ne_zbus_match __P((struct device *, struct cfdata *, void *));
-void	ne_zbus_attach __P((struct device *, struct device *, void *));
+int	ne_zbus_match(struct device *, struct cfdata *, void *);
+void	ne_zbus_attach(struct device *, struct device *, void *);
 
 struct ne_zbus_softc {
 	struct ne2000_softc	sc_ne2000;
@@ -83,7 +83,7 @@ struct cfattach ne_zbus_ca = {
 };
 
 /*
- * The Amiga address are shifted by one bit to the ISA-Bus, but 
+ * The Amiga address are shifted by one bit to the ISA-Bus, but
  * this is handled by the bus_space functions.
  */
 #define	NE_ARIADNE_II_NPORTS	0x20
@@ -93,10 +93,7 @@ struct cfattach ne_zbus_ca = {
 #define	NE_ARIADNE_II_ASICSIZE	0x10
 
 int
-ne_zbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ne_zbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zbus_args *zap = aux;
 
@@ -115,9 +112,7 @@ ne_zbus_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 void
-ne_zbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+ne_zbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_zbus_softc *zsc = (struct ne_zbus_softc *)self;
 	struct ne2000_softc *nsc = &zsc->sc_ne2000;
@@ -150,7 +145,7 @@ ne_zbus_attach(parent, self, aux)
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET, NE_ARIADNE_II_ASICSIZE,
 	    &asich)) {
 		printf("%s: can't map asic i/o space\n", dsc->sc_dev.dv_xname);
-		return; 
+		return;
 	}
 
 	dsc->sc_regt = nict;

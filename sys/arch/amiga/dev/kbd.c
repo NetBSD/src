@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.36 2002/01/13 22:47:43 jandberg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -64,7 +64,7 @@
 
 /* WSKBD */
 
-/* 
+/*
  * If NWSKBD>0 we try to attach an wskbd device to us. What follows
  * is definitions of callback functions and structures that are passed
  * to wscons when initializing.
@@ -78,8 +78,8 @@
  *
  * The data from they keyboard may end up in at least four different
  * places:
- * - If this driver has been opened (/dev/kbd) and the 
- *   direct mode (TIOCDIRECT) has been set, data goes to 
+ * - If this driver has been opened (/dev/kbd) and the
+ *   direct mode (TIOCDIRECT) has been set, data goes to
  *   the process who opened the device. Data will transmit itself
  *   as described by the firm_event structure.
  * - If wskbd support is compiled in and a wskbd driver has been
@@ -100,14 +100,14 @@
 #include <amiga/dev/wskbdmap_amiga.h>
 
 /* accessops */
-int     kbd_enable    __P((void *, int));
-void    kbd_set_leds  __P((void *, int));
-int     kbd_ioctl     __P((void *, u_long, caddr_t, int, struct proc *));
+int     kbd_enable(void *, int);
+void    kbd_set_leds(void *, int);
+int     kbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 /* console ops */
-void    kbd_getc      __P((void *, u_int *, int *));
-void    kbd_pollc     __P((void *, int));
-void    kbd_bell      __P((void *, u_int, u_int, u_int));
+void    kbd_getc(void *, u_int *, int *);
+void    kbd_pollc(void *, int);
+void    kbd_bell(void *, u_int, u_int, u_int);
 
 static struct wskbd_accessops kbd_accessops = {
 	kbd_enable,
@@ -150,16 +150,16 @@ struct kbd_softc {
 };
 struct kbd_softc kbd_softc;
 
-int kbdmatch __P((struct device *, struct cfdata *, void *));
-void kbdattach __P((struct device *, struct device *, void *));
-void kbdintr __P((int));
-void kbdstuffchar __P((u_char));
+int kbdmatch(struct device *, struct cfdata *, void *);
+void kbdattach(struct device *, struct device *, void *);
+void kbdintr(int);
+void kbdstuffchar(u_char);
 
-int drkbdgetc __P((void));
-int drkbdrputc __P((int));
-int drkbdputc __P((int));
-int drkbdputc2 __P((int, int));
-int drkbdwaitfor __P((int));
+int drkbdgetc(void);
+int drkbdrputc(u_int8_t);
+int drkbdputc(u_int8_t);
+int drkbdputc2(u_int8_t, u_int8_t);
+int drkbdwaitfor(int);
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
@@ -167,10 +167,7 @@ struct cfattach kbd_ca = {
 
 /*ARGSUSED*/
 int
-kbdmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 
 	if (matchname((char *)auxp, "kbd"))
@@ -180,9 +177,7 @@ kbdmatch(pdp, cfp, auxp)
 
 /*ARGSUSED*/
 void
-kbdattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+kbdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 #ifdef DRACO
 	kbdenable();
@@ -227,7 +222,7 @@ kbdattach(pdp, dp, auxp)
 #define CLKHI single_inst_bset_b(draco_ioct->io_control, DRCNTRL_KBDCLKOUT)
 
 void
-kbdenable()
+kbdenable(void)
 {
 	static int kbd_inited = 0;
 
@@ -286,7 +281,7 @@ kbdenable()
 		ciaa.cra &= ~(1<<6);	/* serial line == input */
 		splx(s);
 		return;
-		
+
 	} else {
 #endif
 	custom.intena = INTF_SETCLR | INTF_PORTS;
@@ -306,7 +301,7 @@ kbdenable()
  */
 
 int
-drkbdgetc()
+drkbdgetc(void)
 {
 	u_int8_t in;
 
@@ -321,8 +316,7 @@ drkbdgetc()
 #define WAIT1 if (drkbdwaitfor(DRSTAT_KBDCLKIN)) goto Ltimeout
 
 int
-drkbdwaitfor(bit)
-	int bit;
+drkbdwaitfor(int bit)
 {
 	int i;
 
@@ -344,8 +338,7 @@ drkbdwaitfor(bit)
  * return 0 on success, 1 on timeout.
  */
 int
-drkbdrputc(c)
-	u_int8_t c;
+drkbdrputc(u_int8_t c)
 {
 	u_int8_t parity;
 	int bitcnt;
@@ -391,8 +384,7 @@ Ltimeout:
  * and retry if necessary. 0 == success, 1 == timeout
  */
 int
-drkbdputc(c)
-	u_int8_t c;
+drkbdputc(u_int8_t c)
 {
 	int rc;
 
@@ -410,8 +402,7 @@ drkbdputc(c)
  */
 
 int
-drkbdputc2(c1, c2)
-	u_int8_t c1, c2;
+drkbdputc2(u_int8_t c1, u_int8_t c2)
 {
 	int rc;
 
@@ -435,10 +426,7 @@ drkbdputc2(c1, c2)
 #endif
 
 int
-kbdopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	kbdenable();
@@ -451,10 +439,7 @@ kbdopen(dev, flags, mode, p)
 }
 
 int
-kbdclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+kbdclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	/* Turn off event mode, dump the queue */
@@ -465,21 +450,14 @@ kbdclose(dev, flags, mode, p)
 }
 
 int
-kbdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+kbdread(dev_t dev, struct uio *uio, int flags)
 {
 	return ev_read (&kbd_softc.k_events, uio, flags);
 }
 
 int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	register caddr_t data;
-	int flag;
-	struct proc *p;
+kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
+         struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
 
@@ -519,29 +497,25 @@ kbdioctl(dev, cmd, data, flag, p)
 }
 
 int
-kbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+kbdpoll(dev_t dev, int events, struct proc *p)
 {
 	return ev_poll (&kbd_softc.k_events, events, p);
 }
 
 
 void
-kbdintr(mask)
-	int mask;
+kbdintr(int mask)
 {
 	u_char c;
 #ifdef KBDRESET
 	static int reset_warn;
 #endif
- 
-	/* 
+
+	/*
 	 * now only invoked from generic CIA interrupt handler if there *is*
 	 * a keyboard interrupt pending
 	 */
-    
+
 	c = ~ciaa.sdr;	/* keyboard data is inverted */
 	/* ack */
 	ciaa.cra |= (1 << 6);	/* serial line output */
@@ -573,7 +547,7 @@ kbdintr(mask)
 #endif
 	kbdstuffchar(c);
 }
-  
+
 #ifdef DRACO
 /* maps MF-II keycodes to Amiga keycodes */
 
@@ -608,7 +582,7 @@ const u_char drkbdtab[] = {
 
 
 int
-kbdgetcn ()
+kbdgetcn(void)
 {
 	int s;
 	u_char ints, mask, c, in;
@@ -638,17 +612,17 @@ kbdgetcn ()
 	}
 #endif
 	s = spltty();
-	for (ints = 0; ! ((mask = ciaa.icr) & CIA_ICR_SP); 
+	for (ints = 0; ! ((mask = ciaa.icr) & CIA_ICR_SP);
 	    ints |= mask) ;
 
 	in = ciaa.sdr;
 	c = ~in;
-  
+
 	/* ack */
 	ciaa.cra |= (1 << 6);	/* serial line output */
 	ciaa.sdr = 0xff;	/* ack */
 	/* wait 200 microseconds */
-	DELAY(2000);	/* XXXX only works as long as DELAY doesn't 
+	DELAY(2000);	/* XXXX only works as long as DELAY doesn't
 			 * use a timer and waits.. */
 	ciaa.cra &= ~(1 << 6);
 	ciaa.sdr = in;
@@ -664,26 +638,25 @@ kbdgetcn ()
 }
 
 void
-kbdstuffchar(c)
-	u_char c;
+kbdstuffchar(u_char c)
 {
 	struct firm_event *fe;
 	struct kbd_softc *k = &kbd_softc;
 	int put;
 
 #if NWSKBD>0
-	/* 
+	/*
 	 * If we have attached a wskbd and not in polling mode and
 	 * nobody has opened us directly, then send the keystroke
 	 * to the wskbd.
 	 */
 
-	if (kbd_softc.k_pollingmode == 0 
+	if (kbd_softc.k_pollingmode == 0
 	    && kbd_softc.k_wskbddev != NULL
 	    && k->k_event_mode == 0) {
 		wskbd_input(kbd_softc.k_wskbddev,
-			    KEY_UP(c) ? 
-			    WSCONS_EVENT_KEY_UP : 
+			    KEY_UP(c) ?
+			    WSCONS_EVENT_KEY_UP :
 			    WSCONS_EVENT_KEY_DOWN,
 			    KEY_CODE(c));
 		return;
@@ -691,9 +664,9 @@ kbdstuffchar(c)
 
 #endif /* NWSKBD */
 
-	/* 
-	 * If not in event mode, deliver straight to ite to process 
-	 * key stroke 
+	/*
+	 * If not in event mode, deliver straight to ite to process
+	 * key stroke
 	 */
 
 	if (! k->k_event_mode) {
@@ -703,12 +676,12 @@ kbdstuffchar(c)
 		return;
 	}
 
-	/* 
+	/*
 	 * Keyboard is generating events. Turn this keystroke into an
 	 * event and put it in the queue. If the queue is full, the
 	 * keystroke is lost (sorry!).
 	 */
-	
+
 	put = k->k_events.ev_put;
 	fe = &k->k_events.ev_q[put];
 	put = (put + 1) % EV_QSIZE;
@@ -727,7 +700,7 @@ kbdstuffchar(c)
 
 #ifdef DRACO
 void
-drkbdintr()
+drkbdintr(void)
 {
 	u_char in;
 	struct kbd_softc *k = &kbd_softc;
@@ -735,7 +708,7 @@ drkbdintr()
 	in = draco_ioct->io_kbddata;
 	draco_ioct->io_kbdrst = 0;
 
-	if (in == 0xF0) 
+	if (in == 0xF0)
 		k->k_rlprfx = 0x80;
 	else {
 		kbdstuffchar(in>=sizeof(drkbdtab) ? 0xff :
@@ -755,28 +728,19 @@ drkbdintr()
  */
 
 int
-kbd_enable(c, on)
-	void *c;
-	int   on;
+kbd_enable(void *c, int on)
 {
 	/* Wonder what this is supposed to do... */
 	return (0);
 }
 
 void
-kbd_set_leds(c, leds)
-	void *c;
-	int   leds;
+kbd_set_leds(void *c, int leds)
 {
 }
 
-int 
-kbd_ioctl(c, cmd, data, flag, p)
-	void        *c;
-	u_long       cmd;
-	caddr_t      data;
-	int          flag;
-	struct proc *p;
+int
+kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd)
 	{
@@ -788,7 +752,7 @@ kbd_ioctl(c, cmd, data, flag, p)
 		*(int*)data = 0;
 		return 0;
 	case WSKBDIO_GTYPE:
-		*(u_int*)data = WSKBD_TYPE_AMIGA; 
+		*(u_int*)data = WSKBD_TYPE_AMIGA;
 		return 0;
 	}
 
@@ -797,10 +761,7 @@ kbd_ioctl(c, cmd, data, flag, p)
 }
 
 void
-kbd_getc(c, type, data)
-	void  *c;
-	u_int *type;
-	int   *data;
+kbd_getc(void *c, u_int *type, int *data)
 {
 	int key;
 
@@ -811,19 +772,13 @@ kbd_getc(c, type, data)
 }
 
 void
-kbd_pollc(c, on)
-	void *c;
-	int   on;
+kbd_pollc(void *c, int on)
 {
 	kbd_softc.k_pollingmode = on;
 }
 
 void
-kbd_bell(c, x, y, z)
-	void  *c;
-	u_int  x;
-	u_int  y;
-	u_int  z;
+kbd_bell(void *c, u_int x, u_int y, u_int z)
 {
 }
 #endif /* WSKBD */
