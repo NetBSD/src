@@ -1,8 +1,8 @@
-/*	$NetBSD: db_run.c,v 1.10 1997/02/06 21:17:16 gwr Exp $	*/
+/*	$NetBSD: db_run.c,v 1.11 1997/06/26 01:18:11 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
- * Copyright (c) 1991,1990 Carnegie Mellon University
+ * Copyright (c) 1993-1990 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -170,19 +170,25 @@ db_restart_at_pc(regs, watchpt)
 	     * We are about to execute this instruction,
 	     * so count it now.
 	     */
-
 	    ins = db_get_value(pc, sizeof(int), FALSE);
 	    db_inst_count++;
 	    db_load_count += inst_load(ins);
 	    db_store_count += inst_store(ins);
-#if defined(SOFTWARE_SSTEP) && defined(__mips__)
-	    /* XXX works on mips, but... */
-	    if (inst_branch(ins) || inst_call(ins)) {
-		ins = db_get_value(next_instr_address(pc,1),
-				   sizeof(int), FALSE);
-		db_inst_count++;
-		db_load_count += inst_load(ins);
-		db_store_count += inst_store(ins);
+
+#ifdef SOFTWARE_SSTEP
+	    /*
+	     * Account for instructions in delay slots.
+	     */
+	    {
+		db_addr_t brpc;
+
+		brpc = next_instr_address(pc, TRUE);
+		if ((brpc != pc) && (inst_branch(ins) || inst_call(ins))) {
+		    ins = db_get_value(brpc, sizeof(int), FALSE);
+		    db_inst_count++;
+		    db_load_count += inst_load(ins);
+		    db_store_count += inst_store(ins);
+		}
 	    }
 #endif
 	}
@@ -213,7 +219,7 @@ db_single_step(regs)
 	}
 }
 
-#ifdef	SOFTWARE_SSTEP
+#ifdef SOFTWARE_SSTEP
 /*
  *	Software implementation of single-stepping.
  *	If your machine does not have a trace mode
@@ -222,20 +228,22 @@ db_single_step(regs)
  *	Just define the above conditional and provide
  *	the functions/macros defined below.
  *
- * extern boolean_t
- *	inst_branch(),		returns true if the instruction might branch
- * extern unsigned
- *	branch_taken(),		return the address the instruction might
- *				branch to
- *	db_getreg_val();	return the value of a user register,
- *				as indicated in the hardware instruction
- *				encoding, e.g. 8 for r8
- *			
- * next_instr_address(pc,bd)	returns the address of the first
- *				instruction following the one at "pc",
- *				which is either in the taken path of
- *				the branch (bd==1) or not.  This is
- *				for machines (mips) with branch delays.
+ * boolean_t inst_branch(int inst)
+ * boolean_t inst_call(int inst)
+ *	returns TRUE if the instruction might branch
+ *
+ * boolean_t inst_unconditional_flow_transfer(int inst)
+ *	returns TRUE if the instruction is an unconditional
+ *	transter of flow (i.e. unconditional branch)
+ *
+ * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
+ *	returns the target address of the branch
+ *
+ * db_addr_t next_instr_address(db_addr_t pc, boolean_t bd)
+ *	returns the address of the first instruction following the
+ *	one at "pc", which is either in the taken path of the branch
+ *	(bd == TRUE) or not.  This is for machines (e.g. mips) with
+ *	branch delays.
  *
  *	A single-step may involve at most 2 breakpoints -
  *	one for branch-not-taken and one for branch taken.
@@ -251,7 +259,8 @@ db_set_single_step(regs)
 	register db_regs_t *regs;
 {
 	db_addr_t pc = PC_REGS(regs), brpc;
-	register unsigned	 inst;
+	boolean_t unconditional;
+	unsigned int inst;
 
 	/*
 	 *	User was stopped at pc, e.g. the instruction
@@ -259,15 +268,38 @@ db_set_single_step(regs)
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
 	if (inst_branch(inst) || inst_call(inst)) {
-
-	    brpc = branch_taken(inst, pc, regs);
-	    if (brpc != pc) {	/* self-branches are hopeless */
-		db_taken_bkpt = db_set_temp_breakpoint(brpc);
-	    }
-	    pc = next_instr_address(pc,1);
+		brpc = branch_taken(inst, pc, regs);
+		if (brpc != pc) {	/* self-branches are hopeless */
+			db_taken_bkpt = db_set_temp_breakpoint(brpc);
+		} else
+			db_taken_bkpt = 0;
+		pc = next_instr_address(pc, TRUE);
 	}
-	pc = next_instr_address(pc,0);
-	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
+
+	/*
+	 *	Check if this control flow instruction is an
+	 *	unconditional transfer.
+	 */
+	unconditional = inst_unconditional_flow_transfer(inst);
+
+	pc = next_instr_address(pc, FALSE);
+
+	/*
+	 *	We only set the sequential breakpoint if previous
+	 *	instruction was not an unconditional change of flow
+	 *	control.  If the previous instruction is an
+	 *	unconditional change of flow control, setting a
+	 *	breakpoint in the next sequential location may set
+	 *	a breakpoint in data or in another routine, which
+	 *	could screw up in either the program or the debugger.
+	 *	(Consider, for instance, that the next sequential
+	 *	instruction is the start of a routine needed by the
+	 *	debugger.)
+	 */
+	if (unconditional == FALSE && db_find_breakpoint_here(pc) == 0)
+		db_not_taken_bkpt = db_set_temp_breakpoint(pc);
+	else
+		db_not_taken_bkpt = 0;
 }
 
 void
@@ -285,7 +317,7 @@ db_clear_single_step(regs)
 	}
 }
 
-#endif	SOFTWARE_SSTEP
+#endif /* SOFTWARE_SSTEP */
 
 extern int	db_cmd_loop_done;
 
