@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/05/30 08:51:39 augustss Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2003/01/13 20:26:44 augustss Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"

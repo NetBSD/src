@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2003/01/10 16:18:45 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2003/01/13 20:26:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
+#include <sys/kgdb.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -121,6 +122,19 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+#ifdef KGDB
+char kgdb_devname[] = KGDB_DEVNAME;
+int comkgdbaddr = KGDB_DEVADDR;
+int comkgdbrate = KGDB_DEVRATE;
+
+#ifndef KGDB_DEVMODE
+#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+int comkgdbmode = KGDB_DEVMODE;
+
+void kgdb_port_init(void);
+#endif /* KGDB */
 
 /*
  * Global variables used here and there
@@ -278,6 +292,13 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+#ifdef KGDB
+	kgdb_port_init();
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif
 }
 
 void
@@ -342,6 +363,21 @@ consinit(void)
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
 }
+
+#ifdef KGDB
+void
+kgdb_port_init(void)
+{
+#if (NCOM > 0)
+	if(!strcmp(kgdb_devname, "com")) {
+		bus_space_tag_t tag = &pmppc_mem_tag;
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate,
+				CPC_COM_SPEED(a_config.a_bus_freq),
+				comkgdbmode);
+	}
+#endif
+}
+#endif
 
 /*
  * Stray interrupts.
