@@ -33,6 +33,9 @@
  *	@(#)spp_debug.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_SPP_DEBUG_H_
+#define _NETNS_SPP_DEBUG_H_
+
 struct	spp_debug {
 	u_long	sd_time;
 	short	sd_act;
@@ -57,3 +60,5 @@ char	*sanames[] =
 #define	SPP_NDEBUG 100
 struct	spp_debug spp_debug[SPP_NDEBUG];
 int	spp_debx;
+
+#endif /* !_NETNS_SPP_DEBUG_H_ */

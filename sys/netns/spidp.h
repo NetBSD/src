@@ -33,6 +33,9 @@
  *	@(#)spidp.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_SPIDP_H_
+#define _NETNS_SPIDP_H_
+
 /*
  * Definitions for NS(tm) Internet Datagram Protocol
  * containing a Sequenced Packet Protocol packet.
@@ -60,3 +63,5 @@ struct spidp_q {
 #define si_seq	si_s.sp_seq
 #define si_ack	si_s.sp_ack
 #define si_alo	si_s.sp_alo
+
+#endif /* !_NETNS_SPIDP_H_ */
