@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.15 2002/01/07 21:47:12 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.15.8.1 2002/05/16 12:10:50 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.15 2002/01/07 21:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.15.8.1 2002/05/16 12:10:50 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,16 @@ struct cfattach satlink_ca = {
 
 extern struct cfdriver satlink_cd;
 
-cdev_decl(satlink);
+dev_type_open(satlinkopen);
+dev_type_close(satlinkclose);
+dev_type_read(satlinkread);
+dev_type_ioctl(satlinkioctl);
+dev_type_poll(satlinkpoll);
+
+const struct cdevsw satlink_cdevsw = {
+	satlinkopen, satlinkclose, satlinkread, nowrite, satlinkioctl,
+	nostop, notty, satlinkpoll, nommap,
+};
 
 int
 satlinkprobe(parent, match, aux)
@@ -361,16 +370,6 @@ satlinkread(dev, uio, flags)
 		sc->sc_uptr = 0;
 
 	return (error);
-}
-
-int
-satlinkwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (ENODEV);
 }
 
 int
