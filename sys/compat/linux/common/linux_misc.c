@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.109 2002/05/10 14:49:38 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.109.4.1 2002/06/21 05:25:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.109 2002/05/10 14:49:38 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.109.4.1 2002/06/21 05:25:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1495,7 +1495,7 @@ linux_sys_sysinfo(p, v, retval)
     bsd_to_linux_rlimit1(l, b, rlim_max)
 
 #define linux_to_bsd_rlimit1(b, l, f) \
-    (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (b)->f
+    (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (l)->f
 #define linux_to_bsd_rlimit(b, l) \
     linux_to_bsd_rlimit1(b, l, rlim_cur); \
     linux_to_bsd_rlimit1(b, l, rlim_max)
