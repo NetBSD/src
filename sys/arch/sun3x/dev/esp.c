@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.5 1997/08/27 11:24:33 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.6 1998/01/12 20:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,10 +81,6 @@ static void	espattach	__P((struct device *, struct device *, void *));
 
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL
 };
 
 struct scsipi_adapter esp_switch = {
