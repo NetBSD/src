@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.2 2001/01/08 07:18:54 martin Exp $ 
+ *	$Id: log.c,v 1.3 2001/01/11 02:44:03 lukem Exp $ 
  *
  * $FreeBSD$
  *
@@ -89,11 +89,11 @@ init_log(void)
 #if DEBUG
 		if(do_debug && do_fork == 0 && do_fullscreen == 0)
 			(void)openlog("isdnd",
-				LOG_PID|LOG_CONS|LOG_NDELAY|LOG_PERROR,
+				LOG_PID|LOG_NDELAY|LOG_PERROR,
 				logfacility);
 		else
 #endif
-		(void)openlog("isdnd", LOG_PID|LOG_CONS|LOG_NDELAY,
+		(void)openlog("isdnd", LOG_PID|LOG_NDELAY,
 				logfacility);
 	}
 

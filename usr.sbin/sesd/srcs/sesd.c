@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.3 2000/10/11 20:23:56 is Exp $ */
+/* $NetBSD: sesd.c,v 1.4 2001/01/11 02:46:21 lukem Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -111,9 +111,9 @@ main(a, v)
 			perror("daemon");
 			return (1);
 		}
-		openlog("sesd", LOG_CONS, LOG_USER);
+		openlog("sesd", 0, LOG_USER);
 	} else {
-		openlog("sesd", LOG_CONS|LOG_PERROR, LOG_USER);
+		openlog("sesd", LOG_PERROR, LOG_USER);
 	}
 
 	for (;;) {
