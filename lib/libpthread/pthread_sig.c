@@ -1,4 +1,4 @@
-/*	$Id: pthread_sig.c,v 1.1.2.1 2001/03/05 23:52:00 nathanw Exp $ */
+/*	$Id: pthread_sig.c,v 1.1.2.2 2001/07/13 02:21:14 nathanw Exp $ */
 
 /* Copyright */
 
@@ -86,6 +86,11 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			/* Unblock any signals that were blocked
 			 * process-wide before this.
 			 */
+			/* Calling sigprocmask here might be
+                         * overkill. Checking if the signals were
+                         * already unblocked could be more
+                         * efficent. 
+			 */
 			__sigminusset(set, &pt_process_sigmask);
 			sigprocmask(SIG_SETMASK, &pt_process_sigmask, NULL);
 			pthread_spinunlock(self, &pt_process_siglock);
@@ -128,7 +133,7 @@ pthread__signal(pthread_t t, int sig, int code)
 {
 	pthread_t self, target, good, okay;
 	extern pt_spin_t allqueue_lock;
-	extern struct pt_list_t allqueue;
+	extern struct pt_queue_t allqueue;
 	ucontext_t *uc;
 
 	if (t)
@@ -138,7 +143,7 @@ pthread__signal(pthread_t t, int sig, int code)
 		self = pthread__self();
 		okay = good = NULL;
 		pthread_spinlock(self, &allqueue_lock);
-		LIST_FOREACH(target, &allqueue, pt_allq) {
+		PTQ_FOREACH(target, &allqueue, pt_allq) {
 			if (!sigismember(&target->pt_sigmask, sig)) {
 				okay = target;
 				if (target->pt_state == PT_STATE_RUNNABLE) {
