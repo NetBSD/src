@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.42 2003/01/08 19:34:22 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.43 2003/01/09 19:27:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,8 +79,8 @@ pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 
-__strong_alias(__libc_thr_self,pthread_self);
-__strong_alias(__libc_thr_errno,pthread__errno);
+__strong_alias(__libc_thr_self,pthread_self)
+__strong_alias(__libc_thr_errno,pthread__errno)
 
 /*
  * Static library kludge.  Place a reference to a symbol any library

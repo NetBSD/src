@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.17 2003/01/08 19:34:22 thorpej Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.18 2003/01/09 19:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
 
 static void pthread_mutex_lock_slow(pthread_mutex_t *);
 
-__strong_alias(__libc_mutex_init,pthread_mutex_init);
-__strong_alias(__libc_mutex_lock,pthread_mutex_lock);
-__strong_alias(__libc_mutex_trylock,pthread_mutex_trylock);
-__strong_alias(__libc_mutex_unlock,pthread_mutex_unlock);
-__strong_alias(__libc_mutex_destroy,pthread_mutex_destroy);
+__strong_alias(__libc_mutex_init,pthread_mutex_init)
+__strong_alias(__libc_mutex_lock,pthread_mutex_lock)
+__strong_alias(__libc_mutex_trylock,pthread_mutex_trylock)
+__strong_alias(__libc_mutex_unlock,pthread_mutex_unlock)
+__strong_alias(__libc_mutex_destroy,pthread_mutex_destroy)
 
-__strong_alias(__libc_thr_once,pthread_once);
+__strong_alias(__libc_thr_once,pthread_once)
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)

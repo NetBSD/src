@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.8 2003/01/08 19:34:23 thorpej Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.9 2003/01/09 19:27:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@ static int nextkey;
 int pthread__tsd_alloc[PTHREAD_KEYS_MAX];
 void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
 
-__strong_alias(__libc_thr_keycreate,pthread_key_create);
-__strong_alias(__libc_thr_setspecific,pthread_setspecific);
-__strong_alias(__libc_thr_getspecific,pthread_getspecific);
-__strong_alias(__libc_thr_keydelete,pthread_key_delete);
+__strong_alias(__libc_thr_keycreate,pthread_key_create)
+__strong_alias(__libc_thr_setspecific,pthread_setspecific)
+__strong_alias(__libc_thr_getspecific,pthread_getspecific)
+__strong_alias(__libc_thr_keydelete,pthread_key_delete)
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
