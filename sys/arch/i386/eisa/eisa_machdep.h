@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.2 1996/04/09 23:00:27 cgd Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.3 1996/10/21 23:12:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -60,3 +60,7 @@ const char	*eisa_intr_string __P((eisa_chipset_tag_t, eisa_intr_handle_t));
 void		*eisa_intr_establish __P((eisa_chipset_tag_t,
 		    eisa_intr_handle_t, int, int, int (*)(void *), void *));
 void		eisa_intr_disestablish __P((eisa_chipset_tag_t, void *));
+int		eisa_mem_alloc __P((bus_space_tag_t, bus_size_t, bus_size_t,
+		    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
+void		eisa_mem_free __P((bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t));
