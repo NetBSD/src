@@ -1,67 +1,165 @@
-#	$Id: GENERIC,v 1.3 1994/04/15 02:33:06 chopps Exp $
+#
+# GENERIC AMIGA
+#
+# $Id: GENERIC,v 1.4 1994/04/18 00:25:18 chopps Exp $
+#
+# This configuration file contains all possible options
+#
 
+#
+# Architecture type (Required)
+#
 machine		"amiga"
-#cpu		"M68020"
-cpu		"M68030"
-#cpu		"M68040"
+
+#
+# Name this kernel GENERIC (Required)
+#
 ident		GENERIC
 
-timezone	6 dst
+#
+# Different CPU types. Must have the correct one defined. (Required)
+#
+cpu		"M68020"
+cpu		"M68030"
+cpu		"M68040"
+
+#
+# Add support for about 16 users. This variable is used to size
+# various kernel structures.
+#
 maxusers	16
+
+#
+# Set the timezone that the kernel will use. (Required)
+#
+timezone	5 dst
+
+#
+# Set the maximum number of file descriptors
+#
 maxfdescs	2048
 
-# cpu options
-options		FPSP
-options		FPCOPROC
+#
+# The following adds additional floating-point capabilities to 
+# the MC68040.  A subset of the MC6888x instruction set is 
+# executed by the MC68040 on-chip FPU.  The remaining 
+# floating-point instructions are emulated in software.
+# [This should be automatic if cpu is M68040]
+#
+options		FPSP		# MC68040 floating point support
 
-# general options
-options		"COMPAT_09"
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		SYSVSHM,SYSVMSG,SYSVSEM
-options		GENERIC
-options		"COMPAT_43"
-options		"COMPAT_NOMID"
-options		"HAVE_USL_UFS"
-options		"PANICWAIT"
+options		FPCOPROC	# Support for MC68881/MC68882 (Required)
 
-# network options
-options		NFS,NFSSERVER,NFSCLIENT
-options		INET
-options		"TCP_COMPAT_42"
-options		"NKMEMCLUSTERS=256"
-options		"PPP_OUTQ_SIZE=4096"
+#
+# Networking options
+#
+options		INET			# IP networking support (Required)
+options		ISO			# ISO Networking support
+options		TPIP			# ARGO TP networking support
+options		CCITT			# CCITT X.25
+options		NS			# Xerox XNS
+options		EON			# ISO CLNL over IP
+options		GATEWAY			# Packet forwarding
+options		DIRECTED_BROADCAST	# Broadcast across subnets
+options		NSIP			# XNS over IP
 
-#debug options
-options		DIAGNOSTIC,DEBUG,KTRACE
+#
+# File system related options
+#
+options		QUOTA		# Disk quotas for local disks
+options		NFSSERVER	# Network File System server side code
+options		NFSCLIENT	# Network File System client side code
+#
+# Support for various types of filesystems
+#
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		PROCFS		# Process filesystem
+options		KERNFS		# Kernel parameter filesystem (Recommended)
+options		MSDOSFS		# MS-DOS filesystem
+options		FDESC		# /dev/fd filesystem
+options		LOFS		# Loopback filesystem
+options		ISOFS		# ISO 9660 file system, with Rock Ridge
+options		PORTAL		# Portal filesystem
 
-# file systems
-options		FFS
-options		MFS,ISOFS,FIFO,KERNFS,FDESC,PROCFS,LOFS,PORTAL
+options		FIFO		# FIFO operations on vnodes (Recommended)
 
-#emulation options
-options		COMPAT_SUNOS
+options		SWAPPAGER	# Pager for processes (Required)
+options		VNODEPAGER	# Pager for vnodes (Required)
+options		DEVPAGER	# Pager for devices (Required)
+#options	BANKEDDEVPAGER	# Pager for Retina
 
-# amiga graphics options
-options		GRF
-options		GRF_OCS
-options		GRF_ECS
-options		GRF_NTSC
-options		GRF_PAL
-options		"GRF_A2024"
+#
+# Compatability options for various existing systems
+#
+options		"COMPAT_09"	# fs type binary compatability (name vs number)
+options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+#options	HPUXCOMPAT	# HP300 compatability
+options		"COMPAT_43"	# 4.3 BSD compatible system calls
+options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+options		"COMPAT_NOMID"	# Support to run nonvalid machine id executables
 
+#
+# Support for System V IPC facilities.
+#
+options		SYSVSHM		# System V-like shared memory
+options		SYSVMSG		# System V-like messages
+options		SYSVSEM		# System V-like semaphores
+
+#
+# Amiga graphics options
+# 
+options		GRF_ECS			# Enhanced Chip Set
+options		GRF_NTSC		# NTSC
+options		GRF_PAL			# PAL
+options		"GRF_A2024"		# Support for the A2024
+
+#
+# Support for various kernel options
+#
+options		KTRACE		# Add kernel tracing system call
+options		PANICWAIT	# Require keystroke to dump/reboot
+options		DIAGNOSTIC	# Add additional error checking code
+#options	DEBUG		# Add debugging statements
+#options	SCSIDEBUG	# Add SCSI debugging statements
+#options	KGDB		# Kernel debugger (KGDB) support
+#options	DDB		# Kernel debugger
+#options	PANICBUTTON	# Forced crash via keypress (???)
+options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+options		GENERIC		# Mini-root boot support
+#options	PROFTIMER	# Kernel profiling support
+#options	"PRF_INTERVAL=500"	# Clock ticks between profile interrupts
+options		"PPP_OUTQ_SIZE=4096"	# Size of large PPP output queue
+options		LKM		# Loadable kernel modules
+
+#
+# Build one kernel that can boot from any disk.
+#
+# Alternate syntax:
+#   config <kernelname> root on <part> swap on <part> [and <part>]
+#
 config		netbsd swap generic
 
-# scsi controllers.
-master		a3000scsi0	at manufacturer	1	product	1
-master		a2091scsi0	at manufacturer 514	product 3
-master		gvp11scsi0	at manufacturer 2017	product 11
-master		zeusscsi0	at manufacturer	2026	product	150
-master		magnumscsi0	at manufacturer	1058	product	17
-master		csa12gscsi0	at manufacturer	1058	product	21
-master		suprascsi0	at manufacturer 1056	product 12
-master		ivsscsi0	at manufacturer 2112	product 243
+pseudo-device	sl	1	# Serial Line IP (SLIP)
+pseudo-device	ppp	1	# Point-to-Point Protocol (PPP)
+pseudo-device	bpfilter 16	# Berkeley packet filter
+pseudo-device	ite	2	# Bit-mapped display terminal emulator
+pseudo-device	view	10	# View (graphics mapping)
+pseudo-device	kbd	1	# Keyboard support
+pseudo-device	mouse	2	# Mouse support
+pseudo-device	pty		# Pseudo-tty support (Required)
+pseudo-device	loop		# Loopback network (Recommended)
+pseudo-device	ether		# Ethernet support
+pseudo-device	vn	10	# VN Virtual Filesystem device
 
-# all scsi units for A3000.
+#
+#The following sections describe various hardware options.
+#
+
+#
+# Amiga 3000 SCSI support
+#
+master		a3000scsi0	at manufacturer	1	product	1
 disk		sd0	at a3000scsi0 slave 0
 disk		sd1	at a3000scsi0 slave 1
 disk		sd2	at a3000scsi0 slave 2
@@ -70,8 +168,12 @@ disk		sd4	at a3000scsi0 slave 4
 disk		sd5	at a3000scsi0 slave 5
 disk		sd6	at a3000scsi0 slave 6
 tape		st0	at a3000scsi0 slave ?
+tape		st1	at a3000scsi0 slave ?
 
-# all scsi units for A2091.
+#
+# A2091 support
+#
+master		a2091scsi0	at manufacturer 514	product 3
 disk		sd0	at a2091scsi0 slave 0
 disk		sd1	at a2091scsi0 slave 1
 disk		sd2	at a2091scsi0 slave 2
@@ -80,8 +182,12 @@ disk		sd4	at a2091scsi0 slave 4
 disk		sd5	at a2091scsi0 slave 5
 disk		sd6	at a2091scsi0 slave 6
 tape		st0	at a2091scsi0 slave ?
+tape		st1	at a2091scsi0 slave ?
 
-# all scsi units for GVP Series II.
+#
+# GVP Series II support
+#
+master		gvp11scsi0	at manufacturer 2017	product 11
 disk		sd0	at gvp11scsi0 slave 0
 disk		sd1	at gvp11scsi0 slave 1
 disk		sd2	at gvp11scsi0 slave 2
@@ -90,8 +196,12 @@ disk		sd4	at gvp11scsi0 slave 4
 disk		sd5	at gvp11scsi0 slave 5
 disk		sd6	at gvp11scsi0 slave 6
 tape		st0	at gvp11scsi0 slave ?
+tape		st1	at gvp11scsi0 slave ?
 
-# all scsi units for Zeus.
+#
+# PPI Zeus SCSI support
+#
+master		zeusscsi0	at manufacturer 2026	product 150
 disk		sd0	at zeusscsi0 slave 0
 disk		sd1	at zeusscsi0 slave 1
 disk		sd2	at zeusscsi0 slave 2
@@ -100,8 +210,12 @@ disk		sd4	at zeusscsi0 slave 4
 disk		sd5	at zeusscsi0 slave 5
 disk		sd6	at zeusscsi0 slave 6
 tape		st0	at zeusscsi0 slave ?
+tape		st1	at zeusscsi0 slave ?
 
-#all scsi units for Magnum.
+#
+# Magnum SCSI support
+#
+master		magnumscsi0	at manufacturer 1058	product 17
 disk		sd0	at magnumscsi0 slave 0
 disk		sd1	at magnumscsi0 slave 1
 disk		sd2	at magnumscsi0 slave 2
@@ -110,8 +224,12 @@ disk		sd4	at magnumscsi0 slave 4
 disk		sd5	at magnumscsi0 slave 5
 disk		sd6	at magnumscsi0 slave 6
 tape		st0	at magnumscsi0 slave ?
+tape		st1	at magnumscsi0 slave ?
 
-# all scsi units for CSA 12 gauge.
+#
+# CSA 12 gauge support
+#
+master		csa12gscsi0	at manufacturer 1058	product 21
 disk		sd0	at csa12gscsi0 slave 0
 disk		sd1	at csa12gscsi0 slave 1
 disk		sd2	at csa12gscsi0 slave 2
@@ -120,8 +238,12 @@ disk		sd4	at csa12gscsi0 slave 4
 disk		sd5	at csa12gscsi0 slave 5
 disk		sd6	at csa12gscsi0 slave 6
 tape		st0	at csa12gscsi0 slave ?
+tape		st1	at csa12gscsi0 slave ?
 
-# all scsi units for Supra scsi.
+#
+# Supra SCSI support
+#
+master		suprascsi0	at manufacturer 1056	product 12
 disk		sd0	at suprascsi0 slave 0
 disk		sd1	at suprascsi0 slave 1
 disk		sd2	at suprascsi0 slave 2
@@ -130,30 +252,63 @@ disk		sd4	at suprascsi0 slave 4
 disk		sd5	at suprascsi0 slave 5
 disk		sd6	at suprascsi0 slave 6
 tape		st0	at suprascsi0 slave ?
+tape		st1	at suprascsi0 slave ?
 
+#
+# IVS SCSI support
+#
+master		ivsscsi0	at manufacturer 2112	product 243
+disk		sd0	at ivsscsi0 slave 0
+disk		sd1	at ivsscsi0 slave 1
+disk		sd2	at ivsscsi0 slave 2
+disk		sd3	at ivsscsi0 slave 3
+disk		sd4	at ivsscsi0 slave 4
+disk		sd5	at ivsscsi0 slave 5
+disk		sd6	at ivsscsi0 slave 6
+tape		st0	at ivsscsi0 slave ?
+tape		st1	at ivsscsi0 slave ?
 
-# on board io ports
+#
+# Common hardware
+#
+
+#
+# Serial port interface
+#
 device		ser0	at manufacturer	1	product	3
+
+#
+# Parallel port interface
+#
 device		par0	at manufacturer	1	product	6
 
-# graphic devices
+#
+# Floppy drive support
+#
+#master		floppy0	at manufacturer	1	product	2
+device		fd0	at manufacturer 1	product 10
+
+#
+# Graphics routines for the AMIGA native custom chip set
+#
 device		grf0	at manufacturer	1	product	7
+#
+# Graphics routines for the Retina board.
+#
 device		grf1	at manufacturer	18260	product	6
 
+#
+# A2410 (currently not working)
+#
+#device		tiga0	at manufacturer 1030	product 0
+
+#
 # builtin clock (should all identify as "rtclock")
-device		rtclocka0 at manufacturer 1	product 4
-device		rtclockb0 at manufacturer 1	product 9
+#
+device		rtclocka0 at manufacturer 1	product 4 # A3000/A4000
+device		rtclockb0 at manufacturer 1	product 9 # A2000
 
-# ethernet board
+#
+# ethernet board (AMD 7990 LANCE controller)
+#
 device		le0	at manufacturer ?	product ?
-
-pseudo-device	sl	1
-pseudo-device	ppp	1
-pseudo-device	bpfilter 16
-pseudo-device	ite	2
-pseudo-device	view	10
-pseudo-device	kbd	1
-pseudo-device	mouse	2
-pseudo-device	pty
-pseudo-device	loop
-pseudo-device	ether
