@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.7 2001/12/12 01:48:47 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/09/18 14:00:42 lukem Exp $
+
+NOMAN=	# defined
 
 HOST_CPPFLAGS+=-I${.CURDIR}/../../api
-NOMAN=	# defined
 KBD= unix.kbd
 
 .PATH: ${.CURDIR}/../../api
