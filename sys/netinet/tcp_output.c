@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.105 2003/10/24 10:25:40 ragge Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.106 2003/11/12 10:48:04 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.105 2003/10/24 10:25:40 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.106 2003/11/12 10:48:04 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -449,18 +449,9 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	 * data to send is directly following the previous transfer.
 	 * This is important for large TCP windows.
 	 */
-	if (
-#ifdef FAST_MBSEARCH
-	    off == 0 || tp->t_lastm == NULL ||
-		(tp->t_lastoff + tp->t_lastlen) != off
-#else
-	    1
-#endif
-	   )
-	{
-#ifdef FAST_MBSEARCH
+	if (off == 0 || tp->t_lastm == NULL ||
+	    (tp->t_lastoff + tp->t_lastlen) != off) {
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_miss);
-#endif
 		/*
 		 * Either a new packet or a retransmit.
 		 * Start from the beginning.
@@ -468,9 +459,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		tp->t_lastm = so->so_snd.sb_mb;
 		tp->t_inoff = off;
 	} else {
-#ifdef FAST_MBSEARCH
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_hit);
-#endif
 		tp->t_inoff += tp->t_lastlen;
 	}
 
