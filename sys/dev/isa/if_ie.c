@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.29 1995/01/23 04:50:08 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.30 1995/01/26 04:13:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1672,6 +1672,13 @@ iememinit(ptr, sc)
 
 	for (i = 0; i < NTXBUF; i++)
 		sc->xmit_cbuffs[i] = ALLOC(ptr, IE_TBUF_SIZE);
+
+	/* Pointers to last packet sent and next available transmit buffer. */
+	sc->xchead = sc->xctail = 0;
+
+	/* Clear transmit-busy flag and set number of free transmit buffers. */
+	sc->xmit_busy = 0;
+	sc->xmit_free = NTXBUF;
 }
 
 /*
