@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2002/11/23 02:18:56 manu Exp $
+	$NetBSD: syscalls.master,v 1.6 2002/11/25 22:25:14 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -58,6 +58,7 @@
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 
+#include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 %%
@@ -144,9 +145,9 @@
 #else
 45	EXCL		ktrace
 #endif
-46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
-			    const struct sigaction13 *nsa, \
-			    struct sigaction13 *osa); } sigaction13
+46	STD		{ int darwin_sys_sigaction(int signum, \
+			    struct darwin___sigaction *nsa, \
+			    struct sigaction13 *osa); }
 #ifdef COMPAT_43
 47	NOARGS		{ gid_t sys_getgid_with_egid(void); } getgid
 #else
@@ -232,8 +233,8 @@
 			    int flags); } osend
 102	NOARGS    	{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
-103	NOARGS    	{ int compat_13_sys_sigreturn(struct \
-			    sigcontext13 *sigcntxp); } sigreturn13
+103	STD	    	{ int darwin_sys_sigreturn(struct \
+			    darwin_ucontext *uctx); }
 104	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
