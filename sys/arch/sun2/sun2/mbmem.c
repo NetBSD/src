@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.7 2001/11/30 18:11:56 fredette Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.8 2001/12/15 22:13:11 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ mbmem_attach(parent, self, aux)
 	mbma = *ma;
 	mbma.mbma_bustag = &mbmem_space_tag;
 	mbma.mbma_dmatag = &mbmem_dma_tag;
+	mbma.mbma_paddr = LOCATOR_REQUIRED;
 	mbma.mbma_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' mbmem devices */
