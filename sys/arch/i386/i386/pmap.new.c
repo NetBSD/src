@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.20 1998/10/11 23:21:00 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.20.2.1 1999/04/09 04:16:56 chs Exp $	*/
 
 /*
  *
@@ -1805,13 +1805,15 @@ void pmap_destroy(pmap)
 struct pmap *pmap;
 
 {
+	int refs;
+
   /*
    * drop reference count
    */
   simple_lock(&pmap->pm_obj.vmobjlock);
-  pmap->pm_obj.uo_refs--;
-  if (pmap->pm_obj.uo_refs > 0) {
-    simple_unlock(&pmap->pm_obj.vmobjlock);
+  refs = --pmap->pm_obj.uo_refs;
+  simple_unlock(&pmap->pm_obj.vmobjlock);
+  if (refs > 0) {
     return;
   }
 
