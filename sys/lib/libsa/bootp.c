@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.4 1995/02/21 10:14:53 mycroft Exp $	*/
+/*	$NetBSD: bootp.c,v 1.5 1995/04/22 13:47:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -217,7 +217,7 @@ bootprecv(d, pkt, len, tleft)
 	else if (bcmp(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048)) == 0)
 		vend_rfc1048(bp->bp_vend, sizeof(bp->bp_vend));
 	else
-		printf("bootprecv: unknown vendor 0x%x\n", (int)bp->bp_vend);
+		printf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
 
 	/* Check subnet mask against net mask; toss if bogus */
 	if ((nmask & smask) != nmask) {
