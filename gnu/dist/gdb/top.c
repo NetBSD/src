@@ -3653,7 +3653,7 @@ init_main ()
   write_history_p = 0;
 
   /* Setup important stuff for command line editing.  */
-  rl_completion_entry_function = (char *(*)()) readline_line_completion_function;
+  rl_completion_entry_function = (char *(*)(const char *, int)) readline_line_completion_function;
   rl_completer_word_break_characters = gdb_completer_word_break_characters;
   rl_completer_quote_characters = gdb_completer_quote_characters;
   rl_readline_name = "gdb";
