@@ -1,6 +1,14 @@
 /*
- *	$Id: ite_tg.c,v 1.4 1994/02/11 07:01:51 chopps Exp $
+ *	$Id: ite_tg.c,v 1.5 1994/02/17 09:10:50 chopps Exp $
  */
+
+#include <sys/types.h>
+#include <dev/cons.h>
+
+tiga_cnprobe ()
+{
+	return (CN_DEAD);
+}
 
 tiga_init ()
 {
