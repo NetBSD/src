@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.62 2003/10/03 14:35:38 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.63 2003/10/10 22:47:12 jdolecek Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -595,13 +595,13 @@ systrace)
 
 pf)
 	rm -f pf
-	mknod pf c 80 0
+	mknod pf c 161 0
 	chmod 600 pf
 	;;
 
 crypto)
 	rm -f crypto
-	mknod crypto c 81 0
+	mknod crypto c 160 0
 	chmod 666 crypto
 	;;
 
