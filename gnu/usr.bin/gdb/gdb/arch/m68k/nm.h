@@ -17,15 +17,18 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.2 1994/02/04 19:50:49 mycroft Exp $
+	$Id: nm.h,v 1.3 1994/02/23 04:35:35 chopps Exp $
 */
+#include <machine/vmparam.h>
 
 #define PTRACE_ARG3_TYPE        caddr_t
 
-/* This is BSD 4.3 or something like it.  */
+/* KUSER_AREA is the address the kernel uses for struct user */
+#if ! defined (KUSER_AREA)
+#define KUSER_AREA USRSTACK
+#endif
 
-/* Get kernel u area address at run-time using BSD style nlist ().  */
-#define KERNEL_U_ADDR USRSTACK
+#define KERNEL_U_ADDR KUSER_AREA
 
 /* This is a piece of magic that is given a register number REGNO
    and as BLOCKEND the address in the system of the end of the user structure
