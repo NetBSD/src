@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.8 1997/10/19 05:03:32 lukem Exp $	*/
+/*	$NetBSD: list.c,v 1.9 1998/12/19 16:33:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.8 1997/10/19 05:03:32 lukem Exp $");
+__RCSID("$NetBSD: list.c,v 1.9 1998/12/19 16:33:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -750,7 +750,7 @@ matchsubj(str, mesg)
 	 * Now look, ignoring case, for the word in the string.
 	 */
 
-	if (value("searchheaders") && (cp = index(str, ':'))) {
+	if (value("searchheaders") && (cp = strchr(str, ':'))) {
 		/* Check for special case "/To:" */
 		if (raise(str[0]) == 'T' && raise(str[1]) == 'O' &&
 		    str[2] == ':')
