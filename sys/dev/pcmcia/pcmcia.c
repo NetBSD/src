@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.51 2004/08/09 19:33:07 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.52 2004/08/09 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.51 2004/08/09 19:33:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.52 2004/08/09 20:02:36 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -68,13 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.51 2004/08/09 19:33:07 mycroft Exp $");
 #ifdef PCMCIADEBUG
 int	pcmcia_debug = 0;
 #define	DPRINTF(arg) if (pcmcia_debug) printf arg
-int	pcmciaintr_debug = 0;
-/* this is done this way to avoid doing lots of conditionals
-   at interrupt level.  */
-#define PCMCIA_CARD_INTR (pcmciaintr_debug?pcmcia_card_intrdebug:pcmcia_card_intr)
 #else
 #define	DPRINTF(arg)
-#define PCMCIA_CARD_INTR (pcmcia_card_intr)
 #endif
 
 #ifdef PCMCIAVERBOSE
@@ -87,11 +82,6 @@ int	pcmcia_match __P((struct device *, struct cfdata *, void *));
 int	pcmcia_submatch __P((struct device *, struct cfdata *, void *));
 void	pcmcia_attach __P((struct device *, struct device *, void *));
 int	pcmcia_print __P((void *, const char *));
-
-int pcmcia_card_intr __P((void *));
-#ifdef PCMCIADEBUG
-int pcmcia_card_intrdebug __P((void *));
-#endif
 
 CFATTACH_DECL(pcmcia, sizeof(struct pcmcia_softc),
     pcmcia_match, pcmcia_attach, NULL, NULL);
@@ -204,8 +194,7 @@ pcmcia_card_attach(dev)
 		pf->sc = sc;
 		pf->child = NULL;
 		pf->cfe = NULL;
-		pf->ih_fct = NULL;
-		pf->ih_arg = NULL;
+		pf->pf_ih = NULL;
 	}
 
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
@@ -519,7 +508,7 @@ pcmcia_function_enable(pf)
 	if (pcmcia_mfc(pf->sc)) {
 		reg |= (PCMCIA_CCR_OPTION_FUNC_ENABLE |
 			PCMCIA_CCR_OPTION_ADDR_DECODE);
-		if (pf->ih_fct)
+		if (pf->pf_ih)
 			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
 
 	}
@@ -706,105 +695,15 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	int (*ih_fct) __P((void *));
 	void *ih_arg;
 {
-	void *ret;
 
 	if (pf->pf_flags & PFF_ENABLED)
 		printf("pcmcia_intr_establish: function is enabled!\n");
+	if (pf->pf_ih)
+		panic("pcmcia_intr_establish: already done\n");
 
-	/* behave differently if this is a multifunction card */
-	if (pcmcia_mfc(pf->sc)) {
-		int s, ihcnt, hiipl;
-		struct pcmcia_function *pf2;
-
-		/*
-		 * mask all the ipl's which are already used by this card,
-		 * and find the highest ipl number (lowest priority)
-		 */
-
-		ihcnt = 0;
-		s = 0;		/* this is only here to keep the compiler
-				   happy */
-		hiipl = 0;	/* this is only here to keep the compiler
-				   happy */
-
-		SIMPLEQ_FOREACH(pf2, &pf->sc->card.pf_head, pf_list) {
-			if (pf2->ih_fct) {
-				DPRINTF(("%s: function %d has ih_fct %p\n",
-					 pf->sc->dev.dv_xname, pf2->number,
-					 pf2->ih_fct));
-
-				if (ihcnt == 0) {
-					hiipl = pf2->ih_ipl;
-				} else {
-					if (pf2->ih_ipl > hiipl)
-						hiipl = pf2->ih_ipl;
-				}
-
-				ihcnt++;
-			}
-		}
-
-		/*
-		 * establish the real interrupt, changing the ipl if
-		 * necessary
-		 */
-
-		if (ihcnt == 0) {
-#ifdef DIAGNOSTIC
-			if (pf->sc->ih != NULL)
-				panic("card has intr handler, but no function does");
-#endif
-			s = splhigh();
-
-			/* set up the handler for the new function */
-
-			pf->ih_fct = ih_fct;
-			pf->ih_arg = ih_arg;
-			pf->ih_ipl = ipl;
-
-			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
-			splx(s);
-		} else if (ipl > hiipl) {
-#ifdef DIAGNOSTIC
-			if (pf->sc->ih == NULL)
-				panic("functions have ih, but the card does not");
-#endif
-
-			/* XXX need #ifdef for splserial on x86 */
-			s = splhigh();
-
-			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
-						      pf->sc->ih);
-
-			/* set up the handler for the new function */
-			pf->ih_fct = ih_fct;
-			pf->ih_arg = ih_arg;
-			pf->ih_ipl = ipl;
-
-			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, PCMCIA_CARD_INTR, pf->sc);
-
-			splx(s);
-		} else {
-			s = splhigh();
-
-			/* set up the handler for the new function */
-
-			pf->ih_fct = ih_fct;
-			pf->ih_arg = ih_arg;
-			pf->ih_ipl = ipl;
-
-			splx(s);
-		}
-
-		ret = pf->sc->ih;
-	} else {
-		ret = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-		    pf, ipl, ih_fct, ih_arg);
-	}
-
-	return (ret);
+	pf->pf_ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
+	    pf, ipl, ih_fct, ih_arg);
+	return (pf->pf_ih);
 }
 
 void
@@ -812,160 +711,12 @@ pcmcia_intr_disestablish(pf, ih)
 	struct pcmcia_function *pf;
 	void *ih;
 {
+
 	if (pf->pf_flags & PFF_ENABLED)
 		printf("pcmcia_intr_disestablish: function is enabled!\n");
+	if (!pf->pf_ih)
+		panic("pcmcia_intr_distestablish: already done\n");
 
-	/* behave differently if this is a multifunction card */
-	if (pcmcia_mfc(pf->sc)) {
-		int s, ihcnt, hiipl;
-		struct pcmcia_function *pf2;
-
-		/*
-		 * mask all the ipl's which are already used by this card,
-		 * and find the highest ipl number (lowest priority).  Skip
-		 * the current function.
-		 */
-
-		ihcnt = 0;
-		s = 0;		/* avoid compiler warning */
-		hiipl = 0;	/* avoid compiler warning */
-
-		SIMPLEQ_FOREACH(pf2, &pf->sc->card.pf_head, pf_list) {
-			if (pf2 == pf)
-				continue;
-
-			if (pf2->ih_fct) {
-				if (ihcnt == 0) {
-					hiipl = pf2->ih_ipl;
-				} else {
-					if (pf2->ih_ipl > hiipl)
-						hiipl = pf2->ih_ipl;
-				}
-				ihcnt++;
-			}
-		}
-
-		/*
-		 * If the ih being removed is lower priority than the lowest
-		 * priority remaining interrupt, up the priority.
-		 */
-
-		/* 
-		 * ihcnt is the number of interrupt handlers *not* including
-		 * the one about to be removed. 
-		 */
-
-		if (ihcnt == 0) {
-#ifdef DIAGNOSTIC
-			if (pf->sc->ih == NULL)
-				panic("disestablishing last function, but card has no ih");
-#endif
-			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
-			    pf->sc->ih);
-
-			pf->ih_fct = NULL;
-			pf->ih_arg = NULL;
-
-			pf->sc->ih = NULL;
-		} else if (pf->ih_ipl > hiipl) {
-#ifdef DIAGNOSTIC
-			if (pf->sc->ih == NULL)
-				panic("changing ih ipl, but card has no ih");
-#endif
-			/* XXX need #ifdef for splserial on x86 */
-			s = splhigh();
-
-			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
-			    pf->sc->ih);
-			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, hiipl, PCMCIA_CARD_INTR, pf->sc);
-
-			/* null out the handler for this function */
-
-			pf->ih_fct = NULL;
-			pf->ih_arg = NULL;
-
-			splx(s);
-		} else {
-			s = splhigh();
-
-			pf->ih_fct = NULL;
-			pf->ih_arg = NULL;
-
-			splx(s);
-		}
-	} else {
-		pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch, ih);
-	}
+	pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch, ih);
+	pf->pf_ih = 0;
 }
-
-int 
-pcmcia_card_intr(arg)
-	void *arg;
-{
-	struct pcmcia_softc *sc = arg;
-	struct pcmcia_function *pf;
-	int reg, ret;
-
-	ret = 0;
-
-	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
-		if ((pf->pf_flags & PFF_ENABLED) == 0 ||
-		    pf->ih_fct == NULL)
-			continue;
-		if (pf->ccr_mask & (1 << PCMCIA_CCR_STATUS)) {
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-			if (reg & PCMCIA_CCR_STATUS_INTR) {
-				ret |= (*pf->ih_fct)(pf->ih_arg);
-				if (reg & PCMCIA_CCR_STATUS_INTRACK)
-					pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
-					    reg & ~PCMCIA_CCR_STATUS_INTR);
-			}
-		} else
-			ret |= (*pf->ih_fct)(pf->ih_arg);
-	}
-
-	return (ret);
-}
-
-#ifdef PCMCIADEBUG
-int 
-pcmcia_card_intrdebug(arg)
-	void *arg;
-{
-	struct pcmcia_softc *sc = arg;
-	struct pcmcia_function *pf;
-	int reg, ret;
-
-	ret = 0;
-
-	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
-		printf("%s: intr flags=%x fct=%d cor=%02x csr=%02x pin=%02x",
-		       sc->dev.dv_xname, pf->pf_flags, pf->number,
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
-		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
-		if ((pf->pf_flags & PFF_ENABLED) == 0 ||
-		    pf->ih_fct == NULL) {
-			printf("\n");
-			continue;
-		}
-		if (pf->ccr_mask & (1 << PCMCIA_CCR_STATUS)) {
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
-			if (reg & PCMCIA_CCR_STATUS_INTR) {
-				ret |= (*pf->ih_fct)(pf->ih_arg);
-				if (reg & PCMCIA_CCR_STATUS_INTRACK) {
-					printf("; csr %02x->%02x",
-					    reg, reg & ~PCMCIA_CCR_STATUS_INTR);
-					pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS,
-					    reg & ~PCMCIA_CCR_STATUS_INTR);
-				}
-			}
-		} else
-			ret |= (*pf->ih_fct)(pf->ih_arg);
-		printf("\n");
-	}
-
-	return (ret);
-}
-#endif
