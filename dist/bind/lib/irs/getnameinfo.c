@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.1.8.2 2002/07/01 17:14:15 he Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.1.8.3 2003/11/27 17:54:38 cyber Exp $	*/
 
 /*
  * Issues to be discussed:
@@ -46,6 +46,7 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include <netdb.h>
 #include <resolv.h>

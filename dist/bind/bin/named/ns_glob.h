@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_glob.h,v 1.1.1.1.8.4 2002/07/01 17:15:11 he Exp $	*/
+/*	$NetBSD: ns_glob.h,v 1.1.1.1.8.5 2003/11/27 17:54:36 cyber Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_glob.h,v 8.58 2002/06/05 04:53:50 marka Exp
+ *	Id: ns_glob.h,v 8.59 2002/07/19 22:44:08 marka Exp
  */
 
 /*
@@ -311,6 +311,7 @@ DECL	const struct ns_sym	category_constants[]
 	{ ns_log_load,		"load" },
 	{ ns_log_resp_checks,	"response-checks" },
 	{ ns_log_control,	"control" },
+	{ ns_log_update_security, "update-security" },
 	{ 0,			NULL }
 }
 #endif
