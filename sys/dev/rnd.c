@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.15.2.1 1999/06/24 16:15:59 perry Exp $	*/
+/*	$NetBSD: rnd.c,v 1.15.2.2 1999/08/08 07:04:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -935,7 +935,7 @@ rnd_extract_data(p, len, flags)
 	int s;
 	int retval;
 
-	s = splsoftclock();
+	s = splsoftnet();
 
 #if RND_USE_EXTRACT_TIME
 	rndpool_add_uint32(&rnd_pool, rnd_timestamp(), 0);
