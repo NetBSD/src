@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: var.c,v 1.2 1993/08/01 18:11:37 mycroft Exp $";
+static char rcsid[] = "$Id: var.c,v 1.3 1994/01/13 17:18:30 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -400,7 +400,7 @@ Var_Set (name, val, ctxt)
      * to the environment (as per POSIX standard)
      */
     if (ctxt == VAR_CMD) {
-	setenv(name, val);
+	setenv(name, val, 1);
     }
 }
 
