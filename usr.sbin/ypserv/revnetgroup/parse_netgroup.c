@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_netgroup.c,v 1.2 1997/10/06 06:54:13 lukem Exp $ */
+/*	$NetBSD: parse_netgroup.c,v 1.3 2002/07/06 01:00:15 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse_netgroup.c,v 1.2 1997/10/06 06:54:13 lukem Exp $");
+__RCSID("$NetBSD: parse_netgroup.c,v 1.3 2002/07/06 01:00:15 wiz Exp $");
 #endif
 
 /*
@@ -92,8 +92,8 @@ static struct {
 
 extern struct group_entry *gtable[];
 
-static int		parse_netgrp __P((const char *));
-static struct linelist *read_for_group __P((const char *));
+static int		parse_netgrp(const char *);
+static struct linelist *read_for_group(const char *);
 
 
 /*
@@ -103,8 +103,7 @@ static struct linelist *read_for_group __P((const char *));
  * most of the work.
  */
 void
-rng_setnetgrent(group)
-	const char *group;
+rng_setnetgrent(const char *group)
 {
 	/* Sanity check */
 
@@ -129,8 +128,7 @@ rng_setnetgrent(group)
  * Get the next netgroup off the list.
  */
 int
-rng_getnetgrent(hostp, userp, domp)
-	char **hostp, **userp, **domp;
+rng_getnetgrent(char **hostp, char **userp, char **domp)
 {
 	if (nextgrp) {
 		*hostp = nextgrp->ng_str[NG_HOST];
@@ -146,7 +144,7 @@ rng_getnetgrent(hostp, userp, domp)
  * rng_endnetgrent() - cleanup
  */
 void
-rng_endnetgrent()
+rng_endnetgrent(void)
 {
 	struct linelist *lp, *olp;
 	struct netgrp *gp, *ogp;
@@ -183,8 +181,7 @@ rng_endnetgrent()
  * Parse the netgroup file setting up the linked lists.
  */
 static int
-parse_netgrp(group)
-	const char *group;
+parse_netgrp(const char *group)
 {
 	char *spos, *epos;
 	int len, strpos;
@@ -298,8 +295,7 @@ parse_netgrp(group)
  * is found. Return 1 if eof is encountered.
  */
 static struct linelist *
-read_for_group(group)
-	const char *group;
+read_for_group(const char *group)
 {
 	char *pos, *spos, *linep = NULL, *olinep = NULL;
 	int len, olen;
