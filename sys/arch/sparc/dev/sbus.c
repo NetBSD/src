@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.61 2004/06/27 18:24:47 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.62 2004/07/05 08:51:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.61 2004/06/27 18:24:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.62 2004/07/05 08:51:19 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.61 2004/06/27 18:24:47 pk Exp $");
 
 void sbusreset __P((int));
 
-static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct openprom_intr **, int *));
 static void *sbus_intr_establish __P((
@@ -382,7 +381,11 @@ sbus_attach_common(sc, busname, busnode, specials)
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
-	sbt = sbus_alloc_bustag(sc);
+	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, sc)) == NULL) {
+		printf("%s: attach: out of memory\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	sbt->sparc_intr_establish = sbus_intr_establish;
 
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
@@ -690,26 +693,6 @@ sbus_intr_establish(t, pri, level, handler, arg, fastvec)
 	ih->ih_arg = arg;
 	intr_establish(pil, level, ih, fastvec);
 	return (ih);
-}
-
-static bus_space_tag_t
-sbus_alloc_bustag(sc)
-	struct sbus_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (sbt == NULL)
-		return (NULL);
-
-	memcpy(sbt, sc->sc_bustag, sizeof(*sbt));
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
-	sbt->sparc_intr_establish = sbus_intr_establish;
-	sbt->ranges = NULL;
-	sbt->nranges = 0;
-	return (sbt);
 }
 
 int
