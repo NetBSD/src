@@ -1,4 +1,4 @@
-/*	$NetBSD: libbug.h,v 1.2 2000/07/24 18:39:41 jdolecek Exp $	*/
+/*	$NetBSD: libbug.h,v 1.3 2000/12/05 21:54:33 scw Exp $	*/
 
 /*
  * prototypes and such.   note that get/put char are in stand.h
@@ -20,4 +20,6 @@ void	mvmeprom_rtc_rd __P((struct mvmeprom_time *));
 
 extern struct mvmeprom_args bugargs;
 
-void	bugexec __P((void (*)(void)));
+extern void	_bugstart __P((void));
+extern void	bugexec __P((void (*)(void)));
+extern void _rtt(void);
