@@ -641,7 +641,7 @@ fmtfp(
        multiplying by a factor of 10 */
     fracpart = roundv((ipow10(max)) * (ufvalue - intpart));
 
-    if (fracpart >= ipow10(max)) {
+    if (fracpart >= (long)pow10(max)) {
         intpart++;
         fracpart -= (long)ipow10(max);
     }

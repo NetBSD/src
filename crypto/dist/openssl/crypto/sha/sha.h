@@ -64,6 +64,11 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#if defined(OPENSSL_FIPS)
+#define FIPS_SHA_SIZE_T unsigned long
+#endif
+
 /*
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
@@ -89,6 +94,9 @@ typedef struct SHAstate_st
 	int num;
 	} SHA_CTX;
 
+#ifdef OPENSSL_FIPS
+int private_SHA_Init(SHA_CTX *c);
+#endif
 int SHA_Init(SHA_CTX *c);
 int SHA_Update(SHA_CTX *c, const void *data, unsigned long len);
 int SHA_Final(unsigned char *md, SHA_CTX *c);
