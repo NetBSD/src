@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.8 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: poll.2,v 1.9 2001/04/25 02:19:48 simonb Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ Normal data may be written without blocking.
 .It POLLWRBAND
 Data with a non-zero priority may be written without blocking.
 .It POLLERR
-An exceptional condition has occured on the device or socket.  This
+An exceptional condition has occurred on the device or socket.  This
 flag is always checked, even if not present in the
 .Fa events
 bitmask.
@@ -135,7 +135,7 @@ will return without blocking.
 .Sh RETURN VALUES
 .Fn poll
 returns the number of descriptors that are ready for I/O, or -1 if an
-error occured.  If the time limit expires,
+error occurred.  If the time limit expires,
 .Fn poll
 returns 0.
 If
