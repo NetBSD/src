@@ -1,5 +1,13 @@
-#	$NetBSD: Makefile,v 1.7 1995/04/23 07:58:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1997/06/23 13:25:50 mrg Exp $
 
-SUBDIR=	bfd readline libiberty gdb
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax")
+SUBDIR=	bfd readline libiberty
+.endif
+
+SUBDIR=	gdb
 
 .include <bsd.subdir.mk>

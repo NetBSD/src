@@ -1,4 +1,10 @@
-# $Id: Makefile,v 1.12 1997/05/07 07:15:40 mycroft Exp $
+# $Id: Makefile,v 1.13 1997/06/23 13:25:52 mrg Exp $
+
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax")
 
 # Paths to libraries
 #
@@ -55,5 +61,10 @@ DPADD+=		$(LIBTERMCAP) $(LIBKVM)
 .if exists(arch/$(MACHINE_ARCH)/Makefile.inc)
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
 .endif
+
+.endif
+
+MAN=	gdb.1
+
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -1,9 +1,15 @@
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.2 1997/03/24 22:06:17 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/06/23 13:25:45 mrg Exp $
 
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax") || \
+	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "mips") 
 PROG=           gcc
 SRCS=	gcc.c obstack.c version.c 
-MAN=		gcc.1
 BINDIR=		/usr/bin
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) \
@@ -14,8 +20,11 @@ LDADD+=		-lgnumalloc
 DPADD+=		${LIBGNUMALLOC}
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
-MLINKS=		gcc.1 cc.1
 
 .PATH:		$(.CURDIR)/../common 
+.endif
+
+MAN=		gcc.1
+MLINKS=		gcc.1 cc.1
 
 .include <bsd.prog.mk>
