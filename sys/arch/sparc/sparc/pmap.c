@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 1997/09/27 17:58:03 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.102 1997/10/01 19:21:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3735,6 +3735,19 @@ pmap_release(pm)
 			ctx_free(pm);
 		}
 	}
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		if ((c = pm->pm_ctx) != NULL) {
+			if (pm->pm_ctxnum == 0)
+				panic("pmap_release: releasing kernel");
+			ctx_free(pm);
+		}
+		pgtfree(pm->pm_reg_ptps, SRMMU_L1SIZE * sizeof(int));
+		pm->pm_reg_ptps = NULL;
+		pm->pm_reg_ptps_pa = 0;
+	}
+#endif
 	splx(s);
 
 #ifdef DEBUG
@@ -3763,19 +3776,9 @@ if (pmapdebug) {
 	}
 }
 #endif
+
 	if (pm->pm_regstore)
 		free(pm->pm_regstore, M_VMPMAP);
-
-	if (CPU_ISSUN4M) {
-		if ((c = pm->pm_ctx) != NULL) {
-			if (pm->pm_ctxnum == 0)
-				panic("pmap_release: releasing kernel");
-			ctx_free(pm);
-		}
-		pgtfree(pm->pm_reg_ptps, SRMMU_L1SIZE * sizeof(int));
-		pm->pm_reg_ptps = NULL;
-		pm->pm_reg_ptps_pa = 0;
-	}
 }
 
 /*
