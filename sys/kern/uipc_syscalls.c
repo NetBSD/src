@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.38 1998/08/04 19:48:35 kleink Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.39 1998/11/26 02:25:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -386,20 +386,19 @@ sys_sendmsg(p, v, retval)
 	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof(msg));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > IOV_MAX)
+	if (msg.msg_iovlen > UIO_SMALLIOV) {
+		if (msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		       M_WAITOK);
-	} else if ((u_int)msg.msg_iovlen > 0)
+		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
+	} else
 		iov = aiov;
-	else
-		return (EMSGSIZE);
-	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
-	if (error)
-		goto done;
+	if (msg.msg_iovlen > 0) {
+		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
+		if (error)
+			goto done;
+	}
 	msg.msg_iov = iov;
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
@@ -583,27 +582,26 @@ sys_recvmsg(p, v, retval)
 		       sizeof(msg));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > IOV_MAX)
+	if (msg.msg_iovlen > UIO_SMALLIOV) {
+		if (msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		       M_WAITOK);
-	} else if ((u_int)msg.msg_iovlen > 0)
+		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
+	} else
 		iov = aiov;
-	else
-		return (EMSGSIZE);
+	if (msg.msg_iovlen > 0) {
+		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
+		if (error)
+			goto done;
+	}
+	uiov = msg.msg_iov;
+	msg.msg_iov = iov;
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
 #else
 	msg.msg_flags = SCARG(uap, flags);
 #endif
-	uiov = msg.msg_iov;
-	msg.msg_iov = iov;
-	error = copyin((caddr_t)uiov, (caddr_t)iov,
-	    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
-	if (error)
-		goto done;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
 		msg.msg_iov = uiov;
 		error = copyout((caddr_t)&msg, (caddr_t)SCARG(uap, msg),
