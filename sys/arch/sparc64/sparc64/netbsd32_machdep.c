@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15 2001/06/06 21:39:50 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.16 2001/06/07 17:54:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -44,14 +44,20 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
+#include <sys/select.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#include <machine/vuid_event.h>
 #include <machine/netbsd32_machdep.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <dev/sun/event_var.h>
+
+int ev_out32 __P((struct firm_event *, int, struct uio *));
 
 /*
  * Set up registers on exec.
@@ -75,9 +81,11 @@ netbsd32_setregs(p, pack, stack)
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
 
-	/* Setup the coredump32 hook */
+	/* Setup the coredump32 and ev_out32 hook's */
 	if (coredump32_hook == NULL)
 		coredump32_hook = coredump32;
+	if (ev_out32_hook == NULL)
+		ev_out32_hook = ev_out32;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -596,4 +604,27 @@ cpu_coredump32(p, vp, cred, chdr)
 		chdr->c_nseg++;
 
 	return error;
+}
+
+/*
+ * Write out a series of 32-bit firm_events.
+ */
+int
+ev_out32(e, n, uio)
+	struct firm_event *e;
+	int n;
+	struct uio *uio;
+{
+	struct firm_event32 e32;
+	int error = 0;
+
+	while (n-- && error == 0) {
+		e32.id = e->id;
+		e32.value = e->value;
+		e32.time.tv_sec = e->time.tv_sec;
+		e32.time.tv_usec = e->time.tv_usec;
+		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		e++;
+	}
+	return (error);
 }
