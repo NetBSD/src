@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2002/08/06 06:14:38 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2002/08/07 19:04:05 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1384,7 +1384,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
 	 */
-#ifndef MULTIPROCESSOR
+#if !defined(MULTIPROCESSOR) && 0 /* disable for now */
 	/* XXX more is needed for MP */
 	if (pg != NULL)
 		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
