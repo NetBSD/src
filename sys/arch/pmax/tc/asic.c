@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.3 1995/08/18 10:15:09 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.4 1995/08/29 09:43:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -96,7 +96,9 @@ struct asic_slot *asic_slots;
 
 #include "ds-asic-conf.c"
 
-#else	/*!pmax*/
+#endif
+
+#ifdef alpha
 struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
 
 {
@@ -111,7 +113,7 @@ struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
 	{ { "AMD79c30",		/* XXX */ 4, 0x00240000, },
 	    0 /* XXX */, asic_intrnull, (void *)(long)ASIC_SLOT_ISDN, },
 };
-#endif	/*!pmax*/
+#endif	/*alpha*/
 
 caddr_t asic_base;		/* XXX XXX XXX */
 
@@ -271,8 +273,10 @@ asic_intr_establish(ca, handler, val)
 {
 
 #ifdef DIAGNOSTIC
+#ifdef alpha	/*XXX*/
 	if (ca->ca_slot == ASIC_SLOT_RTC)
 		panic("setting clock interrupt incorrectly");
+#endif /*alpha*/
 #endif	/*DIAGNOSTIC*/
 
 	/* XXX SHOULD NOT BE THIS LITERAL */
