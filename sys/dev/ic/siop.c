@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37.2.11 2001/04/03 15:30:41 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.37.2.12 2001/04/03 15:32:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1120,6 +1120,11 @@ siop_handle_reset(sc)
 	printf("%s: scsi bus reset\n", sc->sc_dev.dv_xname);
 	/* stop, reset and restart the chip */
 	siop_reset(sc);
+	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
+		/* chip has been reset, all slots are free now */
+		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
+		scsipi_channel_thaw(&sc->sc_chan, 1);
+	}
 	/*
 	 * Process all commands: first commmands being executed
 	 */
