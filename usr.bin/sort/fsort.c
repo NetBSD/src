@@ -1,3 +1,5 @@
+/*	$NetBSD: fsort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +36,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 /*
  * Read in the next bin.  If it fits in one segment sort it;
  * otherwise refine it by segment deeper by one character,
@@ -48,10 +46,16 @@ static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #include "sort.h"
 #include "fsort.h"
 
+#ifndef lint
+__RCSID("$NetBSD: fsort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
+
 #include <stdlib.h>
 #include <string.h>
 
-u_char **keylist = 0, *buffer = 0, *linebuf = 0;
+const u_char **keylist = 0;
+u_char *buffer = 0, *linebuf = 0;
 struct tempfile fstack[MAXFCT];
 extern char *toutpath;
 #define FSORTMAX 4
@@ -64,7 +68,8 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 	FILE *outfd;
 	register struct field *ftbl;
 {
-	register u_char *bufend, **keypos, *tmpbuf;
+	register const u_char **keypos;
+	register u_char *bufend, *tmpbuf;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	register int c, nelem;
@@ -238,19 +243,19 @@ fsort(binno, depth, infiles, nfiles, outfd, ftbl)
 #define swap(a, b, t) t = a, a = b, b = t
 void
 onepass(a, depth, n, sizes, tr, fd)
-	u_char **a;
+	const u_char **a;
 	int depth;
 	long n, sizes[];
 	u_char *tr;
 	FILE *fd;
 {
 	long tsizes[NBINS+1];
-	u_char **bin[257], **top[256], ***bp, ***bpmax, ***tp;
-	static histo[256];
+	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;
+	static int histo[256];
 	int *hp;
 	register int c;
-	u_char **an, *t, **aj;
-	register u_char **ak, *r;
+	const u_char **an, *t, **aj;
+	register const u_char **ak, *r;
 
 	memset(tsizes, 0, sizeof(tsizes));
 	depth += sizeof(TRECHEADER);

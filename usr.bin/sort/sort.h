@@ -1,3 +1,5 @@
+/*	$NetBSD: sort.h,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,7 +72,7 @@
 
 #define	FCLOSE(file) {							\
 	if (EOF == fclose(file))					\
-		err(2, "%s", file);					\
+		err(2, "%p", file);					\
 }
 
 #define	EWRITE(ptr, size, n, f) {					\

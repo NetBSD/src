@@ -1,3 +1,5 @@
+/*	$NetBSD: fields.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,13 +36,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 /* Subroutines to generate sort keys. */
 
 #include "sort.h"
+
+#ifndef lint
+__RCSID("$NetBSD: fields.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
 
 #define blancmange(ptr) {					\
 	if (BLANK & d_mask[*(ptr)])				\
