@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.3 2000/10/21 07:27:42 takemura Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.4 2000/10/22 10:42:31 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -369,11 +369,12 @@ __hpckbd_input(arg, flag, scancode)
 		
 		if (scancode == hc->hc_special[KEY_SPECIAL_OFF])
 			printf("off button\n");
-		else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT])
+		else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
+			static int onoff; /* XXX -uch */
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
 					 CONFIG_HOOK_BUTTONEVENT_LIGHT, 
-					 0);
-		else 
+					 (void *)(onoff ^= 1));
+		} else 
 			printf("unknown special key %d\n", scancode);
 		
 		return (0);

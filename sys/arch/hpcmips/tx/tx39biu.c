@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.3 1999/12/26 17:06:02 uch Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.4 2000/10/22 10:42:32 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -69,7 +69,7 @@ tx39biu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return ATTACH_NORMAL;
 }
 
 void

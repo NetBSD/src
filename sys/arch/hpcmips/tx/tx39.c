@@ -1,7 +1,11 @@
-/*	$NetBSD: tx39.c,v 1.19 2000/07/27 17:29:05 cgd Exp $ */
+/*	$NetBSD: tx39.c,v 1.20 2000/10/22 10:42:32 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,19 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_tx39_debug.h"
@@ -69,8 +79,8 @@
 #include <hpcmips/dev/tc5165bufvar.h>
 #endif
 
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
+extern unsigned nullclkread(void);
+extern unsigned (*clkread)(void);
 
 struct tx_chipset_tag tx_chipset;
 
@@ -78,21 +88,20 @@ struct tx_chipset_tag tx_chipset;
 u_int32_t tx39debugflag;
 #endif
 
-void	tx_init __P((void));
-int	tx39icu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void	tx39clock_cpuspeed __P((int*, int*));
+void	tx_init(void);
+int	tx39icu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	tx39clock_cpuspeed(int*, int*);
 
 /* TX39-specific initialization vector */
-void	tx_os_init __P((void));
-void	tx_bus_reset __P((void));
-void	tx_cons_init __P((void));
-void	tx_device_register __P((struct device *, void *));
-void    tx_fb_init __P((caddr_t*));
-void    tx_mem_init __P((paddr_t));
-void	tx_find_dram __P((paddr_t, paddr_t));
-void	tx_reboot __P((int howto, char *bootstr));
-int	tx_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, 
-		     u_int32_t causeReg));
+void	tx_os_init(void);
+void	tx_bus_reset(void);
+void	tx_cons_init(void);
+void	tx_device_register(struct device *, void *);
+void    tx_fb_init(caddr_t*);
+void    tx_mem_init(paddr_t);
+void	tx_find_dram(paddr_t, paddr_t);
+void	tx_reboot(int, char *);
+int	tx_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
@@ -129,6 +138,7 @@ tx_init()
 
 		sprintf(cpu_name, "TOSHIBA TMPR3912 %d.%02d MHz",
 			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
+		tc->tc_chipset = __TX391X;
 		break;
 	case TMPR3922:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
@@ -137,6 +147,7 @@ tx_init()
 		sprintf(cpu_name, "TOSHIBA TMPR3922 rev. %x.%x "
 			"%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
 			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
+		tc->tc_chipset = __TX392X;
 		break;
 	}
 }
@@ -275,7 +286,7 @@ void
 tx_cons_init()
 {
 	int slot;
-#define CONSPLATIDMATCH(p) \
+#define CONSPLATIDMATCH(p)						\
 	platid_match(&platid, &platid_mask_MACH_##p)
 
 #ifdef SERIALCONSSLOT
@@ -333,13 +344,7 @@ tx_conf_register_intr(t, intrt)
 	tx_chipset_tag_t t;
 	void *intrt;
 {
-	if (tx_chipset.tc_intrt) {
-		panic("duplicate intrt");
-	}
-
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
+	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_intrt = intrt;
 }
@@ -349,13 +354,7 @@ tx_conf_register_power(t, powert)
 	tx_chipset_tag_t t;
 	void *powert;
 {
-	if (tx_chipset.tc_powert) {
-		panic("duplicate powert");
-	}
-
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
+	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_powert = powert;
 }
@@ -365,13 +364,7 @@ tx_conf_register_clock(t, clockt)
 	tx_chipset_tag_t t;
 	void *clockt;
 {
-	if (tx_chipset.tc_clockt) {
-		panic("duplicate clockt");
-	}
-
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
+	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_clockt = clockt;
 }
@@ -381,27 +374,18 @@ tx_conf_register_sound(t, soundt)
 	tx_chipset_tag_t t;
 	void *soundt;
 {
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
+	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_soundt = soundt;
 }
 
 void
-tx_conf_register_ioman(t, iomant)
-	tx_chipset_tag_t t;
-	void *iomant;
+tx_conf_register_ioman(tx_chipset_tag_t t, struct txio_ops *ops)
 {
-	if (tx_chipset.tc_iomant) {
-		panic("duplicate iomant");
-	}
+	KASSERT(t == &tx_chipset);
+	KASSERT(ops);
 
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
-
-	tx_chipset.tc_iomant = iomant;
+	tx_chipset.tc_ioops[ops->_group] = ops;
 }
 
 void
@@ -409,37 +393,10 @@ tx_conf_register_video(t, videot)
 	tx_chipset_tag_t t;
 	void *videot;
 {
-	if (t != &tx_chipset) {
-		panic("bogus tx_chipset_tag");
-	}
+	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_videot = videot;
 }
-
-#ifdef TX39_PREFER_FUNCTION
-tx_chipset_tag_t
-tx_conf_get_tag()
-{
-	return (tx_chipset_tag_t)&tx_chipset;
-}
-
-txreg_t
-tx_conf_read(t, reg)
-	tx_chipset_tag_t t;
-	int reg;
-{
-	return *((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg));
-}
-
-void
-tx_conf_write(t, reg, val)
-	tx_chipset_tag_t t;
-	int reg;
-	txreg_t val;
-{
-	*((volatile txreg_t*)(TX39_SYSADDR_CONFIG_REG_KSEG1 + reg)) = val;
-}
-#endif /* TX39_PREFER_FUNCTION */
 
 int
 __is_set_print(reg, mask, name)

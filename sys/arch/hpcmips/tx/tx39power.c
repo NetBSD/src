@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.7 2000/10/04 13:53:56 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.8 2000/10/22 10:42:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,8 @@
  */
 
 #include "opt_tx39_debug.h"
-#include "opt_tx39powerdebug.h"
+//#include "opt_tx39powerdebug.h"
+#define TX39POWERDEBUG 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +51,17 @@
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39powerreg.h>
-#include <hpcmips/tx/tx39spireg.h>
+
+#ifdef TX39POWERDEBUG
+int	tx39power_debug = 1;
+#define	DPRINTF(arg)		if (tx39power_debug) printf arg;
+#define	DPRINTFN(n, arg)	if (tx39power_debug > (n)) printf arg;
+#define DUMP_REGS(x)		__tx39power_dump(x)
+#else
+#define	DPRINTF(arg)		((void)0)
+#define DPRINTFN(n, arg)	((void)0)
+#define DUMP_REGS(x)		((void)0)
+#endif
 
 #define ISSET(x, v)		((x) & (v))
 #define ISSETPRINT(r, m)	__is_set_print(r, TX39_POWERCTRL_##m, #m)
@@ -79,13 +90,13 @@ static int tx39power_ok_intr_n(void *);
 static int tx39power_button_intr_p(void *);
 static int tx39power_button_intr_n(void *);
 #ifdef TX39POWERDEBUG
-static void tx39power_dump(struct tx39power_softc *);
+static void __tx39power_dump(struct tx39power_softc *);
 #endif
 
 int
 tx39power_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 2; /* 1st attach group of txsim */
+	return ATTACH_FIRST;
 }
 
 void
@@ -100,42 +111,38 @@ tx39power_attach(struct device *parent, struct device *self, void *aux)
 	tx_conf_register_power(tc, self);
 
 	printf("\n");
-#ifdef TX39POWERDEBUG
-	__tx39power_dump (sc);
-#endif
-	/* 
-	 *	Disable SPI module 
-	 */
-	reg = tx_conf_read(tc, TX39_SPICTRL_REG);
-	if (ISSET(reg, TX39_SPICTRL_ENSPI)) {
-		reg &= ~TX39_SPICTRL_ENSPI;
-	}
-	printf("SPI module disabled\n");
+	DUMP_REGS(sc);
 
-	/*
-	 * enable stop timer
-	 */
+	/* power button setting */
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
-
+	reg |= TX39_POWERCTRL_DBNCONBUTN;
+	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
+	
+	/* enable stop timer */
+	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	reg &= ~(TX39_POWERCTRL_STPTIMERVAL_MASK <<
 		 TX39_POWERCTRL_STPTIMERVAL_SHIFT);
-	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg, 1);
-
+	reg = TX39_POWERCTRL_STPTIMERVAL_SET(reg,
+					     TX39_POWERCTRL_STPTIMERVAL_MAX);
 	reg |= TX39_POWERCTRL_ENSTPTIMER;
 	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
 
+	/* install power event handler */
+	/* low priority */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWRINT),
 			  IST_EDGE, IPL_CLOCK, 
 			  tx39power_intr_p, sc);
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWRINT),
 			  IST_EDGE, IPL_CLOCK,			    
 			  tx39power_intr_n, sc);
+	/* high priority */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWROKINT),
 			  IST_EDGE, IPL_CLOCK, 
 			  tx39power_ok_intr_p, sc);
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_NEGPWROKINT),
 			  IST_EDGE, IPL_CLOCK,			    
 			  tx39power_ok_intr_n, sc);
+	/* user driven event */
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSONBUTNINT),
 			  IST_EDGE, IPL_CLOCK,
 			  tx39power_button_intr_p, sc);
@@ -155,9 +162,6 @@ tx39power_suspend_cpu() /* I assume already splhigh */
 	__asm__ __volatile__(".set noreorder");
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	reg |= TX39_POWERCTRL_STOPCPU;
-#ifdef TX392X
-	reg |= TX39_POWERCTRL_WARMSTART;
-#endif
 	/* save interrupt state */
 	iregs[0] = tx_conf_read(tc, TX39_INTRENABLE6_REG);
 	iregs[1] = tx_conf_read(tc, TX39_INTRENABLE1_REG);
@@ -191,6 +195,12 @@ tx39power_suspend_cpu() /* I assume already splhigh */
 	/* wait until power button pressed */
 	/* clear interrupt */
 	tx_conf_write(tc, TX39_INTRCLEAR5_REG, TX39_INTRSTATUS5_NEGONBUTNINT);
+#ifdef TX392X
+	/* Clear WARMSTART bit to reset vector(0xbfc00000) work correctly */
+	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
+	reg &= ~TX39_POWERCTRL_WARMSTART;
+	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
+#endif
 
 	/* restore interrupt state */
 	tx_conf_write(tc, TX39_INTRENABLE6_REG, iregs[0]);
@@ -223,27 +233,34 @@ tx39power_button_intr_n(void *arg)
 	config_hook_call(CONFIG_HOOK_BUTTONEVENT,
 			 CONFIG_HOOK_BUTTONEVENT_POWER,
 			 (void *)0 /* off */);
+	DUMP_REGS(arg);
 	return 0;
 }
 
 int
 tx39power_intr_p(void *arg)
 {
+	/* low priority event */
 	printf("power_p\n");
+	DUMP_REGS(arg);
 	return 0;
 }
 
 static int
 tx39power_intr_n(void *arg)
 {
+	/* low priority event */
 	printf("power_n\n");
+	DUMP_REGS(arg);
 	return 0;
 }
 
 static int
 tx39power_ok_intr_p(void *arg)
 {
+	/* high priority event */
 	printf("power NG\n");
+	DUMP_REGS(arg);
 	config_hook_call(CONFIG_HOOK_PMEVENT,
 			 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
 	return 0;
@@ -252,7 +269,9 @@ tx39power_ok_intr_p(void *arg)
 static int
 tx39power_ok_intr_n(void *arg)
 {
+	/* high priority event */
 	printf("power OK\n");
+	DUMP_REGS(arg);
 	return 0;
 }
 
@@ -261,6 +280,7 @@ static void
 __tx39power_dump (struct tx39power_softc *sc)
 {
 	tx_chipset_tag_t tc = sc->sc_tc;
+	txreg_t reg;
 
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	ISSETPRINT(reg, ONBUTN);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.41 2000/10/17 11:37:23 sato Exp $
+#	$NetBSD: files.hpcmips,v 1.42 2000/10/22 10:42:31 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -203,18 +203,17 @@ defopt TX39_WATCHDOGTIMER
 defopt TX39ICUDEBUG
 defopt TX39CLKDEBUG
 defopt TX39BIUDEBUG
-defopt TX39IODEBUG
 defopt TX39POWERDEBUG
 defopt TX39UARTDEBUG
 defopt USE_POLL
 
-device txsim { }
+device txsim {[platform = -1]}
 device txcsbusif {[platform = -1]}
 device txcomif {[slot = -1]}
 device txsibif {[slot = -1]}
 device ucbif { }
 device irif { }
-device txiomanif {[platform = -1]}
+device txiomanif {[evtype = -1], [id = -1], [group = -1], [port = -1], [edge = -1], [initial = -1]}
 
 attach txsim at mainbus
 file arch/hpcmips/tx/txsim.c		txsim
@@ -244,13 +243,21 @@ device tx3912video: hpcfbif
 attach tx3912video at txsim
 file arch/hpcmips/tx/tx3912video.c	tx3912video
 
-device tx39io: txiomanif
+device tx39io
 attach tx39io at txsim
 file arch/hpcmips/tx/tx39io.c		tx39io
 
-device txioman
-attach txioman at txiomanif
+device txioman: txiomanif
+attach txioman at txsim
 file arch/hpcmips/tx/txioman.c		txioman
+
+device txin
+attach txin at txiomanif
+file arch/hpcmips/tx/txioman_in.c	txin
+
+device txout
+attach txout at txiomanif
+file arch/hpcmips/tx/txioman_out.c	txout
 
 device tx39sib: txsibif
 attach tx39sib at txsim
@@ -269,13 +276,9 @@ device ucbsnd
 attach ucbsnd at ucbif
 file arch/hpcmips/dev/ucbsnd.c		ucbsnd		needs-flag
 
-device ucbio: newgpbusif
+device ucbio
 attach ucbio at ucbif
 file arch/hpcmips/dev/ucbio.c		ucbio
-
-device ucbioport
-attach ucbioport at newgpbusif
-file arch/hpcmips/dev/ucbioport.c	ucbioport
 
 device tx39uart: txcomif
 attach tx39uart at txsim
@@ -292,7 +295,7 @@ file arch/hpcmips/tx/tx39ir.c		tx39ir
 #	ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
 device it8368e: pcmciabus
 attach it8368e at txcsbus
-file arch/hpcmips/dev/it8368.c	it8368e
+file arch/hpcmips/dev/it8368.c		it8368e
 
 #	MITUBISHI M38813 keryboard controller
 device m38813c: hpckbdif
