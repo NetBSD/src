@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.21 2002/05/14 23:33:08 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.21.2.1 2002/05/30 08:49:11 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -976,6 +976,19 @@ main(int ac, char **av)
 		}
 	}
 
+	if (use_privsep) {
+		struct passwd *pw;
+		struct stat st;
+
+		if ((pw = getpwnam(SSH_PRIVSEP_USER)) == NULL)
+			fatal("Privilege separation user %s does not exist",
+			    SSH_PRIVSEP_USER);
+		if ((stat(_PATH_PRIVSEP_CHROOT_DIR, &st) == -1) ||
+		    (S_ISDIR(st.st_mode) == 0))
+			fatal("Missing privilege separation directory: %s",
+			    _PATH_PRIVSEP_CHROOT_DIR);
+	}
+
 	/* Configuration looks good, so exit if in test mode. */
 	if (test_flag)
 		exit(0);
@@ -1375,7 +1388,7 @@ main(int ac, char **av)
 	sshd_exchange_identification(sock_in, sock_out);
 	/*
 	 * Check that the connection comes from a privileged port.
-	 * Rhosts-Authentication only makes sense from priviledged
+	 * Rhosts-Authentication only makes sense from privileged
 	 * programs.  Of course, if the intruder has root access on his local
 	 * machine, he can connect from any port.  So do not use these
 	 * authentication methods from machines that you do not trust.
@@ -1680,7 +1693,7 @@ do_ssh1_kex(void)
 
 	debug("Received session key; encryption turned on.");
 
-	/* Send an acknowledgement packet.  Note that this packet is sent encrypted. */
+	/* Send an acknowledgment packet.  Note that this packet is sent encrypted. */
 	packet_start(SSH_SMSG_SUCCESS);
 	packet_send();
 	packet_write_wait();
