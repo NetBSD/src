@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.12 1993/06/07 19:52:32 cgd Exp $
+#	$Id: files.oldconf,v 1.13 1993/06/16 22:06:33 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -26,7 +26,6 @@ kern/dead_vnops.c	standard
 kern/fifo_vnops.c	optional fifo
 kern/init_main.c	standard
 kern/init_sysent.c	standard
-kern/kern__physio.c	standard
 kern/kern_acct.c	standard
 kern/kern_clock.c	standard
 kern/kern_descrip.c	standard
@@ -37,6 +36,7 @@ kern/kern_kinfo.c	standard
 kern/kern_ktrace.c	optional ktrace
 kern/kern_lkm.c		optional lkm
 kern/kern_malloc.c	standard
+kern/kern_physio.c	standard
 kern/kern_proc.c	standard
 kern/kern_prot.c	standard
 kern/kern_resource.c	standard
