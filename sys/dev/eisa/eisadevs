@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.13 1997/02/17 00:06:17 jonathan Exp $
+$NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -42,6 +42,7 @@ vendor DEC		Digital Equipment
 vendor FSI		FORE Systems
 vendor INT		Intel
 vendor ETI		Microdyne
+vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
 
@@ -93,6 +94,9 @@ product	TCM 5970 	3C597 Fast Etherlink TX
 product	TCM 5971 	3C597 Fast Etherlink T4 
 product	TCM 5972 	3C597 Fast Etherlink MII 
 
+/* Standard Microsystems (SMC) */
+product SMC 8010	Ethercard Elite32C Ultra
+product SMC 0110	Elite32 Ethernet
 
 /* UltraStor products */
 product USC 0240	24f SCSI
