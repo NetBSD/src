@@ -4,6 +4,9 @@
 #ifdef IN_GCC
 #include "gansidecl.h"
 #endif
+#ifdef IN_GCC 
+#include "arm/xm-netbsd.h"  
+#endif  
 #ifdef IN_GCC
 #include "arm/xm-arm.h"
 #endif
