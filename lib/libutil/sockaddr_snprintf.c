@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.2 2004/11/19 22:05:23 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.3 2004/12/11 06:41:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.2 2004/11/19 22:05:23 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.3 2004/12/11 06:41:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -111,8 +111,8 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 		return -1;
 	}
 
-	if (a && getnameinfo(sa, sa->sa_len, addr = abuf, sizeof(abuf),
-	    NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+	if (a && getnameinfo(sa, (socklen_t)sa->sa_len, addr = abuf,
+	    sizeof(abuf), NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
 		return -1;
 
 	for (ptr = fmt; *ptr; ptr++) {

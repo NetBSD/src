@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.3 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.4 2004/12/11 06:41:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.3 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.4 2004/12/11 06:41:16 christos Exp $");
 #endif
 
 /*
@@ -58,7 +58,8 @@ snprintb(buf, buflen, bitfmt, val)
 	const char *bitfmt;
 	uint64_t val;
 {
-	char *bp = buf, *sbase;
+	char *bp = buf;
+	const char *sbase;
 	int bit, ch, len, sep, flen;
 	uint64_t field;
 

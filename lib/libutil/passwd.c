@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.36 2004/08/03 23:29:05 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.37 2004/12/11 06:41:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.36 2004/08/03 23:29:05 thorpej Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.37 2004/12/11 06:41:15 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -161,7 +161,7 @@ pw_mkdb(username, secureonly)
 
 		args[i++] = pw_filename(_PATH_MASTERPASSWD_LOCK);
 		args[i] = NULL;
-		execv(_PATH_PWD_MKDB, (char * const *)args);
+		execv(_PATH_PWD_MKDB, (char * const *)__UNCONST(args));
 		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
@@ -224,8 +224,9 @@ void
 pw_edit(int notsetuid, const char *filename)
 {
 	int pstat;
-	char *p, *editor;
-	char *argp[] = { "sh", "-c", NULL, NULL };
+	char *p;
+	const char *editor;
+	const char *argp[] = { "sh", "-c", NULL, NULL };
 
 #ifdef __GNUC__
 	(void) &editor;
@@ -257,7 +258,7 @@ pw_edit(int notsetuid, const char *filename)
 			setgid(getgid());
 			setuid(getuid());
 		}
-		execvp(_PATH_BSHELL, argp);
+		execvp(_PATH_BSHELL, (char *const *)__UNCONST(argp));
 		_exit(1);
 	}
 

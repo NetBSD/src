@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.46 2004/11/20 03:06:09 christos Exp $
+#	$NetBSD: Makefile,v 1.47 2004/12/11 06:41:15 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
 
+WARNS=3
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS
 SRCS=	getbootfile.c getlabelsector.c getmaxpartitions.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.16 2004/03/29 11:52:39 wiz Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.17 2004/12/11 06:41:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ttyaction.c,v 1.16 2004/03/29 11:52:39 wiz Exp $");
+__RCSID("$NetBSD: ttyaction.c,v 1.17 2004/12/11 06:41:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -66,16 +66,16 @@ __RCSID("$NetBSD: ttyaction.c,v 1.16 2004/03/29 11:52:39 wiz Exp $");
 #define _PATH_TTYACTION "/etc/ttyaction"
 #endif
 
-static char *actfile = _PATH_TTYACTION;
-static char *pathenv = "PATH=" _PATH_STDPATH;
+static const char *actfile = _PATH_TTYACTION;
+static const char *pathenv = "PATH=" _PATH_STDPATH;
 
 int
 ttyaction(const char *tty, const char *act, const char *user)
 {
 	FILE *fp;
 	char *p1, *p2;
-	char *argv[4];
-	char *envp[8];
+	const char *argv[4];
+	const char *envp[8];
 	char *lastp;
 	char line[1024];
 	char env_tty[64];
@@ -141,7 +141,9 @@ ttyaction(const char *tty, const char *act, const char *user)
 		}
 		if (pid == 0) {
 			/* This is the child. */
-			error = execve(argv[0], argv, envp);
+			error = execve(argv[0], 
+			    (char *const *)__UNCONST(argv),
+			    (char *const *)__UNCONST(envp));
 			/* If we get here, it is an error. */
 			warnx("%s: line %d: exec failed: %s",
 				  actfile, linenum, strerror(errno));
