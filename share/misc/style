@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $ */
+/* $NetBSD: style,v 1.21 2003/02/23 14:58:50 jhawk Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.20 2001/10/23 18:51:05 kleink Exp $");
+__RCSID("$NetBSD: style,v 1.21 2003/02/23 14:58:50 jhawk Exp $");
 #endif /* !__lint */
 
 /*
@@ -115,6 +115,8 @@ int main(int, char *[]);
 
 /*
  * Macros are capitalized, parenthesized, and should avoid side-effects.
+ * Use one TAB between #define and the macro name; spacing after the macro
+ * name may be any whitespace, as appropriate.
  * If they are an inline expansion of a function, the function is defined
  * all in lowercase, the macro has the same name all in uppercase.
  * If the macro is an expression, wrap the expression in parenthesis.
