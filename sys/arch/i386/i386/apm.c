@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.17 1996/11/14 12:39:55 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.18 1996/11/22 00:19:07 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -399,7 +399,7 @@ struct apmregs *regs;
 		DPRINTF(("power status change\n"));
 		error = apm_get_powstat(&nregs);
 		/* only print if nobody is catching events. */
-		if (error == 0 && (sc->sc_flags & SCFLAG_OREAD) == 0)
+		if (error == 0 && (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
 			apm_power_print(sc, &nregs);
 		apm_record_event(sc, regs->bx);
 		break;
@@ -637,6 +637,39 @@ int apm_bogus_bios = 0;
 #define I386_FLAGBITS "\020\017NT\014OVFL\0130UP\012IEN\011TF\010NF\007ZF\005AF\003PF\001CY"
 
 int
+apm_busprobe()
+{
+	struct apmregs regs;
+/* XXX the DPRINTF() conditional */
+#if defined(DEBUG) || defined(APMDEBUG)
+	char bits[128];
+#endif
+
+	regs.ax = APM_BIOS_FN(APM_INSTALLATION_CHECK);
+	regs.bx = APM_DEV_APM_BIOS;
+	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	bioscall(APM_SYSTEM_BIOS, &regs);
+	DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
+		 regs.ax, regs.bx, regs.cx, regs.dx,
+		 bitmask_snprintf(regs.flags, I386_FLAGBITS,
+				  bits, sizeof(bits)), regs.si, regs.di));
+
+	if (regs.flags & PSL_C) {
+		DPRINTF(("apm: carry set means no APM bios\n"));
+		return 0;	/* no carry -> not installed */
+	}
+	if (regs.bx != APM_INSTALL_SIGNATURE) {
+		DPRINTF(("apm: PM signature not found\n"));
+		return 0;
+	}
+	if ((regs.cx & APM_32BIT_SUPPORT) == 0) {
+		DPRINTF(("apm: no 32bit support\n"));
+		return 0;
+	}
+	return 1;  /* OK to continue probe & complain if something fails */
+}
+
+int
 apmprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -663,20 +696,6 @@ apmprobe(parent, match, aux)
 			 regs.ax, regs.bx, regs.cx, regs.dx,
 			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
 			 bits, sizeof(bits)), regs.si, regs.di));
-
-		if (regs.flags & PSL_C) {
-			DPRINTF(("apm: carry set means no APM bios\n"));
-			return 0;	/* no carry -> not installed */
-		}
-
-		if (regs.bx != APM_INSTALL_SIGNATURE) {
-			DPRINTF(("apm: PM signature not found\n"));
-			return 0;
-		}
-		if ((regs.cx & APM_32BIT_SUPPORT) == 0) {
-			DPRINTF(("apm: no 32bit support\n"));
-			return 0;
-		}
 
 		apminfo.apm_detail = (u_int)regs.ax | ((u_int)regs.cx << 16);
 

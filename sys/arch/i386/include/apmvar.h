@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.4 1996/09/10 11:22:35 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.5 1996/11/22 00:19:09 jtk Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -246,6 +246,7 @@ extern void apm_cpu_busy __P((void));
 extern void apm_cpu_idle __P((void));
 extern void apminit __P((void));
 int apm_set_powstate __P((u_int devid, u_int powstate));
+extern int apm_busprobe __P((void));
 #endif /* _KERNEL */
 #endif /* _LOCORE */
 #endif /* __i386_apm_h__ */
