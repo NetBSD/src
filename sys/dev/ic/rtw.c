@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.34 2004/12/29 01:06:52 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.35 2004/12/29 01:13:07 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.34 2004/12/29 01:06:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.35 2004/12/29 01:13:07 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -45,12 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.34 2004/12/29 01:06:52 dyoung Exp $");
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#if 0
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/device.h>
-#endif
 #include <sys/time.h>
 #include <sys/types.h>
 
@@ -787,9 +781,6 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	/* make read_seeprom enter EEPROM read/write mode */ 
 	sd.sd_MS = ecr;
 	sd.sd_RDY = 0;
-#if 0
-	sd.sd_clkdelay = 50;
-#endif
 
 	/* TBD bus barriers */
 	if (!read_seeprom(&sd, sr->sr_content, 0, sr->sr_size/2)) {
@@ -860,39 +851,6 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	    ("%s: %s RF programming method, %#02x\n", dvname, method,
 	    RTW_READ8(regs, RTW_CONFIG4)));
 }
-
-#if 0
-static __inline int
-rtw_identify_rf(struct rtw_regs *regs, enum rtw_rftype *rftype,
-    const char *dvname)
-{
-	u_int8_t cfg4;
-	const char *name;
-
-	cfg4 = RTW_READ8(regs, RTW_CONFIG4);
-
-	switch (cfg4 & RTW_CONFIG4_RFTYPE_MASK) {
-	case RTW_CONFIG4_RFTYPE_PHILIPS:
-		*rftype = RTW_RFTYPE_PHILIPS;
-		name = "Philips";
-		break;
-	case RTW_CONFIG4_RFTYPE_INTERSIL:
-		*rftype = RTW_RFTYPE_INTERSIL;
-		name = "Intersil";
-		break;
-	case RTW_CONFIG4_RFTYPE_RFMD:
-		*rftype = RTW_RFTYPE_RFMD;
-		name = "RFMD";
-		break;
-	default:
-		name = "<unknown>";
-		return ENXIO;
-	}
-
-	printf("%s: RF prog type %s\n", dvname, name);
-	return 0;
-}
-#endif
 
 static __inline void
 rtw_init_channels(enum rtw_locale locale,
@@ -2394,9 +2352,6 @@ rtw_init(struct ifnet *ifp)
 	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
 	rtw_set_access(sc, RTW_ACCESS_NONE);
 
-#if 0
-	RTW_WRITE(regs, RTW_FEMR, RTW_FEMR_GWAKE|RTW_FEMR_WKUP|RTW_FEMR_INTR);
-#endif
 	/* XXX from reference sources */
 	RTW_WRITE(regs, RTW_FEMR, 0xffff);
 	RTW_SYNC(regs, RTW_FEMR, RTW_FEMR);
@@ -3004,7 +2959,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_AUTH:
 #if 0
 		rtw_write_bcn_thresh(sc);
-		rtw_write_ssid(sc);
 		rtw_write_sup_rates(sc);
 #endif
 		if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
@@ -3386,19 +3340,6 @@ rtw_attach(struct rtw_softc *sc)
 	struct rtw_txsoft_blk *tsb;
 	int pri, rc, vers;
 
-#if 0
-	CASSERT(RTW_DESC_ALIGNMENT % sizeof(struct rtw_txdesc) == 0,
-	    "RTW_DESC_ALIGNMENT is not a multiple of "
-	    "sizeof(struct rtw_txdesc)");
-
-	CASSERT(RTW_DESC_ALIGNMENT % sizeof(struct rtw_rxdesc) == 0,
-	    "RTW_DESC_ALIGNMENT is not a multiple of "
-	    "sizeof(struct rtw_rxdesc)");
-
-	CASSERT(RTW_DESC_ALIGNMENT % RTW_MAXPKTSEGS == 0,
-	    "RTW_DESC_ALIGNMENT is not a multiple of RTW_MAXPKTSEGS");
-#endif
-
 	NEXT_ATTACH_STATE(sc, DETACHED);
 
 	switch (RTW_READ(&sc->sc_regs, RTW_TCR) & RTW_TCR_HWVERID_MASK) {
@@ -3541,15 +3482,6 @@ rtw_attach(struct rtw_softc *sc)
 		    sc->sc_dev.dv_xname);
 		goto err;
 	}
-
-#if 0
-	if (rtw_identify_rf(&sc->sc_regs, &sc->sc_rftype,
-	    sc->sc_dev.dv_xname) != 0) {
-		printf("%s: attach failed, unknown RF unidentified\n",
-		    sc->sc_dev.dv_xname);
-		goto err;
-	}
-#endif
 
 	NEXT_ATTACH_STATE(sc, FINISH_RF_ATTACH);
 
