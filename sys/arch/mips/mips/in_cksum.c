@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 1997/07/20 22:42:45 jonathan Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 1997/07/22 07:36:18 jonathan Exp $	*/
  
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -51,17 +51,18 @@ union memptr {
 	unsigned char *c;
 };
 
-static __inline u_int32_t fastsum __P((union memptr buf, int n, u_int sum));
+static __inline u_int32_t fastsum __P((union memptr, int n, u_int sum, int odd));
 
 
 u_int32_t
-fastsum(buf, n, sum)
+fastsum(buf, n, oldsum, odd)
 	union memptr buf;
 	int n;
-	unsigned int sum;
+	unsigned int oldsum;
 {
 	unsigned long hilo = 0, high = 0;
 	unsigned long w0, w1;
+	register unsigned int sum = 0;
 
 	if (buf.u & 0x3) {
 		/* 16-bit-align. Have to do this first so short buffers done right. */
@@ -178,9 +179,22 @@ fastsum(buf, n, sum)
 	/* handle trailing byte */
 	if (n > 0)
 		sum += *buf.c;
-	
+
+	/*
+	 * compensate for a trailing byte in previous mbuf
+	 * by byteswapping the aligned sum of this mbuf.
+ 	 */
+	if (odd & 0x01) {
+		sum = (sum & 0xffff) + (sum >> 16);
+		sum = (sum & 0xffff) + (sum >> 16);
+		sum = oldsum + ((sum >> 8) & 0xff) + ((sum & 0xff) << 8);
+	} else {
 	/* add upper and lower halfwords together to get full sum */
-	sum = (sum & 0xffff) + (sum >> 16);
+		sum = oldsum + sum;
+		sum = (sum & 0xffff) + (sum >> 16);
+	}
+
+	/* fold carry from combining sums */
 	sum = (sum & 0xffff) + (sum >> 16);
 	return(sum);
 }
@@ -198,16 +212,19 @@ in_cksum(m, len)
 	register /*u_short **/ union memptr w;
 	register u_int32_t sum = 0;
 	register int mlen;
+	register int odd = 0;
 
 	for ( ; m && len; m = m->m_next) {
+
 		mlen = m->m_len;
 		if (mlen == 0)
 			continue;
 		if (mlen > len)
 			mlen = len;
-		w.s = mtod(m, u_short *);
-		sum = fastsum(w, mlen, sum);
+		w.c = mtod(m, u_char *);
+		sum = fastsum(w, mlen, sum, odd);
 		len -= mlen;
+		odd += mlen;
 	}
 	if (len != 0) {
 		printf("in_cksum: out of data, %d\n", len);
