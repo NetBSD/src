@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.7 1998/04/02 10:23:01 kleink Exp $	*/
+/*	$NetBSD: leave.c,v 1.8 1998/12/19 17:44:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.7 1998/04/02 10:23:01 kleink Exp $");
+__RCSID("$NetBSD: leave.c,v 1.8 1998/12/19 17:44:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 	}
 
 	for (hours = 0; (c = *cp) && c != '\n'; ++cp) {
-		if (!isdigit(c))
+		if (!isdigit((unsigned char)c))
 			usage();
 		hours = hours * 10 + (c - '0');
 	}
