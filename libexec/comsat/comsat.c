@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.12 1998/07/03 02:27:58 mrg Exp $	*/
+/*	$NetBSD: comsat.c,v 1.13 1998/07/04 19:38:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.12 1998/07/03 02:27:58 mrg Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.13 1998/07/04 19:38:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: comsat.c,v 1.12 1998/07/03 02:27:58 mrg Exp $");
 #include <unistd.h>
 #include <utmp.h>
 
+int	logging;
 int	debug = 0;
 #define	dsyslog	if (debug) syslog
 
@@ -91,10 +92,11 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sockaddr_in from;
-	int cc;
+	int cc, ch;
 	int fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
+	extern char *__progname;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
@@ -103,7 +105,17 @@ main(argc, argv)
 		    "comsat: getsockname: %s.\n", strerror(errno));
 		exit(1);
 	}
+
 	openlog("comsat", LOG_PID, LOG_DAEMON);
+	while ((ch = getopt(argc, argv, "l")) != -1)
+		switch (ch) {
+		case 'l':
+			logging = 1;
+			break;
+		default:
+			syslog(LOG_ERR, "usage: %s [-l]", __progname);
+			exit(1);
+		}
 	if (chdir(_PATH_MAILDIR)) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_MAILDIR);
 		(void)recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
@@ -111,7 +123,7 @@ main(argc, argv)
 	}
 	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) < 0) {
 		syslog(LOG_ERR, "open: %s: %m", _PATH_UTMP);
-		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
+		(void)recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
 	(void)time(&lastmsgtime);
@@ -241,6 +253,9 @@ notify(utp, offset)
 	    setgid(p->pw_gid) < 0 ||
 	    setuid(p->pw_uid) < 0)
 		_exit(-1);
+
+	if (logging)
+		syslog(LOG_INFO, "biff message for %s", name);
 
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
