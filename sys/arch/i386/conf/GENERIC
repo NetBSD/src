@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.515 2002/10/04 16:24:47 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.516 2002/10/05 16:02:39 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.515 $"
+#ident 		"GENERIC-$Revision: 1.516 $"
 
 maxusers	32		# estimated number of users
 
@@ -1000,6 +1000,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 # RAIDframe is broken with MULTIPROCESSOR / LOCKDEBUG
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
