@@ -1,11 +1,11 @@
-.\"	$NetBSD: pcilkm.4,v 1.1 2004/07/02 13:26:40 cube Exp $
+.\"	$NetBSD: pcilkm.4,v 1.2 2004/07/02 13:38:14 wiz Exp $
 .\"
 .\"  Copyright (c) 2004 The NetBSD Foundation.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to the NetBSD Foundation
 .\"   by Quentin Garnier.
-.\" 
+.\"
 .\"  Redistribution and use in source and binary forms, with or without
 .\"  modification, are permitted provided that the following conditions
 .\"  are met:
@@ -21,7 +21,7 @@
 .\"  4. Neither the name of The NetBSD Foundation nor the names of its
 .\"     contributors may be used to endorse or promote products derived
 .\"     from this software without specific prior written permission.
-.\" 
+.\"
 .\"  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\"  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\"  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -34,7 +34,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 2nd, 2004
+.Dd July 2, 2004
 .Dt PCILKM 4
 .Os
 .Sh NAME
@@ -116,40 +116,40 @@ function.
 Therefore,
 .Xr ksyms 4
 support is required in the kernel.
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following piece of code shows the basic skeleton of a loadable PCI
 device driver:
 .Bd -literal -offset indent -compact
-#include <sys/cdefs.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/lkm.h>
-#include <dev/pci/pcivar.h>
-#include <lkm/dev/pcilkm/pcilkm.h>
-.sp
+#include \*[Lt]sys/cdefs.h\*[Gt]
+#include \*[Lt]sys/param.h\*[Gt]
+#include \*[Lt]sys/systm.h\*[Gt]
+#include \*[Lt]sys/conf.h\*[Gt]
+#include \*[Lt]sys/device.h\*[Gt]
+#include \*[Lt]sys/lkm.h\*[Gt]
+#include \*[Lt]dev/pci/pcivar.h\*[Gt]
+#include \*[Lt]lkm/dev/pcilkm/pcilkm.h\*[Gt]
+
 static int	foo_attach(struct device *, struct cfdata *, void *);
 static void	foo_attach(struct device *, struct device *, void *);
 static int	foo_detach(struct device *, int);
-.sp
+
 MOD_MISC("foo");
 CFATTACH_DECL(foo, sizeof(struct device), foo_match,
         foo_attach, foo_detach, NULL);
 PCILKM_DECLARE(foo, DV_DULL, NULL);
-.sp
+
 static int
 foo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	...
 }
-.sp
+
 static void
 foo_attach(struct device *parent, struct device *self, void *aux)
 {
 	...
 }
-.sp
+
 static int
 foo_detach(struct device *self, int flags)
 {
@@ -157,7 +157,7 @@ foo_detach(struct device *self, int flags)
 }
 .Ed
 .Sh SEE ALSO
-.Xr autoconf 9 ,
 .Xr ksyms 4 ,
 .Xr lkm 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr autoconf 9
