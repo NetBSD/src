@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.14 1999/03/25 18:48:52 mrg Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.14.2.1 1999/04/16 16:29:09 chs Exp $	*/
 
 /*
  *
@@ -610,7 +610,7 @@ uvm_loanzero(ufi, output, flags)
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 
-		while ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL) {
+		while ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL) {
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, 
 			    ufi->entry->object.uvm_obj, NULL);
 			uvm_wait("loanzero1");
@@ -640,7 +640,7 @@ uvm_loanzero(ufi, output, flags)
 
 	/* loaning to an anon */
 	while ((anon = uvm_analloc()) == NULL || 
-	    (pg = uvm_pagealloc(NULL, 0, anon)) == NULL) {
+	    (pg = uvm_pagealloc(NULL, 0, anon, 0)) == NULL) {
 		
 		/* unlock everything */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
