@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.25 2000/08/30 23:51:49 jhawk Exp $
+# $NetBSD: Makefile,v 1.26 2002/02/06 23:29:42 ross Exp $
 
 .include "../../../Makefile.inc"
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
 
-TARGETS=	bin.tar.gz etc.tar.gz x11.tar.gz diskimage.gz
+LOCALTARGETS=	bin.tar.gz etc.tar.gz x11.tar.gz diskimage.gz
 
 .if !defined(DESTDIR) || !defined(DESTDISK)
 all:
@@ -18,7 +18,7 @@ KERNEL?= ${KERNOBJDIR}/GENERIC/netbsd
 SECPERCYL=	343
 CYLS=		1189
 
-all: ${TARGETS}
+all: ${LOCALTARGETS}
 
 mount-fs:
 	disklabel -W ${DESTDISK}
@@ -98,7 +98,7 @@ x11.tar.gz: mount-fs build-fs
 
 # clean dependencies in case somebody decides to shortcut the build.
 clean cleandir distclean:
-	/bin/rm -f ${TARGETS}
+	/bin/rm -f ${LOCALTARGETS}
 	/bin/rm -f mount-fs build-fs unmount-fs
 
 .include <bsd.kernobj.mk>
