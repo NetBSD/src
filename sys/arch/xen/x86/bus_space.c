@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.8.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.8.2 2005/03/09 16:23:50 bouyer Exp $	*/
 /*	NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.8.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.8.2 2005/03/09 16:23:50 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -307,7 +307,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
@@ -380,15 +380,11 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			}
 #endif
 
-#if __NetBSD_Version__ > 104050000
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
 			bpa += (bsh & PGOFSET);
-#else
-			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
-#endif
 
 			pmap_kremove(va, endva - va);
 			/*
@@ -438,7 +434,7 @@ x86_memio_unmap(t, bsh, size)
 			panic("x86_memio_unmap: overflow");
 #endif
 
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract_ma(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);

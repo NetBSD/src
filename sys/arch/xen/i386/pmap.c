@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.6.6 2005/02/12 22:30:23 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6.6.7 2005/03/09 16:23:50 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.6 2005/02/12 22:30:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.7 2005/03/09 16:23:50 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2462,6 +2462,41 @@ pmap_extract(pmap, va, pap)
 
 		ptes = pmap_map_ptes(pmap);
 		pte = PTE_GET(&ptes[x86_btop(va)]);
+		pmap_unmap_ptes(pmap);
+
+		if (__predict_true((pte & PG_V) != 0)) {
+			if (pap != NULL)
+				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			return (TRUE);
+		}
+	}
+	return (FALSE);
+}
+
+/*
+ * pmap_extract_ma: like pmap_extract, but returns machine address
+ */
+
+boolean_t
+pmap_extract_ma(pmap, va, pap)
+	struct pmap *pmap;
+	vaddr_t va;
+	paddr_t *pap;
+{
+	pt_entry_t *ptes, pte;
+	pd_entry_t pde;
+
+	if (__predict_true((pde = PDE_GET(&pmap->pm_pdir[pdei(va)])) != 0)) {
+#ifdef LARGEPAGES
+		if (pde & PG_PS) {
+			if (pap != NULL)
+				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			return (TRUE);
+		}
+#endif
+
+		ptes = pmap_map_ptes(pmap);
+		pte = PTE_GET_MA(&ptes[x86_btop(va)]);
 		pmap_unmap_ptes(pmap);
 
 		if (__predict_true((pte & PG_V) != 0)) {
