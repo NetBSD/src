@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.22 1997/10/08 16:55:41 kleink Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.23 1997/10/17 11:53:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif not lint
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.22 1997/10/08 16:55:41 kleink Exp $";
+__RCSID("$NetBSD: nfsd.c,v 1.23 1997/10/17 11:53:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,7 @@ struct timeval	ktv;
 NFSKERBKEYSCHED_T kerb_keysched;
 #endif
 
+int	main __P((int, char **));
 void	nonfs __P((int));
 void	reapchild __P((int));
 void	usage __P((void));
@@ -134,31 +135,34 @@ void	usage __P((void));
  * followed by "n" which is the number of nfsds' to fork off
  */
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
-	char *argv[], *envp[];
+	char *argv[];
 {
-	extern int optind;
-	struct group *grp;
 	struct nfsd_args nfsdargs;
-	struct passwd *pwd;
-	struct ucred *cr;
 	struct sockaddr_in inetaddr, inetpeer;
 #ifdef ISO
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
-	struct timeval ktv;
 	fd_set ready, sockbits;
 	int ch, cltpflag, connect_type_cnt, i, len, maxsock, msgsock;
 	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
-	int tp4cnt, tp4flag, tp4sock, tpipcnt, tpipflag, tpipsock, udpflag;
+	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag;
+#ifdef NFSKERB
+	struct group *grp;
+	struct passwd *pwd;
+	struct ucred *cr;
+	struct timeval ktv;
+	int tp4sock, tpipsock;
 	char *cp, **cpp;
+#endif
 
 #define	MAXNFSDCNT	20
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
 	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
 	tpipflag = udpflag = 0;
+	maxsock = tcpsock = 0;
 #ifdef ISO
 #define	GETOPT	"cn:rtu"
 #define	USAGE	"[-crtu] [-n num_servers]"
