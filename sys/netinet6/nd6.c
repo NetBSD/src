@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.82 2003/06/24 07:32:03 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.83 2003/06/24 07:39:26 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.82 2003/06/24 07:32:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.83 2003/06/24 07:39:26 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,6 @@ nd6_timer(ignored_arg)
 	struct llinfo_nd6 *ln;
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
-	long time_second = time.tv_sec;
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia6, *nia6;
 	struct in6_addrlifetime *lt6;
@@ -411,7 +410,7 @@ nd6_timer(ignored_arg)
 		ndi = ND_IFINFO(ifp);
 		dst = (struct sockaddr_in6 *)rt_key(rt);
 
-		if (ln->ln_expire > time_second) {
+		if (ln->ln_expire > time.tv_sec) {
 			ln = next;
 			continue;
 		}
@@ -429,7 +428,7 @@ nd6_timer(ignored_arg)
 		case ND6_LLINFO_INCOMPLETE:
 			if (ln->ln_asked < nd6_mmaxtries) {
 				ln->ln_asked++;
-				ln->ln_expire = time_second +
+				ln->ln_expire = time.tv_sec +
 				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 				nd6_ns_output(ifp, NULL, &dst->sin6_addr,
 				    ln, 0);
@@ -455,7 +454,7 @@ nd6_timer(ignored_arg)
 		case ND6_LLINFO_REACHABLE:
 			if (ln->ln_expire) {
 				ln->ln_state = ND6_LLINFO_STALE;
-				ln->ln_expire = time_second + nd6_gctimer;
+				ln->ln_expire = time.tv_sec + nd6_gctimer;
 			}
 			break;
 
@@ -470,19 +469,19 @@ nd6_timer(ignored_arg)
 				/* We need NUD */
 				ln->ln_asked = 1;
 				ln->ln_state = ND6_LLINFO_PROBE;
-				ln->ln_expire = time_second +
+				ln->ln_expire = time.tv_sec +
 				    ND6_RETRANS_SEC(ndi->retrans);
 				nd6_ns_output(ifp, &dst->sin6_addr,
 				    &dst->sin6_addr, ln, 0);
 			} else {
 				ln->ln_state = ND6_LLINFO_STALE; /* XXX */
-				ln->ln_expire = time_second + nd6_gctimer;
+				ln->ln_expire = time.tv_sec + nd6_gctimer;
 			}
 			break;
 		case ND6_LLINFO_PROBE:
 			if (ln->ln_asked < nd6_umaxtries) {
 				ln->ln_asked++;
-				ln->ln_expire = time_second +
+				ln->ln_expire = time.tv_sec +
 				    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 				nd6_ns_output(ifp, &dst->sin6_addr,
 				    &dst->sin6_addr, ln, 0);
@@ -497,7 +496,7 @@ nd6_timer(ignored_arg)
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
-		if (dr->expire && dr->expire < time_second) {
+		if (dr->expire && dr->expire < time.tv_sec) {
 			struct nd_defrouter *t;
 			t = TAILQ_NEXT(dr, dr_entry);
 			defrtrlist_del(dr);
@@ -540,7 +539,7 @@ nd6_timer(ignored_arg)
 		 * prefix is not necessary.
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
+		    time.tv_sec - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 			struct nd_prefix *t;
 			t = pr->ndpr_next;
 
@@ -913,7 +912,6 @@ nd6_nud_hint(rt, dst6, force)
 	int force;
 {
 	struct llinfo_nd6 *ln;
-	long time_second = time.tv_sec;
 
 	/*
 	 * If the caller specified "rt", use that.  Otherwise, resolve the
@@ -950,7 +948,7 @@ nd6_nud_hint(rt, dst6, force)
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
 	if (ln->ln_expire)
-		ln->ln_expire = time_second + ND_IFINFO(rt->rt_ifp)->reachable;
+		ln->ln_expire = time.tv_sec + ND_IFINFO(rt->rt_ifp)->reachable;
 }
 
 void
@@ -964,7 +962,6 @@ nd6_rtrequest(req, rt, info)
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
-	long time_second = time.tv_sec;
 	int mine = 0;
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0)
@@ -1024,7 +1021,7 @@ nd6_rtrequest(req, rt, info)
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;
 			if (ln)
-				ln->ln_expire = time_second;
+				ln->ln_expire = time.tv_sec;
 #if 1
 			if (ln && ln->ln_expire == 0) {
 				/* kludge for desktops */
@@ -1113,7 +1110,7 @@ nd6_rtrequest(req, rt, info)
 			 * initialized in rtrequest(), so rt_expire is 0.
 			 */
 			ln->ln_state = ND6_LLINFO_NOSTATE;
-			ln->ln_expire = time_second;
+			ln->ln_expire = time.tv_sec;
 		}
 		rt->rt_flags |= RTF_LLINFO;
 		ln->ln_next = llinfo_nd6.ln_next;
@@ -1443,7 +1440,6 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	int olladdr;
 	int llchange;
 	int newstate = 0;
-	long time_second = time.tv_sec;
 
 	if (!ifp)
 		panic("ifp == NULL in nd6_cache_lladdr");
@@ -1554,7 +1550,7 @@ fail:
 			 * we must set the timer now, although it is actually
 			 * meaningless.
 			 */
-			ln->ln_expire = time_second + nd6_gctimer;
+			ln->ln_expire = time.tv_sec + nd6_gctimer;
 
 			if (ln->ln_hold) {
 				/*
@@ -1567,7 +1563,7 @@ fail:
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
-			ln->ln_expire = time_second;
+			ln->ln_expire = time.tv_sec;
 		}
 	}
 
@@ -1699,7 +1695,6 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	struct sockaddr_in6 *gw6 = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
-	long time_second = time.tv_sec;
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1805,7 +1800,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
 	    ln->ln_state < ND6_LLINFO_REACHABLE) {
 		ln->ln_state = ND6_LLINFO_STALE;
-		ln->ln_expire = time_second + nd6_gctimer;
+		ln->ln_expire = time.tv_sec + nd6_gctimer;
 	}
 
 	/*
@@ -1818,7 +1813,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (ln->ln_state == ND6_LLINFO_STALE) {
 		ln->ln_asked = 0;
 		ln->ln_state = ND6_LLINFO_DELAY;
-		ln->ln_expire = time_second + nd6_delay;
+		ln->ln_expire = time.tv_sec + nd6_delay;
 	}
 
 	/*
@@ -1851,7 +1846,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	 */
 	if (ln->ln_expire && ln->ln_asked == 0) {
 		ln->ln_asked++;
-		ln->ln_expire = time_second +
+		ln->ln_expire = time.tv_sec +
 		    ND6_RETRANS_SEC(ND_IFINFO(ifp)->retrans);
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 	}
