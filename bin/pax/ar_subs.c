@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.17 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.18 2002/10/16 03:46:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.17 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.18 2002/10/16 03:46:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,16 @@ list(void)
 	 * step through the archive until the format says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			off_t cnt;
+			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
+
 		if (arcn->name[0] == '/' && !check_Aflag()) {
 			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
 		}
@@ -133,7 +143,6 @@ list(void)
 			if (res == 0)
 				ls_list(arcn, now, stdout);
 		}
-
 		/*
 		 * skip to next archive format header using values calculated
 		 * by the format header read routine
@@ -192,8 +201,14 @@ extract(void)
 	 * says it is done
 	 */
 	while (next_head(arcn) == 0) {
-		int gnu_longlink_hack =
-		    (arcn->type == PAX_GLL || arcn->type == PAX_GLF);
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
 
 		if (arcn->name[0] == '/' && !check_Aflag()) {
 			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
@@ -202,19 +217,17 @@ extract(void)
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
 		 */
-		if (!gnu_longlink_hack) {
-			if ((res = pat_match(arcn)) < 0)
-				break;
+		if ((res = pat_match(arcn)) < 0)
+			break;
 
-			if ((res > 0) || (sel_chk(arcn) != 0)) {
-				/*
-				 * file is not selected. skip past any file
-				 * data and padding and go back for the next
-				 * archive member
-				 */
-				(void)rd_skip(arcn->skip + arcn->pad);
-				continue;
-			}
+		if ((res > 0) || (sel_chk(arcn) != 0)) {
+			/*
+			 * file is not selected. skip past any file
+			 * data and padding and go back for the next
+			 * archive member
+			 */
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
 		}
 
 		/*
@@ -227,8 +240,7 @@ extract(void)
 		 * file AFTER the name mod. In honesty the pax spec is probably
 		 * flawed in this respect.  ignore this for GNU long links.
 		 */
-		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0)) &&
-		    !gnu_longlink_hack) {
+		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0))) {
 			if (uflag && Dflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -264,8 +276,7 @@ extract(void)
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip; ignore this for GNU long links.
 		 */
-		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0)) &&
-		    !gnu_longlink_hack) {
+		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
 			if (Yflag && Zflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -302,8 +313,7 @@ extract(void)
 		/*
 		 * all ok, extract this member based on type
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG) &&
-		    !gnu_longlink_hack) {
+		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) { 
 			/*
 			 * process archive members that are not regular files.
 			 * throw out padding and any data that might follow the
@@ -328,9 +338,7 @@ extract(void)
 		 * we have a file with data here. If we can not create it, skip
 		 * over the data and purge the name from hard link table
 		 */
-		if (gnu_longlink_hack)
-			fd = -1;  /* this tells the pax internals to DTRT */
-		else if ((fd = file_creat(arcn)) < 0) {
+		if ((fd = file_creat(arcn)) < 0) {
 			(void)rd_skip(arcn->skip + arcn->pad);
 			purg_lnk(arcn);
 			continue;
@@ -340,8 +348,7 @@ extract(void)
 		 * any unprocessed data
 		 */
 		res = (*frmt->rd_data)(arcn, fd, &cnt);
-		if (!gnu_longlink_hack)
-			file_close(arcn, fd);
+		file_close(arcn, fd);
 		if (vflag && vfpart) {
 			(void)putc('\n', listf);
 			vfpart = 0;
@@ -1032,7 +1039,7 @@ next_head(ARCHD *arcn)
 			 * storage device, better give the user the bad news.
 			 */
 			if ((ret == 0) || (rd_sync() < 0)) {
-				if (!is_oldgnutar)
+				if (!is_gnutar)
 					tty_warn(1,
 					    "Premature end of file on archive read");
 				return(-1);
