@@ -384,7 +384,8 @@ substitute(sp, ep, cmdp, s, re, flags)
 	u_int flags;
 {
 	MARK from, to;
-	recno_t elno, lno;
+	recno_t elno;
+	long lno;
 	regmatch_t match[10];
 	size_t blen, cnt, last, lbclen, lblen, len, llen, offset, saved_offset;
 	int cflag, lflag, nflag, pflag, rflag;
