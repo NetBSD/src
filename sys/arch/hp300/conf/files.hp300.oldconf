@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.15 1994/10/26 07:23:17 cgd Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.16 1995/01/07 22:54:18 mycroft Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -34,6 +34,7 @@ arch/hp300/dev/hpib.c			optional hpib
 arch/hp300/dev/fhpib.c			optional hpib device-driver
 arch/hp300/dev/nhpib.c			optional hpib device-driver
 arch/hp300/dev/ct.c			optional ct needs-count # XXX? d-d?
+arch/hp300/dev/mt.c			optional mt needs-count # XXX? d-d?
 arch/hp300/dev/ppi.c			optional ppi device-driver
 arch/hp300/dev/rd.c			optional rd needs-count # XXX? d-d?
 arch/hp300/dev/rd_compat.c		optional rd compat_nolabel
