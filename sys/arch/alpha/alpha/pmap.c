@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.153 2000/12/07 22:11:40 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -126,8 +126,6 @@
  * Bugs/misfeatures:
  *
  *	- Some things could be optimized.
- *
- *	- pmap_growkernel() should be implemented.
  */
 
 /*
@@ -156,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2000/12/07 22:11:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
