@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2003/04/16 15:01:05 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2003/05/02 08:45:18 dsl Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -218,7 +218,7 @@ done:
  * If we can't find a NetBSD label, we attempt to fake one
  * based on the MBR (and extended partition) information
  */
-char *
+const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct cpu_disklabel *osdep)
 {

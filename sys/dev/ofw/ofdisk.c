@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.25 2002/11/01 11:31:58 mrg Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.26 2003/05/02 08:45:27 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.25 2002/11/01 11:31:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.26 2003/05/02 08:45:27 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -461,7 +461,7 @@ ofdisk_getdisklabel(dev)
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[unit];
 	struct disklabel *lp = of->sc_dk.dk_label;
-	char *errmes;
+	const char *errmes;
 	int l;
 
 	ofdisk_getdefaultlabel(of, lp);

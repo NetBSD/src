@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.25 2002/03/05 09:40:39 simonb Exp $ */
+/* $NetBSD: disksubr.c,v 1.26 2003/05/02 08:45:23 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2002/03/05 09:40:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2003/05/02 08:45:23 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ extern struct device *bootdv;
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *));

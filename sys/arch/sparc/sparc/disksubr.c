@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33 2002/03/05 09:40:42 simonb Exp $ */
+/*	$NetBSD: disksubr.c,v 1.34 2003/05/02 08:45:16 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -72,7 +72,7 @@ extern struct device *bootdv;
  *
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *));

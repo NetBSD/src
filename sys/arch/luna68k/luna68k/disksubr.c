@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
+/* $NetBSD: disksubr.c,v 1.13 2003/05/02 08:45:20 dsl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -111,7 +111,7 @@ static int disklabel_bsd_to_om __P((struct disklabel *, char *));
  *
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *));

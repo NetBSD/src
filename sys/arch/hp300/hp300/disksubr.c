@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2002/03/15 05:55:37 gmcgarry Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2003/05/02 08:45:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/05/02 08:45:20 dsl Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2002/03/15 05:55:37 gmcgarry Exp $
  * filled in before calling us.  Returns null on success and an error
  * string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.19 2003/04/02 20:38:28 he Exp $	*/
+/*	$NetBSD: rl.c,v 1.20 2003/05/02 08:45:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.19 2003/04/02 20:38:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.20 2003/05/02 08:45:27 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,7 +280,7 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 	struct disklabel *dl;
 	struct rlc_softc *sc;
 	struct rl_softc *rc;
-	char *msg;
+	const char *msg;
 
 	/*
 	 * Make sure this is a reasonable open request.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43 2003/04/16 15:01:04 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.44 2003/05/02 08:45:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -426,7 +426,7 @@ read_bsd_label(dlbuf, lp, match)
  * filled in before calling us.  Returns null on success and an error
  * string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);

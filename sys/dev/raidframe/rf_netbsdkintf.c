@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.157 2003/04/10 03:36:02 simonb Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.158 2003/05/02 08:45:28 dsl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.157 2003/04/10 03:36:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.158 2003/05/02 08:45:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2064,7 +2064,7 @@ raidgetdisklabel(dev)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs = &raid_softc[unit];
-	char   *errstring;
+	const char   *errstring;
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = rs->sc_dkdev.dk_cpulabel;
 	RF_Raid_t *raidPtr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2002/03/05 09:40:40 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2003/05/02 08:45:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -64,7 +64,7 @@ static int mipsvh_cksum __P((struct mips_volheader *));
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));

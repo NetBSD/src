@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.56 2003/02/14 06:55:17 gmcgarry Exp $	*/
+/*	$NetBSD: rd.c,v 1.57 2003/05/02 08:45:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.56 2003/02/14 06:55:17 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.57 2003/05/02 08:45:13 dsl Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -544,7 +544,7 @@ rdgetinfo(dev)
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
 	struct partition *pi;
-	char *msg;
+	const char *msg;
 
 	/*
 	 * Set some default values to use while reading the label

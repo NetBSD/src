@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 2003/04/30 19:05:21 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 2003/05/02 08:45:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -91,7 +91,7 @@
  * Returns null on success and an error string on failure.
  */
 
-char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));

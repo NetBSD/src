@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2002/03/05 09:40:38 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2003/05/02 08:45:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.6 2002/03/05 09:40:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2003/05/02 08:45:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.6 2002/03/05 09:40:38 simonb Exp $");
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
     struct cpu_disklabel *clp)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.32 2003/04/16 15:01:09 bouyer Exp $ */
+/*	$NetBSD: hp.c,v 1.33 2003/05/02 08:45:11 dsl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -138,7 +138,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	struct	mba_softc *ms = (void *)parent;
 	struct	disklabel *dl;
 	struct  mba_attach_args *ma = aux;
-	char	*msg;
+	const char	*msg;
 
 	sc->sc_iot = ma->ma_iot;
 	sc->sc_ioh = ma->ma_ioh;

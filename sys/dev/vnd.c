@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.96 2003/04/26 12:02:12 dsl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.97 2003/05/02 08:45:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.96 2003/04/26 12:02:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.97 2003/05/02 08:45:26 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1282,7 +1282,7 @@ vndgetdisklabel(dev)
 	dev_t dev;
 {
 	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
-	char *errstring;
+	const char *errstring;
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
 	int i;

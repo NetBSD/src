@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.39 2003/04/02 20:32:01 he Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.40 2003/05/02 08:45:27 dsl Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.39 2003/04/02 20:32:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.40 2003/05/02 08:45:27 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -160,7 +160,7 @@ ra_putonline(ra)
 	struct ra_softc *ra;
 {
 	struct	disklabel *dl;
-	char *msg;
+	const char *msg;
 	int maj;
 
 	if (rx_putonline(ra) != MSCP_DONE)
