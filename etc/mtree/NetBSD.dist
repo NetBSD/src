@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.164 2001/08/09 01:32:46 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.165 2001/08/17 07:15:12 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1737,6 +1737,11 @@ sparc
 # ./usr/share/man/cat4/sparc
 ..
 
+# ./usr/share/man/cat4/sun2
+sun2
+# ./usr/share/man/cat4/sun2
+..
+
 # ./usr/share/man/cat4/sun3
 sun3
 # ./usr/share/man/cat4/sun3
@@ -2119,6 +2124,11 @@ pmax
 # ./usr/share/man/man4/sparc
 sparc
 # ./usr/share/man/man4/sparc
+..
+
+# ./usr/share/man/man4/sun2
+sun2
+# ./usr/share/man/man4/sun2
 ..
 
 # ./usr/share/man/man4/sun3
