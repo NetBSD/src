@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6 2000/01/10 03:53:20 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.7 2000/07/08 19:25:14 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,11 +194,13 @@ struct fpreg32 {
 /* Here we gotta do naughty things to let gdb work on 32-bit binaries */
 #define reg		reg64
 #define fpreg		fpreg64
+#define fpstate		fpstate64
 #define trapframe	trapframe64
 #define rwindow		rwindow64
 #else
 #define reg		reg32
 #define fpreg		fpreg32
+#define fpstate		fpstate32
 #define trapframe	trapframe32
 #define rwindow		rwindow32
 #endif
