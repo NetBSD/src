@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1997/03/29 20:00:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1997/04/13 14:51:50 mrg Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
 MAN=	ipfstat.8
-CFLAGS+=-I${.CURDIR}/../../../sbin/ipf
+CFLAGS+=-I${.CURDIR}/../ipf
 
-.PATH: ${.CURDIR}/../../../sbin/ipf
+.PATH: ${.CURDIR}/../ipf
 .include <bsd.prog.mk>
