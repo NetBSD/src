@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/22 10:53:13 simonb Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/24 13:54:54 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 
 S=	${.CURDIR}/../../../..
 PROG=	boot
 SRCS=	start.S boot.c conf.c filesystem.c
-CLEANFILES+=${PROG}.elf ${PROG}.map bootconf.c ${ALL}
+CLEANFILES+=${PROG}.elf ${PROG}.map ${ALL}
 
 DPADD+=	${LIBS}
 MKMAN=	no
