@@ -11,6 +11,3 @@ CC = gcc
 MH_CFLAGS = -I${srcdir}/../sim/sp64
 SIM_OBS = remote-sim.o
 SIM = ../sim/sp64/libsim.a
-
-# The simulator uses the sqrt() function.
-TM_CLIBS = -lm

@@ -24,6 +24,20 @@ int general_thread;
 int thread_from_wait;
 int old_thread_from_wait;
 int extended_protocol;
+jmp_buf toplevel;
+int inferior_pid;
+
+static unsigned char
+start_inferior (argv, statusptr)
+     char *argv[];
+     char *statusptr;
+{
+  inferior_pid = create_inferior (argv[0], argv);
+  fprintf (stderr, "Process %s created; pid = %d\n", argv[0], inferior_pid);
+
+  /* Wait till we are at 1st instruction in program, return signal number.  */
+  return mywait (statusptr);
+}
 
 int
 main (argc, argv)
@@ -33,7 +47,8 @@ main (argc, argv)
   char ch, status, own_buf[2000], mem_buf[2000];
   int i = 0;
   unsigned char signal;
-  unsigned int mem_addr, len;
+  unsigned int len;
+  CORE_ADDR mem_addr;
 
   if (setjmp(toplevel))
     {
@@ -44,10 +59,8 @@ main (argc, argv)
   if (argc < 3)
     error("Usage: gdbserver tty prog [args ...]");
 
-  inferior_pid = create_inferior (argv[2], &argv[2]);
-  fprintf (stderr, "Process %s created; pid = %d\n", argv[2], inferior_pid);
-
-  signal = mywait (&status);	/* Wait till we are at 1st instr in prog */
+  /* Wait till we are at first instruction in program.  */
+  signal = start_inferior (&argv[2], &status);
 
   /* We are now stopped at the first instruction of the target process */
 
@@ -142,12 +155,9 @@ restart:
 		{
 		  write_ok (own_buf);
 		  fprintf (stderr, "GDBserver restarting\n");
-		  inferior_pid = create_inferior (argv[2], &argv[2]);
-		  fprintf (stderr, "Process %s created; pid = %d\n",
-			   argv[2], inferior_pid);
 
 		  /* Wait till we are at 1st instruction in prog.  */
-		  signal = mywait (&status);
+		  signal = start_inferior (&argv[2], &status);
 		  goto restart;
 		  break;
 		}
@@ -170,12 +180,9 @@ restart:
 		  kill_inferior ();
 		  write_ok (own_buf);
 		  fprintf (stderr, "GDBserver restarting\n");
-		  inferior_pid = create_inferior (argv[2], &argv[2]);
-		  fprintf (stderr, "Process %s created; pid = %d\n",
-			   argv[2], inferior_pid);
 
 		  /* Wait till we are at 1st instruction in prog.  */
-		  signal = mywait (&status);
+		  signal = start_inferior (&argv[2], &status);
 		  goto restart;
 		  break;
 		}
@@ -210,12 +217,9 @@ restart:
 		  kill_inferior ();
 		  write_ok (own_buf);
 		  fprintf (stderr, "GDBserver restarting\n");
-		  inferior_pid = create_inferior (argv[2], &argv[2]);
-		  fprintf (stderr, "Process %s created; pid = %d\n",
-			   argv[2], inferior_pid);
 
 		  /* Wait till we are at 1st instruction in prog.  */
-		  signal = mywait (&status);
+		  signal = start_inferior (&argv[2], &status);
 		  goto restart;
 		  break;
 		}

@@ -1,7 +1,7 @@
 /* Interface GDB to Mach 3.0 operating systems.
    (Most) Mach 3.0 related routines live in this file.
 
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -1138,7 +1138,7 @@ switch_to_thread (new_thread)
 /* Do this in gdb after doing FORK but before STARTUP_INFERIOR.
  * Note that the registers are not yet valid in the inferior task.
  */
-static void
+static int
 m3_trace_him (pid)
      int pid;
 {
@@ -1173,6 +1173,8 @@ m3_trace_him (pid)
 
   /* One trap to exec the shell, one to exec the program being debugged.  */
   intercept_exec_calls (2);
+
+  return pid;
 }
 
 setup_exception_port ()

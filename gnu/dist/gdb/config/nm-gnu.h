@@ -1,6 +1,6 @@
 /* Common declarations for the GNU Hurd
 
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1998 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -25,8 +25,6 @@
 #include <mach.h>
 #include <mach/exception.h>
 
-#include "solib.h"     /* Support for shared libraries. */
-
 #undef target_pid_to_str
 #define target_pid_to_str(pid) gnu_target_pid_to_str(pid)
 extern char *gnu_target_pid_to_str (int pid);
@@ -39,6 +37,7 @@ extern char *gnu_target_pid_to_str (int pid);
 
 /* Use SVR4 style shared library support */
 #define SVR4_SHARED_LIBS
+#include "solib.h"
 #define NO_CORE_OPS
 
 #define MAINTENANCE_CMDS 1

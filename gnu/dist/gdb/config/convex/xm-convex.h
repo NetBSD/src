@@ -1,5 +1,5 @@
 /* Definitions to make GDB run on Convex Unix (4bsd)
-   Copyright 1989, 1991, 1992  Free Software Foundation, Inc.
+   Copyright 1989, 1991, 1992, 1996  Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -18,15 +18,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define HOST_BYTE_ORDER BIG_ENDIAN
-
-/* The host compiler supports "long long" variables. */
-
-#define CC_HAS_LONG_LONG 1
-
-/* The host compiler library supports "long long" formats and variables
-   passed to printf() and friends. */
-
-#define PRINTF_HAS_LONG_LONG 1
 
 #define ATTACH_DETACH
 #define HAVE_WAIT_STRUCT

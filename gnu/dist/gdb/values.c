@@ -1,5 +1,5 @@
 /* Low level packing and unpacking of values for GDB, the GNU Debugger.
-   Copyright 1986, 1987, 1989, 1991, 1993, 1994, 1995, 1996
+   Copyright 1986, 1987, 1989, 1991, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -40,6 +40,8 @@ static value_ptr value_headof PARAMS ((value_ptr, struct type *,
 static void show_values PARAMS ((char *, int));
 
 static void show_convenience PARAMS ((char *, int));
+
+static int vb_match PARAMS ((struct type *, int, struct type *));
 
 /* The value-history records all the values printed
    by print commands during this session.  Each chunk
@@ -89,6 +91,7 @@ allocate_value (type)
   VALUE_REGNO (val) = -1;
   VALUE_LAZY (val) = 0;
   VALUE_OPTIMIZED_OUT (val) = 0;
+  VALUE_BFD_SECTION (val) = NULL;
   val->modifiable = 1;
   return val;
 }
@@ -217,6 +220,7 @@ value_copy (arg)
   VALUE_REGNO (val) = VALUE_REGNO (arg);
   VALUE_LAZY (val) = VALUE_LAZY (arg);
   VALUE_OPTIMIZED_OUT (val) = VALUE_OPTIMIZED_OUT (arg);
+  VALUE_BFD_SECTION (val) = VALUE_BFD_SECTION (arg);
   val->modifiable = arg->modifiable;
   if (!VALUE_LAZY (val))
     {
@@ -630,6 +634,10 @@ unpack_long (type, valaddr)
     case TYPE_CODE_REF:
       /* Assume a CORE_ADDR can fit in a LONGEST (for now).  Not sure
 	 whether we want this to be true eventually.  */
+#ifdef GDB_TARGET_IS_D10V
+      if (len == 2)
+	  return D10V_MAKE_DADDR(extract_address (valaddr, len));
+#endif
       return extract_address (valaddr, len);
 
     case TYPE_CODE_MEMBER:
@@ -673,7 +681,12 @@ unpack_double (type, valaddr, invp)
   else if (nosign)
     {
       /* Unsigned -- be sure we compensate for signed LONGEST.  */
-      return (unsigned LONGEST) unpack_long (type, valaddr);
+#if !defined (_MSC_VER) || (_MSC_VER > 900)
+      return (ULONGEST) unpack_long (type, valaddr);
+#else
+      /* FIXME!!! msvc22 doesn't support unsigned __int64 -> double */
+      return (LONGEST) unpack_long (type, valaddr);
+#endif /* _MSC_VER */
     }
   else
     {
@@ -705,12 +718,37 @@ unpack_pointer (type, valaddr)
   return unpack_long (type, valaddr);
 }
 
+/* Get the value of the FIELDN'th field (which must be static) of TYPE. */
+
+value_ptr
+value_static_field (type, fieldno)
+     struct type *type;
+     int fieldno;
+{
+  CORE_ADDR addr;
+  asection *sect;
+  if (TYPE_FIELD_STATIC_HAS_ADDR (type, fieldno))
+    {
+      addr = TYPE_FIELD_STATIC_PHYSADDR (type, fieldno);
+      sect = NULL;
+    }
+  else
+    {
+      char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
+      struct symbol *sym = lookup_symbol (phys_name, 0, VAR_NAMESPACE, 0, NULL);
+      if (sym == NULL)
+	return NULL;
+      addr = SYMBOL_VALUE_ADDRESS (sym);
+      sect = SYMBOL_BFD_SECTION (sym);
+      SET_FIELD_PHYSADDR (TYPE_FIELD (type, fieldno), addr);
+    }
+  return value_at (TYPE_FIELD_TYPE (type, fieldno), addr, sect);
+}
+
 /* Given a value ARG1 (offset by OFFSET bytes)
    of a struct or union type ARG_TYPE,
-   extract and return the value of one of its fields.
-   FIELDNO says which field.
-
-   For C++, must also be able to return values from static fields */
+   extract and return the value of one of its (non-static) fields.
+   FIELDNO says which field. */
 
 value_ptr
 value_primitive_field (arg1, offset, fieldno, arg_type)
@@ -727,13 +765,13 @@ value_primitive_field (arg1, offset, fieldno, arg_type)
 
   /* Handle packed fields */
 
-  offset += TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
   if (TYPE_FIELD_BITSIZE (arg_type, fieldno))
     {
       v = value_from_longest (type,
-			   unpack_field_as_long (arg_type,
-						 VALUE_CONTENTS (arg1),
-						 fieldno));
+			      unpack_field_as_long (arg_type,
+						    VALUE_CONTENTS (arg1)
+						      + offset,
+						    fieldno));
       VALUE_BITPOS (v) = TYPE_FIELD_BITPOS (arg_type, fieldno) % 8;
       VALUE_BITSIZE (v) = TYPE_FIELD_BITSIZE (arg_type, fieldno);
     }
@@ -743,22 +781,23 @@ value_primitive_field (arg1, offset, fieldno, arg_type)
       if (VALUE_LAZY (arg1))
 	VALUE_LAZY (v) = 1;
       else
-	memcpy (VALUE_CONTENTS_RAW (v), VALUE_CONTENTS_RAW (arg1) + offset,
+	memcpy (VALUE_CONTENTS_RAW (v),
+		VALUE_CONTENTS_RAW (arg1) + offset
+		  + TYPE_FIELD_BITPOS (arg_type, fieldno) / 8,
 		TYPE_LENGTH (type));
     }
   VALUE_LVAL (v) = VALUE_LVAL (arg1);
   if (VALUE_LVAL (arg1) == lval_internalvar)
     VALUE_LVAL (v) = lval_internalvar_component;
   VALUE_ADDRESS (v) = VALUE_ADDRESS (arg1);
-  VALUE_OFFSET (v) = offset + VALUE_OFFSET (arg1);
+  VALUE_OFFSET (v) = VALUE_OFFSET (arg1) + offset
+		     + TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
   return v;
 }
 
 /* Given a value ARG1 of a struct or union type,
-   extract and return the value of one of its fields.
-   FIELDNO says which field.
-
-   For C++, must also be able to return values from static fields */
+   extract and return the value of one of its (non-static) fields.
+   FIELDNO says which field. */
 
 value_ptr
 value_field (arg1, fieldno)
@@ -1136,8 +1175,8 @@ unpack_field_as_long (type, valaddr, fieldno)
      char *valaddr;
      int fieldno;
 {
-  unsigned LONGEST val;
-  unsigned LONGEST valmask;
+  ULONGEST val;
+  ULONGEST valmask;
   int bitpos = TYPE_FIELD_BITPOS (type, fieldno);
   int bitsize = TYPE_FIELD_BITSIZE (type, fieldno);
   int lsbcount;
@@ -1157,7 +1196,7 @@ unpack_field_as_long (type, valaddr, fieldno)
 
   if ((bitsize > 0) && (bitsize < 8 * (int) sizeof (val)))
     {
-      valmask = (((unsigned LONGEST) 1) << bitsize) - 1;
+      valmask = (((ULONGEST) 1) << bitsize) - 1;
       val &= valmask;
       if (!TYPE_UNSIGNED (TYPE_FIELD_TYPE (type, fieldno)))
 	{
@@ -1209,9 +1248,9 @@ modify_field (addr, fieldval, bitpos, bitsize)
 
   /* Mask out old value, while avoiding shifts >= size of oword */
   if (bitsize < 8 * (int) sizeof (oword))
-    oword &= ~(((((unsigned LONGEST)1) << bitsize) - 1) << bitpos);
+    oword &= ~(((((ULONGEST)1) << bitsize) - 1) << bitpos);
   else
-    oword &= ~((~(unsigned LONGEST)0) << bitpos);
+    oword &= ~((~(ULONGEST)0) << bitpos);
   oword |= fieldval << bitpos;
 
   store_signed_integer (addr, sizeof oword, oword);
@@ -1250,9 +1289,9 @@ value_from_longest (type, num)
 	 have the same form.  */
       store_address (VALUE_CONTENTS_RAW (val), len, (CORE_ADDR) num);
       break;
-
+      
     default:
-      error ("Unexpected type encountered for integer constant.");
+      error ("Unexpected type (%d) encountered for integer constant.", code);
     }
   return val;
 }
@@ -1307,7 +1346,7 @@ value_being_returned (valtype, retbuf, struct_return)
     addr = EXTRACT_STRUCT_VALUE_ADDRESS (retbuf);
     if (!addr)
       error ("Function return value unknown");
-    return value_at (valtype, addr);
+    return value_at (valtype, addr, NULL);
   }
 #endif
 

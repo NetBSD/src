@@ -1,6 +1,6 @@
 /* Target machine sub-parameters for SPARC64, for GDB, the GNU debugger.
    This is included by other tm-*.h files to define SPARC64 cpu-related info.
-   Copyright 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996 Free Software Foundation, Inc.
    This is (obviously) based on the SPARC Vn (n<9) port.
    Contributed by Doug Evans (dje@cygnus.com).
 
@@ -22,18 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define GDB_TARGET_IS_SPARC64
 
-/* Need to define this so gdb will know what to do with long long's.
-   Defining FORCE_LONG_LONG is incorrect (as of 940731) because that
-   doesn't work for BFD64 targets.  */
-
-#define CC_HAS_LONG_LONG
-
 #include "sparc/tm-sparc.h"
 
-/* Stack has strict alignment.  */
+/* Stack must be aligned on 128-bit boundaries when synthesizing
+   function calls. */
 
 #undef  STACK_ALIGN
-#define STACK_ALIGN(ADDR) (((ADDR)+15)&-16)
+#define STACK_ALIGN(ADDR) (((ADDR) + 15 ) & -16)
 
 /* Number of machine registers.  */
 

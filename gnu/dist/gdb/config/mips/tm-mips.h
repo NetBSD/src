@@ -20,6 +20,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#ifndef TM_MIPS_H
+#define TM_MIPS_H 1
+
+#ifdef __STDC__
+struct frame_info;
+struct symbol;
+struct type;
+struct value;
+#endif
+
 #include <bfd.h>
 #include "coff/sym.h"		/* Needed for PDR below.  */
 #include "coff/symconst.h"
@@ -32,8 +42,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define GDB_TARGET_IS_MIPS64 0
 #endif
 
+#if !defined (MIPS_EABI)
+#define MIPS_EABI 0
+#endif
+
 #if !defined (TARGET_MONITOR_PROMPT)
 #define TARGET_MONITOR_PROMPT "<IDT>"
+#endif
+
+/* PC should be masked to remove possible MIPS16 flag */
+#if !defined (GDB_TARGET_MASK_DISAS_PC)
+#define GDB_TARGET_MASK_DISAS_PC(addr) UNMAKE_MIPS16_ADDR(addr)
+#endif
+#if !defined (GDB_TARGET_UNMASK_DISAS_PC)
+#define GDB_TARGET_UNMASK_DISAS_PC(addr) MAKE_MIPS16_ADDR(addr)
 #endif
 
 /* Floating point is IEEE compliant */
@@ -58,6 +80,15 @@ extern enum mips_fpu_type mips_fpu;
 
 #define DEFAULT_MIPS_TYPE "generic"
 
+/* Remove useless bits from an instruction address.  */
+
+#define ADDR_BITS_REMOVE(addr) mips_addr_bits_remove(addr)
+CORE_ADDR mips_addr_bits_remove PARAMS ((CORE_ADDR addr));
+
+/* Remove useless bits from the stack pointer.  */
+
+#define TARGET_READ_SP() ADDR_BITS_REMOVE (read_register (SP_REGNUM))
+
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
 
@@ -72,6 +103,7 @@ extern CORE_ADDR mips_skip_prologue PARAMS ((CORE_ADDR addr, int lenient));
 /* Return non-zero if PC points to an instruction which will cause a step
    to execute both the instruction at PC and an instruction at PC+4.  */
 #define STEP_SKIPS_DELAY(pc) (mips_step_skips_delay (pc))
+extern int mips_step_skips_delay PARAMS ((CORE_ADDR));
 
 /* Immediately after a function call, return the saved pc.
    Can't always go through the frames for this because on some machines
@@ -90,11 +122,29 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 #define INNER_THAN <
 
 #define BIG_ENDIAN 4321
-#if TARGET_BYTE_ORDER == BIG_ENDIAN
-#define BREAKPOINT {0, 0x5, 0, 0xd}
-#else
-#define BREAKPOINT {0xd, 0, 0x5, 0}
-#endif
+
+/* Old-style breakpoint macros.
+   The IDT board uses an unusual breakpoint value, and sometimes gets
+   confused when it sees the usual MIPS breakpoint instruction.  */
+
+#define BIG_BREAKPOINT {0, 0x5, 0, 0xd}
+#define LITTLE_BREAKPOINT {0xd, 0, 0x5, 0}
+#define PMON_BIG_BREAKPOINT {0, 0, 0, 0xd}
+#define PMON_LITTLE_BREAKPOINT {0xd, 0, 0, 0}
+#define IDT_BIG_BREAKPOINT {0, 0, 0x0a, 0xd}
+#define IDT_LITTLE_BREAKPOINT {0xd, 0x0a, 0, 0}
+#define MIPS16_BIG_BREAKPOINT {0xe8, 0xa5}
+#define MIPS16_LITTLE_BREAKPOINT {0xa5, 0xe8}
+
+/* BREAKPOINT_FROM_PC uses the program counter value to determine whether a
+   16- or 32-bit breakpoint should be used.  It returns a pointer
+   to a string of bytes that encode a breakpoint instruction, stores
+   the length of the string to *lenptr, and adjusts the pc (if necessary) to
+   point to the actual memory location where the breakpoint should be
+   inserted.  */
+
+unsigned char *mips_breakpoint_from_pc PARAMS ((CORE_ADDR *pcptr, int *lenptr));
+#define BREAKPOINT_FROM_PC(pcptr, lenptr) mips_breakpoint_from_pc(pcptr, lenptr)
 
 /* Amount PC must be decremented by after a breakpoint.
    This is often the number of bytes in BREAKPOINT
@@ -104,7 +154,8 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 
 /* Nonzero if instruction at PC is a return instruction. "j ra" on mips. */
 
-#define ABOUT_TO_RETURN(pc) (read_memory_integer (pc, 4) == 0x3e00008)
+int mips_about_to_return PARAMS ((CORE_ADDR pc));
+#define ABOUT_TO_RETURN(pc) mips_about_to_return (pc)
 
 /* Say how long (ordinary) registers are.  This is a piece of bogosity
    used in push_word and a few other places; REGISTER_RAW_SIZE is the
@@ -120,13 +171,21 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 #define MIPS_REGSIZE 4
 #endif
 
+/* The sizes of floating point registers.  */
+
+#define MIPS_FPU_SINGLE_REGSIZE 4
+#define MIPS_FPU_DOUBLE_REGSIZE 8
+
 /* Number of machine registers */
 
+#ifndef NUM_REGS
 #define NUM_REGS 90
+#endif
 
 /* Initializer for an array of names of registers.
    There should be NUM_REGS strings in this initializer.  */
 
+#ifndef REGISTER_NAMES
 #define REGISTER_NAMES 	\
     {	"zero",	"at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3", \
 	"t0",	"t1",	"t2",	"t3",	"t4",	"t5",	"t6",	"t7", \
@@ -141,6 +200,7 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 	"",	"",	"",	"",	"",	"",	"",	"", \
 	"",	"",	"",	"",	"",	"",	"",	"", \
     }
+#endif
 
 /* Register numbers of various important registers.
    Note that some of these values are "real" register numbers,
@@ -152,6 +212,14 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 #define ZERO_REGNUM 0		/* read-only register, always 0 */
 #define V0_REGNUM 2		/* Function integer return value */
 #define A0_REGNUM 4		/* Loc of first arg during a subr call */
+#if MIPS_EABI
+#  define MIPS_LAST_ARG_REGNUM 11 /* EABI uses R4 through R11 for args */
+#  define MIPS_NUM_ARG_REGS 8
+#else
+#  define MIPS_LAST_ARG_REGNUM 7  /* old ABI uses R4 through R7 for args */
+#  define MIPS_NUM_ARG_REGS 4
+#endif
+#define T9_REGNUM 25		/* Contains address of callee in PIC */
 #define SP_REGNUM 29		/* Contains address of top of stack */
 #define RA_REGNUM 31		/* Contains return address value */
 #define PS_REGNUM 32		/* Contains processor status */
@@ -161,6 +229,14 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 #define CAUSE_REGNUM 36		/* describes last exception */
 #define PC_REGNUM 37		/* Contains program counter */
 #define FP0_REGNUM 38           /* Floating point register 0 (single float) */
+#define FPA0_REGNUM (FP0_REGNUM+12) /* First float argument register */
+#if MIPS_EABI			/* EABI uses F12 through F19 for args */
+#  define MIPS_LAST_FP_ARG_REGNUM (FP0_REGNUM+19)
+#  define MIPS_NUM_FP_ARG_REGS 8
+#else				/* old ABI uses F12 through F15 for args */
+#  define MIPS_LAST_FP_ARG_REGNUM (FP0_REGNUM+15)
+#  define MIPS_NUM_FP_ARG_REGS 4
+#endif
 #define FCRCS_REGNUM 70         /* FP control/status */
 #define FCRIR_REGNUM 71         /* FP implementation/revision */
 #define FP_REGNUM 72		/* Pseudo register that contains true address of executing stack frame */
@@ -173,6 +249,7 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
    of register dumps. */
 
 #define DO_REGISTERS_INFO(_regnum, fp) mips_do_registers_info(_regnum, fp)
+extern void mips_do_registers_info PARAMS ((int, int));
 
 /* Total amount of space needed to store our copies of the machine's
    register state, the array `registers'.  */
@@ -211,28 +288,32 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 	 ? builtin_type_float : builtin_type_int)
 #endif
 
-#if HOST_BYTE_ORDER == BIG_ENDIAN
 /* All mips targets store doubles in a register pair with the least
    significant register in the lower numbered register.
-   If the host is big endian, double register values need conversion between
-   memory and register formats.  */
+   If the target is big endian, double register values need conversion
+   between memory and register formats.  */
 
 #define REGISTER_CONVERT_TO_TYPE(n, type, buffer)			\
-  do {if ((n) >= FP0_REGNUM && (n) < FP0_REGNUM + 32 && 		\
-	  TYPE_CODE(type) == TYPE_CODE_FLT && TYPE_LENGTH(type) == 8) { \
+  do {if (TARGET_BYTE_ORDER == BIG_ENDIAN				\
+	  && REGISTER_RAW_SIZE (n) == 4					\
+	  && (n) >= FP0_REGNUM && (n) < FP0_REGNUM + 32			\
+	  && TYPE_CODE(type) == TYPE_CODE_FLT				\
+	  && TYPE_LENGTH(type) == 8) {					\
         char __temp[4];							\
 	memcpy (__temp, ((char *)(buffer))+4, 4);			\
 	memcpy (((char *)(buffer))+4, (buffer), 4); 			\
 	memcpy (((char *)(buffer)), __temp, 4); }} while (0)
 
 #define REGISTER_CONVERT_FROM_TYPE(n, type, buffer)			\
-  do {if ((n) >= FP0_REGNUM && (n) < FP0_REGNUM + 32 &&			\
-	  TYPE_CODE(type) == TYPE_CODE_FLT && TYPE_LENGTH(type) == 8) { \
+  do {if (TARGET_BYTE_ORDER == BIG_ENDIAN				\
+	  && REGISTER_RAW_SIZE (n) == 4					\
+	  && (n) >= FP0_REGNUM && (n) < FP0_REGNUM + 32			\
+	  && TYPE_CODE(type) == TYPE_CODE_FLT				\
+	  && TYPE_LENGTH(type) == 8) {					\
         char __temp[4];							\
 	memcpy (__temp, ((char *)(buffer))+4, 4);			\
 	memcpy (((char *)(buffer))+4, (buffer), 4); 			\
 	memcpy (((char *)(buffer)), __temp, 4); }} while (0)
-#endif
 
 /* Store the address of the place in which to copy the structure the
    subroutine will return.  Handled by mips_push_arguments.  */
@@ -245,12 +326,15 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 
 #define EXTRACT_RETURN_VALUE(TYPE,REGBUF,VALBUF) \
   mips_extract_return_value(TYPE, REGBUF, VALBUF)
+extern void
+mips_extract_return_value PARAMS ((struct type *, char [], char *));
 
 /* Write into appropriate registers a function return value
    of type TYPE, given in virtual format.  */
 
 #define STORE_RETURN_VALUE(TYPE,VALBUF) \
   mips_store_return_value(TYPE, VALBUF)
+extern void mips_store_return_value PARAMS ((struct type *, char *));
 
 /* Extract from an array REGBUF containing the (raw) register state
    the address in which a function should return its structure value,
@@ -264,9 +348,14 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
   (extract_address (REGBUF + REGISTER_BYTE (V0_REGNUM), \
 		    REGISTER_RAW_SIZE (V0_REGNUM)))
 
+#if MIPS_EABI
+#undef  USE_STRUCT_CONVENTION
+#define USE_STRUCT_CONVENTION(gcc_p, type) \
+  (TYPE_LENGTH (type) > 2 * MIPS_REGSIZE)
+#else
 /* Structures are returned by ref in extra arg0 */
 #define USE_STRUCT_CONVENTION(gcc_p, type)	1
-
+#endif
 
 /* Describe the pointer in each stack frame to the previous stack frame
    (its caller).  */
@@ -275,6 +364,7 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
    and produces the frame's chain-pointer. */
 
 #define FRAME_CHAIN(thisframe) (CORE_ADDR) mips_frame_chain (thisframe)
+extern CORE_ADDR mips_frame_chain PARAMS ((struct frame_info *));
 
 /* Define other aspects of the stack frame.  */
 
@@ -289,6 +379,7 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 /* Saved Pc.  */
 
 #define FRAME_SAVED_PC(FRAME)	(mips_frame_saved_pc(FRAME))
+extern CORE_ADDR mips_frame_saved_pc PARAMS ((struct frame_info *));
 
 #define FRAME_ARGS_ADDRESS(fi)	(fi)->frame
 
@@ -298,6 +389,7 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
    Can return -1, meaning no way to tell.  */
 
 #define FRAME_NUM_ARGS(num, fi)	(num = mips_frame_num_args(fi))
+extern int mips_frame_num_args PARAMS ((struct frame_info *));
 
 /* Return number of bytes at start of arglist that are not really args.  */
 
@@ -316,124 +408,44 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
     (frame_saved_regs) = *(frame_info)->saved_regs; \
     (frame_saved_regs).regs[SP_REGNUM] = (frame_info)->frame; \
   } while (0)
+extern void mips_find_saved_regs PARAMS ((struct frame_info *));
 
 
 /* Things needed for making the inferior call functions.  */
 
-/* Stack has strict alignment. However, use PUSH_ARGUMENTS
-   to take care of it. */
-/*#define STACK_ALIGN(addr)	(((addr)+3)&~3)*/
+/* Stack must be aligned on 32-bit boundaries when synthesizing
+   function calls.  We don't need STACK_ALIGN, PUSH_ARGUMENTS will
+   handle it. */
 
 #define PUSH_ARGUMENTS(nargs, args, sp, struct_return, struct_addr) \
-    sp = mips_push_arguments(nargs, args, sp, struct_return, struct_addr)
+    sp = mips_push_arguments((nargs), (args), (sp), (struct_return), (struct_addr))
+extern CORE_ADDR
+mips_push_arguments PARAMS ((int, struct value **, CORE_ADDR, int, CORE_ADDR));
 
 /* Push an empty stack frame, to record the current PC, etc.  */
 
 #define PUSH_DUMMY_FRAME 	mips_push_dummy_frame()
+extern void mips_push_dummy_frame PARAMS ((void));
 
 /* Discard from the stack the innermost frame, restoring all registers.  */
 
 #define POP_FRAME		mips_pop_frame()
+extern void mips_pop_frame PARAMS ((void));
 
-#define MK_OP(op,rs,rt,offset) (((op)<<26)|((rs)<<21)|((rt)<<16)|(offset))
-#ifndef OP_LDFPR
-#define OP_LDFPR 061	/* lwc1 */
-#endif
-#ifndef OP_LDGPR
-#define OP_LDGPR 043	/* lw */
-#endif
-#define CALL_DUMMY_SIZE (16*4)
-#define Dest_Reg 2
-#define CALL_DUMMY {\
- MK_OP(0,RA_REGNUM,0,8),	/* jr $ra # Fake ABOUT_TO_RETURN ...*/\
- 0,				/* nop 	  #  ... to stop raw backtrace*/\
- 0x27bd0000,			/* addu	sp,?0 # Pseudo prologue */\
-/* Start here; reload FP regs, then GP regs: */\
- MK_OP(OP_LDFPR,SP_REGNUM,12,0             ), /* l[wd]c1 $f12,0(sp) */\
- MK_OP(OP_LDFPR,SP_REGNUM,13,  MIPS_REGSIZE), /* l[wd]c1 $f13,{4,8}(sp) */\
- MK_OP(OP_LDFPR,SP_REGNUM,14,2*MIPS_REGSIZE), /* l[wd]c1 $f14,{8,16}(sp) */\
- MK_OP(OP_LDFPR,SP_REGNUM,15,3*MIPS_REGSIZE), /* l[wd]c1 $f15,{12,24}(sp) */\
- MK_OP(OP_LDGPR,SP_REGNUM, 4,0             ), /* l[wd] $r4,0(sp) */\
- MK_OP(OP_LDGPR,SP_REGNUM, 5,  MIPS_REGSIZE), /* l[wd] $r5,{4,8}(sp) */\
- MK_OP(OP_LDGPR,SP_REGNUM, 6,2*MIPS_REGSIZE), /* l[wd] $r6,{8,16}(sp) */\
- MK_OP(OP_LDGPR,SP_REGNUM, 7,3*MIPS_REGSIZE), /* l[wd] $r7,{12,24}(sp) */\
- (017<<26)| (Dest_Reg << 16),	/* lui $r31,<target upper 16 bits>*/\
- MK_OP(13,Dest_Reg,Dest_Reg,0),	/* ori $r31,$r31,<lower 16 bits>*/ \
- (Dest_Reg<<21) | (31<<11) | 9,	/* jalr $r31 */\
- MK_OP(OP_LDGPR,SP_REGNUM, 7,3*MIPS_REGSIZE), /* l[wd] $r7,{12,24}(sp) */\
- 0x5000d,			/* bpt */\
-}
+#define CALL_DUMMY { 0 }
 
-#define CALL_DUMMY_START_OFFSET 12
+#define CALL_DUMMY_START_OFFSET (0)
 
-#define CALL_DUMMY_BREAKPOINT_OFFSET (CALL_DUMMY_START_OFFSET + (12 * 4))
+#define CALL_DUMMY_BREAKPOINT_OFFSET (0)
 
-/* Insert the specified number of args and function address
-   into a call sequence of the above form stored at DUMMYNAME.  */
-
-/* For big endian mips machines we need to switch the order of the
-   words with a floating-point value (it was already coerced to a double
-   by mips_push_arguments).  */
+/* On Irix, $t9 ($25) contains the address of the callee (used for PIC).
+   It doesn't hurt to do this on other systems; $t9 will be ignored.  */
 #define FIX_CALL_DUMMY(dummyname, start_sp, fun, nargs, args, rettype, gcc_p) \
-  do									\
-    {									\
-      store_unsigned_integer						\
-	(dummyname + 11 * 4, 4,						\
-	 (extract_unsigned_integer (dummyname + 11 * 4, 4)		\
-	  | (((fun) >> 16) & 0xffff)));					\
-      store_unsigned_integer						\
-	(dummyname + 12 * 4, 4,						\
-	 (extract_unsigned_integer (dummyname + 12 * 4, 4)		\
-	  | ((fun) & 0xffff)));						\
-      if (mips_fpu == MIPS_FPU_NONE)					\
-	{								\
-	  store_unsigned_integer (dummyname + 3 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	  store_unsigned_integer (dummyname + 4 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	  store_unsigned_integer (dummyname + 5 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	  store_unsigned_integer (dummyname + 6 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	}								\
-      else if (mips_fpu == MIPS_FPU_SINGLE)				\
-	{								\
-	  /* This isn't right.  mips_push_arguments will call		\
-             value_arg_coerce, which will convert all float arguments	\
-             to doubles.  If the function prototype is float, though,	\
-             it will be expecting a float argument in a float		\
-             register.  */						\
-	  store_unsigned_integer (dummyname + 4 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	  store_unsigned_integer (dummyname + 6 * 4, 4,			\
-				  (unsigned LONGEST) 0);		\
-	}								\
-      else if (TARGET_BYTE_ORDER == BIG_ENDIAN				\
-	       && ! GDB_TARGET_IS_MIPS64)				\
-	{								\
-	  if (nargs > 0							\
-	      && TYPE_CODE (VALUE_TYPE (args[0])) == TYPE_CODE_FLT)	\
-	    {								\
-	      if (TYPE_LENGTH (VALUE_TYPE (args[0])) > 8)		\
-		error ("floating point value too large to pass to function");\
-	      store_unsigned_integer					\
-		(dummyname + 3 * 4, 4, MK_OP (OP_LDFPR, SP_REGNUM, 12, 4));\
-	      store_unsigned_integer					\
-		(dummyname + 4 * 4, 4, MK_OP (OP_LDFPR, SP_REGNUM, 13, 0));\
-	    }								\
-	  if (nargs > 1							\
-	      && TYPE_CODE (VALUE_TYPE (args[1])) == TYPE_CODE_FLT)	\
-	    {								\
-	      if (TYPE_LENGTH (VALUE_TYPE (args[1])) > 8)		\
-		error ("floating point value too large to pass to function");\
-	      store_unsigned_integer					\
-		(dummyname + 5 * 4, 4, MK_OP (OP_LDFPR, SP_REGNUM, 14, 12));\
-	      store_unsigned_integer					\
-		(dummyname + 6 * 4, 4, MK_OP (OP_LDFPR, SP_REGNUM, 15, 8));\
-	    }								\
-	}								\
-    }									\
-  while (0)
+    write_register(T9_REGNUM, fun)
+
+#define CALL_DUMMY_LOCATION AT_ENTRY_POINT
+
+#define CALL_DUMMY_ADDRESS() (entry_point_address ())
 
 /* There's a mess in stack frame creation.  See comments in blockframe.c
    near reference to INIT_FRAME_PC_FIRST.  */
@@ -441,13 +453,14 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 #define	INIT_FRAME_PC(fromleaf, prev) /* nada */
 
 #define INIT_FRAME_PC_FIRST(fromleaf, prev) \
-  (prev)->pc = ((fromleaf) ? SAVED_PC_AFTER_CALL ((prev)->next) : \
-	      (prev)->next ? FRAME_SAVED_PC ((prev)->next) : read_pc ());
+   mips_init_frame_pc_first(fromleaf, prev)
+extern void mips_init_frame_pc_first PARAMS ((int, struct frame_info *));
 
 /* Special symbol found in blocks associated with routines.  We can hang
    mips_extra_func_info_t's off of this.  */
 
 #define MIPS_EFI_SYMBOL_NAME "__GDB_EFI_INFO__"
+extern void ecoff_relocate_efi PARAMS ((struct symbol *, CORE_ADDR));
 
 /* Specific information about a procedure.
    This overlays the MIPS's PDR records, 
@@ -455,6 +468,8 @@ extern int in_sigtramp PARAMS ((CORE_ADDR, char *));
 
 typedef struct mips_extra_func_info {
 	long	numargs;	/* number of args to procedure (was iopt) */
+	bfd_vma high_addr;      /* upper address bound */
+	long	frame_adjust;	/* offset of FP from SP (used on MIPS16) */
 	PDR	pdr;		/* Procedure descriptor record */
 } *mips_extra_func_info_t;
 
@@ -464,6 +479,7 @@ typedef struct mips_extra_func_info {
   struct frame_saved_regs *saved_regs;
 
 #define INIT_EXTRA_FRAME_INFO(fromleaf, fci) init_extra_frame_info(fci)
+extern void init_extra_frame_info PARAMS ((struct frame_info *));
 
 #define	PRINT_EXTRA_FRAME_INFO(fi) \
   { \
@@ -510,3 +526,66 @@ extern struct frame_info *setup_arbitrary_frame PARAMS ((int, CORE_ADDR *));
    probably much more common.  (FIXME). */
 
 #define COERCE_FLOAT_TO_DOUBLE (current_language -> la_language == language_c)
+
+/* These are defined in mdebugread.c and are used in mips-tdep.c  */
+extern CORE_ADDR sigtramp_address, sigtramp_end;
+extern void fixup_sigtramp PARAMS ((void));
+
+/* Defined in mips-tdep.c and used in remote-mips.c */
+extern char *mips_read_processor_type PARAMS ((void));
+
+/* Functions for dealing with MIPS16 call and return stubs.  */
+#define IN_SOLIB_CALL_TRAMPOLINE(pc, name)	mips_in_call_stub (pc, name)
+#define IN_SOLIB_RETURN_TRAMPOLINE(pc, name)	mips_in_return_stub (pc, name)
+#define SKIP_TRAMPOLINE_CODE(pc)		mips_skip_stub (pc)
+#define IGNORE_HELPER_CALL(pc)			mips_ignore_helper (pc)
+extern int mips_in_call_stub PARAMS ((CORE_ADDR pc,  char *name));
+extern int mips_in_return_stub PARAMS ((CORE_ADDR pc,  char *name));
+extern CORE_ADDR mips_skip_stub PARAMS ((CORE_ADDR pc));
+extern int mips_ignore_helper PARAMS ((CORE_ADDR pc));
+
+#ifndef TARGET_MIPS
+#define TARGET_MIPS
+#endif
+
+/* Definitions and declarations used by mips-tdep.c and remote-mips.c  */
+#define MIPS_INSTLEN 4		/* Length of an instruction */
+#define MIPS16_INSTLEN 2	/* Length of an instruction on MIPS16*/
+#define MIPS_NUMREGS 32		/* Number of integer or float registers */
+typedef unsigned long t_inst;	/* Integer big enough to hold an instruction */
+
+/* MIPS16 function addresses are odd (bit 0 is set).  Here are some
+   macros to test, set, or clear bit 0 of addresses.  */
+#define IS_MIPS16_ADDR(addr)	 ((addr) & 1)
+#define MAKE_MIPS16_ADDR(addr)	 ((addr) | 1)
+#define UNMAKE_MIPS16_ADDR(addr) ((addr) & ~1)
+
+#endif	/* TM_MIPS_H */
+
+/* Macros for setting and testing a bit in a minimal symbol that
+   marks it as 16-bit function.  The MSB of the minimal symbol's
+   "info" field is used for this purpose.  This field is already
+   being used to store the symbol size, so the assumption is
+   that the symbol size cannot exceed 2^31.
+
+   SYMBOL_IS_SPECIAL	tests whether an ELF symbol is "special", i.e. refers
+			to a 16-bit function
+   MAKE_MSYMBOL_SPECIAL	sets a "special" bit in a minimal symbol to mark it
+   			as a 16-bit function
+   MSYMBOL_IS_SPECIAL	tests the "special" bit in a minimal symbol
+   MSYMBOL_SIZE		returns the size of the minimal symbol, i.e.
+			the "info" field with the "special" bit masked out
+*/
+
+#define SYMBOL_IS_SPECIAL(sym) \
+  (((elf_symbol_type *) sym) -> internal_elf_sym.st_other == STO_MIPS16)
+#define MAKE_MSYMBOL_SPECIAL(msym) \
+ { \
+  MSYMBOL_INFO (msym) = (char *) (((long) MSYMBOL_INFO (msym)) | 0x80000000); \
+  SYMBOL_VALUE_ADDRESS (msym) |= 1; \
+ }
+   
+#define MSYMBOL_IS_SPECIAL(msym) \
+  (((long) MSYMBOL_INFO (msym) & 0x80000000) != 0)
+#define MSYMBOL_SIZE(msym) \
+  ((long) MSYMBOL_INFO (msym) & 0x7fffffff)

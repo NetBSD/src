@@ -63,8 +63,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* On the VAX, sigtramp is in the u area.  Can't check the exact
    addresses because for cross-debugging we don't have VAX include
    files around.  This should be close enough.  */
-#define SIGTRAMP_START	STACK_END_ADDR
-#define SIGTRAMP_END	0x80000000
+#define SIGTRAMP_START(pc)	STACK_END_ADDR
+#define SIGTRAMP_END(pc)	0x80000000
 
 /* Stack grows downward.  */
 

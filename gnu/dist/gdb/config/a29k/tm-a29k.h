@@ -60,7 +60,9 @@ CORE_ADDR skip_prologue ();
 
 #define INNER_THAN <
 
-/* Stack must be aligned on 32-bit word boundaries.  */
+/* Stack must be aligned on 32-bit boundaries when synthesizing
+   function calls. */
+
 #define STACK_ALIGN(ADDR) (((ADDR) + 3) & ~3)
 
 /* Sequence of bytes for breakpoint instruction.  */

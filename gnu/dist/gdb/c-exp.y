@@ -1,5 +1,5 @@
 /* YACC parser for C expressions, for GDB.
-   Copyright (C) 1986, 1989, 1990, 1991, 1993, 1994
+   Copyright (C) 1986, 1989, 1990, 1991, 1993, 1994, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -298,7 +298,6 @@ exp	:	exp '.' name
 			  write_exp_elt_opcode (STRUCTOP_STRUCT); }
 	;
 
-
 exp	:	exp '.' qualified_name
 			{ /* exp.type::name becomes exp.*(&type::name) */
 			  /* Note: this doesn't work if name is a
@@ -596,15 +595,14 @@ qualified_name:	typebase COLONCOLON name
 			    error ("`%s' is not defined as an aggregate type.",
 				   TYPE_NAME (type));
 
-			  if (!STREQ (type_name_no_tag (type), $4.ptr))
-			    error ("invalid destructor `%s::~%s'",
-				   type_name_no_tag (type), $4.ptr);
-
 			  tmp_token.ptr = (char*) alloca ($4.length + 2);
 			  tmp_token.length = $4.length + 1;
 			  tmp_token.ptr[0] = '~';
 			  memcpy (tmp_token.ptr+1, $4.ptr, $4.length);
 			  tmp_token.ptr[tmp_token.length] = 0;
+
+			  /* Check for valid destructor name.  */
+			  destructor_name_p (tmp_token.ptr, type);
 			  write_exp_elt_opcode (OP_SCOPE);
 			  write_exp_elt_type (type);
 			  write_exp_string (tmp_token);
@@ -907,7 +905,7 @@ parse_number (p, len, parsed_float, putithere)
      here, and we do kind of silly things like cast to unsigned.  */
   register LONGEST n = 0;
   register LONGEST prevn = 0;
-  unsigned LONGEST un;
+  ULONGEST un;
 
   register int i = 0;
   register int c;
@@ -920,34 +918,38 @@ parse_number (p, len, parsed_float, putithere)
   /* We have found a "L" or "U" suffix.  */
   int found_suffix = 0;
 
-  unsigned LONGEST high_bit;
+  ULONGEST high_bit;
   struct type *signed_type;
   struct type *unsigned_type;
 
   if (parsed_float)
     {
-      char c;
-
       /* It's a float since it contains a point or an exponent.  */
+      char c;
+      int num = 0;	/* number of tokens scanned by scanf */
+      char saved_char = p[len];
 
+      p[len] = 0;	/* null-terminate the token */
       if (sizeof (putithere->typed_val_float.dval) <= sizeof (float))
-	sscanf (p, "%g", &putithere->typed_val_float.dval);
+	num = sscanf (p, "%g%c", (float *) &putithere->typed_val_float.dval,&c);
       else if (sizeof (putithere->typed_val_float.dval) <= sizeof (double))
-	sscanf (p, "%lg", &putithere->typed_val_float.dval);
+	num = sscanf (p, "%lg%c", (double *) &putithere->typed_val_float.dval,&c);
       else
 	{
-#ifdef PRINTF_HAS_LONG_DOUBLE
-	  sscanf (p, "%Lg", &putithere->typed_val_float.dval);
+#ifdef SCANF_HAS_LONG_DOUBLE
+	  num = sscanf (p, "%Lg%c", &putithere->typed_val_float.dval,&c);
 #else
 	  /* Scan it into a double, then assign it to the long double.
 	     This at least wins with values representable in the range
 	     of doubles. */
 	  double temp;
-	  sscanf (p, "%lg", &temp);
+	  num = sscanf (p, "%lg%c", &temp,&c);
 	  putithere->typed_val_float.dval = temp;
 #endif
 	}
-
+      p[len] = saved_char;	/* restore the input stream */
+      if (num != 1) 		/* check scanf found ONLY a float ... */
+	return ERROR;
       /* See if it has `f' or `l' suffix (float or long double).  */
 
       c = tolower (p[len - 1]);
@@ -1043,7 +1045,7 @@ parse_number (p, len, parsed_float, putithere)
 	 on 0x123456789 when LONGEST is 32 bits.  */
       if (c != 'l' && c != 'u' && n != 0)
 	{	
-	  if ((unsigned_p && (unsigned LONGEST) prevn >= (unsigned LONGEST) n))
+	  if ((unsigned_p && (ULONGEST) prevn >= (ULONGEST) n))
 	    error ("Numeric constant too large.");
 	}
       prevn = n;
@@ -1061,11 +1063,11 @@ parse_number (p, len, parsed_float, putithere)
      the case where it is we just always shift the value more than
      once, with fewer bits each time.  */
 
-  un = (unsigned LONGEST)n >> 2;
+  un = (ULONGEST)n >> 2;
   if (long_p == 0
       && (un >> (TARGET_INT_BIT - 2)) == 0)
     {
-      high_bit = ((unsigned LONGEST)1) << (TARGET_INT_BIT-1);
+      high_bit = ((ULONGEST)1) << (TARGET_INT_BIT-1);
 
       /* A large decimal (not hex or octal) constant (between INT_MAX
 	 and UINT_MAX) is a long or unsigned long, according to ANSI,
@@ -1079,20 +1081,20 @@ parse_number (p, len, parsed_float, putithere)
   else if (long_p <= 1
 	   && (un >> (TARGET_LONG_BIT - 2)) == 0)
     {
-      high_bit = ((unsigned LONGEST)1) << (TARGET_LONG_BIT-1);
+      high_bit = ((ULONGEST)1) << (TARGET_LONG_BIT-1);
       unsigned_type = builtin_type_unsigned_long;
       signed_type = builtin_type_long;
     }
   else
     {
-      high_bit = (((unsigned LONGEST)1)
+      high_bit = (((ULONGEST)1)
 		  << (TARGET_LONG_LONG_BIT - 32 - 1)
 		  << 16
 		  << 16);
       if (high_bit == 0)
 	/* A long long does not fit in a LONGEST.  */
 	high_bit =
-	  (unsigned LONGEST)1 << (sizeof (LONGEST) * HOST_CHAR_BIT - 1);
+	  (ULONGEST)1 << (sizeof (LONGEST) * HOST_CHAR_BIT - 1);
       unsigned_type = builtin_type_unsigned_long_long;
       signed_type = builtin_type_long_long;
     }
@@ -1402,15 +1404,30 @@ yylex ()
        (c == '_' || c == '$' || (c >= '0' && c <= '9')
 	|| (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '<');)
     {
-       if (c == '<')
-	 {
-	   int i = namelen;
-	   while (tokstart[++i] && tokstart[i] != '>');
-	   if (tokstart[i] == '>')
-	     namelen = i;
-	  }
-       c = tokstart[++namelen];
-     }
+      /* Template parameter lists are part of the name.
+	 FIXME: This mishandles `print $a<4&&$a>3'.  */
+
+      if (c == '<')
+	{
+	  int i = namelen;
+	  int nesting_level = 1;
+	  while (tokstart[++i])
+	    {
+	      if (tokstart[i] == '<')
+		nesting_level++;
+	      else if (tokstart[i] == '>')
+		{
+		  if (--nesting_level == 0)
+		    break;
+		}
+	    }
+	  if (tokstart[i] == '>')
+	    namelen = i;
+	  else
+	    break;
+	}
+      c = tokstart[++namelen];
+    }
 
   /* The token "if" terminates the expression and is NOT 
      removed from the input stream.  */

@@ -1,5 +1,5 @@
 /* Convex stuff for GDB.
-   Copyright (C) 1990, 1991 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -444,26 +444,20 @@ decout (stream, type, val)
 	  && ((lv & 0xf0000000) == 0x80000000
 	      || ((lv & 0xf0000000) == 0xf0000000 && lv < STACK_END_ADDR)))
 	{
-	  fprintf_filtered (stream, "%#x", lv);
+	  print_longest (stream, "x", 0, val);
 	  return;
 	}
 
     case 10:
-      fprintf_filtered (stream, TYPE_UNSIGNED (type) ? "%llu" : "%lld", val);
+      print_longest (stream, TYPE_UNSIGNED (type) ? "u" : "d", 0, val);
       return;
 
     case 8:
-      if (TYPE_LENGTH (type) <= sizeof lv)
-	fprintf_filtered (stream, "%#o", lv);
-      else
-	fprintf_filtered (stream, "%#llo", val);
+      print_longest (stream, "o", 0, val);
       return;
 
     case 16:
-      if (TYPE_LENGTH (type) <= sizeof lv)
-	fprintf_filtered (stream, "%#x", lv);
-      else
-	fprintf_filtered (stream, "%#llx", val);
+      print_longest (stream, "x", 0, val);
       return;
     }
 }

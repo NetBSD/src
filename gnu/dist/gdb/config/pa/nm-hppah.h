@@ -75,3 +75,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    target process...  Which really pisses off GDB.)  */
 
 #define ATTACH_DETACH
+
+#ifdef HAVE_HPUX_THREAD_SUPPORT
+
+#ifdef __STDC__
+struct objfile;
+#endif
+
+void hpux_thread_new_objfile PARAMS ((struct objfile *objfile));
+#define target_new_objfile(OBJFILE) hpux_thread_new_objfile (OBJFILE)
+
+extern char *hpux_pid_to_str PARAMS ((int pid));
+#define target_pid_to_str(PID) hpux_pid_to_str (PID)
+
+#endif /* HAVE_HPUX_THREAD_SUPPORT */

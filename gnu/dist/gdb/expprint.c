@@ -300,7 +300,6 @@ print_subexp (exp, pos, stream, prec)
       fputs_filtered (&exp->elts[pc + 2].string, stream);
       return;
 
-
     case BINOP_SUBSCRIPT:
       print_subexp (exp, pos, stream, PREC_SUFFIX);
       fputs_filtered ("[", stream);
@@ -342,7 +341,8 @@ print_subexp (exp, pos, stream, prec)
 	   its type; print the value in the type of the MEMVAL.  */
 	(*pos) += 4;
 	val = value_at_lazy (exp->elts[pc + 1].type,
-			     (CORE_ADDR) exp->elts[pc + 5].longconst);
+			     (CORE_ADDR) exp->elts[pc + 5].longconst,
+			     NULL);
 	value_print (val, stream, 0, Val_no_prettyprint);
       } else {
 	fputs_filtered ("{", stream);
@@ -612,7 +612,7 @@ dump_expression (exp, stream, note)
 	}
       fprintf_filtered (stream, "%20s  ", opcode_name);
       fprintf_filtered (stream,
-#if defined (PRINTF_HAS_LONG_LONG)
+#if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
 			"%ll16x  ",
 #else
 			"%l16x  ",

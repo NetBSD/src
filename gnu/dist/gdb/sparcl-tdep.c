@@ -23,16 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "serial.h"
 #include <sys/types.h>
-#include <sys/time.h>
 
-#if defined(__GO32__) || defined(WIN32)
-#undef HAVE_SOCKETS
-#else
+#if !defined(__GO32__) && !defined(_WIN32)
 #define HAVE_SOCKETS
-#endif
-
-
-#ifdef HAVE_SOCKETS	 
+#include <sys/time.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -538,8 +532,9 @@ download (target_name, args, from_tty, write_routine, start_routine)
      char *target_name;
      char *args;
      int from_tty;
-     void (*write_routine)();
-     void (*start_routine)();
+     void (*write_routine) PARAMS ((bfd *from_bfd, asection *from_sec,
+				    file_ptr from_addr, bfd_vma to_addr, int len));
+     void (*start_routine) PARAMS ((bfd_vma entry));
 {
   struct cleanup *old_chain;
   asection *section;

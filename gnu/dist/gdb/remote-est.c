@@ -97,7 +97,8 @@ static char *est_inits[] = {"he\r", /* Resets the prompt, and clears repeated cm
 
 static struct monitor_ops est_cmds =
 {
-  MO_CLR_BREAK_USES_ADDR | MO_FILL_USES_ADDR | MO_NEED_REGDUMP_AFTER_CONT,
+  MO_CLR_BREAK_USES_ADDR | MO_FILL_USES_ADDR | MO_NEED_REGDUMP_AFTER_CONT |
+  MO_SREC_ACK | MO_SREC_ACK_PLUS,
   est_inits,			/* Init strings */
   "go\r",			/* continue command */
   "sidr\r",			/* single step */

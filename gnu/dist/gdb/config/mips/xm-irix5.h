@@ -1,6 +1,6 @@
 /* Definitions for irix5 hosting support.
 
-Copyright (C) 1993 Free Software Foundation, Inc.
+Copyright (C) 1993, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "xm-sysv4.h"
 
-#define CC_HAS_LONG_LONG 1
-#define PRINTF_HAS_LONG_LONG 1
 #define HOST_BYTE_ORDER BIG_ENDIAN
 
 /* Override register locations in upage for SGI machines */

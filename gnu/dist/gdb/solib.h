@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1998 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -58,3 +58,15 @@ solib_address PARAMS ((CORE_ADDR));		/* solib.c */
 /* If ADDR lies in a shared library, return its name.  */
 
 #define PC_SOLIB(addr)	solib_address (addr)
+
+#ifdef SVR4_SHARED_LIBS
+
+/* Return 1 if PC lies in the dynamic symbol resolution code of the
+   SVR4 run time loader.  */
+
+#define IN_SOLIB_DYNSYM_RESOLVE_CODE(pc) in_svr4_dynsym_resolve_code (pc)
+
+extern int
+in_svr4_dynsym_resolve_code PARAMS ((CORE_ADDR));
+
+#endif
