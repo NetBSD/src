@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $
+ * $Id: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.107 2003/10/07 19:11:13 fvdl Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4217,20 +4217,20 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	 */
 
 	if (ahc_createdmamem(ahc->parent_dmat,
-			     AHC_SCB_MAX * sizeof(struct hardware_scb), ahc->sc_dmaflags,
-			     &scb_data->hscb_dmamap,
-			     (caddr_t *)&scb_data->hscbs, &scb_data->hscb_busaddr,
-			     &scb_data->hscb_seg, &scb_data->hscb_nseg, ahc_name(ahc),
-			     "hardware SCB structures") < 0)
+	     AHC_SCB_MAX * sizeof(struct hardware_scb), ahc->sc_dmaflags,
+	     &scb_data->hscb_dmamap,
+	     (caddr_t *)&scb_data->hscbs, &scb_data->hscb_busaddr,
+	     &scb_data->hscb_seg, &scb_data->hscb_nseg, ahc_name(ahc),
+	     "hardware SCB structures") < 0)
 		goto error_exit;
 
 	scb_data->init_level++;
 
 	if (ahc_createdmamem(ahc->parent_dmat,
-			     AHC_SCB_MAX * sizeof(struct scsipi_sense_data), ahc->sc_dmaflags,
-			     &scb_data->sense_dmamap, (caddr_t *)&scb_data->sense,
-			     &scb_data->sense_busaddr, &scb_data->sense_seg,
-			     &scb_data->sense_nseg, ahc_name(ahc), "sense buffers") < 0)
+	     AHC_SCB_MAX * sizeof(struct scsipi_sense_data), ahc->sc_dmaflags,
+	     &scb_data->sense_dmamap, (caddr_t *)&scb_data->sense,
+	     &scb_data->sense_busaddr, &scb_data->sense_seg,
+	     &scb_data->sense_nseg, ahc_name(ahc), "sense buffers") < 0)
 		goto error_exit;
 
 	scb_data->init_level++;
@@ -4369,9 +4369,9 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		next_scb->flags = SCB_FREE;
 
 		error = bus_dmamap_create(ahc->parent_dmat, 
-					  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
-					  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-					  &next_scb->dmamap);
+			  AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
+			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
+			  &next_scb->dmamap);
 		if (error != 0)
 			break;
 
