@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.12 2000/02/08 17:14:29 chopps Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.13 2000/02/08 17:48:39 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -225,6 +225,7 @@ pcic_isa_probe_interrupts(sc, h)
 		cscintr = PCIC_CSC_INTR_CD_ENABLE;
 		cscintr |= (irq << PCIC_CSC_INTR_IRQ_SHIFT);
 		pcic_write(h, PCIC_CSC_INTR, cscintr);
+		delay(10);
 
 		/* interrupt 40 times */
 		sc->intr_detect = 0;
@@ -243,15 +244,14 @@ pcic_isa_probe_interrupts(sc, h)
 			mask |= (1 << i);
 		}
 		pcic_write(h, PCIC_CSC_INTR, 0);
+		delay(10);
+
 		if (sc->ih)
 			isa_intr_disestablish(ic, sc->ih);
 	}
 	sc->intr_mask[h->chip] = mask;
 
 	printf("%s\n", sc->intr_mask ? "" : " none");
-
-	/* clear any current interrupt */
-	pcic_read(h, PCIC_CSC);
 }
 
 /*
