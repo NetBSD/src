@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2005/04/06 20:47:23 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 INCSDIR=${X11INCDIR}/freetype2/freetype/cache
 
 INCS=	ftccache.h ftccmap.h ftcglyph.h ftcimage.h ftcmanag.h \
-	ftcsbits.h ftlru.h
+	ftcsbits.h
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
