@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.18 2004/08/10 18:43:50 mycroft Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.19 2004/08/10 21:14:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.18 2004/08/10 18:43:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.19 2004/08/10 21:14:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.18 2004/08/10 18:43:50 mycroft Exp $");
 
 #include "locators.h"
 
-struct pcmcom_slave_info {
-	struct pcmcia_io_handle psi_pcioh;	/* PCMCIA i/o space info */
-	int psi_io_window;			/* our i/o window */
-	struct device *psi_child;		/* child's device */
-};
-
 struct pcmcom_softc {
 	struct device sc_dev;			/* generic device glue */
 
@@ -87,8 +81,12 @@ struct pcmcom_softc {
 	void *sc_ih;				/* interrupt handle */
 	int sc_enabled_count;			/* enabled count */
 
-	struct pcmcom_slave_info *sc_slaves;	/* slave info */
+#define	NSLAVES			8
+	struct device *sc_slaves[NSLAVES];	/* slave info */
 	int sc_nslaves;				/* slave count */
+
+	int sc_state;
+#define	PCMCOM_ATTACHED		3
 };
 
 struct pcmcom_attach_args {
@@ -98,6 +96,7 @@ struct pcmcom_attach_args {
 };
 
 int	pcmcom_match __P((struct device *, struct cfdata *, void *));
+int	pcmcom_validate_config __P((struct pcmcia_config_entry *));
 void	pcmcom_attach __P((struct device *, struct device *, void *));
 int	pcmcom_detach __P((struct device *, int));
 int	pcmcom_activate __P((struct device *, enum devact));
@@ -105,23 +104,15 @@ int	pcmcom_activate __P((struct device *, enum devact));
 CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
     pcmcom_match, pcmcom_attach, pcmcom_detach, pcmcom_activate);
 
-const struct pcmcom_product {
-	struct pcmcia_product pp_product;
-	int		pp_nslaves;		/* number of slaves */
-} pcmcom_products[] = {
-	{ { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
-	    PCMCIA_CIS_INVALID },
-	  2 },
+const struct pcmcia_product pcmcom_products[] = {
+	{ PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
+	  PCMCIA_CIS_INVALID },
 };
 const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
 int	pcmcom_print __P((void *, const char *));
 int	pcmcom_submatch __P((struct device *, struct cfdata *, void *));
-
-int	pcmcom_check_cfe __P((struct pcmcom_softc *,
-	    struct pcmcia_config_entry *));
-void	pcmcom_attach_slave __P((struct pcmcom_softc *, int));
 
 int	pcmcom_enable __P((struct pcmcom_softc *));
 void	pcmcom_disable __P((struct pcmcom_softc *));
@@ -142,130 +133,63 @@ pcmcom_match(parent, cf, aux)
 	return (0);
 }
 
+int
+pcmcom_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1 || cfe->num_iospace > NSLAVES)
+		return (EINVAL);
+	return (0);
+}
+
 void
 pcmcom_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
+	struct pcmcom_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	const struct pcmcom_product *pp;
-	size_t size;
-	int i;
+	int slave;
+	int error;
 
 	sc->sc_pf = pa->pf;
 
-	pp = pcmcia_product_lookup(pa, pcmcom_products, pcmcom_nproducts,
-            sizeof(pcmcom_products[0]), NULL);
-	if (!pp) {
-		printf("\n");
-		panic("pcmcom_attach: impossible");
-	}
-
-	/* Allocate the slave info. */
-	sc->sc_nslaves = pp->pp_nslaves;
-	size = sizeof(struct pcmcom_slave_info) * sc->sc_nslaves;
-	sc->sc_slaves = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sc->sc_slaves == NULL) {
-		printf("%s: unable to allocate slave info\n",
-		    sc->sc_dev.dv_xname);
+	error = pcmcia_function_configure(pa->pf, pcmcom_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
 		return;
 	}
 
-	/*
-	 * The address decoders on these cards are stupid.  They decode
-	 * (usually) 10 bits of address, so you need to allocate the
-	 * regions they request in order for the card to differentiate
-	 * between serial ports.
-	 */
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (pcmcom_check_cfe(sc, cfe)) {
-			/* Found one! */
-			break;
-		}
-	}
-	if (cfe == NULL) {
-		printf("%s: unable to find a suitable config table entry\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
+	cfe = pa->pf->cfe;
+	sc->sc_nslaves = cfe->num_iospace;
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->sc_enabled_count = 1;
+	error = pcmcom_enable(sc);
+	if (error)
+		goto fail;
 
 	/* Attach the children. */
-	for (i = 0; i < sc->sc_nslaves; i++)
-		pcmcom_attach_slave(sc, i);
-
-	sc->sc_enabled_count = 0;
-	pcmcia_function_disable(sc->sc_pf);
-}
-
-int
-pcmcom_check_cfe(sc, cfe)
-	struct pcmcom_softc *sc;
-	struct pcmcia_config_entry *cfe;
-{
-	struct pcmcom_slave_info *psi;
-	int slave;
-
-	/* We need to have the same number of I/O spaces as we do slaves. */
-	if (cfe->num_iospace != sc->sc_nslaves)
-		return (0);
-
 	for (slave = 0; slave < sc->sc_nslaves; slave++) {
-		psi = &sc->sc_slaves[slave];
-		if (pcmcia_io_alloc(sc->sc_pf,
-		    cfe->iospace[slave].start,
-		    cfe->iospace[slave].length,
-		    cfe->iospace[slave].length,
-		    &psi->psi_pcioh))
-			goto release;
+		struct pcmcom_attach_args pca;
+
+		printf("%s: slave %d\n", self->dv_xname, slave);
+
+		pca.pca_iot = cfe->iospace[slave].handle.iot;
+		pca.pca_ioh = cfe->iospace[slave].handle.ioh;
+		pca.pca_slave = slave;
+
+		sc->sc_slaves[slave] = config_found_sm(&sc->sc_dev, &pca,
+		    pcmcom_print, pcmcom_submatch);
 	}
 
-	/* If we got here, we were able to allocate space for all slaves! */
-	return (1);
+	pcmcom_disable(sc);
+	sc->sc_state = PCMCOM_ATTACHED;
+	return;
 
- release:
-	/* Release the i/o spaces we've allocated. */
-	for (slave--; slave >= 0; slave--) {
-		psi = &sc->sc_slaves[slave];
-		pcmcia_io_free(sc->sc_pf, &psi->psi_pcioh);
-	}
-	return (0);
-}
-
-void
-pcmcom_attach_slave(sc, slave)
-	struct pcmcom_softc *sc;
-	int slave;
-{
-	struct pcmcom_slave_info *psi = &sc->sc_slaves[slave];
-	struct pcmcom_attach_args pca;
-
-	printf("%s: slave %d", sc->sc_dev.dv_xname, slave);
-
-	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8, &psi->psi_pcioh,
-	    &psi->psi_io_window)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-
-	printf("\n");
-
-	pca.pca_iot = psi->psi_pcioh.iot;
-	pca.pca_ioh = psi->psi_pcioh.ioh;
-	pca.pca_slave = slave;
-
-	psi->psi_child = config_found_sm(&sc->sc_dev, &pca, pcmcom_print,
-	    pcmcom_submatch);
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -273,26 +197,24 @@ pcmcom_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
-	struct pcmcom_slave_info *psi;
+	struct pcmcom_softc *sc = (void *)self;
 	int slave, error;
 
+	if (sc->sc_state != PCMCOM_ATTACHED)
+		return (0);
+
 	for (slave = sc->sc_nslaves - 1; slave >= 0; slave--) {
-		psi = &sc->sc_slaves[slave];
-		if (psi->psi_child == NULL)
-			continue;
-
-		/* Detach the child. */
-		if ((error = config_detach(psi->psi_child, flags)) != 0)
-			return (error);
-		psi->psi_child = NULL;
-
-		/* Unmap the i/o window. */
-		pcmcia_io_unmap(sc->sc_pf, psi->psi_io_window);
-
-		/* Free the i/o space. */
-		pcmcia_io_free(sc->sc_pf, &psi->psi_pcioh);
+		if (sc->sc_slaves[slave]) {
+			/* Detach the child. */
+			error = config_detach(sc->sc_slaves[slave], flags);
+			if (error)
+				return (error);
+			sc->sc_slaves[slave] = 0;
+		}
 	}
+
+	pcmcia_function_unconfigure(sc->sc_pf);
+
 	return (0);
 }
 
@@ -301,8 +223,7 @@ pcmcom_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
-	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
-	struct pcmcom_slave_info *psi;
+	struct pcmcom_softc *sc = (void *)self;
 	int slave, error = 0, s;
 
 	s = splserial();
@@ -313,17 +234,16 @@ pcmcom_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		for (slave = sc->sc_nslaves - 1; slave >= 0; slave--) {
-			psi = &sc->sc_slaves[slave];
-			if (psi->psi_child == NULL)
-				continue;
-
-			/*
-			 * Deactivate the child.  Doing so will cause our
-			 * own enabled count to drop to 0, once all children
-			 * are deactivated.
-			 */
-			if ((error = config_deactivate(psi->psi_child)) != 0)
-				break;
+			if (sc->sc_slaves[slave]) {
+				/*
+				 * Deactivate the child.  Doing so will cause
+				 * our own enabled count to drop to 0, once all
+				 * children are deactivated.
+				 */
+				error = config_deactivate(sc->sc_slaves[slave]);
+				if (error)
+					break;
+			}
 		}
 		break;
 	}
@@ -374,8 +294,8 @@ pcmcom_intr(arg)
 		return (0);
 
 	for (i = 0; i < sc->sc_nslaves; i++) {
-		if (sc->sc_slaves[i].psi_child != NULL)
-			rval |= comintr(sc->sc_slaves[i].psi_child);
+		if (sc->sc_slaves[i])
+			rval |= comintr(sc->sc_slaves[i]);
 	}
 
 	return (rval);
@@ -396,15 +316,14 @@ pcmcom_enable(sc)
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_SERIAL,
 	    pcmcom_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
+	if (!sc->sc_ih)
+		return (EIO);
 
 	error = pcmcia_function_enable(sc->sc_pf);
-	if (error)
+	if (error) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
+	}
 
 	return (error);
 }
@@ -419,6 +338,7 @@ pcmcom_disable(sc)
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 /****** Here begins the com attachment code. ******/
