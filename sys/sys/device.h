@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.12 1996/03/17 01:03:02 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.13 1996/04/04 00:25:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,8 @@
 #ifndef _SYS_DEVICE_H_
 #define	_SYS_DEVICE_H_
 
+#include <sys/queue.h>
+
 /*
  * Minimal device structures.
  * Note that all ``system'' device types are listed here.
@@ -62,20 +64,22 @@ enum devclass {
 
 struct device {
 	enum	devclass dv_class;	/* this device's classification */
-	struct	device *dv_next;	/* next in list of all */
+	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	struct	cfdata *dv_cfdata;	/* config data that found us */
 	int	dv_unit;		/* device unit number */
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
 };
+TAILQ_HEAD(devicelist, device);
 
 /* `event' counters (use zero or more per device instance, as needed) */
 struct evcnt {
-	struct	evcnt *ev_next;		/* linked list */
+	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
 	struct	device *ev_dev;		/* associated device */
 	int	ev_count;		/* how many have occurred */
 	char	ev_name[8];		/* what to call them (systat display) */
 };
+TAILQ_HEAD(evcntlist, evcnt);
 
 /*
  * Configuration data (i.e., data placed in ioconf.c).
@@ -148,9 +152,11 @@ struct pdevinit {
 };
 
 #ifdef _KERNEL
-struct	device *alldevs;	/* head of list of all devices */
-struct	evcnt *allevents;	/* head of list of all events */
 
+extern struct devicelist alldevs;	/* list of all devices */
+extern struct evcntlist allevents;	/* list of all event counters */
+
+void config_init __P((void));
 void *config_search __P((cfmatch_t, struct device *, void *));
 void *config_rootsearch __P((cfmatch_t, char *, void *));
 int config_found_sm __P((struct device *, void *, cfprint_t, cfmatch_t));
