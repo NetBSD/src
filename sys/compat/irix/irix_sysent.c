@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.2 2001/11/13 02:08:32 lukem Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.3 2001/11/26 21:36:25 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.2 2001/11/13 02:08:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.3 2001/11/26 21:36:25 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -25,15 +25,15 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.2 2001/11/13 02:08:32 lukem Exp $"
 
 struct sysent irix_sysent[] = {
 	{ 0, 0, 0,
-	    sys_nosys },			/* 0 = unimplemented */
+	    sys_nosys },			/* 0 = syscall */
+	{ 1, s(struct sys_exit_args), 0,
+	    sys_exit },				/* 1 = exit */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 1 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 2 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 3 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 4 = unimplemented */
+	    sys_fork },				/* 2 = fork */
+	{ 3, s(struct sys_read_args), 0,
+	    sys_read },				/* 3 = read */
+	{ 3, s(struct sys_write_args), 0,
+	    sys_write },			/* 4 = write */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 5 = unimplemented */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.2 2001/11/26 21:36:24 manu Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.1 2001/11/26 21:36:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,35 +36,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_IRIX_EXEC_H_
-#define	_IRIX_EXEC_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.1 2001/11/26 21:36:24 manu Exp $");
 
-#include <sys/types.h> 
+#ifndef ELFSIZE
+#define ELFSIZE		32	/* XXX should die */
+#endif
+
+#include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
-#ifdef EXEC_ELF32
-#define IRIX_AUX_ARGSIZ howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
-    sizeof (Elf32_Addr))
+#include <compat/irix/irix_exec.h>
 
-int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int
+ELFNAME2(irix,copyargs)(pack, arginfo, stackp, argp)
+        struct exec_package *pack;
+        struct ps_strings *arginfo;
+        char **stackp;
+        void *argp;
+{
+	/* Align the stack frame on a 16 bytes boundary */
+	*stackp = (char *)(((unsigned long)*stackp) & ~0xfUL);
 
-int irix_elf32_probe __P((struct proc *, struct exec_package *, void *,  
-    char *, vaddr_t *));
-#endif
+        return ELFNAME(copyargs)(pack, arginfo, stackp, argp);
 
-#ifdef EXEC_ELF64
-#define IRIX_AUX_ARGSIZ howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), \
-    sizeof (Elf64_Addr))
-
-int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
-
-int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
-    char *, vaddr_t *));
-#endif
-
-extern const struct emul emul_irix;
-
-#endif /* !_IRIX_EXEC_H_ */
+	*stackp = (char *)((unsigned long)*stackp - 16);
+}

@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.2 2001/11/13 02:08:32 lukem Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.3 2001/11/26 21:36:25 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.2 2001/11/13 02:08:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.3 2001/11/26 21:36:25 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -24,11 +24,11 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.2 2001/11/13 02:08:32 lukem Exp 
 #endif /* _KERNEL_OPT */
 
 const char *const irix_syscallnames[] = {
-	"#0 (unimplemented)",		/* 0 = unimplemented */
-	"#1 (unimplemented)",		/* 1 = unimplemented */
-	"#2 (unimplemented)",		/* 2 = unimplemented */
-	"#3 (unimplemented)",		/* 3 = unimplemented */
-	"#4 (unimplemented)",		/* 4 = unimplemented */
+	"syscall",			/* 0 = syscall */
+	"exit",			/* 1 = exit */
+	"fork",			/* 2 = fork */
+	"read",			/* 3 = read */
+	"write",			/* 4 = write */
 	"#5 (unimplemented)",		/* 5 = unimplemented */
 	"#6 (unimplemented)",		/* 6 = unimplemented */
 	"#7 (unimplemented)",		/* 7 = unimplemented */

@@ -1,4 +1,5 @@
-#	$NetBSD: files.irix,v 1.1 2001/09/22 18:51:35 manu Exp $
+#	$NetBSD: files.irix,v 1.2 2001/11/26 21:36:24 manu Exp $
 #
 
 file	compat/irix/irix_exec.c			compat_irix
+file	compat/irix/irix_exec_elf32.c		compat_irix & exec_elf32
