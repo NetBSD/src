@@ -1,4 +1,4 @@
-/* $NetBSD: skeytest.c,v 1.1 2000/07/06 22:35:58 mjl Exp $ */
+/* $NetBSD: skeytest.c,v 1.2 2000/07/31 12:22:39 mjl Exp $ */
 
 /* This is a regression test for the S/Key implementation
 	against the data set from Appendix C of RFC2289 */
@@ -70,11 +70,12 @@ int main()
 
 			for(j=1; j<99; j++)
 				f(data);
+			btoa8(prn, data);
 
-			if(strcasecmp(prn, rr->one))
+			if(strcasecmp(prn, rr->nine))
 				{
 				errors++;
-				printf("Set %d, round 1, %s: Expected %s and got %s\n", i, rr->algo, rr->one, prn);
+				printf("Set %d, round 99, %s: Expected %s and got %s\n", i, rr->algo, rr->nine, prn);
 				}
 
 			}
