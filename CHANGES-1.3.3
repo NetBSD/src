@@ -15,3 +15,39 @@ include/ctype.h				1.16		tv
 distrib/notes/amiga/prep		1.16		is
 
   Add a warning to reinstall miniroot.fs before retrying installation.
+
+libexec/ld.elf_so/rtld.c		1.7		mhitch
+
+  Don't forget to update _rtld_objtail when _rtld_dlclose() removes
+  the current tail entry.
+
+etc/etc.pmax/MAKEDEV			1.22		mhitch
+
+  PMAX SCSI drivers support rz5, rz6, rz7 [on DS3100], rz13, and rz14.
+  MAKEDEV needs to be able to create those devices, and to include
+  them in 'all'.
+
+lib/libc/arch/mips/sys/cerror.S		1.6		jonathan
+
+  Explicilty reload the mips-ABIcall GOT/$gp in cerror().  cerror()
+  gets called from outside libc (e.g., from libposix's rename(), and
+  if we don't load $t9, cerror() makes wild references using the
+  libposix $gp and coredumps.
+
+usr.sbin/inetd/inetd.c			1.43		tron
+
+  From "buqtraq": avoid file descriptor leak if service is looping.
+
+usr.sbin/pkg_install/add/perform.c	1.20		tron
+
+  Fix broken package dependence handling mentioned by Brook Milligan on
+  "tech-pkg@netbsd.org".
+
+gnu/usr.bin/cpio/Makefile		1.6		frueauf
+
+  Add -DHAVE_LCHOWN=1 to CPPFLAGS to ensure that owner/group of
+  symlinks are properly keept. Closes PR#5595.
+
+lib/libc/stdio/fseek.3			1.10-1.11	kleink
+
+  Fix typo (PR#6053), and make return value description match XSH5.
