@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.5 1998/08/25 00:12:17 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.6 1998/10/03 16:24:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.5 1998/08/25 00:12:17 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.6 1998/10/03 16:24:08 hubertf Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: perform.c,v 1.5 1998/08/25 00:12:17 hubertf Exp $");
 
 static int pkg_do(char *);
 static void sanity_check(char *);
-static void undepend(PackingList, char *);
+static int undepend(const char *, char *);
 static char LogDir[FILENAME_MAX];
 
 
@@ -151,10 +151,12 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Attempting to remove dependency on package `%s'\n", p->name);
 	if (!Fake)
-	    undepend(p, pkg);
+	    findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+			     p->name, undepend, pkg);
     }
     return 0;
 }
+
 
 static void
 sanity_check(char *pkg)
@@ -172,29 +174,34 @@ cleanup(int sig)
 	exit(1);
 }
 
-static void
-undepend(PackingList p, char *pkgname)
+/* deppkgname is the pkg from which's +REQUIRED_BY file we are
+ * about to remove pkg2delname. This function is called from
+ * findmatchingname(), deppkgname is expanded from a (possible) pattern.
+ */
+int
+undepend(const char *deppkgname, char *pkg2delname)
 {
      char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
      char fbuf[FILENAME_MAX];
+     char dep[FILENAME_MAX];
      FILE *fp, *fpwr;
      char *tmp;
      int s;
 
      sprintf(fname, "%s/%s/%s",
 	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	     p->name, REQUIRED_BY_FNAME);
+	     deppkgname, REQUIRED_BY_FNAME);
      fp = fopen(fname, "r");
      if (fp == NULL) {
 	 warnx("couldn't open dependency file `%s'", fname);
-	 return;
+	 return 0;
      }
      sprintf(ftmp, "%s.XXXXXX", fname);
      s = mkstemp(ftmp);
      if (s == -1) {
 	 fclose(fp);
 	 warnx("couldn't open temp file `%s'", ftmp);
-	 return;
+	 return 0;
      }
      fpwr = fdopen(s, "w");
      if (fpwr == NULL) {
@@ -202,12 +209,12 @@ undepend(PackingList p, char *pkgname)
 	 fclose(fp);
 	 warnx("couldn't fdopen temp file `%s'", ftmp);
 	 remove(ftmp);
-	 return;
+	 return 0;
      }
      while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
 	 if (fbuf[strlen(fbuf)-1] == '\n')
 	     fbuf[strlen(fbuf)-1] = '\0';
-	 if (strcmp(fbuf, pkgname))		/* no match */
+	 if (strcmp(fbuf, pkg2delname))		/* no match */
 	     fputs(fbuf, fpwr), putc('\n', fpwr);
      }
      (void) fclose(fp);
@@ -215,15 +222,16 @@ undepend(PackingList p, char *pkgname)
 	 warnx("error changing permission of temp file `%s'", ftmp);
 	 fclose(fpwr);
 	 remove(ftmp);
-	 return;
+	 return 0;
      }
      if (fclose(fpwr) == EOF) {
 	 warnx("error closing temp file `%s'", ftmp);
 	 remove(ftmp);
-	 return;
+	 return 0;
      }
      if (rename(ftmp, fname) == -1)
 	 warnx("error renaming `%s' to `%s'", ftmp, fname);
      remove(ftmp);			/* just in case */
-     return;
+     
+     return 0;
 }

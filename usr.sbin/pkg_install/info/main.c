@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.7 1998/08/23 10:16:19 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1998/10/03 16:24:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1998/08/23 10:16:19 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1998/10/03 16:24:08 hubertf Exp $");
 #endif
 #endif
 
@@ -122,7 +122,8 @@ main(int argc, char **argv)
 	    Verbose = TRUE;
 	    /* Reasonable definition of 'everything' */
 	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
-		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
+		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
+		SHOW_REQBY;
 	    break;
 
 	case 'h':

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.11 1998/08/27 23:37:36 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.12 1998/10/03 16:24:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.11 1998/08/27 23:37:36 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.12 1998/10/03 16:24:08 hubertf Exp $");
 #endif
 #endif
 
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: perform.c,v 1.11 1998/08/27 23:37:36 hubertf Exp $");
 #include <err.h>
 #include <signal.h>
 #include <dirent.h>
-#include <fnmatch.h>
 #include <ctype.h>
 
 static char    *Home;
@@ -100,7 +99,7 @@ pkg_do(char *pkg)
 		}
 	}
 	/*
-	 * It's not an ininstalled package, try and find it among the
+	 * It's not an uninstalled package, try and find it among the
 	 * installed
 	 */
 	else {
@@ -175,171 +174,38 @@ bail:
 	return code;
 }
 
-/* use fnmatch to do a glob-style match */
-/* returns 0 if found, 1 if not (1) */
-static int
-globmatch(char *pkgspec, char *dbdir, int quiet)
+/* fn to be called for pkgs found */
+int foundpkg(const char *found, char *data)
 {
-	/* Using glob-match */
-	struct dirent  *dp;
-	int             found;
-	DIR            *dirp;
-
-	found = 0;
-	if ((dirp = opendir(dbdir)) == (DIR *) NULL) {
-		warnx("can't opendir package dir '%s'", dbdir);
-		return !0;
-	}
-	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
-			continue;
-		}
-		if (fnmatch(pkgspec, dp->d_name, FNM_PERIOD) == 0) {
-			if (!quiet)
-				printf("%s\n", dp->d_name);
-			found = 1;
-		}
-	}
-	closedir(dirp);
-	return !found;
+    if(!Quiet)
+	printf("%s\n", found);
+    return 0;
 }
 
-enum {
-	GT,
-	GE,
-	LT,
-	LE
-};
-
-/* compare two dewey decimal numbers */
+/* check if a package "pkgspec" (which can be a pattern) is installed */
+/* return 0 if found, 1 otherwise (indicating an error). */
 static int
-deweycmp(char *a, int op, char *b)
+check4pkg(char *pkgspec, char *dbdir)
 {
-	int	ad;
-	int	bd;
-	int	cmp;
+	if (strpbrk(pkgspec, "<>[]?*{")) {
+	    /* expensive (pattern) match */
+	    int found;
 
-	for (;;) {
-		if (*a == 0 && *b == 0) {
-			cmp = 0;
-			break;
-		}
-		ad = bd = 0;
-		for ( ; *a && *a != '.' ; a++) {
-			ad = (ad * 10) + (*a - '0');
-		}
-		for ( ; *b && *b != '.' ; b++) {
-			bd = (bd * 10) + (*b - '0');
-		}
-		if ((cmp = ad - bd) != 0) {
-			break;
-		}
-		if (*a == '.') {
-			a++;
-		}
-		if (*b == '.') {
-			b++;
-		}
-	}
-	return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
-}
-
-/* match on a relation against dewey decimal numbers */
-/* returns 0 if found, 1 if not (!) */
-static int
-deweymatch(char *name, int op, char *ver, char *dbdir, int quiet)
-{
-	struct dirent  *dp;
-	char		*cp;
-	DIR            *dirp;
-	int             ret;
-        int     	n;
-
-	n = strlen(name);
-	ret = 1;
-	if ((dirp = opendir(dbdir)) == (DIR *) NULL) {
-		warnx("can't opendir package dir '%s'", dbdir);
-		return 1;
-	}
-	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
-			continue;
-		}
-		if ((cp = strrchr(dp->d_name, '-')) != (char *) NULL) {
-			if (strncmp(dp->d_name, name, cp - dp->d_name) == 0 && n == cp - dp->d_name) {
-				if (deweycmp(cp + 1, op, ver)) {
-					if (!quiet)
-						printf("%s\n", dp->d_name);
-					ret = 0;
-				}
-			}
-		}
-	}
-	closedir(dirp);
-	return ret;
-}
-
-/* do a match on a package pattern in dbdir */
-/* returns 0 if found, 1 if not (!) */
-static int
-matchname(char *pkgspec, char *dbdir, int quiet)
-{
-	struct stat	st;
+	    found=findmatchingname(dbdir, pkgspec, foundpkg, NULL);
+	    return !found;
+	} else {
+		/* simple match */
 	char            buf[FILENAME_MAX];
-	char		*sep;
-	char		*last;
-	char		*alt;
-	char		*cp;
 	int             error;
-	int		cnt;
-	int		ret;
+		struct stat     st;
 
-	if ((sep = strchr(pkgspec, '{')) != (char *) NULL) {
-		/* emulate csh-type alternates */
-		(void) strncpy(buf, pkgspec, sep - pkgspec);
-		alt = &buf[sep - pkgspec];
-		for (last = NULL, cnt = 0, cp = sep ; *cp && !last ; cp++) {
-			if (*cp == '{') {
-				cnt++;
-			} else if (*cp == '}' && --cnt == 0 && last == NULL) {
-				last = cp + 1;
-			}
-		}
-		if (cnt != 0) {
-			warnx("Malformed alternate `%s'", pkgspec);
-			return 1;
-		}
-		for (ret = 1, cp = sep + 1 ; *sep != '}' ; cp = sep + 1) {
-			for (cnt = 0, sep = cp ; cnt > 0 || (cnt == 0 && *sep != '}' && *sep != ',') ; sep++) {
-				if (*sep == '{') {
-					cnt++;
-				} else if (*sep == '}') {
-					cnt--;
-				}
-			}
-			(void) snprintf(alt, sizeof(buf) - (alt - buf), "%.*s%s", (int)(sep - cp), cp, last);
-			if (matchname(buf, dbdir, quiet) == 0) {
-				ret = 0;
-			}
-		}
-		return ret;
-	}
-	if ((sep = strpbrk(pkgspec, "<>")) != (char *) NULL) {
-		/* perform relational dewey match on version number */
-		(void) snprintf(buf, sizeof(buf), "%.*s", (int)(sep - pkgspec), pkgspec);
-		cnt = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
-		cp = (cnt == GE || cnt == LE) ? sep + 2 : sep + 1;
-		return deweymatch(buf, cnt, cp, dbdir, quiet);
-	}
-	if (strpbrk(pkgspec, "*?[]") != (char *) NULL) {
-		return globmatch(pkgspec, dbdir, quiet);
-	}
-	/* No shell meta character given - simple check */
-	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = (lstat(buf, &st) < 0);
-	if (!error && !quiet)
+		snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
+		error = (stat(buf, &st) < 0);
+		if (!error && !Quiet)
 		printf("%s\n", pkgspec);
+
 	return error;
+	}
 }
 
 void
@@ -362,7 +228,7 @@ pkg_perform(char **pkgs)
 		tmp = DEF_LOG_DIR;
 	/* Overriding action? */
 	if (CheckPkg) {
-		return matchname(CheckPkg, tmp, Quiet);
+		err_cnt += check4pkg(CheckPkg, tmp);
 	} else if (AllInstalled) {
 		struct dirent  *dp;
 		DIR            *dirp;
