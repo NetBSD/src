@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.19 1996/06/13 22:43:33 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.20 1996/06/16 16:50:56 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -336,6 +336,8 @@ dc_doprobe(addr, unit, flags, priority)
 	for (cntr = 0; cntr < 4; cntr++) {
 		pdp->p_addr = (void *)dcaddr;
 		tp = dc_tty[unit * 4 + cntr] = ttymalloc();
+		if (cntr != DCKBD_PORT && cntr != DCMOUSE_PORT)
+			tty_attach(tp);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -392,8 +394,10 @@ dcopen(dev, flag, mode, p)
 	if (unit >= dc_cnt || dcpdma[unit].p_addr == (void *)0)
 		return (ENXIO);
 	tp = dc_tty[unit];
-	if (tp == NULL)
+	if (tp == NULL) {
 		tp = dc_tty[unit] = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_dev = dev;
