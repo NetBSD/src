@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.9 1998/02/13 05:52:11 lukem Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.10 1998/07/26 11:39:26 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.9 1998/02/13 05:52:11 lukem Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.10 1998/07/26 11:39:26 mycroft Exp $");
 #endif
 #endif
 
@@ -71,7 +71,7 @@ static bool_t authnone_validate __P((AUTH *, struct opaque_auth *));
 static bool_t authnone_refresh __P((AUTH *));
 static void authnone_destroy __P((AUTH *));
 
-static struct auth_ops ops = {
+static const struct auth_ops ops = {
 	authnone_verf,
 	authnone_marshal,
 	authnone_validate,

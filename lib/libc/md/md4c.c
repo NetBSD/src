@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.2 1997/04/30 00:36:22 thorpej Exp $	*/
+/*	$NetBSD: md4c.c,v 1.3 1998/07/26 11:44:11 mycroft Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -57,7 +57,7 @@ static void MD4Transform __P((UINT4 [4], const unsigned char [64]));
 static void Encode __P((unsigned char *, UINT4 *, unsigned int));
 static void Decode __P((UINT4 *, const unsigned char *, unsigned int));
 
-static unsigned char PADDING[64] = {
+static const unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
