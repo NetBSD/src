@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.22 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.23 2003/12/06 09:32:22 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.22 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.23 2003/12/06 09:32:22 itohy Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -1294,14 +1294,14 @@ cmpci_set_mixer_gain(sc, port)
 	struct cmpci_softc *sc;
 	int port;
 {
-	int src = 0; /* XXX: gcc */
+	int src;
 	int bits, mask;
 
 	switch (port) {
 	case CMPCI_MIC_VOL:
 		cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_MIC,
 		    CMPCI_ADJUST_MIC_GAIN(sc, sc->sc_gain[port][CMPCI_LR]));
-		break;
+		return;
 	case CMPCI_MASTER_VOL:
 		src = CMPCI_SB16_MIXER_MASTER_L;
 		break;
