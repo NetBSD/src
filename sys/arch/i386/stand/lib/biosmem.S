@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmem.S,v 1.2 1997/03/19 18:12:10 sommerfe Exp $	*/
+/*	$NetBSD: biosmem.S,v 1.3 1997/06/13 13:43:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -39,7 +39,7 @@
 
 	.text
 
-/* get mem above 1M, in kByte */
+/* get mem below 1M, in kByte */
 
 ENTRY(getbasemem)
 	pushl	%ebp
