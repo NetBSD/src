@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.40 2004/08/23 06:03:19 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.41 2004/12/07 14:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.40 2004/08/23 06:03:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.41 2004/12/07 14:50:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -845,6 +845,12 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		/*
 		 * Put all the arguments for the xfer in the ecb
 		 */
+		if (xs->cmdlen > sizeof(ecb->scsi_cmd)) {
+			printf("%s: cmdlen %d too large for ECB\n",
+			    sc->sc_dev.dv_xname, xs->cmdlen);
+			xs->error = XS_DRIVER_STUFFUP;
+			goto out_bad;
+		}
 		ecb->opcode = ECB_SCSI_OP;
 		ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 		ecb->opt2 = periph->periph_lun | ECB_NRB;

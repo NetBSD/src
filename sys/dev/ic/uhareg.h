@@ -1,4 +1,4 @@
-/*	$NetBSD: uhareg.h,v 1.9 2003/05/03 18:11:24 wiz Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.10 2004/12/07 14:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ struct uha_mscp {
 	/*set. starts at 1, 8bytes per */
 	u_char req_sense_length;
 	u_char scsi_cmd_length;
-	struct scsi_generic scsi_cmd;
+	u_char scsi_cmd[12];
 	u_char host_stat;
 	u_char target_stat;
 	physaddr sense_ptr;	/* if 0 no auto sense */
