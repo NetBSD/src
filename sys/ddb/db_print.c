@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.14 2000/08/09 19:51:46 tv Exp $	*/
+/*	$NetBSD: db_print.c,v 1.15 2001/01/18 10:54:29 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@ db_show_regs(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	struct db_variable *regp;
+	const struct db_variable *regp;
 	db_expr_t	value, offset;
 	char *		name;
 
