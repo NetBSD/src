@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.8 1995/04/16 15:16:07 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.9 1995/05/08 02:40:51 chopps Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -59,7 +59,11 @@
 #include <amiga/dev/if_edreg.h>
 #include <amiga/amiga/cia.h>		/* XXX? */
 
-#define ED_DEBUG
+#define HYDRA_MANID	2121
+#define HYDRA_PRODID	1
+
+#define ASDG_MANID	1023
+#define ASDG_PRODID	254
 
 /*
  * ed_softc: per line info and status
@@ -165,9 +169,10 @@ edmatch(parent, match, aux)
 {
 	struct zbus_args *zap = aux;
 
-	if (zap->manid == 2121 && zap->prodid == 1)
+	if (zap->manid == HYDRA_MANID && zap->prodid == HYDRA_PRODID)
 		return (1);
-
+	else if (zap->manid == ASDG_MANID && zap->prodid == ASDG_PRODID)
+		return (1);
 	return (0);
 }
 
@@ -180,10 +185,17 @@ edattach(parent, self, aux)
 	struct zbus_args *zap = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i;
+	int i, promoff;
 
-	sc->mem_start = zap->va;
-	sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
+	if (zap->manid == HYDRA_MANID) {
+		sc->mem_start = zap->va;
+		sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
+		promoff = HYDRA_ADDRPROM;
+	} else {
+		sc->mem_start = zap->va + 0x8000;
+		sc->nic_addr = sc->mem_start + ASDG_NIC_BASE;
+		promoff = ASDG_ADDRPROM;
+	}
 	sc->cr_proto = ED_CR_RD2;
 	sc->tx_page_start = 0;
 
@@ -214,7 +226,7 @@ edattach(parent, self, aux)
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_arpcom.ac_enaddr[i] =
-		    *((u_char *)(sc->mem_start + HYDRA_ADDRPROM + 2 * i));
+		    *((u_char *)(sc->mem_start + promoff + 2 * i));
 
 	/* Set interface to stopped condition (reset). */
 	ed_stop(sc);

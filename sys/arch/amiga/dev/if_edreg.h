@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edreg.h,v 1.3 1995/04/16 15:16:09 chopps Exp $	*/
+/*	$NetBSD: if_edreg.h,v 1.4 1995/05/08 02:40:54 chopps Exp $	*/
 
 /*
  * Vendor types
@@ -36,3 +36,8 @@
  */
 #define	HYDRA_ADDRPROM	0xffc0
 #define	HYDRA_NIC_BASE	0xffe1
+/*
+ *		Definitions for ASDG LANRover boards
+ */
+#define ASDG_ADDRPROM	0xff
+#define ASDG_NIC_BASE	0x1
