@@ -1,43 +1,44 @@
 #
-# SSLeay/crypto/txt_db/Makefile
+# SSLeay/crypto/md4/Makefile
 #
 
-DIR=	txt_db
-TOP=	../..
-CC=	cc
+DIR=    md4
+TOP=    ../..
+CC=     cc
+CPP=    $(CC) -E
 INCLUDES=
 CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
-MAKE=		make -f Makefile.ssl
+MAKE=           make -f Makefile.ssl
 MAKEDEPEND=	$(TOP)/util/domd $(TOP)
-MAKEFILE=	Makefile.ssl
-AR=		ar r
+MAKEFILE=       Makefile.ssl
+AR=             ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=
-APPS=
+TEST=md4test.c
+APPS=md4.c
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=txt_db.c
-LIBOBJ=txt_db.o
+LIBSRC=md4_dgst.c md4_one.c
+LIBOBJ=md4_dgst.o md4_one.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= txt_db.h
-HEADER=	$(EXHEADER)
+EXHEADER= md4.h
+HEADER= md4_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	lib
+all:    lib
 
-lib:	$(LIBOBJ)
+lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	@echo You may get an error following this line.  Please ignore.
 	- $(RANLIB) $(LIB)
@@ -75,14 +76,10 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f asm/mx86unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-txt_db.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-txt_db.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
-txt_db.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-txt_db.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-txt_db.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
-txt_db.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-txt_db.o: ../../include/openssl/txt_db.h ../cryptlib.h
+md4_dgst.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
+md4_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md4_locl.h
+md4_one.o: ../../include/openssl/md4.h
