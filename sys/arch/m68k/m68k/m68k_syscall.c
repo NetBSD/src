@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.10.1 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.2 2001/11/17 18:18:24 scw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -383,10 +383,9 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(arg)
-	void *arg;
+upcallret(l)
+	struct lwp *l;
 {
-	struct lwp *l = curproc;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	machine_userret(l, f, 0);

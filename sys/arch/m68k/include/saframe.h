@@ -1,4 +1,4 @@
-/*	$NetBSD: saframe.h,v 1.1.2.1 2001/11/17 13:07:52 scw Exp $ */
+/*	$NetBSD: saframe.h,v 1.1.2.2 2001/11/17 18:18:23 scw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@ struct saframe {
 	struct sa_t**	sa_sas;
 	int		sa_events;
 	int		sa_interrupted;
-	int		sa_sig;
-	int		sa_code;
 	void*		sa_arg;
 	sa_upcall_t	sa_upcall;
 };
