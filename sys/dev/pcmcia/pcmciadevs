@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.3 1998/07/22 11:47:13 christos Exp $
+$NetBSD: pcmciadevs,v 1.4 1998/07/30 20:44:25 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -45,6 +45,7 @@ vendor USROBOTICS		0x0115	US Robotics Corporation
 vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor LINKSYS			0x0149	Linksys Corporation
+vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
 
@@ -83,6 +84,9 @@ product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
+
+/* Simple Technology Products */
+product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
 /* Socket Communications Products */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
