@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.742 2004/12/06 17:35:53 yamt Exp $
+#	$NetBSD: mi,v 1.743 2004/12/14 01:49:30 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4060,6 +4060,7 @@
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
+./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
@@ -7831,6 +7832,7 @@
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
+./usr/share/man/man3/sched_yield.3		comp-c-man		.man
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
 ./usr/share/man/man3/scrollok.3			comp-c-man		.man
