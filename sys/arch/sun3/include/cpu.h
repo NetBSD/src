@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.8.5 2002/12/03 20:24:08 gmcgarry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29.8.6 2002/12/03 22:11:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -173,7 +173,8 @@ int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 struct pcb;
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 
 #ifdef _SUN3_
 #define M68K_VAC
