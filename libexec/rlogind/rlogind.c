@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.8 1996/05/21 12:22:31 mrg Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.9 1996/11/08 07:47:45 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,7 @@ static char *rcsid = "$Id: rlogind.c,v 1.8 1996/05/21 12:22:31 mrg Exp $";
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 #include <utmp.h>
 #include "pathnames.h"
 
@@ -79,7 +80,7 @@ static char *rcsid = "$Id: rlogind.c,v 1.8 1996/05/21 12:22:31 mrg Exp $";
 #define TIOCPKT_WINDOW 0x80
 #endif
 
-#define		ARGSTR			"aln"
+#define		OPTIONS			"alnL"
 
 char	*env[2];
 #define	NMAX 30
@@ -88,6 +89,7 @@ static	char term[64] = "TERM=";
 #define	ENVSIZE	(sizeof("TERM=")-1)	/* skip null for concatenation */
 int	keepalive = 1;
 int	check_all = 0;
+int	log_success = 0;
 
 struct	passwd *pwd;
 
@@ -96,7 +98,7 @@ int	control __P((int, char *, int));
 void	protocol __P((int, int));
 void	cleanup __P((int));
 void	fatal __P((int, char *, int));
-int	do_rlogin __P((struct sockaddr_in *));
+int	do_rlogin __P((struct sockaddr_in *, char *));
 void	getstr __P((char *, int, char *));
 void	setup_term __P((int));
 int	do_krb_login __P((struct sockaddr_in *));
@@ -116,7 +118,7 @@ main(argc, argv)
 	openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
+	while ((ch = getopt(argc, argv, OPTIONS)) != EOF)
 		switch (ch) {
 		case 'a':
 			check_all = 1;
@@ -126,6 +128,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			keepalive = 0;
+			break;
+		case 'L':
+			log_success = 1;
 			break;
 		case '?':
 		default:
@@ -148,6 +153,7 @@ main(argc, argv)
 	if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
 		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	doit(0, &from);
+	/* NOTREACHED */
 }
 
 int	child;
@@ -166,7 +172,9 @@ doit(f, fromp)
 	int master, pid, on = 1;
 	int authenticated = 0;
 	register struct hostent *hp;
-	char hostname[2 * MAXHOSTNAMELEN + 1];
+	char utmphost[UT_HOSTSIZE + 1];
+	char *hostname;
+	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 	char c;
 
 	alarm(60);
@@ -179,21 +187,65 @@ doit(f, fromp)
 	fromp->sin_port = ntohs((u_short)fromp->sin_port);
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
 	    fromp->sin_family);
-	if (hp && (strlen(hp->h_name) <= UT_HOSTSIZE))
-		(void)strcpy(hostname, hp->h_name);
-	else
-		(void)strcpy(hostname, inet_ntoa(fromp->sin_addr));
-
-	{
-		if (fromp->sin_family != AF_INET ||
-		    fromp->sin_port >= IPPORT_RESERVED ||
-		    fromp->sin_port < IPPORT_RESERVED/2) {
-			syslog(LOG_NOTICE, "Connection from %s on illegal port",
-				inet_ntoa(fromp->sin_addr));
-			fatal(f, "Permission denied", 0);
+	if (hp) {
+		/*
+		 * If name returned by gethostbyaddr is in our domain,
+		 * attempt to verify that we haven't been fooled by someone
+		 * in a remote net; look up the name and check that this
+		 * address corresponds to the name.
+		 */
+		hostname = hp->h_name;
+		if (check_all || local_domain(hp->h_name)) {
+			strncpy(hostnamebuf, hp->h_name,
+			    sizeof(hostnamebuf) - 1);
+			hostnamebuf[sizeof(hostnamebuf) - 1] = 0;
+			hp = gethostbyname(hostnamebuf);
+			if (hp == NULL) {
+				syslog(LOG_INFO,
+				    "Couldn't look up address for %s",
+				    hostnamebuf);
+				hostname = inet_ntoa(fromp->sin_addr);
+			} else for (; ; hp->h_addr_list++) {
+				if (hp->h_addr_list[0] == NULL) {
+					syslog(LOG_NOTICE,
+					  "Host addr %s not listed for host %s",
+					    inet_ntoa(fromp->sin_addr),
+					    hp->h_name);
+					hostname = inet_ntoa(fromp->sin_addr);
+					break;
+				}
+				if (!bcmp(hp->h_addr_list[0],
+				    (caddr_t)&fromp->sin_addr,
+				    sizeof(fromp->sin_addr))) {
+					hostname = hp->h_name;
+					break;
+				}
+			}
 		}
+		hostname = strncpy(hostnamebuf, hostname,
+				   sizeof(hostnamebuf) - 1);
+	} else
+		hostname = strncpy(hostnamebuf, inet_ntoa(fromp->sin_addr),
+				   sizeof(hostnamebuf) - 1);
+
+	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+
+	if (strlen(hostname) < sizeof(utmphost))
+		(void)strcpy(utmphost, hostname);
+	else
+		(void)strncpy(utmphost, inet_ntoa(fromp->sin_addr),
+				sizeof(utmphost));
+	utmphost[sizeof(utmphost) - 1] = '\0';
+
+	if (fromp->sin_family != AF_INET ||
+	    fromp->sin_port >= IPPORT_RESERVED ||
+	    fromp->sin_port < IPPORT_RESERVED/2) {
+		syslog(LOG_NOTICE, "Connection from %s on illegal port",
+			inet_ntoa(fromp->sin_addr));
+		fatal(f, "Permission denied", 0);
+	}
 #ifdef IP_OPTIONS
-		{
+	{
 		u_char optbuf[BUFSIZ/3], *cp;
 		char lbuf[BUFSIZ], *lp;
 		int optsize = sizeof(optbuf), ipproto;
@@ -218,11 +270,10 @@ doit(f, fromp)
 				exit(1);
 			}
 		}
-		}
-#endif
-		if (do_rlogin(fromp) == 0)
-			authenticated++;
 	}
+#endif
+	if (do_rlogin(fromp, hostname) == 0)
+		authenticated++;
 	if (confirmed == 0) {
 		write(f, "", 1);
 		confirmed = 1;		/* we sent the null! */
@@ -242,10 +293,10 @@ doit(f, fromp)
 		setup_term(0);
 		if (authenticated)
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hostname, "-f", "--", lusername, (char *)0);
+			    "-h", utmphost, "-f", "--", lusername, (char *)0);
 		else
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hostname, "--", lusername, (char *)0);
+			    "-h", utmphost, "--", lusername, (char *)0);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
@@ -375,7 +426,8 @@ protocol(f, p)
 						if (n) {
 							left -= n;
 							if (left > 0)
-								bcopy(cp+n, cp, left);
+								bcopy(cp+n, cp,
+								    left);
 							fcc -= n;
 							goto top; /* n^2 */
 						}
@@ -473,20 +525,39 @@ fatal(f, msg, syserr)
 }
 
 int
-do_rlogin(dest)
+do_rlogin(dest, host)
 	struct sockaddr_in *dest;
+	char *host;
 {
+	extern char *__rcmd_errstr;	/* syslog hook from libc/net/rcmd.c */
+	int retval;
+
 	getstr(rusername, sizeof(rusername), "remuser too long");
 	getstr(lusername, sizeof(lusername), "locuser too long");
 	getstr(term+ENVSIZE, sizeof(term)-ENVSIZE, "Terminal type too long");
 
 	pwd = getpwnam(lusername);
-	if (pwd == NULL)
+	if (pwd == NULL) {
+		syslog(LOG_INFO,
+		    "%s@%s as %s: unknown login.", rusername, host, lusername);
 		return (-1);
-	if (pwd->pw_uid == 0)
-		return (-1);
-	/* XXX why don't we syslog() failure? */
-	return (iruserok(dest->sin_addr.s_addr, 0, rusername, lusername));
+	}
+	retval = iruserok(dest->sin_addr.s_addr, pwd->pw_uid == 0, rusername,
+			    lusername);
+/* XXX put inet_ntoa(dest->sin_addr.s_addr) into all messages below */
+	if (retval == 0) {
+		if (log_success)
+			syslog(LOG_INFO, "%s@%s as %s: iruserok succeeded",
+			    rusername, host, lusername);
+	} else {
+		if (__rcmd_errstr)
+			syslog(LOG_INFO, "%s@%s as %s: iruserok failed (%s)",
+			    rusername, host, lusername, __rcmd_errstr);
+		else
+			syslog(LOG_INFO, "%s@%s as %s: iruserok failed",
+			    rusername, host, lusername);
+	}
+	return(retval);
 }
 
 void
@@ -553,7 +624,7 @@ setup_term(fd)
 void
 usage()
 {
-	syslog(LOG_ERR, "usage: rlogind [-aln]");
+	syslog(LOG_ERR, "usage: rlogind [-alnL]");
 }
 
 /*
