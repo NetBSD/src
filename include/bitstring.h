@@ -5,40 +5,31 @@
  * This code is derived from software contributed to Berkeley by
  * Paul Vixie.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that the above copyright notice and this paragraph are
+ * duplicated in all such forms and that any documentation,
+ * advertising materials, and other materials related to such
+ * distribution and use acknowledge that the software was developed
+ * by the University of California, Berkeley.  The name of the
+ * University may not be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)bitstring.h	5.5 (Berkeley) 4/3/91
+ *	@(#)bitstring.h	5.2 (Berkeley) 4/4/90
  */
 
 #ifndef _BITSTRING_H_
-#define	_BITSTRING_H_
+#define _BITSTRING_H_
 
+/* modified for SV/AT and bitstring bugfix by M.R.Murphy, 11oct91
+ * bitstr_size changed gratuitously, but shorter
+ * bit_alloc   spelling error fixed
+ * the following were efficient, but didn't work, they've been made to
+ * work, but are no longer as efficient :-)
+ * bit_nclear, bit_nset, bit_ffc, bit_ffs
+ */
 typedef	unsigned char bitstr_t;
 
 /* internal macros */
@@ -53,12 +44,11 @@ typedef	unsigned char bitstr_t;
 /* external macros */
 				/* bytes in a bitstring of nbits bits */
 #define	bitstr_size(nbits) \
-	((((nbits) - 1) >> 3) + 1)
+	(((nbits) + 7) >> 3)
 
 				/* allocate a bitstring */
 #define	bit_alloc(nbits) \
-	(bitstr_t *)calloc(1, \
-	    (unsigned int)_bitstr_size(nbits) * sizeof(bitstr_t))
+	(bitstr_t *)calloc((size_t)bitstr_size(nbits), sizeof(bitstr_t))
 
 				/* allocate a bitstring on the stack */
 #define	bit_decl(name, nbits) \
@@ -80,36 +70,29 @@ typedef	unsigned char bitstr_t;
 #define	bit_nclear(name, start, stop) { \
 	register bitstr_t *_name = name; \
 	register int _start = start, _stop = stop; \
-	register int _startbyte = _bit_byte(_start); \
-	register int _stopbyte = _bit_byte(_stop); \
-	_name[_startbyte] &= 0xff >> (8 - (_start&0x7)); \
-	while (++_startbyte < _stopbyte) \
-		_name[_startbyte] = 0; \
-	_name[_stopbyte] &= 0xff << ((_stop&0x7) + 1); \
+	while (_start <= _stop) { \
+		bit_clear(_name, _start); \
+		_start++; \
+		} \
 }
 
 				/* set bits start ... stop in bitstring */
 #define	bit_nset(name, start, stop) { \
 	register bitstr_t *_name = name; \
 	register int _start = start, _stop = stop; \
-	register int _startbyte = _bit_byte(_start); \
-	register int _stopbyte = _bit_byte(_stop); \
-	_name[_startbyte] |= 0xff << ((start)&0x7); \
-	while (++_startbyte < _stopbyte) \
-	    _name[_startbyte] = 0xff; \
-	_name[_stopbyte] |= 0xff >> (7 - (_stop&0x7)); \
+	while (_start <= _stop) { \
+		bit_set(_name, _start); \
+		_start++; \
+		} \
 }
 
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) { \
 	register bitstr_t *_name = name; \
-	register int _byte, _nbits = nbits; \
-	register int _stopbyte = _bit_byte(_nbits), _value = -1; \
-	for (_byte = 0; _byte <= _stopbyte; ++_byte) \
-		if (_name[_byte] != 0xff) { \
-			_value = _byte << 3; \
-			for (_stopbyte = _name[_byte]; (_stopbyte&0x1); \
-			    ++_value, _stopbyte >>= 1); \
+	register int _bit, _nbits = nbits, _value = -1; \
+	for (_bit = 0; _bit < _nbits; ++_bit) \
+		if (!bit_test(_name, _bit)) { \
+			_value = _bit; \
 			break; \
 		} \
 	*(value) = _value; \
@@ -118,13 +101,10 @@ typedef	unsigned char bitstr_t;
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) { \
 	register bitstr_t *_name = name; \
-	register int _byte, _nbits = nbits; \
-	register int _stopbyte = _bit_byte(_nbits), _value = -1; \
-	for (_byte = 0; _byte <= _stopbyte; ++_byte) \
-		if (_name[_byte]) { \
-			_value = _byte << 3; \
-			for (_stopbyte = _name[_byte]; !(_stopbyte&0x1); \
-			    ++_value, _stopbyte >>= 1); \
+	register int _bit, _nbits = nbits, _value = -1; \
+	for (_bit = 0; _bit < _nbits; ++_bit) \
+		if (bit_test(_name, _bit)) { \
+			_value = _bit; \
 			break; \
 		} \
 	*(value) = _value; \
