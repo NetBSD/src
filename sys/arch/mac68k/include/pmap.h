@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1996/05/18 18:52:41 briggs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -210,7 +210,6 @@ void	TBIA __P((void));
 void	TBIS __P((vm_offset_t));
 void	DCFP __P((vm_offset_t));
 void	ICPP __P((vm_offset_t));
-void	copypage __P((caddr_t, caddr_t));
 __END_DECLS
 
 #endif	/* _KERNEL */
