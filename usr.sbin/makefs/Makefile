@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/11/29 13:06:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/11/30 02:06:51 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,22 +10,18 @@ SRCS=	makefs.c walk.c \
 	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c ufs_bmap.c 
 MAN=	makefs.8
 
-DDSRC=		${NETBSDSRCDIR}/bin/dd
 LSSRC=		${NETBSDSRCDIR}/bin/ls
 MKNODSRC=	${NETBSDSRCDIR}/sbin/mknod
 MTREESRC=	${NETBSDSRCDIR}/usr.sbin/mtree
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 
 CPPFLAGS+=	-I${.CURDIR} \
-		-I${LSSRC} -I${MKNODSRC} -I${MTREESRC} -I${DDSRC} 
+		-I${LSSRC} -I${MKNODSRC} -I${MTREESRC}
 .PATH:		${.CURDIR}/ffs ${UFSSRC}/ffs \
-		${LSSRC} ${MKNODSRC} ${MTREESRC} ${DDSRC} 
+		${LSSRC} ${MKNODSRC} ${MTREESRC}
 
 WARNS?=	2
 
 .ifndef HOSTPROG
-DPADD+=	${LIBUTIL}
-LDADD+=	-lutil
-
 .include <bsd.prog.mk>
 .endif
