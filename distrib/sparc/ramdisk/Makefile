@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/06/06 05:29:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/21 13:56:18 mrg Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -46,7 +46,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
@@ -56,4 +56,3 @@ clean cleandir:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
