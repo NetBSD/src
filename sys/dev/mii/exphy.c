@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.13 1998/11/04 23:44:09 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.14 1998/11/04 23:59:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@ struct cfattach exphy_ca = {
 
 int	exphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	exphy_reset __P((struct exphy_softc *));
-void	exphy_status __P((struct exphy_softc *));
 
 int
 exphymatch(parent, match, aux)
@@ -246,7 +245,7 @@ exphy_service(self, mii, cmd)
 	}
 
 	/* Update the media status. */
-	exphy_status(sc);
+	ukphy_status(&sc->sc_mii);
 
 	/* Callback if something changed. */
 	if (sc->sc_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
@@ -254,67 +253,6 @@ exphy_service(self, mii, cmd)
 		sc->sc_active = mii->mii_media_active;
 	}
 	return (0);
-}
-
-void
-exphy_status(sc)
-	struct exphy_softc *sc;
-{
-	struct mii_data *mii = sc->sc_mii.mii_pdata;
-	int bmsr, bmcr, anlpar;
-
-	mii->mii_media_status = IFM_AVALID;
-	mii->mii_media_active = IFM_ETHER;
-
-	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
-	    PHY_READ(&sc->sc_mii, MII_BMSR);
-	if (bmsr & BMSR_LINK)
-		mii->mii_media_status |= IFM_ACTIVE;
-
-	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
-	if (bmcr & BMCR_ISO) {
-		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;
-		return;
-	}
-
-	if (bmcr & BMCR_LOOP)
-		mii->mii_media_active |= IFM_LOOP;
-
-	if (bmcr & BMCR_AUTOEN) {
-		/*
-		 * The 3Com PHY uses the highest-order common bit of
-		 * the ANAR and ANLPAR (i.e. best media advertised
-		 * both by us and our link partner).
-		 */
-		if ((bmsr & BMSR_ACOMP) == 0) {
-			/* Erg, still trying, I guess... */
-			mii->mii_media_active |= IFM_NONE;
-			return;
-		}
-
-		anlpar = PHY_READ(&sc->sc_mii, MII_ANAR) &
-		    PHY_READ(&sc->sc_mii, MII_ANLPAR);
-		if (anlpar & ANLPAR_T4)
-			mii->mii_media_active |= IFM_100_T4;
-		else if (anlpar & ANLPAR_TX_FD)
-			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-		else if (anlpar & ANLPAR_TX)
-			mii->mii_media_active |= IFM_100_TX;
-		else if (anlpar & ANLPAR_10_FD)
-			mii->mii_media_active |= IFM_10_T|IFM_FDX;
-		else if (anlpar & ANLPAR_10)
-			mii->mii_media_active |= IFM_10_T;
-		else
-			mii->mii_media_active |= IFM_NONE;
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
 }
 
 void
