@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 2003/06/11 21:35:48 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2003/06/12 10:51:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,21 +43,6 @@ message md_hello
 
 }
 
-message wdtype
-{What kind of disk is %s?}
-
-message sectforward
-{Does your disk do AUTOMATIC sector forwarding?}
-
-message dlgeom
-{It appears that your disk, %s, has already been labeled with a BSD
-disklabel and the disklabel reports geometry that is different from
-the real geometry.  The two geometries are:
-
-disklabel:	%d cylinders, %d heads, %d sectors 
-real geometry:	%d cylinders, %d heads, %d sectors 
-}
-
 message diagcyl
 {Some old BIOSs or old diagnostic programs may use the last cylinder of
 the disk for test purposes. This should no longer be the case with
@@ -80,15 +65,6 @@ message dobad144
 message dobootblks
 {Installing boot blocks on %s....
 }
-
-message cyl1024
-{ The disklabel (set of partitions) you specified has a root partition that
-ends beyond the 1024 BIOS cylinder boundary. To be sure that the system
-can be booted at all times, the entire root partition must lie below that
-limit. You can either: }
-
-message wmbrfail
-{Rewrite of MBR failed. I can't continue.}
 
 message set_kernel_1
 {Kernel (GENERIC)}
