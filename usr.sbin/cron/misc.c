@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2003/04/04 01:24:09 perry Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2004/03/20 10:38:34 jdolecek Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 2003/04/04 01:24:09 perry Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2004/03/20 10:38:34 jdolecek Exp $");
 #endif
 #endif
 
@@ -45,7 +45,8 @@ __RCSID("$NetBSD: misc.c,v 1.9 2003/04/04 01:24:09 perry Exp $");
 #if defined(SYSLOG)
 # include <syslog.h>
 #endif
-
+#include <ctype.h>
+#include <vis.h>
 
 #if defined(LOG_DAEMON) && !defined(LOG_CRON)
 #define LOG_CRON LOG_DAEMON
@@ -606,23 +607,10 @@ mkprint(dst, src, len)
 	unsigned char *src;
 	int len;
 {
-	while (len-- > 0)
-	{
-		unsigned char ch = *src++;
+	while(len > 0 && isblank((unsigned char) *src))
+		len--, src++;
 
-		if (ch < ' ') {			/* control character */
-			*dst++ = '^';
-			*dst++ = ch + '@';
-		} else if (ch < 0177) {		/* printable */
-			*dst++ = ch;
-		} else if (ch == 0177) {	/* delete/rubout */
-			*dst++ = '^';
-			*dst++ = '?';
-		} else {			/* parity character */
-			dst += snprintf(dst, 5, "\\%03o", ch);
-		}
-	}
-	*dst = '\0';
+	strvisx(dst, src, len, VIS_TAB|VIS_NL);
 }
 
 
