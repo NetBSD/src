@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.9 1993/11/10 08:22:05 cgd Exp $
+ *	$Id: device_pager.c,v 1.10 1993/12/06 13:00:49 mycroft Exp $
  */
 
 /*
@@ -371,7 +371,7 @@ dev_pager_putfake(m)
 	vm_page_t m;
 {
 #ifdef DIAGNOSTIC
-	if (!m->fictitious))
+	if (!m->fictitious)
 		panic("dev_pager_putfake: bad page");
 #endif
 	queue_enter(&dev_pager_fakelist, m, vm_page_t, pageq);
