@@ -1,4 +1,4 @@
-/*  $NetBSD: mii_adapters_id.h,v 1.2 1997/11/16 22:38:33 christos Exp $   */
+/*	$NetBSD: mii_adapters_id.h,v 1.3 1997/11/17 08:57:30 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* adapter types ( msb = vendor, lsb = board ) */
+/* adapter types (msb = vendor, lsb = board) */
 #define	COMPAQ_INT_NETLIGENT_10_100	0x0001
 #define	COMPAQ_DUAL_NETLIGENT_10_100	0x0002
 #define	COMPAQ_NETLIGENT_10_100		0x0003

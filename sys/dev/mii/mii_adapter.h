@@ -1,4 +1,4 @@
-/*  $NetBSD: mii_adapter.h,v 1.1 1997/10/17 17:33:55 bouyer Exp $   */
+/*	$NetBSD: mii_adapter.h,v 1.2 1997/11/17 08:56:08 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -39,32 +39,35 @@
 typedef struct _mii_data {
 	void *adapter_softc;
 	u_int32_t adapter_id; /* adapter ID, see mii_adapters_id.h */
-/*
- * Services provided by the adapter :
- * set/clear/read bit, where bit may be MII_DATA, MII_CLOCK, MII_TXEN
- * or read/write PHYs registers.
- */
+
+	/*
+	 * Services provided by the adapter :
+	 * set/clear/read bit, where bit may be MII_DATA, MII_CLOCK, MII_TXEN
+	 * or read/write PHYs registers.
+	 */
 	void (*mii_setbit)  __P((void *adapter_softc, u_int8_t bit));
 	void (*mii_clrbit)  __P((void *adapter_softc, u_int8_t bit));
 	int  (*mii_readbit) __P((void *adapter_softc, u_int8_t bit));
 	int  (*mii_readreg)  __P((void *, u_int16_t, u_int16_t));
 	void (*mii_writereg) __P((void *, u_int16_t, u_int16_t, u_int16_t));
-/*
- *services provided to the adapter:
- */
+
+	/*
+	 * services provided to the adapter:
+	 */
 	int mii_media_status;
 	int mii_media_active;
-/*
- * mii's private datas
- */
+
+	/*
+	 * mii's private data
+	 */
 	struct mii_softc *mii_sc;
 } mii_data_t;
 
 /* bit types */
-#define MII_DATA  0x00
-#define MII_CLOCK 0x01
-#define MII_TXEN 0x02
+#define	MII_DATA	0x00
+#define	MII_CLOCK	0x01
+#define	MII_TXEN	0x02
 
-void mii_media_add __P((struct ifmedia *,  mii_data_t*));
-int mii_mediachg __P((mii_data_t*));
-void mii_pollstat __P((mii_data_t*));
+void	mii_media_add __P((struct ifmedia *,  mii_data_t*));
+int	mii_mediachg __P((mii_data_t*));
+void	mii_pollstat __P((mii_data_t*));
