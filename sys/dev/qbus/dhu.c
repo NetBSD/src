@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.23 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.24 2001/05/26 21:24:38 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -144,13 +144,8 @@ static	void	dhustart __P((struct tty *));
 static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
 static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
-	int	dhuopen __P((dev_t, int, int, struct proc *));
-	int	dhuclose __P((dev_t, int, int, struct proc *));
-	int	dhuread __P((dev_t, struct uio *, int));
-	int	dhuwrite __P((dev_t, struct uio *, int));
-	int	dhuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-	void	dhustop __P((struct tty *, int));
-struct tty *	dhutty __P((dev_t));
+
+cdev_decl(dhu);
 
 struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
