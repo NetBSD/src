@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2001/10/13 06:15:19 jmc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.19 2001/10/21 23:20:05 jmc Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -21,6 +21,7 @@ KERNEL?=	${KERNOBJDIR}/INSTALL/netbsd
 
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
+STRIP?=		strip
 
 DISKTYPE=	boot3
 RAMDISKTYPE=	rd
@@ -83,7 +84,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 netbsd.gz: ramdisk.fs
 	cp ${KERNEL} /var/tmp/$$$$; \
 		mdsetimage -v /var/tmp/$$$$ ramdisk.fs; \
-		strip /var/tmp/$$$$; \
+		${STRIP} /var/tmp/$$$$; \
 		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
 		rm /var/tmp/$$$$
 
