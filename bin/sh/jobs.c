@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.29 1999/02/04 16:17:39 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.30 1999/04/05 14:59:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.29 1999/02/04 16:17:39 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.30 1999/04/05 14:59:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -732,9 +732,17 @@ waitforjob(jp)
 		st = WTERMSIG(status) + 128;
 	if (! JOBS || jp->state == JOBDONE)
 		freejob(jp);
+#if 0
+	/*
+	 * XXXX
+	 * Why was this here?  It causes us to lose SIGINTs unless the current
+	 * command happens to also catch the SIGINT and exit with the right
+	 * status.  I don't see how that can possibly be correct.  -- mycroft
+	 */
 	CLEAR_PENDING_INT;
 	if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
-		kill(getpid(), SIGINT);
+		raise(SIGINT);
+#endif
 	INTON;
 	return st;
 }
