@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.163 2004/04/29 05:52:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.164 2004/04/29 06:04:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1666,3 +1666,9 @@ x11/tools/fc-cache/Makefile			1.8
 
 	* Clean up lib/expat build now that the version is hard coded.
 	[lukem, ticket #224]
+
+x11/Xserver/os/Makefile				1.11-1.12
+
+	Define XDMCP_NO_IPV6 along with XDMCP, as per the native XFree86 4.4 
+	build.
+	[lukem, ticket #227]
