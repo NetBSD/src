@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts.equiv.5,v 1.3 1999/04/06 02:52:40 tv Exp $
+.\"	$NetBSD: hosts.equiv.5,v 1.4 2000/11/17 10:14:18 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,9 @@ The
 .Nm hosts.equiv
 and
 .Nm .rhosts
-files list hosts and users which are ``trusted'' by the local host when a
-connection is made via
+files list hosts and users which are
+.Dq trusted
+by the local host when a connection is made via
 .Xr rlogind 8 ,
 .Xr rshd 8 ,
 or any other server that uses
@@ -62,16 +63,20 @@ The
 .Em hostname
 may be specified as a host name (typically a fully qualified host
 name in a DNS environment) or address,
-.Em +@netgroup
+.Dq Li +@netgroup
 (from which only the host names are checked),
-or a ``+'' wildcard (allow all hosts).
+or a
+.Dq Li \&+
+wildcard (allow all hosts).
 .Pp
 The
 .Em username ,
 if specified, may be given as a user name on the remote host,
-.Em +@netgroup
+.Dq Li +@netgroup
 (from which only the user names are checked),
-or a ``+'' wildcard (allow all remote users).
+or a
+.Dq Li \&+
+wildcard (allow all remote users).
 .Pp
 If a
 .Em username
@@ -173,4 +178,5 @@ file format appeared in
 The
 .Xr ruserok 3
 implementation currently skips negative entries (preceded with a
-``-'' sign) and does not treat them as ``short-circuit'' negative entries.
+.Dq Li \&-
+sign) and does not treat them as ``short-circuit'' negative entries.

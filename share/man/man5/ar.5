@@ -1,4 +1,4 @@
-.\"	$NetBSD: ar.5,v 1.1 1998/08/22 05:29:57 tv Exp $
+.\"	$NetBSD: ar.5,v 1.2 2000/11/17 10:14:16 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,10 @@ loaded using the link-editor
 .Pp
 A file created with
 .Nm
-begins with the ``magic'' string "!<arch>\en".
+begins with the
+.Dq magic
+string
+.Dq Li "!<arch>\en" .
 The rest of the archive is made up of objects, each of which is composed
 of a header for a file, a possible file name, and the file contents.
 The header is portable between machine architectures, and, if the file
@@ -102,7 +105,8 @@ If any fields are their particular maximum number of characters in
 length, there will be no separation between the fields.
 .Pp
 Objects in the archive are always an even number of bytes long; files
-which are an odd number of bytes long are padded with a newline (``\en'')
+which are an odd number of bytes long are padded with a newline
+.Pq Dq \en
 character, although the size in the header does not reflect this.
 .Sh SEE ALSO
 .Xr ar 1 ,
@@ -111,8 +115,9 @@ character, although the size in the header does not reflect this.
 There have been at least four
 .Nm
 formats.
-The first was denoted by the leading ``magic'' number 0177555 (stored as
-type int).
+The first was denoted by the leading
+.Dq magic
+number 0177555 (stored as type int).
 These archives were almost certainly created on a 16-bit machine, and
 contain headers made up of five fields.
 The fields are the object name (8 characters), the file last modification
@@ -120,8 +125,9 @@ time (type long), the user id (type char), the file mode (type char) and
 the file size (type unsigned int).
 Files were padded to an even number of bytes.
 .Pp
-The second was denoted by the leading ``magic'' number 0177545 (stored as
-type int).
+The second was denoted by the leading
+.Dq magic
+number 0177545 (stored as type int).
 These archives may have been created on either 16 or 32-bit machines, and
 contain headers made up of six fields.
 The fields are the object name (14 characters), the file last modification

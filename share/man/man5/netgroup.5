@@ -1,4 +1,4 @@
-.\"	$NetBSD: netgroup.5,v 1.6 1999/01/16 14:16:42 lukem Exp $
+.\"	$NetBSD: netgroup.5,v 1.7 2000/11/17 10:14:18 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,9 @@
 The
 .Nm netgroup
 file
-specifies ``netgroups'', which are sets of
+specifies
+.Dq netgroups ,
+which are sets of
 .Sy (host, user, domain)
 tuples that are to be given similar network access.
 .Pp
@@ -64,10 +66,17 @@ where the
 and
 .Sy domain
 are character string names for the corresponding component.
-Any of the comma separated fields may be empty to specify a ``wildcard'' value
-or may consist of the string ``-'' to specify ``no valid value''.
+Any of the comma separated fields may be empty to specify a
+.Dq wildcard
+value
+or may consist of the string
+.Dq Li -
+to specify
+.Dq no valid value .
 The members of the list may be separated by whitespace;
-the ``\e'' character may be used at the end of a line to specify
+the
+.Dq \e
+character may be used at the end of a line to specify
 line continuation.
 The functions specified in
 .Xr getnetgrent 3

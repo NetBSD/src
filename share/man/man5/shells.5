@@ -1,4 +1,4 @@
-.\"	$NetBSD: shells.5,v 1.5 1999/03/17 20:19:48 garbled Exp $
+.\"	$NetBSD: shells.5,v 1.6 2000/11/17 10:14:20 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,9 @@ as controlled by
 For each shell a single line should be present, consisting of the
 shell's path, relative to root.
 .Pp
-A hash mark (``#'') indicates the beginning of a comment; subsequent
+A hash
+.Pq Dq \&#
+indicates the beginning of a comment; subsequent
 characters up to the end of the line are not interpreted by the
 routines which search the file.
 Blank lines are also ignored.
