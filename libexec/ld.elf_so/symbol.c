@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.23 2002/10/03 20:35:20 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.24 2002/10/04 20:34:10 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -63,14 +63,17 @@ _rtld_elf_hash(name)
 	const unsigned char *p = (const unsigned char *) name;
 	unsigned long   h = 0;
 	unsigned long   g;
+	unsigned long   c;
 
-	while (*p != '\0') {
-		h = (h << 4) + *p++;
-		if ((g = h & 0xf0000000) != 0)
+	for (; __predict_true((c = *p) != '\0'); p++) {
+		h <<= 4;
+		h += c;
+		if ((g = h & 0xf0000000) != 0) {
+			h ^= g;
 			h ^= g >> 24;
-		h &= ~g;
+		}
 	}
-	return h;
+	return (h);
 }
 
 const Elf_Sym *
