@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.38 2002/04/18 12:06:12 bouyer Exp $
+#	$NetBSD: GENERIC_TINY,v 1.39 2002/04/18 12:54:13 wiz Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -224,9 +224,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0 		at isa?			# pc keyboard controller
 pckbd* 		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 #vga*		at pci? dev ? function ?
 pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
@@ -521,7 +519,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

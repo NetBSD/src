@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.205 2002/04/16 20:50:20 thorpej Exp $
+#	$NetBSD: files.i386,v 1.206 2002/04/18 12:54:12 wiz Exp $
 #
 # new style config file for i386 architecture
 #
@@ -248,10 +248,6 @@ file	arch/i386/isa/omms.c		omms needs-flag
 device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms
-device	opms
-attach	opms at pckbcport with opms_hack
-attach	opms at pckbc with opms_pckbc
-file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"

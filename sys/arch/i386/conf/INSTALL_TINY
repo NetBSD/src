@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.49 2002/04/17 02:22:51 mycroft Exp $
+#	$NetBSD: INSTALL_TINY,v 1.50 2002/04/18 12:54:14 wiz Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -470,7 +470,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

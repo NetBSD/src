@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.27 2002/04/14 01:42:53 mycroft Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.28 2002/04/18 12:54:14 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -238,9 +238,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # wscons
 #pckbc0	at isa?			# pc keyboard controller
 #pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 #vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
