@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.194 2005/01/17 01:48:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.193 2004/12/14 19:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.194 2005/01/17 01:48:56 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -610,13 +610,6 @@ wi_intr(void *arg)
 
 	/* maximum 10 loops per interrupt */
 	for (i = 0; i < 10; i++) {
-		/*
-		 * Only believe a status bit when we enter wi_intr, or when
-		 * the bit was "off" the last time through the loop. This is
-		 * my strategy to avoid racing the hardware/firmware if I
-		 * can re-read the event status register more quickly than
-		 * it is updated.
-		 */
 		status = CSR_READ_2(sc, WI_EVENT_STAT);
 #ifdef WI_DEBUG
 		if (wi_debug > 1) {
