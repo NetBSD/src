@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.21 2004/09/29 02:50:42 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.22 2004/10/01 07:40:59 sekiya Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.21 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -37,6 +37,11 @@ maxusers	32
 options 	MIPS3		# MIPS3 support
 options		INDY_R4600_CACHE	# Include routines to handle special
 					# R4600 cache -- required for Indy.
+
+makeoptions	WANT_ECOFF="yes"	# Create an ECOFF kernel in addition
+					# to an ELF kernel -- required for
+					# netbooting Indigo (IP20) and some
+					# Indigo2 (IP22) machines
 
 #options	BLINK		# blinkenlitzen
 
