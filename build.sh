@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.63 2002/07/09 06:36:16 pooka Exp $
+#  $NetBSD: build.sh,v 1.64 2002/09/03 22:03:48 bjh21 Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -16,6 +16,10 @@ bomb () {
 [ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
 [ -f share/mk/bsd.own.mk ] || bomb "src/share/mk is missing; please re-fetch the source tree"
 
+# If $PWD is a valid name of the current directory, POSIX mandates that pwd
+# return it by default which causes problems in the presence of symlinks.
+# Unsetting PWD is simpler than changing every occurrence of pwd to use -P.
+unset PWD
 TOP=`pwd`
 
 getarch () {
@@ -376,7 +380,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.63 2002/07/09 06:36:16 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.64 2002/09/03 22:03:48 bjh21 Exp $
 #
 
 EOF
