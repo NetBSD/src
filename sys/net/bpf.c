@@ -36,16 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.6 1993/11/15 09:56:46 deraadt Exp $
+ *	$Id: bpf.c,v 1.7 1993/11/23 04:51:25 cgd Exp $
  */
 
 #include "bpfilter.h"
 
 #if NBPFILTER > 0
-
-#ifndef __386BSD__
-#define __386BSD__
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +473,7 @@ bpf_wakeup(d)
 	register struct bpf_d *d;
 {
 	wakeup((caddr_t)d);
-#if (BSD > 199103) || defined(__386BSD__)
+#if (BSD > 199103) || defined(__NetBSD__)
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_pid = 0;
@@ -950,7 +946,7 @@ bpf_select(dev, rw, p)
 		splx(s);
 		return (1);
 	}
-#if defined(__386BSD__)
+#if defined(__NetBSD__)
 	selrecord(p, &d->bd_sel);
 #else
 	/*
