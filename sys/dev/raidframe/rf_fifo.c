@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.10 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.11 2004/03/04 01:53:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.10 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.11 2004/03/04 01:53:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -103,10 +103,9 @@ rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t *elem, int priority)
 	if ((q->hq_count + q->lq_count) != elem->queue->queueLength) {
 		printf("Queue lengths differ!: %d %d %d\n",
 		    q->hq_count, q->lq_count, (int) elem->queue->queueLength);
-		printf("%d %d %d %d\n",
+		printf("%d %d %d\n",
 		    (int) elem->queue->numOutstanding,
 		    (int) elem->queue->maxOutstanding,
-		    (int) elem->queue->row,
 		    (int) elem->queue->col);
 	}
 	RF_ASSERT((q->hq_count + q->lq_count) == elem->queue->queueLength);
