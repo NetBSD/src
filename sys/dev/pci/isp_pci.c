@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.46 1999/10/28 16:11:19 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.47 1999/12/04 02:54:54 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -31,6 +31,7 @@
  */
 
 #include <dev/ic/isp_netbsd.h>
+#include <dev/microcode/isp/asm_pci.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -44,12 +45,28 @@ static void isp_pci_wr_reg_1080 __P((struct ispsoftc *, int, u_int16_t));
 #endif
 static int isp_pci_mbxdma __P((struct ispsoftc *));
 static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
-	ispreq_t *, u_int8_t *, u_int8_t));
+	ispreq_t *, u_int16_t *, u_int16_t));
 static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 	u_int32_t));
 static void isp_pci_reset1 __P((struct ispsoftc *));
 static void isp_pci_dumpregs __P((struct ispsoftc *));
 static int isp_pci_intr __P((void *));
+
+#ifndef	ISP_CODE_ORG
+#define	ISP_CODE_ORG		0x1000
+#endif
+#ifndef	ISP_1040_RISC_CODE
+#define	ISP_1040_RISC_CODE	NULL
+#endif
+#ifndef	ISP_1080_RISC_CODE
+#define	ISP_1080_RISC_CODE	NULL
+#endif
+#ifndef	ISP_2100_RISC_CODE
+#define	ISP_2100_RISC_CODE	NULL
+#endif
+#ifndef	ISP_2200_RISC_CODE
+#define	ISP_2200_RISC_CODE	NULL
+#endif
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
 static struct ispmdvec mdvec = {
@@ -61,9 +78,9 @@ static struct ispmdvec mdvec = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
+	ISP_1040_RISC_CODE,
 	0,
-	0,
-	0,
+	ISP_CODE_ORG,
 	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
@@ -80,9 +97,9 @@ static struct ispmdvec mdvec_1080 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
+	ISP_1080_RISC_CODE,
 	0,
-	0,
-	0,
+	ISP_CODE_ORG,
 	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
@@ -99,9 +116,9 @@ static struct ispmdvec mdvec_2100 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
+	ISP_2100_RISC_CODE,
 	0,
-	0,
-	0,
+	ISP_CODE_ORG,
 	0,
 	0,
 	0
@@ -118,9 +135,9 @@ static struct ispmdvec mdvec_2200 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
+	ISP_2200_RISC_CODE,
 	0,
-	0,
-	0,
+	ISP_CODE_ORG,
 	0,
 	0,
 	0
@@ -235,7 +252,7 @@ isp_pci_attach(parent, self, aux)
 	static char oneshot = 1;
 #endif
 	static char *nomem = "%s: no mem for sdparam table\n";
-	u_int32_t data, linesz = PCI_DFLT_LNSZ;
+	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
 	struct ispsoftc *isp = &pcs->pci_isp;
@@ -244,7 +261,6 @@ isp_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ioh_valid, memh_valid, i;
-	long foo;
 	ISP_LOCKVAL_DECL;
 
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
@@ -276,6 +292,7 @@ isp_pci_attach(parent, self, aux)
 	pcs->pci_poff[SXP_BLOCK >> _BLK_REG_SHFT] = PCI_SXP_REGS_OFF;
 	pcs->pci_poff[RISC_BLOCK >> _BLK_REG_SHFT] = PCI_RISC_REGS_OFF;
 	pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
+	rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
@@ -328,8 +345,7 @@ isp_pci_attach(parent, self, aux)
 		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
-		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
-		if ((data & 0xff) < 3) {
+		if (rev < 3) {
 			/*
 			 * XXX: Need to get the actual revision
 			 * XXX: number of the 2100 FB. At any rate,
@@ -355,6 +371,7 @@ isp_pci_attach(parent, self, aux)
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
 	}
 #endif
+	isp->isp_revision = rev;
 
 	/*
 	 * Make sure that command register set sanely.
@@ -413,6 +430,7 @@ isp_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
 
 	if (IS_FC(isp)) {
+		long foo;
 		/*
 		 * This isn't very random, but it's the best we can do for
 		 * the real edge case of cards that don't have WWNs.
@@ -440,8 +458,6 @@ isp_pci_attach(parent, self, aux)
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
-
-
 
 	/*
 	 * Create the DMA maps for the data transfers.
@@ -658,8 +674,8 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	struct ispsoftc *isp;
 	struct scsipi_xfer *xs;
 	ispreq_t *rq;
-	u_int8_t *iptrp;
-	u_int8_t optr;
+	u_int16_t *iptrp;
+	u_int16_t optr;
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[rq->req_handle - 1];
