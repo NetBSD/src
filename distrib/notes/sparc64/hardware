@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.11 2002/07/22 17:27:16 lukem Exp $
+.\"	$NetBSD: hardware,v 1.12 2002/07/24 02:47:52 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -94,6 +94,12 @@ Sbus parallel ports
 PCI/Ebus parallel ports
 .Pq Em lpt
 .bullet)
+.It
+Audio devices
+.(bullet -compact
+PCI based system audio
+.Pq Em audiocs
+.bullet)
 .bullet)
 .Pp
 There are a large number of untested PCI drivers that have never
@@ -103,12 +109,6 @@ been tested on UltraSPARC PCI systems that may
 .Ss2 Unsupported devices
 .(bullet -offset indent
 Floppy drives
-.It
-Audio devices
-.(bullet -compact
-PCI based system audio
-.Pq Em audiocs
-.bullet)
 .It
 Serial devices
 .(bullet -compact
