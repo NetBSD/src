@@ -1,4 +1,41 @@
-/* $NetBSD: pte.h,v 1.16 1998/03/09 19:57:57 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.17 1998/03/12 01:21:21 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -78,11 +115,17 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define l1pte_index(va) \
 	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
 
-#define	ALPHA_STSIZE		((u_long)NBPG)			/* 8k */
-#define	ALPHA_MAX_PTSIZE	((u_long)(NPTEPG * NBPG))	/* 8M */
-
 #define	VPT_INDEX(va)	\
 	(((vm_offset_t)(va) >> PAGE_SHIFT) & ((1 << 3 * NPTEPG_SHIFT) - 1))
+
+/* Space mapped by one level 1 PTE */
+#define	ALPHA_L1SEG_SIZE	(1L << ((2 * NPTEPG_SHIFT) + PAGE_SHIFT))
+
+/* Space mapped by one level 2 PTE */
+#define	ALPHA_L2SEG_SIZE	(1L << (NPTEPG_SHIFT + PAGE_SHIFT))
+
+#define	alpha_trunc_l1seg(x)	(((u_long)(x)) & ~(ALPHA_L1SEG_SIZE-1))
+#define	alpha_trunc_l2seg(x)	(((u_long)(x)) & ~(ALPHA_L2SEG_SIZE-1))
 
 #ifdef _KERNEL
 extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
