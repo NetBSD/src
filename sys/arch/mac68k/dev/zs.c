@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 1998/10/22 04:36:51 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.28 1999/02/03 20:25:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -169,7 +169,7 @@ static u_char zs_init_reg[16] = {
 	14,	/*12: BAUDLO (default=9600) */
 	0,	/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA,
-	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
+	ZSWR15_BREAK_IE,
 };
 
 struct zschan *
