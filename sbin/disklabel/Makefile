@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1997/10/10 19:47:50 christos Exp $
+#	$NetBSD: Makefile,v 1.29 1997/10/18 07:28:47 mark Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -12,7 +12,8 @@ DPADD+= ${LIBUTIL}
 #CPPFLAGS+= -DNUMBOOT=2
 #.endif
 
-.if (${MACHINE} == "hp300") || (${MACHINE} == "vax")
+.if (${MACHINE} == "hp300") || (${MACHINE} == "vax") \
+	|| (${MACHINE} == "arm32")
 CPPFLAGS+= -DNUMBOOT=1
 .endif
 
