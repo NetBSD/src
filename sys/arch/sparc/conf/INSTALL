@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2 1998/06/26 01:54:09 lukem Exp $
+#	$NetBSD: INSTALL,v 1.3 1998/07/27 05:45:17 mrg Exp $
 #
 # from: NetBSD: GENERIC,v 1.67 1998/05/20 11:50:54 pk Exp
 #
@@ -140,9 +140,9 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
-#file-system	KERNFS		# kernel data-structure filesystem
+file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
-#file-system	MFS		# memory-based filesystem
+file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
 #file-system	LFS		# Log-based filesystem (still experimental)
