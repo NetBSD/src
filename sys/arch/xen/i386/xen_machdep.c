@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.2 2004/04/10 23:33:50 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2 2004/04/10 23:33:50 cl Exp $");
 
 #include "opt_xen.h"
 
@@ -127,14 +127,17 @@ xen_parse_cmdline(char *bootdev, struct xen_netinfo *xi)
 
 	cmd_line = xen_start_info.cmd_line;
 
+	if (bootdev)
+		bootdev[0] = 0;
+
 	while (cmd_line && *cmd_line) {
 		opt = cmd_line;
 		cmd_line = strchr(opt, ' ');
-		if (cmd_line)
-			*cmd_line = 0;
-
 		if (strlen(opt) == 0)
 			continue;
+
+		if (cmd_line)
+			*cmd_line = 0;
 
 		if (bootdev && strncasecmp(opt, "bootdev=", 8) == 0)
 			strncpy(bootdev, opt + 8, 16); /* dv_xname */
