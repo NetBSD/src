@@ -1,7 +1,7 @@
-/*	$NetBSD: ipft_sn.c,v 1.1.1.6 1997/09/21 16:48:06 veego Exp $	*/
+/*	$NetBSD: ipft_sn.c,v 1.1.1.7 1997/10/30 05:27:54 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -26,18 +26,25 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+#ifndef	linux
 #include <netinet/tcpip.h>
+#endif
 #include <net/if.h>
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "snoop.h"
+#ifdef	linux
+#include "tcpip.h"
+#endif
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ipft_sn.c,v 2.0.2.4 1997/04/30 13:55:10 darrenr Exp ";
+#if !defined(lint)
+static const char rcsid[] = "@(#)Id: ipft_sn.c,v 2.0.2.6 1997/09/28 07:11:53 darrenr Exp ";
 #endif
 
 struct	llc	{
