@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.113 2001/01/20 17:03:32 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.114 2001/01/23 05:42:12 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ product TDK LAK_CF010		0x0900 TDK LAC-CF010
 product XIRCOM CE		0x0108 Xircom CreditCard Ethernet
 product XIRCOM CE2		0x010b Xircom CreditCard Ethernet II
 product XIRCOM CE3		0x010a Xircom CreditCard 10/100 Ethernet
+product XIRCOM CT2		0x1101 Xircom CreditCard Token Ring II
 product XIRCOM CEM		0x110a Xircom CreditCard Ethernet + Modem
 product XIRCOM CEM28		0x110b Xircom CreditCard Ethernet + Modem 28
 product XIRCOM CEM33		0x110b Xircom CreditCard Ethernet + Modem 33
