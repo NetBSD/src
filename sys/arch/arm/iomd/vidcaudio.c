@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.22 2003/12/29 16:45:58 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.22 2003/12/29 16:45:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.23 2003/12/29 16:49:31 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -113,7 +113,6 @@ int    vidcaudio_start_output(void *, void *, int, void (*)(void *), void *);
 int    vidcaudio_start_input(void *, void *, int, void (*)(void *), void *);
 int    vidcaudio_halt_output(void *);
 int    vidcaudio_halt_input(void *);
-int    vidcaudio_speaker_ctl(void *, int);
 int    vidcaudio_getdev(void *, struct audio_device *);
 int    vidcaudio_set_port(void *, mixer_ctrl_t *);
 int    vidcaudio_get_port(void *, mixer_ctrl_t *);
@@ -140,7 +139,7 @@ struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_start_input,
 	vidcaudio_halt_output,
 	vidcaudio_halt_input,
-	vidcaudio_speaker_ctl,
+	NULL,
 	vidcaudio_getdev,
 	NULL,
 	vidcaudio_set_port,
@@ -404,16 +403,6 @@ vidcaudio_halt_input(void *addr)
 	printf("DEBUG: vidcaudio_halt_input\n");
 #endif
 	return EIO;
-}
-
-int
-vidcaudio_speaker_ctl(void *addr, int newstate)
-{
-
-#ifdef VIDCAUDIO_DEBUG
-	printf("DEBUG: vidcaudio_speaker_ctl\n");
-#endif
-	return 0;
 }
 
 int
