@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: inject.c,v 1.3 1998/01/06 04:45:24 perry Exp $
+ *	$NetBSD: inject.c,v 1.4 1998/02/20 09:27:18 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -66,7 +66,7 @@ void *map(char *file, int mode, int *len)
 
 	/* Now map the file */
 	p = mmap(NULL, *len, PROT_READ | (mode == O_RDWR ? PROT_WRITE : 0),
-			MAP_SHARED, fd, 0);
+			MAP_FILE | MAP_SHARED, fd, 0);
 	if (p == NULL) {
 		perror("mmap");
 		exit(1);

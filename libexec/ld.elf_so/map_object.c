@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.2 1996/12/17 03:42:44 jonathan Exp $	*/
+/*	$NetBSD: map_object.c,v 1.3 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -194,7 +194,7 @@ _rtld_map_object(
 #endif
 
     mapbase = mmap(base_addr, mapsize, protflags(segs[0]->p_flags),
-	MAP_PRIVATE, fd, base_offset);
+	MAP_FILE|MAP_PRIVATE, fd, base_offset);
     if (mapbase == (caddr_t) -1) {
 	_rtld_error("mmap of entire address space failed: %s", xstrerror(errno));
 	return NULL;
@@ -212,7 +212,7 @@ _rtld_map_object(
     data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
     data_addr = mapbase + (data_vaddr - base_vaddr);
     if (mmap(data_addr, data_vlimit - data_vaddr, protflags(segs[1]->p_flags),
-	    MAP_PRIVATE|MAP_FIXED, fd, data_offset) == (caddr_t) -1) {
+	    MAP_FILE|MAP_PRIVATE|MAP_FIXED, fd, data_offset) == (caddr_t) -1) {
 	_rtld_error("mmap of data failed: %s", xstrerror(errno));
 	return NULL;
     }
@@ -230,7 +230,7 @@ _rtld_map_object(
     bss_addr = mapbase +  (bss_vaddr - base_vaddr);
     if (bss_vlimit > bss_vaddr) {	/* There is something to do */
 	if (mmap(bss_addr, bss_vlimit - bss_vaddr, protflags(segs[1]->p_flags),
-		MAP_PRIVATE|MAP_FIXED|MAP_ANON, -1, 0) == (caddr_t) -1) {
+		MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0) == (caddr_t) -1) {
 	    _rtld_error("mmap of bss failed: %s", xstrerror(errno));
 	    return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.53 1998/02/17 23:07:33 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.54 1998/02/20 09:27:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -674,7 +674,7 @@ again:
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 	         PROT_READ|PROT_EXEC,
-	         MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	         MAP_FILE|MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -1228,7 +1228,7 @@ maphints()
 	}
 
 	hsize = PAGSIZ;
-	addr = mmap(0, hsize, PROT_READ, MAP_COPY, hfd, 0);
+	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_COPY, hfd, 0);
 
 	if (addr == (caddr_t)-1) {
 		close(hfd);
@@ -1254,7 +1254,7 @@ maphints()
 
 	if (hheader->hh_ehints > hsize) {
 		if (mmap(addr+hsize, hheader->hh_ehints - hsize,
-				PROT_READ, MAP_COPY|MAP_FIXED,
+				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
 				hfd, hsize) != (caddr_t)(addr+hsize)) {
 
 			munmap((caddr_t)hheader, hsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strip.c,v 1.18 1997/10/19 23:30:41 lukem Exp $	*/
+/*	$NetBSD: strip.c,v 1.19 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strip.c	8.3 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: strip.c,v 1.18 1997/10/19 23:30:41 lukem Exp $");
+__RCSID("$NetBSD: strip.c,v 1.19 1998/02/20 09:27:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(argc, argv)
 			ERROR(EFTYPE);
 		}
 		if ((ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ|PROT_WRITE,
-		    MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
+		    MAP_FILE|MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
 			(void)close(fd);
 			ERROR(errno);
 		}

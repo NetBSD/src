@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.4 1997/10/07 13:39:59 mrg Exp $	*/
+/*	$NetBSD: library.c,v 1.5 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: library.c,v 1.4 1997/10/07 13:39:59 mrg Exp $");
+__RCSID("$NetBSD: library.c,v 1.5 1998/02/20 09:27:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ get_ifile (fsp, use_mmap)
 		if (fsp->fi_cip)
 			munmap((caddr_t)fsp->fi_cip, fsp->fi_ifile_length);
 		ifp = mmap ((caddr_t)0, file_stat.st_size,
-		    PROT_READ|PROT_WRITE, 0, fid, (off_t)0);
+		    PROT_READ|PROT_WRITE, MAP_FILE|MAP_PRIVATE, fid, (off_t)0);
 		if (ifp ==  (caddr_t)(-1))
 			err(1, "get_ifile: mmap failed");
 	} else {
@@ -564,7 +564,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 
 	if (use_mmap) {
 		*segbuf = mmap ((caddr_t)0, seg_size(lfsp), PROT_READ,
-		    0, fid, seg_byte);
+		    MAP_FILE|MAP_SHARED, fid, seg_byte);
 		if (*(long *)segbuf < 0) {
 			err(0, "mmap_segment: mmap failed");
 			return (0);

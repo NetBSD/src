@@ -1,4 +1,4 @@
-/*	$NetBSD: rdsetroot.c,v 1.5 1998/01/06 04:45:36 perry Exp $	*/
+/*	$NetBSD: rdsetroot.c,v 1.6 1998/02/20 09:27:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: rdsetroot.c,v 1.5 1998/01/06 04:45:36 perry Exp $
+ *	$NetBSD: rdsetroot.c,v 1.6 1998/02/20 09:27:18 mycroft Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ main(argc,argv)
 	dataseg = mmap(NULL,	/* any address is ok */
 				   data_len, /* length */
 				   PROT_READ | PROT_WRITE,
-				   MAP_SHARED,
+				   MAP_FILE | MAP_SHARED,
 				   fd, data_off);
 	if ((long)dataseg == -1) {
 		printf("%s: can not map data seg\n", file);

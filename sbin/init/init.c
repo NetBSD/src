@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.31 1998/02/06 19:30:14 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.32 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.31 1998/02/06 19:30:14 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.32 1998/02/20 09:27:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1388,7 +1388,8 @@ msdosfs_root()
 	if (fstat(fd, &st) == -1)
 		goto done;
 
-	if ((ptr = mmap(0, st.st_size, PROT_READ, 0, fd, 0)) == (void *) -1)
+	if ((ptr = mmap(0,
+	    st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0)) == (void *) -1)
 		goto done;
 
 	(void) close(fd);

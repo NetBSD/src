@@ -18,7 +18,7 @@
    Written July 1992 by Mike Haertel.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: grep.c,v 1.4 1995/02/27 16:48:13 cgd Exp $";
+static char rcsid[] = "$Id: grep.c,v 1.5 1998/02/20 09:27:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -286,7 +286,7 @@ fillbuf(save)
     {
       maddr = buffer + bufsalloc;
       maddr = mmap(maddr, bufalloc - bufsalloc, PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_FIXED, bufdesc, bufoffset);
+		   MAP_FILE | MAP_PRIVATE | MAP_FIXED, bufdesc, bufoffset);
       if (maddr == (caddr_t) -1)
 	{
 	  fprintf(stderr, "%s: warning: %s: %s\n", filename,
