@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.144 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.145 2005/03/05 02:46:38 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.144 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.145 2005/03/05 02:46:38 briggs Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -978,6 +978,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		} else {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			m->m_pkthdr.csum_data |= hlen << 16;
 		}
 		ipstat.ips_ofragments++;
 		fragments++;
@@ -997,6 +998,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 	} else {
 		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
+		m->m_pkthdr.csum_data |= hlen << 16;
 	}
 sendorfree:
 	/*
@@ -1038,7 +1040,7 @@ in_delayed_cksum(struct mbuf *m)
 	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
 		csum = 0xffff;
 
-	offset += m->m_pkthdr.csum_data;	/* checksum offset */
+	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
 
 	if ((offset + sizeof(u_int16_t)) > m->m_len) {
 		/* This happen when ip options were inserted
