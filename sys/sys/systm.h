@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.52 1996/08/16 01:23:46 jtc Exp $	*/
+/*	$NetBSD: systm.h,v 1.53 1996/09/05 15:47:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -126,7 +126,9 @@ int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
 
+#ifdef LKM
 int	lkmenodev __P((void));
+#endif
 
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));

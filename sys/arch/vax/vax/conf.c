@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1996/07/20 18:08:19 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1996/09/05 15:46:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -42,12 +42,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define lkmenodev	enodev
-#endif
 
 #include "hp.h" /* 0 */
 bdev_decl(hp);
@@ -227,12 +221,6 @@ cdev_decl(pts);
 #define ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-#ifdef LKM
-#define NLKM	1
-#else
-#define NLKM	0
-#endif
-cdev_decl(lkm);
 
 cdev_decl(hp);
 cdev_decl(rk);
