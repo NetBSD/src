@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.17 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.18 2000/07/06 03:03:30 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.17 2000/06/02 23:11:07 fvdl Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.18 2000/07/06 03:03:30 christos Exp $");
 #endif
 #endif
 
@@ -117,14 +117,14 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	 * Allocate and set up auth handle
 	 */
 	au = NULL;
-	auth = (AUTH *)mem_alloc(sizeof(*auth));
+	auth = mem_alloc(sizeof(*auth));
 #ifndef KERNEL
 	if (auth == NULL) {
 		warnx("authunix_create: out of memory");
 		goto cleanup_authunix_create;
 	}
 #endif
-	au = (struct audata *)mem_alloc(sizeof(*au));
+	au = mem_alloc(sizeof(*au));
 #ifndef KERNEL
 	if (au == NULL) {
 		warnx("authunix_create: out of memory");
@@ -140,7 +140,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	/*
 	 * fill in param struct from the given params
 	 */
-	(void)gettimeofday(&now,  (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	aup.aup_time = now.tv_sec;
 	aup.aup_machname = machname;
 	aup.aup_uid = uid;
@@ -290,7 +290,7 @@ authunix_refresh(auth)
 
 	/* first deserialize the creds back into a struct authunix_parms */
 	aup.aup_machname = NULL;
-	aup.aup_gids = (int *)NULL;
+	aup.aup_gids = NULL;
 	xdrmem_create(&xdrs, au->au_origcred.oa_base,
 	    au->au_origcred.oa_length, XDR_DECODE);
 	stat = xdr_authunix_parms(&xdrs, &aup);
@@ -298,7 +298,7 @@ authunix_refresh(auth)
 		goto done;
 
 	/* update the time and serialize in place */
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	aup.aup_time = now.tv_sec;
 	xdrs.x_op = XDR_ENCODE;
 	XDR_SETPOS(&xdrs, 0);
