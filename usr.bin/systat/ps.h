@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.h,v 1.1 1999/02/21 21:48:07 jwise Exp $  */
+/*      $NetBSD: ps.h,v 1.1.8.1 2000/06/23 16:40:01 minoura Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -39,7 +39,7 @@ extern struct p_times {
 	struct kinfo_proc *pt_kp;
 } *pt;
  
-extern long	stime[CPUSTATES];       
+extern u_int64_t stime[CPUSTATES];       
 extern int	fscale;       
 extern double	lccpu; 
 extern long	mempages;

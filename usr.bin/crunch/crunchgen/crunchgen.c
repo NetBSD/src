@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.15 2000/04/14 06:11:07 simonb Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.15.2.1 2000/06/23 16:30:18 minoura Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.15 2000/04/14 06:11:07 simonb Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.15.2.1 2000/06/23 16:30:18 minoura Exp $");
 #endif
 
 #include <stdlib.h>
@@ -348,7 +348,7 @@ void add_prog(char *progname)
     else p1->next = p2;
 
     p2->ident = p2->srcdir = p2->objdir = NULL;
-    p2->links = p2->objs = NULL;
+    p2->objs = p2->objpaths = p2->links = NULL;
     p2->goterror = 0;
 }
 

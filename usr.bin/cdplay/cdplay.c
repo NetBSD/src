@@ -1,7 +1,7 @@
-/* 	$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.5.2.1 2000/06/23 16:30:16 minoura Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
  *              New eject algorithm.
  *              Some code style reformatting.
  *
- * From: Id: cdcontrol.c,v 1.17.2.1 1999/01/31 15:36:01 billf Exp
+ * from FreeBSD: cdcontrol.c,v 1.17.2.1 1999/01/31 15:36:01 billf Exp
  */
 
 /*
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.5.2.1 2000/06/23 16:30:16 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -428,12 +428,7 @@ play(arg)
 
 	if (!arg || !*arg) {
 		/* Play the whole disc */
-		if (!msf)
-			return (play_blocks(0, be32toh(toc_buffer[n].addr.lba)));
-		
-		return (play_blocks(0, msf2lba(toc_buffer[n].addr.msf.minute,
-		    toc_buffer[n].addr.msf.second, 
-		    toc_buffer[n].addr.msf.frame)));
+		return (play_track(h.starting_track, 1, h.ending_track, 1));
 	}
 	
 	if (strchr(arg, '#')) {
@@ -840,7 +835,7 @@ prtrack(e, lastflag)
 		block = msf2lba(e->addr.msf.minute, e->addr.msf.second,
 		    e->addr.msf.frame);
 	} else {
-		block = be32toh(e->addr.lba);
+		block = e->addr.lba;
 		lba2msf(block, &m, &s, &f);
 		/* Print track start */
 		printf("%2d:%02d.%02d  ", m, s, f);
@@ -854,7 +849,7 @@ prtrack(e, lastflag)
 		next = msf2lba(e[1].addr.msf.minute, e[1].addr.msf.second,
 		    e[1].addr.msf.frame);
 	else
-		next = be32toh(e[1].addr.lba);
+		next = e[1].addr.lba;
 	len = next - block;
 	lba2msf(len, &m, &s, &f);
 

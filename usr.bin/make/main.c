@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.56.2.1 2000/06/23 16:39:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.56.2.1 2000/06/23 16:39:42 minoura Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.56 2000/05/10 07:49:35 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.56.2.1 2000/06/23 16:39:42 minoura Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1052,9 +1052,17 @@ Check_Cwd_av(ac, av, copy)
 		i, (is_cmd) ? "cmd" : "arg", av[i]);
 #endif
 	if (is_cmd != 0) {
-	    while (*cp == '(' || *cp == '{' ||
-		   *cp == ';' || *cp == '&' || *cp == '|')
-		++cp;
+	    if (*cp == '(' || *cp == '{' ||
+		*cp == ';' || *cp == '&' || *cp == '|') {
+		do {
+		    ++cp;
+		} while (*cp == '(' || *cp == '{' ||
+			 *cp == ';' || *cp == '&' || *cp == '|');
+		if (*cp == '\0') {
+		    next_cmd = 1;
+		    continue;
+		}
+	    }
 	    if (strcmp(cp, "cd") == 0 || strcmp(cp, "chdir") == 0) {
 #ifdef check_cwd_debug
 		fprintf(stderr, " == cd, done.\n");

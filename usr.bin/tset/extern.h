@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1999/10/04 23:33:24 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.4.1 2000/06/23 16:40:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ extern int erasechar, intrchar, killchar;
 
 void	 add_mapping __P((const char *, char *));
 void	 cat __P((char *));
-const	 char *get_termcap_entry __P((const char *, char **));
+const	 char *get_termcap_entry __P((const char *, char **, int));
 const	 char *mapped __P((const char *));
 int	 outc __P((int));
 void	 reset_mode __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.7 1999/03/04 03:02:02 bgrayson Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.7.8.1 2000/06/23 16:40:00 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.7 1999/03/04 03:02:02 bgrayson Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.7.8.1 2000/06/23 16:40:00 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,9 +130,8 @@ showmbufs()
 				waddch(wnd, 'X');
 			waddstr(wnd, buf);
 		} else {
-			while (max--)
-				waddch(wnd, 'X');
 			wclrtoeol(wnd);
+			whline(wnd, 'X', max);
 		}
 		mb->m_mtypes[index] = 0;
 	}

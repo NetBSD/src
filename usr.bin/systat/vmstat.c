@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.24.2.1 2000/06/23 16:40:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.24.2.1 2000/06/23 16:40:02 minoura Exp $");
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $");
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 
 #include <vm/vm.h>
@@ -73,7 +74,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.24 2000/01/21 17:08:36 mycroft Exp $");
 #include "extern.h"
 
 static struct Info {
-	long	time[CPUSTATES];
+	u_int64_t time[CPUSTATES];
 	struct	uvmexp uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
@@ -104,7 +105,7 @@ static int ucount __P((void));
 
 static	int ut;
 static	char buf[26];
-static	time_t t;
+static	u_int64_t t;
 static	double etime;
 static	float hertz;
 static	int nintr;
@@ -138,19 +139,17 @@ closekre(w)
 
 
 static struct nlist namelist[] = {
-#define X_CPTIME	0
-	{ "_cp_time" },
-#define X_TOTAL		1
+#define X_TOTAL		0
 	{ "_total" },
-#define	X_NCHSTATS	2
+#define	X_NCHSTATS	1
 	{ "_nchstats" },
-#define	X_INTRNAMES	3
+#define	X_INTRNAMES	2
 	{ "_intrnames" },
-#define	X_EINTRNAMES	4
+#define	X_EINTRNAMES	3
 	{ "_eintrnames" },
-#define	X_INTRCNT	5
+#define	X_INTRCNT	4
 	{ "_intrcnt" },
-#define	X_EINTRCNT	6
+#define	X_EINTRCNT	5
 	{ "_eintrcnt" },
 	{ "" },
 };
@@ -305,7 +304,7 @@ labelkre()
 	mvprintw(GENSTATROW, GENSTATCOL, "  Csw  Trp  Sys  Int  Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-		"    . %% Sys    . %% User    . %% Nice    . %% Idle");
+		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 		"|    |    |    |    |    |    |    |    |    |    |");
@@ -317,7 +316,7 @@ labelkre()
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
 	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
-	mvprintw(DISKROW + 4, DISKCOL, "  sec");
+	mvprintw(DISKROW + 4, DISKCOL, "%%busy");
 	j = 0;
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
@@ -339,8 +338,8 @@ labelkre()
 #define PUTRATE(fld, l, c, w) {Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w);}
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[CPUSTATES] = { '=' , '>', '-', '%', ' ' };
+static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_INTR, CP_IDLE };
 
 void
 showkre()
@@ -357,7 +356,7 @@ showkre()
 		X(time);
 		etime += s.time[i];
 	}
-	if (etime < 5.0) {	/* < 5 ticks - ignore this trash */
+	if (etime < 1.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
 			clear();
 			mvprintw(2, 10, "The alternate system clock has died!");
@@ -402,7 +401,7 @@ showkre()
 	/* 
 	 * Last CPU state not calculated yet.
 	 */
-	for (c = 0; c < CPUSTATES - 1; c++) {
+	for (c = 0; c < CPUSTATES; c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
 		f2 += f1;
@@ -410,12 +409,9 @@ showkre()
 		if (c == 0)
 			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
 		else
-			putfloat(f1, GRAPHROW, GRAPHCOL + 12 * c,
-				5, 1, 0);
-		move(GRAPHROW + 2, psiz);
+			putfloat(f1, GRAPHROW, GRAPHCOL + 10 * c + 1, 5, 1, 0);
+		mvhline(GRAPHROW + 2, psiz, cpuchar[c], l);
 		psiz += l;
-		while (l-- > 0)
-			addch(cpuchar[c]);
 	}
 
 	putint(ucount(), STATROW, STATCOL, 3);
@@ -565,14 +561,12 @@ putint(n, l, c, w)
 
 	move(l, c);
 	if (n == 0) {
-		while (w-- > 0)
-			addch(' ');
+		hline(' ', w);
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*d", w, n);
 	if (strlen(b) > w) {
-		while (w-- > 0)
-			addch('*');
+		hline('*', w);
 		return;
 	}
 	addstr(b);
@@ -587,14 +581,12 @@ putfloat(f, l, c, w, d, nz)
 
 	move(l, c);
 	if (nz && f == 0.0) {
-		while (--w >= 0)
-			addch(' ');
+		hline(' ', w);
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*.*f", w, d, f);
 	if (strlen(b) > w) {
-		while (--w >= 0)
-			addch('*');
+		hline('*', w);
 		return;
 	}
 	addstr(b);
@@ -609,7 +601,7 @@ getinfo(s, st)
 	size_t size;
 
 	dkreadstats();
-	NREAD(X_CPTIME, s->time, sizeof s->time);
+	(void) fetch_cptime(s->time);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
 	size = sizeof(s->uvmexp);
@@ -667,5 +659,5 @@ dinfo(dn, c)
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
-	putfloat(atime/etime, DISKROW + 4, c, 5, 2, 1);
+	putfloat(atime*100.0/etime, DISKROW + 4, c, 5, 1, 1);
 }

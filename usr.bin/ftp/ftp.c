@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.95.2.1 2000/06/23 16:30:23 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.95.2.1 2000/06/23 16:30:23 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,6 +215,25 @@ hookup(char *host, char *port)
 	hostname = hostnamebuf;
 	
 	for (res = res0; res; res = res->ai_next) {
+		/*
+		 * make sure that ai_addr is NOT an IPv4 mapped address.
+		 * IPv4 mapped address complicates too many things in FTP
+		 * protocol handling, as FTP protocol is defined differently
+		 * between IPv4 and IPv6.
+		 *
+		 * This may not be the best way to handle this situation,
+		 * since the semantics of IPv4 mapped address is defined in
+		 * the kernel.  There are configurations where we should use
+		 * IPv4 mapped address as native IPv6 address, not as
+		 * "an IPv6 address that embeds IPv4 address" (namely, SIIT).
+		 *
+		 * More complete solution would be to have an additional
+		 * getsockopt to grab "real" peername/sockname.  "real"
+		 * peername/sockname will be AF_INET if IPv4 mapped address
+		 * is used to embed IPv4 address, and will be AF_INET6 if
+		 * we use it as native.  What a mess!
+		 */
+		ai_unmapped(res);
 #if 0	/*old behavior*/
 		if (res != res0)	/* not on the first address */
 #else
@@ -1479,6 +1498,7 @@ reinit:
 #define	pack4(var, off) \
 	(((var[(off) + 0] & 0xff) << 24) | ((var[(off) + 1] & 0xff) << 16) | \
 	 ((var[(off) + 2] & 0xff) << 8) | ((var[(off) + 3] & 0xff) << 0))
+#define	UC(b)	(((int)b)&0xff)
 
 		/*
 		 * What we've got at this point is a string of comma separated
@@ -1577,12 +1597,11 @@ reinit:
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
 			    {
-				u_int32_t *p32;
-				p32 = (u_int32_t *)&data_addr.su_sin6.sin6_addr;
-				p32[0] = htonl(pack4(addr, 0));
-				p32[1] = htonl(pack4(addr, 4));
-				p32[2] = htonl(pack4(addr, 8));
-				p32[3] = htonl(pack4(addr, 12));
+				int i;
+				for (i = 0; i < sizeof(struct in6_addr); i++) {
+					data_addr.su_sin6.sin6_addr.s6_addr[i] =
+					    UC(addr[i]);
+				}
 			    }
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
@@ -1679,8 +1698,6 @@ noport:
 	}
 	if (xlisten(data, 1) < 0)
 		warn("listen");
-
-#define	UC(b)	(((int)b)&0xff)
 
 	if (sendport) {
 #ifdef INET6
@@ -2182,4 +2199,37 @@ abort_remote(FILE *din)
 		(void)getreply(0);
 	}
 	(void)getreply(0);
+}
+
+void
+ai_unmapped(struct addrinfo *ai)
+{
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in sin;
+	int len;
+
+	if (ai->ai_family != AF_INET6)
+		return;
+	if (ai->ai_addrlen != sizeof(struct sockaddr_in6) ||
+	    sizeof(sin) > ai->ai_addrlen)
+		return;
+	sin6 = (struct sockaddr_in6 *)ai->ai_addr;
+	if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
+		return;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	len = sizeof(struct sockaddr_in);
+	memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[12],
+	    sizeof(sin.sin_addr));
+	sin.sin_port = sin6->sin6_port;
+
+	ai->ai_family = AF_INET;
+#ifdef BSD4_4
+	sin.sin_len = len;
+#endif
+	memcpy(ai->ai_addr, &sin, len);
+	ai->ai_addrlen = len;
+#endif
 }

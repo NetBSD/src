@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $	*/
+/*	$NetBSD: dohits.c,v 1.7.8.1 2000/06/23 16:40:04 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.7 1998/09/06 02:54:48 lukem Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.7.8.1 2000/06/23 16:40:04 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,16 +80,16 @@ struct Hits Hits[256];		/* one for each of 0x00-0xff */
 
 struct thing *table[100];
 
-static void add __P((char *, char *, int));
-static void scanwhite __P((char *, char *));
-static void scandefine __P((char *, char *));
+static void add __P((const char *, const char *, int));
+static void scanwhite __P((const char *, const char *));
+static void scandefine __P((const char *, const char *));
 static char *savechr __P((unsigned int));
 static char *doit __P((struct hit *, unsigned char *, struct Hits *));
 
 unsigned int
 dohash(seed, string)
 unsigned int seed;
-char *string;
+const char *string;
 {
     unsigned int i = seed;
     unsigned char c;
@@ -107,13 +107,14 @@ char *string;
 
 static void
 add(first, second, value)
-char *first, *second;
+const char *first, *second;
 int value;
 {
     struct thing **item, *this;
 
     item = &firstentry(second);
     this = (struct thing *) malloc(sizeof *this);
+    this->hits = 0;
     this->next = *item;
     *item = this;
     this->value = value;
@@ -123,7 +124,7 @@ int value;
 
 static void
 scanwhite(file, prefix)
-char *file,		/* Name of file to scan for whitespace prefix */
+const char *file,	/* Name of file to scan for whitespace prefix */
      *prefix;		/* prefix of what should be picked up */
 {
     FILE *ourfile;
@@ -151,7 +152,7 @@ char *file,		/* Name of file to scan for whitespace prefix */
 
 static void
 scandefine(file, prefix)
-char *file,		/* Name of file to scan for #define prefix */
+const char *file,	/* Name of file to scan for #define prefix */
      *prefix;		/* prefix of what should be picked up */
 {
     FILE *ourfile;
@@ -235,7 +236,7 @@ struct Hits *hits;
 
 void
 dohits(aidfile, fcnfile)
-char	*aidfile, *fcnfile;
+const char *aidfile, *fcnfile;
 {
     unsigned char plain[100], shifted[100], alted[100], shiftalted[100];
     unsigned char line[200];

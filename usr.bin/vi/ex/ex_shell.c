@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shell.c,v 1.7 1998/01/09 08:08:02 perry Exp $	*/
+/*	$NetBSD: ex_shell.c,v 1.7.8.1 2000/06/23 16:40:10 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -84,8 +84,11 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 	const char *msg;
 	int need_newline;
 {
+	GS *gp;
 	const char *name;
 	pid_t pid;
+
+	gp = sp->gp;
 
 	/* We'll need a shell. */
 	if (opts_empty(sp, O_SHELL, 0))
@@ -97,6 +100,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
 			return (1);
 		}
+		(void)gp->scr_attr(sp, SA_ALTERNATE, 0);
 		F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.19 1999/04/20 07:53:02 mrg Exp $	*/
+/*	$NetBSD: docmd.c,v 1.19.6.1 2000/06/23 16:39:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.19 1999/04/20 07:53:02 mrg Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.19.6.1 2000/06/23 16:39:51 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,6 @@ done:
 		if (sc->sc_type == NOTIFY)
 			notify(tempfile, rhost, sc->sc_args, 0);
 	if (!nflag) {
-		(void) unlink(tempfile);
 		for (; ihead != NULL; ihead = ihead->nextp) {
 			free(ihead);
 			if ((opts & IGNLNKS) || ihead->count == 0)
@@ -439,8 +438,6 @@ dodcolon(filev, files, stamp, cmds)
 	for (sc = cmds; sc != NULL; sc = sc->sc_next)
 		if (sc->sc_type == NOTIFY)
 			notify(tempfile, NULL, sc->sc_args, lastmod);
-	if (!nflag && !(options & VERIFY))
-		(void) unlink(tempfile);
 }
 
 /*

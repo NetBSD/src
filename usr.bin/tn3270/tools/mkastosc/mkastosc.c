@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.6 1998/09/06 02:54:48 lukem Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.6.8.1 2000/06/23 16:40:04 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -62,7 +62,7 @@ static struct tbl {
     unsigned char
 	scancode,
 	used;
-    char
+    const char
 	*shiftstate;
 } tbl[128];
 
@@ -83,7 +83,7 @@ char	*argv[];
     struct thing *this;
     struct thing **attable;
     struct tbl *Pt;
-    static char *shiftof[] =
+    static const char *shiftof[] =
 	    { "0", "SHIFT_UPSHIFT", "SHIFT_ALT", "SHIFT_ALT|SHIFT_UPSHIFT" };
     char *aidfile = 0, *fcnfile = 0;
 
