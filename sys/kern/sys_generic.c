@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.79 2003/09/21 19:17:05 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.80 2003/10/10 15:24:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.79 2003/09/21 19:17:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.80 2003/10/10 15:24:28 chs Exp $");
 
 #include "opt_ktrace.h"
 
@@ -866,7 +866,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 		goto retry;
 	}
 	l->l_flag &= ~L_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
