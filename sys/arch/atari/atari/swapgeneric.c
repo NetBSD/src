@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.9 1996/11/06 13:57:12 leo Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.10 1997/01/01 21:08:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -48,7 +48,7 @@
 
 #include <machine/cpu.h>
 
-#include "rd.h"
+#include "md.h"
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
@@ -73,8 +73,8 @@ struct	swdevt swdevt[] = {
 #if NFD > 0
 extern	struct cfdriver fd_cd;
 #endif
-#if NRD > 0
-extern	struct cfdriver rd_cd;
+#if NMD > 0
+extern	struct cfdriver md_cd;
 #endif
 #if NSD > 0
 extern	struct cfdriver sd_cd;
