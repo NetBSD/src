@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.7 2002/09/05 21:31:32 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.8 2002/09/06 03:05:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ _rtld_function_descriptor_function(const void *addr)
  */
 int
 _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
-    bool bind_now, bool dodebug)
+    bool dodebug)
 {
 	Elf_Addr	*where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym	*def;
@@ -286,7 +286,7 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 	/*
 	 * If we must bind now, fully resolve the PLT entry.
 	 */
-	else if (bind_now) {
+	else {
 
 		/*
 		 * Look up the symbol.  While we're relocating self,
@@ -302,29 +302,12 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 	}
 
 	/*
-	 * Otherwise set up for lazy binding.
-	 */
-	else {
-	
-		/*
-		 * This function pointer points to the PLT
-		 * stub added by the linker, and instead of
-		 * a shared linkage value, we stash this
-		 * relocation's offset.  The PLT stub has
-		 * already been set up to transfer to
-		 * _rtld_bind_start.
-		 */
-		func_pc = ((Elf_Addr)HPPA_OBJ_GOT(obj)) - 16;
-		func_sl = (Elf_Addr)((caddr_t)rela - (caddr_t)obj->pltrela);
-	}
-
-	/*
 	 * Fill this PLT entry and return.
 	 */
 	where[0] = func_pc;
 	where[1] = func_sl;
-	if (addrp != NULL)
-		*addrp = (caddr_t)where;
+
+	*addrp = (caddr_t)where;
 	return 0;
 }
 
@@ -481,6 +464,53 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
 			return -1;
 		}
+	}
+	return 0;
+}
+
+int
+_rtld_relocate_plt_lazy(obj, dodebug)
+	Obj_Entry *obj;
+	bool dodebug;
+{
+	const Elf_Rela *rela;
+
+	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
+		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		Elf_Addr func_pc, func_sl;
+
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
+
+		/*
+		 * If this is an IPLT reloc for a static function,
+		 * fully resolve the PLT entry now.
+		 */
+		if (ELF_R_SYM(rela->r_info) == 0) {
+			func_pc = (Elf_Addr)(obj->relocbase + rela->r_addend);
+			func_sl = (Elf_Addr)HPPA_OBJ_SL(obj);
+		}
+
+		/*
+		 * Otherwise set up for lazy binding.
+		 */
+		else {
+			/*
+			 * This function pointer points to the PLT
+			 * stub added by the linker, and instead of
+			 * a shared linkage value, we stash this
+			 * relocation's offset.  The PLT stub has
+			 * already been set up to transfer to
+			 * _rtld_bind_start.
+			 */
+			func_pc = ((Elf_Addr)HPPA_OBJ_GOT(obj)) - 16;
+			func_sl = (Elf_Addr)((caddr_t)rela - (caddr_t)obj->pltrela);
+		}
+
+		/*
+		 * Fill this PLT entry and return.
+		 */
+		where[0] = func_pc;
+		where[1] = func_sl;
 	}
 	return 0;
 }
