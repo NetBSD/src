@@ -1,3 +1,2 @@
-# $NetBSD: md.netwinder,v 1.4 2002/08/29 01:30:43 lukem Exp $
-./rescue/fdisk				base-rescue-root
+# $NetBSD: md.netwinder,v 1.5 2002/10/09 01:22:39 thorpej Exp $
 ./sbin/fdisk				base-sysutil-root
