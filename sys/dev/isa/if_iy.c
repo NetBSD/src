@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.63 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.63.4.1 2005/01/30 13:02:12 he Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.63 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.63.4.1 2005/01/30 13:02:12 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -784,9 +784,13 @@ struct ifnet *ifp;
 				--llen;
 				++data;
 			}
+			/*
+			 * XXX ALIGNMENT LOSSAGE HERE.
+			 */
 			if (llen > 1)
 				bus_space_write_multi_stream_2(iot, ioh,
-					MEM_PORT_REG, data, llen>>1);
+					MEM_PORT_REG, (u_int16_t *) data,
+					llen>>1);
 			residual = llen & 1;
 			if (residual) {
 				resval = *(data + llen - 1);
@@ -1057,11 +1061,14 @@ iyget(sc, iot, ioh, rxlen)
 			len = MCLBYTES;
 		}
 		len = min(rxlen, len);
+		/*
+		 * XXX ALIGNMENT LOSSAGE HERE.
+		 */
 		if (len > 1) {
 			len &= ~1;
 
 			bus_space_read_multi_stream_2(iot, ioh, MEM_PORT_REG, 
-			    mtod(m, caddr_t), len/2);
+			    mtod(m, u_int16_t *), len/2);
 		} else {
 #ifdef IYDEBUG
 			printf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
@@ -1291,8 +1298,11 @@ iyioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			iyreset(sc); /* XXX can't make it work otherwise */
-			iy_mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				/* XXX can't make it work otherwise */
+				iyreset(sc);
+				iy_mc_reset(sc);
+			}
 			error = 0;
 		}
 		break;
@@ -1390,8 +1400,11 @@ iy_mc_setup(sc)
 	
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while(enm) {
+		/*
+		 * XXX ALIGNMENT LOSSAGE HERE?
+		 */
 		bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
-		    enm->enm_addrlo, 3);
+		    (u_int16_t *) enm->enm_addrlo, 3);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
