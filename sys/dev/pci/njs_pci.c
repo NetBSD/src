@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.1 2004/08/26 14:13:46 itohy Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.1 2004/08/26 14:13:46 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.2 2004/08/26 18:38:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,14 +69,14 @@ struct njsc32_pci_softc {
 	bus_size_t		sc_regmap_size;
 };
 
-int	njs_pci_match __P((struct device *, struct cfdata *, void *));
-void	njs_pci_attach __P((struct device *, struct device *, void *));
-int	njs_pci_detach __P((struct device *, int));
+static int	njs_pci_match(struct device *, struct cfdata *, void *);
+static void	njs_pci_attach(struct device *, struct device *, void *);
+static int	njs_pci_detach(struct device *, int);
 
 CFATTACH_DECL(njs_pci, sizeof(struct njsc32_pci_softc),
     njs_pci_match, njs_pci_attach, njs_pci_detach, NULL);
 
-const struct njsc32_pci_product {
+static const struct njsc32_pci_product {
 	pci_vendor_id_t		p_vendor;
 	pci_product_id_t	p_product;
 	njsc32_model_t		p_model;
@@ -95,12 +95,8 @@ const struct njsc32_pci_product {
 	  NJSC32_MODEL_INVALID,		0 },
 };
 
-const struct njsc32_pci_product * njs_pci_lookup
-    __P((const struct pci_attach_args *));
-
-const struct njsc32_pci_product *
-njs_pci_lookup(pa)
-	const struct pci_attach_args *pa;
+static const struct njsc32_pci_product *
+njs_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct njsc32_pci_product *p;
 
@@ -114,11 +110,8 @@ njs_pci_lookup(pa)
 	return NULL;
 }
 
-int
-njs_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+njs_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -128,10 +121,8 @@ njs_pci_match(parent, match, aux)
 	return 0;
 }
 
-void
-njs_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+njs_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct njsc32_pci_softc *psc = (void *) self;
@@ -220,10 +211,8 @@ njs_pci_attach(parent, self, aux)
 	njsc32_attach(sc);
 }
 
-int
-njs_pci_detach(self, flags)
-	struct device *self;
-	int flags;
+static int
+njs_pci_detach(struct device *self, int flags)
 {
 	struct njsc32_pci_softc *psc = (void *) self;
 	struct njsc32_softc *sc = &psc->sc_njsc32;
