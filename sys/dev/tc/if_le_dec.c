@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.5 1997/03/17 03:19:11 thorpej Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.6 1997/06/15 18:23:02 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -62,6 +62,8 @@
 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
+
+#include <machine/locore.h>	/* XXX wbflush() */
 
 /* access LANCE registers */
 void le_dec_writereg __P((volatile u_short *regptr, u_short val));
