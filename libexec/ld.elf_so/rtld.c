@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.43 2000/11/10 23:53:04 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.44 2001/02/03 13:25:00 pk Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -334,12 +334,40 @@ _rtld(sp)
 	}
 	aux = (const AuxInfo *) sp;
 
-	/* Digest the auxiliary vector. */
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
 #ifdef	VARPSZ
 	pAUX_pagesz = NULL;
 #endif
+	/*
+	 * First pass through the the auxiliary vector, avoiding the use
+	 * of a `switch() {}' statement at this stage. A `switch()' may
+	 * be translated into code utilizing a jump table approach which
+	 * references the equivalent of a global variable. This must be
+	 * avoided until _rtld_init() has done its job.
+	 * 
+	 * _rtld_init() only needs `pAUX_base' and possibly `pAUX_pagesz',
+	 * so we look for just those in this pass.
+	 */
+	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
+		if (auxp->a_type == AT_BASE)
+			pAUX_base = auxp;
+#ifdef	VARPSZ
+		if (auxp->a_type == AT_PAGESZ)
+			pAUX_pagesz = auxp;
+#endif
+	}
+
+	/* Initialize and relocate ourselves. */
+	assert(pAUX_base != NULL);
+#ifdef	VARPSZ
+	assert(pAUX_pagesz != NULL);
+	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
+#else
+	_rtld_init((caddr_t) pAUX_base->a_v, 0);
+#endif
+
+	/* Digest the auxiliary vector (full pass now that we can afford it). */
 	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
 		case AT_BASE:
@@ -367,15 +395,6 @@ _rtld(sp)
 #endif
 		}
 	}
-
-	/* Initialize and relocate ourselves. */
-	assert(pAUX_base != NULL);
-#ifdef	VARPSZ
-	assert(pAUX_pagesz != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
-#else
-	_rtld_init((caddr_t) pAUX_base->a_v, 0);
-#endif
 
 #ifdef	VARPSZ
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
