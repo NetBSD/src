@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.27 1998/01/14 15:31:41 drochner Exp $	
+	$NetBSD: hardware,v 1.28 1998/02/13 04:22:11 enami Exp $	
 
 NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
@@ -20,7 +20,7 @@ Supported devices include:
 		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
 		Adaptec AIC-6260 and AIC-6360 based boards, including
-			the Adaptec AHA-152x, Adaptec AHA-1460 (PCMCIA),
+			the Adaptec AHA-152x, Adaptec APA-1460 (PCMCIA),
 			and the SoundBlaster SCSI host adapter.  (Note
 			that you cannot boot from these boards if they
 			do not have a boot ROM; only the AHA-152x and
