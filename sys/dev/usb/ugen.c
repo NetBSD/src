@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.42 2000/09/08 01:27:12 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.43 2000/10/24 14:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		    USBDEVNAME(sc->sc_dev), configno, sc));
 	/* Avoid setting the current value. */
 	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
-		err = usbd_set_config_no(dev, configno, 0);
+		err = usbd_set_config_no(dev, configno, 1);
 		if (err)
 			return (err);
 	}
