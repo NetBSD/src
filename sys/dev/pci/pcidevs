@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113.2.9 2000/06/03 18:31:43 he Exp $
+$NetBSD: pcidevs,v 1.113.2.10 2000/07/07 17:13:50 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -634,6 +634,10 @@ product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
 product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product	AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
+product	AMD PBC756_IDE	0x7409	AMD756 IDE controller
+product	AMD PBC756_PMC	0x740B	AMD756 Power Management Controller
+product	AMD PBC756_USB	0x740C	AMD756 USB Host Controller
 
 /* Apple products */
 product APPLE BANDIT	0x0001 PCI Controller
@@ -715,9 +719,12 @@ product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio Interface
 product CMDTECH 640		0x0640	PCI0640
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 product	CMDTECH 642		0x0642	PCI0642
+/* datasheets available from www.cmd.com for the followings */
 product	CMDTECH 643		0x0643	PCI0643
 product CMDTECH 646		0x0646	PCI0646
 product CMDTECH 647		0x0647	PCI0647
+product	CMDTECH	648		0x0648	PCI0648
+product	CMDTECH	649		0x0649	PCI0649
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 product CMDTECH 650A		0x0650	PCI0650A
@@ -878,6 +885,29 @@ product INTEL 82441FX	0x1237	82441FX PCI and Memory Controller (PMC)
 product INTEL 82380AB	0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
 product INTEL 82380FB	0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
 product INTEL 82439HX	0x1250	82439HX System Controller (TXC)
+product	INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
+product	INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
+product	INTEL 82801AA_USB	0x2412	82801AA USB Controller
+product	INTEL 82801AA_SMB	0x2413	82801AA SMBus Controller
+product	INTEL 82801AA_ACA	0x2415	82801AA AC-97 Audio Controller
+product	INTEL 82801AA_ACM	0x2416	82801AA AC-97 PCI Modem
+product	INTEL 82801AA_HPB	0x2418	82801AA Hub-to-PCI Bridge
+product	INTEL 82801AB_LPC	0x2420	82801AB LPC Interface Bridge
+product	INTEL 82801AB_IDE	0x2421	82801AB IDE Controller
+product	INTEL 82801AB_USB	0x2422	82801AB USB Controller
+product	INTEL 82801AB_SMB	0x2423	82801AB SMBus Controller
+product	INTEL 82801AB_ACA	0x2425	82801AB AC-97 Audio Controller
+product	INTEL 82801AB_ACM	0x2426	82801AB AC-97 PCI Modem
+product	INTEL 82801AB_HPB	0x2428	82801AB Hub-to-PCI Bridge
+product	INTEL 82801BA_LPC	0x2440	82801BA LPC Interface Bridge
+product	INTEL 82801BA_USB1	0x2442	82801BA USB Controller
+product	INTEL 82801BA_SMB	0x2443	82801BA SMBus Controller
+product	INTEL 82801BA_USB2	0x2444	82801BA USB Controller
+product	INTEL 82801BA_ACA	0x2445	82801BA AC-97 Audio Controller
+product	INTEL 82801BA_ACM	0x2446	82801BA AC-97 PCI Modem
+product	INTEL 82801BA_LAN	0x2449	82801BA LAN Controller
+product	INTEL 82801BA_IDE	0x244B	82801BA IDE Controller
+product	INTEL 82801BA_HPB	0x244E	82801BA Hub-to-PCI Bridge
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
 product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
 product INTEL 82371SB_USB	0x7020	82371SB USB Host Controller (PIIX3)
@@ -994,6 +1024,8 @@ product OAKTECH OTI1007	0x0107	OTI107
 /* Opti products */
 product OPTI 82C557	0xc557	82C557
 product OPTI 82C558	0xc558	82C558
+product	OPTI 82C568	0xc568	82C568
+product	OPTI 82D568	0xd568	82D568
 product OPTI 82C621	0xc621	82C621
 product OPTI 82C822	0xc822	82C822
 product OPTI RM861HA	0xc861	RM861HA
@@ -1007,8 +1039,10 @@ product PCTECH RZ1000	0x1000	RZ1000
 product PROLAN NE2KETHER 0x1980 Ethernet
 
 /* Promise products */
-product PROMISE DC5030	0x5300	DC5030
-product PROMISE ULTRA33	0x4d33	Ultra DMA/ATA Bus Master IDE Accelerator
+product PROMISE DC5030		0x5300	DC5030
+product PROMISE ULTRA33		0x4d33	Ultra DMA/ATA Bus Master IDE Accelerator
+product	PROMISE ULTRA66		0x4d38	Ultra66/ATA Bus Master IDE Accelerator
+product	PROMISE ULTRA100	0x4d30	Ultra100/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
@@ -1140,6 +1174,10 @@ product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
+
+/* Triones Technologies products */
+/* The 366 and 370 controllers have the same product ID */
+product	TRIONES HPT366		0x0004	HPT366/370 IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
