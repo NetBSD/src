@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_dkcksum.c,v 1.2 2003/08/07 16:44:58 agc Exp $	*/
+/*	$NetBSD: disklabel_dkcksum.c,v 1.3 2003/10/25 07:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dkcksum.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: disklabel_dkcksum.c,v 1.2 2003/08/07 16:44:58 agc Exp $");
+__RCSID("$NetBSD: disklabel_dkcksum.c,v 1.3 2003/10/25 07:31:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,8 @@ disklabel_dkcksum(struct disklabel *lp)
 	u_short	 sum;
 
 	sum = 0;
-	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	start = (u_short *)(void *)lp;
+	end = (u_short *)(void *)&lp->d_partitions[lp->d_npartitions];
 	while (start < end)
 		sum ^= *start++;
 	return (sum);
