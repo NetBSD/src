@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.45 2001/01/29 01:24:42 enami Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.46 2001/01/29 12:04:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -314,7 +314,6 @@ static int vr_mii_readreg	__P((struct device *, int, int));
 static void vr_mii_writereg	__P((struct device *, int, int, int));
 static void vr_mii_statchg	__P((struct device *));
 
-static u_int8_t vr_calchash	__P((u_int8_t *));
 static void vr_setmulti		__P((struct vr_softc *));
 static void vr_reset		__P((struct vr_softc *));
 
@@ -431,34 +430,8 @@ vr_mii_statchg(self)
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
 }
 
-/*
- * Calculate CRC of a multicast group address, return the lower 6 bits.
- */
-static u_int8_t
-vr_calchash(addr)
-	u_int8_t *addr;
-{
-	u_int32_t crc, carry;
-	int i, j;
-	u_int8_t c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return ((crc >> 26) & 0x0000003F);
-}
+#define	vr_calchash(addr) \
+	(ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
 
 /*
  * Program the 64-bit multicast hash filter.
