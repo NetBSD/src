@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.33 2002/09/27 15:38:01 provos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.33 2002/09/27 15:38:01 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.1 2002/12/23 17:38:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.33 2002/09/27 15:38:01 provos Exp $"
 #include <miscfs/specfs/specdev.h>
 
 /* #define NTFS_DEBUG 1 */
-#include <ntfs/ntfs.h>
-#include <ntfs/ntfsmount.h>
-#include <ntfs/ntfs_inode.h>
-#include <ntfs/ntfs_vfsops.h>
-#include <ntfs/ntfs_subr.h>
-#include <ntfs/ntfs_compr.h>
-#include <ntfs/ntfs_ihash.h>
+#include <fs/ntfs/ntfs.h>
+#include <fs/ntfs/ntfsmount.h>
+#include <fs/ntfs/ntfs_inode.h>
+#include <fs/ntfs/ntfs_vfsops.h>
+#include <fs/ntfs/ntfs_subr.h>
+#include <fs/ntfs/ntfs_compr.h>
+#include <fs/ntfs/ntfs_ihash.h>
 
 #if defined(NTFS_DEBUG)
 int ntfs_debug = NTFS_DEBUG;

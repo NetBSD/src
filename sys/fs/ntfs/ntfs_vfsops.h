@@ -1,7 +1,7 @@
-/*	$NetBSD: ntfs_ihash.h,v 1.7 2001/09/15 16:13:03 chs Exp $	*/
+/*	$NetBSD: ntfs_vfsops.h,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 Semen Ustimenko
+ * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,14 +25,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
+ *	Id: ntfs_vfsops.h,v 1.3 1999/05/12 09:43:06 semenu Exp
  */
+#define VG_DONTLOADIN	0x0001	/* Tells ntfs_vgetex to do not call */
+				/* ntfs_loadntnode() on ntnode, even if */
+				/* ntnode not loaded */
+#define	VG_DONTVALIDFN	0x0002	/* Tells ntfs_vgetex to do not validate */
+				/* fnode */
+#define	VG_EXT		0x0004	/* This is not main record */
 
-extern struct lock ntfs_hashlock;
-void ntfs_nthashinit __P((void));
-void ntfs_nthashreinit __P((void));
-void ntfs_nthashdone __P((void));
-struct ntnode   *ntfs_nthashlookup __P((dev_t, ino_t));
-struct ntnode   *ntfs_nthashget __P((dev_t, ino_t));
-void ntfs_nthashins __P((struct ntnode *));
-void ntfs_nthashrem __P((struct ntnode *));
+int ntfs_vgetex(struct mount *, ino_t, u_int32_t, char *, u_long, u_long,
+		struct proc *, struct vnode **);
+int ntfs_calccfree(struct ntfsmount *, cn_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.14 2001/05/30 11:42:13 mrg Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.1 2002/12/23 17:38:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko

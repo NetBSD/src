@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.c,v 1.4 2001/11/10 13:24:53 lukem Exp $	*/
+/*	$NetBSD: ntfs_compr.c,v 1.1 2002/12/23 17:38:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.4 2001/11/10 13:24:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.1 2002/12/23 17:38:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.4 2001/11/10 13:24:53 lukem Exp $")
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ntfs/ntfs.h>
-#include <ntfs/ntfs_compr.h>
+#include <fs/ntfs/ntfs.h>
+#include <fs/ntfs/ntfs_compr.h>
 
 #define GET_UINT16(addr)	(*((u_int16_t *)(addr)))
 
