@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.21 2000/06/14 17:25:03 cgd Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.22 2003/05/11 12:47:42 ragge Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -44,6 +44,8 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/ksyms.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -74,7 +76,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	struct nlist *p;
 	char *mappedfile, *strtab;
 	size_t mappedsize;
-	Elf_Ehdr *ehdrp;
+	Elf_Ehdr *ehdrp, ehdr;
 	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
 	Elf_Sym *symp;
 	Elf_Off shdr_off;
@@ -107,6 +109,80 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		errno = EFBIG;
 		BAD;
 	}
+
+	/*
+	 * Read the elf header of the file.
+	 */
+	if ((i = pread(fd, &ehdr, sizeof(Elf_Ehdr), 0)) == -1)
+		BAD;
+
+	/*
+	 * Check that the elf header is correct.
+	 */
+	if (i != sizeof(Elf_Ehdr))
+		BAD;
+	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdr.e_ident[EI_CLASS] != ELFCLASS)
+		BAD;
+
+	switch (ehdr.e_machine) {
+	ELFDEFNNAME(MACHDEP_ID_CASES)
+
+	default:
+		BADUNMAP;
+	}
+
+	if (S_ISCHR(st.st_mode)) {
+		const char *nlistname;
+		struct ksyms_gsymbol kg;
+		Elf_Sym sym;
+
+		/*
+		 * Character device; assume /dev/ksyms.
+		 */
+		nent = 0;
+		for (p = list; !ISLAST(p); ++p) {
+
+			p->n_other = 0;
+			p->n_desc = 0;
+			nlistname = p->n_un.n_name;
+			if (*nlistname == '_')
+				nlistname++;
+
+			kg.kg_name = nlistname;
+			kg.kg_sym = &sym;
+			if (ioctl(fd, KIOCGSYMBOL, &kg) == 0) {
+				p->n_value = sym.st_value;
+				switch (ELFDEFNNAME(ST_TYPE)(sym.st_info)) {
+				case STT_NOTYPE:
+					p->n_type = N_UNDF;
+					break;
+				case STT_OBJECT:
+					p->n_type = N_DATA;
+					break;
+				case STT_FUNC:
+					p->n_type = N_TEXT;
+					break;
+				case STT_FILE:
+					p->n_type = N_FN;
+					break;
+				default:
+					p->n_type = 0;
+					/* catch other enumerations for gcc */
+					break;
+				}
+				if (ELFDEFNNAME(ST_BIND)(sym.st_info) !=
+				    STB_LOCAL)
+					p->n_type |= N_EXT;
+			} else {
+				nent++;
+				p->n_value = 0;
+				p->n_type = 0;
+			}
+		}
+		return nent;
+	}
+
 	mappedsize = (size_t)st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 	    fd, (off_t)0);
@@ -121,17 +197,6 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	if (check(0, sizeof *ehdrp))
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)(void *)&mappedfile[0];
-
-	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
-		BADUNMAP;
-
-	switch (ehdrp->e_machine) {
-	ELFDEFNNAME(MACHDEP_ID_CASES)
-
-	default:
-		BADUNMAP;
-	}
 
 	/*
 	 * Find the symbol list and string table.
