@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.58 1998/12/18 16:55:39 drochner Exp $ */
+/*	$NetBSD: conf.c,v 1.58.2.1 2000/01/05 23:24:09 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +95,9 @@
 #include "rnd.h"
 #include "scsibus.h"
 
+#include "vcoda.h"
+cdev_decl(vc_nb_);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
@@ -175,7 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
-	cdev_notdef(),			/* 47 */
+	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: coda file system psuedo-device */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
