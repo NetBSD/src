@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.14 1994/01/18 02:36:53 brezak Exp $
+ *	$Id: ip_output.c,v 1.15 1994/01/18 03:26:53 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -486,8 +486,8 @@ ip_ctloutput(op, so, level, optname, mp)
 	struct mbuf **mp;
 {
 	register struct inpcb *inp = sotoinpcb(so);
-	register struct mbuf *m = *mp;
 	register int optval;
+	struct mbuf *m = *mp;
 	int error = 0;
 
 	if (level != IPPROTO_IP)
@@ -613,7 +613,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			case IP_MULTICAST_LOOP:
 			case IP_ADD_MEMBERSHIP:
 			case IP_DROP_MEMBERSHIP:
-				error = ip_getmoptions(optname, &inp->inp_moptions, m);
+				error = ip_getmoptions(optname, inp->inp_moptions, &m);
 				break;
 #endif
 

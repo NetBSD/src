@@ -92,7 +92,7 @@ static	struct mrt *mrtfind __P((u_long));
 static	void phyint_send __P((struct ip *, struct vif *, struct mbuf *));
 static	void srcrt_send __P((struct ip *, struct vif *, struct mbuf *));
 static	void encap_send __P((struct ip *, struct vif *, struct mbuf *));
-static	void multiencap_decap __P((struct mbuf *, int hlen));
+static	int multiencap_decap __P((struct mbuf *, int hlen));
 
 #define	INSIZ	sizeof(struct in_addr)
 #define	same(a1, a2)	(bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
@@ -980,7 +980,7 @@ encap_send(ip, vifp, m)
 	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
 #endif
 	ip_output(mb_copy, (struct mbuf *)0, (struct route *)0,
-		  IP_FORWARDING, (struct mbuf *)0);
+		  IP_FORWARDING, (struct ip_moptions *)0);
 }
 
 /*
@@ -988,7 +988,7 @@ encap_send(ip, vifp, m)
  * routine is called whenever IP gets a packet with proto type
  * ENCAP_PROTO and a local destination address).
  */
-static void
+static int
 multiencap_decap(m, hlen)
 	register struct mbuf *m;
 	int hlen;
