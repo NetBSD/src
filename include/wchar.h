@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.13 2003/03/02 22:18:11 tshiozak Exp $	*/
+/*	$NetBSD: wchar.h,v 1.14 2003/03/03 07:39:53 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -101,7 +101,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #define putwchar(wc) putwc((wc), stdout)
 
 __BEGIN_DECLS
-wint_t	btowc __P((int c));
+wint_t	btowc __P((int));
 size_t	mbrlen __P((const char * __restrict, size_t, mbstate_t * __restrict));
 size_t	mbrtowc __P((wchar_t * __restrict, const char * __restrict, size_t,
 	    mbstate_t * __restrict));
@@ -138,6 +138,7 @@ wchar_t	*wmemset __P((wchar_t *, wchar_t, size_t));
 size_t	wcslcat __P((wchar_t *, const wchar_t *, size_t));
 size_t	wcslcpy __P((wchar_t *, const wchar_t *, size_t));
 int	wcswidth __P((const wchar_t *, size_t));
+int	wctob __P((wint_t));
 int	wcwidth __P((wchar_t));
 
 unsigned long int wcstoul __P((const wchar_t * __restrict, wchar_t ** __restrict,
