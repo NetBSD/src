@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.57 2000/05/30 06:56:17 aidan Exp $       */
+/*     $NetBSD: login.c,v 1.58 2000/06/02 03:01:22 aidan Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.57 2000/05/30 06:56:17 aidan Exp $");
+__RCSID("$NetBSD: login.c,v 1.58 2000/06/02 03:01:22 aidan Exp $");
 #endif /* not lint */
 
 /*
@@ -94,17 +94,6 @@ int login_krb5_get_tickets = 1;
 int login_krb4_get_tickets = 0;
 int login_krb5_forwardable_tgt = 0;
 int login_krb5_retain_ccache = 0;
-
-static struct login_confs {
-	char *flagname;
-	int *flag;
-} login_conf_set[] = {
-	{ "krb5_get_tickets", &login_krb5_get_tickets },
-	{ "krb4_get_tickets", &login_krb4_get_tickets },
-	{ "forwardable", &login_krb5_forwardable_tgt },
-	{ "retain_ccache", &login_krb5_retain_ccache },
-	{ 0, 0 }
-};
 #endif
 
 void	 badlogin __P((char *));
@@ -123,7 +112,6 @@ int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
 #endif
 #ifdef KERBEROS5
-void	 login_get_kconf __P((krb5_context));
 int	 k5login __P((struct passwd *, char *, char *, char *));
 void	 k5destroy __P((void));
 int	 k5_read_creds __P((char*));
@@ -303,8 +291,7 @@ main(argc, argv)
 		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
 		    error_message(kerror));
 		login_krb5_get_tickets = 0;
-	} else
-		login_get_kconf(kcontext);
+	}
 #endif KERBEROS5
 
 	for (cnt = 0;; ask = 1) {
@@ -752,28 +739,6 @@ main(argc, argv)
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
 }
-
-#if defined(KERBEROS5)
-/* get flags (listed above) from the profile */
-void
-login_get_kconf(k)
-	krb5_context k;
-{
-	int i;
-	krb5_data realm;
-
-	realm.length = 0;
-	if (krb5_get_default_realm(k, &realm.data) == 0)
-		realm.length = strlen(realm.data);
-
-	for (i = 0; login_conf_set[i].flagname; i++) {
-		krb5_appdefault_boolean(k, "login", &realm,
-		                        login_conf_set[i].flagname,
-		                        *login_conf_set[i].flag,
-		                        login_conf_set[i].flag);
-	}
-}
-#endif
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 #define	NBUFSIZ		(MAXLOGNAME + 1 + 5)	/* .root suffix */
