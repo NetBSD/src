@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.70 2004/05/12 07:07:34 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.71 2004/05/15 21:58:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.70 2004/05/12 07:07:34 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.71 2004/05/15 21:58:40 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1448,13 +1448,21 @@ bge_blockinit(sc)
 #else
 	/* new broadcom docs strongly recommend these: */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+		if (ifp->if_mtu > ETHER_MAX_LEN) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
+		} else {
+			/* Values from Linux driver... */
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 304);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
+		}
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	}
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 #endif
 
 	/* Configure DMA resource watermarks */
@@ -3458,6 +3466,8 @@ bge_init(ifp)
 
 	/* Turn on receiver */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+
+	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
 
 	/* Tell firmware we're alive. */
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
