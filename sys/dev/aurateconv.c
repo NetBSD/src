@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.9.4.2 2004/12/29 18:39:23 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.9.4.3 2004/12/29 19:02:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.2 2004/12/29 18:39:23 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.3 2004/12/29 19:02:17 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -77,10 +77,26 @@ static int aurateconv_slinear16_LE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
 static int aurateconv_slinear24_LE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
+static int aurateconv_slinear32_LE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
 static int aurateconv_slinear16_BE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
 static int aurateconv_slinear24_BE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
+static int aurateconv_slinear32_BE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
+
+static int32_t int32_mask[33] = {
+	0x0, 0x80000000, 0xc0000000, 0xe0000000,
+	0xf0000000, 0xf8000000, 0xfc000000, 0xfe000000,
+	0xff000000, 0xff800000, 0xffc00000, 0xffe00000,
+	0xfff00000, 0xfff80000, 0xfffc0000, 0xfffe0000,
+	0xffff0000, 0xffff8000, 0xffffc000, 0xffffe000,
+	0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00,
+	0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0,
+	0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe,
+	0xffffffff
+};
 
 stream_filter_t *
 aurateconv(struct audio_softc *sc, const audio_params_t *from,
@@ -106,10 +122,9 @@ aurateconv(struct audio_softc *sc, const audio_params_t *from,
 	}
 	if ((from->encoding != AUDIO_ENCODING_SLINEAR_LE
 	     && from->encoding != AUDIO_ENCODING_SLINEAR_BE)
-	    || (from->precision != 16 && from->precision != 24)) {
-		printf("%s: encoding/precision must be SLINEAR_LE 16bit, "
-		       "SLINEAR_BE 16bit, SLINEAR_LE 24bit, or "
-		       "SLINEAR_BE 24bit.\n", __func__);
+	    || (from->precision != 16 && from->precision != 24 && from->precision != 32)) {
+		printf("%s: encoding/precision must be SLINEAR_LE 16/24/32bit, "
+		       "or SLINEAR_BE 16/24/32bit", __func__);
 		return NULL;
 	}
 
@@ -183,6 +198,9 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		case 24:
 			return aurateconv_slinear24_LE(this, dst, m,
 						       frame_src, frame_dst);
+		case 32:
+			return aurateconv_slinear32_LE(this, dst, m,
+						       frame_src, frame_dst);
 		}
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -192,6 +210,9 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 						       frame_src, frame_dst);
 		case 24:
 			return aurateconv_slinear24_BE(this, dst, m,
+						       frame_src, frame_dst);
+		case 32:
+			return aurateconv_slinear32_BE(this, dst, m,
 						       frame_src, frame_dst);
 		}
 		break;
@@ -372,7 +393,77 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 	return 0; \
 }
 
+/*
+ * Function template for 32bit container
+ */
+#define AURATECONV_SLINEAR32(EN)	\
+static int \
+aurateconv_slinear32_##EN (aurateconv_t *this, audio_stream_t *dst, \
+			   int m, int frame_src, int frame_dst) \
+{ \
+	uint8_t *w; \
+	const uint8_t *r; \
+	const audio_params_t *from, *to; \
+	audio_stream_t *src; \
+	int32_t v[AUDIO_MAX_CHANNELS]; \
+	int32_t *prev, *next; \
+	int64_t c256, mask; \
+	int i, values_size, used_src, used_dst; \
+ \
+	src = this->base.src; \
+	w = dst->inp; \
+	r = src->outp; \
+	used_dst = audio_stream_get_used(dst); \
+	used_src = audio_stream_get_used(src); \
+	from = &this->from; \
+	to = &this->to; \
+	if (this->from.sample_rate == this->to.sample_rate) { \
+		while (used_dst < m && used_src >= frame_src) { \
+			READ_Sn(32, EN, v, src, r, from); \
+			used_src -= frame_src; \
+			WRITE_Sn(32, EN, v, dst, w, from, to); \
+			used_dst += frame_dst; \
+		} \
+	} else if (to->sample_rate < from->sample_rate) { \
+		while (used_dst < m && used_src >= frame_src) { \
+			READ_Sn(32, EN, v, src, r, from); \
+			used_src -= frame_src; \
+			this->count += to->sample_rate; \
+			if (this->count >= from->sample_rate) { \
+				this->count -= from->sample_rate; \
+				WRITE_Sn(32, EN, v, dst, w, from, to); \
+				used_dst += frame_dst; \
+			} \
+		} \
+	} else { \
+		/* Initial value of this->count >= to->sample_rate */ \
+		values_size = sizeof(int32_t) * from->channels; \
+		mask = int32_mask[to->validbits]; \
+		prev = this->prev; \
+		next = this->next; \
+		while (used_dst < m \
+		       && ((this->count >= to->sample_rate && used_src >= frame_src) \
+			   || this->count < to->sample_rate)) { \
+			if (this->count >= to->sample_rate) { \
+				this->count -= to->sample_rate; \
+				memcpy(prev, next, values_size); \
+				READ_Sn(32, EN, next, src, r, from); \
+			} \
+			c256 = this->count * 256 / to->sample_rate; \
+			for (i = 0; i < from->channels; i++) \
+				v[i] = (int32_t)((c256 * next[i] + (INT64_C(256) - c256) * prev[i]) >> 8) & mask; \
+			WRITE_Sn(32, EN, v, dst, w, from, to); \
+			this->count += from->sample_rate; \
+		} \
+	} \
+	dst->inp = w; \
+	src->outp = r; \
+	return 0; \
+}
+
 AURATECONV_SLINEAR(16, LE)
 AURATECONV_SLINEAR(24, LE)
+AURATECONV_SLINEAR32(LE)
 AURATECONV_SLINEAR(16, BE)
 AURATECONV_SLINEAR(24, BE)
+AURATECONV_SLINEAR32(BE)
