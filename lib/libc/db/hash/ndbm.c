@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.13 1997/07/21 14:06:40 jtc Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.14 1998/05/07 19:11:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbm.c,v 1.13 1997/07/21 14:06:40 jtc Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.14 1998/05/07 19:11:14 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,8 @@ __weak_alias(dbm_store,_dbm_store);
 extern DBM *
 dbm_open(file, flags, mode)
 	const char *file;
-	int flags, mode;
+	int flags;
+	mode_t mode;
 {
 	HASHINFO info;
 	char path[MAXPATHLEN];
