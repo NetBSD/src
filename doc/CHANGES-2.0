@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.250 2004/06/04 03:40:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.251 2004/06/04 03:41:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3470,3 +3470,8 @@ sys/arch/powerpc/marvell/extintr.c		1.12
 
 	Fix softnet intr handling (to be like the generic ppc softintr).
 	[matt, ticket #436]
+
+sys/dev/isa/fd.c				1.52
+
+	Wrap a noisy probe message in FD_DEBUG.
+	[thorpej, ticket #437]
