@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.103 2005/02/21 02:12:48 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.104 2005/02/26 22:25:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -887,7 +887,7 @@ m_length(struct mbuf *m)
 	struct mbuf *m0;
 	u_int pktlen;
 
-	if ((m->m_flags & M_PKTHDR) != 0) 
+	if ((m->m_flags & M_PKTHDR) != 0)
 		return m->m_pkthdr.len;
 
 	pktlen = 0;
@@ -897,7 +897,7 @@ m_length(struct mbuf *m)
 }
 
 /*
- * m_ext_free: release a reference to the mbuf external storage. 
+ * m_ext_free: release a reference to the mbuf external storage.
  *
  * => if 'dofree', free the mbuf m itsself as well.
  * => called at splvm.

@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.39 2004/04/18 14:25:34 lukem Exp $	*/
+/*	$NetBSD: queue.h,v 1.40 2005/02/26 22:25:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -182,12 +182,12 @@ struct name {								\
 
 #define	SLIST_HEAD_INITIALIZER(head)					\
 	{ NULL }
- 
+
 #define	SLIST_ENTRY(type)						\
 struct {								\
 	struct type *sle_next;	/* next element */			\
 }
- 
+
 /*
  * Singly-linked List functions.
  */

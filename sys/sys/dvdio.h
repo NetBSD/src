@@ -1,4 +1,4 @@
-/*	$NetBSD: dvdio.h,v 1.5 2001/12/09 22:54:51 veego Exp $	*/
+/*	$NetBSD: dvdio.h,v 1.6 2005/02/26 22:25:34 perry Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
@@ -35,7 +35,7 @@ struct dvd_layer {
 	u_int32_t end_sector;
 	u_int32_t end_sector_l0;
 };
- 
+
 struct dvd_physical {
 	u_int8_t type;
 	u_int8_t layer_num;
@@ -166,7 +166,7 @@ struct dvd_host_send_rpcstate {
 	u_int8_t type;
 	u_int8_t pdrc;
 };
- 
+
 struct dvd_lu_send_rpcstate {
 	u_int8_t type		: 2;
 	u_int8_t vra		: 3;
@@ -191,7 +191,7 @@ typedef union {
 
 typedef struct {
 	u_int16_t report_key_length;
-	u_int8_t reserved1[2];                 
+	u_int8_t reserved1[2];
 	u_int8_t ucca		: 3;
 	u_int8_t vra		: 3;
 	u_int8_t type_code	: 2;
