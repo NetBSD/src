@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/05/05 15:42:26 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6 2002/05/05 15:57:15 jdolecek Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -28,8 +28,8 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h mips ] || ln -s ${S}/arch/mips/include mips
 .NOPATH: machine mips
-CLEANFILES+= machine mips
 .endif
+CLEANFILES+= machine mips
 
 realall: ${OBJS} ${KERNLIB} ${ZLIB} ${SALIB}
 #	ln -s ${KERNLIB}
