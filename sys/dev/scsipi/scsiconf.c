@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.224 2004/08/12 14:36:46 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.225 2004/08/18 11:50:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.224 2004/08/12 14:36:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.225 2004/08/18 11:50:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,15 @@ int	scsibusmatch __P((struct device *, struct cfdata *, void *));
 void	scsibusattach __P((struct device *, struct device *, void *));
 int	scsibusactivate __P((struct device *, enum devact));
 int	scsibusdetach __P((struct device *, int flags));
+int	scsibusrescan(struct device *, const char *, const int *);
+void	scsidevdetached(struct device *, struct device *);
 
-int	scsibussubmatch __P((struct device *, struct cfdata *, void *));
+int	scsibussubmatch __P((struct device *, struct cfdata *,
+		const locdesc_t *, void *));
 
-CFATTACH_DECL(scsibus, sizeof(struct scsibus_softc),
-    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate);
+CFATTACH_DECL2(scsibus, sizeof(struct scsibus_softc),
+    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate,
+    scsibusrescan, scsidevdetached);
 
 extern struct cfdriver scsibus_cd;
 
@@ -248,19 +252,15 @@ scsibus_config(chan, arg)
 }
 
 int
-scsibussubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+scsibussubmatch(struct device *parent, struct cfdata *cf,
+	const locdesc_t *ldesc, void *aux)
 {
-	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_periph *periph = sa->sa_periph;
 
 	if (cf->cf_loc[SCSIBUSCF_TARGET] != SCSIBUSCF_TARGET_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_TARGET] != periph->periph_target)
+	    cf->cf_loc[SCSIBUSCF_TARGET] != ldesc->locs[0])
 		return (0);
 	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
-	    cf->cf_loc[SCSIBUSCF_LUN] != periph->periph_lun)
+	    cf->cf_loc[SCSIBUSCF_LUN] != ldesc->locs[1]) 
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -410,6 +410,35 @@ scsi_probe_bus(sc, target, lun)
 	}
 	scsipi_adapter_delref(chan->chan_adapter);
 	return (0);
+}
+
+int
+scsibusrescan(struct device *sc, const char *ifattr, const int *locators)
+{
+
+	KASSERT(ifattr && !strcmp(ifattr, "scsibus"));
+	KASSERT(locators);
+
+	return (scsi_probe_bus((struct scsibus_softc *)sc,
+		locators[SCSIBUSCF_TARGET], locators[SCSIBUSCF_LUN]));
+}
+
+void
+scsidevdetached(struct device *sc, struct device *dev)
+{
+	struct scsibus_softc *ssc = (struct scsibus_softc *)sc;
+	struct scsipi_channel *chan = ssc->sc_channel;
+	struct scsipi_periph *periph;
+	int target, lun;
+
+	target = dev->dv_locators[SCSIBUSCF_TARGET];
+	lun = dev->dv_locators[SCSIBUSCF_LUN];
+
+	periph = scsipi_lookup_periph(chan, target, lun);
+	KASSERT(periph->periph_dev == dev);
+
+	scsipi_remove_periph(chan, periph);
+	free(periph, M_DEVBUF);
 }
 
 /*
@@ -729,6 +758,9 @@ scsi_probe_device(sc, target, lun)
 	int checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
+	int help[3];
+	locdesc_t *locd = (void *)&help;
+	struct device *chld;
 
 	/*
 	 * Assume no more luns to search after this one.
@@ -941,14 +973,20 @@ scsi_probe_device(sc, target, lun)
 	if ((periph->periph_quirks & PQUIRK_NOLUNS) == 0)
 		docontinue = 1;
 
-	if ((cf = config_search(scsibussubmatch, &sc->sc_dev, &sa)) != NULL) {
+	locd->len = 2;
+	locd->locs[0] = target;
+	locd->locs[1] = lun;
+
+	if ((cf = config_search_loc(scsibussubmatch, &sc->sc_dev,
+	     "scsibus", locd, &sa)) != NULL) {
 		scsipi_insert_periph(chan, periph);
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
 		 * XXX need it before config_attach() returns.  Must
 		 * XXX assign it in periph driver.
 		 */
-		(void) config_attach(&sc->sc_dev, cf, &sa, scsibusprint);
+		chld = config_attach_loc(&sc->sc_dev, cf, locd, &sa,
+					 scsibusprint);
 	} else {
 		scsibusprint(&sa, sc->sc_dev.dv_xname);
 		aprint_normal(" not configured\n");
