@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.22 2001/05/07 16:51:47 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.23 2001/05/07 21:15:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,11 +62,11 @@
 #include <sys/sched.h>
 
 struct i386_cache_info {
-	int		cai_index;
-	u_int32_t	cai_desc;
+	uint8_t		cai_index;
+	uint8_t		cai_desc;
+	uint8_t		cai_associativity;
 	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
 	u_int		cai_linesize;	/* or page size for TLB */
-	u_int		cai_associativity;
 	const char	*cai_string;
 };
 
@@ -132,15 +132,6 @@ struct cpu_info {
 	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
-#if 0
-	const struct i386_cache_info *ci_itlb_info;
-	const struct i386_cache_info *ci_itlb2_info;
-	const struct i386_cache_info *ci_dtlb_info;
-	const struct i386_cache_info *ci_dtlb2_info;	
-	const struct i386_cache_info *ci_icache_info;
-	const struct i386_cache_info *ci_dcache_info;
-	const struct i386_cache_info *ci_l2cache_info;
-#endif
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
 };
 

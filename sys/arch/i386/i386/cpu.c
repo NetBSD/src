@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.20 2001/05/07 16:51:46 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.21 2001/05/07 21:15:04 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -188,8 +188,8 @@ cpu_vm_init(struct cpu_info *ci)
 
 		tcolors = atop(cai->cai_totalsize);
 		switch(cai->cai_associativity) {
-		case ~0:
-			tcolors = 1;
+		case 0xff:
+			tcolors = 1; /* fully associative */
 			break;
 		case 0:
 		case 1:			

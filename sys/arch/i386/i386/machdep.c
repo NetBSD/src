@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.21 2001/05/07 16:51:46 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.22 2001/05/07 21:15:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -229,43 +229,43 @@ void	init386 __P((paddr_t));
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
-const struct i386_cache_info
+static const struct i386_cache_info
 intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	32, 4 * 1024,         4 },
-	{ CAI_ITLB2, 	0x02,    2, 4 * 1024 * 1024, ~0 },
-	{ CAI_DTLB, 	0x03,	64, 4 * 1024,         4 },
-	{ CAI_DTLB2,    0x04,    8, 4 * 1024 * 1024,  4 },
-	{ CAI_ICACHE,   0x06,	 8 * 1024,	 32,  4 },
-	{ CAI_ICACHE,   0x08,   16 * 1024,       32,  4 },
-	{ CAI_DCACHE,   0x0a,    8 * 1024,	 32,  2 },
-	{ CAI_DCACHE,   0x0c,   16 * 1024,	 32,  4 },
-	{ CAI_L2CACHE,  0x40,	0,		 0,   0, "not present" },
-	{ CAI_L2CACHE,  0x41,  128 * 1024,	 32,  4 },
-	{ CAI_L2CACHE,  0x42,  256 * 1024,	 32,  4 },
-	{ CAI_L2CACHE,  0x43,  512 * 1024,	 32,  4 },
-	{ CAI_L2CACHE,  0x44, 1024 * 1024,       32,  4 },
-	{ CAI_L2CACHE,  0x45, 2 * 1024 * 1024,   32,  4 },
-	{ CAI_ITLB,     0x50,   64,       4 * 1024, ~0, "4K/4M: 64 entries" },
-	{ CAI_ITLB,     0x51,   64,       4 * 1024, ~0, "4K/4M: 128 entries" },
-	{ CAI_ITLB,     0x52,   64,       4 * 1024, ~0, "4K/4M: 256 entries" },
-	{ CAI_DTLB,     0x5b,	64, 	  4 * 1024, ~0, "4K/4M: 64 entries" },
-	{ CAI_DTLB,     0x5c,   64,       4 * 1024, ~0, "4K/4M: 128 entries" },
-	{ CAI_DTLB,     0x5d,   64,       4 * 1024, ~0, "4K/4M: 256 entries" },
-	{ CAI_DCACHE,   0x66,  8 * 1024,         64,  4 },
-	{ CAI_DCACHE,   0x67, 16 * 1024,         64,  4 },
-	{ CAI_DCACHE,   0x68, 32 * 1024,         64,  4 },
-	{ CAI_ICACHE,   0x70, 12 * 1024,	 32,  8, "12K uOp cache 8-way"},
-	{ CAI_ICACHE,   0x71, 16 * 1024,	 32,  8, "16K uOp cache 8-way"},
-	{ CAI_ICACHE,   0x72, 32 * 1024,	 32,  8, "32K uOp cache 8-way"},	
-	{ CAI_L2CACHE,  0x79, 128 * 1024,	 64,  8 },
-	{ CAI_L2CACHE,  0x7a, 256 * 1024,	 64,  8 },
-	{ CAI_L2CACHE,  0x7b, 512 * 1024,	 64,  8 },	
-	{ CAI_L2CACHE,  0x7c, 1024 * 1024,	 64,  8 },
-	
-	{ CAI_L2CACHE,  0x82, 256 * 1024,	32, 8 },
-	{ CAI_L2CACHE,  0x84, 1 * 1024 * 1024,  32, 8 },
-	{ CAI_L2CACHE,  0x85, 2 * 1024 * 1024,  32, 8 },
-	{ 0,               0,	     0,		 0, 0, NULL },
+	{ CAI_ITLB, 	0x01,	 4, 32, 4 * 1024 },
+	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
+	{ CAI_DTLB, 	0x03,    4, 64, 4 * 1024 },
+	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
+	{ CAI_ITLB,     0x50, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_ITLB,     0x51, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_ITLB,     0x52, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+	{ CAI_DTLB,     0x5b, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_DTLB,     0x5c, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_DTLB,     0x5d, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+
+	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
+	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
+	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
+	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
+	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
+	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
+	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
+	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
+	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
+	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
+	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
+	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache 8-way"},
+	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache 8-way"},
+	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache 8-way"},
+	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },	
+	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
+	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
+	{ 0,               0,  0,	        0,  0 },
 };
 
 static const struct i386_cache_info *
@@ -331,15 +331,14 @@ print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
 		printf("%s %db/line ", cbuf, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
-	case 0:
+	case    0:
 		printf("disabled");
 		break;
-	case 1:
+	case    1:
 		printf("direct-mapped");
 		break;
-	case ~0:
+	case 0xff:
 		printf("fully associative");
-		/* XXX Don't need any color bins? */
 		break;	
 	default:	
 		printf("%d-way", cai->cai_associativity);
@@ -376,7 +375,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
 		case 1:
 			printf("direct-mapped");
 			break;
-		case ~0:
+		case 0xff:
 			printf("fully associative");
 			break;	
 		default:	
@@ -1139,13 +1138,13 @@ cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01, 0,		0, 1,			0 },
-	{ 0, 0x02, 0,		0, 2,			0 },
-	{ 0, 0x04, 0,		0, 4,			0 },
-	{ 0, 0x06, 0,		0, 8,			0 },
-	{ 0, 0x08, 0,		0, 16,			0 },
-	{ 0, 0x0f, 0,		0, ~0,			0 },
-	{ 0, 0x00, 0,		0, 0,			0 },
+	{ 0, 0x01,    1 },
+	{ 0, 0x02,    2 },
+	{ 0, 0x04,    4 },
+	{ 0, 0x06,    8 },
+	{ 0, 0x08,   16 },
+	{ 0, 0x0f, 0xff }, 
+	{ 0, 0x00,    0 },
 };
 
 void
