@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.31 1997/10/19 19:00:24 thorpej Exp $	*/
+/*	$NetBSD: lms.c,v 1.32 1997/10/19 20:31:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -96,7 +96,7 @@ lmsprobe(parent, match, aux)
 	int rv;
 	
 	/* Disallow wildcarded i/o base. */
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return 0;
 
 	/* Map the i/o space. */
@@ -136,15 +136,19 @@ lmsattach(parent, self, aux)
 {
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 
 	printf("\n");
 
-	/* Other initialization was done by lmsprobe. */
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, LMS_NPORTS, 0,
-	    &sc->sc_ioh))
-		panic("lmsattach: couldn't map I/O ports");
+	if (bus_space_map(iot, ia->ia_iobase, LMS_NPORTS, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
+	/* Other initialization was done by lmsprobe. */
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
 	sc->sc_state = 0;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
