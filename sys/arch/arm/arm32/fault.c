@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.8 2002/02/14 07:08:04 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.9 2002/02/14 11:59:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -471,7 +471,7 @@ copyfault:
 			ftype = VM_PROT_WRITE; 
 		/* SWP instruction ? */
 		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
-			ftype = VM_PROT_WRITE; 
+			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
