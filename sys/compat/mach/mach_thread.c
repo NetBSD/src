@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.8 2002/12/21 23:48:47 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.9 2002/12/21 23:57:57 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.8 2002/12/21 23:48:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.9 2002/12/21 23:57:57 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,11 +73,12 @@ mach_sys_syscall_thread_switch(p, v, retval)
 
 	/*
 	 * The day we will be able to find out the struct proc from 
-	 * the port numeber, try to use preempt() to call the right thread.
+	 * the port number, try to use preempt() to call the right thread.
+	 * [- but preempt() is for _involuntary_ context switches.]
 	 */
 	switch(SCARG(uap, option)) {
 	case MACH_SWITCH_OPTION_NONE:
-		need_resched(p->p_cpu);
+		yield();
 		break;
 
 	case MACH_SWITCH_OPTION_WAIT:
@@ -168,4 +169,3 @@ mach_thread_create_running(args)
 	*msglen = sizeof(*rep);
 	return 0;
 }
-
