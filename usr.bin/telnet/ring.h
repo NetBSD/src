@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.6 1998/02/27 10:44:14 christos Exp $	*/
+/*	$NetBSD: ring.h,v 1.7 1998/03/04 13:51:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -58,6 +58,14 @@ typedef struct {
     u_long	consumetime,	/* help us keep straight full, empty, etc. */
 		supplytime;
 } Ring;
+
+/* Ring buffer structures which are shared */
+
+extern Ring
+    netoring,
+    netiring,
+    ttyoring,
+    ttyiring;
 
 /* Here are some functions and macros to deal with the ring buffer */
 
