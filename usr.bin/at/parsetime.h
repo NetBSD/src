@@ -1,9 +1,8 @@
-/*	$NetBSD: parsetime.h,v 1.2 1995/03/25 18:13:37 glass Exp $	*/
+/*	$NetBSD: parsetime.h,v 1.2.4.1 1998/10/24 00:22:41 cgd Exp $	*/
 
 /*
- * at.h -  header for at(1)
- * Copyright (c) 1993 by Thomas Koenig
- * All rights reserved.
+ *  parsetime.h -  header for at(1)
+ *  Copyright (c) 1993  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +16,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -25,6 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * From: $OpenBSD: parsetime.h,v 1.3 1997/03/01 23:40:11 millert Exp $
  */
 
-time_t parsetime	__P((int argc, char **argv));
+time_t parsetime	__P((int, char **));
