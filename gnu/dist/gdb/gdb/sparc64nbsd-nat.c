@@ -205,3 +205,44 @@ store_inferior_registers (int regno)
 	return;
     }
 }
+
+void
+nbsd_reg_to_internal (rgs)
+	char *rgs;
+{
+  if (gdbarch_ptr_bit (current_gdbarch) == 32)
+    sparcnbsd_supply_reg32(rgs, -1);
+  else
+    sparcnbsd_supply_reg64(rgs, -1);
+}
+
+void
+nbsd_fpreg_to_internal (frgs)
+	char *frgs;
+{
+  if (gdbarch_ptr_bit (current_gdbarch) == 32)
+    sparcnbsd_supply_fpreg32(frgs, -1);
+  else
+    sparcnbsd_supply_fpreg64(frgs, -1);
+}
+
+void
+nbsd_internal_to_reg (regs)
+	char *regs;
+{
+  if (gdbarch_ptr_bit (current_gdbarch) == 32)
+    sparcnbsd_fill_reg32(regs, -1);
+  else
+    sparcnbsd_fill_reg64(regs, -1);
+}
+
+void
+nbsd_internal_to_fpreg (fpregs)
+	char *fpregs;
+{
+  if (gdbarch_ptr_bit (current_gdbarch) == 32)
+    sparcnbsd_fill_fpreg32(fpregs, -1);
+  else
+    sparcnbsd_fill_fpreg64(fpregs, -1);
+}
+
