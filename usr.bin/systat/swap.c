@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.3 1995/04/29 05:54:53 cgd Exp $	*/
+/*	$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)swap.c	8.2 (Berkeley) 2/21/94";
+static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: swap.c,v 1.3 1995/04/29 05:54:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -61,7 +61,6 @@ static char rcsid[] = "$NetBSD: swap.c,v 1.3 1995/04/29 05:54:53 cgd Exp $";
 #include "systat.h"
 #include "extern.h"
 
-extern char *devname __P((int, int));
 extern char *getbsize __P((int *headerlenp, long *blocksizep));
 void showspace __P((char *header, int hlen, long blocksize));
 
@@ -205,7 +204,7 @@ fetchswap()
 void
 labelswap()
 {
-	char *header;
+	char *header, *p;
 	int row, i;
 
 	row = 0;
@@ -215,8 +214,8 @@ labelswap()
 	    "Disk", hlen, header, "Used",
 	    "/0%  /10% /20% /30% /40% /50% /60% /70% /80% /90% /100%");
 	for (i = 0; i < nswdev; i++) {
-		mvwprintw(wnd, i + 1, 0, "%-5s",
-		    devname(sw[i].sw_dev, S_IFBLK));
+		p = devname(sw[i].sw_dev, S_IFBLK);
+		mvwprintw(wnd, i + 1, 0, "%-5s", p == NULL ? "??" : p);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.4 1994/12/07 08:35:17 jtc Exp $	*/
+/*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,15 +41,18 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tr.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: tr.c,v 1.4 1994/12/07 08:35:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 static int string1[NCHARS] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.6 1994/12/07 08:35:10 jtc Exp $	*/
+/*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: str.c,v 1.6 1994/12/07 08:35:10 jtc Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -235,7 +235,7 @@ genrange(s)
 
 	savestart = s->str;
 	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
-	if (stopval < s->lastch) {
+	if (stopval < (u_char)s->lastch) {
 		s->str = savestart;
 		return (0);
 	}
