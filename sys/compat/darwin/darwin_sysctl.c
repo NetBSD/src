@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.23 2004/03/24 15:34:52 atatat Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.24 2004/03/29 21:43:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.23 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.24 2004/03/29 21:43:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 		       DARWIN_CTL_KERN, DARWIN_KERN_OSTYPE, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "osrelease", &r,
+		       CTLTYPE_STRING, "osrelease", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_OSRELEASE, CTL_EOL);
 	sysctl_createv(clog, 0, &_root, NULL,
