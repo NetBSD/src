@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.664 2004/01/15 19:50:02 kleink Exp $
+#	$NetBSD: mi,v 1.665 2004/01/21 03:09:38 atatat Exp $
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
@@ -4995,6 +4995,7 @@
 ./usr/share/man/cat9/namei.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/nextrunqueue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/old_sysctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/panic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci.0			comp-sys-catman		.cat
@@ -5207,6 +5208,22 @@
 ./usr/share/man/cat9/suswintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/susword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/suword.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_createv.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_destroyv.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_dispatch.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_locate.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_lock.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_needfunc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_notavail.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_null.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_query.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysctl_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
@@ -8585,6 +8602,7 @@
 ./usr/share/man/man9/namei.9			comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-sys-man		.man
 ./usr/share/man/man9/nextrunqueue.9		comp-sys-man		.man
+./usr/share/man/man9/old_sysctl.9		comp-sys-man		.man
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man
 ./usr/share/man/man9/panic.9			comp-sys-man		.man
 ./usr/share/man/man9/pci.9			comp-sys-man		.man
@@ -8797,6 +8815,22 @@
 ./usr/share/man/man9/suswintr.9			comp-sys-man		.man
 ./usr/share/man/man9/susword.9			comp-sys-man		.man
 ./usr/share/man/man9/suword.9			comp-sys-man		.man
+./usr/share/man/man9/sysctl.9			comp-sys-man		.man
+./usr/share/man/man9/sysctl_create.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_createv.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_destroyv.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_dispatch.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_free.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_init.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_locate.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_lock.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_needfunc.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_notavail.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_null.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_query.9		comp-sys-man		.man
+./usr/share/man/man9/sysctl_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
