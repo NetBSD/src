@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.10 2002/10/02 16:02:42 thorpej Exp $	*/
+/*	$NetBSD: opm.c,v 1.11 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -35,6 +35,9 @@
 /*
  * Temporary implementation: not fully bus.h'fied.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

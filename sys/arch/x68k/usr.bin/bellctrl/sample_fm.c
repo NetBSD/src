@@ -1,4 +1,7 @@
-/*	$NetBSD: sample_fm.c,v 1.2 1996/08/30 17:46:07 thorpej Exp $	*/
+/*	$NetBSD: sample_fm.c,v 1.3 2003/07/15 01:44:53 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sample_fm.c,v 1.3 2003/07/15 01:44:53 lukem Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.21 2003/02/01 06:23:35 thorpej Exp $	*/
+/*	$NetBSD: vs.c,v 1.22 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * VS - OKI MSM6258 ADPCM voice synthesizer device driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.22 2003/07/15 01:44:52 lukem Exp $");
 
 #include "audio.h"
 #include "vs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.25 2003/07/05 19:00:17 tsutsui Exp $	*/
+/*	$NetBSD: spc.c,v 1.26 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.26 2003/07/15 01:44:52 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26 2003/02/24 00:49:44 atatat Exp $	*/
+/*	$NetBSD: grf.c,v 1.27 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,9 @@
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the machine dependent grf switch routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.27 2003/07/15 01:44:51 lukem Exp $");
 
 #include "opt_compat_hpux.h"
 
