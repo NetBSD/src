@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.53 1995/08/15 17:28:02 gwr Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.54 1995/09/19 22:42:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,22 +95,24 @@
 #include <vm/vm.h>
 
 int
-sunos_wait4(p, uap, retval)
+sunos_wait4(p, v, retval)
 	struct proc *p;
-	struct sunos_wait4_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_wait4_args *uap = v;
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = WAIT_ANY;
-	return (wait4(p, uap, retval, 1));
+	return (wait4(p, uap, retval));
 }
 
 int
-sunos_creat(p, uap, retval)
+sunos_creat(p, v, retval)
 	struct proc *p;
-	struct sunos_creat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_creat_args *uap = v;
 	struct sunos_open_args ouap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -123,11 +125,12 @@ sunos_creat(p, uap, retval)
 }
 
 int
-sunos_access(p, uap, retval)
+sunos_access(p, v, retval)
 	struct proc *p;
-	struct sunos_access_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_access_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -135,11 +138,12 @@ sunos_access(p, uap, retval)
 }
 
 int
-sunos_stat(p, uap, retval)
+sunos_stat(p, v, retval)
 	struct proc *p;
-	struct sunos_stat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_stat_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -147,11 +151,12 @@ sunos_stat(p, uap, retval)
 }
 
 int
-sunos_lstat(p, uap, retval)
+sunos_lstat(p, v, retval)
 	struct proc *p;
-	struct sunos_lstat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_lstat_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -159,11 +164,12 @@ sunos_lstat(p, uap, retval)
 }
 
 int
-sunos_execv(p, uap, retval)
+sunos_execv(p, v, retval)
 	struct proc *p;
-	struct sunos_execv_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_execv_args *uap = v;
 	struct execve_args ouap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -176,11 +182,12 @@ sunos_execv(p, uap, retval)
 }
 
 int
-sunos_omsync(p, uap, retval)
+sunos_omsync(p, v, retval)
 	struct proc *p;
-	struct sunos_omsync_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_omsync_args *uap = v;
 	struct msync_args ouap;
 
 	if (SCARG(uap, flags))
@@ -191,21 +198,24 @@ sunos_omsync(p, uap, retval)
 }
 
 int
-sunos_unmount(p, uap, retval)
+sunos_unmount(p, v, retval)
 	struct proc *p;
-	struct sunos_unmount_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_unmount_args *uap = 0;
+
 	SCARG(uap, flags) = 0;
 	return (unmount(p, (struct unmount_args *)uap, retval));
 }
 
 int
-sunos_mount(p, uap, retval)
+sunos_mount(p, v, retval)
 	struct proc *p;
-	struct sunos_mount_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_mount_args *uap = v;
 	struct emul *e = p->p_emul;
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
@@ -280,11 +290,12 @@ async_daemon(p, uap, retval)
 #endif /* NFSCLIENT */
 
 int
-sunos_sigpending(p, uap, retval)
+sunos_sigpending(p, v, retval)
 	struct proc *p;
-	struct sunos_sigpending_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_sigpending_args *uap = v;
 	int mask = p->p_siglist & p->p_sigmask;
 
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
@@ -298,11 +309,12 @@ sunos_sigpending(p, uap, retval)
  * This is quite ugly, but what do you expect from compatibility code?
  */
 int
-sunos_getdents(p, uap, retval)
+sunos_getdents(p, v, retval)
 	struct proc *p;
-	register struct sunos_getdents_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sunos_getdents_args *uap = v;
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -398,11 +410,12 @@ out:
 #define	SUNOS__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
 int
-sunos_mmap(p, uap, retval)
+sunos_mmap(p, v, retval)
 	register struct proc *p;
-	register struct sunos_mmap_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sunos_mmap_args *uap = v;
 	struct mmap_args ouap;
 	register struct filedesc *fdp;
 	register struct file *fp;
@@ -454,11 +467,12 @@ sunos_mmap(p, uap, retval)
 #define	MC_UNLOCKAS	6
 
 int
-sunos_mctl(p, uap, retval)
+sunos_mctl(p, v, retval)
 	register struct proc *p;
-	register struct sunos_mctl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sunos_mctl_args *uap = v;
 
 	switch (SCARG(uap, func)) {
 	case MC_ADVISE:		/* ignore for now */
@@ -471,11 +485,12 @@ sunos_mctl(p, uap, retval)
 }
 
 int
-sunos_setsockopt(p, uap, retval)
+sunos_setsockopt(p, v, retval)
 	struct proc *p;
-	register struct sunos_setsockopt_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sunos_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -529,11 +544,12 @@ sunos_setsockopt(p, uap, retval)
 }
 
 int
-sunos_fchroot(p, uap, retval)
+sunos_fchroot(p, v, retval)
 	register struct proc *p;
-	register struct sunos_fchroot_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sunos_fchroot_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct vnode *vp;
 	struct file *fp;
@@ -572,11 +588,12 @@ sunos_auditsys(p, uap, retval)
 }
 
 int
-sunos_uname(p, uap, retval)
+sunos_uname(p, v, retval)
 	struct proc *p;
-	struct sunos_uname_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_uname_args *uap = v;
 	struct sunos_utsname sut;
 	extern char ostype[], machine[], osrelease[];
 
@@ -594,11 +611,13 @@ sunos_uname(p, uap, retval)
 }
 
 int
-sunos_setpgid(p, uap, retval)
+sunos_setpgid(p, v, retval)
 	struct proc *p;
-	struct sunos_setpgid_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_setpgid_args *uap = v;
+
 	/*
 	 * difference to our setpgid call is to include backwards
 	 * compatibility to pre-setsid() binaries. Do setsid()
@@ -612,11 +631,12 @@ sunos_setpgid(p, uap, retval)
 }
 
 int
-sunos_open(p, uap, retval)
+sunos_open(p, v, retval)
 	struct proc *p;
-	struct sunos_open_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_open_args *uap = v;
 	int l, r;
 	int noctty;
 	int ret;
@@ -649,11 +669,12 @@ sunos_open(p, uap, retval)
 
 #if defined (NFSSERVER)
 int
-sunos_nfssvc(p, uap, retval)
+sunos_nfssvc(p, v, retval)
 	struct proc *p;
-	struct sunos_nfssvc_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_nfssvc_args *uap = v;
 	struct emul *e = p->p_emul;
 	struct nfssvc_args outuap;
 	struct nfsd_srvargs nfsdarg;
@@ -682,11 +703,12 @@ sunos_nfssvc(p, uap, retval)
 #endif /* NFSSERVER */
 
 int
-sunos_ustat(p, uap, retval)
+sunos_ustat(p, v, retval)
 	struct proc *p;
-	struct sunos_ustat_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_ustat_args *uap = v;
 	struct sunos_ustat us;
 	int error;
 
@@ -703,11 +725,13 @@ sunos_ustat(p, uap, retval)
 }
 
 int
-sunos_quotactl(p, uap, retval)
+sunos_quotactl(p, v, retval)
 	struct proc *p;
-	struct sunos_quotactl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_quotactl_args *uap = v;
+
 	return EINVAL;
 }
 
@@ -740,11 +764,12 @@ sunstatfs(sp, buf)
 }	
 
 int
-sunos_statfs(p, uap, retval)
+sunos_statfs(p, v, retval)
 	struct proc *p;
-	struct sunos_statfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_statfs_args *uap = v;
 	register struct mount *mp;
 	register struct statfs *sp;
 	int error;
@@ -766,11 +791,12 @@ sunos_statfs(p, uap, retval)
 }
 
 int
-sunos_fstatfs(p, uap, retval)
+sunos_fstatfs(p, v, retval)
 	struct proc *p;
-	struct sunos_fstatfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
@@ -787,11 +813,13 @@ sunos_fstatfs(p, uap, retval)
 }
 
 int
-sunos_exportfs(p, uap, retval)
+sunos_exportfs(p, v, retval)
 	struct proc *p;
-	struct sunos_exportfs_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_exportfs_args *uap = v;
+
 	/*
 	 * XXX: should perhaps translate into a mount(2)
 	 * with MOUNT_EXPORT?
@@ -800,11 +828,12 @@ sunos_exportfs(p, uap, retval)
 }
 
 int
-sunos_mknod(p, uap, retval)
+sunos_mknod(p, v, retval)
 	struct proc *p;
-	struct sunos_mknod_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_mknod_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -824,11 +853,12 @@ sunos_mknod(p, uap, retval)
 #define SUNOS_SC_VERSION	8
 
 int
-sunos_sysconf(p, uap, retval)
+sunos_sysconf(p, v, retval)
 	struct proc *p;
-	struct sunos_sysconf_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_sysconf_args *uap = v;
 	extern int maxfiles;
 
 	switch(SCARG(uap, name)) {
@@ -870,11 +900,13 @@ sunos_sysconf(p, uap, retval)
 #define SUNOS_RLIM_NLIMITS	7
 
 int
-sunos_getrlimit(p, uap, retval)
+sunos_getrlimit(p, v, retval)
 	struct proc *p;
-	struct sunos_getrlimit_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_getrlimit_args *uap = v;
+
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
 
@@ -885,11 +917,13 @@ sunos_getrlimit(p, uap, retval)
 }
 
 int
-sunos_setrlimit(p, uap, retval)
+sunos_setrlimit(p, v, retval)
 	struct proc *p;
-	struct sunos_getrlimit_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_getrlimit_args *uap = v;
+
 	if (SCARG(uap, which) >= SUNOS_RLIM_NLIMITS)
 		return EINVAL;
 
@@ -915,11 +949,12 @@ static int sreq2breq[] = {
 };
 static int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
-sunos_ptrace(p, uap, retval)
+sunos_ptrace(p, v, retval)
 	struct proc *p;
-	struct sunos_ptrace_args *uap;
+	void *v;
 	int *retval;
 {
+	struct sunos_ptrace_args *uap = v;
 	struct ptrace_args pa;
 	int req;
 
@@ -986,11 +1021,12 @@ sunos_pollscan(p, pl, nfd, retval)
  * differently.
  */
 int
-sunos_poll(p, uap, retval)
+sunos_poll(p, v, retval)
 	struct proc *p;
-	struct sunos_poll_args	*uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_poll_args *uap = v;
 	int i, s;
 	int error, error2;
 	size_t sz = sizeof(struct sunos_pollfd) * SCARG(uap, nfds);
@@ -1087,11 +1123,12 @@ static struct sunos_howto_conv {
 #define	SUNOS_RB_STRING	0x200
 
 int
-sunos_reboot(p, uap, retval)
+sunos_reboot(p, v, retval)
 	struct proc *p;
-	struct sunos_reboot_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sunos_reboot_args *uap = v;
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 
@@ -1136,15 +1173,16 @@ sunos_reboot(p, uap, retval)
  */
 /* ARGSUSED */
 int
-sunos_sigvec(p, uap, retval)
+sunos_sigvec(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sunos_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct sigvec *sv;
