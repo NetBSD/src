@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1996/01/31 21:33:47 phil Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1996/10/09 07:44:54 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,6 +44,7 @@
  *
  * Improved by Phil Budne ... 10/17/94.
  * Pulled over code from i386/isa/clock.c (Matthias Pfaller 12/03/94).
+ * Phil Budne's better microtime added 09/02/96
  */
 
 #include <sys/param.h>
@@ -53,16 +54,16 @@
 
 #include <machine/icu.h>
 
-void spinwait __P((int));
+static int divisor;
 
 void
 startrtclock()
 {
-	int timer = (ICU_CLK_HZ) / hz;
+	divisor = ICU_CLK_HZ / hz;
 
 	/* Write the timer values to the ICU. */
-	WR_ADR (unsigned short, ICU_ADR + HCSV, timer);
-	WR_ADR (unsigned short, ICU_ADR + HCCV, timer);
+	ICUW(HCSV) = divisor;
+	ICUW(HCCV) = divisor;
 
 	/* Establish interrupt vector */
 	intr_establish(IR_CLK, hardclock, NULL, "clock", IPL_CLOCK,
@@ -72,14 +73,8 @@ startrtclock()
 void
 cpu_initclocks()
 {
-	/* enable clock interrupt */
-	WR_ADR (unsigned char, ICU_ADR +CICTL, 0x30);
-}
-
-void
-spinwait(int millisecs)
-{
-	DELAY(5000 * millisecs);
+	/* Enable clock interrupt. */
+	ICUB(CICTL) = 0x30;
 }
 
 void
@@ -88,6 +83,33 @@ setstatclockrate(int dummy)
 	printf ("setstatclockrate\n");
 }
 
+void
+microtime(tvp)
+	register struct timeval *tvp;
+{
+	u_short count, delta, ipend;
+
+	di();
+	ICUB(MCTL) |= 0x88;		/* freeze HCCV, IPND */
+	count = ICUW(HCCV);
+	ipend = ICUW(IPND);
+	*tvp = time;
+	ICUB(MCTL) &= 0x77;		/* thaw ICU regs */
+	ei();
+
+	/* yields value 0..9999 */
+	delta = ((divisor - count) * (4096 * 1000000UL / ICU_CLK_HZ)) >> 12;
+	tvp->tv_usec += delta;
+
+	/* check for timer overflow (ie; clock int disabled) */
+	if (count > 0 && (ipend & (1<<IR_CLK))) {
+		tvp->tv_usec += tick;
+		if (tvp->tv_usec > 1000000) {
+			tvp->tv_usec -= 1000000;
+			tvp->tv_sec++;
+		}
+	}
+}
 
 static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
