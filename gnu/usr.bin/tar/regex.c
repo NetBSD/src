@@ -20,7 +20,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: regex.c,v 1.3 1993/08/02 17:48:59 mycroft Exp $";
+static char rcsid[] = "$NetBSD: regex.c,v 1.4 1995/04/23 08:36:44 cgd Exp $";
 #endif /* not lint */
 
 /* AIX requires this to be the first thing in the file. */
@@ -2320,7 +2320,7 @@ typedef struct
    value.  Assumes the variable `fail_stack'.  Probably should only
    be called from within `PUSH_FAILURE_POINT'.  */
 #define PUSH_FAILURE_ITEM(item)						\
-  fail_stack.stack[fail_stack.avail++] = (fail_stack_elt_t) item
+  fail_stack.stack[fail_stack.avail++] = (fail_stack_elt_t) (long) item
 
 /* The complement operation.  Assumes `fail_stack' is nonempty.  */
 #define POP_FAILURE_ITEM() fail_stack.stack[--fail_stack.avail]
@@ -2487,10 +2487,10 @@ typedef struct
   DEBUG_PRINT_COMPILED_PATTERN (bufp, pat, pend);			\
 									\
   /* Restore register info.  */						\
-  high_reg = (unsigned) POP_FAILURE_ITEM ();				\
+  high_reg = (unsigned long) POP_FAILURE_ITEM ();			\
   DEBUG_PRINT2 ("  Popping high active reg: %d\n", high_reg);		\
 									\
-  low_reg = (unsigned) POP_FAILURE_ITEM ();				\
+  low_reg = (unsigned long) POP_FAILURE_ITEM ();			\
   DEBUG_PRINT2 ("  Popping  low active reg: %d\n", low_reg);		\
 									\
   for (this_reg = high_reg; this_reg >= low_reg; this_reg--)		\
@@ -3757,7 +3757,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
                           regstart[r] = old_regstart[r];
 
                           /* xx why this test?  */
-                          if ((int) old_regend[r] >= (int) regstart[r])
+                          if ((long) old_regend[r] >= (long) regstart[r])
                             regend[r] = old_regend[r];
                         }     
                     }

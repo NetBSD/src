@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: diffarch.c,v 1.5 1993/08/02 17:48:42 mycroft Exp $";
+static char rcsid[] = "$NetBSD: diffarch.c,v 1.6 1995/04/23 08:36:38 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -74,6 +74,9 @@ void sigh ();
 extern void skip_file ();
 extern void skip_extended_headers ();
 int wantbytes ();
+
+extern PTR ck_malloc();
+extern PTR ck_realloc();
 
 extern FILE *msg_file;
 
