@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4 2001/07/04 18:08:01 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.5 2001/07/13 16:14:29 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -891,6 +891,12 @@ power_on(enum controller_channel channel)
 		hd64461_reg_write_2(HD64461_GPADR_REG16, r16);
 	}
 
+	if (channel == CHANNEL_1) {
+		/* GPIO Port C, Port D XXX HP620LX specific? */
+		hd64461_reg_write_2(HD64461_GPCCR_REG16, 0xa800);
+		hd64461_reg_write_2(HD64461_GPDCR_REG16, 0xaa0a);
+	}
+
 	/* supply clock */
 	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
 	r16 &= ~(channel == CHANNEL_0 ? HD64461_SYSSTBCR_SPC0ST :
@@ -912,11 +918,15 @@ power_on(enum controller_channel channel)
 		break;
 	case HD64461_PCCISR_VS2:
 		DPRINTF("3.3V card\n");
-		if (channel == CHANNEL_1) {
+		if (channel == CHANNEL_1) { 
 			r = hd64461_reg_read_1(gcr);
 			r &= ~HD64461_PCCGCR_VCC0;
 			hd64461_reg_write_1(gcr, r);
-		}
+		} else { 
+			r = hd64461_reg_read_1(gcr);
+			r |= HD64461_PCCGCR_VCC0;
+			hd64461_reg_write_1(gcr, r);
+		} 
 		r = hd64461_reg_read_1(scr);
 		r &= ~HD64461_PCCSCR_VCC1;
 		hd64461_reg_write_1(scr, r);
