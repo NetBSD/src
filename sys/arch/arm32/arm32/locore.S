@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 1998/04/01 23:12:32 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 1998/05/08 23:25:31 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -185,7 +185,7 @@ Lboot_cache_purged:
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
-	 * Hurl ourselves into the ROM at 0x00000000
+	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
