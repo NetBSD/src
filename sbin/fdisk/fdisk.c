@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.49 2002/03/04 04:22:22 dbj Exp $ */
+/*	$NetBSD: fdisk.c,v 1.50 2002/03/26 23:56:05 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.49 2002/03/04 04:22:22 dbj Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.50 2002/03/26 23:56:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,9 +104,9 @@ struct mbr_bootsel {
 
 #define	DEFAULT_BOOTCODE	"/usr/mdec/mbr"
 #define DEFAULT_BOOTSELCODE	"/usr/mdec/mbr_bootsel"
-#define OPTIONS			"0123BSafius:b:c:"
+#define OPTIONS			"0123BSafilus:b:c:"
 #else
-#define OPTIONS			"0123Safius:b:c:"
+#define OPTIONS			"0123Safilus:b:c:"
 #endif
 
 #define ACTIVE 0x80
@@ -260,6 +260,8 @@ struct part_type {
 	{0xFF, "Xenix Bad Block Table"},
 };
 
+#define KNOWN_SYSIDS	(sizeof(part_types)/sizeof(part_types[0]))
+
 void	usage(void);
 void	print_s0(int);
 void	print_part(int);
@@ -270,7 +272,7 @@ void	intuit_translated_geometry(void);
 void	get_geometry(void);
 void	get_diskname(const char *, char *, size_t);
 int	try_heads(quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
-		       quad_t);
+    quad_t);
 int	try_sectors(quad_t, quad_t, quad_t, quad_t, quad_t);
 void	change_part(int, int, int, int);
 void	print_params(void);
@@ -348,28 +350,24 @@ main(int argc, char *argv[])
 		case 'i':
 			i_flag = 1;
 			break;
+		case 'l':
+			for (len = 0; len < KNOWN_SYSIDS; len++)
+				printf("%03d %s\n", len, part_types[len].name);
+			return 0;
 		case 'u':
 			u_flag = 1;
 			break;
 		case 's':
 			s_flag = 1;
-			if (sscanf (optarg, "%d/%d/%d",
-				    &csysid, &cstart, &csize) != 3) {
-				(void)fprintf (stderr, "%s: Bad argument "
-					       "to the -s flag.\n",
-					       argv[0]);
-				exit (1);
-			}
+			if (sscanf(optarg, "%d/%d/%d", &csysid, &cstart,
+			    &csize) != 3)
+				err(1, "Bad argument to the -s flag.\n");
 			break;
 		case 'b':
 			b_flag = 1;
-			if (sscanf (optarg, "%d/%d/%d",
-				    &b_cyl, &b_head, &b_sec) != 3) {
-				(void)fprintf (stderr, "%s: Bad argument "
-					       "to the -b flag.\n",
-					       argv[0]);
-				exit (1);
-			}
+			if (sscanf(optarg, "%d/%d/%d", &b_cyl, &b_head,
+			    &b_sec) != 3)
+				err(1, "Bad argument to the -s flag.\n");
 			if (b_cyl > MAXCYL)
 				b_cyl = MAXCYL;
 			break;
@@ -389,8 +387,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (partition == -1 && s_flag) {
-		(void) fprintf (stderr,
-				"-s flag requires a partition selected.\n");
+		warnx("-s flag requires a partition selected.");
 		usage();
 	}
 
@@ -458,10 +455,10 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: fdisk [-aiufBS] [-0|-1|-2|-3] "
-			      "[-b cylinders/heads/sectors]\n"
-			      "             [-s id/start/size] [-c bootcode] "
-			      "[device]\n");
+	(void)fprintf(stderr, "Usage: %s [-aiufBS] [-0|-1|-2|-3] "
+	      "[-b cylinders/heads/sectors]\n"
+	      "%s [-s id/start/size] [-c bootcode] [device]\n",
+	      getprogname(), getprogname());
 	exit(1);
 }
 
@@ -539,11 +536,11 @@ print_part(int part)
 		printf("PART%dSTART=%ld\n", part, getlong(&partp->mbrp_start));
 		printf("PART%dFLAG=0x%x\n", part, partp->mbrp_flag);
 		printf("PART%dBCYL=%d\n", part, MBR_PCYL(partp->mbrp_scyl,
-						      partp->mbrp_ssect));
+		    partp->mbrp_ssect));
 		printf("PART%dBHEAD=%d\n", part, partp->mbrp_shd);
 		printf("PART%dBSEC=%d\n", part, MBR_PSECT(partp->mbrp_ssect));
 		printf("PART%dECYL=%d\n", part, MBR_PCYL(partp->mbrp_ecyl,
-						      partp->mbrp_esect));
+		    partp->mbrp_esect));
 		printf("PART%dEHEAD=%d\n", part, partp->mbrp_ehd);
 		printf("PART%dESEC=%d\n", part, MBR_PSECT(partp->mbrp_esect));
 		return;
@@ -553,7 +550,7 @@ print_part(int part)
 
 void
 print_mbr_partition(struct mbr_partition *partp,
-		    off_t offset, off_t exoffset, int indent)
+    off_t offset, off_t exoffset, int indent)
 {
 	int	empty;
 	off_t	start;
@@ -595,7 +592,7 @@ print_mbr_partition(struct mbr_partition *partp,
 		for (part = 0; part < NMBRPART; part++) {
 			printf("%*s%d: ", indent, "", part);
 			print_mbr_partition(&eboot.parts[part],
-					    start, exoffset, indent);
+			    start, exoffset, indent);
 		}
 	}
 }
@@ -644,8 +641,8 @@ init_sector0(int start, int dopart)
 	putshort(&mboot.signature, MBR_MAGIC);
 	
 	if (dopart)
-		for (i=0; i<4; i++) 
-			memset(&mboot.parts[i], 0, sizeof(struct mbr_partition));
+		for (i = 0; i < 4; i++)
+			memset(&mboot.parts[i], 0, sizeof(mboot.parts[i]));
 
 }
 
@@ -757,13 +754,13 @@ configure_bootsel(void)
 	}
 
 	if (nused == 0) {
-		printf("No used partitions found. Partition the disk first.\n");
+		warnx("No used partitions found. Partition the disk first.");
 		return;
 	}
 
 	if (mbs->magic != MBR_MAGIC) {
 		if (!yesno("Bootselector not yet installed. Install it now?")) {
-			printf("Bootselector not installed.\n");
+			warnx("Bootselector not installed.");
 			return;
 		}
 		bootsize = read_boot(DEFAULT_BOOTSELCODE, bootcode,
@@ -773,7 +770,7 @@ configure_bootsel(void)
 		mbs->flags |= BFL_SELACTIVE;
 	} else {
 		if (mbs->flags & BFL_SELACTIVE) {
-			printf("The bootselector is installed and active.\n");
+			printf("The bootselector is installed and active.");
 			if (!yesno("Do you want to change its settings?")) {
 				if (yesno("Do you want to deactivate it?")) {
 					mbs->flags &= ~BFL_SELACTIVE;
@@ -783,7 +780,7 @@ configure_bootsel(void)
 				return;
 			}
 		} else {
-			printf("The bootselector is installed but not active.\n");
+			printf("The bootselector is installed but not active.");
 			if (yesno("Do you want to activate it?")) {
 				mbs->flags |= BFL_SELACTIVE;
 				bootsel_modified = 1;
@@ -1080,7 +1077,8 @@ change_part(int part, int csysid, int cstart, int csize)
 		if (yesno("Explicitly specify beg/end address?")) {
 			int tsector, tcylinder, thead;
 
-			tcylinder = MBR_PCYL(partp->mbrp_scyl, partp->mbrp_ssect);
+			tcylinder = MBR_PCYL(partp->mbrp_scyl,
+			    partp->mbrp_ssect);
 			thead = partp->mbrp_shd;
 			tsector = MBR_PSECT(partp->mbrp_ssect);
 			decimal("beginning cylinder", &tcylinder);
@@ -1093,7 +1091,8 @@ change_part(int part, int csysid, int cstart, int csize)
 			partp->mbrp_shd = thead;
 			partp->mbrp_ssect = DOSSECT(tsector, tcylinder);
 
-			tcylinder = MBR_PCYL(partp->mbrp_ecyl, partp->mbrp_esect);
+			tcylinder = MBR_PCYL(partp->mbrp_ecyl, 
+			    partp->mbrp_esect);
 			thead = partp->mbrp_ehd;
 			tsector = MBR_PSECT(partp->mbrp_esect);
 			decimal("ending cylinder", &tcylinder);
@@ -1113,7 +1112,8 @@ change_part(int part, int csysid, int cstart, int csize)
 				checkcyl(getlong(&partp->mbrp_start)
 					 / dos_cylindersectors);
 #endif
-				dos(getlong(&partp->mbrp_start), &partp->mbrp_scyl,
+				dos(getlong(&partp->mbrp_start),
+				    &partp->mbrp_scyl,
 				    &partp->mbrp_shd, &partp->mbrp_ssect);
 				dos(getlong(&partp->mbrp_start)
 				    + getlong(&partp->mbrp_size) - 1,
