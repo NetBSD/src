@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.8 1998/12/08 15:48:18 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.9 1998/12/09 01:01:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -423,10 +423,8 @@ uhub_intr(reqh, addr, status)
 	struct uhub_softc *sc = addr;
 
 	DPRINTFN(1,("uhub_intr: sc=%p\n", sc));
-#if 0
 	if (status != USBD_NORMAL_COMPLETION)
-		usbd_clear_endpoint_stall(sc->sc_ipipe);
+		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 	else
-#endif
 		usb_needs_explore(sc->sc_hub->bus);
 }
