@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.1 2000/12/11 18:19:13 marcus Exp $
+#	$NetBSD: files.shbus,v 1.2 2001/04/24 19:43:25 marcus Exp $
 #
 # Config file and device description for machine-independent SHBus code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,6 +14,7 @@ device	shb {[port = -1], [size = 0],
 attach	shb at mainbus
 
 file arch/dreamcast/dreamcast/shb.c		shb needs-flag
+file arch/dreamcast/dreamcast/sysasic.c		shb
 
 # Misc devices
 
