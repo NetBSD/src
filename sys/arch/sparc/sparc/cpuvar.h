@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.21 1999/02/27 13:11:21 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.22 1999/10/04 19:23:49 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -157,7 +157,6 @@ struct cpu_info {
 	/* Context administration */
 	int		*ctx_tbl;	/* [4m] SRMMU-edible context table */
 	paddr_t		ctx_tbl_pa;	/* [4m] ctx table physical address */
-	u_int		cpu_seg_ptd;	/* [4m] CPUINFO_VA segment PT desc. */
 	union ctxinfo	*ctxinfo;
 	union ctxinfo	*ctx_freelist;  /* context free list */
 	int		ctx_kick;	/* allocation rover when none free */
