@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.13 1993/12/02 09:50:34 mycroft Exp $
+ *	$Id: unistd.h,v 1.14 1993/12/30 04:11:56 cgd Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -173,7 +173,7 @@ int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
 void	 usleep __P((u_int));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
-int	 vfork __P((void));
+pid_t	 vfork __P((void));
 
 int	 getopt __P((int, char * const *, const char *));
 extern	 char *optarg;			/* getopt(3) external variables */
