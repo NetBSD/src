@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.9 1999/08/25 01:47:33 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.10 2000/11/01 23:46:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -82,8 +82,16 @@ struct winsize {
 #define	TIOCSETA	_IOW('t', 20, struct termios) /* set termios struct */
 #define	TIOCSETAW	_IOW('t', 21, struct termios) /* drain output, set */
 #define	TIOCSETAF	_IOW('t', 22, struct termios) /* drn out, fls in, set */
-#define	TIOCGETD	_IOR('t', 26, int)	/* get line discipline */
-#define	TIOCSETD	_IOW('t', 27, int)	/* set line discipline */
+#define	TIOCGETD	_IOR('t', 26, int)	/* get line discipline (deprecated) */
+#define	TIOCSETD	_IOW('t', 27, int)	/* set line discipline (deprecated) */
+
+/*
+ * This is the maximum length of a line discipline's name.
+ */
+#define	TTLINEDNAMELEN	32
+typedef char linedn_t[TTLINEDNAMELEN];
+#define TIOCGLINED	_IOR('t', 66, linedn_t)	/* get line discipline (new) */
+#define TIOCSLINED	_IOW('t', 67, linedn_t)	/* set line discipline (new) */
 						/* 127-124 compat */
 #define	TIOCSBRK	 _IO('t', 123)		/* set break bit */
 #define	TIOCCBRK	 _IO('t', 122)		/* clear break bit */
@@ -141,6 +149,8 @@ struct winsize {
 #define	SLIPDISC	4		/* serial IP discipline */
 #define	PPPDISC		5		/* ppp discipline */
 #define	STRIPDISC	6		/* metricom wireless IP discipline */
-#define	HDLCDISC	7		/* HDLC discipline */
+#define SUNKBDDISC	7		/* Sun keyboard discipline */
+#define	SUNMSDISC	8		/* Sun mouse discipline */
+#define	HDLCDISC	9		/* HDLC discipline */
 
 #endif /* !_SYS_TTYCOM_H_ */
