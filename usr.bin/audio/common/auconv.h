@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.1 2002/01/15 17:02:51 mrg Exp $	*/
+/*	$NetBSD: auconv.h,v 1.2 2002/10/13 00:59:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,20 +36,179 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/audioio.h>
+
 /* Convert between signed and unsigned. */
-extern void change_sign8(u_char *, size_t);
-extern void change_sign16_le(u_char *, size_t);
-extern void change_sign16_be(u_char *, size_t);
-extern void change_sign32_le(u_char *, size_t);
-extern void change_sign32_be(u_char *, size_t);
+static __inline__ void change_sign8(u_char *, size_t);
+static __inline__ void change_sign16_le(u_char *, size_t);
+static __inline__ void change_sign16_be(u_char *, size_t);
+static __inline__ void change_sign32_le(u_char *, size_t);
+static __inline__ void change_sign32_be(u_char *, size_t);
 /* Convert between little and big endian. */
-extern void swap_bytes(u_char *, size_t);
-extern void swap_bytes32(u_char *, size_t);
-extern void swap_bytes_change_sign16_le(u_char *, size_t);
-extern void swap_bytes_change_sign16_be(u_char *, size_t);
-extern void change_sign16_swap_bytes_le(u_char *, size_t);
-extern void change_sign16_swap_bytes_be(u_char *, size_t);
-extern void swap_bytes_change_sign32_le(u_char *, size_t);
-extern void swap_bytes_change_sign32_be(u_char *, size_t);
-extern void change_sign32_swap_bytes_le(u_char *, size_t);
-extern void change_sign32_swap_bytes_be(u_char *, size_t);
+static __inline__ void swap_bytes(u_char *, size_t);
+static __inline__ void swap_bytes32(u_char *, size_t);
+static __inline__ void swap_bytes_change_sign16_le(u_char *, size_t);
+static __inline__ void swap_bytes_change_sign16_be(u_char *, size_t);
+static __inline__ void change_sign16_swap_bytes_le(u_char *, size_t);
+static __inline__ void change_sign16_swap_bytes_be(u_char *, size_t);
+static __inline__ void swap_bytes_change_sign32_le(u_char *, size_t);
+static __inline__ void swap_bytes_change_sign32_be(u_char *, size_t);
+static __inline__ void change_sign32_swap_bytes_le(u_char *, size_t);
+static __inline__ void change_sign32_swap_bytes_be(u_char *, size_t);
+
+static __inline__ void
+change_sign8(u_char *p, size_t cc)
+{
+	while (--cc > 0) {
+		*p ^= 0x80;
+		++p;
+	}
+}
+
+static __inline__ void
+change_sign16_le(u_char *p, size_t cc)
+{
+	while ((cc -= 2) > 0) {
+		p[1] ^= 0x80;
+		p += 2;
+	}
+}
+
+static __inline__ void
+change_sign16_be(u_char *p, size_t cc)
+{
+	while ((cc -= 2) > 0) {
+		p[0] ^= 0x80;
+		p += 2;
+	}
+}
+
+static __inline__ void
+change_sign32_le(u_char *p, size_t cc)
+{
+	while ((cc -= 4) > 0) {
+		p[3] ^= 0x80;
+		p += 4;
+	}
+}
+
+static __inline__ void
+change_sign32_be(u_char *p, size_t cc)
+{
+	while ((cc -= 4) > 0) {
+		p[0] ^= 0x80;
+		p += 4;
+	}
+}
+
+static __inline__ void
+swap_bytes(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 2) > 0) {
+		t = p[0];
+		p[0] = p[1];
+		p[1] = t;
+		p += 2;
+	}
+}
+
+static __inline__ void
+swap_bytes32(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 4) > 0) {
+		t = p[0];
+		p[0] = p[3];
+		p[3] = t;
+		t = p[1];
+		p[1] = p[2];
+		p[2] = t;
+		p += 4;
+	}
+}
+
+static __inline__ void
+swap_bytes_change_sign16_le(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 2) > 0) {
+		t = p[1];
+		p[1] = p[0] ^ 0x80;
+		p[0] = t;
+		p += 2;
+	}
+}
+
+static __inline__ void
+swap_bytes_change_sign16_be(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 2) > 0) {
+		t = p[0];
+		p[0] = p[1] ^ 0x80;
+		p[1] = t;
+		p += 2;
+	}
+}
+
+static __inline__ void
+change_sign16_swap_bytes_le(u_char *p, size_t cc)
+{
+	swap_bytes_change_sign16_be(p, cc);
+}
+
+static __inline__ void
+change_sign16_swap_bytes_be(u_char *p, size_t cc)
+{
+	swap_bytes_change_sign16_le(p, cc);
+}
+
+static __inline__ void
+swap_bytes_change_sign32_le(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 4) > 0) {
+		t = p[3];
+		p[3] = p[0] ^ 0x80;
+		p[0] = t;
+		t = p[1];
+		p[1] = p[2];
+		p[2] = t;
+		p += 4;
+	}
+}
+
+static __inline__ void
+swap_bytes_change_sign32_be(u_char *p, size_t cc)
+{
+	u_char t;
+
+	while ((cc -= 4) > 0) {
+		t = p[0];
+		p[0] = p[3] ^ 0x80;
+		p[3] = t;
+		t = p[1];
+		p[1] = p[2];
+		p[2] = t;
+		p += 4;
+	}
+}
+
+static __inline__ void
+change_sign32_swap_bytes_le(u_char *p, size_t cc)
+{
+	swap_bytes_change_sign32_be(p, cc);
+}
+
+static __inline__ void
+change_sign32_swap_bytes_be(u_char *p, size_t cc)
+{
+	swap_bytes_change_sign32_le(p, cc);
+}
