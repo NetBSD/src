@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoumax.c,v 1.3 2001/05/07 08:26:13 kleink Exp $	*/
+/*	$NetBSD: strtoumax.c,v 1.4 2001/05/10 06:10:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoumax.c,v 1.3 2001/05/07 08:26:13 kleink Exp $");
+__RCSID("$NetBSD: strtoumax.c,v 1.4 2001/05/10 06:10:35 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -60,7 +61,7 @@ __weak_alias(strtoumax, _strtoumax)
  * alphabets and digits are each contiguous.
  */
 uintmax_t
-strtoumax(nptr, endptr, base)
+_strtoumax(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
 	int base;
