@@ -1,4 +1,4 @@
-/*	$NetBSD: mopa.out.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $	*/
+/*	$NetBSD: mopa.out.c,v 1.8.2.1 2002/06/07 18:43:01 thorpej Exp $	*/
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopa.out.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
+__RCSID("$NetBSD: mopa.out.c,v 1.8.2.1 2002/06/07 18:43:01 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -70,6 +70,17 @@ __RCSID("$NetBSD: mopa.out.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
 #define MID_VAX 140
 #endif
 
+#ifndef NOELF
+# if defined(__NetBSD__)
+#  include <sys/exec_elf.h>
+# else
+#  define NOELF
+# endif
+# if !defined(EM_VAX)
+#  define EM_VAX 75
+# endif
+#endif /* NOELF */
+
 u_char header[512];		/* The VAX header we generate is 1 block. */
 struct exec ex, ex_swap;
 
@@ -77,12 +88,8 @@ int
 main (int argc, char **argv)
 {
 	FILE   *out;		/* A FILE because that is easier. */
-	int	i;
+	int	i, j;
 	struct dllist dl;
-
-#ifdef NOAOUT
-	errx(1, "has no function in NetBSD");
-#endif	
 
 	if (argc != 3) {
 		fprintf (stderr, "usage: %s kernel-in sys-out\n",
@@ -94,17 +101,39 @@ main (int argc, char **argv)
 	if (dl.ldfd == -1)
 		err(2, "open `%s'", argv[1]);
 	
-	GetFileInfo(&dl);
+	if (GetFileInfo(&dl) == -1)
+		errx(3, "`%s' is an unknown file type", argv[1]);
 
-	if (dl.image_type != IMAGE_TYPE_AOUT)
-		errx(3, "`%s' is not an a.out file", argv[1]);
+	switch (dl.image_type) {
+	case IMAGE_TYPE_MOP:
+		errx(3, "`%s' is already a MOP image", argv[1]);
+		break;
 
-	if (dl.a_mid != MID_VAX)
-		printf("WARNING: `%s' is not a VAX image (mid=%d)\n",
-		    argv[1], dl.a_mid);
+#ifndef NOELF
+	case IMAGE_TYPE_ELF32:
+		if (dl.e_machine != EM_VAX)
+			printf("WARNING: `%s' is not a VAX image "
+			    "(machine=%d)\n", argv[1], dl.e_machine);
+		for (i = 0, j = 0; j < dl.e_nsec; j++)
+			i += dl.e_sections[j].s_fsize + dl.e_sections[j].s_pad;
+		break;
+#endif
 
-	i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
-	    dl.a_bss  + dl.a_bss_fill;
+#ifndef NOAOUT
+	case IMAGE_TYPE_AOUT:
+		if (dl.a_mid != MID_VAX)
+			printf("WARNING: `%s' is not a VAX image (mid=%d)\n",
+			    argv[1], dl.a_mid);
+		i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
+		    dl.a_bss  + dl.a_bss_fill;
+		break;
+#endif
+
+	default:
+		errx(3, "Image type `%s' not supported",
+		    FileTypeName(dl.image_type));
+	}
+
 	i = (i+1) / 512;
 
 	dl.nloadaddr = dl.loadaddr;
@@ -128,8 +157,32 @@ main (int argc, char **argv)
 	
 	fwrite (header, sizeof (header), 1, out);
 
-	fprintf(stderr, "copying %u+%u+%u->%u\n", dl.a_text,
-	    dl.a_data, dl.a_bss, dl.xferaddr);
+	switch (dl.image_type) {
+	case IMAGE_TYPE_MOP:
+		abort();
+
+	case IMAGE_TYPE_ELF32:
+#ifdef NOELF
+		abort();
+#else
+		fprintf(stderr, "copying ");
+		for (j = 0; j < dl.e_nsec; j++)
+			fprintf(stderr, "%s%u+%u", j == 0 ? "" : "+",
+			    dl.e_sections[j].s_fsize,
+			    dl.e_sections[j].s_pad);
+		fprintf(stderr, "->%u\n", dl.xferaddr);
+#endif
+		break;
+
+	case IMAGE_TYPE_AOUT:
+#ifdef NOAOUT
+		abort();
+#else
+		fprintf(stderr, "copying %u+%u+%u->%u\n", dl.a_text,
+		    dl.a_data, dl.a_bss, dl.xferaddr);
+#endif
+		break;
+	}
 	
 	while ((i = mopFileRead(&dl,header)) > 0) {
 		(void)fwrite(header, i, 1, out);
