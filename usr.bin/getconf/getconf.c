@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.5 1997/10/08 22:26:30 jtc Exp $	*/
+/*	$NetBSD: getconf.c,v 1.6 1997/10/19 02:13:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,17 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: getconf.c,v 1.5 1997/10/08 22:26:30 jtc Exp $";
+__RCSID("$NetBSD: getconf.c,v 1.6 1997/10/19 02:13:41 lukem Exp $");
 #endif /* not lint */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 
+int	main __P((int, char **));
 static void usage __P((void));
 
 struct conf_variable
@@ -187,7 +190,7 @@ main(argc, argv)
 		slen = confstr (cp->value, (char *) 0, (size_t) 0);
 
 		if ((sval = malloc(slen)) == NULL)
-			err(1, NULL);
+			err(1, "malloc");
 
 		confstr(cp->value, sval, slen);
 		printf("%s\n", sval);
@@ -197,7 +200,7 @@ main(argc, argv)
 		errno = 0;
 		if ((val = sysconf(cp->value)) == -1) {
 			if (errno != 0) {
-				err(1, NULL);
+				err(1, "malloc");
 				/* NOTREACHED */
 			}
 
