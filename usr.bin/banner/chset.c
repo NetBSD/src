@@ -1,4 +1,4 @@
-/*	$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $	*/
+/*	$NetBSD: chset.c,v 1.3 1997/10/18 12:12:51 lukem Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -51,11 +51,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $";
+__RCSID("$NetBSD: chset.c,v 1.3 1997/10/18 12:12:51 lukem Exp $");
 #endif
 #endif /* not lint */
 

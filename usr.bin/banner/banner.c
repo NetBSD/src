@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
+/*	$NetBSD: banner.c,v 1.3 1997/10/18 12:12:47 lukem Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -51,35 +51,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $";
+__RCSID("$NetBSD: banner.c,v 1.3 1997/10/18 12:12:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "banner.h"
 
 static long PW = LINELEN;
 
+static	int	dropit __P((int));
+	int	main __P((int, char **));
+static	void	scan_out __P((int, char *, int));
+static	char   *scnline __P((int, char *, int));
+
 /* the char gen code below is lifted from lpd */
 
 static char *
 scnline(key, p, c)
-	register int key;
-	register char *p;
+	int key;
+	char *p;
 	int c;
 {
-	register scnwidth;
+	int scnwidth;
 
 	/*
 	 * <sjg> lpd makes chars out of the letter in question.
@@ -123,11 +131,12 @@ dropit(c)
 
 static void
 scan_out(scfd, scsp, dlm)
-	int scfd, dlm;
+	int scfd;
 	char *scsp;
+	int dlm;
 {
-	register char *strp;
-	register nchrs, j;
+	char *strp;
+	int nchrs, j;
 	char outbuf[LINELEN+1], *sp, c, cc;
 	int d, scnhgt;
 	extern char scnkey[][HEIGHT];	/* in lpdchar.c */
@@ -141,7 +150,8 @@ scan_out(scfd, scsp, dlm)
 				for (j = WIDTH; --j;)
 					*strp++ = BACKGND;
 			else
-				strp = scnline(scnkey[c][scnhgt-1-d], strp, cc);
+				strp = scnline(
+				    scnkey[(int)c][scnhgt-1-d], strp, cc);
 			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BACKGND;
