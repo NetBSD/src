@@ -1,5 +1,0 @@
-# OBSOLETE # Host: Apollo m68k, BSD mode.
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-apollo68b.h
-# OBSOLETE NAT_FILE= nm-apollo68b.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o a68v-nat.o
