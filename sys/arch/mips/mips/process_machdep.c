@@ -38,7 +38,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.1 1994/05/27 09:04:03 glass Exp $
+ *	$Id: process_machdep.c,v 1.2 1994/08/15 16:37:29 cgd Exp $
  */
 
 /*
@@ -58,9 +58,6 @@
  *
  * process_sstep(proc)
  *	Arrange for the process to trap after executing a single instruction.
- *
- * process_fix_sstep(proc)
- *	Cleanup process state after executing a single-step instruction.
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
@@ -101,16 +98,9 @@ process_sstep(p, sstep)
 }
 
 int
-process_fix_sstep(p)
-	struct proc *p;
-{
-	return 0;
-}
-
-int
 process_set_pc(p, addr)
 	struct proc *p;
-	u_int addr;
+	caddr_t addr;
 {
 	return (0);
 }

@@ -40,7 +40,7 @@
  * And then from:
  *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
  *
- *	$Id: process_machdep.c,v 1.1 1994/08/01 22:56:59 phil Exp $
+ *	$Id: process_machdep.c,v 1.2 1994/08/15 16:37:25 cgd Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */
@@ -62,9 +62,6 @@
  *
  * process_sstep(proc)
  *	Arrange for the process to trap after executing a single instruction.
- *
- * process_fix_sstep(proc)
- *	Cleanup process state after executing a single-step instruction.
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
@@ -152,13 +149,6 @@ process_sstep(p, sstep)
 		p->p_md.md_regs[REG_PSR] &= ~(PSL_T << 16);
 
 	return (0);
-}
-
-int
-process_fix_sstep(p)
-	struct proc *p;
-{
-	return 0;
 }
 
 int

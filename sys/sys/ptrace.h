@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.17 1994/06/29 06:44:56 cgd Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.18 1994/08/15 16:37:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -63,14 +63,13 @@ struct fpreg;
 #endif
 
 void	proc_reparent __P((struct proc *child, struct proc *newparent));
-int	process_fix_sstep __P((struct proc *p));
 #ifdef PT_GETFPREGS
 int	process_read_fpregs __P((struct proc *p, struct fpreg *regs));
 #endif
 #ifdef PT_GETREGS
 int	process_read_regs __P((struct proc *p, struct reg *regs));
 #endif
-int	process_set_pc __P((struct proc *p, u_int addr));
+int	process_set_pc __P((struct proc *p, caddr_t addr));
 int	process_sstep __P((struct proc *p, int sstep));
 #ifdef PT_SETFPREGS
 int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
@@ -79,13 +78,9 @@ int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
 int	process_write_regs __P((struct proc *p, struct reg *regs));
 #endif
 
-/* do a single-stepping fixup, if needed */
-#define FIX_SSTEP(p) { \
-	if ((p)->p_flag & P_SSTEP) { \
-		process_fix_sstep(p); \
-		(p)->p_flag &= ~P_SSTEP; \
-	} \
-}        
+#ifndef FIX_SSTEP
+#define FIX_SSTEP(p)
+#endif
 
 #else /* !KERNEL */
 
