@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.19 2002/06/11 07:17:15 lukem Exp $	*/
+/*	$NetBSD: apropos.c,v 1.20 2002/09/13 20:16:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.19 2002/06/11 07:17:15 lukem Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.20 2002/09/13 20:16:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: apropos.c,v 1.19 2002/06/11 07:17:15 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <man/config.h>
+#include <man/manconf.h>
 #include <man/pathnames.h>
 
 static int *found, foundman;
