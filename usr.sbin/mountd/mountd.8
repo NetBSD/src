@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.12 1997/03/08 13:51:12 mouse Exp $
+.\"	$NetBSD: mountd.8,v 1.13 1997/03/23 20:58:16 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,10 +68,10 @@ Enable debugging mode.
 will not detach from the controlling terminal and will print
 debugging messages to stderr.
 .It Fl n
-Do not require that clients make mount requests from reserved ports.
-(Normally, only mount requsts from reserved ports are accepted.)
-This option should only be specified if there are clients, such as PC's,
-that need it.
+Do not require that clients make requests from reserved ports.
+This option is only provided for backwards compatibility. Requests
+are checked for reserved ports on a per-export basis, see
+.Xr exports 5 .
 .It Ar exportsfile
 The
 .Ar exportsfile

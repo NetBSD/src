@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.35 1996/10/07 22:33:15 cgd Exp $	*/
+/*	$NetBSD: mountd.c,v 1.36 1997/03/23 20:58:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,12 @@
  * SUCH DAMAGE.
  */
 
+
+/*
+ * XXX The ISO support can't possibly work..
+ */
+
+
 #ifndef lint
 static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
@@ -46,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.35 1996/10/07 22:33:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.36 1997/03/23 20:58:18 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,6 +97,7 @@ struct mountlist {
 	struct mountlist *ml_next;
 	char	ml_host[RPCMNT_NAMELEN+1];
 	char	ml_dirp[RPCMNT_PATHLEN+1];
+	int	ml_flag;		/* XXX more flags (same as dp_flag) */
 };
 
 struct dirlist {
@@ -104,6 +111,7 @@ struct dirlist {
 #define	DP_DEFSET	0x1
 #define DP_HOSTSET	0x2
 #define DP_KERB		0x4
+#define DP_NORESPORT	0x8
 
 struct exportlist {
 	struct exportlist *ex_next;
@@ -117,8 +125,8 @@ struct exportlist {
 #define	EX_LINKED	0x1
 
 struct netmsk {
-	u_long	nt_net;
-	u_long	nt_mask;
+	u_int32_t	nt_net;
+	u_int32_t	nt_mask;
 	char *nt_name;
 };
 
@@ -157,11 +165,11 @@ struct fhreturn {
 char	*add_expdir __P((struct dirlist **, char *, int));
 void	add_dlist __P((struct dirlist **, struct dirlist *,
 				struct grouplist *, int));
-void	add_mlist __P((char *, char *));
+void	add_mlist __P((char *, char *, int));
 int	check_dirpath __P((char *));
 int	check_options __P((struct dirlist *));
-int	chk_host __P((struct dirlist *, u_long, int *, int *));
-void	del_mlist __P((char *, char *));
+int	chk_host __P((struct dirlist *, u_int32_t, int *, int *));
+int	del_mlist __P((char *, char *, struct sockaddr *));
 struct dirlist *dirp_search __P((struct dirlist *, char *));
 int	do_mount __P((struct exportlist *, struct grouplist *, int,
 		struct ucred *, char *, int, struct statfs *));
@@ -189,7 +197,7 @@ void	nextfield __P((char **, char **));
 void	out_of_mem __P((void));
 void	parsecred __P((char *, struct ucred *));
 int	put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
-int	scan_tree __P((struct dirlist *, u_long));
+int	scan_tree __P((struct dirlist *, u_int32_t));
 void	send_umntall __P((void));
 int	umntall_each __P((caddr_t, struct sockaddr_in *));
 int	xdr_dir __P((XDR *, char *));
@@ -217,7 +225,6 @@ struct ucred def_anon = {
 	0,
 	{ }
 };
-int resvport_only = 1;
 int opt_flags;
 /* Bits for above */
 #define	OP_MAPROOT	0x01
@@ -227,6 +234,7 @@ int opt_flags;
 #define	OP_NET		0x10
 #define	OP_ISO		0x20
 #define	OP_ALLDIRS	0x40
+#define OP_NORESPORT	0x80
 
 int debug = 0;
 void	SYSLOG __P((int, const char *, ...));
@@ -253,7 +261,6 @@ main(argc, argv)
 			debug = 1;
 			break;
 		case 'n':
-			resvport_only = 0;
 			break;
 		case 'r':
 			/* Compatibility */
@@ -331,16 +338,16 @@ mntsrv(rqstp, transp)
 	struct stat stb;
 	struct statfs fsb;
 	struct hostent *hp;
-	u_long saddr;
+	struct in_addr saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
 	long bad = ENOENT;
-	int defset, hostset;
+	int defset, hostset, ret;
 	sigset_t sighup_mask;
 
 	sigemptyset(&sighup_mask);
 	sigaddset(&sighup_mask, SIGHUP);
-	saddr = transp->xp_raddr.sin_addr.s_addr;
+	saddr = transp->xp_raddr.sin_addr;
 	sport = ntohs(transp->xp_raddr.sin_port);
 	hp = (struct hostent *)NULL;
 	switch (rqstp->rq_proc) {
@@ -349,10 +356,6 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_MOUNT:
-		if (sport >= IPPORT_RESERVED && resvport_only) {
-			svcerr_weakauth(transp);
-			return;
-		}
 		if (!svc_getargs(transp, xdr_dir, rpcpath)) {
 			svcerr_decode(transp);
 			return;
@@ -378,11 +381,19 @@ mntsrv(rqstp, transp)
 		sigprocmask(SIG_BLOCK, &sighup_mask, NULL);
 		ep = ex_search(&fsb.f_fsid);
 		hostset = defset = 0;
-		if (ep && (chk_host(ep->ex_defdir, saddr, &defset, &hostset) ||
-		    ((dp = dirp_search(ep->ex_dirl, dirpath)) &&
-		     chk_host(dp, saddr, &defset, &hostset)) ||
-		     (defset && scan_tree(ep->ex_defdir, saddr) == 0 &&
-		      scan_tree(ep->ex_dirl, saddr) == 0))) {
+		if (ep && (chk_host(ep->ex_defdir, saddr.s_addr, &defset,
+		    &hostset) || ((dp = dirp_search(ep->ex_dirl, dirpath)) &&
+		     chk_host(dp, saddr.s_addr, &defset, &hostset)) ||
+		     (defset && scan_tree(ep->ex_defdir, saddr.s_addr) == 0 &&
+		      scan_tree(ep->ex_dirl, saddr.s_addr) == 0))) {
+			if (sport >= IPPORT_RESERVED &&
+			    !(hostset & DP_NORESPORT)) {
+				syslog(LOG_NOTICE,
+				       "Refused mount RPC from host %s port %d",
+				       inet_ntoa(saddr), sport);
+				svcerr_weakauth(transp);
+				return;
+			}
 			if (hostset & DP_HOSTSET)
 				fhr.fhr_flag = hostset;
 			else
@@ -405,10 +416,10 @@ mntsrv(rqstp, transp)
 				hp = gethostbyaddr((caddr_t)&saddr,
 				    sizeof(saddr), AF_INET);
 			if (hp)
-				add_mlist(hp->h_name, dirpath);
+				add_mlist(hp->h_name, dirpath, hostset);
 			else
 				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
-					dirpath);
+					dirpath, hostset);
 			if (debug)
 				fprintf(stderr, "Mount successful.\n");
 		} else {
@@ -423,32 +434,38 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_UMOUNT:
-		if (sport >= IPPORT_RESERVED && resvport_only) {
-			svcerr_weakauth(transp);
-			return;
-		}
 		if (!svc_getargs(transp, xdr_dir, dirpath)) {
 			svcerr_decode(transp);
 			return;
 		}
-		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
-			syslog(LOG_ERR, "Can't send reply");
 		hp = gethostbyaddr((caddr_t)&saddr, sizeof(saddr), AF_INET);
 		if (hp)
-			del_mlist(hp->h_name, dirpath);
-		del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), dirpath);
-		return;
-	case RPCMNT_UMNTALL:
-		if (sport >= IPPORT_RESERVED && resvport_only) {
+			ret = del_mlist(hp->h_name, dirpath,
+			    (struct sockaddr *)&transp->xp_raddr);
+		ret |= del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), dirpath,
+			    (struct sockaddr *)&transp->xp_raddr);
+		if (ret) {
 			svcerr_weakauth(transp);
 			return;
 		}
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
 			syslog(LOG_ERR, "Can't send reply");
+		return;
+	case RPCMNT_UMNTALL:
 		hp = gethostbyaddr((caddr_t)&saddr, sizeof(saddr), AF_INET);
 		if (hp)
-			del_mlist(hp->h_name, (char *)NULL);
-		del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), (char *)NULL);
+			ret = del_mlist(hp->h_name, (char *)NULL,
+			    (struct sockaddr *)&transp->xp_raddr);
+		ret |= del_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
+			    (char *)NULL,
+			    (struct sockaddr *)&transp->xp_raddr);
+		if (ret) {
+			svcerr_weakauth(transp);
+			return;
+		}
+			
+		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
+			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_EXPORT:
 		if (!svc_sendreply(transp, xdr_explist, (caddr_t)NULL))
@@ -1040,10 +1057,14 @@ hang_dirp(dp, grp, ep, flags)
 			ep->ex_defdir->dp_flag |= DP_DEFSET;
 			if (flags & OP_KERB)
 				ep->ex_defdir->dp_flag |= DP_KERB;
+			if (flags & OP_NORESPORT)
+				ep->ex_defdir->dp_flag |= DP_NORESPORT;
 		} else while (grp) {
 			hp = get_ht();
 			if (flags & OP_KERB)
 				hp->ht_flag |= DP_KERB;
+			if (flags & OP_NORESPORT)
+				hp->ht_flag |= DP_NORESPORT;
 			hp->ht_grp = grp;
 			hp->ht_next = ep->ex_defdir->dp_hosts;
 			ep->ex_defdir->dp_hosts = hp;
@@ -1102,6 +1123,8 @@ add_dlist(dpp, newdp, grp, flags)
 			hp = get_ht();
 			if (flags & OP_KERB)
 				hp->ht_flag |= DP_KERB;
+			if (flags & OP_NORESPORT)
+				hp->ht_flag |= DP_NORESPORT;
 			hp->ht_grp = grp;
 			hp->ht_next = dp->dp_hosts;
 			dp->dp_hosts = hp;
@@ -1111,6 +1134,8 @@ add_dlist(dpp, newdp, grp, flags)
 		dp->dp_flag |= DP_DEFSET;
 		if (flags & OP_KERB)
 			dp->dp_flag |= DP_KERB;
+		if (flags & OP_NORESPORT)
+			dp->dp_flag |= DP_NORESPORT;
 	}
 }
 
@@ -1142,7 +1167,7 @@ dirp_search(dp, dirpath)
 int
 chk_host(dp, saddr, defsetp, hostsetp)
 	struct dirlist *dp;
-	u_long saddr;
+	u_int32_t saddr;
 	int *defsetp;
 	int *hostsetp;
 {
@@ -1188,7 +1213,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 int
 scan_tree(dp, saddr)
 	struct dirlist *dp;
-	u_long saddr;
+	u_int32_t saddr;
 {
 	int defset, hostset;
 
@@ -1302,6 +1327,9 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			opt_flags |= OP_NET;
 		} else if (!strcmp(cpopt, "alldirs")) {
 			opt_flags |= OP_ALLDIRS;
+		} else if (!strcmp(cpopt, "noresport")) {
+			opt_flags |= OP_NORESPORT;
+			*exflagsp |= MNT_EXNORESPORT;
 #ifdef ISO
 		} else if (cpoptarg && !strcmp(cpopt, "iso")) {
 			if (get_isoaddr(cpoptarg, grp)) {
@@ -1344,7 +1372,7 @@ get_host(cp, grp)
 	char **addrp, **naddrp;
 	struct hostent t_host;
 	int i;
-	u_long saddr;
+	u_int32_t saddr;
 	char *aptr[2];
 
 	if (grp->gr_type != GT_NULL)
@@ -1523,7 +1551,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct msdosfs_args da;
 		struct adosfs_args aa;
 	} args;
-	u_long net;
+	u_int32_t net;
 
 	args.ua.fspec = 0;
 	args.ua.export.ex_flags = exflags;
@@ -1876,20 +1904,31 @@ get_mountlist()
 	fclose(mlfile);
 }
 
-void
-del_mlist(hostp, dirp)
+int
+del_mlist(hostp, dirp, saddr)
 	char *hostp, *dirp;
+	struct sockaddr *saddr;
 {
 	struct mountlist *mlp, **mlpp;
 	struct mountlist *mlp2;
+	struct sockaddr_in *sin = (struct sockaddr_in *)saddr;
 	FILE *mlfile;
-	int fnd = 0;
+	int fnd = 0, ret = 0;
 
 	mlpp = &mlhead;
 	mlp = mlhead;
 	while (mlp) {
 		if (!strcmp(mlp->ml_host, hostp) &&
 		    (!dirp || !strcmp(mlp->ml_dirp, dirp))) {
+			if (!(mlp->ml_flag & DP_NORESPORT) &&
+			    ntohs(sin->sin_port) >= IPPORT_RESERVED) {
+				syslog(LOG_NOTICE,
+				   "Umount request for %s:%s from %s refused\n",
+				   mlp->ml_host, mlp->ml_dirp,
+			 	   inet_ntoa(sin->sin_addr));
+				ret = -1;
+				continue;
+			}
 			fnd = 1;
 			mlp2 = mlp;
 			*mlpp = mlp = mlp->ml_next;
@@ -1911,11 +1950,13 @@ del_mlist(hostp, dirp)
 		}
 		fclose(mlfile);
 	}
+	return ret;
 }
 
 void
-add_mlist(hostp, dirp)
+add_mlist(hostp, dirp, flags)
 	char *hostp, *dirp;
+	int flags;
 {
 	struct mountlist *mlp, **mlpp;
 	FILE *mlfile;
@@ -1933,6 +1974,7 @@ add_mlist(hostp, dirp)
 	mlp->ml_host[RPCMNT_NAMELEN] = '\0';
 	strncpy(mlp->ml_dirp, dirp, RPCMNT_PATHLEN);
 	mlp->ml_dirp[RPCMNT_PATHLEN] = '\0';
+	mlp->ml_flag = flags;
 	mlp->ml_next = (struct mountlist *)NULL;
 	*mlpp = mlp;
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {
