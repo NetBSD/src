@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 1997/07/07 22:27:09 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.8 1997/07/22 23:13:31 phil Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -39,7 +39,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std rz0 rz1 rz2 rz3 rz4 tz0 tz1
+	sh MAKEDEV std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
 	sh MAKEDEV cd0
 	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV tun0 tun1 tun2 tun3
@@ -62,10 +62,16 @@ std)
 	mknod stdin		c 7 0	; chmod 666 stdin
 	mknod stdout		c 7 1	; chmod 666 stdout
 	mknod stderr		c 7 2	; chmod 666 stderr
+	;;
+
+fd)
+	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 7 %d;", i, i)}'`)
+	n=0
+	while [ $n -lt 64 ]; do
+		mknod fd/$n c 7 $n
+		n=$(($n + 1))
+	done
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
