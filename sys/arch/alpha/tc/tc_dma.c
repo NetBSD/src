@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $ */
+/* $NetBSD: tc_dma.c,v 1.6 1998/05/07 20:09:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.6 1998/05/07 20:09:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,25 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $");
 
 #include <dev/tc/tcvar.h>
 
-int	tc_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	tc_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	tc_bus_dmamap_load_uio_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	tc_bus_dmamap_load_raw_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-
-
 struct alpha_bus_dma_tag tc_dmat_direct = {
 	NULL,				/* _cookie */
+	0,				/* _wbase */
 	NULL,				/* _get_tag */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
-	tc_bus_dmamap_load_direct,
-	tc_bus_dmamap_load_mbuf_direct,
-	tc_bus_dmamap_load_uio_direct,
-	tc_bus_dmamap_load_raw_direct,
+	_bus_dmamap_load_direct,
+	_bus_dmamap_load_mbuf_direct,
+	_bus_dmamap_load_uio_direct,
+	_bus_dmamap_load_raw_direct,
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
@@ -87,68 +78,4 @@ tc_dma_init()
 		alpha_XXX_dmamap_or = 0;			/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
-}
-
-/*
- * Load a TurboChannel direct-mapped DMA map with a linear buffer.
- */
-int
-tc_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-
-	return (_bus_dmamap_load_direct_common(t, map, buf, buflen, p,
-	    flags, 0));
-}
-
-/*
- * Load a TurboChannel direct-mapped DMA map with an mbuf chain.
- */
-int
-tc_bus_dmamap_load_mbuf_direct(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
-{
-
-	return (_bus_dmamap_load_mbuf_direct_common(t, map, m,
-	    flags, 0));
-}
-
-/*
- * Load a TurboChannel direct-mapped DMA map with a uio.
- */
-int
-tc_bus_dmamap_load_uio_direct(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-{
-
-	return (_bus_dmamap_load_uio_direct_common(t, map, uio,
-	    flags, 0));
-}
-
-/*
- * Load a TurboChannel direct-mapped DMA map with raw memory.
- */
-int
-tc_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
-{
-
-	return (_bus_dmamap_load_raw_direct_common(t, map, segs, nsegs,
-	    size, flags, 0));
 }
