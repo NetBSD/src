@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.2 2001/07/25 23:53:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.3 2001/08/06 20:51:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 
 
 int
-pthread_cond_broadacst(pthread_cond_t *cond)
+pthread_cond_broadcast(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
 	struct pt_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
