@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.3.2.2 2002/11/18 01:04:18 he Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.3.2.3 2002/11/18 01:16:24 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,23 +42,20 @@
 #include <sys/types.h>
 
 static __inline u_int32_t
-__byte_swap_long_variable(u_int32_t v)
+__byte_swap_32_variable(u_int32_t v)
 {
-	int tmp;
+	u_int32_t t1;
 
-	__asm __volatile(
-		"eor	%1, %2, %2, ror #16\n"
-		"bic	%1, %1, #0x00ff0000\n"
-		"mov	%0, %2, ror #8\n"
-		"eor	%0, %0, %1, lsr #8"
-	: "=r" (v), "=&r" (tmp)
-	: "0" (v));
+	t1 = v ^ ((v << 16) | (v >> 16));
+	t1 &= 0xff00ffff;
+	v = (v >> 8) | (v << 24);
+	v ^= (t1 >> 8);
 
 	return (v);
 }
 
 static __inline u_int16_t
-__byte_swap_word_variable(u_int16_t v)
+__byte_swap_16_variable(u_int16_t v)
 {
 
 	__asm __volatile(
@@ -73,28 +70,28 @@ __byte_swap_word_variable(u_int16_t v)
 
 #ifdef __OPTIMIZE__
 
-#define __byte_swap_long_constant(x)	\
+#define __byte_swap_32_constant(x)	\
 	((((x) & 0xff000000) >> 24) |	\
 	 (((x) & 0x00ff0000) >>  8) |	\
 	 (((x) & 0x0000ff00) <<  8) |	\
 	 (((x) & 0x000000ff) << 24))
 
-#define	__byte_swap_word_constant(x)	\
+#define	__byte_swap_16_constant(x)	\
 	((((x) & 0xff00) >> 8) |	\
 	 (((x) & 0x00ff) << 8))
 
-#define	__byte_swap_long(x)		\
+#define	__byte_swap_32(x)		\
 	(__builtin_constant_p((x)) ?	\
-	 __byte_swap_long_constant(x) :	__byte_swap_long_variable(x))
+	 __byte_swap_32_constant(x) :	__byte_swap_32_variable(x))
 
-#define	__byte_swap_word(x)		\
+#define	__byte_swap_16(x)		\
 	(__builtin_constant_p((x)) ?	\
-	 __byte_swap_word_constant(x) : __byte_swap_word_variable(x))
+	 __byte_swap_16_constant(x) : __byte_swap_16_variable(x))
 
 #else
 
-#define	__byte_swap_long(x)	__byte_swap_long_variable(x)
-#define	__byte_swap_word(x)	__byte_swap_word_variable(x)
+#define	__byte_swap_32(x)	__byte_swap_32_variable(x)
+#define	__byte_swap_16(x)	__byte_swap_16_variable(x)
 
 #endif /* __OPTIMIZE__ */
 
