@@ -1,4 +1,4 @@
-/* $NetBSD: undefined.c,v 1.5 1996/10/13 03:06:00 christos Exp $ */
+/* $NetBSD: undefined.c,v 1.6 1996/10/15 02:14:21 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -62,6 +62,7 @@
 #include <machine/katelib.h>
 #include <machine/undefined.h>
 #include <machine/irqhandler.h>
+#include <machine/trap.h>
 
 #ifdef FAST_FPE
 extern int want_resched;
@@ -73,10 +74,11 @@ u_int disassemble __P((u_int));
 
 
 int
-default_undefined_handler(address, instruction, frame)
+default_undefined_handler(address, instruction, frame, fault_code)
 	u_int address;
 	u_int instruction;
 	trapframe_t *frame;
+	int fault_code;
 {
 	struct proc *p;
 
@@ -100,10 +102,6 @@ install_coproc_handler(coproc, handler)
 		handler = default_undefined_handler;
       
 	undefined_handlers[coproc] = handler;
-#ifdef SA110
-	idcflush();
-	tlbflush();
-#endif
 	return(0);
 }
 
@@ -155,27 +153,20 @@ undefinedinstruction(frame)
 /*
  * According to the datasheets you only need to look at bit 27 of the instruction
  * to tell the difference between and undefined instruction and a
- * coprocessor instruction.
+ * coprocessor instruction following an undefined instruction trap.
  */
 
 	if ((fault_instruction & (1 << 27)) != 0)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
-	else {
+	else
 		coprocessor = 0;
-		s = splhigh();
-		disassemble(fault_pc);
-		(void)splx(s);
-	}
 		
 /* Get the current proc structure or proc0 if there is none */
 
 	if ((p = curproc) == 0)
 		p = &proc0;
 
-/*	printf("fault in process %08x %d\n", p, p->p_pid);*/
-
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-/*		printf("USR32 mode : %08x\n", frame->tf_spsr);*/
 		sticks = p->p_sticks;
                   
 /* Modify the fault_code to reflect the USR/SVC state at time of fault */
@@ -205,9 +196,17 @@ undefinedinstruction(frame)
 	(void)splx(s);
 */
 
-	if ((undefined_handlers[coprocessor](fault_pc, fault_instruction,
-	    frame)) != 0) {
-		s = splhigh();
+	/* Special cases */
+
+	if (coprocessor == 0 && fault_instruction == USER_BREAKPOINT
+	    && fault_code == FAULT_USER) {
+		frame->tf_pc -= 4;	/* Adjust to point to the BP */
+		trapsignal(curproc, SIGTRAP, 0);
+	} else if ((undefined_handlers[coprocessor](fault_pc, fault_instruction,
+	    frame, fault_code)) != 0) {
+		/* Fault has not been handled */
+
+		s = spltty();
 
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
 			printf("CDP\n");
@@ -221,7 +220,7 @@ undefinedinstruction(frame)
 			printf("MRC/MCR\n");
 			disassemble(fault_pc);
 		}
-		else {
+		else if (fault_instruction != 0xe7ffffff) {
 			printf("Undefined instruction\n");
 			disassemble(fault_pc);
 		}
@@ -322,7 +321,7 @@ resethandler(frame)
 	validate_trapframe(frame, 4);
 #endif
 #else
-	panic("Branch through zero..... were dead\n");
+	panic("Branch to never-never land (zero)..... were dead\n");
 #endif
 }
 
