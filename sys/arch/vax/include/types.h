@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.13.2.1 1998/07/30 14:03:58 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.13.2.2 1998/08/12 02:51:11 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,6 +46,8 @@ typedef struct label_t {
 } label_t;
 #endif
 
+/* NB: This should probably be if defined(_KERNEL) */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 
@@ -53,6 +55,7 @@ typedef vm_offset_t	paddr_t;
 typedef vm_size_t	psize_t;
 typedef vm_offset_t	vaddr_t;
 typedef vm_size_t	vsize_t;
+#endif
 
 /*
  * Basic integral types.  Omit the typedef if
