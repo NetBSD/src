@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1997/02/02 08:54:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1997/06/10 19:51:47 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -347,7 +347,7 @@ pmap_bootstrap_alloc(size)
 		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
 	avail_start += size;
 #ifdef MACHINE_NONCONTIG
-	avail_remaining -= x68k_btop(size);
+	avail_remaining -= m68k_btop(size);
 	/* XXX hope this doesn't pop it into the next range: */
 	avail_next += size;
 #endif
@@ -384,7 +384,7 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) IODEVbase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, x68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
+			   &addr, m68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)IODEVbase)
 		goto bogons;
 	addr = (vm_offset_t) Sysmap;
@@ -1196,7 +1196,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap_ste_v(pmap, va))
 		pmap_enter_ptpage(pmap, va);
 
-	pa = x68k_trunc_page(pa);
+	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
 #ifdef DEBUG
@@ -1954,7 +1954,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(x68k_ptob(ppn));
+	return(m68k_ptob(ppn));
 }
 
 #ifdef COMPAT_HPUX
@@ -2793,10 +2793,10 @@ pmap_page_index(pa)
 	index = 0;
 	for (i = 0; i < numranges; i++) {
 		if (pa >= low[i] && pa < high[i]) {
-			index += x68k_btop (pa - low[i]);
+			index += m68k_btop (pa - low[i]);
 			return index;
 		}
-		index += x68k_btop (high[i] - low[i]);
+		index += m68k_btop (high[i] - low[i]);
 	}
 	return -1;
 }
