@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.168 2002/04/22 09:41:22 augustss Exp $
+#	$NetBSD: files.pci,v 1.169 2002/04/22 15:45:19 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -148,6 +148,8 @@ file	dev/pci/siop_pci_common.c	siop_pci_common
 # device declaration in sys/conf/files
 attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c		siop_pci
+attach	esiop at pci with esiop_pci: siop_pci_common
+file	dev/pci/esiop_pci.c		esiop_pci
 
 # Initio INIC-940/950 SCSI controllers
 attach	iha at pci with iha_pci
