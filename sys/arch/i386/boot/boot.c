@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.12 1993/09/07 07:35:41 mycroft Exp $
+ *	$Id: boot.c,v 1.13 1993/11/13 16:31:48 ws Exp $
  */
 
 /*
@@ -82,7 +82,7 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.12 $");
+		"$Revision: 1.13 $");
 	gateA20();
 loadstart:
 	/***************************************************************\
@@ -159,10 +159,6 @@ loadprog(howto)
 			printf("kernel too big, won't fit in 640K with bss\n");
 			printf("Only hope is to link the kernel for > 1MB\n");
 			return;
-		}
-		if((addr + head.a_text + head.a_data + head.a_bss) > ouraddr)
-		{
-			printf("loader overlaps bss, kernel must bzero\n");
 		}
 	}
 	printf("text=0x%x ", head.a_text);
@@ -275,9 +271,14 @@ loadprog(howto)
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
 	printf("entry=0x%x\n" ,((int)startaddr) & 0xffffff);
-	/* Under no circumstances overwrite precious BIOS variables! */
-	pcpy(tmpbuf, addr0, 0x400);
-	pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
+	if (addr0) {
+		/* No BIOS variables here! */
+		pcpy(tmpbuf, addr0, 4096);
+	} else {
+		/* Under no circumstances overwrite precious BIOS variables! */
+		pcpy(tmpbuf, addr0, 0x400);
+		pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
+	}
 	startprog(((int)startaddr & 0xffffff),argv);
 }
 
