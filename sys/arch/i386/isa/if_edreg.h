@@ -1,35 +1,7 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Id: if_edreg.h,v 1.4.2.2 1993/10/29 04:37:29 mycroft Exp $
- *
- * Modification history
- *
- * Revision 2.0  93/09/29  00:37:15  davidg
- * changed double buffering flag to multi buffering
- * made changes/additions for 3c503 multi-buffering
- * ...companion to Rev. 2.0 of 'ed' driver.
- * 
- * Revision 1.6  93/09/28  17:20:03  davidg
- * first cut at PIO (e.g. NE1000/2000) support
- * 
- * Revision 1.5  93/08/25  20:38:34  davidg
- * added define for card type WD8013WC (10BaseT)
- * 
- * Revision 1.4  93/08/14  20:07:55  davidg
- * fix board type definition for 8013EP
- * 
- * Revision 1.3  93/07/20  15:25:25  davidg
- * added config flags for forcing 8/16bit mode and disabling double
- * xmit buffers.
- * 
- * Revision 1.2  93/06/23  03:03:05  davidg
- * added some additional definitions for the 83C584 bus interface
- * chip (SMC/WD boards)
- * 
- * Revision 1.1  93/06/23  03:01:07  davidg
- * Initial revision
- * 
+ * $Id: if_edreg.h,v 1.4.2.3 1994/02/02 10:58:15 mycroft Exp $
  */
 
 /*
@@ -614,6 +586,11 @@ struct ed_ring	{
 #define ED_WD_MSR_ADDR	0x3f	/* Memory decode bits 18-13 */
 #define ED_WD_MSR_MENB	0x40	/* Memory enable */
 #define ED_WD_MSR_RST	0x80	/* Reset board */
+#ifdef TOSH_ETHER
+#define	ED_WD_MSR_POW	0x02	/* 0 = power save, 1 = normal (R/W) */
+#define	ED_WD_MSR_BSY	0x04	/* gate array busy (R) */
+#define	ED_WD_MSR_LEN	0x20	/* 0 = 16-bit, 1 = 8-bit (R/W) */
+#endif
 
 /*
  * Interface Configuration Register (ICR)
@@ -628,6 +605,14 @@ struct ed_ring	{
 #define ED_WD_ICR_RX7	0x20	/* recall all but i/o and LAN address */
 #define	ED_WD_ICR_RIO	0x40	/* recall i/o address */
 #define ED_WD_ICR_STO	0x80	/* store to non-volatile memory */
+#ifdef TOSH_ETHER
+#define	ED_WD_ICR_MEM	0xe0	/* shared mem address A15-A13 (R/W) */
+#define	ED_WD_ICR_MSZ1	0x0f	/* memory size, 0x08 = 64K, 0x04 = 32K,
+				   0x02 = 16K, 0x01 = 8K */
+				/* 64K can only be used if mem address
+				   above 1MB */
+				/* IAR holds address A23-A16 (R/W) */
+#endif
 
 /*
  * IO Address Register (IAR)
@@ -687,10 +672,17 @@ struct ed_ring	{
 #define ED_TYPE_WD8003S		0x02
 #define ED_TYPE_WD8003E		0x03
 #define ED_TYPE_WD8013EBT	0x05
+#define	ED_TYPE_TOSHIBA1	0x11	/* named PCETA1 */
+#define	ED_TYPE_TOSHIBA2	0x12	/* named PCETA2 */
+#define	ED_TYPE_TOSHIBA3	0x13	/* named PCETB */
+#define	ED_TYPE_TOSHIBA4	0x14	/* named PCETC */
+#define	ED_TYPE_WD8013W		0x26
 #define ED_TYPE_WD8013EP	0x27
 #define ED_TYPE_WD8013WC	0x28
 #define ED_TYPE_WD8013EBP	0x2c
 #define ED_TYPE_WD8013EPC	0x29
+#define	ED_TYPE_SMC8216T	0x2a
+#define	ED_TYPE_SMC8216C	0x2b
 
 /* Bit definitions in card ID */
 #define	ED_WD_REV_MASK		0x1f		/* Revision mask */
@@ -701,7 +693,11 @@ struct ed_ring	{
 /*
  * Checksum total. All 8 bytes in station address PROM will add up to this
  */
+#ifdef TOSH_ETHER
+#define ED_WD_ROM_CHECKSUM_TOTAL	0xA5
+#else
 #define ED_WD_ROM_CHECKSUM_TOTAL	0xFF
+#endif
 
 #define ED_WD_NIC_OFFSET	0x10		/* I/O base offset to NIC */
 #define ED_WD_ASIC_OFFSET	0		/* I/O base offset to ASIC */
