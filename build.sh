@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.30 2001/12/04 04:28:23 jmc Exp $
+#  $NetBSD: build.sh,v 1.31 2001/12/09 06:07:16 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -344,7 +344,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.30 2001/12/04 04:28:23 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.31 2001/12/09 06:07:16 jmc Exp $
 #
 
 EOF
@@ -367,5 +367,9 @@ elif $do_buildonlytools; then
 		$runcmd $makewrapper obj-tools || exit 1
 	fi
 	$runcmd cd tools
-	${runcmd-exec} $makewrapper cleandir dependall install
+	if [ "$UPDATE" = "" ]; then
+		${runcmd-exec} $makewrapper cleandir dependall install
+	else
+		${runcmd-exec} $makewrapper dependall install
+	fi
 fi
