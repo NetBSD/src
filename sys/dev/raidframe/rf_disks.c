@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.7 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.8 1999/03/18 03:02:38 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -652,7 +652,20 @@ rf_CheckLabels( raidPtr, cfgPtr )
 			/* Locate the maverick component */
 			if (mod_count[1] > mod_count[0]) {
 				mod_number = mod_values[1];
-			} 
+			} else if (mod_count[1] < mod_count[0]) {
+				mod_number = mod_values[0];
+			} else {
+				/* counts of different modification values
+				   are the same.   Assume greater value is 
+				   the correct one, all other things 
+				   considered */
+				if (mod_values[0] > mod_values[1]) {
+					mod_number = mod_values[0];
+				} else {
+					mod_number = mod_values[1];
+				}
+				
+			}
 			for (r = 0; r < raidPtr->numRow && !too_fatal ; r++) {
 				for (c = 0; c < raidPtr->numCol; c++) {
 					ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
