@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2003/08/20 21:48:49 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2003/09/16 15:49:06 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8 2003/08/20 21:48:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2003/09/16 15:49:06 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -395,6 +395,11 @@ copyfault:
 
 		cr2 = rcr2();
 		KERNEL_PROC_LOCK(l);
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)cr2;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -456,6 +461,7 @@ faultcommon:
 				KERNEL_UNLOCK();
 				return;
 			}
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
@@ -488,8 +494,10 @@ faultcommon:
 		}
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK();
-		else
+		else {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
+		}
 		break;
 	}
 
