@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.56 2004/09/17 14:11:27 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.57 2004/09/21 03:10:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.56 2004/09/17 14:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.57 2004/09/21 03:10:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1343,6 +1343,7 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 			vp->v_data = NULL;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
+			vp->v_flag &= ~VLOCKSWORK;
 			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
