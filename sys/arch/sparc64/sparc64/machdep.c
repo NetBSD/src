@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1998/09/22 02:48:44 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.19 1998/10/06 18:58:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -385,14 +385,6 @@ cpu_startup()
 	configure();
 
 #if 0
-	/*
-	 * Re-zero proc0's user area, to nullify the effect of the
-	 * stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 * XXX - there's a race here, as interrupts are enabled
-	 */
-	bzero(proc0paddr, sizeof(struct user));
-
 	pmap_redzone();
 #endif
 }
