@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.20 2001/06/12 15:17:17 wiz Exp $	*/
+/*	$NetBSD: sfas.c,v 1.21 2001/07/28 18:12:45 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -199,14 +199,14 @@ sfasinitialize(dev)
  * Setup bump buffer.
  */
 	dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map, dev->sc_bump_sz);
-	(void) pmap_extract(kernel_pmap, (vaddr_t)dev->sc_bump_va,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)dev->sc_bump_va,
 	    (paddr_t *)&dev->sc_bump_pa);
 
 /*
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = pmap_pte(kernel_pmap, (vm_offset_t)dev->sc_bump_va);
+	pte = pmap_pte(pmap_kernel(), (vm_offset_t)dev->sc_bump_va);
 	*pte &= ~(PT_C | PT_B);
 	cpu_tlb_flushD();
 	cpu_cache_purgeD_rng((vm_offset_t)dev->sc_bump_va, NBPG);
