@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2002/01/10 19:49:10 thorpej Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -16,12 +16,12 @@ SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
+CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64
 #CPPFLAGS+=	-DNETIF_DEBUG 
 
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
-OBJCOPY?=	objcopy
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 

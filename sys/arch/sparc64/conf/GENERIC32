@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.16.2.2 2001/09/13 01:14:38 thorpej Exp $
+# 	$NetBSD: GENERIC32,v 1.16.2.3 2002/01/10 19:49:11 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.16.2.2 $"
+#ident 		"GENERIC-$Revision: 1.16.2.3 $"
 
 maxusers	64
 
@@ -12,7 +12,7 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options 	SUN4U		# sun4u - UltraSPARC
-#options 	_LP64		# we're using a 64-bit compiler
+#options 	BLINK		# blink the system LED
 
 ## System options specific to the sparc machine type
 
@@ -70,18 +70,18 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use.
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use.
 ## (0xc01 = ttya, 0xc02 = ttyb.)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -135,7 +135,6 @@ options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
 #options 	SYSCALL_DEBUG
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -160,7 +159,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -279,13 +278,16 @@ scsibus* at isp?
 siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
-# PCI SCSI controllers (untested)
-adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+# PCI SCSI controllers
+# 	UT marks untested.
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 scsibus* at scsi?
 
@@ -301,8 +303,12 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*     at pciide? channel ? drive ? flags 0x0000 #flags 0x0ff0
 atapibus* at pciide? channel ?
+
+## Disable UDMA 4 which causes data corruption on the Acer Labs
+## chipset on Sun Blade 100 and Netra X1 machines.
+wd*	at pciide? channel ? drive ? flags 0x0a00 # Disable UDMA 4
+
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
@@ -385,6 +391,7 @@ epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -419,33 +426,43 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
-#ohci*	at pci? dev ? function ?			# Open Host Controller
+ohci*	at pci? dev ? function ?			# Open Host Controller
 
-#usb*	at ohci?					# USB bus support
-#uhub*	at usb?						# USB Hubs
-#uhub*	at uhub? port ? configuration ? interface ?
+usb*	at ohci?					# USB bus support
+uhub*	at usb?						# USB Hubs
+uhub*	at uhub? port ? configuration ? interface ?
 
-#uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
-#ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+uhidev*	at uhub? port ? configuration ? interface ?	# USB HID
+uhid*	at uhidev? reportid ?				# USB Generic HID
 
-#umodem*	at uhub? port ? configuration ?			# USB Modem
-#ucom*	at umodem?
+ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
-#umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
+umodem*	at uhub? port ? configuration ?			# USB Modem
+ucom*	at umodem?
 
-#uaudio*	at uhub? port ? configuration ?			# USB audio
+umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
+atapibus* at umass? channel ?
+scsibus* at umass? channel ?
+
+uaudio*	at uhub? port ? configuration ?			# USB audio
 
 # USB Ethernet adapters
-#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
-#uscanner* at uhub? port ?				# USB scanners
-#uyap* at uhub? port ?					# Y@P firmware loader
-#ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+uscanner* at uhub? port ?				# USB scanners
+uyap* at uhub? port ?					# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
+# PCI IEEE1394 controllers
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+#fwlynx* at pci? dev ? function ?	# IEEE1394 TI Lynx Controller
+fw*	at fwbus?			# IP over 1394
+
+# IEEE1394 nodes
+#fwnode* at fwbus? oui ? devhi ? devlo ?
+#scsibus* at fwnode?
 
 ## Loopback network interface; required
 pseudo-device	loop
@@ -455,6 +472,9 @@ pseudo-device	sl		2
 
 ## PPP, the successor to SLIP.  See pppd(8).
 pseudo-device	ppp		2
+
+## PPP over Ethernet (RFC 2516)
+pseudo-device	pppoe
 
 ## Starmode Radio IP, a special hardware network device.
 pseudo-device	strip		1

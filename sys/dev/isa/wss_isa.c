@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.9.10.1 2001/08/03 04:13:11 lukem Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.9.10.2 2002/01/10 19:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -39,6 +39,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.9.10.2 2002/01/10 19:55:47 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -67,7 +71,8 @@ extern int	wssdebug;
 #define DPRINTF(x)
 #endif
 
-static int	wssfind __P((struct device *, struct wss_softc *, struct isa_attach_args *));
+static int	wssfind __P((struct device *, struct wss_softc *, int,
+		    struct isa_attach_args *));
 
 static void	madprobe __P((struct wss_softc *, int));
 static void	madunmap __P((struct wss_softc *));
@@ -89,12 +94,23 @@ wss_isa_probe(parent, match, aux)
     struct cfdata *match;
     void *aux;
 {
+    struct isa_attach_args *ia = aux;
     struct wss_softc probesc, *sc = &probesc;
     struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
 
+    if (ia->ia_nio < 1)
+	return 0;
+    if (ia->ia_nirq < 1)
+	return 0;
+    if (ia->ia_ndrq < 1)
+	return 0;
+
+    if (ISA_DIRECT_CONFIG(ia))
+	return 0;
+
     memset(sc, 0, sizeof *sc);
     ac->sc_dev.dv_cfdata = match;
-    if (wssfind(parent, sc, aux)) {
+    if (wssfind(parent, sc, 1, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
         ad1848_isa_unmap(&sc->sc_ad1848);
         madunmap(sc);
@@ -105,9 +121,10 @@ wss_isa_probe(parent, match, aux)
 }
 
 static int
-wssfind(parent, sc, ia)
+wssfind(parent, sc, probing, ia)
     struct device *parent;
     struct wss_softc *sc;
+    int probing;
     struct isa_attach_args *ia;
 {
     struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
@@ -115,66 +132,94 @@ wssfind(parent, sc, ia)
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
-    
+    int ndrq, playdrq, recdrq;
+
     sc->sc_iot = ia->ia_iot;
     if (ac->sc_dev.dv_cfdata->cf_flags & 1)
-	madprobe(sc, ia->ia_iobase);
+	madprobe(sc, ia->ia_io[0].ir_addr);
     else
 	sc->mad_chip_type = MAD_NONE;
 
 #if 0
-    if (!WSS_BASE_VALID(ia->ia_iobase)) {
+    if (!WSS_BASE_VALID(ia->ia_io[0].ir_addr)) {
 	DPRINTF(("wss: configured iobase %x invalid\n", ia->ia_iobase));
 	goto bad1;
     }
 #endif
 
     /* Map the ports upto the AD1848 port */
-    if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
+    if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, WSS_CODEC,
+        0, &sc->sc_ioh))
 	goto bad1;
 
     ac->sc_iot = sc->sc_iot;
 
     /* Is there an ad1848 chip at (WSS iobase + WSS_CODEC)? */
-    if (ad1848_isa_mapprobe(&sc->sc_ad1848, ia->ia_iobase + WSS_CODEC) == 0)
+    if (ad1848_isa_mapprobe(&sc->sc_ad1848,
+        ia->ia_io[0].ir_addr + WSS_CODEC) == 0)
 	goto bad;
-	
-    ia->ia_iosize = WSS_NPORT;
 
 #if 0
     /* Setup WSS interrupt and DMA */
-    if (!WSS_DRQ_VALID(ia->ia_drq)) {
-	DPRINTF(("wss: configured dma chan %d invalid\n", ia->ia_drq));
+    if (!WSS_DRQ_VALID(ia->ia_drq[0].ir_drq)) {
+	DPRINTF(("wss: configured dma chan %d invalid\n",
+	    ia->ia_drq[0].ir_drq));
 	goto bad;
     }
 #endif
-    sc->wss_playdrq = ia->ia_drq;
+    sc->wss_playdrq = ia->ia_drq[0].ir_drq;
     sc->wss_ic      = ia->ia_ic;
 
-    if (sc->wss_playdrq != DRQUNK && !isa_drq_isfree(sc->wss_ic, sc->wss_playdrq))
+    if (sc->wss_playdrq != ISACF_DRQ_DEFAULT &&
+        !isa_drq_isfree(sc->wss_ic, sc->wss_playdrq))
 	    goto bad;
 
 #if 0
-    if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	DPRINTF(("wss: configured interrupt %d invalid\n", ia->ia_irq));
+    if (!WSS_IRQ_VALID(ia->ia_irq[0].ir_irq)) {
+	DPRINTF(("wss: configured interrupt %d invalid\n",
+	    ia->ia_irq[0].ir_irq));
 	goto bad;
     }
 #endif
 
-    sc->wss_irq = ia->ia_irq;
+    sc->wss_irq = ia->ia_irq[0].ir_irq;
+
+    playdrq = ia->ia_drq[0].ir_drq;
+    if (ia->ia_ndrq > 1) {
+	ndrq = 2;
+	recdrq = ia->ia_drq[1].ir_drq;
+    } else {
+	ndrq = 1;
+	recdrq = ISACF_IRQ_DEFAULT;
+    }
 
     if (ac->mode <= 1)
-	ia->ia_drq2 = DRQUNK;
+	ndrq = 1;
     sc->wss_recdrq = 
-	ac->mode > 1 && ia->ia_drq2 != DRQUNK ? 
-	ia->ia_drq2 : ia->ia_drq;
+	ac->mode > 1 && ndrq > 1 &&
+	recdrq != ISACF_DRQ_DEFAULT ? recdrq : playdrq;
     if (sc->wss_recdrq != sc->wss_playdrq && !isa_drq_isfree(sc->wss_ic,
       sc->wss_recdrq))
 	goto bad;
 
+    if (probing) {
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = WSS_NPORT;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = ndrq;
+	ia->ia_drq[0].ir_drq = playdrq;
+	if (ndrq > 1)
+	    ia->ia_drq[1].ir_drq = recdrq;
+
+	ia->ia_niomem = 0;
+    }
+
     /* XXX recdrq */
     bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
-		      (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
+		      (interrupt_bits[ia->ia_irq[0].ir_irq] |
+		       dma_bits[ia->ia_drq[0].ir_drq]));
 
     return 1;
 
@@ -198,7 +243,7 @@ wss_isa_attach(parent, self, aux)
     struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     
-    if (!wssfind(parent, sc, ia)) {
+    if (!wssfind(parent, sc, 0, ia)) {
         printf("%s: wssfind failed\n", ac->sc_dev.dv_xname);
         return;
     }

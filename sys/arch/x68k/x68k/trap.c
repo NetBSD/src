@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.2.1 2001/09/13 01:15:13 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.2.2 2002/01/10 19:50:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_m680x0.h"
-#include "opt_fpuemulate.h"
+#include "opt_fpu_emulate.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -796,7 +796,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+			memcpy((caddr_t)fa, (caddr_t)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (paddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -821,7 +821,8 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)(f->f_fa & ~0xF), 16);
+			memcpy((caddr_t)(f->f_fa & ~0xF),
+			    (caddr_t)&f->f_pd0, 16);
 		else
 			err = suline((caddr_t)(f->f_fa & ~0xF), (caddr_t)&f->f_pd0);
 		if (err) {

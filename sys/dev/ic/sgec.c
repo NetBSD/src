@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.16.2.1 2001/08/03 04:13:04 lukem Exp $ */
+/*      $NetBSD: sgec.c,v 1.16.2.2 2002/01/10 19:55:01 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -43,6 +43,9 @@
  *	Collect statistics.
  *	Use imperfect filtering when many multicast addresses.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.16.2.2 2002/01/10 19:55:01 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

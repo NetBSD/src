@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.14.2.1 2001/08/03 04:12:41 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.14.2.2 2002/01/10 19:51:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.14.2.2 2002/01/10 19:51:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

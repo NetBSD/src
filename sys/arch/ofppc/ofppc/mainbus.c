@@ -1,11 +1,11 @@
-/*	$NetBSD: mainbus.c,v 1.2.26.1 2001/09/13 01:14:13 thorpej Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.2.26.2 2002/01/10 19:47:14 thorpej Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,12 +42,16 @@
 
 #include <dev/ofw/openfirm.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+#include <machine/platform.h>
+
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
+
+int	mainbus_print(void *, const char *);
 
 extern struct cfdriver mainbus_cd;
 
@@ -55,11 +59,9 @@ extern struct cfdriver mainbus_cd;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	return (1);
 }
 
@@ -67,19 +69,109 @@ mainbus_match(parent, cf, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
+	char buf[32];
+	const char * const *ssp, *sp = NULL;
 	int node;
 
-	printf("\n");
+	static const char * const openfirmware_special[] = {
+		/*
+		 * These are _root_ devices to ignore.  Others must be
+		 * handled elsewhere, if at all.
+		 */
+		"virtual-memory",
+		"mmu",
+		"aliases",
+		"memory",
+		"openprom",
+		"options",
+		"packages",
+		"chosen",
 
-	node = OF_peer(0);
-	if (node) {
+		/*
+		 * This one is extra-special .. we make a special case
+		 * and attach CPUs early.
+		 */
+		"cpus",
+
+		NULL
+	};
+
+	printf(": %s\n", platform_name);
+
+	/*
+	 * Before we do anything else, attach CPUs.  We do this early,
+	 * because we might need to make CPU dependent decisions during
+	 * the autoconfiguration process.  Also, it's a little weird to
+	 * see CPUs after other devices in the boot messages.
+	 */
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+			oba.oba_busname = "cpu";
+			oba.oba_phandle = node;
+			(void) config_found(self, &oba, mainbus_print);
+		}
+	} else {
+		/*
+		 * No /cpus node; assume they're all children of the
+		 * root OFW node.
+		 */
+		for (node = OF_child(OF_peer(0)); node != 0;
+		     node = OF_peer(node)) {
+			if (OF_getprop(node, "device_type",
+			    buf, sizeof(buf)) <= 0)
+				continue;
+			if (strcmp(buf, "cpu") != 0)
+				continue;
+			oba.oba_busname = "cpu";
+			oba.oba_phandle = node;
+			(void) config_found(self, &oba, mainbus_print);
+		}
+	}
+
+	/*
+	 * Now attach the rest of the devices on the system.
+	 */
+	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+		/*
+		 * Make sure it's not a CPU (we've already attached
+		 * those).
+		 */
+		if (OF_getprop(node, "device_type",
+			       buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
+			continue;
+
+		/*
+		 * Make sure this isn't one of our "special" child nodes.
+		 */
+		OF_getprop(node, "name", buf, sizeof(buf));
+		for (ssp = openfirmware_special; (sp = *ssp) != NULL; ssp++) {
+			if (strcmp(buf, sp) == 0)
+				break;
+		}
+		if (sp != NULL)
+			continue;
+
 		oba.oba_busname = "ofw";
 		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+		(void) config_found(self, &oba, mainbus_print);
 	}
+}
+
+int
+mainbus_print(void *aux, const char *pnp)
+{
+	struct ofbus_attach_args *oba = aux;
+	char name[64];
+
+	if (pnp) {
+		OF_getprop(oba->oba_phandle, "name", name, sizeof(name));
+		printf("%s at %s", name, pnp);
+	}
+
+	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.4 2001/06/27 03:00:46 fredette Exp $	*/
+/*	$NetBSD: obmem.c,v 1.4.2.1 2002/01/10 19:49:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ struct cfattach obmem_ca = {
 	sizeof(struct obmem_softc), obmem_match, obmem_attach
 };
 
-static	int obmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       int, bus_space_handle_t *));
+static	paddr_t obmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+				off_t, int, int));
 static	int _obmem_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
@@ -129,6 +129,7 @@ obmem_attach(parent, self, aux)
 	 */
 	obma = *ma;
 	obma.obma_bustag = &obmem_space_tag;
+	obma.obma_paddr = LOCATOR_REQUIRED;
 	obma.obma_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' obmem devices */
@@ -158,15 +159,17 @@ _obmem_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 				size, flags, vaddr, hp));
 }
 
-int
-obmem_bus_mmap(t, btype, paddr, flags, hp)
+paddr_t
+obmem_bus_mmap(t, btype, paddr, off, prot, flags)
 	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	struct obmem_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag, PMAP_OBMEM, paddr, flags, hp));
+	return (bus_space_mmap2(sc->sc_bustag, PMAP_OBMEM, paddr, off,
+				prot, flags));
 }

@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.25 2001/07/08 16:32:23 abs Exp $
+# 	$NetBSD: DSG,v 1.25.2.1 2002/01/10 19:47:46 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -23,7 +23,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 options 	LKM			# loadable kernel modules
 
@@ -32,8 +32,8 @@ options 	LKM			# loadable kernel modules
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="15*256+0"	# device for kernel gdb
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
@@ -72,15 +72,15 @@ options 	COMPAT_12	# Netbsd 1.2 reboot()
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
-options		FONT_BOLD8x16		# Font for fb devices
-options		FONT_LUCIDA16x29	# Font for px devices
-#options	FONT_GALLANT12x22
-#options	FONT_QVSS8x15
+options 	FONT_BOLD8x16		# Font for fb devices
+options 	FONT_LUCIDA16x29	# Font for px devices
+#options 	FONT_GALLANT12x22
+#options 	FONT_QVSS8x15
 
 # pmax specific
 options 	COMPAT_ULTRIX	# ultrix compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options 	"HZ=256"	# RTC rate required
+options 	HZ=256		# RTC rate required
 
 config		netbsd 		root on rz0a type ffs dumps on rz0b
 config		nfsnetbsd	root on ? type nfs

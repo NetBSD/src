@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.5 2001/04/30 03:45:35 lukem Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.5.2.1 2002/01/10 19:54:11 thorpej Exp $	*/
 
 /*       
  * Product specific probe and attach routines for: 
@@ -38,6 +38,9 @@
  * $FreeBSD: src/sys/dev/aic7xxx/ahc_pci.c,v 1.27 2000/01/10 01:47:51 gibbs Exp
 $
  */     
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.5.2.1 2002/01/10 19:54:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

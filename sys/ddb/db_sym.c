@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.26 2001/06/13 06:01:45 simonb Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.26.2.1 2002/01/10 19:52:41 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,7 +26,10 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_ddbparam.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.26.2.1 2002/01/10 19:52:41 thorpej Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -405,6 +408,7 @@ db_sifting(symstr, mode)
 		if (db_symtabs[i].name) {
 			db_printf("Sifting table %s:\n", db_symtabs[i].name);
 			X_db_forall(&db_symtabs[i], db_sift, &dsa);
+			db_printf("\n");
 		}
 
 	return;
@@ -518,6 +522,40 @@ extern char end[];
 unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x10000000;
 
+void
+db_symstr(buf, off, strategy)
+	char		*buf;
+	db_expr_t	off;
+	db_strategy_t	strategy;
+{
+	db_expr_t	d;
+	char 		*filename;
+	char		*name;
+	db_expr_t	value;
+	int 		linenum;
+	db_sym_t	cursym;
+
+	if (off <= db_lastsym) {
+		cursym = db_search_symbol(off, strategy, &d);
+		db_symbol_values(cursym, &name, &value);
+		if (name && (d < db_maxoff) && value) {
+			strcpy(buf, name);
+			if (d) {
+				strcat(buf, "+");
+				db_format_radix(buf+strlen(buf), 24, d, TRUE);
+			}
+			if (strategy == DB_STGY_PROC) {
+				if (db_line_at_pc(cursym, &filename, &linenum,
+				    off))
+					sprintf(buf+strlen(buf),
+					    " [%s:%d]", filename, linenum);
+			}
+			return;
+		}
+	}
+	strcpy(buf, db_num_to_str(off));
+	return;
+}
 
 void
 db_printsym(off, strategy, pr)

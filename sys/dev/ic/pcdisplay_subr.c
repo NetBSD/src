@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.18.2.1 2001/09/13 01:15:41 thorpej Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.18.2.2 2002/01/10 19:54:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.18.2.2 2002/01/10 19:54:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

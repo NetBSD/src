@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.5.4.1 2002/01/10 19:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,9 +56,12 @@ struct opl_softc {
 #define OPL_2 2
 #define OPL_3 3
 	struct	midisyn syn;
+	struct	device *sc_mididev;
 
 	struct opl_voice voices[OPL3_NVOICE];
 	int volume;
+	u_int8_t pan[MIDI_MAX_CHANS];
+	u_int8_t panl, panr;
 
 	int	(*spkrctl)__P((void *, int));
 	void	*spkrarg;
@@ -68,6 +71,13 @@ struct opl_softc {
 	void	*powerarg;
 #endif
 };
+
+/* for panpot */
+#define OPL_MIDI_CENTER_MIN	(64 - 20)
+#define OPL_MIDI_CENTER_MAX	(64 + 20)
+
+/* config flags */
+#define OPL_FLAGS_SWAP_LR	0x0001	/* swap L and R channels */
 
 struct opl_attach_arg {
 	bus_space_tag_t iot;
@@ -96,4 +106,5 @@ extern const struct opl_operators opl3_instrs[];
 
 int	opl_find __P((struct opl_softc *));
 void	opl_attach __P((struct opl_softc *));
+int	opl_detach __P((struct opl_softc *, int));
 #endif

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/16 16:30:22 minoura Exp $
+#	$NetBSD: Makefile,v 1.4.22.1 2002/01/10 19:50:42 thorpej Exp $
 
 PROG=rtcalarm
-MKMAN=no
+NOMAN=# defined
 
 .include <bsd.prog.mk>

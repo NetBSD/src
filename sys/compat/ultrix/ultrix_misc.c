@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.71 2001/06/18 02:00:54 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.71.2.1 2002/01/10 19:52:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -79,6 +79,9 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.71.2.1 2002/01/10 19:52:27 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
@@ -150,22 +153,6 @@ static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));
 
 extern struct sysent ultrix_sysent[];
 extern const char * const ultrix_syscallnames[];
-
-#if 0
-/* XXX what executable format does Ultrix/vax use ? */
-/*
- * Select the appropriate setregs callback for the target architecture.
- */
-#ifdef __mips__
-#include <machine/ecoff_machdep.h>
-#define ULTRIX_EXEC_SETREGS cpu_exec_ecoff_setregs
-#endif /* mips */
-
-#ifdef __vax__
-#define ULTRIX_EXEC_SETREGS setregs
-#endif /* vax */
-#endif
-
 extern char ultrix_sigcode[], ultrix_esigcode[];
 #ifdef __HAVE_SYSCALL_INTERN
 void syscall_intern(struct proc *);
@@ -188,6 +175,7 @@ const struct emul emul_ultrix = {
 	trapsignal,
 	ultrix_sigcode,
 	ultrix_esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

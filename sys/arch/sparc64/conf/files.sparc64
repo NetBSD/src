@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.48.2.2 2001/09/13 01:14:39 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.48.2.3 2002/01/10 19:49:13 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -7,6 +7,8 @@
 maxpartitions 8
 
 maxusers 2 8 1024
+
+defflag	opt_sparc_arch.h	SUN4U
 
 #
 # XXXXXXXXXXX
@@ -17,7 +19,7 @@ maxusers 2 8 1024
 file net/if_ppp.c		compile-with "${NOOPT_C}"
 file net/if_loop.c		compile-with "${NOOPT_C}"
 file net/if_sl.c		compile-with "${NOOPT_C}"
-file ufs/lfs/lfs_debug.c        compile-with "${NOOPT_C}"
+file ufs/lfs/lfs_debug.c	compile-with "${NOOPT_C}"
 
 #
 # XXXXXXXXXXX
@@ -38,8 +40,8 @@ include "dev/sbus/files.sbus"
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
-device  psycho: pcibus
-attach  psycho at mainbus
+device	psycho: pcibus
+attach	psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
@@ -193,7 +195,7 @@ file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
-file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
+file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/locore2.c
@@ -216,17 +218,18 @@ file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
-#file 	ddb/db_aout.c			ddb_aout
-#file	ddb/db_elf.c			ddb
+#file 	ddb/db_aout.c				ddb_aout
+#file	ddb/db_elf.c				ddb
 
 #
-# Raster Console
+# Raster Console support
 #
-include "dev/rcons/files.rcons"
 include "dev/wsfont/files.wsfont"
+include "dev/rcons/files.rcons"
 
 # USB Support
 include "dev/usb/files.usb"
+
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"
 
@@ -248,12 +251,12 @@ include "compat/aout/files.aout"
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
 file	arch/sparc64/sparc64/svr4_machdep.c	compat_svr4
-file	arch/sparc64/sparc64/svr4_sigcode64.s	compat_svr4 & _lp64
+file	arch/sparc64/sparc64/svr4_sigcode64.s	compat_svr4 & exec_elf64
 
 # 32-bit SVR4 Binary Compatibility (COMPAT_SVR4_32)
 include "compat/svr4_32/files.svr4_32"
 file	arch/sparc64/sparc64/svr4_32_machdep.c	compat_svr4_32
-file	arch/sparc64/sparc64/svr4_32_sigcode.s	compat_svr4_32 | (compat_svr4 & !_lp64)
+file	arch/sparc64/sparc64/svr4_32_sigcode.s	compat_svr4_32 | (compat_svr4 & !exec_elf64)
 
 # SunOS Binary Compatibility (COMPAT_SUNOS), 32-bit & 64-bit kernel
 # (64-bit also depends on COMPAT_NETBSD32)

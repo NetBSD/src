@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.16 2001/06/20 05:39:36 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.16.2.1 2002/01/10 19:53:44 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -158,6 +158,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "56k Modem",
 	},
 	{
+	    CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+	    0,
+	    "D-Link Systems",
+	    "DFE-690TXD 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
 	    0,
 	    "Corega",
@@ -245,6 +251,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_XIRCOM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_DLINK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "D-Link Systems",
 	    NULL,
 	},
 	{

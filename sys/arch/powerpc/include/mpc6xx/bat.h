@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1 2001/06/06 17:36:02 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.1.2.1 2002/01/10 19:48:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct bat {
 #define	BAT_M		0x00000010	/* memory coherency enable */
 #define	BAT_G		0x00000008	/* guarded region */
 
+#define	BAT_PP      0x00000003	/* PP mask */
 #define	BAT_PP_NONE	0x00000000	/* no access permission */
 #define	BAT_PP_RO_S	0x00000001	/* read-only (soft) */
 #define	BAT_PP_RW	0x00000002	/* read/write */
@@ -115,6 +116,11 @@ struct bat {
 #define	BATL(pa, wimg, pp)						\
 	(((pa) & BAT_PBS) | (wimg) | (pp))
 
+#define BAT_VA_MATCH_P(batu,va) \
+  (((~(((batu)&BAT_BL)<<15))&(va)&BAT_EBS)==((batu)&BAT_EBS))
+
+#define BAT_VALID_P(batu, msr) \
+  (((msr)&PSL_PR)?(((batu)&BAT_Vu)==BAT_Vu):(((batu)&BAT_Vs)==BAT_Vs))
 
 /* Lower BAT bits (PowerPC 601): */
 #define	BAT601_PBN	0xfffe0000	/* physical block number */
@@ -144,6 +150,7 @@ struct bat {
  *	1	RW	read/write
  *	1	RO	read-only
  */
+#define	BAT601_PP	0x00000003
 #define	BAT601_PP_NONE	0x00000000	/* no access permission */
 #define	BAT601_PP_RO_S	0x00000001	/* read-only (soft) */
 #define	BAT601_PP_RW	0x00000002	/* read/write */

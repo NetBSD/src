@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_ioctl.c,v 1.1 2000/12/02 20:40:04 scw Exp $	*/
+/*	$NetBSD: aoutm68k_ioctl.c,v 1.1.6.1 2002/01/10 19:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_ioctl.c,v 1.1.6.1 2002/01/10 19:50:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

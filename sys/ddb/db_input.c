@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.14 2000/07/28 16:33:39 jhawk Exp $	*/
+/*	$NetBSD: db_input.c,v 1.14.4.1 2002/01/10 19:52:39 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -29,7 +29,10 @@
  *	Date:	7/90
  */
 
-#include "opt_ddbparam.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.14.4.1 2002/01/10 19:52:39 thorpej Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

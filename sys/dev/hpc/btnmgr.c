@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.2 2001/06/04 18:59:31 uch Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2.2.1 2002/01/10 19:53:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.2.2.1 2002/01/10 19:53:55 thorpej Exp $");
+
 #define BTNMGRDEBUG
 
 #include <sys/param.h>

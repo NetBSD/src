@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2.6.1 2001/08/03 04:12:49 lukem Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2.6.2 2002/01/10 19:52:22 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.2.6.2 2002/01/10 19:52:22 thorpej Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 

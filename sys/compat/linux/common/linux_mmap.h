@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.8.4.1 2001/09/13 01:15:24 thorpej Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.8.4.2 2002/01/10 19:51:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <compat/linux/arch/alpha/linux_mmap.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_mmap.h>
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_mmap.h>
 /*
  * XXX ERH: All below here are guesses.  The header
  * XXX ERH: files are correct but the defined(*)
@@ -65,8 +67,6 @@
  * XXX ERH: use all the defines, but I don't want to go looking
  * XXX ERH: through all the kernel sources right now.
  */
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_mmap.h>
 #elif defined(__sparc__)
 #include <compat/linux/arch/sparc/linux_mmap.h>
 #else

@@ -1,8 +1,8 @@
-#	$NetBSD: files.mvme68k,v 1.45.2.2 2001/08/25 06:15:34 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.45.2.3 2002/01/10 19:46:32 thorpej Exp $
 
 # config file for mvme68k
 
-defopt	opt_m060sp.h		M060SP
+defflag	opt_m060sp.h		M060SP
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -148,7 +148,7 @@ include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
-file    arch/m68k/m68k/sunos_machdep.c  compat_sunos
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"

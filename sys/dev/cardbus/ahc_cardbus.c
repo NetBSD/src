@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.3 2000/03/16 03:06:51 enami Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.3.10.1 2002/01/10 19:53:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *	- power management
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.3.10.1 2002/01/10 19:53:43 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -86,7 +89,7 @@ int	ahc_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_cardbus_ca = {
-	sizeof(struct ahc_softc), ahc_cardbus_match, ahc_cardbus_attach,
+	sizeof(struct ahc_cardbus_softc), ahc_cardbus_match, ahc_cardbus_attach,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8 2001/02/04 23:53:31 jmc Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8.4.1 2002/01/10 19:51:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.4.1 2002/01/10 19:51:31 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 

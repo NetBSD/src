@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196.2.2 2001/09/13 01:14:37 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.196.2.3 2002/01/10 19:49:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,6 +59,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3644,9 +3645,7 @@ pmap_globalize_boot_cpuinfo(cpi)
 	off = 0;
 	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
 		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
 }
@@ -3719,9 +3718,8 @@ pmap_alloc_cpu(sc)
 
 	/* Map the pages */
 	while (size != 0) {
-		pmap_enter(pmap_kernel(), va, pa | (cachebit ? 0 : PMAP_NC),
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa | (cachebit ? 0 : PMAP_NC),
+		    VM_PROT_READ | VM_PROT_WRITE);
 		va += pagesz;
 		pa += pagesz;
 		size -= pagesz;
@@ -3849,7 +3847,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, prot);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -7125,7 +7123,7 @@ int
 pmap_count_ptes(pm)
 	struct pmap *pm;
 {
-	int idx, total;
+	int idx, vs, total;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -7136,9 +7134,14 @@ pmap_count_ptes(pm)
 		rp = pm->pm_regmap;
 		idx = NUREG;
 	}
-	for (total = 0; idx;)
-		if ((sp = rp[--idx].rg_segmap) != NULL)
-			total += sp->sg_npte;
+	for (total = 0; idx;) {
+		if ((sp = rp[--idx].rg_segmap) == NULL) {
+			continue;
+		}
+		for (vs = 0; vs < NSEGRG; vs++) {
+			total += sp[vs].sg_npte;
+		}
+	}
 	pm->pm_stats.resident_count = total;
 	return (total);
 }

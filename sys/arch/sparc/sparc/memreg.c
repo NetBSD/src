@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.30 2001/03/15 03:01:40 mrg Exp $ */
+/*	$NetBSD: memreg.c,v 1.30.2.1 2002/01/10 19:49:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  *
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

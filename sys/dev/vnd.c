@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.72 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.72.2.1 2002/01/10 19:52:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,12 @@
  * NOTE 3: Doesn't interact with leases, should it?
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.72.2.1 2002/01/10 19:52:51 thorpej Exp $");
+
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +168,7 @@ int numvnd = 0;
 
 /* called by main() at boot time */
 void	vndattach __P((int));
+void	vnddetach __P((void));
 
 void	vndclear __P((struct vnd_softc *));
 void	vndstart __P((struct vnd_softc *));
@@ -198,6 +204,13 @@ vndattach(num)
 
 	for (i = 0; i < numvnd; i++)
 		BUFQ_INIT(&vnd_softc[i].sc_tab);
+}
+
+void
+vnddetach()
+{
+
+	free(vnd_softc, M_DEVBUF);
 }
 
 int
@@ -374,6 +387,11 @@ vndstrategy(bp)
 	/* ...and convert to a byte offset within the file. */
 	bn *= lp->d_secsize;
 
+	if (vnd->sc_vp->v_mount == NULL) {
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
 	flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;

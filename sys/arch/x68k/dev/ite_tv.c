@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.7 1999/06/27 14:14:30 minoura Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.7.16.1 2002/01/10 19:50:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -77,7 +77,7 @@ u_char kern_font[256 * FONTHEIGHT];
 #define ROWOFFSET(y) ((y) * FONTHEIGHT * ROWBYTES)
 #define CHADDR(y, x) (tv_row[PHYSLINE(y)] + (x))
 
-#define SETGLYPH(to,from) bcopy(&kern_font[(to)*16], &kern_font[(from)*16],16)
+#define SETGLYPH(to,from) memcpy(&kern_font[(from)*16],&kern_font[(to)*16], 16)
 #define KFONTBASE(left)   ((left) * 32 * 0x5e - 0x21 * 32)
 
 /* prototype */
@@ -137,6 +137,22 @@ txrascpy (src, dst, size, mode)
 }
 
 /*
+ * Change glyphs from SRAM switch.
+ */
+void
+ite_set_glyph(void)
+{
+	u_char glyph = IODEVbase->io_sram[0x59];
+	
+	if (glyph & 4)
+		SETGLYPH(0x82, '|');
+	if (glyph & 2)
+		SETGLYPH(0x81, '~');
+	if (glyph & 1)
+		SETGLYPH(0x80, '\\');
+}
+
+/*
  * Initialize
  */
 void
@@ -144,7 +160,6 @@ tv_init(ip)
 	struct ite_softc *ip;
 {
 	short i;
-	u_char glyph = IODEVbase->io_sram[0x59];
 
 	/*
 	 * initialize private variables
@@ -153,14 +168,8 @@ tv_init(ip)
 	for (i = 0; i < PLANELINES; i++)
 		tv_row[i] = (void *)&IODEVbase->tvram[ROWOFFSET(i)];
 	/* shadow ANK font */
-	bcopy((void *)&IODEVbase->cgrom0_8x16, kern_font, 256 * FONTHEIGHT);
-	/* glyph */
-	if (glyph & 4)
-		SETGLYPH(0x82, '|');
-	if (glyph & 2)
-		SETGLYPH(0x81, '~');
-	if (glyph & 1)
-		SETGLYPH(0x80, '\\');
+	memcpy(kern_font, (void *)&IODEVbase->cgrom0_8x16, 256 * FONTHEIGHT);
+	ite_set_glyph();
 	/* set font address cache */
 	for (i = 0; i < 256; i++)
 		tv_font[i] = &kern_font[i * FONTHEIGHT];
@@ -666,7 +675,7 @@ tv_clear(ip, y, x, height, width)
 	while (height--) {
 		p = CHADDR(y++, x);
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			bzero(p, width);
+			memset(p, 0, width);
 	}
 	/* crtc mode reset */
 	CRTC.r21 = 0;
@@ -729,7 +738,7 @@ tv_scroll(ip, srcy, srcx, count, dir)
 
 			siz = ip->cols - srcx;
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				bcopy(src, dst, siz);
+				memcpy(dst, src, siz);
 				src += ROWBYTES;
 				dst += ROWBYTES;
 			}
@@ -744,7 +753,7 @@ tv_scroll(ip, srcy, srcx, count, dir)
 
 			siz = ip->cols - (srcx + count);
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
-				bcopy(src, dst, siz);
+				memcpy(dst, src, siz);
 				src += ROWBYTES;
 				dst += ROWBYTES;
 			}

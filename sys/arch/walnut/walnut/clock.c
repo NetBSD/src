@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/06/13 06:02:00 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.2.1 2002/01/10 19:50:14 thorpej Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -101,9 +101,8 @@ decr_intr(struct clockframe *frame)
 	lasttb = tick - xticks;
 
 	intrcnt[CNT_CLOCK]++;
-
 	pri = splclock();
-	if (pri & SPL_CLOCK){
+	if (pri & SPL_CLOCK) {
 		tickspending += nticks;
 		ticksmissed+= nticks;
 	} else {
@@ -131,7 +130,6 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
-  
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER); 
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);

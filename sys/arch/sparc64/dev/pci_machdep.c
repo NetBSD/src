@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21.2.2 2001/08/25 06:15:55 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.21.2.3 2002/01/10 19:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -171,13 +171,14 @@ pci_dev_funcorder(pc, busno, device, funcs)
 	}
 #endif
 	/*
-	 * Functions are siblings.  Presumably we're only called when the
-	 * first instance of this device is detected, so we should be able to
-	 * get to all the other functions with OF_peer().  But there seems
-	 * some issues with this scheme, so we always go to the first node on
-	 * this bus segment for a scan.  
+	 * Initially, curnode is the root of the pci tree.  As we
+	 * attach bridges, curnode should be set to that of the bridge.
+	 *
+	 * Note this search is almost exactly the same as pci_bus_devorder()'s,
+	 * except that we limit the search to only those with a matching
+	 * "device" number.
 	 */
-	for (node = OF_child(OF_parent(node)); node; node = OF_peer(node)) {
+	for (node = OF_child(node); node; node = OF_peer(node)) {
 		len = OF_getproplen(node, "reg");
 		if (len < sizeof(reg))
 			continue;
@@ -359,8 +360,8 @@ pci_conf_read(pc, tag, reg)
 			PCITAG_OFFSET(tag) + reg);
 	}
 #ifdef DEBUG
-	else printf("pci_conf_read: bogus pcitag %x\n",
-		(int)PCITAG_OFFSET(tag));
+	else DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
+		(int)PCITAG_OFFSET(tag)));
 #endif
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -384,8 +385,11 @@ pci_conf_write(pc, tag, reg, data)
 		(long long)(sc->sc_configaddr + PCITAG_OFFSET(tag) + reg), 
 		(int)PCITAG_OFFSET(tag) + reg));
 
-	if (PCITAG_NODE(tag) == -1)
-		panic("pci_conf_write: bad addr");
+	/* If we don't know it, just punt it.  */
+	if (PCITAG_NODE(tag) == -1) {
+		DPRINTF(SPDB_CONF, ("pci_conf_write: bad addr"));
+		return;
+	}
 		
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, 
 		PCITAG_OFFSET(tag) + reg, data);

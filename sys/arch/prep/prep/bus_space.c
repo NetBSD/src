@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2001/06/15 15:50:05 nonaka Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.2.1 2002/01/10 19:48:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #include <machine/bus.h>
 
+static paddr_t prep_memio_mmap (bus_space_tag_t, bus_addr_t, off_t, int, int);
 static int prep_memio_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
 static void prep_memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -55,18 +56,22 @@ static void prep_memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 const struct powerpc_bus_space prep_io_space_tag = {
 	PREP_BUS_SPACE_IO,  0x80000000, 0x80000000, 0x3f800000,
+	prep_memio_mmap,
 	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
 const struct powerpc_bus_space prep_isa_io_space_tag = {
 	PREP_BUS_SPACE_IO,  0x80000000, 0x80000000, 0x00010000,
+	prep_memio_mmap,
 	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
 const struct powerpc_bus_space prep_mem_space_tag = {
 	PREP_BUS_SPACE_MEM, 0xC0000000, 0xC0000000, 0x3f000000,
+	prep_memio_mmap,
 	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
 const struct powerpc_bus_space prep_isa_mem_space_tag = {
 	PREP_BUS_SPACE_MEM, 0xC0000000, 0xC0000000, 0x01000000,
+	prep_memio_mmap,
 	prep_memio_map, prep_memio_unmap, prep_memio_alloc, prep_memio_free
 };
 static long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -98,6 +103,17 @@ prep_bus_space_mallocok()
 {
 
 	ioport_malloc_safe = 1;
+}
+
+static paddr_t
+prep_memio_mmap(t, bpa, offset, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	off_t offset;
+	int prot, flags;
+{
+
+	return ((bpa + offset) >> PGSHIFT);
 }
 
 static int

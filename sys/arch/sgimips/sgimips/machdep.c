@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.1 2001/09/13 01:14:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.2 2002/01/10 19:48:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -67,6 +67,7 @@
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
 #include <machine/intr.h>
+#include <machine/bootinfo.h>
 #include <mips/locore.h>
 
 #include <dev/arcbios/arcbios.h>
@@ -91,7 +92,7 @@ char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
 char cpu_model[64 + 1];		/* sizeof(arcbios_system_identifier) */
 
-struct sgi_intrhand intrtab[NINTR];
+struct sgimips_intrhand intrtab[NINTR];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -135,7 +136,7 @@ void	ip32_init(void);
 
 void * cpu_intr_establish(int, int, int (*)(void *), void *);
 
-void	mach_init(int, char **, char **);
+void	mach_init(int, char **, int, struct btinfo_common *);
 void	unconfigured_system_type(int);
 
 void	sgimips_count_cpus(struct arcbios_component *,
@@ -151,12 +152,11 @@ static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
 static void	unimpl_intr_establish(int, int, int (*)(void *), void *);
-static unsigned	nullwork(void);
+static unsigned	long nullwork(void);
 
 void ddb_trap_hook(int where);
 
 struct platform platform = {
-	1000000,
 	unimpl_bus_reset,
 	unimpl_cons_init,
 	unimpl_iointr,
@@ -174,46 +174,66 @@ extern caddr_t esym;
 extern u_int32_t ssir;
 extern struct user *proc0paddr;
 
+static struct btinfo_common *bootinfo;
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(argc, argv, envp)
+mach_init(argc, argv, magic, btinfo)
 	int argc;
 	char **argv;
-	char **envp;
+	int magic;
+	struct btinfo_common *btinfo;
 {
-	unsigned long first, last;
-	caddr_t kernend, v;
+	extern char kernel_text[], _end[];
+	paddr_t first, last;
+	int firstpfn, lastpfn;
+	caddr_t v;
 	vsize_t size;
-	extern char edata[], end[];
 	struct arcbios_mem *mem;
 	char *cpufreq;
-	int i;
+	struct btinfo_symtab *bi_syms;
+	caddr_t ssym;
+	vaddr_t kernend;
+	int kernstartpfn, kernendpfn;
+	int i, nsym;
 
-	/*
-	 * Clear the BSS segment.
-	 */
-#ifdef DDB 
-	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
-	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
-		esym = end;
-		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (caddr_t)mips_round_page(esym);
-		memset(edata, 0, end - edata);
-	} else
-#endif  
-	{
-		kernend = (caddr_t)mips_round_page(end);
-		memset(edata, 0, kernend - edata);
-        }
+#if 0
+	/* Clear the BSS segment.  XXX Is this really necessary? */
+	memset(_edata, 0, _end - _edata);
+#endif
 
 	/*
 	 * Initialize ARCS.  This will set up the bootstrap console.
 	 */
 	arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000));
 	strcpy(cpu_model, arcbios_system_identifier);
+
+	uvm_setpagesize();
+
+	if (magic == BOOTINFO_MAGIC && btinfo != NULL) {
+#ifdef DEBUG
+		printf("Found bootinfo at %p\n", btinfo);
+#endif
+		bootinfo = btinfo;
+	}
+
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (caddr_t) bi_syms->ssym;
+		esym = (caddr_t) bi_syms->esym;
+		kernend = round_page((vaddr_t) esym);
+	} else {
+		nsym = 0;
+		ssym = esym = NULL;
+		kernend = round_page((vaddr_t) _end);
+	}
+
+	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text));
+	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	/*
 	 * Now set up the real console.
@@ -235,19 +255,51 @@ mach_init(argc, argv, envp)
 	... something ... = strtoul(cpufreq, NULL, 10) * 5000000;
 #endif
 
-	uvm_setpagesize();
+	/*
+	 * argv[0] can be either the bootloader loaded by the PROM, or a
+	 * kernel loaded directly by the PROM.
+	 *
+	 * If argv[0] is the bootloader, then argv[1] might be the kernel
+	 * that was loaded.  How to tell which one to use?
+	 *
+	 * If argv[1] isn't an environment string, try to use it to set the
+	 * boot device.
+	 */
+	if (strchr(argv[1], '=') != 0)
+		makebootdev(argv[1]);
 
 	boothowto = RB_SINGLE;
 
+	/*
+	 * Single- or multi-user ('auto' in SGI terms).
+	 */
 	for (i = 0; i < argc; i++) {
-#if 0
-		if (strcmp(argv[i], "OSLoadOptions=auto") == 0) {
+		if (strcmp(argv[i], "OSLoadOptions=auto") == 0)
 			boothowto &= ~RB_SINGLE;
-		}
-#endif
-#if 0
+
+		/*
+		 * The case where the kernel has been loaded by a
+		 * boot loader will usually have been catched by
+		 * the first makebootdev() case earlier on, but
+		 * we still use OSLoadPartition to get the preferred
+		 * root filesystem location, even if it's not
+		 * actually the location of the loaded kernel.
+		 */
+		if (strncmp(argv[i], "OSLoadPartition=", 15) == 0)
+			makebootdev(argv[i] + 16);
+	}
+
+	/*
+	 * When the kernel is loaded directly by the firmware, and
+	 * no explicit OSLoadPartition is set, we fall back on
+	 * SystemPartition for the boot device.
+	 */
+	for (i = 0; i < argc; i++) {
+		if (strncmp(argv[i], "SystemPartition", 15) == 0)
+			makebootdev(argv[i] + 16);
+
+#ifdef DEBUG
 		printf("argv[%d]: %s\n", i, argv[i]);
-		/* delay(20000); */ /* give the user a little time.. */
 #endif
 	}
 
@@ -256,6 +308,7 @@ mach_init(argc, argv, envp)
 	db_trap_callback = ddb_trap_hook;
 
 #ifdef DDB
+	ddb_init(nsym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -319,14 +372,18 @@ mach_init(argc, argv, envp)
 	do {
 	    if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
 		i++;
-		printf("Mem block %d: type %d, base %d, size %d\n", 
+		printf("Mem block %d: type %d, base 0x%x, size 0x%x\n", 
 				i, mem->Type, mem->BasePage, mem->PageCount);
 	    }
 	} while (mem != NULL);
 #endif
 
+	/*
+	 * XXX This code assumes that ARCS provides the memory
+	 * XXX sorted in ascending order.
+	 */
 	mem = NULL;
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) { 
+	for (i = 0; mem_cluster_cnt < VM_PHYSSEG_MAX; i++) { 
 		mem = ARCBIOS->GetMemoryDescriptor(mem);
 
 		if (mem == NULL)
@@ -336,30 +393,75 @@ mach_init(argc, argv, envp)
 		last = trunc_page(first + mem->PageCount * ARCBIOS_PAGESIZE);
 		size = last - first;
 
+		firstpfn = atop(first);
+		lastpfn = atop(last);
+
 		switch (mem->Type) {
 		case ARCBIOS_MEM_FreeContiguous:
 		case ARCBIOS_MEM_FreeMemory:
-			if (last > MIPS_KSEG0_TO_PHYS(kernend))
-				if (first < MIPS_KSEG0_TO_PHYS(kernend))
-					first = MIPS_KSEG0_TO_PHYS(kernend);
-
+		case ARCBIOS_MEM_LoadedProgram:
+			if (firstpfn <= kernstartpfn &&
+			    kernendpfn <= lastpfn) {
+				/*
+				 * Must compute the location of the kernel
+				 * within the segment.
+				 */
+#ifdef DEBUG
+				printf("Cluster %d contains kernel\n", i);
+#endif
+				if (firstpfn < kernstartpfn) {
+					/*
+					 * There is a chunk before the kernel.
+					 */
+#ifdef DEBUG
+					printf("Loading chunk before kernel: "
+					    "0x%x / 0x%x\n", firstpfn,
+					    kernstartpfn);
+#endif
+					uvm_page_physload(firstpfn,
+					    kernstartpfn,
+					    firstpfn, kernstartpfn,
+					    VM_FREELIST_DEFAULT);
+				}
+				if (kernendpfn < lastpfn) {
+					/*
+					 * There is a chunk after the kernel.
+					 */
+#ifdef DEBUG
+					printf("Loading chunk after kernel: "
+					    "0x%x / 0x%x\n", kernendpfn,
+					    lastpfn);
+#endif
+					uvm_page_physload(kernendpfn,
+					    lastpfn, kernendpfn,
+					    lastpfn, VM_FREELIST_DEFAULT);
+				}
+			} else {
+				/*
+				 * Just load this cluster as one chunk.
+				 */
+#ifdef DEBUG
+				printf("Loading cluster %d: 0x%x / 0x%x\n", i,
+				    firstpfn, lastpfn);
+#endif
+				uvm_page_physload(firstpfn, lastpfn,
+				    firstpfn, lastpfn, VM_FREELIST_DEFAULT);
+			}
 			mem_clusters[mem_cluster_cnt].start = first;
 			mem_clusters[mem_cluster_cnt].size = size;
 			mem_cluster_cnt++;
-
-			uvm_page_physload(atop(first), atop(last), atop(first),
-					atop(last), VM_FREELIST_DEFAULT);
-
 			break;
+
 		case ARCBIOS_MEM_FirmwareTemporary:
 		case ARCBIOS_MEM_FirmwarePermanent:
 			arcsmem += btoc(size);
 			break;
+
 		case ARCBIOS_MEM_ExecptionBlock:
 		case ARCBIOS_MEM_SystemParameterBlock:
 		case ARCBIOS_MEM_BadMemory:
-		case ARCBIOS_MEM_LoadedProgram:
 			break;
+
 		default:
 			panic("unknown memory descriptor %d type %d",
 				i, mem->Type); 
@@ -371,6 +473,9 @@ mach_init(argc, argv, envp)
 
 	if (mem_cluster_cnt == 0)
 		panic("no free memory descriptors found");
+
+	/* We can now no longer use bootinfo. */
+	bootinfo = NULL;
 
 	/*
 	 * Walk the component tree and count the number of CPUs
@@ -579,7 +684,7 @@ cpu_reboot(howto, bootstr)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) && (waittime < 0)) {
+	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
 		waittime = 0;
 		vfs_shutdown();
 
@@ -599,13 +704,25 @@ haltsys:
 
 	doshutdownhooks();
 
-#if 0
-	if (howto & RB_POWERDOWN) {
+	/*
+	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
+	 * which lands me back in DDB, at least on my Indy.  So, enable 
+	 * the FPU before asking the PROM to power down to avoid this.. 
+	 * It seems to want the FPU to play the `poweroff tune' 8-/
+	 */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Set CP1 usable bit in SR */
+	 	mips_cp0_status_write(mips_cp0_status_read() | 
+					MIPS_SR_COP_1_BIT);	
+
 		printf("powering off...\n\n");
+		delay(500000);
 		ARCBIOS->PowerDown();
 		printf("WARNING: powerdown failed\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
 	}
-#endif
 
 	if (howto & RB_HALT) {
 		printf("halting...\n\n");
@@ -626,6 +743,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
+	tvp->tv_usec += (*platform.clkread)();
 
 	/*
 	 * Make sure that the time returned is always greater
@@ -688,7 +806,7 @@ unimpl_intr_establish(level, ipl, handler, arg)
 	panic("target init didn't set intr_establish");
 }
 
-static unsigned
+static unsigned long
 nullwork()
 {
 
@@ -735,6 +853,20 @@ void unconfigured_system_type(int ipnum)
 	printf("\n");
 
 	panic("Kernel not configured for current hardware!");
+}
+
+void *
+lookup_bootinfo(int type)
+{
+	struct btinfo_common *b = bootinfo;
+
+	while (bootinfo != NULL) {
+		if (b->type == type)
+			return (b);
+		b = b->next;
+	}
+
+	return (NULL);
 }
 
 #if defined(DDB) || defined(KGDB)

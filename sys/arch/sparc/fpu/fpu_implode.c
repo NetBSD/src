@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.7.4.1 2001/09/13 01:14:34 thorpej Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.7.4.2 2002/01/10 19:48:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,10 @@
  * FPU subroutines: `implode' internal format numbers into the machine's
  * `packed binary' format.
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/systm.h>

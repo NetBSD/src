@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.6 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.6.4.1 2002/01/10 19:50:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kern_exit.c	8.7 (Berkeley) 2/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.6.4.1 2002/01/10 19:50:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

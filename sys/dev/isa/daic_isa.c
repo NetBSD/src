@@ -23,7 +23,9 @@
  *
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.2.2.1 2002/01/10 19:55:21 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

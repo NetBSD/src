@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.12 2001/07/08 16:32:21 abs Exp $
+# 	$NetBSD: LIBERO,v 1.12.2.1 2002/01/10 19:46:52 thorpej Exp $
 
 #	NEWS1750 config file;
 #
@@ -52,7 +52,7 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 file-system	FDESC		# /dev/fd/*
 #file-system	NULLFS		# loopback file system
-#file-system	UNION		# union file system 
+#file-system	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
@@ -103,7 +103,7 @@ wsmouse* at ms?
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe0d40000 ipl 5 vect 64 flags 0x0
 zstty0	at zsc0 channel 0
-zstty1	at zsc0 channel 1 
+zstty1	at zsc0 channel 1
 
 # Frame buffer devices; not yet
 #fb0	at hb0 addr 0xf0700000			# NWB225
@@ -127,7 +127,7 @@ zstty1	at zsc0 channel 1
 # and disable disconnect/reselect for targets 0-3
 #
 si0	at hb0 addr 0xe0cc0000 ipl 4 flags 0xf
-scsibus* at si0	
+scsibus* at si0
 
 sd*	at scsibus? target ? lun ?		# SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes

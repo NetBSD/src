@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.21 2001/04/11 23:02:12 msaitoh Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.21.2.1 2002/01/10 19:52:42 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,8 +26,10 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_ddb.h"				/* for sysctl.h */
-#include "opt_ddbparam.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.21.2.1 2002/01/10 19:52:42 thorpej Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

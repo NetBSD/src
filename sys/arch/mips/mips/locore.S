@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.122 2001/07/09 01:43:26 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.122.2.1 2002/01/10 19:46:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,8 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_ultrix.h"
+#include "opt_compat_linux.h"
+#include "opt_compat_irix.h"
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
@@ -69,6 +71,12 @@
 #include <sys/syscall.h>
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
+#endif
+#ifdef COMPAT_LINUX
+#include <compat/linux/linux_syscall.h>
+#endif
+#ifdef COMPAT_IRIX
+#include <compat/irix/irix_syscall.h>
 #endif
 
 #include <machine/param.h>
@@ -89,8 +97,10 @@ _C_LABEL(kernel_text):
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	v0, MIPS3_SR_DIAG_BEV
 	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
+	COP0_SYNC
 #else
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	COP0_SYNC
 #endif
 /*
  * Initialize stack and call machine startup.
@@ -119,12 +129,14 @@ _C_LABEL(kernel_text):
 	li	t1, 0xffffdfff
 	and	t0, t0, t1
 	mtc0	t0, R3900_COP_0_CONFIG
+	COP0_SYNC
 #ifdef R3900_CACHE_DISABLE
 	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
 	mfc0	t1, R3900_COP_0_CONFIG
 	and	t1, t0, t1
 	nop
 	mtc0	t1, R3900_COP_0_CONFIG
+	COP0_SYNC
 	nop
 #endif /* R3900_CACHE_DISABLE */
 #endif /* ENABLE_MIPS_TX3900 */
@@ -132,14 +144,20 @@ _C_LABEL(kernel_text):
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
+	COP0_SYNC
 #ifdef HPCMIPS_L1CACHE_DISABLE
-	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
+	mfc0	t0, MIPS_COP_0_CONFIG
+	li	t1, 0xfffffff8
+	and	t0, t0, t1
+	or	t0, 0x00000002			# XXX, KSEG0 is uncached
 	mtc0	t0, MIPS_COP_0_CONFIG
+	COP0_SYNC
 #endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
+	COP0_SYNC
 #endif
 	nop
 	nop
@@ -193,6 +211,27 @@ END(ultrix_sigcode)
 XLEAF(ultrix_esigcode)
 #endif
 
+#ifdef COMPAT_LINUX
+#define SYSCALL_SHIFT 4000		# 4000 shift as in linux_syscall.c
+LEAF_NOPROFILE(linux_sigcode)
+	move	a0, sp
+	li	v0, LINUX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
+	syscall
+	break	0			# just in case sigreturn fails
+END(linux_sigcode)
+XLEAF(linux_esigcode)
+#endif
+
+#ifdef COMPAT_IRIX
+#define SYSCALL_SHIFT 1000		# 1000 shift as in irix_syscall.c
+LEAF_NOPROFILE(irix_sigcode)
+	move	a0, sp
+	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
+	syscall
+	break	0			# just in case sigreturn fails
+END(irix_sigcode)
+XLEAF(irix_esigcode)
+#endif
 
 /*
  * The following primitives manipulate the run queues.  whichqs tells which
@@ -280,9 +319,16 @@ END(remrunqueue)
  * profiling.
  */
 LEAF(mips_idle)
+#ifdef 	IPL_ICU_MASK
+	# all interrupts enable.
+	sw	zero, _C_LABEL(md_imask)	
+	jal	_C_LABEL(md_imask_update)
+	nop
+#endif
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
+	COP0_SYNC
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
 #if defined(LOCKDEBUG)
@@ -303,6 +349,7 @@ LEAF(mips_idle)
 	li	t3, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t3,t1)		# machine dependent masking
 	mtc0	t3, MIPS_COP_0_STATUS		# enable all interrupts
+	COP0_SYNC
 	nop
 #endif
 	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
@@ -311,6 +358,7 @@ LEAF(mips_idle)
 	nop
 #if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	COP0_SYNC
 	nop
 	nop
 	nop
@@ -322,6 +370,7 @@ LEAF(mips_idle)
 	nop
 #else
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	COP0_SYNC
 	nop
 	nop
 	nop
@@ -351,6 +400,10 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
+#ifdef IPL_ICU_MASK
+	lw	t0, _C_LABEL(md_imask)	
+	sw	t0, U_PCB_PPL(a0)
+#endif	
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
@@ -371,6 +424,11 @@ cpu_switch_queuescan:
 1:
 	move	t3, t0				# t3 = saved whichqs
 1:
+#if defined(MIPS3_5900)	/* work around for branch prediction miss. */
+	nop
+	nop
+	nop
+#endif
 	addu	t2, t2, 1
 	and	t1, t0, 1			# bit set?
 	beq	t1, zero, 1b
@@ -440,6 +498,14 @@ cpu_switch_queuescan:
 	sw	zero, _C_LABEL(want_resched)	# we've context switched
 	sw	a0, _C_LABEL(curpcb)
 
+#ifdef IPL_ICU_MASK
+	# restore ICU state
+	lw	t0, U_PCB_PPL(a0)
+	sw	t0, _C_LABEL(md_imask)	
+	jal	_C_LABEL(md_imask_update)
+	nop
+	lw	a0, P_ADDR(s7)			# restore pcb_context pointer.
+#endif /* IPL_ICU_MASK */
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
@@ -456,6 +522,7 @@ cpu_switch_queuescan:
 	REG_L	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	v0, MIPS_COP_0_STATUS
+	COP0_SYNC
 	j	ra
 	li	v0, 1				# possible return to 'savectx()'
 END(cpu_switch)
@@ -548,6 +615,7 @@ LEAF(longjmp)
 	REG_L	s8, SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	v0, MIPS_COP_0_STATUS
+	COP0_SYNC
 	j	ra
 	li	v0, 1
 END(longjmp)
@@ -567,9 +635,10 @@ XLEAF(_splraise_noprof)				# does not get mcount hooks
 	and	a0, a0, v0			# disable retaining other bits
 	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
+	COP0_SYNC
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	j	ra
+	nop
 END(_splraise)
 
 LEAF(_spllower)
@@ -581,9 +650,10 @@ LEAF(_spllower)
 	or	a0, a0, v1			# disable making other bits on
 	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
+	COP0_SYNC
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	j	ra
+	nop
 END(_spllower)
 
 LEAF(_splrestore)
@@ -594,9 +664,10 @@ LEAF(_splrestore)
 	or	v1, v1, a0			# set old INT bits
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
+	COP0_SYNC
 	and	v0, v0, MIPS_INT_MASK
+	j	ra
+	nop
 END(_splrestore)
 
 LEAF(_splset)
@@ -608,28 +679,32 @@ XLEAF(_splset_noprof)				# does not get mcount hooks
 	or	v1, v1, a0			# set old INT bits
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
+	COP0_SYNC
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	j	ra
+	nop
 END(_splset)
 
 LEAF(_splget)
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	nop
-	j	ra
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	j	ra
+	nop
 END(_splget)
 
 LEAF(_setsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	COP0_SYNC
 	nop
 	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nop
 	or	v0, v0, a0			# set soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	COP0_SYNC
 	j	ra
 	nop
 END(_setsoftintr)
@@ -637,22 +712,27 @@ END(_setsoftintr)
 LEAF(_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	COP0_SYNC
 	nop
 	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	v0, v0, a0			# clear soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	COP0_SYNC
 	j	ra
 	nop
 END(_clrsoftintr)
 
 LEAF(_splnone)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
+	COP0_SYNC
 	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
 	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
+	COP0_SYNC
 	nop
 	j	ra
 	nop
@@ -901,7 +981,7 @@ END(suswintr)
 
 /*
  * int fuword(void *)
- * Fetches a short word of data from the user-space address.
+ * Fetches a word of data from the user-space address.
  */
 LEAF(fuword)
 XLEAF(fuiword)
@@ -971,7 +1051,7 @@ LEAF(suiword)
 	sw	a1, 0(a0)			# store word
 	sw	zero, U_PCB_ONFAULT(v1)
 	move	v0, zero
-	lw	v1, _C_LABEL(mips_locore_jumpvec) + MIPSX_FLUSHICACHE
+	lw	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
 	j	v1				# NOTE: must not clobber v0!
 	li	a1, 4				# size of word
 END(suiword)
@@ -1051,7 +1131,7 @@ XLEAF(baderr)
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
-END(fswintrberr)
+END(fswberr)
 
 #if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
 /*
@@ -1105,6 +1185,7 @@ END(mips_cp0_cause_read)
  */
 LEAF(mips_cp0_cause_write)
 	mtc0	a0, MIPS_COP_0_CAUSE
+	COP0_SYNC
 	nop
 	nop
 	j	ra
@@ -1134,6 +1215,7 @@ END(mips_cp0_status_read)
  */
 LEAF(mips_cp0_status_write)
 	mtc0	a0, MIPS_COP_0_STATUS
+	COP0_SYNC
 	nop
 	nop
 	j	ra
@@ -1181,6 +1263,7 @@ XNESTED(MachFPTrap)
 #ifndef SOFTFLOAT
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
+	COP0_SYNC
 	nop
 	nop
 	nop				# 1st extra nop for r4k
@@ -1289,6 +1372,7 @@ FPReturn:
 #ifndef SOFTFLOAT
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
+	COP0_SYNC
 #else
 	nop
 #endif
@@ -1472,33 +1556,6 @@ _C_LABEL(cpu_id):
 _C_LABEL(fpu_id):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1DCacheSize)
-	.globl	_C_LABEL(mips_L1ICacheSize)
-	.globl	_C_LABEL(mips_L1DCacheLSize)
-	.globl	_C_LABEL(mips_L1ICacheLSize)
-	.globl	_C_LABEL(mips_CacheAliasMask)
-	.globl	_C_LABEL(mips_CachePreferMask)
-	.globl	_C_LABEL(mips_L2CacheSize)
-	.globl	_C_LABEL(mips_L2CacheLSize)
-	.globl	_C_LABEL(mips_L2CachePresent)
-_C_LABEL(mips_L1DCacheSize):
-	.word	0
-_C_LABEL(mips_L1ICacheSize):
-	.word	0
-_C_LABEL(mips_L1DCacheLSize):
-	.word	0
-_C_LABEL(mips_L1ICacheLSize):
-	.word	0
-_C_LABEL(mips_CacheAliasMask):
-	.word 0
-_C_LABEL(mips_CachePreferMask):
-	.word 0
-_C_LABEL(mips_L2CacheSize):
-	.word	0
-_C_LABEL(mips_L2CacheLSize):
-	.word	0
-_C_LABEL(mips_L2CachePresent):
-	.word	0
 #ifdef MIPS_DYNAMIC_STATUS_MASK
 	.globl	_C_LABEL(mips_dynamic_status_mask)
 _C_LABEL(mips_dynamic_status_mask):

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31 2001/01/18 20:28:27 jdolecek Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.4.1 2002/01/10 19:51:48 thorpej Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,6 +52,9 @@
  *   Unimplemented:
  *	linux_sys_rt_sigtimedwait	: sigsuspend w/timeout.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.4.1 2002/01/10 19:51:48 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 

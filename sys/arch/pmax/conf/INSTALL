@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.40.2.1 2001/09/13 01:14:16 thorpej Exp $
+# 	$NetBSD: INSTALL,v 1.40.2.2 2002/01/10 19:47:46 thorpej Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -10,7 +10,7 @@
 #
 include		"arch/pmax/conf/std.pmax"
 
-makeoptions 	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
 
 maxusers	8
 
@@ -34,7 +34,7 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 # Standard system options
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-#options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+#options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
 
@@ -72,7 +72,7 @@ options 	FONT_LUCIDA16x29	# Font for px devices
 #options 	FONT_QVSS8x15
 
 # pmax specific
-options 	"HZ=256"	# RTC rate required
+options 	HZ=256		# RTC rate required
 
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 
@@ -134,7 +134,7 @@ scsibus* at sii?
 scsibus* at asc?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 #########################################################################
 # Pseudo-devices							#

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.4 2000/08/03 18:32:07 eeh Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.4.4.1 2002/01/10 19:48:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,10 @@
  *
  *	@(#)fpu_emu.h	8.1 (Berkeley) 6/11/93
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Floating point emulator (tailored for SPARC, but structurally

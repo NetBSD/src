@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.5.4.1 2001/08/03 04:12:08 lukem Exp $	*/
+/*	$NetBSD: apbus.c,v 1.5.4.2 2002/01/10 19:46:57 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -495,7 +496,7 @@ apbus_dmamap_sync(t, map, offset, len, ops)
 	 */
 	bus_space_read_4(t->_slotbaset, t->_slotbaseh, 0);
 
-	_bus_dmamap_sync(t, map, offset, len, ops);
+	bus_dmamap_sync(&newsmips_default_bus_dma_tag, map, offset, len, ops);
 }
 
 struct newsmips_bus_dma_tag apbus_dma_tag = {

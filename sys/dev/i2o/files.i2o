@@ -1,6 +1,6 @@
-#	$NetBSD: files.i2o,v 1.3.4.1 2001/08/25 06:16:10 thorpej Exp $
+#	$NetBSD: files.i2o,v 1.3.4.2 2002/01/10 19:53:59 thorpej Exp $
 
-defopt	opt_i2o.h	I2OVERBOSE I2ODEBUG
+defflag	opt_i2o.h	I2OVERBOSE I2ODEBUG
 
 device	iop {tid = -1}
 file	dev/i2o/iop.c			iop			needs-flag
@@ -15,3 +15,7 @@ file	dev/i2o/iopsp.c			iopsp
 device	iopl: ether, token, fddi, ifnet, arp
 attach	iopl at iop
 file	dev/i2o/iopl.c			iopl
+
+device	dpti
+attach	dpti at iop
+file	dev/i2o/dpti.c			dpti			needs-flag

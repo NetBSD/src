@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.7 2001/07/08 16:32:20 abs Exp $
+#	$NetBSD: MMTA,v 1.7.2.1 2002/01/10 19:46:24 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -14,7 +14,7 @@ include "arch/mmeye/conf/std.mmeye"
 maxusers	32			# estimated number of users
 
 # Standard system options
-options 	SH7708R			# 100MHz 
+options 	SH7708R			# 100MHz
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
@@ -22,7 +22,7 @@ options 	INITTODR_ALWAYS_USE_RTC
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
-options 	HZ=50		# clock interrupt generates every 1/HZ sec 
+options 	HZ=50		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
@@ -40,7 +40,7 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_DEBUG
 
@@ -116,7 +116,7 @@ shb* at mainbus?
 
 # PCMCIA bus support
 pcmcia*	at shpcic? controller ? socket ?
-#pcmcia*	at shb? 
+#pcmcia*	at shb?
 
 # SH PCMCIA controllers
 shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000

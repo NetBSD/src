@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.17 2001/04/25 17:53:19 bouyer Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.17.2.1 2002/01/10 19:47:00 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -22,10 +22,11 @@
 #include <newsmips/dev/dmac_0448.h>
 #include <newsmips/dev/screg_1185.h>
 
-#include <machine/locore.h>
 #include <machine/adrsmap.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
+
+#include <mips/cache.h>
 
 static int cxd1185_match __P((struct device *, struct cfdata *, void *));
 static void cxd1185_attach __P((struct device *, struct device *, void *));
@@ -226,7 +227,7 @@ sc_scsipi_request(chan, req, arg)
 				}
 			}
 			/* called during autoconfig only... */
-			MachFlushCache(); /* Flush all caches */
+			mips_dcache_wbinv_all();	/* Flush DCache */
 		}
 		return;
 	case ADAPTER_REQ_GROW_RESOURCES:

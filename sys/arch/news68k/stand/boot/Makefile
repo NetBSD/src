@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2001/03/04 16:15:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2002/01/10 19:46:55 thorpej Exp $
+
+NOMAN= # defined
 
 .include <bsd.own.mk>
 
@@ -10,13 +12,11 @@ COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 PROG= boot
 SRCS= locore.S boot.c devopen.c
 SRCS+= romcalls.S putchar.c
-MKMAN= no
 STRIPFLAG=
 BINMODE= 444
 
 SIZE?= size
 STRIP?= strip
-OBJCOPY?= objcopy
 
 S= ${.CURDIR}/../../../..
 

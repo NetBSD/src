@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.2 2001/04/26 16:25:26 kleink Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.2.4.1 2002/01/10 19:49:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,12 +68,27 @@ typedef	unsigned long long int	uint_least64_t;
 
 /* 7.18.1.3 Fastest minimum-width integer types */
 
+#ifdef __arch64__
+typedef	long int		   int_fast8_t;
+typedef	unsigned char		  uint_fast8_t;
+#else
 typedef	int			   int_fast8_t;
 typedef	unsigned int		  uint_fast8_t;
+#endif
+#ifdef __arch64__
+typedef	long int		  int_fast16_t;
+typedef	unsigned short int	 uint_fast16_t;
+#else
 typedef	int			  int_fast16_t;
 typedef	unsigned int		 uint_fast16_t;
+#endif
+#ifdef __arch64__
+typedef	long int		  int_fast32_t;
+typedef	unsigned int		 uint_fast32_t;
+#else
 typedef	int			  int_fast32_t;
 typedef	unsigned int		 uint_fast32_t;
+#endif
 #ifdef __COMPILER_INT64__
 typedef	__COMPILER_INT64__	  int_fast64_t;
 typedef	__COMPILER_UINT64__	 uint_fast64_t;
@@ -92,8 +107,8 @@ typedef	unsigned long long int	 uint_fast64_t;
 /* 7.18.1.5 Greatest-width integer types */
 
 #ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	 int_least64_t;
-typedef	__COMPILER_UINT64__	uint_least64_t;
+typedef	__COMPILER_INT64__	      intmax_t;
+typedef	__COMPILER_UINT64__	     uintmax_t;
 #else
 #ifdef __arch64__
 typedef	long int		      intmax_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.1.2.1 2001/08/25 06:15:49 thorpej Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.1.2.2 2002/01/10 19:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -31,13 +31,14 @@
 #define	_ARCH_SGIMIPS_HPC_HPCVAR_H_
 
 struct hpc_attach_args {
-	char			*ha_name;
+	const char		*ha_name;	/* name of device */
+	bus_addr_t		ha_devoff;	/* offset of device */
+	bus_addr_t		ha_dmaoff;	/* offset of DMA regs */
+	int			ha_irq;		/* interrupt line */
 
-	bus_space_tag_t		ha_iot;
-	bus_space_handle_t	ha_ioh;
-	bus_dma_tag_t		ha_dmat;
-
-	bus_addr_t		ha_offset;
+	bus_space_tag_t		ha_st;		/* HPC space tag */
+	bus_space_handle_t	ha_sh;		/* HPC space handle XXX */
+	bus_dma_tag_t		ha_dmat;	/* HPC DMA tag */
 };
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCVAR_H_ */

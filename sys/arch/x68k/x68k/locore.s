@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2001/05/30 15:24:40 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.65.2.1 2002/01/10 19:50:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -252,7 +252,7 @@ Lisberr:
 /*
  * FP exceptions.
  */
-#include "opt_fpuemulate.h"
+#include "opt_fpu_emulate.h"
 ENTRY_NOPROFILE(fpfline)
 #if defined(M68040)
 	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
@@ -718,6 +718,11 @@ Ldorte:
  */
 BSS(lowram,4)
 BSS(esym,4)
+
+GLOBAL(_verspad)
+	.word	0
+GLOBAL(boot_version)
+	.word	X68K_BOOTIF_VERS
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts

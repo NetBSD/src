@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.4 2001/06/18 02:00:54 christos Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.4.2.1 2002/01/10 19:52:22 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.4.2.1 2002/01/10 19:52:22 thorpej Exp $");
+
 #define	ELFSIZE		32				/* XXX should die */
 
 #include <sys/param.h>
@@ -48,6 +51,7 @@
 #include <compat/svr4_32/svr4_32_syscall.h>
 #include <compat/svr4/svr4_errno.h>
 #include <compat/svr4_32/svr4_32_signal.h>
+#include <compat/svr4_32/svr4_32_exec.h>
 
 extern char svr4_32_sigcode[], svr4_32_esigcode[];
 extern struct sysent svr4_32_sysent[];
@@ -71,6 +75,7 @@ const struct emul emul_svr4_32 = {
 	trapsignal,
 	svr4_32_sigcode,
 	svr4_32_esigcode,
+	svr4_32_setregs,
 	NULL,
 	NULL,
 	NULL,

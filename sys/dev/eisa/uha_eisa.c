@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.15 2000/03/23 07:01:28 thorpej Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.15.8.1 2002/01/10 19:53:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.15.8.1 2002/01/10 19:53:54 thorpej Exp $");
+
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

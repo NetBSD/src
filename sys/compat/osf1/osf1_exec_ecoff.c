@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.1.6.1 2001/08/03 04:12:47 lukem Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.1.6.2 2002/01/10 19:52:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.1.6.2 2002/01/10 19:52:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

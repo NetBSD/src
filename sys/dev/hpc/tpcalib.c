@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2.2.1 2002/01/10 19:53:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2.2.1 2002/01/10 19:53:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

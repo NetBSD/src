@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.78.2.1 2001/08/03 04:12:55 lukem Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.78.2.2 2002/01/10 19:54:09 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -85,6 +85,9 @@
  * information isn't lost.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.78.2.2 2002/01/10 19:54:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -2040,7 +2043,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       ahc_inb(ahc, SCBPTR));
 		printf("TRACEPOINT: WAITING_SCBH = %d\n", ahc_inb(ahc, WAITING_SCBH));
 		printf("TRACEPOINT: SCB_TAG = %d\n", ahc_inb(ahc, SCB_TAG));
-#if DDB > 0
+#ifdef DDB
 		cpu_Debugger();
 #endif
 #endif
@@ -3347,6 +3350,8 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
 			if (!(txs->xs_control & XS_CTL_POLL)) {
 				callout_reset(&scbp->xs->xs_callout,
+				    (scbp->xs->timeout > 1000000) ?
+				    (scbp->xs->timeout / 1000) * hz : 
 				    (scbp->xs->timeout * hz) / 1000,
 				    ahc_timeout, scbp);
 			}
@@ -3546,12 +3551,12 @@ ahc_init(struct ahc_softc *ahc)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWMISC) {
-		printf("%s: hardware scb %d bytes; kernel scb %d bytes; "
-		       "ahc_dma %d bytes\n",
+		printf("%s: hardware scb %lu bytes; kernel scb %lu bytes; "
+		       "ahc_dma %lu bytes\n",
 			ahc_name(ahc),
-		        sizeof(struct hardware_scb),
-			sizeof(struct scb),
-			sizeof(struct ahc_dma_seg));
+		        (unsigned long) sizeof(struct hardware_scb),
+			(unsigned long) sizeof(struct scb),
+			(unsigned long) sizeof(struct ahc_dma_seg));
 	}
 #endif /* AHC_DEBUG */
 
@@ -4063,7 +4068,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	scb->flags |= SCB_ACTIVE;
 
 	if (!(xs->xs_control & XS_CTL_POLL))
-		callout_reset(&scb->xs->xs_callout, (xs->timeout * hz) / 1000,
+		callout_reset(&scb->xs->xs_callout, xs->timeout > 1000000 ?
+		    (xs->timeout / 1000) * hz : (xs->timeout * hz) / 1000,
 		    ahc_timeout, scb);
 
 	if ((scb->flags & SCB_TARGET_IMMEDIATE) != 0) {
@@ -4176,6 +4182,12 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 		if (error) {
+#ifdef AHC_DEBUG
+			printf("%s: in ahc_setup_data(): bus_dmamap_load() "
+			    "= %d\n",
+			    ahc_name(ahc),
+			    error);
+#endif
 			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			xs->error = XS_RESOURCE_SHORTAGE;	/* XXX fvdl */
@@ -4676,6 +4688,8 @@ bus_reset:
 				newtimeout = MAX(active_scb->xs->timeout,
 						 scb->xs->timeout);
 				callout_reset(&scb->xs->xs_callout,
+				    newtimeout > 1000000 ?
+				    (newtimeout / 1000) * hz :
 				    (newtimeout * hz) / 1000,
 				    ahc_timeout, scb);
 				splx(s);
@@ -4961,7 +4975,7 @@ ahc_abort_scbs(struct ahc_softc *ahc, int target, char channel,
 	 * Go through the pending CCB list and look for
 	 * commands for this target that are still active.
 	 * These are other tagged commands that were
-	 * disconnected when the reset occured.
+	 * disconnected when the reset occurred.
 	 */
 	{
 		struct scb *scb;

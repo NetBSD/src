@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.2 2001/07/08 23:56:03 thorpej Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.2.2.1 2002/01/10 19:53:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,20 @@ struct arcbios_component {
 	char		*Identifier;
 };
 
+/* 
+ * SGI ARCS likes to be `special', so it moved some of the class/type 
+ * numbers around from the ARC standard definitions.
+ */
+#if defined(sgimips)
+/* Component Class */
+#define	COMPONENT_CLASS_SystemClass		0
+#define	COMPONENT_CLASS_ProcessorClass		1
+#define	COMPONENT_CLASS_CacheClass		2
+#define	COMPONENT_CLASS_MemoryClass		3
+#define	COMPONENT_CLASS_AdapterClass		4
+#define	COMPONENT_CLASS_ControllerClass		5
+#define	COMPONENT_CLASS_PeripheralClass		6
+#else
 /* Component Class */
 #define	COMPONENT_CLASS_SystemClass		0
 #define	COMPONENT_CLASS_ProcessorClass		1
@@ -127,7 +141,62 @@ struct arcbios_component {
 #define	COMPONENT_CLASS_ControllerClass		4
 #define	COMPONENT_CLASS_PeripheralClass		5
 #define	COMPONENT_CLASS_MemoryClass		6
+#endif
 
+/* Component Types */
+#if defined(sgimips)
+/* System Class */
+#define	COMPONENT_TYPE_ARC			0
+
+/* Processor Class */
+#define	COMPONENT_TYPE_CPU			1
+#define	COMPONENT_TYPE_FPU			2
+
+/* Cache Class */
+#define	COMPONENT_TYPE_PrimaryICache		3
+#define	COMPONENT_TYPE_PrimaryDCache		4
+#define	COMPONENT_TYPE_SecondaryICache		5
+#define	COMPONENT_TYPE_SecondaryDCache		6
+#define	COMPONENT_TYPE_SecondaryCache		7
+
+/* Memory Class */
+#define	COMPONENT_TYPE_MemoryUnit		8
+
+/* Adapter Class */
+#define	COMPONENT_TYPE_EISAAdapter		9
+#define	COMPONENT_TYPE_TCAdapter		10
+#define	COMPONENT_TYPE_SCSIAdapter		11
+#define	COMPONENT_TYPE_DTIAdapter		12
+#define	COMPONENT_TYPE_MultiFunctionAdapter	13
+
+/* Controller Class */
+#define	COMPONENT_TYPE_DiskController		14
+#define	COMPONENT_TYPE_TapeController		15
+#define	COMPONENT_TYPE_CDROMController		16
+#define	COMPONENT_TYPE_WORMController		17
+#define	COMPONENT_TYPE_SerialController		18
+#define	COMPONENT_TYPE_NetworkController	19
+#define	COMPONENT_TYPE_DisplayController	20
+#define	COMPONENT_TYPE_ParallelController	21
+#define	COMPONENT_TYPE_PointerController	22
+#define	COMPONENT_TYPE_KeyboardController	23
+#define	COMPONENT_TYPE_AudioController		24
+#define	COMPONENT_TYPE_OtherController		25
+
+/* Peripheral Class */
+#define	COMPONENT_TYPE_DiskPeripheral		26
+#define	COMPONENT_TYPE_FloppyDiskPeripheral	27
+#define	COMPONENT_TYPE_TapePeripheral		28
+#define	COMPONENT_TYPE_ModemPeripheral		29
+#define	COMPONENT_TYPE_MonitorPeripheral	30
+#define	COMPONENT_TYPE_PrinterPeripheral	31
+#define	COMPONENT_TYPE_PointerPeripheral	32
+#define	COMPONENT_TYPE_KeyboardPeripheral	33
+#define	COMPONENT_TYPE_TerminalPeripheral	34
+#define	COMPONENT_TYPE_LinePeripheral		35
+#define	COMPONENT_TYPE_NetworkPeripheral	36
+#define	COMPONENT_TYPE_OtherPeripheral		37
+#else /* not sgimips */
 /* System Class */
 #define	COMPONENT_TYPE_ARC			0
 
@@ -179,6 +248,7 @@ struct arcbios_component {
 
 /* Memory Class */
 #define	COMPONENT_TYPE_MemoryUnit		37
+#endif
 
 /* Component flags */
 #define	COMPONENT_FLAG_Failed			1

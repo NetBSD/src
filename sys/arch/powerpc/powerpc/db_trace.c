@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13.2.1 2001/09/13 01:14:24 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13.2.2 2002/01/10 19:48:06 thorpej Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,11 +79,11 @@ const struct db_variable db_regs[] = {
 	{ "r31", (long *)&ddb_regs.r[31], FCN_NULL },
 	{ "iar", (long *)&ddb_regs.iar,   FCN_NULL },
 	{ "msr", (long *)&ddb_regs.msr,   FCN_NULL },
-#ifdef PPC_IBM4XX
 	{ "lr",  (long *)&ddb_regs.lr,    FCN_NULL },
 	{ "ctr", (long *)&ddb_regs.ctr,   FCN_NULL },
 	{ "cr",  (long *)&ddb_regs.cr,    FCN_NULL },
 	{ "xer", (long *)&ddb_regs.xer,   FCN_NULL },
+#ifdef PPC_IBM4XX
 	{ "dear", (long *)&ddb_regs.dear, FCN_NULL },
 	{ "esr", (long *)&ddb_regs.esr,   FCN_NULL },
 	{ "pid", (long *)&ddb_regs.pid,   FCN_NULL },
@@ -127,7 +128,29 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	}
 
-	frame = (db_addr_t)ddb_regs.r[1];
+	if (have_addr) {
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+
+			(*pr)("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				(*pr)("not found\n");
+				return;
+			}	
+			if (!(p->p_flag&P_INMEM)) {
+				(*pr)("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (db_addr_t)u->u_pcb.pcb_sp;
+			(*pr)("at %p\n", frame);
+		} else
+			frame = (db_addr_t)addr;
+	} else {
+		frame = (db_addr_t)ddb_regs.r[1];
+	}
 	for (;;) {
 		if (frame < NBPG)
 			break;

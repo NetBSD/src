@@ -1,37 +1,37 @@
-#	$NetBSD: INSTALL,v 1.16 2001/05/16 05:36:53 matt Exp $
+#	$NetBSD: INSTALL,v 1.16.2.1 2002/01/10 19:50:00 thorpej Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
 include		"arch/vax/conf/std.vax"
 
-makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
+makeoptions	COPTS="-Os"	# Optimise for space. Implies -O2
 
 # Here are all different supported CPU types listed.
-options 	"VAX8600"
-options 	"VAX8200"
-options 	"VAX780"
-options 	"VAX750"
-options 	"VAX630"	# MV II
-options 	"VAX650"	# MV III, 3300, 3400, 3500, 3600, 3800, 3900
-options 	"VAX660"	# VAX 4000/200
-options 	"VAX670"	# VAX 4000/300
-options 	"VAX680"	# VAX 4000/[45]00
-options 	"VAX410"	# VS 2000
-options 	"VAX43"		# VS 3100/76
-options 	"VAX46"		# VS 4000/60
-options 	"VAX48"		# VS 4000 VLC
-options 	"VAX49"		# VS 4000/90
-options 	"VAX53"		# VAX 4000/105A
+options 	VAX8600
+options 	VAX8200
+options 	VAX780
+options 	VAX750
+options 	VAX630		# MV II
+options 	VAX650		# MV III, 3300, 3400, 3500, 3600, 3800, 3900
+options 	VAX660		# VAX 4000/200
+options 	VAX670		# VAX 4000/300
+options 	VAX680		# VAX 4000/[45]00
+options 	VAX410		# VS 2000
+options 	VAX43		# VS 3100/76
+options 	VAX46		# VS 4000/60
+options 	VAX48		# VS 4000 VLC
+options 	VAX49		# VS 4000/90
+options 	VAX53		# VAX 4000/105A
 
 # Max users on system; this is just a hint
 maxusers	8
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
-options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MINIROOTSIZE=2276       # size of memory disk, in blocks
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MINIROOTSIZE=2276	# size of memory disk, in blocks
 
 
 # Kernel compiled-in symbolic debugger & system call tracer
@@ -44,7 +44,7 @@ options 	MINIROOTSIZE=2276       # size of memory disk, in blocks
 
 # Network support
 #options 	GATEWAY
-options         INET
+options 	INET
 
 # File systems
 file-system 	FFS
@@ -96,7 +96,7 @@ options 	COMPAT_15
 #options 	LKM
 
 # Kernel(s) to compile
-config          netbsd root on ? type ?
+config		netbsd root on ? type ?
 
 mainbus0	at root
 
@@ -156,8 +156,8 @@ mt*		at mscpbus? drive?	# MSCP tape
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
-#hdc0		at vsbus0		# The strange builtin MFM controller
-#rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
+hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
+rd*		at hdc0 drive?		# RD5x disks
 
 # SCSI controllers.
 asc0		at vsbus0 csr 0x200c0080 # VS4000/{60,VLC} SCSI-controller
@@ -196,7 +196,7 @@ smg0		at vsbus0 csr 0x200f0000# Small monochrome display ctlr.
 wsdisplay0	at smg0			# display device driver.
 lkc0		at dz0			# Keyboard LK201
 
-pseudo-device   loop	1
+pseudo-device	loop	1
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	bpfilter 8	# Not supported by de yet.
 #pseudo-device	tun	2

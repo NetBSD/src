@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.2.10.1 2001/08/03 04:13:10 lukem Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.2.10.2 2002/01/10 19:55:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.2.10.2 2002/01/10 19:55:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +79,26 @@ pckbc_isa_match(parent, match, aux)
 	bus_space_handle_t ioh_d, ioh_c;
 	int res, ok = 1;
 
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* If values are hardwired to something that they can't be, punt. */
-	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != IO_KBD) ||
-	    ia->ia_maddr != MADDRUNK ||
-	    (ia->ia_irq != IRQUNK && ia->ia_irq != 1 /* XXX */) ||
-	    ia->ia_drq != DRQUNK)
+	if (ia->ia_nio < 1 ||
+	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	     ia->ia_io[0].ir_addr != IO_KBD))
+		return (0);
+
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+		return (0);
+
+	if (ia->ia_nirq < 1 ||
+	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	     ia->ia_irq[0].ir_irq != 1 /*XXX*/))
+		return (0);
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
 	if (pckbc_is_console(iot, IO_KBD) == 0) {
@@ -117,9 +135,13 @@ pckbc_isa_match(parent, match, aux)
 	}
 
 	if (ok) {
-		ia->ia_iobase = IO_KBD;
-		ia->ia_iosize = 5;
-		ia->ia_msize = 0x0;
+		ia->ia_io[0].ir_addr = IO_KBD;
+		ia->ia_io[0].ir_size = 5;
+		ia->ia_nio = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
 	}
 	return (ok);
 }
@@ -139,13 +161,25 @@ pckbc_isa_attach(parent, self, aux)
 	isc->sc_ic = ia->ia_ic;
 	iot = ia->ia_iot;
 
-	/*
-	 * Set up IRQs for "normal" ISA.
-	 *
-	 * XXX The "aux" slot is different (9) on the Alpha AXP150 Jensen.
-	 */
-	isc->sc_irq[PCKBC_KBD_SLOT] = 1;
-	isc->sc_irq[PCKBC_AUX_SLOT] = 12;
+	switch (ia->ia_nirq) {
+	case 1:
+		/* Both channels use the same IRQ. */
+		isc->sc_irq[PCKBC_KBD_SLOT] =
+		    isc->sc_irq[PCKBC_AUX_SLOT] = ia->ia_irq[0].ir_irq;
+		break;
+
+	case 2:
+		/* First IRQ is kbd, second IRQ is aux port. */
+		isc->sc_irq[PCKBC_KBD_SLOT] = ia->ia_irq[0].ir_irq;
+		isc->sc_irq[PCKBC_AUX_SLOT] = ia->ia_irq[1].ir_irq;
+		break;
+
+	default:
+		/* Set up IRQs for "normal" ISA. */
+		isc->sc_irq[PCKBC_KBD_SLOT] = 1;
+		isc->sc_irq[PCKBC_AUX_SLOT] = 12;
+		break;
+	}
 
 	sc->intr_establish = pckbc_isa_intr_establish;
 

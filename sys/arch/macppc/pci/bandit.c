@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.15.8.1 2001/08/03 04:11:56 lukem Exp $	*/
+/*	$NetBSD: bandit.c,v 1.15.8.2 2002/01/10 19:45:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -163,12 +163,8 @@ bandit_conf_read(pc, tag, reg)
 		panic("pci_conf_read: func > 7");
 
 	if (bus == pc->bus) {
-		if (dev < 11) {
-			if (reg == PCI_ID_REG)
-				return 0xffffffff;
-			else
-				panic("pci_conf_read: dev < 11");
-		}
+		if (dev < 11)
+			return 0xffffffff;
 		x = (1 << dev) | (func << 8) | reg;
 	} else
 		x = tag | reg | 1;

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/02/29 15:21:52 nonaka Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2002/01/10 19:48:17 thorpej Exp $
 
 PROG=	mkbootimage
-MKMAN=	no
+NOMAN=	# defined
 
 CPPFLAGS= -I${.CURDIR}
 

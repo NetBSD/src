@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/30 12:48:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2002/01/10 19:46:56 thorpej Exp $
 
 S= ${.CURDIR}/../../../..
 
-MKMAN= no
+NOMAN= # defined
 
 CFLAGS= -Os -Wall
 

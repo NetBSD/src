@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.1.4.2 2001/08/25 06:16:12 thorpej Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.1.4.3 2002/01/10 19:54:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.1.4.3 2002/01/10 19:54:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145.2.1 2001/08/25 06:15:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.2.2 2002/01/10 19:48:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2465,6 +2465,7 @@ softintr_common:
 	 */
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(sparc_interrupt4m))
+#if !defined(MSIIEP)	/* "normal" sun4m */
 	mov	1, %l4
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
@@ -2478,7 +2479,20 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	sll	%l4, 16, %l5
 	st	%l5, [%l6 + ICR_PI_CLR_OFFSET]
 	b,a	softintr_common
-#endif
+#else /* MSIIEP */
+	sethi	%hi(MSIIEP_PCIC_VA), %l6
+	mov	1, %l4
+	ld	[%l6 + PCIC_PROC_IPR_REG], %l5 ! get pending interrupts
+	sll	%l4, %l3, %l4
+	btst	%l4, %l5	!  has pending hw intr at this level?
+	bnz	sparc_interrupt_common
+	 nop
+
+	! a soft interrupt; clear its bit in softintr clear register
+	b	softintr_common
+	 sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+#endif /* MSIIEP */
+#endif /* SUN4M */
 
 _ENTRY(_C_LABEL(sparc_interrupt44c))
 sparc_interrupt_common:
@@ -3833,9 +3847,9 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if defined(SUN4)
+#if defined(SUN4) || defined(SUN4C)
 	/*
-	 * Some sun4 models have fewer than 8 windows. For extra
+	 * Some sun4/sun4c models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
 	 * The save/restore code has 7 "save"'s followed by 7
 	 * "restore"'s -- we "nop" out the last "save" and first
@@ -3844,8 +3858,8 @@ startmap_done:
 	cmp	%o0, 8
 	be	1f
 noplab:	 nop
-	set	noplab, %l0
-	ld	[%l0], %l1
+	sethi	%hi(noplab), %l0
+	ld	[%l0 + %lo(noplab)], %l1
 	set	wb1, %l0
 	st	%l1, [%l0 + 6*4]
 	st	%l1, [%l0 + 7*4]
@@ -4407,6 +4421,10 @@ ENTRY(switchexit)
 	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
+
+/* Macro used for register window flushing in the context switch code */
+#define	SAVE save %sp, -64, %sp
+
 /*
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.
@@ -4418,7 +4436,6 @@ idle:
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
 	 * and %psr to PSR_S, and set cpcb to point to idle_u.
 	 */
-#define	SAVE save %sp, -64, %sp
 	/* XXX: FIXME
 	 * 7 of each:
 	 */
@@ -4447,7 +4464,7 @@ idle:
 #endif
 
 idle_enter_no_schedlock:
-	wr	%g1, 0, %psr		! (void) spl0();
+	wr	%g1, 0, %psr		! spl0();
 1:					! spin reading whichqs until nonzero
 	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
@@ -4456,6 +4473,7 @@ idle_enter_no_schedlock:
 #else
 	bnz,a	Lsw_scan
 #endif
+	! NB: annulled delay slot (executed when we leave the idle loop)
 	 wr	%g1, PSR_PIL, %psr	! (void) splhigh();
 
 	! Check uvm.page_idle_zero
@@ -4820,14 +4838,14 @@ ENTRY(proc_trampoline)
 	 mov	%l1, %o0
 
 	/*
-	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() will have
-	 * set npc only, anticipating that trap.c will advance past the
-	 * trap instruction; but we bypass that, so we must do it manually.
+	 * Here we finish up as in syscall, but simplified.
+	 * cpu_fork() or sendsig() (if we took a pending signal
+	 * in child_return()) will have set the user-space return
+	 * address in tf_pc. In both cases, %npc should be %pc + 4.
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2
-	ld	[%sp + CCFSZ + 8], %l1	! pc = tf->tf_npc from execve/fork
+	ld	[%sp + CCFSZ + 4], %l1	! pc = tf->tf_pc from cpu_fork()
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
@@ -5831,6 +5849,7 @@ ENTRY(ienab_bic)
  * raise(cpu, level)
  */
 ENTRY(raise)
+#if !defined(MSIIEP) /* normal suns */
 	! *(ICR_PI_SET + cpu*_MAXNBPG) = PINTR_SINTRLEV(level)
 	sethi	%hi(1 << 16), %o2
 	sll	%o2, %o1, %o2
@@ -5842,7 +5861,13 @@ ENTRY(raise)
 	 add	%o1, %o3, %o1
 	retl
 	 st	%o2, [%o1]
-
+#else /* MSIIEP - ignore %o0, only one cpu ever */
+	mov	1, %o2
+	sethi	%hi(MSIIEP_PCIC_VA), %o0
+	sll	%o2, %o1, %o2
+	retl
+	 sth	%o2, [%o0 + PCIC_SOFT_INTR_SET_REG]
+#endif
 
 /*
  * Read Synchronous Fault Status registers.
@@ -5948,6 +5973,7 @@ _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 
 #endif /* SUN4M */
 
+#if !defined(MSIIEP)	/* normal suns */
 /*
  * void lo_microtime(struct timeval *tv)
  *
@@ -6012,6 +6038,66 @@ NOP_ON_4_4C_1:
 4:
 	retl
 	 st	%o3, [%o0+4]
+
+#else /* MSIIEP */
+/* XXX: uwe: can be merged with 4c/4m version above */
+/*
+ * ms-IIep version of
+ * void microtime(struct timeval *tv)
+ *
+ * This is similar to 4c/4m microtime.   The difference is that
+ * counter uses 31 bits and ticks every 4 CPU cycles (cpu is @100MHz)
+ * the magic to divide by 25 is stolen from gcc
+ */
+ENTRY(microtime)
+	sethi	%hi(_C_LABEL(time)), %g2
+
+	sethi	%hi(MSIIEP_PCIC_VA), %g3
+	or	%g3, PCIC_SCCR_REG, %g3
+
+2:
+	ldd	[%g2+%lo(_C_LABEL(time))], %o2	! time.tv_sec & time.tv_usec
+	ld	[%g3], %o4			! system (timer) counter
+	ldd	[%g2+%lo(_C_LABEL(time))], %g4	! see if time values changed
+	cmp	%g4, %o2
+	bne	2b				! if time.tv_sec changed
+	 cmp	%g5, %o3
+	bne	2b				! if time.tv_usec changed
+	 tst	%o4
+	!! %o2 - time.tv_sec;  %o3 - time.tv_usec;  %o4 - timer counter
+
+!!! BEGIN ms-IIep specific code
+	bpos	3f				! if limit not reached yet
+	 clr	%g4				!  then use timer as is
+
+	sethi	%hi(0x80000000), %g5
+	sethi	%hi(_C_LABEL(tick)), %g4
+	andn	%o4, %g5, %o4			! cleat limit reached flag
+	ld	[%g4+%lo(_C_LABEL(tick))], %g4
+
+	!! %g4 - either 0 or tick (if timer has hit the limit)
+3:
+	inc	-1, %o4				! timer is 1-based, adjust
+	!! divide by 25 magic stollen from a gcc output
+	sethi	%hi(1374389535), %g5
+	or	%g5, %lo(1374389535), %g5
+	umul	%o4, %g5, %g0
+	rd	%y, %o4
+	srl	%o4, 3, %o4
+	add	%o4, %g4, %o4			! may be bump usec by tick
+!!! END ms-IIep specific code
+
+	add	%o3, %o4, %o3			! add timer to time.tv_usec
+	set	1000000, %g5			! normalize usec value
+	cmp	%o3, %g5
+	bl	4f
+	 nop
+	inc	%o2				! overflow into tv_sec
+	sub	%o3, %g5, %o3
+4:
+	retl
+	 std	%o2, [%o0]
+#endif /* MSIIEP */
 
 /*
  * delay function

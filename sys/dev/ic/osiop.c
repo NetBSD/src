@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.4.4.1 2001/08/03 04:13:02 lukem Exp $	*/
+/*	$NetBSD: osiop.c,v 1.4.4.2 2002/01/10 19:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -75,6 +75,9 @@
  * http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/index.html
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.4.4.2 2002/01/10 19:54:57 thorpej Exp $");
+
 /* #define OSIOP_DEBUG */
 
 #include "opt_ddb.h"
@@ -116,6 +119,7 @@ void osiop_resetbus(struct osiop_softc *);
 void osiop_start(struct osiop_softc *);
 int osiop_checkintr(struct osiop_softc *, u_int8_t, u_int8_t, u_int8_t, int *);
 void osiop_select(struct osiop_softc *);
+void osiop_update_xfer_mode(struct osiop_softc *, int);
 void scsi_period_to_osiop(struct osiop_softc *, int);
 void osiop_timeout(void *);
 
@@ -263,12 +267,12 @@ osiop_attach(sc)
 		return;
 	}
 
-	acb = malloc(sizeof(struct osiop_acb) * OSIOP_NACB, M_DEVBUF, M_NOWAIT);
+	acb = malloc(sizeof(struct osiop_acb) * OSIOP_NACB,
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (acb == NULL) {
 		printf(": can't allocate memory for acb\n");
 		return;
 	}
-	memset(acb, 0, sizeof(struct osiop_acb) * OSIOP_NACB);
 	sc->sc_acb = acb;
 	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
 	sc->sc_nexus = NULL;
@@ -478,7 +482,25 @@ osiop_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		return;
+		{
+			struct osiop_tinfo *ti;
+			struct scsipi_xfer_mode *xm = arg;
+
+			ti = &sc->sc_tinfo[xm->xm_target];
+
+			if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
+			    (ti->flags & TI_NOSYNC) == 0)
+				ti->state = NEG_INIT;
+
+			/*
+			 * If we're not going to negotiate, send the
+			 * notification now, since it won't happen later.
+			 */
+			if (ti->state == NEG_DONE) 
+				osiop_update_xfer_mode(sc, xm->xm_target);
+
+			return;
+		}
 	}
 }
 
@@ -808,7 +830,7 @@ osiop_reset(sc)
 	struct osiop_softc *sc;
 {
 	struct osiop_acb *acb;
-	int s;
+	int i, s;
 	u_int8_t stat;
 
 #ifdef OSIOP_DEBUG
@@ -854,7 +876,11 @@ osiop_reset(sc)
 	    osiop_read_1(sc, OSIOP_CTEST7) | sc->sc_ctest7);
 
 	/* will need to re-negotiate sync xfers */
-	memset(&sc->sc_sync, 0, sizeof(sc->sc_sync));
+	for (i = 0; i < OSIOP_NTGT; i++) {
+		sc->sc_tinfo[i].state = NEG_INIT;
+		sc->sc_tinfo[i].period = 0;
+		sc->sc_tinfo[i].offset = 0;
+	}
 
 	stat = osiop_read_1(sc, OSIOP_ISTAT);
 	if (stat & OSIOP_ISTAT_SIP)
@@ -917,10 +943,10 @@ osiop_start(sc)
 	struct osiop_ds *ds = acb->ds;
 	struct scsipi_xfer *xs = acb->xs;
 	bus_dmamap_t dsdma = sc->sc_dsdma, datadma = acb->datadma;
+	struct osiop_tinfo *ti;
 	int target = xs->xs_periph->periph_target;
 	int lun = xs->xs_periph->periph_lun;
-	int disconnect;
-	int i;
+	int disconnect, i;
 
 #ifdef OSIOP_DEBUG
 	if (osiop_debug & DEBUG_DISC &&
@@ -951,10 +977,11 @@ osiop_start(sc)
 	ds->cmd.count = acb->cmdlen;
 	ds->cmd.addr = acb->cmddma->dm_segs[0].ds_addr;
 
-	ds->scsi_addr = (1 << (16 + target)) | (sc->sc_sync[target].sxfer << 8);
+	ti = &sc->sc_tinfo[target];
+	ds->scsi_addr = ((1 << 16) << target) | (ti->sxfer << 8);
 
 	disconnect = (xs->xs_control & XS_CTL_REQSENSE) == 0 &&
-	    (sc->sc_tinfo[target].flags & TI_NODISC) == 0;
+	    (ti->flags & TI_NODISC) == 0;
 
 	ds->msgout[0] = MSG_IDENTIFY(lun, disconnect);
 	ds->id.count = 1;
@@ -967,11 +994,14 @@ osiop_start(sc)
 	 * doesn't do wide transfers, just begin the synchronous transfer
 	 * negotation here.
 	 */
-	if (sc->sc_sync[target].state == NEG_INIT) {
-		if ((sc->sc_tinfo[target].flags & TI_NOSYNC) != 0) {
-			sc->sc_sync[target].state = NEG_DONE;
-			sc->sc_sync[target].sbcl = 0;
-			sc->sc_sync[target].sxfer = 0;
+	if (ti->state == NEG_INIT) {
+		if ((ti->flags & TI_NOSYNC) != 0) {
+			ti->state = NEG_DONE;
+			ti->sbcl = 0;
+			ti->sxfer = 0;
+			ti->period = 0;
+			ti->offset = 0;
+			osiop_update_xfer_mode(sc, target);
 #ifdef OSIOP_DEBUG
 			if (osiopsync_debug)
 				printf("Forcing target %d asynchronous\n",
@@ -984,8 +1014,8 @@ osiop_start(sc)
 			ds->msgout[3] = MSG_EXT_SDTR;
 			ds->msgout[4] = sc->sc_minsync;
 			ds->msgout[5] = OSIOP_MAX_OFFSET;
-			ds->id.count = 6;
-			sc->sc_sync[target].state = NEG_WAITS;
+			ds->id.count = MSG_EXT_SDTR_LEN + 3;
+			ti->state = NEG_WAITS;
 #ifdef OSIOP_DEBUG
 			if (osiopsync_debug)
 				printf("Sending sync request to target %d\n",
@@ -1043,7 +1073,7 @@ osiop_start(sc)
 			printf("%s: osiop_select while connected?\n",
 			    sc->sc_dev.dv_xname);
 		osiop_write_4(sc, OSIOP_TEMP, 0);
-		osiop_write_1(sc, OSIOP_SBCL, sc->sc_sync[target].sbcl);
+		osiop_write_1(sc, OSIOP_SBCL, ti->sbcl);
 		osiop_write_4(sc, OSIOP_DSA,
 		    dsdma->dm_segs[0].ds_addr + acb->dsoffset);
 		osiop_write_4(sc, OSIOP_DSP,
@@ -1126,6 +1156,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_ok) {
 		/* Normal completion status, or check condition */
+		struct osiop_tinfo *ti;
 #ifdef OSIOP_DEBUG
 		if (osiop_read_4(sc, OSIOP_DSA) !=
 		    dsdma->dm_segs[0].ds_addr + acb->dsoffset) {
@@ -1136,19 +1167,18 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		}
 #endif
 		target = acb->xs->xs_periph->periph_target;
-		if (sc->sc_sync[target].state == NEG_WAITS) {
+		ti = &sc->sc_tinfo[target];
+		if (ti->state == NEG_WAITS) {
 			if (ds->msgbuf[1] == MSG_INVALID)
 				printf("%s: target %d ignored sync request\n",
 				    sc->sc_dev.dv_xname, target);
 			else if (ds->msgbuf[1] == MSG_MESSAGE_REJECT)
 				printf("%s: target %d rejected sync request\n",
 				    sc->sc_dev.dv_xname, target);
-			else
-/* XXX - need to set sync transfer parameters */
-				printf("%s: target %d (sync) %02x %02x %02x\n",
-				    sc->sc_dev.dv_xname, target, ds->msgbuf[1],
-				    ds->msgbuf[2], ds->msgbuf[3]);
-			sc->sc_sync[target].state = NEG_DONE;
+			ti->period = 0;
+			ti->offset = 0;
+			osiop_update_xfer_mode(sc, target);
+			ti->state = NEG_DONE;
 		}
 #ifdef OSIOP_DEBUG
 		if (osiop_read_1(sc, OSIOP_SBCL) & OSIOP_BSY) {
@@ -1176,6 +1206,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		if (ds->msgbuf[1] == MSG_EXTENDED &&
 		    ds->msgbuf[2] == MSG_EXT_SDTR_LEN &&
 		    ds->msgbuf[3] == MSG_EXT_SDTR) {
+			struct osiop_tinfo *ti = &sc->sc_tinfo[target];
 #ifdef OSIOP_DEBUG
 			if (osiopsync_debug)
 				printf("sync msg in: "
@@ -1184,33 +1215,28 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 				    ds->msgbuf[2], ds->msgbuf[3],
 				    ds->msgbuf[4], ds->msgbuf[5]);
 #endif
-			sc->sc_sync[target].sxfer = 0;
-			sc->sc_sync[target].sbcl = 0;
-			if (ds->msgbuf[2] == MSG_EXT_SDTR_LEN &&
-			    ds->msgbuf[3] == MSG_EXT_SDTR &&
-			    ds->msgbuf[5] != 0) {
-				printf("%s: target %d now synchronous, "
-				    "period=%d ns, offset=%d\n",
-				    sc->sc_dev.dv_xname, target,
-				    ds->msgbuf[4] * 4, ds->msgbuf[5]);
-				    scsi_period_to_osiop(sc, target);
-			}
+			ti->period = ds->msgbuf[4];
+			ti->offset = ds->msgbuf[5];
+			ti->sxfer = 0;
+			ti->sbcl = 0;
+			if (ds->msgbuf[5] != 0)
+				scsi_period_to_osiop(sc, target);
+			osiop_update_xfer_mode(sc, target);
+
 			bus_dmamap_sync(sc->sc_dmat, dsdma,
 			    acb->dsoffset, sizeof(struct osiop_ds),
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			osiop_write_1(sc, OSIOP_SXFER,
-			    sc->sc_sync[target].sxfer);
-			osiop_write_1(sc, OSIOP_SBCL,
-			    sc->sc_sync[target].sbcl);
-			if (sc->sc_sync[target].state == NEG_WAITS) {
-				sc->sc_sync[target].state = NEG_DONE;
+			osiop_write_1(sc, OSIOP_SXFER, ti->sxfer);
+			osiop_write_1(sc, OSIOP_SBCL, ti->sbcl);
+			if (ti->state == NEG_WAITS) {
+				ti->state = NEG_DONE;
 				osiop_write_4(sc, OSIOP_DSP,
 				    scraddr + Ent_clear_ack);
 				return (0);
 			}
 			osiop_write_1(sc, OSIOP_DCNTL,
 			    osiop_read_1(sc, OSIOP_DCNTL) | OSIOP_DCNTL_STD);
-			sc->sc_sync[target].state = NEG_DONE;
+			ti->state = NEG_DONE;
 			return (0);
 		}
 		/* XXX - not SDTR message */
@@ -1544,9 +1570,9 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 			osiop_write_4(sc, OSIOP_DSA,
 			    dsdma->dm_segs[0].ds_addr + acb->dsoffset);
 			osiop_write_1(sc, OSIOP_SXFER,
-			    sc->sc_sync[reselid].sxfer);
+			    sc->sc_tinfo[reselid].sxfer);
 			osiop_write_1(sc, OSIOP_SBCL,
-			    sc->sc_sync[reselid].sbcl);
+			    sc->sc_tinfo[reselid].sbcl);
 			break;
 		}
 		if (acb == NULL) {
@@ -1595,8 +1621,8 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		osiop_write_4(sc, OSIOP_TEMP, 0);
 		osiop_write_4(sc, OSIOP_DSA,
 		    dsdma->dm_segs[0].ds_addr + sc->sc_nexus->dsoffset);
-		osiop_write_1(sc, OSIOP_SXFER, sc->sc_sync[target].sxfer);
-		osiop_write_1(sc, OSIOP_SBCL, sc->sc_sync[target].sbcl);
+		osiop_write_1(sc, OSIOP_SXFER, sc->sc_tinfo[target].sxfer);
+		osiop_write_1(sc, OSIOP_SBCL, sc->sc_tinfo[target].sbcl);
 		osiop_write_4(sc, OSIOP_DSP, scraddr + Ent_scripts);
 		return (0);
 	}
@@ -1797,6 +1823,28 @@ osiop_intr(sc)
 	splx(s);
 }
 
+void
+osiop_update_xfer_mode(sc, target)
+	struct osiop_softc *sc;
+	int target;
+{
+	struct osiop_tinfo *tinfo = &sc->sc_tinfo[target];
+	struct scsipi_xfer_mode xm;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (tinfo->period) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = tinfo->period;
+		xm.xm_offset = tinfo->offset;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
+}
+
 /*
  * This is based on the Progressive Peripherals 33Mhz Zeus driver and will
  * not be correct for other 53c710 boards.
@@ -1807,13 +1855,13 @@ scsi_period_to_osiop(sc, target)
 	struct osiop_softc *sc;
 	int target;
 {
-	int period, offset, sxfer, sbcl = 0;
+	int period, offset, sxfer, sbcl;
 #ifdef DEBUG_SYNC
 	int i;
 #endif
 
-	period = sc->sc_nexus->ds->msgbuf[4];
-	offset = sc->sc_nexus->ds->msgbuf[5];
+	period = sc->sc_tinfo[target].period;
+	offset = sc->sc_tinfo[target].offset;
 #ifdef DEBUG_SYNC
 	sxfer = 0;
 	if (offset <= OSIOP_MAX_OFFSET)
@@ -1850,8 +1898,8 @@ scsi_period_to_osiop(sc, target)
 		    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
 #endif
 	}
-	sc->sc_sync[target].sxfer = sxfer;
-	sc->sc_sync[target].sbcl = sbcl;
+	sc->sc_tinfo[target].sxfer = sxfer;
+	sc->sc_tinfo[target].sbcl = sbcl;
 #ifdef DEBUG_SYNC
 	printf("osiop sync: osiop_sxfr %02x, osiop_sbcl %02x\n", sxfer, sbcl);
 #endif

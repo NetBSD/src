@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.5.6.1 2001/08/03 04:13:08 lukem Exp $ */
+/* $NetBSD: ega.c,v 1.5.6.2 2002/01/10 19:55:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.5.6.2 2002/01/10 19:55:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,33 +458,52 @@ ega_match(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	int mono;
 
+	if (ia->ia_nio < 1)
+		return (0);
+
+	if (ia->ia_iomem < 1)
+		return (0);
+
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* If values are hardwired to something that they can't be, punt. */
-	if ((ia->ia_iobase != IOBASEUNK &&
-	     ia->ia_iobase != 0x3d0 &&
-	     ia->ia_iobase != 0x3b0) ||
-	    /* ia->ia_iosize != 0 || XXX isa.c */
-	    (ia->ia_maddr != MADDRUNK &&
-	     ia->ia_maddr != 0xb8000 &&
-	     ia->ia_maddr != 0xb0000) ||
-	    (ia->ia_msize != 0 && ia->ia_msize != 0x8000) ||
-	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
+	if ((ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	     ia->ia_io[0].ir_addr != 0x3d0 &&
+	     ia->ia_io[0].ir_addr != 0x3b0) ||
+	    /* ia->ia_io[0].ir_size != 0 || XXX isa.c */
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	     ia->ia_iomem[0].ir_addr != 0xb8000 &&
+	     ia->ia_iomem[0].ir_addr != 0xb0000) ||
+	    (ia->ia_iomem[0].ir_size != 0 &&
+	     ia->ia_iomem[0].ir_size != 0x8000) ||
+	    ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT ||
+	    ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT)
 		return (0);
 
 	if (ega_is_console(ia->ia_iot))
 		mono = ega_console_dc.hdl.vh_mono;
-	else if (ia->ia_iobase != 0x3b0 && ia->ia_maddr != 0xb0000 &&
+	else if (ia->ia_io[0].ir_addr != 0x3b0 &&
+	    ia->ia_iomem[0].ir_addr != 0xb0000 &&
 		 ega_probe_col(ia->ia_iot, ia->ia_memt))
 		mono = 0;
-	else if (ia->ia_iobase != 0x3d0 && ia->ia_maddr != 0xb8000 &&
+	else if (ia->ia_io[0].ir_addr != 0x3d0 &&
+	    ia->ia_iomem[0].ir_addr != 0xb8000 &&
 		ega_probe_mono(ia->ia_iot, ia->ia_memt))
 		mono = 1;
 	else
 		return (0);
 
-	ia->ia_iobase = mono ? 0x3b0 : 0x3d0;
-	ia->ia_iosize = 0x10;
-	ia->ia_maddr = mono ? 0xb0000 : 0xb8000;
-	ia->ia_msize = 0x8000;
+	ia->ia_io[0].ir_addr = mono ? 0x3b0 : 0x3d0;
+	ia->ia_io[0].ir_size = 0x10;
+	ia->ia_iomem[0].ir_addr = mono ? 0xb0000 : 0xb8000;
+	ia->ia_iomem[0].ir_size = 0x8000;
 	return (2); /* beat pcdisplay */
 }
 
@@ -507,10 +529,12 @@ ega_attach(parent, self, aux)
 	} else {
 		dc = malloc(sizeof(struct ega_config),
 			    M_DEVBUF, M_WAITOK);
-		if (ia->ia_iobase != 0x3b0 && ia->ia_maddr != 0xb0000 &&
+		if (ia->ia_io[0].ir_addr != 0x3b0 &&
+		    ia->ia_iomem[0].ir_addr != 0xb0000 &&
 		    ega_probe_col(ia->ia_iot, ia->ia_memt))
 			ega_init(dc, ia->ia_iot, ia->ia_memt, 0);
-		else if (ia->ia_iobase != 0x3d0 && ia->ia_maddr != 0xb8000 &&
+		else if (ia->ia_io[0].ir_addr != 0x3d0 &&
+		    ia->ia_iomem[0].ir_addr != 0xb8000 &&
 			 ega_probe_mono(ia->ia_iot, ia->ia_memt))
 			ega_init(dc, ia->ia_iot, ia->ia_memt, 1);
 		else

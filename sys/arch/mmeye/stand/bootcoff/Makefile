@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/20 21:24:55 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2002/01/10 19:46:29 thorpej Exp $
 
 PROG=	osloader
 SRCS=	osloader.c
 NOMAN=
-
+# defined
 .include <bsd.prog.mk>

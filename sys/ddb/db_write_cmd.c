@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.14 2000/06/06 05:06:26 jhawk Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.14.6.1 2002/01/10 19:52:42 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,9 @@
  *	Author: David B. Golub,  Carnegie Mellon University
  *	Date:	7/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.14.6.1 2002/01/10 19:52:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

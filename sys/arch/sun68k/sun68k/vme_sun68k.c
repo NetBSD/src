@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.1 2001/06/27 02:48:32 fredette Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.1.2.1 2002/01/10 19:49:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ static int	sun68k_vme_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 static int	sun68k_vme_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int));
 
-int sun68k_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
+paddr_t sun68k_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
 
 struct cfattach sun68kvme_ca = {
 	sizeof(struct sun68kvme_softc), sun68kvme_match, sun68kvme_attach
@@ -259,7 +259,7 @@ sun68k_vme_map(cookie, addr, size, mod, datasize, swap, tp, hp, rp)
 /*
  * Assists in mmap'ing a device on the VME bus.
  */
-int
+paddr_t
 sun68k_vme_mmap_cookie(addr, mod, hp)
 	vme_addr_t addr;
 	vme_am_t mod;
@@ -274,7 +274,7 @@ sun68k_vme_mmap_cookie(addr, mod, hp)
 	if (error != 0)
 		return (error);
 
-	return (bus_space_mmap(sc->sc_bustag, iospace, paddr, 0, hp));
+	return (bus_space_mmap2(sc->sc_bustag, iospace, paddr, 0, 0, 0));
 }
 
 struct sun68k_vme_intr_handle {

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.1.4.2 2001/09/13 01:15:18 thorpej Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.1.4.3 2002/01/10 19:51:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -83,5 +83,12 @@
 
 #define LINUX_LOCK_EX		4  /* F_EXLCK in Linux, and comment "or 3 " */
 #define LINUX_LOCK_SH		8  /* F_SHLCK in Linux, and comment "or 4'  */
+
+/* 
+ * From Linux's include/asm-mips64/fcntl.h
+ */
+#define LINUX_F_GETLK64		33
+#define LINUX_F_SETLK64		34
+#define LINUX_F_SETLKW64	35
 
 #endif /* !_MIPS_LINUX_FCNTL_H */

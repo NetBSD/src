@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.19 2000/09/24 12:37:04 jdolecek Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.19.4.1 2002/01/10 19:53:51 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -30,6 +30,9 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/ahc_eisa.c,v 1.15 2000/01/29 14:22:19 peter Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.19.4.1 2002/01/10 19:53:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

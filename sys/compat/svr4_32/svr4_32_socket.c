@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.1.6.1 2002/01/10 19:52:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  * socket gets closed we remove the item from the list. The list gets loaded
  * every time a stat(2) call finds a socket.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.1.6.1 2002/01/10 19:52:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

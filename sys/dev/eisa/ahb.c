@@ -1,13 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.32 2001/04/25 17:53:27 bouyer Exp $	*/
-
-#include "opt_ddb.h"
-
-#undef	AHBDEBUG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: ahb.c,v 1.32.2.1 2002/01/10 19:53:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +52,18 @@
  * functioning of this software in any circumstances.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.32.2.1 2002/01/10 19:53:50 thorpej Exp $");
+
+#include "opt_ddb.h"
+
+#undef	AHBDEBUG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

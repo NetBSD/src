@@ -1,8 +1,26 @@
-#	$NetBSD: GENERIC,v 1.26.2.2 2001/09/13 01:14:02 thorpej Exp $
+# $NetBSD: GENERIC,v 1.26.2.3 2002/01/10 19:46:29 thorpej Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.26.2.2 $"
+#ident 		"GENERIC-$Revision: 1.26.2.3 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -27,7 +45,7 @@ options 	KTRACE
 options 	COMPAT_43
 
 file-system 	FFS
-file-system 	NFS	
+file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
@@ -36,7 +54,7 @@ file-system 	CD9660
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET
@@ -44,10 +62,10 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options        GATEWAY         # IP packet forwarding
-#options        ISO             # OSI networking
-#options        TPIP
-#options        EON
+#options 	GATEWAY		# IP packet forwarding
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
@@ -70,6 +88,7 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 pseudo-device	sl
 pseudo-device	ppp 2
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

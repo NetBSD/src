@@ -1,8 +1,9 @@
-#	$NetBSD: files.powerpc,v 1.22.2.1 2001/09/13 01:14:22 thorpej Exp $
-defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
-defopt	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
-defopt	L2CR_CONFIG
-defopt	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
+#	$NetBSD: files.powerpc,v 1.22.2.2 2002/01/10 19:47:59 thorpej Exp $
+
+defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
+defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
+defparam		L2CR_CONFIG
+defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copystr.c
@@ -23,11 +24,11 @@ file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/vm_machdep.c
-file    arch/powerpc/powerpc/setjmp.S                   ddb | kgdb
-file    arch/powerpc/powerpc/db_memrw.c                 ddb | kgdb
-file    arch/powerpc/powerpc/db_disasm.c                ddb
-file    arch/powerpc/powerpc/db_interface.c             ddb
-file    arch/powerpc/powerpc/db_trace.c                 ddb
+file	arch/powerpc/powerpc/setjmp.S			ddb | kgdb
+file	arch/powerpc/powerpc/db_memrw.c			ddb | kgdb
+file	arch/powerpc/powerpc/db_disasm.c		ddb
+file	arch/powerpc/powerpc/db_interface.c		ddb | kgdb
+file	arch/powerpc/powerpc/db_trace.c			ddb
 
 # IBM 4xx Family files (40x)
 file	arch/powerpc/ibm4xx/pmap.c			ppc_ibm4xx
@@ -46,4 +47,4 @@ file	arch/powerpc/powerpc/copyinstr.c		ppc_mpc6xx
 file	arch/powerpc/powerpc/copyoutstr.c		ppc_mpc6xx
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/powerpc/powerpc/compat_13_machdep.c      compat_13
+file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13

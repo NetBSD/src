@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.11 2001/07/08 17:55:50 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.11.2.1 2002/01/10 19:55:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -31,6 +31,9 @@
  *
  *   This driver supports the LEMAC (DE203, DE204, and DE205) cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.11.2.1 2002/01/10 19:55:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,26 +81,31 @@ lemac_isa_find(sc, ia, attach)
 	bus_addr_t msize;
 	int rv = 0, irq;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/*
 	 * Disallow wildcarded i/o addresses.
 	 */
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return 0;
 
 	/*
 	 * Make sure this is a valid LEMAC address.
 	 */
-	if (ia->ia_iobase & (LEMAC_IOSIZE - 1))
+	if (ia->ia_io[0].ir_addr & (LEMAC_IOSIZE - 1))
 		return 0;
 
 	sc->sc_iot = ia->ia_iot;
 
-	/*
-	 * Map the LEMAC's port space for the probe sequence.
-	 */
-	ia->ia_iosize = LEMAC_IOSIZE;
-
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, LEMAC_IOSIZE, 0,
 	    &sc->sc_ioh)) {
 		if (attach)
 			printf(": can't map i/o space\n");
@@ -117,7 +125,8 @@ lemac_isa_find(sc, ia, attach)
 	 */
 	lemac_info_get(sc->sc_iot, sc->sc_ioh, &maddr, &msize, &irq);
 
-	if (ia->ia_maddr != maddr && ia->ia_maddr != MADDRUNK)
+	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    ia->ia_iomem[0].ir_addr != maddr)
 		goto outio;
 
 	sc->sc_memt = ia->ia_memt;
@@ -131,9 +140,10 @@ lemac_isa_find(sc, ia, attach)
 	/*
 	 * Double-check IRQ configuration.
 	 */
-	if (ia->ia_irq != irq && ia->ia_irq != IRQUNK)
+	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	    ia->ia_irq[0].ir_irq != irq)
 		printf("%s: overriding IRQ %d to %d\n", sc->sc_dv.dv_xname,
-		       ia->ia_irq, irq);
+		       ia->ia_irq[0].ir_irq, irq);
 
 	if (attach) {
 		sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);
@@ -152,9 +162,17 @@ lemac_isa_find(sc, ia, attach)
 	 */
 	rv = 1;
 
-	ia->ia_maddr = maddr;
-	ia->ia_msize = msize;
-	ia->ia_irq = irq;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = LEMAC_IOSIZE;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_addr = maddr;
+	ia->ia_iomem[0].ir_size = msize;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
+	ia->ia_ndrq = 0;
 
 	if (rv == 0 || !attach)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, msize);

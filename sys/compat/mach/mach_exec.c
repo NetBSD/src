@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.2.2.2 2001/08/03 04:12:45 lukem Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2.2.3 2002/01/10 19:51:51 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.2.3 2002/01/10 19:51:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +80,7 @@ const struct emul emul_mach = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
@@ -95,7 +99,6 @@ int
 exec_mach_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
 {
-	char path[MAXPATHLEN];
 	size_t len;
 	size_t zero = 0;
 	int error;
@@ -111,16 +114,16 @@ exec_mach_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 	}
 	*stackp += sizeof(zero);
 
-	/* do the really stupid thing */
-	if ((error = copyinstr(pack->ep_name, path, MAXPATHLEN, &len)) != 0) {
-		DPRINTF(("mach: copyinstr %p failed\n", pack->ep_name));
-		return error;
-	}
-	if ((error = copyout(path, *stackp, len)) != 0) {
+	if ((error = copyoutstr(pack->ep_emul_arg, *stackp, MAXPATHLEN, &len))
+	    != 0) {
 		DPRINTF(("mach: copyout path failed\n"));
 		return error;
 	}
-	*stackp += len;
+	*stackp += len + 1;
+
+	/* We don't need this anymore */
+	free(pack->ep_emul_arg, MAXPATHLEN);
+	pack->ep_emul_arg = NULL;
 
 	len = len % sizeof(zero);
 	if (len) {
@@ -142,7 +145,6 @@ exec_mach_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 
 int
 exec_mach_probe(char **path) {
-	*path = malloc(strlen(emul_mach.e_path) + 1, M_TEMP, M_WAITOK);
-	(void)strcpy(*path, emul_mach.e_path);
+	*path = (char *)emul_mach.e_path;
 	return 0;
 }

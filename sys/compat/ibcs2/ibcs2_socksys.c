@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.8 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.8.8.1 2002/01/10 19:51:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -24,6 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.8.8.1 2002/01/10 19:51:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

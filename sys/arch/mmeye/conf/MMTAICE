@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.6 2001/07/08 16:32:20 abs Exp $
+#	$NetBSD: MMTAICE,v 1.6.2.1 2002/01/10 19:46:24 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -17,11 +17,11 @@ maxusers	32		# estimated number of users
 #options 	I386_CPU
 #options 	I486_CPU
 #options 	I586_CPU
-options		SH7708		# 60MHz 
-#options	SH7708R		# 100MHz 
-#options 	I686_CPU	
-options		PCLOCK=33330000		# 33.33MHz
-options		INITTODR_ALWAYS_USE_RTC
+options 	SH7708		# 60MHz
+#options 	SH7708R		# 100MHz
+#options 	I686_CPU
+options 	PCLOCK=33330000		# 33.33MHz
+options 	INITTODR_ALWAYS_USE_RTC
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
@@ -35,7 +35,7 @@ options		INITTODR_ALWAYS_USE_RTC
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\""
+#options 	CONSDEVNAME="\"com\""
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -51,7 +51,7 @@ options		INITTODR_ALWAYS_USE_RTC
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-options 	HZ=10		# clock interrupt generates every 1/10 sec 
+options 	HZ=10		# clock interrupt generates every 1/10 sec
 				# for Debug
 #options 	NTP		# NTP phase/frequency locked loop
 
@@ -70,9 +70,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options		SYSCALL_DEBUG
+options 	SYSCALL_DEBUG
 
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3
@@ -148,7 +148,7 @@ shb* at mainbus?
 
 # PCMCIA bus support
 pcmcia*	at shpcic? controller ? socket ?
-#pcmcia*	at shb? 
+#pcmcia*	at shb?
 
 # SH PCMCIA controllers
 shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000

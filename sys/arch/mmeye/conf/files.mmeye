@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.6 2001/04/23 11:20:42 uch Exp $
+#	$NetBSD: files.mmeye,v 1.6.2.1 2002/01/10 19:46:25 thorpej Exp $
 #
 # config file for mmeye
 
@@ -14,7 +14,7 @@ file	arch/mmeye/mmeye/autoconf.c
 file	arch/sh3/sh3/clock.c
 file	arch/sh3/sh3/disksubr.c			disk
 
-defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
 #
 # Machine-independent SCSI drivers
@@ -41,7 +41,7 @@ major	{md = 17}
 #
 
 define mainbus { }
-device	mainbus:  mainbus
+device	mainbus: mainbus
 attach	mainbus at root
 file	arch/mmeye/mmeye/mainbus.c	mainbus
 

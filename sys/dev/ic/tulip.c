@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.94.2.2 2001/08/25 06:16:18 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.94.2.3 2002/01/10 19:55:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Device driver for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family, and a variety of clone chips.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.94.2.3 2002/01/10 19:55:06 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -1251,7 +1254,7 @@ tlp_rxintr(sc)
 			ifp->if_collisions++;
 
 		/*
-		 * If an error occured, update stats, clear the status
+		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
 	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
@@ -2866,7 +2869,7 @@ tlp_al981_filter_setup(sc)
 			goto allmulti;
 		}
 
-		hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
+		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
 		mchash[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -3874,7 +3877,7 @@ tlp_print_media(sc)
 	struct tulip_21x4x_media *tm;
 	const char *sep = "";
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
@@ -5085,7 +5088,7 @@ tlp_pnic_tmsw_init(sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;

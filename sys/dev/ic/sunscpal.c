@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.5.2.2 2001/08/25 06:16:17 thorpej Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.5.2.3 2002/01/10 19:55:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -75,9 +75,11 @@
  * Thank you all.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.5.2.3 2002/01/10 19:55:05 thorpej Exp $");
+
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1300,10 +1302,6 @@ success:
  * NOOP				if nothing else fits the bill ...
  */
 
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
-
 /*
  * Precondition:
  * The SCSI bus is already in the MSGI phase and there is a message byte
@@ -1388,11 +1386,11 @@ nextbyte:
 				 * it should not affect performance
 				 * significantly.
 				 */
-				if (n == 1 && IS1BYTEMSG(sc->sc_imess[0]))
+				if (n == 1 && MSG_IS1BYTE(sc->sc_imess[0]))
 					goto have_msg;
-				if (n == 2 && IS2BYTEMSG(sc->sc_imess[0]))
+				if (n == 2 && MSG_IS2BYTE(sc->sc_imess[0]))
 					goto have_msg;
-				if (n >= 3 && ISEXTMSG(sc->sc_imess[0]) &&
+				if (n >= 3 && MSG_ISEXTENDED(sc->sc_imess[0]) &&
 					n == sc->sc_imess[1] + 2)
 					goto have_msg;
 			}

@@ -1,5 +1,6 @@
-/*	$NetBSD: types.h,v 1.2 2001/05/11 04:42:41 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.2.2.1 2002/01/10 19:48:29 thorpej Exp $	*/
 
 #include <mips/types.h>
 
+#define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS

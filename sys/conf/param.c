@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.37.4.1 2001/08/25 06:16:07 thorpej Exp $	*/
+/*	$NetBSD: param.c,v 1.37.4.2 2002/01/10 19:52:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -40,6 +40,9 @@
  *	@(#)param.c	7.20 (Berkeley) 6/27/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.37.4.2 2002/01/10 19:52:32 thorpej Exp $");
+
 #include "opt_rtc_offset.h"
 #include "opt_sb_max.h"
 #include "opt_sysv.h"
@@ -67,6 +70,9 @@
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
+
+#define CONFIG_FILE
+#include "config_file.h"
 
 /*
  * System parameter formulae.

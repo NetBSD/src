@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.1.2.1 2002/01/10 19:49:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@
 void mmu_atc_flush (u_int va);
 void set_iommupte(u_int va, u_int pa);
 
-u_int	get_pte __P((vm_offset_t va));
-void	set_pte __P((vm_offset_t va, u_int pte));
+u_int	get_pte __P((vaddr_t va));
+void	set_pte __P((vaddr_t va, u_int pte));
 char *	dvma3x_alloc __P((int len));
 void	dvma3x_free __P((char *dvma, int len));
 char *	dvma3x_mapin __P((char *pkt, int len));
@@ -225,7 +225,7 @@ dvma3x_free(char *dvma, int len)
 
 u_int
 get_pte(va)
-	vm_offset_t va;	/* virt. address */
+	vaddr_t va;	/* virt. address */
 {
 	u_int	pn;
 	mmu_short_pte_t *tbl;
@@ -250,7 +250,7 @@ get_pte(va)
 
 void
 set_pte(va, pa)
-	vm_offset_t va;	/* virt. address */
+	vaddr_t va;	/* virt. address */
 	u_int pa;	/* phys. address */
 {
 	u_int	pn;

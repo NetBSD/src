@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.13 2001/06/14 20:32:44 thorpej Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.13.2.1 2002/01/10 19:51:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.13.2.1 2002/01/10 19:51:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -697,6 +700,15 @@ linux_ioctl_termios(p, uap, retval)
 		break;
 	case LINUX_TIOCNOTTY:
 		SCARG(&ia, com) = TIOCNOTTY;
+		break;
+	case LINUX_TCSBRK:
+		SCARG(&ia, com) = SCARG(uap, data) ? TIOCDRAIN : TIOCSBRK;
+		break;
+	case LINUX_TIOCMGET:
+		SCARG(&ia, com) = TIOCMGET;
+		break;
+	case LINUX_TIOCMSET:
+		SCARG(&ia, com) = TIOCMSET;
 		break;
 	default:
 		return EINVAL;

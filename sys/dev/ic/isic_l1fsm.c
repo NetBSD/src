@@ -27,11 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.2 2001/03/24 12:40:30 martin Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.2.2.1 2002/01/10 19:54:38 thorpej Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.2.2.1 2002/01/10 19:54:38 thorpej Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3

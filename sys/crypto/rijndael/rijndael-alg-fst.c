@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.4 2001/05/23 00:02:24 kleink Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.4.2.1 2002/01/10 19:52:35 thorpej Exp $	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.6 2000/10/02 17:14:26 itojun Exp $	*/
 
 /*
@@ -12,6 +12,9 @@
  *
  * This code is placed in the public domain.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rijndael-alg-fst.c,v 1.4.2.1 2002/01/10 19:52:35 thorpej Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/types.h>

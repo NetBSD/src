@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.2 2000/12/01 19:35:39 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.2.6.1 2002/01/10 19:51:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.2.6.1 2002/01/10 19:51:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

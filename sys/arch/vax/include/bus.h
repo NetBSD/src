@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16.2.1 2001/08/03 04:12:36 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.2.2 2002/01/10 19:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,8 @@ struct vax_bus_space {
 			    bus_addr_t *, bus_space_handle_t *));
 	void		(*vbs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
+	/* mmap bus space for user */
+	paddr_t		(*vbs_mmap)(void *, bus_addr_t, off_t, int, int);
 };
 
 /*
@@ -190,6 +192,13 @@ struct vax_bus_space {
 
 #define bus_space_free(t, h, s)						\
 	(*(t)->vbs_free)((t)->vbs_cookie, (h), (s))
+
+/*
+ * Mmap bus space for a user application.
+ */
+#define bus_space_mmap(t, a, o, p, f)					\
+	(*(t)->vbs_mmap)((t)->vbs_cookie, (a), (o), (p), (f))
+
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

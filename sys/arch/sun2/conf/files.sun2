@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.5 2001/06/27 16:57:57 fredette Exp $
+#	$NetBSD: files.sun2,v 1.5.2.1 2002/01/10 19:49:35 thorpej Exp $
 
 #
 # sun2-specific configuration info
@@ -17,7 +17,7 @@ file arch/sun2/sun2/control.c
 file arch/sun2/sun2/mem.c
 file arch/sun2/sun2/conf.c
 file arch/sun2/sun2/db_machdep.c		ddb
-file arch/sun2/sun2/db_memrw.c  		ddb | kgdb
+file arch/sun2/sun2/db_memrw.c			ddb | kgdb
 file arch/sun2/sun2/leds.c
 file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
@@ -120,15 +120,15 @@ attach sc at mbmem with sc_mbmem
 file arch/sun2/dev/sc_mbmem.c		sc_mbmem
 
 # 3Com Ethernet
-device  ec: ifnet, ether, arp
-attach  ec at mbmem
-file    arch/sun2/dev/if_ec.c		ec
+device	ec: ifnet, ether, arp
+attach	ec at mbmem
+file	arch/sun2/dev/if_ec.c		ec
 
 #
 # Console (zs) related stuff
 #
 
-device kbd 
+device kbd
 attach kbd at zstty
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c		kbd
@@ -147,7 +147,7 @@ file dev/md_root.c			memory_disk_hooks
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"
- 
+
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file arch/m68k/m68k/sunos_machdep.c	compat_sunos

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.22 2001/04/25 17:53:26 bouyer Exp $	*/
+/*	$NetBSD: mha.c,v 1.22.2.1 2002/01/10 19:50:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -389,7 +389,7 @@ mhaattach(parent, self, aux)
 	/* drop off */
 	while (SSR & SS_IREQUEST)
 	  {
-	    unsigned a = ISCSR;
+	    (void) ISCSR;
 	  }
 
 	CMR = CMD_SET_UP_REG;	/* setup reg cmd. */
@@ -458,12 +458,12 @@ mha_init(sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(sc->sc_acb));
+		memset(acb, 0, sizeof(sc->sc_acb));
 		for (r = 0; r < sizeof(sc->sc_acb) / sizeof(*acb); r++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(&sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 
 		r = bus_dmamem_alloc(sc->sc_dmat, MAXBSIZE, 0, 0,
 				     sc->sc_dmaseg, 1, &sc->sc_ndmasegs,
@@ -575,7 +575,6 @@ mhaselect(sc, target, lun, cmd, clen)
 	u_char *cmd;
 	u_char clen;
 {
-	struct spc_tinfo *ti = &sc->sc_tinfo[target];
 	int i;
 	int s;
 
@@ -598,7 +597,7 @@ mhaselect(sc, target, lun, cmd, clen)
 	  }
 	SPC_MISC(("], target=%d\n", target));
 #else
-	bcopy(cmd, sc->sc_pcx, clen);
+	memcpy(sc->sc_pcx, cmd, clen);
 #endif
 	if (NSR & 0x80)
 		panic("scsistart: already selected...");
@@ -738,7 +737,7 @@ mha_scsi_request(chan, req, arg)
 
 		/* Initialize acb */
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;
@@ -1034,10 +1033,6 @@ mha_dequeue(sc, acb)
 		sc->sc_msgpriq |= (m);	\
 	} while (0)
 
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
-
 /*
  * Precondition:
  * The SCSI bus is already in the MSGI phase and there is a message byte
@@ -1048,7 +1043,6 @@ mha_msgin(sc)
 	register struct mha_softc *sc;
 {
 	register int v;
-	int n;
 
 	SPC_TRACE(("[mha_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
@@ -1094,11 +1088,11 @@ mha_msgin(sc)
 		 * it should not effect performance
 		 * significantly.
 		 */
-		if (sc->sc_imlen == 1 && IS1BYTEMSG(sc->sc_imess[0]))
+		if (sc->sc_imlen == 1 && MSG_IS1BYTE(sc->sc_imess[0]))
 			goto gotit;
-		if (sc->sc_imlen == 2 && IS2BYTEMSG(sc->sc_imess[0]))
+		if (sc->sc_imlen == 2 && MSG_IS2BYTE(sc->sc_imess[0]))
 			goto gotit;
-		if (sc->sc_imlen >= 3 && ISEXTMSG(sc->sc_imess[0]) &&
+		if (sc->sc_imlen >= 3 && MSG_ISEXTENDED(sc->sc_imess[0]) &&
 		    sc->sc_imlen == sc->sc_imess[1] + 2)
 			goto gotit;
 	}
@@ -1210,10 +1204,8 @@ gotit:
 					ti->offset = 0;
 					mha_sched_msgout(SEND_SDTR);
 				} else {
-					int r = 250/ti->period;
-					int s = (100*250)/ti->period - 100*r;
-					int p;
 #if 0
+					int p;
 					p =  mha_stp2cpb(sc, ti->period);
 					ti->period = mha_cpb2stp(sc, p);
 #endif
@@ -1242,10 +1234,6 @@ gotit:
 						TMR = TM_SYNC;
 						ti->flags |= T_SYNCMODE;
 					}
-#if SPC_DEBUG
-					printf("max sync rate %d.%02dMb/s\n",
-						r, s);
-#endif
 				}
 				ti->flags &= ~T_NEGOTIATE;
 				break;
@@ -1342,7 +1330,9 @@ void
 mha_msgout(sc)
 	register struct mha_softc *sc;
 {
+#if (SPC_USE_SYNCHRONOUS || SPC_USE_WIDE)
 	struct spc_tinfo *ti;
+#endif
 	int n;
 
 	SPC_TRACE(("mha_msgout  "));
@@ -1549,7 +1539,7 @@ mha_datain_pio(sc, p, n)
 	int a;
 	int total_n = n;
 
-	SPC_TRACE(("[mha_datain_pio(%x,%d)", p, n));
+	SPC_TRACE(("[mha_datain_pio(%p,%d)", p, n));
 
 	WAIT;
 	sc->sc_ps[3] = 1;
@@ -1587,7 +1577,7 @@ mha_dataout_pio(sc, p, n)
 	int a;
 	int total_n = n;
 
-	SPC_TRACE(("[mha_dataout_pio(%x,%d)", p, n));
+	SPC_TRACE(("[mha_dataout_pio(%p,%d)", p, n));
 
 	WAIT;
 	sc->sc_ps[3] = 1;
@@ -1623,7 +1613,7 @@ mha_dataio_dma(dw, cw, sc, p, n)
 	u_char *p;
 	int n;
 {
-  char *paddr, *vaddr;
+  char *paddr;
 
   if (n > MAXBSIZE)
     panic("transfer size exceeds MAXBSIZE");
@@ -1643,11 +1633,6 @@ mha_dataio_dma(dw, cw, sc, p, n)
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
   if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
     dw &= ~(1 << 3);
-#endif
-  dma_cachectl((caddr_t) sc->sc_dmabuf, n);
-#if 0
-  printf("(%x,%x)->(%x,%x)\n", p, n, paddr, n);
-  PCIA();	/* XXX */
 #endif
   sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;
   sc->sc_pc[0x180 + (((long)paddr >> 8) & 0xFF)] = 0;
@@ -1672,8 +1657,6 @@ mha_dataout(sc, p, n)
 	u_char *p;
 	int n;
 {
-  register struct acb *acb = sc->sc_nexus;
-
   if (n == 0)
     return n;
 
@@ -1688,9 +1671,7 @@ mha_datain(sc, p, n)
 	u_char *p;
 	int n;
 {
-  int ts;
   register struct acb *acb = sc->sc_nexus;
-  char *paddr, *vaddr;
 
   if (n == 0)
     return n;
@@ -1717,15 +1698,13 @@ mhaintr(arg)
 	u_char ints;
 #endif
 	struct acb *acb;
-	struct scsipi_periph *periph;
-	struct spc_tinfo *ti;
 	u_char ph;
 	u_short r;
 	int n;
 
 #if 1	/* XXX called during attach? */
 	if (tmpsc != NULL) {
-		SPC_MISC(("[%x %x]\n", mha_cd.cd_devs, sc));
+		SPC_MISC(("[%p %p]\n", mha_cd.cd_devs, sc));
 		sc = tmpsc;
 	} else {
 #endif
@@ -1743,7 +1722,6 @@ mhaintr(arg)
 
 	SPC_TRACE(("[mhaintr]"));
 
- loop:
 	/*
 	 * 全転送が完全に終了するまでループする
 	 */
@@ -1765,7 +1743,7 @@ mhaintr(arg)
 		SPC_MISC(("[r=0x%x]", r));
 		switch (r >> 8) {
 		default:
-			printf("[addr=%x\n"
+			printf("[addr=%p\n"
 			       "result=0x%x\n"
 			       "cmd=0x%x\n"
 			       "ph=0x%x(ought to be %d)]\n",
@@ -1996,6 +1974,8 @@ mhaintr(arg)
 			continue;
 		}
 	}
+
+	return 1;
 }
 
 void
@@ -2032,7 +2012,6 @@ mha_timeout(arg)
 	    (void*)periph->periph_channel->chan_adapter->adapt_dev;
 
 	scsipi_printaddr(periph);
-again:
 	printf("%s: timed out [acb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) >",
 		sc->sc_dev.dv_xname,
@@ -2090,9 +2069,9 @@ mha_print_acb(acb)
 	struct acb *acb;
 {
 
-	printf("acb@%x xs=%x flags=%x", acb, acb->xs, acb->flags);
-	printf(" dp=%x dleft=%d stat=%x\n",
-	    (long)acb->daddr, acb->dleft, acb->stat);
+	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
+	printf(" dp=%p dleft=%d stat=%x\n",
+	    acb->daddr, acb->dleft, acb->stat);
 	mha_show_scsi_cmd(acb);
 }
 
@@ -2122,7 +2101,7 @@ mha_dump_driver(sc)
 	struct spc_tinfo *ti;
 	int i;
 
-	printf("nexus=%x prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
+	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
 	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
 	    sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);

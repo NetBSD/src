@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.2 1997/03/26 23:44:27 gwr Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.2.36.1 2002/01/10 19:51:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,9 @@
  *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
  * from NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.2.36.1 2002/01/10 19:51:00 thorpej Exp $");
 
 /*#ifdef COMPAT_12*/
 

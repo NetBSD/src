@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.8 2001/04/30 12:22:42 bouyer Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.8.2.1 2002/01/10 19:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

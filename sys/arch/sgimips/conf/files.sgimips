@@ -1,10 +1,10 @@
-#	$NetBSD: files.sgimips,v 1.10 2001/07/08 20:30:14 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.10.2.1 2002/01/10 19:48:23 thorpej Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-defopt	opt_machtypes.h IP20 IP22 IP32
+defflag	opt_machtypes.h		IP20 IP22 IP32
 
 device mainbus {[addr = -1]}
 attach mainbus at root
@@ -39,8 +39,9 @@ file dev/ic/lpt.c			lpt_mace
 attach pckbc at mace with pckbc_mace
 file arch/sgimips/dev/pckbc_mace.c	pckbc_mace
 
-#attach mcclock at mace with mcclock_mace
-#file arch/sgimips/dev/mcclock_mace.c	mcclock_mace
+device mcclock # XXX
+attach mcclock at mace with mcclock_mace
+file arch/sgimips/dev/mcclock_mace.c	mcclock_mace
 
 device mec: arp, ether, ifnet, mii
 attach mec at mace
@@ -55,13 +56,14 @@ device	zstty: tty
 attach	zstty at zsc
 file 	dev/ic/z8530tty.c			zstty needs-flag
 file	arch/sgimips/dev/zs_kgdb.c		kgdb
-file 	arch/sgimips/dev/zs.c			zsc needs-count
+file 	arch/sgimips/dev/zs.c			zsc needs-flag
 file 	dev/ic/z8530sc.c			zsc
 
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
 
 file arch/sgimips/sgimips/ip22.c
+file arch/sgimips/sgimips/ip22_cache.S		ip22
 file arch/sgimips/sgimips/ip32.c
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
@@ -76,13 +78,11 @@ file arch/sgimips/sgimips/procfs_machdep.c	procfs
 file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
-major {raid = 5} 
+major {raid = 5}
 major {ld = 14}
 
 file dev/clock_subr.c
 file dev/cons.c
-
-include "arch/sgimips/gio/files.gio"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
@@ -104,3 +104,5 @@ major {sd = 10}
 major {cd = 12}
 include "dev/ata/files.ata"
 major {wd = 13}
+
+include "arch/sgimips/gio/files.gio"

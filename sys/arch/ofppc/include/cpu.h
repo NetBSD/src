@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.1 2001/09/13 01:14:12 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.2 2002/01/10 19:47:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -40,12 +40,10 @@ struct cpu_softc {
 	int sc_ofnode;
 };
 
-
 #if defined(_KERNEL)
 #define	CPU_MAXNUM	1
 extern char *bootpath;
 extern struct cfdriver cpu_cd;
-extern struct machvec machine_interface;
 #endif
 
 #include <powerpc/cpu.h>

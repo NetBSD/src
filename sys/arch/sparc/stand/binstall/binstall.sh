@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.8 2001/02/19 06:23:55 jmc Exp $
+#	$NetBSD: binstall.sh,v 1.8.4.1 2002/01/10 19:49:07 thorpej Exp $
 #
 
 vecho () {
@@ -10,8 +10,23 @@ vecho () {
 	return 0
 }
 
+Options () {
+	echo "Options:"
+	echo "	-h		- display this message"
+	echo "	-u		- install sparc64 (UltraSPARC) boot block"
+	echo "	-U		- install sparc boot block"
+	echo "	-b<bootprog>	- second-stage boot program to install"
+	echo "	-f<pathname>	- path to device/file image for filesystem"
+	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
+	echo "	-i<progname>	- Use the installboot program at <progname>"
+	echo "			  (default: /usr/mdec/installboot)"
+	echo "	-v		- verbose mode"
+	echo "	-t		- test mode (implies -v)"
+}
+
 Usage () {
-	echo "Usage: $0 [-hvtuU] [-m<path>] net|ffs directory"
+	echo "Usage: $0 [options] <"'"net"|"ffs"'"> <directory>"
+	Options
 	exit 1
 }
 
@@ -22,15 +37,7 @@ Help () {
 	echo "When installing an \"ffs\" boot program, this script also runs"
 	echo "installboot(8) which installs the default proto bootblocks into"
 	echo "the appropriate filesystem partition."
-	echo "Options:"
-	echo "	-h		- display this message"
-	echo "	-u		- install sparc64 (UltraSPARC) boot block"
-	echo "	-U		- install sparc boot block"
-	echo "	-b<bootprog>	- second-stage boot program to install"
-	echo "  -f<path name>	- path to device/file image for filesystem"
-	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
-	echo "	-v		- verbose mode"
-	echo "	-t		- test mode (implies -v)"
+	Options
 	exit 0
 }
 
@@ -43,6 +50,7 @@ Secure () {
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
+INSTALLBOOT=${INSTALLBOOT:=${MDEC}/installboot}
 BOOTPROG=${BOOTPROG:-boot}
 OFWBOOT=${OFWBOOTBLK:-ofwboot}
 if [ "`sysctl -n hw.machine`" = sparc64 ]; then
@@ -51,7 +59,7 @@ else
 	ULTRASPARC=0
 fi
 
-set -- `getopt "b:hm:f:tvuU" "$@"`
+set -- `getopt "b:hf:i:m:tUuv" "$@"`
 if [ $? -gt 0 ]; then
 	Usage
 fi
@@ -65,6 +73,7 @@ do
 	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
 	-f) FILENAME=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
+	-i) INSTALLBOOT=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
 	--) shift; break ;;
@@ -132,11 +141,11 @@ case $WHAT in
 	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
 	if [ "$ULTRASPARC" = "1" ]; then
-		vecho ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
-		$DOIT ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
+		vecho ${INSTALLBOOT} -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
+		$DOIT ${INSTALLBOOT} -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
 	else
-		vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
-		$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+		vecho ${INSTALLBOOT} ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
+		$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	fi
 	;;
 

@@ -1,11 +1,26 @@
-#	$NetBSD: GENERIC,v 1.9.2.1 2001/09/13 01:14:28 thorpej Exp $
+# $NetBSD: GENERIC,v 1.9.2.2 2002/01/10 19:48:18 thorpej Exp $
 #
-# GENERIC for Motorola Sandpoint
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include "arch/sandpoint/conf/std.sandpoint"
+include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.9.2.1 $"
+#ident 		"GENERIC-$Revision: 1.9.2.2 $"
 
 maxusers	32
 
@@ -22,10 +37,11 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-#options 	NEWPMAP
+options 	NEWPMAP
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
+options 	SYMTAB_SPACE=200000
 
 options 	COMPAT_43
 options 	COMPAT_09
@@ -34,7 +50,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options 	COMPAT_LINUX   # Linux binary compatibility (experimental)
+#options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	MSGBUFSIZE=65536
@@ -52,23 +68,24 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
+options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
 # network psuedo-devices
 pseudo-device	bpfilter	8	# packet filter
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	ipfilter
 pseudo-device	loop
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+#pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -108,6 +125,7 @@ options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 ukphy*	at mii? phy ?			# generic unknown PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -120,6 +138,7 @@ wsdisplay*	at vga? console ?
 wskbd* 		at pckbd? console ?
 wsmouse* 	at pms? mux 0
 wsmouse* 	at pmsi? mux 0
+
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3

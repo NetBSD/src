@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41 2001/06/23 02:07:07 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.41.2.1 2002/01/10 19:45:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -111,7 +112,7 @@ GLOBAL(intrcnt)
 GLOBAL(eintrcnt)
 
 GLOBAL(ofmsr)
-	.long	0			/* msr used in Open Firmware */
+	.long	0,0,0,0,0		/* msr & sprg[0-3] used in Open Firmware */
 
 /*
  * File-scope for locore.S
@@ -151,6 +152,14 @@ __start:
 	mfmsr	0
 	lis	9,ofmsr@ha
 	stw	0,ofmsr@l(9)
+        mfsprg  0,0
+       	stw	0,ofmsr+4@l(9)
+        mfsprg  0,1
+       	stw	0,ofmsr+8@l(9)
+        mfsprg  0,2
+       	stw	0,ofmsr+12@l(9)
+        mfsprg  0,3
+       	stw	0,ofmsr+16@l(9)
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
@@ -249,9 +258,17 @@ ENTRY(openfirmware)
 	cmpwi	5,0
 	bne	1b
 2:
-	lis	4,ofmsr@ha		/* Open Firmware msr */
-	lwz	4,ofmsr@l(4)
-	mtmsr	4
+	lis	4,ofmsr@ha		/* Open Firmware msr + sprg[0-3] */
+	lwz	5,ofmsr+4@l(4)
+	mtsprg	0,5
+	lwz	5,ofmsr+8@l(4)
+	mtsprg	1,5
+	lwz	5,ofmsr+12@l(4)
+	mtsprg	2,5
+	lwz	5,ofmsr+16@l(4)
+	mtsprg	3,5
+	lwz	5,ofmsr@l(4)
+	mtmsr	5
 	isync
 
 	blrl				/* call Open Firmware */

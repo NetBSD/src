@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.92.2.2 2001/09/13 01:15:24 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.92.2.3 2002/01/10 19:51:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
  *	linux_sys_olduname		: linux_olduname.c
  *	linux_sys_pipe			: linux_pipe.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.92.2.3 2002/01/10 19:51:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1407,7 +1410,7 @@ linux_sys_sysinfo(p, v, retval)
 	si.totalram = ctob(physmem);
 	si.freeram = uvmexp.free * uvmexp.pagesize;
 	si.sharedram = 0;	/* XXX */
-	si.bufferram = uvmexp.vnodepages * uvmexp.pagesize;
+	si.bufferram = uvmexp.filepages * uvmexp.pagesize;
 	si.totalswap = uvmexp.swpages * uvmexp.pagesize;
 	si.freeswap = (uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = nprocs;

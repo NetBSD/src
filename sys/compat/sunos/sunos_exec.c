@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.34 2001/06/18 02:00:54 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.34.2.1 2002/01/10 19:52:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -27,6 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.34.2.1 2002/01/10 19:52:09 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
@@ -37,6 +40,7 @@
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscall.h>
@@ -66,6 +70,7 @@ struct emul emul_sunos = {
 	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.34 2000/11/02 23:37:08 mhitch Exp $	*/
+/*	$NetBSD: pm.c,v 1.34.4.1 2002/01/10 19:47:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.34 2000/11/02 23:37:08 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.34.4.1 2002/01/10 19:47:48 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.34 2000/11/02 23:37:08 mhitch Exp $");
 #include <pmax/pmax/kn01.h>
 #include <pmax/ibus/ibusvar.h>
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/locore.h>		/* wbflush() */
 #include <machine/pmioctl.h>
@@ -122,10 +122,10 @@ pm_cnattach()
 
 #if 0
 	ULTRIX does in this way;
-	check the presense of monochrome bit in CSR.
+	check the presence of monochrome bit in CSR.
 	if set, there is a monochrome framebuffer
 	if not set, try two write and read cycles of framebuffer to make
-	sure the presense of video memory.
+	sure the presence of video memory.
 #else
 	base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
 	if (badaddr(base, 4))
@@ -202,7 +202,7 @@ pminit(fi, base, unit)
 	fi->fi_vdac = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
 
 	if (kn01csr & KN01_CSR_MONO) {
-		fi->fi_type.fb_boardtype = PMAX_FBTYPE_PM_MONO;
+		fi->fi_type.fb_type = PMAX_FBTYPE_PM_MONO;
 		fi->fi_type.fb_depth = 1;
 		fi->fi_type.fb_cmsize = 0;
 		fi->fi_type.fb_size = 0x40000;
@@ -210,7 +210,7 @@ pminit(fi, base, unit)
 		fi->fi_linebytes = 2048 / 8;
 	}
 	else {
-		fi->fi_type.fb_boardtype = PMAX_FBTYPE_PM_COLOR;
+		fi->fi_type.fb_type = PMAX_FBTYPE_PM_COLOR;
 		fi->fi_type.fb_depth = 8;
 		fi->fi_type.fb_cmsize = 256;
 		fi->fi_type.fb_size = 0x100000;

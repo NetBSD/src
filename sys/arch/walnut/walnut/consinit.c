@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.2.1 2002/01/10 19:50:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,20 +69,20 @@ int comcnmode = CONMODE;
 char kgdb_devname[] = KGDB_DEVNAME;
 
 #if (NCOM > 1)
-#ifndef KGDBADDR
-#define KGDBADDR  UART1_BASE
+#ifndef KGDB_DEVADDR
+#define KGDB_DEVADDR  UART1_BASE
 #endif
-int comkgdbaddr = KGDBADDR;
+int comkgdbaddr = KGDB_DEVADDR;
 
-#ifndef KGDBRATE
-#define KGDBRATE CONSPEED
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE CONSPEED
 #endif
-int comkgdbrate = KGDBRATE;
+int comkgdbrate = KGDB_DEVRATE;
 
-#ifndef KGDBMODE
-#define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#ifndef KGDB_DEVMODE
+#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
-int comkgdbmode = KGDBMODE;
+int comkgdbmode = KGDB_DEVMODE;
 
 #endif /* NCOM */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.21 2001/05/30 11:37:23 mrg Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.21.2.1 2002/01/10 19:51:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Network related HP-UX compatibility routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.21.2.1 2002/01/10 19:51:09 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

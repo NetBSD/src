@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192.2.2 2001/09/13 01:14:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192.2.3 2002/01/10 19:47:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.2 2001/09/13 01:14:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.3 2002/01/10 19:47:54 thorpej Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192.2.2 2001/09/13 01:14:21 thorpej Ex
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
 #include <pmax/pmax/machdep.h>
+
+#define _PMAX_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -244,6 +247,12 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Clear out the I and D caches.
 	 */
 	mips_vector_init();
+
+	/*
+	 * We know the CPU type now.  Initialize our DMA tags (might
+	 * need this early, for certain types of console devices!!).
+	 */
+	pmax_bus_dma_init();
 
 	/* Check for direct boot from DS5000 REX monitor */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
@@ -773,7 +782,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
+#if defined(DEC_3MIN) || defined(DEC_MAXINE) || defined(DEC_3MAXPLUS)
 	tvp->tv_usec += (*platform.clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.17 2000/12/01 12:28:32 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.17.4.1 2002/01/10 19:51:14 thorpej Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.17.4.1 2002/01/10 19:51:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

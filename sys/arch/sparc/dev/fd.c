@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.87 2001/07/08 18:06:44 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.87.2.1 2002/01/10 19:48:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -580,7 +580,7 @@ fdcattach_obio(parent, self, aux)
 			    sa->sa_size,
 			    fdc->sc_handle);
 
-	if (strcmp(getpropstring(sa->sa_node, "status"), "disabled") == 0) {
+	if (strcmp(PROM_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
 		printf(": no drives attached\n");
 		return;
 	}

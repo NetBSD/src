@@ -1,7 +1,5 @@
-/*	$NetBSD: fwohci.c,v 1.39.2.2 2001/09/13 01:15:42 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.39.2.3 2002/01/10 19:55:14 thorpej Exp $	*/
 
-#define DOUBLEBUF 1
-#define NO_THREAD 1
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,12 +48,17 @@
  * by HAYAKAWA Koichi <haya@netbsd.org>.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.39.2.3 2002/01/10 19:55:14 thorpej Exp $");
+
+#define DOUBLEBUF 1
+#define NO_THREAD 1
+
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -609,7 +612,7 @@ fwohci_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", name, pnp);
 
-	return QUIET;
+	return UNCONF;
 }
 
 static void
@@ -938,7 +941,9 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	struct fwohci_ctx *fc;
 	struct fwohci_buf *fb;
 	struct fwohci_desc *fd;
+#if DOUBLEBUF
 	int buf2cnt;
+#endif
 
 	fc = malloc(sizeof(*fc) + sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK);
 	memset(fc, 0, sizeof(*fc) + sizeof(*fb) * bufcnt);
@@ -1021,7 +1026,8 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	struct fwohci_handler *fh;
 
 #if DOUBLEBUF
-	if (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2)) {
+	if ((fc->fc_type == FWOHCI_CTX_ISO_MULTI) &&
+	    (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2))) {
 		struct fwohci_buf_s fctmp;
 
 		fctmp = fc->fc_buf;
@@ -1734,7 +1740,7 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		while ((reg = OHCI_SYNC_RX_DMA_READ(sc, fc->fc_ctx, OHCI_SUBREG_ContextControlSet)) & OHCI_CTXCTL_ACTIVE) {
 			delay(10);
 			if (++i > 10000) {
-				printf("cannot stop dma engine 0x08x\n", reg);
+				printf("cannot stop dma engine 0x%08x\n", reg);
 				return;
 			}
 		}
@@ -3654,6 +3660,48 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
 		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 	return 0;
+}
+
+int
+fwohci_detach(struct fwohci_softc *sc, int flags)
+{
+	int rv = 0;
+
+	if (sc->sc_sc1394.sc1394_if != NULL)
+		rv = config_detach(sc->sc_sc1394.sc1394_if, flags);
+	if (rv != 0)
+		return (rv);
+
+	callout_stop(&sc->sc_selfid_callout);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_shutdownhook != NULL)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
+
+	return (rv);
+}
+
+int
+fwohci_activate(struct device *self, enum devact act)
+{
+	struct fwohci_softc *sc = (struct fwohci_softc *)self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_sc1394.sc1394_if != NULL)
+	                rv = config_deactivate(sc->sc_sc1394.sc1394_if);
+		break; 
+	}
+	splx(s);
+
+	return (rv);
 }
 
 #ifdef FW_DEBUG

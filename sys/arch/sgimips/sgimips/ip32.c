@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.5 2001/06/14 01:09:37 rafal Exp $	*/
+/*	$NetBSD: ip32.c,v 1.5.4.1 2002/01/10 19:48:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -55,11 +55,15 @@ void	*crime_intr_establish(int, int, int, int (*)(void *), void *);
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
+static unsigned long ticks_per_hz;
+
 void ip32_init(void)
 {
 	/* XXXrkb: enable watchdog timer, clear it */
 	*(volatile u_int32_t *)0xb400000c |= 0x200;
 	*(volatile u_int32_t *)0xb4000034 = 0;
+
+	ticks_per_hz = 1000000;
 
 	platform.iointr = ip32_intr;
 	platform.bus_reset = ip32_bus_reset;
@@ -118,7 +122,7 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 
 	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + platform.ticks_per_hz);
+		mips3_cp0_compare_write(cycles + ticks_per_hz);
 
 		cf.pc = pc;
 		cf.sr = status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.15.2.2 2001/09/13 01:14:33 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.15.2.3 2002/01/10 19:48:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>

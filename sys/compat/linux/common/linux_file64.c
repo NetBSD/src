@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.6.1 2002/01/10 19:51:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Linux 64bit filesystem calls. Used on 32bit archs, not used on 64bit ones.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.6.1 2002/01/10 19:51:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +114,7 @@ linux_sys_fstat64(p, v, retval)
 {
 	struct linux_sys_fstat64_args /* {
 		syscallarg(int) fd;
-		syscallarg(linux_stat64 *) sp;
+		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 	struct sys___fstat13_args fsa;
 	struct linux_stat64 tmplst;
@@ -220,3 +223,43 @@ linux_sys_truncate64(p, v, retval)
 
 	return sys_truncate(p, uap, retval);
 }
+
+#ifdef __mips__ /* i386 and powerpc could use it too */
+int
+linux_sys_fcntl64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_fcntl64_args /* {
+		syscallarg(unsigned int) fd;
+		syscallarg(unsigned int) cmd;
+		syscallarg(unsigned long) arg;
+	} */ *uap = v;
+	unsigned int fd, cmd;
+	unsigned long arg;
+	int error;
+
+	fd = SCARG(uap, fd);
+	cmd = SCARG(uap, cmd);
+	arg = SCARG(uap, arg);
+
+	switch (cmd) {
+		/* XXX implement this later */
+		case LINUX_F_GETLK64:
+			error = 0;
+			break;
+		case LINUX_F_SETLK64:
+			error = 0;
+			break;
+		case LINUX_F_SETLKW64:
+			error = 0;
+			break;
+		default:
+			error = linux_sys_fcntl(p, v, retval);
+			break;
+	}
+
+	return error;
+}
+#endif /* __mips__ */

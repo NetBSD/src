@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7.4.1 2001/08/03 04:11:57 lukem Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7.4.2 2002/01/10 19:45:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -595,10 +595,14 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
 		*--ip = va_arg(ap, int);
 
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return -1;
-	if (args.args_n_results[nargs])
+	}
+	if (args.args_n_results[nargs]) {
+		va_end(ap);
 		return args.args_n_results[nargs];
+	}
 	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
 		*va_arg(ap, int *) = *--ip;
 	va_end(ap);

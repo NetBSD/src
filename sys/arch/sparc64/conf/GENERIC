@@ -1,18 +1,36 @@
-# 	$NetBSD: GENERIC,v 1.42 2001/02/11 01:00:51 eeh Exp $
+# $NetBSD: GENERIC,v 1.42.4.1 2002/01/10 19:49:11 thorpej Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include "arch/sparc64/conf/GENERIC32"
+include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 		"GENERIC64-$Revision: 1.42 $"
+#ident 	"GENERIC-$Revision: 1.42.4.1 $"
 
-options 	_LP64		# we're using a 64-bit compiler
+include 	"arch/sparc64/conf/std.sparc64-64"
+
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-options		COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
-options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
+options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 
 # DEBUG options turned on:
 
-#options		LOCKDEBUG
-#options		DIAGNOSTIC
-makeoptions 	DEBUG="-g"
+#options 	LOCKDEBUG
+#options 	DIAGNOSTIC
+makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG

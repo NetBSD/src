@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.36.2.2 2001/09/13 01:14:20 thorpej Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.36.2.3 2002/01/10 19:47:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.36.2.2 2001/09/13 01:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.36.2.3 2002/01/10 19:47:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dec_maxine_init()
 }
 
 /*
- * Initalize the memory system and I/O buses.
+ * Initialize the memory system and I/O buses.
  */
 static void
 dec_maxine_bus_reset()

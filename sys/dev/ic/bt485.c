@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.4.2.1 2001/08/25 06:16:14 thorpej Exp $ */
+/* $NetBSD: bt485.c,v 1.4.2.2 2002/01/10 19:54:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,6 +30,9 @@
  /* This code was derived from and originally located in sys/dev/pci/
   *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp 
   */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.4.2.2 2002/01/10 19:54:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +84,7 @@ struct ramdac_funcs bt485_funcsstruct = {
 	NULL,			/* check_curcmap; not needed */
 	NULL,			/* set_curcmap; not needed */
 	NULL,			/* get_curcmap; not needed */
+	NULL,			/* no dot clock to set */
 };
 
 /*
@@ -227,7 +231,7 @@ bt485_init(rc)
 	data->ramdac_wr(data->cookie, BT485_REG_PIXMASK, 0xff);
 
 	/*
-	 * Initalize the RAMDAC info struct to hold all of our
+	 * Initialize the RAMDAC info struct to hold all of our
 	 * data, and fill it in.
 	 */
 	data->changed = DATA_ALL_CHANGED;

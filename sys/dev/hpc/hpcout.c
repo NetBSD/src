@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.3 2001/06/13 19:02:14 uch Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.3.4.1 2002/01/10 19:53:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.3.4.1 2002/01/10 19:53:57 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.13.2.1 2001/08/03 04:13:02 lukem Exp $ */
+/* $NetBSD: pckbc.c,v 1.13.2.2 2002/01/10 19:54:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.13.2.2 2002/01/10 19:54:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,22 +302,37 @@ pckbc_attach_slot(sc, slot)
 {
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
+	void *sdata;
 	int found;
+	int alloced = 0;
 
 	pa.pa_tag = t;
 	pa.pa_slot = slot;
-	found = (config_found_sm((struct device *)sc, &pa,
-				 pckbcprint, pckbc_submatch) != NULL);
 
-	if (found && !t->t_slotdata[slot]) {
-		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
-					     M_DEVBUF, M_NOWAIT);
+	if (t->t_slotdata[slot] == NULL) {
+		sdata = malloc(sizeof(struct pckbc_slotdata),
+		    M_DEVBUF, M_NOWAIT);
+		if (sdata == NULL) {
+			printf("%s: no memory\n", sc->sc_dv.dv_xname);
+			return (0);
+		}
+		t->t_slotdata[slot] = sdata;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
+		alloced++;
 	}
+
+	found = (config_found_sm((struct device *)sc, &pa,
+	    pckbcprint, pckbc_submatch) != NULL);
+
+	if (!found && alloced) {
+		free(t->t_slotdata[slot], M_DEVBUF);
+		t->t_slotdata[slot] = NULL;
+	}
+
 #if NRND > 0
 	if (found && (t->t_slotdata[slot] != NULL))
-		rnd_attach_source(&t->t_slotdata[slot]->rnd_source, sc->subname[slot],
-		    RND_TYPE_TTY, 0);
+		rnd_attach_source(&t->t_slotdata[slot]->rnd_source,
+		    sc->subname[slot], RND_TYPE_TTY, 0);
 #endif
 	return (found);
 }

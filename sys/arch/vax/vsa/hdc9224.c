@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.15.2.1 2001/08/03 04:12:37 lukem Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.15.2.2 2002/01/10 19:50:08 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -197,7 +197,7 @@ struct	cfattach rd_ca = {
 /* At least 0.7 uS between register accesses */
 static int rd_dmasize, inq = 0;
 static int u;
-#define	WAIT	asm("movl _u,_u;movl _u,_u;movl _u,_u; movl _u,_u")
+#define	WAIT	asm("movl %0,%0;movl %0,%0;movl %0,%0; movl %0,%0" :: "m"(u))
 
 #define	HDC_WREG(x)	*(volatile char *)(sc->sc_regs) = (x)
 #define	HDC_RREG	*(volatile char *)(sc->sc_regs)

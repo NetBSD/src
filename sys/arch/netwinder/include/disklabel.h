@@ -1,0 +1,3 @@
+/*	$NetBSD: disklabel.h,v 1.2.2.1 2002/01/10 19:46:44 thorpej Exp $	*/
+
+#include <arm/disklabel.h>

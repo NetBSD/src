@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2001/06/19 00:21:18 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.1 2002/01/10 19:50:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

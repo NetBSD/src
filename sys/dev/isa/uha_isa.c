@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.19 2000/03/23 07:01:35 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.19.8.1 2002/01/10 19:55:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.19.8.1 2002/01/10 19:55:44 thorpej Exp $");
+
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -96,11 +98,21 @@ uha_isa_probe(parent, match, aux)
 	struct uha_probe_data upd;
 	int rv;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, UHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	rv = u14_find(iot, ioh, &upd);
@@ -108,14 +120,23 @@ uha_isa_probe(parent, match, aux)
 	bus_space_unmap(iot, ioh, UHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != upd.sc_irq)
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != upd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != upd.sc_drq)
+		if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+		    ia->ia_drq[0].ir_drq != upd.sc_drq)
 			return (0);
-		ia->ia_irq = upd.sc_irq;
-		ia->ia_drq = upd.sc_drq;
-		ia->ia_msize = 0;
-		ia->ia_iosize = UHA_ISA_IOSIZE;
+
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = UHA_ISA_IOSIZE;
+
+		ia->ia_nirq = 1;
+		ia->ia_irq[0].ir_irq = upd.sc_irq;
+
+		ia->ia_ndrq = 1;
+		ia->ia_drq[0].ir_drq = upd.sc_drq;
+
+		ia->ia_niomem = 0;
 	}
 	return (rv);
 }
@@ -139,7 +160,7 @@ uha_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, UHA_ISA_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, UHA_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}

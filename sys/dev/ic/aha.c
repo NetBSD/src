@@ -1,13 +1,4 @@
-/*	$NetBSD: aha.c,v 1.34.2.2 2001/08/25 06:16:11 thorpej Exp $	*/
-
-#include "opt_ddb.h"
-
-#undef AHADIAG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: aha.c,v 1.34.2.3 2002/01/10 19:54:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +52,18 @@
  * functioning of this software in any circumstances.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.34.2.3 2002/01/10 19:54:07 thorpej Exp $");
+
+#include "opt_ddb.h"
+
+#undef AHADIAG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

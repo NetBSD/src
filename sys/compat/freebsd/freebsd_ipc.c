@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.9 2001/05/30 11:37:23 mrg Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.9.2.1 2002/01/10 19:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.9.2.1 2002/01/10 19:51:03 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

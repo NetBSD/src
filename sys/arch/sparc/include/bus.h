@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24.2.1 2001/08/03 04:12:19 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.24.2.2 2002/01/10 19:48:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,13 @@
  */
 typedef	u_long	bus_space_handle_t;
 typedef u_long	bus_type_t;
-typedef u_long	bus_addr_t;
+typedef u_int64_t	bus_addr_t;
 typedef u_long	bus_size_t;
+
+/* bus_addr_t is extended to 64-bits and has the iospace encoded in it */
+#define	BUS_ADDR_IOSPACE(x)	((x)>>32)
+#define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
+#define	BUS_ADDR(io, pa)	((((u_int64_t)(io))<<32)|(pa))
 
 /*
  * Access methods for bus resources and address space.
@@ -116,12 +121,12 @@ struct sparc_bus_space_tag {
 				bus_size_t,		/*size*/
 				int));			/*flags*/
 
-	int	(*sparc_bus_mmap) __P((
+	paddr_t	(*sparc_bus_mmap) __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
-				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				bus_addr_t,
+				off_t,
+				int,			/*prot*/
+				int));			/*flags*/
 
 	void	*(*sparc_intr_establish) __P((
 				bus_space_tag_t,
@@ -186,12 +191,12 @@ static void	bus_space_barrier __P((
 				bus_size_t,
 				bus_size_t,
 				int));
-static int	bus_space_mmap __P((
+static paddr_t	bus_space_mmap __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
 				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				off_t,
+				int,			/*prot*/
+				int));			/*flags*/
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
 				int,			/*bus-specific intr*/
@@ -252,15 +257,15 @@ bus_space_subregion(t, h, o, s, hp)
 	_BS_CALL(t, sparc_bus_subregion)(t, h, o, s, hp);
 }
 
-__inline__ int
-bus_space_mmap(t, bt, a, f, hp)
+__inline__ paddr_t
+bus_space_mmap(t, a, o, p, f)
 	bus_space_tag_t	t;
-	bus_type_t	bt;
 	bus_addr_t	a;
+	off_t		o;
+	int		p;
 	int		f;
-	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_mmap)(t, bt, a, f, hp);
+	_BS_CALL(t, sparc_bus_mmap)(t, a, o, p, f);
 }
 
 __inline__ void *
@@ -351,6 +356,11 @@ int bus_space_probe __P((
 #define	bus_space_read_8(t, h, o)					\
 	    ((void)t, *(volatile u_int64_t *)((h) + (o)))
 
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+#define bus_space_read_stream_8 bus_space_read_8
+
 
 /*
  *	void bus_space_write_N __P((bus_space_tag_t tag,
@@ -376,6 +386,11 @@ int bus_space_probe __P((
 #define	bus_space_write_8(t, h, o, v)	do {				\
 	((void)t, (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
 } while (0)
+
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+#define bus_space_write_stream_8 bus_space_write_8
 
 
 /*
@@ -455,6 +470,11 @@ bus_space_read_multi_8(t, h, o, a, c)
 		*a++ = bus_space_read_8(t, h, o);
 }
 
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+#define bus_space_read_multi_stream_8 bus_space_read_multi_8
+
 
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
@@ -527,6 +547,12 @@ bus_space_write_multi_8(t, h, o, a, c)
 	while (c-- > 0)
 		bus_space_write_8(t, h, o, *a++);
 }
+
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
+#define bus_space_write_multi_stream_8 bus_space_write_multi_8
+
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,

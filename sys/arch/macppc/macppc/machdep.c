@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101.2.2 2001/09/13 01:13:59 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101.2.3 2002/01/10 19:45:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,9 +33,11 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
 #include "adb.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,14 +60,25 @@
 
 #include <net/netisr.h>
 
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+ 
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
+#include <machine/fpu.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -76,6 +89,10 @@
 #include <dev/usb/ukbdvar.h>
 
 #include <macppc/dev/adbvar.h>
+
+#if NZSC > 0
+#include <machine/z8530var.h>
+#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -133,7 +150,7 @@ initppc(startkernel, endkernel, args)
 	extern int tlbimiss, tlbimsize;
 	extern int tlbdlmiss, tlbdlmsize;
 	extern int tlbdsmiss, tlbdsmsize;
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	extern int ddblow, ddbsize;
 #endif
 #ifdef IPKDB
@@ -272,17 +289,20 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			memcpy((void *)EXC_DSMISS, &tlbdsmiss, (size_t)&tlbdsmsize);
 			break;
-#if defined(DDB) || defined(IPKDB)
+#if defined(DDB) || defined(IPKDB) || defined(KGDB)
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
-#if defined(DDB)
+#if defined(DDB) || defined(KGDB)
 			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
+#if defined(IPKDB)
+#error "cannot enable IPKDB with DDB or KGDB"
+#endif
 #else
 			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
 #endif
 			break;
-#endif /* DDB || IPKDB */
+#endif /* DDB || IPKDB || KGDB */
 		}
 
 	/*
@@ -299,13 +319,6 @@ initppc(startkernel, endkernel, args)
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	ofmsr &= ~PSL_IP;
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
 
 	/*
 	 * Parse arg string.
@@ -326,19 +339,49 @@ initppc(startkernel, endkernel, args)
 			BOOT_FLAG(*args++, boothowto);
 	}
 
-#ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
 	/*
-	 * Now trap to IPKDB
+	 * If the bootpath doesn't start with a / then it isn't
+	 * an OFW path and probably is an alias, so look up the alias
+	 * and regenerate the full bootpath so device_register will work.
 	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
+	if (bootpath[0] != '/' && bootpath[0] != '\0') {
+		int aliases = OF_finddevice("/aliases");
+		char tmpbuf[100];
+		char aliasbuf[256];
+		if (aliases != 0) {
+			char *cp1, *cp2, *cp;
+			char saved_ch = 0;
+			int len;
+			cp1 = strchr(bootpath, ':');
+			cp2 = strchr(bootpath, ',');
+			cp = cp1;
+			if (cp1 == NULL || (cp2 != NULL && cp2 < cp1))
+				cp = cp2;
+			tmpbuf[0] = '\0';
+			if (cp != NULL) {
+				strcpy(tmpbuf, cp);
+				saved_ch = *cp;
+				*cp = '\0';
+			}
+			len = OF_getprop(aliases, bootpath, aliasbuf,
+			    sizeof(aliasbuf));
+			if (len > 0) {
+				if (aliasbuf[len-1] == '\0')
+					len--;
+				memcpy(bootpath, aliasbuf, len);
+				strcpy(&bootpath[len], tmpbuf);
+			} else {
+				*cp = saved_ch;
+			}
+		}
+	}
+
+	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
 
 	/*
 	 * Set the page size.
@@ -551,6 +594,26 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
+
+#ifdef DDB
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
+
+#ifdef KGDB
+#if NZSC > 0
+	zs_kgdb_init();
+#endif
+	if (boothowto & RB_KDB)
+		kgdb_connect(1);
+#endif
 }
 
 /*
@@ -914,8 +977,16 @@ cninit_kd()
 	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) != -1 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
-
 		printf("console keyboard type: USB\n");
+		ukbd_cnattach();
+		goto kbd_found;
+	}
+	/* Try old method name. */
+	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
+	    akbd != 0 &&
+	    OF_instance_to_package(akbd) != -1) {
+		printf("console keyboard type: USB\n");
+		stdin = akbd;
 		ukbd_cnattach();
 		goto kbd_found;
 	}
@@ -925,7 +996,6 @@ cninit_kd()
 	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
-
 		printf("console keyboard type: ADB\n");
 		stdin = akbd;
 		akbd_cnattach();

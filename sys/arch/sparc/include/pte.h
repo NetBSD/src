@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.23 2001/05/01 20:37:44 kleink Exp $ */
+/*	$NetBSD: pte.h,v 1.23.2.1 2002/01/10 19:48:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,10 @@
  *
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Sun-4 (sort of), 4c (SparcStation), and 4m Page Table Entries

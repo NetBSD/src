@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.14.2.1 2001/08/03 04:13:07 lukem Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.14.2.2 2002/01/10 19:55:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -191,6 +191,8 @@ struct fwohci_softc {
 int fwohci_init (struct fwohci_softc *, const struct evcnt *);
 int fwohci_intr (void *);
 int fwohci_print (void *, const char *);
+int fwohci_detach(struct fwohci_softc *, int);
+int fwohci_activate(struct device *, enum devact);
 
 /* Macros to read and write the OHCI registers
  */

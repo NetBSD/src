@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2000/08/16 11:30:38 pk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.13.4.1 2002/01/10 19:48:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -42,7 +42,7 @@
 
 /* Sign extend values */
 #define	SIGNEX(v,width)		({					\
-	unsigned s = sizeof(long)-(width);				\
+	unsigned s = sizeof(long)*8-(width);				\
 	(((long)(v) << s) >> s);					\
 })
 #define SIGN(v)			(((v)<0)?"-":"")

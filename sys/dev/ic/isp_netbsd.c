@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.46.2.1 2001/09/13 01:15:39 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.46.2.2 2002/01/10 19:54:41 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,6 +57,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.46.2.2 2002/01/10 19:54:41 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -178,23 +181,14 @@ isp_attach(struct ispsoftc *isp)
 static void
 isp_config_interrupts(struct device *self)
 {
-#if	0
         struct ispsoftc *isp = (struct ispsoftc *) self;
 
 	/*
 	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrupts, so we can do tsleep/wakeup
+	 * schema which allows interrups, so we can do tsleep/wakeup
 	 * for mailbox stuff at that point.
 	 */
-
-	/*
-	 * Argh. We cannot use this until we know whether isprequest
-	 * was *not* called via a hardclock (timed thaw). So- we'll
-	 * only allow a window of the FC kernel thread doing this
-	 * when calling isp_fc_runstate.
-	 */
 	isp->isp_osinfo.no_mbox_ints = 0;
-#endif
 }
 
 
@@ -627,13 +621,13 @@ isp_dog(void *arg)
 			XS_CMD_S_CLEAR(xs);
 			isp_done(xs);
 		} else {
-			u_int16_t iptr, optr;
-			ispreq_t *mp;
+			u_int16_t nxti, optr;
+			ispreq_t local, *mp = &local, *qe;
 			isp_prt(isp, ISP_LOGDEBUG2,
 			    "possible command timeout on handle %x", handle);
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
-			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
+			if (isp_getrqentry(isp, &nxti, &optr, (void **) &qe)) {
 				ISP_UNLOCK(isp);
 				return;
 			}
@@ -643,8 +637,8 @@ isp_dog(void *arg)
 			mp->req_header.rqs_entry_type = RQSTYPE_MARKER;
 			mp->req_modifier = SYNC_ALL;
 			mp->req_target = XS_CHANNEL(xs) << 7;
-			ISP_SWIZZLE_REQUEST(isp, mp);
-			ISP_ADD_REQUEST(isp, iptr);
+			isp_put_request(isp, mp, qe);
+			ISP_ADD_REQUEST(isp, nxti);
 		}
 	} else {
 		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
@@ -682,13 +676,8 @@ isp_fc_worker(void *arg)
 		 */
 		s = splbio();
 		while (isp->isp_osinfo.threadwork) {
-			int omb, r;
 			isp->isp_osinfo.threadwork = 0;
-			omb = isp->isp_osinfo.no_mbox_ints;
-			isp->isp_osinfo.no_mbox_ints = 0;
-			r = isp_fc_runstate(isp, 10 * 1000000);
-			isp->isp_osinfo.no_mbox_ints = omb;
-			if (r) {
+			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
 				break;
 			}
 			if  (isp->isp_osinfo.loop_checked &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3.2.1 2001/09/13 01:14:46 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.3.2.2 2002/01/10 19:49:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -99,9 +99,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct iovec *iov;
-	register vm_offset_t o, v;
-	register int c, rw;
+	struct iovec *iov;
+	vaddr_t o, v;
+	int c, rw;
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
@@ -215,7 +215,7 @@ mmrw(dev, uio, flags)
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
 				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				memset(devzeropage, 0, NBPG);
 			}
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
@@ -290,10 +290,10 @@ promacc(va, len, rw)
 	caddr_t va;
 	int len, rw;
 {
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 
-	sva = (vm_offset_t)va;
-	eva = (vm_offset_t)va + len;
+	sva = (vaddr_t)va;
+	eva = (vaddr_t)va + len;
 
 	/* Test for the most common case first. */
 	if (sva < SUN2_PROM_BASE)

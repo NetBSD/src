@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.1.2.2 2001/08/25 06:15:49 thorpej Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.1.2.3 2002/01/10 19:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -36,6 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Support for SCSI DMA provided by the HPC.
+ *
+ * Note: We use SCSI0 offsets, etc. here.  Since the layout of SCSI0
+ * and SCSI1 are the same, this is no problem.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,24 +56,24 @@
 
 /*
  * Allocate DMA Chain descriptor list
- *
- * XXX:  Need to place in device tree
  */
 void
-hpcdma_init(haa, sc, ndesc)
-	struct hpc_attach_args *haa;
-	struct hpc_dma_softc *sc;
-	int	ndesc;
+hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 {
 	bus_dma_segment_t seg;
 	struct hpc_dma_desc *hdd;
 	int rseg, allocsz;
 
-	sc->sc_bst = haa->ha_iot;
-	sc->sc_bsh = haa->ha_ioh;
+	sc->sc_bst = haa->ha_st;
 	sc->sc_dmat = haa->ha_dmat;
 	sc->sc_ndesc = ndesc;
 	sc->sc_flags = 0;
+
+	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_dmaoff,
+	    HPC_SCSI0_REGS_SIZE, &sc->sc_bsh) != 0) {
+		printf(": can't map DMA registers\n");
+		return;
+	}
 
 	/* Alloc 1 additional descriptor - needed for DMA bug fix */
 	allocsz = sizeof(struct hpc_dma_desc) * (ndesc + 1);
@@ -107,9 +114,7 @@ hpcdma_init(haa, sc, ndesc)
 
 
 void
-hpcdma_sglist_create(sc, dmamap)
-	struct hpc_dma_softc *sc;
-	bus_dmamap_t   dmamap;
+hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 {
 	struct hpc_dma_desc *hva, *hpa;
 	bus_dma_segment_t   *segp;
@@ -151,16 +156,25 @@ hpcdma_sglist_create(sc, dmamap)
 }
 
 void
-hpcdma_cntl(sc, mode)
-	struct hpc_dma_softc *sc;
-	u_int32_t	mode;
+hpcdma_cntl(struct hpc_dma_softc *sc, uint32_t mode)
 {
+
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL, mode);
 }
 
 void
-hpcdma_flush(sc)
-	struct hpc_dma_softc *sc;
+hpcdma_reset(struct hpc_dma_softc *sc)
+{
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL,
+	    HPC_DMACTL_RESET);
+	delay(100);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL, 0);
+	delay(1000);
+}
+
+void
+hpcdma_flush(struct hpc_dma_softc *sc)
 {
 	u_int32_t	mode;
 

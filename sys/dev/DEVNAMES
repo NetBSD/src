@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.67.2.3 2001/09/13 01:15:33 thorpej Exp $
+#	$NetBSD: DEVNAMES,v 1.67.2.4 2002/01/10 19:52:43 thorpej Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -101,6 +101,7 @@ auxiotwo		sparc
 auxreg			sparc
 avmebus			atari
 awi			MI		
+az			MI		
 bah			MI		
 bandit			macppc
 bba			MI
@@ -145,6 +146,7 @@ cbiisc			amigappc
 cbsc			amiga
 cbsc			amigappc
 cd			MI		
+cd18xx			MI		Attribute
 cfb			alpha
 cfb			pmax
 cgeight			sparc
@@ -163,6 +165,8 @@ cgtwo			sparc64
 cgtwo			sun3
 ch			MI		
 cia			alpha
+cir			MI
+clcd			MI		
 clcs			MI		
 clct			MI		
 clmpcc			MI		
@@ -178,6 +182,7 @@ clock			sparc64
 clock			sun2
 clock			sun3
 clock			x68k
+clockctl		MI
 cmi			vax
 cmpci			MI
 cnw			MI		
@@ -229,8 +234,8 @@ dio			hp300
 dl			MI		
 dma			MI		
 dma			sun3
-dmac			x68k
 dmac			newsmips
+dmac			x68k
 dmc			MI
 dmf			vax
 dmphy			MI		
@@ -238,6 +243,7 @@ dmz			vax
 dn			vax
 dp8390nic		MI		Attribute
 dpt			MI		
+dpti			MI
 drbbc			amiga
 drbbc			amigappc
 drsc			amiga
@@ -260,9 +266,9 @@ ec			sun2
 eca			arm26
 eccmemctl		sparc
 eco			MI		Attribute
+ed			MI (MCA)
 ed			amiga
 ed			amigappc
-ed			MI (MCA)
 edc			MI (MCA)
 eeprom			sparc
 eeprom			sparc64
@@ -271,6 +277,7 @@ ef			MI
 eg			MI		
 ega			MI		
 eh			arm26
+ehci			MI		
 ei			MI
 eisa			MI		
 eisabus			MI		Attribute
@@ -280,6 +287,7 @@ elmc			MI (MCA)
 emac			walnut
 empsc			amiga
 empsc			amigappc
+emuxki			MI
 en			MI		
 ep			MI		
 epic			MI		
@@ -288,6 +296,8 @@ es			amigappc
 es			arm32
 esc			arm32		Attribute
 esh			MI		
+esa			MI
+esl			MI		
 esm			MI		
 eso			MI		
 esp			MI		
@@ -298,9 +308,9 @@ event			amiga		Attribute
 event			amigappc	Attribute
 event			atari		Attribute
 event			x68k		Attribute
-ezload			MI		Attribute
 ex			MI		
 exphy			MI		
+ezload			MI		Attribute
 fb			luna68k
 fb			news68k
 fb			newsmips
@@ -369,6 +379,7 @@ gayle			amiga		Attribute
 gayle			amigappc	Attribute
 gbox			hp300
 gbus			alpha
+gem			MI
 gio			sgimips
 giobus			sgimips		Attribute
 gm			macppc
@@ -409,6 +420,7 @@ grfrt			amiga
 grfrt			amigappc
 grful			amiga
 grful			amigappc
+gsfb			playstation2
 gt			cobalt
 gtsc			amiga
 gtsc			amigappc
@@ -422,6 +434,7 @@ hcsc			MI
 hd64570			MI		Attribute
 hdc			vax
 hdfd			atari
+hid			MI		Attribute
 hifn			MI
 hippi			MI		Attribute
 hme			MI		
@@ -489,6 +502,9 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+irdasir			MI		Attribute
+irframe			MI
+irframedrv		MI		Attribute
 irif			hpcmips
 isa			MI		
 isabeep			alpha
@@ -543,10 +559,11 @@ le_dec_subr		MI		Attribute
 lebuffer		MI		
 ledma			MI		
 leo			atari
-lkkbd			vax
 lkkbd			alpha
+lkkbd			vax
 lkms			vax
 lm			MI		
+lm700x			MI
 lmc			MI		
 lmcaudio		arm32
 lms			bebox
@@ -611,9 +628,9 @@ mainbus			x68k
 mb86960			MI		Attribute
 mba			vax
 mbe			MI		
-mbpp			MI		
 mbio			sun2
 mbmem			sun2
+mbpp			MI		
 mc			mac68k
 mc			macppc
 mca			i386
@@ -662,6 +679,7 @@ mms			bebox
 mms			i386
 moxa			MI
 mpu			MI		
+mr			MI
 ms			amiga
 ms			amigappc
 ms			news68k
@@ -682,8 +700,6 @@ mtc			MI
 mtty			MI		
 mu			vax
 mulaw			MI		Attribute
-necpb			arc
-neo			MI
 nca			MI		
 ncr			pc532
 ncr5380sbc		MI		Attribute
@@ -692,8 +708,10 @@ ncrsc			mvme68k
 ncrscsi			atari
 ncrscsi			mac68k
 ne			MI		
+necpb			arc
 nele			MI		
 nell			MI		
+neo			MI
 neptune			x68k
 newgpbusif		hpcmips
 nextdisplay		next68k
@@ -721,6 +739,7 @@ obio_norm		mac68k		Attribute
 obio_scsi5380		mac68k		Attribute
 obmem			sun2
 obmem			sun3
+oboe			MI
 oclock			sparc
 oclock			sun3
 of_network_dev		MI		Attribute
@@ -850,6 +869,8 @@ qn			amigappc
 qsphy			MI		
 qv			vax
 ra			MI		
+radio			MI		
+radio			MI		Attribute
 rambo			mipsco
 rapide			arm32
 rasops1			MI		Attribute
@@ -864,10 +885,14 @@ rb			vax
 rbox			hp300
 rd			hp300
 rd			vax
+repulse			amiga
+repulse			amigappc
 rk			vax
 rl			vax
 rlc			vax
 rpckbd			arm32
+rt			MI
+rtii			MI
 rtc			arm26
 rtc			arm32
 rtc			pc532
@@ -878,6 +903,7 @@ rtl80x9			MI		Attribute
 rx			MI		
 ry			vax
 rz			pmax
+sab			MI
 sableio			alpha
 sacc			hpcarm
 sacom			hpcarm
@@ -895,6 +921,7 @@ sbic			arm26		Attribute
 sbic			arm32		Attribute
 sbic			mvme68k		Attribute
 sbus			MI		
+sbus			playstation2
 sc			MI
 sc			newsmips
 sc			vax
@@ -925,6 +952,7 @@ sfas			arm32		Attribute
 sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
+sf2r			MI
 shb			evbsh3
 shb			mmeye
 shpcic			evbsh3
@@ -933,10 +961,11 @@ si			MI
 si			news68k
 si			sun3
 sii			pmax
-simba			sparc64
 simide			arm32
 sio			alpha
 sio			luna68k
+sio16			sparc
+sio16			sparc64
 siop			MI
 siop_common		MI		Attribute
 siopng			amiga		Attribute
@@ -945,6 +974,7 @@ sip			MI
 skbd			hpcmips
 skbdif			hpcmips
 sm			MI		
+smap			playstation2
 smc93cx6		MI		Attribute
 smg			vax
 sn			arc
@@ -955,6 +985,7 @@ sparcvme		sparc
 spc			luna68k
 spc			x68k
 spckbd			arm32		Attribute
+spd			playstation2
 spifi			newsmips
 spkr			MI		
 sppp			MI		Attribute
@@ -983,6 +1014,7 @@ tctrl			sparc
 tcx			sparc
 tcx			sparc64
 te			vax
+tea5757			MI
 tga			MI		
 ti			MI		
 timer			news68k
@@ -1005,6 +1037,7 @@ tpcic			sparc
 tqphy			MI		
 tr			MI		
 tr_isa			MI		Attribute
+trm			MI
 ts			MI
 tsc			alpha
 tsp			alpha
@@ -1041,11 +1074,15 @@ ucbtp			hpcmips
 ucom			MI		
 ucombus			MI		Attribute
 uda			MI		
+udsbr			MI		
 uftdi			MI		
 ugen			MI		
+uirda			MI		
 uha			MI		
 uhci			MI		
 uhid			MI		
+uhidbus			MI		Attribute
+uhidev			MI		
 uhub			MI		
 uk			MI		
 ukbd			MI		
@@ -1069,6 +1106,7 @@ usb			MI
 usbus			MI		Attribute
 uscanner		MI
 usscanner		MI
+ustir			MI
 ut			vax
 uu			vax
 uvisor			MI		
@@ -1133,9 +1171,9 @@ wskbd			MI
 wskbddev		MI		Attribute
 wsmouse			MI		
 wsmousedev		MI		Attribute
+wsqms			arm32
 wsrasteremulops		MI		Attribute
 wss			MI		
-wsqms			arm32
 wstsc			amiga
 wstsc			amigappc
 wt			MI		

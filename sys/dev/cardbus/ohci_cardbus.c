@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.9 2001/05/09 19:33:07 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.9.2.1 2002/01/10 19:53:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,11 @@
  * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.9.2.1 2002/01/10 19:53:47 thorpej Exp $");
+
+#include "ehci.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -59,6 +64,8 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
+#include <dev/cardbus/usb_cardbus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
@@ -73,6 +80,9 @@ int	ohci_cardbus_detach(device_ptr_t, int);
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
+#if NEHCI > 0
+	struct usb_cardbus	sc_cardbus;
+#endif
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
@@ -179,6 +189,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		return;
 	}
 
+#if NEHCI > 0
+	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
+#endif
+
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -203,5 +217,8 @@ ohci_cardbus_detach(device_ptr_t self, int flags)
 		    sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+#if NEHCI > 0
+	usb_cardbus_rem(&sc->sc_cardbus);
+#endif
 	return (0);
 }

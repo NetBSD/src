@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.35.2.1 2001/08/25 06:16:16 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.35.2.2 2002/01/10 19:54:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 /*
  * Common code shared by all NE2000-compatible Ethernet interfaces.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.35.2.2 2002/01/10 19:54:56 thorpej Exp $");
 
 #include "opt_ipkdb.h"
 

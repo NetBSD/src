@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.3 2001/06/10 10:48:43 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.3.2.1 2002/01/10 19:54:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Compaq array controller front-end for ld(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.3.2.1 2002/01/10 19:54:46 thorpej Exp $");
 
 #include "rnd.h"
 

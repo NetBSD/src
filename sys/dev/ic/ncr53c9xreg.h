@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.9 2001/05/23 18:32:26 petrov Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.9.2.1 2002/01/10 19:54:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -83,7 +83,7 @@
 
 #define	NCR_SELID	0x04		/* WO - Select/Reselect Bus ID	*/
 #define  NCR_BUSID_HME		0x10 	/* XXX HME reselect ID 		*/
-#define  NCR_BUSID_HME32	0x40	/* XXX HME to select more then 16 */
+#define  NCR_BUSID_HME32	0x40	/* XXX HME to select more than 16 */
 
 #define	NCR_INTR	0x05		/* RO - Interrupt		*/
 #define  NCRINTR_SBR	0x80		/*	SCSI Bus Reset		*/

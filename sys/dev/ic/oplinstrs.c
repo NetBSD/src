@@ -1,4 +1,7 @@
-/*	$NetBSD: oplinstrs.c,v 1.3 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: oplinstrs.c,v 1.3.4.1 2002/01/10 19:54:57 thorpej Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oplinstrs.c,v 1.3.4.1 2002/01/10 19:54:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

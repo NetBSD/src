@@ -1,10 +1,10 @@
-#	$NetBSD: std.newsmips,v 1.10 2000/12/03 07:05:23 matt Exp $
+#	$NetBSD: std.newsmips,v 1.10.4.1 2002/01/10 19:46:59 thorpej Exp $
 
 machine newsmips mips
 
-options	EXEC_ELF32	# exec ELF32 binaries
-options	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80001000"
-makeoptions	LINKFLAGS="-N"
-makeoptions	ENDIAN="-EB"
+makeoptions	LINKFORMAT="-N"
+makeoptions	MACHINE_ARCH="mipseb"

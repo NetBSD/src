@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2001/05/11 03:42:59 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1.4.1 2002/01/10 19:48:30 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -33,3 +33,5 @@ struct clockfns {
 };
 
 void clockattach(struct device *, const struct clockfns *);
+
+#define IRIX_CLOCK_BASE 1940

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.2 1999/06/12 12:10:30 dante Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.2.18.1 2002/01/10 19:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -57,8 +57,9 @@
  *     3. This board has been sold by SIIG as the i542 SpeedMaster.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.2.18.1 2002/01/10 19:55:17 thorpej Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -120,51 +121,91 @@ adv_isa_probe(parent, match, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int port_index;
-	int iobase;
+	int iobase, irq, drq;
 	int rv = 0;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/*
-	 * Find io port
+	 * If the I/O address is wildcarded, look for boards
+	 * in ascending order.
 	 */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT) {
-		for(port_index=0; port_index < ASC_IOADR_TABLE_MAX_IX;
-				port_index++) {
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT) {
+		for (port_index = 0; port_index < ASC_IOADR_TABLE_MAX_IX;
+		     port_index++) {
 			iobase = asc_ioport[port_index];
 
-			if(iobase) {
+			if (iobase) {
 				if (bus_space_map(iot, iobase, ASC_IOADR_GAP,
-						0, &ioh))
+				    0, &ioh))
 					continue;
 
 				rv = AscFindSignature(iot, ioh);
-
-				bus_space_unmap(iot, ioh, ASC_IOADR_GAP);
 				
 				if (rv) {
-					ia->ia_iobase = iobase;
+					ia->ia_io[0].ir_addr = iobase;
 					break;
 				}
+
+				bus_space_unmap(iot, ioh, ASC_IOADR_GAP);
 			}
 		}
+		if (rv == 0)
+			return (0);
 	} else {
-		if (bus_space_map(iot, ia->ia_iobase, ASC_IOADR_GAP, 0, &ioh))
+		iobase = ia->ia_io[0].ir_addr;
+		if (bus_space_map(iot, iobase, ASC_IOADR_GAP, 0, &ioh))
 			return (0);
 
 		rv = AscFindSignature(iot, ioh);
 
-		bus_space_unmap(iot, ioh, ASC_IOADR_GAP);
+		if (rv == 0) {
+			bus_space_unmap(iot, ioh, ASC_IOADR_GAP);
+			return (0);
+		}
 	}
 
-	if (rv) {
-		ASC_SET_CHIP_CONTROL(iot, ioh, ASC_CC_HALT);
-		ASC_SET_CHIP_STATUS(iot, ioh, 0);
+	/* XXXJRT Probe routines should not have side-effects!! */
+	ASC_SET_CHIP_CONTROL(iot, ioh, ASC_CC_HALT);
+	ASC_SET_CHIP_STATUS(iot, ioh, 0);
 
-		ia->ia_msize = 0;
-		ia->ia_iosize = ASC_IOADR_GAP;
-		ia->ia_irq = AscGetChipIRQ(iot, ioh, ASC_IS_ISA);
-		ia->ia_drq = AscGetIsaDmaChannel(iot, ioh);
+	irq = AscGetChipIRQ(iot, ioh, ASC_IS_ISA);
+	drq = AscGetIsaDmaChannel(iot, ioh);
+
+	/* Verify that the IRQ/DRQ match (or are wildcarded). */
+	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	    ia->ia_irq[0].ir_irq != irq) {
+		rv = 0;
+		goto out;
+	}
+	if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+	    ia->ia_drq[0].ir_drq != drq) {
+		rv = 0;
+		goto out;
 	}
 
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = iobase;
+	ia->ia_io[0].ir_size = ASC_IOADR_GAP;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
+	ia->ia_ndrq = 1;
+	ia->ia_drq[0].ir_drq = drq;
+
+	ia->ia_niomem = 0;
+
+ out:
+	bus_space_unmap(iot, ioh, ASC_IOADR_GAP);
 	return rv;
 }
 
@@ -185,7 +226,7 @@ adv_isa_attach(parent, self, aux)
 
 	sc->sc_flags = 0x0;
 
-	if (bus_space_map(iot, ia->ia_iobase, ASC_IOADR_GAP, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ASC_IOADR_GAP, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -209,14 +250,14 @@ adv_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
+	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
 		printf("%s: unable to cascade DRQ, error = %d\n",
 				sc->sc_dev.dv_xname, error);
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-			adv_intr, sc);
+	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	    IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.1 2000/08/11 02:27:07 thorpej Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.1.8.1 2002/01/10 19:53:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * EISA bus front-end for the Digital DEPCA Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.1.8.1 2002/01/10 19:53:51 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

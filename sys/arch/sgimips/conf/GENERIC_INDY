@@ -1,0 +1,5 @@
+#	$NetBSD: GENERIC_INDY,v 1.4.4.2 2002/01/10 19:48:22 thorpej Exp $
+
+include		"arch/sgimips/conf/GENERIC"
+
+makeoptions	TEXTADDR="0x88069000"

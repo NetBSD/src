@@ -1,6 +1,7 @@
-$NetBSD: version,v 1.4 2000/09/24 12:32:38 jdolecek Exp $
+$NetBSD: version,v 1.4.4.1 2002/01/10 19:47:17 thorpej Exp $
 
 1.1:		Boot program for OpenFirmware; initial revision
 1.2:		Boot program rearrangement
 1.3:		Added support for loading ELF kernels
 1.4:		Support verbose/quiet boot.
+1.5:		Support for proper DDB symbol loading and MS-DOS file systems

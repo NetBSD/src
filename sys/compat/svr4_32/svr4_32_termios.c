@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.1 2001/02/06 16:37:59 eeh Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.1.6.1 2002/01/10 19:52:26 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.1.6.1 2002/01/10 19:52:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

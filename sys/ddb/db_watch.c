@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.15.2.1 2001/09/13 01:15:33 thorpej Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.15.2.2 2002/01/10 19:52:42 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,9 @@
  * 	Author: Richard P. Draves, Carnegie Mellon University
  *	Date:	10/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.15.2.2 2002/01/10 19:52:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -221,15 +224,16 @@ db_set_watchpoints()
 	if (!db_watchpoints_inserted) {
 	    for (watch = db_watchpoint_list;
 	         watch != 0;
-	         watch = watch->link)
+	         watch = watch->link) {
 		pmap_protect(watch->map->pmap,
 			     trunc_page(watch->loaddr),
 			     round_page(watch->hiaddr),
 			     VM_PROT_READ);
+		pmap_update(watch->map->pmap);
+	    }
 
 	    db_watchpoints_inserted = TRUE;
 	}
-	pmap_update(watch->map->pmap);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.26 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.26.2.1 2002/01/10 19:51:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  * Based on sys/kern/exec_aout.c
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.26.2.1 2002/01/10 19:51:08 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -113,6 +116,7 @@ const struct emul emul_hpux = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	hpux_setregs,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.16 2001/07/06 18:05:59 mcr Exp $
+#	$NetBSD: files.cardbus,v 1.16.2.1 2002/01/10 19:53:45 thorpej Exp $
 #
 # files.cardbus
 #
@@ -6,7 +6,7 @@
 device	cardslot: cbbus, pcmciabus
 attach	cardslot at pcmciaslot
 file	dev/cardbus/cardslot.c		cardslot		needs-flag
-defopt	opt_cardslot.h			CARDSLOT_DEBUG
+defflag	opt_cardslot.h			CARDSLOT_DEBUG
 
 device	cardbus {[dev = -1], [function = -1]}
 attach	cardbus at cbbus
@@ -14,7 +14,7 @@ file	dev/cardbus/cardbus.c		cardbus			needs-flag
 file	dev/cardbus/cardbus_map.c	cardbus
 file	dev/cardbus/cardbus_exrom.c	cardbus
 file	dev/cardbus/rbus.c		cardbus
-defopt	opt_cardbus.h			CARDBUS_DEBUG
+defflag	opt_cardbus.h			CARDBUS_DEBUG
 
 
 #
@@ -45,6 +45,12 @@ file	dev/cardbus/if_tlp_cardbus.c	tlp_cardbus
 #
 attach	ohci at cardbus with ohci_cardbus
 file	dev/cardbus/ohci_cardbus.c	ohci_cardbus
+
+#
+# OHCI USB controller
+#
+attach	ehci at cardbus with ehci_cardbus
+file	dev/cardbus/ehci_cardbus.c	ehci_cardbus
 
 #
 # OHCI IEEE 1394 controller

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.22.1 2002/01/10 19:49:06 thorpej Exp $
 
-MKMAN=	no
+NOMAN=	# defined
 
 SCRIPTS=	binstall.sh
 

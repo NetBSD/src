@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26.4.1 2001/09/13 01:14:55 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26.4.2 2002/01/10 19:49:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -87,7 +87,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
+	lp->d_npartitions = RAW_PART + 1;
 	if (lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;

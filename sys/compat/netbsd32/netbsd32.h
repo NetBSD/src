@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.19.2.1 2001/09/13 01:15:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.19.2.2 2002/01/10 19:51:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -533,8 +533,7 @@ typedef struct firm_event32 {
 #define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
-/* hook for coredump */
-extern	int coredump32(struct proc *, struct vnode *);
+int	coredump_netbsd32(struct proc *, struct vnode *, struct ucred *);
 
 /*
  * random other stuff

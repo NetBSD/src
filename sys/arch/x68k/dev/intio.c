@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.8.4.1 2001/09/13 01:15:11 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.8.4.2 2002/01/10 19:50:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ intio_attach(parent, self, aux)
 	sc->sc_dmat = &intio_bus_dma;
 	sc->sc_dmac = 0;
 
-	bzero(iiv, sizeof (struct intio_interrupt_vector) * 256);
+	memset(iiv, 0, sizeof (struct intio_interrupt_vector) * 256);
 
 	ia.ia_bst = sc->sc_bst;
 	ia.ia_dmat = sc->sc_dmat;
@@ -328,10 +328,12 @@ intio_bus_space_map(t, bpa, size, flags, bshp)
 	*bshp = (bus_space_handle_t)
 	  ((u_int) bpa - PHYS_INTIODEV + intiobase);
 	/*
-	 * Some devices are mapped on odd addresses only.
+	 * Some devices are mapped on odd or even addresses only.
 	 */
-	if (flags & BUS_SPACE_MAP_SHIFTED)
+	if ((flags & BUS_SPACE_MAP_SHIFTED_MASK) == BUS_SPACE_MAP_SHIFTED_ODD)
 		*bshp += 0x80000001;
+	if ((flags & BUS_SPACE_MAP_SHIFTED_MASK) == BUS_SPACE_MAP_SHIFTED_EVEN)
+		*bshp += 0x80000000;
 
 	return (0);
 }

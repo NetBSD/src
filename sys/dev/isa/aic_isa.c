@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.7 1998/06/09 07:24:56 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.7.28.1 2002/01/10 19:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,9 @@
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.7.28.1 2002/01/10 19:55:17 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -107,11 +109,23 @@ aic_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, AIC_ISA_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Disallow wildcarded IRQ. */
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AIC_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	AIC_TRACE(("aic_isa_probe: port 0x%x\n", ia->ia_iobase));
@@ -120,8 +134,13 @@ aic_isa_probe(parent, match, aux)
 	bus_space_unmap(iot, ioh, AIC_ISA_IOSIZE);
 
 	if (rv) {
-		ia->ia_msize = 0;
-		ia->ia_iosize = AIC_ISA_IOSIZE;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = AIC_ISA_IOSIZE;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
 	}
 	return rv;
 }
@@ -140,7 +159,7 @@ aic_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, AIC_ISA_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AIC_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -153,8 +172,8 @@ aic_isa_attach(parent, self, aux)
 		return;
 	}
 
-	isc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    aicintr, sc);
+	isc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	    IPL_BIO, aicintr, sc);
 	if (isc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);

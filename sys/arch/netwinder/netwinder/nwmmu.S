@@ -1,4 +1,4 @@
-/*	$NetBSD: nwmmu.S,v 1.2 2001/04/20 16:09:48 matt Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.2.4.1 2002/01/10 19:46:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #incude "assym.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/pte.h>
+#include <arm/arm32/pte.h>
 
 	.text
 
@@ -49,7 +50,7 @@ ASENTRY_NP(nwstart)
 	add	r6, r6, #0x3f8
 	mov	r3, #0
 	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_CACHEABLE)
+	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
 	mov	r2, #0x100000		/* advance by 1MB */
 	mov	r1, #0x8000		/* page table start */
 	mov	r0, #0x1000		/* page table size */
@@ -64,7 +65,7 @@ L1:
  * Page Table now maps 1:1 to physical memory.
  */
 	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_CACHEABLE)
+	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
 	mov	r2, #0x100000		/* advance by 1MB */
 	mov	r1, #0x8000		/* page table start */
 	add	r1, r1, #(0x100 * 4)	/* offset to 0x100xxxxx */
@@ -78,7 +79,7 @@ L2:
  * 0x10000000-0x1fffffff now maps to 0x00000000-0x0fffffff
  */
 	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	add	r3, r3, #(L1_SECTION|PT_CACHEABLE)
+	add	r3, r3, #(L1_SECTION|PT_B|PT_C)
 	mov	r1, #0x8000		/* page table start */
 	add	r1, r1, #(0xf00 * 4)	/* offset to 0xf03xxxxx */
 	mov	r0, #64

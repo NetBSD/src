@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.14 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.14.2.1 2002/01/10 19:55:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 /*
  * Device driver for the 3Com Etherlink II (3c503).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.14.2.1 2002/01/10 19:55:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +122,8 @@ static const int ec_iobase[] = {
 #define	NEC_IOBASE	(sizeof(ec_iobase) / sizeof(ec_iobase[0]))
 
 static const int ec_membase[] = {
-	MADDRUNK, MADDRUNK, MADDRUNK, MADDRUNK, 0xc8000, 0xcc000,
-	0xd8000, 0xdc000,
+	ISACF_IOMEM_DEFAULT, ISACF_IOMEM_DEFAULT, ISACF_IOMEM_DEFAULT,
+	ISACF_IOMEM_DEFAULT, 0xc8000, 0xcc000, 0xd8000, 0xdc000,
 };
 #define	NEC_MEMBASE	(sizeof(ec_membase) / sizeof(ec_membase[0]))
 
@@ -149,45 +152,55 @@ ec_probe(parent, match, aux)
 	 */
 	memsize = 8192;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o addresses. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
 	/* Disallow wildcarded mem address. */
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
 		return (0);
 
 	/* Validate the i/o base. */
 	for (i = 0; i < NEC_IOBASE; i++)
-		if (ia->ia_iobase == ec_iobase[i])
+		if (ia->ia_io[0].ir_addr == ec_iobase[i])
 			break;
 	if (i == NEC_IOBASE)
 		return (0);
 
 	/* Validate the mem base. */
 	for (i = 0; i < NEC_MEMBASE; i++) {
-		if (ec_membase[i] == MADDRUNK)
+		if (ec_membase[i] == ISACF_IOMEM_DEFAULT)
 			continue;
-		if (ia->ia_maddr == ec_membase[i])
+		if (ia->ia_iomem[0].ir_addr == ec_membase[i])
 			break;
 	}
 	if (i == NEC_MEMBASE)
 		return (0);
 
 	/* Attempt to map the NIC space. */
-	if (bus_space_map(nict, ia->ia_iobase + ELINK2_NIC_OFFSET,
+	if (bus_space_map(nict, ia->ia_io[0].ir_addr + ELINK2_NIC_OFFSET,
 	    ELINK2_NIC_PORTS, 0, &nich))
 		goto out;
 	nich_valid = 1;
 
 	/* Attempt to map the ASIC space. */
-	if (bus_space_map(asict, ia->ia_iobase + ELINK2_ASIC_OFFSET,
+	if (bus_space_map(asict, ia->ia_io[0].ir_addr + ELINK2_ASIC_OFFSET,
 	    ELINK2_ASIC_PORTS, 0, &asich))
 		goto out;
 	asich_valid = 1;
 
 	/* Attempt to map the memory space. */
-	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, memsize, 0, &memh))
 		goto out;
 	memh_valid = 1;
 
@@ -203,7 +216,7 @@ ec_probe(parent, match, aux)
 	if (x == 0 || (x & (x - 1)) != 0)
 		goto out;
 	i = ffs(x) - 1;
-	if (ia->ia_iobase != ec_iobase[i])
+	if (ia->ia_io[0].ir_addr != ec_iobase[i])
 		goto out;
 
 	/*
@@ -214,12 +227,20 @@ ec_probe(parent, match, aux)
 	if (x == 0 || (x & (x - 1)) != 0)
 		goto out;
 	i = ffs(x) - 1;
-	if (ia->ia_maddr != ec_membase[i])
+	if (ia->ia_iomem[0].ir_addr != ec_membase[i])
 		goto out;
 
 	/* So, we say we've found it! */
-	ia->ia_iosize = ELINK2_NIC_PORTS;
-	ia->ia_msize = memsize;
+	ia->ia_nio = 1;		/* XXX Really 2! */
+	ia->ia_io[0].ir_size = ELINK2_NIC_PORTS;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_size = memsize;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
 	rv = 1;
 
  out:
@@ -255,10 +276,10 @@ ec_attach(parent, self, aux)
 	 * Hmm, a 16-bit card has 16k of memory, but only an 8k window
 	 * to it.
 	 */
-	memsize = 8192;
+	memsize = ia->ia_iomem[0].ir_size;
 
 	/* Map the NIC space. */
-	if (bus_space_map(nict, ia->ia_iobase + ELINK2_NIC_OFFSET,
+	if (bus_space_map(nict, ia->ia_io[0].ir_addr + ELINK2_NIC_OFFSET,
 	    ELINK2_NIC_PORTS, 0, &nich)) {
 		printf("%s: can't map nic i/o space\n",
 		    sc->sc_dev.dv_xname);
@@ -266,7 +287,7 @@ ec_attach(parent, self, aux)
 	}
 
 	/* Map the ASIC space. */
-	if (bus_space_map(asict, ia->ia_iobase + ELINK2_ASIC_OFFSET,
+	if (bus_space_map(asict, ia->ia_io[0].ir_addr + ELINK2_ASIC_OFFSET,
 	    ELINK2_ASIC_PORTS, 0, &asich)) {
 		printf("%s: can't map asic i/o space\n",
 		    sc->sc_dev.dv_xname);
@@ -274,7 +295,7 @@ ec_attach(parent, self, aux)
 	}
 
 	/* Map the memory space. */
-	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh)) {
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, memsize, 0, &memh)) {
 		printf("%s: can't map shared memory\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -439,21 +460,21 @@ ec_attach(parent, self, aux)
 	/*
 	 * Program the IRQ.
 	 */
-	switch (ia->ia_irq) {
+	switch (ia->ia_irq[0].ir_irq) {
 	case 9:	tmp = ELINK2_IDCFR_IRQ2; break;
 	case 3:	tmp = ELINK2_IDCFR_IRQ3; break;
 	case 4:	tmp = ELINK2_IDCFR_IRQ4; break;
 	case 5:	tmp = ELINK2_IDCFR_IRQ5; break;
 		break;
 
-	case IRQUNK:
+	case ISACF_IRQ_DEFAULT:
 		printf("%s: wildcarded IRQ is not allowed\n",
 		    sc->sc_dev.dv_xname);
 		return;
 
 	default:
 		printf("%s: invalid IRQ %d, must be 3, 4, 5, or 9\n",
-		    sc->sc_dev.dv_xname, ia->ia_irq);
+		    sc->sc_dev.dv_xname, ia->ia_irq[0].ir_irq);
 		return;
 	}
 
@@ -485,8 +506,8 @@ ec_attach(parent, self, aux)
 	}
 
 	/* Establish interrupt handler. */
-	esc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, dp8390_intr, sc);
+	esc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, dp8390_intr, sc);
 	if (esc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 }

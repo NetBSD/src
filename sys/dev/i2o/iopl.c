@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3.4.2 2001/08/25 06:16:10 thorpej Exp $	*/
+/*	$NetBSD: iopl.c,v 1.3.4.3 2002/01/10 19:54:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * - Doesn't handle token-ring, but that's not a big deal.
  * - Interrupts run at IPL_BIO.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.4.3 2002/01/10 19:54:01 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -1349,7 +1352,7 @@ iopl_ifmedia_change(struct ifnet *ifp)
 }
 
 /*
- * Initalize the interface.
+ * Initialize the interface.
  */
 static int
 iopl_init(struct ifnet *ifp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.34.2.1 2001/08/25 06:16:17 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.34.2.2 2002/01/10 19:55:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  * Memory allocation interrupt logic is drived from an SMC 91C90 driver
  * written for NetBSD/amiga by Michael Hitch.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.34.2.2 2002/01/10 19:55:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -800,10 +803,11 @@ smc91cxx_intr(arg)
 	if (status & IM_RCV_INT) {
 #if 1 /* DIAGNOSTIC */
 		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-		if (packetno & FIFO_REMPTY)
+		if (packetno & FIFO_REMPTY) {
 			printf("%s: receive interrupt on empty fifo\n",
 			    sc->sc_dev.dv_xname);
-		else
+			goto out;
+		} else
 #endif
 		smc91cxx_read(sc);
 	}
@@ -924,6 +928,7 @@ smc91cxx_intr(arg)
 	 */
 	smc91cxx_start(ifp);
 
+out:
 	/*
 	 * Reenable the interrupts we wish to receive now that processing
 	 * is complete.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/05/12 22:35:30 chs Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2002/01/10 19:47:07 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -40,7 +40,7 @@ SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
 CLEANFILES+= srt0.o boot.elf boot.raw machine ${MACHINE_ARCH} limits.h
 CLEANFILES+= vers.c build.c build	# generated dynamically
 
-MKMAN=	no
+NOMAN=	# defined
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}

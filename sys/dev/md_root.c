@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2 2001/07/02 17:17:25 uch Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2.2.1 2002/01/10 19:52:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.2.2.1 2002/01/10 19:52:48 thorpej Exp $");
+
 #include "opt_md.h"
 #include "opt_mdsize.h"
 
@@ -47,7 +50,7 @@
 
 extern int boothowto;
 
-#if MEMORY_DISK_DYNAMIC
+#ifdef MEMORY_DISK_DYNAMIC
 size_t md_root_size;
 char *md_root_image;
 #else /* MEMORY_DISK_DYNAMIC */
@@ -65,7 +68,7 @@ u_int32_t md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 #endif /* MEMORY_DISK_DYNAMIC */
 
-#if MEMORY_DISK_DYNAMIC
+#ifdef MEMORY_DISK_DYNAMIC
 void
 md_root_setconf(char *addr, size_t size)
 {

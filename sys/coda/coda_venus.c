@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.7.24.2 2001/08/25 06:16:05 thorpej Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.7.24.3 2002/01/10 19:50:53 thorpej Exp $	*/
 
 /*
  * 
@@ -30,6 +30,9 @@
  * 
  * 	@(#) coda/coda_venus.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.7.24.3 2002/01/10 19:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

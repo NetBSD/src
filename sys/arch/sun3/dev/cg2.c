@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.13.4.2 2001/09/13 01:14:48 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.13.4.3 2002/01/10 19:49:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/cg2reg.h>

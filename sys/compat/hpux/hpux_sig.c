@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.20 2000/12/27 21:58:53 jdolecek Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.20.4.1 2002/01/10 19:51:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Signal related HPUX compatibility routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.20.4.1 2002/01/10 19:51:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,23 @@
+# $NetBSD: GENERIC,v 1.7.2.2 2002/01/10 19:46:16 thorpej Exp $
 #
-# 	$NetBSD: GENERIC,v 1.7.2.1 2001/09/13 01:14:00 thorpej Exp $
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
 include		"arch/mipsco/conf/std.mipsco"
 
 maxusers	16
@@ -11,16 +28,16 @@ options 	MIPS1			# R2000/R3000 support
 options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10		# number of semaphore identifiers
+#options 	SEMMNS=60		# number of semaphores in system
+#options 	SEMUME=10		# max number of undo entries per process
+#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
-options		HZ=25
+options 	HZ=25
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger
@@ -29,9 +46,9 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DIAGNOSTIC		# extra kernel sanity checking
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
-#options	KGDB			# Remote kernel debug using gdb
-#options	KGDBDEV=0x0100		# KGDB port (this is serial0)
-#options	KGDBRATE=19200		# KGDB Baud Rate (default=19200)
+#options 	KGDB			# Remote kernel debug using gdb
+#options 	KGDB_DEV=0x0100		# KGDB port (this is serial0)
+#options 	KGDB_DEVRATE=19200	# KGDB Baud Rate (default=19200)
 #makeoptions	DEBUG="-g"		# Build kernel with debug symbols
 
 # Compatibility options
@@ -117,6 +134,7 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		2	# SLIP interfaces
 #pseudo-device	ppp		2	# PPP interfaces
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		4	# Network "tunnel" device
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
@@ -126,7 +144,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

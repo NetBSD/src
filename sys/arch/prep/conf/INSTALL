@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5.2.1 2001/09/13 01:14:25 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.5.2.2 2002/01/10 19:48:10 thorpej Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -37,6 +37,21 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 options 	INET		# IP + ICMP + TCP + UDP
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
+
+#
+# wscons options
+#
+# builtin terminal emulations
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
@@ -80,14 +95,19 @@ isapnp0 at isa?
 
 # Console Devices
 
-# ISA console.
-pc0	at isa? port 0x60 irq 1		# generic PC console device
+# wscons
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+vga*		at pci?
+wsdisplay*	at vga? console ?
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
+wsmouse*	at pmsi? mux 0
 
-# Keyboard layout configuration for pccons
-#options	FRENCH_KBD
-#options	FINNISH_KBD
-#options	GERMAN_KBD
-#options	NORWEGIAN_KBD
+pcppi0	at isa?				# PC prog. periph. interface
+isabeep0 at pcppi?			# "keyboard" beep
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 
@@ -159,7 +179,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
 # Network Interfaces
@@ -209,4 +229,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#options	RND_COM			# use "com" randomness as well
+#options 	RND_COM			# use "com" randomness as well

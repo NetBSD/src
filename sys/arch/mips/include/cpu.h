@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52.2.1 2001/09/13 01:13:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.2 2002/01/10 19:46:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,6 +138,7 @@ void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 struct clockframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
+	int	ppl;	/* previous priority level at time of interrupt */
 };
 
 /*
@@ -157,6 +158,10 @@ struct clockframe {
 #define	MIPS3_CLKF_BASEPRI(framep)	\
 	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_IE)) == 0)
 
+#ifdef IPL_ICU_MASK
+#define ICU_CLKF_BASEPRI(framep)	((framep)->ppl == 0)
+#endif
+
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
@@ -168,6 +173,11 @@ struct clockframe {
 #if !defined(MIPS3) && defined(MIPS1)
 #define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
 #define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
+#endif
+
+#ifdef IPL_ICU_MASK
+#undef CLKF_BASEPRI
+#define CLKF_BASEPRI(framep)	ICU_CLKF_BASEPRI(framep)
 #endif
 
 #if defined(MIPS3) && defined(MIPS1)
@@ -215,11 +225,6 @@ do {									\
 #define aston(p)	((p)->p_md.md_astpending = 1)
 
 extern int want_resched;		/* resched() was called */
-#ifdef MIPS3
-extern u_int	mips_L2CacheSize;
-extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */
-extern int	mips_L2CacheMixed;
-#endif /* MIPS3 */
 
 /*
  * Misc prototypes and variable declarations.

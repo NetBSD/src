@@ -1,8 +1,26 @@
-# 	$NetBSD: GENERIC,v 1.121.2.1 2001/09/13 01:14:33 thorpej Exp $
+# $NetBSD: GENERIC,v 1.121.2.2 2002/01/10 19:48:42 thorpej Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include "arch/sparc/conf/std.sparc"
+include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.121.2.1 $"
+#ident 		"GENERIC-$Revision: 1.121.2.2 $"
 
 maxusers	32
 
@@ -52,10 +70,10 @@ options 	KTRACE
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -77,20 +95,21 @@ options 	NFS_BOOT_BOOTPARAM
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use, where the minor
-## device number encodes the PROM enumeration of the serial ports, i.e.:
-## 0xc00 = ttya, 0xc01 = ttyb, 0xc02 = ttyc, 0xc03 = ttyd.  (Note: ttyc and
-## ttyd are available only on some sun4 models)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use, where
+## the minor device number encodes the PROM enumeration of the serial ports,
+## i.e.:
+## 0xc00 = ttya, 0xc01 = ttyb, 0xc02 = ttyc, 0xc03 = ttyd.
+## (Note: ttyc and ttyd are available only on some sun4 models)
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -160,7 +179,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -273,7 +292,7 @@ zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 zstty2	at zs2 channel 0				# ttyc
 zstty3	at zs2 channel 1				# ttyd
 
-## NS16x50 serial chips and clones.  Present on the 
+## NS16x50 serial chips and clones.  Present on the
 ## Sun JavaStation-1 and Tadpole SPARCbook 3
 com*	at obio0					# sun4m
 
@@ -481,6 +500,9 @@ pseudo-device	sl		2
 ## PPP, the successor to SLIP.  See pppd(8).
 pseudo-device	ppp		2
 
+## PPP over Ethernet (RFC 2516)
+pseudo-device	pppoe
+
 ## Starmode Radio IP, a special hardware network device.
 #pseudo-device	strip		1
 
@@ -508,7 +530,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
-#pseudo-device	bridge
+pseudo-device	bridge
 
 #### Audio and video devices
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.46.2.1 2001/08/25 06:16:15 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.46.2.2 2002/01/10 19:54:23 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -12,6 +12,9 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.46.2.2 2002/01/10 19:54:23 thorpej Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -757,7 +760,7 @@ dp8390_intr(arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occured while not
+			 * be zero if a transmitter interrupt occurred while not
 			 * actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.

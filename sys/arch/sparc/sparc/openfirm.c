@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4 2001/05/30 12:28:51 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4.2.1 2002/01/10 19:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -358,10 +358,14 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	va_start(ap, nreturns);
 	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return -1;
-	if (args.args_n_results[nargs])
+	}
+	if (args.args_n_results[nargs]) {
+		va_end(ap);
 		return args.args_n_results[nargs];
+	}
 	for (ip = (long*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
 		*va_arg(ap, unsigned long *) = *--ip;
 	va_end(ap);
@@ -635,7 +639,13 @@ OF_enter()
 	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
+#if defined(MSIIEP)
+	msiiep_swap_endian(0);
+#endif
 	openfirmware(&args);
+#if defined(MSIIEP)
+	msiiep_swap_endian(1);
+#endif
 }
 
 void
@@ -650,7 +660,13 @@ OF_exit()
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
+#if defined(MSIIEP)
+	msiiep_swap_endian(0);
+#endif
 	openfirmware(&args);
+#if defined(MSIIEP)
+	msiiep_swap_endian(1);
+#endif
 	panic("OF_exit failed");
 }
 

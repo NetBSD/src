@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.11.2.1 2001/09/13 01:15:35 thorpej Exp $        */
+/*      $NetBSD: rndpool.c,v 1.11.2.2 2002/01/10 19:52:50 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.11.2.2 2002/01/10 19:52:50 thorpej Exp $");
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/sha1.h>
 

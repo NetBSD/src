@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.15 2001/05/30 11:37:22 mrg Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.15.2.1 2002/01/10 19:51:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.15.2.1 2002/01/10 19:51:00 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.11 2000/11/04 18:28:19 veego Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.11.6.1 2002/01/10 19:54:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.11.6.1 2002/01/10 19:54:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -678,7 +681,7 @@ generic_fanrpm(sc, sensors)
 }
 
 /*
- * pre:  last read occured >= 1.5 seconds ago
+ * pre:  last read occurred >= 1.5 seconds ago
  * post: sensors[] current data are the latest from the chip
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.39 2000/11/01 06:27:45 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.39.4.1 2002/01/10 19:48:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *));
-static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			      int, bus_space_handle_t *));
+static paddr_t sbus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+				  int, int));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
 		bus_type_t,		/*slot*/
@@ -309,7 +309,7 @@ sbus_attach_mainbus(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -349,7 +349,7 @@ sbus_attach_iommu(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
@@ -377,7 +377,7 @@ sbus_attach_xbox(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_attach_common(sc, "sbus", node, NULL);
@@ -401,7 +401,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = getpropint(busnode, "burst-sizes", 0);
+	sc->sc_burst = PROM_getpropint(busnode, "burst-sizes", 0);
 
 
 	if (CPU_ISSUN4M) {
@@ -417,7 +417,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getprop(busnode, "ranges", sizeof(struct rom_range),
+	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
 			&sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -454,7 +454,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
+		char *name = PROM_getpropstring(node, "name");
 		for (ssp = specials, sp = NULL;
 		     ssp != NULL && (sp = *ssp) != NULL;
 		     ssp++)
@@ -486,7 +486,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n, error;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -496,13 +496,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = getprop(node, "reg", sizeof(struct sbus_reg),
+	error = PROM_getprop(node, "reg", sizeof(struct sbus_reg),
 			&sa->sa_nreg, (void **)&sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(getpropstringA(node, "device_type", buf, sizeof buf),
+		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -518,7 +518,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	error = getprop(node, "address", sizeof(u_int32_t),
+	error = PROM_getprop(node, "address", sizeof(u_int32_t),
 			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -568,7 +568,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 			continue;
 
 		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].poffset + offset;
+		paddr = sc->sc_range[i].poffset + BUS_ADDR_PADDR(offset);
 		iospace = sc->sc_range[i].pspace;
 		return (bus_space_map2(sc->sc_bustag, iospace, paddr,
 					size, flags, vaddr, hp));
@@ -577,33 +577,42 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-int
-sbus_bus_mmap(t, btype, paddr, flags, hp)
+static paddr_t
+sbus_bus_mmap(t, baddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
+	bus_addr_t baddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
-	int slot = (int)btype;
-	int offset = (int)paddr;
 	struct sbus_softc *sc = t->cookie;
+	int slot = BUS_ADDR_IOSPACE(baddr);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t paddr;
-		bus_addr_t iospace;
 
 		if (sc->sc_range[i].cspace != slot)
 			continue;
 
-		paddr = sc->sc_range[i].poffset + offset;
-		iospace = (bus_addr_t)sc->sc_range[i].pspace;
-		return (bus_space_mmap(sc->sc_bustag, iospace, paddr,
-				       flags, hp));
+		paddr = BUS_ADDR(sc->sc_range[i].pspace,
+			    sc->sc_range[i].poffset + BUS_ADDR_PADDR(baddr));
+		return (bus_space_mmap(sc->sc_bustag, paddr, off,
+				       prot, flags));
 	}
 
 	return (-1);
+}
+
+bus_addr_t
+sbus_bus_addr(t, btype, offset)
+	bus_space_tag_t t;
+	u_int btype;
+	u_int offset;
+{
+
+	/* XXX: sbus_bus_addr should be g/c'ed */
+	return (BUS_ADDR(btype, offset));
 }
 
 
@@ -680,12 +689,14 @@ sbus_get_intr(sc, node, ipp, np)
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
 		/* Change format to an `struct sbus_intr' array */
 		struct sbus_intr *ip;
 		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
-		if (ip == NULL)
+		if (ip == NULL) {
+			free(ipl, M_DEVBUF);
 			return (ENOMEM);
+		}
 		for (n = 0; n < *np; n++) {
 			ip[n].sbi_pri = ipl[n];
 			ip[n].sbi_vec = 0;
@@ -699,7 +710,7 @@ sbus_get_intr(sc, node, ipp, np)
 	 * Fall back on `intr' property.
 	 */
 	*ipp = NULL;
-	error = getprop(node, "intr", sizeof(struct sbus_intr),
+	error = PROM_getprop(node, "intr", sizeof(struct sbus_intr),
 			np, (void **)ipp);
 	switch (error) {
 	case 0:

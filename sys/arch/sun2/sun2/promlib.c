@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.4.2.2 2001/09/13 01:14:47 thorpej Exp $	*/
+/*	$NetBSD: promlib.c,v 1.4.2.3 2002/01/10 19:49:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ _prom_swap_ptes(swapout, swapin)
 	u_int *swapout, *swapin;
 {
 	int pte_number;
-	vm_offset_t va;
+	vaddr_t va;
 
 	for(pte_number = 0, va = 0; pte_number < 4; pte_number++, va += NBPG) {
 		swapout[pte_number] = get_pte(va);
@@ -165,6 +165,7 @@ type new proto								\
 PROMLIB_FUNC(int, prom_memsize, (void), memorySize, + 0, return(rc))
 PROMLIB_FUNC(int, prom_stdin, (void), inSource, + 0, return(rc))
 PROMLIB_FUNC(int, prom_stdout, (void), outSink, + 0, return(rc))
+PROMLIB_FUNC(int, prom_kbdid, (void), keyBid, + 0, return(rc))
 PROMLIB_FUNC(int, prom_getchar, (void), getChar, (), return(rc))
 PROMLIB_FUNC(int, prom_peekchar, (void), mayGet, (), return(rc))
 PROMLIB_FUNC(void, prom_putchar, (int c), putChar, (c), return)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.79.2.1 2001/08/03 04:12:20 lukem Exp $ */
+/*	$NetBSD: clock.c,v 1.79.2.2 2002/01/10 19:48:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,31 @@
  * Clock driver.  This is the id prom and eeprom driver as well
  * and includes the timer register functions too.
  */
+#include "opt_sparc_arch.h"
+
+/*
+ * This file lumps together a lot of loosely related stuff with
+ * confusingly similar names.
+ *
+ * First, there are kernel's clocks provided by "timer" device.  The
+ * hardclock is provided by the timer register (aka system counter).
+ * The statclock is provided by per cpu counter register(s) (aka
+ * processor counter(s)).
+ *
+ * The "clock" device is the time-of-day clock provided by MK48Txx.
+ * idprom is located in the NVRAM area of the chip.
+ *
+ * microSPARC-IIep machines use DS1287A at EBus for TOD clock and the
+ * driver for it ("rtc") is in a separate file to prevent this file
+ * from being cluttered even further.
+ */
+
+
+/* 
+ * ifdef out mk48txx TOD clock code for the sake of ms-IIep so that
+ * this file doesn't require obio, iommu and sbus to link the kernel.
+ */
+#include "mk48txx.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,6 +110,20 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
+
+#if defined(MSIIEP)
+#include <sparc/sparc/msiiepreg.h>
+/* XXX: move this stuff to msiiepreg.h? */
+
+/* ms-IIep PCIC registers mapped at fixed VA (see vaddrs.h) */
+#define msiiep ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
+
+/* 
+ * ms-IIep counters tick every 4 cpu clock @100MHz.
+ * counter is reset to 1 when new limit is written.
+ */
+#define tmr_ustolimIIep(n) ((n)* 25 + 1)
+#endif /* MSIIEP */
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -123,11 +162,7 @@ extern struct idprom sun4_idprom_store;
 static int oldclk = 0;
 bus_space_tag_t i7_bt;
 bus_space_handle_t i7_bh;
-#endif
-
-/* Location and size of the MK48xx TOD clock, if present */
-static bus_space_handle_t	mk_nvram_base;
-static bus_size_t		mk_nvram_size;
+#endif /* SUN4 */
 
 static int oclockmatch(struct device *, struct cfdata *, void *);
 static void oclockattach(struct device *, struct device *, void *);
@@ -135,11 +170,6 @@ static void oclockattach(struct device *, struct device *, void *);
 struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
 };
-
-extern struct cfdriver oclock_cd;
-
-static struct intrhand level10 = { clockintr };
-static struct intrhand level14 = { statintr };
 
 /*
  * Sun 4 machines use the old-style (a'la Sun 3) EEPROM.  On the
@@ -167,7 +197,13 @@ struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
 };
 
-extern struct cfdriver eeprom_cd;
+
+#if NMK48TXX > 0
+/* Location and size of the MK48xx TOD clock, if present */
+static bus_space_handle_t	mk_nvram_base;
+static bus_size_t		mk_nvram_size;
+
+static int	clk_wenable(todr_chip_handle_t, int);
 
 static int	clockmatch_mainbus (struct device *, struct cfdata *, void *);
 static int	clockmatch_obio(struct device *, struct cfdata *, void *);
@@ -183,8 +219,11 @@ struct cfattach clock_mainbus_ca = {
 struct cfattach clock_obio_ca = {
 	sizeof(struct device), clockmatch_obio, clockattach_obio
 };
+#endif /* NMK48TXX > 0 */
 
-extern struct cfdriver clock_cd;
+
+static struct intrhand level10 = { clockintr };
+static struct intrhand level14 = { statintr };
 
 static int	timermatch_mainbus(struct device *, struct cfdata *, void *);
 static int	timermatch_obio(struct device *, struct cfdata *, void *);
@@ -192,6 +231,13 @@ static void	timerattach_mainbus(struct device *, struct device *, void *);
 static void	timerattach_obio(struct device *, struct device *, void *);
 
 static void	timerattach(volatile int *, volatile int *);
+
+/*
+ * On ms-IIep counters are part of PCIC, so msiiep_attach will simply
+ * call this function to configure the counters.
+ */
+void	timerattach_msiiep(void);
+
 
 /*struct counter_4m	*counterreg_4m;*/
 struct timer_4m		*timerreg4m;
@@ -208,15 +254,14 @@ struct cfattach timer_obio_ca = {
 };
 
 /* Global TOD clock handle & idprom pointer */
-static todr_chip_handle_t todr_handle;
+todr_chip_handle_t todr_handle;
 struct idprom *idprom;
 
-static int clk_wenable(todr_chip_handle_t, int);
-static void stopcounter(struct counter_4m *);
-static void establish_hostid(struct idprom *);
+void establish_hostid(struct idprom *);
 void myetheraddr(u_char *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
+
 
 /*
  * old clock match routine
@@ -323,7 +368,7 @@ oclockattach(parent, self, aux)
 	if ((todr_handle = intersil7170_attach(bt, bh, 1968)) == NULL)
 		panic("Can't attach tod clock");
 
-	establish_hostid(idprom = &sun4_idprom_store);
+	establish_hostid(&sun4_idprom_store);
 #endif /* SUN4 */
 }
 
@@ -391,6 +436,9 @@ eeprom_attach(parent, self, aux)
 	eeprom_nvram = 0;
 #endif /* SUN4 */
 }
+
+
+#if NMK48TXX > 0
 
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
@@ -531,7 +579,7 @@ clockattach(node, bt, bh)
 	if (CPU_ISSUN4)
 		model = "mk48t02";	/* Hard-coded sun4 clock */
 	else if (node != 0)
-		model = getpropstring(node, "model");
+		model = PROM_getpropstring(node, "model");
 	else
 		panic("clockattach: node == 0");
 
@@ -571,6 +619,42 @@ clockattach(node, bt, bh)
 
 	establish_hostid(idp);
 }
+
+/*
+ * Write en/dis-able TOD clock registers.  This is a safety net to
+ * save idprom (part of mk48txx TOD clock) from being accidentally
+ * stomped on by a buggy code.  We coordinate so that several writers
+ * can run simultaneously.
+ */
+int
+clk_wenable(handle, onoff)
+	todr_chip_handle_t handle;
+	int onoff;
+{
+	int s;
+	vm_prot_t prot;/* nonzero => change prot */
+	int npages;
+	vaddr_t base;
+	static int writers;
+
+	/* XXX - we ignore `handle' here... */
+
+	s = splhigh();
+	if (onoff)
+		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
+	else
+		prot = --writers == 0 ? VM_PROT_READ : 0;
+	splx(s);
+
+	npages = round_page((vsize_t)mk_nvram_size) << PAGE_SHIFT;
+	base = trunc_page((vaddr_t)mk_nvram_base);
+	if (prot)
+		pmap_changeprot(pmap_kernel(), base, prot, npages);
+
+	return (0);
+}
+
+#endif /* NMK48TXX > 0 */ /* "clock" device driver */
 
 /*
  * The sun4c OPENPROM calls the timer the "counter-timer".
@@ -782,48 +866,59 @@ timerattach(cntreg, limreg)
 	timerok = 1;
 }
 
+
+#if defined(MSIIEP)
 /*
- * Write en/dis-able clock registers.  We coordinate so that several
- * writers can run simultaneously.
+ * Attach system and cpu counters (kernel hard and stat clocks) for ms-IIep.
+ * Counters are part of the PCIC and there's no PROM node for them.
+ * msiiep_attach() will call this function directly.
  */
-int
-clk_wenable(handle, onoff)
-	todr_chip_handle_t handle;
-	int onoff;
-{
-	int s;
-	vm_prot_t prot;/* nonzero => change prot */
-	int npages;
-	vaddr_t base;
-	static int writers;
-
-	/* XXX - we ignore `handle' here... */
-
-	s = splhigh();
-	if (onoff)
-		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
-	else
-		prot = --writers == 0 ? VM_PROT_READ : 0;
-	splx(s);
-
-	npages = round_page((vsize_t)mk_nvram_size) << PAGE_SHIFT;
-	base = trunc_page((vaddr_t)mk_nvram_base);
-	if (prot)
-		pmap_changeprot(pmap_kernel(), base, prot, npages);
-
-	return (0);
-}
-
 void
-stopcounter(creg)
-	struct counter_4m *creg;
+timerattach_msiiep()
 {
-	/* Stop the clock */
-	volatile int discard;
-	discard = creg->t_limit;
-	creg->t_limit = 0;
-	creg->t_ss = 0;
+	/* Put processor counter in "counter" mode */
+	msiiep->pcic_pc_ctl = 0; /* stop user timer (just in case) */
+	msiiep->pcic_pc_cfg = 0; /* timer mode disabled (processor counter) */
+
+	/*
+	 * Calibrate delay() by tweaking the magic constant
+	 * until a delay(100) actually reads (at least) 100 us on the clock.
+	 * Note: ms-IIep clocks ticks every 4 processor cycles.
+	 */
+	for (timerblurb = 1; ; ++timerblurb) {
+		volatile int discard;
+		int t;
+
+		discard = msiiep->pcic_pclr; /* clear the limit bit */
+		msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
+		delay(100);
+		t = msiiep->pcic_pccr;
+
+		if (t & TMR_LIMIT) /* cannot happen */
+			panic("delay calibration");
+
+		/* counter ticks -> usec, inverse of tmr_ustolimIIep */
+		t = (t - 1) / 25;
+		if (t >= 100)
+			break;
+	}
+	printf(" delay constant %d\n", timerblurb);
+
+	/*
+	 * Set counter interrupt priority assignment:
+	 * upper 4 bits are for system counter: level 10
+	 * lower 4 bits are for processor counter: level 14
+	 */
+	msiiep->pcic_cipar = 0xae;
+
+	/* link interrupt handlers */
+	intr_establish(10, &level10);
+	intr_establish(14, &level14);
+
+	timerok = 1;
 }
+#endif /* MSIIEP */
+
 
 /*
  * XXX this belongs elsewhere
@@ -862,8 +957,8 @@ establish_hostid(idp)
 
 
 /*
- * Set up the real-time and statistics clocks.  Leave stathz 0 only if
- * no alternative timer is available.
+ * Set up the real-time and statistics clocks.
+ * Leave stathz 0 only if no alternative timer is available.
  *
  * The frequencies of these clocks must be an even number of microseconds.
  */
@@ -910,7 +1005,9 @@ cpu_initclocks()
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
+	statmin = statint - (statvar >> 1);
 
+#if defined(SUN4M) && !defined(MSIIEP)
 	if (CPU_ISSUN4M) {
 		int n;
 		timerreg4m->t_limit = tmr_ustolim4m(tick);
@@ -920,23 +1017,25 @@ cpu_initclocks()
 				continue;
 			cpi->counterreg_4m->t_limit = tmr_ustolim4m(statint);
 		}
+		ienab_bic(SINTR_T);
 	}
+#endif
 
+#if defined(MSIIEP)
+	/* ms-IIep kernels support *only* IIep */ {
+		msiiep->pcic_sclr = tmr_ustolimIIep(tick);
+		msiiep->pcic_pclr = tmr_ustolimIIep(statint);
+		/* XXX: ensure interrupt target mask doesn't masks them? */
+	}
+#endif
+
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C) {
 		timerreg4->t_c10.t_limit = tmr_ustolim(tick);
 		timerreg4->t_c14.t_limit = tmr_ustolim(statint);
-	}
-
-	statmin = statint - (statvar >> 1);
-
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		ienab_bic(SINTR_T);
-#endif
-
-	if (CPU_ISSUN4OR4C)
 		ienab_bis(IE_L14 | IE_L10);
-
+	}
+#endif
 }
 
 /*
@@ -951,9 +1050,9 @@ setstatclockrate(newhz)
 }
 
 /*
- * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
- * console input, we need to check for that here as well, and generate
- * a software interrupt to read it.
+ * Level 10 (clock) interrupts from system counter.
+ * If we are using the FORTH PROM for console input, we need to check
+ * for that here as well, and generate a software interrupt to read it.
  */
 int
 clockintr(cap)
@@ -978,9 +1077,14 @@ clockintr(cap)
 		goto forward;
 	}
 #endif
+
 	/* read the limit register to clear the interrupt */
 	if (CPU_ISSUN4M) {
+#if !defined(MSIIEP)
 		discard = timerreg4m->t_limit;
+#else
+		discard = msiiep->pcic_sclr;
+#endif
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -996,7 +1100,7 @@ forward:
 }
 
 /*
- * Level 14 (stat clock) interrupt handler.
+ * Level 14 (stat clock) interrupts from processor counter.
  */
 int
 statintr(cap)
@@ -1014,12 +1118,27 @@ statintr(cap)
 
 	/* read the limit register to clear the interrupt */
 	if (CPU_ISSUN4M) {
+#if !defined(MSIIEP)
 		discard = counterreg4m->t_limit;
+#else
+		discard = msiiep->pcic_pclr;
+#endif
 		if (timerok == 0) {
 			/* Stop the clock */
 			printf("note: counter running!\n");
-			stopcounter(counterreg4m);
+#if !defined(MSIIEP)
+			discard = counterreg4m->t_limit;
+			counterreg4m->t_limit = 0;
+			counterreg4m->t_ss = 0;
 			timerreg4m->t_cfg = TMR_CFG_USER;
+#else
+			/* 
+			 * Turn interrupting processor counter
+			 * into non-interrupting user timer.
+			 */
+			msiiep->pcic_pc_cfg = 1; /* make it a user timer */
+			msiiep->pcic_pc_ctl = 0; /* stop user timer */
+#endif
 			return 1;
 		}
 	}
@@ -1027,6 +1146,7 @@ statintr(cap)
 	if (CPU_ISSUN4OR4C) {
 		discard = timerreg4->t_c14.t_limit;
 	}
+
 	statclock((struct clockframe *)cap);
 
 	/*
@@ -1046,7 +1166,11 @@ statintr(cap)
 		 * loose the counter ticks that happened since this
 		 * interrupt was raised.
 		 */
+#if !defined(MSIIEP)
 		counterreg4m->t_limit_nr = tmr_ustolim4m(newint);
+#else
+		msiiep->pcic_pclr_nr = tmr_ustolimIIep(newint);
+#endif
 	}
 
 	if (CPU_ISSUN4OR4C) {

@@ -1,4 +1,4 @@
-/*  $NetBSD: i2c_bus.c,v 1.1 1997/10/17 17:21:14 bouyer Exp $   */
+/*  $NetBSD: i2c_bus.c,v 1.1.30.1 2002/01/10 19:53:58 thorpej Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c_bus.c,v 1.1.30.1 2002/01/10 19:53:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -27,11 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.3 2001/03/25 14:38:23 is Exp $
+ *	$Id: isic_bchan.c,v 1.3.2.1 2002/01/10 19:54:37 thorpej Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.3.2.1 2002/01/10 19:54:37 thorpej Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3

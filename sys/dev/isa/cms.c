@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.1 2000/05/01 22:48:33 augustss Exp $ */
+/* $NetBSD: cms.c,v 1.1.10.1 2002/01/10 19:55:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cms.h"
-#if NCMS > 0
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.1.10.1 2002/01/10 19:55:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,16 @@ cms_probe(parent, match, aux)
 
 	iot = ia->ia_iot;
 
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_nio < 1)
 		return 0;
 
-	if (bus_space_map(iot, ia->ia_iobase, CMS_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return 0;
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return 0;
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, CMS_IOSIZE, 0, &ioh))
 		return 0;
 
 	bus_space_write_1(iot, ioh, CMS_WREG, 0xaa);
@@ -154,7 +160,12 @@ cms_probe(parent, match, aux)
 	}
 	found = 1;
 
-	ia->ia_iosize = CMS_IOSIZE;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = CMS_IOSIZE;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 out:
 	bus_space_unmap(iot, ioh, CMS_IOSIZE);
@@ -181,7 +192,7 @@ cms_attach(parent, self, aux)
 
 	iot = ia->ia_iot;
 
-	if (bus_space_map(iot, ia->ia_iobase, CMS_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, CMS_IOSIZE, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -341,5 +352,3 @@ cms_reset(sc)
 	CMS_WRITE(sc, 0, CMS_IREG_SYS_CTL, CMS_IREG_SYS_ENBL);
 	CMS_WRITE(sc, 1, CMS_IREG_SYS_CTL, CMS_IREG_SYS_ENBL);
 }
-
-#endif

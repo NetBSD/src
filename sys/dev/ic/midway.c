@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.53 2001/07/07 16:13:49 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.53.2.1 2002/01/10 19:54:50 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -66,6 +66,9 @@
  *	- remove WMAYBE related code.  ENI WMAYBE DMA doen't work.
  *	- remove updating if_lastchange for every packet.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.53.2.1 2002/01/10 19:54:50 thorpej Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -142,7 +145,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
 #include <sys/device.h>
 #endif
@@ -155,6 +157,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/queue.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_atm.h>

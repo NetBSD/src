@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.5 2001/06/20 05:41:27 ichiro Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.5.2.1 2002/01/10 19:53:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -34,6 +34,9 @@
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
  *		- MELCO		LPC3-TX-CB   (RealTek 8139)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.5.2.1 2002/01/10 19:53:46 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -103,6 +106,8 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
 		"Accton MPX 5030/5038 10/100BaseTX",
 		RTK_8139 },
+	{ CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+		"D-Link DFE-690TXD 10/100BaseTX", RTK_8139 },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
 		"RealTek 8138 10/100BaseTX", RTK_8139 },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,

@@ -1,6 +1,7 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.3.16.1 2002/01/10 19:55:31 thorpej Exp $	*/
 
-#undef TRTCMISADEBUG
+/* XXXJRT verify doens't change isa_attach_args too early */
+
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +37,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.3.16.1 2002/01/10 19:55:31 thorpej Exp $");
+
+#undef TRTCMISADEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +223,9 @@ trtcm_isa_probe(parent, match, aux)
 	struct tcm_isa_done_probe *tcm;
 	static int irqs[] = { 7, 15, 6, 11, 3, 10, 9, 5 };
 
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	if (tcm_isa_probes_initialized == 0) {
 		LIST_INIT(&tcm_isa_all_probes);
 		tcm_isa_probes_initialized = 1;
@@ -325,16 +334,23 @@ trtcm_isa_probe(parent, match, aux)
 
 bus_probed:
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
 	for (i = 0; i < ntcmcards; i++) {
 		if (tcmcards[i].bus != bus)
 			continue;
 		if (tcmcards[i].available == 0)
 			continue;
-		if (ia->ia_iobase != IOBASEUNK &&
-		    ia->ia_iobase != tcmcards[i].iobase)
+		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		    ia->ia_io[0].ir_addr != tcmcards[i].iobase)
 			continue;
-		if (ia->ia_irq != IRQUNK &&
-		    ia->ia_irq != tcmcards[i].irq)
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != tcmcards[i].irq)
 			continue;
 		goto good;
 	}
@@ -344,15 +360,24 @@ good:
 	tcmcards[i].available = 0;
 	if (tcmcards[i].pnpmode)
 		return -1;	/* XXX Don't actually probe this card. */
-	ia->ia_iobase = tcmcards[i].iobase;
-	ia->ia_irq = tcmcards[i].irq;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = tcmcards[i].iobase;
 	/* XXX probably right, but ...... */
-	if (ia->ia_iobase == 0xa20 || ia->ia_iobase == 0x0a24)
-		ia->ia_iosize = 4;
+	if (ia->ia_io[0].ir_addr == 0xa20 || ia->ia_io[0].ir_addr == 0xa24)
+		ia->ia_io[0].ir_size = 4;
 	else
-		ia->ia_iosize = 16;
-	ia->ia_maddr = tcmcards[i].maddr;
-	ia->ia_msize = tcmcards[i].msize;
+		ia->ia_io[0].ir_size = 16;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_addr = tcmcards[i].maddr;
+	ia->ia_iomem[0].ir_size = tcmcards[i].msize;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = tcmcards[i].irq;
+
+	ia->ia_ndrq = 0;
+
 	ia->ia_aux = (void *) tcmcards[i].model;
 	return 1;
 }

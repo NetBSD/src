@@ -1,16 +1,16 @@
-#	$NetBSD: files.x68k,v 1.39 2001/06/18 02:00:51 christos Exp $
+#	$NetBSD: files.x68k,v 1.39.2.1 2002/01/10 19:50:17 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
 
-defopt	opt_fpuemulate.h	FPU_EMULATE
-defopt	opt_m060sp.h		M060SP
+defflag				FPU_EMULATE
+defflag				M060SP
 
-defopt	opt_m680x0.h		M68020 M68030 M68040 M68060
+defflag	opt_m680x0.h		M68020 M68030 M68040 M68060
 
-defopt	opt_jupiter.h		JUPITER
-defopt	opt_panicbutton.h	PANICBUTTON
-defopt  opt_extmem.h		EXTENDED_MEMORY
+defflag				JUPITER
+defflag				PANICBUTTON
+defflag	opt_extmem.h		EXTENDED_MEMORY
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -71,7 +71,7 @@ file	arch/x68k/dev/grf_machdep.c	grf|ite
 file	arch/x68k/dev/grf_tv.c		grf|ite
 file	arch/x68k/dev/grf_gv.c		grf|ite
 
-defopt	opt_ite.h	ITE_KERNEL_ATTR
+defparam opt_ite.h	ITE_KERNEL_ATTR
 device	ite: tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
@@ -107,7 +107,8 @@ device dmac
 attach	dmac at intio
 file	arch/x68k/dev/intio_dmac.c	dmac needs-flag
 
-defopt	opt_zsc.h	ZSCONSOLE ZSCN_SPEED
+defflag	opt_zsc.h	ZSCONSOLE
+defparam opt_zsc.h	ZSCN_SPEED
 device zsc {channel = -1}
 attach zsc at intio
 file arch/x68k/dev/zs.c			zsc needs-flag
@@ -175,6 +176,10 @@ defpseudo sram
 file	arch/x68k/dev/sram.c		sram needs-flag
 defpseudo pow
 file	arch/x68k/dev/pow.c		pow needs-count
+
+# Nereid Ethernet
+attach	ne at intio with ne_intio: rtl80x9
+file	arch/x68k/dev/if_ne_intio.c	ne_intio
 
 # memory disk
 file	dev/md_root.c			memory_disk_hooks

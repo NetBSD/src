@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.56.2.1 2001/08/03 04:12:20 lukem Exp $ */
+/*	$NetBSD: cache.c,v 1.56.2.2 2002/01/10 19:48:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,6 +59,7 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +76,7 @@ struct cachestats cachestats;
 
 int cache_alias_dist;		/* Cache anti-aliasing constants */
 int cache_alias_bits;
+u_long dvma_cachealign;
 
 /*
  * Enable the cache.
@@ -188,7 +190,6 @@ hypersparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr, v;
-	extern u_long dvma_cachealign;
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.9 2001/06/14 20:32:41 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.9.2.1 2002/01/10 19:51:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	From: @(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.9.2.1 2002/01/10 19:51:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

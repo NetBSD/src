@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.3 1999/03/22 10:00:10 mycroft Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.3.22.1 2002/01/10 19:55:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.3.22.1 2002/01/10 19:55:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

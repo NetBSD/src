@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.20 2001/06/18 02:00:50 christos Exp $
+# $NetBSD: files.next68k,v 1.20.2.1 2002/01/10 19:47:04 thorpej Exp $
 
 # next68k-specific configuration info
 
@@ -8,7 +8,7 @@ maxpartitions 8
 maxusers 2 8 64
 
 # serial console options
-defopt opt_serial.h ZS_CONSOLE_ABORT SERCONSOLE
+defflag	opt_serial.h		ZS_CONSOLE_ABORT SERCONSOLE
 
 device mainbus { }
 attach mainbus at root
@@ -28,7 +28,7 @@ file	dev/ic/z8530sc.c		zsc
 device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
-file	arch/next68k/dev/zs_kgdb.c		kgdb
+file	arch/next68k/dev/zs_kgdb.c	kgdb
 
 #file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
 file	arch/next68k/next68k/db_memrw.c	ddb | kgdb
@@ -48,40 +48,40 @@ file	arch/next68k/next68k/clock.c
 file	arch/next68k/next68k/conf.c
 file 	arch/next68k/next68k/sys_machdep.c
 file	arch/next68k/next68k/isr.c
-file    arch/next68k/next68k/autoconf.c
-file    arch/next68k/next68k/nextrom.c
-file    arch/next68k/next68k/rtc.c
+file	arch/next68k/next68k/autoconf.c
+file	arch/next68k/next68k/nextrom.c
+file	arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
-file	arch/next68k/next68k/kgdb_machdep.c   kgdb
-file	arch/next68k/next68k/stub.c	      kgdb
+file	arch/next68k/next68k/kgdb_machdep.c	kgdb
+file	arch/next68k/next68k/stub.c		kgdb
 
-#file    arch/next68k/dev/dbj_debug.c
+#file	arch/next68k/dev/dbj_debug.c
 file 	arch/next68k/dev/bus_dma.c
-file    arch/next68k/dev/nextdma.c
+file	arch/next68k/dev/nextdma.c
 
 file	dev/cons.c
 file	dev/cninit.c
 
-file    dev/clock_subr.c
+file	dev/clock_subr.c
 
 include "dev/scsipi/files.scsipi"
 
 include "dev/wscons/files.wscons"
 
-device  xe: arp, ether, ifnet
-attach  xe at intio
-file    arch/next68k/dev/mb8795.c
-file    arch/next68k/dev/if_xe.c
+device	xe: arp, ether, ifnet
+attach	xe at intio
+file	arch/next68k/dev/mb8795.c
+file	arch/next68k/dev/if_xe.c
 
-device  nextdisplay: wsemuldisplaydev, wsrasteremulops
-attach  nextdisplay at mainbus
-file    arch/next68k/dev/nextdisplay.c  nextdisplay needs-flag
+device	nextdisplay: wsemuldisplaydev, wsrasteremulops
+attach	nextdisplay at mainbus
+file	arch/next68k/dev/nextdisplay.c	nextdisplay needs-flag
 
-device  nextkbd: wskbddev
-attach  nextkbd at intio
-file    arch/next68k/dev/nextkbd.c      nextkbd needs-flag
-file	arch/next68k/dev/wskbdmap_next.c		nextkbd
-file    arch/next68k/dev/nextcons.c                     nextkbd
+device	nextkbd: wskbddev
+attach	nextkbd at intio
+file	arch/next68k/dev/nextkbd.c		nextkbd needs-flag
+file	arch/next68k/dev/wskbdmap_next.c	nextkbd
+file	arch/next68k/dev/nextcons.c		nextkbd
 
 attach	esp at intio
 file	arch/next68k/dev/esp.c		esp needs-flag

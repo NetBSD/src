@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/05/03 13:11:25 soren Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2002/01/10 19:47:10 thorpej Exp $
 
 KDIR=	/sys/arch/ofppc/include
 INCSDIR= /usr/include/ofppc
@@ -11,7 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	float.h fpu.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	ipkdb.h irq.h \
+	intr.h ipkdb.h irq.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h \

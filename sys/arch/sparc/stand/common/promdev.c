@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.10.2.1 2001/08/25 06:15:53 thorpej Exp $ */
+/*	$NetBSD: promdev.c,v 1.10.2.2 2002/01/10 19:49:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -480,7 +480,7 @@ static	struct idprom idprom;
 			void *buf = &idprom;
 			int len = sizeof(struct idprom);
 			int node = prom_findroot();
-			if (getprop(node, "idprom", 1, &len, &buf) != 0) {
+			if (PROM_getprop(node, "idprom", 1, &len, &buf) != 0) {
 				printf("`idprom' property cannot be read: "
 					"cannot get ethernet address");
 				/*

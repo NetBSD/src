@@ -1,12 +1,26 @@
-# $NetBSD: GENERIC,v 1.43.2.1 2001/09/13 01:14:09 thorpej Exp $
+# $NetBSD: GENERIC,v 1.43.2.2 2002/01/10 19:47:03 thorpej Exp $
 #
-# GENERIC next68k
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
 #
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include "arch/next68k/conf/std.next68k"
+include 	"arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.43.2.1 $"
+#ident 		"GENERIC-$Revision: 1.43.2.2 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -15,10 +29,10 @@ maxusers	16
 options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -34,17 +48,17 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options 	KGDBRATE=0x2580	# baud rate
+#makeoptions	DEBUG="-g"		# debugging symbols for gdb
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
+#options 	KGDB_DEVRATE=9600	# baud rate
 
 # Other debugging options
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options         SWAPDEBUG
+options 	SWAPDEBUG
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD and ...
@@ -85,7 +99,7 @@ file-system 	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -122,8 +136,8 @@ options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
 # wscons options
-options         RCONS_2BPP              # necessary for nextdisplay
-options         RCONS_16BPP		# necessary for color nextdisplay
+options 	RCONS_2BPP		# necessary for nextdisplay
+options 	RCONS_16BPP		# necessary for color nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -144,21 +158,21 @@ mainbus0 at root
 #fpu0 at mainbus?
 
 # device space
-intio0  at mainbus?
+intio0	at mainbus?
 
-nextkbd0    at intio? ipl 3
-nextdisplay0    at mainbus?
+nextkbd0	at intio? ipl 3
+nextdisplay0	at mainbus?
 
-wsdisplay*      at nextdisplay? console ?
-wskbd*          at nextkbd? console ?
+wsdisplay*	at nextdisplay? console ?
+wskbd*		at nextkbd? console ?
 
 # INTIO
-zsc0    at intio? ipl 5
-#zsc1    at intio? ipl 5
+zsc0	at intio? ipl 5
+#zsc1	at intio? ipl 5
 
-xe*     at intio? ipl 3         # ethernet
+xe*	at intio? ipl 3			# ethernet
 
-#esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
+#esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
 
 #
 # Serial ports
@@ -187,6 +201,7 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipfilter		# ip filter
@@ -194,9 +209,9 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
