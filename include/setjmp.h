@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.9 1994/10/26 00:56:22 cgd Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.10 1994/12/10 11:42:26 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -72,9 +72,6 @@
 #endif
 
 #ifndef _ANSI_SOURCE
-/*
- * WARNING: sigsetjmp() isn't supported yet, this is a placeholder.
- */
 typedef int sigjmp_buf[_JBLEN + 1];
 #endif /* not ANSI */
 
@@ -87,9 +84,6 @@ int	setjmp __P((jmp_buf));
 void	longjmp __P((jmp_buf, int));
 
 #ifndef _ANSI_SOURCE
-/*
- * WARNING: sigsetjmp() isn't supported yet, this is a placeholder.
- */
 int	sigsetjmp __P((sigjmp_buf, int));
 void	siglongjmp __P((sigjmp_buf, int));
 #endif /* not ANSI */
