@@ -1,4 +1,4 @@
-/*	$NetBSD: label.y,v 1.1.1.1 2001/04/19 12:52:00 wiz Exp $	*/
+/*	$NetBSD: label.y,v 1.2 2002/01/30 20:44:54 tv Exp $	*/
 
 /* -*- C++ -*-
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -27,9 +27,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #include "ref.h"
 #include "token.h"
 
-int yylex();
 void yyerror(const char *);
-int yyparse();
 
 static const char *format_serial(char c, int n);
 
