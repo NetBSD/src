@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)apropos.c	5.12 (Berkeley) 6/1/90";
 #include <stdlib.h>
 #include "../man/pathnames.h"
 
-#define	MAXLINELEN	256			/* max line handled */
+#define	MAXLINELEN	4096			/* max line handled */
 
 char *progname;
 
