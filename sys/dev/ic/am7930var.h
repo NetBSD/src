@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.3 1996/02/01 22:32:25 mycroft Exp $ */
+/*	$NetBSD: am7930var.h,v 1.4 1997/10/19 07:41:49 augustss Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,13 +46,16 @@
 
 #ifndef _LOCORE
 
-/* XXX I think these defines should go into some other header file */
 #define SUNAUDIO_MIC_PORT	0
 #define SUNAUDIO_SPEAKER	1
 #define SUNAUDIO_HEADPHONES	2
 #define SUNAUDIO_MONITOR	3
-#define SUNAUDIO_INPUT_CLASS	4
-#define SUNAUDIO_OUTPUT_CLASS	5
+#define SUNAUDIO_SOURCE		4
+#define SUNAUDIO_OUTPUT		5
+#define SUNAUDIO_INPUT_CLASS	6
+#define SUNAUDIO_OUTPUT_CLASS	7
+#define SUNAUDIO_RECORD_CLASS	8
+#define SUNAUDIO_MONITOR_CLASS	9
 
 struct auio {
 	volatile struct amd7930 *au_amd;/* chip registers */

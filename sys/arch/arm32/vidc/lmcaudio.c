@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.15 1997/10/14 12:03:17 mark Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.16 1997/10/19 07:41:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -90,9 +90,6 @@ struct lmcaudio_softc {
 	int iobase;
 
 	int open;
-
-	int inport;
-	int outport;
 };
 
 int  lmcaudio_probe	__P((struct device *parent, struct cfdata *cf, void *aux));
@@ -122,16 +119,10 @@ int curr_rate = 11;
 int    lmcaudio_query_encoding   __P((void *, struct audio_encoding *));
 int    lmcaudio_set_params       __P((void *, int, int, struct audio_params *, struct audio_params *));
 int    lmcaudio_round_blocksize  __P((void *, int));
-int    lmcaudio_set_out_port	 __P((void *, int));
-int    lmcaudio_get_out_port	 __P((void *));
-int    lmcaudio_set_in_port	 __P((void *, int));
-int    lmcaudio_get_in_port  	 __P((void *));
 int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    lmcaudio_halt_output	 __P((void *));
 int    lmcaudio_halt_input 	 __P((void *));
-int    lmcaudio_cont_output	 __P((void *));
-int    lmcaudio_cont_input	 __P((void *));
 int    lmcaudio_speaker_ctl	 __P((void *, int));
 int    lmcaudio_getdev		 __P((void *, struct audio_device *));
 int    lmcaudio_set_port	 __P((void *, mixer_ctrl_t *));
@@ -152,10 +143,6 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_query_encoding,
 	lmcaudio_set_params,
 	lmcaudio_round_blocksize,
-	lmcaudio_set_out_port,
-	lmcaudio_get_out_port,
-	lmcaudio_set_in_port,
-	lmcaudio_get_in_port,
 	0,
 	0,
 	0,
@@ -163,8 +150,6 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_start_input,
 	lmcaudio_halt_output,
 	lmcaudio_halt_input,
-	lmcaudio_cont_output,
-	lmcaudio_cont_input,
 	lmcaudio_speaker_ctl,
 	lmcaudio_getdev,
 	0,
@@ -226,8 +211,6 @@ lmcaudio_attach(parent, self, aux)
 	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
-	sc->inport = 0;
-	sc->outport = 0;
 	ag.in_progress = 0;
 
 	ag.next_cur = 0;
@@ -415,45 +398,8 @@ lmcaudio_round_blocksize(addr, blk)
 	return (blk);
 }
 
-int
-lmcaudio_set_out_port(addr, port)
-	void *addr;
-	int port;
-{
-	struct lmcaudio_softc *sc = addr;
-	sc->outport = port;
-	return(0);
-}
-
-int
-lmcaudio_get_out_port(addr)
-	void *addr;
-{
-	struct lmcaudio_softc *sc = addr;
-	return(sc->outport);
-}
-
-int
-lmcaudio_set_in_port(addr, port)
-	void *addr;
-	int port;
-{
-	struct lmcaudio_softc *sc = addr;
-	sc->inport = port;
-	return(0);
-}
-
-int
-lmcaudio_get_in_port(addr)
-	void *addr;
-{
-	struct lmcaudio_softc *sc = addr;
-	return(sc->inport);
-}
-
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
 
-extern char *auzero_block;
 int
 lmcaudio_start_output(addr, p, cc, intr, arg)
 	void *addr;
@@ -465,10 +411,6 @@ lmcaudio_start_output(addr, p, cc, intr, arg)
 #ifdef DEBUG
 	printf ( "lmcaudio_start_output (%d) %08x %08x\n", cc, intr, arg );
 #endif
-
-if (p == auzero_block)
-	nauzero++;
-ndmacall++;
 
 	if (((u_int) p & 0x0000000f) || (ROUND(p) != ROUND(p+cc-1))) {
 		/*
@@ -510,27 +452,7 @@ lmcaudio_halt_input(addr)
 	void *addr;
 {
 #ifdef DEBUG
-	printf ( "DEBUG: lmcaudio_halt_output\n" );
-#endif
-	return EIO;
-}
-
-int
-lmcaudio_cont_output(addr)
-	void *addr;
-{
-#ifdef DEBUG
-	printf ( "DEBUG: lmcaudio_halt_output\n" );
-#endif
-	return EIO;
-}
-
-int
-lmcaudio_cont_input(addr)
-	void *addr;
-{
-#ifdef DEBUG
-	printf ( "DEBUG: lmcaudio_halt_output\n" );
+	printf ( "DEBUG: lmcaudio_halt_input\n" );
 #endif
 	return EIO;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.19 1997/10/14 12:03:19 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.20 1997/10/19 07:41:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -91,9 +91,6 @@ struct vidcaudio_softc {
 	int iobase;
 
 	int open;
-
-	int inport;
-	int outport;
 };
 
 int  vidcaudio_probe	__P((struct device *parent, struct cfdata *cf, void *aux));
@@ -122,16 +119,10 @@ struct cfdriver vidcaudio_cd = {
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
 int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
 int    vidcaudio_round_blocksize __P((void *, int));
-int    vidcaudio_set_out_port	 __P((void *, int));
-int    vidcaudio_get_out_port	 __P((void *));
-int    vidcaudio_set_in_port	 __P((void *, int));
-int    vidcaudio_get_in_port  	 __P((void *));
 int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_halt_output	 __P((void *));
 int    vidcaudio_halt_input 	 __P((void *));
-int    vidcaudio_cont_output	 __P((void *));
-int    vidcaudio_cont_input	 __P((void *));
 int    vidcaudio_speaker_ctl	 __P((void *, int));
 int    vidcaudio_getdev		 __P((void *, struct audio_device *));
 int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
@@ -152,10 +143,6 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_query_encoding,
     vidcaudio_set_params,
     vidcaudio_round_blocksize,
-    vidcaudio_set_out_port,
-    vidcaudio_get_out_port,
-    vidcaudio_set_in_port,
-    vidcaudio_get_in_port,
     0,
     0,
     0,
@@ -163,8 +150,6 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_start_input,
     vidcaudio_halt_output,
     vidcaudio_halt_input,
-    vidcaudio_cont_output,
-    vidcaudio_cont_input,
     vidcaudio_speaker_ctl,
     vidcaudio_getdev,
     0,
@@ -233,8 +218,6 @@ vidcaudio_attach(parent, self, aux)
 	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
-	sc->inport = 0;
-	sc->outport = 0;
 	ag.in_progress = 0;
 
 	ag.next_cur = 0;
@@ -378,32 +361,6 @@ int vidcaudio_round_blocksize ( void *addr, int blk )
     return (blk);
 }
 
-int vidcaudio_set_out_port ( void *addr, int port )
-{
-    struct vidcaudio_softc *sc = addr;
-    sc->outport = port;
-    return 0;
-}
-
-int vidcaudio_get_out_port ( void *addr )
-{
-    struct vidcaudio_softc *sc = addr;
-    return sc->outport;
-}
-
-int vidcaudio_set_in_port ( void *addr, int port )
-{
-    struct vidcaudio_softc *sc = addr;
-    sc->inport = port;
-    return 0;
-}
-
-int vidcaudio_get_in_port ( void *addr )
-{
-    struct vidcaudio_softc *sc = addr;
-    return sc->inport;
-}
-
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
 
 int vidcaudio_start_output ( void *addr, void *p, int cc,
@@ -458,23 +415,7 @@ int vidcaudio_halt_output ( void *addr )
 int vidcaudio_halt_input ( void *addr )
 {
 #ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_halt_output\n" );
-#endif
-    return EIO;
-}
-
-int vidcaudio_cont_output ( void *addr )
-{
-#ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_halt_output\n" );
-#endif
-    return EIO;
-}
-
-int vidcaudio_cont_input ( void *addr )
-{
-#ifdef DEBUG
-    printf ( "DEBUG: vidcaudio_halt_output\n" );
+    printf ( "DEBUG: vidcaudio_halt_input\n" );
 #endif
     return EIO;
 }
