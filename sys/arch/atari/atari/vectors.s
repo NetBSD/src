@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.7 1997/01/01 21:11:44 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.8 1997/06/04 13:50:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -44,9 +44,9 @@
 	.globl	_trap0,_trap1,_trap2,_trap15
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12, _badmfpint
-	.globl	_autovects, _uservects
+	.globl	_vectab, _autovects, _uservects
 
-Lvectab:
+_vectab:
 	.long	0x4ef80400	| 0: jmp 0x400:w (unused reset SSP)
 	.long	0		| 1: NOT USED (reset PC)
 	.long	_buserr		| 2: bus error
@@ -115,7 +115,6 @@ _autovects:
 	.long	_fpfault	| 53: FPCP overflow
 	.long	_fpfault	| 54: FPCP signalling NAN
 #endif
-
 
 	.long	_fpunsupp	| 55: FPCP unimplemented data type
 	.long	_badtrap	| 56: unassigned, reserved
