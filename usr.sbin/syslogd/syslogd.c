@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.35 2004/11/18 20:51:40 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.36 2004/11/18 21:07:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.35 2004/11/18 20:51:40 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.36 2004/11/18 21:07:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1164,11 +1164,11 @@ fprintlog(struct filed *f, int flags, char *msg)
 			l = snprintf(line, sizeof(line) - 1,
 				     "<%d>%.15s [%s]: %s",
 				     f->f_prevpri, (char *) iov[0].iov_base,
-				     f->f_prevhost, (char *) iov[4].iov_base);
+				     f->f_prevhost, (char *) iov[5].iov_base);
 		} else {
 			l = snprintf(line, sizeof(line) - 1, "<%d>%.15s %s",
 				     f->f_prevpri, (char *) iov[0].iov_base,
-				     (char *) iov[4].iov_base);
+				     (char *) iov[5].iov_base);
 		}
 		if (l > MAXLINE)
 			l = MAXLINE;
