@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.20 2002/07/26 01:00:41 wiz Exp $	*/
+/*	$NetBSD: label.c,v 1.21 2002/07/29 01:30:25 grant Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.20 2002/07/26 01:00:41 wiz Exp $");
+__RCSID("$NetBSD: label.c,v 1.21 2002/07/29 01:30:25 grant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,8 +64,8 @@ void	atofsb (const char *, int *, int *);
 
 
 /*
- * Return 1 iff partition i in lp should be ignored when checking
- * for  overlapping partitions.
+ * Return 1 if partition i in lp should be ignored when checking
+ * for overlapping partitions.
  */
 static int
 boringpart(lp, i, rawpart, bsdpart)
@@ -156,26 +156,26 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 	int rawpart;
 	int bsdpart;
 {
-	 while (1) {
-		 int i, j;
+	while (1) {
+		int i, j;
 
-		 /* first give the user the option to edit the label... */
-		 process_menu(MENU_fspartok);
+		/* first give the user the option to edit the label... */
+		process_menu(MENU_fspartok);
 
-		 /* User thinks the label is OK. check for overlaps.*/
-		 if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
-			/* partitions are OK. */
-			 return (1);
-		 }
+		/* User thinks the label is OK. check for overlaps */
+		if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
+			/* partitions are OK */
+			return (1);
+		}
 		 
-		 /* partitions overlap. */
-		 msg_display(MSG_partitions_overlap, 'a' + i, 'a' + j);
-		 /*XXX*/
-		 msg_display_add(MSG_edit_partitions_again);
-		 process_menu(MENU_yesno);
-		 if (!yesno)
-			 return(0);
-	 }
+		/* partitions overlap */
+		msg_display(MSG_partitions_overlap, 'a' + i, 'a' + j);
+		/*XXX*/
+		msg_display_add(MSG_edit_partitions_again);
+		process_menu(MENU_yesno);
+		if (!yesno)
+			return(0);
+	}
 
 	/*NOTREACHED*/
 }
@@ -324,7 +324,7 @@ incorelabel(dkname, lp)
 	return (0);
 }
 
-/* Ask for a partition offset, check bounds and do the needed roudups */
+/* Ask for a partition offset, check bounds and do the needed roundups */
 int
 getpartoff(msg_no, defpartstart)
 	msg msg_no;
@@ -368,7 +368,7 @@ getpartoff(msg_no, defpartstart)
 }
 
 
-/* Ask for a partition size, check bounds and does the needed roudups */
+/* Ask for a partition size, check bounds and does the needed roundups */
 int
 getpartsize(msg_no, partstart, defpartsize)
 	msg msg_no;
@@ -428,7 +428,7 @@ getpartsize(msg_no, partstart, defpartsize)
  * 2000c = 2000 cylinders
  * 150256s = 150256 sectors
  * Without units, use the default (sizemult)
- * returns the number of sectors, and the unit used (for roudups).
+ * returns the number of sectors, and the unit used (for roundups).
  */
 
 void
