@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.71 2002/01/27 12:41:08 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.72 2002/01/28 02:06:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -176,7 +176,8 @@ struct ctlname {
 #define	KERN_PIPE		56	/* node: pipe limits */
 #define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
-#define	KERN_MAXID		59	/* number of valid kern ids */
+#define	KERN_TKSTAT		59	/* tty in/out counters */
+#define	KERN_MAXID		60	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -238,6 +239,7 @@ struct ctlname {
 	{ "pipe", CTLTYPE_NODE }, \
 	{ "maxphys", CTLTYPE_INT }, \
 	{ "sbmax", CTLTYPE_INT }, \
+	{ "tkstat", CTLTYPE_NODE }, \
 }
 
 /*
@@ -433,6 +435,24 @@ struct kinfo_proc2 {
 #define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
+
+/*
+ * tty counter sysctl variables
+ */
+#define	KERN_TKSTAT_NIN			1	/* total input character */
+#define	KERN_TKSTAT_NOUT		2	/* total output character */
+#define	KERN_TKSTAT_CANCC		3	/* canonical input character */
+#define	KERN_TKSTAT_RAWCC		4	/* raw input character */
+#define	KERN_TKSTAT_MAXID		5	/* number of valid TKSTAT ids */
+
+#define	KERN_TKSTAT_NAMES { \
+	{ 0, 0 }, \
+	{ "nin", CTLTYPE_QUAD }, \
+	{ "nout", CTLTYPE_QUAD }, \
+	{ "cancc", CTLTYPE_QUAD }, \
+	{ "rawcc", CTLTYPE_QUAD }, \
+}
+
 
 /*
  * CTL_HW identifiers
