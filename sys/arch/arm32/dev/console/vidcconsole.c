@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.7 1996/03/28 21:18:40 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.8 1996/04/26 20:59:09 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -1194,6 +1194,7 @@ vidcconsole_cursorflashrate(vc, rate)
 	int rate;
 {
 	CURSORSPEED = 60/rate;
+	return(0);
 }
 
 static int cursorcounter=DEFAULT_CURSORSPEED;
@@ -1638,6 +1639,7 @@ vidcconsole_flash(vc, flash)
 	int flash;
 {
 	flash = flash;
+	return(0);
 }
 
 int

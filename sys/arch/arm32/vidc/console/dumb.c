@@ -1,4 +1,4 @@
-/* $NetBSD: dumb.c,v 1.2 1996/03/18 19:33:05 mark Exp $ */
+/* $NetBSD: dumb.c,v 1.3 1996/04/26 20:59:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -113,6 +113,7 @@ do_render(c, vc)
 		vc->xcur=0;
 		vc->ycur=vc->ychars-1;
 	}
+	return(0);
 }
 	
 int
@@ -143,4 +144,5 @@ TERMTYPE_PUTSTRING(string, length, vc)
 			break;
 		}
 	}
+	return(0);
 }

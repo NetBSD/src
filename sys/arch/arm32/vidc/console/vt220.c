@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.3 1996/03/18 19:33:10 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.4 1996/04/26 20:59:11 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -1173,7 +1173,7 @@ do_render_noscroll(c, vc)
     {
 	if (((vc->flags)&(LOSSY))==0)
 	{
-          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c|cdata->attribs )
+          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != (c | cdata->attribs) )
           {
 	    if ( vc==vconsole_current )
 	        vc->RENDER ( vc, c );
@@ -1286,7 +1286,7 @@ do_render(c, vc)
 	{
 	    if ( cdata->irm == 0 )
 	    {
-                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!=c|cdata->attribs )
+                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= (c | cdata->attribs) )
                 {
 	            if ( vc==vconsole_current )
 	                vc->RENDER ( vc, c );
@@ -1337,7 +1337,9 @@ TERMTYPE_PUTSTRING(string, length, vc)
 {
     struct vt220_info *cdata;
     register char c;
+#ifdef DEBUGTERM
     char dc[] = "x\0";
+#endif
     cdata = (struct vt220_info *)vc->data;
 
     /* A piece of saftey code */
