@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.20 2004/08/06 15:11:48 mycroft Exp $	*/
+/*	$NetBSD: essvar.h,v 1.21 2004/08/07 19:32:56 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.20 $ (SHARK) $Date: 2004/08/06 15:11:48 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.21 $ (SHARK) $Date: 2004/08/07 19:32:56 $
 **
 **++
 **
@@ -151,15 +151,16 @@ struct ess_softc
 
 	u_int	sc_model;
 #define ESS_UNSUPPORTED 0
-#define	ESS_1688	1
-#define ESS_1788	2
-#define ESS_1868	3
-#define ESS_1869	4
-#define ESS_1878	5
-#define ESS_1879	6
-#define ESS_888		7
-#define ESS_1887	8
-#define ESS_1888	9
+#define	ESS_688		1
+#define	ESS_1688	2
+#define ESS_1788	3
+#define ESS_1868	4
+#define ESS_1869	5
+#define ESS_1878	6
+#define ESS_1879	7
+#define ESS_888		8
+#define ESS_1887	9
+#define ESS_1888	10
 
 	u_int	sc_version;		/* Legacy ES688/ES1688 ID */
 
