@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.125 2001/05/17 13:15:47 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.126 2001/05/18 06:14:40 jhawk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.126 2001/05/17 13:14:19 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.127 2001/05/18 06:05:52 jhawk Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -464,6 +464,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Simple Technology",
 	    "Symbol Spectrum24 WLAN Adapter"	},
+	},
+	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_EA_ETHER,
+	    PCMCIA_CIS_SOCKET_EA_ETHER,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications EA"	},
 	},
 	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
