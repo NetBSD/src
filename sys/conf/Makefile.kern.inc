@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.49 2003/11/25 09:15:50 pk Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.50 2003/12/01 01:12:58 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -90,15 +90,15 @@ COPTS.${j}+=-g
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
-NORMAL_C?=	@${_MKSHMSG} "compile ${.TARGET}"; \
+NORMAL_C?=	@${_MKSHMSG} "compile ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
 		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NOPROF_C?=	@${_MKSHMSG} "compile ${.TARGET}"; \
+NOPROF_C?=	@${_MKSHMSG} "compile ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
 		${CC} ${CFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S?=	@${_MKSHMSG} "compile ${.TARGET}"; \
+NORMAL_S?=	@${_MKSHMSG} "compile ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<; \
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
@@ -168,7 +168,7 @@ ${_cfile:T:R}.o: ${_cfile}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
-SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.TARGET}"; \
+SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
