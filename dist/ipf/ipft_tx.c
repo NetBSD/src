@@ -1,10 +1,13 @@
-/*	$NetBSD: ipft_tx.c,v 1.4 2002/01/24 08:21:33 martti Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.5 2002/03/14 12:32:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -43,7 +46,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.4 2001/06/26 10:43:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.6 2002/03/13 03:55:15 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -263,7 +266,7 @@ int	*out;
 			tx_proto = "udp";
 		} else {
 			ip->ip_p = IPPROTO_ICMP;
-			ip->ip_len += sizeof(struct icmp);
+			ip->ip_len += ICMPERR_IPICMPHLEN;
 			tx_proto = "icmp";
 		}
 		cpp++;
