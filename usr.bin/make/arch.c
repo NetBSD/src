@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: arch.c,v 1.34 2001/11/30 01:29:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.34 2001/11/30 01:29:48 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: arch.c,v 1.34 2001/11/30 01:29:48 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -115,12 +115,12 @@ __RCSID("$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $");
 #include    "config.h"
 
 #ifdef TARGET_MACHINE
-#undef MACHINE
-#define MACHINE TARGET_MACHINE
+#undef MAKE_MACHINE
+#define MAKE_MACHINE TARGET_MACHINE
 #endif
 #ifdef TARGET_MACHINE_ARCH
-#undef MACHINE_ARCH
-#define MACHINE_ARCH TARGET_MACHINE_ARCH
+#undef MAKE_MACHINE_ARCH
+#define MAKE_MACHINE_ARCH TARGET_MACHINE_ARCH
 #endif
 
 static Lst	  archives;   /* Lst of archives we've already examined */
