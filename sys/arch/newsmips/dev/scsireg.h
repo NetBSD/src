@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.3 1998/11/19 21:47:21 thorpej Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.4 2000/12/03 01:42:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -306,7 +306,7 @@ struct sc_softc {
 
 
 struct scintsw {
-/*00*/	int	(*sci_inthandler)();	/* pointer to interrupt handler */
+/*00*/	int	(*sci_inthandler)(int);	/* pointer to interrupt handler */
 /*04*/	int	sci_ctlr;		/* controller number */
 /*08*/
 };
