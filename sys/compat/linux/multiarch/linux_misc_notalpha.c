@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.33 1997/10/10 01:44:01 fvdl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.34 1997/10/10 06:25:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -511,6 +511,24 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,pos) = lmap.lm_pos;
 
 	return sys_mmap(p, &cma, retval);
+}
+
+int
+linux_sys_mremap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef notyet
+	struct linux_sys_mremap_args /* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(size_t) new_size;
+		syscallarg(u_long) flags;
+	} */ *uap = v;
+#endif
+
+	return ENOMEM;
 }
 
 int
