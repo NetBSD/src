@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.17 1996/03/31 23:28:03 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.17.4.1 1996/06/12 20:31:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,9 +138,13 @@ main()
 	def("PG_PROTUREAD", PG_PROTUREAD);
 	def("PG_PROTUWRITE", PG_PROTUWRITE);
 #if defined(SUN4M)
+	def("SRMMU_TETYPE", SRMMU_TETYPE);
 	def("SRMMU_TEPTE", SRMMU_TEPTE);
+	def("SRMMU_PROT_MASK", SRMMU_PROT_MASK);
+	def("PPROT_R_RW", PPROT_R_RW);
 	def("PPROT_RX_RX", PPROT_RX_RX);
 	def("PPROT_RWX_RWX", PPROT_RWX_RWX);
+	def("PPROT_WRITE", PPROT_WRITE);
 #endif
 
 	/* FPU state */
