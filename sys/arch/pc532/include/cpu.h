@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1996/10/09 07:28:43 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1996/10/23 07:30:54 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,6 +123,9 @@ void	startrtclock __P((void));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct syscframe frame));
+
+/* vm_machdep.c */
+int kvtop __P((caddr_t));
 
 #ifdef GENERIC
 /* swapgeneric.c */
