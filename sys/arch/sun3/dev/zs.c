@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 1995/04/26 23:20:24 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 1995/06/13 22:11:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -506,7 +506,7 @@ zscngetc(dev)
 	dev_t dev;
 {
 	register volatile struct zschan *zc = zs_conschan;
-	register int s, c;
+	register int s, c, rr0;
 
 	if (zc == NULL)
 		return (0);
@@ -514,9 +514,10 @@ zscngetc(dev)
 	s = splhigh();
 
 	/* Wait for a character to arrive. */
-	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
+	do {
+		rr0 = zc->zc_csr;
 		ZS_DELAY();
-	ZS_DELAY();
+	} while ((rr0 & ZSRR0_RX_READY) == 0);
 
 	c = zc->zc_data;
 	ZS_DELAY();
@@ -539,7 +540,7 @@ zscnputc(dev, c)
 	int c;
 {
 	register volatile struct zschan *zc = zs_conschan;
-	register int s;
+	register int s, rr0;
 
 	if (zc == NULL) {
 		s = splhigh();
@@ -550,9 +551,10 @@ zscnputc(dev, c)
 	s = splhigh();
 
 	/* Wait for transmitter to become ready. */
-	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
+	do {
+		rr0 = zc->zc_csr;
 		ZS_DELAY();
-	ZS_DELAY();
+	} while ((rr0 & ZSRR0_TX_READY) == 0);
 
 	zc->zc_data = c;
 	ZS_DELAY();
@@ -659,10 +661,14 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	mon_printf("wait for carrier...\n");
 #endif
 	for (;;) {
+		register int rr0;
+
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, 1);
 		/* May never get status intr if carrier already on. -gwr */
-		if (cs->cs_zc->zc_csr & ZSRR0_DCD)
+		rr0 = cs->cs_zc->zc_csr;
+		ZS_DELAY();
+		if (rr0 & ZSRR0_DCD)
 			tp->t_state |= TS_CARR_ON;
 		if (cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
@@ -828,7 +834,10 @@ zshard(int intrarg)
 static int
 zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 {
-	register int c = zc->zc_data;
+	register int c;
+
+	c = zc->zc_data;
+	ZS_DELAY();
 
 	if (cs->cs_conk) {
 		register struct conk_state *conk = &zsconk_state;
@@ -858,23 +867,22 @@ zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 	if (c == FRAME_START && cs->cs_kgdb && 
 	    (cs->cs_ttyp->t_state & TS_ISOPEN) == 0) {
 		zskgdb(cs->cs_unit);
+		c = 0;
 		goto clearit;
 	}
 #endif
 	/* compose receive character and status */
 	c <<= 8;
 	c |= ZS_READ(zc, 1);
-
-	/* clear receive error & interrupt condition */
-	zc->zc_csr = ZSWR0_RESET_ERRORS;
-	zc->zc_csr = ZSWR0_CLR_INTR;
-
-	return (ZRING_MAKE(ZRING_RINT, c));
+	c = ZRING_MAKE(ZRING_RINT, c);
 
 clearit:
+	/* clear receive error & interrupt condition */
 	zc->zc_csr = ZSWR0_RESET_ERRORS;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
-	return (0);
+	ZS_DELAY();
+	return (c);
 }
 
 static int
@@ -884,12 +892,16 @@ zsxint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 
 	if (i == 0) {
 		zc->zc_csr = ZSWR0_RESET_TXINT;
+		ZS_DELAY();
 		zc->zc_csr = ZSWR0_CLR_INTR;
+		ZS_DELAY();
 		return (ZRING_MAKE(ZRING_XINT, 0));
 	}
 	cs->cs_tbc = i - 1;
 	zc->zc_data = *cs->cs_tba++;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 	return (0);
 }
 
@@ -899,8 +911,11 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 	register int rr0;
 
 	rr0 = zc->zc_csr;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_RESET_STATUS;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 	/*
 	 * The chip's hardware flow control is, as noted in zsreg.h,
 	 * busted---if the DCD line goes low the chip shuts off the
@@ -922,8 +937,10 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 	}
 	if ((rr0 & ZSRR0_BREAK) && cs->cs_brkabort) {
 		/* Wait for end of break to avoid PROM abort. */
-		while (zc->zc_csr & ZSRR0_BREAK)
+		do {
+			rr0 = zc->zc_csr;
 			ZS_DELAY();
+		} while (rr0 & ZSRR0_BREAK);
 		zsabort();
 		return (0);
 	}
@@ -1051,6 +1068,7 @@ again:
 				if (cs->cs_heldchange) {
 					s = splzs();
 					c = zc->zc_csr;
+					ZS_DELAY();
 					if ((c & ZSRR0_DCD) == 0)
 						cs->cs_preg[3] &= ~ZSWR3_HFC;
 					bcopy((caddr_t)cs->cs_preg,
@@ -1062,6 +1080,7 @@ again:
 					    (tp->t_state & TS_TTSTOP) == 0) {
 						cs->cs_tbc = cs->cs_heldtbc - 1;
 						zc->zc_data = *cs->cs_tba++;
+						ZS_DELAY();
 						goto again;
 					}
 				}
@@ -1258,6 +1277,7 @@ zsstart(register struct tty *tp)
 		cs->cs_creg[1] |= ZSWR1_TIE;
 		ZS_WRITE(cs->cs_zc, 1, cs->cs_creg[1]);
 		cs->cs_zc->zc_data = *p;
+		ZS_DELAY();
 		cs->cs_tba = p + 1;
 		cs->cs_tbc = nch - 1;
 	} else {
@@ -1364,10 +1384,13 @@ zsparam(register struct tty *tp, register struct termios *t)
 	 * carrier detect drops, the receiver is disabled.  Hence we
 	 * can only do this when the carrier is on.
 	 */
-	if (cflag & CCTS_OFLOW && cs->cs_zc->zc_csr & ZSRR0_DCD)
-		tmp |= ZSWR3_HFC | ZSWR3_RX_ENABLE;
-	else
-		tmp |= ZSWR3_RX_ENABLE;
+	tmp |= ZSWR3_RX_ENABLE;
+	if (cflag & CCTS_OFLOW) {
+		if (cs->cs_zc->zc_csr & ZSRR0_DCD)
+			tmp |= ZSWR3_HFC;
+		ZS_DELAY();
+	}
+
 	cs->cs_preg[3] = tmp;
 	cs->cs_preg[5] = tmp5 | ZSWR5_TX_ENABLE | ZSWR5_DTR | ZSWR5_RTS;
 
@@ -1521,10 +1544,15 @@ static int
 zs_kgdb_getc(void *arg)
 {
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
+	register int c, rr0;
 
-	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
-		continue;
-	return (zc->zc_data);
+	do {
+		rr0 = zc->zc_csr;
+		ZS_DELAY();
+	} while ((rr0 & ZSRR0_RX_READY) == 0);
+	c = zc->zc_data;
+	ZS_DELAY();
+	return (c);
 }
 
 /*
@@ -1534,10 +1562,14 @@ static void
 zs_kgdb_putc(void *arg, int c)
 {
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
+	register int c, rr0;
 
-	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
-		continue;
+	do {
+		rr0 = zc->zc_csr;
+		ZS_DELAY();
+	} while ((rr0 & ZSRR0_TX_READY) == 0);
 	zc->zc_data = c;
+	ZS_DELAY();
 }
 
 /*
