@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.2 1994/12/23 06:52:58 jtc Exp $	*/
+/*	$NetBSD: k5login.c,v 1.3 1997/02/11 08:15:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-static char rcsid[] = "$NetBSD: k5login.c,v 1.2 1994/12/23 06:52:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: k5login.c,v 1.3 1997/02/11 08:15:08 mrg Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -130,18 +130,18 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-	    (void)sprintf(tkt_location, "FILE:/tmp/krb5cc_%d.%s",
-		          pw->pw_uid, tty);
+	    (void)snprintf(tkt_location, sizeof tkt_location,
+		"FILE:/tmp/krb5cc_%d.%s", pw->pw_uid, tty);
 	else
-	    (void)sprintf(tkt_location, "FILE:/tmp/krb5cc_root_%d.%s",
-		          pw->pw_uid, tty);
+	    (void)snprintf(tkt_location, sizeof tkt_location,
+		"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
 
 	principal = malloc(strlen(pw->pw_name)+strlen(instance)+2);
-	strcpy(principal, pw->pw_name);
+	strcpy(principal, pw->pw_name);	/* XXX strcpy is safe */
 	if (strlen(instance)) {
-	    strcat(principal, "/");
-	    strcat(principal, instance);
+	    strcat(principal, "/");		/* XXX strcat is safe */
+	    strcat(principal, instance);	/* XXX strcat is safe */
 	}
 	
 	if (kerror = krb5_cc_resolve(tkt_location, &ccache)) {
