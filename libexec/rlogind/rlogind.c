@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.28 2002/09/20 19:07:34 mycroft Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.29 2002/09/23 03:32:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.28 2002/09/20 19:07:34 mycroft Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.29 2002/09/23 03:32:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,9 @@ __RCSID("$NetBSD: rlogind.c,v 1.28 2002/09/20 19:07:34 mycroft Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <signal.h>
 #include <termios.h>
+#include <poll.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.14 2002/09/18 20:20:28 mycroft Exp $	*/
+/*	$NetBSD: identd.c,v 1.15 2002/09/23 03:32:35 itojun Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -36,12 +36,12 @@
 #include <netdb.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
 #ifndef _AUX_SOURCE
 #  include <sys/file.h>
 #endif
