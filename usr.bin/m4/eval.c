@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.14 2001/11/14 06:16:08 tv Exp $	*/
+/*	$NetBSD: eval.c,v 1.15 2002/01/21 21:49:57 tv Exp $	*/
 /*	$OpenBSD: eval.c,v 1.41 2001/10/10 23:25:31 espie Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.14 2001/11/14 06:16:08 tv Exp $");
+__RCSID("$NetBSD: eval.c,v 1.15 2002/01/21 21:49:57 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: eval.c,v 1.14 2001/11/14 06:16:08 tv Exp $");
  */
 
 #include <sys/types.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>

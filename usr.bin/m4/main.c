@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2001/11/14 14:57:04 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2002/01/21 21:49:58 tv Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2001/11/14 14:57:04 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2002/01/21 21:49:58 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: main.c,v 1.28 2001/11/14 14:57:04 tv Exp $");
 #include <sys/types.h>
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <stddef.h>
@@ -570,9 +569,12 @@ initkwds()
 	for (i = 0; i < MAXKEYS; i++) {
 		k = (char *)keywrds[i].knam;
 		if (m4prefix) {
-			if (asprintf(&k, "m4_%s", k) == -1)
-				err(1, "asprintf");
-			keywrds[i].knam = k;
+			size_t klen = strlen(k);
+			char *newk = malloc(klen + 4);
+
+			if (snprintf(newk, klen, "m4_%s", k) == -1)
+				err(1, "snprintf");
+			keywrds[i].knam = newk;
 		}
 		h = hash(k);
 		p = (ndptr) xalloc(sizeof(struct ndblock));
