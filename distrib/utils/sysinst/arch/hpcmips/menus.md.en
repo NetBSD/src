@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.1 2000/01/21 11:26:00 shin Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.2 2000/01/22 02:59:59 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -192,8 +192,8 @@ menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	option  "X contrib clients",	 action { toggle_getit (11); };
 	option  "X11 programming",	 action { toggle_getit (12); };
 
-menu biosonematch;
 /*
+menu biosonematch;
 	option "This is the correct geometry", exit, action {
 		extern struct disklist *disklist;
 		extern struct nativedisk_info *nativedisk;
@@ -206,14 +206,12 @@ menu biosonematch;
 		bsec = bip->bi_sec;
 		biosdisk = bip;
 	};
-*/
 	option "Set the geometry by hand", exit, action {
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
 	};
 
 menu biosmultmatch;
-/*
 	option "Use one of these disks", exit, action {
 		extern struct disklist *disklist;
 		extern struct nativedisk_info *nativedisk;
@@ -233,7 +231,6 @@ menu biosmultmatch;
 		bsec = bip->bi_sec;
 		biosdisk = bip;
 	};
-*/
 	option "Set the geometry by hand", exit, action {
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
@@ -328,3 +325,4 @@ menu defaultbootsel, title "Pick a default partition/disk to boot";
 		action { mbs->defkey = SCAN_F1 + 9; defbootseldisk = 5; };
 	option "First active partition", exit,
 		action { mbs->defkey = SCAN_ENTER; };
+*/
