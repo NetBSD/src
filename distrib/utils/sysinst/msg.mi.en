@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.124 2004/01/29 08:48:23 lukem Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.125 2004/03/07 00:47:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -292,7 +292,7 @@ message fsize_fmt
 message isize_fmt
 { avg file size: %9d bytes (for number of inodes)}
 message isize_fmt_dflt
-{ Avg file size:         4 fragments}
+{ avg file size:         4 fragments}
 
 message newfs_fmt
 {         newfs: %9s}
