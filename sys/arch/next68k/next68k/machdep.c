@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1998/07/19 21:41:17 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1998/08/28 23:05:54 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,6 +96,8 @@
 
 #include <dev/cons.h>
 
+#include <next68k/next68k/seglist.h>
+
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -123,13 +125,11 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-caddr_t	msgbufaddr;
-#ifndef MACHINE_NONCONTIG
-int	maxmem;			/* max memory per process */
-#endif
+caddr_t	msgbufaddr;		/* KVA of message buffer */
+paddr_t msgbufpa;		/* PA of message buffer */
 
-int	physmem = MAXMEM;	/* max supported memory, measured in pages
-				   changes to actual in locore.s */
+int	maxmem;			/* max memory per process */
+int	physmem;
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -163,6 +163,19 @@ void	nmihand __P((struct frame));
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
+/*
+ * Memory segments initialized in locore, which are eventually loaded
+ * as managed VM pages.
+ */
+phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
+
+/*
+ * Memory segments to dump.  This is initialized from the phys_seg_list
+ * before pages are stolen from it for VM system overhead.  I.e. this
+ * covers the entire range of physical memory.
+ */
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+int	mem_cluster_cnt;
 
 /****************************************************************/
 
@@ -174,7 +187,34 @@ next68k_init()
 {
   int i;
 
-#if 0
+	/*
+	 * Tell the VM system about available physical memory.
+	 */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			/*
+			 * Segment has been completely gobbled up.
+			 */
+			continue;
+		}
+#if defined(UVM)
+		/*
+		 * Note the index of the mem cluster is the free
+		 * list we want to put the memory on.
+		 */
+		uvm_page_physload(atop(phys_seg_list[i].ps_start),
+				 atop(phys_seg_list[i].ps_end),
+				 atop(phys_seg_list[i].ps_start),
+				 atop(phys_seg_list[i].ps_end), i);
+#else
+		vm_page_physload(atop(phys_seg_list[i].ps_start),
+				 atop(phys_seg_list[i].ps_end),
+				 atop(phys_seg_list[i].ps_start),
+				 atop(phys_seg_list[i].ps_end));
+#endif
+	}
+
+#if 1
   /* @@@ Since the boot rom doesn't know how to pass in
 	 * these parameters yet, I manually set them here while debugging
 	 * the scsi driver.
@@ -189,14 +229,13 @@ next68k_init()
   /* Calibrate the delay loop. */
   next68k_calibrate_delay();
   
-  /*
-   * Initialize error message buffer (at end of core).
-   * avail_end was pre-decremented in pmap_bootstrap to compensate.
-   */
-  for (i = 0; i < btoc(MSGBUFSIZE); i++)
-    pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-	       avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-  initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
+		    msgbufpa + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
 
 /*
@@ -699,6 +738,7 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
+	int i;
 	extern char end[];
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
@@ -746,16 +786,12 @@ cpu_init_kcore_hdr()
 	m->relocend = (u_int32_t)end;
 
 	/*
-	 * hp300 has one contiguous memory segment.  Note,
-	 * RAM size is physmem + 1 to account for the msgbuf
-	 * page.
-	 *
-	 * XXX There's actually one more page... the last one mapped
-	 * XXX va == pa.  Should we dump it?  It's not really used
-	 * XXX for anything except to reboot and the MMU trampoline.
+	 * The next68k has multiple memory segments.
 	 */
-	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size  = ctob(physmem + 1);
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		m->ram_segs[i].start = mem_clusters[i].start;
+		m->ram_segs[i].size  = mem_clusters[i].size;
+	}
 }
 
 /*

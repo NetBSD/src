@@ -1,4 +1,11 @@
-/*	$NetBSD: db_memrw.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1998/08/28 23:05:54 dbj Exp $	*/
+
+/*
+ * This file was taken from from mvme68k/mvme68k/db_memrw.c
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id: NetBSD: db_memrw.c,v 1.4 1998/08/22 10:55:34 scw Exp 
+ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,13 +71,11 @@
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
 #include <machine/cpu.h>
-#if 0
-#include <machine/hp300spu.h>
-#endif
+#include <m68k/cacheops.h>
 
 #include <ddb/db_access.h>
 
-static void	db_write_text __P((vm_offset_t, size_t, char *));
+static void	db_write_text __P((vaddr_t, size_t, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -79,7 +84,7 @@ static void	db_write_text __P((vm_offset_t, size_t, char *));
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	size_t	size;
 	char	*data;
 {
@@ -108,13 +113,13 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(addr, size, data)
-	vm_offset_t addr;
-	size_t size;
-	char *data;
+	vaddr_t	addr;
+	size_t	size;
+	char	*data;
 {
 	char *dst, *odst;
 	pt_entry_t *pte, oldpte, tmppte;
-	vm_offset_t pgva;
+	vaddr_t pgva;
 	int limit;
 
 	if (size == 0)
@@ -169,7 +174,7 @@ db_write_text(addr, size, data)
 
 		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
 		*pte = tmppte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 
 		/*
 		 * Page is now writable.  Do as much access as we
@@ -182,7 +187,7 @@ db_write_text(addr, size, data)
 		 * Restore the old PTE.
 		 */
 		*pte = oldpte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 	} while (size != 0);
 
 	/*
@@ -198,7 +203,7 @@ db_write_text(addr, size, data)
 extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	size_t	size;
 	char	*data;
 {
