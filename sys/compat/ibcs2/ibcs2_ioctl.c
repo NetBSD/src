@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.23 2001/11/13 02:08:25 lukem Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.24 2002/09/23 04:49:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.23 2001/11/13 02:08:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.24 2002/09/23 04:49:32 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct ibcs2_termios *st;
 {
+	int i;
 	u_long l, r;
 
 	l = bt->c_iflag;	r = 0;
@@ -267,9 +268,9 @@ btios2stios(bt, st)
 	if (l & TOSTOP)		r |= IBCS2_TOSTOP;
 	st->c_lflag = r;
 
-	l = ttspeedtab(bt->c_ospeed, sptab);
-	if (l >= 0)
-		st->c_cflag |= l;
+	i = ttspeedtab(bt->c_ospeed, sptab);
+	if (i >= 0)
+		st->c_cflag |= i;
 
 	st->c_cc[IBCS2_VINTR] =
 	    bt->c_cc[VINTR]  != _POSIX_VDISABLE ? bt->c_cc[VINTR]  : 0;
