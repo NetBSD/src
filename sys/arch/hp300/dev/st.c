@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: st.c 1.8 90/10/14
  *      from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.6 1994/02/10 13:59:47 mycroft Exp $
+ *	$Id: st.c,v 1.7 1994/05/11 10:16:21 mycroft Exp $
  */
 
 /*
@@ -827,24 +827,6 @@ stfinish(unit, sc, bp)
 		stustart(unit);
 	else
 		sttab[unit].b_active = 0;
-}
-
-stread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	int unit = UNIT(dev);
-
-	return(physio(ststrategy, &stbuf[unit], dev, B_READ, minphys, uio));
-}
-
-stwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	int unit = UNIT(dev);
-
-	return(physio(ststrategy, &stbuf[unit], dev, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/

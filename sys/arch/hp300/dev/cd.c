@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cd.c 1.6 90/11/28
  *	from: @(#)cd.c	7.4 (Berkeley) 5/7/91
- *	$Id: cd.c,v 1.4 1994/02/10 13:59:25 mycroft Exp $
+ *	$Id: cd.c,v 1.5 1994/05/11 10:16:11 mycroft Exp $
  */
 
 /*
@@ -570,32 +570,6 @@ cdiodone(cbp)
 		cdintr(unit);
 	}
 	splx(s);
-}
-
-cdread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	register int unit = cdunit(dev);
-
-#ifdef DEBUG
-	if (cddebug & CDB_FOLLOW)
-		printf("cdread(%x, %x)\n", dev, uio);
-#endif
-	return(physio(cdstrategy, &cdbuf[unit], dev, B_READ, minphys, uio));
-}
-
-cdwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	register int unit = cdunit(dev);
-
-#ifdef DEBUG
-	if (cddebug & CDB_FOLLOW)
-		printf("cdwrite(%x, %x)\n", dev, uio);
-#endif
-	return(physio(cdstrategy, &cdbuf[unit], dev, B_WRITE, minphys, uio));
 }
 
 cdioctl(dev, cmd, data, flag, p)

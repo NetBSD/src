@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
- *	$Id: ct.c,v 1.6 1994/02/10 13:59:27 mycroft Exp $
+ *	$Id: ct.c,v 1.7 1994/05/11 10:16:14 mycroft Exp $
  */
 
 #include "ct.h"
@@ -774,24 +774,6 @@ done:
 		return;
 	}
 	ctustart(unit);
-}
-
-ctread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	register int unit = UNIT(dev);
-
-	return(physio(ctstrategy, &ctbuf[unit], dev, B_READ, minphys, uio));
-}
-
-ctwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	register int unit = UNIT(dev);
-
-	return(physio(ctstrategy, &ctbuf[unit], dev, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/
