@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.29 2004/10/13 23:28:35 gavan Exp $
+.\"	$NetBSD: macros,v 1.30 2004/11/10 20:59:40 abs Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,8 +402,6 @@
 .
 .ds A \*M
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[iyonix]:\n[netwinder]:\n[shark] .ds A arm
-.ds P \*M
-.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[netwinder]:\n[shark] .ds A arm
 .if \n[hp700] .ds A hppa
 .if \n[sun2] .ds A m68000
 .if \n[amiga]:\n[atari]:\n[cesfic]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
