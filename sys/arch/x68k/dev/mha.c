@@ -1,8 +1,12 @@
-/*	$NetBSD: mha.c,v 1.13 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.14 1999/03/22 08:54:14 minoura Exp $	*/
 
-/*
- * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
- * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
+/*-
+ * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum, Masaru Oki, Takumi Nakamura, Masanobu Saitoh and
+ * Minoura Makoto.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +18,25 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+
+/*-
  * Copyright (c) 1994 Jarle Greipsland
  * All rights reserved.
  *
@@ -314,6 +333,7 @@ mhaattach(parent, self, aux)
 	sc->sc_iobase = INTIO_ADDR(ia->ia_addr + 0x80); /* XXX */
 	intio_map_allocate_region (parent->dv_parent, ia, INTIO_MAP_ALLOCATE);
 				/* XXX: FAKE  */
+	sc->sc_dmat = ia->ia_dmat;
 
 	sc->sc_pc = (volatile u_char *)sc->sc_iobase;
 	sc->sc_ps = (volatile u_short *)sc->sc_iobase;
@@ -449,6 +469,29 @@ mha_init(sc)
 			acb++;
 		}
 		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+
+		r = bus_dmamem_alloc(sc->sc_dmat, MAXBSIZE, 0, 0,
+				     sc->sc_dmaseg, 1, &sc->sc_ndmasegs,
+				     BUS_DMA_NOWAIT);
+		if (r)
+			panic("mha_init: cannot allocate dma memory");
+		if (sc->sc_ndmasegs != 1)
+			panic("mha_init: number of segment > 1??");
+		r = bus_dmamem_map(sc->sc_dmat, sc->sc_dmaseg, sc->sc_ndmasegs,
+				   MAXBSIZE, &sc->sc_dmabuf, BUS_DMA_NOWAIT);
+		if (r)
+			panic("mha_init: cannot map dma memory");
+		r = bus_dmamap_create(sc->sc_dmat, MAXBSIZE, 1,
+				      MAXBSIZE, 0, BUS_DMA_NOWAIT,
+				      &sc->sc_dmamap);
+		if (r)
+			panic("mha_init: cannot create dmamap structure");
+		r = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+				    sc->sc_dmabuf, MAXBSIZE, NULL,
+				    BUS_DMA_NOWAIT);
+		if (r)
+			panic("mha_init: cannot load dma buffer into dmamap");
+		sc->sc_p = 0;
 	} else {
 		/* Cancel any active commands. */
 		sc->sc_flags |= SPC_ABORTING;
@@ -1156,7 +1199,8 @@ gotit:
 					sc->sc_dev.dv_xname);
 #endif
 #if 1 /* XXX - must remember last message */
-scsi_print_addr(acb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
+			scsi_print_addr(acb->xs->sc_link);
+			printf("MSG_MESSAGE_REJECT>>");
 #endif
 			if (sc->sc_flags & SPC_SYNCHNEGO) {
 				ti->period = ti->offset = 0;
@@ -1305,7 +1349,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 
 			if (!acb) {		/* Invalid reselection! */
 				mha_sched_msgout(SEND_ABORT);
-				printf("mmespc: invalid reselect (idbit=0x%2x)\n",
+				printf("mha: invalid reselect (idbit=0x%2x)\n",
 				    sc->sc_selid);
 			} else {		/* Reestablish nexus */
 				/*
@@ -1635,36 +1679,28 @@ mha_dataio_dma(dw, cw, sc, p, n)
 	u_char *p;
 	int n;
 {
-  int ts;
   char *paddr, *vaddr;
 
-  vaddr = p;
-  paddr = (char *)kvtop(vaddr);
+  if (n > MAXBSIZE)
+    panic("transfer size exceeds MAXBSIZE");
+  if (sc->sc_dmasize > 0)
+    panic("DMA request while another DMA transfer is in pregress");
+
+  memcpy(sc->sc_dmabuf, p, n);
+  bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n,
+		  (cw == CMD_SEND_FROM_DMA)?BUS_DMASYNC_PREWRITE
+					   :BUS_DMASYNC_PREREAD);
+  sc->sc_p = p;
+  sc->sc_dmasize = n;
+
+  paddr = (char *)sc->sc_dmaseg[0].ds_addr;
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
   if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
     dw &= ~(1 << 3);
 #endif
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-  if (mmutype == MMU_68040)
-#endif
-    DCFP((paddr_t)paddr);	/* XXX */
-#endif
-  for (ts = (NBPG - ((long)vaddr & PGOFSET));
-       ts < n && (char *)kvtop(vaddr + ts + 4) == paddr + ts + 4;
-       ts += NBPG)
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-    if (mmutype == MMU_68040)
-#endif
-      DCFP((paddr_t)paddr + ts);
-#else
-    ;
-#endif
-  if (ts > n)
-    ts = n;
+  dma_cachectl((caddr_t) sc->sc_dmabuf, n);
 #if 0
-  printf("(%x,%x)->(%x,%x)\n", p, n, paddr, ts);
+  printf("(%x,%x)->(%x,%x)\n", p, n, paddr, n);
   PCIA();	/* XXX */
 #endif
   sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;
@@ -1672,8 +1708,8 @@ mha_dataio_dma(dw, cw, sc, p, n)
   sc->sc_pc[0x280 + (((long)paddr >> 0) & 0xFF)] = 0;
   WAIT;
   sc->sc_ps[3] = 1;
-  sc->sc_ps[4] = ts >> 8;
-  sc->sc_pc[10] = ts;
+  sc->sc_ps[4] = n >> 8;
+  sc->sc_pc[10] = n;
   /* DMA 転送制御は以下の通り。
      3 ... short bus cycle
      2 ... MAXIMUM XFER.
@@ -1682,7 +1718,7 @@ mha_dataio_dma(dw, cw, sc, p, n)
   sc->sc_ps[-1] = dw;	/* burst */
   asm volatile ("nop");
   CMR = cw;	/* receive to DMA */
-  return ts;
+  return n;
 }
 int
 mha_dataout(sc, p, n)
@@ -1695,7 +1731,7 @@ mha_dataout(sc, p, n)
   if (n == 0)
     return n;
 
-  if (((long)p & 1) || (n & 1))
+  if (n & 1)
     return mha_dataout_pio(sc, p, n);
   return mha_dataio_dma(MHA_DMA_DATAOUT, CMD_SEND_FROM_DMA, sc, p, n);
 }
@@ -1712,7 +1748,7 @@ mha_datain(sc, p, n)
 
   if (n == 0)
     return n;
-  if (acb->cmd.opcode == 0x03 || ((long)p & 1) || (n & 1))
+  if (acb->cmd.opcode == REQUEST_SENSE || (n & 1))
     return mha_datain_pio(sc, p, n);
   return mha_dataio_dma(MHA_DMA_DATAIN, CMD_RECEIVE_TO_DMA, sc, p, n);
 }
@@ -1731,7 +1767,9 @@ mhaintr(arg)
 	void *arg;
 {
 	struct mha_softc *sc = arg;
+#if 0
 	u_char ints;
+#endif
 	struct acb *acb;
 	struct scsipi_link *sc_link;
 	struct spc_tinfo *ti;
@@ -1750,16 +1788,16 @@ mhaintr(arg)
 	}
 #endif
 
+#if 0
 	/*
 	 * 割り込み禁止にする
 	 */
-#if 0
 	SCTL &= ~SCTL_INTR_ENAB;
 #endif
 
 	SPC_TRACE(("[mhaintr]"));
 
-loop:
+ loop:
 	/*
 	 * 全転送が完全に終了するまでループする
 	 */
@@ -1775,237 +1813,243 @@ loop:
 	ints = SSR;
 #endif
 #endif
-  while (SSR & SS_IREQUEST)
-    {
-      acb = sc->sc_nexus;
-      r = ISCSR;
-      SPC_MISC(("[r=0x%x]", r));
-      switch (r >> 8)
-	{
-	default:
-	  printf("[addr=%x\n"
-		 "result=0x%x\n"
-		 "cmd=0x%x\n"
-		 "ph=0x%x(ought to be %d)]\n",
-		 &ISCSR,
-		 r,
-		 acb->xs->cmd->opcode,
-		 SCR, sc->sc_phase);
-	  panic("unexpected result.");
-	case 0x82:	/* selection timeout */
-	  SPC_MISC(("selection timeout  "));
-	  sc->sc_phase = BUSFREE_PHASE;
-	  SPC_ASSERT(sc->sc_nexus != NULL);
-	  acb = sc->sc_nexus;
-	  delay(250);
-	  acb->xs->error = XS_SELTIMEOUT;
-	  mha_done(sc, acb);
-	  continue;	/* XXX ??? msaitoh */
-	case 0x60:	/* command completed */
-	  sc->sc_spcinitialized++;
-	  if (sc->sc_phase == BUSFREE_PHASE)
-	    continue;
-	  ph = SCR;
-	  if (ph & PSNS_ACK)
-	    {
-	      int s;
-	      /* ふつーのコマンドが終了したらしい */
-SPC_MISC(("0x60)phase = %x(ought to be %x)\n", ph & PHASE_MASK, sc->sc_phase));
-# if 0
-	      switch (sc->sc_phase)
-#else
-	      switch (ph & PHASE_MASK)
-#endif
-		{
-		case STATUS_PHASE:
-			if (sc->sc_state != SPC_HASNEXUS)
-			  {
-			    printf("stsin: !SPC_HASNEXUS->(%d)\n", sc->sc_state);
-			  }
+	while (SSR & SS_IREQUEST) {
+		acb = sc->sc_nexus;
+		r = ISCSR;
+		SPC_MISC(("[r=0x%x]", r));
+		switch (r >> 8) {
+		default:
+			printf("[addr=%x\n"
+			       "result=0x%x\n"
+			       "cmd=0x%x\n"
+			       "ph=0x%x(ought to be %d)]\n",
+			       &ISCSR,
+			       r,
+			       acb->xs->cmd->opcode,
+			       SCR, sc->sc_phase);
+			panic("unexpected result.");
+		case 0x82:	/* selection timeout */
+			SPC_MISC(("selection timeout  "));
+			sc->sc_phase = BUSFREE_PHASE;
 			SPC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			WAIT;
-			s = MBR;
-			SPC_ASSERT(s == 1);
-			acb->stat = sc->sc_pcx[0]; /* XXX */
-			SPC_MISC(("stat=0x%02x  ", acb->stat));
-			sc->sc_prevphase = STATUS_PHASE;
-			break;
-		case MESSAGE_IN_PHASE:
-			mha_msgin(sc);
-			sc->sc_prevphase = MESSAGE_IN_PHASE;
-			break;
-		}
-	      WAIT;
-	      CMR = CMD_RESET_ACK;	/* reset ack */
-	      /*mha_done(sc, acb);	XXX */
-	      continue;
-	    }
-	  else if (NSR & 0x80)	/* nexus */
-	    {
-#if 1
-		if (sc->sc_state == SPC_SELECTING)	/* XXX msaitoh */
-		  sc->sc_state = SPC_HASNEXUS;
-	      /* フェーズの決め打ちをする
-		 外れたら、initial-phase error(0x54) が
-		 返ってくるんで注意したまえ。
-		 でもなぜか 0x65 が返ってきたりしてねーか? */
-	      WAIT;
-	      if (SSR & SS_IREQUEST)
-		continue;
-	      switch (sc->sc_phase)
-		{
-		default:
-		  panic("見知らぬ phase が来ちまっただよ");
-		case MESSAGE_IN_PHASE:
-		  /* 何もしない */
-		  continue;
-		case STATUS_PHASE:
-		  sc->sc_phase = MESSAGE_IN_PHASE;
-		  CMR = CMD_RECEIVE_MSG;	/* receive msg */
-		  continue;
-		case DATA_IN_PHASE:
-		  sc->sc_prevphase = DATA_IN_PHASE;
-		  if (sc->sc_dleft == 0)
-		    {
-		      /* 転送データはもうないので
-			 ステータスフェーズを期待しよう */
-		      sc->sc_phase = STATUS_PHASE;
-		      CMR = CMD_RECEIVE_STS;	/* receive sts */
-		      continue;
-		    }
-		  n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
-		  sc->sc_dp += n;
-		  sc->sc_dleft -= n;
-		  continue;
-		case DATA_OUT_PHASE:
-		  sc->sc_prevphase = DATA_OUT_PHASE;
-		  if (sc->sc_dleft == 0)
-		    {
-		      /* 転送データはもうないので
-			 ステータスフェーズを期待しよう */
-		      sc->sc_phase = STATUS_PHASE;
-		      CMR = CMD_RECEIVE_STS;	/* receive sts */
-		      continue;
-		    }
-		  /* data phase の続きをやろう */
-		  n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
-		  sc->sc_dp += n;
-		  sc->sc_dleft -= n;
-		  continue;
-		case COMMAND_PHASE:
-		  /* 最初は CMD PHASE ということらしい */
-		  if (acb->dleft)
-		    {
-		      /* データ転送がありうる場合 */
-		      if (acb->xs->flags & SCSI_DATA_IN)
-			{
-			  sc->sc_phase = DATA_IN_PHASE;
-			  n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
-			  sc->sc_dp += n;
-			  sc->sc_dleft -= n;
-			}
-		      else if (acb->xs->flags & SCSI_DATA_OUT)
-			{
-			  sc->sc_phase = DATA_OUT_PHASE;
-			  n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
-			  sc->sc_dp += n;
-			  sc->sc_dleft -= n;
-			}
-		      continue;
-		    }
-		  else
-		    {
-		      /* データ転送はないらしい?! */
-		      WAIT;
-		      sc->sc_phase = STATUS_PHASE;
-		      CMR = CMD_RECEIVE_STS;	/* receive sts */
-		      continue;
-		    }
-		}
-#endif
-	    }
-	  continue;
-	case 0x31:	/* disconnected in xfer progress. */
-	  SPC_MISC(("[0x31]"));
-	case 0x70:	/* disconnected. */
-	  SPC_ASSERT(sc->sc_flags & SPC_BUSFREE_OK);
-	  sc->sc_phase = BUSFREE_PHASE;
-	  sc->sc_state = SPC_IDLE;
-#if 1
-	  acb = sc->sc_nexus;
-	  SPC_ASSERT(sc->sc_nexus != NULL);
-	  acb->xs->error = XS_NOERROR;
-	  mha_done(sc, acb);
+			delay(250);
+			acb->xs->error = XS_SELTIMEOUT;
+			mha_done(sc, acb);
+			continue;	/* XXX ??? msaitoh */
+		case 0x60:	/* command completed */
+			sc->sc_spcinitialized++;
+			if (sc->sc_phase == BUSFREE_PHASE)
+				continue;
+			ph = SCR;
+			if (ph & PSNS_ACK) {
+				int s;
+				/* ふつーのコマンドが終了したらしい */
+				SPC_MISC(("0x60)phase = %x(ought to be %x)\n",
+					  ph & PHASE_MASK, sc->sc_phase));
+#if 0
+/*				switch (sc->sc_phase) {*/
 #else
-	  TAILQ_INSERT_HEAD(&sc->nexus_list, acb, chain);
-	  mha_sched(sc);
+				switch (ph & PHASE_MASK) {
 #endif
-	  continue;
-	case 0x32:	/* phase error in xfer progress. */
-	  SPC_MISC(("[0x32]"));
-	case 0x65:	/* invalid command.
-			   なぜこんなものが出るのか
-			   俺には全く理解できない */
+				case STATUS_PHASE:
+					if (sc->sc_state != SPC_HASNEXUS)
+						printf("stsin: !SPC_HASNEXUS->(%d)\n",
+						       sc->sc_state);
+					SPC_ASSERT(sc->sc_nexus != NULL);
+					acb = sc->sc_nexus;
+					WAIT;
+					s = MBR;
+					SPC_ASSERT(s == 1);
+					acb->stat = sc->sc_pcx[0]; /* XXX */
+					SPC_MISC(("stat=0x%02x  ", acb->stat));
+					sc->sc_prevphase = STATUS_PHASE;
+					break;
+				case MESSAGE_IN_PHASE:
+					mha_msgin(sc);
+					sc->sc_prevphase = MESSAGE_IN_PHASE;
+					/* thru */
+				case DATA_IN_PHASE:
+					if (sc->sc_dmasize == 0)
+						break;
+					bus_dmamap_sync(sc->sc_dmat,
+							sc->sc_dmamap, 
+							0, sc->sc_dmasize,
+							BUS_DMASYNC_POSTREAD);
+					memcpy(sc->sc_p, sc->sc_dmabuf,
+					       sc->sc_dmasize);
+					sc->sc_dmasize = 0;
+					break;
+				case DATA_OUT_PHASE:
+					if (sc->sc_dmasize == 0)
+						break;
+					bus_dmamap_sync(sc->sc_dmat,
+							sc->sc_dmamap, 
+							0, sc->sc_dmasize,
+							BUS_DMASYNC_POSTWRITE);
+					sc->sc_dmasize = 0;
+					break;
+				}
+				WAIT;
+				CMR = CMD_RESET_ACK;	/* reset ack */
+				/*mha_done(sc, acb);	XXX */
+				continue;
+			} else if (NSR & 0x80) { /* nexus */
 #if 1
-	  SPC_MISC(("[0x%04x]", r));
+				if (sc->sc_state == SPC_SELECTING)	/* XXX msaitoh */
+					sc->sc_state = SPC_HASNEXUS;
+				/* フェーズの決め打ちをする
+				   外れたら、initial-phase error(0x54) が
+				   返ってくるんで注意したまえ。
+				   でもなぜか 0x65 が返ってきたりしてねーか? */
+				WAIT;
+				if (SSR & SS_IREQUEST)
+					continue;
+				switch (sc->sc_phase) {
+				default:
+					panic("見知らぬ phase が来ちまっただよ");
+				case MESSAGE_IN_PHASE:
+					/* 何もしない */
+					continue;
+				case STATUS_PHASE:
+					sc->sc_phase = MESSAGE_IN_PHASE;
+					CMR = CMD_RECEIVE_MSG;	/* receive msg */
+					continue;
+				case DATA_IN_PHASE:
+					sc->sc_prevphase = DATA_IN_PHASE;
+					if (sc->sc_dleft == 0) {
+						/* 転送データはもうないので
+						   ステータスフェーズを期待しよう */
+						sc->sc_phase = STATUS_PHASE;
+						CMR = CMD_RECEIVE_STS;	/* receive sts */
+						continue;
+					}
+					n = mha_datain(sc, sc->sc_dp,
+						       sc->sc_dleft);
+					sc->sc_dp += n;
+					sc->sc_dleft -= n;
+					continue;
+				case DATA_OUT_PHASE:
+					sc->sc_prevphase = DATA_OUT_PHASE;
+					if (sc->sc_dleft == 0) {
+						/* 転送データはもうないので
+						   ステータスフェーズを期待しよう */
+						sc->sc_phase = STATUS_PHASE;
+						CMR = CMD_RECEIVE_STS;	/* receive sts */
+						continue;
+					}
+					/* data phase の続きをやろう */
+					n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
+					sc->sc_dp += n;
+					sc->sc_dleft -= n;
+					continue;
+				case COMMAND_PHASE:
+					/* 最初は CMD PHASE ということらしい */
+					if (acb->dleft) {
+						/* データ転送がありうる場合 */
+						if (acb->xs->flags & SCSI_DATA_IN) {
+							sc->sc_phase = DATA_IN_PHASE;
+							n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
+							sc->sc_dp += n;
+							sc->sc_dleft -= n;
+						}
+						else if (acb->xs->flags & SCSI_DATA_OUT) {
+							sc->sc_phase = DATA_OUT_PHASE;
+							n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
+							sc->sc_dp += n;
+							sc->sc_dleft -= n;
+						}
+						continue;
+					}
+					else {
+						/* データ転送はないらしい?! */
+						WAIT;
+						sc->sc_phase = STATUS_PHASE;
+						CMR = CMD_RECEIVE_STS;	/* receive sts */
+						continue;
+					}
+				}
 #endif
-	case 0x54:	/* initial-phase error. */
-	  SPC_MISC(("[0x54, ns=%x, ph=%x(ought to be %x)]",
-		    NSR,
-		    SCR, sc->sc_phase));
-	  /* thru */
-	case 0x71:	/* assert req */
-	  WAIT;
-	  if (SSR & 0x40)
-	    {
-	      printf("SPC sts=%2x, r=%04x, ns=%x, ph=%x\n",
-		     SSR, r, NSR, SCR);
-	      WAIT;
-	    }
-	  ph = SCR;
-	  if (sc->sc_state == SPC_SELECTING)	/* XXX msaitoh */
-	    {
-	      sc->sc_state = SPC_HASNEXUS;
-	    }
-	  if (ph & 0x80)
-	    {
-	      switch (ph & PHASE_MASK)
-		{
-		default:
-			printf("phase = %x\n", ph);
-			panic("assert req: the phase I don't know!");
-		case DATA_IN_PHASE:
-			sc->sc_prevphase = DATA_IN_PHASE;
-			SPC_MISC(("DATAIN(%d)...", sc->sc_dleft));
-			n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
-			sc->sc_dp += n;
-			sc->sc_dleft -= n;
-			SPC_MISC(("done\n"));
+			}
 			continue;
-		case DATA_OUT_PHASE:
-			sc->sc_prevphase = DATA_OUT_PHASE;
-			SPC_MISC(("DATAOUT\n"));
-			n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
-			sc->sc_dp += n;
-			sc->sc_dleft -= n;
+		case 0x31:	/* disconnected in xfer progress. */
+			SPC_MISC(("[0x31]"));
+		case 0x70:	/* disconnected. */
+			SPC_ASSERT(sc->sc_flags & SPC_BUSFREE_OK);
+			sc->sc_phase = BUSFREE_PHASE;
+			sc->sc_state = SPC_IDLE;
+#if 1
+			acb = sc->sc_nexus;
+			SPC_ASSERT(sc->sc_nexus != NULL);
+			acb->xs->error = XS_NOERROR;
+			mha_done(sc, acb);
+#else
+			TAILQ_INSERT_HEAD(&sc->nexus_list, acb, chain);
+			mha_sched(sc);
+#endif
 			continue;
-		case STATUS_PHASE:
-			sc->sc_phase = STATUS_PHASE;
-			SPC_MISC(("[RECV_STS]"));
+		case 0x32:	/* phase error in xfer progress. */
+			SPC_MISC(("[0x32]"));
+#if 0
+		case 0x65:	/* invalid command.
+				   なぜこんなものが出るのか
+				   俺には全く理解できない */
+#if 1
+			SPC_MISC(("[0x%04x]", r));
+#endif
+#endif
+		case 0x54:	/* initial-phase error. */
+			SPC_MISC(("[0x54, ns=%x, ph=%x(ought to be %x)]",
+				  NSR,
+				  SCR, sc->sc_phase));
+			/* thru */
+		case 0x71:	/* assert req */
 			WAIT;
-			CMR = CMD_RECEIVE_STS;	/* receive sts */
-			continue;
-		case MESSAGE_IN_PHASE:
-			sc->sc_phase = MESSAGE_IN_PHASE;
-			WAIT;
-			CMR = CMD_RECEIVE_MSG;
+			if (SSR & 0x40) {
+				printf("SPC sts=%2x, r=%04x, ns=%x, ph=%x\n",
+				       SSR, r, NSR, SCR);
+				WAIT;
+			}
+			ph = SCR;
+			if (sc->sc_state == SPC_SELECTING) {	/* XXX msaitoh */
+				sc->sc_state = SPC_HASNEXUS;
+			}
+			if (ph & 0x80) {
+				switch (ph & PHASE_MASK) {
+				default:
+					printf("phase = %x\n", ph);
+					panic("assert req: the phase I don't know!");
+				case DATA_IN_PHASE:
+					sc->sc_prevphase = DATA_IN_PHASE;
+					SPC_MISC(("DATAIN(%d)...", sc->sc_dleft));
+					n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
+					sc->sc_dp += n;
+					sc->sc_dleft -= n;
+					SPC_MISC(("done\n"));
+					continue;
+				case DATA_OUT_PHASE:
+					sc->sc_prevphase = DATA_OUT_PHASE;
+					SPC_MISC(("DATAOUT\n"));
+					n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
+					sc->sc_dp += n;
+					sc->sc_dleft -= n;
+					continue;
+				case STATUS_PHASE:
+					sc->sc_phase = STATUS_PHASE;
+					SPC_MISC(("[RECV_STS]"));
+					WAIT;
+					CMR = CMD_RECEIVE_STS;	/* receive sts */
+					continue;
+				case MESSAGE_IN_PHASE:
+					sc->sc_phase = MESSAGE_IN_PHASE;
+					WAIT;
+					CMR = CMD_RECEIVE_MSG;
+					continue;
+				}
+			}
 			continue;
 		}
-	    }
-	  continue;
 	}
-    }
 }
 
 void
