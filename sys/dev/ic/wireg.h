@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.5 2001/05/16 10:45:36 tsubai Exp $	*/
+/*	$NetBSD: wireg.h,v 1.6 2001/05/16 14:33:21 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -365,6 +365,7 @@ struct wi_ltv_ver {
 #define WI_NIC_EVB3	0x8004
 #define WI_NIC_HWB1153	0x8007
 #define WI_NIC_P2_SST	0x8008	/* Prism2 with SST flush */
+#define WI_NIC_PRISM2_5	0x800C
 };
 
 /*
