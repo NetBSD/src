@@ -1,4 +1,5 @@
-/*	$NetBSD: startdaemon.c,v 1.6 1995/11/15 22:23:20 pk Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.7 1995/11/28 19:43:32 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

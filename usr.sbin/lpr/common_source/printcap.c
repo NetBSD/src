@@ -1,4 +1,5 @@
-/*	$NetBSD: printcap.c,v 1.6 1995/11/15 22:23:18 pk Exp $	*/
+/*	$NetBSD: printcap.c,v 1.7 1995/11/28 19:43:29 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
