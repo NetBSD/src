@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.268 1997/12/08 05:07:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.269 1998/01/12 18:59:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2535,16 +2535,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-#if 0
-			/*
-			 * This is not necessary on x86-family
-			 * processors.
-			 */
-			if (flags & BUS_DMAMEM_NOSYNC)
+			if ((flags & BUS_DMAMEM_NOSYNC)
+#ifdef I386_CPU
+			    && cpu_class != CPUCLASS_386
+#endif
+			    )
 				pmap_changebit(addr, PG_N, ~0);
 			else
 				pmap_changebit(addr, 0, ~PG_N);
-#endif
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 1997/12/16 17:53:12 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -222,9 +222,7 @@ struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
 };
 
-struct cfdriver zsc_cd = {
-	NULL, "zsc", DV_DULL
-};
+extern struct cfdriver zsc_cd;
 
 int zshard __P((void *));
 int zssoft __P((void *));
