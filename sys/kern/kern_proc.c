@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.29 1998/09/01 00:08:44 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.30 1998/09/01 01:02:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,6 +79,7 @@ struct pool proc_pool;
 struct pool pcred_pool;
 struct pool plimit_pool;
 struct pool pgrp_pool;
+struct pool rusage_pool;
 
 static void orphanpg __P((struct pgrp *));
 #ifdef DEBUG
@@ -105,6 +106,8 @@ procinit()
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.54 1998/08/31 23:20:16 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.55 1998/09/01 01:02:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -125,8 +125,7 @@ exit1(p, rv)
 #endif
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
-	MALLOC(p->p_ru, struct rusage *, sizeof(struct rusage),
-		M_ZOMBIE, M_WAITOK);
+	p->p_ru = pool_get(&rusage_pool, PR_WAITOK);
 	/*
 	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
 	 * wake up the parent early to avoid deadlock.
@@ -347,7 +346,7 @@ loop:
 			}
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
-			FREE(p->p_ru, M_ZOMBIE);
+			pool_put(&rusage_pool, p->p_ru);
 
 			/*
 			 * Finally finished with old proc entry.
