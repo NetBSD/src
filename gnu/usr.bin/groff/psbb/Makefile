@@ -3,6 +3,6 @@
 PROG=		psbb
 SRCS=		psbb.c
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

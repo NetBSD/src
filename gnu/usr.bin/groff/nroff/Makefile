@@ -6,6 +6,6 @@ afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		$(.CURDIR)/psroff.sh $(DESTDIR)$(BINDIR)/psroff
 
-.include <bsd.prog.mk>
 .include <../../Makefile.inc>
 .include <../Makefile.cfg>
+.include <bsd.prog.mk>

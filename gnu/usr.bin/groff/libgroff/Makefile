@@ -19,5 +19,5 @@ version.cc: $(.CURDIR)/../VERSION
 
 install:
 
-.include <bsd.lib.mk>
 .include "../Makefile.cfg"
+.include <bsd.lib.mk>
