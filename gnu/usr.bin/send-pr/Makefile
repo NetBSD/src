@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.12 1995/04/23 07:58:52 cgd Exp $
+
 #
 # Makefile for building a standalone send-pr.
 #
