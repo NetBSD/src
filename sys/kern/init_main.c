@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.96 1997/01/31 05:25:24 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.97 1997/02/02 02:55:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -323,7 +323,7 @@ main(framep)
 	do {
 		domountroothook();
 		if ((error = vfs_mountroot())) {
-			printf("cannot mount root, error = %d", error);
+			printf("cannot mount root, error = %d\n", error);
 			boothowto |= RB_ASKNAME;
 			setroot(root_device,
 			    (rootdev != NODEV) ? DISKPART(rootdev) : 0, NULL);
