@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)err.h	8.1 (Berkeley) 6/2/93
- *	$Id: err.h,v 1.6 1993/11/06 00:46:23 cgd Exp $
+ *	$Id: err.h,v 1.7 1993/12/01 23:59:27 jtc Exp $
  */
 
 #ifndef _ERR_H_
@@ -48,14 +48,22 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-__dead void	err __P((int, const char *, ...));
-__dead void	verr __P((int, const char *, _VA_LIST_));
-__dead void	errx __P((int, const char *, ...));
-__dead void	verrx __P((int, const char *, _VA_LIST_));
-void		warn __P((const char *, ...));
-void		vwarn __P((const char *, _VA_LIST_));
-void		warnx __P((const char *, ...));
-void		vwarnx __P((const char *, _VA_LIST_));
+__dead void	err __P((int, const char *, ...))
+			__attribute((format (printf, 2, 3)));
+__dead void	verr __P((int, const char *, _VA_LIST_))
+			__attribute((format (printf, 2, 0)));
+__dead void	errx __P((int, const char *, ...))
+			__attribute((format (printf, 2, 3)));
+__dead void	verrx __P((int, const char *, _VA_LIST_))
+			__attribute((format (printf, 2, 0)));
+void		warn __P((const char *, ...))
+			__attribute((format (printf, 1, 2)));
+void		vwarn __P((const char *, _VA_LIST_))
+			__attribute((format (printf, 1, 0)));
+void		warnx __P((const char *, ...))
+			__attribute((format (printf, 1, 2)));
+void		vwarnx __P((const char *, _VA_LIST_))
+			__attribute((format (printf, 1, 0)));
 __END_DECLS
 
 #endif /* !_ERR_H_ */
