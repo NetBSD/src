@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.36 1997/07/15 01:07:47 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.37 1997/07/17 23:54:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3203,7 +3203,8 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	struct vattr at;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	u_quad_t frev;
+	u_quad_t frev, maxfsize;
+	struct statfs sb;
 
 #ifndef nolint
 	cache = 0;
@@ -3217,6 +3218,11 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
+
+	/* XXX Try to make a guess on the max file size. */
+	VFS_STATFS(vp->v_mount, &sb, (struct proc *)0);
+	maxfsize = (u_quad_t)0x80000000 * sb.f_bsize - 1;
+
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3POSTOPATTR + NFSX_V3FSINFO);
@@ -3239,8 +3245,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	sip->fs_wtpref = txdr_unsigned(pref);
 	sip->fs_wtmult = txdr_unsigned(NFS_FABLKSIZE);
 	sip->fs_dtpref = txdr_unsigned(pref);
-	sip->fs_maxfilesize.nfsuquad[0] = 0xffffffff;
-	sip->fs_maxfilesize.nfsuquad[1] = 0xffffffff;
+	txdr_hyper(&maxfsize, &sip->fs_maxfilesize);
 	sip->fs_timedelta.nfsv3_sec = 0;
 	sip->fs_timedelta.nfsv3_nsec = txdr_unsigned(1);
 	sip->fs_properties = txdr_unsigned(NFSV3FSINFO_LINK |

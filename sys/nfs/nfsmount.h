@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.13 1996/12/22 10:10:36 cgd Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.14 1997/07/17 23:54:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,6 +88,7 @@ struct	nfsmount {
 	short	nm_bufqlen;		/* number of buffers in queue */
 	short	nm_bufqwant;		/* process wants to add to the queue */
 	int	nm_bufqiods;		/* number of iods processing queue */
+	u_int64_t nm_maxfilesize;	/* maximum file size */
 };
 
 #ifdef _KERNEL

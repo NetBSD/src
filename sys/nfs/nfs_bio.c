@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.32 1997/07/04 20:22:09 drochner Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.33 1997/07/17 23:54:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,6 +96,8 @@ nfs_bioread(vp, uio, ioflag, cred)
 	p = uio->uio_procp;
 	if ((nmp->nm_flag & (NFSMNT_NFSV3 | NFSMNT_GOTFSINFO)) == NFSMNT_NFSV3)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+	if ((uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
+		return (EFBIG);
 	biosize = nmp->nm_rsize;
 	/*
 	 * For nfs, cache consistency can only be maintained approximately.
@@ -443,6 +445,8 @@ nfs_write(v)
 	}
 	if (uio->uio_offset < 0)
 		return (EINVAL);
+	if ((uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
+		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
 	/*
