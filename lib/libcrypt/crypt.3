@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.7 1999/07/02 15:18:37 simonb Exp $
+.\"	$NetBSD: crypt.3,v 1.7.6.1 2000/06/23 16:16:19 minoura Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)crypt.3	8.1.1.1 (Berkeley) 8/18/93
+.\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd August 18, 1993
+.Dd December 11, 1993
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@ underscore (``_'') followed by 4 bytes of iteration count and 4 bytes
 of salt.
 Both the iteration
 .Fa count
-and the
+and the 
 .Fa salt
 are encoded with 6 bits per character, least significant bits first.
 The values 0 to 63 are encoded by the characters ``./0-9A-Za-z'',
@@ -167,8 +167,9 @@ If the value of
 is 0,
 the argument
 .Fa block
-is encrypted, otherwise it fails.
-The encryption is returned in the original
+is encrypted, otherwise it
+is decrypted.
+The encryption or decryption is returned in the original
 array
 .Fa block
 after using the
@@ -194,7 +195,9 @@ significant bit in each character is ignored and the next 7 bits of each
 character are concatenated to yield a 56-bit key.
 The function
 .Fn des_cipher
-encrypts the 64-bits stored in the 8 characters at
+encrypts (or decrypts if
+.Fa count
+is negative) the 64-bits stored in the 8 characters at
 .Fa in
 using
 .Xr abs 3

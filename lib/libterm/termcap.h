@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.11 2000/05/20 13:55:11 blymn Exp $	*/
+/*	$NetBSD: termcap.h,v 1.11.2.1 2000/06/23 16:16:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,6 +66,7 @@ int   t_goto    __P((struct tinfo *, const char *, int, int, char *, size_t));
 int   t_puts    __P((struct tinfo *, const char *, int,
 		     void (*)(char, void *), void *));
 void  t_freent  __P((struct tinfo *));
+int   t_setinfo(struct tinfo **, const char *);
 
 extern	char PC;
 extern	char *BC;

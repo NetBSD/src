@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.13 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: quotactl.2,v 1.13.2.1 2000/06/23 16:18:09 minoura Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,14 +65,15 @@ The address of an optional command specific data structure,
 may be given; its interpretation
 is discussed below with each command.
 .Pp
-Currently quotas are supported only for the ``ffs'' filesystem.
-For ``ffs'',
+Currently quotas are supported only for the ``ffs''
+and ``lfs'' filesystem.
+For both of them,
 a command is composed of a primary command (see below)
 and a command type used to interpret the
 .Fa id .
 Types are supported for interpretation of user identifiers
 and group identifiers.
-The ``ffs'' specific commands are:
+The ``ffs'' and ``lfs'' specific commands are:
 .Bl -tag -width Q_QUOTAON
 .It Dv Q_QUOTAON
 Enable disk quotas for the filesystem specified by
@@ -163,9 +164,8 @@ or the command type is invalid.
 .It Bq Er EACCES
 In
 .Dv Q_QUOTAON ,
-the quota file is not a plain file.
-.It Bq Er EACCES
-Search permission is denied for a component of a path prefix.
+the quota file is not a plain file, or
+search permission is denied for a component of a path prefix.
 .It Bq Er ENOTDIR
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
@@ -188,13 +188,12 @@ An
 error occurred while reading from or writing
 to a file containing quotas.
 .It Bq Er EFAULT
-An invalid
+.Fa path
+points outside the process's allocated address space, or
+an invalid
 .Fa addr
 was supplied; the associated structure could not be copied in or out
-of the kernel.
-.It Bq Er EFAULT
-.Fa path
-points outside the process's allocated address space.
+of the kernel. 
 .It Bq Er EPERM
 The call was privileged and the caller was not the super-user.
 .El

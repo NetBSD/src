@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.16.2.1 2000/06/23 16:17:41 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.16.2.1 2000/06/23 16:17:41 minoura Exp $");
 #endif
 #endif
 
@@ -51,16 +51,22 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $");
  */
 
 #include "namespace.h"
-
+#include "reentrant.h"
 #include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <rpc/rpc.h>
+#include <rpc/raw.h>
 
 #ifdef __weak_alias
 __weak_alias(clntraw_create,_clntraw_create)
+__weak_alias(clnt_raw_create,_clnt_raw_create)
+#endif
+
+#ifdef __REENT
+extern mutex_t clntaw_lock;
 #endif
 
 #define MCALL_MSG_SIZE 24
@@ -71,7 +77,7 @@ __weak_alias(clntraw_create,_clntraw_create)
 static struct clntraw_private {
 	CLIENT	client_object;
 	XDR	xdr_stream;
-	char	_raw_buf[UDPMSGSIZE];
+	char	*_raw_buf;
 	union {
 	    struct rpc_msg	mashl_rpcmsg;
 	    char 		mashl_callmsg[MCALL_MSG_SIZE];
@@ -79,42 +85,42 @@ static struct clntraw_private {
 	u_int	mcnt;
 } *clntraw_private;
 
+extern void svc_getreq_common __P((int));
 
 
-static enum clnt_stat clntraw_call __P((CLIENT *, u_long, xdrproc_t,
+static enum clnt_stat clnt_raw_call __P((CLIENT *, rpcproc_t, xdrproc_t,
     caddr_t, xdrproc_t, caddr_t, struct timeval));
-static void clntraw_geterr __P((CLIENT *, struct rpc_err *));
-static bool_t clntraw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
-static void clntraw_abort __P((CLIENT *));
-static bool_t clntraw_control __P((CLIENT *, u_int, char *));
-static void clntraw_destroy __P((CLIENT *));
-
-static const struct clnt_ops client_ops = {
-	clntraw_call,
-	clntraw_abort,
-	clntraw_geterr,
-	clntraw_freeres,
-	clntraw_destroy,
-	clntraw_control
-};
+static void clnt_raw_geterr __P((CLIENT *, struct rpc_err *));
+static bool_t clnt_raw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
+static void clnt_raw_abort __P((CLIENT *));
+static bool_t clnt_raw_control __P((CLIENT *, u_int, char *));
+static void clnt_raw_destroy __P((CLIENT *));
+static struct clnt_ops *clnt_raw_ops __P((void));
 
 /*
  * Create a client handle for memory based rpc.
  */
 CLIENT *
-clntraw_create(prog, vers)
-	u_long prog;
-	u_long vers;
+clnt_raw_create(prog, vers)
+	rpcprog_t prog;
+	rpcvers_t vers;
 {
 	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
 	XDR *xdrs = &clp->xdr_stream;
 	CLIENT	*client = &clp->client_object;
 
-	if (clp == 0) {
+	mutex_lock(&clntraw_lock);
+	if (clp == NULL) {
 		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
-		if (clp == 0)
-			return (0);
+		if (clp == NULL) {
+			mutex_unlock(&clntraw_lock);
+			return NULL;
+		}
+		if (__rpc_rawcombuf == NULL)
+			__rpc_rawcombuf =
+			    (char *)calloc(UDPMSGSIZE, sizeof (char));
+		clp->_raw_buf = __rpc_rawcombuf;
 		clntraw_private = clp;
 	}
 	/*
@@ -139,16 +145,17 @@ clntraw_create(prog, vers)
 	/*
 	 * create client handle
 	 */
-	client->cl_ops = &client_ops;
+	client->cl_ops = clnt_raw_ops();
 	client->cl_auth = authnone_create();
+	mutex_unlock(&clntraw_lock);
 	return (client);
 }
 
 /* ARGSUSED */
 static enum clnt_stat 
-clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
+clnt_raw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	CLIENT *h;
-	u_long proc;
+	rpcproc_t proc;
 	xdrproc_t xargs;
 	caddr_t argsp;
 	xdrproc_t xresults;
@@ -163,8 +170,13 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 
 	_DIAGASSERT(h != NULL);
 
-	if (clp == 0)
+	mutex_lock(&clntraw_lock);
+	if (clp == NULL) {
+		mutex_unlock(&clntraw_lock);
 		return (RPC_FAILED);
+	}
+	mutex_unlock(&clntraw_lock);
+
 call_again:
 	/*
 	 * send request
@@ -184,7 +196,7 @@ call_again:
 	 * We have to call server input routine here because this is
 	 * all going on in one process. Yuk.
 	 */
-	svc_getreq(1);
+	svc_getreq_common(FD_SETSIZE);
 
 	/*
 	 * get results
@@ -239,7 +251,7 @@ call_again:
 
 /*ARGSUSED*/
 static void
-clntraw_geterr(cl, err)
+clnt_raw_geterr(cl, err)
 	CLIENT *cl;
 	struct rpc_err *err;
 {
@@ -248,7 +260,7 @@ clntraw_geterr(cl, err)
 
 /* ARGSUSED */
 static bool_t
-clntraw_freeres(cl, xdr_res, res_ptr)
+clnt_raw_freeres(cl, xdr_res, res_ptr)
 	CLIENT *cl;
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
@@ -257,24 +269,27 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	XDR *xdrs = &clp->xdr_stream;
 	bool_t rval;
 
-	if (clp == 0) {
+	mutex_lock(&clntraw_lock);
+	if (clp == NULL) {
 		rval = (bool_t) RPC_FAILED;
+		mutex_unlock(&clntraw_lock);
 		return (rval);
 	}
+	mutex_unlock(&clntraw_lock);
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
 /*ARGSUSED*/
 static void
-clntraw_abort(cl)
+clnt_raw_abort(cl)
 	CLIENT *cl;
 {
 }
 
 /*ARGSUSED*/
 static bool_t
-clntraw_control(cl, ui, str)
+clnt_raw_control(cl, ui, str)
 	CLIENT *cl;
 	u_int ui;
 	char *str;
@@ -284,7 +299,30 @@ clntraw_control(cl, ui, str)
 
 /*ARGSUSED*/
 static void
-clntraw_destroy(cl)
+clnt_raw_destroy(cl)
 	CLIENT *cl;
 {
+}
+
+static struct clnt_ops *
+clnt_raw_ops()
+{
+	static struct clnt_ops ops;
+#ifdef __REENT
+	extern mutex_t  ops_lock;
+#endif
+
+	/* VARIABLES PROTECTED BY ops_lock: ops */
+
+	mutex_lock(&ops_lock);
+	if (ops.cl_call == NULL) {
+		ops.cl_call = clnt_raw_call;
+		ops.cl_abort = clnt_raw_abort;
+		ops.cl_geterr = clnt_raw_geterr;
+		ops.cl_freeres = clnt_raw_freeres;
+		ops.cl_destroy = clnt_raw_destroy;
+		ops.cl_control = clnt_raw_control;
+	}
+	mutex_unlock(&ops_lock);
+	return (&ops);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.14 2000/03/13 22:59:22 soren Exp $	*/
+/*	$NetBSD: crypt.c,v 1.14.2.1 2000/06/23 16:16:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.14 2000/03/13 22:59:22 soren Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.14.2.1 2000/06/23 16:16:19 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -666,7 +666,9 @@ des_cipher(in, out, salt, num_iter)
 	}
 	else
 	{		/* decryption */
-		return (1); /* always fail */
+		num_iter = -num_iter;
+		kp = &KS[KS_SIZE-1];
+		ks_inc  = -(long)sizeof(*kp);
 	}
 
 	while (--num_iter >= 0) {

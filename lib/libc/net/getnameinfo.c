@@ -1,10 +1,10 @@
-/*	$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $	*/
-/*	$KAME: getnameinfo.c,v 1.38 2000/04/26 15:58:50 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.16.2.1 2000/06/23 16:17:34 minoura Exp $	*/
+/*	$KAME: getnameinfo.c,v 1.43 2000/06/12 04:27:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.16.2.1 2000/06/23 16:17:34 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -95,20 +95,20 @@ struct sockinet {
 static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
 				 size_t, int));
 static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
-#endif 
+#endif
 
-#define ENI_NOSOCKET 	0
-#define ENI_NOSERVNAME	1
-#define ENI_NOHOSTNAME	2
-#define ENI_MEMORY	3
-#define ENI_SYSTEM	4
-#define ENI_FAMILY	5
-#define ENI_SALEN	6
+#define ENI_NOSOCKET 	EAI_FAIL		/*XXX*/
+#define ENI_NOSERVNAME	EAI_NONAME
+#define ENI_NOHOSTNAME	EAI_NONAME
+#define ENI_MEMORY	EAI_MEMORY
+#define ENI_SYSTEM	EAI_SYSTEM
+#define ENI_FAMILY	EAI_FAMILY
+#define ENI_SALEN	EAI_FAMILY
 
 int
 getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	const struct sockaddr *sa;
-	size_t salen;
+	socklen_t salen;
 	char *host;
 	size_t hostlen;
 	char *serv;
@@ -360,7 +360,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 		return(snprintf(buf, bufsiz, "%d", sa6->sin6_scope_id));
 	}
 #endif
- 
+
 	/* if_indextoname() does not take buffer size.  not a good api... */
 	if ((IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) &&
 	    bufsiz >= IF_NAMESIZE) {

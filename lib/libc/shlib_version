@@ -1,5 +1,9 @@
-#	$NetBSD: shlib_version,v 1.89 2000/04/21 16:24:23 minoura Exp $
+#	$NetBSD: shlib_version,v 1.89.2.1 2000/06/23 16:16:10 minoura Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
+# things we wish to do on next major version bump:
+# - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
+# - libc/net: resolver update to BIND8/9?
+#
 major=12
-minor=61
+minor=62

@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
+/* $NetBSD: cerror.S,v 1.5.8.1 2000/06/23 16:17:05 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

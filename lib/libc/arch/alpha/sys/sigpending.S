@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.3 1998/12/02 01:01:03 thorpej Exp $	*/
+/* $NetBSD: sigpending.S,v 1.3.8.1 2000/06/23 16:17:06 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

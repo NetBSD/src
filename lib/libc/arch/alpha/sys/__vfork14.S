@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.1 1998/01/04 20:58:08 thorpej Exp $	*/
+/* $NetBSD: __vfork14.S,v 1.1.8.1 2000/06/23 16:17:05 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

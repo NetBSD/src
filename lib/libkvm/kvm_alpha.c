@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.15 1999/07/02 15:28:49 simonb Exp $	*/
+/* $NetBSD: kvm_alpha.c,v 1.15.6.1 2000/06/23 16:16:47 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.20 2000/05/22 05:54:37 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.20.2.1 2000/06/23 16:16:28 minoura Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.20 2000/05/22 05:54:37 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.20.2.1 2000/06/23 16:16:28 minoura Exp $");
 #endif
 #endif				/* not lint */
 
@@ -140,6 +140,8 @@ __stopwin(void)
 	(void) tputs(TE, 0, __cputchar);
 	(void) fflush(stdout);
 	(void) setvbuf(stdout, NULL, _IOLBF, (size_t) 0);
+
+	__endwin = 1;
 
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);

@@ -1,8 +1,9 @@
-/*	$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $	*/
+/* $NetBSD: nlist_coff.c,v 1.1.2.1 2000/06/23 16:17:26 minoura Exp $ */
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- *
+ * Copyright (c) 1996 Christopher G. Demetriou
+ * All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,11 +14,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
+ *    derived from this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -28,11 +30,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.1.2.1 2000/06/23 16:17:26 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,8 +59,8 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.1 2000/01/03 02:13:32 msaitoh Exp $");
 
 #ifdef NLIST_COFF
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+#define	BAD			do { rv = -1; goto out; } while (/*CONSTCOND*/0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
 
 #define ES_LEN 18
 struct coff_extsym {

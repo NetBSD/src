@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.56 2000/05/23 12:35:34 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.56.2.1 2000/06/23 16:17:30 minoura Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,17 +260,18 @@ information.
 .It KERN\_AUTONICETIME	integer	yes
 .It KERN\_AUTONICEVAL	integer	yes
 .It KERN\_BOOTTIME	struct timeval	no
-.It KERN\_CHOWN\_RESTRICTED	integer	no
+.It KERN\_CCPU	integer	no
 .It KERN\_CLOCKRATE	struct clockinfo	no
+.It KERN\_CP\_TIME	long[\|]	no
 .It KERN\_DEFCORENAME	string	yes
 .It KERN\_DOMAINNAME	string	yes
 .It KERN\_FILE	struct file	no
+.It KERN\_FSCALE	integer	no
 .It KERN\_FSYNC	integer	no
 .It KERN\_HOSTID	integer	yes
 .It KERN\_HOSTNAME	string	yes
 .It KERN\_IOV\_MAX	integer	no
 .It KERN\_JOB\_CONTROL	integer	no
-.It KERN\_LINK\_MAX	integer	no
 .It KERN\_LOGIN\_NAME\_MAX	integer	no
 .It KERN\_LOGSIGEXIT	integer	yes
 .It KERN\_MAPPED\_FILES	integer	no
@@ -278,31 +279,32 @@ information.
 .It KERN\_MAXPARTITIONS	integer	no
 .It KERN\_MAXPROC	integer	yes
 .It KERN\_MAXVNODES	integer	yes
-.It KERN\_MAX\_CANON	integer	no
-.It KERN\_MAX\_INPUT	integer	no
+.It KERN\_MBUF	node	not applicable
 .It KERN\_MEMLOCK	integer	no
 .It KERN\_MEMLOCK\_RANGE	integer	no
 .It KERN\_MEMORY\_PROTECTION	integer	no
+.It KERN\_MSGBUF	char[\|]	no
 .It KERN\_MSGBUFSIZE	integer	no
-.It KERN\_NAME\_MAX	integer	no
 .It KERN\_NGROUPS	integer	no
-.It KERN\_NO\_TRUNC	integer	no
+.It KERN\_NTPTIME	struct ntptimeval	no
 .It KERN\_OSRELEASE	string	no
 .It KERN\_OSREV	integer	no
 .It KERN\_OSTYPE	string	no
-.It KERN\_PATH\_MAX	integer	no
-.It KERN\_PIPE\_BUF	integer	no
 .It KERN\_POSIX1	integer	no
-.It KERN\_PROC	struct proc	no
+.It KERN\_PROC	struct kinfo_proc	no
+.It KERN\_PROC2	struct kinfo_proc2	no
+.It KERN\_PROC\_ARGS	string	no
 .It KERN\_PROF	node	not applicable
 .It KERN\_RAWPARTITION	integer	no
+.It KERN\_ROOT\_DEVICE	string	no
+.It KERN\_RTC\_OFFSET	integer	yes
 .It KERN\_SAVED\_IDS	integer	no
 .It KERN\_SECURELVL	integer	raise only
 .It KERN\_SYNCHRONIZED\_IO	integer	no
+.It KERN\_SYSVIPC\_INFO	node	not applicable
 .It KERN\_SYSVMSG	integer	no
 .It KERN\_SYSVSEM	integer	no
 .It KERN\_SYSVSHM	integer	no
-.It KERN\_VDISABLE	integer	no
 .It KERN\_VERSION	string	no
 .It KERN\_VNODE	struct vnode	no
 .El
@@ -324,10 +326,8 @@ A
 .Va struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
-.It Li KERN_CHOWN_RESTRICTED
-Return 1 if appropriate privileges are required for the
-.Xr chown 2
-system call, otherwise 0.
+.It Li KERN_CCPU
+The scheduler exponential decay value.
 .It Li KERN_CLOCKRATE
 A
 .Va struct clockinfo
@@ -335,6 +335,9 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+.It Li KERN_CP_TIME
+Return an array if CPUSTATES longs is returned.  This array contains the
+number of clock ticks spent in different CPU states.
 .It Li KERN_DEFCORENAME
 Default template for the name of core dump files (see also PROC_PID_CORENAME
 in the per-process variables CTL_PROC, and
@@ -355,6 +358,8 @@ The returned data consists of a single
 followed by an array of
 .Va struct file ,
 whose size depends on the current number of such objects in the system.
+.It Li KERN_FSCALE
+The kernel fixed-point scale factor.
 .It Li KERN_FSYNC
 Return 1 if the POSIX 1003.1b File Synchronization Option is available
 on this system,
@@ -376,8 +381,6 @@ and
 .Xr writev 2 .
 .It Li KERN_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise 0.
-.It Li KERN_LINK_MAX
-The maximum file link count.
 .It Li KERN_LOGIN_NAME_MAX
 The size of the storage required for a login name, in bytes,
 including the terminating NUL.
@@ -399,11 +402,34 @@ The maximum number of partitions allowed per disk.
 The maximum number of simultaneous processes the system will allow.
 .It Li KERN_MAXVNODES
 The maximum number of vnodes available on the system.
-.It Li KERN_MAX_CANON
-The maximum number of bytes in terminal canonical input line.
-.It Li KERN_MAX_INPUT
-The minimum maximum number of bytes for which space is available in
-a terminal input queue.
+.It Li KERN_MBUF
+Return information about the mbuf control variables.
+the third level names for the mbuf variables are detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "MBUFXNMBCLUSTERSXXX" "struct integerXXX" -offset indent
+.It MBUF\_MSIZE	integer	yes
+.It MBUF\_MCLBYTES	integer	yes
+.It MBUF\_NMBCLUSTERS	integer	yes
+.It MBUF\_MBLOWAT	integer	yes
+.It MBUF\_MCLLOWAT	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li MBUF_MSIZE
+The mbuf base size.
+.It Li MBUF_MCLBYTES
+The mbuf cluster size.
+.It Li MBUF_NMBCLUSTERS
+The limit on the number of mbuf clusters.
+The variable can only be increased, and only increased on machines with
+direct-mapped pool pages
+.It Li MBUF_MBLOWAT
+The mbuf low water mark.
+.It Li MBUF_MCLLOWAT
+The mbuf cluster low water mark.
+.El
 .It Li KERN_MEMLOCK
 Returns 1 if the POSIX 1003.1b Process Memory Locking Option is available
 on this system,
@@ -416,14 +442,24 @@ otherwise 0.
 Returns 1 if the POSIX 1003.1b Memory Protection Option is available
 on this system,
 otherwise 0.
+.It Li KERN_MSGBUF
+The kernel message buffer, rotated so that the head of the circular kernel
+message buffer is returned at the start of the buffer specified by
+.Fa oldp .
+The returned data may contain NUL bytes.
 .It Li KERN_MSGBUFSIZE
 The maximum number of characters that the kernel message buffer can hold.
-.It Li KERN_NAME_MAX
-The maximum number of bytes in a file name.
 .It Li KERN_NGROUPS
 The maximum number of supplemental groups.
 .It Li KERN_NO_TRUNC
 Return 1 if file names longer than KERN_NAME_MAX are truncated.
+.It Li KERN_NTPTIME
+A
+.Va struct ntptimeval
+structure is returned.
+This structure contains data used by the
+.Xr ntpd 8
+program.
 .It Li KERN_OSRELEASE
 The system release string.
 .It Li KERN_OSREV
@@ -432,8 +468,6 @@ The system revision string.
 The system type string.
 .It Li KERN_PATH_MAX
 The maximum number of bytes in a pathname.
-.It Li KERN_PIPE_BUF
-The maximum number of bytes which will be written atomically to a pipe.
 .It Li KERN_POSIX1
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
@@ -449,9 +483,29 @@ The third and fourth level names are as follows:
 .It KERN\_PROC\_ALL	None
 .It KERN\_PROC\_PID	A process ID
 .It KERN\_PROC\_PGRP	A process group
+.It KERN\_PROC\_SESSION	A session ID
 .It KERN\_PROC\_TTY	A tty device
 .It KERN\_PROC\_UID	A user ID
 .It KERN\_PROC\_RUID	A real user ID
+.It KERN\_PROC\_GID	A group ID
+.It KERN\_PROC\_RGID	A real group ID
+.El
+.It Li KERN_PROC2
+As for KERN_PROC, but an array of
+.Va struct kinfo_proc2
+structures are returned.  The fifth level name is the size of the
+.Va struct kinfo_proc2
+and the sixth level name is the number of structures to return.
+.It Li KERN_PROC_ARGS
+Return the argv or environment strings (or the number thereof)
+of a process.  Multiple strings are returned separated by NUL
+characters.  The third level name is the process ID.  The fourth
+level name is as follows:
+.Bl -column "Third level nameXXXXXX" -offset indent
+.It KERN\_PROC\_ARGV	The argv strings
+.It KERN\_PROC\_NARGV	The number of argv strings
+.It KERN\_PROC\_ENV	The environ strings
+.It KERN\_PROC\_NENV	The number of environ strings
 .El
 .It Li KERN_PROF
 Return profiling information about the kernel.
@@ -489,6 +543,10 @@ Structure giving the sizes of the above arrays.
 .El
 .It Li KERN_RAWPARTITION
 The raw partition of a disk (a == 0).
+.It Li KERN_ROOT_DEVICE
+The name of the root device.
+.It Li KERN_RTC_OFFSET
+Return the offset of real time clock from UTC in minutes.
 .It Li KERN_SAVED_IDS
 Returns 1 if saved set-group and saved set-user ID is available.
 .It Li KERN_SECURELVL
@@ -499,6 +557,33 @@ It may only be lowered by process 1.
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
 otherwise 0.
+.It Li KERN_SYSVIPC_INFO
+Return System V style IPC configuration and run-time information.
+The third level name selects the System V style IPC facility.
+.Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
+.It Sy Pa Third level name	Type
+.It KERN\_SYSVIPC\_MSG\_INFO	struct msg_sysctl_info
+.It KERN\_SYSVIPC\_SEM\_INFO	struct sem_sysctl_info
+.It KERN\_SYSVIPC\_SHM\_INFO	struct shm_sysctl_info
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li KERN_SYSVIPC_MSG_INFO
+Return information on the System V style message facility.  The
+.Sy msg_sysctl_info
+structure is defined in
+.Aq Pa sys/msg.h .
+.It Li KERN_SYSVIPC_SEM_INFO
+Return information on the System V style semaphore facility.  The
+.Sy sem_sysctl_info
+structure is defined in
+.Aq Pa sys/sem.h .
+.It Li KERN_SYSVIPC_SHM_INFO
+Return information on the System V style shared memory facility.  The
+.Sy shm_sysctl_info
+structure is defined in
+.Aq Pa sys/shm.h .
+.El
 .It Li KERN_SYSVMSG
 Returns 1 if System V style message queue functionality is available
 on this system,
@@ -511,8 +596,6 @@ otherwise 0.
 Returns 1 if System V style share memory functionality is available
 on this system,
 otherwise 0.
-.It Li KERN_VDISABLE
-Returns the terminal character disabling value.
 .It Li KERN_VERSION
 The system version string.
 .It Li KERN_VNODE

@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.14 1999/10/04 23:16:52 lukem Exp $	*/
+/*	$NetBSD: tputs.c,v 1.14.4.1 2000/06/23 16:16:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.14 1999/10/04 23:16:52 lukem Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.14.4.1 2000/06/23 16:16:56 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: tputs.c,v 1.14 1999/10/04 23:16:52 lukem Exp $");
 #include <ctype.h>
 #include <termcap.h>
 #include <stdio.h>
+#include <stdlib.h>
 #undef ospeed
 
 /* internal functions */
@@ -67,13 +68,13 @@ char	PC;
 int
 _tputs_convert(ptr, affcnt)
 	const char **ptr;
-        int affcnt;
+	int affcnt;
 {
-        int i = 0;
-        
-          /*
-           * Convert the number representing the delay.
-           */
+	int i = 0;
+
+	/*
+	 * Convert the number representing the delay.
+	 */
 	if (isdigit(*(*ptr))) {
 		do
 			i = i * 10 + *(*ptr)++ - '0';
@@ -98,7 +99,7 @@ _tputs_convert(ptr, affcnt)
 	if (*(*ptr) == '*')
 		(*ptr)++, i *= affcnt;
 
-        return i;
+	return i;
 }
 
 /*
@@ -120,9 +121,9 @@ tputs(cp, affcnt, outc)
 	if (cp == 0)
 		return;
 
-          /* scan and convert delay digits (if any) */
-        i = _tputs_convert(&cp, affcnt);
-        
+	/* scan and convert delay digits (if any) */
+	i = _tputs_convert(&cp, affcnt);
+
 	/*
 	 * The guts of the string.
 	 */
@@ -155,36 +156,39 @@ tputs(cp, affcnt, outc)
 int
 t_puts(info, cp, affcnt, outc, args)
 	struct tinfo *info;
-        const char *cp;
-        int affcnt;
-        void (*outc) __P((char, void *));
-        void *args;
+	const char *cp;
+	int affcnt;
+	void (*outc) __P((char, void *));
+	void *args;
 {
 	int i = 0;
-	size_t limit = 2;
+	size_t limit;
 	int mspc10;
-        char pad[2], *pptr;
+	char pad[2], *pptr;
+	char *pc;
 
-        if (info != NULL)
-        {
-                  /*
-                   * if we have info then get the pad char from the
-                   * termcap entry if it exists, otherwise use the
-                   * default NUL char.
-                   */
-                pptr = pad;
-                if (t_getstr(info, "pc", &pptr, &limit) == NULL)
-                {
-                        pad[0] = '\0';
-                }
-        }
-        
+	if (info != NULL)
+	{
+		/*
+		 * if we have info then get the pad char from the
+		 * termcap entry if it exists, otherwise use the
+		 * default NUL char.
+		 */
+		pptr = pad;
+		limit = sizeof(pad);
+		pc = t_getstr(info, "pc", &pptr, &limit);
+		if (pc == NULL)
+			pad[0] = '\0';
+		else
+			free(pc);
+	}
+
 	if (cp == 0)
 		return -1;
 
-          /* scan and convert delay digits (if any) */
-        i = _tputs_convert(&cp, affcnt);
-        
+	/* scan and convert delay digits (if any) */
+	i = _tputs_convert(&cp, affcnt);
+
 	/*
 	 * The guts of the string.
 	 */
@@ -212,5 +216,5 @@ t_puts(info, cp, affcnt, outc, args)
 	for (i /= mspc10; i > 0; i--)
 		(*outc)(pad[0], args);
 
-        return 0;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.1 1995/02/10 17:50:44 cgd Exp $	*/
+/* $NetBSD: syscall.S,v 1.1.20.1 2000/06/23 16:17:07 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

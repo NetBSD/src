@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_open.3,v 1.6 1999/07/02 15:28:50 simonb Exp $
+.\"	$NetBSD: kvm_open.3,v 1.6.6.1 2000/06/23 16:16:48 minoura Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,12 +107,35 @@ The
 argument indicates read/write access as in
 .Xr open 2
 and applies only to the core file.
-Only
+The only permitted flags from
+.Xr open 2
+are
 .Dv O_RDONLY ,
 .Dv O_WRONLY ,
 and
-.Dv O_RDWR
-are permitted.
+.Dv O_RDWR .
+.Pp
+As a special case, a
+.Fa flags
+argument of
+.Dv KVM_NO_FILES
+will initialse the
+.Xr kvm 3
+library for use on active kernels only using
+.Xr sysctl 3
+for retrieving kernel data and ignores the
+.Fa execfile ,
+.Fa corefile
+and
+.Fa swapfile
+arguments.  Only a small subset of the
+.Xr kvm 3
+library functions are available using this method.  These
+are currently
+.Xr kvm_getproc2 3 ,
+.Xr kvm_getargv2 3
+and
+.Xr kvm_getenvv2 3 .
 .Pp
 There are two open routines which differ only with respect to
 the error mechanism.

@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.c,v 1.3 2000/03/13 22:59:21 soren Exp $	*/
+/* $NetBSD: modf.c,v 1.3.2.1 2000/06/23 16:17:14 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

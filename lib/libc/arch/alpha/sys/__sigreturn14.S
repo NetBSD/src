@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/29 03:01:38 thorpej Exp $	*/
+/* $NetBSD: __sigreturn14.S,v 1.1.8.1 2000/06/23 16:17:05 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
