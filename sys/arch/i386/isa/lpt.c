@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.11 1994/02/18 19:50:56 mycroft Exp $
+ *	$Id: lpt.c,v 1.12 1994/02/19 02:43:53 mycroft Exp $
  */
 
 /*
@@ -76,8 +76,6 @@
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
 
-#define	MAX_SPIN	255
-
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
 
@@ -94,6 +92,7 @@ struct lpt_softc {
 	size_t sc_count;
 	struct buf *sc_inbuf;
 	u_char *sc_cp;
+	int sc_spinmax;
 	u_short sc_iobase;
 	u_short sc_irq;
 	u_char sc_state;
@@ -105,7 +104,6 @@ struct lpt_softc {
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 	u_char sc_control;
-	u_char sc_smax;
 } lpt_softc[NLPT];
 
 int lptprobe __P((struct isa_device *));
@@ -406,11 +404,11 @@ pushbytes(sc)
 
 		while (sc->sc_count > 0) {
 			spin = 0;
-			while (NOT_READY() && spin++ < sc->sc_smax);
-			if (spin >= sc->sc_smax) {
+			while (NOT_READY() && spin++ < sc->sc_spinmax);
+			if (spin >= sc->sc_spinmax) {
 				tic = 0;
-				if (sc->sc_smax < MAX_SPIN)
-					sc->sc_smax++;
+				/* adapt busy-wait algorithm */
+				sc->sc_spinmax++;
 				while (NOT_READY()) {
 					/* exponential backoff */
 					tic = tic + tic + 1;
@@ -429,10 +427,8 @@ pushbytes(sc)
 			outb(iobase + lpt_control, control);
 
 			/* adapt busy-wait algorithm */
-			if (spin >= sc->sc_smax && sc->sc_smax < MAX_SPIN)
-				sc->sc_smax++;
-			if (spin*2 < sc->sc_smax)
-				sc->sc_smax--;
+			if (spin*2 < sc->sc_spinmax)
+				sc->sc_spinmax--;
 		}
 	} else {
 		int s;
