@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)unctime.c	5.4 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: unctime.c,v 1.4 1993/08/01 18:27:38 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)unctime.c	5.5 (Berkeley) 6/18/92"; */
+static char *rcsid = "$Id: unctime.c,v 1.5 1993/12/22 10:25:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ unctime(str)
 
 	if (strlen(str) != 25)
 		str[25] = 0;
-	strcpy(dbuf, str);
+	(void) strcpy(dbuf, str);
 	dbuf[E_MONTH+3] = 0;
 	if ((then.tm_mon = lookup(&dbuf[E_MONTH])) < 0)
 		return (-1);

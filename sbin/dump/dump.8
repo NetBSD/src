@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)dump.8	6.8 (Berkeley) 6/17/91
-.\"	$Id: dump.8,v 1.6 1993/11/30 00:11:45 jtc Exp $
+.\"     from: @(#)dump.8	6.10 (Berkeley) 6/20/92
+.\"	$Id: dump.8,v 1.7 1993/12/22 10:24:37 cgd Exp $
 .\"
-.Dd June 17, 1991
+.Dd June 20, 1992
 .Dt DUMP 8
 .Os BSD 4
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd filesystem backup
 .Sh SYNOPSIS
 .Nm dump
-.Op Cm 0123456789fusdWn Op Ar argument ...
+.Op Cm 0123456789fusTdWn Op Ar argument ...
 .Op Ar filesystem
 .Sh DESCRIPTION
 .Nm Dump
@@ -49,12 +49,16 @@ on a filesystem
 and determines which files
 need to be backed up. These files
 are copied to the given disk, tape or other
-storage medium for safe keeping (see
-.Xr rdump 8
-for
-remote backups) .
+storage medium for safe keeping (see the
+.Cm f
+option below for doing remote backups).
 A dump that is larger than the output medium is broken into
-multiple volumes of a fixed size;
+multiple volumes.
+On most media the size is determined by writing until an
+end-of-media indication is returned.
+On media that cannot reliably return an end-of-media indication
+(such as some cartridge tape drives)
+each volume is of a fixed size;
 the actual size is determined by the tape size and density and/or
 block count options below.
 By default, the same output file name is used for each volume
@@ -82,7 +86,7 @@ like
 .Pa /dev/rmt12
 (a tape drive),
 .Pa /dev/rsd1c
-(an optical drive),
+(a disk drive),
 an ordinary file,
 or
 .Ql Fl
@@ -92,6 +96,11 @@ Each file will be used for one dump volume in the order listed;
 if the dump requires more volumes than the number of names given,
 the last file name will used for all remaining volumes after prompting
 for media changes.
+If the name of the file is of the form
+.Dq host:file ,
+.Nm dump
+writes to the named file on the remote host using
+.Xr rmt 8 .
 .It Cm d Ar density
 Set tape density to
 .Ar density .
@@ -105,7 +114,7 @@ notify all operators in the group
 by means similar to a
 .Xr wall 1 .
 .It Cm s Ar feet
-Attempt to caluculate the amount of tape needed
+Attempt to calculate the amount of tape needed
 at a particular density.
 If this amount is exceeded,
 .Nm dump
@@ -127,12 +136,25 @@ filesystem name,
 increment level
 and
 .Xr ctime 3
-format dump date.  
+format dump date. 
 There may be only one entry per filesystem at each level.
 The file
 .Pa /etc/dumpdates
 may be edited to change any of the fields,
 if necessary.
+.It Cm T Ar date
+Use the specified date as the starting time for the dump
+instead of the time determined from looking in
+.Pa /etc/dumpdates .
+The format of date is the same as that of
+.Xr ctime 3 .
+This option is useful for automated dump scripts that wish to
+dump over a specific period of time.
+The
+.Cm T
+option is mutually exclusive from the
+.Cm u
+option.
 .It Cm W
 .Nm Dump
 tells the operator what file systems need to be dumped.
@@ -148,7 +170,7 @@ to print out, for each file system in
 .Pa /etc/dumpdates
 the most recent dump date and level,
 and highlights those file systems that should be dumped.
-If the 
+If the
 .Cm W
 option is set, all other options are ignored, and
 .Nm dump
@@ -168,7 +190,7 @@ In addition to alerting all operators implied by the
 .Cm n
 key,
 .Nm dump
-interacts with the operator on 
+interacts with the operator on
 .Em dump's
 control terminal at times when
 .Nm dump
@@ -178,7 +200,10 @@ All questions
 .Nm dump
 poses
 .Em must
-be answered by typing \*(lqyes\*(rq or \*(lqno\*(rq,
+be answered by typing
+.Dq yes
+or
+.Dq no ,
 appropriately.
 .Pp
 Since making a dump involves a lot of time and effort for full dumps,
@@ -213,13 +238,13 @@ to minimize the number of tapes follows:
 .It
 Always start with a level 0 backup, for example:
 .Bd -literal -offset indent
-/sbin/dump 0ufds /dev/nrst1 54000 6000 /usr/src
+/etc/dump 0uf /dev/nrst1 /usr/src
 .Ed
 .Pp
 This should be done at set intervals, say once a month or once every two months,
 and on a set of fresh tapes that is saved forever.
 .It
-After a level 0, dumps of active file 
+After a level 0, dumps of active file
 systems are taken on a daily basis,
 using a modified Tower of Hanoi algorithm,
 with this sequence of dump levels:
@@ -239,12 +264,10 @@ After several months or so, the daily and weekly tapes should get
 rotated out of the dump cycle and fresh tapes brought in.
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
-.It Pa /dev/rrp1g
-default filesystem to dump from (system dependent).
 .It Pa /dev/rmt8
 default tape unit to dump to
 .It Pa /etc/dumpdates
-new format dump date record 
+dump date records
 .It Pa /etc/fstab
 dump table: file systems and frequency
 .It Pa /etc/group
@@ -252,8 +275,8 @@ to find group
 .Em operator
 .El
 .Sh SEE ALSO
-.Xr rdump 8 ,
 .Xr restore 8 ,
+.Xr rmt 8 ,
 .Xr dump 5 ,
 .Xr fstab 5
 .Sh DIAGNOSTICS
@@ -290,6 +313,5 @@ for the operator running
 .Xr restore .
 .Sh HISTORY
 A
-.Nm
-command appeared in 
-.At v6 .
+.Nm dump
+command appeared in Version 6 AT&T UNIX.
