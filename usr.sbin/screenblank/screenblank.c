@@ -1,7 +1,7 @@
-/*	$NetBSD: screenblank.c,v 1.8 1998/05/14 21:49:13 is Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.9 1998/12/18 01:15:45 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,8 +43,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.8 1998/05/14 21:49:13 is Exp $");
+"@(#) Copyright (c) 1996, 1998 \
+	The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: screenblank.c,v 1.9 1998/12/18 01:15:45 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,13 +66,21 @@ __RCSID("$NetBSD: screenblank.c,v 1.8 1998/05/14 21:49:13 is Exp $");
 #include <signal.h>
 #include <unistd.h>
 
+#include <dev/wscons/wsconsio.h>
+
+#ifdef HAVE_FBIO
 #include <machine/fbio.h>
+#endif
 
 #include "pathnames.h"
 
+u_long	setvideo = WSDISPLAYIO_SVIDEO;		/* "set video" ioctl */
+int	videoon  = WSDISPLAYIO_VIDEO_ON;	/* value for "on" */
+int	videooff = WSDISPLAYIO_VIDEO_OFF;	/* value for "off" */
+
 struct	dev_stat {
 	LIST_ENTRY(dev_stat) ds_link;	/* linked list */
-	char	*ds_path;		/* path to device */
+	const char *ds_path;		/* path to device */
 	int	ds_isfb;		/* boolean; framebuffer? */
 	time_t	ds_atime;		/* time device last accessed */
 	time_t	ds_mtime;		/* time device last modified */
@@ -81,7 +90,7 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 extern	char *__progname;
 
 int	main __P((int, char *[]));
-static	void add_dev __P((char *, int));
+static	void add_dev __P((const char *, int));
 static	void change_state __P((int));
 static	void cvt_arg __P((char *, struct timeval *));
 static	void logpid __P((void));
@@ -98,6 +107,7 @@ main(argc, argv)
 	struct sigaction sa;
 	struct stat st;
 	int ch, change, fflag = 0, kflag = 0, mflag = 0, state;
+	const char *kbd, *mouse, *display;
 
 	LIST_INIT(&ds_list);
 
@@ -145,19 +155,52 @@ main(argc, argv)
 		usage();
 
 	/*
+	 * Default to WSCONS support.
+	 */
+	kbd = _PATH_WSKBD;
+	mouse = _PATH_WSMOUSE;
+	display = _PATH_WSDISPLAY;
+
+#ifdef HAVE_FBIO
+	/*
+	 * If a display device wasn't specified, check to see which we
+	 * have.  If we can't open the WSCONS display, fall back to fbio.
+	 */
+	if (!fflag) {
+		int fd;
+
+		if ((fd = open(display, O_RDONLY, 0666)) == -1)
+			setvideo = FBIOSVIDEO;
+		else
+			(void) close(fd);
+	}
+
+	/*
+	 * Do this here so that -f ... args above can influence us.
+	 */
+	if (setvideo == FBIOSVIDEO) {
+		videoon = FBVIDEO_ON;
+		videooff = FBVIDEO_OFF;
+		kbd = _PATH_KEYBOARD;
+		mouse = _PATH_MOUSE;
+		display = _PATH_FB;
+	}
+#endif
+
+	/*
 	 * Add the keyboard, mouse, and default framebuffer devices
 	 * as necessary.  We _always_ check the console device.
 	 */
 	add_dev(_PATH_CONSOLE, 0);
 	if (!kflag)
-		add_dev(_PATH_KEYBOARD, 0);
+		add_dev(kbd, 0);
 	if (!mflag)
-		add_dev(_PATH_MOUSE, 0);
+		add_dev(mouse, 0);
 	if (!fflag)
-		add_dev(_PATH_FB, 1);
+		add_dev(display, 1);
 
 	/* Ensure that the framebuffer is on. */
-	state = FBVIDEO_ON;
+	state = videoon;
 	change_state(state);
 	tvp = &timo_on;
 
@@ -198,22 +241,18 @@ main(argc, argv)
 			}
 		}
 
-		switch (state) {
-		case FBVIDEO_ON:
+		if (state == videoon) {
 			if (!change) {
-				state = FBVIDEO_OFF;
+				state = videooff;
 				change_state(state);
 				tvp = &timo_off;
 			}
-			break;
-
-		case FBVIDEO_OFF:
+		} else {
 			if (change) {
-				state = FBVIDEO_ON;
+				state = videoon;
 				change_state(state);
 				tvp = &timo_on;
 			}
-			break;
 		}
 
 		if (select(0, NULL, NULL, NULL, tvp) < 0)
@@ -224,28 +263,42 @@ main(argc, argv)
 
 static void
 add_dev(path, isfb)
-	char *path;
+	const char *path;
 	int isfb;
 {
-	struct dev_stat *dsp1, *dsp2;
+	struct dev_stat *dsp;
+	int fd;
+
+	/* Make sure we can open the device. */
+	if ((fd = open(path, O_RDWR, 0666)) == -1)
+		err(1, "can't open %s", path);
+
+#ifdef HAVE_FBIO
+	/*
+	 * We default to WSCONS.  If this is a frame buffer
+	 * device, check to see if it responds to the old
+	 * Sun-style fbio ioctls.  If so, switch to fbio mode.
+	 */
+	if (isfb && setvideo != FBIOSVIDEO) {
+		int onoff;
+
+		if ((ioctl(fd, FBIOGVIDEO, &onoff)) == 0)
+			setvideo = FBIOSVIDEO;
+	}
+#endif
+
+	(void) close(fd);
 
 	/* Create the entry... */
-	dsp1 = malloc(sizeof(struct dev_stat));
-	if (dsp1 == NULL)
+	dsp = malloc(sizeof(struct dev_stat));
+	if (dsp == NULL)
 		errx(1, "can't allocate memory for %s", path);
-	memset(dsp1, 0, sizeof(struct dev_stat));
-	dsp1->ds_path = path;
-	dsp1->ds_isfb = isfb;
+	memset(dsp, 0, sizeof(struct dev_stat));
+	dsp->ds_path = path;
+	dsp->ds_isfb = isfb;
 
 	/* ...and put it in the list. */
-	if (ds_list.lh_first == NULL) {
-		LIST_INSERT_HEAD(&ds_list, dsp1, ds_link);
-	} else {
-		for (dsp2 = ds_list.lh_first; dsp2->ds_link.le_next != NULL;
-		    dsp2 = dsp2->ds_link.le_next)
-			/* Nothing. */ ;
-		LIST_INSERT_AFTER(dsp2, dsp1, ds_link);
-	}
+	LIST_INSERT_HEAD(&ds_list, dsp, ds_link);
 }
 
 /* ARGSUSED */
@@ -256,7 +309,7 @@ sighandler(sig)
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
 	(void)unlink(_PATH_SCREENBLANKPID);
-	change_state(FBVIDEO_ON);
+	change_state(videoon);
 	exit(0);
 }
 
@@ -275,7 +328,7 @@ change_state(state)
 			warn("open: %s", dsp->ds_path);
 			continue;
 		}
-		if (ioctl(fd, FBIOSVIDEO, &state) < 0)
+		if (ioctl(fd, setvideo, &state) < 0)
 			warn("ioctl: %s", dsp->ds_path);
 		(void)close(fd);
 	}
