@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1998/08/22 10:55:34 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1999/02/20 16:24:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,6 +100,7 @@
 #define splnet()        spl3()
 #define spltty()        spl3()
 #define splimp()        spl3()
+#define splserial()     spl4()
 #define splclock()      spl5()
 #define splstatclock()	spl5()
 #define splvm()         spl5()
