@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.14 2002/10/02 05:26:45 thorpej Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.15 2003/07/15 02:29:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -27,6 +27,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.15 2003/07/15 02:29:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.6 2002/10/02 05:26:56 thorpej Exp $	*/
+/*	$NetBSD: vrled.c,v 1.7 2003/07/15 02:29:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrled.c,v 1.7 2003/07/15 02:29:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

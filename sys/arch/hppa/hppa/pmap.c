@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2003/05/10 21:10:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2003/07/15 02:29:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@
  * 2. PA7300LC ERS, Hewlett-Packard, March 18 1996, Version 1.0
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2003/07/15 02:29:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

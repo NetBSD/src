@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181ip.c,v 1.1 2003/05/01 07:02:05 igy Exp $ */
+/* $NetBSD: vr4181ip.c,v 1.2 2003/07/15 02:29:35 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2002
@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr4181ip.c,v 1.2 2003/07/15 02:29:35 lukem Exp $");
 
 #include "opt_vr41xx.h"
 

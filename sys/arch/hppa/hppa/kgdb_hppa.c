@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,6 +47,9 @@
 /*
  * Machine-dependent (hppa) part of the KGDB remote "stub"
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.2 2002/07/04 23:32:04 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3 2003/07/15 02:29:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *	from: Utah Hdr: machdep.c 1.74 92/12/20
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2003/07/15 02:29:41 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.7 2002/11/24 06:02:24 shin Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.8 2003/07/15 02:29:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrdsu.c,v 1.8 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2002/11/17 17:10:46 chs Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -76,6 +76,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

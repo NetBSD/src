@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.12 2003/04/01 15:02:05 thorpej Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.13 2003/07/15 02:29:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.13 2003/07/15 02:29:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
