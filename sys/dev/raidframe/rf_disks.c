@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.29 2000/05/28 22:53:49 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.30 2000/05/29 02:57:34 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -388,6 +388,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	RF_AutoConfig_t *ac;
 	int parity_good;
 	int mod_counter;
+	int mod_counter_found;
 
 #if DEBUG
 	printf("Starting autoconfiguration of RAID set...\n");
@@ -404,28 +405,19 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	parity_good = RF_RAID_CLEAN;
 
 	/* Check for mod_counters that are too low */
-	mod_counter = -1;
+	mod_counter_found = 0;
 	ac = auto_config;
 	while(ac!=NULL) {
-		if (ac->clabel->mod_counter > mod_counter) {
+		if (mod_counter_found==0) {
 			mod_counter = ac->clabel->mod_counter;
-		}
-		ac->flag = 0; /* clear the general purpose flag */
-		ac = ac->next;
-	}
-
-	if (mod_counter == -1) {
-		/* mod_counters were all negative!?!?!? 
-		   Ok, we can deal with that. */
-#if 0
-		ac = auto_config;
-		while(ac!=NULL) {
+			mod_counter_found = 1;
+		} else {
 			if (ac->clabel->mod_counter > mod_counter) {
 				mod_counter = ac->clabel->mod_counter;
 			}
-			ac = ac->next;
 		}
-#endif
+		ac->flag = 0; /* clear the general purpose flag */
+		ac = ac->next;
 	}
 
 	for (r = 0; r < raidPtr->numRow; r++) {
