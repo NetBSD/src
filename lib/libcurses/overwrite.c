@@ -1,4 +1,4 @@
-/*	$NetBSD: overwrite.c,v 1.9 1998/02/03 19:12:31 perry Exp $	*/
+/*	$NetBSD: overwrite.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)overwrite.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overwrite.c,v 1.9 1998/02/03 19:12:31 perry Exp $");
+__RCSID("$NetBSD: overwrite.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <ctype.h>
 #include <string.h>
@@ -55,7 +55,7 @@ int
 overwrite(win1, win2)
 	WINDOW *win1, *win2;
 {
-	int x, y, endy, endx, starty, startx;
+	int     x, y, endy, endx, starty, startx;
 
 #ifdef DEBUG
 	__CTRACE("overwrite: (%0.2o, %0.2o);\n", win1, win2);
@@ -72,11 +72,11 @@ overwrite(win1, win2)
 #endif
 	x = endx - startx;
 	for (y = starty; y < endy; y++) {
-		(void)memcpy(
-		    &win2->lines[y - win2->begy]->line[startx - win2->begx], 
+		(void) memcpy(
+		    &win2->lines[y - win2->begy]->line[startx - win2->begx],
 		    &win1->lines[y - win1->begy]->line[startx - win1->begx],
 		    x * __LDATASIZE);
-		__touchline(win2, y, startx - win2->begx, endx - win2->begx,
+		__touchline(win2, y, (int) (startx - win2->begx), (int) (endx - win2->begx),
 		    0);
 	}
 	return (OK);

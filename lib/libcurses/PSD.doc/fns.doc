@@ -1,5 +1,3 @@
-.\"	$NetBSD: fns.doc,v 1.4 1998/01/09 04:12:10 perry Exp $
-.\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -66,6 +64,43 @@ on the window at the current \*y.
 \*(Es
 In this case, it will put on as much as it can.
 .Ds
+.Fn addnstr "char *str" "int len" \(dg
+.De
+Add no more than
+.Vn len
+characters of the string pointed to by                                                 
+.Vn str
+on the window at the current \*y.
+\*(Es
+In this case, it will put on as much as it can.
+.Ds
+.Fn attroff "int attribute" \(dg
+.De
+Remove character attributes set by
+.Fn attron or
+.Fn attrset .
+To clear all character attributes, use
+.Fn attroff "A_ATTRIBUTES" .
+.Fn attroff "A_UNDERLINE"
+is equivalent to 
+.Fn underend .
+.Ds
+.Fn attron "int attribute" \(dg
+.De
+Add character attributes for any characters
+added to the window (if it has that capability).
+The attributes that can be set are \fBA_UNDERLINE\fR,
+\fBA_REVERSE\fR, \fBA_BLINK\fR, \fBA_DIM\fR,
+\fBA_BOLD\fR, \fBA_BLANK\fR and \fBA_PROTECT\fB.
+.Fn attron "A_UNDERLINE"
+is equivalent to 
+.Fn underscore .
+.Ds
+.Fn attrset "int attribute" \(dg
+.De
+Set character attributes for any characters
+added to the window (if it has that capability).
+.Ds
 .Fn baudrate "" \(dg
 .De
 Returns the output baud rate of the terminal.
@@ -75,6 +110,12 @@ This is a system dependent constant
 on BSD systems,
 which is included by
 .b <curses.h> ).
+.Ds
+.Fn beep ""
+.De
+Sound the terminal bell.  If the terminal has no bell capability,
+but has the ability to flash the screen, do that instead.  See also
+.Fn flash
 .Ds
 .Fn box "WINDOW win" "char vert" "char hor"
 .De
@@ -90,7 +131,7 @@ the corners are left blank to avoid a scroll.
 .Ds
 .Fn cbreak "" \(dg
 .De
-Set or the terminal to cbreak mode.
+Set the terminal to cbreak mode.
 .Ds
 .Fn clear "" \(dg
 .De
@@ -222,6 +263,17 @@ Returns the erase character
 for the terminal,
 .i i.e. ,
 the character used by the user to erase a single character from the input.
+.Ds
+.Fn flash ""
+.De
+Flash the terminal screen.  If the terminal has no flash capability,
+but has the ability to sound the bell, do that instead.  See also
+.Fn bell
+.Ds
+.Fn flushinp ""
+.De
+Throw away any input that has been typed by the user but has not yet
+been read by the program.
 .Ds
 .Fn flushok "WINDOW *win" "int boolf"
 .De
@@ -358,6 +410,25 @@ will be shifted down,
 and the bottom line will disappear.
 The current line will become blank,
 and the current \*y will remain unchanged.
+.Ds
+.Fn isendwin ""
+.De
+Returns TRUE if
+.Fn endwin
+has been called without a subsequent call to
+.Fn wrefresh ,
+and FALSE otherwise.
+.Ds
+.Fn keypad "WINDOW *win" "int boolf"
+.De
+Sets the boolean flag for interpretation of escape sequences.  If
+.Vn boolf
+is non-zero, escape sequences from terminal keypad and function
+keys will be interpreted by the library.  Escape sequnces are not
+interpreted by default.  The include file
+.b <curses.h>
+contains the list of recognised keypad and function keys.  See also
+.Fn notimeout .
 .Ds
 .Fn killchar "" \(dg
 .De
@@ -509,6 +580,20 @@ The misnamed macro
 is retained for backwards compatibility
 with ealier versions of the library.
 .Ds
+.Fn nodelay "WINDOW *win1" "int boolf"
+.De
+Sets the boolean flag for non-blocking
+.Fn getch .
+If
+.Vn boolf
+is non-zero,
+.Fn getch
+will return ERR is no input is waiting.  The default
+is to for
+.Fn getch
+to block indefinitely.  See also
+.Fn timeout .
+.Ds
 .Fn noecho "" \(dg
 .De
 Turn echoing of characters off.
@@ -523,6 +608,25 @@ Unset the terminal to from nl mode.  See
 .De
 Unset the terminal from raw mode.  See 
 .Fn raw .
+.Ds
+.Fn notimeout "WINDOW *win1" "int boolf"
+.De
+Sets the boolean flag for inter-key timeouts
+for escape sequences interpreted when
+.Fn keypad
+is set.
+By default,
+.Fn keypad
+sets a timer while waiting for the next character of
+an escape sequence.
+If
+.Vn boolf
+is non-zero,
+.Fn getch
+will wait indefinitely between escape sequence characters,
+or until a delay set by
+.Fn timeout
+expires.
 .Ds
 .Fn overlay "WINDOW *win1" "WINDOW *win2"
 .De
@@ -658,12 +762,21 @@ This is its default setting.
 .De
 End standout mode initiated by
 .Fn standout .
+This function is provided for compatibility
+with older curses implementations.
 .Ds
 .Fn standout "" \(dg
 .De
 Causes any characters added to the window
 to be put in standout mode on the terminal
-(if it has that capability).
+(if it has that capability).  This function
+is provided for compatibility with older curses
+implementations.  A larger range of character
+attributes supported by modern terminals can be
+accessed using
+.Fn attron
+and
+.Fn attrset .
 .Ds
 .Ft "WINDOW *"
 .Fn subwin "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
@@ -693,6 +806,30 @@ that dimension will be set to
 or
 .Vn "COLS \- begin\*_x" ) (
 respectively.
+.Ds
+.Fn timeout "int delay" \(dg
+.De
+Sets blocking or non-blocking
+.Fn getch .
+If
+.Vn delay
+is positive,
+.Fn getch
+will block for
+.Vn delay
+milliseconds before returning.  If
+.Vn delay
+is zero,
+.Fn getch
+will return ERR is no input is waiting.  If
+.Vn delay
+is negative,
+.Fn getch
+will block indefinitely.  See also
+.Fn keypad ,
+.Fn nodelay
+and
+.Fn notimeout .
 .Ds
 .Fn touchline "WINDOW *win" "int y" "int startx" "int endx"
 .De
@@ -751,6 +888,21 @@ Returns the length of the ASCII representation of
 .Vn ch .
 .ne 1i
 .Ds
+.Fn underend "" \(dg
+.De
+End underscore mode initiated by
+.Fn underscore .
+This is equivalent to
+.Fn attroff "A_UNDERLINE" .
+.Ds
+.Fn underscore "" \(dg
+.De
+Causes any characters added to the window
+to be put in underscore mode on the terminal
+(if it has that capability).
+This is equivalent to
+.Fn attron "A_UNDERLINE" .
+.Ds
 .Fn vwprintw "WINDOW *win" "const char *fmt" "va_list ap"
 .De
 Identical to 
@@ -781,6 +933,10 @@ specification of a window, rather than the use of the default
 .Ds
 .Fn waddch "WINDOW *win" "char ch" 
 .Fn waddstr "WINDOW *win" "char *str" 
+.Fn waddnstr "WINDOW *win" "char *str" "int len"
+.Fn wattron  "WINDOW *win" "int attr"
+.Fn wattroff  "WINDOW *win" "int attr"
+.Fn wattrset  "WINDOW *win" "int attr"
 .Fn wclear "WINDOW *win"  
 .Fn wclrtobot "WINDOW *win"  
 .Fn wclrtoeol "WINDOW *win"  
@@ -798,4 +954,7 @@ specification of a window, rather than the use of the default
 .Fn wscanw "WINDOW *win" "char *fmt" "..." 
 .Fn wstandend "WINDOW *win" 
 .Fn wstandout "WINDOW *win"
+.Fn wtimeout "WINDOW *win" "int delay"
+.Fn wunderend "WINDOW *win" 
+.Fn wunderscore "WINDOW *win"
 .Dg

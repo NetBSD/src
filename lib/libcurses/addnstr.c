@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.4 1997/07/22 07:36:23 mikel Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.5 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.4 1997/07/22 07:36:23 mikel Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.5 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <string.h>
 
@@ -56,14 +56,14 @@ int
 waddnstr(win, s, n)
 	WINDOW *win;
 	const char *s;
-	int n;
+	int     n;
 {
-	size_t len;
+	size_t  len;
 	const char *p;
 
 	if (n > 0)
 		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = strlen(s);
-	return (waddbytes(win, s, len));
+	return (waddbytes(win, s, (int) len));
 }

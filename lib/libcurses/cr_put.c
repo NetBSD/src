@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.11 1998/08/19 00:20:59 thorpej Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.12 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.11 1998/08/19 00:20:59 thorpej Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.12 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include <string.h>
 
@@ -57,15 +57,15 @@ __RCSID("$NetBSD: cr_put.c,v 1.11 1998/08/19 00:20:59 thorpej Exp $");
 /* Stub function for the users. */
 int
 mvcur(ly, lx, y, x)
-	int ly, lx, y, x;
+	int     ly, lx, y, x;
 {
 	return (__mvcur(ly, lx, y, x, 0));
 }
 
-static void	fgoto __P((int));
-static int	plod __P((int, int));
-static void	plodput __P((int));
-static int	tabcol __P((int, int));
+static void fgoto __P((int));
+static int plod __P((int, int));
+static void plodput __P((int));
+static int tabcol __P((int, int));
 
 static int outcol, outline, destcol, destline;
 
@@ -76,7 +76,7 @@ static int outcol, outline, destcol, destline;
  */
 int
 __mvcur(ly, lx, y, x, in_refresh)
-	int ly, lx, y, x, in_refresh;
+	int     ly, lx, y, x, in_refresh;
 {
 #ifdef DEBUG
 	__CTRACE("mvcur: moving cursor from (%d, %d) to (%d, %d)\n",
@@ -88,14 +88,14 @@ __mvcur(ly, lx, y, x, in_refresh)
 	outline = ly;
 	fgoto(in_refresh);
 	return (OK);
-}	
-        
+}
+
 static void
 fgoto(in_refresh)
-	int in_refresh;
+	int     in_refresh;
 {
-	int c, l;
-	char *cgp;
+	int     c, l;
+	char   *cgp;
 
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
@@ -145,15 +145,14 @@ fgoto(in_refresh)
 			 * sc capability but sf will generally take the place
 			 * if it works.
 			 * 
-			 * Superbee glitch: in the middle of the screen have
-			 * to use esc B (down) because linefeed screws up in
+			 * Superbee glitch: in the middle of the screen have to
+			 * use esc B (down) because linefeed screws up in
 			 * "Efficient Paging" (what a joke) mode (which is
 			 * essential in some SB's because CRLF mode puts
 			 * garbage in at end of memory), but you must use
 			 * linefeed to scroll since down arrow won't go past
 			 * memory end. I turned this off after recieving Paul
-			 * Eggert's Superbee description which wins better.
-			 */
+			 * Eggert's Superbee description which wins better. */
 			if (NL /* && !XB */ && __pfast)
 				tputs(NL, 0, __cputchar);
 			else
@@ -172,9 +171,9 @@ fgoto(in_refresh)
 		 * Need this condition due to inconsistent behavior
 		 * of backspace on the last column.
 		 */
-		if (outcol != COLS - 1 && plod(strlen(cgp), in_refresh) > 0)
+		if (outcol != COLS - 1 && plod((int) strlen(cgp), in_refresh) > 0)
 			plod(0, in_refresh);
-		else 
+		else
 			tputs(cgp, 0, __cputchar);
 	} else
 		plod(0, in_refresh);
@@ -192,7 +191,7 @@ static int plodcnt, plodflg;
 
 static void
 plodput(c)
-	int c;
+	int     c;
 {
 	if (plodflg)
 		--plodcnt;
@@ -202,9 +201,9 @@ plodput(c)
 
 static int
 plod(cnt, in_refresh)
-	int cnt, in_refresh;
+	int     cnt, in_refresh;
 {
-	int i, j, k, soutcol, soutline;
+	int     i, j, k, soutcol, soutline;
 
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;
@@ -254,18 +253,19 @@ plod(cnt, in_refresh)
 			 */
 			tputs(HO, 0, plodput);
 			outcol = outline = 0;
-		} else if (LL) {
-			/*
-			 * Quickly consider homing down and moving from there.
-			 * Assume cost of LL is 2.
-			 */
-			k = (LINES - 1) - destline;
-			if (i + k + 2 < j && (k <= 0 || UP)) {
-				tputs(LL, 0, plodput);
-				outcol = 0;
-				outline = LINES - 1;
+		} else
+			if (LL) {
+				/*
+				 * Quickly consider homing down and moving from there.
+				 * Assume cost of LL is 2.
+				 */
+				k = (LINES - 1) - destline;
+				if (i + k + 2 < j && (k <= 0 || UP)) {
+					tputs(LL, 0, plodput);
+					outcol = 0;
+					outline = LINES - 1;
+				}
 			}
-		}
 	} else
 		/* No home and no up means it's impossible. */
 		if (!UP && destline < outline)
@@ -276,14 +276,13 @@ plod(cnt, in_refresh)
 		i = destcol;
 #ifdef notdef
 	if (BT && outcol > destcol &&
-	    (j = (((outcol+7) & ~7) - destcol - 1) >> 3)) {
+	    (j = (((outcol + 7) & ~7) - destcol - 1) >> 3)) {
 		j *= (k = strlen(BT));
-		if ((k += (destcol&7)) > 4)
-			j += 8 - (destcol&7);
+		if ((k += (destcol & 7)) > 4)
+			j += 8 - (destcol & 7);
 		else
 			j += k;
-	}
-	else
+	} else
 #endif
 		j = outcol - destcol;
 
@@ -323,8 +322,7 @@ plod(cnt, in_refresh)
 		}
 		outcol = 0;
 	}
-
-dontcr:	while (outline < destline) {
+dontcr:while (outline < destline) {
 		outline++;
 		if (NL)
 			tputs(NL, 0, plodput);
@@ -397,14 +395,14 @@ dontcr:	while (outline < destline) {
 			else {
 				i = curscr->lines[outline]->line[outcol].ch;
 				if ((curscr->lines[outline]->line[outcol].attr
-				     & __STANDOUT) ==
+					& __STANDOUT) ==
 				    (curscr->flags & __WSTANDOUT))
 					putchar(i);
 				else
 					goto nondes;
 			}
 		else
-nondes:			if (ND)
+	nondes:	if (ND)
 				tputs(ND, 0, plodput);
 			else
 				plodput(' ');
@@ -419,7 +417,6 @@ out:	if (plodflg) {
 	}
 	return (plodcnt);
 }
-
 /*
  * Return the column number that results from being in column col and
  * hitting a tab, where tabs are set every ts columns.  Work right for
@@ -427,9 +424,9 @@ out:	if (plodflg) {
  */
 static int
 tabcol(col, ts)
-	int col, ts;
+	int     col, ts;
 {
-	int offset;
+	int     offset;
 
 	if (col >= COLS) {
 		offset = COLS * (col / COLS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.8 1998/02/03 19:12:29 perry Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.8 1998/02/03 19:12:29 perry Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -51,10 +51,10 @@ __RCSID("$NetBSD: mvwin.c,v 1.8 1998/02/03 19:12:29 perry Exp $");
 int
 mvwin(win, by, bx)
 	WINDOW *win;
-	int by, bx;
+	int     by, bx;
 {
 	WINDOW *orig;
-	int dy, dx;
+	int     dy, dx;
 
 	if (by + win->maxy > LINES || bx + win->maxx > COLS)
 		return (ERR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.9 1998/02/03 19:12:18 perry Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.10 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.9 1998/02/03 19:12:18 perry Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,7 +52,7 @@ int
 wclrtoeol(win)
 	WINDOW *win;
 {
-	int minx, x, y;
+	int     minx, x, y;
 	__LDATA *end, *maxx, *sp;
 
 	y = win->cury;
@@ -77,14 +77,9 @@ wclrtoeol(win)
 		}
 #ifdef DEBUG
 	__CTRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
-	    minx, maxx - win->lines[y]->line, *win->lines[y]->firstchp, 
+	    minx, maxx - win->lines[y]->line, *win->lines[y]->firstchp,
 	    *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
-	return (__touchline(win, y, x, win->maxx - 1, 0));
+	return (__touchline(win, y, x, (int) win->maxx - 1, 0));
 }
-
-
-
-
-
