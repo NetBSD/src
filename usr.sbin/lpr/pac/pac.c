@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.11 1999/12/05 22:18:40 jdolecek Exp $	*/
+/*	$NetBSD: pac.c,v 1.12 1999/12/05 22:22:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.11 1999/12/05 22:18:40 jdolecek Exp $");
+__RCSID("$NetBSD: pac.c,v 1.12 1999/12/05 22:22:05 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,10 +113,10 @@ main(argc, argv)
 {
 	FILE *acct;
 	char *cp;
-	int errs, i;
+	int opt;
 
-	while ((i = getopt(argc, argv, "P:p:scmr")) != -1) {
-		switch(i) {
+	while ((opt = getopt(argc, argv, "P:p:scmr")) != -1) {
+		switch(opt) {
 		case 'P':
 			/*
 			 * Printer name.
