@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: nfs_prot_hpux11.h,v 1.1.1.2 2000/11/19 23:43:03 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_hpux11.h,v 1.4 2000/01/12 16:44:47 ezk Exp 
+ * Id: nfs_prot_hpux11.h,v 1.4.2.1 2000/02/25 03:16:43 ezk Exp
  *
  */
 
@@ -93,6 +94,7 @@
 #define NFS_COOKIESIZE 4
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
+#define HOSTNAMESZ 32      /* Max size of hostname in struct nfs_args */
 
 #define NFSMODE_FMT 0170000
 #define NFSMODE_DIR 0040000
@@ -152,14 +154,13 @@
 #define	NFSMNT_KERBEROS		0x20000	/* use kerberos credentials */
 #define	NFSMNT_POSIX		0x40000 /* static pathconf kludge info */
 #define	NFSMNT_LLOCK		0x80000	/* Local locking (no lock manager) */
-#define NFSMNT_FSNAME           0x1000000 /* set f/s name */
+#define NFSMNT_REMOUNT          0x100000 /* Remount from r/o to r/w */
+
+#define NFSMNT_FSNAME           0x1000000 /* FS name e.g. "host:/path/" */
+#define NFSMNT_NODEVS           0x2000000 /* no devices access (default on) */
+#define NFSMNT_IGNORE           0x4000000 /* ignore in mnttab */
 
 #define MS_FSS        0x00            /* fake flag to do nothing */
-
-/* no am-utils support for NFS V.3 yet */
-#undef MNTTYPE_NFS3
-#undef MNTTAB_TYPE_NFS3
-#undef HAVE_FS_NFS3
 
 /*
  * ENUMS:
@@ -300,7 +301,7 @@ extern bool_t xdr_statfsres(XDR *, nfsstatfsres*);
  * STRUCTURES:
  */
 
-/* HP shamelessly stole this from Solaris 2.5.1 */
+/* This is similar to Solaris 2.5.1 */
 struct nfs_args {
   struct netbuf		*addr;		/* file server address */
   struct netbuf		*syncaddr;	/* secure NFS time sync addr */

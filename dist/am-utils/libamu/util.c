@@ -1,4 +1,5 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: util.c,v 1.1.1.2 2000/11/19 23:43:21 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: util.c,v 1.3 2000/01/12 16:45:08 ezk Exp 
+ * Id: util.c,v 1.3 2000/01/12 16:45:08 ezk Exp
  *
  */
 
