@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.52 2003/11/21 18:07:29 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.53 2003/11/30 07:41:54 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -548,7 +548,6 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 #endif /* !defined(PPC_OEA64) */
 
 #if defined(DDB) || defined(KGDB)
-#define	ddbsave	0xde0		/* primary save area for DDB */
 /*
  * In case of DDB we want a separate trap catcher for it
  */
