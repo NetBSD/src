@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 1999/04/19 03:11:34 simonb Exp $
+# $NetBSD: mi,v 1.37 1999/07/04 20:07:52 fvdl Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -61,6 +61,7 @@
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
+./etc/rtadvd.conf
 ./etc/security
 ./etc/security.conf
 ./etc/sendmail.cf
