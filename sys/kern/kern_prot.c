@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.50 1998/09/25 06:04:48 erh Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.51 1998/12/10 15:09:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -47,6 +47,7 @@
 #include "opt_compat_freebsd.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_sunos.h"
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
