@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.14 1993/10/18 07:38:32 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.15 1993/10/29 17:57:05 mycroft Exp $
  */
 
 /*
@@ -70,6 +70,8 @@ struct com_softc {
 	u_char	sc_flags;
 #define	COM_SOFTCAR	0x01
 #define	COM_FIFO	0x02
+	u_char	sc_bufn;
+	u_char	*sc_buf;
 };
 /* XXXX should be in com_softc, but not ready for that yet */
 #include "com.h"
@@ -102,7 +104,7 @@ extern	struct tty *constty;
 
 static int
 comspeed(speed)
-	int speed;
+	long speed;
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -472,7 +474,7 @@ comparam(tp, t)
 	struct	com_softc *sc = comcd.cd_devs[unit];
 	u_short	iobase = sc->sc_iobase;
 	int	ospeed = comspeed(t->c_ospeed);
-	u_char	cflag = t->c_cflag;
+	tcflag_t cflag = t->c_cflag;
 	u_char	cfcr;
 	int	s;
  
