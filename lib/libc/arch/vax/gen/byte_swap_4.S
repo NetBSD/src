@@ -33,13 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: byte_swap_4.S,v 1.1 1999/01/15 13:31:21 bouyer Exp $"
+	.asciz "$NetBSD: byte_swap_4.S,v 1.2 1999/03/06 11:13:43 ragge Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
-ALTENTRY(ntohs)
-ALTENTRY(htons)
+ALTENTRY(ntohl)
+ALTENTRY(htonl)
 ENTRY(__bswap32, 0)
 	rotl	$-8,4(ap),r0
 	insv	r0,$16,$8,r0
