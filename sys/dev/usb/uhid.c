@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.34 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.35 2000/03/19 22:23:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -630,6 +630,30 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 			return (EINVAL);
 		}
 		err = usbd_get_report(sc->sc_iface, re->report, id, re->data,
+			  size);
+		if (err)
+			return (EIO);
+		break;
+
+	case USB_SET_REPORT:
+		re = (struct usb_ctl_report *)addr;
+		switch (re->report) {
+		case UHID_INPUT_REPORT:
+			size = sc->sc_isize;
+			id = sc->sc_iid;
+			break;
+		case UHID_OUTPUT_REPORT:
+			size = sc->sc_osize;
+			id = sc->sc_oid;
+			break;
+		case UHID_FEATURE_REPORT:
+			size = sc->sc_fsize;
+			id = sc->sc_fid;
+			break;
+		default:
+			return (EINVAL);
+		}
+		err = usbd_set_report(sc->sc_iface, re->report, id, re->data,
 			  size);
 		if (err)
 			return (EIO);
