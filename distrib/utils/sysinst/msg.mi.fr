@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.35 2000/08/07 15:56:34 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.36 2000/09/21 17:12:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -258,8 +258,8 @@ message packname
 {SVP donnez un nom à votre disque NetBSD.}
 
 message lastchance
-{Bon, nous sommes prêt à installer NetBSD sur votre disque. Rien n'a été écrit
-pour l'instant. C'est votre dernière chance de quitter cette procédure en
+{Bon, nous sommes prêt à installer NetBSD sur votre disque (%s). Rien n'a été
+écrit pour l'instant. C'est votre dernière chance de quitter cette procédure en
 laissant votre disque intact. On continue ?
 }
 
