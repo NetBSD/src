@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.c,v 1.1 1999/09/12 19:04:31 kleink Exp $	*/
+/*	$NetBSD: fmtmsg.c,v 1.2 1999/09/13 18:36:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,6 +37,10 @@
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fmtmsg.c,v 1.2 1999/09/13 18:36:02 kleink Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <fmtmsg.h>
 #include <paths.h>
 #include <stdio.h>
