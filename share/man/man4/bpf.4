@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.19 2002/08/28 09:35:55 onoe Exp $
+.\"	$NetBSD: bpf.4,v 1.20 2002/08/29 12:20:21 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd June 28, 1994
+.Dd August 29, 2002
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -56,7 +56,8 @@ example given in the SYNOPSIS above sets the limit to 16.
 A separate device file is required for each minor device.
 If a file is in use, the open will fail and
 .Va errno
-will be set to EBUSY.
+will be set to
+.Ev EBUSY .
 .Pp
 Associated with each open instance of a
 .Nm
@@ -130,7 +131,8 @@ allowable size will be set and returned in the argument.
 A read call will result in EIO if it is passed a buffer that is not this size.
 .It Dv BIOCGDLT (u_int)
 Returns the type of the data link layer underlying the attached interface.
-EINVAL is returned if no interface has been specified.
+.Ev EINVAL
+is returned if no interface has been specified.
 The device types, prefixed with
 .Dq DLT_ ,
 are defined in \*[Lt]net/bpf.h\*[Gt].
@@ -148,18 +150,23 @@ The available type is returned to the array pointed to the
 .Va bfl_list
 field while its length in u_int is supplied to the
 .Va bfl_len
-field.  ENOMEM is returned if there is not enough buffer.  The
+field.
+.Ev ENOMEM
+is returned if there is not enough buffer.  The
 .Va bfl_len
 field is modified on return to indicate the actual length in u_int
 of the array returned.
 If
 .Va bfl_list
-is NULL, the
+is
+Dv NULL ,
+the
 .Va bfl_len
 field is returned to indicate the required length of an array in u_int.
 .It Dv BIOCSDLT (u_int)
 Change the type of the data link layer underlying the attached interface.
-EINVAL is returned if no interface has been specified or the specified
+.Ev EINVAL
+is returned if no interface has been specified or the specified
 type is not available for the interface.
 .It Dv BIOCPROMISC
 Forces the interface into promiscuous mode.
@@ -298,7 +305,8 @@ Set or clear non-blocking I/O.  If arg is non-zero, then doing a
 .Xr read 2
 when no data is available will return -1 and
 .Va errno
-will be set to EAGAIN.
+will be set to
+.Ev EAGAIN .
 If arg is zero, non-blocking I/O is disabled.  Note:  setting this
 overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
@@ -676,7 +684,9 @@ so desired, must utilize a filter to reject foreign packets.
 Data link protocols with variable length headers are not currently supported.
 .Pp
 Under SunOS, if a BPF application reads more than 2^31 bytes of
-data, read will fail in EINVAL.  You can either fix the bug in SunOS,
+data, read will fail in
+.Ev EINVAL .
+You can either fix the bug in SunOS,
 or lseek to 0 when read fails for this reason.
 .Pp
 .Dq Immediate mode
