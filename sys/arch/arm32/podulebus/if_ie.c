@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.13 1997/03/15 18:09:39 is Exp $ */
+/* $NetBSD: if_ie.c,v 1.13.4.1 1997/10/15 05:45:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -172,7 +172,7 @@ static int command_and_wait __P(( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
 			      void *pcmd, int ocmd, int scmd, int mask ));
 
-int ieprobe __P((struct device *, void *, void *));
+int ieprobe __P((struct device *, struct cfdata *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
 /*
@@ -296,7 +296,7 @@ crc32(p, l)
  */
 
 int
-ieprobe(struct device *parent, void *match, void *aux)
+ieprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
@@ -484,10 +484,10 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
 	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
 
-	if (irq_claim(IRQ_PODULE, &sc->sc_ih)) {
+	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih)) {
 		sc->sc_irqmode = 0;
 		printf(" POLLED");
-		panic("Cannot install IRQ handler\n");
+		panic("%s: Cannot install IRQ handler\n", sc->sc_dev.dv_xname);
 	} else {
 		sc->sc_irqmode = 1;
 		printf(" IRQ");
@@ -1444,8 +1444,8 @@ loop:
 	ie_cli(sc);
 	if ( saftey_net++ > 50 )
 	{
-	    printf ( "ie: saftey net catches driver, shutting down\n" );
-	    disable_irq ( IRQ_PODULE );
+/*	    printf ( "ie: saftey net catches driver, shutting down\n" );
+	    disable_irq ( IRQ_PODULE );*/
 	}
 	in_intr = 0;
 	return(0);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.13.4.1 1997/08/23 07:08:07 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.13.4.2 1997/10/15 05:44:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -159,7 +159,7 @@ static void eb_hardreset __P((struct eb_softc *));
 static void ebgetpackets __P((struct eb_softc *));
 static void ebtxpacket __P((struct eb_softc *));
 
-int ebprobe __P((struct device *, void *, void *));
+int ebprobe __P((struct device *, struct cfdata *, void *));
 void ebattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
@@ -237,15 +237,15 @@ eb_dump_buffer(sc, offset)
  */
 
 /*
- * int ebprobe(struct device *parent, void *match, void *aux)
+ * int ebprobe(struct device *parent, struct cfdata *cf, void *aux)
  *
  * Probe for the ether3 podule.
  */
 
 int
-ebprobe(parent, match, aux)
+ebprobe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
@@ -360,10 +360,7 @@ ebattach(parent, self, aux)
 
 /* Claim either a network slot interrupt or a podule interrupt */
 
-	if (sc->sc_podule_number >= MAX_PODULES)
-		sc->sc_irq = IRQ_NETSLOT;
-	else
-		sc->sc_irq = IRQ_PODULE /*+ sc->sc_podule_number*/;
+	sc->sc_irq = sc->sc_podule->interrupt;
 
 	/* Stop the board. */
 
@@ -1496,7 +1493,7 @@ eb_ioctl(ifp, cmd, data)
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN;
+				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 			/* Set new address. */
 			dprintf(("Interface eb is coming up (AF_NS)\n"));
 			eb_init(sc);

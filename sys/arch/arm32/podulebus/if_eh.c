@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.16 1997/07/28 17:54:07 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.16.2.1 1997/10/15 05:44:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -166,7 +166,7 @@ struct eh_softc {
 /* Function and data prototypes *********************************************/
 /****************************************************************************/
 
-int  ehprobe		__P((struct device *parent, void *match, void *aux));
+int  ehprobe		__P((struct device *parent, struct cfdata *cf, void *aux));
 void ehattach		__P((struct device *parent, struct device *self, void *aux));
 void ehstart		__P((struct ifnet *ifp));
 int  ehioctl		__P((struct ifnet *ifp, u_long cmd, caddr_t data));
@@ -211,9 +211,9 @@ struct cfdriver eh_cd = {
 /****************************************************************************/
 
 int
-ehprobe(parent, match, aux)
+ehprobe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *) aux;
@@ -462,10 +462,10 @@ ehattach(parent, self, aux)
 	sc->sc_ih.ih_level = IPL_NET;
 	sc->sc_ih.ih_name = "net: eh";
 	
-	irq = (sc->sc_podule_number>=MAX_PODULES) ? IRQ_NETSLOT : IRQ_PODULE;
+	irq = sc->sc_podule->interrupt;
 
 	if (irq_claim(irq, &sc->sc_ih))
-		panic("Cannot install IRQ handler");
+		panic("%s: Cannot install IRQ handler\n", sc->sc_dev.dv_xname);
 
     /* This loopbacks the card on reset, and stops riscos locking */
 

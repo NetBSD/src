@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.4 1996/10/12 18:31:10 mark Exp $ */
+/*	$NetBSD: pte.h,v 1.4.10.1 1997/10/15 05:37:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

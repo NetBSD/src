@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.2 1997/01/26 01:50:17 mark Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.2.8.1 1997/10/15 05:42:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,6 +43,7 @@
 /* Proto types for all the bus_space structure functions */
 
 bs_protos(mainbus);
+bs_protos(bs_notimpl);
 
 /* Declare the mainbus bus space tag */
 
@@ -66,55 +67,54 @@ struct bus_space mainbus_bs_tag = {
 	mainbus_r_1,
 	mainbus_r_2,
 	mainbus_r_4,
-	mainbus_r_8,
+	bs_notimpl_r_8,
 
 	/* read multiple */
-	mainbus_rm_1,
+	bs_notimpl_rm_1,
 	mainbus_rm_2,
-	mainbus_rm_4,
-	mainbus_rm_8,
+	bs_notimpl_rm_4,
+	bs_notimpl_rm_8,
 
 	/* read region */
-	mainbus_rr_1,
-	mainbus_rr_2,
-	mainbus_rr_4,
-	mainbus_rr_8,
+	bs_notimpl_rr_1,
+	bs_notimpl_rr_2,
+	bs_notimpl_rr_4,
+	bs_notimpl_rr_8,
 
 	/* write (single) */
 	mainbus_w_1,
 	mainbus_w_2,
 	mainbus_w_4,
-	mainbus_w_8,
+	bs_notimpl_w_8,
 
 	/* write multiple */
 	mainbus_wm_1,
 	mainbus_wm_2,
-	mainbus_wm_4,
-	mainbus_wm_8,
+	bs_notimpl_wm_4,
+	bs_notimpl_wm_8,
 
 	/* write region */
-	mainbus_wr_1,
-	mainbus_wr_2,
-	mainbus_wr_4,
-	mainbus_wr_8,
+	bs_notimpl_wr_1,
+	bs_notimpl_wr_2,
+	bs_notimpl_wr_4,
+	bs_notimpl_wr_8,
 
-	/* set multiple */
-	mainbus_sm_1,
-	mainbus_sm_2,
-	mainbus_sm_4,
-	mainbus_sm_8,
+	bs_notimpl_sm_1,
+	bs_notimpl_sm_2,
+	bs_notimpl_sm_4,
+	bs_notimpl_sm_8,
 
 	/* set region */
-	mainbus_sr_1,
-	mainbus_sr_2,
-	mainbus_sr_4,
-	mainbus_sr_8,
+	bs_notimpl_sr_1,
+	bs_notimpl_sr_2,
+	bs_notimpl_sr_4,
+	bs_notimpl_sr_8,
 
 	/* copy */
-	mainbus_c_1,
-	mainbus_c_2,
-	mainbus_c_4,
-	mainbus_c_8,
+	bs_notimpl_c_1,
+	bs_notimpl_c_2,
+	bs_notimpl_c_4,
+	bs_notimpl_c_8,
 };
 
 /* bus space functions */

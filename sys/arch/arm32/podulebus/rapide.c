@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.2 1997/03/15 18:09:40 is Exp $	*/
+/*	$NetBSD: rapide.c,v 1.2.4.1 1997/10/15 05:46:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -87,15 +87,15 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <machine/io.h>
-#include <machine/iomd.h>
 #include <machine/bus.h>
 #include <machine/bootconfig.h>
+#include <arm32/iomd/iomdreg.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/rapidereg.h>
 
-#include <arm32/mainbus/wdreg.h>
-#include <arm32/mainbus/wdvar.h>
+#include <arm32/dev/wdreg.h>
+#include <arm32/dev/wdcvar.h>
 
 /*
  * RapIDE podule device.
@@ -124,7 +124,7 @@ struct rapide_softc {
 	bus_space_handle_t	sc_ctl_ioh;		/* control handler */
 };
 
-int	rapide_probe	__P((struct device *, void *, void *));
+int	rapide_probe	__P((struct device *, struct cfdata *, void *));
 void	rapide_attach	__P((struct device *, struct device *, void *));
 void	rapide_shutdown	__P((void *arg));
 
@@ -181,9 +181,10 @@ rapide_print(aux, name)
  */
 
 int
-rapide_probe(parent, match, aux)
+rapide_probe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
 
@@ -311,7 +312,7 @@ struct rapwdc_softc {
 	struct rapide_softc	*sc_softc;		/* pointer to parent */
 };
 
-int	wdc_rapide_probe	__P((struct device *, void *, void *));
+int	wdc_rapide_probe	__P((struct device *, struct cfdata *, void *));
 void	wdc_rapide_attach	__P((struct device *, struct device *, void *));
 int	wdc_rapide_intr		__P((void *));
 
@@ -350,9 +351,10 @@ struct {
  */
 
 int
-wdc_rapide_probe(parent, match, aux)
+wdc_rapide_probe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct rapide_attach_args *ra = (void *)aux;
 	struct podule_attach_args *pa = ra->ra_pa;
@@ -491,7 +493,7 @@ wdc_rapide_attach(parent, self, aux)
 	wdc->sc_ih.ih_maskaddr = wdc->sc_podule->irq_addr;
 	wdc->sc_ih.ih_maskbits = wdc->sc_irqmask;
 
-	if (irq_claim(IRQ_PODULE, &wdc->sc_ih))
+	if (irq_claim(sc->sc_podule->interrupt, &wdc->sc_ih))
 		panic("Cannot claim IRQ %d for %s\n", IRQ_PODULE, self->dv_xname);
 
 	/* clear any pending interrupts and enable interrupts */

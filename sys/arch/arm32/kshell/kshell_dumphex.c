@@ -1,4 +1,4 @@
-/* $NetBSD: dumphex.c,v 1.4 1996/10/13 03:06:06 christos Exp $ */
+/*	$NetBSD: kshell_dumphex.c,v 1.5.2.2 1997/10/15 05:39:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -130,4 +130,4 @@ dumpw(addr, count)
 	}
 }
 
-/* End of dumphex.c */
+/* End of kshell_dumphex.c */
