@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.59 2001/05/21 09:17:28 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.60 2001/07/24 14:45:16 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.59 2001/05/21 09:17:28 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.60 2001/07/24 14:45:16 wiz Exp $");
 #endif
 #endif
 
@@ -341,18 +341,19 @@ pkg_do(char *pkg)
 					if (Verbose)
 						printf("Upgrading %s to %s.\n", installed, PkgName);
 
-					if (fexists(upgrade_from)) {
-						if (0 && Verbose)
-							printf("HF: mv %s %s\n", upgrade_from, upgrade_via);
+					if (fexists(upgrade_from)) {  /* Are there any dependencies? */
+						if (Verbose)
+							printf("mv %s %s\n", upgrade_from, upgrade_via);
 						rc = rename(upgrade_from, upgrade_via);
 						assert(rc == 0);
-
-						if (0 && Verbose)
-							printf("HF: pkg_delete '%s'\n", installed);
-						vsystem("pkg_delete '%s'\n", installed);
-
+						
 						upgrading = 1;
 					}
+
+					if (Verbose)
+						printf("pkg_delete '%s'\n", installed);
+					vsystem("pkg_delete '%s'\n", installed);
+					
 				} else {
 					warnx("other version '%s' already installed", installed);
 
