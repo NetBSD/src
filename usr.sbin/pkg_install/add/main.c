@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16 2000/10/11 11:01:41 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2000/12/13 03:17:53 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2000/10/11 11:01:41 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2000/12/13 03:17:53 hubertf Exp $");
 #endif
 #endif
 
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 					/* Maybe just a pkg name w/o pattern was given */
 					char tmp[FILENAME_MAX];
 						
-					snprintf(tmp, sizeof(tmp), "%s-[0-9]*.tgz", *argv);
+					snprintf(tmp, sizeof(tmp), "%s-[0-9]*.t[bg]z", *argv);
 					s=findbestmatchingname(dirname_of(tmp),
 							       basename_of(tmp));
 					if (s) {

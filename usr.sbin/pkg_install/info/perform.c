@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.33 2000/11/30 10:09:15 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.34 2000/12/13 03:17:54 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.33 2000/11/30 10:09:15 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.34 2000/12/13 03:17:54 hubertf Exp $");
 #endif
 #endif
 
@@ -67,12 +67,14 @@ pkg_do(char *pkg)
 			}
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
-		} else
+		} else {
 			strcpy(fname, pkg);
+		}
 		cp = fname;
 	} else {
-		if ((cp = fileFindByPath(NULL, pkg)) != NULL)
+		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
 			strncpy(fname, cp, FILENAME_MAX);
+		}
 	}
 
 	if (cp) {
@@ -80,22 +82,35 @@ pkg_do(char *pkg)
 			/* file is already unpacked by fileGetURL() */
 			strcpy(PlayPen, cp);
 		} else {
-			/*
-			 * Apply a crude heuristic to see how much space the package will
-			 * take up once it's unpacked.  I've noticed that most packages
-			 * compress an average of 75%, but we're only unpacking the + files so
-			 * be very optimistic.
-			 */
-			if (stat(fname, &sb) == FAIL) {
-				warnx("can't stat package file '%s'", fname);
-				code = 1;
-				goto bail;
-			}
-			Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
-			if (unpack(fname, "+*")) {
-				warnx("error during unpacking, no info for '%s' available", pkg);
-				code = 1;
-				goto bail;
+			if (IS_URL(cp)) {
+				/* only a package name was given, and it was expanded to a
+				 * full URL by fileFindByPath. Now extract...
+				 */
+				char *cp2;
+
+				if ((cp2 = fileGetURL(NULL, cp)) != NULL) {
+					strcpy(fname, cp2);
+					isTMP = TRUE;
+				}
+				strcpy(PlayPen, cp2);
+			} else {
+				/*
+				 * Apply a crude heuristic to see how much space the package will
+				 * take up once it's unpacked.  I've noticed that most packages
+				 * compress an average of 75%, but we're only unpacking the + files so
+				 * be very optimistic.
+				 */
+				if (stat(fname, &sb) == FAIL) {
+					warnx("can't stat package file '%s'", fname);
+					code = 1;
+					goto bail;
+				}
+				Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
+				if (unpack(fname, "+*")) {
+					warnx("error during unpacking, no info for '%s' available", pkg);
+					code = 1;
+					goto bail;
+				}
 			}
 		}
 	} else {
