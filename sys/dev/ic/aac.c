@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.17 2005/03/01 03:31:45 briggs Exp $	*/
+/*	$NetBSD: aac.c,v 1.18 2005/03/12 10:35:29 darcy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.17 2005/03/01 03:31:45 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.18 2005/03/12 10:35:29 darcy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,12 @@ aac_attach(struct aac_softc *sc)
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
 	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	locdesc_t *ldesc = (void *)help; /* XXX - Not clean
+		The big plan is to let config(8) issue information
+		about the length of the locator array in a useful way.
+		Then the allocation can be centralized. See also
+		http://mail-index.netbsd.org/tech-kern/2005/02/09/0025.html
+	*/
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
