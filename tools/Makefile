@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2002/04/06 13:33:46 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.48 2002/05/03 20:35:46 kleink Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,10 @@ SUBDIR+=	groff
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	autoconf gettext
+.endif
+
+.if ${MACHINE} == prep
+SUBDIR+=	prep-mkbootimage
 .endif
 
 .if ${MACHINE} == sparc || ${MACHINE} == sparc64
