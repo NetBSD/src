@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.1 1999/02/13 17:33:14 minoura Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.2 1999/02/19 16:19:53 minoura Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -525,13 +525,13 @@ spc_scsi_cmd(xs)
 
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 	/*
-	 * キューの処理中でなければ、スケジューリング開始する
+	 * Start scheduling unless a queue process is in progress.
 	 */
 	if (sc->sc_state == SPC_IDLE)
 		spc_sched(sc);
 	/*
-	 * 送信に成功したら、すぐにリターンするか調べる
-	 * すぐリターンするなら SUCCESSFULLY_QUEUED を返す
+	 * After successful sending, check if we should return just now.
+	 * If so, return SUCCESSFULLY_QUEUED.
 	 */
 
 	splx(s);
@@ -660,18 +660,19 @@ spc_select(sc, acb)
 	bus_space_write_1(iot, ioh, PCTL, 0);
 	bus_space_write_1(iot, ioh, TEMP, (1 << sc->sc_initiator) | (1 << target));
 	/*
-	 * BSY による応答待ち時間設定 (設定時間を過ぎると selection timeout)
-	 * 0 にすると無限待ち (x68k では Tclf == 200ns)
-	 * T = (X * 256 + 15) * Tclf * 2 なので... 256ms 待つとすると
+	 * Setup BSY timeout (selection timeout).
+	 * 250ms according to the SCSI specification.
+	 * T = (X * 256 + 15) * Tclf * 2  (Tclf = 200ns on x68k)
+	 * To setup 256ms timeout,
 	 * 128000ns/200ns = X * 256 + 15
 	 * 640 - 15 = X * 256
 	 * X = 625 / 256
 	 * X = 2 + 113 / 256
-	 * なので tch に 2, tcm に 113 を代入。(いいのか?)
+	 *  ==> tch = 2, tcm = 113 (correct?)
 	 */
 	bus_space_write_1(iot, ioh, TCH, 2);
 	bus_space_write_1(iot, ioh, TCM, 113);
-	/* BSY と SEL が 0 になってからフェーズ開始までの時間 */
+	/* Time to the information transfer phase start. */
 	bus_space_write_1(iot, ioh, TCL, 3);
 	bus_space_write_1(iot, ioh, SCMD, SCMD_SELECT);
 
@@ -1475,10 +1476,10 @@ spc_dataout_pio(sc, p, n)
 
 		for (;;) {
 			intstat = bus_space_read_1(iot, ioh, INTS);
-			/* バッファが空になるまで待つ */
+			/* Wait till buffer is empty. */
 			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)
 				break;
-			/* ただし割り込みが入ってきたら抜ける */
+			/* Break on interrupt. */
 			if (intstat != 0)
 				goto phasechange;
 		}
@@ -1504,11 +1505,11 @@ spc_dataout_pio(sc, p, n)
 	} else {
 		/* See the bytes off chip */
 		for (;;) {
-			/* バッファが空になるまで待つ */
+			/* Wait till buffer is empty. */
 			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)
 				break;
 			intstat = bus_space_read_1(iot, ioh, INTS);
-			/* ただし割り込みが入ってきたら抜ける */
+			/* Break on interrupt. */
 			if (intstat != 0)
 				goto phasechange;
 		}
@@ -1660,7 +1661,7 @@ spcintr(arg)
 	int n;
 
 	/*
-	 * 割り込み禁止にする
+	 * Disable interrupt.
 	 */
 	bus_space_write_1(iot, ioh, SCTL, bus_space_read_1(iot, ioh, SCTL) & ~SCTL_INTR_ENAB);
 
@@ -1668,7 +1669,7 @@ spcintr(arg)
 
 loop:
 	/*
-	 * 全転送が完全に終了するまでループする
+	 * Loop until transfer completion.
 	 */
 	/*
 	 * First check for abnormal conditions, such as reset.
@@ -1920,7 +1921,7 @@ dophase:
 #endif
 
 	/*
-	 * フェーズによって状態遷移する
+	 * State transition.
 	 */
 	sc->sc_phase = bus_space_read_1(iot, ioh, PSNS) & PH_MASK;
 /*	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase);*/
