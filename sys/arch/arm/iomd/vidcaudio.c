@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.31 2004/01/01 18:07:58 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.32 2004/01/03 14:53:16 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.31 2004/01/01 18:07:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.32 2004/01/03 14:53:16 chris Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -217,10 +217,12 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 	struct vidcaudio_softc *sc = (void *)self;
 
 	switch (IOMD_ID) {
+#ifndef EB7500ATX
 	case RPC600_IOMD_ID:
 		sc->sc_is16bit = (cmos_read(0xc4) >> 5) & 1;
 		sc->sc_dma_intr = IRQ_DMASCH0;
 		break;
+#endif
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		sc->sc_is16bit = TRUE;
