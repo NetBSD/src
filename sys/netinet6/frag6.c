@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.10 2000/02/06 12:49:42 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.10.4.1 2001/05/26 16:05:44 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@ static void frag6_insque __P((struct ip6q *, struct ip6q *));
 static void frag6_remque __P((struct ip6q *));
 static void frag6_freef __P((struct ip6q *));
 
+/* XXX we eventually need splreass6, or some real semaphore */
 int frag6_doing_reass;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
@@ -392,18 +393,24 @@ frag6_input(mp, offp, proto)
 		i = af6->ip6af_up->ip6af_off + af6->ip6af_up->ip6af_frglen
 			- ip6af->ip6af_off;
 		if (i > 0) {
+#if 0				/* suppress the noisy log */
 			log(LOG_ERR, "%d bytes of a fragment from %s "
 			    "overlaps the previous fragment\n",
 			    i, ip6_sprintf(&q6->ip6q_src));
+#endif
+			free(ip6af, M_FTABLE);
 			goto dropfrag;
 		}
 	}
 	if (af6 != (struct ip6asfrag *)q6) {
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
 		if (i > 0) {
+#if 0				/* suppress the noisy log */
 			log(LOG_ERR, "%d bytes of a fragment from %s "
 			    "overlaps the succeeding fragment",
 			    i, ip6_sprintf(&q6->ip6q_src));
+#endif
+			free(ip6af, M_FTABLE);
 			goto dropfrag;
 		}
 	}
