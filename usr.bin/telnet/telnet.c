@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.19 2001/09/24 13:22:36 wiz Exp $	*/
+/*	$NetBSD: telnet.c,v 1.20 2002/02/11 11:00:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.19 2001/09/24 13:22:36 wiz Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.20 2002/02/11 11:00:07 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2019,7 +2019,7 @@ process_iac:
 		     * inserted into the suboption are all possibilities.
 		     * If we assume that the IAC was not doubled,
 		     * and really the IAC SE was left off, we could
-		     * get into an infinate loop here.  So, instead,
+		     * get into an infinite loop here.  So, instead,
 		     * we terminate the suboption, and process the
 		     * partial suboption if we can.
 		     */
