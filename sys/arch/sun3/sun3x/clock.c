@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2003/08/07 16:29:58 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 2003/09/22 17:21:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2003/08/07 16:29:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2003/09/22 17:21:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,9 +161,9 @@ CFATTACH_DECL(oclock, sizeof(struct device),
  */
 static int
 oclock_match(parent, cf, args)
-    struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-    void *args;
+	void *args;
 {
 	struct confargs *ca = args;
 
@@ -214,8 +214,7 @@ oclock_attach(parent, self, args)
 	/* Verify correct probe order... */
 	if (mostek_clk_va) {
 		mostek_clk_va = 0;
-		printf("%s: warning - mostek found also!\n",
-			   self->dv_xname);
+		printf("%s: warning - mostek found also!\n", self->dv_xname);
 	}
 #endif
 
@@ -227,7 +226,7 @@ oclock_attach(parent, self, args)
 	 * affect us, but we need to set the rate...
 	 */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 	intersil_clear();
 
 	/* Set the clock to 100 Hz, but do not enable it yet. */
@@ -249,9 +248,9 @@ oclock_attach(parent, self, args)
  */
 static int
 clock_match(parent, cf, args)
-    struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-    void *args;
+	void *args;
 {
 	struct confargs *ca = args;
 
@@ -354,7 +353,7 @@ set_clk_mode(on, off, enable_clk)
 		 * interrupt register to clear any pending signals there.
 		 */
 		intersil_clock->clk_cmd_reg =
-			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 		intersil_clear();
 	}
 #endif	/* SUN3_470 */
@@ -366,7 +365,7 @@ set_clk_mode(on, off, enable_clk)
 	/* Turn the clock back on (maybe) */
 	if (intersil_va && enable_clk)
 		intersil_clock->clk_cmd_reg =
-			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 #endif	/* SUN3_470 */
 
 	/* Finally, turn the "master" enable back on. */
@@ -386,7 +385,7 @@ cpu_initclocks(void)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isr_add_custom(CLOCK_PRI, (void*)_isr_clock);
+	isr_add_custom(CLOCK_PRI, (void *)_isr_clock);
 
 	/* Now enable the clock at level 5 in the interrupt reg. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
@@ -402,6 +401,7 @@ void
 setstatclockrate(newhz)
 	int newhz;
 {
+
 	/* nothing */
 }
 
@@ -463,9 +463,10 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	int s = splhigh();
+	int s;
 	static struct timeval lasttime;
 
+	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec++; 	/* XXX */
 	while (tvp->tv_usec >= 1000000) {
@@ -473,9 +474,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
-		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000)
-	{
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -520,7 +520,7 @@ void inittodr(fs_time)
 		if (fs_time != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* 1991/07/01  12:00:00 */
-		fs_time = 21*SECYR + 186*SECDAY + SECDAY/2;
+		fs_time = 21 * SECYR + 186 * SECDAY + SECDAY / 2;
 	}
 
 	clk_time = clk_get_secs();
@@ -537,8 +537,8 @@ void inittodr(fs_time)
 			diff = -diff;
 		if (diff >= (SECDAY*2)) {
 			printf("WARNING: clock %s %d days",
-				   (clk_time < fs_time) ? "lost" : "gained",
-				   (int) (diff / SECDAY));
+			    (clk_time < fs_time) ? "lost" : "gained",
+			    (int) (diff / SECDAY));
 			clk_bad = 1;
 		}
 	}
@@ -552,6 +552,7 @@ void inittodr(fs_time)
  */
 void resettodr()
 {
+
 	clk_set_secs(time.tv_sec);
 }
 
@@ -593,8 +594,8 @@ clk_get_secs()
 	}
 
 	if ((dt.dt_hour > 24) ||
-		(dt.dt_day  > 31) ||
-		(dt.dt_mon  > 12))
+	    (dt.dt_day  > 31) ||
+	    (dt.dt_mon  > 12))
 		return (0);
 
 	dt.dt_year += CLOCK_BASE_YEAR;
@@ -647,7 +648,7 @@ intersil_get_dt(struct clock_ymdhms *dt)
 
 	/* Enable read (stop time) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
 	/* Copy the info.  Careful about the order! */
 	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
@@ -661,7 +662,7 @@ intersil_get_dt(struct clock_ymdhms *dt)
 
 	/* Done reading (time wears on) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
@@ -676,7 +677,7 @@ intersil_set_dt(struct clock_ymdhms *dt)
 
 	/* Enable write (stop time) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
 	/* Copy the info.  Careful about the order! */
 	isdt->dt_csec = 0;
@@ -690,7 +691,7 @@ intersil_set_dt(struct clock_ymdhms *dt)
 
 	/* Done writing (time wears on) */
 	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
