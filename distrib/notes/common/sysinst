@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.14 2000/11/02 16:40:45 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.15 2000/11/03 20:30:57 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -706,7 +706,7 @@ above.
 .\}
 .if r_sparc \{\
 .Nx
-disklabels on \*M are compatable with the boot ROMs, and with 
+disklabels on \*M are compatible with the boot ROMs, and with 
 .Tn SunOS
 and
 .Tn Solaris .
