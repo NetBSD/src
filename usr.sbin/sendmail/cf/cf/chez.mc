@@ -34,10 +34,11 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)ucbarpa.mc	8.1 (Berkeley) 6/7/93')
-DOMAIN(cs.exposed)dnl
+VERSIONID(`@(#)chez.mc	8.1 (Berkeley) 6/7/93')
 OSTYPE(bsd4.4)dnl
+DOMAIN(cs.exposed)dnl
+define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl
+define(`MASQUERADE_NAME', vangogh.CS.Berkeley.EDU)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-MAILER(uucp)dnl
-SITECONFIG(uucp.ucbarpa, ucbarpa, U)
+Fw/etc/sendmail.cw

@@ -34,10 +34,11 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)ucbarpa.mc	8.1 (Berkeley) 6/7/93')
+VERSIONID(`@(#)knecht.mc	8.1 (Berkeley) 6/7/93')
+OSTYPE(ultrix4.1)dnl
 DOMAIN(cs.exposed)dnl
-OSTYPE(bsd4.4)dnl
-MAILER(local)dnl
+define(`LOCAL_RELAY', CS.Berkeley.EDU)dnl
 MAILER(smtp)dnl
-MAILER(uucp)dnl
-SITECONFIG(uucp.ucbarpa, ucbarpa, U)
+
+# our local domain
+DDCS.Berkeley.EDU
