@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.10 2000/02/24 21:59:13 mycroft Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.11 2000/03/04 19:52:26 uch Exp $
 
 # Makefile for NetBSD
 #
@@ -25,17 +25,17 @@
 MACHINE=hpcmips
 MACHINE_ARCH=mipsel
 
-AR=	${BINDIR}ar
-AS=	${BINDIR}as
-CC=	${BINDIR}gcc
+AR?=	${BINDIR}ar
+AS?=	${BINDIR}as
+CC?=	${BINDIR}gcc
 CPP?=	cpp
-LD=	${BINDIR}ld
+LD?=	${BINDIR}ld
 LORDER?=lorder
 MKDEP?=	mkdep
-NM=	${BINDIR}nm
-RANLIB=	${BINDIR}ranlib
-SIZE=	${BINDIR}size
-STRIP=	${BINDIR}strip
+NM?=	${BINDIR}nm
+RANLIB?=	${BINDIR}ranlib
+SIZE?=	${BINDIR}size
+STRIP?=	${BINDIR}strip
 TSORT?=	tsort -q
 
 COPTS?=	-Os -mmemcpy
