@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
+/*	$NetBSD: mtio.h,v 1.15 1997/09/29 19:25:26 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -65,6 +65,7 @@ struct mtop {
 #define MTNOCACHE	13	/* disable controller cache */
 #define MTSETBSIZ	14	/* set block size; 0 for variable */
 #define MTSETDNSTY	15	/* set density code for current mode */
+#define MTCMPRESS	16	/* set/clear device compression */
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -119,6 +120,16 @@ struct mtget {
 #define	MTIOCGET	_IOR('m', 2, struct mtget)	/* get tape status */
 #define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
+/*
+ * When more SCSI-3 SSC (streaming device) devices are out there
+ * that support the full 32 byte type 2 structure, we'll have to
+ * rethink these ioctls to support all the entities they haul into
+ * the picture (64 bit blocks, logical file record numbers, etc..).
+ */
+#define	MTIOCRDSPOS	_IOR('m', 5, u_int32_t)	/* get logical blk addr */
+#define	MTIOCRDHPOS	_IOR('m', 6, u_int32_t)	/* get hardware blk addr */
+#define	MTIOCSLOCATE	_IOW('m', 5, u_int32_t)	/* seek to logical blk addr */
+#define	MTIOCHLOCATE	_IOW('m', 6, u_int32_t)	/* seek to hardware blk addr */
 
 #ifdef	_KERNEL
 /*
