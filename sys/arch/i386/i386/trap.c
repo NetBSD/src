@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.162 2001/11/15 07:03:31 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.163 2002/02/14 07:08:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.162 2001/11/15 07:03:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2002/02/14 07:08:07 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -413,7 +413,7 @@ copyfault:
 		else
 			map = &vm->vm_map;
 		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -561,7 +561,7 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE) != 0)
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE) != 0)
 		return 1;
 
 	if (nss > vm->vm_ssize)
