@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.8 2002/10/08 14:49:24 provos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.9 2002/10/11 21:54:58 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.8 2002/10/08 14:49:24 provos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.9 2002/10/11 21:54:58 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,8 @@ static int nbsd_syscall_number(const char *, const char *);
 static short nbsd_translate_policy(short);
 static short nbsd_translate_flags(short);
 static int nbsd_translate_errno(int);
-static int nbsd_answer(int, pid_t, u_int32_t, short, int, short);
+static int nbsd_answer(int, pid_t, u_int32_t, short, int, short,
+    struct elevate *);
 static int nbsd_newpolicy(int);
 static int nbsd_assignpolicy(int, pid_t, int);
 static int nbsd_modifypolicy(int, int, int, short);
@@ -371,15 +372,27 @@ nbsd_translate_errno(int nerrno)
 
 static int
 nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
-    short flags)
+    short flags, struct elevate *elevate)
 {
 	struct systrace_answer ans;
 
+	memset(&ans, 0, sizeof(ans));
 	ans.stra_pid = pid;
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = nbsd_translate_policy(policy);
 	ans.stra_flags = nbsd_translate_flags(flags);
 	ans.stra_error = nbsd_translate_errno(nerrno);
+
+	if (elevate != NULL) {
+		if (elevate->e_flags & ELEVATE_UID) {
+			ans.stra_flags |= SYSTR_FLAGS_SETEUID;
+			ans.stra_seteuid = elevate->e_uid;
+		}
+		if (elevate->e_flags & ELEVATE_GID) {
+			ans.stra_flags |= SYSTR_FLAGS_SETEGID;
+			ans.stra_setegid = elevate->e_gid;
+		}
+	}
 
 	if (ioctl(fd, STRIOCANSWER, &ans) == -1)
 		return (-1);
@@ -610,7 +623,7 @@ nbsd_read(int fd)
 			break;
 		}
 
-		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
@@ -621,7 +634,7 @@ nbsd_read(int fd)
 
 		intercept_ugid(icpid, msg_ugid->uid, msg_ugid->uid);
 
-		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0, NULL) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 	}
