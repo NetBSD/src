@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.21 2002/06/20 20:17:04 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.22 2002/06/20 23:38:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.21 2002/06/20 20:17:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.22 2002/06/20 23:38:47 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ex_pci_attach(parent, self, aux)
 		    PCI_INTRACK);
 
 	if (sc->disable != NULL)
-		ex_disable(sc);
+		(*sc->disable)(sc);
 }
 
 void            
