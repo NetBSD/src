@@ -1,17 +1,9 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1994/10/26 08:25:04 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 1995/08/29 22:37:44 phil Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+/*-
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,63 +33,141 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_cksum.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: in_cksum.c,v 1.7 92/11/26 03:04:52 torek Exp 
+ * from tahoe:	in_cksum.c	1.2	86/01/05
+ *	@(#)in_cksum.c	1.3 (Berkeley) 1/19/91
  */
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-
 /*
  * Checksum routine for Internet Protocol family headers.
+ *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
- * In particular, it should not be this one.
+ * 
+ * This implementation is the ns32k version.
  */
+
+#define REDUCE          {sum = (sum & 0xffff) + (sum >> 16);}
+#define	ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
+#define	SWAP		{sum <<= 8;}
+#define	ADVANCE(x)	{w += x; mlen -= x;}
+
+/*
+ * Thanks to gcc we don't have to guess
+ * which registers contain sum & w.
+ */
+#define	Asm	__asm __volatile
+#define ADD(n)  Asm("addd "  #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define ADC(n)  Asm("addcd " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define MOP     Asm("addcd  0,%0" :         "=r" (sum) : "0" (sum))
+#define	UNSWAP	Asm("rotd   8,%0" :         "=r" (sum) : "0" (sum))
+#define	ADDBYTE	{sum += *w; SWAP; byte_swapped ^= 1;}
+#define	ADDWORD	{sum += *(u_short *)w;}
+
 int
 in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register int sum = 0, i, oddbyte = 0, v = 0;
-	register u_char *cp;
+	register u_char *w;
+	register unsigned sum = 0;
+	register int mlen = 0;
+	int byte_swapped = 0;
 
-	/* we assume < 2^16 bytes being summed */
-	while (len) {
-		while ((i = m->m_len) == 0)
-			m = m->m_next;
-		if (i > len)
-			i = len;
-		len -= i;
-		cp = mtod(m, u_char *);
-		if (oddbyte) {
-			sum += v + *cp++;
-			i--;
-		}
-		if (((int)cp & 1) == 0) {
-			while ((i -= 2) >= 0) {
-				sum += *(u_short *)cp;
-				cp += 2;
+	for (; m && len; m = m->m_next) {
+		mlen = m->m_len;
+		if (mlen == 0)
+			continue;
+		w = mtod(m, u_char *);
+		if (len < mlen)
+			mlen = len;
+		len -= mlen;
+		if (mlen < 16)
+			goto short_mbuf;
+		/*
+		 * Force to long boundary so we do longword aligned
+		 * memory operations
+		 */
+		if ((3 & (long)w) != 0) {
+			REDUCE;
+			if ((1 & (long)w) != 0) {
+				ADDBYTE;
+				ADVANCE(1);
 			}
-		} else {
-			while ((i -= 2) >= 0) {
-				sum += *cp++ << 8;
-				sum += *cp++;
+			if ((2 & (long)w) != 0) {
+				ADDWORD;
+				ADVANCE(2);
 			}
 		}
-		if ((oddbyte = i & 1) != 0)
-			v = *cp << 8;
-		m = m->m_next;
+		/*
+		 * Align 4 bytes past a 16-byte cache line boundary.
+		 */
+		if ((4 & (long)w) == 0) {
+			ADD(0);
+			MOP;
+			ADVANCE(4);
+		}
+		if ((8 & (long)w) != 0) {
+			ADD(0);  ADC(4);
+			MOP;
+			ADVANCE(8);
+		}
+		/*
+		 * Do as much of the checksum as possible 32 bits at at time.
+		 * In fact, this loop is unrolled to make overhead from
+		 * branches &c small.
+		 */
+		while (mlen >= 32) {
+			/*
+			 * Add with carry 16 words and fold in the last carry
+			 * by adding a 0 with carry.
+			 *
+			 * Use the burst fill delay for pointer update.
+			 */
+			ADD(0);   ADC(4);   ADC(8);  ADC(12);
+			MOP;
+			w += 32;
+			ADD(-16); ADC(-12); ADC(-8); ADC(-4);
+			MOP;
+			mlen -= 32;
+		}
+		if (mlen >= 16) {
+			ADD(12); ADC(0);  ADC(4);  ADC(8);
+			MOP;
+			ADVANCE(16);
+		}
+	short_mbuf:
+		if (mlen >= 8) {
+			ADD(0);  ADC(4);
+			MOP;
+			ADVANCE(8);
+		}
+		if (mlen >= 4) {
+			ADD(0);
+			MOP;
+			ADVANCE(4);
+		}
+		if (mlen > 0) {
+			REDUCE;
+			if (mlen >= 2) {
+				ADDWORD;
+				ADVANCE(2);
+			}
+			if (mlen >= 1) {
+				ADDBYTE;
+			}
+		}
 	}
-	if (oddbyte)
-		sum += v;
-	sum = (sum >> 16) + (sum & 0xffff); /* add in accumulated carries */
-	sum += sum >> 16;		/* add potential last carry */
-	return (0xffff & ~sum);
-}
 
+	if (len)
+		printf("cksum: out of data\n");
+	if (byte_swapped) {
+		UNSWAP;
+	}
+	REDUCE;
+	ADDCARRY;
+	return (sum ^ 0xffff);
+}
 

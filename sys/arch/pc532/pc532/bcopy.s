@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.4 1994/10/26 08:24:50 cgd Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.5 1995/08/29 22:37:41 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -83,80 +83,3 @@ common:	movd	B_ARG2,r0  /* bcount */
 	movsb		   /* move bytes */
 	DEMARF
 	ret	0
-
-	
-#if 0
-/* bcopy_bytes(from, to, bcount)
- *
- * PC532 uses memory mapped SCSI pseudo dma addresses that
- * are not in the IO address space. This means that the
- * 532 does prefetch when doing SCSI pseudo dma input.
- *
- * This code solves this by using "movsb" instruction that
- * provides a single point when interrupts are recognized
- * and does not prefetch (XXX we are not sure of the prefetch,
- * since this is not documented; however, see pp. 3-28 in the
- * 32000 instruction set reference manual (1984 version)).
- * 
- * Scsi pseudo dma involves the additional problem: The target we read
- * from might send a disconnect (or some other) message when we are
- * expecting data. In this case we will get a phase mismatch interrupt
- * and we need to know if we were doing DMA when the interrupt
- * occurred. This we know by status bits of the corresponding scsi
- * driver (like aic->state). If so, the interrupt might occur at any
- * of the following cases:
- *
- *  1) We are in splx() after we lowered the interrupt level
- *  2) We are in bcopy_bytes() but before the "movsb" is started
- *  3) We are in "movsb" instruction, so the registers are valid
- *  4) We have transferred all requested bytes (r0 == 0)
- *     and the dma is done, but not yet returned from here.
- *
- * If you need to cancel the DMA transfer for any reason, you
-
- * should do as follows:
- *
- * if you want to CANCEL DMA when interrupt comes, AND you are
- * doing SCSI DMA:
- *
- * if (bcopy_bytes <= INTERRUPT(PC) < bcopy_bytes_movsb)
- *   {
- *     if (INTERRUPT(PC) < bcopy_bytes_init)
- *       bcopy_bytes_failed = 1;
- *     else
- *       INTERRUPT(R0) = 0;
- *   }
- * else if (bcopy_bytes_movsb < INTERRUPT(PC) < bcopy_bytes_end)
- *   nothing
- *   ;
- */
-
-/* Untested! */
-
-	.data
-	.globl EX(bcopy_bytes_failed)
-LEX(bcopy_bytes_failed)
-	.long 0
-
-	.text
-ENTRY(bcopy_bytes)
-	FRAME
-	movd	B_ARG0,r1  /* from */
-	movd	B_ARG1,r2  /* to */
-	movd	B_ARG2,r0  /* bcount */
-
-	.globl EX(bcopy_bytes_init)
-LEX(bcopy_bytes_init)
-	cmpqd	0, EX(bcopy_bytes_failed)
-	bne	bcopy_skip /* BNE does prefetches as if branch taken */
-
-	.globl EX(bcopy_bytes_movsb)
-LEX(bcopy_bytes_movsb)
-	movsb		   # move bytes
-
-bcopy_skip:
-	EMARF
-	ret	0
-	.globl EX(bcopy_bytes_end)
-LEX(bcopy_bytes_end)
-#endif
