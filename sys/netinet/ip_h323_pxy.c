@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_h323_pxy.c,v 1.2 2002/04/01 16:45:24 jdolecek Exp $	*/
+
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
  * 
@@ -24,6 +26,8 @@
 #else
 # include <sys/ioctl.h>
 #endif
+
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.2 2002/04/01 16:45:24 jdolecek Exp $");
 
 #define IPF_H323_PROXY
 
