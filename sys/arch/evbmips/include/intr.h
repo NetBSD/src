@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2002/11/10 15:21:52 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2003/04/01 17:34:10 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
+#define IST_LEVEL_HIGH	4	/* level triggered, active high */
+#define IST_LEVEL_LOW	5       /* level triggered, active low */
 
 #ifdef	_KERNEL
 
