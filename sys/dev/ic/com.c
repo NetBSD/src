@@ -1,7 +1,8 @@
-/*	$NetBSD: com.c,v 1.70 1996/02/19 15:09:25 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.71 1996/02/19 15:23:25 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
