@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.85 2004/10/22 15:36:30 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.86 2004/10/22 16:01:49 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.85 2004/10/22 15:36:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.86 2004/10/22 16:01:49 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,23 +159,17 @@ struct chan {
 };
 
 struct uaudio_softc {
-	USBBASEDEVICE sc_dev;		/* base device */
+	USBBASEDEVICE	sc_dev;		/* base device */
 	usbd_device_handle sc_udev;	/* USB device */
-
-	int	sc_ac_iface;	/* Audio Control interface */
+	int		sc_ac_iface;	/* Audio Control interface */
 	usbd_interface_handle	sc_ac_ifaceh;
-
-	struct chan sc_playchan;	/* play channel */
-	struct chan sc_recchan;		/* record channel */
-
-	int	sc_nullalt;
-
-	int	sc_audio_rev;
-
-	struct as_info *sc_alts;
-	int	sc_nalts;
-
-	int	sc_altflags;
+	struct chan	sc_playchan;	/* play channel */
+	struct chan	sc_recchan;	/* record channel */
+	int		sc_nullalt;
+	int		sc_audio_rev;
+	struct as_info	*sc_alts;	/* alternate settings */
+	int		sc_nalts;	/* # of alternate settings */
+	int		sc_altflags;
 #define HAS_8		0x01
 #define HAS_16		0x02
 #define HAS_8U		0x04
@@ -183,14 +177,11 @@ struct uaudio_softc {
 #define HAS_MULAW	0x10
 #define UA_NOFRAC	0x20		/* don't do sample rate adjustment */
 #define HAS_24		0x40
-
-	int	sc_mode;		/* play/record capability */
-
-	struct mixerctl *sc_ctls;
-	int	sc_nctls;
-
-	device_ptr_t sc_audiodev;
-	char	sc_dying;
+	int		sc_mode;	/* play/record capability */
+	struct mixerctl *sc_ctls;	/* mixer controls */
+	int		sc_nctls;	/* # of mixer controls */
+	device_ptr_t	sc_audiodev;
+	char		sc_dying;
 };
 
 struct terminal_list {
@@ -228,13 +219,13 @@ Static const char *uac_names[] = {
 };
 #endif
 
-Static usbd_status uaudio_identify_ac(struct uaudio_softc *,
-				      const usb_config_descriptor_t *);
-Static usbd_status uaudio_identify_as(struct uaudio_softc *,
-				      const usb_config_descriptor_t *);
-Static usbd_status uaudio_process_as(struct uaudio_softc *,
-				     const char *, int *, int,
-				     const usb_interface_descriptor_t *);
+Static usbd_status uaudio_identify_ac
+	(struct uaudio_softc *, const usb_config_descriptor_t *);
+Static usbd_status uaudio_identify_as
+	(struct uaudio_softc *, const usb_config_descriptor_t *);
+Static usbd_status uaudio_process_as
+	(struct uaudio_softc *, const char *, int *, int,
+	 const usb_interface_descriptor_t *);
 
 Static void	uaudio_add_alt(struct uaudio_softc *, const struct as_info *);
 
@@ -242,89 +233,91 @@ Static const usb_interface_descriptor_t *uaudio_find_iface
 	(const char *, int, int *, int);
 
 Static void	uaudio_mixer_add_ctl(struct uaudio_softc *, struct mixerctl *);
-Static char	*uaudio_id_name(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static struct usb_audio_cluster uaudio_get_cluster(int,
-		    const struct io_terminal *);
-Static void	uaudio_add_input(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_output(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_mixer(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_selector(struct uaudio_softc *,
-		    const struct io_terminal *, int);
+Static char	*uaudio_id_name
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static struct usb_audio_cluster uaudio_get_cluster
+	(int, const struct io_terminal *);
+Static void	uaudio_add_input
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_output
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_mixer
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_selector
+	(struct uaudio_softc *, const struct io_terminal *, int);
 #ifdef UAUDIO_DEBUG
 Static const char *uaudio_get_terminal_name(int);
 #endif
-Static int	uaudio_determine_class(const struct io_terminal *,
-		    struct mixerctl *);
-Static const char *uaudio_feature_name(const struct io_terminal *,
-		    struct mixerctl *);
-Static void	uaudio_add_feature(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_processing_updown(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_processing(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static void	uaudio_add_extension(struct uaudio_softc *,
-		    const struct io_terminal *, int);
-Static struct terminal_list	*uaudio_merge_terminal_list
-		    (const struct io_terminal *);
-Static struct terminal_list	*uaudio_io_terminaltype(int,
-		    struct io_terminal *, int);
-Static usbd_status uaudio_identify(struct uaudio_softc *,
-		    const usb_config_descriptor_t *);
+Static int	uaudio_determine_class
+	(const struct io_terminal *, struct mixerctl *);
+Static const char *uaudio_feature_name
+	(const struct io_terminal *, struct mixerctl *);
+Static void	uaudio_add_feature
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_processing_updown
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_processing
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static void	uaudio_add_extension
+	(struct uaudio_softc *, const struct io_terminal *, int);
+Static struct terminal_list *uaudio_merge_terminal_list
+	(const struct io_terminal *);
+Static struct terminal_list *uaudio_io_terminaltype
+	(int, struct io_terminal *, int);
+Static usbd_status uaudio_identify
+	(struct uaudio_softc *, const usb_config_descriptor_t *);
 
 Static int	uaudio_signext(int, int);
 Static int	uaudio_value2bsd(struct mixerctl *, int);
 Static int	uaudio_bsd2value(struct mixerctl *, int);
 Static int	uaudio_get(struct uaudio_softc *, int, int, int, int, int);
-Static int	uaudio_ctl_get(struct uaudio_softc *, int,
-			       struct mixerctl *, int);
-Static void	uaudio_set(struct uaudio_softc *, int,
-			   int, int, int, int, int);
-Static void	uaudio_ctl_set(struct uaudio_softc *, int,
-			       struct mixerctl *, int, int);
+Static int	uaudio_ctl_get
+	(struct uaudio_softc *, int, struct mixerctl *, int);
+Static void	uaudio_set
+	(struct uaudio_softc *, int, int, int, int, int, int);
+Static void	uaudio_ctl_set
+	(struct uaudio_softc *, int, struct mixerctl *, int, int);
 
 Static usbd_status uaudio_set_speed(struct uaudio_softc *, int, u_int);
 
 Static usbd_status uaudio_chan_open(struct uaudio_softc *, struct chan *);
 Static void	uaudio_chan_close(struct uaudio_softc *, struct chan *);
-Static usbd_status uaudio_chan_alloc_buffers(struct uaudio_softc *,
-					     struct chan *);
+Static usbd_status uaudio_chan_alloc_buffers
+	(struct uaudio_softc *, struct chan *);
 Static void	uaudio_chan_free_buffers(struct uaudio_softc *, struct chan *);
-Static void	uaudio_chan_init(struct chan *, int,
-				 const struct audio_params *, int);
+Static void	uaudio_chan_init
+	(struct chan *, int, const struct audio_params *, int);
 Static void	uaudio_chan_set_param(struct chan *, u_char *, u_char *, int);
 Static void	uaudio_chan_ptransfer(struct chan *);
-Static void	uaudio_chan_pintr(usbd_xfer_handle,
-				  usbd_private_handle, usbd_status);
+Static void	uaudio_chan_pintr
+	(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static void	uaudio_chan_rtransfer(struct chan *);
-Static void	uaudio_chan_rintr(usbd_xfer_handle,
-				  usbd_private_handle, usbd_status);
+Static void	uaudio_chan_rintr
+	(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int	uaudio_open(void *, int);
 Static void	uaudio_close(void *);
 Static int	uaudio_drain(void *);
 Static int	uaudio_query_encoding(void *, struct audio_encoding *);
-Static void	uaudio_get_minmax_rates(int, const struct as_info *,
-					const struct audio_params *,
-					int, u_long *, u_long *);
-Static int	uaudio_match_alt_sub(int, const struct as_info *,
-				     const struct audio_params *, int, u_long);
-Static int	uaudio_match_alt_chan(int, const struct as_info *,
-				      struct audio_params *, int);
-Static int	uaudio_match_alt(int, const struct as_info *,
-				 struct audio_params *, int);
-Static int	uaudio_set_params(void *, int, int, struct audio_params *,
-				  struct audio_params *);
+Static void	uaudio_get_minmax_rates
+	(int, const struct as_info *, const struct audio_params *,
+	 int, u_long *, u_long *);
+Static int	uaudio_match_alt_sub
+	(int, const struct as_info *, const struct audio_params *, int, u_long);
+Static int	uaudio_match_alt_chan
+	(int, const struct as_info *, struct audio_params *, int);
+Static int	uaudio_match_alt
+	(int, const struct as_info *, struct audio_params *, int);
+Static int	uaudio_set_params
+	(void *, int, int, struct audio_params *, struct audio_params *);
 Static int	uaudio_round_blocksize(void *, int);
-Static int	uaudio_trigger_output(void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
-Static int	uaudio_trigger_input (void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
+Static int	uaudio_trigger_output
+	(void *, void *, void *, int, void (*)(void *), void *,
+	 struct audio_params *);
+Static int	uaudio_trigger_input
+	(void *, void *, void *, int, void (*)(void *), void *,
+	 struct audio_params *);
 Static int	uaudio_halt_in_dma(void *);
 Static int	uaudio_halt_out_dma(void *);
 Static int	uaudio_getdev(void *, struct audio_device *);
@@ -513,7 +506,7 @@ uaudio_detach(device_ptr_t self, int flags)
 	return (rv);
 }
 
-int
+Static int
 uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	struct uaudio_softc *sc = addr;
@@ -581,7 +574,7 @@ uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 	}
 }
 
-const usb_interface_descriptor_t *
+Static const usb_interface_descriptor_t *
 uaudio_find_iface(const char *buf, int size, int *offsp, int subtype)
 {
 	const usb_interface_descriptor_t *d;
@@ -597,7 +590,7 @@ uaudio_find_iface(const char *buf, int size, int *offsp, int subtype)
 	return (NULL);
 }
 
-void
+Static void
 uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
 	int res;
@@ -665,7 +658,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 #endif
 }
 
-char *
+Static char *
 uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	static char buf[32];
@@ -673,7 +666,7 @@ uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 	return (buf);
 }
 
-struct usb_audio_cluster
+Static struct usb_audio_cluster
 uaudio_get_cluster(int id, const struct io_terminal *iot)
 {
 	struct usb_audio_cluster r;
@@ -723,7 +716,7 @@ uaudio_get_cluster(int id, const struct io_terminal *iot)
 
 }
 
-void
+Static void
 uaudio_add_input(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 #ifdef UAUDIO_DEBUG
@@ -738,7 +731,7 @@ uaudio_add_input(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 #endif
 }
 
-void
+Static void
 uaudio_add_output(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 #ifdef UAUDIO_DEBUG
@@ -751,7 +744,7 @@ uaudio_add_output(struct uaudio_softc *sc, const struct io_terminal *iot, int id
 #endif
 }
 
-void
+Static void
 uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_mixer_unit *d = iot[id].d.mu;
@@ -815,7 +808,7 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 
 }
 
-void
+Static void
 uaudio_add_selector(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_selector_unit *d = iot[id].d.su;
@@ -844,7 +837,7 @@ uaudio_add_selector(struct uaudio_softc *sc, const struct io_terminal *iot, int 
 }
 
 #ifdef UAUDIO_DEBUG
-const char *
+Static const char *
 uaudio_get_terminal_name(int terminal_type)
 {
 	static char buf[100];
@@ -918,7 +911,7 @@ uaudio_get_terminal_name(int terminal_type)
 }
 #endif
 
-int
+Static int
 uaudio_determine_class(const struct io_terminal *iot, struct mixerctl *mix)
 {
 	int terminal_type;
@@ -968,7 +961,7 @@ uaudio_determine_class(const struct io_terminal *iot, struct mixerctl *mix)
 	return terminal_type;
 }
 
-const char *
+Static const char *
 uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 {
 	int terminal_type;
@@ -1066,7 +1059,7 @@ uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 	return AudioNmaster;
 }
 
-void
+Static void
 uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_feature_unit *d = iot[id].d.fu;
@@ -1179,7 +1172,7 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	}
 }
 
-void
+Static void
 uaudio_add_processing_updown(struct uaudio_softc *sc,
 			     const struct io_terminal *iot, int id)
 {
@@ -1216,7 +1209,7 @@ uaudio_add_processing_updown(struct uaudio_softc *sc,
 	uaudio_mixer_add_ctl(sc, &mix);
 }
 
-void
+Static void
 uaudio_add_processing(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_processing_unit *d = iot[id].d.pu;
@@ -1258,7 +1251,7 @@ uaudio_add_processing(struct uaudio_softc *sc, const struct io_terminal *iot, in
 	}
 }
 
-void
+Static void
 uaudio_add_extension(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_extension_unit *d = iot[id].d.eu;
@@ -1285,7 +1278,7 @@ uaudio_add_extension(struct uaudio_softc *sc, const struct io_terminal *iot, int
 	}
 }
 
-struct terminal_list*
+Static struct terminal_list*
 uaudio_merge_terminal_list(const struct io_terminal *iot)
 {
 	struct terminal_list *tml;
@@ -1320,7 +1313,7 @@ uaudio_merge_terminal_list(const struct io_terminal *iot)
 	return tml;
 }
 
-struct terminal_list *
+Static struct terminal_list *
 uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 {
 	struct terminal_list *tml;
@@ -1471,7 +1464,7 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 	}
 }
 
-usbd_status
+Static usbd_status
 uaudio_identify(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 {
 	usbd_status err;
@@ -1482,7 +1475,7 @@ uaudio_identify(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 	return (uaudio_identify_as(sc, cdesc));
 }
 
-void
+Static void
 uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 {
 	size_t len;
@@ -1505,7 +1498,7 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	sc->sc_alts[sc->sc_nalts++] = *ai;
 }
 
-usbd_status
+Static usbd_status
 uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		  int size, const usb_interface_descriptor_t *id)
 #define offs (*offsp)
@@ -1716,7 +1709,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 }
 #undef offs
 
-usbd_status
+Static usbd_status
 uaudio_identify_as(struct uaudio_softc *sc,
 		   const usb_config_descriptor_t *cdesc)
 {
@@ -1772,7 +1765,7 @@ uaudio_identify_as(struct uaudio_softc *sc,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+Static usbd_status
 uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc)
 {
 	struct io_terminal* iot;
@@ -1983,7 +1976,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	return (USBD_NORMAL_COMPLETION);
 }
 
-int
+Static int
 uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 {
 	struct uaudio_softc *sc = addr;
@@ -2066,7 +2059,7 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 	return (0);
 }
 
-int
+Static int
 uaudio_open(void *addr, int flags)
 {
 	struct uaudio_softc *sc = addr;
@@ -2086,12 +2079,12 @@ uaudio_open(void *addr, int flags)
 /*
  * Close function is called at splaudio().
  */
-void
+Static void
 uaudio_close(void *addr)
 {
 }
 
-int
+Static int
 uaudio_drain(void *addr)
 {
 	struct uaudio_softc *sc = addr;
@@ -2101,7 +2094,7 @@ uaudio_drain(void *addr)
 	return (0);
 }
 
-int
+Static int
 uaudio_halt_out_dma(void *addr)
 {
 	struct uaudio_softc *sc = addr;
@@ -2116,7 +2109,7 @@ uaudio_halt_out_dma(void *addr)
 	return (0);
 }
 
-int
+Static int
 uaudio_halt_in_dma(void *addr)
 {
 	struct uaudio_softc *sc = addr;
@@ -2131,7 +2124,7 @@ uaudio_halt_in_dma(void *addr)
 	return (0);
 }
 
-int
+Static int
 uaudio_getdev(void *addr, struct audio_device *retp)
 {
 	struct uaudio_softc *sc = addr;
@@ -2147,7 +2140,7 @@ uaudio_getdev(void *addr, struct audio_device *retp)
 /*
  * Make sure the block size is large enough to hold all outstanding transfers.
  */
-int
+Static int
 uaudio_round_blocksize(void *addr, int blk)
 {
 	struct uaudio_softc *sc = addr;
@@ -2182,14 +2175,14 @@ uaudio_round_blocksize(void *addr, int blk)
 	return (blk);
 }
 
-int
+Static int
 uaudio_get_props(void *addr)
 {
 	return (AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT);
 
 }
 
-int
+Static int
 uaudio_get(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len)
 {
@@ -2229,7 +2222,7 @@ uaudio_get(struct uaudio_softc *sc, int which, int type, int wValue,
 	return (val);
 }
 
-void
+Static void
 uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len, int val)
 {
@@ -2266,7 +2259,7 @@ uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 #endif
 }
 
-int
+Static int
 uaudio_signext(int type, int val)
 {
 	if (!MIX_UNSIGNED(type)) {
@@ -2278,7 +2271,7 @@ uaudio_signext(int type, int val)
 	return (val);
 }
 
-int
+Static int
 uaudio_value2bsd(struct mixerctl *mc, int val)
 {
 	DPRINTFN(5, ("uaudio_value2bsd: type=%03x val=%d min=%d max=%d ",
@@ -2311,7 +2304,7 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 	return (val);
 }
 
-int
+Static int
 uaudio_ctl_get(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 	       int chan)
 {
@@ -2323,7 +2316,7 @@ uaudio_ctl_get(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 	return (uaudio_value2bsd(mc, val));
 }
 
-void
+Static void
 uaudio_ctl_set(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 	       int chan, int val)
 {
@@ -2332,7 +2325,7 @@ uaudio_ctl_set(struct uaudio_softc *sc, int which, struct mixerctl *mc,
 		   mc->wIndex, MIX_SIZE(mc->type), val);
 }
 
-int
+Static int
 uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct uaudio_softc *sc = addr;
@@ -2377,7 +2370,7 @@ uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	return (0);
 }
 
-int
+Static int
 uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct uaudio_softc *sc = addr;
@@ -2418,7 +2411,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	return (0);
 }
 
-int
+Static int
 uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
 		     struct audio_params *param)
@@ -2460,7 +2453,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	return (0);
 }
 
-int
+Static int
 uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		      void (*intr)(void *), void *arg,
 		      struct audio_params *param)
@@ -2503,7 +2496,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 }
 
 /* Set up a pipe for a channel. */
-usbd_status
+Static usbd_status
 uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as = &sc->sc_alts[ch->altidx];
@@ -2542,7 +2535,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	return err;
 }
 
-void
+Static void
 uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as = &sc->sc_alts[ch->altidx];
@@ -2563,7 +2556,7 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 	}
 }
 
-usbd_status
+Static usbd_status
 uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
 	usbd_xfer_handle xfer;
@@ -2594,7 +2587,7 @@ bad:
 	return (USBD_NOMEM);
 }
 
-void
+Static void
 uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
 	int i;
@@ -2604,7 +2597,7 @@ uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
 }
 
 /* Called at splusb() */
-void
+Static void
 uaudio_chan_ptransfer(struct chan *ch)
 {
 	struct chanbuf *cb;
@@ -2669,7 +2662,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 	(void)usbd_transfer(cb->xfer);
 }
 
-void
+Static void
 uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		  usbd_status status)
 {
@@ -2708,7 +2701,7 @@ uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 /* Called at splusb() */
-void
+Static void
 uaudio_chan_rtransfer(struct chan *ch)
 {
 	struct chanbuf *cb;
@@ -2753,7 +2746,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 	(void)usbd_transfer(cb->xfer);
 }
 
-void
+Static void
 uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		  usbd_status status)
 {
@@ -2811,7 +2804,7 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	uaudio_chan_rtransfer(ch);
 }
 
-void
+Static void
 uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
     int maxpktsize)
 {
@@ -2832,7 +2825,7 @@ uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
 	ch->residue = 0;
 }
 
-void
+Static void
 uaudio_chan_set_param(struct chan *ch, u_char *start, u_char *end, int blksize)
 {
 	ch->start = start;
@@ -2844,7 +2837,7 @@ uaudio_chan_set_param(struct chan *ch, u_char *start, u_char *end, int blksize)
 	ch->curchanbuf = 0;
 }
 
-void
+Static void
 uaudio_get_minmax_rates(int nalts, const struct as_info *alts,
 			const struct audio_params *p, int mode,
 			u_long *min, u_long *max)
@@ -2886,7 +2879,7 @@ uaudio_get_minmax_rates(int nalts, const struct as_info *alts,
 	}
 }
 
-int
+Static int
 uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 		     const struct audio_params *p, int mode, u_long rate)
 {
@@ -2925,7 +2918,7 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 	return -1;
 }
 
-int
+Static int
 uaudio_match_alt_chan(int nalts, const struct as_info *alts,
 		      struct audio_params *p, int mode)
 {
@@ -2969,7 +2962,7 @@ uaudio_match_alt_chan(int nalts, const struct as_info *alts,
 	return -1;
 }
 
-int
+Static int
 uaudio_match_alt(int nalts, const struct as_info *alts,
 		 struct audio_params *p, int mode)
 {
@@ -2993,7 +2986,7 @@ uaudio_match_alt(int nalts, const struct as_info *alts,
 	return uaudio_match_alt_chan(nalts, alts, p, mode);
 }
 
-int
+Static int
 uaudio_set_params(void *addr, int setmode, int usemode,
 		  struct audio_params *play, struct audio_params *rec)
 {
@@ -3182,7 +3175,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	return (0);
 }
 
-usbd_status
+Static usbd_status
 uaudio_set_speed(struct uaudio_softc *sc, int endpt, u_int speed)
 {
 	usb_device_request_t req;
