@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.18 2003/02/22 04:57:48 tsutsui Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.19 2003/02/25 08:48:24 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.18 2003/02/22 04:57:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.19 2003/02/25 08:48:24 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,6 +142,7 @@ static int	emuxki_set_params(void *, int, int,
 				  struct audio_params *,
 				  struct audio_params *);
 
+static int	emuxki_round_blocksize(void *, int);
 static size_t	emuxki_round_buffersize(void *, int, size_t);
 
 static int	emuxki_trigger_output(void *, void *, void *, int,
@@ -186,7 +187,7 @@ static struct audio_hw_if emuxki_hw_if = {
 	NULL,			/* drain */
 	emuxki_query_encoding,
 	emuxki_set_params,
-	NULL,			/* round blocksize */
+	emuxki_round_blocksize,
 	NULL,			/* commit settings */
 	NULL,			/* init_output */
 	NULL,			/* init_input */
@@ -208,6 +209,23 @@ static struct audio_hw_if emuxki_hw_if = {
 	emuxki_trigger_output,
 	emuxki_trigger_input,
 	NULL,			/* dev_ioctl */
+};
+
+static const int emuxki_recsrc_adcrates[] =
+    { 48000, 44100, 32000, 24000, 22050, 16000, 11025, 8000, -1 };
+static const int emuxki_recsrc_intrmasks[EMU_NUMRECSRCS] =
+    { EMU_INTE_MICBUFENABLE, EMU_INTE_ADCBUFENABLE, EMU_INTE_EFXBUFENABLE };
+static const u_int32_t emuxki_recsrc_bufaddrreg[EMU_NUMRECSRCS] =
+    { EMU_MICBA, EMU_ADCBA, EMU_FXBA };
+static const u_int32_t emuxki_recsrc_idxreg[EMU_NUMRECSRCS] =
+    { EMU_RECIDX(EMU_MICIDX), EMU_RECIDX(EMU_ADCIDX), EMU_RECIDX(EMU_FXIDX) };
+static const u_int32_t emuxki_recsrc_szreg[EMU_NUMRECSRCS] =
+    { EMU_MICBS, EMU_ADCBS, EMU_FXBS };
+static const int emuxki_recbuf_sz[] = {
+	0, 384, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792,
+	2048, 2560, 3072, 3584, 4096, 5120, 6144, 7168, 8192, 10240,
+	12288, 14366, 16384, 20480, 24576, 28672, 32768, 40960, 49152,
+	57344, 65536
 };
 
 /*
@@ -402,8 +420,16 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	if (emuxki_scinit(sc) || emuxki_ac97_init(sc) ||
-	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL)
+	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL) {
 		emuxki_pci_shutdown(sc);
+		return;
+	}
+#if 0
+	sc->rsourcectl.dev =
+	    sc->codecif->vtbl->get_portnum_by_name(sc->codec_if, AudioCrecord,
+						   AudioNsource, NULL);
+	sc->rsourcectl.cp = AUDIO_MIXER_ENUM;
+#endif
 }
 
 static int
@@ -600,6 +626,15 @@ emuxki_initfx(struct emuxki_softc *sc)
 			  EMU_DSP_OUTR(EMU_DSP_OUT_AC97),
 			  EMU_DSP_FX(1), EMU_DSP_CST(4));
 #endif
+	/* ADC recording (l/r) = AC97 In (l/r) */
+	emuxki_dsp_addop(sc, &pc, EMU_DSP_OP_ACC3,
+			  EMU_DSP_OUTL(EMU_DSP_OUT_ADC),
+			  EMU_DSP_INL(EMU_DSP_IN_AC97),
+			  EMU_DSP_CST(0), EMU_DSP_CST(0));
+	emuxki_dsp_addop(sc, &pc, EMU_DSP_OP_ACC3,
+			  EMU_DSP_OUTR(EMU_DSP_OUT_ADC),
+			  EMU_DSP_INR(EMU_DSP_IN_AC97),
+			  EMU_DSP_CST(0), EMU_DSP_CST(0));
 	/* zero out the rest of the microcode */
 	while (pc < 512)
 		emuxki_dsp_addop(sc, &pc, EMU_DSP_OP_ACC3,
@@ -1181,16 +1216,36 @@ emuxki_voice_channel_destroy(struct emuxki_voice *voice)
 /*
  * Will come back when used in voice_dataloc_create
  */
-#if 0
 static int
 emuxki_recsrc_reserve(struct emuxki_voice *voice, emuxki_recsrc_t source)
 {
-	if (voice->emu->recsrc[source] != NULL)
+	if (source < 0 || source >= EMU_NUMRECSRCS) {
+#ifdef EMUXKI_DEBUG
+		printf("Tryed to reserve invalid source: %d\n", source);
+#endif
+		return (EINVAL);
+	}
+	if (voice->sc->recsrc[source] == voice)
+		return (0);			/* XXX */
+	if (voice->sc->recsrc[source] != NULL)
 		return (EBUSY);
-	voice->emu->recsrc[source] = voice;
+	voice->sc->recsrc[source] = voice;
 	return (0);
 }
-#endif
+
+static int
+emuxki_recsrc_rate_to_index(int srate)
+{
+	int index;
+
+	for(index = 0; ; index++) {
+		if (emuxki_recsrc_adcrates[index] == srate)
+			return (index);
+
+		if (emuxki_recsrc_adcrates[index] < 0)
+			return (-1);
+	}
+}
 
 /* When calling this function we assume the voice is stopped */
 static void
@@ -1208,16 +1263,9 @@ emuxki_voice_dataloc_create(struct emuxki_voice *voice)
 		if ((error = emuxki_voice_channel_create(voice)))
 			return (error);
 	} else {
-		/*
-		 * Commented out because i don't know how to get the selected
-		 * recording source
-		 */
-#if 0
-		if (emuxki_recsrc_reserve(voice, recsrc))
-			return (EBUSY);
-		printf("Which rec src do i have to create!!!\n");
-#endif
-		return (EBUSY);	/* just return an error, no real meaning */
+		if ((error =
+		    emuxki_recsrc_reserve(voice, voice->dataloc.source)))
+			return (error);
 	}
 	return (0);
 }
@@ -1248,25 +1296,25 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 	sc->lvoice = NULL;
 	splx(s);
 
-	if (!voice) {
+	if (!voice)
 		if (!(voice = malloc(sizeof(*voice), M_DEVBUF, M_WAITOK)))
 			return (NULL);
-		voice->sc = sc;
-		voice->state = !EMU_VOICE_STATE_STARTED;
-		voice->stereo = EMU_VOICE_STEREO_NOTSET;
-		voice->b16 = 0;
-		voice->sample_rate = 0;
-		if (use & EMU_VOICE_USE_PLAY)
-			voice->dataloc.chan[0] = voice->dataloc.chan[0] = NULL;
-		else
-			voice->dataloc.source = EMU_RECSRC_NOTSET;
-		voice->buffer = NULL;
-		voice->blksize = 0;
-		voice->trigblk = 0;
-		voice->blkmod = 0;
-		voice->inth = NULL;
-		voice->inthparam = NULL;
-	}
+
+	voice->sc = sc;
+	voice->state = !EMU_VOICE_STATE_STARTED;
+	voice->stereo = EMU_VOICE_STEREO_NOTSET;
+	voice->b16 = 0;
+	voice->sample_rate = 0;
+	if (use & EMU_VOICE_USE_PLAY)
+		voice->dataloc.chan[0] = voice->dataloc.chan[1] = NULL;
+	else
+		voice->dataloc.source = EMU_RECSRC_NOTSET;
+	voice->buffer = NULL;
+	voice->blksize = 0;
+	voice->trigblk = 0;
+	voice->blkmod = 0;
+	voice->inth = NULL;
+	voice->inthparam = NULL;
 	voice->use = use;
 
 	s = splaudio();
@@ -1302,9 +1350,14 @@ static int
 emuxki_voice_set_stereo(struct emuxki_voice *voice, u_int8_t stereo)
 {
 	int	error;
+	emuxki_recsrc_t source;
 	struct emuxki_chanparms_fxsend fxsend;
 
+	if (! (voice->use & EMU_VOICE_USE_PLAY))
+		source = voice->dataloc.source;
 	emuxki_voice_dataloc_destroy(voice);
+	if (! (voice->use & EMU_VOICE_USE_PLAY))
+		voice->dataloc.source = source;
 	voice->stereo = stereo;
 	if ((error = emuxki_voice_dataloc_create(voice)))
 	  return (error);
@@ -1339,10 +1392,9 @@ emuxki_voice_set_srate(struct emuxki_voice *voice, u_int32_t srate)
 			emuxki_channel_set_srate(voice->dataloc.chan[1],
 						  srate);
 	} else {
-#ifdef EMUXKI_DEBUG
-		printf("Recording voice set_srate not implemented\n");
-#endif
-		return (EINVAL);
+		if (emuxki_recsrc_rate_to_index(srate) < 0)
+			return (EINVAL);
+		voice->sample_rate = srate;
 	}
 	return (0);
 }
@@ -1382,6 +1434,7 @@ emuxki_voice_set_bufparms(struct emuxki_voice *voice, void *ptr,
 	struct emuxki_channel **chan;
 	u_int32_t start, end;
 	u_int8_t sample_size;
+	int idx;
 	int error = EFAULT;
 
 	LIST_FOREACH(mem, &voice->sc->mem, next) {
@@ -1390,7 +1443,6 @@ emuxki_voice_set_bufparms(struct emuxki_voice *voice, void *ptr,
 
 		voice->buffer = mem;
 		sample_size = (voice->b16 + 1) * (voice->stereo + 1);
-		voice->blksize = blksize / sample_size;
 		voice->trigblk = 0;	/* This shouldn't be needed */
 		voice->blkmod = bufsize / blksize;
 		if (bufsize % blksize) 	  /* This should not happen */
@@ -1398,6 +1450,7 @@ emuxki_voice_set_bufparms(struct emuxki_voice *voice, void *ptr,
 		error = 0;
 
 		if (voice->use & EMU_VOICE_USE_PLAY) {
+			voice->blksize = blksize / sample_size;
 			chan = voice->dataloc.chan;
 			start = mem->ptbidx << 12;
 			end = start + bufsize / sample_size;
@@ -1411,10 +1464,33 @@ emuxki_voice_set_bufparms(struct emuxki_voice *voice, void *ptr,
 			if (voice->timerate < 5)
 				error = EINVAL;
 		} else {
+			voice->blksize = blksize;
+			for(idx = sizeof(emuxki_recbuf_sz) /
+			    sizeof(emuxki_recbuf_sz[0]); --idx >= 0;)
+				if (emuxki_recbuf_sz[idx] == bufsize)
+					break;
+			if (idx < 0) {
 #ifdef EMUXKI_DEBUG
-			printf("Rec voice set bufparms not implemented\n");
+				printf("Invalid bufsize: %d\n", bufsize);
 #endif
-			error = ENODEV;
+				return (EINVAL);
+			}
+			emuxki_write(voice->sc, 0,
+			    emuxki_recsrc_szreg[voice->dataloc.source], idx);
+			emuxki_write(voice->sc, 0,
+			    emuxki_recsrc_bufaddrreg[voice->dataloc.source],
+			    DMAADDR(mem->dmamem));
+
+			/* Use timer to emulate DMA completion interrupt */
+			voice->timerate = (u_int32_t) 48000 * blksize /
+			    (voice->sample_rate * sample_size);
+			if (voice->timerate < 5) {
+#ifdef EMUXKI_DEBUG
+				printf("Invalid timerate: %d, blksize %d\n",
+				    voice->timerate, blksize);
+#endif
+				error = EINVAL;
+			}
 		}
 
 		break;
@@ -1436,11 +1512,24 @@ emuxki_voice_commit_parms(struct emuxki_voice *voice)
 static u_int32_t
 emuxki_voice_curaddr(struct emuxki_voice *voice)
 {
+
+	/* XXX different semantics in these cases */
 	if (voice->use & EMU_VOICE_USE_PLAY)
+		/* returns number of samples (an l/r pair counts 1) */
 		return (emuxki_read(voice->sc,
 				     voice->dataloc.chan[0]->num,
 				     EMU_CHAN_CCCA_CURRADDR) -
 			voice->dataloc.chan[0]->loop.start);
+	else
+		/* returns number of bytes */
+		/*
+		 * XXX Linux driver suggests something special is needed
+		 * XXX when precision == 8.
+		 */
+		return (emuxki_read(voice->sc, 0,
+		    emuxki_recsrc_idxreg[voice->dataloc.source]) &
+		    EMU_RECIDX_MASK);
+		
 	return (0);
 }
 
@@ -1454,8 +1543,7 @@ emuxki_resched_timer(struct emuxki_softc *sc)
 
 	s = splaudio();
 	LIST_FOREACH(voice, &sc->voices, next) {
-		if ((voice->use & EMU_VOICE_USE_PLAY) == 0 ||
-		    (voice->state & EMU_VOICE_STATE_STARTED) == 0)
+		if ((voice->state & EMU_VOICE_STATE_STARTED) == 0)
 			continue;
 		active = 1;
 		if (voice->timerate < timerate)
@@ -1483,6 +1571,8 @@ static void
 emuxki_voice_start(struct emuxki_voice *voice,
 		    void (*inth) (void *), void *inthparam)
 {
+	u_int32_t val;
+
 	voice->inth = inth;
 	voice->inthparam = inthparam;
 	if (voice->use & EMU_VOICE_USE_PLAY) {
@@ -1490,14 +1580,36 @@ emuxki_voice_start(struct emuxki_voice *voice,
 		emuxki_channel_start(voice->dataloc.chan[0]);
 		if (voice->stereo)
 			emuxki_channel_start(voice->dataloc.chan[1]);
-	}
-#ifdef EMUXKI_DEBUG
-	else
-		printf("Recording voice start not implemented\n");
+	} else {
+		voice->trigblk = 1;
+		switch ((int)voice->dataloc.source) {
+		case EMU_RECSRC_ADC:
+			val = EMU_ADCCR_LCHANENABLE;
+			/* XXX need to program DSP to output L+R
+			 * XXX in monaural case? */
+			if (voice->stereo)
+				val |= EMU_ADCCR_RCHANENABLE;
+			val |= emuxki_recsrc_rate_to_index(voice->sample_rate);
+                        emuxki_write(voice->sc, 0, EMU_ADCCR, 0);
+                        emuxki_write(voice->sc, 0, EMU_ADCCR, val);
+			break;
+		case EMU_RECSRC_MIC:
+		case EMU_RECSRC_FX:
+			printf("unimplemented\n");
+			break;
+		}
+#if 0
+		/* DMA completion interrupt is useless; use timer */
+		int s;
+		s = splaudio();
+                val = emu_rd(sc, INTE, 4);
+		val |= emuxki_recsrc_intrmasks[voice->dataloc.source];
+                emu_wr(sc, INTE, val, 4);
+		splx(s);
 #endif
+	}
 	voice->state |= EMU_VOICE_STATE_STARTED;
-	if (voice->use & EMU_VOICE_USE_PLAY)
-		emuxki_resched_timer(voice->sc);
+	emuxki_resched_timer(voice->sc);
 }
 
 static void
@@ -1507,14 +1619,33 @@ emuxki_voice_halt(struct emuxki_voice *voice)
 		emuxki_channel_stop(voice->dataloc.chan[0]);
 		if (voice->stereo)
 			emuxki_channel_stop(voice->dataloc.chan[1]);
-	}
-#ifdef EMUXKI_DEBUG
-	else
-		printf("Recording voice halt not implemented\n");
+	} else {
+		switch (voice->dataloc.source) {
+		case EMU_RECSRC_ADC:
+                        emuxki_write(voice->sc, 0, EMU_ADCCR, 0);
+			break;
+		case EMU_RECSRC_FX:
+		case EMU_RECSRC_MIC:
+			printf("unimplemented\n");
+			break;
+		case EMU_RECSRC_NOTSET:
+			printf("Bad dataloc.source\n");
+		}
+		/* This should reset buffer pointer */
+		emuxki_write(voice->sc, 0,
+		    emuxki_recsrc_szreg[voice->dataloc.source],
+		    EMU_RECBS_BUFSIZE_NONE);
+#if 0
+		int s;
+		s = splaudio();
+                val = emu_rd(sc, INTE, 4);
+		val &= ~emuxki_recsrc_intrmasks[voice->dataloc.source];
+                emu_wr(sc, INTE, val, 4);
+		splx(s);
 #endif
+	}
 	voice->state &= ~EMU_VOICE_STATE_STARTED;
-	if (voice->use & EMU_VOICE_USE_PLAY)
-		emuxki_resched_timer(voice->sc);
+	emuxki_resched_timer(voice->sc);
 }
 
 /*
@@ -1531,18 +1662,28 @@ emuxki_intr(void *arg)
 	while ((ipr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_IPR))) {
 		if (ipr & EMU_IPR_INTERVALTIMER) {
 			LIST_FOREACH(voice, &sc->voices, next) {
-				if ((voice->use & EMU_VOICE_USE_PLAY)==0 ||
-				    (voice->state &
+				if ((voice->state &
 				      EMU_VOICE_STATE_STARTED) == 0)
 					continue;
 
 				curblk = emuxki_voice_curaddr(voice) /
 				       voice->blksize;
+#if 0
 				if (curblk == voice->trigblk) {
 					voice->inth(voice->inthparam);
 					voice->trigblk++;
 					voice->trigblk %= voice->blkmod;
 				}
+#else
+				while ((curblk >= voice->trigblk &&
+				    curblk < (voice->trigblk + voice->blkmod / 2)) ||
+				    ((int)voice->trigblk - (int)curblk) >
+				    (voice->blkmod / 2 + 1)) {
+					voice->inth(voice->inthparam);
+					voice->trigblk++;
+					voice->trigblk %= voice->blkmod;
+				}
+#endif
 			}
 		}
 
@@ -1581,8 +1722,14 @@ emuxki_open(void *addr, int flags)
 	 * recording source(s) which is necessary when setting recording
 	 * params This will be adressed very soon
 	 */
-	if (flags & AUOPEN_READ)
-		return (EOPNOTSUPP);
+	if (flags & AUOPEN_READ) {
+		sc->rvoice = emuxki_voice_new(sc, 0 /* EMU_VOICE_USE_RECORD */);
+		if (sc->rvoice == NULL)
+			return (EBUSY);
+
+		/* XXX Hardcode RECSRC_ADC for now */
+		sc->rvoice->dataloc.source = EMU_RECSRC_ADC;
+	}
 
 	if (flags & AUOPEN_WRITE) {
 		sc->pvoice = emuxki_voice_new(sc, EMU_VOICE_USE_PLAY);
@@ -1896,15 +2043,39 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 	}
 }
 
+/* blocksize should be a divisor of allowable buffersize */
+/* XXX probably this could be done better */
+static int
+emuxki_round_blocksize(void *addr, int blksize)
+{
+#if 0
+	struct emuxki_softc *sc = addr;
+	struct audio_softc *au;
+#endif
+	int bufsize;
+#if 0
+	if (sc == NULL)
+		return blksize;
+
+	au = (void *)sc->sc_audev;
+	if (au == NULL)
+		return blksize;
+
+	bufsize = emuxki_round_buffersize(sc, AUMODE_RECORD,
+	    au->sc_rr.bufsize);
+#else
+	bufsize = 65536;
+#endif
+
+	while (bufsize > blksize)
+		bufsize /= 2;
+
+	return bufsize;
+}
+	
 static size_t
 emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 {
-	static const int recbuf_sz[] = {
-		0, 384, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792,
-		2048, 2560, 3072, 3584, 4096, 5120, 6144, 7168, 8192, 10240,
-		12288, 14366, 16384, 20480, 24576, 28672, 32768, 40960, 49152,
-		57344, 65536
-	};
 
 	if (direction == AUMODE_PLAY) {
 		if (bsize < EMU_PTESIZE)
@@ -1920,9 +2091,10 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 		int idx;
 
 		/* find nearest lower recbuf size */
-		for(idx=32; --idx >= 0; ) {
-			if (bsize >= recbuf_sz[idx]) {
-				bsize = recbuf_sz[idx];
+		for(idx = sizeof(emuxki_recbuf_sz) /
+		    sizeof(emuxki_recbuf_sz[0]); --idx >= 0; ) {
+			if (bsize >= emuxki_recbuf_sz[idx]) {
+				bsize = emuxki_recbuf_sz[idx];
 				break;
 			}
 		}
@@ -2002,7 +2174,6 @@ emuxki_trigger_input(void *addr, void *start, void *end, int blksize,
 						(caddr_t)end - (caddr_t)start,
 						blksize)))
 		return (error);
-	emuxki_voice_commit_parms(voice); /* Useless for record ? */
 	emuxki_voice_start(voice, inth, inthparam);
 
 	return (0);
