@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.82 2003/09/17 21:09:18 enami Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.83 2003/10/15 13:07:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.82 2003/09/17 21:09:18 enami Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.83 2003/10/15 13:07:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,6 +657,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 * Update information about this partion in pack
 	 * label, to that it may be updated on disk.
 	 */
+	if (pp == NULL)
+		return;
 	if (isappleufs)
 		pp->p_fstype = FS_APPLEUFS;
 	else
