@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.1 1999/12/23 06:26:09 takemura Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.2 2000/01/16 20:01:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,8 +34,6 @@
  *
  */
 
-#define XXX_AUTO_INIT	/* XXX, Where would we call config_hook_init() from? */
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -60,14 +58,6 @@ void
 config_hook_init()
 {
 	int i;
-#ifdef XXX_AUTO_INIT
-	static int initialized = 0;
-
-	if (initialized) {
-		return;
-	}
-	initialized = 1;
-#endif
 
 	for (i = 0; i < CONFIG_HOOK_NTYPES; i++) {
 		LIST_INIT(&hook_lists[i]);
@@ -85,9 +75,6 @@ config_hook(type, id, mode, func, ctx)
 	struct hook_rec *hr, *prev_hr;
 	int s;
 
-#ifdef XXX_AUTO_INIT
-	config_hook_init();
-#endif
 	/* Check type value. */
 	if (type < 0 || CONFIG_HOOK_NTYPES <= type) {
 		panic("config_hook: invalid hook type");
@@ -101,8 +88,9 @@ config_hook(type, id, mode, func, ctx)
 	     hr = LIST_NEXT(hr, hr_link)) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode != mode) {
-				panic("config_hook: incompatible mode on type=%d/id=%d",
-				      type, id);
+				panic("config_hook: incompatible mode on "
+				      "type=%d/id=%d != %d", 
+				      type, id, hr->hr_mode);
 			}
 			prev_hr = hr;
 		}
@@ -123,8 +111,8 @@ config_hook(type, id, mode, func, ctx)
 		break;
 	case CONFIG_HOOK_EXCLUSIVE:
 		if (prev_hr != NULL) {
-			panic("config_hook: type=%d/id=%ld is already hooked",
-			      type, id);
+			panic("config_hook: type=%d/id=%ld is already "
+			      "hooked(%d)", type, id, prev_hr);
 		}
 		break;
 	default:
@@ -139,6 +127,8 @@ config_hook(type, id, mode, func, ctx)
 	hr->hr_type = type;
 	hr->hr_id = id;
 	hr->hr_func = func;
+	hr->hr_mode = mode;
+
 	s = splhigh();
 	LIST_INSERT_HEAD(&hook_lists[type], hr, hr_link);
 	splx(s);
@@ -153,9 +143,6 @@ config_unhook(hrx)
 	int s;
 	struct hook_rec *hr = (struct hook_rec*)hrx;
 
-#ifdef XXX_AUTO_INIT
-	config_hook_init();
-#endif
 	if (hr->hr_link.le_next != NULL) {
 		s = splhigh();
 		LIST_REMOVE(hr, hr_link);
@@ -174,9 +161,6 @@ config_hook_call(type, id, msg)
 	int res;
 	struct hook_rec *hr;
 
-#ifdef XXX_AUTO_INIT
-	config_hook_init();
-#endif
 	/* Check type value. */
 	if (type < 0 || CONFIG_HOOK_NTYPES <= type) {
 		panic("config_hook: invalid hook type");

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2000/01/16 20:01:41 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2000/01/16 20:01:41 uch Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $"
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
+#include <machine/config_hook.h>
+
 int	cpuspeed = 7;	/* approx # instr per usec. */
 
 static char booted_device_name[16];
@@ -85,6 +87,9 @@ cpu_configure()
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	config_hook_init();
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
