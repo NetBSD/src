@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.167 2000/10/04 03:35:53 itojun Exp $
+# $NetBSD: GENERIC,v 1.168 2000/10/19 14:35:44 ad Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 maxusers 32
 
@@ -368,7 +368,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-ca*	at	cac? unit ?
+lsu*	at	cac? unit ?
 
 # USB bus support
 usb*	at uhci?
