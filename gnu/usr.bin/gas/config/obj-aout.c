@@ -44,21 +44,22 @@ const short seg_N_TYPE[] = {
 };
 
 const segT N_TYPE_seg[N_TYPE+2] = {	/* N_TYPE == 0x1E = 32-2 */
-	SEG_UNKNOWN,			/* N_UNDF == 0 */
-	SEG_GOOF,
-	SEG_ABSOLUTE,			/* N_ABS == 2 */
-	SEG_GOOF,
-	SEG_TEXT,			/* N_TEXT == 4 */
-	SEG_GOOF,
-	SEG_DATA,			/* N_DATA == 6 */
-	SEG_GOOF,
-	SEG_BSS,			/* N_BSS == 8 */
-	SEG_GOOF,
-	SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
-	SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
-	SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
-	SEG_REGISTER,			/* dummy N_REGISTER for regs = 30 */
-	SEG_GOOF,
+	SEG_UNKNOWN,	SEG_GOOF,	/* N_UNDF == 0 */
+	SEG_ABSOLUTE,	SEG_GOOF,	/* N_ABS == 2 */
+	SEG_TEXT,	SEG_GOOF,	/* N_TEXT == 4 */
+	SEG_DATA,	SEG_GOOF,	/* N_DATA == 6 */
+	SEG_BSS,	SEG_GOOF,	/* N_BSS == 8 */
+	SEG_GOOF,	SEG_GOOF,	/* N_INDR == 0xa */
+	SEG_GOOF,	SEG_GOOF,	/* 0xc */
+	SEG_GOOF,	SEG_GOOF,	/* 0xe */
+	SEG_GOOF,	SEG_GOOF,	/* 0x10 */
+	SEG_REGISTER,	SEG_GOOF,	/* 0x12 (dummy N_REGISTER) */
+	SEG_GOOF,	SEG_GOOF,	/* N_SETA == 0x14 */
+	SEG_GOOF,	SEG_GOOF,	/* N_SETT == 0x16 */
+	SEG_GOOF,	SEG_GOOF,	/* N_SETD == 0x18 */
+	SEG_GOOF,	SEG_GOOF,	/* N_SETB == 0x1a */
+	SEG_GOOF,	SEG_GOOF,	/* N_SETV == 0x1c */
+	SEG_GOOF,	SEG_GOOF,	/* N_WARNING == 0x1e */
 };
 
 #if __STDC__ == 1
