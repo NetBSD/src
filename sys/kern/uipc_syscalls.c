@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.22 1996/06/14 22:21:44 cgd Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.23 1996/12/22 10:16:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -102,7 +102,7 @@ sys_bind(p, v, retval)
 {
 	register struct sys_bind_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(const struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -112,7 +112,7 @@ sys_bind(p, v, retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-			 MT_SONAME);
+	    MT_SONAME);
 	if (error)
 		return (error);
 	error = sobind((struct socket *)fp->f_data, nam);
@@ -147,7 +147,7 @@ sys_accept(p, v, retval)
 {
 	register struct sys_accept_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(struct sockaddr *) name;
 		syscallarg(int *) anamelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -228,7 +228,7 @@ sys_connect(p, v, retval)
 {
 	register struct sys_connect_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(const struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -242,7 +242,7 @@ sys_connect(p, v, retval)
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING))
 		return (EALREADY);
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-			 MT_SONAME);
+	    MT_SONAME);
 	if (error)
 		return (error);
 	error = soconnect(so, nam);
@@ -344,16 +344,16 @@ sys_sendto(p, v, retval)
 {
 	register struct sys_sendto_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(const void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) to;
+		syscallarg(const struct sockaddr *) to;
 		syscallarg(int) tolen;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 
-	msg.msg_name = SCARG(uap, to);
+	msg.msg_name = (caddr_t)SCARG(uap, to);		/* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
@@ -361,7 +361,7 @@ sys_sendto(p, v, retval)
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
 #endif
-	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
@@ -374,7 +374,7 @@ sys_sendmsg(p, v, retval)
 {
 	register struct sys_sendmsg_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) msg;
+		syscallarg(const struct msghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct msghdr msg;
@@ -524,10 +524,10 @@ sys_recvfrom(p, v, retval)
 {
 	register struct sys_recvfrom_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) from;
+		syscallarg(struct sockaddr *) from;
 		syscallarg(int *) fromlenaddr;
 	} */ *uap = v;
 	struct msghdr msg;
@@ -542,7 +542,7 @@ sys_recvfrom(p, v, retval)
 			return (error);
 	} else
 		msg.msg_namelen = 0;
-	msg.msg_name = SCARG(uap, from);
+	msg.msg_name = (caddr_t)SCARG(uap, from);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	aiov.iov_base = SCARG(uap, buf);
@@ -768,7 +768,7 @@ sys_setsockopt(p, v, retval)
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
-		syscallarg(caddr_t) val;
+		syscallarg(const void *) val;
 		syscallarg(int) valsize;
 	} */ *uap = v;
 	struct file *fp;
@@ -804,7 +804,7 @@ sys_getsockopt(p, v, retval)
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
-		syscallarg(caddr_t) val;
+		syscallarg(void *) val;
 		syscallarg(int *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
@@ -894,7 +894,7 @@ sys_getsockname(p, v, retval)
 {
 	register struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(struct sockaddr *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 	struct file *fp;
@@ -936,7 +936,7 @@ sys_getpeername(p, v, retval)
 {
 	register struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(struct sockaddr *) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
 	struct file *fp;
@@ -971,7 +971,7 @@ bad:
 int
 sockargs(mp, buf, buflen, type)
 	struct mbuf **mp;
-	caddr_t buf;
+	const void *buf;
 	int buflen, type;
 {
 	register struct sockaddr *sa;
