@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.27 2001/01/08 02:03:47 fvdl Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.28 2001/04/12 20:03:35 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -263,7 +263,7 @@ raclose(dev, flags, fmt, p)
 	 */
 #if notyet
 	if (ra->ra_openpart == 0) {
-		s = splimp();
+		s = splbio();
 		while (BUFQ_FIRST(&udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
