@@ -1,4 +1,4 @@
-/*	$Id: akbdvar.h,v 1.1 1998/10/13 11:21:21 tsubai Exp $	*/
+/*	$Id: akbdvar.h,v 1.2 1998/10/14 12:56:19 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -30,8 +30,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_KBDVAR_H_
-#define _MAC68K_KBDVAR_H_
+#ifndef _MACPPC_KBDVAR_H_
+#define _MACPPC_KBDVAR_H_
 
 #include <machine/adbsys.h>
 
@@ -47,6 +47,7 @@ struct kbd_softc {
 	u_int8_t        handler_id;     /* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
+        struct device *sc_wskbddev;
 };
 
 /* LED register bits, inverse of actual register value */
@@ -56,4 +57,4 @@ struct kbd_softc {
 
 void    kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 
-#endif /* _MAC68K_KBDVAR_H_ */
+#endif /* _MACPPC_KBDVAR_H_ */
