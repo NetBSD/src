@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2001/05/01 02:19:16 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2001/05/15 16:15:22 toshii Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_VMPARAM_H_
-#define	_ARM32_VMPARAM_H_
+#ifndef	_HPCARM_VMPARAM_H_
+#define	_HPCARM_VMPARAM_H_
 
 /* for pt_entry_t definition */
 #include <machine/pte.h>
@@ -201,6 +201,6 @@ struct pmap_physseg {
 	char *attrs;			/* attrs array */
 };
 
-#endif	/* _ARM32_VMPARAM_H_ */
+#endif	/* _HPCARM_VMPARAM_H_ */
 
 /* End of vmparam.h */
