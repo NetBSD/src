@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.68 1998/08/04 16:38:39 minoura Exp $
+#	$NetBSD: NetBSD.dist,v 1.69 1998/09/13 22:32:17 tv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -126,11 +126,6 @@ bfd
 
 # ./usr/include/g++
 g++
-
-# ./usr/include/g++/gen
-gen
-# ./usr/include/g++/gen
-..
 
 # ./usr/include/g++/std
 std
