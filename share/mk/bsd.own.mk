@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.412 2004/03/04 13:10:28 rtr Exp $
+#	$NetBSD: bsd.own.mk,v 1.413 2004/03/08 06:30:33 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -556,6 +556,10 @@ MK${var}?=	no
 #
 # Force some options off if their dependencies are off.
 #
+
+.if ${MKKERBEROS} == "no"
+MKKERBEROS4:=   no 
+.endif
 
 .if ${MKCRYPTO} == "no"
 MKKERBEROS4:=	no
