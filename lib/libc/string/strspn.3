@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek and the American National Standards Committee X3,
@@ -33,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)strspn.3	5.3 (Berkeley) 6/29/91
+.\"     @(#)strspn.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 29, 1991
+.Dd June 4, 1993
 .Dt STRSPN 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Fn strspn "const char *s" "const char *charset"
 .Sh DESCRIPTION
 The
-.Xr strcspn
+.Fn strcspn
 function
 spans the initial part of the null-terminated string
 .Fa s
