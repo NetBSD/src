@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.3 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.4 2001/05/13 20:43:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,15 +70,9 @@
 /*
  * Driver for 3Com 3c529 cards.
  *
- * Known issues:
- * - on my 386DX, speed of network is like 100KB/s at best; for bigger
- *   files fetched e.g. via ftp, I get as low as 5KB/s, mostly due
- *   to excessive number of overrun packets. Configuring system to
- *   use smaller TCP window might help, though the performance is
- *   still expected to be very dependant on CPU speed, especially
- *   since ISA and PCI attachments are reported to work OK on pentium
- *   class systems.
- *   Changing ic/elink3.c to use RX Early might help here potentially.
+ * If you encouter sucky performance, try kernel without DEBUG/DIAGNOSTIC.
+ * This helped on my test machine to change the performance of the card
+ * from like 5KB/s to like 800 KB/s.
  */
 
 #include <sys/param.h>
