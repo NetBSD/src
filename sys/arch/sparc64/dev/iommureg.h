@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.7 2002/02/07 21:35:26 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,8 +125,9 @@ struct iommu_strbuf {
  */
 
 
-#define IOTSB_VEND		(0xffffffffffffffffLL<<PGSHIFT)
+#define IOTSB_VEND		(u_int)(0xffffffffffffffffLL<<PGSHIFT)
 #define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << ((sz)+10)) 
+#define	IOTSB_VSIZE(sz)		(u_int)(1 << ((sz)+10+PGSHIFT))
 
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
 #define IOTSBSLOT(va,sz)	((u_int)(((vaddr_t)(va))-(is->is_dvmabase))>>PGSHIFT)
