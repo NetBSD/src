@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.149 2005/02/22 14:40:00 peter Exp $
+# $NetBSD: mi,v 1.150 2005/02/27 03:40:14 thorpej Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -84,6 +84,7 @@
 ./etc/obsolete/misc				etc-obsolete		obsolete
 ./etc/obsolete/text				etc-obsolete		obsolete
 ./etc/pam.d/README				etc-sys-etc
+./etc/pam.d/display_manager			etc-sys-etc
 ./etc/pam.d/ftpd				etc-sys-etc
 ./etc/pam.d/gdm					etc-sys-etc
 ./etc/pam.d/imap				etc-sys-etc
