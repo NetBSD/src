@@ -1,0 +1,318 @@
+# $NetBSD: HACKS,v 1.1 2002/09/21 08:17:37 lukem Exp $
+#
+# This file is intended to document workarounds for currently unsolved
+# (mostly) compiler bugs.
+#
+# Format:
+#   hack		title
+#   cdate		creation date
+#   mdate		mod date
+#   who			responsible developer
+#   port		...
+#  	  affected ports, space separated, if not "all"
+#   file		affected file : revision : line from : line to
+#  	  affected files and revision and line numbers describing hack
+#  	  multiple lines if necessary.
+#   pr			NNNN ...
+#  	  problem reports this hack works around, if known. Space
+#  	  separated.
+#   regress		src/regress/directory/where/test/found
+#  	  regression test directories, if available.
+#   descr
+#  	  insert short informal description (multi-line). (Longer ones
+#  	  should be in the PR database. More formal descriptions might
+#  	  be in the regress tree. See above).
+#   kcah
+#  	  closing bracket.
+#
+# this is a comment.
+
+hack	specific knowledge of xterm escapes in curses code
+cdate	Wed, 11 Sep 2002 18:23:25 +0300
+who	jdc
+port	all
+file	lib/libcurses/setterm.c : 1.33
+descr
+	Recognise that "\E[m" will turn off all attributes for xterm-like
+	terminals.  Without this hack, we can't tell when turning off one
+	attribute affects another (which we check by comparing sequences).
+kcah
+
+hack	gcc 2.95/vax cannot handle __builtin_ffs()
+cdate	Fri Aug 23 21:31:15 CEST 2002
+who	ragge
+port	vax
+file	sys/lib/libkern/libkern.h : 1.42
+descr
+	__builtin_ffs() is ifdef'd away if __vax__. Matt Thomas has added
+	this feature to GCC 3 so it can be removed when switching.
+kcah
+
+hack	gcc 2.95.3 -O2 bug
+cdate	Sun Jan  6 23:17:28 UTC 2002
+who	lukem
+port	alpha
+file	sbin/newfs/mkfs.c : (all?)
+pr	15156
+descr
+	newfs built with gcc -O2 dumps core part-way through.
+	using -O1 avoids the problem
+kcah
+
+hack	binutil-2.11-sparc64-pltrela
+mdate	14 Aug 2001
+who	eeh
+port	sparc64
+file	libexec/ld.elf_so/reloc.c: 1.41 : 597 : 619
+descr
+	The first for PLT entries are reserved.  There is some disagreement
+	whether they should have associated relocation entries.  Both the
+	SPARC 32-bit and 64-bit ELF specifications say that they should have
+	relocation entries, but the 32-bit SPARC binutils do not generate
+	them, and now the 64-bit SPARC binutils have stopped generating them
+	too.
+
+	To provide binary compatibility, we will check the first entry, if it
+	is reserved it should not be of the type JMP_SLOT.  If it is JMP_SLOT,
+	then the 4 reserved entries were not generated and our index is 4
+	entries too far, so we frob the rela pointer.
+kcah
+
+hack	gcc-arm32-schedule
+mdate	04 May 2000
+who	is
+file	lib/libc/stdlib/strtoull.c	: 1.3 : 78 : 81
+file	lib/libc/stdlib/strtouq.c	: 1.15 : 73 : 76
+pr	9613
+descr
+	strtoull() was returning a wrong result for small numbers with bit 31
+	set. This is a gcc/arm32 compiler bug in gcc < 2.95.2. Adding
+	(void)&acc; works around it.
+kcah
+
+hack	gcc-sparc64-memorysize
+mdate	17 Sep 2000
+who	mrg
+port	sparc64
+file	lib/libc/hash/sha1.c		: 1.6 : 78 : 129 : 162 : 189
+file	sys/lib/libkern/sha1.c		: 1.6 : 78 : 129 : 162 : 189
+file	usr.sbin/bind/lib/Makefile	: 1.14 : 87 : 91
+descr
+	the normal SHA1Transform() function causes the sparc64 compiler to
+	use excessive amounts of memory attempting to optimise this function.
+	using no optimisation allows the function to build.  this hack
+	splits the mathematical functions inside SHA1Transform() into 4
+	separate functions, which avoids the optimiser explosion.
+kcah
+
+hack	gcc-sparc64-double-arguments
+mdate	18 Sep 2000
+who	mrg
+port	sparc64
+file	xsrc/xc/lib/fonts/Type1/type1.c		: 1.2 : 1461 : 1507 : 1702 : 1709
+descr
+	in passing 17 "double" arguments to a function, gcc incorrectly tries
+	to use a register that doesn't exist, causing an internal error.  this
+	hack changes the way arguments are passed to the function, such that
+	a pointer to a "double" (really an array) is passed, and the old
+	arguments are assigned within the function.
+kcah
+
+hack	gcc-sparc64-gawk
+mdate	28 Oct 2000
+who	mrg
+port	sparc64
+file	gnu/usr.bin/gawk/Makefile		: 1.11 : 21 : 24
+descr
+	gcc fails to build gawk properly, due to double floating point bugs.
+	this simple test program will fail to print ``ab'':
+		BEGIN { f = "abc"; print substr(f, 1, 2); exit }
+	the work around is simple: use -msoft-quad-float.
+kcah
+
+hack    gcc-sparc64-libgcc
+mdate   01 Dec 2001
+who	jmc
+port	sparc64
+file	gnu/lib/libgcc/Makefile			: 1.29 : 24 : 27
+descr
+	gcc fails to do double -> int conversions correctly without 
+	soft-quad-float. Add it in there for the internal conversion
+	routines. This appears to be more than likely emulations bugs than
+	compiler bugs as the assembly looks correct on the surface.
+
+kcah
+
+hack	gcc-sparc64-iostat-systat
+mdate	04 Feb 2001
+who	mrg
+port	sparc64
+file	usr.sbin/iostat/Makefile	: 1.17 : 7 : 10
+file	usr.bin/systat/Makefile		: 1.23 : 6 : 9
+descr
+	gcc fails to build iostat properly, due to double floating point bugs.
+	results will include "Inf" and other garbage.
+	the work around is simple: use -msoft-quad-float.
+kcah
+
+hack	gcc-sparc64-nawk
+mdate	25 Oct 2001
+who	martin
+port	sparc64
+file	usr.bin/awk/Makefile		: 1.3 : 13 : 15
+descr
+	Don't use long double on sparc64.
+kcah
+
+hack	gcc-sparc64-ntp
+mdate	12 Nov 2000
+who	martin
+port	sparc64
+file	usr.sbin/ntp/Makefile.inc	: 1.5 : 17 : 19
+descr
+	gcc fails to build ntpd properly, due to double floating point bugs.
+	Ntpd will fail to decode incoming packets; ntpdc -s will report
+	a delay, offset and dispersion of 0.0000 for all peers.
+	the work around is simple: use -msoft-quad-float.
+kcah
+
+hack	gcc-sparc64-x_dhclient
+mdate	27 Dec 2000
+who	mrg
+port	sparc64
+file	distrib/utils/x_dhclient/Makefile	: 1.6 : 28 : 30
+descr
+	gcc fails with an ICE while building dhclient's parse.c with -O2
+	and -Os.  the work around is simple: don't use -Os.
+kcah
+
+hack	lint-no-long-double
+mdate	17 Aug 2001
+who	eeh
+port	sparc64
+file	usr.bin/xlint/lint1/param.h: 1.14 :
+descr
+	Don't use long double on sparc64.
+kcah
+
+hack	netstat ieee1394 address printing.
+mdate	14 Nov 2000
+who	matt
+file	lib/libc/net/getnameinfo.c	: 1.32 : 497 : 503
+descr
+	Because the current implementation of IP over IEEE1394, the
+	fw device address contains more than just the IEEE1394 EUI-64.
+	So when printing out IEEE1394 addresses, ignore the extra stuff.
+kcah
+
+hack	xterm vs. libterm
+mdate	01 Aug 2000
+who	jdc
+file	xsrc/xc/programs/xterm/main.c	: 1.2 : 3609 : 3614
+pr	10383
+descr
+	In order to extend the termcap string over 1023 bytes, a ZZ entry was
+	introduced to point to a memory location containing the full entry.
+	Without this hack, xterm will export a termcap containing the ZZ
+	entry, which will then be ignored by libterm.  As xterm modifies the
+	exported termcap, this would cause those modifications to be ignored.
+kcah
+
+hack	gcc-3-libtelnet
+mdate	29 Jan 2002
+who	thorpej
+file	lib/libtelnet/Makefile	: 1.14 : 14 : 17
+descr
+	GCC 3.x issues a spurious warning when compiling a Duff's Device
+	with optimization, even though it compiles the file correctly.
+	GCC PR optimization/5230.  kerberos.c contains a Duff's Device
+	in the checksum routine.  Hack is to build libtelnet w/o optimization
+	if HAVE_GCC3 is set.
+kcah
+
+hack	gcc-sh3-sed
+mdate	23 Apr 2002
+who	thorpej
+file	usr.bin/sed/Makefile	: 1.9 : 9 : 13
+descr
+	The in-tree GCC 2.95.3-based compiler ICEs when building
+	with optimization for SuperH.  Hack is to biuld with -O0.
+kcah
+
+hack	gcc-unsigned-compare
+cdate	09 Mar 2002
+mdate	18 Mar 2002
+who	bjh21
+port	arm
+file	dist/bind/lib/nameser/ns_parse.c : 1.3
+file	dist/dhcp/minires/ns_parse.c : 1.3
+file	dist/dhcp/omapip/result.c : 1.2
+file	dist/dhcp/server/failover.c : 1.3
+file	gnu/dist/gawk/eval.c : 1.4
+file	gnu/dist/toolchain/bfd/bfd.c : 1.2
+file	gnu/dist/toolchain/bfd/format.c : 1.2
+file	gnu/dist/toolchain/gdb/target.c : 1.2
+file	sys/kern/vfs_subr.c : 1.172
+descr	When checking that a potentially-unsigned enum is >= 0, assign it
+	to an int first.  This is necessary to avoid "comparison is always
+	true" warnings with -fshort-enums.  Casting to an int really should
+	be enough, but turns out not to be.
+kcah
+
+hack	wi-at-big-endian-bus
+cdate	15 Mar 2002
+who	martin
+file	dev/ic/wireg.h
+descr	Add an option to access the underlying bus in big endian byte order
+	to work around deficiencies in bus_space_{read,write}_* macros.
+	Those don't allow the implementation of a proper pcmcia bus space
+	tag.
+kcah
+
+hack	gcc 2.95.3 -O2 (-fgcse) bug
+cdate	Sun May  5 18:36:04 UTC 2002
+who	tsutsui
+port	macppc
+file	sys/arch/macppc/dev/adb_direct.c:	1.24 : 1895 : 1896
+pr	16678
+descr
+	gcc-2.95.3 does generates wrong code on optimization
+	by gcc -O2 (-fgcse), and adb_read_date_time() returns
+	wrong value on cuda system.
+	A null asm statement has been added to avoid this for workaround.
+kcah
+
+hack	gcc-vax-libbz2
+mdate	27 Jun 2002
+who	thorpej
+port	vax
+file	lib/libbz2/Makefile
+descr
+	libbz2 is mis-compiled with optimization with GCC 2.95.3
+	on VAX.  -O0 works around this problem.
+kcah
+
+hack	egcs-pc532-ip6_mroute
+cdate	09 Jul 2002
+who	simonb
+port	pc532
+file	sys/arch/pc532/conf/Makefile.pc532 : 1.70
+file	sys/arch/pc532/conf/files.pc532 : 1.47
+descr
+	egcs 1.1.2 gets an "internal error--insn does not satisfy its
+	constraints" error compiling ip6_mroute.c with -O2 or greater.
+	-O1 works around this problem.
+kcah
+
+hack	SuperH SH5 Toolchain Bugs
+cdate	11 Jul 2002
+who	scw
+port	sh5
+file	usr.sbin/ndbootd/ndbootd.c : 1.6
+file	usr.sbin/traceroute/traceroute.c : 1.48
+descr
+	The SuperH SH5 toolchain (2.97-sh5-010522) gets an internal
+	compiler error when assigning a bit-wise inverted value
+	under some circumstances.
+	Work around it by splitting the statement into two.
+kcah
