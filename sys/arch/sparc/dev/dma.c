@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.52 1998/04/07 20:11:54 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.53 1998/07/27 19:32:42 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -57,7 +57,7 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <sparc/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>

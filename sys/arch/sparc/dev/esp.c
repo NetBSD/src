@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.73 1998/03/29 22:10:32 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.74 1998/07/27 19:32:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <sparc/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>
