@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.52 1998/11/06 23:03:06 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.53 1998/12/01 23:18:48 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1700,9 +1700,8 @@ ufsspec_read(v)
 	/*
 	 * Set access flag.
 	 */
-#ifndef NODEVMTIME
-	VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
-#endif
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
+		VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -1723,9 +1722,8 @@ ufsspec_write(v)
 	/*
 	 * Set update and change flags.
 	 */
-#ifndef NODEVMTIME
-	VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
-#endif
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
+		VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
