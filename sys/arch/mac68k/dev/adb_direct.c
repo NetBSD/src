@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.35 1999/12/10 00:03:47 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.36 1999/12/25 08:16:34 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2542,6 +2542,7 @@ adb_setup_hw_type(void)
 	case MACH_MACLC520:		/* LC 520 */
 	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
 	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACTV:		/* Macintosh TV */
 	case MACH_MACP580:		/* Performa 580/588 */
 	case MACH_MACQ605:		/* Quadra 605 */
 	case MACH_MACQ605_33:		/* Clock-chipped Quadra 605 */
@@ -2588,6 +2589,7 @@ adb_setup_hw_type(void)
 	case MACH_MACLC520:		/* LC 520 */
 	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
 	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACTV:		/* Macintosh TV */
 	case MACH_MACP580:		/* Performa 580/588 */
 	case MACH_MACP600:		/* Performa 600 */
 	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
