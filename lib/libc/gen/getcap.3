@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.18 2003/08/07 16:42:49 agc Exp $
+.\"	$NetBSD: getcap.3,v 1.19 2004/04/23 14:48:07 christos Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
-.Fn cgetent "char **buf" "char **db_array" "const char *name"
+.Fn cgetent "char **buf" "const char * const *db_array" "const char *name"
 .Ft int
 .Fn cgetset "const char *ent"
 .Ft int
@@ -66,9 +66,9 @@
 .Ft int
 .Fn cgetustr "char *buf" "const char *cap" "char **str"
 .Ft int
-.Fn cgetfirst "char **buf" "char **db_array"
+.Fn cgetfirst "char **buf" "const char * const *db_array"
 .Ft int
-.Fn cgetnext "char **buf" "char **db_array"
+.Fn cgetnext "char **buf" "const char * const *db_array"
 .Ft int
 .Fn cgetclose "void"
 .Sh DESCRIPTION
