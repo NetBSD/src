@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.174 2003/08/07 16:33:15 agc Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.175 2003/08/15 03:42:04 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.174 2003/08/07 16:33:15 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.175 2003/08/15 03:42:04 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -216,7 +216,13 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.174 2003/08/07 16:33:15 agc Exp $");
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
-#endif
+#endif	/* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC*/
+
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
@@ -1005,7 +1011,7 @@ findpcb:
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
 		}
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		if (inp && ipsec4_in_reject(m, inp)) {
 			ipsecstat.in_polvio++;
 			goto drop;
@@ -1045,7 +1051,7 @@ findpcb:
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
 		}
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		if (ipsec6_in_reject(m, in6p)) {
 			ipsec6stat.in_polvio++;
 			goto drop;
@@ -3210,7 +3216,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	}
 #endif
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/*
 	 * we make a copy of policy, instead of sharing the policy,
 	 * for better behavior in terms of SA lookup and dead SA removal.
@@ -3798,8 +3804,8 @@ syn_cache_respond(sc, m)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0),
-		    NULL);
+		    (ip_mtudisc ? IP_MTUDISC : 0), 
+		    (struct ip_moptions *)0, (struct inpcb *)0);
 		break;
 #endif
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.104 2003/08/07 16:33:20 agc Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.105 2003/08/15 03:42:05 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.104 2003/08/07 16:33:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.105 2003/08/15 03:42:05 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -114,6 +114,13 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.104 2003/08/07 16:33:20 agc Exp $")
 #endif
 
 #include <machine/stdarg.h>
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#ifdef INET6
+#include <netipsec/ipsec6.h>
+#endif
+#endif	/* FAST_IPSEC*/
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -486,7 +493,7 @@ udp4_sendup(m, off, src, so)
 		return;
 	}
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		ipsecstat.in_polvio++;
@@ -532,7 +539,7 @@ udp6_sendup(m, off, src, so)
 		return;
 	in6p = sotoin6pcb(so);
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		ipsec6stat.in_polvio++;
@@ -903,7 +910,7 @@ udp_output(m, va_alist)
 
 	return (ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions));
+	    inp->inp_moptions, inp));
 
 release:
 	m_freem(m);
