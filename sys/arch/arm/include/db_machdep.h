@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2001/03/11 16:02:21 bjh21 Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 2001/05/13 13:51:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -104,9 +104,11 @@ u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
 int kdb_trap __P((int, db_regs_t *));
 void db_machine_init __P((void));
 
-/*
- * We use a.out symbols in DDB.
- */
+#ifdef __ELF__
+#define DB_ELF_SYMBOLS
+#define DB_ELFSIZE 32
+#else
 #define	DB_AOUT_SYMBOLS
+#endif
 
 #endif	/* _ARM_DB_MACHDEP_H_ */
