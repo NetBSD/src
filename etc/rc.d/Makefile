@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2004/01/14 10:51:54 jmmv Exp $
+# $NetBSD: Makefile,v 1.46 2004/02/01 02:34:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	accounting altqd amd apmd \
 	bootparams bootconf.sh ccd cgd cleartmp cron \
 	dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
-	ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
+	identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
 	kdc ldconfig lkm1 lkm2 lkm3 local lpd \
 	mixerctl mopd motd mountall mountcritlocal mountcritremote mountd \
 	moused mrouted \
