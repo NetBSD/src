@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064var.h,v 1.4 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064var.h,v 1.5 2001/06/21 05:20:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct p5064_config {
 #define	P5064_IRQ_IDE1		15
 
 extern struct p5064_config p5064_configuration;
+extern const int p5064_isa_to_irqmap[];
 
 void	algor_p5064_bus_io_init(bus_space_tag_t, void *);
 void	algor_p5064_bus_mem_init(bus_space_tag_t, void *);

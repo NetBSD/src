@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.4 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.5 2001/06/21 05:20:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -706,6 +706,7 @@ void *
 algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
     int (*func)(void *), void *arg)
 {
+	struct algor_intrhand *ih;
 	int irqidx;
 
 	if (iirq > 15 || type == IST_NONE)
@@ -714,14 +715,23 @@ algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
 	if ((irqidx = p5064_isa_to_irqmap[iirq]) == -1)
 		return (NULL);
 
-	return (algor_p5064_intr_establish(irqidx, func, arg));
+	ih = algor_p5064_intr_establish(irqidx, func, arg);
+	if (ih != NULL) {
+		/* Translate it to an ISA IRQ. */
+		ih->ih_irq = iirq;
+	}
+	return (ih);
 }
 
 void
 algor_p5064_isa_intr_disestablish(void *v, void *cookie)
 {
+	struct algor_intrhand *ih = cookie;
 
-	algor_p5064_intr_disestablish(cookie);
+	/* Translate the IRQ back to our domain. */
+	ih->ih_irq = p5064_isa_to_irqmap[ih->ih_irq];
+
+	algor_p5064_intr_disestablish(ih);
 }
 
 int
