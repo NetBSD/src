@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.36.2.2 2000/08/31 14:55:00 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.36.2.3 2000/10/08 21:49:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.36.2.2 2000/08/31 14:55:00 veego Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.36.2.3 2000/10/08 21:49:23 itojun Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -770,6 +770,9 @@ int out;
 	}
 #  endif /* CSUM_DELAY_DATA */
 
+	/* at this moment, ipfilter supports IPv4 traffic only. */
+	if (ip->ip_v != 4)
+		return 0;
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
 	     ip->ip_p == IPPROTO_ICMP)) {
