@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.h,v 1.2 1997/07/30 22:55:30 jtc Exp $	*/
+/*	$NetBSD: ypserv.h,v 1.3 1997/10/15 05:01:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@ struct ypresp_all {
 	} ypresp_all_u;
 };
 
+extern	int _yp_invalid_domain __P((const char *));	/* from libc */
+	int _yp_invalid_map __P((const char *));
+
 void	*ypproc_null_2_svc __P((void *, struct svc_req *));
 void	*ypproc_domain_2_svc __P((void *, struct svc_req *));
 void	*ypproc_domain_nonack_2_svc __P((void *, struct svc_req *));
@@ -65,6 +68,7 @@ struct ypresp_key_val ypdb_get_next __P((const char *, const char *,
 struct ypresp_order ypdb_get_order __P((const char *, const char *));
 struct ypresp_master ypdb_get_master __P((const char *, const char *));
 
-void	ypdb_init __P((void));
-bool_t	ypdb_xdr_get_all __P((XDR *, struct ypreq_nokey *));
 void	ypdb_close_all __P((void));
+void	ypdb_init __P((void));
+int	ypdb_secure __P((const char *, const char *));
+bool_t	ypdb_xdr_get_all __P((XDR *, struct ypreq_nokey *));

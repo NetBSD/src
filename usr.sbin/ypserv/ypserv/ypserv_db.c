@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.4 1997/07/18 21:57:20 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.5 1997/10/15 05:01:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,6 +33,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypserv_db.c,v 1.5 1997/10/15 05:01:37 lukem Exp $");
+#endif
+
 /*
  * major revision/cleanup of Mats' version
  * done by Chuck Cranor <chuck@ccrc.wustl.edu>
@@ -49,6 +54,7 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -76,6 +82,7 @@ struct opt_map {
 	DBM	*db;			/* database */
 	struct opt_domain *dom;		/* back ptr to our domain */
 	int	host_lookup;		/* host lookup */
+	int	secure;			/* is this map secure? */
 	CIRCLEQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
 	LIST_ENTRY(opt_map) mapsl;	/* map list pointers */
 };
@@ -175,7 +182,7 @@ ypdb_close_last()
 	LIST_REMOVE(last, mapsl);		/* remove from domain list */
 
 #ifdef DEBUG
-	yplog("  ypdb_close_last: closing map %s in domain %s [db=0x%x]",
+	yplog("  ypdb_close_last: closing map %s in domain %s [db=%#x]",
 	      last->map, last->dom->domain, last->db);
 #endif
 
@@ -212,12 +219,12 @@ ypdb_close_db(db)
 {
 
 #ifdef DEBUG
-	yplog("  ypdb_close_db(0x%x)", db);
+	yplog("  ypdb_close_db(%#x)", db);
 #endif
 
-#ifndef OPTDB
+#ifndef OPTIMIZE_DB
 	ypdb_close_all();
-#endif
+#endif /* not OPTIMIZE_DB */
 }
 
 /*
@@ -231,12 +238,12 @@ ypdb_open_db(domain, map, status, map_info)
 	struct opt_map **map_info;
 {
 	static char *domain_key = YP_INTERDOMAIN_KEY;
+	static char *secure_key = YP_SECURE_KEY;
 	char map_path[MAXPATHLEN];
 	struct stat finfo;
 	struct opt_domain *d = NULL;
 	struct opt_map *m = NULL;
 	DBM *db;
-	int fd;
 	datum k, v;
 
 	/*
@@ -258,25 +265,29 @@ ypdb_open_db(domain, map, status, map_info)
 
 	if (m) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=0x%x",
+		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=%#x",
 		      domain, map, m->db);
 #endif
 		CIRCLEQ_REMOVE(&maps, m, mapsq);	/* adjust LRU queue */
 		CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
 		*status = YP_TRUE;
+		if (map_info)
+			*map_info = m;
 		return (m->db);
 	}
 
 	/*
-	 * database not open, first check for "out of fd" and close a db if
-	 * out...
+	 * check for illegal domain and map names
 	 */
 
-	fd = open("/", O_RDONLY);
-	if (fd < 0)
-		ypdb_close_last();
-	else
-		close(fd);
+	if (_yp_invalid_domain(domain)) {
+		*status = YP_NODOM;
+		return (NULL);
+	}
+	if (_yp_invalid_map(map)) {
+		*status = YP_NOMAP;
+		return (NULL);
+	}
 
 	/*
 	 * check for domain, file.
@@ -305,9 +316,23 @@ ypdb_open_db(domain, map, status, map_info)
 	 * open map
 	 */
 
+#ifdef OPTIMIZE_DB
+retryopen:
+#endif /* OPTIMIZE_DB */
 	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
 	    YP_DB_PATH, domain, map);
 	db = ypdb_open(map_path, O_RDONLY, 0444);
+#ifdef OPTIMIZE_DB
+	if (db == NULL) {
+#ifdef DEBUG
+		yplog("  ypdb_open_db: errno %d (%s)", errno, strerror(errno));
+#endif /* DEBUG */
+		if ((errno == ENFILE) || (errno == EMFILE)) {
+			ypdb_close_last();
+			goto retryopen;
+		}
+	}
+#endif /* OPTIMIZE_DB */
 
 	*status = YP_NOMAP;	/* see note below */
 
@@ -372,14 +397,21 @@ ypdb_open_db(domain, map, status, map_info)
 			m->host_lookup = TRUE;
 	}
 
+	m->secure = FALSE;
+	k.dptr = secure_key;
+	k.dsize = YP_SECURE_LEN;
+	v = ypdb_fetch(db, k);
+	if (v.dptr != NULL)
+		m->secure = TRUE;
+
 	*status = YP_TRUE;
 
 	if (map_info)
 		*map_info = m;
 
 #ifdef DEBUG
-	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, db=0x%x",
-	    domain, map, m->host_lookup, m->db);
+	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=%#x",
+	    domain, map, m->host_lookup, m->secure, m->db);
 #endif
 
 	return (m->db);
@@ -519,6 +551,7 @@ ypdb_get_record(domain, map, key, ypprivate)
 
 		/* note: lookup_host needs null terminated string */
 		strncpy(keystr, key.dptr, key.dsize);
+		keystr[key.dsize] = '\0';
 		res.status = lookup_host((hn == 0) ? TRUE : FALSE,
 		    host_lookup, db, keystr, &res);
 	} else {
@@ -766,4 +799,25 @@ ypdb_xdr_get_all(xdrs, req)
 		ypdb_close_db(db);
 
 	return (TRUE);
+}
+
+int
+ypdb_secure(domain, map)
+	const char *domain;
+	const char *map;
+{
+	DBM *db;
+	int secure, status;
+	struct opt_map *map_info = NULL;
+
+	secure = FALSE;
+
+	db = ypdb_open_db(domain, map, &status, &map_info);
+	if (db == NULL || status < 0)
+		return (secure);
+	if (map_info != NULL) 
+		secure = map_info->secure;
+
+	ypdb_close_db(db);
+	return (secure);
 }

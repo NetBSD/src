@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.4 1997/07/18 21:57:20 thorpej Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.5 1997/10/15 05:01:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypserv_proc.c,v 1.5 1997/10/15 05:01:44 lukem Exp $");
+#endif
 
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -98,6 +103,8 @@ ypproc_domain_2_svc(argp, rqstp)
 	char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (_yp_invalid_domain(domain))
+		goto bail_domain;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s",
 	    YP_DB_PATH, domain);
 	if ((stat(domain_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))
@@ -110,6 +117,7 @@ ypproc_domain_2_svc(argp, rqstp)
 	    TORF(ok), domain, TORF(result));
 
 	if (!ok) {
+bail_domain:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
@@ -129,6 +137,8 @@ ypproc_domain_nonack_2_svc(argp, rqstp)
 	char domain_path[MAXPATHLEN];
 	struct stat finfo;
 
+	if (_yp_invalid_domain(domain))
+		goto bail_nonack;
 	snprintf(domain_path, sizeof(domain_path), "%s/%s",
 	    YP_DB_PATH, domain);
 	if ((stat(domain_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))
@@ -137,11 +147,12 @@ ypproc_domain_nonack_2_svc(argp, rqstp)
 		result = FALSE;
 
 	YPLOG(
-	   "domain_nonack_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
-	   inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
-	   domain, TORF(result));
+	    "domain_nonack_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	    domain, TORF(result));
 
 	if (!ok) {
+bail_nonack:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
@@ -161,18 +172,27 @@ ypproc_match_2_svc(argp, rqstp)
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_key *k = argp;
+	int secure;
+
+	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map))
+		goto bail_match;
+	secure = ypdb_secure(k->domain, k->map);
 
 	YPLOG(
-	  "match_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
-	  k->domain, k->map, k->keydat.dsize, k->keydat.dptr);
+"match_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	    TORF(secure), k->domain, k->map, k->keydat.dsize, k->keydat.dptr);
 
 	if (!ok) {
+bail_match:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-	res = ypdb_get_record(k->domain, k->map, k->keydat, FALSE);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+		res.status = YP_YPERR;
+	else
+		res = ypdb_get_record(k->domain, k->map, k->keydat, FALSE);
 
 #ifdef DEBUG
 	yplog("  match2_status: %s", yperr_string(ypprot_err(res.status)));
@@ -190,17 +210,27 @@ ypproc_first_2_svc(argp, rqstp)
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_nokey *k = argp;
+	int secure;
 
-	YPLOG("first_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
-	  k->domain, k->map);
+	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map))
+		goto bail_first;
+	secure = ypdb_secure(k->domain, k->map);
+
+	YPLOG(
+	    "first_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	    TORF(secure), k->domain, k->map);
 
 	if (!ok) {
+bail_first:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-	res = ypdb_get_first(k->domain, k->map, FALSE);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+		res.status = YP_YPERR;
+	else
+		res = ypdb_get_first(k->domain, k->map, FALSE);
 
 #ifdef DEBUG
 	yplog("  first2_status: %s", yperr_string(ypprot_err(res.status)));
@@ -218,19 +248,27 @@ ypproc_next_2_svc(argp, rqstp)
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_key *k = argp;
+	int secure;
+
+	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map))
+		goto bail_next;
+	secure = ypdb_secure(k->domain, k->map);
 
 	YPLOG(
-	  "next_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
-	  k->domain, k->map, k->keydat.dsize, k->keydat.dptr);
+"next_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	    TORF(secure), k->domain, k->map, k->keydat.dsize, k->keydat.dptr);
 
 	if (!ok) {
+bail_next:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-	res = ypdb_get_next(k->domain, k->map, k->keydat, FALSE);
-
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+		res.status = YP_YPERR;
+	else
+		res = ypdb_get_next(k->domain, k->map, k->keydat, FALSE);
 
 #ifdef DEBUG
 	yplog("  next2_status: %s", yperr_string(ypprot_err(res.status)));
@@ -256,12 +294,15 @@ ypproc_xfr_2_svc(argp, rqstp)
 	memset(&res, 0, sizeof(res));
 
 	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%d, prog=%d",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
-	  ypx->map_parms.domain, ypx->transid, ypx->proto);
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	    ypx->map_parms.domain, ypx->transid, ypx->proto);
 	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
-	  ypx->port, ypx->map_parms.map);
+	    ypx->port, ypx->map_parms.map);
 
-	if (!ok) {
+	if (_yp_invalid_domain(ypx->map_parms.domain) ||
+	    _yp_invalid_map(ypx->map_parms.map) ||
+	    ntohs(caller->sin_port) >= IPPORT_RESERVED ||
+	    !ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
@@ -299,22 +340,22 @@ ypproc_clear_2_svc(argp, rqstp)
 	static char res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
-#ifdef OPTDB
+#ifdef OPTIMIZE_DB
 	char *optdbstr = True;
 #else
 	char *optdbstr = False;
 #endif
 
-	YPLOG("clear_2: caller=[%s].%d, auth_ok=%s, opt=%s",
+	YPLOG("clear_2: caller=[%s].%d, auth_ok=%s, optimize_db=%s",
 	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
 	    TORF(ok), optdbstr);
 
-	if (!ok) {
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED || !ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-#ifdef OPTDB
+#ifdef OPTIMIZE_DB
         ypdb_close_all();
 #endif
 
@@ -332,17 +373,28 @@ ypproc_all_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_nokey *k = argp;
 	pid_t pid;
+	int secure;
 
-	YPLOG("all_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  k->domain, k->map);
+	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map))
+		goto bail_all;
+	secure = ypdb_secure(k->domain, k->map);
+
+	YPLOG("all_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	    TORF(secure), k->domain, k->map);
 
 	if (!ok) {
+bail_all:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
 	memset(&res, 0, sizeof(res));
+
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.ypresp_all_u.val.status = YP_YPERR;
+		return (&res);
+	}
 	
 	switch ((pid = fork())) {
 	case -1:
@@ -373,17 +425,27 @@ ypproc_master_2_svc(argp, rqstp)
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_nokey *k = argp;
+	int secure;
 
-	YPLOG("master_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  k->domain, k->map);
+	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map))
+		goto bail_master;
+	secure = ypdb_secure(k->domain, k->map);
+
+	YPLOG(
+"master_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	    TORF(secure), k->domain, k->map);
 
 	if (!ok) {
+bail_master:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-	res = ypdb_get_master(k->domain, k->map);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+		res.status = YP_YPERR;
+	else
+		res = ypdb_get_master(k->domain, k->map);
 
 #ifdef DEBUG
 	yplog("  master2_status: %s", yperr_string(ypprot_err(res.status)));
@@ -415,17 +477,30 @@ ypproc_order_2_svc(argp, rqstp)
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
 	struct ypreq_nokey *k = argp;
+	int secure;
 
-	YPLOG("order_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  k->domain, k->map);
+	if (_yp_invalid_domain(k->domain))
+		goto bail_order;
+	secure = ypdb_secure(k->domain, k->map);
+
+
+	YPLOG(
+	    "order_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	    TORF(secure), k->domain, k->map);
 
 	if (!ok) {
+bail_order:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
-	res = ypdb_get_order(k->domain, k->map);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+		res.status = YP_YPERR;
+	else if (_yp_invalid_map(k->map))
+		res.status = YP_NOMAP;
+	else
+		res = ypdb_get_order(k->domain, k->map);
 
 #ifdef DEBUG
 	yplog("  order2_status: %s", yperr_string(ypprot_err(res.status)));
@@ -451,19 +526,21 @@ ypproc_maplist_2_svc(argp, rqstp)
 	int status;
 	struct ypmaplist *m;
 
+	if (_yp_invalid_domain(domain))
+		goto bail_maplist;
 	YPLOG("maplist_2: caller=[%s].%d, auth_ok=%s, domain=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
 	  domain);
 
 	if (!ok) {
+bail_maplist:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
 
 	memset(&res, 0, sizeof(res));
 
-	snprintf(domain_path, sizeof(domain_path), "%s/%s",
-	    YP_DB_PATH, domain);
+	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, domain);
 
 	res.list = NULL;
 	status = YP_TRUE;
