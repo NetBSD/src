@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.15.2.5 2001/04/24 23:11:45 he Exp $	*/
+/*	$NetBSD: main.c,v 1.15.2.6 2002/02/23 17:58:31 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.15.2.5 2001/04/24 23:11:45 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.15.2.6 2002/02/23 17:58:31 he Exp $");
 #endif
 #endif
 
@@ -34,8 +34,9 @@ __RCSID("$NetBSD: main.c,v 1.15.2.5 2001/04/24 23:11:45 he Exp $");
 #include <sys/param.h>
 #include "lib.h"
 #include "add.h"
+#include "verify.h"
 
-static char Options[] = "hVvIRfnp:SMt:u";
+static char Options[] = "hVvIRfnp:SMs:t:u";
 
 char   *Prefix = NULL;
 Boolean NoInstall = FALSE;
@@ -53,9 +54,9 @@ int	upgrade = 0;
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n",
+	(void) fprintf(stderr, "%s\n%s\n",
 	    "usage: pkg_add [-hVvInfRMSu] [-t template] [-p prefix]",
-	    "               pkg-name [pkg-name ...]");
+	    "               [-s verification-type] pkg-name [pkg-name ...]");
 	exit(1);
 }
 
@@ -93,6 +94,10 @@ main(int argc, char **argv)
 		case 'n':
 			Fake = TRUE;
 			Verbose = TRUE;
+			break;
+
+		case 's':
+			set_verification(optarg);
 			break;
 
 		case 't':
