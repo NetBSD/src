@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 1999/09/07 06:24:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.45 2000/06/06 18:07:33 soren Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -216,7 +216,8 @@
 118	STD		{ int svr4_sys_fpathconf(int fd, int name); }
 119	NOARGS		{ int sys_vfork(void); }
 120	NOARGS		{ int sys_fchdir(int fd); }
-121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, u_int iovcnt); }
+121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
+			    u_int iovcnt); }
 122	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
 123	STD		{ int svr4_sys_xstat(int two, const char *path, \
