@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.55 2003/01/17 23:10:31 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.56 2003/02/26 21:28:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.55 2003/01/17 23:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.56 2003/02/26 21:28:23 fvdl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -215,5 +215,5 @@ mmmmap(dev, off, prot)
 
 	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (-1);
-	return (i386_btop((u_int)off));
+	return (x86_btop((u_int)off));
 }

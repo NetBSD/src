@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.4 2002/10/11 00:53:10 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.5 2003/02/26 21:28:22 fvdl Exp $	*/
 
 /*
  * Copyright (C) 2000 Wolfgang Solfrank.
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.4 2002/10/11 00:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.5 2003/02/26 21:28:22 fvdl Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -143,7 +143,7 @@ ipkdbif_init(kip)
 #error You must specify the IPKDB_NE_PCISLOT to use IPKDB_NE_PCI.
 #endif
 
-	if (ne_pci_ipkdb_attach(kip, I386_BUS_SPACE_IO, NULL, 0,
+	if (ne_pci_ipkdb_attach(kip, X86_BUS_SPACE_IO, NULL, 0,
 	    IPKDB_NE_PCISLOT) == 0) {
 		printf("IPKDB on %s\n", kip->name);
 		return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.3 2002/10/07 07:58:26 fvdl Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.4 2003/02/26 21:28:22 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ __cpu_simple_lock_init(lockp)
 
 #if defined (DEBUG) && defined(DDB)
 int spin_limit = 10000000;
-__cpu_simple_lock_t *wantlock[I386_MAXPROCS], *gotlock[I386_MAXPROCS];
+__cpu_simple_lock_t *wantlock[X86_MAXPROCS], *gotlock[X86_MAXPROCS];
 #endif
 
 void
@@ -85,7 +85,7 @@ __cpu_simple_lock(lockp)
 #endif
 #endif
 
-	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
+	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
 	    __SIMPLELOCK_LOCKED) {
 #if defined(DEBUG) && defined(DDB)
 		spincount++;
@@ -121,7 +121,7 @@ __cpu_simple_lock_try(lockp)
 
 	KDASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
-	r = (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	r = (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED);
 
 	__lockbarrier();
