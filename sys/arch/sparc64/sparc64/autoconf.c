@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2000/06/24 20:48:39 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.34 2000/06/29 07:37:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -68,7 +68,7 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
