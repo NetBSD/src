@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13.2.2 1999/02/25 04:01:57 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.2.3 1999/04/09 04:35:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -163,7 +163,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags, alloced)
 			 * just read the block (if requested).
 			 */
 
-justread:
 			if (bpp != NULL) {
 				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
 					      &bp);
@@ -189,7 +188,16 @@ justread:
 				 * just read the block (if requested).
 				 */
 
-				goto justread;
+				if (bpp != NULL) {
+					error = bread(vp, lbn, osize, NOCRED,
+						      &bp);
+					if (error) {
+						brelse(bp);
+						return (error);
+					}
+					*bpp = bp;
+				}
+				return 0;
 			} else {
 
 				/*
