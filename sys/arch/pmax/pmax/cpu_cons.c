@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.18 1997/06/15 16:18:29 mhitch Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.19 1997/06/16 01:45:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,6 @@
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <machine/machConst.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
