@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.9 2003/08/03 08:19:58 kochi Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.10 2003/08/15 17:07:04 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.9 2003/08/03 08:19:58 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.10 2003/08/15 17:07:04 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -166,7 +166,7 @@ AcpiOsSleep(UINT32 Seconds, UINT32 Milliseconds)
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	timo = (Seconds * hz) + (Milliseconds / (1000 * hz));
+	timo = Seconds * hz + Milliseconds * hz / 1000;
 	if (timo == 0)
 		timo = 1;
 
