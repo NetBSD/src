@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.13 1997/09/14 08:14:32 lukem Exp $	*/
+/*	$NetBSD: badsect.c,v 1.14 1997/09/16 02:13:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.13 1997/09/14 08:14:32 lukem Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.14 1997/09/16 02:13:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: badsect.c,v 1.13 1997/09/14 08:14:32 lukem Exp $");
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 
 #include <fcntl.h>
 #include <paths.h>
