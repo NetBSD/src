@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.23 2001/12/20 07:26:37 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.24 2001/12/21 08:54:54 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -555,8 +555,6 @@ do {						\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (0)
 
-int	in6_ifinit __P((struct ifnet *,
-			struct in6_ifaddr *, struct sockaddr_in6 *, int));
 struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
 				     int *));
 void	in6_delmulti __P((struct in6_multi *));

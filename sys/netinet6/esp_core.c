@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.19 2001/11/27 11:19:36 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.20 2001/12/21 08:54:52 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.19 2001/11/27 11:19:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.20 2001/12/21 08:54:52 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -629,8 +629,8 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
-	int sn, dn;	/* offset from the head of the mbuf, to meat  */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -833,8 +833,8 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
-	int sn, dn;	/* offset from the head of the mbuf, to meat  */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;

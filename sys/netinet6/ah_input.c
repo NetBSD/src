@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.30 2001/12/21 07:16:58 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.31 2001/12/21 08:54:52 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.30 2001/12/21 07:16:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.31 2001/12/21 08:54:52 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -654,7 +654,7 @@ ah6_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	nxt = ah->ah_nxt;
 
-	/* find the sassoc.  */
+	/* find the sassoc. */
 	spi = ah->ah_spi;
 
 	if (ntohs(ip6->ip6_plen) == 0) {

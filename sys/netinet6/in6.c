@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.51 2001/12/20 07:26:36 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.52 2001/12/21 08:54:53 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.51 2001/12/20 07:26:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.52 2001/12/21 08:54:53 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -127,6 +127,8 @@ const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 
 static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
+static int in6_ifinit __P((struct ifnet *, struct in6_ifaddr *,
+			   struct sockaddr_in6 *, int));
 
 /*
  * This structure is used to keep track of in6_multi chains which belong to
@@ -363,7 +365,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSIFINFO_FLAGS:
 		if (!privileged)
 			return(EPERM);
-		/*fall through*/
+		/* fall through */
 	case SIOCGIFINFO_IN6:
 	case SIOCGDRLST_IN6:
 	case SIOCGPRLST_IN6:
@@ -380,7 +382,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSGIFPREFIX_IN6:
 		if (!privileged)
 			return(EPERM);
-		/*fall through*/
+		/* fall through */
 	case SIOCGIFPREFIX_IN6:
 		return(in6_prefix_ioctl(so, cmd, data, ifp));
 	}
@@ -390,7 +392,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCDLIFADDR:
 		if (!privileged)
 			return(EPERM);
-		/*fall through*/
+		/* fall through */
 	case SIOCGLIFADDR:
 		return in6_lifaddr_ioctl(so, cmd, data, ifp, p);
 	}
@@ -409,7 +411,7 @@ in6_control(so, cmd, data, ifp, p)
 					htons(ifp->if_index);
 			} else if (sa6->sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
-				return(EINVAL);	/* ifid contradicts */
+				return(EINVAL);	/* link ID contradicts */
 			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
@@ -427,10 +429,10 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCDIFADDR_IN6:
 		/*
 		 * for IPv4, we look for existing in_ifaddr here to allow
-		 * "ifconfig if0 delete" to remove first IPv4 address on the
-		 * interface.  For IPv6, as the spec allow multiple interface
-		 * address from the day one, we consider "remove the first one"
-		 * semantics to be not preferable.
+		 * "ifconfig if0 delete" to remove the first IPv4 address on
+		 * the interface.  For IPv6, as the spec allows multiple
+		 * interface address from the day one, we consider "remove the
+		 * first one" semantics to be not preferable.
 		 */
 		if (ia == NULL)
 			return(EADDRNOTAVAIL);
@@ -849,6 +851,7 @@ in6_control(so, cmd, data, ifp, p)
 			return(EOPNOTSUPP);
 		return((*ifp->if_ioctl)(ifp, cmd, data));
 	}
+
 	return(0);
 }
 
@@ -929,7 +932,8 @@ in6_purgeif(ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa)
+	{
 		nifa = TAILQ_NEXT(ifa, ifa_list);
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -977,7 +981,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 	/* sanity checks */
 	if (!data || !ifp) {
 		panic("invalid argument to in6_lifaddr_ioctl");
-		/*NOTRECHED*/
+		/* NOTREACHED */
 	}
 
 	switch (cmd) {
@@ -985,7 +989,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		/* address must be specified on GET with IFLR_PREFIX */
 		if ((iflr->flags & IFLR_PREFIX) == 0)
 			break;
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		/* address must be specified on ADD and DELETE */
@@ -1001,10 +1005,10 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in6))
 			return EINVAL;
 		break;
-	default: /*shouldn't happen*/
+	default: /* shouldn't happen */
 #if 0
 		panic("invalid cmd to in6_lifaddr_ioctl");
-		/*NOTREACHED*/
+		/* NOTREACHED */
 #else
 		return EOPNOTSUPP;
 #endif
@@ -1061,7 +1065,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 				hostid->s6_addr32[3];
 		}
 
-		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) {	/*XXX*/
+		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) { /* XXX */
 			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
 				((struct sockaddr *)&iflr->dstaddr)->sa_len);
 			if (hostid) {
@@ -1107,7 +1111,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 		} else {
 			if (cmd == SIOCGLIFADDR) {
 				/* on getting an address, take the 1st match */
-				cmp = 0;	/*XXX*/
+				cmp = 0;	/* XXX */
 			} else {
 				/* on deleting an address, do exact match */
 				in6_len2mask(&mask, 128);
@@ -1151,7 +1155,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 			iflr->prefixlen =
 				in6_mask2len(&ia->ia_prefixmask.sin6_addr);
 
-			iflr->flags = ia->ia6_flags;	/*XXX*/
+			iflr->flags = ia->ia6_flags;	/* XXX */
 
 			return 0;
 		} else {
@@ -1181,7 +1185,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, p)
 	    }
 	}
 
-	return EOPNOTSUPP;	/*just for safety*/
+	return EOPNOTSUPP;	/* just for safety */
 }
 
 /*
@@ -1216,7 +1220,7 @@ in6_ifscrub(ifp, ia)
  * Initialize an interface's intetnet6 address
  * and routing table entry.
  */
-int
+static int
 in6_ifinit(ifp, ia, sin6, scrub)
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia;
@@ -1629,8 +1633,8 @@ ip6_sprintf(addr)
 	static char ip6buf[8][48];
 	int i;
 	char *cp;
-	u_short *a = (u_short *)addr;
-	u_char *d;
+	const u_short *a = (u_short *)addr;
+	const u_char *d;
 	int dcolon = 0;
 
 	ip6round = (ip6round + 1) & 7;
@@ -1659,7 +1663,7 @@ ip6_sprintf(addr)
 			a++;
 			continue;
 		}
-		d = (u_char *)a;
+		d = (const u_char *)a;
 		*cp++ = digits[*d >> 4];
 		*cp++ = digits[*d++ & 0xf];
 		*cp++ = digits[*d >> 4];
@@ -1794,6 +1798,7 @@ struct in6_addr *src, *dst;
 	return match;
 }
 
+/* XXX: to be scope conscious */
 int
 in6_are_prefix_equal(p1, p2, len)
 	struct in6_addr *p1, *p2;
@@ -2105,7 +2110,7 @@ in6_ifawithifp(ifp, dst)
 	int dst_scope =	in6_addrscope(dst), blen = -1, tlen;
 	struct ifaddr *ifa;
 	struct in6_ifaddr *besta = 0;
-	struct in6_ifaddr *dep[2];	/*last-resort: deprecated*/
+	struct in6_ifaddr *dep[2];	/* last-resort: deprecated */
 
 	dep[0] = dep[1] = NULL;
 
