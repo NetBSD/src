@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.19 2002/09/26 13:06:56 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.20 2003/05/01 07:41:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.19 2002/09/26 13:06:56 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.20 2003/05/01 07:41:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -165,8 +165,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		if (m0->m_flags & M_MCAST)
 			memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
 		else if (!nd6_storelladdr(ifp, rt, m0, dst, (u_char *)&hwdst)) {
-			/* this must be impossible, so we bark */
-			printf("ieee1394_output: nd6_storelladdr failed\n");
+			/* something bad happened */
 			return 0;
 		}
 		etype = htons(ETHERTYPE_IPV6);
