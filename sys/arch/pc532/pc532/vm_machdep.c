@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 1999/12/04 21:21:14 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2000/01/20 22:18:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -68,9 +68,20 @@ void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy the pcb and setup the kernel stack for the child.
- * Setup the child's stackframe to return to child_return
- * via proc_trampoline from cpu_switch.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
 cpu_fork(p1, p2, stack, stacksize)

@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -69,11 +69,21 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2000/01/05 08:49:04 nisimura Exp 
 #include <m68k/cacheops.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.  Copy and
- * update the kernel stack and pcb, making the child ready to run,  
- * and marking it so that it can return differently than the parent.
- * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
- * returns once for forking parent p1. 
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
 cpu_fork(p1, p2, stack, stacksize)
