@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.20 1997/03/03 22:12:19 explorer Exp $	*/
+/*	$NetBSD: w.c,v 1.21 1997/03/29 23:21:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.20 1997/03/03 22:12:19 explorer Exp $";
+static char rcsid[] = "$NetBSD: w.c,v 1.21 1997/03/29 23:21:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,8 +292,13 @@ main(argc, argv)
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
-		if ((x = strchr(p, ':')) != NULL)
-			*x++ = '\0';
+		for (x = p; x < p + UT_HOSTSIZE; x++)
+			if (*x == ':') {
+				*x = '\0';
+				break;
+			}
+		if (x == p + UT_HOSTSIZE)
+			x = NULL;
 		if (!nflag && isdigit(*p) &&
 		    (long)(l = inet_addr(p)) != -1 &&
 		    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
