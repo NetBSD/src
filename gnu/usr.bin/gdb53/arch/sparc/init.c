@@ -84,6 +84,14 @@ extern initialize_file_ftype _initialize_mi_out;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_mi_parse;
+extern initialize_file_ftype _initialize_nbsd_thread;
+extern initialize_file_ftype _initialize_tui;
+extern initialize_file_ftype _initialize_tuiLayout;
+extern initialize_file_ftype _initialize_tuiRegs;
+extern initialize_file_ftype _initialize_tuiStack;
+extern initialize_file_ftype _initialize_tuiWin;
+extern initialize_file_ftype _initialize_tui_out;
+
 void
 initialize_all_files (void)
 {
@@ -112,7 +120,6 @@ initialize_all_files (void)
   _initialize_copying ();
   _initialize_sparc_tdep ();
   _initialize_sparnbsd_tdep ();
-  _initialize_corelow ();
   _initialize_solib ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();
@@ -169,4 +176,12 @@ initialize_all_files (void)
   _initialize_mi_cmds ();
   _initialize_mi_main ();
   _initialize_mi_parse ();
+  _initialize_nbsd_thread ();
+  _initialize_tui ();
+  _initialize_tuiLayout ();
+  _initialize_tuiRegs ();
+  _initialize_tuiStack ();
+  _initialize_tuiWin ();
+  _initialize_tui_out ();
+  _initialize_corelow ();
 }

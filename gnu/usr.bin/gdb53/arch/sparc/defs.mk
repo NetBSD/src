@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/12 20:27:55 martin Exp $
+# $NetBSD: defs.mk,v 1.2 2003/09/14 10:15:47 martin Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -96,6 +96,7 @@ mi-parse.o \
 minsyms.o \
 mipsread.o \
 nbsd-tdep.o \
+nbsd-thread.o \
 nlmread.o \
 objfiles.o \
 osabi.o \
@@ -132,6 +133,22 @@ target.o \
 thread.o \
 top.o \
 tracepoint.o \
+tui-file.o \
+tui-hooks.o \
+tui-out.o \
+tui.o \
+tuiCommand.o \
+tuiData.o \
+tuiDataWin.o \
+tuiDisassem.o \
+tuiGeneralWin.o \
+tuiIO.o \
+tuiLayout.o \
+tuiRegs.o \
+tuiSource.o \
+tuiSourceWin.o \
+tuiStack.o \
+tuiWin.o \
 typeprint.o \
 ui-file.o \
 ui-out.o \
