@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.2 2002/03/12 00:32:30 uwe Exp $ */
+/*	$NetBSD: ebusvar.h,v 1.3 2005/01/11 04:23:15 kent Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -44,8 +44,8 @@ struct ebus_attach_args {
 	bus_dma_tag_t		ea_dmatag;
 
 	struct ebus_regs	*ea_reg;	/* registers */
-	u_int32_t		*ea_vaddr;	/* virtual addrs */
-	u_int32_t		*ea_intr;	/* interrupts */
+	uint32_t		*ea_vaddr;	/* virtual addrs */
+	uint32_t		*ea_intr;	/* interrupts */
 
 	int			ea_nreg;	/* number of them */
 	int			ea_nvaddr;
