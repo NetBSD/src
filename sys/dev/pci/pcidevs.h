@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.289 2001/01/03 23:15:14 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.290 2001/01/08 09:53:08 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp 
  */
 
 /*
@@ -1342,6 +1342,8 @@
 #define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
+#define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG2070	0x0001		/* MagicGraph NM2070 */
