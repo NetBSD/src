@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1998/08/31 14:43:40 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -106,7 +106,6 @@ extern int ptab_cnt;
 #ifdef	_KERNEL
 #ifndef	_LOCORE
 extern u_int dsisr __P((void));
-extern vm_offset_t dar __P((void));
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_PTE_H_ */
