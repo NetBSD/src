@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.8 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.9 2002/05/09 12:24:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,8 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "assym.h"
 #include "opt_cputype.h"
+#include "opt_ddb.h"
+#include "assym.h"
 
 #include <sh3/param.h>
 #include <sh3/asm.h>
@@ -47,7 +48,7 @@
 /*
  * Exception vectors. following routines are copied to vector addreses.
  *	sh_vector_generic:	VBR + 0x100
-	 *	sh_vector_tlbmiss:	VBR + 0x400
+ *	sh_vector_tlbmiss:	VBR + 0x400
  *	sh_vector_interrupt:	VBR + 0x600
  */
 
@@ -55,82 +56,69 @@
  * void sh_vector_generic(void) __attribute__((__noreturn__)):
  *	copied to VBR+0x100. This code should be relocatable and max 384
  *	instructions.
- *		0x40 TLB miss (load)
- *		0x60 TLB miss (store)
- *		0xc0	TLB protection (store)
- *		  -> tlbmiss_exp()
- *		0xa0 TLB protection (load)
- *		0x80 Initial page write.
- *		 and other...
- *		  -> trap()
  */
 	.globl	_C_LABEL(sh_vector_generic), _C_LABEL(sh_vector_generic_end)
 	.text
 	.align	2
 _C_LABEL(sh_vector_generic):
 	__EXCEPTION_ENTRY
+	__INTR_MASK(r0, r1)
 	/* Identify exception cause */
 	MOV	(EXPEVT, r0)
 	mov.l	@r0,	r0
-	/*
-	 * TLB exception.
-	 */
-	cmp/eq	#0x40,	r0		/* T_TLBINVALIDR */
-	bf	1f
-3:
-	__INTR_MASK(r0, r1)
+	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
+	/* Get curproc */
+	mov.l	3f,	r1
+	mov.l	@r1,	r4	/* 1st arg */
+	/* Check TLB exception or not */
+	mov.l	_L.TLB_PROT_ST, r1
+	cmp/hi	r1,	r0
+	bt	1f
+	MOV	(TEA,	r0)
+	mov.l	@r0,	r6	/* 3rd arg */
+	mov.l	_L.VPN_MASK, r1
+	and	r1,	r6	/* va = trunc_page(va) */
 	__EXCEPTION_UNBLOCK(r0, r1)
-	mov.l	_L.tlb_handler, r0
+	mov.l	_L.tlb, r0
 	jsr	@r0
-	 mov	r14,	r6
-	bra	4f
+	 mov	r14,	r5	/* 2nd arg */
+	bra	2f
 	 nop
-1:
-	cmp/eq	#0x60,	r0		/* T_TLBINVALIDW */
-	bt	3b
-
-	mov.l	_L.TLBPROTWR, r1	/* T_TLBPRIVW */
-	cmp/eq	r0,	r1
-	bt	3b
-
-	/*
-	 * General exception.
-	 */
+1:	mov	r4,	r8
 #ifdef DDB
 	mov	#0,	r2
 	MOV	(BBRA, r1)
 	mov.w	r2,	@r1	/* disable UBC */
 	mov.l	r2,	@(TF_UBC, r14)	/* clear trapframe->tf_ubc */
 #endif /* DDB */
-
-	mov.l	r0,	@(TF_TRAPNO, r14) /* trapframe->tf_trapno = EXPEVT */
-	__INTR_UNMASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
-	mov.l	_L.trap, r0
+	mov.l	_L.general, r0
 	jsr	@r0
-	 mov	r14,	r6
+	 mov	r14,	r5
 
 	/* Check for ASTs on exit to user mode. */
+	mov	r8,	r4
 	mov.l	_L.ast,	r0
 	jsr	@r0
-	 mov	r14,	r4
-
+	 mov	r14,	r5
 #ifdef DDB	/* BBRA = trapframe->tf_ubc */
 	__EXCEPTION_BLOCK(r0, r1)
 	mov.l	@(TF_UBC, r14), r0
 	MOV	(BBRA, r1)
 	mov.w	r0,	@r1
 #endif /* DDB */
-4:
-	__EXCEPTION_RETURN
+2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
+3:		.long	_C_LABEL(curproc)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
-_L.TLBPROTWR:	.long	0x000000c0
-_L.trap:	.long	_C_LABEL(trap)
+REG_SYMBOL(TEA)
+_L.tlb:		.long	_C_LABEL(tlb_exception)
+_L.general:	.long	_C_LABEL(general_exception)
 _L.ast:		.long	_C_LABEL(ast)
-_L.tlb_handler:	.long	_C_LABEL(tlb_handler)
+_L.TLB_PROT_ST:	.long	0xc0
+_L.VPN_MASK:	.long	0xfffff000
 _C_LABEL(sh_vector_generic_end):	.long	0
 
 #ifdef SH3
@@ -144,19 +132,20 @@ _C_LABEL(sh_vector_generic_end):	.long	0
 	.align	2
 _C_LABEL(sh3_vector_tlbmiss):
 	__EXCEPTION_ENTRY
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
+	mov.l	_L.TEA3, r0
+	mov.l	@r0,	r6
+	mov.l	__L.VPN_MASK, r1
+	and	r1,	r6	/* 3rd arg */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
-	mov.l	_L.TEA, r1
-	mov.l	@r1,	r0	/* r0 = va */
-	mov.l	_L.VPN_MASK, r1
-	and	r1,	r0	/* va = trunc_page(va) */
+	tst	r6,	r6	/* check VPN == 0 */
+	bt	6f
 	mov.l	_L.CURUPTE, r1
+	mov.l	@r1,	r1
 	mov	#UPAGES,r3
 	mov	#1,	r2
-4:	mov.l	@r1+,	r6
-	cmp/eq	r6,	r0	/* md_upte.addr: u-area VPN */
+4:	mov.l	@r1+,	r7
+	cmp/eq	r7,	r6	/* md_upte.addr: u-area VPN */
 	bt	5f
 	add	#4,	r1	/* skip md_upte.data */
 	cmp/eq	r2,	r3
@@ -167,59 +156,35 @@ _C_LABEL(sh3_vector_tlbmiss):
 5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
 	mov.l	_L.PTEL, r1
 	mov.l	r2,	@r1
+	mov.l	_L.PTEH, r1
+	mov.l	@r1,	r2
+	mov.l	__L.VPN_MASK, r0
+	and	r2,	r0
+	mov.l	r0,	@r1	/* ASID 0 */
 	ldtlb
+	mov.l	r2,	@r1	/* restore ASID */
 	bra	3f
 	 nop
 #endif /* !P1_STACK */
-6:	mov	r0,	r2
-	mov	#-22,	r1
-	shld	r1,	r2	/* r2 = va >> 22 */
-	shll2	r2		/* r2 *= sizeof(pt_entry_t) */
-	mov.l	_L.TTB, r1
-	mov.l	@r1,	r1
-	add	r1,	r2	/* r2 = page directory entry address */
-	mov	#1	r1
-	swap.b	r1,	r1	/* 0x100 (PG_V) */
-	mov.l	@r2,	r2	/* r2 = pde */
-	and	r2,	r1
-	tst	r1,	r1
-	bt	2f		/* (pde & PG_V) == 0 -> tlb_handler */
-	mov.l	_L.VPN_MASK, r1
-	and	r1,	r2	/* zero attribute bits */
-	mov.l	_L.PT_MASK, r1
-	mov	r0,	r3
-	and	r1,	r3	/* r3 = va & 0x003ff000 */
-	mov	#-12	r1
-	shld	r1,	r3	/* r3 = (va & 0x003ff000) >> 12 */
-	shll2	r3		/* r3 *= sizeof(pt_entry_t) */
-	add	r2,	r3	/* r3 = page table entry address */
-	mov.l	@r3,	r3	/* r3 = page table entry */
-	mov	#1,	r1
-	swap.b	r1,	r1	/* r1 = PG_V */
-	and	r3,	r1
-	tst	r1,	r1
-	bt	2f		/* (pte & PG_V) == 0 -> tlb_handler */
-	mov.l	_L.PTE_HW_BITS, r2
-	and	r2,	r3
-	mov.l	_L.PTEL, r1
-	mov.l	r3,	@r1	/* PTEL = (pte & PG_HW_BITS) */
-	ldtlb
-	bra	3f
-	 nop
-2:
+6:	mov.l	_L.EXPEVT3, r0
+	mov.l	@r0,	r0
+	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
+	mov.l	2f,	r0
+	mov.l	@r0,	r4	/* 1st arg */
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	1f,	r0
 	jsr	@r0
-	 mov	r14,	r6
-3:
-	__EXCEPTION_RETURN
+	 mov	r14,	r5	/* 2nd arg */
+3:	__EXCEPTION_RETURN
 	.align	2
-1:		.long	_C_LABEL(tlb_handler)
-_L.TEA:		.long	SH3_TEA
-_L.TTB:		.long	SH3_TTB
+2:		.long	_C_LABEL(curproc)
+1:		.long	_C_LABEL(tlb_exception)
+_L.EXPEVT3:	.long	SH3_EXPEVT
+_L.TEA3:	.long	SH3_TEA
 _L.PTEL:	.long	SH3_PTEL
-_L.PTE_HW_BITS:	.long	0x1ffff17e
-_L.PT_MASK:	.long	0x003ff000
-_L.VPN_MASK:	.long	0xfffff000
+_L.PTEH:	.long	SH3_PTEH
+__L.VPN_MASK:	.long	0xfffff000
 _L.CURUPTE:	.long	_C_LABEL(curupte)
 	.align	2
 _C_LABEL(sh3_vector_tlbmiss_end):	.long	0
@@ -236,97 +201,27 @@ _C_LABEL(sh3_vector_tlbmiss_end):	.long	0
 	.align	2
 _C_LABEL(sh4_vector_tlbmiss):
 	__EXCEPTION_ENTRY
+	mov.l	_L.TEA4, r0
+	mov.l	@r0,	r6
+	mov.l	___L.VPN_MASK, r1
+	and	r1,	r6	/* va = trunc_page(va) */
+	mov.l	_L.EXPEVT4, r0
+	mov.l	@r0,	r0
+	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
+	mov.l	2f,	r0
+	mov.l	@r0,	r4	/* 1st arg */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
-	mov	#0x20,	r7
-	swap.b	r7,	r7
-	swap.w	r7,	r7	/* r7 = 0x20000000 */
-	mov.l	__L.TEA, r1
-	mov.l	@r1,	r0	/* r0 = va */
-	mov	r0,	r2
-	mov	#-22,	r1
-	shld	r1,	r2	/* r2 = va >> 22 */
-	shll2	r2		/* r2 *= sizeof(pt_entry_t) */
-	mov.l	__L.TTB, r1
-	mov.l	@r1,	r1
-	or	r7,	r1	/* XXX P2 access */
-	add	r1,	r2	/* r2 = page directory entry address */
-	mov	#1	r1
-	swap.b	r1,	r1	/* 0x100 (PG_V) */
-	mov.l	@r2,	r2	/* r2 = pde */
-	and	r2,	r1
-	tst	r1,	r1
-	bt	2f		/* (pde & PG_V) == 0 -> tlb_handler */
-	mov.l	__L.VPN_MASK, r1
-	and	r1,	r2	/* zero attribute bits */
-	mov.l	__L.PT_MASK, r1
-	mov	r0,	r3
-	and	r1,	r3	/* r3 = va & 0x003ff000 */
-	mov	#-12	r1
-	shld	r1,	r3	/* r3 = (va & 0x003ff000) >> 12 */
-	shll2	r3		/* r3 *= sizeof(pt_entry_t) */
-	add	r2,	r3	/* r3 = page table entry address */
-	or	r7,	r3	/* XXX P2 access */
-	mov.l	@r3,	r3	/* r3 = page table entry */
-	mov	#1,	r1
-	swap.b	r1,	r1	/* r1 = PG_V */
-	and	r3,	r1
-	tst	r1,	r1
-	bt	2f		/* (pte & PG_V) == 0 -> tlb_handler */
-	mov	#0xe,	r1
-	swap.b	r1,	r1	/* r1 = _PG_PCMCIA (0x0e00) */
-	and	r3,	r1
-	tst	r1,	r1
-	bt	4f
-	mov	r3,	r2
-	mov	#-9	r1
-	shld	r1,	r2
-	mov	#7,	r1
-	and	r1,	r2	/* r2 = (pte >> 9) & 0x7 */
-	mov.l	__L.PTEA, r1
-	mov.l	r2,	@r1
-	mov.l	__L.PTE_HW_BITS, r1
-	and	r3,	r1
-	mov	#-9,	r2
-	and	r2,	r3	/* pte &= ~PG_N XXX */
-	mov.l	__L.PTEL, r1
-	mov.l	r3,	@r1
-	bra	6f
-	 nop
-4:
-	mov.l	__L.PTE_HW_BITS, r1
-	and	r1,	r3
-	mov.l	__L.P3SEGBASE, r1
-	cmp/hs	r1,	r0	/* va >= 0xc0000000 ? T = 1 */
-	bf	5f
-	mov	#1,	r1
-	or	r1,	r3	/* PG_WT  P3 write-through XXX */
-5:
-	mov.l	__L.PTEA, r1
-	xor	r0,	r0
-	mov.l	r0,	@r1
-	mov.l	__L.PTEL, r1
-	mov.l	r3,	@r1
-	nop
-6:	ldtlb
-	bra	3f
-	 nop
-2:
 	mov.l	1f,	r0
 	jsr	@r0
-	 mov	r14,	r6
-3:
+	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
-1:		.long	_C_LABEL(tlb_handler)
-__L.TEA:	.long	SH4_TEA
-__L.TTB:	.long	SH4_TTB
-__L.PTEL:	.long	SH4_PTEL
-__L.PTEA:	.long	SH4_PTEA
-__L.P3SEGBASE:	.long	0xc0000000
-__L.PTE_HW_BITS:.long	0x1ffff17e
-__L.PT_MASK:	.long	0x003ff000
-__L.VPN_MASK:	.long	0xfffff000
+1:		.long	_C_LABEL(tlb_exception)
+2:		.long	_C_LABEL(curproc)
+_L.EXPEVT4:	.long	SH4_EXPEVT
+_L.TEA4:	.long	SH4_TEA
+___L.VPN_MASK:	.long	0xfffff000
 _C_LABEL(sh4_vector_tlbmiss_end):	.long	0
 #endif /* SH4 */
 
@@ -339,6 +234,8 @@ _C_LABEL(sh4_vector_tlbmiss_end):	.long	0
 	.text
 _C_LABEL(sh_vector_interrupt):
 	__EXCEPTION_ENTRY
+	xor	r0,	r0
+	mov.l	r0,	@(TF_EXPEVT, r14) /* (for debug) */
 	stc	r0_bank,r6	/* ssp */
 	/* Enable exception for P3 access */
 	__INTR_MASK(r0, r1)
@@ -353,11 +250,14 @@ _C_LABEL(sh_vector_interrupt):
 	jsr	@r0		/* intc_intr(ssr, spc, ssp) */
 	 nop
 	/* Check for ASTs on exit to user mode. */
+	mov.l	1f,	r0
+	mov.l	@r0,	r4	/* 1st arg */
 	mov.l	__L.ast, r0
 	jsr	@r0
-	 mov	r14,	r4
+	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
+1:			.long	_C_LABEL(curproc)
 __L.intc_intr:		.long	_C_LABEL(intc_intr)
 __L.ast:		.long	_C_LABEL(ast)
 __L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS

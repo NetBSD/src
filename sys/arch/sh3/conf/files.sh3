@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.26 2002/04/20 19:59:11 thorpej Exp $
+#	$NetBSD: files.sh3,v 1.27 2002/05/09 12:24:19 uch Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -14,6 +14,7 @@ file	arch/sh3/sh3/sh3disasm.c	ddb
 file	arch/sh3/sh3/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
+file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
 file	arch/sh3/sh3/Locore.c
 file	arch/sh3/sh3/locore_subr.S
@@ -23,7 +24,6 @@ file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/sh3_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
-file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
 file	arch/sh3/sh3/cache.c
 file	arch/sh3/sh3/cache_sh3.c	sh3
