@@ -1,4 +1,4 @@
-.\"	$NetBSD: msync.2,v 1.10 1998/02/02 05:20:33 perry Exp $
+.\"	$NetBSD: msync.2,v 1.11 1999/03/09 03:49:46 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,11 +75,11 @@ argument is formed by
 .Em or Ns 'ing
 the following values
 .Pp
-.Bd -literal -offset indent -compact
-MS_ASYNC	Perform asynchronous writes.
-MS_SYNC		Perform synchronous writes.
-MS_INVALIDATE	Invalidate cached data after writing.
-.Ed
+.Bl -column -offset indent -compact MS_INVALIDATE
+.It Dv MS_ASYNC Ta Perform asynchronous writes.
+.It Dv MS_SYNC Ta Perform synchronous writes.
+.It Dv MS_INVALIDATE Ta Invalidate cached data after writing.
+.El
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er
@@ -111,6 +111,7 @@ An I/O error occured while writing to the file system.
 Addresses in the specified region are outside the range allowed
 for the address space of the process, or specify one or more pages
 which are unmapped.
+.El
 .Sh SEE ALSO
 .Xr mlock 2 ,
 .Xr mmap 2 ,
