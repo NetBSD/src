@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.4.2.1 1999/04/15 03:12:58 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.4.2.2 1999/10/20 23:18:04 he Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -115,6 +115,8 @@ and
 Set the sampling rate.  This value is per-second.  Typical values are
 8000, 44100 and 48000, which are the telephone, CD Audio and DAT Audio
 default sampling rates.
+.It Fl t
+Sets the maximum amount of time to record.  Format is [hh:]mm:ss.
 .It Fl q
 Be quiet.
 .It Fl V
@@ -123,6 +125,13 @@ Be verbose.
 Set the volume (gain) to
 .Ar volume .
 This value must be between 0 and 255.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIOCTLDEVICE
+.It AUDIOCTLDEVICE
+the audio control device to be used.
+.It AUDIODEVICE
+the audio device to be used.
 .El
 .Sh BUGS
 Many audio device hardware is limited in capabilities.  Any attempt
@@ -149,6 +158,7 @@ program was written by Matthew R. Green <mrg@eterna.com.au>.
 .Xr aria 4 ,
 .Xr audio 4 ,
 .Xr eap 4 ,
+.Xr eso 4 ,
 .Xr ess 4 ,
 .Xr gus 4 ,
 .Xr guspnp 4 ,
