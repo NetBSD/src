@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.4 2002/12/22 11:26:20 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.5 2002/12/29 11:17:04 seb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.4 2002/12/22 11:26:20 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.5 2002/12/29 11:17:04 seb Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: db.c,v 1.4 2002/12/22 11:26:20 lukem Exp $");
 
 /*
  * TODO --
- *   -	support output field separator for read ?
  *   -	add option to strunvis(3) key (& value) from infile ?
  */
 
@@ -83,6 +82,7 @@ void	usage(void);
 
 flags_t	 flags;
 DB	*db;
+char	*outputsep = "\t";
 
 int
 main(int argc, char *argv[])
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	oi.mode = 0644;
 
 				/* parse arguments */
-	while ( (ch = getopt(argc, argv, "CDdE:f:iKm:NqRVw")) != -1) {
+	while ( (ch = getopt(argc, argv, "CDdE:F:f:iKm:NqRs:Vw")) != -1) {
 		switch (ch) {
 
 		case 'C':
@@ -148,8 +148,8 @@ main(int argc, char *argv[])
 
 		case 'F':
 			if (! optarg[0] || optarg[1])
-				errx(1, "Invalid field separaor `%s'",
-				    fieldsep);
+				errx(1, "Invalid field separator `%s'",
+				    optarg);
 			fieldsep = optarg;
 			break;
 
@@ -181,6 +181,10 @@ main(int argc, char *argv[])
 
 		case 'R':
 			flags |= F_REPLACE;
+			break;
+
+		case 's':
+			outputsep = optarg;
 			break;
 
 		case 'V':
@@ -323,7 +327,7 @@ db_print(DBT *key, DBT *val)
 	if (flags & F_SHOW_KEY)
 		printf("%.*s", (int)key->size, (char *)key->data);
 	if ((flags & F_SHOW_KEY) && (flags & F_SHOW_VALUE))
-		printf("\t");		/* XXX support output separator here? */
+		printf("%s", outputsep);
 	if (flags & F_SHOW_VALUE)
 		printf("%.*s", (int)val->size, (char *)val->data);
 	printf("\n");
@@ -459,7 +463,7 @@ usage(void)
 	fprintf(stderr,
     "Usage: %s [-KV] [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
     "       %s -d [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
-    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod]\n"
+    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod] [-s str]\n"
     "             type dbfile [key val [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
@@ -480,6 +484,7 @@ usage(void)
 	    "\t-i\tignore case of key by converting to lower case\n"
 	    "\t-m mod\tmode of created database  [default: 0644]\n"
 	    "\t-q\tquiet operation (missing keys aren't errors)\n"
+	    "\t-s sep\toutput field separator string [default: '\\t']\n"
 	    );
 	exit(1);
 }
