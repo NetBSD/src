@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.9 1994/10/30 21:49:51 cgd Exp $	*/
+/*	$NetBSD: file.h,v 1.10 1994/12/13 15:21:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)file.h	8.1 (Berkeley) 6/2/93
+ *	@(#)file.h	8.2 (Berkeley) 8/20/94
  */
 
 #include <sys/fcntl.h>
@@ -49,7 +49,7 @@ struct uio;
  * One entry for each open kernel vnode and socket.
  */
 struct file {
-	LIST_ENTRY(file) f_list;	/* list of active files */
+	LIST_ENTRY(file) f_list;/* list of active files */
 	short	f_flag;		/* see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
