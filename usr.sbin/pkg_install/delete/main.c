@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.7 1999/01/19 17:01:59 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/02/26 10:49:30 chopps Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1999/01/19 17:01:59 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/02/26 10:49:30 chopps Exp $");
 #endif
 #endif
 
@@ -34,17 +34,19 @@ __RCSID("$NetBSD: main.c,v 1.7 1999/01/19 17:01:59 hubertf Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfFp:";
+static char Options[] = "hvDdnfFrp:";
 
 char	*Prefix		= NULL;
+char    *ProgramPath	= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
 Boolean File2Pkg	= FALSE;
+Boolean Recurse		= FALSE;
 
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: pkg_delete [-vDdnFf] [-p prefix] pkg-name ...\n");
+    fprintf(stderr, "usage: pkg_delete [-vDdnFfr] [-p prefix] pkg-name ...\n");
     exit(1);
 }
 
@@ -53,6 +55,8 @@ main(int argc, char **argv)
 {
     int ch, error;
     char **pkgs, **start;
+
+    ProgramPath = argv[0];
 
     pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
@@ -84,6 +88,10 @@ main(int argc, char **argv)
 	case 'n':
 	    Fake = TRUE;
 	    Verbose = TRUE;
+	    break;
+
+	case 'r':
+	    Recurse = TRUE;
 	    break;
 
 	case 'h':
