@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.4 1999/02/15 04:36:33 hubertf Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.5 2000/03/06 21:36:10 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,8 @@ struct consdev consdev_bm = {
 	bmcninit,
 	bmcngetc,
 	bmcnputc,
-	bmcnpollc
+	bmcnpollc,
+	NULL,
 };
 
 static void

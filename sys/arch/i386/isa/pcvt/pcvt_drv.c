@@ -763,7 +763,7 @@ int
 pccnattach()
 {
 	static struct consdev pccons = { NULL, NULL,
-	pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL};
+	    pccngetc, pccnputc, pccnpollc, NULL, NODEV, CN_NORMAL};
 
 	cn_tab = &pccons;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.15 2000/03/03 12:35:40 soda Exp $	*/
+/*	$NetBSD: pccons.c,v 1.16 2000/03/06 21:36:06 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -846,7 +846,8 @@ pccnattach()
 {
 	int maj;
 	static struct consdev pccons = {
-		NULL, NULL, pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL
+		NULL, NULL, pccngetc, pccnputc, pccnpollc, NULL,
+		    NODEV, CN_NORMAL
 	};
 
 	/*

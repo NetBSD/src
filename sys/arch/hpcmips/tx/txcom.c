@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.6 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.7 2000/03/06 21:36:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -140,7 +140,7 @@ cdev_decl(txcom);
 
 struct consdev txcomcons = {
 	NULL, NULL, txcom_cngetc, txcom_cnputc, txcom_cnpollc, 
-	NODEV, CN_NORMAL
+	    NULL, NODEV, CN_NORMAL
 };
 
 /* Serial console */
