@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.109 2000/11/11 12:12:46 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.110 2001/01/21 07:48:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -333,7 +333,7 @@ static	int cpu_instance;
 #endif
 
 	cpus[cpu_instance] = cpi;
-	cpi->cpu_no = cpu_instance++;
+	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
 
