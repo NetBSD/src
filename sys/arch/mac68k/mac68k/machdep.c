@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.20 1994/07/09 06:36:11 briggs Exp $
+ *	$Id: machdep.c,v 1.21 1994/07/10 16:58:13 briggs Exp $
  */
 
 #include <param.h>
@@ -129,10 +129,12 @@ vm_map_t buffer_map;
 extern vm_offset_t avail_end;
 
 int dbg_flg = 0;
-int			mach_processor;
-int			do_graybars;
-int			mach_memsize;
-int			booter_version;
+struct mac68k_machine_S	mac68k_machine;
+
+volatile unsigned char	*Via1Base;
+unsigned long		NuBusBase = NBBASE;
+unsigned long		IOBase;
+
 extern unsigned long	videoaddr;
 extern unsigned long	videorowbytes;
 u_int			cache_copyback = PG_CCB;
@@ -164,6 +166,8 @@ extern int	freebufspace;
 #ifdef COMPAT_SUNOS
 void	sun_sendsig();
 #endif
+
+static void	identifycpu(void);
 
 /*
  * Console initialization: called early on from main,
@@ -401,83 +405,6 @@ setregs(p, entry, sp, retval)
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
-}
-
-char	cpu_model[120];
-
-identifycpu()
-{
-	extern unsigned long	bootdev, root_scsi_id,
-				videobitdepth, videosize;
-	char			*mod, *proc;
-
-	switch (machineid) {
-		case MACH_MACII: mod = ("II "); break;
-		case MACH_MACIIX: mod = ("IIx "); break;
-		case MACH_MACIISI: mod = ("IIsi "); break;
-		case MACH_MACIICI: mod = ("IIci "); break;
-		case MACH_MACIICX: mod = ("IIcx "); break;
-		case MACH_MACIIFX: mod = ("IIfx "); break;
-		case MACH_MACSE30: mod = ("SE/30 "); break;
-		case MACH_MACQ700: mod = ("Quadra 700 "); break;
-		case MACH_MACQ900: mod = ("Quadra 900 "); break;
-		case MACH_MACPB140: mod = ("PowerBook 140 "); break;
-		case MACH_MACPB100: mod = ("PowerBook 100 "); break;
-		case MACH_MACPB170: mod = ("PowerBook 170 "); break;
-		case MACH_MACCLASSICII: mod = ("Classic II "); break;
-		case MACH_MACQ950: mod = ("Quadra 950 "); break;
-		case MACH_MACLCIII: mod = ("LC III "); break;
-		case MACH_MACPB210: mod = ("PowerBook 950 "); break;
-		case MACH_MACC650: mod = ("Centris 650 "); break;
-		case MACH_MACPB230: mod = ("PowerBook 230 "); break;
-		case MACH_MACPB180: mod = ("PowerBook 180 "); break;
-		case MACH_MACPB160: mod = ("PowerBook 160 "); break;
-		case MACH_MACQ800: mod = ("Quadra 800 "); break;
-		case MACH_MACQ650: mod = ("Quadra 650 "); break;
-		case MACH_MACLCII: mod = ("LC II "); break;
-		case MACH_MACPB250: mod = ("PowerBook 250 "); break;
-		case MACH_MACIIVI: mod = ("IIvi "); break;
-		case MACH_MACP600: mod = ("Performa 600 "); break;
-		case MACH_MACIIVX: mod = ("IIvx "); break;
-		case MACH_MACCCLASSIC: mod = ("Classic "); break;
-		case MACH_MACPB165C: mod = ("PowerBook 165c "); break;
-		case MACH_MACC610: mod = ("Centris 610 "); break;
-		case MACH_MACQ610: mod = ("Quadra 610 "); break;
-		case MACH_MACPB145: mod = ("PowerBook 950 "); break;
-		case MACH_MACLC520: mod = ("LC 520 "); break;
-		case MACH_MACC660AV: mod = ("Centris 660AV "); break;
-		case MACH_MACP460: mod = ("Performa 460 "); break;
-		case MACH_MACPB180C: mod = ("PowerBook 180c "); break;
-		case MACH_MACPB270: mod = ("PowerBook 270 "); break;
-		case MACH_MACQ840AV: mod = ("Quadra 840AV "); break;
-		case MACH_MACP550: mod = ("Performa 550 "); break;
-		case MACH_MACPB165: mod = ("PowerBook 165 "); break;
-		case MACH_MACTV: mod = ("TV "); break;
-		case MACH_MACLC475: mod = ("LC 475 "); break;
-		case MACH_MACLC575: mod = ("LC 575 "); break;
-		case MACH_MACQ605: mod = ("Quadra 605 "); break;
-		default:
-			printf("Pentium (gestalt %d) ", machineid);
-			break;
-	}
-
-	switch(mach_processor) {
-		case MACH_68020:
-			proc = ("(68020)");
-			break;	
-		case MACH_68030:
-			proc = ("(68030)");
-			break;	
-		case MACH_68040:
-			proc = ("(68040)");
-			break;	
-		case MACH_PENTIUM:
-		default:
-			proc = ("");
-			break;	
-	}
-	sprintf(cpu_model, "Apple Macintosh %s %s", mod, proc);
-	printf ("%s\n", cpu_model);
 }
 
 #define SS_RTEFRAME	1
@@ -1540,70 +1467,6 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-static unsigned long gray_nextaddr = 0;
-
-void gray_bar2()
-{
-   static int i=0;
-   static int flag=0;
-
-/* Same premise as gray_bar, but bigger.  Gives a quicker check of
-   where we are while debugging. */
-
-   asm("movl a0, sp@-");
-   asm("movl a1, sp@-");
-   asm("movl d0, sp@-");
-   asm("movl d1, sp@-");
-
-/* check to see if gray bars are turned off */
-   if (do_graybars) {
-   	/* MF the 10*rowbytes is done lots, but we want this to be slow */
-   	for(i = 0; i < 10*videorowbytes; i++)
-      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
-   	for(i = 0; i < 2*videorowbytes; i++)
-      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
-   }
-
-   asm("movl sp@+, d1");
-   asm("movl sp@+, d0");
-   asm("movl sp@+, a1");
-   asm("movl sp@+, a0");
-}
-
-void gray_bar()
-{
-   static int i=0;
-   static int flag=0;
-
-/* MF basic premise as I see it:
-	1) Save the scratch regs as they are not saved by the compilier.
-   	2) Check to see if we want gray bars, if so,
-		display some lines of gray,
-		a couple of lines of white(about 8),
-		and loop to slow this down.
-   	3) restore regs
-*/
-
-   asm("movl a0, sp@-");
-   asm("movl a1, sp@-");
-   asm("movl d0, sp@-");
-   asm("movl d1, sp@-");
-
-/* check to see if gray bars are turned off */
-   if (do_graybars) {
-   	/* MF the 10*rowbytes/4 is done lots, but we want this to be slow */
-   	for(i = 0; i < 10*videorowbytes/4; i++)
-      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
-   	for(i = 0; i < 2*videorowbytes/4; i++)
-      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
-   }
-
-   asm("movl sp@+, d1");
-   asm("movl sp@+, d0");
-   asm("movl sp@+, a1");
-   asm("movl sp@+, a0");
-}
-
 #if 0
 extern void	macserputchar(unsigned char c);
 #endif
@@ -1840,7 +1703,7 @@ int get_top_of_ram(void)
 	unsigned long	i, found, store;
 	char		*p, *zero;
 
-	return((mach_memsize * MEGABYTE) - 4096);
+	return((mac68k_machine.mach_memsize * MEGABYTE) - 4096);
 
 #if TESTING 	/* Why doesn't any of this code work? */
 	found = 0;
@@ -1957,6 +1820,38 @@ int alice_debug(p, uap, retval)
 {
    printf("*AHEM* -- process %d says hello.\n", p->p_pid);
    return(0);
+}
+
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 cpu_exec_aout_makecmds(p, epp)
@@ -2080,7 +1975,7 @@ void ddprintf (char *fmt, int val)
 #if 0
   char buf[128], *s;
 
-  if (!serial_boot_echo) return;
+  if (!mac68k_machine.serial_boot_echo) return;
   sprintf (buf, fmt, val);
   for (s = buf; *s; s++) {
     macserputchar (*s);
@@ -2096,7 +1991,7 @@ void dddprintf (char *fmt, int val1, int val2)
 #if 0
   char buf[128], *s;
 
-  if (!serial_boot_echo) return;
+  if (!mac68k_machine.serial_boot_echo) return;
   sprintf (buf, fmt, val1, val2);
   for (s = buf; *s; s++) {
     macserputchar (*s);
@@ -2189,161 +2084,311 @@ static long getenv (char *str)
   }
 }
 
-void getenvvars (void)
+struct cpu_model_info {
+	int	machineid;	/* MacOS Gestalt value. */
+	char	*model_major;	/* Make this distinction to save a few */
+	char	*model_minor;	/*      bytes--might be useful, too. */
+	int	class;		/* Rough class of machine. */
+} cpu_models[] = {
+
+/* The first four. */
+{ MACH_MACII,         "II ",       "",        MACH_CLASSII },
+{ MACH_MACIIX,        "IIx ",      "",        MACH_CLASSII },
+{ MACH_MACIICX,       "IIcx ",     "",        MACH_CLASSII },
+{ MACH_MACSE30,       "SE/30 ",    "",        MACH_CLASSII },
+
+/* The rest of the II series... */
+{ MACH_MACIICI,       "IIci ",     "",        MACH_CLASSIIci },
+{ MACH_MACIISI,       "IIsi ",     "",        MACH_CLASSIIci },
+{ MACH_MACIIVI,       "IIvi ",     "",        MACH_CLASSIIci },
+{ MACH_MACIIVX,       "IIvx ",     "",        MACH_CLASSIIci },
+{ MACH_MACIIFX,       "IIfx ",     "",        MACH_CLASSIIfx },
+
+/* The Centris/Quadra series. */
+{ MACH_MACQ700,       "Quadra",    " 700 ",   MACH_CLASSQ },
+{ MACH_MACQ900,       "Quadra",    " 900 ",   MACH_CLASSQ },
+{ MACH_MACQ950,       "Quadra",    " 950 ",   MACH_CLASSQ },
+{ MACH_MACQ800,       "Quadra",    " 800 ",   MACH_CLASSQ },
+{ MACH_MACQ650,	      "Quadra",    " 650 ",   MACH_CLASSQ },
+{ MACH_MACC650,       "Centris",   " 650 ",   MACH_CLASSQ },
+{ MACH_MACQ605,       "Quadra",    " 605",    MACH_CLASSQ },
+{ MACH_MACC610,	      "Centris",   " 610 ",   MACH_CLASSQ },
+{ MACH_MACQ610,       "Quadra",    " 610 ",   MACH_CLASSQ },
+{ MACH_MACC660AV,     "Centris",   " 660AV ", MACH_CLASSQ },
+{ MACH_MACQ840AV,     "Quadra",    " 840AV ", MACH_CLASSQ },
+
+/* The Powerbooks/Duos... */
+{ MACH_MACPB100,      "PowerBook", " 100 ",   MACH_CLASSPB },
+{ MACH_MACPB140,      "PowerBook", " 140 ",   MACH_CLASSPB },
+{ MACH_MACPB145,      "PowerBook", " 145 ",   MACH_CLASSPB },
+{ MACH_MACPB160,      "PowerBook", " 160 ",   MACH_CLASSPB },
+{ MACH_MACPB165,      "PowerBook", " 165 ",   MACH_CLASSPB },
+{ MACH_MACPB165C,     "PowerBook", " 165c ",  MACH_CLASSPB },
+{ MACH_MACPB170,      "PowerBook", " 170 ",   MACH_CLASSPB },
+{ MACH_MACPB180,      "PowerBook", " 180 ",   MACH_CLASSPB },
+{ MACH_MACPB180C,     "PowerBook", " 180c ",  MACH_CLASSPB },
+{ MACH_MACPB210,      "PowerBook", " 210 ",   MACH_CLASSPB },
+{ MACH_MACPB230,      "PowerBook", " 230 ",   MACH_CLASSPB },
+{ MACH_MACPB250,      "PowerBook", " 250 ",   MACH_CLASSPB },
+{ MACH_MACPB270,      "PowerBook", " 270 ",   MACH_CLASSPB },
+
+/* The Performas... */
+{ MACH_MACP600,       "Performa",  " 600 ",   MACH_CLASSLC },
+{ MACH_MACP460,       "Performa",  " 460 ",   MACH_CLASSLC },
+{ MACH_MACP550,       "Performa",  " 550 ",   MACH_CLASSLC },
+
+/* The LCs... */
+{ MACH_MACLCII,       "LC",        " II ",    MACH_CLASSLC },
+{ MACH_MACLCIII,      "LC",        " III ",   MACH_CLASSLC },
+{ MACH_MACLC475,      "LC",        " 475 ",   MACH_CLASSLC },
+{ MACH_MACLC520,      "LC",        " 520 ",   MACH_CLASSLC },
+{ MACH_MACLC575,      "LC",        " 575 ",   MACH_CLASSLC },
+/* Does this belong here? */
+{ MACH_MACCLASSICII,  "Classic",   " II ",    MACH_CLASSLC },
+
+/* The hopeless ones... */
+{ MACH_MACCCLASSIC,   "Classic ",  "",        MACH_CLASSH },
+{ MACH_MACTV,         "TV ",       "",        MACH_CLASSH },
+
+/* The unknown one and the end... */
+{ 0,                 "Unknown",    "",        MACH_CLASSII},
+{ 0,                 NULL,         NULL,      0 },
+}; /* End of cpu_models[] initialization. */
+
+char	cpu_model[120];	/* for sysctl */
+
+static void
+identifycpu(void)
 {
-  /* LAK: Grab a few useful variables */
+	char	*proc;
 
-  extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
-  extern unsigned long end, esym;
+	switch(mac68k_machine.mach_processor) {
+		case MACH_68020:
+			proc = ("(68020)");
+			break;	
+		case MACH_68030:
+			proc = ("(68030)");
+			break;	
+		case MACH_68040:
+			proc = ("(68040)");
+			break;	
+		case MACH_PENTIUM:
+		default:
+			proc = ("(unknown processor)");
+			break;	
+	}
+	sprintf(cpu_model, "Apple Macintosh %s%s %s",
+		cpu_models[mac68k_machine.cpu_model_index].model_major,
+		cpu_models[mac68k_machine.cpu_model_index].model_minor,
+		proc);
+	printf("%s\n", cpu_model);
+}
 
-  bootdev = root_scsi_id = getenv ("ROOT_SCSI_ID");
-  bootdev = (bootdev << 16) | 4;	/* This is wrong for non-scsi-id */
-					/* bootdev... */
+static void
+get_machine_info(void)
+{
+	char	*proc;
+	int	i;
+
+	for (i=0 ; cpu_models[i].model_major ; i++) {
+		if (mac68k_machine.machineid == cpu_models[i].machineid)
+			break;
+	}
+
+	if (cpu_models[i].model_major == NULL)
+		i--;
+
+	switch(mac68k_machine.mach_processor) {
+		case MACH_68040:
+			cpu040 = 1;
+			break;	
+		case MACH_68020:
+		case MACH_68030:
+		case MACH_PENTIUM:
+		default:
+			cpu040 = 0;
+			break;	
+	}
+
+	mac68k_machine.cpu_model_index = i;
+}
+
+/*
+ * getenvvars: Grab a few useful variables
+ */
+extern void
+getenvvars (void)
+{
+  extern unsigned long	bootdev, videobitdepth, videosize;
+  extern unsigned long	end, esym;
+  int			root_scsi_id;
+
+  root_scsi_id = getenv ("ROOT_SCSI_ID");
+  /*
+   * For now, we assume that the boot device is off the first controller.
+   */
+  bootdev = (root_scsi_id << 16) | 4;
+
   boothowto = getenv ("SINGLE_USER");
-  videoaddr = getenv ("VIDEO_ADDR");
-		/* These next two should give us mapped video & serial */
-		/* We need these for pre-mapping graybars & echo, but probably */
-		/* only on MacII or LC. */
+
+	/* These next two should give us mapped video & serial */
+	/* We need these for pre-mapping graybars & echo, but probably */
+	/* only on MacII or LC.  --  XXX */
   /* videoaddr = getenv("MACOS_VIDEO"); */
   /* sccaddr = getenv("MACOS_SCC"); */
+
+  /*
+   * The following are not in a structure so that they can be
+   * accessed more quickly.
+   */
+  videoaddr = getenv ("VIDEO_ADDR");
   videorowbytes = getenv ("ROW_BYTES");
   videobitdepth = getenv ("SCREEN_DEPTH");
   videosize = getenv ("DIMENSIONS");
-  /* New info stuff */
-  machineid = getenv("MACHINEID");
-  mach_processor = getenv("PROCESSOR");
-  mach_memsize = getenv("MEMSIZE");
-  do_graybars = getenv("GRAYBARS");
-  serial_boot_echo = getenv("SERIALECHO");
+
+  /*
+   * More misc stuff from booter.
+   */
+  mac68k_machine.machineid = getenv("MACHINEID");
+  mac68k_machine.mach_processor = getenv("PROCESSOR");
+  mac68k_machine.mach_memsize = getenv("MEMSIZE");
+  mac68k_machine.do_graybars = getenv("GRAYBARS");
+  mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 		/* Should probably check this and fail if old */
-  booter_version = getenv("BOOTERVER");
+  mac68k_machine.booter_version = getenv("BOOTERVER");
+
+  /*
+   * Get end of symbols for kernel debugging
+   */
   esym = getenv("END_SYM");
   if (esym == 0) esym = (long) &end;
 }
 
 void printenvvars (void)
 {
-  extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
+  extern unsigned long bootdev, videobitdepth, videosize;
 
   ddprintf ("bootdev = %u\n\r", (int)bootdev);
-  ddprintf ("root_scsi_id = %u\n\r", (int)root_scsi_id);
   ddprintf ("boothowto = %u\n\r", (int)boothowto);
   ddprintf ("videoaddr = %u\n\r", (int)videoaddr);
   ddprintf ("videorowbytes = %u\n\r", (int)videorowbytes);
   ddprintf ("videobitdepth = %u\n\r", (int)videobitdepth);
   ddprintf ("videosize = %u\n\r", (int)videosize);
-  ddprintf ("machineid = %u\n\r", (int)machineid);
-  ddprintf ("processor = %u\n\r", (int)mach_processor);
-  ddprintf ("memsize = %u\n\r", (int)mach_memsize);
-  ddprintf ("graybars = %u\n\r", (int)do_graybars);
-  ddprintf ("serial echo = %u\n\r", (int)serial_boot_echo);
+  ddprintf ("machineid = %u\n\r", (int)mac68k_machine.machineid);
+  ddprintf ("processor = %u\n\r", (int)mac68k_machine.mach_processor);
+  ddprintf ("memsize = %u\n\r", (int)mac68k_machine.mach_memsize);
+  ddprintf ("graybars = %u\n\r", (int)mac68k_machine.do_graybars);
+  ddprintf ("serial echo = %u\n\r", (int)mac68k_machine.serial_boot_echo);
 }
 
-extern long			(*via1itab[7])();
-extern long			adb_intr_II(void);
-extern long			adb_intr_SI(void);
-extern long			adb_intr_PB(void);
 extern volatile unsigned char	*sccA;
-extern int			sccClkConst;
-extern int			has5380scsi;
-extern int			has53c96scsi;
 
-/* BG 1/2/94 */
+/*
+ * Sets a bunch of machine-specific variables
+ */
 void
 setmachdep(void)
 {
 static	int			firstpass = 1;
+	struct cpu_model_info	*cpui;
 
-	/* Sets a bunch of machine-specific variables */
-
-	/* First, set things that need to be set on the first pass only */
-	/* Ideally, we'd only call this once, but for some reason, the  */
-	/* VIAs need interrupts turned off twice !? */
+	/*
+	 * First, set things that need to be set on the first pass only
+	 * Ideally, we'd only call this once, but for some reason, the
+	 * VIAs need interrupts turned off twice !?
+	 */
 	if (firstpass) {
-		load_addr = 0;
+		get_machine_info();
 
-		has5380scsi = 1;
-		has53c96scsi = 0;
+		load_addr = 0;
 	}
 
-	/* Set up any machine specific stuff that we have to before */
-	/*  ANYTHING else happens */
-	switch(machineid){	/* remove bit overlap */
-		case MACH_MACII:
-		case MACH_MACSE30:
-		case MACH_MACIIX:
-		case MACH_MACIICX:
-		case MACH_MACLCII:
-			VIA2 = 1;
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			via1itab[2] = adb_intr_II;
-			break;
-		case MACH_MACPB140:
-		case MACH_MACPB170:
-			VIA2 = 1;
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			via1itab[2] = adb_intr_PB;
-			break;
-		case MACH_MACIICI:
-			VIA2 = 0x13;
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			/*
-			 * LAK: Find out if internal video is on.  If yes, then
-			 * we loaded in bank B.  We need a better way to determine
-			 * this, like use the TT0 register.
-			 */
-			if (rbv_vidstatus ()) {
-				load_addr = 0x04000000;
-			}
-			via1itab[2] = adb_intr_II;
-			sccClkConst = 122400;
-			break;
-		case MACH_MACIISI:		/* I'm really not sure about IIsi. */
-			VIA2 = 0x13;
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			/*
-			 * LAK: Find out if internal video is on.  If yes, then
-			 * we loaded in bank B.  We need a better way to determine
-			 * this, like use the TT0 register.
-			 */
-			if (rbv_vidstatus ()) {
-				load_addr = 0x04000000;
-			}
-			via1itab[2] = adb_intr_SI;
-			sccClkConst = 122400;
-			break;
-		case MACH_MACQ700:
-		case MACH_MACQ900:	/* Maybe? */
-		case MACH_MACC610:	/* Maybe? */
-		case MACH_MACQ610:	/* Maybe? */
-			cpu040 = 1;
-			VIA2 = 0x1;
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
+
+	/*
+	 * Set up any machine specific stuff that we have to before
+	 * ANYTHING else happens
+	 */
+	switch(cpui->class){	/* Base this on class of machine... */
+		case MACH_CLASSII:
 			if (firstpass) {
-				via1itab[2] = adb_intr_II;
-				sccA = IOBase + 0xc000;
-				sccClkConst = 249600;
-				has5380scsi = 0;
-				has53c96scsi = 1;
+				VIA2 = 1;
+				IOBase = 0x50000000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0x4000;
+				mac68k_machine.scsi80 = 1;
+				mac68k_machine.sccClkConst = 115200;
 			}
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 			break;
-		case MACH_MACCLASSICII:
-			VIA2 = 0x13;
+		case MACH_CLASSPB:
+			if (firstpass) {
+				VIA2 = 1;
+				IOBase = 0x50000000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0x4000;
+				mac68k_machine.scsi80 = 1;
+				mac68k_machine.sccClkConst = 115200;
+			}
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+			break;
+		case MACH_CLASSQ:
+			if (firstpass) {
+				VIA2 = 1;
+				IOBase = 0x50f00000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0xc000;
+				mac68k_machine.scsi96 = 1;
+				mac68k_machine.sccClkConst = 249600;
+			}
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+			break;
+		case MACH_CLASSIIci:
+			if (firstpass) {
+				VIA2 = 0x13;
+				IOBase = 0x50000000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0x4000;
+				mac68k_machine.scsi80 = 1;
+				mac68k_machine.sccClkConst = 122400;
+			/*
+			 * LAK: Find out if internal video is on.  If yes, then
+			 * we loaded in bank B.  We need a better way to
+			 * determine this, like use the TT0 register.
+			 */
+				if (rbv_vidstatus ()) {
+					load_addr = 0x04000000;
+				}
+			}
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			via1itab[2] = adb_intr_SI;
+			break;
+		case MACH_CLASSLC:
+			if (firstpass) {
+				VIA2 = 0x13;
+				IOBase = 0x50000000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0x4000;
+				mac68k_machine.scsi80 = 1;
+				mac68k_machine.sccClkConst = 122400;
+			/*
+			 * LAK: Find out if internal video is on.  If yes, then
+			 * we loaded in bank B.  We need a better way to
+			 * determine this, like use the TT0 register.
+			 */
+				if (rbv_vidstatus ()) {
+					load_addr = 0x04000000;
+				}
+			}
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 			break;
 		default:
-			/* For any other machine, I have no idea how to handle it! */
-			VIA2 = 0x13;	/* Is it the same as RBV?? */
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
-			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
-			via1itab[2] = adb_intr_SI;
+		case MACH_CLASSH:
+		case MACH_CLASSIIfx:
 			break;
 	}
 	firstpass = 0;
@@ -2433,34 +2478,68 @@ unsigned long getphysical (unsigned long tc, unsigned long pte,
   return pte;
 }
 
-/*
- * machine dependent system variables.
- */
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static unsigned long gray_nextaddr = 0;
+
+void
+gray_bar2(void)
 {
-	dev_t consdev;
+   static int i=0;
+   static int flag=0;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+/* Same premise as gray_bar, but bigger.  Gives a quicker check of
+   where we are while debugging. */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+   asm("movl a0, sp@-");
+   asm("movl a1, sp@-");
+   asm("movl d0, sp@-");
+   asm("movl d1, sp@-");
+
+/* check to see if gray bars are turned off */
+   if (mac68k_machine.do_graybars) {
+   	/* MF the 10*rowbytes is done lots, but we want this to be slow */
+   	for(i = 0; i < 10*videorowbytes; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
+   	for(i = 0; i < 2*videorowbytes; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
+   }
+
+   asm("movl sp@+, d1");
+   asm("movl sp@+, d0");
+   asm("movl sp@+, a1");
+   asm("movl sp@+, a0");
+}
+
+void
+gray_bar(void)
+{
+   static int i=0;
+   static int flag=0;
+
+/* MF basic premise as I see it:
+	1) Save the scratch regs as they are not saved by the compilier.
+   	2) Check to see if we want gray bars, if so,
+		display some lines of gray,
+		a couple of lines of white(about 8),
+		and loop to slow this down.
+   	3) restore regs
+*/
+
+   asm("movl a0, sp@-");
+   asm("movl a1, sp@-");
+   asm("movl d0, sp@-");
+   asm("movl d1, sp@-");
+
+/* check to see if gray bars are turned off */
+   if (mac68k_machine.do_graybars) {
+   	/* MF the 10*rowbytes/4 is done lots, but we want this to be slow */
+   	for(i = 0; i < 10*videorowbytes/4; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
+   	for(i = 0; i < 2*videorowbytes/4; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
+   }
+
+   asm("movl sp@+, d1");
+   asm("movl sp@+, d0");
+   asm("movl sp@+, a1");
+   asm("movl sp@+, a0");
 }
