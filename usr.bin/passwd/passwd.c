@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.8 1996/08/09 09:19:41 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.9 1996/11/26 23:35:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";
 #else
-static char rcsid[] = "$NetBSD: passwd.c,v 1.8 1996/08/09 09:19:41 thorpej Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.9 1996/11/26 23:35:38 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.8 1996/08/09 09:19:41 thorpej Exp $
 int use_kerberos;
 int use_yp;
 int yppwd;
+int yflag;
 
 extern	char *__progname;		/* from crt0.o */
 
@@ -121,6 +122,7 @@ main(argc, argv)
 			if (!use_yp)
 				errx(1, "YP not in use.");
 			use_kerberos = 0;
+			yflag = 1;
 			break;
 #else
 			errx(1, "YP support not compiled in.");
