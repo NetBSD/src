@@ -1,8 +1,8 @@
-/*	$NetBSD: ip32.c,v 1.6.2.2 2002/04/01 07:42:29 nathanw Exp $	*/
+/*	$NetBSD: ip32.c,v 1.6.2.3 2002/06/20 03:40:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
- * Copyright (c) 2001 Rafal K. Boni
+ * Copyright (c) 2001, 2002 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,15 @@ void	ip32_intr_establish(int, int, int (*)(void *), void *);
 int	crime_intr(void *);
 void	*crime_intr_establish(int, int, int, int (*)(void *), void *);
 
+u_int32_t next_clk_intr;
+u_int32_t missed_clk_intrs;
+static unsigned long last_clk_intr;
+
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
-static unsigned long ticks_per_hz;
+static struct evcnt mips_spurint_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
 void ip32_init(void)
 {
@@ -63,7 +68,15 @@ void ip32_init(void)
 	*(volatile u_int32_t *)0xb400000c |= 0x200;
 	*(volatile u_int32_t *)0xb4000034 = 0;
 
-	ticks_per_hz = 1000000;
+	/* 
+	 * XXX: we have no clock calibration code for the IP32, so cpu speed
+	 * is set from `cpuspeed' environment variable in machdep.c.
+	 */
+	
+	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
+	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
+	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	platform.iointr = ip32_intr;
 	platform.bus_reset = ip32_bus_reset;
@@ -75,6 +88,11 @@ void ip32_init(void)
 	clockmask = 0xff00;
 
 	evcnt_attach_static(&mips_int5_evcnt);
+	evcnt_attach_static(&mips_spurint_evcnt);
+
+	printf("CPU clock speed = %lu.%02luMhz\n", 
+				curcpu()->ci_cpu_freq / 1000000,
+			    	(curcpu()->ci_cpu_freq / 10000) % 100);
 }
 
 void
@@ -83,6 +101,10 @@ ip32_bus_reset(void)
 	/* do nothing */
 }
 
+/*
+ * NB: Do not re-enable interrupts here -- reentrancy here can cause all
+ * sorts of Bad Things(tm) to happen, including kernel stack overflows.
+ */
 void
 ip32_intr(status, cause, pc, ipending)
 	u_int32_t status;
@@ -91,7 +113,7 @@ ip32_intr(status, cause, pc, ipending)
 	u_int32_t ipending;
 {
 	int i;
-	unsigned long cycles;
+	u_int32_t newcnt;
 	struct clockframe cf;
 
 #if 0
@@ -121,8 +143,22 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 #endif
 
 	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + ticks_per_hz);
+		last_clk_intr = mips3_cp0_count_read();
+
+		next_clk_intr += curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_clk_intr);
+		newcnt = mips3_cp0_count_read();
+
+		/* 
+		 * Missed one or more clock interrupts, so let's start 
+		 * counting again from the current value.
+		 */
+		if ((next_clk_intr - newcnt) & 0x80000000) {
+		    missed_clk_intrs++;
+
+		    next_clk_intr = newcnt + curcpu()->ci_cycles_per_hz;
+		    mips3_cp0_compare_write(next_clk_intr);
+		}
 
 		cf.pc = pc;
 		cf.sr = status;
@@ -143,7 +179,8 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 					cause &= ~(MIPS_INT_MASK_0 << i);
 	}
 
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	if (cause & status & MIPS_HARD_INT_MASK) 
+		mips_spurint_evcnt.ev_count++;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.5 2002/05/29 21:31:53 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.6 2002/06/20 03:40:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,16 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+
+/* Is zs configured in? */
+#include "zsc.h"
+#if (NZSC > 0)
+#include <next68k/dev/zs_cons.h>
+#endif
 #endif
 
 #include <sys/sysctl.h>
@@ -246,7 +256,7 @@ consinit()
 
 	if (!init) {
 		cninit();
-#ifdef KGDB
+#if defined(KGDB) && (NZSC > 0)
 		zs_kgdb_init();
 #endif
 #ifdef  DDB

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.10.2.6 2002/02/28 04:13:26 nathanw Exp $ */
+/* $NetBSD: isp_target.h,v 1.10.2.7 2002/06/20 03:44:51 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -437,9 +437,9 @@ typedef struct {
 	isphdr_t	ct_header;
 	u_int16_t	ct_reserved;
 	u_int16_t	ct_fwhandle;	/* just to match CTIO */
-	u_int8_t	ct_lun;	/* lun */
-	u_int8_t	ct_iid;	/* initiator id */
-	u_int16_t	ct_rxid; /* response ID */
+	u_int8_t	ct_lun;		/* lun */
+	u_int8_t	ct_iid;		/* initiator id */
+	u_int16_t	ct_rxid;	/* response ID */
 	u_int16_t	ct_flags;
 	u_int16_t 	ct_status;	/* isp status */
 	u_int16_t	ct_timeout;
@@ -577,8 +577,10 @@ int isp_endcmd(struct ispsoftc *, void *, u_int32_t, u_int16_t);
 
 /*
  * Handle an asynchronous event
+ *
+ * Return nonzero if the interrupt that generated this event has been dismissed.
  */
 
-void isp_target_async(struct ispsoftc *, int, int);
+int isp_target_async(struct ispsoftc *, int, int);
 #endif
 #endif	/* _ISP_TARGET_H */

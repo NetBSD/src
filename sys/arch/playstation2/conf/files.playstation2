@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.2.4.3 2002/04/01 07:41:50 nathanw Exp $
+#	$NetBSD: files.playstation2,v 1.2.4.4 2002/06/20 03:40:27 nathanw Exp $
 
 maxpartitions 8
 
@@ -86,9 +86,6 @@ major	{md = 6}
 #
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 include "dev/usb/files.usb"
 

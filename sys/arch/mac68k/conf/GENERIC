@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.6.5 2002/04/17 00:03:30 nathanw Exp $
+# $NetBSD: GENERIC,v 1.113.6.6 2002/06/20 03:39:21 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.113.6.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.113.6.6 $"
 
 maxusers	16		# estimated number of users
 
@@ -230,6 +232,10 @@ se*	at scsibus? target ? lun ?	# SCSI ethernet
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# IDE controller and devices
+wdc*	at obio? flags 0x1000
+wd*	at wdc? channel ? drive ?
+
 
 # Miscellaneous mass storage devices
 
@@ -296,6 +302,7 @@ pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

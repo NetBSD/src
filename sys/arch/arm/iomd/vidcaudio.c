@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.2.4.5 2002/04/17 00:02:32 nathanw Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.2.4.6 2002/06/20 03:38:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.2.4.5 2002/04/17 00:02:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.2.4.6 2002/06/20 03:38:13 nathanw Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -86,7 +86,6 @@ struct audio_general {
 
 struct vidcaudio_softc {
 	struct device device;
-	int iobase;
 
 	int open;
 };
@@ -204,11 +203,8 @@ vidcaudio_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *mb = aux;
 	struct vidcaudio_softc *sc = (void *)self;
 	int id;
-
-	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
 	ag.in_progress = 0;

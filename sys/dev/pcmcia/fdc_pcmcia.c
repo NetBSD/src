@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.4.20.1 2001/11/14 19:15:36 nathanw Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.4.20.2 2002/06/20 03:46:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.4.20.1 2001/11/14 19:15:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.4.20.2 2002/06/20 03:46:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +161,7 @@ fdc_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 		if (cfe->num_memspace != 0 ||
 		    cfe->num_iospace != 1)
 			continue;

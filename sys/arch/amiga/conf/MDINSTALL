@@ -1,10 +1,12 @@
-#	$NetBSD: MDINSTALL,v 1.4.8.4 2002/04/17 00:02:15 nathanw Exp $
+#	$NetBSD: MDINSTALL,v 1.4.8.5 2002/06/20 03:37:51 nathanw Exp $
 
 #
 # INSTALL kernel for ramdisk installation
 #
 
 include "arch/amiga/conf/std.amiga"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -66,7 +68,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
@@ -105,6 +107,11 @@ options 	GRF_AGA		# AGA Chip Set
 options 	GRF_AGA_VGA	# AGA VGAONLY timing
 options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
+
+# select a font for the console according to the character set and keymap
+# you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and do not need option setting

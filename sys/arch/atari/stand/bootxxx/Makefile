@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.3 2002/04/17 00:02:42 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3.2.4 2002/06/20 03:38:20 nathanw Exp $
 
 NOMAN=	# defined
 
@@ -48,7 +48,8 @@ beforeinstall:
 	@mv -f ${PROG}X ${PROG};
 
 afterinstall:
-	cp -p ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
+	${INSTALL_FILE} -o root -g wheel -m 644 \
+		${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
 	@mv -f ${PROG}XX ${PROG}
 
 .s.o:

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.4.4.8 2002/05/29 21:48:49 nathanw Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.4.4.9 2002/06/20 03:43:02 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -474,7 +474,25 @@
 /* syscall: "ugetrlimit" ret: "int" args: "int" "struct rlimit *" */
 #define	LINUX_SYS_ugetrlimit	190
 
+/* syscall: "truncate64" ret: "int" args: "const char *" "off_t" */
+#define	LINUX_SYS_truncate64	193
+
+/* syscall: "linux_ftruncate64" ret: "int" args: "int" "off_t" */
+#define	LINUX_SYS_linux_ftruncate64	194
+
+/* syscall: "stat64" ret: "int" args: "const char *" "struct linux_stat64 *" */
+#define	LINUX_SYS_stat64	195
+
+/* syscall: "lstat64" ret: "int" args: "const char *" "struct linux_stat64 *" */
+#define	LINUX_SYS_lstat64	196
+
+/* syscall: "fstat64" ret: "int" args: "int" "struct linux_stat64 *" */
+#define	LINUX_SYS_fstat64	197
+
 /* syscall: "getdents64" ret: "int" args: "int" "struct linux_dirent64 *" "unsigned int" */
 #define	LINUX_SYS_getdents64	202
+
+/* syscall: "fcntl64" ret: "int" args: "int" "int" "void *" */
+#define	LINUX_SYS_fcntl64	204
 
 #define	LINUX_SYS_MAXSYSCALL	207

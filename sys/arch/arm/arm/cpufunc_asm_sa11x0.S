@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.1.4.2 2002/02/28 04:07:17 nathanw Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.1.4.3 2002/06/20 03:38:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -93,5 +93,33 @@ ENTRY(sa11x0_cpu_sleep)
 
 	/* Restore interrupts (which will cause them to be serviced). */
 	msr	cpsr_all, r3
-
 	mov	pc, lr
+
+
+/*
+ * This function is the same as sa110_context_switch for now, the plan
+ * is to make use of the process id register to avoid cache flushes.
+ */
+ENTRY(sa11x0_context_switch)
+	/*
+	 * CF_CACHE_PURGE_ID will *ALWAYS* be called prior to this.
+	 * Thus the data cache will contain only kernel data and the
+	 * instruction cache will contain only kernel code, and all
+	 * kernel mappings are shared by all processes.
+	 */
+
+	/* Write the TTB */
+	mcr	p15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
+
+	/* Make sure that pipeline is emptied */
+	mov	r0, r0
+	mov	r0, r0
+	mov	pc, lr
+
+ENTRY(sa11x0_drain_readbuf)
+	mcr	p15, 0, r0, c9, c0, 0		/* drain read buffer */
+	mov	pc, lr
+

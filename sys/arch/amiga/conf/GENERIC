@@ -1,4 +1,9 @@
-# $NetBSD: GENERIC,v 1.162.6.5 2002/04/17 00:02:14 nathanw Exp $
+# $NetBSD: GENERIC,v 1.162.6.6 2002/06/20 03:37:51 nathanw Exp $
+#
+# This file was automatically created.
+# Changes will be lost when make is run in this directory.
+#
+# Created from: # NetBSD: GENERIC.in,v 1.1 2002/06/18 17:39:39 lukem Exp $
 #
 # GENERIC machine description file
 #
@@ -18,27 +23,13 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-#
-#if 0
-# GENERIC Amiga or DraCo
-#
-# This configuration file contains all possible options
-#
-# make AMIGA extracts the AMIGA configuration file.
-# make DRACO extracts the DRACO configuration file.
-# make INSTALL extracts the INSTALL configuration file.
-#
-# commit them, too.
-#endif
-#
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.162.6.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ifdef INSTALL_CONFIGURATION
-makeoptions	COPTS="-Os"
-#endif
+#ident 		"GENERIC-$Revision: 1.162.6.6 $"
+
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -46,11 +37,7 @@ options 	RTC_OFFSET=0
 #
 # mainboards to support (in addition to Amiga)
 #
-#ifdef DRACO_CONFIGURATION
 options 	DRACO
-
-#endif
-#ifdef AMIGA_CONFIGURATION
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
 				# MC68060 with an OS ROM up to (at least)
 				# V40 (OS3.1) and want to boot with the
@@ -58,19 +45,16 @@ options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
 options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
-#endif
 #
 # processors this kernel should support
 #
 options 	M68060		# support for 060
 options 	M060SP		# MC68060 software support (Required for 060)
-#ifdef AMIGA_CONFIGURATION
 options 	M68040		# support for 040
 options 	FPSP		# MC68040 floating point support
 options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
-#endif
 
 #
 # Networking options
@@ -83,7 +67,6 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
-#ifndef INSTALL_CONFIGURATION
 #options 	MROUTING	# Multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -92,7 +75,6 @@ options 	ISO,TPIP	# OSI
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-#endif
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -105,9 +87,7 @@ file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured filesystem (experimental)
 
-#ifndef INSTALL_CONFIGURATION
 file-system 	MFS		# Memory based filesystem
-#endif
 
 file-system 	NFS		# Network File System client side code
 file-system 	ADOSFS		# AmigaDOS file system
@@ -116,7 +96,6 @@ file-system 	MSDOSFS		# MS-DOS filesystem
 
 file-system 	KERNFS		# kernel data-structure filesystem
 
-#ifndef INSTALL_CONFIGURATION
 file-system 	FDESC		# user file descriptor filesystem
 file-system 	NULLFS		# loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
@@ -124,17 +103,14 @@ file-system 	OVERLAY		# overlay filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
-#endif
 
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
 
-#ifndef INSTALL_CONFIGURATION
 options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
-#endif
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -143,7 +119,6 @@ options 	NFSSERVER	# Network File System server side code
 # Compatibility options for various existing systems
 #
 
-#ifndef INSTALL_CONFIGURATION
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# compatibility with NetBSD 0.9
@@ -155,12 +130,10 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-#endif
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.
 
-#ifndef INSTALL_CONFIGURATION
 #
 # Support for System V IPC facilities.
 #
@@ -171,26 +144,19 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
-#endif
 
 #
 # Support for various kernel options
 #
 
-#ifndef INSTALL_CONFIGURATION
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
-#endif
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USERCONF	# userconf(4) support
-#ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-#else
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-#endif
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #
 # Misc. debugging options
@@ -201,7 +167,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
@@ -226,15 +192,12 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	LEV6_DEFER	# defers l6 to l4 (below serial l5)
 
 options 	RETINACONSOLE	# enable code to allow retina to be console
-#ifdef AMIGA_CONFIGURATION
 options 	ULOWELLCONSOLE	# enable code to allow a2410 to be console
 options 	CL5426CONSOLE	# Cirrus console
 options 	CV64CONSOLE	# CyberVision console
 options 	TSENGCONSOLE	# Tseng console
 options 	CV3DCONSOLE	# CyberVision 64/3D console
-#endif
 
-#ifdef AMIGA_CONFIGURATION
 options 	GRF_ECS		# Enhanced Chip Set
 options 	GRF_NTSC	# NTSC
 options 	GRF_PAL		# PAL
@@ -242,8 +205,12 @@ options 	GRF_A2024	# Support for the A2024
 options 	GRF_AGA		# AGA Chip Set
 options 	GRF_AGA_VGA	# AGA VGAONLY timing
 options 	GRF_SUPER72	# AGA Super-72
-#endif
 #options 	KFONT_8X11	# 8x11 font
+
+# select a font for the console according to the character set and keymap
+# you want to use
+options        KFONT_CONS_ISO8859_1
+#options         KFONT_CONS_ISO8859_2
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and do not need option setting
@@ -263,54 +230,41 @@ options 	GRF_SUPER72	# AGA Super-72
 # enables the Hardwarecursor which does not work on some systems.
 #options 	RH_HARDWARECURSOR
 
-#ifdef AMIGA_CONFIGURATION
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
 #
+
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
-#options	WSEMUL_VT100
-#options	FONT_BOLD8x16
-#options	FONT_VT220L8x10
-#endif
+#options 	WSEMUL_VT100
+#options 	FONT_BOLD8x16
+#options 	FONT_VT220L8x10
 
-#ifdef AMIGA_CONFIGURATION
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
-#endif
 grfrh0		at zbus0		# retina III
-#ifdef AMIGA_CONFIGURATION
-grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
 grful0		at zbus0		# A2410
 grfcv0		at zbus0		# CyberVision 64
 grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
 grfcv3d0	at zbus0		# CyberVision 64/3D
-#endif
 
-#ifdef AMIGA_CONFIGURATION
 grf0		at grfcc0
 grf1		at grfrt0
-#endif
 grf2		at grfrh0
-#ifdef AMIGA_CONFIGURATION
 grf3		at grfcl?
 grf4		at grful0
 grf5		at grfcv0
 grf6		at grfet?
 grf7		at grfcv3d0
-#endif
-#ifdef AMIGA_CONFIGURATION
 ite0		at grf0			# terminal emulators for grfs
 ite1		at grf1			# terminal emulators for grfs
-#endif
 ite2		at grf2			# terminal emulators for grfs
-#ifdef AMIGA_CONFIGURATION
 ite3		at grf3			# terminal emulators for grfs
 ite4		at grf4			# terminal emulators for grfs
 ite5		at grf5			# terminal emulators for grfs
 ite6		at grf6			# terminal emulators for grfs
 ite7		at grf7			# terminal emulators for grfs
-#endif
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
@@ -341,10 +295,10 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 # Don't enable wskbd if you use ite.
 #
 # XXX in std.amiga: kbd0 at mainbus0
+
 #wskbd0		at kbd0 console ?
 
 
-#ifdef AMIGA_CONFIGURATION
 #
 # Amiga Mainboard devices (sans graphics and keyboard)
 #
@@ -356,13 +310,9 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
-#ifndef INSTALL_CONFIGURATION
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
-#endif
-#endif
 
-#ifdef DRACO_CONFIGURATION
 #
 # DraCo Mainboard devices (sans keyboard)
 #
@@ -371,25 +321,17 @@ drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
 com*		at drsupio? port ?	# DraCo serial
 lpt0		at drsupio? port ?	# DraCo parallel
-#endif
 
 #
 # Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 #
 
-#ifndef INSTALL_CONFIGURATION
-#ifndef DRACO_CONFIGURATION
-# Alas, Melody-Z2 dont configure in the DraCo bus.
-melody* 	at zbus0		# Melody MPEG audio decoder
-audio*		at melody?
-#endif
 
 repulse*	at zbus0		# ALiENDESiGN Repulse
 audio*		at repulse?
 
 toccata*	at zbus0		# MacroSystem GmbH Toccata
 audio*		at toccata?
-#endif
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
@@ -401,7 +343,6 @@ qn*		at zbus0		# Quicknet
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560
 
-#ifdef AMIGA_CONFIGURATION
 # Greater Valley Product Bus
 gvpbus* 	at zbus0
 
@@ -472,12 +413,9 @@ mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
 
-#endif
 
-#ifdef DRACO_CONFIGURATION
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
-#endif
 
 
 # each hard drive from low target to high
@@ -486,10 +424,8 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
 ch*	at scsibus? target ? lun ?	# scsi autochangers
-#ifndef INSTALL_CONFIGURATION
 ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
-#endif
 
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
@@ -507,19 +443,20 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_EVENODD=1
+# options 	RF_INCLUDE_RAID5_RS=1
+# options 	RF_INCLUDE_PARITYLOGGING=1
+# options 	RF_INCLUDE_CHAINDECLUSTER=1
+# options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

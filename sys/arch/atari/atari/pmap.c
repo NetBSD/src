@@ -862,8 +862,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE);
-		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE);
+		uvm_km_pgremove(uvm.kernel_object,
+		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
+		    (vaddr_t)pmap->pm_ptab + ATARI_UPTSIZE
+				- vm_map_min(kernel_map));
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   ATARI_UPTSIZE);
 	}
@@ -2549,8 +2551,9 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
-		while ((pg = uvm_pagealloc(uvm.kernel_object, va, NULL,
-					   UVM_PGA_ZERO)) == NULL) {
+		while ((pg = uvm_pagealloc(uvm.kernel_object,
+					   va - vm_map_min(kernel_map),
+					   NULL, UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
 		pg->flags &= ~(PG_BUSY|PG_FAKE);

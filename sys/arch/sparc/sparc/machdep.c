@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.8 2002/05/29 21:31:57 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.9 2002/06/20 03:41:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,7 +226,6 @@ cpu_startup()
 	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &pa);
 
 	/* Allocate additional physical pages */
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(size - 8192,
 			    vm_first_phys, vm_first_phys+vm_num_phys,
 			    0, 0, &mlist, 1, 0) != 0)
@@ -1529,7 +1528,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(mlist);
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

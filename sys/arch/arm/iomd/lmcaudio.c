@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.2.4.3 2002/04/17 00:02:32 nathanw Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.2.4.4 2002/06/20 03:38:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -90,7 +90,6 @@ static struct callout ag_drain_ch = CALLOUT_INITIALIZER;
 
 struct lmcaudio_softc {
 	struct device device;
-	int iobase;
 
 	int open;
 };
@@ -205,10 +204,7 @@ lmcaudio_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *mb = aux;
 	struct lmcaudio_softc *sc = (void *)self;
-
-	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
 	ag.in_progress = 0;

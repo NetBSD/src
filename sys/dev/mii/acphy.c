@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.2.4.5 2002/04/01 07:46:06 nathanw Exp $	*/
+/*	$NetBSD: acphy.c,v 1.2.4.6 2002/06/20 03:45:15 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.2.4.5 2002/04/01 07:46:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.2.4.6 2002/06/20 03:45:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ acphy_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {

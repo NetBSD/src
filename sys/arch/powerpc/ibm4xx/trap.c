@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.4 2002/02/28 04:11:25 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.5 2002/06/20 03:40:31 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,6 +69,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
@@ -77,11 +78,16 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
 #include <sys/lwp.h>
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -299,22 +305,14 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 				params = args;
 			}
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, code, argsize, params);
-#endif
-#ifdef SYSCALL_DEBUG
-			if (trapdebug)
-				scdebug_call(p, code, args);
-#endif
+
+			if ((error = trace_enter(p, code, params, rval)) != 0)
+				goto syscall_bad;
+
 			rval[0] = 0;
 			rval[1] = 0;
 
 			error = (*callp->sy_call)(l, params, rval);
-#ifdef SYSCALL_DEBUG
-			if (trapdebug)
-				scdebug_ret(p, code, error, rval);
-#endif
 			switch (error) {
 			case 0:
 				frame->fixreg[FIRSTARG] = rval[0];
@@ -338,13 +336,10 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
+			KERNEL_PROC_UNLOCK(p);
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSRET))
-				ktrsysret(p, code, error, rval[0]);
-#endif
+			trace_exit(p, code, args, rval, error);
 		}
-		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_AST|EXC_USER:

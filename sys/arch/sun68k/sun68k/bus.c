@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3.4.2 2002/01/08 00:28:27 nathanw Exp $	*/
+/*	$NetBSD: bus.c,v 1.3.4.3 2002/06/20 03:42:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -245,7 +245,6 @@ extern	paddr_t avail_end;
 	/*
 	 * Allocate physical pages from the VM system.
 	 */
-	TAILQ_INIT(mlist);
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

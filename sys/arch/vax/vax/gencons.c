@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35.8.2 2002/04/01 07:43:31 nathanw Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35.8.3 2002/06/20 03:42:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -118,9 +118,9 @@ gencnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 
-	gc_softc[minor(dev)].alive = 0;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
+	gc_softc[minor(dev)].alive = 0;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.7 2002/05/29 21:31:36 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.8 2002/06/20 03:37:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.7 2002/05/29 21:31:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.8 2002/06/20 03:37:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ struct vm_map *phys_map = NULL;
 caddr_t	msgbufaddr;
 paddr_t msgbufpa;
 
+int	machineid;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -173,6 +174,14 @@ struct cpu_info cpu_info_store;
  * DMA transfer lengths.
  */
 int	ser_open_speed;
+
+#ifdef DRACO
+vaddr_t DRCCADDR;
+
+volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
+volatile u_int8_t *draco_misc;
+volatile struct drioct *draco_ioct;
+#endif
 
  /*
  * Console initialization: called early on from main,

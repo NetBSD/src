@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.8.2.2 2002/02/28 04:14:27 nathanw Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.8.2.3 2002/06/20 03:46:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,8 @@
 #define	STIC_KSEG_TO_PHYS(x)	MIPS_KSEG0_TO_PHYS(x)
 #elif defined(alpha)
 #define	STIC_KSEG_TO_PHYS(x)	ALPHA_K0SEG_TO_PHYS((vaddr_t)x)
-#else No support for your architecture
+#else
+#error No support for your architecture
 #endif
 
 #define	STIC_MAXDV	5

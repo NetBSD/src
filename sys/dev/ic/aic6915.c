@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.1.2.4 2001/11/14 19:14:14 nathanw Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.1.2.5 2002/06/20 03:44:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.1.2.4 2001/11/14 19:14:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.1.2.5 2002/06/20 03:44:27 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -1028,7 +1028,7 @@ sf_init(struct ifnet *ifp)
 	 */
 	sc->sc_TxDescQueueCtrl = TDQC_SkipLength(0) |
 	    TDQC_TxDmaBurstSize(4) |	/* default */
-	    TDQC_MinFrameSpacing(2) |	/* 64 bytes */
+	    TDQC_MinFrameSpacing(3) |	/* 128 bytes */
 	    TDQC_TxDescType(0);
 	sf_funcreg_write(sc, SF_TxDescQueueCtrl,
 	    sc->sc_TxDescQueueCtrl |

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5.6.2 2002/01/08 00:27:24 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5.6.3 2002/06/20 03:40:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -122,6 +122,7 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_pc = 0;
+	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	config_found(self, &mba.mba_pba, mainbus_print);

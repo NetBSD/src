@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.40.2 2002/01/08 00:27:12 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.40.3 2002/06/20 03:40:34 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,3 +76,4 @@ define	SPLX		offsetof(struct machvec, splx)
 
 define	CACHELINESIZE	CACHELINESIZE
 
+define	CPU_CI		offsetof(struct cpu_info, ci_ci)

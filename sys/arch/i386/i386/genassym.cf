@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.2.3 2001/06/21 19:25:27 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.4 2002/06/20 03:39:10 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL_OPT)
 include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"

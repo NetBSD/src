@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.10.4.1 2001/09/21 22:35:10 nathanw Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.10.4.2 2002/06/20 03:39:14 nathanw Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -60,10 +60,11 @@ struct i386_pmc_info_args {
 #define	PMC_TYPE_NONE		0
 #define	PMC_TYPE_I586		1
 #define	PMC_TYPE_I686		2
+#define	PMC_TYPE_K7		3
 
 #define	PMC_INFO_HASTSC		0x01
 
-#define	PMC_NCOUNTERS		2
+#define	PMC_NCOUNTERS		4
 
 struct i386_pmc_startstop_args {
 	int counter;

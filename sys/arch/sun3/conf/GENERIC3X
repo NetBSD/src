@@ -1,9 +1,11 @@
-# $NetBSD: GENERIC3X,v 1.42.6.4 2002/04/17 00:04:33 nathanw Exp $
+# $NetBSD: GENERIC3X,v 1.42.6.5 2002/06/20 03:41:40 nathanw Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3x"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
@@ -237,3 +239,4 @@ pseudo-device	vnd		4	# paging to files
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	clockctl		# user control of clock subsystem

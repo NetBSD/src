@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21.14.4 2002/04/17 00:06:07 nathanw Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.14.5 2002/06/20 03:46:03 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.14.4 2002/04/17 00:06:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.14.5 2002/06/20 03:46:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,7 @@ com_pcmcia_match(parent, match, aux)
 
 	/* 2. Does it have all four 'standard' port ranges? */
 	comportmask = 0;
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	    cfe = cfe->cfe_list.sqe_next) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		switch (cfe->iospace[0].start) {
 		case IO_COM1:
 			comportmask |= 1;
@@ -222,8 +221,7 @@ com_pcmcia_attach(parent, self, aux)
 retry:
 	/* find a cfe we can use */
 
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	    cfe = cfe->cfe_list.sqe_next) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 #if 0
 		/*
 		 * Some modem cards (e.g. Xircom CM33) also have

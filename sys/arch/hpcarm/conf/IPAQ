@@ -1,9 +1,11 @@
-#	$NetBSD: IPAQ,v 1.11.6.5 2002/04/17 00:03:01 nathanw Exp $
+#	$NetBSD: IPAQ,v 1.11.6.6 2002/06/20 03:38:43 nathanw Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 maxusers	32
@@ -14,13 +16,12 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-options 	CPU_SA110	# Support the SA110 core
-options 	CPU_SA1110	# Support the SA110 core
+
+options 	CPU_SA1110	# Support the SA1110 core
 
 # Architecture options
 options 	SAEGPIO_BASE="0x49000000"
 				# we have Extended GPIO
-
 # FPA options
 #options 	ARMFPE		# ARM Ltd FPE
 
@@ -203,3 +204,4 @@ pseudo-device	biconsdev 1		# build-in console device
 
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

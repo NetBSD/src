@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.2.4 2002/04/01 07:43:39 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.2.5 2002/06/20 03:42:27 nathanw Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -99,10 +99,6 @@
 /*
  * Globals
  */
-GLOBAL(startsym)
-	.long	0			/* start symbol table */
-GLOBAL(endsym)
-	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
 
@@ -759,7 +755,8 @@ ENTRY(memcpy)
 	dcba	0,r3		/* Allocate another line */
 #else
 	.long	0x7c071dec	/* dcba	r7,r3 */
-#endif	bgt	0b
+#endif	
+	bgt	0b
 1:
 	mtxer	r5		/* Store byte count */
 	lswx	r24,0,r4	/* Load up to 32 bytes */

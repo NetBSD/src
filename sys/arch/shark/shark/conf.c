@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.3 2002/04/17 00:04:21 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.4 2002/06/20 03:40:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +222,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 37: was vidcconsole */
 	cdev_lkm_dummy(),		/* 38: removed cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
-	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
+	cdev_mouse_init(NOPMS,opms),    /* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),		/* 41: reserved */
 	cdev_lkm_dummy(),		/* 42: was iic */
 	cdev_lkm_dummy(),		/* 43: was rtc */
@@ -269,6 +271,11 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 82: reserved */
 	cdev_notdef(),			/* 83: reserved */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 84: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 85: system call tracing */
+#else
+	cdev_notdef(),			/* 85: system call tracing */
+#endif
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -395,6 +402,7 @@ static int chrtoblktbl[] = {
     /* 82 */	    NODEV,
     /* 83 */	    NODEV,
     /* 84 */	    NODEV,
+    /* 85 */	    NODEV,
 };
 
 /*

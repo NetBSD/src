@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.79.2.5 2002/04/01 07:47:42 nathanw Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.79.2.6 2002/06/20 03:47:02 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.5 2002/04/01 07:47:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.6 2002/06/20 03:47:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,7 @@ usbd_dump_queue(usbd_pipe_handle pipe)
 	usbd_xfer_handle xfer;
 
 	printf("usbd_dump_queue: pipe=%p\n", pipe);
-	for (xfer = SIMPLEQ_FIRST(&pipe->queue);
-	     xfer;
-	     xfer = SIMPLEQ_NEXT(xfer, next)) {
+	SIMPLEQ_FOREACH(xfer, &pipe->queue, next) {
 		printf("  xfer=%p\n", xfer);
 	}
 }
@@ -268,7 +266,7 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 
 	if (--pipe->refcnt != 0)
 		return (USBD_NORMAL_COMPLETION);
-	if (SIMPLEQ_FIRST(&pipe->queue) != 0)
+	if (! SIMPLEQ_EMPTY(&pipe->queue))
 		return (USBD_PENDING_REQUESTS);
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
@@ -317,7 +315,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	/* Copy data if going out. */
 	if (!(xfer->flags & USBD_NO_COPY) && size != 0 && 
 	    !usbd_xfer_isread(xfer))
-		memcpy(KERNADDR(dmap), xfer->buffer, size);
+		memcpy(KERNADDR(dmap, 0), xfer->buffer, size);
 
 	err = pipe->methods->transfer(xfer);
 
@@ -369,7 +367,7 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size)
 	if (err)
 		return (NULL);
 	xfer->rqflags |= URQ_DEV_DMABUF;
-	return (KERNADDR(&xfer->dmabuf));
+	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
 void
@@ -390,7 +388,7 @@ usbd_get_buffer(usbd_xfer_handle xfer)
 {
 	if (!(xfer->rqflags & URQ_DEV_DMABUF))
 		return (0);
-	return (KERNADDR(&xfer->dmabuf));
+	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
 usbd_xfer_handle 
@@ -795,7 +793,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			xfer->actlen = xfer->length;
 		}
 #endif
-		memcpy(xfer->buffer, KERNADDR(dmap), xfer->actlen);
+		memcpy(xfer->buffer, KERNADDR(dmap, 0), xfer->actlen);
 	}
 
 	/* if we allocated the buffer in usbd_transfer() we free it here. */
@@ -815,7 +813,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_BUSY;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
 	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n", 
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_clreg.h,v 1.6.40.1 2002/02/28 04:06:38 nathanw Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.6.40.2 2002/06/20 03:37:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -310,4 +310,3 @@ int grfcl_cnprobe(void);
 void grfcl_iteinit(struct grf_softc *gp);
 
 #endif /* _GRF_RHREG_H */
-

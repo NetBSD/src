@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.11.2.2 2002/01/08 00:25:50 nathanw Exp $
+#	$NetBSD: Makefile.luna68k,v 1.11.2.3 2002/06/20 03:39:18 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,11 @@ GENASSYM=	${LUNA68K}/luna68k/genassym.cf
 ##
 CPPFLAGS+=	-Dluna68k
 CFLAGS+=	-msoft-float
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat

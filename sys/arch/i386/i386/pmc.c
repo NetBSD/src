@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2.6.1 2002/01/08 00:25:28 nathanw Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2.6.2 2002/06/20 03:39:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.6.1 2002/01/08 00:25:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.6.2 2002/06/20 03:39:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2.6.1 2002/01/08 00:25:28 nathanw Exp $");
 #include <machine/pmc.h>
 
 static int pmc_initialized;
+static int pmc_ncounters;
 static int pmc_type;
 static int pmc_flags;
 
@@ -75,6 +76,7 @@ pmc_init(void)
 	case CPUCLASS_586:
 		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 			pmc_type = PMC_TYPE_I586;
+			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
 			pmc_state[1].pmcs_ctrmsr = MSR_CTR1;
 			break;
@@ -83,8 +85,16 @@ pmc_init(void)
 	case CPUCLASS_686:
 		if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 			pmc_type = PMC_TYPE_I686;
+			pmc_ncounters = 2;
 			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
 			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
+		} else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+			pmc_type = PMC_TYPE_K7;
+			pmc_ncounters = 4;
+			pmc_state[0].pmcs_ctrmsr = MSR_K7_PERFCTR0;
+			pmc_state[1].pmcs_ctrmsr = MSR_K7_PERFCTR1;
+			pmc_state[2].pmcs_ctrmsr = MSR_K7_PERFCTR2;
+			pmc_state[3].pmcs_ctrmsr = MSR_K7_PERFCTR3;
 		}
 		break;
 	}
@@ -127,7 +137,7 @@ pmc_startstop(struct proc *p, struct i386_pmc_startstop_args *uargs,
 	if (error)
 		return (error);
 
-	if (args.counter < 0 || args.counter >= PMC_NCOUNTERS)
+	if (args.counter < 0 || args.counter >= pmc_ncounters)
 		return (EINVAL);
 
 	mask = 1 << args.counter;
@@ -165,6 +175,20 @@ pmc_startstop(struct proc *p, struct i386_pmc_startstop_args *uargs,
 			      PMC6_EVTSEL_INV : 0) |
 			    (args.compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
 			break;
+
+		case PMC_TYPE_K7:
+			pmc_state[args.counter].pmcs_control = args.event |
+			    (args.unit << K7_EVTSEL_UNIT_SHIFT) |
+			    ((args.flags & PMC_SETUP_KERNEL) ?
+			      K7_EVTSEL_OS : 0) |
+			    ((args.flags & PMC_SETUP_USER) ?
+			      K7_EVTSEL_USR : 0) |
+			    ((args.flags & PMC_SETUP_EDGE) ?
+			      K7_EVTSEL_E : 0) |
+			    ((args.flags & PMC_SETUP_INV) ?
+			      K7_EVTSEL_INV : 0) |
+			    (args.compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
+			break;
 		}
 		disable_intr();
 		wrmsr(pmc_state[args.counter].pmcs_ctrmsr,
@@ -191,6 +215,15 @@ pmc_startstop(struct proc *p, struct i386_pmc_startstop_args *uargs,
 		    (pmc_running ? PMC6_EVTSEL_EN : 0));
 		enable_intr();
 		break;
+
+	case PMC_TYPE_K7:
+		disable_intr();
+		if (args.counter == 1)
+			wrmsr(MSR_K7_EVNTSEL1, pmc_state[1].pmcs_control);
+		wrmsr(MSR_K7_EVNTSEL0, pmc_state[0].pmcs_control |
+		    (pmc_running ? K7_EVTSEL_EN : 0));
+		enable_intr();
+		break;
 	}
 
 	return (0);
@@ -211,7 +244,7 @@ pmc_read(struct proc *p, struct i386_pmc_read_args *uargs, register_t *retval)
 	if (error)
 		return (error);
 
-	if (args.counter < 0 || args.counter >= PMC_NCOUNTERS)
+	if (args.counter < 0 || args.counter >= pmc_ncounters)
 		return (EINVAL);
 
 	if (pmc_running & (1 << args.counter)) {

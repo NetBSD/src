@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.2.4 2002/05/29 21:32:28 nathanw Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.2.5 2002/06/20 03:42:54 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.4 2002/05/29 21:32:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.5 2002/06/20 03:42:54 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.2.4 2002/05/29 21:32:28 nathanw
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 #include <compat/irix/irix_syssgi.h>
@@ -220,6 +221,7 @@ irix_sys_syssgi(p, v, retval)
 		return irix_syssgi_sysconf((int)arg1, p, retval);	
 		break;
 
+	case IRIX_SGI_SATCTL:		/* control audit stream */
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
 		return 0;
@@ -391,8 +393,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			error = (*vcp->ev_proc)(p, vcp);
-			if (error)
+			/* Eventually do it for a whole share group */
+			if ((error = irix_sync_saddr_vmcmd(p, vcp)) != 0)
 				goto bad;
 		}
 		pht++;
@@ -449,6 +451,7 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SAVED_IDS;
 		break;
+	case IRIX_SC_IP_SECOPTS:/* IP security options */
 	/* Trusted IRIX capabilities are unsupported */
 	case IRIX_SC_ACL:	/* ACcess Lists */
 	case IRIX_SC_AUDIT:	/* Audit */
@@ -468,7 +471,7 @@ irix_syssgi_sysconf(name, p, retval)
 	default:
 		printf("Warning: syssgi(SYSCONF) unsupported variable %d\n",
 		    name);
-		    return EINVAL;
+		return EINVAL;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.63.4.2 2002/03/29 23:22:45 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.63.4.3 2002/06/20 03:42:21 nathanw Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,6 +75,7 @@ extern struct cpu_dep ka88_calls;
 extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
+extern struct cpu_dep vxt_calls;
 extern struct cpu_dep ka49_calls;
 extern struct cpu_dep ka53_calls;
 extern struct cpu_dep ka410_calls;
@@ -126,7 +127,7 @@ _start(struct rpb *prpb)
 	case VAX_BTYP_790:
 		dep_call = &ka860_calls;
 		strcpy(cpu_model,"VAX 8600");
-		if (vax_cpudata & 0x100)
+		if (vax_cpudata & 0x800000)
 			cpu_model[6] = '5';
 		break;
 #endif
@@ -169,6 +170,12 @@ _start(struct rpb *prpb)
 		case 2: strcpy(cpu_model, "VAXstation 4000 VLC"); break;
 		default: strcpy(cpu_model, "unknown SOC"); break;
 		}
+		break;
+#endif
+#if 0 && (VXT2000 || VAXANY)
+	case VAX_BTYP_VXT:
+		dep_call = &vxt_calls;
+		strcpy(cpu_model, "VXT 2000 X terminal");
 		break;
 #endif
 #if VAX49 || VAXANY

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.3 2002/04/01 07:43:27 nathanw Exp $
+#	$NetBSD: Makefile,v 1.4.2.4 2002/06/20 03:41:59 nathanw Exp $
 
 LIB=sa
 
@@ -18,7 +18,7 @@ S=${.CURDIR}/../../../..
 DIR_SA=${S}/lib/libsa
 DIR_KERN=${S}/lib/libkern
 
-.PATH:  ${DIR_SA} ${DIR_KERN}
+.PATH:  ${DIR_SA} ${DIR_KERN} ${DIR_KERN}/arch/m68k ${S}/arch/sun68k/sun68k
 
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 #  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
@@ -34,28 +34,23 @@ SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
 SRC_sa = alloc.c bcopy.c close.c files.c getfile.c loadfile.c loadfile_aout.c \
 	loadfile_elf32.c lseek.c memcpy.c open.c printf.c read.c sprintf.c \
-	strerror.c subr_prf.c twiddle.c
+	strerror.c subr_prf.c twiddle.c ctrlsp.S
 
 SRC_kern= ashldi3.c ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
 	memcmp.c memset.c strcmp.c strlen.c strncmp.c
 
 SRC_here= clock.c dev_disk.c devopen.c \
 	 gets.c idprom.c netif_sun.c panic.c \
-	 promboot.c promcons.c promdev.c \
+	 promboot.c promcons.c promdev.c putstr.c \
 	 sun2.c sun3.c sun3x.c vers.c xxboot.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
-SRCS+= ${S}/arch/sun68k/sun68k/ctrlsp.S
 
 # only needed during build
 libinstall::
 
 # bring in the required libgcc integer support:
-.if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
-SRCS+= ${DIR_KERN}/arch/m68k/mulsi3.S ${DIR_KERN}/arch/m68k/divsi3.S \
-	${DIR_KERN}/arch/m68k/udivsi3.S ${DIR_KERN}/arch/m68k/modsi3.S \
-	${DIR_KERN}/arch/m68k/umodsi3.S muldi3.c
-.endif
+SRCS+= mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S muldi3.c
 
 .include <bsd.own.mk>
 .undef DESTDIR=

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.9 2002/04/17 00:02:29 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.10 2002/06/20 03:38:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -125,12 +125,13 @@
 #endif
 
 /*
- * CLKF_BASEPRI: True if we were at spl0 before the interrupt
+ * CLKF_BASEPRI: True if we were at spl0 before the interrupt.
  *
- * This needs straighening, prob is the frame does not have info on the
- * priority a guess that needs trying is (current_spl_level == SPL0)
+ * This is hard-wired to 0 on the ARM, since spllowersoftclock() might
+ * not actually be able to unblock the interrupt, which would cause us
+ * to run the softclock interrupts with hardclock blocked.
  */
-#define CLKF_BASEPRI(frame)	CLKF_USERMODE(frame)
+#define CLKF_BASEPRI(frame)	0
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another

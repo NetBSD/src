@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.2.2.3 2002/04/17 00:04:20 nathanw Exp $
+#	$NetBSD: files.shark,v 1.2.2.4 2002/06/20 03:40:56 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -87,7 +87,7 @@ define	spckbd { [irq = -1], [port = -1] }
 
 # PS/2 mouse device
 device	opms: tty
-file	arch/shark/shark/pms.c			opms needs-flag
+file	arch/shark/shark/opms.c			opms needs-flag
 
 attach	opms at spckbd with opms
 

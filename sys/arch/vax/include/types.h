@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21.8.2 2002/04/01 07:43:30 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.21.8.3 2002/06/20 03:42:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,6 +56,9 @@ typedef unsigned long	vsize_t;
 #endif
 
 typedef int		register_t;
+
+/* The VAX does not have strict alignment requirements. */
+#define	__NO_STRICT_ALIGNMENT
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS

@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscall.h,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $ */
+/* $NetBSD: irix_syscall.h,v 1.18.2.6 2002/06/20 03:42:53 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -154,9 +154,15 @@
 				/* 72 is obsolete rmount */
 				/* 73 is obsolete rumount */
 				/* 74 is obsolete rfstart */
-				/* 75 is obsolete sigret */
-				/* 76 is obsolete rdebug */
-				/* 77 is obsolete rfstop */
+/* syscall: "getrlimit64" ret: "int" args: "int" "struct irix_rlimit64 *" */
+#define	IRIX_SYS_getrlimit64	75
+
+/* syscall: "setrlimit64" ret: "int" args: "int" "const struct irix_rlimit64 *" */
+#define	IRIX_SYS_setrlimit64	76
+
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+#define	IRIX_SYS_nanosleep	77
+
 /* syscall: "lseek64" ret: "irix_off64_t" args: "int" "int" "irix_off64_t" "int" "int" "int" "int" */
 #define	IRIX_SYS_lseek64	78
 
@@ -286,10 +292,19 @@
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" */
 #define	IRIX_SYS_gettimeofday	128
 
+/* syscall: "sproc" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" */
+#define	IRIX_SYS_sproc	129
+
 /* syscall: "prctl" ret: "ptrdiff_t" args: "unsigned int" "void *" */
 #define	IRIX_SYS_prctl	130
 
-/* syscall: "mmap" ret: "void *" args: "void *" "svr4_size_t" "int" "int" "int" "svr4_off_t" */
+/* syscall: "procblk" ret: "int" args: "int" "pid_t" "int" */
+#define	IRIX_SYS_procblk	131
+
+/* syscall: "sprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "caddr_t" "irix_size_t" */
+#define	IRIX_SYS_sprocsp	132
+
+/* syscall: "mmap" ret: "void *" args: "void *" "irix_size_t" "int" "int" "int" "irix_off_t" */
 #define	IRIX_SYS_mmap	134
 
 /* syscall: "munmap" ret: "int" args: "void *" "int" */
@@ -298,8 +313,32 @@
 /* syscall: "mprotect" ret: "int" args: "void *" "int" "int" */
 #define	IRIX_SYS_mprotect	136
 
+/* syscall: "__msync13" ret: "int" args: "void *" "size_t" "int" */
+#define	IRIX_SYS___msync13	137
+
+/* syscall: "getpgrp" ret: "int" args: */
+#define	IRIX_SYS_getpgrp	143
+
+/* syscall: "setpgrp" ret: "int" args: "int" "int" */
+#define	IRIX_SYS_setpgrp	144
+
 /* syscall: "fsync" ret: "int" args: "int" */
 #define	IRIX_SYS_fsync	146
+
+/* syscall: "fchdir" ret: "int" args: "int" */
+#define	IRIX_SYS_fchdir	147
+
+/* syscall: "getrlimit" ret: "int" args: "int" "struct irix_rlimit *" */
+#define	IRIX_SYS_getrlimit	148
+
+/* syscall: "setrlimit" ret: "int" args: "int" "const struct irix_rlimit *" */
+#define	IRIX_SYS_setrlimit	149
+
+/* syscall: "fchown" ret: "int" args: "int" "int" "int" */
+#define	IRIX_SYS_fchown	152
+
+/* syscall: "fchmod" ret: "int" args: "int" "int" */
+#define	IRIX_SYS_fchmod	153
 
 /* syscall: "systeminfo" ret: "long" args: "int" "char *" "long" */
 #define	IRIX_SYS_systeminfo	156
@@ -355,6 +394,15 @@
 /* syscall: "ftruncate64" ret: "int" args: "int" "int" "off_t" */
 #define	IRIX_SYS_ftruncate64	184
 
+/* syscall: "mmap64" ret: "void *" args: "void *" "irix_size_t" "int" "int" "int" "int" "irix_off_t" */
+#define	IRIX_SYS_mmap64	185
+
+/* syscall: "pread" ret: "ssize_t" args: "int" "void *" "size_t" "svr4_off_t" */
+#define	IRIX_SYS_pread	187
+
+/* syscall: "pwrite" ret: "ssize_t" args: "int" "const void *" "size_t" "svr4_off_t" */
+#define	IRIX_SYS_pwrite	188
+
 /* syscall: "getmountid" ret: "int" args: "const char *" "irix_mountid_t *" */
 #define	IRIX_SYS_getmountid	203
 
@@ -366,6 +414,12 @@
 
 /* syscall: "ngetdents64" ret: "int" args: "int" "irix_dirent64_t *" "unsigned short" "int *" */
 #define	IRIX_SYS_ngetdents64	208
+
+/* syscall: "pidsprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "caddr_t" "irix_size_t" "irix_pid_t" */
+#define	IRIX_SYS_pidsprocsp	210
+
+/* syscall: "usync_cntl" ret: "int" args: "int" "void *" */
+#define	IRIX_SYS_usync_cntl	223
 
 #define	IRIX_SYS_MAXSYSCALL	236
 #define	IRIX_SYS_NSYSENT	236

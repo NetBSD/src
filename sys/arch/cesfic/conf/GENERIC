@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5.6.4 2002/04/17 00:02:53 nathanw Exp $
+# $NetBSD: GENERIC,v 1.5.6.5 2002/06/20 03:38:26 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include 	"arch/cesfic/conf/std.cesfic"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Need to set locally
 maxusers	32
@@ -110,3 +112,4 @@ pseudo-device	pty		64	# pseudo ptys
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	rnd
+pseudo-device	clockctl		# user control of clock subsystem

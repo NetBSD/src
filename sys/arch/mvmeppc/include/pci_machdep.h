@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1.2.2 2002/02/28 04:11:02 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.2.3 2002/06/20 03:40:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -80,6 +80,9 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 void		pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
 		    int func, int swiz, int *iline);
+
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))
 
 #endif /* _KERNEL */
 

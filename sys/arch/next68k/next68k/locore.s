@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33.6.2 2001/11/18 18:43:07 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.33.6.3 2002/06/20 03:40:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -319,7 +319,7 @@ Lhpmmu2:
 	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
 #endif
 Lstploaddone:
-#ifdef defined(ENABLE_MAXADDR_TRAMPOLINE)
+#if defined(ENABLE_MAXADDR_TRAMPOLINE)
 	lea	MAXADDR,%a2		| PA of last RAM page
 	ASRELOC(Lhighcode, %a1)		| addr of high code
 	ASRELOC(Lehighcode, %a3)	| end addr
@@ -378,7 +378,7 @@ Lhighcode:
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
 
-	jmp     Lturnoffttr		| global jump into mapped memory.
+	jmp     Lturnoffttr:l		| global jump into mapped memory.
 Lturnoffttr:
 	moveq	#0,%d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc %d0,%itt0
@@ -394,12 +394,12 @@ Lmotommu2:
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
-	jmp	Lenab1
+	jmp	Lenab1:l		| force absolute (not pc-relative) jmp
 #if defined(ENABLE_HP_CODE)
 Lhpmmu3:
 	movl	#0,INTIOBASE+MMUBASE+MMUCMD	| clear external cache
 	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
-	jmp	Lenab1				| jmp to mapped code
+	jmp	Lenab1:l			| jmp to mapped code
 #endif
 #if defined(ENABLE_MAXADDR_TRAMPOLINE)
 Lehighcode:

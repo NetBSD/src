@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.7 1998/01/09 06:59:28 thorpej Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.7.32.1 2002/06/20 03:38:37 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.3 1997/10/09 09:06:50 jtc Exp 
+ *	NetBSD: diodevs,v 1.5 2002/04/17 20:50:45 gmcgarry Exp 
  */
 
 /*-
@@ -43,7 +43,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DIO_NDEVICES	45
+#define DIO_NDEVICES	46
 
 struct dio_devdata dio_devdatas[] = {
 	{ 0x02,	0,	1 },
@@ -80,6 +80,7 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x0a,	0,	1 },
 	{ 0x0b,	0,	1 },
 	{ 0x12,	0,	1 },
+	{ 0x13,	0,	1 },
 	{ 0x16,	0,	1 },
 	{ 0x19,	0,	1 },
 	{ 0x1a,	0,	4 },
@@ -129,6 +130,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x0a,	0,	DIO_DEVICE_DESC_MISC3 },
 	{ 0x0b,	0,	DIO_DEVICE_DESC_MISC4 },
 	{ 0x12,	0,	DIO_DEVICE_DESC_MISC5 },
+	{ 0x13,	0,	DIO_DEVICE_DESC_AUDIO },
 	{ 0x16,	0,	DIO_DEVICE_DESC_MISC6 },
 	{ 0x19,	0,	DIO_DEVICE_DESC_MISC7 },
 	{ 0x1a,	0,	DIO_DEVICE_DESC_MISC8 },

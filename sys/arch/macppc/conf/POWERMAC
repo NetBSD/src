@@ -1,9 +1,11 @@
-#	$NetBSD: POWERMAC,v 1.30.8.5 2002/04/17 00:03:41 nathanw Exp $
+#	$NetBSD: POWERMAC,v 1.30.8.6 2002/06/20 03:39:32 nathanw Exp $
 #
 # POWERMAC config file
 #
 
 include		"arch/macppc/conf/std.macppc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -68,13 +70,14 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 obio0	at pci? dev ? function ?
 
 nsphy*	at mii? phy ?			# NS83840 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x0		# 53c9x SCSI
@@ -102,3 +105,4 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.4.3 2002/01/04 19:12:28 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.25.4.4 2002/06/20 03:41:29 nathanw Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -206,20 +206,16 @@ define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)
 define	TF_PC		offsetof(struct trapframe64, tf_pc)
 define	TF_NPC		offsetof(struct trapframe64, tf_npc)
 define	TF_FAULT	offsetof(struct trapframe64, tf_fault)
-define	TF_KSTACK	offsetof(struct trapframe64, tf_kstack)
 define	TF_Y		offsetof(struct trapframe64, tf_y)
 define	TF_PIL		offsetof(struct trapframe64, tf_pil)
 define	TF_OLDPIL	offsetof(struct trapframe64, tf_oldpil)
 define	TF_TT		offsetof(struct trapframe64, tf_tt)
 define	TF_GLOBAL	offsetof(struct trapframe64, tf_global)
 define	TF_OUT		offsetof(struct trapframe64, tf_out)
+ifdef DEBUG
 define	TF_LOCAL	offsetof(struct trapframe64, tf_local)
 define	TF_IN		offsetof(struct trapframe64, tf_in)
-# shortened versions
-define	TF_G		offsetof(struct trapframe64, tf_global)
-define	TF_O		offsetof(struct trapframe64, tf_out)
-define	TF_L		offsetof(struct trapframe64, tf_local)
-define	TF_I		offsetof(struct trapframe64, tf_in)
+endif
 define	TF_SIZE		sizeof(struct trapframe64)
 
 ifdef notyet

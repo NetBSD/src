@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.6.2.1 2001/11/14 19:15:05 nathanw Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.6.2.2 2002/06/20 03:45:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.6.2.1 2001/11/14 19:15:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.6.2.2 2002/06/20 03:45:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ ess_ofisa_match(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = {
+	static const char *const compatible_strings[] = {
 		"ESST,es1887-codec",		/* ESS 1887 */
 		"ESST,es1888-codec",		/* ESS 1888 */
 		"ESST,es888-codec",		/* ESS 888 */

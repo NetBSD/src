@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42.2.3 2002/04/01 07:46:34 nathanw Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.2.4 2002/06/20 03:45:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.2.3 2002/04/01 07:46:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.2.4 2002/06/20 03:45:39 nathanw Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -156,7 +156,7 @@ const struct pci_class pci_subclass_communications[] = {
 };
 
 const struct pci_class pci_subclass_system[] = {
-	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
@@ -1202,11 +1202,11 @@ pci_conf_print(
 		    hdrtype);
 	printf("\n");
 
-#ifdef _KERNEL
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
 	pci_conf_print_regs(regs, endoff, 256);
 	printf("\n");
+#ifdef _KERNEL
 	if (printfn)
 		(*printfn)(pc, tag, regs);
 	else

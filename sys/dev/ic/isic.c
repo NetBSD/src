@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $ 
+ *	$Id: isic.c,v 1.1.2.5 2002/06/20 03:44:42 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.1.2.5 2002/06/20 03:44:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -91,14 +91,8 @@ isicintr(void *arg)
 	struct isic_softc *sc = arg;
 
 	/* could this be an interrupt for us? */
-	if (sc->sc_intr_valid != ISIC_INTR_VALID) {
-		/* just in case - clear it, or we might never get interrupted
-		 * again */
-		if (sc->sc_intr_valid == ISIC_INTR_DISABLED &&
-		    sc->clearirq)
-			sc->clearirq(sc);
-		return 0;
-	}
+	if (sc->sc_intr_valid == ISIC_INTR_DYING)
+		return 0;	/* do not touch removed hardware */
 
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
@@ -196,13 +190,18 @@ isicintr(void *arg)
 			}
 			if(ipac_irq_stat & IPAC_ISTA_ICD)
 			{
-				/* ISAC interrupt */
-				isic_isac_irq(sc, ISAC_READ(I_ISTA));
+				/* ISAC interrupt, Obey ISAC-IPAC differences */
+				u_int8_t isac_ista = ISAC_READ(I_ISTA);
+				if (isac_ista & 0xfe)
+					isic_isac_irq(sc, isac_ista & 0xfe);
+				if (isac_ista & 0x01) /* unexpected */
+					printf("%s: unexpected ipac timer2 irq\n", 
+					    sc->sc_dev.dv_xname);
 				was_ipac_irq = 1;
 			}
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
-				/* force ISAC interrupt handling */
+				/* ISAC EXI interrupt */
 				isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
@@ -212,9 +211,16 @@ isicintr(void *arg)
 				break;
 		}
 
+#if 0
+		/*
+		 * This seems not to be necessary on IPACs - no idea why
+		 * it is here - but due to limit range of test cards, leave
+		 * it in for now, in case we have to resurrect it.
+		 */
 		IPAC_WRITE(IPAC_MASK, 0xff);
 		DELAY(50);
 		IPAC_WRITE(IPAC_MASK, 0xc0);
+#endif
 
 		return(was_ipac_irq);
 	}		
@@ -229,8 +235,8 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = dchan_driver;
 	sc->sc_l2.l1_token = sc;
-	sc->sc_l2.bri = drv->bri;
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	sc->sc_l2.drv = drv;
+	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
 	isdn_bri_ready(drv->bri);
 	return 1;
 }
@@ -238,7 +244,7 @@ isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_l
 int
 isic_detach_bri(struct isic_softc *sc)
 {
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 0);
+	isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_ATTACH, 0);
 	isdn_detach_bri(sc->sc_l3token);
 	sc->sc_l3token = NULL;
 	return 1;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.6.4 2002/04/17 00:04:22 nathanw Exp $
+# $NetBSD: GENERIC,v 1.123.6.5 2002/06/20 03:41:01 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.123.6.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.123.6.5 $"
 
 maxusers	32
 
@@ -83,10 +85,10 @@ options 	LKM
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -617,3 +619,5 @@ pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+pseudo-device	clockctl		# user control of clock subsystem

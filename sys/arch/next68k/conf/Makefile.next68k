@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.21.2.2 2002/01/08 00:26:57 nathanw Exp $
+# $NetBSD: Makefile.next68k,v 1.21.2.3 2002/06/20 03:40:21 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,11 @@ GENASSYM=	${NEXT68K}/next68k/genassym.cf
 ##
 CPPFLAGS+=	-Dnext68k
 CFLAGS+=	-msoft-float
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat

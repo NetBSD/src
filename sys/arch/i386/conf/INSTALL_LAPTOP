@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.8 2002/04/17 00:03:17 nathanw Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.9 2002/06/20 03:39:05 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -10,6 +10,8 @@
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -238,9 +240,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # wscons
 #pckbc0	at isa?			# pc keyboard controller
 #pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 #vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -378,6 +378,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)

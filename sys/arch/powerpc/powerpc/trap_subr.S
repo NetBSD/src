@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11.6.4 2002/04/01 07:42:09 nathanw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.6.5 2002/06/20 03:40:35 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,8 +41,8 @@
 /*
  * Data used during primary/secondary traps/interrupts
  */
-#define	tempsave	0x2e0	/* primary save area for trap handling */
-#define	disisave	0x3e0	/* primary save area for dsi/isi traps */
+#define	tempsave	EXC_MCHK+0xe0 /* primary save area for trap handling */
+#define	disisave	EXC_DSI+0xe0  /* primary save area for dsi/isi traps */
 
 /*
  * XXX Interrupt and spill stacks need to be per-CPU.
@@ -250,20 +250,12 @@ _C_LABEL(isitrap601):
 	mtcr	30
 	bc	4,25,1f			/* branch if Valid is is false,
 					   presently assumes supervisor only */
-
 	/* get batu */
 	lwz	31,_C_LABEL(battable)@l(31)
-/* We randomly use the highest two bat registers here */
-	mfspr	28,SPR_RTCL_R
-	andi.	28,28,128
-	bne	2f
-	mtibatu	2,31
-	mtibatl	2,30
-	b	3f
-2:
+
 	mtibatu	3,31
 	mtibatl	3,30
-3:
+
 	mtcr	29			/* restore CR */
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
@@ -560,6 +552,35 @@ _C_LABEL(ipkdblow):
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
 
+#ifdef	CPU601_KERN_ENTRY_HOOK
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	98f;			/* skip if not 601 */		\
+	CPU601_KERN_ENTRY_HOOK(_s1_,_s2_);				\
+98:
+#else
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)	/* nothing */
+#endif
+
+#ifdef CPU601_KERN_LEAVE_HOOK
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	99f;			/* skip if not 601 */		\
+	CPU601_KERN_LEAVE_HOOK(_pmap_,_s1_);				\
+	xor	_s1_,_s1_,_s1_;						\
+	mtibatl	0,_s1_;			/* obliterate BATs */		\
+	mtibatl	1,_s1_;							\
+	mtibatl	2,_s1_;							\
+	mtibatl	3,_s1_;							\
+99:
+#else
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)	/* nothing */
+#endif
+
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (1)
@@ -651,6 +672,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
 	mtsr	KERNEL_SR,3;						\
+	CPU601_KERN_LEAVE(2,3);						\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
 	lwz	2,savearea(0);						\
@@ -690,6 +712,7 @@ s_trap:
 	lis	31,KERNEL_SEGMENT@h
 	ori	31,31,KERNEL_SEGMENT@l
 	mtsr	KERNEL_SR,31
+	CPU601_KERN_ENTRY(30,31)
 /* Obliterate SRs so BAT spills work correctly */
 	lis	31,EMPTY_SEGMENT@h
 	ori	31,31,EMPTY_SEGMENT@l
@@ -743,18 +766,18 @@ s_dsitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	lis	1,spillstk+SPILLSTK@ha
 	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mflr	30			/* save trap type */
 	mfctr	31			/* & CTR */
 	mfdar	3
@@ -765,17 +788,17 @@ s_pte_spill:
 	mtlr	30			/* and trap type */
 	mfsprg	31,2			/* get saved XER */
 	mtxer	31			/* restore XER */
-	lwz	12,8(1)			/* restore non-volatile registers */
-	lwz	11,12(1)
-	lwz	10,16(1)
-	lwz	9,20(1)
-	lwz	8,24(1)
-	lwz	7,28(1)
-	lwz	6,32(1)
-	lwz	5,36(1)
-	lwz	4,40(1)
-	lwz	3,44(1)
-	lwz	0,48(1)
+	lwz	12,SPFRAME_R12(1)	/* restore non-volatile registers */
+	lwz	11,SPFRAME_R11(1)
+	lwz	10,SPFRAME_R10(1)
+	lwz	9,SPFRAME_R9(1)
+	lwz	8,SPFRAME_R8(1)
+	lwz	7,SPFRAME_R7(1)
+	lwz	6,SPFRAME_R6(1)
+	lwz	5,SPFRAME_R5(1)
+	lwz	4,SPFRAME_R4(1)
+	lwz	3,SPFRAME_R3(1)
+	lwz	0,SPFRAME_R0(1)
 	beq	disitrap
 	mfsprg	1,1			/* restore SP */
 	mtcr	29			/* restore CR */
@@ -794,18 +817,18 @@ s_isitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	lis	1,spillstk+SPILLSTK@ha
 	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mfxer	30			/* save XER */
 	mtsprg	2,30
 	mflr	30			/* save trap type */
@@ -818,33 +841,33 @@ s_isitrap:
  */
 #define	INTRENTER							\
 /* Save non-volatile registers: */					\
-	stwu	1,-88(1);		/* temporarily */		\
-	stw	0,84(1);						\
+	stwu	1,-IFRAMELEN(1);	/* temporarily */		\
+	stw	0,IFRAME_R0(1);						\
 	mfsprg	0,1;			/* get original SP */		\
-	stw	0,0(1);			/* and store it */		\
-	stw	3,80(1);						\
-	stw	4,76(1);						\
-	stw	5,72(1);						\
-	stw	6,68(1);						\
-	stw	7,64(1);						\
-	stw	8,60(1);						\
-	stw	9,56(1);						\
-	stw	10,52(1);						\
-	stw	11,48(1);						\
-	stw	12,44(1);						\
-	stw	28,40(1);		/* saved LR */			\
-	stw	29,36(1);		/* saved CR */			\
-	stw	30,32(1);		/* saved XER */			\
+	stw	0,IFRAME_R1(1);		/* and store it */		\
+	stw	3,IFRAME_R3(1);						\
+	stw	4,IFRAME_R4(1);						\
+	stw	5,IFRAME_R5(1);						\
+	stw	6,IFRAME_R6(1);						\
+	stw	7,IFRAME_R7(1);						\
+	stw	8,IFRAME_R8(1);						\
+	stw	9,IFRAME_R9(1);						\
+	stw	10,IFRAME_R10(1);					\
+	stw	11,IFRAME_R11(1);					\
+	stw	12,IFRAME_R12(1);					\
+	stw	28,IFRAME_LR(1);	/* saved LR */			\
+	stw	29,IFRAME_CR(1);	/* saved CR */			\
+	stw	30,IFRAME_XER(1);	/* saved XER */			\
 	lmw	28,tempsave(0);		/* restore r28-r31 */		\
 	mfctr	6;							\
 	lis	5,_C_LABEL(intr_depth)@ha;				\
 	lwz	5,_C_LABEL(intr_depth)@l(5);				\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
-	stw	6,28(1);						\
-	stw	5,20(1);						\
-	stw	4,12(1);						\
-	stw	3,8(1);							\
+	stw	6,IFRAME_CTR(1);					\
+	stw	5,IFRAME_INTR_DEPTH(1);					\
+	stw	4,IFRAME_SRR0(1);					\
+	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
 	lis	3,EMPTY_SEGMENT@h;					\
@@ -857,6 +880,7 @@ s_isitrap:
 	mtsr	5,3;							\
 	mtsr	6,3;							\
 	mtsr	7,3;							\
+	CPU601_KERN_ENTRY(3,4);						\
 /* interrupts are recoverable here, and enable translation */		\
 	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
 	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
@@ -879,16 +903,16 @@ intr_exit:
 	mtmsr	3
 	isync
 /* restore possibly overwritten registers: */
-	lwz	12,44(1)
-	lwz	11,48(1)
-	lwz	10,52(1)
-	lwz	9,56(1)
-	lwz	8,60(1)
-	lwz	7,64(1)
-	lwz	6,8(1)
-	lwz	5,12(1)
-	lwz	4,28(1)
-	lwz	3,32(1)
+	lwz	12,IFRAME_R12(1)
+	lwz	11,IFRAME_R11(1)
+	lwz	10,IFRAME_R10(1)
+	lwz	9,IFRAME_R9(1)
+	lwz	8,IFRAME_R8(1)
+	lwz	7,IFRAME_R7(1)
+	lwz	6,IFRAME_SRR1(1)
+	lwz	5,IFRAME_SRR0(1)
+	lwz	4,IFRAME_CTR(1)
+	lwz	3,IFRAME_XER(1)
 	mtsrr1	6
 	mtsrr0	5
 	mtctr	4
@@ -914,25 +938,26 @@ intr_exit:
 	mtsr	6,4			/* Restore SR6 */
 	lwz	4,PM_SR+28(3)
 	mtsr	7,4			/* Restore SR7 */
-	lwz	3,PM_KERNELSR(3)
-	mtsr	KERNEL_SR,3		/* Restore kernel SR */
+	lwz	4,PM_KERNELSR(3)
+	mtsr	KERNEL_SR,4		/* Restore kernel SR */
+	CPU601_KERN_LEAVE(3,4)
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
-	lwz	3,0(1)			/* get saved SP */
+	lwz	3,IFRAME_R1(1)		/* get saved SP */
 	mtsprg	1,3
 	li	6,EXC_AST
 	stmw	28,tempsave(0)		/* establish tempsave again */
 	mtlr	6
-	lwz	28,40(1)		/* saved LR */
-	lwz	29,36(1)		/* saved CR */
-	lwz	6,68(1)
-	lwz	5,72(1)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
+	lwz	28,IFRAME_LR(1)		/* saved LR */
+	lwz	29,IFRAME_CR(1)		/* saved CR */
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
 	lis	30,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
 	lwz	31,_C_LABEL(intr_depth)@l(30)
 	addi	31,31,-1
@@ -940,20 +965,20 @@ intr_exit:
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
-	lwz	5,36(1)
-	lwz	6,40(1)
+	lwz	5,IFRAME_CR(1)
+	lwz	6,IFRAME_LR(1)
 	mtcr	5
 	mtlr	6
-	lwz	6,68(1)
-	lwz	5,72(1)
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
 	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
 	lwz	4,_C_LABEL(intr_depth)@l(3)
 	addi	4,4,-1
 	stw	4,_C_LABEL(intr_depth)@l(3)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
-	lwz	1,0(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
+	lwz	1,IFRAME_R1(1)
 	rfi
 
 /*
@@ -961,7 +986,7 @@ intr_exit:
  */
 decrintr:
 	INTRENTER
-	addi	3,1,8			/* intr frame */
+	addi	3,1,8			/* intr frame -> clock frame */
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 

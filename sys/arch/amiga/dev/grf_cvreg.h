@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.6.38.1 2002/02/28 04:06:39 nathanw Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.6.38.2 2002/06/20 03:37:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -433,4 +433,3 @@ RGfx(ba, idx)
 }
 
 #endif /* _GRF_RHREG_H */
-

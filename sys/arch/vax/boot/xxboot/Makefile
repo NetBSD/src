@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.8.4 2002/04/17 00:04:37 nathanw Exp $
+#	$NetBSD: Makefile,v 1.10.8.5 2002/06/20 03:42:08 nathanw Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -21,7 +21,8 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 BINDIR=	/usr/mdec
 NOMAN=	# defined
 
-CFLAGS=	-Os
+CFLAGS=	-Os -ffreestanding
+LIBC=
 
 SA_AS=	library
 .include "${S}/lib/libsa/Makefile.inc"
@@ -40,6 +41,7 @@ machine-links:
 .NOPATH: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
 .endif
+CLEANFILES+= ${PROG}.out
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}

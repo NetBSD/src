@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.28.8.4 2002/04/17 00:04:34 nathanw Exp $
+# $NetBSD: KGDB3X,v 1.28.8.5 2002/06/20 03:41:41 nathanw Exp $
 
 # KGDB3X Sun3X (3/80, 3/470)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -7,6 +7,8 @@
 #	(gdb) target remote /dev/ttyb
 
 include "arch/sun3/conf/std.sun3x"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
@@ -204,3 +206,4 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.7 2002/04/01 07:42:09 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.8 2002/06/20 03:40:35 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -42,11 +43,16 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
 #include <sys/lwp.h>
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -286,10 +292,8 @@ trap(frame)
 				params = args;
 			}
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, code, argsize, params);
-#endif
+			if ((error = trace_enter(l, code, params, rval)) != 0)
+				goto syscall_bad;
 
 			rval[0] = 0;
 			rval[1] = 0;
@@ -318,13 +322,11 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
-
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSRET))
-				ktrsysret(p, code, error, rval[0]);
-#endif
+			KERNEL_PROC_UNLOCK(l);
+			trace_exit(l, code, params, rval, error);
 		}
-		KERNEL_PROC_UNLOCK(l);
+
+
 		break;
 
 	case EXC_FPU|EXC_USER:
@@ -662,6 +664,25 @@ fix_unaligned(l, frame)
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
 
 	switch (indicator) {
+	case EXC_ALI_DCBZ:
+		{
+			/*
+			 * The DCBZ (Data Cache Block Zero) instruction
+			 * gives an alignment fault if used on non-cacheable
+			 * memory.  We handle the fault mainly for the
+			 * case when we are running with the cache disabled
+			 * for debugging.
+			 */
+			static char zeroes[CACHELINESIZE];
+			int error;
+			error = copyout(zeroes,
+					(void *)(frame->dar & -CACHELINESIZE),
+					CACHELINESIZE);
+			if (error)
+				return -1;
+			return 0;
+		}
+
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
 		{

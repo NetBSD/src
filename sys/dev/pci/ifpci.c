@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.5.2.3 2002/04/17 00:06:02 nathanw Exp $
+ *	$Id: ifpci.c,v 1.5.2.4 2002/06/20 03:45:32 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.3 2002/04/17 00:06:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.4 2002/06/20 03:45:32 nathanw Exp $");
 
 
 #include <sys/param.h>
@@ -392,8 +392,8 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = &isic_std_driver;
 	sc->sc_l2.l1_token = sc;
-	sc->sc_l2.bri = drv->bri;
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
+	sc->sc_l2.drv = drv;
+	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
 	isdn_bri_ready(drv->bri);
 }
 
@@ -427,7 +427,7 @@ ifpci_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
-		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, STI_ATTACH, 0);
+		isdn_layer2_status_ind(&psc->sc_isic.sc_l2, psc->sc_isic.sc_l3token, STI_ATTACH, 0);
 		isdn_detach_bri(psc->sc_isic.sc_l3token);
 		psc->sc_isic.sc_l3token = NULL;
 		break;
@@ -725,7 +725,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				if (stat & HSCX_STAT_RME)
@@ -770,7 +770,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 							hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 							hdr.dir = FROM_NT;
 							hdr.count = ++sc->sc_trace_bcount;
-							isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+							isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 						}
 
 					  if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
@@ -869,7 +869,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 				
 				if(chan->bprot == BPROT_NONE)
@@ -1153,7 +1153,7 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
 	isic_hscx_fifo(chan, sc);
@@ -1321,7 +1321,7 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 					hdr.type = (chan->channel == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 			}
 			else

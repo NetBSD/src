@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3.2.9 2002/02/28 04:14:12 nathanw Exp $	*/
+/*	$NetBSD: yds.c,v 1.3.2.10 2002/06/20 03:45:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.3.2.9 2002/02/28 04:14:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.3.2.10 2002/06/20 03:45:56 nathanw Exp $");
 
 #include "mpu.h"
 
@@ -291,7 +291,7 @@ yds_dump_play_slot(sc, bank)
 		p++;
 	}
 
-	num = *(u_int32_t*)sc->ptbl;
+	num = le32toh(*(u_int32_t*)sc->ptbl);
 	printf("numofplay = %d\n", num);
 
 	for (i = 0; i < num; i++) {
@@ -475,7 +475,7 @@ yds_allocate_slots(sc)
         sc->pbankoff = cb;
         for (i=0; i < N_PLAY_SLOT_CTRL; i++) {
 		sc->pbankp[i*2] = (struct play_slot_ctrl_bank *)(va + cb);
-		*(sc->ptbl + i+1) = da + cb;
+		*(sc->ptbl + i+1) = htole32(da + cb);
                 cb += pcs;
 
                 sc->pbankp[i*2+1] = (struct play_slot_ctrl_bank *)(va + cb);
@@ -1049,11 +1049,11 @@ yds_intr(p)
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
 					sc->pbankoff,
 					sizeof(struct play_slot_ctrl_bank)*
-					    (*sc->ptbl)*
+					    le32toh(*sc->ptbl)*
 					    N_PLAY_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = sc->pbankp[nbank]->pgstart * sc->sc_play.factor;
+			dma = le32toh(sc->pbankp[nbank]->pgstart) * sc->sc_play.factor;
 			cpu = sc->sc_play.offset;
 			blk = sc->sc_play.blksize;
 			len = sc->sc_play.length;
@@ -1093,7 +1093,7 @@ yds_intr(p)
 					    N_REC_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr;
+			dma = le32toh(sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr);
 			cpu = sc->sc_rec.offset;
 			blk = sc->sc_rec.blksize;
 			len = sc->sc_rec.length;
@@ -1186,7 +1186,7 @@ yds_open(addr, flags)
 	int flags;
 {
 	struct yds_softc *sc = addr;
-	int mode;
+	u_int32_t mode;
 
 	/* Select bank 0. */
 	YWRITE4(sc, YDS_CONTROL_SELECT, 0);
@@ -1432,6 +1432,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 	size_t l;
 	int i;
 	int p44, channels;
+	u_int32_t format;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_play.intr)
@@ -1468,7 +1469,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 	l = ((char *)end - (char *)start);
 	sc->sc_play.length = l;
 
-	*sc->ptbl = channels;	/* Num of play */
+	*sc->ptbl = htole32(channels);	/* Num of play */
 
 	sc->sc_play.factor = 1;
 	if (param->channels == 2)
@@ -1477,21 +1478,23 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_play.factor *= 2;
 	l /= sc->sc_play.factor;
 
+	format = ((channels == 2 ? PSLT_FORMAT_STEREO : 0) |
+		  (param->precision == 8 ? PSLT_FORMAT_8BIT : 0) |
+		  (p44 ? PSLT_FORMAT_SRC441 : 0));
+
 	psb = sc->pbankp[0];
 	memset(psb, 0, sizeof(*psb));
-	psb->format = ((channels == 2 ? PSLT_FORMAT_STEREO : 0) |
-		       (param->precision == 8 ? PSLT_FORMAT_8BIT : 0) |
-		       (p44 ? PSLT_FORMAT_SRC441 : 0));
-	psb->pgbase = s;
-	psb->pgloopend = l;
+	psb->format = htole32(format);
+	psb->pgbase = htole32(s);
+	psb->pgloopend = htole32(l);
 	if (!p44) {
-		psb->pgdeltaend = (param->sample_rate * 65536 / 48000) << 12;
-		psb->lpfkend = yds_get_lpfk(param->sample_rate);
-		psb->eggainend = gain;
-		psb->lpfq = yds_get_lpfq(param->sample_rate);
-		psb->pgdelta = psb->pgdeltaend;
-		psb->lpfk = yds_get_lpfk(param->sample_rate);
-		psb->eggain = gain;
+		psb->pgdeltaend = htole32((param->sample_rate * 65536 / 48000) << 12);
+		psb->lpfkend = htole32(yds_get_lpfk(param->sample_rate));
+		psb->eggainend = htole32(gain);
+		psb->lpfq = htole32(yds_get_lpfq(param->sample_rate));
+		psb->pgdelta = htole32(psb->pgdeltaend);
+		psb->lpfk = htole32(yds_get_lpfk(param->sample_rate));
+		psb->eggain = htole32(gain);
 	}
 
 	for (i = 0; i < channels; i++) {
@@ -1503,16 +1506,16 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 		if (channels == 2) {
 			/* stereo */
 			if (i == 0) {
-				psb->lchgain = psb->lchgainend = gain;
+				psb->lchgain = psb->lchgainend = htole32(gain);
 			} else {
 				psb->lchgain = psb->lchgainend = 0;
-				psb->rchgain = psb->rchgainend = gain;
-				psb->format |= PSLT_FORMAT_RCH;
+				psb->rchgain = psb->rchgainend = htole32(gain);
+				psb->format |= htole32(PSLT_FORMAT_RCH);
 			}
 		} else if (!p44) {
 			/* mono */
-			psb->lchgain = psb->rchgain = gain;
-			psb->lchgainend = psb->rchgainend = gain;
+			psb->lchgain = psb->rchgain = htole32(gain);
+			psb->lchgainend = psb->rchgainend = htole32(gain);
 		}
 		/* copy to the other bank */
 		*(sc->pbankp[i*2+1]) = *psb;
@@ -1594,8 +1597,8 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	rsb = &sc->rbank[0];
 	memset(rsb, 0, sizeof(*rsb));
-	rsb->pgbase = s;
-	rsb->pgloopendadr = l;
+	rsb->pgbase = htole32(s);
+	rsb->pgloopendadr = htole32(l);
 	/* Seems all 4 banks must be set up... */
 	sc->rbank[1] = *rsb;
 	sc->rbank[2] = *rsb;

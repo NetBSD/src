@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.16.4.2 2001/08/30 23:43:39 nathanw Exp $ */
+/* $NetBSD: db_interface.c,v 1.16.4.3 2002/06/20 03:37:29 nathanw Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.4.2 2001/08/30 23:43:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.4.3 2002/06/20 03:37:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.4.2 2001/08/30 23:43:39 nathan
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 
-
-extern label_t	*db_recover;
 
 #if 0
 extern char *trap_type[];

@@ -1,0 +1,8 @@
+#	$NetBSD: files.adosfs,v 1.1.6.2 2002/06/20 03:37:16 nathanw Exp $
+
+deffs	ADOSFS
+
+file	adosfs/adlookup.c	adosfs
+file	adosfs/adutil.c		adosfs
+file	adosfs/advfsops.c	adosfs
+file	adosfs/advnops.c	adosfs

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26.8.5 2002/04/17 00:04:23 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.26.8.6 2002/06/20 03:41:02 nathanw Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -6,6 +6,8 @@
 # leave as much disabled as possible.
 
 include "arch/sparc/conf/std.sparc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -74,7 +76,7 @@ config		netbsd	root on ? type ?
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.7 2002/02/28 04:10:19 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.8 2002/06/20 03:39:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,12 +106,14 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
  *
- * XXX intrframe has a lot of gunk we don't need.
+ * Note: Since spllowersoftclock() does not actually unmask the currently
+ * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
+ * we could stall hardclock ticks if another interrupt takes too long.
  */
 #define clockframe intrframe
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
-#define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
+#define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 
@@ -125,7 +127,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
+extern	int	want_resched;		/* resched() was called */
 #define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*

@@ -1,7 +1,9 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.13.8.4 2002/04/17 00:04:22 nathanw Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.13.8.5 2002/06/20 03:41:01 nathanw Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -58,7 +60,7 @@ options 	LKM
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 #options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_DHCP
@@ -535,3 +537,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

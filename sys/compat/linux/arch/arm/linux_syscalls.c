@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.8.2.6 2002/05/29 21:48:47 nathanw Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.8.2.7 2002/06/20 03:42:57 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.8.2.6 2002/05/29 21:48:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.8.2.7 2002/06/20 03:42:57 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -254,7 +254,7 @@ const char *const linux_syscallnames[] = {
 	"#218 (unimplemented pivot_root)",		/* 218 = unimplemented pivot_root */
 	"#219 (unimplemented mincore)",		/* 219 = unimplemented mincore */
 	"#220 (unimplemented madvise)",		/* 220 = unimplemented madvise */
-	"#221 (unimplemented fcntl64)",		/* 221 = unimplemented fcntl64 */
+	"fcntl64",			/* 221 = fcntl64 */
 	"#222 (unimplemented)",		/* 222 = unimplemented */
 	"#223 (unimplemented)",		/* 223 = unimplemented */
 	"#224 (unimplemented)",		/* 224 = unimplemented */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2.2.5 2002/05/29 21:32:55 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.2.2.6 2002/06/20 03:43:14 nathanw Exp $
 ; based on NetBSD: syscalls.master,v 1.110 2001/07/01 18:06:11 thorpej Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -341,21 +341,21 @@
 167	UNIMPL
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 169	EXCL		{ int sys_semsys(int which, int a2, int a3, int a4, \
 			    int a5); } osemsys
 #else
 169	EXCL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 170	EXCL		{ int sys_msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
 170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 171	EXCL		{ int sys_shmsys(int which, int a2, int a3, int a4); } \
 			    oshmsys
 #else

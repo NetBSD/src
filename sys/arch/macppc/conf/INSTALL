@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.50.6.6 2002/04/17 00:03:41 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.50.6.7 2002/06/20 03:39:32 nathanw Exp $
 #
 # config file for INSTALL FLOPPY
 #
 
 include		"arch/macppc/conf/std.macppc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
 
@@ -41,6 +43,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
@@ -66,7 +69,6 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -85,11 +87,7 @@ cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 pciide*	at pci? dev ? function ?	# PCI IDE Controller
 obio0	at pci? dev ? function ?
-tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs

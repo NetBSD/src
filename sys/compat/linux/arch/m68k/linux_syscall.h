@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.31.2.7 2002/05/29 21:48:48 nathanw Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.31.2.8 2002/06/20 03:43:00 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -543,4 +543,4 @@
 /* syscall: "getdents64" ret: "int" args: "int" "struct linux_dirent64 *" "unsigned int" */
 #define	LINUX_SYS_getdents64	220
 
-#define	LINUX_SYS_MAXSYSCALL	221
+#define	LINUX_SYS_MAXSYSCALL	223

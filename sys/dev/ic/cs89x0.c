@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.2.2.3 2002/02/28 04:13:21 nathanw Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.2.2.4 2002/06/20 03:44:31 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.2.3 2002/02/28 04:13:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.2.4 2002/06/20 03:44:31 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -239,31 +239,31 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2.2.3 2002/02/28 04:13:21 nathanw Exp $
 /*
  * FUNCTION PROTOTYPES
  */
-void	cs_get_default_media __P((struct cs_softc *));
-int	cs_get_params __P((struct cs_softc *));
-int	cs_get_enaddr __P((struct cs_softc *));
-int	cs_reset_chip __P((struct cs_softc *));
-void	cs_reset __P((void *));
-int	cs_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	cs_initChip __P((struct cs_softc *));
-void	cs_buffer_event __P((struct cs_softc *, u_int16_t));
-void	cs_transmit_event __P((struct cs_softc *, u_int16_t));
-void	cs_receive_event __P((struct cs_softc *, u_int16_t));
-void	cs_process_receive __P((struct cs_softc *));
-void	cs_process_rx_early __P((struct cs_softc *));
-void	cs_start_output __P((struct ifnet *));
-void	cs_copy_tx_frame __P((struct cs_softc *, struct mbuf *));
-void	cs_set_ladr_filt __P((struct cs_softc *, struct ethercom *));
-u_int16_t cs_hash_index __P((char *));
-void	cs_counter_event __P((struct cs_softc *, u_int16_t));
+void	cs_get_default_media(struct cs_softc *);
+int	cs_get_params(struct cs_softc *);
+int	cs_get_enaddr(struct cs_softc *);
+int	cs_reset_chip(struct cs_softc *);
+void	cs_reset(void *);
+int	cs_ioctl(struct ifnet *, u_long, caddr_t);
+void	cs_initChip(struct cs_softc *);
+void	cs_buffer_event(struct cs_softc *, u_int16_t);
+void	cs_transmit_event(struct cs_softc *, u_int16_t);
+void	cs_receive_event(struct cs_softc *, u_int16_t);
+void	cs_process_receive(struct cs_softc *);
+void	cs_process_rx_early(struct cs_softc *);
+void	cs_start_output(struct ifnet *);
+void	cs_copy_tx_frame(struct cs_softc *, struct mbuf *);
+void	cs_set_ladr_filt(struct cs_softc *, struct ethercom *);
+u_int16_t cs_hash_index(char *);
+void	cs_counter_event(struct cs_softc *, u_int16_t);
 
-int	cs_mediachange __P((struct ifnet *));
-void	cs_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	cs_mediachange(struct ifnet *);
+void	cs_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int cs_enable __P((struct cs_softc *));
-static void cs_disable __P((struct cs_softc *));
-static void cs_stop __P((struct ifnet *, int));
-static void cs_power __P((int, void *));
+static int cs_enable(struct cs_softc *);
+static void cs_disable(struct cs_softc *);
+static void cs_stop(struct ifnet *, int);
+static void cs_power(int, void *);
 
 /*
  * GLOBAL DECLARATIONS
@@ -306,10 +306,8 @@ int cs_default_media[] = {
 int cs_default_nmedia = sizeof(cs_default_media) / sizeof(cs_default_media[0]);
 
 int 
-cs_attach(sc, enaddr, media, nmedia, defmedia)
-	struct cs_softc *sc;
-	u_int8_t *enaddr;
-	int *media, nmedia, defmedia;
+cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media, 
+	  int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *chipname, *medname;
@@ -418,8 +416,19 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 			return 1;
 		}
 	} else {
+#if 1
+		int i;
+		uint v;
+
+		for (i = 0; i < 6; i += 2) {
+			v = CS_READ_PACKET_PAGE(sc, PKTPG_IND_ADDR + i);
+			sc->sc_enaddr[i + 0] = v;
+			sc->sc_enaddr[i + 1] = v >> 8;
+		}
+#else
 		printf("%s: no Ethernet address!\n", sc->sc_dev.dv_xname);
 		return 1;
+#endif
 	}
 
 	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
@@ -479,8 +488,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 }
 
 int
-cs_detach(sc)
-	struct cs_softc *sc;
+cs_detach(struct cs_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -517,26 +525,23 @@ cs_detach(sc)
 }
 
 void
-cs_get_default_media(sc)
-	struct cs_softc *sc;
+cs_get_default_media(struct cs_softc *sc)
 {
 	u_int16_t adp_cfg, xmit_ctl;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_default_media: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
 	}
 
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ADPTR_CFG,
-	    &adp_cfg) == CS_ERROR) {
+	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adp_cfg) == CS_ERROR) {
 		printf("%s: unable to read adapter config from EEPROM\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
 	}
 
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_XMIT_CTL,
-	    &xmit_ctl) == CS_ERROR) {
+	if (cs_read_eeprom(sc, EEPROM_XMIT_CTL, &xmit_ctl) == CS_ERROR) {
 		printf("%s: unable to read transmit control from EEPROM\n",
 		    sc->sc_dev.dv_xname);
 		goto fakeit;
@@ -567,26 +572,23 @@ cs_get_default_media(sc)
 }
 
 int 
-cs_get_params(sc)
-	struct cs_softc *sc;
+cs_get_params(struct cs_softc *sc)
 {
 	u_int16_t isaConfig;
 	u_int16_t adapterConfig;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_params: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		return (CS_ERROR);
 	}
 
 	/* Get ISA configuration from the EEPROM */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ISA_CFG,
-	    &isaConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
 		goto eeprom_bad;
 
 	/* Get adapter configuration from the EEPROM */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ADPTR_CFG,
-	    &adapterConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
 		goto eeprom_bad;
 
 	/* Copy the USE_SA flag */
@@ -610,12 +612,11 @@ cs_get_params(sc)
 }
 
 int 
-cs_get_enaddr(sc)
-	struct cs_softc *sc;
+cs_get_enaddr(struct cs_softc *sc)
 {
 	u_int16_t *myea;
 
-	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+	if (cs_verify_eeprom(sc) == CS_ERROR) {
 		printf("%s: cs_get_enaddr: EEPROM missing or bad\n",
 		    sc->sc_dev.dv_xname);
 		return (CS_ERROR);
@@ -625,14 +626,11 @@ cs_get_enaddr(sc)
 
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_H,
-	    &myea[0]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
 		goto eeprom_bad;
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_M,
-	    &myea[1]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
 		goto eeprom_bad;
-	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_L,
-	    &myea[2]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
 		goto eeprom_bad;
 
 	return (CS_OK);
@@ -644,8 +642,7 @@ cs_get_enaddr(sc)
 }
 
 int 
-cs_reset_chip(sc)
-	struct cs_softc *sc;
+cs_reset_chip(struct cs_softc *sc)
 {
 	int intState;
 	int x;
@@ -681,10 +678,10 @@ cs_reset_chip(sc)
 	 */
 
 	/* Transition SBHE to switch chip from 8-bit to 16-bit */
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 0);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 1);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 0);
+	IO_READ_1(sc, PORT_PKTPG_PTR + 1);
 
 	/* Wait until the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
@@ -711,14 +708,12 @@ cs_reset_chip(sc)
 }
 
 int
-cs_verify_eeprom(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+cs_verify_eeprom(struct cs_softc *sc)
 {
 	u_int16_t self_status;
 
 	/* Verify that the EEPROM is present and OK */
-	self_status = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST);
+	self_status = CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST);
 	if (((self_status & SELF_ST_EEP_PRES) &&
 	     (self_status & SELF_ST_EEP_OK)) == 0)
 		return (CS_ERROR);
@@ -727,17 +722,13 @@ cs_verify_eeprom(iot, ioh)
 }
 
 int 
-cs_read_eeprom(iot, ioh, offset, pValue)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
-	u_int16_t *pValue;
+cs_read_eeprom(struct cs_softc *sc, int offset, u_int16_t *pValue)
 {
 	int x;
 
 	/* Ensure that the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		if (!(CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST) &
 		      SELF_ST_SI_BUSY))
 			break;
 	}
@@ -746,12 +737,12 @@ cs_read_eeprom(iot, ioh, offset, pValue)
 		return (CS_ERROR);
 
 	/* Issue the command to read the offset within the EEPROM */
-	CS_WRITE_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_CMD,
+	CS_WRITE_PACKET_PAGE_IO(sc, PKTPG_EEPROM_CMD,
 	    offset | EEPROM_CMD_READ);
 
 	/* Wait until the command is completed */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		if (!(CS_READ_PACKET_PAGE_IO(sc, PKTPG_SELF_ST) &
 		      SELF_ST_SI_BUSY))
 			break;
 	}
@@ -760,19 +751,19 @@ cs_read_eeprom(iot, ioh, offset, pValue)
 		return (CS_ERROR);
 
 	/* Get the EEPROM data from the EEPROM Data register */
-	*pValue = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_DATA);
+	*pValue = CS_READ_PACKET_PAGE_IO(sc, PKTPG_EEPROM_DATA);
 
 	return (CS_OK);
 }
 
 void 
-cs_initChip(sc)
-	struct cs_softc *sc;
+cs_initChip(struct cs_softc *sc)
 {
 	u_int16_t busCtl;
 	u_int16_t selfCtl;
-	u_int16_t *myea;
+	u_int16_t v;
 	u_int16_t isaId;
+	int i;
 	int media = IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media);
 
 	/* Disable reception and transmission of frames */
@@ -931,10 +922,10 @@ cs_initChip(sc)
 	}
 
 	/* Put Ethernet address into the Individual Address register */
-	myea = (u_int16_t *)sc->sc_enaddr;
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 0, myea[0]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, myea[1]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
+	for (i = 0; i < 6; i += 2) {
+		v = sc->sc_enaddr[i + 0] | (sc->sc_enaddr[i + 1]) << 8;
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + i, v);
+	}
 
 	if (sc->sc_irq != -1) {
 		/* Set the interrupt level in the chip */
@@ -964,8 +955,7 @@ cs_initChip(sc)
 }
 
 int 
-cs_init(ifp)
-	struct ifnet *ifp;
+cs_init(struct ifnet *ifp)
 {
 	int intState;
 	int error = CS_OK;
@@ -1012,9 +1002,7 @@ out:
 }
 
 void 
-cs_set_ladr_filt(sc, ec)
-	struct cs_softc *sc;
-	struct ethercom *ec;
+cs_set_ladr_filt(struct cs_softc *sc, struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
@@ -1099,47 +1087,19 @@ cs_set_ladr_filt(sc, ec)
 }
 
 u_int16_t
-cs_hash_index(addr)
-	char *addr;
+cs_hash_index(char *addr)
 {
-	u_int POLY = 0x04c11db6;
-	u_int crc_value = 0xffffffff;
-	u_int16_t hash_code = 0;
-	int i;
-	u_int current_bit;
-	char current_byte = *addr;
-	u_int cur_crc_high;
+	uint32_t crc;
+	uint16_t hash_code;
 
-	for (i = 0; i < 6; i++) {
-		current_byte = *addr;
-		addr++;
+	crc = ether_crc32_le(addr, ETHER_ADDR_LEN);
 
-		for (current_bit = 8; current_bit; current_bit--) {
-			cur_crc_high = crc_value >> 31;
-			crc_value <<= 1;
-			if (cur_crc_high ^ (current_byte & 0x01)) {
-				crc_value ^= POLY;
-				crc_value |= 0x00000001;
-			}
-			current_byte >>= 1;
-		}
-	}
-
-	/*
-         * The hash code is the 6 least significant bits of the CRC
-         * in the reverse order: CRC[0] = hash[5],CRC[1] = hash[4],etc.
-         */
-	for (i = 0; i < 6; i++) {
-		hash_code = (u_int16_t) ((hash_code << 1) |
-		    (u_int16_t) ((crc_value >> i) & 0x00000001));
-	}
-
-	return hash_code;
+	hash_code = crc >> 26;
+	return (hash_code);
 }
 
 void 
-cs_reset(arg)
-	void *arg;
+cs_reset(void *arg)
 {
 	struct cs_softc *sc = arg;
 
@@ -1151,10 +1111,7 @@ cs_reset(arg)
 }
 
 int 
-cs_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+cs_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cs_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1192,8 +1149,7 @@ cs_ioctl(ifp, cmd, data)
 }
 
 int
-cs_mediachange(ifp)
-	struct ifnet *ifp;
+cs_mediachange(struct ifnet *ifp)
 {
 
 	/*
@@ -1205,9 +1161,7 @@ cs_mediachange(ifp)
 }
 
 void
-cs_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+cs_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct cs_softc *sc = ifp->if_softc;
 
@@ -1225,8 +1179,7 @@ cs_mediastatus(ifp, ifmr)
 }
 
 int 
-cs_intr(arg)
-	void *arg;
+cs_intr(void *arg)
 {
 	struct cs_softc *sc = arg;
 	u_int16_t Event;
@@ -1234,6 +1187,7 @@ cs_intr(arg)
 	u_int16_t rndEvent;
 #endif
 
+/*printf("cs_intr %p\n", sc);*/
 	/* Ignore any interrupts that happen while the chip is being reset */
 	if (sc->sc_resetting) {
 		printf("%s: cs_intr: reset in progress\n",
@@ -1292,9 +1246,7 @@ cs_intr(arg)
 }
 
 void 
-cs_counter_event(sc, cntEvent)
-	struct cs_softc *sc;
-	u_int16_t cntEvent;
+cs_counter_event(struct cs_softc *sc, u_int16_t cntEvent)
 {
 	struct ifnet *ifp;
 	u_int16_t errorCount;
@@ -1332,9 +1284,7 @@ cs_counter_event(sc, cntEvent)
 }
 
 void 
-cs_buffer_event(sc, bufEvent)
-	struct cs_softc *sc;
-	u_int16_t bufEvent;
+cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 {
 	struct ifnet *ifp;
 
@@ -1388,9 +1338,7 @@ cs_buffer_event(sc, bufEvent)
 }
 
 void 
-cs_transmit_event(sc, txEvent)
-	struct cs_softc *sc;
-	u_int16_t txEvent;
+cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1455,9 +1403,7 @@ cs_transmit_event(sc, txEvent)
 }
 
 void
-cs_print_rx_errors(sc, rxEvent)
-	struct cs_softc *sc;
-	u_int16_t rxEvent;
+cs_print_rx_errors(struct cs_softc *sc, u_int16_t rxEvent)
 {
 
 	if (rxEvent & RX_EVENT_RUNT)
@@ -1478,9 +1424,7 @@ cs_print_rx_errors(sc, rxEvent)
 }
 
 void 
-cs_receive_event(sc, rxEvent)
-	struct cs_softc *sc;
-	u_int16_t rxEvent;
+cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1521,9 +1465,7 @@ cs_receive_event(sc, rxEvent)
 }
 
 void
-cs_ether_input(sc, m)
-	struct cs_softc *sc;
-	struct mbuf *m;
+cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1543,8 +1485,7 @@ cs_ether_input(sc, m)
 }
 
 void 
-cs_process_receive(sc)
-	struct cs_softc *sc;
+cs_process_receive(struct cs_softc *sc)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -1644,16 +1585,14 @@ cs_process_receive(sc)
 		}
 	}
 	else {
-		bus_space_read_multi_2(sc->sc_iot, sc->sc_ioh, PORT_RXTX_DATA,
-			pBuff, (totlen + 1)>>1);
+		IO_READ_MULTI_2(sc, PORT_RXTX_DATA, pBuff, (totlen + 1)>>1);
 	}
 
 	cs_ether_input(sc, m);
 }
 
 void 
-cs_process_rx_early(sc)
-	struct cs_softc *sc;
+cs_process_rx_early(struct cs_softc *sc)
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
@@ -1754,8 +1693,7 @@ cs_process_rx_early(sc)
 }
 
 void 
-cs_start_output(ifp)
-	struct ifnet *ifp;
+cs_start_output(struct ifnet *ifp)
 {
 	struct cs_softc *sc;
 	struct mbuf *pMbuf;
@@ -1908,9 +1846,7 @@ cs_start_output(ifp)
 }
 
 void 
-cs_copy_tx_frame(sc, m0)
-	struct cs_softc *sc;
-	struct mbuf *m0;
+cs_copy_tx_frame(struct cs_softc *sc, struct mbuf *m0)
 {
 	struct mbuf *m;
 	int len, leftover, frameoff;
@@ -1972,12 +1908,12 @@ cs_copy_tx_frame(sc, m0)
 				leftover = len & 1;
 				len &= ~1;
 				if (sc->sc_memorymode) {
-					bus_space_write_region_2(sc->sc_memt, sc->sc_memh, frameoff,
+					MEM_WRITE_REGION_2(sc, frameoff,
 						(u_int16_t *) p, len >> 1);
 					frameoff += len;
 				}
 				else {
-					bus_space_write_multi_2(sc->sc_iot, sc->sc_ioh,
+					IO_WRITE_MULTI_2(sc,
 						PORT_RXTX_DATA, (u_int16_t *)p, len >> 1);
 				}
 				p += len;
@@ -2005,37 +1941,37 @@ cs_copy_tx_frame(sc, m0)
 }
 
 static int
-cs_enable(sc)
-	struct cs_softc *sc;
+cs_enable(struct cs_softc *sc)
 {
-	if (!CS_IS_ENABLED(sc) && sc->sc_enable) {
-		int error;
 
-		error = (*sc->sc_enable)(sc);
-		if (error)
-			return error;
+	if (CS_IS_ENABLED(sc) == 0) {
+		if (sc->sc_enable != NULL) {
+			int error;
 
+			error = (*sc->sc_enable)(sc);
+			if (error)
+				return (error);
+		}
 		sc->sc_cfgflags |= CFGFLG_ENABLED;
 	}
 
-	return 0;
+	return (0);
 }
 
 static void
-cs_disable(sc)
-	struct cs_softc *sc;
+cs_disable(struct cs_softc *sc)
 {
-	if (CS_IS_ENABLED(sc) && sc->sc_disable) {
-		(*sc->sc_disable)(sc);
+
+	if (CS_IS_ENABLED(sc)) {
+		if (sc->sc_disable != NULL)
+			(*sc->sc_disable)(sc);
 
 		sc->sc_cfgflags &= ~CFGFLG_ENABLED;
 	}
 }
 
 static void
-cs_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+cs_stop(struct ifnet *ifp, int disable)
 {
 	struct cs_softc *sc = ifp->if_softc;
 
@@ -2052,9 +1988,7 @@ cs_stop(ifp, disable)
 }
 
 int
-cs_activate(self, act)
-	struct device *self;
-	enum devact act;
+cs_activate(struct device *self, enum devact act)
 {
 	struct cs_softc *sc = (void *)self;
 	int s, error = 0;
@@ -2075,9 +2009,7 @@ cs_activate(self, act)
 }
 
 static void
-cs_power(why, arg)
-	int why;
-	void *arg;
+cs_power(int why, void *arg)
 {
 	struct cs_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

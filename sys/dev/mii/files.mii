@@ -1,8 +1,12 @@
-#	$NetBSD: files.mii,v 1.19.2.6 2002/04/01 22:41:04 nathanw Exp $
-
-file	dev/mii/mii.c				mii
+#	$NetBSD: files.mii,v 1.19.2.7 2002/06/20 03:45:16 nathanw Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
+
+define	mii		{[phy = -1]}
+file	dev/mii/mii.c				mii
+
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c			mii_bitbang
 
 define	mii_phy
 file	dev/mii/mii_physubr.c			mii_phy

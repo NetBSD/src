@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.2.4.2 2002/02/28 04:09:34 nathanw Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.2.4.3 2002/06/20 03:38:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -43,7 +43,7 @@
 #include <machine/config_hook.h>
 
 struct hook_rec {
-	LIST_ENTRY(hook_rec) hr_link;
+	CIRCLEQ_ENTRY(hook_rec) hr_link;
 	void *hr_ctx;
 	int hr_type;
 	long hr_id;
@@ -51,7 +51,7 @@ struct hook_rec {
 	int (*hr_func)(void *, int, long, void *);
 };
 
-LIST_HEAD(hook_list, hook_rec);
+CIRCLEQ_HEAD(hook_list, hook_rec);
 struct hook_list hook_lists[CONFIG_HOOK_NTYPES];
 struct hook_list call_list;
 
@@ -61,9 +61,9 @@ config_hook_init()
 	int i;
 
 	for (i = 0; i < CONFIG_HOOK_NTYPES; i++) {
-		LIST_INIT(&hook_lists[i]);
+		CIRCLEQ_INIT(&hook_lists[i]);
 	}
-	LIST_INIT(&call_list);
+	CIRCLEQ_INIT(&call_list);
 }
 
 config_hook_tag
@@ -80,8 +80,7 @@ config_hook(int type, long id, enum config_hook_mode mode,
 
 	/* check mode compatibility */
 	prev_hr = NULL;
-	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
-	    hr = LIST_NEXT(hr, hr_link)) {
+	CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode != mode) {
 				panic("config_hook: incompatible mode on "
@@ -100,8 +99,8 @@ config_hook(int type, long id, enum config_hook_mode mode,
 			printf("config_hook: type=%d/id=%ld is replaced",
 			    type, id);
 			s = splhigh();
-			LIST_REMOVE(prev_hr, hr_link);
-			prev_hr->hr_link.le_next = NULL;
+			CIRCLEQ_REMOVE(&hook_lists[type], prev_hr, hr_link);
+			prev_hr->hr_link.cqe_next = NULL;
 			splx(s);
 		}
 		break;
@@ -127,11 +126,10 @@ config_hook(int type, long id, enum config_hook_mode mode,
 	hr->hr_mode = mode;
 
 	s = splhigh();
-	LIST_INSERT_HEAD(&hook_lists[type], hr, hr_link);
+	CIRCLEQ_INSERT_HEAD(&hook_lists[type], hr, hr_link);
 
 	/* update call list */
-	for (cr = LIST_FIRST(&call_list); cr != NULL;
-	    cr = LIST_NEXT(cr, hr_link)) {
+	CIRCLEQ_FOREACH(cr, &call_list, hr_link) {
 		if (cr->hr_type == type && cr->hr_id == id) {
 			if (cr->hr_func != NULL &&
 			    cr->hr_mode != mode) {
@@ -155,13 +153,12 @@ config_unhook(config_hook_tag hrx)
 	int s;
 	struct hook_rec *hr = (struct hook_rec*)hrx, *cr;
 
-	if (hr->hr_link.le_next != NULL) {
+	if (hr->hr_link.cqe_next != NULL) {
 		s = splhigh();
-		LIST_REMOVE(hr, hr_link);
-		hr->hr_link.le_next = NULL;
+		CIRCLEQ_REMOVE(&hook_lists[hr->hr_type], hr, hr_link);
+		hr->hr_link.cqe_next = NULL;
 		/* update call list */
-		for (cr = LIST_FIRST(&call_list); cr != NULL;
-		    cr = LIST_NEXT(cr, hr_link)) {
+		CIRCLEQ_FOREACH(cr, &call_list, hr_link) {
 			if (cr->hr_type == hr->hr_type &&
 			    cr->hr_id == hr->hr_id)
 				cr->hr_func = NULL;
@@ -172,7 +169,7 @@ config_unhook(config_hook_tag hrx)
 }
 
 int
-config_hook_call(int type, long id, void *msg)
+__config_hook_call(int type, long id, void *msg, int reverse)
 {
 	int res;
 	struct hook_rec *hr;
@@ -183,10 +180,15 @@ config_hook_call(int type, long id, void *msg)
 	}
 
 	res = -1;
-	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
-	    hr = LIST_NEXT(hr, hr_link)) {
-		if (hr->hr_id == id) {
-			res = (*hr->hr_func)(hr->hr_ctx, type, id, msg);
+	if (reverse) {
+		CIRCLEQ_FOREACH_REVERSE(hr, &hook_lists[type], hr_link) {
+			if (hr->hr_id == id)
+				res = (*hr->hr_func)(hr->hr_ctx, type, id,msg);
+		}
+	} else {
+		CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
+			if (hr->hr_id == id)
+				res = (*hr->hr_func)(hr->hr_ctx, type, id,msg);
 		}
 	}
 
@@ -215,11 +217,10 @@ config_connect(int type, long id)
 
 	s = splhigh();
 	/* insert the record into the call list */
-	LIST_INSERT_HEAD(&call_list, cr, hr_link);
+	CIRCLEQ_INSERT_HEAD(&call_list, cr, hr_link);
 
 	/* scan hook list */
-	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
-	    hr = LIST_NEXT(hr, hr_link)) {
+	CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode == CONFIG_HOOK_SHARE)
 				panic("config_connect: can't connect with "
@@ -241,7 +242,7 @@ config_disconnect(config_call_tag crx)
 	struct hook_rec *cr = (struct hook_rec*)crx;
 
 	s = splhigh();
-	LIST_REMOVE(cr, hr_link);
+	CIRCLEQ_REMOVE(&call_list, cr, hr_link);
 	splx(s);
 
 	free(cr, M_DEVBUF);

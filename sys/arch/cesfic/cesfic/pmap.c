@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.4.4 2002/04/01 07:39:41 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6.4.5 2002/06/20 03:38:25 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -780,8 +780,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE);
-		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE);
+		uvm_km_pgremove(uvm.kernel_object,
+		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
+		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE
+				- vm_map_min(kernel_map));
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   HP_MAX_PTSIZE);
 	}
@@ -1268,6 +1270,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 #endif
 		}
+
+		/*
+		 * Speed pmap_is_referenced() or pmap_is_modified() based
+		 * on the hint provided in access_type.
+		 */
+#ifdef DIAGNOSTIC
+		if ((flags & VM_PROT_ALL) & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
+#endif
+		if (flags & VM_PROT_WRITE)
+			*pa_to_attribute(pa) |= (PG_U|PG_M);
+		else if (flags & VM_PROT_ALL)
+			*pa_to_attribute(pa) |= PG_U;
 		splx(s);
 	}
 	/*
@@ -1761,14 +1776,12 @@ ok:
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splvm(), and since we don't
- *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	int s, npte;
+	int npte;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
@@ -1794,8 +1807,6 @@ pmap_zero_page(phys)
 	}
 #endif
 
-	s = splvm();
-
 	*caddr1_pte = npte;
 	TBIS((vaddr_t)CADDR1);
 
@@ -1805,8 +1816,6 @@ pmap_zero_page(phys)
 	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
 #endif
-
-	splx(s);
 }
 
 /*
@@ -1817,14 +1826,12 @@ pmap_zero_page(phys)
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splvm(), and since we don't
- *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	int s, npte1, npte2;
+	int npte1, npte2;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%lx, %lx)\n", src, dst));
 
@@ -1853,8 +1860,6 @@ pmap_copy_page(src, dst)
 	}
 #endif
 
-	s = splvm();
-
 	*caddr1_pte = npte1;
 	TBIS((vaddr_t)CADDR1);
 
@@ -1870,8 +1875,6 @@ pmap_copy_page(src, dst)
 	*caddr2_pte = PG_NV;
 	TBIS((vaddr_t)CADDR2);
 #endif
-
-	splx(s);
 }
 
 /*
@@ -2562,8 +2565,9 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
-		while ((pg = uvm_pagealloc(uvm.kernel_object, va, NULL,
-					   UVM_PGA_ZERO)) == NULL) {
+		while ((pg = uvm_pagealloc(uvm.kernel_object,
+					   va - vm_map_min(kernel_map),
+					   NULL, UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
@@ -2667,7 +2671,14 @@ pmap_ptpage_addref(ptpva)
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+#ifdef DEBUG
+	if (!pg)
+		panic("pmap_ptpage_addref(%lx): no page\n", ptpva);
+#endif
 	pg->wire_count++;
+	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+	    ("ptpage addref: pg %p now %d\n",
+	     pg, pg->wire_count));
 	simple_unlock(&uvm.kernel_object->vmobjlock);
 }
 
@@ -2685,7 +2696,14 @@ pmap_ptpage_delref(ptpva)
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+#ifdef DEBUG
+	if (!pg)
+		panic("pmap_ptpage_delref(%lx): no page\n", ptpva);
+#endif
 	rv = --pg->wire_count;
+	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+	    ("ptpage delref: pg %p now %d\n",
+	     pg, pg->wire_count));
 	simple_unlock(&uvm.kernel_object->vmobjlock);
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.2.4.1 2002/06/20 03:37:17 nathanw Exp $	*/
 /*	$KAME: altq_var.h,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,12 @@ struct acc_classifier {
 extern u_int32_t machclk_freq;
 extern u_int32_t machclk_per_tick;
 extern void init_machclk(void);
+
+#if defined(__i386__) && !defined(I586_CPU) && !defined(I686_CPU)
+#ifndef ALTQ_NOPCC
+#define	ALTQ_NOPCC	/* TSC is not available, ALTQ_NOPCC needed */
+#endif
+#endif
 
 #if defined(__i386__) && !defined(ALTQ_NOPCC)
 /* for pentium tsc */

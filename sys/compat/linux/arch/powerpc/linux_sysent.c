@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.4.4.8 2002/05/29 21:48:50 nathanw Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.4.4.9 2002/06/20 03:43:03 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.4.4.8 2002/05/29 21:48:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.4.4.9 2002/06/20 03:43:03 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -417,16 +417,16 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 191 = unimplemented / * unused * / */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 192 = unimplemented mmap2 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 193 = unimplemented truncate64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 194 = unimplemented ftruncate64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 195 = unimplemented stat64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 196 = unimplemented lstat64 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 197 = unimplemented fstat64 */
+	{ 2, s(struct linux_sys_truncate64_args), 0,
+	    linux_sys_truncate64 },		/* 193 = truncate64 */
+	{ 2, s(struct sys_ftruncate_args), 0,
+	    sys_ftruncate },			/* 194 = linux_ftruncate64 */
+	{ 2, s(struct linux_sys_stat64_args), 0,
+	    linux_sys_stat64 },			/* 195 = stat64 */
+	{ 2, s(struct linux_sys_lstat64_args), 0,
+	    linux_sys_lstat64 },		/* 196 = lstat64 */
+	{ 2, s(struct linux_sys_fstat64_args), 0,
+	    linux_sys_fstat64 },		/* 197 = fstat64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 198 = unimplemented sys_pciconfig_read */
 	{ 0, 0, 0,
@@ -439,8 +439,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_getdents64 },		/* 202 = getdents64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 203 = unimplemented pivot_root */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 204 = unimplemented fcntl64 */
+	{ 3, s(struct linux_sys_fcntl64_args), 0,
+	    linux_sys_fcntl64 },		/* 204 = fcntl64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 205 = unimplemented madvise */
 	{ 0, 0, 0,

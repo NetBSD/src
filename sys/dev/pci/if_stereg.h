@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stereg.h,v 1.1.4.2 2001/08/24 00:10:07 nathanw Exp $	*/
+/*	$NetBSD: if_stereg.h,v 1.1.4.3 2002/06/20 03:45:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct ste_frag {
  * ST-201 Transmit Frame Descriptor.  Note the number of fragments
  * here is arbitrary, but we can't exceed 512 bytes of TFD.
  */
-#define	STE_NTXFRAGS	8
+#define	STE_NTXFRAGS	16
 struct ste_tfd {
 	uint32_t	tfd_next;	/* next TFD in list */
 	uint32_t	tfd_control;	/* control bits */

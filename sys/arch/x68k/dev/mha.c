@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.23.2.3 2002/04/17 00:04:46 nathanw Exp $	*/
+/*	$NetBSD: mha.c,v 1.23.2.4 2002/06/20 03:42:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -1519,6 +1519,7 @@ nextbyte:
 
 out:
 	/* Disable REQ/ACK protocol. */
+	return;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.4.6.5 2002/02/28 04:14:01 nathanw Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.4.6.6 2002/06/20 03:45:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.5 2002/02/28 04:14:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.6 2002/06/20 03:45:26 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -115,17 +115,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.5 2002/02/28 04:14:01 nathanw Exp $
  *
  * NOTE: We can't have any more than 512 Tx descriptors, SO BE CAREFUL!
  *
- * So we play a little trick here.  We give each packet up to 8
- * DMA segments, but only allocate 4 DMA segments per packet.
- * The transmit logic can deal with this, we just are hoping to
- * sneak by.
+ * So we play a little trick here.  We give each packet up to 16
+ * DMA segments, but only allocate the max of 512 descriptors.  The
+ * transmit logic can deal with this, we just are hoping to sneak by.
  */
-#define	PCN_NTXSEGS		8
-#define	PCN_NTXSEGS_ALLOC	4
+#define	PCN_NTXSEGS		16
 
 #define	PCN_TXQUEUELEN		128
 #define	PCN_TXQUEUELEN_MASK	(PCN_TXQUEUELEN - 1)
-#define	PCN_NTXDESC		(PCN_TXQUEUELEN * PCN_NTXSEGS_ALLOC)
+#define	PCN_NTXDESC		512
 #define	PCN_NTXDESC_MASK	(PCN_NTXDESC - 1)
 #define	PCN_NEXTTX(x)		(((x) + 1) & PCN_NTXDESC_MASK)
 #define	PCN_NEXTTXS(x)		(((x) + 1) & PCN_TXQUEUELEN_MASK)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.17.2.2 2002/01/08 00:27:00 nathanw Exp $
+#	$NetBSD: files.ofppc,v 1.17.2.3 2002/06/20 03:40:25 nathanw Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -47,11 +47,6 @@ file arch/powerpc/powerpc/linux_trap.c		compat_linux
 #
 include "dev/ofw/files.ofw"
 major	{ofdisk = 0}
-
-#
-# MII/PHY support
-#
-include "dev/mii/files.mii"
 
 #
 # I2O device support

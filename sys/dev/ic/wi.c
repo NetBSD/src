@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.12 2002/04/17 00:05:53 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.13 2002/06/20 03:45:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.12 2002/04/17 00:05:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.13 2002/06/20 03:45:07 nathanw Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -364,9 +364,9 @@ static void wi_rxeof(sc)
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
 
-	if (le16toh(rx_frame.wi_status) == WI_STAT_1042 ||
-	    le16toh(rx_frame.wi_status) == WI_STAT_TUNNEL ||
-	    le16toh(rx_frame.wi_status) == WI_STAT_WMP_MSG) {
+	if ((le16toh(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE) == WI_STAT_1042 ||
+	    (le16toh(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE) == WI_STAT_TUNNEL ||
+	    (le16toh(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE) == WI_STAT_WMP_MSG) {
 		if ((le16toh(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN) > MCLBYTES) {
 			printf("%s: oversized packet received "
 			    "(wi_dat_len=%d, wi_status=0x%x)\n",
@@ -1845,10 +1845,10 @@ wi_start(ifp)
 	 * Use RFC1042 encoding for IP and ARP datagrams,
 	 * 802.3 for anything else.
 	 */
-	if (ntohs(eh->ether_type) == ETHERTYPE_IP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
+	if (eh->ether_type == htons(ETHERTYPE_IP) ||
+	    eh->ether_type == htons(ETHERTYPE_ARP) ||
+	    eh->ether_type == htons(ETHERTYPE_REVARP) ||
+	    eh->ether_type == htons(ETHERTYPE_IPV6)) {
 		memcpy((char *)&tx_frame.wi_addr1, (char *)&eh->ether_dhost,
 		    ETHER_ADDR_LEN);
 		memcpy((char *)&tx_frame.wi_addr2, (char *)&eh->ether_shost,

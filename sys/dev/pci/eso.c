@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20.2.3 2001/11/14 19:15:12 nathanw Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.2.4 2002/06/20 03:45:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.2.3 2001/11/14 19:15:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.2.4 2002/06/20 03:45:22 nathanw Exp $");
 
 #include "mpu.h"
 
@@ -85,6 +85,7 @@ struct eso_dma {
 static int eso_match __P((struct device *, struct cfdata *, void *));
 static void eso_attach __P((struct device *, struct device *, void *));
 static void eso_defer __P((struct device *));
+static int eso_print __P((void *, const char *));
 
 struct cfattach eso_ca = {
 	sizeof (struct eso_softc), eso_match, eso_attach
@@ -375,6 +376,11 @@ eso_attach(parent, self, aux)
 		mvctl |= ESO_MIXREG_MVCTL_MPUIRQM;
 		eso_write_mixreg(sc, ESO_MIXREG_MVCTL, mvctl);
 	}
+
+	aa.type = AUDIODEV_TYPE_AUX;
+	aa.hwif = NULL;
+	aa.hdl = NULL;
+	(void)config_found(&sc->sc_dev, &aa, eso_print);
 }
 
 static void
@@ -411,6 +417,20 @@ eso_defer(self)
 	}
 	
 	printf("can't map Audio 1 DMA into I/O space\n");
+}
+
+/* ARGSUSED */
+static int
+eso_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+
+	/* Only joys can attach via this; easy. */
+	if (pnp)
+		printf("joy at %s:", pnp);
+
+	return (UNCONF);
 }
 
 static void

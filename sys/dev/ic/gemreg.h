@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.1.2.3 2001/10/22 20:41:17 nathanw Exp $ */
+/*	$NetBSD: gemreg.h,v 1.1.2.4 2002/06/20 03:44:35 nathanw Exp $ */
 
 /*
  * 
@@ -204,13 +204,14 @@
 
 /* GEM_RX_PAUSE_THRESH register bits -- sizes in multiples of 64 bytes */
 #define	GEM_RX_PTH_XOFF_THRESH	0x000001ff
-#define	GEM_RX_PTH_XON_THRESH	0x07fc0000
+#define	GEM_RX_PTH_XON_THRESH	0x001ff000
 
 
 /* GEM_RX_BLANKING register bits */
 #define	GEM_RX_BLANKING_PACKETS	0x000001ff	/* Delay intr for x packets */
-#define	GEM_RX_BLANKING_TIME	0x03fc0000	/* Delay intr for x ticks */
-/* One tick is 1048 PCI clocs, or 16us at 66MHz */
+#define	GEM_RX_BLANKING_TIME	0x000ff000	/* Delay intr for x ticks */
+#define	GEM_RX_BLANKING_TIME_SHIFT 12
+/* One tick is 2048 PCI clocks, or 16us at 66MHz */
 
 
 /* GEM_MAC registers */
@@ -323,7 +324,7 @@
 #define	GEM_MAC_XIF_TX_MII_ENA	0x00000001	/* Enable XIF output drivers */
 #define	GEM_MAC_XIF_MII_LOOPBK	0x00000002	/* Enable MII loopback mode */
 #define	GEM_MAC_XIF_ECHO_DISABL	0x00000004	/* Disable echo */
-#define	GEM_MAC_XIF_MII_MODE	0x00000008	/* Select GMII/MII mode */
+#define	GEM_MAC_XIF_GMII_MODE	0x00000008	/* Select GMII/MII mode */
 #define	GEM_MAC_XIF_MII_BUF_ENA	0x00000010	/* Enable MII recv buffers */
 #define	GEM_MAC_XIF_LINK_LED	0x00000020	/* force link LED active */
 #define	GEM_MAC_XIF_FDPLX_LED	0x00000040	/* force FDPLX LED active */
@@ -475,6 +476,8 @@
 #define	GEM_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interfac */
 #define	GEM_MII_DATAPATH_MII	0x00000004	/* Use MII, not PCS */
 #define	GEM_MII_DATAPATH_MIIOUT	0x00000008	/* enable serial output on GMII */
+#define GEM_MII_DATAPATH_BITS	"\177\020"	\
+				"b\0SERIAL\0b\1SERDES\0b\2MII\0b\3MIIOUT\0\0"
 
 
 /* GEM_MII_SLINK_CONTROL reg */

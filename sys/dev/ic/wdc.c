@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.10 2002/04/17 00:05:52 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.11 2002/06/20 03:45:06 nathanw Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.10 2002/04/17 00:05:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.94.2.11 2002/06/20 03:45:06 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -357,7 +357,7 @@ wdcattach(chp)
 		 * Wait a bit, some devices are weird just after a reset.
 		 * Then issue a IDENTIFY command, to try to detect slave ghost
 		 */
-		delay(100);
+		delay(5000);
 		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (error != CMD_OK) {
 			delay(1000000);

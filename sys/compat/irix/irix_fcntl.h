@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.h,v 1.1.2.2 2002/04/17 00:04:50 nathanw Exp $ */
+/*	$NetBSD: irix_fcntl.h,v 1.1.2.3 2002/06/20 03:42:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -90,5 +90,19 @@
 #define IRIX_F_GETBMAPX		56
 #define IRIX_F_SETPRIO		57
 #define IRIX_F_GETPRIO		58
+
+/* fcntl F_GETFL flags */
+#define IRIX_FNDELAY		0x000004
+#define IRIX_FAPPEND		0x000008
+#define IRIX_FSYNC		0x000010
+#define IRIX_FDSYNC		0x000020
+#define IRIX_FRSYNC		0x000040
+#define IRIX_FNONBLOCK		0x000080
+#define IRIX_FASYNC		0x001000
+#define IRIX_FLARGEFILE		0x002000
+#define IRIX_FDIRECT		0x008000
+#define IRIX_FBULK		0x010000
+#define IRIX_FLCINVAL		0x020000
+#define IRIX_FLCFLUSH		0x040000
 
 #endif /* _IRIX_FCNTL_H_ */

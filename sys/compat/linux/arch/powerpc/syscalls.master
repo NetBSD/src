@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2.4.7 2002/05/29 21:32:35 nathanw Exp $  
+	$NetBSD: syscalls.master,v 1.2.4.8 2002/06/20 03:43:03 nathanw Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -354,11 +354,16 @@
 			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
 192	UNIMPL		mmap2
-193	UNIMPL		truncate64
-194	UNIMPL		ftruncate64
-195	UNIMPL		stat64
-196	UNIMPL		lstat64
-197	UNIMPL		fstat64
+193	STD		{ int linux_sys_truncate64(const char *path, \
+			    off_t length); }
+194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \
+			    off_t length); }
+195	STD		{ int linux_sys_stat64(const char *path, \
+			    struct linux_stat64 *sp); }
+196	STD		{ int linux_sys_lstat64(const char *path, \
+			    struct linux_stat64 *sp); }
+197	STD		{ int linux_sys_fstat64(int fd, \
+			    struct linux_stat64 *sp); }
 198	UNIMPL		sys_pciconfig_read  
 199	UNIMPL		sys_pciconfig_write
 200	UNIMPL		sys_pciconfig_iobase
@@ -366,6 +371,6 @@
 202	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
 203	UNIMPL		pivot_root
-204	UNIMPL		fcntl64
+204	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 205	UNIMPL		madvise
 206	UNIMPL		mincore

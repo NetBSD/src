@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.44.2.5 2002/05/29 21:48:42 nathanw Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.44.2.6 2002/06/20 03:42:46 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -425,15 +425,15 @@ int	compat_09_sys_setdomainname(struct lwp *, void *, register_t *);
 int	compat_09_sys_uname(struct lwp *, void *, register_t *);
 int	sys_sysarch(struct lwp *, void *, register_t *);
 int	freebsd_sys_rtprio(struct lwp *, void *, register_t *);
-#if defined(SYSVSEM) && !defined(alpha)
+#if defined(SYSVSEM) && !defined(_LP64)
 int	freebsd_sys_semsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if defined(SYSVMSG) && !defined(alpha)
+#if defined(SYSVMSG) && !defined(_LP64)
 int	freebsd_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if defined(SYSVSHM) && !defined(alpha)
+#if defined(SYSVSHM) && !defined(_LP64)
 int	freebsd_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif

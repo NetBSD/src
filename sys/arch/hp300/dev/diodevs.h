@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.7 1998/01/09 06:59:27 thorpej Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.7.32.1 2002/06/20 03:38:37 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.3 1997/10/09 09:06:50 jtc Exp 
+ *	NetBSD: diodevs,v 1.5 2002/04/17 20:50:45 gmcgarry Exp 
  */
 
 /*-
@@ -159,6 +159,9 @@
 
 #define	DIO_DEVICE_ID_MISC5	0x12
 #define	DIO_DEVICE_DESC_MISC5	"98640A"
+
+#define	DIO_DEVICE_ID_AUDIO	0x13
+#define	DIO_DEVICE_DESC_AUDIO	"digital audio"
 
 #define	DIO_DEVICE_ID_MISC6	0x16
 #define	DIO_DEVICE_DESC_MISC6	"98659A"

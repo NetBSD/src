@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21.8.1 2001/11/18 18:12:02 scw Exp $
+#	$NetBSD: genassym.cf,v 1.21.8.2 2002/06/20 03:39:28 nathanw Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
 #
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL_OPT)
 include "opt_compat_svr4.h"
 endif
 

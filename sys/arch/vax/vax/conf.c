@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.56.4.2 2002/02/28 04:12:30 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.56.4.3 2002/06/20 03:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,6 +35,9 @@
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
 
+#include "opt_systrace.h"
+#include "opt_cputype.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -43,8 +46,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <machine/cpu.h>
-
-#include "opt_cputype.h"
 
 #include "hp.h" /* 0 */
 bdev_decl(hp);
@@ -481,6 +482,11 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 74: ws multiplexor */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 75: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 76: system call tracing */
+#else
+	cdev_notdef(),			/* 76: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -574,6 +580,7 @@ int	chrtoblktbl[] = {
 	25,	/* 73 */
 	NODEV,	/* 74 */
 	NODEV,	/* 75 */
+	NODEV,	/* 76 */
 };
 
 dev_t

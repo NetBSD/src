@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.6 2002/01/09 02:50:41 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.7 2002/06/20 03:39:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.6 2002/01/09 02:50:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.7 2002/06/20 03:39:12 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.6 2002/01/09 02:50:41 nat
 #include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <miscfs/procfs/procfs.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -401,10 +399,8 @@ process_set_pc(struct lwp *l, caddr_t addr)
 }
 
 #ifdef __HAVE_PTRACE_MACHDEP
-int
-process_machdep_read_xmmregs(l, regs)
-	struct lwp *l;
-	struct xmmregs *regs;
+static int
+process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
 	union savefpu *frame = process_fpframe(l);
 
@@ -441,10 +437,8 @@ process_machdep_read_xmmregs(l, regs)
 	return (0);
 }
 
-int
-process_machdep_write_xmmregs(l, regs)
-	struct lwp *l;
-	struct xmmregs *regs;
+static int
+process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
 	union savefpu *frame = process_fpframe(l);
 
@@ -484,7 +478,7 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
 
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
-		if (!procfs_machdep_validxmmregs(lt, NULL))
+		if (!process_machdep_validxmmregs(lt))
 			return (EINVAL);
 		else {
 			iov.iov_base = addr;
@@ -496,7 +490,7 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_machdep_doxmmregs(p, lt, NULL, &uio));
+			return (process_machdep_doxmmregs(p, lt, &uio));
 		}
 	}
 
@@ -508,15 +502,13 @@ ptrace_machdep_dorequest(p, lt, req, addr, data)
 }
 
 /*
- * The following functions have procfs-centric names, but are in
- * fact used by both ptrace(2) and procfs.
+ * The following functions are used by both ptrace(2) and procfs.
  */
 
 int
-procfs_machdep_doxmmregs(curp, l, pfs, uio)
+process_machdep_doxmmregs(curp, l, uio)
 	struct proc *curp;		/* tracer */
 	struct lwp *l;			/* traced */
-	struct pfsnode *pfs;
 	struct uio *uio;
 {
 	int error;
@@ -557,9 +549,8 @@ procfs_machdep_doxmmregs(curp, l, pfs, uio)
 }
 
 int
-procfs_machdep_validxmmregs(l, mp)
+process_machdep_validxmmregs(l)
 	struct lwp *l;
-	struct mount *mp;
 {
 
 	if (l->l_proc->p_flag & P_SYSTEM)

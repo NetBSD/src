@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.1.2.2 2002/04/01 07:39:16 nathanw Exp $	*/
+/*	$NetBSD: i80321.c,v 1.1.2.3 2002/06/20 03:38:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -201,6 +201,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = preg;
+	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;	/* XXX what if busno != 0? */
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |

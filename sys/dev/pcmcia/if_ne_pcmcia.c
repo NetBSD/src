@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.7 2002/04/01 07:46:50 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.8 2002/06/20 03:46:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.7 2002/04/01 07:46:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.8 2002/06/20 03:46:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +274,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_DLINK_DE650,
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
+    { PCMCIA_STR_DLINK_DFE670TXD,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+      PCMCIA_CIS_DLINK_DFE670TXD,
+      0, -1, { 0x00, 0x50, 0xba }, NE2000DVF_DL10019 },
+
     { PCMCIA_STR_MELCO_LPC2_TX,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_MELCO_LPC2_TX,
@@ -368,6 +373,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
+    { PCMCIA_STR_COREGA_ETHER_II_PCC_TD,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD,
+      PCMCIA_CIS_COREGA_ETHER_II_PCC_TD,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
     { PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX,
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
       PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
@@ -423,6 +433,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_MELCO_LPC3_TX, 
       0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
 
+    { PCMCIA_STR_BUFFALO_LPC3_CLT,
+      PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC3_CLT,
+      PCMCIA_CIS_BUFFALO_LPC3_CLT,
+      0, -1, { 0x00, 0x07, 0x40 } },
+
     { PCMCIA_STR_BILLIONTON_LNT10TN,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_BILLIONTON_LNT10TN,
@@ -442,6 +457,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
       PCMCIA_CIS_MACNICA_ME1_JEIDA,
       0, 0x00b8, { 0x08, 0x00, 0x42 } },
+
+    { PCMCIA_STR_NETGEAR_FA411,
+      PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
+      PCMCIA_CIS_NETGEAR_FA411,
+      0, -1, { 0x00, 0x40, 0xf4 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
@@ -577,8 +597,7 @@ ne_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 #if 0
 		/*
 		 * Some ne2000 driver's claim to have memory; others don't.
@@ -686,6 +705,7 @@ ne_pcmcia_attach(parent, self, aux)
 	i = 0;
 again:
 	enaddr = NULL;			/* Ask ASIC by default */
+	typestr = "";			/* clear previous card-type */
 	for (; i < NE2000_NDEVS; i++) {
 		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
 		if (ne_dev != NULL) {
@@ -699,8 +719,11 @@ again:
 		}
 	}
 	if (i == NE2000_NDEVS) {
-		printf("%s: can't match ethernet vendor code\n",
-		    dsc->sc_dev.dv_xname);
+		printf("%s (manf %08x prod %08x) cis %s %s: "
+		       "can't match ethernet vendor code\n",
+		       dsc->sc_dev.dv_xname,
+		       pa->manufacturer, pa->product,
+		       pa->card->cis1_info[0], pa->card->cis1_info[1]);
 		goto fail_5;
 	}
 

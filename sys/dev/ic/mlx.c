@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.4.2.5 2001/11/14 19:14:30 nathanw Exp $	*/
+/*	$NetBSD: mlx.c,v 1.4.2.6 2002/06/20 03:44:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.4.2.5 2001/11/14 19:14:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.4.2.6 2002/06/20 03:44:55 nathanw Exp $");
 
 #include "ld.h"
 
@@ -855,8 +855,10 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		for (i = 0; i < MLX_MAX_DRIVES; i++) {
 			ms = &mlx->mlx_sysdrive[i];
 			if (ms->ms_dv != NULL)
-				if (ms->ms_dv->dv_xname[2] == '0' + *arg)
-					return (i);
+				if (ms->ms_dv->dv_xname[2] == '0' + *arg) {
+					*arg = i;
+					return (0);
+				}
 		}
 		return (ENOENT);
 	}
@@ -1896,7 +1898,7 @@ mlx_ccb_enqueue(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	while ((mc = SIMPLEQ_FIRST(&mlx->mlx_ccb_queue)) != NULL) {
 		if (mlx_ccb_submit(mlx, mc) != 0)
 			break;
-		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc, mc_chain.simpleq);
+		SIMPLEQ_REMOVE_HEAD(&mlx->mlx_ccb_queue, mc_chain.simpleq);
 		TAILQ_INSERT_TAIL(&mlx->mlx_ccb_worklist, mc, mc_chain.tailq);
 	}
 

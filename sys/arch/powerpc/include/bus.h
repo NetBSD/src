@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2.6.2 2002/01/08 00:27:09 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.6.3 2002/06/20 03:40:31 nathanw Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -147,6 +147,15 @@ struct powerpc_bus_space {
  */
 
 #define	__BUS_SPACE_HAS_STREAM_METHODS
+
+/*
+ *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h) ((void *)(h))
 
 /*
  *	paddr_t bus_space_mmap  __P((bus_space_tag_t t, bus_addr_t addr,

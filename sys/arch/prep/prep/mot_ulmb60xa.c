@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.1.2.2 2002/02/28 04:11:32 nathanw Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.1.2.3 2002/06/20 03:40:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,18 +68,21 @@
     (((ct) >> MOT_CPUTYPE_BOARDID_SHIFT) & MOT_CPUTYPE_BOARDID_MASK)
 
 #define	MOT_CPUTYPE_BOARDID_ULTRA	4
+#define	MOT_CPUTYPE_BOARDID_MTX		14
 
 
 static int mot_ulmb60xa_match(struct platform *);
+static void pci_intr_fixup_mot_ulmb60xa(int, int, int *);
 
 struct platform platform_mot_ulmb60xa = {
 	"BULL ESTRELLA (e0)         (e0)",	/* model */ /* XXX */
 	mot_ulmb60xa_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
 	pci_intr_fixup_mot_ulmb60xa,		/* pci_intr_fixup */
-	ext_intr_ivr,				/* ext_intr */
+	init_intr_ivr,				/* init_intr */
 	cpu_setup_unknown,			/* cpu_setup */
-	reset_ibm_generic,			/* reset */
+	reset_prep_generic,			/* reset */
+	obiodevs_nodev,				/* obiodevs */
 };
 
 static int
@@ -87,7 +90,7 @@ mot_ulmb60xa_match(struct platform *p)
 {
 	uint8_t cputype;
 
-	if (p->model == NULL)
+	if (p == NULL || p->model == NULL)
 		return 0;
 	if (strcmp(res->VitalProductData.PrintableModel, p->model) != 0)
 		return 0;
@@ -100,7 +103,7 @@ mot_ulmb60xa_match(struct platform *p)
 	return 1;
 }
 
-void
+static void
 pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int *line)
 {
 

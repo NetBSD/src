@@ -1,10 +1,11 @@
-/*	$NetBSD: prtvid.c,v 1.1 1996/05/17 19:55:00 chuck Exp $	*/
+/*	$NetBSD: prtvid.c,v 1.1.52.1 2002/06/20 03:40:03 nathanw Exp $	*/
 
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
 #include <machine/disklabel.h>
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

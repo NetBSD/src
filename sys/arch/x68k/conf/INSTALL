@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.40.8.5 2002/04/17 00:04:45 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.40.8.6 2002/06/20 03:42:29 nathanw Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,9 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.40.8.5 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"INSTALL-$Revision: 1.40.8.6 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 

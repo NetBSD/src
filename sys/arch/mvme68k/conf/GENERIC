@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.6.4 2002/04/17 00:03:51 nathanw Exp $
+# $NetBSD: GENERIC,v 1.28.6.5 2002/06/20 03:39:56 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.28.6.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.28.6.5 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -101,6 +103,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd 2
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

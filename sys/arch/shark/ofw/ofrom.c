@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.1.2.3 2002/04/01 07:42:36 nathanw Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.1.2.4 2002/06/20 03:40:58 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -73,7 +73,7 @@ ofromprobe(parent, cf, aux)
 	void *aux;
 {
 	struct ofbus_attach_args *oba = aux;
-	const char *compatible_strings[] = { "rom", NULL };
+	static const char *const compatible_strings[] = { "rom", NULL };
 
 	return (of_compatible(oba->oba_phandle, compatible_strings) == -1) ?
 	    0 : 5;

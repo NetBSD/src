@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44.4.3 2002/04/01 07:43:09 nathanw Exp $ */
+/*	$NetBSD: clock.c,v 1.44.4.4 2002/06/20 03:41:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -457,16 +457,15 @@ clockattach_rtc(parent, self, aux)
 	handle->todr_settime = rtc_settime;
 	handle->todr_getcal = rtc_getcal;
 	handle->todr_setcal = rtc_setcal;
+	/*
+	 * Apparently on some machines the TOD registers are on the same
+	 * physical page as the COM registers.  So we won't protect them.
+	 */
 	handle->todr_setwen = NULL;
 	rtc->rtc_bt = bt;
 	rtc->rtc_bh = ci.ci_bh;
-	/* Our TOD clock year 0 is 1968 */
-	rtc->rtc_year0 = 1968;	/* XXX Really? */
-
-	/* Save info for the clock wenable call. */
-	ci.ci_bt = bt;
-	handle->bus_cookie = &ci;
-	handle->todr_setwen = clock_wenable;
+	/* Our TOD clock year 0 is 0 */
+	rtc->rtc_year0 = 0;
 	todr_handle = handle;
 }
 
@@ -970,6 +969,9 @@ eeprom_uio(uio)
  * RTC todr routines.
  */
 
+/* Loooks like Sun stores the century info somewhere in CMOS RAM */
+#define MC_CENT 0x32
+
 /*
  * Get time-of-day and convert to a `struct timeval'
  * Return 0 on success; an error number otherwise.
@@ -983,7 +985,7 @@ rtc_gettime(handle, tv)
 	bus_space_tag_t bt = rtc->rtc_bt;
 	bus_space_handle_t bh = rtc->rtc_bh;
 	struct clock_ymdhms dt;
-	int year;
+	int year, cent;
 	u_int8_t csr;
 
 	todr_wenable(handle, 1);
@@ -1001,16 +1003,14 @@ rtc_gettime(handle, tv)
 	dt.dt_wday = rtc_read_reg(bt, bh, MC_DOW);
 	dt.dt_mon = rtc_read_reg(bt, bh, MC_MONTH);
 	year = rtc_read_reg(bt, bh, MC_YEAR);
-printf("rtc_gettime: read y %x/%d m %x/%d wd %d d %x/%d "
+	cent = rtc_read_reg(bt, bh, MC_CENT);
+printf("rtc_gettime: read c %x/%d y %x/%d m %x/%d wd %d d %x/%d "
 	"h %x/%d m %x/%d s %x/%d\n",
-	year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
+	cent, cent, year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
 	dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
 	dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
 
-	year += rtc->rtc_year0;
-	if (year < POSIX_BASE_YEAR && rtc_auto_century_adjust != 0)
-		year += 100;
-
+	year += cent * 100;
 	dt.dt_year = year;
 
 	/* time wears on */
@@ -1020,7 +1020,7 @@ printf("rtc_gettime: read y %x/%d m %x/%d wd %d d %x/%d "
 	todr_wenable(handle, 0);
 
 	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	if (dt.dt_year < 1970 || dt.dt_mon > 12 || dt.dt_day > 31 ||
 	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
 		return (1);
 
@@ -1043,14 +1043,13 @@ rtc_settime(handle, tv)
 	bus_space_handle_t bh = rtc->rtc_bh;
 	struct clock_ymdhms dt;
 	u_int8_t csr;
-	int year;
+	int year, cent;
 
 	/* Note: we ignore `tv_usec' */
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	year = dt.dt_year - rtc->rtc_year0;
-	if (year > 99 && rtc_auto_century_adjust != 0)
-		year -= 100;
+	year = dt.dt_year % 100;
+	cent = dt.dt_year / 100;
 
 	todr_wenable(handle, 1);
 	/* enable write */
@@ -1065,6 +1064,7 @@ rtc_settime(handle, tv)
 	rtc_write_reg(bt, bh, MC_DOM, dt.dt_day);
 	rtc_write_reg(bt, bh, MC_MONTH, dt.dt_mon);
 	rtc_write_reg(bt, bh, MC_YEAR, year);
+	rtc_write_reg(bt, bh, MC_CENT, cent);
 
 	/* load them up */
 	csr = rtc_read_reg(bt, bh, MC_REGB);

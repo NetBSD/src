@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.14 2002/04/17 00:05:22 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.15 2002/06/20 03:43:17 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -8,11 +8,15 @@
 defflag				INSECURE
 defflag				KMEMSTATS
 defflag				KTRACE
+defflag				SYSTRACE
 defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
+
+defflag	opt_sock_counters.h	SOSEND_COUNTERS
+defflag				SOSEND_LOAN
 
 defflag				MULTIPROCESSOR
 
@@ -24,13 +28,6 @@ defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defflag	opt_ntp.h		PPS_SYNC NTP
-
-defflag	opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
-				NFS_BOOT_GATEWAY NFS_BOOT_TCP
-defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS
-				NFS_BOOT_RWSIZE
-defflag	opt_nfs.h		NFS_V2_ONLY
-defflag				NFSSERVER
 
 defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
 defflag	opt_malloclog.h		MALLOCLOG
@@ -103,51 +100,17 @@ defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 defflag	opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
 				UDP_CSUM_COUNTERS
 
-defflag	opt_altq_enabled.h	ALTQ
-defflag	opt_altq.h		ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_BLUE
-				ALTQ_FLOWVALVE ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC
-				ALTQ_CDNR ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
-
 defparam			SB_MAX
 
 # UVM options
 #
 defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
 
-# file systems
-#
-deffs				FFS EXT2FS
-deffs	fs_mfs.h		MFS			# XXX
-deffs	fs_lfs.h		LFS
-deffs	fs_ntfs.h		NTFS
-deffs				CD9660
-deffs				ADOSFS
-deffs				MSDOSFS
-deffs				FILECORE
-deffs	fs_nfs.h		NFS
-deffs				NULLFS
-deffs				OVERLAY
-deffs				SMBFS
-deffs				FDESC
-deffs				PORTAL
-deffs				UMAPFS
-deffs				PROCFS
-deffs	fs_kernfs.h		KERNFS		# XXX
-deffs	fs_union.h		UNION
-deffs	fs_coda.h		CODA
-
 # file system options
 #
-defflag				SOFTDEP
-defflag				QUOTA
-defflag	opt_ffs.h		FFS_EI
-defflag	opt_ntfs.h		NTFS_DEBUG
+defflag				SOFTDEP			# XXX files.ufs?
+defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_OP_NOINLINE
-
-# RAIDframe options
-#
-defflag				RAID_AUTOCONFIG
-defflag				RAID_DIAGNOSTIC
 
 # buffer cache size options
 #
@@ -192,14 +155,13 @@ devclass tty
 
 # generic attributes
 #
-define	audio		{ }
+define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
 define	wdc_base
 define	scsi		{[channel = -1]}
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
-define	mii		{[phy = -1]}
 define	irbus		{ }
 define	radiodev	{ }
 
@@ -213,7 +175,7 @@ file	dev/aurateconv.c	aurateconv	needs-flag
 # audio and midi devices, attaches to audio hardware driver
 #
 device	audio
-attach	audio at audio
+attach	audio at audiobus
 device	midi
 attach	midi at midibus
 
@@ -257,6 +219,11 @@ define	crypto
 #
 define	arp
 
+#
+# ALTQ network traffic shaping subsystem
+#
+include "altq/files.altq"
+
 # Device description for machine-independent IPKDB code.
 #
 defflag	opt_ipkdb.h		IPKDB				: IPKDBKEY
@@ -268,26 +235,25 @@ defparam opt_ipkdb.h		IPKDBKEY			: IPKDB
 file	ipkdb/ipkdb_ipkdb.c		ipkdb
 file	ipkdb/ipkdb_if.c		ipkdb
 
-# Attribute for devices that read/write an IEEE 802.3u MII bus
-# using the bit-bang method.
-# XXX Can't be in dev/mii/files.mii because that file hasn't
-# XXX been included yet.
-#
-define	mii_bitbang
-file	dev/mii/mii_bitbang.c		mii_bitbang
-
 # Logical disk
 #
 device	ld: disk
 file	dev/ld.c			ld			needs-flag
 
-# Central clearing house for system monitoring.
 #
-define	sysmon_envsys
-define	sysmon_wdog
-file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
-file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
-file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
+# System monitoring framework
+#
+include "dev/sysmon/files.sysmon"
+
+#
+# MII/PHY support for network devices
+#
+include "dev/mii/files.mii"
+
+#
+# RAIDframe
+#
+include "dev/raidframe/files.raidframe"
 
 #
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -336,6 +302,26 @@ file	dev/ic/mlx.c			mlx			needs-flag
 attach	ld at mlx with ld_mlx
 file	dev/ic/ld_mlx.c			ld_mlx
 
+# ICP-Vortex/Intel RAID controllers
+#
+device	icp {unit = -1}
+file	dev/ic/icp.c			icp			needs-flag
+
+attach	ld at icp with ld_icp
+file	dev/ic/ld_icp.c			ld_icp
+
+device	icpsp: scsi
+file	dev/ic/icpsp.c			icpsp
+attach	icpsp at icp
+
+# Adaptec FSA RAID controllers
+#
+device	aac {unit = -1}
+file	dev/ic/aac.c			aac
+
+attach	ld at aac with ld_aac
+file	dev/ic/ld_aac.c			ld_aac
+
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 #
 device	adv: scsi
@@ -381,6 +367,11 @@ file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
 
+# LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
+#
+device	lfmiop: scsi
+file	dev/ic/lfmiop.c			lfmiop
+
 # Symbios/NCR 53c710 SCSI controllers
 #
 device	osiop: scsi
@@ -395,6 +386,10 @@ file	dev/ic/siop_common.c		siop_common
 #
 device	siop: scsi,siop_common
 file	dev/ic/siop.c			siop
+defflag	opt_siop.h			SIOP_SYMLED
+
+device	esiop: scsi,siop_common
+file	dev/ic/esiop.c			esiop
 
 # UltraStor SCSI controllers
 #
@@ -638,7 +633,7 @@ file	dev/ic/am7930.c			am7930
 
 # SPARC `SUNW,audiocs'
 #
-device	audiocs: audio, auconv, ad1848
+device	audiocs: audiobus, auconv, ad1848
 file	dev/ic/cs4231.c			audiocs
 
 # AC-97 CODECs
@@ -832,9 +827,31 @@ file	dev/ieee1394/sbp2.c		sbp2
 device	fwlynx: fwbus
 device	fwohci: fwbus
 
+# Sony Programmable I/O Controller
+device	spic: wsmousedev
+file	dev/ic/spic.c			spic
+
+# IBM CPC700 PowerPC bridge
+define	cpcbus { addr, [irq=-1] }
+device	cpc: cpcbus, pcibus
+file	dev/ic/cpc700.c			cpc
+
+attach	com at cpcbus with com_cpcbus
+file	dev/ic/com_cpcbus.c		com_cpcbus
+
+device	cpctim
+attach	cpctim at cpcbus
+file	dev/ic/timer_cpcbus.c		cpctim
+
+device	cpciic
+attach	cpciic at cpcbus with iic_cpcbus
+file	dev/ic/iic_cpcbus.c		iic_cpcbus
+
+
 # Attribute used by various things that need BPF's virtual machine
 #
 define	bpf_filter
+defparam opt_bpf.h	BPF_BUFSIZE
 
 # Attributes used by the ISDN subsystem
 #
@@ -862,9 +879,7 @@ file	dev/ic/daic.c			daic
 #
 defpseudo vnd:		disk
 defpseudo ccd:		disk
-defpseudo raid:		disk
 defpseudo md:		disk
-defpseudo vcoda
 defpseudo netsmb
 
 defpseudo pty:		tty
@@ -891,6 +906,7 @@ defpseudo irframetty:	irframedrv, irdasir
 defpseudo sequencer
 defpseudo clockctl
 defpseudo irix_kmem
+defpseudo irix_usema
 
 # ISDN userland pseudo devices
 #
@@ -904,32 +920,30 @@ defpseudo isdn:		isdndev, tty
 defpseudo irip:		isdndev, ifnet
 defpseudo ippp:		isdndev, sppp, ifnet
 
+#
+# File systems
+#
+include "adosfs/files.adosfs"
+include "coda/files.coda"
+include "filecorefs/files.filecorefs"
+include "fs/smbfs/files.smbfs"
+include "isofs/cd9660/files.cd9660"
+include "miscfs/fdesc/files.fdesc"
+include "miscfs/kernfs/files.kernfs"
+include "miscfs/nullfs/files.nullfs"
+include "miscfs/overlay/files.overlay"
+include "miscfs/portal/files.portal"
+include "miscfs/procfs/files.procfs"
+include "miscfs/umapfs/files.umapfs"
+include "miscfs/union/files.union"
+include "msdosfs/files.msdosfs"
+include "nfs/files.nfs"
+include "ntfs/files.ntfs"
+include "ufs/files.ufs"
+
+#
 # kernel sources
 #
-file	adosfs/adlookup.c		adosfs
-file	adosfs/adutil.c			adosfs
-file	adosfs/advfsops.c		adosfs
-file	adosfs/advnops.c		adosfs
-file	altq/altq_conf.c		altq
-file	altq/altq_afmap.c		altq
-file	altq/altq_blue.c		altq
-file	altq/altq_cbq.c			altq
-file	altq/altq_cdnr.c		altq
-file	altq/altq_fifoq.c		altq
-file	altq/altq_hfsc.c		altq
-file	altq/altq_localq.c		altq
-file	altq/altq_priq.c		altq
-file	altq/altq_red.c			altq
-file	altq/altq_rio.c			altq
-file	altq/altq_rmclass.c		altq
-file	altq/altq_subr.c		altq
-file	altq/altq_wfq.c			altq
-file	coda/coda_namecache.c		coda
-file	coda/coda_psdev.c		vcoda			needs-count
-file	coda/coda_subr.c		coda
-file	coda/coda_venus.c		coda
-file	coda/coda_vfsops.c		coda
-file	coda/coda_vnops.c		coda
 file	crypto/arc4/arc4.c		wlan
 file	crypto/des/des_ecb.c		ipsec & ipsec_esp
 file	crypto/des/des_setkey.c		ipsec & ipsec_esp
@@ -976,89 +990,10 @@ file	dev/midisyn.c			midisyn
 file	dev/mm.c
 file	dev/mulaw.c			mulaw
 file	dev/radio.c			radio			needs-flag
-file	dev/raidframe/rf_acctrace.c		raid		needs-flag
-file	dev/raidframe/rf_alloclist.c		raid		needs-flag
-file	dev/raidframe/rf_aselect.c		raid		needs-flag
-file	dev/raidframe/rf_callback.c		raid		needs-flag
-file	dev/raidframe/rf_chaindecluster.c	raid		needs-flag
-file	dev/raidframe/rf_copyback.c		raid		needs-flag
-file	dev/raidframe/rf_cvscan.c		raid		needs-flag
-file	dev/raidframe/rf_dagdegrd.c		raid		needs-flag
-file	dev/raidframe/rf_dagdegwr.c		raid		needs-flag
-file	dev/raidframe/rf_dagffrd.c		raid		needs-flag
-file	dev/raidframe/rf_dagffwr.c		raid		needs-flag
-file	dev/raidframe/rf_dagfuncs.c		raid		needs-flag
-file	dev/raidframe/rf_dagutils.c		raid		needs-flag
-file	dev/raidframe/rf_debugMem.c		raid		needs-flag
-file	dev/raidframe/rf_debugprint.c		raid		needs-flag
-file	dev/raidframe/rf_decluster.c		raid		needs-flag
-file	dev/raidframe/rf_declusterPQ.c		raid		needs-flag
-file	dev/raidframe/rf_diskqueue.c		raid		needs-flag
-file	dev/raidframe/rf_disks.c		raid		needs-flag
-file	dev/raidframe/rf_driver.c		raid		needs-flag
-file	dev/raidframe/rf_engine.c		raid		needs-flag
-file	dev/raidframe/rf_evenodd.c		raid		needs-flag
-file	dev/raidframe/rf_evenodd_dagfuncs.c	raid		needs-flag
-file	dev/raidframe/rf_evenodd_dags.c		raid		needs-flag
-file	dev/raidframe/rf_fifo.c			raid		needs-flag
-file	dev/raidframe/rf_interdecluster.c	raid		needs-flag
-file	dev/raidframe/rf_invertq.c		raid		needs-flag
-file	dev/raidframe/rf_layout.c		raid		needs-flag
-file	dev/raidframe/rf_map.c			raid		needs-flag
-file	dev/raidframe/rf_mcpair.c		raid		needs-flag
-file	dev/raidframe/rf_memchunk.c		raid		needs-flag
-file	dev/raidframe/rf_netbsdkintf.c		raid		needs-flag
-file	dev/raidframe/rf_nwayxor.c		raid		needs-flag
-file	dev/raidframe/rf_options.c		raid		needs-flag
-file	dev/raidframe/rf_paritylog.c		raid		needs-flag
-file	dev/raidframe/rf_paritylogDiskMgr.c	raid		needs-flag
-file	dev/raidframe/rf_paritylogging.c	raid		needs-flag
-file	dev/raidframe/rf_parityloggingdags.c	raid		needs-flag
-file	dev/raidframe/rf_parityscan.c		raid		needs-flag
-file	dev/raidframe/rf_pq.c			raid		needs-flag
-file	dev/raidframe/rf_pqdeg.c		raid		needs-flag
-file	dev/raidframe/rf_pqdegdags.c		raid		needs-flag
-file	dev/raidframe/rf_psstatus.c		raid		needs-flag
-file	dev/raidframe/rf_raid0.c		raid		needs-flag
-file	dev/raidframe/rf_raid1.c		raid		needs-flag
-file	dev/raidframe/rf_raid4.c		raid		needs-flag
-file	dev/raidframe/rf_raid5.c		raid		needs-flag
-file	dev/raidframe/rf_raid5_rotatedspare.c	raid		needs-flag
-file	dev/raidframe/rf_reconbuffer.c		raid		needs-flag
-file	dev/raidframe/rf_reconmap.c		raid		needs-flag
-file	dev/raidframe/rf_reconstruct.c		raid		needs-flag
-file	dev/raidframe/rf_reconutil.c		raid		needs-flag
-file	dev/raidframe/rf_revent.c		raid		needs-flag
-file	dev/raidframe/rf_shutdown.c		raid		needs-flag
-file	dev/raidframe/rf_sstf.c			raid		needs-flag
-file	dev/raidframe/rf_states.c		raid		needs-flag
-file	dev/raidframe/rf_stripelocks.c		raid		needs-flag
-file	dev/raidframe/rf_strutils.c		raid		needs-flag
-file	dev/raidframe/rf_threadstuff.c		raid		needs-flag
-file	dev/raidframe/rf_utils.c		raid		needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/vnd.c			vnd			needs-flag
-file	filecorefs/filecore_bmap.c	filecore
-file	filecorefs/filecore_lookup.c	filecore
-file	filecorefs/filecore_node.c	filecore
-file	filecorefs/filecore_utils.c	filecore
-file	filecorefs/filecore_vfsops.c	filecore
-file	filecorefs/filecore_vnops.c	filecore
-file	fs/smbfs/smbfs_io.c		smbfs
-file	fs/smbfs/smbfs_node.c		smbfs
-file	fs/smbfs/smbfs_smb.c		smbfs
-file	fs/smbfs/smbfs_subr.c		smbfs
-file	fs/smbfs/smbfs_vfsops.c		smbfs
-file	fs/smbfs/smbfs_vnops.c		smbfs
-file	isofs/cd9660/cd9660_bmap.c	cd9660
-file	isofs/cd9660/cd9660_lookup.c	cd9660
-file	isofs/cd9660/cd9660_node.c	cd9660
-file	isofs/cd9660/cd9660_rrip.c	cd9660
-file	isofs/cd9660/cd9660_util.c	cd9660
-file	isofs/cd9660/cd9660_vfsops.c	cd9660
-file	isofs/cd9660/cd9660_vnops.c	cd9660
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c
@@ -1083,6 +1018,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
@@ -1146,48 +1082,14 @@ file	kern/vfs_syscalls.c
 file	kern/vfs_vnops.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
-file	miscfs/fdesc/fdesc_vfsops.c	fdesc
-file	miscfs/fdesc/fdesc_vnops.c	fdesc
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
-file	miscfs/kernfs/kernfs_vfsops.c	kernfs
-file	miscfs/kernfs/kernfs_vnops.c	kernfs
-file	miscfs/nullfs/null_vfsops.c	nullfs
-file	miscfs/nullfs/null_vnops.c	nullfs
-file	miscfs/overlay/overlay_vfsops.c	overlay
-file	miscfs/overlay/overlay_vnops.c	overlay
-file	miscfs/portal/portal_vfsops.c	portal
-file	miscfs/portal/portal_vnops.c	portal
-file	miscfs/procfs/procfs_cmdline.c	procfs
-file	miscfs/procfs/procfs_ctl.c	procfs
-file	miscfs/procfs/procfs_fpregs.c
-file	miscfs/procfs/procfs_linux.c	procfs
-file	miscfs/procfs/procfs_map.c	procfs
-file	miscfs/procfs/procfs_mem.c
-file	miscfs/procfs/procfs_note.c	procfs
-file	miscfs/procfs/procfs_regs.c
-file	miscfs/procfs/procfs_status.c	procfs
-file	miscfs/procfs/procfs_subr.c	procfs
-file	miscfs/procfs/procfs_vfsops.c	procfs
-file	miscfs/procfs/procfs_vnops.c	procfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	miscfs/umapfs/umap_subr.c	umapfs
-file	miscfs/umapfs/umap_vfsops.c	umapfs
-file	miscfs/umapfs/umap_vnops.c	umapfs
-file	miscfs/union/union_subr.c	union
-file	miscfs/union/union_vfsops.c	union
-file	miscfs/union/union_vnops.c	union
-file	msdosfs/msdosfs_conv.c		msdosfs
-file	msdosfs/msdosfs_denode.c	msdosfs
-file	msdosfs/msdosfs_fat.c		msdosfs
-file	msdosfs/msdosfs_lookup.c	msdosfs
-file	msdosfs/msdosfs_vfsops.c	msdosfs
-file	msdosfs/msdosfs_vnops.c		msdosfs
 file	net/bpf.c			bpfilter		needs-count
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
@@ -1217,7 +1119,7 @@ file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
-#file net/net_osdep.c
+#file	net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
@@ -1301,7 +1203,6 @@ file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_pcb.c		inet6
-file	netinet6/in6_prefix.c		inet6
 file	netinet6/in6_proto.c		inet6
 file	netinet6/in6_src.c		inet6
 file	netinet6/ip6_forward.c		inet6
@@ -1382,67 +1283,7 @@ file	netsmb/smb_subr.c		netsmb	needs-count
 file	netsmb/smb_trantcp.c		netsmb	needs-count
 file	netsmb/smb_usr.c		netsmb	needs-count
 file	netsmb/subr_mchain.c		netsmb
-file	nfs/krpc_subr.c			nfs
-file	nfs/nfs_bio.c			nfs
-file	nfs/nfs_boot.c			nfs
-file	nfs/nfs_bootdhcp.c		nfs & (nfs_boot_bootp | nfs_boot_dhcp)
-file	nfs/nfs_bootparam.c		nfs & nfs_boot_bootparam
-file	nfs/nfs_node.c			nfs
-file	nfs/nfs_nqlease.c		nfsserver | nfs
-file	nfs/nfs_serv.c			nfsserver
-file	nfs/nfs_socket.c		nfsserver | nfs
-file	nfs/nfs_srvcache.c		nfsserver
-file	nfs/nfs_subs.c			nfsserver | nfs
-file	nfs/nfs_syscalls.c		nfsserver | nfs
-file	nfs/nfs_vfsops.c		nfs
-file	nfs/nfs_vnops.c			nfs
-file	ntfs/ntfs_compr.c		ntfs
-file	ntfs/ntfs_conv.c		ntfs
-file	ntfs/ntfs_ihash.c		ntfs
-file	ntfs/ntfs_subr.c		ntfs
-file	ntfs/ntfs_vfsops.c		ntfs
-file	ntfs/ntfs_vnops.c		ntfs
-file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
-file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
-file	ufs/ext2fs/ext2fs_bmap.c	ext2fs
-file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
-file	ufs/ext2fs/ext2fs_inode.c	ext2fs
-file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
-file	ufs/ext2fs/ext2fs_readwrite.c	ext2fs
-file	ufs/ext2fs/ext2fs_subr.c	ext2fs
-file	ufs/ext2fs/ext2fs_vfsops.c	ext2fs
-file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
-file	ufs/ffs/ffs_alloc.c		ffs | mfs
-file	ufs/ffs/ffs_balloc.c		ffs | mfs
-file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
-file	ufs/ffs/ffs_inode.c		ffs | mfs
-file	ufs/ffs/ffs_softdep.c		ffs & softdep
-file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
-					    (!ffs & (lfs | mfs | ext2fs))
-file	ufs/ffs/ffs_subr.c		ffs | mfs
-file	ufs/ffs/ffs_tables.c		ffs | mfs
-file	ufs/ffs/ffs_vfsops.c		ffs | mfs
-file	ufs/ffs/ffs_vnops.c		ffs | mfs
-file	ufs/lfs/lfs_alloc.c		lfs
-file	ufs/lfs/lfs_balloc.c		lfs
-file	ufs/lfs/lfs_bio.c		lfs
-file	ufs/lfs/lfs_cksum.c		lfs
-file	ufs/lfs/lfs_debug.c		lfs
-file	ufs/lfs/lfs_inode.c		lfs
-file	ufs/lfs/lfs_segment.c		lfs
-file	ufs/lfs/lfs_subr.c		lfs
-file	ufs/lfs/lfs_syscalls.c		lfs
-file	ufs/lfs/lfs_vfsops.c		lfs
-file	ufs/lfs/lfs_vnops.c		lfs
-file	ufs/mfs/mfs_vfsops.c		mfs
-file	ufs/mfs/mfs_vnops.c		mfs
-file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
-file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
-file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
+
 file	uvm/uvm_amap.c
 file	uvm/uvm_anon.c
 file	uvm/uvm_aobj.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.2.8.3 2002/04/01 07:43:35 nathanw Exp $
+#	$NetBSD: files.walnut,v 1.2.8.4 2002/06/20 03:42:25 nathanw Exp $
 #
 # walnut-specific configuration info
 
@@ -25,9 +25,6 @@ major	{md = 9}
 
 # Machine-independent I2O drivers.
 include	"dev/i2o/files.i2o"
-
-# Machine-independent MII/PHY drivers.
-include	"dev/mii/files.mii"
 
 # Machine-independent SCSI drivers
 include	"dev/scsipi/files.scsipi"
@@ -90,3 +87,15 @@ file	arch/walnut/dev/ds1743.c		dsrtc
 include "dev/pckbc/files.pckbc"
 attach	pckbc at mainbus with pckbc_mainbus
 file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+
+#
+# Machine-independent CardBus drivers
+#
+
+# XXX dev/pcmcia needs fdc
+device fdc {drive = -1}
+
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/macppc/macppc/rbus_machdep.c		cardbus

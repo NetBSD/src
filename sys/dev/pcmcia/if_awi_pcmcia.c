@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.4 2002/01/08 00:31:22 nathanw Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.5 2002/06/20 03:46:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.18.2.4 2002/01/08 00:31:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.18.2.5 2002/06/20 03:46:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,8 +286,7 @@ awi_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	     cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		if (cfe->iftype != PCMCIA_IFTYPE_IO)
 			continue;
 		if (cfe->num_iospace < 1)

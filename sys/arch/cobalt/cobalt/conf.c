@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11.8.3 2002/04/01 07:39:41 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.11.8.4 2002/06/20 03:38:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,6 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +155,11 @@ struct cdevsw cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 31: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 32: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 33: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 34: system call tracing */
+#else
+	cdev_notdef(),			/* 34: system call tracing */
+#endif
 
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -210,6 +217,7 @@ static int chrtoblktbl[] =  {
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
+	/* 34 */	NODEV,
 };
 
 dev_t

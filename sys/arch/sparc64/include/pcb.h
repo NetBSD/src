@@ -1,6 +1,7 @@
-/*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.7.8.1 2002/06/20 03:41:25 nathanw Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

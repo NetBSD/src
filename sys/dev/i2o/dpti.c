@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.1.2.4 2001/11/14 19:14:09 nathanw Exp $	*/
+/*	$NetBSD: dpti.c,v 1.1.2.5 2002/06/20 03:44:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.1.2.4 2001/11/14 19:14:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.1.2.5 2002/06/20 03:44:24 nathanw Exp $");
 
 #include "opt_i2o.h"
 
@@ -107,7 +107,7 @@ static struct dpt_sig dpti_sig = {
 	PROC_POWERPC,
 #elif defined(alpha)
 	PROC_ALPHA,
-#elif defined(mips)
+#elif defined(__mips__)
 	PROC_MIPS,
 #elif defined(sparc64)
 	PROC_ULTRASPARC,

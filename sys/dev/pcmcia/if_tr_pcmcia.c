@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.3.2.3 2002/01/08 00:31:25 nathanw Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.3.2.4 2002/06/20 03:46:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.3.2.3 2002/01/08 00:31:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.3.2.4 2002/06/20 03:46:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ tr_pcmcia_attach(parent, self, aux)
 	bus_size_t offset;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	pcmcia_function_init(pa->pf, cfe);
 

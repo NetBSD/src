@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.41.2.6 2002/04/17 00:06:14 nathanw Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.41.2.7 2002/06/20 03:46:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.41.2.6 2002/04/17 00:06:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.41.2.7 2002/06/20 03:46:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,8 @@ USB_ATTACH(uaudio)
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_playchan.sc = sc->sc_recchan.sc = sc;
+	sc->sc_playchan.altidx = -1;
+	sc->sc_recchan.altidx = -1;
 
 	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
 		sc->sc_altflags |= UA_NOFRAC;
@@ -1893,6 +1895,7 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as = &sc->sc_alts[ch->altidx];
 
+	as->sc_busy = 0;
 	if (sc->sc_nullalt >= 0) {
 		DPRINTF(("uaudio_chan_close: set null alt=%d\n",
 			 sc->sc_nullalt));
@@ -2504,7 +2507,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	}
 	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, play);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec);
 	}
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n",

@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.13.6.5 2002/04/17 00:02:49 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.13.6.6 2002/06/20 03:38:22 nathanw Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -110,7 +112,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 #siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at siop?

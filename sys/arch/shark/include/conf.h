@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3.2.3 2002/04/01 07:42:35 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.3.2.4 2002/06/20 03:40:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -81,7 +81,7 @@ cdev_decl(vidcconsole);
 cdev_decl(com);
 cdev_decl(lpt);
 cdev_decl(qms);
-cdev_decl(pms);
+cdev_decl(opms);
 cdev_decl(beep);
 cdev_decl(kbd);
 cdev_decl(iic);

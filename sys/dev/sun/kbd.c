@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.27.2.2 2001/11/14 19:16:07 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.27.2.3 2002/06/20 03:46:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.2 2001/11/14 19:16:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.3 2002/06/20 03:46:46 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -601,6 +601,10 @@ kbd_input_keysym(k, keysym)
 {
 	struct kbd_state *ks = &k->k_state;
 	int data;
+
+	/* Check if a recipient has been configured */
+	if (k->k_cc == NULL)
+		return (0);
 
 	switch (KEYSYM_CLASS(keysym)) {
 

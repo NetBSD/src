@@ -1,9 +1,11 @@
-#	$NetBSD: IQ80310,v 1.4.2.5 2002/04/17 00:02:54 nathanw Exp $
+#	$NetBSD: IQ80310,v 1.4.2.6 2002/06/20 03:38:29 nathanw Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
 
 include	"arch/evbarm/conf/std.iq80310"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -20,6 +22,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+options 	XSCALE_CCLKCFG=9	# 733MHz
 
 # Architecture options
 
@@ -180,3 +183,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

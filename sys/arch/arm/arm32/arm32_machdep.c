@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.6.2.7 2002/04/17 00:02:24 nathanw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6.2.8 2002/06/20 03:38:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -77,7 +77,7 @@ extern int physmem;
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
-extern u_int memory_disc_size;		/* Memory disc size */
+extern size_t md_root_size;		/* Memory disc size */
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
@@ -428,12 +428,12 @@ parse_mi_bootargs(args)
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
-		memory_disc_size = integer;
-		memory_disc_size *= 1024;
-		if (memory_disc_size < 32*1024)
-			memory_disc_size = 32*1024;
-		if (memory_disc_size > 2048*1024)
-			memory_disc_size = 2048*1024;
+		md_root_size = integer;
+		md_root_size *= 1024;
+		if (md_root_size < 32*1024)
+			md_root_size = 32*1024;
+		if (md_root_size > 2048*1024)
+			md_root_size = 2048*1024;
 	}
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 

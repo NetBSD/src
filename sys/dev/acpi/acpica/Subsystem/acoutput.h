@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acoutput.h -- debug output
- *       xRevision: 84 $
+ *       $Revision: 1.1.1.1.4.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -137,25 +137,18 @@
 #define ACPI_DEBUGGER               0x00000200
 #define ACPI_OS_SERVICES            0x00000400
 
-#define ACPI_BUS                    0x00010000
-#define ACPI_SYSTEM                 0x00020000
-#define ACPI_POWER                  0x00040000
-#define ACPI_EC                     0x00080000
-#define ACPI_AC_ADAPTER             0x00100000
-#define ACPI_BATTERY                0x00200000
-#define ACPI_BUTTON                 0x00400000
-#define ACPI_PROCESSOR              0x00800000
-#define ACPI_THERMAL                0x01000000
-#define ACPI_FAN                    0x02000000
-
-#define ACPI_ALL_COMPONENTS         0x0FFFFFFF
+#define ACPI_ALL_COMPONENTS         0x00000FFF
 
 #define ACPI_COMPONENT_DEFAULT      (ACPI_ALL_COMPONENTS)
 
+/* Component IDs for ACPI tools and utilities */
 
-#define ACPI_COMPILER               0x10000000
-#define ACPI_TOOLS                  0x20000000
+#define ACPI_COMPILER               0x00001000
+#define ACPI_TOOLS                  0x00002000
 
+/* Component IDs reserved for ACPI drivers */
+
+#define ACPI_ALL_DRIVERS            0xFFFF0000
 
 /*
  * Raw debug output levels, do not use these in the DEBUG_PRINT macros
@@ -203,6 +196,16 @@
 #define ACPI_LV_INTERRUPTS          0x08000000
 #define ACPI_LV_VERBOSITY3          0x0F000000 | ACPI_LV_VERBOSITY2
 
+/* Exceptionally verbose output -- also used in the global "DebugLevel"  */
+
+#define ACPI_LV_AML_DISASSEMBLE     0x10000000
+#define ACPI_LV_VERBOSE_INFO        0x20000000
+#define ACPI_LV_FULL_TABLES         0x40000000
+#define ACPI_LV_EVENTS              0x80000000
+
+#define ACPI_LV_VERBOSE             0xF0000000
+
+
 /*
  * Debug level macros that are used in the DEBUG_PRINT macros
  */
@@ -243,17 +246,8 @@
 #define ACPI_DB_MUTEX               ACPI_DEBUG_LEVEL (ACPI_LV_MUTEX)
 #define ACPI_DB_INIT                ACPI_DEBUG_LEVEL (ACPI_LV_INIT)
 
-#define ACPI_DB_ALL                 ACPI_DEBUG_LEVEL (0x0FFFFF80)
+#define ACPI_DB_ALL                 ACPI_DEBUG_LEVEL (ACPI_LV_ALL)
 
-
-/* Exceptionally verbose output -- also used in the global "DebugLevel"  */
-
-#define ACPI_DB_AML_DISASSEMBLE     0x10000000
-#define ACPI_DB_VERBOSE_INFO        0x20000000
-#define ACPI_DB_FULL_TABLES         0x40000000
-#define ACPI_DB_EVENTS              0x80000000
-
-#define ACPI_DB_VERBOSE             0xF0000000
 
 
 /* Defaults for DebugLevel, debug and normal */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29.2.6 2002/05/29 21:32:33 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.29.2.7 2002/06/20 03:43:01 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -373,8 +373,10 @@
 214	NOARGS		{ int sys_setgid(gid_t gid); }
 215	STD		{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		{ int linux_sys_getfsuid(void); }
-217	UNIMPL		pivot_root
-218	UNIMPL		/* unused ? */
-219	UNIMPL		/* unused ? */
+217	UNIMPL		/* unused */
+218	UNIMPL		/* unused */
+219	UNIMPL		/* unused */
 220	STD		{ int linux_sys_getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
+221	UNIMPL		gettid
+222	UNIMPL		tkill

@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscalls.c,v 1.5.2.5 2002/05/29 21:48:42 nathanw Exp $ */
+/* $NetBSD: aoutm68k_syscalls.c,v 1.5.2.6 2002/06/20 03:42:44 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.5.2.5 2002/05/29 21:48:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.5.2.6 2002/06/20 03:42:44 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -394,17 +394,17 @@ const char *const aoutm68k_syscallnames[] = {
 	"#166 (unimplemented)",		/* 166 = unimplemented */
 	"#167 (unimplemented)",		/* 167 = unimplemented */
 	"#168 (unimplemented)",		/* 168 = unimplemented */
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	"osemsys",			/* 169 = osemsys */
 #else
 	"#169 (excluded 1.0 semsys)",		/* 169 = excluded 1.0 semsys */
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	"omsgsys",			/* 170 = omsgsys */
 #else
 	"#170 (excluded 1.0 msgsys)",		/* 170 = excluded 1.0 msgsys */
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	"oshmsys",			/* 171 = oshmsys */
 #else
 	"#171 (excluded 1.0 shmsys)",		/* 171 = excluded 1.0 shmsys */

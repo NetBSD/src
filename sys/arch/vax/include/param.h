@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.47.6.3 2002/04/01 07:43:29 nathanw Exp $    */
+/*      $NetBSD: param.h,v 1.47.6.4 2002/06/20 03:42:14 nathanw Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -149,8 +149,8 @@
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
+#define	btodb(x)	((unsigned long)(x) >> DEV_BSHIFT)
+#define	dbtob(x)	((unsigned long)(x) << DEV_BSHIFT)
 
 /* MD conversion macros */
 #define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)

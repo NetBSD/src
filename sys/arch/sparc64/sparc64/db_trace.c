@@ -1,6 +1,7 @@
-/*	$NetBSD: db_trace.c,v 1.23.8.3 2002/01/04 19:12:27 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.23.8.4 2002/06/20 03:41:29 nathanw Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
@@ -364,10 +365,9 @@ db_dump_trap(addr, have_addr, count, modif)
 		  tf, (unsigned long long)tf->tf_tstate,
 		  (unsigned long long)tf->tf_pc,
 		  (unsigned long long)tf->tf_npc);
-	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\tkstack: %llx\ttt: %x\tGlobals:\n", 
+	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\ttt: %x\tGlobals:\n", 
 		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil,
-		  (unsigned long long)tf->tf_fault,
-		  (unsigned long long)tf->tf_kstack, (int)tf->tf_tt);
+		  (unsigned long long)tf->tf_fault, (int)tf->tf_tt);
 	db_printf("%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_global[0],
 		  (unsigned long long)tf->tf_global[1],
@@ -383,12 +383,13 @@ db_dump_trap(addr, have_addr, count, modif)
 		  (unsigned long long)tf->tf_out[1],
 		  (unsigned long long)tf->tf_out[2],
 		  (unsigned long long)tf->tf_out[3]);
-	db_printf("%016llx %016llx %016llx %016llx\nlocals:\n",
+	db_printf("%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_out[4],
 		  (unsigned long long)tf->tf_out[5],
 		  (unsigned long long)tf->tf_out[6],
 		  (unsigned long long)tf->tf_out[7]);
-	db_printf("%016llx %016llx %016llx %016llx\n",
+#ifdef DEBUG
+	db_printf("locals:\n%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_local[0],
 		  (unsigned long long)tf->tf_local[1],
 		  (unsigned long long)tf->tf_local[2],
@@ -408,6 +409,7 @@ db_dump_trap(addr, have_addr, count, modif)
 		  (unsigned long long)tf->tf_in[5],
 		  (unsigned long long)tf->tf_in[6],
 		  (unsigned long long)tf->tf_in[7]);
+#endif
 #if 0
 	if (tf == curproc->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);

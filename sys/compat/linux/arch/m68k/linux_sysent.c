@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.31.2.7 2002/05/29 21:48:49 nathanw Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.31.2.8 2002/06/20 03:43:00 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.31.2.7 2002/05/29 21:48:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.31.2.8 2002/06/20 03:43:00 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -485,12 +485,16 @@ struct sysent linux_sysent[] = {
 	{ 0, 0, 0,
 	    linux_sys_getfsuid },		/* 216 = getfsuid */
 	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 217 = unimplemented pivot_root */
+	    linux_sys_nosys },			/* 217 = unimplemented / * unused * / */
 	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 218 = unimplemented / * unused ? * / */
+	    linux_sys_nosys },			/* 218 = unimplemented / * unused * / */
 	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 219 = unimplemented / * unused ? * / */
+	    linux_sys_nosys },			/* 219 = unimplemented / * unused * / */
 	{ 3, s(struct linux_sys_getdents64_args), 0,
 	    linux_sys_getdents64 },		/* 220 = getdents64 */
+	{ 0, 0, 0,
+	    linux_sys_nosys },			/* 221 = unimplemented gettid */
+	{ 0, 0, 0,
+	    linux_sys_nosys },			/* 222 = unimplemented tkill */
 };
 

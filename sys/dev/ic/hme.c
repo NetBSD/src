@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.20.2.4 2002/01/08 00:29:44 nathanw Exp $	*/
+/*	$NetBSD: hme.c,v 1.20.2.5 2002/06/20 03:44:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.20.2.4 2002/01/08 00:29:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.20.2.5 2002/06/20 03:44:35 nathanw Exp $");
 
 #define HMEDEBUG
 
@@ -634,6 +634,9 @@ hme_init(sc)
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
+
+	/* Set the current media. */
+	mii_mediachg(&sc->sc_mii);
 
 	/* Start the one second timer. */
 	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);

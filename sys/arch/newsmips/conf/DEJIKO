@@ -1,8 +1,10 @@
-# 	$NetBSD: DEJIKO,v 1.4.8.1 2002/04/17 00:04:01 nathanw Exp $
+# 	$NetBSD: DEJIKO,v 1.4.8.2 2002/06/20 03:40:12 nathanw Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
 include		"arch/newsmips/conf/std.newsmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -73,3 +75,4 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscallargs.h,v 1.4.4.5 2002/05/29 21:48:56 nathanw Exp $ */
+/* $NetBSD: sunos32_syscallargs.h,v 1.4.4.6 2002/06/20 03:43:16 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -382,15 +382,15 @@ int	sunos32_sys_exportfs(struct lwp *, void *, register_t *);
 int	sunos32_sys_mount(struct lwp *, void *, register_t *);
 int	sunos32_sys_ustat(struct lwp *, void *, register_t *);
 #ifdef SYSVSEM
-int	netbsd32_compat_10_sys_semsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_semsys(struct lwp *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVMSG
-int	netbsd32_compat_10_sys_msgsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVSHM
-int	netbsd32_compat_10_sys_shmsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif
 int	sunos32_sys_auditsys(struct lwp *, void *, register_t *);

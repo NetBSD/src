@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46.2.8 2002/04/17 00:06:13 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.9 2002/06/20 03:46:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -260,19 +260,18 @@ struct scsipi_bustype {
  *	Note: chan_bustype has to be first member, as its bustype_type member
  * 	is shared with the aa_bustype member of struct ata_atapi_attach.
  */
+
+#define	SCSIPI_CHAN_PERIPH_BUCKETS	16
+#define	SCSIPI_CHAN_PERIPH_HASHMASK	(SCSIPI_CHAN_PERIPH_BUCKETS - 1)
+
 struct scsipi_channel {
 	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 	const char *chan_name;	/* this channel's name */
 
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
 
-	/*
-	 * Periphs for this channel.  2-dimensional array is dynamically
-	 * allocated.
-	 *
-	 * XXX Consider a different data structure to save space.
-	 */
-	struct scsipi_periph ***chan_periphs;
+	/* Periphs for this channel. */
+	LIST_HEAD(, scsipi_periph) chan_periphtab[SCSIPI_CHAN_PERIPH_BUCKETS];
 
 	int	chan_channel;		/* channel number */
 	int	chan_flags;		/* channel flags */
@@ -350,6 +349,9 @@ struct scsipi_periph {
 	struct device *periph_dev;	/* pointer to peripherial's device */
 	struct scsipi_channel *periph_channel; /* channel we're connected to */
 
+					/* link in channel's table of periphs */
+	LIST_ENTRY(scsipi_periph) periph_hash;
+
 	const struct scsipi_periphsw *periph_switch; /* peripherial's entry
 							points */
 	int	periph_openings;	/* max # of outstanding commands */
@@ -410,6 +412,9 @@ struct scsipi_periph {
 #define	PERIPH_CAP_TQING	0x0200	/* tagged queueing */
 #define	PERIPH_CAP_SFTRESET	0x0400	/* soft RESET condition response */
 #define	PERIPH_CAP_CMD16	0x0800	/* 16 byte commands (ATAPI) */
+#define	PERIPH_CAP_DT		0x1000	/* supports DT clock */
+#define	PERIPH_CAP_QAS		0x2000	/* supports quick arbit. and select. */
+#define	PERIPH_CAP_IUS		0x4000	/* supports information unit xfers */
 
 /* periph_flags */
 #define	PERIPH_REMOVABLE	0x0001	/* media is removable */
@@ -449,7 +454,8 @@ struct scsipi_periph {
 #define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
 						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
-#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI1 device with sync op */
+#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI device with ST sync op*/
+#define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.4 2000/05/29 15:43:32 soren Exp $	*/
+/*	$NetBSD: gt.c,v 1.4.12.1 2002/06/20 03:38:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -86,6 +86,7 @@ gt_attach(parent, self, aux)
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		PCI_FLAGS_MRL_OKAY | /*PCI_FLAGS_MRM_OKAY|*/ PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, gt_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.7 2002/05/29 21:31:42 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.8 2002/06/20 03:38:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.7 2002/05/29 21:31:42 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.8 2002/06/20 03:38:39 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -282,7 +282,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize cpu
  */
 void
 cpu_startup()

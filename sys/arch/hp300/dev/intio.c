@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.6.32.3 2002/04/17 00:03:00 nathanw Exp $	*/
+/*	$NetBSD: intio.c,v 1.6.32.4 2002/06/20 03:38:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.32.3 2002/04/17 00:03:00 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.32.4 2002/06/20 03:38:37 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ const struct intio_builtins intio_4xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "frodo",	0x01c000,	5},
 	{ "hil",	0x028000,	1},
-	{ "fb",		0x160000,	-1},
 };
 #define nintio_4xx_builtins \
 	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43.4.3 2001/11/14 19:16:01 nathanw Exp $	*/
+/*	$NetBSD: ch.c,v 1.43.4.4 2002/06/20 03:46:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.3 2001/11/14 19:16:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.4 2002/06/20 03:46:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,6 @@ chopen(dev, flags, fmt, p)
 	if ((error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	periph->periph_flags |= PERIPH_OPEN;
-
 	/*
 	 * Make sure the unit is on-line.  If a UNIT ATTENTION
 	 * occurs, we will mark that an Init-Element-Status is
@@ -285,6 +283,8 @@ chopen(dev, flags, fmt, p)
 	error = scsipi_test_unit_ready(periph, XS_CTL_IGNORE_NOT_READY);
 	if (error)
 		goto bad;
+
+	periph->periph_flags |= PERIPH_OPEN;
 
 	/*
 	 * Make sure our parameters are up to date.
@@ -510,15 +510,18 @@ ch_interpret_sense(xs)
 		/* "Power On, Reset, or Bus Device Reset Occurred" */
 		sc->sc_periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 		/*
-		 * Enqueue an Element-Status-Changed event, and
-		 * wake up any processes waiting for them.
-		 */
-		/*
 		 * Enqueue an Element-Status-Changed event, and wake up
 		 * any processes waiting for them.
 		 */
 		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
+		if ((periph->periph_flags & PERIPH_OPEN) == 0) {
+			/*
+			 * if the device is not yet open, we can ignore this
+			 * information.
+			 */
+			return (0);
+		}
 		break;
 	default:
 		break;

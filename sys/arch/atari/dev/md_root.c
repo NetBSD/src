@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15.8.1 2001/11/17 23:18:08 scw Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15.8.2 2002/06/20 03:38:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -54,7 +54,7 @@
  * Misc. defines:
  */
 #define	RAMD_CHUNK	(9 * 512)	/* Chunk-size for auto-load	*/
-#define	RAMD_NDEV	2		/* Number of devices configured	*/
+#define	RAMD_NDEV	3		/* Number of devices configured	*/
 
 struct   ramd_info {
 	u_long	ramd_size;  /* Size of disk in bytes			*/
@@ -75,7 +75,12 @@ struct ramd_info rd_info[RAMD_NDEV] = {
 	MAKEDISKDEV(2, 0, 2),	/* XXX: This is crap! (720Kb flop)	*/
     },
     {
-	1105920,		/*	1Mb in 2160 sectors		*/
+	1474560,		/* 1.44Mb in 2880 sectors		*/
+	RAMD_LOAD,		/* auto-load this device		*/
+	MAKEDISKDEV(2, 0, 2),	/* XXX: This is crap! (720Kb flop)	*/
+    },
+    {
+	1474560,		/* 1.44Mb in 2880 sectors		*/
 	RAMD_LOAD,		/* auto-load this device		*/
 	MAKEDISKDEV(2, 0, 3),	/* XXX: This is crap! (1.44Mb flop)	*/
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_vidc.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw Exp $	*/
+/*	$NetBSD: sysbeep_vidc.c,v 1.1.4.4 2002/06/20 03:38:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.1.4.4 2002/06/20 03:38:12 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: sysbeep_vidc.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw
 #include "lmcaudio.h"
 
 /* Prototypes */
-int sysbeep_vidc_match __P((struct device *parent, struct cfdata *cf, void *aux));
-void sysbeep_vidc_attach __P((struct device *parent, struct device *self, void *aux));
-void sysbeep __P((int pitch, int period));
+int sysbeep_vidc_match(struct device *, struct cfdata *, void *);
+void sysbeep_vidc_attach(struct device *, struct device *, void *);
+void sysbeep(int, int);
 
-void lmcaudio_beep_generate __P((void));
+void lmcaudio_beep_generate(void);
 
 /* device attach structure */
 struct cfattach sysbeep_vidc_ca = {
@@ -63,26 +63,23 @@ struct cfattach sysbeep_vidc_ca = {
 };
 
 int
-sysbeep_vidc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sysbeep_vidc_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return (1);	/* XXX */
 }
 
 void
-sysbeep_vidc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sysbeep_vidc_attach(struct device *parent, struct device *self, void *aux)
 {
+
 	printf("\n");
 }
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
+
 #if NVIDCAUDIO > 0
 	vidcaudio_beep_generate();
 #elif NLMCAUDIO > 0

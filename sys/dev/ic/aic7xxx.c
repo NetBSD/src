@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.10 2002/04/17 00:05:32 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.11 2002/06/20 03:44:27 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.10 2002/04/17 00:05:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.11 2002/06/20 03:44:27 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -1548,10 +1548,9 @@ ahc_intr(void *arg)
 		 * We upset the sequencer :-(
 		 * Lookup the error message
 		 */
-		int i, error, num_errors;
+		int i, error;
 
 		error = ahc_inb(ahc, ERROR);
-		num_errors =  sizeof(hard_error)/sizeof(hard_error[0]);
 		for (i = 0; error != 1 && i < num_errors; i++)
 			error >>= 1;
 		panic("%s: brkadrint, %s at seqaddr = 0x%x\n",

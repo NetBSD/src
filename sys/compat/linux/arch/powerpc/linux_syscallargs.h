@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.4.4.8 2002/05/29 21:48:50 nathanw Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.4.4.9 2002/06/20 03:43:02 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -514,10 +514,36 @@ struct linux_sys_ugetrlimit_args {
 	syscallarg(struct rlimit *) rlp;
 };
 
+struct linux_sys_truncate64_args {
+	syscallarg(const char *) path;
+	syscallarg(off_t) length;
+};
+
+struct linux_sys_stat64_args {
+	syscallarg(const char *) path;
+	syscallarg(struct linux_stat64 *) sp;
+};
+
+struct linux_sys_lstat64_args {
+	syscallarg(const char *) path;
+	syscallarg(struct linux_stat64 *) sp;
+};
+
+struct linux_sys_fstat64_args {
+	syscallarg(int) fd;
+	syscallarg(struct linux_stat64 *) sp;
+};
+
 struct linux_sys_getdents64_args {
 	syscallarg(int) fd;
 	syscallarg(struct linux_dirent64 *) dent;
 	syscallarg(unsigned int) count;
+};
+
+struct linux_sys_fcntl64_args {
+	syscallarg(int) fd;
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
 };
 
 /*
@@ -676,5 +702,11 @@ int	sys___getcwd(struct lwp *, void *, register_t *);
 int	linux_sys_sigaltstack(struct lwp *, void *, register_t *);
 int	sys___vfork14(struct lwp *, void *, register_t *);
 int	linux_sys_ugetrlimit(struct lwp *, void *, register_t *);
+int	linux_sys_truncate64(struct lwp *, void *, register_t *);
+int	sys_ftruncate(struct lwp *, void *, register_t *);
+int	linux_sys_stat64(struct lwp *, void *, register_t *);
+int	linux_sys_lstat64(struct lwp *, void *, register_t *);
+int	linux_sys_fstat64(struct lwp *, void *, register_t *);
 int	linux_sys_getdents64(struct lwp *, void *, register_t *);
+int	linux_sys_fcntl64(struct lwp *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

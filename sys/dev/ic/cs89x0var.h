@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.1.2.2 2002/01/08 00:29:40 nathanw Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.1.2.3 2002/06/20 03:44:31 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -107,15 +107,61 @@ struct cs_softc {
 #endif
 
 	/* power management */
-	int (*sc_enable) __P((struct cs_softc *));
-	void (*sc_disable) __P((struct cs_softc *));
+	int (*sc_enable)(struct cs_softc *);
+	void (*sc_disable)(struct cs_softc *);
 	void *sc_powerhook;
 
 	/* dma hooks */
-	void (*sc_dma_process_rx) __P((struct cs_softc *));
-	void (*sc_dma_chipinit) __P((struct cs_softc *));
-	void (*sc_dma_attach) __P((struct cs_softc *));
+	void (*sc_dma_process_rx)(struct cs_softc *);
+	void (*sc_dma_chipinit)(struct cs_softc *);
+	void (*sc_dma_attach)(struct cs_softc *);
+
+	/* register access hooks */
+	u_int8_t (*sc_io_read_1)(struct cs_softc *, bus_size_t);
+	u_int16_t (*sc_io_read_2)(struct cs_softc *, bus_size_t);
+	void (*sc_io_read_multi_2)(struct cs_softc *, bus_size_t, u_int16_t *,
+				bus_size_t);
+	void (*sc_io_write_2)(struct cs_softc *, bus_size_t, u_int16_t);
+	void (*sc_io_write_multi_2)(struct cs_softc *, bus_size_t,
+				 const u_int16_t *, bus_size_t);
+	u_int16_t (*sc_mem_read_2)(struct cs_softc *, bus_size_t);
+	void (*sc_mem_write_2)(struct cs_softc *, bus_size_t, u_int16_t);
+	void (*sc_mem_write_region_2)(struct cs_softc *, bus_size_t,
+				      const u_int16_t *, bus_size_t);
 };
+
+#define IO_READ_1(sc, a) \
+	(sc)->sc_io_read_1 ? \
+		(sc)->sc_io_read_1((sc), (a)) : \
+		bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (a))
+#define IO_READ_2(sc, a) \
+	(sc)->sc_io_read_2 ? \
+		(sc)->sc_io_read_2((sc), (a)) : \
+		bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (a))
+#define IO_READ_MULTI_2(sc, a, b, c) \
+	if ((sc)->sc_io_read_multi_2) \
+		(sc)->sc_io_read_multi_2((sc), (a), (b), (c)); else \
+		bus_space_read_multi_2((sc)->sc_iot, (sc)->sc_ioh, (a), (b), (c))
+#define IO_WRITE_2(sc, a, d) \
+	if ((sc)->sc_io_write_2) \
+		(sc)->sc_io_write_2((sc), (a), (d)); else \
+		bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (a), (d))
+#define IO_WRITE_MULTI_2(sc, a, d, c) \
+	if ((sc)->sc_io_write_multi_2) \
+		(sc)->sc_io_write_multi_2((sc), (a), (d), (c)); else \
+		bus_space_write_multi_2((sc)->sc_iot, (sc)->sc_ioh, (a), (d), (c))
+#define MEM_READ_2(sc, a) \
+	(sc)->sc_mem_read_2 ? \
+		(sc)->sc_mem_read_2((sc), (a)) : \
+		bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, (a))
+#define MEM_WRITE_2(sc, a, d) \
+	if ((sc)->sc_mem_write_2) \
+		(sc)->sc_mem_write_2((sc), (a), (d)); else \
+		bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, (a), (d))
+#define MEM_WRITE_REGION_2(sc, a, d, c) \
+	if ((sc)->sc_mem_write_region_2) \
+		(sc)->sc_mem_write_region_2((sc), (a), (d), (c)); else \
+		bus_space_write_region_2((sc)->sc_memt, (sc)->sc_memh, (a), (d), (c))
 
 
 /* Config Flags in cs_softc */
@@ -149,11 +195,11 @@ _cs_read_port(struct cs_softc *sc, int off)
 	     * EtherJet PCMCIA don't work with cardbus bridges
 	     * (at least TI1250) without this hack.
 	     */
-	    result = (bus_space_read_1(sc->sc_iot, sc->sc_ioh, off) & 0xff);
-	    result |= ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, off+1) & 0xff) << 8);
+	    result = (IO_READ_1(sc, off) & 0xff);
+	    result |= ((IO_READ_1(sc, off+1) & 0xff) << 8);
 	}
 	else {
-	    result = bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
+	    result = IO_READ_2(sc, off);
 	}
 
 	return result;
@@ -165,56 +211,49 @@ static __inline__ u_int16_t
 _CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 {
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR, offset);
+	IO_WRITE_2(sc, PORT_PKTPG_PTR, offset);
 	return (_cs_read_port(sc, PORT_PKTPG_DATA));
 }
 
-static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO __P((bus_space_tag_t,
-	bus_space_handle_t, int));
+static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
 
 static __inline__ u_int16_t
-CS_READ_PACKET_PAGE_IO(iot, ioh, offset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
+CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 {
 
-	bus_space_write_2(iot, ioh, PORT_PKTPG_PTR, offset);
-	return (bus_space_read_2(iot, ioh, PORT_PKTPG_DATA));
+	IO_WRITE_2(sc, PORT_PKTPG_PTR, offset);
+	return (IO_READ_2(sc, PORT_PKTPG_DATA));
 }
 
-#define	CS_READ_PACKET_PAGE_MEM(memt, memh, offset)			\
-	bus_space_read_2((memt), (memh), (offset))
+#define	CS_READ_PACKET_PAGE_MEM(sc, offset)				\
+	MEM_READ_2((sc), (offset))
 
 #define	CS_READ_PACKET_PAGE(sc, offset)					\
-	((sc)->sc_memorymode ? CS_READ_PACKET_PAGE_MEM((sc)->sc_memt,	\
-			       (sc)->sc_memh, (offset)) :		\
+	((sc)->sc_memorymode ? CS_READ_PACKET_PAGE_MEM((sc), (offset)) :\
 	 _CS_READ_PACKET_PAGE_IO((sc), (offset)))
 
-#define	CS_WRITE_PACKET_PAGE_IO(iot, ioh, offset, val)			\
+#define	CS_WRITE_PACKET_PAGE_IO(sc, offset, val)			\
 do {									\
-	bus_space_write_2((iot), (ioh), PORT_PKTPG_PTR, (offset));	\
-	bus_space_write_2((iot), (ioh), PORT_PKTPG_DATA, (val));	\
+	IO_WRITE_2((sc), PORT_PKTPG_PTR, (offset));			\
+	IO_WRITE_2((sc), PORT_PKTPG_DATA, (val));			\
 } while (0)
 
-#define	CS_WRITE_PACKET_PAGE_MEM(memt, memh, offset, val)		\
-	bus_space_write_2((memt), (memh), (offset), (val))
+#define	CS_WRITE_PACKET_PAGE_MEM(sc, offset, val)		\
+	MEM_WRITE_2((sc), (offset), (val))
 
 #define	CS_WRITE_PACKET_PAGE(sc, offset, val)				\
 do {									\
 	if ((sc)->sc_memorymode)					\
-		CS_WRITE_PACKET_PAGE_MEM((sc)->sc_memt, (sc)->sc_memh,	\
-		    (offset), (val));					\
+		CS_WRITE_PACKET_PAGE_MEM((sc), (offset), (val));	\
 	else								\
-		CS_WRITE_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh,	\
-		    (offset), (val));					\
+		CS_WRITE_PACKET_PAGE_IO((sc), (offset), (val));		\
 } while (0)
 
 #define CS_READ_PORT(sc, off)\
-	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (off))
+	IO_READ_2((sc), (off))
 
 #define CS_WRITE_PORT(sc, off, val)\
-	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (off), (val))
+	IO_WRITE_2((sc), (off), (val))
 
 
 /* Return Status */
@@ -233,17 +272,16 @@ do {									\
 
 #define MAXLOOP            0x8888
 
-int	cs_attach __P((struct cs_softc *sc, u_int8_t *enaddr,
-	    int *media, int nmedia, int defmedia));
-int	cs_detach __P((struct cs_softc *sc));
-int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
-int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
-	    u_int16_t *));
-int	cs_intr __P((void *));
-int cs_activate __P((struct device *, enum devact));
-void	cs_ether_input __P((struct cs_softc *, struct mbuf *));
-void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
-int	cs_init __P((struct ifnet *));
+int	cs_attach(struct cs_softc *sc, u_int8_t *enaddr,
+		  int *media, int nmedia, int defmedia);
+int	cs_detach(struct cs_softc *sc);
+int	cs_verify_eeprom(struct cs_softc *sc);
+int	cs_read_eeprom(struct cs_softc *, int, u_int16_t *);
+int	cs_intr(void *);
+int	cs_activate(struct device *, enum devact);
+void	cs_ether_input(struct cs_softc *, struct mbuf *);
+void	cs_print_rx_errors(struct cs_softc *, u_int16_t);
+int	cs_init(struct ifnet *);
 
 #define CS_IS_ENABLED(sc)	((sc)->sc_cfgflags & CFGFLG_ENABLED)
 

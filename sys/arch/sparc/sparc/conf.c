@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.71.4.4 2002/04/01 07:42:48 nathanw Exp $ */
+/*	$NetBSD: conf.c,v 1.71.4.5 2002/06/20 03:41:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 /* XXX KEEP THIS FILE IN SYNC WITH THE arch/sparc64/sparc64/conf.c VERSION */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +284,11 @@ struct cdevsw	cdevsw[] =
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Aurora multiport serial */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 126: system call tracing */
+#else
+	cdev_notdef(),			/* 126: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -448,6 +454,7 @@ static int chrtoblktbl[] = {
 	/*123 */	NODEV,
 	/*124 */	NODEV,
 	/*125 */	NODEV,
+	/*126 */	NODEV,
 };
 
 /*

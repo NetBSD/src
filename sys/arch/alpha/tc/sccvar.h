@@ -1,4 +1,4 @@
-/* $NetBSD: sccvar.h,v 1.6.14.1 2001/08/28 18:57:40 nathanw Exp $ */
+/* $NetBSD: sccvar.h,v 1.6.14.2 2002/06/20 03:37:47 nathanw Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -118,4 +118,4 @@ struct pdma {
 #define	SCCCOMM3_PORT	0x2
 #define	SCCKBD_PORT	0x3
 
-int	alpha_donot_kludge_scc;
+extern	int	alpha_donot_kludge_scc;

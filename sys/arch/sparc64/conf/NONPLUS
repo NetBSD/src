@@ -1,6 +1,8 @@
-# 	$NetBSD: NONPLUS,v 1.29.2.5 2002/04/17 00:04:29 nathanw Exp $
+# 	$NetBSD: NONPLUS,v 1.29.2.6 2002/06/20 03:41:18 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	64
 
@@ -423,3 +425,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

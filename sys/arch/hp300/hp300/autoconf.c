@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49.20.3 2002/04/01 07:39:55 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.20.4 2002/06/20 03:38:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.20.3 2002/04/01 07:39:55 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.20.4 2002/06/20 03:38:38 nathanw Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -796,12 +796,12 @@ hp300_cninit()
 	/*
 	 * Look for serial consoles first.
 	 */
-#if NDCA > 0
-	if (!dio_scan(dcacnattach))
+#if NAPCI > 0
+	if (!apcicnattach(HP300_BUS_SPACE_INTIO, 0x1c020, -1))
 		return;
 #endif
-#if NAPCI > 0
-	if (!dio_scan(apcicnattach))
+#if NDCA > 0
+	if (!dio_scan(dcacnattach))
 		return;
 #endif
 #if NDCM > 0
@@ -830,7 +830,7 @@ hp300_cninit()
 	if (!topcatcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
 		goto find_kbd;
 #endif
-#endif
+#endif	/* CONSCODE */
 
 	/*
 	 * Look for external framebuffers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.1.14.1 2002/04/01 07:42:14 nathanw Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.1.14.2 2002/06/20 03:40:43 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -38,15 +38,23 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <elf.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/disklabel_mbr.h>
-#include <sys/exec_elf.h>
-#include <machine/bswap.h>
-#include <machine/endian.h>
 
+#include "byteorder.h"
 #include "magic.h"
+
+#ifndef	MBR_PTYPE_PREP
+#define	MBR_PTYPE_PREP		0x41
+#endif
+
+#ifndef	MBR_FLAGS_ACTIVE
+#define	MBR_FLAGS_ACTIVE	0x80
+#endif
+
 
 int
 main(argc, argv)
@@ -109,14 +117,14 @@ main(argc, argv)
 		fprintf(stderr, "input '%s' is not ELF32 format\n", argv[1]);
 		exit(3);
 	}
-	if (be16toh(hdr.e_machine) != EM_PPC) {
+	if (sa_be16toh(hdr.e_machine) != EM_PPC) {
 		fprintf(stderr, "input '%s' is not PowerPC exec binary\n",
 			argv[1]);
 		exit(3);
 	}
 
-	for (i = 0; i < be16toh(hdr.e_phnum); i++) {
-		lseek(elf_fd, be32toh(hdr.e_phoff) + sizeof(phdr) * i,
+	for (i = 0; i < sa_be16toh(hdr.e_phnum); i++) {
+		lseek(elf_fd, sa_be32toh(hdr.e_phoff) + sizeof(phdr) * i,
 			SEEK_SET);
 		if (read(elf_fd, &phdr, sizeof(phdr)) != sizeof(phdr)) {
 			fprintf(stderr, "Can't read input '%s' phdr : %s\n",
@@ -124,13 +132,13 @@ main(argc, argv)
 			exit(3);
                 }
 
-		if ((be32toh(phdr.p_type) != PT_LOAD) ||
-		    !(be32toh(phdr.p_flags) & PF_X))
+		if ((sa_be32toh(phdr.p_type) != PT_LOAD) ||
+		    !(sa_be32toh(phdr.p_flags) & PF_X))
 			continue;
 
 		fstat(elf_fd, &elf_stat);
-		elf_img_len = elf_stat.st_size - be32toh(phdr.p_offset);
-		lseek(elf_fd, be32toh(phdr.p_offset), SEEK_SET);
+		elf_img_len = elf_stat.st_size - sa_be32toh(phdr.p_offset);
+		lseek(elf_fd, sa_be32toh(phdr.p_offset), SEEK_SET);
 
 		break;
 	}
@@ -138,13 +146,13 @@ main(argc, argv)
 	memset(mbr, 0, sizeof(mbr));
  
 	/* Set entry point and boot image size skipping over elf header */
-	entry  = htole32(0x400);
-	length = htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
+	entry  = sa_htole32(0x400);
+	length = sa_htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
 
 	/*
 	 * Set magic number for msdos partition
 	 */
-	*(unsigned short *)&mbr[MBR_MAGICOFF] = htole16(MBR_MAGIC);
+	*(unsigned short *)&mbr[MBR_MAGICOFF] = sa_htole16(MBR_MAGIC);
   
 	/*
 	 * Build a "PReP" partition table entry in the boot record
@@ -177,8 +185,8 @@ main(argc, argv)
 	 */
 
 	/* This has to be 0 on the PowerStack? */   
-	mbrp->mbrp_start = htole32(0);
-	mbrp->mbrp_size  = htole32(2 * 18 * 80 - 1);
+	mbrp->mbrp_start = sa_htole32(0);
+	mbrp->mbrp_size  = sa_htole32(2 * 18 * 80 - 1);
 
 	write(prep_fd, mbr, sizeof(mbr));
 	write(prep_fd, &entry, sizeof(entry));
@@ -217,11 +225,12 @@ main(argc, argv)
 			exit(3);
 		}
 		write(prep_fd, (void *)magic, MAGICSIZE);
-		tmp = htobe32(kern_stat.st_size);
+		tmp = sa_htobe32(kern_stat.st_size);
 		write(prep_fd, (void *)&tmp, KERNLENSIZE);
 		write(prep_fd, (void *)kern_img, kern_stat.st_size);
 
-		length = htole32(0x400 + elf_img_len + 8 + kern_stat.st_size);
+		length = sa_htole32(0x400 + elf_img_len + 8 +
+		    kern_stat.st_size);
 		lseek(prep_fd, sizeof(mbr) + 4, SEEK_SET);
 		write(prep_fd, &length, sizeof(length));  
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.2.4.2 2002/04/17 00:02:32 nathanw Exp $	*/
+/*	$NetBSD: vidc.h,v 1.2.4.3 2002/06/20 03:38:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -106,8 +106,8 @@ extern int *vidc_base;
 /* VIDC palette macros */
 
 #define VIDC_RED(r)   (r)
-#define VIDC_GREEN(g) (g << 8)
-#define VIDC_BLUE(b)  (b << 16)
+#define VIDC_GREEN(g) ((g) << 8)
+#define VIDC_BLUE(b)  ((b) << 16)
 #define VIDC_COL(r, g, b) (VIDC_RED(r) | VIDC_GREEN(g) | VIDC_BLUE(b))
 
 

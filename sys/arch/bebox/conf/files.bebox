@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.29.4.3 2002/02/28 04:08:37 nathanw Exp $
+#	$NetBSD: files.bebox,v 1.29.4.4 2002/06/20 03:38:22 nathanw Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -91,9 +91,6 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/bebox/pci/pcib.c		pcib
 
-# network devices MII bus
-include "dev/mii/files.mii"
-
 #
 # ISA and mixed ISA+PCI drivers
 #
@@ -126,10 +123,6 @@ file	arch/bebox/isa/lms.c		lms needs-flag
 device	mms
 attach	mms at isa
 file	arch/bebox/isa/mms.c		mms needs-flag
-device	opms
-attach	opms at pckbcport with pms_hack
-attach	opms at pckbc with pms_pckbc
-file	arch/bebox/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_types.h,v 1.12 2001/02/21 23:53:02 eeh Exp $	 */
+/*	$NetBSD: svr4_types.h,v 1.12.2.1 2002/06/20 03:43:17 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@
 #ifndef	_SVR4_TYPES_H_
 #define	_SVR4_TYPES_H_
 
-#ifndef __LP64__
-#if defined(__alpha__) || defined(__sparc_v9__)
-#define	__LP64__	1
-#endif
-#endif
-
 typedef u_quad_t	 svr4_ino64_t;
 typedef quad_t		 svr4_off64_t;
 typedef quad_t		 svr4_blkcnt64_t;
@@ -77,7 +71,7 @@ typedef u_short		 svr4_o_gid_t;
 typedef long		 svr4_clock_t;
 typedef int		 svr4_key_t;
 
-#ifdef __LP64__
+#ifdef _LP64
 /*
  * Solaris uses a `long' time_t.
  */

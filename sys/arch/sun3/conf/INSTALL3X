@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.12.8.4 2002/04/17 00:04:34 nathanw Exp $
+# $NetBSD: INSTALL3X,v 1.12.8.5 2002/06/20 03:41:40 nathanw Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -8,6 +8,8 @@
 #
 
 include "arch/sun3/conf/std.sun3x"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"	# Optimise for space. Implies -O2
 

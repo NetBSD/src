@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.4 1994/10/26 07:24:59 cgd Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.4.50.1 2002/06/20 03:38:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -294,7 +294,11 @@ struct scsi_format_parms {		/* physical BFI format */
 		unsigned head : 8;
 		long	bytes_from_index;
 	} defect[127];
-} format_parms;
+};
+
+#ifdef _KERNEL
+extern struct scsi_format_parms format_parms;
+#endif
 
 struct scsi_reassign_parms {
 	u_short	reserved;
@@ -302,7 +306,11 @@ struct scsi_reassign_parms {
 	struct new_defect {
 		unsigned lba;	/* logical block address */
 	} new_defect[2];
-} reassign_parms;
+};
+
+#ifdef _KERNEL
+extern struct scsi_reassign_parms reassign_parms;
+#endif
 
 struct scsi_modesel_hdr {
 	u_char	rsvd1;

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.21.2.3 2002/05/29 21:48:52 nathanw Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.21.2.4 2002/06/20 03:43:12 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.21.2.3 2002/05/29 21:48:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.21.2.4 2002/06/20 03:43:12 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -189,13 +189,8 @@ struct sysent netbsd32_sysent[] = {
 	    compat_13(netbsd32_sigaltstack13) },/* 53 = compat_13 netbsd32_sigaltstack13 */
 	{ 3, s(struct netbsd32_ioctl_args), 0,
 	    netbsd32_ioctl },			/* 54 = netbsd32_ioctl */
-#ifdef COMPAT_12
 	{ 1, s(struct compat_12_netbsd32_reboot_args), 0,
 	    compat_12(netbsd32_reboot) },	/* 55 = compat_12 netbsd32_reboot */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 55 = obsolete oreboot */
-#endif
 	{ 1, s(struct netbsd32_revoke_args), 0,
 	    netbsd32_revoke },			/* 56 = netbsd32_revoke */
 	{ 2, s(struct netbsd32_symlink_args), 0,
@@ -449,26 +444,26 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 167 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	{ 5, s(struct netbsd32_compat_10_sys_semsys_args), 0,
-	    netbsd32_compat_10_sys_semsys },	/* 169 = osemsys */
+#if defined(SYSVSEM) || !defined(_KERNEL)
+	{ 5, s(struct compat_10_netbsd32_sys_semsys_args), 0,
+	    compat_10(netbsd32_sys_semsys) },	/* 169 = compat_10 osemsys */
 #else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 169 = excluded 1.0 semsys */
+	    sys_nosys },			/* 169 = excluded netbsd32_sys_semsys */
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	{ 6, s(struct netbsd32_compat_10_sys_msgsys_args), 0,
-	    netbsd32_compat_10_sys_msgsys },	/* 170 = omsgsys */
+#if defined(SYSVMSG) || !defined(_KERNEL)
+	{ 6, s(struct compat_10_netbsd32_sys_msgsys_args), 0,
+	    compat_10(netbsd32_sys_msgsys) },	/* 170 = compat_10 omsgsys */
 #else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 170 = excluded 1.0 msgsys */
+	    sys_nosys },			/* 170 = excluded netbsd32_sys_msgsys */
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	{ 4, s(struct netbsd32_compat_10_sys_shmsys_args), 0,
-	    netbsd32_compat_10_sys_shmsys },	/* 171 = oshmsys */
+#if defined(SYSVSHM) || !defined(_KERNEL)
+	{ 4, s(struct compat_10_netbsd32_sys_shmsys_args), 0,
+	    compat_10(netbsd32_sys_shmsys) },	/* 171 = compat_10 oshmsys */
 #else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 171 = excluded 1.0 shmsys */
+	    sys_nosys },			/* 171 = excluded netbsd32_sys_shmsys */
 #endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 172 = unimplemented */

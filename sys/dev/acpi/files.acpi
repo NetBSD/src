@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.2.4.4 2002/04/01 07:45:07 nathanw Exp $
+#	$NetBSD: files.acpi,v 1.2.4.5 2002/06/20 03:43:27 nathanw Exp $
 
 include "dev/acpi/acpica/files.acpica"
 

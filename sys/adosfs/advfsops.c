@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.44.2.6 2002/04/01 07:38:41 nathanw Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.44.2.7 2002/06/20 03:37:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.6 2002/04/01 07:38:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.7 2002/06/20 03:37:16 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,8 @@ struct pool adosfs_node_pool;
 struct genfs_ops adosfs_genfsops = {
 	genfs_size,
 };
+
+int (**adosfs_vnodeop_p) __P((void *));
 
 int
 adosfs_mount(mp, path, data, ndp, p)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.26.4.5 2002/04/17 00:03:02 nathanw Exp $
+#	$NetBSD: files.hpcarm,v 1.26.4.6 2002/06/20 03:38:44 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -141,9 +141,6 @@ include "dev/i2o/files.i2o"
 
 # Include PCI stuff
 include "dev/pci/files.pci"
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 # Include USB stuff
 include "dev/usb/files.usb"

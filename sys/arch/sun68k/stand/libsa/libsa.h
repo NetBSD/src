@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.1.8.2 2002/01/08 00:28:25 nathanw Exp $	*/
+/*	$NetBSD: libsa.h,v 1.1.8.3 2002/06/20 03:42:00 nathanw Exp $	*/
 
 /*
  * This file defines the API for libsa.a
@@ -13,7 +13,6 @@
 #define KERN_LOADADDR	0x4000
 
 /* SRT0.S */
-void	exit __P((void));
 void	ICIA __P((void));
 void **	getvbr __P((void));
 

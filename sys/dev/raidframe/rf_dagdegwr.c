@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.6.2.3 2001/11/14 19:15:46 nathanw Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.6.2.4 2002/06/20 03:46:26 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.6.2.3 2001/11/14 19:15:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.6.2.4 2002/06/20 03:46:26 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -404,7 +404,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 		 * xored in */
 		if (overlappingPDAs[i]) {
 			RF_MallocAndAdd(pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
-			bcopy((char *) wndNodes[i].params[0].p, (char *) pda, sizeof(RF_PhysDiskAddr_t));
+			memcpy((char *) pda, (char *) wndNodes[i].params[0].p, sizeof(RF_PhysDiskAddr_t));
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_DOBUFFER, 0);
 			xorNode->params[paramNum++].p = pda;
 			xorNode->params[paramNum++].p = pda->bufPtr;

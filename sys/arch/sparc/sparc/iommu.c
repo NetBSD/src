@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59.4.3 2002/04/01 07:42:50 nathanw Exp $ */
+/*	$NetBSD: iommu.c,v 1.59.4.4 2002/06/20 03:41:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -242,7 +242,6 @@ iommu_attach(parent, self, aux)
 	 */
 
 	size = ((0 - IOMMU_DVMA_BASE) / sc->sc_pagesize) * sizeof(iopte_t);
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
 			    size, 0, &mlist, 1, 0) != 0)
 		panic("iommu_attach: no memory");

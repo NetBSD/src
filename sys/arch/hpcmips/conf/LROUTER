@@ -1,11 +1,13 @@
 #
-# 	$NetBSD: LROUTER,v 1.4.4.3 2002/04/17 00:03:06 nathanw Exp $
+# 	$NetBSD: LROUTER,v 1.4.4.4 2002/06/20 03:38:45 nathanw Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
 #
 
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
@@ -164,6 +166,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #pseudo-device	biconsdev	1	# build-in console device
 #pseudo-device	wsmux			# mouse & keyboard multiplexor

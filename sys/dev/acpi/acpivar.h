@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.3.4.3 2002/04/01 07:45:07 nathanw Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.3.4.4 2002/06/20 03:43:27 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -261,3 +261,8 @@ struct acpi_mem		*acpi_res_mem(struct acpi_resources *, int);
 struct acpi_memrange	*acpi_res_memrange(struct acpi_resources *, int);
 struct acpi_irq		*acpi_res_irq(struct acpi_resources *, int);
 struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
+
+/*
+ * power state transition
+ */
+extern ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);

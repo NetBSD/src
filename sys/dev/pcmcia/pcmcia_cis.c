@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.7 2002/02/28 04:14:14 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.8 2002/06/20 03:46:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.7 2002/02/28 04:14:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.8 2002/06/20 03:46:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,8 +527,7 @@ pcmcia_print_cis(sc)
 	printf("%s: Manufacturer code 0x%x, product 0x%x\n",
 	       sc->dev.dv_xname, card->manufacturer, card->product);
 
-	for (pf = card->pf_head.sqh_first; pf != NULL;
-	    pf = pf->pf_list.sqe_next) {
+	SIMPLEQ_FOREACH(pf, &card->pf_head, pf_list) {
 		printf("%s: function %d: ", sc->dev.dv_xname, pf->number);
 
 		switch (pf->function) {
@@ -582,8 +581,7 @@ pcmcia_print_cis(sc)
 
 		printf(", ccr addr %lx mask %lx\n", pf->ccr_base, pf->ccr_mask);
 
-		for (cfe = pf->cfe_head.sqh_first; cfe != NULL;
-		    cfe = cfe->cfe_list.sqe_next) {
+		SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 			printf("%s: function %d, config table entry %d: ",
 			    sc->dev.dv_xname, pf->number, cfe->number);
 
@@ -692,11 +690,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		 * rather not change it.
 		 */
 		if (state->gotmfc == 1) {
-			struct pcmcia_function *pf, *pfnext;
+			struct pcmcia_function *pf;
 
-			for (pf = state->card->pf_head.sqh_first; pf != NULL;
-			    pf = pfnext) {
-				pfnext = pf->pf_list.sqe_next;
+			SIMPLEQ_FOREACH(pf, &state->card->pf_head, pf_list) {
 				free(pf, M_DEVBUF);
 			}
 

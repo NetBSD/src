@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.55.2.9 2002/04/17 00:06:17 nathanw Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.55.2.10 2002/06/20 03:47:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.9 2002/04/17 00:06:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.10 2002/06/20 03:47:07 nathanw Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -203,7 +203,7 @@ const struct execsw execsw_builtin[] = {
 	  netbsd32_copyargs,
 	  NULL,
 	  coredump_netbsd32 },
-#endif
+#else /* !COMPAT_NETBSD32 */
 
 	/* Native a.out */
 	{ sizeof(struct exec),
@@ -222,6 +222,7 @@ const struct execsw execsw_builtin[] = {
 	  NULL,
 	  coredump_netbsd },
 #endif /* EXEC_AOUT */
+#endif /* !COMPAT_NETBSD32 */
 
 #ifdef EXEC_COFF
 	/* Native COFF */
@@ -287,9 +288,38 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs,
 	  NULL,
-	  coredump_netbsd32 },		/* XXX XXX XXX */
+	  coredump_elf32 },		/* XXX XXX XXX */
+	  /* This one should go first so it matches instead of native */
+
+#ifdef COMPAT_SVR4_32
+	/* SVR4 Elf32 on 64-bit */
+	{ sizeof (Elf32_Ehdr),
+	  exec_elf32_makecmds,
+	  { ELF32NAME2(svr4_32,probe) },
+	  &emul_svr4_32,
+	  EXECSW_PRIO_ANY,
+	  SVR4_32_AUX_ARGSIZ,
+	  svr4_32_copyargs,
+	  NULL,
+	  coredump_elf32 },	/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 #endif
+
+#if 0
+#if EXEC_ELF_NOTELESS
+	/* Generic compat Elf32 -- run as compat NetBSD Elf32 */
+	{ sizeof (Elf32_Ehdr),
+	  exec_elf32_makecmds,
+	  { ELF32NAME2(netbsd32,probe_noteless) },
+	  &emul_netbsd32,
+	  EXECSW_PRIO_FIRST,
+	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  netbsd32_elf32_copyargs,
+	  NULL,
+	  coredump_elf32 },		/* XXX XXX XXX */
+#endif
+#endif
+#else /* !COMPAT_NETBSD32 */
 
 	/* Native Elf32 */
 	{ sizeof (Elf32_Ehdr),
@@ -352,20 +382,6 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 
-#ifdef COMPAT_SVR4_32
-	/* SVR4 Elf32 on 64-bit */
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { ELF32NAME2(svr4_32,probe) },
-	  &emul_svr4_32,
-	  EXECSW_PRIO_ANY,
-	  SVR4_32_AUX_ARGSIZ,
-	  svr4_32_copyargs,
-	  NULL,
-	  coredump_netbsd32 },	/* XXX XXX XXX */
-	  /* This one should go first so it matches instead of native */
-#endif
-
 #ifdef COMPAT_SVR4
 	/* SVR4 Elf32 */
 	{ sizeof (Elf32_Ehdr),
@@ -405,6 +421,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 #endif /* EXEC_ELF32 */
+#endif /* !COMPAT_NETBSD32 */
 
 #ifdef EXEC_ELF64
 	/* Native Elf64 */

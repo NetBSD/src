@@ -71,6 +71,9 @@
 
 #include <machine/netbsd32_machdep.h>
 
+/* Provide a the name of the architecture we're emulating */
+char	machine_arch32[] = "sparc";	
+
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53.2.4 2002/01/08 00:22:58 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53.2.5 2002/06/20 03:37:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,7 +145,7 @@ extern int astpending;		/* need trap before returning to user mode */
 #define AMIGA_68060	(1L<<7)
 
 #ifdef _KERNEL
-int machineid;
+extern int machineid;
 #endif
 
 /*

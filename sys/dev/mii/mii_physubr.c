@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.18.2.4 2001/11/14 19:15:02 nathanw Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.18.2.5 2002/06/20 03:45:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.18.2.4 2001/11/14 19:15:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.18.2.5 2002/06/20 03:45:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,7 +155,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 int
 mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
-	int bmsr, i;
+	int i;
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		/*
@@ -201,7 +201,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	if (waitfor) {
 		/* Wait 500ms for it to complete. */
 		for (i = 0; i < 500; i++) {
-			if ((bmsr = PHY_READ(sc, MII_BMSR)) & BMSR_ACOMP)
+			if (PHY_READ(sc, MII_BMSR) & BMSR_ACOMP)
 				return (0);
 			delay(1000);
 		}
@@ -235,14 +235,13 @@ void
 mii_phy_auto_timeout(void *arg)
 {
 	struct mii_softc *sc = arg;
-	int s, bmsr;
+	int s;
 
 	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
 	s = splnet();
 	sc->mii_flags &= ~MIIF_DOINGAUTO;
-	bmsr = PHY_READ(sc, MII_BMSR);
 
 	/* Update the media status. */
 	(void) PHY_SERVICE(sc, sc->mii_pdata, MII_POLLSTAT);
@@ -342,23 +341,30 @@ void
 mii_phy_update(struct mii_softc *sc, int cmd)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	int announce, s;
 
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
+		announce = mii_phy_statusmsg(sc);
 		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		mii_phy_statusmsg(sc);
 		sc->mii_media_active = mii->mii_media_active;
 		sc->mii_media_status = mii->mii_media_status;
+
+		if (announce) {
+			s = splnet();
+			rt_ifmsg(mii->mii_ifp);
+			splx(s);
+		}
 	}
 }
 
-void
+int
 mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int s, baudrate, link_state, announce = 0;
+	int baudrate, link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
@@ -385,11 +391,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 		announce = 1;
 	}
 
-	if (announce) {
-		s = splnet();
-		rt_ifmsg(ifp);
-		splx(s);
-	}
+	return (announce);
 }
 
 /*
@@ -404,7 +406,7 @@ mii_phy_add_media(struct mii_softc *sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(n)	printf("%s%s", sep, (n)); sep = ", "
 
 	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
@@ -536,6 +538,7 @@ mii_phy_activate(struct device *self, enum devact act)
 	return (rv);
 }
 
+/* ARGSUSED1 */
 int
 mii_phy_detach(struct device *self, int flags)
 {

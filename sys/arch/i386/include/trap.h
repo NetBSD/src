@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
+/*	$NetBSD: trap.h,v 1.4.48.1 2002/06/20 03:39:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,9 @@
 #define	T_TSSFLT	15	/* invalid tss fault */
 #define	T_SEGNPFLT	16	/* segment not present fault */
 #define	T_STKFLT	17	/* stack fault */
-#define	T_RESERVED	18	/* reserved fault base */
+#define	T_MCA		18	/* machine check */
+#define T_XMM		19	/* SSE FP exception */
+#define T_RESERVED	20	/* reserved fault base */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100

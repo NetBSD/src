@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62.8.3 2002/04/01 07:38:52 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.62.8.4 2002/06/20 03:37:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -35,10 +35,11 @@
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
-#include "opt_compat_svr4.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.3 2002/04/01 07:38:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.4 2002/06/20 03:37:49 nathanw Exp $");
+
+#include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +134,9 @@ cdev_decl(isdntrc);
 cdev_decl(isdnbchan);
 cdev_decl(isdntel);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -192,6 +196,12 @@ struct cdevsw	cdevsw[] =
 			    wsdisplay), /* 53: display */
 
 	cdev_mouse_init(NWSKBD,wskbd),  /* 54: keyboard */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 55: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 56: system call tracing */
+#else
+	cdev_notdef(),			/* 56: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -307,6 +317,10 @@ static int chrtoblktab[] = {
 	/* 50 */	16,
 	/* 51 */	NODEV,
 	/* 52 */	17,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
 };
 
 /*

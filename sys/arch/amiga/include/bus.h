@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2000/03/23 22:44:43 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.12.1 2002/06/20 03:37:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -241,10 +241,10 @@ struct amiga_bus_space_methods {
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
 
-const struct amiga_bus_space_methods amiga_bus_stride_1;
-const struct amiga_bus_space_methods amiga_bus_stride_2;
-const struct amiga_bus_space_methods amiga_bus_stride_4;
-const struct amiga_bus_space_methods amiga_bus_stride_4swap;
-const struct amiga_bus_space_methods amiga_bus_stride_16;
+extern const struct amiga_bus_space_methods amiga_bus_stride_1;
+extern const struct amiga_bus_space_methods amiga_bus_stride_2;
+extern const struct amiga_bus_space_methods amiga_bus_stride_4;
+extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
+extern const struct amiga_bus_space_methods amiga_bus_stride_16;
 
 #endif /* _AMIGA_BUS_H_ */

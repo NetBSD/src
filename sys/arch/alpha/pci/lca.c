@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.36 2000/06/29 08:58:47 mrg Exp $ */
+/* $NetBSD: lca.c,v 1.36.2.1 2002/06/20 03:37:42 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.36 2000/06/29 08:58:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.36.2.1 2002/06/20 03:37:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +252,7 @@ lcaattach(parent, self, aux)
 	    alphabus_dma_get_tag(&lcp->lc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, lcaprint);

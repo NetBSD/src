@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.6.3 2002/04/01 07:40:55 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.6.4 2002/06/20 03:39:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -127,11 +127,6 @@
 #define HFS_PART 4
 #define SCRATCH_PART 5
 
-int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
-		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
-		    MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
-		    -1 };
-
 static int getFreeLabelEntry __P((struct disklabel *));
 static int whichType __P((struct part_map_entry *, u_int8_t *, int *));
 static void setpartition __P((struct part_map_entry *,
@@ -142,8 +137,8 @@ static char *read_mac_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
 static char *read_dos_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
-static int get_netbsd_label __P((dev_t dev, void (*strat)(struct buf *),
-		struct disklabel *lp, daddr_t bno));
+static int get_netbsd_label __P((dev_t, void (*)(struct buf *),
+		struct disklabel *, daddr_t, int));
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -409,10 +404,11 @@ read_dos_label(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct mbr_partition *dp;
-	struct partition *pp;
 	struct buf *bp;
 	char *msg = NULL;
-	int i, *ip, slot, maxslot = 0;
+	int i, slot, maxslot = 0;
+	u_int32_t bsdpartoff, cyl;
+	struct mbr_partition *bsdp;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -425,33 +421,74 @@ read_dos_label(dev, strat, lp, osdep)
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
+	bsdpartoff = 0;
+	cyl = LABELSECTOR / lp->d_secpercyl;
+
 	/* if successful, wander through dos partition table */
 	if (biowait(bp)) {
 		msg = "dos partition I/O error";
 		goto done;
-	} else {
-		/* XXX */
-		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
-		for (i = 0; i < NMBRPART; i++, dp++) {
-			if (dp->mbrp_typ != 0) {
-				slot = getFreeLabelEntry(lp);
-				if (slot > maxslot)
-					maxslot = slot;
-
-				pp = &lp->d_partitions[slot];
-				pp->p_fstype = FS_OTHER;
-				pp->p_offset = bswap32(dp->mbrp_start);
-				pp->p_size = bswap32(dp->mbrp_size);
-
-				for (ip = fat_types; *ip != -1; ip++) {
-					if (dp->mbrp_typ == *ip) {
-						pp->p_fstype = FS_MSDOS;
-						break;
-					}
-				}
-			}
+	}
+	/* XXX */
+	dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
+	bsdp = NULL;
+	for (i = 0; i < NMBRPART; i++, dp++) {
+		switch (dp->mbrp_typ) {
+		case MBR_PTYPE_NETBSD:
+			bsdp = dp;
+			break;
+		case MBR_PTYPE_OPENBSD:
+		case MBR_PTYPE_386BSD:
+			if (!bsdp)
+				bsdp = dp;
+			break;
 		}
 	}
+	if (!bsdp) {
+		/* generate fake disklabel */
+		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
+		for (i = 0; i < NMBRPART; i++, dp++) {
+			if (!dp->mbrp_typ)
+				continue;
+			slot = getFreeLabelEntry(lp);
+			if (slot < 0)
+				break;
+			if (slot > maxslot)
+				maxslot = slot;
+
+			lp->d_partitions[slot].p_offset = bswap32(dp->mbrp_start);
+			lp->d_partitions[slot].p_size = bswap32(dp->mbrp_size);
+
+			switch (dp->mbrp_typ) {
+			case MBR_PTYPE_FAT12:
+			case MBR_PTYPE_FAT16S:
+			case MBR_PTYPE_FAT16B:
+			case MBR_PTYPE_FAT32:
+			case MBR_PTYPE_FAT32L:
+			case MBR_PTYPE_FAT16L:
+				lp->d_partitions[slot].p_fstype = FS_MSDOS;
+				break;
+			default:
+				lp->d_partitions[slot].p_fstype = FS_OTHER;
+				break;
+			}
+		}
+		msg = "no NetBSD disk label";
+	} else {
+		/* NetBSD partition on MBR */
+		bsdpartoff = bswap32(bsdp->mbrp_start);
+		cyl = MBR_PCYL(bsdp->mbrp_scyl, bsdp->mbrp_ssect);
+
+		lp->d_partitions[2].p_size = bswap32(bsdp->mbrp_size);
+		lp->d_partitions[2].p_offset = bswap32(bsdp->mbrp_start);
+		if (2 > maxslot)
+			maxslot = 2;
+		/* read in disklabel, blkno + 1 for DOS disklabel offset */
+		if (get_netbsd_label(dev, strat, lp, bsdpartoff + 1, 0))
+			goto done;
+		msg = "no NetBSD disk label";
+	}
+
 	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
  done:
@@ -463,11 +500,12 @@ read_dos_label(dev, strat, lp, osdep)
  * Get real NetBSD disk label
  */
 static int
-get_netbsd_label(dev, strat, lp, bno)
+get_netbsd_label(dev, strat, lp, bno, offset)
 	dev_t dev;
 	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	daddr_t bno;
+	int offset;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -477,7 +515,7 @@ get_netbsd_label(dev, strat, lp, bno)
 	bp->b_dev = dev;
 
 	/* Now get the label block */
-	bp->b_blkno = bno + LABELSECTOR;
+	bp->b_blkno = bno;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
@@ -486,7 +524,7 @@ get_netbsd_label(dev, strat, lp, bno)
 	if (biowait(bp))
 		goto done;
 
-	for (dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	for (dlp = (struct disklabel *)(bp->b_data + offset);
 	     dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof (*dlp));
 	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC
@@ -545,7 +583,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	if (biowait(bp))
 		msg = "I/O error reading block zero";
-	else if (get_netbsd_label(dev, strat, lp, 0))
+	else if (get_netbsd_label(dev, strat, lp, LABELSECTOR, LABELOFFSET))
 		osdep->cd_start = 0;
 	else {
 		u_int16_t *sbSigp;
@@ -556,6 +594,10 @@ readdisklabel(dev, strat, lp, osdep)
 		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
 			   == MBR_MAGIC) {
 			msg = read_dos_label(dev, strat, lp, osdep);
+#if 0
+			if (!msg)
+				osdep->cd_start = 0;
+#endif
 		} else {
 			msg = "no disk label -- NetBSD or Macintosh";
 			osdep->cd_start = 0;	/* XXX for now */

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.21.2.3 2002/05/29 21:48:51 nathanw Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.21.2.4 2002/06/20 03:43:09 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -166,7 +166,6 @@
 
 #define	netbsd32_SYS_compat_12_netbsd32_reboot	55
 
-				/* 55 is obsolete oreboot */
 /* syscall: "netbsd32_revoke" ret: "int" args: "const netbsd32_charp" */
 #define	netbsd32_SYS_netbsd32_revoke	56
 
@@ -427,18 +426,15 @@
 /* syscall: "netbsd32_sysarch" ret: "int" args: "int" "netbsd32_voidp" */
 #define	netbsd32_SYS_netbsd32_sysarch	165
 
-/* syscall: "osemsys" ret: "int" args: "int" "int" "int" "int" "int" */
-#define	netbsd32_SYS_osemsys	169
+#define	netbsd32_SYS_compat_10_osemsys	169
 
-				/* 169 is excluded 1.0 semsys */
-/* syscall: "omsgsys" ret: "int" args: "int" "int" "int" "int" "int" "int" */
-#define	netbsd32_SYS_omsgsys	170
+				/* 169 is excluded netbsd32_sys_semsys */
+#define	netbsd32_SYS_compat_10_omsgsys	170
 
-				/* 170 is excluded 1.0 msgsys */
-/* syscall: "oshmsys" ret: "int" args: "int" "int" "int" "int" */
-#define	netbsd32_SYS_oshmsys	171
+				/* 170 is excluded netbsd32_sys_msgsys */
+#define	netbsd32_SYS_compat_10_oshmsys	171
 
-				/* 171 is excluded 1.0 shmsys */
+				/* 171 is excluded netbsd32_sys_shmsys */
 /* syscall: "netbsd32_pread" ret: "netbsd32_ssize_t" args: "int" "netbsd32_voidp" "netbsd32_size_t" "int" "off_t" */
 #define	netbsd32_SYS_netbsd32_pread	173
 

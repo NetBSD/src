@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2.4.3 2002/04/01 07:38:47 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.4.4 2002/06/20 03:37:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2.4.3 2002/04/01 07:38:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2.4.4 2002/06/20 03:37:25 nathanw Exp $");
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +140,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 64 */
 	bdev_lkm_dummy(),		/* 65 */
 	bdev_lkm_dummy(),		/* 66 */
+	bdev_lkm_dummy(),		/* 67 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -328,6 +331,11 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 64: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
 	cdev_clockctl_init(NCLOCKCTL,clockctl),	/* 66: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 67: system call tracing */
+#else
+	cdev_notdef(),			/* 67: system call tracing */
+#endif
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -436,6 +444,7 @@ static int chrtoblktbl[] = {
 	/* 64 */	NODEV,
 	/* 65 */	NODEV,
 	/* 66 */	NODEV,
+	/* 67 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.2.2.5 2002/05/29 21:48:53 nathanw Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.2.2.6 2002/06/20 03:43:13 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -288,13 +288,13 @@ int	pecoff_sys_statfs(struct lwp *, void *, register_t *);
 int	sys_fstatfs(struct lwp *, void *, register_t *);
 int	pecoff_sys_getfh(struct lwp *, void *, register_t *);
 int	sys_sysarch(struct lwp *, void *, register_t *);
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 #else
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 #else
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 #else
 #endif
 int	sys_pread(struct lwp *, void *, register_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.6.6.2 2002/02/28 04:11:29 nathanw Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.6.6.3 2002/06/20 03:40:39 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -101,6 +101,9 @@ struct prep_pci_chipset {
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	pci_conf_hook(c, b, d, f, i)					\
     (*(c)->pc_conf_hook)((c)->pc_conf_v, (b), (d), (f), (i))
+
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))
 
 #ifdef _KERNEL
 /*

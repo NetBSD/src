@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_compat.c,v 1.7.32.1 2002/04/01 07:39:54 nathanw Exp $	*/
+/*	$NetBSD: sd_compat.c,v 1.7.32.2 2002/06/20 03:38:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_compat.c,v 1.7.32.1 2002/04/01 07:39:54 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sd_compat.c,v 1.7.32.2 2002/06/20 03:38:37 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -70,14 +70,14 @@ __KERNEL_RCSID(0, "$NetBSD: sd_compat.c,v 1.7.32.1 2002/04/01 07:39:54 nathanw E
  * H starts after D and is what ever is left (i.e. combo of E and F).
  */
 struct partition sddefaultpart[] = {
-	{  16384,   1024, 1024, FS_BSDFFS, 8 },
-	{  65536,  17408,    0, FS_SWAP,   0 },
-	{      0,      0,    0, FS_BOOT,   0 },
-	{  98304,  17408,    0, FS_SWAP,   0 },
-	{ 102400, 115712, 1024, FS_BSDFFS, 8 },
-	{      0, 218112, 1024, FS_BSDFFS, 8 },
-	{      0,  82944, 1024, FS_BSDFFS, 8 },
-	{      0, 115712, 1024, FS_BSDFFS, 8 }
+	{  16384,   1024, { .fsize = 1024 }, FS_BSDFFS, 8 },
+	{  65536,  17408, { .fsize =    0 }, FS_SWAP,   0 },
+	{      0,      0, { .fsize =    0 }, FS_BOOT,   0 },
+	{  98304,  17408, { .fsize =    0 }, FS_SWAP,   0 },
+	{ 102400, 115712, { .fsize = 1024 }, FS_BSDFFS, 8 },
+	{      0, 218112, { .fsize = 1024 }, FS_BSDFFS, 8 },
+	{      0,  82944, { .fsize = 1024 }, FS_BSDFFS, 8 },
+	{      0, 115712, { .fsize = 1024 }, FS_BSDFFS, 8 }
 };
 int sdnumdefaultpart = sizeof(sddefaultpart)/sizeof(sddefaultpart[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932reg.h,v 1.1.4.2 2001/08/24 00:09:21 nathanw Exp $	*/
+/*	$NetBSD: dp83932reg.h,v 1.1.4.3 2002/06/20 03:44:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct sonic_rra32 {
  *
  * Note the number of fragments defined here is arbitrary.
  */
-#define	SONIC_NTXFRAGS	8
+#define	SONIC_NTXFRAGS	16
 
 struct sonic_frag16 {
 	uint16_t	frag_ptr0;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.28.2.5 2002/04/01 07:47:29 nathanw Exp $
+#	$NetBSD: files.usb,v 1.28.2.6 2002/06/20 03:46:51 nathanw Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -31,7 +31,7 @@ define	ezload
 file	dev/usb/ezload.c		ezload
 
 # Audio devices
-device	uaudio: audio, auconv, mulaw, aurateconv
+device	uaudio: audiobus, auconv, mulaw, aurateconv
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
 

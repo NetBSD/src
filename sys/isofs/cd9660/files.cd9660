@@ -1,0 +1,11 @@
+#	$NetBSD: files.cd9660,v 1.1.6.2 2002/06/20 03:47:06 nathanw Exp $
+
+deffs	CD9660
+
+file	isofs/cd9660/cd9660_bmap.c	cd9660
+file	isofs/cd9660/cd9660_lookup.c	cd9660
+file	isofs/cd9660/cd9660_node.c	cd9660
+file	isofs/cd9660/cd9660_rrip.c	cd9660
+file	isofs/cd9660/cd9660_util.c	cd9660
+file	isofs/cd9660/cd9660_vfsops.c	cd9660
+file	isofs/cd9660/cd9660_vnops.c	cd9660

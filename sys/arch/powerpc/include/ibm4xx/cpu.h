@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2.4.2 2002/04/01 07:42:05 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.4.3 2002/06/20 03:40:32 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@ struct board_cfg_data {
 	unsigned int	processor_speed;
 	unsigned int	plb_speed;
 	unsigned int	pci_speed;
-} board_data;
+};
 
 extern struct board_cfg_data board_data;
 

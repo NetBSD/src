@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.5 2002/04/01 07:39:07 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.6 2002/06/20 03:38:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,6 +390,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 95: */
 	bdev_lkm_dummy(),		/* 96: */
 	bdev_lkm_dummy(),		/* 97: */
+	bdev_lkm_dummy(),		/* 98: */
 };
 
 /* Character devices */
@@ -442,7 +445,7 @@ struct cdevsw cdevsw[] = {
 	cdev_vidcvid_init(NVIDCCONSOLE,vidcconsole),	/* 37: vidcconsole device */
 	cdev_notdef(),				/* 38: removed cpu device */
 	cdev_lkm_dummy(),			/* 39: reserved */
-	cdev_mouse_init(NOPMS,pms),		/* 40: PS2 mouse driver */
+	cdev_mouse_init(NOPMS,opms),		/* 40: PS2 mouse driver */
 	cdev_lkm_dummy(),			/* 41: reserved */
 	cdev_iic_init(NIIC,iic),		/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC,rtc),		/* 43: RTC driver */
@@ -500,6 +503,11 @@ struct cdevsw cdevsw[] = {
 	cdev_ir_init(NIRFRAMEDRV,irframe),	/* 95: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),	/* 98: system call tracing */
+#else
+	cdev_notdef(),				/* 98: system call tracing */
+#endif
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -640,6 +648,7 @@ static int chrtoblktbl[] = {
     /* 95 */	    NODEV,
     /* 96 */	    NODEV,
     /* 97 */	    NODEV,
+    /* 98 */	    NODEV,
 };
 
 /*

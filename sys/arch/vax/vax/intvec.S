@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.2.2.2 2002/02/28 04:12:31 nathanw Exp $   */
+/*	$NetBSD: intvec.S,v 1.2.2.3 2002/06/20 03:42:20 nathanw Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -522,8 +522,3 @@ _C_LABEL(eintrnames):
 _C_LABEL(intrcnt):
 	.long	0
 _C_LABEL(eintrcnt):
-
-	.data
-	.globl _C_LABEL(scb)
-_C_LABEL(scb):	.long 0
-

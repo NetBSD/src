@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.18.2.6 2002/06/20 03:42:54 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.18.2.6 2002/06/20 03:42:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -123,9 +123,9 @@ const char *const irix_syscallnames[] = {
 	"#72 (obsolete rmount)",		/* 72 = obsolete rmount */
 	"#73 (obsolete rumount)",		/* 73 = obsolete rumount */
 	"#74 (obsolete rfstart)",		/* 74 = obsolete rfstart */
-	"#75 (obsolete sigret)",		/* 75 = obsolete sigret */
-	"#76 (obsolete rdebug)",		/* 76 = obsolete rdebug */
-	"#77 (obsolete rfstop)",		/* 77 = obsolete rfstop */
+	"getrlimit64",			/* 75 = getrlimit64 */
+	"setrlimit64",			/* 76 = setrlimit64 */
+	"nanosleep",			/* 77 = nanosleep */
 	"lseek64",			/* 78 = lseek64 */
 	"rmdir",			/* 79 = rmdir */
 	"mkdir",			/* 80 = mkdir */
@@ -177,31 +177,31 @@ const char *const irix_syscallnames[] = {
 	"setitimer",			/* 126 = setitimer */
 	"adjtime",			/* 127 = adjtime */
 	"gettimeofday",			/* 128 = gettimeofday */
-	"#129 (unimplemented sproc)",		/* 129 = unimplemented sproc */
+	"sproc",			/* 129 = sproc */
 	"prctl",			/* 130 = prctl */
-	"#131 (unimplemented procblk)",		/* 131 = unimplemented procblk */
-	"#132 (unimplemented sprocsp)",		/* 132 = unimplemented sprocsp */
+	"procblk",			/* 131 = procblk */
+	"sprocsp",			/* 132 = sprocsp */
 	"#133 (unimplemented sgigsc)",		/* 133 = unimplemented sgigsc */
 	"mmap",			/* 134 = mmap */
 	"munmap",			/* 135 = munmap */
 	"mprotect",			/* 136 = mprotect */
-	"#137 (unimplemented msync)",		/* 137 = unimplemented msync */
+	"__msync13",			/* 137 = __msync13 */
 	"#138 (unimplemented madvise)",		/* 138 = unimplemented madvise */
 	"#139 (unimplemented pagelock)",		/* 139 = unimplemented pagelock */
 	"#140 (unimplemented getpagesize)",		/* 140 = unimplemented getpagesize */
 	"#141 (unimplemented quotactl)",		/* 141 = unimplemented quotactl */
 	"#142 (unimplemented)",		/* 142 = unimplemented */
-	"#143 (unimplemented getpgrp)",		/* 143 = unimplemented getpgrp */
-	"#144 (unimplemented setpgrp)",		/* 144 = unimplemented setpgrp */
+	"getpgrp",			/* 143 = getpgrp */
+	"setpgrp",			/* 144 = setpgrp */
 	"#145 (unimplemented vhangup)",		/* 145 = unimplemented vhangup */
 	"fsync",			/* 146 = fsync */
-	"#147 (unimplemented fchdir)",		/* 147 = unimplemented fchdir */
-	"#148 (unimplemented getrlimit)",		/* 148 = unimplemented getrlimit */
-	"#149 (unimplemented setrlimit)",		/* 149 = unimplemented setrlimit */
+	"fchdir",			/* 147 = fchdir */
+	"getrlimit",			/* 148 = getrlimit */
+	"setrlimit",			/* 149 = setrlimit */
 	"#150 (unimplemented cacheflush)",		/* 150 = unimplemented cacheflush */
 	"#151 (unimplemented cachectl)",		/* 151 = unimplemented cachectl */
-	"#152 (unimplemented fchown)",		/* 152 = unimplemented fchown */
-	"#153 (unimplemented fchmod)",		/* 153 = unimplemented fchmod */
+	"fchown",			/* 152 = fchown */
+	"fchmod",			/* 153 = fchmod */
 	"#154 (unimplemented wait3)",		/* 154 = unimplemented wait3 */
 	"#155 (unimplemented socketpair)",		/* 155 = unimplemented socketpair */
 	"systeminfo",			/* 156 = systeminfo */
@@ -233,10 +233,10 @@ const char *const irix_syscallnames[] = {
 	"writev",			/* 182 = writev */
 	"truncate64",			/* 183 = truncate64 */
 	"ftruncate64",			/* 184 = ftruncate64 */
-	"#185 (unimplemented mmap64)",		/* 185 = unimplemented mmap64 */
+	"mmap64",			/* 185 = mmap64 */
 	"#186 (unimplemented dmi)",		/* 186 = unimplemented dmi */
-	"#187 (unimplemented pread)",		/* 187 = unimplemented pread */
-	"#188 (unimplemented pwrite)",		/* 188 = unimplemented pwrite */
+	"pread",			/* 187 = pread */
+	"pwrite",			/* 188 = pwrite */
 	"#189 (unimplemented fdatasync)",		/* 189 = unimplemented fdatasync */
 	"#190 (unimplemented sgifastpath)",		/* 190 = unimplemented sgifastpath */
 	"#191 (unimplemented attr_get)",		/* 191 = unimplemented attr_get */
@@ -258,7 +258,7 @@ const char *const irix_syscallnames[] = {
 	"ngetdents",			/* 207 = ngetdents */
 	"ngetdents64",			/* 208 = ngetdents64 */
 	"#209 (unimplemented sgi_sesmgr)",		/* 209 = unimplemented sgi_sesmgr */
-	"#210 (unimplemented pidsprocsp)",		/* 210 = unimplemented pidsprocsp */
+	"pidsprocsp",			/* 210 = pidsprocsp */
 	"#211 (unimplemented rexec)",		/* 211 = unimplemented rexec */
 	"#212 (unimplemented timer_create)",		/* 212 = unimplemented timer_create */
 	"#213 (unimplemented timer_delete)",		/* 213 = unimplemented timer_delete */
@@ -271,7 +271,7 @@ const char *const irix_syscallnames[] = {
 	"#220 (unimplemented sched_setscheduler)",		/* 220 = unimplemented sched_setscheduler */
 	"#221 (unimplemented sched_getparam)",		/* 221 = unimplemented sched_getparam */
 	"#222 (unimplemented sched_setparam)",		/* 222 = unimplemented sched_setparam */
-	"#223 (unimplemented usync_cntl)",		/* 223 = unimplemented usync_cntl */
+	"usync_cntl",			/* 223 = usync_cntl */
 	"#224 (unimplemented psema_cntl)",		/* 224 = unimplemented psema_cntl */
 	"#225 (unimplemented restartreturn)",		/* 225 = unimplemented restartreturn */
 	"#226 (unimplemented sysget)",		/* 226 = unimplemented sysget */

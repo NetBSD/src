@@ -1,4 +1,4 @@
-/* $NetBSD: pal.h,v 1.1.32.1 2002/05/19 00:22:10 nathanw Exp $ */
+/* $NetBSD: pal.h,v 1.1.32.2 2002/06/20 03:37:38 nathanw Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University

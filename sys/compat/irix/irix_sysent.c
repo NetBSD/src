@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.18.2.6 2002/06/20 03:42:54 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.18.2.6 2002/06/20 03:42:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -46,8 +46,8 @@ struct sysent irix_sysent[] = {
 	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args), 0,
 	    sys_write },			/* 4 = write */
-	{ 3, s(struct svr4_sys_open_args), 0,
-	    svr4_sys_open },			/* 5 = open */
+	{ 3, s(struct irix_sys_open_args), 0,
+	    irix_sys_open },			/* 5 = open */
 	{ 1, s(struct sys_close_args), 0,
 	    sys_close },			/* 6 = close */
 	{ 0, 0, 0,
@@ -70,8 +70,8 @@ struct sysent irix_sysent[] = {
 	    sys_chmod },			/* 15 = chmod */
 	{ 3, s(struct sys___posix_chown_args), 0,
 	    sys___posix_chown },		/* 16 = chown */
-	{ 1, s(struct svr4_sys_break_args), 0,
-	    svr4_sys_break },			/* 17 = break */
+	{ 1, s(struct irix_sys_break_args), 0,
+	    irix_sys_break },			/* 17 = break */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 18 = obsolete stat */
 	{ 3, s(struct compat_43_sys_lseek_args), 0,
@@ -146,8 +146,8 @@ struct sysent irix_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 51 = unimplemented acct */
 #ifdef SYSVSHM
-	{ 4, s(struct svr4_sys_shmsys_args), 0,
-	    svr4_sys_shmsys },			/* 52 = shmsys */
+	{ 4, s(struct irix_sys_shmsys_args), 0,
+	    irix_sys_shmsys },			/* 52 = shmsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 52 = unimplemented shmsys */
@@ -201,12 +201,12 @@ struct sysent irix_sysent[] = {
 	    sys_nosys },			/* 73 = obsolete rumount */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 74 = obsolete rfstart */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 75 = obsolete sigret */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 76 = obsolete rdebug */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 77 = obsolete rfstop */
+	{ 2, s(struct irix_sys_getrlimit64_args), 0,
+	    irix_sys_getrlimit64 },		/* 75 = getrlimit64 */
+	{ 2, s(struct irix_sys_setrlimit64_args), 0,
+	    irix_sys_setrlimit64 },		/* 76 = setrlimit64 */
+	{ 2, s(struct sys_nanosleep_args), 0,
+	    sys_nanosleep },			/* 77 = nanosleep */
 	{ 7, s(struct irix_sys_lseek64_args), 0,
 	    irix_sys_lseek64 },			/* 78 = lseek64 */
 	{ 1, s(struct sys_rmdir_args), 0,
@@ -309,24 +309,24 @@ struct sysent irix_sysent[] = {
 	    sys_adjtime },			/* 127 = adjtime */
 	{ 1, s(struct svr4_sys_gettimeofday_args), 0,
 	    svr4_sys_gettimeofday },		/* 128 = gettimeofday */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 129 = unimplemented sproc */
+	{ 3, s(struct irix_sys_sproc_args), 0,
+	    irix_sys_sproc },			/* 129 = sproc */
 	{ 2, s(struct irix_sys_prctl_args), 0,
 	    irix_sys_prctl },			/* 130 = prctl */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 131 = unimplemented procblk */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 132 = unimplemented sprocsp */
+	{ 3, s(struct irix_sys_procblk_args), 0,
+	    irix_sys_procblk },			/* 131 = procblk */
+	{ 5, s(struct irix_sys_sprocsp_args), 0,
+	    irix_sys_sprocsp },			/* 132 = sprocsp */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 133 = unimplemented sgigsc */
-	{ 6, s(struct svr4_sys_mmap_args), 0,
-	    svr4_sys_mmap },			/* 134 = mmap */
-	{ 2, s(struct sys_munmap_args), 0,
-	    sys_munmap },			/* 135 = munmap */
-	{ 3, s(struct sys_mprotect_args), 0,
-	    sys_mprotect },			/* 136 = mprotect */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 137 = unimplemented msync */
+	{ 6, s(struct irix_sys_mmap_args), 0,
+	    irix_sys_mmap },			/* 134 = mmap */
+	{ 2, s(struct irix_sys_munmap_args), 0,
+	    irix_sys_munmap },			/* 135 = munmap */
+	{ 3, s(struct irix_sys_mprotect_args), 0,
+	    irix_sys_mprotect },		/* 136 = mprotect */
+	{ 3, s(struct sys___msync13_args), 0,
+	    sys___msync13 },			/* 137 = __msync13 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 138 = unimplemented madvise */
 	{ 0, 0, 0,
@@ -338,27 +338,27 @@ struct sysent irix_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 142 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 143 = unimplemented getpgrp */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 144 = unimplemented setpgrp */
+	    sys_getpgrp },			/* 143 = getpgrp */
+	{ 2, s(struct irix_sys_setpgrp_args), 0,
+	    irix_sys_setpgrp },			/* 144 = setpgrp */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 145 = unimplemented vhangup */
 	{ 1, s(struct sys_fsync_args), 0,
 	    sys_fsync },			/* 146 = fsync */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 147 = unimplemented fchdir */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 148 = unimplemented getrlimit */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 149 = unimplemented setrlimit */
+	{ 1, s(struct sys_fchdir_args), 0,
+	    sys_fchdir },			/* 147 = fchdir */
+	{ 2, s(struct irix_sys_getrlimit_args), 0,
+	    irix_sys_getrlimit },		/* 148 = getrlimit */
+	{ 2, s(struct irix_sys_setrlimit_args), 0,
+	    irix_sys_setrlimit },		/* 149 = setrlimit */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 150 = unimplemented cacheflush */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 151 = unimplemented cachectl */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 152 = unimplemented fchown */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 153 = unimplemented fchmod */
+	{ 3, s(struct sys___posix_fchown_args), 0,
+	    sys___posix_fchown },		/* 152 = fchown */
+	{ 2, s(struct sys_fchmod_args), 0,
+	    sys_fchmod },			/* 153 = fchmod */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 154 = unimplemented wait3 */
 	{ 0, 0, 0,
@@ -421,14 +421,14 @@ struct sysent irix_sysent[] = {
 	    sys_truncate },			/* 183 = truncate64 */
 	{ 3, s(struct sys_ftruncate_args), 0,
 	    sys_ftruncate },			/* 184 = ftruncate64 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 185 = unimplemented mmap64 */
+	{ 7, s(struct irix_sys_mmap64_args), 0,
+	    irix_sys_mmap64 },			/* 185 = mmap64 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 186 = unimplemented dmi */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 187 = unimplemented pread */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 188 = unimplemented pwrite */
+	{ 4, s(struct svr4_sys_pread_args), 0,
+	    svr4_sys_pread },			/* 187 = pread */
+	{ 4, s(struct svr4_sys_pwrite_args), 0,
+	    svr4_sys_pwrite },			/* 188 = pwrite */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 189 = unimplemented fdatasync */
 	{ 0, 0, 0,
@@ -471,8 +471,8 @@ struct sysent irix_sysent[] = {
 	    irix_sys_ngetdents64 },		/* 208 = ngetdents64 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 209 = unimplemented sgi_sesmgr */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 210 = unimplemented pidsprocsp */
+	{ 6, s(struct irix_sys_pidsprocsp_args), 0,
+	    irix_sys_pidsprocsp },		/* 210 = pidsprocsp */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 211 = unimplemented rexec */
 	{ 0, 0, 0,
@@ -497,8 +497,8 @@ struct sysent irix_sysent[] = {
 	    sys_nosys },			/* 221 = unimplemented sched_getparam */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 222 = unimplemented sched_setparam */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 223 = unimplemented usync_cntl */
+	{ 2, s(struct irix_sys_usync_cntl_args), 0,
+	    irix_sys_usync_cntl },		/* 223 = usync_cntl */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 224 = unimplemented psema_cntl */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.1.2.3 2002/04/17 00:04:20 nathanw Exp $
+#	$NetBSD: OFWGENCFG,v 1.1.2.4 2002/06/20 03:40:56 nathanw Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -8,6 +8,8 @@
 
 include	"arch/shark/conf/std.arm32"
 include "arch/shark/conf/std.ofwgencfg"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -140,3 +142,4 @@ pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.3.2.4 2002/04/17 00:02:54 nathanw Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.3.2.5 2002/06/20 03:38:29 nathanw Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -6,6 +6,8 @@
 
 include	"arch/evbarm/conf/std.iq80310"
 options 	IOP310_TEAMASA_NPWR	# Enable Npwr support
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -22,6 +24,7 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	CPU_XSCALE_80200	# Support the XScale core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 #makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+options 	XSCALE_CCLKCFG=7	# 600MHz
 
 # Architecture options
 
@@ -169,7 +172,8 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 #
 
 # PCI SCSI controllers
-siop0		at pci? dev ? function ?	# on-board LSI 53c1010
+esiop0		at pci? dev ? function ?	# on-board LSI 53c1010
+options 	SIOP_SYMLED
 scsibus*	at scsi?
 
 # SCSI device support
@@ -193,3 +197,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

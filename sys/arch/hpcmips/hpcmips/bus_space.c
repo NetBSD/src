@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.14.2.3 2002/04/17 00:03:08 nathanw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.14.2.4 2002/06/20 03:38:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ __bs_map(bus_space_tag_t tx, bus_addr_t bpa, bus_size_t size, int flags,
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
 	DPRINTF(("\tbus_space_map:%#lx(%#lx)+%#lx\n",
-	    bpa, bpa - t->base, size));
+	    bpa, bpa + t->base, size));
 
 	if (!t->extent) { /* Before autoconfiguration, can't use extent */
 		DPRINTF(("bus_space_map: map temporary region:"
@@ -281,6 +281,8 @@ __bs_map(bus_space_tag_t tx, bus_addr_t bpa, bus_size_t size, int flags,
 		bpa += t->base;
 		if ((err = extent_alloc_region(t->extent, bpa, size, 
 		    EX_NOWAIT|EX_MALLOCOK))) {
+			DPRINTF(("\tbus_space_map: "
+			    "extent_alloc_regiion() failed\n"));
 			return (err);
 		}
 	}

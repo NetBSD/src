@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.1.2.2 2002/02/28 04:09:16 nathanw Exp $	*/
+/*	$NetBSD: board.h,v 1.1.2.3 2002/06/20 03:38:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
 
 #ifndef _STAND_BOARD_H_
 #define	_STAND_BOARD_H_
+
+void	board_init(void);
+void	board_fini(void);
 
 void	cons_init(void);
 void	mem_init(void);

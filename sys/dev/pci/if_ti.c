@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.20.2.5 2002/04/01 07:46:24 nathanw Exp $ */
+/* $NetBSD: if_ti.c,v 1.20.2.6 2002/06/20 03:45:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.20.2.5 2002/04/01 07:46:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.20.2.6 2002/06/20 03:45:28 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -195,7 +195,7 @@ static void ti_cmd_ext		__P((struct ti_softc *, struct ti_cmd_desc *,
 static void ti_handle_events	__P((struct ti_softc *));
 static int ti_alloc_jumbo_mem	__P((struct ti_softc *));
 static void *ti_jalloc		__P((struct ti_softc *));
-static void ti_jfree		__P((caddr_t, u_int, void *));
+static void ti_jfree		__P((struct mbuf *, caddr_t, u_int, void *));
 static int ti_newbuf_std	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_mini	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_jumbo	__P((struct ti_softc *, int, struct mbuf *));
@@ -674,7 +674,7 @@ static void *ti_jalloc(sc)
 		return(NULL);
 	}
 
-	SIMPLEQ_REMOVE_HEAD(&sc->ti_jfree_listhead, entry, jpool_entries);
+	SIMPLEQ_REMOVE_HEAD(&sc->ti_jfree_listhead, jpool_entries);
 	SIMPLEQ_INSERT_HEAD(&sc->ti_jinuse_listhead, entry, jpool_entries);
 	return(sc->ti_cdata.ti_jslots[entry->slot]);
 }
@@ -682,13 +682,14 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(buf, size, arg)
+static void ti_jfree(m, buf, size, arg)
+	struct mbuf		*m;
 	caddr_t			buf;
 	u_int			size;
 	void *arg;
 {
 	struct ti_softc		*sc;
-	int		        i;
+	int		        i, s;
 	struct ti_jpool_entry   *entry;
 
 	/* Extract the softc struct pointer. */
@@ -704,16 +705,18 @@ static void ti_jfree(buf, size, arg)
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jfree: asked to free buffer that we don't manage!");
+
+	s = splvm();
 	entry = SIMPLEQ_FIRST(&sc->ti_jinuse_listhead);
 	if (entry == NULL)
 		panic("ti_jfree: buffer not in use!");
 	entry->slot = i;
-	SIMPLEQ_REMOVE_HEAD(&sc->ti_jinuse_listhead, 
-	    entry, jpool_entries);
-	SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, 
-	     entry, jpool_entries);
+	SIMPLEQ_REMOVE_HEAD(&sc->ti_jinuse_listhead, jpool_entries);
+	SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, entry, jpool_entries);
 
-	return;
+	if (__predict_true(m != NULL))
+		pool_cache_put(&mbpool_cache, m);
+	splx(s);
 }
 
 
@@ -895,13 +898,9 @@ static int ti_newbuf_jumbo(sc, i, m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_len = m_new->m_pkthdr.len =
-		    m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
-		m_new->m_ext.ext_free = ti_jfree;
-		m_new->m_ext.ext_arg = sc;
-		MCLINITREFERENCE(m_new);
+		MEXTADD(m_new, (void *)buf, ETHER_MAX_LEN_JUMBO,
+		    M_DEVBUF, ti_jfree, sc);
+		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
@@ -1067,7 +1066,7 @@ static void ti_free_tx_ring(sc)
 	}
 
 	while ((dma = SIMPLEQ_FIRST(&sc->txdma_list))) {
-		SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
+		SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, link);
 		bus_dmamap_destroy(sc->sc_dmat, dma->dmamap);
 		free(dma, M_DEVBUF);
 	}
@@ -1206,7 +1205,7 @@ static void ti_setmulti(sc)
 	/* First, zot all the existing filters. */
 	while ((mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead)) != NULL) {
 		ti_del_mcast(sc, &mc->mc_addr);
-		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc, mc_entries);
+		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc_entries);
 		free(mc, M_DEVBUF);
 	}
 
@@ -1232,8 +1231,7 @@ static void ti_setmulti(sc)
 	TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_DIS, 0);
 
 	/* Now program new ones. */
-	for (mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead); mc != NULL;
-	    mc = SIMPLEQ_NEXT(mc, mc_entries))
+	SIMPLEQ_FOREACH(mc, &sc->ti_mc_listhead, mc_entries)
 		ti_add_mcast(sc, &mc->mc_addr);
 
 	/* Re-enable interrupts. */
@@ -1244,8 +1242,7 @@ static void ti_setmulti(sc)
 allmulti:
 	/* No need to keep individual multicast addresses */
 	while ((mc = SIMPLEQ_FIRST(&sc->ti_mc_listhead)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc,
-		    mc_entries);
+		SIMPLEQ_REMOVE_HEAD(&sc->ti_mc_listhead, mc_entries);
 		free(mc, M_DEVBUF);
 	}
 
@@ -2369,7 +2366,7 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 	    BUS_DMASYNC_PREWRITE);
 
 	sc->ti_cdata.ti_tx_chain[cur] = m_head;
-	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
+	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, link);
 	sc->txdma[cur] = dma;
 	sc->ti_txcnt += cnt;
 
@@ -2466,7 +2463,7 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	TI_CDTXSYNC(sc, firstfrag, cnt, BUS_DMASYNC_PREWRITE);
 
 	sc->ti_cdata.ti_tx_chain[cur] = m_head;
-	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
+	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, link);
 	sc->txdma[cur] = dma;
 	sc->ti_txcnt += cnt;
 

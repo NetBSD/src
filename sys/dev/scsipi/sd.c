@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.7 2002/02/28 04:14:23 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.8 2002/06/20 03:46:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.7 2002/02/28 04:14:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.8 2002/06/20 03:46:41 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -185,7 +185,7 @@ sdattach(parent, sd, periph, ops)
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
 	        printf(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %ld sectors",
+		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %lu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    dp->disksize);
 		break;
@@ -1259,7 +1259,8 @@ sd_interpret_sense(xs)
 			 */
 			printf("%s: waiting for pack to spin up...\n",
 			    sd->sc_dev.dv_xname);
-			scsipi_periph_freeze(periph, 1);
+			if (!callout_active(&periph->periph_callout))
+				scsipi_periph_freeze(periph, 1);
 			callout_reset(&periph->periph_callout,
 			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;

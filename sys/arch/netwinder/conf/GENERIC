@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8.6.5 2002/04/17 00:03:55 nathanw Exp $
+# $NetBSD: GENERIC,v 1.8.6.6 2002/06/20 03:40:07 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include		"arch/netwinder/conf/std.netwinder"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -244,3 +246,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.8.2 2001/12/08 08:22:43 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29.8.3 2002/06/20 03:41:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -144,7 +144,11 @@ extern void isr_soft_request __P((int level));
 union sun3sir {
 	int 	sir_any;
 	char	sir_which[4];
-} sun3sir;
+};
+
+#ifdef _KERNEL
+extern union sun3sir sun3sir;
+#endif
 
 #define SIR_NET  	0
 #define SIR_CLOCK	1

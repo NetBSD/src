@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.15.6.4 2002/04/17 00:03:55 nathanw Exp $
+#	$NetBSD: files.netwinder,v 1.15.6.5 2002/06/20 03:40:07 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -104,9 +104,6 @@ include "dev/i2o/files.i2o"
 file	arch/netwinder/pci/pci_machdep.c	pci
 
 include "dev/pci/files.pci"
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 device	pcib: isabus
 attach	pcib at pci
