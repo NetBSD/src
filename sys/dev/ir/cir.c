@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: cir.c,v 1.2 2001/12/12 15:33:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,8 +46,9 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 
-#include <dev/ir/cirvar.h>
 #include <dev/ir/ir.h>
+#include <dev/ir/cirio.h>
+#include <dev/ir/cirvar.h>
 
 cdev_decl(cir);
 
@@ -84,7 +85,8 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_methods->im_read == NULL ||
-	    sc->sc_methods->im_write == NULL)
+	    sc->sc_methods->im_write == NULL ||
+	    sc->sc_methods->im_setparams == NULL)
 		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
 #endif
 	printf("\n");
@@ -205,6 +207,15 @@ cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
 		error = 0;
+		break;
+	case CIR_GET_PARAMS:
+		*(struct cir_params *)addr = sc->sc_params;
+		break;
+	case CIR_SET_PARAMS:
+		error = sc->sc_methods->im_setparams(sc->sc_handle,
+			    (struct cir_params *)addr);
+		if (!error)
+			sc->sc_params = *(struct cir_params *)addr;
 		break;
 	default:
 		error = EINVAL;
