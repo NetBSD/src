@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2001/10/27 16:34:12 rearnsha Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2001/11/26 23:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -183,5 +183,58 @@ dosoftints()
 		(void)splx(s);
 	}
 }
+
+int current_spl_level = _SPL_SERIAL;
+u_int spl_masks[_SPL_LEVELS + 1];
+u_int spl_smasks[_SPL_LEVELS];
+int safepri = _SPL_0;
+
+void
+set_spl_masks()
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		spl_masks[loop] = 0xffffffff;
+		spl_smasks[loop] = 0;
+	}
+
+	spl_masks[_SPL_BIO]        = irqmasks[IPL_BIO];
+	spl_masks[_SPL_NET]        = irqmasks[IPL_NET];
+	spl_masks[_SPL_SOFTSERIAL] = irqmasks[IPL_TTY];
+	spl_masks[_SPL_TTY]        = irqmasks[IPL_TTY];
+	spl_masks[_SPL_IMP]        = irqmasks[IPL_IMP];
+	spl_masks[_SPL_AUDIO]      = irqmasks[IPL_AUDIO];
+	spl_masks[_SPL_CLOCK]      = irqmasks[IPL_CLOCK];
+#ifdef IPL_STATCLOCK
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_STATCLOCK];
+#else
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_CLOCK];
+#endif
+	spl_masks[_SPL_HIGH]       = irqmasks[IPL_HIGH];
+	spl_masks[_SPL_SERIAL]     = irqmasks[IPL_SERIAL];
+	spl_masks[_SPL_LEVELS]     = 0;
+
+	spl_smasks[_SPL_0] = 0xffffffff;
+	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_SERIAL);
+	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
+	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
+}
+
+#ifdef DIAGNOSTIC
+void
+dump_spl_masks()
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		    spl_masks[loop], loop, spl_smasks[loop]);
+	}
+}
+#endif
 
 /* End of intr.c */
