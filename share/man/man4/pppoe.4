@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.9 2002/04/14 11:42:56 martin Exp $
+.\"	$NetBSD: pppoe.4,v 1.9.2.1 2003/02/07 20:21:43 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2001
+.Dd July 15, 2002
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -95,16 +95,16 @@ on the available options see
 This all is typically accomplished using an
 .Pa /etc/ifconfig.pppoe0
 file.
-.Sh IMPORTANT NOTE
+.Ss MSS/MTU problems
 If you are using a
 .Nm
-interface, you will have an unusual low MTU for todays internet.
+interface, you will have an unusual low MTU for todays Internet.
 Combined with a lot of misconfigured sites (host using path MTU discovery
 behind a router blocking all ICMP traffic) this will often cause problems.
 Connections to this servers will only work if your system advertises the
-right MSS in the TCP three way handshake. To get the right MSS, you need
-to set
-.Bd -literal
+right MSS in the TCP three way handshake.
+To get the right MSS, you need to set
+.Bd -literal -offset indent
 # Obey interface MTUs when calculating MSS
 net.inet.tcp.mss_ifmtu=1
 .Ed
@@ -113,19 +113,79 @@ in your
 .Pa /etc/sysctl.conf
 file.
 This causes the calculated MSS to be based on the MTU of the interface
-via which the packet is sent. This is always the right value if you are
-sure the answer to this packet will be received on the same interface
-(I.e. you only have one interface connected to the internet.)
+via which the packet is sent.
+This is always the right value if you are sure the answer to this packet
+will be received on the same interface (i.e., you only have one interface
+connected to the Internet.)
 .Pp
 Unfortunately this sysctl does not fix the MSS advertised by hosts in
 the network behind a
 .Nm
 connected router.
+.Ss Setting up NAT with MSS-clamping
+Some systems behind misconfigured firewalls try to use
+Path-MTU-Discovery, while their firewall blocks all ICMP messages.
+This is an illegal, but not uncommon, setup.
+Typically you will have no chance to fix this (remote, outside of your
+control) setup.
+And sometimes you will have to use such remote systems (to download
+data from them, or to do your online banking).
+.Pp
+Without special care systems as described above will not be able
+to send larger chunks of data to a system connected via
+.Nm "" .
+But there is a workaround (some may call it cheating): pretend to not
+be able to handle large packets, by sending a small MSS (maximum
+segment size) option during initial TCP handshake.
+.Pp
+For connections originating from your
+.Nm
+connected machines, this is accomplished by setting the sysctl
+variable
+.Dv net.inet.tcp.mss_ifmtu
+to 1, i.e., by adding this
+.Bd -literal -offset indent
+# Obey interface MTUs when calculating MSS
+net.inet.tcp.mss_ifmtu=1
+.Ed
+.Pp
+to
+.Pa /etc/sysctl.conf .
+For connections originating from systems behind your
+.Nm
+router, you need to set the
+.Dv mssclamp
+options in your NAT rules, like in this example of
+.Pa /etc/ipnat.conf :
+.Bd -literal -offset indent
+map pppoe0 192.168.1.0/24 -> 0/32 portmap tcp/udp 44000:49999 mssclamp 1452
+map pppoe0 192.168.1.0/24 -> 0/32 mssclamp 1452
+.Ed
+.Pp
+If you do not use NAT, you need to setup a 1:1 NAT rule, just to
+get the clamping:
+.Bd -literal -offset indent
+map pppoe0 x.x.x.x/24 -> 0/0 mssclamp 1452
+.Ed
+.Pp
+.Em Note :
+While the MSS of 1452 byte (as shown in the examples above) is the
+theoretically correct value (it accounts for the smaller
+.Nm
+MTU, the TCP header and the maximum of 0x40 bytes of TCP options), it
+seems to not be sufficient in some cases.
+Other
+.Nm
+implementations recommend clamping to 1412 byte MSS, and we have
+received reports that this actually helps in some situations.
+So if you have weird problems (like sessions to certain sites
+stalling), you might try using this even smaller value and see if it
+helps.
 .Sh EXAMPLES
 A typical
 .Pa /etc/ifconfig.pppoe0
 file looks like this:
-.Bd -literal
+.Bd -literal -offset indent
 create
 ! /sbin/ifconfig ne0 up
 ! /sbin/pppoectl -e ne0 $int
@@ -155,9 +215,10 @@ and addresses of the interface become available.  To enable the usage of
 and
 .Pa /etc/ppp/ip-down
 for this purpose, simply add
-.Bd -literal
+.Bd -literal -offset indent
 ifwatchd=YES
 .Ed
+.Pp
 to
 .Pa /etc/rc.conf .
 See
