@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: input-scrub.c,v 1.6 1994/08/25 07:36:22 pk Exp $";
+static char rcsid[] = "$Id: input-scrub.c,v 1.7 2000/01/24 19:44:37 mycroft Exp $";
 #endif
 
 #include <errno.h>		/* Need this to make errno declaration right */
@@ -258,17 +258,44 @@ input_scrub_next_buffer (bufp)
 	      (unsigned int) partial_size);
       memcpy (buffer_start + BEFORE_SIZE, save_source, AFTER_SIZE);
     }
-  limit = input_file_give_next_buffer (buffer_start + BEFORE_SIZE + partial_size);
+  limit = input_file_give_next_buffer (buffer_start
+				       + BEFORE_SIZE
+				       + partial_size);
   if (limit)
     {
       register char *p;		/* Find last newline. */
 
-      for (p = limit; *--p != '\n';);;
+      for (p = limit - 1; *p != '\n'; --p)
+	;
       ++p;
-      if (p <= buffer_start + BEFORE_SIZE)
+
+      while (p <= buffer_start + BEFORE_SIZE)
 	{
-	  as_fatal ("Source line too long. Please change file %s then rebuild assembler.", __FILE__);
+	  int limoff;
+
+	  limoff = limit - buffer_start;
+	  buffer_length += input_file_buffer_size ();
+	  buffer_start = xrealloc (buffer_start,
+				   (BEFORE_SIZE
+				    + 2 * buffer_length
+				    + AFTER_SIZE));
+	  *bufp = buffer_start + BEFORE_SIZE;
+	  limit = input_file_give_next_buffer (buffer_start + limoff);
+
+	  if (limit == NULL)
+	    {
+	      as_warn ("partial line at end of file ignored");
+	      partial_where = NULL;
+	      if (next_saved_file)
+		*bufp = input_scrub_pop (next_saved_file);
+	      return NULL;
+	    }
+
+	  for (p = limit - 1; *p != '\n'; --p)
+	    ;
+	  ++p;
 	}
+
       partial_where = p;
       partial_size = limit - p;
       memcpy (save_source, partial_where, (int) AFTER_SIZE);
