@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.29 1999/07/14 20:47:41 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.30 1999/07/21 13:24:56 jtk Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.29 1999/07/14 20:47:41 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.30 1999/07/21 13:24:56 jtk Exp $");
 #endif
 #endif /* not lint */
 
@@ -2268,6 +2268,10 @@ tn(argc, argv)
     if (!portp) {
       telnetport = 1;
       portp = "telnet";
+    } else if (portp[0] == '-') {
+      /* use telnet negotiation if port number/name preceded by minus sign */
+      telnetport = 1;
+      portp++;
     }
 
     memset(&hints, 0, sizeof(hints));
