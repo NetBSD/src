@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 1995/09/17 00:50:54 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.1 1997/06/01 03:39:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,9 +38,10 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <a.out.h>
-#include <stand.h>
 
-#include "promdev.h"
+#include <lib/libsa/stand.h>
+
+#include <sparc/stand/common/promdev.h>
 
 static void copyunix __P((int, char *));
 static void promsyms __P((int, struct exec *));
@@ -50,9 +51,9 @@ int netif_debug;
 /*
  * Boot device is derived from ROM provided information.
  */
-#define DEFAULT_KERNEL	"netbsd"
+#define	DEFAULT_KERNEL	"netbsd"
 
-extern char		*version;
+extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 unsigned long		esym;
 char			*strtab;
 int			strtablen;
@@ -69,7 +70,8 @@ main()
 
 	prom_init();
 
-	printf(">> NetBSD BOOT [%s]\n", version);
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	file = prom_bootfile;
 	if (file == 0 || *file == 0)
