@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.12 2002/07/29 13:03:51 blymn Exp $	*/
+/*	$NetBSD: menu.h,v 1.13 2004/03/22 19:01:09 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -33,26 +33,26 @@
 #include <eti.h>
 
 /* requests for the menu_driver call */
-#define REQ_BASE_NUM      (KEY_MAX + 0x100)
-#define REQ_LEFT_ITEM     (KEY_MAX + 0x101)
-#define REQ_RIGHT_ITEM    (KEY_MAX + 0x102)
-#define REQ_UP_ITEM       (KEY_MAX + 0x103)
-#define REQ_DOWN_ITEM     (KEY_MAX + 0x104)
-#define REQ_SCR_ULINE     (KEY_MAX + 0x105)
-#define REQ_SCR_DLINE     (KEY_MAX + 0x106)
-#define REQ_SCR_DPAGE     (KEY_MAX + 0x107)
-#define REQ_SCR_UPAGE     (KEY_MAX + 0x108)
-#define REQ_FIRST_ITEM    (KEY_MAX + 0x109)
-#define REQ_LAST_ITEM     (KEY_MAX + 0x10a)
-#define REQ_NEXT_ITEM     (KEY_MAX + 0x10b)
-#define REQ_PREV_ITEM     (KEY_MAX + 0x10c)
-#define REQ_TOGGLE_ITEM   (KEY_MAX + 0x10d)
-#define REQ_CLEAR_PATTERN (KEY_MAX + 0x10e)
-#define REQ_BACK_PATTERN  (KEY_MAX + 0x10f)
-#define REQ_NEXT_MATCH    (KEY_MAX + 0x110)
-#define REQ_PREV_MATCH    (KEY_MAX + 0x111)
+#define REQ_BASE_NUM      (KEY_MAX + 0x200)
+#define REQ_LEFT_ITEM     (KEY_MAX + 0x201)
+#define REQ_RIGHT_ITEM    (KEY_MAX + 0x202)
+#define REQ_UP_ITEM       (KEY_MAX + 0x203)
+#define REQ_DOWN_ITEM     (KEY_MAX + 0x204)
+#define REQ_SCR_ULINE     (KEY_MAX + 0x205)
+#define REQ_SCR_DLINE     (KEY_MAX + 0x206)
+#define REQ_SCR_DPAGE     (KEY_MAX + 0x207)
+#define REQ_SCR_UPAGE     (KEY_MAX + 0x208)
+#define REQ_FIRST_ITEM    (KEY_MAX + 0x209)
+#define REQ_LAST_ITEM     (KEY_MAX + 0x20a)
+#define REQ_NEXT_ITEM     (KEY_MAX + 0x20b)
+#define REQ_PREV_ITEM     (KEY_MAX + 0x20c)
+#define REQ_TOGGLE_ITEM   (KEY_MAX + 0x20d)
+#define REQ_CLEAR_PATTERN (KEY_MAX + 0x20e)
+#define REQ_BACK_PATTERN  (KEY_MAX + 0x20f)
+#define REQ_NEXT_MATCH    (KEY_MAX + 0x210)
+#define REQ_PREV_MATCH    (KEY_MAX + 0x211)
 
-#define MAX_COMMAND       (KEY_MAX + 0x111) /* last menu driver request
+#define MAX_COMMAND       (KEY_MAX + 0x211) /* last menu driver request
 					       - for application defined
 					       commands */
 
