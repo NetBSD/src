@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.37.4.1 2000/07/13 03:15:37 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.37.4.2 2000/08/29 01:28:19 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.37.4.1 2000/07/13 03:15:37 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.37.4.2 2000/08/29 01:28:19 hubertf Exp $");
 #endif
 #endif
 
@@ -408,7 +408,8 @@ fileFindByPath(char *base, char *fname)
 	while (cp) {
 		char   *cp2 = strsep(&cp, ";");
 
-		printf("trying PKG_PATH %s\n", cp2?cp2:cp);
+		if (Verbose)
+			printf("trying PKG_PATH %s\n", cp2?cp2:cp);
 
 		if (strstr(fname, ".tgz")) {
 			/* There's already a ".tgz" present, probably typed on the command line */
