@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.35 2001/01/08 11:20:24 takemura Exp $ */
+/* $NetBSD: wsconsio.h,v 1.36 2001/02/01 17:53:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -224,6 +224,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
+#define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
