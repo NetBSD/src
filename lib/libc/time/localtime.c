@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.20 1998/10/16 12:56:44 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.21 1998/11/15 17:11:06 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.66";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.20 1998/10/16 12:56:44 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.21 1998/11/15 17:11:06 christos Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -113,7 +113,7 @@ struct state {
 	time_t		ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
+	char		chars[/* LINTED constant */BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
 				(2 * (MY_TZNAME_MAX + 1)))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 };
@@ -198,7 +198,9 @@ static int		lcl_is_set;
 static int		gmt_is_set;
 
 __aconst char *		tzname[2] = {
+	/* LINTED const castaway */
 	(__aconst char *)wildabbr,
+	/* LINTED const castaway */
 	(__aconst char *)wildabbr
 };
 
@@ -257,7 +259,9 @@ settzname P((void))
 	register struct state * const	sp = lclptr;
 	register int			i;
 
+	/* LINTED const castaway */
 	tzname[0] = (__aconst char *)wildabbr;
+	/* LINTED const castaway */
 	tzname[1] = (__aconst char *)wildabbr;
 #ifdef USG_COMPAT
 	daylight = 0;
@@ -1156,6 +1160,7 @@ struct tm * const	tmp;
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
+		/* LINTED const castaway */
 		tmp->TM_ZONE = (__aconst char *)wildabbr;
 	else {
 #ifdef ALL_STATE
@@ -1284,7 +1289,7 @@ register struct tm * const		tmp;
 	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
 		register int	newy;
 
-		newy = y + days / DAYSPERNYEAR;
+		newy = (int)(y + days / DAYSPERNYEAR);
 		if (days < 0)
 			--newy;
 		days -= (newy - y) * DAYSPERNYEAR +
@@ -1322,9 +1327,9 @@ ctime_r(timep, buf)
 const time_t * const	timep;
 char *			buf;
 {
-	struct tm	tm;
+	struct tm	tmp;
 
-	return asctime_r(localtime_r(timep, &tm), buf);
+	return asctime_r(localtime_r(timep, &tmp), buf);
 }
 
 /*
@@ -1476,6 +1481,7 @@ const int		do_norm_secs;
 	** assuming two's complement arithmetic.
 	** If time_t is unsigned, then (1 << bits) is just above the median.
 	*/
+	/* LINTED constant in conditional context */
 	t = TYPE_SIGNED(time_t) ? 0 : (((time_t) 1) << bits);
 	for ( ; ; ) {
 		(*funcp)(&t, offset, &mytm);
@@ -1606,14 +1612,14 @@ const long		offset;
 		for (otheri = sp->typecnt - 1; otheri >= 0; --otheri) {
 			if (sp->ttis[otheri].tt_isdst == tmp->tm_isdst)
 				continue;
-			tmp->tm_sec += sp->ttis[otheri].tt_gmtoff -
-					sp->ttis[samei].tt_gmtoff;
+			tmp->tm_sec += (int)(sp->ttis[otheri].tt_gmtoff -
+					sp->ttis[samei].tt_gmtoff);
 			tmp->tm_isdst = !tmp->tm_isdst;
 			t = time2(tmp, funcp, offset, &okay);
 			if (okay)
 				return t;
-			tmp->tm_sec -= sp->ttis[otheri].tt_gmtoff -
-					sp->ttis[samei].tt_gmtoff;
+			tmp->tm_sec -= (int)(sp->ttis[otheri].tt_gmtoff -
+					sp->ttis[samei].tt_gmtoff);
 			tmp->tm_isdst = !tmp->tm_isdst;
 		}
 	}
