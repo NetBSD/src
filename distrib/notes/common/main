@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.165 2002/04/01 11:07:50 skrll Exp $
+.\"	$NetBSD: main,v 1.166 2002/04/02 15:09:07 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1451,7 +1451,6 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
-.It Ta Mark Brinicombe Ta Mt mark@netbsd.org Ta Sy arm32
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy sbmips
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
@@ -1520,6 +1519,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Manuel Bouyer Ta Mt bouyer@netbsd.org
 .It Ta John Brezak Ta Mt brezak@netbsd.org
 .It Ta Allen Briggs Ta Mt briggs@netbsd.org
+.It Ta Mark Brinicombe Ta Mt mark@netbsd.org
 .It Ta Aaron Brown Ta Mt abrown@netbsd.org
 .It Ta Andrew Brown Ta Mt atatat@netbsd.org
 .It Ta David Brownlee Ta Mt abs@netbsd.org
