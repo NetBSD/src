@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2002/04/25 09:20:32 aymeric Exp $	*/
+/*	$NetBSD: bus.h,v 1.18 2002/09/27 21:08:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -209,6 +209,12 @@ struct amiga_bus_space_methods {
 
 #define bus_space_write_4(t, h, o, v) \
 	panic("bus_space_write_4 not implemented")
+
+#define bus_space_read_stream_4(t, h, o) \
+	(panic("bus_space_read_stream_4 not implemented"), 0)
+
+#define bus_space_write_stream_4(t, h, o, v) \
+	panic("bus_space_read_stream_4 not implemented")
 
 #define bus_space_read_multi_4(t, h, o, p, c) \
 	panic("bus_space_read_multi_4 not implemented")
