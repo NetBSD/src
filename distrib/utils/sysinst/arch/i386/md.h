@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 2000/03/16 14:55:23 ad Exp $	*/
+/*	$NetBSD: md.h,v 1.17 2000/03/28 00:29:55 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,6 +78,7 @@ EXTERN distinfo dist_list[]
     {"man",	1, "ar", "Manuals      : "},
     {"misc",	1, "aj", "Miscellaneous: "},
     {"text",	1, "af", "Text tools   : "},
+    {"secr",	0, NULL, "Security     : "},
 
     /* XXX no X11 on floppies, what sets are they?*/
     {"xbase",	1, "al", "X11 clients  : "},
