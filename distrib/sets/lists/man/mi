@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 1999/06/27 18:38:24 augustss Exp $
+# $NetBSD: mi,v 1.147 1999/06/30 06:51:13 augustss Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -836,7 +836,6 @@
 ./usr/share/man/cat8/tunefs.0
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/update.0
-./usr/share/man/cat8/usbd.0
 ./usr/share/man/cat8/usbdevs.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
@@ -1955,7 +1954,6 @@
 ./usr/share/man/man8/tunefs.8
 ./usr/share/man/man8/umount.8
 ./usr/share/man/man8/update.8
-./usr/share/man/man8/usbd.8
 ./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/uucico.8
 ./usr/share/man/man8/uucpd.8
