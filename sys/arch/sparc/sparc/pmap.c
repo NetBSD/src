@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.227 2003/01/12 00:34:52 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.228 2003/01/12 01:16:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -333,10 +333,6 @@ int	ncontext;			/* sizeof ctx_freelist */
 void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
 
-caddr_t	vpage[2];		/* two reserved MD virtual pages */
-#if defined(SUN4M) || defined(SUN4D)
-int	*vpage_pte[2];		/* pte location of vpage[] */
-#endif
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
 
@@ -2992,8 +2988,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	avail_start = PMAP_BOOTSTRAP_VA2PA(p);
 
 	i = (int)p;
-	vpage[0] = p, p += NBPG;
-	vpage[1] = p, p += NBPG;
+	cpuinfo.vpage[0] = p, p += NBPG;
+	cpuinfo.vpage[1] = p, p += NBPG;
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
@@ -3411,8 +3407,8 @@ pmap_bootstrap4m(void)
 	 * for /dev/mem, and some more for dumpsys().
 	 */
 	q = p;
-	vpage[0] = p, p += NBPG;
-	vpage[1] = p, p += NBPG;
+	cpuinfo.vpage[0] = p, p += NBPG;
+	cpuinfo.vpage[1] = p, p += NBPG;
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
@@ -3420,9 +3416,10 @@ pmap_bootstrap4m(void)
 	for (i = 0; i < 2; i++) {
 		struct regmap *rp;
 		struct segmap *sp;
-		rp = &pmap_kernel()->pm_regmap[VA_VREG(vpage[i])];
-		sp = &rp->rg_segmap[VA_VSEG(vpage[i])];
-		vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(vpage[i])];
+		rp = &pmap_kernel()->pm_regmap[VA_VREG(cpuinfo.vpage[i])];
+		sp = &rp->rg_segmap[VA_VSEG(cpuinfo.vpage[i])];
+		cpuinfo.vpage_pte[i] =
+			&sp->sg_pte[VA_SUN4M_VPG(cpuinfo.vpage[i])];
 	}
 
 	virtual_avail = (vaddr_t)p;
@@ -3613,6 +3610,7 @@ pmap_alloc_cpu(sc)
 	struct pglist mlist;
 	int cachebit;
 	int pagesz = NBPG;
+	int i;
 
 	cachebit = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0;
 
@@ -3696,6 +3694,15 @@ pmap_alloc_cpu(sc)
 	/* Install this CPU's context table */
 	sc->ctx_tbl = ctxtable;
 	sc->ctx_tbl_pa = (paddr_t)ctxtable_pa;
+
+	/* Pre-compute this CPU's vpage[] PTEs */
+	for (i = 0; i < 2; i++) {
+		struct regmap *rp;
+		struct segmap *sp;
+		rp = &pmap_kernel()->pm_regmap[VA_VREG(sc->vpage[i])];
+		sp = &rp->rg_segmap[VA_VSEG(sc->vpage[i])];
+		sc->vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(sc->vpage[i])];
+	}
 }
 #endif /* SUN4M || SUN4D */
 
@@ -6677,7 +6684,7 @@ pmap_zero_page4_4c(pa)
 	}
 	pte = PG_V | PG_S | PG_W | PG_NC | (pfn & PG_PFNUM);
 
-	va = vpage[0];
+	va = cpuinfo.vpage[0];
 	setpte4(va, pte);
 	qzero(va, NBPG);
 	setpte4(va, 0);
@@ -6716,8 +6723,8 @@ pmap_copy_page4_4c(src, dst)
 	}
 	dpte = PG_V | PG_S | PG_W | PG_NC | (dstpfn & PG_PFNUM);
 
-	sva = vpage[0];
-	dva = vpage[1];
+	sva = cpuinfo.vpage[0];
+	dva = cpuinfo.vpage[1];
 	setpte4(sva, spte);
 	setpte4(dva, dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
@@ -6761,12 +6768,15 @@ pmap_zero_page4m(pa)
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		pte |= SRMMU_PG_C;
 
-	va = vpage[0];
-	setpgt4m(vpage_pte[0], pte);
+	va = cpuinfo.vpage[0];
+	setpgt4m(cpuinfo.vpage_pte[0], pte);
 	qzero(va, NBPG);
-	/* Remove temporary mapping */
-	sp_tlb_flush((int)va, getcontext4m(), ASI_SRMMUFP_L3);
-	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
+	/*
+	 * Remove temporary mapping (which is kernel-only, so the
+	 * context used for TLB flushing does not matter)
+	 */
+	sp_tlb_flush((int)va, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 }
 
 /*
@@ -6824,14 +6834,14 @@ pmap_zero_page_hypersparc(pa)
 	}
 	pte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX | (pfn << SRMMU_PPNSHIFT);
 
-	va = vpage[0];
-	setpgt4m(vpage_pte[0], pte);
+	va = cpuinfo.vpage[0];
+	setpgt4m(cpuinfo.vpage_pte[0], pte);
 	for (offset = 0; offset < NBPG; offset += 32) {
 		sta(va + offset, ASI_BLOCKFILL, 0);
 	}
 	/* Remove temporary mapping */
-	sp_tlb_flush((int)va, getcontext4m(), ASI_SRMMUFP_L3);
-	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
+	sp_tlb_flush((int)va, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 }
 
 /*
@@ -6874,16 +6884,16 @@ pmap_copy_page4m(src, dst)
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		dpte |= SRMMU_PG_C;
 
-	sva = vpage[0];
-	dva = vpage[1];
-	setpgt4m(vpage_pte[0], spte);
-	setpgt4m(vpage_pte[1], dpte);
+	sva = cpuinfo.vpage[0];
+	dva = cpuinfo.vpage[1];
+	setpgt4m(cpuinfo.vpage_pte[0], spte);
+	setpgt4m(cpuinfo.vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
 	cache_flush_page((vaddr_t)sva, getcontext4m());
-	tlb_flush_page((int)sva, getcontext4m(), CPUSET_ALL); /* XXX */
-	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
-	tlb_flush_page((int)dva, getcontext4m(), CPUSET_ALL); /* XXX */
-	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
+	sp_tlb_flush((int)sva, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
+	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[1], SRMMU_TEINVALID);
 }
 
 /*
@@ -6948,19 +6958,19 @@ pmap_copy_page_hypersparc(src, dst)
 	dpte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX |
 		(dstpfn << SRMMU_PPNSHIFT);
 
-	sva = vpage[0];
-	dva = vpage[1];
-	setpgt4m(vpage_pte[0], spte);
-	setpgt4m(vpage_pte[1], dpte);
+	sva = cpuinfo.vpage[0];
+	dva = cpuinfo.vpage[1];
+	setpgt4m(cpuinfo.vpage_pte[0], spte);
+	setpgt4m(cpuinfo.vpage_pte[1], dpte);
 
 	for (offset = 0; offset < NBPG; offset += 32) {
 		sta(dva + offset, ASI_BLOCKCOPY, sva + offset);
 	}
 
-	tlb_flush_page((int)sva, getcontext4m(), CPUSET_ALL); /* XXX */
-	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
-	tlb_flush_page((int)dva, getcontext4m(), CPUSET_ALL); /* XXX */
-	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
+	sp_tlb_flush((int)sva, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
+	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
+	setpgt4m(cpuinfo.vpage_pte[1], SRMMU_TEINVALID);
 }
 #endif /* SUN4M || SUN4D */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.52 2003/01/09 05:55:31 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.53 2003/01/12 01:16:06 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -238,6 +238,10 @@ struct cpu_info {
 	/* Support for hardware-assisted page clear/copy */
 	void	(*zero_page)(paddr_t);
 	void	(*copy_page)(paddr_t, paddr_t);
+
+	/* Virtual addresses for use in pmap copy_page/zero_page */
+	caddr_t	vpage[2];
+	int	*vpage_pte[2];		/* pte location of vpage[] */
 
 	void	(*cache_enable)(void);
 
