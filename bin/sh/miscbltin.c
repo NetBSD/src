@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.28 2000/11/22 19:20:31 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.29 2001/01/04 15:39:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.28 2000/11/22 19:20:31 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.29 2001/01/04 15:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ ulimitcmd(argc, argv)
 			{
 				val /= l->factor;
 #ifdef BSD4_4
-				out1fmt("%qd\n", (long long) val);
+				out1fmt("%lld\n", (long long) val);
 #else
 				out1fmt("%ld\n", (long) val);
 #endif
@@ -403,7 +403,7 @@ ulimitcmd(argc, argv)
 		{
 			val /= l->factor;
 #ifdef BSD4_4
-			out1fmt("%qd\n", (long long) val);
+			out1fmt("%lld\n", (long long) val);
 #else
 			out1fmt("%ld\n", (long) val);
 #endif

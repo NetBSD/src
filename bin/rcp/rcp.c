@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.26 1999/11/09 15:06:32 drochner Exp $	*/
+/*	$NetBSD: rcp.c,v 1.27 2001/01/04 15:39:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.26 1999/11/09 15:06:32 drochner Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.27 2001/01/04 15:39:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,7 +442,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 				goto next;
 		}
 #define	RCPMODEMASK	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
-		(void)snprintf(buf, sizeof(buf), "C%04o %qd %s\n",
+		(void)snprintf(buf, sizeof(buf), "C%04o %lld %s\n",
 		    stb.st_mode & RCPMODEMASK, (long long)stb.st_size, last);
 		(void)write(rem, buf, strlen(buf));
 		if (response() < 0)

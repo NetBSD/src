@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 1999/07/29 19:03:31 hubertf Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2001/01/04 15:39:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 1999/07/29 19:03:31 hubertf Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2001/01/04 15:39:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ summary()
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
-	    "%qu bytes transferred in %lu secs (%qu bytes/sec)\n",
+	    "%llu bytes transferred in %lu secs (%llu bytes/sec)\n",
 	    (long long) st.bytes, (long) secs, (long long) (st.bytes / secs));
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
