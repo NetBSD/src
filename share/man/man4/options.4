@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.125 2000/11/24 10:09:46 itojun Exp $
+.\"	$NetBSD: options.4,v 1.126 2000/12/05 18:05:49 drochner Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -626,6 +626,9 @@ Same as
 .Dq NFS_BOOT_BOOTP
 , but use the DHCP extensions to the
 BOOTP protocol (RFC 1541).
+.It Cd options NFS_BOOT_BOOTP_REQFILE
+Specifies the string sent in the bp_file field of the BOOTP / DHCP
+request packet.
 .It Cd options NFS_BOOT_BOOTPARAM
 Enable use of the BOOTPARAM protocol, consisting of RARP and
 BOOTPARAM RPC, to get configuration information if NFS
