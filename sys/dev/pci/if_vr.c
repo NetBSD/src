@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.65 2003/10/17 17:42:35 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.66 2003/11/13 22:29:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.65 2003/10/17 17:42:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.66 2003/11/13 22:29:09 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1563,9 +1563,21 @@ vr_attach(parent, self, aux)
 	 * they've been programmed a special way. Consequently,
 	 * we need to read the node address from the PAR0 and PAR1
 	 * registers.
+	 *
+	 * XXXSCW: On the Rhine III, setting VR_EECSR_LOAD forces a reload
+	 *         of the *whole* EEPROM, not just the MAC address. This is
+	 *         pretty pointless since the chip does this automatically
+	 *         at powerup/reset.
+	 *         I suspect the same thing applies to the other Rhine
+	 *         variants, but in the absence of a data sheet for those
+	 *         (and the lack of anyone else noticing the problems this
+	 *         causes) I'm going to retain the old behaviour for the
+	 *         other parts.
 	 */
-	VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
-	DELAY(200);
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105) {
+		VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
+		DELAY(200);
+	}
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 
