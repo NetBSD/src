@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd_opts.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: netbsd_opts.c,v 1.2 1997/03/14 06:55:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -43,25 +43,27 @@
 
 #include "libi386.h"
 
-static struct optent{
-  char name;
-  int flag;
-}opttab[] = {
-  {'a', RB_ASKNAME},
-  {'s', RB_SINGLE},
-  {'r', RB_DFLTROOT},
-  {'d', RB_KDB},
+static struct optent {
+	char name;
+	int flag;
+} opttab[] = {
+	{'a', RB_ASKNAME},
+	{'s', RB_SINGLE},
+	{'r', RB_DFLTROOT},
+	{'d', RB_KDB},
 };
 
 #define OPTTABSIZE (sizeof(opttab)/sizeof(struct optent))
 
-int netbsd_opt(c)
-char c;
+int
+netbsd_opt(c)
+	char c;
 {
-  int i;
-  for(i = 0; i < OPTTABSIZE; i++){
-    if(c == opttab[i].name)
-	return(opttab[i].flag);
-  }
-  return(-1);
+	int i;
+
+	for (i = 0; i < OPTTABSIZE; i++) {
+		if (c == opttab[i].name)
+			return (opttab[i].flag);
+	}
+	return (-1);
 }
