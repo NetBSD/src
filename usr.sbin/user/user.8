@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.6 2000/10/01 08:54:07 simonb Exp $ */
+.\" $NetBSD: user.8,v 1.7 2000/10/03 19:32:23 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,15 +39,16 @@
 .Nd manage user login information on the system
 .Sh SYNOPSIS
 .Nm ""
-add
-.Op Fl D
+.Cm add
+.Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
 .Op Fl r Ar low..high
 .Nm ""
-add
+.Cm add
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
@@ -56,31 +57,26 @@ add
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Op Fl r Ar low..high
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Nm ""
-del
-.Op Fl D
+.Cm del
+.Fl D
 .Op Fl p Ar preserve-value
 .Nm ""
-del
-.Op Fl p
-.Op Fl r
-.Op Fl v
+.Cm del
+.Op Fl prv
 .Ar user
 .Nm ""
-info
-.Op Fl e
-.Op Fl v
+.Cm info
+.Op Fl ev
 .Ar user
 .Nm ""
-mod
+.Cm mod
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
@@ -88,12 +84,9 @@ mod
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
 .Op Fl l Ar new-login
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Sh DESCRIPTION
 The
