@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.1.1.1.4.1 2002/08/02 01:34:11 lukem Exp $	*/
+/*	$NetBSD: tty.c,v 1.1.1.1.4.2 2002/08/09 22:59:30 lukem Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.3 2000/07/24 14:58:15 paulus Exp "
 #else
-__RCSID("$NetBSD: tty.c,v 1.1.1.1.4.1 2002/08/02 01:34:11 lukem Exp $");
+__RCSID("$NetBSD: tty.c,v 1.1.1.1.4.2 2002/08/09 22:59:30 lukem Exp $");
 #endif
 #endif
 
@@ -794,17 +794,29 @@ charshunt(ifd, ofd, record_file)
 	if (nibuf != 0) {
 	    if (ilevel >= max_level)
 		top = &tout;
-	    else
+	    else {
+		if (pty_master >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(pty_master, &writey);
-	} else if (stdin_readable)
+	    }
+	} else if (stdin_readable) {
+	    if (ifd >= FD_SETSIZE)
+		fatal("descriptor too big");
 	    FD_SET(ifd, &ready);
+	}
 	if (nobuf != 0) {
 	    if (olevel >= max_level)
 		top = &tout;
-	    else
+	    else {
+		if (ofd >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(ofd, &writey);
-	} else if (pty_readable)
+	    }
+	} else if (pty_readable) {
+	    if (pty_master >= FD_SETSIZE)
+		fatal("descriptor too big");
 	    FD_SET(pty_master, &ready);
+	}
 	if (select(nfds, &ready, &writey, NULL, top) < 0) {
 	    if (errno != EINTR)
 		fatal("select");
@@ -845,6 +857,8 @@ charshunt(ifd, ofd, record_file)
 		    if (!record_write(recordf, 4, NULL, 0, &lasttime))
 			recordf = NULL;
 	    } else {
+		if (pty_master >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(pty_master, &writey);
 		if (recordf)
 		    if (!record_write(recordf, 2, ibufp, nibuf, &lasttime))
@@ -872,6 +886,8 @@ charshunt(ifd, ofd, record_file)
 		    if (!record_write(recordf, 3, NULL, 0, &lasttime))
 			recordf = NULL;
 	    } else {
+		if (ofd >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(ofd, &writey);
 		if (recordf)
 		    if (!record_write(recordf, 1, obufp, nobuf, &lasttime))
