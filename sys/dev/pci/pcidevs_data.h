@@ -110,6 +110,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7850",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
+	    0,
+	    "AMD",
+	    "PCnet-PCI Ethernet",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    0,
 	    "ATI Technologies",
