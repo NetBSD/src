@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2001/07/11 23:00:02 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2001/07/12 23:13:15 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -534,6 +534,42 @@ pmap_bootdebug()
 }
 #endif
 
+
+/*
+ * Calculate the correct number of page colors to use.  This should be the
+ * size of the E$/NBPG.  However, different CPUs can have different sized
+ * E$, so we need to take the GCM of the E$ size.
+ */
+static int pmap_calculate_colors __P((void));
+static int 
+pmap_calculate_colors() {
+	int node = 0;
+	int size, assoc, color, maxcolor = 1;
+	char buf[80];
+
+	while ((node = OF_peer(node))) {
+		if ((OF_getprop(node, "device_type", buf, sizeof(buf)) > 0) &&
+			strcmp("cpu", buf) == 0) {
+			/* Found a CPU, get the E$ info. */
+			if (OF_getprop(node,"ecache-size", &size, 
+				sizeof(size)) != sizeof(size)) {
+				printf("pmap_calculate_colors: node %x has "
+					"no ecache-size\n", node);
+				/* If we can't get the E$ size, skip the node */
+				continue;
+			}
+			if (OF_getprop(node, "ecache-associativity", &assoc,
+				sizeof(assoc)) != sizeof(assoc))
+				/* Fake asociativity of 1 */
+				assoc = 1;
+			color = size/assoc/NBPG;
+			if (color > maxcolor)
+				maxcolor = color;
+		}
+	}
+	return (maxcolor);
+}
+
 /*
  * This is called during bootstrap, before the system is really initialized.
  *
@@ -582,7 +618,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * set machine page size
 	 */
 	uvmexp.pagesize = NBPG;
+	uvmexp.ncolors = pmap_calculate_colors();
 	uvm_setpagesize();
+
 	/*
 	 * Find out how big the kernel's virtual address
 	 * space is.  The *$#@$ prom loses this info
@@ -786,7 +824,6 @@ remap_data:
 		OF_exit();
 	}
 	memsize = OF_getproplen(memh, "reg") + 2 * sizeof(struct mem_region);
-printf("size for `memory' %x\n", (int)memsize);
 	valloc(mem, struct mem_region, memsize);
 	bzero((caddr_t)mem, memsize);
 	if (OF_getprop(memh, "reg", mem, memsize) <= 0) {
@@ -824,7 +861,6 @@ printf("size for `memory' %x\n", (int)memsize);
 	 * Save the prom translations
 	 */
 	sz = OF_getproplen(vmemh, "translations");
-printf("size for `translations' %x\n", (int)sz);
 	valloc(prom_map, struct prom_map, sz);
 	if (OF_getprop(vmemh, "translations", (void*)prom_map, sz) <= 0) {
 		prom_printf("no translations installed?");
@@ -985,7 +1021,6 @@ printf("size for `translations' %x\n", (int)sz);
 	 * find out how much memory really is free.  
 	 */
 	sz = OF_getproplen(memh, "available") + sizeof(struct mem_region);
-printf("size for orig `available' %x\n", (int)sz);
 	valloc(orig, struct mem_region, sz);
 	bzero((caddr_t)orig, sz);
 	if (OF_getprop(memh, "available", orig, sz) <= 0) {
@@ -1003,7 +1038,6 @@ printf("size for orig `available' %x\n", (int)sz);
 		prom_printf("End of available physical memory\r\n");
 	}
 #endif
-printf("size for new `available' %x\n", (int)sz);
 	valloc(avail, struct mem_region, sz);
 	bzero((caddr_t)avail, sz);
 	for (pcnt = 0, mp = orig, mp1 = avail; (mp1->size = mp->size);
@@ -1016,7 +1050,6 @@ printf("size for new `available' %x\n", (int)sz);
 	 * Allocate and initialize a context table
 	 */
 	numctx = maxctx;
-printf("size for orig `ctxbusy' %x\n", (int)CTXSIZE);
 	valloc(ctxbusy, paddr_t, CTXSIZE);
 	bzero((caddr_t)ctxbusy, CTXSIZE);
 
@@ -1040,7 +1073,6 @@ printf("size for orig `ctxbusy' %x\n", (int)CTXSIZE);
 #endif
 	BDPRINTF(PDB_BOOT, ("frobbed i, firstaddr before TSB=%x, %lx\r\n", 
 			    (int)i, (u_long)firstaddr));
-printf("size for orig `tsb' %x\n", (int)TSBSIZE);
 	valloc(tsb, pte_t, TSBSIZE);
 	bzero(tsb, TSBSIZE);
 
