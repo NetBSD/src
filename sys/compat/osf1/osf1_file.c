@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.9 2000/12/01 19:20:56 jdolecek Exp $ */
+/* $NetBSD: osf1_file.c,v 1.10 2001/04/04 19:52:18 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -166,6 +166,39 @@ osf1_sys_lstat(p, v, retval)
 	return (error);
 }
 
+/*
+ * Get file status; this version does not follow links.
+ */
+/* ARGSUSED */
+int
+osf1_sys_lstat2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_lstat2_args *uap = v;
+	struct stat sb;
+	struct osf1_stat2 osb;
+	int error;
+	struct nameidata nd;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	if ((error = namei(&nd)))
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	osf1_cvt_stat2_from_native(&sb, &osb);
+	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	return (error);
+}
+
 int
 osf1_sys_mknod(p, v, retval)
 	struct proc *p;
@@ -281,6 +314,39 @@ osf1_sys_stat(p, v, retval)
 	if (error)
 		return (error);
 	osf1_cvt_stat_from_native(&sb, &osb);
+	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	return (error);
+}
+
+/*
+ * Get file status; this version follows links.
+ */
+/* ARGSUSED */
+int
+osf1_sys_stat2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_stat2_args *uap = v;
+	struct stat sb;
+	struct osf1_stat2 osb;
+	int error;
+	struct nameidata nd;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	if ((error = namei(&nd)))
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	osf1_cvt_stat2_from_native(&sb, &osb);
 	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
