@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.33 2000/08/07 21:55:22 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.34 2000/08/07 22:10:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -278,6 +278,10 @@ void	lockinit(struct lock *, int prio, const char *wmesg, int timo,
 int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(__volatile struct lock *);
+
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+void	spinlock_switchcheck(void);
+#endif
 
 #define	spinlockinit(lkp, name, flags)					\
 	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
