@@ -39,7 +39,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.6 1994/02/06 22:06:29 briggs Exp $
+ *	$Id: trap.c,v 1.7 1994/02/22 01:23:37 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ dopanic:
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
 		regdump(frame.f_regs, 128);
 		type &= ~T_USER;
-stacknquit();
+/* stacknquit(); */
 		if ((unsigned)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
