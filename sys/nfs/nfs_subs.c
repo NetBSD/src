@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.112 2003/04/01 11:59:03 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.113 2003/04/02 15:14:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.112 2003/04/01 11:59:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.113 2003/04/02 15:14:22 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1285,7 +1285,7 @@ nfs_searchdircache(vp, off, do32, hashent)
 	if (hashent)
 		*hashent = (int)(ndhp - np->n_dircache);
 	if (do32) {
-		for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next) {
+		LIST_FOREACH(ndp, ndhp, dc_hash) {
 			if (ndp->dc_cookie32 == (u_int32_t)off) {
 				/*
 				 * An invalidated entry will become the
@@ -1301,9 +1301,10 @@ nfs_searchdircache(vp, off, do32, hashent)
 			}
 		}
 	} else {
-		for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next)
+		LIST_FOREACH(ndp, ndhp, dc_hash) {
 			if (ndp->dc_cookie == off)
 				break;
+		}
 	}
 	return ndp;
 }
@@ -1397,7 +1398,7 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	 * loss.
 	 */
 	if (np->n_dircachesize == NFS_MAXDIRCACHE) {
-		first = np->n_dirchain.tqh_first;
+		first = TAILQ_FIRST(&np->n_dirchain);
 		TAILQ_REMOVE(&np->n_dirchain, first, dc_chain);
 		LIST_REMOVE(first, dc_hash);
 		FREE(first, M_NFSDIROFF);
@@ -1427,7 +1428,7 @@ nfs_invaldircache(vp, forcefree)
 		return;
 
 	if (!(nmp->nm_flag & NFSMNT_XLATECOOKIE) || forcefree) {
-		while ((ndp = np->n_dirchain.tqh_first)) {
+		while ((ndp = TAILQ_FIRST(&np->n_dirchain)) != 0) {
 			TAILQ_REMOVE(&np->n_dirchain, ndp, dc_chain);
 			LIST_REMOVE(ndp, dc_hash);
 			FREE(ndp, M_NFSDIROFF);
@@ -1437,9 +1438,9 @@ nfs_invaldircache(vp, forcefree)
 			FREE(np->n_dirgens, M_NFSDIROFF);
 		}
 	} else {
-		for (ndp = np->n_dirchain.tqh_first; ndp;
-		    ndp = ndp->dc_chain.tqe_next)
+		TAILQ_FOREACH(ndp, &np->n_dirchain, dc_chain) {
 			ndp->dc_blkno = -1;
+		}
 	}
 
 	np->n_dblkno = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.56 2003/03/31 14:43:59 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.57 2003/04/02 15:14:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.56 2003/03/31 14:43:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.57 2003/04/02 15:14:23 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -257,8 +257,8 @@ sys_nfssvc(l, v, retval)
 			 * First check to see if another nfsd has already
 			 * added this credential.
 			 */
-			for (nuidp = NUIDHASH(slp,nsd->nsd_cr.cr_uid)->lh_first;
-			    nuidp != 0; nuidp = nuidp->nu_hash.le_next) {
+			LIST_FOREACH(nuidp, NUIDHASH(slp,nsd->nsd_cr.cr_uid),
+			    nu_hash) {
 				if (nuidp->nu_cr.cr_uid == nsd->nsd_cr.cr_uid &&
 				    (!nfsd->nfsd_nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
@@ -284,7 +284,7 @@ sys_nfssvc(l, v, retval)
 				    free((caddr_t)nuidp, M_NFSUID);
 			    } else {
 				if (nuidp == (struct nfsuid *)0) {
-				    nuidp = slp->ns_uidlruhead.tqh_first;
+				    nuidp = TAILQ_FIRST(&slp->ns_uidlruhead);
 				    LIST_REMOVE(nuidp, nu_hash);
 				    TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp,
 					nu_lru);
@@ -503,8 +503,7 @@ nfssvc_nfsd(nsd, argp, l)
 			}
 			if (nfsd->nfsd_slp == (struct nfssvc_sock *)0 &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
-				for (slp = nfssvc_sockhead.tqh_first; slp != 0;
-				    slp = slp->ns_chain.tqe_next) {
+				TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 				    if ((slp->ns_flag & (SLP_VALID | SLP_DOREC))
 					== (SLP_VALID | SLP_DOREC)) {
 					    slp->ns_flag &= ~SLP_DOREC;
@@ -532,8 +531,9 @@ nfssvc_nfsd(nsd, argp, l)
 				error = nfsrv_dorec(slp, nfsd, &nd);
 				cur_usec = (u_quad_t)time.tv_sec * 1000000 +
 					(u_quad_t)time.tv_usec;
-				if (error && slp->ns_tq.lh_first &&
-				    slp->ns_tq.lh_first->nd_time <= cur_usec) {
+				if (error && LIST_FIRST(&slp->ns_tq) &&
+				    LIST_FIRST(&slp->ns_tq)->nd_time <=
+				    cur_usec) {
 					error = 0;
 					cacherep = RC_DOIT;
 					writes_todo = 1;
@@ -745,8 +745,8 @@ nfssvc_nfsd(nsd, argp, l)
 		    cur_usec = (u_quad_t)time.tv_sec * 1000000 +
 			(u_quad_t)time.tv_usec;
 		    s = splsoftclock();
-		    if (slp->ns_tq.lh_first &&
-			slp->ns_tq.lh_first->nd_time <= cur_usec) {
+		    if (LIST_FIRST(&slp->ns_tq) &&
+			LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec) {
 			cacherep = RC_DOIT;
 			writes_todo = 1;
 		    } else
@@ -804,9 +804,9 @@ nfsrv_zapsock(slp)
 			m_free(slp->ns_nam);
 		m_freem(slp->ns_raw);
 		m_freem(slp->ns_rec);
-		for (nuidp = slp->ns_uidlruhead.tqh_first; nuidp != 0;
+		for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 		    nuidp = nnuidp) {
-			nnuidp = nuidp->nu_lru.tqe_next;
+			nnuidp = TAILQ_NEXT(nuidp, nu_lru);
 			LIST_REMOVE(nuidp, nu_hash);
 			TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp, nu_lru);
 			if (nuidp->nu_flag & NU_NAM)
@@ -814,8 +814,8 @@ nfsrv_zapsock(slp)
 			free((caddr_t)nuidp, M_NFSUID);
 		}
 		s = splsoftclock();
-		for (nwp = slp->ns_tq.lh_first; nwp; nwp = nnwp) {
-			nnwp = nwp->nd_tq.le_next;
+		for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
+			nnwp = LIST_NEXT(nwp, nd_tq);
 			LIST_REMOVE(nwp, nd_tq);
 			free((caddr_t)nwp, M_NFSRVDESC);
 		}
@@ -853,8 +853,9 @@ nfsrv_init(terminating)
 		panic("nfsd init");
 	nfssvc_sockhead_flag |= SLP_INIT;
 	if (terminating) {
-		for (slp = nfssvc_sockhead.tqh_first; slp != 0; slp = nslp) {
-			nslp = slp->ns_chain.tqe_next;
+		for (slp = TAILQ_FIRST(&nfssvc_sockhead); slp != 0;
+		    slp = nslp) {
+			nslp = TAILQ_NEXT(slp, ns_chain);
 			if (slp->ns_flag & SLP_VALID)
 				nfsrv_zapsock(slp);
 			TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
@@ -971,8 +972,7 @@ nfssvc_iod(l)
 	 */
 	for (;;) {
 	    while (((nmp = nfs_iodmount[myiod]) == NULL
-		    || nmp->nm_bufq.tqh_first == NULL)
-		    && error == 0) {
+		    || TAILQ_EMPTY(&nmp->nm_bufq)) && error == 0) {
 		if (nmp)
 		    nmp->nm_bufqiods--;
 		nfs_iodwant[myiod] = p;
@@ -980,7 +980,7 @@ nfssvc_iod(l)
 		error = tsleep((caddr_t)&nfs_iodwant[myiod],
 			PWAIT | PCATCH, "nfsidl", 0);
 	    }
-	    while (nmp != NULL && (bp = nmp->nm_bufq.tqh_first) != NULL) {
+	    while (nmp != NULL && (bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen--;
@@ -1138,8 +1138,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	if (verf_len < (4 * NFSX_UNSIGNED))
 		panic("nfs_getnickauth verf too small");
 #endif
-	for (nuidp = NMUIDHASH(nmp, cred->cr_uid)->lh_first;
-	    nuidp != 0; nuidp = nuidp->nu_hash.le_next) {
+	LIST_FOREACH(nuidp, NMUIDHASH(nmp, cred->cr_uid), nu_hash) {
 		if (nuidp->nu_cr.cr_uid == cred->cr_uid)
 			break;
 	}
@@ -1235,7 +1234,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 				   malloc(sizeof (struct nfsuid), M_NFSUID,
 					M_WAITOK);
 			} else {
-				nuidp = nmp->nm_uidlruhead.tqh_first;
+				nuidp = TAILQ_FIRST(&nmp->nm_uidlruhead);
 				LIST_REMOVE(nuidp, nu_hash);
 				TAILQ_REMOVE(&nmp->nm_uidlruhead, nuidp,
 					nu_lru);

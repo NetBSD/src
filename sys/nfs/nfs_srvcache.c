@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.21 2003/02/26 06:31:19 matt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.22 2003/04/02 15:14:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.21 2003/02/26 06:31:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.22 2003/04/02 15:14:22 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -187,8 +187,7 @@ nfsrv_getcache(nd, slp, repp)
 	if (!nd->nd_nam2)
 		return (RC_DOIT);
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != 0;
-	    rp = rp->rc_hash.le_next) {
+	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
@@ -198,7 +197,7 @@ loop:
 			}
 			rp->rc_flag |= RC_LOCKED;
 			/* If not at end of LRU chain, move it there */
-			if (rp->rc_lru.tqe_next) {
+			if (TAILQ_NEXT(rp, rc_lru)) {
 				TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 				TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);
 			}
@@ -238,11 +237,11 @@ loop:
 		numnfsrvcache++;
 		rp->rc_flag = RC_LOCKED;
 	} else {
-		rp = nfsrvlruhead.tqh_first;
+		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_flag & RC_LOCKED) != 0) {
 			rp->rc_flag |= RC_WANTED;
 			(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
-			rp = nfsrvlruhead.tqh_first;
+			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
 		rp->rc_flag |= RC_LOCKED;
 		LIST_REMOVE(rp, rc_hash);
@@ -292,8 +291,7 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 	if (!nd->nd_nam2)
 		return;
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != 0;
-	    rp = rp->rc_hash.le_next) {
+	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
@@ -336,8 +334,8 @@ nfsrv_cleancache()
 {
 	struct nfsrvcache *rp, *nextrp;
 
-	for (rp = nfsrvlruhead.tqh_first; rp != 0; rp = nextrp) {
-		nextrp = rp->rc_lru.tqe_next;
+	for (rp = TAILQ_FIRST(&nfsrvlruhead); rp != 0; rp = nextrp) {
+		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		free(rp, M_NFSD);

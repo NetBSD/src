@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.160 2003/03/31 14:47:03 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.161 2003/04/02 15:14:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.160 2003/03/31 14:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.161 2003/04/02 15:14:25 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1472,8 +1472,8 @@ again:
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
 #ifdef INET
-			if (in_ifaddr.tqh_first)
-				*tl++ = in_ifaddr.tqh_first->ia_addr.sin_addr.s_addr;
+			if (TAILQ_FIRST(&in_ifaddr))
+				*tl++ = TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr.s_addr;
 			else
 				*tl++ = create_verf;
 #else
