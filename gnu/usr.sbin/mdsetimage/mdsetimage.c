@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.11 2003/03/04 08:32:58 dogcow Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.12 2003/03/04 12:16:41 dogcow Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.11 2003/03/04 08:32:58 dogcow Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.12 2003/03/04 12:16:41 dogcow Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -61,14 +61,13 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.11 2003/03/04 08:32:58 dogcow Exp $");
 
 struct symbols {
 	char *name;
-	bfd_vma vma;
 	size_t offset;
 } md_root_symbols[] = {
 #define	X_MD_ROOT_IMAGE	0
-	{ "_md_root_image", 0, 0 },
+	{ "_md_root_image", 0 },
 #define	X_MD_ROOT_SIZE	1
-	{ "_md_root_size", 0, 0 },
-	{ NULL }
+	{ "_md_root_size", 0 },
+	{ NULL, 0 }
 };
 
 #define	CHUNKSIZE	(64 * 1024)
@@ -76,6 +75,7 @@ struct symbols {
 int		main(int, char *[]);
 static void	usage(void) __attribute__((noreturn));
 static int	find_md_root(bfd *, struct symbols symbols[]);
+static int32_t  conv_endian(bfd *, int32_t);
 
 int	verbose;
 int	extract;
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 
 	md_root_offset = md_root_symbols[X_MD_ROOT_IMAGE].offset;
 	md_root_size_offset = md_root_symbols[X_MD_ROOT_SIZE].offset;
-	md_root_size = bfd_get_32(abfd, &mappedkfile[md_root_size_offset]);
+	md_root_size = conv_endian(abfd, *((int32_t *)(mappedkfile + md_root_size_offset)));
 
 	munmap(mappedkfile, ksb.st_size);
 
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
 	if (setsize && !extract) {
-		char buf[sizeof(uint32_t)];
+		volatile int32_t buf;
 
 		if (verbose)
 			fprintf(stderr, "setting md_root_size to %llu\n",
@@ -236,8 +236,8 @@ main(int argc, char *argv[])
 		if (lseek(kfd, md_root_size_offset, SEEK_SET) !=
 		    md_root_size_offset)
 			err(1, "seek %s", kfile);
-		bfd_put_32(abfd, fssb.st_size, buf);
-		if (write(kfd, buf, sizeof(buf)) != sizeof(buf))
+		buf = conv_endian(abfd, fssb.st_size);
+		if (write(kfd, (const void *) &buf, sizeof(buf)) != sizeof(buf))
 			err(1, "write %s", kfile);
 	}
 
@@ -274,7 +274,6 @@ find_md_root(bfd *abfd, struct symbols symbols[])
 	long number_of_symbols;
 	asymbol **symbol_table = NULL;
 	struct symbols *s;
-	struct sec *p;
 
 	storage_needed = bfd_get_symtab_upper_bound(abfd);
 	if (storage_needed <= 0)
@@ -292,14 +291,16 @@ find_md_root(bfd *abfd, struct symbols symbols[])
 
 	for (i = 0; i < number_of_symbols; i++) {
 		for (s = symbols; s->name != NULL; s++) {
-			const char *sym = bfd_asymbol_name(symbol_table[i]);
+			const char *sym = symbol_table[i]->name;
 
 			/*
 			 * match symbol prefix '_' or ''.
 			 */
 			if (!strcmp(s->name, sym) ||
 			    !strcmp(s->name + 1, sym)) {
-				s->vma = bfd_asymbol_value(symbol_table[i]);
+				s->offset =
+				    (size_t)(symbol_table[i]->section->filepos
+				    + symbol_table[i]->value);
 			}
 		}
 	}
@@ -307,19 +308,34 @@ find_md_root(bfd *abfd, struct symbols symbols[])
 	free(symbol_table);
 
 	for (s = symbols; s->name != NULL; s++) {
-		if (s->vma == 0)
-			return (1);
-
-		for (p = abfd->sections; p != NULL; p = p->next) {
-			if (p->vma > s->vma || p->vma + p->_raw_size < s->vma)
-				continue;
-
-			s->offset = (size_t)(p->filepos + (s->vma - p->vma));
-		}
-
 		if (s->offset == 0)
 			return (1);
 	}
 
 	return (0);
 }
+
+static int32_t
+conv_endian(bfd *abfd, int32_t len)
+{
+	int32_t x;
+
+	switch (abfd->xvec->byteorder) {
+	case BFD_ENDIAN_BIG:
+		return (htonl(len));
+		/*NOTREACHED*/
+	case BFD_ENDIAN_LITTLE:
+		x = htonl(len);
+		return ((x << 24) & 0xff000000 ) |
+		    ((x <<  8) & 0x00ff0000 ) |
+		    ((x >>  8) & 0x0000ff00 ) |
+		    ((x >> 24) & 0x000000ff );
+		/*NOTREACHED*/
+	case BFD_ENDIAN_UNKNOWN:
+	default:
+		errx(1, "unknown BFD endianness");
+		return (len);
+		/*NOTREACHED*/
+	}
+}
+
