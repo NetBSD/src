@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.365 2002/11/17 15:51:21 wiz Exp $
+# $NetBSD: mi,v 1.366 2002/11/23 11:11:15 blymn Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -156,7 +156,7 @@
 ./sbin/ttyflags		base-sysutil-root
 ./sbin/tunefs		base-sysutil-root
 ./sbin/umount		base-sysutil-root
-./sbin/verifiedexec_load		base-sysutil-root
+./sbin/veriexecctl	base-sysutil-root
 ./sbin/wdogctl		base-sysutil-root
 ./sbin/wsconsctl	base-sysutil-root
 ./stand			base-sys-root
@@ -959,6 +959,9 @@
 ./usr/share/examples/rtadvd		base-router-examples
 ./usr/share/examples/supfiles		base-sup-examples
 ./usr/share/examples/syslogd		base-sysutil-examples
+./usr/share/examples/veriexecctl	base-sysutil-examples
+./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples
+./usr/share/examples/veriexecctl/gen_sha1	base-sysutil-examples
 ./usr/share/games			base-games-share
 ./usr/share/games/atc			base-games-share
 ./usr/share/games/boggle		base-games-share
