@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2000/07/19 02:39:11 matt Exp $ */
+/*	$NetBSD: boot.c,v 1.13 2000/08/30 18:16:09 jdolecek Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +34,8 @@
  *	@(#)boot.c	7.15 (Berkeley) 5/4/91
  */
 
-#include "sys/param.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
 #include "lib/libsa/stand.h"
 #include "lib/libsa/loadfile.h"
 #include "lib/libkern/libkern.h"
@@ -98,13 +98,15 @@ Xmain(void)
 	int io;
 	int j, nu;
 	u_long marks[MARK_MAX];
+	extern const char *bootprog_rev, *bootprog_date;
 
 	io = 0;
 	skip = 1;
 	autoconf();
 
 	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
-	printf("\n\r>> NetBSD/vax boot [%s %s] <<\n", __DATE__, __TIME__);
+	printf("\n\r>> NetBSD/vax boot [%s %s] <<\n", bootprog_rev,
+		bootprog_date);
 	printf(">> Press any key to abort autoboot  ");
 	sluttid = getsecs() + 5;
 	senast = 0;
