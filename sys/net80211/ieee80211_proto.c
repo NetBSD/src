@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.9 2004/07/16 02:38:34 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.10 2004/07/22 14:52:07 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.9 2004/07/16 02:38:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.10 2004/07/22 14:52:07 mycroft Exp $");
 #endif
 
 /*
@@ -322,8 +322,10 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 				continue;
 			}
 		}
-		if (!ignore)
+		if (!ignore) {
 			okrate = nrs->rs_rates[i];
+			ni->ni_txrate = i;
+		}
 		i++;
 	}
 	if (okrate == 0 || error != 0)
