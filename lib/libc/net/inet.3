@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.21 2003/04/29 12:39:20 wiz Exp $
+.\"	$NetBSD: inet.3,v 1.22 2003/05/03 19:11:31 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -235,8 +235,7 @@ Due to the method of allocating certain styles of IPv6
 addresses, it will be common for addresses to contain long
 strings of zero bits.
 In order to make writing addresses
-.Pp
-containing zero bits easier a special syntax is available to
+containing zero bits easier, a special syntax is available to
 compress the zeros.
 The use of ``::'' indicates multiple groups of 16-bits of zeros.
 The ``::'' can only appear once in an address.
