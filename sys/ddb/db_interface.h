@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.7 2001/07/31 04:28:16 atatat Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.8 2001/11/09 06:52:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 db_addr_t db_disasm __P((db_addr_t, boolean_t));
 
 /* arch/<arch>/<arch>/db_interface.c */
-void db_machine_init __P((void));
 #ifdef DB_MACHINE_COMMANDS
 extern const struct db_command db_machine_command_table[];
 #endif

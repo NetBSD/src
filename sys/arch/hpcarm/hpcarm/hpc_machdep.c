@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.19 2001/11/09 00:34:37 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.20 2001/11/09 06:52:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -211,7 +211,6 @@ extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
-extern void db_machine_init	__P((void));
 
 extern void dumpsys	__P((void));
 
