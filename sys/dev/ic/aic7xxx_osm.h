@@ -1,7 +1,7 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.3 2003/04/20 15:32:10 fvdl Exp $	*/
 
 /*
- * FreeBSD platform specific driver option settings, data structures,
+ * NetBSD platform specific driver option settings, data structures,
  * function declarations and includes.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
@@ -177,7 +177,6 @@ struct scb_platform_data {
 };
 
 /********************************* Byte Order *********************************/
-#if __FreeBSD_version >= 500000
 #define ahc_htobe16(x) htobe16(x)
 #define ahc_htobe32(x) htobe32(x)
 #define ahc_htobe64(x) htobe64(x)
@@ -191,21 +190,6 @@ struct scb_platform_data {
 #define ahc_le16toh(x) le16toh(x)
 #define ahc_le32toh(x) le32toh(x)
 #define ahc_le64toh(x) le64toh(x)
-#else
-#define ahc_htobe16(x) (x)
-#define ahc_htobe32(x) (x)
-#define ahc_htobe64(x) (x)
-#define ahc_htole16(x) (x)
-#define ahc_htole32(x) (x)
-#define ahc_htole64(x) (x)
-
-#define ahc_be16toh(x) (x)
-#define ahc_be32toh(x) (x)
-#define ahc_be64toh(x) (x)
-#define ahc_le16toh(x) (x)
-#define ahc_le32toh(x) (x)
-#define ahc_le64toh(x) (x)
-#endif
 
 /************************** Timer DataStructures ******************************/
 typedef struct callout ahc_timer_t;
@@ -222,11 +206,7 @@ typedef struct callout ahc_timer_t;
 /***************************** Timer Facilities *******************************/
 void ahc_timeout(void*);
 
-#if __FreeBSD_version >= 500000
-#define ahc_timer_init(timer) callout_init(timer, /*mpsafe*/0)
-#else
 #define ahc_timer_init callout_init
-#endif
 #define ahc_timer_stop callout_stop
 
 static __inline void
@@ -438,7 +418,6 @@ ahc_freeze_scb(struct scb *scb)
 static __inline void
 ahc_platform_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
 {
-	/* Nothing to do here for FreeBSD */
 }
 
 static __inline int
@@ -446,7 +425,6 @@ ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
 			char channel, int lun, u_int tag,
 			role_t role, uint32_t status)
 {
-	/* Nothing to do here for FreeBSD */
 	return (0);
 }
 
@@ -537,7 +515,6 @@ ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
 static __inline void
 ahc_platform_dump_card_state(struct ahc_softc *ahc)
 {
-	/* Nothing to do here for FreeBSD */
 }
 /**************************** Transfer Settings *******************************/
 void	  ahc_notify_xfer_settings_change(struct ahc_softc *,
