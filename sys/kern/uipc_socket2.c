@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.43 2002/07/03 19:06:49 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.44 2002/07/03 21:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.43 2002/07/03 19:06:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.44 2002/07/03 21:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
  * in the socket buffer, that is, a stream protocol (such as TCP).
  */
 void
-sbappend_stream(struct sockbuf *sb, struct mbuf *m)
+sbappendstream(struct sockbuf *sb, struct mbuf *m)
 {
 
 	KDASSERT(m->m_nextpkt == NULL);
