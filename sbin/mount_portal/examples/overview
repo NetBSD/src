@@ -1,4 +1,4 @@
-$NetBSD: overview,v 1.1 1999/08/16 06:42:48 bgrayson Exp $
+$NetBSD: overview,v 1.2 2001/10/11 18:41:12 atatat Exp $
 
 Overall notes:
 
@@ -26,6 +26,8 @@ Descriptions of files in this directory:
   rfilter.1	Simple rfilter usage:  bunzip2/bzcat
   rfilter.2	Advanced rfilter usage
   advanced.1	A tutorial
+  cvs.1		How to map a cvs server into your local file system
+  cvs.pl	A perl script that does the work for the cvs configuration
 
 In progress:
   wfilter.1	Simple wfilter usage:  bzip2
