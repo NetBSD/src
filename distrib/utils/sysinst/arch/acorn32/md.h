@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2002/01/31 00:33:49 reinoud Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2002/02/14 15:25:02 reinoud Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the arm32 */
+/* md.h -- Machine specific definitions for the Acorn32 */
 
 /* Constants and defines */
 
@@ -50,8 +50,8 @@
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  *
- * arm32 has the MD set kern first, because generic kernels are too
- * big to fit on install floppies. arm32 does not yet include xsets
+ * Acorn32 has the MD set kern first, because generic kernels are too
+ * big to fit on install floppies. Acorn32 does not yet include xsets
  *
  * Third entry is the last extension name in the split sets for loading
  * from floppy.
@@ -60,6 +60,9 @@ EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
     {"kern-GENERIC",	1, NULL, "Kernel       : "},
+    {"kern-RPC_WSCONS",	1, NULL, "Kernel       : "},
+    {"kern-NC",		1, NULL, "Kernel       : "},
+    {"kern-NC_WSCONS",	1, NULL, "Kernel       : "},
     {"base",		1, NULL, "Base         : "},
     {"etc",		1, NULL, "System (/etc): "},
     {"comp",		1, NULL, "Compiler     : "},
@@ -82,7 +85,7 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  *
- * On arm32, we allow "wd" IDE disks and "sd" scsi disks.
+ * On acorn32, we allow "wd" IDE disks and "sd" scsi disks.
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
@@ -95,13 +98,13 @@ EXTERN	char *disk_names[]
  * this must return 1 for a character that matches the first
  * characters of each member of disk_names.
  *
- * On arm32, that means matching 'w' for ide and 's' for sd.
+ * On acorn32, that means matching 'w' for ide and 's' for sd.
  */
 #define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
 /*
  * Machine-specific command to write a new label to a disk.
- * For example, arm32 uses "/sbin/disklabel -w -r", just like arm32
+ * For example, acorn32 uses "/sbin/disklabel -w -r", just like acorn32
  * miniroot scripts, though this may leave a bogus incore label.
  * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
  * to get incore to ondisk inode translation for the Sun proms.
@@ -112,7 +115,7 @@ EXTERN	char *disk_names[]
 
 /*
  * Default fileystem type for floppy disks.
- * On arm32, that is  msdos.
+ * On acorn32, that is  msdos.
  */
 EXTERN char *fdtype INIT("msdos");
 
