@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.68 2003/04/14 09:49:15 dsl Exp $ */
+/* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.68 2003/04/14 09:49:15 dsl Exp $");
+__RCSID("$NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1558,8 +1558,6 @@ useradd(int argc, char **argv)
 	defaultfield = bigD = 0;
 	while ((c = getopt(argc, argv, "DG:b:c:d:e:f:g:k:mou:s:" ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("useradd");
 		case 'D':
 			bigD = 1;
 			break;
@@ -1639,6 +1637,9 @@ useradd(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("useradd");
+			/* NOTREACHED */
 		}
 	}
 	if (bigD) {
@@ -1691,8 +1692,6 @@ usermod(int argc, char **argv)
 	have_new_user = 0;
 	while ((c = getopt(argc, argv, "G:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("usermod");
 		case 'G':
 			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
 			       u.u_groupc < NGROUPS_MAX) {
@@ -1764,6 +1763,9 @@ usermod(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("usermod");
+			/* NOTREACHED */
 		}
 	}
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
@@ -1803,8 +1805,6 @@ userdel(int argc, char **argv)
 	defaultfield = bigD = rmhome = 0;
 	while ((c = getopt(argc, argv, "r" DEL_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("userdel");
 #ifdef EXTENSIONS
 		case 'D':
 			bigD = 1;
@@ -1826,6 +1826,9 @@ userdel(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("userdel");
+			/* NOTREACHED */
 		}
 	}
 #ifdef EXTENSIONS
@@ -1885,8 +1888,6 @@ groupadd(int argc, char **argv)
 	dupgid = 0;
 	while ((c = getopt(argc, argv, "g:o" GROUP_ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("groupadd");
 		case 'g':
 			if (!is_number(optarg)) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
@@ -1901,6 +1902,9 @@ groupadd(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("groupadd");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -1939,13 +1943,14 @@ groupdel(int argc, char **argv)
 
 	while ((c = getopt(argc, argv, "" GROUP_DEL_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("groupdel");
 #ifdef EXTENSIONS
 		case 'v':
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("groupdel");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -1985,8 +1990,6 @@ groupmod(int argc, char **argv)
 	newname = NULL;
 	while ((c = getopt(argc, argv, "g:on:" GROUP_MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
-		default:
-			usermgmt_usage("groupmod");
 		case 'g':
 			if (!is_number(optarg)) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
@@ -2004,6 +2007,9 @@ groupmod(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("groupmod");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2059,14 +2065,15 @@ userinfo(int argc, char **argv)
 	exists = 0;
 	while ((i = getopt(argc, argv, "ev")) != -1) {
 		switch(i) {
-		default:
-			usermgmt_usage("userinfo");
 		case 'e':
 			exists = 1;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
+		default:
+			usermgmt_usage("userinfo");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2121,14 +2128,15 @@ groupinfo(int argc, char **argv)
 	exists = 0;
 	while ((i = getopt(argc, argv, "ev")) != -1) {
 		switch(i) {
-		default:
-			usermgmt_usage("groupinfo");
 		case 'e':
 			exists = 1;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
+		default:
+			usermgmt_usage("groupinfo");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
