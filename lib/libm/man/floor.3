@@ -30,14 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)floor.3	6.5 (Berkeley) 4/19/91
-.\"	$Id: floor.3,v 1.4 1993/10/29 17:10:11 jtc Exp $
+.\"	$Id: floor.3,v 1.5 1994/03/11 01:32:10 jtc Exp $
 .\"
-.Dd April 19, 1991
+.Dd March 10, 1994
 .Dt FLOOR 3
 .Os
 .Sh NAME
 .Nm floor
-.Nd largest integral value not greater than x
+.Nd round to largest integral value not greater than x
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
@@ -45,13 +45,10 @@
 .Sh DESCRIPTION
 The
 .Fn floor
-function computes the largest integral value not greater than
+function returns the largest integral value 
+(represented as a double precision number)
+less than or equal to
 .Fa x .
-.Sh RETURN VALUES
-The
-.Fn floor
-function returns the largest integral value
-expressed as a double.
 .Sh SEE ALSO
 .Xr abs 3 ,
 .Xr ceil 3 ,
