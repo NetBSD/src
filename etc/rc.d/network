@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.39 2002/10/05 05:24:40 tron Exp $
+# $NetBSD: network,v 1.40 2003/01/06 10:11:14 tron Exp $
 #
 
 # PROVIDE: network
 # REQUIRE: ipfilter ipsec mountcritlocal root tty sysctl
 # BEFORE:  NETWORKING
+# KEYWORD: shutdown
 
 . /etc/rc.subr
 
