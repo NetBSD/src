@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 1994/10/26 07:50:54 cgd Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 1995/01/10 19:01:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -34,11 +34,13 @@
  *
  *	@(#)signal.h	7.16 (Berkeley) 3/17/91
  */
+
 #ifndef _M68K_SIGNAL_H_
 #define _M68K_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
+#ifndef _ANSI_SOURCE
 /*
  * Get the "code" values
  */
@@ -61,4 +63,5 @@ struct	sigcontext {
 	int	sc_ps;			/* psl to restore */
 };
 
+#endif	/* !_ANSI_SOURCE */
 #endif	/* !_M68K_SIGNAL_H_ */
