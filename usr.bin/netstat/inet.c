@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.60 2003/10/17 22:28:11 enami Exp $	*/
+/*	$NetBSD: inet.c,v 1.61 2004/05/18 14:44:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.60 2003/10/17 22:28:11 enami Exp $");
+__RCSID("$NetBSD: inet.c,v 1.61 2004/05/18 14:44:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,6 +298,8 @@ tcp_stats(off, name)
 	p(tcps_sc_dupesyn, "\t%llu duplicate SYN%s received for entries "
 		"already in the cache\n");
 	p(tcps_sc_dropped, "\t%llu SYN%s dropped (no route or no space)\n");
+	p(tcps_badsig, "\t%llu packet%s with bad signature\n");
+	p(tcps_goodsig, "\t%llu packet%s with good signature\n");
 
 #undef p
 #undef ps
