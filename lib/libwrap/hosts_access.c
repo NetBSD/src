@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.3 1997/10/26 20:49:32 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.4 1999/01/18 19:45:26 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.3 1997/10/26 20:49:32 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.4 1999/01/18 19:45:26 christos Exp $");
 #endif
 #endif
 
@@ -35,11 +35,13 @@ __RCSID("$NetBSD: hosts_access.c,v 1.3 1997/10/26 20:49:32 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <ctype.h>
 #include <errno.h>
 #include <setjmp.h>
 #include <string.h>
+#include <netdb.h>
 #ifdef  NETGROUP
 #include <netgroup.h>
 #include <rpcsvc/ypclnt.h>
@@ -91,6 +93,7 @@ static int list_match __P((char *, struct request_info *,
 static int server_match __P((char *, struct request_info *));
 static int client_match __P((char *, struct request_info *));
 static int host_match __P((char *, struct host_info *));
+static int rbl_match __P((char *, char *));
 static int string_match __P((char *, char *));
 static int masked_match __P((char *, char *, char *));
 
@@ -283,12 +286,49 @@ struct host_info *host;
     } else if (STR_EQ(tok, "LOCAL")) {		/* local: no dots in name */
 	char   *name = eval_hostname(host);
 	return (strchr(name, '.') == 0 && HOSTNAME_KNOWN(name));
+    } else if (strncmp(tok, "{RBL}.", 6) == 0) { /* RBL lookup in domain */
+	return rbl_match(tok+6, eval_hostaddr(host));
     } else if ((mask = split_at(tok, '/')) != 0) {	/* net/mask */
 	return (masked_match(tok, mask, eval_hostaddr(host)));
     } else {					/* anything else */
 	return (string_match(tok, eval_hostaddr(host))
 	    || (NOT_INADDR(tok) && string_match(tok, eval_hostname(host))));
     }
+}
+
+/* rbl_match() - match host by looking up in RBL domain */
+
+static int rbl_match(rbl_domain, rbl_hostaddr)
+char   *rbl_domain;				/* RBL domain */
+char   *rbl_hostaddr;				/* hostaddr */
+{
+    char *rbl_name;
+    unsigned long host_address;
+    int ret = NO;
+ 
+    if ((host_address = dot_quad_addr(rbl_hostaddr)) == INADDR_NONE) {
+	tcpd_warn("unable to convert %s to address", rbl_hostaddr);
+	return (NO);
+    }
+    /*  construct the rbl name to look up */
+    if ((rbl_name = malloc(strlen(rbl_domain) + (4*4) + 2)) == NULL) {
+	tcpd_jump("not enough memory to build RBL name for %s in %s", rbl_hostaddr, rbl_domain);
+	/* NOTREACHED */
+    }
+    sprintf(rbl_name, "%u.%u.%u.%u.%s",
+	    (unsigned int) ((host_address) & 0xff),
+	    (unsigned int) ((host_address >> 8) & 0xff),
+	    (unsigned int) ((host_address >> 16) & 0xff),
+	    (unsigned int) ((host_address >> 24) & 0xff),
+	    rbl_domain);
+    /* look it up */
+    if (gethostbyname(rbl_name) != NULL) {
+	/* successful lookup - they're on the RBL list */
+	ret = YES;
+    }
+    free(rbl_name);
+
+    return ret;
 }
 
 /* string_match - match string against pattern */
