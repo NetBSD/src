@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.16 2001/09/04 16:14:49 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.17 2001/09/16 03:50:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -360,13 +360,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	bus_space_handle_t *memhp;
 	int acct;
 {
-	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	int error;
-
-	/* Requests for linear unprefetchable space can't be satisfied. */
-	if (linear && !prefetchable)
-		return (EOPNOTSUPP);
 
 	if (acct == 0)
 		goto mapit;
@@ -446,14 +440,8 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t memaddr;
 	int error;
-
-	/* Requests for linear unprefetchable space can't be satisfied. */
-	if (linear && !prefetchable)
-		return (EOPNOTSUPP);
 
 	/*
 	 * Do the requested allocation.
@@ -498,10 +486,7 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 	void *v;
 	bus_space_handle_t bsh;
 {
-	/*
-	 * We get linear access only with BUS_SPACE_MAP_PREFETCHABLE,
-	 * so it should be OK if the caller doesn't use BWX instructions.
-	 */
+
 	return ((void *)bsh);
 }
 
