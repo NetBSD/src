@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.2 1998/02/06 22:31:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.3 1998/02/07 02:18:27 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -401,10 +401,10 @@ vm_fault_t fault_type;
 vm_prot_t access_type;
 
 {
-  struct uvm_object *uobj;
-  struct uvm_device *udv;
-  vm_offset_t curr_offset, curr_va, paddr;
   struct vm_map_entry *entry = ufi->entry;
+  struct uvm_object *uobj = entry->object.uvm_obj;
+  struct uvm_device *udv = (struct uvm_device *)uobj;
+  vm_offset_t curr_offset, curr_va, paddr;
   int lcv, retval;
   dev_t device;
   int (*mapfn) __P((dev_t, int, int));
@@ -431,10 +431,8 @@ vm_prot_t access_type;
   }
 
   /*
-   * get object pointers and map function.   
+   * get device map function.   
    */
-  uobj = entry->object.uvm_obj;
-  udv = (struct uvm_device *) uobj;
   device = udv->u_device;
   mapfn = cdevsw[major(device)].d_mmap;
 
