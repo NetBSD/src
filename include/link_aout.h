@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: link_aout.h,v 1.3 1994/01/28 20:26:52 pk Exp $
+ *	$Id: link_aout.h,v 1.4 1994/05/24 10:47:48 pk Exp $
  */
 
 /*
@@ -178,7 +178,6 @@ struct ld_entry {
 #define DL_GETREFCNT	x
 #define DL_GETLOADADDR	x
 
-#if 0	/* In separate header file */
 /*
  * dl*() prototypes.
  */
@@ -186,7 +185,6 @@ extern void	*dlopen __P((char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, char *));
 extern int	dlctl __P((void *, int, void *));
-#endif
 
 
 /*
