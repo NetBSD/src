@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.28 2000/12/30 01:55:24 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.29 2001/01/01 01:42:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.28 2000/12/30 01:55:24 sato Exp $";
+    "$Id: hpcfb.c,v 1.29 2001/01/01 01:42:03 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ int	hpcfb_debug = 0;
 /*
  * currently experimental
 #define HPCFB_JUMP
-*/
 #define HPCFB_MULTI
+*/
 
 struct hpcfb_vchar {
 	u_int c;
