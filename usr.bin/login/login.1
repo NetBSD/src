@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)login.1	6.12 (Berkeley) 6/29/91
-.\"	$Id: login.1,v 1.2 1993/08/01 07:31:30 mycroft Exp $
+.\"	$Id: login.1,v 1.3 1994/01/11 02:31:09 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt LOGIN 1
@@ -84,7 +84,7 @@ If the file
 .Pa /etc/nologin
 exists,
 .Nm login
-dislays its contents to the user and exits.
+displays its contents to the user and exits.
 This is used by
 .Xr shutdown  8
 to prevent users from logging in when the system is about to go down.
@@ -103,7 +103,7 @@ then records an entry in the
 .Xr wtmp 5
 and
 .Xr utmp 5
-files and executes the user's command interpretor.
+files and executes the user's command interpreter.
 .Pp
 Login enters information into the environment (see
 .Xr environ 7 )
