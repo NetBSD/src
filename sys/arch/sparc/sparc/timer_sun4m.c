@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.5 2003/01/06 12:50:46 pk Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.6 2003/01/14 23:00:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,6 +127,7 @@ clockintr_4m(void *cap)
 int
 statintr_4m(void *cap)
 {
+	struct clockframe *frame = cap;
 	volatile int discard;
 	u_long newint;
 
@@ -134,7 +135,9 @@ statintr_4m(void *cap)
 	discard = counterreg4m->t_limit;
 	if (timerok == 0) {
 		/* Stop the clock */
+#ifdef DIAGNOSTIC
 		printf("note: counter running!\n");
+#endif
 		discard = counterreg4m->t_limit;
 		counterreg4m->t_limit = 0;
 		counterreg4m->t_ss = 0;
@@ -142,7 +145,7 @@ statintr_4m(void *cap)
 		return (1);
 	}
 
-	statclock((struct clockframe *)cap);
+	statclock(frame);
 
 	/*
 	 * Compute new randomized interval.
@@ -160,8 +163,19 @@ statintr_4m(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
-		raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
+	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+		if (CLKF_LOPRI(frame, IPL_SCHED)) {
+			/* No need to schedule a soft interrupt */
+			spllowerschedclock();
+			schedintr(cap);
+		} else {
+			/*
+			 * We're interrupting a thread that may have the
+			 * scheduler lock; run schedintr() on this CPU later.
+			 */
+			raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
+		}
+	}
 
 	return (1);
 }
