@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.5 2005/01/08 02:58:03 joff Exp $
+#	$NetBSD: TS7200,v 1.6 2005/01/08 20:41:56 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -167,6 +167,8 @@ isa0		at tspld?
 wdc0		at tspld?
 # TS-5620 battery-backed real-time clock
 tsrtc*		at tspld?
+# HD44780 LCD on LCD header
+tslcd*		at tspld?
 
 # TS-SER[1,2,4] multiport serial PC/104 cards
 com0		at isa? port 0x3f8 irq 6        # Standard PC serial ports
