@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.281 2001/10/12 07:27:33 lukem Exp $
+# $NetBSD: mi,v 1.282 2001/10/13 20:23:24 augustss Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -770,6 +770,7 @@
 ./usr/sbin/wiconfig		base-sysutil-bin
 ./usr/sbin/wire-test		base-netutil-bin
 ./usr/sbin/wsconscfg		base-sysutil-bin
+./usr/sbin/wsmuxctl		base-sysutil-bin
 ./usr/sbin/wsfontload		base-sysutil-bin
 ./usr/sbin/ypbind		base-nis-bin
 ./usr/sbin/ypinit		base-nis-bin
