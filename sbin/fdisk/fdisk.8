@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.11 1997/09/14 14:05:34 lukem Exp $
+.\"	$NetBSD: fdisk.8,v 1.11.2.1 1997/11/27 08:12:33 mellon Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -18,7 +18,7 @@ In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
 Sector 0 of the disk must contain boot code, a partition table, and a
 magic number.
-Newer BIOS want the entire first track reserved.
+Newer BIOS programs want the entire first track reserved.
 BIOS partitions can be used to break the disk up into several pieces.
 The BIOS brings in sector 0, verifies the magic number, and begins
 executing the code at the first byte.
@@ -65,7 +65,7 @@ An example follows:
 .Pp
 This example disk is divided into three partitions that happen to fill the
 disk.  The second partition overlaps the end of the first.
-(Used for debugging purposes)
+(Used for debugging purposes.)
 .Pp
 The various fields in each partition are:
 .Bl -tag -width "cylinder"
@@ -138,7 +138,7 @@ partition, you can use only the
 .Fl a .
 .Pp
 Finally,
-when the all the data for the first sector has been accumulated,
+when all the data for the first sector has been accumulated,
 .Nm
 will ask if you really want to rewrite sector 0.
 Only if you reply affirmatively to this question will
@@ -194,7 +194,7 @@ disk parameters by using the
 flag.  This is provided only so scripts or other programs may
 use fdisk as part of an automatic installation process.  Using the
 .Fl f
-flag with the
+flag with
 .Fl u
 makes it impossible to specify the starting and ending
 .Em cylinder ,
@@ -210,7 +210,8 @@ flag used with no other flags prints a series of
 commands for setting variables to the partition information.  This
 is used for the install script.
 .Sh NOTES
-The automatic calculation of starting cylinder etc. uses
+The automatic calculation of the starting cylinder and
+other parameters uses
 a set of figures that represent what the BIOS thinks is the
 geometry of the drive.
 These figures are by default taken from the incore disklabel, but
