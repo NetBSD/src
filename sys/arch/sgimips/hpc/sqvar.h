@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.1 2001/05/11 03:22:21 thorpej Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.2 2001/06/07 23:05:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -72,6 +72,9 @@ struct sq_control {
 #define	SQ_CDTXOFF(x)		SQ_CDOFF(tx_desc[(x)])
 #define	SQ_CDRXOFF(x)		SQ_CDOFF(rx_desc[(x)])
 
+#define	SQ_TYPE_8003		0
+#define	SQ_TYPE_80C03		1
+
 struct sq_softc {
 	struct device 		sc_dev;
 
@@ -88,6 +91,8 @@ struct sq_softc {
 
 	struct ethercom 	sc_ethercom;
 	unsigned char 		sc_enaddr[ETHER_ADDR_LEN];
+
+	int			sc_type;
 
 	struct sq_control*	sc_control;
 #define	sc_rxdesc		sc_control->rx_desc
@@ -114,6 +119,8 @@ struct sq_softc {
 	bus_dma_segment_t	sc_txseg[SQ_NTXDESC];
 	bus_dmamap_t		sc_txmap[SQ_NTXDESC];
 	struct mbuf*		sc_txmbuf[SQ_NTXDESC];
+
+	u_int8_t		sc_rxcmd;	/* prototype rxcmd */
 
 #if NRND > 0
 	rndsource_element_t 	rnd_source;	/* random source */
