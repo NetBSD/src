@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.2 1997/10/30 05:31:59 mrg Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.2 1997/10/30 16:09:03 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.

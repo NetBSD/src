@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.5 1997/10/08 16:57:04 mycroft Exp $	*/
+/*	$NetBSD: ip.c,v 1.6 1997/10/30 16:10:30 mrg Exp $	*/
 
 /*
  * ip.c (C) 1995-1997 Darren Reed
@@ -7,8 +7,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "%W% %G% (C)1995";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.0.2.11 1997/10/23 11:42:44 darrenr Exp ";
 #endif
 #include <errno.h>
 #include <stdio.h>
@@ -24,9 +25,13 @@ static	char	sccsid[] = "%W% %G% (C)1995";
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#include <sys/param.h>
 #ifndef	linux
 # include <netinet/if_ether.h>
 # include <netinet/ip_var.h>
+# if __FreeBSD_version >= 300000
+#  include <net/if_var.h>
+# endif
 #endif
 #include "ipsend.h"
 
@@ -67,8 +72,8 @@ struct	in_addr	gwip;
 
 	bcopy((char *)buf, s + sizeof(*eh), len);
 	if (gwip.s_addr == last_gw.s_addr)
-		bcopy(last_arp, (char *)&eh->ether_dhost, 6);
-	else if (arp((char *)&gwip, (char *)&eh->ether_dhost) == -1)
+		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
 		return -2;
@@ -99,15 +104,15 @@ int	frag;
 		ipbuf = (char *)malloc(65536);
 	eh = (ether_header_t *)ipbuf;
 
-	bzero((char *)&eh->ether_shost, sizeof(eh->ether_shost));
+	bzero((char *)A_A eh->ether_shost, sizeof(eh->ether_shost));
 	if (last_gw.s_addr && (gwip.s_addr == last_gw.s_addr))
-		bcopy(last_arp, (char *)&eh->ether_dhost, 6);
-	else if (arp((char *)&gwip, (char *)&eh->ether_dhost) == -1)
+		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
 		return -2;
 	    }
-	bcopy((char *)&eh->ether_dhost, last_arp, sizeof(last_arp));
+	bcopy((char *)A_A eh->ether_dhost, last_arp, sizeof(last_arp));
 	eh->ether_type = htons(ETHERTYPE_IP);
 
 	bcopy((char *)ip, (char *)&ipsv, sizeof(*ip));

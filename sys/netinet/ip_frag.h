@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_frag.h,v 1.8 1997/09/21 18:03:19 veego Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.9 1997/10/30 16:09:02 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.0.2.9 1997/06/16 02:46:12 darrenr Exp 
+ * Id: ip_frag.h,v 2.0.2.12 1997/10/23 14:56:01 darrenr Exp 
  */
 
 #ifndef	__IP_FRAG_H__
@@ -49,9 +49,10 @@ extern	int	ipfr_newfrag __P((ip_t *, fr_info_t *, int));
 extern	int	ipfr_nat_newfrag __P((ip_t *, fr_info_t *, int, struct nat *));
 extern	nat_t	*ipfr_nat_knownfrag __P((ip_t *, fr_info_t *));
 extern	int	ipfr_knownfrag __P((ip_t *, fr_info_t *));
+extern	void	ipfr_forget __P((void *));
 extern	void	ipfr_unload __P((void));
 
-#if     (BSD >= 199306) || SOLARIS
+#if     (BSD >= 199306) || SOLARIS || defined(__sgi)
 extern	void	ipfr_slowtimer __P((void));
 #else
 extern	int	ipfr_slowtimer __P((void));

@@ -1,18 +1,23 @@
-/*	$NetBSD: ipmon.c,v 1.7 1997/09/21 18:01:50 veego Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8 1997/10/30 16:10:19 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29 1997/10/29 12:14:17 darrenr Exp ";
+#endif
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #include <sys/dir.h>
@@ -20,7 +25,6 @@
 #include <sys/filio.h>
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/file.h>
@@ -55,9 +59,12 @@
 #include "netinet/ip_nat.h"
 #include "netinet/ip_state.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static	char	rcsid[] = "Id: ipmon.c,v 2.0.2.21 1997/09/09 14:28:06 darrenr Exp ";
+
+#if	defined(sun) && !defined(SOLARIS2)
+#define	STRERROR(x)	sys_errlist[x]
+extern	char	*sys_errlist[];
+#else
+#define	STRERROR(x)	strerror(x)
 #endif
 
 
@@ -139,10 +146,14 @@ struct	in_addr	ip;
 }
 
 
+#ifdef __STDC__
+char	*portname(int res, char *proto, u_short port)
+#else
 char	*portname(res, proto, port)
 int	res;
 char	*proto;
 u_short	port;
+#endif
 {
 	static	char	pname[8];
 	struct	servent	*serv;
@@ -234,7 +245,7 @@ int	blen;
 	}
 	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, ipl->ipl_usec,
-		nl->nl_rule);
+		nl->nl_rule+1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -358,6 +369,10 @@ int	logtype, blen;
 
 	while (blen > 0) {
 		ipl = (iplog_t *)buf;
+		if (ipl->ipl_magic != IPL_MAGIC) {
+			/* invalid data or out of sync */
+			return;
+		}
 		psize = ipl->ipl_dsize;
 		switch (logtype)
 		{
@@ -391,7 +406,9 @@ int	blen;
 	char	c[3], pname[8], *t, *proto;
 	u_short	hl, p;
 	int	i, lvl, res;
-#if !SOLARIS && !(defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+#if !(SOLARIS || \
+	(defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+	(defined(OpenBSD) && (OpenBSD >= 199603)))
 	int	len;
 #endif
 	struct	ip	*ip;
@@ -419,9 +436,11 @@ int	blen;
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
 		t += strlen(t);
 	}
-#if SOLARIS || (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+#if (SOLARIS || \
+	(defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+	(defined(OpenBSD) && (OpenBSD >= 199603)))
 	(void) sprintf(t, "%.*s @%hd ", (int)sizeof(ipf->fl_ifname),
-		ipf->fl_ifname, ipf->fl_rule);
+		ipf->fl_ifname, ipf->fl_rule+1);
 #else
 	for (len = 0; len < 3; len++)
 		if (!ipf->fl_ifname[len])
@@ -429,7 +448,7 @@ int	blen;
 	if (ipf->fl_ifname[len])
 		len++;
 	(void) sprintf(t, "%*.*s%u @%hd ", len, len, ipf->fl_ifname,
-		ipf->fl_unit, ipf->fl_rule);
+		ipf->fl_unit, ipf->fl_rule+1);
 #endif
 	pr = getprotobynumber((int)p);
 	if (!pr) {
@@ -583,8 +602,7 @@ FILE *log;
 	int	fd, flushed = 0;
 
 	if ((fd = open(file, O_RDWR)) == -1) {
-		(void) fprintf(stderr, "%s: ", file);
-		perror("open");
+		(void) fprintf(stderr, "%s: open: %s", file, STRERROR(errno));
 		exit(-1);
 	}
 
@@ -600,7 +618,7 @@ FILE *log;
 		if (opts & OPT_SYSLOG)
 			syslog(LOG_INFO, "%d bytes flushed from log\n",
 				flushed);
-		else
+		else if (log != stdout)
 			fprintf(log, "%d bytes flushed from log\n", flushed);
 	}
 }
@@ -611,7 +629,7 @@ int argc;
 char *argv[];
 {
 	struct	stat	sb;
-	FILE	*log = NULL;
+	FILE	*log = stdout;
 	int	fd[3], doread, n, i, nfd = 1;
 	int	tr, nr, regular, c;
 	int	fdt[3];
@@ -649,6 +667,7 @@ char *argv[];
 		case 'N' :
 			opts |= OPT_NAT;
 			fdt[0] = IPL_LOGNAT;
+			iplfile = IPL_NAT;
 			break;
 		case 's' :
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
@@ -657,6 +676,7 @@ char *argv[];
 		case 'S' :
 			opts |= OPT_STATE;
 			fdt[0] = IPL_LOGSTATE;
+			iplfile = IPL_STATE;
 			break;
 		case 't' :
 			opts |= OPT_TAIL;
@@ -677,32 +697,38 @@ char *argv[];
 		}
 
 	if ((fd[0] == -1) && (fd[0] = open(iplfile, O_RDONLY)) == -1) {
-		(void) fprintf(stderr, "%s: ", iplfile);
-		perror("open");
+		(void) fprintf(stderr, "%s: open: %s", iplfile,
+			STRERROR(errno));
 		exit(-1);
 	}
 
 	if ((opts & OPT_ALL)) {
 		if ((fd[1] = open(IPL_NAT, O_RDONLY)) == -1) {
-			(void) fprintf(stderr, "%s: ", IPL_NAT);
-			perror("open");
+			(void) fprintf(stderr, "%s: open: %s", IPL_NAT,
+				STRERROR(errno));
 			exit(-1);
 		}
 		if ((fd[2] = open(IPL_STATE, O_RDONLY)) == -1) {
-			(void) fprintf(stderr, "%s: ", IPL_STATE);
-			perror("open");
+			(void) fprintf(stderr, "%s: open: %s", IPL_STATE,
+				STRERROR(errno));
 			exit(-1);
 		}
 	}
 
 	if (!(opts & OPT_SYSLOG)) {
 		log = argv[optind] ? fopen(argv[optind], "a") : stdout;
+		if (log == NULL) {
+			
+			(void) fprintf(stderr, "%s: fopen: %s", argv[optind],
+				STRERROR(errno));
+			exit(-1);
+		}
 		setvbuf(log, NULL, _IONBF, 0);
 	}
 
 	if (stat(iplfile, &sb) == -1) {
-		fprintf(stderr, "%s :", iplfile);
-		perror("fstat");
+		(void) fprintf(stderr, "%s: stat: %s", iplfile,
+			STRERROR(errno));
 		exit(-1);
 	}
 

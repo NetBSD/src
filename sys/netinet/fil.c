@@ -1,15 +1,15 @@
-/*	$NetBSD: fil.c,v 1.15 1997/09/21 18:03:06 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.16 1997/10/30 16:08:54 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1996 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fil.c,v 2.0.2.32 1997/08/26 13:27:00 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -84,8 +84,10 @@ extern	int	opts;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 # define	IPLLOG(a, c, d, e)		ipflog(a, c, d, e)
-# if SOLARIS
+# if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipf_mutex, ipf_auth;
+# endif
+# if SOLARIS
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, \
 							   ip, qif)
 #  define	SEND_RESET(ip, qif, if)		send_reset(ip, qif)
@@ -94,13 +96,18 @@ extern	kmutex_t	ipf_mutex, ipf_auth;
 # else
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 #  define	SEND_RESET(ip, qif, if)	send_reset((struct tcpiphdr *)ip)
-#  if BSD < 199103
+#  ifdef __sgi
 #   define	ICMP_ERROR(b, ip, t, c, if, src) \
-			icmp_error(mtod(b, ip_t *), t, c, if, src)
+			icmp_error(b, t, c, if, src, if)
 #  else
-#   define	ICMP_ERROR(b, ip, t, c, if, src) \
+#   if BSD < 199103
+#    define	ICMP_ERROR(b, ip, t, c, if, src) \
+			icmp_error(mtod(b, ip_t *), t, c, if, src)
+#   else
+#    define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(b, t, c, (src).s_addr, if)
-#  endif
+#   endif
+#  endif /* __sgi */
 # endif
 #endif
 
@@ -538,12 +545,40 @@ int out;
 #ifdef	_KERNEL
 # if !defined(__SVR4) && !defined(__svr4__)
 	struct mbuf *mc = NULL;
+#  ifdef __sgi
+	char hbuf[(0xf << 2) + sizeof(struct icmp) + sizeof(struct ip) + 8];
+#  endif
+	int up;
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
 	     ip->ip_p == IPPROTO_ICMP)) {
-		register int up = MIN(hlen + 8, ip->ip_len);
+		int plen = 0;
+
+		switch(ip->ip_p)
+		{
+		case IPPROTO_TCP:
+			plen = sizeof(tcphdr_t);
+			break;
+		case IPPROTO_UDP:
+			plen = sizeof(udphdr_t);
+			break;
+		case IPPROTO_ICMP:
+			/* 96 - enough for complete ICMP error IP header */
+			plen = sizeof(struct icmp) + sizeof(struct ip) + 8;
+			break;
+		}
+		up = MIN(hlen + plen, ip->ip_len);
 
 		if (up > m->m_len) {
+#ifdef __sgi /* Under IRIX, avoid m_pullup as it makes ping <hostname> panic */
+			if ((up > sizeof(hbuf)) || (m_length(m) < up)) {
+				frstats[out].fr_pull[1]++;
+				return -1;
+			}
+			m_copydata(m, 0, up, hbuf);
+			frstats[out].fr_pull[0]++;
+			ip = (struct ip *)hbuf;
+#else
 			if ((*mp = m_pullup(m, up)) == 0) {
 				frstats[out].fr_pull[1]++;
 				return -1;
@@ -552,8 +587,11 @@ int out;
 				m = *mp;
 				ip = mtod(m, struct ip *);
 			}
-		}
-	}
+#endif
+		} else
+			up = 0;
+	} else
+		up = 0;
 # endif
 # if SOLARIS
 	mblk_t *mc = NULL, *m = qif->qf_m;
@@ -598,8 +636,11 @@ int out;
 				 */
 				bcopy((char *)fc, (char *)fin, FI_COPYSIZE);
 				frstats[out].fr_chit++;
-				fr = fin->fin_fr;
-				pass = fr ? fr->fr_flags : fr_pass;
+				if ((fr = fin->fin_fr)) {
+					fr->fr_hits++;
+					pass = fr->fr_flags;
+				} else
+					pass = fr_pass;
 			} else {
 				pass = fr_pass;
 				if ((fin->fin_fr = ipfilter[out][fr_active]))
@@ -775,6 +816,10 @@ logit:
 	}
 	if (!(pass & FR_PASS) && m)
 		m_freem(m);
+#  ifdef __sgi
+	else if (changed && up && m)
+		m_copyback(m, 0, up, hbuf);
+#  endif
 	return (pass & FR_PASS) ? 0 : -1;
 # else
 	if (fr) {
@@ -844,15 +889,22 @@ tcphdr_t *tcp;
 	} bytes;
 	u_long sum;
 	u_short	*sp;
-	int len, ilen;
-# if SOLARIS
+	int len;
+# if SOLARIS || defined(__sgi)
 	int add, hlen;
+# endif
+
+# if SOLARIS
+	/* skip any leading M_PROTOs */
+	while(m && (MTYPE(m) != M_DATA))
+		m = m->b_cont;
+	PANIC((!m),("fr_tcpsum: no M_DATA"));
 # endif
 
 	/*
 	 * Add up IP Header portion
 	 */
-	ilen = len = ip->ip_len - (ip->ip_hl << 2);
+	len = ip->ip_len - (ip->ip_hl << 2);
 	bytes.c[0] = 0;
 	bytes.c[1] = IPPROTO_TCP;
 	sum = bytes.s;
@@ -885,35 +937,58 @@ tcphdr_t *tcp;
 		while (hlen) {
 			add = MIN(hlen, m->b_wptr - m->b_rptr);
 			sp = (u_short *)((caddr_t)m->b_rptr + add);
-			if ((hlen -= add))
+			hlen -= add;
+			if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 				m = m->b_cont;
+				PANIC((!m),("fr_tcpsum: not enough data"));
+				if (!hlen)
+					sp = (u_short *)m->b_rptr;
+			}
+		}
+	}
+#endif
+#ifdef	__sgi
+	/*
+	 * In case we had to copy the IP & TCP header out of mbufs,
+	 * skip over the mbuf bits which are the header
+	 */
+	if ((caddr_t)ip != mtod(m, caddr_t)) {
+		hlen = (caddr_t)sp - (caddr_t)ip;
+		while (hlen) {
+			add = MIN(hlen, m->m_len);
+			sp = (u_short *)(mtod(m, caddr_t) + add);
+			hlen -= add;
+			if (add >= m->m_len) {
+				m = m->m_next;
+				PANIC((!m),("fr_tcpsum: not enough data"));
+				if (!hlen)
+					sp = mtod(m, u_short *);
+			}
 		}
 	}
 #endif
 
 	if (!(len -= sizeof(*tcp)))
 		goto nodata;
-	while (len > 1) {
-		sum += *sp++;
-		len -= 2;
+	while (len > 0) {
 #if SOLARIS
-		if ((caddr_t)sp > (caddr_t)m->b_wptr) {
+		if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
 			m = m->b_cont;
 			PANIC((!m),("fr_tcpsum: not enough data"));
 			sp = (u_short *)m->b_rptr;
 		}
 #else
-# ifdef	m_data
-		if ((caddr_t)sp > (m->m_data + m->m_len))
-# else
-		if ((caddr_t)sp > (caddr_t)(m->m_dat + m->m_off + m->m_len))
-# endif
+		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len)
 		{
 			m = m->m_next;
 			PANIC((!m),("fr_tcpsum: not enough data"));
 			sp = mtod(m, u_short *);
 		}
 #endif /* SOLARIS */
+		if (len < 2)
+			break;
+		sum += *sp++;
+		len -= 2;
 	}
 	if (len) {
 		bytes.c[1] = 0;
@@ -928,7 +1003,7 @@ nodata:
 }
 
 
-#if defined(_KERNEL) && (BSD < 199306) && !SOLARIS
+#if defined(_KERNEL) && ( ((BSD < 199306) && !SOLARIS) || defined(__sgi) )
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -962,7 +1037,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.0.2.32 1997/08/26 13:27:00 darrenr Exp 
+ * Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darrenr Exp 
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -970,12 +1045,17 @@ nodata:
  */
 #include <sys/mbuf.h>
 
+#ifdef __STDC__
+void
+m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
+#else
 void
 m_copydata(m, off, len, cp)
 	register struct mbuf *m;
 	register int off;
 	register int len;
 	caddr_t cp;
+#endif
 {
 	register unsigned count;
 

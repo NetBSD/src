@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.4 1997/09/21 18:02:21 veego Exp $	*/
+/*	$NetBSD: iptest.c,v 1.5 1997/10/30 16:10:41 mrg Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -12,8 +12,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8 1997/10/12 09:48:39 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -55,7 +56,11 @@ char	default_device[] = "ln0";
 #   ifdef	__bsdi__
 char	default_device[] = "ef0";
 #   else
+#    ifdef	__sgi
+char	default_device[] = "ec0";
+#    else
 char	default_device[] = "lan0";
+#    endif
 #   endif
 #  endif
 # endif
