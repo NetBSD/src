@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.3 1995/03/21 09:07:32 cgd Exp $	*/
+/*	$NetBSD: options.h,v 1.4 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -75,24 +75,25 @@
 #define	VF	0x00008000
 #define	WF	0x00010000
 #define	XF	0x00020000
-#define	CBF	0x00040000	/* nonstandard extension */
-#define	CDF	0x00080000	/* nonstandard extension */
-#define	CEF	0x00100000	/* nonstandard extension */
-#define	CGF	0x00200000	/* nonstandard extension */
-#define	CHF	0x00400000	/* nonstandard extension */
-#define	CLF	0x00800000	/* nonstandard extension */
-#define	CPF	0x01000000	/* nonstandard extension */
-#define	CTF	0x02000000	/* nonstandard extension */
-#define	CUF	0x04000000	/* nonstandard extension */
-#define	CXF	0x08000000
-#define	CYF	0x10000000	/* nonstandard extension */
-#define	CZF	0x20000000	/* nonstandard extension */
+#define	CAF	0x00040000	/* nonstandard extension */
+#define	CBF	0x00080000	/* nonstandard extension */
+#define	CDF	0x00100000	/* nonstandard extension */
+#define	CEF	0x00200000	/* nonstandard extension */
+#define	CGF	0x00400000	/* nonstandard extension */
+#define	CHF	0x00800000	/* nonstandard extension */
+#define	CLF	0x01000000	/* nonstandard extension */
+#define	CPF	0x02000000	/* nonstandard extension */
+#define	CTF	0x04000000	/* nonstandard extension */
+#define	CUF	0x08000000	/* nonstandard extension */
+#define	CXF	0x10000000
+#define	CYF	0x20000000	/* nonstandard extension */
+#define	CZF	0x40000000	/* nonstandard extension */
 
 /*
  * ascii string indexed by bit position above (alter the above and you must
  * alter this string) used to tell the user what flags caused us to complain
  */
-#define FLGCH	"abcdfiklnoprstuvwxBDEGHLPTUXYZ"
+#define FLGCH	"abcdfiklnoprstuvwxABDEGHLPTUXYZ"
 
 /*
  * legal pax operation bit patterns

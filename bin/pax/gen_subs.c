@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.14 1998/11/04 19:37:56 christos Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.15 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.14 1998/11/04 19:37:56 christos Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.15 1999/08/24 07:57:06 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,3 +504,14 @@ uqd_asc(val, str, len, base)
 	return(0);
 }
 #endif
+
+int
+check_Aflag(void) {
+	if (Aflag > 0)
+		return 1;
+	if (Aflag == 0) {
+		Aflag = -1;
+		tty_warn(0, "Removing leading / from absolute path names in the archive");
+	}
+	return 0;
+}
