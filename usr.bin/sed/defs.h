@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Diomidis Spinellis of Imperial College, University of London.
@@ -34,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defs.h	5.3 (Berkeley) 8/28/92
- *	$Id: defs.h,v 1.3 1993/08/01 18:08:57 mycroft Exp $
+ *	@(#)defs.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
@@ -75,7 +74,7 @@ struct s_subst {
 
 /*
  * An internally compiled command.
- * Initialy, label references are stored in u.t, on a second pass they
+ * Initialy, label references are stored in t, on a second pass they
  * are updated to pointers.
  */
 struct s_command {
@@ -116,11 +115,11 @@ enum e_args {
 struct s_appends {
 	enum {AP_STRING, AP_FILE} type;
 	char *s;
+	size_t len;
 };
 
 enum e_spflag {
 	APPEND,					/* Append to the contents. */
-	APPENDNL,				/* Append, with newline. */
 	REPLACE,				/* Replace the contents. */
 };
 
