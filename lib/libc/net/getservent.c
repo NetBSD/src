@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent.c,v 1.9 2004/02/19 19:27:26 christos Exp $	*/
+/*	$NetBSD: getservent.c,v 1.10 2005/01/07 22:22:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,10 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getservent.c,v 1.9 2004/02/19 19:27:26 christos Exp $");
+__RCSID("$NetBSD: getservent.c,v 1.10 2005/01/07 22:22:49 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
+
 #include <netdb.h>
 
 #ifdef __weak_alias
@@ -50,22 +52,34 @@ __weak_alias(getservent,_getservent)
 __weak_alias(setservent,_setservent)
 #endif
 
+#ifdef _REENTRANT
+mutex_t _servent_mutex = MUTEX_INITIALIZER;
+#endif
 struct servent_data _servent_data;
 
 void
 setservent(int f)
 {
+	mutex_lock(&_servent_mutex);
 	setservent_r(f, &_servent_data);
+	mutex_unlock(&_servent_mutex);
 }
 
 void
 endservent(void)
 {
+	mutex_lock(&_servent_mutex);
 	endservent_r(&_servent_data);
+	mutex_unlock(&_servent_mutex);
 }
 
 struct servent *
 getservent(void)
 {
-	return getservent_r(&_servent_data.serv, &_servent_data);
+	struct servent *s;
+
+	mutex_lock(&_servent_mutex);
+	s = getservent_r(&_servent_data.serv, &_servent_data);
+	mutex_unlock(&_servent_mutex);
+	return (s);
 }
