@@ -13,11 +13,12 @@
 
 #include <sendmail.h>
 
+
 #ifndef lint
 # ifdef DAEMON
-static char id[] = "@(#)Id: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp (with daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401.4.14 2000/07/14 04:15:00 gshapiro Exp (with daemon mode)";
 # else /* DAEMON */
-static char id[] = "@(#)Id: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp (without daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401.4.14 2000/07/14 04:15:00 gshapiro Exp (without daemon mode)";
 # endif /* DAEMON */
 #endif /* ! lint */
 
@@ -159,6 +160,7 @@ getrequests(e)
 
 #define D(x,idx)	x[idx]
 
+
 	for (idx = 0; idx < ndaemons; idx++)
 	{
 		Daemons[idx].d_port = setupdaemon(&(Daemons[idx].d_addr));
@@ -252,6 +254,7 @@ getrequests(e)
 			      Daemons[idx].d_firsttime = FALSE;
 			}
 		}
+
 		if (curtime() >= last_disk_space_check)
 		{
 			if (!enoughdiskspace(MinBlocksFree + 1, FALSE))
@@ -338,7 +341,7 @@ getrequests(e)
 					}
 					if (Daemons[idx].d_socket > highest)
 						highest = Daemons[idx].d_socket;
-					FD_SET(Daemons[idx].d_socket, &readfds);
+					FD_SET((u_int)Daemons[idx].d_socket, &readfds);
 				}
 			}
 
@@ -429,6 +432,15 @@ getrequests(e)
 			/* arrange to re-open the socket next time around */
 			(void) close(Daemons[curdaemon].d_socket);
 			Daemons[curdaemon].d_socket = -1;
+# if SO_REUSEADDR_IS_BROKEN
+			/*
+			**  Give time for bound socket to be released.
+			**  This creates a denial-of-service if you can
+			**  force accept() to fail on affected systems.
+			*/
+
+			Daemons[curdaemon].d_refuse_connections_until = curtime() + 15;
+# endif /* SO_REUSEADDR_IS_BROKEN */
 			continue;
 		}
 
@@ -562,7 +574,7 @@ getrequests(e)
 			{
 				/* Add control socket process */
 				proc_list_add(getpid(), "console socket child",
-					      PROC_CONTROL_CHILD);
+					PROC_CONTROL_CHILD);
 			}
 			else
 			{
@@ -605,6 +617,7 @@ getrequests(e)
 			if (control)
 			{
 				control_command(t, e);
+
 				/* NOTREACHED */
 				exit(EX_SOFTWARE);
 			}
@@ -698,8 +711,7 @@ getrequests(e)
 		/* parent -- keep track of children */
 		if (control)
 		{
-			snprintf(status, sizeof status,
-				 "control socket server child");
+			snprintf(status, sizeof status, "control socket server child");
 			proc_list_add(pid, status, PROC_CONTROL);
 		}
 		else
@@ -713,15 +725,22 @@ getrequests(e)
 
 		/* close the read end of the synchronization pipe */
 		if (pipefd[0] != -1)
+		{
 			(void) close(pipefd[0]);
+			pipefd[0] = -1;
+		}
 
 		/* close the port so that others will hang (for a while) */
 		(void) close(t);
 
 		/* release the child by closing the read end of the sync pipe */
 		if (pipefd[1] != -1)
+		{
 			(void) close(pipefd[1]);
+			pipefd[1] = -1;
+		}
 	}
+
 	if (tTd(15, 2))
 		dprintf("getreq: returning\n");
 	return &Daemons[curdaemon].d_flags;
@@ -1143,7 +1162,7 @@ setsockaddroptions(p, d)
 # if NETINET
 			  case AF_INET:
 				if (isascii(*v) && isdigit(*v))
-					d->d_addr.sin.sin_port = htons(atoi(v));
+					d->d_addr.sin.sin_port = htons((u_short)atoi((const char *)v));
 				else
 				{
 #  ifdef NO_GETSERVBYNAME
@@ -1166,7 +1185,7 @@ setsockaddroptions(p, d)
 # if NETINET6
 			  case AF_INET6:
 				if (isascii(*v) && isdigit(*v))
-					d->d_addr.sin6.sin6_port = htons(atoi(v));
+					d->d_addr.sin6.sin6_port = htons((u_short)atoi(v));
 				else
 				{
 #  ifdef NO_GETSERVBYNAME
@@ -1190,7 +1209,7 @@ setsockaddroptions(p, d)
 			  case AF_ISO:
 				/* assume two byte transport selector */
 				if (isascii(*v) && isdigit(*v))
-					port = htons(atoi(v));
+					port = htons((u_short)atoi(v));
 				else
 				{
 #  ifdef NO_GETSERVBYNAME
@@ -1362,6 +1381,47 @@ setclientoptions(p)
 		define(macid("{client_flags}", NULL), "", &BlankEnvelope);
 }
 /*
+**  ADDR_FAMILY -- determine address family from address
+**
+**	Parameters:
+**		addr -- the string representation of the address
+**
+**	Returns:
+**		AF_INET, AF_INET6 or AF_UNSPEC
+**
+**	Side Effects:
+**		none.
+*/
+
+static int
+addr_family(addr)
+	char *addr;
+{
+# if NETINET6
+	SOCKADDR clt_addr;
+# endif /* NETINET6 */
+
+# if NETINET
+	if (inet_addr(addr) != INADDR_NONE)
+	{
+		if (tTd(16, 9))
+			printf("addr_family(%s): INET\n", addr);
+		return AF_INET;
+	}
+# endif /* NETINET */
+# if NETINET6
+	if (inet_pton(AF_INET6, addr, &clt_addr.sin6.sin6_addr) == 1)
+	{
+		if (tTd(16, 9))
+			printf("addr_family(%s): INET6\n", addr);
+		return AF_INET6;
+	}
+# endif /* NETINET6 */
+	if (tTd(16, 9))
+		printf("addr_family(%s): UNSPEC\n", addr);
+	return AF_UNSPEC;
+}
+/*
 **  MAKECONNECTION -- make a connection to an SMTP socket on a machine.
 **
 **	Parameters:
@@ -1444,18 +1504,14 @@ makeconnection(host, port, mci, e)
 	if (bitnset(D_BINDIF, d_flags) &&
 	    (p = macvalue(macid("{if_addr}", NULL), e)) != NULL)
 	{
-		char *f;
 # if NETINET6
 		char p6[INET6_ADDRSTRLEN];
 # endif /* NETINET6 */
 
 		memset(&clt_addr, '\0', sizeof clt_addr);
 
-		/* XXX set all necessary values... */
-		if ((f = macvalue(macid("{if_family}", NULL), e)) != NULL)
-			clt_addr.sa.sa_family = atoi(f);
-		else
-			clt_addr.sa.sa_family = family;
+		/* infer the address family from the address itself */
+		clt_addr.sa.sa_family = addr_family(p);
 		switch (clt_addr.sa.sa_family)
 		{
 # if NETINET
@@ -1504,6 +1560,8 @@ makeconnection(host, port, mci, e)
 			break;
 # endif /* 0 */
 		}
+		if (clt_bind)
+			family = clt_addr.sa.sa_family;
 	}
 	else
 	{
@@ -1983,6 +2041,7 @@ gothostent:
 			}
 			continue;
 		}
+		errno = save_errno;
 
 # if NETINET6
 		if (family == AF_INET6)
@@ -2033,9 +2092,14 @@ gothostent:
 	if (getsockname(s, &addr.sa, &len) == 0)
 	{
 		char *name;
+		char *p;
 
 		define(macid("{if_addr}", NULL), newstr(anynet_ntoa(&addr)),
 		       &BlankEnvelope);
+		p = xalloc(5);
+		snprintf(p, 4, "%d", addr.sa.sa_family);
+		define(macid("{if_family}", NULL), p, &BlankEnvelope);
+
 		name = hostnamebyanyaddr(&addr);
 		define(macid("{if_name}", NULL), newstr(name), &BlankEnvelope);
 		if (LogLevel > 11)
@@ -2054,6 +2118,7 @@ gothostent:
 	{
 		define(macid("{if_name}", NULL), NULL, &BlankEnvelope);
 		define(macid("{if_addr}", NULL), NULL, &BlankEnvelope);
+		define(macid("{if_family}", NULL), NULL, &BlankEnvelope);
 	}
 	mci_setstat(mci, EX_OK, NULL, NULL);
 	return EX_OK;
@@ -2334,6 +2399,7 @@ getauthinfo(fd, may_be_forged)
 	int fd;
 	bool *may_be_forged;
 {
+	u_short port = 0;
 	SOCKADDR_LEN_T falen;
 	register char *volatile p = NULL;
 	SOCKADDR la;
@@ -2422,6 +2488,7 @@ getauthinfo(fd, may_be_forged)
 			/* no ident info */
 			goto noident;
 		}
+		port = RealHostAddr.sin.sin_port;
 
 		/* create ident query */
 		(void) snprintf(ibuf, sizeof ibuf, "%d,%d\r\n",
@@ -2453,6 +2520,7 @@ getauthinfo(fd, may_be_forged)
 			/* no ident info */
 			goto noident;
 		}
+		port = RealHostAddr.sin6.sin6_port;
 
 		/* create ident query */
 		(void) snprintf(ibuf, sizeof ibuf, "%d,%d\r\n",
@@ -2489,6 +2557,7 @@ getauthinfo(fd, may_be_forged)
 
 	/* put a timeout around the whole thing */
 	ev = setevent(TimeOuts.to_ident, authtimeout, 0);
+
 
 	/* connect to foreign IDENT server using same address as SMTP socket */
 	s = socket(la.sa.sa_family, SOCK_STREAM, 0);
@@ -2599,6 +2668,24 @@ closeident:
 	clrevent(ev);
 
 noident:
+	/* put back the original incoming port */
+	switch (RealHostAddr.sa.sa_family)
+	{
+# if NETINET
+	  case AF_INET:
+		if (port > 0)
+			RealHostAddr.sin.sin_port = port;
+		break;
+# endif /* NETINET */
+
+# if NETINET6
+	  case AF_INET6:
+		if (port > 0)
+			RealHostAddr.sin6.sin6_port = port;
+		break;
+# endif /* NETINET6 */
+	}
+
 	if (RealHostName == NULL)
 	{
 		if (tTd(9, 1))
@@ -2728,6 +2815,25 @@ postipsr:
 # endif /* IP_SRCROUTE */
 	if (tTd(9, 1))
 		dprintf("getauthinfo: %s\n", hbuf);
+
+	/* put back the original incoming port */
+	switch (RealHostAddr.sa.sa_family)
+	{
+# if NETINET
+	  case AF_INET:
+		if (port > 0)
+			RealHostAddr.sin.sin_port = port;
+		break;
+# endif /* NETINET */
+
+# if NETINET6
+	  case AF_INET6:
+		if (port > 0)
+			RealHostAddr.sin6.sin6_port = port;
+		break;
+# endif /* NETINET6 */
+	}
+
 	return hbuf;
 }
 /*

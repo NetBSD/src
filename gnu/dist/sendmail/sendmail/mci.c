@@ -12,13 +12,16 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: mci.c,v 8.133 2000/01/18 01:19:07 ca Exp";
+static char id[] = "@(#)Id: mci.c,v 8.133.10.3 2000/06/23 16:17:06 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
+
 #if NETINET || NETINET6
 # include <arpa/inet.h>
 #endif /* NETINET || NETINET6 */
+
 #include <dirent.h>
 
 static int	mci_generate_persistent_path __P((const char *, char *,
@@ -949,6 +952,7 @@ mci_store_persistent(mci)
 **		< 0 -- if any action routine returns a negative value, that
 **			value is returned.
 **		0 -- if we successfully went to completion.
+**		> 0 -- return status from action()
 */
 
 int
@@ -1192,7 +1196,7 @@ mci_print_persistent(pathname, hostname)
 **
 **	Returns:
 **		0 -- ok
-**		1 -- file too young to be deleted
+**		1 -- file not deleted (too young, incorrect format)
 **		< 0 -- some error occurred
 */
 
@@ -1232,7 +1236,7 @@ mci_purge_persistent(pathname, hostname)
 	{
 		/* remove the directory */
 		if (*end != '.')
-			return 0;
+			return 1;
 
 		if (tTd(56, 1))
 			dprintf("mci_purge_persistent: dpurge %s\n", pathname);

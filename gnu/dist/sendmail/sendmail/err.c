@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: err.c,v 8.120 2000/02/17 21:32:05 ca Exp";
+static char id[] = "@(#)Id: err.c,v 8.120.4.1 2000/05/25 18:56:15 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -20,6 +20,7 @@ static char id[] = "@(#)Id: err.c,v 8.120 2000/02/17 21:32:05 ca Exp";
 # include <lber.h>
 # include <ldap.h>			/* for LDAP error codes */
 #endif /* LDAPMAP */
+
 
 static void	putoutmsg __P((char *, bool, bool));
 static void	puterrmsg __P((char *));
@@ -156,6 +157,8 @@ syserr(fmt, va_alist)
 #ifdef ESTALE
 	  case ESTALE:
 #endif /* ESTALE */
+
+
 		printopenfds(TRUE);
 		mci_dump_all(TRUE);
 		break;

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: strl.c,v 8.5 1999/12/29 22:13:46 ca Exp";
+static char id[] = "@(#)Id: strl.c,v 8.5.14.1 2000/05/12 20:46:17 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -77,7 +77,7 @@ strlcat(dst, src, len)
 
 	o = strlen(dst);
 	if (len < o + 1)
-	  return o + strlen(src);
+		return o + strlen(src);
 	len -= o + 1;
 	for (i = 0, j = o; i < len && (dst[j] = src[i]) != 0; i++, j++)
 		continue;

@@ -13,8 +13,11 @@
 #include <sendmail.h>
 
 #ifndef lint
-static char id[] = "@(#)Id: alias.c,v 8.142 2000/03/31 05:35:29 ca Exp";
+static char id[] = "@(#)Id: alias.c,v 8.142.4.1 2000/05/25 18:56:12 gshapiro Exp";
 #endif /* ! lint */
+
+# define SEPARATOR ':'
+# define ALIAS_SPEC_SEPARATORS	" ,/:"
 
 static MAP	*AliasFileMap = NULL;	/* the actual aliases.files map */
 static int	NAliasFileMaps;	/* the number of entries in AliasFileMap */
@@ -276,9 +279,8 @@ setalias(spec)
 		map = &s->s_map;
 		memset(map, '\0', sizeof *map);
 		map->map_mname = s->s_name;
-
-		p = strpbrk(p, " ,/:");
-		if (p != NULL && *p == ':')
+		p = strpbrk(p,ALIAS_SPEC_SEPARATORS);
+		if (p != NULL && *p == SEPARATOR)
 		{
 			/* map name */
 			*p++ = '\0';
@@ -435,7 +437,8 @@ aliaswait(map, ext, isopen)
 	{
 #if !_FFR_REMOVE_AUTOREBUILD
 		/* database is out of date */
-		if (AutoRebuild && stb.st_ino != 0 &&
+		if (AutoRebuild &&
+		    stb.st_ino != 0 &&
 		    (stb.st_uid == geteuid() ||
 		     (geteuid() == 0 && stb.st_uid == TrustedUid)))
 		{
@@ -599,9 +602,9 @@ rebuildaliases(map, automatic)
 	/* restore the old signals */
 	(void) setsignal(SIGINT, oldsigint);
 	(void) setsignal(SIGQUIT, oldsigquit);
-#ifdef SIGTSTP
+# ifdef SIGTSTP
 	(void) setsignal(SIGTSTP, oldsigtstp);
-#endif /* SIGTSTP */
+# endif /* SIGTSTP */
 	return success;
 }
 /*
@@ -900,12 +903,12 @@ forward(user, sendq, aliaslevel, e)
 		char buf[MAXPATHLEN + 1];
 		struct stat st;
 
-		ep = strchr(pp, ':');
+		ep = strchr(pp, SEPARATOR);
 		if (ep != NULL)
 			*ep = '\0';
 		expand(pp, buf, sizeof buf, e);
 		if (ep != NULL)
-			*ep++ = ':';
+			*ep++ = SEPARATOR;
 		if (buf[0] == '\0')
 			continue;
 		if (tTd(27, 3))

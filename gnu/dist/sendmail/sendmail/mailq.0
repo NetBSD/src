@@ -15,14 +15,18 @@ DDEESSCCRRIIPPTTIIOONN
        future delivery.
 
        The first line printed for each message shows the internal
-       identifier  used on this host for the message, the size of
-       the message in bytes, the date and time  the  message  was
-       accepted  into  the  queue, and the envelope sender of the
-       message.  The second line shows  the  error  message  that
-       caused  this  message to be retained in the queue; it will
-       not be present if the message is being processed  for  the
-       first  time.  The following lines show message recipients,
-       one per line.
+       identifier used on this host for the message with a possi-
+       ble status character, the size of the  message  in  bytes,
+       the date and time the message was accepted into the queue,
+       and the envelope sender of the message.  The  second  line
+       shows  the  error  message  that caused this message to be
+       retained in the queue; it will not be present if the  mes-
+       sage  is  being  processed for the first time.  The status
+       characters are either ** to indicate the job is being  pro-
+       cessed; XX to indicate that the load is too high to process
+       the job; and -- to indicate that the job is  too  young  to
+       process.  The following lines show message recipients, one
+       per line.
 
        MMaaiillqq is identical to ``sendmail -bp''.
 
@@ -57,10 +61,6 @@ HHIISSTTOORRYY
 
 
 
-
-
-
-
-                   Date: 1999/06/22 20:41:34                 1
+                   Date: 2000/07/14 05:07:01                 1
 
 

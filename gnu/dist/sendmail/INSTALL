@@ -14,8 +14,8 @@ On many environments this will do everything for you, no fuss, no muss.
 3. In the sendmail/ directory, run "sh Build" (see sendmail/README for
    details).
 
-4. In the cf/cf/ directory (that's not a typo), copy whichever .mc file
-   best matches your environment to config.mc, where config can be any
+4. Change to the cf/cf/ directory (that's not a typo): Copy whichever .mc
+   file best matches your environment to config.mc, where config can be any
    name.  Next, tailor it as explained in cf/README.  Then run
    "sh Build config.cf".
 
@@ -30,4 +30,4 @@ On many environments this will do everything for you, no fuss, no muss.
    read the README in the utility's directory.  When you are ready to install
    it, back up your installed version and type "sh Build install".
 
-Revision: 8.3, Last updated Date: 1999/04/04 07:01:36
+Revision: 8.3.16.1, Last updated Date: 2000/05/09 20:20:44
