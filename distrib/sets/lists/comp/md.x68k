@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.48 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.x68k,v 1.49 2004/05/12 14:25:08 minoura Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/x68k				comp-c-include
 ./usr/include/x68k/_G_config.h			comp-obsolete		obsolete
@@ -30,6 +30,7 @@
 ./usr/include/x68k/intr.h			comp-c-include
 ./usr/include/x68k/iteioctl.h			comp-c-include
 ./usr/include/x68k/kbd.h			comp-c-include
+./usr/include/x68k/kbdmap.h			comp-c-include
 ./usr/include/x68k/kbio.h			comp-c-include
 ./usr/include/x68k/kcore.h			comp-c-include
 ./usr/include/x68k/limits.h			comp-c-include
