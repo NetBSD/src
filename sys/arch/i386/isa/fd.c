@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.7 1993/10/07 14:48:47 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.8 1993/10/09 08:44:20 mycroft Exp $
  */
 
 #include "param.h"
@@ -409,7 +409,7 @@ fdstrategy(bp)
 			bp->b_blkno, bp->b_bcount);
 #endif
 
-	blkno = (unsigned long)bp->b_blkno * DEV_BSIZE/FDC_BSIZE;
+	blkno = (u_long)bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
  	nblks = type->size;
 	if (blkno + (bp->b_bcount / FDC_BSIZE) > nblks) {
 		if (blkno == nblks) {
