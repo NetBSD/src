@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.15 2003/09/04 09:19:36 wiz Exp $
+.\"	$NetBSD: login.conf.5,v 1.16 2004/04/19 00:11:16 lukem Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd March 24, 2003
+.Dd April 19, 2004
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -219,6 +219,10 @@ Initial priority (nice) level.
 Require home directory to login.
 .\"
 .sp
+.It Sy sbsize Ta size Ta "" Ta
+Maximum socket buffer size limit.
+.\"
+.sp
 .It Sy setenv Ta list Ta "" Ta
 Comma separated list of environment variables and values to be set.
 .\"
@@ -232,6 +236,15 @@ environment variable will contain the shell specified in the password file.
 .sp
 .It Sy stacksize Ta size Ta "" Ta
 Maximum stack size limit.
+.\"
+.sp
+.It Sy tc Ta string Ta "" Ta
+A "continuation" entry, which must be the last capability provided.
+More capabilities are read from the named entry.
+The capabilities given before
+.Sy tc
+override those in the entry invoked by
+.Sy tc .
 .\"
 .sp
 .It Sy term Ta string Ta Li su Ta
@@ -252,10 +265,17 @@ File containing welcome message.
 .El
 .Pp
 The resource limit entries
-.No ( Ns Sy cputime , filesize , datasize , stacksize , coredumpsize ,
-.Sy memoryuse , memorylocked , maxproc ,
+.Sy ( coredumpsize ,
+.Sy cputime ,
+.Sy datasize ,
+.Sy filesize ,
+.Sy maxproc ,
+.Sy memorylocked ,
+.Sy memoryuse ,
+.Sy openfiles ,
+.Sy sbsize ,
 and
-.Sy openfiles )
+.Sy stacksize )
 actually specify both the maximum and current limits (see
 .Xr getrlimit 2 ) .
 The current limit is the one normally used,
