@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.27 2002/08/30 04:02:44 onoe Exp $	*/
-/*	$KAME: traceroute6.c,v 1.58 2002/08/27 00:33:39 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.28 2002/09/08 01:41:13 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.61 2002/09/08 01:28:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.27 2002/08/30 04:02:44 onoe Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.28 2002/09/08 01:41:13 itojun Exp $");
 #endif
 #endif
 
@@ -790,7 +790,8 @@ main(argc, argv)
 		freeaddrinfo(res);
 	} else {
 		struct sockaddr_in6 Nxt;
-		int dummy, len;
+		int dummy;
+		socklen_t len;
 
 		Nxt = Dst;
 		Nxt.sin6_port = htons(DUMMY_PORT);
@@ -826,7 +827,7 @@ main(argc, argv)
 	}
 
 	{
-		int len;
+		socklen_t len;
 
 		len = sizeof(Src);
 		if (getsockname(sndsock, (struct sockaddr *)&Src, &len) < 0) {
