@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240.2.2 2004/06/30 21:01:05 jdc Exp $
+# $NetBSD: GENERIC,v 1.240.2.3 2004/07/02 17:40:55 he Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240.2.2 $"
+#ident 		"GENERIC-$Revision: 1.240.2.3 $"
 
 maxusers 32
 
@@ -151,6 +151,9 @@ options 	SYSVSEM
 # System V-like shared memory
 options 	SYSVSHM
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
+
+# p1003.1b semaphore support
+options 	P1003_1B_SEMAPHORE
 
 # Loadable Kernel Modules
 options 	LKM
