@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $	*/
+/*	$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.97 2004/02/03 19:25:29 chuck Exp $");
+__RCSID("$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -206,16 +206,61 @@ MainParseArgs(int argc, char **argv)
 {
 	char *p;
 	int c;
+	int arginc;
+	char *argvalue;
+	const char *getopt_def;
+	char *optscan;
+	Boolean inOption;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
 # define OPTFLAGS "BD:I:J:L:NPST:V:WXd:ef:ij:km:nqrst"
 #else
 # define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
 #endif
-rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
+#undef optarg
+#define optarg argvalue	
+/* Can't actually use getopt(3) because rescanning is not portable */
+
+	getopt_def = OPTFLAGS;
+rearg:	
+	inOption = FALSE;
+	while(argc > 1) {
+		char *getopt_spec;
+		if(!inOption)
+			optscan = argv[1];
+		c = *optscan++;
+		arginc = 0;
+		if(inOption) {
+			if(c == '\0') {
+				++argv;
+				--argc;
+				inOption = FALSE;
+				continue;
+			}
+		} else {
+			if (c != '-')
+				break;
+			inOption = TRUE;
+			c = *optscan++;
+		}
+		/* '-' found at some earlier point */
+		getopt_spec = strchr(getopt_def, c);
+		if(c != '\0' && getopt_spec != NULL && getopt_spec[1] == ':') {
+			/* -<something> found, and <something> should have an arg */
+			inOption = FALSE;
+			arginc = 1;
+			argvalue = optscan;
+			if(*argvalue == '\0') {
+				argvalue = argv[2];
+				arginc = 2;
+			}
+		}
 		switch(c) {
+		case '\0':
+			arginc = 1;
+			inOption = FALSE;
+			break;
 		case 'B':
 			compatMake = TRUE;
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
@@ -430,6 +475,8 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		case '?':
 			usage();
 		}
+		argv += arginc;
+		argc -= arginc;
 	}
 
 	oldVars = TRUE;
@@ -439,20 +486,15 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 	 * perform them if so. Else take them to be targets and stuff them
 	 * on the end of the "create" list.
 	 */
-	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
-		if (Parse_IsVar(*argv)) {
-			Parse_DoVar(*argv, VAR_CMD);
+	for (; argc > 1; ++argv, --argc)
+		if (Parse_IsVar(argv[1])) {
+			Parse_DoVar(argv[1], VAR_CMD);
 		} else {
-			if (!**argv)
+			if (!*argv[1])
 				Punt("illegal (null) argument.");
-			if (**argv == '-') {
-				if ((*argv)[1])
-					optind = 0;     /* -flag... */
-				else
-					optind = 1;     /* - */
+			if (*argv[1] == '-')
 				goto rearg;
-			}
-			(void)Lst_AtEnd(create, (ClientData)estrdup(*argv));
+			(void)Lst_AtEnd(create, (ClientData)estrdup(argv[1]));
 		}
 }
 
