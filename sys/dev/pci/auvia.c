@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.36 2004/03/25 23:07:09 xtraeme Exp $	*/
+/*	$NetBSD: auvia.c,v 1.37 2004/03/31 21:10:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.36 2004/03/25 23:07:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.37 2004/03/31 21:10:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,6 +754,12 @@ auvia_set_params(void *addr, int setmode, int usemode,
 int
 auvia_round_blocksize(void *addr, int blk)
 {
+	struct auvia_softc *sc = addr;
+
+	/* XXX VT823x might have the limitation of dma_ops size */
+	if (sc->sc_flags & AUVIA_FLAGS_VT8233 && blk < 288)
+		blk = 288;
+
 	return (blk & -32);
 }
 
