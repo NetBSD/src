@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.15 1998/11/17 08:49:11 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.16 1998/11/27 21:59:18 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -462,42 +462,46 @@ pcic_submatch(parent, cf, aux)
 
 	switch (h->sock) {
 	case C0SA:
-		if (cf->cf_loc[PCICCF_CONTROLLER] !=
-		    PCICCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCICCF_CONTROLLER] != 0)
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
 			return 0;
-		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCICCF_SOCKET] != 0)
+		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		    PCMCIABUSCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
 			return 0;
 
 		break;
 	case C0SB:
-		if (cf->cf_loc[PCICCF_CONTROLLER] !=
-		    PCICCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCICCF_CONTROLLER] != 0)
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 0)
 			return 0;
-		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCICCF_SOCKET] != 1)
+		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		    PCMCIABUSCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
 			return 0;
 
 		break;
 	case C1SA:
-		if (cf->cf_loc[PCICCF_CONTROLLER] !=
-		    PCICCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCICCF_CONTROLLER] != 1)
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 1)
 			return 0;
-		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCICCF_SOCKET] != 0)
+		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		    PCMCIABUSCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 0)
 			return 0;
 
 		break;
 	case C1SB:
-		if (cf->cf_loc[PCICCF_CONTROLLER] !=
-		    PCICCF_CONTROLLER_DEFAULT &&
-		    cf->cf_loc[PCICCF_CONTROLLER] != 1)
+		if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] !=
+		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != 1)
 			return 0;
-		if (cf->cf_loc[PCICCF_SOCKET] != PCICCF_SOCKET_DEFAULT &&
-		    cf->cf_loc[PCICCF_SOCKET] != 1)
+		if (cf->cf_loc[PCMCIABUSCF_SOCKET] !=
+		    PCMCIABUSCF_SOCKET_DEFAULT &&
+		    cf->cf_loc[PCMCIABUSCF_SOCKET] != 1)
 			return 0;
 
 		break;
