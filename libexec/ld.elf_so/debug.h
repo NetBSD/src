@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 1996/12/16 20:37:57 cgd Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 1999/01/10 17:19:01 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -42,9 +42,12 @@
 #error "Sorry, this module relies on some GNU extensions"
 #endif /* } */
 
-extern void xprintf(const char *fmt, ...);
-extern void xvprintf(const char *fmt, va_list ap);
-extern void debug_printf(const char *, ...);
+extern void xprintf(const char *fmt, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
+extern void xvprintf(const char *fmt, va_list ap)
+    __attribute__((__format__(__printf__, 1, 0)));
+extern void debug_printf(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 extern int debug;
 
 #ifdef DEBUG /* { */
