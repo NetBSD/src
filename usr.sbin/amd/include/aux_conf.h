@@ -1,3 +1,5 @@
+/* $NetBSD: aux_conf.h,v 1.6 2003/03/09 17:57:50 wiz Exp $ */
+
 /*
  * aux_conf.h:
  * This file gets "filled in" for each architecture.
