@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.8 1998/02/10 00:29:57 perry Exp $	*/
+/*	$NetBSD: mpool.h,v 1.9 2000/07/07 10:43:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,6 +38,7 @@
 #ifndef _MPOOL_H_
 #define _MPOOL_H_
 
+#include <sys/cdefs.h>
 #include <sys/queue.h>
 
 /*
