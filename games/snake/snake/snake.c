@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)snake.c	5.10 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: snake.c,v 1.3 1993/08/01 18:51:11 mycroft Exp $";
+static char rcsid[] = "$Id: snake.c,v 1.4 1994/04/01 03:02:32 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -484,14 +484,14 @@ int	iscore, flag;
 	/* Figure out what happened in the past */
 	read(rawscores, &allbscore, sizeof(short));
 	read(rawscores, &allbwho, sizeof(short));
-	lseek(rawscores, ((long)uid)*sizeof(short), 0);
+	lseek(rawscores, uid*sizeof(short), 0);
 	read(rawscores, &oldbest, sizeof(short));
 	if (!flag)
 		return (score > oldbest ? 1 : 0);
 
 	/* Update this jokers best */
 	if (score > oldbest) {
-		lseek(rawscores, ((long)uid)*sizeof(short), 0);
+		lseek(rawscores, uid*sizeof(short), 0);
 		write(rawscores, &score, sizeof(short));
 		pr("You bettered your previous best of $%d\n", oldbest);
 	} else
@@ -500,7 +500,7 @@ int	iscore, flag;
 	/* See if we have a new champ */
 	p = getpwuid(allbwho);
 	if (p == NULL || score > allbscore) {
-		lseek(rawscores, (long)0, 0);
+		lseek(rawscores, 0, 0);
 		write(rawscores, &score, sizeof(short));
 		write(rawscores, &uid, sizeof(short));
 		if (allbwho)
