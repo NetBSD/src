@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.7 2002/01/19 03:25:12 wiz Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.7.2.1 2003/08/31 09:40:33 tron Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -39,7 +39,14 @@
 .Sh DESCRIPTION
 The file
 .Pa /etc/mailer.conf
-contains a series of pairs. The first member of each pair is the name
+contains a series of lines of the form
+.Pp
+.Pa name
+.Pa program
+.Op Ar arguments ...
+.Pp
+The first word of each line is the
+.P name
 of a program invoking
 .Xr mailwrapper 8
 which is typically a symbolic link to
@@ -49,9 +56,21 @@ which is typically a symbolic link to
 and
 .Xr mailq 1
 would be set up this way.)
-The second member of each pair is the name of the program to
-actually execute when the first name is invoked. The file may also
-contain comments, denoted by a # mark in the first column of any line.
+.Pp
+The second word of each line is the name of the
+.Pa program
+to actually execute when the first name is invoked.
+.Pp
+The further
+.Pa arguments ,
+if any, are passed to the
+.Pa program ,
+followed by the arguments
+.Xr mailwrapper 8
+was called with.
+.Pp
+The file may also contain comment lines, denoted by a # mark in the
+first column of any line.
 .Sh FILES
 /etc/mailer.conf
 .Sh EXAMPLES
@@ -80,6 +99,11 @@ sendmail	/usr/libexec/postfix/sendmail
 send-mail	/usr/libexec/postfix/sendmail
 mailq		/usr/libexec/postfix/sendmail
 newaliases	/usr/libexec/postfix/sendmail
+.Ed
+.Bd -literal
+# Send outgoing mail to a smart relay using mini-sendmail without queueing
+sendmail	/usr/pkg/sbin/mini-sendmail -srelayhost
+send-mail	/usr/pkg/sbin/mini-sendmail -srelayhost
 .Ed
 .Sh SEE ALSO
 .Xr mail 1 ,
