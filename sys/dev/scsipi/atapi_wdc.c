@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.13 1999/01/08 18:10:36 augustss Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.14 1999/01/09 03:16:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -446,12 +446,14 @@ again:
 			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
 				bus_space_write_multi_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    xfer->c_bcount >> 1);
 			} else {
 				bus_space_write_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    xfer->c_bcount >> 1);
 			}
 			for (i = xfer->c_bcount; i < len; i += 2)
@@ -464,12 +466,14 @@ again:
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_write_multi_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 2);
 			    else
 				bus_space_write_multi_stream_4(chp->data32iot,
 				    chp->data32ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 2);
 
 			    xfer->c_skip += len & 0xfffffffc;
@@ -480,12 +484,14 @@ again:
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_write_multi_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 1);
 			    else
 				bus_space_write_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 1);
 			    xfer->c_skip += len;
 			    xfer->c_bcount -= len;
@@ -519,12 +525,14 @@ again:
 			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
 			    bus_space_read_multi_2(chp->cmd_iot,
 			    chp->cmd_ioh, wd_data,
-			    (char *)xfer->databuf + xfer->c_skip,
+			    (u_int16_t *)((char *)xfer->databuf +
+			                  xfer->c_skip),
 			    xfer->c_bcount >> 1);
 			} else {
 			    bus_space_read_multi_stream_2(chp->cmd_iot,
 			    chp->cmd_ioh, wd_data,
-			    (char *)xfer->databuf + xfer->c_skip,
+			    (u_int16_t *)((char *)xfer->databuf +
+			                  xfer->c_skip),
 			    xfer->c_bcount >> 1);
 			}
 			wdcbit_bucket(chp, len - xfer->c_bcount);
@@ -535,12 +543,14 @@ again:
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_read_multi_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 2);
 			    else
 				bus_space_read_multi_stream_4(chp->data32iot,
 				    chp->data32ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    len >> 2);
 				
 			    xfer->c_skip += len & 0xfffffffc;
@@ -551,12 +561,14 @@ again:
 			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
 				bus_space_read_multi_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip, 
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip), 
 				    len >> 1);
 			    else
 				bus_space_read_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip, 
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip), 
 				    len >> 1);
 			    xfer->c_skip += len;
 			    xfer->c_bcount -=len;
