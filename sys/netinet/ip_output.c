@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.109 2003/08/15 03:42:03 jonathan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.110 2003/08/18 22:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.109 2003/08/15 03:42:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.110 2003/08/18 22:23:22 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -167,11 +167,11 @@ ip_output(m0, va_alist)
 	va_dcl
 #endif
 {
-	struct ip *ip, *mhip;
+	struct ip *ip;
 	struct ifnet *ifp;
 	struct mbuf *m = m0;
 	int hlen = sizeof (struct ip);
-	int len, off, error = 0;
+	int len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
@@ -461,7 +461,8 @@ sendit:
 #ifdef IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, flags, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
+		    flags, &error);
 	else
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
 
@@ -584,7 +585,6 @@ sendit:
 			ifp = ro->ro_rt->rt_ifp;
 	}
     }
-
 skip_ipsec:
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
@@ -794,17 +794,87 @@ spd_done:
 		ipstat.ips_cantfrag++;
 		goto bad;
 	}
-	len = (mtu - hlen) &~ 7;
-	if (len < 8) {
-		error = EMSGSIZE;
+
+	error = ip_fragment(m, ifp, mtu);
+	if (error == EMSGSIZE)
 		goto bad;
+
+	for (m = m0; m; m = m0) {
+		m0 = m->m_nextpkt;
+		m->m_nextpkt = 0;
+		if (error == 0) {
+#if IFA_STATS
+			/*
+			 * search for the source address structure to
+			 * maintain output statistics.
+			 */
+			INADDR_TO_IA(ip->ip_src, ia);
+			if (ia) {
+				ia->ia_ifa.ifa_data.ifad_outbytes +=
+				    ntohs(ip->ip_len);
+			}
+#endif
+#ifdef IPSEC
+			/* clean ipsec history once it goes out of the node */
+			ipsec_delaux(m);
+#endif
+			KASSERT((m->m_pkthdr.csum_flags &
+			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+			error = (*ifp->if_output)(ifp, m, sintosa(dst),
+			    ro->ro_rt);
+		} else
+			m_freem(m);
 	}
 
-    {
-	int mhlen, firstlen = len;
-	struct mbuf **mnext = &m->m_nextpkt;
+	if (error == 0)
+		ipstat.ips_fragmented++;
+done:
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = 0;
+	}
+
+#ifdef IPSEC
+	if (sp != NULL) {
+		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+			printf("DP ip_output call free SP:%p\n", sp));
+		key_freesp(sp);
+	}
+#endif /* IPSEC */
+#ifdef FAST_IPSEC
+	if (sp != NULL)
+		KEY_FREESP(&sp);
+#endif /* FAST_IPSEC */
+
+	return (error);
+bad:
+	m_freem(m);
+	goto done;
+}
+
+int
+ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
+{
+	struct ip *ip, *mhip;
+	struct mbuf *m0;
+	int len, hlen, off;
+	int mhlen, firstlen;
+	struct mbuf **mnext;
+	int sw_csum;
 	int fragments = 0;
 	int s;
+	int error = 0;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
+
+	len = (mtu - hlen) &~ 7;
+	if (len < 8)
+		return (EMSGSIZE);
+
+	firstlen = len;
+	mnext = &m->m_nextpkt;
 
 	/*
 	 * Loop through length of segment after first fragment,
@@ -884,58 +954,7 @@ sendorfree:
 	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments)
 		error = ENOBUFS;
 	splx(s);
-	for (m = m0; m; m = m0) {
-		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
-		if (error == 0) {
-#if IFA_STATS
-			/*
-			 * search for the source address structure to
-			 * maintain output statistics.
-			 */
-			INADDR_TO_IA(ip->ip_src, ia);
-			if (ia) {
-				ia->ia_ifa.ifa_data.ifad_outbytes +=
-				    ntohs(ip->ip_len);
-			}
-#endif
-#ifdef IPSEC
-			/* clean ipsec history once it goes out of the node */
-			ipsec_delaux(m);
-#endif
-			KASSERT((m->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
-		} else
-			m_freem(m);
-	}
-
-	if (error == 0)
-		ipstat.ips_fragmented++;
-    }
-done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = 0;
-	}
-
-#ifdef IPSEC
-	if (sp != NULL) {
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP ip_output call free SP:%p\n", sp));
-		key_freesp(sp);
-	}
-#endif /* IPSEC */
-#ifdef FAST_IPSEC
-	if (sp != NULL)
-		KEY_FREESP(&sp);
-#endif /* FAST_IPSEC */
-
 	return (error);
-bad:
-	m_freem(m);
-	goto done;
 }
 
 /*
@@ -1446,6 +1465,7 @@ ip_multicast_if(a, ifindexp)
 {
 	int ifindex;
 	struct ifnet *ifp;
+	struct in_ifaddr *ia;
 
 	if (ifindexp)
 		*ifindexp = 0;
@@ -1457,7 +1477,11 @@ ip_multicast_if(a, ifindexp)
 		if (ifindexp)
 			*ifindexp = ifindex;
 	} else {
-		INADDR_TO_IFP(*a, ifp);
+		LIST_FOREACH(ia, &IN_IFADDR_HASH(a->s_addr), ia_hash) {
+			if (in_hosteq(ia->ia_addr.sin_addr, *a) &&
+			    (ia->ia_ifp->if_flags & IFF_MULTICAST) != 0)
+				break;
+		}
 	}
 	return ifp;
 }
