@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_bus.c,v 1.5 2000/03/13 23:52:34 soren Exp $	*/
+/*	$NetBSD: ebus_bus.c,v 1.6 2000/04/05 03:05:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -112,6 +112,8 @@
  * bus space and bus dma support for UltraSPARC `ebus'.  this is largely
  * copied from the psycho code which was largely copied from the sbus code.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
