@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.7 2003/09/25 18:57:55 matt Exp $
+#	$NetBSD: EV64260,v 1.8 2003/10/08 11:08:07 bouyer Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -226,7 +226,8 @@ cd*		at scsibus? target ? lun ?
 #audio*	at auvia?
 
 pciide*		at pci? dev ? function ? flags 0x0000
-wd*		at pciide? channel ? drive ? flags 0x0000
+atabus* 	at pciide? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated/striped disk devices
