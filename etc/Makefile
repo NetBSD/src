@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.216 2002/04/26 16:23:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.217 2002/05/02 15:09:40 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -66,8 +66,7 @@ BIN3=
 # Directories to build in ${RELEASEDIR}.   MD Makefile.inc files can
 # add to this.
 # NOTE: Parent directories must be listed before subdirectories.
-INSTALLATION_DIRS= \
-	binary binary/sets binary/kernel installation
+INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"

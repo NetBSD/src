@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2002/04/16 13:39:19 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/05/02 15:09:42 lukem Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
@@ -7,7 +7,7 @@ KERNEL_SETS=		BOOT HADES MILAN-ISAIDE MILAN-PCIIDE
 
 EXTRA_KERNELS=		ATARITT BOOTX FALCON
 
-INSTALLATION_DIRS+=	installation/miniroot \
+INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
   
 snap_md_post:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/04/22 03:37:13 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/05/02 15:09:43 lukem Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
@@ -7,7 +7,8 @@ KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL RAMDISK
 
-INSTALLATION_DIRS+=	installation/misc
+INSTALLATION_DIRS+=	installation/miniroot	\
+			installation/misc
 
 # Build the boot media and install notes and install them
 snap_md_post:
