@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.155 2001/10/03 09:40:12 chs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.156 2001/10/03 20:03:29 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -845,14 +845,17 @@ void
 cpu_rootconf()
 {
 	struct bootpath *bp;
-	struct device *bootdv;
 	int bootpartition;
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	bootdv = bp == NULL ? NULL : bp->dev;
-	bootpartition = bootdv == NULL ? 0 : bp->val[2];
+	if (bp == NULL) 
+		bootpartition = 0;
+	else if (booted_device != bp->dev)
+		bootpartition = 0;
+	else
+		bootpartition = bp->val[2];
 
-	setroot(bootdv, bootpartition);
+	setroot(booted_device, bootpartition);
 }
 
 /*
@@ -1693,7 +1696,7 @@ device_register(dev, aux)
 				strcpy(bootpath[nbootpath].name, "fd");
 				nbootpath++;
 			}
-			bp->dev = dev;
+			booted_device = bp->dev = dev;
 			bootpath_store(1, bp + 1);
 			return;
 		}
