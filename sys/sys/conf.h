@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.29 1996/02/10 00:13:25 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.30 1996/02/13 21:08:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -342,4 +342,5 @@ extern struct swdevt swdevt[];
 
 int	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
+int	iszerodev __P((dev_t));
 #endif
