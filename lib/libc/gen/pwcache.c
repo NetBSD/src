@@ -1,6 +1,8 @@
+/*	$NetBSD: pwcache.c,v 1.4 1995/02/27 04:35:47 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,21 +34,22 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)pwcache.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: pwcache.c,v 1.3 1994/01/19 21:15:46 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: pwcache.c,v 1.4 1995/02/27 04:35:47 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <utmp.h>
-#include <pwd.h>
+
 #include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <utmp.h>
 
 #define	NCACHE	64			/* power of 2 */
 #define	MASK	NCACHE - 1		/* bits to store with */
-
-static	int pwopen = 0;
-static	int gropen = 0;
 
 char *
 user_from_uid(uid, nouser)
@@ -57,6 +60,7 @@ user_from_uid(uid, nouser)
 		uid_t	uid;
 		char	name[UT_NAMESIZE + 1];
 	} c_uid[NCACHE];
+	static int pwopen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
 	register struct passwd *pw;
 	register struct ncache *cp;
@@ -65,19 +69,19 @@ user_from_uid(uid, nouser)
 	if (cp->uid != uid || !*cp->name) {
 		if (pwopen == 0) {
 			setpassent(1);
-			pwopen++;
+			pwopen = 1;
 		}
-		if (!(pw = getpwuid(uid))) {
+		if ((pw = getpwuid(uid)) == NULL) {
 			if (nouser)
-				return((char *)NULL);
-			(void)sprintf(nbuf, "%u", uid);
-			return(nbuf);
+				return (NULL);
+			(void)snprintf(nbuf, sizeof(nbuf), "%u", uid);
+			return (nbuf);
 		}
 		cp->uid = uid;
 		(void)strncpy(cp->name, pw->pw_name, UT_NAMESIZE);
 		cp->name[UT_NAMESIZE] = '\0';
 	}
-	return(cp->name);
+	return (cp->name);
 }
 
 char *
@@ -89,25 +93,26 @@ group_from_gid(gid, nogroup)
 		gid_t	gid;
 		char	name[UT_NAMESIZE + 1];
 	} c_gid[NCACHE];
+	static int gropen;
 	static char nbuf[15];		/* 32 bits == 10 digits */
-	register struct group *gr;
-	register struct ncache *cp;
+	struct group *gr;
+	struct ncache *cp;
 
 	cp = c_gid + (gid & MASK);
 	if (cp->gid != gid || !*cp->name) {
 		if (gropen == 0) {
 			setgroupent(1);
-			gropen++;
+			gropen = 1;
 		}
-		if (!(gr = getgrgid(gid))) {
+		if ((gr = getgrgid(gid)) == NULL) {
 			if (nogroup)
-				return((char *)NULL);
-			(void)sprintf(nbuf, "%u", gid);
-			return(nbuf);
+				return (NULL);
+			(void)snprintf(nbuf, sizeof(nbuf), "%u", gid);
+			return (nbuf);
 		}
 		cp->gid = gid;
 		(void)strncpy(cp->name, gr->gr_name, UT_NAMESIZE);
 		cp->name[UT_NAMESIZE] = '\0';
 	}
-	return(cp->name);
+	return (cp->name);
 }
