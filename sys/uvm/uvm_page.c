@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.75 2002/05/15 00:19:12 enami Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.75.4.1 2002/06/01 22:44:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.75 2002/05/15 00:19:12 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.75.4.1 2002/06/01 22:44:00 tv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1306,6 +1306,7 @@ uvm_pagefree(pg)
  * => pages must either all belong to the same object, or all belong to anons.
  * => if pages are object-owned, object must be locked.
  * => if pages are anon-owned, anons must be locked.
+ * => caller must lock page queues if pages may be released.
  */
 
 void
