@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2001/04/12 05:59:25 itojun Exp $
+# $NetBSD: Makefile,v 1.12 2001/06/20 02:01:19 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,7 @@ SRCS=						\
 	crypto.c				\
 	data.c					\
 	eai_to_heim_errno.c			\
+	error_string.c				\
 	expand_hostname.c			\
 	fcache.c				\
 	free.c					\
@@ -69,6 +70,7 @@ SRCS=						\
 	init_creds_pw.c				\
 	keyblock.c				\
 	keytab.c				\
+	keytab_any.c				\
 	keytab_file.c				\
 	keytab_memory.c				\
 	keytab_keyfile.c			\
@@ -126,22 +128,23 @@ INCS=	krb5.h					\
 	krb5-types.h
 
 MAN=						\
+	kerberos.8				\
 	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
 	krb5_appdefault.3			\
+	krb5_auth_context.3			\
 	krb5_build_principal.3			\
 	krb5_config.3				\
+	krb5_context.3				\
 	krb5_free_principal.3			\
+	krb5_init_context.3			\
+	krb5_keytab.3				\
 	krb5_openlog.3				\
 	krb5_parse_name.3			\
 	krb5_sname_to_principal.3		\
 	krb5_unparse_name.3			\
 	krb5_warn.3				\
-	kerberos.8				\
 	verify_krb5_conf.8			\
-	krb5_auth_context.3			\
-	krb5_context.3				\
-	krb5_init_context.3			\
 
 krb5-types.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@
