@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.17 2002/01/14 16:04:44 aymeric Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.17 2002/01/14 16:04:44 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -52,9 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.17 2002/01/14 16:04:44 aymeric Exp $"
 #include <net/bpf.h>
 #endif
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
