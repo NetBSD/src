@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.14 2003/03/15 20:49:27 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.15 2003/09/02 07:35:04 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.14 2003/03/15 20:49:27 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.15 2003/09/02 07:35:04 jlam Exp $");
 #endif
 
 /*
@@ -46,7 +46,19 @@ __RCSID("$NetBSD: pkgdb.c,v 1.14 2003/03/15 20:49:27 agc Exp $");
 
 #define PKGDB_FILE	"pkgdb.byfile.db"	/* indexed by filename */
 
-static DB *pkgdbp;
+/*
+ * Where we put logging information by default if PKG_DBDIR is unset.
+ */
+#ifndef DEF_LOG_DIR
+#define DEF_LOG_DIR		"/var/db/pkg"
+#endif
+
+/* just in case we change the environment variable name */
+#define PKG_DBDIR		"PKG_DBDIR"
+
+static DB   *pkgdbp;
+static char *pkgdb_dir = NULL;
+static char  pkgdb_cache[FILENAME_MAX];
 
 /*
  *  Open the pkg-database
@@ -236,11 +248,24 @@ _pkgdb_getPKGDB_FILE(char *buf, unsigned size)
 char *
 _pkgdb_getPKGDB_DIR(void)
 {
-	char   *tmp;
-	static char *cache = NULL;
+	char *tmp;
 
-	if (cache == NULL)
-		cache = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+	if (pkgdb_dir == NULL) {
+		if ((tmp = getenv(PKG_DBDIR)))
+			_pkgdb_setPKGDB_DIR(tmp);
+		else
+			_pkgdb_setPKGDB_DIR(DEF_LOG_DIR);
+	}
 
-	return cache;
+	return pkgdb_dir;
+}
+
+/*
+ *  Set the first place we look for where pkgdb is stored.
+ */
+void
+_pkgdb_setPKGDB_DIR(const char *dir)
+{
+	(void) snprintf(pkgdb_cache, sizeof(pkgdb_cache), "%s", dir);
+	pkgdb_dir = pkgdb_cache;
 }
