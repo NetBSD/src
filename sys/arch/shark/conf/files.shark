@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.7 2004/07/08 22:07:48 drochner Exp $
+#	$NetBSD: files.shark,v 1.8 2005/01/05 09:13:29 tsutsui Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -61,7 +61,7 @@ file	arch/shark/ofw/wdc_ofisa_machdep.c	wdc_ofisa
 # Glue for OFW ISA device attachment
 device	ofisapc {}
 attach	ofisapc at ofbus
-file	arch/shark/ofw/ofisapc.c		pc
+file	arch/shark/ofw/ofisapc.c		ofisapc
 device	ofisascr {}
 attach	ofisascr at ofisa
 file	arch/shark/ofw/ofisascr.c		scr
@@ -105,20 +105,20 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # Shark specific files
-file	arch/shark/shark/shark_machdep.c	shark
-file	arch/shark/shark/sequoia.c		shark
-file	arch/shark/shark/shark_fiq.S		shark
-file	arch/shark/shark/hat.c			shark
-file	arch/shark/isa/isa_irqhandler.c		shark
-file	arch/shark/isa/clock.c			shark
-file	arch/shark/isa/isa_irq.S		shark
-file	arch/shark/isa/isa_shark_machdep.c	shark
-file	arch/shark/isa/isa_io.c			shark | isa
-file	arch/shark/isa/isa_io_asm.S		shark | isa
+file	arch/shark/shark/shark_machdep.c
+file	arch/shark/shark/sequoia.c
+file	arch/shark/shark/shark_fiq.S
+file	arch/shark/shark/hat.c
+file	arch/shark/isa/isa_irqhandler.c
+file	arch/shark/isa/clock.c
+file	arch/shark/isa/isa_irq.S
+file	arch/shark/isa/isa_shark_machdep.c
+file	arch/shark/isa/isa_io.c
+file	arch/shark/isa/isa_io_asm.S
 
 # National Semiconductor PC97307VUL SuperIO chip configuration routines
 define	nsio
-file	arch/shark/shark/ns87307.c		nsio & shark
+file	arch/shark/shark/ns87307.c		nsio
 
 # 8042 microcontroller routines for keyboard and mouse
 define	i8042
