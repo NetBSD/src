@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.577 2003/09/25 16:49:03 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.578 2003/09/26 07:47:14 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.579 2003/09/25 16:47:54 joda Exp 
+ *	NetBSD: pcidevs,v 1.580 2003/09/26 07:45:15 matt Exp 
  */
 
 /*
@@ -1251,7 +1251,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
+#define	PCI_PRODUCT_DELL_PERC_4DI	0x000f		/* PERC 4/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
