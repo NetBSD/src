@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.15 1999/02/01 12:53:48 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.16 1999/02/02 12:46:13 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -432,7 +432,13 @@ esp_dma_isintr(sc)
 				NCR_WRITE_REG(sc, ESP_DCTL, 
 						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
 			}
-			nextdma_intr(&esc->sc_scsi_dma);
+			{
+				int nr;
+				nr = nextdma_intr(&esc->sc_scsi_dma);
+				if (nr) {
+					DPRINTF(("nextma_intr = %d\n",nr));
+				}
+			}
 			return 0;
 		}
 
@@ -855,29 +861,9 @@ esp_dmacb_completed(map, arg)
 	}
 #endif
 
-#if 0
-	if (esc->sc_datain) {					/* @@@ this may not be needed */
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB);
-	}
-#endif
-
 	bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, map,
 			0, map->dm_mapsize,
 			(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
-
-#if 0
-	if (esc->sc_datain) {					/* @@@ this may not be needed */
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-	} else {
-		NCR_WRITE_REG(sc, ESP_DCTL,
-				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
-	}
-#endif
 
 }
 
