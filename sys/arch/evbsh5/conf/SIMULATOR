@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.5 2002/07/12 20:43:12 scw Exp $
+#	$NetBSD: SIMULATOR,v 1.6 2002/08/26 11:16:02 scw Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -11,12 +11,15 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"SIMULATOR-$Revision: 1.5 $"
+#ident		"SIMULATOR-$Revision: 1.6 $"
 
 options 	CPU_STB1
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
+
+makeoptions     DEFCOPTS="-g"
+makeoptions     DEBUG="-g"
 
 options 	DIAGNOSTIC
 options 	DEBUG
@@ -26,18 +29,12 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
 
 file-system 	FFS
-file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 
-options 	SOFTDEP
-
 options 	INET
-options 	INET6
 
 config netbsd	root on ? type ?
-
-options 	NFS_BOOT_DHCP
 
 pseudo-device	loop
 pseudo-device	bpfilter
