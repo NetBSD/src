@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.14 1996/12/07 08:33:07 cjs Exp $	*/
+/*	$NetBSD: elink3.c,v 1.15 1996/12/29 13:32:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -81,6 +81,8 @@ struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
+void	ep_internalconfig __P((struct ep_softc *sc));
+void	ep_vortex_internalconfig __P((struct ep_softc *sc));
 static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
@@ -97,6 +99,7 @@ void epsetlink __P((struct ep_softc *));
 
 static int epbusyeeprom __P((struct ep_softc *));
 
+
 void
 epconfig(sc, conn)
 	struct ep_softc *sc;
@@ -106,15 +109,12 @@ epconfig(sc, conn)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
-	u_int32_t r;
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 
+
 	/* print RAM size */
-	GO_WINDOW(3);
-	r = bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
-	printf("%dKB %s-wide RAM, ", 8 << (r & 0x07),
-	    (r & 0x08) ? "word" : "byte");
+	ep_internalconfig(sc);
 	GO_WINDOW(0);
 
 	/* determine connectors available */
@@ -132,11 +132,37 @@ epconfig(sc, conn)
 	if (conn & IS_UTP) {
 		if (sc->ep_connectors)
 			printf("/");
-		printf("utp");
+		printf("10baseT");
 		sc->ep_connectors |= UTP;
 	}
+	if (conn & IS_100BASE_TX) {
+		if (sc->ep_connectors)
+			printf("/");
+		printf("100base-TX");
+		sc->ep_connectors |= TX;
+	}
+	if (conn & IS_100BASE_T4) {
+		if (sc->ep_connectors)
+			printf("/");
+		printf("100base-T4");
+		sc->ep_connectors |= T4;
+	}
+	if (conn & IS_100BASE_FX) {
+		if (sc->ep_connectors)
+			printf("/");
+		printf("100base-FX");
+		sc->ep_connectors |= FX;
+	}
+	if (conn & IS_100BASE_MII) {
+		if (sc->ep_connectors)
+			printf("/");
+		printf("MII");
+		sc->ep_connectors |= MII;
+	}
+
 	if (!sc->ep_connectors)
 		printf("no connectors!");
+	printf("\n");
 
 	/*
 	 * Read the station address from the eeprom
@@ -154,7 +180,8 @@ epconfig(sc, conn)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: , address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x, eisa)? and Boomerang (3c900)cards allow
@@ -180,6 +207,7 @@ epconfig(sc, conn)
 
 	case (EP_LARGEWIN_PROBE << 2):
 		sc->ep_pktlenshift = 2;
+		ep_vortex_internalconfig(sc);
 		break;
 
 	default:
@@ -225,6 +253,97 @@ epconfig(sc, conn)
 	epstop(sc);		/*XXX reset after probe, stop interface. */
 	DELAY(20000);
 #endif
+}
+
+/*
+ * Show interface-model-independent info from window 3
+ * internal-configuration register.
+ */
+void
+ep_internalconfig(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	u_int config0;
+	u_int config1;
+
+	int  ram_size, ram_width, ram_speed, rom_size, ram_split;
+	/*
+	 * NVRAM buffer Rx:Tx config names for busmastering cards
+	 * (Demon, Vortex, and later).
+	 */
+	const char *onboard_ram_config[] = {
+		"5:3", "3:1", "1:1", "(undefined)" };
+
+	GO_WINDOW(3);
+	config0 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
+	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG+2);
+	GO_WINDOW(0);
+
+	ram_size  = (config0 & CONFIG_RAMSIZE) >> CONFIG_RAMSIZE_SHIFT;
+	ram_width = (config0 & CONFIG_RAMWIDTH) >> CONFIG_RAMWIDTH_SHIFT;
+	ram_speed = (config0 & CONFIG_RAMSPEED) >> CONFIG_RAMSPEED_SHIFT;
+	rom_size  = (config0 & CONFIG_ROMSIZE) >> CONFIG_ROMSIZE_SHIFT;
+
+	ram_split  = (config1 & CONFIG_RAMSPLIT) >> CONFIG_RAMSPLIT_SHIFT;
+
+	printf("%dKB %s-wide FIFO, %s Rx:Tx split, ",
+	    8 << ram_size,
+	    (ram_width) ? "word" : "byte",
+	    onboard_ram_config[ram_split]);
+}
+
+
+/*
+ * Show onboard configuration of large-packet-capable elink3 devices (Demon,
+ * Vortex, Boomerang),  using media and card-version info in window 3.
+ *
+ * XXX how much of this works with 3c515, pcmcia 10/100?  With 3c509, 3c589?
+ */
+void
+ep_vortex_internalconfig(sc)
+	struct ep_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int config0;
+	u_int config1;
+	int reset_options;
+
+	int  media_mask, autoselect;
+	/*  Names for  media in the media bitmask field. */
+	const char *medium_name;
+	const char *media_names[8] ={
+		"10baseT",
+		"10base AUI",
+		"undefined",
+		"10base2",
+		"100baseTX",
+		"100baseFX",
+		"MII",
+		"100baseT4"};
+
+	GO_WINDOW(3);
+	config0 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
+	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG+2);
+	reset_options  = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
+	GO_WINDOW(0);
+
+	media_mask = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+        autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
+
+	medium_name = (media_mask > 8) ? "(unknown/impossible media)"
+		                       : media_names[media_mask];
+
+	media_mask = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+        autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
+
+
+	printf("%s: default medium %s, autoselect %s\n",
+	       sc->sc_dev.dv_xname,
+	       medium_name,  (autoselect)? "on" : "off" );
 }
 
 /*
@@ -319,6 +438,10 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
+/*
+ * select media based on link{0,1,2} switches.
+ * Assumes 10Mbit interface, totatlly broken for 10/100 adaptors.
+ */
 void
 epsetlink(sc)
 	register struct ep_softc *sc;
