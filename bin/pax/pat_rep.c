@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.21 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.22 2005/01/21 20:23:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.21 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.22 2005/01/21 20:23:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,9 @@ rep_add(char *str)
 	char *pt1;
 	char *pt2;
 	REPLACE *rep;
-#ifndef NET2_REGEX
+#ifdef NET2_REGEX
+	static const char rebuf[] = "Error";
+#else
 	int res;
 	char rebuf[BUFSIZ];
 #endif
@@ -136,7 +138,7 @@ rep_add(char *str)
 		if (*pt1 == *str)
 			break;
 	}
-	if (pt1 == NULL) {
+	if (*pt1 == 0) {
 		tty_warn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -156,9 +158,9 @@ rep_add(char *str)
 #else
 	if ((res = regcomp(&(rep->rcmp), str+1, 0)) != 0) {
 		regerror(res, &(rep->rcmp), rebuf, sizeof(rebuf));
+#endif
 		tty_warn(1, "%s while compiling regular expression %s", rebuf,
 		    str);
-#endif
 		(void)free((char *)rep);
 		return(-1);
 	}
@@ -177,7 +179,7 @@ rep_add(char *str)
 		if (*pt2 == *str)
 			break;
 	}
-	if (pt2 == NULL) {
+	if (*pt2 == 0) {
 #ifdef NET2_REGEX
 		(void)free((char *)rep->rcmp);
 #else
