@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1997/06/23 22:08:02 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.2 1997/07/01 07:21:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,6 +164,7 @@ void	(*tc_enable_interrupt) __P ((u_int slotno,
 				     int (*handler) __P ((void *sc)),
 				     void *sc, int onoff));
 #ifdef DS3100
+#include <pmax/pmax/kn01var.h>
 void	kn01_enable_intr  __P ((u_int slotno,
 				int (*handler) __P ((intr_arg_t sc)),
 				intr_arg_t sc, int onoff));
@@ -455,6 +456,7 @@ mach_init(argc, argv, code, cv)
 			i = 0;
 		}
 	}
+
 	/* check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
@@ -1748,7 +1750,6 @@ kmin_enable_intr(slotno, handler, sc, on)
 		if (slotno <= 2) {
 			/* it's an option slot */
 			int s = splhigh();
-			printf("Enabling 3MIN tcslot %d (UNTESTED)\n", slotno);
 			s  |= mask;
 			splx(s);
 		} else {
@@ -1761,7 +1762,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 			/* it's an option slot */
 			int s = splhigh();
 			printf("kmin_intr: cannot disable option slot %d\n",
-				slotno);
+			    slotno);
 			s &= ~mask;
 			splx(s);
 		} else {
@@ -1848,7 +1849,7 @@ xine_enable_intr(slotno, handler, sc, on)
 void
 kn03_tc_reset()
 {
-/*
+	/*
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
