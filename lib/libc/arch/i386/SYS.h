@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.12 1999/01/14 22:48:19 kleink Exp $
+ *	$NetBSD: SYS.h,v 1.13 1999/02/07 17:21:38 christos Exp $
  */
 
 #include <machine/asm.h>
@@ -60,7 +60,7 @@
 
 #define _SYSCALL(x,y)							\
 	.text; .align 2;						\
-	2: jmp PIC_PLT(CERROR);						\
+	2: PIC_PROLOGUE; jmp PIC_PLT(CERROR);				\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
 
