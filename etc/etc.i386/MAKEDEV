@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.66 1998/07/12 19:51:55 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.67 1998/07/12 20:28:24 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -29,6 +29,7 @@
 #	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
+#	usbs	make USB devices
 #
 # Tapes:
 #	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
@@ -64,6 +65,13 @@
 # Printers:
 #	lpt*	stock lp
 #	lpa*	interruptless lp
+#
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	ums*	Mice, using the busmouse protocol
+#	ukbd*	Keyboards
 #
 # Call units:
 #
@@ -103,6 +111,7 @@ all)
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
+	sh $0 usbs
 	;;
 
 floppy)
