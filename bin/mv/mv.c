@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.23 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: mv.c,v 1.24 1999/12/14 17:30:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.23 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: mv.c,v 1.24 1999/12/14 17:30:11 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ do_move(from, to)
 	 * (1)	If the destination path exists, the -f option is not specified
 	 *	and either of the following conditions are true:
 	 *
-	 *	(a) The perimissions of the destination path do not permit
+	 *	(a) The permissions of the destination path do not permit
 	 *	    writing and the standard input is a terminal.
 	 *	(b) The -i option is specified.
 	 *
