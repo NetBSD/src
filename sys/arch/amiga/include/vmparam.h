@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.5 1994/02/11 07:02:49 chopps Exp $
+ *	$Id: vmparam.h,v 1.6 1994/02/17 09:11:52 chopps Exp $
  */
 
 
@@ -59,39 +59,13 @@
 
 /* Sun settings. Still hope, that I might get sun3 binaries to work... */
 #define	USRTEXT		0x2000
-#define	USRSTACK	0x0F000000
+#define	USRSTACK	0x0E000000
 #define	LOWPAGES	btoc(USRTEXT)
 #define	HIGHPAGES	0
 
 /*
  * Virtual memory related constants, all in bytes
  */
-
-#if 0
-/* these are the sun3 parameters, but they obviously confuse our memory
-   allocator (because data and stack segments overlap). So for now,
-   limit both data and stack to 32M each, this should be fairly enough
-   for the start, and if not, we'll take another look at how to tell
-   the vm-system that it's ok if stack and data potentially overlap,
-   as long as they don't in reality.. */
-
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		USRSTACK		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		USRSTACK		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
-
-#else
 
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(6*1024*1024)		/* max text size */
@@ -107,8 +81,6 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
-
 #endif
 
 /*
