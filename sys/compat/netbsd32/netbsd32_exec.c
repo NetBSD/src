@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.1 1998/08/26 10:20:35 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.2 1998/08/26 13:38:32 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -53,7 +53,7 @@ extern char *sparc32_syscallnames[];
 #endif
 extern char sigcode[], esigcode[];
 const char sparc32_emul_path[] = "/emul/sparc32";
-extern void sparc32_sendsig __P((sig_t, int, int, u_long)); /* XXX error fix only */
+void sparc32_sendsig __P((sig_t, int, int, u_long));
 void sparc32_setregs __P((struct proc *, struct exec_package *, u_long));
 
 struct emul emul_sparc32 = {
@@ -313,4 +313,13 @@ sparc32_setregs(p, pack, stack)
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow32);
 	tf->tf_out[6] = stack;
+}
+
+void
+sparc32_sendsig(s, a, b, c)
+	sig_t s;
+	int a, b;
+	u_long c;
+{
+
 }
