@@ -1,0 +1,150 @@
+#!/bin/sh
+
+# Copyright (c) 1994, 1996 Charles Hannum.  All rights reserved.
+
+# Count the messages in your mailbox, using only POSIX shell builtins.
+#
+# Caveats:
+#
+# The read loop is horrendously slow on every implementation I've
+# tried.  I suggest using from(1) and wc(1) instead, though these are
+# not shell builtins.
+
+# for krb.
+#set -- `from -t`
+#v=$3
+set -- `from | wc -l`
+v=$1
+#v=`from | wc -l`
+
+#v=0
+#exec 0</var/mail/$USER
+#while read line; do
+#  case "$line" in
+#    "From "*) v=$(($v + 1)) ;;
+#  esac
+#done
+#exec 0<&-
+
+result=
+g=0
+
+while :; do
+
+  case $v in
+    0 | '') break ;;
+    ?) v=00$v ;;
+    ??) v=0$v ;;
+  esac
+
+  case $v in
+    *000) ;;
+    *)
+      case $g in
+	0) ;;
+	1) val=THOUSAND ;;
+	2) val=MILLION ;;
+	3) val=BILLION ;;
+	4) val=TRILLION ;;
+	5) val=QUADRILLION ;;
+	6) val=QUINTILLION ;;
+	7) val=SEXTILLION ;;
+	8) val=SEPTILLION ;;
+	*)
+	  echo "YOU HAVE TOO MUCH MAIL!" 1>&2
+	  exit 1
+	  ;;
+      esac
+
+      case $g in
+	0) ;;
+	*) result="$val $result" ;;
+      esac
+      ;;
+  esac
+
+  g=$(($g + 1))
+
+  case $v in
+    *?10) val=TEN ;;
+    *?11) val=ELEVEN ;;
+    *?12) val=TWELVE ;;
+    *?13) val=THIRTEEN ;;
+    *?14) val=FOURTEEN ;;
+    *?15) val=FIFTEEN ;;
+    *?16) val=SIXTEEN ;;
+    *?17) val=SEVENTEEN ;;
+    *?18) val=EIGHTEEN ;;
+    *?19) val=NINETEEN ;;
+    *)
+      case $v in
+	*?2?) val=TWENTY ;;
+	*?3?) val=THIRTY ;;
+	*?4?) val=FOURTY ;;
+	*?5?) val=FIFTY ;;
+	*?6?) val=SIXTY ;;
+	*?7?) val=SEVENTY ;;
+	*?8?) val=EIGHTY ;;
+	*?9?) val=NINETY ;;
+	*) val= ;;
+      esac
+
+      case $v in
+	*?0? | *??0) ;;
+	*) val=${val}- ;;
+      esac
+
+      case $v in
+	*??1) val=${val}ONE ;;
+	*??2) val=${val}TWO ;;
+	*??3) val=${val}THREE ;;
+	*??4) val=${val}FOUR ;;
+	*??5) val=${val}FIVE ;;
+	*??6) val=${val}SIX ;;
+	*??7) val=${val}SEVEN ;;
+	*??8) val=${val}EIGHT ;;
+	*??9) val=${val}NINE ;;
+      esac
+      ;;
+  esac
+
+  case $v in
+    *?00) ;;
+    *) result="$val $result" ;;
+  esac
+
+  case $v in
+    *1??) val=ONE ;;
+    *2??) val=TWO ;;
+    *3??) val=THREE ;;
+    *4??) val=FOUR ;;
+    *5??) val=FIVE ;;
+    *6??) val=SIX ;;
+    *7??) val=SEVEN ;;
+    *8??) val=EIGHT ;;
+    *9??) val=NINE ;;
+  esac
+
+  case $v in
+    *0??) ;;
+    *) result="$val HUNDRED $result" ;;
+  esac
+
+  v=${v%%???}
+
+done
+
+plural=S
+
+case "$result" in
+  "") result=ZERO ;;
+  "ONE ") plural= ;;
+esac
+
+set -- $result
+
+echo "$*!
+
+$* NEW MAIL MESSAGE$plural!
+
+HAHAHAHAHA!"
