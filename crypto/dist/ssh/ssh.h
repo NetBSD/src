@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.h,v 1.1.1.1 2000/09/28 22:10:34 thorpej Exp $	*/
+/*	$NetBSD: ssh.h,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -348,7 +348,8 @@ void    log_init(const char *av0, LogLevel level, SyslogFacility facility,
 	    int on_stderr, int quiet_mode, int debug_mode);
 
 /* Logging implementation, depending on server or client */
-void    do_log(LogLevel level, const char *fmt, va_list args);
+void    do_log(LogLevel level, const char *fmt, va_list args)
+     __attribute__((format(printf, 2, 0)));
 
 /* name to facility/level */
 SyslogFacility log_facility_number(const char *name);

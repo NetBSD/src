@@ -1,4 +1,4 @@
-/*	$NetBSD: log-server.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: log-server.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: log-server.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
+__RCSID("$NetBSD: log-server.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -138,7 +138,6 @@ void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
 	char msgbuf[MSGBUFSIZ];
-	char fmtbuf[MSGBUFSIZ];
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	extern char *__progname;
@@ -176,8 +175,12 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		break;
 	}
 	if (txt != NULL) {
-		snprintf(fmtbuf, sizeof(fmtbuf), "%s: %s", txt, fmt);
-		vsnprintf(msgbuf, sizeof(msgbuf), fmtbuf, args);
+	  	int len;
+
+		snprintf(msgbuf, sizeof(msgbuf), "%s: ", txt);
+		len = strlen(msgbuf);
+		if (len < sizeof(msgbuf))
+		  	vsnprintf(msgbuf+len, sizeof(msgbuf)-len, fmt, args);
 	} else {
 		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}
