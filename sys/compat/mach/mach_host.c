@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.11 2002/11/19 16:18:43 christos Exp $ */
+/*	$NetBSD: mach_host.c,v 1.12 2002/11/20 07:17:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.11 2002/11/19 16:18:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.12 2002/11/20 07:17:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -96,6 +96,23 @@ mach_host_info(p, msgh)
 		break;
 	}
 
+	case MACH_HOST_PRIORITY_INFO: {
+		struct mach_host_priority_info *info
+		    = (struct mach_host_priority_info *)&rep.rep_data[0];
+
+		DPRINTF(("mach_host_info(PRIORITY_INFO);\n"));
+		rep.rep_msgh.msgh_size = sizeof(*reps) 
+		    - sizeof(rep.rep_trailer) + sizeof(*info);
+		rep.rep_count = sizeof(*info) / sizeof(mach_integer_t);
+		mach_host_priority_info(info);
+		/* 
+		 * XXX this is the trailer, the way it 
+		 * is filled should be improved 
+		 */
+		rep.rep_data[rep.rep_count + 1] = 8;
+		break;
+	}
+
 	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
 		DPRINTF(("mach_host_info(%s);\n",
@@ -110,7 +127,6 @@ mach_host_info(p, msgh)
 
 	case MACH_HOST_SCHED_INFO:
 	case MACH_HOST_RESOURCE_SIZES:
-	case MACH_HOST_PRIORITY_INFO:
 		DPRINTF(("Unimplemented host_info flavor %d\n", 
 		    req.req_flavor));
 	default:
@@ -185,4 +201,21 @@ mach_host_get_clock_service(p, msgh)
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
+}
+
+void
+mach_host_priority_info(info)
+	struct mach_host_priority_info *info;
+{
+	/* XXX One day, try to fill this correctly */
+	info->kernel_priority = 0x50;
+	info->system_priority = 0x50;
+	info->server_priority = 0x40;
+	info->user_priority = 0x1f;
+	info->depress_priority = 0x00;
+	info->idle_priority = 0x00;
+	info->minimum_priority = 0x00;
+	info->maximum_priority = 0x4f;
+
+	return;
 }
