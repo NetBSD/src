@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.65 1998/01/28 02:32:20 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.66 1998/05/28 13:51:09 matt Exp $	*/
 
 /**************************************************************************
 **
@@ -1438,7 +1438,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.65 1998/01/28 02:32:20 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.66 1998/05/28 13:51:09 matt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3520,7 +3520,7 @@ ncr_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	u_char rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
+	u_char rev = PCI_REVISION(pa->pa_class);
 #if 0
 	struct cfdata *cf = match;
 
@@ -3538,7 +3538,7 @@ ncr_probe(parent, match, aux)
 
 static	char* ncr_probe (pcici_t tag, pcidi_t type)
 {
-	u_char rev = pci_conf_read (tag, PCI_CLASS_REG) & 0xff;
+	u_char rev = PCI_REVISION(pa->pa_class);
 	int i;
 
 	i = ncr_chip_lookup(type, rev);
@@ -3619,7 +3619,7 @@ ncr_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
+	struct pci_attach_args * const pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int retval;
 	pci_intr_handle_t intrhandle;
@@ -3627,7 +3627,7 @@ ncr_attach(parent, self, aux)
 	ncb_p np = (void *)self;
 	u_long	period;
 	int	i;
-	u_char rev = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
+	u_char rev = PCI_REVISION(pa->pa_class);
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_addr_t ioaddr, memaddr;
