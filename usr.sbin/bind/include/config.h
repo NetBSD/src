@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* Id: config.h.in,v 1.47.2.3.2.11 2004/09/01 07:18:30 marka Exp */
 
 /***
  *** This file is not to be included by any public header files, because
@@ -138,6 +138,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if you are running under Compaq TruCluster..  */
 /* #undef HAVE_TRUCLUSTER */
 
+/* Define if OpenSSL includes DSA support */
+#define HAVE_OPENSSL_DSA 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 /* #undef HAVE_DLFCN_H */
 
@@ -158,6 +161,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 /* #undef HAVE_LIBPTHREAD */
+
+/* Define to 1 if you have the `scf' library (-lscf). */
+/* #undef HAVE_LIBSCF */
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
@@ -236,10 +242,7 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
-#include <sys/endian.h>
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define WORDS_BIGENDIAN
-#endif
+/* #undef WORDS_BIGENDIAN */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
