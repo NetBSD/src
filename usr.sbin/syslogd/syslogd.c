@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.32 2004/11/18 15:52:01 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.33 2004/11/18 15:55:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.32 2004/11/18 15:52:01 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.33 2004/11/18 15:55:34 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -570,7 +570,7 @@ getgroup:
 				logerror("kevent() failed");
 			continue;
 		}
-		dprintf("Got a message (%d)\n", rv);
+		dprintf("Got an event (%d)\n", rv);
 		for (i = 0; i < rv; i++) {
 			handler = (void *) events[i].udata;
 			(*handler)(&events[i]);
