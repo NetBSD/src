@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.17 1997/01/07 07:40:46 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.18 1997/01/20 04:27:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -779,7 +779,9 @@ sbc_drq_intr(p)
 	u_int8_t		*data;
 	register int		count;
 	int			dcount, resid;
+#ifdef SBC_WRITE_HACK
 	u_int8_t		tmp;
+#endif
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -814,7 +816,8 @@ sbc_drq_intr(p)
 
 			dh->dh_addr += count;
 			dh->dh_len -= count;
-		}
+		} else
+			count = 0;
 
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_INTR)
@@ -886,6 +889,7 @@ sbc_drq_intr(p)
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 
+#ifdef SBC_WRITE_HACK
 		/*
 		 * XXX -- Read a byte from the SBC to trigger a /BERR.
 		 * This seems to be necessary for us to notice that
@@ -899,6 +903,7 @@ sbc_drq_intr(p)
 			drq = (volatile u_int8_t *) sc->sc_drq_addr;
 		}
 		tmp = *drq;
+#endif
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.
