@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.20 1995/02/11 20:54:11 gwr Exp $	*/
+/*	$NetBSD: copy.s,v 1.21 1995/02/11 21:59:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -136,7 +136,7 @@ Lcibloop:
 Lcidone:
 	movl	_curpcb,a0		| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
-	movl	sp@+,d2			| restore scratch reg
+	movl	sp@+,d2			| restore scratch register
 Lciret:
 	rts
 Lcifault:
@@ -202,7 +202,7 @@ Lcobloop:
 Lcodone:
 	movl	_curpcb,a0		| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
-	movl	sp@+,d2			| restore scratch reg
+	movl	sp@+,d2			| restore scratch register
 Lcoret:
 	rts
 Lcofault:
@@ -210,7 +210,7 @@ Lcofault:
 	bra	Lcodone
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
@@ -239,7 +239,7 @@ Lcsret:
 	rts
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
@@ -278,7 +278,7 @@ Lcisfault:
 	bra	Lcisdone
 
 /*
- * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, into the
  * user's address space.  Return the number of characters copied (including
  * the NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG;
