@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.7 1999/03/22 18:16:46 garbled Exp $
+.\"	$NetBSD: vis.1,v 1.7.10.1 2001/04/22 17:36:51 he Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,6 +103,7 @@ an invertible version of the
 .Xr fold 1
 utility.  That is, the output
 can be unfolded by running the output through
+.Xr unvis 1 .
 .It Fl o
 Request a format which displays non-printable characters as
 an octal number, \eddd.
@@ -110,7 +111,6 @@ an octal number, \eddd.
 Only characters considered unsafe to send to a terminal are encoded.
 This flag allows backspace, bell, and carriage return in addition
 to the default space, tab and newline.
-.Xr unvis 1 .
 .It Fl t
 Tabs are also encoded.
 .It Fl w
