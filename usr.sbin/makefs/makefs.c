@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.7 2001/12/05 11:08:53 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.8 2002/01/10 05:31:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.7 2001/12/05 11:08:53 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.8 2002/01/10 05:31:07 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -86,6 +86,8 @@ main(int argc, char *argv[])
 	fsnode		*root;
 	int	 	 ch, len;
 	char		*specfile;
+
+	setprogname(argv[0]);
 
 	debug = 0;
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
