@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.4 2001/11/23 06:21:49 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -205,12 +205,23 @@ void	r4k_icache_sync_all_16(void);
 void	r4k_icache_sync_range_16(vaddr_t, vsize_t);
 void	r4k_icache_sync_range_index_16(vaddr_t, vsize_t);
 
+void	r4k_icache_sync_all_32(void);
+void	r4k_icache_sync_range_32(vaddr_t, vsize_t);
+void	r4k_icache_sync_range_index_32(vaddr_t, vsize_t);
+
 void	r4k_pdcache_wbinv_all_16(void);
 void	r4k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
 void	r4k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
 
 void	r4k_pdcache_inv_range_16(vaddr_t, vsize_t);
 void	r4k_pdcache_wb_range_16(vaddr_t, vsize_t);
+
+void	r4k_pdcache_wbinv_all_32(void);
+void	r4k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	r4k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
+
+void	r4k_pdcache_inv_range_32(vaddr_t, vsize_t);
+void	r4k_pdcache_wb_range_32(vaddr_t, vsize_t);
 
 void	r5k_icache_sync_all_32(void);
 void	r5k_icache_sync_range_32(vaddr_t, vsize_t);
