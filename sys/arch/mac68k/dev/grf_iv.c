@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.12 1996/05/19 22:27:06 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.13 1996/08/04 06:03:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -110,7 +110,7 @@ grfiv_attach(parent, self, aux)
 	gm->fboff = 0;
 
 	/* Perform common video attachment. */
-	grf_establish(sc, grfiv_mode, grfiv_phys);
+	grf_establish(sc, NULL, grfiv_mode, grfiv_phys);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.33 1996/05/19 22:27:04 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.34 1996/08/04 06:03:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -344,6 +344,7 @@ grfmap(dev, addrp, p)
 	caddr_t *addrp;
 	struct proc *p;
 {
+	extern u_int32_t mac68k_vidphys;
 	struct grf_softc *gp;
 	struct specinfo si;
 	struct vnode vn;
@@ -358,8 +359,11 @@ grfmap(dev, addrp, p)
 	len = mac68k_round_page(gp->sc_grfmode->fbsize + gp->sc_grfmode->fboff);
 	flags = MAP_SHARED | MAP_FIXED;
 
-	*addrp = (caddr_t) mac68k_trunc_page(
-				NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot));
+	if (gp->sc_slot == NULL)
+		*addrp = (caddr_t) mac68k_trunc_page(mac68k_vidphys);
+	else
+		*addrp = (caddr_t) mac68k_trunc_page(
+		    NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot));
 
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */
