@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.6 1993/12/18 04:31:51 mycroft Exp $
+ *	$Id: isofs_rrip.c,v 1.7 1994/03/02 19:05:20 ws Exp $
  */
 
 #include <sys/param.h>
@@ -376,11 +376,10 @@ isofs_rrip_device(p,ana)
 	high = isonum_733(p->dev_t_high_l);
 	low  = isonum_733(p->dev_t_low_l);
 	
-	if ( high == 0 ) {
-		ana->inop->inode.iso_rdev = makedev( major(low), minor(low) );
-	} else {
-		ana->inop->inode.iso_rdev = makedev( high, minor(low) );
-	}
+	if (high == 0)
+		ana->inop->inode.iso_rdev = makedev(major(low),minor(low));
+	else
+		ana->inop->inode.iso_rdev = makedev(high,minor(low));
 	ana->fields &= ~ISO_SUSP_DEVICE;
 	return ISO_SUSP_DEVICE;
 }
@@ -423,8 +422,6 @@ isofs_rrip_stop(p,ana)
 	ISO_SUSP_HEADER *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	/* stop analyzing */
-	ana->fields = 0;
 	return ISO_SUSP_STOP;
 }
 
@@ -501,6 +498,10 @@ isofs_rrip_loop(isodir,ana,table)
 				if (!ana->fields)
 					break;
 			}
+			if (result&ISO_SUSP_STOP) {
+				result &= ~ISO_SUSP_STOP;
+				break;
+			}
 			/*
 			 * move to next SUSP
 			 * Hopefully this works with newer versions, too
@@ -508,7 +509,7 @@ isofs_rrip_loop(isodir,ana,table)
 			phead = (ISO_SUSP_HEADER *)((char *)phead + isonum_711(phead->length));
 		}
 		
-		if ( ana->fields && ana->iso_ce_len ) {
+		if (ana->fields && ana->iso_ce_len) {
 			if (ana->iso_ce_blk >= ana->imp->volume_space_size
 			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
@@ -525,7 +526,7 @@ isofs_rrip_loop(isodir,ana,table)
 		brelse(bp);
 	/*
 	 * If we don't find the Basic SUSP stuffs, just set default value
-	 *   ( attribute/time stamp )
+	 *   (attribute/time stamp)
 	 */
 	for (ptable = table; ptable->func2; ptable++)
 		if (!(ptable->result&result))
@@ -534,6 +535,9 @@ isofs_rrip_loop(isodir,ana,table)
 	return result;
 }
 
+/*
+ * Get Attributes.
+ */
 static RRIP_TABLE rrip_table_analyze[] = {
 	{ "PX", isofs_rrip_attr,	isofs_rrip_defattr,	ISO_SUSP_ATTR },
 	{ "TF", isofs_rrip_tstamp,	isofs_rrip_deftstamp,	ISO_SUSP_TSTAMP },
@@ -560,9 +564,7 @@ isofs_rrip_analyze(isodir,inop,imp)
 }
 
 /* 
- * Get Alternate Name from 'AL' record 
- * If either no AL record or 0 length, 
- *    it will be return the translated ISO9660 name,
+ * Get Alternate Name.
  */
 static RRIP_TABLE rrip_table_getname[] = {
 	{ "NM", isofs_rrip_altname,	isofs_rrip_defname,	ISO_SUSP_ALTNAME },
@@ -607,9 +609,7 @@ isofs_rrip_getname(isodir,outbuf,outlen,inump,imp)
 }
 
 /* 
- * Get Symbolic Name from 'SL' record 
- *
- * Note: isodir should contains SL record!
+ * Get Symbolic Link.
  */
 static RRIP_TABLE rrip_table_getsymname[] = {
 	{ "SL", isofs_rrip_slink,	0,			ISO_SUSP_SLINK },
@@ -647,8 +647,8 @@ static RRIP_TABLE rrip_table_extref[] = {
 };
 
 /*
- * Check for Rock Ridge Extension and return offset of its fields.
- * Note: We require the ER field.
+ * Check for Rock Ridge Extension and Return Offset of its Fields.
+ * Note: We insist on the ER field.
  */
 int
 isofs_rrip_offset(isodir,imp)
