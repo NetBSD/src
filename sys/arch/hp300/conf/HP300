@@ -32,7 +32,7 @@ options		"BUFPAGES=900"
 options		"NKMEMCLUSTERS=256"
 options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
-options		KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
+#options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
 
 config		netbsd root on sd0 swap on sd0d and rd0d
 config		vgnetbsd root on sd0 swap on sd0d and sd1d and sd2d
