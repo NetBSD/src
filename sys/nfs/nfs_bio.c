@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.33 1997/07/17 23:54:27 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.34 1997/10/10 01:53:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 
 #include <vm/vm.h>
 
@@ -69,21 +70,25 @@ extern struct nfsstats nfsstats;
  * Any similarity to readip() is purely coincidental
  */
 int
-nfs_bioread(vp, uio, ioflag, cred)
+nfs_bioread(vp, uio, ioflag, cred, cflag)
 	register struct vnode *vp;
 	register struct uio *uio;
-	int ioflag;
+	int ioflag, cflag;
 	struct ucred *cred;
 {
 	register struct nfsnode *np = VTONFS(vp);
-	register int biosize, diff, i;
+	register int biosize, diff;
 	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	struct nfsdircache *ndp = NULL;
 	daddr_t lbn, bn, rabn;
-	caddr_t baddr;
-	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin;
+	caddr_t baddr, ep, edp;
+	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin, en, enn;
+	int enough = 0;
+	struct dirent *dp, *pdp;
+	off_t curoff = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -91,12 +96,14 @@ nfs_bioread(vp, uio, ioflag, cred)
 #endif
 	if (uio->uio_resid == 0)
 		return (0);
-	if (uio->uio_offset < 0)
+	if (vp->v_type != VDIR && uio->uio_offset < 0)
 		return (EINVAL);
 	p = uio->uio_procp;
-	if ((nmp->nm_flag & (NFSMNT_NFSV3 | NFSMNT_GOTFSINFO)) == NFSMNT_NFSV3)
+	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
+	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
-	if ((uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
+	if (vp->v_type != VDIR &&
+	    (uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
 		return (EFBIG);
 	biosize = nmp->nm_rsize;
 	/*
@@ -121,7 +128,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 			if (vp->v_type != VREG) {
 				if (vp->v_type != VDIR)
 					panic("nfs: bioread, not dir");
-				nfs_invaldir(vp);
+				nfs_invaldircache(vp);
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
@@ -137,7 +144,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 				return (error);
 			if (np->n_mtime != vattr.va_mtime.tv_sec) {
 				if (vp->v_type == VDIR)
-					nfs_invaldir(vp);
+					nfs_invaldircache(vp);
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
@@ -161,14 +168,14 @@ nfs_bioread(vp, uio, ioflag, cred)
 			(np->n_flag & NQNFSNONCACHE) ||
 			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
 			if (vp->v_type == VDIR)
-			    nfs_invaldir(vp);
+				nfs_invaldircache(vp);
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 			    return (error);
 			np->n_brev = np->n_lrev;
 		    }
 		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
-		    nfs_invaldir(vp);
+		    nfs_invaldircache(vp);
 		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 		    if (error)
 			return (error);
@@ -295,44 +302,126 @@ again:
 		on = 0;
 		break;
 	    case VDIR:
-		if (uio->uio_resid < NFS_READDIRBLKSIZ)
-			return (0);
+diragain:
 		nfsstats.biocache_readdirs++;
-		lbn = uio->uio_offset / NFS_DIRBLKSIZ;
-		on = uio->uio_offset & (NFS_DIRBLKSIZ - 1);
-		bp = nfs_getcacheblk(vp, lbn, NFS_DIRBLKSIZ, p);
+		if (uio->uio_offset != 0 &&
+		    uio->uio_offset == np->n_direofoffset)
+			return (0);
+		ndp = nfs_lookdircache(vp, uio->uio_offset, 0, 0, 1);
+#ifdef DIAGNOSTIC
+		if (!ndp)
+			panic("nfs_bioread: bad dir cache");
+#endif
+		bp = nfs_getcacheblk(vp, ndp->dc_blkno, NFS_DIRBLKSIZ, p);
 		if (!bp)
 		    return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 		    bp->b_flags |= B_READ;
+		    bp->b_dcookie = ndp->dc_cookie;
 		    error = nfs_doio(bp, cred, p);
 		    if (error) {
+			/*
+			 * Yuck! The directory has been modified on the
+			 * server. Punt and let the userland code
+			 * deal with it.
+			 */
 			brelse(bp);
-			while (error == NFSERR_BAD_COOKIE) {
-			    nfs_invaldir(vp);
-			    error = nfs_vinvalbuf(vp, 0, cred, p, 1);
-			    /*
-			     * Yuck! The directory has been modified on the
-			     * server. The only way to get the block is by
-			     * reading from the beginning to get all the
-			     * offset cookies.
-			     */
-			    for (i = 0; i <= lbn && !error; i++) {
-				bp = nfs_getcacheblk(vp, i, NFS_DIRBLKSIZ, p);
-				if (!bp)
-				    return (EINTR);
-				if ((bp->b_flags & B_DONE) == 0) {
-				    bp->b_flags |= B_READ;
-				    error = nfs_doio(bp, cred, p);
-				    if (error)
-					brelse(bp);
-				}
-			    }
+			if (error == NFSERR_BAD_COOKIE) {
+			    nfs_invaldircache(vp);
+			    nfs_vinvalbuf(vp, 0, cred, p, 1);
+			    error = EINVAL;
 			}
-			if (error)
-			    return (error);
+			return (error);
 		    }
 		}
+
+		/*
+		 * Find the entry we were looking for in the block.
+		 */
+
+		en = ndp->dc_entry;
+
+		pdp = dp = (struct dirent *)bp->b_data;
+		edp = bp->b_data + bp->b_validend;
+		enn = 0;
+		while (enn < en && (caddr_t)dp < edp) {
+			pdp = dp;
+			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			enn++;
+		}
+
+		/*
+		 * If the entry number was bigger than the number of
+		 * entries in the block, or the cookie of the previous
+		 * entry doesn't match, the directory cache is
+		 * stale. Flush it and try again (i.e. go to
+		 * the server).
+		 */
+		if ((caddr_t)dp >= edp || (caddr_t)dp + dp->d_reclen > edp ||
+		    (en > 0 && NFS_GETCOOKIE(pdp) != uio->uio_offset)) {
+#ifdef DEBUG
+		    	printf("invalid cache: %p %p %p len %u off %lx %lx\n",
+				pdp, dp, edp, dp->d_reclen,
+				(unsigned long)uio->uio_offset,
+				(unsigned long)NFS_GETCOOKIE(pdp));
+#endif
+			brelse(bp);
+			nfs_invaldircache(vp);
+			nfs_vinvalbuf(vp, 0, cred, p, 0);
+			goto diragain;
+		}
+
+		on = (caddr_t)dp - bp->b_data;
+
+		/*
+		 * Cache all entries that may be exported to the
+		 * user, as they may be thrown back at us. The
+		 * NFSBIO_CACHECOOKIES flag indicates that all
+		 * entries are being 'exported', so cache them all.
+		 */
+
+		if (en == 0 && pdp == dp) {
+			dp = (struct dirent *)
+			    ((caddr_t)dp + dp->d_reclen);
+			enn++;
+		}
+
+		if (uio->uio_resid < (bp->b_validend - on)) {
+			n = uio->uio_resid;
+			enough = 1;
+		} else
+			n = bp->b_validend - on;
+
+		ep = bp->b_data + on + n;
+
+		/*
+		 * Find last complete entry to copy, caching entries
+		 * (if requested) as we go.
+		 */
+
+		while ((caddr_t)dp < ep && (caddr_t)dp + dp->d_reclen <= ep) {	
+			if (cflag & NFSBIO_CACHECOOKIES)
+				nfs_lookdircache(vp, NFS_GETCOOKIE(pdp), enn,
+				    bp->b_lblkno, 1);
+			pdp = dp;
+			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
+			enn++;
+		}
+
+		/*
+		 * If the last requested entry was not the last in the
+		 * buffer (happens if NFS_DIRFRAGSIZ < NFS_DIRBLKSIZ),	
+		 * cache the cookie of the last requested one, and
+		 * set of the offset to it.
+		 */
+
+		if ((on + n) < bp->b_validend) {
+			curoff = NFS_GETCOOKIE(pdp);
+			nfs_lookdircache(vp, curoff, enn, bp->b_lblkno, 1);
+		} else
+			curoff = bp->b_dcookie;
+
+		n = ((caddr_t)pdp + pdp->d_reclen) - (bp->b_data + on);
 
 		/*
 		 * If not eof and read aheads are enabled, start one.
@@ -340,13 +429,13 @@ again:
 		 *  directory offset cookie of the next block.)
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    (np->n_direofoffset == 0 ||
-		    (lbn + 1) * NFS_DIRBLKSIZ < np->n_direofoffset) &&
-		    !(np->n_flag & NQNFSNONCACHE) &&
-		    !incore(vp, lbn + 1)) {
-			rabp = nfs_getcacheblk(vp, lbn + 1, NFS_DIRBLKSIZ, p);
+		    np->n_direofoffset == 0 && !(np->n_flag & NQNFSNONCACHE)) {
+			ndp = nfs_lookdircache(vp, bp->b_dcookie, 0, 0, 1);
+			rabp = nfs_getcacheblk(vp, ndp->dc_blkno,
+						NFS_DIRBLKSIZ, p);
 			if (rabp) {
 			    if ((rabp->b_flags & (B_DONE | B_DELWRI)) == 0) {
+				rabp->b_dcookie = ndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp, cred)) {
 				    rabp->b_flags |= B_INVAL;
@@ -356,7 +445,6 @@ again:
 				brelse(rabp);
 			}
 		}
-		n = min(uio->uio_resid, NFS_DIRBLKSIZ - bp->b_resid - on);
 		got_buf = 1;
 		break;
 	    default:
@@ -378,6 +466,9 @@ again:
 	    case VDIR:
 		if (np->n_flag & NQNFSNONCACHE)
 			bp->b_flags |= B_INVAL;
+		uio->uio_offset = curoff;
+		if (enough)
+			n = 0;
 		break;
 	    default:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
@@ -426,7 +517,8 @@ nfs_write(v)
 		np->n_flag &= ~NWRITEERR;
 		return (np->n_error);
 	}
-	if ((nmp->nm_flag & (NFSMNT_NFSV3 | NFSMNT_GOTFSINFO)) == NFSMNT_NFSV3)
+	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
+	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
@@ -894,7 +986,7 @@ nfs_doio(bp, cr, p)
 		break;
 	    case VDIR:
 		nfsstats.readdir_bios++;
-		uiop->uio_offset = ((u_quad_t)bp->b_lblkno) * NFS_DIRBLKSIZ;
+		uiop->uio_offset = bp->b_dcookie;
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, uiop, cr);
 			if (error == NFSERR_NOTSUPP)
@@ -902,6 +994,11 @@ nfs_doio(bp, cr, p)
 		}
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
 			error = nfs_readdirrpc(vp, uiop, cr);
+		if (!error) {
+			bp->b_dcookie = uiop->uio_offset;
+			bp->b_validoff = 0;
+			bp->b_validend = bp->b_bcount - uiop->uio_resid;
+		}
 		break;
 	    default:
 		printf("nfs_doio:  type %x unexpected\n",vp->v_type);
