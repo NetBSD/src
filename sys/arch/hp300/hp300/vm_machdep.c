@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1997/03/15 23:40:25 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 1997/03/16 09:40:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@ cpu_fork(p1, p2)
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 1997/03/13 17:14:45 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.5 1997/03/16 09:40:01 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -211,12 +211,6 @@ define	ENAMETOOLONG		ENAMETOOLONG
 define	CLKSR			CLKSR
 define	CLKMSB1			CLKMSB1
 define	CLKMSB3			CLKMSB3
-
-# HP-UX trace bit
-# XXX This is used in a btst; the old genassym.c used
-# XXX	ffs(MDP_HPUXTRACE) - 1
-# XXX This translates to "2" for a value of 0x0004
-define	MDP_TRCB		2
 
 # LED stuff
 define	LED_PULSE		LED_PULSE

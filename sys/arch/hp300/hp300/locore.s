@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 1997/03/15 23:23:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.66 1997/03/16 09:40:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -780,21 +780,16 @@ Ltrap1:
 	rte
 
 /*
- * Routines for traps 1 and 2.  The meaning of the two traps depends
- * on whether we are an HPUX compatible process or a native 4.3 process.
- * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
- * as a breakpoint trap.  HPUX uses trap 1 for a breakpoint, so we have
- * to make adjustments so that trap 2 is used for sigreturn.
+ * Trap 1 - sigreturn
  */
 _trap1:
-	btst	#MDP_TRCB,mdpflag	| being traced by an HPUX process?
-	jeq	sigreturn		| no, trap1 is sigreturn
-	jra	_trace			| yes, trap1 is breakpoint
+	jra	sigreturn
 
+/*
+ * Trap 2 - trace trap
+ */
 _trap2:
-	btst	#MDP_TRCB,mdpflag	| being traced by an HPUX process?
-	jeq	_trace			| no, trap2 is breakpoint
-	jra	sigreturn		| yes, trap2 is sigreturn
+	jra	_trace
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
