@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.35 1997/05/25 16:21:45 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.36 1997/05/25 19:37:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,11 +95,21 @@ int vnddebug = 0x00;
 
 #define	vndunit(x)	DISKUNIT(x)
 
-struct vndbuf {
-	struct buf	vb_buf;
-	struct buf	*vb_obp;
+struct vndxfer {
+	struct buf	*vx_bp;		/* Pointer to parent buffer */
+	int		vx_error;
+	int		vx_pending;	/* # of pending aux buffers */
 };
 
+struct vndbuf {
+	struct buf	vb_buf;
+	struct vndxfer	*vb_xfer;
+};
+
+#define	getvndxfer()	\
+	((struct vndxfer *)malloc(sizeof(struct vndxfer), M_DEVBUF, M_WAITOK))
+#define putvndxfer(vnx)	\
+	free((caddr_t)(vnx), M_DEVBUF)
 #define	getvndbuf()	\
 	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
 #define putvndbuf(vbp)	\
@@ -256,6 +266,7 @@ vndstrategy(bp)
 	int unit = vndunit(bp->b_dev);
 	register struct vnd_softc *vnd = &vnd_softc[unit];
 	register struct vndbuf *nbp;
+	struct vndxfer *vnx;
 	register int bn, bsize, resid;
 	register caddr_t addr;
 	int sz, flags, error;
@@ -285,6 +296,13 @@ vndstrategy(bp)
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
 	flags = bp->b_flags | B_CALL;
+
+	/* Allocate a header for this transfer and link it to the buffer */
+	vnx = getvndxfer();
+	vnx->vx_error = 0;
+	vnx->vx_pending = 0;
+	vnx->vx_bp = bp;
+
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vnode *vp;
 		daddr_t nbn;
@@ -296,6 +314,27 @@ vndstrategy(bp)
 		VOP_UNLOCK(vnd->sc_vp);
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
+
+		/*
+		 * If there was an error or a hole in the file...punt.
+		 * Note that we may have to wait for any operations
+		 * that we have already fired off before releasing
+		 * the buffer.
+		 *
+		 * XXX we could deal with holes here but it would be
+		 * a hassle (in the write case).
+		 */
+		if (error) {
+			vnx->vx_error = error;
+			if (vnx->vx_pending == 0) {
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				putvndxfer(vnx);
+				biodone(bp);
+			}
+			return;
+		}
+
 #ifdef DEBUG
 		if (!dovndcluster)
 			nra = 0;
@@ -350,25 +389,9 @@ vndstrategy(bp)
 				max(0, bp->b_validend - (bp->b_bcount-resid)));
 		}
 
-		/* save a reference to the old buffer */
-		nbp->vb_obp = bp;
+		nbp->vb_xfer = vnx;
+		vnx->vx_pending++;
 
-		/*
-		 * If there was an error or a hole in the file...punt.
-		 * Note that we deal with this after the nbp allocation.
-		 * This ensures that we properly clean up any operations
-		 * that we have already fired off.
-		 *
-		 * XXX we could deal with holes here but it would be
-		 * a hassle (in the write case).
-		 */
-		if (error) {
-			nbp->vb_buf.b_error = error;
-			nbp->vb_buf.b_flags |= B_ERROR;
-			bp->b_resid -= (resid - sz);
-			biodone(&nbp->vb_buf);
-			return;
-		}
 		/*
 		 * Just sort by block number
 		 */
@@ -423,9 +446,10 @@ vndiodone(bp)
 	struct buf *bp;
 {
 	register struct vndbuf *vbp = (struct vndbuf *) bp;
-	register struct buf *pbp = vbp->vb_obp;
+	register struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
+	register struct buf *pbp = vnx->vx_bp;
 	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
-	int s;
+	int s, resid;
 
 	s = splbio();
 #ifdef DEBUG
@@ -436,25 +460,39 @@ vndiodone(bp)
 		    vbp->vb_buf.b_bcount);
 #endif
 
+	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
+	pbp->b_resid -= resid;
+	disk_unbusy(&vnd->sc_dkdev, resid);
+	vnx->vx_pending--;
+
 	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndiodone: vbp %p error %d\n", vbp,
 			    vbp->vb_buf.b_error);
 #endif
-		pbp->b_flags |= B_ERROR;
-		pbp->b_error = biowait(&vbp->vb_buf);
+		vnx->vx_error = vbp->vb_buf.b_error;
 	}
-	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
-	disk_unbusy(&vnd->sc_dkdev, vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid);
-	if (pbp->b_resid == 0) {
+
+	/*
+	 * Wrap up this transaction if it has run to completion or, in
+	 * case of an error, when all auxiliary buffers have returned.
+	 */
+	if (pbp->b_resid == 0 || (vnx->vx_error && vnx->vx_pending == 0)) {
+
+		if (vnx->vx_error != 0) {
+			pbp->b_flags |= B_ERROR;
+			pbp->b_error = vnx->vx_error;
+		}
+		putvndxfer(vnx);
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndiodone: pbp %p iodone\n", pbp);
 #endif
 		biodone(pbp);
 	}
+
 	if (vnd->sc_tab.b_actf)
 		vndstart(vnd);
 	else
