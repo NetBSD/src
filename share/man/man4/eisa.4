@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.12 2002/03/06 14:43:03 wiz Exp $
+.\"	$NetBSD: eisa.4,v 1.13 2002/09/27 22:31:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -28,13 +28,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 1997
+.Dd September 27, 2002
 .Dt EISA 4
 .Os
 .Sh NAME
 .Nm eisa
 .Nd Introduction to EISA bus machine-independent drivers and support
 .Sh SYNOPSIS
+.Cd options EISAVERBOSE
+.Pp
 Machine-dependent; depends on the bus topology and
 .Tn EISA
 bus interface of your system.  Typical

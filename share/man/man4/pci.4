@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.68 2002/08/20 00:46:23 enami Exp $
+.\"	$NetBSD: pci.4,v 1.69 2002/09/27 22:31:43 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 31, 1997
+.Dd September 27, 2002
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -39,6 +39,9 @@
 .Cd "pci* at mainbus? bus ?"
 .Cd "pci* at pchb? bus ?"
 .Cd "pci* at ppb? bus ?"
+.Pp
+.Cd options PCIVERBOSE
+.Cd options PCI_CONFIG_DUMP
 .Pp
 Other
 .Nm
