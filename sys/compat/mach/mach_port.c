@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.16 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.17 2002/12/17 22:48:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.16 2002/12/17 18:42:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.17 2002/12/17 22:48:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,7 @@ mach_sys_reply_port(p, v, retval)
 {
 	struct mach_right *mr;
 
-	mr = mach_right_get(mach_port_get(p), p, MACH_PORT_RIGHT_RECEIVE);
+	mr = mach_right_get(mach_port_get(), p, MACH_PORT_RIGHT_RECEIVE);
 	*retval = (register_t)mr;
 
 	return 0;
@@ -169,15 +169,15 @@ mach_port_allocate(args)
 
 	switch (req->req_right) {
 	case MACH_PORT_RIGHT_RECEIVE:
-		mr = mach_right_get(mach_port_get(p), p, req->req_right);
+		mr = mach_right_get(mach_port_get(), p, req->req_right);
 		break;
 
 	case MACH_PORT_RIGHT_DEAD_NAME:
-		mr = mach_right_get(mach_port_get(NULL), p, req->req_right);
+		mr = mach_right_get(mach_port_get(), p, req->req_right);
 		break;
 
 	case MACH_PORT_RIGHT_PORT_SET:
-		mr = mach_right_get(mach_port_get(NULL), p, req->req_right);
+		mr = mach_right_get(mach_port_get(), p, req->req_right);
 		break;
 
 	default:
@@ -389,14 +389,13 @@ mach_port_init(void)
 }
 
 struct mach_port *
-mach_port_get(p)
-	struct proc *p;
+mach_port_get(void)
 {
 	struct mach_port *mp;
 
 	mp = (struct mach_port *)pool_get(&mach_port_pool, M_WAITOK);
 	bzero(mp, sizeof(*mp));
-	mp->mp_recv = p;
+	mp->mp_recv = NULL;
 	mp->mp_count = 0;
 	TAILQ_INIT(&mp->mp_msglist);
 	lockinit(&mp->mp_msglock, PZERO|PCATCH, "mach_port", 0, 0);
@@ -433,7 +432,6 @@ mach_right_get(mp, p, type)
 	int type;
 {
 	struct mach_right *mr;
-	struct mach_right *omr;
 	struct mach_emuldata *med;
 
 	mr = pool_get(&mach_right_pool, M_WAITOK);
@@ -468,26 +466,12 @@ mach_right_get(mp, p, type)
 		lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
 		/* 
-		 * The process that owned the receive right on that 
-		 * port should now drop it. 
+		 * Destroy the former receive right on this port, and
+		 * register the new right.
 		 */
-		if (mr->mr_port->mp_recv != NULL) {
-			med = (struct mach_emuldata *)
-			    mr->mr_port->mp_recv->p_emuldata;
-
-			lockmgr(&mach_right_list_lock, LK_SHARED, NULL);
-			LIST_FOREACH(omr, &med->med_recv, mr_list)
-				if ((omr->mr_port == mr->mr_port) && 
-				    (omr != mr) &&
-				    (omr->mr_type == MACH_PORT_RIGHT_RECEIVE))
-					mach_right_put_shlocked(omr);
-			lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
-		}
-
-		/* 
-		 * Requester now is the receiver 
-		 */
-		mr->mr_port->mp_recv = p;
+		if (mr->mr_port->mp_recv != NULL)
+			mach_right_put(mr->mr_port->mp_recv);
+		mr->mr_port->mp_recv = mr;
 		break;
 
 	default:
