@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.4 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.4.22.1 2002/05/19 07:56:35 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <machine/adrsmap.h>
 #include <machine/autoconf.h>
@@ -405,7 +406,9 @@ void
 zscninit(cn)
 	struct consdev *cn;
 {
-	cn->cn_dev = makedev(zs_major, 0);
+	extern const struct cdevsw zstty_cdevsw;
+
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	cn->cn_pri = CN_REMOTE;
 	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
 }

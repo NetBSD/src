@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.2 2000/02/14 07:01:47 scottr Exp $	*/
+/*	$NetBSD: maccons.c,v 1.2.20.1 2002/05/19 07:56:38 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -49,10 +49,6 @@ int maccngetc __P((dev_t));
 void maccnputc __P((dev_t, int));
 void maccnpollc __P((dev_t, int));
 
-#if NWSDISPLAY > 0
-cdev_decl(wsdisplay);
-#endif
-
 static int	maccons_initted = (-1);
 
 /* From Booter via locore */
@@ -62,6 +58,7 @@ void
 maccnprobe(struct consdev *cp)
 {
 #if NWSDISPLAY > 0
+	extern const struct cdevsw wsdisplay_cdevsw;
 	int     maj, unit;
 #endif
 
@@ -70,12 +67,8 @@ maccnprobe(struct consdev *cp)
 
 #if NWSDISPLAY > 0
 	unit = 0;
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen) {
-			break;
-		}
-	}
-	if (maj != nchrdev) {
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
+	if (maj != -1) {
 		cp->cn_pri = CN_INTERNAL;
 		cp->cn_dev = makedev(maj, unit);
 	}

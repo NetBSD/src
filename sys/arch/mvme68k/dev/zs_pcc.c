@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.12 2001/05/31 18:46:09 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.12.16.1 2002/05/19 07:56:36 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -180,13 +180,15 @@ void
 zsc_pcccnprobe(cp)
 	struct consdev *cp;
 {
+	extern const struct cdevsw zstty_cdevsw;
+
 	if (machineid != MVME_147) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
 
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(zs_major, 0);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	cp->cn_pri = CN_NORMAL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.64 2001/09/05 14:03:49 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.64.14.1 2002/05/19 07:56:33 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun3 provides a 4.9152 MHz clock to the ZS chips.
@@ -831,6 +830,7 @@ cninit()
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	u_char inSource, outSink;
+	extern const struct cdevsw zstty_cdevsw;
 
 	/* Get the zs driver ready for console duty. */
 	zs_init();
@@ -871,7 +871,8 @@ cninit()
 		zs_unit = zstty_conf[zstty_unit].zs_unit;
 		channel = zstty_conf[zstty_unit].channel;
 		cn = &consdev_tty;
-		cn->cn_dev = makedev(zs_major, zstty_unit);
+		cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw),
+				     zstty_unit);
 		cn->cn_pri = CN_REMOTE;
 		break;
 

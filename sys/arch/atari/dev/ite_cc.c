@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.17 2002/03/17 19:40:35 atatat Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.17.4.1 2002/05/19 07:56:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -134,6 +134,7 @@ void		*auxp;
 	static int	did_consinit = 0;
 	static int	must_probe = 1;
 	grf_auxp_t	*grf_auxp = auxp;
+	extern const struct cdevsw view_cdevsw;
 
 	if (must_probe) {
 		/*
@@ -161,7 +162,7 @@ void		*auxp;
 		 */
 		if (did_consinit)
 			return(0);
-		if (viewopen(cfp->cf_unit, 0, 0, NULL))
+		if ((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
 			return(0);
 		cfdata_grf = cfp;
 		did_consinit = 1;
@@ -183,7 +184,7 @@ void		*auxp;
 	 * Final constraint: each grf needs a view....
 	 */
 	if((cfdata_grf == NULL) || (did_consinit > 1)) {
-	    if(viewopen(cfp->cf_unit, 0, 0, NULL))
+	    if((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
 		return(0);
 	}
 	did_consinit = 2;
@@ -205,13 +206,12 @@ void		*auxp;
 	       grf_auxp_t		grf_auxp;
 	       struct grf_softc		*gp;
 	       int			maj;
+	extern const struct cdevsw grf_cdevsw;
 
 	/*
 	 * find our major device number 
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == grfopen)
-			break;
+	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	/*
 	 * Handle exeption case: early console init
@@ -378,6 +378,7 @@ struct itewinsize	*winsz;
 	u_long			i, j;
 	int			error = 0;
 	view_t			*view;
+	extern const struct cdevsw view_cdevsw;
 
 	vs.x      = winsz->x;
 	vs.y      = winsz->y;
@@ -385,8 +386,8 @@ struct itewinsize	*winsz;
 	vs.height = winsz->height;
 	vs.depth  = winsz->depth;
 
-	error = viewioctl(ip->grf->g_viewdev, VIOCSSIZE, (caddr_t)&vs, 0,
-								NOPROC);
+	error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, VIOCSSIZE,
+				       (caddr_t)&vs, 0, NOPROC);
 	view  = viewview(ip->grf->g_viewdev);
 
 	/*
@@ -465,6 +466,8 @@ struct proc		*p;
 	struct itewinsize	*is;
 	int			error = 0;
 	view_t			*view = viewview(ip->grf->g_viewdev);
+	extern const struct cdevsw ite_cdevsw;
+	extern const struct cdevsw view_cdevsw;
 
 	switch (cmd) {
 	case ITEIOCSWINSZ:
@@ -483,7 +486,8 @@ struct proc		*p;
 			 * XXX tell tty about the change 
 			 * XXX this is messy, but works 
 			 */
-			iteioctl(ip->grf->g_itedev,TIOCSWINSZ,(caddr_t)&ws,0,p);
+			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
+					      (caddr_t)&ws, 0, p);
 		}
 		break;
 	case VIOCSCMAP:
@@ -493,7 +497,8 @@ struct proc		*p;
 		 * XXX talking these two commands don't use the proc pointer
 		 * XXX though.
 		 */
-		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, NOPROC);
+		error = (*view_cdevsw.d_ioctl)(ip->grf->g_viewdev, cmd, addr,
+					       flag, NOPROC);
 		break;
 	default:
 		error = EPASSTHROUGH;

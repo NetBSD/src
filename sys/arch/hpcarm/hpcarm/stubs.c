@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.10 2002/03/24 21:46:28 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.10.2.1 2002/05/19 07:56:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -75,17 +75,17 @@ struct pcb dumppcb;
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
@@ -115,6 +115,7 @@ extern char *memhook;		/* XXX */
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	daddr_t blkno;
 	int psize;
 	int error;
@@ -144,7 +145,10 @@ dumpsys()
 	blkno = dumplo;
 	dumpspace = (vaddr_t) memhook;
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
+		return;
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -161,7 +165,7 @@ dumpsys()
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 	                pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
-			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev,
+			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (caddr_t) dumpspace, NBPG);
 			if (error) break;
 			blkno += btodb(NBPG);

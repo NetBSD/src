@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 2002/05/02 20:26:49 rafal Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.2.1 2002/05/19 07:56:34 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 0;
 
 #define PCLK		3672000	 /* PCLK pin input clock rate */
 
@@ -707,6 +706,7 @@ void
 zscninit(cn)
 	struct consdev *cn;
 {
+	extern const struct cdevsw zstty_cdevsw;
 	char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
@@ -718,14 +718,7 @@ zscninit(cn)
 
 	cons_port = consdev[7] - '0';
 
-	/*
-	 * Initialize the zstty console device major (needed by cnopen)
-	 */
-	for (zs_major = 0; zs_major < nchrdev; zs_major++)
-		if (cdevsw[zs_major].d_open == zsopen)
-			break;
-
-	cn->cn_dev = makedev(zs_major, cons_port);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), cons_port);
 	cn->cn_pri = CN_REMOTE;
 
 	/* Mark this unit as the console */

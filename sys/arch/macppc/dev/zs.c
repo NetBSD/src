@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: zs.c,v 1.20.4.1 2002/05/19 07:56:37 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -91,7 +91,6 @@
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -1066,6 +1065,7 @@ zscnprobe(cp)
 	int chosen, pkg;
 	int unit = 0;
 	char name[16];
+	extern const struct cdevsw zstty_cdevsw;
 	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
@@ -1092,7 +1092,7 @@ zscnprobe(cp)
 	if (strcmp(name, "ch-b") == 0)
 		unit = 1;
 
-	cp->cn_dev = makedev(zs_major, unit);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), unit);
 	cp->cn_pri = CN_REMOTE;
 }
 
