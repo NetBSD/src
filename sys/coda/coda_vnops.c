@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.23 2001/01/22 12:17:35 jdolecek Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.24 2001/05/28 02:50:51 chs Exp $	*/
 
 /*
  * 
@@ -126,7 +126,7 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
 /* 1.3    { &vop_select_desc, coda_select },	select */
-    { &vop_mmap_desc, coda_vop_error },		/* mmap */
+    { &vop_mmap_desc, genfs_mmap },		/* mmap */
     { &vop_fsync_desc, coda_fsync },		/* fsync */
     { &vop_remove_desc, coda_remove },		/* remove */
     { &vop_link_desc, coda_link },		/* link */
@@ -156,8 +156,7 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_update_desc, coda_vop_error },	/* update */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
-
-    { (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+    { NULL, NULL }
 };
 
 const struct vnodeopv_desc coda_vnodeop_opv_desc = 

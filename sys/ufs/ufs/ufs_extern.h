@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.24 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.25 2001/05/28 02:50:53 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -73,7 +73,7 @@ int	ufs_link	__P((void *));
 int	ufs_lookup	__P((void *));
 int	ufs_mkdir	__P((void *));
 int	ufs_mknod	__P((void *));
-int	ufs_mmap	__P((void *));
+#define	ufs_mmap	genfs_mmap
 #define	ufs_revoke	genfs_revoke
 int	ufs_open	__P((void *));
 int	ufs_pathconf	__P((void *));

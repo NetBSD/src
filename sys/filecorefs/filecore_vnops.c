@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.12 2001/02/27 04:37:45 chs Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.13 2001/05/28 02:50:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -237,20 +237,6 @@ filecore_read(v)
 
 out:
 	return (error);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-filecore_mmap(v)
-	void *v;
-{
-
-	return (EINVAL);
 }
 
 /*

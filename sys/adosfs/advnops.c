@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.58 2001/04/12 04:12:04 chs Exp $	*/
+/*	$NetBSD: advnops.c,v 1.59 2001/05/28 02:50:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -89,7 +89,7 @@ int	adosfs_pathconf	__P((void *));
 #define adosfs_mkdir 	genfs_eopnotsupp
 #define adosfs_mknod 	genfs_eopnotsupp
 #define adosfs_revoke	genfs_revoke
-#define adosfs_mmap 	genfs_eopnotsupp
+#define adosfs_mmap 	genfs_mmap
 #define adosfs_remove 	genfs_eopnotsupp
 #define adosfs_rename 	genfs_eopnotsupp
 #define adosfs_rmdir 	genfs_eopnotsupp

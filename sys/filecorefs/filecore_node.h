@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.3 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.4 2001/05/28 02:50:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -77,25 +77,25 @@ struct filecore_node {
 /*
  * Prototypes for Filecore vnode operations
  */
-int	filecore_lookup	__P((void *));
-#define	filecore_open	genfs_nullop
-#define	filecore_close	genfs_nullop
-int	filecore_access	__P((void *));
+int	filecore_lookup		__P((void *));
+#define	filecore_open		genfs_nullop
+#define	filecore_close		genfs_nullop
+int	filecore_access		__P((void *));
 int	filecore_getattr	__P((void *));
-int	filecore_read	__P((void *));
-#define	filecore_poll	genfs_poll
-int	filecore_mmap	__P((void *));
-#define	filecore_seek	genfs_seek
+int	filecore_read		__P((void *));
+#define	filecore_poll		genfs_poll
+#define	filecore_mmap		genfs_mmap
+#define	filecore_seek		genfs_seek
 int	filecore_readdir	__P((void *));
 int	filecore_readlink	__P((void *));
 #define	filecore_abortop	genfs_abortop
 int	filecore_inactive	__P((void *));
 int	filecore_reclaim	__P((void *));
-int	filecore_link	__P((void *));
+int	filecore_link		__P((void *));
 int	filecore_symlink	__P((void *));
-int	filecore_bmap	__P((void *));
+int	filecore_bmap		__P((void *));
 int	filecore_strategy	__P((void *));
-int	filecore_print	__P((void *));
+int	filecore_print		__P((void *));
 int	filecore_pathconf	__P((void *));
 int	filecore_blkatoff	__P((void *));
 

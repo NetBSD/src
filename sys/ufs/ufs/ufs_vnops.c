@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.77 2001/03/23 12:15:34 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78 2001/05/28 02:50:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -575,27 +575,6 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 #endif /* QUOTA */
 	ip->i_flag |= IN_CHANGE;
 	return (0);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-ufs_mmap(void *v)
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode	*a_vp;
-		int		a_fflags;
-		struct ucred	*a_cred;
-		struct proc	*a_p;
-	} */ *ap = v;
-#endif
-
-	return (EINVAL);
 }
 
 int
