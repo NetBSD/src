@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.33 2001/05/29 17:37:51 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.33 2001/05/29 17:37:51 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.33 2001/05/29 17:37:51 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -257,7 +257,10 @@ CompatRunCommand (cmdp, gnp)
 	 */
 	static char	*shargv[4] = { "/bin/sh" };
 
-	shargv[1] = (errCheck ? "-ec" : "-c");
+	if (DEBUG(SHELL))
+		shargv[1] = (errCheck ? "-exc" : "-xc");
+	else
+		shargv[1] = (errCheck ? "-ec" : "-c");
 	shargv[2] = cmd;
 	shargv[3] = (char *)NULL;
 	av = shargv;
@@ -479,7 +482,7 @@ CompatMake (gnp, pgnp)
 	} else if (keepgoing) {
 	    pgn->flags &= ~REMAKE;
 	} else {
-	    printf ("\n\nStop.\n");
+	    PrintOnError("\n\nStop.");
 	    exit (1);
 	}
     } else if (gn->made == ERROR) {
@@ -574,7 +577,7 @@ Compat_Run(targs)
 	if (gn != NILGNODE) {
 	    Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
             if (gn->made == ERROR) {
-                printf("\n\nStop.\n");
+                PrintOnError("\n\nStop.");
                 exit(1);
             }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2001/06/01 20:33:37 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -310,6 +310,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 				case 'v':
 					debug |= DEBUG_VAR;
 					break;
+				case 'x':
+					debug |= DEBUG_SHELL;
+					break;
 				default:
 					(void)fprintf(stderr,
 				"%s: illegal argument to d option -- %c\n",
@@ -389,9 +392,10 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 	 * on the end of the "create" list.
 	 */
 	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
-		if (Parse_IsVar(*argv))
+		if (Parse_IsVar(*argv)) {
+			Var_Append(MAKEFLAGS, *argv, VAR_GLOBAL);
 			Parse_DoVar(*argv, VAR_CMD);
-		else {
+		} else {
 			if (!**argv)
 				Punt("illegal (null) argument.");
 			if (**argv == '-') {
@@ -612,6 +616,10 @@ main(argc, argv)
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
 	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
+#ifdef MAKE_VERSION
+	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL);
+#endif
+	Var_Set(".newline", "\n", VAR_GLOBAL); /* handy for :@ loops */
 
 	/*
 	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -979,11 +987,14 @@ ReadMakefile(p, q)
 	FILE *stream;
 	size_t len = MAXPATHLEN;
 	char *name, *path = emalloc(len);
+	int setMAKEFILE;
 
 	if (!strcmp(fname, "-")) {
 		Parse_File("(stdin)", stdin);
 		Var_Set("MAKEFILE", "", VAR_GLOBAL);
 	} else {
+		setMAKEFILE = strcmp(fname, ".depend");
+
 		/* if we've chdir'd, rebuild the path name */
 		if (curdir != objdir && *fname != '/') {
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
@@ -1011,7 +1022,9 @@ ReadMakefile(p, q)
 		 * placement of the setting here means it gets set to the last
 		 * makefile specified, as it is set by SysV make.
 		 */
-found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
+found:
+		if (setMAKEFILE)
+			Var_Set("MAKEFILE", fname, VAR_GLOBAL);
 		Parse_File(fname, stream);
 		(void)fclose(stream);
 	}
@@ -1411,6 +1424,8 @@ Fatal(va_alist)
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
 
+	PrintOnError(NULL);
+
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
 	Trace_Log(MAKEERROR, 0);
@@ -1452,6 +1467,8 @@ Punt(va_alist)
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
+
+	PrintOnError(NULL);
 
 	DieHorribly();
 }
@@ -1623,4 +1640,23 @@ PrintAddr(a, b)
 {
     printf("%lx ", (unsigned long) a);
     return b ? 0 : 0;
+}
+
+
+
+void
+PrintOnError(s)
+    char *s;
+{
+    char tmp[64];
+	
+    if (s)
+	    printf("%s", s);
+	
+    printf("\n%s: stopped in %s\n", progname, curdir);
+    strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
+	    sizeof(tmp) - 1);
+    s = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    if (s && *s)
+	printf("%s", s);
 }

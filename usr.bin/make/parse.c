@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2716,6 +2716,7 @@ Parse_File(name, stream)
 	(void)fprintf(stderr,
 	    "%s: Fatal errors encountered -- cannot continue\n",
 	    progname);
+	PrintOnError(NULL);
 	exit (1);
     }
 }
