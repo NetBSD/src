@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.631 2003/10/13 08:34:15 dyoung Exp $
+#	$NetBSD: mi,v 1.632 2003/10/13 19:57:41 bouyer Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4217,6 +4217,7 @@
 ./usr/share/man/cat9/pfil_run_hooks.0		comp-sys-catman
 ./usr/share/man/cat9/pgsignal.0		comp-sys-catman
 ./usr/share/man/cat9/physio.0		comp-sys-catman
+./usr/share/man/cat9/pmatch.0		comp-sys-catman
 ./usr/share/man/cat9/pmap.0		comp-sys-catman
 ./usr/share/man/cat9/pmc.0		comp-sys-catman
 ./usr/share/man/cat9/pmc_accumulate.0		comp-sys-catman
@@ -7669,6 +7670,7 @@
 ./usr/share/man/man9/pfil_run_hooks.9		comp-sys-man
 ./usr/share/man/man9/pgsignal.9		comp-sys-man
 ./usr/share/man/man9/physio.9		comp-sys-man
+./usr/share/man/man9/pmatch.9		comp-sys-man
 ./usr/share/man/man9/pmap.9		comp-sys-man
 ./usr/share/man/man9/pmc.9		comp-sys-man
 ./usr/share/man/man9/pmc_accumulate.9		comp-sys-man
