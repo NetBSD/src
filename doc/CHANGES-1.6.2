@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.164 2003/10/01 06:10:08 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.165 2003/10/01 15:05:55 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2103,4 +2103,15 @@ sys/netinet/if_arp.c				1.94 (via patch)
 	On arplookup() failure, nuke cloned route - otherwise outsider could
 	use massive number of bogus ARPs for DoS attack.  FreeBSD-SA-03:14.arp
 	[itojun, ticket #1482]
+
+crypto/dist/openssl/crypto/asn1/asn1_lib.c	patch
+crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
+
+	Apply patch (requested by christos in ticket #1492):
+	Fix various bugs revealed by running the NISCC test suite:
+	Stop out of bounds reads in the ASN1 code when presented with
+	invalid tags (CAN-2003-0543 and CAN-2003-0544).
+	If verify callback ignores invalid public key errors don't try to check
+	certificate signature with the NULL public key.
+	[christos, ticket #1492]
 
