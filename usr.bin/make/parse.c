@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.62 2001/01/14 20:54:16 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.63 2001/02/23 21:11:38 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -342,6 +342,8 @@ ParseVErrorInternal(va_alist)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
+	(void)fprintf(stderr, "%s: \"", progname);
+
 	if (*cfname != '/') {
 		char *cp, *dir;
 
@@ -350,13 +352,17 @@ ParseVErrorInternal(va_alist)
 		 * is the culprit.
 		 */
 		dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
-		if (*dir == '\0' ||
+		if (dir == NULL || *dir == '\0' ||
 		    (*dir == '.' && dir[1] == '\0'))
 			dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
+		if (dir == NULL)
+			dir = ".";
 		
-		(void)fprintf(stderr, "\"%s/%s\", line %d: ", dir, cfname, (int) clineno);
+		(void)fprintf(stderr, "%s/%s", dir, cfname);
 	} else
-		(void)fprintf(stderr, "\"%s\", line %d: ", cfname, (int) clineno);
+		(void)fprintf(stderr, "%s", cfname);
+
+	(void)fprintf(stderr, "\" line %d: ", (int)clineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(stderr, "warning: ");
 	(void)vfprintf(stderr, fmt, ap);
@@ -2707,7 +2713,9 @@ Parse_File(name, stream)
     Cond_End();
 
     if (fatals) {
-	fprintf (stderr, "Fatal errors encountered -- cannot continue\n");
+	(void)fprintf(stderr,
+	    "%s: Fatal errors encountered -- cannot continue\n",
+	    progname);
 	exit (1);
     }
 }
