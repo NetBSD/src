@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.8.2.1 1997/05/23 21:33:42 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.8.2.2 1997/06/06 20:26:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,10 +30,10 @@
 /*
  * 21171 Chipset registers and constants.
  *
- * Taken from XXX
+ * Taken from EC-QE18B-TE.
  */
 
-#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
