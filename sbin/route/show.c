@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.11 1999/07/17 06:51:27 itojun Exp $	*/
+/*	$NetBSD: show.c,v 1.12 1999/09/03 03:47:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.11 1999/07/17 06:51:27 itojun Exp $");
+__RCSID("$NetBSD: show.c,v 1.12 1999/09/03 03:47:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,10 @@ __RCSID("$NetBSD: show.c,v 1.11 1999/07/17 06:51:27 itojun Exp $");
 #include <err.h>
 
 #include "extern.h"
+
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * Definitions for showing gateway flags.
@@ -192,9 +196,7 @@ p_rtentry(rtm)
 		p_sockaddr(sa, 0, WID_DST + 1 + WID_GW + 1);
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, WID_DST);
-		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(long);
-		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
+		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, 0, WID_GW);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
@@ -305,10 +307,7 @@ p_sockaddr(sa, flags, width)
 	    {
 		struct sockaddr_in6 *sin = (struct sockaddr_in6 *)sa;
 
-		cp = (sin->sin6_addr.s6_addr32[0] == 0 &&
-		      sin->sin6_addr.s6_addr32[1] == 0 &&
-		      sin->sin6_addr.s6_addr32[2] == 0 &&
-		      sin->sin6_addr.s6_addr32[3] == 0) ? "default" :
+		cp = IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr) ? "default" :
 			((flags & RTF_HOST) ?
 			routename(sa) :	netname(sa));
 		/* make sure numeric address is not truncated */
@@ -327,7 +326,7 @@ p_sockaddr(sa, flags, width)
 	    {
 		u_char *s = (u_char *)sa->sa_data, *slim;
 
-		slim = sa->sa_len + (u_char *) sa;
+		slim = ROUNDUP(sa->sa_len) + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += snprintf(cp, cplim - cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {

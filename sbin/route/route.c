@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.32 1999/07/06 23:15:48 mjacob Exp $	*/
+/*	$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.32 1999/07/06 23:15:48 mjacob Exp $");
+__RCSID("$NetBSD: route.c,v 1.33 1999/09/03 03:47:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ usage(cp)
 }
 
 #define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(int32_t) - 1))) : sizeof(int32_t))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
@@ -341,7 +341,7 @@ bad:			usage(*argv);
 			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 			(void) printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
 			    routename(sa) : netname(sa));
-			sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
+			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 			(void) printf("%-20.20s ", routename(sa));
 			(void) printf("done\n");
 		}
