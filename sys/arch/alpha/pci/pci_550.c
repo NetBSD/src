@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.5 1998/06/05 19:04:51 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.6 1998/06/05 21:47:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.5 1998/06/05 19:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.6 1998/06/05 21:47:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -365,7 +365,7 @@ dec_550_intr_enable(irq)
 	u_int64_t imask;
 	int s;
 
-#if 1
+#if 0
 	printf("dec_550_intr_enable: enabling %d\n", irq);
 #endif
 
@@ -385,7 +385,7 @@ dec_550_intr_disable(irq)
 	u_int64_t imask;
 	int s;
 
-#if 1
+#if 0
 	printf("dec_550_intr_disable: disabling %d\n", irq);
 #endif
 
