@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.30 1996/03/30 22:24:42 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -492,10 +492,7 @@ sys_lkmnosys(p, v, retval)
  * Place holder for device switch slots reserved for loadable modules.
  */
 int
-lkmenodev(dev, oflags, devtype, p)
-	dev_t dev;
-	int oflags, devtype;
-	struct proc *p;
+lkmenodev()
 {
 
 	return (enodev());
@@ -699,7 +696,8 @@ _lkm_dev(lkmtp, cmd)
 				 * Search the table looking for a slot...
 				 */
 				for (i = 0; i < nblkdev; i++)
-					if (bdevsw[i].d_open == lkmenodev)
+					if (bdevsw[i].d_open == 
+					    (dev_type_open((*))) lkmenodev)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nblkdev) {
@@ -729,7 +727,8 @@ _lkm_dev(lkmtp, cmd)
 				 * Search the table looking for a slot...
 				 */
 				for (i = 0; i < nchrdev; i++)
-					if (cdevsw[i].d_open == lkmenodev)
+					if (cdevsw[i].d_open ==
+					    (dev_type_open((*))) lkmenodev)
 						break;		/* found it! */
 				/* out of allocable slots? */
 				if (i == nchrdev) {
