@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.16 2001/02/10 03:06:39 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17 2001/02/11 05:24:45 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.39 2001/02/10 02:13:13 itojun Exp $	*/
 
 /*
@@ -929,9 +929,7 @@ ip6_mforward(ip6, ifp, m)
 	struct mbuf *mm;
 	int s;
 	mifi_t mifi;
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	long time_second = time.tv_sec;
-#endif
 
 #ifdef MRT6DEBUG
 	if (mrt6debug & DEBUG_FORWARD)
