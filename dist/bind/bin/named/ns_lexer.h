@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_lexer.h,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_lexer.h,v 1.2 2000/10/08 19:41:18 is Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -32,8 +32,10 @@
 #define SYM_LOGGING	0x04
 #define SYM_SYSLOG	0x08
 
-int	parser_warning(int, const char *, ...);
-int	parser_error(int, const char *, ...);
+int	parser_warning(int, const char *, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
+int	parser_error(int, const char *, ...)
+     __attribute__((__format__(__printf__, 2, 3)));
 void	yyerror(const char *);
 void	lexer_begin_file(const char *, FILE *);
 void	lexer_end_file(void);
