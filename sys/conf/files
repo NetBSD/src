@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.7 1998/08/13 14:37:53 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.8 1998/08/21 16:34:49 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -73,6 +73,7 @@ deffs	fs_lfs.h LFS
 deffs	CD9660
 deffs	ADOSFS
 deffs	MSDOSFS
+deffs	FILECORE
 deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
@@ -378,6 +379,12 @@ file dev/rnd.c				rnd			needs-flag
 file dev/rndpool.c			rnd			needs-flag
 file dev/i2c/i2c_bus.c		i2c
 file dev/i2c/i2c_eeprom.c	i2c_eeprom
+file filecorefs/filecore_bmap.c		filecore
+file filecorefs/filecore_lookup.c	filecore
+file filecorefs/filecore_node.c		filecore
+file filecorefs/filecore_utils.c	filecore
+file filecorefs/filecore_vfsops.c	filecore
+file filecorefs/filecore_vnops.c	filecore
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.12 1998/08/13 14:36:13 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.13 1998/08/21 16:34:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.

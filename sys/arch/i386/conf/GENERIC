@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.9 1998/08/13 14:37:52 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.10 1998/08/21 16:34:48 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -22,10 +22,14 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
+options		XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\""
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#	you don't want the option below ON iff you are using the
+#	serial debugger option of the new boot strap code.
+#options	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
