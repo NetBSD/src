@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.5 2004/01/20 22:55:14 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.5 2004/01/20 22:55:14 jonathan Exp $");
 
 /*
  * IPsec controller part.
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
 #endif
 #include <netinet/in_pcb.h>
 #ifdef INET6
+#include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
 #endif
 
@@ -126,6 +127,9 @@ int ip4_esp_randpad = -1;
  */
 int	crypto_support = 0;
 
+static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
+	PCB_T *, int *);
+
 #ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet_ipsec);
 
@@ -158,15 +162,17 @@ SYSCTL_STRUCT(_net_inet_ipsec, OID_AUTO,
 	ipsecstats,	CTLFLAG_RD,	&newipsecstat,	newipsecstat, "");
 #endif /* __FreeBSD__ */
 
-
 #ifdef INET6
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_net_deflev = IPSEC_LEVEL_USE;
+struct secpolicy ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 int ip6_esp_randpad = -1;
 
+
+#ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet6_ipsec6);
 
 /* net.inet6.ipsec6 */
@@ -191,6 +197,7 @@ SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEBUG,
 SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_ESP_RANDPAD,
 	esp_randpad, CTLFLAG_RW,	&ip6_esp_randpad,	0, "");
 #endif /* INET6 */
+#endif __FreeBSD__
 
 static int ipsec4_setspidx_inpcb __P((struct mbuf *, struct inpcb *pcb));
 #ifdef INET6
@@ -279,11 +286,11 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
  */
-struct secpolicy *
+static struct secpolicy *
 ipsec_getpolicybysock(m, dir, inp, error)
 	struct mbuf *m;
 	u_int dir;
-	struct inpcb *inp;
+	PCB_T *inp;
 	int *error;
 {
 	struct inpcbpolicy *pcbsp = NULL;
@@ -297,22 +304,31 @@ ipsec_getpolicybysock(m, dir, inp, error)
 	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
 		("ipsec_getpolicybysock: invalid direction %u", dir));
 
-	af = inp->inp_socket->so_proto->pr_domain->dom_family;
+	IPSEC_ASSERT(inp->inp_socket != NULL,
+	    ("ipsec_getppolicybysock: null socket\n"));
+
+	/* XXX FIXME inpcb/in6pcb  vs socket*/
+	af = PCB_FAMILY(inp);
 	IPSEC_ASSERT(af == AF_INET || af == AF_INET6,
 		("ipsec_getpolicybysock: unexpected protocol family %u", af));
 
 	switch (af) {
-	case AF_INET:
+	case AF_INET: {
+		struct inpcb *in4p = PCB_TO_IN4PCB(inp);
 		/* set spidx in pcb */
-		*error = ipsec4_setspidx_inpcb(m, inp);
-		pcbsp = inp->inp_sp;
+		*error = ipsec4_setspidx_inpcb(m, in4p);
+		pcbsp = in4p->inp_sp;
 		break;
-#ifdef INET6
-	case AF_INET6:
+		}
+
+#if defined(INET6)
+	case AF_INET6: {
+		struct in6pcb *in6p = PCB_TO_IN6PCB(inp);
 		/* set spidx in pcb */
-		*error = ipsec6_setspidx_in6pcb(m, inp);
-		pcbsp = inp->in6p_sp;
+		*error = ipsec6_setspidx_in6pcb(m, in6p);
+		pcbsp = in6p->in6p_sp;
 		break;
+		}
 #endif
 	default:
 		*error = EPFNOSUPPORT;
@@ -447,10 +463,13 @@ ipsec4_checkpolicy(m, dir, flag, error, inp)
 	struct secpolicy *sp;
 
 	*error = 0;
-	if (inp == NULL)
+
+
+	/* XXX KAME IPv6 calls us with non-null inp but bogus inp_socket? */
+	if (inp == NULL || inp->inp_socket == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
-	else
-		sp = ipsec_getpolicybysock(m, dir, inp, error);
+	} else
+		sp = ipsec_getpolicybysock(m, dir, IN4PCB_TO_PCB(inp), error);
 	if (sp == NULL) {
 		IPSEC_ASSERT(*error != 0,
 			("ipsec4_checkpolicy: getpolicy failed w/o error"));
@@ -482,6 +501,7 @@ ipsec4_checkpolicy(m, dir, flag, error, inp)
 		KEY_FREESP(&sp);
 		sp = NULL;
 	}
+	DPRINTF(("ipsecpol: done, sp %p error %d, \n", sp, *error));
 	return sp;
 }
 
@@ -1453,7 +1473,8 @@ ipsec4_in_reject(m, inp)
 	if (inp == NULL)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND, inp, &error);
+		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
+					   IN4PCB_TO_PCB(inp), &error);
 
 	if (sp != NULL) {
 		result = ipsec_in_reject(sp, m);
@@ -1475,9 +1496,9 @@ ipsec4_in_reject(m, inp)
  * and {ah,esp}6_input for tunnel mode
  */
 int
-ipsec6_in_reject(m, inp)
+ipsec6_in_reject(m, in6p)
 	struct mbuf *m;
-	struct inpcb *inp;
+	struct in6pcb *in6p;
 {
 	struct secpolicy *sp = NULL;
 	int error;
@@ -1491,10 +1512,12 @@ ipsec6_in_reject(m, inp)
 	 * When we are called from ip_forward(), we call
 	 * ipsec_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
-	if (inp == NULL)
+	if (in6p == NULL)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND, inp, &error);
+		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
+			IN6PCB_TO_PCB(in6p),
+			&error);
 
 	if (sp != NULL) {
 		result = ipsec_in_reject(sp, m);
@@ -1594,7 +1617,8 @@ ipsec4_hdrsiz(m, dir, inp)
 	if (inp == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir, inp, &error);
+		sp = ipsec_getpolicybysock(m, dir,
+					   IN4PCB_TO_PCB(inp), &error);
 
 	if (sp != NULL) {
 		size = ipsec_hdrsiz(sp);
@@ -1632,7 +1656,9 @@ ipsec6_hdrsiz(m, dir, in6p)
 	if (in6p == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir, in6p, &error);
+		sp = ipsec_getpolicybysock(m, dir, 
+			IN6PCB_TO_PCB(in6p),
+			&error);
 
 	if (sp == NULL)
 		return 0;
