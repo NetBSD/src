@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.79 2000/06/30 17:10:20 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.80 2000/07/19 10:42:22 tsutsui Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 maxusers	64
 
@@ -42,6 +42,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM			# loadable kernel modules
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
+#options 	TCVERBOSE		# recognize "unknown" TC devices
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
