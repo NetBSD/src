@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfsmod.c,v 1.2 1994/07/24 03:13:33 mycroft Exp $
+ *	$Id: kernfsmod.c,v 1.3 1994/07/24 07:16:23 mycroft Exp $
  */
 #define printf I_HATE_ANSI
 #include <stdio.h>
@@ -52,6 +52,7 @@
  * This is the vfsops table from /sys/miscfs/kernfs/kernfs_vfsops.c
  */
 extern struct vfsops kernfs_vfsops;
+extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 /*
  * Currently, the mount system call is broken in the way it operates
@@ -66,31 +67,7 @@ extern struct vfsops kernfs_vfsops;
  * change the file system operation: for instance, in ISOFS, this
  * could be used to enable/disable Rockridge extensions.
  */
-MOD_VFS("kernfs",MOUNT_KERNFS,&kernfs_vfsops)
-
-/*
- * This function is called each time the module is loaded.   Technically,
- * we could have made this "nosys" in the "DISPATCH" in "kernfsmod()",
- * but it's a convenient place to kick a copyright out to the console.
- */
-static int
-kernfsmod_load( lkmtp, cmd)
-struct lkm_table	*lkmtp;
-int			cmd;
-{
-	if( cmd == LKM_E_LOAD) {	/* print copyright on console*/
-		printf( "\nSample Loaded file system\n");
-		printf( "Copyright (c) 1990, 1992 Jan-Simon Pendry\n");
-		printf( "All rights reserved.\n");
-		printf( "\nLoader stub and module loader is\n");
-		printf( "Copyright (c) 1993\n");
-		printf( "Terrence R. Lambert\n");
-		printf( "All rights reserved\n");
-	}
-
-	return( 0);
-}
-
+MOD_VFS("kernfs", MOUNT_KERNFS, &kernfs_vfsops)
 
 /*
  * External entry point; should generally match name of .o file.  The
@@ -105,21 +82,25 @@ int			cmd;
  * the kernel symbol name space in a future version, generally all
  * functions used in the implementation of a particular module should
  * be static unless they are expected to be seen in other modules or
- * to resolve unresolved symbols alread existing in the kernel (the
+ * to resolve unresolved symbols already existing in the kernel (the
  * second case is not likely to ever occur).
  *
  * The entry point should return 0 unless it is refusing load (in which
  * case it should return an errno from errno.h).
  */
-kernfsmod( lkmtp, cmd, ver)
-struct lkm_table	*lkmtp;	
-int			cmd;
-int			ver;
+kernfsmod(lkmtp, cmd, ver)
+	struct lkm_table *lkmtp;	
+	int cmd;
+	int ver;
 {
-	DISPATCH(lkmtp,cmd,ver,kernfsmod_load,nosys,nosys)
+
+	/*
+	 * This is normally done automatically at boot time if the
+	 * opv_desc is listed in vfs_opv_descs[] in vfs_conf.c.  For
+	 * loaded modules, we have to do it manually.
+	 */
+	vfs_opv_init_explicit(&kernfs_vnodeop_opv_desc);
+	vfs_opv_init_default(&kernfs_vnodeop_opv_desc);
+
+	DISPATCH(lkmtp, cmd, ver, nosys, nosys, nosys)
 }
-
-
-/*
- * EOF -- This file has not been truncated.
- */
