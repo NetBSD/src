@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2000/06/04 04:30:50 takemura Exp $	*/
+/*	$NetBSD: print.c,v 1.5 2000/08/29 15:10:20 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -82,7 +82,7 @@ msg_printf(UINT type, LPWSTR caption, LPWSTR lpszFmt, ...)
 	va_start(ap, lpszFmt);
 	count = wvsprintf(buffer, lpszFmt, ap);
 	va_end(ap);
-	return MessageBox(hWndMain, buffer, caption, type);
+	return MessageBox(hDlgMain, buffer, caption, type);
 }
 
 int 
@@ -96,7 +96,7 @@ stat_printf(LPWSTR lpszFmt, ...)
 	count = wvsprintf(buffer, lpszFmt, ap);
 	va_end(ap);
 	if (count > 0) {
-		SetDlgItemText(hWndMain, IDC_STATUS, buffer);
+		SetDlgItemText(hDlgMain, IDC_STATUS, buffer);
 	}
 	return count;
 }
