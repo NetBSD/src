@@ -1,4 +1,4 @@
-/*      $NetBSD: profile.h,v 1.3 1995/05/03 19:53:47 ragge Exp $ */
+/*      $NetBSD: profile.h,v 1.4 1995/05/11 16:53:15 jtc Exp $ */
 /*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -39,11 +39,11 @@
 #define MCOUNT \
 asm(".text; .globl mcount; mcount: pushl 16(fp); calls $1,__mcount; rsb");
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Note that we assume splhigh() and splx() cannot call mcount()
  * recursively.
  */
 #define MCOUNT_ENTER    s = splhigh()
 #define MCOUNT_EXIT     splx(s)
-#endif /* KERNEL */
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.h,v 1.2 1994/10/26 08:01:55 cgd Exp $	*/
+/*	$NetBSD: if_uba.h,v 1.3 1995/05/11 16:53:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -124,7 +124,7 @@ struct ifuba {
 #define	ifu_w		ifu_xmt.ifrw
 #define	ifu_xtofree	ifu_xmt.ifw_xtofree
 
-#ifdef 	KERNEL
+#ifdef 	_KERNEL
 #define	if_ubainit(ifuba, uban, hlen, nmr) \
 		if_ubaminit(&(ifuba)->ifu_info, uban, hlen, nmr, \
 			&(ifuba)->ifu_r, 1, &(ifuba)->ifu_xmt, 1)

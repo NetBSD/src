@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.8 1995/03/28 18:20:57 jtc Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.9 1995/05/11 16:53:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -167,7 +167,7 @@ struct eeprom {
 	u_char	eeUnixArea[0x100];
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 /* Value of eeConsole (for convenience of drivers). */
 extern int ee_console;
 /* Function to get other bytes. */
