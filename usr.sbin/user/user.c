@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.54 2002/07/20 08:40:21 grant Exp $ */
+/* $NetBSD: user.c,v 1.55 2002/08/06 09:03:55 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.54 2002/07/20 08:40:21 grant Exp $");
+__RCSID("$NetBSD: user.c,v 1.55 2002/08/06 09:03:55 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1066,10 +1066,12 @@ adduser(char *login_name, user_t *up)
 	(void) close(ptmpfd);
 #if PW_MKDB_ARGC == 2
 	if (pw_mkdb(login_name, 0) < 0) {
+		(void) pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 #else
 	if (pw_mkdb() < 0) {
+		(void) pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 #endif
@@ -1355,6 +1357,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	error = pw_mkdb();
 #endif
 	if (error < 0) {
+		(void) pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 
