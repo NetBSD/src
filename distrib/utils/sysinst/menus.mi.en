@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.47 2001/06/16 08:25:20 veego Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.48 2001/12/03 06:12:19 jhawk Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,7 +137,7 @@ menu fspartok, title "Partitions ok?", y=15;
 		msg_display(MSG_fspart, multname);
 		disp_cur_fspart(-1, 0);
 	};
-	option "Change a partition", sub menu editfsparts;
+	option "Change partitions", sub menu editfsparts;
 	option "Partitions are ok", exit;
 
 menu edfspart, title "Change what?", exit, y=14;
