@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.78.2.1 2000/08/11 23:07:39 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.78.2.2 2000/08/11 23:10:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,6 +766,9 @@ mi_switch(struct proc *p)
 
 	spc = &p->p_cpu->ci_schedstate;
 
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+	spinlock_switchcheck();
+#endif
 #ifdef LOCKDEBUG
 	simple_lock_switchcheck();
 #endif
