@@ -92,6 +92,10 @@ struct	grfdev {
 #define GM_GRFGETVMODE	6
 #define GM_GRFSETVMODE	7
 #define GM_GRFGETNUMVM	8
+#define GM_GRFGETBANK	9
+#define GM_GRFSETBANK	10
+#define GM_GRFGETCURBANK 11
+#define GM_GRFIOCTL	12
 
 /* minor device interpretation */
 #define GRFOVDEV	0x10	/* overlay planes */

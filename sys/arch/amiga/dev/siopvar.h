@@ -1,6 +1,9 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
+ * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Van Jacobson of Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,40 +33,62 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
+ *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
  */
 
-struct serdevice {
-	int	dummy;
+struct siop_ds {			/* Data Structure */
+	long	scsi_addr;		/* SCSI ID & sync */
+	long	idlen;			/* Identify message */
+	char	*idbuf;
+	long	cmdlen;			/* SCSI command */
+	char	*cmdbuf;
+	long	stslen;			/* Status */
+	char	*stsbuf;
+	long	msglen;			/* Message */
+	char	*msgbuf;
+	long	sdtrolen;		/* Sync Data Transfer Request out */
+	char	*sdtrobuf;
+	long	sdtrilen;		/* Sync Data Transfer Request in */
+	char	*sdtribuf;
+	struct {
+		long datalen;
+		char *databuf;
+	} chain[MAXPHYS/NBPG+1];
 };
 
-/*
- * WARNING: Serial console is assumed to be at SC9
- * and CONUNIT must be 0.
- */
-#define CONUNIT		(0)
+struct	siop_softc {
+	struct	amiga_ctlr *sc_ac;
+	struct	devqueue sc_dq;
+	struct	devqueue sc_sq;
 
-/* seems this is nowhere defined in the system headers.. do it here */
-#define SERDATRF_OVRUN	(1<<15)
-#define SERDATRF_RBF	(1<<14)
-#define SERDATRF_TBE	(1<<13)
-#define SERDATRF_TSRE	(1<<12)
-#define SERDATRF_RXD	(1<<11)
-#define SERDATRF_RSVD	(1<<10)
-#define SERDATRF_STP2	(1<<9)
-#define SERDATRF_STP1	(1<<8)
+	/* should have one for each target? */
+	u_char	sc_istat;
+	u_char	sc_dstat;
+	u_char	sc_sstat0;
+	u_char	sc_sstat1;
+	struct siop_ds sc_ds;
+	u_char	sc_flags;
+	u_char	sc_lun;
+	u_long	sc_clock_freq;
+	/* one for each target */
+	struct syncpar {
+	  u_char state;
+	  u_char period, offset;
+	} sc_sync[8];
+	u_char	sc_slave;
+	u_char	sc_scsi_addr;
+	u_char	sc_stat[2];
+	u_char	sc_msg[8];
+};
 
-#define ADKCONF_SETCLR	(1<<15)
-#define ADKCONF_UARTBRK	(1<<11)
+/* sc_flags */
+#define	SIOP_DMA	0x80	/* DMA I/O in progress */
+#define	SIOP_ALIVE	0x01	/* controller initialized */
+#define SIOP_SELECTED	0x04	/* bus is in selected state. Needed for
+				   correct abort procedure. */
 
-
-#define SERBRD(val)	((3579545/val-1) < 32768 ? 3579545/val-1 : 0)
-#define SER_VBL_PRIORITY (1)
-
-/* unit is in lower 7 bits (for now, only one unit:-))
-   dialin:    open blocks until carrier present, hangup on carrier drop
-   dialout:   carrier is ignored */
-
-#define SERUNIT(dev)   (minor(dev) & 0x7f)
-#define DIALIN(dev)    ((minor(dev) & 0x80) == 0x80)
-#define DIALOUT(dev)   ((minor(dev) & 0x80) == 0x00)
+/* sync states */
+#define SYNC_START	0	/* no sync handshake started */
+#define SYNC_SENT	1	/* we sent sync request, no answer yet */
+#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
+				   or it rejected the request and we stay async */

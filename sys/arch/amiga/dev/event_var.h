@@ -1,6 +1,4 @@
 /*
- * losely based on:
- *
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -41,15 +39,50 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
+ *	@(#)event_var.h	8.1 (Berkeley) 6/11/93
  *
- * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
- * $Id: kbdreg.h,v 1.4 1994/01/26 21:06:02 mw Exp $
+ * from: Header: event_var.h,v 1.5 92/11/26 01:11:51 torek Exp  (LBL)
+ * $Id: event_var.h,v 1.1 1994/01/26 21:05:42 mw Exp $
  */
 
-#define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */
-			/* (we only accept TR_UNTRANS_EVENT) */
-#define	KIOCGTRANS	_IOR('k', 5, int)	/* get translation mode */
-#define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
+/*
+ * Internal `Firm_event' interface for the keyboard and mouse drivers.
+ * The drivers are expected not to place events in the queue above spltty(),
+ * i.e., are expected to run off serial ports.
+ */
 
-#define	TR_UNTRANS_EVENT	3
+/* EV_QSIZE should be a power of two so that `%' is fast */
+#define	EV_QSIZE	256	/* may need tuning; this uses 2k */
+
+struct evvar {
+	u_int	ev_get;		/* get (read) index (modified synchronously) */
+	volatile u_int ev_put;	/* put (write) index (modified by interrupt) */
+	struct	selinfo ev_sel;	/* process selecting */
+	struct	proc *ev_io;	/* process that opened queue (can get SIGIO) */
+	char	ev_wanted;	/* wake up on input ready */
+	char	ev_async;	/* send SIGIO on input ready */
+	struct	firm_event *ev_q;/* circular buffer (queue) of events */
+};
+
+#define	splev()	spltty()
+
+#define	EV_WAKEUP(ev) { \
+	selwakeup(&(ev)->ev_sel); \
+	if ((ev)->ev_wanted) { \
+		(ev)->ev_wanted = 0; \
+		wakeup((caddr_t)(ev)); \
+	} \
+	if ((ev)->ev_async) \
+		psignal((ev)->ev_io, SIGIO); \
+}
+
+void	ev_init __P((struct evvar *));
+void	ev_fini __P((struct evvar *));
+int	ev_read __P((struct evvar *, struct uio *, int));
+int	ev_select __P((struct evvar *, int, struct proc *));
+
+/*
+ * PEVENT is set just above PSOCK, which is just above TTIPRI, on the
+ * theory that mouse and keyboard `user' input should be quick.
+ */
+#define	PEVENT	23

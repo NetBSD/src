@@ -1,0 +1,532 @@
+# This is a shell archive.  Save it in a file, remove anything before
+# this line, and then unpack it by entering "sh file".  Note, it may
+# create directories; files and directories will be owned by you and
+# have default permissions.
+#
+# This archive contains:
+#
+#	Makefile
+#	st.4
+#	st.0
+#
+echo x - Makefile
+sed 's/^X//' >Makefile << 'END-of-Makefile'
+X#
+X#	@(#)Makefile	5.15 (Berkeley) 5/27/92
+X#
+X
+XBINGRP= kmem
+XBINOWN= root
+XBINMODE=755
+XMAN4 = st.0
+X
+X.include <bsd.prog.mk>
+X
+X
+END-of-Makefile
+echo x - st.4
+sed 's/^X//' >st.4 << 'END-of-st.4'
+X.\" Copyright (c) 1990, 1991 The Regents of the University of California.
+X.\" All rights reserved.
+X.\"
+X.\" This code is derived from software contributed to Berkeley by
+X.\" the Systems Programming Group of the University of Utah Computer
+X.\" Science Department.
+X.\"
+X.\" Redistribution and use in source and binary forms, with or without
+X.\" modification, are permitted provided that the following conditions
+X.\" are met:
+X.\" 1. Redistributions of source code must retain the above copyright
+X.\"    notice, this list of conditions and the following disclaimer.
+X.\" 2. Redistributions in binary form must reproduce the above copyright
+X.\"    notice, this list of conditions and the following disclaimer in the
+X.\"    documentation and/or other materials provided with the distribution.
+X.\" 3. All advertising materials mentioning features or use of this software
+X.\"    must display the following acknowledgement:
+X.\"	This product includes software developed by the University of
+X.\"	California, Berkeley and its contributors.
+X.\" 4. Neither the name of the University nor the names of its contributors
+X.\"    may be used to endorse or promote products derived from this software
+X.\"    without specific prior written permission.
+X.\"
+X.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+X.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+X.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+X.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+X.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+X.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+X.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+X.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+X.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+X.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+X.\" SUCH DAMAGE.
+X.\"
+X.\"     from: @(#)st.4	5.3 (Berkeley) 7/31/91
+X.\"	$Id: st-man,v 1.1 1994/01/26 21:06:24 mw Exp $
+X.\"
+X.Dd November 27, 1993
+X.Dt ST 4 amiga
+X.Os
+X.Sh NAME
+X.Nm \&st
+X.Nd
+X.Tn CCS SCSI
+Xtape driver
+X.Sh SYNOPSIS
+X.Cd "tape st0 at scsi? slave ?"
+X.Sh DESCRIPTION
+XThe
+X.Nm \&st
+Xdriver was written especially to support the Exabyte
+X.Tn EXB-8200 8MM
+XCartridge 
+XTape Subsystem.  It has several extensions specific to the Exabyte,
+Xbut should support other tape drives as long as they follow
+Xthe
+X.Tn ANSI SCSI-I
+Xspecification.  Besides extensive use with
+Xan Exabyte 8200, the driver has been tested with an
+XArchive
+X.Tn QIC-24
+Xtape drive, an Archive
+X.Tn Viper QIC-150
+X, an Archive
+X.Tn Viper 2525,
+Xan Archive
+X.Tn Python 27216 and 25501,
+Xa Caliper
+X.Tn CP150,
+Xa HP35450A,
+Xa Wangtek 
+X.Tn 5150ES,
+Xa Wangtek 5099ES,
+Xand a Wangtek 5150ES, which is also currently the default drive type.
+XThe
+X.Nm \&st
+Xtape interface provides a standard tape drive interface 
+Xas described in
+X.Xr mtio 4
+Xwith the following exceptions:
+X.Bl -enum
+X.It
+XDensity is dependent on device type.  Current Exabyte hardware has
+Xonly one density. The
+X.Tn EXB-8500
+Xdrive, when released, will have a high
+Xdensity format of
+X.Tn 5.6GB .
+XOn an Archive
+X.Tn QIC-24
+Xdrive the driver reads both
+X.Tn QIC-11
+Xand
+X.Tn QIC-24
+Xformats
+Xbut writes only
+X.Tn QIC-24. On an Archive
+X.Tn Viper QIC-150
+Xdrive the driver reads and writes only
+X.Tn QIC-150
+Xformats, it should also be able to read
+X.Tn QIC-11
+Xand
+X.Tn QIC-24
+Xbut this has not been verified.
+XOn an Archive
+X.Tn Viper 2525
+Xthe drive can read and write
+X.Tn QIC-525, QIC-150, QIC-120
+Xand can also read
+X.Tn QIC-24
+Xtapes.
+X.It
+XOnly the ``raw'' interface is supported.
+X.El
+X.Pp
+XSpecial Exabyte Support:
+X.Pp
+XThe
+X.Dv MTIOCGET
+X.Xr ioctl 2
+Xcall on an Exabyte returns this structure:
+X.Bd -literal
+Xstruct mtget {
+X	short	mt_type;	/* type of magtape device */
+X        /* the following two registers are grossly device dependent */
+X	short	mt_dsreg;	/* sc_flags,  ``drive status'' register */
+X	short	mt_erreg;	/* high 8 bytes error status, ``error'' register */
+X	/* low  8 bytes percentage of Rewrites
+X	if writing, ECC errors if reading */
+X        /* end device-dependent registers */
+X	short	mt_resid;	/*  Mbyte until end of tape ,residual count */
+X        /* the following two are not yet implemented */
+X	daddr_t	mt_fileno;	/* file number of current position */
+X	daddr_t	mt_blkno;	/* block number of current position */
+X        /* end not yet implemented */
+X};
+X
+X
+X.Ed
+X.Pp
+XBits 3 and 4 in the minor device are used to select tape density.
+XOften when these bits are zero, as in the case of the Archive
+X.Tn Viper 2525,
+Xthe drive will automatically determine the tape type and
+Xformat when reading. When writing should these bits be zero, the drive
+Xwill write the highest valid density for a given tape type. For the Archive
+X.Tn Viper 2525
+Xusing unit 0 with density = 0x01, which is /dev/rst8 assumes the tape is a QIC-24,
+Xdensity = 0x10 which is /dev/rst16 assumes the tape is a QIC-120,
+Xdensity = 0x11 which is /dev/rst24 assumes the tape is a QIC-150,
+Xdensity = 0x00 which is /dev/rst0 will allow the use of a QIC-525 with a 6525 tape.
+XThis density mapping will vary depending on the drive
+Xtype.
+X
+XBit 5 in the minor device number is used
+Xto select long filemarks or short filemarks. A long filemark occupies
+X2.12 MBytes of space on the tape, while a short filemark occupies 488 KBytes.
+XA long filemark includes an erase gap while the short filemark does not.
+XThe tape can be positioned on the
+X.Tn BOT
+Xside of a long filemark allowing
+Xdata to be appended with a write operation.  Since the short filemark does not
+Xcontain an erase gap which would allow writing it is considered to be
+Xnon-erasable.  If either type of filemark is followed by blank tape,
+Xdata may be appended on its
+X.Tn EOT
+Xside.
+X.Pp
+XBit 6 in the minor device number selects fixed block mode with a block
+Xsize of 1K.  Variable length records are the default if bit 6 is not
+Xset.
+X.Pp
+XFor unit 0 here are the effects of minor device bits 2,3,4,5,6. For other
+Xunits add the
+X.Em unit#
+Xto each of the device names.
+X.Bl -column norewind density0 density1 filemarks fixed-block -offset indent
+X.Em 	norewind			short	fixed-block
+X.Em 		density0 density1	filemarks	mode
+Xrst0
+Xnrst0	X
+Xrst8		X
+Xnrst8	X	X
+Xrst16			X
+Xnrst16	X		X
+Xrst24		X	X
+Xnrst24	X	X	X
+Xrst32				X
+Xnrst32	X			X
+Xrst40		X		X
+Xnrst40	X	X		X
+Xrst48			X	X
+Xnrst48	X		X	X
+Xrst56		X	X	X
+Xnrst56	X	X	X	X
+Xrst64					X
+Xnrst64	X				X
+Xrst72		X			X
+Xnrst72	X	X			X
+Xrst80			X		X
+Xnrst80	X		X		X
+Xrst88		X	X		X
+Xnrst88	X	X	X		X
+Xrst96				X	X
+Xnrst96	X			X	X
+Xrst104		X		X	X
+Xnrst104	X	X		X	X
+Xrst112			X	X	X
+Xnrst112	X		X	X	X
+Xrst120		X	X	X	X
+Xnrst120	X	X	X	X	X
+X.El
+X.Sh SEE ALSO
+X.Xr mt 1 ,
+X.Xr tar 1 ,
+X.Xr mtio 4 ,
+X.Rs
+X.%T EXB-8200 8MM Cartridge Tape Subsystem Interface User Manual.
+X.Re
+X.Sh HISTORY
+XThe
+X.Nm \&st
+Xdriver was derived from the hp300 st.c tape driver in June of 1993.
+X.Sh BUGS
+XThe
+X.Tn HP
+X98268
+X.Tn SCSI
+Xcontroller hardware can not do odd length
+X.Tn DMA
+Xtransfers.  If odd length
+X.Tn DMA I/O
+Xis requested the driver will use the
+X"Program Transfer Mode" of the Fujitsu
+X.Tn MB87030
+Xchip. Read requests are
+Xnormally even length for which a
+X.Tn DMA
+Xtransfer is used. If, however, the
+Xdriver detects that a odd length read has happened (when a even length
+Xwas requested) it will issue the
+X.Dv EIO
+Xerror and the last byte of the read
+Xdata will be 0x00. Odd length read requests must match the size of the
+Xrequested data block on tape.
+X.Pp
+XThe following only applies when using long filemarks. Short filemarks can
+Xnot be overwritten.
+X.Bd -filled -offset 4n
+XDue to the helical scan and the erase mechanism, there is a writing
+Xlimitation on Exabyte drives.
+X.Dq Li tar r
+Xor
+X.Dq Li tar u
+Xwill not work
+X.Pf ( Dq Li tar c
+Xis ok).  One can only start writing at  1) beginning of tape, 2) on the
+Xend of what was last written, 3) "front" side of a regular (long) filemark.
+XSay you have a tape with 3 tar files on it, want to save the first
+Xfile, and want to begin writing over the 2nd file.
+X.Pp
+XOn a normal 1/4" or 1/2" drive you would do:
+X.Pp
+X.Li "mt fsf 1; tar cf /dev/nrst0 ..."
+X.Pp
+Xbut for an Exabyte you need to do:
+X.Pp
+X.Li "mt fsf 1; mt bsf 1; mt weof 1; tar cf /dev/nrst0 ..."
+X.Pp
+XThe regular long filemark consists of an erased zone 3.8" long
+X(needed to begin a write).  In this case, the first filemark is
+Xrewritten in place, which creates an erased zone
+X.Em after
+Xit, clearing the
+Xway to write more on the tape.  The erase head is not helical.
+X.Pp
+XOne can position a tape to the end of what was last written by reading
+Xuntil a
+X.Tn \*qBLANK CHECK\*q
+Xerror is returned.  Writing can be started at this
+Xpoint.  (This applies to both long and short filemarks.)  The tape does
+Xnot become positioned somewhere down the "erased" area as does a
+Xconventional magtape.  One can issue multiple reads at the
+X.Tn \*qBLANK CHECK\*q
+Xerror, but the Exabyte stays positioned at the beginning of the
+Xblank area, ready to accept write commands.  File skip operations do
+Xnot stop at blank tape and will run into old data or run to the end of
+Xthe tape, so you have to be careful not to
+X.Dq Li mt fsf too_many .
+X.Ed
+X.Pp
+XArchive support gets confused if asked to moved more filemarks than there are
+Xon the tape.
+X.Pp
+XThis man page needs some work.  Some of these are not really bugs,
+Xjust unavoidable consequences of the hardware.
+X.Pp
+XAmiga specific controller comments should be added and HP specific comments removed after we determine any SCSI controller specific problems.
+END-of-st.4
+echo x - st.0
+sed 's/^X//' >st.0 << 'END-of-st.0'
+XST(4)                       BSD Programmer's Manual                      ST(4)
+X
+XNNAAMMEE
+X     sstt - CCS SCSI tape driver
+X
+XSSYYNNOOPPSSIISS
+X     ttaappee sstt00 aatt ssccssii?? ssllaavvee ??
+X
+XDDEESSCCRRIIPPTTIIOONN
+X     The sstt driver was written especially to support the Exabyte EXB-8200 8MM
+X     Cartridge Tape Subsystem.  It has several extensions specific to the Ex-
+X     abyte, but should support other tape drives as long as they follow the
+X     ANSI SCSI-I specification.  Besides extensive use with an Exabyte 8200,
+X     the driver has been tested with an Archive QIC-24 tape drive, an Archive
+X     Viper QIC-150 , an Archive Viper 2525, an Archive Python 27216 and 25501,
+X     a Caliper CP150, a HP35450A, a Wangtek 5150ES, a Wangtek 5099ES, and a
+X     Wangtek 5150ES, which is also currently the default drive type.  The sstt
+X     tape interface provides a standard tape drive interface as described in
+X     mtio(4) with the following exceptions:
+X
+X     1.   Density is dependent on device type.  Current Exabyte hardware has
+X          only one density. The EXB-8500 drive, when released, will have a
+X          high density format of 5.6GB. On an Archive QIC-24 drive the driver
+X          reads both QIC-11 and QIC-24 formats but writes only QIC-24. On an
+X          Archive Viper QIC-150 drive the driver reads and writes only QIC-150
+X          formats, it should also be able to read QIC-11 and QIC-24 but this
+X          has not been verified.  On an Archive Viper 2525 the drive can read
+X          and write QIC-525, QIC-150, QIC-120 and can also read QIC-24 tapes.
+X
+X     2.   Only the ``raw'' interface is supported.
+X
+X     Special Exabyte Support:
+X
+X     The MTIOCGET ioctl(2) call on an Exabyte returns this structure:
+X
+X     struct mtget {
+X             short   mt_type;        /* type of magtape device */
+X             /* the following two registers are grossly device dependent */
+X             short   mt_dsreg;       /* sc_flags,  ``drive status'' register */
+X             short   mt_erreg;       /* high 8 bytes error status, ``error'' register */
+X             /* low  8 bytes percentage of Rewrites
+X             if writing, ECC errors if reading */
+X             /* end device-dependent registers */
+X             short   mt_resid;       /*  Mbyte until end of tape ,residual count */
+X             /* the following two are not yet implemented */
+X             daddr_t mt_fileno;      /* file number of current position */
+X             daddr_t mt_blkno;       /* block number of current position */
+X             /* end not yet implemented */
+X     };
+X
+X
+X
+X     Bits 3 and 4 in the minor device are used to select tape density.  Often
+X     when these bits are zero, as in the case of the Archive Viper 2525, the
+X     drive will automatically determine the tape type and format when reading.
+X     When writing should these bits be zero, the drive will write the highest
+X     valid density for a given tape type. For the Archive Viper 2525 using
+X     unit 0 with density = 0x01, which is /dev/rst8 assumes the tape is a
+X     QIC-24, density = 0x10 which is /dev/rst16 assumes the tape is a QIC-120,
+X     density = 0x11 which is /dev/rst24 assumes the tape is a QIC-150, density
+X     = 0x00 which is /dev/rst0 will allow the use of a QIC-525 with a 6525
+X     tape.  This density mapping will vary depending on the drive type.
+X
+X     Bit 5 in the minor device number is used to select long filemarks or
+X     short filemarks. A long filemark occupies 2.12 MBytes of space on the
+X     tape, while a short filemark occupies 488 KBytes.  A long filemark in-
+X     cludes an erase gap while the short filemark does not.  The tape can be
+X     positioned on the BOT side of a long filemark allowing data to be append-
+X     ed with a write operation.  Since the short filemark does not contain an
+X     erase gap which would allow writing it is considered to be non-erasable.
+X     If either type of filemark is followed by blank tape, data may be append-
+X     ed on its EOT side.
+X
+X     Bit 6 in the minor device number selects fixed block mode with a block
+X     size of 1K.  Variable length records are the default if bit 6 is not set.
+X
+X     For unit 0 here are the effects of minor device bits 2,3,4,5,6. For other
+X     units add the _u_n_i_t_# to each of the device names.
+X
+X                      _n_o_r_e_w_i_n_d                          _s_h_o_r_t         _f_i_x_e_d_-_b_l_o_c_k
+X                                 _d_e_n_s_i_t_y_0 _d_e_n_s_i_t_y_1      _f_i_l_e_m_a_r_k_s     _m_o_d_e
+X           rst0
+X           nrst0      X
+X           rst8                  X
+X           nrst8      X          X
+X           rst16                            X
+X           nrst16     X                     X
+X           rst24                 X          X
+X           nrst24     X          X          X
+X           rst32                                        X
+X           nrst32     X                                 X
+X           rst40                 X                      X
+X           nrst40     X          X                      X
+X           rst48                            X           X
+X           nrst48     X                     X           X
+X           rst56                 X          X           X
+X           nrst56     X          X          X           X
+X           rst64                                                      X
+X           nrst64     X                                               X
+X           rst72                 X                                    X
+X           nrst72     X          X                                    X
+X           rst80                            X                         X
+X           nrst80     X                     X                         X
+X           rst88                 X          X                         X
+X           nrst88     X          X          X                         X
+X           rst96                                        X             X
+X           nrst96     X                                 X             X
+X           rst104                X                      X             X
+X           nrst104    X          X                      X             X
+X           rst112                           X           X             X
+X           nrst112    X                     X           X             X
+X           rst120                X          X           X             X
+X           nrst120    X          X          X           X             X
+X
+XSSEEEE AALLSSOO
+X     mt(1),  tar(1),  mtio(4),
+X
+X     _E_X_B_-_8_2_0_0 _8_M_M _C_a_r_t_r_i_d_g_e _T_a_p_e _S_u_b_s_y_s_t_e_m _I_n_t_e_r_f_a_c_e _U_s_e_r _M_a_n_u_a_l_..
+X
+XHHIISSTTOORRYY
+X     The sstt driver was derived from the hp300 st.c tape driver in June of
+X     1993.
+X
+XBBUUGGSS
+X     The HP 98268 SCSI controller hardware can not do odd length DMA trans-
+X     fers.  If odd length DMA I/O is requested the driver will use the "Pro-
+X     gram Transfer Mode" of the Fujitsu MB87030 chip. Read requests are nor-
+X     mally even length for which a DMA transfer is used. If, however, the
+X     driver detects that a odd length read has happened (when a even length
+X     was requested) it will issue the EIO error and the last byte of the read
+X     data will be 0x00. Odd length read requests must match the size of the
+X     requested data block on tape.
+X
+X     The following only applies when using long filemarks. Short filemarks can
+X     not be overwritten.
+X
+X         Due to the helical scan and the erase mechanism, there is a writing
+X         limitation on Exabyte drives.  ``tar r'' or ``tar u'' will not work
+X         (``tar c'' is ok).  One can only start writing at  1) beginning of
+X         tape, 2) on the end of what was last written, 3) "front" side of a
+X         regular (long) filemark.  Say you have a tape with 3 tar files on it,
+X         want to save the first file, and want to begin writing over the 2nd
+X         file.
+X
+X         On a normal 1/4" or 1/2" drive you would do:
+X
+X         mt fsf 1; tar cf /dev/nrst0 ...
+X
+X         but for an Exabyte you need to do:
+X
+X         mt fsf 1; mt bsf 1; mt weof 1; tar cf /dev/nrst0 ...
+X
+X         The regular long filemark consists of an erased zone 3.8" long (need-
+X         ed to begin a write).  In this case, the first filemark is rewritten
+X         in place, which creates an erased zone _a_f_t_e_r it, clearing the way to
+X         write more on the tape.  The erase head is not helical.
+X
+X         One can position a tape to the end of what was last written by read-
+X         ing until a "BLANK CHECK" error is returned.  Writing can be started
+X         at this point.  (This applies to both long and short filemarks.)  The
+X         tape does not become positioned somewhere down the "erased" area as
+X         does a conventional magtape.  One can issue multiple reads at the
+X         "BLANK CHECK" error, but the Exabyte stays positioned at the begin-
+X         ning of the blank area, ready to accept write commands.  File skip
+X         operations do not stop at blank tape and will run into old data or
+X         run to the end of the tape, so you have to be careful not to ``mt fsf
+X         too_many''.
+X
+X     Archive support gets confused if asked to moved more filemarks than there
+X     are on the tape.
+X
+X     This man page needs some work.  Some of these are not really bugs, just
+X     unavoidable consequences of the hardware.
+X
+X     Amiga specific controller comments should be added and HP specific com-
+X     ments removed after we determine any SCSI controller specific problems.
+X
+XNetBSD BSD/Amiga                   November 27, 1993                             3
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+X
+END-of-st.0
+exit
+

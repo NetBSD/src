@@ -1,6 +1,9 @@
 /*
- * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
+ * Copyright (c) 1993 Christian E. Hopps
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Christian E. Hopps.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,40 +33,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
  */
 
-struct serdevice {
-	int	dummy;
+/* The view major device is a placeholder device.  It serves
+ * simply to map the semantics of a graphics dipslay to
+ * the semantics of a character block device.  In other
+ * words the graphics system as currently built does not like to be
+ * refered to by open/close/ioctl.  This device serves as
+ * a interface to graphics. */
+
+struct view_softc {
+    struct  view_size size;
+    view_t *view;
+
+    dmode_t   *mode;  
+    monitor_t *monitor;
+
+    pid_t   lock_process;
+    int     flags;
 };
 
-/*
- * WARNING: Serial console is assumed to be at SC9
- * and CONUNIT must be 0.
- */
-#define CONUNIT		(0)
+enum view_unit_flag_bits {
+    VUB_OPEN,
+    VUB_ADDED,
+    VUB_DISPLAY,
+    VUB_LAST_BIT
+};
 
-/* seems this is nowhere defined in the system headers.. do it here */
-#define SERDATRF_OVRUN	(1<<15)
-#define SERDATRF_RBF	(1<<14)
-#define SERDATRF_TBE	(1<<13)
-#define SERDATRF_TSRE	(1<<12)
-#define SERDATRF_RXD	(1<<11)
-#define SERDATRF_RSVD	(1<<10)
-#define SERDATRF_STP2	(1<<9)
-#define SERDATRF_STP1	(1<<8)
+enum view_unit_flags {
+    VUF_OPEN = 1<<VUB_OPEN,
+    VUF_ADDED = 1<<VUB_ADDED,
+    VUF_DISPLAY = 1<<VUB_DISPLAY,
+    VUF_MASK = ((1<<VUB_LAST_BIT)-1)
+};
 
-#define ADKCONF_SETCLR	(1<<15)
-#define ADKCONF_UARTBRK	(1<<11)
-
-
-#define SERBRD(val)	((3579545/val-1) < 32768 ? 3579545/val-1 : 0)
-#define SER_VBL_PRIORITY (1)
-
-/* unit is in lower 7 bits (for now, only one unit:-))
-   dialin:    open blocks until carrier present, hangup on carrier drop
-   dialout:   carrier is ignored */
-
-#define SERUNIT(dev)   (minor(dev) & 0x7f)
-#define DIALIN(dev)    ((minor(dev) & 0x80) == 0x80)
-#define DIALOUT(dev)   ((minor(dev) & 0x80) == 0x00)

@@ -42,6 +42,10 @@ struct MonDef {
 	unsigned char  FLG;
 	
 	unsigned short MW;  /* screen width in pixels */
+                            /* has to be at least a multiple of 8, */
+                            /* has to be a multiple of 64 in 256-color mode */
+                            /* if you want to use some great tricks */
+                            /* to speed up the vertical scrolling */
 	unsigned short MH;  /* screen height in pixels */
 	
 	unsigned short HBS;
@@ -56,21 +60,38 @@ struct MonDef {
 	unsigned short VT;
 	
 	unsigned short DEP;  /* Color-depth, 4 for text-mode */
-	                     /* values != 4 currently not supported */
+                             /* 8 enables 256-color graphics-mode, */
+                             /* 16 and 24bit gfx not supported yet */
 	
-	unsigned char * PAL; /* points to n*3 byte RGB-palette data */
-	                     /* n=16 for the text-mode */
+	unsigned char * PAL; /* points to 16*3 byte RGB-palette data */
+                             /* use LoadPalette() to set colors 0..255 */
+                             /* in 256-color-gfx mode */
 	
-	/* all following entries are text-specific in
-	   any way. Make sure your monitor
+	/* all following entries are font-specific in
+	   text mode. Make sure your monitor
 	   parameters are calculated for the
 	   appropriate font width and height!
 	*/
 	
-	unsigned short  TX;     /* screen-width  in characters */
-	                        /* currently, TX has to be a   */
-	                        /* multiple of 16!             */
-	unsigned short  TY;     /* screen-height in characters */
+       unsigned short  TX;     /* Text-mode (DEP=4):          */
+                               /* screen-width  in characters */
+                               /* currently, TX has to be a   */
+                               /* multiple of 16!             */
+                               
+                               /* Gfx-mode (DEP > 4)          */
+                               /* "logical" screen-width,     */
+                               /* use values > MW to allow    */
+                               /* hardware-panning            */
+                               /* has to be a multiple of 8   */
+                               
+       unsigned short  TY;     /* Text-mode:                  */
+                               /* screen-height in characters */
+       
+                               /* Gfx-mode: "logical" screen  */
+                               /* height for panning          */
+       
+       /* the following values are currently unused for gfx-mode */
+       
 	unsigned short  XY;     /* TX*TY (speeds up some calcs.) */
 	
 	unsigned short  FX;     /* font-width (valid values: 4,7-16) */
@@ -122,17 +143,23 @@ extern struct MonDef MON_1280_1024_69;
    and used by the standard monitor-definitions above */
 extern unsigned char NCRStdPalette[];
 
-/* The prototypes for C 
+/* The prototypes for C
    with a little explanation
 
 	unsigned char * InitNCR(volatile void * BoardAdress, struct MonDef * md = &MON_640_512_60);
 
    This routine initialises the Retina hardware, opens a
-   text-mode screen, and sets the cursor to position 0. 
+   text- or gfx-mode screen, depending on the the value of MonDef.DEP,
+   and sets the cursor to position 0. 
+   It takes as arguments a pointer to the hardware-base
+   address as it is denoted in the DevConf structure
+   of the AmigaDOS, and a pointer to a struct MonDef
+   which describes the screen-mode parameters.
+   
    The routine returns 0 if it was unable to open the screen,
    or an unsigned char * to the display/attribute memory
    when it succeeded. The organisation of the display memory
-   is a little strange (Intel-typically...) :
+   is a little strange in text-mode (Intel-typically...) :
    
    Byte  00    01    02    03    04     05    06   etc.
        Char0  Attr0  --    --   Char1 Attr1   --   etc.
@@ -173,34 +200,74 @@ extern unsigned char NCRStdPalette[];
       unsigned char * c = DispMem + x*4 + y*md->TX*4;
       
       *c++ = chr;
-      *c++ = attr;
+      *c   = attr;
+      
    }
+   
+   In Gfx-mode, the memory organisation is rather simple,
+   1 byte per pixel in 256-color mode, one pixel after
+   each other, line by line.
    
    Currently, InitNCR() disables the Retina VBLANK IRQ,
    but beware: When running the Retina WB-Emu under
    AmigaDOS, the VBLANK IRQ is ENABLED.
    
-
-
 	void SetCursorPos(unsigned short pos);
 
    This routine sets the hardware-cursor position 
    to the screen location pos. pos can be calculated
    as (x + y * md->TY).
-
+   Text-mode only!
 
 	void ScreenUp(void);
 
    A somewhat optimized routine that scrolls the whole
    screen up one row. A good idea to compile this piece
    of code with optimization enabled.
-
+   Text-mode only!
 
 	void ScreenDown(void);
 
    A somewhat optimized routine that scrolls the whole
    screen down one row. A good idea to compile this piece
    of code with optimization enabled.
+   Text-mode only!
+
+	unsigned char * SetSegmentPtr(unsigned long adress);
+
+   Sets the beginning of the 64k-memory segment to the
+   adress specified by the unsigned long. If adress MOD 64
+   is != 0, the return value will point to the segments
+   start in the Amiga adress space + (adress MOD 64).
+   Don't use more than (65536-64) bytes in the segment
+   you set if you aren't sure that (adress MOD 64) == 0.
+   See retina.doc from MS for further information.
+
+	void ClearScreen(unsigned char color);
+
+   Fills the whole screen with "color" - 256-color mode only!
+
+	void LoadPalette(unsigned char * pal, unsigned char firstcol, 
+	                 unsigned char colors);
+
+   Loads the palette-registers. "pal" points to an array of unsigned char 
+   triplets, for the red, green and blue component. "firstcol" determines the 
+   number of the first palette-register to load (256 available). "colors" 
+   is the number of colors you want to put in the palette registers.
+
+	void SetPalette(unsigned char colornum, unsigned char red, 
+	                unsigned char green, unsigned char blue);
+
+   Allows you to set a single color in the palette, "colornum" is the number 
+   of the palette entry (256 available), "red", "green" and "blue" are the 
+   three components.
+
+	void SetPanning(unsigned short xoff, unsigned short yoff);
+
+   Moves the logical coordinate (xoff, yoff) to the upper left corner
+   of your screen. Of course, you shouldn't specify excess values that would
+   show garbage in the lower right area of your screen... SetPanning()
+   does NOT check for boundaries.
 */
 
 /* -------------- START OF CODE -------------- */
@@ -277,7 +344,10 @@ extern unsigned char NCRStdPalette[];
 #define SEQ_ID_CHAR_MAP_SELECT	0x03
 #define SEQ_ID_MEMORY_MODE	0x04
 #define SEQ_ID_EXTENDED_ENABLE	0x05	/* down from here, all seq registers are NCR extensions */
+#define SEQ_ID_UNKNOWN1         0x06	/* it does exist so it's probably usefull */
+#define SEQ_ID_UNKNOWN2         0x07	/* it does exist so it's probably usefull */
 #define SEQ_ID_CHIP_ID		0x08
+#define SEQ_ID_UNKNOWN3         0x09	/* it does exist so it's probably usefull */
 #define SEQ_ID_CURSOR_COLOR1	0x0A
 #define SEQ_ID_CURSOR_COLOR0	0x0B
 #define SEQ_ID_CURSOR_CONTROL	0x0C
@@ -287,12 +357,15 @@ extern unsigned char NCRStdPalette[];
 #define SEQ_ID_CURSOR_Y_LOC_LO	0x10
 #define SEQ_ID_CURSOR_X_INDEX	0x11
 #define SEQ_ID_CURSOR_Y_INDEX	0x12
+#define SEQ_ID_CURSOR_STORE_HI	0x13	/* printed manual is wrong about these.. */
 #define SEQ_ID_CURSOR_STORE_LO	0x14
-#define SEQ_ID_CURSOR_STORE_HI	0x15
-#define SEQ_ID_CURSOR_STORE_MID	0x16
+#define SEQ_ID_CURSOR_ST_OFF_HI	0x15
+#define SEQ_ID_CURSOR_ST_OFF_LO	0x16
 #define SEQ_ID_CURSOR_PIXELMASK	0x17
 #define SEQ_ID_PRIM_HOST_OFF_HI	0x18
 #define SEQ_ID_PRIM_HOST_OFF_LO	0x19
+#define SEQ_ID_DISP_OFF_HI	0x1A
+#define SEQ_ID_DISP_OFF_LO	0x1B
 #define SEQ_ID_SEC_HOST_OFF_HI	0x1C
 #define SEQ_ID_SEC_HOST_OFF_LO	0x1D
 #define SEQ_ID_EXTENDED_MEM_ENA	0x1E
@@ -307,6 +380,9 @@ extern unsigned char NCRStdPalette[];
 #define SEQ_ID_MISC_FEATURE_SEL	0x27
 #define SEQ_ID_COLOR_KEY_CNTL	0x28
 #define SEQ_ID_COLOR_KEY_MATCH	0x29
+#define SEQ_ID_UNKNOWN4         0x2A
+#define SEQ_ID_UNKNOWN5         0x2B
+#define SEQ_ID_UNKNOWN6         0x2C
 #define SEQ_ID_CRC_CONTROL	0x2D
 #define SEQ_ID_CRC_DATA_LOW	0x2E
 #define SEQ_ID_CRC_DATA_HIGH	0x2F
@@ -340,6 +416,29 @@ extern unsigned char NCRStdPalette[];
 #define CRT_ID_END_VER_BLANK	0x16
 #define CRT_ID_MODE_CONTROL	0x17
 #define CRT_ID_LINE_COMPARE	0x18
+#define CRT_ID_UNKNOWN1         0x19	/* are these register really void ? */
+#define CRT_ID_UNKNOWN2         0x1A
+#define CRT_ID_UNKNOWN3         0x1B
+#define CRT_ID_UNKNOWN4         0x1C
+#define CRT_ID_UNKNOWN5         0x1D
+#define CRT_ID_UNKNOWN6         0x1E
+#define CRT_ID_UNKNOWN7         0x1F
+#define CRT_ID_UNKNOWN8         0x20
+#define CRT_ID_UNKNOWN9         0x21
+#define CRT_ID_UNKNOWN10      	0x22
+#define CRT_ID_UNKNOWN11      	0x23
+#define CRT_ID_UNKNOWN12      	0x24
+#define CRT_ID_UNKNOWN13      	0x25
+#define CRT_ID_UNKNOWN14      	0x26
+#define CRT_ID_UNKNOWN15      	0x27
+#define CRT_ID_UNKNOWN16      	0x28
+#define CRT_ID_UNKNOWN17      	0x29
+#define CRT_ID_UNKNOWN18      	0x2A
+#define CRT_ID_UNKNOWN19      	0x2B
+#define CRT_ID_UNKNOWN20      	0x2C
+#define CRT_ID_UNKNOWN21      	0x2D
+#define CRT_ID_UNKNOWN22      	0x2E
+#define CRT_ID_UNKNOWN23      	0x2F
 #define CRT_ID_EXT_HOR_TIMING1	0x30	/* down from here, all crt registers are NCR extensions */
 #define CRT_ID_EXT_START_ADDR	0x31
 #define CRT_ID_EXT_HOR_TIMING2	0x32
@@ -352,24 +451,19 @@ extern unsigned char NCRStdPalette[];
 #define VDAC_REG_DATA		0x8003	/* dito.. */
 
 #define WGfx(ba, idx, val) \
-	vgaw(ba, GCT_ADDRESS, idx);\
-	vgaw(ba, GCT_ADDRESS_W , val)\
+	do { vgaw(ba, GCT_ADDRESS, idx); vgaw(ba, GCT_ADDRESS_W , val); } while (0)
 
-#define WSeq(ba, idx, val)\
-	vgaw(ba, SEQ_ADDRESS, idx);\
-	vgaw(ba, SEQ_ADDRESS_W , val)
+#define WSeq(ba, idx, val) \
+	do { vgaw(ba, SEQ_ADDRESS, idx); vgaw(ba, SEQ_ADDRESS_W , val); } while (0)
 
-#define WCrt(ba, idx, val)\
-	vgaw(ba, CRT_ADDRESS, idx);\
-	vgaw(ba, CRT_ADDRESS_W , val)
+#define WCrt(ba, idx, val) \
+	do { vgaw(ba, CRT_ADDRESS, idx); vgaw(ba, CRT_ADDRESS_W , val); } while (0)
 
-#define WAttr(ba, idx, val)\
-	vgaw(ba, ACT_ADDRESS, idx);\
-	vgaw(ba, ACT_ADDRESS_W, val)
+#define WAttr(ba, idx, val) \
+	do { vgaw(ba, ACT_ADDRESS, idx); vgaw(ba, ACT_ADDRESS_W, val); } while (0)
 
-#define Map(m)\
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 );\
-	WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3)))\
+#define Map(m) \
+	do { WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); } while (0)
 
 static inline unsigned char RAttr(volatile void * ba, short idx) {
 	vgaw (ba, ACT_ADDRESS, idx);

@@ -13,9 +13,12 @@
  *  3-Sep-90  Alessandro Forin (af) at Carnegie-Mellon University
  *  Created.
  * $Log: kernel_font.c.distrib,v $
- * Revision 1.2  1993/10/30 23:41:27  mw
- * new tree for amiga, replacing the bogous previous one.
- * SunOS support works for a lot of executables now (static and dynamic).
+ * Revision 1.3  1994/01/26 21:06:03  mw
+ * Integrate recent changes done to the amiga branch. Includes support
+ * for the '40.
+ * Support for more scsi controllers (zeus, magnum)
+ * Support for more tapes (in st.c)
+ * New custom chip console code integrated.
  *
  * Revision 2.6  91/06/19  11:46:19  rvb
  *  File moved here from mips/PMAX since it tries to be generic;
@@ -71,6 +74,8 @@ unsigned char kernel_font_width = 8;
 unsigned char kernel_font_height = 15;
 unsigned char kernel_font_lo = 0x20;
 unsigned char kernel_font_hi = 0xbd + 0x20;
+unsigned char kernel_font_baseline = 11;
+short         kernel_font_boldsmear = 1;
 
 
 unsigned char kernel_cursor[] = {
