@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.1.1.1 2000/04/22 07:11:33 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.2 2000/04/24 05:38:51 thorpej Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -226,10 +226,11 @@ void discover_interfaces (state)
 
 		if (ifp -> ifr_addr.sa_family == AF_INET) {
 			struct iaddr addr;
+			void *ptr;
 
 			/* Get a pointer to the address... */
-			memcpy (&foo, &ifp -> ifr_addr,
-				sizeof ifp -> ifr_addr);
+			ptr = &ifp -> ifr_addr;
+			memcpy (&foo, ptr, sizeof ifp -> ifr_addr);
 
 			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl (INADDR_LOOPBACK) &&
