@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ffs_inode.c	8.5 (Berkeley) 12/30/93
- *	$Id: ffs_inode.c,v 1.2 1994/06/13 20:38:42 pk Exp $
+ *	$Id: ffs_inode.c,v 1.3 1994/06/13 20:49:56 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -163,7 +163,7 @@ ffs_truncate(ap)
 	off_t osize;
 
 	if (length < 0)
-		return EINVAL;
+		return (EINVAL);
 	oip = VTOI(ovp);
 	tv = time;
 	if (ovp->v_type == VLNK &&
