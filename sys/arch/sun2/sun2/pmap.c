@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2001/03/28 14:15:11 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2001/04/06 14:52:19 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
 #include <machine/dvma.h>
 #include <machine/idprom.h>
 #include <machine/kcore.h>
-#include <machine/mon.h>
+#include <machine/promlib.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
@@ -117,7 +117,6 @@
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/fc.h>
 #include <sun2/sun2/machdep.h>
-#include <sun2/sun2/obmem.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -723,12 +722,12 @@ pmeg_reserve(sme)
 	pmegp = &pmeg_array[sme];
 
 	if (pmegp->pmeg_reserved) {
-		mon_printf("pmeg_reserve: already reserved\n");
-		sunmon_abort();
+		prom_printf("pmeg_reserve: already reserved\n");
+		prom_abort();
 	}
 	if (pmegp->pmeg_owner) {
-		mon_printf("pmeg_reserve: already owned\n");
-		sunmon_abort();
+		prom_printf("pmeg_reserve: already owned\n");
+		prom_abort();
 	}
 
 	/* Owned by kernel, but not really usable... */
@@ -753,7 +752,7 @@ pmeg_mon_init(sva, eva, keep)
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_SEGMAP)
-		mon_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
+		prom_printf("pmeg_mon_init(0x%x, 0x%x, %d)\n",
 		           sva, eva, keep);
 #endif
 
@@ -772,7 +771,7 @@ pmeg_mon_init(sva, eva, keep)
 			}
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_SEGMAP)
-				mon_printf(" sva=0x%x seg=0x%x valid=%d\n",
+				prom_printf(" sva=0x%x seg=0x%x valid=%d\n",
 				           sva, sme, valid);
 #endif
 			if (keep && valid)
@@ -1588,13 +1587,11 @@ void
 pmap_bootstrap(nextva)
 	vm_offset_t nextva;
 {
-	struct sunromvec *rvec;
 	vm_offset_t va, eva;
 	int i, pte, sme;
 	extern char etext[];
 
 	nextva = m68k_round_page(nextva);
-	rvec = romVectorPtr;
 
 	/* Steal some special-purpose, already mapped pages? */
 
@@ -1610,7 +1607,7 @@ pmap_bootstrap(nextva)
 	 * Physical memory at zero was remapped to KERNBASE.
 	 */
 	avail_start = nextva - KERNBASE;
-	avail_end = *rvec->memorySize;
+	avail_end = prom_memsize();
 	avail_end = m68k_trunc_page(avail_end);
 
 	/*
@@ -1651,8 +1648,8 @@ pmap_bootstrap(nextva)
 	for ( ; va < virtual_avail; va += NBSG) {
 		sme = get_segmap(va);
 		if (sme == SEGINV) {
-			mon_printf("kernel text/data/bss not mapped\n");
-			sunmon_abort();
+			prom_printf("kernel text/data/bss not mapped\n");
+			prom_abort();
 		}
 		pmeg_reserve(sme);
 	}
@@ -1677,9 +1674,6 @@ pmap_bootstrap(nextva)
 	 * DO NOT kill the last one! (owned by the PROM!)
 	 * VA range: [0x00F00000 .. 0x00FE0000]
 	 */
-	/* XXX fredette - DVMA_MAP_SIZE is currently a constant 
-	   for the 2/120, this should use cpu_machine_id to
-	   determine the real extent. */
 	pmeg_mon_init(SUN2_MONEND, SUN2_MONEND + DVMA_MAP_SIZE, FALSE);
 
 	/*
@@ -1753,7 +1747,7 @@ pmap_bootstrap(nextva)
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
+			prom_printf("invalid page at 0x%x\n", va);
 		}
 		pte &= ~(PG_WRITE|PG_NC);
 		/* Kernel text is read-only */
@@ -1765,7 +1759,7 @@ pmap_bootstrap(nextva)
 	while (va < nextva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
-			mon_printf("invalid page at 0x%x\n", va);
+			prom_printf("invalid page at 0x%x\n", va);
 		}
 		pte &= ~(PG_NC);
 		pte |= (PG_SYSTEM | PG_WRITE);
@@ -1779,8 +1773,8 @@ pmap_bootstrap(nextva)
 #ifdef	DIAGNOSTIC
 	/* Near the beginning of locore.s we set context zero. */
 	if (get_context() != 0) {
-		mon_printf("pmap_bootstrap: not in context zero?\n");
-		sunmon_abort();
+		prom_printf("pmap_bootstrap: not in context zero?\n");
+		prom_abort();
 	}
 #endif	/* DIAGNOSTIC */
 	for (va = 0; va < (vm_offset_t) (NBSG * NSEGMAP); va += NBSG) {
@@ -1800,8 +1794,8 @@ pmap_bootstrap(nextva)
 	virtual_avail += NBSG;
 #ifdef	DIAGNOSTIC
 	if (temp_seg_va & SEGOFSET) {
-		mon_printf("pmap_bootstrap: temp_seg_va\n");
-		sunmon_abort();
+		prom_printf("pmap_bootstrap: temp_seg_va\n");
+		prom_abort();
 	}
 #endif
 
@@ -2115,7 +2109,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	/*
 	 * treatment varies significantly:
-	 *  kernel ptes are in all contexts, and are always in the mmu
+	 *  kernel ptes are always in the mmu
 	 *  user ptes may not necessarily? be in the mmu.  pmap may not
 	 *   be in the mmu either.
 	 *
@@ -2781,7 +2775,6 @@ _pmap_switch(pmap)
 #endif
 	}
 	set_context(pmap->pm_ctxnum);
-	ICIA();
 }
 
 /*
@@ -2886,6 +2879,34 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vm_size_t	len;
 	vm_offset_t	src_addr;
 {
+}
+
+/*
+ * This extracts the PMEG associated with the given map/virtual
+ * address pair.  Returns SEGINV if VA not valid.
+ */
+int
+_pmap_extract_pmeg(pmap, va)
+		pmap_t	pmap;
+		vm_offset_t va;
+{
+		int s, saved_ctx, segnum, sme;
+
+		s = splvm();
+
+		if (pmap == kernel_pmap) {
+				saved_ctx = get_context();
+				set_context(KERNEL_CONTEXT);
+				sme = get_segmap(va);
+				set_context(saved_ctx);
+		} else {
+				/* This is rare, so do it the easy way. */
+				segnum = VA_SEGNUM(va);
+				sme = pmap->pm_segmap[segnum];
+		}
+		
+		splx(s);
+		return (sme);
 }
 
 /*
@@ -3922,7 +3943,6 @@ pmap_procwr(p, va, len)
 	vaddr_t		va;
 	size_t		len;
 {
-	(void)cachectl1(0x80000004, va, len, p);
 }
 
 
