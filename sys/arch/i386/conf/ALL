@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.45 1994/04/13 07:53:02 deraadt Exp $
+#	$Id: ALL,v 1.46 1994/04/15 00:25:12 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -97,7 +97,10 @@ options		DDB
 # Allows user to create an i386 LDT (Used by Wine to run Windows programs)
 options		"USER_LDT"
 
+# NetBSD 0.8 and 0.9 compatibility
 options		"COMPAT_NOMID"
+options		"COMPAT_09"
+
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
