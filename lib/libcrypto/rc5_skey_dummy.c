@@ -63,6 +63,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __weak_alias
+#define RC5_32_set_key	_RC5_32_set_key
+
+__weak_alias(RC5_32_set_key,_RC5_32_set_key)
+#endif
+
 __warn_references(RC5_32_set_key,
     "RC5 is a patented algorithm; link against libcrypto_rc5.a")
 
