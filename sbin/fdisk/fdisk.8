@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.13 1998/02/06 06:03:41 perry Exp $
+.\"	$NetBSD: fdisk.8,v 1.14 1998/02/19 15:15:29 drochner Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -50,16 +50,16 @@ An example follows:
 		
 	Information from DOS bootblock is:
 	The data for partition 0 is:
-	0: sysid 165 (NetBSD)
+	0: sysid 169 (NetBSD)
     	    start 495, size 380160 (185 MB), flag 0
 		beg: cylinder    1, head   0, sector  1
 		end: cylinder  768, head  14, sector 33
-	1: sysid 164 (unknown)
+	1: sysid 164 (reserved)
     	    start 378180, size 2475 (1 MB), flag 0
 		beg: cylinder  764, head   0, sector  1
 		end: cylinder  768, head  14, sector 33
 	2: <UNUSED>
-	3: sysid 99 (ISC UNIX, other System V/386, GNU HURD or Mach)
+	3: sysid 99 (GNU HURD or Mach or Sys V/386 (such as ISC UNIX))
     	    start 380656, size 224234 (109 MB), flag 80
 		beg: cylinder  769, head   0, sector  2
 		end: cylinder  197, head  14, sector 33
@@ -74,7 +74,7 @@ The various fields in each partition are:
 .It Em "sysid"
 is used to label the partition.
 .Nx
-reserves the magic number 165 decimal (A5 in hex).
+reserves the magic number 169 decimal (A9 in hex).
 .It Xo
 .Em start ,
 .Em size
