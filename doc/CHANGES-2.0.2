@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.5 2005/03/16 13:09:43 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.6 2005/03/16 15:11:03 he Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -25,7 +25,7 @@ sys/nfs/nfs_subs.c				1.146
 	are used for other purposes in the case of !VREG.
 	[yamt, ticket #1148]
 
-sys/dist/ipf/netinet/ip_state.c			patch
+sys/netinet/ip_state.c				patch
 
 	Disable the oow test because it is broken. It is killing valid packets.
 	[martti, ticket #1110]
