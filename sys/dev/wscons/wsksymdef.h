@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.29 2000/03/19 06:24:52 tsarna Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.30 2000/03/19 06:31:17 tsarna Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
-#define KB_SWAPCTRLCAPS		0x0008	/* Swap Control and Caps-Lock */
+#define KB_SWAPCTRLCAPS		0x0008	/* Swap Left-Control and Caps-Lock */
 #define KB_DVORAK		0x0010	/* Dvorak layout */
 #define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
 
