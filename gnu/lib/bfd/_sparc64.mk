@@ -1,9 +1,9 @@
-#	$NetBSD: _sparc64.mk,v 1.1 1998/11/23 09:23:30 mrg Exp $
+#	$NetBSD: _sparc64.mk,v 1.2 1999/02/02 22:16:58 tv Exp $
 
 BFD_ARCH_SRCS=	cpu-sparc.c \
 		elf32-sparc.c elf32.c \
 		elf64-sparc.c elf64.c \
-		elf.c elflink.c \
+		elf.c elflink.c dwarf2.c \
 		sparc-dis.c sparc-opc.c
 
 BFD_ARCH_DEFS=	-DARCH_sparc \

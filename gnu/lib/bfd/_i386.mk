@@ -1,9 +1,9 @@
-#	$NetBSD: _i386.mk,v 1.5 1998/12/28 20:39:54 tv Exp $
+#	$NetBSD: _i386.mk,v 1.6 1999/02/02 22:16:57 tv Exp $
 
 BFD_ARCH_SRCS=	cpu-i386.c \
 		i386bsd.c i386freebsd.c i386netbsd.c aout32.c \
 		coff-i386.c cofflink.c \
-		elf32-i386.c elf32.c elf.c elflink.c \
+		elf32-i386.c elf32.c elf.c elflink.c dwarf2.c \
 		i386-dis.c
 
 BFD_ARCH_DEFS=	-DARCH_i386 \
