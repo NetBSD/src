@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.45 2000/05/08 18:48:30 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.46 2000/05/20 13:38:59 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,7 @@
 
  /* All bugs are subject to removal without further notice */
 		
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -48,6 +49,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/nexus.h>
+#include <machine/rpb.h>
 
 #include "opt_vax780.h"
 #include "opt_vax750.h"
@@ -63,11 +65,11 @@
 #include "opt_vax660.h"
 #include "opt_vax670.h"
 
-void	start(void);
+void	start(struct rpb *);
 void	main(void);
 
 extern	paddr_t avail_end;
-paddr_t	esym;
+paddr_t esym;
 u_int	proc0paddr;
 
 /*
@@ -97,7 +99,7 @@ extern struct cpu_dep ka680_calls;
  * management is disabled, and no interrupt system is active.
  */
 void
-start()
+start(struct rpb *prpb)
 {
 	extern void *scratch;
 	struct pte *pt;
@@ -237,18 +239,32 @@ start()
 		asm("halt");
 	}
 
-        /*
-         * Machines older than MicroVAX II have their boot blocks
-         * loaded directly or the boot program loaded from console
-         * media, so we need to figure out their memory size.
-         * This is not easily done on MicroVAXen, so we get it from
-         * VMB instead.
-         */
-        if (avail_end == 0)
-                while (badaddr((caddr_t)avail_end, 4) == 0)
-                        avail_end += VAX_NBPG * 128;
+	/*
+	 * Machines older than MicroVAX II have their boot blocks
+	 * loaded directly or the boot program loaded from console
+	 * media, so we need to figure out their memory size.
+	 * This is not easily done on MicroVAXen, so we get it from
+	 * VMB instead.
+	 *
+	 * In post-1.4 a RPB is always provided from the boot blocks.
+	 */
+#if defined(COMPAT_14)
+	if (prpb == 0) {
+		bzero((caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+		prpb = (struct rpb *)(proc0paddr + REDZONEADDR);
+		prpb->pfncnt = avail_end >> VAX_PGSHIFT;
+		prpb->rpb_base = (void *)-1;	/* RPB is fake */
+	} else
+#endif
+	bcopy(prpb, (caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+	if (prpb->pfncnt)
+		avail_end = prpb->pfncnt << VAX_PGSHIFT;
+	else
+		while (badaddr((caddr_t)avail_end, 4) == 0)
+			avail_end += VAX_NBPG * 128;
+	boothowto = prpb->rpb_bootr5;
 
-        avail_end = TRUNC_PAGE(avail_end); /* be sure */
+	avail_end = TRUNC_PAGE(avail_end); /* be sure */
 
 	proc0.p_addr = (void *)proc0paddr; /* XXX */
 
@@ -259,7 +275,7 @@ start()
 
 	/* Now running virtual. set red zone for proc0 */
 	pt = kvtopte((u_int)proc0.p_addr + REDZONEADDR);
-        pt->pg_v = 0;
+	pt->pg_v = 0;
 
 	((struct pcb *)proc0paddr)->framep = scratch;
 

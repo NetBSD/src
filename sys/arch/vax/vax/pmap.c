@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2000/04/16 09:42:22 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.79 2000/05/20 13:38:58 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,6 +58,7 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/rpb.h>
 
 /* QDSS console mapping hack */
 #include "qd.h"
@@ -228,7 +229,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	bzero(0, VAX_NBPG >> 1);
+	bcopy((caddr_t)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -275,6 +276,8 @@ pmap_bootstrap()
 	    avail_start >> PGSHIFT, avail_end >> PGSHIFT,
 	    VM_FREELIST_DEFAULT);
 	mtpr(sysptsize, PR_SLR);
+	rpb.sbr = mfpr(PR_SBR);
+	rpb.slr = mfpr(PR_SLR);
 	mtpr(1, PR_MAPEN);
 }
 

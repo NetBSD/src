@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.37 2000/05/09 18:59:58 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.38 2000/05/20 13:38:58 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,7 @@
 #include "assym.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_ibcs2.h"
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_syscall.h>
@@ -52,10 +53,7 @@
  * First entry routine from boot. This should be in a file called locore.
  */
 ASENTRY(start, 0)
-	movl	r11,_boothowto			# Howto boot (single etc...)
-	movl	r10,_bootdev			# From where? (see rpb.h)
 	bisl3	$0x80000000,r9,_esym		# End of loaded code
-	movl	r8,_avail_end			# Usable memory (from VMB)
 	pushl	$0x1f0000			# Push a nice PSL
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
@@ -82,7 +80,19 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
 	clrl	IFTRAP(r0)
 	mtpr	$0,$PR_SCBB
 
-	calls	$0,_start			# Jump away.
+# Copy the RPB to its new position
+#if defined(COMPAT_14)
+	tstl	(ap)				# Any arguments?
+	bneq	1f				# Yes, called from new boot
+	movl	r11,_boothowto			# Howto boot (single etc...)
+#	movl	r10,_bootdev			# uninteresting, will complain
+	movl	r8,_avail_end			# Usable memory (from VMB)
+	clrl	-(sp)				# Have no RPB
+	brb	2f
+#endif
+
+1:	pushl	4(ap)				# Address of old rpb
+2:	calls	$1,_start			# Jump away.
 	/* NOTREACHED */
 
 
@@ -465,7 +475,6 @@ ENTRY(fuswintr,0)
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
 pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
-_bootdev:	.long 0; .globl _bootdev
 
 /*
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
