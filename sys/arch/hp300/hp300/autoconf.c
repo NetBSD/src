@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1995/09/02 04:54:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1995/09/02 23:36:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -970,7 +970,7 @@ setroot()
 	dev_t temp, orootdev;
 	struct swdevt *swp;
 
-	if (boothowto & RB_DFLTROOT || (bootdev == NODEV) ||
+	if (boothowto & RB_DFLTROOT || (bootdev == 0) ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 	majdev = B_TYPE(bootdev);
