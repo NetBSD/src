@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.6 1994/04/19 13:28:29 pk Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.7 1994/05/05 10:06:32 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,7 +81,7 @@ main(argc, argv)
 	openlog("mail.local", LOG_PERROR, LOG_MAIL);
 
 	from = NULL;
-	while ((ch = getopt(argc, argv, "df:r:")) != EOF)
+	while ((ch = getopt(argc, argv, "ldf:r:")) != EOF)
 		switch(ch) {
 		case 'd':		/* backward compatible */
 			break;
