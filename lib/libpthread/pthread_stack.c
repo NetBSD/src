@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.4 2003/01/19 16:03:50 christos Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.5 2003/01/19 20:58:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,64 +148,4 @@ pthread__stackid_setup(void *base, int size)
 #endif
 
 	return t;
-}
-
-int
-pthread_attr_getguardsize(const pthread_attr_t *attr, size_t *size)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC)
-	    || size == NULL)
-		return EINVAL;
-	*size = (size_t)sysconf(_SC_PAGESIZE);
-	return 0;
-}
-
-int
-pthread_attr_setguardsize(pthread_attr_t *attr, size_t size)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC)
-	    || size < (size_t)sysconf(_SC_PAGESIZE))
-		return EINVAL;
-	/*XXX*/
-	return 0;
-}
-
-int
-pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC)
-	    || size == NULL)
-		return EINVAL;
-	*size = PT_STACKSIZE - 2 * (size_t)sysconf(_SC_PAGESIZE);
-	return 0;
-}
-
-int
-pthread_attr_setstacksize(pthread_attr_t *attr, size_t size)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC)
-	    || size < PT_STACKSIZE - 2 * (size_t)sysconf(_SC_PAGESIZE))
-		return EINVAL;
-	/*XXX*/
-	return 0;
-}
-
-int
-/*ARGSUSED*/
-pthread_attr_getstackaddr(const pthread_attr_t *attr, void **base)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-	/*XXX*/
-	return 0;
-}
-
-int
-/*ARGSUSED*/
-pthread_attr_setstackaddr(pthread_attr_t *attr, void *base)
-{
-	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-	/*XXX*/
-	return 0;
 }
