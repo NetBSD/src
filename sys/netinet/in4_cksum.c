@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.5 2001/05/19 00:13:53 thorpej Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.6 2001/05/19 14:20:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -109,7 +109,7 @@ in4_cksum(m, nxt, off, len)
 		u_int32_t l;
 	} l_util;
 
-	if (nxt == 0) {
+	if (nxt != 0) {
 		/* pseudo header */
 		if (off < sizeof(struct ipovly))
 			panic("in4_cksum: offset too short");
