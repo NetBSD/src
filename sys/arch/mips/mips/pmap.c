@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1999/03/26 00:15:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 1999/03/24 05:51:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 1999/03/26 00:15:05 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -265,7 +265,7 @@ pmap_bootstrap()
 	 * Allocate a PTE table for the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	Sysmapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
+	Sysmapsize = (VM_KMEM_SIZE + VM_PHYS_SIZE +
 		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG;
 	/*
 	 * Allocate PTE space space for u-areas (XXX)
