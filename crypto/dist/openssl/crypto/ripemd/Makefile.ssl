@@ -22,7 +22,7 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST=rmdtest.c
-APPS=rmd160.c
+APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=rmd_dgst.c rmd_one.c
@@ -42,7 +42,8 @@ all:    lib
 
 lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB)
+	@echo You may get an error following this line.  Please ignore.
+	- $(RANLIB) $(LIB)
 	@touch lib
 
 # elf

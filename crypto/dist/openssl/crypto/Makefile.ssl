@@ -27,19 +27,19 @@ LIBS=
 
 SDIRS=	md2 md5 sha mdc2 hmac ripemd \
 	des rc2 rc4 rc5 idea bf cast \
-	bn rsa dsa dh \
+	bn rsa dsa dh dso \
 	buffer bio stack lhash rand err objects \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp
 
 GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
-LIBSRC=	cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c
-LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o
+LIBSRC=	cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c
+LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o
 
 SRC= $(LIBSRC)
 
-EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h ebcdic.h
+EXHEADER= crypto.h tmdiff.h opensslv.h opensslconf.h ebcdic.h symhacks.h
 HEADER=	cryptlib.h buildinf.h md32_common.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
@@ -90,7 +90,8 @@ links:
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB)
+	@echo You may get an error following this line.  Please ignore.
+	- $(RANLIB) $(LIB)
 	@touch lib
 
 libs:
@@ -155,41 +156,48 @@ dclean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cpt_err.o: ../include/openssl/crypto.h ../include/openssl/err.h
+cpt_err.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+cpt_err.o: ../include/openssl/err.h ../include/openssl/lhash.h
 cpt_err.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
-cpt_err.o: ../include/openssl/stack.h
+cpt_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 cryptlib.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 cryptlib.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 cryptlib.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-cryptlib.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-cryptlib.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-cryptlib.o: cryptlib.h
+cryptlib.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+cryptlib.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
+cryptlib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 cversion.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 cversion.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 cversion.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-cversion.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-cversion.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-cversion.o: buildinf.h cryptlib.h
+cversion.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+cversion.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
+cversion.o: ../include/openssl/stack.h ../include/openssl/symhacks.h buildinf.h
+cversion.o: cryptlib.h
 ex_data.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 ex_data.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 ex_data.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 ex_data.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
-ex_data.o: ../include/openssl/stack.h cryptlib.h
+ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 mem.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-mem.o: ../include/openssl/safestack.h ../include/openssl/stack.h cryptlib.h
+mem.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+mem.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
+mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem_dbg.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 mem_dbg.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 mem_dbg.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 mem_dbg.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 mem_dbg.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
-mem_dbg.o: ../include/openssl/stack.h cryptlib.h
+mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 tmdiff.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 tmdiff.o: ../include/openssl/crypto.h ../include/openssl/e_os.h
 tmdiff.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-tmdiff.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-tmdiff.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+tmdiff.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+tmdiff.o: ../include/openssl/opensslv.h ../include/openssl/safestack.h
+tmdiff.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 tmdiff.o: ../include/openssl/tmdiff.h cryptlib.h
+uid.o: ../include/openssl/crypto.h ../include/openssl/opensslv.h
+uid.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+uid.o: ../include/openssl/symhacks.h
