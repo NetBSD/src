@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.59 2003/02/25 21:25:41 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.60 2003/03/17 09:05:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -294,8 +294,8 @@ struct buf *getnewbuf __P((int slpflag, int slptimeo));
 struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *bp));
-int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+int	physio __P((void (*)(struct buf *), struct buf *bp, dev_t dev,
+		    int flags, void (*)(struct buf *), struct uio *uio));
 
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
