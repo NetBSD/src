@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.59 2005/02/10 22:52:31 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.60 2005/02/14 16:16:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.59 2005/02/10 22:52:31 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.60 2005/02/14 16:16:24 agc Exp $");
 #endif
 #endif
 
@@ -195,7 +195,7 @@ pkg_do(char *pkg)
 			}
 		}
 		if (Flags & SHOW_COMMENT) {
-			show_file("Comment:\n", COMMENT_FNAME);
+			show_file(pkg, "Comment:\n", COMMENT_FNAME);
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
@@ -204,28 +204,28 @@ pkg_do(char *pkg)
 			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
-			show_file("Required by:\n", REQUIRED_BY_FNAME);
+			show_file(pkg, "Required by:\n", REQUIRED_BY_FNAME);
 		}
 		if (Flags & SHOW_DESC) {
-			show_file("Description:\n", DESC_FNAME);
+			show_file(pkg, "Description:\n", DESC_FNAME);
 		}
 		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
-			show_file("Install notice:\n", DISPLAY_FNAME);
+			show_file(pkg, "Install notice:\n", DISPLAY_FNAME);
 		}
 		if (Flags & SHOW_PLIST) {
 			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
 		}
 		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
-			show_file("Install script:\n", INSTALL_FNAME);
+			show_file(pkg, "Install script:\n", INSTALL_FNAME);
 		}
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
-			show_file("De-Install script:\n", DEINSTALL_FNAME);
+			show_file(pkg, "De-Install script:\n", DEINSTALL_FNAME);
 		}
 		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
-			show_file("Require script:\n", REQUIRE_FNAME);
+			show_file(pkg, "Require script:\n", REQUIRE_FNAME);
 		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
-			show_file("mtree file:\n", MTREE_FNAME);
+			show_file(pkg, "mtree file:\n", MTREE_FNAME);
 		}
 		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
@@ -234,16 +234,16 @@ pkg_do(char *pkg)
 			show_files("Files:\n", &plist);
 		}
 		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
-			show_file("Build version:\n", BUILD_VERSION_FNAME);
+			show_file(pkg, "Build version:\n", BUILD_VERSION_FNAME);
 		}
 		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
-			show_file("Build information:\n", BUILD_INFO_FNAME);
+			show_file(pkg, "Build information:\n", BUILD_INFO_FNAME);
 		}
 		if ((Flags & SHOW_PKG_SIZE) && fexists(SIZE_PKG_FNAME)) {
-			show_file("Size of this package in bytes: ", SIZE_PKG_FNAME);
+			show_file(pkg, "Size of this package in bytes: ", SIZE_PKG_FNAME);
 		}
 		if ((Flags & SHOW_ALL_SIZE) && fexists(SIZE_ALL_FNAME)) {
-			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
+			show_file(pkg, "Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
 			if (fexists(PRESERVE_FNAME)) {
