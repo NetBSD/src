@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35 2000/04/22 16:28:48 thorpej Exp $
+# $NetBSD: INSTALL,v 1.36 2000/04/28 13:51:56 ad Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -134,6 +134,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -235,6 +236,9 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Floppy drives
 fd*	at	fdc? drive ?
+
+# Hardware RAID devices
+ca*	at	cac? unit ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?
