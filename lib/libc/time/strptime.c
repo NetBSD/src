@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.9 1998/01/20 20:41:49 mycroft Exp $	*/
+/*	$NetBSD: strptime.c,v 1.10 1998/01/20 20:47:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.9 1998/01/20 20:41:49 mycroft Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.10 1998/01/20 20:47:46 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -325,7 +325,7 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
 
-			if (i < 70)
+			if (i <= 68)
 				tm->tm_year = i + 2000 - TM_YEAR_BASE;
 			else
 				tm->tm_year = i + 1900 - TM_YEAR_BASE;
