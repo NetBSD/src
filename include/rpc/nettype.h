@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.h,v 1.8 2000/06/02 22:57:57 fvdl Exp $	*/
+/*	$NetBSD: nettype.h,v 1.1 2000/06/02 22:57:55 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -27,28 +27,37 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ */
+/*
+ * Copyright (c) 1986 - 1991 by Sun Microsystems, Inc.
+ */
+
+/*
+ * nettype.h, Nettype definitions.
+ * All for the topmost layer of rpc
  *
- *	from: @(#)svc_auth.h 1.6 86/07/16 SMI
- *	@(#)svc_auth.h	2.1 88/07/29 4.0 RPCSRC
  */
 
-/*
- * svc_auth.h, Service side of rpc authentication.
- * 
- * Copyright (C) 1984, Sun Microsystems, Inc.
- */
+#ifndef	_RPC_NETTYPE_H
+#define	_RPC_NETTYPE_H
 
-#ifndef _RPC_SVC_AUTH_H_
-#define _RPC_SVC_AUTH_H_
+#include <netconfig.h>
 
-/*
- * Server side authenticator
- */
+#define	_RPC_NONE	0
+#define	_RPC_NETPATH	1
+#define	_RPC_VISIBLE	2
+#define	_RPC_CIRCUIT_V	3
+#define	_RPC_DATAGRAM_V	4
+#define	_RPC_CIRCUIT_N	5
+#define	_RPC_DATAGRAM_N	6
+#define	_RPC_TCP	7
+#define	_RPC_UDP	8
+
 __BEGIN_DECLS
-extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
-extern int svc_auth_reg __P((int, enum auth_stat (*) __P((struct svc_req *,
-							  struct rpc_msg *))));
-
+extern void *__rpc_setconf __P((char *));
+extern void __rpc_endconf __P((void *));
+extern struct netconfig *__rpc_getconf __P((void *));
+extern struct netconfig *__rpc_getconfip __P((char *));
 __END_DECLS
 
-#endif /* !_RPC_SVC_AUTH_H_ */
+#endif	/* !_RPC_NETTYPE_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.h,v 1.8 2000/06/02 22:57:57 fvdl Exp $	*/
+/*	$NetBSD: raw.h,v 1.1 2000/06/02 22:57:56 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -27,28 +27,31 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ */
+/*
+ * Copyright (c) 1986 - 1991 by Sun Microsystems, Inc.
+ */
+
+#ifndef _RPC_RAW_H
+#define	_RPC_RAW_H
+
+/* #pragma ident	"@(#)raw.h	1.11	94/04/25 SMI" */
+/*	@(#)raw.h 1.2 88/10/25 SMI	*/
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*
+ * raw.h
  *
- *	from: @(#)svc_auth.h 1.6 86/07/16 SMI
- *	@(#)svc_auth.h	2.1 88/07/29 4.0 RPCSRC
+ * Raw interface
+ * The common memory area over which they will communicate
  */
+extern char *__rpc_rawcombuf;
 
-/*
- * svc_auth.h, Service side of rpc authentication.
- * 
- * Copyright (C) 1984, Sun Microsystems, Inc.
- */
+#ifdef	__cplusplus
+}
+#endif
 
-#ifndef _RPC_SVC_AUTH_H_
-#define _RPC_SVC_AUTH_H_
-
-/*
- * Server side authenticator
- */
-__BEGIN_DECLS
-extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
-extern int svc_auth_reg __P((int, enum auth_stat (*) __P((struct svc_req *,
-							  struct rpc_msg *))));
-
-__END_DECLS
-
-#endif /* !_RPC_SVC_AUTH_H_ */
+#endif	/* _RPC_RAW_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.16 1999/12/01 18:34:21 thorpej Exp $	*/
+/*	$NetBSD: xdr.h,v 1.17 2000/06/02 22:57:57 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -115,6 +115,7 @@ typedef struct __rpc_xdr {
 		int32_t	*(*x_inline) __P((struct __rpc_xdr *, u_int));
 		/* free privates of this xdr_stream */
 		void	(*x_destroy) __P((struct __rpc_xdr *));
+		bool_t	(*x_control) __P((struct __rpc_xdr *, int, void *));
 	} *x_ops;
 	char *	 	x_public;	/* users' data */
 	void *		x_private;	/* pointer to private data */
@@ -184,6 +185,21 @@ typedef	bool_t (*xdrproc_t) __P((/* XDR *, void *, u_int */));
 #define	xdr_destroy(xdrs)				\
 	if ((xdrs)->x_ops->x_destroy) 			\
 		(*(xdrs)->x_ops->x_destroy)(xdrs)
+
+#define XDR_CONTROL(xdrs, req, op)			\
+	if ((xdrs)->x_ops->x_control)			\
+		(*(xdrs)->x_ops->x_control)(xdrs, req, op)
+#define xdr_control(xdrs, req, op) XDR_CONTROL(xdrs, req, op)
+
+/*
+ * Solaris strips the '_t' from these types -- not sure why.
+ * But, let's be compatible.
+ */
+#define xdr_rpcvers(xdrs, versp) xdr_u_int32(xdrs, versp)
+#define xdr_rpcprog(xdrs, progp) xdr_u_int32(xdrs, progp)
+#define xdr_rpcproc(xdrs, procp) xdr_u_int32(xdrs, procp)
+#define xdr_rpcprot(xdrs, protp) xdr_u_int32(xdrs, protp)
+#define xdr_rpcport(xdrs, portp) xdr_u_int32(xdrs, portp)
 
 /*
  * Support struct for discriminated unions.
@@ -260,6 +276,7 @@ extern bool_t	xdr_u_char	__P((XDR *, u_char *));
 extern bool_t	xdr_vector	__P((XDR *, char *, u_int, u_int, xdrproc_t));
 extern bool_t	xdr_float	__P((XDR *, float *));
 extern bool_t	xdr_double	__P((XDR *, double *));
+extern bool_t	xdr_quadruple	__P((XDR *, long double *));
 extern bool_t	xdr_reference	__P((XDR *, char **, u_int, xdrproc_t));
 extern bool_t	xdr_pointer	__P((XDR *, char **, u_int, xdrproc_t));
 extern bool_t	xdr_wrapstring	__P((XDR *, char **));
@@ -290,8 +307,8 @@ __BEGIN_DECLS
 /* XDR using memory buffers */
 extern void   xdrmem_create	__P((XDR *, char *, u_int, enum xdr_op));
 
-#ifdef _STDIO_H_
 /* XDR using stdio library */
+#ifdef _STDIO_H_
 extern void   xdrstdio_create	__P((XDR *, FILE *, enum xdr_op));
 #endif
 
@@ -308,6 +325,7 @@ extern bool_t xdrrec_skiprecord	__P((XDR *));
 
 /* true if no more input */
 extern bool_t xdrrec_eof	__P((XDR *));
+extern u_int xdrrec_readbytes	__P((XDR *, caddr_t, u_int));
 __END_DECLS
 
 #endif /* !_RPC_XDR_H_ */
