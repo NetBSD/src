@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.19.4.1 1998/02/04 21:04:13 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.19.4.2 1998/02/05 04:11:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,6 +57,13 @@
  */
 
 /*
+ * USRTEXT is the start of the user text/data space, while
+ * USRSTACK is the top (end) of the user stack.
+ */
+#define	USRTEXT 	NBPG		/* Start of user text */
+#define	USRSTACK	KERNBASE	/* High end of user stack */
+
+/*
  * Virtual memory related constants, all in bytes.
  * The Sun3 has only 224 MB of user-virtual space,
  * so we need to be conservative with these limits.
@@ -94,5 +101,21 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	512 	/* 4 MB */
 #endif
+
+/*
+ * Mach-derived constants:
+ */
+
+/* user/kernel map constants */
+#define VM_MIN_ADDRESS		((vm_offset_t)0)
+#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)KERN_END)
+
+/* virtual sizes (bytes) for various kernel submaps */
+#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 #define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
