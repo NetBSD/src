@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpibreg.h,v 1.4 1994/10/26 07:24:45 cgd Exp $	*/
+/*	$NetBSD: nhpibreg.h,v 1.5 1995/01/07 10:30:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -67,8 +67,17 @@ struct	nhpibdevice {
 	vu_char	hpib_data;
 };
 
+/*
+ * Bits in hpib_lis (and hpib_lim).
+ */
+#define	LIS_IFC		0x01
 #define	LIS_SRQ		0x02
+#define	LIS_MA		0x04
+#define	LIS_DCAS	0x08
+#define	LIS_APT		0x10
+#define	LIS_UCG		0x20
 #define	LIS_ERR		0x40
+#define	LIS_GET		0x80
 
 #define	MIS_END		0x08
 #define	MIS_BO		0x10
@@ -77,26 +86,36 @@ struct	nhpibdevice {
 #define	IS_TADS		0x02
 #define	IS_LADS		0x04
 
-#define	AUX_CSWRST	0
-#define	AUX_RHDF	2
-#define	AUX_CHDFA	3
-#define	AUX_CHDFE	4
-#define	AUX_EOI		8
-#define	AUX_GTS		11
-#define	AUX_TCA		12
-#define	AUX_TCS		13
-#define	AUX_CPP		14
-#define	AUX_CSIC	15
-#define	AUX_CSRE	16
-#define	AUX_CDAI	19
-#define	AUX_CSHDW	22
-#define	AUX_SSWRST	128
-#define	AUX_SHDFE	132
-#define	AUX_SLON	137
-#define	AUX_STON	138
-#define	AUX_SPP		142
-#define	AUX_SSIC	143
-#define	AUX_SSRE	144
-#define	AUX_SSTD1	149
-#define	AUX_SVSTD1	151
+/*
+ * ti9914 "Auxiliary Commands" - Some are Set/Clear, others pulse.
+ */
+#define	AUX_CSWRST	0x00	/* End software reset */
+#define	AUX_RHDF	0x02	/* release RFD (ready for data) holdoff */
+#define	AUX_CHDFA	0x03	/* Clear holdoff on all data */
+#define	AUX_CHDFE	0x04	/* Clear holdoff on EOI data only */
+#define	AUX_EOI		0x08	/* Pulse EOI (with data) */
+#define	AUX_CLON	0x09	/* Clear listen only */
+#define	AUX_CTON	0x0a	/* Clear talk only */
+#define	AUX_GTS		0x0b	/* Go to standby (clears ATN line) */
+#define	AUX_TCA		0x0c	/* Take control (async) */
+#define	AUX_TCS		0x0d	/* Take control (sync) */
+#define	AUX_CPP		0x0e	/* Clear parallel poll */
+#define	AUX_CSIC	0x0f	/* Clear IFC (interface clear) line */
+#define	AUX_CSRE	0x10	/* Clear REN (remote enable) line */
+#define	AUX_CDAI	0x13	/* Clear interrupt disable */
+#define	AUX_CSTD1	0x15	/* Clear 1200ns T1 delay */
+#define	AUX_CSHDW	0x16	/* Clear shadow handshake */
+#define	AUX_CVSTD1	0x17	/* Clear 600ns T1 delay */
 
+#define	AUX_SSWRST	0x80	/* Start software reset */
+#define	AUX_SHDFA	0x83	/* Set holdoff on all data */
+#define	AUX_SHDFE	0x84	/* Set holdoff on EOI data only */
+#define	AUX_SLON	0x89	/* Set listen only */
+#define	AUX_STON	0x8a	/* Set talk only */
+#define	AUX_SPP		0x8e	/* Set parallel poll */
+#define	AUX_SSIC	0x8f	/* Set IFC line */
+#define	AUX_SSRE	0x90	/* Set REN line */
+#define	AUX_SDAI	0x93	/* Disable all interrupts */
+#define	AUX_SSTD1	0x95	/* Set T1 delay to 1200ns */
+#define	AUX_SSHDW	0x96	/* Set shadow handshake */
+#define	AUX_SVSTD1	0x97	/* Set T1 delay to 600ns */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.4 1994/10/26 07:24:17 cgd Exp $	*/
+/*	$NetBSD: hpib.c,v 1.5 1995/01/07 10:30:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -164,6 +164,12 @@ hpibpptest(unit, slave)
 	return((*ppoll)(unit) & (0x80 >> slave));
 }
 
+hpibppclear(unit)
+	int unit;
+{
+	hpib_softc[unit].sc_flags &= ~HPIBF_PPOLL;
+}
+
 hpibawait(unit)
 	int unit;
 {
@@ -216,14 +222,14 @@ hpibstart(unit)
 	(dq->dq_driver->d_go)(dq->dq_unit);
 }
 
-hpibgo(unit, slave, sec, addr, count, rw)
+hpibgo(unit, slave, sec, addr, count, rw, timo)
 	register int unit;
 	int slave, sec, addr, count, rw;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
-		fhpibgo(unit, slave, sec, addr, count, rw);
+		fhpibgo(unit, slave, sec, addr, count, rw, timo);
 	else
-		nhpibgo(unit, slave, sec, addr, count, rw);
+		nhpibgo(unit, slave, sec, addr, count, rw, timo);
 }
 
 hpibdone(unit)

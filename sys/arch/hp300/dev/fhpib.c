@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.5 1994/10/26 07:23:43 cgd Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.6 1995/01/07 10:30:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/buf.h>
 
 #include <hp300/dev/device.h>
@@ -152,7 +153,10 @@ fhpibsend(unit, slave, sec, addr, origcnt)
 	hd->hpib_data = C_UNL;
 	hd->hpib_data = C_TAG + hs->sc_ba;
 	hd->hpib_data = C_LAG + slave;
-	if (sec != -1)
+	if (sec < 0) {
+		if (sec == -2)		/* selected device clear KLUDGE */
+			hd->hpib_data = C_SDC;
+	} else
 		hd->hpib_data = C_SCG + sec;
 	if (fhpibwait(hd, IM_IDLE) < 0)
 		goto senderr;
@@ -179,6 +183,7 @@ fhpibsend(unit, slave, sec, addr, origcnt)
 	}
 	hd->hpib_imask = 0;
 	return (origcnt);
+
 senderr:
 	hd->hpib_imask = 0;
 	fhpibifc(hd);
@@ -189,7 +194,7 @@ senderr:
 		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
-	return(origcnt - cnt - 1);
+	return (origcnt - cnt - 1);
 }
 
 fhpibrecv(unit, slave, sec, addr, origcnt)
@@ -202,20 +207,26 @@ fhpibrecv(unit, slave, sec, addr, origcnt)
 	register int timo;
 
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
-	hd->hpib_stat = 0;
-	hd->hpib_imask = IM_IDLE | IM_ROOM | IM_BYTE;
-	if (fhpibwait(hd, IM_IDLE) < 0)
-		goto recverror;
-	hd->hpib_stat = ST_ATN;
-	hd->hpib_data = C_UNL;
-	hd->hpib_data = C_LAG + hs->sc_ba;
-	hd->hpib_data = C_TAG + slave;
-	if (sec != -1)
-		hd->hpib_data = C_SCG + sec;
-	if (fhpibwait(hd, IM_IDLE) < 0)
-		goto recverror;
-	hd->hpib_stat = ST_READ0;
-	hd->hpib_data = 0;
+	/*
+	 * Slave < 0 implies continuation of a previous receive
+	 * that probably timed out.
+	 */
+	if (slave >= 0) {
+		hd->hpib_stat = 0;
+		hd->hpib_imask = IM_IDLE | IM_ROOM | IM_BYTE;
+		if (fhpibwait(hd, IM_IDLE) < 0)
+			goto recverror;
+		hd->hpib_stat = ST_ATN;
+		hd->hpib_data = C_UNL;
+		hd->hpib_data = C_LAG + hs->sc_ba;
+		hd->hpib_data = C_TAG + slave;
+		if (sec != -1)
+			hd->hpib_data = C_SCG + sec;
+		if (fhpibwait(hd, IM_IDLE) < 0)
+			goto recverror;
+		hd->hpib_stat = ST_READ0;
+		hd->hpib_data = 0;
+	}
 	if (cnt) {
 		while (--cnt >= 0) {
 			timo = hpibtimeout;
@@ -245,10 +256,10 @@ recvbyteserror:
 		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
-	return(origcnt - cnt - 1);
+	return (origcnt - cnt - 1);
 }
 
-fhpibgo(unit, slave, sec, addr, count, rw)
+fhpibgo(unit, slave, sec, addr, count, rw, timo)
 	register int unit;
 	int slave, sec, count, rw;
 	char *addr;
@@ -258,11 +269,10 @@ fhpibgo(unit, slave, sec, addr, count, rw)
 	register int i;
 	int flags = 0;
 
-#ifdef lint
-	i = unit; if (i) return;
-#endif
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
 	hs->sc_flags |= HPIBF_IO;
+	if (timo)
+		hs->sc_flags |= HPIBF_TIMO;
 	if (rw == B_READ)
 		hs->sc_flags |= HPIBF_READ;
 #ifdef DEBUG
@@ -335,6 +345,42 @@ fhpibgo(unit, slave, sec, addr, count, rw)
 		((flags & DMAGO_WORD) ? IDS_WDMA : 0);
 }
 
+/*
+ * A DMA read can finish but the device can still be waiting (MAG-tape
+ * with more data than we're waiting for).  This timeout routine
+ * takes care of that.  Somehow, the thing gets hosed.  For now, since
+ * this should be a very rare occurence, we RESET it.
+ */
+void
+fhpibdmadone(arg)
+	void *arg;
+{
+	register int unit;
+	register struct hpib_softc *hs;
+	int s = splbio();
+
+	unit = (int)arg;
+	hs = &hpib_softc[unit];
+	if (hs->sc_flags & HPIBF_IO) {
+		register struct fhpibdevice *hd;
+		register struct devqueue *dq;
+
+		hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
+		hd->hpib_imask = 0;
+		hd->hpib_cid = 0xFF;
+		DELAY(100);
+		hd->hpib_cmd = CT_8BIT;
+		hd->hpib_ar = AR_ARONC;
+		fhpibifc(hd);
+		hd->hpib_ie = IDS_IE;
+		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
+		dmafree(&hs->sc_dq);
+		dq = hs->sc_sq.dq_forw;
+		(dq->dq_driver->d_intr)(dq->dq_unit);
+	}
+	(void) splx(s);
+}
+
 fhpibdone(unit)
 	int unit;
 {
@@ -352,9 +398,11 @@ fhpibdone(unit)
 		printf("fhpibdone: addr %x cnt %d\n",
 		       hs->sc_addr, hs->sc_count);
 #endif
-	if (hs->sc_flags & HPIBF_READ)
+	if (hs->sc_flags & HPIBF_READ) {
 		hd->hpib_imask = IM_IDLE | IM_BYTE;
-	else {
+		if (hs->sc_flags & HPIBF_TIMO)
+			timeout(fhpibdmadone, (void *)unit, hz >> 2);
+	} else {
 		cnt = hs->sc_count;
 		if (cnt) {
 			addr = hs->sc_addr;
@@ -407,13 +455,15 @@ fhpibintr(unit)
 #endif
 	dq = hs->sc_sq.dq_forw;
 	if (hs->sc_flags & HPIBF_IO) {
+		if (hs->sc_flags & HPIBF_TIMO)
+			untimeout(fhpibdmadone, (void *)unit);
 		stat0 = hd->hpib_cmd;
 		hd->hpib_cmd = fhpibcmd[unit] & ~CT_8BIT;
 		hd->hpib_stat = 0;
 		hd->hpib_cmd = CT_REN | CT_8BIT;
 		stat0 = hd->hpib_intr;
 		hd->hpib_imask = 0;
-		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ);
+		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(&hs->sc_dq);
 		(dq->dq_driver->d_intr)(dq->dq_unit);
 	} else if (hs->sc_flags & HPIBF_PPOLL) {
