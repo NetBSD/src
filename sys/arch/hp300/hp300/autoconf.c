@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2003/11/08 11:18:33 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -603,8 +603,8 @@ findbootdev()
 	if (scsiboot) {
 		findbootdev_slave(&dev_data_list_scsi, ctlr,
 		     slave, punit);
-		if (booted_device == NULL)  
-			return; 
+		if (booted_device == NULL)
+			return;
 
 		/*
 		 * Sanity check.
@@ -613,7 +613,7 @@ findbootdev()
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
-			booted_device = NULL; 
+			booted_device = NULL;
 		}
 		goto out;
 	}

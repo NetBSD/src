@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.54 2003/08/07 16:27:32 agc Exp $	*/
+/*	$NetBSD: if_le.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.54 2003/08/07 16:27:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.55 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -100,13 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.54 2003/08/07 16:27:32 agc Exp $");
 
 struct  le_softc {
 	struct  am7990_softc sc_am7990; /* glue to MI code */
- 
-	bus_space_tag_t sc_bst; 
- 
+
+	bus_space_tag_t sc_bst;
+
 	bus_space_handle_t sc_bsh0;	/* DIO registers */
 	bus_space_handle_t sc_bsh1;	/* LANCE registers */
 	bus_space_handle_t sc_bsh2;	/* buffer area */
-};    
+};
 
 int	lematch(struct device *, struct cfdata *, void *);
 void	leattach(struct device *, struct device *, void *);
@@ -136,7 +136,7 @@ hide void le_zerobuf(struct lance_softc *, int, int);
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
 hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);  
+hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
 
 hide void
 lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
