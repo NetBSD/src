@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 1998/07/27 16:55:53 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.18 1998/07/27 17:55:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.17 1998/07/27 16:55:53 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.18 1998/07/27 17:55:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,8 +209,6 @@ print(tp, wp, ldisc, fmt)
 			}
 		}
 		if (cnt) {
-			buf1[cnt * 8] = '\0';
-			buf2[cnt * 8] = '\0';
 			(void)printf("%s\n", buf1);
 			(void)printf("%s\n", buf2);
 		}

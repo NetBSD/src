@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.6 1998/07/27 17:06:48 mycroft Exp $	*/
+/*	$NetBSD: expr.c,v 1.7 1998/07/27 17:55:17 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -175,7 +175,6 @@ to_string(vp)
 		err(2, "%s", "");
 	}
 	(void)snprintf(tmp, 25, "%d", vp->u.i);
-	tmp[24] = '\0';
 	vp->type = string;
 	vp->u.s = tmp;
 }

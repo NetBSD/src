@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.28 1998/07/27 17:55:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $");
+__RCSID("$NetBSD: ls.c,v 1.28 1998/07/27 17:55:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,8 +478,10 @@ display(p, list)
 			btotal += sp->st_blocks;
 			if (f_longform) {
 				if (f_numericonly) {
-					snprintf(nuser, 12, "%u", sp->st_uid);
-					snprintf(ngroup, 12, "%u", sp->st_gid);
+					snprintf(nuser, sizeof(nuser), "%u",
+					    sp->st_uid);
+					snprintf(ngroup, sizeof(ngroup), "%u",
+					    sp->st_gid);
 					user = nuser;
 					group = ngroup;
 				} else {

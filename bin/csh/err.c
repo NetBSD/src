@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.9 1998/07/27 15:32:04 mycroft Exp $	*/
+/*	$NetBSD: err.c,v 1.10 1998/07/27 17:55:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.9 1998/07/27 15:32:04 mycroft Exp $");
+__RCSID("$NetBSD: err.c,v 1.10 1998/07/27 17:55:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,8 +312,7 @@ seterror(id, va_alist)
 #endif
 	if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
 	    id = ERR_INVALID;
-	vsnprintf(berr, sizeof(berr) - 1, errorlist[id], va);
-	berr[sizeof(berr) - 1] = '\0';
+	vsnprintf(berr, sizeof(berr), errorlist[id], va);
 	va_end(va);
 
 	seterr = strsave(berr);
