@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.13 1998/09/29 04:22:36 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.14 1998/10/01 22:57:30 ross Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.13 1998/09/29 04:22:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.14 1998/10/01 22:57:30 ross Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -231,14 +231,16 @@ tlsbattach(parent, self, aux)
 			    cpus[hwrpb->rpb_primary_cpu_id]->sc_dev.dv_xname);
 			TLSB_PUT_NODEREG(node, TLCPUMASK,
 			    (1UL << hwrpb->rpb_primary_cpu_id));
+			printf("%s node %d: routing interrupts to %s\n",
+			    self->dv_xname, node,
+			    cpus[hwrpb->rpb_primary_cpu_id]->sc_dev.dv_xname);
 #else
 			/*
 			 * Make sure interrupts are sent to the primary
 			 * CPU.
 			 */
-			printf("%s node %d: routing interrupts to %s\n",
-			    self->dv_xname, node,
-			    cpus[hwrpb->rpb_primary_cpu_id]->sc_dev.dv_xname);
+			printf("%s node %d: routing interrupts to cpu id %d\n",
+			    self->dv_xname, node, hwrpb->rpb_primary_cpu_id);
 			TLSB_PUT_NODEREG(node, TLCPUMASK,
 			    (1UL << hwrpb->rpb_primary_cpu_id));
 #endif /* MULTIPROCESSOR */
