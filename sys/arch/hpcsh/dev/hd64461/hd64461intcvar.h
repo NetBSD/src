@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461intcvar.h,v 1.1 2001/02/21 15:39:09 uch Exp $	*/
+/*	$NetBSD: hd64461intcvar.h,v 1.2 2002/02/11 17:19:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,5 +50,5 @@ enum hd64461_irq {
 };
 
 void *hd64461_intr_establish(enum hd64461_irq, int, int, int (*)(void *),
-			     void *);
+    void *);
 void hd64461_intr_disestablish(void *);
