@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1994/10/26 08:23:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1996/12/23 08:38:02 matthias Exp $
 
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -16,7 +16,7 @@ SPC532=	../pc532/pc532/*.[ch] ../pc532/include/*.h \
 APC532=	../pc532/pc532/*.s
 
 # Directories in which to place pc532 tags links
-DPC532=	dev include scsi
+DPC532=	dev include
 
 tags:
 	-ctags -dtf ${TPC532} ${COMM} ${SPC532}
