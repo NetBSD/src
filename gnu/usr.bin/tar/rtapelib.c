@@ -16,7 +16,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rtapelib.c,v 1.2 1993/08/02 17:49:04 mycroft Exp $";
+static char rcsid[] = "$Id: rtapelib.c,v 1.3 1994/10/16 11:34:34 andrew Exp $";
 #endif /* not lint */
 
 /* The man page rmt(8) for /etc/rmt documents the remote mag tape
@@ -375,31 +375,11 @@ __rmt_open (path, oflag, mode, bias)
       setgid (getgid ());
 
       if (*login)
-	{
-	  execl ("/usr/ucb/rsh", "rsh", system, "-l", login,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bin/remsh", "remsh", system, "-l", login,
-		 "/etc/rmt", (char *) 0);
 	  execl ("/usr/bin/rsh", "rsh", system, "-l", login,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bsd/rsh", "rsh", system, "-l", login,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bin/nsh", "nsh", system, "-l", login,
-		 "/etc/rmt", (char *) 0);
-	}
+		 "/usr/sbin/rmt", (char *) 0);
       else
-	{
-	  execl ("/usr/ucb/rsh", "rsh", system,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bin/remsh", "remsh", system,
-		 "/etc/rmt", (char *) 0);
 	  execl ("/usr/bin/rsh", "rsh", system,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bsd/rsh", "rsh", system,
-		 "/etc/rmt", (char *) 0);
-	  execl ("/usr/bin/nsh", "nsh", system,
-		 "/etc/rmt", (char *) 0);
-	}
+		 "/usr/sbin/rmt", (char *) 0);
 
       /* Bad problems if we get here.  */
 
