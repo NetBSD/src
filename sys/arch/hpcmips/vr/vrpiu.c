@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.7 2000/12/27 12:22:07 sato Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.8 2001/01/08 09:50:08 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -71,6 +71,13 @@ int	vrpiu_debug = 0;
 #ifndef VRPIU_AD_POLL_INTERVAL
 #define VRPIU_AD_POLL_INTERVAL	60	/* interval is 60 sec */
 #endif /* VRPIU_AD_POLL_INTERTVAL */
+
+#define	PIUSIVL_SCANINTVAL_MIN	333			/* 10msec	*/
+#define	PIUSIVL_SCANINTVAL_MAX	PIUSIVL_SCANINTVAL_MASK	/* 60msec	*/
+
+#define TP_INTR	(PIUINT_ALLINTR & ~PIUINT_PADADPINTR)
+#define AD_INTR	(PIUINT_PADADPINTR)
+
 /*
  * data types
  */
@@ -100,6 +107,7 @@ void		vrpiu_ad_disable __P((void *));
 static void	vrpiu_start_powerstate __P((void *));
 static void	vrpiu_calc_powerstate __P((struct vrpiu_softc *));
 static void	vrpiu_power __P((int, void *));
+static u_int	scan_interval __P((u_int data));
 
 /* mra is defined in mra.c */
 int mra_Y_AX1_BX2_C __P((int *y, int ys, int *x1, int x1s, int *x2, int x2s,
@@ -170,6 +178,8 @@ vrpiuattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_vrip = va->va_vc;
+
+	sc->sc_interval = scan_interval(WSMOUSE_RES_DEFAULT);
 
 	/*
 	 * disable device until vrpiu_enable called
@@ -253,6 +263,30 @@ vrpiuattach(parent, self, aux)
 			  vrpiu_start_powerstate, sc);
 }
 
+/*
+ * calculate interval value
+ *  input: WSMOUSE_RES_MIN - WSMOUSE_RES_MAX
+ * output: value for PIUSIVL_REG
+ */
+static u_int
+scan_interval(u_int data)
+{
+	int scale;
+
+	if (data < WSMOUSE_RES_MIN)
+		data = WSMOUSE_RES_MIN;
+
+	if (WSMOUSE_RES_MAX < data)
+		data = WSMOUSE_RES_MAX;
+
+	scale = WSMOUSE_RES_MAX - WSMOUSE_RES_MIN;
+	data += WSMOUSE_RES_MIN;
+
+	return PIUSIVL_SCANINTVAL_MIN + 
+	    (PIUSIVL_SCANINTVAL_MAX - PIUSIVL_SCANINTVAL_MIN) *
+	    (scale - data) / scale;
+}
+
 int
 vrpiu_ad_enable(v)
 	void *v;
@@ -261,20 +295,21 @@ vrpiu_ad_enable(v)
 	int s;
 	unsigned int cnt;
 
-	DPRINTF(("%s(%d): vrpiu_ad_enable()\n", __FILE__, __LINE__));
+	DPRINTF(("%s(%d): vrpiu_ad_enable(): interval=0x%03x\n",
+	    __FILE__, __LINE__, sc->sc_interval));
 	if (sc->sc_adstat != VRPIU_AD_STAT_DISABLE)
 		return EBUSY;
 
 	/* supply clock to PIU */
 	__vrcmu_supply(CMUMSKPIU, 1);
 
-	/* Scan interval 0x7FF is maximum value */
-	vrpiu_write(sc, PIUSIVL_REG_W, 0x7FF);
+	/* set scan interval */
+	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
 
 	s = spltty();
 
 	/* clear interrupt status */
-	vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
+	vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
 
 	/* Disable -> Standby */
 	cnt = PIUCNT_PIUPWR |
@@ -283,7 +318,7 @@ vrpiu_ad_enable(v)
 	vrpiu_write(sc, PIUCNT_REG_W, cnt);
 
 	/* Level2 interrupt register setting */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_PADADPINTR, 1);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, AD_INTR, 1);
 
 	/* save pen status, touch or release */
 	cnt = vrpiu_read(sc, PIUCNT_REG_W);
@@ -311,7 +346,7 @@ vrpiu_ad_disable(v)
 	DPRINTF(("%s(%d): vrpiu_ad_disable()\n", __FILE__, __LINE__));
 
 	/* Set level2 interrupt register to mask interrupts */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_PADADPINTR, 0);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, AD_INTR, 0);
 
 	sc->sc_adstat = VRPIU_AD_STAT_DISABLE;
 
@@ -332,20 +367,21 @@ vrpiu_tp_enable(v)
 	int s;
 	unsigned int cnt;
 
-	DPRINTF(("%s(%d): vrpiu_tp_enable()\n", __FILE__, __LINE__));
+	DPRINTF(("%s(%d): vrpiu_tp_enable(): interval=0x%03x\n",
+	    __FILE__, __LINE__, sc->sc_interval));
 	if (sc->sc_tpstat != VRPIU_TP_STAT_DISABLE)
 		return EBUSY;
 
 	/* supply clock to PIU */
 	__vrcmu_supply(CMUMSKPIU, 1);
 
-	/* Scan interval 0x7FF is maximum value */
-	vrpiu_write(sc, PIUSIVL_REG_W, 0x7FF);
+	/* set scan interval */
+	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
 
 	s = spltty();
 
 	/* clear interrupt status */
-	vrpiu_write(sc, PIUINT_REG_W, PIUINT_ALLINTR&~PIUINT_PADADPINTR);
+	vrpiu_write(sc, PIUINT_REG_W, TP_INTR);
 
 	/* Disable -> Standby */
 	cnt = PIUCNT_PIUPWR |
@@ -354,7 +390,7 @@ vrpiu_tp_enable(v)
 	vrpiu_write(sc, PIUCNT_REG_W, cnt);
 
 	/* Level2 interrupt register setting */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR&~PIUINT_PADADPINTR, 1);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, TP_INTR, 1);
 
 	/* save pen status, touch or release */
 	cnt = vrpiu_read(sc, PIUCNT_REG_W);
@@ -384,7 +420,7 @@ vrpiu_tp_disable(v)
 	DPRINTF(("%s(%d): vrpiu_tp_disable()\n", __FILE__, __LINE__));
 
 	/* Set level2 interrupt register to mask interrupts */
-	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, PIUINT_ALLINTR&~PIUINT_PADADPINTR, 0);
+	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, TP_INTR, 0);
 
 	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
@@ -415,9 +451,34 @@ vrpiu_tp_ioctl(v, cmd, data, flag, p)
 		break;
 		
 	case WSMOUSEIO_SRES:
-		printf("%s(%d): WSMOUSRIO_SRES is not supported",
-		       __FILE__, __LINE__);
-		break;
+	    {
+		int tp_enable;
+		int ad_enable;
+
+		tp_enable = (sc->sc_tpstat != VRPIU_TP_STAT_DISABLE);
+		ad_enable = (sc->sc_adstat != VRPIU_AD_STAT_DISABLE);
+
+		if (tp_enable)
+			vrpiu_tp_disable(sc);
+		if (ad_enable)
+			vrpiu_ad_disable(sc);
+		
+		sc->sc_interval = scan_interval(*(u_int *)data);
+		DPRINTF(("%s(%d): WSMOUSEIO_SRES: *data=%d, interval=0x%03x\n",
+		    __FILE__, __LINE__, *(u_int *)data, sc->sc_interval));
+		
+		if (sc->sc_interval < PIUSIVL_SCANINTVAL_MIN)
+			sc->sc_interval = PIUSIVL_SCANINTVAL_MIN;
+			
+		if (PIUSIVL_SCANINTVAL_MAX < sc->sc_interval)
+			sc->sc_interval = PIUSIVL_SCANINTVAL_MAX;
+
+		if (tp_enable)
+			vrpiu_tp_enable(sc);
+		if (ad_enable)
+			vrpiu_ad_enable(sc);
+	    }
+	    break;
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
@@ -445,7 +506,7 @@ vrpiu_ad_intr(sc)
 		/*
 		 * the device isn't enabled. just clear interrupt.
 		 */
-		vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
+		vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
 		return;
 	}
 
@@ -464,7 +525,7 @@ vrpiu_ad_intr(sc)
 		}
 		vrpiu_calc_powerstate(sc);
 	}
-	vrpiu_write(sc, PIUINT_REG_W, PIUINT_PADADPINTR);
+	vrpiu_write(sc, PIUINT_REG_W, AD_INTR);
 
 	return;
 }
@@ -486,7 +547,7 @@ vrpiu_tp_intr(sc)
 	/*
 		 * the device isn't enabled. just clear interrupt.
 		 */
-		vrpiu_write(sc, PIUINT_REG_W, intrstat&~PIUINT_PADADPINTR);
+		vrpiu_write(sc, PIUINT_REG_W, intrstat & TP_INTR);
 		return;
 	}
 
@@ -511,7 +572,7 @@ vrpiu_tp_intr(sc)
 #endif
 
 	/* clear interrupt status */
-	vrpiu_write(sc, PIUINT_REG_W, intrstat&~PIUINT_PADADPINTR);
+	vrpiu_write(sc, PIUINT_REG_W, intrstat & TP_INTR);
 
 #if 0
 	DPRINTF(("vrpiu_intr: OVP=%d", page));
