@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	8.1 (Berkeley) 7/15/93
- * 	     $Id: ct.c,v 1.4 1994/03/09 20:17:40 brezak Exp $
+ * 	     $Id: ct.c,v 1.5 1994/09/19 00:23:39 mycroft Exp $
  */
 
 /*
@@ -164,9 +164,7 @@ ctopen(f, ctlr, unit, part)
 	if (rs->sc_alive == 0)
 		if (ctinit(ctlr, unit) == 0)
 			return(ENXIO);
-
 	f->f_devdata = (void *)rs;
-
 	ctstrategy(f, MTREW);
 	skip = part;
 	while (skip--)

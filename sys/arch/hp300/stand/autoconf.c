@@ -38,7 +38,7 @@
  * from: Utah Hdr: autoconf.c 1.16 92/05/29
  * from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: autoconf.c,v 1.5 1994/06/19 01:49:50 hpeyerl Exp $
+ * $Id: autoconf.c,v 1.6 1994/09/19 00:23:37 mycroft Exp $
  */
 
 #include <hp300/stand/samachdep.h>
@@ -144,9 +144,9 @@ msustobdev()
 			break;
 	bdev |= rom2mdev[(rp->msus >> 24) & 0x1F] << B_TYPESHIFT;
 	bdev |= 0 << B_PARTITIONSHIFT;
-	bdev |= ((rp->msus >> 16) & 0xFF) << B_ADAPTORSHIFT;
-	bdev |= (rp->msus & 0xFF) << B_UNITSHIFT;
-	bdev |= (int)hw->hw_pa << B_CONTROLLERSHIFT;
+	bdev |= ((rp->msus >> 16) & 0xFF) << B_UNITSHIFT;
+	bdev |= (rp->msus & 0xFF) << B_CONTROLLERSHIFT;
+	bdev |= (int)hw->hw_pa << B_ADAPTORSHIFT;
 	bdev |= B_DEVMAGIC;
 #if 0
 	printf("msus %x -> bdev %x\n", rp->msus, bdev);
