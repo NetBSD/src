@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.3 1995/05/21 00:39:11 mycroft Exp $
+**	$Id: identd.c,v 1.4 1995/06/03 22:46:26 mycroft Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -413,6 +413,7 @@ int main(argc,argv)
 
     clearmem(&addr, sizeof(addr));
     
+    addr.sin_len = sizeof(struct sockaddr_in);
     addr.sin_family = AF_INET;
     if (bind_address == NULL)
       addr.sin_addr.s_addr = htonl(INADDR_ANY);
