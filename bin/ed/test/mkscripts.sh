@@ -1,5 +1,6 @@
 #!/bin/sh -
-#	$NetBSD: mkscripts.sh,v 1.9 1995/03/21 09:05:27 cgd Exp $
+#	$NetBSD: mkscripts.sh,v 1.10 1995/04/23 10:07:36 cgd Exp $
+#
 # This script generates ed test scripts (.ed) from .t files
 
 PATH="/bin:/usr/bin:/usr/local/bin/:."
