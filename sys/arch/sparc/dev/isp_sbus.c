@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.11 1998/07/18 21:02:06 mjacob Exp $ */
-/* $Id: isp_sbus.c,v 1.11 1998/07/18 21:02:06 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.12 1998/07/20 21:18:38 thorpej Exp $ */
+/* $Id: isp_sbus.c,v 1.12 1998/07/20 21:18:38 thorpej Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -101,7 +101,9 @@ isp_match(parent, cf, aux)
         void *aux;
 {
 	int rv;
+#ifdef DEBUG
 	static int oneshot = 1;
+#endif
 	struct sbus_attach_args *sa = aux;
 
 	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
@@ -109,6 +111,7 @@ isp_match(parent, cf, aux)
 		strcmp("ptisp", sa->sa_name) == 0 ||
 		strcmp("SUNW,isp", sa->sa_name) == 0 ||
 		strcmp("QLGC,isp", sa->sa_name) == 0);
+#ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
 		printf("***Qlogic ISP Driver, NetBSD (sbus) Platform Version "
@@ -116,6 +119,7 @@ isp_match(parent, cf, aux)
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
+#endif
 	return (rv);
 }
 
