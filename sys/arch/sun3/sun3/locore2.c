@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.44 1995/06/13 22:21:40 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.45 1995/06/27 14:42:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -383,7 +383,8 @@ void sun3_vm_init(kehp)
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
-	 * Make these non-cached at their full-time mapping address.
+	 * XXX - Make these non-cached at their full-time mapping address.
+	 * XXX - Still need to do that? -gwr
 	 */
 	proc0paddr = (struct user *) virtual_avail;
 	proc0_user_pa = avail_start;
@@ -650,10 +651,10 @@ tracedump(x1)
 	caddr_t x1;
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
-	u_int tospage = btoc(fp);
-	
+	u_int stackpage = ((u_int)fp) & ~PGOFSET;
+
 	mon_printf("Begin traceback...fp = %x\n", fp);
-	while (btoc(fp) == tospage) {
+	do {
 		if (fp == fp->fr_savfp) {
 			mon_printf("FP loop at %x", fp);
 			break;
@@ -662,7 +663,7 @@ tracedump(x1)
 				   fp->fr_savpc, fp->fr_savfp,
 				   fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3]);
 		fp = fp->fr_savfp;
-	}
+	} while ( (((u_int)fp) & ~PGOFSET) == stackpage);
 	mon_printf("End traceback...\n");
 }
 
