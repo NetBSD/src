@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108.2.13 2002/11/11 22:14:03 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108.2.14 2002/12/19 23:57:19 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -512,9 +512,9 @@
 241	STD		{ int sys_fdatasync(int fd); }
 242	STD		{ int sys_mlockall(int flags); }
 243	STD		{ int sys_munlockall(void); }
-244	UNIMPL
-245	UNIMPL
-246	UNIMPL
+244	UNIMPL		sys_sigwaitinfo
+245	UNIMPL		sys_sigtimedwait
+246	UNIMPL		sys_sigqueue
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
