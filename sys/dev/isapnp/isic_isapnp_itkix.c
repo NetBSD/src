@@ -1,3 +1,5 @@
+/* $NetBSD: isic_isapnp_itkix.c,v 1.3.2.1 2002/07/15 10:35:25 gehenna Exp $ */
+
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.3 2002/04/14 12:24:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.3.2.1 2002/07/15 10:35:25 gehenna Exp $");
 
 #include "opt_isicpnp.h"
 

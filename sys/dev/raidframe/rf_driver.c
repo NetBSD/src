@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.46.8.1 2002/07/15 10:35:49 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46.8.1 2002/07/15 10:35:49 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,14 +345,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_RowCol_t row, col;
 	int     i, rc;
 
-	/* XXX This check can probably be removed now, since 
-	   RAIDFRAME_CONFIGURRE now checks to make sure that the
-	   RAID set is not already valid
-	*/
-	if (raidPtr->valid) {
-		RF_ERRORMSG("RAIDframe configuration not shut down.  Aborting configure.\n");
-		return (EINVAL);
-	}
 	RF_LOCK_MUTEX(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
@@ -657,12 +649,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 	struct buf *bp = (struct buf *) bp_in;
 
 	raidAddress += rf_raidSectorOffset;
-
-	if (!raidPtr->valid) {
-		RF_ERRORMSG("RAIDframe driver not successfully configured.  Rejecting access.\n");
-		IO_BUF_ERR(bp, EINVAL);
-		return (EINVAL);
-	}
 
 	if (rf_accessDebug) {
 

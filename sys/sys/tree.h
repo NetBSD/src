@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.2.4.2 2002/06/20 15:53:05 gehenna Exp $	*/
+/*	$NetBSD: tree.h,v 1.2.4.3 2002/07/15 10:37:19 gehenna Exp $	*/
 /*	$OpenBSD: tree.h,v 1.4 2002/03/26 02:47:28 hugh Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -667,7 +667,7 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	     (x) = name##_RB_NEXT(head, x))
 
 #endif	/* _SYS_TREE_H_ */
-/*	$NetBSD: tree.h,v 1.2.4.2 2002/06/20 15:53:05 gehenna Exp $	*/
+/*	$NetBSD: tree.h,v 1.2.4.3 2002/07/15 10:37:19 gehenna Exp $	*/
 /*	$OpenBSD: tree.h,v 1.4 2002/03/26 02:47:28 hugh Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

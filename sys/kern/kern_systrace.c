@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenna Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.4.4 2002/07/15 10:36:36 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,8 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.4 2002/07/15 10:36:36 gehenna Exp $");
 
 #include "opt_systrace.h"
 
@@ -52,14 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenn
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/ptrace.h>
 #include <sys/systrace.h>
 
-#include <miscfs/procfs/procfs.h>
-
-
-#ifdef SYSTRACE
 #ifdef __NetBSD__
-/* XXX: is this ok? */
 #define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL)
 #define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL)
 #else
@@ -70,12 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.4.3 2002/07/15 01:47:08 gehenn
 #define	M_XDATA		M_FILE	/* XXX */
 #endif
 
-int	systraceopen(dev_t, int, int, struct proc *);
-int	systraceclose(dev_t, int, int, struct proc *);
-int	systraceread(dev_t, struct uio *, int);
-int	systracewrite(dev_t, struct uio *, int);
-int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	systraceselect(dev_t, int, struct proc *);
+#ifdef __NetBSD__
+dev_type_open(systraceopen);
+#else
+cdev_decl(systrace);
+#endif
 
 #ifdef __NetBSD__
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
@@ -83,12 +79,13 @@ int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *,
 		int);
 int	systracef_fcntl(struct file *, u_int, caddr_t, struct proc *);
+int	systracef_poll(struct file *, int, struct proc *);
 #else
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
+int	systracef_select(struct file *, int, struct proc *);
 int	systracef_kqfilter(struct file *, struct knote *);
 #endif
-int	systracef_select(struct file *, int, struct proc *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
@@ -162,9 +159,9 @@ static struct fileops systracefops = {
 	systracef_ioctl,
 #ifdef __NetBSD__
 	systracef_fcntl,
-#endif
+	systracef_poll,
+#else
 	systracef_select,
-#ifndef __NetBSD__
 	systracef_kqfilter,
 #endif
 	systracef_stat,
@@ -274,8 +271,8 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	switch (cmd) {
 	case FIONBIO:
-        case FIOASYNC:
-                return (0);
+	case FIOASYNC:
+		return (0);
 
 	case STRIOCATTACH:
 		pid = *(pid_t *)data;
@@ -399,18 +396,33 @@ systracef_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p)
 }
 #endif
 
-/* ARGSUSED */
+#ifdef __NetBSD__
+int
+systracef_poll(struct file *fp, int events, struct proc *p)
+{
+	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
+	int revents = 0;
+
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
+		return (revents);
+
+	SYSTRACE_LOCK(fst, p);
+	if (TAILQ_EMPTY(&fst->messages) == 0)
+		revents |= events & (POLLIN | POLLRDNORM);
+	else
+		selrecord(p, &fst->si);
+	SYSTRACE_UNLOCK(fst, p);
+
+	return (revents);
+}
+#else
 int
 systracef_select(struct file *fp, int which, struct proc *p)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	int ready = 0;
 
-#ifdef __NetBSD__
-	if (!(which & (POLLIN | POLLRDNORM)))
-#else
 	if (which != FREAD)
-#endif
 		return (0);
 
 	SYSTRACE_LOCK(fst, p);
@@ -421,7 +433,7 @@ systracef_select(struct file *fp, int which, struct proc *p)
 
 	return (ready);
 }
-
+#endif /* __NetBSD__ */
 
 #ifndef __NetBSD__
 /* ARGSUSED */
@@ -505,7 +517,7 @@ systrace_unlock(void)
 }
 
 void
-systrace_init()
+systrace_init(void)
 {
 	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
 	    "strprocpl", NULL);
@@ -515,98 +527,38 @@ systrace_init()
 }
 
 int
-systraceopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	return (0);
-}
+	struct fsystrace *fst;
+	struct file *fp;
+	int error, fd;
 
-int
-systraceclose(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
-{
-	return (0);
-}
+	/* falloc() will use the descriptor for us. */
+	if ((error = falloc(p, &fp, &fd)) != 0)
+		return (error);
 
-int
-systraceread(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
+	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
 
-int
-systracewrite(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
+	memset(fst, 0, sizeof(struct fsystrace));
+	lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
 
-int
-systraceioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	data;
-	int	flag;
-	struct proc *p;
-{
-	struct file *f;
-	struct fsystrace *fst = NULL;
-	int fd, error;
+	TAILQ_INIT(&fst->processes);
+	TAILQ_INIT(&fst->messages);
+	TAILQ_INIT(&fst->policies);
 
-	switch (cmd) {
-	case SYSTR_CLONE:
-		MALLOC(fst, struct fsystrace *, sizeof(struct fsystrace),
-		    M_XDATA, M_WAITOK);
+	if (suser(p->p_ucred, &p->p_acflag) == 0)
+		fst->issuser = 1;
 
-		memset(fst, 0, sizeof(struct fsystrace));
-		lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
-		TAILQ_INIT(&fst->processes);
-		TAILQ_INIT(&fst->messages);
-		TAILQ_INIT(&fst->policies);
+	fp->f_flag = FREAD | FWRITE;
+	fp->f_type = DTYPE_SYSTRACE;
+	fp->f_ops = &systracefops;
+	fp->f_data = (caddr_t) fst;
 
-		if (suser(p->p_ucred, &p->p_acflag) == 0)
-			fst->issuser = 1;
-    
-		error = falloc(p, &f, &fd);
-		if (error) {
-			FREE(fst, M_XDATA);
-			return (error);
-		}
-		f->f_flag = FREAD | FWRITE;
-		f->f_type = DTYPE_VNODE;
-		f->f_ops = &systracefops;
-		f->f_data = (caddr_t) fst;
-		*(int *)data = fd;
-		FILE_SET_MATURE(f);
-#ifdef __NetBSD__
-		FILE_UNUSE(f, p);
-#endif
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
+	p->p_dupfd = fd;
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, p);
 
-int
-systraceselect(dev, rw, p)
-	dev_t	dev;
-	int	rw;
-	struct proc *p;
-{
-	return (0);
+	return (ENXIO);
 }
 
 void
@@ -763,10 +715,12 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	if (fst) {
 		SYSTRACE_UNLOCK(fst, p);
 	}
-	if (error == 0)
-		strp->oldemul = p->p_emul;
-	else
-		strp->oldemul = NULL;
+	if (strp != NULL) {
+		if (error == 0)
+			strp->oldemul = p->p_emul;
+		else
+			strp->oldemul = NULL;
+	}
 	return error;
 }
 
@@ -1042,7 +996,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_segflg = UIO_USERSPACE;
 	uio.uio_procp = p;
 
-	error = procfs_domem(p, t, NULL, &uio);
+	error = process_domem(p, t, &uio);
 	io->strio_len -= uio.uio_resid;
  out:
 
@@ -1378,4 +1332,3 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 
 	return (0);
 }
-#endif

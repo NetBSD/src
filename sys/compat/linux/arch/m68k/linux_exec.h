@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.4 2002/01/17 17:19:03 bjh21 Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.4.8.1 2002/07/15 10:34:55 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,8 +54,5 @@
 #else
 #define LINUX_COPYARGS_FUNCTION	ELFNAME(copyargs)
 #endif
-
-/* Linux uses the standard syscall handler. */
-#define LINUX_SYSCALL_FUNCTION syscall
 
 #endif /* !_M68K_LINUX_EXEC_H */

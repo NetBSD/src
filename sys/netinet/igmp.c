@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.28.2.1 2002/06/20 15:52:13 gehenna Exp $	*/
+/*	$NetBSD: igmp.c,v 1.28.2.2 2002/07/15 10:36:55 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28.2.1 2002/06/20 15:52:13 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28.2.2 2002/07/15 10:36:55 gehenna Exp $");
 
 #include "opt_mrouting.h"
 
@@ -180,6 +180,7 @@ igmp_input(m, va_alist)
 	m->m_data += iphlen;
 	m->m_len -= iphlen;
 	igmp = mtod(m, struct igmp *);
+	/* No need to assert alignment here. */
 	if (in_cksum(m, ip->ip_len - iphlen)) {
 		++igmpstat.igps_rcv_badsum;
 		m_freem(m);

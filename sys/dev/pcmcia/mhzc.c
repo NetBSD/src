@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.8.8.1 2002/06/20 16:33:57 gehenna Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.8.8.2 2002/07/15 10:35:47 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.8.8.1 2002/06/20 16:33:57 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.8.8.2 2002/07/15 10:35:47 gehenna Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -795,7 +795,7 @@ sm_mhzc_attach(parent, self, aux)
 	}
 	printf(" io 0x%x-0x%x\n",
 	   (int)msc->sc_ethernet_pcioh.addr,
-	   (int)(msc->sc_ethernet_pcioh.addr + msc->sc_modem_pcioh.size - 1));
+	   (int)(msc->sc_ethernet_pcioh.addr + msc->sc_ethernet_pcioh.size - 1));
 
 	msc->sc_flags |= MHZC_ETHERNET_MAPPED;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.8 2001/11/13 07:11:17 lukem Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.8.8.1 2002/07/15 10:35:53 gehenna Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,17 +33,12 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.8 2001/11/13 07:11:17 lukem Exp $");
-
-#include "rf_threadstuff.h"
-
-#include <sys/time.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.8.8.1 2002/07/15 10:35:53 gehenna Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
 #include "rf_debugMem.h"
 #include "rf_alloclist.h"
-#include "rf_general.h"
 
 /* creates & zeros 2-d array with b rows and k columns (MCH) */
 RF_RowCol_t **

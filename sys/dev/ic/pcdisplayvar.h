@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.8.20.1 2002/07/15 10:35:19 gehenna Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -39,16 +39,16 @@ struct pcdisplayscreen {
 
 	const struct wsscreen_descr *type;
 
-	int active;	/* currently displayed */
-	u_int16_t *mem; /* backing store for contents */
+	int active;		/* currently displayed */
+	u_int16_t *mem;		/* backing store for contents */
 
 	int cursoron;		/* cursor displayed? */
 #ifdef PCDISPLAY_SOFTCURSOR
 	int cursortmp;		/* glyph & attribute behind software cursor */
 #endif
-	int vc_ccol, vc_crow;	/* current cursor position */
+	int cursorcol, cursorrow;	/* current cursor position */
 
-	int dispoffset; /* offset of displayed area in video mem */
+	int dispoffset; 	/* offset of displayed area in video mem */
 };
 
 struct pcdisplay_handle {
@@ -56,10 +56,9 @@ struct pcdisplay_handle {
 	bus_space_handle_t ph_ioh_6845, ph_memh;
 };
 
-static inline u_int8_t _pcdisplay_6845_read __P((struct pcdisplay_handle *,
-						 int));
-static inline void _pcdisplay_6845_write __P((struct pcdisplay_handle *,
-					      int, u_int8_t));
+static inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *, int);
+static inline void _pcdisplay_6845_write(struct pcdisplay_handle *, int,
+					 u_int8_t);
 
 static inline u_int8_t _pcdisplay_6845_read(ph, reg)
 	struct pcdisplay_handle *ph;
@@ -83,14 +82,17 @@ static inline void _pcdisplay_6845_write(ph, reg, val)
 #define pcdisplay_6845_write(ph, reg, val) \
 	_pcdisplay_6845_write(ph, offsetof(struct reg_mc6845, reg), val)
 
-void	pcdisplay_cursor_init __P((struct pcdisplayscreen *, int));
-void	pcdisplay_cursor __P((void *, int, int, int));
+void	pcdisplay_cursor_init(struct pcdisplayscreen *, int);
+void	pcdisplay_cursor(void *, int, int, int);
 #if 0
-unsigned int pcdisplay_mapchar_simple __P((void *, int));
+unsigned int pcdisplay_mapchar_simple(void *, int);
 #endif
-int pcdisplay_mapchar __P((void *, int, unsigned int *));
-void	pcdisplay_putchar __P((void *, int, int, u_int, long));
-void	pcdisplay_copycols __P((void *, int, int, int,int));
-void	pcdisplay_erasecols __P((void *, int, int, int, long));
-void	pcdisplay_copyrows __P((void *, int, int, int));
-void	pcdisplay_eraserows __P((void *, int, int, long));
+int	pcdisplay_mapchar(void *, int, unsigned int *);
+void	pcdisplay_putchar(void *, int, int, u_int, long);
+void	pcdisplay_copycols(void *, int, int, int,int);
+void	pcdisplay_erasecols(void *, int, int, int, long);
+void	pcdisplay_copyrows(void *, int, int, int);
+void	pcdisplay_eraserows(void *, int, int, long);
+struct wsdisplay_char;
+int	pcdisplay_getwschar(void *, struct wsdisplay_char *);
+int	pcdisplay_putwschar(void *, struct wsdisplay_char *);

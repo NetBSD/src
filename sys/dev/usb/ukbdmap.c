@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.10 2002/03/17 18:01:07 augustss Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.10.4.1 2002/07/15 10:36:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.10 2002/03/17 18:01:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.10.4.1 2002/07/15 10:36:09 gehenna Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -119,7 +119,7 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(70),			KS_Print_Screen,
     KC(71), 			KS_Hold_Screen,
     KC(72),			KS_Pause,
-    KC(73),			KS_Insert, 
+    KC(73),			KS_Insert,
     KC(74),			KS_Home,
     KC(75), 			KS_Prior,
     KC(76),			KS_Delete,
@@ -181,7 +181,7 @@ Static const keysym_t ukbd_keydesc_jp[] = {
     KC(138),			KS_Henkan,
     KC(139),			KS_Muhenkan,
 };
- 
+
 Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
     KC(57), 			KS_Control_L,
@@ -308,7 +308,7 @@ Static const keysym_t ukbd_keydesc_fr[] = {
     KC(39),  KS_agrave,		KS_0,		KS_at,
     KC(45),  KS_parenright,	KS_degree,	KS_bracketright,
     KC(46),  KS_equal,		KS_plus,	KS_braceright,
-    KC(47),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(47),  KS_dead_circumflex, KS_dead_diaeresis,
     KC(48),  KS_dollar,		KS_sterling,	KS_currency,
     KC(50),  KS_asterisk,	KS_mu,
     KC(51),  KS_m,

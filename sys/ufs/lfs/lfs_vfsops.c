@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.74.2.3 2002/06/20 15:53:12 gehenna Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.74.2.4 2002/07/15 10:37:29 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.3 2002/06/20 15:53:12 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.4 2002/07/15 10:37:29 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -407,6 +407,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, ufs_daddr_t lbn,
 		ooff = ip->i_ffs_db[lbn];
 		if (ooff == UNWRITTEN)
 			ip->i_ffs_blocks += btofsb(fs, size);
+		/* XXX what about fragment extension? */
 		ip->i_ffs_db[lbn] = ndaddr;
 		break;
 	    case 1:
@@ -955,6 +956,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->lfs_nadirop = 0;
 	fs->lfs_seglock = 0;
 	lockinit(&fs->lfs_freelock, PINOD, "lfs_freelock", 0, 0);
+	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1335,7 +1337,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct ufsmount *ump;
 	ufs_daddr_t daddr;
 	dev_t dev;
-	int error, retries;
+	int i, error, retries;
 	struct timespec ts;
 
 	ump = VFSTOUFS(mp);
@@ -1465,11 +1467,17 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 	ip->i_lfs_effnblks = ip->i_ffs_blocks;
+	ip->i_lfs_osize = ip->i_ffs_size;
 	if (fs->lfs_version > 1) {
 		ip->i_ffs_atime = ts.tv_sec;
 		ip->i_ffs_atimensec = ts.tv_nsec;
 	}
 	brelse(bp);
+
+        memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+        for (i = 0; i < NDADDR; i++)
+                if (ip->i_ffs_db[i] != 0)
+                        ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

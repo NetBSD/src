@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.63.2.2 2002/05/30 14:46:11 gehenna Exp $	*/
+/*	$NetBSD: pci.c,v 1.63.2.3 2002/07/15 10:35:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.63.2.2 2002/05/30 14:46:11 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.63.2.3 2002/07/15 10:35:39 gehenna Exp $");
 
 #include "opt_pci.h"
 
@@ -260,10 +260,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-		return (NULL);
+		return (0);
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
-		return (NULL);
+		return (0);
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
@@ -447,4 +447,83 @@ pci_enumerate_bus_generic(struct pci_softc *sc,
 		}
 	}
 	return (0);
+}
+
+/*
+ * Power Management Capability (Rev 2.2)
+ */
+
+int
+pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int newstate)
+{
+	int offset;
+	pcireg_t value, cap, now;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
+		return (EOPNOTSUPP);
+
+	cap = value >> 16;
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
+	now    = value & PCI_PMCSR_STATE_MASK;
+	value &= ~PCI_PMCSR_STATE_MASK;
+	switch (newstate) {
+	case PCI_PWR_D0:
+		if (now == PCI_PMCSR_STATE_D0)
+			return (0);
+		value |= PCI_PMCSR_STATE_D0;
+		break;
+	case PCI_PWR_D1:
+		if (now == PCI_PMCSR_STATE_D1)
+			return (0);
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+			return (EINVAL);
+		if (!(cap & PCI_PMCR_D1SUPP))
+			return (EOPNOTSUPP);
+		value |= PCI_PMCSR_STATE_D1;
+		break;
+	case PCI_PWR_D2:
+		if (now == PCI_PMCSR_STATE_D2)
+			return (0);
+		if (now == PCI_PMCSR_STATE_D3)
+			return (EINVAL);
+		if (!(cap & PCI_PMCR_D2SUPP))
+			return (EOPNOTSUPP);
+		value |= PCI_PMCSR_STATE_D2;
+		break;
+	case PCI_PWR_D3:
+		if (now == PCI_PMCSR_STATE_D3)
+			return (0);
+		value |= PCI_PMCSR_STATE_D3;
+		break;
+	default:
+		return (EINVAL);
+	}
+	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
+	DELAY(1000);
+
+	return (0);
+}
+
+int
+pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	int offset;
+	pcireg_t value;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
+		return (PCI_PWR_D0);
+	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
+	value &= PCI_PMCSR_STATE_MASK;
+	switch (value) {
+	case PCI_PMCSR_STATE_D0:
+		return (PCI_PWR_D0);
+	case PCI_PMCSR_STATE_D1:
+		return (PCI_PWR_D1);
+	case PCI_PMCSR_STATE_D2:
+		return (PCI_PWR_D2);
+	case PCI_PMCSR_STATE_D3:
+		return (PCI_PWR_D3);
+	}
+
+	return (PCI_PWR_D0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.2.4.2 2002/06/20 15:53:05 gehenna Exp $	*/
+/*	$NetBSD: systrace.h,v 1.2.4.3 2002/07/15 10:37:19 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -34,8 +34,6 @@
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
-
-#define	SYSTR_CLONE	_IOR('s', 1, int)
 
 #define SYSTR_EMULEN	8	/* sync with sys proc */
 

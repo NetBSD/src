@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.248.2.2 2002/06/20 16:34:15 gehenna Exp $
+$NetBSD: usbdevs,v 1.248.2.3 2002/07/15 10:36:17 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -288,6 +288,7 @@ vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
+vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -466,6 +467,7 @@ product ATI2 205		0xa001	USB Cable 205
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
+product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Audio-Technica products */
@@ -1066,6 +1068,7 @@ product PRIMAX G2300		0x0302	G2-300 scanner
 product PRIMAX G2E3002		0x0303	G2E-300 scanner
 product PRIMAX 9600		0x0340	Colorado USB 9600 scanner
 product PRIMAX 600U		0x0341	Colorado 600u scanner
+product PRIMAX 6200		0x0345	Visioneer 6200 scanner
 product PRIMAX 19200		0x0360	Colorado USB 19200 scanner
 product PRIMAX 1200U		0x0361	Colorado 1200u scanner
 product PRIMAX G600		0x0380	G2-600 scanner
@@ -1097,10 +1100,12 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 product	RAINBOW IKEY2000	0x1200	i-Key 2000  
 
 /* Roland products */
+product	ROLAND SC8850		0x0003	RolandED SC-8850 SOUND Canvas MIDI Synth.
 product	ROLAND UM1		0x0009	UM-1 MIDI I/F
 product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
 product	ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
+product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1163,6 +1168,7 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
+product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
 product SMC2 2020HUB            0x2020  USB Hub
 
 /* SOHOware products */
@@ -1207,6 +1213,7 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
 product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
@@ -1240,6 +1247,9 @@ product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
 
+/* Trumpion products */
+product	TRUMPION XXX1100	0x1100	XXX 1100
+
 /* Ultima products */
 product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus scanner
 
@@ -1260,6 +1270,7 @@ product VISION VC6452V002	0x0002	CPiA Camera
 /* Visioneer products */
 product VISIONEER 7600		0x0211	OneTouch 7600
 product VISIONEER 5300		0x0221	OneTouch 5300
+product VISIONEER 3000		0x0224	Scanport 3000
 product VISIONEER 6100		0x0231	OneTouch 6100
 product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100

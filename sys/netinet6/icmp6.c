@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75.6.2 2002/06/20 15:52:37 gehenna Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.75.6.3 2002/07/15 10:37:04 gehenna Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.6.2 2002/06/20 15:52:37 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.6.3 2002/07/15 10:37:04 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -469,6 +469,7 @@ icmp6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
+	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 	code = icmp6->icmp6_code;
 
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
@@ -1623,9 +1624,10 @@ ni6_nametodns(name, namelen, old)
 			while (i > 0) {
 				if (!isalnum(*p) && *p != '-')
 					goto fail;
-				if (isupper(*p))
-					*cp++ = tolower(*p++);
-				else
+				if (isupper(*p)) {
+					*cp++ = tolower(*p);
+					p++;
+				} else
 					*cp++ = *p++;
 				i--;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.11.8.1 2002/05/16 11:29:45 gehenna Exp $	*/
+/*	$NetBSD: urio.c,v 1.11.8.2 2002/07/15 10:36:14 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.11.8.1 2002/05/16 11:29:45 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.11.8.2 2002/07/15 10:36:14 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	USB_GET_SC_OPEN(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n", 
+	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));
 
 	if (sc->sc_dying)
@@ -435,7 +435,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
 
-	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev), 
+	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev),
 		     (long)uio->uio_resid));
 
 	if (sc->sc_dying)
@@ -478,7 +478,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTFN(5, ("uriowrite: done unit=%d, error=%d\n", URIOUNIT(dev), 
+	DPRINTFN(5, ("uriowrite: done unit=%d, error=%d\n", URIOUNIT(dev),
 		     error));
 
 	return (error);
@@ -527,7 +527,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	len = rcmd->length;
 
 	DPRINTFN(1,("urio_ioctl: cmd=0x%08lx reqtype=0x%0x req=0x%0x "
-		    "value=0x%0x index=0x%0x len=0x%0x\n", 
+		    "value=0x%0x index=0x%0x len=0x%0x\n",
 		    cmd, requesttype, rcmd->request, rcmd->value,
 		    rcmd->index, len));
 
@@ -548,7 +548,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 		uio.uio_resid = len;
 		uio.uio_offset = 0;
 		uio.uio_segflg = UIO_USERSPACE;
-		uio.uio_rw = req.bmRequestType & UT_READ ? 
+		uio.uio_rw = req.bmRequestType & UT_READ ?
 			     UIO_READ : UIO_WRITE;
 		uio.uio_procp = p;
 		ptr = malloc(len, M_TEMP, M_WAITOK);

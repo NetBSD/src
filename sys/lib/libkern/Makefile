@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63.8.1 2002/05/30 14:48:09 gehenna Exp $
+#	$NetBSD: Makefile,v 1.63.8.2 2002/07/15 10:36:43 gehenna Exp $
 
 LIB=	kern
 NOPIC=	# defined
@@ -89,3 +89,6 @@ lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
 	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
+
+showsources: ${SRCS}
+	@echo ${.ALLSRC}

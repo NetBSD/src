@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.79.2.1 2002/05/16 04:47:32 gehenna Exp $	*/
+/*	$NetBSD: vnd.c,v 1.79.2.2 2002/07/15 10:35:10 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.79.2.1 2002/05/16 04:47:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.79.2.2 2002/07/15 10:35:10 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -932,6 +932,37 @@ vndioctl(dev, cmd, data, flag, p)
 		vndunlock(vnd);
 
 		break;
+
+	case VNDIOCGET: {
+		struct vnd_user *vnu;
+		struct vattr va;
+
+		vnu = (struct vnd_user *)data;
+
+		if (vnu->vnu_unit == -1)
+			vnu->vnu_unit = unit;
+		if (vnu->vnu_unit >= numvnd)
+			return (ENXIO);
+		if (vnu->vnu_unit < 0)
+			return (EINVAL);
+
+		vnd = &vnd_softc[vnu->vnu_unit];
+
+		if (vnd->sc_flags & VNF_INITED) {
+			error = VOP_GETATTR(vnd->sc_vp, &va, p->p_ucred, p);
+			if (error)
+				return (error);
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+		}
+		else {
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+		}
+
+		break;
+	}
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(vnd->sc_dkdev.dk_label);

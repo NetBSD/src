@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.5 2001/11/13 07:41:37 lukem Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.5.8.1 2002/07/15 10:35:33 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.5 2001/11/13 07:41:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.5.8.1 2002/07/15 10:35:33 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 
 #include <net/if.h>

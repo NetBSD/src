@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.15 2002/03/06 05:33:05 nathanw Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.15.6.1 2002/07/15 10:35:23 gehenna Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.15 2002/03/06 05:33:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.15.6.1 2002/07/15 10:35:23 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.15 2002/03/06 05:33:05 nathanw Exp $");
 #include <net/if_ieee1394.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
-#include <net/ethertypes.h>
 #include <net/route.h>
 
 #ifdef INET

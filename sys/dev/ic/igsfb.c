@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.2.4.1 2002/07/15 10:35:18 gehenna Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.4.1 2002/07/15 10:35:18 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ igsfb_common_attach(sc, isconsole)
 	 */
 	if (isconsole) {
 		long defattr;
-		(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&igsfb_stdscreen, ri, 0, 0, defattr);
 	}
 
