@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2000/05/26 21:19:27 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2000/06/19 19:49:51 is Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -616,7 +616,10 @@ void
 identifycpu()
 {
 	register int pvr, hid1;
-	char *mach, *cpu;
+	char *mach, *pup, *cpu;
+
+	const char *p5type_p = (const char *)0xf00010;
+	int cpuclock, busclock;
 
 	/* Amiga type */
 	if (is_a4000()) {
@@ -624,6 +627,46 @@ identifycpu()
 	}
 	else {
 		mach = "Amiga 1200";
+	}
+	/* XXX removethis */printf("p5serial = %8s\n", p5type_p);
+	switch(p5type_p[0]) {
+	case 'D':
+		pup = "[PowerUP]";
+		break;
+	case 'E':
+		pup = "[CSPPC]";
+		break;
+	case 'F':
+		pup = "[CS Mk.III]";
+		break;
+	case 'I':
+		pup = "[BlizzardPPC]";
+		break;
+	default:
+		pup = "";
+		break;
+	}
+
+	switch(p5type_p[1]) {
+	case 'A':
+		cpuclock = 150;
+		busclock = 60000000/4;
+		break;
+	case 'B':
+		cpuclock = 180;
+		busclock = 66000000/4;
+		break;
+	case 'C':
+		cpuclock = 200;
+		busclock = 66000000/4;
+		break;
+	case 'D':
+		cpuclock = 233;
+		busclock = 66000000/4;
+		break;
+	default:
+		cpuclock = 0;
+		break;
 	}
 
 	/* find CPU type */
@@ -664,7 +707,9 @@ identifycpu()
 		break;
 	}
 
-	sprintf(cpu_model, "%s (%s rev.%x)", mach, cpu, pvr & 0xffff);
+	snprintf(cpu_model, sizeof(cpu_model), 
+	    "%s %s (%s rev.%x %d MHz, busclk %d kHz)",
+	    mach, pup, cpu, pvr & 0xffff, cpuclock, busclock / 1000);
 	printf("%s\n", cpu_model);
 }
 
