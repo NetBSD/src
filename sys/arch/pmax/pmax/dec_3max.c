@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.13 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.13 1999/05/26 04:23:59 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
@@ -107,8 +106,7 @@ void		dec_3max_bus_reset __P((void));
 void		dec_3max_enable_intr
 		   __P ((u_int slotno, int (*handler)  __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_3max_intr __P((u_int mask, u_int pc,
-			      u_int statusReg, u_int causeReg));
+int		dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3max_cons_init __P((void));
 void		dec_3max_device_register __P((struct device *, void *));
 
@@ -116,6 +114,9 @@ static void	dec_3max_errintr __P((void));
 
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
 
 /*
  * Fill in platform struct.
@@ -250,22 +251,22 @@ dec_3max_enable_intr(slotno, handler, sc, on)
  * Returns spl value.
  */
 int
-dec_3max_intr(mask, pc, statusReg, causeReg)
+dec_3max_intr(mask, pc, status, cause)
 	unsigned mask;
 	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+	unsigned status;
+	unsigned cause;
 {
-	unsigned i, m;
-	volatile struct chiptime *c =
-	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
-	unsigned csr;
-	int temp;
-	struct clockframe cf;
 	static int warned = 0;
+	unsigned i, m;
+	unsigned csr;
 
 	/* handle clock interrupts ASAP */
 	if (mask & MIPS_INT_MASK_1) {
+		struct clockframe cf;
+		struct chiptime *clk;
+		volatile int temp;
+
 		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
 			warned = 1;
@@ -275,18 +276,20 @@ dec_3max_intr(mask, pc, statusReg, causeReg)
 			printf("WARNING: power supply is OK again\n");
 		}
 
-		temp = c->regc;	/* XXX clear interrupt bits */
+		clk = (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
+		temp = clk->regc;	/* XXX clear interrupt bits */
+
 		cf.pc = pc;
-		cf.sr = statusReg;
+		cf.sr = status;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
 		/* keep clock interrupts enabled when we return */
-		causeReg &= ~MIPS_INT_MASK_1;
+		cause &= ~MIPS_INT_MASK_1;
 	}
 
 	/* If clock interrups were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (mask & MIPS_INT_MASK_0) {
 		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
@@ -321,7 +324,7 @@ dec_3max_intr(mask, pc, statusReg, causeReg)
 		dec_3max_errintr();
 	}
 
-	return(MIPS_SR_INT_IE | (statusReg & ~causeReg & MIPS_HARD_INT_MASK));
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

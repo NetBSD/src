@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.19 1999/05/25 07:37:08 nisimura Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.20 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.19 1999/05/25 07:37:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.20 1999/05/26 04:23:59 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.19 1999/05/25 07:37:08 nisimura E
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
@@ -117,14 +116,20 @@ void		dec_3maxplus_device_register __P((struct device *, void *));
 static void 	dec_3maxplus_errintr __P ((void));
 
 
-void kn03_wbflush __P((void));
-unsigned kn03_clkread __P((void));
-extern unsigned (*clkread) __P((void));
-
 /*
  * Local declarations
  */
 u_long	kn03_tc3_imask;
+
+static unsigned latched_cycle_cnt;
+
+void kn03_wbflush __P((void));
+unsigned kn03_clkread __P((void));
+extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+extern char cpu_model[];
 
 
 /*
@@ -327,7 +332,7 @@ dec_3maxplus_intr(mask, pc, status, cause)
 	unsigned cause;
 {
 	static int user_warned = 0;
-	u_int32_t old_buscycle;
+	unsigned old_buscycle;
 
 	if (mask & MIPS_INT_MASK_4)
 		prom_haltbutton();

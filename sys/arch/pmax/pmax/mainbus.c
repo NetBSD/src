@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31 1999/05/26 04:23:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/sysconf.h>
 #include <machine/autoconf.h>
 #include <pmax/pmax/pmaxtype.h>
 
@@ -102,7 +103,7 @@ mbattach(parent, self, aux)
 #endif /* NTC */
 
 	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
-		nca.ca_name = "baseboard";
+		nca.ca_name = platform.iobus;
 		nca.ca_slot = 0;
 		config_found(self, &nca, mbprint);
 	}
