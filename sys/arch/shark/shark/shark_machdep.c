@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.13 2003/04/26 11:05:20 ragge Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.14 2003/05/03 12:45:16 ragge Exp $	*/
 
 /*
  * Copyright 1997
@@ -293,6 +293,7 @@ initarm(ofw_handle)
 		panic("Cannot claim FIQ vector.");
 
 #if NKSYMS || defined(DDB) || defined(LKM)
+#ifdef __ELF__
 	ksyms_init(0, NULL, NULL);	/* XXX */
 #else
 	{
@@ -303,6 +304,7 @@ initarm(ofw_handle)
 		ksyms_init(kernexec->a_syms, &end, esym);
 	}
 #endif /* __ELF__ */
+#endif /* NKSYMS || defined(DDB) || defined(LKM) */
 
 #ifdef DDB
 	db_machine_init();
