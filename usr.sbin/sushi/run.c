@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.3 2001/01/24 07:46:23 garbled Exp $       */
+/*      $NetBSD: run.c,v 1.4 2002/02/12 12:21:01 blymn Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -553,7 +553,6 @@ run_prog(int display, char **args)
 		}
 	}
 	/* clean things up */
-	echo();
 	delwin(actionwin);
 	delwin(boxwin);
 	delwin(statuswin);
