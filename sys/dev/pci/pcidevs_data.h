@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.342 2001/07/25 01:45:55 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.343 2001/07/28 00:33:44 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -44,6 +44,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c985 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
+	    0,
+	    "3Com",
+	    "3c556 V.90 MiniPCI Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
