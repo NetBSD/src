@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14 2001/01/12 13:43:12 bjh21 Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.1 2001/01/12 21:31:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
@@ -44,32 +45,32 @@
 
 /* Glue code to interface db_disasm to the generic ARM disassembler */
 
+static u_int db_disasm_read_word(u_int);
+static void db_disasm_printaddr(u_int);
+
+static disasm_interface_t db_disasm_interface = {
+	db_disasm_read_word, db_disasm_printaddr, db_printf
+};
+
 static u_int
-db_disasm_read_word(address)
-	u_int address;
+db_disasm_read_word(u_int address)
 {
-	return(db_get_value(address, 4, 0));
+
+	return db_get_value(address, 4, 0);
 }
 
 static void
-db_disasm_printaddr(address)
-	u_int address;
+db_disasm_printaddr(u_int address)
 {
+
 	db_printsym((db_addr_t)address, DB_STGY_ANY, db_printf);
 }
 
 vm_offset_t
-db_disasm(loc, altfmt)
-	vm_offset_t loc;
-	boolean_t altfmt;
+db_disasm(vm_offset_t loc, boolean_t altfmt)
 {
-	disasm_interface_t di;
 
-	di.di_readword = db_disasm_read_word;
-	di.di_printaddr = db_disasm_printaddr;
-	di.di_printf = db_printf;
-
-	return(disasm(&di, loc, altfmt));
+	return disasm(&db_disasm_interface, loc, altfmt);
 }
 
 /* End of db_disasm.c */
