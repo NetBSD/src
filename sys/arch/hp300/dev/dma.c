@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 1997/04/27 21:02:34 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -65,14 +65,13 @@
  */
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
 
-struct	dma_chain {
+struct dma_chain {
 	int	dc_count;
 	char	*dc_addr;
 };
 
-struct	dma_channel {
+struct dma_channel {
 	struct	dmaqueue *dm_job;		/* current job */
-	struct	dma_softc *dm_softc;		/* pointer back to softc */
 	struct	dmadevice *dm_hwaddr;		/* registers if DMA_C */
 	struct	dmaBdevice *dm_Bhwaddr;		/* registers if not DMA_C */
 	char	dm_flags;			/* misc. flags */
@@ -82,15 +81,14 @@ struct	dma_channel {
 	struct	dma_chain dm_chain[DMAMAXIO];	/* all segments */
 };
 
-struct	dma_softc {
-	char	*sc_xname;			/* XXX external name */
+struct dma_softc {
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
 	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
 	char	sc_type;			/* A, B, or C */
 	int	sc_ipl;				/* our interrupt level */
 	void	*sc_ih;				/* interrupt cookie */
-} Dma_softc;
+} dma_softc;
 
 /* types */
 #define	DMA_B	0
@@ -120,10 +118,13 @@ long	dmaword[NDMACHAN];
 long	dmalword[NDMACHAN];
 #endif
 
+/*
+ * Initialize the DMA engine, called by dioattach()
+ */
 void
 dmainit()
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 	struct dmareg *dma;
 	struct dma_channel *dc;
 	int i;
@@ -132,7 +133,6 @@ dmainit()
 	/* There's just one. */
 	sc->sc_dmareg = (struct dmareg *)DMA_BASE;
 	dma = sc->sc_dmareg;
-	sc->sc_xname = "dma0";
 
 	/*
 	 * Determine the DMA type.  A DMA_A or DMA_B will fail the
@@ -156,7 +156,6 @@ dmainit()
 
 	for (i = 0; i < NDMACHAN; i++) {
 		dc = &sc->sc_chan[i];
-		dc->dm_softc = sc;
 		dc->dm_job = NULL;
 		switch (i) {
 		case 0:
@@ -180,8 +179,8 @@ dmainit()
 	timeout(dmatimeout, sc, 30 * hz);
 #endif
 
-	printf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
-	       rev, (rev == 'B') ? 16 : 32);
+	printf("98620%c, 2 channels, %d bit DMA\n",
+	    rev, (rev == 'B') ? 16 : 32);
 
 	/*
 	 * Defer hooking up our interrupt until the first
@@ -197,7 +196,7 @@ dmainit()
 void
 dmacomputeipl()
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 
 	if (sc->sc_ih != NULL)
 		intr_disestablish(sc->sc_ih);
@@ -214,7 +213,7 @@ int
 dmareq(dq)
 	struct dmaqueue *dq;
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 	int i, chan, s;
 
 #if 1
@@ -259,7 +258,7 @@ dmafree(dq)
 	struct dmaqueue *dq;
 {
 	int unit = dq->dq_chan;
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 	struct dmaqueue *dn;
 	int chan, s;
@@ -332,7 +331,7 @@ dmago(unit, addr, count, flags)
 	int count;
 	int flags;
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 	char *dmaend = NULL;
 	int seg, tcount;
@@ -469,14 +468,14 @@ dmago(unit, addr, count, flags)
 	}
 	dmatimo[unit] = 1;
 #endif
-	DMA_ARM(dc);
+	DMA_ARM(sc, dc);
 }
 
 void
 dmastop(unit)
 	int unit;
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = &dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 
 #ifdef DEBUG
@@ -545,8 +544,7 @@ dmaintr(arg)
 			   dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}
 		if (stat & DMA_ARMED)
-			printf("%s, chan %d: intr when armed\n",
-			    sc->sc_xname, i);
+			printf("dma channel %d: intr when armed\n", i);
 #endif
 		/*
 		 * Load the next segemnt, or finish up if we're done.
@@ -564,7 +562,7 @@ dmaintr(arg)
 			    (dc->dm_flags & DMAF_NOINTR))
 				dc->dm_cmd &= ~DMA_ENAB;
 			DMA_CLEAR(dc);
-			DMA_ARM(dc);
+			DMA_ARM(sc, dc);
 		} else
 			dmastop(i);
 	}
@@ -583,8 +581,8 @@ dmatimeout(arg)
 		s = splbio();
 		if (dmatimo[i]) {
 			if (dmatimo[i] > 1)
-				printf("%s: chan %d timeout #%d\n",
-				    sc->sc_xname, i, dmatimo[i]-1);
+				printf("dma channel %d timeout #%d\n",
+				    i, dmatimo[i]-1);
 			dmatimo[i]++;
 		}
 		splx(s);
