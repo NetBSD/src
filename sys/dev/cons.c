@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.41 2001/11/13 05:32:50 lukem Exp $	*/
+/*	$NetBSD: cons.c,v 1.42 2002/08/02 19:55:32 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.41 2001/11/13 05:32:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.42 2002/08/02 19:55:32 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +85,7 @@ cnopen(dev, flag, mode, p)
 		 * code. Panicing looks better than jumping into nowhere
 		 * through cdevsw below....
 		 */
-		panic("cnopen: cn_tab->cn_dev == NODEV\n");
+		panic("cnopen: no console device\n");
 	}
 	if (dev == cndev) {
 		/*
