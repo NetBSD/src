@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.19 1994/12/30 05:14:52 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.20 1994/12/30 05:20:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -231,9 +231,7 @@ scsi_strvis(dst, src, len)
 		--len;
 
 	while (len > 0) {
-		if (*src == 0x00)
-			break;
-		else if (*src < 0x20 || *src >= 0x80) {
+		if (*src < 0x20 || *src >= 0x80) {
 			/* non-printable characters */
 			*dst++ = '\\';
 			*dst++ = ((*src & 0300) >> 6) + '0';
@@ -368,9 +366,10 @@ scsi_probedev(scsi, target, lun)
 
 	{
 		int len = inqbuf.additional_length;
-		u_int8_t *p = inqbuf.unused + len;
-		while (p < (u_int8_t *)(&inqbuf + 1))
-			*p++ = 0;
+		while (len < 3)
+			inqbuf.unused[len++] = '\0';
+		while (len < 3 + 28)
+			inqbuf.unused[len++] = ' ';
 	}
 
 	finger = (struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(&inqbuf,
