@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.18 2002/09/20 13:08:21 mycroft Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.19 2002/09/20 19:51:35 mycroft Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 	set[1].fd = rtsock;
 	set[1].events = POLLIN;
 #else
-	set[1].events = 0;
+	set[1].fd = -1;
 #endif
 
 	/* configuration per interface */

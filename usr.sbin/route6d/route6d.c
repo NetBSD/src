@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.38 2002/09/20 13:30:18 mycroft Exp $	*/
+/*	$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.38 2002/09/20 13:30:18 mycroft Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.39 2002/09/20 19:51:33 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -643,7 +643,7 @@ init(void)
 		set[1].fd = rtsock;
 		set[1].events = POLLIN;
 	} else
-		set[1].events = 0;
+		set[1].fd = -1;
 }
 
 #define	RIPSIZE(n) \

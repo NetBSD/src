@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.23 2002/09/20 13:14:32 mycroft Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.24 2002/09/20 19:51:34 mycroft Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ main(argc, argv)
 		set[1].fd = rtsock;
 		set[1].events = POLLIN;
 	} else
-		set[1].events = 0;
+		set[1].fd = -1;
 
 	signal(SIGTERM, set_die);
 	signal(SIGUSR1, rtadvd_set_dump_file);
