@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.482 2002/09/22 06:32:47 gmcgarry Exp $
+#	$NetBSD: mi,v 1.483 2002/09/22 13:11:45 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1152,6 +1152,8 @@
 ./usr/share/man/cat2/ioctl.0		comp-c-catman
 ./usr/share/man/cat2/issetugid.0	comp-c-catman
 ./usr/share/man/cat2/kill.0		comp-c-catman
+./usr/share/man/cat2/kevent.0		comp-c-catman
+./usr/share/man/cat2/kqueue.0		comp-c-catman
 ./usr/share/man/cat2/ktrace.0		comp-c-catman
 ./usr/share/man/cat2/lchflags.0		comp-c-catman
 ./usr/share/man/cat2/lchmod.0		comp-c-catman
@@ -3871,6 +3873,8 @@
 ./usr/share/man/man2/ioctl.2		comp-c-man
 ./usr/share/man/man2/issetugid.2		comp-c-man
 ./usr/share/man/man2/kill.2		comp-c-man
+./usr/share/man/man2/kevent.2		comp-c-man
+./usr/share/man/man2/kqueue.2		comp-c-man
 ./usr/share/man/man2/ktrace.2		comp-c-man
 ./usr/share/man/man2/lchflags.2		comp-c-man
 ./usr/share/man/man2/lchmod.2		comp-c-man
