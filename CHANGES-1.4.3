@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.62 2000/09/26 15:19:40 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.63 2000/09/26 15:25:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1370,3 +1370,8 @@ distrib/sets/lists/man/md_share			1.99-1.100
 distrib/pmax/instkernel/Makefile		1.12 via patch (partial)
 
   Install the ecoff install kernel in the release directory.
+
+distrib/notes/Makefile.inc			patch
+
+  Make sure install notes are built before installing them under
+  ``make release''.
