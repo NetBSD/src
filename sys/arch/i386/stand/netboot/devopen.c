@@ -1,7 +1,7 @@
-/*	$NetBSD: devopen.c,v 1.4 1997/09/17 18:47:13 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5 1998/05/14 18:17:44 drochner Exp $	 */
 
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1996, 1998
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,8 @@
  */
 
 /*
- * bootfile from tftp overrides! TODO: pass (net) device to net_open
+ * bootfile from tftp overrides!
+ * TODO: pass (net) device to net_open
  */
 
 #include <sys/types.h>
@@ -45,10 +46,14 @@
 #include <lib/libsa/net.h>	/* global "bootfile" */
 
 #include <libi386.h>
+#ifdef _STANDALONE
 #include <bootinfo.h>
+#endif
 #include "dev_net.h"
 
+#ifdef _STANDALONE
 struct btinfo_bootpath bibp;
+#endif
 
 int
 devopen(f, fname, file)
@@ -72,8 +77,10 @@ devopen(f, fname, file)
 	else
 		*file = (char *) fname;
 
+#ifdef _STANDALONE
 	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
 	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+#endif
 
 	return (error);
 }
