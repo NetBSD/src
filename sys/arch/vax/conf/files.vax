@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.100 2003/09/29 21:04:53 matt Exp $
+#	$NetBSD: files.vax,v 1.101 2003/10/19 15:03:25 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -175,6 +175,16 @@ file	arch/vax/vsa/ncr.c		si_vsbus
 device	smg: wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
+
+# Color framebuffer on VS4000/60.
+device	lcg: wsemuldisplaydev
+attach	lcg at vsbus
+file	arch/vax/vsa/lcg.c		lcg needs-flag
+
+# Color framebuffer on VS4000/90.
+device	lcspx: wsemuldisplaydev
+attach	lcspx at vsbus
+file	arch/vax/vsa/lcspx.c		lcspx needs-flag
 
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus with le_vsbus:	le24
