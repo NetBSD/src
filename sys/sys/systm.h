@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143 2002/03/26 23:17:09 fredette Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.1 2002/05/16 12:44:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -100,9 +100,6 @@ extern const char version[];	/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
-
-extern int nblkdev;		/* number of entries in bdevsw */
-extern int nchrdev;		/* number of entries in cdevsw */
 
 extern int selwait;		/* select timeout address */
 
