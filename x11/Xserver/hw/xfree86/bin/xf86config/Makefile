@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/06 11:58:56 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/18 04:59:56 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SRCS=	xf86config.c cards.c
 LDADD=	-lxkbfile -lXext -lX11
 DPADD=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
 
-CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11INCDIR}/X11/Cards"' \
+CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11USRLIBDIR}/X11/Cards"' \
 		-DXKB_RULES_DIR=\"${X11INCDIR}/X11/xkb/rules\" \
 		-DXCONFIGFILE=\"XF86Config\" \
 		-DXVERSION="${XVERSION}" \
