@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.46 2003/11/19 18:06:13 christos Exp $	*/
+/*	$NetBSD: gram.y,v 1.47 2003/11/19 21:10:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -384,7 +384,7 @@ value:
 	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					  (void)snprintf(bf, sizeof(bf),
-					      FORMAT($1), $1.val);
+					      FORMAT($1), (long long)$1.val);
 					  $$ = intern(bf); };
 
 stringvalue:
