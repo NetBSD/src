@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.198 2001/09/28 02:06:55 thorpej Exp $
+#	$NetBSD: files.i386,v 1.199 2001/11/20 14:34:21 lukem Exp $
 #
 # new style config file for i386 architecture
 #
@@ -11,14 +11,14 @@ maxusers 2 16 128
 # APM options
 defopt	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
-			APMDEBUG_VALUE APM_POWER_PRINT APM_DISABLE_INTERRUPTS
-			APM_ALLOW_BOGUS_SEGMENTS
+			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
+defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
 defopt	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
-defopt	CPURESET_DELAY
+defparam CPURESET_DELAY
 
 # VM86 emulation
 defopt	VM86
@@ -42,7 +42,7 @@ defopt	MTRR
 defopt	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
-defopt	opt_realmem.h	REALBASEMEM REALEXTMEM
+defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 # understand boot device passed by pre-1.3 bootblocks
 defopt	COMPAT_OLDBOOT
@@ -165,7 +165,7 @@ file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
-defopt	PCI_CONF_MODE
+defparam PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
@@ -391,9 +391,9 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam PCIC_ISA_ALLOC_IOBASE
+defparam PCIC_ISA_ALLOC_IOSIZE
+defparam PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
@@ -422,9 +422,9 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	TCIC_ISA_ALLOC_IOBASE
-defopt	TCIC_ISA_ALLOC_IOSIZE
-defopt	TCIC_ISA_INTR_ALLOC_MASK
+defparam TCIC_ISA_ALLOC_IOBASE
+defparam TCIC_ISA_ALLOC_IOSIZE
+defparam TCIC_ISA_INTR_ALLOC_MASK
 
 device	tcic: pcmciabus
 file	dev/ic/tcic2.c			tcic
