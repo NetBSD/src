@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.1.2.1 1997/10/14 01:06:15 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.1.2.2 1997/10/14 21:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -202,6 +202,9 @@ ne_isa_attach(parent, self, aux)
 	}
 
 	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+
+	/* This interface is always enabled. */
+	dsc->sc_enabled = 1;
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.1.2.1 1997/10/14 01:16:46 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.1.2.2 1997/10/14 21:20:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,6 +186,9 @@ ne_pci_attach(parent, self, aux)
 	    PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
+
+	/* This interface is always enabled. */
+	dsc->sc_enabled = 1;
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address
