@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.1,v 1.11 2001/12/01 20:33:02 wiz Exp $
+.\"	$NetBSD: locate.1,v 1.12 2003/04/05 16:46:00 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd April 5, 2003
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -63,9 +63,6 @@ including slashes (``/'').
 As a special case, a pattern containing no globbing characters (``foo'')
 is matched as though it were ``*foo*''.
 .Pp
-.Nm
-exits with a successful status if a match is found.
-.Pp
 Options:
 .Bl -tag -width flag
 .It Fl d Ar dbpath
@@ -77,6 +74,11 @@ The environment variable
 .Ar LOCATE_PATH
 has the same effect.
 .El
+.Sh EXIT STATUS
+.Nm
+exits with a 0 if a match is found, and >0 if no match is found or if
+another problem (such as a missing or corrupted database file) is
+encountered.
 .Sh FILES
 .Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
