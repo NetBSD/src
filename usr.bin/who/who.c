@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
+/*	$NetBSD: who.c,v 1.5 1997/07/23 20:08:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,36 +36,42 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $";
+__RCSID("$NetBSD: who.c,v 1.5 1997/07/23 20:08:03 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pwd.h>
-#include <utmp.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
 #include <err.h>
+#include <locale.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <utmp.h>
 
 void output __P((struct utmp *));
+void output_labels __P((void));
 void who_am_i __P((FILE *));
+FILE *file __P((char *));
 void usage __P((void));
-int only_current_term;		/* show info about the current terminal only */
+
 int show_term;			/* show term state */
 int show_idle;			/* show idle time */
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -73,10 +79,13 @@ main(argc, argv)
 	char **argv;
 {
 	struct utmp usr;
-	FILE *ufp, *file();
-	int c;
+	FILE *ufp;
+	int c, only_current_term, show_labels;
 
-	while ((c = getopt(argc, argv, "mTu")) != -1) {
+	setlocale(LC_ALL, "");
+
+	only_current_term = show_term = show_idle = show_labels = 0;
+	while ((c = getopt(argc, argv, "mTuH")) != -1) {
 		switch (c) {
 		case 'm':
 			only_current_term = 1;
@@ -86,6 +95,9 @@ main(argc, argv)
 			break;
 		case 'u':
 			show_idle = 1;
+			break;
+		case 'H':
+			show_labels = 1;
 			break;
 		default:
 			usage();
@@ -99,6 +111,9 @@ main(argc, argv)
 		err(1, "cannot change directory to /dev");
 		/* NOTREACHED */
 	}
+
+	if (show_labels)
+		output_labels();
 
 	switch (argc) {
 	case 0:					/* who */
@@ -145,9 +160,9 @@ who_am_i(ufp)
 	char *t;
 
 	/* search through the utmp and find an entry for this tty */
-	if (p = ttyname(0)) {
+	if ((p = ttyname(0)) != NULL) {
 		/* strip any directory component */
-		if (t = rindex(p, '/'))
+		if ((t = rindex(p, '/')) != NULL)
 			p = t + 1;
 		while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
 			if (usr.ut_name && !strcmp(usr.ut_line, p)) {
@@ -176,19 +191,19 @@ output(up)
 	static time_t now = 0;
 	time_t idle;
 
+	state = '?';
+	idle = 0;
+
 	if (show_term || show_idle) {
 		if (now == 0)
 			time(&now);
 		
-		strncpy (line, up->ut_line, sizeof (up->ut_line));
+		strncpy(line, up->ut_line, sizeof (up->ut_line));
 		line[sizeof (up->ut_line)] = '\0';
 
 		if (stat(line, &sb) == 0) {
 			state = (sb.st_mode & 020) ? '+' : '-';
 			idle = now - sb.st_atime;
-		} else {
-			state = '?';
-			idle = 0;
 		}
 		
 	}
@@ -206,15 +221,34 @@ output(up)
 		if (idle < 60) 
 			(void)printf("  .   ");
 		else if (idle < (24 * 60 * 60))
-			(void)printf("%02d:%02d ", 
-				     (idle / (60 * 60)),
-				     (idle % (60 * 60)) / 60);
+			(void)printf("%02ld:%02ld ", 
+				     (long)(idle / (60 * 60)),
+				     (long)(idle % (60 * 60)) / 60);
 		else
 			(void)printf(" old  ");
 	}
 	
 	if (*up->ut_host)
 		printf("\t(%.*s)", UT_HOSTSIZE, up->ut_host);
+	(void)putchar('\n');
+}
+
+void
+output_labels()
+{
+	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, "USER");
+
+	if (show_term)
+		(void)printf("S ");
+	
+	(void)printf("%-*.*s ", UT_LINESIZE, UT_LINESIZE, "LINE");
+	(void)printf("WHEN         ");
+
+	if (show_idle)
+		(void)printf("IDLE  ");
+	
+	(void)printf("\t%.*s", UT_HOSTSIZE, "FROM");
+
 	(void)putchar('\n');
 }
 
@@ -228,12 +262,12 @@ file(name)
 		err(1, "%s", name);
 		/* NOTREACHED */
 	}
-	return(ufp);
+	return (ufp);
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: who [-mTu] [ file ]\n       who am i\n");
+	(void)fprintf(stderr, "usage: who [-mTuH] [ file ]\n       who am i\n");
 	exit(1);
 }
