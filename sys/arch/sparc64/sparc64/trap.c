@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2003/11/04 14:14:28 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.100 2003/11/04 14:24:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2003/11/04 14:14:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2003/11/04 14:24:25 pk Exp $");
 
 #define NEW_FPSTATE
 
@@ -879,7 +879,7 @@ badtrap:
 		KSI_INIT_TRAP(&ksi);
 		sig = SIGEMT;
 		ksi.ksi_trap = type;
-		ksi.ksi_code = 0;
+		ksi.ksi_code = SI_NOINFO;
 		ksi.ksi_addr = (void *)pc;
 		break;
 
@@ -1304,12 +1304,13 @@ kfault:
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = 0;
+			ksi.ksi_code = SI_NOINFO;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
+		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);
@@ -1808,6 +1809,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
+		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)pc;
 		trapsignal(l, &ksi);
