@@ -30,14 +30,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: atan.3,v 1.5 1995/03/04 01:36:37 jtc Exp $
+.\"	$Id: atan.3,v 1.6 1995/04/14 18:39:59 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt ATAN 3
 .Os
 .Sh NAME
-.Nm atan ,
-.Nm atanf
+.Nm atan
 .Nd arc tangent function of one variable
 .Sh SYNOPSIS
 .Fd #include <math.h>
@@ -51,17 +50,14 @@ The
 and 
 .Fn atanf
 functions compute the principal value of the arc tangent of
-.Fa x .
-For a discussion of error due to roundoff, see
-.Xr math 3 .
-.Sh RETURN VALUES
-The
-.Fn atan
-function returns the arc tangent in the range
+.Fa x 
+in the range
 .Bk -words
-.Bq -\*(Pi/2 , +\*(Pi/2
+.Bq -\*(Pi/2 , +\*(Pi/2 .
 .Ek
-radians.
+.Sh RETURN VALUES
+Exceptional cases are handled by
+.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
@@ -72,9 +68,5 @@ radians.
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3 ,
-.Xr math 3
-.Sh STANDARDS
-The
-.Fn atan
-function conforms to
-.St -ansiC .
+.Xr math 3 ,
+.Xr matherr 3

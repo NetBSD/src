@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: ieee_test.3,v 1.1 1994/03/11 17:19:01 jtc Exp $
+.\"	$Id: ieee_test.3,v 1.2 1995/04/14 18:40:14 jtc Exp $
 .\"
 .Dd March 10, 1994
 .Dt IEEE_TEST 3
@@ -44,10 +44,16 @@
 .Fd #include <math.h>
 .Ft double 
 .Fn logb "double x"
+.Ft float
+.Fn logbf "float x"
 .Ft double 
 .Fn scalb "double x" "double n"
+.Ft float
+.Fn scalbf "float x" "float n"
 .Ft double
 .Fn significand "double x"
+.Ft float
+.Fn significand "float x"
 .Sh DESCRIPTION
 These functions allow users to test conformance to 
 .St -ieee754 .
@@ -85,6 +91,5 @@ is 0, \*(Pm\*(If, or \*(Na.
 .Sh SEE ALSO
 .Xr ieee 3 ,
 .Xr math 3
-
 .Sh STANDARDS
 .St -ieee754

@@ -30,15 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acos.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: acos.3,v 1.5 1995/03/04 01:36:29 jtc Exp $
+.\"	$Id: acos.3,v 1.6 1995/04/14 18:39:53 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt ACOS 3
 .Os
 .Sh NAME
-.Nm acos ,
-.Nm acosf
-.Nd arc cosine functions
+.Nm acos
+.Nd arc cosine function
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
@@ -51,31 +50,12 @@ The
 and
 .Fn acosf
 functions compute the principal value of the arc cosine of
-.Fa x .
-A domain error occurs for arguments not in the range [-1, +1].
-For a discussion of error due to roundoff, see
-.Xr math 3 .
+.Fa x 
+in the range
+.Bq 0 , \*(Pi .
 .Sh RETURN VALUES
-The 
-.Fn acos
-function returns the arc cosine in the range
-.Bq 0 , \*(Pi
-radians.
-On the
-.Tn VAX
-and
-.Tn Tahoe ,
-if:
-.Bd -unfilled -offset indent
-.Pf \&| Ns Ar x Ns \&| > 1 ,
-.Ed
-.Pp
-.Fn acos x
-sets the global variable
-.Va errno
-to
-.Dv EDOM
-and a reserved operand fault is generated.
+Exceptional cases are handled by
+.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr sin 3 ,
 .Xr cos 3 ,
@@ -86,9 +66,5 @@ and a reserved operand fault is generated.
 .Xr sinh 3 ,
 .Xr cosh 3 ,
 .Xr tanh 3 ,
-.Xr math 3
-.Sh STANDARDS
-The
-.Fn acos
-function conforms to
-.St -ansiC .
+.Xr math 3 ,
+.Xr matherr 3

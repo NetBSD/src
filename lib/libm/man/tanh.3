@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tanh.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: tanh.3,v 1.4 1993/10/05 16:33:49 jtc Exp $
+.\"	$Id: tanh.3,v 1.5 1995/04/14 18:40:23 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt TANH 3
@@ -42,10 +42,14 @@
 .Fd #include <math.h>
 .Ft double
 .Fn tanh "double x"
+.Ft float
+.Fn tanhf "float x"
 .Sh DESCRIPTION
 The
 .Fn tanh
-function computes the hyperbolic tangent of
+and
+.Fn tanhf
+functions compute the hyperbolic tangent of
 .Fa x .
 For a discussion of error due to roundoff, see
 .Xr math 3 .

@@ -30,15 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$Id: lgamma.3,v 1.6 1994/01/11 00:46:56 jtc Exp $
+.\"	$Id: lgamma.3,v 1.7 1995/04/14 18:40:16 jtc Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
 .Os BSD 4.3
 .Sh NAME
-.Nm lgamma ,
-.Nm gamma
-.Nd log gamma function, gamma function
+.Nm lgamma 
+.Nd log gamma function
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft extern int
@@ -46,8 +45,8 @@
 .sp
 .Ft double
 .Fn lgamma "double x"
-.Ft double
-.Fn gamma "double x"
+.Ft float
+.Fn lgammaf "float x"
 .Sh DESCRIPTION
 .Fn Lgamma x
 .if t \{\
@@ -65,9 +64,6 @@ The external integer
 .Fa signgam
 returns the sign of \(*G(x).
 .Pp
-.Fn Gamma x
-returns \(*G(x), with no effect on
-.Fa signgam .
 .Sh IDIOSYNCRASIES
 Do not use the expression
 .Dq Li signgam\(**exp(lgamma(x))
@@ -113,12 +109,3 @@ The
 .Nm lgamma
 function appeared in 
 .Bx 4.3 .
-The
-.Nm gamma
-function appeared in
-.Bx 4.4 .
-The name
-.Fn gamma
-was originally dedicated to the
-.Fn lgamma
-function, so some old code may no longer be compatible.

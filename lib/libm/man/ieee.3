@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: ieee.3,v 1.7 1994/03/10 18:15:07 jtc Exp $
+.\"	$Id: ieee.3,v 1.8 1995/04/14 18:40:13 jtc Exp $
 .\"
 .Dd Feb 25, 1994
 .Dt IEEE 3
@@ -47,16 +47,28 @@
 .Fd #include <math.h>
 .Ft double 
 .Fn copysign "double x" "double y"
+.Ft float
+.Fn copysignf "float x" "float y"
 .Ft int 
 .Fn finite "double x"
 .Ft int
+.Fn finitef "float x"
+.Ft int
 .Fn ilogb "double x"
+.Ft int
+.Fn ilogbf "float x"
 .Ft double 
 .Fn nextafter "double x" "double y"
+.Ft float
+.Fn nextafterf "float x" "float y"
 .Ft double
 .Fn remainder "double x" "double y"
+.Ft float
+.Fn remainderf "float x" "float y"
 .Ft double 
 .Fn scalbn "double x" "int n"
+.Ft float
+.Fn scalbnf "float x" "int n"
 .Sh DESCRIPTION
 These functions are required or recommended by 
 .St -ieee754 .

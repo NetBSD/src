@@ -30,15 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)asin.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: asin.3,v 1.5 1995/03/04 01:36:34 jtc Exp $
+.\"	$Id: asin.3,v 1.6 1995/04/14 18:39:56 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt ASIN 3
 .Os
 .Sh NAME
-.Nm asin ,
-.Nm asinf
-.Nd arc sine functions
+.Nm asin 
+.Nd arc sine function
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
@@ -51,33 +50,14 @@ The
 and 
 .Fn asinf
 functions compute the principal value of the arc sine of
-.Fa x .
-A domain error occurs for arguments not in the range [-1, +1].
-For a discussion of error due to roundoff, see
-.Xr math 3 .
-.Sh RETURN VALUES
-The
-.Fn asin
-function returns the arc sine in the range
+.Fa x 
+in the range
 .Bk -words
-.Bq -\*(Pi/2, +\*(Pi/2
+.Bq -\*(Pi/2, +\*(Pi/2 .
 .Ek
-radians.
-On the
-.Tn VAX ,
-and Tahoe ,
-if:
-.Bd -unfilled -offset indent
-.Pf \&| Ns Ar x Ns \&| > 1
-.Ed
-.Pp
-the
-global variable
-.Va errno
-is set to
-.Er EDOM
-and
-a reserved operand fault generated.
+.Sh RETURN VALUES
+Exceptional cases are handled by 
+.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr atan 3 ,
@@ -88,9 +68,5 @@ a reserved operand fault generated.
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3 ,
-.Xr math 3 
-.Sh STANDARDS
-The
-.Fn asin
-function conforms to
-.St -ansiC .
+.Xr math 3 ,
+.Xr matherr 3
