@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.141 1995/07/04 07:23:53 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.142 1995/08/05 23:50:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -983,46 +983,44 @@ void
 wdgetdisklabel(wd)
 	struct wd_softc *wd;
 {
+	struct disklabel *lp = &wd->sc_dk.dk_label;
 	char *errstring;
 
-	bzero(&wd->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct disklabel));
 	bzero(&wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-	wd->sc_dk.dk_label.d_secsize = DEV_BSIZE;
-	wd->sc_dk.dk_label.d_ntracks = wd->sc_params.wdp_heads;
-	wd->sc_dk.dk_label.d_nsectors = wd->sc_params.wdp_sectors;
-	wd->sc_dk.dk_label.d_ncylinders = wd->sc_params.wdp_cylinders;
-	wd->sc_dk.dk_label.d_secpercyl =
-	    wd->sc_dk.dk_label.d_ntracks * wd->sc_dk.dk_label.d_nsectors;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_ntracks = wd->sc_params.wdp_heads;
+	lp->d_nsectors = wd->sc_params.wdp_sectors;
+	lp->d_ncylinders = wd->sc_params.wdp_cylinders;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 #if 0
-	strncpy(wd->sc_dk.dk_label.d_typename, "ST506 disk", 16);
-	wd->sc_dk.dk_label.d_type = DTYPE_ST506;
+	strncpy(lp->d_typename, "ST506 disk", 16);
+	lp->d_type = DTYPE_ST506;
 #endif
-	strncpy(wd->sc_dk.dk_label.d_packname, wd->sc_params.wdp_model, 16);
-	wd->sc_dk.dk_label.d_secperunit =
-	    wd->sc_dk.dk_label.d_secpercyl * wd->sc_dk.dk_label.d_ncylinders;
-	wd->sc_dk.dk_label.d_rpm = 3600;
-	wd->sc_dk.dk_label.d_interleave = 1;
-	wd->sc_dk.dk_label.d_flags = 0;
+	strncpy(lp->d_packname, wd->sc_params.wdp_model, 16);
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
 
-	wd->sc_dk.dk_label.d_partitions[RAW_PART].p_offset = 0;
-	wd->sc_dk.dk_label.d_partitions[RAW_PART].p_size =
-	    wd->sc_dk.dk_label.d_secperunit *
-	    (wd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
-	wd->sc_dk.dk_label.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	wd->sc_dk.dk_label.d_npartitions = RAW_PART + 1;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
 
-	wd->sc_dk.dk_label.d_magic = DISKMAGIC;
-	wd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
-	wd->sc_dk.dk_label.d_checksum = dkcksum(&wd->sc_dk.dk_label);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 
 	wd->sc_badsect[0] = -1;
 
 	if (wd->sc_state > RECAL)
 		wd->sc_state = RECAL;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, &wd->sc_dk.dk_label, &wd->sc_dk.dk_cpulabel);
+	    wdstrategy, lp, &wd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -1033,7 +1031,7 @@ wdgetdisklabel(wd)
 		if (wd->sc_state > GEOMETRY)
 			wd->sc_state = GEOMETRY;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-		    wdstrategy, &wd->sc_dk.dk_label, &wd->sc_dk.dk_cpulabel);
+		    wdstrategy, lp, &wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
@@ -1042,7 +1040,7 @@ wdgetdisklabel(wd)
 
 	if (wd->sc_state > GEOMETRY)
 		wd->sc_state = GEOMETRY;
-	if ((wd->sc_dk.dk_label.d_flags & D_BADSECT) != 0)
+	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 }
 
@@ -1445,52 +1443,41 @@ wddump(dev, blkno, va, size)
 	struct wdc_softc *wdc;	/* disk controller to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
 	int	unit, part;
-	int	sectorsize;	/* size of a disk sector */
-	int	nsects;		/* number of sectors in partition */
-	int	sectoff;	/* sector offset of partition */
-	int	totwrt;		/* total number of sectors left to write */
-	int	nwrt;		/* current number of sectors to write */
-	int	retval;
+	int	nblks;		/* total number of sectors left to write */
 
 	/* Check if recursive dump; if so, punt. */
 	if (wddoingadump)
 		return EFAULT;
-
-	/* Mark as active early. */
 	wddoingadump = 1;
 
-	unit = WDUNIT(dev);	/* decompose unit & partition */
-	part = WDPART(dev);
-
-	/* Check for acceptable drive number. */
-	if (unit >= wdcd.cd_ndevs || (wd = wdcd.cd_devs[unit]) == NULL)
+	unit = WDUNIT(dev);
+	if (unit >= wdcd.cd_ndevs)
 		return ENXIO;
+	wd = wdcd.cd_devs[unit];
+	if (wd == 0)
+		return ENXIO;
+
+	part = WDPART(dev);
 
 	/* Make sure it was initialized. */
 	if (wd->sc_state < OPEN)
 		return ENXIO;
 
-	/* Remember the controller device, and sanity check */
-	if ((wdc = (void *)wd->sc_dev.dv_parent) == NULL)
-		return ENXIO;
+	wdc = (void *)wd->sc_dev.dv_parent;
 
         /* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = &wd->sc_dk.dk_label;
-	sectorsize = lp->d_secsize;
-	if ((size % sectorsize) != 0)
+	if ((size % lp->d_secsize) != 0)
 		return EFAULT;
-	totwrt = size / sectorsize;
-	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
-
-	nsects = lp->d_partitions[part].p_size;
-	sectoff = lp->d_partitions[part].p_offset;
+	nblks = size / lp->d_secsize;
+	blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 
 	/* Check transfer bounds against partition size. */
-	if ((blkno < 0) || ((blkno + totwrt) > nsects))
+	if ((blkno < 0) || ((blkno + nblks) > lp->d_partitions[part].p_size))
 		return EINVAL;  
 
 	/* Offset block number to start of partition. */
-	blkno += sectoff;
+	blkno += lp->d_partitions[part].p_offset;
 
 	/* Recalibrate, if first dump transfer. */
 	if (wddumprecalibrated == 0) {
@@ -1503,12 +1490,9 @@ wddump(dev, blkno, va, size)
 		}
 	}
    
-	while (totwrt > 0) {
+	while (nblks > 0) {
+		daddr_t xlt_blkno = blkno;
 		long cylin, head, sector;
-		daddr_t xlt_blkno;
-
-		nwrt = 1;		/* ouch XXX */
-		xlt_blkno = blkno;
 
 		if ((lp->d_flags & D_BADSECT) != 0) {
 			long blkdiff;
@@ -1550,15 +1534,11 @@ wddump(dev, blkno, va, size)
 			return EIO;
 		}
 	
-		outsw(wdc->sc_iobase+wd_data, va, sectorsize / sizeof(short));
+		outsw(wdc->sc_iobase+wd_data, va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
 			wderror(wd, NULL, "wddump: timeout waiting for ready");
-			return EIO;
-		}
-		if (wdc->sc_status & WDCS_DRQ) {
-			wderror(wd, NULL, "wddump: extra drq");
 			return EIO;
 		}
 #else	/* WD_DUMP_NOT_TRUSTED */
@@ -1569,10 +1549,11 @@ wddump(dev, blkno, va, size)
 #endif
 
 		/* update block count */
-		totwrt -= nwrt;
-		blkno += nwrt;
-		va += sectorsize * nwrt;
+		nblks -= 1;
+		blkno += 1;
+		va += lp->d_secsize;
 	}
+
 	wddoingadump = 0;
 	return 0;
 }
