@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.113 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.114 2004/03/24 15:44:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
- * Copyright (c) 1995 Paul Kranenburg.
  *
  * This code is derived from software contributed to Berkeley by
  * Don Ahn.
@@ -109,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.113 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114 2004/03/24 15:44:46 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
