@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)a.out.5	6.3 (Berkeley) 4/29/91
-.\"	$Id: a.out.5,v 1.4 1994/05/24 10:04:46 deraadt Exp $
+.\"	$Id: a.out.5,v 1.5 1994/06/09 16:08:39 pk Exp $
 .\"
 .Dd April 29, 1991
 .Dt A.OUT 5
@@ -377,7 +377,28 @@ such as
 the values are described in
 .Xr stab 5 .
 .It Fa n_other
-This field is currently unused.
+This field provides information on the nature of the symbol independent of
+the symbol's location in terms of segments as determined by the
+.Fa n_type
+field. Currently, the lower 4 bits of the
+.Fa n_other
+field hold one of two values:
+.Dv AUX_FUNC
+and
+.Dv AUX_OBJECT
+.Po
+see
+.Aq Pa link.h
+for their definitions
+.Pc .
+.Dv AUX_FUNC
+associates the symbol with a callable function, while
+.Dv AUX_OBJECT
+associates the symbol with data, irrespective of their locations in
+either the text or the data segment.
+This field is intended to be used by
+.Xr ld 1
+for the construction of dynamic executables.
 .It Fa n_desc
 Reserved for use by debuggers; passed untouched by the link editor.
 Different debuggers use this field for different purposes.
