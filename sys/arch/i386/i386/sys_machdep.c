@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.62.4.1 2002/08/07 01:29:53 lukem Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.62.4.2 2002/08/07 04:34:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.62.4.1 2002/08/07 01:29:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.62.4.2 2002/08/07 04:34:25 lukem Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -180,9 +180,8 @@ i386_set_ldt(p, args, retval)
 	    ua.num, ua.desc);
 #endif
 
-	if (ua.start < 0 || ua.num < 0)
-		return (EINVAL);
-	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
+	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
+	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
 	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
