@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.52 1998/03/11 23:39:39 thorpej Exp $
+	$NetBSD: INSTALL,v 1.53 1998/03/22 03:56:55 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -587,6 +587,7 @@ Mark Brinicombe		<mark@NetBSD.ORG>		(arm32)
 Jeremy Cooper		<jeremy@NetBSD.ORG>		(sun3x)
 Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
 Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
+Ross Harvey		<ross@NetBSD.ORG>		(alpha)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
