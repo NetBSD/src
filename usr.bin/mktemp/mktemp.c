@@ -1,3 +1,5 @@
+/* $NetBSD: mktemp.c,v 1.2 1999/09/21 06:24:46 cgd Exp $ */
+
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
  * All rights reserved.
@@ -34,6 +36,7 @@
  * more like the OpenBSD version - which was first to publish the interface.
  */
 
+#include <sys/cdefs.h>
 #include <err.h>
 #include <paths.h>
 #include <stdio.h>
@@ -42,8 +45,12 @@
 #include <unistd.h>
 
 #ifndef lint
+#if 0
 static const char rcsid[] =
 	"$FreeBSD: src/usr.bin/mktemp/mktemp.c,v 1.2 1998/05/05 06:13:47 charnier Exp $";
+#else
+__RCSID("$NetBSD: mktemp.c,v 1.2 1999/09/21 06:24:46 cgd Exp $");
+#endif
 #endif /* not lint */
 
 static void usage __P((void));
