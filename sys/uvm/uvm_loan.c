@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.48 2004/02/13 13:47:16 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.49 2004/02/13 17:17:04 drochner Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.48 2004/02/13 13:47:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.49 2004/02/13 17:17:04 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1050,7 +1050,9 @@ struct vm_page *
 uvm_loanbreak(struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
+#ifdef DIAGNOSTIC
 	struct uvm_object *uobj = uobjpage->uobject;
+#endif
 
 	KASSERT(uobj != NULL);
 	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
