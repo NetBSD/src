@@ -4,7 +4,7 @@
 ### ALLOC=storage.o
 PROG=	named
 MAN8=	named.0
-CFLAGS=	-O -DDEBUG -DSTATS
+CFLAGS+=-DDEBUG -DSTATS
 LDADD=	-lutil
 SRCS=	db_dump.c db_glue.c db_load.c db_lookup.c db_reload.c db_save.c \
 	db_update.c ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \
