@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.16.4.1 2001/09/13 01:13:15 thorpej Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.16.4.2 2002/01/10 19:38:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -83,7 +83,7 @@ md_attach_hook(unit, md)
 			bootmd = md;
 		}
 #endif	/* MINIROOTSIZE */
-		printf("md%d: allocated %dK (%d blocks)\n", unit, md->md_size / 1024, md->md_size / DEV_BSIZE);
+		printf("md%d: allocated %ldK (%ld blocks)\n", unit, (long)md->md_size / 1024, (long)md->md_size / DEV_BSIZE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2000/06/29 08:23:02 mrg Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.4.1 2002/01/10 19:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 		 * Intio space is direct-mapped in pmap_bootstrap(); just
 		 * do the translation.
 		 */
-		*bshp = (bus_space_handle_t)IIOV(bpa);
+		*bshp = (bus_space_handle_t)IIOV(INTIOBASE + bpa);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1 2001/06/13 15:02:13 soda Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1.4.1 2002/01/10 19:37:43 thorpej Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -58,8 +58,6 @@
 #include <arc/dev/mcclockvar.h>
 #include <arc/isa/mcclock_isavar.h>
 
-#define ARC_IO_RTCSIZE	2
-
 int mcclock_isa_match __P((struct device *, struct cfdata *, void *));
 void mcclock_isa_attach __P((struct device *, struct device *, void *));
 
@@ -86,31 +84,39 @@ mcclock_isa_match(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
-	bus_addr_t iobase = IO_RTC;
-	bus_size_t iosize = ARC_IO_RTCSIZE;
 
-	if (ia->ia_iobase != IOBASEUNK)
-		iobase = ia->ia_iobase;
-#if 0	/* XXX isa.c */
-	if (ia->ia_iosize != 0)
-		iosize = ia->ia_iosize;
-#endif
+	if (ia->ia_nio < 1 ||
+	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	     ia->ia_io[0].ir_addr != 0x70))
+		return (0);
 
-	if (iobase != IO_RTC || iosize != ARC_IO_RTCSIZE ||
-	    ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
-	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+		return (0);
+
+	if (ia->ia_nirq > 0 &&
+	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+		return (0);
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
 	if (!mcclock_isa_conf)
 		return (0);
 
-	if (bus_space_map(ia->ia_iot, iobase, iosize, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, 0x70, 0x02, 0, &ioh))
 		return (0);
 
-	bus_space_unmap(ia->ia_iot, ioh, iosize);
+	bus_space_unmap(ia->ia_iot, ioh, 0x02);
 
-	ia->ia_iobase = iobase;
-	ia->ia_iosize = iosize;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = 0x70;
+	ia->ia_io[0].ir_size = 0x02;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return (1);
 }
@@ -125,8 +131,8 @@ mcclock_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
-	    &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
 		panic("mcclock_isa_attach: couldn't map clock I/O space");
 
 	mcclock_attach(sc, &mcclock_isa_busfns, 80);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.3 2001/09/13 01:13:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.4 2002/01/10 19:37:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -33,8 +33,10 @@
 #ifndef	_ARM32_PMAP_H_
 #define	_ARM32_PMAP_H_
 
-#include <machine/cpufunc.h>
-#include <machine/pte.h>
+#ifdef _KERNEL
+
+#include <arm/cpufunc.h>
+#include <arm/arm32/pte.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -152,7 +154,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
  * Macros that we need to export
  */
 #define pmap_kernel()			(&kernel_pmap_store)
-#define pmap_update(pmap)		/* nothing (yet) */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -161,8 +162,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 /*
  * Functions that we need to export
  */
-extern boolean_t pmap_testbit __P((paddr_t, int));
-extern void pmap_changebit __P((paddr_t, int, int));
 extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 extern void pmap_procwr __P((struct proc *, vaddr_t, int));
 #define	PMAP_NEED_PROCWR
@@ -202,10 +201,16 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 #define pmap_pde(m, v) (&((m)->pm_pdir[((vaddr_t)(v) >> PDSHIFT)&4095]))
 #define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
 #define pmap_pde_v(pde)		(*(pde) != 0)
+#define pmap_pde_section(pde)	((*(pde) & L1_MASK) == L1_SECTION)
+#define pmap_pde_page(pde)	((*(pde) & L1_MASK) == L1_PAGE)
+#define pmap_pde_fpage(pde)	((*(pde) & L1_MASK) == L1_FPAGE)
+
 #define pmap_pte_v(pte)		(*(pte) != 0)
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+
+#endif /* _KERNEL */
 
 #endif	/* _ARM32_PMAP_H_ */

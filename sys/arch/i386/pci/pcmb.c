@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.2 2001/04/21 19:18:20 jdolecek Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.2.4.1 2002/01/10 19:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * "Driver" for PCI-MCA Bridges.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.2.4.1 2002/01/10 19:45:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

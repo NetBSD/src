@@ -1,9 +1,12 @@
-/*	$NetBSD: altq_localq.c,v 1.2.6.1 2001/08/25 06:14:58 thorpej Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.2.6.2 2002/01/10 19:35:56 thorpej Exp $	*/
 /*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
  * this file is in the public domain.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.2.6.2 2002/01/10 19:35:56 thorpej Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

@@ -1,10 +1,4 @@
-/*	$NetBSD: npx.c,v 1.76.2.2 2001/09/13 01:13:49 thorpej Exp $	*/
-
-#if 0
-#define IPRINTF(x)	printf x
-#else
-#define	IPRINTF(x)
-#endif
+/*	$NetBSD: npx.c,v 1.76.2.3 2002/01/10 19:44:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -42,6 +36,15 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.76.2.3 2002/01/10 19:44:58 thorpej Exp $");
+
+#if 0
+#define IPRINTF(x)	printf x
+#else
+#define	IPRINTF(x)
+#endif
 
 #include "opt_cputype.h"
 
@@ -117,7 +120,6 @@ fpu_save(union savefpu *addr)
 	if (i386_use_fxsave) {
 		fxsave(&addr->sv_xmm);
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
-		fwait();	/* XXX needed? */
 		fninit();
 	} else
 #endif /* I686_CPU */

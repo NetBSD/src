@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.17.2.1 2001/08/25 06:15:24 thorpej Exp $
+#	$NetBSD: SWINGER,v 1.17.2.2 2002/01/10 19:44:31 thorpej Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.17.2.1 $"
+#ident 		"SWINGER-$Revision: 1.17.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -32,7 +32,7 @@ options 	XSERVER		# X server support in console drivers
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -69,7 +69,7 @@ options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -111,7 +111,7 @@ file-system 	PROCFS		# /proc
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -242,7 +242,7 @@ isapnp0	at isa?
 
 # CardBus bus support
 #cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?	
+#cardslot*	at cbb?
 
 #cardbus*	at cardslot?
 #pcmcia* 	at cardslot?
@@ -380,6 +380,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # CardBus SCSI cards
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 #scsibus* at adv?
@@ -420,7 +421,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp? 
+wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
@@ -549,8 +550,8 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #ne1	at isa? port 0x300 irq 10
 #sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
-#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
-#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
+#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
 #tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 #we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
@@ -593,16 +594,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums? mux 0
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -686,7 +690,7 @@ sb*	at isapnp?			# SoundBlaster-compatible audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
@@ -720,7 +724,7 @@ audio*	at uaudio?
 #audio*	at ym?
 
 # MPU 401 UARTs
-#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+#mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
 #mpu*	at eso?
 #mpu*	at fms?
 mpu*	at sb?
@@ -813,5 +817,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont

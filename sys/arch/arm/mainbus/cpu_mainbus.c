@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.1 2001/04/20 18:08:49 matt Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.1.6.1 2002/01/10 19:38:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -53,10 +53,16 @@
 #endif
 #include <machine/cpu.h>
 #if 0
-#include <machine/cpus.h>
-#include <machine/undefined.h>
+#include <arm/cpus.h>
+#include <arm/undefined.h>
 #endif
 
+/*
+ * Prototypes
+ */
+static int cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
+static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
+ 
 /*
  * int cpumatch(struct device *parent, struct cfdata *cf, void *aux)
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2001/05/01 02:19:15 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3.2.1 2002/01/10 19:37:37 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,17 +68,6 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE	1024
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a ``long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP 		20
 
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work

@@ -1,4 +1,4 @@
-#	$NetBSD: HP620LX,v 1.2.2.1 2001/08/03 04:11:38 lukem Exp $
+#	$NetBSD: HP620LX,v 1.2.2.2 2002/01/10 19:44:18 thorpej Exp $
 #
 #	HP620LX
 #
@@ -7,15 +7,15 @@ include "arch/hpcsh/conf/std.hpcsh"
 
 maxusers	32			# estimated number of users
 
-options		SH7709A			# 133MHz
-options		SH7709A_BROKEN_IPR
-options		PCLOCK=18432000		# 18MHz
+options 	SH7709A			# 133MHz
+options 	SH7709A_BROKEN_IPR
+options 	PCLOCK=18432000		# 18MHz
 
 options 	DDB			# in-kernel debugger
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options		MSGBUFSIZE=65534
+options 	MSGBUFSIZE=65534
 
 # Standard system options
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
@@ -73,7 +73,7 @@ pfckbd*		at mainbus?
 hpckbd*		at pfckbd?
 wskbd*		at hpckbd? mux 1
 
-options SCIFCN_SPEED=19200
+options 	SCIFCN_SPEED=19200
 scif* at shb? port 0xa4000008 irq 12
 
 hd64461if* at shb? irq 4
@@ -110,7 +110,7 @@ scsibus* at aic?
 # PC-Card slot
 wdc1	at pcmcia0 function ?
 wd*	at wdc1 channel ? drive ? flags 0x0000
-# Compact Flash slot (only memory mapped mode CF can attach) 
+# Compact Flash slot (only memory mapped mode CF can attach)
 wdc0	at pcmcia1 function ?
 wd*	at wdc0 channel ? drive ? flags 0x0000
 
@@ -133,4 +133,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux

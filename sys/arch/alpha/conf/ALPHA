@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.151.2.1 2001/08/25 06:15:01 thorpej Exp $
+# $NetBSD: ALPHA,v 1.151.2.2 2002/01/10 19:37:01 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.151.2.1 $"
+ident		"ALPHA-$Revision: 1.151.2.2 $"
 
 maxusers 32
 
@@ -58,6 +58,7 @@ file-system	PORTAL		# Portal file system
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
+file-system	CODA		# CODA distributed file system
 
 # File system options
 options 	QUOTA		# User and group quotas for the FFS
@@ -68,8 +69,8 @@ options 	SOFTDEP		# FFS soft updates support.
 # Networking options
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite
@@ -192,6 +193,7 @@ bba0	at	ioasic? offset ?
 audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
+asc*	at	tc? slot ? offset ?
 #cfb*	at	tc? slot ? offset ?
 #sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
@@ -226,6 +228,9 @@ pci*	at	mcpcia?
 pci*	at	tsp?
 pci*	at	ttwopci?
 
+# AGP support
+agp*	at	irongate?
+
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
@@ -235,6 +240,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
+cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
@@ -278,17 +284,24 @@ vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
+audio*	at	cmpci?
 audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
 
+opl*	at	cmpci? flags 1
 opl*	at	eso?
 #opl*	at	sv?
 opl*	at	yds?
 
+midi*	at	opl?
+
+mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
+
+midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -341,8 +354,8 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
 #wdc*	at	isapnp?
-we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
@@ -438,16 +451,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -494,8 +510,8 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
@@ -513,3 +529,5 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.

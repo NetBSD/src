@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.1.2.2 2001/09/13 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.1.2.3 2002/01/10 19:37:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#include <arm/footbridge/footbridge.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <uvm/uvm_extern.h>
 

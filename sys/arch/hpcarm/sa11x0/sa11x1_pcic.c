@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.7.2.1 2001/08/03 04:11:35 lukem Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.7.2.2 2002/01/10 19:43:43 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ sacpcic_attach(parent, self, aux)
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
-	p = platid_search(&platid, sacpcic_platid_table);
+	p = platid_search_data(&platid, sacpcic_platid_table);
 
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.26 2001/05/27 09:09:05 kleink Exp $	*/
+/*	$NetBSD: ct.c,v 1.26.2.1 2002/01/10 19:42:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ ctident(parent, sc, ha)
 	hpibrecv(parent->dv_unit, ha->ha_slave, C_EXEC, &desc, 37);
 	hpibrecv(parent->dv_unit, ha->ha_slave, C_QSTAT, &stat, sizeof(stat));
 
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	if (stat == 0) {
 		n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
@@ -285,7 +285,7 @@ ctident(parent, sc, ha)
 
 	switch (ha->ha_id) {
 	case CT7946ID:
-		if (bcmp(name, "079450", 6) == 0)
+		if (memcmp(name, "079450", 6) == 0)
 			return (0);		/* not really a 7946 */
 		/* fall into... */
 	case CT9144ID:

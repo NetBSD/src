@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20.2.1 2001/08/03 04:11:15 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.2.2 2002/01/10 19:39:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -308,7 +308,7 @@ writedisklabel(dev, strat, lp, clp)
  * if it contains a valid NetBSD disk label.
  *
  * Returns:  0 if successfull,
- *          -1 if an I/O error occured,
+ *          -1 if an I/O error occurred,
  *          +1 if no valid label was found.
  */
 static int
@@ -410,7 +410,7 @@ ck_label(dl, cdl)
  * create a fake NetBSD label based on the AHDI label.
  *
  * Returns:  0 if successful,
- *          -1 if an I/O error occured,
+ *          -1 if an I/O error occurred,
  *          +1 if no valid AHDI label was found.
  */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2001/03/04 03:50:33 matt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.6.1 2002/01/10 19:37:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ void	isa_dma_init(void);
 vaddr_t	isa_io_data_vaddr(void);
 vaddr_t	isa_mem_data_vaddr(void);
 int isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq);
+void	isa_intr_init(void);
 
 /*
  * Miscellanous functions.

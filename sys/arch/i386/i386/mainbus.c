@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2001/04/01 23:14:02 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.32.2.1 2002/01/10 19:44:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.1 2002/01/10 19:44:43 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,6 +51,7 @@
 #include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
+#include "acpi.h"
 
 #if NAPM > 0
 #include <machine/bioscall.h>
@@ -56,6 +60,10 @@
 
 #if NPNPBIOS > 0
 #include <arch/i386/pnpbios/pnpbiosvar.h>
+#endif
+
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
 #endif
 
 #if NMCA > 0
@@ -84,6 +92,9 @@ union mainbus_attach_args {
 #endif
 #if NPNPBIOS > 0
 	struct pnpbios_attach_args mba_paa;
+#endif
+#if NACPI > 0
+	struct acpibus_attach_args mba_acpi;
 #endif
 };
 
@@ -132,7 +143,38 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+#if NPCI > 0
+	/*
+	 * ACPI needs to be able to access PCI configuration space.
+	 */
+	pci_mode = pci_mode_detect();
+#endif
+
+#if NACPI > 0
+	if (acpi_probe()) {
+		mba.mba_acpi.aa_busname = "acpi";
+		mba.mba_acpi.aa_iot = I386_BUS_SPACE_IO;
+		mba.mba_acpi.aa_memt = I386_BUS_SPACE_MEM;
+		mba.mba_acpi.aa_pc = NULL;
+		mba.mba_acpi.aa_pciflags =
+		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+		config_found(self, &mba.mba_acpi, mainbus_print);
+#if 0 /* XXXJRT not yet */
+		if (acpi_active) {
+			/*
+			 * ACPI already did all the work for us, there
+			 * is nothing more for us to do.
+			 */
+			return;
+		}
+#endif
+	}
+#endif
+
 #if NPNPBIOS > 0
+#if NACPI > 0
+	if (acpi_active == 0)
+#endif
 	if (pnpbios_probe()) {
 		mba.mba_paa.paa_busname = "pnpbios";
 		mba.mba_paa.paa_ic = &i386_isa_chipset;
@@ -147,7 +189,7 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	if (pci_mode_detect() != 0) {
+	if (pci_mode != 0) {
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
@@ -189,6 +231,9 @@ mainbus_attach(parent, self, aux)
 #endif
 
 #if NAPM > 0
+#if NACPI > 0
+	if (acpi_active == 0)
+#endif
 	if (apm_busprobe()) {
 		mba.mba_aaa.aaa_busname = "apm";
 		config_found(self, &mba.mba_aaa, mainbus_print);

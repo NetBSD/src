@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.7 1996/10/05 05:22:11 thorpej Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.7.42.1 2002/01/10 19:42:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -63,11 +63,6 @@ extern	char *kbd_shiftmap;
 extern	char *kbd_ctrlmap;
 extern	char *kbd_ctrlshiftmap;
 extern	char **kbd_stringmap;
-
-/* XXX: itecngetc() interface */
-extern	char *kbd_cn_keymap;
-extern	char *kbd_cn_shiftmap;
-extern	char *kbd_cn_ctrlmap;
 
 extern struct kbdmap kbd_map[];
 #endif

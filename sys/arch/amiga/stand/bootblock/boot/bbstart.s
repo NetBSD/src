@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.8 2001/03/02 16:43:26 mhitch Exp $ */
+/* $NetBSD: bbstart.s,v 1.8.4.1 2002/01/10 19:37:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,11 @@
 #define Cmd_Rd	2
 
 	.text
+#if defined(_PRIMARY_BOOT) || defined(AUTOLOAD)
 Lzero:	.asciz "DOS"			| "DOS type"
+#else
+Lzero:	.ascii	"BOOT"			| Secondary Boot
+#endif
 	/*
 	 * We put the relocator version here, for aout2bb, which replaces
 	 * it with the bootblock checksum.
@@ -74,6 +78,11 @@ ENTRY_NOPROFILE(start)
 
 Lreltab:
 	.word 0			| aout2bb puts the reloc table address here
+
+	.globl _C_LABEL(default_command)
+_C_LABEL(default_command):
+	.asciz	"netbsd -ASn2"
+	.org	(_C_LABEL(default_command)+32)
 
 #ifdef AUTOLOAD
 /*
@@ -170,8 +179,16 @@ Lendtab:
 
 	movl	%a6,_C_LABEL(SysBase)
 
+#ifndef _PRIMARY_BOOT
+	movl	%a5,%sp@-		| Console info
+#endif
 	movl	%a1,%sp@-
 	bsr	_C_LABEL(pain)
+#ifdef _PRIMARY_BOOT
+	addql	#4,%sp
+#else
+	addql	#8,%sp
+#endif
 
 Lerr:
 	movq	#1,%d0

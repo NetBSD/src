@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_reg.h,v 1.1 2001/07/08 23:37:52 rjs Exp $	*/
+/*	$NetBSD: sa1111_reg.h,v 1.1.2.1 2002/01/10 19:38:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,18 @@
 #define SACCIC_LEN	55
 
 /* System Bus Interface */
+#define SACCSBI_SKCR		0x0000
+#define SACCSBI_SMCR		0x0004
 #define SACCSBI_SKID		0x0008
+
+/* System Controller */
+#define SACCSC_SKPCR		0x0200
+
+/* USB Host Controller */
+#define SACCUSB_REVISION	0x0400
+#define SACCUSB_CONTROL		0x0404
+#define SACCUSB_STATUS		0x0408
+#define SACCUSB_RESET		0x051C
 
 /* Interrupt Controller */
 #define SACCIC_INTTEST0		0x1600
@@ -74,3 +85,4 @@
 #define SACCGPIOC_DVR		0x1024
 #define SACCGPIOC_SDR		0x1028
 #define SACCGPIOC_SSR		0x102C
+

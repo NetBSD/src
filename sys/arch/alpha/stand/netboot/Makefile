@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2001/05/28 18:21:12 he Exp $
+# $NetBSD: Makefile,v 1.23.2.1 2002/01/10 19:37:09 thorpej Exp $
 
 PROG = netboot
 
@@ -16,7 +16,7 @@ CPPFLAGS += ${UNIFIED_CPPFLAGS} -DSUPPORT_DHCP \
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
-	@objcopy --output-target=binary ${PROG}.sym ${PROG}
+	@${OBJCOPY} --output-target=binary ${PROG}.sym ${PROG}
 	@chmod 644 ${PROG}
 	@ls -l ${PROG}
 	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${UNIFIED_MAX_LOAD} \

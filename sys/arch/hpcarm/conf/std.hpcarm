@@ -1,12 +1,12 @@
-#	$NetBSD: std.hpcarm,v 1.2 2001/02/23 21:23:51 reinoud Exp $
+#	$NetBSD: std.hpcarm,v 1.2.6.1 2002/01/10 19:43:36 thorpej Exp $
 #
 # standard NetBSD/hpcarm options
 
 machine	hpcarm arm
 
 options 	EXEC_AOUT
-options		EXEC_ELF32
+options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
-options ARM32
+options 	ARM32

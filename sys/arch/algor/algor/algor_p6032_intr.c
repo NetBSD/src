@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.2.2.1 2001/08/25 06:14:58 thorpej Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.2.2.2 2002/01/10 19:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -520,7 +520,7 @@ algor_p6032_pci_intr_disestablish(void *v, void *cookie)
 }
 
 void
-algor_p6032_pci_conf_interrupt(void *v, int bus, int dev, int func, int swiz,
+algor_p6032_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
     int *iline)
 {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.7 2001/03/11 20:15:02 mhitch Exp $ */
+/* $NetBSD: libstubs.s,v 1.7.2.1 2002/01/10 19:37:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,8 @@ ENTRY_NOPROFILE(OpenLibrary)
 	movl	%sp@+,%a6
 	movl	%d0,%a0			| Comply with ELF ABI
 	rts
-#ifdef notyet
+
+#ifdef _PRIMARY_BOOT
 ENTRY_NOPROFILE(CloseLibrary)
 	movl	%a6,%sp@-
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
@@ -78,7 +79,7 @@ ENTRY_NOPROFILE(CreateMsgPort)
 	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 	
-#ifdef notyet
+#ifdef _PRIMARY_BOOT
 ENTRY_NOPROFILE(DeleteMsgPort)
 	movl	%a6,%sp@-
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
@@ -106,6 +107,16 @@ ENTRY_NOPROFILE(OpenDevice)
 	jsr	%a6@(-0x1bc)
 	movl	%sp@+,%a6
 	rts
+
+#ifdef _PRIMARY_BOOT
+ENTRY_NOPROFILE(CloseDevice)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1c2)
+	movl	%sp@+,%a6
+	rts
+#endif
 
 ENTRY_NOPROFILE(DoIO)
 	movl	%a6,%sp@-
@@ -224,6 +235,16 @@ ENTRY_NOPROFILE(OpenScreenTagList)
 	movl	%d0,%a0			| Comply with ELF ABI
 	rts
 
+#ifdef _PRIMARY_BOOT
+ENTRY_NOPROFILE(CloseScreen)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(IntuitionBase):w),%a6
+	movl	%sp@(8),%a0
+	jsr	%a6@(-0x42)
+	movl	%sp@+,%a6
+	rts
+#endif
+
 ENTRY_NOPROFILE(OpenWindowTagList)
 	movl	%a6,%sp@-
 	movl	%pc@(_C_LABEL(IntuitionBase):w),%a6
@@ -233,6 +254,16 @@ ENTRY_NOPROFILE(OpenWindowTagList)
 	movl	%sp@+,%a6
 	movl	%d0,%a0			| Comply with ELF ABI
 	rts
+
+#ifdef _PRIMARY_BOOT
+ENTRY_NOPROFILE(CloseWindow)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(IntuitionBase):w),%a6
+	movl	%sp@(8),%a0
+	jsr	%a6@(-0x48)
+	movl	%sp@+,%a6
+	rts
+#endif
 #ifdef nomore
 ENTRY_NOPROFILE(mytime)
 	movl	%a6,%sp@-

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 2001/05/13 13:53:08 bjh21 Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.2.1 2002/01/10 19:38:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,7 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 #include "isa.h"
 
@@ -66,10 +66,9 @@ extern void	startrtclock __P((void));
 
 #if defined(OFWGENCFG) || defined(SHARK)
 /* Temporary for SHARK! */
+extern void ofw_device_register(struct device *dev, void *aux);
 #include <machine/ofw.h>
 #endif
-
-#include "podulebus.h"
 
 struct device *booted_device;
 int booted_partition;
@@ -192,9 +191,6 @@ cpu_configure()
 #endif
 
 	config_rootfound("mainbus", NULL);
-#if NPODULEBUS > 0
-	config_rootfound("podulebus", NULL);
-#endif	/* NPODULEBUS */
 #if defined(OFWGENCFG) || defined(SHARK)
 	/* Temporary for SHARK! */
 	ofrootfound();

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.1.2.1 2002/01/10 19:41:30 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -58,10 +58,9 @@
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/pte.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
 
@@ -104,9 +103,6 @@ extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
 extern void consinit		__P((void));
-#ifdef	DDB
-extern void db_machine_init     __P((void));
-#endif
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 
@@ -306,15 +302,19 @@ initarm(ofw_handle)
 		panic("Cannot claim FIQ vector.\n");
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
-		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
 		ddb_init(kernexec->a_syms, &end, esym);
 	}
+#endif /* __ELF__ */
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

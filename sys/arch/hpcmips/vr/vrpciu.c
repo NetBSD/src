@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1 2001/06/13 07:32:48 enami Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.4.1 2002/01/10 19:44:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -30,10 +30,14 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#define	_HPCMIPS_BUS_DMA_PRIVATE	/* XXX */
 #include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
+#include <machine/bus_dma_hpcmips.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/vripvar.h>
@@ -79,6 +83,7 @@ static int	vrpciu_intr(void *);
 static void	vrpciu_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 static int	vrpciu_bus_maxdevs(pci_chipset_tag_t, int);
+static int	vrpciu_bus_devorder(pci_chipset_tag_t, int, char *);
 static pcitag_t	vrpciu_make_tag(pci_chipset_tag_t, int, int, int);
 static void	vrpciu_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
@@ -138,8 +143,9 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct vrip_attach_args *va = aux;
-	bus_space_tag_t iot;
+	struct bus_space_tag_hpcmips *iot;
 	u_int32_t reg;
+	char tmpbuf[16];
 #if NPCI > 0
 	struct pcibus_attach_args pba;
 #endif
@@ -244,7 +250,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_dev = &sc->sc_dev;
 	pc->pc_attach_hook = vrpciu_attach_hook;
 	pc->pc_bus_maxdevs = vrpciu_bus_maxdevs;
-	pc->pc_bus_devorder = vrc4173bcu_pci_bus_devorder;
+	pc->pc_bus_devorder = vrpciu_bus_devorder;
 	pc->pc_make_tag = vrpciu_make_tag;
 	pc->pc_decompose_tag = vrpciu_decompose_tag;
 	pc->pc_conf_read = vrpciu_conf_read;
@@ -275,13 +281,13 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* For now, just inherit window mappings set by WinCE.  XXX. */
 
-	pba.pba_iot = iot = hpcmips_alloc_bus_space_tag();
+	iot = hpcmips_alloc_bus_space_tag();
 	reg = vrpciu_read(sc, VRPCIU_MIOAWREG);
-	iot->t_base = VRPCIU_MAW_ADDR(reg);
-	iot->t_size = VRPCIU_MAW_SIZE(reg);
-	snprintf(iot->t_name, sizeof(iot->t_name), "%s/iot",
+	snprintf(tmpbuf, sizeof(tmpbuf), "%s/iot",
 	    sc->sc_dev.dv_xname);
-	hpcmips_init_bus_space_extent(iot);
+	hpcmips_init_bus_space(iot, (struct bus_space_tag_hpcmips *)sc->sc_iot,
+	    tmpbuf, VRPCIU_MAW_ADDR(reg), VRPCIU_MAW_SIZE(reg));
+	pba.pba_iot = &iot->bst;
 
 	/*
 	 * Just use system bus space tag.  It works since WinCE maps
@@ -289,7 +295,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	 * of course.  XXX.
 	 */
 	pba.pba_memt = sc->sc_iot;
-	pba.pba_dmat = &hpcmips_default_bus_dma_tag;
+	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY;
@@ -339,6 +345,35 @@ vrpciu_attach_hook(struct device *parent, struct device *self,
 int
 vrpciu_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
+
+	return (32);
+}
+
+int
+vrpciu_bus_devorder(pci_chipset_tag_t pc, int busno, char *devs)
+{
+	int i, dev;
+	char priorities[32];
+	static pcireg_t ids[] = {
+		/* these devices should be attached first */
+		PCI_ID_CODE(PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU),
+	};
+
+	/* scan PCI devices and check the id table */
+	memset(priorities, 0, sizeof(priorities));
+	for (dev = 0; dev < 32; dev++) {
+		pcireg_t id;
+		id = pci_conf_read(pc, pci_make_tag(pc, 0, dev, 0),PCI_ID_REG);
+		for (i = 0; i < sizeof(ids)/sizeof(*ids); i++)
+			if (id == ids[i])
+				priorities[dev] = 1;
+	}
+
+	/* fill order array */
+	for (i = 1; 0 <= i; i--)
+		for (dev = 0; dev < 32; dev++)
+			if (priorities[dev] == i)
+				*devs++ = dev;
 
 	return (32);
 }
@@ -438,11 +473,17 @@ vrpciu_vrcintr_establish(pci_chipset_tag_t pc, int port,
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
 	struct vrip_softc *vsc = (struct vrip_softc *)sc->sc_vc;
 	void *ih;
+	int mode;
 
 	sc->sc_bcu = arg;
+
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_SIGMARION2))
+		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_HIGH | HPCIO_INTR_THROUGH;
+	else
+		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_LOW | HPCIO_INTR_HOLD;
+
 	ih = hpcio_intr_establish(vsc->sc_gpio_chips[VRIP_IOCHIP_VRGIU],
-	    port, HPCIO_INTR_LEVEL | HPCIO_INTR_LOW | HPCIO_INTR_HOLD,
-	    func, arg);
+	    port, mode, func, arg);
 
 	return (ih);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2001/05/05 17:53:59 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.2.1 2002/01/10 19:44:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,6 +47,9 @@
  * and the drivers are initialized.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56.2.1 2002/01/10 19:44:34 thorpej Exp $");
+
 #include "opt_compat_oldboot.h"
 
 #include <sys/param.h>
@@ -71,6 +74,7 @@
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
 static void findroot __P((void));
+static int is_valid_disk __P((struct device *));
 
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
@@ -148,6 +152,7 @@ matchbiosdisks()
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
+	int  dklist_size;
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
@@ -158,22 +163,21 @@ matchbiosdisks()
 	 * First, count all native disks
 	 */
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
-		if (dv->dv_class == DV_DISK &&
-		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")))
+		if (is_valid_disk(dv))
 			i386_ndisks++;
 
 	if (i386_ndisks == 0)
 		return;
 
+	dklist_size = sizeof (struct disklist) + (i386_ndisks - 1) *
+	    sizeof (struct nativedisk_info);
+
 	/* XXX M_TEMP is wrong */
-	i386_alldisks = malloc(sizeof (struct disklist) + (i386_ndisks - 1) *
-				sizeof (struct nativedisk_info),
-				M_TEMP, M_NOWAIT);
+	i386_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT);
 	if (i386_alldisks == NULL)
 		return;
+
+	memset(i386_alldisks, 0, dklist_size);
 
 	i386_alldisks->dl_nnativedisks = i386_ndisks;
 	i386_alldisks->dl_nbiosdisks = big->num;
@@ -197,10 +201,7 @@ matchbiosdisks()
 		printf("matchbiosdisks: trying to match (%s) %s\n",
 		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
 #endif
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")) {
+		if (is_valid_disk(dv)) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
@@ -398,10 +399,7 @@ findroot(void)
 				goto found;
 			}
 
-			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")) {
+			if (is_valid_disk(dv)) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -498,7 +496,9 @@ device_register(dev, aux)
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
-			if (bin->addr.iobase == iaa->ia_iobase)
+			/* XXXJRT what about multiple I/O addrs? */
+			if (iaa->ia_nio > 0 &&
+			    bin->addr.iobase == iaa->ia_io[0].ir_addr)
 				goto found;
 		}
 #if NPCI > 0
@@ -531,4 +531,18 @@ found:
 		return;
 	}
 	booted_device = dev;
+}
+
+static int
+is_valid_disk(struct device *dv)
+{
+	const char *name;
+
+	if (dv->dv_class != DV_DISK)
+		return (0);
+
+	name = dv->dv_cfdata->cf_driver->cd_name;
+
+	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
+	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);
 }

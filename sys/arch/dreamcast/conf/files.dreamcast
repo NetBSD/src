@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.11.2.1 2001/09/13 01:13:34 thorpej Exp $
+#	$NetBSD: files.dreamcast,v 1.11.2.2 2002/01/10 19:41:55 thorpej Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -22,9 +22,9 @@ file	arch/dreamcast/dreamcast/procfs_machdep.c	procfs
 file	arch/dreamcast/dreamcast/clock.c
 file	arch/sh3/sh3/disksubr.c				disk
 
-defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
-defopt  opt_led_addr.h	LED_ADDR
-defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
+defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
+defparam opt_led_addr.h	LED_ADDR
+defparam opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 			BSC_WCR3_VAL BSC_MCR_VAL BSC_SDMR2_VAL BSC_SDMR3_VAL
 			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
 			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL
@@ -54,7 +54,7 @@ major	{md = 17}
 #
 
 define mainbus { }
-device	mainbus:  mainbus
+device	mainbus: mainbus
 attach	mainbus at root
 file	arch/dreamcast/dreamcast/mainbus.c	mainbus
 
@@ -75,9 +75,9 @@ device	mms: wsmousedev
 attach	mms at maple
 file	arch/dreamcast/dev/maple/mms.c			mms	needs-flag
 
-device  pvr: wsemuldisplaydev, rasops16
-attach  pvr at shb
-file    arch/dreamcast/dev/pvr.c			pvr	needs-flag
+device	pvr: wsemuldisplaydev, rasops16
+attach	pvr at shb
+file	arch/dreamcast/dev/pvr.c			pvr	needs-flag
 
 device	gdrom: disk
 attach	gdrom at shb

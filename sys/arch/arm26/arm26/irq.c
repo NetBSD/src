@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.18.2.2 2001/09/13 01:13:11 thorpej Exp $ */
+/* $NetBSD: irq.c,v 1.18.2.3 2002/01/10 19:38:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.18.2.2 2001/09/13 01:13:11 thorpej Exp $");
+__RCSID("$NetBSD: irq.c,v 1.18.2.3 2002/01/10 19:38:34 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: irq.c,v 1.18.2.2 2001/09/13 01:13:11 thorpej Exp $");
 #include <arch/arm26/iobus/iocvar.h>
 
 #include "opt_ddb.h"
+#include "opt_flashything.h"
 #include "fiq.h"
 #include "ioeb.h"
 #include "unixbp.h"
@@ -77,6 +78,7 @@ extern char *irqnames[];
 int current_intr_depth = 0;
 
 #if NFIQ > 0
+void (*fiq_downgrade_handler)(void);
 int fiq_want_downgrade;
 #endif
 
@@ -187,7 +189,9 @@ irq_handler(struct irqframe *irqf)
 	if (__predict_false(stray)) {
 		log(LOG_WARNING, "Stray IRQ, status = 0x%x, spl = %d, "
 		    "mask = 0x%x\n", status, s, irqmask[s]);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #if NFIQ > 0
 handled:
@@ -309,6 +313,32 @@ void irq_genmasks()
 	splx(s);
 }
 
+#ifdef FLASHYTHING
+#include <machine/memcreg.h>
+#include <arch/arm26/vidc/vidcreg.h>
+
+static const int iplcolours[] = {
+	VIDC_PALETTE_ENTRY( 0,  0,  0, 0), /* Black: IPL_NONE */
+	VIDC_PALETTE_ENTRY( 0,  0, 15, 0), /* Blue: IPL_SOFTCLOCK */
+	VIDC_PALETTE_ENTRY( 6,  4,  2, 0), /* Brown: IPL_SOFTNET */
+	VIDC_PALETTE_ENTRY(15,  0,  0, 0), /* Red: IPL_BIO */
+	VIDC_PALETTE_ENTRY(15,  9,  1, 0), /* Orange: IPL_NET */
+	VIDC_PALETTE_ENTRY(15, 15,  0, 0), /* Yellow: IPL_TTY */
+	VIDC_PALETTE_ENTRY( 0, 15,  0, 0), /* Green: IPL_IMP */
+	VIDC_PALETTE_ENTRY( 5,  8, 14, 0), /* Light Blue: IPL_AUDIO */
+	VIDC_PALETTE_ENTRY( 15, 0, 15, 0), /* Magenta: IPL_SERIAL */
+	VIDC_PALETTE_ENTRY( 0, 15, 15, 0), /* Cyan: IPL_CLOCK */
+	VIDC_PALETTE_ENTRY( 8,  8,  8, 0), /* Grey: IPL_STATCLOCK */
+	VIDC_PALETTE_ENTRY( 8,  8,  8, 0), /* Grey: IPL_SCHED */
+	VIDC_PALETTE_ENTRY(15, 15, 15, 0), /* White: IPL_HIGH */
+};
+#endif
+
+int schedbreak = 0;
+
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+
 __inline int
 hardsplx(int s)
 {
@@ -317,6 +347,9 @@ hardsplx(int s)
 
 	KASSERT(s < IPL_HIGH);
 	int_off();
+#ifdef FLASHYTHING
+	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[s]);
+#endif
 	was = current_spl;
 	mask = irqmask[s];
 #if NFIQ > 0
@@ -340,6 +373,9 @@ splhigh(void)
 	int was;
 
 	int_off();
+#ifdef FLASHYTHING
+	VIDC_WRITE(VIDC_PALETTE_BCOL | iplcolours[IPL_HIGH]);
+#endif
 	was = current_spl;
 	current_spl = IPL_HIGH;
 #ifdef DEBUG

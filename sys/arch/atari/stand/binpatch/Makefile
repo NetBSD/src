@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.22.1 2002/01/10 19:40:08 thorpej Exp $
 
 PROG=binpatch
-MKMAN=	no
+NOMAN=	# defined
 
 BINDIR=/sbin
 LDFLAGS+=-static

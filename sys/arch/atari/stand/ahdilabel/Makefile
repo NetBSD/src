@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2001/03/04 20:51:51 jdc Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2002/01/10 19:40:07 thorpej Exp $
 
 PROG=	ahdilabel
 SRCS=	ahdilabel.c build.c check.c cksum.c magic.c openraw.c read.c write.c \
 	writedtab.c
 
-MKMAN=	no
+NOMAN=	# defined
 BINDIR=	/sbin
 
 WARNS=	1

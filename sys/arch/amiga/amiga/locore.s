@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124.2.1 2001/08/03 04:10:53 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.124.2.2 2002/01/10 19:37:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -447,11 +447,14 @@ ENTRY_NOPROFILE(trace)
  */
 
 ENTRY_NOPROFILE(spurintr)
+	addql	#1,_C_LABEL(interrupt_depth)
 	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev5intr)
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%d1/%a0/%a1,%sp@-
 #include "ser.h"
 #if NSER > 0
@@ -463,10 +466,12 @@ ENTRY_NOPROFILE(lev5intr)
 	moveml	%sp@+,%d0/%d1/%a0/%a1
 	addql	#1,_C_LABEL(intrcnt)+20
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 #ifdef DRACO
 ENTRY_NOPROFILE(DraCoLev2intr)
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%d1/%a0/%a1,%sp@-
 
 	CIAAADDR(%a0)
@@ -490,10 +495,12 @@ ENTRY_NOPROFILE(DraCoLev2intr)
 Ldraciaend:
 	moveml	%sp@+,%d0/%d1/%a0/%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
 ENTRY_NOPROFILE(DraCoLev1intr)
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%d1/%a0/%a1,%sp@-
 	movl	_C_LABEL(draco_ioct),%a0
 	btst	#5,%a0@(7)
@@ -522,10 +529,12 @@ Ldrclockretry:
 
 	moveml	%sp@+,%d0/%d1/%a0/%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)	| XXXX: shouldn't we call the normal lev1?
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 ENTRY_NOPROFILE(DraCoIntr)
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml  %d0/%d1/%a0/%a1,%sp@-
 Ldrintrcommon:
 	lea	_ASM_LABEL(Drintrcnt)-4,%a0
@@ -538,6 +547,7 @@ Ldrintrcommon:
 	addql	#4,%sp			| pop SR
 	moveml	%sp@+,%d0/%d1/%a0/%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 #endif
 	
@@ -548,6 +558,7 @@ ENTRY_NOPROFILE(lev3intr)
 #ifndef LEV6_DEFER
 ENTRY_NOPROFILE(lev4intr)
 #endif
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%d1/%a0/%a1,%sp@-
 Lintrcommon:
 	lea	_C_LABEL(intrcnt),%a0
@@ -560,6 +571,7 @@ Lintrcommon:
 	addql	#4,%sp			| pop SR
 	moveml	%sp@+,%d0/%d1/%a0/%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 /* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
@@ -571,6 +583,7 @@ ENTRY_NOPROFILE(lev6intr)
 	 * as we return. Block generation of level 6 ints until
 	 * we have dealt with this one.
 	 */
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%a0,%sp@-
 	INTREQRADDR(%a0)
 	movew	%a0@,%d0
@@ -582,15 +595,18 @@ ENTRY_NOPROFILE(lev6intr)
 	movew	#INTF_EXTER,%a0@
 	movew	#INTF_SETCLR+INTF_AUD3,%a0@	| make sure THIS one is ok...
 	moveml	%sp@+,%d0/%a0
+	subql	#1,_C_LABEL(interrupt_depth)
 	rte
 Llev6spur:
 	addql	#1,_C_LABEL(intrcnt)+36	| count spurious level 6 interrupts
 	moveml	%sp@+,%d0/%a0
+	subql	#1,_C_LABEL(interrupt_depth)
 	rte
 
 ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(fake_lev6intr)
 #endif
+	addql	#1,_C_LABEL(interrupt_depth)
 	moveml	%d0/%d1/%a0/%a1,%sp@-
 #ifdef LEV6_DEFER
 	/*
@@ -634,6 +650,7 @@ Lskipciab:
 Llev6done:
 	moveml	%sp@+,%d0/%d1/%a0/%a1	| restore scratch regs
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)		| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?
@@ -905,9 +922,10 @@ Lstartnot040:
 	RELOC(start_c, %a0)
 	jbsr	%a0@
 	addl	#28,%sp
-	jmp	Lunshadow
+	jmp	unshadow_fake_global
 
-Lunshadow:
+	.globl unshadow_fake_global
+unshadow_fake_global:
 
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_cleanup)
@@ -1087,7 +1105,11 @@ GLOBAL(curpcb)
 	.long	0
 ASGLOBAL(pcbflag)
 	.byte	0		| copy of pcb_flags low byte
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 BSS(nullpcb,SIZEOF_PCB)
 	.text
 
@@ -1402,12 +1424,14 @@ Lcpydone:
 ASLOCAL(__TBIA)
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jeq	Ltbia040
-	pflusha					| flush entire TLB
 	tstl	_C_LABEL(mmutype)
 	jpl	Lmc68851a			| 68851 implies no d-cache
+	pflusha					| flush entire TLB
 	movl	#DC_CLEAR,%d0
 	movc	%d0,%cacr			| invalidate on-chip d-cache
+	rts
 Lmc68851a:
+	pflusha
 	rts
 Ltbia040:
 	.word	0xf518				| pflusha
@@ -1716,7 +1740,11 @@ Ldoboot1:
 	jmp	%a0@			| otherwise, jump to the ROM to reset
 	| reset needs to be on longword boundary
 	nop
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 Ldoreset:
 	| reset unconfigures all memory!
 	reset
@@ -1751,7 +1779,11 @@ LdbOnDraCo:
 	.word	0x4e7b,0x0004	| movc d0,ITT0
 	jmp	%a0@
 
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 LdoDraCoBoot:
 | turn off MMU now ... were more ore less guaranteed to run on 040/060:
 	movl	#0,%d0
@@ -1849,7 +1881,11 @@ ASLOCAL(zero)
 	.long	0
 Ldorebootend:
 
+#ifdef __ELF__
+	.align 4
+#else
 	.align 2
+#endif
 	nop
 ENTRY_NOPROFILE(delay)
 ENTRY_NOPROFILE(DELAY)
@@ -1940,7 +1976,11 @@ GLOBAL(intrnames)
 	.asciz	"fpe"
 #endif
 GLOBAL(eintrnames)
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0
 #ifdef DRACO

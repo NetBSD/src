@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.1 2002/01/10 19:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ extern int nkpde;
 extern char cpu_model[];
 extern paddr_t avail_start, avail_end;	// XXX
 
-#if defined sh3_debug || defined SYSCALL_DEBUG
+#if defined(sh3_debug) || defined(SYSCALL_DEBUG)
 int cpu_debug_mode = 1;
 #else
 int cpu_debug_mode = 0;
@@ -229,7 +229,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	if (boothowto & RB_MINIROOT) {
 		size_t fssz;
 		fssz = round_page(mfs_initminiroot((void *)kernend));
-#if MEMORY_DISK_DYNAMIC
+#ifdef MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
 #endif
 		kernend += fssz;

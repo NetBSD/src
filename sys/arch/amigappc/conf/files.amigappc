@@ -1,30 +1,33 @@
-#	$NetBSD: files.amigappc,v 1.3 2001/06/18 02:00:48 christos Exp $
+#	$NetBSD: files.amigappc,v 1.3.2.1 2002/01/10 19:37:35 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
 
-defopt	opt_amigaccgrf.h	GRF_PAL:GRF_NTSC	# temporary workaround
-defopt	opt_amigaccgrf.h	GRF_NTSC
-defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
-defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
-defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
-defopt	opt_amigaccgrf.h	USE_C_BFOPS
+defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
+defflag	opt_amigaccgrf.h	GRF_NTSC
+defflag	opt_amigaccgrf.h	GRF_ECS GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
+defflag	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
+defflag	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
+defflag	opt_amigaccgrf.h	USE_C_BFOPS
 
-defopt	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
-defopt	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
-defopt	opt_amigacons.h		CV3DONZORRO2
+defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
+defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
+defflag	opt_amigacons.h		CV3DONZORRO2
 
-defopt	opt_retina.h		RH_MEMCLK RH_64BIT_SPRITE RH_HARDWARECURSOR
-defopt	opt_retina.h		RETINA_SPEED_HACK
+defparam opt_retina.h		RH_MEMCLK
+defflag	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
+defflag	opt_retina.h		RETINA_SPEED_HACK
 
-defopt				BB060STUPIDROM
-defopt				P5PPC68KBOARD
+defflag				BB060STUPIDROM
+defflag				P5PPC68KBOARD
 
-device  mainbus {}
-attach  mainbus at root
+defflag				LEV6_DEFER
+
+device	mainbus {}
+attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
@@ -53,9 +56,10 @@ attach	a34kbbc at mainbus
 file	arch/amiga/dev/a34kbbc.c	a34kbbc
 
 # keyboard
-device	kbd: event
+device	kbd: event,wskbddev
 attach	kbd at mainbus
 file	arch/amiga/dev/kbd.c		kbd needs-flag
+file	arch/amiga/dev/wskbdmap_amiga.c	kbd
 
 # serial port
 device	ser: tty
@@ -70,7 +74,7 @@ file	arch/amiga/dev/par.c		par needs-count
 # audio
 device	aucc: audio
 attach	aucc at mainbus
-file	arch/amiga/dev/aucc.c		aucc needs-flag 
+file	arch/amiga/dev/aucc.c		aucc needs-flag
 
 device	melody: audio, tms320av110
 attach	melody at zbus
@@ -101,7 +105,7 @@ device	ite: tty
 attach	ite at grf
 file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
-file	arch/amiga/dev/kf_8x8.c		ite
+file	arch/amiga/dev/kf_8x8.c		ite | amidisplaycc
 file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom
 
@@ -111,11 +115,18 @@ attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
+# wscons interface to custom chips
+device	amidisplaycc: wsemuldisplaydev
+attach	amidisplaycc at mainbus
+file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
+
+include "dev/wscons/files.wscons"
+
 defpseudo	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
-file	arch/amiga/dev/grfabs.c		grfcc | view
-file	arch/amiga/dev/grfabs_cc.c	grfcc | view
-file	arch/amiga/dev/grfabs_ccglb.c	grfcc | view
+file	arch/amiga/dev/grfabs.c		grfcc | view | amidisplaycc
+file	arch/amiga/dev/grfabs_cc.c	grfcc | view | amidisplaycc
+file	arch/amiga/dev/grfabs_ccglb.c	grfcc | view | amidisplaycc
 
 # retina ZII grf (ite1 grf1)
 device	grfrt: grfbus
@@ -242,7 +253,7 @@ major	{sd = 4}
 major	{cd = 7}
 
 # wd 33c93 contrllers
-define	sbic 
+define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # GVP series II
@@ -269,7 +280,7 @@ device	wstsc: scsi, sci
 attach	wstsc at zbus
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
-# IVS 
+# IVS
 device	ivsc: scsi, sci
 attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
@@ -364,7 +375,7 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 # MacroSystem DraCo internal
 device	drsc: scsi, asiop
 attach	drsc at mainbus
-file  arch/amiga/dev/drsc.c           drsc needs-flag
+file	arch/amiga/dev/drsc.c		drsc needs-flag
 
 # MacroSystem DraCo internal DS2404 hwc
 device	drbbc
@@ -393,7 +404,7 @@ file	arch/amiga/amiga/gayle.c		gayle
 include "dev/ata/files.ata"
 major	{wd = 17}
 
-# Amiga 4000/1200 IDE using MI wdc      
+# Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 

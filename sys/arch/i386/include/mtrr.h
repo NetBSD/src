@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.h,v 1.1.4.1 2001/09/13 01:13:49 thorpej Exp $ */
+/* $NetBSD: mtrr.h,v 1.1.4.2 2002/01/10 19:44:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,20 @@ struct mtrr_state {
 
 #define MTRR_I686_MASK_VALID	(1 << 11)
 
+/*
+ * AMD K6 MTRRs.
+ *
+ * There are two of these MTRR-like registers in the UWCRR.
+ */
+
+#define	MTRR_K6_ADDR_SHIFT 17
+#define	MTRR_K6_ADDR	(0x7fffU << MTRR_K6_ADDR_SHIFT)
+#define	MTRR_K6_MASK_SHIFT 2
+#define	MTRR_K6_MASK	(0x7fffU << MTRR_K6_MASK_SHIFT)
+#define	MTRR_K6_WC	(1U << 1)	/* write-combine */
+#define	MTRR_K6_UC	(1U << 0)	/* uncached */
+
+#define	MTRR_K6_NVAR	2
 
 #ifdef _KERNEL
 
@@ -105,6 +119,7 @@ struct proc;
 struct mtrr;
 
 void i686_mtrr_init_first(void);
+void k6_mtrr_init_first(void);
 
 struct mtrr_funcs {
 	void (*init_cpu)(struct cpu_info *ci);
@@ -117,6 +132,7 @@ struct mtrr_funcs {
 };
 
 extern struct mtrr_funcs i686_mtrr_funcs;
+extern struct mtrr_funcs k6_mtrr_funcs;
 extern struct mtrr_funcs *mtrr_funcs;
 
 #define mtrr_init_cpu(ci)	mtrr_funcs->init_cpu(ci)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.5 2001/05/09 17:34:40 matt Exp $	*/
+/*	$NetBSD: hat.c,v 1.5.2.1 2002/01/10 19:39:19 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,21 +46,20 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <arm/fiq.h>
+
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #include <dev/ic/i8253reg.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <arm32/shark/fiq.h>
+#include <arm32/shark/shark_fiq.h>
 #include <arm32/shark/sequoia.h>
-
-extern int fiq_getregs         __P((fiqhandler_t *));
-extern int fiq_setregs         __P((fiqhandler_t *));
 
 static int hatOn = 0;
 
@@ -71,9 +70,10 @@ static void hatEnableSWTCH();
 
 static void (*hatWedgeFn)(int);
 
+extern struct fiqregs shark_fiqregs;
+
 int hatClkOff(void)
 {
-        fiqhandler_t fiqhandler;
 	u_int16_t    seqReg;
 
 	if (!hatOn) return -1;
@@ -89,13 +89,13 @@ int hatClkOff(void)
         outb(ATSR_REG1_REG, 
 	     inb(ATSR_REG1_REG) & ~((REG1_M_TMR2EN) | (REG1_M_SPKREN)));
 
-	fiq_getregs(&fiqhandler);
+	fiq_getregs(&shark_fiqregs);
 
 	/* get rid of the C routine and stack */
-	fiqhandler.fh_r9  = 0;
-	fiqhandler.fh_r13 = 0;
+	shark_fiqregs.fr_r9  = 0;
+	shark_fiqregs.fr_r13 = 0;
 
-	fiq_setregs(&fiqhandler);
+	fiq_setregs(&shark_fiqregs);
 	isa_dmathaw(&isa_chipset_tag);		/* XXX */
 
 	return 0;
@@ -105,7 +105,6 @@ int hatClkOff(void)
 int hatClkOn(int count, void (*hatFn)(int), int arg,
 	     unsigned char *stack, void (*wedgeFn)(int))
 {
-        fiqhandler_t fiqhandler;
 	u_int16_t    seqReg;
 
 	if (hatOn) return -1;
@@ -114,14 +113,14 @@ int hatClkOn(int count, void (*hatFn)(int), int arg,
 
 	isa_dmafreeze(&isa_chipset_tag);	/* XXX */
 
-	fiq_getregs(&fiqhandler);
+	fiq_getregs(&shark_fiqregs);
 
 	/* set the C routine and stack */
-	fiqhandler.fh_r9  = (u_int)hatFn;
-	fiqhandler.fh_r10 = (u_int)arg;
-	fiqhandler.fh_r13 = (u_int)stack;
+	shark_fiqregs.fr_r9  = (u_int)hatFn;
+	shark_fiqregs.fr_r10 = (u_int)arg;
+	shark_fiqregs.fr_r13 = (u_int)stack;
 
-	fiq_setregs(&fiqhandler);
+	fiq_setregs(&shark_fiqregs);
 
 	/* no debounce on SWTCH */
 	sequoiaRead(PMC_DBCR_REG, &seqReg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.26 2000/07/11 16:08:15 nathanw Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.26.4.1 2002/01/10 19:35:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.26.4.1 2002/01/10 19:35:53 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.15.2.1 2001/08/03 04:11:33 lukem Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.15.2.2 2002/01/10 19:43:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -80,11 +80,10 @@
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/io.h>
-#include <machine/irqhandler.h>
-#include <machine/katelib.h>
-#include <machine/pte.h>
+#include <machine/intr.h>
+#include <arm/arm32/katelib.h>
 #include <machine/bootinfo.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <hpc/hpc/platid.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
@@ -124,10 +123,6 @@ paddr_t physical_freeend;
 paddr_t physical_end;
 u_int free_pages;
 int physmem = 0;
-
-#define biconscnpollc      nullcnpollc
-cons_decl(bicons);
-static struct consdev bicons = cons_init(bicons);
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
@@ -179,7 +174,7 @@ vaddr_t sa11x0_idle_mem;
 /* Prototypes */
 
 void physcon_display_base	__P((u_int addr));
-extern void consinit		__P((void));
+void consinit		__P((void));
 
 void map_section	__P((vaddr_t pt, vaddr_t va, vaddr_t pa,
 			     int cacheable));
@@ -194,8 +189,6 @@ vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 
 u_int cpu_get_control		__P((void));
 
@@ -213,7 +206,6 @@ extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
-extern void db_machine_init	__P((void));
 
 extern void dumpsys	__P((void));
 
@@ -674,14 +666,7 @@ initarm(argc, argv, bi)
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
 
-	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
-		consinit();
-	else {
-		/* XXX this isn't useful for normal use, but helps debuging */
-		biconscninit(&bicons);
-		cn_tab = &bicons;
-		cn_tab->cn_pri = CN_REMOTE;
-	}
+	consinit();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("freemempos=%08lx\n", freemempos);
@@ -745,7 +730,14 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
-	cninit();
+	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
+		cninit();
+	else {
+		/*
+		 * Nothing to do here.  Console initialization is done at
+		 * autoconf device attach time.
+		 */
+	}
 }
 
 #ifdef DEBUG_BEFOREMMU

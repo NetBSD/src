@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_hfsc.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
-/*	$KAME: altq_hfsc.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.3.2.1 2002/01/10 19:35:56 thorpej Exp $	*/
+/*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Carnegie Mellon University. All Rights Reserved.
@@ -39,6 +39,9 @@
  * Real-Time and Priority Service"
  * by Ion Stoica, Hui Zhang, and T. S. Eugene Ng.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.3.2.1 2002/01/10 19:35:56 thorpej Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -332,7 +335,7 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 		if (flags & HFCF_CLEARDSCP)
 			red_flags |= RIOF_CLEARDSCP;
 #endif
-		if (sc->m2 == 0)
+		if (sc->m2 < 8)
 			red_pkttime = 1000 * 1000 * 1000; /* 1 sec */
 		else
 			red_pkttime = (int64_t)hif->hif_ifq->altq_ifp->if_mtu

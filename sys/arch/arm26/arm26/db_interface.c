@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2001/03/13 23:56:49 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9.2.1 2002/01/10 19:38:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -34,7 +34,6 @@
  * Interface to new debugger.
  */
 #include "opt_ddb.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +44,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
+#include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
@@ -58,6 +58,8 @@ int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
+int db_trapper __P((u_int addr, u_int inst, struct trapframe *frame,
+    int fault_code));
 
 static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
@@ -82,7 +84,7 @@ const struct db_variable db_regs[] = {
 	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
 	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
 	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-#ifdef PROG32
+#ifdef __PROG32
 	{ "und_sp", (long *)&nil, db_access_und_sp, },
 	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
 	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
@@ -95,7 +97,7 @@ extern label_t	*db_recover;
 
 int	db_active = 0;
 
-#ifdef PROG32
+#ifdef __PROG32
 int db_access_und_sp(vp, valp, rw)
 	const struct db_variable *vp;
 	db_expr_t *valp;
@@ -125,7 +127,7 @@ int db_access_irq_sp(vp, valp, rw)
 		*valp = get_stackptr(PSR_IRQ32_MODE);
 	return(0);
 }
-#endif
+#endif /* __PROG32 */
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -163,20 +165,6 @@ kdb_trap(type, regs)
 	*regs = ddb_regs;
 
 	return (1);
-}
-
-
-/*
- * Received keyboard interrupt sequence.
- */
-void
-kdb_kbd_trap(regs)
-	db_regs_t *regs;
-{
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, regs);
-	}
 }
 
 
@@ -259,11 +247,6 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_irqstat_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-
 const struct db_command db_machine_command_table[] = {
 	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
@@ -307,7 +290,7 @@ db_machine_init()
 	 */
 
 	if (kernexec->a_syms == 0) {
-		printf("[No symbol table]\n");
+		printf("ddb: No symbol table\n");
 	} else {
 		/* cover the symbols themselves (what is the int for?? XXX) */
 		esym = (int)&end + kernexec->a_syms + sizeof(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1997/02/04 03:52:15 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.40.1 2002/01/10 19:43:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,22 @@
 #include <sys/param.h>
 
 #include <hp300/dev/hilreg.h>
-#include <hp300/hp300/clockreg.h>
+
+#define FEBRUARY        2
+#define STARTOFTIME     1970
+#define SECDAY          86400L
+#define SECYR           (SECDAY * 365)
+
+#define BBC_SET_REG     0xe0
+#define BBC_WRITE_REG   0xc2
+#define BBC_READ_REG    0xc3
+#define NUM_BBC_REGS    12
+
+#define leapyear(year)		((year) % 4 == 0)
+#define range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
+#define days_in_year(a)		(leapyear(a) ? 366 : 365)
+#define days_in_month(a)	(month_days[(a) - 1])
+#define bbc_to_decimal(a,b)	(bbc_registers[a] * 10 + bbc_registers[b])
 
 #include <hp300/stand/common/samachdep.h>
 

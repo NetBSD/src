@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/20 00:24:11 soren Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2002/01/10 19:41:27 thorpej Exp $
 
-MKMAN=		no
+NOMAN=		# defined
 
 SCRIPTS=	installkernel.sh
 

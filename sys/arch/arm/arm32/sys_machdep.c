@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2001/03/04 05:08:43 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.6.1 2002/01/10 19:37:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -50,6 +50,10 @@
 #include <sys/syscallargs.h>
 
 #include <machine/sysarch.h>
+
+/* Prototypes */
+static int arm32_sync_icache __P((struct proc *, char *, register_t *));
+static int arm32_drain_writebuf __P((struct proc *, char *, register_t *));
 
 static int
 arm32_sync_icache(p, args, retval)

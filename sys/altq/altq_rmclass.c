@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.4 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.4.2.1 2002/01/10 19:35:57 thorpej Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  * LBL code modified by speer@eng.sun.com, May 1977.
  * For questions and/or comments, please send mail to cbq@ee.lbl.gov
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.4.2.1 2002/01/10 19:35:57 thorpej Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.9.2.1 2001/09/13 01:13:50 thorpej Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.9.2.2 2002/01/10 19:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,6 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.9.2.2 2002/01/10 19:45:03 thorpej Exp $");
+
 #include "opt_pcibios.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.4 2001/06/20 02:21:58 toshii Exp $	*/
+/*	$NetBSD: softintr.c,v 1.4.4.1 2002/01/10 19:43:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/irqhandler.h>
+#include <arm/cpufunc.h>
+#include <machine/intr.h>
 
 extern int ipl_to_spl(int);
 void softintr_free(void *);

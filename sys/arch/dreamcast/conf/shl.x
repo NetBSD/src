@@ -11,7 +11,7 @@ SECTIONS
     *(.text)
     *(.rodata)
     *(.strings)
-     etext = . ; 
+     etext = . ;
      _etext = . ;  /* XXX */
   }  > ram
   .tors :
@@ -26,20 +26,20 @@ SECTIONS
   .data :
   {
     *(.data)
-     edata = . ; 
+     edata = . ;
      _edata = . ;  /* XXX */
   }  > ram
   .bss :
   {
-     bss_start = . ; 
+     bss_start = . ;
     *(.bss)
     *(COMMON)
-     end = . ;  
+     end = . ;
      _end = . ;  /* XXX */
   }  > ram
   .stack   :
   {
-     stack = . ; 
+     stack = . ;
     *(.stack)
   }  > ram
   .stab 0 (NOLOAD) :

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 1999/09/27 04:18:45 itohy Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.25.16.1 2002/01/10 19:45:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,6 +63,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
@@ -1351,6 +1352,7 @@ opcode_coproc(dbuf, opc)
 	case 4:
 	case 5:
 	default:
+		/* Nothing */ ;
 	}
 	addstr(dbuf, "UNKNOWN COPROC OPCODE");
 	return;

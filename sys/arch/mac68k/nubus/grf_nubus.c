@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.62.4.1 2002/01/10 19:45:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -490,42 +490,42 @@ grfmv_intr_cb264(vsc)
 
 	sc = (struct grfbus_softc *)vsc;
 	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
-	asm volatile("	movl	%0,a0
-			movl	a0@(0xff6028),d0
-			andl	#0x2,d0
+	asm volatile("	movl	%0,%%a0
+			movl	%%a0@(0xff6028),%%d0
+			andl	#0x2,%%d0
 			beq	_mv_intr0
-			movql	#0x3,d0
+			movql	#0x3,%%d0
 		_mv_intr0:
-			movl	a0@(0xff600c),d1
-			andl	#0x3,d1
-			cmpl	d1,d0
+			movl	%%a0@(0xff600c),%%d1
+			andl	#0x3,%%d1
+			cmpl	%%d1,%%d0
 			beq	_mv_intr_fin
-			movl	d0,a0@(0xff600c)
+			movl	%%d0,%%a0@(0xff600c)
 			nop
-			tstb	d0
+			tstb	%%d0
 			beq	_mv_intr1
-			movl	#0x0002,a0@(0xff6040)
-			movl	#0x0102,a0@(0xff6044)
-			movl	#0x0105,a0@(0xff6048)
-			movl	#0x000e,a0@(0xff604c)
-			movl	#0x001c,a0@(0xff6050)
-			movl	#0x00bc,a0@(0xff6054)
-			movl	#0x00c3,a0@(0xff6058)
-			movl	#0x0061,a0@(0xff605c)
-			movl	#0x0012,a0@(0xff6060)
+			movl	#0x0002,%%a0@(0xff6040)
+			movl	#0x0102,%%a0@(0xff6044)
+			movl	#0x0105,%%a0@(0xff6048)
+			movl	#0x000e,%%a0@(0xff604c)
+			movl	#0x001c,%%a0@(0xff6050)
+			movl	#0x00bc,%%a0@(0xff6054)
+			movl	#0x00c3,%%a0@(0xff6058)
+			movl	#0x0061,%%a0@(0xff605c)
+			movl	#0x0012,%%a0@(0xff6060)
 			bra	_mv_intr_fin
 		_mv_intr1:
-			movl	#0x0002,a0@(0xff6040)
-			movl	#0x0209,a0@(0xff6044)
-			movl	#0x020c,a0@(0xff6048)
-			movl	#0x000f,a0@(0xff604c)
-			movl	#0x0027,a0@(0xff6050)
-			movl	#0x00c7,a0@(0xff6054)
-			movl	#0x00d7,a0@(0xff6058)
-			movl	#0x006b,a0@(0xff605c)
-			movl	#0x0029,a0@(0xff6060)
+			movl	#0x0002,%%a0@(0xff6040)
+			movl	#0x0209,%%a0@(0xff6044)
+			movl	#0x020c,%%a0@(0xff6048)
+			movl	#0x000f,%%a0@(0xff604c)
+			movl	#0x0027,%%a0@(0xff6050)
+			movl	#0x00c7,%%a0@(0xff6054)
+			movl	#0x00d7,%%a0@(0xff6058)
+			movl	#0x006b,%%a0@(0xff605c)
+			movl	#0x0029,%%a0@(0xff6060)
 		_mv_intr_fin:
-			movl	#0x1,a0@(0xff6014)"
+			movl	#0x1,%%a0@(0xff6014)"
 		: : "g" (slotbase) : "a0","d0","d1");
 }
 
@@ -544,77 +544,77 @@ grfmv_intr_cb364(vsc)
 
 	sc = (struct grfbus_softc *)vsc;
 	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
-	asm volatile("	movl	%0,a0
-			movl	a0@(0xfe6028),d0
-			andl	#0x2,d0
+	asm volatile("	movl	%0,%%a0
+			movl	%%a0@(0xfe6028),%%d0
+			andl	#0x2,%%d0
 			beq	_cb364_intr4
-			movql	#0x3,d0
-			movl	a0@(0xfe6018),d1
-			movl	#0x3,a0@(0xfe6018)
-			movw	a0@(0xfe7010),d2
-			movl	d1,a0@(0xfe6018)
-			movl	a0@(0xfe6020),d1
-			btst	#0x06,d2
+			movql	#0x3,%%d0
+			movl	%%a0@(0xfe6018),%%d1
+			movl	#0x3,%%a0@(0xfe6018)
+			movw	%%a0@(0xfe7010),%%d2
+			movl	%%d1,%%a0@(0xfe6018)
+			movl	%%a0@(0xfe6020),%%d1
+			btst	#0x06,%%d2
 			beq	_cb364_intr0
-			btst	#0x00,d1
+			btst	#0x00,%%d1
 			beq	_cb364_intr5
 			bsr	_cb364_intr1
 			bra	_cb364_intr_out
 		_cb364_intr0:
-			btst	#0x00,d1
+			btst	#0x00,%%d1
 			bne	_cb364_intr5
 			bsr	_cb364_intr1
 			bra	_cb364_intr_out
 		_cb364_intr1:
-			movl	d0,a0@(0xfe600c)
+			movl	%%d0,%%a0@(0xfe600c)
 			nop
-			tstb	d0
+			tstb	%%d0
 			beq	_cb364_intr3
-			movl	#0x0002,a0@(0xfe6040)
-			movl	#0x0105,a0@(0xfe6048)
-			movl	#0x000e,a0@(0xfe604c)
-			movl	#0x00c3,a0@(0xfe6058)
-			movl	#0x0061,a0@(0xfe605c)
-			btst	#0x06,d2
+			movl	#0x0002,%%a0@(0xfe6040)
+			movl	#0x0105,%%a0@(0xfe6048)
+			movl	#0x000e,%%a0@(0xfe604c)
+			movl	#0x00c3,%%a0@(0xfe6058)
+			movl	#0x0061,%%a0@(0xfe605c)
+			btst	#0x06,%%d2
 			beq	_cb364_intr2
-			movl	#0x001c,a0@(0xfe6050)
-			movl	#0x00bc,a0@(0xfe6054)
-			movl	#0x0012,a0@(0xfe6060)
-			movl	#0x000e,a0@(0xfe6044)
-			movl	#0x00c3,a0@(0xfe6064)
-			movl	#0x0061,a0@(0xfe6020)
+			movl	#0x001c,%%a0@(0xfe6050)
+			movl	#0x00bc,%%a0@(0xfe6054)
+			movl	#0x0012,%%a0@(0xfe6060)
+			movl	#0x000e,%%a0@(0xfe6044)
+			movl	#0x00c3,%%a0@(0xfe6064)
+			movl	#0x0061,%%a0@(0xfe6020)
 			rts
 		_cb364_intr2:
-			movl	#0x0016,a0@(0xfe6050)
-			movl	#0x00b6,a0@(0xfe6054)
-			movl	#0x0011,a0@(0xfe6060)
-			movl	#0x0101,a0@(0xfe6044)
-			movl	#0x00bf,a0@(0xfe6064)
-			movl	#0x0001,a0@(0xfe6020)
+			movl	#0x0016,%%a0@(0xfe6050)
+			movl	#0x00b6,%%a0@(0xfe6054)
+			movl	#0x0011,%%a0@(0xfe6060)
+			movl	#0x0101,%%a0@(0xfe6044)
+			movl	#0x00bf,%%a0@(0xfe6064)
+			movl	#0x0001,%%a0@(0xfe6020)
 			rts
 		_cb364_intr3:
-			movl	#0x0002,a0@(0xfe6040)
-			movl	#0x0209,a0@(0xfe6044)
-			movl	#0x020c,a0@(0xfe6048)
-			movl	#0x000f,a0@(0xfe604c)
-			movl	#0x0027,a0@(0xfe6050)
-			movl	#0x00c7,a0@(0xfe6054)
-			movl	#0x00d7,a0@(0xfe6058)
-			movl	#0x006b,a0@(0xfe605c)
-			movl	#0x0029,a0@(0xfe6060)
-			oril	#0x0040,a0@(0xfe6064)
-			movl	#0x0000,a0@(0xfe6020)
+			movl	#0x0002,%%a0@(0xfe6040)
+			movl	#0x0209,%%a0@(0xfe6044)
+			movl	#0x020c,%%a0@(0xfe6048)
+			movl	#0x000f,%%a0@(0xfe604c)
+			movl	#0x0027,%%a0@(0xfe6050)
+			movl	#0x00c7,%%a0@(0xfe6054)
+			movl	#0x00d7,%%a0@(0xfe6058)
+			movl	#0x006b,%%a0@(0xfe605c)
+			movl	#0x0029,%%a0@(0xfe6060)
+			oril	#0x0040,%%a0@(0xfe6064)
+			movl	#0x0000,%%a0@(0xfe6020)
 			rts
 		_cb364_intr4:
-			movq	#0x00,d0
+			movq	#0x00,%%d0
 		_cb364_intr5:
-			movl	a0@(0xfe600c),d1
-			andl	#0x3,d1
-			cmpl	d1,d0
+			movl	%%a0@(0xfe600c),%%d1
+			andl	#0x3,%%d1
+			cmpl	%%d1,%%d0
 			beq	_cb364_intr_out
 			bsr	_cb364_intr1
 		_cb364_intr_out:
-			movl	#0x1,a0@(0xfe6014)
+			movl	#0x1,%%a0@(0xfe6014)
 		_cb364_intr_quit:
 		" : : "g" (slotbase) : "a0","d0","d1","d2");
 }

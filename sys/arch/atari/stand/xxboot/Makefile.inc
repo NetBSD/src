@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3.36.1 2001/09/13 01:13:23 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3.36.2 2002/01/10 19:40:34 thorpej Exp $
 
 BINDIR=		/usr/mdec
 BINMODE=	${NONBINMODE}
@@ -8,7 +8,7 @@ LDFLAGS=	-nostdlib -static -Wl,-x,-Ttext,0,-N
 CPPFLAGS+=	-I- -I. -I..
 
 beforeinstall:
-	objcopy -O binary ${PROG} ${PROG}X
+	${OBJCOPY} -O binary ${PROG} ${PROG}X
 	@mv -f ${PROG} ${PROG}XX
 	@mv -f ${PROG}X ${PROG}
 

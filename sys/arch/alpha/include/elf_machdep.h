@@ -1,4 +1,16 @@
-/* $NetBSD: elf_machdep.h,v 1.6 2000/04/02 15:35:49 minoura Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.6.8.1 2002/01/10 19:37:05 thorpej Exp $ */
+
+#ifndef	_ALPHA_ELF_MACHDEP_H_
+#define	_ALPHA_ELF_MACHDEP_H_
+
+/*
+ * Alpha ELF uses different (non-standard) definitions of Elf64_Sword
+ * and Elf64_Word.
+ */
+typedef	int64_t		Elf64_Sword;
+#define	ELF64_FSZ_SWORD	8
+typedef	uint64_t	Elf64_Word;
+#define	ELF64_FSZ_WORD	8
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -9,6 +21,8 @@
 		case EM_ALPHA:						\
 		case EM_ALPHA_EXP:					\
 			break;
+
+#define	ELF64_MACHDEP_ID	EM_ALPHA_EXP	/* XXX */
 
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
@@ -45,3 +59,5 @@
 #define	R_ALPHA_RELATIVE	27	/* Adjust by program base */
 
 #define	R_TYPE(name)		__CONCAT(R_ALPHA_,name)
+
+#endif /* _ALPHA_ELF_MACHDEP_H_ */

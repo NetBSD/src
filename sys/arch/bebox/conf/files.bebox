@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.27.2.1 2001/09/13 01:13:27 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.27.2.2 2002/01/10 19:40:45 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -49,8 +49,8 @@ major	{wd = 0}
 #
 # Memory Disk for install floppy
 #
-file arch/bebox/bebox/md_root.c   memory_disk_hooks 
-major   {md = 17}
+file arch/bebox/bebox/md_root.c		memory_disk_hooks
+major	{md = 17}
 
 #
 # RAIDframe
@@ -132,6 +132,7 @@ attach	opms at pckbc with pms_pckbc
 file	arch/bebox/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 device	pfb: wsemuldisplaydev, wsrasteremulops
 attach	pfb at pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.44 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: rd.c,v 1.44.4.1 2002/01/10 19:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ rdattach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	memset(&sc->sc_dkdev, 0, sizeof(sc->sc_dkdev));
 	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dkdev);
 
@@ -406,7 +406,7 @@ rdident(parent, sc, ha)
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
 	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-	bzero(name, sizeof(name)); 
+	memset(name, 0, sizeof(name)); 
 	if (stat == 0) {
 		n = desc->d_name;
 		for (i = 5; i >= 0; i--) {
@@ -442,21 +442,21 @@ rdident(parent, sc, ha)
 	 */
 	switch (ha->ha_id) {
 	case RD7946AID:
-		if (bcmp(name, "079450", 6) == 0)
+		if (memcmp(name, "079450", 6) == 0)
 			id = RD7945A;
 		else
 			id = RD7946A;
 		break;
 
 	case RD9134LID:
-		if (bcmp(name, "091340", 6) == 0)
+		if (memcmp(name, "091340", 6) == 0)
 			id = RD9134L;
 		else
 			id = RD9122D;
 		break;
 
 	case RD9134DID:
-		if (bcmp(name, "091220", 6) == 0)
+		if (memcmp(name, "091220", 6) == 0)
 			id = RD9122S;
 		else
 			id = RD9134D;
@@ -532,7 +532,7 @@ rdgetinfo(dev)
 	 * Set some default values to use while reading the label
 	 * or to use if there isn't a label.
 	 */
-	bzero((caddr_t)lp, sizeof *lp);
+	memset((caddr_t)lp, 0, sizeof *lp);
 	lp->d_type = DTYPE_HPIB;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = 32;
@@ -965,7 +965,7 @@ rdstatus(rs)
 	rs->sc_rsc.c_sram = C_SRAM;
 	rs->sc_rsc.c_ram = C_RAM;
 	rs->sc_rsc.c_cmd = C_STATUS;
-	bzero((caddr_t)&rs->sc_stat, sizeof(rs->sc_stat));
+	memset((caddr_t)&rs->sc_stat, 0, sizeof(rs->sc_stat));
 	rv = hpibsend(c, s, C_CMD, &rs->sc_rsc, sizeof(rs->sc_rsc));
 	if (rv != sizeof(rs->sc_rsc)) {
 #ifdef DEBUG
@@ -1053,7 +1053,7 @@ rderror(unit)
 		return(1);
 
 	/*
-	 * First conjure up the block number at which the error occured.
+	 * First conjure up the block number at which the error occurred.
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
@@ -1071,7 +1071,7 @@ rderror(unit)
 	 * Now output a generic message suitable for badsect.
 	 * Note that we don't use harderr cuz it just prints
 	 * out b_blkno which is just the beginning block number
-	 * of the transfer, not necessary where the error occured.
+	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
 	    'a'+rdpart(bp->b_dev), pbn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46.2.1 2001/07/10 14:03:30 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.46.2.2 2002/01/10 19:43:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -123,7 +123,7 @@ cdev_decl(dca);
 cdev_decl(apci);
 #include "ite.h"
 cdev_decl(ite);
-/* XXX shouldn't this be optional? */
+#include "hil.h"
 cdev_decl(hil);
 #include "dcm.h"
 cdev_decl(dcm);
@@ -165,7 +165,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
 	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
-	cdev_hil_init(1,hil),		/* 14: human interface loop */
+	cdev_hil_init(NHIL,hil),	/* 14: human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -188,6 +188,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 35: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 36: svr4 net pseudo-device */
+	cdev_notdef(),			/* 37: wscons consoles */
+	cdev_notdef(),			/* 38: wscons keyboards */
+	cdev_notdef(),			/* 39: wscons mice */
+	cdev_notdef(),			/* 40: wscons multiplexor */
+	cdev_notdef(),			/* 41: wsfont pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -264,7 +269,13 @@ static int chrtoblktbl[] = {
 	/* 32 */	14,
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
-	/* 35 */	15,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
 };
 
 /*
@@ -283,81 +294,3 @@ chrtoblk(dev)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
-
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-#define dvboxcngetc		itecngetc
-#define dvboxcnputc		itecnputc
-#define dvboxcnpollc		nullcnpollc
-cons_decl(dvbox);
-
-#define gboxcngetc		itecngetc
-#define gboxcnputc		itecnputc
-#define gboxcnpollc		nullcnpollc
-cons_decl(gbox);
-
-#define hypercngetc		itecngetc
-#define hypercnputc		itecnputc
-#define hypercnpollc		nullcnpollc
-cons_decl(hyper);
-
-#define rboxcngetc		itecngetc
-#define rboxcnputc		itecnputc
-#define rboxcnpollc		nullcnpollc
-cons_decl(rbox);
-
-#define topcatcngetc		itecngetc
-#define topcatcnputc		itecnputc
-#define topcatcnpollc		nullcnpollc
-cons_decl(topcat);
-
-#define	dcacnpollc		nullcnpollc
-cons_decl(dca);
-
-#define	apcicnpollc		nullcnpollc
-cons_decl(apci);
-
-#define	dcmcnpollc		nullcnpollc
-cons_decl(dcm);
-
-#include "dvbox.h"
-#include "gbox.h"
-#include "hyper.h"
-#include "rbox.h"
-#include "topcat.h"
-
-struct	consdev constab[] = {
-#if NITE > 0
-#if NDVBOX > 0
-	cons_init(dvbox),
-#endif
-#if NGBOX > 0
-	cons_init(gbox),
-#endif
-#if NHYPER > 0
-	cons_init(hyper),
-#endif
-#if NRBOX > 0
-	cons_init(rbox),
-#endif
-#if NTOPCAT > 0
-	cons_init(topcat),
-#endif
-#endif /* NITE > 0 */
-#if NDCA > 0
-	cons_init(dca),
-#endif
-#if NAPCI > 0
-	cons_init(apci),
-#endif
-#if NDCM > 0
-	cons_init(dcm),
-#endif
-	{ 0 },
-};

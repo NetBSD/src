@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.10 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: SHARKINST,v 1.10.2.1 2002/01/10 19:38:41 thorpej Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -127,7 +127,7 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
@@ -157,7 +157,7 @@ ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
-wd*             at wdc? drive ?
+wd*		at wdc? drive ?
 
 atapibus*	at wdc?
 cd*		at atapibus? drive?

@@ -1,10 +1,26 @@
-#	$NetBSD: GENERIC,v 1.111.2.1 2001/09/13 01:13:53 thorpej Exp $
+# $NetBSD: GENERIC,v 1.111.2.2 2002/01/10 19:45:30 thorpej Exp $
 #
-# GENERIC
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include	"arch/mac68k/conf/std.mac68k"
+include		"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.111.2.1 $"
+#ident 		"GENERIC-$Revision: 1.111.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -29,10 +45,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -42,11 +58,11 @@ options 	LKM		# loadable kernel modules
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote debugger
-#options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# remote debugger
+#options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
+#options 	KGDB_DEVRATE=38400	# baud rate
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -248,6 +264,7 @@ pseudo-device	bpfilter	12	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
@@ -256,7 +273,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.2.2.1 2001/09/13 01:13:13 thorpej Exp $ */
+/* $NetBSD: machdep.h,v 1.2.2.2 2002/01/10 19:38:36 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -44,7 +44,6 @@ extern void swi_handler(struct trapframe *);
 extern void data_abort_handler(struct trapframe *);
 extern void prefetch_abort_handler(struct trapframe *);
 extern void address_exception_handler(struct trapframe *);
-extern void ast_handler(struct trapframe *);
 
 /* irq.c */
 extern void irq_handler	__P((struct irqframe *irqf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.2.2 2001/09/13 01:12:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.3 2002/01/10 19:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,13 +98,12 @@
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 

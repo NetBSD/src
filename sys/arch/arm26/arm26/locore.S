@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15.2.2 2001/09/13 01:13:12 thorpej Exp $ */
+/* $NetBSD: locore.S,v 1.15.2.3 2002/01/10 19:38:34 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -116,39 +116,6 @@ _C_LABEL(kernel_text):
  * FIQ
  */
 
-	.global	_C_LABEL(page0), _C_LABEL(page0_end)
-_C_LABEL(page0):
-	ldr	pc, Lreset_target
-	ldr	pc, Lundefined_target
-	ldr	pc, Lswi_target
-	ldr	pc, Lprefetch_abort_target
-	ldr	pc, Ldata_abort_target
-	ldr	pc, Laddress_exception_target
-	ldr	pc, Lirq_target
-Lfiqhandler:
-	.global _C_LABEL(fiqhandler)
-	.set	_C_LABEL(fiqhandler), . - _C_LABEL(page0)
-	subs	pc, lr, #4
-#if NFIQ > 0
-	.org	Lfiqhandler + 0x100
-#endif
-
-Lreset_target:
-	.word	reset_entry
-Lundefined_target:
-	.word	undefined_entry
-Lswi_target:
-	.word	swi_entry
-Lprefetch_abort_target:
-	.word	prefetch_abort_entry
-Ldata_abort_target:
-	.word	data_abort_entry
-Laddress_exception_target:
-	.word	address_exception_entry
-Lirq_target:
-	.word	irq_entry
-_C_LABEL(page0_end):
-
 /*
  * Trap handlers
  *
@@ -194,21 +161,23 @@ pull_trapframe:
  * AST handling stuff.  We have to disable IRQs between loading the
  * flag and returning to user mode, since otherwise an IRQ might
  * happen in the interim and set the flag again.  For simplicity, we
- * just leave IRQs off throughout (ast_handler will re-enable them).
+ * just leave IRQs off throughout (ast will re-enable them).
  */
 	ldr	lr, [sp, #TF_R15]	/* Pull return address and PSR */
 	tst	lr, #R15_MODE		/* Was trap in USR mode? */
 	bne	3f			/* If not, return */
+	ldr	r4, Lastpending
+1:
 #ifndef __APCS_26__
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 #endif
-	ldr	r4, Lastpending
-1:
 	ldr	r1, [r4]
 	cmp	r1, #0			/* AST pending? */
 	beq	2f			/* If not, return */
+	mov	r1, #0			/* Clear astpending */
+	str	r1, [r4]
 	mov	r0, sp			/* Reuse old trapframe */
-	bl	_C_LABEL(ast_handler)	/* Handle AST */
+	bl	_C_LABEL(ast)	/* Handle AST */
 	b	1b			/* Try again */
 
 2:
@@ -312,8 +281,8 @@ Lirq_from_usr:
 	mov	r0, sp
 	bl	_C_LABEL(irq_handler)
 
-	ldr	r0, Lastpending
-	ldr	r0, [r0]
+	ldr	r1, Lastpending
+	ldr	r0, [r1]
 	cmp	r0, #0
 	bne	Lirq_to_ast
 	mov	r0, sp
@@ -329,6 +298,8 @@ Lirq_from_usr:
 	movs	r15, lr			/* and return. */
 
 Lirq_to_ast:
+	mov	r0, #0			/* Clear astpending */
+	str	r0, [r1]
 	ldmia	sp, {IRQ_REGS_USR}	/* Slurp up irqframe */
 	sub	sp, sp, #(TF_SIZE - IF_SIZE - TF_R0)
 	stmia	sp, {TRAP_REGS}^	/* Spit out trapframe */
@@ -340,7 +311,7 @@ Lirq_to_ast:
 
 	mov	fp, #0
 	mov	r0, sp
-	bl	_C_LABEL(ast_handler)
+	bl	_C_LABEL(ast)
 	b	pull_trapframe
 
 /* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
@@ -377,36 +348,7 @@ ENTRY(set_r13_irq)
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	MODE_CHANGE_NOP
 	movs	r15, lr
-
-#if NFIQ > 0
-/* LINTSTUB: Func: void fiq_setregs(const struct fiq_regs *) */
-ENTRY(fiq_setregs)
-	/* We assume that there's no need to disable FIQs while we work. */
-	mov	r1, r15
-	bic	r2, r1, #R15_MODE
-	teqp	r2, #R15_MODE_FIQ
-	MODE_CHANGE_NOP
-	ldmia	r0, {r8-r13}
-	teqp	r1, #0
-	MODE_CHANGE_NOP
-	mov	r15, lr	
-/* LINTSTUB: Func: void fiq_getregs(struct fiq_regs *) */
-ENTRY(fiq_getregs)
-	mov	r1, r15
-	bic	r2, r1, #R15_MODE
-	teqp	r2, #R15_MODE_FIQ
-	MODE_CHANGE_NOP
-	stmia	r0, {r8-r13}
-	teqp	r1, #0
-	MODE_CHANGE_NOP
-	mov	r15, lr
-#endif
-
-	/*
-	 * These are grotty, and very non-APCS.  The CPU interrupt status
-	 * is part of the state that's restored on function exit, so the
-	 * effect of these only persists until then.
-	 */
+
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE)
@@ -429,6 +371,17 @@ ENTRY(fiq_off)
 /* LINTSTUB: Func: void fiq_on(void) */
 ENTRY(fiq_on)
 	bics	r15, r14, #(R15_FIQ_DISABLE)
+
+ENTRY_NP(set_r15)
+	mov	r3, r14			/* get caller's IRQ state */
+	bic	r2, r3, r0
+	eor	r2, r2, r1
+	mov	r0, r3			/* return old IRQ state */
+	movs	r15, r2			/* set new state and return */
+
+ENTRY_NP(get_r15)
+	mov	r0, r14
+	mov	r15, lr
 
 	/*
 	 * Low-level context-switch operation.  cpu_switch() is in C -- this
@@ -504,4 +457,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.15.2.2 2001/09/13 01:13:12 thorpej Exp $")
+RCSID("$NetBSD: locore.S,v 1.15.2.3 2002/01/10 19:38:34 thorpej Exp $")

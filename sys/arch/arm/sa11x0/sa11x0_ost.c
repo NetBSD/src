@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.1.2.1 2001/09/13 01:13:11 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.1.2.2 2002/01/10 19:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -46,8 +46,11 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/cpufunc.h>
-#include <machine/katelib.h>
+
+#include <arm/cpufunc.h>
+
+#include <arm/arm32/katelib.h>
+
 #include <arm/sa11x0/sa11x0_reg.h> 
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_ostreg.h>
@@ -232,21 +235,22 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d\n", hz, stathz);
 
-	/* Zero the counter value */
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
-
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
 	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
 
+	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
+	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
 			  saost_sc->sc_clock_count);
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
 			  saost_sc->sc_statclock_count);
 
-	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
-	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
+	/* Zero the counter value */
+	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
 }
 
 int
@@ -267,11 +271,16 @@ void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splhigh();
-	int tm;
-	int deltatm;
+	int s, tm, deltatm;
 	static struct timeval lasttime;
 
+	if(saost_sc == NULL) {
+		tvp->tv_sec = 0;
+		tvp->tv_usec = 0;
+		return;
+	}
+
+	s = splhigh();
 	tm = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 			SAOST_CR);
 

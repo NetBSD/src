@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.33.2.3 2001/09/13 01:13:13 thorpej Exp $
+# $NetBSD: files.arm26,v 1.33.2.4 2002/01/10 19:38:35 thorpej Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -13,7 +13,7 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,15 +30,18 @@
 maxpartitions 8
 maxusers 2 8 64
 
+# Display current IPL in screen border
+defflag FLASHYTHING
+
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 include "dev/ata/files.ata"
-major { wd = 4 }
+major	{ wd = 4 }
 include "dev/scsipi/files.scsipi"
-major   {sd = 5}
-major   {cd = 6}
+major	{ sd = 5 }
+major	{ cd = 6 }
 
 define fiq
 
@@ -50,7 +53,7 @@ file	arch/arm26/arm26/cpu.c			cpu
 # Floating-point unit
 device	fpu
 attach	fpu at cpu
-defopt	opt_fputypes.h	FPU_FPPC FPU_FPA
+defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
 file	arch/arm26/arm26/fpu.c			fpu		needs-flag
 file	arch/arm26/arm26/fpu_asm.S		fpu
 
@@ -65,6 +68,7 @@ file	arch/arm26/iobus/iobus.c		iobus
 device	ioc { [bank = -1], [offset = 0] }
 attach	ioc at iobus
 file	arch/arm26/iobus/ioc.c			ioc		needs-flag
+file	arch/arm26/ioc/ioc_fiq_util.S		fiq		needs-flag
 
 # I^2C bus (bit-banged through IOC control register)
 device	iic { addr = -1 }
@@ -98,7 +102,8 @@ device	arcwskbd: wskbddev
 attach	arcwskbd at arckbd
 device	arcwsmouse: wsmousedev
 attach	arcwsmouse at arckbd
-file	arch/arm26/ioc/arckbd.c			arckbd		needs-flag
+file	arch/arm26/ioc/arckbd.c			arckbd | arcwskbd | arcwsmouse
+								needs-flag
 file	arch/arm26/ioc/arckbdmap.c		arckbd
 
 # On-board WD 1772 floppy controller (usually at bank 1 irq 12 fiq 0/1)
@@ -113,7 +118,7 @@ attach	wf at wfdc
 # Econet module (Motorola 6854) (usually at bank 2 fiq 2)
 device	eca: fiq, eco, ifnet
 attach	eca at ioc
-file	arch/arm26/ioc/if_eca.c			eca
+file	arch/arm26/ioc/if_eca.c			eca		needs-flag
 file	arch/arm26/ioc/if_eca_fiq.S		eca
 
 # On-board Rockwell 6551 serial (usually at bank 3 irq 10/1)
@@ -126,14 +131,16 @@ device	arcpp
 attach	arcpp at ioc
 file	arch/arm26/ioc/arcpp.c			arcpp		needs-flag
 
-include "dev/podulebus/files.podulebus"
 
 # Podule interface (podules listed later) (usually at bank 4 irq 13 fiq 6)
 #  Unix backplanes also use bank 6
 #  MEMC podules also use the iobus directly
-# XXX How on Earth do we codify all that?
 device	unixbp
 attach	unixbp at ioc
+
+# NB: files.podulebus must come after unixbp is defined, to get the
+# attachments in the right order.
+include "dev/podulebus/files.podulebus"
 attach	podulebus at ioc
 file	arch/arm26/podulebus/podulebus.c	podulebus
 file	arch/arm26/podulebus/podloader_asm.S	podloader	needs-flag
@@ -205,8 +212,6 @@ file	arch/arm26/arm26/conf.c
 file	arch/arm26/arm26/cons_machdep.c
 file	arch/arm26/arm26/copyinout.S
 file	arch/arm26/arm26/except.c
-file	arch/arm26/arm26/fiq.c			fiq		needs-flag
-file	arch/arm26/arm26/fiq_util.S		fiq
 file	arch/arm26/arm26/irq.c
 file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c

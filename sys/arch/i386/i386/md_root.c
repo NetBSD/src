@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.11 1999/03/17 18:59:22 sommerfe Exp $	*/
+/*	$NetBSD: md_root.c,v 1.11.24.1 2002/01/10 19:44:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.11.24.1 2002/01/10 19:44:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

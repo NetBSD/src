@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.1.2.1 2001/09/13 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.1.2.2 2002/01/10 19:37:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -47,11 +47,14 @@
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/cpufunc.h>
+
+#include <arm/cpufunc.h>
+
 #include <arm/footbridge/footbridgevar.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/dc21285mem.h>
-
+#include <arm/footbridge/footbridge.h>
+ 
 /*
  * DC21285 'Footbridge' device
  *
@@ -67,7 +70,6 @@ static void footbridge_attach	__P((struct device *parent, struct device *self,
         	                     void *aux));
 static int footbridge_print	__P((void *aux, const char *pnp));
 static int footbridge_intr	__P((void *arg));
-void footbridge_sa110_cc_setup	__P((void));
 
 /* Driver and attach structures */
 struct cfattach footbridge_ca = {

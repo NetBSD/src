@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.1.2.1 2001/09/13 01:13:09 thorpej Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.1.2.2 2002/01/10 19:37:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -47,7 +47,8 @@
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
-
+#include <arm/arm32/machdep.h>
+ 
 irqhandler_t *irqhandlers[NIRQS];
 
 int current_intr_depth;		/* Depth of interrupt nesting */
@@ -61,7 +62,8 @@ u_int irqblock[NIRQS];
 extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
-extern void set_spl_masks	__P((void));
+
+void stray_irqhandler __P((void));
 
 void
 irq_init(void)

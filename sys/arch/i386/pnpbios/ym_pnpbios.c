@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.4 2000/09/24 23:40:12 itohy Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.4.8.1 2002/01/10 19:45:09 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.4.8.1 2002/01/10 19:45:09 thorpej Exp $");
 
 #include "mpu_ym.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.48.4.1 2001/09/13 01:13:46 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.48.4.2 2002/01/10 19:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,11 +40,14 @@
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
-#include "opt_compat_netbsd.h"
-
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.48.4.2 2002/01/10 19:44:44 thorpej Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>

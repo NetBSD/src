@@ -1,26 +1,25 @@
-#	$NetBSD: Makefile,v 1.15 2001/04/15 17:13:07 kleink Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2002/01/10 19:38:47 thorpej Exp $
 
 KDIR=	/sys/arch/arm32/include
 INCSDIR= /usr/include/arm32
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	beep.h bootconfig.h bswap.h bus.h \
-	cdefs.h conf.h cpu.h cpufunc.h cpus.h \
-	db_machdep.h devmap.h disklabel.h disklabel_acorn.h \
+	bswap.h bus.h \
+	cdefs.h cpu.h \
+	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
-	ieee.h ieeefp.h iic.h \
+	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h io.h ipkdb.h irqhandler.h \
-	joystick.h \
-	katelib.h kbd.h \
+	intr.h ipkdb.h \
 	limits.h lock.h \
-	math.h mouse.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h rtc.h \
+	math.h \
+	param.h pcb.h pmap.h proc.h profile.h ptrace.h \
+	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
-	undefined.h \
-	varargs.h vconsole.h vidc.h vmparam.h
+	varargs.h vmparam.h
+
+INCS+=	devmap.h joystick.h
 
 .include <bsd.kinc.mk>

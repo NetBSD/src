@@ -1,20 +1,22 @@
-#	$NetBSD: files.arm,v 1.33.2.3 2001/09/13 01:13:08 thorpej Exp $
+#	$NetBSD: files.arm,v 1.33.2.4 2002/01/10 19:37:50 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
-defopt	ARM32
+defflag				ARM32
 
-# What mode are we running in?  These are mutually exclusive for now.
-defopt	opt_progmode.h	PROG26 PROG32
 # CPU types
-defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3 : PROG26
-defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8 
-			CPU_SA110 CPU_SA1100 CPU_SA1110 CPU_XSCALE : PROG32
+defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
+defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
+				CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110
+				CPU_XSCALE
 
 # Floating point emulator
-defopt	ARMFPE
+defflag				ARMFPE
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+file	arch/arm/fpe-arm/armfpe.S		armfpe
 
 # PMAP_DEBUG (heavily abused option)
-defopt	PMAP_DEBUG
+defflag				PMAP_DEBUG
 
 # MI console support
 file	dev/cons.c
@@ -29,6 +31,9 @@ file	arch/arm/arm32/db_interface.c		ddb & arm32
 file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm32/db_machdep.c		ddb & arm32
 
+# FIQ support
+file	arch/arm/arm/fiq.c
+file	arch/arm/arm/fiq_subr.S
 
 # mainbus files
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
@@ -45,34 +50,44 @@ file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus & arm32
 file	arch/arm/arm/disassem.c
 
 file	arch/arm/arm/arm_machdep.c
+file	arch/arm/arm/ast.c
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/bus_space_notimpl.S	arm32
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
+file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3
+file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
+file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
+file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
+file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
+file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_sa110 |
+							cpu_xscale
+file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110
+file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/undefined.c
+# vectors.S gets included manually by Makefile.arm26, since it needs
+# to be at the start of the text segment on those machines.
+file	arch/arm/arm/vectors.S			arm32
 file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm32 implementations
 file	arch/arm/arm32/arm32_machdep.c		arm32
-file	arch/arm/arm32/ast.c			arm32
 file	arch/arm/arm32/bus_dma.c		arm32
 file	arch/arm/arm32/cpu.c			arm32 & cpu
 file	arch/arm/arm32/cpuswitch.S		arm32
 file	arch/arm/arm32/exception.S		arm32
 file	arch/arm/arm32/fault.c			arm32
 file	arch/arm/arm32/fusu.S			arm32
-file	arch/arm/arm32/intr.c			arm32 & !newintr
 file	arch/arm/arm32/mem.c			arm32
 file	arch/arm/arm32/pmap.c			arm32
 file	arch/arm/arm32/setcpsr.S		arm32
 file	arch/arm/arm32/setstack.S		arm32
-file	arch/arm/arm32/spl.S			arm32 & !newintr
 file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32

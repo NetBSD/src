@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.6 1998/09/05 15:28:07 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.6.28.1 2002/01/10 19:44:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@
  * Since this is a machine-dependent file, we make all sorts of
  * assumptions about bus.h's guts.  Beware!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.6.28.1 2002/01/10 19:44:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

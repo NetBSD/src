@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.147.4.1 2001/08/03 04:11:47 lukem Exp $	*/
+/*	$NetBSD: pccons.c,v 1.147.4.2 2002/01/10 19:44:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
  * controller driver, ==0 that we access it directly.
  * XXX Only one of these attachments can be used in one kernel configuration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.147.4.2 2002/01/10 19:44:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -571,6 +574,18 @@ pcprobe(parent, match, aux)
 	int res;
 #endif
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	/*
+	 * XXXJRT This is probably wrong, but then again, pccons is a
+	 * XXXJRT total hack to begin with.
+	 */
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 #if (NPCCONSKBD == 0)
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -706,11 +721,17 @@ lose:
 #endif /* 1 */
 
 #if (NPCCONSKBD > 0)
-	ia->ia_iosize = 0;
+	ia->ia_nio = 0;
+	ia->ia_nirq = 0;
 #else
-	ia->ia_iosize = 16;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 16;
+	ia->ia_nirq = 1;
 #endif
-	ia->ia_msize = 0;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	return (1);
 }
 
@@ -733,8 +754,8 @@ pcattach(parent, self, aux)
 #if (NPCCONSKBD > 0)
 	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc, sc->sc_dev.dv_xname);
 #else
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_TTY, pcintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_TTY, pcintr, sc);
 
 	/*
 	 * Look for children of the keyboard controller.

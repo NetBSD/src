@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.1 2001/01/28 00:37:52 nathanw Exp $	*/
+/*	$NetBSD: joy_pnpbios.c,v 1.1.10.1 2002/01/10 19:45:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.1.10.1 2002/01/10 19:45:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

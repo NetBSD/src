@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.1.2.1 2001/09/13 01:13:29 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.1.2.2 2002/01/10 19:40:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -63,9 +63,9 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/pte.h>
-#include <machine/undefined.h>
-
+#include <arm/undefined.h>
+#include <arm/arm32/machdep.h>
+ 
 #include <machine/cyclone_boot.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
@@ -78,7 +78,6 @@
 #include <dev/isa/isavar.h>
 #endif
 
-#define VERBOSE_INIT_ARM
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -154,8 +153,6 @@ void consinit		__P((void));
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
 
-void isa_cats_init __P((u_int iobase, u_int membase));
-
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
 			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -170,10 +167,7 @@ void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 extern void dumpsys		__P((void));
 
@@ -335,9 +329,10 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(bootinfo)
-	struct ebsaboot *bootinfo;
+initarm(bootargs)
+	void *bootargs;
 {
+	struct ebsaboot *bootinfo = bootargs;
 	int loop;
 	int loop1;
 	u_int logical;
@@ -740,14 +735,17 @@ initarm(bootinfo)
 #endif
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		extern int end;
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif /* __ELF__ */
 
 	if (boothowto & RB_KDB)
 		Debugger();

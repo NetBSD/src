@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.27 2001/06/13 15:05:44 soda Exp $	*/
+/*	$NetBSD: pccons.c,v 1.27.2.1 2002/01/10 19:37:42 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -60,6 +60,7 @@
 #include <sys/kernel.h>
 #include <sys/kcore.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 

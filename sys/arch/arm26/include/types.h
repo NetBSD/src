@@ -1,9 +1,9 @@
-/* $NetBSD: types.h,v 1.7 2001/02/26 00:19:57 bjh21 Exp $ */
+/* $NetBSD: types.h,v 1.7.4.1 2002/01/10 19:38:36 thorpej Exp $ */
 
 #ifndef	_ARM26_TYPES_H_
 #define	_ARM26_TYPES_H_
 
-#include <arm/types.h>
+#include <arm/arm26/types.h>
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 

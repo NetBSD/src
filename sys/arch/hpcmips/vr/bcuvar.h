@@ -1,4 +1,4 @@
-/*	$NetBSD: bcuvar.h,v 1.3 1999/12/16 12:10:02 shin Exp $	*/
+/*	$NetBSD: bcuvar.h,v 1.3.8.1 2002/01/10 19:44:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -40,8 +40,8 @@ struct vrbcu_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-char	*vrbcu_vrip_getcpuname __P((void));
-int	vrbcu_vrip_getcpuid __P((void));
-int	vrbcu_vrip_getcpumajor __P((void));
-int	vrbcu_vrip_getcpuminor __P((void));
-int	vrbcu_vrip_getcpuclock __P((void));
+char	*vrbcu_vrip_getcpuname(void);
+int	vrbcu_vrip_getcpuid(void);
+int	vrbcu_vrip_getcpumajor(void);
+int	vrbcu_vrip_getcpuminor(void);
+int	vrbcu_vrip_getcpuclock(void);

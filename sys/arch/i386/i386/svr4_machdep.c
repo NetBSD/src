@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.53.4.1 2001/08/03 04:11:44 lukem Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.53.4.2 2002/01/10 19:44:47 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.53.4.2 2002/01/10 19:44:47 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -232,7 +235,8 @@ svr4_setmcontext(p, mc, flags)
 		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_fs = r[SVR4_X86_FS];
+		tf->tf_gs = r[SVR4_X86_GS];
 		tf->tf_es = r[SVR4_X86_ES];
 		tf->tf_ds = r[SVR4_X86_DS];
 #ifdef VM86
@@ -598,8 +602,19 @@ svr4_fasttrap(frame)
 		}
 		break;
 
-	case SVR4_TRAP_CLOCK_SETTIME:
-		uprintf("unimplemented svr4 fast trap CLOCK_SETTIME\n");
+	case SVR4_TRAP_GETHRESTIME:
+		/*
+		 * This is like clock_gettime(CLOCK_REALTIME, tp), returning
+		 * proc's wall time. Seconds are returned in %eax, nanoseconds
+		 * in %edx.
+		 */
+		{
+			struct timeval tv;
+			microtime(&tv);
+
+			frame.tf_eax = (u_int32_t) tv.tv_sec;
+			frame.tf_edx = (u_int32_t) tv.tv_usec * 1000;
+		}
 		break;
 
 	default:

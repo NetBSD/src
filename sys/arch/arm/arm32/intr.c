@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.3 2001/09/13 01:13:07 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.2.4 2002/01/10 19:37:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,9 +49,21 @@
 
 #include <net/netisr.h>
 
+#include <machine/conf.h>
+#include <arm/arm32/machdep.h>
+ 
+#ifndef NPLCOM
+#define NPLCOM 0
+#endif
+
+/* Prototypes */
+static void clearsoftintr __P((u_int)); 
+ 
 u_int soft_interrupts = 0;
 
 extern int current_spl_level;
+
+extern unsigned spl_mask;
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 #ifdef IRQSTATS
@@ -70,6 +82,10 @@ extern u_int sintrcnt[];
 extern void comsoft	__P((void));
 #endif	/* NCOM > 0 */
 
+#if NPLCOM > 0
+extern void plcomsoft	__P((void));
+#endif	/* NPLCOM > 0 */
+
 /* Eventually these will become macros */
 
 void
@@ -79,7 +95,7 @@ setsoftintr(intrmask)
 	atomic_set_bit(&soft_interrupts, intrmask);
 }
 
-void
+static void
 clearsoftintr(intrmask)
 	u_int intrmask;
 {
@@ -103,8 +119,6 @@ setsoftserial()
 {
 	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_SERIAL));
 }
-
-int astpending;
 
 /* Handle software interrupts */
 
@@ -165,8 +179,64 @@ dosoftints()
 #if NCOM > 0
 		comsoft();
 #endif	/* NCOM > 0 */
+#if NPLCOM > 0
+		plcomsoft();
+#endif	/* NPLCOM > 0 */
 		(void)splx(s);
 	}
 }
+
+int current_spl_level = _SPL_SERIAL;
+u_int spl_masks[_SPL_LEVELS + 1];
+u_int spl_smasks[_SPL_LEVELS];
+int safepri = _SPL_0;
+
+void
+set_spl_masks()
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		spl_masks[loop] = 0xffffffff;
+		spl_smasks[loop] = 0;
+	}
+
+	spl_masks[_SPL_BIO]        = irqmasks[IPL_BIO];
+	spl_masks[_SPL_NET]        = irqmasks[IPL_NET];
+	spl_masks[_SPL_SOFTSERIAL] = irqmasks[IPL_TTY];
+	spl_masks[_SPL_TTY]        = irqmasks[IPL_TTY];
+	spl_masks[_SPL_IMP]        = irqmasks[IPL_IMP];
+	spl_masks[_SPL_AUDIO]      = irqmasks[IPL_AUDIO];
+	spl_masks[_SPL_CLOCK]      = irqmasks[IPL_CLOCK];
+#ifdef IPL_STATCLOCK
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_STATCLOCK];
+#else
+	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_CLOCK];
+#endif
+	spl_masks[_SPL_HIGH]       = irqmasks[IPL_HIGH];
+	spl_masks[_SPL_SERIAL]     = irqmasks[IPL_SERIAL];
+	spl_masks[_SPL_LEVELS]     = 0;
+
+	spl_smasks[_SPL_0] = 0xffffffff;
+	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_SERIAL);
+	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
+	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
+}
+
+#ifdef DIAGNOSTIC
+void
+dump_spl_masks()
+{
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		    spl_masks[loop], loop, spl_smasks[loop]);
+	}
+}
+#endif
 
 /* End of intr.c */

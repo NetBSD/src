@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.8 2000/02/14 07:01:48 scottr Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.8.8.1 2002/01/10 19:45:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 
 struct grfmode {
 	u_int8_t	mode_id;	/* Identifier for mode              */
+	u_int8_t	pad0;
 	caddr_t		fbbase;		/* Base of page of frame buffer     */
 	u_int32_t	fbsize;		/* Size of frame buffer             */
 	u_int16_t	fboff;		/* Offset of frame buffer from base */
@@ -55,7 +56,7 @@ struct grfmode {
 	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct       */
 	u_int16_t	psize;		/* Screen depth                     */
 	char		pad[32];	/* Space for expansion              */
-};
+} __attribute__((packed));
 
 struct grfmodes {
 	int		nmodes;		/* Number of modes in modelist */

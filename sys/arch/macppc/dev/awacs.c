@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.11 2001/06/19 12:02:55 simonb Exp $	*/
+/*	$NetBSD: awacs.c,v 1.11.2.1 2002/01/10 19:45:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -145,6 +145,7 @@ struct audio_hw_if awacs_hw_if = {
 	awacs_get_props,
 	awacs_trigger_output,
 	awacs_trigger_input,
+	NULL,
 };
 
 struct audio_device awacs_device = {

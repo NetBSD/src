@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30.2.2 2001/09/13 01:13:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.30.2.3 2002/01/10 19:38:34 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2001/09/13 01:13:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.3 2002/01/10 19:38:34 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -120,6 +120,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2001/09/13 01:13:12 thorpej Exp $"
 #include <machine/memcreg.h>
 
 #include <arch/arm26/arm26/cpuvar.h>
+
+#ifdef PMAP_DEBUG_MODIFIED
+#include <sys/md4.h>
+#endif
 
 /*
  * We store all the mapping information in the pv_table, and the pmaps
@@ -138,9 +142,13 @@ struct pv_entry {
 	u_int8_t	pv_vflags; /* Per-mapping flags */
 #define PV_WIRED	0x01 /* This is a wired mapping */
 #define PV_UNMANAGED	0x02 /* Mapping was entered by pmap_kenter_*() */
+	/* From pv_pflags onwards is per-physical-page state. */
 	u_int8_t	pv_pflags; /* Per-physical-page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
+#ifdef PMAP_DEBUG_MODIFIED
+	unsigned char	pv_md4sum[16];
+#endif
 };
 
 #define PM_NENTRIES 1024
@@ -200,6 +208,10 @@ static caddr_t pmap_find(paddr_t);
 
 static void pmap_update_page(int);
 
+#ifdef PMAP_DEBUG_MODIFIED
+static void pmap_md4_page(unsigned char [16], paddr_t);
+#endif
+
 /*
  * No-one else wanted to take responsibility for the MEMC control register,
  * so it's ended up here.
@@ -245,6 +257,10 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	pv_table =
 	    (struct pv_entry *)uvm_pageboot_alloc(pv_table_size);
 	bzero(pv_table, pv_table_size);
+#ifdef PMAP_DEBUG_MODIFIED
+	for (i = 0; i < physmem; i++)
+		pv_table[i].pv_pflags |= PV_MODIFIED;
+#endif
 
 	/* Set up the kernel's pmap */
 	pmap = pmap_kernel();
@@ -598,13 +614,12 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 		if (npv) {
 			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
 			/* Pull up first entry from chain. */
-			npv->pv_pflags = pv->pv_pflags;
-			*pv = *npv;
+			memcpy(pv, npv, offsetof(struct pv_entry, pv_pflags));
 			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
 			pv_free(npv);
 		} else {
 			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
-			bzero(pv, sizeof(*pv));
+			memset(pv, 0, offsetof(struct pv_entry, pv_pflags));
 		}
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
@@ -679,10 +694,13 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 	}
 	if (unmanaged)
 		pv->pv_vflags |= PV_UNMANAGED;
-	if (flags & VM_PROT_WRITE)
-		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
-	else if (flags & (VM_PROT_ALL))
-		ppv->pv_pflags |= PV_REFERENCED;
+	else {
+		/* According to pmap(9), unmanaged mappings don't track r/m */
+		if (flags & VM_PROT_WRITE)
+			ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
+		else if (flags & (VM_PROT_ALL))
+			ppv->pv_pflags |= PV_REFERENCED;
+	}
 	pmap_update_page(ppn);
 	pmap->pm_entries[lpn] = pv;
 	if (pv->pv_vflags & PV_WIRED)
@@ -756,19 +774,41 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	pmap_remove(pmap_kernel(), va, va+len);
 }
 
-boolean_t
+inline boolean_t
 pmap_is_modified(page)
 	struct vm_page *page;
 {
 	int ppn;
+	boolean_t rv;
+#ifdef PMAP_DEBUG_MODIFIED
+	unsigned char digest[16];
+#endif
 	UVMHIST_FUNC("pmap_is_modified");
 
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
-	return (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
+	rv = (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
+#ifdef PMAP_DEBUG_MODIFIED
+	if (!rv) {
+		pmap_md4_page(digest, page->phys_addr);
+		if (memcmp(digest, pv_table[ppn].pv_md4sum, 16) != 0) {
+			int i;
+
+			printf("page %p modified bit wrong\n", page);
+			printf("then = ");
+			for (i = 0; i < 16; i++)
+				printf("%02x", pv_table[ppn].pv_md4sum[i]);
+			printf("\n now = ");
+			for (i = 0; i < 16; i++)
+				printf("%02x", digest[i]);
+			printf("\n");
+		}
+	}
+#endif
+	return rv;
 }
 
-boolean_t
+inline boolean_t
 pmap_is_referenced(page)
 	struct vm_page *page;
 {
@@ -804,13 +844,23 @@ pmap_clear_modify(struct vm_page *page)
 {
 	int ppn;
 	boolean_t rv;
+	struct pv_entry *pv;
 	UVMHIST_FUNC("pmap_clear_modify");
 
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_modified(page);
-	pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
-	pmap_update_page(ppn);
+#ifdef PMAP_DEBUG_MODIFIED
+	pmap_md4_page(pv_table[ppn].pv_md4sum, ptoa(ppn));
+#endif
+	if (rv) {
+		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
+			if (pv->pv_pmap == pmap_kernel() &&
+			    (pv->pv_prot & VM_PROT_WRITE))
+				return rv;
+		pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
+		pmap_update_page(ppn);
+	}
 	return rv;
 }
 
@@ -824,8 +874,10 @@ pmap_clear_reference(struct vm_page *page)
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_referenced(page);
-	pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
-	pmap_update_page(ppn);
+	if (rv) {
+		pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
+		pmap_update_page(ppn);
+	}
 	return rv;
 }
 
@@ -848,7 +900,7 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 		return FALSE;
 	ppn = pv->pv_ppn;
 	ppv = &pv_table[ppn];
-	UVMHIST_LOG(pmaphist,
+ 	UVMHIST_LOG(pmaphist,
 	    "pmap = %p, lpn = %d, ppn = %d, atype = 0x%x",
 	    pmap, lpn, ppn, atype);
 	if (pmap != pmap_kernel()) {
@@ -1045,6 +1097,20 @@ pmap_copy_page(paddr_t src, paddr_t dest)
 	pmap_update_page(dppn);
 }
 
+#ifdef PMAP_DEBUG_MODIFIED
+static void
+pmap_md4_page(unsigned char digest[16], paddr_t pa)
+{
+	MD4_CTX context;
+	UVMHIST_FUNC("pmap_md4_page");
+
+	UVMHIST_CALLED(pmaphist);
+	MD4Init(&context);
+	MD4Update(&context, pmap_find(pa), PAGE_SIZE);
+	MD4Final(digest, &context);
+}
+#endif
+
 /*
  * This is meant to return the range of kernel vm that is available
  * after loading the kernel.  Since NetBSD/arm26 runs the kernel from
@@ -1066,6 +1132,8 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 
 #ifdef DDB
 #include <ddb/db_output.h>
+
+void pmap_dump(struct pmap *);
 
 void
 pmap_dump(struct pmap *pmap)

@@ -1,8 +1,8 @@
-#	$NetBSD: files.footbridge,v 1.5 2001/06/20 22:14:35 chris Exp $
+#	$NetBSD: files.footbridge,v 1.5.4.1 2002/01/10 19:37:50 thorpej Exp $
 #
 # Shared footbridge files information
 
-defopt	FOOTBRIDGE
+defflag	FOOTBRIDGE
 
 # DC21285 "Footbridge" specific files
 define	footbridge {}

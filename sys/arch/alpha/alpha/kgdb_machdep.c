@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb_machdep.c,v 1.1 2001/04/19 02:56:34 thorpej Exp $ */
+/* $NetBSD: kgdb_machdep.c,v 1.1.6.1 2002/01/10 19:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
  * Machine-dependent functions for remote KGDB.
  */
 
-#include "opt_kgdb_machdep.h"
+#include "opt_kgdb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1 2001/04/19 02:56:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1.6.1 2002/01/10 19:36:58 thorpej Exp $");
 
 #include "com.h"
 

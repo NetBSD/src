@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.10 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: KARLA,v 1.10.2.1 2002/01/10 19:42:47 thorpej Exp $
 #
 # KARLA
 #
@@ -40,7 +40,7 @@ options 	SETUIDSCRIPTS
 options 	UCONSOLE	# allows non-root to read console output
 
 #options 	COMPAT_NOMID
-options 	COMPAT_43	# compatibility with 4.3BSD 
+options 	COMPAT_43	# compatibility with 4.3BSD
 options 	COMPAT_44	# compatibility with 4.4BSD binaries
 #options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0 binaries
@@ -76,6 +76,12 @@ mainbus0	at root
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
+
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# Human Interface Loop
+hil*		at intio?
 
 topcat*		at intio?		# DAVE - remove one of these
 topcat*		at dio? scode?

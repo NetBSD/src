@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.59.2.1 2001/09/13 01:13:40 thorpej Exp $
+#	$NetBSD: files.hpcmips,v 1.59.2.2 2002/01/10 19:43:45 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -30,7 +30,7 @@ major	{wd = 1}
 #
 # Bus-independent devices
 #
-device mainbus { }			# no locators
+device mainbus { [id = -1] }
 attach mainbus at root
 
 device cpu				# not optional
@@ -38,8 +38,8 @@ attach cpu at mainbus
 file arch/hpcmips/hpcmips/cpu.c		cpu
 
 # CPU support option headers
-defopt	opt_vr41xx.h	VR41XX VR4101 VR4102 VR4111 VR4121 VR4122 VR4181 VR4131
-defopt	opt_tx39xx.h	TX39XX TX3911 TX3912 TX3922
+defflag	opt_vr41xx.h	VR41XX VR4101 VR4102 VR4111 VR4121 VR4122 VR4181 VR4131
+defflag	opt_tx39xx.h	TX39XX TX3911 TX3912 TX3922
 
 #
 # CPU-dependent files
@@ -53,6 +53,8 @@ file	arch/mips/mips/fp.S		softfloat
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/bus_space.c
+file	arch/hpcmips/hpcmips/bus_space_notimpl.c
+file	arch/hpcmips/hpcmips/bus_space_through.c
 file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
@@ -148,7 +150,7 @@ device vrpciu: pcibus
 attach vrpciu at vrip
 file arch/hpcmips/vr/vrpciu.c			vrpciu needs-flag
 
-defopt opt_mq200.h	MQ200_DEBUG MQ200_USECRT
+defflag opt_mq200.h	MQ200_DEBUG MQ200_USECRT
 device mqvideo: hpcfbif
 attach mqvideo at vrip with mqvideo_vrip
 file arch/hpcmips/vr/mq200_vrip.c		mqvideo_vrip
@@ -198,14 +200,14 @@ file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 #
 #	TOSHIBA TX3912/3922
 #
-defopt TX39_DEBUG
-defopt TX39_WATCHDOGTIMER
-defopt TX39ICUDEBUG
-defopt TX39CLKDEBUG
-defopt TX39BIUDEBUG
-defopt TX39POWERDEBUG
-defopt TX39UARTDEBUG
-defopt USE_POLL
+defflag			TX39_DEBUG
+defflag			TX39_WATCHDOGTIMER
+defflag			TX39ICUDEBUG
+defflag			TX39CLKDEBUG
+defflag			TX39BIUDEBUG
+defflag			TX39POWERDEBUG
+defflag			TX39UARTDEBUG
+defflag			USE_POLL
 
 device txsim { }
 device txcsbusif {[platform = -1]}
@@ -366,9 +368,9 @@ include "dev/mii/files.mii"
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_ISA_ALLOC_IOBASE
-defopt	PCIC_ISA_ALLOC_IOSIZE
-defopt	PCIC_ISA_INTR_ALLOC_MASK
+defparam		PCIC_ISA_ALLOC_IOBASE
+defparam		PCIC_ISA_ALLOC_IOSIZE
+defparam		PCIC_ISA_INTR_ALLOC_MASK
 
 device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
@@ -387,7 +389,10 @@ include "dev/pcmcia/files.pcmcia"
 
 # Serial Interface Unit
 attach com at vrip with com_vrip
-file	arch/hpcmips/vr/com_vrip.c			com_vrip
+file	arch/hpcmips/vr/com_vrip.c		com_vrip needs-flag
+
+attach com at hpcioif with com_hpcio
+file arch/hpcmips/dev/com_hpcio.c		com_hpcio needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c				memory_disk_hooks

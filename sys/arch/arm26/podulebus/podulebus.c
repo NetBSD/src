@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.14.2.1 2001/08/25 06:15:14 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.14.2.2 2002/01/10 19:38:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.14.2.1 2001/08/25 06:15:14 thorpej Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.14.2.2 2002/01/10 19:38:37 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -65,7 +65,7 @@ static u_int8_t *podulebus_get_chunk(struct podulebus_attach_args *pa, int type)
 #if NPODLOADER > 0
 void podloader_read_region(struct podulebus_attach_args *pa, u_int src,
     u_int8_t *dest, size_t length);
-extern register_t podloader_call(register_t, register_t, register_t,
+extern register_t _podloader_call(register_t, register_t, register_t,
     void *, int);
 #endif
 
@@ -267,6 +267,19 @@ podulebus_initloader(struct podulebus_attach_args *pa)
 		FREE(pa->pa_descr, M_DEVBUF);
 	pa->pa_descr = podulebus_get_chunk(pa, CHUNK_DEV_DESCR);
 	return 0;
+}
+
+static register_t
+podloader_call(register_t r0, register_t r1, register_t r11, void *loader,
+    int entry)
+{
+	int s;
+	register_t result;
+
+	s = splhigh();
+	result = _podloader_call(r0, r1, r11, loader, entry);
+	splx(s);
+	return result;
 }
 
 int

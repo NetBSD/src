@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.20 1999/07/08 01:05:58 wrstuden Exp $	*/
+/*	$NetBSD: adutil.c,v 1.20.16.1 2002/01/10 19:35:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.20.16.1 2002/01/10 19:35:53 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.1.2.2 2001/09/13 01:13:11 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.1.2.3 2002/01/10 19:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -48,7 +48,6 @@
 
 #include <machine/bus.h>
 #include <machine/pmap.h>
-#include <machine/pte.h>
 
 /* Proto types for all the bus_space structure functions */
 

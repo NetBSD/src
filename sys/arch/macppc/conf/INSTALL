@@ -1,18 +1,18 @@
-#	$NetBSD: INSTALL,v 1.47.2.2 2001/09/13 01:13:57 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.47.2.3 2002/01/10 19:45:46 thorpej Exp $
 #
 # config file for INSTALL FLOPPY
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-makeoptions 	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
+makeoptions	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
 
 maxusers	12
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # Change base address to 0x800000 to use large memory disk.
-makeoptions 	TEXTADDR=0x800000
+makeoptions	TEXTADDR=0x800000
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
@@ -62,6 +62,7 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
+de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -81,10 +82,10 @@ ohci*	at pci? dev ? function ?	# Open Host Controller
 pciide*	at pci? dev ? function ?	# PCI IDE Controller
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs

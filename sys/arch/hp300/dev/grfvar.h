@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.13 2000/07/17 06:50:32 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.13.4.1 2002/01/10 19:42:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,7 @@ struct	grfdev_softc {
 	struct	device sc_dev;		/* generic device info */
 	struct	grf_data *sc_data;	/* generic grf data */
 	int	sc_scode;		/* select code, -1 for intio */
+	int	sc_isconsole;		/* device is the console */
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.17 2001/06/30 16:20:37 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.17.2.1 2002/01/10 19:38:39 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.17 2001/06/30 16:20:37 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.17.2.1 2002/01/10 19:38:39 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: arcvideo.c,v 1.17 2001/06/30 16:20:37 bjh21 Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
-#define WSDISPLAY_TYPE_ARCHIMEDES 42 /* XXX Should be in wsconsio.h */
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
@@ -402,7 +401,7 @@ arcvideo_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_ARCHIMEDES;
+		*(u_int *)data = WSDISPLAY_TYPE_VIDC;
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		if (sc->sc_flags & AV_VIDEO_ON)

@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.4 2000/06/14 15:15:43 jhawk Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.4.10.1 2002/01/10 19:45:06 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_pnpbios.c,v 1.4.10.1 2002/01/10 19:45:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.5 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: txsim.c,v 1.5.2.1 2002/01/10 19:44:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,12 +73,11 @@ int
 txsim_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-    
+
 #ifdef VR41XX
-	if (!platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
-	    && !platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
-		return (1);
-#endif /* !TX39XX */
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+	  return (0);
+#endif /* VR41XX */
 	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return (0);
 

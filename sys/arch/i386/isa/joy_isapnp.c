@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.16 1999/03/22 10:00:09 mycroft Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.16.24.1 2002/01/10 19:44:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.16.24.1 2002/01/10 19:44:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

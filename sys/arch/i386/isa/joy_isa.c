@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.4 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.4.4.1 2002/01/10 19:44:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,6 +32,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4.4.1 2002/01/10 19:44:58 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -63,10 +66,13 @@ joy_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rval = 0;
 
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_nio < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, JOY_NPORTS, 0, &ioh))
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, JOY_NPORTS, 0, &ioh))
 		return (0);
 
 #ifdef WANT_JOYSTICK_CONNECTED
@@ -80,8 +86,14 @@ joy_isa_probe(parent, match, aux)
 
 	bus_space_unmap(iot, ioh, JOY_NPORTS);
 
-	ia->ia_iosize = JOY_NPORTS;
-	ia->ia_msize = 0;
+	if (rval) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = JOY_NPORTS;
+
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (rval);
 }
 
@@ -97,7 +109,7 @@ joy_isa_attach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, JOY_NPORTS, 0,
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, JOY_NPORTS, 0,
 	    &sc->sc_ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.9 2001/05/02 13:12:45 jdolecek Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.9.4.1 2002/01/10 19:44:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ xreal:	# really in real mode now
 	# set up segment selectors.  Note: everything is now relative
 	# to zero-base in this file, except %ss.
 	# data items in our scratch area need to reflect MYADDR
-	xorl %ax,%ax
+	xorl %eax,%eax
 	movw %ax,%ss
 
 	movw %cs,%ax
@@ -221,15 +221,15 @@ xreal:	# really in real mode now
 	# Don't forget that we're in real mode, with 16-bit default data.
 	# all these movl's are really movw's, and movw's are movl's!
 	addr32
-	movw EDI_REGADDR-MYBASE,%edi
+	movw EDI_REGADDR-MYBASE,%di
 	addr32
-	movw ESI_REGADDR-MYBASE,%esi
+	movw ESI_REGADDR-MYBASE,%si
 	addr32
-	movw EDX_REGADDR-MYBASE,%edx
+	movw EDX_REGADDR-MYBASE,%dx
 	addr32
-	movw ECX_REGADDR-MYBASE,%ecx
+	movw ECX_REGADDR-MYBASE,%cx
 	addr32
-	movw EBX_REGADDR-MYBASE,%ebx
+	movw EBX_REGADDR-MYBASE,%bx
 	addr32
 	movb FUNCTION_ADDR-MYBASE,%al
 	addr32
@@ -239,11 +239,11 @@ xreal:	# really in real mode now
 	ljmp $(MYBASE>>4),$flushit
 flushit:
 	addr32
-	movw EFLAGS_REGADDR-MYBASE,%eax
+	movw EFLAGS_REGADDR-MYBASE,%ax
 	pushl %eax
 	popfl
 	addr32
-	movw EAX_REGADDR-MYBASE,%eax
+	movw EAX_REGADDR-MYBASE,%ax
 	
 intaddr: 
 	int $0xff
@@ -251,20 +251,20 @@ intaddr:
 	# save results
 	pushf
 	addr32
-	movw %eax,EAX_REGADDR-MYBASE
+	movw %ax,EAX_REGADDR-MYBASE
 	addr32
-	movw %ebx,EBX_REGADDR-MYBASE
+	movw %bx,EBX_REGADDR-MYBASE
 	addr32
-	movw %ecx,ECX_REGADDR-MYBASE
+	movw %cx,ECX_REGADDR-MYBASE
 	addr32
-	movw %edx,EDX_REGADDR-MYBASE
+	movw %dx,EDX_REGADDR-MYBASE
 	addr32
-	movw %esi,ESI_REGADDR-MYBASE
+	movw %si,ESI_REGADDR-MYBASE
 	addr32
-	movw %edi,EDI_REGADDR-MYBASE
-	pop %eax
+	movw %di,EDI_REGADDR-MYBASE
+	pop %ax
 	addr32
-	movw %eax,EFLAGS_REGADDR-MYBASE
+	movw %ax,EFLAGS_REGADDR-MYBASE
 	addr32
 	movw %es,ES_REGADDR-MYBASE
 

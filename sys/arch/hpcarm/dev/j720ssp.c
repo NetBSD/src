@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.2 2001/06/29 17:22:50 toshii Exp $ */
+/* $NetBSD: j720ssp.c,v 1.2.2.1 2002/01/10 19:43:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <machine/bus.h>
 #include <machine/config_hook.h>
 
+#include <hpc/hpc/bootinfo.h>
 #include <hpc/hpc/config_hook.h>
 #include <hpcarm/dev/sed1356var.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
@@ -156,6 +157,7 @@ const struct wskbd_mapdata j720kbd_keymapdata = {
 static int j720ssp_powerstate = 1;
 
 static struct j720ssp_softc j720kbdcons_sc;
+static int j720kbdcons_initstate = 0;
 
 #define DEBUG
 #ifdef DEBUG
@@ -206,6 +208,15 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &j720kbd_accessops;
 	a.accesscookie = sc;
 
+	/* Do console initialization */
+	if (! (bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
+		j720kbdcons_sc = *sc;
+		a.console = 1;
+
+		wskbd_cnattach(&j720kbd_consops, NULL, &j720kbd_keymapdata);
+		j720kbdcons_initstate = 1;
+	}
+
 	/*
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
@@ -217,6 +228,9 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	j720sspwaitcnt = 0;
 	j720sspwaittime = 0;
 #endif
+
+	if (j720kbdcons_initstate == 1)
+		j720kbd_enable(sc, 1);
 
 	/* LCD control is on the same bus */
 	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
@@ -480,12 +494,13 @@ j720ssp_readwrite(struct j720ssp_softc *sc, int drainfifo, int in, int *out)
 	return 0;
 }
 
-
 #if 0
 int
 j720kbd_cnattach()
 {
-	/* XXX */
+	/* XXX defer initialization till j720sspattach */
+
+	return (0);
 }
 #endif
 
@@ -494,6 +509,9 @@ void
 j720kbd_cngetc(void *v, u_int *type, int *data)
 {
 	char buf[9];
+
+	if (j720kbdcons_initstate < 1)
+		return;
 
 	for (;;) {
 		j720kbd_read(&j720kbdcons_sc, buf);

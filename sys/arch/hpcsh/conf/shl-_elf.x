@@ -1,4 +1,4 @@
-/*	$NetBSD: shl-_elf.x,v 1.1 2001/07/07 16:35:22 uch Exp $	*/
+/*	$NetBSD: shl-_elf.x,v 1.1.2.1 2002/01/10 19:44:19 thorpej Exp $	*/
 
 OUTPUT_FORMAT("elf32-shl-unx")
 OUTPUT_ARCH(sh)
@@ -19,7 +19,7 @@ SECTIONS
     *(.rodata)
     *(.strings)
   } > ram
-  _etext = . ; 
+  _etext = . ;
   PROVIDE (_etext = .);
   . = ALIGN(8);
   .data :
@@ -29,7 +29,7 @@ SECTIONS
     *(.data)
     CONSTRUCTORS
   } > ram
-  _edata = . ; 
+  _edata = . ;
   PROVIDE (_edata = .);
   . = ALIGN(8);
   .bss :

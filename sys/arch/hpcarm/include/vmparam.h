@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4.2.2 2001/08/25 06:15:20 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4.2.3 2002/01/10 19:43:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,54 +36,13 @@
 #ifndef	_HPCARM_VMPARAM_H_
 #define	_HPCARM_VMPARAM_H_
 
-/* for pt_entry_t definition */
-#include <machine/pte.h>
+#ifdef _KERNEL
 
-#define	USRTEXT		VM_MIN_ADDRESS
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
- * Note that MAXTSIZ mustn't be greater than 32M. Otherwise you'd have
- * to change the compiler to not generate bl instructions
- */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
-#ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
-#endif
-#ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
-
-/*
- * Size of shared memory map
- */
-#ifndef SHMMAXPGS
-#define SHMMAXPGS       1024
-#endif
-
-/*
- * The time for a process to be blocked before being very swappable.
- * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
- * it is used in subtle ways (fractions and multiples of it are, that is, like
- * half of a `long time'', almost a long time, etc.)
- * It is related to human patience and other factors which don't really
- * change over time.
- */
-#define	MAXSLP		20
+#include <arm/arm32/vmparam.h>
 
 /*
  * Address space constants
  */
-
-/* total number of page table entries to map 4GB * size of each entry*/
-#define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
 
 #ifndef HPCARM
 /*
@@ -92,9 +51,6 @@
  */
 #define	KERNEL_SPACE_START	0xf0000000
 
-/* Address where the page tables are mapped */
-#define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
-
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
@@ -102,7 +58,6 @@
 #define	KERNEL_VM_BASE		0xf1000000
 #else /* defined(HPCARM) */
 #define	KERNEL_SPACE_START	0xc0000000
-#define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
 #define	KERNEL_BASE		0xc0040000
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
 #define	ALT_PAGE_TBLS_BASE	0xc0800000
@@ -128,18 +83,6 @@
  * Override the default pager_map size, there's not enough KVA.
  */
 #define PAGER_MAP_SIZE		(4 * 1024 * 1024)
-
-/*
- * Mach derived constants
- */
-
-#define	VM_MIN_ADDRESS		((vm_offset_t)0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)(PAGE_TABLE_SPACE_START - UPAGES * NBPG))
-#define	VM_MAX_ADDRESS		((vm_offset_t)(PAGE_TABLE_SPACE_START + (KERNEL_SPACE_START >> PGSHIFT) * sizeof(pt_entry_t)))
-
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNEL_TEXT_BASE)
-#define	VM_MAXKERN_ADDRESS	((vm_offset_t)(KERNEL_VM_BASE + KERNEL_VM_SIZE))
-#define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffff)
 
 /*
  * Size of User Raw I/O map
@@ -189,18 +132,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
 
-/*
- * define structure pmap_physseg: there is one of these structures
- * for each chunk of noncontig RAM you have.
- */
-
-#define	__HAVE_PMAP_PHYSSEG
-
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv_entry array */
-	char *attrs;			/* attrs array */
-};
+#endif /* _KERNEL */
 
 #endif	/* _HPCARM_VMPARAM_H_ */
-
-/* End of vmparam.h */

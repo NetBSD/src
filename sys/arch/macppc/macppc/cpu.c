@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.2.3 2001/09/13 01:13:58 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.2.4 2002/01/10 19:45:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -46,6 +46,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
+#include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/pio.h>
 
@@ -56,8 +57,8 @@ void identifycpu(char *);
 static void ohare_init(void);
 int cpu_spinup(void);
 void cpu_hatch(void);
-
 void cpu_spinup_trampoline(void);
+int cpuintr(void *v);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -321,7 +322,7 @@ cpu_hatch()
 	asm volatile ("sync; isync");
 	h->running = 1;
 
-	identifycpu(model);
+	cpu_identify(model, sizeof(model));
 	printf(": %s, ID %d\n", model, cpu_number());
 
 	while (start_secondary_cpu == 0);

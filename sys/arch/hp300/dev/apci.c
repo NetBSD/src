@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.12 2001/06/12 15:17:18 wiz Exp $	*/
+/*	$NetBSD: apci.c,v 1.12.2.1 2002/01/10 19:42:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -188,10 +188,13 @@ struct apciregs *apci_cn = NULL;	/* console hardware */
 int	apciconsinit;			/* has been initialized */
 int	apcimajor;			/* our major number */
 
-void	apcicnprobe __P((struct consdev *));
-void	apcicninit __P((struct consdev *));
+int	apcicnattach __P((bus_space_tag_t, bus_addr_t, int));
 int	apcicngetc __P((dev_t));
 void	apcicnputc __P((dev_t, int));
+
+static struct consdev apci_cons = {
+       NULL, NULL, apcicngetc, apcicnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
+};
 
 
 int
@@ -887,59 +890,44 @@ apcitimeout(arg)
  * The following routines are required for the APCI to act as the console.
  */
 
-void
-apcicnprobe(cp)
-	struct consdev *cp;
+int
+apcicnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
+        bus_space_handle_t bsh;
+        caddr_t va;
+        struct apciregs *apci;
 
-	/* locate the major number */
-	for (apcimajor = 0; apcimajor < nchrdev; apcimajor++)
-		if (cdevsw[apcimajor].d_open == apciopen)
-			break;
-
-	/* initialize the required fields */
-	cp->cn_dev = makedev(apcimajor, 0);	/* XXX */
-	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if console is already forced. */
-	if (conforced)
-		return;
-
-	/*
-	 * The APCI can only be a console on a 425e; on other 4xx
-	 * models, the "first" serial port is mapped to the DCA
-	 * at select code 9.  See frodo.c for the autoconfiguration
-	 * version of this check.
-	 */
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
-		return;
+		return (1);
 
-#ifdef APCI_FORCE_CONSOLE
-	cp->cn_pri = CN_REMOTE;
-	conforced = 1;
-	conscode = -2;			/* XXX */
-#else
-	cp->cn_pri = CN_NORMAL;
+        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+                return (1);
+
+        va = bus_space_vaddr(bst, bsh);
+	apci = (struct apciregs *)va;
+
+	apciinit(apci, apcidefaultrate);
+        apciconsinit = 1;
+        apci_cn = apci;
+
+        /* locate the major number */
+        for (apcimajor = 0; apcimajor < nchrdev; apcimajor++)
+                if (cdevsw[apcimajor].d_open == apciopen)
+                        break;
+
+        /* initialize required fields */
+        cn_tab = &apci_cons;
+        cn_tab->cn_dev = makedev(apcimajor, 0);
+
+#ifdef KGDB
+	/* XXX this needs to be fixed. */
+	if (major(kgdb_dev) == 1)			/* XXX */
+		kgdb_dev = makedev(apcimajor, minor(kgdb_dev));
 #endif
 
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * console, install ourselves.
-	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || conforced)
-		cn_tab = cp;
+        return (0);
 }
 
-/* ARGSUSED */
-void
-apcicninit(cp)
-	struct consdev *cp;
-{
-
-	apci_cn = (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
-	apciinit(apci_cn, apcidefaultrate);
-	apciconsinit = 1;
-}
 
 /* ARGSUSED */
 int

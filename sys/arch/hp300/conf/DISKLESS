@@ -1,10 +1,9 @@
-#	$NetBSD: DISKLESS,v 1.30 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: DISKLESS,v 1.30.2.1 2002/01/10 19:42:45 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
 
-# Include attributes common to all hp300s
-include "arch/hp300/conf/std.hp300"
+include 	"arch/hp300/conf/std.hp300"
 
 # Support for various CPU types
 options 	HP320
@@ -48,7 +47,7 @@ file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
 
 # File system options
-options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
+options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
 
 # Networking options
 options 	INET		# Internet protocols
@@ -93,8 +92,14 @@ mainbus0	at root		# root "bus"
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
 
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# Human Interface Loop
+hil*		at intio?
+
 # Frodo utility chip found on 4xx's
-frodo0		at intio?
+frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor

@@ -1,10 +1,10 @@
-#	$NetBSD: std.milan,v 1.1.6.1 2001/09/13 01:13:19 thorpej Exp $
+#	$NetBSD: std.milan,v 1.1.6.2 2002/01/10 19:39:59 thorpej Exp $
 #
 # standard atari information
 #
 machine		atari m68k
 
-options		_MILANHW_
+options 	_MILANHW_
 
 options 	EXEC_SCRIPT		# Support #!
 options 	EXEC_ELF32		# 32-bit ELF executables

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7.2.2 2001/09/13 01:13:29 thorpej Exp $
+#	$NetBSD: files.cats,v 1.7.2.3 2002/01/10 19:40:55 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -7,19 +7,19 @@ maxpartitions	8
 maxusers 2 8 64
 
 # COMPAT_OLD_OFW for SHARKs
-defopt	COMPAT_OLD_OFW
+defflag	COMPAT_OLD_OFW
 
 # Maintain Interrupt statistics
-defopt	IRQSTATS
+defflag	IRQSTATS
 
 # X server support in console drivers
-defopt	XSERVER
+defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
-#defopt	COMPAT_OLD_BOOTLOADER
+#defflag	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
-defopt	NETWINDER
+defflag	NETWINDER
 
 define todservice {}
 
@@ -57,7 +57,7 @@ file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -67,8 +67,8 @@ major	{raid = 71}
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 file	arch/arm/arm32/conf.c
 
@@ -82,10 +82,8 @@ file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
-# ARM FPE
-file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.s		armfpe
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm32/isa/isapnp_machdep.c		isapnp

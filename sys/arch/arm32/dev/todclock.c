@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.8.2.1 2001/08/25 06:15:14 thorpej Exp $	*/
+/*	$NetBSD: todclock.c,v 1.8.2.2 2002/01/10 19:38:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -61,6 +61,8 @@
 #error "Can only had 1 todclock device"
 #endif
 
+static int yeartoday __P((int));
+ 
 /*
  * softc structure for the todclock device
  */
