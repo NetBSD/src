@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.32 1997/09/15 07:21:12 lukem Exp $	*/
+/*	$NetBSD: ping.c,v 1.32.2.1 1997/12/01 20:02:05 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.32 1997/09/15 07:21:12 lukem Exp $");
+__RCSID("$NetBSD: ping.c,v 1.32.2.1 1997/12/01 20:02:05 mellon Exp $");
 #endif
 
 #include <stdio.h>
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 	if (tcgetattr (0, &ts) != -1) {
 		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
 		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
+		(void)tcsetattr(0, TCSANOW, &ts);
 	}
 #endif
 	while ((c = getopt(argc, argv,
@@ -685,8 +685,16 @@ pinger(void)
 			err(1, "Can't turn off special IP header");
 		if (sendto(s, (char *) &opack_icmp, PHDR_LEN, MSG_DONTROUTE,
 			   (struct sockaddr *)&loc_addr,
-			   sizeof(struct sockaddr_in)) < 0)
-			err(1, "failed to clear cached route");
+			   sizeof(struct sockaddr_in)) < 0) {
+			/*
+			 * XXX: we only report this as a warning in verbose
+			 * mode because people get confused when they see
+			 * this error when they are running in single user
+			 * mode and they have not configured lo0
+			 */
+			if (pingflags & F_VERBOSE)
+				warn("failed to clear cached route");
+		}
 		sw = 1;
 		if (setsockopt(s,IPPROTO_IP,IP_HDRINCL,
 			       (char *)&sw, sizeof(sw)) < 0)
@@ -1126,7 +1134,7 @@ prefinish(int s)
 	    || nreceived == 0)		/* or if remote is dead */
 		finish(0);
 
-	signal(s, finish);		/* do this only the 1st time */
+	(void)signal(s, finish);	/* do this only the 1st time */
 
 	if (npackets > ntransmitted)	/* let the normal limit work */
 		npackets = ntransmitted;
@@ -1145,7 +1153,7 @@ finish(int s)
 
 	if (reset_kerninfo && tcgetattr (0, &ts) != -1) {
 		ts.c_lflag &= ~NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
+		(void)tcsetattr(0, TCSANOW, &ts);
 	}
 	(void)signal(SIGINFO, SIG_IGN);
 #else
@@ -1584,7 +1592,7 @@ gethost(const char *arg,
 {
 	struct hostent *hp;
 
-	memset(sa, 0, sizeof(*sa));
+	(void)memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
 
 	/* If it is an IP address, try to convert it to a name to
@@ -1612,7 +1620,7 @@ gethost(const char *arg,
 	if (hp->h_addrtype != AF_INET)
 		errx(1, "%s only supported with IP", arg);
 
-	memmove(&sa->sin_addr, hp->h_addr, sizeof(sa->sin_addr));
+	(void)memmove(&sa->sin_addr, hp->h_addr, sizeof(sa->sin_addr));
 
 	if (realname) {
 		(void)strncpy(realname, hp->h_name, realname_len);
@@ -1625,7 +1633,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: \n"
-		      "%s [-dDfnqrvRLP] [-c count] [-s size] [-l preload]"
+		      "%s [-dDfnoqrvRLP] [-c count] [-s size] [-l preload]"
 		      " [-p pattern]\n"
 		      "     [-i interval] [-i maxwait] [-t tos] [-T ttl]"
 		      " [-I addr] [-g gateway] host\n",
