@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.17 1998/12/16 13:06:52 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.18 1998/12/17 13:05:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -94,6 +94,8 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "MATSHITA CR-574", "", "1.06"},          ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA CR-574", "", "1.02"},          ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "FX320S", "", " q01"},          	ADEV_NOSENSE},
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.11 1998/12/16 13:02:04 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.12 1998/12/17 13:05:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -184,8 +184,7 @@ int
 wdc_atapi_send_cmd(sc_xfer)
 	struct scsipi_xfer *sc_xfer;
 {
-	struct scsipi_link *sc_link = sc_xfer->sc_link;
-	struct wdc_softc *wdc = (void*)sc_link->adapter_softc;
+	struct wdc_softc *wdc = (void*)sc_xfer->sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
 	struct ata_drive_datas *drvp;
 	int flags = sc_xfer->flags;
@@ -467,8 +466,8 @@ again:
 				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 			    else
-				bus_space_write_multi_stream_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_write_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 
 			    xfer->c_skip += len & 0xfffffffc;
@@ -532,8 +531,8 @@ again:
 				    chp->data32ioh, 0,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 			    else
-				bus_space_read_multi_stream_4(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
+				bus_space_read_multi_stream_4(chp->data32iot,
+				    chp->data32ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 2);
 				
 			    xfer->c_skip += len & 0xfffffffc;
@@ -584,13 +583,19 @@ again:
 				/* save the short sense */
 				sc_xfer->error = XS_SHORTSENSE;
 				sc_xfer->sense.atapi_sense = chp->ch_error;
-				/* let the driver issue a 'request sense' */
-				xfer->databuf = &sc_xfer->sense;
-				xfer->c_bcount =
-				    sizeof(sc_xfer->sense.scsi_sense);
-				xfer->c_flags |= C_SENSE;
-				wdc_atapi_start(chp, xfer);
-				return 1;
+				if ((sc_xfer->sc_link->quirks &
+				    ADEV_NOSENSE) == 0) {
+					/*
+					 * let the driver issue a
+					 * 'request sense'
+					 */
+					xfer->databuf = &sc_xfer->sense;
+					xfer->c_bcount =
+					    sizeof(sc_xfer->sense.scsi_sense);
+					xfer->c_flags |= C_SENSE;
+					wdc_atapi_start(chp, xfer);
+					return 1;
+				}
 			} else if (dma_err < 0) {
 				drvp->n_dmaerrs++;
 				sc_xfer->error = XS_DRIVER_STUFFUP;
