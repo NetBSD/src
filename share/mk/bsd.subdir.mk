@@ -1,15 +1,12 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
-#	$Id: bsd.subdir.mk,v 1.2 1993/08/15 19:37:11 mycroft Exp $
+#	$Id: bsd.subdir.mk,v 1.3 1993/08/15 20:42:44 mycroft Exp $
 
+.if !target(.MAIN)
 .MAIN: all
-
-STRIP?=	-s
-
-BINGRP?=	bin
-BINOWN?=	bin
-BINMODE?=	555
+.endif
 
 _SUBDIRUSE: .USE
+.if defined(SUBDIR)
 	@for entry in ${SUBDIR}; do \
 		(if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
 			echo "===> $${entry}.${MACHINE}"; \
@@ -18,7 +15,7 @@ _SUBDIRUSE: .USE
 			echo "===> $$entry"; \
 			cd ${.CURDIR}/$${entry}; \
 		fi; \
-		${MAKE} ${.TARGET:realinstall=install}); \
+		${MAKE} ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
 	done
 
 ${SUBDIR}::
@@ -28,21 +25,6 @@ ${SUBDIR}::
 		cd ${.CURDIR}/${.TARGET}; \
 	fi; \
 	${MAKE} all
-
-.if !target(all)
-all: _SUBDIRUSE
-.endif
-
-.if !target(clean)
-clean: _SUBDIRUSE
-.endif
-
-.if !target(cleandir)
-cleandir: _SUBDIRUSE
-.endif
-
-.if !target(depend)
-depend: _SUBDIRUSE
 .endif
 
 .if !target(install)
@@ -52,19 +34,10 @@ beforeinstall:
 .if !target(afterinstall)
 afterinstall:
 .endif
-install: afterinstall
+install: maninstall
+maninstall: afterinstall
 afterinstall: realinstall
-realinstall: beforeinstall _SUBDIRUSE
+realinstall: beforeinstall
 .endif
 
-.if !target(lint)
-lint: _SUBDIRUSE
-.endif
-
-.if !target(obj)
-obj: _SUBDIRUSE
-.endif
-
-.if !target(tags)
-tags: _SUBDIRUSE
-.endif
+maninstall all clean cleandir depend lint obj tags: _SUBDIRUSE

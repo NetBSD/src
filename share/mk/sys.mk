@@ -1,8 +1,10 @@
-#	@(#)sys.mk	5.11 (Berkeley) 3/13/91
+#	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
+#	$Id: sys.mk,v 1.6 1993/08/15 20:42:45 mycroft Exp $
 
 unix=		We run UNIX.
 
 .SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .cl .p .h 
+.SUFFIXES: .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .LIBS:		.a
 
@@ -97,5 +99,8 @@ YFLAGS=-d
 	${LEX} ${LFLAGS} ${.IMPSRC}
 	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
 	rm -f lex.yy.c
+
+.8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
+        nroff -mandoc ${.IMPSRC} > ${.TARGET}
 
 .include <bsd.own.mk>

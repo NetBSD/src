@@ -1,5 +1,5 @@
 #	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-#	$Id: bsd.doc.mk,v 1.13 1993/08/15 19:37:05 mycroft Exp $
+#	$Id: bsd.doc.mk,v 1.14 1993/08/15 20:42:40 mycroft Exp $
 
 PRINTER?=	ps
 
@@ -14,11 +14,6 @@ ROFF?=		groff -T${PRINTER} ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
 
-BINDIR?=	/usr/share/doc
-BINGRP?=	bin
-BINOWN?=	bin
-BINMODE?=	444
-
 .PATH: ${.CURDIR}
 
 all:	${DOC}.${PRINTER}
@@ -28,14 +23,16 @@ print: ${DOC}.${PRINTER}
 	lpr -P${PRINTER} ${DOC}.${PRINTER}
 .endif
 
-clean cleandir:
+clean:
 	rm -f ${DOC}.* [eE]rrs mklog ${CLEANFILES}
+
+cleandir: clean
 
 FILES?=	${SRCS}
 install:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}/${DIR}
-	(cd ${.CURDIR}; install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR} )
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${DOCDIR}/${DIR}
+	(cd ${.CURDIR}; install ${COPY} -o ${DOCOWN} -g ${DOCGRP} -m 444 \
+	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${DOCDIR}/${DIR} )
 
 spell: ${SRCS}
 	(cd ${.CURDIR}; spell ${SRCS}) | sort | \
