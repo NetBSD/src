@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.21 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: RPCINST,v 1.21.2.1 1999/04/20 19:39:01 perry Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -258,6 +258,7 @@ pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
+#pseudo-device	rnd			# /dev/random and /dev/urandom
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
