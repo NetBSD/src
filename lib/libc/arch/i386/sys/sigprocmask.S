@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigprocmask.S,v 1.3 1993/12/06 23:28:10 pk Exp $
+ *	$Id: sigprocmask.S,v 1.4 1994/01/24 19:24:44 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sigprocmask.S,v 1.3 1993/12/06 23:28:10 pk Exp $"
+	.asciz "$Id: sigprocmask.S,v 1.4 1994/01/24 19:24:44 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,7 +49,7 @@ err:
 
 ENTRY(sigprocmask)
 	movl	8(%esp),%ecx		# fetch new sigset pointer
-	cmpl	$0,%ecx			# check new sigset pointer
+	testl	%ecx,%ecx		# check new sigset pointer
 	jne	1f			# if not null, indirect
 /*	movl	$0,8(%esp)		# null mask pointer: block empty set */
 	movl	$1,4(%esp)		# SIG_BLOCK
@@ -60,7 +60,7 @@ ENTRY(sigprocmask)
 	LCALL(0x7,0)
 	jb	err
 	movl	12(%esp),%ecx		# fetch old mask requested
-	cmpl	$0,%ecx			# test if old mask requested
+	cmpl	%ecx,%ecx		# test if old mask requested
 	je	out
 	movl	%eax,(%ecx)		# store old mask
 out:

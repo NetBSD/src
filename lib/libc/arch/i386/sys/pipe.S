@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pipe.s	5.1 (Berkeley) 4/23/90
- *	$Id: pipe.S,v 1.2 1993/10/21 02:19:32 jtc Exp $
+ *	$Id: pipe.S,v 1.3 1994/01/24 19:24:43 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: pipe.S,v 1.2 1993/10/21 02:19:32 jtc Exp $"
+	.asciz "$Id: pipe.S,v 1.3 1994/01/24 19:24:43 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,5 +48,5 @@ SYSCALL(pipe)
 	movl	4(%esp),%ecx
 	movl	%eax,(%ecx)
 	movl	%edx,4(%ecx)
-	movl	$0,%eax
+	xorl	%eax,%eax
 	ret
