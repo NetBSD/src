@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.40 2003/12/07 04:49:17 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.41 2003/12/07 05:44:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -115,12 +115,19 @@ struct wi_softc	{
 
 	int			sc_buflen;
 #define	WI_NTXBUF	3
+#define	WI_NTXRSS	10
 	struct sc_txdesc {
-		int		d_fid;
-		int		d_len;
+		int				d_fid;
+		int				d_len;
+		int				d_rate;
 	}			sc_txd[WI_NTXBUF];
 	int			sc_txnext;
 	int			sc_txcur;
+	struct wi_rssdesc {
+		struct ieee80211_rssdesc	rd_desc;
+		SLIST_ENTRY(wi_rssdesc)		rd_next;
+	}			sc_rssd[WI_NTXRSS];
+	SLIST_HEAD(,wi_rssdesc)	sc_rssdfree;
 	int			sc_tx_timer;
 	int			sc_scan_timer;
 	int			sc_syn_timer;
@@ -132,6 +139,7 @@ struct wi_softc	{
 	int 			sc_naps;
 
 	int			sc_false_syns;
+	int			sc_alt_retry;
 
 	union {
 		struct wi_rx_radiotap_header	tap;
@@ -142,12 +150,20 @@ struct wi_softc	{
 		u_int8_t			pad[64];
 	} sc_txtapu;
 	u_int16_t		sc_txbuf[IEEE80211_MAX_LEN/2];
+	/* number of transmissions pending at each data rate */
+	u_int8_t		sc_txpending[IEEE80211_RATE_MAXSIZE];
+	struct callout		sc_rssadapt_ch;
 };
 
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
 
 #define	sc_if			sc_ic.ic_if
+
+struct wi_node {
+	struct ieee80211_node		wn_node;
+	struct ieee80211_rssadapt	wn_rssadapt;
+};
 
 /* maximum consecutive false change-of-BSSID indications */
 #define	WI_MAX_FALSE_SYNS		10	
@@ -165,6 +181,7 @@ struct wi_softc	{
 #define	WI_FLAGS_ATTACHED		0x0001
 #define	WI_FLAGS_INITIALIZED		0x0002
 #define	WI_FLAGS_OUTRANGE		0x0004
+#define	WI_FLAGS_RSSADAPT		0x0008
 #define	WI_FLAGS_HAS_MOR		0x0010
 #define	WI_FLAGS_HAS_ROAMING		0x0020
 #define	WI_FLAGS_HAS_DIVERSITY		0x0040

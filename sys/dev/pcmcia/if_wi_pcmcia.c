@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.37 2003/11/16 09:02:42 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.38 2003/12/07 05:44:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.37 2003/11/16 09:02:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.38 2003/12/07 05:44:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.37 2003/11/16 09:02:42 dyoung Exp
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
+#include <net80211/ieee80211_rssadapt.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
