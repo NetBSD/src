@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.137 2003/09/09 22:18:09 itojun Exp $
+#	$NetBSD: shlib_version,v 1.138 2003/09/16 13:55:41 cl Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -12,4 +12,4 @@
 # - libc/gen/utmpx.c, utmpx.h: remove lastlogxname, __getlastlogx13 -> getlastlogx
 #
 major=12
-minor=104
+minor=105
