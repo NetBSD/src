@@ -1,4 +1,4 @@
-#	$Id: list,v 1.4 1995/08/14 01:50:16 cgd Exp $
+#	$Id: list,v 1.5 1995/08/14 01:50:20 cgd Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/kcbin	kcbin
