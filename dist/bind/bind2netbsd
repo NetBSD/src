@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.17 2001/05/17 20:52:58 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.18 2001/05/17 22:59:37 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,10 +81,6 @@ cd $r/doc
 pax -rvw bog $d/doc
 cd $d/doc/bog
 make clean
-
-### Remove lib/bsd
-cd $d/lib
-rm -r bsd
 
 ### Remove yacc/lex-generated files
 cd $d/bin

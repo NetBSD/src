@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_update.c,v 1.3 2001/01/27 07:22:00 itojun Exp $	*/
+/*	$NetBSD: ns_update.c,v 1.4 2001/05/17 22:59:40 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_update.c,v 8.89 2001/01/14 09:46:20 marka Exp";
+static const char rcsid[] = "Id: ns_update.c,v 8.91.2.2 2001/04/30 03:20:46 marka Exp";
 #endif /* not lint */
 
 /*
@@ -1137,7 +1137,7 @@ class=%s, type=%s, ttl=%d, dp=%p",
 static enum req_action
 req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg, 
 		   struct qstream *qsp, int dfd, struct sockaddr_in from,
-		   struct tsig_record *in_tsig, ns_updque curupd)
+		   struct tsig_record *in_tsig, ns_updque *curupd)
 {
 	char dnbuf[MAXDNAME], *dname;
 	u_int zocount, prcount, upcount, adcount, class, type, dlen;
@@ -1206,8 +1206,9 @@ req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 	 */
 
 	if (!ip_addr_or_key_allowed(zp->z_update_acl, from.sin_addr, in_key)) {
-		ns_notice(ns_log_security, "denied update from %s for \"%s\"",
-			  sin_ntoa(from), *dname ? dname : ".");
+		ns_notice(ns_log_security,
+			  "denied update from %s for \"%s\" %s",
+			  sin_ntoa(from), *dname ? dname : ".", p_class(class));
 		nameserIncr(from.sin_addr, nssRcvdUUpd);
 		return (Refuse);
 	}
@@ -1283,7 +1284,7 @@ req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 	rrecp = res_mkupdrec(S_ZONE, dname, class, type, 0);
 	rrecp->r_zone = zonenum;
 
-	APPEND(curupd, rrecp, r_link);
+	APPEND(*curupd, rrecp, r_link);
 
 	/*
 	 * Parse the prerequisite and update sections for format errors.
@@ -1343,7 +1344,7 @@ req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 		DRCNTINC(dp);
 		rrecp->r_dp = dp;
 		/* Append the current record to the end of list of records. */
-		APPEND(curupd, rrecp, r_link);
+		APPEND(*curupd, rrecp, r_link);
 		if (cp > eom) {
 			ns_info(ns_log_update,
 				"Malformed response from %s (overrun)",
@@ -1354,7 +1355,7 @@ req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 	}
 
 	/* Now process all parsed records in the prereq and update sections. */
-	numupdated = process_updates(&curupd, &rcode, from);
+	numupdated = process_updates(curupd, &rcode, from);
 	hp->rcode = rcode;
 	if (numupdated <= 0) {
 		if (rcode != NOERROR)
@@ -1371,7 +1372,7 @@ req_update_private(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 	ns_stopxfrs(zp);
 
 	/* Make a log of the update. */
-	(void) printupdatelog(from, &curupd, hp, zp, old_serial);
+	(void) printupdatelog(from, curupd, hp, zp, old_serial);
 
 	return (Finish);
 }
@@ -1395,17 +1396,21 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 			next_rrecp = NEXT(rrecp, r_link);
 		else
 			next_rrecp = PREV(rrecp, r_link);
+		UNLINK(*updlist, rrecp, r_link);
 		if (rrecp->r_section != S_UPDATE) {
 			if (rrecp->r_dp) {
 				DRCNTDEC(rrecp->r_dp);
 				if (rrecp->r_dp->d_rcnt == 0)
 					db_freedata(rrecp->r_dp);
+				rrecp->r_dp = NULL;
 			}
+			INSIST(rrecp->r_deldp == NULL);
 			res_freeupdrec(rrecp);
 			continue;
 		}
 		dname = rrecp->r_dname;
 		dp = rrecp->r_dp;
+		rrecp->r_dp = NULL;
 		if ((dp->d_mark & D_MARK_ADDED) != 0) {
 			if (rcode == NOERROR) {
 				/*
@@ -1438,37 +1443,19 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 					 */
 				}
 			}
-			DRCNTDEC(dp);
-			if (dp->d_rcnt == 0)
-				db_freedata(dp);
-		} else {
-			/*
-			 * Databuf's matching this were deleted by this
-			 * update, or were never executed (because we bailed
-			 * out early).
-			 */
-			DRCNTDEC(dp);
-			if (dp->d_rcnt == 0)
-				db_freedata(dp);
 		}
+		DRCNTDEC(dp);
+		if (dp->d_rcnt == 0)
+			db_freedata(dp);
 
 		/* Process deleted databuf's. */
 		dp = rrecp->r_deldp;
+		rrecp->r_deldp = NULL;
 		while (dp != NULL) {
 			tmpdp = dp;
-			DRCNTDEC(tmpdp);
-			tmpdp->d_next = NULL;
 			dp = dp->d_next;
-			if (rcode == NOERROR) {
-				if (tmpdp->d_rcnt)
-					ns_debug(ns_log_update, 1,
-					   "free_rrecp: type = %s, rcnt = %d",
-						 p_type(tmpdp->d_type),
-						 tmpdp->d_rcnt);
-				else {
-					db_freedata(tmpdp);
-				}
-			} else {
+			tmpdp->d_next = NULL;
+			if (rcode != NOERROR) {
 				/* Add the databuf back. */
 				tmpdp->d_mark &= ~D_MARK_DELETED;
 				if (db_update(dname, tmpdp, tmpdp, NULL,
@@ -1481,13 +1468,13 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 				      "free_rrecp: added back databuf %p",
 						 tmpdp);
 				}
-				if (tmpdp->d_rcnt == 0)
-					db_freedata(tmpdp);
 			}
+			DRCNTDEC(tmpdp);
+			if (tmpdp->d_rcnt == 0)
+				db_freedata(tmpdp);
 		}
 		res_freeupdrec(rrecp);
 	}
-	INIT_LIST(*updlist);
 }
 
 enum req_action
@@ -1500,7 +1487,7 @@ req_update(HEADER *hp, u_char *cp, u_char *eom, u_char *msg,
 
 	INIT_LIST(curupd);
 	ret = req_update_private(hp, cp, eom, msg, qsp, dfd, from,
-				 in_tsig, curupd);
+				 in_tsig, &curupd);
 	free_rrecp(&curupd, ret == Refuse ? ns_r_refused : hp->rcode, from);
 	if (ret == Finish) {
 		hp->qdcount = hp->ancount = hp->nscount = hp->arcount = 0;
@@ -2146,7 +2133,6 @@ merge_logs(struct zoneinfo *zp, char *logname) {
 				 "isc_movefile(%s,%s) failed: %s :1",
 				 logname, zp->z_source,
 				 strerror(errno));
-			fclose(fp);
 			return (-1);
 		}
 		/* Finally, tell caller to reload zone. */
@@ -2246,6 +2232,7 @@ merge_logs(struct zoneinfo *zp, char *logname) {
 					ns_error(ns_log_update,
 				 "error merging update id %d from log file %s",
 						 id, logname);
+					fclose(fp);
 					return(-1);
 				}
 				free_rrecp(&curupd, rcode, empty_from);

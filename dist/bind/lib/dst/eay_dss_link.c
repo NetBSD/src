@@ -1,7 +1,7 @@
-/*	$NetBSD: eay_dss_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: eay_dss_link.c,v 1.3 2001/05/17 23:00:18 itojun Exp $	*/
 
 #ifdef EAY_DSS
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/eay_dss_link.c,v 1.4 1999/10/13 16:39:23 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/eay_dss_link.c,v 1.5 2001/04/05 22:00:03 bwelling Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -343,7 +343,6 @@ dst_eay_dss_from_dns_key(DST_KEY *s_key, const u_char *key, const int len)
 	d_key->pub_key = BN_bin2bn(key_ptr, p_bytes, NULL);
 	key_ptr += p_bytes;
 
-	s_key->dk_id = dst_s_id_calc(key, len); 
 	s_key->dk_key_size = p_bytes * 8;
 	return (1);
 }
@@ -444,9 +443,7 @@ dst_eay_dss_key_from_file_format(DST_KEY *d_key, const u_char *buff,
 				const int buff_len)
 {
 	char s[128];
-	char dns[1024];
 	int len, s_len = sizeof(s);
-	int foot = -1, dnslen;
 	const char *p = buff;
 	DSA *dsa_key;
 
@@ -501,10 +498,8 @@ dst_eay_dss_key_from_file_format(DST_KEY *d_key, const u_char *buff,
 	}			/* while p */
 
 	d_key->dk_key_size = BN_num_bytes(dsa_key->p);
-	dnslen = d_key->dk_func->to_dns_key(d_key, dns, sizeof(dns));
-	foot = dst_s_id_calc(dns, dnslen);
 
-	return (foot);
+	return (0);
 }
 
 
@@ -545,10 +540,9 @@ dst_eay_dss_free_key_structure(void *key)
 static int
 dst_eay_dss_generate_keypair(DST_KEY *key, int nothing)
 {
-	int status, dnslen, n;
+	int status, n;
 	DSA *dsa;
 	u_char rand[SHA_DIGEST_LENGTH];
-	char dns[1024];
 
 	if (key == NULL || key->dk_alg != KEY_DSA)
 		return (0);
@@ -574,8 +568,6 @@ dst_eay_dss_generate_keypair(DST_KEY *key, int nothing)
 		return(0);
 	}
 	key->dk_KEY_struct = (void *) dsa;
-	dnslen = key->dk_func->to_dns_key(key, dns, sizeof(dns));
-	key->dk_id = dst_s_id_calc(dns, dnslen);
 	return (1);
 }
 
