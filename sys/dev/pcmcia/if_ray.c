@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.14 2000/02/27 20:40:42 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.15 2000/02/28 06:44:52 mycroft Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -984,6 +984,7 @@ ray_ioctl(ifp, cmd, data)
 			error = 0;
 			ray_update_mcast(sc);
 		}
+		break;
 	case SIOCSIFMEDIA:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCSIFMEDIA\n", ifp->if_xname));
 	case SIOCGIFMEDIA:
