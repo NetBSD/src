@@ -1,4 +1,4 @@
-/*	$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $	*/
+/*	$NetBSD: mkhits.c,v 1.6.2.1 2002/12/01 12:21:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
@@ -44,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkhits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $");
+__RCSID("$NetBSD: mkhits.c,v 1.6.2.1 2002/12/01 12:21:15 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,14 +69,11 @@ __RCSID("$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $");
  * all fields are separated by a single space.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include "../ctlr/function.h"
 
 #include "dohits.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)
