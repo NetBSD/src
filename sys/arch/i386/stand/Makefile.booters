@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.36 2002/09/02 07:33:11 jdolecek Exp $
+#	$NetBSD: Makefile.booters,v 1.37 2002/11/23 23:34:39 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,12 @@ BINMODE=444
 
 # Make sure we override any optimization options specified by the
 # user.
+.if ${MACHINE_ARCH} == "x86_64"
+COPTS=	-Os -m32
+CPPFLAGS+= -DBOOT_ELF64
+.else
 COPTS=	-Os -mcpu=i386
+.endif
 COPTS+= -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
@@ -30,6 +35,14 @@ PXESTART= start_pxe.o
 
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
+
+# XXX
+.if ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=-m32
+LD+=-m elf_i386
+LIBKERN_ARCH=i386
+KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+.endif
 
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 SRCS+=	vers.c
