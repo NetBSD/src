@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.12 1994/04/08 06:02:01 deraadt Exp $
+ * $Id: trap.c,v 1.13 1994/04/22 22:52:44 pk Exp $
  */
 
 #include <sys/param.h>
@@ -723,7 +723,7 @@ syscall(code, tf, pc)
 	stime = p->p_stime;
 	p->p_md.md_tf = tf;
 #ifdef DEBUG_SCALL
-printf("sc[%d] %s%d/X%x(", p->p_pid, p->p_emul ? "netbsd" : "sunos",
+printf("sc[%d] %s%d/X%x(", p->p_pid, p->p_emul == 1 ? "sunos" : "netbsd",
 code, code);
 #endif
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
