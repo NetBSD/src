@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.52 2003/08/11 16:33:32 pk Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.53 2003/08/28 13:12:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.52 2003/08/11 16:33:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.53 2003/08/28 13:12:19 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -554,6 +554,7 @@ uvmpd_scan_inactive(pglst)
 				p->flags &= ~(PG_CLEAN);
 			}
 			if (p->flags & PG_CLEAN) {
+				int slot;
 				uvm_pagefree(p);
 				uvmexp.pdfreed++;
 
@@ -566,14 +567,21 @@ uvmpd_scan_inactive(pglst)
 				if (anon) {
 					KASSERT(anon->an_swslot != 0);
 					anon->u.an_page = NULL;
+					slot = anon->an_swslot;
+				} else {
+					slot = uao_find_swslot(uobj,
+						p->offset >> PAGE_SHIFT);
 				}
 				simple_unlock(slock);
 
-				/* this page is now only in swap. */
-				simple_lock(&uvm.swap_data_lock);
-				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
-				uvmexp.swpgonly++;
-				simple_unlock(&uvm.swap_data_lock);
+				if (slot > 0) {
+					/* this page is now only in swap. */
+					simple_lock(&uvm.swap_data_lock);
+					KASSERT(uvmexp.swpgonly <
+						uvmexp.swpginuse);
+					uvmexp.swpgonly++;
+					simple_unlock(&uvm.swap_data_lock);
+				}
 				continue;
 			}
 

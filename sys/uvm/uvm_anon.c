@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.25 2003/08/11 16:54:10 pk Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.26 2003/08/28 13:12:17 pk Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.25 2003/08/11 16:54:10 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.26 2003/08/28 13:12:17 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -261,7 +261,7 @@ uvm_anfree(anon)
 				    "freed now!", anon, pg, 0, 0);
 		}
 	}
-	if (pg == NULL && anon->an_swslot != 0) {
+	if (pg == NULL && anon->an_swslot > 0) {
 		/* this page is no longer only in swap. */
 		simple_lock(&uvm.swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
