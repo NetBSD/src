@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.5 2001/07/19 00:19:42 itojun Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.6 2001/07/19 00:28:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -318,7 +318,7 @@ print_t1_cable(lmc_ctl_t *ctl)
 static void
 print_protocol(lmc_ctl_t *ctl)
 {
-	printf("\tHDLC Keepalive:  ");
+	printf("\tHDLC Keepalive: ");
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 	if (ctl->keepalive_onoff)
 		printf("on\n");
@@ -356,15 +356,17 @@ dumpdata(char *name, lmc_ctl_t *ctl)
 		print_protocol(ctl);
 		break;
 	case LMC_CTL_CARDTYPE_LMC1000:
-		printf("%s: Lan Media Corporation LMC1000 (T1/E1)\n", name);
+		printf("%s: Lan Media Corporation LMC1000 (SSI/V.35)\n", name);
 		print_clocking(ctl);
 		print_t1_cable(ctl);
 		print_protocol(ctl);
 		break;
 	case LMC_CTL_CARDTYPE_LMC1200:
-		printf("%s: Lan Media Corperation LMC1200 (T1)\n", name);
+		printf("%s: Lan Media Corperation LMC1200 (T1/E1)\n", name);
 		print_clocking(ctl);
 		print_protocol(ctl);
+		printf("\tLine protocol: %s\n",
+		    ctl->circuit_type == LMC_CTL_CIRCUIT_TYPE_T1 ? "T1" : "E1");
 		break;
 	default:
 		printf("%s: Unknown card type: %d\n", name, ctl->cardtype);
