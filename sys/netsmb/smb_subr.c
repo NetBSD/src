@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.14 2003/03/24 08:20:01 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.15 2003/03/24 08:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.14 2003/03/24 08:20:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.15 2003/03/24 08:39:17 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,8 +205,8 @@ smb_maperror(int eclass, int eno)
 		    case ERRbadfile:
 		    case ERRbadpath:
 		    case ERRremcd:
-		    case ERRbaddevice:	/* nt returns it when share not available */
-		    case ERRbadnetname:	/* observed from nt4sp6 when sharename wrong */
+		    case ERRnoipc: /* nt returns it when share not available */
+		    case ERRnosuchshare:	/* observed from nt4sp6 when sharename wrong */
 			return ENOENT;
 		    case ERRnofids:
 			return EMFILE;
@@ -232,11 +232,11 @@ smb_maperror(int eclass, int eno)
 			return EDEADLK;
 		    case ERRfilexists:
 			return EEXIST;
-		    case ERRinvname:	/* dunno what is it, but samba maps as noent */
+		    case ERRinvalidname:	/* dunno what is it, but samba maps as noent */
 			return ENOENT;
 		    case ERRdirnempty:	/* samba */
 			return ENOTEMPTY;
-		    case ERReexists:
+		    case ERRrename:
 			return EEXIST;
 		    case ERRquota:
 			return EDQUOT;
@@ -256,7 +256,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRinvnetname:
 			SMBERROR("NetBIOS name is invalid\n");
 			return EAUTH;
-		    case ERRsrvbaddevice:	/* reserved and returned */
+		    case ERRbadtype:	/* reserved and returned */
 			return EIO;
 		    case ERRaccountExpired:
 		    case ERRbadClient:
