@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp 
+ *	NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp 
  */
 
 /*
@@ -141,6 +141,7 @@ static struct podule_description podules_brini[] = {
 static struct podule_description podules_ant[] = {
 	{ PODULE_ANT_ETHER3,	"ether 3/5 interface" },
 	{ PODULE_ANT_ETHERB,	"ether B network slot interface" },
+	{ PODULE_ANT_ETHERM,	"ether M dual interface NIC" },
 	{ 0x0000, NULL }
 };
 
