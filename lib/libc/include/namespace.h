@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60 2001/02/19 22:11:40 cgd Exp $	*/
+/*	$NetBSD: namespace.h,v 1.61 2001/03/19 04:13:17 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #define warnx		_warnx
 
 #ifdef __weak_alias
+#define MD2Final		_MD2Final
+#define MD2Init			_MD2Init
+#define MD2Update		_MD2Update
 #define MD4Final		_MD4Final
 #define MD4Init			_MD4Init
 #define MD4Update		_MD4Update
