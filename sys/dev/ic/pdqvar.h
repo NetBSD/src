@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.26 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.27 2000/05/03 19:17:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -109,7 +109,7 @@ enum _pdq_type_t {
 #include <vm/vm_extern.h>
 #include <machine/cpufunc.h>
 #include <machine/clock.h>
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef int ioctl_cmd_t;
 typedef enum { PDQ_BUS_EISA, PDQ_BUS_PCI } pdq_bus_t;
 typedef	u_int16_t pdq_bus_ioport_t;
@@ -127,7 +127,7 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #include <net/if_media.h>
 #endif
 #include <machine/inline.h>
-typedef int ifnet_ret_t;
+#define	ifnet_ret_t int
 typedef int ioctl_cmd_t;
 typedef enum { PDQ_BUS_EISA, PDQ_BUS_PCI } pdq_bus_t;
 typedef	u_int16_t pdq_bus_ioport_t;
@@ -144,7 +144,7 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #define PDQ_OS_HDR_OFFSET	(PDQ_RX_FC_OFFSET-3)
 #define	PDQ_OS_PTR_FMT		"%p"
 #define	PDQ_OS_CSR_FMT		"0x%lx"
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
 typedef	bus_space_tag_t pdq_bus_t;
 typedef	bus_space_handle_t pdq_bus_ioport_t;
