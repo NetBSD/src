@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $	*/
+/*	$NetBSD: send.c,v 1.2 1998/11/24 06:06:31 ross Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -90,6 +90,7 @@ static char rcsid[] = "Id: send.c,v 8.6 1997/05/21 19:49:58 halley Exp";
 #include <resolv.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "port_after.h"
 
