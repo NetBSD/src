@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.36 2005/01/19 02:04:49 chs Exp $
+#	$NetBSD: GENERICSBC,v 1.37 2005/01/28 03:19:50 rumble Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.36 $"
+#ident 		"GENERICSBC-$Revision: 1.37 $"
 
 maxusers	16		# estimated number of users
 
@@ -100,6 +100,7 @@ file-system 	CODA		# Venus/Coda distributed file system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
