@@ -1,3 +1,4 @@
+#include <sys/param.h>
 #ifdef BSD
 #ifndef BSD4_1
 #define HAVE_GETPAGESIZE
