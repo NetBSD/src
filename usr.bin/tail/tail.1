@@ -1,4 +1,4 @@
-.\"	$NetBSD: tail.1,v 1.6 1998/02/09 22:39:42 cjs Exp $
+.\"	$NetBSD: tail.1,v 1.7 1998/09/18 01:54:13 cjs Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,6 +146,14 @@ is the name of the file.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Sh BUGS
+When using the
+.Fl F
+option, 
+.Nm
+will not detect a file truncation if, between the truncation
+and the next check of the file size, data written to the file make
+it larger than the last known file size.
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr head 1 ,
@@ -157,9 +165,10 @@ utility is expected to be a superset of the
 .St -p1003.2-92 
 specification.
 In particular, the
-.Fl b
-and
+.Fl b ,
 .Fl r
+and
+.Fl F
 options are extensions to that standard.
 .Pp
 The historic command line syntax of
