@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp $ 	*/
+/*	$NetBSD: print-ascii.c,v 1.2 2001/01/28 10:05:06 itojun Exp $ 	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp $");
+__RCSID("$NetBSD: print-ascii.c,v 1.2 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #include <stdio.h>
 #include <sys/types.h>
@@ -68,7 +68,8 @@ ascii_print_with_offset(register const u_char *cp, register u_int length,
 	while (--nshorts >= 0) {
 		s1 = *cp++;
 		s2 = *cp++;
-		(void)sprintf(hsp, " %02x%02x", s1, s2);
+		(void)snprintf(hsp, sizeof(hexstuff) - (hsp - hexstuff),
+		    " %02x%02x", s1, s2);
 		hsp += HEXDUMP_HEXSTUFF_PER_SHORT;
 		*(asp++) = (isgraph(s1) ? s1 : '.');
 		*(asp++) = (isgraph(s2) ? s2 : '.');
@@ -83,7 +84,8 @@ ascii_print_with_offset(register const u_char *cp, register u_int length,
 	}
 	if (length & 1) {
 		s1 = *cp++;
-		(void)sprintf(hsp, " %02x", s1);
+		(void)snprintf(hsp, sizeof(hexstuff) - (hsp - hexstuff),
+		    " %02x", s1);
 		hsp += 3;
 		*(asp++) = (isgraph(s1) ? s1 : '.');
 		++i;

@@ -1,7 +1,7 @@
-/*	$NetBSD: route6d.h,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+/*	$NetBSD: route6d.h,v 1.3 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
- * KAME Header: /cvsroot/hydrangea-freebsd/kit/src/tcpdump/Attic/route6d.h,v 1.1.2.1 1998/05/10 15:38:08 itojun Exp
+ * Header: /tcpdump/master/tcpdump/route6d.h,v 1.2 2000/04/28 11:14:49 itojun Exp
  */
 
 #define	RIP6_VERSION	1
@@ -10,16 +10,16 @@
 #define	RIP6_RESPONSE	2
 
 struct netinfo6 {
-	struct	in6_addr	rip6_dest;
-	u_short	rip6_tag;
-	u_char	rip6_plen;
-	u_char	rip6_metric;
+	struct in6_addr	rip6_dest;
+	u_int16_t	rip6_tag;
+	u_int8_t	rip6_plen;
+	u_int8_t	rip6_metric;
 };
 
 struct	rip6 {
-	u_char	rip6_cmd;
-	u_char	rip6_vers;
-	u_char	rip6_res1[2];
+	u_int8_t	rip6_cmd;
+	u_int8_t	rip6_vers;
+	u_int8_t	rip6_res1[2];
 	union {
 		struct	netinfo6	ru6_nets[1];
 		char	ru6_tracefile[1];

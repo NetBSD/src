@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.3 1997/10/03 19:54:47 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.4 2001/01/28 10:05:05 itojun Exp $	*/
 
 /* Header: ntp.h,v 1.3 95/05/04 17:52:49 mccanne Exp  */
 
@@ -35,8 +35,8 @@ struct l_fixedpt {
 };
 
 struct s_fixedpt {
-	u_short int_part;
-	u_short fraction;
+	u_int16_t int_part;
+	u_int16_t fraction;
 };
 
 /*  =================  Table 3.3. Packet Variables   ================= */
