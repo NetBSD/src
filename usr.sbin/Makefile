@@ -10,7 +10,7 @@
 #
 
 SUBDIR=	arp chown chroot config dbsym dev_mkdb diskpart \
-	inetd kvm_mkdb lpr \
+	inetd kgmon kvm_mkdb lpr \
 	mtree named portmap pwd_mkdb rmt rwhod\
 	sendmail sliplogin syslogd timed traceroute update vipw
 
