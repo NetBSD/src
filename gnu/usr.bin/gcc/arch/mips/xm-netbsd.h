@@ -1,2 +1,2 @@
-#include "mips/xm-mips.h"
-#include "xm-netbsd.h"
+#include <mips/xm-mips.h>
+#include <xm-netbsd.h>
