@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.174 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.175 2005/01/01 21:02:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.174 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.175 2005/01/01 21:02:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -476,12 +476,13 @@ uvm_mapent_alloc_split(struct vm_map *map,
 
 	if (old_entry->flags & UVM_MAP_QUANTUM) {
 		int s;
+		struct vm_map_kernel *vmk = vm_map_to_kernel(map);
 
 		s = splvm();
 		simple_lock(&uvm.kentry_lock);
-		me = map->merged_entries;
+		me = vmk->vmk_merged_entries;
 		KASSERT(me);
-		map->merged_entries = me->next;
+		vmk->vmk_merged_entries = me->next;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 		KASSERT(me->flags & UVM_MAP_QUANTUM);
@@ -526,15 +527,17 @@ uvm_mapent_free_merged(struct vm_map_entry *me)
 		 * keep this entry for later splitting.
 		 */
 		struct vm_map *map;
+		struct vm_map_kernel *vmk;
 		int s;
 
 		KASSERT(me->flags & UVM_MAP_KERNEL);
 
 		map = uvm_kmapent_map(me);
+		vmk = vm_map_to_kernel(map);
 		s = splvm();
 		simple_lock(&uvm.kentry_lock);
-		me->next = map->merged_entries;
-		map->merged_entries = me;
+		me->next = vmk->vmk_merged_entries;
+		vmk->vmk_merged_entries = me;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 	} else {
@@ -2582,6 +2585,23 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 	return error;
 }
 
+/*
+ * uvm_map_setup_kernel: init in-kernel map
+ *
+ * => map must not be in service yet.
+ */
+
+void
+uvm_map_setup_kernel(struct vm_map_kernel *map,
+    vaddr_t min, vaddr_t max, int flags)
+{
+
+	uvm_map_setup(&map->vmk_map, min, max, flags);
+	
+	LIST_INIT(&map->vmk_kentry_free);
+	map->vmk_merged_entries = NULL;
+}
+
 
 /*
  * uvm_map_protect: change map protection
@@ -4079,7 +4099,7 @@ again:
 	 */
 	s = splvm();
 	simple_lock(&uvm.kentry_lock);
-	ukh = LIST_FIRST(&map->kentry_free);
+	ukh = LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free);
 	if (ukh) {
 		entry = uvm_kmapent_get(ukh);
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK)
@@ -4140,7 +4160,8 @@ again:
 
 	s = splvm();
 	simple_lock(&uvm.kentry_lock);
-	LIST_INSERT_HEAD(&map->kentry_free, ukh, ukh_listq);
+	LIST_INSERT_HEAD(&vm_map_to_kernel(map)->vmk_kentry_free,
+	    ukh, ukh_listq);
 	simple_unlock(&uvm.kentry_lock);
 	splx(s);
 
@@ -4179,7 +4200,9 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	uvm_kmapent_put(ukh, entry);
 	if (ukh->ukh_nused > 1) {
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK - 1)
-			LIST_INSERT_HEAD(&map->kentry_free, ukh, ukh_listq);
+			LIST_INSERT_HEAD(
+			    &vm_map_to_kernel(map)->vmk_kentry_free,
+			    ukh, ukh_listq);
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 		return;
@@ -4191,7 +4214,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	 * however, keep an empty ukh to avoid ping-pong.
 	 */
 
-	if (LIST_FIRST(&map->kentry_free) == ukh &&
+	if (LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free) == ukh &&
 	    LIST_NEXT(ukh, ukh_listq) == NULL) {
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
