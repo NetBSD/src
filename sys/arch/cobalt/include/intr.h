@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2000/03/19 23:07:46 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/03/21 02:27:50 soren Exp $	*/
 
 #include <mips/cpuregs.h>
 
@@ -44,7 +44,8 @@ extern void		_clrsoftintr(int);
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
 #define splx(s)         (void)_splset(s)
-#define SPLBIO		MIPS_INT_MASK_4
+#define SPLSOFT		MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1
+#define SPLBIO		SPLSOFT | MIPS_INT_MASK_4
 #define SPLNET		SPLBIO | MIPS_INT_MASK_1 | MIPS_INT_MASK_2
 #define SPLTTY		SPLNET | MIPS_INT_MASK_3
 #define SPLCLOCK	SPLTTY | MIPS_INT_MASK_0 | MIPS_INT_MASK_5

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2000/03/21 01:05:53 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2000/03/21 02:27:50 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -175,10 +175,14 @@ pci_intr_establish(pc, ih, level, func, arg)
 	 * XXX XXX XXX
 	 */
 
-	if (ih == 4)
+	if (ih == 4) {
 		tlp0 = arg;
-	if (ih == 13)
+		return (void *)-1;
+	}
+	if (ih == 13) {
 		tlp1 = arg;
+		return (void *)-1;
+	}
 
 	return intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }
