@@ -1,4 +1,4 @@
-.\"	$NetBSD: swap.8,v 1.1.2.2.2.2 1997/05/11 13:29:43 mrg Exp $
+.\"	$NetBSD: swap.8,v 1.1.2.2.2.3 1997/05/11 13:54:03 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -37,25 +37,27 @@
 .Nd system swap management tool
 .Sh SYNOPSIS
 .Nm
-.\" SWAP_OFF_WORKS: .Op Fl Aadkls
-.Op Fl Aakls
+.Op Fl A
 .Op Fl p Ar priority
-.Ar device
 .Nm swap
-.Op Fl c
+.Op Fl a | Fl c
+.\" SWAP_OFF_WORKS: .Op Fl a | Fl c | Fl d
 .Op Fl p Ar priority
-.Ar device
+.Ar path
+.Nm swap
+.Op Fl l | Fl s
+.Op Fl k
 .Nm swapon
 .Op Fl a
-.Ar device
+.Ar path
 .\" .Nm swapoff
-.\" .Ar device
+.\" .Ar path
 .Sh DESCRIPTION
 The
 .Nm
 program adds,
 .\" SWAP_OFF_WORKS: removes,
-lists and prioritizes swap devices for the system.
+lists and prioritizes swap devices and files for the system.
 The
 .Nm swapon
 program acts the same as the
@@ -81,15 +83,15 @@ This options causes
 .Nm
 to read the
 .Pa /etc/fstab
-file for devices with a ``sw'' type, and adds all these entries
+file for devices and files with a ``sw'' type, and adds all these entries
 as swap devices.
 .It Fl a
 The
 .Fl a
 option requires that a
-.Ar device
+.Ar path
 also be in the argument list.  The
-.Ar device
+.Ar path
 is added to the kernel's list of swap devices using the
 .Xr swapon 2
 system call.  The priority set by having ``priority=N'' in the
@@ -99,13 +101,13 @@ file.
 .It Fl c
 The
 .Fl c
-option changes the priority of the listed swap device.
+option changes the priority of the listed swap device or file.
 .\" .It Fl d
 .\" The
 .\" .Fl d
 .\" option removes the listed
-.\" .Ar device
-.\" from the kernel's list of swap devices.
+.\" .Ar path
+.\" from the kernel's list of swap devices or files.
 .It Fl l
 The
 .Fl l
@@ -117,7 +119,7 @@ option displays a single line summary of current swap statistics.
 .It Fl p
 The
 .Fl p
-option sets the priority of swap devices to the
+option sets the priority of swap devices or files to the
 .Ar priority
 argument.  This works with the
 .\" .Fl d ,
