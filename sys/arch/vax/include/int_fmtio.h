@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.1 2001/04/15 17:13:18 kleink Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.2 2001/04/26 16:25:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,10 @@
 #define	PRIdLEAST16	"d"	/* int_least16_t	*/
 #define	PRIdLEAST32	"d"	/* int_least32_t	*/
 #define	PRIdLEAST64	"lld"	/* int_least64_t	*/
+#define	PRIdFAST8	"d"	/* int_fast8_t		*/
+#define	PRIdFAST16	"d"	/* int_fast16_t		*/
+#define	PRIdFAST32	"d"	/* int_fast32_t		*/
+#define	PRIdFAST64	"lld"	/* int_fast64_t		*/
 #define	PRIdMAX		"lld"	/* intmax_t		*/
 #ifdef __ELF__
 #define	PRIdPTR		"ld"	/* intptr_t		*/
@@ -68,6 +72,10 @@
 #define	PRIiLEAST16	"i"	/* int_least16_t	*/
 #define	PRIiLEAST32	"i"	/* int_least32_t	*/
 #define	PRIiLEAST64	"lli"	/* int_least64_t	*/
+#define	PRIiFAST8	"i"	/* int_fast8_t		*/
+#define	PRIiFAST16	"i"	/* int_fast16_t		*/
+#define	PRIiFAST32	"i"	/* int_fast32_t		*/
+#define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #define	PRIiMAX		"lli"	/* intmax_t		*/
 #ifdef __ELF__
 #define	PRIiPTR		"li"	/* intptr_t		*/
@@ -85,6 +93,10 @@
 #define	PRIoLEAST16	"o"	/* uint_least16_t	*/
 #define	PRIoLEAST32	"o"	/* uint_least32_t	*/
 #define	PRIoLEAST64	"llo"	/* uint_least64_t	*/
+#define	PRIoFAST8	"o"	/* uint_fast8_t		*/
+#define	PRIoFAST16	"o"	/* uint_fast16_t	*/
+#define	PRIoFAST32	"o"	/* uint_fast32_t	*/
+#define	PRIoFAST64	"llo"	/* uint_fast64_t	*/
 #define	PRIoMAX		"llo"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	PRIoPTR		"lo"	/* uintptr_t		*/
@@ -100,6 +112,10 @@
 #define	PRIuLEAST16	"u"	/* uint_least16_t	*/
 #define	PRIuLEAST32	"u"	/* uint_least32_t	*/
 #define	PRIuLEAST64	"llu"	/* uint_least64_t	*/
+#define	PRIuFAST8	"u"	/* uint_fast8_t		*/
+#define	PRIuFAST16	"u"	/* uint_fast16_t	*/
+#define	PRIuFAST32	"u"	/* uint_fast32_t	*/
+#define	PRIuFAST64	"llu"	/* uint_fast64_t	*/
 #define	PRIuMAX		"llu"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	PRIuPTR		"lu"	/* uintptr_t		*/
@@ -115,6 +131,10 @@
 #define	PRIxLEAST16	"x"	/* uint_least16_t	*/
 #define	PRIxLEAST32	"x"	/* uint_least32_t	*/
 #define	PRIxLEAST64	"llx"	/* uint_least64_t	*/
+#define	PRIxFAST8	"x"	/* uint_fast8_t		*/
+#define	PRIxFAST16	"x"	/* uint_fast16_t	*/
+#define	PRIxFAST32	"x"	/* uint_fast32_t	*/
+#define	PRIxFAST64	"llx"	/* uint_fast64_t	*/
 #define	PRIxMAX		"llx"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	PRIxPTR		"lx"	/* uintptr_t		*/
@@ -130,6 +150,10 @@
 #define	PRIXLEAST16	"X"	/* uint_least16_t	*/
 #define	PRIXLEAST32	"X"	/* uint_least32_t	*/
 #define	PRIXLEAST64	"llX"	/* uint_least64_t	*/
+#define	PRIXFAST8	"X"	/* uint_fast8_t		*/
+#define	PRIXFAST16	"X"	/* uint_fast16_t	*/
+#define	PRIXFAST32	"X"	/* uint_fast32_t	*/
+#define	PRIXFAST64	"llX"	/* uint_fast64_t	*/
 #define	PRIXMAX		"llX"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	PRIXPTR		"lX"	/* uintptr_t		*/
@@ -147,6 +171,10 @@
 #define	SCNdLEAST16	"hd"	/* int_least16_t	*/
 #define	SCNdLEAST32	"d"	/* int_least32_t	*/
 #define	SCNdLEAST64	"lld"	/* int_least64_t	*/
+#define	SCNdFAST8	"hhd"	/* int_fast8_t		*/
+#define	SCNdFAST16	"hd"	/* int_fast16_t		*/
+#define	SCNdFAST32	"d"	/* int_fast32_t		*/
+#define	SCNdFAST64	"lld"	/* int_fast64_t		*/
 #define	SCNdMAX		"lld"	/* intmax_t		*/
 #ifdef __ELF__
 #define	SCNdPTR		"ld"	/* intptr_t		*/
@@ -162,6 +190,10 @@
 #define	SCNiLEAST16	"hi"	/* int_least16_t	*/
 #define	SCNiLEAST32	"i"	/* int_least32_t	*/
 #define	SCNiLEAST64	"lli"	/* int_least64_t	*/
+#define	SCNiFAST8	"hhi"	/* int_fast8_t		*/
+#define	SCNiFAST16	"hi"	/* int_fast16_t		*/
+#define	SCNiFAST32	"i"	/* int_fast32_t		*/
+#define	SCNiFAST64	"lli"	/* int_fast64_t		*/
 #define	SCNiMAX		"lli"	/* intmax_t		*/
 #ifdef __ELF__
 #define	SCNiPTR		"li"	/* intptr_t		*/
@@ -179,6 +211,10 @@
 #define	SCNoLEAST16	"ho"	/* uint_least16_t	*/
 #define	SCNoLEAST32	"o"	/* uint_least32_t	*/
 #define	SCNoLEAST64	"llo"	/* uint_least64_t	*/
+#define	SCNoFAST8	"hho"	/* uint_fast8_t		*/
+#define	SCNoFAST16	"ho"	/* uint_fast16_t	*/
+#define	SCNoFAST32	"o"	/* uint_fast32_t	*/
+#define	SCNoFAST64	"llo"	/* uint_fast64_t	*/
 #define	SCNoMAX		"llo"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	SCNoPTR		"lo"	/* uintptr_t		*/
@@ -194,6 +230,10 @@
 #define	SCNuLEAST16	"hu"	/* uint_least16_t	*/
 #define	SCNuLEAST32	"u"	/* uint_least32_t	*/
 #define	SCNuLEAST64	"llu"	/* uint_least64_t	*/
+#define	SCNuFAST8	"hhu"	/* uint_fast8_t		*/
+#define	SCNuFAST16	"hu"	/* uint_fast16_t	*/
+#define	SCNuFAST32	"u"	/* uint_fast32_t	*/
+#define	SCNuFAST64	"llu"	/* uint_fast64_t	*/
 #define	SCNuMAX		"llu"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	SCNuPTR		"lu"	/* uintptr_t		*/
@@ -209,6 +249,10 @@
 #define	SCNxLEAST16	"hx"	/* uint_least16_t	*/
 #define	SCNxLEAST32	"x"	/* uint_least32_t	*/
 #define	SCNxLEAST64	"llx"	/* uint_least64_t	*/
+#define	SCNxFAST8	"hhx"	/* uint_fast8_t		*/
+#define	SCNxFAST16	"hx"	/* uint_fast16_t	*/
+#define	SCNxFAST32	"x"	/* uint_fast32_t	*/
+#define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #define	SCNxMAX		"llx"	/* uintmax_t		*/
 #ifdef __ELF__
 #define	SCNxPTR		"lx"	/* uintptr_t		*/
