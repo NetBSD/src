@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.4 1997/06/13 17:49:22 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.5 1997/06/26 19:03:32 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -17,6 +17,7 @@ GENPROM= ${.CURDIR}/../genprom/genprom
 DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 
 CPPFLAGS += -I$S -I${.CURDIR}/../lib -I$S/lib/libsa
+CPPFLAGS+= -D_STANDALONE
 
 .include <bsd.prog.mk>
 
