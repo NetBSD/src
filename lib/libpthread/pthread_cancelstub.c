@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.9 2004/05/21 17:15:42 kleink Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.10 2005/03/10 00:34:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.9 2004/05/21 17:15:42 kleink Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.10 2005/03/10 00:34:23 kleink Exp $");
 
 /*
  * This is necessary because the fsync_range() name is always weak (it is
  * not a POSIX function).
  */
 #define	fsync_range	_fsync_range
+
+/*
+ * XXX this is necessary to get the prototypes for the __sigsuspend14
+ * XXX and __msync13 internal names, instead of the application-visible
+ * XXX sigsuspend and msync names. It's kind of gross, but we're pretty
+ * XXX intimate with libc already.
+ */
+#define __LIBC12_SOURCE__
 
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -54,21 +62,14 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.9 2004/05/21 17:15:42 kleink Exp $");
 #include <stdarg.h>
 #include <unistd.h>
 
-int	pthread__cancel_stub_binder;
-
-/*
- * XXX this is necessary to get the prototypes for the __sigsuspend14
- * XXX and __msync13 internal names, instead of the application-visible
- * XXX sigsuspend and msync names. It's kind of gross, but we're pretty
- * XXX intimate with libc already.
- */
-#define __LIBC12_SOURCE__
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+int	pthread__cancel_stub_binder;
 
 int	_sys_accept(int, struct sockaddr *, socklen_t *);
 int	_sys_close(int);
