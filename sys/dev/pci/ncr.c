@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.41 1996/08/28 19:01:29 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.42 1996/09/20 22:38:37 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1332,7 +1332,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.41 1996/08/28 19:01:29 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.42 1996/09/20 22:38:37 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -3608,11 +3608,11 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.adapter_softc = np;
 	np->sc_link.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
+	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = unit;
 	np->sc_link.adapter_targ = np->myaddr;
 	np->sc_link.fordriver	 = 0;
-	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
 #endif /* !__NetBSD__ */
 	np->sc_link.adapter      = &ncr_switch;
 	np->sc_link.device       = &ncr_dev;
