@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.3 2000/05/30 11:45:11 tsubai Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.4 2000/06/29 07:59:29 mrg Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -40,7 +40,7 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
