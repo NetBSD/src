@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:06 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/01 01:07:42 simonb Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -20,7 +20,7 @@ SRCS=	${PSRCS} ${GENSRCS}
 
 CLEANFILES+= ${GENSRCS}
 
-CPPFLAGS+= -I${.OBJDIR}/
+CPPFLAGS+= -I${.OBJDIR}
 
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
