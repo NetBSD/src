@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.28 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.29 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ struct uhub_softc {
 };
 
 usbd_status uhub_init_port __P((struct usbd_port *));
-void uhub_disconnect_port __P((struct usbd_port *up));
 usbd_status uhub_explore __P((usbd_device_handle hub));
 void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
@@ -377,7 +376,7 @@ uhub_explore(dev)
 			DPRINTF(("uhub_explore: device %d disappeared "
 				 "on port %d\n", 
 				 up->device->address, port));
-			uhub_disconnect_port(up);
+			usb_disconnect_port(up);
 			usbd_clear_port_feature(dev, port, 
 						UHF_C_PORT_CONNECTION);
 		}
@@ -430,62 +429,6 @@ uhub_explore(dev)
 		}
 	}
 	return (USBD_NORMAL_COMPLETION);
-}
-
-/*
- * The general mechanism for detaching drivers works as follows: Each
- * driver is responsible for maintaining a reference count on the
- * number of outstanding references to its softc (e.g.  from
- * processing hanging in a read or write).  The detach method of the
- * driver decrements this counter and flags in the softc that the
- * driver is dying and then wakes any sleepers.  It then sleeps on the
- * softc.  Each place that can sleep must maintain the reference
- * count.  When the reference count drops to -1 (0 is the normal value
- * of the reference count) the a wakeup on the softc is performed
- * signaling to the detach waiter that all references are gone.
- */
-
-/*
- * Called from process context when we discover that a port has
- * been disconnected.
- */
-void
-uhub_disconnect_port(up)
-	struct usbd_port *up;
-{
-	usbd_device_handle dev = up->device;
-	char *hubname;
-	int i;
-
-	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
-		    up, dev, up->portno));
-
-	if (!dev->cdesc) {
-		/* Partially attached device, just drop it. */
-		dev->bus->devices[dev->address] = 0;
-		up->device = 0;
-		return;
-	}
-
-	if (dev->subdevs) {
-		hubname = USBDEVPTRNAME(up->parent->subdevs[0]);
-		for (i = 0; dev->subdevs[i]; i++) {
-			printf("%s: at %s port %d (addr %d) disconnected\n",
-			       USBDEVPTRNAME(dev->subdevs[i]), hubname,
-			       up->portno, dev->address);
-			config_detach(dev->subdevs[i], DETACH_FORCE);
-		}
-	}
-
-	dev->bus->devices[dev->address] = 0;
-	up->device = 0;
-	usb_free_device(dev);
-
-#if defined(__FreeBSD__)
-      device_delete_child(
-	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
-	  ((struct softc *)dev->softc)->sc_dev);
-#endif
 }
 
 int
@@ -544,7 +487,7 @@ uhub_detach(self, flags)
 	for(p = 0; p < nports; p++) {
 		rup = &dev->hub->ports[p];
 		if (rup->device)
-			uhub_disconnect_port(rup);
+			usb_disconnect_port(rup);
 	}
 	
 	free(dev->hub, M_USBDEV);
