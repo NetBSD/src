@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.34 1997/10/17 12:17:01 lukem Exp $	*/
+/*	$NetBSD: pstat.c,v 1.35 1997/10/18 11:06:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.34 1997/10/17 12:17:01 lukem Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.35 1997/10/18 11:06:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,7 +402,7 @@ ufs_getflags(vp, ip, flags)
 	struct inode *ip;
 	char *flags;
 {
-	register int flag;
+	int flag;
 
 	flag = ip->i_flag;
 	if (flag & IN_LOCKED)
