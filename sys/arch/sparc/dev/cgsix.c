@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.20 1996/02/27 22:09:28 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.21 1996/03/14 19:44:40 christos Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -53,6 +53,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <machine/fbio.h>
@@ -71,6 +72,7 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#include <machine/cpu.h>
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #endif
@@ -82,6 +84,7 @@
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
+#include <sparc/dev/dev_conf.h>
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */
@@ -156,10 +159,6 @@ cgsixmatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	struct cg6_layout *p = (struct cg6_layout *)ra->ra_paddr;
-	void *tmp;
-	extern void *bus_tmp __P((void *, int));	/* XXX */
-	extern void bus_untmp __P((void));		/* XXX */
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
@@ -174,6 +173,8 @@ cgsixmatch(parent, vcf, aux)
 
 #if defined(SUN4)
 	if (CPU_ISSUN4 && (ca->ca_bustype == BUS_OBIO)) {
+		void *tmp;
+
 		/*
 		 * Check for a pfour framebuffer.  This is done somewhat
 		 * differently on the cgsix than other pfour framebuffers.
@@ -203,11 +204,11 @@ cgsixattach(parent, self, args)
 {
 	register struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole = 0, sbus = 1;
-	char *nam;
+	char *nam = NULL;
 	extern struct tty *fbconstty;
 
 	fb->fb_driver = &cg6_fbdriver;
@@ -371,7 +372,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 {
 	register struct cgsix_softc *sc = cgsixcd.cd_devs[minor(dev)];
 	u_int count;
-	int i, v, error;
+	int v, error;
 	union cursor_cmap tcm;
 
 	switch (cmd) {

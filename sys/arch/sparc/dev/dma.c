@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 1996/02/27 00:36:11 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.19 1996/03/14 19:44:49 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -113,8 +113,6 @@ dmaattach(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
-	int node, base, slot;
-	char *name;
 
 	if (ca->ca_ra.ra_vaddr == NULL)
 		ca->ca_ra.ra_vaddr =
@@ -261,7 +259,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname,
+	ESP_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
 		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -323,19 +321,19 @@ int
 dmaintr(sc)
 	struct dma_softc *sc;
 {
+	static const char fmt1[] = "%s: intr: addr %p, csr %b\n";
+	static const char fmt2[] = "%s: error: csr=%b\n";
 	int trans = 0, resid = 0;
 	u_long csr;
-
 	csr = DMACSR(sc);
 
-	ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
+	ESP_DMA((fmt1, sc->sc_dev.dv_xname,
 		 DMADDR(sc), csr, DMACSRBITS));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			csr, DMACSRBITS);
+		printf(fmt2, sc->sc_dev.dv_xname, csr, DMACSRBITS);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.40 1996/03/05 09:29:58 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.41 1996/03/14 19:44:53 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -85,6 +85,10 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ int	espintr		__P((struct esp_softc *));
 /*static*/ void	esp_timeout	__P((void *arg));
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
+
+int esp_stp2cpb __P((struct esp_softc *, int));
+int esp_cpb2stp __P((struct esp_softc *, int));
+
 
 /* Linkup to the rest of the kernel */
 struct cfdriver espcd = {
@@ -511,8 +515,10 @@ espreadregs(sc)
 /*
  * Convert Synchronous Transfer Period to chip register Clock Per Byte value.
  */
+int
 esp_stp2cpb(sc, period)
 	struct esp_softc *sc;
+	int period;
 {
 	int v;
 	v = (sc->sc_freq * period) / 250;
@@ -525,6 +531,7 @@ esp_stp2cpb(sc, period)
 /*
  * Convert chip register Clock Per Byte value to Synchronous Transfer Period.
  */
+int
 esp_cpb2stp(sc, cpb)
 	struct esp_softc *sc;
 	int cpb;
@@ -1128,7 +1135,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			break;
 		}
 	} else if (sc->sc_state == ESP_RESELECTED) {
-		struct scsi_link *sc_link;
+		struct scsi_link *sc_link = NULL;
 		struct ecb *ecb;
 		struct esp_tinfo *ti;
 		u_char lunit;
@@ -1910,8 +1917,8 @@ esp_timeout(arg)
 	sc = xs->sc_link->adapter_softc;
 	sc_print_addr(xs->sc_link);
 again:
-	printf("%s: timed out [ecb 0x%x (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %x, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
+	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
+	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,

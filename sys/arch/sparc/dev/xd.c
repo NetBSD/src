@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.18 1996/03/04 20:11:32 chuck Exp $	*/
+/*	$NetBSD: xd.c,v 1.19 1996/03/14 19:45:20 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.18 1996/03/04 20:11:32 chuck Exp $
+ * id: $NetBSD: xd.c,v 1.19 1996/03/14 19:45:20 christos Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -61,7 +61,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -73,6 +72,8 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
+#include <sys/cpu.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -83,6 +84,7 @@
 #include <sparc/dev/xdvar.h>
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/dev/dev_conf.h>
 
 /*
  * macros
@@ -215,24 +217,14 @@ inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
 			    struct xd_softc *, int, u_long, int,
 			    caddr_t, struct buf *));
 void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-int	xdc_start __P((struct xdc_softc *, int));
+void	xdc_start __P((struct xdc_softc *, int));
 int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
 int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
 void	xdc_tick __P((void *));
-int	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
 
 /* machine interrupt hook */
 int	xdcintr __P((void *));
-
-/* {b,c}devsw */
-int	xdclose __P((dev_t, int, int));
-int	xddump __P((dev_t));
-int	xdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	xdopen __P((dev_t, int, int));
-int	xdread __P((dev_t, struct uio *));
-int	xdwrite __P((dev_t, struct uio *));
-int	xdsize __P((dev_t));
-void	xdstrategy __P((struct buf *));
 
 /* autoconf */
 int	xdcmatch __P((struct device *, void *, void *));
@@ -517,7 +509,6 @@ xdmatch(parent, match, aux)
 	void   *match, *aux;
 
 {
-	struct xdc_softc *xdc = (void *) parent;
 	struct cfdata *cf = match;
 	struct xdc_attach_args *xa = aux;
 
@@ -543,7 +534,7 @@ xdattach(parent, self, aux)
 	struct xd_softc *xd = (void *) self;
 	struct xdc_softc *xdc = (void *) parent;
 	struct xdc_attach_args *xa = aux;
-	int     rqno, err, spt, mb, blk, lcv, fmode, s, newstate;
+	int     rqno, err, spt = 0, mb, blk, lcv, fmode, s = 0, newstate;
 	struct xd_iopb_drive *driopb;
 	struct dkbad *dkb;
 	struct bootpath *bp;
@@ -744,10 +735,10 @@ done:
  * xdclose: close device
  */
 int 
-xdclose(dev, flag, fmt)
+xdclose(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-
+	struct proc *p;
 {
 	struct xd_softc *xd = xdcd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -770,10 +761,12 @@ xdclose(dev, flag, fmt)
 /*
  * xddump: crash dump system
  */
-int 
-xddump(dev)
-	dev_t   dev;
-
+int
+xddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -902,10 +895,10 @@ xdioctl(dev, command, addr, flag, p)
  */
 
 int 
-xdopen(dev, flag, fmt)
+xdopen(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-
+	struct proc *p;
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -954,18 +947,20 @@ xdopen(dev, flag, fmt)
 }
 
 int
-xdread(dev, uio)
+xdread(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xdwrite(dev, uio)
+xdwrite(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -982,11 +977,11 @@ xdsize(dev)
 
 {
 	struct xd_softc *xdsc;
-	int     unit, part, size;
+	int     part, size;
 
 	/* valid unit?  try an open */
 
-	if (xdopen(dev, 0, S_IFBLK) != 0)
+	if (xdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
@@ -997,7 +992,7 @@ xdsize(dev)
 		size = -1;	/* only give valid size for swap partitions */
 	else
 		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xdclose(dev, 0, S_IFBLK) != 0)
+	if (xdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
@@ -1121,8 +1116,6 @@ xdcintr(v)
 
 {
 	struct xdc_softc *xdcsc = v;
-	struct xd_softc *xd;
-	struct buf *bp;
 
 	/* kick the event counter */
 
@@ -1306,7 +1299,6 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 
 {
 	int     rqno, submode = XD_STATE(fullmode), retry;
-	u_long  dp;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 
@@ -1375,7 +1367,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	struct buf *wq;
-	u_long  block, dp;
+	u_long  block;
 	caddr_t dbuf;
 
 	if (!xdcsc->nfree)
@@ -1638,7 +1630,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
  * xdc_reset: reset one drive.   NOTE: assumes xdc was just reset.
  * we steal iopb[0] for this, but we put it back when we are done.
  */
-int 
+void 
 xdc_xdreset(xdcsc, xdsc)
 	struct xdc_softc *xdcsc;
 	struct xd_softc *xdsc;
@@ -1679,7 +1671,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	struct xd_softc *xdsc;
 
 {
-	int     del = 0, lcv, poll = -1, retval = XD_ERR_AOK;
+	int     del = 0, lcv, retval = XD_ERR_AOK;
 	int     oldfree = xdcsc->nfree;
 
 	/* soft reset hardware */
@@ -1770,7 +1762,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
  * xdc_start: start all waiting buffers
  */
 
-int 
+void 
 xdc_start(xdcsc, maxio)
 	struct xdc_softc *xdcsc;
 	int     maxio;
@@ -1797,7 +1789,6 @@ xdc_remove_iorq(xdcsc)
 {
 	int     errno, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
-	u_long  addr;
 	struct xd_iopb *iopb;
 	struct xd_iorq *iorq;
 	struct buf *bp;
@@ -2070,7 +2061,7 @@ xdc_tick(arg)
 	struct xdc_softc *xdcsc = arg;
 	int     lcv, s, reset = 0;
 #ifdef XDC_DIAG
-	int     wait, run, free, done, whd;
+	int     wait, run, free, done, whd = 0;
 	u_char  fqc[XDC_MAXIOPB], wqc[XDC_MAXIOPB], mark[XDC_MAXIOPB];
 	s = splbio();
 	wait = xdcsc->nwait;
@@ -2100,7 +2091,7 @@ xdc_tick(arg)
 		printf("\n");
 		for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 			if (mark[lcv] == 0)
-				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %x\n",
+				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
 				lcv, xdcsc->reqs[lcv].mode,
 				xdcsc->iopbase[lcv].done,
 				xdcsc->iopbase[lcv].errs,
@@ -2248,7 +2239,7 @@ xdc_ioctlcmd(xd, dev, xio)
 	if (xio->dlen) {
 		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
-			if (err = copyin(xio->dptr, buf, xio->dlen)) {
+			if ((err = copyin(xio->dptr, buf, xio->dlen)) != 0) {
 				dvma_free(dvmabuf, xio->dlen, &buf);
 				return (err);
 			}

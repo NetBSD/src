@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.10 1996/03/04 20:13:39 chuck Exp $	*/
+/*	$NetBSD: xy.c,v 1.11 1996/03/14 19:45:24 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.10 1996/03/04 20:13:39 chuck Exp $
+ * id: $NetBSD: xy.c,v 1.11 1996/03/14 19:45:24 christos Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -61,7 +61,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -73,6 +72,7 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
+#include <sys/cpu.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -83,6 +83,7 @@
 #include <sparc/dev/xyvar.h>
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/dev/dev_conf.h>
 
 /*
  * macros
@@ -157,25 +158,15 @@ inline void xyc_rqinit __P((struct xy_iorq *, struct xyc_softc *,
 			    struct xy_softc *, int, u_long, int,
 			    caddr_t, struct buf *));
 void	xyc_rqtopb __P((struct xy_iorq *, struct xy_iopb *, int, int));
-int	xyc_start __P((struct xyc_softc *, struct xy_iorq *));
+void	xyc_start __P((struct xyc_softc *, struct xy_iorq *));
 int	xyc_startbuf __P((struct xyc_softc *, struct xy_softc *, struct buf *));
 int	xyc_submit_iorq __P((struct xyc_softc *, struct xy_iorq *, int));
 void	xyc_tick __P((void *));
 int	xyc_unbusy __P((struct xyc *, int));
-int	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
+void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
 
 /* machine interrupt hook */
 int	xycintr __P((void *));
-
-/* {b,c}devsw */
-int	xyclose __P((dev_t, int, int));
-int	xydump __P((dev_t));
-int	xyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	xyopen __P((dev_t, int, int));
-int	xyread __P((dev_t, struct uio *));
-int	xywrite __P((dev_t, struct uio *));
-int	xysize __P((dev_t));
-void	xystrategy __P((struct buf *));
 
 /* autoconf */
 int	xycmatch __P((struct device *, void *, void *));
@@ -295,7 +286,6 @@ int xycmatch(parent, match, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct xyc *xyc;
-	int     del = 0;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
@@ -464,7 +454,6 @@ xymatch(parent, match, aux)
 	void   *match, *aux;
 
 {
-	struct xyc_softc *xyc = (void *) parent;
 	struct cfdata *cf = match;
 	struct xyc_attach_args *xa = aux;
 
@@ -490,7 +479,7 @@ xyattach(parent, self, aux)
 	struct xy_softc *xy = (void *) self, *oxy;
 	struct xyc_softc *xyc = (void *) parent;
 	struct xyc_attach_args *xa = aux;
-	int     res, err, spt, mb, blk, lcv, fmode, s, newstate;
+	int     err, spt, mb, blk, lcv, fmode, s = 0, newstate;
 	struct dkbad *dkb;
 	struct bootpath *bp;
 
@@ -708,9 +697,10 @@ done:
  * xyclose: close device
  */
 int 
-xyclose(dev, flag, fmt)
+xyclose(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
+	struct proc *p;
 
 {
 	struct xy_softc *xy = xycd.cd_devs[DISKUNIT(dev)];
@@ -735,9 +725,11 @@ xyclose(dev, flag, fmt)
  * xydump: crash dump system
  */
 int 
-xydump(dev)
-	dev_t   dev;
-
+xydump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -867,10 +859,10 @@ xyioctl(dev, command, addr, flag, p)
  */
 
 int 
-xyopen(dev, flag, fmt)
+xyopen(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-
+	struct proc *p;
 {
 	int     unit, part;
 	struct xy_softc *xy;
@@ -920,18 +912,20 @@ xyopen(dev, flag, fmt)
 }
 
 int
-xyread(dev, uio)
+xyread(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xystrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xywrite(dev, uio)
+xywrite(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xystrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -948,11 +942,11 @@ xysize(dev)
 
 {
 	struct xy_softc *xysc;
-	int     unit, part, size;
+	int     part, size;
 
 	/* valid unit?  try an open */
 
-	if (xyopen(dev, 0, S_IFBLK) != 0)
+	if (xyopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
@@ -963,7 +957,7 @@ xysize(dev)
 		size = -1;	/* only give valid size for swap partitions */
 	else
 		size = xysc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xyclose(dev, 0, S_IFBLK) != 0)
+	if (xyclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
@@ -978,8 +972,6 @@ xystrategy(bp)
 
 {
 	struct xy_softc *xy;
-	struct xyc_softc *parent;
-	struct buf *wq;
 	int     s, unit;
 	struct xyc_attach_args xa;
 
@@ -1065,8 +1057,6 @@ xycintr(v)
 
 {
 	struct xyc_softc *xycsc = v;
-	struct xy_softc *xy;
-	struct buf *bp;
 
 	/* kick the event counter */
 
@@ -1198,8 +1188,7 @@ xyc_cmd(xycsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 	int     fullmode;
 
 {
-	int     submode = XY_STATE(fullmode), retry;
-	u_long  dp;
+	int     submode = XY_STATE(fullmode);
 	struct xy_iorq *iorq = xycsc->ciorq;
 	struct xy_iopb *iopb = xycsc->ciopb;
 
@@ -1251,7 +1240,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	int     partno;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
-	u_long  block, dp;
+	u_long  block;
 	caddr_t dbuf;
 
 	iorq = xysc->xyrq;
@@ -1490,7 +1479,6 @@ xyc_piodriver(xycsc, iorq)
 	int     nreset = 0;
 	int     retval = 0;
 	u_long  res;
-	struct xyc *xyc = xycsc->xyc;
 #ifdef XYC_DEBUG
 	printf("xyc_piodriver(%s, 0x%x)\n", xycsc->sc_dev.dv_xname, iorq);
 #endif
@@ -1543,7 +1531,7 @@ xyc_piodriver(xycsc, iorq)
  * xyc_xyreset: reset one drive.   NOTE: assumes xyc was just reset.
  * we steal iopb[XYC_CTLIOPB] for this, but we put it back when we are done.
  */
-int 
+void 
 xyc_xyreset(xycsc, xysc)
 	struct xyc_softc *xycsc;
 	struct xy_softc *xysc;
@@ -1593,7 +1581,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 	struct xy_softc *xysc;
 
 {
-	int     del = 0, lcv, poll = -1, retval = XY_ERR_AOK;
+	int     del = 0, lcv, retval = XY_ERR_AOK;
 
 	/* soft reset hardware */
 
@@ -1666,7 +1654,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
  * xyc_start: start waiting buffers
  */
 
-int 
+void 
 xyc_start(xycsc, iorq)
 	struct xyc_softc *xycsc;
 	struct xy_iorq *iorq;
@@ -1983,7 +1971,7 @@ xyc_ioctlcmd(xy, dev, xio)
 	struct xd_iocmd *xio;
 
 {
-	int     s, err, rqno, dummy;
+	int     s, err, rqno, dummy = 0;
 	caddr_t dvmabuf = NULL, buf = NULL;
 	struct xyc_softc *xycsc;
 
@@ -2018,7 +2006,7 @@ xyc_ioctlcmd(xy, dev, xio)
 	if (xio->dlen) {
 		dvmabuf = dvma_malloc(xio->dlen, &buf, M_WAITOK);
 		if (xio->cmd == XYCMD_WR) {
-			if (err = copyin(xio->dptr, buf, xio->dlen)) {
+			if ((err = copyin(xio->dptr, buf, xio->dlen)) != 0) {
 				dvma_free(dvmabuf, xio->dlen, &buf);
 				return (err);
 			}

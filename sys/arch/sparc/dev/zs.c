@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 1996/02/25 22:03:20 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.34 1996/03/14 19:45:28 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,12 +52,10 @@
  *
  * This driver knows far too much about chip to usage mappings.
  */
-#define	NZS	2		/* XXX */
-
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -72,9 +70,12 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
+
 #include <machine/kbd.h>
 #include <dev/ic/z8530reg.h>
+
 #include <sparc/dev/zsvar.h>
+#include <sparc/dev/dev_conf.h>
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -129,19 +130,20 @@ struct zs_chanstate *zslist;
 static void	zsiopen __P((struct tty *));
 static void	zsiclose __P((struct tty *));
 static void	zsstart __P((struct tty *));
-void		zsstop __P((struct tty *, int));
 static int	zsparam __P((struct tty *, struct termios *));
 
 /* Routines purely local to this driver. */
 static int	zs_getspeed __P((volatile struct zschan *));
+#ifdef KGDB
 static void	zs_reset __P((volatile struct zschan *, int, int));
+#endif
 static void	zs_modem __P((struct zs_chanstate *, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
-static int zscnputc __P((int));	/* console putc function */
+static void zscnputc __P((int));	/* console putc function */
 static volatile struct zschan *zs_conschan;
 static struct tty *zs_checkcons __P((struct zsinfo *, int, struct zs_chanstate *));
 
@@ -150,9 +152,18 @@ static struct tty *zs_checkcons __P((struct zsinfo *, int, struct zs_chanstate *
 extern int kgdb_dev, kgdb_rate;
 static int zs_kgdb_savedspeed;
 static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
+void zskgdb __P((int));
+static int zs_kgdb_getc __P((void *));
+static void zs_kgdb_putc __P((void *, int));
 #endif
 
-extern volatile struct zsdevice *findzs(int);
+static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
+
+void zsabort __P((void));
+static void zsoverrun __P((int, long *, char *));
+
 static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*
@@ -171,10 +182,13 @@ int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
 
 #ifdef SUN4
-static u_char
+static u_int zs_read __P((volatile struct zschan *, u_int reg));
+static u_int zs_write __P((volatile struct zschan *, u_int, u_int));
+
+static u_int
 zs_read(zc, reg)
 	volatile struct zschan *zc;
-	u_char reg;
+	u_int reg;
 {
 	u_char val;
 
@@ -185,10 +199,10 @@ zs_read(zc, reg)
 	return val;
 }
 
-static u_char
+static u_int
 zs_write(zc, reg, val)
 	volatile struct zschan *zc;
-	u_char reg, val;
+	u_int reg, val;
 {
 	zc->zc_csr = reg;
 	ZS_DELAY();
@@ -329,6 +343,7 @@ zsattach(parent, dev, aux)
 			      M_DEVBUF, M_NOWAIT);
 }
 
+#ifdef KGDB
 /*
  * Put a channel in a known state.  Interrupts may be left disabled
  * or enabled, as desired.
@@ -364,6 +379,7 @@ zs_reset(zc, inten, speed)
 	reg[13] = tconst >> 8;
 	zs_loadchannelregs(zc, reg);
 }
+#endif
 
 /*
  * Declare the given tty (which is in fact &cons) as a console input
@@ -379,9 +395,8 @@ zsconsole(tp, unit, out, fnstop)
 	register struct tty *tp;
 	register int unit;
 	int out;
-	void (**fnstop) __P((struct tty *, int));
+	int (**fnstop) __P((struct tty *, int));
 {
-	extern int (*v_putc)();
 	int zs;
 	volatile struct zsdevice *addr;
 
@@ -405,7 +420,7 @@ zsconsole(tp, unit, out, fnstop)
 /*
  * Polled console output putchar.
  */
-static int
+static void
 zscnputc(c)
 	int c;
 {
@@ -595,8 +610,9 @@ zsopen(dev, flags, mode, p)
 		    tp->t_state & TS_CARR_ON)
 			break;
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0)) {
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+				 ttopen, 0);
+		if (error) {
 			if (!(tp->t_state & TS_ISOPEN)) {
 				zs_modem(cs, 0);
 				tp->t_state &= ~TS_WOPEN;
@@ -932,6 +948,7 @@ zssint(cs, zc)
 	return (ZRING_MAKE(ZRING_SINT, rr0));
 }
 
+void
 zsabort()
 {
 
@@ -948,6 +965,7 @@ zsabort()
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
+void
 zskgdb(unit)
 	int unit;
 {
@@ -1151,7 +1169,7 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	case TIOCSFLAGS: {
-		int userbits, driverbits = 0;
+		int userbits;
 
 		error = suser(p->p_ucred, &p->p_acflag);
 		if (error != 0)
@@ -1282,7 +1300,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-void
+int
 zsstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -1302,6 +1320,7 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.21 1996/02/25 21:53:53 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.22 1996/03/14 19:45:08 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -59,11 +58,13 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <machine/autoconf.h>
 
 #include <machine/vuid_event.h>
 #include <sparc/dev/event_var.h>
+#include <sparc/dev/dev_conf.h>
 #include <machine/kbd.h>
 #include <machine/kbio.h>
 
@@ -217,19 +218,10 @@ struct kbd_softc {
 } kbd_softc;
 
 /* Prototypes */
-void	kbd_ascii(struct tty *);
-void	kbd_serial(struct tty *, void (*)(), void (*)());
-static	void kbd_getid(void *);
-void	kbd_reset(struct kbd_state *);
-static	int kbd_translate(int, struct kbd_state *);
-void	kbd_rint(int);
-int	kbdopen(dev_t, int, int, struct proc *);
-int	kbdclose(dev_t, int, int, struct proc *);
-int	kbdread(dev_t, struct uio *, int);
-int	kbdwrite(dev_t, struct uio *, int);
-int	kbdioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	kbdselect(dev_t, int, struct proc *);
-int	kbd_docmd(int, int);
+void	kbd_reset __P((struct kbd_state *));
+static	int kbd_translate __P((int, struct kbd_state *));
+void	kbdattach __P((int));
+void	kbd_repeat __P((void *arg));
 
 /* set in kbdattach() */
 int kbd_repeat_start;
@@ -240,7 +232,8 @@ int kbd_repeat_step;
  * This happens before kbd_serial.
  */
 void
-kbd_ascii(struct tty *tp)
+kbd_ascii(tp)
+	struct tty *tp;
 {
 
 	kbd_softc.k_cons = tp;
@@ -251,7 +244,10 @@ kbd_ascii(struct tty *tp)
  * We pick up the initial keyboard click state here as well.
  */
 void
-kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
+kbd_serial(tp, iopen, iclose)
+	struct tty *tp;
+	void (*iopen) __P((struct tty *));
+	void (*iclose) __P((struct tty *));
 {
 	register struct kbd_softc *k;
 	register char *cp;
@@ -274,7 +270,8 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
  * send a RESET, so that we can find out what kind of keyboard it is.
  */
 void
-kbdattach(int nkbd)
+kbdattach(kbd)
+	int kbd;
 {
 	register struct kbd_softc *k;
 	register struct tty *tp;
@@ -293,7 +290,8 @@ kbdattach(int nkbd)
 }
 
 void
-kbd_reset(register struct kbd_state *ks)
+kbd_reset(ks)
+	register struct kbd_state *ks;
 {
 	/*
 	 * On first identification, wake up anyone waiting for type
@@ -335,7 +333,9 @@ kbd_reset(register struct kbd_state *ks)
  * Turn keyboard up/down codes into ASCII.
  */
 static int
-kbd_translate(register int c, register struct kbd_state *ks)
+kbd_translate(c, ks)
+	register int c;
+	register struct kbd_state *ks;
 {
 	register int down;
 
@@ -398,7 +398,8 @@ kbd_translate(register int c, register struct kbd_state *ks)
 
 
 void
-kbd_repeat(void *arg)
+kbd_repeat(arg)
+	void *arg;
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
 	int s = spltty();
@@ -411,7 +412,8 @@ kbd_repeat(void *arg)
 }
 
 void
-kbd_rint(register int c)
+kbd_rint(c)
+	register int c;
 {
 	register struct kbd_softc *k = &kbd_softc;
 	register struct firm_event *fe;
@@ -509,7 +511,11 @@ kbd_rint(register int c)
 }
 
 int
-kbdopen(dev_t dev, int flags, int mode, struct proc *p)
+kbdopen(dev, flags, mode, p)
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	int s, error;
 	struct tty *tp;
@@ -545,7 +551,11 @@ kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-kbdclose(dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(dev, flags, mode, p)
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 
 	/*
@@ -561,7 +571,10 @@ kbdclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-kbdread(dev_t dev, struct uio *uio, int flags)
+kbdread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 
 	return (ev_read(&kbd_softc.k_events, uio, flags));
@@ -569,14 +582,22 @@ kbdread(dev_t dev, struct uio *uio, int flags)
 
 /* this routine should not exist, but is convenient to write here for now */
 int
-kbdwrite(dev_t dev, struct uio *uio, int flags)
+kbdwrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
+kbdioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	register caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct kbd_softc *k = &kbd_softc;
 	register struct kiockey *kmp;
@@ -720,7 +741,10 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 }
 
 int
-kbdselect(dev_t dev, int rw, struct proc *p)
+kbdselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
 {
 
 	return (ev_select(&kbd_softc.k_events, rw, p));
@@ -732,7 +756,9 @@ kbdselect(dev_t dev, int rw, struct proc *p)
  * is flooding.  (The keyboard runs at 1200 baud, or 120 cps.)
  */
 int
-kbd_docmd(int cmd, int isuser)
+kbd_docmd(cmd, isuser)
+	int cmd;
+	int isuser;
 {
 	register struct tty *tp = kbd_softc.k_kbd;
 	register struct kbd_softc *k = &kbd_softc;

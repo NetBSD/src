@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.15 1996/02/27 22:09:35 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.16 1996/03/14 19:44:59 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,19 +50,22 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
+#include <machine/kbd.h>
 #include <machine/fbvar.h>
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 #endif
+#include <sparc/dev/dev_conf.h>
 
 static struct fbdevice *devfb;
+
 
 void
 fb_unblank()
@@ -352,7 +355,8 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
-extern int (*v_putc) __P((int));
+static int a2int __P((char *, int));
+static void fb_bell __P((int));
 
 static int
 a2int(cp, deflt)
@@ -431,7 +435,7 @@ fbrcons_init(fb)
 	rc->rc_bell = fb_bell;
 	rcons_init(rc);
 	/* Hook up virtual console */
-	v_putc = (int (*) __P((int)))rcons_cnputc;
+	v_putc = rcons_cnputc;
 }
 #endif
 

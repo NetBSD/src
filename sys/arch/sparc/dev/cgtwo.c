@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.10 1996/02/27 22:09:33 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.11 1996/03/14 19:44:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -71,6 +72,8 @@
 #endif
 
 #include <machine/cgtworeg.h>
+
+#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgtwo_softc {
@@ -92,7 +95,9 @@ int		cgtwoopen __P((dev_t, int, int, struct proc *));
 int		cgtwoclose __P((dev_t, int, int, struct proc *));
 int		cgtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgtwommap __P((dev_t, int, int));
-static void	cgtwounblank(struct device *);
+static void	cgtwounblank __P((struct device *));
+int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
+int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
 struct cfdriver cgtwocd = {
 	NULL, "cgtwo", cgtwomatch, cgtwoattach,
@@ -106,10 +111,6 @@ static struct fbdriver cgtwofbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int nullop();
-static int cgtwo_cnputc();
-
-static void cgtwoloadcmap __P((struct cgtwo_softc *, int, int));
 
 /*
  * Match a cgtwo.
@@ -122,7 +123,6 @@ cgtwomatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	int probe;
 	caddr_t tmp;
 
 	/*
@@ -159,10 +159,9 @@ cgtwoattach(parent, self, args)
 {
 	register struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	register struct confargs *ca = args;
-	register int node, i;
-	register struct cgtwo_all *p;
-	int isconsole;
-	char *nam;
+	register int node = 0;
+	int isconsole = 0;
+	char *nam = NULL;
 
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
@@ -276,7 +275,6 @@ cgtwoioctl(dev, cmd, data, flags, p)
 {
 	register struct cgtwo_softc *sc = cgtwocd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
-	int error;
 
 	switch (cmd) {
 
@@ -297,10 +295,10 @@ cgtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGETCMAP:
-		return cgtwogetcmap(sc, data);
+		return cgtwogetcmap(sc, (struct fbcmap *) data);
 
 	case FBIOPUTCMAP:
-		return cgtwoputcmap(sc, data);
+		return cgtwoputcmap(sc, (struct fbcmap *) data);
 
 	case FBIOGVIDEO:
 		*(int *)data = sc->sc_reg->video_enab;

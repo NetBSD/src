@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.7 1996/02/25 21:53:49 pk Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.8 1996/03/14 19:44:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -92,7 +92,6 @@ int	amd7930hwintr __P((void *));
 #define AUDIO_SET_SWINTR ienab_bis(IE_L4)
 #else
 struct auio *auiop;
-extern void amd7930_trap();
 #endif
 int	amd7930swintr __P((void *));
 
@@ -212,8 +211,10 @@ int	amd7930_set_in_port __P((void *, int));
 int	amd7930_get_in_port __P((void *));
 int	amd7930_commit_settings __P((void *));
 u_int	amd7930_get_silence __P((int));
-int	amd7930_start_output __P((void *, void *, int, void (*)(), void *));
-int	amd7930_start_input __P((void *, void *, int, void (*)(), void *));
+int	amd7930_start_output __P((void *, void *, int, void (*)(void *),
+				  void *));
+int	amd7930_start_input __P((void *, void *, int, void (*)(void *),
+				 void *));
 int	amd7930_halt_output __P((void *));
 int	amd7930_halt_input __P((void *));
 int	amd7930_cont_output __P((void *));
@@ -361,7 +362,6 @@ amd7930_open(dev, flags)
 	int flags;
 {
 	register struct amd7930_softc *sc;
-	register volatile struct amd7930 *amd;
 	int unit = AUDIOUNIT(dev);
 
 	DPRINTF(("sa_open: unit %d\n",unit));
@@ -626,7 +626,7 @@ amd7930_start_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr) __P((void *));
 	void *arg;
 {
 	register struct amd7930_softc *sc = addr;
@@ -658,7 +658,7 @@ amd7930_start_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr) __P((void *));
 	void *arg;
 {
 	register struct amd7930_softc *sc = addr;
@@ -815,8 +815,6 @@ amd7930_query_devinfo(addr, dip)
 	void *addr;
 	register mixer_devinfo_t *dip;
 {
-	register struct amd7930_softc *sc = addr;
-
 	switch(dip->index) {
 	    case SUNAUDIO_MIC_PORT:
 		    dip->type = AUDIO_MIXER_VALUE;

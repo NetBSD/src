@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.17 1996/02/25 21:45:53 pk Exp $ */
+/*	$NetBSD: cons.c,v 1.18 1996/03/14 19:44:46 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,13 +54,20 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/conf.h>
+#include <sys/cpu.h>
+
+#include <dev/cons.h>
+
+#include <sparc/dev/dev_conf.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/psl.h>
+#include <machine/cpu.h>
+#include <machine/kbd.h>
 #if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
+#include <machine/autoconf.h>
 
 #include "zs.h"
 
@@ -76,19 +83,21 @@ extern struct promvec *promvec;
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
-static void (*fcnstop) __P((struct tty *, int));
+static int (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
-void cnstop __P((struct tty *, int));
+int cnstop __P((struct tty *, int));
 
 static void cnfbstart __P((struct tty *));
-static void cnfbstop __P((struct tty *, int));
+static int cnfbstop __P((struct tty *, int));
 static void cnfbdma __P((void *));
+static struct tty  *xxcntty __P((dev_t));
 
 extern char char_type[];
 
-/*XXX*/static struct tty *
-cntty()
+/*XXX*/
+static struct tty *
+xxcntty(dev_t dev)
 {
 	return &cons;
 }
@@ -98,9 +107,8 @@ consinit()
 {
 	register struct tty *tp = &cons;
 	register int in, out;
-	void zsconsole();
 
-/*XXX*/	cdevsw[0].d_tty = cntty;
+/*XXX*/	cdevsw[0].d_tty = xxcntty;
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
@@ -108,8 +116,6 @@ consinit()
 	if (promvec->pv_romvec_vers > 2) {
 		/* We need to probe the PROM device tree */
 		register int node,fd;
-		int	findroot __P((void));
-		char   *getpropstring __P((int node, char *name));
 		char buffer[128];
 		register struct nodeops *no;
 		register struct v2devops *op;
@@ -259,7 +265,7 @@ setup_console:
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		fcnstop = (void (*)(struct tty *, int))nullop;
+		fcnstop = (int (*)(struct tty *, int))nullop;
 		break;
 	}
 }
@@ -396,7 +402,7 @@ cnstart(tp)
 		void (*v1)__P((int));
 		int  (*v3)__P((int, void *, int));
 	} putc;
-	register int fd, v;
+	register int fd = 0, v;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
@@ -431,12 +437,13 @@ cnstart(tp)
 	splx(s);
 }
 
-void
+int
 cnstop(tp, flag)
 	register struct tty *tp;
 	int flag;
 {
 	(*fcnstop)(tp, flag);
+	return 0;
 }
 
 /*
@@ -480,7 +487,7 @@ cnfbstart(tp)
 /*
  * Stop frame buffer output: just assert TS_FLUSH if necessary.
  */
-static void
+static int
 cnfbstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -490,6 +497,7 @@ cnfbstop(tp, flag)
 	if ((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
 	splx(s);
+	return 0;
 }
 
 /*
@@ -600,7 +608,7 @@ cngetc()
 #if defined(SUN4)
 		/* SUN4 PROM: must turn off echo to avoid double char echo */
 		extern struct om_vector *oldpvec;
-		int saveecho;
+		int saveecho = 0;
 #endif
 
 		s = splhigh();

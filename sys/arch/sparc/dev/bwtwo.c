@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.22 1996/02/27 22:09:23 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.23 1996/03/14 19:44:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -55,6 +55,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -77,6 +78,7 @@
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
+#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct bwtwo_softc {
@@ -122,10 +124,6 @@ static struct fbdriver bwtwofbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int bwtwo_cnputc();
-static struct bwtwo_softc *bwcons;
 
 /*
  * Match a bwtwo.
@@ -195,9 +193,9 @@ bwtwoattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node = ca->ca_ra.ra_node, ramsize;
 	struct fbdevice *fb = &sc->sc_fb;
-	int isconsole;
+	int isconsole = 0;
 	int sbus = 1;
-	char *nam;
+	char *nam = NULL;
 
 	fb->fb_driver = &bwtwofbdriver;
 	fb->fb_device = &sc->sc_dev;

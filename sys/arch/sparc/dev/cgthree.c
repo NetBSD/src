@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.23 1996/02/28 22:09:27 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.24 1996/03/14 19:44:42 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -66,11 +67,13 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#include <machine/cpu.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgthreereg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgthree_softc {
@@ -104,9 +107,6 @@ static struct fbdriver cgthreefbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int cgthree_cnputc();
 
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 static void cgthree_set_video __P((struct cgthree_softc *, int));
@@ -147,11 +147,11 @@ cgthreeattach(parent, self, args)
 {
 	register struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
 	int isconsole;
 	int sbus = 1;
-	char *nam;
+	char *nam = NULL;
 
 	sc->sc_fb.fb_driver = &cgthreefbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;

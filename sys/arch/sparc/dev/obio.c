@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.19 1996/01/12 21:44:16 chuck Exp $	*/
+/*	$NetBSD: obio.c,v 1.20 1996/03/14 19:45:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
@@ -57,13 +58,16 @@ struct bus_softc {
 /* autoconfiguration driver */
 static int	busmatch __P((struct device *, void *, void *));
 static void	obioattach __P((struct device *, struct device *, void *));
+int		busprint __P((void *, char *));
 #if defined(SUN4)
 static void	vmesattach __P((struct device *, struct device *, void *));
 static void	vmelattach __P((struct device *, struct device *, void *));
 static int	busattach __P((struct device *, void *, void *, int));
 void *		bus_map __P((struct rom_reg *, int, int));
-void *		bus_tmp __P((void *, int));
-void		bus_untmp __P((void));
+int		obio_scan __P((struct device *, void *, void *));
+int 		vmes_scan __P((struct device *, void *, void *));
+int 		vmel_scan __P((struct device *, void *, void *));
+int 		vmeintr __P((void *));
 #endif
 
 struct cfdriver obiocd = { NULL, "obio", busmatch, obioattach,
@@ -104,7 +108,7 @@ busprint(args, obio)
 		ca->ca_ra.ra_name = "<unknown>";
 	if (obio)
 		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
-	printf(" addr 0x%x", ca->ca_ra.ra_paddr);
+	printf(" addr %p", ca->ca_ra.ra_paddr);
 	if (ca->ca_ra.ra_intr[0].int_vec != -1)
 		printf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
 	return (UNCONF);
@@ -118,7 +122,6 @@ busattach(parent, child, args, bustype)
 	int bustype;
 {
 	struct cfdata *cf = child;
-	register struct bus_softc *sc = (struct bus_softc *)parent;
 	register struct confargs *ca = args;
 	struct confargs oca;
 	caddr_t tmp;
@@ -307,7 +310,8 @@ vmeintr(arg)
 	struct intrhand *ih;
 	int i = 0;
 
-	vec = ldcontrolb(AC_VMEINTVEC | (pil_to_vme[level] << 1) | 1);
+	vec = ldcontrolb((caddr_t)
+	    (AC_VMEINTVEC | (pil_to_vme[level] << 1) | 1));
 	if (vec == -1) {
 		printf("vme: spurious interrupt\n");
 		return 0;
@@ -366,7 +370,7 @@ bus_map(pa, len, bustype)
 {
 	u_long	pf = (u_long)(pa->rr_paddr) >> PGSHIFT;
 	u_long	va, pte;
-	int pgtype;
+	int pgtype = -1;
 
 	switch (bt2pmt[bustype]) {
 	case PMAP_OBIO:
