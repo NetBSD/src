@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.4 2003/08/07 16:28:15 agc Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.5 2004/08/28 21:31:07 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -184,19 +184,19 @@ extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
 void	pmap_init_md(void);
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
-void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
+void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
 #ifdef CACHE_HAVE_VAC
-void	pmap_prefer __P((vaddr_t, vaddr_t *));
+void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap)	pmap_prefer((foff), (vap))
 #endif
 
 #ifdef mvme68k
-void _pmap_set_page_cacheable __P((struct pmap *, vaddr_t));
-void _pmap_set_page_cacheinhibit __P((struct pmap *, vaddr_t));
-int _pmap_page_is_cacheable __P((struct pmap *, vaddr_t));
+void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
+void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
+int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
 #endif
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */
