@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca_fiq.S,v 1.1 2001/09/10 23:41:49 bjh21 Exp $	*/
+/*	$NetBSD: if_eca_fiq.S,v 1.2 2001/09/20 21:54:11 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,19 +29,24 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: if_eca_fiq.S,v 1.1 2001/09/10 23:41:49 bjh21 Exp $")
+RCSID("$NetBSD: if_eca_fiq.S,v 1.2 2001/09/20 21:54:11 bjh21 Exp $")
 
 #include <dev/ic/mc6854reg.h>
 #include <arch/arm26/ioc/if_ecavar.h>
 
 #include "assym.h"
 
+ENTRY_NP(eca_fiqhandler)
+	ldr	pc, [r11, #EFS_FIQHANDLER]
+	.global	eca_efiqhandler
+_C_LABEL(eca_efiqhandler):
+	
 /*
  * Econet Rx FIQ handler registers:
  * R8:  Address of 6854
  * R9:  Data buffer address
  * R10: Space left in buffer
- * R11: struct eca_rxstate pointer
+ * R11: struct eca_fiqstate pointer
  * R12: Scratch
  * R13: Scratch
  */
@@ -63,31 +68,27 @@ Leca_rx_nodata:
 	teq	r12, #0			/* No more status? */
 	subeqs	pc, r14, #4		/* Return. */
 	tst	r12, #MC6854_SR2_FV	/* End of frame? */
-	ldrne	r12, [r11, #ERX_FLAGS]
+	ldrne	r12, [r11, #EFS_RX_FLAGS]
 	tstne	r12, #ERXF_FLAGFILL	/* Want flag fill? */
 	movne	r12, #(MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE)
 	strneb	r12, [r8, #(MC6854_CR2 << 2)]
-Leca_rx_downgrade:
-	ldr	pc, Leca_rx_fiq_downgrade
-
-Leca_rx_fiq_downgrade:
-	.word	fiq_downgrade
+	b	fiq_downgrade
 
 Leca_rx_counter:
 	/* If we've already got the header, this indicates end-of-buffer. */
-	ldr	r12, [r11, #ERX_FLAGS]
+	ldr	r12, [r11, #EFS_RX_FLAGS]
 	tst	r12, #ERXF_GOTHDR
 	bne	Leca_rx_full
 	ldrb	r12, [r9, #-2]
-	ldrb	r13, [r11, #ERX_MYADDR]
+	ldrb	r13, [r11, #EFS_RX_MYADDR]
 	teq	r12, r13		/* Our host */
 	ldreqb	r12, [r9, #-1]
 	teqeq	r12, #0			/* Local network? */
-	ldr	r12, [r11, #ERX_FLAGS]
+	ldr	r12, [r11, #EFS_RX_FLAGS]
 	orrne	r12, r12, #ERXF_GOTHDR
 	orreq	r12, r12, #(ERXF_GOTHDR | ERXF_FLAGFILL)
-	str	r12, [r11, #ERX_FLAGS]
-	ldr	r12, [r11, #ERX_CURMBUF]
+	str	r12, [r11, #EFS_RX_FLAGS]
+	ldr	r12, [r11, #EFS_RX_CURMBUF]
 	ldr	r10, [r12, #M_LEN]
 	ldr	r12, [r12, #M_DATA]
 	sub	r12, r9, r12		/* Amount got already */
@@ -96,24 +97,21 @@ Leca_rx_counter:
 
 Leca_rx_full:
 	/* Rx buffer full.  See if there's another mbuf in the chain. */
-	ldr	r12, [r11, #ERX_CURMBUF]
+	ldr	r12, [r11, #EFS_RX_CURMBUF]
 	ldr	r12, [r12, #M_NEXT]
-	str	r12, [r11, #ERX_CURMBUF]
+	str	r12, [r11, #EFS_RX_CURMBUF]
 	teq	r12, #0
-	beq	Leca_rx_downgrade
+	beq	fiq_downgrade
 	ldr	r9, [r12, #M_DATA]
 	ldr	r10, [r12, #M_LEN]
 	subs	pc, r14, #4
-
-	.global	eca_efiqhandler_rx
-_C_LABEL(eca_efiqhandler_rx):
 
 /*
  * Econet Tx FIQ handler registers:
  * R8:  Address of 6854
  * R9:  Data buffer address
  * R10: Data left in buffer
- * R11: struct eca_txstate pointer
+ * R11: struct eca_fiqstate pointer
  * R12: Scratch
  * R13: Scratch
  */
@@ -132,24 +130,17 @@ Leca_tx_loop:
 Leca_tx_nospace:
 	tst	r12, #MC6854_SR1_IRQ	/* No more status? */
 	subeqs	pc, r14, #4		/* Return. */
-	ldr	pc, Leca_tx_fiq_downgrade
+	b	fiq_downgrade
 
 Leca_tx_nodata:
 	/* We get here when the current data block is empty. */
-	ldr	r12, [r11, #ETX_CURMBUF]
+	ldr	r12, [r11, #EFS_TX_CURMBUF]
 	ldr	r12, [r12, #M_NEXT]
-	str	r12, [r11, #ETX_CURMBUF]
+	str	r12, [r11, #EFS_TX_CURMBUF]
 	teq	r12, #0				/* Another mbuf? */
 	moveq	r12, #(MC6854_CR2_TX_LAST)	/* If not, finish frame... */
 	streqb	r12, [r8, #(MC6854_CR2 << 2)]
-	ldreq	pc, Leca_tx_fiq_downgrade	/* ... and report back. */
+	beq	fiq_downgrade			/* ... and report back. */
 	ldr	r9, [r12, #M_DATA]		/* Line up next mbuf. */
 	ldr	r10, [r12, #M_LEN]
 	subs	pc, r14, #4
-
-Leca_tx_fiq_downgrade:
-	.word	fiq_downgrade
-
-	.global	eca_efiqhandler_tx
-_C_LABEL(eca_efiqhandler_tx):
-
