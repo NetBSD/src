@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.15 2002/07/09 16:08:38 lukem Exp $
+#	$NetBSD: checkflist,v 1.16 2002/08/29 04:19:36 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -80,8 +80,10 @@ if [ $rv -ne 0 ]; then
 	echo "${prog}: flist inconsistencies found"
 	if [ -z "$diffargs" ]; then
 		echo "${prog}: key to output:"
-		echo "  <  file in flist but missing from DESTDIR"
-		echo "  >  file in DESTDIR but missing from flist"
+		echo "  <  file is in flist but missing from DESTDIR"
+		echo "     (file wasn't installed ?)"
+		echo "  >  file is in DESTDIR but missing from flist"
+		echo "     (file is obsolete or flist is out of date ?)"
 	fi
 fi
 exit $rv
