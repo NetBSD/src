@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.21 2003/12/09 19:33:22 augustss Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.22 2004/01/31 20:11:13 jdc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.21 2003/12/09 19:33:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.22 2004/01/31 20:11:13 jdc Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1123,10 +1123,14 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 
 #ifdef PFIL_HOOKS
 	if (runfilt) {
-		if (pfil_run_hooks(&sc->sc_if.if_pfil, &m, dst_ifp, PFIL_OUT) != 0) {
-			m_freem(m);
+		if (pfil_run_hooks(&sc->sc_if.if_pfil, &m,
+		    dst_ifp, PFIL_OUT) != 0) {
+			if (m != NULL)
+				m_freem(m);
 			return;
 		}
+		if (m == NULL)
+			return;
 	}
 #endif /* PFIL_HOOKS */
 
@@ -1374,8 +1378,10 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	}
 
 #ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&sc->sc_if.if_pfil, &m, m->m_pkthdr.rcvif, PFIL_IN) != 0) {
-		m_freem(m);
+	if (pfil_run_hooks(&sc->sc_if.if_pfil, &m,
+	    m->m_pkthdr.rcvif, PFIL_IN) != 0) {
+		if (m != NULL)
+			m_freem(m);
 		return;
 	}
 	if (m == NULL)
@@ -1919,21 +1925,21 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  */
 static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
-	int snap, error, split1, split2, pktlen;
-	struct ether_header *eh;
-	struct mbuf *m1, *m2;
+	int snap, error;
+	struct ether_header *eh1, eh2;
+	struct llc llc;
 	u_int16_t ether_type;
 
 	snap = 0;
-	error = -1; /* Default error if not error == 0 */
-	eh = mtod(*mp, struct ether_header *);
-	ether_type = ntohs(eh->ether_type);
+	error = -1;	/* Default error if not error == 0 */
+	eh1 = mtod(*mp, struct ether_header *);
+	ether_type = ntohs(eh1->ether_type);
 
 	/*
 	 * Check for SNAP/LLC.
 	 */
         if (ether_type < ETHERMTU) { 
-                struct llc *llc = (struct llc *)(eh + 1);
+                struct llc *llc = (struct llc *)(eh1 + 1);
                             
                 if ((*mp)->m_len >= ETHER_HDR_LEN + 8 &&
                     llc->llc_dsap == LLC_SNAP_LSAP &&
@@ -1966,71 +1972,62 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 			goto bad;
 	}
 
-	/* Strip off the Ethernet header---but keep a copy. */
-	if ((*mp)->m_len == sizeof(struct ether_header)) {
-		m1 = (*mp)->m_next;
-		split1 = 0;
-	} else {
-		if ((m1 = m_split(*mp, sizeof(struct ether_header), M_NOWAIT)) == NULL)
-			goto bad;
-		split1 = 1;
-	}
+	/* Strip off the Ethernet header and keep a copy. */
+	m_copydata(*mp, 0, ETHER_HDR_LEN, (caddr_t) &eh2);
+	m_adj(*mp, ETHER_HDR_LEN);
+
 	/* Strip off snap header, if present */
 	if (snap) {
-		if (m1->m_len == sizeof(struct llc)) {
-			m2 = m1->m_next;
-			split2 = 0;
-		} else {
-			if ((m2 = m_split(m1, sizeof(struct llc), M_NOWAIT)) == NULL)
-				goto bad2;
-			split2 = 1;
-		}
-	} else {
-		m2 = m1;
-		split2 = 0; /* XXX: gcc */
+		m_copydata(*mp, 0, sizeof(struct llc), (caddr_t) &llc);
+		m_adj(*mp, sizeof(struct llc));
 	}
 
 	/*
-	 * Check basic packet sanity, if the packet is outbound, and
-	 * run IPF filter.
+	 * Check basic packet sanity and run IPF through pfil.
 	 */
-	if (ether_type == ETHERTYPE_IP &&
-	    (dir == PFIL_OUT || bridge_ip_checkbasic(&m2) == 0)) {
-		error = pfil_run_hooks(&inet_pfil_hook, &m2, ifp, dir);
-		if (error) goto bad2;
-	}
+	switch (ether_type)
+	{
+	case ETHERTYPE_IP :
+		error = (dir == PFIL_IN) ? bridge_ip_checkbasic(mp) : 0;
+		if (error == 0)
+			error = pfil_run_hooks(&inet_pfil_hook, mp, ifp, dir);
+		break;
 # ifdef INET6
-	if (ether_type == ETHERTYPE_IPV6 &&
-	    (dir == PFIL_OUT || bridge_ip6_checkbasic(&m2) == 0)) {
-		error = pfil_run_hooks(&inet6_pfil_hook, &m2, ifp, dir);
-		if (error) goto bad2;
-	}
+	case ETHERTYPE_IPV6 :
+		error = (dir == PFIL_IN) ? bridge_ip6_checkbasic(mp) : 0;
+		if (error == 0)
+			error = pfil_run_hooks(&inet6_pfil_hook, mp, ifp, dir);
+		break;
 # endif
-	if (m2 == NULL) goto bad2;
+	default :
+		error = 0;
+		break;
+	}
+
+	if (*mp == NULL)
+		return error;
+	if (error != 0)
+		goto bad;
+
+	error = -1;
 
 	/*
 	 * Finally, put everything back the way it was and return
 	 */
 	if (snap) {
-		if (split2) {
-			pktlen = m2->m_pkthdr.len;
-			m_cat(m1, m2);
-			m1 ->m_pkthdr.len += pktlen;
-		}
-	} else
-		m1 = m2;
-	if (split1) {
-		pktlen = m1->m_pkthdr.len;
-		m_cat(*mp, m1);
-		(*mp)->m_pkthdr.len += pktlen;
+		M_PREPEND(*mp, sizeof(struct llc), M_DONTWAIT);
+		if (*mp == NULL)
+			return error;
+		bcopy(&llc, mtod(*mp, caddr_t), sizeof(struct llc));
 	}
+
+	M_PREPEND(*mp, ETHER_HDR_LEN, M_DONTWAIT);
+	if (*mp == NULL)
+		return error;
+	bcopy(&eh2, mtod(*mp, caddr_t), ETHER_HDR_LEN);
 
 	return 0;
 
-    bad2:
-	if (snap)
-		m_freem(m1);
-	m_freem(m2);
     bad:
 	m_freem(*mp);
 	*mp = NULL;
