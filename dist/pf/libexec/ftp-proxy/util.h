@@ -54,7 +54,7 @@ struct csiob {
 extern int telnet_getline(struct csiob *iobp,
     struct csiob *telnet_passthrough);
 
-extern int pf_get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
+extern int get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
     struct sockaddr_in *client_sa_ptr);
 extern int ipf_get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
     struct sockaddr_in *client_sa_ptr);
