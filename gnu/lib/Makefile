@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/18 18:13:35 gwr Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/23 18:15:04 cjs Exp $
 
-SUBDIR+= libmalloc bfd readline
+SUBDIR+= libmalloc
 SUBDIR+= libg++
+
+.if (${MACHINE_ARCH} != "alpha")
+SUBDIR+= bfd readline
+.endif
 
 .include <bsd.subdir.mk>
