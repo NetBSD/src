@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.9 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10 2003/02/21 15:14:08 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 
 1:
-	xor	31,31,31
+	li	31,0
 	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
@@ -201,7 +201,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
 	GET_CPUINFO(3)
-	xor	31,31,31
+	li	31,0
 	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(3)
 #endif
@@ -211,7 +211,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	xor	3,3,3			/* spl0() */
+	li	3,0			/* spl0() */
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
 	stw	3,PCB_SPL(31)		/* save spl */
@@ -261,7 +261,7 @@ ENTRY_NOPROFILE(cpu_switch)
 switch_common:
 1:
 	/* just did this resched thing */
-	xor	3,3,3
+	li	3,0
 	GET_CPUINFO(4)
 	stw	3,CI_WANT_RESCHED(4)
 	stw	3,L_BACK(31)		/* probably superfluous */
@@ -279,7 +279,7 @@ switch_common:
 	lwz	4,L_ADDR(31)
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
-	xor	3,3,3			/* if it is the same lwp, return 0 */
+	li	3,0			/* if it is the same lwp, return 0 */
 	cmpl	0,31,30			/* is it the same lwp? */
 	beq	switch_return
 
@@ -409,7 +409,7 @@ ENTRY(cpu_switchto)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 
 1:
-	xor	31,31,31
+	li	31,0
 	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
@@ -417,7 +417,7 @@ ENTRY(cpu_switchto)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
 	GET_CPUINFO(3)
-	xor	31,31,31
+	li	31,0
 	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(3)
 #endif
@@ -427,7 +427,7 @@ ENTRY(cpu_switchto)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	xor	3,3,3
+	li	3,0
 	bl	_C_LABEL(lcsplx)
 #if !defined(MULTIPROCESSOR)
 	stw	3,PCB_SPL(31)		/* save spl */
@@ -465,7 +465,7 @@ _C_LABEL(fork_trampoline):
 #if defined(MULTIPROCESSOR)
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
-	xor	3,3,3
+	li	3,0
 	bl	_C_LABEL(lcsplx)
 	mtlr	31
 	mr	3,30
