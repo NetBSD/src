@@ -1,4 +1,4 @@
-/* $NetBSD: ne.c,v 1.3 2001/11/03 12:02:28 yamt Exp $ */
+/* $NetBSD: ne.c,v 1.4 2001/11/07 08:46:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,12 +84,7 @@
 
 #define NE_16BIT
 
-void DELAY(x) 
-{
-	int i, y=0;
-
-	for (i=0; i<x; i++) {y++;}
-}
+#define DELAY(x) delay(x)
 
 #define ASIC_PORT(x) (NE_ASIC_BASEREG + (x))
 #define ASIC_INB(x) inb(ASIC_PORT(x))
