@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.12 2003/01/20 05:30:00 simonb Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.13 2003/04/27 17:05:56 tsutsui Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -612,8 +612,8 @@ u_int mdb_ss_instr;
 static void
 mdbsetsstep()
 {
-	register u_int va;
-	register int *locr0 = mdbpcb.pcb_regs;
+	u_int va;
+	int *locr0 = mdbpcb.pcb_regs;
 
 	/* compute next address after current location */
 	if(mdbpeek(locr0[PC]) != 0) {
@@ -642,7 +642,7 @@ mdbsetsstep()
 static int
 mdbclrsstep(int cr)
 {
-	register u_int pc, va;
+	u_int pc, va;
 	u_int instr;
 
 	/* fix pc if break instruction is in the delay slot */
