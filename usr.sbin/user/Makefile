@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2001/10/22 11:00:05 agc Exp $
+# $NetBSD: Makefile,v 1.8.2.1 2002/06/04 12:10:00 lukem Exp $
 #
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ LINKS+=	${BINDIR}/user ${BINDIR}/userinfo
 LINKS+=	${BINDIR}/user ${BINDIR}/groupinfo
 LDADD+= -lutil 
 DPADD+= ${LIBUTIL}
-MAN= user.8 useradd.8 userdel.8 usermod.8 userinfo.8
+MAN= user.8 useradd.8 userdel.8 usermod.8 userinfo.8 usermgmt.conf.5
 MAN+= group.8 groupadd.8 groupdel.8 groupmod.8 groupinfo.8
 MLINKS=	useradd.8 adduser.8
 
