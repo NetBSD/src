@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.128 2002/09/27 15:37:35 provos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.129 2002/09/29 20:58:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.128 2002/09/27 15:37:35 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.129 2002/09/29 20:58:25 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,6 +597,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 			  OHCI_ITD_ALIGN, &dma);
 		if (err)
 			return (NULL);
+		s = splusb();
 		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
 			sitd = KERNADDR(&dma, offs);
@@ -604,6 +605,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 			sitd->nextitd = sc->sc_freeitds;
 			sc->sc_freeitds = sitd;
 		}
+		splx(s);
 	}
 
 	s = splusb();
@@ -1201,8 +1203,11 @@ void
 ohci_rhsc_enable(void *v_sc)
 {
 	ohci_softc_t *sc = v_sc;
+	int s;
 
+	s = splhardusb();
 	ohci_rhsc_able(sc, 1);
+	splx(s);
 }
 
 #ifdef OHCI_DEBUG
