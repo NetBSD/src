@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.159 2002/11/02 07:28:14 perry Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.160 2003/01/04 23:43:06 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.159 2002/11/02 07:28:14 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.160 2003/01/04 23:43:06 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3389,7 +3389,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	tp->rcv_up = sc->sc_irs + 1;
 
 	/*
-	 * This is what whould have happened in tcp_ouput() when
+	 * This is what whould have happened in tcp_output() when
 	 * the SYN,ACK was sent.
 	 */
 	tp->snd_up = tp->snd_una;

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: chkconfig.sh,v 1.1 2001/03/14 03:51:47 thorpej Exp $
+#	$NetBSD: chkconfig.sh,v 1.2 2003/01/04 23:43:04 wiz Exp $
 #
 # Copyright (c) 2001 Zembu Labs, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@
 
 display()
 {
-	# ouput $1 with 'on' or 'off' based on the return of checkyesno()
+	# output $1 with 'on' or 'off' based on the return of checkyesno()
 	# Returns 0 for yes, 1 for no.
 
 	_name=$1	
