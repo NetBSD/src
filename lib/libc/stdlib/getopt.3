@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.21 2002/02/07 07:00:28 ross Exp $
+.\"	$NetBSD: getopt.3,v 1.22 2002/02/07 09:24:06 ross Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -253,7 +253,7 @@ while ((c = getopt(argc, argv, "0123456789")) != -1)
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
-		if (p[0] == '-' &amp;&amp; p[1] == ch &amp;&amp; !p[2])
+		if (p[0] == '-' \*[Am]\*[Am] p[1] == ch \*[Am]\*[Am] !p[2])
 			length = atoi(++p);
 		else
 			length = atoi(argv[optind] + 1);
