@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Rick Adams.
@@ -35,13 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)slattach.c	4.6 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,8 @@ main(argc, argv)
 		exit(1);
 	}
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
-		(void)sprintf(devname, "%s/%s", _PATH_DEV, dev);
+		(void)snprintf(devname, sizeof(devname),
+		    "%s%s", _PATH_DEV, dev);
 		dev = devname;
 	}
 	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0) {

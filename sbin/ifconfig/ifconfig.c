@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,31 +49,28 @@ static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef notdef
 #define	NSIP
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#include <netdb.h>
 
 #define EON
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
-#endif
-#include <netdb.h>
 #include <sys/protosw.h>
 
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
-#ifdef	EON
 struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
-#endif
 struct	sockaddr_in	netmask;
 
 char	name[30];
@@ -90,7 +87,7 @@ extern	int errno;
 
 int	setifflags(), setifaddr(), setifdstaddr(), setifnetmask();
 int	setifmetric(), setifbroadaddr(), setifipdst();
-int	notealias(), setsnpaoffset(), setnsellength();
+int	notealias(), setsnpaoffset(), setnsellength(), notrailers();
 
 #define	NEXTARG		0xffffff
 
@@ -101,8 +98,8 @@ struct	cmd {
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
-	{ "trailers",	-IFF_NOTRAILERS,setifflags },
-	{ "-trailers",	IFF_NOTRAILERS,	setifflags },
+	{ "trailers",	-1,		notrailers },
+	{ "-trailers",	1,		notrailers },
 	{ "arp",	-IFF_NOARP,	setifflags },
 	{ "-arp",	IFF_NOARP,	setifflags },
 	{ "debug",	IFF_DEBUG,	setifflags },
@@ -121,22 +118,23 @@ struct	cmd {
 	{ "ipdst",	NEXTARG,	setifipdst },
 	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
 	{ "nsellength",	NEXTARG,	setnsellength },
+	{ "link0",	IFF_LINK0,	setifflags } ,
+	{ "-link0",	-IFF_LINK0,	setifflags } ,
+	{ "link1",	IFF_LINK1,	setifflags } ,
+	{ "-link1",	-IFF_LINK1,	setifflags } ,
+	{ "link2",	IFF_LINK2,	setifflags } ,
+	{ "-link2",	-IFF_LINK2,	setifflags } ,
 	{ 0,		0,		setifaddr },
 	{ 0,		0,		setifdstaddr },
 };
 
 /*
- * XNS support liberally adapted from
- * code written at the University of Maryland
- * principally by James O'Toole and Chris Torek.
+ * XNS support liberally adapted from code written at the University of
+ * Maryland principally by James O'Toole and Chris Torek.
  */
 int	in_status(), in_getaddr();
-#ifdef NSIP
 int	xns_status(), xns_getaddr();
-#endif
-#ifdef EON
 int	iso_status(), iso_getaddr();
-#endif
 
 /* Known address families */
 struct afswtch {
@@ -152,14 +150,10 @@ struct afswtch {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
-#ifdef	NSIP
 	{ "ns", AF_NS, xns_status, xns_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
-#endif
-#ifdef	EON
 	{ "iso", AF_ISO, iso_status, iso_getaddr,
 	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, C(iso_ridreq), C(iso_addreq) },
-#endif
 	{ 0,	0,	    0,		0 }
 };
 
@@ -177,8 +171,8 @@ main(argc, argv)
 		    "\t[ af [ address [ dest_addr ] ] [ up ] [ down ]",
 			    "[ netmask mask ] ]\n",
 		    "\t[ metric n ]\n",
-		    "\t[ trailers | -trailers ]\n",
-		    "\t[ arp | -arp ]\n");
+		    "\t[ arp | -arp ]\n",
+		    "\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ] \n");
 		exit(1);
 	}
 	argc--, argv++;
@@ -223,6 +217,9 @@ main(argc, argv)
 			p++;	/* got src, do dst */
 		if (p->c_func) {
 			if (p->c_parameter == NEXTARG) {
+				if (argv[1] == NULL)
+					errx(1, "'%s' requires argument",
+					    p->c_name);
 				(*p->c_func)(argv[1]);
 				argc--, argv++;
 			} else
@@ -232,7 +229,6 @@ main(argc, argv)
 	}
 	if (af == AF_ISO)
 		adjust_nsellength();
-#ifdef	NSIP
 	if (setipdst && af==AF_NS) {
 		struct nsip_req rq;
 		int size = sizeof(rq);
@@ -243,7 +239,6 @@ main(argc, argv)
 		if (setsockopt(s, 0, SO_NSIP_ROUTE, &rq, size) < 0)
 			Perror("Encapsulation Routing");
 	}
-#endif
 	if (clearaddr) {
 		int ret;
 		strncpy(rafp->af_ridreq, name, sizeof ifr.ifr_name);
@@ -320,6 +315,14 @@ notealias(addr, param)
 }
 
 /*ARGSUSED*/
+notrailers(vname, value)
+	char *vname;
+	int value;
+{
+	printf("Note: trailers are no longer sent, but always received\n");
+}
+
+/*ARGSUSED*/
 setifdstaddr(addr, param)
 	char *addr;
 	int param;
@@ -360,14 +363,12 @@ setifmetric(val)
 setsnpaoffset(val)
 	char *val;
 {
-#ifdef	EON
 	iso_addreq.ifra_snpaoffset = atoi(val);
-#endif
 }
 
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
-"
+\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 /*
  * Print the status of the interface.  If an address family was
@@ -427,7 +428,7 @@ in_status(force)
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
 		printf("--> %s ", inet_ntoa(sin->sin_addr));
 	}
-	printf("netmask %x ", ntohl(netmask.sin_addr.s_addr));
+	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
 		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
@@ -443,7 +444,6 @@ in_status(force)
 	putchar('\n');
 }
 
-#ifdef	NSIP
 
 xns_status(force)
 	int force;
@@ -483,8 +483,6 @@ xns_status(force)
 	putchar('\n');
 }
 
-#endif
-#ifdef	EON
 iso_status(force)
 	int force;
 {
@@ -533,28 +531,25 @@ iso_status(force)
 	}
 	putchar('\n');
 }
-#endif
 
 Perror(cmd)
 	char *cmd;
 {
 	extern int errno;
 
-	fprintf(stderr, "ifconfig: ");
 	switch (errno) {
 
 	case ENXIO:
-		fprintf(stderr, "%s: no such interface\n", cmd);
+		errx(1, "%s: no such interface", cmd);
 		break;
 
 	case EPERM:
-		fprintf(stderr, "%s: permission denied\n", cmd);
+		errx(1, "%s: permission denied", cmd);
 		break;
 
 	default:
-		perror(cmd);
+		err(1, "%s", cmd);
 	}
-	exit(1);
 }
 
 struct	in_addr inet_makeaddr();
@@ -582,10 +577,8 @@ in_getaddr(s, which)
 		bcopy(hp->h_addr, (char *)&sin->sin_addr, hp->h_length);
 	else if (np = getnetbyname(s))
 		sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
-	else {
-		fprintf(stderr, "%s: bad value\n", s);
-		exit(1);
-	}
+	else
+		errx(1, "%s: bad value", s);
 }
 
 /*
@@ -620,7 +613,6 @@ printb(s, v, bits)
 		putchar('>');
 	}
 }
-#ifdef	NSIP
 
 #define SNS(x) ((struct sockaddr_ns *) &(x))
 struct sockaddr_ns *snstab[] = {
@@ -640,8 +632,6 @@ char *addr;
 		printf("Attempt to set XNS netmask will be ineffectual\n");
 }
 
-#endif
-#ifdef	EON
 #define SISO(x) ((struct sockaddr_iso *) &(x))
 struct sockaddr_iso *sisotab[] = {
 SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
@@ -662,23 +652,17 @@ char *addr;
 		siso->siso_family = AF_ISO;
 	}
 }
-#endif
 
 setnsellength(val)
 	char *val;
 {
 	nsellength = atoi(val);
-	if (nsellength < 0) {
-		fprintf(stderr, "Negative NSEL length is absurd\n");
-		exit (1);
-	}
-	if (afp == 0 || afp->af_af != AF_ISO) {
-		fprintf(stderr, "Setting NSEL length valid only for iso\n");
-		exit (1);
-	}
+	if (nsellength < 0)
+		errx(1, "Negative NSEL length is absurd");
+	if (afp == 0 || afp->af_af != AF_ISO)
+		errx(1, "Setting NSEL length valid only for iso");
 }
 
-#ifdef notdef
 fixnsel(s)
 register struct sockaddr_iso *s;
 {
@@ -686,13 +670,10 @@ register struct sockaddr_iso *s;
 		return;
 	s->siso_tlen = nsellength;
 }
-#endif
 
 adjust_nsellength()
 {
-#ifdef notdef
 	fixnsel(sisotab[RIDADDR]);
 	fixnsel(sisotab[ADDR]);
 	fixnsel(sisotab[DSTADDR]);
-#endif
 }
