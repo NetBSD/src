@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1 2002/10/24 13:58:48 scw Exp $	*/
+/*	$NetBSD: fpu.h,v 1.2 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -57,6 +57,7 @@
 #define	SH5_FPSCR_FLAG_O		0x00010	/* Overflow */
 #define	SH5_FPSCR_FLAG_Z		0x00020	/* Divide by Zero */
 #define	SH5_FPSCR_FLAG_V		0x00040	/* Invalid */
+#define	SH5_FPSCR_FLAG_MASK		0x0007c
 
 /* Enable Flags */
 #define	SH5_FPSCR_ENABLE_I		0x00080	/* Inexact */
@@ -64,6 +65,7 @@
 #define	SH5_FPSCR_ENABLE_O		0x00200	/* Overflow */
 #define	SH5_FPSCR_ENABLE_Z		0x00400	/* Divide by Zero */
 #define	SH5_FPSCR_ENABLE_V		0x00800	/* Invalid */
+#define	SH5_FPSCR_ENABLE_MASK		0x00f80
 
 /* Cause Flags */
 #define	SH5_FPSCR_CAUSE_I		0x01000	/* Inexact */
@@ -72,10 +74,16 @@
 #define	SH5_FPSCR_CAUSE_Z		0x08000	/* Divide by Zero */
 #define	SH5_FPSCR_CAUSE_V		0x10000	/* Invalid */
 #define	SH5_FPSCR_CAUSE_E		0x20000	/* FPU Error */
+#define	SH5_FPSCR_CAUSE_MASK		0x3f000
 
 /* Treatment of denormalised source operands */
 #define	SH5_FPSCR_DN_MASK		0x40000
 #define	SH5_FPSCR_DN_RAISE		0x00000 /* Raise an exception */
 #define	SH5_FPSCR_DN_FLUSH_ZERO		0x40000 /* Flush to zero */
+
+#ifdef _KERNEL
+extern u_int32_t sh5_getfpscr(void);
+extern void sh5_setfpscr(u_int32_t);
+#endif
 
 #endif /* _SH5_FPU_H */
