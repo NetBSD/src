@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_ioctl.h,v 1.3 1995/07/04 19:47:04 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.h,v 1.1 1995/07/04 19:47:07 christos Exp $	 */
 
 /*
- * Copyright (c) 1994 Christos Zoulas
+ * Copyright (c) 1995 Christos Zoulas
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,31 +27,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SVR4_IOCTL_H_
-#define	_SVR4_IOCTL_H_
+#ifndef	_SVR4_SOCKIO_H_
+#define	_SVR4_SOCKIO_H_
 
-#define	SVR4_IOC_VOID	0x20000000
-#define	SVR4_IOC_OUT	0x40000000
-#define	SVR4_IOC_IN	0x80000000
-#define	SVR4_IOC_INOUT	(SVR4_IOC_IN|SVR4_IOC_OUT)
+#define SVR4_SIOC	('i' << 8)
 
-#define	SVR4_IOC(inout,group,num,len) \
-	(inout | ((len & 0xff) << 16) | ((group) << 8) | (num))
+#define	SVR4_SIOCGIFNUM		SVR4_IOR('i', 87, int)
 
-#define	SVR4_IO(g,n)		SVR4_IOC(SVR4_IOC_VOID,	(g), (n), 0)
-#define	SVR4_IOR(g,n,t)		SVR4_IOC(SVR4_IOC_OUT,	(g), (n), sizeof(t))
-#define	SVR4_IOW(g,n,t)		SVR4_IOC(SVR4_IOC_IN,	(g), (n), sizeof(t))
-#define	SVR4_IOWR(g,n,t)	SVR4_IOC(SVR4_IOC_INOUT,(g), (n), sizeof(t))
-
-int	svr4_streamioctl __P((struct file* fp, u_long cmd, caddr_t data,
-			      struct proc* p, register_t *retval));
-int	svr4_termioctl __P((struct file* fp, u_long cmd, caddr_t data,
-			    struct proc* p, register_t *retval));
-int	svr4_ttoldioctl __P((struct file* fp, u_long cmd, caddr_t data,
-			     struct proc* p, register_t *retval));
-int	svr4_filioctl __P((struct file* fp, u_long cmd, caddr_t data,
-			   struct proc* p, register_t *retval));
-int	svr4_sockioctl __P((struct file* fp, u_long cmd, caddr_t data,
-			    struct proc* p, register_t *retval));
-
-#endif /* !_SVR4_IOCTL_H_ */
+#endif /* !_SVR4_SOCKIO_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.10 1995/07/04 19:47:02 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.1 1995/07/04 19:47:06 christos Exp $	 */
 
 /*
- * Copyright (c) 1994 Christos Zoulas
+ * Copyright (c) 1995 Christos Zoulas
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,86 +49,37 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ioctl.h>
-#include <compat/svr4/svr4_termios.h>
-#include <compat/svr4/svr4_ttold.h>
-#include <compat/svr4/svr4_filio.h>
 #include <compat/svr4/svr4_sockio.h>
 
-#ifdef DEBUG_SVR4
-/*
- * Decode an ioctl command symbolically
- */
-void
-svr4_decode_cmd(cmd, dir, c, num, argsiz)
-	int		  cmd;
-	char		 *dir, *c;
-	int		 *num, *argsiz;
-{
-	if (cmd & SVR4_IOC_VOID)
-		*dir++ = 'V';
-	if (cmd & SVR4_IOC_IN)
-		*dir++ = 'R';
-	if (cmd & SVR4_IOC_OUT)
-		*dir++ = 'W';
-	*dir = '\0';
-	if (cmd & SVR4_IOC_INOUT)
-		*argsiz = (cmd >> 16) & 0xff;
-	else
-		*argsiz = -1;
 
-	*c = (cmd >> 8) & 0xff;
-	*num = cmd & 0xff;
-}
-#endif
+extern int if_index;
 
 int
-svr4_ioctl(p, uap, retval)
-	register struct proc		*p;
-	register struct svr4_ioctl_args	*uap;
-	register_t			*retval;
-{
-	struct file	*fp;
-	struct filedesc	*fdp;
+svr4_sockioctl(fp, cmd, data, p, retval)
+	struct file 	*fp;
 	u_long		 cmd;
-#ifdef DEBUG_SVR4
-	char		 dir[4];
-	char		 c;
-	int		 num;
-	int		 argsiz;
+	caddr_t		 data;
+	struct proc	*p;
+	register_t	*retval;
+{
+	struct filedesc *fdp = p->p_fd;
+	int error;
+	int fd;
+	int num;
+	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+			fp->f_ops->fo_ioctl;
 
-	svr4_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
+#undef DPRINTF
+#define DPRINTF(a) printf a
+	*retval = 0;
 
-	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %x);\n", SCARG(uap, fd),
-	       dir, c, num, argsiz, SCARG(uap, data));
-#endif
-	fdp = p->p_fd;
-	cmd = SCARG(uap, com);
-
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return EBADF;
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return EBADF;
-
-	switch (cmd & 0xff00) {
-	case SVR4_tIOC:
-		return svr4_ttoldioctl(fp, cmd, SCARG(uap, data), p, retval);
-
-	case SVR4_TIOC:
-		return svr4_termioctl(fp, cmd, SCARG(uap, data), p, retval);
-
-	case SVR4_STR:
-		return svr4_streamioctl(fp, cmd, SCARG(uap, data), p, retval);
-
-	case SVR4_FIOC:
-		return svr4_filioctl(fp, cmd, SCARG(uap, data), p, retval);
-
-	case SVR4_SIOC:
-		return svr4_sockioctl(fp, cmd, SCARG(uap, data), p, retval);
+	switch (cmd) {
+	case SVR4_SIOCGIFNUM:
+		DPRINTF(("SIOCGIFNUM %d\n", if_index));
+		return copyout(&if_index, data, sizeof(if_index));
 
 	default:
-		DPRINTF(("Unimplemented ioctl %x\n", cmd));
-		return 0;	/* XXX: really ENOSYS */
+		DPRINTF(("Unknown svr4 sockio %x\n", cmd));
+		return 0;	/* ENOSYS really */
 	}
 }
