@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.84 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.84 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.84 2004/01/25 18:06:49 hannken Exp $"
  *  [1] SWAP_NSWAP: returns the number of swap devices currently configured
  *  [2] SWAP_STATS: given a pointer to an array of swapent structures
  *	(passed in via "arg") of a size passed in via "misc" ... we load
- *	the current swap config into the array. The actual work is done 
+ *	the current swap config into the array. The actual work is done
  *	in the uvm_swap_stats(9) function.
  *  [3] SWAP_ON: given a pathname in arg (could be device or file) and a
  *	priority in "misc", start swapping on it.
@@ -220,21 +220,21 @@ struct lock swap_syscall_lock;
 /*
  * prototypes
  */
-static struct swapdev	*swapdrum_getsdp __P((int));
+static struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find __P((struct vnode *, int));
-static void		 swaplist_insert __P((struct swapdev *,
-					     struct swappri *, int));
-static void		 swaplist_trim __P((void));
+static struct swapdev	*swaplist_find(struct vnode *, int);
+static void		 swaplist_insert(struct swapdev *,
+					 struct swappri *, int);
+static void		 swaplist_trim(void);
 
-static int swap_on __P((struct proc *, struct swapdev *));
-static int swap_off __P((struct proc *, struct swapdev *));
+static int swap_on(struct proc *, struct swapdev *);
+static int swap_off(struct proc *, struct swapdev *);
 
-static void sw_reg_strategy __P((struct swapdev *, struct buf *, int));
-static void sw_reg_iodone __P((struct buf *));
-static void sw_reg_start __P((struct swapdev *));
+static void sw_reg_strategy(struct swapdev *, struct buf *, int);
+static void sw_reg_iodone(struct buf *);
+static void sw_reg_start(struct swapdev *);
 
-static int uvm_swap_io __P((struct vm_page **, int, int, int));
+static int uvm_swap_io(struct vm_page **, int, int, int);
 
 dev_type_read(swread);
 dev_type_write(swwrite);
@@ -700,13 +700,13 @@ out:
 	return (error);
 }
 
-/* 
+/*
  * swap_stats: implements swapctl(SWAP_STATS). The function is kept
- * away from sys_swapctl() in order to allow COMPAT_* swapctl() 
+ * away from sys_swapctl() in order to allow COMPAT_* swapctl()
  * emulation to use it directly without going through sys_swapctl().
  * The problem with using sys_swapctl() there is that it involves
  * copying the swapent array to the stackgap, and this array's size
- * is not known at build time. Hence it would not be possible to 
+ * is not known at build time. Hence it would not be possible to
  * ensure it would fit in the stackgap in any case.
  */
 void
@@ -735,9 +735,9 @@ uvm_swap_stats(cmd, sep, sec, retval)
 			sdp->swd_ose.ose_inuse =
 			    btodb((u_int64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
-			(void)memcpy(sep, &sdp->swd_ose, 
+			(void)memcpy(sep, &sdp->swd_ose,
 			    sizeof(struct oswapent));
-			
+
 			/* now copy out the path if necessary */
 #if defined(COMPAT_13)
 			if (cmd == SWAP_STATS)
@@ -782,7 +782,7 @@ swap_on(p, sdp)
 	u_long result;
 	struct vattr va;
 #ifdef NFS
-	extern int (**nfsv2_vnodeop_p) __P((void *));
+	extern int (**nfsv2_vnodeop_p)(void *);
 #endif /* NFS */
 	const struct bdevsw *bdev;
 	dev_t dev;
@@ -927,11 +927,11 @@ swap_on(p, sdp)
 		 * XXX: sp->f_blocks isn't the total number of
 		 * blocks in the filesystem, it's the number of
 		 * data blocks.  so, our rootblocks almost
-		 * definitely underestimates the total size 
+		 * definitely underestimates the total size
 		 * of the filesystem - how badly depends on the
-		 * details of the filesystem type.  there isn't 
+		 * details of the filesystem type.  there isn't
 		 * an obvious way to deal with this cleanly
-		 * and perfectly, so for now we just pad our 
+		 * and perfectly, so for now we just pad our
 		 * rootblocks estimate with an extra 5 percent.
 		 */
 		rootblocks += (rootblocks >> 5) +

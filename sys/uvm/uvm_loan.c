@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.49 2004/02/13 17:17:04 drochner Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.50 2004/03/24 07:50:48 junyoung Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.49 2004/02/13 17:17:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.50 2004/03/24 07:50:48 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,15 +107,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.49 2004/02/13 17:17:04 drochner Exp $
  * local prototypes
  */
 
-static int	uvm_loananon __P((struct uvm_faultinfo *, void ***,
-				int, struct vm_anon *));
-static int	uvm_loanentry __P((struct uvm_faultinfo *, void ***, int));
-static int	uvm_loanuobj __P((struct uvm_faultinfo *, void ***,
-				int, vaddr_t));
-static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
-static void	uvm_unloananon __P((struct vm_anon **, int));
-static void	uvm_unloanpage __P((struct vm_page **, int));
-static void	uvm_loanpage __P((struct vm_page **, int));
+static int	uvm_loananon(struct uvm_faultinfo *, void ***,
+			     int, struct vm_anon *);
+static int	uvm_loanentry(struct uvm_faultinfo *, void ***, int);
+static int	uvm_loanuobj(struct uvm_faultinfo *, void ***,
+			     int, vaddr_t);
+static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
+static void	uvm_unloananon(struct vm_anon **, int);
+static void	uvm_unloanpage(struct vm_page **, int);
+static void	uvm_loanpage(struct vm_page **, int);
 
 
 /*
@@ -295,8 +295,8 @@ uvm_loan(map, start, len, v, flags)
 		/*
 		 * done!  the map is unlocked.  advance, if possible.
 		 *
-		 * XXXCDC: could be recoded to hold the map lock with 
-		 *	   smarter code (but it only happens on map entry 
+		 * XXXCDC: could be recoded to hold the map lock with
+		 *	   smarter code (but it only happens on map entry
 		 *	   boundaries, so it isn't that bad).
 		 */
 
@@ -501,7 +501,7 @@ reget:
 		}
 
 		KASSERT(npages > 0);
-		
+
 		/* loan and unbusy pages */
 		slock = NULL;
 		for (i = 0; i < npages; i++) {
