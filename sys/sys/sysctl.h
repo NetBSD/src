@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.85 2002/12/11 19:14:35 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.86 2002/12/19 23:31:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -527,7 +527,8 @@ struct kinfo_proc2 {
 #define	USER_POSIX2_UPE		18	/* int: POSIX2_UPE */
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
 #define	USER_TZNAME_MAX		20	/* int: POSIX2_TZNAME_MAX */
-#define	USER_MAXID		21	/* number of valid user ids */
+#define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
+#define	USER_MAXID		22	/* number of valid user ids */
 
 #define	CTL_USER_NAMES { \
 	{ 0, 0 }, \
@@ -551,6 +552,7 @@ struct kinfo_proc2 {
 	{ "posix2_upe", CTLTYPE_INT }, \
 	{ "stream_max", CTLTYPE_INT }, \
 	{ "tzname_max", CTLTYPE_INT }, \
+	{ "atexit_max", CTLTYPE_INT }, \
 }
 
 /*

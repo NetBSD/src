@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.18 2002/08/05 06:35:44 tron Exp $	*/
+/*	$NetBSD: getconf.c,v 1.19 2002/12/19 23:31:57 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.18 2002/08/05 06:35:44 tron Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.19 2002/12/19 23:31:57 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -154,6 +154,9 @@ const struct conf_variable conf_table[] =
 
   /* X/Open CAE Spec. Issue 5 Version 2 Configurable System Variables */
   { "FILESIZEBITS",		PATHCONF,	_PC_FILESIZEBITS	},
+
+  /* POSIX.1-2001 XSI Option Group Configurable System Variables */
+  { "ATEXIT_MAX",		SYSCONF,	_SC_ATEXIT_MAX		},
   { NULL }
 };
 
