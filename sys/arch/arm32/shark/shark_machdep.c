@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.10 1998/08/27 04:00:55 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.11 1998/08/29 03:57:03 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,8 +102,8 @@ void	ofbus_attach __P((struct device *, struct device *, void *));
  *  Exported variables
  */
 BootConfig bootconfig;
-char *boot_path;
-char *boot_args;
+char *boot_args = NULL;
+char *boot_file = NULL;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
@@ -216,7 +216,7 @@ initarm(ofw_handle)
 	consinit();
 
 	/* Get boot info and process it. */
-	ofw_getbootinfo(&boot_path, &boot_args);
+	ofw_getbootinfo(&boot_file, &boot_args);
 	process_kernel_args();
 
 	ofw_configisadma(&isadmaphysbufs);
