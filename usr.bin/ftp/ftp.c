@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.70 1999/09/29 00:44:01 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.71 1999/09/30 06:35:13 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.70 1999/09/29 00:44:01 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.71 1999/09/30 06:35:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -554,7 +554,7 @@ empty(cin, din, sec)
 	struct timeval t;
 	fd_set rmask;
 
-	FD_ZERO(&cin);
+	FD_ZERO(&rmask);
 	if (cin) {
 		if (nfd < fileno(cin))
 			nfd = fileno(cin);
