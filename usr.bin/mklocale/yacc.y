@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.9 2002/03/17 22:14:38 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.10 2002/04/26 18:04:58 bjh21 Exp $	*/
 
 %{
 /*-
@@ -47,9 +47,13 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.9 2002/03/17 22:14:38 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.10 2002/04/26 18:04:58 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+#include <netinet/in.h>	/* Needed by <arpa/inet.h> on NetBSD 1.5. */
+#include <arpa/inet.h>	/* Needed for htonl on POSIX systems. */
 
 #include <ctype.h>
 #include <err.h>
