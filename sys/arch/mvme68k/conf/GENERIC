@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.8.2.2 2000/08/11 20:18:04 mason Exp $
+#	$NetBSD: GENERIC,v 1.8.2.3 2000/10/05 00:04:07 itojun Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.8.2.2 $"
+#ident 		"GENERIC-$Revision: 1.8.2.3 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -66,6 +66,10 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	vnd 2
+
+# random number generator pseudo-device
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 mainbus0	at root
 
