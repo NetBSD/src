@@ -7,7 +7,7 @@
 # merging several one- and two-line files into here.
 #
 # XXX - byte order for GIF and TIFF fields?
-# [GRR:  TIFF allows both byte orders; GIF is probably little-endian]
+# [GRR:  TIFF allows both byte orders; GIF is little-endian]
 #
 
 # [GRR:  what the hell is this doing in here?]
@@ -21,28 +21,34 @@
 0	string		P5		PGM "rawbits" file
 0	string		P6		PPM "rawbits" file
 
-# NIFF (Navy Interchange File Format, a modification of TIFF)
-# [GRR:  this *must* go before TIFF]
+# NIFF (Navy Interchange File Format, a modification of TIFF) images
+# this *must* go before TIFF
 0	string		IIN1		NIFF raster data
 
-# TIFF and friends
+# TIFF images
 0	string		MM		TIFF file, big-endian
->2	short		>0		version %d
+>2	beshort		>0		- version %d
 0	string		II		TIFF file, little-endian
->2	short		>0		version %d
+>2	leshort		>0		- version %d
 
-# possible GIF replacements; none yet released!
+# PNG [Portable Network Graphics, or "PNG's Not GIF"] images
 # (Greg Roelofs, newt@uchicago.edu)
 #
-# GRR 950115:  this was mine ("Zip GIF"):
-0	string		GIF94z		ZIF image (GIF+deflate alpha)
+# 137 P N G \r \n ^Z \n [4-byte length] H E A D [HEAD data] [HEAD crc] ...
 #
-# GRR 950115:  this is Jeremy Wohl's Free Graphics Format (better):
-0	string		FGF95a		FGF image (GIF+deflate beta)
-#
-# GRR 950115:  this is Thomas Boutell's Portable Bitmap Format proposal
-# (best; not yet implemented):
-0	string		.PBF		PBF image (deflate compression)
+0	string		\x89PNG		PNG image,
+>4	belong		!0x0d0a1a0a	CORRUPTED,
+>16	belong		x		%ld x
+>20	belong		x		%ld,
+>24	byte		x		%d-bit
+>25	byte		0		grayscale,
+>25	byte		2		\b/color RGB,
+>25	byte		3		colormap,
+>25	byte		4		gray+alpha,
+>25	byte		6		\b/color RGBA,
+#>26	byte		0		deflate/32K,
+>28	byte		0		non-interlaced
+>28	byte		1		interlaced
 
 # GIF
 0	string		GIF		GIF image
@@ -51,7 +57,7 @@
 >6	leshort		>0		%hd x
 >8	leshort		>0		%hd,
 #>10	byte		&0x80		color mapped,
-# GRR 950118:  the following is not accurate for xv-created GIFs:
+# GRR 950330:  the following is not accurate for most GIFs:
 #>10	byte		&0x40		interlaced,
 >10	byte&0x07	=0x00		2 colors
 >10	byte&0x07	=0x01		4 colors
@@ -186,18 +192,24 @@
 #>28	belong		>0		colormap is %d bytes long
 
 # Daniel Quinlan (quinlan@yggdrasil.com) -- from an SGI machine
-0	string	IT01			FIT image file
->4	belong	x			(%d x
->8	belong	x			%d x
->12	belong	x			%d)
+# There may be a byte swapped version of SGI imagelib images, but
+# I haven't seen any evidence of programs that support it.
+0	beshort		000732		SGI imagelib image
+>6	beshort		x		\b, %d x
+>8	beshort		x		%d
 #
-0	string	IT02			FIT image file
->4	belong	x			(%d x
->8	belong	x			%d x
->12	belong	x			%d)
+0	string		IT01		FIT image file
+>4	belong		x		\b, %d x
+>8	belong		x		%d x
+>12	belong		x		%d
 #
-2048	string	PCD_IPI			Kodak Photo CD image pack file
-0	string	PCD_OPA			Kodak Photo CD overview pack file
+0	string		IT02		FIT image file
+>4	belong		x		\b, %d x
+>8	belong		x		%d x
+>12	belong		x		%d
+#
+2048	string		PCD_IPI		Kodak Photo CD image pack file
+0	string		PCD_OPA		Kodak Photo CD overview pack file
 
 # Jeff Uphoff <juphoff@tarsier.cv.nrao.edu>
 # FITS is the Flexible Image Transport System, the de facto standard for

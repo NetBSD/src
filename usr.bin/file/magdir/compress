@@ -43,7 +43,10 @@
 >2	belong		=1		%d character originally
 #
 # This magic number is byte-order-independent.
+# Are there two types of old packed data?  One big endian, one little endian?
 #
+#0	beshort		017437		old packed data, big endian
+#0	leshort		017437		old packed data, little endian
 0	short		017437		old packed data
 
 # XXX - why *two* entries for "compacted data", one of which is
