@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.41 1999/08/24 11:12:08 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.42 1999/08/26 20:50:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -437,6 +437,8 @@ fbrcons_init(fb)
 	rc->rc_maxrow = ri->ri_rows;
 	rc->rc_width = ri->ri_emuwidth;
 	rc->rc_height = ri->ri_emuheight;
+	rc->rc_deffgcolor = WSCOL_BLACK;
+	rc->rc_defbgcolor = WSCOL_WHITE;
 	rcons_init(rc, 0);
 
 	/* Hook up virtual console */
