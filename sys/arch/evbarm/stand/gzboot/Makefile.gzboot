@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.6 2003/03/29 22:25:25 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.7 2003/04/29 05:15:14 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -7,7 +7,8 @@ NOMAN=  # defined
 EVBARM_STAND=	${S}/arch/evbarm/stand
 
 BASE=	gzboot_${PLATFORM}_${RELOC}
-PROG=	${BASE}.sym
+PROGSYM=${BASE}.sym
+PROG=	${BASE}.bin
 WARNS=	1
 
 NEWVERSWHAT=	"Gzip Boot"
@@ -95,8 +96,11 @@ vers.c: ${VERSIONFILE}
 	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
 	    ${NEWVERSWHAT}
 
-${PROG}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${BASE}.sym ${LDFLAGS} ${STARTFILE} \
-	    ${OBJS} ${LIBLIST} > ${BASE}.list
+${PROG}: ${PROGSYM}
+	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}
 
 .include <bsd.prog.mk>
+
+${PROGSYM}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -o ${.TARGET} ${LDFLAGS} ${STARTFILE} \
+	    ${OBJS} ${LIBLIST} > ${BASE}.list
