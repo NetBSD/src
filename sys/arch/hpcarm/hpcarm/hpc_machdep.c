@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.25 2001/12/28 01:41:54 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.26 2002/01/30 00:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -168,8 +168,9 @@ extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
 static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
+
 /* Non-buffered non-cachable memory needed to enter idle mode */
-vaddr_t sa11x0_idle_mem;
+extern vaddr_t sa11x0_idle_mem;
 
 /* Prototypes */
 
