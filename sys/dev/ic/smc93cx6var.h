@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6var.h,v 1.5 2000/03/15 02:08:31 fvdl Exp $	*/
+/*	$NetBSD: smc93cx6var.h,v 1.6 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -48,16 +48,17 @@ typedef enum {
 struct seeprom_descriptor {
 	bus_space_tag_t sd_tag;
 	bus_space_handle_t sd_bsh;
+	bus_size_t sd_regsize;
 	bus_size_t sd_control_offset;
 	bus_size_t sd_status_offset;
 	bus_size_t sd_dataout_offset;
 	seeprom_chip_t sd_chip;
-	u_int16_t sd_MS;
-	u_int16_t sd_RDY;
-	u_int16_t sd_CS;
-	u_int16_t sd_CK;
-	u_int16_t sd_DO;
-	u_int16_t sd_DI;
+	u_int32_t sd_MS;
+	u_int32_t sd_RDY;
+	u_int32_t sd_CS;
+	u_int32_t sd_CK;
+	u_int32_t sd_DO;
+	u_int32_t sd_DI;
 };
 
 /*
@@ -77,13 +78,34 @@ struct seeprom_descriptor {
  */
 
 #define SEEPROM_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset)
-#define SEEPROM_OUTB(sd, value) \
-	bus_space_write_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset, value)
+	(((sd)->sd_regsize == 4) \
+	    ? bus_space_read_4((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_control_offset) \
+	    : bus_space_read_1((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_control_offset))
+
+#define SEEPROM_OUTB(sd, value) do { \
+	if ((sd)->sd_regsize == 4) \
+		bus_space_write_4((sd)->sd_tag, (sd)->sd_bsh, \
+		    (sd)->sd_control_offset, (value)); \
+	else \
+		bus_space_write_1((sd)->sd_tag, (sd)->sd_bsh, \
+		    (sd)->sd_control_offset, (u_int8_t) (value)); \
+} while (0)
+
 #define SEEPROM_STATUS_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_status_offset)
+	(((sd)->sd_regsize == 4) \
+	    ? bus_space_read_4((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_status_offset) \
+	    : bus_space_read_1((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_status_offset))
+
 #define SEEPROM_DATA_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_dataout_offset)
+	(((sd)->sd_regsize == 4) \
+	    ? bus_space_read_4((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_dataout_offset) \
+	    : bus_space_read_1((sd)->sd_tag, (sd)->sd_bsh, \
+	          (sd)->sd_dataout_offset))
 
 int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
 		 bus_size_t start_addr, bus_size_t count);

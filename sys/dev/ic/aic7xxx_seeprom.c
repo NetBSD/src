@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.7 2003/04/19 19:33:30 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*       
  * Product specific probe and attach routines for: 
@@ -46,13 +46,13 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@netbsd.org>
  * 
- * $Id: aic7xxx_seeprom.c,v 1.7 2003/04/19 19:33:30 fvdl Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.7 2003/04/19 19:33:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ ahc_check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)
 
 	sd.sd_tag = ahc->tag;
 	sd.sd_bsh = ahc->bsh;
+	sd.sd_regsize = 1;
 	sd.sd_control_offset = SEECTL;		
 	sd.sd_status_offset = SEECTL;		
 	sd.sd_dataout_offset = SEECTL;		
