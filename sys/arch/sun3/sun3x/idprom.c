@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.6 1998/02/05 04:57:56 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.7 1999/04/08 04:08:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,10 +47,13 @@
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
-/* #include <machine/mon.h> */
 
 #include <sun3/sun3/machdep.h>
+#ifdef _SUN3_
+#include <sun3/sun3/control.h>
+#elif _SUN3X_
 #include <sun3/sun3x/obio.h>
+#endif
 
 /*
  * This structure is what this driver is all about.
@@ -58,47 +61,40 @@
  */
 struct idprom identity_prom;
 
+static int idprom_cksum __P((u_char *));
+static void idprom_get __P((u_char *));
 static int idprom_hostid __P((void));
 
 /*
- * Find the IDPROM and copy it to memory.
- * This is called early during startup,
- * but late enough so peek_byte() works.
- * Called by machdep.c:identifycpu()
+ * Copy the IDPROM contents,
+ * verify the checksum,
+ * set the hostid...
  */
 void
 idprom_init()
 {
-	u_char *src, *dst;
-	caddr_t va;
-	int len, x, xorsum;
 
-	/* First, probe for a separate IDPROM (3/470). */
-	va = obio_find_mapping(OBIO_IDPROM1, IDPROM_SIZE);
-	if (peek_byte(va) == -1) {
-		/* IDPROM is in the EEPROM */
-		va = obio_find_mapping(OBIO_IDPROM2, IDPROM_SIZE);
-	}
-
-	/* Copy the IDPROM contents and do the checksum. */
-	dst = (u_char *) &identity_prom;
-	src = (u_char *) va;
-	len = IDPROM_SIZE;
-	xorsum = 0;	/* calculated as xor of data */
-
-	do {
-		x = *src++;
-		*dst++ = x;
-		xorsum ^= x;
-	} while (--len > 0);
-
-	if (xorsum != 0)
+	idprom_get((u_char *)&identity_prom);
+	if (idprom_cksum((u_char *) &identity_prom))
 		printf("idprom: bad checksum\n");
 	if (identity_prom.idp_format < 1)
 		printf("idprom: bad version\n");
 
 	cpu_machine_id = identity_prom.idp_machtype;
 	hostid = idprom_hostid();
+}
+
+static int
+idprom_cksum(p)
+	u_char *p;
+{
+	int len, x;
+
+	len = IDPROM_CKSUM_SIZE;
+	x = 0;	/* xor of data */
+	do x ^= *p++;
+	while (--len > 0);
+	return (x);
 }
 
 static int
@@ -129,3 +125,41 @@ idprom_etheraddr(eaddrp)
 
 	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
 }
+
+/*
+ * Machine specific stuff follows.
+ */
+
+#ifdef _SUN3_
+#error "not yet merged"
+#endif /* SUN3 */
+#ifdef _SUN3X_
+/*
+ * On the Sun3X, this is called early during startup,
+ * but after trap table setup so peek_byte() works.
+ * Called by machdep.c:identifycpu()
+ */
+static void
+idprom_get(dst)
+	u_char *dst;
+{
+	u_char *src;
+	caddr_t va;
+	int len, x;
+
+	/* First, probe for a separate IDPROM (3/470). */
+	va = obio_find_mapping(OBIO_IDPROM1, IDPROM_SIZE);
+	if (peek_byte(va) == -1) {
+		/* IDPROM is in the EEPROM */
+		va = obio_find_mapping(OBIO_IDPROM2, IDPROM_SIZE);
+	}
+
+	/* Copy the IDPROM contents and do the checksum. */
+	src = (u_char *) va;
+	len = IDPROM_SIZE;
+	do {
+		*dst++ = *src++;
+	} while (--len > 0);
+}
+
+#endif /* SUN3X */
