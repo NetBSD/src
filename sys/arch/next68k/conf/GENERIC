@@ -105,8 +105,6 @@ options         ZS_CONSOLE_ABORT
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
-options         UVM
-
 config		netbsd root on ? type ?
 
 # Memory-disk drivers
