@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.62 2004/10/14 05:12:28 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.63 2004/10/15 07:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.62 2004/10/14 05:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.63 2004/10/15 07:19:01 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_bufq.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.62 2004/10/14 05:12:28 yamt Exp $");
  * A global list of all disks attached to the system.  May grow or
  * shrink over time.
  */
-struct	disklist_head disklist;	/* TAILQ_HEAD */
+struct	disklist_head disklist = TAILQ_HEAD_INITIALIZER(disklist);
 int	disk_count;		/* number of drives in global disklist */
 struct simplelock disklist_slock = SIMPLELOCK_INITIALIZER;
 
@@ -179,17 +179,6 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 }
 
 /*
- * Initialize the disklist.  Called by main() before autoconfiguration.
- */
-void
-disk_init(void)
-{
-
-	TAILQ_INIT(&disklist);
-	disk_count = 0;
-}
-
-/*
  * Searches the disklist for the disk corresponding to the
  * name provided.
  */
@@ -255,8 +244,8 @@ disk_attach(struct disk *diskp)
 	 */
 	simple_lock(&disklist_slock);
 	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
+	disk_count++;
 	simple_unlock(&disklist_slock);
-	++disk_count;
 }
 
 /*
@@ -271,10 +260,11 @@ disk_detach(struct disk *diskp)
 	/*
 	 * Remove from the disklist.
 	 */
-	if (--disk_count < 0)
-		panic("disk_detach: disk_count < 0");
+	if (disk_count == 0)
+		panic("disk_detach: disk_count == 0");
 	simple_lock(&disklist_slock);
 	TAILQ_REMOVE(&disklist, diskp, dk_link);
+	disk_count--;
 	simple_unlock(&disklist_slock);
 
 	/*
