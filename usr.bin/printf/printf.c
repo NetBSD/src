@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.21 1998/12/19 20:21:44 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.22 2001/05/05 17:29:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.21 1998/12/19 20:21:44 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.22 2001/05/05 17:29:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: printf.c,v 1.21 1998/12/19 20:21:44 christos Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <locale.h>
 #include <stdio.h>
@@ -68,8 +69,8 @@ static size_t	 print_escape __P((const char *));
 static int	 getchr __P((void));
 static double	 getdouble __P((void));
 static int	 getint __P((void));
-static long	 getlong __P((void));
-static unsigned long getulong __P ((void));
+static intmax_t	 getintmax __P((void));
+static uintmax_t getuintmax __P ((void));
 static char	*getstr __P((void));
 static char	*mklong __P((const char *, int)); 
 static void      check_conversion __P((const char *, const char *));
@@ -237,7 +238,7 @@ main(argc, argv)
 				case 'd':
 				case 'i': {
 					char *f = mklong(start, convch);
-					long p = getlong();
+					intmax_t p = getintmax();
 					PF(f, p);
 					break;
 				}
@@ -246,7 +247,7 @@ main(argc, argv)
 				case 'x':
 				case 'X': {
 					char *f = mklong(start, convch);
-					unsigned long p = getulong();
+					uintmax_t p = getuintmax();
 					PF(f, p);
 					break;
 				}
@@ -433,7 +434,7 @@ mklong(str, ch)
 
 	len = strlen(str) + 2;
 	(void)memmove(copy, str, len - 3);
-	copy[len - 3] = 'l';
+	copy[len - 3] = 'j';
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
 	return (copy);	
@@ -468,38 +469,38 @@ getint()
 	return 0;
 }
 
-static long
-getlong()
+static intmax_t
+getintmax()
 {
-	long val;
+	intmax_t val;
 	char *ep;
 
 	if (!*gargv)
-		return(0L);
+		return(INTMAX_C(0));
 
 	if (**gargv == '\"' || **gargv == '\'')
-		return (long) *((*gargv++)+1);
+		return (intmax_t) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtol (*gargv, &ep, 0);
+	val = strtoimax (*gargv, &ep, 0);
 	check_conversion(*gargv++, ep);
 	return val;
 }
 
-static unsigned long
-getulong()
+static uintmax_t
+getuintmax()
 {
-	unsigned long val;
+	uintmax_t val;
 	char *ep;
 
 	if (!*gargv)
-		return(0UL);
+		return(UINTMAX_C(0));
 
 	if (**gargv == '\"' || **gargv == '\'')
-		return (unsigned long) *((*gargv++)+1);
+		return (uintmax_t) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtoul (*gargv, &ep, 0);
+	val = strtoumax (*gargv, &ep, 0);
 	check_conversion(*gargv++, ep);
 	return val;
 }
