@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.2 2004/12/10 07:25:56 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.3 2004/12/11 16:30:11 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.2 2004/12/10 07:25:56 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.3 2004/12/11 16:30:11 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3007,6 +3007,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		}
 		sc->sc_rparams = rp;
 		sc->sc_pparams = pp;
+		sc->sc_rr.s.param = rfilters.req_size <= 0
+			? rp : rfilters.filters[0].param;
+		sc->sc_pr.s.param = pfilters.req_size <= 0
+			? pp : pfilters.filters[pfilters.req_size - 1].param;
 	}
 
 	oldpblksize = sc->sc_pr.blksize;

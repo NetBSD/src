@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.1 2004/12/10 00:30:55 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.2 2004/12/11 16:30:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -158,10 +158,6 @@ struct audio_softc {
 	int	sc_rchan;
 	int	sc_wchan;
 
-	/* Ring buffers, separate for record and play. */
-	struct	audio_ringbuffer sc_rr; /* Record ring */
-	struct	audio_ringbuffer sc_pr; /* Play ring */
-
 #define MAX_SAMPLE_SIZE	(AUDIO_MAX_CHANNELS * 24 / 8) /* 6channels x 24bit precision */
 	int	sc_input_fragment_length;
 	u_char	sc_input_fragment[MAX_SAMPLE_SIZE];
@@ -187,8 +183,43 @@ struct audio_softc {
 	u_char	sc_rbus;	/* input DMA in progress */
 	u_char	sc_pbus;	/* output DMA in progress */
 
-	struct	audio_params sc_pparams;	/* play encoding parameters */
-	struct	audio_params sc_rparams;	/* record encoding parameters */
+	/**
+	 *  userland
+	 *	|  write(2) & uiomove(9)
+	 *  sc_pstreams[0]	<sc_pparams>
+	 *      |  sc_pfilters[0]
+	 *  sc_pstreams[1]
+	 *      :
+	 *  sc_pstreams[n]
+	 *      |  sc_pfilters[n]
+	 *    sc_pr
+	 *      |
+	 *  hardware
+	 */
+	audio_params_t		sc_pparams;	/* play encoding parameters */
+	int			sc_npfilters;	/* number of filters */
+	audio_stream_t		*sc_pstreams[AUDIO_MAX_FILTERS];
+	stream_filter_t		*sc_pfilters[AUDIO_MAX_FILTERS];
+	struct audio_ringbuffer	sc_pr;		/* Play ring */
+
+	/**
+	 *  hardware
+	 *	|
+	 *    sc_rr
+	 *	|  sc_rfilters[0]
+	 *  sc_rstreams[0]
+	 *      |  sc_rfilters[1]
+	 *  sc_rstreams[1]
+	 *      :
+	 *  sc_rstreams[n]	<sc_rparams>
+	 *      |  uiomove(9) & read(2)
+	 *  userland
+	 */
+	struct audio_ringbuffer	sc_rr;		/* Record ring */
+	int			sc_nrfilters;	/* number of filters */
+	stream_filter_t		*sc_rfilters[AUDIO_MAX_FILTERS];
+	audio_stream_t		*sc_rstreams[AUDIO_MAX_FILTERS];
+	audio_params_t		sc_rparams;	/* record encoding parameters */
 
 	int	sc_eof;		/* EOF, i.e. zero sized write, counter */
 	u_long	sc_wstamp;
