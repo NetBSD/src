@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/03/30 03:07:13 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/04/02 06:33:31 mrg Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -23,9 +23,7 @@ CPPFLAGS+=-I$(.CURDIR) \
 LDADD+=		-lgnumalloc
 DPADD+=		$(LIBGNUMALLOC)
 
-.PATH: $(.CURDIR)/../common $(.CURDIR)/../../../dist/gcc \
-	$(.CURDIR)/../../../dist/gcc/config \
-	$(.CURDIR)/../../../dist/gcc/config/$(MACHINE_ARCH) \
+.PATH: $(DIST) $(DIST)/config $(DIST)/config/$(MACHINE_ARCH) \
 	$(COMMON) $(COMMONOBJ)
 
 # XXX
