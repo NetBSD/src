@@ -1,4 +1,4 @@
-.\" $NetBSD: ippp.4,v 1.4 2002/07/29 00:59:43 wiz Exp $
+.\" $NetBSD: ippp.4,v 1.5 2002/08/30 13:38:38 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: ippp.4,v 1.4 2002/07/29 00:59:43 wiz Exp $
+.\"	$Id: ippp.4,v 1.5 2002/08/30 13:38:38 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -71,7 +71,7 @@ The
 .Xr ipppctl 8
 utility is used to configure all aspects of PPP required to connect to a
 remote site.
-.Sh LINK0 and LINK1
+.Ss LINK0 and LINK1
 The
 .Em link0
 and
@@ -84,26 +84,46 @@ devices:
 .Bl -tag -width link0 -compact
 .Pp
 .It Li link0
-wait passively for connection
+Wait passively for connection.
+The administrative
+.Em Open
+event to the Link Control Protocol (LCP) layer will be delayed until
+after the lower layers signal an
+.Em Up
+event (rise of
+.Dq carrier ) .
+This can be used by lower layers to support a dialin connection where
+the physical layer isn't available immediately at startup, but only
+after some external event arrives.
+Receipt of a
+.Em Down
+event from the lower layer will not take the interface completely down
+in this case.
 .Pp
 .It Li link1
-auto-dial on output
+Dial-on-demand mode.
+The administrative
+.Em Open
+event to the LCP layer will be delayed until either an outbound
+network packet arrives, or until the lower layer signals an
+.Em Up
+event, indicating an inbound connection.
+As with passive mode, receipt of a
+.Em Down
+event (loss of carrier) will not automatically take the interface
+down, thus it remains available for further connections.
 .El
 .Pp
 The
 .Em link0
-and
-.Em link1
-flags are set to
+flag is set to
 .Em off
-by default.
-.Pp
-See
-.Xr sppp 4
-for a more detailed discussion of the flags.
+by default, the
+.Em link1
+flag to
+.Em on .
 .Sh SEE ALSO
 .Xr bpf 4 ,
-.Xr sppp 4 ,
 .Xr isdnd.rc 5 ,
 .Xr ipppctl 8 ,
 .Xr isdnd 8 ,
