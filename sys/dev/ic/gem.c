@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.17 2002/05/14 23:33:41 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.18 2002/05/15 02:36:11 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.17 2002/05/14 23:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.18 2002/05/15 02:36:11 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -352,6 +352,34 @@ gem_attach(sc, enaddr)
 			  RND_TYPE_NET, 0);
 #endif
 
+	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "interrupts");
+	evcnt_attach_dynamic(&sc->sc_ev_txint, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, sc->sc_dev.dv_xname, "tx interrupts");
+	evcnt_attach_dynamic(&sc->sc_ev_rxint, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, sc->sc_dev.dv_xname, "rx interrupts");
+	evcnt_attach_dynamic(&sc->sc_ev_rxfull, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx ring full");
+	evcnt_attach_dynamic(&sc->sc_ev_rxnobuf, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx malloc failure");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[0], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 0desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[1], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 1desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[2], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 2desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[3], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 3desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[4], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >3desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[5], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >7desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[6], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >15desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[7], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >31desc");
+	evcnt_attach_dynamic(&sc->sc_ev_rxhist[8], EVCNT_TYPE_INTR,
+	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >63desc");
 
 #if notyet
 	/*
@@ -1318,15 +1346,27 @@ gem_rint(sc)
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
 	u_int64_t rxstat;
-	int i, len;
+	u_int32_t rxcomp;
+	int i, len, progress = 0;
 
 	DPRINTF(sc, ("%s: gem_rint\n", sc->sc_dev.dv_xname));
+
+	/*
+	 * Read the completion register once.  This limits
+	 * how long the following loop can execute.
+	 */
+	rxcomp = bus_space_read_4(t, h, GEM_RX_COMPLETION);
+
 	/*
 	 * XXXX Read the lastrx only once at the top for speed.
 	 */
 	DPRINTF(sc, ("gem_rint: sc->rxptr %d, complete %d\n",
-		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
-	for (i = sc->sc_rxptr; i != bus_space_read_4(t, h, GEM_RX_COMPLETION);
+		sc->sc_rxptr, rxcomp));
+
+	/*
+	 * Go into the loop at least once.
+	 */
+	for (i = sc->sc_rxptr; i == sc->sc_rxptr || i != rxcomp;
 	     i = GEM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
@@ -1336,15 +1376,17 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
-			printf("gem_rint: completed descriptor "
-				"still owned %d\n", i);
 			/*
 			 * We have processed all of the receive buffers.
 			 */
 			break;
 		}
 
+		progress++;
+		ifp->if_ipackets++;
+
 		if (rxstat & GEM_RD_BAD_CRC) {
+			ifp->if_ierrors++;
 			printf("%s: receive error: CRC error\n",
 				sc->sc_dev.dv_xname);
 			GEM_INIT_RXDESC(sc, i);
@@ -1376,6 +1418,7 @@ gem_rint(sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (gem_add_rxbuf(sc, i) != 0) {
+			sc->sc_ev_rxnobuf.ev_count++;
 			ifp->if_ierrors++;
 			GEM_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
@@ -1384,7 +1427,6 @@ gem_rint(sc)
 		}
 		m->m_data += 2; /* We're already off by two */
 
-		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
@@ -1403,9 +1445,29 @@ gem_rint(sc)
 		(*ifp->if_input)(ifp, m);
 	}
 
-	/* Update the receive pointer. */
-	sc->sc_rxptr = i;
-	bus_space_write_4(t, h, GEM_RX_KICK, i);
+	if (progress) {
+		/* Update the receive pointer. */
+		if (i == sc->sc_rxptr) {
+			sc->sc_ev_rxfull.ev_count++;
+			printf("%s: rint: ring wrap\n", sc->sc_dev.dv_xname);
+		}
+		sc->sc_rxptr = i;
+		bus_space_write_4(t, h, GEM_RX_KICK, GEM_PREVRX(i));
+	}
+	if (progress <= 4) {
+		sc->sc_ev_rxhist[progress].ev_count++;
+	} else if (progress > 31) {
+		if (progress < 16)
+			sc->sc_ev_rxhist[5].ev_count++;
+		else
+			sc->sc_ev_rxhist[6].ev_count++;
+			
+	} else {
+		if (progress < 64)
+			sc->sc_ev_rxhist[7].ev_count++;
+		else
+			sc->sc_ev_rxhist[8].ev_count++;
+	}
 
 	DPRINTF(sc, ("gem_rint: done sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
@@ -1503,11 +1565,15 @@ gem_intr(v)
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
 
-	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0)
+	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0) {
+		sc->sc_ev_txint.ev_count++;
 		r |= gem_tint(sc);
+	}
 
-	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0)
+	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0) {
+		sc->sc_ev_rxint.ev_count++;
 		r |= gem_rint(sc);
+	}
 
 	/* We should eventually do more than just print out error stats. */
 	if (status & GEM_INTR_TX_MAC) {
