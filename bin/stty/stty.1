@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.22 2000/09/04 07:30:13 kleink Exp $
+.\"	$NetBSD: stty.1,v 1.23 2001/12/20 20:08:25 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,8 +92,7 @@ to restore the current terminal state as per
 .Pp
 The following arguments are available to set the terminal
 characteristics:
-.Ss Control Modes:
-.Pp
+.Ss Control Modes
 Control mode flags affect hardware characteristics associated with the
 terminal.  This corresponds to the c_cflag in the termios structure.
 .Bl -tag -width Fl
@@ -151,7 +150,7 @@ Enable RTS/CTS flow control.
 .It Cm cdtrcts Pq Fl cdtrcts
 Enable DTR/CTS flow control (if supported).
 .El
-.Ss Input Modes:
+.Ss Input Modes
 This corresponds to the c_iflag in the termios structure.
 .Bl -tag -width Fl
 .It Cm ignbrk Pq Fl ignbrk
@@ -227,7 +226,7 @@ if
 is unset and the input queue is full, the next input character causes
 the entire input and output queues to be discarded.
 .El
-.Ss Output Modes:
+.Ss Output Modes
 This corresponds to the c_oflag of the termios structure.
 .Bl -tag -width Fl
 .It Cm opost Pq Fl opost
@@ -253,8 +252,7 @@ Do not (do) output CRs at column zero.
 .It Cm onlret Pq Fl onlret
 On the terminal NL performs (does not perform) the CR function.
 .El
-.Ss Local Modes:
-.Pp
+.Ss Local Modes
 Local mode flags (lflags) affect various and sundry characteristics of terminal
 processing.
 Historically the term "local" pertained to new job control features
@@ -360,7 +358,7 @@ Indicates input is (is not) pending after a switch from non-canonical
 to canonical mode and will be re-input when a read becomes pending
 or more input arrives.
 .El
-.Ss Control Characters:
+.Ss Control Characters
 .Bl -tag -width Fl
 .It Ar control-character Ar string
 Set
@@ -410,8 +408,7 @@ are used in
 Non-Canonical mode input processing
 (-icanon).
 .El
-.Ss Combination Modes:
-.Pp
+.Ss Combination Modes
 .Bl -tag -width Fl
 .It Ar saved settings
 Set the current terminal
@@ -458,7 +455,7 @@ The terminal size is recorded as having
 columns.
 .It Cm cols Ar number
 is an alias for
-.Cm columns.
+.Cm columns .
 .It Cm rows Ar number
 The terminal size is recorded as having
 .Ar number
@@ -491,20 +488,17 @@ This means that unsetting
 may not put back all the setting that were previously in effect.
 To set the terminal into a raw state and then accurately restore it, the following
 shell code is recommended:
-.nf
-
+.Bd -literal -offset indent
 save_state=$(stty -g)
 stty raw
 \&...
 stty "$save_state"
-
-.fi
+.Ed
 .It Cm size
 The size of the terminal is printed as two numbers on a single line,
 first rows, then columns.
 .El
-.Ss Compatibility Modes:
-.Pp
+.Ss Compatibility Modes
 These modes remain for compatibility with the previous version of
 the stty command.
 .Bl -tag -width Fl
@@ -575,8 +569,7 @@ Same as the control character
 Same as the control character
 .Cm reprint .
 .El
-.Ss Control operations:
-.Pp
+.Ss Control operations
 These operations are not modes, but rather commands to be performed by
 the tty layer.
 .Bl -tag -width Fl
