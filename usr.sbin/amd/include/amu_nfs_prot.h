@@ -1,4 +1,4 @@
-/* $NetBSD: amu_nfs_prot.h,v 1.12 2003/03/09 17:57:50 wiz Exp $ */
+/* $NetBSD: amu_nfs_prot.h,v 1.13 2003/05/08 13:34:04 yamt Exp $ */
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -177,6 +177,8 @@ typedef writeargs nfswriteargs;
 # define MOUNT_NFS3 MOUNT_NFS
 # define MNTOPT_NFS3 "nfs"
 
+/* NetBSD 2.0 has rpcgen-generated definitions for MOUNTv3 and NFSv3. */
+#if 0
 #define FHSIZE3 64		/* size in bytes of a file handle (v3) */
 #define	NFS3_FHSIZE 64
 #define	MOUNTVERS3 ((unsigned long)(3))
@@ -228,6 +230,18 @@ struct nfs_fh3 {
   } fh3_u;
 };
 typedef struct nfs_fh3 nfs_fh3;
+#else
+struct nfs_fh3_netbsd20 {
+  u_int fh3_length;
+  union nfs_fh3_u {
+    struct nfs_fh3_i {
+      fhandle_t fh3_i;
+    } nfs_fh3_i;
+    char data[NFS3_FHSIZE];
+  } fh3_u;
+};
+typedef struct nfs_fh3_netbsd20 nfs_fh3_netbsd20;
+#endif
 
 #endif /* NFSMNT_NFSV3 */
 
