@@ -1,12 +1,12 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 1996/02/02 16:10:13 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.2 1996/03/14 20:17:22 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
 # Updated by Mark Brinicombe
-# Createdby Scott Stevens
+# Created by Scott Stevens
 #
 # Redistribution and use in source and binary forms are permitted provided
 # that: (1) source distributions retain this entire copyright notice and
@@ -23,8 +23,6 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#
-#	$Id: MAKEDEV,v 1.1 1996/02/02 16:10:13 mark Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
@@ -68,6 +66,8 @@
 #
 # Special purpose devices:
 #	rd	ram disk
+#	kbd	raw keyboard
+#	kbdctl	keyboard control
 #	fd	file descriptors
 #	bpf*	packet filter
 #	beep	riscpc speaker
@@ -75,6 +75,8 @@
 #	tun*	network tunnel driver
 #	ch*	SCSI Auto changer
 #	uk*	SCSI Unknown device
+#	ss*	SCSI scanner device
+#
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -84,7 +86,7 @@ case $i in
 
 all)
 	sh MAKEDEV std fd fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
-	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1
+	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0
 	sh MAKEDEV ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
 	sh MAKEDEV beep lkm quadmouse local cpu0 cpu1 cpu2 cpu3 cpu4 cpu5
@@ -108,6 +110,7 @@ std)
 	mknod tty		c 3 0	; chmod 666 tty
 	mknod klog		c 5 0	; chmod 600 klog
 	mknod kbd		c 11 0	; chmod 666 kbd
+	mknod kbdctl		c 11 1	; chmod 666 kbdctl
 	mknod stdin		c 34 0	; chmod 666 stdin
 	mknod stdout		c 34 1	; chmod 666 stdout
 	mknod stderr		c 34 2	; chmod 666 stderr
@@ -233,7 +236,6 @@ ch*)
 	umask 77
 	;;
 
-
 uk*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
@@ -241,6 +243,18 @@ uk*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr $unit
+	chgrp operator ${name}${unit}
+	chmod 640 ${name}${unit}
+	umask 77
+	;;
+
+ss*)
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	ss*) name=ss;  chr=29;;
+	esac
+	rm -f $name$unit
+	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
 	chgrp operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
