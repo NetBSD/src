@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111 2001/01/05 21:49:47 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.112 2001/04/18 08:28:10 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -216,6 +216,7 @@ MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
+MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
