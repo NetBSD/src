@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.117 2000/03/28 18:39:03 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.118 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -232,7 +232,7 @@ ttyopen(tp, dialout, nonblock)
 int
 ttylopen(device, tp)
 	dev_t device;
-	register struct tty *tp;
+	struct tty *tp;
 {
 	int s;
 
@@ -256,7 +256,7 @@ ttylopen(device, tp)
  */
 int
 ttyclose(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 
@@ -294,11 +294,11 @@ ttyclose(tp)
  */
 int
 ttyinput(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
-	register int iflag, lflag;
-	register u_char *cc;
+	int iflag, lflag;
+	u_char *cc;
 	int i, error;
 
 	/*
@@ -636,11 +636,11 @@ startoutput:
  */
 int
 ttyoutput(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
-	register long oflag;
-	register int col, notout, s;
+	long oflag;
+	int col, notout, s;
 
 	oflag = tp->t_oflag;
 	if (!ISSET(oflag, OPOST)) {
@@ -732,7 +732,7 @@ ttyoutput(c, tp)
 /* ARGSUSED */
 int
 ttioctl(tp, cmd, data, flag, p)
-	register struct tty *tp;
+	struct tty *tp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -801,7 +801,7 @@ ttioctl(tp, cmd, data, flag, p)
 		splx(s);
 		break;
 	case TIOCFLUSH: {		/* flush buffers */
-		register int flags = *(int *)data;
+		int flags = *(int *)data;
 
 		if (flags == 0)
 			flags = FREAD | FWRITE;
@@ -868,7 +868,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case TIOCSETA:			/* set termios struct */
 	case TIOCSETAW:			/* drain output, set */
 	case TIOCSETAF: {		/* drn out, fls in, set */
-		register struct termios *t = (struct termios *)data;
+		struct termios *t = (struct termios *)data;
 
 		s = spltty();
 		if (cmd == TIOCSETAW || cmd == TIOCSETAF) {
@@ -929,7 +929,7 @@ ttioctl(tp, cmd, data, flag, p)
 		break;
 	}
 	case TIOCSETD: {		/* set line discipline */
-		register int t = *(int *)data;
+		int t = *(int *)data;
 		dev_t device = tp->t_dev;
 
 		if ((u_int)t >= nlinesw)
@@ -985,7 +985,7 @@ ttioctl(tp, cmd, data, flag, p)
 		p->p_flag |= P_CONTROLT;
 		break;
 	case TIOCSPGRP: {		/* set pgrp of tty */
-		register struct pgrp *pgrp = pgfind(*(int *)data);
+		struct pgrp *pgrp = pgfind(*(int *)data);
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
@@ -1022,7 +1022,7 @@ ttpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	register struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 	int revents = 0;
 	int s = spltty();
 
@@ -1072,7 +1072,7 @@ ttnread(tp)
  */
 int
 ttywait(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	int error, s;
 
@@ -1109,10 +1109,10 @@ ttywflush(tp)
  */
 void
 ttyflush(tp, rw)
-	register struct tty *tp;
+	struct tty *tp;
 	int rw;
 {
-	register int s;
+	int s;
 
 	s = spltty();
 	if (rw & FREAD) {
@@ -1149,9 +1149,9 @@ ttychars(tp)
  */
 static void
 ttyblock(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register int total;
+	int total;
 
 	total = tp->t_rawq.c_cc + tp->t_canq.c_cc;
 	if (tp->t_rawq.c_cc > TTYHOG) {
@@ -1231,7 +1231,7 @@ ttylclose(tp, flag)
  */
 int
 ttymodem(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
 
@@ -1266,7 +1266,7 @@ ttymodem(tp, flag)
  */
 int
 nullmodem(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
 
@@ -1289,10 +1289,10 @@ nullmodem(tp, flag)
  */
 void
 ttypend(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	struct clist tq;
-	register int c;
+	int c;
 
 	CLR(tp->t_lflag, PENDIN);
 	SET(tp->t_state, TS_TYPEN);
@@ -1309,15 +1309,15 @@ ttypend(tp)
  */
 int
 ttread(tp, uio, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	struct uio *uio;
 	int flag;
 {
-	register struct clist *qp;
-	register int c;
-	register long lflag;
-	register u_char *cc = tp->t_cc;
-	register struct proc *p = curproc;
+	struct clist *qp;
+	int c;
+	long lflag;
+	u_char *cc = tp->t_cc;
+	struct proc *p = curproc;
 	int s, first, error = 0;
 	struct timeval stime;
 	int has_stime = 0, last_cc = 0;
@@ -1513,7 +1513,7 @@ read:
  */
 int
 ttycheckoutq(tp, wait)
-	register struct tty *tp;
+	struct tty *tp;
 	int wait;
 {
 	int hiwat, s;
@@ -1545,13 +1545,13 @@ ttycheckoutq(tp, wait)
  */
 int
 ttwrite(tp, uio, flag)
-	register struct tty *tp;
-	register struct uio *uio;
+	struct tty *tp;
+	struct uio *uio;
 	int flag;
 {
-	register u_char *cp = NULL;
-	register int cc, ce;
-	register struct proc *p;
+	u_char *cp = NULL;
+	int cc, ce;
+	struct proc *p;
 	int i, hiwat, cnt, error, s;
 	u_char obuf[OBUFSIZ];
 
@@ -1729,10 +1729,10 @@ ovhiwat:
 void
 ttyrub(c, tp)
 	int c;
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register u_char *cp;
-	register int savecol;
+	u_char *cp;
+	int savecol;
 	int tabc, s;
 
 	if (!ISSET(tp->t_lflag, ECHO) || ISSET(tp->t_lflag, EXTPROC))
@@ -1811,7 +1811,7 @@ ttyrub(c, tp)
  */
 static void
 ttyrubo(tp, cnt)
-	register struct tty *tp;
+	struct tty *tp;
 	int cnt;
 {
 
@@ -1829,9 +1829,9 @@ ttyrubo(tp, cnt)
  */
 void
 ttyretype(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register u_char *cp;
+	u_char *cp;
 	int s, c;
 
 	/* Echo the reprint character. */
@@ -1857,8 +1857,8 @@ ttyretype(tp)
  */
 static void
 ttyecho(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
 
 	if (!ISSET(tp->t_state, TS_CNTTB))
@@ -1885,7 +1885,7 @@ ttyecho(c, tp)
  */
 void
 ttwakeup(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 
 	selwakeup(&tp->t_rsel);
@@ -1901,7 +1901,7 @@ ttwakeup(tp)
 int
 ttspeedtab(speed, table)
 	int speed;
-	register struct speedtab *table;
+	struct speedtab *table;
 {
 
 	for ( ; table->sp_speed != -1; table++)
@@ -1920,7 +1920,7 @@ void
 ttsetwater(tp)
 	struct tty *tp;
 {
-	register int cps, x;
+	int cps, x;
 
 #define CLAMP(x, h, l)	((x) > h ? h : ((x) < l) ? l : (x))
 
@@ -1937,9 +1937,9 @@ ttsetwater(tp)
  */
 void
 ttyinfo(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct proc *p, *pick;
+	struct proc *p, *pick;
 	struct timeval utime, stime;
 	int tmp;
 
@@ -1995,7 +1995,7 @@ ttyinfo(tp)
 		if (pick->p_stat == SIDL || P_ZOMBIE(pick))
 			tmp = 0;
 		else {
-			register struct vmspace *vm = pick->p_vmspace;
+			struct vmspace *vm = pick->p_vmspace;
 			tmp = pgtok(vm_resident_count(vm));
 		}
 		ttyprintf(tp, "%dk\n", tmp);
@@ -2024,7 +2024,7 @@ ttyinfo(tp)
 
 static int
 proc_compare(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
 
 	if (p1 == NULL)
@@ -2083,7 +2083,7 @@ tputchar(c, tp)
 	int c;
 	struct tty *tp;
 {
-	register int s;
+	int s;
 
 	s = spltty();
 	if (ISSET(tp->t_state,

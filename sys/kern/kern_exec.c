@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.107 2000/01/25 01:15:14 fvdl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.108 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -205,11 +205,11 @@ bad1:
 /* ARGSUSED */
 int
 sys_execve(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_execve_args /* {
+	struct sys_execve_args /* {
 		syscallarg(const char *) path;
 		syscallarg(char * const *) argp;
 		syscallarg(char * const *) envp;

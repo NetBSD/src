@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.19 1998/08/04 04:03:15 perry Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.20 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -161,13 +161,13 @@ sys_profil(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_profil_args /* {
+	struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;
 		syscallarg(u_int) size;
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
-	register struct uprof *upp;
+	struct uprof *upp;
 	int s;
 
 	if (SCARG(uap, scale) > (1 << 16))
@@ -214,14 +214,14 @@ sys_profil(p, v, retval)
  */
 void
 addupc_intr(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
+	struct proc *p;
+	u_long pc;
 	u_int ticks;
 {
-	register struct uprof *prof;
-	register caddr_t addr;
-	register u_int i;
-	register int v;
+	struct uprof *prof;
+	caddr_t addr;
+	u_int i;
+	int v;
 
 	if (ticks == 0)
 		return;
@@ -244,13 +244,13 @@ addupc_intr(p, pc, ticks)
  */
 void
 addupc_task(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
+	struct proc *p;
+	u_long pc;
 	u_int ticks;
 {
-	register struct uprof *prof;
-	register caddr_t addr;
-	register u_int i;
+	struct uprof *prof;
+	caddr_t addr;
+	u_int i;
 	u_short v;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
