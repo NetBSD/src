@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.11 2002/03/30 19:13:44 martin Exp $ 
+ *	$Id: isic.c,v 1.12 2002/04/01 12:14:27 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.11 2002/03/30 19:13:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.12 2002/04/01 12:14:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -212,26 +212,6 @@ isicintr(void *arg)
 
 		return(was_ipac_irq);
 	}		
-}
-
-void
-isic_enable_intr(struct isic_softc *sc, int enabled)
-{
-	if (sc->sc_ipac) {
-		if (enabled) {
-			IPAC_WRITE(IPAC_MASK, 0xc0);
-		} else {
-			IPAC_WRITE(IPAC_MASK, 0xff);
-		}
-	} else {
-		if (enabled) {
-			ISAC_WRITE(I_MASK, ISAC_IMASK);
-		} else {
-			ISAC_WRITE(I_MASK, 0xff);
-		}
-	}
-	if (enabled == 0 && sc->clearirq)
-		sc->clearirq(sc);
 }
 
 int
