@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 1999/06/02 02:03:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.43 1999/06/20 22:07:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 1999/06/02 02:03:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 1999/06/20 22:07:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 	gatemode = 0;
 	outfile = NULL;
 	restartautofetch = 0;
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	editing = 0;
 	el = NULL;
 	hist = NULL;
@@ -178,14 +178,16 @@ main(argc, argv)
 	ttyout = stdout;
 	if (isatty(fileno(ttyout))) {
 		verbose = 1;		/* verbose if to a tty */
-#ifndef SMALL
 		if (! dumbterm) {
+#ifndef NO_EDITCOMPLETE
 			if (fromatty)	/* editing mode on if tty is usable */
 				editing = 1;
+#endif
+#ifndef NO_PROGRESS
 			if (foregroundproc())
 				progress = 1;	/* progress bar on if fg */
-		}
 #endif
+		}
 	}
 
 	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtvV")) != -1) {
@@ -205,7 +207,7 @@ main(argc, argv)
 			break;
 
 		case 'e':
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 			editing = 0;
 #endif
 			break;
@@ -334,9 +336,9 @@ main(argc, argv)
 			retry_connect = 0; /* connected, stop hiding msgs */
 		}
 	}
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	controlediting();
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 	top = setjmp(toplevel) == 0;
 	if (top) {
 		(void)signal(SIGINT, (sig_t)intr);
@@ -407,15 +409,15 @@ cmdscanner(top)
 	int num;
 
 	if (!top
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	    && !editing
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 	    )
 		(void)putc('\n', ttyout);
 	for (;;) {
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 		if (!editing) {
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 			if (fromatty) {
 				fputs(prompt(), ttyout);
 				(void)fflush(ttyout);
@@ -435,7 +437,7 @@ cmdscanner(top)
 					/* void */;
 				break;
 			} /* else it was a line without a newline */
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 		} else {
 			const char *buf;
 			HistEvent ev;
@@ -454,7 +456,7 @@ cmdscanner(top)
 			line[num] = '\0';
 			history(hist, &ev, H_ENTER, buf);
 		}
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 		makeargv();
 		if (margc == 0)
@@ -465,7 +467,7 @@ cmdscanner(top)
 			continue;
 		}
 		if (c == NULL) {
-#if !defined(SMALL)
+#if !defined(NO_EDITCOMPLETE)
 			/*
 			 * attempt to el_parse() unknown commands.
 			 * any command containing a ':' would be parsed
@@ -475,7 +477,7 @@ cmdscanner(top)
 			 */
 			if (strchr(margv[0], ':') != NULL ||
 			    el_parse(el, margc, margv) != 0)
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 				fputs("?Invalid command.\n", ttyout);
 			continue;
 		}
@@ -547,7 +549,7 @@ makeargv()
 		if (argp == NULL)
 			break;
 	}
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	if (cursor_pos == line) {
 		cursor_argc = 0;
 		cursor_argo = 0;
@@ -555,12 +557,12 @@ makeargv()
 		cursor_argc = margc;
 		cursor_argo = strlen(margv[margc-1]);
 	}
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 }
 
-#ifdef SMALL
+#ifdef NO_EDITCOMPLETE
 #define INC_CHKCURSOR(x)	(x)++
-#else  /* !SMALL */
+#else  /* !NO_EDITCOMPLETE */
 #define INC_CHKCURSOR(x)	{ (x)++ ; \
 				if (x == cursor_pos) { \
 					cursor_argc = margc; \
@@ -568,7 +570,7 @@ makeargv()
 					cursor_pos = NULL; \
 				} }
 
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 /*
  * Parse string into argbuf;
