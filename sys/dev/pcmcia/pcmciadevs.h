@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.171 2002/06/03 01:15:15 jonathan Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.172 2002/06/08 18:02:08 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.171 2002/06/03 01:13:01 jonathan Exp 
+ *	NetBSD: pcmciadevs,v 1.172 2002/06/08 18:01:14 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -95,6 +95,7 @@
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
+#define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
@@ -149,6 +150,11 @@
 #define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
 #define	PCMCIA_STR_3COM_3CRWE62092A	"3Com 3CRWE62092A Wireless LAN"
+
+/* ACTIONTEC Products */
+#define	PCMCIA_CIS_ACTIONTEC_PRISM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ACTIONTEC_PRISM	0x0101
+#define	PCMCIA_STR_ACTIONTEC_PRISM	"PRISM Wireless LAN PC Card"
 
 /* Adaptec Products */
 #define	PCMCIA_CIS_ADAPTEC_APA1460	{ NULL, NULL, NULL, NULL }
