@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.h,v 1.1 2000/05/15 07:53:18 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.1.4.1 2000/12/15 04:51:16 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -41,6 +41,7 @@ struct siop_product_desc {
 	u_int8_t maxoff;  /* maximum supported offset */
 	u_int8_t clock_div; /* clock divider to use for async. logic */
 	u_int8_t clock_period; /* clock period (ns * 10) */
+	int 	ram_size; /* size of RAM, if appropriate */
 };
 
 const struct siop_product_desc * siop_lookup_product __P((u_int32_t, int));
