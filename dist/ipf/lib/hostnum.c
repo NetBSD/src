@@ -1,4 +1,4 @@
-/*	$NetBSD: hostnum.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: hostnum.c,v 1.1.1.1.4.1 2005/02/06 07:43:44 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -37,7 +37,7 @@ char	*ifname;
 			return -1;
 	}
 #endif
-	if (isdigit(*host) && inet_aton(host, &ip)) {
+	if (ISDIGIT(*host) && inet_aton(host, &ip)) {
 		*ipa = ip.s_addr;
 		return 0;
 	}
