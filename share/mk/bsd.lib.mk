@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.157 1999/09/04 21:48:33 fredb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.158 1999/09/12 00:31:34 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -229,12 +229,16 @@ _LIBS=lib${LIB}.a
 _LIBS=
 .endif
 
+OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+
 .if ${MKPROFILE} != "no"
 _LIBS+=lib${LIB}_p.a
+POBJS+=${OBJS:.o=.po}
 .endif
 
 .if ${MKPIC} != "no"
 _LIBS+=lib${LIB}_pic.a
+SOBJS+=${OBJS:.o=.so}
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
@@ -242,9 +246,12 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
 _LIBS+=llib-l${LIB}.ln
+LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
-all: ${SRCS} ${_LIBS}
+ALLOBJS=${OBJS} ${POBJS} ${SOBJS} ${LOBJS}
+
+all: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
 __archivebuild: .USE
 	@rm -f ${.TARGET}
@@ -267,11 +274,9 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
 
-POBJS+=		${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS} __archivebuild
 	@echo building profiled ${LIB} library
 
-SOBJS+=		${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
 
@@ -301,7 +306,6 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    lib${LIB}.so
 .endif
 
-LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
