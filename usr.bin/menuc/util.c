@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2003/07/17 08:33:44 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.3.2.1 2004/06/22 07:16:11 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,10 +38,14 @@
 
 /* util.c - utility routines. */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: util.c,v 1.3 2003/07/17 08:33:44 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.3.2.1 2004/06/22 07:16:11 tron Exp $");
 #endif
 
 
