@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.1 1999/07/30 23:58:25 matt Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.2 1999/08/03 00:32:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,16 @@ com_obio_match(parent, cf, aux)
 	/* Tadpole 3GX/3GS uses "modem" for a 16450 port
 	 */
 	if (strcmp("modem", sa->sa_name) == 0) {
-		return (1);
+		bus_space_handle_t ioh;
+		int rv = 0;
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset, COM_NPORTS,
+				 BUS_SPACE_MAP_LINEAR, 0,
+				 &ioh) != 0) {
+			rv = comprobe1(sa->sa_bustag, ioh);
+			bus_space_unmap(sa->sa_bustag, ioh, COM_NPORTS);
+		}
+		return (rv);
 	}
 	return (0);
 }
@@ -144,8 +153,10 @@ com_obio_attach(parent, self, aux)
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_iobase = sa->sa_offset;
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
-			  BUS_SPACE_MAP_LINEAR, &sc->sc_ioh)) {
+	    sbus_bus_map(sc->sc_iot, sa->sa_slot,
+			 sc->sc_iobase, COM_NPORTS,
+			 BUS_SPACE_MAP_LINEAR, 0,
+			 &sc->sc_ioh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
