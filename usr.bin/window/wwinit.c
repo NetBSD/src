@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wwinit.c	3.40 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: wwinit.c,v 1.5 1994/01/04 02:41:08 mycroft Exp $";
+static char rcsid[] = "$Id: wwinit.c,v 1.6 1994/12/30 02:46:05 mycroft Exp $";
 #endif /* not lint */
 
 #include "ww.h"
@@ -51,7 +51,7 @@ wwinit()
 	char *kp;
 	int s;
 
-	wwdtablesize = getdtablesize();
+	wwdtablesize = 3;
 	wwhead.ww_forw = &wwhead;
 	wwhead.ww_back = &wwhead;
 
