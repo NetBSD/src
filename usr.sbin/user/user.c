@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.38 2001/02/19 23:22:49 cgd Exp $ */
+/* $NetBSD: user.c,v 1.39 2001/06/23 02:42:32 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.38 2001/02/19 23:22:49 cgd Exp $");
+__RCSID("$NetBSD: user.c,v 1.39 2001/06/23 02:42:32 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1359,11 +1359,13 @@ useradd(int argc, char **argv)
 #endif
 		return EXIT_SUCCESS;
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("useradd");
 	}
 	checkeuid();
-	return adduser(argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return adduser(*argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS
@@ -1457,12 +1459,13 @@ usermod(int argc, char **argv)
 		warnx("option 'm' useless without 'd' or 'l' -- ignored");
 		u.u_flags &= !F_MKDIR;
 	}
-
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("usermod");
 	}
 	checkeuid();
-	return moduser(argv[optind], (have_new_user) ? newuser : argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(*argv, (have_new_user) ? newuser : *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS
@@ -1520,12 +1523,14 @@ userdel(int argc, char **argv)
 		return EXIT_SUCCESS;
 	}
 #endif
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("userdel");
 	}
 	checkeuid();
-	if ((pwp = getpwnam(argv[optind])) == NULL) {
-		warnx("No such user `%s'", argv[optind]);
+	if ((pwp = getpwnam(*argv)) == NULL) {
+		warnx("No such user `%s'", *argv);
 		return EXIT_FAILURE;
 	}
 	if (rmhome)
@@ -1536,9 +1541,9 @@ userdel(int argc, char **argv)
 		password[PasswordLength] = '\0';
 		memsave(&u.u_password, password, PasswordLength);
 		u.u_flags |= F_PASSWORD;
-		return moduser(argv[optind], argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
-	return moduser(argv[optind], argv[optind], NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(*argv, *argv, NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS
@@ -1575,7 +1580,9 @@ groupadd(int argc, char **argv)
 #endif
 		}
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("groupadd");
 	}
 	checkeuid();
@@ -1585,10 +1592,10 @@ groupadd(int argc, char **argv)
 	if (!dupgid && getgrgid((gid_t) gid) != NULL) {
 		errx(EXIT_FAILURE, "can't add group: gid %d is a duplicate", gid);
 	}
-	if (!valid_group(argv[optind])) {
-		warnx("warning - invalid group name `%s'", argv[optind]);
+	if (!valid_group(*argv)) {
+		warnx("warning - invalid group name `%s'", *argv);
 	}
-	if (!creategid(argv[optind], gid, "")) {
+	if (!creategid(*argv, gid, "")) {
 		err(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1615,11 +1622,13 @@ groupdel(int argc, char **argv)
 #endif
 		}
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("groupdel");
 	}
 	checkeuid();
-	if (!modify_gid(argv[optind], NULL)) {
+	if (!modify_gid(*argv, NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1668,7 +1677,9 @@ groupmod(int argc, char **argv)
 #endif
 		}
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("groupmod");
 	}
 	checkeuid();
@@ -1678,8 +1689,8 @@ groupmod(int argc, char **argv)
 	if (dupgid && gid < 0) {
 		err(EXIT_FAILURE, "Duplicate which gid?");
 	}
-	if ((grp = getgrnam(argv[optind])) == NULL) {
-		err(EXIT_FAILURE, "can't find group `%s' to modify", argv[optind]);
+	if ((grp = getgrnam(*argv)) == NULL) {
+		err(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
 		warn("warning - invalid group name `%s'", newname);
@@ -1693,7 +1704,7 @@ groupmod(int argc, char **argv)
 			(cpp[1] == NULL) ? "" : ",");
 	}
 	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
-	if (!modify_gid(argv[optind], buf)) {
+	if (!modify_gid(*argv, buf)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1723,22 +1734,24 @@ userinfo(int argc, char **argv)
 			break;
 		}
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("userinfo");
 	}
-	pwp = find_user_info(argv[optind]);
+	pwp = find_user_info(*argv);
 	if (exists) {
 		exit((pwp) ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 	if (pwp == NULL) {
-		errx(EXIT_FAILURE, "can't find user `%s'", argv[optind]);
+		errx(EXIT_FAILURE, "can't find user `%s'", *argv);
 	}
 	(void) printf("login\t%s\n", pwp->pw_name);
 	(void) printf("passwd\t%s\n", pwp->pw_passwd);
 	(void) printf("uid\t%d\n", pwp->pw_uid);
 	for (cc = 0 ; (grp = getgrent()) != NULL ; ) {
 		for (cpp = grp->gr_mem ; *cpp ; cpp++) {
-			if (strcmp(*cpp, argv[optind]) == 0 && grp->gr_gid != pwp->pw_gid) {
+			if (strcmp(*cpp, *argv) == 0 && grp->gr_gid != pwp->pw_gid) {
 				cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s ", grp->gr_name);
 			}
 		}
@@ -1779,15 +1792,17 @@ groupinfo(int argc, char **argv)
 			break;
 		}
 	}
-	if (argc == optind) {
+	argc -= optind;
+	argv += optind;
+	if (argc != 1) {
 		usermgmt_usage("groupinfo");
 	}
-	grp = find_group_info(argv[optind]);
+	grp = find_group_info(*argv);
 	if (exists) {
 		exit((grp) ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 	if (grp == NULL) {
-		errx(EXIT_FAILURE, "can't find group `%s'", argv[optind]);
+		errx(EXIT_FAILURE, "can't find group `%s'", *argv);
 	}
 	(void) printf("name\t%s\n", grp->gr_name);
 	(void) printf("passwd\t%s\n", grp->gr_passwd);
