@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.69.2.1 2004/11/12 06:56:12 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.69.2.1 2004/11/12 06:56:12 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,9 +744,10 @@ ibcs2_sys_setgroups(l, v, retval)
 	gid_t gp[NGROUPS_MAX], *ngid;
 	caddr_t sg = stackgap_init(p, 0);
 
-	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	if (SCARG(uap, gidsetsize) > NGROUPS_MAX)
+	if (SCARG(uap, gidsetsize) > NGROUPS_MAX || 
+	    SCARG(uap, gidsetsize) < 0 )
 		return EINVAL;
+	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
 	
 	if (SCARG(&sa, gidsetsize)) {
 		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset, 
