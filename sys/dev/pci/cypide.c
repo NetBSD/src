@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.8 2004/08/02 19:37:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -169,6 +169,8 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		aprint_normal("compatibility mode\n");
 		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan, &cmdsize,
 		    &ctlsize);
+		if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+			pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan);
 	}
 	wdcattach(&cp->wdc_channel);
 }
