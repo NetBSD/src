@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.37 1994/10/20 14:09:10 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.38 1994/10/20 14:10:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -292,8 +292,9 @@ bad:
  * occurence of an open device
  */
 int 
-cdclose(dev)
+cdclose(dev, flag, fmt)
 	dev_t dev;
+	int flag, fmt;
 {
 	struct cd_data *cd = cdcd.cd_devs[CDUNIT(dev)];
 	int part = CDPART(dev);
