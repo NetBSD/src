@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.6 1998/06/09 07:25:00 thorpej Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.7 1999/01/08 19:22:35 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -366,8 +366,8 @@ ai_attach(parent, self, aux)
 
 	/* Map i/o space. */
 	sc->sc_msize = ia->ia_msize;
-	sc->sc_maddr = (void *) memh;
-	sc->sc_iobase = sc->sc_maddr + sc->sc_msize - (1 << 24);
+	sc->sc_maddr = (void *)memh;
+	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
 	/* set up pointers to important on-card control structures */
 	sc->iscp = 0;
@@ -459,7 +459,7 @@ check_ie_present(sc, memt, memh, size)
 
 	sc->bt = memt;
 	sc->bh = memh;
-	sc->sc_iobase = (void *) memh + size - (1 << 24);
+	sc->sc_iobase = (char *)memh + size - (1 << 24);
 
 	sc->scp = size + IE_SCP_ADDR - (1 << 24);
 	bus_space_set_region_1(memt, memh, (u_long) sc->scp, 0, IE_SCP_SZ);

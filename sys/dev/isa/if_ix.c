@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.5 1998/06/09 07:25:02 thorpej Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.6 1999/01/08 19:22:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -623,8 +623,8 @@ ix_attach(parent, self, aux)
 
 	/* Map i/o space. */
 	sc->sc_msize = ia->ia_msize;
-	sc->sc_maddr = (void* ) memh;
-	sc->sc_iobase = sc->sc_maddr + sc->sc_msize - (1 << 24);
+	sc->sc_maddr = (void *)memh;
+	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
 	/* set up pointers to important on-card control structures */
 	sc->iscp = 0;

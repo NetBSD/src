@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.27 1998/11/25 13:39:37 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.28 1999/01/08 19:22:35 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -1175,7 +1175,8 @@ ess_trigger_output(addr, start, end, blksize, intr, arg, param)
 		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2,
 		    ESS_AUDIO2_CTRL2_FIFO_SIGNED);
 
-	isa_dmastart(sc->sc_ic, sc->sc_out.drq, start, end - start, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_out.drq, start, 
+		     (char *)end - (char *)start, NULL,
 	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_out.drq))
@@ -1266,7 +1267,8 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
 	    ESS_AUDIO1_CTRL1_FIFO_CONNECT);
 
-	isa_dmastart(sc->sc_ic, sc->sc_in.drq, start, end - start, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_in.drq, start, 
+		     (char *)end - (char *)start, NULL,
 	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_in.drq))
