@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.39 2000/02/01 21:29:15 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.40 2000/02/01 21:41:36 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.39 2000/02/01 21:29:15 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.40 2000/02/01 21:41:36 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -286,14 +286,13 @@ int iplattach()
 	else
 		defpass = "no-match -> block";
 
-	printf("IP Filter: initialized.  Default = %s all, Logging = %s\n",
-		defpass,
+	printf("%s initialized.  Default = %s all, Logging = %s\n",
+		ipfilter_version, defpass,
 # ifdef	IPFILTER_LOG
 		"enabled");
 # else
 		"disabled");
 # endif
-	printf("%s\n", ipfilter_version);
 #ifdef	_KERNEL
 # if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
