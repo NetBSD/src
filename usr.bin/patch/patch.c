@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.20 2004/08/06 14:54:26 mycroft Exp $	*/
+/*	$NetBSD: patch.c,v 1.21 2004/08/14 12:53:35 cube Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.20 2004/08/06 14:54:26 mycroft Exp $");
+__RCSID("$NetBSD: patch.c,v 1.21 2004/08/14 12:53:35 cube Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -467,7 +467,6 @@ exclusive\n");
 		opt = *++s;
 
 	    do {
-		printf("PARSING OPTION %c\n", opt);
 		switch (opt) {
 		case 'b':
 		    simple_backup_suffix = xstrdup(nextarg());
