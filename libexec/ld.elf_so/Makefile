@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2002/10/05 15:04:49 junyoung Exp $
+#	$NetBSD: Makefile,v 1.59 2002/10/05 15:52:15 junyoung Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -39,7 +39,7 @@ CPPFLAGS+= -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -I${.CURDIR}
 CPPFLAGS+= -DRTLD_LOADER
 CPPFLAGS+= -D_RTLD_SOURCE
-CPPFLAGS+= -DDEBUG
+#CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DRTLD_DEBUG
 #CPPFLAGS+= -DRTLD_DEBUG_RELOC
 #DBG=	-g
