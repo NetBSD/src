@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.16.1 2000/03/13 12:15:29 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.16.2 2000/03/14 10:25:01 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -142,7 +142,7 @@ extern struct pmap	kernel_pmap_store;
 #define _pmap_set_page_cacheable(pm,va)		\
 	do {					\
 		pt_entry_t *_pte_;		\
-		_pte_ = &((pm)->pm_stab[(vaddr_t)(v) >> PG_SHIFT]);	\
+		_pte_ = &((pm)->pm_stab[(vaddr_t)(va) >> PG_SHIFT]);	\
 		if ( (*_pte_ & PG_CI) != 0 ) {	\
 			*_pte_ &= ~PG_CI;	\
 			TBIS(va);		\
@@ -152,7 +152,7 @@ extern struct pmap	kernel_pmap_store;
 #define _pmap_set_page_cacheinhibit(pm,va)	\
 	do {					\
 		pt_entry_t *_pte_;		\
-		_pte_ = &((pm)->pm_stab[(vaddr_t)(v) >> PG_SHIFT]);	\
+		_pte_ = &((pm)->pm_stab[(vaddr_t)(va) >> PG_SHIFT]);	\
 		if ( (*_pte_ & PG_CI) == 0 ) {	\
 			*_pte_ |= ~PG_CI;	\
 			TBIS(va);		\
