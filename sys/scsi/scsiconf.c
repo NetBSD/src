@@ -12,6 +12,8 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
+ *
+ *	$Id: scsiconf.c,v 1.7 1993/05/20 03:46:36 cgd Exp $
  */
 
 #include "sys/types.h"

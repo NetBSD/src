@@ -1,30 +1,6 @@
 /*
- * HISTORY
- * $Log: scsi_tape.h,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 1.2  1993/01/26  18:39:08  julian
- * add the 'write protected' bit in the device status struct.
- *
- * Revision 1.1  1992/09/26  22:10:21  julian
- * Initial revision
- *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * 
- */
-
-/*
  * SCSI tape interface description
- */
-
-/*
+ *
  * Written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems.
  *
@@ -38,6 +14,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
+ *	$Id: scsi_tape.h,v 1.2 1993/05/20 03:46:34 cgd Exp $
  */
 
 /*

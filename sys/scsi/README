@@ -1,10 +1,5 @@
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+#	$Id: README,v 1.2 1993/05/20 03:46:09 cgd Exp $
+
 This release consists of the following files 
 (relative to the base of the kernel tree)
 

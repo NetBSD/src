@@ -1,20 +1,6 @@
 /*
- * HISTORY
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * 
- */
-
-/*
  * SCSI changer interface description
- */
-
-/*
+ *
  * Written by Stefan Grefen   (grefen@goofy.zdv.uni-mainz.de soon grefen@convex.com)
  * based on the SCSI System by written Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems.
@@ -29,6 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
+ *	$Id: scsi_changer.h,v 1.2 1993/05/20 03:46:30 cgd Exp $
  */
 
 /*
