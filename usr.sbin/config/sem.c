@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.37 2003/01/27 05:00:55 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.38 2003/07/13 12:36:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -656,9 +656,9 @@ makedevstr(int maj, int min)
 
 	devname = major2name(maj);
 	if (devname == NULL)
-		(void)sprintf(buf, "<%d/%d>", maj, min);
+		(void)snprintf(buf, sizeof(buf), "<%d/%d>", maj, min);
 	else
-		(void)sprintf(buf, "%s%d%c", devname,
+		(void)snprintf(buf, sizeof(buf), "%s%d%c", devname,
 		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.48 2003/05/15 14:50:02 itojun Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.49 2003/07/13 12:29:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.48 2003/05/15 14:50:02 itojun Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.49 2003/07/13 12:29:20 itojun Exp $");
 #endif
 
 
@@ -283,7 +283,7 @@ bpf_open(void)
 
 	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void)sprintf(device, "/dev/bpf%d", n++);
+		(void)snprintf(device, sizeof(device), "/dev/bpf%d", n++);
 		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
 
@@ -527,7 +527,7 @@ rarp_bootable(u_int32_t addr)
 	char    ipname[9];
 	static DIR *dd = 0;
 
-	(void)sprintf(ipname, "%08X", addr);
+	(void)snprintf(ipname, sizeof(ipname), "%08X", addr);
 	/* If directory is already open, rewind it.  Otherwise, open it. */
 	if (d = dd)
 		rewinddir(d);

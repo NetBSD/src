@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.14 2002/06/05 10:56:19 lukem Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.15 2003/07/13 12:36:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,9 +76,10 @@ mkdevstr(dev_t d)
 	static char buf[32];
 
 	if (d == NODEV)
-		(void)sprintf(buf, "NODEV");
+		(void)snprintf(buf, sizeof(buf), "NODEV");
 	else
-		(void)sprintf(buf, "makedev(%d, %d)", major(d), minor(d));
+		(void)snprintf(buf, sizeof(buf), "makedev(%d, %d)",
+		    major(d), minor(d));
 	return buf;
 }
 
@@ -90,8 +91,8 @@ mkoneswap(struct config *cf)
 	char fname[200], tname[200];
 	char specinfo[200];
 
-	(void)sprintf(fname, "swap%s.c", cf->cf_name);
-	(void)sprintf(tname, "swap%s.c.tmp", cf->cf_name);
+	(void)snprintf(fname, sizeof(fname), "swap%s.c", cf->cf_name);
+	(void)snprintf(tname, sizeof(tname), "swap%s.c.tmp", cf->cf_name);
 	if ((fp = fopen(tname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
 		    fname, strerror(errno));
@@ -107,9 +108,10 @@ mkoneswap(struct config *cf)
 	 */
 	nv = cf->cf_root;
 	if (cf->cf_root->nv_str == s_qmark)
-		strcpy(specinfo, "NULL");
+		strlcpy(specinfo, "NULL", sizeof(specinfo));
 	else
-		sprintf(specinfo, "\"%s\"", cf->cf_root->nv_str);
+		snprintf(specinfo, sizeof(specinfo), "\"%s\"",
+		    cf->cf_root->nv_str);
 	if (fprintf(fp, "const char *rootspec = %s;\n", specinfo) < 0)
 		goto wrerror;
 	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n\n",
@@ -122,9 +124,9 @@ mkoneswap(struct config *cf)
 	 */
 	nv = cf->cf_dump;
 	if (cf->cf_dump == NULL)
-		strcpy(specinfo, "NULL");
+		strlcpy(specinfo, "NULL", sizeof(specinfo));
 	else
-		sprintf(specinfo, "\"%s\"", cf->cf_dump->nv_str);
+		snprintf(specinfo, sizeof(specinfo), "\"%s\"", cf->cf_dump->nv_str);
 	if (fprintf(fp, "const char *dumpspec = %s;\n", specinfo) < 0)
 		goto wrerror;
 	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n\n",
@@ -136,9 +138,10 @@ mkoneswap(struct config *cf)
 	 * Emit the root file system.
 	 */
 	if (cf->cf_fstype == NULL)
-		strcpy(specinfo, "NULL");
+		strlcpy(specinfo, "NULL", sizeof(specinfo));
 	else {
-		sprintf(specinfo, "%s_mountroot", cf->cf_fstype);
+		snprintf(specinfo, sizeof(specinfo), "%s_mountroot",
+		    cf->cf_fstype);
 		if (fprintf(fp, "int %s(void);\n", specinfo) < 0)
 			goto wrerror;
 	}
