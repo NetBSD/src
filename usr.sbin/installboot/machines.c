@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.15 2003/04/15 14:22:13 dsl Exp $	*/
+/*	$NetBSD: machines.c,v 1.16 2003/07/27 07:51:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: machines.c,v 1.16 2003/07/27 07:51:40 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/types.h>
 #include "installboot.h"
