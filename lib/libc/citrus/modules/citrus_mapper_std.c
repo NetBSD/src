@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.4 2004/12/21 11:25:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.3 2003/07/12 15:39:20 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.4 2004/12/21 11:25:43 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -221,7 +221,7 @@ do {							\
 }
 
 typedef int (*initfunc_t)(struct _citrus_mapper_std *);
-static struct {
+static const struct {
 	const char			*t_name;
 	initfunc_t			t_init;
 } types[] = {

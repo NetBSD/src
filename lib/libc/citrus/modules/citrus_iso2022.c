@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.11 2004/01/02 12:27:41 itojun Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.12 2004/12/21 11:25:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.11 2004/01/02 12:27:41 itojun Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.12 2004/12/21 11:25:43 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -469,7 +469,7 @@ _citrus_ISO2022_encoding_module_uninit(_ISO2022EncodingInfo *ei)
 #define	ECMA	-1
 #define	INTERM	-2
 #define	OECMA	-3
-static struct seqtable {
+static const struct seqtable {
 	int type;
 	int csoff;
 	int finaloff;
@@ -567,7 +567,7 @@ _ISO2022_sgetwchar(_ISO2022EncodingInfo * __restrict ei,
 {
 	wchar_t wchar = 0;
 	int cur;
-	struct seqtable *sp;
+	const struct seqtable *sp;
 	int nmatch;
 	int i;
 
