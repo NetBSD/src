@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.12 2003/01/03 13:40:06 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.13 2003/01/03 14:47:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.12 2003/01/03 13:40:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.13 2003/01/03 14:47:27 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ darwin_e_proc_fork(p, parent)
 	len = sizeof(struct darwin_emuldata) - sizeof(struct mach_emuldata);
 	(void)memcpy(ed1, ed2, len);
 
-	if (ded2->ded_fakepid == 1) {
+	if ((ded2->ded_fakepid == 1) && (darwin_init_pid != 0)) {
 		darwin_init_pid = 0;
 		ded1->ded_fakepid = 2;
 	} else {
@@ -259,9 +259,9 @@ darwin_e_proc_init(p, vmspace)
 		p->p_emuldata = malloc(sizeof(struct darwin_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
-		ded = (struct darwin_emuldata *)p->p_emuldata;
-		ded->ded_fakepid = 0;
 	}
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+	ded->ded_fakepid = 0;
 
 	mach_e_proc_init(p, vmspace);
 
