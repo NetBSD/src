@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.12 1998/08/25 20:59:37 ross Exp $	*/
+/*	$NetBSD: finger.c,v 1.13 1998/12/19 15:59:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.12 1998/08/25 20:59:37 ross Exp $");
+__RCSID("$NetBSD: finger.c,v 1.13 1998/12/19 15:59:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ userlist(argc, argv)
 
 	/* Pull out all network requests. */
 	for (ap = p = argv, np = nargv; *p; ++p)
-		if (index(*p, '@'))
+		if (strchr(*p, '@'))
 			*np++ = *p;
 		else
 			*ap++ = *p;
