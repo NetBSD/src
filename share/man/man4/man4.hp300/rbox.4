@@ -1,4 +1,4 @@
-.\"	$NetBSD: rbox.4,v 1.1 2001/09/11 06:30:05 gmcgarry Exp $
+.\"	$NetBSD: rbox.4,v 1.2 2002/01/15 01:37:10 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,22 @@ mapped, the frame buffer structure is accessible.  The structure describing
 the 98720 is defined in
 .Pa hpdev/grf_rbreg.h .
 .El
-.Sh EXAMPLE
+.Sh FILES
+.Bl -tag -width /dev/MAKEDEV.hpux -compact
+.It Pa /dev/grf?
+.Bx
+special file
+.It Pa /dev/crt98720
+.It Pa /dev/ocrt98720
+.Tn HP-UX
+.Em starbase
+special files
+.It Pa /dev/MAKEDEV.hpux
+script for creating
+.Tn HP-UX
+special files
+.El
+.Sh EXAMPLES
 This is a short segment of code showing how the device is opened and mapped
 into user process address space assuming that it is grf0:
 .Bd -literal
@@ -133,21 +148,6 @@ if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
 rbox = (rboxfb *) Addr;                         /* Control Registers   */
 frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/MAKEDEV.hpux -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt98720
-.It Pa /dev/ocrt98720
-.Tn HP-UX
-.Em starbase
-special files
-.It Pa /dev/MAKEDEV.hpux
-script for creating
-.Tn HP-UX
-special files
-.El
 .Sh DIAGNOSTICS
 None under
 .Bx .
@@ -166,8 +166,8 @@ Invalid ioctl specification.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ite 4 ,
-.Xr grf 4
+.Xr grf 4 ,
+.Xr ite 4
 .Pp
 For extensive code examples using the
 Renaissance, see the X device dependent source.
