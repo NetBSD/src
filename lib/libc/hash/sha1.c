@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.7 2001/03/19 03:14:00 simonb Exp $	*/
+/*	$NetBSD: sha1.c,v 1.8 2002/03/31 12:58:55 bjh21 Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -29,6 +29,12 @@
 #endif
 
 #include <sys/sha1.h>
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_SHA1_H
 
 /*
  * XXX Kludge until there is resolution regarding mem*() functions
@@ -277,3 +283,5 @@ void SHA1Final(digest, context)
 		((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
 }
+
+#endif /* HAVE_SHA1_H */

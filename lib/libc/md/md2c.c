@@ -1,4 +1,4 @@
-/*	$NetBSD: md2c.c,v 1.2 2001/03/20 11:47:44 augustss Exp $	*/
+/*	$NetBSD: md2c.c,v 1.3 2002/03/31 12:58:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@
 #include <assert.h>
 #include <md2.h>
 #include <string.h>
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_MD2_H
 
 /* cut-n-pasted from rfc1319 */
 static unsigned char S[256] = {
@@ -177,3 +183,5 @@ MD2Transform(context)
 	/* reset input pointer */
 	context->i = 16;
 }
+
+#endif /* !HAVE_MD2_H */
