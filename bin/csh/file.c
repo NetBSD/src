@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.15 1998/12/26 02:11:39 itohy Exp $	*/
+/*	$NetBSD: file.c,v 1.16 1999/03/23 09:29:51 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.15 1998/12/26 02:11:39 itohy Exp $");
+__RCSID("$NetBSD: file.c,v 1.16 1999/03/23 09:29:51 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,12 +47,12 @@ __RCSID("$NetBSD: file.c,v 1.15 1998/12/26 02:11:39 itohy Exp $");
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/tty.h>
 #include <termios.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/tty.h>
 #ifndef SHORT_STRINGS
 #include <string.h>
 #endif /* SHORT_STRINGS */
@@ -229,7 +229,7 @@ pushback(string)
 		    svchars[nsv++] = c;
 		    i--;	/* try this comparison with the next char */
 		} else
-		    break;	/* too much */
+		    break;	/* too many */
 	    }
 	}
     }
