@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.1.1.1 1994/02/04 21:41:32 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/12/22 10:27:12 cgd Exp $
 
 PROG=	identd
 SRCS=	config.c identd.c netbsd.c parse.c proxy.c version.c
-MAN8=	identd.0
+MAN=	identd.8
 
 LDADD=	-lkvm
 DPADD=	${LIBKVM}

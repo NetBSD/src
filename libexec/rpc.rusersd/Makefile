@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.9 1994/02/16 01:06:26 jtc Exp $
+#	$Id: Makefile,v 1.10 1994/12/22 10:27:55 cgd Exp $
 
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c
-MAN8 =	rpc.rusersd.0
+MAN =	rpc.rusersd.8
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

@@ -3,5 +3,5 @@
 .PATH: ${.CURDIR}/db/man
 
 # mpool.3
-MAN3+=	btree.0 dbopen.0 hash.0 recno.0
+MAN+=	btree.3 dbopen.3 hash.3 recno.3
 MLINKS+= dbopen.3 db.3

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/20/91
-#	$Id: Makefile.inc,v 1.6 1993/10/19 00:36:16 cgd Exp $
+#	$Id: Makefile.inc,v 1.7 1994/12/22 10:14:41 cgd Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -13,7 +13,7 @@ SRCS+=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
 	svc_tcp.c svc_udp.c xdr.c xdr_array.c xdr_float.c xdr_mem.c \
 	xdr_rec.c xdr_reference.c xdr_stdio.c
 
-MAN3+=	bindresvport.0 getrpcent.0 getrpcport.0 rpc.0 xdr.0
+MAN+=	bindresvport.3 getrpcent.3 getrpcport.3 rpc.3 xdr.3
 MLINKS+=	getrpcport.3 getrpcbyname.3 \
 		getrpcport.3 getrpcbynumber.3 \
 		getrpcport.3 endrpcent.3 \
