@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.20 1999/06/21 02:55:27 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.21 1999/06/22 00:43:57 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -287,8 +287,12 @@ launch_subwin(actionwin, args, win, display)
 	rtt.c_lflag &= ~ECHO; 
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
 
+	/* ignore tty signals until we're done with subprocess setup */
+	ttysig_ignore = 1;
+
 	switch(child=fork()) {
 	case -1:
+		ttysig_ignore = 0;
 		return -1;
 		break;
 	case 0:
@@ -325,7 +329,13 @@ launch_subwin(actionwin, args, win, display)
 		warn("execvp %s", argzero);
 		_exit(EXIT_FAILURE);
 		break; /* end of child */
-	default: break;
+	default:
+		/*
+		 * we've set up the subprocess.  forward tty signals to its			 * process group.
+		 */
+		ttysig_forward = child;
+		ttysig_ignore = 0;
+		break;
 	}
 	close(dataflow[1]);
 	FD_ZERO(&active_fd_set);
@@ -342,6 +352,8 @@ launch_subwin(actionwin, args, win, display)
 		}
 		read_fd_set = active_fd_set;
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+			if (errno == EINTR)
+				goto loop;
 			perror("select");
 			if (logging)
 				(void)fprintf(log, "select failure: %s\n", strerror(errno));
@@ -376,6 +388,7 @@ launch_subwin(actionwin, args, win, display)
 				}
 			}
 		}
+loop:
 		pid = wait4(child, &status, WNOHANG, 0);
  		if (pid == child && (WIFEXITED(status) || WIFSIGNALED(status)))
 			break;
@@ -386,7 +399,11 @@ launch_subwin(actionwin, args, win, display)
 	if (logging)
 		fflush(log);
 
+	/* from here on out, we take tty signals ourselves */
+	ttysig_forward = 0;
+
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
+
 	if (WIFEXITED(status))
 		return(WEXITSTATUS(status));
 	else if (WIFSIGNALED(status))
