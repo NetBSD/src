@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiuvar.h,v 1.2 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: vrgiuvar.h,v 1.3 2001/04/30 11:42:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,24 +33,6 @@
  * SUCH DAMAGE.
  *
  */
-typedef void *vrgiu_chipset_tag_t;
-
-struct vrgiu_function_tag {
-	int (*gf_portread) __P((vrgiu_chipset_tag_t, int));
-	int (*gf_portwrite) __P((vrgiu_chipset_tag_t, int, int));
-	u_int32_t (*gf_regread_4) __P((vrgiu_chipset_tag_t, bus_addr_t));
-	void (*gf_regwrite_4) __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
-	void *(*gf_intr_establish) __P((vrgiu_chipset_tag_t, int, int, int, int (*)(void *), void*));
-	void (*gf_intr_disestablish) __P((vrgiu_chipset_tag_t, void*));
-};
-typedef struct vrgiu_function_tag *vrgiu_function_tag_t;
-
-struct gpbus_attach_args {
-	char *gpa_busname;
-	vrgiu_chipset_tag_t gpa_gc;
-	vrgiu_function_tag_t gpa_gf;
-};
-
 #define MAX_GPIO_OUT 50    /* port 32:49 are output only port */
 #define MAX_GPIO_INOUT 32  /* input/output port(0:31) */
 
@@ -61,6 +43,7 @@ struct vrgiu_intr_entry {
 	TAILQ_ENTRY(vrgiu_intr_entry) ih_link;
 };
 
+struct hpcio_ops;
 struct vrgiu_softc {
 	struct	device sc_dev;
 	bus_space_tag_t sc_iot;
@@ -71,30 +54,10 @@ struct vrgiu_softc {
 	u_int32_t sc_intr_mask;
 	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
 	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
+	struct hpcio_chip sc_iochip;
 	/* Platform dependent port mapping XXX Should not be in here? */
 	int sc_gpio_map[MAX_GPIO_OUT];
 };
-
-/* Interrupt options. */
-#define VRGIU_INTR_EDGE		(1<<2)
-#define VRGIU_INTR_LEVEL	(0<<2)
-#define VRGIU_INTR_HIGH		(1<<1)
-#define VRGIU_INTR_LOW		(0<<1)
-#define VRGIU_INTR_HOLD		(1<<0)
-#define VRGIU_INTR_THROUGH	(0<<0)
-
-#define VRGIU_INTR_LEVEL_HIGH_HOLD	\
-		(VRGIU_INTR_LEVEL|VRGIU_INTR_HIGH|VRGIU_INTR_HOLD)
-#define VRGIU_INTR_LEVEL_HIGH_THROUGH	\
-		(VRGIU_INTR_LEVEL|VRGIU_INTR_HIGH|VRGIU_INTR_THROUGH)
-#define VRGIU_INTR_LEVEL_LOW_HOLD	\
-		(VRGIU_INTR_LEVEL|VRGIU_INTR_LOW|VRGIU_INTR_HOLD)
-#define VRGIU_INTR_LEVEL_LOW_THROUGH	\
-		(VRGIU_INTR_LEVEL|VRGIU_INTR_LOW|VRGIU_INTR_THROUGH)
-#define VRGIU_INTR_EDGE_HOLD	\
-		(VRGIU_INTR_EDGE|VRGIU_INTR_HOLD)
-#define VRGIU_INTR_EDGE_THROUGH	\
-		(VRGIU_INTR_EDGE|VRGIU_INTR_THROUGH)
 
 /* Before autoconfiguration */
 void __vrgiu_out __P((int, int));
