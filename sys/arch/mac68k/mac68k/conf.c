@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1996/05/05 06:18:19 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1996/05/05 16:39:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,7 @@ bdev_decl(rd);
 /* No cdev for rd */
 
 #ifdef LKM
-int	lkmenodev();
+int	lkmenodev __P((void));
 #else
 #define lkmenodev	enodev
 #endif
