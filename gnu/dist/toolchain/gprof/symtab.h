@@ -1,6 +1,6 @@
 /* symtab.h
-   
-   Copyright (C) 2000  Free Software Foundation, Inc.
+
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    to map code-addresses into source-code information.  Source-code
    information can be any combination of: (i) function-name, (ii)
    source file-name, and (iii) source line number.
-  
+
    The symbol table is used to map addresses into source-code
    information.  */
 
@@ -41,11 +41,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 typedef struct sym
   {
     /* Common information:
-      
+
        In the symbol-table, fields ADDR and FUNC_NAME are guaranteed
        to contain valid information.  FILE may be 0, if unknown and
        LINE_NUM maybe 0 if unknown.  */
-    
+
     bfd_vma addr;		/* Address of entry point.  */
     bfd_vma end_addr;		/* End-address.  */
     const char *name;		/* Name of function this sym is from.  */

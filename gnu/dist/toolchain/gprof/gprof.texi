@@ -1,5 +1,7 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename gprof.info
+@c Copyright 1988, 1992, 1993, 1998, 1999, 2000, 2001
+@c Free Software Foundation, Inc.
 @settitle GNU gprof
 @setchapternewpage odd
 
