@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.4 1993/08/14 19:20:58 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/10/01 23:56:08 cgd Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
@@ -31,8 +31,8 @@ SRCS+=	cabs.c cbrt.c support.c
 HARDWARE=mc68881
 .PATH:	${.CURDIR}/mc68881 ${.CURDIR}/common_source ${.CURDIR}/ieee
 # common_source
-SRCS+=	acosh.c asinh.c erf.c exp__D.c exp__E.c fmod.c lgamma.c j0.c j1.c \
-	log__D.c log__L.c logtab.c pow.c
+SRCS+=	acosh.c asinh.c erf.c exp__D.c exp__E.c fmod.c gamma.c lgamma.c j0.c \
+	j1.c log__D.c log__L.c logtab.c pow.c
 # mc68881
 SRCS+=	asincos.s atan.s atan2.c atanh.s cosh.s exp.s expm1.s floor.s \
 	log.s log10.s log1p.s sincos.s sinh.s sqrt.s support.s tan.s tanh.s
@@ -46,8 +46,8 @@ HARDWARE=i387
 CFLAGS+= -Dnational
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # ieee
@@ -60,8 +60,8 @@ HARDWARE=${MACHINE}
 CFLAGS+= -Dnational
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # ieee
@@ -78,8 +78,8 @@ HARDWARE=${MACHINE}
 	${.CURDIR}/ieee
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # national
@@ -93,8 +93,8 @@ HARDWARE=${MACHINE}
 .PATH:  ${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # XXX should do sqrt & support functions in assembly
 # common
 SRCS+=	atan2.c sincos.c tan.c
@@ -107,8 +107,8 @@ HARDWARE=${MACHINE}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/tahoe \
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # tahoe
@@ -120,8 +120,8 @@ HARDWARE=${MACHINE}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/vax
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
-	exp__E.c expm1.c floor.c fmod.c lgamma.c j0.c j1.c jn.c log.c log10.c \
-	log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
+	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
+	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # vax
 SRCS+=	atan2.s cabs.s cbrt.s sqrt.s sincos.s tan.s argred.s support.s \
 	infnan.s
