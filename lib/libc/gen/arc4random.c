@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.2 2002/05/24 04:53:07 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.3 2002/06/14 03:11:24 itojun Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ arc4_stir(as)
 		struct timeval tv;
 		u_int rnd[(128 - sizeof(struct timeval)) / sizeof(u_int)];
 	}       rdat;
+	int	n;
 
 	gettimeofday(&rdat.tv, NULL);
 	fd = open("/dev/urandom", O_RDONLY);
@@ -124,6 +125,14 @@ arc4_stir(as)
 	 * whatever was on the stack... */
 
 	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
+
+	/*
+	 * Throw away the first N words of output, as suggested in the
+	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
+	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
+	 */
+	for (n = 0; n < 256 * 4; n++)
+		arc4_getbyte(as);
 }
 
 static inline u_int8_t
