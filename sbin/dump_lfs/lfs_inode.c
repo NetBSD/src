@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.3 2001/07/13 20:30:18 perseant Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.4 2001/11/02 05:44:46 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.3 2001/07/13 20:30:18 perseant Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.4 2001/11/02 05:44:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,20 +80,20 @@ struct lfs *sblock;
  * Determine whether byte-swapping needs to be done on this filesystem.
  */
 int
-fs_read_sblock(char *sblock_buf)
+fs_read_sblock(char *superblock)
 {
 	char tbuf[LFS_SBPAD];
-	int needswap = 0;
+	int ns = 0;
 	off_t sboff = LFS_LABELPAD;
 
-	sblock = (struct lfs *)sblock_buf;
+	sblock = (struct lfs *)superblock;
 	while(1) {
 		rawread(sboff, (char *) sblock, LFS_SBPAD);
 		if (sblock->lfs_magic != LFS_MAGIC) {
 #ifdef notyet
 			if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
 				lfs_sb_swap(sblock, sblock, 0);
-				needswap = 1;
+				ns = 1;
 			} else
 #endif
 				quit("bad sblock magic number\n");
@@ -110,7 +110,7 @@ fs_read_sblock(char *sblock_buf)
 	 */
 	rawread(fsbtob(sblock, sblock->lfs_sboffs[1]), tbuf, LFS_SBPAD);
 #ifdef notyet
-	if (needswap)
+	if (ns)
 		lfs_sb_swap(tbuf, tbuf, 0);
 #endif
 	if (((struct lfs *)tbuf)->lfs_magic != LFS_MAGIC) {
@@ -134,7 +134,7 @@ fs_read_sblock(char *sblock_buf)
 		    (unsigned long)(btodb(sboff)));
 	}
 
-	return needswap;
+	return ns;
 }
 
 /*
