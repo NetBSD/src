@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.7 2001/07/27 15:51:14 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.8 2001/07/27 16:16:34 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -30,7 +30,7 @@
  *
  * Ported from i91u.c, provided by Initio Corporation, which credits:
  *
- * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
+ * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
  *
  * FreeBSD
  *
@@ -369,7 +369,7 @@ iha_attach(sc)
 	conf = &eeprom.adapter[0];
 
 	/*
-	 * fill in the rest of the IHA_SOFTC fields
+	 * fill in the rest of the iha_softc fields
 	 */
 	sc->sc_id = CFG_ID(conf->config1);
 	sc->sc_semaph = ~SEMAPH_IN_MAIN;
