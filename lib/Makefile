@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 1999/06/07 00:53:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.53 1999/07/01 20:15:26 itojun Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -15,5 +15,8 @@ SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit libkvm \
 	make(clean) || make(cleandir) || make(distclean)
 SUBDIR+=	libtelnet
 .endif
+
+# IPv6/IPsec
+SUBDIR+=	libipsec
 
 .include <bsd.subdir.mk>
