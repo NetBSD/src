@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.12 2000/10/10 20:24:52 is Exp $	*/
+/*	$NetBSD: fat.c,v 1.13 2001/01/05 01:41:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.12 2000/10/10 20:24:52 is Exp $");
+__RCSID("$NetBSD: fat.c,v 1.13 2001/01/05 01:41:34 lukem Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -186,12 +186,14 @@ readfat(fs, boot, no, fp)
 				      buffer[4], buffer[5], buffer[6], buffer[7]);
 				break;
 			case CLUST16_MASK:
-				pwarn("%s (%02x%02x%02x%02x)\n", "FAT starts with odd byte sequence",
-				      buffer[0], buffer[1], buffer[2], buffer[3]);
+				pwarn("%s (%02x%02x%02x%02x)\n",
+				    "FAT starts with odd byte sequence",
+				    buffer[0], buffer[1], buffer[2], buffer[3]);
 				break;
 			default:
-				pwarn("%s (%02x%02x%02x)\n", "FAT starts with odd byte sequence",
-				      buffer[0], buffer[1], buffer[2]);
+				pwarn("%s (%02x%02x%02x)\n",
+				    "FAT starts with odd byte sequence",
+				    buffer[0], buffer[1], buffer[2]);
 				break;
 			}
 
