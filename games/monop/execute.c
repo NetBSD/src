@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.8 2001/08/29 18:23:44 jsm Exp $	*/
+/*	$NetBSD: execute.c,v 1.9 2003/04/21 01:25:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.8 2001/08/29 18:23:44 jsm Exp $");
+__RCSID("$NetBSD: execute.c,v 1.9 2003/04/21 01:25:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ typedef	struct tm	TIME;
 static char	buf[257];
 
 static bool	new_play;	/* set if move on to new player		*/
+extern void 	*heapstart;
 
 static void show_move __P((void));
 
@@ -209,7 +210,7 @@ save()
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
-	start = 0;
+	start = heapstart;
 	end = sbrk(0);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
@@ -258,7 +259,7 @@ rest_f(file)
 		perror(file);
 		exit(1);
 	}
-	start = 0;
+	start = heapstart;
 	brk(end = start + sbuf.st_size);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
