@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
+/*	$NetBSD: string.h,v 1.7 1997/07/13 18:02:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@ char	*strrchr __P((const char *, int));
 size_t	 strspn __P((const char *, const char *));
 char	*strstr __P((const char *, const char *));
 char	*strtok __P((char *, const char *));
+char	*strtok_r __P((char *, const char *, char **));
 size_t	 strxfrm __P((char *, const char *, size_t));
 
 /* Nonstandard routines */
