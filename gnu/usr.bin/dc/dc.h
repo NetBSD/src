@@ -1,7 +1,7 @@
 /* 
  * Header file for dc routines
  *
- * Copyright (C) 1994 Free Software Foundation, Inc.
+ * Copyright (C) 1994, 1997 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,14 +53,11 @@ typedef enum {DC_FALSE, DC_TRUE} dc_boolean;
 /* type discriminant for dc_data */
 typedef enum {DC_UNINITIALIZED, DC_NUMBER, DC_STRING} dc_value_type;
 
-/* generic pointer for information hiding */
-typedef void *Opaque;
+/* only numeric.c knows what dc_num's *really* look like */
+typedef struct dc_number *dc_num;
 
-/* only dc-math.c knows what dc_num's *really* look like */
-typedef Opaque dc_num;
-
-/* only dc-string.c knows what dc_str's *really* look like */
-typedef Opaque dc_str;
+/* only string.c knows what dc_str's *really* look like */
+typedef struct dc_string *dc_str;
 
 
 /* except for the two implementation-specific modules, all
