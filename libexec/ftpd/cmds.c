@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.9 2000/12/04 10:50:39 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.10 2000/12/18 02:32:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.9 2000/12/04 10:50:39 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.10 2000/12/18 02:32:50 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ delete(const char *name)
 		perror_reply(550, name);
 	} else
 		ack("DELE");
-	logcmd("delete", -1, name, NULL, NULL, p);
+	logxfer("delete", -1, name, NULL, NULL, p);
 }
 
 void
@@ -219,7 +219,7 @@ makedir(const char *name)
 		perror_reply(550, name);
 	} else
 		replydirname(name, "directory created.");
-	logcmd("mkdir", -1, name, NULL, NULL, p);
+	logxfer("mkdir", -1, name, NULL, NULL, p);
 }
 
 void
@@ -412,7 +412,7 @@ removedir(const char *name)
 		perror_reply(550, name);
 	} else
 		ack("RMD");
-	logcmd("rmdir", -1, name, NULL, NULL, p);
+	logxfer("rmdir", -1, name, NULL, NULL, p);
 }
 
 char *
@@ -438,7 +438,7 @@ renamecmd(const char *from, const char *to)
 		perror_reply(550, "rename");
 	} else
 		ack("RNTO");
-	logcmd("rename", -1, from, to, NULL, p);
+	logxfer("rename", -1, from, to, NULL, p);
 }
 
 void
@@ -446,14 +446,17 @@ sizecmd(const char *filename)
 {
 	switch (type) {
 	case TYPE_L:
-	case TYPE_I: {
+	case TYPE_I:
+	    {
 		struct stat stbuf;
 		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
 			reply(550, "%s: not a plain file.", filename);
 		else
 			reply(213, ULLF, (ULLT)stbuf.st_size);
-		break; }
-	case TYPE_A: {
+		break;
+	    }
+	case TYPE_A:
+	    {
 		FILE *fin;
 		int c;
 		off_t count;
@@ -478,7 +481,8 @@ sizecmd(const char *filename)
 		(void) fclose(fin);
 
 		reply(213, LLF, (LLT)count);
-		break; }
+		break;
+	    }
 	default:
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
 	}
