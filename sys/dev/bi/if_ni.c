@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.18 2002/10/02 16:33:38 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.19 2003/01/15 21:51:47 bouyer Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.18 2002/10/02 16:33:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.19 2003/01/15 21:51:47 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,6 +152,8 @@ static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
 static	int failtest(struct ni_softc *, int, int, int, char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
+
+static char *padbuf = NULL;
 
 CFATTACH_DECL(ni, sizeof(struct ni_softc),
     nimatch, niattach, NULL, NULL);
@@ -471,6 +473,16 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	printf("%s: hardware address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
+	if (padbuf == NULL) {
+		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
+		    M_ZERO | M_NOWAIT);
+		if (padbuf == NULL) {
+			printf("%s: can't allocate pad buffer\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
 	/*
 	 * Attach the interface.
 	 */
@@ -544,6 +556,8 @@ nistart(ifp)
 		for (m0 = m, cnt = 0; m0; m0 = m0->m_next)
 			if (m0->m_len)
 				cnt++;
+		if (if m->m_pkthdr.len < ETHER_MIN_LEN)
+			cnt++;
 		if (cnt > NTXFRAGS)
 			panic("nistart"); /* XXX */
 
@@ -566,13 +580,23 @@ nistart(ifp)
 			bdp++;
 			i++;
 		}
+		if (mlen < ETHER_MIN_LEN) {
+			bdp->nb_status = ((u_int32_t)padbuf & NIBD_OFFSET) |
+			    NIBD_VALID;
+			bdp->nb_pte = (u_int32_t)kvtopte(padbuf);
+			bdp->nb_len = ETHER_MIN_LEN - mlen;
+			data->bufs[i]._offset = 0;
+			data->bufs[i]._len = bdp->nb_len;
+			data->bufs[i]._index |= NIDG_CHAIN;
+			mlen += bdp->nb_len;
+			bdp++;
+			i++;
+		}
 		data->nd_opcode = BVP_DGRAM;
 		data->nd_pad3 = 1;
 		data->nd_ptdbidx = 1;
 		data->nd_len = 10 + i * 8;
 		data->bufs[i - 1]._index &= ~NIDG_CHAIN;
-		if (mlen < 64)
-			data->bufs[i - 1]._len = bdp[-1].nb_len += (64 - mlen);
 		data->nd_cmdref = (u_int32_t)m;
 #ifdef DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
