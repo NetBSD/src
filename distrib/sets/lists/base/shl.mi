@@ -1,11 +1,11 @@
-# $NetBSD: shl.mi,v 1.84 2000/07/08 13:47:34 kleink Exp $
+# $NetBSD: shl.mi,v 1.85 2000/07/17 02:21:18 mrg Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libasn1.so.2.0
 ./usr/lib/libbz2.so.0.0
 ./usr/lib/libc.so.12.64
 ./usr/lib/libcom_err.so.3.0
 ./usr/lib/libcrypt.so.0.0
-./usr/lib/libcrypto.so.0.1
+./usr/lib/libcrypto.so.0.2
 ./usr/lib/libcurses.so.3.6
 ./usr/lib/libdes.so.5.1
 ./usr/lib/libedit.so.2.3
