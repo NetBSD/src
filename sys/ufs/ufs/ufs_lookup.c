@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.22 1999/07/30 01:55:38 mycroft Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.23 1999/08/04 18:07:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -614,12 +614,13 @@ found:
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if (error = vn_lock(pdp, LK_EXCLUSIVE))) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		VREF(vdp);	/* we want ourself, ie "." */
