@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.20 2000/03/30 13:10:06 augustss Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.21 2001/02/20 10:38:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -211,6 +211,7 @@ next:
 		m->m_pkthdr.len -= sizeof(struct fddi_header);
 		break;
 	case IFT_PTPSERIAL:
+	case IFT_GIF:
 		/* nothing extra to get from the mbuf */
 		bzero((caddr_t)sh.snh_dhost, sizeof(sh.snh_dhost));
 		bzero((caddr_t)sh.snh_shost, sizeof(sh.snh_shost));
