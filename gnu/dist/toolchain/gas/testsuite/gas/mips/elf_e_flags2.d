@@ -25,3 +25,4 @@ Disassembly of section .text:
   24:	00000000 	nop
   28:	03e00008 	jr	\$ra
   2c:	27bd0028 	addiu	\$sp,\$sp,40
+	...

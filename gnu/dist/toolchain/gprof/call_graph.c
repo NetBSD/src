@@ -1,3 +1,24 @@
+/* call_graph.c  -  Create call graphs.
+
+   Copyright (C) 2000  Free Software Foundation, Inc.
+
+   This file is part of GNU Binutils.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
+
 #include "cg_arcs.h"
 #include "call_graph.h"
 #include "corefile.h"
@@ -28,17 +49,14 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
    
      For normal profiling, is_func will be set on all symbols, so this
      code will do nothing.  */
-
   while (child >= symtab.base && ! child->is_func)
     --child;
 
   if (child < symtab.base)
     return;
 
-  /*
-   * Keep arc if it is on INCL_ARCS table or if the INCL_ARCS table
-   * is empty and it is not in the EXCL_ARCS table.
-   */
+  /* Keep arc if it is on INCL_ARCS table or if the INCL_ARCS table
+     is empty and it is not in the EXCL_ARCS table.  */
   if (sym_id_arc_is_present (&syms[INCL_ARCS], parent, child)
       || (syms[INCL_ARCS].len == 0
 	  && !sym_id_arc_is_present (&syms[EXCL_ARCS], parent, child)))
@@ -51,13 +69,11 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
     }
 }
 
+/* Read a record from file IFP describing an arc in the function
+   call-graph and the count of how many times the arc has been
+   traversed.  FILENAME is the name of file IFP and is provided
+   for formatting error-messages only.  */
 
-/*
- * Read a record from file IFP describing an arc in the function
- * call-graph and the count of how many times the arc has been
- * traversed.  FILENAME is the name of file IFP and is provided
- * for formatting error-messages only.
- */
 void
 DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
 {
@@ -71,22 +87,21 @@ DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
 	       whoami, filename);
       done (1);
     }
+  
   from_pc = get_vma (core_bfd, (bfd_byte *) arc.from_pc);
   self_pc = get_vma (core_bfd, (bfd_byte *) arc.self_pc);
   count = bfd_get_32 (core_bfd, (bfd_byte *) arc.count);
   DBG (SAMPLEDEBUG,
        printf ("[cg_read_rec] frompc 0x%lx selfpc 0x%lx count %lu\n",
 	       (unsigned long) from_pc, (unsigned long) self_pc, count));
-  /* add this arc: */
+  /* Add this arc:  */
   cg_tally (from_pc, self_pc, count);
 }
 
+/* Write all the arcs in the call-graph to file OFP.  FILENAME is
+   the name of OFP and is provided for formatting error-messages
+   only.  */
 
-/*
- * Write all the arcs in the call-graph to file OFP.  FILENAME is
- * the name of OFP and is provided for formatting error-messages
- * only.
- */
 void
 DEFUN (cg_write_arcs, (ofp, filename), FILE * ofp AND const char *filename)
 {
