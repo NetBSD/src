@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.48 2000/10/09 10:14:23 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.49 2001/01/13 23:49:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,7 +358,19 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	jal	_C_LABEL(trap)
 	mtc0	t0, MIPS_COP_0_STATUS
-
+/*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(astpending)	# any pending ast?
+	nop
+	beq	t0, zero, 1f			# if no, skip ast processing
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
 	la	ra, _C_LABEL(mips1_xcpt_return)
 	j	ra				# pretend function return
 	nop
@@ -435,7 +447,19 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  */
 	jal	_C_LABEL(syscall)
 	mtc0	t0, MIPS_COP_0_STATUS
-
+/*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(astpending)	# any pending ast?
+	nop
+	beq	t0, zero, 1f
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
 	la	ra, _C_LABEL(mips1_xcpt_return)
 	j	ra				# pretend function return
 	nop
