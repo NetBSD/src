@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.11 1999/05/19 19:59:04 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.12 1999/05/19 20:34:19 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -299,7 +299,7 @@ fbrcons_init(fb)
 	rc->rc_maxrow = ri->ri_rows;
 	rc->rc_width = ri->ri_emuwidth;
 	rc->rc_height = ri->ri_emuheight;
-	rcons_init(rc);
+	rcons_init(rc, 0);
 
 	/* Hook up virtual console */
 	v_putc = rcons_cnputc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.27 1999/05/15 13:04:03 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.28 1999/05/19 20:34:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -161,7 +161,7 @@ rcons_connect (info)
 	rc.rc_bell = lk_bell;
 	rc.rc_width = ri.ri_width;
 	rc.rc_height = ri.ri_height;
-	rcons_init(&rc);
+	rcons_init(&rc, 1);
 }
 #endif
 
@@ -197,7 +197,7 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	rc.rc_height = width;
 	rc.rc_maxcol = cols;
 	rc.rc_maxrow = rows;
-	rcons_init(&rc);
+	rcons_init(&rc, 1);
 }
 #endif
 
