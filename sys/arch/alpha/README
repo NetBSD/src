@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 1996/04/25 00:11:09 cgd Exp $
+$NetBSD: README,v 1.9 1996/06/13 20:36:04 cgd Exp $
 
 Obtaining NetBSD/Alpha sources and binaries:
 
@@ -21,11 +21,8 @@ Obtaining NetBSD/Alpha sources and binaries:
 		    There are no instructions on how to use these.
 		    Good luck!  8-)
 
-	Binary snapshots include two precompiled kernels available: one
-	generic kernel which will prompt for a disk name to be used as
-	the root device, and one which tries to boot diskless via
-	bootp and NFS.  The generic kernel is included in the rz25
-	disk image.
+	Binary snapshots include a kernel image which is the same
+	as the one on the rz25 disk image.
 
 	The sources provided seperately from the normal NetBSD-current
 	distribution are:
@@ -73,11 +70,6 @@ Installing the NetBSD/Alpha distribution:
 	Boot the Alpha with the NetBSD disk, supplying the boot flag "-s".
 	It should print something like "NetBSD/Alpha Boot program", load
 	the kernel, print a copyright, and print various startup messages.
-	Included among those startup messages will be names (e.g. "sd0",
-	"cd0") for all of the SCSI disks in your system that NetBSD
-	recognizes.  Eventually, you will be prompted for the name of
-	the root device, and should enter the device name (e.g. "sd0")
-	of the device that corresponds to your NetBSD disk.
 
 	After a short while, you should be asked for the name of a shell
 	to use; just hit return.  You're advised to fsck the disk at this
