@@ -199,7 +199,6 @@ file	arch/arm32/arm32/ast.c
 file	arch/arm32/arm32/fault.c
 file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/mem.c
-file	arch/arm32/arm32/scratch.S
 file	arch/arm32/arm32/process_machdep.c
 file	arch/arm32/arm32/machdep.c
 file	arch/arm32/arm32/sys_machdep.c
