@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.257 2004/07/04 15:22:03 christos Exp $
+#	$NetBSD: files.i386,v 1.258 2004/07/08 22:07:48 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -208,10 +208,6 @@ device	p64h2apic
 attach	p64h2apic at pci
 file	arch/i386/pci/p64h2apic.c	p64h2apic
 
-
-
-# Game adapter (joystick)
-file	arch/i386/isa/joy_timer.c	joy
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers

@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.6 2004/02/10 16:43:22 jdolecek Exp $
+#	$NetBSD: files.shark,v 1.7 2004/07/08 22:07:48 drochner Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -48,9 +48,6 @@ file	dev/cninit.c
 
 # ISA DMA glue
 file	arch/shark/isa/isadma_machdep.c		isadma
-
-# Game adapter (joystick)
-file	arch/shark/isa/joy_timer.c		joy
 
 # OFW ISA bus driver.
 include "dev/ofisa/files.ofisa"

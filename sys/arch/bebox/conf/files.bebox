@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.43 2004/03/25 12:40:19 wiz Exp $
+#	$NetBSD: files.bebox,v 1.44 2004/07/08 22:07:47 drochner Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -120,9 +120,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-
-# Game adapter (joystick)
-file	arch/bebox/isa/joy_timer.c	joy
 
 # ISA Plug 'n Play support
 file	arch/bebox/isa/isapnp_machdep.c		isapnp

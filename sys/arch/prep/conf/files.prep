@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.47 2004/06/26 21:51:04 kleink Exp $
+#	$NetBSD: files.prep,v 1.48 2004/07/08 22:07:48 drochner Exp $
 #
 # prep-specific configuration info
 #
@@ -146,9 +146,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 # Floppy disk controller
 device	fd: disk
 attach	fd at fdc
-
-# Game adapter (joystick)
-file	arch/prep/isa/joy_timer.c	joy
 
 device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa

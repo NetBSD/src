@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.32 2004/03/13 17:31:34 bjh21 Exp $
+#	$NetBSD: files.netwinder,v 1.33 2004/07/08 22:07:48 drochner Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -40,9 +40,6 @@ include "dev/ata/files.ata"
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c isadma
-
-# Game adapter (joystick)
-file	arch/arm/footbridge/isa/joy_timer.c	joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
