@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.25.6.1 2005/04/04 17:58:26 tron Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.25.6.2 2005/04/04 18:02:33 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.25.6.1 2005/04/04 17:58:26 tron Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.25.6.2 2005/04/04 18:02:33 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,6 +84,10 @@ __weak_alias(glob,_glob)
 __weak_alias(globfree,_globfree)
 #endif /* __LIBC12_SOURCE__ */
 #endif /* __weak_alias */
+
+#ifdef HAVE_NBTOOL_CONFIG_H
+#define NO_GETPW_R
+#endif
 
 /*
  * XXX: For NetBSD 1.4.x compatibility. (kill me l8r)
@@ -381,13 +385,16 @@ globtilde(pattern, patbuf, patsize, pglob)
 	size_t patsize;
 	glob_t *pglob;
 {
-	struct passwd *pwd, pwres;
+	struct passwd *pwd;
 	const char *h;
 	const Char *p;
 	Char *b;
 	char *d;
 	Char *pend = &patbuf[patsize / sizeof(Char)];
+#ifndef NO_GETPW_R
+	struct passwd pwres;
 	char pwbuf[1024];
+#endif
 
 	pend--;
 
@@ -416,8 +423,12 @@ globtilde(pattern, patbuf, patsize, pglob)
 		 * first and then trying the password file
 		 */
 		if ((h = getenv("HOME")) == NULL) {
+#ifdef NO_GETPW_R
+			if ((pwd = getpwuid(getuid())) == NULL)
+#else
 			if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf),
 			    &pwd) != 0)
+#endif
 				return pattern;
 			else
 				h = pwd->pw_dir;
@@ -427,7 +438,11 @@ globtilde(pattern, patbuf, patsize, pglob)
 		/*
 		 * Expand a ~user
 		 */
+#ifdef NO_GETPW_R
+		if ((pwd = getpwnam(d)) == NULL)
+#else
 		if (getpwnam_r(d, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+#endif
 			return pattern;
 		else
 			h = pwd->pw_dir;
