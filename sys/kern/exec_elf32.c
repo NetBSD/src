@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.15 1996/10/07 18:29:24 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.16 1996/10/07 21:43:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -55,7 +55,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_exec.h>

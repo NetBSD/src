@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.12 1996/10/07 21:43:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -51,7 +51,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 
 #include <compat/sunos/exec.h>
 #include <compat/sunos/sunos.h>
