@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.12 2001/05/17 01:02:17 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.13 2002/03/18 16:00:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.12 2001/05/17 01:02:17 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.13 2002/03/18 16:00:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,7 +66,6 @@ __RCSID("$NetBSD: key.c,v 1.12 2001/05/17 01:02:17 christos Exp $");
  *      1) It is not possible to have one key that is a
  *	   substr of another.
  */
-#include "sys.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -91,8 +90,9 @@ private int		 node__try(EditLine *, key_node_t *, const char *,
     key_value_t *, int);
 private key_node_t	*node__get(int);
 private void		 node__put(EditLine *, key_node_t *);
-private int		 node__delete(EditLine *, key_node_t **, char *);
-private int		 node_lookup(EditLine *, char *, key_node_t *, int);
+private int		 node__delete(EditLine *, key_node_t **, const char *);
+private int		 node_lookup(EditLine *, const char *, key_node_t *,
+    int);
 private int		 node_enum(EditLine *, key_node_t *, int);
 private int		 key__decode_char(char *, int, int);
 
@@ -219,7 +219,7 @@ key_add(EditLine *el, const char *key, key_value_t *val, int ntype)
  *
  */
 protected void
-key_clear(EditLine *el, el_action_t *map, char *in)
+key_clear(EditLine *el, el_action_t *map, const char *in)
 {
 
 	if ((map[(unsigned char)*in] == ED_SEQUENCE_LEAD_IN) &&
@@ -236,7 +236,7 @@ key_clear(EditLine *el, el_action_t *map, char *in)
  *      they exists.
  */
 protected int
-key_delete(EditLine *el, char *key)
+key_delete(EditLine *el, const char *key)
 {
 
 	if (key[0] == '\0') {
@@ -257,7 +257,7 @@ key_delete(EditLine *el, char *key)
  *	Print entire el->el_key.map if null
  */
 protected void
-key_print(EditLine *el, char *key)
+key_print(EditLine *el, const char *key)
 {
 
 	/* do nothing if el->el_key.map is empty and null key specified */
@@ -376,7 +376,7 @@ node__try(EditLine *el, key_node_t *ptr, const char *str, key_value_t *val, int 
  *	Delete node that matches str
  */
 private int
-node__delete(EditLine *el, key_node_t **inptr, char *str)
+node__delete(EditLine *el, key_node_t **inptr, const char *str)
 {
 	key_node_t *ptr;
 	key_node_t *prev_ptr = NULL;
@@ -478,7 +478,7 @@ node__get(int ch)
  *	Print if last node
  */
 private int
-node_lookup(EditLine *el, char *str, key_node_t *ptr, int cnt)
+node_lookup(EditLine *el, const char *str, key_node_t *ptr, int cnt)
 {
 	int ncnt;
 
@@ -568,7 +568,7 @@ node_enum(EditLine *el, key_node_t *ptr, int cnt)
  *	function specified by val
  */
 protected void
-key_kprint(EditLine *el, char *key, key_value_t *val, int ntype)
+key_kprint(EditLine *el, const char *key, key_value_t *val, int ntype)
 {
 	el_bindings_t *fp;
 	char unparsbuf[EL_BUFSIZ];
@@ -644,9 +644,10 @@ key__decode_char(char *buf, int cnt, int ch)
  *	Make a printable version of the ey
  */
 protected char *
-key__decode_str(char *str, char *buf, char *sep)
+key__decode_str(const char *str, char *buf, const char *sep)
 {
-	char *b, *p;
+	char *b;
+	const char *p;
 
 	b = buf;
 	if (sep[0] != '\0')

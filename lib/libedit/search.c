@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.11 2001/01/23 15:55:31 jdolecek Exp $	*/
+/*	$NetBSD: search.c,v 1.12 2002/03/18 16:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,19 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.11 2001/01/23 15:55:31 jdolecek Exp $");
+__RCSID("$NetBSD: search.c,v 1.12 2002/03/18 16:00:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * search.c: History and character search functions
  */
-#include "sys.h"
 #include <stdlib.h>
 #if defined(REGEX)
 #include <regex.h>

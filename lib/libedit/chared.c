@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.14 2001/05/17 01:02:17 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.15 2002/03/18 16:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,20 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.14 2001/05/17 01:02:17 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.15 2002/03/18 16:00:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * chared.c: Character editor utilities
  */
-#include "sys.h"
-
 #include <stdlib.h>
 #include "el.h"
 

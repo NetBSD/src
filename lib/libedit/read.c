@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.20 2001/09/27 19:29:50 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.21 2002/03/18 16:00:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.20 2001/09/27 19:29:50 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.21 2002/03/18 16:00:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: read.c,v 1.20 2001/09/27 19:29:50 christos Exp $");
  * read.c: Clean this junk up! This is horrible code.
  *	   Terminal read functions
  */
-#include "sys.h"
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -217,14 +216,13 @@ read_preread(EditLine *el)
  *	Push a macro
  */
 public void
-el_push(EditLine *el, const char *str)
+el_push(EditLine *el, char *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
-		/* LINTED const cast */
-		ma->macro[ma->level] = (char *) str;
+		ma->macro[ma->level] = str;
 	} else {
 		term_beep(el);
 		term__flush();

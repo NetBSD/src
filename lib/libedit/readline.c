@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.20 2002/03/18 16:00:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.20 2002/03/18 16:00:57 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $");
 #include <limits.h>
 #include "histedit.h"
 #include "readline/readline.h"
-#include "sys.h"
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 
@@ -66,7 +65,11 @@ __RCSID("$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $");
 /* readline compatibility stuff - look at readline sources/documentation */
 /* to see what these variables mean */
 const char *rl_library_version = "EditLine wrapper";
-char *rl_readline_name = "";
+static char empty[] = { '\0' };
+static char expand_chars[] = { ' ', '\t', '\n', '=', '(', '\0' };
+static char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@', '$',
+    '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
+char *rl_readline_name = empty;
 FILE *rl_instream = NULL;
 FILE *rl_outstream = NULL;
 int rl_point = 0;
@@ -78,12 +81,12 @@ int history_length = 0;
 int max_input_history = 0;
 char history_expansion_char = '!';
 char history_subst_char = '^';
-char *history_no_expand_chars = " \t\n=(";
+char *history_no_expand_chars = expand_chars;
 Function *history_inhibit_expansion_function = NULL;
 
 int rl_inhibit_completion = 0;
 int rl_attempted_completion_over = 0;
-char *rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{(";
+char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
 CPFunction *rl_completion_entry_function = NULL;
@@ -251,8 +254,8 @@ rl_initialize(void)
 	 * and rl_line_buffer directly.
 	 */
 	li = el_line(e);
-	/* LINTED const cast */
-	rl_line_buffer = (char *) li->buffer;
+	/* a cheesy way to get rid of const cast. */
+	rl_line_buffer = memchr(li->buffer, *li->buffer, 1);
 	rl_point = rl_end = 0;
 
 	return (0);
@@ -269,6 +272,7 @@ readline(const char *prompt)
 	HistEvent ev;
 	int count;
 	const char *ret;
+	char *buf;
 
 	if (e == NULL || h == NULL)
 		rl_initialize();
@@ -284,23 +288,19 @@ readline(const char *prompt)
 	ret = el_gets(e, &count);
 
 	if (ret && count > 0) {
-		char *foo;
 		int lastidx;
 
-		foo = strdup(ret);
+		buf = strdup(ret);
 		lastidx = count - 1;
-		if (foo[lastidx] == '\n')
-			foo[lastidx] = '\0';
-
-		ret = foo;
+		if (buf[lastidx] == '\n')
+			buf[lastidx] = '\0';
 	} else
-		ret = NULL;
+		buf = NULL;
 
 	history(h, &ev, H_GETSIZE);
 	history_length = ev.num;
 
-	/* LINTED const cast */
-	return (char *) ret;
+	return buf;
 }
 
 /*
@@ -1374,9 +1374,7 @@ static int
 _rl_qsort_string_compare(i1, i2)
 	const void *i1, *i2;
 {
-	/*LINTED const castaway*/
 	const char *s1 = ((const char **)i1)[0];
-	/*LINTED const castaway*/
 	const char *s2 = ((const char **)i2)[0];
 
 	return strcasecmp(s1, s2);

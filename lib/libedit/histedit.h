@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.18 2001/10/09 13:50:30 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.19 2002/03/18 16:00:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  */
 #ifndef _HISTEDIT_H_
 #define	_HISTEDIT_H_
+
+#define	LIBEDIT_MAJOR 2
+#define	LIBEDIT_MINOR 6
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -90,7 +93,7 @@ void		 el_end(EditLine *);
  */
 const char	*el_gets(EditLine *, int *);
 int		 el_getc(EditLine *, char *);
-void		 el_push(EditLine *, const char *);
+void		 el_push(EditLine *, char *);
 
 /*
  * Beep!
@@ -101,7 +104,7 @@ void		 el_beep(EditLine *);
  * High level function internals control
  * Parses argc, argv array and executes builtin editline commands
  */
-int		 el_parse(EditLine *, int, char **);
+int		 el_parse(EditLine *, int, const char **);
 
 /*
  * Low level editline access functions

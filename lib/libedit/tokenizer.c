@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.9 2002/01/31 02:27:31 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.10 2002/03/18 16:01:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,19 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.9 2002/01/31 02:27:31 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.10 2002/03/18 16:01:00 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * tokenize.c: Bourne shell like tokenizer
  */
-#include "sys.h"
 #include <string.h>
 #include <stdlib.h>
 #include "tokenizer.h"
@@ -170,7 +169,7 @@ tok_end(Tokenizer *tok)
  *		 0: Ok
  */
 public int
-tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
+tok_line(Tokenizer *tok, const char *line, int *argc, const char ***argv)
 {
 	const char *ptr;
 
@@ -275,7 +274,7 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 			switch (tok->quote) {
 			case Q_none:
 				tok_finish(tok);
-				*argv = tok->argv;
+				*argv = (const char **)tok->argv;
 				*argc = tok->argc;
 				return (0);
 
@@ -308,7 +307,7 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 					return (3);
 				}
 				tok_finish(tok);
-				*argv = tok->argv;
+				*argv = (const char **)tok->argv;
 				*argc = tok->argc;
 				return (0);
 

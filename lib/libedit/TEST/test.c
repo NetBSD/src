@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.9 2000/09/04 23:36:41 lukem Exp $	*/
+/*	$NetBSD: test.c,v 1.10 2002/03/18 16:01:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -46,14 +46,13 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.9 2000/09/04 23:36:41 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.10 2002/03/18 16:01:02 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
  * test.c: A little test program
  */
-#include "sys.h"
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.8 2001/01/09 17:31:04 jdolecek Exp $	*/
+/*	$NetBSD: sig.c,v 1.9 2002/03/18 16:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.8 2001/01/09 17:31:04 jdolecek Exp $");
+__RCSID("$NetBSD: sig.c,v 1.9 2002/03/18 16:00:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: sig.c,v 1.8 2001/01/09 17:31:04 jdolecek Exp $");
  *	  our policy is to trap all signals, set a good state
  *	  and pass the ball to our caller.
  */
-#include "sys.h"
 #include "el.h"
 #include <stdlib.h>
 
