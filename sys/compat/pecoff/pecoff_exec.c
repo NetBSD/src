@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.16 2002/03/24 05:55:49 oki Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.17 2002/03/25 06:44:46 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.16 2002/03/24 05:55:49 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.17 2002/03/25 06:44:46 kent Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -82,47 +82,6 @@ int exec_pecoff_prep_zmagic (struct proc *p, struct exec_package *epp,
 			     struct coff_filehdr *fp,
 			     struct coff_aouthdr *ap, int peofs);
 
-
-extern struct sysent pecoff_sysent[];
-#ifdef SYSCALL_DEBUG
-extern const char * const pecoff_syscallnames[];
-#endif
-extern char sigcode[], esigcode[];
-#ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern(struct proc *);
-#else
-void syscall(void);
-#endif
-
-const struct emul emul_pecoff = {
-	"pecoff",
-	"/emul/pecoff",
-#ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
-	0,
-	PECOFF_SYS_syscall,
-	PECOFF_SYS_MAXSYSCALL,
-#endif
-	pecoff_sysent,
-#ifdef SYSCALL_DEBUG
-	pecoff_syscallnames,
-#else
-	NULL,
-#endif
-	sendsig,
-	trapsignal,
-	sigcode,
-	esigcode,
-	setregs,
-	NULL,
-	NULL,
-	NULL,
-#ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
-#else
-	syscall,
-#endif
-};
 
 int
 pecoff_copyargs(pack, arginfo, stackp, argp)
