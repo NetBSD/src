@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.11 1993/10/26 11:57:22 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.12 1993/10/26 16:44:11 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -821,34 +821,12 @@ setregs(p, entry, stack, retval)
  */
 
 /*
- * Initialize segments & interrupt table
+ * Initialize segments and descriptor tables
  */
 
-#define	GNULL_SEL	0	/* Null Descriptor */
-#define	GCODE_SEL	1	/* Kernel Code Descriptor */
-#define	GDATA_SEL	2	/* Kernel Data Descriptor */
-#define	GLDT_SEL	3	/* LDT - eventually one per process */
-#define	GTGATE_SEL	4	/* Process task switch gate */
-#define	GPANIC_SEL	5	/* Task state to consider panic from */
-#define	GPROC0_SEL	6	/* Task state process slot zero and up */
-#define	GUSERLDT_SEL	7	/* User LDT */
-#define NGDT 	GUSERLDT_SEL+1
-
 union descriptor gdt[NGDT];
-
-/* local descriptor table */
-#define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
-#define	LSYS5SIGR_SEL	1
-#define	L43BSDCALLS_SEL	2	/* notyet */
-#define	LUCODE_SEL	3
-#define	LUDATA_SEL	4
-#ifdef notyet
-/* seperate stack, es,fs,gs sels ? */
-#define	LPOSIXCALLS_SEL	5	/* notyet */
-#endif
-#define NLDT		LUDATA_SEL+1
-
 union descriptor ldt[NLDT];
+struct gate_descriptor idt[NIDT];
 
 int _default_ldt, currentldt;
 
@@ -978,9 +956,6 @@ struct soft_segment_descriptor ldt_segs[] = {
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ } };
-
-/* interrupt descriptor table */
-struct gate_descriptor idt[NIDT];
 
 void
 setidt(idx, func, typ, dpl)
