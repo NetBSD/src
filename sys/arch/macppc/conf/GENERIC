@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39.2.8 2001/03/28 18:20:26 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.9 2001/04/02 16:28:23 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.8 $"
+#ident 		"GENERIC-$Revision: 1.39.2.9 $"
 
 maxusers	32
 
@@ -142,7 +142,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
@@ -208,7 +208,7 @@ wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
 scsibus* at adv?
-#scsibus* at ahc?
+scsibus* at ahc?
 scsibus* at bha?
 scsibus* at isp?
 scsibus* at esp?
