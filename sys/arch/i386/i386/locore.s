@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.264 2002/10/04 06:43:40 junyoung Exp $	*/
+/*	$NetBSD: locore.s,v 1.265 2002/10/05 21:20:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2263,6 +2263,24 @@ ENTRY(savectx)
 #define	BPTTRAP(a)	ZTRAP(a)
 #endif
 
+/*
+ * Store address of TSS in %eax, given a selector in %eax.
+ * Clobbers %eax, %ecx, %edx, but that's ok for its usage.
+ * This is a bit complicated, but it's done to make as few
+ * assumptions as possible about the validity of the environment.
+ * The GDT and the current and previous TSS are known to be OK,
+ * otherwise we would not be here. The only other thing that needs
+ * to be OK is the cpu_info structure for the current CPU.
+ */
+#define GET_TSS \
+	andl	$0xfff8,%eax				;\
+	addl	CPUVAR(GDT),%eax			;\
+	movl	2(%eax),%edx				;\
+	andl	$0xffffff,%edx				;\
+	movzbl	7(%eax),%eax				;\
+	shl	$24,%eax				;\
+	orl	%edx,%eax
+
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
@@ -2293,7 +2311,7 @@ IDTVEC(trap07)
 	ZTRAP(T_DNA)
 #endif
 IDTVEC(trap08)
-	TRAP(T_DOUBLEFLT)
+	ZTRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
@@ -2387,6 +2405,19 @@ IDTVEC(exceptions)
 	.long	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
 	.long	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
 	.long	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
+
+IDTVEC(tss_trap08)
+1:
+	str	%ax
+	GET_TSS
+	movzwl	(%eax),%eax
+	GET_TSS
+	pushl	$T_DOUBLEFLT
+	pushl	%eax
+	call	_C_LABEL(trap_tss)
+	addl	$12,%esp
+	iret
+	jmp	1b
 
 /*
  * If an error is detected during trap, syscall, or interrupt exit, trap() will
