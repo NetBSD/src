@@ -1,4 +1,4 @@
-# $NetBSD: dot.hdprofile,v 1.7 2000/06/14 17:24:52 cgd Exp $
+# $NetBSD: dot.hdprofile,v 1.8 2000/09/12 15:40:00 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -50,7 +50,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	echo "Mounting filesystems..."
 	mount -a
-	mount -t kernfs /kern /kern
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
