@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.15 1994/10/30 19:11:15 cgd Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.16 1995/01/09 02:45:47 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -443,8 +443,7 @@ kmem_free_wakeup(map, addr, size)
  */
 void
 kmem_init(start, end)
-	vm_offset_t	start;
-	vm_offset_t	end;
+	vm_offset_t start, end;
 {
 	register vm_map_t m;
 
