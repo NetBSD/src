@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1997/05/20 06:01:19 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1997/05/28 04:28:52 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -263,13 +263,10 @@ static TAILQ_HEAD(c_pool_head_struct, c_tmgr_struct) c_pool;
  * Flags used to mark the safety/availability of certain operations or
  * resources.
  */
-static boolean_t
-    pv_initialized = FALSE,          /* PV system has been initialized. */
-    tmp_vpages_inuse = FALSE,        /*
-                                      * Temp. virtual pages are in use.
-                                      * (see pmap_copy_page, et. al.)
-                                      */
-    bootstrap_alloc_enabled = FALSE; /* Safe to use pmap_bootstrap_alloc(). */
+static boolean_t pv_initialized = FALSE, /* PV system has been initialized. */
+       bootstrap_alloc_enabled = FALSE; /*Safe to use pmap_bootstrap_alloc().*/
+u_char tmp_vpage0_inuse,	/* Temporary virtual page 0 is in use */
+       tmp_vpage1_inuse;	/* Temporary virtual page 1 is in use */
 
 /*
  * XXX:  For now, retain the traditional variables that were
@@ -287,7 +284,8 @@ vm_offset_t virtual_contig_end;
 vm_offset_t avail_next;
 
 /* These are used by pmap_copy_page(), etc. */
-vm_offset_t tmp_vpages[2];
+vm_offset_t tmp_vpages[2];	/* Note: tmp_vpage[0] MUST be mapped R/O */
+				/*       tmp_vpage[1] MUST be mapped R/W */
 
 /*
  * The 3/80 is the only member of the sun3x family that has non-contiguous
@@ -836,6 +834,7 @@ pmap_bootstrap(nextva)
 	virtual_avail += NBPG;
 	tmp_vpages[1] = virtual_avail;
 	virtual_avail += NBPG;
+	tmp_vpage0_inuse = tmp_vpage1_inuse = 0;
 
 	/** Initialize the PV system **/
 	pmap_init_pv();
@@ -2465,18 +2464,33 @@ void
 pmap_copy_page(src, dst)
 	vm_offset_t src, dst;
 {
-	PMAP_LOCK();
-	if (tmp_vpages_inuse)
-		panic("pmap_copy_page: temporary vpages are in use.");
-	tmp_vpages_inuse++;
+	int s;
+	vm_offset_t oldsrc, olddst;
 
-	/* XXX - Use non-cached mappings to avoid cache polution? */
+	s = splimp();
+	oldsrc = olddst = 0; /*XXXgcc*/
+	if (tmp_vpage0_inuse++) {
+		oldsrc = pmap_extract_kernel(tmp_vpages[0]);
+	}
+	if (tmp_vpage1_inuse++) {
+		olddst = pmap_extract_kernel(tmp_vpages[1]);
+	}
+	splx(s);
+
+	/* Map pages as non-cacheable to avoid cache polution? */
 	pmap_enter_kernel(tmp_vpages[0], src, VM_PROT_READ);
 	pmap_enter_kernel(tmp_vpages[1], dst, VM_PROT_READ|VM_PROT_WRITE);
 	copypage((char *) tmp_vpages[0], (char *) tmp_vpages[1]);
 
-	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+	s = splimp();
+	if (--tmp_vpage0_inuse) {
+		pmap_enter_kernel(tmp_vpages[0], oldsrc, VM_PROT_READ);
+	}
+	if (--tmp_vpage1_inuse) {
+		pmap_enter_kernel(tmp_vpages[1], olddst,
+			VM_PROT_READ|VM_PROT_WRITE);
+	}
+	splx(s);
 }
 
 /* pmap_zero_page			INTERFACE
@@ -2491,16 +2505,25 @@ void
 pmap_zero_page(pa)
 	vm_offset_t pa;
 {
-	PMAP_LOCK();
-	if (tmp_vpages_inuse)
-		panic("pmap_zero_page: temporary vpages are in use.");
-	tmp_vpages_inuse++;
+	int s;
+	vm_offset_t oldpa;
 
-	pmap_enter_kernel(tmp_vpages[0], pa, VM_PROT_READ|VM_PROT_WRITE);
-	zeropage((char *) tmp_vpages[0]);
+	s = splimp();
+	oldpa = 0; /*XXXgcc*/
+	if (tmp_vpage1_inuse++) {
+		oldpa = pmap_extract_kernel(tmp_vpages[1]);
+	}
+	splx(s);
 
-	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+	pmap_enter_kernel(tmp_vpages[1], pa, VM_PROT_READ|VM_PROT_WRITE);
+	zeropage((char *) tmp_vpages[1]);
+
+	s = splimp();
+	if (--tmp_vpage1_inuse) {
+		pmap_enter_kernel(tmp_vpages[1], oldpa,
+			VM_PROT_READ|VM_PROT_WRITE);
+	}
+	splx(s);
 }
 
 /* pmap_collect			INTERFACE
