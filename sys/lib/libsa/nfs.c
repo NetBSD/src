@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.16 1996/09/30 16:01:20 ws Exp $	*/
+/*	$NetBSD: nfs.c,v 1.17 1996/10/02 20:28:26 cgd Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -261,7 +261,8 @@ nfs_readlink(d, buf)
 	
 	if (rdata.d.errno)
 		return (ntohl(rdata.d.errno));
-			
+
+	rdata.d.len = ntohl(rdata.d.len);
 	if (rdata.d.len > NFS_MAXPATHLEN)
 		return (ENAMETOOLONG);
 
@@ -412,7 +413,7 @@ nfs_open(path, f)
 		/*
 		 * Check that current node is a directory.
 		 */
-		if (currfd->fa.fa_type != NFDIR) {
+		if (currfd->fa.fa_type != htonl(NFDIR)) {
 			error = ENOTDIR;
 			goto out;
 		}
@@ -448,7 +449,7 @@ nfs_open(path, f)
 		/*
 		 * Check for symbolic link
 		 */
-		if (newfd->fa.fa_type == NFLNK) {
+		if (newfd->fa.fa_type == htonl(NFLNK)) {
 			int link_len, len;
 			
 			error = nfs_readlink(newfd, linkbuf);
