@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.46 1996/06/20 03:47:27 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.47 1996/08/10 05:29:53 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,40 +21,40 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-SUN3=	../..
+S!=	cd ../../../..; pwd
+SUN3=	$S/arch/sun3
 
 # Override CPP defaults entirely, so cross-compilation works.
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-XDEFS= 		-undef -D__NetBSD__ -Dm68k -Dmc68000
-DEFINES=	-D_KERNEL -Dmc68020 -Dsun3
-CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT}
-# Make it easy to override this on the command line...
-WFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS= 	${DEBUG} -O2 -msoft-float ${WFLAGS}
-APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
+INCLUDES=	-I. -I$S/arch -I$S
+XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3 ${XDEFS}
+CWARNFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 
-# What to use for libkern: (see ../compile/libkern)
-# Note, this can be shared by all kernel configs.
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
-LIBKERN=	../libkern/libkern.o
+LIBKERN=	${KERNLIB}
 .else
-LIBKERN=	../libkern/libkern.po
+LIBKERN=	${KERNLIB_PROF}
 .endif
 
-# What to use for libcompat:
-# Would like to share this too, but it's config dependent.
-LIBCOMPAT=	libcompat.a
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
@@ -67,20 +67,14 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} -o $@ $*.s ; rm $*.s
-NORMAL_S_C=	${CPP} ${APPFLAGS} ${PARAM} $< > $*.s ;\
-		${AS} -o $@ $*.s ; rm $*.s
-
-# OBJS, CFILES, SFILES follow:
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
 
 %SFILES
-
-# OBJS, CFILES, SFILES done.
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
@@ -105,19 +99,7 @@ SYSTEM_LD_TAIL+=; \
 LINKFLAGS+=	-S
 .endif
 
-# LOAD+
-
 %LOAD
-
-# LOAD-
-
-.include "../libcompat/Makefile.inc"
-
-${LIBKERN} : .NOTMAIN .FORCE
-	@echo "making sure libkern is up-to-date..."
-	@(cd ../libkern ; ${MAKE})
-
-.FORCE:
 
 assym.h: genassym
 	./genassym >assym.h
@@ -166,12 +148,10 @@ links:
 
 SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${COMPAT_DEPENDS}
-	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
-	${MKDEP} -a ${CPPFLAGS} ${COMPAT_DEPENDS}
+.depend: ${SRCS} assym.h param.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
 
 # XXX - see below
 #	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
@@ -182,6 +162,7 @@ depend:: .depend
 # easiest compromise is to just list those dependencies here.
 locore.o: assym.h machine/trap.h m68k/trap.h
 copy.o:   assym.h $S/sys/errno.h
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -195,9 +176,8 @@ genassym.o machdep.o: Makefile
 # depend on CPU configuration 
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
 
-locore.o: ${SUN3}/sun3/locore.s
-	${NORMAL_S}
 
-# Rules follow
+locore.o: ${SUN3}/sun3/locore.s assym.h
+	${NORMAL_S}
 
 %RULES

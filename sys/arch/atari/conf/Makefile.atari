@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.18 1996/06/18 11:12:32 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.19 1996/08/10 05:29:32 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,20 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-ATARI=	../..
+S!=	cd ../../../..; pwd
+ATARI=	$S/arch/atari
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Datari
-CFLAGS=		${DEBUG} -O2 -Werror -mc68020 -msoft-float
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -mc68020
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
@@ -151,10 +151,10 @@ SRCS=	${ATARI}/atari/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${ATARI}/atari/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ATARI}/atari/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ATARI}/atari/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ATARI}/atari/genassym.c
 
 
 # depend on root or device configuration
