@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.85 2002/09/07 03:24:52 lukem Exp $
+.\"	$NetBSD: contents,v 1.86 2002/09/09 01:35:45 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -832,6 +832,7 @@ Programs that were contributed to X.
 .It Sy xfont
 Fonts needed by X.
 .\" MI, except for i386 and shark
+.\" XXX CHASE THIS UP XXX
 .setsize 6 7
 .if \n[i386] .setsize 15 19
 .if \n[shark] .setsize 6 8
@@ -862,7 +863,7 @@ The Xarm32VIDC and Xprt servers.
 .
 .if \n[atari] \{\
 .It Sy xserver
-The Xservers and some programs not shared with the other m68k ports.
+The X servers and some programs not shared with the other m68k ports.
 Please consult the X specific section in the atari FAQ as to which server
 you should use.
 .showsize 5 13
@@ -903,6 +904,12 @@ server which supports 256 colors with man pages.
 .It Sy xserver
 The Xpmax server with man page.
 .showsize 2 6
+.\}
+.
+.if \n[shark] \{\
+.\" XXX FIX THIS XXX
+The shark X server.
+.showsize
 .\}
 .
 .if \n[sparc] \{\
