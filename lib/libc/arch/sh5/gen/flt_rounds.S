@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.1 2002/07/10 13:09:04 scw Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.2 2002/07/10 13:21:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 ENTRY(__flt_rounds)
 	fgetscr	fr0
 	ptabs/l	r18, tr0
-	fmov.sl	fr0, r3
-	andi	r3, 1, r3
-	xori	r3, 1, r3
+	fmov.sl	fr0, r2
+	andi	r2, 1, r2
+	xori	r2, 1, r2
 	blink	tr0, r63
