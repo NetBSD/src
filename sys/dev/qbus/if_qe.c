@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.49.10.2 2003/01/27 05:04:53 jmc Exp $ */
+/*      $NetBSD: if_qe.c,v 1.49.10.3 2003/01/29 01:40:56 jmc Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.49.10.2 2003/01/27 05:04:53 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.49.10.3 2003/01/29 01:40:56 jmc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,6 +95,7 @@ struct	qe_softc {
 	struct mbuf*	sc_rxmbuf[RXDESCS];
 	bus_dmamap_t	sc_xmtmap[TXDESCS];
 	bus_dmamap_t	sc_rcvmap[RXDESCS];
+	bus_dmamap_t	sc_nulldmamap;	/* ethernet padding buffer	*/
 	struct ubinfo	sc_ui;
 	int		sc_intvec;	/* Interrupt vector		*/
 	int		sc_nexttx;
@@ -125,6 +126,8 @@ struct	cfattach qe_ca = {
 
 #define	LOWORD(x)	((int)(x) & 0xffff)
 #define	HIWORD(x)	(((int)(x) >> 16) & 0x3f)
+
+#define	ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 /*
  * Check for present DEQNA. Done by sending a fake setup packet
@@ -216,6 +219,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	struct	qe_ring *rp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int i, error;
+	char *nullbuf;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -225,7 +229,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
          * Allocate DMA safe memory for descriptors and setup memory.
          */
 
-	sc->sc_ui.ui_size = sizeof(struct qe_cdata);
+	sc->sc_ui.ui_size = sizeof(struct qe_cdata) + ETHER_PAD_LEN;
 	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0))) {
 		printf(": unable to ubmemalloc(), error = %d\n", error);
 		return;
@@ -236,7 +240,8 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Zero the newly allocated memory.
 	 */
-	bzero(sc->sc_qedata, sizeof(struct qe_cdata));
+	bzero(sc->sc_qedata, sizeof(struct qe_cdata) + ETHER_PAD_LEN);
+	nullbuf = ((char*)sc->sc_qedata) + sizeof(struct qe_cdata);
 	/*
 	 * Create the transmit descriptor DMA maps. We take advantage
 	 * of the fact that the Qbus address space is big, and therefore 
@@ -275,6 +280,21 @@ qeattach(struct device *parent, struct device *self, void *aux)
 			goto fail_6;
 		}
 	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
+	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT,&sc->sc_nulldmamap)) != 0) {
+		printf("%s: unable to create pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_6;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_nulldmamap,
+	    nullbuf, ETHER_PAD_LEN, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_7;
+	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_nulldmamap, 0, ETHER_PAD_LEN,
+	    BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Create ring loops of the buffer chains.
@@ -339,10 +359,12 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
+ fail_7:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_nulldmamap);
  fail_6:
 	for (i = 0; i < RXDESCS; i++) {
 		if (sc->sc_rxmbuf[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
 			m_freem(sc->sc_rxmbuf[i]);
 		}
 	}
@@ -428,7 +450,7 @@ qestart(struct ifnet *ifp)
 	struct qe_cdata *qc = sc->sc_qedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
-	int idx, len, s, i, totlen, error;
+	int idx, len, s, i, totlen, buflen, error;
 	short orword, csr;
 
 	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
@@ -453,6 +475,11 @@ qestart(struct ifnet *ifp)
 		for (m0 = m, i = 0; m0; m0 = m0->m_next)
 			if (m0->m_len)
 				i++;
+		if (m->m_pkthdr.len < ETHER_PAD_LEN) {
+			buflen = ETHER_PAD_LEN;
+			i++;
+		} else
+			buflen = m->m_pkthdr.len;
 		if (i >= TXDESCS)
 			panic("qestart");
 
@@ -472,20 +499,26 @@ qestart(struct ifnet *ifp)
 		 * Loop around and set it.
 		 */
 		totlen = 0;
-		for (m0 = m; m0; m0 = m0->m_next) {
-			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
-			    mtod(m0, void *), m0->m_len, 0, 0);
-			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
-			len = m0->m_len;
-			if (len == 0)
-				continue;
+		for (m0 = m; ; m0 = m0->m_next) {
+			if (m0) {
+				if (m0->m_len == 0)
+					continue;
+				error = bus_dmamap_load(sc->sc_dmat,
+				    sc->sc_xmtmap[idx], mtod(m0, void *),
+				    m0->m_len, 0, 0);
+				buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
+				len = m0->m_len;
+			} else if (totlen < ETHER_PAD_LEN) {
+				buffer = sc->sc_nulldmamap->dm_segs[0].ds_addr;
+				len = ETHER_PAD_LEN - totlen;
+			} else {
+				break;
+			}
 
 			totlen += len;
 			/* Word alignment calc */
 			orword = 0;
-			if (totlen == m->m_pkthdr.len) {
-				if (totlen < ETHER_MIN_LEN)
-					len += (ETHER_MIN_LEN - totlen);
+			if (totlen == buflen) {
 				orword |= QE_EOMSG;
 				sc->sc_txmbuf[idx] = m;
 			}
@@ -495,8 +528,6 @@ qestart(struct ifnet *ifp)
 				orword |= QE_ODDBEGIN;
 			if ((buffer + len) & 1)
 				orword |= QE_ODDEND;
-			if (len > m0->m_len) {
-				memset(buffer + m0->m_len, 0, len - m0->m_len);
 			qc->qc_xmit[idx].qe_buf_len = -(len/2);
 			qc->qc_xmit[idx].qe_addr_lo = LOWORD(buffer);
 			qc->qc_xmit[idx].qe_addr_hi = HIWORD(buffer);
@@ -506,9 +537,11 @@ qestart(struct ifnet *ifp)
 			if (++idx == TXDESCS)
 				idx = 0;
 			sc->sc_inq++;
+			if (m0 == NULL)
+				break;
 		}
 #ifdef DIAGNOSTIC
-		if (totlen != m->m_pkthdr.len)
+		if (totlen != buflen)
 			panic("qestart: len fault");
 #endif
 
@@ -584,10 +617,13 @@ qeintr(void *arg)
 
 			if (qc->qc_xmit[idx].qe_addr_hi & QE_SETUP)
 				continue;
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
+			if (sc->sc_txmbuf[idx] == NULL ||
+			    sc->sc_txmbuf[idx]->m_pkthdr.len < ETHER_PAD_LEN)
+				bus_dmamap_unload(sc->sc_dmat,
+				    sc->sc_xmtmap[idx]);
 			if (sc->sc_txmbuf[idx]) {
 				m_freem(sc->sc_txmbuf[idx]);
-				sc->sc_txmbuf[idx] = 0;
+				sc->sc_txmbuf[idx] = NULL;
 			}
 		}
 		ifp->if_timer = 0;
