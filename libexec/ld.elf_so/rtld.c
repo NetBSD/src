@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.68 2002/09/24 00:33:39 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.69 2002/09/24 01:24:44 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -64,7 +64,7 @@
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t, caddr_t, int));
+static void     _rtld_init __P((caddr_t, caddr_t));
 static void     _rtld_exit __P((void));
 
 Elf_Addr        _rtld __P((Elf_Addr *, Elf_Addr));
@@ -83,9 +83,7 @@ Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char            _rtld_path[] = _PATH_RTLD;
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
-#ifdef	VARPSZ
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
-#endif
 
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
@@ -142,9 +140,8 @@ _rtld_call_init_functions(first)
  * this function is to relocate the dynamic linker.
  */
 static void
-_rtld_init(mapbase, relocbase, pagesz)
+_rtld_init(mapbase, relocbase)
 	caddr_t mapbase, relocbase;
-	int pagesz;
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
 	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
@@ -160,21 +157,9 @@ _rtld_init(mapbase, relocbase, pagesz)
 	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
 	for (i = 0; i < hdr->e_phnum; i++) {
 		if (objself.phdr[i].p_type == PT_LOAD) {
-#ifdef	VARPSZ
-			/* We can't touch _rtld_pagesz yet so we can't use 
-			   round_*() */
-#define	_rnd_down(x)	((x) & ~((long)pagesz-1))
-#define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
-			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + 
-			    objself.phdr[i].p_memsz) - 
-			    _rnd_down(objself.phdr[i].p_vaddr);
-#undef	_rnd_down
-#undef	_rnd_up
-#else
 			objself.textsize = round_up(objself.phdr[i].p_vaddr + 
 			    objself.phdr[i].p_memsz) - 
 			    round_down(objself.phdr[i].p_vaddr);
-#endif
 			break;
 		}
 	}
@@ -253,9 +238,7 @@ _rtld(sp, relocbase)
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
 		       *pAUX_ruid, *pAUX_rgid;
-#ifdef	VARPSZ
 	const AuxInfo  *pAUX_pagesz;
-#endif
 	char          **env;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
@@ -305,39 +288,9 @@ _rtld(sp, relocbase)
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
 	pAUX_euid = pAUX_ruid = pAUX_egid = pAUX_rgid = NULL;
-#ifdef	VARPSZ
 	pAUX_pagesz = NULL;
-#endif
-	/*
-	 * First pass through the the auxiliary vector, avoiding the use
-	 * of a `switch() {}' statement at this stage. A `switch()' may
-	 * be translated into code utilizing a jump table approach which
-	 * references the equivalent of a global variable. This must be
-	 * avoided until _rtld_init() has done its job.
-	 * 
-	 * _rtld_init() only needs `pAUX_base' and possibly `pAUX_pagesz',
-	 * so we look for just those in this pass.
-	 */
-	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
-		if (auxp->a_type == AT_BASE)
-			pAUX_base = auxp;
-#ifdef	VARPSZ
-		if (auxp->a_type == AT_PAGESZ)
-			pAUX_pagesz = auxp;
-#endif
-	}
 
-	/* Initialize and relocate ourselves. */
-	assert(pAUX_base != NULL);
-#ifdef	VARPSZ
-	assert(pAUX_pagesz != NULL);
-	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase,
-	    (int)pAUX_pagesz->a_v);
-#else
-	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase, 0);
-#endif
-
-	/* Digest the auxiliary vector (full pass now that we can afford it). */
+	/* Digest the auxiliary vector. */
 	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
 		case AT_BASE:
@@ -372,17 +325,17 @@ _rtld(sp, relocbase)
 			pAUX_rgid = auxp;
 			break;
 #endif
-#ifdef	VARPSZ
 		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
 			break;
-#endif
 		}
 	}
 
-#ifdef	VARPSZ
+	/* Initialize and relocate ourselves. */
+	assert(pAUX_base != NULL);
+	assert(pAUX_pagesz != NULL);
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
-#endif
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
 
 #ifdef RTLD_DEBUG
 	dbg(("_ctype_ is %p\n", _ctype_));

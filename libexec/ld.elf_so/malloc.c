@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.5 1999/06/17 21:13:14 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.6 2002/09/24 01:24:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -49,13 +49,15 @@
  */
 
 #include <sys/cdefs.h>
-#include "rtldenv.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+
+#include "rtld.h"
 
 /*
  * Pre-allocate mmap'ed pages
@@ -150,7 +152,7 @@ malloc(nbytes)
 	 * align break pointer so all data will be page aligned.
 	 */
 	if (pagesz == 0) {
-		pagesz = n = getpagesize();
+		pagesz = n = _rtld_pagesz;
 		if (morepages(NPOOLPAGES) == 0)
 			return NULL;
 		op = (union overhead *)(pagepool_start);
