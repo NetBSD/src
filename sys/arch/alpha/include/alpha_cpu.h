@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.15 1997/09/20 19:02:34 mjacob Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.16 1998/02/13 00:12:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -278,6 +278,11 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_IMPLVER_EV4	0		/* LCA/EV4/EV45 */
 #define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
 #define	ALPHA_IMPLVER_EV6	2		/* EV6 */
+
+/*
+ * Misc. support routines.
+ */
+const char	*alpha_dsr_sysname __P((void));
 
 /*
  * Stubs for Alpha instructions normally inaccessible from C.

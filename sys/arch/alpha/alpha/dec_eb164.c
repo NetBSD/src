@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.23 1998/02/12 20:46:47 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.24 1998/02/13 00:12:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.23 1998/02/12 20:46:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.24 1998/02/13 00:12:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,14 @@ static void dec_eb164_device_register __P((struct device *, void *));
 void
 dec_eb164_init()
 {
-	platform.family = platform.model = "DEC EB164 or AlphaPC 164";
+
+	platform.family = "EB164";
+
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		/* XXX Don't know the system variations, yet. */
+		platform.model = alpha_unknown_sysname();
+	}
+
 	platform.iobus = "cia";
 	platform.cons_init = dec_eb164_cons_init;
 	platform.device_register = dec_eb164_device_register;
