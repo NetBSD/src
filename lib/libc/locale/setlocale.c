@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.26 2000/12/22 15:25:11 jdolecek Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.27 2000/12/22 16:50:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.26 2000/12/22 15:25:11 jdolecek Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.27 2000/12/22 16:50:08 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,7 +120,7 @@ __setlocale(category, locale)
 	int category;
 	const char *locale;
 {
-	int i, j;
+	int i, loadlocale_success;
 	size_t len;
 	char *env, *r;
 
@@ -203,19 +203,21 @@ __setlocale(category, locale)
 	if (category)
 		return (loadlocale(category));
 
+	loadlocale_success = 0;
 	for (i = 1; i < _LC_LAST; ++i) {
 		(void)strlcpy(saved_categories[i], current_categories[i],
 		    sizeof(saved_categories[i]));
-		if (loadlocale(i) == NULL) {
-			for (j = 1; j < i; j++) {
-				(void)strlcpy(new_categories[j],
-				     saved_categories[j],
-				     sizeof(new_categories[j]));
-				/* XXX can fail too */
-				(void)loadlocale(j);
-			}
-		}
+		if (loadlocale(i) != NULL)
+			loadlocale_success = 1;
 	}
+
+	/*
+	 * If all categories failed, return NULL; we don't need to back
+	 * changes off, since none happened.
+	 */
+	if (!loadlocale_success)
+		return NULL;
+
 	return (currentlocale());
 }
 
