@@ -1,4 +1,4 @@
-.\" $Id: cu.1,v 1.5 2001/04/06 14:06:02 wiz Exp $
+.\" $Id: cu.1,v 1.6 2001/10/26 14:44:13 briggs Exp $
 .TH cu 1 "Taylor UUCP 1.06"
 .SH NAME
 cu \- Call up another system
@@ -215,6 +215,12 @@ The following options may be given to
 .B \-e, \-\-parity=even
 Use even parity.
 .TP 5
+.B \-f, \-F
+Use hardware flow control
+.B (\-F, default)
+or not
+.B (-f).
+.TP 5
 .B \-o, \-\-parity=odd
 Use odd parity.
 .TP 5
@@ -249,6 +255,11 @@ Name the port to use.
 .B \-a port
 Equivalent to
 .B \-\-port port.
+.TP 5
+.B \-q
+Be quiet during file transfers.
+.I cu
+is normally quite verbose.
 .TP 5
 .B \-l line, \-\-line line
 Name the line to use by giving a device name.  This may be used to
