@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.3 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: pass6.c,v 1.4 2005/03/25 20:16:37 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -461,7 +461,7 @@ pass6(void)
 	int i, j, bc;
 	ufs_daddr_t hassuper;
 
-	devvp = fs->lfs_unlockvp;
+	devvp = fs->lfs_devvp;
 
 	/* Find last valid partial segment */
 	lastgood = try_verify(fs, devvp, 0, debug);

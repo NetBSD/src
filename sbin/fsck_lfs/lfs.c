@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.8 2005/02/26 05:45:54 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.9 2005/03/25 20:16:37 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -374,7 +374,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
-		bread(fs->lfs_unlockvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
+		bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
@@ -387,7 +387,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 		brelse(bp);
 	}
 	ip->i_number = ino;
-	/* ip->i_devvp = fs->lfs_unlockvp; */
+	/* ip->i_devvp = fs->lfs_devvp; */
 	ip->i_lfs = fs;
 
 	ip->i_ffs_effnlink = ip->i_ffs1_nlink;
@@ -478,7 +478,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			sblkno = btodb(LFS_LABELPAD);
 		fs = (struct lfs *) malloc(sizeof(*fs));
 		memset(fs, 0, sizeof(*fs));
-		fs->lfs_unlockvp = devvp;
+		fs->lfs_devvp = devvp;
 	} else {
 		if (sblkno == 0) {
 			sblkno = btodb(LFS_LABELPAD);
@@ -490,7 +490,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		fs = (struct lfs *) malloc(sizeof(*fs));
 		memset(fs, 0, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-		fs->lfs_unlockvp = devvp;
+		fs->lfs_devvp = devvp;
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	
@@ -500,7 +500,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			altfs = (struct lfs *) malloc(sizeof(*altfs));
 			memset(altfs, 0, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
-			altfs->lfs_unlockvp = devvp;
+			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 	
