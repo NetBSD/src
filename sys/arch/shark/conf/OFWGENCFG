@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.11 2004/02/13 11:36:17 wiz Exp $
+#	$NetBSD: OFWGENCFG,v 1.11.2.1 2004/07/15 20:20:03 he Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -101,6 +101,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
