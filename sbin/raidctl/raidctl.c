@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.21 2000/05/28 23:12:01 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.22 2000/05/31 00:47:30 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -883,7 +883,10 @@ do_meter(fd, option)
 			wait_for_more_data = 0;
 		}
 
-		rate = amount / elapsed;
+		if (elapsed == 0)
+			rate = 0.0;
+		else
+			rate = amount / elapsed;
 
 		if (rate > 0.0) {
 			simple_eta = (int) (((double)progressInfo.total - 
