@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1998/02/04 11:08:57 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -46,7 +46,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.4 1998/02/04 11:08:57 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,8 @@ edit(filename)
 		return(0);
 	}
 	else if ((f = open(filename, O_RDONLY, 0)) < 0) {
-		(void)sprintf(message, "%s: %s", filename, strerror(errno));
+		(void)snprintf(message, sizeof(message), "%s: %s", filename,
+		    strerror(errno));
 		error(message);
 		free(filename);
 		return(0);
@@ -335,13 +336,13 @@ save(s)
 {
 	char *p;
 
-	p = malloc((u_int)strlen(s)+1);
+	p = strdup(s);
 	if (p == NULL)
 	{
 		error("cannot allocate memory");
 		quit();
 	}
-	return(strcpy(p, s));
+	return(p);
 }
 
 /*
