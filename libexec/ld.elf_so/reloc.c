@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.46 2001/12/16 08:23:25 thorpej Exp $	 */
+/*	$NetBSD: reloc.c,v 1.47 2001/12/20 02:23:24 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -305,8 +305,10 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		if (def == NULL)
 			return -1;
 
-		if (*where != (Elf_Addr)(defobj->relocbase + def->st_value))
-			*where = (Elf_Addr)(defobj->relocbase + def->st_value);
+		tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
+		    rela->r_addend;
+		if (*where != tmp)
+			*where = tmp;
 		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path));
