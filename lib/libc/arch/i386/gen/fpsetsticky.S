@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.5 1998/01/09 03:45:06 perry Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.6 2002/01/13 21:45:43 thorpej Exp $	*/
 
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
@@ -7,7 +7,12 @@
 
 #include <machine/asm.h>
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpsetsticky, _fpsetsticky)
+ENTRY(_fpsetsticky)
+#else
 ENTRY(fpsetsticky)
+#endif
 	subl $28,%esp
 
 	fnstenv (%esp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.S,v 1.7 1999/10/25 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: fpsetround.S,v 1.8 2002/01/13 21:45:44 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -7,7 +7,12 @@
 
 #include <machine/asm.h>
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpsetround, _fpsetround)
+ENTRY(_fpsetround)
+#else
 ENTRY(fpsetround)
+#endif
 	movel %d2,%sp@-
 	fmovel %fpcr,%d1
 	movel %sp@(8),%d2
