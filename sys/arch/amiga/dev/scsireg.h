@@ -308,12 +308,6 @@
 #define	sbic_isa_select(cmd)	(((cmd)>0x5)&&((cmd)<0xa))
 
 #define PAD(n)          char n;
-#ifdef A3000
-#define SBIC_CLOCK_FREQUENCY    143	/* according to A3000T service manual */
-#endif
-#ifdef A2091
-#define SBIC_CLOCK_FREQUENCY    77
-#endif
 #define SBIC_MACHINE_DMA_MODE   SBIC_CTL_DMA
 
 typedef struct {

@@ -43,3 +43,33 @@
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
 #define ITELOADKMAP	_IOW('Z',0x70, struct kbdmap)
 #define ITEGETKMAP	_IOR('Z',0x71, struct kbdmap)
+
+/* don't use these in new code, just included to get 
+   view code to compile!! There's got to be a more generic,
+   not so cc-concentrated approach! */
+
+struct ite_window_size {
+    int x;
+    int y;
+    int width;
+    int height;
+    int depth;
+};
+
+struct ite_bell_values {
+    int volume;
+    int period;
+    int time;
+};
+
+
+#define ITE_GET_WINDOW_SIZE	_IOR('Z',0x72, struct ite_window_size)
+#define ITE_SET_WINDOW_SIZE	_IOW('Z',0x73, struct ite_window_size)
+
+#define ITE_DISPLAY_WINDOW	_IO('Z', 0x74)
+#define ITE_REMOVE_WINDOW	_IO('Z', 0x75)
+
+#define ITE_GET_BELL_VALUES	_IOR('Z', 0x76, struct ite_bell_values)
+#define ITE_SET_BELL_VALUES	_IOW('Z', 0x77, struct ite_bell_values)
+
+

@@ -67,7 +67,7 @@ struct ite_softc {
 	u_char	font_lo, font_hi;
 	short	rows, cols;
 	short   cpl;
-	short	ftheight, ftwidth;
+	short	ftheight, ftwidth, ftbaseline, ftboldsmear;
 	short   attribute;
 	u_char	*attrbuf;
 	short	planemask;
@@ -82,6 +82,8 @@ struct ite_softc {
 	char	emul_level, eightbit_C1;
 	int	top_margin, bottom_margin, inside_margins;
 	short	save_curx, save_cury, save_attribute;
+	/* needed by view code */
+	void    *view;
 };
 
 /* emulation levels: */

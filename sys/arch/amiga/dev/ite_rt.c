@@ -64,6 +64,9 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	volatile u_char * ba = ip->grf->g_regkva;
 	volatile u_char * fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
+#ifdef BANKEDDEVPAGER
+	int bank;
+#endif
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -75,6 +78,13 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	    return;
 	  }
 
+
+#ifdef BANKEDDEVPAGER
+	/* make sure to save/restore active bank (and if it's only
+	   for tests of the feature in text-mode..) */
+	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) 
+		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
+#endif
 
 	/* the trick here is to use a feature of the NCR chip. It can
 	   optimize data access in various read/write modes. One of
@@ -182,7 +192,13 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
-	
+
+#ifdef BANKEDDEVPAGER
+	/* restore former bank */
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
+	bank >>= 8;
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
+#endif
 };
 
 static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
@@ -190,6 +206,9 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	volatile u_char * ba = ip->grf->g_regkva;
 	volatile u_char * fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
+#ifdef BANKEDDEVPAGER
+	int bank;
+#endif
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -201,6 +220,12 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	    return;
 	  }
 
+#ifdef BANKEDDEVPAGER
+	/* make sure to save/restore active bank (and if it's only
+	   for tests of the feature in text-mode..) */
+	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) 
+		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
+#endif
 	/* see screen_up() for explanation of chip-tricks */
 
 		/* write to primary, read from secondary */
@@ -299,6 +324,12 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	   /* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
 	
+#ifdef BANKEDDEVPAGER
+	/* restore former bank */
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
+	bank >>= 8;
+	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
+#endif
 };
 
 void retina_deinit(struct ite_softc *ip)

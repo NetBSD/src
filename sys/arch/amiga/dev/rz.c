@@ -33,17 +33,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sd.c	7.8 (Berkeley) 6/9/91
+ *	@(#)rz.c	7.8 (Berkeley) 6/9/91
  */
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
  */
-#include "sd.h"
-#if NSD > 0
+#include "rz.h"
+#if NRZ > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.5 1994/01/26 21:06:17 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/rz.c,v 1.1 1994/01/26 21:06:11 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -57,7 +57,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.5
 #include "sys/file.h"
 
 #include "device.h"
-#include "scsireg.h"
+#include "siopreg.h"
 #include "vm/vm_param.h"
 #include "vm/lock.h"
 #include "vm/vm_statistics.h"
@@ -66,30 +66,30 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.5
 
 #include "rdb.h"
 
-struct sd_softc;
+struct rz_softc;
 
-extern int sdinit (register struct amiga_device *ad);
-extern void sdreset (register struct sd_softc *sc, register struct amiga_device *ad);
-extern int sdopen (dev_t dev, int flags, int mode, struct proc *p);
-extern void sdstrategy (register struct buf *bp);
-extern void sdustart (register int unit);
-extern void sdstart (register int unit);
-extern void sdgo (register int unit);
-extern void sdintr (register int unit, int stat);
-extern int sdioctl (dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-extern int sdsize (dev_t dev);
-extern int sddump (dev_t dev);
-static int sdident (struct sd_softc *sc, struct amiga_device *ad);
-static void sdlblkstrat (register struct buf *bp, register int bsize);
-static int sderror (int unit, register struct sd_softc *sc, register struct amiga_device *am, int stat);
-static void sdfinish (int unit, register struct sd_softc *sc, register struct buf *bp);
+extern int rzinit (register struct amiga_device *ad);
+extern void rzreset (register struct rz_softc *sc, register struct amiga_device *ad);
+extern int rzopen (dev_t dev, int flags, int mode, struct proc *p);
+extern void rzstrategy (register struct buf *bp);
+extern void rzustart (register int unit);
+extern void rzstart (register int unit);
+extern void rzgo (register int unit);
+extern void rzintr (register int unit, int stat);
+extern int rzioctl (dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
+extern int rzsize (dev_t dev);
+extern int rzdump (dev_t dev);
+static int rzident (struct rz_softc *sc, struct amiga_device *ad);
+static void rzlblkstrat (register struct buf *bp, register int bsize);
+static int rzerror (int unit, register struct rz_softc *sc, register struct amiga_device *am, int stat);
+static void rzfinish (int unit, register struct rz_softc *sc, register struct buf *bp);
 
 extern void disksort();
 extern int physio();
 extern void TBIS();
 
-struct	driver sddriver = {
-	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr, 0,
+struct	driver rzdriver = {
+	rzinit, "rz", (int (*)())rzstart, (int (*)())rzgo, (int (*)())rzintr, 0,
 };
 
 #if 0
@@ -99,7 +99,7 @@ struct	size {
 	int	nblocks;
 };
 
-struct sdinfo {
+struct rzinfo {
 	u_int	cylinders;	/* number of driver cylinders	      RDB value */
 	u_int	sectors;	/* sectors per track		      RDB value */
 	u_int	heads;		/* number of drive heads 	      RDB value */
@@ -115,7 +115,7 @@ struct sdinfo {
  * the G partition.  As usual, the C partition covers the entire disk
  * (including the boot area).
  */
-struct sdinfo sddefaultpart = {
+struct rzinfo rzdefaultpart = {
 	     1024,   17408,   16384   ,	/* A */
 	    17408,   82944,   65536   ,	/* B */
 	        0,       0,       0   ,	/* C */
@@ -127,7 +127,7 @@ struct sdinfo sddefaultpart = {
 };
 #endif
 
-struct	sd_softc {
+struct	rz_softc {
 	struct	amiga_device *sc_ad;
 	struct	devqueue sc_dq;
 	int	sc_format_pid;	/* process using "format" mode */
@@ -142,13 +142,13 @@ struct	sd_softc {
 	struct  disklabel sc_label;  /* drive partition table & label info */
 	int	sc_have_label;
 	int	sc_write_label;
-} sd_softc[NSD];
+} rz_softc[NRZ];
 
 /* sc_flags values */
 #define	SDF_ALIVE	0x1
 
 #ifdef DEBUG
-int sddebug = 0;
+int rzdebug = 0;
 #define SDB_ERROR	0x01
 #define SDB_PARTIAL	0x02
 #define SDB_BOOTDEV	0x04
@@ -161,22 +161,22 @@ int sddebug = 0;
 #define QPRINTF(a)
 #endif
 
-struct sdstats {
-	long	sdresets;
-	long	sdtransfers;
-	long	sdpartials;
-} sdstats[NSD];
+struct rzstats {
+	long	rzresets;
+	long	rztransfers;
+	long	rzpartials;
+} rzstats[NRZ];
 
-struct	buf sdtab[NSD];
-struct	scsi_fmt_cdb sdcmd[NSD];
-struct	scsi_fmt_sense sdsense[NSD];
+struct	buf rztab[NRZ];
+struct	scsi_fmt_cdb rzcmd[NRZ];
+struct	scsi_fmt_sense rzsense[NRZ];
 
-static struct scsi_fmt_cdb sd_read_cmd = { 10, CMD_READ_EXT };
-static struct scsi_fmt_cdb sd_write_cmd = { 10, CMD_WRITE_EXT };
+static struct scsi_fmt_cdb rz_read_cmd = { 10, CMD_READ_EXT };
+static struct scsi_fmt_cdb rz_write_cmd = { 10, CMD_WRITE_EXT };
 
-#define	sdunit(x)	(minor (x) >> 3 & 0x7)
-#define sdpart(x)	(minor (x) & 0x7 | minor (x) >> 3 & 0x18)
-#define	sdpunit(x)	((x) & 7)
+#define	rzunit(x)	(minor(x) >> 3 & 0x7)
+#define rzpart(x)	(minor(x) & 0x7 | minor (x) >> 3 & 0x18)
+#define	rzpunit(x)	((x) & 7)
 #define	b_cylin		b_resid
 
 #define	SDRETRY		2
@@ -213,14 +213,14 @@ static struct scsi_fmt_cdb inq = {
 };
 
 static u_char capbuf[8];
-struct scsi_fmt_cdb cap = {
+struct scsi_fmt_cdb rzcap = {
 	10,
 	CMD_READ_CAPACITY, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static int
-sdident(sc, ad)
-	struct sd_softc *sc;
+rzident(sc, ad)
+	struct rz_softc *sc;
 	struct amiga_device *ad;
 {
 	int unit;
@@ -232,12 +232,12 @@ sdident(sc, ad)
 	ctlr = ad->amiga_ctlr;
 	slave = ad->amiga_slave;
 	unit = sc->sc_punit;
-	scsi_delay(-1);
+	siop_delay(-1);
 
 	/*
 	 * See if unit exists and is a disk then read block size & nblocks.
 	 */
-	while ((i = scsi_test_unit_rdy(ctlr, slave, unit)) != 0) {
+	while ((i = siop_test_unit_rdy(ctlr, slave, unit)) != 0) {
 retry_TUR:
 		if (i == -1 || --tries < 0) {
 			if (ismo)
@@ -249,7 +249,7 @@ retry_TUR:
 			u_char sensebuf[128];
 			struct scsi_xsense *sp = (struct scsi_xsense *)sensebuf;
 
-			i = scsi_request_sense(ctlr, slave, unit, sensebuf, 
+			i = siop_request_sense(ctlr, slave, unit, sensebuf, 
 					       sizeof(sensebuf));
 			if (sp->class == 7)
 				switch (sp->key) {
@@ -272,7 +272,7 @@ retry_TUR:
 	/*
 	 * Find out about device
 	 */
-	if (i = scsi_immed_command(ctlr, slave, unit, &inq, 
+	if (i = siop_immed_command(ctlr, slave, unit, &inq, 
 				   (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
 	  {
 	    if (i == STS_CHECKCOND)
@@ -287,7 +287,7 @@ retry_TUR:
 		break;
 	default:	/* not a disk */
 #ifdef DEBUG
-		if (sddebug)
+		if (rzdebug)
 		  printf ("Unit %d unknown scsi-type: %d\n", slave, inqbuf.type);
 #endif
 		goto failed;
@@ -315,9 +315,9 @@ retry_TUR:
 	}
 
 	/* for those that have drives they only turn on for use under BSD... */
-	scsi_start_stop_unit (ctlr, slave, unit, 1);
+	siop_start_stop_unit (ctlr, slave, unit, 1);
 
-	i = scsi_immed_command(ctlr, slave, unit, &cap, 
+	i = siop_immed_command(ctlr, slave, unit, &rzcap, 
 			       (u_char *)&capbuf, sizeof(capbuf), B_READ);
 	if (i) {
 		if (i != STS_CHECKCOND ||
@@ -335,15 +335,15 @@ retry_TUR:
 	sc->sc_blks++;
 
 	if (inqbuf.version < 1)
-		printf("sd%d: type 0x%x, qual 0x%x, ver %d", ad->amiga_unit,
+		printf("rz%d: type 0x%x, qual 0x%x, ver %d", ad->amiga_unit,
 			inqbuf.type, inqbuf.qual, inqbuf.version);
 	else
-		printf("sd%d: %s %s rev %s", ad->amiga_unit, sc->sc_idstr, &sc->sc_idstr[8],
+		printf("rz%d: %s %s rev %s", ad->amiga_unit, sc->sc_idstr, &sc->sc_idstr[8],
 			&sc->sc_idstr[24]);
 	printf(", %d %d byte blocks\n", sc->sc_blks, sc->sc_blksize);
 	if (sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
-			printf("sd%d: need %d byte blocks - drive ignored\n",
+			printf("rz%d: need %d byte blocks - drive ignored\n",
 				unit, DEV_BSIZE);
 			goto failed;
 		}
@@ -352,18 +352,18 @@ retry_TUR:
 		sc->sc_blks <<= sc->sc_bshift;
 	}
 	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
-	scsi_delay(0);
+	siop_delay(0);
 	return(inqbuf.type);
 failed:
-	scsi_delay(0);
+	siop_delay(0);
 	return(-1);
 }
 
 int
-sdinit(ad)
+rzinit(ad)
 	register struct amiga_device *ad;
 {
-	register struct sd_softc *sc = &sd_softc[ad->amiga_unit];
+	register struct rz_softc *sc = &rz_softc[ad->amiga_unit];
 	static u_int block [DEV_BSIZE / 4];
 	struct RigidDiskBlock *rdb = (struct RigidDiskBlock *) block;
 	struct PartitionBlock *pb  = (struct PartitionBlock *) block;
@@ -379,8 +379,8 @@ sdinit(ad)
 	s = splbio();
 
 	sc->sc_ad = ad;
-	sc->sc_punit = sdpunit(ad->amiga_flags);
-	sc->sc_type = sdident(sc, ad);
+	sc->sc_punit = rzpunit(ad->amiga_flags);
+	sc->sc_type = rzident(sc, ad);
 	if (sc->sc_type < 0)
 	  {
 	    splx (s);
@@ -389,7 +389,7 @@ sdinit(ad)
 	sc->sc_dq.dq_ctlr = ad->amiga_ctlr;
 	sc->sc_dq.dq_unit = ad->amiga_unit;
 	sc->sc_dq.dq_slave = ad->amiga_slave;
-	sc->sc_dq.dq_driver = &sddriver;
+	sc->sc_dq.dq_driver = &rzdriver;
 
 	/* fill in as much as we can of the disklabel */
 	dl = &sc->sc_label;
@@ -422,7 +422,7 @@ no_rdb:
 
 	for (bnum = 0; bnum < RDB_LOCATION_LIMIT; bnum++)
 	  {
-	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+	    if (siop_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
 			      (char *) block, DEV_BSIZE, bnum, sc->sc_bshift))
 	      /* read error on block */
 	      goto no_rdb;
@@ -456,7 +456,7 @@ no_rdb:
 	    u_int reserved;
 	    int part, bsd_part;
 
-	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+	    if (siop_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
 			      (char *) block, DEV_BSIZE, npbnum, sc->sc_bshift))
 	      break;
 	  
@@ -468,7 +468,7 @@ no_rdb:
 	    npbnum      = pb->pb_Next;
 	    start_block = pb->pb_Environment[DE_LOWCYL] * dl->d_secpercyl;
 	    reserved    = pb->pb_Environment[DE_RESERVEDBLKS];
-	    end_block   = 
+	    end_block   =
 	      (1 + pb->pb_Environment[DE_UPPERCYL]) * dl->d_secpercyl - 1;
 
 	    part = -1;
@@ -487,16 +487,16 @@ no_rdb:
 		       bootdev by assigning the just computed values of the
 		       root partition. */
 
-		    /* 4: 		sd major
+		    /* 5: 		rz major
 		       0: 		adaptor number
 		       ad->amiga_ctlr:	controller number
 		       ad->amiga_unit:  scsi-unit
 		       part:		partition (A) */
 
-		    bootdev = MAKEBOOTDEV (4, 0, ad->amiga_ctlr, ad->amiga_unit, part);
+		    bootdev = MAKEBOOTDEV (5, 0, ad->amiga_ctlr, ad->amiga_unit, part);
 #ifdef DEBUG
-		    if (sddebug & SDB_BOOTDEV)
-		      printf ("sdinit: setting bootdev to 0x%08x\n", bootdev);
+		    if (rzdebug & SDB_BOOTDEV)
+		      printf ("rzinit: setting bootdev to 0x%08x\n", bootdev);
 #endif
 		  }
 		break;
@@ -566,7 +566,7 @@ no_rdb:
 		dl->d_partitions[part].p_cpg    = 0;	/* XXX */
 	    
 #ifdef DEBUG
-	        if (sddebug)
+	        if (rzdebug)
 		  if (bsd_part)
 		    printf ("BSD partition %c @%d - %d size %d\n", part + 'A',
 			    start_block, end_block,
@@ -590,7 +590,7 @@ no_rdb:
 	dl->d_npartitions = non_bsd_part;
 #endif
 #ifdef DEBUG
-	if (sddebug)
+	if (rzdebug)
 	  printf ("total %d partitions (%d BSD).\n", num_part, num_bsd_part);
 #endif
 
@@ -610,23 +610,23 @@ do_chksum:
 }
 
 void
-sdreset(sc, ad)
-	register struct sd_softc *sc;
+rzreset(sc, ad)
+	register struct rz_softc *sc;
 	register struct amiga_device *ad;
 {
-	sdstats[ad->amiga_unit].sdresets++;
+	rzstats[ad->amiga_unit].rzresets++;
 }
 
 int
-sdopen(dev, flags, mode, p)
+rzopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
+	register int unit = rzunit(dev);
+	register struct rz_softc *sc = &rz_softc[unit];
 
-	if (unit >= NSD)
+	if (unit >= NRZ)
 		return(ENXIO);
 	if ((sc->sc_flags & SDF_ALIVE) == 0 && suser(p->p_ucred, &p->p_acflag))
 		return(ENXIO);
@@ -646,7 +646,7 @@ sdopen(dev, flags, mode, p)
  *	3. transfer any final partial block
  */
 static void
-sdlblkstrat(bp, bsize)
+rzlblkstrat(bp, bsize)
 	register struct buf *bp;
 	register int bsize;
 {
@@ -663,8 +663,8 @@ sdlblkstrat(bp, bsize)
 	resid = bp->b_bcount;
 	addr = bp->b_un.b_addr;
 #ifdef DEBUG
-	if (sddebug & SDB_PARTIAL)
-		printf("sdlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
+	if (rzdebug & SDB_PARTIAL)
+		printf("rzlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
 		       bp, bp->b_flags, bn, resid, addr);
 #endif
 
@@ -673,18 +673,18 @@ sdlblkstrat(bp, bsize)
 		register int count;
 
 		if (boff || resid < bsize) {
-			sdstats[sdunit(bp->b_dev)].sdpartials++;
+			rzstats[rzunit(bp->b_dev)].rzpartials++;
 			count = MIN(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
 			cbp->b_blkno = bn - btodb(boff);
 			cbp->b_un.b_addr = cbuf;
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
-			if (sddebug & SDB_PARTIAL)
+			if (rzdebug & SDB_PARTIAL)
 				printf(" readahead: bn %x cnt %x off %x addr %x\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
-			sdstrategy(cbp);
+			rzstrategy(cbp);
 			biowait(cbp);
 			if (cbp->b_flags & B_ERROR) {
 				bp->b_flags |= B_ERROR;
@@ -697,7 +697,7 @@ sdlblkstrat(bp, bsize)
 			}
 			bcopy(addr, &cbuf[boff], count);
 #ifdef DEBUG
-			if (sddebug & SDB_PARTIAL)
+			if (rzdebug & SDB_PARTIAL)
 				printf(" writeback: bn %x cnt %x off %x addr %x\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
@@ -707,13 +707,13 @@ sdlblkstrat(bp, bsize)
 			cbp->b_un.b_addr = addr;
 			cbp->b_bcount = count;
 #ifdef DEBUG
-			if (sddebug & SDB_PARTIAL)
+			if (rzdebug & SDB_PARTIAL)
 				printf(" fulltrans: bn %x cnt %x addr %x\n",
 				       cbp->b_blkno, count, addr);
 #endif
 		}
 		cbp->b_flags = B_BUSY | B_PHYS | (bp->b_flags & B_READ);
-		sdstrategy(cbp);
+		rzstrategy(cbp);
 		biowait(cbp);
 		if (cbp->b_flags & B_ERROR) {
 			bp->b_flags |= B_ERROR;
@@ -725,7 +725,7 @@ done:
 		resid -= count;
 		addr += count;
 #ifdef DEBUG
-		if (sddebug & SDB_PARTIAL)
+		if (rzdebug & SDB_PARTIAL)
 			printf(" done: bn %x resid %x addr %x\n",
 			       bn, resid, addr);
 #endif
@@ -735,17 +735,17 @@ done:
 }
 
 void
-sdstrategy(bp)
+rzstrategy(bp)
 	register struct buf *bp;
 {
-	register int unit = sdunit(bp->b_dev);
-	register struct sd_softc *sc = &sd_softc[unit];
-	register struct partition *pinfo = &sc->sc_label.d_partitions[sdpart(bp->b_dev)];
-	register struct buf *dp = &sdtab[unit];
+	register int unit = rzunit(bp->b_dev);
+	register struct rz_softc *sc = &rz_softc[unit];
+	register struct partition *pinfo = &sc->sc_label.d_partitions[rzpart(bp->b_dev)];
+	register struct buf *dp = &rztab[unit];
 	register daddr_t bn;
-	register int sz, s;
+	register int rz, s;
 
-	QPRINTF (("sdstrat: unit=%d [s=%d,l=%d], [b=%d,l=%d]\n", unit, 
+	QPRINTF (("rzstrat: unit=%d [s=%d,l=%d], [b=%d,l=%d]\n", unit, 
 		  pinfo->p_offset, pinfo->p_size, bp->b_blkno, bp->b_bcount));
 
 	if (sc->sc_format_pid) {
@@ -757,26 +757,26 @@ sdstrategy(bp)
 		bp->b_cylin = 0;
 	} else {
 		bn = bp->b_blkno;
-		sz = howmany(bp->b_bcount, DEV_BSIZE);
-		if (bn < 0 || bn + sz > pinfo->p_size) {
-			sz = pinfo->p_size - bn;
-			if (sz == 0) {
+		rz = howmany(bp->b_bcount, DEV_BSIZE);
+		if (bn < 0 || bn + rz > pinfo->p_size) {
+			rz = pinfo->p_size - bn;
+			if (rz == 0) {
 				bp->b_resid = bp->b_bcount;
 				goto done;
 			}
-			if (sz < 0) {
+			if (rz < 0) {
 				bp->b_error = EINVAL;
 				bp->b_flags |= B_ERROR;
 				goto done;
 			}
-			bp->b_bcount = dbtob(sz);
+			bp->b_bcount = dbtob(rz);
 		}
 		/*
 		 * Non-aligned or partial-block transfers handled specially.
 		 */
 		s = sc->sc_blksize - 1;
 		if ((dbtob(bn) & s) || (bp->b_bcount & s)) {
-			sdlblkstrat(bp, sc->sc_blksize);
+			rzlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
 		bp->b_cylin = (bn + pinfo->p_offset) >> sc->sc_bshift;
@@ -785,7 +785,7 @@ sdstrategy(bp)
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
 		dp->b_active = 1;
-		sdustart(unit);
+		rzustart(unit);
 	}
 	splx(s);
 	return;
@@ -794,11 +794,11 @@ done:
 }
 
 void
-sdustart(unit)
+rzustart(unit)
 	register int unit;
 {
-	if (scsireq(&sd_softc[unit].sc_dq))
-		sdstart(unit);
+	if (siopreq(&rz_softc[unit].sc_dq))
+		rzstart(unit);
 }
 
 /*
@@ -808,23 +808,23 @@ sdustart(unit)
  *	>0	if a fatal error
  */
 static int
-sderror(unit, sc, am, stat)
+rzerror(unit, sc, am, stat)
 	int unit, stat;
-	register struct sd_softc *sc;
+	register struct rz_softc *sc;
 	register struct amiga_device *am;
 {
 	int cond = 1;
 
-	sdsense[unit].status = stat;
+	rzsense[unit].status = stat;
 	if (stat & STS_CHECKCOND) {
 		struct scsi_xsense *sp;
 
-		scsi_request_sense(am->amiga_ctlr, am->amiga_slave,
+		siop_request_sense(am->amiga_ctlr, am->amiga_slave,
 				   sc->sc_punit,
-				   sdsense[unit].sense,
-				   sizeof(sdsense[unit].sense));
-		sp = (struct scsi_xsense *)sdsense[unit].sense;
-		printf("sd%d: scsi sense class %d, code %d", unit,
+				   rzsense[unit].sense,
+				   sizeof(rzsense[unit].sense));
+		sp = (struct scsi_xsense *)rzsense[unit].sense;
+		printf("rz%d: scsi sense class %d, code %d", unit,
 			sp->class, sp->code);
 		if (sp->class == 7) {
 			printf(", key %d", sp->key);
@@ -847,61 +847,61 @@ sderror(unit, sc, am, stat)
 }
 
 static void
-sdfinish(unit, sc, bp)
+rzfinish(unit, sc, bp)
 	int unit;
-	register struct sd_softc *sc;
+	register struct rz_softc *sc;
 	register struct buf *bp;
 {
-	sdtab[unit].b_errcnt = 0;
-	sdtab[unit].b_actf = bp->b_actf;
+	rztab[unit].b_errcnt = 0;
+	rztab[unit].b_actf = bp->b_actf;
 	bp->b_resid = 0;
 	biodone(bp);
-	scsifree(&sc->sc_dq);
-	if (sdtab[unit].b_actf)
-		sdustart(unit);
+	siopfree(&sc->sc_dq);
+	if (rztab[unit].b_actf)
+		rzustart(unit);
 	else
-		sdtab[unit].b_active = 0;
+		rztab[unit].b_active = 0;
 }
 
 void
-sdstart(unit)
+rzstart(unit)
 	register int unit;
 {
-	register struct sd_softc *sc = &sd_softc[unit];
+	register struct rz_softc *sc = &rz_softc[unit];
 	register struct amiga_device *am = sc->sc_ad;
 
 	/*
 	 * we have the SCSI bus -- in format mode, we may or may not need dma
 	 * so check now.
 	 */
-	if (sc->sc_format_pid && legal_cmds[sdcmd[unit].cdb[0]] > 0) {
-		register struct buf *bp = sdtab[unit].b_actf;
+	if (sc->sc_format_pid && legal_cmds[rzcmd[unit].cdb[0]] > 0) {
+		register struct buf *bp = rztab[unit].b_actf;
 		register int sts;
 
-		sts = scsi_immed_command(am->amiga_ctlr, am->amiga_slave,
+		sts = siop_immed_command(am->amiga_ctlr, am->amiga_slave,
 					 sc->sc_punit,
-					 &sdcmd[unit],
+					 &rzcmd[unit],
 					 bp->b_un.b_addr, bp->b_bcount,
 					 bp->b_flags & B_READ);
-		sdsense[unit].status = sts;
+		rzsense[unit].status = sts;
 		if (sts & 0xfe) {
-			(void) sderror(unit, sc, am, sts);
+			(void) rzerror(unit, sc, am, sts);
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 		}
-		sdfinish(unit, sc, bp);
+		rzfinish(unit, sc, bp);
 
-	} else if (scsiustart(am->amiga_ctlr))
-		sdgo(unit);
+	} else if (siopustart(am->amiga_ctlr))
+		rzgo(unit);
 }
 
 void
-sdgo(unit)
+rzgo(unit)
 	register int unit;
 {
-	register struct sd_softc *sc = &sd_softc[unit];
+	register struct rz_softc *sc = &rz_softc[unit];
 	register struct amiga_device *am = sc->sc_ad;
-	register struct buf *bp = sdtab[unit].b_actf;
+	register struct buf *bp = rztab[unit].b_actf;
 	register int pad;
 	register struct scsi_fmt_cdb *cmd;
 
@@ -910,26 +910,26 @@ sdgo(unit)
 	  return;
 
 	if (sc->sc_format_pid) {
-		cmd = &sdcmd[unit];
+		cmd = &rzcmd[unit];
 		pad = 0;
 	} else {
-		cmd = bp->b_flags & B_READ? &sd_read_cmd : &sd_write_cmd;
+		cmd = bp->b_flags & B_READ? &rz_read_cmd : &rz_write_cmd;
 		*(int *)(&cmd->cdb[2]) = bp->b_cylin;
 		pad = howmany(bp->b_bcount, sc->sc_blksize);
 		*(u_short *)(&cmd->cdb[7]) = pad;
-		QPRINTF(("sdgo[%d, %d]: %s @%d >%d\n",
+		QPRINTF(("rzgo[%d, %d]: %s @%d >%d\n",
 			 am->amiga_ctlr, am->amiga_slave,
 			 bp->b_flags & B_READ ? "R" : "W",
 			 bp->b_cylin, pad));
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
 #ifdef DEBUG
 		if (pad)
-			printf("sd%d: partial block xfer -- %x bytes\n",
+			printf("rz%d: partial block xfer -- %x bytes\n",
 			       unit, bp->b_bcount);
 #endif
-		sdstats[unit].sdtransfers++;
+		rzstats[unit].rztransfers++;
 	}
-	if (scsigo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit, bp, cmd, pad) == 0) {
+	if (siopgo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit, bp, cmd, pad) == 0) {
 		if (am->amiga_dk >= 0) {
 			dk_busy |= 1 << am->amiga_dk;
 			++dk_seek[am->amiga_dk];
@@ -939,91 +939,91 @@ sdgo(unit)
 		return;
 	}
 #ifdef DEBUG
-	if (sddebug & SDB_ERROR)
-		printf("sd%d: sdstart: %s adr %d blk %d len %d ecnt %d\n",
+	if (rzdebug & SDB_ERROR)
+		printf("rz%d: rzstart: %s adr %d blk %d len %d ecnt %d\n",
 		       unit, bp->b_flags & B_READ? "read" : "write",
 		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
-		       sdtab[unit].b_errcnt);
+		       rztab[unit].b_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
-	sdfinish(unit, sc, bp);
+	rzfinish(unit, sc, bp);
 }
 
 void
-sdintr(unit, stat)
+rzintr(unit, stat)
 	register int unit;
 	int stat;
 {
-	register struct sd_softc *sc = &sd_softc[unit];
-	register struct buf *bp = sdtab[unit].b_actf;
+	register struct rz_softc *sc = &rz_softc[unit];
+	register struct buf *bp = rztab[unit].b_actf;
 	register struct amiga_device *am = sc->sc_ad;
 	int cond;
 	
 	if (bp == NULL) {
-		printf("sd%d: bp == NULL\n", unit);
+		printf("rz%d: bp == NULL\n", unit);
 		return;
 	}
 	if (am->amiga_dk >= 0)
 		dk_busy &=~ (1 << am->amiga_dk);
 	if (stat) {
 #ifdef DEBUG
-		if (sddebug & SDB_ERROR)
-			printf("sd%d: sdintr: bad scsi status 0x%x\n",
+		if (rzdebug & SDB_ERROR)
+			printf("rz%d: rzintr: bad scsi status 0x%x\n",
 				unit, stat);
 #endif
-		cond = sderror(unit, sc, am, stat);
+		cond = rzerror(unit, sc, am, stat);
 		if (cond) {
-			if (cond < 0 && sdtab[unit].b_errcnt++ < SDRETRY) {
+			if (cond < 0 && rztab[unit].b_errcnt++ < SDRETRY) {
 #ifdef DEBUG
-				if (sddebug & SDB_ERROR)
-					printf("sd%d: retry #%d\n",
-					       unit, sdtab[unit].b_errcnt);
+				if (rzdebug & SDB_ERROR)
+					printf("rz%d: retry #%d\n",
+					       unit, rztab[unit].b_errcnt);
 #endif
-				sdstart(unit);
+				rzstart(unit);
 				return;
 			}
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 		}
 	}
-	sdfinish(unit, sc, bp);
+	rzfinish(unit, sc, bp);
 }
 
 #if 1
 u_int
-sdminphys (bp)
+rzminphys (bp)
 	struct buf *bp;
 {
-	register int unit = sdunit(bp->b_dev);
-	register struct sd_softc *sc = &sd_softc[unit];
-	register struct partition *pinfo = &sc->sc_label.d_partitions[sdpart(bp->b_dev)];
+	register int unit = rzunit(bp->b_dev);
+	register struct rz_softc *sc = &rz_softc[unit];
+	register struct partition *pinfo = &sc->sc_label.d_partitions[rzpart(bp->b_dev)];
 	register daddr_t bn;
-	register int sz, s;
+	register int rz, s;
 
 	/* first restrict by max amount of physio possible */
 	bp->b_bcount = min(MAXPHYS, bp->b_bcount);
 
-	/* then restrict by partition size (code replicated from sdstrategy).
+	/* then restrict by partition size (code replicated from rzstrategy).
 	   Should minphys() really fiddle around with b_resid and b_flags ??? XXXX */
 
 	bn = bp->b_blkno;
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
-	if (bn < 0 || bn + sz > pinfo->p_size) 
+	rz = howmany(bp->b_bcount, DEV_BSIZE);
+	if (bn < 0 || bn + rz > pinfo->p_size) 
 	  {
-	    sz = pinfo->p_size - bn;
-	    if (sz == 0) 
+	    rz = pinfo->p_size - bn;
+	    if (rz == 0) 
 	      {
 	        bp->b_resid = bp->b_bcount;
 	        goto done;
 	      }
-	    if (sz < 0) 
+	    if (rz < 0) 
 	      {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	      }
-	    bp->b_bcount = dbtob(sz);
+	    bp->b_bcount = dbtob(rz);
 	  }
 
 	return bp->b_bcount;
@@ -1033,48 +1033,48 @@ done:
 
 
 int
-sdread(dev, uio, flags)
+rzread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int unit = sdunit(dev);
+	register int unit = rzunit(dev);
 	register int pid;
 
-	if ((pid = sd_softc[unit].sc_format_pid) &&
+	if ((pid = rz_softc[unit].sc_format_pid) &&
 	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
-	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
+	return (physio(rzstrategy, NULL, dev, B_READ, rzminphys, uio));
 }
 
 int
-sdwrite(dev, uio, flags)
+rzwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int unit = sdunit(dev);
+	register int unit = rzunit(dev);
 	register int pid;
 
-	if ((pid = sd_softc[unit].sc_format_pid) &&
+	if ((pid = rz_softc[unit].sc_format_pid) &&
 	    pid != uio->uio_procp->p_pid)
 		return (EPERM);
 		
-	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
+	return (physio(rzstrategy, NULL, dev, B_WRITE, rzminphys, uio));
 }
 #endif
 
 int
-sdioctl(dev, cmd, data, flag, p)
+rzioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	register int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
+	register int unit = rzunit(dev);
+	register struct rz_softc *sc = &rz_softc[unit];
 	struct disklabel *dl;
 	int error;
 
@@ -1150,7 +1150,7 @@ sdioctl(dev, cmd, data, flag, p)
 			return (EPERM);
 		if (legal_cmds[((struct scsi_fmt_cdb *)data)->cdb[0]] == 0)
 			return (EINVAL);
-		bcopy(data, (caddr_t)&sdcmd[unit], sizeof(sdcmd[0]));
+		bcopy(data, (caddr_t)&rzcmd[unit], sizeof(rzcmd[0]));
 		return (0);
 
 	case SDIOCSENSE:
@@ -1158,7 +1158,7 @@ sdioctl(dev, cmd, data, flag, p)
 		 * return the SCSI sense data saved after the last
 		 * operation that completed with "check condition" status.
 		 */
-		bcopy((caddr_t)&sdsense[unit], data, sizeof(sdsense[0]));
+		bcopy((caddr_t)&rzsense[unit], data, sizeof(rzsense[0]));
 		return (0);
 		
 	}
@@ -1166,27 +1166,27 @@ sdioctl(dev, cmd, data, flag, p)
 }
 
 int
-sdsize(dev)
+rzsize(dev)
 	dev_t dev;
 {
-	register int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
+	register int unit = rzunit(dev);
+	register struct rz_softc *sc = &rz_softc[unit];
 
-	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
+	if (unit >= NRZ || (sc->sc_flags & SDF_ALIVE) == 0)
 		return(-1);
-	return(sc->sc_label.d_partitions[sdpart(dev)].p_size);
+	return(sc->sc_label.d_partitions[rzpart(dev)].p_size);
 }
 
 /*
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-sddump(dev)
+rzdump(dev)
 	dev_t dev;
 {
-	int part = sdpart(dev);
-	int unit = sdunit(dev);
-	register struct sd_softc *sc = &sd_softc[unit];
+	int part = rzpart(dev);
+	int unit = rzunit(dev);
+	register struct rz_softc *sc = &rz_softc[unit];
 	register struct amiga_device *am = sc->sc_ad;
 	register daddr_t baddr;
 	register int maddr;
@@ -1203,7 +1203,7 @@ sddump(dev)
 	pages = physmem;
 
 	/* is drive ok? */
-	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
+	if (unit >= NRZ || (sc->sc_flags & SDF_ALIVE) == 0)
 		return (ENXIO);
 	/* dump parameters in range? */
 	if (dumplo < 0 || dumplo >= sc->sc_label.d_partitions[part].p_size)
@@ -1213,9 +1213,9 @@ sddump(dev)
 	maddr = ctob(lowram);
 	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
 	/* scsi bus idle? */
-	if (!scsireq(&sc->sc_dq)) {
-		scsireset(am->amiga_ctlr);
-		sdreset(sc, sc->sc_ad);
+	if (!siopreq(&sc->sc_dq)) {
+		siopreset(am->amiga_ctlr);
+		rzreset(sc, sc->sc_ad);
 		printf("[ drive %d reset ] ", unit);
 	}
 	for (i = 0; i < pages; i++) {
@@ -1225,11 +1225,11 @@ sddump(dev)
 			printf("%d ", i / NPGMB);
 #undef NPBMG
 		pmap_enter(pmap_kernel(), vmmap, maddr, VM_PROT_READ, TRUE);
-		stat = scsi_tt_write(am->amiga_ctlr, am->amiga_slave,
+		stat = siop_tt_write(am->amiga_ctlr, am->amiga_slave,
 				     sc->sc_punit,
 				     vmmap, NBPG, baddr, sc->sc_bshift);
 		if (stat) {
-			printf("sddump: scsi write error 0x%x\n", stat);
+			printf("rzdump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
 		maddr += NBPG;

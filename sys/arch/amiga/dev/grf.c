@@ -66,7 +66,7 @@
 #include "vm/vm_page.h"
 #include "vm/vm_pager.h"
 
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "vnode.h"
 #include "mman.h"
 
@@ -241,6 +241,11 @@ grfioctl(dev, cmd, data, flag, p)
 	error = 0;
 	switch (cmd) {
 
+	case OGRFIOCGINFO:
+	        /* argl.. no bank-member.. */
+	  	bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo)-4);
+		break;
+
 	case GRFIOCGINFO:
 		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
 		break;
@@ -280,7 +285,22 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFGETNUMVM:
 		return grfdev[gp->g_type].gd_mode (gp, GM_GRFGETNUMVM, data);
 
+		/* these are all hardware dependant, and have to be resolved
+		   in the respective driver. */
+	case GRFIOCPUTCMAP:
+	case GRFIOCGETCMAP:
+	case GRFIOCSSPRITEPOS:
+	case GRFIOCGSPRITEPOS:
+	case GRFIOCSSPRITEINF:
+	case GRFIOCGSPRITEINF:
+	case GRFIOCGSPRITEMAX:
+		return grfdev[gp->g_type].gd_mode (gp, GM_GRFIOCTL, cmd, data);
+
 	default:
+		/* check to see whether it's a command recognized by the
+		   view code if the unit is 0 XXX */
+		if (GRFUNIT(dev) == 0)
+		  return viewioctl (dev, cmd, data, flag, p);
 		error = EINVAL;
 		break;
 
@@ -420,6 +440,10 @@ grfaddr(gp, off)
 	/* frame buffer */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
+#ifdef BANKEDDEVPAGER
+		if (gi->gd_bank_size)
+		  off %= gi->gd_bank_size;
+#endif
 		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
 	/* bogus */
@@ -445,8 +469,18 @@ grfmmap(dev, addrp, p)
 	flags = MAP_FILE|MAP_SHARED;
 	if (*addrp)
 		flags |= MAP_FIXED;
-	else
-		*addrp = (caddr_t)0x1000000;	/* XXX */
+	else {
+		/*
+		 * XXX if no hint provided for a non-fixed mapping place it after
+		 * the end of the largest possible heap.
+		 *
+		 * There should really be a pmap call to determine a reasonable
+		 * location.
+		 */
+		*addrp = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	}
+	bzero (&vn, sizeof (vn));
+	bzero (&si, sizeof (si));
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
@@ -476,5 +510,50 @@ grfunmmap(dev, addr, p)
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
+#ifdef BANKEDDEVPAGER
+
+int
+grfbanked_get (dev, off, prot)
+     dev_t dev;
+     off_t off;
+     int   prot;
+{
+  int unit = GRFUNIT(dev);
+  struct grf_softc *gp = &grf_softc[unit];
+  int error, bank;
+  struct grfinfo *gi = &gp->g_display;
+
+  off -= gi->gd_regsize;
+  if (off < 0 || off >= gi->gd_fbsize)
+    return -1;
+
+  error = grfdev[gp->g_type].gd_mode (gp, GM_GRFGETBANK, &bank, off, prot);
+  return error ? -1 : bank;
+}
+
+int
+grfbanked_cur (dev)
+     dev_t dev;
+{
+  int unit = GRFUNIT(dev);
+  struct grf_softc *gp = &grf_softc[unit];
+  int error, bank;
+
+  error = grfdev[gp->g_type].gd_mode (gp, GM_GRFGETCURBANK, &bank);
+  return error ? -1 : bank;
+}
+
+int
+grfbanked_set (dev, bank)
+     dev_t dev;
+     int bank;
+{
+  int unit = GRFUNIT(dev);
+  struct grf_softc *gp = &grf_softc[unit];
+
+  return grfdev[gp->g_type].gd_mode (gp, GM_GRFSETBANK, bank) ? -1 : 0;
+}
+
+#endif /* BANKEDDEVPAGER */
 
 #endif	/* NGRF > 0 */

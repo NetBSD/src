@@ -293,6 +293,7 @@ dmago(unit, addr, count, flags)
   dmatimo[unit] = 1;
 #endif
 
+  DCIS();				/* push data cache */
   dc->sc_hwaddr->CNTR = dc->sc_cmd;
   scsi_int_mode[unit] = 1;
   dc->sc_hwaddr->ACR = (u_int) dc->sc_cur->dc_addr;

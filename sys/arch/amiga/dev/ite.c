@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.4 1993/10/30 23:41:17 mw Exp $
+ *	$Id: ite.c,v 1.5 1994/01/26 21:05:54 mw Exp $
  *
  * Original author: unknown
  * Amiga author:: Markus Wild
@@ -97,7 +97,7 @@ extern int itecninit (struct consdev *cp);
 extern int itecngetc (dev_t dev);
 extern int itecnputc (dev_t dev, int c);
 static void repeat_handler (int a0, int a1);
-static void inline ite_reset(struct ite_softc *ip);
+void ite_reset(struct ite_softc *ip);
 static void ite_dnchar (struct ite_softc *ip, struct itesw *sp, int n);
 static void ite_inchar (struct ite_softc *ip, struct itesw *sp, int n);
 static void ite_clrtoeol (struct ite_softc *ip, struct itesw *sp);
@@ -126,8 +126,11 @@ static int strncmp (const char *a, const char *b, int l);
 
 extern  int nodev();
 
+int ite_view_init(), ite_view_deinit();
+#if 0
 int customc_scroll(),	customc_init(),		customc_deinit();
 int customc_clear(),	customc_putc(),		customc_cursor();
+#endif
 
 int tiga_scroll(),	tiga_init(),		tiga_deinit();
 int tiga_clear(),	tiga_putc(),		tiga_cursor();
@@ -137,7 +140,7 @@ int retina_clear(),	retina_putc(),		retina_cursor();
 
 struct itesw itesw[] =
 {
-	customc_init,		customc_deinit,		0,
+	ite_view_init,		ite_view_deinit,	0,
 	0,			0,			0,
 	
 	tiga_init,		tiga_deinit,		tiga_clear,
@@ -437,6 +440,7 @@ iteioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
+	struct ite_softc *ip = &ite_softc[UNIT(dev)];
 	int error;
 
 	if (! tp)
@@ -472,6 +476,10 @@ iteioctl(dev, cmd, addr, flag)
 	  }
 
 
+	/* XXX */
+	if (UNIT(dev) == 0)
+	    return ite_grf_ioctl (ip, cmd, addr, flag);
+
 	return (ENOTTY);
 }
 
@@ -505,7 +513,8 @@ itestart(tp)
 		hiwat++;
 		cc = iteburst;
 	}
-	(*itesw[ip->type].ite_cursor)(ip, START_CURSOROPT);
+	if ((ip->flags & (ITE_ACTIVE|ITE_INGRF)) == ITE_ACTIVE)
+		(*itesw[ip->type].ite_cursor)(ip, START_CURSOROPT);
 	while (--cc >= 0) {
 		register int c;
 
@@ -523,7 +532,8 @@ itestart(tp)
 		iteputchar(c, tp->t_dev);
 		spltty();
 	}
-	(*itesw[ip->type].ite_cursor)(ip, END_CURSOROPT);
+	if ((ip->flags & (ITE_ACTIVE|ITE_INGRF)) == ITE_ACTIVE)
+		(*itesw[ip->type].ite_cursor)(ip, END_CURSOROPT);
 	if (hiwat) {
 		tp->t_state |= TS_TIMEOUT;
 		timeout((timeout_t) ttrstrt, (caddr_t) tp, 1);
@@ -660,6 +670,14 @@ itefilter(c, caller)
         }
       splx (s);
       return -1;
+    }
+  else if (tout_pending && last_char != c)
+    {
+      /* not the same character remove the repeater and continue
+       * to process this key. -ch*/
+      untimeout ((timeout_t) repeat_handler, 0);
+      tout_pending = 0;
+      last_char = 0;
     }
 
 
@@ -1140,7 +1158,7 @@ strncmp (a, b, l)
   return 0;
 }
 
-static void inline
+void 
 ite_reset(ip)
     struct ite_softc *ip;
 {
@@ -1964,7 +1982,6 @@ doesc:
 	      }
           }
 
-
 	switch (c) {
 
 	case VT:	/* VT is treated like LF */
@@ -2280,4 +2297,8 @@ itecnputc(dev, c)
 	}
 	iteputchar(c, dev);
 }
+
+void
+iteattach() {}
 #endif
+

@@ -55,6 +55,19 @@
 #include "../amiga/custom.h"
 #include "../amiga/cia.h"
 
+/* for sun-like event mode, if you go thru /dev/kbd. */
+#include "event_var.h"
+#include "vuid_event.h"
+
+struct kbd_softc {
+  int k_event_mode;  	 /* if true, collect events, else pass to ite */
+  struct evvar k_events; /* event queue state */
+} kbd_softc;
+
+/* definitions for amiga keyboard encoding. */
+#define KEY_CODE(c)  ((c) & 0x7f)
+#define KEY_UP(c)    ((c) & 0x80)
+
 void
 kbdenable ()
 {
@@ -65,8 +78,98 @@ kbdenable ()
   custom.intena = INTF_SETCLR | INTF_PORTS;
   ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;  /* SP interrupt enable */
   ciaa.cra &= ~(1<<6);		/* serial line == input */
+  kbd_softc.k_event_mode = 0;
+  kbd_softc.k_events.ev_io = 0;
   
   splx (s);
+}
+
+
+int
+kbdopen (dev_t dev, int flags, int mode, struct proc *p)
+{
+  int s, error;
+
+  if (kbd_softc.k_events.ev_io)
+    return EBUSY;
+
+  kbd_softc.k_events.ev_io = p;
+  ev_init(&kbd_softc.k_events);
+  return (0);
+}
+
+int
+kbdclose (dev_t dev, int flags, int mode, struct proc *p)
+{
+  /* Turn off event mode, dump the queue */
+  kbd_softc.k_event_mode = 0;
+  ev_fini(&kbd_softc.k_events);
+  kbd_softc.k_events.ev_io = NULL;
+  return (0);
+}
+
+int
+kbdread (dev_t dev, struct uio *uio, int flags)
+{
+  return ev_read (&kbd_softc.k_events, uio, flags);
+}
+
+/* this routine should not exist, but is convenient to write here for now */
+int
+kbdwrite (dev_t dev, struct uio *uio, int flags)
+{
+  return EOPNOTSUPP;
+}
+
+int
+kbdioctl (dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
+{
+  register struct kbd_softc *k = &kbd_softc;
+
+  switch (cmd) 
+    {
+    case KIOCTRANS:
+      if (*(int *)data == TR_UNTRANS_EVENT)
+	return 0;
+      break;
+
+    case KIOCGTRANS:
+      /*
+       * Get translation mode
+       */
+      *(int *)data = TR_UNTRANS_EVENT;
+      return 0;
+
+    case KIOCSDIRECT:
+      k->k_event_mode = *(int *)data;
+      return 0;
+
+    case FIONBIO:		/* we will remove this someday (soon???) */
+      return 0;
+
+    case FIOASYNC:
+      k->k_events.ev_async = *(int *)data != 0;
+      return 0;
+
+    case TIOCSPGRP:
+      if (*(int *)data != k->k_events.ev_io->p_pgid)
+	return EPERM;
+      return 0;
+
+    default:
+      return ENOTTY;
+    }
+
+  /*
+   * We identified the ioctl, but we do not handle it.
+   */
+  return EOPNOTSUPP;		/* misuse, but what the heck */
+}
+
+int
+kbdselect (dev_t dev, int rw, struct proc *p)
+{
+  return ev_select (&kbd_softc.k_events, rw, p);
 }
 
 
@@ -75,6 +178,9 @@ kbdintr (mask)
      int mask;
 {
   u_char c, in;
+  struct kbd_softc *k = &kbd_softc;
+  struct firm_event *fe;
+  int put;
  
   /* now only invoked from generic CIA interrupt handler if there *is*
      a keyboard interrupt pending */
@@ -82,23 +188,47 @@ kbdintr (mask)
   in = ciaa.sdr;
   /* ack */
   ciaa.cra |= (1 << 6);	/* serial line output */
-  /* wait 85 microseconds */
-  DELAY(85);
+  /* wait 200 microseconds (for bloody Cherry keyboards..) */
+  DELAY(200);
   ciaa.cra &= ~(1 << 6);
 
   c = ~in;	/* keyboard data is inverted */
 
-  /* process the character. 
+  /* process the character */
   
-     Should implement RAW mode for X11 later here !! */
   c = (c >> 1) | (c << 7);	/* rotate right once */
 
-  itefilter (c, ITEFILT_TTY);
   
   /* XXX THIS IS WRONG!!! The screenblanker should route thru ite.c, which 
      should call thru it's driver table, ie. we need a new driver-dependant
      function for this feature! */
+
   cc_unblank ();
+
+  /* if not in event mode, deliver straight to ite to process key stroke */
+  if (! k->k_event_mode)
+    {
+      itefilter (c, ITEFILT_TTY);
+      return;
+    }
+
+  /* Keyboard is generating events.  Turn this keystroke into an
+     event and put it in the queue.  If the queue is full, the
+     keystroke is lost (sorry!). */
+  
+  put = k->k_events.ev_put;
+  fe = &k->k_events.ev_q[put];
+  put = (put + 1) % EV_QSIZE;
+  if (put == k->k_events.ev_get) 
+    {
+      log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
+      return;
+    }
+  fe->id = KEY_CODE(c);
+  fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
+  fe->time = time;
+  k->k_events.ev_put = put;
+  EV_WAKEUP(&k->k_events);
 }
 
 
@@ -124,8 +254,8 @@ kbdgetcn ()
   /* ack */
   ciaa.cra |= (1 << 6);	/* serial line output */
   ciaa.sdr = 0xff;		/* ack */
-  /* wait 85 microseconds */
-  DELAY(85);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
+  /* wait 200 microseconds */
+  DELAY(200);    /* XXXX only works as long as DELAY doesn't use a timer and waits.. */
   ciaa.cra &= ~(1 << 6);
   ciaa.sdr = in;
 
@@ -133,10 +263,12 @@ kbdgetcn ()
   c = (c >> 1) | (c << 7);
 
   /* take care that no CIA-interrupts are lost */
-  if (mask)
-    dispatch_cia_ints (0, mask);
+  if (ints)
+    dispatch_cia_ints (0, ints);
 
   return c;
 }
 
+void
+kbdattach() {}
 #endif
