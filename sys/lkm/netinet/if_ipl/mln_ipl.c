@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.6 1997/03/29 03:03:09 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.7 1997/03/29 19:51:45 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -48,12 +48,6 @@
 #include <sys/lkm.h>
 #include "ipl.h"
 #include <netinet/ip_fil.h>
-
-#ifndef	IPL_NAME
-#define	IPL_NAME	"/dev/ipl"
-#endif
-#define	IPL_NAT		"/dev/ipnat"
-#define	IPL_STATE	"/dev/ipstate"
 
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
@@ -177,7 +171,7 @@ static int ipl_remove __P((void))
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPL_NAT, curproc);
+	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPNAT_NAME, curproc);
 	if ((error = namei(&nd)))
 		return (error);
 	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
@@ -185,7 +179,7 @@ static int ipl_remove __P((void))
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPL_STATE, curproc);
+	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPSTATE_NAME, curproc);
 	if ((error = namei(&nd)))
 		return (error);
 	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
@@ -241,7 +235,7 @@ static int ipl_load()
 	if (error)
 		return error;
 
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAT, curproc);
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPNAT_NAME, curproc);
 	if (error = namei(&nd))
 		return error;
 	if (nd.ni_vp != NULL) {
@@ -262,7 +256,7 @@ static int ipl_load()
 	if (error)
 		return error;
 
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_STATE, curproc);
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPSTATE_NAME, curproc);
 	if (error = namei(&nd))
 		return error;
 	if (nd.ni_vp != NULL) {
