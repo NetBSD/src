@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2001/09/08 01:32:52 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2001/12/02 18:50:04 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,6 +131,23 @@ File pseudo-disks, see
 IDE disks, see
 .Xr \&wd 4
 . El
+.It Console ports :
+. Bl -tag -width 0123456789 -compact
+. It Ar ttyE#
+Wscons
+. El
+.It Pointing devices :
+. Bl -tag -width 0123456789 -compact
+. It Ar wsmouse#
+Wscons mouse events, see
+.Xr \&wsmouse 4
+. El
+.It Keyboard devices :
+. Bl -tag -width 0123456789 -compact
+. It Ar wskbd#
+Wscons keyboard events, see
+.Xr \&wskbd 4
+. El
 .It Terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyC#
@@ -184,6 +201,11 @@ Network tunnel driver, see
 . It Ar uk#
 SCSI unknown, see
 .Xr \&uk 4
+. It Ar wsfont#
+Console font control
+. It Ar wsmux#
+Wscons event multiplexor, see
+.Xr \&wsmux 4
 . El
 .El
 .Sh FILES
