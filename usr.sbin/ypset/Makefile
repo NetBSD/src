@@ -2,6 +2,6 @@
 
 PROG=	ypset
 NOMAN=
-DESTDIR=/usr/sbin
+BINDIR=/usr/sbin
 
 .include <bsd.prog.mk>
