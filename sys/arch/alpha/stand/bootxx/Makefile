@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 1998/03/28 00:21:35 thorpej Exp $
+# $NetBSD: Makefile,v 1.16 1998/10/15 00:52:38 ross Exp $
 
 PROG = bootxx
 
@@ -21,6 +21,9 @@ ${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
 	    obs=`expr 15 \* 512` conv=osync
 
 .include "../Makefile.bootprogs"
+
+NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
+CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
 ${PROG}.sym: ${OBJS} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
