@@ -31,33 +31,72 @@
 #include "DEFS.h"
 
 /*
- * strrchr(s, c)
- *	return a pointer to the last occurance of the character c in
- *	string s, or NULL if c does not occur in the string.
- *
- * %edx - pointer iterating through string
- * %eax - pointer to last occurance of 'c'
- * %cl  - character we're comparing against
- * %bl  - character at %edx
+ * strcat(s, append)
+ *	append a copy of the null-terminated string "append" to the end
+ *	of the null-terminated string s, then add a terminating `\0'.
  *
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-ENTRY(strrchr)
-	pushl	%ebx
-	movl	8(%esp),%edx
-	movb	12(%esp),%cl
-	xorl	%eax,%eax		/* init pointer to null */
+/*
+ * I've unrolled the loop eight times: large enough to make a
+ * significant difference, and small enough not to totally trash the
+ * cashe.
+ */
+
+ENTRY(strcat)
+	pushl	%edi			/* save edi */
+	movl	8(%esp),%edi		/* dst address */
+	movl	12(%esp),%edx		/* src address */
+	pushl	%edi			/* push destination address */
+
+	cld				/* set search forward */
+	xorl	%eax,%eax		/* set search for null terminator */
+	movl	$-1,%ecx		/* set search for lots of characters */
+	repne				/* search! */
+	scasb
+
+	decl	%edi			/* correct dst address */
+	movl	%edi,%ecx
+
 	.align 2,0x90
-L1:
-	movb	(%edx),%bl
-	cmpb	%bl,%cl
-	jne	L2
-	movl	%edx,%eax
-L2:	
-	incl	%edx
-	testb	%bl,%bl			/* null terminator??? */
+L1:	movb	(%edx),%al		/* unroll loop, but not too much */
+	movb	%al,(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	1(%edx),%al
+	movb	%al,1(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	2(%edx),%al
+	movb	%al,2(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	3(%edx),%al
+	movb	%al,3(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	4(%edx),%al
+	movb	%al,4(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	5(%edx),%al
+	movb	%al,5(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	6(%edx),%al
+	movb	%al,6(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	7(%edx),%al
+	movb	%al,7(%ecx)
+	testb	%al,%al
+	je	L2
+	addl	$8,%edx
+	addl	$8,%ecx
+	testb	%al,%al
 	jne	L1
-	popl	%ebx
+L2:	popl	%eax			/* pop destination address */
+	popl	%edi			/* restore edi */
 	ret
