@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.2 2000/07/06 13:09:46 ad Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.3 2000/08/03 08:25:41 ad Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -31,6 +31,11 @@
  *
  * from OpenBSD: pwd_gensalt.c,v 1.9 1998/07/05 21:08:32 provos Exp
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.3 2000/08/03 08:25:41 ad Exp $");
+#endif /* not lint */
 
 #include <sys/syslimits.h>
 #include <sys/types.h>
