@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.15 2003/09/26 18:09:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.16 2004/02/20 16:11:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -76,5 +76,7 @@ struct netbsd32_sigcontext13 {
  */
 #define	NETBSD32_MD_IOCTL	/* enable netbsd32_md_ioctl() */
 int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct proc *);
+
+#define NETBSD32_MID_MACHINE MID_SPARC
 
 #endif /* _MACHINE_NETBSD32_H_ */
