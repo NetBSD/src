@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.563 2003/08/17 15:48:43 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.564 2003/08/17 18:06:23 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.565 2003/08/17 15:47:11 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.566 2003/08/17 18:03:29 chs Exp 
  */
 
 /*
@@ -1334,6 +1334,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_ATA,
+	    0,
+	    "Apple Computer",
+	    "UniNorth ATA/100 Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP3,
@@ -8576,6 +8582,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Triones Technologies",
 	    "HPT372 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT302,
+	    0,
+	    "Triones Technologies",
+	    "HPT302 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
