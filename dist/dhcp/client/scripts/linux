@@ -22,9 +22,10 @@
 # 4. TIMEOUT not tested. ping has a flag I don't know, and I'm suspicious
 # of the $1 in its args.
 
-function make_resolv_conf() {
+make_resolv_conf() {
   if [ "x$new_domain_name" != x ] && [ x"$new_domain_name_servers" != x ]; then
     echo search $new_domain_name >/etc/resolv.conf
+    chmod 644 /etc/resolv.conf
     for nameserver in $new_domain_name_servers; do
       echo nameserver $nameserver >>/etc/resolv.conf
     done
@@ -32,7 +33,7 @@ function make_resolv_conf() {
 }
 
 # Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
-function exit_with_hooks() {
+exit_with_hooks() {
   exit_status=$1
   if [ -f /etc/dhclient-exit-hooks ]; then
     . /etc/dhclient-exit-hooks
@@ -90,7 +91,7 @@ if [ x$reason = xPREINIT ]; then
     # Add route to make broadcast work. Do not omit netmask.
     route add default dev $interface netmask 0.0.0.0
   else
-    ifconfig $interface up
+    ifconfig $interface 0 up
   fi
 
   # We need to give the kernel some time to get the interface up.
@@ -122,7 +123,7 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]; then
     # IP address changed. Bringing down the interface will delete all routes,
     # and clear the ARP cache.
-    ifconfig $interface inet down
+    ifconfig $interface inet 0 down
 
   fi
   if [ x$old_ip_address = x ] || [ x$old_ip_address != x$new_ip_address ] || \
@@ -157,7 +158,7 @@ if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ] || [ x$reason = xRELEASE ] \
   fi
   if [ x$old_ip_address != x ]; then
     # Shut down interface, which will delete routes and clear arp cache.
-    ifconfig $interface inet down
+    ifconfig $interface inet 0 down
   fi
   if [ x$alias_ip_address != x ]; then
     ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
@@ -190,7 +191,7 @@ if [ x$reason = xTIMEOUT ]; then
     make_resolv_conf
     exit_with_hooks 0
   fi
-  ifconfig $interface inet down
+  ifconfig $interface inet 0 down
   exit_with_hooks 1
 fi
 
