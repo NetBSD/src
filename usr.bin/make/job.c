@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.30 1999/09/15 08:43:22 mycroft Exp $	*/
+/*	$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.30 1999/09/15 08:43:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.30 1999/09/15 08:43:22 mycroft Exp $");
+__RCSID("$NetBSD: job.c,v 1.31 2000/01/19 23:39:37 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1010,7 +1010,6 @@ JobFinish(job, status)
 	/*
 	 * If we are aborting and the job table is now empty, we finish.
 	 */
-	(void) eunlink(tfile);
 	Finish(errors);
     }
 }
@@ -1681,10 +1680,10 @@ JobStart(gn, flags, previous)
 {
     register Job  *job;       /* new job descriptor */
     char	  *argv[10];  /* Argument vector to shell */
-    static int    jobno = 0;  /* job number of catching output in a file */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
+    int		  tfd;	      /* File descriptor to the temp file */
 
     if (previous != NULL) {
 	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT|JOB_REMOTE);
@@ -1739,9 +1738,13 @@ JobStart(gn, flags, previous)
 	    DieHorribly();
 	}
 
-	job->cmdFILE = fopen(tfile, "w+");
+	if ((tfd = mkstemp(tfile)) == -1)
+	    Punt("Could not create temporary file %s", strerror(errno));
+	(void) eunlink(tfile);
+
+	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL) {
-	    Punt("Could not open %s", tfile);
+	    Punt("Could not fdopen %s", tfile);
 	}
 	(void) fcntl(FILENO(job->cmdFILE), F_SETFD, 1);
 	/*
@@ -1847,7 +1850,6 @@ JobStart(gn, flags, previous)
 	 * Unlink and close the command file if we opened one
 	 */
 	if (job->cmdFILE != stdout) {
-	    (void) eunlink(tfile);
 	    if (job->cmdFILE != NULL)
 		(void) fclose(job->cmdFILE);
 	} else {
@@ -1875,7 +1877,6 @@ JobStart(gn, flags, previous)
 	}
     } else {
 	(void) fflush(job->cmdFILE);
-	(void) eunlink(tfile);
     }
 
     /*
@@ -1887,8 +1888,7 @@ JobStart(gn, flags, previous)
     /*
      * If we're using pipes to catch output, create the pipe by which we'll
      * get the shell's output. If we're using files, print out that we're
-     * starting a job and then set up its temporary-file name. This is just
-     * tfile with two extra digits tacked on -- jobno.
+     * starting a job and then set up its temporary-file name.
      */
     if (!compatMake || (job->flags & JOB_FIRST)) {
 	if (usePipes) {
@@ -1902,10 +1902,8 @@ JobStart(gn, flags, previous)
 	} else {
 	    (void) fprintf(stdout, "Remaking `%s'\n", gn->name);
   	    (void) fflush(stdout);
-	    (void)snprintf(job->outFile, sizeof(job->outFile), "%s%02d", tfile,
-		jobno);
-	    jobno = (jobno + 1) % 100;
-	    job->outFd = open(job->outFile,O_WRONLY|O_CREAT|O_APPEND,0600);
+	    (void) strcpy(job->outFile, TMPPAT);
+	    job->outFd = mkstemp(job->outFile);
 	    (void) fcntl(job->outFd, F_SETFD, 1);
 	}
     }
@@ -2423,9 +2421,6 @@ Job_Init(maxproc, maxlocal)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
-    (void) snprintf(tfile, sizeof(tfile), "/tmp/make%05ld",
-	(unsigned long)getpid());
-
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
     maxJobs = 	  maxproc;
@@ -2934,7 +2929,6 @@ JobInterrupt(runINTERRUPT, signo)
 	    }
 	}
     }
-    (void) eunlink(tfile);
     exit(signo);
 }
 
@@ -2969,7 +2963,6 @@ Job_Finish()
 	    }
 	}
     }
-    (void) eunlink(tfile);
     return(errors);
 }
 
@@ -3074,7 +3067,6 @@ Job_AbortAll()
      */
     while (waitpid((pid_t) -1, &foo, WNOHANG) > 0)
 	continue;
-    (void) eunlink(tfile);
 }
 
 #ifdef REMOTE
