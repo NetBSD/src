@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2000/02/22 06:06:06 mjacob Exp $
+# $NetBSD: Makefile.inc,v 1.7 2000/05/25 12:49:32 kleink Exp $
 # $OpenBSD: $
 # $FreeBSD: $
 #
@@ -34,7 +34,7 @@
 # mjacob@feral.com
 #
 
-COPTS	+=	-DSESINC="<dev/scsipi/ses.h>"
+CPPFLAGS+=	-DSESINC="<dev/scsipi/ses.h>"
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
