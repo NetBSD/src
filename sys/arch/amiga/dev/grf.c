@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.8 1994/02/13 21:10:24 chopps Exp $
+ *	$Id: grf.c,v 1.9 1994/02/17 09:10:32 chopps Exp $
  */
 
 /*
@@ -55,6 +55,8 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
+#include <sys/systm.h>
 
 #include <amiga/dev/device.h>
 #include <amiga/dev/grfioctl.h>
@@ -71,10 +73,25 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 
+#if defined (__STDC__)
+#define GET_CHRDEV_MAJOR(dev, maj) { \
+	for(maj = 0; maj < nchrdev; maj++) \
+		if (cdevsw[maj].d_open == dev ## open) \
+			break; \
+}
+#else
+#define GET_CHRDEV_MAJOR(dev, maj) { \
+	for(maj = 0; maj < nchrdev; maj++) \
+		if (cdevsw[maj].d_open == dev/**/open) \
+			break; \
+}
+#endif
+
 #include "ite.h"
 #if NITE == 0
-#define	iteon(u,f)
-#define	iteoff(u,f)
+#define	ite_on(u,f)
+#define	ite_off(u,f)
+#define ite_reinit(d)
 #endif
 
 int	grfprobe();
@@ -279,7 +296,7 @@ grfioctl(dev, cmd, data, flag, p)
 		if (! error)
 		  {
 		    /* XXX */
-		    itereinit (GRFUNIT (dev));
+		    ite_reinit (GRFUNIT (dev));
 		  }
 		break;
 
@@ -374,10 +391,11 @@ grfmap(dev, off, prot)
 	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
 }
 
-
 grfon(dev)
 	dev_t dev;
 {
+	extern int iteopen __P((dev_t, int, int, struct proc *));
+	int maj;
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = &grf_softc[unit];
 
@@ -385,12 +403,9 @@ grfon(dev)
 	  return 0;
 	gp->g_flags |= GF_GRFON;
 
-	/*
-	 * XXX: iteoff call relies on devices being in same order
-	 * as ITEs and the fact that iteoff only uses the minor part
-	 * of the dev arg.
-	 */
-	iteoff(unit, 3);
+	/* XXX relies on the unit matching */
+	GET_CHRDEV_MAJOR(ite, maj);
+	ite_off(makedev(maj,unit), 3);
 	return((*grfdev[gp->g_type].gd_mode)
 			(gp, (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
 }
@@ -398,6 +413,8 @@ grfon(dev)
 grfoff(dev)
 	dev_t dev;
 {
+	extern int iteopen __P((dev_t, int, int, struct proc *));
+	int maj;
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = &grf_softc[unit];
 	int error;
@@ -409,8 +426,9 @@ grfoff(dev)
 	(void) grfunmmap(dev, (caddr_t)0, curproc);
 	error = (*grfdev[gp->g_type].gd_mode)
 			(gp, (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
-	/* XXX: see comment for iteoff above */
-	iteon(unit, 2);
+	/* XXX relies on the unit matching */
+	GET_CHRDEV_MAJOR(ite, maj);
+	ite_on(makedev(maj,unit), 2);
 	return(error);
 }
 
@@ -424,7 +442,7 @@ grfsinfo(dev, dyninfo)
 
 	error = grfdev[gp->g_type].gd_mode (gp, GM_GRFCONFIG, dyninfo);
 	/* XXX: see comment for iteoff above */
-	itereinit (unit);
+	ite_reinit (unit);
 	return(error);
 }
 

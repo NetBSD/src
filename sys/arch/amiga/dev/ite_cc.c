@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.10 1994/02/13 21:10:45 chopps Exp $
+ *	$Id: ite_cc.c,v 1.11 1994/02/17 09:10:46 chopps Exp $
  */
 
 #include "ite.h"
@@ -8,13 +8,13 @@
 #endif
 #if NITE > 0
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <dev/cons.h>
 
 #include "ite.h"
 #include <amiga/dev/itevar.h>
@@ -84,7 +84,7 @@ int ite_default_depth = 2;
 
 /* audio bell stuff */
 static char *bell_data;
-static struct ite_bell_values bell_vals = { 64, 200, 10 };
+static struct ite_bell_values bell_vals = { 10, 200, 10 };
 
 cc_unblank ()
 {
@@ -179,8 +179,23 @@ ite_new_size (struct ite_softc *ip, struct ite_window_size *vs)
     return (error);
 }
 
+/*
+ * view_cnprobe is called when the console is being initialized
+ * i.e. very early.  grfconfig() has been called, so this implies
+ * that grfcc_probe() was called as well as view_config() (in view.c)
+ * if we are functioning view_inited will be true.
+ */
 
-ite_view_init(ip)
+int
+view_cnprobe(min)
+	int min;
+{
+	extern int view_inited;		/* in view.c */
+	return (view_inited ? CN_INTERNAL : CN_DEAD);
+}
+
+void
+view_init(ip)
 	register struct ite_softc *ip;
 {
     struct itesw *sp = itesw;
@@ -272,7 +287,7 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 	    ite_reset (ip);
 	    /* XXX tell tty about the change *and* the process group should */
 	    /* XXX be signalled---this is messy, but works nice :^) */
-	    iteioctl (0, TIOCSWINSZ, &ws, 0, p);
+	    iteioctl (0, TIOCSWINSZ, (caddr_t)&ws, 0, p);
         }
         break;
 
@@ -309,7 +324,8 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
     return (error);
 }
 
-ite_view_deinit(ip)
+void
+view_deinit(ip)
 	struct ite_softc *ip;
 {
   ip->flags &= ~ITE_INITED;
