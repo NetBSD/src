@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.20 2003/12/07 23:44:15 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.21 2003/12/08 12:02:24 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ struct mach_complex_msg {
 	mach_msg_header_t mcm_header;
 	mach_msg_body_t mcm_body;
 	union {
+		mach_msg_type_descriptor_t mcm_desc[1];
 		mach_msg_port_descriptor_t mcm_port_desc[1];
 		mach_msg_ool_ports_descriptor_t mcm_ool_port_desc[1];
 		mach_msg_ool_descriptor_t mcm_ool_desc[1];
