@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.3 2001/11/13 13:14:39 lukem Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.4 2002/03/24 20:35:47 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.4 2002/03/24 20:35:47 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -73,14 +73,15 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.3 2001/11/13 13:14:39 lukem Exp $")
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_trace.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
-
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_trace.h>
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
 
 
 static char *state_text[N_STATES] = {
@@ -110,27 +111,27 @@ static char *event_text[N_EVENTS] = {
 
 /* Function prototypes */
 
-static void timer3_expired (struct l1_softc *sc);
-static void T3_start (struct l1_softc *sc);
-static void T3_stop (struct l1_softc *sc);
-static void F_T3ex (struct l1_softc *sc);
-static void timer4_expired (struct l1_softc *sc);
-static void T4_start (struct l1_softc *sc);
-static void T4_stop (struct l1_softc *sc);
-static void F_AI8 (struct l1_softc *sc);
-static void F_AI10 (struct l1_softc *sc);
-static void F_I01 (struct l1_softc *sc);
-static void F_I02 (struct l1_softc *sc);
-static void F_I03 (struct l1_softc *sc);
-static void F_I2 (struct l1_softc *sc);
-static void F_ill (struct l1_softc *sc);
-static void F_NULL (struct l1_softc *sc);
+static void timer3_expired (struct isic_softc *sc);
+static void T3_start (struct isic_softc *sc);
+static void T3_stop (struct isic_softc *sc);
+static void F_T3ex (struct isic_softc *sc);
+static void timer4_expired (struct isic_softc *sc);
+static void T4_start (struct isic_softc *sc);
+static void T4_stop (struct isic_softc *sc);
+static void F_AI8 (struct isic_softc *sc);
+static void F_AI10 (struct isic_softc *sc);
+static void F_I01 (struct isic_softc *sc);
+static void F_I02 (struct isic_softc *sc);
+static void F_I03 (struct isic_softc *sc);
+static void F_I2 (struct isic_softc *sc);
+static void F_ill (struct isic_softc *sc);
+static void F_NULL (struct isic_softc *sc);
 
 /*---------------------------------------------------------------------------*
  *	I.430 Timer T3 expire function
  *---------------------------------------------------------------------------*/	
 static void
-timer3_expired(struct l1_softc *sc)
+timer3_expired(struct isic_softc *sc)
 {
 	if(sc->sc_I430T3)
 	{
@@ -165,7 +166,7 @@ timer3_expired(struct l1_softc *sc)
 
 			splx(s);
 
-			isdn_layer2_status_ind(sc->sc_l2, STI_NOL1ACC, 0);
+			isdn_layer2_status_ind(&sc->sc_l2, STI_NOL1ACC, 0);
 		}
 		
 		isic_next_state(sc, EV_T3);		
@@ -180,7 +181,7 @@ timer3_expired(struct l1_softc *sc)
  *	I.430 Timer T3 start
  *---------------------------------------------------------------------------*/	
 static void
-T3_start(struct l1_softc *sc)
+T3_start(struct isic_softc *sc)
 {
 	NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 	sc->sc_I430T3 = 1;
@@ -192,7 +193,7 @@ T3_start(struct l1_softc *sc)
  *	I.430 Timer T3 stop
  *---------------------------------------------------------------------------*/	
 static void
-T3_stop(struct l1_softc *sc)
+T3_stop(struct isic_softc *sc)
 {
 	NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 
@@ -209,24 +210,24 @@ T3_stop(struct l1_softc *sc)
  *	I.430 Timer T3 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_T3ex(struct l1_softc *sc)
+F_T3ex(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_T3ex executing");
-	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(sc->sc_l2, 0);
+	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
+		isdn_layer2_activate_ind(&sc->sc_l2, 0);
 }
 
 /*---------------------------------------------------------------------------*
  *	Timer T4 expire function
  *---------------------------------------------------------------------------*/	
 static void
-timer4_expired(struct l1_softc *sc)
+timer4_expired(struct isic_softc *sc)
 {
 	if(sc->sc_I430T4)
 	{
 		NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 		sc->sc_I430T4 = 0;
-		isdn_layer2_status_ind(sc->sc_l2, STI_PDEACT, 0);
+		isdn_layer2_status_ind(&sc->sc_l2, STI_PDEACT, 0);
 	}
 	else
 	{
@@ -238,7 +239,7 @@ timer4_expired(struct l1_softc *sc)
  *	Timer T4 start
  *---------------------------------------------------------------------------*/	
 static void
-T4_start(struct l1_softc *sc)
+T4_start(struct isic_softc *sc)
 {
 	NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 	sc->sc_I430T4 = 1;
@@ -250,7 +251,7 @@ T4_start(struct l1_softc *sc)
  *	Timer T4 stop
  *---------------------------------------------------------------------------*/	
 static void
-T4_stop(struct l1_softc *sc)
+T4_stop(struct isic_softc *sc)
 {
 	NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 
@@ -265,14 +266,14 @@ T4_stop(struct l1_softc *sc)
  *	FSM function: received AI8
  *---------------------------------------------------------------------------*/	
 static void
-F_AI8(struct l1_softc *sc)
+F_AI8(struct isic_softc *sc)
 {
 	T4_stop(sc);
 
 	NDBGL1(L1_F_MSG, "FSM function F_AI8 executing");
 
-	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(sc->sc_l2, 1);
+	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
+		isdn_layer2_activate_ind(&sc->sc_l2, 1);
 
 	T3_stop(sc);
 
@@ -284,7 +285,7 @@ F_AI8(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -292,14 +293,14 @@ F_AI8(struct l1_softc *sc)
  *	FSM function: received AI10
  *---------------------------------------------------------------------------*/	
 static void
-F_AI10(struct l1_softc *sc)
+F_AI10(struct isic_softc *sc)
 {
 	T4_stop(sc);
 	
 	NDBGL1(L1_F_MSG, "FSM function F_AI10 executing");
 
-	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(sc->sc_l2, 1);
+	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
+		isdn_layer2_activate_ind(&sc->sc_l2, 1);
 
 	T3_stop(sc);
 
@@ -311,7 +312,7 @@ F_AI10(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -319,7 +320,7 @@ F_AI10(struct l1_softc *sc)
  *	FSM function: received INFO 0 in states F3 .. F5
  *---------------------------------------------------------------------------*/	
 static void
-F_I01(struct l1_softc *sc)
+F_I01(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_I01 executing");
 
@@ -331,7 +332,7 @@ F_I01(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -339,12 +340,12 @@ F_I01(struct l1_softc *sc)
  *	FSM function: received INFO 0 in state F6
  *---------------------------------------------------------------------------*/	
 static void
-F_I02(struct l1_softc *sc)
+F_I02(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_I02 executing");
 
-	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(sc->sc_l2, 0);
+	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
+		isdn_layer2_activate_ind(&sc->sc_l2, 0);
 
 	if(sc->sc_trace & TRACE_I)
 	{
@@ -354,7 +355,7 @@ F_I02(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -362,12 +363,12 @@ F_I02(struct l1_softc *sc)
  *	FSM function: received INFO 0 in state F7 or F8
  *---------------------------------------------------------------------------*/	
 static void
-F_I03(struct l1_softc *sc)
+F_I03(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_I03 executing");
 
-	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		isdn_layer2_activate_ind(sc->sc_l2, 0);
+	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
+		isdn_layer2_activate_ind(&sc->sc_l2, 0);
 
 	T4_start(sc);
 	
@@ -379,7 +380,7 @@ F_I03(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -387,7 +388,7 @@ F_I03(struct l1_softc *sc)
  *	FSM function: activate request
  *---------------------------------------------------------------------------*/	
 static void
-F_AR(struct l1_softc *sc)
+F_AR(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_AR executing");
 
@@ -399,7 +400,7 @@ F_AR(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_TE;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
 	}
 
 	isic_isac_l1_cmd(sc, CMD_AR8);
@@ -411,7 +412,7 @@ F_AR(struct l1_softc *sc)
  *	FSM function: received INFO2
  *---------------------------------------------------------------------------*/	
 static void
-F_I2(struct l1_softc *sc)
+F_I2(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_I2 executing");
 
@@ -423,16 +424,15 @@ F_I2(struct l1_softc *sc)
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
-	}		
-
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, 1, &info);
+	}
 }
 
 /*---------------------------------------------------------------------------*
  *	illegal state default action
  *---------------------------------------------------------------------------*/	
 static void
-F_ill(struct l1_softc *sc)
+F_ill(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_ERR, "FSM function F_ill executing");
 }
@@ -441,7 +441,7 @@ F_ill(struct l1_softc *sc)
  *	No action
  *---------------------------------------------------------------------------*/	
 static void
-F_NULL(struct l1_softc *sc)
+F_NULL(struct isic_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_NULL executing");
 }
@@ -451,7 +451,7 @@ F_NULL(struct l1_softc *sc)
  *	layer 1 state transition table
  *---------------------------------------------------------------------------*/	
 struct isic_state_tab {
-	void (*func) (struct l1_softc *sc);	/* function to execute */
+	void (*func) (struct isic_softc *sc);	/* function to execute */
 	int newstate;				/* next state */
 } isic_state_tab[N_EVENTS][N_STATES] = {
 
@@ -475,7 +475,7 @@ struct isic_state_tab {
  *	event handler
  *---------------------------------------------------------------------------*/	
 void
-isic_next_state(struct l1_softc *sc, int event)
+isic_next_state(struct isic_softc *sc, int event)
 {
 	int currstate, newstate;
 
@@ -514,7 +514,7 @@ isic_next_state(struct l1_softc *sc, int event)
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/	
 char *
-isic_printstate(struct l1_softc *sc)
+isic_printstate(struct isic_softc *sc)
 {
 	return((char *) state_text[sc->sc_I430state]);
 }

@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.7 2002/03/17 20:54:05 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.8 2002/03/24 20:36:02 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.7 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.8 2002/03/24 20:36:02 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -80,10 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.7 2002/03/17 20:54:05 martin Exp $");
 #include <netisdn/i4b_l4.h>
 
 unsigned int i4b_l3_debug = L3_DEBUG_DEFAULT;
-
-call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
-ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];	/* controller description array */
-int utoc_tab[MAX_CONTROLLERS];		/* unit to controller conversion */
 
 /* protocol independent causes -> Q.931 causes */
 
@@ -179,7 +175,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* find or allocate calldescriptor */
 
-	if((cd = cd_by_unitcr(bri, crval,
+	if((cd = cd_by_bricr(bri, crval,
 			crflag == CRF_DEST ? CRF_ORIG : CRF_DEST)) == NULL)
 	{
 		if(*msg_ptr == SETUP)

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.3 2001/11/13 13:14:39 lukem Exp $ */
+/* $NetBSD: isic_l1.c,v 1.4 2002/03/24 20:35:46 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.4 2002/03/24 20:35:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -47,13 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
-#include <dev/ic/isic_l1.h>
-#include <dev/ic/isac.h>
-#include <dev/ic/hscx.h>
-
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
+
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
@@ -91,7 +92,7 @@ extern int get_trace_data_from_l1(int unit, int what, int len, char *buf);
 static int
 isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
+	struct isic_softc *sc = (struct isic_softc*)token;
 	u_char cmd;
 	int s;
 
@@ -125,7 +126,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
 			}
 			splx(s);
 			return(1);
@@ -146,7 +147,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_dcount;
-		isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
 	}
 	
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */
@@ -204,7 +205,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 static int
 isic_std_ph_activate_req(isdn_layer1token token)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
+	struct isic_softc *sc = (struct isic_softc*)token;
 
 	NDBGL1(L1_PRIM, " %s ", sc->sc_dev.dv_xname);
 	isic_next_state(sc, EV_PHAR);
@@ -217,7 +218,7 @@ isic_std_ph_activate_req(isdn_layer1token token)
 static int
 isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
-	struct l1_softc *sc = (struct l1_softc*)token;
+	struct isic_softc *sc = (struct isic_softc*)token;
 	
 	switch(command)
 	{
@@ -247,7 +248,7 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 static int
 isic_std_enable(isdn_layer1token token, int enable)
 {
-	struct l1_softc * sc = (struct l1_softc*)token;
+	struct isic_softc * sc = (struct isic_softc*)token;
 	printf("%s: enable = %d\n", sc->sc_dev.dv_xname, enable);
 	return 0;
 }

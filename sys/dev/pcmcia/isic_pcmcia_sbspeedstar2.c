@@ -41,7 +41,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.3 2001/11/13 07:26:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.4 2002/03/24 20:35:56 martin Exp $");
 
 #include "opt_isicpcmcia.h"  
 #ifdef ISICPCMCIA_SBSPEEDSTAR2
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.3 2001/11/13 07:26:34
 #include <net/if.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
@@ -82,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.3 2001/11/13 07:26:34
  *---------------------------------------------------------------------------*/
 
 static void
-sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+sws_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -107,7 +109,7 @@ sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
  *---------------------------------------------------------------------------*/
 
 static void
-sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+sws_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -132,7 +134,7 @@ sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
  *---------------------------------------------------------------------------*/
 
 static void
-sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+sws_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -157,7 +159,7 @@ sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
  *---------------------------------------------------------------------------*/
 
 static u_int8_t
-sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+sws_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -181,9 +183,9 @@ sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
  * could be removed an inserted again.
  */
 int
-isic_attach_sbspeedstar2(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_sbspeedstar2(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc * sc = &psc->sc_isic;
+	struct isic_softc * sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	
@@ -228,10 +230,6 @@ isic_attach_sbspeedstar2(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry
 
 	sc->readfifo  = sws_read_fifo;
 	sc->writefifo = sws_write_fifo;
-
-	/* setup card type */
-	
-	sc->sc_cardtyp = CARD_TYPEP_SWS;
 
 	/* setup IOM bus type */
 	
