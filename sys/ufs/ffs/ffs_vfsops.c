@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.98 2002/04/10 08:05:13 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.99 2002/06/09 16:46:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98 2002/04/10 08:05:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.99 2002/06/09 16:46:49 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -715,18 +715,21 @@ ffs_mountfs(devvp, mp, p)
 	bp = NULL;
 
 	/*
-	 * verify that we can access the last block in the fs.
+	 * verify that we can access the last block in the fs
+	 * if we're mounting read/write.
 	 */
 
-	error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize, cred,
-	    &bp);
-	if (bp->b_bcount != fs->fs_fsize)
-		error = EINVAL;
-	bp->b_flags |= B_INVAL;
-	if (error)
-		goto out;
-	brelse(bp);
-	bp = NULL;
+	if (!ronly) {
+		error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize,
+		    cred, &bp);
+		if (bp->b_bcount != fs->fs_fsize)
+			error = EINVAL;
+		bp->b_flags |= B_INVAL;
+		if (error)
+			goto out;
+		brelse(bp);
+		bp = NULL;
+	}
 
 	fs->fs_ronly = ronly;
 	if (ronly == 0) {
