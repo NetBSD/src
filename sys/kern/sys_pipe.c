@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.25 2002/03/17 19:41:07 atatat Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.26 2002/08/25 23:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.25 2002/03/17 19:41:07 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.26 2002/08/25 23:16:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1303,7 +1303,7 @@ pipe_write(fp, offset, uio, cred, flags)
 #endif
 
 	while (uio->uio_resid) {
-		int space;
+		size_t space;
 
 #ifndef PIPE_NODIRECT
 		/*
