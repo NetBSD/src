@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1996/01/13 23:25:26 pk Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/01/13 23:25:26 pk Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ do_look_ahead(t, token)
  */
 void
 macro() {
-	char token[MAXTOK];
+	char token[MAXTOK], chars[2];
 	register char *s;
 	register int t, l;
 	register ndptr p;
@@ -330,24 +330,34 @@ macro() {
 			continue;
 		}
 	/*
-	 * non-alpha single-char token seen..
+	 * non-alpha token possibly seen..
 	 * [the order of else if .. stmts is important.]
 	 */
 		else if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
 			nlpar = 1;
 			do {
+
 				l = gpbc();
-				if (LOOK_AHEAD(l,rquote))
+				if (LOOK_AHEAD(l,rquote)) {
 					nlpar--;
-				else if (LOOK_AHEAD(l,lquote))
+					s = rquote;
+				} else if (LOOK_AHEAD(l,lquote)) {
 					nlpar++;
-				else if (l == EOF)
+					s = lquote;
+				} else if (l == EOF)
 					oops("missing right quote", "");
+				else {
+					chars[0] = l;
+					chars[1] = '\0';
+					s = chars;
+				}
 				if (nlpar > 0) {
 					if (sp < 0)
-						putc(l, active);
+						while (*s)
+							putc(*s++, active);
 					else
-						chrsave(l);
+						while (*s)
+							chrsave(*s++);
 				}
 			}
 			while (nlpar != 0);
