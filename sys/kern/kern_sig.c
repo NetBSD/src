@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.10 2002/01/09 02:58:56 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.11 2002/01/18 20:58:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.10 2002/01/09 02:58:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.11 2002/01/18 20:58:00 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -823,26 +823,12 @@ psignal1(struct proc *p, int signum,
 		SCHED_LOCK(s);
 	
 	if (p->p_nrlwps > 0) {
-		/* An LWP is running. */
-#ifdef __HAVE_AST_PERPROC
-		if ((curproc->l_stat == LSONPROC) ||
-		    (curproc->l_stat == LSRUN) ||
-		    (curproc->l_stat == LSIDL)) {
-			/*
-			 * LSONPROC: We're running, notice the signal when
-			 * we return back to userspace.
-			 *
-			 * LSRUN, LSIDL: Notice the signal when we run again
-			 * and return to back to userspace.
-			 */
-#else /* ! __HAVE_AST_PERPROC */
-		if (curproc->l_stat == LSONPROC) { /* XXX SMP */
-			/*
-			 * We're running; notice the signal.
-			 */
-#endif /* __HAVE_AST_PERPROC */
-			signotify(p);
-		}
+		/*
+		 * At least one LWP is running or on a run queue. 
+		 * The signal will be noticed when one of them returns 
+		 * to userspace.
+		 */
+		signotify(p);
 		/* 
 		 * The signal will be noticed very soon.
 		 */
