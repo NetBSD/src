@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.8 2001/04/20 00:10:18 thorpej Exp $ */
+/* $NetBSD: pcb.h,v 1.9 2002/11/30 01:37:29 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _ALPHA_PCB_H_
+#define	_ALPHA_PCB_H_
 
 #include <sys/lock.h>
 
@@ -86,3 +89,4 @@ struct md_coredump {
 	struct	trapframe md_tf;
 	struct	fpreg md_fpstate;
 };
+#endif /* _ALPHA_PCB_H_ */
