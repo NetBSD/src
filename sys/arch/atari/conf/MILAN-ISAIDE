@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.26 2003/10/08 11:05:52 bouyer Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.27 2003/10/08 11:53:10 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.12 2003/10/08 11:05:27 bouyer Exp $
+#		NetBSD: MILAN.in,v 1.13 2003/10/08 11:52:50 bouyer Exp $
 #		NetBSD: GENERIC.in,v 1.33 2003/09/22 14:11:16 cl Exp $
 
 #This configuration file is for a generic Milan
