@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.45 2002/02/10 06:37:45 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.46 2002/02/11 07:10:36 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.45 2002/02/10 06:37:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.46 2002/02/11 07:10:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2116,7 +2116,7 @@ uaudio_chan_set_param(struct chan *ch, struct audio_params *param,
 {
 	int samples_per_frame, sample_size;
 
-	sample_size = param->precision * param->channels / 8;
+	sample_size = param->precision * param->factor * param->channels / 8;
 	samples_per_frame = param->sample_rate / USB_FRAMES_PER_SECOND;
 	ch->fraction = param->sample_rate % USB_FRAMES_PER_SECOND;
 	ch->sample_size = sample_size;
@@ -2139,7 +2139,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 {
 	struct uaudio_softc *sc = addr;
 	int flags = sc->sc_altflags;
-	int factor;
+	int factor, precision;
 	int enc, i, j;
 	void (*swcode)(void *, u_char *buf, int cnt);
 	struct audio_params *p;
@@ -2163,6 +2163,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		factor = 1;
 		swcode = 0;
 		enc = p->encoding;
+		precision = p->precision;
 		switch (enc) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->precision == 16) {
@@ -2222,31 +2223,32 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 					swcode = slinear16_to_mulaw_le;
 				factor = 2;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
+				precision = 16;
 			} else
 				return (EINVAL);
 			break;
 		case AUDIO_ENCODING_ALAW:
-			if (!(flags & HAS_ALAW)) {
-				if (mode == AUMODE_PLAY &&
-				    (flags & HAS_16)) {
-					swcode = alaw_to_slinear16_le;
-					factor = 2;
-					enc = AUDIO_ENCODING_SLINEAR_LE;
-				} else if (flags & HAS_8U) {
-					if (mode == AUMODE_PLAY)
-						swcode = alaw_to_ulinear8;
-					else
-						swcode = ulinear8_to_alaw;
-					enc = AUDIO_ENCODING_ULINEAR_LE;
-				} else if (flags & HAS_8) {
-					if (mode == AUMODE_PLAY)
-						swcode = alaw_to_slinear8;
-					else
-						swcode = slinear8_to_alaw;
-					enc = AUDIO_ENCODING_SLINEAR_LE;
-				} else
-					return (EINVAL);
-			}
+			if (flags & HAS_ALAW)
+				break;
+			if (mode == AUMODE_PLAY && (flags & HAS_16)) {
+				swcode = alaw_to_slinear16_le;
+				factor = 2;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+				precision = 16;
+			} else if (flags & HAS_8U) {
+				if (mode == AUMODE_PLAY)
+					swcode = alaw_to_ulinear8;
+				else
+					swcode = ulinear8_to_alaw;
+				enc = AUDIO_ENCODING_ULINEAR_LE;
+			} else if (flags & HAS_8) {
+				if (mode == AUMODE_PLAY)
+					swcode = alaw_to_slinear8;
+				else
+					swcode = slinear8_to_alaw;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else
+				return (EINVAL);
 			break;
 		default:
 			return (EINVAL);
@@ -2260,7 +2262,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 			struct usb_audio_streaming_type1_descriptor *a1d =
 				sc->sc_alts[i].asf1desc;
 			if (p->channels == a1d->bNrChannels &&
-			    p->precision == a1d->bBitResolution &&
+			    precision == a1d->bBitResolution &&
 			    enc == sc->sc_alts[i].encoding &&
 			    (mode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN) ==
 			    UE_GET_DIR(sc->sc_alts[i].edesc->bEndpointAddress)) {
