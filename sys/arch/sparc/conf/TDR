@@ -1,4 +1,4 @@
-# $Id: TDR,v 1.2 1993/10/17 04:41:34 deraadt Exp $
+# $Id: TDR,v 1.3 1993/10/27 18:07:44 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -21,8 +21,8 @@ options		RCONSOLE		# fast rasterop console
 options		FFS
 #options	QUOTA	# fast filesystem with user and group quotas
 #options	MFS		# memory-based filesystem
-#options	NFSSERVER	# Sun NFS-compatible filesystem
-#options	NFSCLIENT	# Sun NFS-compatible filesystem
+options	NFSSERVER	# Sun NFS-compatible filesystem
+options	NFSCLIENT	# Sun NFS-compatible filesystem
 #options	LOFS		# Loop-back filesystem
 #options	KERNFS		# kernel data-structure filesystem
 #options	FDESC		# user file descriptor filesystem
@@ -49,9 +49,11 @@ esp*	at sbus0 slot ? offset ?	# nb., esp is a `scsi'
 
 tg0	at scsi? target 1
 sd0	at tg0 drive 0
+tg1	at scsi? target 3
+sd1	at tg1 drive 0
 
 bwtwo*	at sbus? slot ? offset ?
-#cgthree* at sbus? slot ? offset ?
+cgthree* at sbus? slot ? offset ?
 
 le*	at sbus? slot ? offset ?
 
