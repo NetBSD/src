@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.84 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.85 2003/02/02 02:22:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -45,7 +45,6 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <sys/mallocvar.h>
 
 /*
  * flags to malloc
@@ -56,6 +55,8 @@
 #define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
 				 * be allocated */
 #ifdef _KERNEL
+
+#include <sys/mallocvar.h>
 /*
  * The following are standard, built-in malloc types that are
  * not specific to any one subsystem.
