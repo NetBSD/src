@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.57 2000/06/14 05:10:27 mycroft Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.58 2000/06/17 20:57:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -161,11 +161,8 @@ static	void ether_input __P((struct ifnet *, struct mbuf *));
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
 	int s, error = 0, hdrcmplt = 0;
@@ -494,9 +491,7 @@ bad:
  * the ether header.
  */
 static void
-ether_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+ether_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
@@ -737,8 +732,7 @@ ether_input(ifp, m)
  */
 static char digits[] = "0123456789abcdef";
 char *
-ether_sprintf(ap)
-	const u_char *ap;
+ether_sprintf(const u_char *ap)
 {
 	static char etherbuf[18];
 	char *cp = etherbuf;
@@ -757,9 +751,7 @@ ether_sprintf(ap)
  * Perform common duties while attaching to interface list
  */
 void
-ether_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	const u_int8_t *lla;
+ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
 	struct sockaddr_dl *sdl;
 
@@ -782,8 +774,7 @@ ether_ifattach(ifp, lla)
 }
 
 void
-ether_ifdetach(ifp)
-	struct ifnet *ifp;
+ether_ifdetach(struct ifnet *ifp)
 {
 
 	/* Nothing. */
@@ -796,9 +787,7 @@ ether_ifdetach(ifp)
  * than the double-loop.
  */
 u_int32_t
-ether_crc32_le(buf, len)
-	const u_int8_t *buf;
-	size_t len;
+ether_crc32_le(const u_int8_t *buf, size_t len)
 {
 	u_int32_t c, crc, carry;
 	size_t i, j;
@@ -820,9 +809,7 @@ ether_crc32_le(buf, len)
 }
 #else
 u_int32_t
-ether_crc32_le(buf, len)
-	const u_int8_t *buf;
-	size_t len;
+ether_crc32_le(const u_int8_t *buf, size_t len)
 {
 	static const u_int32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
@@ -846,9 +833,7 @@ ether_crc32_le(buf, len)
 #endif
 
 u_int32_t
-ether_crc32_be(buf, len)
-	const u_int8_t *buf;
-	size_t len;
+ether_crc32_be(const u_int8_t *buf, size_t len)
 {
 	u_int32_t c, crc, carry;
 	size_t i, j;
@@ -882,9 +867,7 @@ u_char	ether_ip6multicast_max[6] = { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
  * given interface.
  */
 int
-ether_addmulti(ifr, ec)
-	struct ifreq *ifr;
-	struct ethercom *ec;
+ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 {
 	struct ether_multi *enm;
 #ifdef INET
@@ -995,9 +978,7 @@ ether_addmulti(ifr, ec)
  * Delete a multicast address record.
  */
 int
-ether_delmulti(ifr, ec)
-	struct ifreq *ifr;
-	struct ethercom *ec;
+ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 {
 	struct ether_multi *enm;
 #ifdef INET
