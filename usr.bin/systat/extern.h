@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 1999/12/22 14:46:15 kleink Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 1999/12/25 01:49:25 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -160,7 +160,6 @@ void	 showswap __P((void));
 void	 showtcp __P((void));
 void	 showtcpsyn __P((void));
 void	 status __P((void));
-void	 suspend __P((int));
 void	 vmstat_boot __P((char *args));
 void	 vmstat_run __P((char *args));
 void	 vmstat_time __P((char *args));
