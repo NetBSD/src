@@ -1,4 +1,4 @@
-.\"	$NetBSD: getifaddrs.3,v 1.5 2001/09/16 02:23:09 wiz Exp $
+.\"	$NetBSD: getifaddrs.3,v 1.6 2001/09/16 02:54:17 wiz Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -140,16 +140,6 @@ for any of the errors specified for the library routines
 .Xr malloc 3
 or
 .Xr sysctl 3 .
-.Sh BUGS
-If both
-.Aq Pa net/if.h
-and
-.Aq Pa ifaddrs.h
-are being included,
-.Aq Pa net/if.h
-.Em must
-be included before
-.Aq Pa ifaddrs.h .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
@@ -161,3 +151,13 @@ The
 .Nm
 implementation first appeared in
 .Bsx .
+.Sh BUGS
+If both
+.Aq Pa net/if.h
+and
+.Aq Pa ifaddrs.h
+are being included,
+.Aq Pa net/if.h
+.Em must
+be included before
+.Aq Pa ifaddrs.h .
