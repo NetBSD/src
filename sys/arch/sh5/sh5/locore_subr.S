@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2 2002/07/12 15:42:29 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.3 2002/08/26 10:04:05 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -775,14 +775,18 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 	st.q	r2, 0, r0		/* Frob the FPF register */
 	synco
 	synci
-	pta/l	2f, tr0
+	pta/u	2f, tr0
+	pta/u	3f, tr1
+	LDC32(0x100000, r0)
 
 2:	ld.l	r1, 0, r2		/* Fetch "sync" value */
 	synco
 	synci
-	bne/l	r2, r63, tr0		/* Back if not clear*/
+	beq/u	r2, r63, tr1		/* Exit if clear*/
+	addi	r0, -1, r0
+	bne/l	r0, r63, tr0		/* Back until timeout */
 
-	putcon	r18, spc		/* Prepare to return to caller */
+3:	putcon	r18, spc		/* Prepare to return to caller */
 	putcon	r5, ssr			/* Original SR value */
 	synco
 	synci
