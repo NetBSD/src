@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.23 1999/06/17 21:07:55 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.24 1999/07/07 06:02:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -114,6 +114,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
 #define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
+#define	MADV_FREE	6	/* pages are empty, free them */
 #endif
 
 #ifndef _KERNEL
