@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.10 1998/07/25 20:02:21 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.11 1998/08/02 14:18:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.10 1998/07/25 20:02:21 augustss Exp $";
+    "$NetBSD: wsdisplay.c,v 1.11 1998/08/02 14:18:07 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1260,6 +1260,14 @@ wsdisplay_set_kbd(dv, kbddv)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dv;
 
 	KASSERT(sc != NULL);
+	if (sc->sc_kbddv) {
+		/* disable old keyboard */
+		wskbd_enable(sc->sc_kbddv, 0);
+	}
+	if (kbddv) {
+		/* enable new keyboard */
+		wskbd_enable(kbddv, 1);
+	}
 	sc->sc_kbddv = kbddv;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.4 1998/06/15 17:48:33 drochner Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.5 1998/08/02 14:18:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -327,10 +327,8 @@ fillmapentry(kp, len, mapentry)
 }
 
 void
-wskbd_get_mapentry(name, kdesc, kdesclen, kc, mapentry)
-	kbd_t name;
-	const struct wscons_keydesc *kdesc;
-	int kdesclen;
+wskbd_get_mapentry(mapdata, kc, mapentry)
+	const struct wskbd_mapdata *mapdata;
 	int kc;
 	struct wscons_keymap *mapentry;
 {
@@ -345,16 +343,16 @@ wskbd_get_mapentry(name, kdesc, kdesclen, kc, mapentry)
 	mapentry->group2[0] = KS_voidSymbol;
 	mapentry->group2[1] = KS_voidSymbol;
 
-	for (cur = name; cur != 0; ) {
-		for (i = 0; i < kdesclen; i++)
-			if (kdesc[i].name == cur)
+	for (cur = mapdata->layout; cur != 0; ) {
+		for (i = 0; i < mapdata->num_keydescs; i++)
+			if (mapdata->keydesc[i].name == cur)
 				break;
 
 		/* If map not found, return */
-		if (i == kdesclen)
+		if (i == mapdata->num_keydescs)
 			return;
 
-		mp = kdesc + i;
+		mp = mapdata->keydesc + i;
 		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
 			if (KS_GROUP(*kp) == KS_GROUP_Keycode &&
 			    KS_VALUE(*kp) == kc) {
@@ -374,7 +372,7 @@ wskbd_get_mapentry(name, kdesc, kdesclen, kc, mapentry)
 				return;
 			}
 
-		cur = kdesc[i].base;
+		cur = mapdata->keydesc[i].base;
 	}
 }
 
@@ -404,10 +402,8 @@ wskbd_init_keymap(newlen, map, maplen)
 }
 
 int
-wskbd_load_keymap(name, kdesc, kdesclen, map, maplen)
-	kbd_t name;
-	const struct wscons_keydesc *kdesc;
-	int kdesclen;
+wskbd_load_keymap(mapdata, map, maplen)
+	const struct wskbd_mapdata *mapdata;
 	struct wscons_keymap **map;
 	int *maplen;
 {
@@ -416,24 +412,25 @@ wskbd_load_keymap(name, kdesc, kdesclen, map, maplen)
 	const struct wscons_keydesc *mp;
 	kbd_t cur;
 
-	for (cur = name, stack_ptr = 0; cur != 0; stack_ptr++) {
-		for (i = found = 0; i < kdesclen; i++)
-			if (cur == 0 || kdesc[i].name == cur) {
+	for (cur = mapdata->layout, stack_ptr = 0; cur != 0; stack_ptr++) {
+		for (i = found = 0; i < mapdata->num_keydescs; i++)
+			if (cur == 0 || mapdata->keydesc[i].name == cur) {
 				found = 1;
 				break;
 			}
 
 		if (stack_ptr == sizeof(stack)/sizeof(stack[0]))
-			panic("wskbd_load_keymap: %d: recursion too deep", name);
+			panic("wskbd_load_keymap: %d: recursion too deep",
+			      mapdata->layout);
 		if (! found)
 			return(EINVAL);
 
 		stack[stack_ptr] = i;
-		cur = kdesc[i].base;
+		cur = mapdata->keydesc[i].base;
 	}
 
 	for (i = 0, s = stack_ptr - 1; s >= 0; s--) {
-		mp = kdesc + stack[s];
+		mp = mapdata->keydesc + stack[s];
 		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
 			if (KS_GROUP(*kp) == KS_GROUP_Keycode && KS_VALUE(*kp) > i)
 				i = KS_VALUE(*kp);
@@ -442,7 +439,7 @@ wskbd_load_keymap(name, kdesc, kdesclen, map, maplen)
 	wskbd_init_keymap(i + 1, map, maplen);
 
 	for (s = stack_ptr - 1; s >= 0; s--) {
-		mp = kdesc + stack[s];
+		mp = mapdata->keydesc + stack[s];
 		for (kp = mp->map; kp < mp->map + mp->map_size; ) {
 			if (KS_GROUP(*kp) != KS_GROUP_Keycode)
 				panic("wskbd_load_keymap: %d(%d): bad entry",
