@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 2001/05/28 14:40:49 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 2001/06/07 08:41:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -144,6 +144,7 @@ cdev_decl(i4btel);
 #include "uk.h"
 #include "vga_pci.h"
 #include "view.h"
+#include "wsdisplay.h"
 #include "zs.h"
 #include "leo.h"
 #include "scsibus.h"
@@ -184,6 +185,7 @@ cdev_decl(tun);
 cdev_decl(uk);
 cdev_decl(view);
 cdev_decl(wd);
+cdev_decl(wsdisplay);
 cdev_decl(zs);
 cdev_decl(et);
 cdev_decl(leo);
@@ -232,7 +234,8 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 38: random source pseudo-device */
   	cdev_leo_init(NLEO,leo),	/* 39: Circad Leonardo video */
 	cdev_et_init(NET,et),		/* 40: ET4000 color video */
-        cdev_notdef(),			/* 41: wscons placeholder	*/
+        cdev_wsdisplay_init(NWSDISPLAY,
+			wsdisplay),	/* 41: wscons placeholder	*/
   	cdev_audio_init(NAUDIO,audio),	/* 42 */
   	cdev_notdef(),			/* 43 */
 	cdev_i4b_init(NI4B, i4b),		/* 44: i4b main device */
