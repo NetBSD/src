@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.h,v 1.3 2002/04/28 17:10:35 uch Exp $	*/
+/*	$NetBSD: mmu_sh4.h,v 1.4 2002/05/09 12:26:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 /* ITLB 4-entry full-associative UTLB 64-entry full-associative */
 #define	SH4_PTEH			0xff000000
 #define	  SH4_PTEH_VPN_MASK		  0xfffffc00
-#define	  SH4_PTEH_ASID_MASK		  0x0000000f
+#define	  SH4_PTEH_ASID_MASK		  0x000000ff
 #define	SH4_PTEL			0xff000004
 #define	  SH4_PTEL_WT			  0x00000001
 #define	  SH4_PTEL_SH			  0x00000002
