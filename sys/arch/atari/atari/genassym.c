@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1996/03/20 12:41:38 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.10 1996/09/16 06:24:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -167,8 +167,9 @@ main(void)
 	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
 
-	printf("#define\tSOFTINT_ADDR %p\n", (void *)&SCU->sys_int);
-	printf("#define\tSYSMASK_ADDR %p\n", (void *)&SCU->sys_mask);
+	stio_addr = 0;
+	printf("#define\tSCU_SOFTINT %p\n", (void *)&SCU->sys_int);
+	printf("#define\tSCU_SYSMASK %p\n", (void *)&SCU->sys_mask);
 
 	exit(0);
 }
