@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.7 1997/06/15 18:24:05 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.8 1997/06/21 04:06:11 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -26,6 +26,7 @@
 #include <pmax/dev/ascreg.h>	/* XXX */
 #include <dev/tc/ascvar.h>
 
+#include <mips/cpu.h> /* XXX CPUISMIPS3 */
 #include <mips/locore.h> /* XXX XXX bus.h needs cache-consistency*/
 
 /*XXX*/
@@ -55,10 +56,6 @@ asic_dma_start __P((asc_softc_t asc, State *state, caddr_t cp, int flag));
 
 static void
 asic_dma_end __P((asc_softc_t asc, State *state, int flag));
-
-#ifdef MIPS3
-extern void MachHitFlushDCache __P((caddr_t, int));
-#endif
 
 int
 asc_ioasic_match(parent, match, aux)
@@ -146,10 +143,8 @@ asic_dma_start(asc, state, cp, flag)
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
 #ifdef MIPS3
-#ifdef MIPS1XX
-	if (cpu_arch == 3)
-#endif
-		MachHitFlushDCache(cp, state->dmalen);
+	if (CPUISMIPS3)
+		mips3_HitFlushDCache((vm_offset_t)cp, state->dmalen);
 #endif /* MIPS3 */
 	phys = MACH_CACHED_TO_PHYS(cp);
 	cp = (caddr_t)mips_trunc_page(cp + NBPG);
@@ -191,21 +186,14 @@ asic_dma_end(asc, state, flag)
 
 	if (flag == ASCDMA_READ) {
 #ifdef MIPS3
-#ifdef MIPS1XX
-		if (cpu_arch == 3)
-#endif
+		if (CPUISMIPS3)
 			MachFlushDCache(MACH_UNCACHED_TO_PHYS(state->dmaBufAddr),
 			   state->dmalen);
-#ifdef MIPS1XX	/* ??? what am I doing? mhitch */
 		else
+#endif /* MIPS3 */
 			MachFlushDCache(MACH_PHYS_TO_CACHED(
 			    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)),
 			    state->dmalen);
-#endif
-#else
-		MachFlushDCache(MACH_PHYS_TO_CACHED(
-		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
-#endif /* MIPS3 */
 		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
 			/* pick up last upto6 bytes, sigh. */
 	
