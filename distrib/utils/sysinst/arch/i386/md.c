@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.61 2002/07/25 14:31:10 grant Exp $ */
+/*	$NetBSD: md.c,v 1.62 2002/07/26 00:42:04 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -291,7 +291,7 @@ editlab:
 	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
 		partstart = ptstart;
 
-		/* check that we have enouth space */
+		/* check that we have enough space */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
 		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize);
