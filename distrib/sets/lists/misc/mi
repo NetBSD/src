@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2001/03/13 18:13:25 itojun Exp $
+# $NetBSD: mi,v 1.63 2001/03/31 11:45:23 aymeric Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -303,11 +303,12 @@
 ./usr/share/doc/usd/07.mail/maila.nr		misc-usd-doc
 ./usr/share/doc/usd/11.edit/Makefile		misc-usd-doc
 ./usr/share/doc/usd/11.edit/edittut.ms		misc-usd-doc
+./usr/share/doc/usd/12.ex/Makefile		misc-usd-doc
+./usr/share/doc/usd/12.ex/ex.rm			misc-usd-doc
+./usr/share/doc/usd/12.ex/ex.summary		misc-usd-doc
 ./usr/share/doc/usd/12.vi/Makefile		misc-usd-doc
 ./usr/share/doc/usd/12.vi/vi.chars		misc-usd-doc
 ./usr/share/doc/usd/12.vi/vi.in			misc-usd-doc
-./usr/share/doc/usd/13.ex/Makefile		misc-usd-doc
-./usr/share/doc/usd/13.ex/ex.rm			misc-usd-doc
 ./usr/share/doc/usd/13.viref			misc-usd-doc
 ./usr/share/doc/usd/13.viref/Makefile		misc-usd-doc
 ./usr/share/doc/usd/13.viref/ex.cmd.roff	misc-usd-doc
