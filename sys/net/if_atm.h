@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.4 1996/06/28 02:34:34 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.5 1996/06/29 20:07:05 chuck Exp $       */
 
 /*
  *
@@ -68,7 +68,7 @@ struct atm_pseudohdr {
 /* atm_pseudoioctl: turns on and off RX VCIs  [for internal use only!] */
 struct atm_pseudoioctl {
   struct atm_pseudohdr aph;
-  struct socket *asock;
+  void *rxhand;
 };
 #define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* enable */
 #define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
@@ -92,7 +92,7 @@ struct atmllc {
 #ifdef _KERNEL
 void	atm_ifattach __P((struct ifnet *));
 void	atm_input __P((struct ifnet *, struct atm_pseudohdr *,
-		struct mbuf *, struct socket *));
+		struct mbuf *, void *));
 int	atm_output __P((struct ifnet *, struct mbuf *, struct sockaddr *, 
 		struct rtentry *));
 #endif
