@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.103 2000/02/12 17:19:34 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.104 2000/02/15 19:54:12 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -189,6 +189,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
+
+struct timeval tcp_rst_ratelim_last;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -856,7 +858,7 @@ findpcb:
 				    src, ntohs(th->th_sport));
 			}
 			TCP_FIELDS_TO_HOST(th);
-			goto dropwithreset;
+			goto dropwithreset_ratelim;
 		}
 #ifdef IPSEC
 		if (inp && ipsec4_in_reject(m, inp)) {
@@ -895,7 +897,7 @@ findpcb:
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
 			TCP_FIELDS_TO_HOST(th);
-			goto dropwithreset;
+			goto dropwithreset_ratelim;
 		}
 #ifdef IPSEC
 		if (ipsec6_in_reject(m, in6p)) {
@@ -928,7 +930,7 @@ findpcb:
 #endif
 	if (tp == 0) {
 		TCP_FIELDS_TO_HOST(th);
-		goto dropwithreset;
+		goto dropwithreset_ratelim;
 	}
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
@@ -2113,11 +2115,23 @@ dropafterack:
 		m_freem(tcp_saveti);
 	return;
 
+dropwithreset_ratelim:
+	/*
+	 * We may want to rate-limit RSTs in certain situations,
+	 * particularly if we are sending an RST in response to
+	 * an attempt to connect to or otherwise communicate with
+	 * a port for which we have no socket.
+	 */
+	if (ratecheck(&tcp_rst_ratelim_last, &tcp_rst_ratelim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
+	/* ...fall into dropwithreset... */
+
 dropwithreset:
 	/*
 	 * Generate a RST, dropping incoming segment.
 	 * Make ACK acceptable to originator of segment.
-	 * Don't bother to respond if destination was broadcast/multicast.
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
