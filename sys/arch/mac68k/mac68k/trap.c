@@ -39,7 +39,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.5 1994/02/03 05:09:31 briggs Exp $
+ *	$Id: trap.c,v 1.6 1994/02/06 22:06:29 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -124,6 +124,7 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
+	clockframe	clk;
 	register int i;
 	unsigned ucode = 0;
 	register struct proc *p = curproc;
@@ -302,7 +303,9 @@ copyfault:
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
+			clk.pc = (caddr_t) frame.f_pc;
+			clk.ps = (caddr_t) frame.f_sr;
+			softclock(&clk);
 		}
 		/*
 		 * If this was not an AST trap, we are all done.

@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.3 1994/01/30 01:03:51 briggs Exp $
+ *	$Id: clock.c,v 1.4 1994/02/06 22:06:25 briggs Exp $
  */
 
 #if !defined(STANDALONE)
@@ -230,24 +230,22 @@ void stopprofclock(void)
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-void profclock(pc, ps)
-   caddr_t pc;
-   int ps;
+void profclock(clockframe *pclk)
 {
    /*
     * Came from user mode.
     * If this process is being profiled record the tick.
     */
-   if (USERMODE(ps)) {
+   if (USERMODE(pclk->ps)) {
       if (p->p_stats.p_prof.pr_scale)
-         addupc(pc, &curproc->p_stats.p_prof, 1);
+         addupc(pclk->pc, &curproc->p_stats.p_prof, 1);
    }
    /*
     * Came from kernel (supervisor) mode.
     * If we are profiling the kernel, record the tick.
     */
    else if (profiling < 2) {
-      register int s = pc - s_lowpc;
+      register int s = pclk->pc - s_lowpc;
 
       if (s < s_textsize)
          kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
