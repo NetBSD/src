@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2 1996/03/05 23:15:05 cgd Exp $
+#	$NetBSD: devlist2h.awk,v 1.2.4.1 1996/06/05 18:34:36 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -63,7 +63,7 @@ $1 == "device" {
 	devices[ndevices, 1] = $2;		# C identifier for device
 	gsub("-", "_", devices[ndevices, 1]);
 
-	devices[ndevices, 2] = $3;		/* driver name */
+	devices[ndevices, 2] = $3;		# driver name
 
 	printf("\n") > hfile
 	printf("#define\tTC_DEVICE_%s\t\"%s\"\n", devices[ndevices, 1],
