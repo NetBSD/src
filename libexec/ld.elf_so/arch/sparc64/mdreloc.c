@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.31 2002/09/26 20:42:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.32 2002/10/18 20:35:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -457,7 +457,7 @@ _rtld_bind(obj, reloff)
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
+	Elf_Word *where;
 	Elf_Addr value, offset;
 
 	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
@@ -478,6 +478,8 @@ _rtld_bind(obj, reloff)
 		 */
 		rela -= 4;
 	}
+
+	where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 
 	/* Fully resolve procedure addresses now */
 
