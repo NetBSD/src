@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.24 2000/06/08 21:25:18 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.25 2000/06/09 15:28:21 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
 CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
 STRIPFLAGS=	-g
@@ -94,8 +94,8 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
-NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NOOPT_C=	${CC} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C=	${CC} ${COPTS} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 %OBJS
@@ -132,13 +132,13 @@ LINKFLAGS+=	-S
 
 .if ${USE_GENASSYM} == "no"
 assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	sh $S/kern/genassym.sh ${CC} ${COPTS} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${SPARC64}/sparc64/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 .else
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
+HOSTED_CFLAGS=	${COPTS} ${CFLAGS}
 
 HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
@@ -164,7 +164,7 @@ ioconf.o: ioconf.c
 
 newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+	${CC} ${COPTS} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
 __CLEANKERNEL: .USE
@@ -205,7 +205,7 @@ depend: .depend
 .if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${COPTS} ${CFLAGS} \
 	  ${CPPFLAGS} < ${SPARC64}/sparc64/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
