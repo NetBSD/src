@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 2000/03/05 04:34:07 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 2000/03/10 01:30:06 sato Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -42,6 +42,20 @@
 #include <hpcmips/vr/vrgiureg.h>
 
 #include "locators.h"
+
+#define VRISADEBUG
+
+#ifdef VRISADEBUG
+#ifndef VRISADEBUG_CONF
+#define VRISADEBUG_CONF 0
+#endif /* VRISADEBUG_CONF */
+int vrisa_debug = VRISADEBUG_CONF;
+#define DPRINTF(arg) if (vrisa_debug) printf arg;
+#define DBITDISP32(mask) if (vrisa_debug) bitdisp32(mask);
+#else /* VRISADEBUG */
+#define DPRINTF(arg)
+#define DBITDISP32(mask)
+#endif /* VRISADEBUG */
 
 int	vrisabprint __P((void*, const char*));
 int	vrisabmatch __P((struct device*, struct cfdata*, void*));
@@ -188,6 +202,7 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 		VRGIU_INTR_EDGE_THROUGH,
 		VRGIU_INTR_EDGE_HOLD,
 	};
+#ifdef VRISADEBUG
 	static char* intr_mode_names[8] = {
 		"level high through",
 		"level high hold",
@@ -198,7 +213,7 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 		"edge through",
 		"edge hold",
 	};
-
+#endif /* VRISADEBUG */
 	/* 
 	 * ISA IRQ <-> GPIO port mapping
 	 */
@@ -213,8 +228,8 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	mode = INTR_MODE(intr);
 	port = INTR_PORT(intr);
 
-	printf("ISA IRQ %d -> GPIO port %d, %s\n",
-	       irq, port, intr_mode_names[mode]);
+	DPRINTF(("ISA IRQ %d -> GPIO port %d, %s\n",
+	       irq, port, intr_mode_names[mode]));
 
 	/* Call Vr routine */
 	return sc->sc_gf->gf_intr_establish(sc->sc_gc, port,
@@ -240,8 +255,8 @@ isa_intr_alloc(ic, mask, type, irq)
 	int *irq;
 {
 	/* XXX not coded yet. this is temporary XXX */
-	printf ("isa_intr_alloc:");
-	bitdisp32(mask);
+	DPRINTF(("isa_intr_alloc:"));
+	DBITDISP32(mask);
 	*irq = (ffs(mask) -1); /* XXX */
 	return 0;
 }
