@@ -1,0 +1,13 @@
+#	$NetBSD: sup.netbsd.org,v 1.1 1997/11/13 02:31:38 thorpej Exp $
+#
+# Example supfile for sup.netbsd.org.
+#
+
+current release=allsrc host=sup.netbsd.org hostbase=/ftp/pub \
+base=/usr prefix=/usr backup use-rel-suffix compress
+
+current release=doc host=sup.netbsd.org hostbase=/ftp/pub \
+base=/usr prefix=/usr backup use-rel-suffix compress
+
+current release=security host=sup.netbsd.org hostbase=/ftp/pub \
+base=/usr prefix=/usr backup use-rel-suffix compress
