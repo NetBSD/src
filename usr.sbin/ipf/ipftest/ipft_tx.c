@@ -1,7 +1,7 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.11 1998/07/12 14:48:04 veego Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.12 1998/11/22 14:21:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.3 1998/05/23 19:20:32 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.5 1998/11/22 01:50:35 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -310,6 +310,7 @@ int	*out;
 		if (tcp->th_flags)
 			cpp++;
 		assert(tcp->th_flags != 0);
+		tcp->th_win = htons(4096);
 	} else if (*cpp && ip->ip_p == IPPROTO_ICMP) {
 		extern	char	*tx_icmptypes[];
 		char	**s, *t;

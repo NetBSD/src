@@ -1,7 +1,7 @@
-/*	$NetBSD: opt.c,v 1.1.1.10 1998/07/12 14:48:00 veego Exp $	*/
+/*	$NetBSD: opt.c,v 1.1.1.11 1998/11/22 14:21:44 mrg Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -29,7 +29,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: opt.c,v 2.0.2.9.2.1 1997/11/12 10:58:44 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: opt.c,v 2.0.2.9.2.2 1998/11/22 01:50:41 darrenr Exp ";
 #endif
 
 extern	int	opts;

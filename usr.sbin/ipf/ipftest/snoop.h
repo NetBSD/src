@@ -1,7 +1,7 @@
-/*	$NetBSD: snoop.h,v 1.1.1.10 1998/07/12 14:48:04 veego Exp $	*/
+/*	$NetBSD: snoop.h,v 1.1.1.11 1998/11/22 14:21:48 mrg Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -13,7 +13,7 @@
 
 /*
  * written to comply with the RFC (1761) from Sun.
- * Id: snoop.h,v 2.0.2.5 1997/09/28 07:12:11 darrenr Exp 
+ * Id: snoop.h,v 2.0.2.5.2.1 1998/11/22 01:50:42 darrenr Exp 
  */
 struct	snoophdr	{
 	char	s_id[8];

@@ -1,7 +1,7 @@
-/*	$NetBSD: kmem.c,v 1.1.1.10 1998/07/12 14:48:02 veego Exp $	*/
+/*	$NetBSD: kmem.c,v 1.1.1.11 1998/11/22 14:21:46 mrg Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -22,7 +22,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)Id: kmem.c,v 2.0.2.5 1997/10/23 14:50:53 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: kmem.c,v 2.0.2.5.2.1 1998/11/22 01:50:38 darrenr Exp ";
 #endif
 
 static	int	kmemfd = -1;
