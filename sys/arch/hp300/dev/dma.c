@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.17 1997/04/14 02:33:18 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.18 1997/04/27 21:02:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -40,6 +40,8 @@
 /*
  * DMA driver
  */
+
+#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +275,8 @@ dmafree(dq)
 #endif
 
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
+
+#if defined(CACHE_HAVE_PAC) || defined(M68040)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
@@ -282,7 +285,8 @@ dmafree(dq)
 		dc->dm_flags &= ~DMAF_PCFLUSH;
 	}
 #endif
-#if defined(HP320) || defined(HP350)
+
+#if defined(CACHE_HAVE_VAC)
 	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.
@@ -297,6 +301,7 @@ dmafree(dq)
 		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
+
 	/*
 	 * Channel is now free.  Look for another job to run on this
 	 * channel.
@@ -334,10 +339,12 @@ dmago(unit, addr, count, flags)
 
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
+
 #if defined(HP320)
 	if (sc->sc_type == DMA_B && (flags & DMAGO_LWORD))
 		panic("dmago: no can do 32-bit DMA");
 #endif
+
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
 		printf("dmago(%d, %p, %x, %x)\n",
@@ -354,7 +361,7 @@ dmago(unit, addr, count, flags)
 	 */
 	for (seg = 0; count > 0; seg++) {
 		dc->dm_chain[seg].dc_addr = (char *) kvtop(addr);
-#if defined(HP380)
+#if defined(M68040)
 		/*
 		 * Push back dirty cache lines
 		 */
@@ -411,7 +418,8 @@ dmago(unit, addr, count, flags)
 		dc->dm_cmd |= DMA_WORD;
 	if (flags & DMAGO_PRI)
 		dc->dm_cmd |= DMA_PRI;
-#if defined(HP380)
+
+#if defined(M68040)
 	/*
 	 * On the 68040 we need to flush (push) the data cache before a
 	 * DMA (already done above) and flush again after DMA completes.
@@ -422,7 +430,8 @@ dmago(unit, addr, count, flags)
 	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
+
+#if defined(CACHE_HAVE_PAC)
 	/*
 	 * Remember if we need to flush external physical cache when
 	 * DMA is done.  We only do this if we are reading (writing memory).
@@ -430,10 +439,12 @@ dmago(unit, addr, count, flags)
 	if (ectype == EC_PHYS && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
-#if defined(HP320) || defined(HP350)
+
+#if defined(CACHE_HAVE_VAC)
 	if (ectype == EC_VIRT && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_VCFLUSH;
 #endif
+
 	/*
 	 * Remember if we can skip the dma completion interrupt on
 	 * the last segment in the chain.
@@ -474,13 +485,15 @@ dmastop(unit)
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
+
+#if defined(CACHE_HAVE_PAC) || defined(M68040)
 	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->dm_flags &= ~DMAF_PCFLUSH;
 	}
 #endif
-#if defined(HP320) || defined(HP350)
+
+#if defined(CACHE_HAVE_VAC)
 	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.
@@ -495,6 +508,7 @@ dmastop(unit)
 		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
+
 	/*
 	 * We may get this interrupt after a device service routine
 	 * has freed the dma channel.  So, ignore the intr if there's
