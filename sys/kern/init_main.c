@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.183 2000/11/13 21:32:15 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.184 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,6 @@
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-#include <sys/exec.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -144,29 +143,7 @@ static void check_console(struct proc *p);
 static void start_init(void *);
 void main(void);
 
-extern char sigcode[], esigcode[];
-#ifdef SYSCALL_DEBUG
-extern const char * const syscallnames[];
-#endif
-
-struct emul emul_netbsd = {
-	"netbsd",
-	NULL,
-	sendsig,
-	SYS_syscall,
-	SYS_MAXSYSCALL,
-	sysent,
-#ifdef SYSCALL_DEBUG
-	syscallnames,
-#else
-	NULL,
-#endif
-	0,
-	copyargs,
-	setregs,
-	sigcode,
-	esigcode,
-};
+extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 /*
  * System startup; initialize the world, create process 0, mount root
