@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.6 2002/08/01 03:40:34 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.7 2002/08/01 08:33:14 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -189,8 +189,11 @@ inet_cksum(u_int16_t *addr, u_int len)
 {
 	int nleft = (int)len;
 	u_int16_t *w = addr;
-	u_int16_t answer = 0;
 	int32_t sum = 0;
+	union {
+		u_int16_t w;
+		u_int8_t b[2];
+	} answer;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -205,8 +208,9 @@ inet_cksum(u_int16_t *addr, u_int len)
 
 	/* mop up an odd byte, if necessary */
 	if (nleft == 1) {
-		*(u_char *) (&answer) = *(u_char *)w ;
-		sum += answer;
+		answer.w = 0;
+		answer.b[0] = *(u_char *)w ;
+		sum += answer.w;
 	}
 
 	/*
@@ -214,6 +218,6 @@ inet_cksum(u_int16_t *addr, u_int len)
 	 */
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* truncate to 16 bits */
-	return (answer);
+	answer.w = ~sum;			/* truncate to 16 bits */
+	return (answer.w);
 }
