@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.31 2003/11/01 10:55:12 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.32 2003/11/01 22:55:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.31 2003/11/01 10:55:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.32 2003/11/01 22:55:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,6 +395,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 		return (rv);
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
+
 	if (p1->Type != ACPI_TYPE_PACKAGE) {
 		printf("%s: expected PACKAGE, got %d\n", sc->sc_dev.dv_xname,
 		    p1->Type);
@@ -405,19 +406,9 @@ acpibat_get_info(struct acpibat_softc *sc)
 		    sc->sc_dev.dv_xname, p1->Package.Count);
 		goto out;
 	}
-
-#define INITDATA(index, unit, string) \
-	sc->sc_data[index].units = unit;     				\
-	sc->sc_info[index].units = unit;     				\
-	snprintf(sc->sc_info[index].desc, sizeof(sc->sc_info->desc),	\
-	    "%s %s", sc->sc_dev.dv_xname, string);			\
+	p2 = p1->Package.Elements;
 
 	ABAT_LOCK(sc, s);
-	p2 = p1->Package.Elements;
-	/*
-	 * XXX: It seems that the below attributes should not be overriden
-	 * in such manner... we should unregister them for a while, maybe.
-	 */
 	if ((p2[0].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0) {
 		ABAT_SET(sc, ABAT_F_PWRUNIT_MA);
 		sc->sc_sysmon.sme_ranges = acpibat_range_amp;
@@ -429,13 +420,20 @@ acpibat_get_info(struct acpibat_softc *sc)
 		capunit = ENVSYS_SWATTHOUR;
 		rateunit = ENVSYS_SWATTS;
 	}
-	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
-	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "last full cap");
-	INITDATA(ACPIBAT_WCAPACITY, capunit, "warn cap");
-	INITDATA(ACPIBAT_LCAPACITY, capunit, "low cap");
-	INITDATA(ACPIBAT_CHARGERATE, rateunit, "charge rate");
-	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
-	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
+
+#define INITDATA(index, unit) \
+	sc->sc_data[index].units = unit;     				\
+	sc->sc_info[index].units = unit;
+
+	INITDATA(ACPIBAT_DCAPACITY, capunit);
+	INITDATA(ACPIBAT_LFCCAPACITY, capunit);
+	INITDATA(ACPIBAT_WCAPACITY, capunit);
+	INITDATA(ACPIBAT_LCAPACITY, capunit);
+	INITDATA(ACPIBAT_CHARGERATE, rateunit);
+	INITDATA(ACPIBAT_DISCHARGERATE, rateunit);
+	INITDATA(ACPIBAT_CAPACITY, capunit);
+
+#undef INITDATA
 
 	sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s = p2[1].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DCAPACITY].validflags |= ENVSYS_FCURVALID;
@@ -456,11 +454,9 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_available = ABAT_ALV_INFO;
 	ABAT_UNLOCK(sc, s);
 
-	if ((sc->sc_flags & ABAT_F_VERBOSE))
-		printf("%s: %s %s %s %s\n",
-		       sc->sc_dev.dv_xname,
-		       p2[12].String.Pointer, p2[11].String.Pointer,
-		       p2[9].String.Pointer, p2[10].String.Pointer);
+	printf("%s: battery info: %s, %s, %s, %s\n", sc->sc_dev.dv_xname,
+	    p2[12].String.Pointer, p2[11].String.Pointer,
+	    p2[9].String.Pointer, p2[10].String.Pointer);
 
 	rv = AE_OK;
 
@@ -535,7 +531,8 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ABAT_UNLOCK(sc, s);
 
 	rv = AE_OK;
-  out:
+
+out:
 	AcpiOsFree(buf.Pointer);
 	return (rv);
 }
@@ -702,7 +699,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 void
 acpibat_init_envsys(struct acpibat_softc *sc)
 {
-	int capunit, rateunit, i;
+	int capunit, rateunit;
 
 #if 0
 	if (sc->sc_flags & ABAT_F_PWRUNIT_MA) {
@@ -719,12 +716,17 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	}
 #endif
 
-	for (i = 0 ; i < ACPIBAT_NSENSORS; i++) {
-		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags = ENVSYS_FVALID;
-		sc->sc_info[i].validflags = ENVSYS_FVALID;
-		sc->sc_data[i].warnflags = 0;
-	}
+#define INITDATA(index, unit, string) \
+	sc->sc_data[index].sensor = index;				\
+	sc->sc_data[index].units = unit;     				\
+	sc->sc_data[index].validflags = ENVSYS_FVALID;			\
+	sc->sc_data[index].warnflags = 0;				\
+	sc->sc_info[index].sensor = index;				\
+	sc->sc_info[index].units = unit;     				\
+	sc->sc_info[index].validflags = ENVSYS_FVALID;			\
+	snprintf(sc->sc_info[index].desc, sizeof(sc->sc_info->desc),	\
+	    "%s %s", sc->sc_dev.dv_xname, string);			\
+
 	INITDATA(ACPIBAT_PRESENT, ENVSYS_INDICATOR, "present");
 	INITDATA(ACPIBAT_DCAPACITY, capunit, "design cap");
 	INITDATA(ACPIBAT_LFCCAPACITY, capunit, "last full cap");
@@ -738,6 +740,8 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
 	INITDATA(ACPIBAT_DISCHARGING, ENVSYS_INDICATOR, "discharging");
+
+#undef INITDATA
 
 	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
