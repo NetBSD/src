@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.5 2000/12/10 12:23:50 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.6 2000/12/10 19:29:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@ linux_syscall(frame)
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 #ifdef DEBUG
@@ -136,9 +135,7 @@ linux_syscall(frame)
 	p = curproc;
 	p->p_md.md_regs = &frame;
 
-	sticks = p->p_sticks;
 	code = frame.tf_eax;
-
 	callp = p->p_emul->e_sysent;
 
 #ifdef VM86
@@ -216,7 +213,7 @@ linux_syscall(frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p, frame.tf_eip, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
