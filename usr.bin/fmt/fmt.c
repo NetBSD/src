@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.13 2000/09/18 13:42:53 abs Exp $	*/
+/*	$NetBSD: fmt.c,v 1.14 2000/10/02 18:31:48 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.13 2000/09/18 13:42:53 abs Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.14 2000/10/02 18:31:48 abs Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -202,7 +202,7 @@ fmt(fi)
 				c = getc(fi);
 				continue;
 			}
-			if(!(isprint(c) || c == '\t')) {
+			if(!(isprint(c) || c == '\t' || c > 127)) {
 				c = getc(fi);
 				continue;
 			}
