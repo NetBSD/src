@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.5 1999/06/20 15:52:51 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.6 1999/08/23 19:09:27 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -144,7 +144,6 @@ consinit()
 		break;
 
 	case VAX_BTYP_43:
-	case VAX_BTYP_49:
 	case VAX_BTYP_410:	  
 	case VAX_BTYP_420:
 		put_fp = rom_putchar;
@@ -160,6 +159,7 @@ consinit()
 
 	case VAX_BTYP_46:
 	case VAX_BTYP_48:
+	case VAX_BTYP_49:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		test_fp = rom_testchar;
@@ -238,6 +238,7 @@ asm("
 
 	_rom_testchar:
 		.word	0
+		mnegl	$1,r0
 		jsb	*_rom_getc
 		tstl	r0
 		beql	1f
