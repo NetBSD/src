@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.97 2003/04/25 23:12:33 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.98 2003/04/29 07:45:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.97 2003/04/25 23:12:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.98 2003/04/29 07:45:23 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -105,7 +105,7 @@ do {									\
 /*
  * A virgin directory (no blushing please).
  */
-static struct dirtemplate mastertemplate = {
+static const struct dirtemplate mastertemplate = {
 	0,	12,		DT_DIR,	1,	".",
 	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
