@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.27 1994/05/24 13:39:15 mycroft Exp $
+ *      $Id: bt742a.c,v 1.28 1994/06/03 15:56:18 mycroft Exp $
  */
 
 /*
@@ -1054,8 +1054,7 @@ bt_find(bt)
 	bt_cmd(bt, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED, sizeof(info));
 	switch (info.bus_type) {
 	case BT_BUS_TYPE_24BIT:
-		/* Use the aha1542 driver. */
-		return EINVAL;
+		/* XXXX How do we avoid conflicting with the aha1542 probe? */
 	case BT_BUS_TYPE_32BIT:
 		break;
 	case BT_BUS_TYPE_MCA:
