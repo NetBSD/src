@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.93 2003/09/10 03:24:38 simonb Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.94 2003/09/10 03:56:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.93 2003/09/10 03:24:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.94 2003/09/10 03:56:33 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -840,6 +840,14 @@ kernfs_readdir(v)
 		n = 0;
 		for (; i < nkern_targets && uio->uio_resid >= UIO_MX; i++) {
 			kt = &kern_targets[i];
+			if (kt->kt_tag == Pdevice) {
+				dev_t *dp = kt->kt_data;
+				struct vnode *fvp;
+
+				if (*dp == NODEV ||
+				    !vfinddev(*dp, kt->kt_vtype, &fvp))
+					continue;
+			}
 			d.d_namlen = kt->kt_namlen;
 			if (i < 2)
 				d.d_fileno = KERNFS_FILENO(&kern_targets[0],
