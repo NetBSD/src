@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.1.1.1 1995/03/26 07:12:12 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.2 1995/07/25 13:49:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -61,6 +61,7 @@ struct ite_softc {
 	void			*priv;
 	font_info		font;
 	u_char			*tabs;
+	struct kbdmap		*kbdmap;
 	int			flags;
 	short			cursorx;
 	short			cursory;
