@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.21 2004/10/30 15:43:25 dsl Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.22 2004/11/25 20:23:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.21 2004/10/30 15:43:25 dsl Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.22 2004/11/25 20:23:36 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,6 +94,7 @@ static	void add_dev(const char *, int);
 static	void change_state(int);
 static	void cvt_arg(char *, struct timespec *);
 static	void sighandler(int);
+static	int is_graphics_fb(struct dev_stat *);
 static	void usage(void);
 
 int
@@ -228,8 +229,8 @@ main(int argc, char *argv[])
 		change = 0;
 		for (dsp = ds_list.lh_first; dsp != NULL;
 		    dsp = dsp->ds_link.le_next) {
-			/* Don't check framebuffers. */
-			if (dsp->ds_isfb)
+			/* Don't check framebuffers in graphics mode. */
+			if (is_graphics_fb(dsp))
 				continue;
 			if (stat(dsp->ds_path, &st) == -1) {
 				syslog(LOG_CRIT,
@@ -318,6 +319,41 @@ sighandler(int sig)
 	/* Kill the pid file and re-enable the framebuffer before exit. */
 	change_state(videoon);
 	exit(0);
+}
+
+/*
+ * Return 1 if we are a framebuffer in graphics mode or a framebuffer
+ * where we cannot tell the mode. Return 0 if we are not a framebuffer
+ * device, or a wscons framebuffer in text mode.
+ */
+static int
+is_graphics_fb(struct dev_stat *dsp)
+{
+	int fd;
+	int state;
+
+	if (dsp->ds_isfb == 0)
+		return 0;
+
+	/* We can't tell if we are not a wscons device */
+	if (setvideo != WSDISPLAYIO_SVIDEO)
+		return 1;
+
+	if ((fd = open(dsp->ds_path, O_RDWR, 0)) == -1) {
+		syslog(LOG_WARNING, "Cannot open `%s' (%m)", dsp->ds_path);
+		return 1;
+	}
+
+	if (ioctl(fd, WSDISPLAYIO_GMODE, &state) == -1) {
+		syslog(LOG_WARNING, "Cannot get mode on `%s' (%m)",
+		    dsp->ds_path);
+		/* We can't tell, so we say we are mapped */
+		state = WSDISPLAYIO_MODE_MAPPED;
+	}
+
+	(void)close(fd);
+
+	return state != WSDISPLAYIO_MODE_EMUL;
 }
 
 static void
