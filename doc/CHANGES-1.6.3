@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.25 2004/03/15 05:09:19 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.26 2004/03/15 05:11:47 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -147,3 +147,8 @@ usr.sbin/route6d/route6d.c		1.51
 
 	Let it compile again on sparc/sparc64.
 	[martin, ticket #1626]
+
+sys/dev/scsipi/scsiconf.c		1.220
+
+	Add a drive with broken tagged queuing support. PR#23815
+	[bouyer, ticket #1625]
