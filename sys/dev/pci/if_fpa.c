@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fpa.c,v 1.2 1995/08/19 04:35:25 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -20,62 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: if_fpa.c,v 1.1.1.1 1995/08/19 00:59:48 cgd Exp $
- *
- * $Log: if_fpa.c,v $
- * Revision 1.1.1.1  1995/08/19 00:59:48  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
- *
- * Revision 1.1  1995/08/16  22:57:28  thomas
- * Initial revision
- *
- * Revision 1.13  1995/08/04  21:54:56  thomas
- * Clean IRQ processing under BSD/OS.
- * A receive tweaks.  (print source of MAC CRC errors, etc.)
- *
- * Revision 1.12  1995/06/02  16:04:22  thomas
- * Use correct PCI defs for BSDI now that they have fixed them.
- * Increment the slot number 0x1000, not one! (*duh*)
- *
- * Revision 1.11  1995/04/21  13:23:55  thomas
- * Fix a few pub in the DEFPA BSDI support
- *
- * Revision 1.10  1995/04/20  21:46:42  thomas
- * Why???
- * ,
- *
- * Revision 1.9  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.8  1995/04/04  22:54:29  thomas
- * Fix DEFEA support
- *
- * Revision 1.7  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- *
- * Revision 1.6  1995/03/10  17:06:59  thomas
- * Update for latest version of FreeBSD.
- * Compensate for the fast that the ifp will not be first thing
- * in softc on BSDI.
- *
- * Revision 1.5  1995/03/07  19:59:42  thomas
- * First pass at BSDI EISA support
- *
- * Revision 1.4  1995/03/06  17:06:03  thomas
- * Add transmit timeout support.
- * Add support DEFEA (untested).
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
- *
  */
 
 /*
@@ -140,7 +86,7 @@
 #elif defined(__NetBSD__)
 #include <dev/pci/pcivar.h>
 #include <dev/ic/pdqreg.h>
-#include <dev/ic/pdq_os.h>
+#include <dev/ic/pdqvar.h>
 #endif /* __NetBSD__ */
 
 
