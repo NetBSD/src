@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.17 1998/01/13 02:10:28 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.18 1998/07/05 00:51:07 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -50,6 +50,8 @@
  *	- Does not currently support multicasts
  *	- Does not transmit multiple packets in one go
  */
+
+#include "opt_inet.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.6 1998/01/12 09:23:35 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.7 1998/07/05 00:51:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  * written for NetBSD/amiga by Michael Hitch.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.10 1998/01/19 02:49:48 thorpej Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.11 1998/07/05 00:51:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.10 1998/01/19 02:49:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.11 1998/07/05 00:51:25 jonathan Exp $");
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

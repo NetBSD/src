@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.21 1998/06/09 07:25:02 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.22 1998/07/05 00:51:21 jonathan Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

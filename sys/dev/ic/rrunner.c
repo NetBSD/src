@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.3 1998/06/08 07:11:51 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.4 1998/07/05 00:51:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

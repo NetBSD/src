@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.41 1998/05/02 14:34:24 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.42 1998/07/05 00:51:26 jonathan Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -80,6 +80,8 @@
 
 #define VJC
 #define PPP_COMPRESS
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

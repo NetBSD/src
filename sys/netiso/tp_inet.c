@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.14 1996/10/13 02:04:36 christos Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.15 1998/07/05 00:51:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,6 +75,8 @@ SOFTWARE.
  * header, give to tp tpip_output_dg: package a pkt for ip given 2 addresses
  * & some data tpip_output: package a pkt for ip given an inpcb & some data
  */
+
+#include "opt_inet.h"
 
 #ifdef INET
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.49 1998/03/23 13:08:56 enami Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.50 1998/07/05 00:51:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -69,6 +69,7 @@
 #include "sl.h"
 #if NSL > 0
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

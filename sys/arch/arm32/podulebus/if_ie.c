@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.16 1998/01/28 02:24:38 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.17 1998/07/05 00:51:07 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -55,6 +55,8 @@
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
 /* Standard podule includes */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.1 1998/06/02 01:29:42 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.2 1998/07/05 00:51:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
  * Ethernet PCI Integrated Controller (EPIC/100).
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

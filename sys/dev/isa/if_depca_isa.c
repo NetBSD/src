@@ -1,4 +1,4 @@
-/*	$NetBSD: if_depca_isa.c,v 1.1 1998/04/16 18:00:14 drochner Exp $	*/
+/*	$NetBSD: if_depca_isa.c,v 1.2 1998/07/05 00:51:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

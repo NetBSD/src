@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.35 1998/06/08 20:47:46 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.36 1998/07/05 00:51:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * and the handy software interrupt request register.
  */
 
+#include "opt_inet.h"
+#include "opt_atalk.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

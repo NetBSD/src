@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.2 1998/06/09 07:25:03 thorpej Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.3 1998/07/05 00:51:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

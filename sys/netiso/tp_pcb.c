@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.17 1996/10/13 02:04:41 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.18 1998/07/05 00:51:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,8 @@ SOFTWARE.
  * tp_soisdisconnected() are tp-specific versions of soisconnect* and are
  * called (obviously) during the closing phase.
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

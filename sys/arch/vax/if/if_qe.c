@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.26 1998/06/20 21:01:43 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.27 1998/07/05 00:51:15 jonathan Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -139,6 +139,7 @@
  * supports DEQNA and DELQA in DEQNA-mode.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
