@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.60 1999/10/04 16:55:56 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.61 1999/10/05 09:22:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
-#include <compat/linux/common/linux_sched.h>
 
 
 /* Local linux_misc.c functions: */
