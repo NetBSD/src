@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2001/12/01 14:10:04 kleink Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2001/12/02 12:46:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -51,6 +51,7 @@ void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
 
 PLAN	*c_amin __P((char ***, int));
+PLAN	*c_anewer __P((char ***, int));
 PLAN	*c_atime __P((char ***, int));
 PLAN	*c_cmin __P((char ***, int));
 PLAN	*c_cnewer __P((char ***, int));

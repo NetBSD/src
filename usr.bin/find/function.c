@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.39 2001/12/01 14:10:04 kleink Exp $	*/
+/*	$NetBSD: function.c,v 1.40 2001/12/02 12:46:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.39 2001/12/01 14:10:04 kleink Exp $");
+__RCSID("$NetBSD: function.c,v 1.40 2001/12/02 12:46:39 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: function.c,v 1.39 2001/12/01 14:10:04 kleink Exp $");
 static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_always_true __P((PLAN *, FTSENT *));
 	int	f_amin __P((PLAN *, FTSENT *));
+	int	f_anewer __P((PLAN *, FTSENT *));
 	int	f_atime __P((PLAN *, FTSENT *));
 	int	f_cmin __P((PLAN *, FTSENT *));
 	int	f_cnewer __P((PLAN *, FTSENT *));
@@ -202,6 +203,42 @@ c_amin(argvp, isok)
 	TIME_CORRECT(new, N_AMIN);
 	return (new);
 }
+
+/*
+ * -anewer file functions --
+ *
+ *	True if the current file has been accessed more recently
+ *	than the access time of the file named by the pathname
+ *	file.
+ */
+int
+f_anewer(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	return (entry->fts_statp->st_atime > plan->t_data);
+}
+ 
+PLAN *
+c_anewer(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *filename = **argvp;
+	PLAN *new;
+	struct stat sb;
+    
+	(*argvp)++;
+	ftsoptions &= ~FTS_NOSTAT;
+
+	if (stat(filename, &sb))
+		err(1, "%s", filename);
+	new = palloc(N_ANEWER, f_anewer);
+	new->t_data = sb.st_atime;
+	return (new);
+}
+ 
 /*
  * -atime n functions --
  *
@@ -269,7 +306,7 @@ c_cmin(argvp, isok)
  * -cnewer file functions --
  *
  *	True if the current file has been changed more recently
- *	then the changed time of the file named by the pathname
+ *	than the changed time of the file named by the pathname
  *	file.
  */
 int
@@ -851,7 +888,7 @@ c_name(argvp, isok)
  * -newer file functions --
  *
  *	True if the current file has been modified more recently
- *	then the modification time of the file named by the pathname
+ *	than the modification time of the file named by the pathname
  *	file.
  */
 int
