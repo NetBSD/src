@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.5 2004/09/22 20:47:51 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.6 2004/09/25 21:39:27 tron Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -597,8 +597,6 @@ sendmail 8.12.11
 tcpump 3.7.1
 .It
 texinfo 4.6
-.bullet)
-.It
 .bullet)
 .It
 Many new packages in the
