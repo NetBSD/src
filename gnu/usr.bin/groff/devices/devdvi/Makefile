@@ -1,9 +1,12 @@
-#	@(#)Makefile	6.3 (Berkeley) 4/30/91
-
 DEVICE=		dvi
-FONTS=		R I B BI CW MI S EX H
-FONTFILES=	$(FONTS) DESC eqnchar
+FONTFILES=	R I B BI CW MI S EX H HI HB SA SB DESC $(DEVGENFILES)
+DEVGENFILES=	generate/CompileFonts generate/Makefile generate/msam.map\
+		generate/msbm.map generate/texb.map generate/texex.map \
+		generate/texi.map generate/texmi.map generate/texr.map \
+		generate/texsy.map generate/textt.map
 
-clean cleandir obj:
+NOOBJ=		noobj
+
+clean cleandir:
 
 .include "../Makefile.dev"
