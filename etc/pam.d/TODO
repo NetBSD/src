@@ -1,10 +1,10 @@
-# $NetBSD: TODO,v 1.2 2005/02/20 00:52:21 christos Exp $
+# $NetBSD: TODO,v 1.3 2005/02/20 01:47:04 christos Exp $
 
 Status:
 
 Programs
 -------------------------------------------------------------------------------
-ftpd		- XXX: No code yet
+ftpd		- Done, needs testing and review, working
 gdm		- Pkgsrc, nothing to do
 imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
@@ -24,7 +24,7 @@ xdm		- Done, needs testing and review, XXX: ???
 
 To enable pam support, recompile with USE_PAM=yes and:
 -------------------------------------------------------------------------------
-ftpd		- XXX: Not done
+ftpd		- Nothing
 gdm		- Pkgsrc, nothing to do
 imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
