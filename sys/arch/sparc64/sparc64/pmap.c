@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 2003/05/13 08:39:25 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.141 2003/05/17 01:38:40 nakayama Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2365,7 +2365,7 @@ pmap_dumpmmu(dump, blkno)
 	int	*bp, *ep;
 
 #define EXPEDITE(p,n) do {						\
-	int *sp = (int *)(p);						\
+	int *sp = (void *)(p);						\
 	int sz = (n);							\
 	while (sz > 0) {						\
 		*bp++ = *sp++;						\
