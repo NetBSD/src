@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.2 1998/07/12 20:44:53 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.3 1998/09/05 15:42:41 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.1 1998/07/12 19:52:00 augustss Exp 
+ *	NetBSD: usbdevs,v 1.2 1998/09/05 15:42:12 augustss Exp 
  */
 
 /*
@@ -48,6 +48,7 @@
  */
 
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
+#define	USB_VENDOR_KODAK	0x0409		/* Eastman Kodak */
 #define	USB_VENDOR_NANAO	0x0440		/* Nanao */
 #define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
 #define	USB_VENDOR_GENIUS	0x0458		/* Genius */
@@ -68,6 +69,9 @@
 
 /* NEC products */
 #define	USB_PRODUCT_NEC_HUB	0x55aa		/* hub */
+
+/* Kodak products */
+#define	USB_PRODUCT_Kodak_DC260	0x0110		/* Digital Science DC260 */
 
 /* Nanao products */
 #define	USB_PRODUCT_NANAO_HUB	0x0000		/* hub */
