@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.5 2002/10/02 16:52:10 thorpej Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.6 2004/07/07 06:43:22 mycroft Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.5 2002/10/02 16:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.6 2004/07/07 06:43:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,8 @@ cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf;
-	char devinfo[256];
 
-	/* Print out what we are. */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
+	aprint_normal("\n");
 
 	pf = psc->sc_pf = pa->pf;
 
