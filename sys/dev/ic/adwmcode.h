@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.h,v 1.2 2000/02/03 20:29:17 dante Exp $        */
+/*      $NetBSD: adwmcode.h,v 1.3 2000/04/30 18:52:15 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -48,5 +48,9 @@ extern u_int32_t adv_asc3550_mcode_chksum;
 extern u_int8_t adv_asc38C0800_mcode[];
 extern u_int16_t adv_asc38C0800_mcode_size;
 extern u_int32_t adv_asc38C0800_mcode_chksum;
+
+extern u_int8_t adv_asc38C1600_mcode[];
+extern u_int16_t adv_asc38C1600_mcode_size;
+extern u_int32_t adv_asc38C1600_mcode_chksum;
 
 #endif	/* ADV_MCODE_H */
