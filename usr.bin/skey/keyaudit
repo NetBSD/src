@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: keyaudit,v 1.1 1994/05/24 06:47:50 deraadt Exp $
+# $Id: keyaudit,v 1.2 1994/05/27 22:06:09 deraadt Exp $
 # This script will look thru the skeykeys file for
 # people with sequence numbers less then LOWLIMIT=12
 # and send them e-mail remindes to use keyinit soon
@@ -9,7 +9,7 @@ AWK=/usr/bin/awk
 GREP=/usr/bin/grep
 ECHO=/bin/echo
 KEYDB=/etc/skeykeys
-LOWLIMIT=120
+LOWLIMIT=12
 ADMIN=root
 SUBJECT="Reminder: Run keyinit"
 HOST=`/bin/hostname`
