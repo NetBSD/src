@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.9 2000/06/04 16:55:57 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.10 2000/08/09 20:00:30 tv Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2000/06/04 16:55:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2000/08/09 20:00:30 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,8 +1004,13 @@ loadstore:
 		        register_name(i.mem_format.ra));
 		signed_immediate = (long)i.mem_format.displacement;
 loadstore_address:
-		db_printf("%lz(%s)", signed_immediate,
-			register_name(i.mem_format.rb));
+		{
+			char tbuf[24];
+
+			db_format_hex(tbuf, 24, signed_immediate, FALSE);
+			db_printf("%s(%s)", tbuf,
+				register_name(i.mem_format.rb));
+		}
 		/*
 		 * For convenience, do the address computation
 		 */
