@@ -1,0 +1,31 @@
+.\" $NetBSD: mscdlabel.8,v 1.1 2002/05/29 19:39:07 drochner Exp $
+.\"
+.Dd May 29, 2002
+.Dt MSCDLABEL 8
+.Os
+.Sh NAME
+.Nm mscdlabel
+.Nd generate disk label from CD track information
+.Sh SYNOPSIS
+.Nm
+.Op Ar device
+.Sh DESCRIPTION
+.Nm
+is used to generate a
+.Nx
+disk label from track information read from the CD. This way, data
+of previous sessions of a multi-session CD can be accessed.
+.Pp
+.Nm
+scans the CD's TOC and adds a partition entry for each data track,
+beginning with the last one.
+.Pp
+The raw partition (typically partition
+.Em c ,
+but
+.Em d
+on i386 and some other platforms) is left alone during this process.
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr mbrlabel 8 ,
+.Xr cdplay 1
