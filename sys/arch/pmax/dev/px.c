@@ -1,4 +1,4 @@
-/* $NetBSD: px.c,v 1.3 1999/04/24 08:01:06 simonb Exp $ */
+/* $NetBSD: px.c,v 1.4 1999/04/25 04:04:16 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.3 1999/04/24 08:01:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.4 1999/04/25 04:04:16 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1702,10 +1702,10 @@ pxioctl(dev, cmd, data, flag, p)
 		break;
 
 	case QIOSETCMAP:
+		i = ((ColorMap *)data)->index;
 		if (i < 0 || i > 255)
 			return (-1);
 
-		i = ((ColorMap *)data)->index;
 		pxi->pxi_cmap_idx = i;
 		pxi->pxi_cmap_cnt = 1;
 		i = (i << 1) + i;
