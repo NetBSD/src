@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.2 1997/07/19 22:51:13 chuck Exp $	*/
+/*	$NetBSD: natm.h,v 1.3 2000/07/03 01:19:23 sommerfeld Exp $	*/
 
 /*
  *
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NETNATM_NATM_H_
+#define _NETNATM_NATM_H_
 
 /*
  * natm.h: native mode atm
@@ -150,3 +153,5 @@ int	natm5_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	natmintr __P((void));
 
 #endif
+
+#endif /* _NETNATM_NATM_H_ */
