@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.5 2002/12/30 03:30:16 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.6 2002/12/30 15:54:46 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -340,32 +340,22 @@ void get_memory_configuration(void) {
 
 	printf(" \n\n");
 
-	/* find top of DRAM pages */
-	top_physdram = 0;
-	
-	for (loop = podram_blocks-1; (loop >= 0) && (PODRAM_addr[loop] == 0); loop++);
-	if (loop >= 0) top_physdram = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
-	if (top_physdram == 0) {
-		for (loop = dram_blocks-1; (loop >= 0) && (DRAM_addr[loop] == 0); loop++);
-		if (loop >= 0) top_physdram = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
-	};
-	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
-
 	if (VRAM_pages[0] == 0) {
 		/* map bottom DRAM as video memory */
 		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
 #if 0
 		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/
-		videomem_start   = DRAM_addr[0];
 		videomem_pages   = (mapped_screen_memory / nbpp);
+		videomem_start   = DRAM_addr[0];
 		DRAM_addr[0]	+= videomem_pages * nbpp;
 		DRAM_pages[0]	-= videomem_pages;
 #else
 		mapped_screen_memory = display_size;
 		bank = dram_blocks-1;				/* pick last SIMM		*/
-		videomem_start   = DRAM_addr[bank];
 		videomem_pages   = (mapped_screen_memory / nbpp);
-		DRAM_addr[bank] += videomem_pages * nbpp;	/* at the front of the SIMM	*/
+
+		/* Map video memory at the end of the SIMM	*/
+		videomem_start   = DRAM_addr[bank] + (DRAM_pages[bank] - videomem_pages)*nbpp;
 		DRAM_pages[bank]-= videomem_pages;
 #endif
 	} else {
@@ -379,6 +369,18 @@ void get_memory_configuration(void) {
 	if (mapped_screen_memory) {
 		printf("Used 1st Mb of DRAM at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
 	};
+
+	/* find top of DRAM pages */
+	top_physdram = 0;
+	
+	for (loop = podram_blocks-1; (loop >= 0) && (PODRAM_addr[loop] == 0); loop++);
+	if (loop >= 0) top_physdram = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
+	if (top_physdram == 0) {
+		for (loop = dram_blocks-1; (loop >= 0) && (DRAM_addr[loop] == 0); loop++);
+		if (loop >= 0) top_physdram = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
+	};
+	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
+
 
 	videomem_start_ro = vdu_var(os_VDUVAR_DISPLAY_START);
 
@@ -506,8 +508,13 @@ void add_pagetables_at_top(void) {
 	/* get 4 pages on the top of the physical memeory and copy PT's in it	*/
 	new_L1_pages_phys = top_physdram - 4*nbpp;
 
+	/* If the L1 page tables are not 16 kb aligned, adjust base until it is	*/
+	while (new_L1_pages_phys & (16*1024-1)) {
+		new_L1_pages_phys -= nbpp;
+	};
+	if (new_L1_pages_phys & (16*1024-1)) panic("Paranoia : L1 pages not on 16Kb boundary");
+
 	dst = new_L1_pages_phys;
-	if (dst & (16*1024-1)) panic("L1 pages not on 16Kb boundary");
 	src = (u_long) initial_page_tables;
 
 	for (page = 0; page < 4; page++) {
