@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.16 2005/01/11 03:45:17 kent Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.17 2005/01/11 04:23:14 kent Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.16 2005/01/11 03:45:17 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.17 2005/01/11 04:23:14 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,35 +132,34 @@ static int	cs4231_ebus_intr(void *);
 
 
 int
-cs4231_ebus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct ebus_attach_args *ea = aux;
+	struct ebus_attach_args *ea;
 
+	ea = aux;
 	if (strcmp(ea->ea_name, AUDIOCS_PROM_NAME) == 0)
-		return (1);
+		return 1;
 #ifdef __sparc__		/* XXX: Krups */
 	if (strcmp(ea->ea_name, "sound") == 0)
-		return (1);
+		return 1;
 #endif
 
-	return (0);
+	return 0;
 }
 
 
 void
-cs4231_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cs4231_ebus_softc *ebsc = (struct cs4231_ebus_softc *)self;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
-	struct ebus_attach_args *ea = aux;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
+	struct ebus_attach_args *ea;
 	bus_space_handle_t bh;
 	int i;
 
+	ebsc = (struct cs4231_ebus_softc *)self;
+	sc = &ebsc->sc_cs4231;
+	ea = aux;
 	sc->sc_bustag = ebsc->sc_bt = ea->ea_bustag;
 	sc->sc_dmatag = ea->ea_dmatag;
 
@@ -215,23 +214,18 @@ cs4231_ebus_attach(parent, self, aux)
 
 
 static int
-cs4231_ebus_round_blocksize(addr, blk, mode, param)
-	void *addr;
-	int blk;
-	int mode;
-	const audio_params_t *param;
+cs4231_ebus_round_blocksize(void *addr, int blk, int mode,
+			    const audio_params_t *param)
 {
 
 	/* we want to use DMA burst size of 16 words */
-	return (blk & -64);
+	return blk & -64;
 }
 
 
 #ifdef AUDIO_DEBUG
 static void
-cs4231_ebus_regdump(label, ebsc)
-	char *label;
-	struct cs4231_ebus_softc *ebsc;
+cs4231_ebus_regdump(char *label, struct cs4231_ebus_softc *ebsc)
 {
 	/* char bits[128]; */
 
@@ -244,9 +238,7 @@ cs4231_ebus_regdump(label, ebsc)
 
 /* XXX: nothing CS4231-specific in this code... */
 static int
-cs4231_ebus_dma_reset(dt, dh)
-	bus_space_tag_t dt;
-	bus_space_handle_t dh;
+cs4231_ebus_dma_reset(bus_space_tag_t dt, bus_space_handle_t dh)
 {
 	u_int32_t csr;
 	int timo;
@@ -266,19 +258,17 @@ cs4231_ebus_dma_reset(dt, dh)
 		printf("cs4231_ebus_dma_reset: timed out: csr=%s\n",
 		       bitmask_snprintf(csr, EBUS_DCSR_BITS,
 					bits, sizeof(bits)));
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 	}
 
 	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR, csr & ~EBDMA_RESET);
-	return (0);
+	return 0;
 }
 
 
 static void
-cs4231_ebus_dma_advance(t, dt, dh)
-	struct cs_transfer *t;
-	bus_space_tag_t dt;
-	bus_space_handle_t dh;
+cs4231_ebus_dma_advance(struct cs_transfer *t, bus_space_tag_t dt,
+			bus_space_handle_t dh)
 {
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
@@ -295,21 +285,19 @@ cs4231_ebus_dma_advance(t, dt, dh)
  * "iswrite" defines direction of the transfer.
  */
 static int
-cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
-			     start, end, blksize,
-			     intr, arg, param)
-	struct cs4231_softc *sc;
-	struct cs_transfer *t;
-	bus_space_tag_t dt;
-	bus_space_handle_t dh;
-	int iswrite;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+cs4231_ebus_trigger_transfer(
+	struct cs4231_softc *sc,
+	struct cs_transfer *t,
+	bus_space_tag_t dt,
+	bus_space_handle_t dh,
+	int iswrite,
+	void *start, void *end,
+	int blksize,
+	void (*intr)(void *),
+	void *arg,
+	const audio_params_t *param)
 {
-	u_int32_t csr;
+	uint32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
 	int ret;
@@ -317,11 +305,11 @@ cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
 	ret = cs4231_transfer_init(sc, t, &dmaaddr, &dmasize,
 				   start, end, blksize, intr, arg);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	ret = cs4231_ebus_dma_reset(dt, dh);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	csr = bus_space_read_4(dt, dh, EBUS_DMAC_DCSR);
 	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR,
@@ -330,36 +318,34 @@ cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
 			  | EBDMA_BURST_SIZE_16);
 
 	/* first load: propagated to DACR/DBCR */
-	bus_space_write_4(dt, dh, EBUS_DMAC_DNBR, (u_int32_t)dmasize);
-	bus_space_write_4(dt, dh, EBUS_DMAC_DNAR, (u_int32_t)dmaaddr);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNBR, (uint32_t)dmasize);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNAR, (uint32_t)dmaaddr);
 
 	/* next load: goes to DNAR/DNBR */
 	cs4231_ebus_dma_advance(t, dt, dh);
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_ebus_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+cs4231_ebus_trigger_output(void *addr, void *start, void *end, int blksize,
+			   void (*intr)(void *), void *arg,
+			   const audio_params_t *param)
 {
-	struct cs4231_ebus_softc *ebsc = addr;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
 	int cfg, ret;
 
+	ebsc = addr;
+	sc = &ebsc->sc_cs4231;
 	ret = cs4231_ebus_trigger_transfer(sc, &sc->sc_playback,
 					   ebsc->sc_bt, ebsc->sc_pdmareg,
 					   0, /* iswrite */
 					   start, end, blksize,
 					   intr, arg, param);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	ad_write(&sc->sc_ad1848, SP_LOWER_BASE_COUNT, 0xff);
 	ad_write(&sc->sc_ad1848, SP_UPPER_BASE_COUNT, 0xff);
@@ -367,30 +353,28 @@ cs4231_ebus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, cfg | PLAYBACK_ENABLE);
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_ebus_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+cs4231_ebus_trigger_input(void *addr, void *start, void *end, int blksize,
+			  void (*intr)(void *), void *arg,
+			  const audio_params_t *param)
 {
-	struct cs4231_ebus_softc *ebsc = addr;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
 	int cfg, ret;
 
+	ebsc = addr;
+	sc = &ebsc->sc_cs4231;
 	ret = cs4231_ebus_trigger_transfer(sc, &sc->sc_capture,
 					   ebsc->sc_bt, ebsc->sc_cdmareg,
 					   1, /* iswrite */
 					   start, end, blksize,
 					   intr, arg, param);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	ad_write(&sc->sc_ad1848, CS_LOWER_REC_CNT, 0xff);
 	ad_write(&sc->sc_ad1848, CS_UPPER_REC_CNT, 0xff);
@@ -398,19 +382,20 @@ cs4231_ebus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, cfg | CAPTURE_ENABLE);
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_ebus_halt_output(addr)
-	void *addr;
+cs4231_ebus_halt_output(void *addr)
 {
-	struct cs4231_ebus_softc *ebsc = addr;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
 	u_int32_t csr;
 	int cfg;
 
+	ebsc = addr;
+	sc = &ebsc->sc_cs4231;
 	sc->sc_playback.t_active = 0;
 
 	csr = bus_space_read_4(ebsc->sc_bt, ebsc->sc_pdmareg, EBUS_DMAC_DCSR);
@@ -421,19 +406,20 @@ cs4231_ebus_halt_output(addr)
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,
 		 cfg & ~PLAYBACK_ENABLE);
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_ebus_halt_input(addr)
-	void *addr;
+cs4231_ebus_halt_input(void *addr)
 {
-	struct cs4231_ebus_softc *ebsc = addr;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
-	u_int32_t csr;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
+	uint32_t csr;
 	int cfg;
 
+	ebsc = addr;
+	sc = &ebsc->sc_cs4231;
 	sc->sc_capture.t_active = 0;
 
 	csr = bus_space_read_4(ebsc->sc_bt, ebsc->sc_cdmareg, EBUS_DMAC_DCSR);
@@ -444,17 +430,15 @@ cs4231_ebus_halt_input(addr)
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,
 		 cfg & ~CAPTURE_ENABLE);
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_ebus_dma_intr(t, dt, dh)
-	struct cs_transfer *t;
-	bus_space_tag_t dt;
-	bus_space_handle_t dh;
+cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
+		     bus_space_handle_t dh)
 {
-	u_int32_t csr;
+	uint32_t csr;
 #ifdef AUDIO_DEBUG
 	char bits[128];
 #endif
@@ -470,43 +454,44 @@ cs4231_ebus_dma_intr(t, dt, dh)
 		printf("audiocs: %s DMA error, resetting\n", t->t_name);
 		cs4231_ebus_dma_reset(dt, dh);
 		/* how to notify audio(9)??? */
-		return (1);
+		return 1;
 	}
 
 	if ((csr & EBDMA_INT_PEND) == 0)
-		return (0);
+		return 0;
 
 	++t->t_intrcnt.ev_count;
 
 	if ((csr & EBDMA_TC) == 0) { /* can this happen? */
 		printf("audiocs: %s INT_PEND but !TC\n", t->t_name);
-		return (1);
+		return 1;
 	}
 
 	if (!t->t_active)
-		return (1);
+		return 1;
 
 	cs4231_ebus_dma_advance(t, dt, dh);
 
 	/* call audio(9) framework while DMA is chugging along */
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	return (1);
+	return 1;
 }
 
 
 static int
-cs4231_ebus_intr(arg)
-	void *arg;
+cs4231_ebus_intr(void *arg)
 {
-	struct cs4231_ebus_softc *ebsc = arg;
-	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	struct cs4231_ebus_softc *ebsc;
+	struct cs4231_softc *sc;
 	int status;
 	int ret;
 #ifdef AUDIO_DEBUG
 	char bits[128];
 #endif
 
+	ebsc = arg;
+	sc = &ebsc->sc_cs4231;
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
 
 #ifdef AUDIO_DEBUG
@@ -545,5 +530,5 @@ cs4231_ebus_intr(arg)
 		ret = 1;
 	}
 
-	return (ret);
+	return ret;
 }
