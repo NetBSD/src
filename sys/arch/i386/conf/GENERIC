@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.131 1998/01/23 01:16:03 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.132 1998/01/23 20:42:34 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -272,6 +272,9 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and Related Devices
+
+# ISA Plug-and-Play IDE controllers
+wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
