@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/02/03 16:22:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/08 04:53:50 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	rescue-small.fs
-KDIR=	${.CURDIR}/../kernel-rescue
+KDIR=	${TOP}/kernel-rescue
 KNAME=	INSTALL_SMALL
 KERN!=	cd ${KDIR}; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.${KNAME}.gz\n" | \
