@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.31 1998/02/12 20:43:45 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.32 1998/04/28 18:11:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.31 1998/02/12 20:43:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.32 1998/04/28 18:11:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,9 @@ ciaattach(parent, self, aux)
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
-	printf(": DECchip 21171/21172 Core Logic chipset, revision %d\n",
-	    ccp->cc_rev);
+	/* XXX Revisions > 2 are Pyxis? */
+	printf(": DECchip 2117%d Core Logic chipset, revision %d\n",
+	    ccp->cc_rev <= 2 ? ccp->cc_rev : 4, ccp->cc_rev);
 	if (ccp->cc_cnfg)
 		printf("%s: extended capabilities: %s\n", self->dv_xname,
 		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
