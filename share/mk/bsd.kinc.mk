@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.12 2000/04/23 07:58:17 simonb Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.13 2000/04/24 14:22:05 simonb Exp $
 
 # System configuration variables:
 #
@@ -40,11 +40,11 @@ __initialized__:
 
 # Change SYS_INCLUDE in bsd.own.mk or /etc/mk.conf to "symlinks" if you
 # don't want copies
-SYS_INCLUDE?=   copies
+SYS_INCLUDE?=	copies
 
 # If DESTDIR is set, we're probably building a release, so force "copies".
 .if defined(DESTDIR) && (${DESTDIR} != "/" && !empty(DESTDIR))
-SYS_INCLUDE=    copies
+SYS_INCLUDE=	copies
 .endif
 
 
