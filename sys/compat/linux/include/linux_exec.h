@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 1995/04/07 22:23:26 fvdl Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.3 1995/06/11 14:56:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -35,6 +35,12 @@
 #ifndef	_LINUX_EXEC_H
 #define	_LINUX_EXEC_H
 
+/*
+ * Include this for ELF definitions. Should be an emul-independent file
+ * someday.
+ */
+#include <compat/svr4/svr4_exec.h>
+
 #define LINUX_M_I386	100
 /* Sparc? Alpha? */
 
@@ -66,6 +72,7 @@
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
+int exec_linux_elf_makecmds __P((struct proc *, struct exec_package *));
 
 extern char linux_sigcode[], linux_esigcode[];
 
