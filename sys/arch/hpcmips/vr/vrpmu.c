@@ -1,8 +1,9 @@
-/*	$NetBSD: vrpmu.c,v 1.8 2000/07/02 10:01:31 takemura Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.9 2000/09/25 03:51:28 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
- * Copyright (c) 1999 PocketBSD Project. All rights reserved.
+ * Copyright (c) 2000 SATO Kazumi. All rights reserved.
+ * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +76,8 @@ struct cfattach vrpmu_ca = {
 	sizeof(struct vrpmu_softc), vrpmumatch, vrpmuattach
 };
 
+struct vrpmu_softc *this_pmu;
+
 static inline void
 vrpmu_write(sc, port, val)
 	struct vrpmu_softc *sc;
@@ -109,6 +112,9 @@ vrpmuattach(parent, self, aux)
 {
 	struct vrpmu_softc *sc = (struct vrpmu_softc *)self;
 	struct vrip_attach_args *va = aux;
+#if NVRBCU > 0
+	int cpuid;
+#endif /* NVRBCU > 0 */
 
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
@@ -135,6 +141,14 @@ vrpmuattach(parent, self, aux)
 	/* clear interrupt status */
 	vrpmu_write(sc, PMUINT_REG_W, PMUINT_ALL);
 	vrpmu_write(sc, PMUINT2_REG_W, PMUINT2_ALL);
+#if NVRBCU > 0
+	cpuid = vrbcu_vrip_getcpuid();
+	if (cpuid >= BCUREVID_RID_4111){
+		vrpmu_write(sc, PMUWAIT_REG_W, PMUWAIT_DEFAULT);
+	}
+#endif /* NVRBCU */
+
+	this_pmu = sc;
 }
 
 /*
@@ -275,8 +289,8 @@ vrpmu_intr(arg)
 	if (intstat1 & PMUINT_RTC)
 		;
 	if (intstat1 & PMUINT_BATT)
-		;
-
+		config_hook_call(CONFIG_HOOK_PMEVENT,
+				 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
 	if (intstat1 & PMUINT_TIMOUTRST)
 		;
 	if (intstat1 & PMUINT_RTCRST)
@@ -286,7 +300,8 @@ vrpmu_intr(arg)
 	if (intstat1 & PMUINT_DMSWRST)
 		;
 	if (intstat1 & PMUINT_BATTINTR)
-		;
+		config_hook_call(CONFIG_HOOK_PMEVENT,
+				 CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
 	if (intstat1 & PMUINT_POWERSW) {
 		/*
 		 * you can't detect when the button is released
