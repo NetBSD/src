@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.18 2003/09/06 06:52:08 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.19 2004/01/06 01:18:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.18 2003/09/06 06:52:08 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.19 2004/01/06 01:18:52 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.18 2003/09/06 06:52:08 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.19 2004/01/06 01:18:52 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -145,7 +145,7 @@ static Boolean CondDoMake(int, char *);
 static Boolean CondDoExists(int, char *);
 static Boolean CondDoTarget(int, char *);
 static Boolean CondDoCommands(int, char *);
-static Boolean CondCvtArg(char *, double *);
+static char * CondCvtArg(char *, double *);
 static Token CondToken(Boolean);
 static Token CondT(Boolean);
 static Token CondF(Boolean);
@@ -491,7 +491,8 @@ CondDoCommands(int argLen, char *arg)
  *
  * Results:
  *	Sets 'value' to double value of string.
- *	Returns true if the string was a valid number, false o.w.
+ *	Returns NULL if string was fully consumed,
+ *	else returns remaining input.
  *
  * Side Effects:
  *	Can change 'value' even if string is not a valid number.
@@ -499,7 +500,7 @@ CondDoCommands(int argLen, char *arg)
  *
  *-----------------------------------------------------------------------
  */
-static Boolean
+static char *
 CondCvtArg(char *str, double *value)
 {
     if ((*str == '0') && (str[1] == 'x')) {
@@ -512,16 +513,15 @@ CondCvtArg(char *str, double *value)
 	    else if (isxdigit((unsigned char) *str))
 		x = 10 + *str - isupper((unsigned char) *str) ? 'A' : 'a';
 	    else
-		return FALSE;
+		break;
 	    i = (i << 4) + x;
 	}
 	*value = (double) i;
-	return TRUE;
-    }
-    else {
+	return *str ? str : NULL;
+    } else {
 	char *eptr;
 	*value = strtod(str, &eptr);
-	return *eptr == '\0';
+	return *eptr ? eptr : NULL;
     }
 }
 
@@ -747,7 +747,7 @@ do_string_compare:
 		    double  	left, right;
 		    char    	*string;
 
-		    if (!CondCvtArg(lhs, &left))
+		    if (CondCvtArg(lhs, &left))
 			goto do_string_compare;
 		    if (*rhs == '$') {
 			int 	len;
@@ -757,7 +757,7 @@ do_string_compare:
 			if (string == var_Error) {
 			    right = 0.0;
 			} else {
-			    if (!CondCvtArg(string, &right)) {
+			    if (CondCvtArg(string, &right)) {
 				if (freeIt)
 				    free(string);
 				goto do_string_compare;
@@ -768,16 +768,19 @@ do_string_compare:
 				condExpr += len;
 			}
 		    } else {
-			if (!CondCvtArg(rhs, &right))
+			char *cp;
+
+			if ((cp = CondCvtArg(rhs, &right)) &&
+			    cp == rhs)
 			    goto do_string_compare;
 			if (rhs == condExpr) {
 			    /*
 			     * Skip over the right-hand side
 			     */
-			    while(!isspace((unsigned char) *condExpr) &&
-				  (*condExpr != '\0')) {
-				condExpr++;
-			    }
+			    if (cp)
+				condExpr = cp;
+			    else
+				condExpr = strchr(rhs, '\0');	
 			}
 		    }
 
