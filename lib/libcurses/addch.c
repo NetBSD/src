@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,35 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)addch.c	5.5 (Berkeley) 6/1/90";
-#endif /* not lint */
+static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include "curses.h"
 
 /*
- *	This routine adds the character to the current position
+ * waddch --
+ *	Add the character to the current position in the given window.
  *
  */
-waddch(win, c)
-WINDOW	*win;
-char		c;
+int
+waddch(win, ch)
+	WINDOW *win;
+	int ch;
 {
-    return waddbytes(win, &c, 1);
+	__LDATA buf;
+
+	buf.ch = ch;
+	buf.attr = 0;
+	return (__waddch(win, &buf));
+}
+
+int
+__waddch(win, dp)
+	WINDOW *win;
+	__LDATA *dp;
+{
+	char buf[2];
+
+	buf[0] = dp->ch;
+	return (__waddbytes(win, buf, 1, dp->attr & __STANDOUT));
 }
