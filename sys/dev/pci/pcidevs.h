@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.214 2000/04/17 00:26:45 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.215 2000/04/18 16:38:12 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.207 2000/04/17 00:26:22 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.208 2000/04/18 16:37:00 cgd Exp 
  */
 
 /*
@@ -531,6 +531,7 @@
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
+#define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
