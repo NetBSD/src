@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.2 2003/07/14 11:52:25 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.3 2003/07/14 11:54:15 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -54,6 +54,7 @@ usage() {
 prefix=${PREFIX:-/usr/pkg}
 view=${PKG_VIEW:-""}
 ignorefiles=${PLIST_IGNORE_FILES:-info/dir}
+dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
 
 while [ $# -gt 1 ]; do
 	case "$1" in
@@ -84,10 +85,10 @@ shift
 
 depot_pkg_dbdir=${prefix}/packages
 
-# if standard view, put package info into ${PKG_DBDIR}
+# if standard view, put package info into ${dflt_pkg_dbdir}
 # if not standard view, put package info into view's pkgdb
 case "$view" in
-"")	pkg_dbdir=${PKG_DBDIR} ;;
+"")	pkg_dbdir=${dflt_pkg_dbdir} ;;
 *)	pkg_dbdir=${prefix}/${view}/.pkgdb ;;
 esac
 
