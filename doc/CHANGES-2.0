@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.516 2004/11/12 06:01:39 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.517 2004/11/12 06:02:29 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7945,3 +7945,11 @@ distrib/notes/macppc/install			1.33
 
 	List a few more open firmware settings.
 	[mbw, ticket #936]
+
+distrib/notes/macppc/hardware			1.42
+
+	 - update list of supported machines  
+	 - mention that NetBSD uses different names for serial ports than OF
+	 - update date of supported hardware info 
+
+	[mbw, ticket #937]
