@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.15 1994/01/28 13:39:53 deraadt Exp $
+ *	$Id: disklabel.h,v 1.16 1994/02/10 04:19:25 briggs Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -236,6 +236,7 @@ static char *dktypenames[] = {
 #define FS_ISOFS	FS_ISO9660
 #define	FS_BOOT		13		/* partition contains bootstrap */
 #define FS_ADOS		14		/* AmigaDOS fast file system */
+#define FS_HFS		15		/* Macintosh HFS */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -254,6 +255,7 @@ static char *fstypenames[] = {
 	"ISO-9660",
 	"boot",
 	"ADOS",
+	"HFS",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
