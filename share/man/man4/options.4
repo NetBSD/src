@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.135 2001/04/07 12:31:17 tsutsui Exp $
+.\"	$NetBSD: options.4,v 1.136 2001/04/21 20:51:18 fvdl Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -349,7 +349,7 @@ which may decrease system performance.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
-structures is detected.
+structures is detected. These checks can decrease performance up to 15%.
 .It Cd options KTRACE
 Add hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.
