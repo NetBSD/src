@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.41 1999/12/13 10:45:31 christos Exp $
+# $NetBSD: md.i386,v 1.42 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/i386
 ./usr/include/i386/_G_config.h
 ./usr/include/i386/ansi.h
@@ -30,6 +30,7 @@
 ./usr/include/i386/joystick.h
 ./usr/include/i386/kcore.h
 ./usr/include/i386/limits.h
+./usr/include/i386/math.h
 ./usr/include/i386/mouse.h
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h

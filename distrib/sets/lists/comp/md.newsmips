@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.3 1999/11/09 21:56:55 kleink Exp $
+# $NetBSD: md.newsmips,v 1.4 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/newsmips
 ./usr/include/newsmips/_G_config.h
 ./usr/include/newsmips/adrsmap.h
@@ -26,6 +26,7 @@
 ./usr/include/newsmips/limits.h
 ./usr/include/newsmips/locore.h
 ./usr/include/newsmips/machConst.h
+./usr/include/newsmips/math.h
 ./usr/include/newsmips/mips_opcode.h
 ./usr/include/newsmips/mouse.h
 ./usr/include/newsmips/param.h
