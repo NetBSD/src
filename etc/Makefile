@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 1998/11/19 19:53:33 tron Exp $
+#	$NetBSD: Makefile,v 1.92 1998/12/25 22:18:19 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # XXX: For NO_SENDMAIL and USE_BIND4
@@ -24,14 +24,16 @@ BIN3=
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1+=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
-	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
-	gettytab group hosts hosts.lpd inetd.conf ld.so.conf lkm.conf \
-	man.conf monthly monthly.conf mrouted.conf netstart networks \
-	newsyslog.conf phones printcap profile protocols rbootd.conf rc \
-	rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc security \
-	security.conf services shells syslog.conf weekly weekly.conf \
-	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
+BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
+	csh.logout daily daily.conf dm.conf floppytab ftpchroot \
+	ftpusers ftpwelcome gettytab group hosts hosts.lpd \
+	inetd.conf ld.so.conf lkm.conf mailer.conf man.conf \
+	monthly monthly.conf mrouted.conf netstart networks \
+	newsyslog.conf phones printcap profile protocols \
+	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
+	rc.shutdown remote rpc security security.conf services \
+	shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
+	etc.${MACHINE}/disktab
 
 # -rw-rw-r--
 BIN2+=	motd
