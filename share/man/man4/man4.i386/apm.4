@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.9 2000/06/04 22:38:58 gmcgarry Exp $
+.\"   $NetBSD: apm.4,v 1.10 2000/11/07 05:44:50 lukem Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -74,7 +74,9 @@ Enable kernel printout of every call to the APM BIOS (this is very noisy).
 .It Dv APM_POWER_PRINT
 Print power state on console at
 .Dv APM_POWER_CHANGE
-events.  (Since it increases syslogd(8)'s activity, it may consume increased
+events.  (Since it increases
+.Xr syslogd 8 's
+activity, it may consume increased
 battery power.  Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
 .It Dv APM_DISABLE_INTERRUPTS
