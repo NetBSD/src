@@ -1,4 +1,4 @@
-/*	$NetBSD: hpciovar.h,v 1.2 2001/05/01 00:25:17 takemura Exp $	*/
+/*	$NetBSD: hpciovar.h,v 1.3 2001/05/06 14:25:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin.
@@ -45,6 +45,7 @@ struct hpcio_chip {
 	hpcio_intr_handle_t(*hc_intr_establish)(hpcio_chip_t, int, int, int (*)(void *), void*);
 	void (*hc_intr_disestablish)(hpcio_chip_t, hpcio_intr_handle_t);
 	void (*hc_intr_clear)(hpcio_chip_t, hpcio_intr_handle_t);
+	void (*hc_register_iochip)(hpcio_chip_t, hpcio_chip_t);
 	void (*hc_update)(hpcio_chip_t);
 	void (*hc_dump)(hpcio_chip_t);
 };
@@ -53,6 +54,7 @@ struct hpcio_attach_args {
 	char *haa_busname;
 	void *haa_sc;
 	hpcio_chip_t (*haa_getchip)(void*, int);
+	bus_space_tag_t haa_iot;	/* I/O space tag */
 };
 #define HPCIO_BUSNAME	"hpcioif"
 
@@ -66,6 +68,8 @@ struct hpcio_attach_args {
 		((*(hc)->hc_intr_disestablish)((hc), (handle)))
 #define hpcio_intr_clear(hc, handle)	\
 		((*(hc)->hc_intr_clear)((hc), (handle)))
+#define hpcio_register_iochip(hc, iochip)	\
+		((*(hc)->hc_register_iochip)((hc), (iochip)))
 #define hpcio_update(hc)	\
 		((*(hc)->hc_update)(hc))
 #define hpcio_dump(hc)	\

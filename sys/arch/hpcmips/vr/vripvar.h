@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.3 2001/04/30 11:42:19 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.4 2001/05/06 14:25:16 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -50,6 +50,7 @@ struct vripbus_attach_args {
 /* Vrip GPIO chips */
 enum vrip_iochip {
 	VRIP_IOCHIP_VRGIU = 0,
+	VRIP_IOCHIP_VRC4172GPIO,
 	VRIP_NIOCHIPS
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.21 2001/05/01 00:25:17 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.22 2001/05/06 14:25:16 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -115,6 +115,7 @@ static void vrgiu_port_write(hpcio_chip_t, int, int);
 static void *vrgiu_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void*);
 static void vrgiu_intr_disestablish(hpcio_chip_t, void*);
 static void vrgiu_intr_clear(hpcio_chip_t, void*);
+static void vrgiu_register_iochip(hpcio_chip_t, hpcio_chip_t);
 static void vrgiu_update(hpcio_chip_t);
 static void vrgiu_dump(hpcio_chip_t);
 static hpcio_chip_t vrgiu_getchip(void*, int);
@@ -125,6 +126,7 @@ static struct hpcio_chip vrgiu_iochip = {
 	.hc_intr_establish =	vrgiu_intr_establish,
 	.hc_intr_disestablish =	vrgiu_intr_disestablish,
 	.hc_intr_clear =	vrgiu_intr_clear,
+	.hc_register_iochip =	vrgiu_register_iochip,
 	.hc_update =		vrgiu_update,
 	.hc_dump =		vrgiu_dump,
 };
@@ -204,6 +206,7 @@ vrgiu_attach(parent, self, aux)
 	haa.haa_busname = HPCIO_BUSNAME;
 	haa.haa_sc = sc;
 	haa.haa_getchip = vrgiu_getchip;
+	haa.haa_iot = sc->sc_iot;
 	while (config_found(self, &haa, vrgiu_print)) ;
 	/*
 	 * GIU-ISA bridge
@@ -225,6 +228,7 @@ vrgiu_callback(self)
 	haa.haa_busname = "vrisab";
 	haa.haa_sc = sc;
 	haa.haa_getchip = vrgiu_getchip;
+	haa.haa_iot = sc->sc_iot;
 	config_found(self, &haa, vrgiu_print);
 }
 
@@ -629,6 +633,16 @@ vrgiu_intr_clear(hc, arg)
 
 	reg = vrgiu_regread_4(sc, GIUINTSTAT_REG);
 	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, reg & ~(1 << ihe->ih_port));
+}
+
+static void
+vrgiu_register_iochip(hc, iochip)
+	hpcio_chip_t hc;
+	hpcio_chip_t iochip;
+{
+	struct vrgiu_softc *sc = hc->hc_sc;
+
+	vrip_gpio_register(sc->sc_vc, iochip);
 }
 
 /* interrupt handler */

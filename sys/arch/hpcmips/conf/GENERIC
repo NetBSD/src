@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.90 2001/05/06 01:54:19 hubertf Exp $
+# 	$NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 maxusers	10
 
@@ -325,10 +325,12 @@ isa4    at vrisab4
 wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0002  # single drive
 
 #
-# Unknown machines
+# Fujitsu PenCentra 130
 #
-vrisab4 at vrgiu?
-isa4	at vrisab4
+vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a port 10
+vrisab5 at vrc4172gpio0 isaportoffset 0x1000000
+isa5	at vrisab5
+pcic0   at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?
