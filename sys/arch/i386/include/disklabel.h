@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4.14.1 1998/10/09 17:57:18 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4.14.2 1998/11/23 07:47:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -65,7 +65,7 @@ struct dos_partition {
 #define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
 #define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
 #define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
-#define DOSPTYP_LNXEXT2 0x83		/* Linux native */
+#define DOSPTYP_LNXEXT2	0x83		/* Linux native */
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
