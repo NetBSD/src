@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.46 2001/03/30 16:56:36 jdolecek Exp $
+#	$NetBSD: makesyscalls.sh,v 1.47 2001/04/27 06:07:27 lukem Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -151,10 +151,10 @@ BEGIN {
 		compat_upper[i] = toupper(compat[i])
 
 		printf "\n#ifdef %s\n", compat_upper[i] > sysent
-		printf "#define %s(func) __CONCAT(%s_,func)\n", compat[i], \
+		printf "#define	%s(func) __CONCAT(%s_,func)\n", compat[i], \
 		    compat[i] > sysent
 		printf "#else\n" > sysent
-		printf "#define %s(func) %s\n", compat[i], sys_nosys > sysent
+		printf "#define	%s(func) %s\n", compat[i], sys_nosys > sysent
 		printf "#endif\n" > sysent
 	}
 
@@ -191,7 +191,7 @@ NR == 1 {
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
 	printf "#ifndef _" constprefix "_SYSCALLARGS_H_\n" > sysarghdr
-	printf "#define _" constprefix "_SYSCALLARGS_H_\n\n" > sysarghdr
+	printf "#define	_" constprefix "_SYSCALLARGS_H_\n\n" > sysarghdr
 	printf "#ifdef\tsyscallarg\n" > sysarghdr
 	printf "#undef\tsyscallarg\n" > sysarghdr
 	printf "#endif\n\n" > sysarghdr
