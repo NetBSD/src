@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 2003/10/01 01:25:06 mycroft Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 2003/10/01 06:14:57 mycroft Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.15 2003/10/01 01:25:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16 2003/10/01 06:14:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -406,7 +406,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiiopa;
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -415,7 +415,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the mono fb space PTEs */
 	pte = (u_int *)monopa;
 	epte = (u_int *)emonopa;
-	protopte = MONOBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = MONOBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -424,7 +424,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the color fb space PTEs */
 	pte = (u_int *)colorpa;
 	epte = (u_int *)ecolorpa;
-	protopte = COLORBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = COLORBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
