@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2001/06/17 00:11:41 cyber Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2001/07/22 15:23:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -140,7 +140,7 @@ mach_init(memsize)
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
