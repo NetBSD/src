@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 1998/07/30 22:28:44 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.119 1998/08/20 20:45:40 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1691,8 +1691,9 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error != 0)
 		return (error);
 
-	if (extent_alloc(dvmamap24, round_page(size), NBPG, EX_NOBOUNDARY,
-            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+	if (extent_alloc(dvmamap24, round_page(size), NBPG, boundary,
+			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
+			 (u_long *)&dvmaddr) != 0)
 		return (ENOMEM);
 
 	/*
@@ -1745,9 +1746,9 @@ sun4_dmamem_free(t, segs, nsegs)
 	}
 
 	addr = segs[0].ds_addr;
-	len = segs[0].ds_len;
+	len = round_page(segs[0].ds_len);
 
-	if (extent_free(dvmamap24, addr, round_page(len), EX_NOWAIT) != 0)
+	if (extent_free(dvmamap24, addr, len, EX_NOWAIT) != 0)
 		printf("warning: %ld of DVMA space lost\n", len);
 
 	pmap_remove(pmap_kernel(), addr, addr + len);
