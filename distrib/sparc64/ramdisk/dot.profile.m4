@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile.m4,v 1.1 2000/08/10 14:38:53 mrg Exp $
+# $NetBSD: dot.profile.m4,v 1.2 2000/08/19 13:23:27 mrg Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,8 +48,6 @@ export EDITOR
 
 umask 022
 
-ROOTDEV=/dev/md0a
-
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
@@ -65,14 +63,12 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	    TERM=$ans
 	fi
 
-	# run update, so that installed software is written as it goes.
-	update
+	# mount the kern_fs so that we can find the root device, and also
+	# examine the dmesg state
+	mount -t kernfs /kern /kern
 
 	# mount the ramdisk read write
-	mount -u $ROOTDEV /
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
+	mount -u /kern/rootdev /
 
 	# run the installation or upgrade script.
 	sysinst
