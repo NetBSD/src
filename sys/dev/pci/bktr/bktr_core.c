@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.20 2001/11/13 07:29:36 lukem Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.21 2002/05/22 16:03:16 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.20 2001/11/13 07:29:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.21 2002/05/22 16:03:16 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -3764,7 +3764,7 @@ static int oformat_meteor_to_bt( u_long format )
 
 		if (( pf1->type        == pf2->type        ) &&
 		    ( pf1->Bpp         == pf2->Bpp         ) &&
-		    !bcmp( pf1->masks, pf2->masks, sizeof( pf1->masks )) &&
+		    !memcmp( pf1->masks, pf2->masks, sizeof( pf1->masks )) &&
 		    ( pf1->swap_bytes  == pf2->swap_bytes  ) &&
 		    ( pf1->swap_shorts == pf2->swap_shorts )) 
 			break;
