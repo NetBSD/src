@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.8 1996/01/28 19:49:32 chopps Exp $	*/
+/*	$NetBSD: cc.c,v 1.9 1996/04/21 21:06:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -478,7 +478,6 @@ void *
 alloc_chipmem(size)
 	u_long size;
 {
-	void *mem;
 	int s;
 	struct mem_node *mn, *new;
 

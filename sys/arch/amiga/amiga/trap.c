@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 1995/11/30 00:56:43 jtc Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 1996/04/21 21:07:15 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,8 +168,22 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
-int fubail();
-int subail();
+extern char fubail[], subail[];
+int _write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
+static void userret __P((struct proc *, int, u_quad_t));
+void panictrap __P((int, u_int, u_int, struct frame *));
+void trapcpfault __P((struct proc *, struct frame *));
+void trapmmufault __P((int, u_int, u_int, struct frame *, struct proc *,
+			u_quad_t));
+void trap __P((int, u_int, u_int, struct frame));
+#ifdef DDB
+#include <m68k/db_machdep.h>
+int kdb_trap __P((int, struct mc68020_saved_state *));
+#endif
+void syscall __P((register_t, struct frame));
+void child_return __P((struct proc *, struct frame));
+void _wb_fault __P((void));
+
 
 static void
 userret(p, pc, oticks)
@@ -261,7 +275,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	u_quad_t sticks;
 {
 	extern vm_map_t kernel_map;
-	struct vmspace *vm;
+	struct vmspace *vm = NULL;
 	vm_prot_t ftype;
 	vm_offset_t va;
 	vm_map_t map;
@@ -285,10 +299,10 @@ trapmmufault(type, code, v, fp, p, sticks)
 		mmudebug |= 0x100;			/* XXX PAGE0 */
 #endif
 	if (mmudebug && mmutype == MMU_68040) {
-		printf ("68040 access error: pc %x, code %x,"
+		printf("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
 		if (curpcb)
-			printf (" curpcb %x ->pcb_ustp %x / %x\n",
+			printf(" curpcb %p ->pcb_ustp %x / %x\n",
 			    curpcb, curpcb->pcb_ustp, 
 			    curpcb->pcb_ustp << PG_SHIFT);
 #ifdef DDB						/* XXX PAGE0 */
@@ -321,7 +335,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	va = trunc_page((vm_offset_t)v);
 #ifdef DEBUG
 	if (map == kernel_map && va == 0) {
-		printf("trap: bad kernel access at %x\n", v);
+		printf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
 		panictrap(type, code, v, fp);
 	}
 #endif
@@ -341,14 +355,14 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("vm_fault(%x,%x,%d,0)\n", map, va, ftype);
+		printf("vm_fault(%x,%lx,%d,0)\n", map, va, ftype);
 #endif
 
 	rv = vm_fault(map, va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("vmfault %s %x returned %d\n",
+		printf("vmfault %s %lx returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
 	if (mmutype == MMU_68040) {
@@ -449,7 +463,7 @@ nogo:
 			trapcpfault(p, fp);
 			return;
 		}
-		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+		printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
@@ -466,15 +480,16 @@ nogo:
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	u_int code, v;
 	struct frame frame;
 {
 	struct proc *p;
-	u_int ncode, ucode;
-	u_quad_t sticks;
-	int i, s;
+	u_int ucode;
+	u_quad_t sticks = 0;
+	int i;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
@@ -491,7 +506,7 @@ trap(type, code, v, frame)
 
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, &frame))
+		if (kdb_trap(type, (db_regs_t *)&frame))
 			return;
 	}
 #endif
@@ -668,6 +683,7 @@ trap(type, code, v, frame)
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;
@@ -839,6 +855,7 @@ child_return(p, frame)
 /*
  * Process a pending write back
  */
+int
 _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb;	/* writeback type: 1, 2, or 3 */
 	u_int wb_sts;	/* writeback status information */
@@ -848,7 +865,6 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;
-	void _wb_fault ();	/* fault handler for write back */
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -967,7 +983,8 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 /*
  * fault handler for write back
  */
-void _wb_fault()
+void
+_wb_fault()
 {
 #ifdef DEBUG
 	printf ("trap: writeback fault\n");
