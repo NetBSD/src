@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.35 2004/11/15 21:01:18 christos Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.36 2004/11/16 06:04:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.35 2004/11/15 21:01:18 christos Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.36 2004/11/16 06:04:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -258,11 +258,7 @@ doit(f, fromp)
 	int gaierror;
 	socklen_t fromlen = fromp->ss_len > sizeof(*fromp)
 	    ? sizeof(*fromp) : fromp->ss_len;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
-#endif
 
 	alarm(60);
 	read(f, &c, 1);
