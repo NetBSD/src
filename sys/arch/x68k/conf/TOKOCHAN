@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.28 2002/06/17 05:14:29 lukem Exp $
+#	$NetBSD: TOKOCHAN,v 1.29 2002/08/11 13:18:57 isaki Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"TOKOCHAN-$Revision: 1.28 $"
+#ident 		"TOKOCHAN-$Revision: 1.29 $"
 
 maxusers	10
 
@@ -112,8 +112,10 @@ makeoptions	COPTS="-O2 -pipe"	# pass -pipe option to CC
 ## on the system console
 #options 	DEBUG
 
-## Make SCSI error messages more verbose when explaining their meanings.
-options 	SCSIVERBOSE
+## These options enable verbose messages for several subsystems.
+## Warning, these may compile large string tables into the kernel!
+options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,
@@ -266,6 +268,112 @@ audio*	at vs?
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne0	at neptune? addr 0x300			# NE2000 or clone
+
+
+## MII/PHY support for USB ethernet
+#acphy*	at mii? phy ?
+
+## USB Controller and Devices; Experimental
+
+# Nereid USB controllers
+#slhci0	at intio0 addr 0xece380 intr 251
+#slhci1	at intio0 addr 0xeceb80 intr 250
+#options	SLHCI_DEBUG
+
+# USB bus support
+#usb*	at slhci?
+
+# USB Hubs
+#uhub*	at usb?
+#uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice; not supported wscons yet
+#ums*	at uhidev? reportid ?
+#wsmouse* at ums? mux 0
+
+# USB Keyboards; not supported wscons yet
+#ukbd*	at uhidev? reportid ?
+#wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+#uhid*	at uhidev? reportid ?
+
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
+
+# USB Mass Storage; wd not supported
+#umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
+#scsibus* at umass? channel ?
+#wd* at umass?
+
+# USB audio
+#uaudio*	at uhub? port ? configuration ?
+
+# USB MIDI
+#umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+#ustir* at uhub? port ?
+#irframe* at ustir?
+
+# USB Ethernet adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# Prolific PL2301/PL2302 host-to-host adapter
+#upl*	at uhub? port ?
+
+# Serial adapters
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+#ucom*	at uftdi? portno ?
+
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
+
+#uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
+
+#uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
+
+# Diamond Multimedia Rio 500
+#urio*	at uhub? port ?
+
+# USB Handspring Visor
+#uvisor*	at uhub? port ?
+#ucom*	at uvisor?
+
+# USB scanners
+#uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+#usscanner* at uhub? port ?
+#scsibus* at usscanner? channel ?
+
+# Y@P firmware loader
+#uyap* at uhub? port ?
+
+# D-Link DSB-R100 USB radio
+#udsbr*	at uhub? port ?
+#radio*	at udsbr?
+
+# USB Generic driver
+#ugen*	at uhub? port ?
 
 
 #### Pseudo devices
