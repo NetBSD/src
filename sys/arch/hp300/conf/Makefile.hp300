@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.53 1997/03/16 09:47:48 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ HP300=	$S/arch/hp300
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dhp300 -DFPCOPROC
-CWARNFLAGS=	-Werror
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
