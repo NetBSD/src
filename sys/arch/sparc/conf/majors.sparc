@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.13 2003/10/10 21:21:27 jdolecek Exp $
+#	$NetBSD: majors.sparc,v 1.14 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for sparc
 #
@@ -113,8 +113,6 @@ device-major	nsmb		char 134		nsmb
 device-major	sysmon		char 135		sysmon_envsys | sysmon_wdog | sysmon_power
 
 device-major	ksyms		char 136		ksyms
-device-major	pf		char 137		pf
-device-major	crypto		char 138		opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
