@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.271 2004/01/06 03:46:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.272 2004/01/06 07:25:40 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -146,9 +146,8 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
-.PHONY: 	MAKEDEV release-info
-CLEANFILES+=	MAKEDEV release-info
-
+.PHONY: 	MAKEDEV
+CLEANFILES+=	MAKEDEV
 MAKEDEV:
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
@@ -170,7 +169,9 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR USETOOLS
 
-release-info:
+.PHONY:		etc-release install-etc-release
+CLEANFILES+=	etc-release
+etc-release:
 	${_MKTARGET_CREATE}
 	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
 		echo "	$$(date -u)  $${USER-root}@$$(hostname)"; \
@@ -187,10 +188,10 @@ release-info:
 .endif
 .endfor
 
-install-release-info: release-info
-	${_MKMSG_INSTALL} etc/release-info
+install-etc-release: etc-release
+	${_MKMSG_INSTALL} etc/release
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    release-info ${DESTDIR}/etc/release
+	    etc-release ${DESTDIR}/etc/release
 
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
