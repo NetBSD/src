@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	7.2 (Berkeley) 4/20/91
- *	$Id: device_pager.c,v 1.2 1993/05/20 03:59:08 cgd Exp $
+ *	$Id: device_pager.c,v 1.3 1993/07/02 10:26:49 cgd Exp $
  */
 
 /*
@@ -218,7 +218,6 @@ dev_pager_dealloc(pager)
 		  devp->devp_npages * sizeof(struct vm_page));
 	free((caddr_t)devp, M_VMPGDATA);
 	free((caddr_t)pager, M_VMPAGER);
-	pager->pg_data = 0;
 }
 
 dev_pager_getpage(pager, m, sync)
