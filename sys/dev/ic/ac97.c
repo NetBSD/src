@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.28 2002/10/08 09:19:44 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.29 2002/10/08 12:33:34 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.28 2002/10/08 09:19:44 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.29 2002/10/08 12:33:34 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -968,6 +968,17 @@ ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate)
 	u_int16_t power_bit;
 
 	as = (struct ac97_softc *)codec_if;
+	if (target == AC97_REG_PCM_MIC_ADC_RATE) {
+		if (!(as->ext_id & AC97_EXT_AUDIO_VRM)) {
+			*rate = AC97_SINGLE_RATE;
+			return 0;
+		}
+	} else {
+		if (!(as->ext_id & AC97_EXT_AUDIO_VRA)) {
+			*rate = AC97_SINGLE_RATE;
+			return 0;
+		}
+	}
 	value = *rate * AC97_STANDARD_CLOCK / as->ac97_clock;
 	ext_stat = 0;
 	/*
