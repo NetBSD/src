@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.23 1997/03/17 22:16:03 gwr Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.24 1997/04/08 22:04:16 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,7 @@ CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 CWARNFLAGS=	-Werror
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
-AFLAGS= 	-m68030
+AFLAGS=
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-d
 
