@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
-#	$Id: Makefile,v 1.14 1994/06/11 07:54:01 mycroft Exp $
+#	$Id: Makefile,v 1.15 1994/12/22 10:45:16 cgd Exp $
 
 PROG=	init
-MAN8=	init.0
+MAN=	init.8
 DPADD=	${LIBUTIL} ${LIBCRYPT}
 LDADD=	-lutil -lcrypt
 BINMODE=500

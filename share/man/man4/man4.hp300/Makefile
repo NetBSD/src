@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 6/29/90
-#	$Id: Makefile,v 1.3 1993/07/31 15:28:58 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 10:48:48 cgd Exp $
 
-MAN4=	autoconf.0 cons.0 ct.0 dca.0 dcl.0 dcm.0 dv.0 gb.0 grf.0 hil.0 \
-	intro.0 ite.0 le.0 mem.0 ppi.0 rb.0 rd.0 rmp.0 tc.0
+MAN=	autoconf.4 cons.4 ct.4 dca.4 dcl.4 dcm.4 dv.4 gb.4 grf.4 hil.4 \
+	intro.4 ite.4 le.4 mem.4 ppi.4 rb.4 rd.4 rmp.4 tc.4
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=/hp300
 

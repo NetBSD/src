@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.5 1994/06/08 18:58:21 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 10:44:22 cgd Exp $
 
 PROG=	dumpfs
-MAN8=	dumpfs.0
+MAN=	dumpfs.8
 
 .include <bsd.prog.mk>

@@ -33,10 +33,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.4 1994/02/09 15:00:32 deraadt Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 10:45:33 cgd Exp $
 #
 
 PROG=	modload
-MAN8=	modload.0
+MAN=	modload.8
 
 .include <bsd.prog.mk>

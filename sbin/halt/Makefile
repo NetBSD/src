@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:37:47 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 10:44:51 cgd Exp $
 
 PROG=	halt
-MAN8=	halt.0
+MAN=	halt.8
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 

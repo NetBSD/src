@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 3/22/91
-#	$Id: Makefile,v 1.1 1994/06/16 18:50:17 deraadt Exp $
+#	$Id: Makefile,v 1.2 1994/12/22 10:50:58 cgd Exp $
 
-MAN8=	MAKEDEV.0
+MAN=	MAKEDEV.8
 MANSUBDIR=/sparc
 
 .include <bsd.prog.mk>

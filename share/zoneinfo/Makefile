@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.11 1994/02/10 04:42:42 cgd Exp $
+#	$Id: Makefile,v 1.12 1994/12/22 10:44:49 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -100,8 +100,7 @@ REDO=		posix_only
 .PATH:	${.CURDIR}/datfiles
 CFLAGS+=	-DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone
 PROG=	zic
-MAN5=	tzfile.0
-MAN8=	zic.0
+MAN=	tzfile.5 zic.8
 
 SRCS=	zic.c scheck.c ialloc.c
 

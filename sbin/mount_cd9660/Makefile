@@ -1,8 +1,9 @@
-#	@(#)Makefile	8.3 (Berkeley) 3/27/94
+#	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
+#	$Id: Makefile,v 1.2 1994/12/22 10:45:58 cgd Exp $
 
 PROG=	mount_cd9660
 SRCS=	mount_cd9660.c getmntopts.c
-MAN8=	mount_cd9660.0
+MAN=	mount_cd9660.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -I${MOUNT}

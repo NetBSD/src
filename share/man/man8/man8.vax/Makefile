@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 3/22/91
-#	$Id: Makefile,v 1.3 1993/07/31 15:27:53 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 10:51:04 cgd Exp $
 
-MAN8=	MAKEDEV.0 crash.0 drtest.0 format.0 installboot.0
+MAN=	MAKEDEV.8 crash.8 drtest.8 format.8 installboot.8
 MANSUBDIR=/vax
 
 .include <bsd.prog.mk>
