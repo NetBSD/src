@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.11.6.1 2002/04/25 04:07:11 nathanw Exp $	*/
+/*	$NetBSD: vis.h,v 1.11.6.2 2002/12/19 02:30:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _VIS_H_
 #define	_VIS_H_
+
+#include <sys/types.h>
 
 /*
  * to select alternate encoding format
