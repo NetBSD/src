@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.53 2000/03/23 06:48:17 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.54 2000/06/26 15:26:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_fcntl.h>
