@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: pcb.h 1.13 89/04/23
  *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.4 1994/05/04 03:47:26 mycroft Exp $
+ *	$Id: pcb.h,v 1.5 1994/05/21 09:16:34 cgd Exp $
  */
 
 #include <machine/frame.h>
@@ -64,3 +64,12 @@ struct pcb
 #define PCB_HPUXTRACE	0x0020	/* being traced by an HPUX process */
 #define PCB_HPUXBIN	0x0040	/* loaded from an HPUX format binary */
 				/* note: does NOT imply EMUL_HPUX */
+
+/*
+ * The pcb is augmented with machine-dependent additional data for
+ * core dumps. For the hp300, this includes an HP-UX exec header
+ * which is dumped for HP-UX processes.
+ */
+struct md_coredump {
+	int	md_exec[16];	/* exec structure for HP-UX core dumps */
+};
