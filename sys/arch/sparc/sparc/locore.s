@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.102 1998/10/14 14:47:20 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.103 1998/10/16 22:39:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4841,6 +4841,7 @@ Lsw_load:
 	/* p does have a context: just switch to it */
 Lsw_havectx:
 	! context is in %o0
+	! pmap is in %o3
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
 	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
 	ld	[%o1 + %lo(_cputyp)], %o1
@@ -4864,6 +4865,15 @@ Lsw_havectx:
 	mov	%o7, %g7	! save return address
 	jmpl	%o2, %o7	! this function must not clobber %o0 and %g7
 	 nop
+
+#if defined(MULTIPROCESSOR)
+	/* Fixup CPUINFO_VA region table entry */
+	sethi	%hi(CPUINFO_VA+CPUINFO_SEGPTD), %o2
+	ld	[%o2 + %lo(CPUINFO_VA+CPUINFO_SEGPTD)], %o2
+	ld	[%o3 + PMAP_REGPTPS], %o3	! load region table address
+	add	%o3, REGTAB_CPU_OFF, %o3	! goto CPUINFO_VA segment entry
+	st	%o2, [%o3]			! switch to this CPU's segment
+#endif
 
 	set	SRMMU_CXR, %o1
 	jmp	%g7 + 8
