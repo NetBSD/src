@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.71 1999/06/03 20:59:04 is Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.72 1999/06/03 21:15:49 is Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.71 1999/06/03 20:59:04 is Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.72 1999/06/03 21:15:49 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -1097,6 +1097,8 @@ makedisktab(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_BSDLFS:
+			case FS_ADOS:
 				(void) fprintf(f, "b%c#%d:", c,
 				    pp->p_fsize * pp->p_frag);
 				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
