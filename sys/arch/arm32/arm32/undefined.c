@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.19 2000/06/29 08:52:58 mrg Exp $	*/
+/*	$NetBSD: undefined.c,v 1.20 2000/07/27 10:12:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -284,7 +284,7 @@ resethandler(frame)
 	/* Extra info incase panic drops us into the debugger */
 	printf("Trap frame at %p\n", frame);
 #endif	/* DDB */
-	panic("Branch to never-never land (zero)..... were dead\n");
+	panic("Branch to never-never land (zero)..... we're dead\n");
 }
 
 /* End of undefined.c */
