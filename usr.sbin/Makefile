@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.103 1999/02/13 02:54:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.104 1999/03/25 19:27:09 perry Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
 
-# XXX Temporary for NO_SENDMAIL and USE_BIND4
+# XXX Temporary for NO_SENDMAIL
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
+SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp \
 	chown chroot chrtbl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
@@ -25,12 +25,6 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
 
 .if !defined(NO_SENDMAIL)
 SUBDIR+=	sendmail
-.endif
-
-.ifdef USE_BIND4
-SUBDIR+=	named
-.else
-SUBDIR+=	bind
 .endif
 
 .include <bsd.subdir.mk>
