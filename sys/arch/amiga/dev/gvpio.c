@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.6.8.3 2002/10/18 02:34:56 nathanw Exp $ */
+/*	$NetBSD: gvpio.c,v 1.6.8.4 2003/01/03 16:38:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.3 2002/10/18 02:34:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.4 2003/01/03 16:38:46 thorpej Exp $");
 
 /*
  * GVP I/O Extender
@@ -164,7 +164,7 @@ gvpioprint(void *auxp, const char *pnp)
 	if (pnp == NULL)
 		return(QUIET);
 
-	printf("%s at %s port 0x%02x ipl %d",
+	aprint_normal("%s at %s port 0x%02x ipl %d",
 	    supa->supio_name, pnp, supa->supio_iobase, supa->supio_ipl);
 
 	return(UNCONF);

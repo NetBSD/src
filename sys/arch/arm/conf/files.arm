@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.40.2.10 2002/11/11 21:56:37 nathanw Exp $
+#	$NetBSD: files.arm,v 1.40.2.11 2003/01/03 16:41:08 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -12,6 +12,8 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
 
+# Interrupt implementation header definition.
+defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # Floating point emulator
 defflag				ARMFPE

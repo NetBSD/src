@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.3.8.4 2002/10/18 02:34:59 nathanw Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.3.8.5 2003/01/03 16:38:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.4 2002/10/18 02:34:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.5 2003/01/03 16:38:46 thorpej Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -156,7 +156,7 @@ iobzprint(void *auxp, const char *pnp)
 	if (pnp == NULL)
 		return(QUIET);
 
-	printf("%s at %s port 0x%02x",
+	aprint_normal("%s at %s port 0x%02x",
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);

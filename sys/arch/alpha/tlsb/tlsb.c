@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.22.2.2 2002/10/18 02:34:34 nathanw Exp $ */
+/* $NetBSD: tlsb.c,v 1.22.2.3 2003/01/03 16:38:42 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.22.2.2 2002/10/18 02:34:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.22.2.3 2003/01/03 16:38:42 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -93,10 +93,10 @@ tlsbprint(aux, pnp)
 	struct tlsb_dev_attach_args *tap = aux;
 
 	if (pnp)
-		printf("%s at %s node %d", tlsb_node_type_str(tap->ta_dtype),
-		    pnp, tap->ta_node);
+		aprint_normal("%s at %s node %d",
+		    tlsb_node_type_str(tap->ta_dtype), pnp, tap->ta_node);
 	else
-		printf(" node %d: %s", tap->ta_node,
+		aprint_normal(" node %d: %s", tap->ta_node,
 		    tlsb_node_type_str(tap->ta_dtype));
 
 	return (UNCONF);

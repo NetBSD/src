@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.1.2.2 2002/12/11 05:53:14 thorpej Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.1.2.3 2003/01/03 16:41:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -46,7 +46,6 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 /*
  * interrupt dispatch table.
@@ -62,8 +61,6 @@ __volatile int intr_mask;
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];
 int s3c2xx0_ilevel[ICU_LEN];
-
-int current_intr_depth;
 
 vaddr_t intctl_base;		/* interrupt controller registers */
 #define icreg(offset) \
@@ -89,7 +86,6 @@ s3c2800_irq_handler(struct clockframe *frame)
 	int irqno;
 	int saved_spl_level;
 
-	++current_intr_depth;
 	saved_spl_level = current_spl_level;
 
 	/* get pending IRQs */
@@ -122,8 +118,6 @@ s3c2800_irq_handler(struct clockframe *frame)
 
 	if (softint_pending & intr_mask)
 		s3c2xx0_do_pending();
-
-	--current_intr_depth;
 }
 
 

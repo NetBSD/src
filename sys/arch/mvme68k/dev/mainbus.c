@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11.6.3 2002/10/18 02:38:57 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.6.4 2003/01/03 16:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -255,9 +255,9 @@ mainbus_print(aux, cp)
 	ma = aux;
 
 	if (cp)
-		printf("%s at %s", ma->ma_name, cp);
+		aprint_normal("%s at %s", ma->ma_name, cp);
 
-	printf(" address 0x%lx", ma->ma_offset);
+	aprint_normal(" address 0x%lx", ma->ma_offset);
 
 	return (UNCONF);
 }

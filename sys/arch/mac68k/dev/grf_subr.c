@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.15 2000/02/14 07:01:46 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.15.12.1 2003/01/03 16:48:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ grfbusprint(aux, name)
 	struct grfbus_attach_args *ga = aux;
 
 	if (name)
-		printf("%s at %s", ga->ga_name, name);
+		aprint_normal("%s at %s", ga->ga_name, name);
 
 	return (UNCONF);
 }

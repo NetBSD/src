@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.1.2.2 2002/12/11 05:53:14 thorpej Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.1.2.3 2003/01/03 16:41:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -47,7 +47,6 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
 
 
 #ifndef PCLK

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.5.2.3 2002/12/11 06:00:57 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.5.2.4 2003/01/03 16:48:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ mp_print(aux, pnp)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (pnp)
-		printf("%s at %s:",caa->caa_name, pnp);
+		aprint_normal("%s at %s:",caa->caa_name, pnp);
 	return (UNCONF);
 }
 

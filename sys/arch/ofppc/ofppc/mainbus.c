@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7.4.2 2002/10/18 02:39:20 nathanw Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.7.4.3 2003/01/03 16:48:34 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -163,8 +163,8 @@ mainbus_print(void *aux, const char *pnp)
 	struct ofbus_attach_args *oba = aux;
 
 	if (pnp)
-		printf("%s at %s", oba->oba_ofname, pnp);
+		aprint_normal("%s at %s", oba->oba_ofname, pnp);
 	else
-		printf(" (%s)", oba->oba_ofname);
+		aprint_normal(" (%s)", oba->oba_ofname);
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.2.6.1 2002/01/08 00:25:43 nathanw Exp $	*/
+/*	$NetBSD: piix.c,v 1.2.6.2 2003/01/03 16:48:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.2.6.1 2002/01/08 00:25:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.2.6.2 2003/01/03 16:48:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,16 @@ piix_getclink(v, link, clinkp)
 	if (link >= 0x60 && link <= 0x63) {
 		*clinkp = link - 0x60;
 		DPRINTF(("PIRQ %d (register offset)\n", *clinkp));
+		return (0);
+	}
+
+	/* 
+	 * XXX Pattern 3: configuration register offset 1
+	 *  Some BIOS return 0x68, 0x69
+	 */
+	if (link >= 0x68 && link <= 0x69) {
+		*clinkp = link - 0x67;
+		DPRINTF(("PIRQ %d (register offset 1)\n", *clinkp));
 		return (0);
 	}
 

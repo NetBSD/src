@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2.10.1 2002/10/18 02:38:54 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.2.10.2 2003/01/03 16:48:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ obio_print(args, name)
 		return(QUIET);
 
 	if (ca->ca_addr != -1)
-		printf(" addr 0x%x", ca->ca_addr);
+		aprint_normal(" addr 0x%x", ca->ca_addr);
 
 	return(UNCONF);
 }

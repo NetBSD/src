@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.12.26.4 2002/10/18 02:34:54 nathanw Exp $ */
+/*	$NetBSD: grf_et.c,v 1.12.26.5 2003/01/03 16:38:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.12.26.4 2002/10/18 02:34:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.12.26.5 2003/01/03 16:38:45 thorpej Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -368,7 +368,7 @@ int
 grfetprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("ite at %s: ", pnp);
+		aprint_normal("ite at %s: ", pnp);
 	return (UNCONF);
 }
 

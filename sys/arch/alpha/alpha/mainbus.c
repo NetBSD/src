@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.27.26.2 2002/10/18 02:34:03 nathanw Exp $ */
+/* $NetBSD: mainbus.c,v 1.27.26.3 2003/01/03 16:38:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.26.2 2002/10/18 02:34:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.26.3 2003/01/03 16:38:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ mbprint(aux, pnp)
 	struct mainbus_attach_args *ma = aux;
 
 	if (pnp)
-		printf("%s at %s", ma->ma_name, pnp);
+		aprint_normal("%s at %s", ma->ma_name, pnp);
 
 	return (UNCONF);
 }

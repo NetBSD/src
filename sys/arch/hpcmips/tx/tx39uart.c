@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.4.10.2 2002/10/18 02:37:14 nathanw Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.4.10.3 2003/01/03 16:45:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ tx39uart_print(void *aux, const char *pnp)
 {
 	struct tx39uart_attach_args *ua = aux;
 	
-	printf(" slot %d", ua->ua_slot);
+	aprint_normal(" slot %d", ua->ua_slot);
 
 	return QUIET;
 }

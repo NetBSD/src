@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2.4.4 2002/10/18 02:36:32 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.2.4.5 2003/01/03 16:43:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -129,9 +129,9 @@ obio_print(void *aux, const char *pnp)
 {
 	struct obio_attach_args *oba = aux;
 
-	printf(" addr 0x%08lx", oba->oba_addr);
+	aprint_normal(" addr 0x%08lx", oba->oba_addr);
 	if (oba->oba_irq != -1)
-		printf(" xint3 %d", IRQ_XINT3(oba->oba_irq));
+		aprint_normal(" xint3 %d", IRQ_XINT3(oba->oba_irq));
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.12.2 2002/10/18 02:36:39 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.12.3 2003/01/03 16:45:06 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -184,9 +184,9 @@ mainbus_print(void *aux, const char *pnp)
 		return QUIET;
 
 	if (pnp)
-		printf("%s at %s", ma->ma_name, pnp);
+		aprint_normal("%s at %s", ma->ma_name, pnp);
 	if (ma->ma_addr != MAINBUSCF_ADDR_DEFAULT)
-		printf(" addr 0x%lx", ma->ma_addr);
+		aprint_normal(" addr 0x%lx", ma->ma_addr);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.27.26.4 2002/10/18 02:34:53 nathanw Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.27.26.5 2003/01/03 16:38:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.26.4 2002/10/18 02:34:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.27.26.5 2003/01/03 16:38:44 thorpej Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -494,7 +494,7 @@ int
 grfcvprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("ite at %s: ", pnp);
+		aprint_normal("ite at %s: ", pnp);
 	return (UNCONF);
 }
 

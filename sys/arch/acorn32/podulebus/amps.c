@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.1.4.4 2002/10/18 02:33:41 nathanw Exp $	*/
+/*	$NetBSD: amps.c,v 1.1.4.5 2003/01/03 16:38:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ amps_print(aux, name)
 	struct amps_attach_args *aa = aux;
 
 	if (!name)
-		printf(", port %d", aa->aa_port);
+		aprint_normal(", port %d", aa->aa_port);
 
 	return(QUIET);
 }

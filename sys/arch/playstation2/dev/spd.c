@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.1.4.2 2002/10/18 02:39:23 nathanw Exp $	*/
+/*	$NetBSD: spd.c,v 1.1.4.3 2003/01/03 16:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ spd_print(void *aux, const char *pnp)
 	struct spd_attach_args *spa = aux;
 
 	if (pnp)
-		printf("%s at %s", __spd_table[spa->spa_slot].name, pnp);
+		aprint_normal("%s at %s", __spd_table[spa->spa_slot].name, pnp);
 
 	return (UNCONF);
 }

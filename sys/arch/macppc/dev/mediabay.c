@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.4.6.2 2002/10/18 02:38:35 nathanw Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.4.6.3 2003/01/03 16:48:25 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -186,7 +186,7 @@ mediabay_print(aux, mediabay)
 	struct confargs *ca = aux;
 
 	if (mediabay == NULL && ca->ca_nreg > 0)
-		printf(" offset 0x%x", ca->ca_reg[0]);
+		aprint_normal(" offset 0x%x", ca->ca_reg[0]);
 
 	return QUIET;
 }

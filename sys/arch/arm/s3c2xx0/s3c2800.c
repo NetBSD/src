@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.1.2.2 2002/12/11 05:53:13 thorpej Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.1.2.3 2003/01/03 16:41:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -68,13 +68,13 @@ s3c2800_print(void *aux, const char *name)
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *) aux;
 
 	if (sa->sa_size)
-		printf(" addr 0x%lx", sa->sa_addr);
+		aprint_normal(" addr 0x%lx", sa->sa_addr);
 	if (sa->sa_size > 1)
-		printf("-0x%lx", sa->sa_addr + sa->sa_size - 1);
+		aprint_normal("-0x%lx", sa->sa_addr + sa->sa_size - 1);
 	if (sa->sa_intr != SSIOCF_INTR_DEFAULT)
-		printf(" intr %d", sa->sa_intr);
+		aprint_normal(" intr %d", sa->sa_intr);
 	if (sa->sa_index != SSIOCF_INDEX_DEFAULT)
-		printf(" unit %d", sa->sa_index);
+		aprint_normal(" unit %d", sa->sa_index);
 
 	return (UNCONF);
 }

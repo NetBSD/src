@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.13.2.2 2002/10/18 02:33:32 nathanw Exp $	*/
+/*	$NetBSD: hydra.c,v 1.13.2.3 2003/01/03 16:38:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.13.2.2 2002/10/18 02:33:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.13.2.3 2003/01/03 16:38:37 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -239,8 +239,8 @@ hydra_print(void *aux, char const *pnp)
 	struct hydra_attach_args *ha = aux;
 
 	if (pnp)
-		printf("cpu at %s", pnp);
-	printf(" slave %d", ha->ha_slave);
+		aprint_normal("cpu at %s", pnp);
+	aprint_normal(" slave %d", ha->ha_slave);
 	return UNCONF;
 }
 

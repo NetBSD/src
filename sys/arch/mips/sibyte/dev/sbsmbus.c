@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.1.6.3 2002/12/11 06:11:16 thorpej Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.1.6.4 2003/01/03 16:48:27 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -105,8 +105,8 @@ smbus_print(void *aux, const char *pnp)
 	struct smbus_attach_args *sa = aux;
 
 	if (pnp)
-		printf("rtc0 at %s", pnp);	/* XXX! */
-	printf(" device 0x%x", sa->sa_device);
+		aprint_normal("rtc0 at %s", pnp);	/* XXX! */
+	aprint_normal(" device 0x%x", sa->sa_device);
 
 	return (UNCONF);
 }

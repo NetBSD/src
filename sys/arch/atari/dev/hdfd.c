@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28.8.6 2002/11/11 21:57:17 nathanw Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28.8.7 2003/01/03 16:41:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -361,7 +361,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		aprint_normal(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 

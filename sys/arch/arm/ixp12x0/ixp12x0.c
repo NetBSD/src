@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.2.2.3 2002/12/11 05:53:09 thorpej Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.2.2.4 2003/01/03 16:41:09 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -176,9 +176,9 @@ ixp12x0_pcibus_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 
-	printf(" bus %d", pba->pba_bus);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }

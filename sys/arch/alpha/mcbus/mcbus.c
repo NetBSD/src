@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.8.4.2 2002/10/18 02:34:17 nathanw Exp $ */
+/* $NetBSD: mcbus.c,v 1.8.4.3 2003/01/03 16:38:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.8.4.2 2002/10/18 02:34:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.8.4.3 2003/01/03 16:38:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,8 @@ mcbusprint(aux, cp)
 	const char *cp;
 {
 	struct mcbus_dev_attach_args *tap = aux;
-	printf(" mid %d: %s", tap->ma_mid, mcbus_node_type_str(tap->ma_type));
+	aprint_normal(" mid %d: %s", tap->ma_mid,
+	    mcbus_node_type_str(tap->ma_type));
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.3.2.4 2002/10/18 02:34:20 nathanw Exp $ */
+/* $NetBSD: irongate.c,v 1.3.2.5 2003/01/03 16:38:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.2.4 2002/10/18 02:34:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.2.5 2003/01/03 16:38:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,9 +219,9 @@ irongate_print(void *aux, const char *pnp)
 
 	/* Only PCIs can attach to Irongates; easy. */
 	if (pnp != NULL)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 	if (strcmp(pba->pba_busname, "pci") == 0)
-		printf(" bus %d", pba->pba_bus);
+		aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.1.4.1 2002/10/18 02:34:28 nathanw Exp $ */
+/* $NetBSD: sableio.c,v 1.1.4.2 2003/01/03 16:38:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.1.4.1 2002/10/18 02:34:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.1.4.2 2003/01/03 16:38:41 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -197,9 +197,9 @@ sableio_print(void *aux, const char *pnp)
 	struct sableio_attach_args *sa = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", sa->sa_name, pnp);
+		aprint_normal("%s at %s", sa->sa_name, pnp);
 
-	printf(" port 0x%lx", sa->sa_ioaddr);
+	aprint_normal(" port 0x%lx", sa->sa_ioaddr);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9.8.2 2002/10/18 02:33:52 nathanw Exp $	*/
+/*	$NetBSD: pcib.c,v 1.9.8.3 2003/01/03 16:38:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9.8.2 2002/10/18 02:33:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9.8.3 2003/01/03 16:38:39 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -336,7 +336,7 @@ pcib_print(void *aux, const char *pnp)
 	struct isabus_attach_args *iba;
 
 	if (pnp)
-		printf("%s at %s", iba->iba_busname, pnp);
+		aprint_normal("%s at %s", iba->iba_busname, pnp);
 	return (UNCONF);
 }
 

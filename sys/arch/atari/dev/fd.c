@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.6.5 2002/11/11 21:57:16 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.6.6 2003/01/03 16:41:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -350,7 +350,7 @@ void	*auxp;
 const char	*pnp;
 {
 	if (pnp != NULL)
-		printf("fd%d at %s:", (int)auxp, pnp);
+		aprint_normal("fd%d at %s:", (int)auxp, pnp);
 	
 	return(UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.5.8.3 2002/10/18 02:33:51 nathanw Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.5.8.4 2003/01/03 16:38:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -144,8 +144,8 @@ vtpbc_mainbus_print(void *aux, const char *pnp)
 
 	/* only PCIs can attach to VTPBCs; easy. */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }

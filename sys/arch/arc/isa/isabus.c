@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.15.8.2 2002/04/01 07:39:05 nathanw Exp $	*/
+/*	$NetBSD: isabus.c,v 1.15.8.3 2003/01/03 16:38:46 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -173,8 +173,8 @@ isabrprint(aux, pnp)
 	struct confargs *ca = aux;
 
         if (pnp)
-                printf("%s at %s", ca->ca_name, pnp);
-        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx",
+                aprint_normal("%s at %s", ca->ca_name, pnp);
+        aprint_verbose(" isa_io_base 0x%lx isa_mem_base 0x%lx",
 		arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
         return (UNCONF);
 }

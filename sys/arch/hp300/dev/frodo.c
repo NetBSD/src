@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.5.20.3 2002/10/18 02:36:45 nathanw Exp $	*/
+/*	$NetBSD: frodo.c,v 1.5.20.4 2003/01/03 16:45:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.5.20.3 2002/10/18 02:36:45 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.5.20.4 2003/01/03 16:45:07 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -228,8 +228,8 @@ frodoprint(aux, pnp)
 	struct frodo_attach_args *fa = aux;
 
 	if (pnp)
-		printf("%s at %s", fa->fa_name, pnp);
-	printf(" offset 0x%x", fa->fa_offset);
+		aprint_normal("%s at %s", fa->fa_name, pnp);
+	aprint_normal(" offset 0x%x", fa->fa_offset);
 	return (UNCONF);
 }
 

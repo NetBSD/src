@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.8.3 2002/10/18 02:36:13 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.8.4 2003/01/03 16:41:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -187,10 +187,10 @@ zsc_print(aux, name)
 	struct zsc_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		aprint_normal(" channel %d", args->channel);
 
 	return UNCONF;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.20.6.2 2002/10/18 02:38:57 nathanw Exp $	*/
+/*	$NetBSD: pcc.c,v 1.20.6.3 2003/01/03 16:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -244,11 +244,11 @@ pccprint(aux, cp)
 	pa = aux;
 
 	if (cp)
-		printf("%s at %s", pa->pa_name, cp);
+		aprint_normal("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
+	aprint_normal(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
 	if (pa->pa_ipl != -1)
-		printf(" ipl %d", pa->pa_ipl);
+		aprint_normal(" ipl %d", pa->pa_ipl);
 
 	return (UNCONF);
 }

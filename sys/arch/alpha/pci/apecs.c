@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.38.2.2 2002/10/18 02:34:18 nathanw Exp $ */
+/* $NetBSD: apecs.c,v 1.38.2.3 2003/01/03 16:38:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.38.2.2 2002/10/18 02:34:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.38.2.3 2003/01/03 16:38:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,8 @@ apecsprint(aux, pnp)
 
 	/* only PCIs can attach to APECSes; easy. */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 

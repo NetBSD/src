@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.3.4.3 2002/10/18 02:38:40 nathanw Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.3.4.4 2003/01/03 16:48:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -150,8 +150,8 @@ uninorth_print(aux, pnp)
 	struct pcibus_attach_args *pa = aux;
 
 	if (pnp)
-		printf("%s at %s", pa->pba_busname, pnp);
-	printf(" bus %d", pa->pba_bus);
+		aprint_normal("%s at %s", pa->pba_busname, pnp);
+	aprint_normal(" bus %d", pa->pba_bus);
 	return UNCONF;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.5.26.2 2002/10/18 02:38:05 nathanw Exp $	*/
+/*	$NetBSD: pceb.c,v 1.5.26.3 2003/01/03 16:48:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.5.26.2 2002/10/18 02:38:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.5.26.3 2003/01/03 16:48:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,6 +155,6 @@ pceb_print(aux, pnp)
 	union pceb_attach_args *ea = aux;
 
 	if (pnp)
-		printf("%s at %s", ea->ea_name, pnp);
+		aprint_normal("%s at %s", ea->ea_name, pnp);
 	return (UNCONF);
 }

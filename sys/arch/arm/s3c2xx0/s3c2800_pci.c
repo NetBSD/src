@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.1.2.2 2002/12/11 05:53:14 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.1.2.3 2003/01/03 16:41:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -224,9 +224,9 @@ sspci_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pci_pba = (struct pcibus_attach_args *) aux;
 
 	if (pnp)
-		printf("%s at %s", pci_pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pci_pba->pba_busname, pnp);
 	if (strcmp(pci_pba->pba_busname, "pci") == 0)
-		printf(" bus %d", pci_pba->pba_bus);
+		aprint_normal(" bus %d", pci_pba->pba_bus);
 
 	return UNCONF;
 }

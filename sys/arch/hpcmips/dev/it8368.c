@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.10.4.5 2002/10/18 02:37:05 nathanw Exp $ */
+/*	$NetBSD: it8368.c,v 1.10.4.6 2003/01/03 16:45:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -371,7 +371,7 @@ int
 it8368_print(void *arg, const char *pnp)
 {
 	if (pnp)
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 
 	return (UNCONF);
 }

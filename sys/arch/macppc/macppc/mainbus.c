@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.6.2 2002/10/18 02:38:38 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.6.3 2003/01/03 16:48:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -109,7 +109,7 @@ mainbus_print(aux, pnp)
 	struct pcibus_attach_args *pa= aux;
 
 	if (pnp)
-		printf("%s at %s", pa->pba_busname, pnp);
-	printf(" bus %d", pa->pba_bus);
+		aprint_normal("%s at %s", pa->pba_busname, pnp);
+	aprint_normal(" bus %d", pa->pba_bus);
 	return UNCONF;
 }

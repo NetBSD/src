@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.4.2.13 2002/12/29 19:15:01 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4.2.14 2003/01/03 16:38:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.13 2002/12/29 19:15:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.14 2003/01/03 16:38:37 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -510,7 +510,7 @@ initarm(void *cookie)
 	printf("Allocating page tables\n");
 #endif
 	/*
-	 * Set up the variables that define the availablilty of physcial
+	 * Set up the variables that define the availablilty of physical
 	 * memory
 	 */
 	physical_start = 0xffffffff;
@@ -566,6 +566,7 @@ initarm(void *cookie)
 	kerneldatasize = bootconfig.kernsize + bootconfig.MDFsize;
 
 	/* Update the address of the first free page of physical memory */
+	/* XXX Assumption that the kernel and stuff is at the LOWEST physical memory address? XXX */
 	physical_freestart +=
 	    bootconfig.kernsize + bootconfig.MDFsize + bootconfig.scratchsize;
 	free_pages -= (physical_freestart - physical_start) / NBPG;
@@ -684,7 +685,7 @@ initarm(void *cookie)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel code/data */
-
+	/* XXX Kernel doesn't have to be on physical_start (!) use bootconfig XXX */
 	/*
 	 * The defines are a workaround for a recent problem that occurred
 	 * with ARM 610 processors and some ARM 710 processors

@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_intr.c,v 1.1.2.2 2002/11/11 21:56:57 nathanw Exp $ */
+/* $NetBSD: pxa2x0_intr.c,v 1.1.2.3 2003/01/03 16:41:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -79,8 +79,6 @@ __volatile int intr_mask;
 int pxa2x0_imask[NIPL];
 static int extirq_level[ICU_LEN];
 
-int current_intr_depth;
-
 static __inline void
 __raise(int ipl)
 {
@@ -110,7 +108,6 @@ pxa2x0_irq_handler(struct clockframe *frame)
 	int irqno;
 	int saved_spl_level;
 
-	++current_intr_depth;
 	saved_spl_level = current_spl_level;
 
 	/* get pending IRQs */
@@ -147,8 +144,6 @@ pxa2x0_irq_handler(struct clockframe *frame)
 			
 	if( softint_pending & intr_mask )
 		pxa2x0_do_pending();
-
-	--current_intr_depth;
 }
 
 static int

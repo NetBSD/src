@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.9.6.3 2002/10/18 02:35:18 nathanw Exp $	*/
+/*	$NetBSD: necpb.c,v 1.9.6.4 2003/01/03 16:38:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -256,8 +256,8 @@ necpbprint(aux, pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 
