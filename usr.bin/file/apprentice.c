@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.17 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.18 1999/12/31 13:07:59 tron Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -39,7 +39,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.28 1998/09/12 13:17:52 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.17 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.18 1999/12/31 13:07:59 tron Exp $");
 #endif
 #endif	/* lint */
 
@@ -188,9 +188,10 @@ int *ndx, check;
 	int i = 0, nd = *ndx;
 	struct magic *m;
 	char *t, *s;
+	struct magic *newmagic;
 
 	if (nd+1 >= maxmagic){
-	    if ((magic = (struct magic *) realloc(magic, 
+	    if ((newmagic = (struct magic *) realloc(magic, 
 						  sizeof(struct magic) * 
 						  maxmagic * 2)) == NULL) {
 		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
@@ -199,6 +200,7 @@ int *ndx, check;
 		else
 			exit(1);
 	    }
+	    magic = newmagic;
 	    memset(&magic[maxmagic], 0, sizeof(struct magic) * maxmagic);
 	    maxmagic *= 2;
 	}
