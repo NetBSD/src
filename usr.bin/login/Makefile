@@ -2,9 +2,12 @@
 
 PROG=	login
 SRCS=	login.c
-CFLAGS+=-DDES
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
+.ifndef EXPORTABLE_SYSTEM
+DPADD+=	${LIBCRYPT}
+LDADD+= -lcrypt
+.endif
 BINOWN=	root
 BINMODE=4555
 
