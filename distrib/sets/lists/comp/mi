@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.267 2000/10/20 05:53:26 simonb Exp $
+#	$NetBSD: mi,v 1.268 2000/10/31 10:46:35 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -575,6 +575,7 @@
 ./usr/include/kvm.h		comp-c-include
 ./usr/include/langinfo.h		comp-c-include
 ./usr/include/libgen.h		comp-c-include
+./usr/include/libintl.h		comp-c-include
 ./usr/include/limits.h		comp-c-include
 ./usr/include/link.h		comp-c-include
 ./usr/include/link_aout.h		comp-c-include
@@ -1771,8 +1772,10 @@
 ./usr/share/man/cat3/basename.0	comp-c-catman
 ./usr/share/man/cat3/bcmp.0	comp-c-catman
 ./usr/share/man/cat3/bcopy.0	comp-c-catman
+./usr/share/man/cat3/bind_textdomain_codeset.0	comp-c-catman
 ./usr/share/man/cat3/bindresvport.0	comp-c-catman
 ./usr/share/man/cat3/bindresvport_sa.0	comp-c-catman
+./usr/share/man/cat3/bindtextdomain.0	comp-c-catman
 ./usr/share/man/cat3/bitstring.0	comp-c-catman
 ./usr/share/man/cat3/blowfish.0		comp-c-catman
 ./usr/share/man/cat3/bm.0	comp-c-catman
@@ -1813,6 +1816,7 @@
 ./usr/share/man/cat3/cgetent.0	comp-c-catman
 ./usr/share/man/cat3/cgetfirst.0	comp-c-catman
 ./usr/share/man/cat3/cgetmatch.0	comp-c-catman
+./usr/share/man/cat3/cgetnext.0		comp-c-catman
 ./usr/share/man/cat3/cgetnext.0	comp-c-catman
 ./usr/share/man/cat3/cgetnum.0	comp-c-catman
 ./usr/share/man/cat3/cgetset.0	comp-c-catman
@@ -1880,8 +1884,11 @@
 ./usr/share/man/cat3/daemon.0	comp-c-catman
 ./usr/share/man/cat3/db.0	comp-c-catman
 ./usr/share/man/cat3/dbopen.0	comp-c-catman
+./usr/share/man/cat3/dcgettext.0	comp-c-catman
+./usr/share/man/cat3/dcngettext.0	comp-c-catman
 ./usr/share/man/cat3/des.0		comp-c-catman
 ./usr/share/man/cat3/devname.0	comp-c-catman
+./usr/share/man/cat3/dgettext.0		comp-c-catman
 ./usr/share/man/cat3/dh.0		comp-c-catman
 ./usr/share/man/cat3/difftime.0	comp-c-catman
 ./usr/share/man/cat3/directory.0	comp-c-catman
@@ -1897,6 +1904,7 @@
 ./usr/share/man/cat3/dlsym.0	comp-c-catman
 ./usr/share/man/cat3/dn_comp.0	comp-c-catman
 ./usr/share/man/cat3/dn_expand.0	comp-c-catman
+./usr/share/man/cat3/dngettext.0	comp-c-catman
 ./usr/share/man/cat3/drand48.0	comp-c-catman
 ./usr/share/man/cat3/dsa.0		comp-c-catman
 ./usr/share/man/cat3/edata.0	comp-c-catman
@@ -2078,6 +2086,7 @@
 ./usr/share/man/cat3/getservbyport.0	comp-c-catman
 ./usr/share/man/cat3/getservent.0	comp-c-catman
 ./usr/share/man/cat3/getsubopt.0	comp-c-catman
+./usr/share/man/cat3/gettext.0		comp-c-catman
 ./usr/share/man/cat3/getttyent.0	comp-c-catman
 ./usr/share/man/cat3/getttynam.0	comp-c-catman
 ./usr/share/man/cat3/getusershell.0	comp-c-catman
@@ -2342,6 +2351,7 @@
 ./usr/share/man/cat3/network.0	comp-c-catman
 ./usr/share/man/cat3/nextafter.0	comp-c-catman
 ./usr/share/man/cat3/nextafterf.0	comp-c-catman
+./usr/share/man/cat3/ngettext.0		comp-c-catman
 ./usr/share/man/cat3/nice.0	comp-c-catman
 ./usr/share/man/cat3/nl_langinfo.0	comp-c-catman
 ./usr/share/man/cat3/nlist.0	comp-c-catman
@@ -2686,6 +2696,7 @@
 ./usr/share/man/cat3/telldir.0	comp-c-catman
 ./usr/share/man/cat3/tempnam.0	comp-c-catman
 ./usr/share/man/cat3/termcap.0	comp-c-catman
+./usr/share/man/cat3/textdomain.0	comp-c-catman
 ./usr/share/man/cat3/tfind.0	comp-c-catman
 ./usr/share/man/cat3/tgetent.0	comp-c-catman
 ./usr/share/man/cat3/tgetflag.0	comp-c-catman
@@ -3527,8 +3538,10 @@
 ./usr/share/man/man3/basename.3		comp-c-man
 ./usr/share/man/man3/bcmp.3		comp-c-man
 ./usr/share/man/man3/bcopy.3		comp-c-man
+./usr/share/man/man3/bind_textdomain_codeset.3	comp-c-man
 ./usr/share/man/man3/bindresvport.3		comp-c-man
 ./usr/share/man/man3/bindresvport_sa.3		comp-c-man
+./usr/share/man/man3/bindtextdomain.3	comp-c-man
 ./usr/share/man/man3/bitstring.3		comp-c-man
 ./usr/share/man/man3/blowfish.3		comp-c-man
 ./usr/share/man/man3/bm.3		comp-c-man
@@ -3636,8 +3649,11 @@
 ./usr/share/man/man3/daemon.3		comp-c-man
 ./usr/share/man/man3/db.3		comp-c-man
 ./usr/share/man/man3/dbopen.3		comp-c-man
+./usr/share/man/man3/dcgettext.3	comp-c-man
+./usr/share/man/man3/dcngettext.3	comp-c-man
 ./usr/share/man/man3/des.3		comp-c-man
 ./usr/share/man/man3/devname.3		comp-c-man
+./usr/share/man/man3/dgettext.3		comp-c-man
 ./usr/share/man/man3/dh.3		comp-c-man
 ./usr/share/man/man3/difftime.3		comp-c-man
 ./usr/share/man/man3/directory.3		comp-c-man
@@ -3653,6 +3669,7 @@
 ./usr/share/man/man3/dlsym.3		comp-c-man
 ./usr/share/man/man3/dn_comp.3		comp-c-man
 ./usr/share/man/man3/dn_expand.3		comp-c-man
+./usr/share/man/man3/dngettext.3	comp-c-man
 ./usr/share/man/man3/drand48.3		comp-c-man
 ./usr/share/man/man3/dsa.3		comp-c-man
 ./usr/share/man/man3/edata.3		comp-c-man
@@ -3834,6 +3851,7 @@
 ./usr/share/man/man3/getservbyport.3		comp-c-man
 ./usr/share/man/man3/getservent.3		comp-c-man
 ./usr/share/man/man3/getsubopt.3		comp-c-man
+./usr/share/man/man3/gettext.3		comp-c-man
 ./usr/share/man/man3/getttyent.3		comp-c-man
 ./usr/share/man/man3/getttynam.3		comp-c-man
 ./usr/share/man/man3/getusershell.3		comp-c-man
@@ -4098,6 +4116,7 @@
 ./usr/share/man/man3/network.3		comp-c-man
 ./usr/share/man/man3/nextafter.3		comp-c-man
 ./usr/share/man/man3/nextafterf.3		comp-c-man
+./usr/share/man/man3/ngettext.3		comp-c-man
 ./usr/share/man/man3/nice.3		comp-c-man
 ./usr/share/man/man3/nl_langinfo.3		comp-c-man
 ./usr/share/man/man3/nlist.3		comp-c-man
@@ -4442,6 +4461,7 @@
 ./usr/share/man/man3/telldir.3		comp-c-man
 ./usr/share/man/man3/tempnam.3		comp-c-man
 ./usr/share/man/man3/termcap.3		comp-c-man
+./usr/share/man/man3/textdomain.3	comp-c-man
 ./usr/share/man/man3/tfind.3		comp-c-man
 ./usr/share/man/man3/tgetent.3		comp-c-man
 ./usr/share/man/man3/tgetflag.3		comp-c-man
