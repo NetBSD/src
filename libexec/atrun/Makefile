@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1996/08/30 20:24:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/07 10:50:40 mrg Exp $
 
+WARNS?=	1
 PROG=	atrun
 BINDIR=	/usr/libexec
 MAN=	atrun.8
