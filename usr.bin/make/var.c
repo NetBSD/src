@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.13 1996/05/28 23:34:49 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.14 1996/08/13 16:42:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.13 1996/05/28 23:34:49 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.14 1996/08/13 16:42:25 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ VarFind (name, ctxt, flags)
 	    int	  	len;
 	    
 	    v = (Var *) emalloc(sizeof(Var));
-	    v->name = strdup(name);
+	    v->name = estrdup(name);
 
 	    len = strlen(env);
 	    
@@ -334,7 +334,7 @@ VarAdd (name, val, ctxt)
 
     v = (Var *) emalloc (sizeof (Var));
 
-    v->name = strdup (name);
+    v->name = estrdup (name);
 
     len = val ? strlen(val) : 0;
     v->val = Buf_Init(len+1);
