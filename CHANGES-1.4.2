@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.46 1999/09/27 06:03:04 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.47 1999/09/28 04:49:26 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -575,3 +575,29 @@ usr.sbin/mopd/common/dl.c			1.4
   In a program request packet during the second and third stage of an
   Ultrix/mips MOP boot, the "software" packet is 256 bytes - bump the
   size of the program array (maximum for the VAX must only be 16 bytes).
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.24
+
+  Don't allow reconstructs, copybacks, or forced failures of components if
+  using a RAID 0, since RAID 0 can't handle those sorts of things.
+
+sys/dev/raidframe/rf_parityscan.c		1.6
+
+  Don't panic the system just because there is a problem verifying
+  the parity.
+
+sys/dev/raidframe/rf_reconstruct.c		1.6
+
+  Clean up reconstruction accounting a bit.  While it worked before, it
+  was slightly broken in the case where the RAID set did not support
+  reconstruction.
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.26
+
+  Correct and/or improve detection of bogus row/column values passed
+  in via ioctls.
+
+sys/dev/raidframe/rf_reconmap.c			1.6
+
+  Fix an 'off-by-one' error in a RF_ASSERT which meant that a reconstruct
+  would panic in the case where the stripe width was 1 block.
