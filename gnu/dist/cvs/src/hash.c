@@ -470,6 +470,7 @@ nodetypestring (type)
     case FILEATTR:	return("FILEATTR");
     case VARIABLE:	return("VARIABLE");
     case RCSFIELD:	return("RCSFIELD");
+    case RCSCMPFLD:	return("RCSCMPFLD");
     }
 
     return("<trash>");

@@ -233,6 +233,8 @@ static short tz_local;
 static time_t tz_seconds_east_of_GMT;
 static char *tz_name = "+0000";
 
+char *logHistory = ALL_REC_TYPES;
+
 /* -r, -t, or -b options, malloc'd.  These are "" if the option in
    question is not specified or is overridden by another option.  The
    main reason for using "" rather than NULL is historical.  Together
@@ -711,6 +713,8 @@ history_write (type, update_dir, revs, name, repository)
 
     if (logoff)			/* History is turned off by cmd line switch */
 	return;
+    if ( strchr(logHistory, type) == NULL )	
+	return;
     fname = xmalloc (strlen (CVSroot_directory) + sizeof (CVSROOTADM)
 		     + sizeof (CVSROOTADM_HISTORY) + 10);
     (void) sprintf (fname, "%s/%s/%s", CVSroot_directory,
@@ -730,7 +734,14 @@ history_write (type, update_dir, revs, name, repository)
 	goto out;
     fd = CVS_OPEN (fname, O_WRONLY | O_APPEND | O_CREAT | OPEN_BINARY, 0666);
     if (fd < 0)
-	error (1, errno, "cannot open history file: %s", fname);
+    {
+	if (! really_quiet)
+        {
+            error (0, errno, "warning: cannot write to history file %s",
+                   fname);
+        }
+        goto out;
+    }
 
     repos = Short_Repository (repository);
 
@@ -1461,9 +1472,9 @@ report_hrecs ()
 	else
 	    tm = localtime (&(lr->date));
 
-	(void) printf ("%c %02d/%02d %02d:%02d %s %-*s", ty, tm->tm_mon + 1,
-		  tm->tm_mday, tm->tm_hour, tm->tm_min, tz_name,
-		  user_len, lr->user);
+	(void) printf ("%c %04d-%02d-%02d %02d:%02d %s %-*s", ty,
+		  tm->tm_year+1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
+		  tm->tm_min, tz_name, user_len, lr->user);
 
 	workdir = xmalloc (strlen (lr->dir) + strlen (lr->end) + 10);
 	(void) sprintf (workdir, "%s%s", lr->dir, lr->end);
