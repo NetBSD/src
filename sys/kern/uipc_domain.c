@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.15 1996/07/04 03:16:56 chuck Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.16 1996/08/14 05:43:35 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -97,8 +97,8 @@ domaininit()
 				(*pr->pr_init)();
 	}
 
-if (max_linkhdr < 16)		/* XXX */
-max_linkhdr = 16;
+	if (max_linkhdr < 16)		/* XXX */
+		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
 	timeout(pffasttimo, NULL, 1);
