@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1992, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,101 +32,97 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.11 1994/04/28 00:03:18 jtc Exp $";
+/*static char sccsid[] = "from: @(#)rmdir.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: rmdir.c,v 1.12 1994/09/22 09:25:59 mycroft Exp $";
 #endif /* not lint */
 
-/*
- * Remove directory
- */
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <errno.h>
 #include <unistd.h>
-#include <err.h>
 
-static int rmpath __P((char *));
-static void usage __P((void));
+int rm_path __P((char *));
+void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	int errors;
-	int ch;
-	int delete_parent_directories = 0;
+	int ch, errors;
+	int pflag;
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt (argc, argv, "p")) != -1) {
-		switch (ch) {
+	pflag = 0;
+	while ((ch = getopt(argc, argv, "p")) != -1)
+		switch(ch) {
 		case 'p':
-			delete_parent_directories = 1;
+			pflag = 1;
 			break;
 		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
-	}
+	argc -= optind;
+	argv += optind;
 
-	if (!*(argv += optind)) {
-		usage ();
-		/* NOTREACHED */
-	}
+	if (argc == 0)
+		usage();
 
 	for (errors = 0; *argv; argv++) {
-		register char *slash;
+		char *p;
 
-		/* delete trailing slashes */
-		slash = strrchr(*argv, '\0');
-		while (--slash > *argv && *slash == '/')
-			*slash = '\0';
+		/* Delete trailing slashes, per POSIX. */
+		p = *argv + strlen(*argv);
+		while (--p > *argv && *p == '/')
+			;
+		*++p = '\0';
 
-		if (rmdir(*argv)) {
-			warn ("%s", *argv);
+		if (rmdir(*argv) < 0) {
+			warn("%s", *argv);
 			errors = 1;
-		} else if (delete_parent_directories) {
-			errors |= rmpath(*argv);
-		} 
+		} else if (pflag)
+			errors |= rm_path(*argv);
 	}
 
 	exit(errors);
 }
 
-static int
-rmpath (path)
+int
+rm_path(path)
 	char *path;
 {
-	register char *slash;
+	char *p;
 
-	while ((slash = strrchr(path, '/')) != NULL) {
-		/* delete trailing slash characters */
-		while (slash > path && *slash == '/')
-			slash--;
-		*++slash = '\0';
+	while ((p = strrchr(path, '/')) != NULL) {
+		/* Delete trailing slashes. */
+		while (--p > path && *p == '/')
+			;
+		*++p = '\0';
 
-		if (rmdir (path)) {
-			warn ("%s", path);
-			return 1;
+		if (rmdir(path) < 0) {
+			warn("%s", path);
+			return (1);
 		}
 	}
 
-	return 0;
+	return (0);
 }
 
-static void
+void
 usage()
 {
-	fprintf(stderr, "usage: rmdir [-p] directory ...\n");
+
+	(void)fprintf(stderr, "usage: rmdir [-p] directory ...\n");
 	exit(1);
 }

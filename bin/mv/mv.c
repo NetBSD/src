@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ken Smith of The State University of New York at Buffalo.
@@ -35,45 +35,52 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mv.c	5.11 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: mv.c,v 1.7 1993/11/09 18:58:03 jtc Exp $";
+/*static char sccsid[] = "from: @(#)mv.c	8.2 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: mv.c,v 1.8 1994/09/22 09:25:44 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 
 int fflg, iflg;
 int stdin_ok;
 
+int	copy __P((char *, char *));
+int	do_move __P((char *, char *));
+int	fastcopy __P((char *, char *, struct stat *));
+void	usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	register int baselen, exitval, len;
+	register int baselen, len, rval;
 	register char *p, *endp;
 	struct stat sb;
 	int ch;
 	char path[MAXPATHLEN + 1];
 
-	while (((ch = getopt(argc, argv, "if")) != -1))
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, "if")) != -1)
+		switch (ch) {
 		case 'i':
 			fflg = 0;
 			iflg = 1;
@@ -110,61 +117,67 @@ main(argc, argv)
 	endp = &path[baselen];
 	*endp++ = '/';
 	++baselen;
-	for (exitval = 0; --argc; ++argv) {
-		if ((p = rindex(*argv, '/')) == NULL)
+	for (rval = 0; --argc; ++argv) {
+		if ((p = strrchr(*argv, '/')) == NULL)
 			p = *argv;
 		else
 			++p;
-		if ((baselen + (len = strlen(p))) >= MAXPATHLEN)
-			(void)fprintf(stderr,
-			    "mv: %s: destination pathname too long\n", *argv);
-		else {
-			bcopy(p, endp, len + 1);
-			exitval |= do_move(*argv, path);
+		if ((baselen + (len = strlen(p))) >= MAXPATHLEN) {
+			warnx("%s: destination pathname too long", *argv);
+			rval = 1;
+		} else {
+			memmove(endp, p, len + 1);
+			if (do_move(*argv, path))
+				rval = 1;
 		}
 	}
-	exit(exitval);
+	exit(rval);
 }
 
+int
 do_move(from, to)
 	char *from, *to;
 {
 	struct stat sb;
+	char modep[15];
 
-	/* (1)	If the destination path exists, the -f option is not specified
+	/*
+	 * (1)	If the destination path exists, the -f option is not specified
 	 *	and either of the following conditions are true:
 	 *
 	 *	(a) The perimissions of the destination path do not permit
 	 *	    writing and the standard input is a terminal.
 	 *	(b) The -i option is specified.
 	 *
-	 *	the mv utility shall write a prompt to standard error and 
+	 *	the mv utility shall write a prompt to standard error and
 	 *	read a line from standard input.  If the response is not
 	 *	affirmative, mv shall do nothing more with the current
 	 *	source file...
 	 */
 	if (!fflg && !access(to, F_OK)) {
-		int ask = 0;
+		int ask = 1;
 		int ch;
 
 		if (iflg) {
 			(void)fprintf(stderr, "overwrite %s? ", to);
-			ask = 1;
 		} else if (stdin_ok && access(to, W_OK) && !stat(to, &sb)) {
-			(void)fprintf(stderr, "override mode %o on %s? ",
-			    sb.st_mode & 07777, to);
-			ask = 1;
-		}
+			strmode(sb.st_mode, modep);
+			(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
+			    modep + 1, modep[9] == ' ' ? "" : " ",
+			    user_from_uid(sb.st_uid, 0),
+			    group_from_gid(sb.st_gid, 0), to);
+		} else
+			ask = 0;
 		if (ask) {
 			if ((ch = getchar()) != EOF && ch != '\n')
 				while (getchar() != '\n');
 			if (ch != 'y' && ch != 'Y')
-				return(0);
+				return (0);
 		}
 	}
 
-
-	/* (2)	If rename() succeeds, mv shall do nothing more with the 
+	/*
+	 * (2)	If rename() succeeds, mv shall do nothing more with the
 	 *	current source file.  If it fails for any other reason than
 	 *	EXDEV, mv shall write a diagnostic message to the standard
 	 *	error and do nothing more with the current source file.
@@ -172,45 +185,44 @@ do_move(from, to)
 	 * (3)	If the destination path exists, and it is a file of type
 	 *	directory and source_file is not a file of type directory,
 	 *	or it is a file not of type directory, and source file is
-	 *	a file of type directory, mv shall write a diagnostic 
+	 *	a file of type directory, mv shall write a diagnostic
 	 *	message to standard error, and do nothing more with the
 	 *	current source file...
 	 */
 	if (!rename(from, to))
-		return(0);
+		return (0);
 
 	if (errno != EXDEV) {
-		(void)fprintf(stderr,
-		    "mv: rename %s to %s: %s\n", from, to, strerror(errno));
-		return(1);
+		warn("rename %s to %s", from, to);
+		return (1);
 	}
 
-
-	/* (4)	If the destination path exists, mv shall attempt to remove it.
-	 *	If this fails for any reason, mv shall write a diagnostic 
+	/*
+	 * (4)	If the destination path exists, mv shall attempt to remove it.
+	 *	If this fails for any reason, mv shall write a diagnostic
 	 *	message to the standard error and do nothing more with the
 	 *	current source file...
 	 */
 	if (!stat(to, &sb)) {
 		if ((S_ISDIR(sb.st_mode)) ? rmdir(to) : unlink(to)) {
-			(void) fprintf(stderr,
-			    "mv: can't remove %s: %s\n", to, strerror(errno));
+			warn("can't remove %s", to);
 			return (1);
 		}
 	}
 
-
-	/* (5)	The file hierarchy rooted in source_file shall be duplicated
+	/*
+	 * (5)	The file hierarchy rooted in source_file shall be duplicated
 	 *	as a file hiearchy rooted in the destination path...
 	 */
 	if (stat(from, &sb)) {
-		(void)fprintf(stderr, "mv: %s: %s\n", from, strerror(errno));
-		return(1);
+		warn("%s", from);
+		return (1);
 	}
-	return(S_ISREG(sb.st_mode) ?
+	return (S_ISREG(sb.st_mode) ?
 	    fastcopy(from, to, &sb) : copy(from, to));
 }
 
+int
 fastcopy(from, to, sbp)
 	char *from, *to;
 	struct stat *sbp;
@@ -221,79 +233,107 @@ fastcopy(from, to, sbp)
 	register int nread, from_fd, to_fd;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
-		error(from);
-		return(1);
+		warn("%s", from);
+		return (1);
 	}
-	if ((to_fd = open(to, O_CREAT|O_TRUNC|O_WRONLY, sbp->st_mode)) < 0) {
-		error(to);
+	if ((to_fd =
+	    open(to, O_CREAT | O_TRUNC | O_WRONLY, sbp->st_mode)) < 0) {
+		warn("%s", to);
 		(void)close(from_fd);
-		return(1);
+		return (1);
 	}
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
-		error(NULL);
-		return(1);
+		warn(NULL);
+		return (1);
 	}
 	while ((nread = read(from_fd, bp, blen)) > 0)
 		if (write(to_fd, bp, nread) != nread) {
-			error(to);
+			warn("%s", to);
 			goto err;
 		}
 	if (nread < 0) {
-		error(from);
-err:		(void)unlink(to);
+		warn("%s", from);
+err:		if (unlink(to))
+			warn("%s: remove", to);
 		(void)close(from_fd);
 		(void)close(to_fd);
-		return(1);
+		return (1);
 	}
-	(void)fchown(to_fd, sbp->st_uid, sbp->st_gid);
-	(void)fchmod(to_fd, sbp->st_mode);
-
 	(void)close(from_fd);
-	(void)close(to_fd);
+
+	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
+		warn("%s: set owner/group", to);
+	if (fchmod(to_fd, sbp->st_mode))
+		warn("%s: set mode", to);
 
 	tval[0].tv_sec = sbp->st_atime;
 	tval[1].tv_sec = sbp->st_mtime;
 	tval[0].tv_usec = tval[1].tv_usec = 0;
-	(void)utimes(to, tval);
-	(void)unlink(from);
-	return(0);
+	if (utimes(to, tval))
+		warn("%s: set times", to);
+
+	if (close(to_fd)) {
+		warn("%s", to);
+		return (1);
+	}
+
+	if (unlink(from)) {
+		warn("%s: remove", from);
+		return (1);
+	}
+	return (0);
 }
 
+int
 copy(from, to)
 	char *from, *to;
 {
 	int pid, status;
 
-	if (!(pid = vfork())) {
-		execl(_PATH_CP, "mv", "-pr", from, to, NULL);
-		error(_PATH_CP);
+	if ((pid = vfork()) == 0) {
+		execl(_PATH_CP, "mv", "-PRp", from, to, NULL);
+		warn("%s", _PATH_CP);
 		_exit(1);
 	}
-	(void)waitpid(pid, &status, 0);
-	if (!WIFEXITED(status) || WEXITSTATUS(status))
-		return(1);
+	if (waitpid(pid, &status, 0) == -1) {
+		warn("%s: waitpid", _PATH_CP);
+		return (1);
+	}
+	if (!WIFEXITED(status)) {
+		warn("%s: did not terminate normally", _PATH_CP);
+		return (1);
+	}
+	if (WEXITSTATUS(status)) {
+		warn("%s: terminated with %d (non-zero) status",
+		    _PATH_CP, WEXITSTATUS(status));
+		return (1);
+	}
 	if (!(pid = vfork())) {
 		execl(_PATH_RM, "mv", "-rf", from, NULL);
-		error(_PATH_RM);
+		warn("%s", _PATH_RM);
 		_exit(1);
 	}
-	(void)waitpid(pid, &status, 0);
-	return(!WIFEXITED(status) || WEXITSTATUS(status));
+	if (waitpid(pid, &status, 0) == -1) {
+		warn("%s: waitpid", _PATH_RM);
+		return (1);
+	}
+	if (!WIFEXITED(status)) {
+		warn("%s: did not terminate normally", _PATH_RM);
+		return (1);
+	}
+	if (WEXITSTATUS(status)) {
+		warn("%s: terminated with %d (non-zero) status",
+		    _PATH_RM, WEXITSTATUS(status));
+		return (1);
+	}
+	return (0);
 }
 
-error(s)
-	char *s;
-{
-	if (s)
-		(void)fprintf(stderr, "mv: %s: %s\n", s, strerror(errno));
-	else
-		(void)fprintf(stderr, "mv: %s\n", strerror(errno));
-}
-
+void
 usage()
 {
-	(void)fprintf(stderr, 
-		"usage: mv [-fi] source_file target_file\n"
-		"       mv [-fi] source_file ... target_dir\n");
+
+	(void)fprintf(stderr, "usage: mv [-fi] source target\n");
+	(void)fprintf(stderr, "       mv [-fi] source ... directory\n");
 	exit(1);
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,127 +32,112 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)kill.c	5.3 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: kill.c,v 1.6 1993/08/06 21:25:21 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)kill.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: kill.c,v 1.7 1994/09/22 09:25:27 mycroft Exp $";
 #endif /* not lint */
 
-#include <signal.h>
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <unistd.h>
 
+void nosig __P((char *));
+void printsignals __P((FILE *));
+int signame_to_signum __P((char *));
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	register int errors, numsig, pid;
-	register char **p;
+	const char *const *p;
+	int errors, numsig, pid;
 	char *ep;
 
 	if (argc < 2)
 		usage();
 
 	numsig = SIGTERM;
-	argc--, argv++;
-	if (strcmp(*argv, "-l") == 0) {
-		if (argc > 2) {
-			usage ();
-			/* NOTREACHED */
-		}
-		if (argc == 2) {
-			argv++;
-			if (isdigit(**argv)) {
-				numsig = strtol(*argv, &ep, 10);
-				if (*argv && !*ep) {
-					if (numsig > 0 && numsig < NSIG) {
-						printsig (numsig);
-						exit (0);
-					}
 
-					numsig -= 128;
-					if (numsig > 0 && numsig < NSIG) {
-						printsig (numsig);
-						exit (0);
-					}
-				}
-				(void)fprintf(stderr,
-				    "kill: illegal signal number %s\n", *argv);
-				exit(1);
-			}
-			usage ();
-			/* NOTREACHED */
+	argc--, argv++;
+	if (!strcmp(*argv, "-l")) {
+		argc--, argv++;
+		if (argc > 1)
+			usage();
+		if (argc == 1) {
+			if (!isdigit(**argv))
+				usage();
+			numsig = strtol(*argv, &ep, 10);
+			if (!*argv || *ep)
+				errx(1, "illegal signal number: %s", *argv);
+			if (numsig >= 128)
+				numsig -= 128;
+			if (numsig <= 0 || numsig >= NSIG)
+				nosig(*argv);
+			printf("%s\n", sys_signame[numsig]);
+			exit(0);
 		}
 		printsignals(stdout);
 		exit(0);
-	} else if (strcmp(*argv, "-s") == 0) {
-		if (argc < 2) {
-			(void)fprintf(stderr,
-				"kill: option requires an argument -- s\n");
+	}
+
+	if (!strcmp(*argv, "-s")) {
+		argc--, argv++;
+		if (argc < 1) {
+			warnx("option requires an argument -- s");
 			usage();
 		}
-		argc--,argv++;
-		if (strcmp (*argv, "0") == 0) {
-			numsig = 0;
-		} else {
-			if ((numsig = signame_to_signum (*argv)) < 0) {
+		if (strcmp(*argv, "0")) {
+			if ((numsig = signame_to_signum(*argv)) < 0)
 				nosig(*argv);
-				/* NOTREACHED */
-			}
-		}
-		argc--,argv++;
+		} else
+			numsig = 0;
+		argc--, argv++;
 	} else if (**argv == '-') {
 		++*argv;
 		if (isalpha(**argv)) {
-			if ((numsig = signame_to_signum (*argv)) < 0) {
+			if ((numsig = signame_to_signum(*argv)) < 0)
 				nosig(*argv);
-				/* NOTREACHED */
-			}
 		} else if (isdigit(**argv)) {
 			numsig = strtol(*argv, &ep, 10);
-			if (!*argv || *ep) {
-				(void)fprintf(stderr,
-				    "kill: illegal signal number %s\n", *argv);
-				exit(1);
-			}
-			if (numsig <= 0 || numsig >= NSIG) {
+			if (!*argv || *ep)
+				errx(1, "illegal signal number: %s", *argv);
+			if (numsig <= 0 || numsig >= NSIG)
 				nosig(*argv);
-				/* NOTREACHED */
-			}
 		} else
 			nosig(*argv);
-		argc--,argv++;
+		argc--, argv++;
 	}
 
-	if (!*argv)
+	if (argc == 0)
 		usage();
 
-	for (errors = 0; *argv; ++argv) {
+	for (errors = 0; argc; argc--, argv++) {
 		pid = strtol(*argv, &ep, 10);
 		if (!*argv || *ep) {
-			(void)fprintf(stderr,
-			    "kill: illegal process id %s\n", *argv);
-			continue;
-		}
-		if (kill(pid, numsig) == -1) {
-			(void)fprintf(stderr,
-			    "kill: %s: %s\n", *argv, strerror(errno));
+			warnx("illegal process id: %s", *argv);
+			errors = 1;
+		} else if (kill(pid, numsig) == -1) {
+			warn("%s", *argv);
 			errors = 1;
 		}
 	}
+
 	exit(errors);
 }
 
 int
-signame_to_signum (sig)
+signame_to_signum(sig)
 	char *sig;
 {
 	int n;
@@ -161,45 +146,42 @@ signame_to_signum (sig)
 		sig += 3;
 	for (n = 1; n < NSIG; n++) {
 		if (!strcasecmp(sys_signame[n], sig))
-			return n;
+			return (n);
 	}
-	return -1;
+	return (-1);
 }
 
+void
 nosig(name)
 	char *name;
 {
-	(void)fprintf(stderr,
-	    "kill: unknown signal %s; valid signals:\n", name);
+
+	warnx("unknown signal %s; valid signals:", name);
 	printsignals(stderr);
 	exit(1);
 }
 
-printsig(sig)
-	int sig;
-{
-	printf ("%s\n", sys_signame[sig]);
-}
-
+void
 printsignals(fp)
 	FILE *fp;
 {
 	int n;
 
-        for (n = 1; n < NSIG; n++) {
-                (void)fprintf(fp, "%s", sys_signame[n]);
-                if (n == (NSIG / 2) || n == (NSIG - 1))
-                        (void)fprintf(fp, "\n");
+	for (n = 1; n < NSIG; n++) {
+		(void)fprintf(fp, "%s", sys_signame[n]);
+		if (n == (NSIG / 2) || n == (NSIG - 1))
+			(void)fprintf(fp, "\n");
 		else
 			(void)fprintf(fp, " ");
-        }
+	}
 }
 
+void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: kill [-s signal_name] pid ...\n");
 	(void)fprintf(stderr, "       kill -l [exit_status]\n");
-	(void)fprintf(stderr, "obsolete usage:\n");
 	(void)fprintf(stderr, "       kill -signal_name pid ...\n");
 	(void)fprintf(stderr, "       kill -signal_number pid ...\n");
 	exit(1);
