@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.20 1995/11/03 02:35:54 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.21 1995/11/06 19:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -945,7 +945,7 @@ ccdioctl(dev, cmd, data, flag, p)
 {
 	int unit = ccdunit(dev);
 	int i, j, lookedup = 0, error = 0;
-	int part, pmask;
+	int part, pmask, s;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
@@ -1111,7 +1111,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		}
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
-		bzero(cs, sizeof(struct ccd_softc));
+		cs->sc_flags &= ~CCDF_INITED;
 
 		/*
 		 * Free ccddevice information and clear entry.
@@ -1121,7 +1121,11 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_dk = -1;
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
 
+		/* This must be atomic. */
+		s = splhigh();
 		ccdunlock(cs);
+		bzero(cs, sizeof(struct ccd_softc));
+		splx(s);
 
 		break;
 
