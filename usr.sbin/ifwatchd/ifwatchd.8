@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.4 2001/12/10 15:04:51 wiz Exp $
+.\" $NetBSD: ifwatchd.8,v 1.5 2002/01/10 19:38:51 martin Exp $
 .\"
 .\" Copyright (C) 2001 by Martin Husemann
 .\" All rights reserved.
@@ -98,8 +98,8 @@ Events for other interfaces are ignored.
 # ifwatchd -u /etc/ppp/ip-up -d /etc/ppp/ip-down pppoe0
 .Ed
 .Sh PARAMETERS PASSED TO SCRIPTS
-The invoked scripts get three parameters passed:
-.Bl -tag -width address
+The invoked scripts get four parameters passed:
+.Bl -tag -width destination
 .It Ar ifname
 The name of the interface this change is for (this allows to share the same
 script for multiple interfaces watched and dispatching on the interface name
@@ -116,6 +116,9 @@ if this is a down event.
 .Pp
 The format of the address depends on the address family, for IPv4 it is the
 usual dotted quad notation, for IPv6 the colon separated standard notation.
+.It Ar destination
+For point to point interfaces, this is the remote address of the interface.
+For other interfaces it is the broadcast address.
 .El
 .Sh SEE ALSO
 .Xr route 4 ,

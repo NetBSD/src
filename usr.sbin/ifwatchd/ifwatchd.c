@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.3 2001/12/10 14:54:09 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.4 2002/01/10 19:38:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Martin Husemann <martin@duskware.de>
@@ -47,7 +47,7 @@
 static void usage(void);
 static void dispatch(void*, size_t);
 static void check_addrs(char *cp, int addrs, int is_up);
-static void invoke_script(struct sockaddr *sa, int is_up, int ifindex);
+static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, int is_up, int ifindex);
 static void list_interfaces(const char *ifnames);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
@@ -200,7 +200,7 @@ check_addrs(cp, addrs, is_up)
 	char    *cp;
 	int     addrs, is_up;
 {
-	struct sockaddr *sa;
+	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	int ifndx = 0, i;
 
 	if (addrs == 0)
@@ -217,21 +217,27 @@ check_addrs(cp, addrs, is_up)
 			return;
 		    }
 		} else if (i == RTA_IFA) {
-		    invoke_script(sa, is_up, ifndx);
+		    ifa = sa;
+		} else if (i == RTA_BRD) {
+		    brd = sa;
 		}
 		ADVANCE(cp, sa);
 	    }
 	}
+	if (ifa != NULL)
+	   invoke_script(ifa, brd, is_up, ifndx);
 }
 
 static void
-invoke_script(sa, is_up, ifindex)
-	struct sockaddr *sa;
+invoke_script(sa, dest, is_up, ifindex)
+	struct sockaddr *sa, *dest;
 	int is_up, ifindex;
 {
-	char addr[NI_MAXHOST], ifname_buf[IFNAMSIZ], *ifname, *cmd;
+	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ],
+	     *ifname, *cmd;
 	const char *script;
 
+	daddr[0] = 0;
 	ifname = if_indextoname(ifindex, ifname_buf);
 	if (sa->sa_len == 0) {
 	    fprintf(stderr, "illegal socket address (sa_len == 0)\n");
@@ -243,12 +249,19 @@ invoke_script(sa, is_up, ifindex)
 		printf("getnameinfo failed\n");
 	    return;	/* this address can not be handled */
 	}
+	if (dest != NULL) {
+	    if (getnameinfo(dest, dest->sa_len, daddr, sizeof daddr, NULL, 0, NI_NUMERICHOST)) {
+		if (verbose)
+		    printf("getnameinfo failed\n");
+		return;	/* this address can not be handled */
+	    }
+	}
 
 	script = is_up? up_script : down_script;
 	if (script == NULL) return;
 
-	asprintf(&cmd, "%s \"%s\" %s \"%s\"", script, ifname, 
-			is_up?"up":"down", addr);
+	asprintf(&cmd, "%s \"%s\" %s \"%s\" \"%s\"", script, ifname, 
+			is_up?"up":"down", addr, daddr);
 	if (cmd == NULL) {
 	    fprintf(stderr, "out of memory\n");
 	    return;
@@ -326,7 +339,7 @@ static void run_initial_ups()
 		    continue;
 		SLIST_FOREACH(ifd, &ifs, next) {
 		    if (strcmp(ifd->ifname, p->ifa_name) == 0) {
-			invoke_script(p->ifa_addr, 1, ifd->index);
+			invoke_script(p->ifa_addr, p->ifa_dstaddr, 1, ifd->index);
 			break;
 		    }
 		}
