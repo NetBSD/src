@@ -8,7 +8,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		"i387"
 options		XSERVER,UCONSOLE
-options		KERNFS,FDESC
+options		KERNFS,FDESC,PCFS
 options		KTRACE
 options		DDB
 
