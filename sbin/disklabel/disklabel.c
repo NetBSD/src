@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.61 1999/01/19 06:24:09 abs Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.62 1999/01/21 11:58:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.61 1999/01/19 06:24:09 abs Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.62 1999/01/21 11:58:00 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -1728,15 +1728,19 @@ checklabel(lp)
 		if (pp->p_size == 0 && pp->p_offset != 0)
 			warnx("warning, partition %c: size 0, but offset %d",
 			    part, pp->p_offset);
-#ifdef notdef
-		if (pp->p_size % lp->d_secpercyl)
+#ifdef STRICT_CYLINDER_ALIGNMENT
+		if (pp->p_size % lp->d_secpercyl) {
 			warnx("warning, partition %c:"
 			      " size %% cylinder-size != 0",
 			    part);
-		if (pp->p_offset % lp->d_secpercyl)
+			errors++;
+		}
+		if (pp->p_offset % lp->d_secpercyl) {
 			warnx("warning, partition %c:"
 			      " offset %% cylinder-size != 0",
 			    part);
+			errors++;
+		}
 #endif
 		if (pp->p_offset > lp->d_secperunit) {
 			warnx("partition %c: offset past end of unit", part);
