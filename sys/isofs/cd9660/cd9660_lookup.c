@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.7 1994/07/19 15:07:36 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.8 1994/07/19 15:10:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -229,7 +229,6 @@ cd9660_lookup(ap)
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
 		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
 				return (error);
-		}
 		numdirpasses = 2;
 		iso_nchstats.ncs_2passes++;
 	}
