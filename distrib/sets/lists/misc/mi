@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.72 2001/12/18 14:11:31 mrg Exp $
+# $NetBSD: mi,v 1.73 2002/01/24 03:40:44 jwise Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -435,8 +435,10 @@
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples
 ./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
 ./usr/share/examples/syslogd/all.newsyslog.conf		misc-sysutil-examples
+./usr/share/sendmail					misc-sendmail-share
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
+./usr/share/sendmail/cf					misc-sendmail-share
 ./usr/share/sendmail/cf/Makefile			misc-sendmail-share
 ./usr/share/sendmail/cf/boat-anchor.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/chimera.mc			misc-sendmail-share
@@ -445,6 +447,7 @@
 ./usr/share/sendmail/cf/netbsd-proto.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/sun-lamp.mc			misc-sendmail-share
 ./usr/share/sendmail/cf/zhadum.mc			misc-sendmail-share
+./usr/share/sendmail/domain				misc-sendmail-share
 ./usr/share/sendmail/domain/Berkeley.EDU.m4		misc-sendmail-share
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4		misc-sendmail-share
 ./usr/share/sendmail/domain/EECS.Berkeley.EDU.m4	misc-sendmail-share
@@ -453,6 +456,7 @@
 ./usr/share/sendmail/domain/berkeley-only.m4		misc-sendmail-share
 ./usr/share/sendmail/domain/generic.m4			misc-sendmail-share
 ./usr/share/sendmail/domain/ihack.net.m4		misc-sendmail-share
+./usr/share/sendmail/feature				misc-sendmail-share
 ./usr/share/sendmail/feature/accept_unqualified_senders.m4	misc-sendmail-share
 ./usr/share/sendmail/feature/accept_unresolvable_domains.m4	misc-sendmail-share
 ./usr/share/sendmail/feature/access_db.m4		misc-sendmail-share
@@ -495,11 +499,14 @@
 ./usr/share/sendmail/feature/uucpdomain.m4		misc-sendmail-share
 ./usr/share/sendmail/feature/virtuser_entire_domain.m4	misc-sendmail-share
 ./usr/share/sendmail/feature/virtusertable.m4		misc-sendmail-share
+./usr/share/sendmail/hack				misc-sendmail-share
 ./usr/share/sendmail/hack/cssubdomain.m4		misc-sendmail-share
+./usr/share/sendmail/m4			misc-sendmail-share
 ./usr/share/sendmail/m4/cf.m4				misc-sendmail-share
 ./usr/share/sendmail/m4/cfhead.m4			misc-sendmail-share
 ./usr/share/sendmail/m4/proto.m4			misc-sendmail-share
 ./usr/share/sendmail/m4/version.m4			misc-sendmail-share
+./usr/share/sendmail/mailer		misc-sendmail-share
 ./usr/share/sendmail/mailer/cyrus.m4			misc-sendmail-share
 ./usr/share/sendmail/mailer/fax.m4			misc-sendmail-share
 ./usr/share/sendmail/mailer/local.m4			misc-sendmail-share
@@ -511,6 +518,7 @@
 ./usr/share/sendmail/mailer/smtp.m4			misc-sendmail-share
 ./usr/share/sendmail/mailer/usenet.m4			misc-sendmail-share
 ./usr/share/sendmail/mailer/uucp.m4			misc-sendmail-share
+./usr/share/sendmail/ostype		misc-sendmail-share
 ./usr/share/sendmail/ostype/aix2.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/aix3.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/aix4.m4			misc-sendmail-share
@@ -559,7 +567,9 @@
 ./usr/share/sendmail/ostype/unixware7.m4		misc-sendmail-share
 ./usr/share/sendmail/ostype/unknown.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/uxpds.m4			misc-sendmail-share
+./usr/share/sendmail/sh			misc-sendmail-share
 ./usr/share/sendmail/sh/makeinfo.sh			misc-sendmail-share
+./usr/share/sendmail/siteconfig		misc-sendmail-share
 ./usr/share/sendmail/siteconfig/uucp.cogsci.m4		misc-sendmail-share
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4	misc-sendmail-share
 ./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4		misc-sendmail-share
