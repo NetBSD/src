@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.75 2001/01/27 11:08:23 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.76 2001/01/27 11:10:18 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.75 2001/01/27 11:08:23 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.76 2001/01/27 11:10:18 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1043,8 +1043,10 @@ dopool(void)
 		addr = (long)TAILQ_NEXT(pp, pr_poollist);
 	}
 
+	inuse /= 1024;
+	total /= 1024;
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
-	    inuse/1024, total/1024, (double)(100 * inuse) / total);
+	    inuse, total, (double)(100 * inuse) / total);
 }
 
 /*
