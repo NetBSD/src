@@ -69,6 +69,23 @@
  *	since Tahoe version of <netinet/in.h> does not define them.
  *
  * $Log: scm.c,v $
+ * Revision 1.3  1996/09/05 16:50:05  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.2  1995/06/03 21:21:51  christos
  * Changes to write ascii timestamps in the when files.
  * Looked into making it 64 bit clean, but it is hopeless.
@@ -177,6 +194,9 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#ifndef SIOCGIFCONF
+#include <sys/sockio.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -199,6 +219,7 @@ extern int errno;
 static char *myhost ();
 
 char scmversion[] = "4.3 BSD";
+extern int silent;
 
 /*************************
  ***    M A C R O S    ***
@@ -348,7 +369,8 @@ int *t,*b;
 			s = *t;
 		*t -= s;
 	}
-	(void) scmerr (-1,"Will retry in %d seconds",s);
+	if (!silent)
+	    (void) scmerr (-1,"Will retry in %d seconds",s);
 	sleep (s);
 	return (1);
 }
@@ -372,8 +394,9 @@ int *retry;
 		else
 			return (scmerr (-1,"Can't find %s server description",
 					server));
-		(void) scmerr (-1,"%s/tcp: unknown service: using port %d",
-					server,port);
+		if (!silent)
+		    (void) scmerr (-1,"%s/tcp: unknown service: using port %d",
+				    server,port);
 	} else
 		port = sp->s_port;
 	(void) bzero ((char *)&sin,sizeof(sin));

@@ -27,6 +27,23 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmisc.c,v $
+ * Revision 1.3  1996/09/05 16:50:10  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.2  1995/06/03 21:21:57  christos
  * Changes to write ascii timestamps in the when files.
  * Looked into making it 64 bit clean, but it is hopeless.
@@ -309,16 +326,19 @@ va_dcl
 lockout (on)		/* lock out interrupts */
 int on;
 {
-	register int x;
-	static int lockmask;
+	static sigset_t oset;
+	sigset_t nset;
 
 	if (on) {
-		x = sigmask (SIGHUP) | sigmask (SIGINT) |
-		    sigmask (SIGQUIT) | sigmask (SIGTERM);
-		lockmask = sigblock (x);
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGHUP);
+		sigaddset(&nset, SIGINT);
+		sigaddset(&nset, SIGTERM);
+		sigaddset(&nset, SIGQUIT);
+		(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 	}
 	else {
-		(void) sigsetmask (lockmask);
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	}
 }
 

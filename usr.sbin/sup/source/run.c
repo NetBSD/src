@@ -48,6 +48,23 @@
  **********************************************************************
  * HISTORY
  * $Log: run.c,v $
+ * Revision 1.3  1996/09/05 16:50:03  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.2  1995/06/24 16:21:33  christos
  * - Don't use system(3) to fork processes. It is a big security hole.
  * - Encode the filenames in the scan files using strvis(3), so filenames
@@ -153,8 +170,8 @@ int usepath;
 {
 	int wpid;
 	register int pid;
-	struct sigvec ignoresig,intsig,quitsig;
-	union wait status;
+	struct sigaction ignoresig,intsig,quitsig;
+	int status;
 	int execvp(), execv();
 	int (*execrtn)() = usepath ? execvp : execv;
 
@@ -169,25 +186,25 @@ int usepath;
 		_exit (0377);
 	}
 
-	ignoresig.sv_handler = SIG_IGN;	/* ignore INT and QUIT signals */
-	ignoresig.sv_mask = 0;
-	ignoresig.sv_onstack = 0;
-	sigvec (SIGINT,&ignoresig,&intsig);
-	sigvec (SIGQUIT,&ignoresig,&quitsig);
+	ignoresig.sa_handler = SIG_IGN;	/* ignore INT and QUIT signals */
+	sigemptyset(&ignoresig.sa_mask);
+	ignoresig.sa_flags = 0;
+	sigaction (SIGINT,&ignoresig,&intsig);
+	sigaction (SIGQUIT,&ignoresig,&quitsig);
 	do {
-		wpid = wait3 (&status.w_status, WUNTRACED, 0);
+		wpid = wait3 (&status, WUNTRACED, 0);
 		if (WIFSTOPPED (status)) {
 		    kill (0,SIGTSTP);
 		    wpid = 0;
 		}
 	} while (wpid != pid && wpid != -1);
-	sigvec (SIGINT,&intsig,0);	/* restore signals */
-	sigvec (SIGQUIT,&quitsig,0);
+	sigaction (SIGINT,&intsig,0);	/* restore signals */
+	sigaction (SIGQUIT,&quitsig,0);
 
-	if (WIFSIGNALED (status) || status.w_retcode == 0377)
+	if (WIFSIGNALED (status) || WEXITSTATUS(status) == 0377)
 		return (-1);
 
-	return (status.w_retcode);
+	return (WEXITSTATUS(status));
 }
 
 /*
