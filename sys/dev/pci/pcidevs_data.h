@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.479 2002/10/24 06:40:58 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.480 2002/10/25 15:58:04 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.477 2002/10/24 06:40:07 grant Exp 
+ *	NetBSD: pcidevs,v 1.479 2002/10/25 15:56:47 kent Exp 
  */
 
 /*
@@ -1054,16 +1054,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD768 USB Controller",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
-	    0,
-	    "Advanced Micro Devices",
-	    "AMD8111 AC97 Audio",
-	},
-	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD8111 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 AC97 Audio",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
@@ -2764,6 +2764,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "\"Light Pulse\" FibreChannel adapter",
 	},
 	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB1410 Cardbus Controller",
+	},
+	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
 	    0,
 	    "Ensoniq",
@@ -3212,6 +3218,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IBM",
 	    "MPIC-II",
+	},
+	{
+	    PCI_VENDOR_ICOMPRESSION, PCI_PRODUCT_ICOMPRESSION_ITVC15,
+	    0,
+	    "Conexant (iCompression)",
+	    "iTVC15 MPEG2 codec",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
@@ -11026,6 +11038,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ENE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ENE Technology, Inc.",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_TERRATEC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "TerraTec Electronic",
@@ -11137,6 +11155,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADDTRON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Addtron Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ICOMPRESSION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Conexant (iCompression)",
 	    NULL,
 	},
 	{
