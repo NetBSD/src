@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $	*/
+/*	$NetBSD: keysock.c,v 1.2 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.2 2003/10/06 22:05:15 tls Exp $");
 
 #include "opt_ipsec.h"
 
@@ -634,7 +634,7 @@ key_usrreq(so, req, m, nam, control, p)
 /* sysctl */
 #ifdef SYSCTL_NODE
 SYSCTL_NODE(_net, PF_KEY, key, CTLFLAG_RW, 0, "Key Family");
-#endif SYSCTL_NODE
+#endif /* SYSCTL_NODE */
 
 /*
  * Definitions of protocols supported in the KEY domain.

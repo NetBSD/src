@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.3 2003/09/12 11:20:58 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.3 2003/09/12 11:20:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
 
 /*
  * IPsec controller part.
@@ -90,9 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.3 2003/09/12 11:20:58 itojun Exp $");
 #include <netipsec/ipcomp.h>		/*XXX*/
 #include <netipsec/ipcomp_var.h>
 
-#include <netkey/key.h>
-#include <netkey/keydb.h>
-#include <netkey/key_debug.h>
+#include <netipsec/key.h>
+#include <netipsec/keydb.h>
+#include <netipsec/key_debug.h>
 
 #include <netipsec/xform.h>
 
@@ -156,7 +156,7 @@ SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
 	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
 SYSCTL_STRUCT(_net_inet_ipsec, OID_AUTO,
 	ipsecstats,	CTLFLAG_RD,	&newipsecstat,	newipsecstat, "");
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */
 
 
 #ifdef INET6
