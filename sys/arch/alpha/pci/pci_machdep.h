@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
+/* $NetBSD: pci_machdep.h,v 1.7 1997/04/07 02:00:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
