@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.71 2002/03/16 20:43:52 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.72 2002/03/22 18:39:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.71 2002/03/16 20:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.72 2002/03/22 18:39:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -110,6 +110,12 @@ int linux_read_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
     register_t *));
 int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
     register_t *));
+#endif
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
 #endif
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
@@ -358,6 +364,7 @@ linux_read_ldt(p, uap, retval)
 	caddr_t sg;
 	char *parms;
 
+	DPRINTF(("linux_read_ldt!"));
 	sg = stackgap_init(p, 0);
 
 	gl.start = 0;
@@ -385,6 +392,7 @@ struct linux_ldt_info {
 	u_int read_exec_only:1;
 	u_int limit_in_pages:1;
 	u_int seg_not_present:1;
+	u_int useable:1;
 };
 
 int
@@ -403,15 +411,27 @@ linux_write_ldt(p, uap, retval)
 	int error;
 	caddr_t sg;
 	char *parms;
+	int oldmode = (int)retval[0];
 
+	DPRINTF(("linux_write_ldt %d\n", oldmode));
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
 		return (EINVAL);
 	if ((error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info))) != 0)
 		return error;
-	if (ldt_info.contents == 3)
+	if (ldt_info.entry_number >= 8192)
 		return (EINVAL);
+	if (ldt_info.contents == 3) {
+		if (oldmode)
+			return (EINVAL);
+		if (ldt_info.seg_not_present)
+			return (EINVAL);
+	}
 
-	if (ldt_info.base_addr == 0 && ldt_info.limit == 0) {
+	if (ldt_info.base_addr == 0 && ldt_info.limit == 0 &&
+	    (oldmode || (ldt_info.contents == 0 &&
+	    ldt_info.read_exec_only == 1 && ldt_info.seg_32bit == 0 &&
+	    ldt_info.limit_in_pages == 0 && ldt_info.seg_not_present == 1 &&
+	    ldt_info.useable == 0))) {
 		/* this means you should zero the ldt */
 		(void)memset(&sd, 0, sizeof(sd));
 	} else {
@@ -425,16 +445,16 @@ linux_write_ldt(p, uap, retval)
 		sd.sd_p = !ldt_info.seg_not_present;
 		sd.sd_def32 = ldt_info.seg_32bit;
 		sd.sd_gran = ldt_info.limit_in_pages;
+		if (!oldmode)
+			sd.sd_xx = ldt_info.useable;
 	}
 	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
 	sl.desc = stackgap_alloc(p, &sg, sizeof(sd));
 	sl.num = 1;
 
-#if 0
-	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
-	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
-#endif
+	DPRINTF(("linux_write_ldt: idx=%d, base=0x%lx, limit=0x%x\n",
+	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit));
 
 	parms = stackgap_alloc(p, &sg, sizeof(sl));
 
@@ -467,10 +487,19 @@ linux_sys_modify_ldt(p, v, retval)
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return (linux_read_ldt(p, uap, retval));
-
+		return linux_read_ldt(p, uap, retval);
 	case 1:
-		return (linux_write_ldt(p, uap, retval));
+		retval[0] = 1;
+		return linux_write_ldt(p, uap, retval);
+	case 2:
+#ifdef notyet
+		return (linux_read_default_ldt(p, uap, retval);
+#else
+		return (ENOSYS);
+#endif
+	case 0x11:
+		retval[0] = 0;
+		return linux_write_ldt(p, uap, retval);
 #endif /* USER_LDT */
 
 	default:
@@ -831,8 +860,8 @@ linux_machdepioctl(p, v, retval)
 		}
 
 		if (error == ENOTTY)
-			printf("linux_machdepioctl: invalid ioctl %08lx\n",
-			    com);
+			DPRINTF(("linux_machdepioctl: invalid ioctl %08lx\n",
+			    com));
 		return error;
 	}
 	SCARG(&bia, com) = com;
