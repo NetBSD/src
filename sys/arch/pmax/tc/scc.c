@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.18 1996/10/16 05:04:51 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.19 1997/04/26 02:26:54 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -1448,14 +1448,12 @@ scc_modem_intr(dev)
 	 * Is it related to  console handling?
 	 */
 #ifndef alpha
-#ifdef	notyet	/*XXX -does this help pmax console? */
 	if (car) {
 		/* carrier present */
 		if (!(tp->t_state & TS_CARR_ON))
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	} else if (tp->t_state & TS_CARR_ON)
 		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-#endif /*notyet*/
 #endif /* !alpha */
 	splx(s);
 }
