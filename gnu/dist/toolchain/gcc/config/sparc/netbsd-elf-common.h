@@ -1,6 +1,7 @@
 /* NetBSD/sparc ELF common 32/64 bit configuration */
 
 #define OBJECT_FORMAT_ELF
+#define NETBSD_ELF
 #include <netbsd.h>
 
 #undef CPP_SUBTARGET_SPEC
