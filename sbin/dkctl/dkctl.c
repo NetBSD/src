@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.2 2002/07/01 18:49:57 yamt Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.3 2003/04/15 18:27:28 darrenr Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,6 +42,8 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/dkio.h>
+#include <sys/disk.h>
+#include <sys/queue.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -58,6 +60,10 @@
 #define	YES_STR	"yes"
 #define	NO_STR	"no"
 #define YESNO_ARG	YES_STR " | " NO_STR
+
+#ifndef PRIdaddr
+#define PRIdaddr PRId64
+#endif
 
 struct command {
 	const char *cmd_name;
@@ -81,6 +87,7 @@ void	disk_getcache(int, char *[]);
 void	disk_setcache(int, char *[]);
 void	disk_synccache(int, char *[]);
 void	disk_keeplabel(int, char *[]);
+void	disk_badsectors(int, char *[]);
 
 struct command commands[] = {
 	{ "getcache",
@@ -102,6 +109,11 @@ struct command commands[] = {
 	  YESNO_ARG,
 	  disk_keeplabel,
 	  O_RDWR },
+
+	{ "badsector",
+	  "flush | list | retry",
+	   disk_badsectors,
+	   O_RDWR },
 
 	{ NULL,
 	  NULL,
@@ -259,6 +271,148 @@ disk_keeplabel(int argc, char *argv[])
 
 	if (ioctl(fd, DIOCKLABEL, &keep) == -1)
 		err(1, "%s: keep label", dvname);
+}
+
+
+void
+disk_badsectors(int argc, char *argv[])
+{
+	struct disk_badsectors *dbs, *dbs2, buffer[200];
+	SLIST_HEAD(, disk_badsectors) dbstop;
+	struct disk_badsecinfo dbsi;
+	daddr_t blk, totbad, bad;
+	u_int32_t count, size;
+	struct stat sb;
+	u_char *block;
+
+	if (argc != 1)
+		usage();
+
+	if (strcmp(argv[0], "list") == 0) {
+		/*
+		 * Copy the list of kernel bad sectors out in chunks that fit
+		 * into buffer[].  Updating dbsi_skip means we don't sit here
+		 * forever only getting the first chunk that fit in buffer[].
+		 */
+		dbsi.dbsi_buffer = (caddr_t)buffer;
+		dbsi.dbsi_bufsize = sizeof(buffer);
+		dbsi.dbsi_skip = 0;
+		dbsi.dbsi_copied = 0;
+		dbsi.dbsi_left = 0;
+
+		do {
+			if (ioctl(fd, DIOCBSLIST, (caddr_t)&dbsi) == -1)
+				err(1, "%s: badsectors list", dvname);
+
+			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
+			for (count = dbsi.dbsi_copied; count > 0; count--) {
+				printf("%s: blocks %d - %d failed at %s",
+					dvname, dbs->dbs_min, dbs->dbs_max,
+					ctime(&dbs->dbs_failedat.tv_sec));
+			}
+			dbsi.dbsi_skip += dbsi.dbsi_copied;
+		} while (dbsi.dbsi_left != 0);
+
+	} else if (strcmp(argv[0], "flush") == 0) {
+		if (ioctl(fd, DIOCBSFLUSH) == -1)
+			err(1, "%s: badsectors flush", dvname);
+
+	} else if (strcmp(argv[0], "retry") == 0) {
+		/*
+		 * Enforce use of raw device here because the block device
+		 * causes access to blocks to be clustered in a larger group,
+		 * making it impossible to determine which individual sectors
+		 * are the cause of a problem.
+		 */ 
+		if (fstat(fd, &sb) == -1)
+			err(1, "fstat");
+
+		if (!S_ISCHR(sb.st_mode)) {
+			fprintf(stderr, "'badsector retry' must be used %s\n",
+				"with character device");
+			exit(1);
+		}
+
+		SLIST_INIT(&dbstop);
+
+		/*
+		 * Build up a copy of the in-kernel list in a number of stages.
+		 * That the list we build up here is in the reverse order to
+		 * the kernel's is of no concern.
+		 */
+		dbsi.dbsi_buffer = (caddr_t)buffer;
+		dbsi.dbsi_bufsize = sizeof(buffer);
+		dbsi.dbsi_skip = 0;
+		dbsi.dbsi_copied = 0;
+		dbsi.dbsi_left = 0;
+
+		do {
+			if (ioctl(fd, DIOCBSLIST, (caddr_t)&dbsi) == -1)
+				err(1, "%s: badsectors list", dvname);
+
+			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
+			for (count = dbsi.dbsi_copied; count > 0; count--) {
+				dbs2 = malloc(sizeof(*dbs2));
+				*dbs2 = *dbs;
+				SLIST_INSERT_HEAD(&dbstop, dbs2, dbs_next);
+			}
+			dbsi.dbsi_skip += dbsi.dbsi_copied;
+		} while (dbsi.dbsi_left != 0);
+
+		/*
+		 * Just calculate and print out something that will hopefully
+		 * provide some useful information about what's going to take
+		 * place next (if anything.)
+		 */
+		bad = 0;
+		totbad = 0;
+		block = calloc(1, DEV_BSIZE);
+		SLIST_FOREACH(dbs, &dbstop, dbs_next) {
+			bad++;
+			totbad += dbs->dbs_max - dbs->dbs_min + 1;
+		}
+
+		printf("%s: bad sector clusters %"PRIdaddr
+		    " total sectors %"PRIdaddr"\n", dvname, bad, totbad);
+
+		/*
+		 * Clear out the kernel's list of bad sectors, ready for us
+		 * to test all those it thought were bad.
+		 */
+		if (ioctl(fd, DIOCBSFLUSH) == -1)
+			err(1, "%s: badsectors flush", dvname);
+
+		printf("%s: bad sectors flushed\n", dvname);
+
+		/*
+		 * For each entry we obtained from the kernel, retry each
+		 * individual sector recorded as bad by seeking to it and
+		 * attempting to read it in.  Print out a line item for each
+		 * bad block we verify.
+		 *
+		 * PRIdaddr is used here because the type of dbs_max is daddr_t
+		 * and that may be either a 32bit or 64bit number(!)
+		 */
+		SLIST_FOREACH(dbs, &dbstop, dbs_next) {
+			printf("%s: Retrying %"PRIdaddr" - %"
+			    PRIdaddr"\n", dvname, dbs->dbs_min, dbs->dbs_max);
+
+			for (blk = dbs->dbs_min; blk <= dbs->dbs_max; blk++) {
+				if (lseek(fd, (off_t)blk * DEV_BSIZE,
+				    SEEK_SET) == -1) {
+					warn("%s: lseek block %d", dvname,
+					     blk);
+					continue;
+				}
+				printf("%s: block %"PRIdaddr" - ", dvname, blk);
+				if (read(fd, block, DEV_BSIZE) != DEV_BSIZE)
+					printf("failed\n");
+				else
+					printf("ok\n");
+				fflush(stdout);
+			}
+		}
+	}
 }
 
 /*

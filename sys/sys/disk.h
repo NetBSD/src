@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.21 2003/04/15 14:11:00 darrenr Exp $	*/
+/*	$NetBSD: disk.h,v 1.22 2003/04/15 18:27:27 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -187,9 +187,17 @@ TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
  */
 struct disk_badsectors {
 	SLIST_ENTRY(disk_badsectors)	dbs_next;
-	u_int64_t	dbs_min;	/* min. sector number */
-	u_int64_t	dbs_max;	/* max. sector number */
+	daddr_t		dbs_min;	/* min. sector number */
+	daddr_t		dbs_max;	/* max. sector number */
 	struct timeval	dbs_failedat;	/* first failure at */
+};
+
+struct disk_badsecinfo {
+	u_int32_t	dbsi_bufsize;	/* size of region pointed to */
+	u_int32_t	dbsi_skip;	/* how many to skip past */
+	u_int32_t	dbsi_copied;	/* how many got copied back */
+	u_int32_t	dbsi_left;	/* remaining to copy */
+	caddr_t		dbsi_buffer;	/* region to copy disk_badsectors to */
 };
 
 #ifdef _KERNEL
