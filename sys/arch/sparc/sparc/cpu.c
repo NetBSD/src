@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.172 2003/01/23 14:54:33 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.173 2003/01/23 19:54:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -102,6 +102,7 @@ extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
+u_int	cpu_ready_mask;			/* the set of CPUs marked as READY */
 static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
@@ -466,6 +467,10 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpi->redzone = (void *)((long)cpi->idle_u + REDSIZE);
 #endif
 
+	/*
+	 * Allocate a slot in the cpus[] array such that the following
+	 * invariant holds: cpus[cpi->ci_cpuid] == cpi;
+	 */
 	cpus[cpu_instance] = cpi;
 	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
@@ -540,9 +545,6 @@ cpu_boot_secondary_processors()
 		return;
 	}
 
-	if (cpus == NULL)
-		return;
-
 	printf("cpu0: booting secondary processors:");
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
@@ -559,13 +561,16 @@ cpu_boot_secondary_processors()
 
 		printf(" cpu%d", cpi->ci_cpuid);
 		cpi->flags |= CPUFLG_READY;
+		cpu_ready_mask |= (1 << n);
 	}
+
+	/* Mark the boot CPU as ready */
+	cpuinfo.flags |= CPUFLG_READY;
+	cpu_ready_mask |= (1 << 0);
 
 	/* Tell the other CPU's to start up.  */
 	go_smp_cpus = 1;
 
-	/* OK, we're done. */
-	cpuinfo.flags |= CPUFLG_READY;
 	printf("\n");
 }
 #endif /* MULTIPROCESSOR */
@@ -664,6 +669,9 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		return;
 	}
 
+	/* Mask any CPUs that are not ready */
+	cpuset &= cpu_ready_mask;
+
 	/* prevent interrupts that grab the kernel lock */
 	s = splsched();
 #ifdef DEBUG
@@ -685,11 +693,12 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || (cpuset & (1 << cpi->ci_cpuid)) == 0)
+		/* Note: n == cpi->ci_cpuid */
+		if ((cpuset & (1 << n)) == 0)
 			continue;
 
 		cpi->msg.tag = XPMSG_FUNC;
-		cpi->flags &= ~CPUFLG_GOTMSG;
+		cpi->msg.complete = 0;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
 		p->arg0 = arg0;
@@ -723,10 +732,10 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
 
-			if (cpi == NULL || (cpuset & (1 << cpi->ci_cpuid)) == 0)
+			if ((cpuset & (1 << n)) == 0)
 				continue;
 
-			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
+			if (cpi->msg.complete == 0) {
 				if (i < 0) {
 					printf_nolog(" cpu%d", cpi->ci_cpuid);
 				} else {
