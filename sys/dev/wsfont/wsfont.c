@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: wsfont.c,v 1.8 1999/11/02 10:25:23 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.8 1999/11/02 10:25:23 takemura Exp $");
 
 #include "opt_wsfont.h"
 
@@ -66,6 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $");
 #ifdef FONT_LUCIDA16x29
 #define HAVE_FONT 1
 #include <dev/wsfont/lucida16x29.h>
+#endif
+
+#ifdef FONT_VT220L8x8
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220l8x8.h>
+#endif
+
+#ifdef FONT_VT220L8x10
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220l8x10.h>
 #endif
 
 /* Make sure we always have at least one font. */
@@ -112,6 +122,12 @@ static struct font *list, builtin_fonts[] = {
 #endif
 #ifdef FONT_QVSS8x15
 	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_R2L, WSFONT_L2R },
+#endif
+#ifdef FONT_VT220L8x8
+	{ NULL, NULL, &vt220l8x8, 0, 7, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+#endif
+#ifdef FONT_VT220L8x10
+	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
 #endif
 	{ NULL, NULL, NULL, 0, WSFONT_L2R, WSFONT_L2R },
 };
