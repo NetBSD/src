@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ioasic.c,v 1.3 1996/10/13 03:39:30 christos Exp $	*/
+/*	$NetBSD: dc_ioasic.c,v 1.4 1996/10/14 17:15:42 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -46,16 +46,13 @@ dc_ioasic_consinit(dev)
 	dev_t dev;
 {
 
-#if defined(DEBUG)
+#if defined(DEBUG) && 0
 	printf("dc_ioasic(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
 	       MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ));
 	DELAY(100000);
 #endif
-
-#if 0
 	dc_consinit(dev, (void *)MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ));
-#endif
 	return(1);
 }
 
