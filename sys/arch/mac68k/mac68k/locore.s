@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.18 1994/07/07 00:27:14 briggs Exp $
+ *	$Id: locore.s,v 1.19 1994/07/07 01:46:44 briggs Exp $
  */
 
 #include "assym.s"
@@ -690,6 +690,7 @@ _lev7intr:
  */
 	.comm	_ssir,1
 	.globl	_astpending
+	.globl	rei
 rei:
 #ifdef STACKCHECK
 	tstl	_panicstr		| have we paniced?
