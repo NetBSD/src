@@ -1,4 +1,4 @@
-/*	$NetBSD: auto-host.h,v 1.2 1998/10/14 01:48:43 matt Exp $	*/
+/*	$NetBSD: auto-host.h,v 1.3 1998/10/14 16:53:43 tv Exp $	*/
 
 /* auto-host.h.  Generated automatically by configure.  */
 /* config.in.  Generated automatically from configure.in by autoheader.  */
@@ -181,7 +181,7 @@
 #define HAVE_SYS_FILE_H 1
 
 /* Define if you have the <sys/param.h> header file.  */
-/* #undef HAVE_SYS_PARAM_H */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define if you have the <sys/resource.h> header file.  */
 #define HAVE_SYS_RESOURCE_H 1
