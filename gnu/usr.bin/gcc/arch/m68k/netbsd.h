@@ -59,3 +59,35 @@
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 0
+
+/* Finalize the trampoline by flushing the insn cache.  */
+
+#undef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)					\
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__cachectl"),		\
+		     0, VOIDmode, 2, TRAMP, Pmode,			\
+		     GEN_INT(TRAMPOLINE_SIZE), SImode);
+
+#undef TRANSFER_FROM_TRAMPOLINE
+#define TRANSFER_FROM_TRAMPOLINE				\
+asm (								\
+	GLOBAL_ASM_OP "  ___cachectl;				\
+___cachectl:							\
+	movel sp@(4),a1;					\
+	movel sp@(8),d1;					\
+	movel #0x80000004,d0;					\
+	trap #12;						\
+	rts");							\
+								\
+void								\
+__transfer_from_trampoline ()					\
+{								\
+  register char *a0 asm ("%a0");				\
+  asm (GLOBAL_ASM_OP " ___trampoline");				\
+  asm ("___trampoline:");					\
+  asm volatile ("move%.l %0,%@" : : "m" (a0[22]));		\
+  asm volatile ("move%.l %1,%0" : "=a" (a0) : "m" (a0[18]));	\
+  asm ("rts":);							\
+}
+
+

@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.27 1997/10/22 12:56:54 is Exp $
+#	$NetBSD: gcc2netbsd,v 1.28 1997/10/24 21:25:46 is Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -21,6 +21,7 @@
 #  Updated May 13, 1997 for gcc-2.7.2.1
 #  Updated May 14, 1997 for gcc-2.7.2.2
 #  Updated Oct 21, 1997 to complete objc-support (Ignatios Souvatzis)
+#  Updated Oct 24, 1997 to fix the m68k trampolines (Ignatios Souvatzis)
 #
 #  This is currently updated for gcc-2.7.2.2.  Newer versions of gcc
 #	should have this script and related files updated.
@@ -1349,8 +1350,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
     a different assembler syntax.  wilson@cygnus.com says # is right.  */
 %% end patch
 %% patch arch/m68k
---- gcc/arch/m68k/m68k.h	Tue May 13 11:47:26 1997
-+++ gcc.current/arch/m68k/m68k.h	Tue May 13 09:22:49 1997
+diff -u /usr/local/src/gcc-2.7.2.2/config/m68k/m68k.h gcc/arch/m68k/m68k.h
+--- /usr/local/src/gcc-2.7.2.2/config/m68k/m68k.h	Wed Oct 22 10:02:52 1997
++++ gcc/arch/m68k/m68k.h	Fri Oct 24 22:56:25 1997
 @@ -90,9 +90,17 @@
     run on a 68030 and 68881/2. */
  #define TARGET_68040 (target_flags & 01400)
@@ -1401,8 +1403,101 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
      { "68851", 0},	/* Affects *_SPEC and/or GAS.  */	\
      { "no-68851", 0},	/* Affects *_SPEC and/or GAS.  */	\
      { "68302", 0},	/* Affects *_SPEC and/or GAS.  */	\
---- gcc/arch/m68k/m68k.md	Tue May 13 11:47:26 1997
-+++ gcc.current/arch/m68k/m68k.md	Tue May 13 09:22:50 1997
+@@ -935,41 +944,36 @@
+    of a trampoline, leaving space for the variable parts.  */
+ 
+ /* On the 68k, the trampoline looks like this:
+-     mov  @#.,a0
+-     jsr  @#___trampoline
+-     jsr  @#___trampoline
+-     .long STATIC
+-     .long FUNCTION
+-The reason for having three jsr insns is so that an entire line
+-of the instruction cache is filled in a predictable way
+-that will always be the same.
++     movl #STATIC,a0
++     jmp  FUNCTION
+ 
+-We always use the assembler label ___trampoline
+-regardless of whether the system adds underscores.  */
++   WARNING: Targets that may run on 68040+ cpus must arrange for
++   the instruction cache to be flushed.  Previous incarnations of
++   the m68k trampoline code attempted to get around this by either
++   using an out-of-line transfer function or pc-relative data, but
++   the fact remains that the code to jump to the transfer function
++   or the code to load the pc-relative data needs to be flushed
++   just as much as the "variable" portion of the trampoline.  
++   Recognizing that a cache flush is going to be required anyway,
++   dispense with such notions and build a smaller trampoline.  */
+ 
+-#define TRAMPOLINE_TEMPLATE(FILE)					\
+-{									\
+-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x207c));	\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4eb9));	\
+-  ASM_OUTPUT_INT (FILE, gen_rtx (SYMBOL_REF, SImode, "*___trampoline"));\
+-  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4eb9));	\
+-  ASM_OUTPUT_INT (FILE, gen_rtx (SYMBOL_REF, SImode, "*___trampoline"));\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-  ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
+-}
++/* Since more instructions are required to move a template into
++   place than to create it on the spot, don't use a template.  */
+ 
+ /* Length in units of the trampoline for entering a nested function.  */
+ 
+-#define TRAMPOLINE_SIZE 26
++#define TRAMPOLINE_SIZE 12
++
++/* Alignment required for a trampoline in bytes.  */
+ 
+-/* Alignment required for a trampoline.  16 is used to find the
+-   beginning of a line in the instruction cache.  */
++#define TRAMPOLINE_ALIGNMENT 2
+ 
+-#define TRAMPOLINE_ALIGN 16
++/* Targets redefine this to invoke code to either flush the cache,
++   or enable stack execution (or both).  */
++
++#ifndef FINALIZE_TRAMPOLINE
++#define FINALIZE_TRAMPOLINE(TRAMP)
++#endif
+ 
+ /* Emit RTL insns to initialize the variable parts of a trampoline.
+    FNADDR is an RTX for the address of the function's pure code.
+@@ -977,14 +981,22 @@
+ 
+ #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
+ {									\
+-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), TRAMP); \
+-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 18)), CXT); \
+-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 22)), FNADDR); \
++  emit_move_insn (gen_rtx (MEM, HImode, TRAMP), GEN_INT(0x207C));	\
++  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), CXT); \
++  emit_move_insn (gen_rtx (MEM, HImode, plus_constant (TRAMP, 6)),	\
++		  GEN_INT(0x4EF9));					\
++  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 8)), FNADDR); \
++  FINALIZE_TRAMPOLINE(TRAMP);						\
+ }
+ 
++#define TRAMPOLINE_TEMPLATE(x)
++
+ /* This is the library routine that is used
+    to transfer control from the trampoline
+-   to the actual nested function.  */
++   to the actual nested function.
++   It is defined for backward compatibility,
++   for linking with object code that used the old
++   trampoline definition.  */
+ 
+ /* A colon is used with no explicit operands
+    to cause the template string to be scanned for %-constructs.  */
+diff -u /usr/local/src/gcc-2.7.2.2/config/m68k/m68k.md gcc/arch/m68k/m68k.md
+--- /usr/local/src/gcc-2.7.2.2/config/m68k/m68k.md	Wed Oct 22 10:02:52 1997
++++ gcc/arch/m68k/m68k.md	Fri Mar 14 19:06:23 1997
 @@ -92,6 +92,16 @@
  ;;- into play by defining "%$" and "%&" to expand to "s" and "d" rather
  ;;- than "".
@@ -1597,8 +1692,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
      {
        int i = floating_exact_log2 (operands[2]);
        operands[2] = gen_rtx (CONST_INT, VOIDmode, i);
---- gcc/arch/m68k/netbsd.h	Tue May 13 11:47:26 1997
-+++ gcc.current/arch/m68k/netbsd.h	Tue May 13 09:22:51 1997
+diff -u /usr/local/src/gcc-2.7.2.2/config/m68k/netbsd.h gcc/arch/m68k/netbsd.h
+--- /usr/local/src/gcc-2.7.2.2/config/m68k/netbsd.h	Thu Sep 28 19:00:52 1995
++++ gcc/arch/m68k/netbsd.h	Fri Oct 24 22:56:25 1997
 @@ -15,9 +15,12 @@
  #undef CPP_SPEC
  #define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} %{posix:-D_POSIX_SOURCE}"
@@ -1613,18 +1709,50 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  
  /* Make gcc agree with <machine/ansi.h> */
  
-@@ -52,11 +55,6 @@
-    continuation back on).  */
+@@ -53,11 +56,38 @@
  
  #define DBX_CONTIN_CHAR '?'
--
+ 
 -/* Don't use the `xsfoo;' construct in DBX output; this system
 -   doesn't support it.  */
 -
 -#define DBX_NO_XREFS
- 
+-
  /* Don't default to pcc-struct-return, because gcc is the only compiler, and
     we want to retain compatibility with older gcc versions.  */
+ #define DEFAULT_PCC_STRUCT_RETURN 0
++
++/* Finalize the trampoline by flushing the insn cache.  */
++
++#undef FINALIZE_TRAMPOLINE
++#define FINALIZE_TRAMPOLINE(TRAMP)					\
++  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__cachectl"),		\
++		     0, VOIDmode, 2, TRAMP, Pmode,			\
++		     GEN_INT(TRAMPOLINE_SIZE), SImode);
++
++#undef TRANSFER_FROM_TRAMPOLINE
++#define TRANSFER_FROM_TRAMPOLINE				\
++asm (								\
++	GLOBAL_ASM_OP "  ___cachectl;				\
++___cachectl:							\
++	movel sp@(4),a1;					\
++	movel sp@(8),d1;					\
++	movel #0x80000004,d0;					\
++	trap #12;						\
++	rts");							\
++								\
++void								\
++__transfer_from_trampoline ()					\
++{								\
++  register char *a0 asm ("%a0");				\
++  asm (GLOBAL_ASM_OP " ___trampoline");				\
++  asm ("___trampoline:");					\
++  asm volatile ("move%.l %0,%@" : : "m" (a0[22]));		\
++  asm volatile ("move%.l %1,%0" : "=a" (a0) : "m" (a0[18]));	\
++  asm ("rts":);							\
++}
++
++
 %% end patch
 %% patch arch/mips
 --- gcc/arch/mips/mips.h	Tue May 13 11:47:32 1997
