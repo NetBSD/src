@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pager.c,v 1.6 1993/08/30 07:09:25 deraadt Exp $
+ *	$Id: vm_pager.c,v 1.7 1993/10/02 00:00:24 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -132,7 +132,7 @@ vm_pager_init()
  * Allocate an instance of a pager of the given type.
  */
 vm_pager_t
-vm_pager_allocate(type, handle, size, prot)
+vm_pager_allocate(type, handle, size, prot, off)
 	int type;
 	caddr_t handle;
 	vm_size_t size;
@@ -142,7 +142,7 @@ vm_pager_allocate(type, handle, size, prot)
 	struct pagerops *ops;
 
 	ops = (type == PG_DFLT) ? dfltpagerops : pagertab[type];
-	return((*ops->pgo_alloc)(handle, size, prot));
+	return((*ops->pgo_alloc)(handle, size, prot, off));
 }
 
 void
