@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.38 2001/11/15 07:03:31 lukem Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.39 2001/12/04 19:41:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38 2001/11/15 07:03:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2001/12/04 19:41:47 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -161,8 +161,13 @@ process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
 		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
 		    sizeof(sxmm->sv_ac[i].fp_bytes));
 	}
-
+#if 0
+	/*
+	 * Software-only word not provided by the userland fpreg
+	 * structure.
+	 */
 	sxmm->sv_ex_sw = s87->sv_ex_sw;
+#endif
 }
 
 int
