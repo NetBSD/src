@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.14 2003/08/07 10:04:38 agc Exp $	*/
+/*	$NetBSD: restore.c,v 1.15 2003/10/21 02:34:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: restore.c,v 1.14 2003/08/07 10:04:38 agc Exp $");
+__RCSID("$NetBSD: restore.c,v 1.15 2003/10/21 02:34:45 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,7 +471,7 @@ nodeupdates(name, ino, type)
 	 * for it, we discard the name knowing that it will be on the
 	 * next incremental tape.
 	 */
-	case NULL:
+	case 0:
 		fprintf(stderr, "%s: (inode %d) not found on tape\n",
 			name, ino);
 		break;
