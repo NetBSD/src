@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 01:49:57 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2002/01/07 04:06:52 minoura Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -57,7 +57,7 @@ $(BOOT): $(OBJS)
 	then echo '$(BOOT): first_kbyte exceeds the first killobyte'; exit 1; fi
 	@$(SIZE) $(BOOT).x
 	@if [ `(echo ibase=16; \
-		$(NM) $(BOOT).x | sed -n 's/D _edata/-$(BSS)/p' | tr a-f A-F) |\
+		$(NM) $(BOOT).x | sed -n 's/[AD] _edata/-$(BSS)/p' | tr a-f A-F) |\
 			bc` -gt 0 ];\
 	then	echo '$(BOOT): text+data is too large'; exit 1; fi
 	@cp $(BOOT).x s.x
