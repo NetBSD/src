@@ -1,0 +1,43 @@
+.\"	$NetBSD: hardware,v 1.1 2000/02/20 15:45:34 jun Exp $
+A H/PC machine contains a keyboard and a touch screen and
+generally has 8MB or more of RAM.  The port supports the HPC
+form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
+form factors.
+
+The following WindowsCE hardware is supported:
+.de section
+.	El
+.	Pp
+.	It Em \\$*
+.	br
+.	Bl -bullet -compact
+..
+.de item
+.	It
+\\$*
+..
+.Bl -tag -width Disks
+.	It Em CPUs:
+.	br
+.	Bl -bullet -compact 
+.		item VR4102-based: 
+.		item VR4111-based: 
+.		item VR4121-based: 
+.		item TX3912-based: 
+.		item TX3922-based: 
+.	section RS232 interfaces:
+.		item built in serial port (com).
+.	section Network interfaces:
+.		item PCMCIA ethernet card (ep/ne).
+.	section Displays:
+.		item LCD Display
+.	section Input devices:
+.		item Keyboard. 
+.		item TouchPad. 
+.	section Miscellaneous:
+.		item Battery-backed real-time clock.
+.	El
+.El
+.Pp
+.Bl -tag -width (***)
+.El
