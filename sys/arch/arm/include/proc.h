@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2.10.2 2002/08/13 02:17:54 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.10.3 2002/12/31 02:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,14 +40,12 @@
  */
 
 struct mdlwp {
-	struct trapframe *__spare0;
-	int		__spare1;
-	int		pmc_enabled;	/* bitfield of enabled counters */
-	void		*pmc_state;	/* port-specific pmc state */
+	int	md_dummy;		/* must have at least one member */
 };
 
 struct mdproc {
-	int	md_dummy;  /* Zero-sized structs are bad, apparently. */
+	int	pmc_enabled;		/* bitfield of enabled counters */
+	void	*pmc_state;		/* port-specific pmc state */
 };
 
-#endif
+#endif /* _ARM32_PROC_H_ */
