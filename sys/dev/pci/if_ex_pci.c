@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.10 2000/01/13 23:26:35 mycroft Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.11 2000/03/23 22:23:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,8 @@ ex_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const struct ex_pci_product *epp;
 	const char *intrstr = NULL;
-	int rev, pmode;
+	int rev, pmreg;
+	pcireg_t reg;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -221,9 +222,9 @@ ex_pci_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed (BIOS bugs) */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, PCI_POWERCTL) & 0x3;
-		if (pmode == 3) {
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
+		if (reg == 3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -232,10 +233,10 @@ ex_pci_attach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		if (pmode != 0) {
+		if (reg != 0) {
 			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, PCI_POWERCTL, 0);
+			    sc->sc_dev.dv_xname, reg);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
 
