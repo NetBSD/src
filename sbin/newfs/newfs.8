@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.24.8.1 2001/04/04 16:29:53 he Exp $
+.\"	$NetBSD: newfs.8,v 1.24.8.2 2001/11/24 21:46:58 he Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .Dd May 6, 1998
 .Dt NEWFS 8
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm newfs ,
 .Nm mount_mfs
@@ -82,9 +82,7 @@
 .Ar special node
 .Sh DESCRIPTION
 .Nm
-replaces the more obtuse
-mkfs
-program.
+is used to initialize and clear file systems before first use.
 Before running
 .Nm
 or
@@ -119,7 +117,7 @@ If the
 flag is specified (see below), the special file is unused.
 Otherwise, it is only used to read the disk label which provides
 a set of configuration parameters for the memory based file system.
-The special file is typically that of the primary swap area, since
+The special file is typically that of the first swap area, since
 that is where the file system will be backed up when free memory
 gets low and the memory supporting the file system has to be paged.
 If the keyword ``swap'' is used instead of a special file name,
@@ -131,7 +129,7 @@ on a machine without any disks).
 The following options define the general layout policies.
 .Bl -tag -width Fl
 .It Fl B
-specify the metadata byte order of the filesystem to be created.
+Specify the metadata byte order of the filesystem to be created.
 Valid byte orders are `be' and `le'.
 If no byte order is specified, the filesystem is created in host
 byte order.
@@ -207,7 +205,11 @@ See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl s Ar size
-The size of the file system in sectors.
+The size of the file system in sectors.  For
+.Nm mount_mfs
+an
+.Sq m
+suffix will be interpreted as a number of megabytes.
 .El
 .Pp
 The following options override the standard sizes for the disk geometry.
