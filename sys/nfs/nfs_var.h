@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.4 1996/09/01 23:49:04 mycroft Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.5 1996/10/25 23:14:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -88,17 +88,17 @@ int nfs_writerpc __P((struct vnode *, struct uio *, struct ucred *, int *,
 int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *));
 int nfs_removeit __P((struct sillyrename *));
-int nfs_removerpc __P((struct vnode *, char *, int, struct ucred *,
+int nfs_removerpc __P((struct vnode *, const char *, int, struct ucred *,
 		       struct proc *));
 int nfs_renameit __P((struct vnode *, struct componentname *,
 		      struct sillyrename *));
-int nfs_renamerpc __P((struct vnode *, char *, int, struct vnode *, char *, int,
-		       struct ucred *, struct proc *));
+int nfs_renamerpc __P((struct vnode *, const char *, int, struct vnode *,
+		       const char *, int, struct ucred *, struct proc *));
 int nfs_readdirrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_readdirplusrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
-int nfs_lookitup __P((struct vnode *, char *, int, struct ucred *,
+int nfs_lookitup __P((struct vnode *, const char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
 int nfs_commit __P((struct vnode *, u_quad_t, int, struct ucred *,
 		    struct proc *));
@@ -228,7 +228,7 @@ int nfsm_mbuftouio __P((struct mbuf **, struct uio *, int, caddr_t *));
 int nfsm_uiotombuf __P((struct uio *, struct mbuf **, int, caddr_t *));
 int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
-int nfsm_strtmbuf __P((struct mbuf **, char **, char *, long));
+int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
 void nfs_init __P((void));
 int nfs_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *));

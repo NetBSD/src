@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.5 1996/10/12 02:12:55 thorpej Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.6 1996/10/25 23:14:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -130,9 +130,7 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 		 * root directory and never finding it, because "/" resolves
 		 * to the emulation root directory. This is expensive :-(
 		 */
-		/* XXX: prototype should have const here for NDINIT */
-		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, 
-		       (char *) prefix, p);
+		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, prefix, p);
 
 		if ((error = namei(&ndroot)) != 0)
 			goto bad2;
