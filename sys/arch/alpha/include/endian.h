@@ -1,4 +1,4 @@
-/* $NetBSD: endian.h,v 1.5 1997/10/09 15:42:19 bouyer Exp $ */
+/* $NetBSD: endian.h,v 1.6 1998/07/31 15:07:41 mycroft Exp $ */
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -86,10 +86,10 @@ __END_DECLS
 
 #else
 
-#define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
-#define	NTOHS(x)	(x) = ntohs((in_port_t)x)
-#define	HTONL(x)	(x) = htonl((in_addr_t)x)
-#define	HTONS(x)	(x) = htons((in_port_t)x)
+#define	NTOHL(x)	(x) = ntohl((in_addr_t)(x))
+#define	NTOHS(x)	(x) = ntohs((in_port_t)(x))
+#define	HTONL(x)	(x) = htonl((in_addr_t)(x))
+#define	HTONS(x)	(x) = htons((in_port_t)(x))
 #endif
 #endif /* !_POSIX_SOURCE */
 #endif /* !_ENDIAN_H_ */
