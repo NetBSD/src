@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.7 1996/03/17 11:50:14 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.8 1996/03/17 21:12:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -795,7 +795,7 @@ adddev(name, at, loclist, flags)
 		 *
 		 * (1) If we're attached to an attribute, then we don't need
 		 *     look at the parent base device to see what attributes
-		 *     it has, and make sure that we can attach to them.
+		 *     it has, and make sure that we can attach to them.    
 		 *
 		 * (2) If we're attached to a real device (i.e. named in
 		 *     the config file), we want to remember that so that
@@ -811,37 +811,39 @@ adddev(name, at, loclist, flags)
 		/* Figure out parent's devbase, to satisfy case (3). */
 		ab = ht_lookup(devbasetab, cp);
 
-		/* Are we an attribute?  Case (1). */
-		if ((attr = ht_lookup(attrtab, cp)) == NULL) {
-			/*
-			 * A real, non-attribute device was named.  Case (2).
-			 *
-			 * Have to work a bit harder to see whether we have
-			 * something like "tg0 at esp0" (where esp is merely
-			 * not an attribute) or "tg0 at nonesuch0" (where
-			 * nonesuch is not even a device).
-			 */
-			if (ab == NULL) {
-				error("%s at %s: `%s' unknown",
-				    name, at, atbuf);
-				goto bad;
-			}
+		/* Find out if it's an attribute. */
+		attr = ht_lookup(attrtab, cp);
 
-			/*
-			 * See if the named parent carries an attribute
-			 * that allows it to supervise device ib.
-			 */
-			for (nv = ab->d_attrs; nv != NULL; nv = nv->nv_next) {
-				attr = nv->nv_ptr;
-				if (onlist(attr->a_devs, ib))
-					goto findattachment;
-			}
-			attr = &errattr;/* now onlist below will fail */
-		}
-		if (!onlist(attr->a_devs, ib)) {
-			error("%s's cannot attach to %s's", ib->d_name, atbuf);
+		/* Make sure we're _really_ attached to the attr.  Case (1). */
+		if (attr != NULL && onlist(attr->a_devs, ib))
+			goto findattachment;
+
+		/*
+		 * Else a real device, and not just an attribute.  Case (2).
+		 *
+		 * Have to work a bit harder to see whether we have
+		 * something like "tg0 at esp0" (where esp is merely
+		 * not an attribute) or "tg0 at nonesuch0" (where
+		 * nonesuch is not even a device).
+		 */
+		if (ab == NULL) {
+			error("%s at %s: `%s' unknown",
+			    name, at, atbuf);
 			goto bad;
 		}
+
+		/*
+		 * See if the named parent carries an attribute
+		 * that allows it to supervise device ib.
+		 */
+		for (nv = ab->d_attrs; nv != NULL; nv = nv->nv_next) {
+			attr = nv->nv_ptr;
+			if (onlist(attr->a_devs, ib))
+				goto findattachment;
+		}
+		error("%s's cannot attach to %s's", ib->d_name, atbuf);
+		goto bad;
+
 findattachment:
 		/* find out which attachment it uses */
 		hit = 0;
