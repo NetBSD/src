@@ -1,4 +1,4 @@
-.\"	$NetBSD: semget.2,v 1.9 2000/12/12 16:47:05 briggs Exp $	
+.\"	$NetBSD: semget.2,v 1.10 2001/09/16 01:39:02 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -49,7 +49,7 @@ system call returns the semaphore identifier associated with
 .Pp
 A new set containing
 .Fa nsems
-semaphores is created if either 
+semaphores is created if either
 .Fa key
 is equal to
 .Dv IPC_PRIVATE ,
@@ -67,7 +67,7 @@ structure, see
 .Xr semctl 2 )
 is initialized as follows:
 .Bl -bullet
-.It 
+.It
 .Va sem_perm.cuid
 and
 .Va sem_perm.uid

@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.12 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: readlink.2,v 1.13 2001/09/16 01:39:02 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,9 +70,9 @@ will fail if:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
