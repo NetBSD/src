@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.14 2002/01/31 11:18:07 uwe Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.15 2002/02/08 14:55:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.14 2002/01/31 11:18:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.15 2002/02/08 14:55:23 uch Exp $");
 
 #include "opt_rasops.h"
 
@@ -200,7 +200,11 @@ rasops8_makestamp(ri, attr)
 		stamp[i] |= ((i & 4 ? fg : bg) << 16);
 		stamp[i] |= ((i & 8 ? fg : bg) << 24);
 #endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+		if ((ri->ri_flg & RI_BSWAP) == 0)
+#else
 		if ((ri->ri_flg & RI_BSWAP) != 0)
+#endif
 			stamp[i] = bswap32(stamp[i]);
 	}
 }
