@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.10 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.pmax,v 1.11 2003/12/13 23:04:37 ad Exp $
 #
 # Device majors for pmax
 #
@@ -19,7 +19,9 @@ device-major	bpf		char 12			bpfilter
 
 device-major	dtop		char 15			dtop
 device-major	dc		char 16			dc
+device-major	dz		char 16			dz
 device-major	scc		char 17			scc
+device-major	zstty		char 17			zstty
 
 device-major	pts_ultrix	char 20			pty
 device-major	ptc_ultrix	char 21			pty
@@ -37,7 +39,9 @@ device-major	rz		char 56  block 21	rz
 device-major	rcons		char 85			rasterconsole
 device-major	fb		char 86			fb
 device-major	ccd		char 87  block 24	ccd
-
+device-major	wsdisplay	char 88			wsdisplay
+device-major	wskbd		char 89			wskbd
+device-major	wsmouse		char 90			wsmouse
 device-major	ipl		char 91			ipfilter
 device-major	rnd		char 92			rnd
 device-major	tun		char 93			tun
@@ -45,10 +49,12 @@ device-major	lkm		char 94			lkm
 device-major	scsibus		char 95			scsibus
 device-major	raid		char 96  block 32	raid
 device-major	md		char 97  block 17	md
-device-major	px		char 98			px
+device-major	px		char 98			px & !stic
+device-major	stic		char 98			stic
 device-major	audio		char 99			audio
 device-major	clockctl	char 100		clockctl
-
+device-major	wsmux		char 101		wsmux
+device-major	wsfont		char 102		wsfont
 device-major	systrace	char 103		systrace
 device-major	cgd		char 104  block 33	cgd
 device-major	ksyms		char 105		ksyms

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.38 2003/08/07 16:29:13 agc Exp $ */
+/* $NetBSD: dec_3max.c,v 1.39 2003/12/13 23:04:38 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,25 +106,36 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.38 2003/08/07 16:29:13 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.39 2003/12/13 23:04:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include <dev/tc/tcvar.h>		/* tc_addr_t */
+
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
-#include <pmax/dev/dcvar.h>
 
+#ifdef WSCONS
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
+#include <dev/dec/dzkbdvar.h>
+#include <pmax/pmax/cons.h>
+#include "wsdisplay.h"
+#else
+#include <pmax/dev/dcvar.h>
 #include "rasterconsole.h"
+#endif
 
 void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
@@ -204,7 +215,13 @@ dec_3max_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0
+#if NWSDISPLAY > 0
+ 		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
+			dz_ibus_cnsetup(KN02_SYS_DZ);
+			dzkbd_cnattach(NULL);
+ 			return;
+ 		}
+#elif NRASTERCONSOLE > 0
 		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
 			dckbd_cnattach(KN02_SYS_DZ);
 			return;
@@ -221,7 +238,12 @@ dec_3max_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
+#ifdef WSCONS
+	dz_ibus_cnsetup(KN02_SYS_DZ);
+	dz_ibus_cnattach(kbd);
+#else
 	dc_cnattach(KN02_SYS_DZ, kbd);
+#endif
 }
 
 static const struct {

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $ */
+/* $NetBSD: dec_5100.c,v 1.34 2003/12/13 23:04:38 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.34 2003/12/13 23:04:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,19 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $"
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include <dev/tc/tcvar.h>		/* tc_addr_t */
+
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
-#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
+
+#ifdef WSCONS
+#include <pmax/pmax/cons.h>
+#else
+#include <pmax/dev/dcvar.h>
+#endif
 
 void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
@@ -114,7 +121,12 @@ dec_5100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
+#ifdef WSCONS
+	dz_ibus_cnsetup(KN230_SYS_DZ0);
+	dz_ibus_cnattach(0);
+#else
 	dc_cnattach(KN230_SYS_DZ0, 0);
+#endif
 }
 
 static void
