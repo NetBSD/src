@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.29 1998/12/09 08:47:19 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.30 1999/01/14 04:47:18 ross Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -355,12 +355,13 @@ AGAIN:
 
 #ifdef BHADEBUG
 		if (bha_debug) {
-			u_char *cp = &ccb->scsi_cmd;
+			struct scsi_generic *cmd = &ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
-			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			    cmd->opcode, cmd->bytes[0], cmd->bytes[1],
+			    cmd->bytes[2], cmd->bytes[3], cmd->bytes[4]);
+			printf("stat %x for mbi addr = 0x%p, ",
 			    wmbi->stat, wmbi);
-			printf("ccb addr = 0x%x\n", ccb);
+			printf("ccb addr = %p\n", ccb);
 		}
 #endif /* BHADEBUG */
 
