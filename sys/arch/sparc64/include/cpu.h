@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2002/02/09 04:50:13 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.31 2002/05/14 21:21:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,22 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
+/*
+ * XXX Disable CLKF_BASEPRI() for now.  If we use a counter-timer for
+ * the clock, the interrupt remains blocked until the interrupt handler
+ * returns and we write to the clear interrupt register.  If we use 
+ * %tick for the clock, we could get multiple interrupts, but the 
+ * currently enabled INTR_INTERLOCK will prevent the interrupt from being
+ * posted twice anyway.
+ * 
+ * Switching to %tick for all machines and disabling INTR_INTERLOCK
+ * in locore.s would allow us to take advantage of CLKF_BASEPRI().
+ */
+#if 0
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
+#else
+#define	CLKF_BASEPRI(framep)	(0)
+#endif
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 /* Since some files in sys/kern do not know BIAS, I'm using 0x7ff here */
 #define	CLKF_INTR(framep)						\
