@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.15 1995/09/04 02:50:57 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.16 1996/03/29 02:06:41 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -32,9 +32,9 @@
 
 #include <sys/param.h>
 #include <machine/adbsys.h>
+#include <machine/viareg.h>
 
 #include "adbvar.h"
-#include "../mac68k/via.h"
 #include "../mac68k/macrom.h"
 
 /* from adb.c */
