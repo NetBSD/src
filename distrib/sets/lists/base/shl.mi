@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.23 1999/05/11 20:16:32 veego Exp $
+# $NetBSD: shl.mi,v 1.24 1999/05/11 21:32:05 veego Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -21,6 +21,7 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
+./usr/lib/libusb.so.0.0
 ./usr/lib/libutil.so.5.0
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.1
