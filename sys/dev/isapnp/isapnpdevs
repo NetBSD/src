@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.3 1998/08/07 00:53:23 matt Exp $
+$NetBSD: isapnpdevs,v 1.4 1998/08/15 19:26:18 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -62,6 +62,7 @@ devlogic	com	BRI1400		Boca 33.6 PnP
 devlogic	com	BRIB400		Boca 56k PnP
 devlogic	com	ROK0010		Rockwell ?
 devlogic	com	USR2070		USR Sportster 56k
+devlogic	com	ZTIF761		Zoom ComStar 33.6
 devcompat	com	PNP0500		Generic 8250/16450
 devcompat	com	PNP0501		Generic 16550A
 
