@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.20 1993/05/31 00:54:40 cgd Exp $
+ *	$Id: pccons.c,v 1.21 1993/06/16 02:57:20 mycroft Exp $
  */
 
 /*
@@ -62,6 +62,13 @@
 
 #include "pc.h"
 #if NPC > 0
+
+#ifndef BEEP_FREQ
+#define BEEP_FREQ 1500
+#endif
+#ifndef BEEP_TIME
+#define BEEP_TIME (hz/4)
+#endif
 
 extern u_short *Crtat;
 
@@ -396,10 +403,10 @@ pcioctl(dev, cmd, data, flag)
 		   integers. data[0] is the pitch in Hz and data[1]
 		   is the duration in msec.  */
 		if (data) {
-			sysbeep(1187500/ ((int*)data)[0],
-				((int*)data)[1] * hz/ 3000);
+			sysbeep(((int*)data)[0],
+				(((int*)data)[1] * hz)/ 3000);
 		} else {
-			sysbeep(0x31b, hz/4);
+			sysbeep(BEEP_FREQ, BEEP_TIME);
 		}
 		return (0);
 	}
@@ -920,7 +927,7 @@ static sputc(c, ka)
 			}
 		} else {
 			if (c == 7)
-				sysbeep(0x31b, hz/4);
+				sysbeep(BEEP_FREQ, BEEP_TIME);
 			else {
 				if (vs.so) {
 					wrtchar(c, vs.so_at);
