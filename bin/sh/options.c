@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.30 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.31 2001/02/26 13:06:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.30 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.31 2001/02/26 13:06:43 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,8 +110,10 @@ procargs(argc, argv)
 			optlist[i].val = 0;
 	arg0 = argv[0];
 	if (sflag == 0 && minusc == NULL) {
-		commandname = arg0 = *argptr++;
-		setinputfile(commandname, 0);
+		commandname = argv[0];
+		arg0 = *argptr++;
+		setinputfile(arg0, 0);
+		commandname = arg0;
 	}
 	/* POSIX 1003.2: first arg after -c cmd is $0, remainder $1... */
 	if (argptr && minusc && *argptr)
