@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.11 1995/03/28 16:09:41 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.12 1995/04/10 07:33:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -159,6 +159,14 @@ kdwrite(dev, uio, flag)
 	struct tty *tp = kd_tty[unit];
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+int
+kdstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
 }
 
 int
