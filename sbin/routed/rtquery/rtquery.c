@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.10 1999/02/23 10:47:41 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.11 1999/08/19 05:12:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@ char copyright[] =
 static char sccsid[] __attribute__((unused))= "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.10 1999/02/23 10:47:41 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.11 1999/08/19 05:12:38 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -749,10 +749,10 @@ rip_input(struct sockaddr_in *from,
 		} else {
 			(void)sprintf(net_buf, "(af %#x) %d.%d.%d.%d",
 				      ntohs(n->n_family),
-				      (char)(n->n_dst >> 24),
-				      (char)(n->n_dst >> 16),
-				      (char)(n->n_dst >> 8),
-				      (char)n->n_dst);
+				      (unsigned char)(n->n_dst >> 24),
+				      (unsigned char)(n->n_dst >> 16),
+				      (unsigned char)(n->n_dst >> 8),
+				      (unsigned char)n->n_dst);
 		}
 
 		(void)printf("  %-18s metric %2d %-10s",
