@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.sparc,v 1.4 2000/09/29 18:06:25 fvdl Exp $
+# $NetBSD: obsolete.sparc,v 1.5 2002/05/07 12:49:40 lukem Exp $
 /usr/include/machine
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
@@ -52,3 +52,4 @@
 /usr/include/machine/vmparam.h
 /usr/include/machine/vuid_event.h
 /usr/include/sparc
+/usr/mdec/installboot
