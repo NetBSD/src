@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.44 2005/01/13 11:50:32 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.45 2005/02/11 02:12:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -230,9 +230,6 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
-
-#define	min_offset		header.end
-#define	max_offset		header.start
 };
 
 #if defined(_KERNEL)
@@ -525,8 +522,11 @@ do {									\
 /*
  *	Functions implemented as macros
  */
-#define		vm_map_min(map)		((map)->min_offset)
-#define		vm_map_max(map)		((map)->max_offset)
+#define		vm_map_min(map)		((map)->header.end)
+#define		vm_map_max(map)		((map)->header.start)
+#define		vm_map_setmin(map, v)	((map)->header.end = (v))
+#define		vm_map_setmax(map, v)	((map)->header.start = (v))
+
 #define		vm_map_pmap(map)	((map)->pmap)
 
 #endif /* _UVM_UVM_MAP_H_ */
