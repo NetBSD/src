@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.18 1997/09/16 16:45:28 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.19 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.18 1997/09/16 16:45:28 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.19 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,20 +47,24 @@ __RCSID("$NetBSD: pass5.c,v 1.18 1997/09/16 16:45:28 lukem Exp $");
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <err.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
 
+void print_bmap __P((u_char *,u_int32_t));
+
 void
 pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos = 0;
-	struct fs *fs = &sblock;
-	struct cg *cg = &cgrp;
+	struct fs *fs = sblock;
 	ufs_daddr_t dbase, dmax;
 	ufs_daddr_t d;
 	long i, j;
@@ -70,6 +74,11 @@ pass5()
 	char buf[MAXBSIZE];
 	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
+	struct cg *cg;
+
+	cg = cgrp = malloc(fs->fs_cgsize);
+	if (cg == NULL)
+		errx(EEXIT, "cannot allocate space for cylinder group");
 
 	statemap[WINO] = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
@@ -173,8 +182,13 @@ pass5()
 		setbmap(i);
 	for (c = 0; c < fs->fs_ncg; c++) {
 		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
-		if (!cg_chkmagic(cg))
+		memcpy(cg, cgblk.b_un.b_cg, fs->fs_cgsize);
+		if((doswap && !needswap) || (!doswap && needswap))
+			swap_cg(cgblk.b_un.b_cg, cg);
+		if (!cg_chkmagic(cg, 0))
 			pfatal("CG %d: BAD MAGIC NUMBER\n", c);
+		if(doswap)
+			cgdirty();
 		dbase = cgbase(fs, c);
 		dmax = dbase + fs->fs_fpg;
 		if (dmax > fs->fs_size)
@@ -205,7 +219,7 @@ pass5()
 		else
 			newcg->cg_irotor = 0;
 		memset(&newcg->cg_frsum[0], 0, sizeof newcg->cg_frsum);
-		memset(&cg_blktot(newcg)[0], 0,
+		memset(&cg_blktot(newcg, 0)[0], 0,
 		      (size_t)(sumsize + mapsize));
 		if (fs->fs_postblformat == FS_42POSTBLFMT)
 			ocg->cg_magic = CG_MAGIC;
@@ -225,7 +239,7 @@ pass5()
 			case FSTATE:
 			case FCLEAR:
 				newcg->cg_cs.cs_nifree--;
-				setbit(cg_inosused(newcg), i);
+				setbit(cg_inosused(newcg, 0), i);
 				break;
 
 			default:
@@ -237,7 +251,7 @@ pass5()
 		}
 		if (c == 0)
 			for (i = 0; i < ROOTINO; i++) {
-				setbit(cg_inosused(newcg), i);
+				setbit(cg_inosused(newcg, 0), i);
 				newcg->cg_cs.cs_nifree--;
 			}
 		for (i = 0, d = dbase;
@@ -247,26 +261,26 @@ pass5()
 			for (j = 0; j < fs->fs_frag; j++) {
 				if (testbmap(d + j))
 					continue;
-				setbit(cg_blksfree(newcg), i + j);
+				setbit(cg_blksfree(newcg, 0), i + j);
 				frags++;
 			}
 			if (frags == fs->fs_frag) {
 				newcg->cg_cs.cs_nbfree++;
 				j = cbtocylno(fs, i);
-				cg_blktot(newcg)[j]++;
-				cg_blks(fs, newcg, j)[cbtorpos(fs, i)]++;
+				cg_blktot(newcg, 0)[j]++;
+				cg_blks(fs, newcg, j, 0)[cbtorpos(fs, i)]++;
 				if (fs->fs_contigsumsize > 0)
-					setbit(cg_clustersfree(newcg),
+					setbit(cg_clustersfree(newcg, 0),
 					    i / fs->fs_frag);
 			} else if (frags > 0) {
 				newcg->cg_cs.cs_nffree += frags;
-				blk = blkmap(fs, cg_blksfree(newcg), i);
-				ffs_fragacct(fs, blk, newcg->cg_frsum, 1);
+				blk = blkmap(fs, cg_blksfree(newcg, 0), i);
+				ffs_fragacct(fs, blk, newcg->cg_frsum, 1, 0);
 			}
 		}
 		if (fs->fs_contigsumsize > 0) {
-			int32_t *sump = cg_clustersum(newcg);
-			u_char *mapp = cg_clustersfree(newcg);
+			int32_t *sump = cg_clustersum(newcg, 0);
+			u_char *mapp = cg_clustersfree(newcg, 0);
 			int map = *mapp++;
 			int bit = 1;
 			int run = 0;
@@ -298,40 +312,66 @@ pass5()
 		cstotal.cs_nifree += newcg->cg_cs.cs_nifree;
 		cstotal.cs_ndir += newcg->cg_cs.cs_ndir;
 		cs = &fs->fs_cs(fs, c);
-		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0 &&
-		    dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
+		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0)
+			if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memmove(cs, &newcg->cg_cs, sizeof *cs);
 			sbdirty();
-		}
+			} else
+				markclean = 0;
 		if (doinglevel1) {
 			memmove(cg, newcg, (size_t)fs->fs_cgsize);
 			cgdirty();
 			continue;
 		}
-		if (memcmp(cg_inosused(newcg),
-			 cg_inosused(cg), mapsize) != 0 &&
-		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
-			memmove(cg_inosused(cg), cg_inosused(newcg),
+		if (memcmp(cg_inosused(newcg, 0), cg_inosused(cg, 0), mapsize) != 0) {
+			if (debug) {
+				printf("newcg map:\n");
+				print_bmap(cg_inosused(newcg, 0), mapsize);
+				printf("\ncg map:\n");
+				print_bmap(cg_inosused(cg, 0), mapsize);
+			}
+		    if (dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
+			memmove(cg_inosused(cg, 0), cg_inosused(newcg, 0),
 			      (size_t)mapsize);
 			cgdirty();
+			} else
+				markclean = 0;
 		}
-		if ((memcmp(newcg, cg, basesize) != 0 ||
-		     memcmp(&cg_blktot(newcg)[0],
-			  &cg_blktot(cg)[0], sumsize) != 0) &&
-		    dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
+		if (memcmp(newcg, cg, basesize) != 0 ||
+		     memcmp(&cg_blktot(newcg, 0)[0],
+				&cg_blktot(cg, 0)[0], sumsize) != 0) 
+		    if (dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 			memmove(cg, newcg, (size_t)basesize);
-			memmove(&cg_blktot(cg)[0],
-			       &cg_blktot(newcg)[0], (size_t)sumsize);
+			memmove(&cg_blktot(cg, 0)[0],
+			       &cg_blktot(newcg, 0)[0], (size_t)sumsize);
 			cgdirty();
-		}
+			} else markclean = 0;
+
 	}
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0
-	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
+	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0)
+	    if(dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 		memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
 		fs->fs_ronly = 0;
 		fs->fs_fmod = 0;
 		sbdirty();
+		} else
+			markclean = 0;
+}
+
+void 
+print_bmap(map, size)
+	u_char *map;
+	u_int32_t size;
+{
+	int i, j;
+
+	i = 0;
+	while (i < size) {
+		printf("%u: ",i);
+		for (j = 0; j < 16; j++, i++)
+			printf("%2x ", (u_int)map[i] & 0xff);
+		printf("\n");
 	}
 }

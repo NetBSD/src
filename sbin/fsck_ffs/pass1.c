@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.20 1997/09/20 06:16:29 lukem Exp $	*/
+/*	$NetBSD: pass1.c,v 1.21 1998/03/18 17:01:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.20 1997/09/20 06:16:29 lukem Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.21 1998/03/18 17:01:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,17 +72,17 @@ pass1()
 	/*
 	 * Set file system reserved blocks in used block map.
 	 */
-	for (c = 0; c < sblock.fs_ncg; c++) {
-		cgd = cgdmin(&sblock, c);
+	for (c = 0; c < sblock->fs_ncg; c++) {
+		cgd = cgdmin(sblock, c);
 		if (c == 0)
-			i = cgbase(&sblock, c);
+			i = cgbase(sblock, c);
 		else
-			i = cgsblock(&sblock, c);
+			i = cgsblock(sblock, c);
 		for (; i < cgd; i++)
 			setbmap(i);
 	}
-	i = sblock.fs_csaddr;
-	cgd = i + howmany(sblock.fs_cssize, sblock.fs_fsize);
+	i = sblock->fs_csaddr;
+	cgd = i + howmany(sblock->fs_cssize, sblock->fs_fsize);
 	for (; i < cgd; i++)
 		setbmap(i);
 	/*
@@ -94,14 +94,15 @@ pass1()
 	inumber = 0;
 	n_files = n_blks = 0;
 	resetinodebuf();
-	for (c = 0; c < sblock.fs_ncg; c++) {
-		for (i = 0; i < sblock.fs_ipg; i++, inumber++) {
+	for (c = 0; c < sblock->fs_ncg; c++) {
+		for (i = 0; i < sblock->fs_ipg; i++, inumber++) {
 			if (inumber < ROOTINO)
 				continue;
 			checkinode(inumber, &idesc);
 		}
 	}
 	freeinodebuf();
+	do_blkswap = 0; /* has been done */
 }
 
 static void
@@ -113,10 +114,12 @@ checkinode(inumber, idesc)
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
+	u_int64_t size;
 	char symbuf[MAXSYMLINKLEN];
 
 	dp = getnextinode(inumber);
-	mode = dp->di_mode & IFMT;
+	mode = iswap16(dp->di_mode) & IFMT;
+	size = iswap64(dp->di_size);
 	if (mode == 0) {
 		if (memcmp(dp->di_db, zino.di_db,
 			NDADDR * sizeof(ufs_daddr_t)) ||
@@ -128,30 +131,32 @@ checkinode(inumber, idesc)
 				dp = ginode(inumber);
 				clearinode(dp);
 				inodirty();
-			}
+			} else
+				markclean = 0;
 		}
 		statemap[inumber] = USTATE;
 		return;
 	}
 	lastino = inumber;
 	if (/* dp->di_size < 0 || */
-	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size ||
-	    (mode == IFDIR && dp->di_size > MAXDIRSIZE)) {
+	    size + sblock->fs_bsize - 1 < size ||
+	    (mode == IFDIR && size > MAXDIRSIZE)) {
 		if (debug)
-			printf("bad size %qu:",(unsigned long long)dp->di_size);
+			printf("bad size %qu:",(unsigned long long)size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
 		dp = ginode(inumber);
-		dp->di_size = sblock.fs_fsize;
-		dp->di_mode = IFREG|0600;
+		dp->di_size = iswap64(sblock->fs_fsize);
+		size = sblock->fs_fsize;
+		dp->di_mode = iswap16(IFREG|0600);
 		inodirty();
 	}
-	ndb = howmany(dp->di_size, sblock.fs_bsize);
+	ndb = howmany(size, sblock->fs_bsize);
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %qu ndb %d:",
-				(unsigned long long)dp->di_size, ndb);
+				(unsigned long long)size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -165,20 +170,20 @@ checkinode(inumber, idesc)
 		 * conversion altogether.  - mycroft, 19MAY1994
 		 */
 		if (doinglevel2 &&
-		    dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN &&
+		    size > 0 && size < MAXSYMLINKLEN &&
 		    dp->di_blocks != 0) {
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(&sblock, dp->di_db[0]),
+			    fsbtodb(sblock, iswap32(dp->di_db[0])),
 			    (long)secsize) != 0)
 				errx(EEXIT, "cannot read symlink");
 			if (debug) {
-				symbuf[dp->di_size] = 0;
+				symbuf[size] = 0;
 				printf("convert symlink %u(%s) of size %qd\n",
 				    inumber, symbuf,
-				    (unsigned long long)dp->di_size);
+				    (unsigned long long)size);
 			}
 			dp = ginode(inumber);
-			memmove(dp->di_shortlink, symbuf, (long)dp->di_size);
+			memmove(dp->di_shortlink, symbuf, (long)size);
 			dp->di_blocks = 0;
 			inodirty();
 		}
@@ -186,13 +191,13 @@ checkinode(inumber, idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (dp->di_size < sblock.fs_maxsymlinklen ||
-		    (sblock.fs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(dp->di_size, sizeof(daddr_t));
+		if (size < sblock->fs_maxsymlinklen ||
+		    (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
+			ndb = howmany(size, sizeof(daddr_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(&sblock);
+					ndb *= NINDIR(sblock);
 				ndb += NDADDR;
 			}
 		}
@@ -200,25 +205,26 @@ checkinode(inumber, idesc)
 	for (j = ndb; j < NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
-				printf("bad direct addr: %d\n", dp->di_db[j]);
+				printf("bad direct addr: %d\n", iswap32(dp->di_db[j]));
 			goto unknown;
 		}
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(&sblock);
+		ndb /= NINDIR(sblock);
 	for (; j < NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
 				printf("bad indirect addr: %d\n",
-					dp->di_ib[j]);
+					iswap32(dp->di_ib[j]));
 			goto unknown;
 		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
-	lncntp[inumber] = dp->di_nlink;
-	if (dp->di_nlink <= 0) {
+	lncntp[inumber] = iswap16(dp->di_nlink);
+	if (lncntp[inumber] <= 0) {
 		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
+			markclean = 0;
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0)
 				exit(EEXIT);
@@ -229,7 +235,7 @@ checkinode(inumber, idesc)
 		}
 	}
 	if (mode == IFDIR) {
-		if (dp->di_size == 0)
+		if (size == 0)
 			statemap[inumber] = DCLEAR;
 		else
 			statemap[inumber] = DSTATE;
@@ -238,27 +244,30 @@ checkinode(inumber, idesc)
 		statemap[inumber] = FSTATE;
 	typemap[inumber] = IFTODT(mode);
 	if (doinglevel2 &&
-	    (dp->di_ouid != (u_short)-1 || dp->di_ogid != (u_short)-1)) {
+	    (iswap16(dp->di_ouid) != (u_short)-1 ||
+		iswap16(dp->di_ogid) != (u_short)-1)) {
 		dp = ginode(inumber);
-		dp->di_uid = dp->di_ouid;
-		dp->di_ouid = -1;
-		dp->di_gid = dp->di_ogid;
-		dp->di_ogid = -1;
+		dp->di_uid = iswap32(iswap16(dp->di_ouid));
+		dp->di_ouid = iswap16(-1);
+		dp->di_gid = iswap32(iswap16(dp->di_ogid));
+		dp->di_ogid = iswap16(-1);
 		inodirty();
 	}
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
-	idesc->id_entryno *= btodb(sblock.fs_fsize);
-	if (dp->di_blocks != idesc->id_entryno) {
+	idesc->id_entryno *= btodb(sblock->fs_fsize);
+	if (iswap32(dp->di_blocks) != idesc->id_entryno) {
 		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, dp->di_blocks, idesc->id_entryno);
+		    inumber, iswap32(dp->di_blocks), idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
-		else if (reply("CORRECT") == 0)
+		else if (reply("CORRECT") == 0) {
+			markclean = 0;
 			return;
+		}
 		dp = ginode(inumber);
-		dp->di_blocks = idesc->id_entryno;
+		dp->di_blocks = iswap32(idesc->id_entryno);
 		inodirty();
 	}
 	return;
@@ -270,7 +279,8 @@ unknown:
 		dp = ginode(inumber);
 		clearinode(dp);
 		inodirty();
-	}
+	} else
+		markclean = 0;
 }
 
 int
@@ -314,6 +324,7 @@ pass1check(idesc)
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
+				markclean = 0;
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0)
 					exit(EEXIT);

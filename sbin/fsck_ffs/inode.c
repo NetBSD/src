@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.26 1997/09/16 16:45:01 lukem Exp $	*/
+/*	$NetBSD: inode.c,v 1.27 1998/03/18 17:01:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.26 1997/09/16 16:45:01 lukem Exp $");
+__RCSID("$NetBSD: inode.c,v 1.27 1998/03/18 17:01:23 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: inode.c,v 1.26 1997/09/16 16:45:01 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 #ifndef SMALL
 
 #include <err.h>
@@ -73,38 +74,41 @@ ckinode(dp, idesc)
 	ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
-	u_int64_t remsize, sizepb;
+	u_int64_t sizepb;
+	int64_t remsize;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
 	idesc->id_entryno = 0;
-	idesc->id_filesize = dp->di_size;
-	mode = dp->di_mode & IFMT;
+	idesc->id_filesize = iswap64(dp->di_size);
+	mode = iswap16(dp->di_mode) & IFMT;
 	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
-	    (dp->di_size < sblock.fs_maxsymlinklen ||
-	     (sblock.fs_maxsymlinklen == 0 && dp->di_blocks == 0))))
+	    (idesc->id_filesize < sblock->fs_maxsymlinklen ||
+	     (sblock->fs_maxsymlinklen == 0 && dp->di_blocks == 0))))
 		return (KEEPON);
 	dino = *dp;
-	ndb = howmany(dino.di_size, sblock.fs_bsize);
+	ndb = howmany(iswap64(dino.di_size), sblock->fs_bsize);
 	for (ap = &dino.di_db[0]; ap < &dino.di_db[NDADDR]; ap++) {
-		if (--ndb == 0 && (offset = blkoff(&sblock, dino.di_size)) != 0)
+		if (--ndb == 0 &&
+			(offset = blkoff(sblock, iswap64(dino.di_size))) != 0)
 			idesc->id_numfrags =
-				numfrags(&sblock, fragroundup(&sblock, offset));
+				numfrags(sblock, fragroundup(sblock, offset));
 		else
-			idesc->id_numfrags = sblock.fs_frag;
+			idesc->id_numfrags = sblock->fs_frag;
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb >= 0) {
 				/* An empty block in a directory XXX */
+				markclean = 0;
 				getpathname(pathbuf, idesc->id_number,
 				    idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size = (ap - &dino.di_db[0]) *
-					    sblock.fs_bsize;
+					dp->di_size = iswap64((ap - &dino.di_db[0]) *
+					    sblock->fs_bsize);
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
@@ -113,7 +117,7 @@ ckinode(dp, idesc)
 			}
 			continue;
 		}
-		idesc->id_blkno = *ap;
+		idesc->id_blkno = iswap32(*ap);
 		if (idesc->id_type == ADDR)
 			ret = (*idesc->id_func)(idesc);
 		else
@@ -121,25 +125,26 @@ ckinode(dp, idesc)
 		if (ret & STOP)
 			return (ret);
 	}
-	idesc->id_numfrags = sblock.fs_frag;
-	remsize = dino.di_size - sblock.fs_bsize * NDADDR;
-	sizepb = sblock.fs_bsize;
+	idesc->id_numfrags = sblock->fs_frag;
+	remsize = iswap64(dino.di_size) - sblock->fs_bsize * NDADDR;
+	sizepb = sblock->fs_bsize;
 	for (ap = &dino.di_ib[0], n = 1; n <= NIADDR; ap++, n++) {
 		if (*ap) {
-			idesc->id_blkno = *ap;
+			idesc->id_blkno = iswap32(*ap);
 			ret = iblock(idesc, n, remsize);
 			if (ret & STOP)
 				return (ret);
 		} else {
 			if (idesc->id_type == DATA && remsize > 0) {
 				/* An empty block in a directory XXX */
+				markclean = 0;
 				getpathname(pathbuf, idesc->id_number,
 				    idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size -= remsize;
+					dp->di_size = iswap64(iswap64(dp->di_size) - remsize);
 					remsize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -149,7 +154,7 @@ ckinode(dp, idesc)
 				}
 			}
 		}
-		sizepb *= NINDIR(&sblock);
+		sizepb *= NINDIR(sblock);
 		remsize -= sizepb;
 	}
 	return (KEEPON);
@@ -178,16 +183,23 @@ iblock(idesc, ilevel, isize)
 		func = dirscan;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags))
 		return (SKIP);
-	bp = getdatablk(idesc->id_blkno, sblock.fs_bsize);
+	bp = getdatablk(idesc->id_blkno, sblock->fs_bsize);
 	ilevel--;
-	for (sizepb = sblock.fs_bsize, i = 0; i < ilevel; i++)
-		sizepb *= NINDIR(&sblock);
-	if (isize > sizepb * NINDIR(&sblock))
-		nif = NINDIR(&sblock);
+	for (sizepb = sblock->fs_bsize, i = 0; i < ilevel; i++)
+		sizepb *= NINDIR(sblock);
+	if (isize > sizepb * NINDIR(sblock))
+		nif = NINDIR(sblock);
 	else
 		nif = howmany(isize, sizepb);
-	if (idesc->id_func == pass1check && nif < NINDIR(&sblock)) {
-		aplim = &bp->b_un.b_indir[NINDIR(&sblock)];
+	if (do_blkswap) { /* swap byte order of the whole blk */
+		aplim = &bp->b_un.b_indir[nif];
+		for (ap = bp->b_un.b_indir; ap < aplim; ap++)
+			*ap = bswap32(*ap);
+		dirty(bp);
+		flush(fswritefd, bp);
+	}
+	if (idesc->id_func == pass1check && nif < NINDIR(sblock)) {
+		aplim = &bp->b_un.b_indir[NINDIR(sblock)];
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
@@ -196,14 +208,15 @@ iblock(idesc, ilevel, isize)
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
-			}
+			} else
+				markclean=  0;
 		}
 		flush(fswritefd, bp);
 	}
 	aplim = &bp->b_un.b_indir[nif];
 	for (ap = bp->b_un.b_indir; ap < aplim; ap++) {
 		if (*ap) {
-			idesc->id_blkno = *ap;
+			idesc->id_blkno = iswap32(*ap);
 			if (ilevel == 0)
 				n = (*func)(idesc);
 			else
@@ -215,13 +228,14 @@ iblock(idesc, ilevel, isize)
 		} else {
 			if (idesc->id_type == DATA && isize > 0) {
 				/* An empty block in a directory XXX */
+				markclean=  0;
 				getpathname(pathbuf, idesc->id_number,
 				    idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->di_size -= isize;
+					dp->di_size = iswap64(iswap64(dp->di_size) - isize);
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -251,24 +265,24 @@ chkrange(blk, cnt)
 
 	if ((unsigned)(blk + cnt) > maxfsblock)
 		return (1);
-	c = dtog(&sblock, blk);
-	if (blk < cgdmin(&sblock, c)) {
-		if ((blk + cnt) > cgsblock(&sblock, c)) {
+	c = dtog(sblock, blk);
+	if (blk < cgdmin(sblock, c)) {
+		if ((blk + cnt) > cgsblock(sblock, c)) {
 			if (debug) {
 				printf("blk %d < cgdmin %d;",
-				    blk, cgdmin(&sblock, c));
+				    blk, cgdmin(sblock, c));
 				printf(" blk + cnt %d > cgsbase %d\n",
-				    blk + cnt, cgsblock(&sblock, c));
+				    blk + cnt, cgsblock(sblock, c));
 			}
 			return (1);
 		}
 	} else {
-		if ((blk + cnt) > cgbase(&sblock, c+1)) {
+		if ((blk + cnt) > cgbase(sblock, c+1)) {
 			if (debug)  {
 				printf("blk %d >= cgdmin %d;",
-				    blk, cgdmin(&sblock, c));
-				printf(" blk + cnt %d > sblock.fs_fpg %d\n",
-				    blk+cnt, sblock.fs_fpg);
+				    blk, cgdmin(sblock, c));
+				printf(" blk + cnt %d > sblock->fs_fpg %d\n",
+				    blk+cnt, sblock->fs_fpg);
 			}
 			return (1);
 		}
@@ -288,14 +302,14 @@ ginode(inumber)
 	if (inumber < ROOTINO || inumber > maxino)
 		errx(EEXIT, "bad inode number %d to ginode", inumber);
 	if (startinum == 0 ||
-	    inumber < startinum || inumber >= startinum + INOPB(&sblock)) {
-		iblk = ino_to_fsba(&sblock, inumber);
+	    inumber < startinum || inumber >= startinum + INOPB(sblock)) {
+		iblk = ino_to_fsba(sblock, inumber);
 		if (pbp != 0)
 			pbp->b_flags &= ~B_INUSE;
-		pbp = getdatablk(iblk, sblock.fs_bsize);
-		startinum = (inumber / INOPB(&sblock)) * INOPB(&sblock);
+		pbp = getdatablk(iblk, sblock->fs_bsize);
+		startinum = (inumber / INOPB(sblock)) * INOPB(sblock);
 	}
-	return (&pbp->b_un.b_dinode[inumber % INOPB(&sblock)]);
+	return (&pbp->b_un.b_dinode[inumber % INOPB(sblock)]);
 }
 
 /*
@@ -318,7 +332,7 @@ getnextinode(inumber)
 		errx(EEXIT, "bad inode number %d to nextinode", inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
-		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
+		dblk = fsbtodb(sblock, ino_to_fsba(sblock, lastinum));
 		if (readcnt % readpercg == 0) {
 			size = partialsize;
 			lastinum += partialcnt;
@@ -327,6 +341,19 @@ getnextinode(inumber)
 			lastinum += fullcnt;
 		}
 		(void)bread(fsreadfd, (char *)inodebuf, dblk, size); /* ??? */
+		if (doswap) {
+			int i, j;
+			for (i = inumber, dp  = inodebuf; i < lastinum; i++, dp++) {
+				ffs_dinode_swap(dp, dp);
+				/* ffs_dinode_swap() doesn't swap blocks addrs */
+				if ((iswap16(dp->di_mode) & IFMT) != IFLNK ||
+					iswap64(dp->di_size) > sblock->fs_maxsymlinklen) {
+					for (j=0; j<NDADDR + NIADDR; j++)
+						dp->di_db[j] = bswap32(dp->di_db[j]);
+				}
+			}
+			bwrite(fswritefd, (char *)inodebuf, dblk, size);
+		}
 		dp = inodebuf;
 	}
 	return (dp++);
@@ -340,10 +367,10 @@ resetinodebuf()
 	nextino = 0;
 	lastinum = 0;
 	readcnt = 0;
-	inobufsize = blkroundup(&sblock, INOBUFSIZE);
+	inobufsize = blkroundup(sblock, INOBUFSIZE);
 	fullcnt = inobufsize / sizeof(struct dinode);
-	readpercg = sblock.fs_ipg / fullcnt;
-	partialcnt = sblock.fs_ipg % fullcnt;
+	readpercg = sblock->fs_ipg / fullcnt;
+	partialcnt = sblock->fs_ipg % fullcnt;
 	partialsize = partialcnt * sizeof(struct dinode);
 	if (partialcnt != 0) {
 		readpercg++;
@@ -383,7 +410,7 @@ cacheino(dp, inumber)
 	struct inoinfo **inpp;
 	unsigned int blks;
 
-	blks = howmany(dp->di_size, sblock.fs_bsize);
+	blks = howmany(iswap64(dp->di_size), sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
 	inp = (struct inoinfo *)
@@ -400,7 +427,7 @@ cacheino(dp, inumber)
 		inp->i_parent = (ino_t)0;
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
-	inp->i_isize = dp->di_size;
+	inp->i_isize = iswap64(dp->di_size);
 	inp->i_numblks = blks * sizeof(ufs_daddr_t);
 	memmove(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
@@ -466,7 +493,7 @@ clri(idesc, type, flag)
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
 		pwarn("%s %s", type,
-		    (dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE");
+		    (iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if (preen || reply("CLEAR") == 1) {
@@ -477,7 +504,8 @@ clri(idesc, type, flag)
 		clearinode(dp);
 		statemap[idesc->id_number] = USTATE;
 		inodirty();
-	}
+	} else
+		markclean=  0;
 }
 
 int
@@ -486,7 +514,7 @@ findname(idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
-	if (dirp->d_ino != idesc->id_parent)
+	if (iswap32(dirp->d_ino) != idesc->id_parent)
 		return (KEEPON);
 	memmove(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
 	return (STOP|FOUND);
@@ -501,8 +529,8 @@ findino(idesc)
 	if (dirp->d_ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
-	    dirp->d_ino >= ROOTINO && dirp->d_ino <= maxino) {
-		idesc->id_parent = dirp->d_ino;
+	    iswap32(dirp->d_ino) >= ROOTINO && iswap32(dirp->d_ino) <= maxino) {
+		idesc->id_parent = iswap32(dirp->d_ino);
 		return (STOP|FOUND);
 	}
 	return (KEEPON);
@@ -523,16 +551,16 @@ pinode(ino)
 	dp = ginode(ino);
 	printf(" OWNER=");
 #ifndef SMALL
-	if ((pw = getpwuid((int)dp->di_uid)) != 0)
+	if ((pw = getpwuid((int)iswap32(dp->di_uid))) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned)dp->di_uid);
-	printf("MODE=%o\n", dp->di_mode);
+		printf("%u ", (unsigned)iswap32(dp->di_uid));
+	printf("MODE=%o\n", iswap16(dp->di_mode));
 	if (preen)
 		printf("%s: ", cdevname());
-	printf("SIZE=%qu ", (unsigned long long)dp->di_size);
-	t = dp->di_mtime;
+	printf("SIZE=%qu ", (unsigned long long)iswap64(dp->di_size));
+	t = iswap32(dp->di_mtime);
 	p = ctime(&t);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
@@ -599,17 +627,17 @@ allocino(request, type)
 		return (0);
 	}
 	dp = ginode(ino);
-	dp->di_db[0] = allocblk((long)1);
+	dp->di_db[0] = iswap32(allocblk((long)1));
 	if (dp->di_db[0] == 0) {
 		statemap[ino] = USTATE;
 		return (0);
 	}
-	dp->di_mode = type;
+	dp->di_mode = iswap16(type);
 	(void)time(&t);
-	dp->di_atime = t;
+	dp->di_atime = iswap32(t);
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
-	dp->di_size = sblock.fs_fsize;
-	dp->di_blocks = btodb(sblock.fs_fsize);
+	dp->di_size = iswap64(sblock->fs_fsize);
+	dp->di_blocks = iswap32(btodb(sblock->fs_fsize));
 	n_files++;
 	inodirty();
 	if (newinofmt)
