@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memchr.S,v 1.3 1994/01/28 20:34:40 jtc Exp $
+ *	$Id: memchr.S,v 1.4 1994/02/14 20:05:57 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: memchr.S,v 1.3 1994/01/28 20:34:40 jtc Exp $"
+	.asciz "$Id: memchr.S,v 1.4 1994/02/14 20:05:57 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -54,7 +54,7 @@ ENTRY(memchr)
 	cld				/* set search forward */
 	repne				/* search! */
 	scasb
-	jnz	L1			/* scan failed, return null */
+	jne	L1			/* scan failed, return null */
 	leal	-1(%edi),%eax		/* adjust result of scan */
 	popl	%edi
 	ret
