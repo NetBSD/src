@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.46 2002/02/03 23:34:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.47 2002/02/04 00:25:30 thorpej Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
-ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/}
+ARCHSUBDIR= ${MACHINE_CPU}
 M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${MACHINE_ARCH} == "alpha") ||					\
