@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 1999/03/24 05:51:09 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 1999/05/13 21:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -75,8 +75,10 @@ void	setredzone __P((u_short *, caddr_t));
  * via proc_trampoline from cpu_switch.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct syscframe *tf;
@@ -104,6 +106,13 @@ cpu_fork(p1, p2)
 	 * through rei().  Note the in-line cpu_set_kpc().
 	 */
 	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->sf_regs.r_sp = (u_int)stack + stacksize;
+
 	p2->p_md.md_regs = &tf->sf_regs;
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_p  = p2;
