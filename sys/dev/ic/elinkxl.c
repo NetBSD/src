@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.69 2003/05/09 20:54:18 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.70 2003/06/05 22:11:21 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.69 2003/05/09 20:54:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.70 2003/06/05 22:11:21 dogcow Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -216,6 +216,11 @@ ex_config(sc)
 		if (sc->ex_conf & EX_CONF_PHY_POWER)
 			val |= ELINK_RESET_OPT_PHYPOWER;
 		bus_space_write_2(iot, ioh, ELINK_W2_RESET_OPTIONS, val);
+	}
+	if (sc->ex_conf & EX_CONF_NO_XCVR_PWR) {
+		GO_WINDOW(0);
+		bus_space_write_2(iot, ioh, ELINK_W0_MFG_ID,
+		    EX_XCVR_PWR_MAGICBITS);
 	}
 
 	attach_stage = 0;
