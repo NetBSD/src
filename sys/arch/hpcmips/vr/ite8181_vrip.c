@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.4 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.5 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -37,9 +37,7 @@
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
-#include <hpcmips/vr/vripreg.h>
-#include <hpcmips/vr/vripvar.h>
-#include <hpcmips/vr/vrgiureg.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/dev/ite8181var.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
@@ -66,7 +64,7 @@ ite8181_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 	bus_space_handle_t ioh;
 	int res;
 
-	if (va->va_addr == VRIPCF_ADDR_DEFAULT)
+	if (va->va_addr == VRIPIFCF_ADDR_DEFAULT)
 		return (0);
 
 #if NBIVIDEO > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.13 2002/01/26 10:50:44 takemura Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.14 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -47,6 +47,7 @@
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/bcureg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.6 2002/01/26 10:50:44 takemura Exp $	*/
+/*	$NetBSD: cmu.c,v 1.7 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -47,8 +47,8 @@
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripreg.h>
-#include <hpcmips/vr/vripvar.h>
 
 #include <hpcmips/vr/cmureg.h>
 
@@ -60,16 +60,13 @@ struct vrcmu_softc {
 	bus_space_handle_t sc_ioh;
 	config_hook_tag sc_hardpower;
 	int sc_save;
+	struct vrcmu_chipset_tag sc_chipset;
 };
 
 int	vrcmu_match(struct device *, struct cfdata *, void *);
 void	vrcmu_attach(struct device *, struct device *, void *);
 int	vrcmu_supply(vrcmu_chipset_tag_t, u_int16_t, int);
 int	vrcmu_hardpower(void *, int, long, void *);
-
-struct vrcmu_function_tag vrcmu_functions = {
-	vrcmu_supply
-};
 
 struct cfattach vrcmu_ca = {
 	sizeof(struct vrcmu_softc), vrcmu_match, vrcmu_attach
@@ -89,6 +86,8 @@ vrcmu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrcmu_softc *sc = (void *)self;
 
 	sc->sc_iot = va->va_iot;
+	sc->sc_chipset.cc_sc = sc;
+	sc->sc_chipset.cc_clock = vrcmu_supply;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 	    0 /* no flags */, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
@@ -96,7 +95,7 @@ vrcmu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf ("\n");
 
-	vrip_cmu_function_register(va->va_vc, &vrcmu_functions, self);
+	vrip_register_cmu(va->va_vc, &sc->sc_chipset);
 	sc->sc_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
 	    CONFIG_HOOK_PMEVENT_HARDPOWER,
 	    CONFIG_HOOK_SHARE,
@@ -122,7 +121,7 @@ __vrcmu_supply(u_int16_t mask, int onoff)
 int
 vrcmu_supply(vrcmu_chipset_tag_t cc, u_int16_t mask, int onoff)
 {
-	struct vrcmu_softc *sc = (void *)cc;
+	struct vrcmu_softc *sc = cc->cc_sc;
 	u_int16_t reg;
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0);

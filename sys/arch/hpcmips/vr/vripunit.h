@@ -1,8 +1,8 @@
-/*	$NetBSD: vripvar.h,v 1.7 2002/01/27 14:18:13 takemura Exp $	*/
+/*	$NetBSD: vripunit.h,v 1.1 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2002
- *         Shin Takemura and PocketBSD Project. All rights reserved.
+ * Copyright (c) 2002 TAKEMURA Shin
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,22 +29,42 @@
  * SUCH DAMAGE.
  *
  */
+    
+#ifndef _VRIPUNIT_H_
+#define _VRIPUNIT_H_
 
-#ifndef _VRIPVAR_H_
-#define _VRIPVAR_H_
-
-struct vrip_unit {
-	char	*vu_name;
-	int	vu_intr[2];
-	int	vu_clkmask;
-	bus_addr_t	vu_lreg;
-	bus_addr_t	vu_mlreg;
-	bus_addr_t	vu_hreg;
-	bus_addr_t	vu_mhreg;
+enum vrip_unit_id {
+	VRIP_UNIT_PMU,
+	VRIP_UNIT_RTC,
+	VRIP_UNIT_PIU,
+	VRIP_UNIT_KIU,
+	VRIP_UNIT_SIU,
+	VRIP_UNIT_GIU,
+	VRIP_UNIT_LED,
+	VRIP_UNIT_AIU,
+	VRIP_UNIT_FIR,
+	VRIP_UNIT_DSIU,
+	VRIP_UNIT_PCIU,
+	VRIP_UNIT_SCU,
+	VRIP_UNIT_CSI,
+	VRIP_UNIT_BCU,
 };
 
-void vrip_intr_suspend(void);
-void vrip_intr_resume(void);
-void vripattach_common(struct device *, struct device *, void *);
+#ifdef VRIPUNIT_DEFINE_UNIT_NICKNAME
+#define VRPMU	VRIP_UNIT_PMU
+#define VRRTC	VRIP_UNIT_RTC
+#define VRPIU	VRIP_UNIT_PIU
+#define VRKIU	VRIP_UNIT_KIU
+#define VRSIU	VRIP_UNIT_SIU
+#define VRGIU	VRIP_UNIT_GIU
+#define VRLED	VRIP_UNIT_LED
+#define VRAIU	VRIP_UNIT_AIU
+#define VRFIR	VRIP_UNIT_FIR
+#define VRDSIU	VRIP_UNIT_DSIU
+#define VRPCIU	VRIP_UNIT_PCIU
+#define VRSCU	VRIP_UNIT_SCU
+#define VRCSI	VRIP_UNIT_CSI
+#define VRBCU	VRIP_UNIT_BCU
+#endif VRIPUNIT_DEFINE_UNIT_NICKNAME
 
-#endif /* !_VRIPVAR_H_ */
+#endif /* _VRIPUNIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.17 2001/09/28 10:25:15 sato Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.18 2002/01/27 14:18:13 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
@@ -54,7 +54,7 @@
 
 #include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vrcpudef.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
 #include <hpcmips/vr/vrpiureg.h>
@@ -252,7 +252,7 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 
 	/* install interrupt handler and enable interrupt */
 	if (!(sc->sc_handler = 
-	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	    vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 		vrpiu_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.3 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrled.c,v 1.4 2002/01/27 14:18:13 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -33,7 +33,7 @@
 #include <machine/bus.h>
 #include <machine/config_hook.h>
 
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrledvar.h>
 #include <hpcmips/vr/vrledreg.h>
 
@@ -110,7 +110,7 @@ vrledattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 
 	if (!(sc->sc_handler = 
-	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	    vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 		vrled_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;
