@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.422 2001/09/07 00:18:27 lukem Exp $
+#	$NetBSD: GENERIC,v 1.423 2001/09/10 10:17:29 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.422 $"
+#ident 		"GENERIC-$Revision: 1.423 $"
 
 maxusers	32		# estimated number of users
 
@@ -21,6 +21,8 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+options 	MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
