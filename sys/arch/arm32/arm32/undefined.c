@@ -1,4 +1,4 @@
-/* $NetBSD: undefined.c,v 1.1 1996/01/31 23:17:29 mark Exp $ */
+/* $NetBSD: undefined.c,v 1.2 1996/03/08 20:54:25 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * Fault handler
  *
  * Created      : 06/01/95
- * Last updated : 28/08/95
- *
- *    $Id: undefined.c,v 1.1 1996/01/31 23:17:29 mark Exp $
  */
 
 #define CONTINUE_AFTER_RESET_BUG
@@ -68,7 +65,6 @@
 
 #ifdef FAST_FPE
 extern int want_resched;
-/*extern u_int spl_mask;*/
 #endif
 
 undef_handler_t undefined_handlers[MAX_COPROCS];
@@ -89,8 +85,6 @@ default_undefined_handler(address, instruction, frame)
 		p = &proc0;
 	log(LOG_ERR, "Undefined instruction 0x%08x @ 0x%08x in process %s (pid %d)\n",
 	    instruction, address, p->p_comm, p->p_pid);
-/*	printf("Undefined instruction 0x%08x -> 0x%08x\n",
-	    address, instruction);*/
 	return(1);
 }
 
@@ -132,18 +126,6 @@ undefinedinstruction(frame)
 	int fault_code;
 	u_quad_t sticks;
 	int coprocessor;
-
-/* Faults are always handled in SVC32 mode now
-	s = splhigh();
-	if ((GetCPSR() & PSR_MODE) != PSR_UND32_MODE) {
-		printf("undefined instruction in non UND32 mode\n");
-		traceback();
-		dumpframe(frame);
-		printf("CPSR=%08x\n", GetCPSR());
-		panic("were dead and buried\n");
-	}
-	(void)splx(s);
-*/
 
 #ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
