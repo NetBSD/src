@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.322 2004/07/10 09:33:17 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.323 2004/07/10 09:37:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5152,16 +5152,16 @@ usr.bin/gzip/gzip.c				1.51
 	Fix "zcat -f" on normal files. Fixes PR bin/26145.
 	[mrg, ticket #625]
 
-xfree/xc/programs/Xserver/hw/netbsd/dreamcast/dreamcastKbd.c	1.2-1.3
-x11/Xserver/hw/netbsd/dreamcast/Makefile			1.3
+xsrc/xfree/xc/programs/Xserver/hw/netbsd/dreamcast/dreamcastKbd.c	1.2-1.3
+x11/Xserver/hw/netbsd/dreamcast/Makefile				1.3
 
 	Make Xdreamcast build again.
 	[he, ticket #612]
 
-xfree/xc/lib/dps/Xlibnet.h			1.2
-xfree/xc/lib/dps/csconndi.c			1.2
-xfree/xc/lib/dps/cslibint.c			1.2
-xfree/xc/programs/xterm/main.c			1.9
+xsrc/xfree/xc/lib/dps/Xlibnet.h			1.2
+xsrc/xfree/xc/lib/dps/csconndi.c		1.2
+xsrc/xfree/xc/lib/dps/cslibint.c		1.2
+xsrc/xfree/xc/programs/xterm/main.c		1.9
 
 	Fix xterm scrolling speed, missed events, and a number of GTK
 	"protocol errors" on LP64 platforms.
@@ -5179,7 +5179,7 @@ sys/arch/i386/conf/GENERIC			1.6188
 	Remove accidently added UMASS_DEBUG.
 	[abs, ticket #608]
 
-xfree/xc/config/imake/imakemdep.h		1.5
+xsrc/xfree/xc/config/imake/imakemdep.h		1.5
 
 	Include gcc's preprocessor define of __sparc64__ in Imake's defines.
 	XFree PR 1424.
