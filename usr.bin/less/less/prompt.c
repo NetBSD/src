@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.4 1997/09/21 12:41:02 mrg Exp $	*/
+/*	$NetBSD: prompt.c,v 1.5 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -56,23 +56,34 @@ extern char *editor;
  * Prototypes for the three flavors of prompts.
  * These strings are expanded by pr_expand().
  */
-static constant char s_proto[] =
+static char s_proto[] =
   "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x..%t";
-static constant char m_proto[] =
+static char m_proto[] =
   "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t";
-static constant char M_proto[] =
+static char M_proto[] =
   "?f%f .?n?m(file %i of %m) ..?ltline %lt?L/%L. :byte %bB?s/%s. .?e(END) ?x- Next\\: %x.:?pB%pB\\%..%t";
-static constant char e_proto[] =
+static char e_proto[] =
   "?f%f .?m(file %i of %m) .?ltline %lt?L/%L. .byte %bB?s/%s. ?e(END) :?pB%pB\\%..%t";
-static constant char h_proto[] =
+static char h_proto[] =
   "HELP -- ?eEND -- Press g to see it again:Press RETURN for more., or q when done";
 
 public char *prproto[3];
-public char constant *eqproto = e_proto;
-public char constant *hproto = h_proto;
+public char *eqproto = e_proto;
+public char *hproto = h_proto;
 
 static char message[PROMPT_SIZE];
 static char *mp;
+
+static void setmp __P((void));
+static void ap_pos __P((POSITION));
+static void ap_int __P((int));
+static void ap_str __P((char *));
+static void ap_quest __P((void));
+static POSITION curr_byte __P((int));
+static int cond __P((int, int));
+static void protochar __P((int, int));
+static char *skipcond __P((char *));
+static char *wherechar __P((char *, int *));
 
 /*
  * Initialize the prompt prototype strings.

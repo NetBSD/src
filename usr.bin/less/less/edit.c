@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.1.1.3 1997/09/21 12:23:13 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.2 1998/02/22 14:57:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -42,7 +42,7 @@ extern int sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
-extern void constant *ml_examine;
+extern void *ml_examine;
 #if SPACES_IN_FILENAMES
 extern char openquote;
 extern char closequote;
@@ -57,6 +57,11 @@ extern char *namelogfile;
 char *curr_altfilename = NULL;
 static void *curr_altpipe;
 
+
+static void close_file __P((void));
+static int edit_istep __P((IFILE, int, int));
+static int edit_inext __P((IFILE, int));
+static int edit_iprev __P((IFILE, int));
 
 /*
  * Textlist functions deal with a list of words separated by spaces.

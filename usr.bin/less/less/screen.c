@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.6 1998/02/10 03:53:39 mrg Exp $	*/
+/*	$NetBSD: screen.c,v 1.7 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -32,6 +32,7 @@
  * Uses termcap to be as terminal-independent as possible.
  */
 
+#include "acconfig.h"
 #include "less.h"
 #include "cmd.h"
 
@@ -57,7 +58,7 @@
 
 #if HAVE_TERMIOS_H && HAVE_TERMIOS_FUNCS
 #include <termios.h>
-#if HAVE_SYS_IOCTL_H && !defined(TIOCGWINSZ)
+#if HAVE_SYS_IOCTL_H && (!defined(TIOCGWINSZ) || defined(__NetBSD__))
 #include <sys/ioctl.h>
 #endif
 #else
@@ -213,8 +214,34 @@ public int above_mem, below_mem;	/* Memory retained above/below screen */
 public int can_goto_line;		/* Can move cursor to any line */
 public int missing_cap = 0;	/* Some capability is missing */
 
-static char *cheaper();
-static void tmodes();
+
+static char *ltget_env __P((char *));
+static int ltgetflag __P((char *));
+static int ltgetnum __P((char *));
+static char *ltgetstr __P((char *, char **));
+
+#if MSDOS_COMPILER==MSOFTC
+static void get_clock __P((void));
+static void dummy_func __P((void));
+static void delay __P((int));
+#endif
+static void inc_costcount __P((int));
+static int cost __P((char *));
+static char *cheaper __P((char *, char *, char *));
+static void tmodes __P((char *, char *, char **, char **, char *, char *, char **));
+#if MSDOS_COMPILER==WIN32C
+static void _settextposition __P((int, int));
+static void initcolor __P((void));
+static void win32_init_term __P((void));
+static void win32_deinit_term __P((void));
+#endif
+#if MSDOS_COMPILER
+static void create_flash __P((void));
+#endif
+static void beep __P((void));
+#if MSDOS_COMPILER==WIN32C
+static int win32_kbhit __P((HANDLE));
+#endif
 
 /*
  * These two variables are sometimes defined in,
@@ -242,8 +269,10 @@ extern int screen_trashed;
 extern int hilite_search;
 #endif
 
+#ifndef HAVE_TERMCAP_H
 extern char *tgetstr();
 extern char *tgoto();
+#endif
 
 
 /*
@@ -1301,12 +1330,12 @@ get_term()
 static int costcount;
 
 /*ARGSUSED*/
-	static int
+	static void
 inc_costcount(c)
 	int c;
 {
 	costcount++;
-	return (c);
+	return;
 }
 
 	static int
