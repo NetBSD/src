@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.9 1996/06/21 06:21:04 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.9.2.1 1996/09/16 18:40:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #define _NLS_PRIVATE
 
+#include "namespace.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,13 +50,17 @@
 #include <fcntl.h>
 #include <nl_types.h>
 
+#ifndef __weak_alias
+__weak_alias(catopen,_catopen);
+#endif
+
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
 static nl_catd load_msgcat();
 
 nl_catd
-_catopen(name, oflag)
+catopen(name, oflag)
 	const char *name;
 	int oflag;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $	*/
+/*	$NetBSD: glob.c,v 1.5.4.1 1996/09/16 18:40:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: glob.c,v 1.5.4.1 1996/09/16 18:40:29 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,6 +69,7 @@ static char rcsid[] = "$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $";
  *	Number of matches in the current invocation of glob.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rewinddir.c,v 1.4 1995/02/25 08:51:37 cgd Exp $	*/
+/*	$NetBSD: rewinddir.c,v 1.4.4.1 1996/09/16 18:40:33 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,18 +37,22 @@
 #if 0
 static char sccsid[] = "@(#)rewinddir.c	8.1 (Berkeley) 6/8/93";
 #else
-static char rcsid[] = "$NetBSD: rewinddir.c,v 1.4 1995/02/25 08:51:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: rewinddir.c,v 1.4.4.1 1996/09/16 18:40:33 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <dirent.h>
+
+#ifdef __weak_alias
+__weak_alias(rewinddir,_rewinddir);
+#endif
 
 void
 rewinddir(dirp)
 	DIR *dirp;
 {
-
 	__seekdir(dirp, dirp->dd_rewind);
 	dirp->dd_rewind = telldir(dirp);
 }

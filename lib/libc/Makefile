@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 1996/08/15 22:36:59 jtc Exp $
+#	$NetBSD: Makefile,v 1.48.2.1 1996/09/16 18:38:45 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -82,15 +82,15 @@ rm-from-libkern:
 	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
 .endif
 
-all: tags
+all: 
 tags: ${SRCS}
 	ctags ${.ALLSRC:M*.c}
 	egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> tags; sort -o tags tags
 
-beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 tags \
-		${DESTDIR}/var/db/libc.tags
+#beforeinstall:
+#	install -c -o ${BINOWN} -g ${BINGRP} -m 444 tags \
+#		${DESTDIR}/var/db/libc.tags
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.9.2.1 1996/09/16 18:40:26 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,9 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9.2.1 1996/09/16 18:40:26 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdio.h>
 #define _NETGROUP_PRIVATE

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.15 1996/03/29 23:29:28 jtc Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.15.2.1 1996/09/16 18:40:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,9 +40,10 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: vfscanf.c,v 1.15 1996/03/29 23:29:28 jtc Exp $";
+static char rcsid[] = "$NetBSD: vfscanf.c,v 1.15.2.1 1996/09/16 18:40:58 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

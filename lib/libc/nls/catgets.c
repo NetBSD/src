@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.8 1996/05/13 23:29:38 jtc Exp $	*/
+/*	$NetBSD: catgets.c,v 1.8.2.1 1996/09/16 18:40:55 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,12 +38,17 @@
 
 #define _NLS_PRIVATE
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #include <nl_types.h>
 
+#ifdef __weak_alias
+__weak_alias(catgets,_catgets);
+#endif
+
 char *
-_catgets(catd, set_id, msg_id, s)
+catgets(catd, set_id, msg_id, s)
 	nl_catd catd;
 	int set_id;
 	int msg_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.7 1996/05/13 23:29:37 jtc Exp $	*/
+/*	$NetBSD: catclose.c,v 1.7.2.1 1996/09/16 18:40:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,13 +38,18 @@
 
 #define _NLS_PRIVATE
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <errno.h>
 #include <nl_types.h>
 
+#ifdef __weak_alias
+__weak_alias(catclose,_catclose);
+#endif
+
 int
-_catclose(catd)
+catclose(catd)
 	nl_catd catd;
 {
 	if (catd == (nl_catd) -1) {

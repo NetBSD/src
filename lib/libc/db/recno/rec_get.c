@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_get.c,v 1.8 1996/05/03 21:38:48 cgd Exp $	*/
+/*	$NetBSD: rec_get.c,v 1.8.2.1 1996/09/16 18:40:00 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)rec_get.c	8.9 (Berkeley) 8/18/94";
 #else
-static char rcsid[] = "$NetBSD: rec_get.c,v 1.8 1996/05/03 21:38:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: rec_get.c,v 1.8.2.1 1996/09/16 18:40:00 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>

@@ -1,4 +1,0 @@
-#	$Id: Makefile.ns32k,v 1.2 1996/04/05 16:21:14 phil Exp $
-
-CFLAGS+=	-DPIC -DNS32532 -DNS32381
-SRCS+=		tc-ns32k.c atof-ieee.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.72 1996/07/03 21:41:46 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.72.2.1 1996/09/16 18:40:10 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -19,10 +19,6 @@ SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
 	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
 	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
-
-# indirect reference stubs, to be removed soon.
-SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
-	_verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:

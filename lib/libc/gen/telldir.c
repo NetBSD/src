@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.4 1995/02/25 08:51:51 cgd Exp $	*/
+/*	$NetBSD: telldir.c,v 1.4.4.1 1996/09/16 18:40:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: telldir.c,v 1.4 1995/02/25 08:51:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: telldir.c,v 1.4.4.1 1996/09/16 18:40:38 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(telldir,_telldir);
+#endif
 
 /*
  * The option SINGLEUSE may be defined to say that a telldir

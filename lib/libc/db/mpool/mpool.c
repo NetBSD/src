@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.6 1996/05/03 21:29:48 cgd Exp $	*/
+/*	$NetBSD: mpool.c,v 1.6.2.1 1996/09/16 18:39:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
 #else
-static char rcsid[] = "$NetBSD: mpool.c,v 1.6 1996/05/03 21:29:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: mpool.c,v 1.6.2.1 1996/09/16 18:39:56 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -55,6 +56,16 @@ static char rcsid[] = "$NetBSD: mpool.c,v 1.6 1996/05/03 21:29:48 cgd Exp $";
 
 #define	__MPOOLINTERFACE_PRIVATE
 #include <mpool.h>
+
+#ifdef __weak_alias
+__weak_alias(mpool_open,_mpool_open);
+__weak_alias(mpool_filter,_mpool_filter);
+__weak_alias(mpool_new,_mpool_new);
+__weak_alias(mpool_get,_mpool_get);
+__weak_alias(mpool_put,_mpool_put);
+__weak_alias(mpool_close,_mpool_close);
+__weak_alias(mpool_sync,_mpool_sync);
+#endif
 
 static BKT *mpool_bkt __P((MPOOL *));
 static BKT *mpool_look __P((MPOOL *, pgno_t));
