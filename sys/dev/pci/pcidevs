@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp $
+$NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -759,6 +759,13 @@ product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
+product AMD PBC768_ISA	0x7440	AMD768 PCI to ISA/LPC Bridge
+product AMD PBC768_IDE  0x7441	AMD768 EIDE Controller
+product AMD PBC768_PMC  0x7443	AMD768 Power Management Controller
+product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
+product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
+product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
+product AMD PBC768_USB	0x7449	AMD768 USB Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
