@@ -52,7 +52,7 @@ relmajor=`echo $release |sed -e 's/^\([^\.]*\)\..*$/\1/'`
 relminor=`echo $release |sed -e 's/^.*\.\([^\.]*\)$/\1/'`
 
 if [ x$reason = xMEDIUM ]; then
-  $ifconfig $interface $medium
+  eval "$ifconfig $interface $medium"
   $ifconfig $interface
   sleep 1
   exit_with_hooks 0
@@ -104,8 +104,8 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   fi
   if [ x$old_ip_address = x ] || [ x$old_ip_address != x$new_ip_address ] || \
      [ x$reason = xBOUND ] || [ x$reason = xREBOOT ]; then
-    $ifconfig $interface inet $new_ip_address $new_netmask_arg \
-					$new_broadcast_arg $medium
+    eval "$ifconfig $interface inet $new_ip_address $new_netmask_arg \
+					$new_broadcast_arg $medium"
     route add $new_ip_address 127.1 1 >/dev/null 2>&1
     for router in $new_routers; do
       route add default $router 1 >/dev/null 2>&1
@@ -144,8 +144,8 @@ if [ x$reason = xTIMEOUT ]; then
     $ifconfig ${interface}:1 0 down > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
-  $ifconfig $interface inet $new_ip_address $new_netmask_arg \
-					$new_broadcast_arg $medium
+  eval "$ifconfig $interface inet $new_ip_address $new_netmask_arg \
+					$new_broadcast_arg $medium"
   sleep 1
   set $new_routers
   if ping -s -n -I 1 $1 64 1; then

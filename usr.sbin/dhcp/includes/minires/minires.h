@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 by Internet Software Consortium.
+ * Copyright (c) 2001 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include "minires/resolv.h"
 #include "minires/res_update.h"
+#include "isc/result.h"
 
 /*
  * Based on the Dynamic DNS reference implementation by Viraj Bais
@@ -32,8 +33,9 @@ ns_updrec *minires_mkupdrec (int, const char *, unsigned int,
 			     unsigned int, unsigned long);
 void minires_freeupdrec (ns_updrec *);
 int minires_nmkupdate (res_state, ns_updrec *, double *, unsigned *);
-ns_rcode minires_nupdate (res_state, ns_updrec *);
+isc_result_t minires_nupdate (res_state, ns_updrec *);
 int minires_ninit (res_state);
+ns_rcode isc_rcode_to_ns (isc_result_t);
 
 #if defined (MINIRES_LIB)
 #define res_update minires_update
@@ -118,12 +120,12 @@ const char *res_servicename(u_int16_t, const char *);
 u_int32_t ns_datetosecs (const char *cp, int *errp);
 int b64_pton (char const *, unsigned char *, size_t);
 unsigned int res_randomid (void);
-ns_rcode res_findzonecut (res_state, const char *, ns_class, int, char *,
-			  size_t, struct in_addr *, int, int *, void *);
-int res_nsend (res_state,
-	       double *, unsigned, double *, unsigned);
-int res_nsendsigned (res_state, double *,
-		     unsigned, ns_tsig_key *, double *, unsigned);
+isc_result_t res_findzonecut (res_state, const char *, ns_class, int, char *,
+			      size_t, struct in_addr *, int, int *, void *);
+isc_result_t res_nsend (res_state,
+			double *, unsigned, double *, unsigned, unsigned *);
+isc_result_t res_nsendsigned (res_state, double *, unsigned, ns_tsig_key *,
+			      double *, unsigned, unsigned *);
 int ns_samename (const char *, const char *);
 int res_nameinquery (const char *, int, int,
 		     const unsigned char *, const unsigned char *);
@@ -135,27 +137,29 @@ unsigned int ns_get16 (const unsigned char *);
 void res_close (void);
 void res_nclose (res_state);
 int res_ourserver_p (const res_state, const struct sockaddr_in *);
-int ns_sign (unsigned char *, unsigned *,
-	     unsigned, int, void *, const unsigned char *,
-	     unsigned, unsigned char *, unsigned *, time_t);
+isc_result_t ns_sign (unsigned char *, unsigned *,
+		      unsigned, int, void *, const unsigned char *,
+		      unsigned, unsigned char *, unsigned *, time_t);
 const char *p_class (int);
 const char *p_section (int section, int opcode);
-int ns_makecanon (const char *, char *, size_t);
-int ns_parserr (ns_msg *, ns_sect, int, ns_rr *);
+isc_result_t ns_makecanon (const char *, char *, size_t);
+isc_result_t ns_parserr (ns_msg *, ns_sect, int, ns_rr *);
 int ns_samedomain (const char *, const char *);
 int ns_name_uncompress (const u_char *, const u_char *,
 			    const u_char *, char *, size_t);
-int res_nmkquery (res_state, int,
-		  const char *, ns_class, ns_type, const unsigned char *,
-		  unsigned, const unsigned char *, double *, unsigned);
+isc_result_t res_nmkquery (res_state, int, const char *, ns_class, ns_type,
+			   const unsigned char *, unsigned,
+			   const unsigned char *, double *,
+			   unsigned, unsigned *);
 int ns_initparse (const unsigned char *, unsigned, ns_msg *);
-int res_nquery(res_state, const char *,
-	       ns_class, ns_type, double *, unsigned anslen);
-int res_nsearch(res_state, const char *,
-		ns_class, ns_type, double *, unsigned);
+isc_result_t res_nquery(res_state, const char *,
+			ns_class, ns_type, double *, unsigned, unsigned *);
+isc_result_t res_nsearch(res_state, const char *,
+			 ns_class, ns_type, double *, unsigned, unsigned *);
 const char *res_hostalias (const res_state, const char *, char *, size_t);
-int res_nquerydomain(res_state, const char *, const char *,
-		     ns_class class, ns_type type, double *, unsigned);
+isc_result_t res_nquerydomain(res_state, const char *, const char *,
+			      ns_class class, ns_type type,
+			      double *, unsigned, unsigned *);
 
 int ns_skiprr(const unsigned char *, const unsigned char *, ns_sect, int);
 int dn_skipname (const unsigned char *, const unsigned char *);
@@ -170,10 +174,10 @@ void putUShort (unsigned char *, u_int32_t);
 void putShort (unsigned char *, int32_t);
 void putUChar (unsigned char *, u_int32_t);
 int ns_name_ntol (const unsigned char *, unsigned char *, size_t);
-int ns_sign_tcp_init (void *,
-		      const unsigned char *, unsigned, ns_tcp_tsig_state *);
-int ns_sign_tcp (unsigned char *,
-		 unsigned *, unsigned, int, ns_tcp_tsig_state *, int);
+isc_result_t ns_sign_tcp_init (void *, const unsigned char *,
+			       unsigned, ns_tcp_tsig_state *);
+isc_result_t ns_sign_tcp (unsigned char *,
+			  unsigned *, unsigned, int, ns_tcp_tsig_state *, int);
 int ns_name_ntop (const unsigned char *, char *, size_t);
 int ns_name_pton (const char *, unsigned char *, size_t);
 int ns_name_unpack (const unsigned char *, const unsigned char *,
@@ -185,11 +189,13 @@ int ns_name_compress (const char *, unsigned char *,
 int ns_name_skip (const unsigned char **, const unsigned char *);
 int ns_subdomain (const char *, const char *);
 unsigned char *ns_find_tsig (unsigned char *, unsigned char *);
-int ns_verify (unsigned char *, unsigned *, void *, const unsigned char *,
-	       unsigned, unsigned char *, unsigned *, time_t *, int);
-int ns_verify_tcp_init (void *,
-		       const unsigned char *, unsigned, ns_tcp_tsig_state *);
-int ns_verify_tcp (unsigned char *, unsigned *, ns_tcp_tsig_state *, int);
+isc_result_t ns_verify (unsigned char *, unsigned *, void *,
+			const unsigned char *,
+			unsigned, unsigned char *, unsigned *, time_t *, int);
+isc_result_t ns_verify_tcp_init (void *, const unsigned char *, unsigned,
+				 ns_tcp_tsig_state *);
+isc_result_t ns_verify_tcp (unsigned char *, unsigned *,
+			    ns_tcp_tsig_state *, int);
 int b64_ntop (unsigned char const *, size_t, char *, size_t);
 
 ns_rcode find_cached_zone (const char *, ns_class, char *,
@@ -198,6 +204,8 @@ int find_tsig_key (ns_tsig_key **, const char *, void *);
 int forget_zone (void *);
 int repudiate_zone (void *);
 void cache_found_zone (ns_class, char *, struct in_addr *, int);
+isc_result_t uerr2isc (int);
+isc_result_t ns_rcode_to_isc (int);
 
 #define DprintQ(a,b,c,d)
 #define Dprint(a,b)
@@ -206,4 +214,8 @@ void cache_found_zone (ns_class, char *, struct in_addr *, int);
 #define DPRINTF(x)
 
 #define USE_MD5
+#endif
+
+#if defined (TRACING)
+void trace_mr_statp_setup (res_state);
 #endif
