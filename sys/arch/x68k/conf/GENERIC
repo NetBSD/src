@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 1996/06/17 06:09:30 oki Exp $
+#	$NetBSD: GENERIC,v 1.3 1996/08/11 15:37:42 oki Exp $
 
 #
 #	GENERIC
@@ -23,8 +23,8 @@ options		GENERIC			# historical
 options 	SWAPPAGER		# swap pager (anonymous and swap space)
 options 	VNODEPAGER		# vnode pager (mapped files)
 options 	DEVPAGER		# device pager (mapped devices)
-options 	DDB			# kernel debugger; recommended
-options 	DIAGNOSTIC		# internal consistency checking
+#options 	DDB			# kernel debugger; recommended
+#options 	DIAGNOSTIC		# internal consistency checking
 
 options 	KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# FIFOs; RECOMMENDED
@@ -32,29 +32,31 @@ options 	SYSVMSG			# System V-like message queues
 options 	SYSVSEM			# System V-like semaphores
 options 	SYSVSHM			# System V-like memory sharing
 options 	SHMMAXPGS=1024		# 1024 pages in the defualt
-options		LKM			# loadable kernel modules
+#options 	LKM			# loadable kernel modules
 
 # compatibility options
 #options 	COMPAT_NOMID		# old zmagic executables
-options 	COMPAT_43		# compatibility with 4.3BSD binaries
+#options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	COMPAT_44		# compatibility with 4.4BSD binaries
 options 	COMPAT_09		# compatibility with NetBSD 0.9
+options 	COMPAT_10		# compatibility with NetBSD 1.0
+options 	COMPAT_11		# compatibility with NetBSD 1.1
 options 	TCP_COMPAT_42		# 4.2 networking ABI
 #options 	COMPAT_SUNOS		# SunOS binaries
 #options	COMPAT_HPUX		# HP-UX binaries; VERY EXPERIMENTAL
 
 # file system options
-options		QUOTA			# file system quotas
+#options 	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
 options		FASTLINKS		# fast symbolic links in FFS
 options		MFS			# memory file system; uses RAM and swap
 #options 	NFSSERVER		# Network File System server
-#options 	NFSCLIENT		# Network File System client
+options 	NFSCLIENT		# Network File System client
 options		CD9660			# ISO 9660 CD-ROM file system, with RR
 options 	MSDOSFS			# MS-DOS FAT file system
-options		FDESC			# /dev/fd
+#options 	FDESC			# /dev/fd
 options		KERNFS			# kernel file system; recommended
-options 	PROCFS			# /proc
+#options 	PROCFS			# /proc
 options 	NULLFS			# Loop-back filesystem
 #options 	PORTAL			# portal filesystem (still experimental)
 #options 	ADOSFS			# AmigaDOS filesystem
@@ -74,7 +76,7 @@ options 	INET			# Internet protocols
 
 # Options specific to this host.
 options 	DEBUG
-#options 	MACHINE_NONCONTIG	# support for noncontig memory
+options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPSP			# '40 Floating Point Software
 options		ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
@@ -93,13 +95,14 @@ mainbus0	at root
 
 zs0		at mainbus0		# Zilog serial
 par0		at mainbus0		# builtin parallel port
-spc0		at mainbus0		# scsi
+spc0		at mainbus0		# builtin scsi
+spc1		at mainbus0		# external scsi
 scsibus*	at spc?
 grfbus0 	at mainbus0		# bitmapped display's
 grf0		at grfbus0		# graphics driver
 ite0		at grf0			# console
-dc0		at mainbus0		# floppy controller
-d*		at fdc0 unit ?		# builtin floppy drive
+fdc0		at mainbus0		# floppy controller
+fd*		at fdc0 unit ?		# builtin floppy drive
 
 # SCSI disks
 #sd*	at scsibus? target ? lun ?
@@ -124,8 +127,8 @@ st*	at scsibus? target ? lun 0
 
 #device  	bsdaudio0	at nexus0 # /dev/audio
 
-#pseudo-device	sl		4	# compressed SLIP
-pseudo-device	ppp		4	# point-to-point protocol
+pseudo-device	sl		2	# compressed SLIP
+pseudo-device	ppp		2	# point-to-point protocol
 #pseudo-device	bpfilter	16	# packet filter
 pseudo-device	pty		32	# pseudo-terminals
 pseudo-device	kbd			# kbd
