@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.92 1998/09/26 00:03:52 thorpej Exp $
+# $NetBSD: files.alpha,v 1.93 1998/09/29 18:23:55 drochner Exp $
 #
 # alpha-specific configuration info
 
@@ -31,6 +31,9 @@ defopt	ZS_IOASIC_DMA
 
 # XXX Temporary, until integration is finished.
 defopt	NEW_SCC_DRIVER
+
+# realtime clock compatible to OSF/1
+defopt	CLOCK_COMPAT_OSF1
 
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
@@ -384,6 +387,7 @@ file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
 #
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/clock.c
+file	dev/clock_subr.c
 file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
