@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.h,v 1.4 1998/02/02 21:07:43 perry Exp $	*/
+/*	$NetBSD: regexp.h,v 1.5 1998/09/14 20:25:02 tv Exp $	*/
 
 /*
  * Copyright (c) 1986 by University of Toronto.
@@ -62,10 +62,17 @@ typedef struct regexp {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-regexp *regcomp __P((const char *));
-int regexec __P((const  regexp *, const char *));
-void regsub __P((const  regexp *, const char *, char *));
-void regerror __P((const char *));
+#ifdef __LIBCOMPAT_SOURCE__
+regexp *__compat_regcomp __P((const char *));
+int __compat_regexec __P((const  regexp *, const char *));
+void __compat_regsub __P((const  regexp *, const char *, char *));
+void __compat_regerror __P((const char *));
+#endif
+regexp *regcomp __P((const char *))		 __RENAME(__compat_regcomp);
+int regexec __P((const  regexp *, const char *)) __RENAME(__compat_regexec);
+void regsub __P((const  regexp *, const char *, char *))
+						 __RENAME(__compat_regsub);
+void regerror __P((const char *))		 __RENAME(__compat_regerror);
 __END_DECLS
 
 #endif /* !_REGEXP_H_ */

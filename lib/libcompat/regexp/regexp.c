@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regexp.c,v 1.8 1998/02/03 18:58:10 perry Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.9 1998/09/14 20:25:04 tv Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -206,7 +206,7 @@ STATIC int strcspn __P((char *, char *));
  * of the structure of the compiled regexp.
  */
 regexp *
-regcomp(exp)
+__compat_regcomp(exp)
 const char *exp;
 {
 	regexp *r;
@@ -790,7 +790,7 @@ STATIC char *regprop __P((char *));
  - regexec - match a regexp against a string
  */
 int
-regexec(prog, string)
+__compat_regexec(prog, string)
 const regexp *prog;
 const char *string;
 {

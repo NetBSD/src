@@ -1,13 +1,13 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regerror.c,v 1.4 1997/10/09 10:21:11 lukem Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.5 1998/09/14 20:25:03 tv Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
 #include <stdio.h>
 
 void
-regerror(s)
+__compat_regerror(s)
 const char *s;
 {
 #ifdef ERRAVAIL
