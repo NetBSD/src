@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1998/10/06 01:43:12 mark Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1998/11/08 02:11:24 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -449,38 +449,8 @@ int md_make_bsd_partitions (void)
 	/* Disk name */
 	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
-	/* Create the disktab.preinstall */
-#ifdef DEBUG
-	f = fopen("/tmp/disktab", "a");
-#else
-	run_prog("cp /etc/disktab.preinstall /etc/disktab");
-	f = fopen("/etc/disktab", "a");
-#endif
-	if (f == NULL) {
-		endwin();
-		(void) fprintf(stderr, "Could not open /etc/disktab");
-		exit (1);
-	}
-	(void)fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i = 0; i < 8; i++) {
-		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
-			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
-			(void)fprintf(f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i][D_BSIZE],
-				       'a'+i, bsdlabel[i][D_FSIZE]);
-		if (i < 7)
-			(void)fprintf(f, "\\\n");
-		else
-			(void)fprintf(f, "\n");
-	}
-	fclose (f);
+	/* save label to disk for MI code to update. */
+	(void) savenewlabel(lp, 8);		/* save 8-partition label */
 
 	/* Everything looks OK. */
 	return (1);
