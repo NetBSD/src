@@ -77,7 +77,7 @@
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
-#define DEFAULT_EMULATION "mipslelf"
+/* #define DEFAULT_EMULATION "mipslelf" */
 #define EMULATIONS &mipslelf, &mipsbelf, &mipself,
 #define USE_EMULATIONS 1
 /* #undef OBJ_MAYBE_AOUT */
