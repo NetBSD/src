@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.58 2001/10/03 06:58:47 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.59 2001/11/10 22:48:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -567,7 +567,7 @@ ex_probemedia(sc)
 		return;
 	}
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (exm = ex_native_media; exm->exm_name != NULL; exm++) {
 		if (reset_options & exm->exm_mpbit) {
