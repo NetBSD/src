@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.40 2000/07/03 05:02:38 enami Exp $	*/
+/*	$NetBSD: inet.c,v 1.41 2000/08/15 20:24:58 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.40 2000/07/03 05:02:38 enami Exp $");
+__RCSID("$NetBSD: inet.c,v 1.41 2000/08/15 20:24:58 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: inet.c,v 1.40 2000/07/03 05:02:38 enami Exp $");
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 
+#include <net/if_arp.h>
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -501,6 +502,59 @@ igmp_stats(off, name)
         p(igps_snd_reports, "\t%llu membership report%s sent\n");
 #undef p
 #undef py
+}
+
+/*
+ * Dump the ARP statistics structure.
+ */
+void
+arp_stats(off, name)
+	u_long off;
+	char *name;
+{
+	struct arpstat arpstat;
+
+	if (off == 0)
+		return;
+	kread(off, (char *)&arpstat, sizeof (arpstat));
+	printf("%s:\n", name);
+
+#define	ps(f, m) if (arpstat.f || sflag <= 1) \
+    printf(m, (unsigned long long)arpstat.f)
+#define	p(f, m) if (arpstat.f || sflag <= 1) \
+    printf(m, (unsigned long long)arpstat.f, plural(arpstat.f))
+
+	p(as_sndtotal, "\t%llu packet%s sent\n");
+	p(as_sndreply, "\t\t%llu reply packet%s\n");
+	p(as_sndrequest, "\t\t%llu request packet%s\n");
+
+	p(as_rcvtotal, "\t%llu packet%s received\n");
+	p(as_rcvreply, "\t\t%llu reply packet%s\n");
+	p(as_rcvrequest, "\t\t%llu valid request packet%s\n");
+	p(as_rcvmcast, "\t\t%llu broadcast/multicast packet%s\n");
+	p(as_rcvbadproto, "\t\t%llu packet%s with unknown protocol type\n");
+	p(as_rcvbadlen, "\t\t%llu packet%s with bad (short) length\n");
+	p(as_rcvzerotpa, "\t\t%llu packet%s with null target IP address\n");
+	p(as_rcvzerospa, "\t\t%llu packet%s with null source IP address\n");
+	ps(as_rcvnoint, "\t\t%llu could not be mapped to an interface\n");
+	p(as_rcvlocalsha, "\t\t%llu packet%s sourced from a local hardware "
+	    "address\n");
+	p(as_rcvbcastsha, "\t\t%llu packet%s with a broadcast "
+	    "source hardware address\n");
+	p(as_rcvlocalspa, "\t\t%llu duplicate%s for a local IP address\n");
+	p(as_rcvoverperm, "\t\t%llu attempt%s to overwrite a static entry\n");
+	p(as_rcvoverint, "\t\t%llu packet%s received on wrong interface\n");
+	p(as_rcvover, "\t\t%llu entry%s overwritten\n");
+	p(as_rcvlenchg, "\t\t%llu change%s in hardware address length\n");
+
+	p(as_dfrtotal, "\t%llu packet%s deferred pending ARP resolution\n");
+	ps(as_dfrsent, "\t\t%llu sent\n");
+	ps(as_dfrdropped, "\t\t%llu dropped\n");
+
+	p(as_allocfail, "\t%llu failure%s to allocate llinfo\n");
+
+#undef ps
+#undef p
 }
 
 /*
