@@ -592,6 +592,14 @@ before
 .Vn count
 is reached.
 .Ds
+.Fn idcok "WINDOW *win" "int boolf"
+.De
+Reserved for future use.
+This will eventually signal to
+.Fn refresh
+that it is all right to use the insert and delete char sequences
+when updating the window.
+.Ds
 .Fn idlok "WINDOW *win" "int boolf"
 .De
 Reserved for future use.
