@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.1.1.2 1997/04/22 13:45:29 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.2 1997/04/22 14:16:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -356,8 +356,7 @@ forward(n, force, only_last)
 					pos = position(BOTTOM_PLUS_ONE);
 				} while (pos == NULL_POSITION);
 			}
-		} else
-		{
+		} else {
 			eof_bell();
 			hit_eof++;
 			return;
