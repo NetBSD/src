@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.19 1998/01/18 22:09:40 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.20 1998/05/20 00:54:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.19 1998/01/18 22:09:40 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.20 1998/05/20 00:54:26 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -182,7 +182,7 @@ url_get(origline, proxyenv)
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 
-	if (isdigit(host[0])) {
+	if (isdigit((unsigned char)host[0])) {
 		if (inet_aton(host, &sin.sin_addr) == 0) {
 			warnx("Invalid IP address: %s", host);
 			goto cleanup_url_get;
