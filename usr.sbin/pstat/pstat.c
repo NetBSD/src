@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.83 2003/08/07 11:25:38 agc Exp $	*/
+/*	$NetBSD: pstat.c,v 1.84 2003/12/20 11:22:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.83 2003/08/07 11:25:38 agc Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.84 2003/12/20 11:22:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ struct nlist nl[] = {
 int	usenumflag;
 int	totalflag;
 int	kflag;
+int	hflag;
 char	*nlistf	= NULL;
 char	*memf	= NULL;
 kvm_t	*kd;
@@ -189,7 +190,7 @@ main(argc, argv)
 
 	setegid(getgid());
 	fileflag = swapflag = ttyflag = vnodeflag = 0;
-	while ((ch = getopt(argc, argv, "TM:N:fiknstv")) != -1)
+	while ((ch = getopt(argc, argv, "TM:N:fhiknstv")) != -1)
 		switch (ch) {
 		case 'f':
 			fileflag = 1;
@@ -214,6 +215,9 @@ main(argc, argv)
 			break;
 		case 'k':
 			kflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
 			break;
 		case 'v':
 		case 'i':		/* Backward compatibility. */
@@ -262,7 +266,7 @@ main(argc, argv)
 	if (ttyflag)
 		ttymode();
 	if (swapflag || totalflag)
-		list_swap(0, kflag, 0, totalflag, 1);
+		list_swap(0, kflag, 0, totalflag, 1, hflag);
 	exit(0);
 }
 
@@ -953,7 +957,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-T|-f|-s|-t|-v] [-kn] [-M core] [-N system]\n",
+	    "usage: %s [-T|-f|-s|-t|-v] [-knh] [-M core] [-N system]\n",
 	    getprogname());
 	exit(1);
 }
