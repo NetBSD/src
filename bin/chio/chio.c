@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.3 1997/07/20 05:31:47 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.4 1997/09/15 13:15:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.3 1997/07/20 05:31:47 thorpej Exp $");
+__RCSID("$NetBSD: chio.c,v 1.4 1997/09/15 13:15:16 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -175,7 +175,7 @@ do_move(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 
 	/* <from ET>  */
 	cmd.cm_fromtype = parse_element_type(*argv);
@@ -243,7 +243,7 @@ do_exchange(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 
 	/* <src ET>  */
 	cmd.ce_srctype = parse_element_type(*argv);
@@ -337,7 +337,7 @@ do_position(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		goto usage;
 	}
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 
 	/* <to ET>  */
 	cmd.cp_type = parse_element_type(*argv);
@@ -389,7 +389,7 @@ do_params(cname, argc, argv)
 	}
 
 	/* Get params from changer and display them. */
-	bzero(&data, sizeof(data));
+	memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
@@ -497,7 +497,7 @@ do_status(cname, argc, argv)
 	 * Get params from changer.  Specifically, we need the element
 	 * counts.
 	 */
-	bzero(&data, sizeof(data));
+	memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, (char *)&data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
@@ -550,8 +550,8 @@ do_status(cname, argc, argv)
 		if ((statusp = (u_int8_t *)malloc(count)) == NULL)
 			errx(1, "can't allocate status storage");
 
-		bzero(statusp, count);
-		bzero(&cmd, sizeof(cmd));
+		memset(statusp, 0, count);
+		memset(&cmd, 0, sizeof(cmd));
 
 		cmd.ces_type = chet;
 		cmd.ces_data = statusp;
@@ -641,7 +641,7 @@ bits_to_string(v, cp)
 	static char buf[128];
 
 	bp = buf;
-	bzero(buf, sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 
 	for (sep = '<'; (f = *cp++) != 0; cp = np) {
 		for (np = cp; *np >= ' ';)
