@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.8 1997/11/22 14:19:06 simonb Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.9 1997/11/25 00:53:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -278,6 +278,8 @@ get_via_ftp (void)
 				       filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
+			msg_display (MSG_ftperror_cont);
+			getchar();
 			puts (CL);
 			wrefresh (stdscr);
 			msg_display (MSG_ftperror);
