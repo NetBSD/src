@@ -17,6 +17,10 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: cond.c,v 1.3 1994/08/25 07:36:17 pk Exp $";
+#endif
+
 #include "as.h"
 
 #include "obstack.h"
