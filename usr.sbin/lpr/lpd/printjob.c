@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.40 2004/08/26 13:05:14 wiz Exp $	*/
+/*	$NetBSD: printjob.c,v 1.41 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.40 2004/08/26 13:05:14 wiz Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.41 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1088,7 +1088,7 @@ sendmail(char *user, int bombed)
 	struct stat stb;
 	FILE *fp;
 
-	if (user[0] == '-' || user[0] == '/' || !isprint(user[0]))
+	if (user[0] == '-' || user[0] == '/' || !isprint((unsigned char)user[0]))
 		return;
 	pipe(p);
 	if ((s = dofork(DORETURN)) == 0) {		/* child */

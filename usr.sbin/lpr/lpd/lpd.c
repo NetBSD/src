@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.49 2003/10/16 06:30:11 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.50 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.49 2003/10/16 06:30:11 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.50 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,11 +458,11 @@ doit(void)
 					continue;
 				}
 				*cp++ = '\0';
-				while (isspace(*cp))
+				while (isspace((unsigned char)*cp))
 					cp++;
 				if (*cp == '\0')
 					break;
-				if (isdigit(*cp)) {
+				if (isdigit((unsigned char)*cp)) {
 					if (requests >= MAXREQUESTS)
 						fatal("Too many requests");
 					requ[requests++] = atoi(cp);
@@ -494,11 +494,11 @@ doit(void)
 					continue;
 				}
 				*cp++ = '\0';
-				while (isspace(*cp))
+				while (isspace((unsigned char)*cp))
 					cp++;
 				if (*cp == '\0')
 					break;
-				if (isdigit(*cp)) {
+				if (isdigit((unsigned char)*cp)) {
 					if (requests >= MAXREQUESTS)
 						fatal("Too many requests");
 					requ[requests++] = atoi(cp);

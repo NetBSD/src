@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.14 2003/09/01 00:21:09 itojun Exp $	*/
+/*	$NetBSD: lpq.c,v 1.15 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.14 2003/09/01 00:21:09 itojun Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.15 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		printer = DEFLP;
 
 	for (argc -= optind, argv += optind; argc; --argc, ++argv)
-		if (isdigit(argv[0][0])) {
+		if (isdigit((unsigned char)argv[0][0])) {
 			if (requests >= MAXREQUESTS)
 				fatal("too many requests");
 			requ[requests++] = atoi(*argv);
