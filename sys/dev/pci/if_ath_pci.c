@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.5 2003/12/16 06:48:09 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.5.2.1 2004/07/02 22:28:31 he Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.6 2003/11/28 05:28:27 imp Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.5 2003/12/16 06:48:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.5.2.1 2004/07/02 22:28:31 he Exp $");
 #endif
 
 /*
@@ -142,8 +142,13 @@ ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
+	pci_vendor_id_t vendor;
 
-	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), ath_product(pa->pa_id));
+	vendor = PCI_VENDOR(pa->pa_id);
+	/* XXX HACK until HAL is updated. */
+	if (vendor == 0x128c)
+		vendor = PCI_VENDOR_ATHEROS;
+	devname = ath_hal_probe(vendor, ath_product(pa->pa_id));
 	if (devname) 
 		return 1;
 
