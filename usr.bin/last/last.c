@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.18 2003/03/03 07:18:37 wiz Exp $	*/
+/*	$NetBSD: last.c,v 1.19 2003/07/07 11:42:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.18 2003/03/03 07:18:37 wiz Exp $");
+__RCSID("$NetBSD: last.c,v 1.19 2003/07/07 11:42:13 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 #elif defined(SUPPORT_UTMP)
 	wtmp(file, namesize, linesize, hostsize);
 #else
-	errx(1, "Nu utmp or utmpx support compiled in.");
+	errx(1, "No utmp or utmpx support compiled in.");
 #endif
 	exit(0);
 }
