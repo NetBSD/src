@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.19 2001/09/10 21:19:20 chris Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.20 2002/06/02 14:44:37 drochner Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2001/09/10 21:19:20 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2002/06/02 14:44:37 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,6 @@ _bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
 	 * uvm_pglistalloc() also currently ignores the 'nsegs' parameter,
 	 * and always returns only one (contiguous) segment.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
