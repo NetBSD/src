@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.506 2003/02/18 00:09:43 grant Exp $
+$NetBSD: pcidevs,v 1.507 2003/02/26 11:48:58 salo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -185,7 +185,7 @@ vendor DG		0x1089	Data General Corporation
 vendor BIT3		0x108a	Bit3 Computer Corp.
 vendor ELONEX		0x108c	Elonex PLC c/o Oakleigh Systems
 vendor OLICOM		0x108d	Olicom
-vendor SUN		0x108e	Sun Microsystems
+vendor SUN		0x108e	Sun Microsystems, Inc.
 vendor SYSTEMSOFT	0x108f	Systemsoft
 vendor ENCORE		0x1090	Encore Computer
 vendor INTERGRAPH	0x1091	Intergraph
@@ -393,7 +393,7 @@ vendor MAXTOR		0x115f	Maxtor
 vendor MEGASOFT		0x1160	Megasoft
 vendor PFU		0x1161	PFU Limited
 vendor OALAB		0x1162	OA Laboratory
-vendor RENDITION	0x1163	Rendition Inc.
+vendor RENDITION	0x1163	Rendition, Inc.
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
 vendor SERVERWORKS	0x1166	ServerWorks
@@ -491,7 +491,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor O2MICRO		0x1217  O2 Micro Inc
+vendor O2MICRO		0x1217  O2 Micro, Inc.
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor HEURICON		0x1223	Heurikon/Computer Products
@@ -504,15 +504,15 @@ vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
-vendor ESSTECH		0x125d	ESS Technology Inc
+vendor ESSTECH		0x125d	ESS Technology, Inc.
 vendor INTERSIL		0x1260	Intersil
-vendor SILMOTION	0x126f	Silicon Motion
+vendor SILMOTION	0x126f	Silicon Motion, Inc.
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor TRANSMETA	0x1279	Transmeta Corp
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor DAVICOM		0x1282	Davicom Semiconductor
-vendor ESSTECH2		0x1285	ESS Technology Inc
+vendor ESSTECH2		0x1285	ESS Technology, Inc.
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor ALTEON		0x12ae	Alteon
@@ -524,7 +524,7 @@ vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
-vendor SIIG		0x131f	Siig Inc.
+vendor SIIG		0x131f	Siig, Inc.
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
@@ -533,7 +533,7 @@ vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
-vendor CMEDIA		0x13f6	C-Media Electronics Inc
+vendor CMEDIA		0x13f6	C-Media Electronics, Inc.
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
 vendor ETIMEDIA		0x1409	eTIMedia Technology Co. Ltd.
 vendor OXFORDSEMI	0x1415	Oxford Semiconductor Ltd.
@@ -575,7 +575,7 @@ vendor ICOMPRESSION	0x4444	Conexant (iCompression)
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
-vendor MEDIAQ		0x4d51	MediaQ Inc.
+vendor MEDIAQ		0x4d51	MediaQ, Inc.
 vendor GUILLEMOT	0x5046	Guillemot
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
@@ -1212,7 +1212,7 @@ product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
-/* ENE Technology Inc. products */
+/* ENE Technology, Inc. products */
 product	ENE CB1410	0x1410	CB1410 Cardbus Controller
 
 /* Ensoniq products */
@@ -1224,7 +1224,7 @@ product ENSONIQ CT5880		0x5880	CT5880
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
-/* ESS Technology Inc products */
+/* ESS Technology, Inc. products */
 product ESSTECH	MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product ESSTECH	MAESTRO2	0x1968	Maestro 2 PCI Audio Accelerator
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
@@ -1234,13 +1234,13 @@ product ESSTECH	MAESTRO3	0x1998	Maestro 3 PCI Audio Accelerator
 product ESSTECH	MAESTRO3MODEM	0x1999	Maestro 3 Modem
 product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 
-/* ESS Technology Inc products */
+/* ESS Technology, Inc. products */
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
 /* Eumitcom products */
 product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 
-/* O2 Micro Inc */
+/* O2 Micro, Inc. */
 product O2MICRO OZ6729		0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO OZ6730		0x673A	OZ6730 PCI-PCMCIA Bridge
 product O2MICRO OZ6832		0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
@@ -1643,7 +1643,7 @@ product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
 
-/* MediaQ Inc. products */
+/* MediaQ, Inc. products */
 product MEDIAQ MQ200		0x0200	MQ200
 
 /* Middle Digital, Inc. products */
@@ -2005,9 +2005,14 @@ product SIS 7012_AC		0x7012	SiS 7012 AC-97 Sound
 product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
 product SIS 7018		0x7018	SiS 7018 Sound
 
-/* Silicon Motion products */
-product SILMOTION LYNX_EMP	0x0712	Lynx EM+
-product SILMOTION LYNX_E	0x0810	Lynx E
+/* Silicon Motion, Inc. products */
+product SILMOTION SM710		0x0710	Lynx EM
+product SILMOTION SM712		0x0712	Lynx EM+
+product SILMOTION SM720		0x0720	Lynx 3DM
+product SILMOTION SM810		0x0810	Lynx E
+product SILMOTION SM811		0x0811	Lynx E
+product SILMOTION SM820		0x0820	Lynx 3D
+product SILMOTION SM910		0x0910	Lynx
 
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
@@ -2025,7 +2030,7 @@ product	SONY	CXD1947A	0x8009	CXD1947A IEEE 1394 Host Controller
 product SONY	CXD3222		0x8039  CXD3222 OHCI IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
-/* Sun Microsystems products */
+/* Sun Microsystems, Inc. products */
 product SUN EBUS	0x1000	PCIO Ebus2
 product SUN HMENETWORK	0x1001	PCIO Happy Meal Ethernet
 product SUN EBUSIII	0x1100	PCIO Ebus2 (US III)
