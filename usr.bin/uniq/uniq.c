@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.8 1997/10/20 02:27:05 lukem Exp $	*/
+/*	$NetBSD: uniq.c,v 1.9 1998/12/19 23:23:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.8 1997/10/20 02:27:05 lukem Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.9 1998/12/19 23:23:49 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -194,7 +194,7 @@ skip(str)
 	int infield, nchars, nfields;
 
 	for (nfields = numfields, infield = 0; nfields && *str; ++str)
-		if (isspace(*str)) {
+		if (isspace((unsigned char)*str)) {
 			if (infield) {
 				infield = 0;
 				--nfields;
@@ -230,7 +230,7 @@ obsolete(argv)
 				return;
 		} else if (ap[1] == '-')
 			return;
-		if (!isdigit(ap[1]))
+		if (!isdigit((unsigned char)ap[1]))
 			continue;
 		/*
 		 * Digit signifies an old-style option.  Malloc space for dash,
