@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2005/02/20 01:17:41 manu Exp $
+# $NetBSD: Makefile,v 1.7 2005/02/20 10:44:15 manu Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -19,7 +19,7 @@ SRCS=	main.c session.c isakmp.c handler.c 			\
 	isakmp_unity.c throttle.c isakmp_frag.c 		\
 	nattraversal.c vmbuf.c sockmisc.c misc.c		\
 	sha2.c
-MAN=	racoon.8 racoonctl.8 racoon.conf.5
+MAN=	racoon.8 racoon.conf.5
 
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/libipsec
