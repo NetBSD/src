@@ -1,3 +1,5 @@
+/*	$NetBSD: md-prologue.c,v 1.2 1996/07/03 03:31:56 thorpej Exp $	*/
+
 /*
  * rtld entry pseudo code - turn into assembler and tweak it
  */

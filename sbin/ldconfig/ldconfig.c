@@ -1,3 +1,5 @@
+/*	$NetBSD: ldconfig.c,v 1.15 1996/07/03 03:28:11 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ldconfig.c,v 1.14 1996/06/30 22:30:32 jtc Exp $
  */
 
 #include <sys/param.h>
