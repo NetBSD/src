@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
+/*	$NetBSD: pack.c,v 1.6 1997/04/17 05:01:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,9 +164,42 @@ pack()
 void
 packdevi()
 {
-	register struct devi *i, *l, *p;
-	register struct devbase *d;
-	register int j, m, n;
+	struct devi *firststar, *i, **ip, *l, *p;
+	struct devbase *d;
+	int j, m, n;
+
+	/*
+	 * Sort all the cloning units to after the non-cloning units,
+	 * preserving order of cloning and non-cloning units with
+	 * respect to other units of the same time.
+	 *
+	 * Algorithm: Walk down the list until the first cloning unit is
+	 * seen for the second time (or until the end of the list, if there
+	 * are no cloning units on the list), moving starred units to the
+	 * end of the list.
+	 */
+	for (d = allbases; d != NULL; d = d->d_next) {
+		ip = &d->d_ihead;
+		firststar = NULL;
+
+		for (i = *ip; i != firststar; i = *ip) {
+			if (i->i_unit != STAR) {
+				/* try i->i_bsame next */
+				ip = &i->i_bsame;
+			} else {
+				if (firststar == NULL)
+					firststar = i;
+
+				*d->d_ipp = i;
+				d->d_ipp = &i->i_bsame;
+
+				*ip = i->i_bsame;
+				i->i_bsame = NULL;
+
+				/* leave ip alone; try (old) i->i_bsame next */
+			}
+		}
+	}
 
 	packed = emalloc((ndevi + 1) * sizeof *packed);
 	n = 0;
