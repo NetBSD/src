@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28 1999/09/30 23:04:39 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.1 1999/10/19 17:44:55 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -111,10 +111,9 @@ struct ahb_softc {
 	TAILQ_HEAD(, ahb_ecb) sc_free_ecb;
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
 	int sc_numecbs;
-	struct scsipi_link sc_link;
-	struct scsipi_adapter sc_adapter;
 
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_adapter sc_adapter;
+	struct scsipi_channel sc_channel;
 };
 
 /*
@@ -137,21 +136,14 @@ void	ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_probe_data *));
 int	ahb_init __P((struct ahb_softc *));
 void	ahbminphys __P((struct buf *));
-int	ahb_scsi_cmd __P((struct scsipi_xfer *));
+void	ahb_scsipi_request __P((struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *));
 int	ahb_poll __P((struct ahb_softc *, struct scsipi_xfer *, int));
 void	ahb_timeout __P((void *));
 int	ahb_create_ecbs __P((struct ahb_softc *, struct ahb_ecb *, int));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsipi_device ahb_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 int	ahbmatch __P((struct device *, struct cfdata *, void *));
 void	ahbattach __P((struct device *, struct device *, void *));
@@ -213,6 +205,8 @@ ahbattach(parent, self, aux)
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
 	struct ahb_probe_data apd;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	if (!strcmp(ea->ea_idstring, "ADP0000"))
 		model = EISA_PRODUCT_ADP0000;
@@ -238,31 +232,33 @@ ahbattach(parent, self, aux)
 		panic("ahbattach: ahb_find failed!");
 
 	TAILQ_INIT(&sc->sc_free_ecb);
-	TAILQ_INIT(&sc->sc_queue);
+
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	/* adapt_openings initialized below */
+	adapt->adapt_max_periph = 4;		/* XXX arbitrary? */
+	adapt->adapt_request = ahb_scsipi_request;
+	adapt->adapt_minphys = ahbminphys;
+
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = apd.sc_scsi_dev;
 
 	if (ahb_init(sc) != 0) {
 		/* Error during initialization! */
 		return;
 	}
-
-	/*
-	 * Fill in the adapter switch.
-	 */
-	sc->sc_adapter.scsipi_cmd = ahb_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = ahbminphys;
-
-	/*
-	 * fill in the prototype scsipi_link.
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = apd.sc_scsi_dev;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &ahb_dev;
-	sc->sc_link.openings = 4;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
 
 	if (eisa_intr_map(ec, apd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
@@ -287,7 +283,7 @@ ahbattach(parent, self, aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -321,7 +317,7 @@ ahb_send_mbox(sc, opcode, ecb)
 	bus_space_write_4(iot, ioh, MBOXOUT0,
 	    sc->sc_dmamap_ecb->dm_segs[0].ds_addr + AHB_ECB_OFF(ecb));
 	bus_space_write_1(iot, ioh, ATTN, opcode |
-		ecb->xs->sc_link->scsipi_scsi.target);
+		ecb->xs->xs_periph->periph_target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -354,7 +350,7 @@ ahb_send_immed(sc, cmd, ecb)
 	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);	/* don't know this will work */
 	bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
 	bus_space_write_1(iot, ioh, ATTN, OP_IMMED |
-		ecb->xs->sc_link->scsipi_scsi.target);
+		ecb->xs->xs_periph->periph_target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
@@ -661,19 +657,7 @@ ahb_done(sc, ecb)
 	}
 done:
 	ahb_free_ecb(sc, ecb);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
-
-	/*
-	 * If there are queue entries in the software queue, try to
-	 * run the first one.  We should be more or less guaranteed
-	 * to succeed, since we just freed an ECB.
-	 *
-	 * NOTE: ahb_scsi_cmd() relies on our calling it with
-	 * the first entry in the queue.
-	 */
-	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
-		(void) ahb_scsi_cmd(xs);
 }
 
 /*
@@ -827,6 +811,8 @@ ahb_init(sc)
 		    sc->sc_dev.dv_xname, i, AHB_ECB_MAX);
 	}
 
+	sc->sc_adapter.adapt_openings = i;
+
 	return (0);
 }
 
@@ -844,220 +830,187 @@ ahbminphys(bp)
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-int
-ahb_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+ahb_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct ahb_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct ahb_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct ahb_ecb *ecb;
 	int error, seg, flags, s;
-	int fromqueue = 0, dontqueue = 0;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	s = splbio();		/* protect the queue */
+		SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsipi_request\n"));
 
-	/*
-	 * If we're running the queue from ahb_done(), we've been
-	 * called with the first queue entry as our argument.
-	 */
-	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-		goto get_ecb;
-	}
-
-	/* Polled requests can't be queued for later. */
-	dontqueue = xs->xs_control & XS_CTL_POLL;
-
-	/*
-	 * If there are jobs in the queue, run them first.
-	 */
-	if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
+		/* Get an ECB to use. */
+		ecb = ahb_get_ecb(sc, flags);
+#ifdef DIAGNOSTIC
 		/*
-		 * If we can't queue, we have to abort, since
-		 * we have to preserve order.
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
 		 */
-		if (dontqueue) {
+		if (ecb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate ecb\n");
+			panic("ahb_scsipi_request");
+		}
+#endif
+
+		ecb->xs = xs;
+		ecb->timeout = xs->timeout;
+
+		/*
+		 * If it's a reset, we need to do an 'immediate'
+		 * command, and store its ecb for later
+		 * if there is already an immediate waiting,
+		 * then WE must wait
+		 */
+		if (flags & XS_CTL_RESET) {
+			ecb->flags |= ECB_IMMED;
+			if (sc->sc_immed_ecb) {
+				ahb_free_ecb(sc, ecb);
+				xs->error = XS_BUSY;
+				scsipi_done(xs);
+				return;
+			}
+			sc->sc_immed_ecb = ecb;
+
+			s = splbio();
+			ahb_send_immed(sc, AHB_TARG_RESET, ecb);
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+
+			if ((flags & XS_CTL_POLL) == 0)
+				return;
+
+			/*
+			 * If we can't use interrupts, poll on completion
+			 */
+			if (ahb_poll(sc, xs, ecb->timeout))
+				ahb_timeout(ecb);
+			return;
 		}
 
 		/*
-		 * Swap with the first queue entry.
+		 * Put all the arguments for the xfer in the ecb
 		 */
-		TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		xs = TAILQ_FIRST(&sc->sc_queue);
-		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
-		fromqueue = 1;
-	}
+		ecb->opcode = ECB_SCSI_OP;
+		ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
+		ecb->opt2 = periph->periph_lun | ECB_NRB;
+		bcopy(xs->cmd, &ecb->scsi_cmd,
+		    ecb->scsi_cmd_length = xs->cmdlen);
+		ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);
+		ecb->req_sense_length = sizeof(ecb->ecb_sense);
+		ecb->status = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_status);
+		ecb->ecb_status.host_stat = 0x00;
+		ecb->ecb_status.target_stat = 0x00;
 
- get_ecb:
-	/*
-	 * get a ecb (mbox-out) to use. If the transfer
-	 * is from a buf (possibly from interrupt time)
-	 * then we can't allow it to sleep
-	 */
-	flags = xs->xs_control;
-	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		/*
-		 * If we can't queue, we lose.
-		 */
-		if (dontqueue) {
-			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+		if (xs->datalen) {
+			/*
+			 * Map the DMA transfer.
+			 */
+#ifdef TFS
+			if (flags & XS_CTL_DATA_UIO) {
+				error = bus_dmamap_load_uio(sc->sc_dmat,
+				    ecb->dmamap_xfer, (struct uio *)xs->data,
+				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				    BUS_DMA_WAITOK);
+			} else
+#endif /* TFS */
+			{
+				error = bus_dmamap_load(sc->sc_dmat,
+				    ecb->dmamap_xfer, xs->data, xs->datalen,
+				    NULL, (flags & XS_CTL_NOSLEEP) ?
+				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			}
+
+			if (error) {
+				if (error == EFBIG) {
+					printf("%s: ahb_scsipi_request, more "
+					    "than %d dma segments\n",
+					    sc->sc_dev.dv_xname, AHB_NSEG);
+				} else {
+					printf("%s: ahb_scsipi_request, error "
+					    "%d loading dma map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
+				ahb_free_ecb(sc, ecb);
+				xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+				return;
+			}
+
+			bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
+			    ecb->dmamap_xfer->dm_mapsize,
+			    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
+
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			for (seg = 0; seg < ecb->dmamap_xfer->dm_nsegs; seg++) {
+				ecb->ahb_dma[seg].seg_addr =
+				    ecb->dmamap_xfer->dm_segs[seg].ds_addr;
+				ecb->ahb_dma[seg].seg_len =
+				    ecb->dmamap_xfer->dm_segs[seg].ds_len;
+			}
+
+			ecb->data_addr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+			    AHB_ECB_OFF(ecb) +
+			    offsetof(struct ahb_ecb, ahb_dma);
+			ecb->data_length = ecb->dmamap_xfer->dm_nsegs *
+			    sizeof(struct ahb_dma_seg);
+			ecb->opt1 |= ECB_S_G;
+		} else {	/* No data xfer, use non S/G values */
+			ecb->data_addr = (physaddr)0;
+			ecb->data_length = 0;
 		}
+		ecb->link_addr = (physaddr)0;
 
-		/*
-		 * Stuff ourselves into the queue, in front
-		 * if we came off in the first place.
-		 */
-		if (fromqueue)
-			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
-		else
-			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	splx(s);		/* done playing with the queue */
-
-	ecb->xs = xs;
-	ecb->timeout = xs->timeout;
-
-	/*
-	 * If it's a reset, we need to do an 'immediate'
-	 * command, and store its ecb for later
-	 * if there is already an immediate waiting,
-	 * then WE must wait
-	 */
-	if (flags & XS_CTL_RESET) {
-		ecb->flags |= ECB_IMMED;
-		if (sc->sc_immed_ecb)
-			return TRY_AGAIN_LATER;
-		sc->sc_immed_ecb = ecb;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ecb,
+		    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		s = splbio();
-		ahb_send_immed(sc, AHB_TARG_RESET, ecb);
+		ahb_send_mbox(sc, OP_START_ECB, ecb);
 		splx(s);
 
 		if ((flags & XS_CTL_POLL) == 0)
-			return SUCCESSFULLY_QUEUED;
+			return;
 
 		/*
 		 * If we can't use interrupts, poll on completion
 		 */
-		if (ahb_poll(sc, xs, ecb->timeout))
+		if (ahb_poll(sc, xs, ecb->timeout)) {
 			ahb_timeout(ecb);
-		return COMPLETE;
-	}
-
-	/*
-	 * Put all the arguments for the xfer in the ecb
-	 */
-	ecb->opcode = ECB_SCSI_OP;
-	ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
-	ecb->opt2 = sc_link->scsipi_scsi.lun | ECB_NRB;
-	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length = xs->cmdlen);
-	ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-	    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);
-	ecb->req_sense_length = sizeof(ecb->ecb_sense);
-	ecb->status = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-	    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_status);
-	ecb->ecb_status.host_stat = 0x00;
-	ecb->ecb_status.target_stat = 0x00;
-
-	if (xs->datalen) {
-		/*
-		 * Map the DMA transfer.
-		 */
-#ifdef TFS
-		if (flags & XS_CTL_DATA_UIO) {
-			error = bus_dmamap_load_uio(sc->sc_dmat,
-			    ecb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
-		} else
-#endif /* TFS */
-		{
-			error = bus_dmamap_load(sc->sc_dmat,
-			    ecb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
+			if (ahb_poll(sc, xs, ecb->timeout))
+				ahb_timeout(ecb);
 		}
+		return;
 
-		if (error) {
-			if (error == EFBIG) {
-				printf("%s: ahb_scsi_cmd, more than %d"
-				    " dma segments\n",
-				    sc->sc_dev.dv_xname, AHB_NSEG);
-			} else {
-				printf("%s: ahb_scsi_cmd, error %d loading"
-				    " dma map\n",
-				    sc->sc_dev.dv_xname, error);
-			}
-			goto bad;
-		}
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
 
-		bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
-		    ecb->dmamap_xfer->dm_mapsize,
-		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
-		    BUS_DMASYNC_PREWRITE);
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX How do we do this? */
+		return;
 
-		/*
-		 * Load the hardware scatter/gather map with the
-		 * contents of the DMA map.
-		 */
-		for (seg = 0; seg < ecb->dmamap_xfer->dm_nsegs; seg++) {
-			ecb->ahb_dma[seg].seg_addr =
-			    ecb->dmamap_xfer->dm_segs[seg].ds_addr;
-			ecb->ahb_dma[seg].seg_len =
-			    ecb->dmamap_xfer->dm_segs[seg].ds_len;
-		}
-
-		ecb->data_addr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ahb_dma);
-		ecb->data_length = ecb->dmamap_xfer->dm_nsegs *
-		    sizeof(struct ahb_dma_seg);
-		ecb->opt1 |= ECB_S_G;
-	} else {	/* No data xfer, use non S/G values */
-		ecb->data_addr = (physaddr)0;
-		ecb->data_length = 0;
+	case ADAPTER_REQ_GET_XFER_MODE:
+		/* XXX How do we do this? */
+		return;
 	}
-	ecb->link_addr = (physaddr)0;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ecb,
-	    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	s = splbio();
-	ahb_send_mbox(sc, OP_START_ECB, ecb);
-	splx(s);
-
-	/*
-	 * Usually return SUCCESSFULLY QUEUED
-	 */
-	if ((flags & XS_CTL_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
-
-	/*
-	 * If we can't use interrupts, poll on completion
-	 */
-	if (ahb_poll(sc, xs, ecb->timeout)) {
-		ahb_timeout(ecb);
-		if (ahb_poll(sc, xs, ecb->timeout))
-			ahb_timeout(ecb);
-	}
-	return COMPLETE;
-
-bad:
-	xs->error = XS_DRIVER_STUFFUP;
-	ahb_free_ecb(sc, ecb);
-	return COMPLETE;
 }
 
 /*
@@ -1093,11 +1046,12 @@ ahb_timeout(arg)
 {
 	struct ahb_ecb *ecb = arg;
 	struct scsipi_xfer *xs = ecb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct ahb_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct ahb_softc *sc =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	int s;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	printf("timed out");
 
 	s = splbio();
