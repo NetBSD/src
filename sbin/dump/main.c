@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1997/04/21 11:31:16 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1997/05/27 08:35:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/04/21 11:31:16 mrg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.13 1997/05/27 08:35:28 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,6 @@ int	cartridge = 0;	/* Assume non-cartridge tape */
 long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
-uid_t	uid;		/* real uid */
-uid_t	euid;		/* effective uid */
 
 static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
@@ -110,10 +108,6 @@ main(argc, argv)
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow;
-
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -253,7 +247,6 @@ main(argc, argv)
 		exit(X_ABORT);
 #endif
 	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, sig);
