@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.7 1997/10/18 14:11:43 drochner Exp $	*/
+/*	$NetBSD: statd.c,v 1.8 1997/10/21 13:33:23 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.7 1997/10/18 14:11:43 drochner Exp $");
+__RCSID("$NetBSD: statd.c,v 1.8 1997/10/21 13:33:23 is Exp $");
 #endif
 
 
@@ -280,7 +280,7 @@ init_file(filename)
 	 * File now open.  mmap() it, with a generous size to allow for
 	 * later growth, where we will extend the file but not re-map it.
 	 */
-	status_info = (FileLayout *)mmap(NULL, 0x10000000,
+	status_info = (FileLayout *)mmap(NULL, 0x1000000,
 	    PROT_READ | PROT_WRITE, MAP_SHARED, status_fd, 0);
 
 	if (status_info == (FileLayout *)(-1)) {
