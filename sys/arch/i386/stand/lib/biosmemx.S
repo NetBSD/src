@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.4 2003/02/05 21:48:53 dsl Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.5 2003/02/14 14:39:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -33,8 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-#define	data32	.byte 0x66
 
 	.text
 
@@ -112,7 +110,7 @@ ENTRY(getmementry)
 	shrl	$4, %edi
 	mov	%ds, %ax
 	add	%di, %ax
-	mov	%ax, %ds
+	mov	%ax, %es
 	pop	%di
 	and	$0xf, %di
 
