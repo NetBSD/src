@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.73 2000/12/18 19:44:33 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.74 2000/12/26 23:54:34 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1212,10 +1212,11 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
+		error = ether_addmulti(ifr, ec);
+		break;
+
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, ec) :
-		    ether_delmulti(ifr, ec);
+		error = ether_delmulti(ifr, ec);
 		break;
 
 	default:
