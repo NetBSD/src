@@ -1,3 +1,5 @@
+/*	$NetBSD: job.h,v 1.4 1995/06/14 15:19:26 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)job.h	5.3 (Berkeley) 6/1/90
- *	$Id: job.h,v 1.3 1994/03/05 00:34:49 cgd Exp $
  */
 
 /*-

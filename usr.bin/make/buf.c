@@ -1,3 +1,5 @@
+/*	$NetBSD: buf.c,v 1.6 1995/06/14 15:18:51 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -37,8 +39,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)buf.c	5.5 (Berkeley) 12/28/90"; */
-static char *rcsid = "$Id: buf.c,v 1.5 1994/06/06 22:45:19 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)buf.c	5.5 (Berkeley) 12/28/90";
+#else
+static char rcsid[] = "$NetBSD: buf.c,v 1.6 1995/06/14 15:18:51 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*-

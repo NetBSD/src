@@ -1,6 +1,8 @@
+/*	$NetBSD: make.h,v 1.6 1995/06/14 15:19:43 christos Exp $	*/
+
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)make.h	5.13 (Berkeley) 3/1/91
- *	$Id: make.h,v 1.5 1994/05/09 06:36:21 glass Exp $
+ *	@(#)make.h	8.3 (Berkeley) 6/13/95
  */
 
 /*-
@@ -193,6 +194,7 @@ typedef struct GNode {
 				     * local variables. */
 #define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
+#define OP_PHONY	0x00010000  /* Not a file target; run always */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */

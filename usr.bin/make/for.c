@@ -1,3 +1,5 @@
+/*	$NetBSD: for.c,v 1.3 1995/06/14 15:19:13 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)for.c	5.6 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: for.c,v 1.2 1994/06/06 22:45:28 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)for.c	5.6 (Berkeley) 6/1/90";
+#else
+static char rcsid[] = "$NetBSD: for.c,v 1.3 1995/06/14 15:19:13 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*-
