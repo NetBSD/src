@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 1999/05/27 21:03:31 christos Exp $
+#	$NetBSD: Makefile,v 1.98 1999/07/12 21:53:52 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -25,15 +25,6 @@
 #   DESTDIR is the target directory for installation of the compiled
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
-#   EXPORTABLE_SYSTEM, when set, ensures that non-exportable crypto code
-#	is not compiled or installed. EXPORTABLE_SYSTEM is ignored if
-#	the `domestic/crypto-us' subtree does not exist.
-#   FORCE_DOMESTIC, when set, forces a descent into the domestic/crypto-us tree
-#	when handling the `all', `includes', and `install' targets. This
-#	flag is incompatible with the `build' target. It's generally a
-#	bad idea to use FORCE_DOMESTIC unless the ramifications are well
-#	understood, and should never be enabled by default. FORCE_DOMESTIC
-#	is ignored if the `domestic/crypto-us' subtree does not exist.
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR.
@@ -62,31 +53,6 @@ SUBDIR+= games
 SUBDIR+= gnu
 # This is needed for libstdc++ and gen-params.
 includes-gnu: includes-include includes-sys
-
-# Descend into the domestic/crypto-us tree if it exists AND
-#  1) the target is clean, cleandir, or obj, OR
-#  2) the the target is install or includes AND
-#     NOT compiling only "exportable" code AND
-#     doing it as part of installing a distribution, OR
-#  3) we Really Know what we're doing.  (Really!)
-#
-# NOTE:  due to the use of the make(foo) construct here, using the
-# clean, cleandir, and obj targets on the command line in conjunction
-# with any other target may produce unexpected results.
-
-.if exists(domestic)
-DOMESTIC=domestic
-.elif exists(crypto-us)
-DOMESTIC=crypto-us
-.endif
-
-.if defined(DOMESTIC) && \
-    (make(clean) || make(cleandir) || make(obj) || \
-    ((make(includes) || make(install)) && \
-	!defined(EXPORTABLE_SYSTEM) && defined(_DISTRIB)) || \
-    defined(FORCE_DOMESTIC))
-SUBDIR+= ${DOMESTIC}
-.endif
 
 .if exists(regress)
 .ifmake !(install)
