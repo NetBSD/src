@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2001/01/04 20:21:18 garbled Exp $
+# $NetBSD: Makefile,v 1.2 2001/01/04 21:50:13 garbled Exp $
 DIST=		${.CURDIR}/../../dist
 .PATH: ${DIST}/cdk
 .PATH: ${DIST}/cdk/include
@@ -31,8 +31,6 @@ MAN=	cdk_alphalist.3 cdk_binding.3 cdk_buttonbox.3 cdk_calendar.3 \
 MLINKS=	cdk_cdk.3 cdk.3
 
 INCSDIR= /usr/include/cdk
-
-DPSRCS=	print_version.h
 
 CPPFLAGS+= -I. \
 	-I${DIST}/cdk/include \
