@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.64 1999/04/26 04:32:05 ad Exp $
+#	$NetBSD: files.pmax,v 1.65 1999/05/11 05:06:35 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -16,21 +16,18 @@ device cpu				# not optional
 attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
 
-# CPU support option headers
-defopt	DEC_3100	# "kn01":	3100, 2100 (kn01)
-defopt	DEC_3MAX	# "kn02":	Decstation 5000/200
-defopt	DEC_3MIN	# "kn02ba":	Decstation 5000/{20,25,33,50}
-defopt	DEC_MAXINE	# "kn02ca":	Decstation 5000/{20,25,33,50}
-defopt	DEC_3MAXPLUS	# "kn03":	Decstation 5000/240, 5000/260
+# Model support option headers
+defopt 	DEC_3100	# DECstation 2100, 3100 (kn01)
+defopt 	DEC_5100	# DECsystem 5100 (kn230)
+defopt 	DEC_3MAX	# DECstation 5000/200 (kn02)
+defopt 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
+defopt 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
+defopt 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
+defopt	DEC_5800	# DECsystem 5800 isis (kn5800) XMI
+defopt	DEC_5400	# DECsystem 5400 mipsfair (kn210) Qbus
+defopt	DEC_5500	# DECsystem 5500 mipsfair2 (kn220) Qbus
 
-defopt	DEC_5800	# "kn5800":	Decstation 5800 isis (XMI)
-defopt	DEC_5400	# "kn210":	Decstation 5400 mipsfair
-defopt	DEC_5500	# "kn220":	Decstation 5500 mipsfair2
-defopt	DEC_5100	# "kn230":	Decstation 5100 mipsmate
-
-#
-# CPU-dependent files
-#
+# Model dependent files
 file	arch/pmax/pmax/dec_3100.c	dec_3100	# DS3100, pmax
 file	arch/pmax/pmax/dec_3max.c	dec_3max	# DS5000/200, 3max
 file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus	# DS5000/240, 3maxplus
@@ -235,19 +232,15 @@ file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
 file	arch/pmax/pmax/bus_space.c
 file	arch/pmax/pmax/conf.c
-#file	arch/pmax/pmax/kadb.c			optional kadb
-#file	arch/pmax/pmax/machdep.c		standard config-dependent
-file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/disksubr.c
-file	arch/pmax/stand/lib/callvec.c
+file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
+file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-
-
-# Console code.
+file	arch/pmax/stand/lib/callvec.c
 file	dev/cons.c
-file	arch/pmax/dev/promio.c			# default console
-file	arch/pmax/dev/findcons.c		# find and set up console.
+file	arch/pmax/dev/findcons.c	# find and set up console.
+#file	arch/pmax/pmax/kadb.c		# obsolute kadb
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
 
