@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.1 2001/02/07 13:32:57 mrg Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2 2001/06/05 12:44:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 extern const struct emul emul_sunos;
 
-int compat_sunos_lkmentry __P((struct lkm_table *, int, int));
+int compat_sunos32_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * declare the emulation
@@ -54,7 +54,7 @@ MOD_COMPAT("compat_sunos32", -1, &emul_sunos);
  * entry point
  */
 int
-compat_sunos_lkmentry(lkmtp, cmd, ver)
+compat_sunos32_lkmentry(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
 	int ver;
