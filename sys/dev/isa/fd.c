@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2004/06/04 01:12:04 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2004/09/14 17:38:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2004/06/04 01:12:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2004/09/14 17:38:30 drochner Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -130,6 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2004/06/04 01:12:04 thorpej Exp $");
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include "locators.h"
 
 #if defined(atari)
 /*
