@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.89 2000/04/15 21:14:53 tsarna Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.90 2000/05/07 01:38:36 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -613,6 +613,16 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	struct vattr attrs;
 	struct ucred *cr;
 
+	/* 
+	 * If the number of nfs iothreads to use has never
+	 * been set, create a reasonable number of them.
+	 */
+
+	if (nfs_niothreads < 0) {
+		nfs_niothreads = 4;
+		nfs_getset_niothreads(TRUE);
+	}
+	
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
 		/* update paths, file handles, etc, here	XXX */
