@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1998/01/05 22:00:36 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1998/07/27 07:48:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -162,7 +162,9 @@ u_long		addr;
 	sp->addr[0] = fudge & 0xffff;
 	sp->addr[1] = fudge >> 16;
 #endif
+#if 0
 	sp->reloc_index = 0;
+#endif
 }
 
 /*
