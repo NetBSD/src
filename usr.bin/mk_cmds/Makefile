@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:57:19 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/03 04:02:32 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/sl
 
@@ -17,7 +17,8 @@ CFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-LDADD=	-lroken \
+LDADD=	-lvers \
+	-lroken \
 	-lcrypt
 
 NOMAN=	noman
