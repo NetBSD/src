@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 1999/03/26 03:03:37 mark Exp $	*/
+/*	$NetBSD: md.h,v 1.6 1999/06/20 06:08:17 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -17,7 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior

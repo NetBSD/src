@@ -1,10 +1,9 @@
-/*	$NetBSD: label.c,v 1.11 1999/04/11 22:40:20 bouyer Exp $	*/
+/*	$NetBSD: label.c,v 1.12 1999/06/20 06:08:14 cgd Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
  * All rights reserved.
  *
-
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Jonathan Stone.
  * 4. The name of Jonathan Stone may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -37,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.11 1999/04/11 22:40:20 bouyer Exp $");
+__RCSID("$NetBSD: label.c,v 1.12 1999/06/20 06:08:14 cgd Exp $");
 #endif
 
 #include <sys/types.h>
