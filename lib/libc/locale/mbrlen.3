@@ -1,0 +1,199 @@
+.\" $NetBSD: mbrlen.3,v 1.1 2002/03/18 06:00:26 tshiozak Exp $
+.\"
+.\" Copyright (c)2002 Citrus Project,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd Feb 3, 2002
+.Dt MBRLEN 3
+.Os
+.\" ----------------------------------------------------------------------
+.Sh NAME
+.Nm mbrlen
+.Nd get number of bytes consisting a multibyte character (restartable)
+.\" ----------------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.\" ----------------------------------------------------------------------
+.Sh SYNOPSIS
+.Fd #include <wchar.h>
+.Ft int
+.Fn mbrlen "const char * restrict s" "size_t n" "mbstate_t * restrict ps"
+.\" ----------------------------------------------------------------------
+.Sh DESCRIPTION
+The
+.Fn mbrlen
+function usually determines the number of bytes consisting in
+a multibyte character pointed by
+.Fa s
+and return it.
+This function shall only examine max n bytes of the array beginning from
+.Fa s .
+.Pp
+.Fn mbrlen
+is equivalent to the following call (except
+.Fa ps
+is evaluated only once):
+.Pp
+.Bd -literal
+mbrtowc(NULL, s, n, (ps != NULL) ? ps : &internal);
+.Ed
+.Pp
+Here,
+.Fa internal
+is an internal state object.
+.Pp
+In state-dependent encodings,
+.Fa s
+may point the special sequence bytes to change the shift-state.
+Although such sequence bytes corresponds to no individual
+wide-character code, these affect the conversion state object pointed by 
+.Fa ps ,
+and the
+.Fn mbrlen
+treats the special sequence bytes
+as if these are a part of the subsequent multibyte character.
+.Pp
+Unlike
+.Xr mblen 3 ,
+the
+.Fn mbrlen
+may accept the byte sequence being not complete character
+but possible to consist a part of a valid character.
+In this case, this function will accept the all such bytes
+and save them into the conversion state object pointed by
+.Fa ps .
+They will be used at the subsequent call of this function to restart
+the conversion suspended.
+.Pp
+The behaviour of the
+.Fn mbrlen
+is affected by LC_CTYPE category of the current locale.
+.Pp
+There are the special cases:
+.Bl -tag -width 0123456789
+.It "s == NULL"
+The
+.Fn mbrlen
+sets the conversion state object pointed by
+.Fa ps
+to an initila state and always return 0.
+Unlike
+.Xr mblen 3 ,
+the value returned does not indicate whether the current encoding of
+the locale is state-dependent.
+.Pp
+In this case, the
+.Fn mbrlen
+ignores
+.Fa n .
+.It "n == 0"
+In this case,
+the first
+.Fa n
+bytes of the array pointed by
+.Fa s
+never form a complete character.  Thus, the
+.Fn mbrlen
+always returns (size_t)-2.
+.It "ps == NULL"
+The
+.Fn mbrlen
+uses its own internal state object to keep the conversion state,
+instead of
+.Fa ps
+mentioned in this manual page.
+.Pp
+Calling any other functions in the
+.Lb libc
+never change the internal
+state of the
+.Fn mbrlen ,
+except for calling
+.Xr setlocale 3
+with changing LC_CTYPE category of the current locale.
+Such
+.Xr setlocale 3
+call causes the internal state of this function to be indeterminate.
+This internal state is initialized at startup time of the program.
+.El
+.\" ----------------------------------------------------------------------
+.Sh RETURN VALUES
+The
+.Fn mbrlen
+returns:
+.Bl -tag -width 0123456789
+.It "0"
+.Fa s
+points a null byte (\'\\0\').
+.It "positive"
+The value returned is
+a number of bytes for the valid multibyte character pointed by
+.Fa s .
+There is no cases that this value is greater than
+.Fa n
+or the value of MB_CUR_MAX macro.
+.It "(size_t)-2"
+.Fa s
+points the byte sequence which is possible to consist a part of valid
+multibyte character but incomplete.
+When
+.Fa n
+is at least MB_CUR_MAX,
+this case can only occur if the array pointed
+.Fa s
+contains redundant shift sequence.
+.It "(size_t)-1"
+.Fa s
+points a illegal byte sequence which does not form a valid multibyte
+character.
+In this case, the
+.Fn mbrtowc
+sets errno to indicate the error.
+.El
+.\" ----------------------------------------------------------------------
+.Sh ERRORS
+The
+.Fn mbrlen
+may causes an error in the following case:
+.Bl -tag -width Er
+.It Bq Er EILSEQ
+.Fa s
+points an invalid multibyte character.
+.It Bq Er EINVAL
+.Fa ps
+points an invalid or uninitialized mbstate_t object.
+.El
+.\" ----------------------------------------------------------------------
+.Sh SEE ALSO
+.Xr setlocale 3 ,
+.Xr mblen 3 ,
+.Xr mbrtowc 3 .
+.\" ----------------------------------------------------------------------
+.Sh STANDARDS
+The
+.Fn mbrlen
+function conforms to
+.St -isoC-amd1 .
+The restrict qualifier is added at
+.St -isoC99 .
