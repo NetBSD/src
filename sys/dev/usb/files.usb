@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.31 2001/11/28 10:21:25 lukem Exp $
+#	$NetBSD: files.usb,v 1.32 2001/12/12 15:27:24 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -83,6 +83,12 @@ device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
 file	dev/usb/umassbus.c		umass
+
+
+# IrDA bridges
+device	uirda: irbus
+attach	uirda at uhub
+file	dev/usb/uirda.c			uirda
 
 
 # Misc
