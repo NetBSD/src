@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.3 2005/03/10 17:02:20 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.4 2005/03/11 15:47:27 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -108,7 +108,7 @@ xen_shm_init()
 	}
 	xen_shm_ex = extent_create("xen_shm",
 	    xen_shm_base_address_pg,
-	    xen_shm_end_address >> PAGE_SHIFT,
+	    (xen_shm_end_address >> PAGE_SHIFT) - 1,
 	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 	if (xen_shm_ex == NULL) {
 		panic("xen_shm_init no extent");
@@ -151,6 +151,16 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 		mcl[i].args[1] = ma[i] | remap_prot;
 		mcl[i].args[2] = 0;
 		mcl[i].args[3] = domid;
+#ifdef DIAGNOSTIC
+		if ((new_va_pg - xen_shm_base_address_pg) >=
+		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
+		    (new_va_pg - xen_shm_base_address_pg) < 0) {
+			printf("new_va_pg 0x%lx "
+			    "xen_shm_base_address_pg 0x%lx\n",
+			    new_va_pg, xen_shm_base_address_pg);
+			panic("xen_shm_map: out of _xen_shm_vaddr2ma\n");
+		}
+#endif
 		_xen_shm_vaddr2ma[new_va_pg - xen_shm_base_address_pg] = 
 		    ma[i];
 	}
@@ -188,6 +198,16 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		mcl[i].args[0] = va + i;
 		mcl[i].args[1] = 0;
 		mcl[i].args[2] = 0;
+#ifdef DIAGNOSTIC
+		if ((va + i - xen_shm_base_address_pg) >=
+		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
+		    (va + i - xen_shm_base_address_pg) < 0) {
+			printf("va 0x%lx i 0x%x "
+			    "xen_shm_base_address_pg 0x%lx\n",
+			    va, i, xen_shm_base_address_pg);
+			panic("xen_shm_unmap: out of _xen_shm_vaddr2ma\n");
+		}
+#endif
 		_xen_shm_vaddr2ma[va + i - xen_shm_base_address_pg] = -1;
 	}
 	mcl[nentries - 1].args[2] = UVMF_FLUSH_TLB;
@@ -248,6 +268,15 @@ xen_shm_vaddr2ma(vaddr_t va, paddr_t *map)
 	if (va <  xen_shm_base_address || va >=  xen_shm_end_address)
 		return -1;
 
+#ifdef DIAGNOSTIC
+		if (((va >> PAGE_SHIFT) - xen_shm_base_address_pg) >=
+		    BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST ||
+		    ((va >> PAGE_SHIFT) - xen_shm_base_address_pg) < 0) {
+			printf("va 0x%lx xen_shm_base_address_pg 0x%lx\n",
+			    (va >> PAGE_SHIFT), xen_shm_base_address_pg);
+			panic("xen_shm_vaddr2ma: out of _xen_shm_vaddr2ma\n");
+		}
+#endif
 	*map = _xen_shm_vaddr2ma[(va >> PAGE_SHIFT) - xen_shm_base_address_pg];
 	*map |= (va & PAGE_MASK);
 	return 0;
