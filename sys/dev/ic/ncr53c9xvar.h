@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.35 2001/12/03 23:27:32 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.36 2002/08/26 05:14:47 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -171,9 +171,7 @@ struct ncr53c9x_tinfo {
 	int	perrs;		/* # of parity errors */
 	int	senses;		/* # of request sense commands sent */
 	u_char  flags;
-#define T_NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
-#define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
 #define T_SYNCMODE	0x08	/* SYNC mode has been negotiated */
 #define T_SYNCHOFF	0x10	/* SYNC mode for is permanently off */
 #define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
