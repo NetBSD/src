@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1996/08/27 21:56:23 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1996/10/10 23:41:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -122,7 +122,7 @@ zs_config(zsc, chan_addr)
 	u_char reset;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
-	printf(": Zilog 8530 SCC\n");
+	kprintf(": Zilog 8530 SCC\n");
 
 	/*
 	 * Initialize software state for each channel.
@@ -198,10 +198,10 @@ zsc_print(aux, name)
 	struct zsc_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		kprintf("%s: ", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		kprintf(" channel %d", args->channel);
 
 	return UNCONF;
 }

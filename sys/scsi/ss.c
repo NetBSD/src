@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.11 1996/07/12 16:49:50 is Exp $	*/
+/*	$NetBSD: ss.c,v 1.12 1996/10/10 23:34:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -186,7 +186,7 @@ ssopen(dev, flag, mode, p)
 	    unit, ss_cd.cd_ndevs));
 
 	if (sc_link->flags & SDEV_OPEN) {
-		printf("%s: already open\n", ss->sc_dev.dv_xname);
+		kprintf("%s: already open\n", ss->sc_dev.dv_xname);
 		return (EBUSY);
 	}
 
