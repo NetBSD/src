@@ -1,4 +1,4 @@
-/*      $NetBSD: rcache.c,v 1.4 1999/10/01 04:35:23 perseant Exp $       */
+/*      $NetBSD: rcache.c,v 1.5 2000/10/11 04:57:42 briggs Exp $       */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ rawread(blkno, buf, size)
 			disk, blkno, size, cnt);
 err:
 	if (++breaderrors > BREADEMAX) {
-		msg("More than %d block read errors from %d\n",
+		msg("More than %d block read errors from %s\n",
 			BREADEMAX, disk);
 		broadcast("DUMP IS AILING!\n");
 		msg("This is an unrecoverable error.\n");
@@ -221,12 +221,12 @@ err:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %d]: count=%d: "
+			msg("read error from %s: %s: [sector %d]: count=%ld: "
 			    "%s\n", disk, strerror(errno), blkno, dev_bsize,
 			    strerror(errno));
 			continue;
 		}
-		msg("short read error from %s: [sector %d]: count=%d, got=%d\n",
+		msg("short read error from %s: [sector %d]: count=%ld, got=%d\n",
 		    disk, blkno, dev_bsize, cnt);
 	}
 }
