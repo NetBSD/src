@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.35 1998/02/18 01:24:08 thorpej Exp $	*/
+/*	$NetBSD: savecore.c,v 1.36 1998/04/01 15:15:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.35 1998/02/18 01:24:08 thorpej Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.36 1998/04/01 15:15:58 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: savecore.c,v 1.35 1998/02/18 01:24:08 thorpej Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
