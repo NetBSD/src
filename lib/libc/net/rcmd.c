@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.40 2000/02/24 06:33:47 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.41 2000/03/05 09:40:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.40 2000/02/24 06:33:47 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.41 2000/03/05 09:40:57 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -641,8 +641,8 @@ iruserok(raddr, superuser, ruser, luser)
 	sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return iruserok_sa(&sin, sizeof(struct sockaddr_in), superuser, luser,
-		    ruser);
+	return iruserok_sa(&sin, sizeof(struct sockaddr_in), superuser, ruser,
+		    luser);
 }
 
 /*
