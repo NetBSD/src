@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.5 2002/10/02 16:02:22 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.6 2003/04/01 15:48:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -371,13 +371,13 @@ ie_obio_attach(parent, self, aux)
 	 * (a side-effect of this double-map is that the ISCP and SCB
 	 * structures also get aliased there, but we ignore this). The
 	 * first page at `maddr' is only used for ISCP, SCB and the aliased
-	 * SCP; the actual buffers start at maddr+NBPG.
+	 * SCP; the actual buffers start at maddr+PAGE_SIZE.
 	 *
 	 * In a picture:
 
 	|---//--- ISCP-SCB-----scp-|--//- buffers -//-|... |iscp-scb-----SCP-|
 	|         |                |                  |    |             |   |
-	|         |<----- NBPG --->|                  |    |<----- NBPG -+-->|
+	|         |<---PAGE_SIZE-->|                  |    |<--PAGE_SIZE-+-->|
 	|         |<------------- msize ------------->|    |       ^     |
 	|         |                                                |     |
 	|         \@maddr                                 (last page dbl mapped)
@@ -415,8 +415,8 @@ ie_obio_attach(parent, self, aux)
 	 * Rest of first page is unused (wasted!); the other pages
 	 * are used for buffers.
 	 */
-	sc->buf_area = NBPG;
-	sc->buf_area_sz = msize - NBPG;
+	sc->buf_area = PAGE_SIZE;
+	sc->buf_area_sz = msize - PAGE_SIZE;
 
 	if (i82586_proberam(sc) == 0) {
 		printf(": memory probe failed\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.8 2003/01/18 06:58:34 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.9 2003/04/01 15:47:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ _bootstrap()
 	/*
  	* Now unmap the PROM's physical/virtual pages zero through three.
  	*/
-	for(va = 0; va < NBPG * 4; va += NBPG)
+	for(va = 0; va < PAGE_SIZE * 4; va += PAGE_SIZE)
 		set_pte(va, PG_INVAL);
 
 	/*

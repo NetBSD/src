@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2003/01/18 06:58:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2003/04/01 15:47:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -260,7 +260,7 @@ cpu_startup()
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (caddr_t) (NBPG * 4);
+	v = (caddr_t) (PAGE_SIZE * 4);
 	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
@@ -299,7 +299,7 @@ cpu_startup()
 	/*
 	 * Get scratch page for dumpsys().
 	 */
-	if ((dumppage = uvm_km_alloc(kernel_map, NBPG)) == 0)
+	if ((dumppage = uvm_km_alloc(kernel_map, PAGE_SIZE)) == 0)
 		panic("startup: alloc dumppage");
 
 	/*
@@ -341,7 +341,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -378,7 +378,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -386,7 +386,7 @@ cpu_startup()
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_valloc_wait(kernel_map, NBPG);
+	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
 
 	/*
 	 * Allocate dma map for devices on the bus.
@@ -625,7 +625,7 @@ long	dumplo = 0; 		/* blocks */
 
 /*
  * This is called by main to set dumplo, dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -678,8 +678,8 @@ extern paddr_t avail_start;
  * Write a crash dump.  The format while in swap is:
  *   kcore_seg_t cpu_hdr;
  *   cpu_kcore_hdr_t cpu_data;
- *   padding (NBPG-sizeof(kcore_seg_t))
- *   pagemap (2*NBPG)
+ *   padding (PAGE_SIZE-sizeof(kcore_seg_t))
+ *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
 void
@@ -731,7 +731,7 @@ dumpsys()
 	blkno = dumplo;
 	todo = dumpsize;	/* pages */
 	vaddr = (char*)dumppage;
-	memset(vaddr, 0, NBPG);
+	memset(vaddr, 0, PAGE_SIZE);
 
 	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)vaddr;
@@ -744,25 +744,25 @@ dumpsys()
 
 	/* Fill in cpu_kcore_hdr_t part. */
 	strncpy(chdr_p->name, kernel_arch, sizeof(chdr_p->name));
-	chdr_p->page_size = NBPG;
+	chdr_p->page_size = PAGE_SIZE;
 	chdr_p->kernbase = KERNBASE;
 
 	/* Fill in the sun2_kcore_hdr part (MMU state). */
 	pmap_kcore_hdr(sh);
 
 	/* Write out the dump header. */
-	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 	if (error)
 		goto fail;
-	blkno += btodb(NBPG);
+	blkno += btodb(PAGE_SIZE);
 
 	/* translation RAM (pages zero through seven) */
-	for(chunk = 0; chunk < (NBPG * 8); chunk += NBPG) {
+	for(chunk = 0; chunk < (PAGE_SIZE * 8); chunk += PAGE_SIZE) {
 		pmap_get_pagemap((int*)vaddr, chunk);
-		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		if (error)
 			goto fail;
-		blkno += btodb(NBPG);
+		blkno += btodb(PAGE_SIZE);
 	}
 
 	/*
@@ -785,11 +785,11 @@ dumpsys()
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
 		vaddr = (char*)(paddr + KERNBASE);
-		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		if (error)
 			goto fail;
-		paddr += NBPG;
-		blkno += btodb(NBPG);
+		paddr += PAGE_SIZE;
+		blkno += btodb(PAGE_SIZE);
 		--todo;
 	} while (--chunk > 0);
 
@@ -800,13 +800,13 @@ dumpsys()
 			printf("\r%4d", todo);
 		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
 		pmap_update(pmap_kernel());
-		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-		pmap_kremove(vmmap, NBPG);
+		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
+		pmap_kremove(vmmap, PAGE_SIZE);
 		pmap_update(pmap_kernel());
 		if (error)
 			goto fail;
-		paddr += NBPG;
-		blkno += btodb(NBPG);
+		paddr += PAGE_SIZE;
+		blkno += btodb(PAGE_SIZE);
 	} while (--todo > 0);
 
 	printf("\rdump succeeded\n");
