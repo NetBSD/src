@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.101 1997/10/10 02:09:30 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.102 1997/10/11 00:05:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1364,7 +1364,7 @@ sys_readlink(p, v, retval)
 	vp = nd.ni_vp;
 	if (vp->v_type != VLNK)
 		error = EINVAL;
-	else {
+	else if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) == 0) {
 		aiov.iov_base = SCARG(uap, buf);
 		aiov.iov_len = SCARG(uap, count);
 		auio.uio_iov = &aiov;
