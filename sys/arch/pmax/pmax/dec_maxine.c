@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.14 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.15 1999/06/08 23:42:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.14 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.15 1999/06/08 23:42:36 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.14 1999/05/26 04:23:59 nisimura Exp
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
 
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
@@ -126,7 +127,6 @@ static unsigned latched_cycle_cnt;
 void kn02ca_wbflush __P((void));
 unsigned kn02ca_clkread __P((void));
 extern unsigned (*clkread) __P((void));
-extern void prom_haltbutton __P((void));
 
 extern volatile struct chiptime *mcclock_addr; /* XXX */
 extern char cpu_model[];
