@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.31 1997/07/31 04:08:19 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.32 1997/08/18 21:23:14 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -434,11 +434,19 @@ ipl)
 
 audio*)
 	unit=${i#audio}
-	rm -f audio$unit sound$unit mixer$unit
-	mknod audio$unit c 41 $(($unit + 128))
-	mknod sound$unit c 41 $unit
-	mknod mixer$unit c 41 $(($unit + 16))
-	chmod 644 audio$unit sound$unit mixer$unit
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=41
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
 local)
