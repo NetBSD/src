@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.31 1997/02/11 07:51:18 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,9 +64,10 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <machine/viareg.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/viareg.h>
 
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.5 1996/10/13 03:21:19 christos Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.6 1997/02/20 00:23:28 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/grfioctl.h>
 
 #include <mac68k/dev/nubus.h>

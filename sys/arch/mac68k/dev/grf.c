@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39 1996/12/16 16:17:05 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.40 1997/02/20 00:23:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,9 @@
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
-#include <machine/grfioctl.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
 
 #include <miscfs/specfs/specdev.h>
 
