@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.xxx,v 1.1 2002/07/23 11:08:28 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2003/02/18 08:11:21 shin Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
