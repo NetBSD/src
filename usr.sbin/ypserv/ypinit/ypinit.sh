@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.1.1.1 1996/08/09 10:14:59 thorpej Exp $
+#	$NetBSD: ypinit.sh,v 1.2 1996/08/09 15:09:04 thorpej Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -17,26 +17,21 @@ YP_DIR=/var/yp
 
 ERROR=USAGE				# assume usage error
 
-if [ $# -eq 1 ]
-then
-	if [ $1 = "-m" ]		# ypinit -m
-	then
+if [ $# -eq 1 ]; then
+	if [ $1 = "-m" ]; then		# ypinit -m
 		DOMAIN=`${DOMAINNAME}`
 		SERVERTYPE=MASTER
 		ERROR=
 	fi
 fi
 
-if [ $# -eq 2 ]
-then
-	if [ $1 = "-m" ]		# ypinit -m domainname
-	then
+if [ $# -eq 2 ]; then
+	if [ $1 = "-m" ]; then		# ypinit -m domainname
 		DOMAIN=${2}
 		SERVERTYPE=MASTER
 		ERROR=
 	fi
-	if [ $1 = "-s" ]		# ypinit -s master_server
-	then
+	if [ $1 = "-s" ]; then		# ypinit -s master_server
 		DOMAIN=`${DOMAINNAME}`
 		SERVERTYPE=SLAVE
 		MASTER=${2}
@@ -44,10 +39,8 @@ then
 	fi
 fi
 
-if [ $# -eq 3 ]
-then
-	if [ $1 = "-s" ]		# ypinit -s master_server domainname
-	then
+if [ $# -eq 3 ]; then
+	if [ $1 = "-s" ]; then		# ypinit -s master_server domainname
 		DOMAIN=${3}
 		SERVERTYPE=SLAVE
 		MASTER=${2}
@@ -55,8 +48,7 @@ then
 	fi
 fi
 
-if [ "${ERROR}" = "USAGE" ]
-then
+if [ X${ERROR} = X"USAGE" ]; then
 	cat << \__usage 1>&2
 usage: ypinit -m [domainname]
        ypinit -s master_server [domainname]
@@ -70,8 +62,7 @@ __usage
 fi
 
 # Check if domainname is set, don't accept an empty domainname
-if [ -z "${DOMAIN}" ]
-then
+if [ X${DOMAIN} = "X" ]; then
 	cat << \__no_domain 1>&2
 The local host's YP domain name has not been set.  Please set it with
 the domainname(8) command or pass the domain as an argument to ypinit(8).
@@ -82,8 +73,7 @@ fi
 
 # Check if hostname is set, don't accept an empty hostname
 HOST=`${HOSTNAME}`
-if [ -z "${HOST}" ]
-then
+if [ X${HOST} = "X" ]; then
 	cat << \__no_hostname 1>&2
 The local host's hostname has not been set.  Please set it with the
 hostname(8) command.
@@ -99,7 +89,11 @@ then
 	exit 1
 fi
 
-echo "Server type: ${SERVERTYPE} Domain: ${DOMAIN} Master: ${MASTER}"
+echo -n "Server type: ${SERVERTYPE} Domain: ${DOMAIN}"
+if [ X${SERVERTYPE} = X"SLAVE" ]; then
+	echo -n " Master: ${MASTER}"
+fi
+echo ""
 cat << \__notice1
 
 Installing the YP data base will require that you answer a few questions.
@@ -107,18 +101,14 @@ Questions will all be asked at the beginning of the procedure.
 
 __notice1
 
-if [ -d ${YP_DIR}/${DOMAIN} ]; then
+if [ -d "${YP_DIR}/${DOMAIN}" ]; then
 	echo -n "Can we destroy the existing ${YP_DIR}/${DOMAIN} and its contents? [y/n: n]  "
 	read KILL
 
 	ERROR=
 	case ${KILL} in
-	y*)
-		ERROR = DELETE
-		;;
-
-	Y*)
-		ERROR = DELETE
+	y*|Y*)
+		ERROR="DELETE"
 		;;
 
 	*)
@@ -126,33 +116,23 @@ if [ -d ${YP_DIR}/${DOMAIN} ]; then
 		;;
 	esac
 
-	if [ -z "${ERROR}" ]
-	then
-		echo "OK, please clean it up by hand and start again."
-		exit 0
-	fi
-
-	if [ "${ERROR}" = "DELETE" ]
-	then
-		rm -rf ${YP_DIR}/${DOMAIN}
-
-		if [ $? -ne 0 ]
-		then
+	if [ X${ERROR} = X"DELETE" ]; then
+		if ! rm -rf ${YP_DIR}/${DOMAIN}; then
 			echo "Can't clean up old directory ${YP_DIR}/${DOMAIN}." 1>&2
 			exit 1
 		fi
+	else
+		echo "OK, please clean it up by hand and start again."
+		exit 0
 	fi
 fi
 
-mkdir ${YP_DIR}/${DOMAIN}
-
-if [ $? -ne 0 ]
-then
+if ! mkdir "${YP_DIR}/${DOMAIN}"; then
 	echo "Can't make new directory ${YP_DIR}/${DOMAIN}." 1>&2
 	exit 1
 fi
 
-if [ "${SERVERTYPE}" = "MASTER" ]; then
+if [ X${SERVERTYPE} = X"MASTER" ]; then
 	if [ ! -f ${YP_DIR}/Makefile ];	then
 		if [ ! -f ${YP_DIR}/Makefile.main ]; then
 			echo "Can't find ${YP_DIR}/Makefile.main. " 1>&2
@@ -163,7 +143,7 @@ if [ "${SERVERTYPE}" = "MASTER" ]; then
 
 	SUBDIR=`grep "^SUBDIR=" ${YP_DIR}/Makefile`
 
-	if [ -z "${SUBDIR}" ]; then
+	if [ X"${SUBDIR}" = "X" ]; then
 		echo "Can't find line starting with 'SUBDIR=' in ${YP_DIR}/Makefile. " 1>&2
 		exit 1
 	fi
@@ -199,22 +179,22 @@ if [ "${SERVERTYPE}" = "MASTER" ]; then
 		touch ypservers
 		cat ypservers | ${MAKEDBM} - ypservers
 	)
+
+	echo "Done.  Be sure to run \`make' in /var/yp."
 fi
 
-if [ "${SERVERTYPE}" = "SLAVE" ]; then
+if [ X${SERVERTYPE} = X"SLAVE" ]; then
 	echo ""
 
 	for MAP in `${YPWHICH} -d ${DOMAIN} -m | cut -d\  -f1`; do
 		echo "Transfering ${MAP}..."
-		${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}
-
-		if [ $?  -ne 0 ]; then
+		if ! ${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}; then
 			echo "Can't transfer map ${MAP}." 1>&2
 			exit 1
 		fi
 	done
 
 	echo ""
-	echo "Don't forget to update the `ypservers' on ${MASTER}."
+	echo "Don't forget to update the \`ypservers' on ${MASTER}."
 	exit 0
 fi
