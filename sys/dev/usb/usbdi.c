@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.29 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.30 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -408,6 +408,7 @@ usbd_clear_endpoint_stall(pipe)
 	usbd_status r;
 
 	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
+	pipe->methods->cleartoggle(pipe);
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -432,6 +433,7 @@ usbd_clear_endpoint_stall_async(pipe)
 	usb_device_request_t req;
 	usbd_status r;
 
+	pipe->methods->cleartoggle(pipe);
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
