@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.7 2001/06/08 04:48:58 simonb Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.8 2003/01/24 04:53:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -52,10 +52,15 @@ struct pciide_softc {
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
 
+	/* For AMD/nVidia */
+	bus_addr_t sc_amd_regbase;
+
 	/* For Cypress */
 	const struct cy82c693_handle *sc_cy_handle;
 	int sc_cy_compatchan;
 
+	/* Vendor info (for interpreting Chip description) */
+	uint32_t sc_pci_vendor;
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
 	/* common definitions */
