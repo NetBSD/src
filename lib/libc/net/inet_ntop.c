@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.9 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.10 2002/05/14 18:57:31 kleink Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.9 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.10 2002/05/14 18:57:31 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,10 @@ __weak_alias(inet_ntop,_inet_ntop)
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static const char *inet_ntop4 __P((const u_char *src, char *dst, size_t size));
-static const char *inet_ntop6 __P((const u_char *src, char *dst, size_t size));
+static const char *inet_ntop4 __P((const u_char *src, char *dst,
+				   socklen_t size));
+static const char *inet_ntop6 __P((const u_char *src, char *dst,
+				   socklen_t size));
 
 /* char *
  * inet_ntop(af, src, dst, size)
@@ -70,7 +72,7 @@ inet_ntop(af, src, dst, size)
 	int af;
 	const void *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 
 	_DIAGASSERT(src != NULL);
@@ -103,7 +105,7 @@ static const char *
 inet_ntop4(src, dst, size)
 	const u_char *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
@@ -129,7 +131,7 @@ static const char *
 inet_ntop6(src, dst, size)
 	const u_char *src;
 	char *dst;
-	size_t size;
+	socklen_t size;
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough

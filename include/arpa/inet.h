@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.11 2002/04/26 15:32:45 bjh21 Exp $	*/
+/*	$NetBSD: inet.h,v 1.12 2002/05/14 18:57:31 kleink Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -71,6 +71,15 @@
 #include <sys/cdefs.h>
 #include <netinet/in.h>
 
+#include <sys/ansi.h>
+
+#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	__socklen_t
+#endif
+#endif /* !_XOPEN_SOURCE || (_XOPEN_SOURCE 0) >= 500 */
+
 __BEGIN_DECLS
 unsigned long	 inet_addr __P((const char *));
 unsigned long	 inet_lnaof __P((struct in_addr));
@@ -79,7 +88,7 @@ unsigned long	 inet_netof __P((struct in_addr));
 unsigned long	 inet_network __P((const char *));
 char		*inet_ntoa __P((struct in_addr));
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
-const char	*inet_ntop __P((int, const void *, char *, size_t));
+const char	*inet_ntop __P((int, const void *, char *, socklen_t));
 int		 inet_pton __P((int, const char *, void *));
 #endif
 #if !defined(_XOPEN_SOURCE)
