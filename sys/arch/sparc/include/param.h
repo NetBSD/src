@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.55 2002/07/17 06:07:29 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.56 2002/07/17 06:17:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,41 +212,41 @@ extern void	delay __P((unsigned int));
 /*
  * Step 2: Define the CPU type predicates.  Rules:
  *
- *	* If support for a CPU type is not configured into
- *	  the kernel, the test is always false.
+ *	* If CPU types are configured in, and the CPU type
+ *	  is not one of them, then the test is always false.
  *
- *	* Otherwise, if there is only one CPU type configured
- *	  in to the kernel, then the test is always true.
+ *	* If exactly one CPU type is configured in, and it's
+ *	  this one, then the test is always true.
  *
  *	* Otherwise, we have to reference the cputyp variable.
  */
-#if !defined(SUN4)
+#if CPU_NTYPES != 0 && !defined(SUN4)
 #	define CPU_ISSUN4	(0)
-#elif CPU_NTYPES == 1
+#elif CPU_NTYPES == 1 && defined(SUN4)
 #	define CPU_ISSUN4	(1)
 #else
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #endif
 
-#if !defined(SUN4C)
+#if CPU_NTYPES != 0 && !defined(SUN4C)
 #	define CPU_ISSUN4C	(0)
-#elif CPU_NTYPES == 1
+#elif CPU_NTYPES == 1 && defined(SUN4C)
 #	define CPU_ISSUN4C	(1)
 #else
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #endif
 
-#if !defined(SUN4M)
+#if CPU_NTYPES != 0 && !defined(SUN4M)
 #	define CPU_ISSUN4M	(0)
-#elif CPU_NTYPES == 1
+#elif CPU_NTYPES == 1 && defined(SUN4M)
 #	define CPU_ISSUN4M	(1)
 #else
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #endif
 
-#if !defined(SUN4D)
+#if CPU_NTYPES != 0 && !defined(SUN4D)
 #	define CPU_ISSUN4D	(0)
-#elif CPU_NTYPES == 1
+#elif CPU_NTYPES == 1 && defined(SUN4D)
 #	define CPU_ISSUN4D	(1)
 #else
 #	define CPU_ISSUN4D	(cputyp == CPU_SUN4D)
@@ -258,15 +258,15 @@ extern void	delay __P((unsigned int));
  * Step 3: Sun4 machines have a page size of 8192.  All other machines
  * have a page size of 4096.  Short cut page size variables if we can.
  */
-#if !defined(SUN4)
+#if CPU_NTYPES != 0 && !defined(SUN4)
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
-#elif CPU_NTYPES == 1	/* only SUN4 */
+#elif CPU_NTYPES == 1 && defined(SUN4)
 #	define NBPG		8192
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4_PGSHIFT
-#else			/* more than one type */
+#else
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
