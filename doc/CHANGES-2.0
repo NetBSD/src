@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.33 2004/04/05 06:33:47 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.34 2004/04/05 06:36:47 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -339,4 +339,5 @@ gnu/usr.bin/send-pr/send-pr.sh		1.21-1.22
 
 	use mktemp(1) for safe temp files.
 	oops; exit on failure with the previous.
+	Fixes PR#21840.
 	[reed, ticket #52]
