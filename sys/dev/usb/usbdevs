@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.141 2001/01/19 17:28:15 ichiro Exp $
+$NetBSD: usbdevs,v 1.142 2001/01/20 20:53:07 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -469,7 +469,7 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* Griffin Technology */
-product GRIFFIN IMATE		0x0405	iMate, ABD adapter
+product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
