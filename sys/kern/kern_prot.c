@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.39 1997/03/27 06:14:03 mikel Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.40 1997/04/23 18:59:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -249,11 +249,6 @@ sys_setpgid(curp, v, retval)
 	register struct proc *targp;		/* target process */
 	register struct pgrp *pgrp;		/* target pgrp */
 
-#ifdef COMPAT_09
-	SCARG(uap, pid)  = (short) SCARG(uap, pid);		/* XXX */
-	SCARG(uap, pgid) = (short) SCARG(uap, pgid);		/* XXX */
-#endif
-
 	if (SCARG(uap, pgid) < 0)
 		return (EINVAL);
 
@@ -291,11 +286,7 @@ sys_setuid(p, v, retval)
 	register uid_t uid;
 	int error;
 
-#ifdef COMPAT_09				/* XXX */
-	uid = (u_short)SCARG(uap, uid);
-#else
 	uid = SCARG(uap, uid);
-#endif
 	if (uid != pc->p_ruid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
@@ -328,11 +319,7 @@ sys_seteuid(p, v, retval)
 	register uid_t euid;
 	int error;
 
-#ifdef COMPAT_09				/* XXX */
-	euid = (u_short)SCARG(uap, euid);
-#else
 	euid = SCARG(uap, euid);
-#endif
 	if (euid != pc->p_ruid && euid != pc->p_svuid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
@@ -405,11 +392,7 @@ sys_setgid(p, v, retval)
 	register gid_t gid;
 	int error;
 
-#ifdef COMPAT_09				/* XXX */
-	gid = (u_short)SCARG(uap, gid);
-#else
 	gid = SCARG(uap, gid);
-#endif
 	if (gid != pc->p_rgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
@@ -435,11 +418,7 @@ sys_setegid(p, v, retval)
 	register gid_t egid;
 	int error;
 
-#ifdef COMPAT_09				/* XXX */
-	egid = (u_short)SCARG(uap, egid);
-#else
 	egid = SCARG(uap, egid);
-#endif
 	if (egid != pc->p_rgid && egid != pc->p_svgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
