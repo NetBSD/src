@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.7 2000/11/07 06:43:24 lukem Exp $
+.\" $NetBSD: login_cap.3,v 1.8 2001/04/09 12:11:06 wiz Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -32,8 +32,8 @@
 .\"
 .\" BSDI login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp
 .\"
-.Dd "January 13, 2000"
-.Dt LOGIN_CAP 3 
+.Dd January 13, 2000
+.Dt LOGIN_CAP 3
 .Os
 .Sh NAME
 .Nm login_getclass ,
@@ -127,7 +127,7 @@ if no capabilities were found for this class (typically meaning that
 the default class was used and the
 .Li /etc/login.conf
 file is missing).
-It returns a non-zero value if 
+It returns a non-zero value if
 .Ar cap ,
 with no value, was found,
 zero otherwise.
@@ -138,14 +138,14 @@ function takes
 .Ar class ,
 the name of a user class,
 and sets the resources defined by that class according to
-.Ar flags.
+.Ar flags .
 Only the
 .Dv LOGIN_SETPATH ,
 .Dv LOGIN_SETPRIORITY ,
 .Dv LOGIN_SETRESOURCES ,
 and
 .Dv LOGIN_SETUMASK
-bits are used.  (See 
+bits are used.  (See
 .Fn setusercontext
 below).
 It returns 0 on success and -1 on failure.
@@ -181,7 +181,7 @@ are:
 Set the group id and call
 .Xr initgroups 3 .
 Requires the
-.Xr pwd
+.Ar pwd
 field be specified.
 .It LOGIN_SETLOGIN
 Sets the login name by
