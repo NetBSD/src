@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.29 2000/03/24 20:48:20 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.30 2000/03/25 06:33:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -604,29 +604,30 @@
 /*
  * CPU processor revision ID
  */
-#define MIPS_R2000	0x01	/* MIPS R2000 CPU		ISA I	*/
-#define MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I	*/
-#define MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
-#define MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III */
+#define MIPS_R2000	0x01	/* MIPS R2000 			ISA I	*/
+#define MIPS_R3000	0x02	/* MIPS R3000 			ISA I	*/
+#define MIPS_R6000	0x03	/* MIPS R6000 			ISA II	*/
+#define MIPS_R4000	0x04	/* MIPS R4000/4400 		ISA III */
 #define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
-#define MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
-#define MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/
-#define MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
-#define MIPS_R4200	0x0a	/* NEC VR4200 CPU		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
-#define MIPS_R4100	0x0c	/* NEC VR4100 CPU		ISA III */
+#define MIPS_R6000A	0x06	/* MIPS R6000A 			ISA II	*/
+#define MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 	ISA I	*/
+#define MIPS_R10000	0x09	/* MIPS R10000/T5 		ISA IV	*/
+#define MIPS_R4200	0x0a	/* NEC VR4200 			ISA III */
+#define MIPS_R4300	0x0b	/* NEC VR4300 			ISA III */
+#define MIPS_R4100	0x0c	/* NEC VR4100 			ISA III */
 #define MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
 #define MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
-#define MIPS_R4650	0x22	/* !ID crash! QED R4650 CPU	ISA III */
-#define MIPS_TX3900	0x22	/* !ID crash! Toshiba R3000 CPU ISA I	*/
-#define MIPS_R5000	0x23	/* MIPS R5000 CPU		ISA IV	*/
-#define MIPS_RC32364	0x26	/* IDT RC32364 CPU		ISA II	*/
-#define MIPS_RM5230	0x28	/* QED RM5230 CPU		ISA IV	*/
-#define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 CPU	ISA III */
-#define MIPS_R3SONY	0x21	/* ? Sony R3000 based CPU	ISA I	*/
-#define MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I	*/
-#define MIPS_R5400	0x54	/* NEC VR5400 CPU		ISA IV	*/
+#define MIPS_R4650	0x22	/* !ID crash! QED R4650 	ISA III */
+#define MIPS_TX3900	0x22	/* !ID crash! Toshiba R3000	ISA I	*/
+#define MIPS_R5000	0x23	/* MIPS R5000 			ISA IV	*/
+#define MIPS_RC32364	0x26	/* IDT RC32364 			ISA II	*/
+#define MIPS_RM7000	0x27	/* QED RM7000			ISA IV  */
+#define MIPS_RM5230	0x28	/* QED RM5200s 			ISA IV	*/
+#define MIPS_RC64470	0x30	/* IDT RC64474/RC64475 		ISA III */
+#define MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
+#define MIPS_R3SONY	0x21	/* ? Sony R3000 based 		ISA I	*/
+#define MIPS_R3NKK	0x23	/* ? NKK R3000 based 		ISA I	*/
 
 /*
  * FPU processor revision ID
