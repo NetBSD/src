@@ -1,5 +1,5 @@
 /* #ifdef-format output routines for GNU DIFF.
-   Copyright (C) 1989 Free Software Foundation, Inc.
+   Copyright (C) 1989, 91, 92 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
@@ -21,7 +21,9 @@ and this notice must be preserved on all copies.  */
 
 #include "diff.h"
 
+static void format_ifdef ();
 static void print_ifdef_hunk ();
+static void print_ifdef_lines ();
 struct change *find_change ();
 
 static int next_line;
@@ -32,10 +34,14 @@ void
 print_ifdef_script (script)
      struct change *script;
 {
-  next_line = 0;
+  next_line = - files[0].prefix_lines;
   print_script (script, find_change, print_ifdef_hunk);
-  while (next_line < files[0].buffered_lines)
-    print_1_line ("", &files[0].linbuf[next_line++]);
+  if (next_line < files[0].valid_lines)
+    {
+      begin_output ();
+      format_ifdef (group_format[UNCHANGED], next_line, files[0].valid_lines,
+		    0, -1);
+    }
 }
 
 /* Print a hunk of an ifdef diff.
@@ -47,39 +53,131 @@ print_ifdef_hunk (hunk)
      struct change *hunk;
 {
   int first0, last0, first1, last1, deletes, inserts;
-  register int i;
+  const char *format;
 
   /* Determine range of line numbers involved in each file.  */
   analyze_hunk (hunk, &first0, &last0, &first1, &last1, &deletes, &inserts);
-  if (!deletes && !inserts)
+  if (inserts)
+    format = deletes ? group_format[CHANGED] : group_format[NEW];
+  else if (deletes)
+    format = group_format[OLD];
+  else
     return;
 
-  /* Print out lines up to this change.  */
-  while (next_line < first0)
-    print_1_line ("", &files[0].linbuf[next_line++]);
+  begin_output ();
 
-  /* Print out stuff deleted from first file.  */
-  if (deletes)
+  /* Print lines up to this change.  */
+  if (next_line < first0)
+    format_ifdef (group_format[UNCHANGED], next_line, first0, 0, -1);
+
+  /* Print this change.  */
+  next_line = last0 + 1;
+  format_ifdef (format, first0, next_line, first1, last1 + 1);
+}
+
+/* Print a set of lines according to FORMAT.
+   Lines BEG0 up to END0 are from the first file.
+   If END1 is -1, then the second file's lines are identical to the first;
+   otherwise, lines BEG1 up to END1 are from the second file.  */
+
+static void
+format_ifdef (format, beg0, end0, beg1, end1)
+     const char *format;
+     int beg0, end0, beg1, end1;
+{
+  register FILE *out = outfile;
+  register char c;
+  register const char *f = format;
+
+  while ((c = *f++) != 0)
     {
-      fprintf (outfile, "#ifndef %s\n", ifdef_string);
-      for (i = first0; i <= last0; i++)
-	print_1_line ("", &files[0].linbuf[i]);
-      next_line = i;
-    }
+      if (c == '%')
+	switch ((c = *f++))
+	  {
+	  case 0:
+	    return;
 
-  /* Print out stuff inserted from second file.  */
-  if (inserts)
-    {
-      if (deletes)
-	fprintf (outfile, "#else /* %s */\n", ifdef_string);
-      else
-	fprintf (outfile, "#ifdef %s\n", ifdef_string);
-      for (i = first1; i <= last1; i++)
-	print_1_line ("", &files[1].linbuf[i]);
-    }
+	  case '<':
+	    /* Print lines deleted from first file.  */
+	    print_ifdef_lines (line_format[OLD], &files[0], beg0, end0);
+	    continue;
 
-  if (inserts)
-    fprintf (outfile, "#endif /* %s */\n", ifdef_string);
+	  case '=':
+	    /* Print common lines.  */
+	    print_ifdef_lines (line_format[UNCHANGED], &files[0], beg0, end0);
+	    continue;
+
+	  case '>':
+	    /* Print lines inserted from second file.  */
+	    if (end1 == -1)
+	      print_ifdef_lines (line_format[NEW], &files[0], beg0, end0);
+	    else
+	      print_ifdef_lines (line_format[NEW], &files[1], beg1, end1);
+	    continue;
+
+	  case '0':
+	    c = 0;
+	    break;
+
+	  default:
+	    break;
+	  }
+      putc (c, out);
+  }
+}
+
+/* Use FORMAT to print each line of CURRENT starting with FROM
+   and continuing up to UPTO.  */
+static void
+print_ifdef_lines (format, current, from, upto)
+     const char *format;
+     const struct file_data *current;
+     int from, upto;
+{
+  const char * const *linbuf = current->linbuf;
+
+  /* If possible, use a single fwrite; it's faster.  */
+  if (!tab_expand_flag && strcmp (format, "%l\n") == 0)
+    fwrite (linbuf[from], sizeof (char),
+	    linbuf[upto] + (linbuf[upto][-1] != '\n') -  linbuf[from],
+	    outfile);
+  else if (!tab_expand_flag && strcmp (format, "%L") == 0)
+    fwrite (linbuf[from], sizeof (char), linbuf[upto] -  linbuf[from], outfile);
   else
-    fprintf (outfile, "#endif /* not %s */\n", ifdef_string);
+    for (;  from < upto;  from++)
+      {
+	register FILE *out = outfile;
+	register char c;
+	register const char *f = format;
+
+	while ((c = *f++) != 0)
+	  {
+	    if (c == '%')
+	      switch ((c = *f++))
+		{
+		case 0:
+		  goto format_done;
+
+		case 'l':
+		  output_1_line (linbuf[from],
+				 linbuf[from + 1]
+				   - (linbuf[from + 1][-1] == '\n'), 0, 0);
+		  continue;
+
+		case 'L':
+		  output_1_line (linbuf[from], linbuf[from + 1], 0, 0);
+		  continue;
+
+		case '0':
+		  c = 0;
+		  break;
+
+		default:
+		  break;
+		}
+	    putc (c, out);
+	  }
+
+      format_done:;
+      }
 }

@@ -5,7 +5,7 @@ This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -20,6 +20,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "diff.h"
 
+int change_letter ();
 void print_normal_hunk ();
 void print_number_range ();
 struct change *find_change ();
@@ -49,6 +50,8 @@ print_normal_hunk (hunk)
   analyze_hunk (hunk, &first0, &last0, &first1, &last1, &deletes, &inserts);
   if (!deletes && !inserts)
     return;
+
+  begin_output ();
 
   /* Print out the line number header for this hunk */
   print_number_range (',', &files[0], first0, last0);

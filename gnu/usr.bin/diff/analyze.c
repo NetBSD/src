@@ -1,11 +1,11 @@
 /* Analyze file differences for GNU DIFF.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1992 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -23,12 +23,12 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "diff.h"
 
-struct change *find_change ();
+int read_files ();
 void finish_output ();
-void print_context_header ();
 void print_context_script ();
 void print_ed_script ();
 void print_ifdef_script ();
+void print_sdiff_script ();
 void print_normal_script ();
 void print_rcs_script ();
 void pr_forward_ed_script ();
@@ -86,7 +86,7 @@ diag (xoff, xlim, yoff, ylim, cost)
   int fmin = fmid, fmax = fmid;	/* Limits of top-down search. */
   int bmin = bmid, bmax = bmid;	/* Limits of bottom-up search. */
   int c;			/* Cost. */
-  int odd = fmid - bmid & 1;	/* True if southeast corner is on an odd
+  int odd = (fmid - bmid) & 1;	/* True if southeast corner is on an odd
 				   diagonal with respect to the northwest. */
 
   fd[fmid] = xoff;
@@ -315,23 +315,24 @@ discard_confusing_lines (filevec)
   unsigned int f, i;
   char *discarded[2];
   int *equiv_count[2];
+  int *p;
 
   /* Allocate our results.  */
+  p = (int *) xmalloc ((filevec[0].buffered_lines + filevec[1].buffered_lines)
+		       * (2 * sizeof (int)));
   for (f = 0; f < 2; f++)
     {
-      filevec[f].undiscarded
-	= (int *) xmalloc (filevec[f].buffered_lines * sizeof (int));
-      filevec[f].realindexes
-	= (int *) xmalloc (filevec[f].buffered_lines * sizeof (int));
+      filevec[f].undiscarded = p;  p += filevec[f].buffered_lines;
+      filevec[f].realindexes = p;  p += filevec[f].buffered_lines;
     }
 
   /* Set up equiv_count[F][I] as the number of lines in file F
      that fall in equivalence class I.  */
 
-  equiv_count[0] = (int *) xmalloc (filevec[0].equiv_max * sizeof (int));
-  bzero (equiv_count[0], filevec[0].equiv_max * sizeof (int));
-  equiv_count[1] = (int *) xmalloc (filevec[1].equiv_max * sizeof (int));
-  bzero (equiv_count[1], filevec[1].equiv_max * sizeof (int));
+  p = (int *) xmalloc (filevec[0].equiv_max * (2 * sizeof (int)));
+  equiv_count[0] = p;
+  equiv_count[1] = p + filevec[0].equiv_max;
+  bzero (p, filevec[0].equiv_max * (2 * sizeof (int)));
 
   for (i = 0; i < filevec[0].buffered_lines; ++i)
     ++equiv_count[0][filevec[0].equivs[i]];
@@ -340,10 +341,10 @@ discard_confusing_lines (filevec)
 
   /* Set up tables of which lines are going to be discarded.  */
 
-  discarded[0] = (char *) xmalloc (filevec[0].buffered_lines);
-  discarded[1] = (char *) xmalloc (filevec[1].buffered_lines);
-  bzero (discarded[0], filevec[0].buffered_lines);
-  bzero (discarded[1], filevec[1].buffered_lines);
+  discarded[0] = (char *) xmalloc (filevec[0].buffered_lines
+				   + filevec[1].buffered_lines);
+  discarded[1] = discarded[0] + filevec[0].buffered_lines;
+  bzero (discarded[0], filevec[0].buffered_lines + filevec[1].buffered_lines);
 
   /* Mark to be discarded each line that matches no line of the other file.
      If a line matches many lines, mark it as provisionally discardable.  */
@@ -504,9 +505,7 @@ discard_confusing_lines (filevec)
       filevec[f].nondiscarded_lines = j;
     }
 
-  free (discarded[1]);
   free (discarded[0]);
-  free (equiv_count[1]);
   free (equiv_count[0]);
 }
 
@@ -544,7 +543,7 @@ shift_boundaries (filevec)
 
       while (1)
 	{
-	  int start, end, other_start;
+	  int start, other_start;
 
 	  /* Scan forwards to find beginning of another run of changes.
 	     Also keep track of the corresponding point in the other file.  */
@@ -568,8 +567,8 @@ shift_boundaries (filevec)
 	    {
 	      /* Now find the end of this run of changes.  */
 
-	      while (i < i_end && changed[i] != 0) i++;
-	      end = i;
+	      while (changed[++i] != 0)
+		;
 
 	      /* If the first changed line matches the following unchanged one,
 		 and this run does not follow right after a previous run,
@@ -580,17 +579,13 @@ shift_boundaries (filevec)
 	      /* You might ask, how could this run follow right after another?
 		 Only because the previous run was shifted here.  */
 
-	      if (end != i_end
-		  && files[f].equivs[start] == files[f].equivs[end]
+	      if (i != i_end
+		  && files[f].equivs[start] == files[f].equivs[i]
 		  && !other_changed[j]
-		  && end != i_end
-		  && !((preceding >= 0 && start == preceding)
-		       || (other_preceding >= 0
-			   && other_start == other_preceding)))
+		  && !(start == preceding || other_start == other_preceding))
 		{
-		  changed[end++] = 1;
 		  changed[start++] = 0;
-		  ++i;
+		  changed[i] = 1;
 		  /* Since one line-that-matches is now before this run
 		     instead of after, we must advance in the other file
 		     to keep in synch.  */
@@ -677,19 +672,9 @@ build_script (filevec)
   struct change *script = 0;
   char *changed0 = filevec[0].changed_flag;
   char *changed1 = filevec[1].changed_flag;
-  int len0 = filevec[0].buffered_lines;
-  int len1 = filevec[1].buffered_lines;
-  int i0 = len0, i1 = len1;
+  int i0 = filevec[0].buffered_lines, i1 = filevec[1].buffered_lines;
 
   /* Note that changedN[-1] does exist, and contains 0.  */
-
-#if 0 /* Unnecessary since a line includes its trailing newline.  */
-  /* In RCS comparisons, making the existence or nonexistence of trailing
-     newlines really matter. */
-  if (output_style == OUTPUT_RCS
-      && filevec[0].missing_newline != filevec[1].missing_newline)
-    changed0[len0 - 1] = changed1[len1 - 1] = 1;
-#endif
 
   while (i0 >= 0 || i1 >= 0)
     {
@@ -723,202 +708,237 @@ diff_2_files (filevec, depth)
   int i;
   struct change *e, *p;
   struct change *script;
-  int binary;
   int changes;
 
-  /* See if the two named files are actually the same physical file.
-     If so, we know they are identical without actually reading them.  */
 
-  if (output_style != OUTPUT_IFDEF
-      && filevec[0].stat.st_ino == filevec[1].stat.st_ino
-      && filevec[0].stat.st_dev == filevec[1].stat.st_dev)
-    return 0;
-
-  binary = read_files (filevec);
-
-  /* If we have detected that file 0 is a binary file,
+  /* If we have detected that either file is binary,
      compare the two files as binary.  This can happen
      only when the first chunk is read.
      Also, -q means treat all files as binary.  */
 
-  if (binary || no_details_flag)
+  if (read_files (filevec))
     {
-      int differs = (filevec[0].buffered_chars != filevec[1].buffered_chars
-		     || bcmp (filevec[0].buffer, filevec[1].buffer,
-			      filevec[1].buffered_chars));
-      if (differs) 
-	message (binary ? "Binary files %s and %s differ\n"
-		 : "Files %s and %s differ\n",
+      /* Files with different lengths must be different.  */
+      if (filevec[0].stat.st_size != filevec[1].stat.st_size
+	  && (filevec[0].desc < 0 || S_ISREG (filevec[0].stat.st_mode))
+	  && (filevec[1].desc < 0 || S_ISREG (filevec[1].stat.st_mode)))
+	changes = 1;
+
+      /* Standard input equals itself.  */
+      else if (filevec[0].desc == filevec[1].desc)
+	changes = 0;
+
+      else
+	/* Scan both files, a buffer at a time, looking for a difference.  */
+	{
+	  /* Allocate same-sized buffers for both files.  */
+	  int buffer_size = max (STAT_BLOCKSIZE (filevec[0].stat),
+				 STAT_BLOCKSIZE (filevec[1].stat));
+	  for (i = 0; i < 2; i++)
+	    filevec[i].buffer = xrealloc (filevec[i].buffer, buffer_size);
+
+	  for (;;  filevec[0].buffered_chars = filevec[1].buffered_chars = 0)
+	    {
+	      /* Read a buffer's worth from both files.  */
+	      for (i = 0; i < 2; i++)
+		if (0 <= filevec[i].desc)
+		  while (filevec[i].buffered_chars != buffer_size)
+		    {
+		      int r = read (filevec[i].desc,
+				    filevec[i].buffer
+				    + filevec[i].buffered_chars,
+				    buffer_size - filevec[i].buffered_chars);
+		      if (r == 0)
+			break;
+		      if (r < 0)
+			pfatal_with_name (filevec[i].name);
+		      filevec[i].buffered_chars += r;
+		    }
+
+	      /* If the buffers differ, the files differ.  */
+	      if (filevec[0].buffered_chars != filevec[1].buffered_chars
+	          || bcmp (filevec[0].buffer,
+			   filevec[1].buffer,
+			   filevec[0].buffered_chars) != 0)
+		{
+		  changes = 1;
+		  break;
+		}
+
+	      /* If we reach end of file, the files are the same.  */
+	      if (filevec[0].buffered_chars != buffer_size)
+		{
+		  changes = 0;
+		  break;
+		}
+	    }
+	}
+
+      if (changes) 
+	message (no_details_flag ? "Files %s and %s differ\n"
+		 : "Binary files %s and %s differ\n",
 		 filevec[0].name, filevec[1].name);
+    }
+  else
+    {
+      /* Allocate vectors for the results of comparison:
+	 a flag for each line of each file, saying whether that line
+	 is an insertion or deletion.
+	 Allocate an extra element, always zero, at each end of each vector.  */
+
+      filevec[0].changed_flag = (char *) xmalloc (filevec[0].buffered_lines
+						  + filevec[1].buffered_lines
+						  + 4);
+      bzero (filevec[0].changed_flag, filevec[0].buffered_lines
+				      + filevec[1].buffered_lines + 4);
+      filevec[0].changed_flag++;
+      filevec[1].changed_flag = filevec[0].changed_flag
+				+ filevec[0].buffered_lines + 2;
+
+      /* Some lines are obviously insertions or deletions
+	 because they don't match anything.  Detect them now, and
+	 avoid even thinking about them in the main comparison algorithm.  */
+
+      discard_confusing_lines (filevec);
+
+      /* Now do the main comparison algorithm, considering just the
+	 undiscarded lines.  */
+
+      xvec = filevec[0].undiscarded;
+      yvec = filevec[1].undiscarded;
+      diags = filevec[0].nondiscarded_lines + filevec[1].nondiscarded_lines + 3;
+      fdiag = (int *) xmalloc (diags * (2 * sizeof (int)));
+      bdiag = fdiag + diags;
+      fdiag += filevec[1].nondiscarded_lines + 1;
+      bdiag += filevec[1].nondiscarded_lines + 1;
+
+      files[0] = filevec[0];
+      files[1] = filevec[1];
+
+      compareseq (0, filevec[0].nondiscarded_lines,
+		  0, filevec[1].nondiscarded_lines);
+
+      free (fdiag - (filevec[1].nondiscarded_lines + 1));
+
+      /* Modify the results slightly to make them prettier
+	 in cases where that can validly be done.  */
+
+      shift_boundaries (filevec);
+
+      /* Get the results of comparison in the form of a chain
+	 of `struct change's -- an edit script.  */
+
+      if (output_style == OUTPUT_ED)
+	script = build_reverse_script (filevec);
+      else
+	script = build_script (filevec);
+
+      if (script || ! no_diff_means_no_output)
+	{
+	  /* Record info for starting up output,
+	     to be used if and when we have some output to print.  */
+	  setup_output (files[0].name, files[1].name, depth);
+
+	  switch (output_style)
+	    {
+	    case OUTPUT_CONTEXT:
+	      print_context_script (script, 0);
+	      break;
+
+	    case OUTPUT_UNIFIED:
+	      print_context_script (script, 1);
+	      break;
+
+	    case OUTPUT_ED:
+	      print_ed_script (script);
+	      break;
+
+	    case OUTPUT_FORWARD_ED:
+	      pr_forward_ed_script (script);
+	      break;
+
+	    case OUTPUT_RCS:
+	      print_rcs_script (script);
+	      break;
+
+	    case OUTPUT_NORMAL:
+	      print_normal_script (script);
+	      break;
+
+	    case OUTPUT_IFDEF:
+	      print_ifdef_script (script);
+	      break;
+
+	    case OUTPUT_SDIFF:
+	      print_sdiff_script (script);
+	    }
+
+	  finish_output ();
+	}
+
+      /* Set CHANGES if we had any diffs that were printed.
+	 If some changes are ignored, we must scan the script to decide.  */
+      if (ignore_blank_lines_flag || ignore_regexp_list)
+	{
+	  struct change *next = script;
+	  changes = 0;
+
+	  while (next && changes == 0)
+	    {
+	      struct change *this, *end;
+	      int first0, last0, first1, last1, deletes, inserts;
+
+	      /* Find a set of changes that belong together.  */
+	      this = next;
+	      end = find_change (next);
+
+	      /* Disconnect them from the rest of the changes, making them
+		 a hunk, and remember the rest for next iteration.  */
+	      next = end->link;
+	      end->link = NULL;
+
+	      /* Determine whether this hunk was printed.  */
+	      analyze_hunk (this, &first0, &last0, &first1, &last1,
+			    &deletes, &inserts);
+
+	      /* Reconnect the script so it will all be freed properly.  */
+	      end->link = next;
+
+	      if (deletes || inserts)
+		changes = 1;
+	    }
+	}
+      else
+	changes = (script != 0);
+
+      free (filevec[0].undiscarded);
+
+      free (filevec[0].changed_flag - 1);
+
+      for (i = 1; i >= 0; --i)
+	free (filevec[i].equivs);
 
       for (i = 0; i < 2; ++i)
-	if (filevec[i].buffer)
-	  free (filevec[i].buffer);
-      return differs;
-    }
+	free (filevec[i].linbuf + filevec[i].linbuf_base);
 
-  /* Allocate vectors for the results of comparison:
-     a flag for each line of each file, saying whether that line
-     is an insertion or deletion.
-     Allocate an extra element, always zero, at each end of each vector.  */
-
-  filevec[0].changed_flag = (char *) xmalloc (filevec[0].buffered_lines + 2);
-  filevec[1].changed_flag = (char *) xmalloc (filevec[1].buffered_lines + 2);
-  bzero (filevec[0].changed_flag, filevec[0].buffered_lines + 2);
-  bzero (filevec[1].changed_flag, filevec[1].buffered_lines + 2);
-  filevec[0].changed_flag++;
-  filevec[1].changed_flag++;
-
-  /* Some lines are obviously insertions or deletions
-     because they don't match anything.  Detect them now,
-     and avoid even thinking about them in the main comparison algorithm.  */
-
-  discard_confusing_lines (filevec);
-
-  /* Now do the main comparison algorithm, considering just the
-     undiscarded lines.  */
-
-  xvec = filevec[0].undiscarded;
-  yvec = filevec[1].undiscarded;
-  diags = filevec[0].nondiscarded_lines + filevec[1].nondiscarded_lines + 3;
-  fdiag = (int *) xmalloc (diags * sizeof (int));
-  fdiag += filevec[1].nondiscarded_lines + 1;
-  bdiag = (int *) xmalloc (diags * sizeof (int));
-  bdiag += filevec[1].nondiscarded_lines + 1;
-
-  files[0] = filevec[0];
-  files[1] = filevec[1];
-
-  compareseq (0, filevec[0].nondiscarded_lines,
-	      0, filevec[1].nondiscarded_lines);
-
-  bdiag -= filevec[1].nondiscarded_lines + 1;
-  free (bdiag);
-  fdiag -= filevec[1].nondiscarded_lines + 1;
-  free (fdiag);
-
-  /* Modify the results slightly to make them prettier
-     in cases where that can validly be done.  */
-
-  shift_boundaries (filevec);
-
-  /* Get the results of comparison in the form of a chain
-     of `struct change's -- an edit script.  */
-
-  if (output_style == OUTPUT_ED)
-    script = build_reverse_script (filevec);
-  else
-    script = build_script (filevec);
-
-  if (script || output_style == OUTPUT_IFDEF)
-    {
-      setup_output (files[0].name, files[1].name, depth);
-
-      switch (output_style)
+      for (e = script; e; e = p)
 	{
-	case OUTPUT_CONTEXT:
-	  print_context_header (files, 0);
-	  print_context_script (script, 0);
-	  break;
-
-	case OUTPUT_UNIFIED:
-	  print_context_header (files, 1);
-	  print_context_script (script, 1);
-	  break;
-
-	case OUTPUT_ED:
-	  print_ed_script (script);
-	  break;
-
-	case OUTPUT_FORWARD_ED:
-	  pr_forward_ed_script (script);
-	  break;
-
-	case OUTPUT_RCS:
-	  print_rcs_script (script);
-	  break;
-
-	case OUTPUT_NORMAL:
-	  print_normal_script (script);
-	  break;
-
-	case OUTPUT_IFDEF:
-	  print_ifdef_script (script);
-	  break;
+	  p = e->link;
+	  free (e);
 	}
 
-      finish_output ();
+      if (! ROBUST_OUTPUT_STYLE (output_style))
+	for (i = 0; i < 2; ++i)
+	  if (filevec[i].missing_newline)
+	    {
+	      error ("No newline at end of file %s", filevec[i].name, "");
+	      changes = 2;
+	    }
     }
 
-  /* Set CHANGES if we had any diffs that were printed.
-     If some changes are being ignored, we must scan the script to decide.  */
-  if (ignore_blank_lines_flag || ignore_regexp)
-    {
-      struct change *next = script;
-      changes = 0;
-
-      while (next && changes == 0)
-	{
-	  struct change *this, *end;
-	  int first0, last0, first1, last1, deletes, inserts;
-
-	  /* Find a set of changes that belong together.  */
-	  this = next;
-	  end = find_change (next);
-
-	  /* Disconnect them from the rest of the changes,
-	     making them a hunk, and remember the rest for next iteration.  */
-	  next = end->link;
-	  end->link = NULL;
-
-	  /* Determine whether this hunk was printed.  */
-	  analyze_hunk (this, &first0, &last0, &first1, &last1,
-			&deletes, &inserts);
-
-	  /* Reconnect the script so it will all be freed properly.  */
-	  end->link = next;
-
-	  if (deletes || inserts)
-	    changes = 1;
-	}
-    }
-  else
-    changes = (script != 0);
-
-  for (i = 1; i >= 0; --i)
-    {
-      free (filevec[i].realindexes);
-      free (filevec[i].undiscarded);
-    }
-
-  for (i = 1; i >= 0; --i)
-    free (--filevec[i].changed_flag);
-
-  for (i = 1; i >= 0; --i)
-    free (filevec[i].equivs);
-
-  for (i = 0; i < 2; ++i)
-    {
-      if (filevec[i].buffer != 0)
-	free (filevec[i].buffer);
-      free (filevec[i].linbuf);
-    }
-
-  for (e = script; e; e = p)
-    {
-      p = e->link;
-      free (e);
-    }
-
-  if (! ROBUST_OUTPUT_STYLE (output_style)
-      /* For -D, invent newlines silently.  That's ok in C code.  */
-      && output_style != OUTPUT_IFDEF)
-    for (i = 0; i < 2; ++i)
-      if (filevec[i].missing_newline)
-	{
-	  error ("No newline at end of file %s", filevec[i].name, "");
-	  changes = 2;
-	}
+  if (filevec[0].buffer != filevec[1].buffer)
+    free (filevec[0].buffer);
+  free (filevec[1].buffer);
 
   return changes;
 }

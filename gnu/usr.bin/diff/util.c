@@ -1,11 +1,11 @@
 /* Support routines for GNU DIFF.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1992 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -26,7 +26,9 @@ void
 perror_with_name (text)
      char *text;
 {
+  int e = errno;
   fprintf (stderr, "%s: ", program);
+  errno = e;
   perror (text);
 }
 
@@ -36,8 +38,10 @@ void
 pfatal_with_name (text)
      char *text;
 {
+  int e = errno;
   print_message_queue ();
   fprintf (stderr, "%s: ", program);
+  errno = e;
   perror (text);
   exit (2);
 }
@@ -59,11 +63,11 @@ error (format, arg, arg1)
 /* Print an error message containing the string TEXT, then exit.  */
 
 void
-fatal (message)
-     char *message;
+fatal (m)
+     char *m;
 {
   print_message_queue ();
-  error (message, "");
+  error ("%s", m, 0);
   exit (2);
 }
 
@@ -90,7 +94,11 @@ message (format, arg1, arg2)
       new->next = 0;
     }
   else
-    printf (format, arg1, arg2);
+    {
+      if (sdiff_help_sdiff)
+	putchar (' ');
+      printf (format, arg1, arg2);
+    }
 }
 
 /* Output all the messages that were saved up by calls to `message'.  */
@@ -111,23 +119,39 @@ print_message_queue ()
    we fork off a `pr' and make OUTFILE a pipe to it.
    `pr' then outputs to our stdout.  */
 
+static char *current_name0;
+static char *current_name1;
+static int current_depth;
+
 void
 setup_output (name0, name1, depth)
      char *name0, *name1;
      int depth;
 {
+  current_name0 = name0;
+  current_name1 = name1;
+  current_depth = depth;
+  outfile = 0;
+}
+
+void
+begin_output ()
+{
   char *name;
 
+  if (outfile != 0)
+    return;
+
   /* Construct the header of this piece of diff.  */
-  name = (char *) xmalloc (strlen (name0) + strlen (name1)
+  name = (char *) xmalloc (strlen (current_name0) + strlen (current_name1)
 			   + strlen (switch_string) + 15);
 
   strcpy (name, "diff");
   strcat (name, switch_string);
   strcat (name, " ");
-  strcat (name, name0);
+  strcat (name, current_name0);
   strcat (name, " ");
-  strcat (name, name1);
+  strcat (name, current_name1);
 
   if (paginate_flag)
     {
@@ -172,11 +196,26 @@ setup_output (name0, name1, depth)
 
       /* If handling multiple files (because scanning a directory),
 	 print which files the following output is about.  */
-      if (depth > 0)
+      if (current_depth > 0)
 	printf ("%s\n", name);
     }
 
   free (name);
+
+  /* A special header is needed at the beginning of context output.  */
+  switch (output_style)
+    {
+    case OUTPUT_CONTEXT:
+      print_context_header (files, 0);
+      break;
+
+    case OUTPUT_UNIFIED:
+      print_context_header (files, 1);
+      break;
+
+    default:
+      break;
+    }
 }
 
 /* Call after the end of output of diffs for one file.
@@ -185,51 +224,33 @@ setup_output (name0, name1, depth)
 void
 finish_output ()
 {
-  if (outfile != stdout)
+  if (outfile != 0 && outfile != stdout)
     {
       fclose (outfile);
       wait (0);
     }
+
+  outfile = 0;
 }
 
 /* Compare two lines (typically one from each input file)
    according to the command line options.
-   Each line is described by a `struct line_def'.
    Return 1 if the lines differ, like `bcmp'.  */
 
 int
-line_cmp (s1, s2)
-     struct line_def *s1, *s2;
+line_cmp (s1, len1, s2, len2)
+     const char *s1, *s2;
+     int len1, len2;
 {
-  register char *t1, *t2;
-  register char end_char = line_end_char;
-  int savechar;
+  register const unsigned char *t1, *t2;
+  register unsigned char end_char = line_end_char;
 
   /* Check first for exact identity.
      If that is true, return 0 immediately.
      This detects the common case of exact identity
      faster than complete comparison would.  */
 
-  t1 = s1->text;
-  t2 = s2->text;
-
-  /* Alter the character following line 2 so it doesn't
-     match that following line 1.
-     (We used to alter the character after line 1,
-     but that caused trouble if line 2 directly follows line 1.)  */
-  savechar = s2->text[s2->length];
-  s2->text[s2->length] = s1->text[s1->length] + 1;
-
-  /* Now find the first mismatch; this won't go past the
-     character we just changed.  */
-  while (*t1++ == *t2++);
-
-  /* Undo the alteration.  */
-  s2->text[s2->length] = savechar;
-
-  /* If the comparison stopped at the alteration,
-     the two lines are identical.  */
-  if (t2 == s2->text + s2->length + 1)
+  if (len1 == len2 && bcmp (s1, s2, len1) == 0)
     return 0;
 
   /* Not exactly identical, but perhaps they match anyway
@@ -237,21 +258,21 @@ line_cmp (s1, s2)
 
   if (ignore_case_flag || ignore_space_change_flag || ignore_all_space_flag)
     {
-      t1 = s1->text;
-      t2 = s2->text;
+      t1 = (const unsigned char *) s1;
+      t2 = (const unsigned char *) s2;
 
       while (1)
 	{
-	  register char c1 = *t1++;
-	  register char c2 = *t2++;
+	  register unsigned char c1 = *t1++;
+	  register unsigned char c2 = *t2++;
 
 	  /* Ignore horizontal whitespace if -b or -w is specified.  */
 
 	  if (ignore_all_space_flag)
 	    {
-	      /* For -w, just skip past any spaces or tabs.  */
-	      while (c1 == ' ' || c1 == '\t') c1 = *t1++;
-	      while (c2 == ' ' || c2 == '\t') c2 = *t2++;
+	      /* For -w, just skip past any white space.  */
+	      while (Is_space (c1)) c1 = *t1++;
+	      while (Is_space (c2)) c2 = *t2++;
 	    }
 	  else if (ignore_space_change_flag)
 	    {
@@ -378,59 +399,88 @@ print_script (script, hunkfun, printfun)
 
 void
 print_1_line (line_flag, line)
-     char *line_flag;
-     struct line_def *line;
+     const char *line_flag;
+     const char * const *line;
 {
-  int length = line->length; /* must be nonzero */
-  const char *text = line->text; /* Help the compiler.  */
+  const char *text = line[0], *limit = line[1]; /* Help the compiler.  */
   FILE *out = outfile; /* Help the compiler some more.  */
+  const char *flag_format = 0;
 
   /* If -T was specified, use a Tab between the line-flag and the text.
      Otherwise use a Space (as Unix diff does).
      Print neither space nor tab if line-flags are empty.  */
 
   if (line_flag != NULL && line_flag[0] != 0)
-    fprintf (out, tab_align_flag ? "%s\t" : "%s ", line_flag);
-
-  /* Now output the contents of the line.
-     If -t was specified, expand tabs to spaces.
-     Otherwise output verbatim.  */
-
-  if (tab_expand_flag)
     {
-      register int column = 0;
-      register int i;
-      for (i = 0; i < line->length; i++)
-	{
-	  register char c = line->text[i];
-	  switch (c)
-	    {
-	    case '\t':
-	      column++;
-	      while (column & 7)
-		{
-		  putc (' ', out);
-		  column++;
-		}
-	      c = ' ';
-	      break;
-	    case '\b':
-	      column--;
-	      break;
-	    default:
-	      column++;
-	      break;
-	    }
-	  putc (c, out);
-	}
+      flag_format = tab_align_flag ? "%s\t" : "%s ";
+      fprintf (out, flag_format, line_flag);
     }
-  else
-    fwrite (text, sizeof (char), length, out);
-  if ((line_flag == NULL || line_flag[0] != 0) && text[length - 1] != '\n'
+
+  output_1_line (text, limit, flag_format, line_flag);
+
+  if ((line_flag == NULL || line_flag[0] != 0) && limit[-1] != '\n'
       && line_end_char == '\n')
     fprintf (out, "\n\\ No newline at end of file\n");
 }
 
+/* Output a line from TEXT up to LIMIT.  Without -t, output verbatim.
+   With -t, expand white space characters to spaces, and if FLAG_FORMAT
+   is nonzero, output it with argument LINE_FLAG after every
+   internal carriage return, so that tab stops continue to line up.  */
+
+void
+output_1_line (text, limit, flag_format, line_flag)
+     const char *text, *limit, *flag_format, *line_flag;
+{
+  if (!tab_expand_flag)
+    fwrite (text, sizeof (char), limit - text, outfile);
+  else
+    {
+      register FILE *out = outfile;
+      register char c;
+      register const char *t = text;
+      register unsigned column = 0;
+
+      while (t < limit)
+	switch ((c = *t++))
+	  {
+	  case '\t':
+	    {
+	      unsigned spaces = TAB_WIDTH - column % TAB_WIDTH;
+	      column += spaces;
+	      do
+		putc (' ', out);
+	      while (--spaces);
+	    }
+	    break;
+
+	  case '\r':
+	    putc (c, out);
+	    if (flag_format && t < limit && *t != '\n')
+	      fprintf (out, flag_format, line_flag);
+	    column = 0;
+	    break;
+
+	  case '\b':
+	    if (column == 0)
+	      continue;
+	    column--;
+	    putc (c, out);
+	    break;
+
+	  default:
+	    if (textchar[(unsigned char) c])
+	      column++;
+	    /* fall into */
+	  case '\f':
+	  case '\v':
+	    putc (c, out);
+	    break;
+	  }
+    }
+}
+
+int
 change_letter (inserts, deletes)
      int inserts, deletes;
 {
@@ -446,18 +496,15 @@ change_letter (inserts, deletes)
    into an actual line number in the input file.
    The internal line number is LNUM.  FILE points to the data on the file.
 
-   Internal line numbers count from 0 within the current chunk.
-   Actual line numbers count from 1 within the entire file;
-   in addition, they include lines ignored for comparison purposes.
-
-   The `ltran' feature is no longer in use.  */
+   Internal line numbers count from 0 starting after the prefix.
+   Actual line numbers count from 1 within the entire file.  */
 
 int
 translate_line_number (file, lnum)
      struct file_data *file;
      int lnum;
 {
-  return lnum + 1;
+  return lnum + file->prefix_lines + 1;
 }
 
 void
@@ -515,7 +562,7 @@ analyze_hunk (hunk, first0, last0, first1, last1, deletes, inserts)
 {
   int f0, l0, f1, l1, show_from, show_to;
   int i;
-  int nontrivial = !(ignore_blank_lines_flag || ignore_regexp);
+  int nontrivial = !(ignore_blank_lines_flag || ignore_regexp_list);
   struct change *next;
 
   show_from = show_to = 0;
@@ -531,22 +578,36 @@ analyze_hunk (hunk, first0, last0, first1, last1, deletes, inserts)
       show_to += next->inserted;
 
       for (i = next->line0; i <= l0 && ! nontrivial; i++)
-	if ((!ignore_blank_lines_flag || files[0].linbuf[i].length > 1)
-	    && (!ignore_regexp
-		|| 0 > re_search (&ignore_regexp_compiled,
-				  files[0].linbuf[i].text,
-				  files[0].linbuf[i].length, 0,
-				  files[0].linbuf[i].length, 0)))
-	  nontrivial = 1;
+	if (!ignore_blank_lines_flag || files[0].linbuf[i][0] != '\n')
+	  {
+	    struct regexp_list *r;
+	    const char *line = files[0].linbuf[i];
+	    int len = files[0].linbuf[i + 1] - line;
+
+	    for (r = ignore_regexp_list; r; r = r->next)
+	      if (0 <= re_search (&r->buf, line, len, 0, len, 0))
+		break;	/* Found a match.  Ignore this line.  */
+	    /* If we got all the way through the regexp list without
+	       finding a match, then it's nontrivial.  */
+	    if (r == NULL)
+	      nontrivial = 1;
+	  }
 
       for (i = next->line1; i <= l1 && ! nontrivial; i++)
-	if ((!ignore_blank_lines_flag || files[1].linbuf[i].length > 1)
-	    && (!ignore_regexp
-		|| 0 > re_search (&ignore_regexp_compiled,
-				  files[1].linbuf[i].text,
-				  files[1].linbuf[i].length, 0,
-				  files[1].linbuf[i].length, 0)))
-	  nontrivial = 1;
+	if (!ignore_blank_lines_flag || files[1].linbuf[i][0] != '\n')
+	  {
+	    struct regexp_list *r;
+	    const char *line = files[1].linbuf[i];
+	    int len = files[1].linbuf[i + 1] - line;
+
+	    for (r = ignore_regexp_list; r; r = r->next)
+	      if (0 <= re_search (&r->buf, line, len, 0, len, 0))
+		break;	/* Found a match.  Ignore this line.  */
+	    /* If we got all the way through the regexp list without
+	       finding a match, then it's nontrivial.  */
+	    if (r == NULL)
+	      nontrivial = 1;
+	  }
     }
 
   *first0 = f0;
@@ -615,6 +676,7 @@ concat (s1, s2, s3)
   return new;
 }
 
+void
 debug_script (sp)
      struct change *sp;
 {
@@ -624,3 +686,18 @@ debug_script (sp)
 	     sp->line0, sp->line1, sp->deleted, sp->inserted);
   fflush (stderr);
 }
+
+#if !HAVE_MEMCHR
+char *
+memchr (s, c, n)
+     char *s;
+     int c;
+     size_t n;
+{
+  unsigned char *p = (unsigned char *) s, *lim = p + n;
+  for (;  p < lim;  p++)
+    if (*p == c)
+      return (char *) p;
+  return 0;
+}
+#endif

@@ -1,11 +1,11 @@
 /* Output routines for ed-script format.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 91, 92 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -19,6 +19,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "diff.h"
 
+int change_letter ();
+int translate_line_number ();
 static void print_rcs_hunk ();
 static void print_ed_hunk ();
 static void pr_forward_ed_hunk ();
@@ -56,6 +58,8 @@ print_ed_hunk (hunk)
   if (!deletes && !inserts)
     return;
 
+  begin_output ();
+
   /* Print out the line number header for this hunk */
   print_number_range (',', &files[0], f0, l0);
   fprintf (outfile, "%c\n", change_letter (inserts, deletes));
@@ -78,8 +82,8 @@ print_ed_hunk (hunk)
 	     so that we will output another ed-command later
 	     to change the double dot into a single dot.  */
 
-	  if (files[1].linbuf[i].text[0] == '.'
-	      && files[1].linbuf[i].text[1] == '\n')
+	  if (files[1].linbuf[i][0] == '.'
+	      && files[1].linbuf[i][1] == '\n')
 	    {
 	      fprintf (outfile, "..\n");
 	      fprintf (outfile, ".\n");
@@ -122,6 +126,8 @@ pr_forward_ed_hunk (hunk)
   analyze_hunk (hunk, &f0, &l0, &f1, &l1, &deletes, &inserts);
   if (!deletes && !inserts)
     return;
+
+  begin_output ();
 
   fprintf (outfile, "%c", change_letter (inserts, deletes));
   print_number_range (' ', files, f0, l0);
@@ -167,6 +173,8 @@ print_rcs_hunk (hunk)
   analyze_hunk (hunk, &f0, &l0, &f1, &l1, &deletes, &inserts);
   if (!deletes && !inserts)
     return;
+
+  begin_output ();
 
   translate_range (&files[0], f0, l0, &tf0, &tl0);
 

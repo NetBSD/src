@@ -1,11 +1,11 @@
 /* Shared definitions for GNU DIFF
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 91, 92 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
 GNU DIFF is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 1, or (at your option)
+the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 GNU DIFF is distributed in the hope that it will be useful,
@@ -17,86 +17,23 @@ You should have received a copy of the GNU General Public License
 along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-
 #include <ctype.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#ifdef USG
-#include <time.h>
-#ifdef HAVE_NDIR
-#ifdef NDIR_IN_SYS
-#include <sys/ndir.h>
-#else
-#include <ndir.h>
-#endif /* not NDIR_IN_SYS */
-#else
-#include <dirent.h>
-#endif /* not HAVE_NDIR */
-#include <fcntl.h>
-#ifndef HAVE_DIRECT
-#define direct dirent
-#endif
-#else /* not USG */
-#include <sys/time.h>
-#include <sys/dir.h>
-#include <sys/file.h>
-#endif
-
-#ifdef USG
-/* Define needed BSD functions in terms of sysV library.  */
-
-#define bcopy(s,d,n)	memcpy((d),(s),(n))
-#define bcmp(s1,s2,n)	memcmp((s1),(s2),(n))
-#define bzero(s,n)	memset((s),0,(n))
-
-#ifndef XENIX
-#define dup2(f,t)	(close(t),fcntl((f),F_DUPFD,(t)))
-#endif
-
-#define vfork	fork
-#define index	strchr
-#define rindex	strrchr
-#endif
-
-#ifdef sparc
-/* vfork clobbers registers on the Sparc, so don't use it.  */
-#define vfork fork
-#endif
-
-#include <errno.h>
-extern int      errno;
-extern int      sys_nerr;
-extern char    *sys_errlist[];
-
-#define	EOS		(0)
-#define	FALSE		(0)
-#define TRUE		1
-
-#define min(a,b) ((a) <= (b) ? (a) : (b))
-#define max(a,b) ((a) >= (b) ? (a) : (b))
+#include "system.h"
+#include "regex.h"
 
 #ifndef PR_FILE_NAME
 #define PR_FILE_NAME "/bin/pr"
 #endif
 
-/* Support old-fashioned C compilers.  */
-#if defined (__STDC__) || defined (__GNUC__)
-#include "limits.h"
-#else
-#define INT_MAX 2147483647
-#define CHAR_BIT 8
-#endif
+/* Character classes.  */
+extern const char textchar[];
 
-/* Support old-fashioned C compilers.  */
-#if !defined (__STDC__) && !defined (__GNUC__)
-#define const
-#endif
+/* Is_space is a little broader than ctype.h's isspace,
+   because it also includes backspace and no-break space.  */
+#define Is_space(c) (textchar[c] & 2)
 
-#ifndef O_RDONLY
-#define O_RDONLY 0
-#endif
+#define TAB_WIDTH 8
 
 /* Variables for command line options */
 
@@ -120,15 +57,19 @@ enum output_style {
   /* Like -f, but output a count of changed lines in each "command" (-n). */
   OUTPUT_RCS,
   /* Output merged #ifdef'd file (-D).  */
-  OUTPUT_IFDEF };
+  OUTPUT_IFDEF,
+  /* Output sdiff style (-y).  */
+  OUTPUT_SDIFF
+};
 
 /* True for output styles that are robust,
    i.e. can handle a file that ends in a non-newline.  */
-#define ROBUST_OUTPUT_STYLE(S) \
- ((S) == OUTPUT_CONTEXT || (S) == OUTPUT_UNIFIED || (S) == OUTPUT_RCS \
-  || (S) == OUTPUT_NORMAL)
+#define ROBUST_OUTPUT_STYLE(S) ((S) != OUTPUT_ED && (S) != OUTPUT_FORWARD_ED)
 
 EXTERN enum output_style output_style;
+
+/* Nonzero if output cannot be generated for identical files.  */
+EXTERN int no_diff_means_no_output;
 
 /* Number of lines of context to show in each set of diffs.
    This is zero when context is not to be shown.  */
@@ -138,6 +79,9 @@ EXTERN int      context;
    Don't interpret codes over 0177 as implying a "binary file".  */
 EXTERN int	always_text_flag;
 
+/* Number of lines to keep in identical prefix and suffix.  */
+EXTERN int      horizon_lines;
+
 /* Ignore changes in horizontal whitespace (-b).  */
 EXTERN int      ignore_space_change_flag;
 
@@ -146,12 +90,6 @@ EXTERN int      ignore_all_space_flag;
 
 /* Ignore changes that affect only blank lines (-B).  */
 EXTERN int      ignore_blank_lines_flag;
-
-/* Ignore changes that affect only lines matching this regexp (-I).  */
-EXTERN char	*ignore_regexp;
-
-/* Result of regex-compilation of `ignore_regexp'.  */
-EXTERN struct re_pattern_buffer ignore_regexp_compiled;
 
 /* 1 if lines may match even if their lengths are different.
    This depends on various options.  */
@@ -163,11 +101,17 @@ EXTERN int      ignore_case_flag;
 /* File labels for `-c' output headers (-L).  */
 EXTERN char *file_label[2];
 
-/* Regexp to identify function-header lines (-F).  */
-EXTERN char	*function_regexp;
+struct regexp_list
+{
+  struct re_pattern_buffer buf;
+  struct regexp_list *next;
+};
 
-/* Result of regex-compilation of `function_regexp'.  */
-EXTERN struct re_pattern_buffer function_regexp_compiled;
+/* Regexp to identify function-header lines (-F).  */
+EXTERN struct regexp_list *function_regexp_list;
+
+/* Ignore changes that affect only lines matching this regexp (-I).  */
+EXTERN struct regexp_list *ignore_regexp_list;
 
 /* Say only whether files differ, not how (-q).  */
 EXTERN int 	no_details_flag;
@@ -196,11 +140,43 @@ EXTERN char	*dir_start_file;
    Then `patch' would create the file with appropriate contents.  */
 EXTERN int	entire_new_file_flag;
 
+/* If a file is new (appears in only the second dir)
+   include its entire contents (-P).
+   Then `patch' would create the file with appropriate contents.  */
+EXTERN int	unidirectional_new_file_flag;
+
 /* Pipe each file's output through pr (-l).  */
 EXTERN int	paginate_flag;
 
-/* String to use for #ifdef (-D).  */
-EXTERN char *	ifdef_string;
+enum line_class {
+  /* Lines taken from just the first file.  */
+  OLD,
+  /* Lines taken from just the second file.  */
+  NEW,
+  /* Lines common to both files.  */
+  UNCHANGED,
+  /* A hunk containing both old and new lines (line groups only).  */
+  CHANGED
+};
+
+/* Line group formats for old, new, unchanged, and changed groups.  */
+EXTERN const char *group_format[CHANGED + 1];
+
+/* Line formats for old, new, and unchanged lines.  */
+EXTERN const char *line_format[UNCHANGED + 1];
+
+/* If using OUTPUT_SDIFF print extra information to help the sdiff filter. */
+EXTERN int sdiff_help_sdiff;  
+
+/* Tell OUTPUT_SDIFF to show only the left version of common lines. */
+EXTERN int sdiff_left_only;
+
+/* Tell OUTPUT_SDIFF to not show common lines. */
+EXTERN int sdiff_skip_common_lines;
+
+/* The half line width and column 2 offset for OUTPUT_SDIFF.  */
+EXTERN unsigned sdiff_half_width;
+EXTERN unsigned sdiff_column2_offset;
 
 /* String containing all the command options diff received,
    with spaces between and at the beginning but none at the end.
@@ -236,21 +212,13 @@ struct change
 
 /* Structures that describe the input files.  */
 
-/* Data on one line of text.  */
-
-struct line_def {
-    char        *text;
-    int         length;
-    unsigned	hash;
-};
-
 /* Data on one input file being compared.  */
 
 struct file_data {
     int             desc;	/* File descriptor  */
     char           *name;	/* File name  */
     struct stat     stat;	/* File status from fstat()  */
-    int             dir_p;	/* 1 if file is a directory  */
+    int             dir_p;	/* nonzero if file is a directory  */
 
     /* Buffer in which text of file is read.  */
     char *	    buffer;
@@ -259,26 +227,24 @@ struct file_data {
     /* Number of valid characters now in the buffer. */
     int		    buffered_chars;
 
-    /* Array of data on analyzed lines of this chunk of this file.  */
-    struct line_def *linbuf;
+    /* Array of pointers to lines in the file.  */
+    const char **linbuf;
 
-    /* Allocated size of linbuf array (# of elements).  */
-    int		    linbufsize;
-
-    /* Number of elements of linbuf containing valid data. */
-    int		    buffered_lines;
+    /* linbuf_base <= buffered_lines <= valid_lines <= alloc_lines.
+       linebuf[linbuf_base ... buffered_lines - 1] are possibly differing.
+       linebuf[linbuf_base ... valid_lines - 1] contain valid data.
+       linebuf[linbuf_base ... alloc_lines - 1] are allocated.  */
+    int linbuf_base, buffered_lines, valid_lines, alloc_lines;
 
     /* Pointer to end of prefix of this file to ignore when hashing. */
-    char *prefix_end;
+    const char *prefix_end;
 
-    /* Count of lines in the prefix. */
+    /* Count of lines in the prefix.
+       There are this many lines in the file before linbuf[0].  */
     int prefix_lines;
 
     /* Pointer to start of suffix of this file to ignore when hashing. */
-    char *suffix_begin;
-
-    /* Count of lines in the suffix. */
-    int suffix_lines;
+    const char *suffix_begin;
 
     /* Vector, indexed by line number, containing an equivalence code for
        each line.  It is this vector that is actually compared with that
@@ -307,18 +273,11 @@ struct file_data {
     /* 1 more than the maximum equivalence value used for this or its
        sibling file. */
     int equiv_max;
-
-    /* Table translating diff's internal line numbers 
-       to actual line numbers in the file.
-       This is needed only when some lines have been discarded.
-       The allocated size is always linbufsize
-       and the number of valid elements is buffered_lines.  */
-    int		   *ltran;
 };
 
 /* Describe the two files currently being compared.  */
 
-struct file_data files[2];
+EXTERN struct file_data files[2];
 
 /* Queue up one-line messages to be printed at the end,
    when -l is specified.  Each message is recorded with a `struct msg'.  */
@@ -345,7 +304,7 @@ EXTERN FILE *outfile;
 
 /* Declare various functions.  */
 
-#ifdef __STDC__
+#if __STDC__
 #define VOID void
 #else
 #define VOID char
@@ -353,18 +312,24 @@ EXTERN FILE *outfile;
 VOID *xmalloc ();
 VOID *xrealloc ();
 char *concat ();
-void free ();
-char *rindex ();
-char *index ();
+
+int excluded_filename ();
+int sip ();
+
+struct change *find_change ();
 
 void analyze_hunk ();
+void begin_output ();
 void error ();
 void fatal ();
 void message ();
+void output_1_line ();
 void perror_with_name ();
 void pfatal_with_name ();
 void print_1_line ();
+void print_context_header ();
 void print_message_queue ();
 void print_number_range ();
 void print_script ();
+void slurp ();
 void translate_range ();
