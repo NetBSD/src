@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.2 2001/05/06 19:53:04 ad Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.3 2001/06/10 10:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ struct mlx_softc {
 	int			mlx_flags;
 
 	struct mlx_sysdrive	mlx_sysdrive[MLX_MAX_DRIVES];
+	int			mlx_numsysdrives;
 };
 
 #define MLX_BG_CHECK		1	/* we started a check */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.9 2001/05/15 12:49:37 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.10 2001/06/10 10:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -534,17 +534,32 @@ static void
 mlx_configure(struct mlx_softc *mlx, int waitok)
 {
 	struct mlx_enquiry *me;
+	struct mlx_enquiry_old *meo;
 	struct mlx_enq_sys_drive *mes;
 	struct mlx_sysdrive *ms;
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
 
-	me = mlx_enquire(mlx, MLX_CMD_ENQUIRY, sizeof(struct mlx_enquiry),
-	    NULL, waitok);
-	if (me == NULL) {
-		printf("%s: ENQUIRY failed\n", mlx->mlx_dv.dv_xname);
-		return;
+	if (mlx->mlx_iftype == 2) {
+		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
+		    sizeof(struct mlx_enquiry_old), NULL, waitok);
+		if (meo == NULL) {
+			printf("%s: ENQUIRY_OLD failed\n",
+			    mlx->mlx_dv.dv_xname);
+			return;
+		}
+		mlx->mlx_numsysdrives = meo->me_num_sys_drvs;
+		free(meo, M_DEVBUF);
+	} else {
+		me = mlx_enquire(mlx, MLX_CMD_ENQUIRY,
+		    sizeof(struct mlx_enquiry), NULL, waitok);
+		if (me == NULL) {
+			printf("%s: ENQUIRY failed\n", mlx->mlx_dv.dv_xname);
+			return;
+		}
+		mlx->mlx_numsysdrives = me->me_num_sys_drvs;
+		free(me, M_DEVBUF);
 	}
 
 	mes = mlx_enquire(mlx, MLX_CMD_ENQSYSDRIVE,
@@ -565,9 +580,6 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		size = le32toh(mes[i].sd_size);
 		ms->ms_state = mes[i].sd_state;
 
-		if (i >= me->me_num_sys_drvs)
-			continue;
-
 		/*
 		 * If an existing device has changed in some way (e.g. no
 		 * longer present) then detach it.
@@ -581,6 +593,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		ms->ms_state = mes[i].sd_state;
 		ms->ms_dv = NULL;
 
+		if (i >= mlx->mlx_numsysdrives)
+			continue;
 		if (size == 0xffffffffU || size == 0)
 			continue;
 
@@ -594,7 +608,6 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	}
 
 	free(mes, M_DEVBUF);
-	free(me, M_DEVBUF);
 
 	if (nunits != 0)
 		mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
@@ -1146,7 +1159,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 
 		dr = &mlx->mlx_sysdrive[0];
 
-		for (i = 0; i < MLX_MAX_DRIVES; i++) {
+		for (i = 0; i < mlx->mlx_numsysdrives; i++) {
 			/* Has state been changed by controller? */
 			if (dr->ms_state != mes[i].sd_state) {
 				switch (mes[i].sd_state) {
@@ -1160,6 +1173,10 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 
 				case MLX_SYSD_CRITICAL:
 					statestr = "critical";
+					break;
+				
+				default:
+					statestr = "unknown";
 					break;
 				}
 
