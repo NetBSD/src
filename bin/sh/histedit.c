@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.25 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.26 2002/03/12 00:14:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.25 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.26 2002/03/12 00:14:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,6 @@ histcmd(argc, argv)
 		} else {
 			const char *s = pat ?
 			   fc_replace(he.str, pat, repl) : he.str;
-			char *sp;
 
 			if (sflg) {
 				if (displayhist) {
@@ -375,7 +374,6 @@ histcmd(argc, argv)
 				}
 
 				evalstring(strcpy(stalloc(strlen(s) + 1), s), 0);
-				free(sp);
 				if (displayhist && hist) {
 					/*
 					 *  XXX what about recursive and
