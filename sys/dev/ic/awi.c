@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.56 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: awi.c,v 1.57 2003/11/02 01:55:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.56 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.57 2003/11/02 01:55:40 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1085,14 +1085,7 @@ awi_rx_int(struct awi_softc *sc)
 					goto rx_next;
 				}
 				wh = mtod(m, struct ieee80211_frame *);
-				if (ic->ic_opmode != IEEE80211_M_STA) {
-					ni = ieee80211_find_node(ic,
-					    wh->i_addr2);
-					if (ni == NULL)
-						ni = ieee80211_ref_node(
-						    ic->ic_bss);
-				} else
-					ni = ieee80211_ref_node(ic->ic_bss);
+				ni = ieee80211_find_rxnode(ic, wh);
 				ieee80211_input(ifp, m, ni, rssi, rstamp);
 				/*
 				 * The frame may have caused the
