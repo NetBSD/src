@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.23 2003/07/06 22:56:08 dyoung Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.24 2003/10/14 17:44:09 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.25 2003/06/26 21:14:44 ichiro Exp 
+ *	NetBSD: cardbusdevs,v 1.26 2003/10/14 17:43:55 ichiro Exp 
  */
 
 /*
@@ -61,6 +61,7 @@
 #define	CARDBUS_VENDOR_ALLIEDTELESYN	0x1259		/* Allied Telesyn International */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
 #define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex Communications Inc */
+#define	CARDBUS_VENDOR_ATHEROS	0x168c		/* Atheros Communications, Inc. */
 #define	CARDBUS_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
@@ -139,3 +140,6 @@
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
+
+/* Atheros Communications, Inc. products */
+#define	CARDBUS_PRODUCT_ATHEROS_AR5001	0x0013		/* AR5001 Wireless LAN 802.11a/b/g CardBus Card */
