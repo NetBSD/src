@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.31 2003/01/09 21:47:39 atatat Exp $	*/
+/*	$NetBSD: tty.c,v 1.32 2003/04/05 10:07:00 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.31 2003/01/09 21:47:39 atatat Exp $");
+__RCSID("$NetBSD: tty.c,v 1.32 2003/04/05 10:07:00 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -169,6 +169,9 @@ _cursesi_gettmode(SCREEN *screen)
 int
 raw(void)
 {
+#ifdef DEBUG
+	__CTRACE("raw()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -185,6 +188,9 @@ raw(void)
 int
 noraw(void)
 {
+#ifdef DEBUG
+	__CTRACE("noraw()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -201,6 +207,9 @@ noraw(void)
 int
 cbreak(void)
 {
+#ifdef DEBUG
+	__CTRACE("cbreak()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -218,6 +227,9 @@ cbreak(void)
 int
 nocbreak(void)
 {
+#ifdef DEBUG
+	__CTRACE("nocbreak()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -376,6 +388,9 @@ __notimeout(void)
 int
 echo(void)
 {
+#ifdef DEBUG
+	__CTRACE("echo()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -387,6 +402,9 @@ echo(void)
 int
 noecho(void)
 {
+#ifdef DEBUG
+	__CTRACE("noecho()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -398,6 +416,9 @@ noecho(void)
 int
 nl(void)
 {
+#ifdef DEBUG
+	__CTRACE("nl()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -411,6 +432,7 @@ nl(void)
 	_cursesi_screen->baset.c_iflag |= ICRNL;
 	_cursesi_screen->baset.c_oflag |= ONLCR;
 
+	_cursesi_screen->nl = 1;
 	_cursesi_screen->pfast = _cursesi_screen->rawmode;
 	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
 			  TCSASOFT | TCSADRAIN : TCSADRAIN,
@@ -420,6 +442,9 @@ nl(void)
 int
 nonl(void)
 {
+#ifdef DEBUG
+	__CTRACE("nonl()\n");
+#endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
 		__restartwin();
@@ -433,6 +458,7 @@ nonl(void)
 	_cursesi_screen->baset.c_iflag &= ~ICRNL;
 	_cursesi_screen->baset.c_oflag &= ~ONLCR;
 
+	_cursesi_screen->nl = 0;
 	__pfast = 1;
 	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
 			  TCSASOFT | TCSADRAIN : TCSADRAIN,
