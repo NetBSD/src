@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 1999/05/10 05:58:44 cgd Exp $
+	$NetBSD: syscalls.master,v 1.30.12.1 2002/03/20 23:37:18 he Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -223,7 +223,7 @@
 129	STD		{ int osf1_sys_truncate(const char *path, \
 			    off_t length); }
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
-131	UNIMPL		flock
+131	NOARGS		{ int sys_flock(int fd, int operation); }
 132	STD		{ int osf1_sys_setgid(gid_t gid); }
 133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, struct sockaddr *to, int tolen); }
