@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5 2003/03/16 08:01:13 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5.4.1 2004/05/23 10:45:59 tron Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2003/03/16 08:01:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.4.1 2004/05/23 10:45:59 tron Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -48,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2003/03/16 08:01:13 jdolecek Exp
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+#include <fs/union/union.h>
 
 int union_lkmentry __P((struct lkm_table *, int, int));
 
@@ -62,6 +65,13 @@ extern struct vfsops union_vfsops;
 MOD_VFS("union", -1, &union_vfsops);
 
 /*
+ * take care of fs specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_union_log;
+
+/*
  * entry point
  */
 int
@@ -71,5 +81,25 @@ union_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc)
+}
+
+int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_vfs_union_setup(&_union_log);
+	return (0);
+}
+
+int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_teardown(&_union_log);
+	return (0);
 }
