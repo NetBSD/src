@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.546 2004/11/29 06:18:44 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.547 2004/11/29 06:24:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8142,3 +8142,9 @@ lib/libc/net/gethnamaddr.c			1.64
 	works by allowing _gethtent() to treat host.h_addrtype==0 && 
 	host.h_length==0 as "any address family" when parsing.
 	[lukem, ticket #998]
+
+sys/sys/param.h                                 patch
+share/tmac/doc-common                           patch
+gnu/usr.bin/groff/tmac/mdoc.local               patch
+
+	Welcome to 2.0 (finally)
