@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 1997/03/16 09:40:03 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 1997/03/16 09:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,18 +147,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
-
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-
-	/*
-	 * If we loaded from an HP-UX format binary file we dump enough
-	 * of an HP-UX style user struct so that the HP-UX debuggers can
-	 * grok it.
-	 */
-	if (p->p_emul == &emul_hpux)
-		return (hpux_dumpu(vp, cred));
-#endif
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
