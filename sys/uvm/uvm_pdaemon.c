@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.39 2001/09/30 02:57:34 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.40 2001/11/06 06:28:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -355,7 +355,6 @@ boolean_t
 uvmpd_scan_inactive(pglst)
 	struct pglist *pglst;
 {
-	boolean_t retval = FALSE;	/* assume we haven't hit target */
 	int error;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
@@ -390,7 +389,6 @@ uvmpd_scan_inactive(pglst)
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				UVMHIST_LOG(pdhist,"  met free target: "
 					    "exit loop", 0, 0, 0, 0);
-				retval = TRUE;
 
 				if (swslot == 0) {
 					/* exit now if no swap-i/o pending */
@@ -713,7 +711,6 @@ uvmpd_scan(void)
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
-	boolean_t got_it;
 	UVMHIST_FUNC("uvmpd_scan"); UVMHIST_CALLED(pdhist);
 
 	uvmexp.pdrevs++;
@@ -752,7 +749,6 @@ uvmpd_scan(void)
 	 * low bit of uvmexp.pdrevs (which we bump by one each call).
 	 */
 
-	got_it = FALSE;
 	pages_freed = uvmexp.pdfreed;
 	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
