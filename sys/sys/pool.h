@@ -1,7 +1,7 @@
-/*	$NetBSD: pool.h,v 1.18 2000/12/06 18:20:52 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.19 2000/12/07 05:45:57 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,12 +53,31 @@
 #define PR_HASHTABSIZE		8
 
 #ifdef __POOL_EXPOSE
+struct pool_cache {
+	TAILQ_ENTRY(pool_cache)
+			pc_poollist;	/* entry on pool's group list */
+	TAILQ_HEAD(, pool_cache_group)
+			pc_grouplist;	/* Cache group list */
+	struct pool_cache_group
+			*pc_allocfrom;	/* group to allocate from */
+	struct pool_cache_group
+			*pc_freeto;	/* grop to free to */
+	struct pool	*pc_pool;	/* parent pool */
+	struct simplelock pc_slock;	/* mutex */
+
+	int		(*pc_ctor)(void *, void *, int);
+	void		(*pc_dtor)(void *, void *);
+	void		*pc_arg;
+};
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
 	TAILQ_HEAD(,pool_item_header)
 			pr_pagelist;	/* Allocated pages */
 	struct pool_item_header	*pr_curpage;
+	TAILQ_HEAD(,pool_cache)
+			pr_cachelist;	/* Caches for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
 	unsigned int	pr_itemoffset;	/* Align this offset in item */
@@ -184,6 +203,18 @@ int		pool_chk(struct pool *, const char *);
  */
 void		*pool_page_alloc_nointr(unsigned long, int, int);
 void		pool_page_free_nointr(void *, unsigned long, int);
+
+/*
+ * Pool cache routines.
+ */
+void		pool_cache_init(struct pool_cache *, struct pool *,
+		    int (*ctor)(void *, void *, int),
+		    void (*dtor)(void *, void *),
+		    void *);
+void		pool_cache_destroy(struct pool_cache *);
+void		*pool_cache_get(struct pool_cache *, int);
+void		pool_cache_put(struct pool_cache *, void *);
+void		pool_cache_invalidate(struct pool_cache *);
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
