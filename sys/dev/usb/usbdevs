@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.20 1999/01/25 01:02:59 augustss Exp $
+$NetBSD: usbdevs,v 1.21 1999/01/26 22:21:55 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ vendor 3COM		0x04c1	3Com
 vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor JAZZ		0x04fa	Jazz
+vendor AKS		0x0529	Aladdin Knowledge Systems
 vendor ATEN		0x0557	ATen
 vendor PERACOM		0x0565	Peracom
 vendor EIZO		0x056d	EIZO
@@ -133,6 +134,9 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 
 /* Jazz products */
 product JAZZ J6502		0x4201	J-6502 speakers
+
+/* AKS products */
+product AKS USBHASP		0x0001	USB-HASP 0.06
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
