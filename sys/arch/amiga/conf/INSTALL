@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.43.2.2 2004/07/02 19:59:46 he Exp $
+# $NetBSD: INSTALL,v 1.43.2.3 2004/07/15 20:41:35 he Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.18.2.2 2004/07/02 17:41:12 he Exp $
+# Created from: # NetBSD$
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43.2.2 $"
+#ident 		"GENERIC-$Revision: 1.43.2.3 $"
 
 makeoptions	COPTS="-Os"
 
@@ -130,6 +130,7 @@ options 	COMPAT_AOUT_M68K # actually make some system calls work.
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Enable experimental buffer queue strategy for better responsiveness under 
