@@ -27,13 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memchr.S,v 1.5 1994/03/12 01:40:01 jtc Exp $
+ *	$Id: memchr.S,v 1.6 1994/11/24 16:36:35 mycroft Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: memchr.S,v 1.5 1994/03/12 01:40:01 jtc Exp $")
+	RCSID("$Id: memchr.S,v 1.6 1994/11/24 16:36:35 mycroft Exp $")
 #endif
 
 /*
@@ -49,7 +49,8 @@ ENTRY(memchr)
 	movl	8(%esp),%edi		/* string address */
 	movl	12(%esp),%eax		/* set character to search for */
 	movl	16(%esp),%ecx		/* set length of search */
-	testl	%eax,%eax		/* clear Z flag, for len == 0 */
+	testl	%ecx,%ecx		/* test for len == 0 */
+	jz	L1
 	cld				/* set search forward */
 	repne				/* search! */
 	scasb
