@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.61 1999/11/29 02:28:55 jun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.62 1999/11/29 12:55:20 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.60 1999/11/29 02:28:19 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.61 1999/11/29 12:54:00 itojun Exp 
  */
 
 /*-
@@ -395,11 +395,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Xircom CreditCard CE3 10/100 Ethernet"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW,
-	    PCMCIA_CIS_TDK_XIR_CNW,
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_801,
+	    PCMCIA_CIS_TDK_XIR_CNW_801,
 	    0,
 	    "TDK Corporation",
-	    "Xircom CreditCard Netwave"	},
+	    "Xircom CreditCard Netwave (Canada)"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW_802,
+	    PCMCIA_CIS_TDK_XIR_CNW_802,
+	    0,
+	    "TDK Corporation",
+	    "Xircom CreditCard Netwave (US)"	},
 	},
 	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
