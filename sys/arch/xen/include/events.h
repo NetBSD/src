@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
+/*	$NetBSD: events.h,v 1.3 2004/04/24 19:32:37 cl Exp $	*/
 
 /*
  *
@@ -41,6 +41,6 @@ typedef int (*ev_handler_t)(void *);
 
 void init_events(void);
 unsigned int do_event(int, struct trapframe *);
-int event_set_handler(int, ev_handler_t, int);
+int event_set_handler(int, ev_handler_t, void *, int);
 
 #endif /*  _XEN_EVENTS_H_ */
