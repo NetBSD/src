@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.41 2000/02/14 22:00:22 fvdl Exp $	*/
+/*	$NetBSD: buf.h,v 1.42 2000/03/28 06:03:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -268,11 +268,11 @@ do {									\
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 #ifdef _KERNEL
-int	nbuf;			/* The number of buffer headers */
-struct	buf *buf;		/* The buffer headers. */
-char	*buffers;		/* The buffer contents. */
-int	bufpages;		/* Number of memory pages in the buffer pool. */
-extern int nswbuf;		/* Number of swap I/O buffer headers. */
+extern	int nbuf;		/* The number of buffer headers */
+extern	struct buf *buf;	/* The buffer headers. */
+extern	char *buffers;		/* The buffer contents. */
+extern	int bufpages;		/* Number of memory pages in the buffer pool. */
+extern	int nswbuf;		/* Number of swap I/O buffer headers. */
 
 extern struct pool bufpool;	/* I/O buf pool */
 
