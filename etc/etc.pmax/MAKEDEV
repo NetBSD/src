@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 1999/03/26 04:37:30 mrg Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1999/04/26 04:46:46 ad Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -33,13 +33,13 @@
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
 #	fb*	generic framebuffer pseudo-device
+#	px*	PixelStamp Xserver access 
 #
 # The following names are reserved for future use:
 #	pm*	raw interface to PMAX graphics devices
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
-#	px*	raw interface to i860-accelerated framebuffers
 #	scsibus*, sd*, st*, cd*, ss*, uk*  -- MI scsi devices
 #	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
 #	audio*	phone-quality audio on Personal  DECstations
@@ -59,6 +59,7 @@ all)
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 fb0 fb1 fb2
+	sh $0 px0 px1 px2
 	sh $0 mouse
 	sh $0 ipl random lkm
  	sh $0 local
@@ -227,6 +228,13 @@ fb*)
 	rm -f fb$unit
 	mknod fb$unit c 86 $unit
 	chmod 666 fb$unit
+	;;
+
+px*)
+	unit=${i#px}
+	rm -f px$unit
+	mknod px$unit c 98 $unit
+	chmod 666 px$unit
 	;;
 
 mouse)
