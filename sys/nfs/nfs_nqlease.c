@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.2 1994/06/29 06:42:11 cgd Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.3 1994/08/17 11:41:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,7 +131,6 @@ extern nfstype nfs_type[9];
 extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
 extern struct nfsd nfsd_head;
 extern int nfsd_waiting;
-extern struct nfsreq nfsreqh;
 
 #define TRUE	1
 #define	FALSE	0
@@ -1008,7 +1007,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		 * processes in nfs_reply) and there is data in the receive
 		 * queue, poke for callbacks.
 		 */
-		if (nfsreqh.r_next == &nfsreqh && nmp->nm_so &&
+		if (nfs_reqq.tqh_first == 0 && nmp->nm_so &&
 		    nmp->nm_so->so_rcv.sb_cc > 0) {
 		    myrep.r_flags = R_GETONEREP;
 		    myrep.r_nmp = nmp;
