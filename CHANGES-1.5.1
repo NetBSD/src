@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.72 2001/05/21 02:38:16 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.73 2001/05/26 22:39:07 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4916,4 +4916,95 @@ distrib/notes/amiga/hardware			1.40
 distrib/notes/arm32/legal			1.6-1.7
 distrib/notes/arm32/prep.RISCOS			1.6
 
-	Synchronize common part of release notes with the trunk.
+  Synchronize common part of release notes with the trunk.
+
+sys/arch/sh3/include/psl.h			1.2
+sys/arch/sh3/sh3/compat_13_machdep.c		1.3
+sys/arch/sh3/sh3/sh3_machdep.c			1.13
+
+  Validate Status Register passed from userland in sigreturn().
+
+usr.bin/top/machine/m_netbsd15.c		1.14
+
+  Add workaround for formatting glitch.
+
+usr.sbin/ntp/Makefile.inc			1.5
+
+  Make ntp work on sparc64 (use -msoft-quad-float, due to toolchain
+  problems).
+
+distrib/atari/miniroot/list			patch
+
+  Change the order of some operations to squeeze in those last
+  bits.
+
+sys/netinet6/frag6.c				1.14
+
+  Plug memory leak in IPv6 fragment reassembly, and omit noisy
+  logging.
+
+sys/dev/pcmcia/if_wi.c				1.50
+usr.sbin/wiconfig/wiconfig.8			1.13 via patch
+share/man/man4/wi.4				1.14
+
+  Change wi(4)'s default from ad-hoc mode to BSS mode.  Also
+  some minor manual page fixes.
+
+sys/dev/pcmcia/pcmciadevs			1.127
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+sys/dev/pcmcia/if_ne_pcmcia.c			1.72
+
+  Support the Socket EA pcmcia ethernet cards.
+
+sys/dev/isa/mcd.c				patch
+
+  Correct typo related to __HAVE_OLD_DISKLABEL changes.
+
+distrib/notes/macppc/install			1.12-1.13
+distrib/notes/macppc/hardware			1.12-1.13
+distrib/notes/macppc/prep			1.15-1.17
+distrib/notes/macppc/whatis			1.3
+
+  More changes, updates and corrections for macppc install notes.
+
+sys/dev/pci/yds.c				1.5
+
+  Correct bug in initializing gain registers.  Fixes L-R imbalance.
+
+sys/crypto/rijndael/boxes-fst.dat		1.4 via patch
+sys/crypto/rijndael/rijndael-alg-fst.c		1.3-1.4
+sys/crypto/rijndael/rijndael-api-fst.h		1.3
+
+  Fix alignment problems causing panics on some strict-alignment
+  platforms.
+
+lib/libc/gen/frexp.3				1.5
+
+  Correct return value interval.  Fixes PR#12984.
+
+usr.sbin/pppd/chat/chat.c			1.23
+
+  Add ``E'' to getopt string, to recognize -E option.  Fixes PR#13008.
+
+usr.sbin/tcpdump/print-domain.c			1.9-1.11
+usr.sbin/tcpdump/nameser.h			1.1-1.2 (new)
+
+  Correct A6/DNAME decoder.  Improve decoder for TSIG and multiple
+  question section.
+
+sys/arch/macppc/conf/INSTALL			patch
+
+  Enable the gmac ethernet driver in this kernel.  Fixes PR#12892.
+
+distrib/notes/common/postinstall		1.27
+distrib/notes/common/sysinst			1.23
+distrib/notes/common/upgrade			1.12
+distrib/notes/macppc/install			1.14
+distrib/notes/macppc/prep			1.18
+
+  Still more tweaks of install notes for macppc.
+
+distrib/notes/i386/hardware			patch
+
+  We do not have 3ware Escalade driver for 1.5.1.
