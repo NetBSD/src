@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.37 2000/07/30 03:01:01 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.38 2000/10/04 14:56:24 sommerfeld Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.37 2000/07/30 03:01:01 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.38 2000/10/04 14:56:24 sommerfeld Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,7 +148,8 @@ typedef union {
 extern int h_errno;
 
 #ifdef DEBUG
-static void dprintf __P((char *, int));
+static void dprintf __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 #endif
 static struct hostent *getanswer __P((const querybuf *, int,
     const char *, int));
@@ -191,17 +192,18 @@ static const ns_src default_dns_files[] = {
 
 #ifdef DEBUG
 static void
-dprintf(msg, num)
-	char *msg;
-	int num;
+dprintf(char *msg, ...)
 {
-
 	_DIAGASSERT(msg != NULL);
 
 	if (_res.options & RES_DEBUG) {
 		int save = errno;
+		va_list ap;
 
-		printf(msg, num);
+		va_start (ap, msg);
+		vprintf(msg, ap);
+		va_end (ap);
+		
 		errno = save;
 	}
 }
