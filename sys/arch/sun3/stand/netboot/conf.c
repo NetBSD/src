@@ -1,9 +1,11 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1995/09/23 03:42:50 gwr Exp $	*/
 
 #include <sys/types.h>
-#include <stand.h>
-#include <nfs.h>
-#include <dev_net.h>
+#include <netinet/in.h>
+
+#include "stand.h"
+#include "nfs.h"
+#include "dev_net.h"
 
 struct fs_ops file_system[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },

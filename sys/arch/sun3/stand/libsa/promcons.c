@@ -9,6 +9,7 @@ getchar()
 	return ( (*romp->getChar)() );
 }
 
+int
 peekchar()
 {
 	return ( (*romp->mayGet)() );
