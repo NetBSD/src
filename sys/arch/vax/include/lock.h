@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 2001/06/03 15:10:11 ragge Exp $	*/
+/*	$NetBSD: lock.h,v 1.7 2001/06/04 15:37:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -52,34 +52,6 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
-	__asm__ __volatile ("movl %0,r1;jsb Slock"
-		: /* No output */
-		: "g"(alp)
-		: "r0","r1","cc","memory");
-#if 0
-	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
-		: /* No output */
-		: "m"(*alp));
-#endif
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
-		: /* No output */
-		: "g"(alp)
-		: "r1","cc","memory");
-#if 0
-	__asm__ __volatile ("bbcci $0, %0, 1f;1:"
-		: /* No output */
-		: "m"(*alp));
-#endif
-}
-
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
@@ -98,6 +70,65 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return ret;
 }
 
+#define	__cpu_simple_lock(alp)						\
+{									\
+	struct cpu_info *__ci = curcpu();				\
+									\
+	while (__cpu_simple_lock_try(alp) == 0) {			\
+		int __s;						\
+									\
+		if (__ci->ci_ipimsgs & (1 << IPI_SEND_CNCHAR)) {	\
+			__s = splipi();					\
+			cpu_handle_ipi();				\
+			splx(__s);					\
+		}							\
+	}								\
+}
+
+#if 0
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+	struct cpu_info *ci = curcpu();
+
+	while (__cpu_simple_lock_try(alp) == 0) {
+		int s;
+
+		if (ci->ci_ipimsgs & IPI_SEND_CNCHAR) {
+			s = splipi();
+			cpu_handle_ipi();
+			splx(s);
+		}
+	}
+
+#if 0
+	__asm__ __volatile ("movl %0,r1;jsb Slock"
+		: /* No output */
+		: "g"(alp)
+		: "r0","r1","cc","memory");
+#endif
+#if 0
+	__asm__ __volatile ("1:;bbssi $0, %0, 1b"
+		: /* No output */
+		: "m"(*alp));
+#endif
+}
+#endif
+
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+	__asm__ __volatile ("movl %0,r1;jsb Sunlock"
+		: /* No output */
+		: "g"(alp)
+		: "r1","cc","memory");
+#if 0
+	__asm__ __volatile ("bbcci $0, %0, 1f;1:"
+		: /* No output */
+		: "m"(*alp));
+#endif
+}
+
 #if defined(MULTIPROCESSOR)
 /*
  * On the Vax, interprocessor interrupts can come in at device priority
@@ -111,11 +142,14 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 #define SPINLOCK_SPIN_HOOK						\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
+	int __s;							\
 									\
 	if (__ci->ci_ipimsgs != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
+		__s = splipi();						\
 		cpu_handle_ipi();					\
+		splx(__s);						\
 	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */
