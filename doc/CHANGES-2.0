@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.309 2004/07/01 21:52:48 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.310 2004/07/02 18:45:02 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4605,91 +4605,281 @@ sys/arch/i386/conf/INSTALL			1.241
 	Add mtd (Myson MTD803 3-in-1 Ethernet) driver.
 	[martin, ticket #564]
 
-sys/dev/usb/umass_quirks.c				1.66
+sys/dev/usb/umass_quirks.c			1.66
+
 	The Sony Clie reports that it's SFF-8070 when it's really UFI.
 	This quirk allows the memory stick port to be used as a memory
 	stick reader.
 	[gendalia, ticket #565]
 
 xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c	1.7
+
 	Support absolute mouse position events.
 	Fix a bug that caused an entire batch of events to be thrown out when
 	one of an unknown or invalid type was encountered.
 	[tsarna, ticket #566]
 
-sys/arch/acorn26/conf/GENERIC				1.20
-sys/arch/acorn32/conf/GENERIC				1.41
-sys/arch/alpha/conf/GENERIC				1.245
-sys/arch/amd64/conf/GENERIC				1.27
-sys/arch/amiga/conf/GENERIC.in				1.22
-sys/arch/arc/conf/GENERIC				1.102
-sys/arch/atari/conf/GENERIC.in				1.37
-sys/arch/bebox/conf/GENERIC				1.73
-sys/arch/cats/conf/GENERIC				1.65
-sys/arch/cesfic/conf/GENERIC				1.24
-sys/arch/cobalt/conf/GENERIC				1.59
-sys/arch/dreamcast/conf/GENERIC				1.42
-sys/arch/hp300/conf/GENERIC				1.101
-sys/arch/hp700/conf/GENERIC				1.25
-sys/arch/hpcmips/conf/GENERIC				1.151
-sys/arch/hpcsh/conf/GENERIC				1.37
-sys/arch/i386/conf/GENERIC				1.616
-sys/arch/i386/conf/GENERIC_LAPTOP			1.100
-sys/arch/i386/conf/GENERIC_PS2TINY			1.28
-sys/arch/i386/conf/GENERIC_TINY				1.66
-sys/arch/ibmnws/conf/GENERIC				1.7
-sys/arch/luna68k/conf/GENERIC				1.46
-sys/arch/mac68k/conf/GENERIC				1.145
-sys/arch/mac68k/conf/GENERICSBC				1.30
-sys/arch/macppc/conf/GENERIC				1.178
-sys/arch/mipsco/conf/GENERIC				1.35
-sys/arch/mmeye/conf/GENERIC				1.56
-sys/arch/mvme68k/conf/GENERIC				1.47
-sys/arch/netwinder/conf/GENERIC				1.49
-sys/arch/news68k/conf/GENERIC				1.51
-sys/arch/news68k/conf/GENERIC_TINY			1.25
-sys/arch/newsmips/conf/GENERIC				1.66
-sys/arch/next68k/conf/GENERIC				1.77
-sys/arch/ofppc/conf/GENERIC				1.66
-sys/arch/pc532/conf/GENERIC				1.39
-sys/arch/pdp10/conf/GENERIC				1.4
-sys/arch/playstation2/conf/GENERIC			1.5
-sys/arch/pmax/conf/GENERIC				1.118
-sys/arch/prep/conf/GENERIC				1.78
-sys/arch/sandpoint/conf/GENERIC.sandpoint		1.15
-sys/arch/sbmips/conf/GENERIC				1.27
-sys/arch/sgimips/conf/GENERIC32_IP2x			1.12
-sys/arch/sgimips/conf/GENERIC32_IP3x			1.9
-sys/arch/shark/conf/GENERIC				1.31
-sys/arch/sparc/conf/GENERIC				1.156
-sys/arch/sparc64/conf/GENERIC32				1.84
-sys/arch/sun2/conf/GENERIC				1.30
-sys/arch/sun3/conf/GENERIC				1.105
-sys/arch/sun3/conf/GENERIC3X				1.62
-sys/arch/vax/conf/GENERIC				1.122
-sys/arch/x68k/conf/GENERIC				1.97
-sys/arch/xen/conf/GENERIC				1.13
-sys/arch/amiga/conf/AMIGA				1.67
-sys/arch/amiga/conf/DRACO				1.83
-sys/arch/amiga/conf/GENERIC				1.203
-sys/arch/amiga/conf/INSTALL				1.44
-sys/arch/amiga/conf/WSCONS				1.21
-sys/arch/atari/conf/ATARITT				1.60
-sys/arch/atari/conf/BOOT				1.57
-sys/arch/atari/conf/BOOTX				1.52
-sys/arch/atari/conf/HADES				1.52
-sys/arch/atari/conf/FALCON				1.61
-sys/arch/atari/conf/MILAN-ISAIDE			1.28
-sys/arch/atari/conf/MILAN-PCIIDE			1.31
+sys/arch/acorn26/conf/GENERIC			1.20
+sys/arch/acorn32/conf/GENERIC			1.41
+sys/arch/alpha/conf/GENERIC			1.245
+sys/arch/amd64/conf/GENERIC			1.27
+sys/arch/amiga/conf/GENERIC.in			1.22
+sys/arch/arc/conf/GENERIC			1.102
+sys/arch/atari/conf/GENERIC.in			1.37
+sys/arch/bebox/conf/GENERIC			1.73
+sys/arch/cats/conf/GENERIC			1.65
+sys/arch/cesfic/conf/GENERIC			1.24
+sys/arch/cobalt/conf/GENERIC			1.59
+sys/arch/dreamcast/conf/GENERIC			1.42
+sys/arch/hp300/conf/GENERIC			1.101
+sys/arch/hp700/conf/GENERIC			1.25
+sys/arch/hpcmips/conf/GENERIC			1.151
+sys/arch/hpcsh/conf/GENERIC			1.37
+sys/arch/i386/conf/GENERIC			1.616
+sys/arch/i386/conf/GENERIC_LAPTOP		1.100
+sys/arch/i386/conf/GENERIC_PS2TINY		1.28
+sys/arch/i386/conf/GENERIC_TINY			1.66
+sys/arch/ibmnws/conf/GENERIC			1.7
+sys/arch/luna68k/conf/GENERIC			1.46
+sys/arch/mac68k/conf/GENERIC			1.145
+sys/arch/mac68k/conf/GENERICSBC			1.30
+sys/arch/macppc/conf/GENERIC			1.178
+sys/arch/mipsco/conf/GENERIC			1.35
+sys/arch/mmeye/conf/GENERIC			1.56
+sys/arch/mvme68k/conf/GENERIC			1.47
+sys/arch/netwinder/conf/GENERIC			1.49
+sys/arch/news68k/conf/GENERIC			1.51
+sys/arch/news68k/conf/GENERIC_TINY		1.25
+sys/arch/newsmips/conf/GENERIC			1.66
+sys/arch/next68k/conf/GENERIC			1.77
+sys/arch/ofppc/conf/GENERIC			1.66
+sys/arch/pc532/conf/GENERIC			1.39
+sys/arch/pdp10/conf/GENERIC			1.4
+sys/arch/playstation2/conf/GENERIC		1.5
+sys/arch/pmax/conf/GENERIC			1.118
+sys/arch/prep/conf/GENERIC			1.78
+sys/arch/sandpoint/conf/GENERIC.sandpoint	1.15
+sys/arch/sbmips/conf/GENERIC			1.27
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.12
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.9
+sys/arch/shark/conf/GENERIC			1.31
+sys/arch/sparc/conf/GENERIC			1.156
+sys/arch/sparc64/conf/GENERIC32			1.84
+sys/arch/sun2/conf/GENERIC			1.30
+sys/arch/sun3/conf/GENERIC			1.105
+sys/arch/sun3/conf/GENERIC3X			1.62
+sys/arch/vax/conf/GENERIC			1.122
+sys/arch/x68k/conf/GENERIC			1.97
+sys/arch/xen/conf/GENERIC			1.13
+sys/arch/amiga/conf/AMIGA			1.67
+sys/arch/amiga/conf/DRACO			1.83
+sys/arch/amiga/conf/GENERIC			1.203
+sys/arch/amiga/conf/INSTALL			1.44
+sys/arch/amiga/conf/WSCONS			1.21
+sys/arch/atari/conf/ATARITT			1.60
+sys/arch/atari/conf/BOOT			1.57
+sys/arch/atari/conf/BOOTX			1.52
+sys/arch/atari/conf/HADES			1.52
+sys/arch/atari/conf/FALCON			1.61
+sys/arch/atari/conf/MILAN-ISAIDE		1.28
+sys/arch/atari/conf/MILAN-PCIIDE		1.31
+
 	Add (commented out) ALTQ options to all GENERIC-like files.
 	Regenerate from master config files.
 	[abs, ticket #567]
 
-distrib/utils/sysinst/msg.mi.de				1.12
+distrib/utils/sysinst/msg.mi.de			1.12
+
 	Translate language selection string.
 	[martin, ticket #568]
 
-sys/dev/raidframe/rf_driver.c				1.104
+sys/dev/raidframe/rf_driver.c			1.104
+
 	Remove a (redundant) check that was already performed in raidstart().
 	[oster, ticket #569]
 
+sys/netinet/ip_nat.c				1.60
+
+	Fix problem where ipnat is corrupting ``bimap'' translations.
+	Fixes PR#25999.
+	[christos, ticket #571]
+
+doc/RESPONSIBLE					1.40 via patch
+sys/dev/ata/ata_wdc.c				1.56-1.57
+sys/dev/ata/wd.c				1.279-1.280
+sys/dev/scsipi/sd.c				1.218-1.219
+sys/dev/usb/ehci.c				1.65-1.66
+sys/dev/usb/ohci.c				1.149
+sys/dev/usb/ugen.c				1.68
+sys/dev/usb/uhci.c				1.179
+sys/dev/usb/uhid.c				1.62
+sys/dev/usb/uhub.c				1.68
+sys/dev/usb/umass.c				1.113-1.115
+sys/dev/usb/umass_quirks.c			1.65,1.67
+sys/dev/usb/usb_quirks.c			1.50
+sys/dev/usb/usb_subr.c				1.114-1.116
+sys/dev/usb/usbdi_util.h			1.29
+
+	Several fixes mostly related to USB:
+	 o Don't force ATA_SINGLE on devices which don't support
+	   READ/WRITE MULTI.  Increases performance with several
+	   CF cards substantially.
+	 o Update copyright.
+	 o Add a general workaround for devices returning incorrect
+	   lengths in string descriptors, so that we don't need
+	   separate quirk entries for these.
+	 o Add a comment explaining quirk table policy.
+	 o Fix some UMATCH values in umass_quirks.c.
+	 o Use STATUS_CMD_FAILED instead of STATUS_WIRE_FAILED in
+	   response to a CBI stall, so that we do a REQUEST SENSE
+	   thereafter.  Fixes PR#22960.
+	 o Fix usage of incorrect buffer in CBI, possibly causing
+	   general failure to transfer data correctly.  Fixes
+	   PR#25676.
+	 o Do not do a CBI resset before returning STATUS_CMD_FAILED.
+	   This causes any sense information to be thrown away.
+	 o Separate page 4/5 reading into separate functions.  For
+	   ``removeable'' devices, try page 5 first.  Fixes problem
+	   with some broken USB devices which do not handle page 4
+	   correctly.
+	 o Add prototypes for recently added functions.
+	 o Make a message dependent on ohcidebug, so it does not
+	   interfere with polled operation, e.g. when entering a
+	   root device or in DDB.
+	 o Ignore a port error that happens to come in at the same
+	   time as a connect status change.  Some root hubs appear
+	   to report both.
+	 o Fix an endianness problem in the ehci.c driver.
+	 o Add Charles Hannum as responsible for USB and ACPI.
+	[mycroft, ticket #572]
+
+sys/dev/acpi/acpi_bat.c				1.40
+
+	Handle a ``device check'' message by reloading battery
+	information.
+	[mycroft, ticket #572]
+
+sys/dev/ieee1394/sbp2.c				1.19
+
+	Fix sbp2_free() so that it does not dump core.  Fixes PR#21099
+	and PR#23904.
+	[mycroft, ticket #572]
+
+sys/arch/acorn26/conf/GENERIC			1.21
+sys/arch/acorn32/conf/GENERIC			1.42
+sys/arch/alpha/conf/GENERIC			1.246
+sys/arch/amiga/conf/GENERIC.in			1.23
+sys/arch/arc/conf/GENERIC			1.103
+sys/arch/atari/conf/GENERIC.in			1.38
+sys/arch/cats/conf/GENERIC			1.66
+sys/arch/cesfic/conf/GENERIC			1.25
+sys/arch/cobalt/conf/GENERIC			1.60
+sys/arch/dreamcast/conf/GENERIC			1.43
+sys/arch/hp300/conf/GENERIC			1.102
+sys/arch/hp700/conf/GENERIC			1.26
+sys/arch/i386/conf/GENERIC_LAPTOP		1.101
+sys/arch/i386/conf/GENERIC_PS2TINY		1.29
+sys/arch/i386/conf/GENERIC_TINY			1.67
+sys/arch/luna68k/conf/GENERIC			1.47
+sys/arch/mac68k/conf/GENERIC			1.146
+sys/arch/mac68k/conf/GENERICSBC			1.31
+sys/arch/macppc/conf/GENERIC			1.179
+sys/arch/mipsco/conf/GENERIC			1.36
+sys/arch/mmeye/conf/GENERIC			1.57
+sys/arch/netwinder/conf/GENERIC			1.50
+sys/arch/news68k/conf/GENERIC			1.52
+sys/arch/news68k/conf/GENERIC_TINY		1.26
+sys/arch/newsmips/conf/GENERIC			1.67
+sys/arch/ofppc/conf/GENERIC			1.67
+sys/arch/pc532/conf/GENERIC			1.40
+sys/arch/pdp10/conf/GENERIC			1.5
+sys/arch/pmax/conf/GENERIC			1.119
+sys/arch/prep/conf/GENERIC			1.80
+sys/arch/sbmips/conf/GENERIC			1.28
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.13
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.10
+sys/arch/sparc/conf/GENERIC			1.157
+sys/arch/sun2/conf/GENERIC			1.31
+sys/arch/sun3/conf/GENERIC			1.106
+sys/arch/sun3/conf/GENERIC3X			1.63
+sys/arch/vax/conf/GENERIC			1.123
+sys/arch/x68k/conf/GENERIC			1.98
+
+	Add options P1003_1B_SEMAPHORE to all GENERIC-like kernel
+	config files where SYSV* options were already present
+	(commented out if the SYSV* options are commented out).
+	Fixes PR#25897 and PR#25898.
+	[bouyer, ticket #573]
+
+sbin/wsconsctl/keyboard.c			1.5
+
+	It should not be a fatal error if the WSKBDIO_GETSCROLL is
+	not supported by the device.  Fixes PR#26101.
+	[recht, ticket #574]
+
+sys/miscfs/genfs/layer_extern.h			1.17
+sys/miscfs/genfs/layer_vnops.c			1.23
+sys/miscfs/nullfs/null_vnops.c			1.31
+sys/miscfs/overlay/overlay_vnops.c		1.14
+sys/miscfs/umapfs/umap_vnops.c			1.32
+
+	Do LAYERFS_REMOVED for vop_rmdir.
+	[hannken, ticket #575]
+
+sys/arch/sparc64/dev/iommu.c			1.75
+
+	Reserve extra dvma page in iommu_dvma_load_raw().  Fixes
+	PR#13654.
+	[petrov, ticket #576]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.180
+
+	The result of rf_DoAccess() should not be assigned to
+	bp->b_error.  As well, when we do detect some sort of an
+	error, we should be doing a biodone() here.
+	[oster, ticket #577]
+
+distrib/sparc64/xminiroot/Makefile		1.25
+
+	Do not remove sysinst via CLEANFILES, since it is a directory.
+	Instead, provide a new clean rule for it.  Fixes PR#26137.
+	[jmc, ticket #578]
+
+include/signal.h				1.38
+
+	Resolve some namespace protection confusion between XPG4.2
+	and 5/1003.1b, making _XOPEN_SOURCE_EXTENDED work again.
+	Fixes PR#26077.
+	[kleink, ticket #579]
+
+include/assert.h				1.17
+include/stdio.h					1.56
+sys/sys/endian.h				1.8
+sys/sys/lock.h					1.55
+lib/librpcsvc/bootparam_prot.x			1.7
+lib/librpcsvc/nfs_prot.x			1.7
+lib/librpcsvc/nlm_prot.x			1.7
+lib/librpcsvc/rwall.x				1.7
+lib/librpcsvc/klm_prot.x			1.6
+lib/librpcsvc/mount.x				1.6
+lib/librpcsvc/rex.x				1.6
+lib/librpcsvc/rquota.x				1.6
+lib/librpcsvc/sm_inter.x			1.6
+lib/librpcsvc/yppasswd.x			1.6
+lib/librpcsvc/rnusers.x				1.12
+lib/librpcsvc/rstat.x				1.5
+lib/librpcsvc/rusers.x				1.5
+lib/librpcsvc/spray.x				1.5
+lib/librpcsvc/yp.x				1.5
+sys/arch/vax/include/intr.h			1.15
+sys/arch/vax/include/macros.h			1.31
+
+	Tidy up the namespace: lint -> __lint__.
+	[kleink, ticket #580]
+
+sys/dev/ic/elinkxl.c				1.73
+
+	Make this driver work also on alpha systems, instead of
+	producing a machine check, by only reading the mii media
+	status if the interface is up.  Fixes PR#25788.
+	[bouyer, ticket #581]
