@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2002/08/21 18:36:55 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2002/08/22 15:43:08 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -387,6 +387,7 @@ extern struct evcnt pmap_evcnt_copied_pages;
 extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #else
 #define	PMAPCOUNT(ev)	((void) 0)
+#define	PMAPCOUNT2(ev)	((void) 0)
 #endif
 
 #define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
@@ -802,9 +803,10 @@ pmap_pte_spill(vaddr_t addr)
 		}
 	}
 
-	if (source_pvo == NULL)
+	if (source_pvo == NULL) {
 		PMAPCOUNT(ptes_unspilled);
 		return 0;
+	}
 
 	if (victim_pvo == NULL) {
 		if ((pt->pte_hi & PTE_HID) == 0)
