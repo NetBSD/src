@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.32 2002/02/25 02:22:59 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.80 2002/02/24 07:10:10 suz Exp $	*/
+/*	$NetBSD: route6d.c,v 1.32.2.1 2002/08/22 00:05:26 lukem Exp $	*/
+/*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.32 2002/02/25 02:22:59 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.32.2.1 2002/08/22 00:05:26 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -738,6 +738,9 @@ ripsend(ifcp, sin6, flag)
 	struct	riprt *rrt;
 	struct	in6_addr *nh;	/* next hop */
 	int	maxrte;
+
+	if (qflag)
+		return;
 
 	if (ifcp == NULL) {
 		/*
