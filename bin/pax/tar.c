@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47.2.5 2004/06/18 09:14:00 tron Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.6 2004/07/15 15:59:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47.2.5 2004/06/18 09:14:00 tron Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.6 2004/07/15 15:59:44 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1293,10 +1293,12 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 		else if (line[i] == '?') {
 			sbuf[j++] = '.';
 			continue;
-		} else if (!isalnum(line[i]) && !isblank(line[i]))
+		} else if (!isalnum((unsigned char)line[i]) &&
+		    !isblank((unsigned char)line[i]))
 			sbuf[j++] = '\\';
 		sbuf[j++] = line[i];
 	}
+	sbuf[j] = '\0';
 	/* don't need the .*\/ ones if we start with /, i guess */
 	if (line[0] != '/') {
 		(void)snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
