@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.10 2003/09/23 03:55:59 skd Exp $	*/
+/*	$NetBSD: atareg.h,v 1.11 2003/11/02 09:50:43 wiz Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -65,7 +65,7 @@ struct ataparams {
 #define WDC_EXT_MODES		0x0002
 #define WDC_EXT_GEOM		0x0001
 /* words 54-62 are ATA only */
-    u_int16_t	atap_curcylinders;	/* 54: current logical cyliners */
+    u_int16_t	atap_curcylinders;	/* 54: current logical cylinders */
     u_int16_t	atap_curheads;		/* 55: current logical heads */
     u_int16_t	atap_cursectors;	/* 56: current logical sectors/tracks */
     u_int16_t	atap_curcapacity[2];	/* 57-58: current capacity */
@@ -86,7 +86,7 @@ struct ataparams {
     u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
 #endif
     u_int16_t	atap_dmatiming_mimi;	/* 65: minimum DMA cycle time */
-    u_int16_t	atap_dmatiming_recom;	/* 66: recomended DMA cycle time */
+    u_int16_t	atap_dmatiming_recom;	/* 66: recommended DMA cycle time */
     u_int16_t	atap_piotiming;    	/* 67: mini PIO cycle time without FC */
     u_int16_t	atap_piotiming_iordy;	/* 68: mini PIO cycle time with IORDY FC */
     u_int16_t	__reserved3[2];
