@@ -2010,6 +2010,17 @@ LOOP:
 }
 
 void
+setpassive(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	passivemode = !passivemode;
+	printf("Passive mode %s.\n", onoff(passivemode));
+	code = passivemode;
+}
+
+void
 setsunique(argc, argv)
 	int argc;
 	char *argv[];
