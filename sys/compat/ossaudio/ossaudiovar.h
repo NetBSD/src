@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.7 1999/11/17 00:06:39 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.8 1999/11/19 23:50:21 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ struct oss_buffmem_desc {
 
 struct oss_synth_control {
 	int devno;	/* Synthesizer # */
-	char data[4000]; /* Device spesific command/data record */
+	char data[4000]; /* Device specific command/data record */
 };
 
 struct oss_remove_sample {
