@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127 1999/02/10 07:10:59 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.128 1999/02/10 16:52:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -749,7 +749,7 @@ syscall(frame)
 		 */
 #ifdef COMPAT_FREEBSD
 		/* FreeBSD has a same function in SYS___syscall */
-		if (callp != sysent && freebsd)
+		if (callp != sysent && !freebsd)
 			break;
 #else
 		if (callp != sysent)
