@@ -88,7 +88,7 @@ cpu_fork(p1, p2)
 	offset = getsp() - kstack;
 	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
 	    (unsigned) ctob(UPAGES) - offset);
-
+	save_u_area(&p2->p_addr->u_pcb, p2->p_addr);
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
 
 	/*

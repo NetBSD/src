@@ -50,6 +50,10 @@
  * of the memory error register is necessary
  */
 	
+.globl _buserr, _addrerr, _illinst, _zerodiv, _chkinst, _trapvinst
+.globl _privinst, _trace, _fpfline, _badtrap, _coperr, _fmterr, _trap0,
+.globl _trap1, _trap2, _trap15
+.globl _fpunsupp
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
@@ -104,6 +108,20 @@ Lbe10:
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
+/*
+ * the sun3 specific code
+ *	
+ * our mission: figure out whether what we are looking at is
+ *              bus error in the UNIX sense, or
+ *	        a memory error i.e a page fault
+ *
+ * [this code replaces similarly mmu specific code in the hp300 code]	
+ */
+sun3_mmu_specific:
+	clrl d0				| make sure top bits are cleard too
+	movsb BUSERR_REG, d0		| get value of bus error register
+	btst #5, d0 			| test to timeout bit
+	jne Lisberr			| if bus error, do it
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	Ltrapnstkadj		| and deal with it
@@ -134,6 +152,9 @@ Lstkadj:
 	movl	sp@,sp			| and our SP
 	jra	rei			| all done
 
+/* unchanged from hp300 */
+
+
 /*
  * FP exceptions.
  */
@@ -149,6 +170,7 @@ _fpunsupp:
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
  */
+.globl _fpfault
 _fpfault:
 #ifdef FPCOPROC
 	clrw	sp@-		| pad SR to longword
@@ -291,20 +313,6 @@ _trap2:
 	btst	#PCB_TRCB,pcbflag	| being traced by an HPUX process?
 	jeq	_trace			| no, trap2 is breakpoint
 	jra	sigreturn		| yes, trap2 is sigreturn
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-	.globl	_cachectl
-_trap12:
-	movl	d1,sp@-			| push length
-	movl	a1,sp@-			| push addr
-	movl	d0,sp@-			| push command
-	jbsr	_cachectl		| do it
-	lea	sp@(12),sp		| pop args
-	jra	rei			| all done
 
 /*
  * Trap 15 is used for:
