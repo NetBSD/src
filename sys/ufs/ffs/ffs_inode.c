@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.70 2004/08/15 17:36:00 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.71 2004/08/15 19:01:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.70 2004/08/15 17:36:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.71 2004/08/15 19:01:16 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -298,7 +298,8 @@ ffs_truncate(v)
 			simple_lock(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
-			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+			    PGO_CLEANIT | PGO_DEACTIVATE |
+			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
 			if (error)
 				return error;
 		}
