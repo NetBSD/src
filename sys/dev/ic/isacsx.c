@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.c,v 1.1 2002/10/25 21:03:48 leo Exp $	*/
+/* $NetBSD: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $	*/
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  * Copyright (c) 2001 Gary Jennejohn. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_ifpi2_isac.c - i4b Fritz PCI Version 2 ISACSX handler
  *	--------------------------------------------
  *
- *	$Id: isacsx.c,v 1.1 2002/10/25 21:03:48 leo Exp $ 
+ *	$Id: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $ 
  *
  * $FreeBSD: src/sys/i4b/layer1/ifpi2/i4b_ifpi2_isacsx.c,v 1.3 2002/09/02 00:52:07 brooks Exp $
  *
@@ -37,13 +37,13 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.1 2002/10/25 21:03:48 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.2 2003/05/08 21:16:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-
+#include <sys/device.h>
 
 #include <net/if.h>
 
