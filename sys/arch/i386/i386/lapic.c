@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.9 2000/08/07 01:08:38 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,10 +48,6 @@
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
  
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30.10.1 2000/06/26 02:04:12 sommerfeld Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.10.2 2000/08/07 01:08:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.2 2000/02/21 21:53:57 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.3 2000/08/07 01:08:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_vm86.h"
 
 #include <net/netisr.h>
@@ -168,9 +163,7 @@ IDTVEC(softnet)
 	jz	1f		;\
 	call	_C_LABEL(c)	;\
 1:
-
-#include "net/netisr_dispatch.h"
-
+#include <net/netisr_dispatch.h>
 	movl	%ebx,CPL
 	jmp	%esi
 

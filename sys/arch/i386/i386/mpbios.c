@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.4 2000/02/29 13:20:07 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.5 2000/08/07 01:08:44 sommerfeld Exp $
  */
 
 /*
@@ -113,11 +113,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_extern.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/specialreg.h>
 #include <machine/cputypes.h>
 #include <machine/cpuvar.h>

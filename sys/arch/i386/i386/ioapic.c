@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.4 2000/06/25 20:46:08 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.5 2000/08/07 01:08:36 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,10 +75,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
