@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.18 2001/05/24 11:56:03 lukem Exp $ */
+/* $NetBSD: cgram.y,v 1.19 2001/05/24 12:05:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgram.y,v 1.18 2001/05/24 11:56:03 lukem Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.19 2001/05/24 12:05:28 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -760,7 +760,7 @@ enums_with_opt_comma:
 			error(54);
 		} else {
 			/* trailing "," prohibited in enum declaration */
-			gnuism(54);
+			(void)gnuism(54);
 		}
 		$$ = $1;
 	  }
