@@ -1,6 +1,6 @@
+/*	$NetBSD: paths.h,v 1.4 1997/10/08 07:07:54 mrg Exp $	*/
+
 /*
-**	$NetBSD: paths.h,v 1.3 1996/08/30 17:41:41 thorpej Exp $
-**
 ** paths.h		Common path definitions for the in.identd daemon
 **
 ** Last update: 11 Dec 1992
