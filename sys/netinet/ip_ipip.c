@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.3 1999/02/02 07:20:13 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.4 1999/04/02 20:39:23 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@ ipip_ioctl(ifp, cmd, data)
 {
 	struct ipip_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct in_ifaddr *ia = (struct in_ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -300,10 +301,8 @@ ipip_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		if (cmd == SIOCSIFADDR)
 			sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
-		else
-			sc->sc_dst = (satosin(ifa->ifa_dstaddr))->sin_addr;
+			sc->sc_dst = ia->ia_dstaddr.sin_addr;
 
 		if (!in_nullhost(sc->sc_src) && !in_nullhost(sc->sc_dst)) {
 			ipip_compute_route(sc);
