@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.34 2004/04/26 14:00:31 grant Exp $
+.\"	$NetBSD: tunefs.8,v 1.35 2004/11/18 00:11:48 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,8 @@ This specifies the expected number of files per directory.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.
-The default value used is 5%.
+The default value is set during creation of the filesystem, see
+.Xr newfs 8 .
 This value can be set to zero, however up to a factor of three
 in throughput will be lost over the performance obtained at a 5%
 threshold.
