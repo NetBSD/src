@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53 1998/10/06 05:52:23 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.54 1998/10/12 15:41:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -129,8 +129,8 @@ void	rtcinit __P((void));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
 static int yeartoday __P((int));
-int 	hexdectodec __P((int));
-int	dectohexdec __P((int));
+int 	bcdtobin __P((int));
+int	bintobcd __P((int));
 
 
 __inline u_int mc146818_read __P((void *, u_int));
@@ -471,7 +471,7 @@ yeartoday(year)
 }
 
 int
-hexdectodec(n)
+bcdtobin(n)
 	int n;
 {
 
@@ -479,7 +479,7 @@ hexdectodec(n)
 }
 
 int
-dectohexdec(n)
+bintobcd(n)
 	int n;
 {
 
@@ -498,7 +498,7 @@ inittodr(base)
 {
 	mc_todregs rtclk;
 	time_t n;
-	int sec, min, hr, dom, mon, yr;
+	int sec, min, hr, dom, mon, yr, century, tcentury;
 	int i, days = 0;
 	int s;
 
@@ -522,15 +522,35 @@ inittodr(base)
 		printf("WARNING: invalid time in clock chip\n");
 		goto fstime;
 	}
+	/* XXX Does reading the century from NVRAM need to be at splclock? */
+	century = mc146818_read(NULL, NVRAM_CENTURY); /* XXX softc */
 	splx(s);
 
-	sec = hexdectodec(rtclk[MC_SEC]);
-	min = hexdectodec(rtclk[MC_MIN]);
-	hr = hexdectodec(rtclk[MC_HOUR]);
-	dom = hexdectodec(rtclk[MC_DOM]);
-	mon = hexdectodec(rtclk[MC_MONTH]);
-	yr = hexdectodec(rtclk[MC_YEAR]);
-	yr = (yr < 70) ? yr+100 : yr;
+	sec = bcdtobin(rtclk[MC_SEC]);
+	min = bcdtobin(rtclk[MC_MIN]);
+	hr = bcdtobin(rtclk[MC_HOUR]);
+	dom = bcdtobin(rtclk[MC_DOM]);
+	mon = bcdtobin(rtclk[MC_MONTH]);
+	yr = bcdtobin(rtclk[MC_YEAR]);
+	century = bcdtobin(century);
+	tcentury = (yr < 70) ? 20 : 19;
+	if (century != tcentury) {
+		/* XXX note: saying "century is 20" might confuse the naive. */
+		printf("WARNING: NVRAM century is %d but RTC year is %d\n",
+		    century, yr);
+	}
+	/* Kludge to roll over century. */
+	if ((century == 19) && (tcentury == 20) && (yr == 00)) {
+		printf("WARNING: Setting NVRAM century to 20\n");
+		/* XXX Does writing the century need to be at splclock? */
+		s = splclock();
+		/* note: 0x20 = 20 in BCD. */
+		mc146818_write(NULL, NVRAM_CENTURY, 0x20); /* XXX softc */
+		splx(s);
+	} else {
+		printf("WARNING: CHECK AND RESET THE DATE!\n");
+	}
+	yr = (tcentury == 20) ? yr+100 : yr;
  
 	/*
 	 * If time_t is 32 bits, then the "End of Time" is 
@@ -593,7 +613,7 @@ resettodr()
 {
 	mc_todregs rtclk;
 	time_t n;
-	int diff, i, j;
+	int diff, i, j, century;
 	int s;
 
 	/*
@@ -610,10 +630,10 @@ resettodr()
 
 	diff = rtc_offset * 60;
 	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
-	rtclk[MC_SEC] = dectohexdec(n % 60);
+	rtclk[MC_SEC] = bintobcd(n % 60);
 	n /= 60;
-	rtclk[MC_MIN] = dectohexdec(n % 60);
-	rtclk[MC_HOUR] = dectohexdec(n / 60);
+	rtclk[MC_MIN] = bintobcd(n % 60);
+	rtclk[MC_HOUR] = bintobcd(n / 60);
 
 	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
 	rtclk[MC_DOW] = (n + 4) % 7;  /* 1/1/70 is Thursday */
@@ -621,19 +641,22 @@ resettodr()
 	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
 		n -= i;
 
-	rtclk[MC_YEAR] = dectohexdec((j - 1900)%100);
+	rtclk[MC_YEAR] = bintobcd((j - 1900)%100);
+	century = bintobcd(j/100);
 
 	if (i == 366)
 		month[1] = 29;
 	for (i = 0; n >= month[i]; i++)
 		n -= month[i];
 	month[1] = 28;
-	rtclk[MC_MONTH] = dectohexdec(++i);
+	rtclk[MC_MONTH] = bintobcd(++i);
 
-	rtclk[MC_DOM] = dectohexdec(++n);
+	rtclk[MC_DOM] = bintobcd(++n);
 
 	s = splclock();
 	rtcput(&rtclk);
+	/* XXX Does writing the century need to be at splclock? */
+	mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
 	splx(s);
 }
 
