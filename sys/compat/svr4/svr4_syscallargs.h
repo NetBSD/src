@@ -46,6 +46,10 @@ struct svr4_stat_args {
 	syscallarg(struct svr4_stat *) ub;
 };
 
+struct svr4_alarm_args {
+	syscallarg(unsigned) sec;
+};
+
 struct svr4_fstat_args {
 	syscallarg(int) fd;
 	syscallarg(struct svr4_stat *) sb;
@@ -54,6 +58,11 @@ struct svr4_fstat_args {
 struct svr4_access_args {
 	syscallarg(char *) path;
 	syscallarg(int) flags;
+};
+
+struct svr4_kill_args {
+	syscallarg(int) pid;
+	syscallarg(int) signum;
 };
 
 struct svr4_pgrpsys_args {
@@ -139,9 +148,30 @@ struct svr4_sigprocmask_args {
 	syscallarg(svr4_sigset_t *) oset;
 };
 
+struct svr4_sigaction_args {
+	syscallarg(int) signum;
+	syscallarg(struct svr4_sigaction *) nsa;
+	syscallarg(struct svr4_sigaction *) osa;
+};
+
 struct svr4_sigpending_args {
 	syscallarg(int) what;
 	syscallarg(svr4_sigset_t *) mask;
+};
+
+struct svr4_context_args {
+	syscallarg(int) func;
+	syscallarg(struct svr4_ucontext *) uc;
+};
+
+struct svr4_statvfs_args {
+	syscallarg(char *) path;
+	syscallarg(struct svr4_statvfs *) fs;
+};
+
+struct svr4_fstatvfs_args {
+	syscallarg(int) fd;
+	syscallarg(struct svr4_statvfs *) fs;
 };
 
 struct svr4_waitsys_args {

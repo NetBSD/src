@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_wait.h,v 1.2 1995/01/08 21:31:49 christos Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.1 1995/01/08 21:31:47 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,70 +27,54 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SVR4_WAIT_H_
-#define	_SVR4_WAIT_H_
+#ifndef	_SVR4_UCONTEXT_H_
+#define	_SVR4_UCONTEXT_H_
 
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <machine/svr4_machdep.h>
 
-#define SVR4_P_PID	0
-#define SVR4_P_PPID	1
-#define SVR4_P_PGID	2
-#define SVR4_P_SID	3
-#define SVR4_P_CID	4
-#define SVR4_P_UID	5
-#define SVR4_P_GID	6
-#define SVR4_P_ALL	7
+/*
+ * Machine context
+ */
 
-#define SVR4_WEXITED	0x01
-#define SVR4_WTRAPPED	0x02
-#define SVR4_WSTOPPED	0x04
-#define SVR4_WCONTINUED	0x08
-#define SVR4_WUNDEF1	0x10
-#define SVR4_WUNDEF2	0x20
-#define SVR4_WNOHANG	0x40
-#define SVR4_WNOWAIT	0x80
+typedef struct {
+	svr4_gregset_t	greg;
+	svr4_fregset_t	freg;
+} svr4_mcontext_t;
 
-#define SVR4_WOPTMASK   (SVR4_WEXITED|SVR4_WTRAPPED|SVR4_WSTOPPED|\
-			 SVR4_WCONTINUED|SVR4_WNOHANG|SVR4_WNOWAIT)
+#define SVR4_UC_SIGMASK		0x01
+#define	SVR4_UC_STACK		0x02
 
-struct svr4_siginfo {
-	int	si_signo;
-	int	si_code;
-	int	si_errno;
+#define SVR4_UC_CPU		0x04
+#define SVR4_UC_FPU		0x08
+#define SVR4_UC_WEITEK		0x10
 
-	union {
-		int	_pad[(128 / sizeof(int)) - 3];
-		struct {
-			svr4_pid_t	_pid;
-			union {
-				struct {
-					svr4_uid_t	_uid;
-				} _kill;
-				struct {
-					svr4_clock_t	_utime;
-					int		_status;
-					svr4_clock_t	_stime;
-				} _cld;
-			} _pdata;
-		} _proc;
+#define SVR4_UC_MCONTEXT	(SVR4_UC_CPU|SVR4_UC_FPU|SVR4_UC_WEITEK)
 
-		struct {
-			svr4_caddr_t _addr;
-		} _fault;
+#define SVR4_UC_ALL		(SVR4_UC_SIGMASK|SVR4_UC_STACK|SVR4_UC_MCONTEXT)
 
-		struct {
-			int	_fd;
-			long	_band;
-		} _file;
-	} _data;
+typedef struct svr4_ucontext {
+	u_long			 uc_flags;
+	struct svr4_ucontext	*uc_link;
+	svr4_sigset_t		 uc_sigmask;
+	svr4_stack_t		 uc_stack;
+	svr4_mcontext_t		 uc_mcontext;
+	long			 uc_pad[5];
+} svr4_ucontext_t;
+
+#define SVR4_UC_GETREGSET	0
+#define SVR4_UC_SETREGSET	1
+
+/*
+ * Signal frame
+ */
+struct svr4_sigframe {
+	int	sf_signum;
+	int	sf_code;
+	struct	svr4_ucontext *sf_ucp;
+	sig_t	sf_handler;
+	struct	svr4_ucontext sf_uc;
 };
 
-#define si_band		_data._file._band
-#define si_fd		_data._file._fd
-#define si_addr		_data._fault._addr
-#define si_stime	_data._proc._pdata._cld._stime
-#define si_status	_data._proc._pdata._cld._status
-#define si_utime	_data._proc._pdata._cld._utime
-#define si_uid		_data._proc._pdata._kill._uid
-#define si_pid		_data._proc._pid
-
-#endif /* !_SVR4_WAIT_H_ */
+#endif /* !_SVR4_UCONTEXT_H_ */

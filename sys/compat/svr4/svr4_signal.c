@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.5 1994/11/18 02:53:57 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.6 1995/01/08 21:31:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -41,14 +41,17 @@
 
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 
 static int  svr4_to_bsd_signum __P((int sn));
-static int  bsd_to_svr4_signum __P((int sn));
-static void bsd_to_svr4_sigset_t __P((const sigset_t *bs, svr4_sigset_t *ss));
-static void svr4_to_bsd_sigset_t __P((const svr4_sigset_t *ss, sigset_t *bs));
+static void bsd_to_svr4_sigaction __P((const struct sigaction *bsa, 
+				       struct svr4_sigaction *ssa));
+static void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *ssa,
+				       struct sigaction *bsa));
+static int  svr4_to_bsd_sigaction_flags __P((int flgs));
+static int  bsd_to_svr4_sigaction_flags __P((int flgs));
 static int  svr4_sigismember __P((const svr4_sigset_t *ss, int sn));
 static int  svr4_sigaddset __P((svr4_sigset_t *ss, int sn));
 
@@ -157,7 +160,7 @@ svr4_to_bsd_signum(sn)
 	}
 }
 
-static int
+int
 bsd_to_svr4_signum(sn)
 	int	sn;
 {
@@ -227,7 +230,7 @@ bsd_to_svr4_signum(sn)
 	}
 }
 
-static void
+void
 svr4_to_bsd_sigset_t(ss, bs)
 	const svr4_sigset_t 	*ss;
 	sigset_t 		*bs;
@@ -240,7 +243,7 @@ svr4_to_bsd_sigset_t(ss, bs)
 }
 
 
-static void
+void
 bsd_to_svr4_sigset_t(bs, ss)
 	const sigset_t 	*bs;
 	svr4_sigset_t 	*ss;
@@ -251,6 +254,61 @@ bsd_to_svr4_sigset_t(bs, ss)
 		if (sigismember(bs, i))
 			svr4_sigaddset(ss, bsd_to_svr4_signum(i));
 }
+
+/*
+ * XXX: Only a subset of the flags is currently implemented.
+ */
+static int
+bsd_to_svr4_sigaction_flags(flgs)
+	int flgs;
+{
+	int rv = 0;
+
+#define SETFLAG(_a)	if (flgs & __CONCAT(SA_,_a)) rv |= __CONCAT(SVR4_SA_,_a)
+	SETFLAG(ONSTACK);
+	SETFLAG(RESTART);
+	SETFLAG(NOCLDSTOP);
+	return rv;
+#undef SETFLAG
+}
+
+
+static int
+svr4_to_bsd_sigaction_flags(flgs)
+	int flgs;
+{
+	int rv = 0;
+
+#define SETFLAG(_a)	if (flgs & __CONCAT(SVR4_SA_,_a)) rv |= __CONCAT(SA_,_a)
+	SETFLAG(ONSTACK);
+	SETFLAG(RESTART);
+	SETFLAG(NOCLDSTOP);
+	return rv;
+#undef SETFLAG
+}
+
+
+static void
+bsd_to_svr4_sigaction(bsa, ssa)
+	const struct sigaction *bsa;
+	struct svr4_sigaction *ssa;
+{
+	ssa->sa_handler = bsa->sa_handler;
+	bsd_to_svr4_sigset_t(&bsa->sa_mask, &ssa->sa_mask);
+	ssa->sa_flags = bsd_to_svr4_sigaction_flags(bsa->sa_flags);
+}
+
+
+static void
+svr4_to_bsd_sigaction(ssa, bsa)
+	const struct svr4_sigaction *ssa;
+	struct sigaction *bsa;
+{
+	bsa->sa_handler = ssa->sa_handler;
+	svr4_to_bsd_sigset_t(&ssa->sa_mask, &bsa->sa_mask);
+	bsa->sa_flags = svr4_to_bsd_sigaction_flags(ssa->sa_flags);
+}
+
 
 /*
  * Stolen from the ibcs2 one
@@ -475,4 +533,96 @@ svr4_sigpending(p, uap, retval)
 	}
 		
 	return copyout(&ss, SCARG(uap, mask), sizeof(ss));
+}
+
+
+int
+svr4_sigaction(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_sigaction_args	*uap;
+	register_t				*retval;
+{
+
+	struct sigaction *bosa = NULL;
+	struct sigaction *bnsa = NULL;
+	struct sigaction bsa;
+	struct sigaction_args sa_args;
+	struct svr4_sigaction sa;
+	caddr_t sg = stackgap_init();
+	int error;
+	int nsig = svr4_to_bsd_signum(SCARG(uap, signum));
+
+	if (SCARG(uap, osa) != NULL)
+		bosa = stackgap_alloc(&sg, sizeof(struct sigaction));
+
+	if (SCARG(uap, nsa) != NULL) {
+		bnsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		if ((error = copyin(SCARG(uap, nsa), &sa, sizeof(sa))) != 0)
+			return error;
+		svr4_to_bsd_sigaction(&sa, &bsa);
+		if ((error = copyout(&bsa, bnsa, sizeof(bsa))) != 0)
+			return error;
+	}
+
+	SCARG(&sa_args, signum) = nsig;
+	SCARG(&sa_args, nsa) = bnsa;
+	SCARG(&sa_args, osa) = bosa;
+
+	if ((error = sigaction(p, &sa_args, retval)) != 0)
+		return error;
+
+	if (SCARG(uap, osa) != NULL) {
+		if ((error = copyin(bosa, &bsa, sizeof(bsa))) != 0)
+			return error;
+		bsd_to_svr4_sigaction(&bsa, &sa);
+		if ((error = copyout(&sa, SCARG(uap, osa), sizeof(sa))) != 0)
+			return error;
+	}
+
+	return 0;
+}
+
+
+int
+svr4_kill(p, uap, retval)
+	register struct proc		*p;
+	register struct svr4_kill_args	*uap;
+	register_t			*retval;
+{
+	struct kill_args ki_args;
+	SCARG(&ki_args, pid) = SCARG(uap, pid);
+	SCARG(&ki_args, signum) = svr4_to_bsd_signum(SCARG(uap, signum));
+	return kill(p, &ki_args, retval);
+}
+
+
+int 
+svr4_context(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_context_args	*uap;
+	register_t				*retval;
+{
+	struct svr4_ucontext uc;
+	int error;
+	*retval = 0;
+
+	switch (SCARG(uap, func)) {
+	case 0:
+		DPRINTF(("getcontext(%x)\n", SCARG(uap, uc)));
+		svr4_getcontext(p, &uc, p->p_sigmask,
+				p->p_sigacts->ps_sigstk.ss_flags & SA_ONSTACK);
+		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
+
+	case 1: 
+		DPRINTF(("setcontext(%x)\n", SCARG(uap, uc)));
+		if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
+			return error;
+		return svr4_setcontext(p, &uc);
+
+	default:
+		DPRINTF(("context(%d, %x)\n", SCARG(uap, func),
+			SCARG(uap, uc)));
+		return ENOSYS;
+	}
+	return 0;
 }
