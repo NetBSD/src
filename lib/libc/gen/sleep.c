@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.7 1995/03/04 01:56:08 cgd Exp $	*/
+/*	$NetBSD: sleep.c,v 1.8 1995/03/21 13:36:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: sleep.c,v 1.7 1995/03/04 01:56:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: sleep.c,v 1.8 1995/03/21 13:36:46 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,8 +82,7 @@ sleep(seconds)
 			 * before ours, so we compute the time diff
 			 * so we can add it back in the end.
 			 */
-			diff = itv.it_value;
-			__timersub(&diff, &oitv.it_value);
+			timersub(&itv.it_value, &oitv.it_value, &diff);
 			itv.it_value = oitv.it_value;
 			/*
 			 * This is a hack, but we must have time to return
@@ -106,7 +105,7 @@ sleep(seconds)
 	(void) setitimer(ITIMER_REAL, &oitv, &itv);
 
 	if (timerisset(&diff))
-		__timeradd(&itv.it_value, &diff);
+		timeradd(&itv.it_value, &diff, &itv.it_value);
 
 	return (itv.it_value.tv_sec);
 }

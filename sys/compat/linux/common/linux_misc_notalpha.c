@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.2 1995/03/05 23:23:41 fvdl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.3 1995/03/21 13:34:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -519,7 +519,7 @@ linux_alarm(p, uap, retval)
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
 	    timercmp(&itp->it_value, &time, >))
-		__timersub(&itp->it_value, &time);
+		timersub(&itp->it_value, &time, &itp->it_value);
 	/*
 	 * Return how many seconds were left (rounded up)
 	 */
@@ -548,7 +548,7 @@ linux_alarm(p, uap, retval)
 	}
 
 	if (timerisset(&it.it_value)) {
-		__timeradd(&it.it_value, &time);
+		timeradd(&it.it_value, &time, &it.it_value);
 		timeout(realitexpire, p, hzto(&it.it_value));
 	}
 	p->p_realtimer = it;
