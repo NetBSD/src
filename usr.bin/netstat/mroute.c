@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.12 1997/10/19 05:50:06 lukem Exp $	*/
+/*	$NetBSD: mroute.c,v 1.13 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.12 1997/10/19 05:50:06 lukem Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.13 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ pktscale(n)
 		n /= 1048576;
 	}
 
-	sprintf(buf, "%lu%c", n, t);
+	(void)snprintf(buf, sizeof buf, "%lu%c", n, t);
 	return (buf);
 }
 

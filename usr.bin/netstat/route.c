@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.28 1998/07/06 06:52:14 mrg Exp $	*/
+/*	$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.28 1998/07/06 06:52:14 mrg Exp $");
+__RCSID("$NetBSD: route.c,v 1.29 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,13 @@ __RCSID("$NetBSD: route.c,v 1.28 1998/07/06 06:52:14 mrg Exp $");
 
 #include <sys/sysctl.h>
 
+#include <err.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "netstat.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
@@ -116,7 +118,7 @@ static void p_flags __P((int, char *));
 static void p_rtentry __P((struct rtentry *));
 static void ntreestuff __P((void));
 static u_long forgemask __P((u_long));
-static void domask __P((char *, u_long, u_long));
+static void domask __P((char *, size_t, u_long, u_long));
 
 /*
  * Print routing tables.
@@ -260,12 +262,11 @@ again:
 	}
 }
 
-char	nbuf[20];
-
 static void
 p_rtnode()
 {
 	struct radix_mask *rm = rnode.rn_mklist;
+	char	nbuf[20];
 
 	if (rnode.rn_b < 0) {
 		if (rnode.rn_mask) {
@@ -275,13 +276,13 @@ p_rtnode()
 		} else if (rm == 0)
 			return;
 	} else {
-		sprintf(nbuf, "(%d)", rnode.rn_b);
+		(void)snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
 		printf("%6.6s %8.8lx : %8.8lx", nbuf, (u_long) rnode.rn_l,
 		    (u_long) rnode.rn_r);
 	}
 	while (rm) {
 		kget(rm, rmask);
-		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
+		(void)snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %8.8lx {(%d),%s", (u_long) rm,
 		    -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		if (rmask.rm_flags & RNF_NORMAL) {
@@ -291,8 +292,8 @@ p_rtnode()
 			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
 				    NULL, 0, -1);
 		} else
-		    p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask),
-				NULL, 0, -1);
+			p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask),
+			    NULL, 0, -1);
 		putchar('}');
 		if ((rm = rmask.rm_mklist) != NULL)
 			printf(" ->");
@@ -308,18 +309,18 @@ ntreestuff()
 	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
 
-        mib[0] = CTL_NET;
-        mib[1] = PF_ROUTE;
-        mib[2] = 0;
-        mib[3] = 0;
-        mib[4] = NET_RT_DUMP;
-        mib[5] = 0;
-        if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		{ perror("route-sysctl-estimate"); exit(1);}
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_DUMP;
+	mib[5] = 0;
+	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+		err(1, "route sysctl estimate");
 	if ((buf = malloc(needed)) == 0)
-		{ printf("out of space\n"); exit(1);}
-        if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		{ perror("sysctl of routing table"); exit(1);}
+		errx(1, "out of space");
+	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		err(1, "sysctl of routing table");
 	lim  = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -413,7 +414,8 @@ p_sockaddr(sa, mask, flags, width)
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
-			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
+			(void)snprintf(workbuf, sizeof workbuf, "link#%d",
+			    sdl->sdl_index);
 		else switch (sdl->sdl_type) {
 		case IFT_FDDI:
 		case IFT_ETHER:
@@ -424,6 +426,7 @@ p_sockaddr(sa, mask, flags, width)
 
 			cplim = "";
 			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
+				/* XXX */
 				cp += sprintf(cp, "%s%02x", cplim, *lla);
 				cplim = ":";
 			}
@@ -470,7 +473,7 @@ p_flags(f, format)
 	char name[33], *flags;
 	struct bits *p = bits;
 
-	for (flags = name; p->b_mask; p++)
+	for (flags = name; p->b_mask && flags - name < sizeof(name); p++)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
 	*flags = '\0';
@@ -544,12 +547,13 @@ routename(in)
 			cp = hp->h_name;
 		}
 	}
-	if (cp)
+	if (cp) {
 		strncpy(line, cp, sizeof(line) - 1);
-	else {
+		line[sizeof(line) - 1] = '\0';
+	} else {
 #define C(x)	((x) & 0xff)
 		in = ntohl(in);
-		sprintf(line, "%u.%u.%u.%u",
+		snprintf(line, sizeof line, "%u.%u.%u.%u",
 		    C(in >> 24), C(in >> 16), C(in >> 8), C(in));
 	}
 	return (line);
@@ -571,8 +575,9 @@ forgemask(a)
 }
 
 static void
-domask(dst, addr, mask)
+domask(dst, dlen, addr, mask)
 	char *dst;
+	size_t dlen;
 	u_long addr, mask;
 {
 	int b, i;
@@ -595,9 +600,9 @@ domask(dst, addr, mask)
 			break;
 		}
 	if (i == -1)
-		sprintf(dst, "&0x%lx", mask);
+		(void)snprintf(dst, dlen, "&0x%lx", mask);
 	else
-		sprintf(dst, "/%d", 32-i);
+		(void)snprintf(dst, dlen, "/%d", 32-i);
 }
 
 /*
@@ -651,15 +656,17 @@ netname(in, mask)
 	if (cp)
 		strncpy(line, cp, sizeof(line) - 1);
 	else if ((i & 0xffffff) == 0)
-		sprintf(line, "%u", C(i >> 24));
+		(void)snprintf(line, sizeof line, "%u", C(i >> 24));
 	else if ((i & 0xffff) == 0)
-		sprintf(line, "%u.%u", C(i >> 24) , C(i >> 16));
+		(void)snprintf(line, sizeof line, "%u.%u", C(i >> 24)
+		    , C(i >> 16));
 	else if ((i & 0xff) == 0)
-		sprintf(line, "%u.%u.%u", C(i >> 24), C(i >> 16), C(i >> 8));
+		(void)snprintf(line, sizeof line, "%u.%u.%u", C(i >> 24),
+		    C(i >> 16), C(i >> 8));
 	else
-		sprintf(line, "%u.%u.%u.%u", C(i >> 24),
+		(void)snprintf(line, sizeof line, "%u.%u.%u.%u", C(i >> 24),
 			C(i >> 16), C(i >> 8), C(i));
-	domask(line+strlen(line), i, omask);
+	domask(line + strlen(line), sizeof(line) - strlen(line), i, omask);
 	return (line);
 }
 
@@ -698,7 +705,10 @@ ns_print(sa)
 {
 	struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
-	union { union ns_net net_e; u_long long_e; } net;
+	union {
+		union	ns_net net_e;
+		u_long	long_e;
+	} net;
 	u_short port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
@@ -711,10 +721,10 @@ ns_print(sa)
 	net.net_e  = work.x_net;
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (port ) {
-			sprintf(mybuf, "*.%xH", port);
+			(void)snprintf(mybuf, sizeof mybuf, "*.%xH", port);
 			upHex(mybuf);
 		} else
-			sprintf(mybuf, "*.*");
+			(void)snprintf(mybuf, sizeof mybuf, "*.*");
 		return (mybuf);
 	}
 
@@ -724,20 +734,21 @@ ns_print(sa)
 		host = "*";
 	} else {
 		q = work.x_host.c_host;
-		sprintf(chost, "%02x%02x%02x%02x%02x%02xH",
+		(void)snprintf(chost, sizeof chost, "%02x%02x%02x%02x%02x%02xH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			continue;
 		host = p;
 	}
 	if (port)
-		sprintf(cport, ".%xH", htons(port));
+		(void)snprintf(cport, sizeof cport, ".%xH", htons(port));
 	else
 		*cport = 0;
 
-	sprintf(mybuf, "%xH.%s%s", (int)ntohl(net.long_e), host, cport);
+	(void)snprintf(mybuf, sizeof mybuf, "%xH.%s%s", (int)ntohl(net.long_e),
+	    host, cport);
 	upHex(mybuf);
-	return(mybuf);
+	return (mybuf);
 }
 
 char *
@@ -754,8 +765,9 @@ ns_phost(sa)
 	work.sns_addr.x_net = ns_zeronet;
 
 	p = ns_print((struct sockaddr *)&work);
-	if (strncmp("0H.", p, 3) == 0) p += 3;
-	return(p);
+	if (strncmp("0H.", p, 3) == 0)
+		p += 3;
+	return (p);
 }
 
 void
@@ -763,9 +775,15 @@ upHex(p0)
 	char *p0;
 {
 	char *p = p0;
-	for (; *p; p++) switch (*p) {
 
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		*p += ('A' - 'a');
-	}
+	for (; *p; p++)
+		switch (*p) {
+		case 'a':
+		case 'b':
+		case 'c':
+		case 'd':
+		case 'e':
+		case 'f':
+			*p += ('A' - 'a');
+		}
 }

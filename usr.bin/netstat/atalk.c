@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.3 1997/10/19 05:49:56 lukem Exp $	*/
+/*	$NetBSD: atalk.c,v 1.4 1998/07/12 03:20:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.3 1997/10/19 05:49:56 lukem Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.4 1998/07/12 03:20:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,8 @@ at_pr_net(sat, numeric)
 			return ("*");
 		}
 	}
-	(void) snprintf(mybuf, sizeof(mybuf), "%hu", 
-	    ntohs(sat->sat_addr.s_net));
-	return mybuf;
+	(void)snprintf(mybuf, sizeof(mybuf), "%hu", ntohs(sat->sat_addr.s_net));
+	return (mybuf);
 }
 
 static char *
@@ -115,9 +114,9 @@ at_pr_host(sat, numeric)
 			return ("*");
 		}
 	}
-	(void) snprintf(mybuf, sizeof(mybuf), "%d", 
-	    (unsigned int) sat->sat_addr.s_node);
-	return mybuf;
+	(void)snprintf(mybuf, sizeof(mybuf), "%d", 
+	    (unsigned int)sat->sat_addr.s_node);
+	return (mybuf);
 }
 
 static char *
@@ -132,9 +131,9 @@ at_pr_port(sat)
 	case 0xff:
 		return "????";
 	default:
-		(void) snprintf(mybuf, sizeof(mybuf), "%d",
-		    (unsigned int) sat->sat_port);
-		return mybuf;
+		(void)snprintf(mybuf, sizeof(mybuf), "%d",
+		    (unsigned int)sat->sat_port);
+		return (mybuf);
 	}
 }
 
@@ -146,14 +145,14 @@ at_pr_range(sat)
 
 	if (sat->sat_range.r_netrange.nr_firstnet
 	    != sat->sat_range.r_netrange.nr_lastnet) {
-		(void) snprintf(mybuf, sizeof(mybuf), "%d-%d",
+		(void)snprintf(mybuf, sizeof(mybuf), "%d-%d",
 			ntohs(sat->sat_range.r_netrange.nr_firstnet),
 			ntohs(sat->sat_range.r_netrange.nr_lastnet));
 	} else {
-		(void) snprintf(mybuf, sizeof(mybuf), "%d",
+		(void)snprintf(mybuf, sizeof(mybuf), "%d",
 			ntohs(sat->sat_range.r_netrange.nr_firstnet));
 	}
-	return mybuf;
+	return (mybuf);
 }
 
 
@@ -178,26 +177,26 @@ atalk_print(sa, what)
 		mybuf[0] = 0;
 		break;
 	case 1:
-		(void) snprintf(mybuf, sizeof(mybuf), "%s",
+		(void)snprintf(mybuf, sizeof(mybuf), "%s",
 		    at_pr_net(sat, numeric));
 		break;
 	case 2:
-		(void) snprintf(mybuf, sizeof(mybuf), "%s",
+		(void)snprintf(mybuf, sizeof(mybuf), "%s",
 		    at_pr_host(sat, numeric));
 		break;
 	case 3:
-		(void) snprintf(mybuf, sizeof(mybuf), "%s.%s",
+		(void)snprintf(mybuf, sizeof(mybuf), "%s.%s",
 			at_pr_net(sat, numeric),
 			at_pr_host(sat, numeric));
 		break;
 	case 0x10:
-		(void) snprintf(mybuf, sizeof(mybuf), "%s", at_pr_range(sat));
+		(void)snprintf(mybuf, sizeof(mybuf), "%s", at_pr_range(sat));
 	}
 	if (what & 4) {
-		(void) snprintf(mybuf + strlen(mybuf),
+		(void)snprintf(mybuf + strlen(mybuf),
 		    sizeof(mybuf) - strlen(mybuf), ".%s", at_pr_port(sat));
 	}
-	return mybuf;
+	return (mybuf);
 }
 
 char *
@@ -242,14 +241,14 @@ atalkprotopr(off, name)
 
 	if (off == 0)
 		return;
-	if (kread(off, (char *) &initial, sizeof(struct ddpcb *)) < 0)
+	if (kread(off, (char *)&initial, sizeof(struct ddpcb *)) < 0)
 		return;
 	ddpcb = cb;
-	prev = (struct ddpcb *) off;
+	prev = (struct ddpcb *)off;
 	for (next = initial; next != NULL; prev = next) {
-		u_long          ppcb = (u_long) next;
+		u_long	ppcb = (u_long)next;
 
-		if (kread((u_long) next, (char *) &ddpcb, sizeof(ddpcb)) < 0)
+		if (kread((u_long)next, (char *)&ddpcb, sizeof(ddpcb)) < 0)
 			return;
 		next = ddpcb.ddp_next;
 #if 0
@@ -257,8 +256,8 @@ atalkprotopr(off, name)
 			continue;
 		}
 #endif
-		if (kread((u_long) ddpcb.ddp_socket,
-			  (char *) &sockb, sizeof(sockb)) < 0)
+		if (kread((u_long)ddpcb.ddp_socket,
+			  (char *)&sockb, sizeof(sockb)) < 0)
 			return;
 		if (first) {
 			printf("Active ATALK connections");
@@ -279,9 +278,9 @@ atalkprotopr(off, name)
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		       sockb.so_snd.sb_cc);
 		printf(Aflag ? " %-18.18s" : " %-22.22s", atalk_print(
-				  (struct sockaddr *) & ddpcb.ddp_lsat, 7));
+				  (struct sockaddr *)&ddpcb.ddp_lsat, 7));
 		printf(Aflag ? " %-18.18s" : " %-22.22s", atalk_print(
-				  (struct sockaddr *) & ddpcb.ddp_fsat, 7));
+				  (struct sockaddr *)&ddpcb.ddp_fsat, 7));
 		putchar('\n');
 	}
 }
@@ -300,7 +299,7 @@ ddp_stats(off, name)
 
 	if (off == 0)
 		return;
-	if (kread(off, (char *) &ddpstat, sizeof(ddpstat)) < 0)
+	if (kread(off, (char *)&ddpstat, sizeof(ddpstat)) < 0)
 		return;
 	printf("%s:\n", name);
 	ANY(ddpstat.ddps_short, "packet", " with short headers ");

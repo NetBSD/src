@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.15 1998/01/29 09:11:21 frueauf Exp $	*/
+/*	$NetBSD: iso.c,v 1.16 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.15 1998/01/29 09:11:21 frueauf Exp $");
+__RCSID("$NetBSD: iso.c,v 1.16 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,6 +261,7 @@ iso_protopr1(kern_addr, istp)
 	u_long kern_addr;
 	int istp;
 {
+
 	if (first) {
 		printf("Active ISO net connections");
 		if (aflag)
@@ -276,32 +277,32 @@ iso_protopr1(kern_addr, istp)
 		first = 0;
 	}
 	if (Aflag)
-			printf("%8lx ", 
-			    (u_long) (sockb.so_pcb ? (void *)sockb.so_pcb :
-			    (void *)kern_addr));
+		printf("%8lx ", 
+		    (u_long) (sockb.so_pcb ? (void *)sockb.so_pcb :
+		    (void *)kern_addr));
 	printf("%-5.5s %6ld %6ld ", "tp",
 	    sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
 	if (istp && tpcb.tp_lsuffixlen) {
-			hexprint(tpcb.tp_lsuffixlen, tpcb.tp_lsuffix, "()");
-			printf("\t");
+		hexprint(tpcb.tp_lsuffixlen, tpcb.tp_lsuffix, "()");
+		printf("\t");
 	} else if (isopcb.isop_laddr == 0)
-			printf("*.*\t");
+		printf("*.*\t");
 	else {
-			if ((char *)isopcb.isop_laddr == ((char *)kern_addr) +
-					offsetof(struct isopcb, isop_sladdr))
-					laddr.siso = isopcb.isop_sladdr;
-			else
-					kget(isopcb.isop_laddr, laddr);
-			isonetprint((struct sockaddr_iso *)&laddr, 1);
+		if ((char *)isopcb.isop_laddr == ((char *)kern_addr) +
+		    offsetof(struct isopcb, isop_sladdr))
+			laddr.siso = isopcb.isop_sladdr;
+		else
+			kget(isopcb.isop_laddr, laddr);
+		isonetprint((struct sockaddr_iso *)&laddr, 1);
 	}
 	if (istp && tpcb.tp_fsuffixlen) {
-			hexprint(tpcb.tp_fsuffixlen, tpcb.tp_fsuffix, "()");
-			printf("\t");
+		hexprint(tpcb.tp_fsuffixlen, tpcb.tp_fsuffix, "()");
+		printf("\t");
 	} else if (isopcb.isop_faddr == 0)
 		printf("*.*\t");
 	else {
 		if ((char *)isopcb.isop_faddr == ((char *)kern_addr) +
-			offsetof(struct isopcb, isop_sfaddr))
+		    offsetof(struct isopcb, isop_sfaddr))
 			faddr.siso = isopcb.isop_sfaddr;
 		else
 			kget(isopcb.isop_faddr, faddr);
@@ -314,7 +315,7 @@ tp_protopr(off, name)
 	u_long off;
 	char *name;
 {
-	extern char *tp_sstring[];
+	extern char *tp_sstring[];	/* from sys/netiso/tp_astring.c */
 	struct tp_ref *tpr, *tpr_base;
 	struct tp_refinfo tpkerninfo;
 	int size;
@@ -360,6 +361,7 @@ tp_inproto(pcb)
 	u_long pcb;
 {
 	struct inpcb inpcb;
+
 	kget(tpcb.tp_npcb, inpcb);
 	if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 		return;
@@ -389,24 +391,24 @@ isonetname(iso)
 	static char line[80];
 
 	memset(line, 0, sizeof(line));
-	if( iso->isoa_afi ) {
+	if (iso->isoa_afi) {
 		sa.siso_family = AF_ISO;
 		sa.siso_addr = *iso;
 		sa.siso_tsuffix = 0;
 
-		if (!nflag )
-			ihe = iso_gethostentrybyaddr( &sa, 0, 0 );
-		if( ihe ) {
+		if (!nflag)
+			ihe = iso_gethostentrybyaddr(&sa, 0, 0);
+		if (ihe) {
 			Ihe = *ihe;
 			ihe = &Ihe;
-			sprintf(line, "%s", ihe->isoh_hname);
+			(void)snprintf(line, sizeof line, "%s", ihe->isoh_hname);
 		} else {
-			sprintf(line, "%s", iso_ntoa(iso));
+			(void)snprintf(line, sizeof line, "%s", iso_ntoa(iso));
 		}
 	} else {
-		sprintf(line, "*");
+		(void)snprintf(line, sizeof line, "*");
 	}
-	return line;
+	return (line);
 }
 
 static void
@@ -419,35 +421,36 @@ isonetprint(iso, sufx, sufxlen, islocal)
 	struct iso_hostent *iso_getserventrybytsel(), *ihe;
 	struct iso_hostent Ihe;
 	char *line, *cp;
-	int Alen = Aflag?18:22;
+	int Alen = Aflag ? 18 : 22;
 
-	line =  isonetname(iso);
+	line = isonetname(iso);
 	cp = strchr(line, '\0');
 	ihe = (struct iso_hostent *)0;
 
-	if( islocal )
+	if (islocal)
 		islocal = 20;
 	else
 		islocal = 22 + Alen;
 
-	if(Aflag)
+	if (Aflag)
 		islocal += 10 ;
 
-	if(!nflag) {
-		if( (cp -line)>10 ) {
-			cp = line+10;
+	if (!nflag) {
+		if ((cp - line) > 10) {
+			cp = line + 10;
 			memset(cp, 0, sizeof(line)-10);
 		}
 	}
 
 	*cp++ = '.';
-	if(sufxlen) {
-		if( !Aflag && !nflag && (ihe=iso_getserventrybytsel(sufx, sufxlen))) {
+	if (sufxlen) {
+		if (!Aflag && !nflag &&
+		    (ihe = iso_getserventrybytsel(sufx, sufxlen))) {
 			Ihe = *ihe;
 			ihe = &Ihe;
 		}
-		if( ihe && (strlen(ihe->isoh_aname)>0) ) {
-			sprintf(cp, "%s", ihe->isoh_aname);
+		if (ihe && (strlen(ihe->isoh_aname) > 0)) {
+			sprintf(cp, "%s", ihe->isoh_aname);	/* XXX */
 		} else  {
 			iso_sprinttsel(cp, sufx, sufxlen);
 		}
@@ -543,6 +546,7 @@ tp_stats(off, name)
 	u_long off;
 	caddr_t name;
 {
+
 	if (off == 0) {
 		printf("TP not configured\n\n");
 		return;
@@ -552,126 +556,124 @@ tp_stats(off, name)
 	tprintstat(&tp_stat, 8);
 }
 
-#define OUT stdout
-
 static void
 tprintstat(s, indent)
 	struct tp_stat *s;
 	int indent;
 {
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*sReceiving:\n",indent," ");
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld variable parameter%s ignored\n", indent," ",
 		s->ts_param_ignored, plural(s->ts_param_ignored));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid parameter code%s\n", indent, " ",
 		s->ts_inv_pcode, plural(s->ts_inv_pcode));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid parameter value%s\n", indent, " ",
 		s->ts_inv_pval, plural(s->ts_inv_pval));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid dutype%s\n", indent, " ",
 		s->ts_inv_dutype, plural(s->ts_inv_dutype));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld negotiation failure%s\n", indent, " ",
 		s->ts_negotfailed, plural(s->ts_negotfailed));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid destination reference%s\n", indent, " ",
 		s->ts_inv_dref, plural(s->ts_inv_dref));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid suffix parameter%s\n", indent, " ",
 		s->ts_inv_sufx, plural(s->ts_inv_sufx));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid length\n",indent, " ", s->ts_inv_length);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld invalid checksum%s\n", indent, " ",
 		s->ts_bad_csum, plural(s->ts_bad_csum));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld DT%s out of order\n", indent, " ",
 		s->ts_dt_ooo, plural(s->ts_dt_ooo));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld DT%s not in window\n", indent, " ",
 		s->ts_dt_niw, plural(s->ts_dt_niw));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld duplicate DT%s\n", indent, " ",
 		s->ts_dt_dup, plural(s->ts_dt_dup));
-	fprintf(OUT, "\t%*s%ld XPD%s not in window\n", indent, " ",
+	fprintf(stdout, "\t%*s%ld XPD%s not in window\n", indent, " ",
 		s->ts_xpd_niw, plural(s->ts_xpd_niw));
-	fprintf(OUT, "\t%*s%ld XPD%s w/o credit to stash\n", indent, " ",
+	fprintf(stdout, "\t%*s%ld XPD%s w/o credit to stash\n", indent, " ",
 		s->ts_xpd_dup, plural(s->ts_xpd_dup));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld time%s local credit reneged\n", indent, " ",
 		s->ts_lcdt_reduced, plural(s->ts_lcdt_reduced));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld concatenated TPDU%s\n", indent, " ",
 		s->ts_concat_rcvd, plural(s->ts_concat_rcvd));
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*sSending:\n", indent, " ");
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld XPD mark%s discarded\n", indent, " ",
 		s->ts_xpdmark_del, plural(s->ts_xpdmark_del));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sXPD stopped data flow %ld time%s\n", indent, " ",
 		s->ts_xpd_intheway, plural(s->ts_xpd_intheway));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld time%s foreign window closed\n", indent, " ",
 		s->ts_zfcdt, plural(s->ts_zfcdt));
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*sMiscellaneous:\n", indent, " ");
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld small mbuf%s\n", indent, " ",
 		s->ts_mb_small, plural(s->ts_mb_small));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld cluster%s\n", indent, " ",
 		s->ts_mb_cluster, plural(s->ts_mb_cluster));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld source quench \n",indent, " ",
 		s->ts_quench);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld dec bit%s\n", indent, " ",
 		s->ts_rcvdecbit, plural(s->ts_rcvdecbit));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sM:L ( M mbuf chains of length L)\n", indent, " ");
 	{
 		int j;
 
-		fprintf(OUT, "\t%*s%ld: over 16\n", indent, " ",
+		fprintf(stdout, "\t%*s%ld: over 16\n", indent, " ",
 		s->ts_mb_len_distr[0]);
 		for( j=1; j<=8; j++) {
-			fprintf(OUT,
+			fprintf(stdout,
 				"\t%*s%ld: %d\t\t%ld: %d\n", indent, " ",
 				s->ts_mb_len_distr[j],j,
 				s->ts_mb_len_distr[j<<1],j<<1
 				);
 		}
 	}
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld EOT rcvd\n",  indent, " ", s->ts_eot_input);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld EOT sent\n",  indent, " ", s->ts_EOT_sent);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld EOT indication%s\n",  indent, " ",
 		s->ts_eot_user, plural(s->ts_eot_user));
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*sConnections:\n", indent, " ");
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld connection%s used extended format\n",  indent, " ",
 		s->ts_xtd_fmt, plural(s->ts_xtd_fmt));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld connection%s allowed transport expedited data\n",  indent, " ",
 		s->ts_use_txpd, plural(s->ts_use_txpd));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld connection%s turned off checksumming\n",  indent, " ",
 		s->ts_csum_off, plural(s->ts_csum_off));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld connection%s dropped due to retrans limit\n",  indent, " ",
 		s->ts_conn_gaveup, plural(s->ts_conn_gaveup));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld tp 4 connection%s\n",  indent, " ",
 		s->ts_tp4_conn, plural(s->ts_tp4_conn));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%ld tp 0 connection%s\n",  indent, " ",
 		s->ts_tp0_conn, plural(s->ts_tp0_conn));
     {
@@ -683,14 +685,14 @@ tprintstat(s, indent)
 			" LOCAL, PDN"
 		};
 
-		fprintf(OUT,
+		fprintf(stdout,
 			"\n%*sRound trip times, listed in ticks:\n", indent, " ");
-		fprintf(OUT,
+		fprintf(stdout,
 			"\t%*s%11.11s  %12.12s | %12.12s | %s\n", indent, " ",
 				"Category",
 				"Smoothed avg", "Deviation", "Deviation/Avg");
 		for (j = 0; j <= 3; j++) {
-			fprintf(OUT,
+			fprintf(stdout,
 				"\t%*s%11.11s: %-11d | %-11d | %-11d | %-11d\n", indent, " ",
 				name[j],
 				s->ts_rtt[j],
@@ -699,7 +701,7 @@ tprintstat(s, indent)
 				s->ts_rtv[j]);
 		}
 	}
-	fprintf(OUT,
+	fprintf(stdout,
 "\n%*sTpdus RECVD [%ld valid, %3.6f %% of total (%ld); %ld dropped]\n",indent," ",
 		s->ts_tpdu_rcvd, 
 		((s->ts_pkt_rcvd > 0) ?
@@ -708,95 +710,95 @@ tprintstat(s, indent)
 		s->ts_pkt_rcvd,
 		s->ts_recv_drop );
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n", indent, " ",
 		s->ts_DT_rcvd, s->ts_AK_rcvd, s->ts_DR_rcvd, s->ts_CR_rcvd);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sXPD %6ld   XAK %6ld   DC  %4ld   CC  %4ld   ER  %4ld\n",  indent, " ",
 		s->ts_XPD_rcvd, s->ts_XAK_rcvd, s->ts_DC_rcvd, s->ts_CC_rcvd,
 		s->ts_ER_rcvd);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sTpdus SENT [%ld total, %ld dropped]\n",  indent, " ",
 		s->ts_tpdu_sent, s->ts_send_drop);
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sDT  %6ld   AK  %6ld   DR  %4ld   CR  %4ld \n", indent, " ",
 		s->ts_DT_sent, s->ts_AK_sent, s->ts_DR_sent, s->ts_CR_sent);
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*sXPD %6ld   XAK %6ld   DC  %4ld   CC  %4ld   ER  %4ld\n",  indent, " ",
 		s->ts_XPD_sent, s->ts_XAK_sent, s->ts_DC_sent, s->ts_CC_sent,
 		s->ts_ER_sent);
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sRetransmissions:\n", indent, " ");
 #define PERCENT(X,Y) (((Y)>0)?((100 *(float)(X)) / (float) (Y)):0)
 
-	fprintf(OUT,
+	fprintf(stdout,
 	"\t%*sCR  %6ld   CC  %6ld   DR  %6ld \n", indent, " ",
 		s->ts_retrans_cr, s->ts_retrans_cc, s->ts_retrans_dr);
-	fprintf(OUT,
+	fprintf(stdout,
 	"\t%*sDT  %6ld (%5.2f%%)\n", indent, " ",
 		s->ts_retrans_dt,
 		PERCENT(s->ts_retrans_dt, s->ts_DT_sent));
-	fprintf(OUT,
+	fprintf(stdout,
 	"\t%*sXPD %6ld (%5.2f%%)\n",  indent, " ",
 		s->ts_retrans_xpd,
 		PERCENT(s->ts_retrans_xpd, s->ts_XPD_sent));
 
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sE Timers: [%6ld ticks]\n", indent, " ", s->ts_Eticks);
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*s%6ld timer%s set \t%6ld timer%s expired \t%6ld timer%s cancelled\n",indent, " ",
 		s->ts_Eset, plural(s->ts_Eset),
 		s->ts_Eexpired, plural(s->ts_Eexpired),
 		s->ts_Ecan_act, plural(s->ts_Ecan_act));
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sC Timers: [%6ld ticks]\n",  indent, " ",s->ts_Cticks);
-	fprintf(OUT,
+	fprintf(stdout,
 	"%*s%6ld timer%s set \t%6ld timer%s expired \t%6ld timer%s cancelled\n",
 		indent, " ",
 		s->ts_Cset, plural(s->ts_Cset),
 		s->ts_Cexpired, plural(s->ts_Cexpired),
 		s->ts_Ccan_act, plural(s->ts_Ccan_act));
-	fprintf(OUT,
+	fprintf(stdout,
 		"%*s%6ld inactive timer%s cancelled\n", indent, " ",
 		s->ts_Ccan_inact, plural(s->ts_Ccan_inact));
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sPathological debugging activity:\n", indent, " ");
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%6ld CC%s sent to zero dref\n", indent, " ",
 		s->ts_zdebug, plural(s->ts_zdebug));
 	/* SAME LINE AS ABOVE */
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%6ld random DT%s dropped\n", indent, " ",
 		s->ts_ydebug, plural(s->ts_ydebug));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%6ld illegally large XPD TPDU%s\n", indent, " ",
 		s->ts_vdebug, plural(s->ts_vdebug));
-	fprintf(OUT,
+	fprintf(stdout,
 		"\t%*s%6ld faked reneging of cdt\n", indent, " ",
 		s->ts_ldebug );
 
-	fprintf(OUT,
+	fprintf(stdout,
 		"\n%*sACK reasons:\n", indent, " ");
-	fprintf(OUT, "\t%*s%6ld not acked immediately\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld not acked immediately\n", indent, " ",
 		s->ts_ackreason[_ACK_DONT_] );
-	fprintf(OUT, "\t%*s%6ld strategy==each\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld strategy==each\n", indent, " ",
 		s->ts_ackreason[_ACK_STRAT_EACH_] );
-	fprintf(OUT, "\t%*s%6ld strategy==fullwindow\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld strategy==fullwindow\n", indent, " ",
 		s->ts_ackreason[_ACK_STRAT_FULLWIN_] );
-	fprintf(OUT, "\t%*s%6ld duplicate DT\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld duplicate DT\n", indent, " ",
 		s->ts_ackreason[_ACK_DUP_] );
-	fprintf(OUT, "\t%*s%6ld EOTSDU\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld EOTSDU\n", indent, " ",
 		s->ts_ackreason[_ACK_EOT_] );
-	fprintf(OUT, "\t%*s%6ld reordered DT\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld reordered DT\n", indent, " ",
 		s->ts_ackreason[_ACK_REORDER_] );
-	fprintf(OUT, "\t%*s%6ld user rcvd\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld user rcvd\n", indent, " ",
 		s->ts_ackreason[_ACK_USRRCV_] );
-	fprintf(OUT, "\t%*s%6ld fcc reqd\n", indent, " ",
+	fprintf(stdout, "\t%*s%6ld fcc reqd\n", indent, " ",
 		s->ts_ackreason[_ACK_FCC_] );
 }
 #ifndef SSEL
@@ -809,6 +811,7 @@ isonetprint(siso, islocal)
 	struct sockaddr_iso *siso;
 	int islocal;
 {
+
 	hexprint(siso->siso_nlen, siso->siso_addr.isoa_genaddr, "{}");
 	if (siso->siso_tlen || siso->siso_slen || siso->siso_plen)
 		hexprint(siso->siso_tlen, TSEL(siso), "()");
