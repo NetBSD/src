@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.52 1998/03/29 01:12:14 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.53 1998/04/19 08:39:43 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -36,9 +36,9 @@ file	arch/pmax/pmax/dec_3max.c	dec_3max	# DS5000/200, 3max
 file	arch/pmax/pmax/dec_3maxplus.c	dec_3maxplus	# DS5000/240, 3maxplus
 file	arch/pmax/pmax/dec_3min.c	dec_3min	# DS5000/1xx, 3min
 file	arch/pmax/pmax/dec_maxine.c	dec_maxine	# DS5000/1xx, maxine
+file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 #file	arch/pmax/pmax/dec_5400.c	dec_5400	# DS5400, mipsfair
 #file	arch/pmax/pmax/dec_5500.c	dec_5500	# kn220, mipsfair2
-#file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 #file	arch/pmax/pmax/dec_5800.c	dec_5800	# 5800, isis
 
 # handlers for memory subsystems shared across models..
@@ -50,14 +50,39 @@ file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
 #
 include "dev/dec/files.dec"
 
+# 3100 and 5100 ibus
+define baseboard {}
+device kn01bus {}: baseboard
+attach  kn01bus at mainbus
+
+device kn230bus {}: baseboard
+attach  kn230bus at mainbus
+
+device ibus {}
+attach  ibus at baseboard
+
+file	arch/pmax/ibus/ibus.c		ibus
+file	arch/pmax/ibus/ibus_3100.c	ibus & dec_3100
+file	arch/pmax/ibus/ibus_5100.c	ibus & dec_5100
+
+
 #
 # TurboChannel Devices
 #
+device tcasic {}
+attach tcasic	at mainbus
 include	"dev/tc/files.tc"
+#attach tc	at tcasic
+attach tc	at mainbus
 
-attach tc at mainbus
-file	arch/pmax/tc/tc_subr.c		tc		needs-flag
 
+file	arch/pmax/tc/tcasic.c		tcasic
+file	arch/pmax/tc/tc_conf.c		tcasic
+file	arch/pmax/tc/tc_subr.c		tc	needs-flag
+file	arch/pmax/tc/tc_3max.c		tc & dec_3max
+file	arch/pmax/tc/tc_3min.c		tc & dec_3min
+file	arch/pmax/tc/tc_3maxplus.c	tc & dec_3maxplus
+file	arch/pmax/tc/tc_maxine.c	tc & dec_maxine
 
 #
 # The TurboChannel IOCTL ASIC. Present on IOASIC machines,
@@ -70,11 +95,15 @@ file	arch/pmax/tc/asic.c		ioasic
 
 
 # Real-time clock (not optional)
-device	clock
-attach	clock at ioasic, mainbus with mcclock_ioasic
+device	mcclock
+attach	mcclock at ioasic with mcclock_ioasic
+attach	mcclock at ibus with mcclock_ibus
 file	arch/pmax/pmax/clock.c
-file	arch/pmax/pmax/mcclock.c	clock
+file	arch/pmax/pmax/mcclock.c	mcclock
+file	dev/dec/mcclock.c		mcclock
+file	dev/dec/mcclock_pad32.c		mcclock
 file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
+file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 
 #
 # Machine-independent SCSI driver.
@@ -108,7 +137,7 @@ file	dev/tc/asc.c			asc needs-flag
 #device sii: scsi,oldscsi
 device sii: oldscsi
 file	arch/pmax/dev/sii.c		sii needs-flag
-attach sii at mainbus with sii_ds
+attach sii at ibus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
 
 
@@ -130,7 +159,7 @@ device dc: tty
 file	arch/pmax/dev/dc.c		dc
 attach dc at ioasic with dc_ioasic
 file	arch/pmax/dev/dc_ioasic.c	dc_ioasic	needs-flag
-attach dc at mainbus with dc_ds
+attach dc at ibus with dc_ds
 file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
 
 
@@ -143,7 +172,7 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 #   device defined in sys/conf/files.
 #   TC and ioasic attachment and files in sys/dev/tc/files.tc
 
-attach le at mainbus with le_pmax:	le_dec_subr
+attach le at ibus with le_pmax:		le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
 
@@ -151,7 +180,7 @@ file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 device pm
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
-attach pm at mainbus with pm_ds
+attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm_ds.c		pm_ds
 
 ########################################################################
