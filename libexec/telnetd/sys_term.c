@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.28 2001/08/24 00:14:04 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.29 2001/08/29 00:32:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.28 2001/08/24 00:14:04 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.29 2001/08/29 00:32:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1835,6 +1835,9 @@ scrub_env()
 		"POSIXLY_CORRECT=",
 		"TERMCAP=",
 		"PRINTER=",
+#ifdef CRAY
+		"TZ=",
+#endif
 		NULL
 	};
 
