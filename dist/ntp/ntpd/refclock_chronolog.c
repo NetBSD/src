@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chronolog.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_chronolog.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
 
 /*
  * refclock_chronolog - clock driver for Chronolog K-series WWVB receiver.
@@ -15,16 +15,14 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_CHRONOLOG)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-#include <time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_calendar.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * This driver supports the Chronolog K-series WWVB receiver.
@@ -219,7 +217,6 @@ chronolog_receive(
 	 * calls since it is transmitted a few seconds ahead of the
 	 * timestamp.
 	 */
-	pp->msec = 0;
 	got_good=0;
 	if (sscanf(pp->a_lastcode, "Y %d/%d/%d", &up->year,&up->month,&up->day))
 	{
@@ -297,8 +294,9 @@ chronolog_receive(
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
 	}
-	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	up->lasthour = pp->hour;
 }
 

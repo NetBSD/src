@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_usno.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_usno.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_usno - clock driver for the Naval Observatory dialup
@@ -11,19 +11,18 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_USNO)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif /* HAVE_SYS_IOCTL_H */
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_unixtime.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
 #include "ntp_control.h"
+
+#include <stdio.h>
+#include <ctype.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif /* HAVE_SYS_IOCTL_H */
 
 /*
  * This driver supports the Naval Observatory dialup at +1 202 653 0351.
@@ -347,8 +346,9 @@ usno_receive(
 	 * protocol module to chuck out the data. Finaly, we unhook the
 	 * timeout, arm for the next call, fold the tent and go home.
 	 */
-	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	pp->sloppyclockflag &= ~CLK_FLAG1;
 	up->pollcnt = 0;
 	up->state = 0;
