@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.1.4.4 2002/11/11 22:08:03 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.1.4.5 2002/11/20 23:35:13 petrov Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.1.4.4 2002/11/11 22:08:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.1.4.5 2002/11/20 23:35:13 petrov Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -317,12 +317,12 @@ netbsd32_setitimer(l, v, retval)
 	 * wants to clear the timer.
 	 */
 	if (!timerisset(&aitv.it_value) && 
-	    ((p->p_timers == NULL) || (p->p_timers[which] == NULL)))
+	    ((p->p_timers == NULL) || (p->p_timers->pts_timers[which] == NULL)))
 		return (0);
 
 	if (p->p_timers == NULL)
 		timers_alloc(p);
-	if (p->p_timers[which] == NULL) {
+	if (p->p_timers->pts_timers[which] == NULL) {
 		pt = pool_get(&ptimer_pool, PR_WAITOK);
 		callout_init(&pt->pt_ch);
 		pt->pt_ev.sigev_notify = SIGEV_SIGNAL;
@@ -341,10 +341,10 @@ netbsd32_setitimer(l, v, retval)
 			break;
 		}
 	} else
-		pt = p->p_timers[which];
+		pt = p->p_timers->pts_timers[which];
 
 	pt->pt_time = aitv;
-	p->p_timers[which] = pt;
+	p->p_timers->pts_timers[which] = pt;
 	if (which == ITIMER_REAL) {
 		s = splclock();
 		callout_stop(&pt->pt_ch);
@@ -383,7 +383,7 @@ netbsd32_getitimer(l, v, retval)
 		return (EINVAL);
 
 /* XXX same as setitimer */
-	if ((p->p_timers == NULL) || (p->p_timers[which] == NULL)) {
+	if ((p->p_timers == NULL) || (p->p_timers->pts_timers[which] == NULL)) {
 		timerclear(&aitv.it_value);
 		timerclear(&aitv.it_interval);
 	} else {
@@ -396,7 +396,7 @@ netbsd32_getitimer(l, v, retval)
 			 * else return difference between current time
 			 * and time for the timer to go off.  
 			 */
-			aitv = p->p_timers[ITIMER_REAL]->pt_time;
+			aitv = p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
 			if (timerisset(&aitv.it_value)) {
 				if (timercmp(&aitv.it_value, &time, <))
 					timerclear(&aitv.it_value);
@@ -404,7 +404,7 @@ netbsd32_getitimer(l, v, retval)
 					timersub(&aitv.it_value, &time, &aitv.it_value);
 			}
 		} else
-			aitv = p->p_timers[which]->pt_time;
+			aitv = p->p_timers->pts_timers[which]->pt_time;
 		splx(s);
 	}
 	netbsd32_from_itimerval(&aitv, &s32it);
