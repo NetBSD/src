@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.5 1998/07/21 09:17:33 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.6 1998/07/27 16:59:22 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -67,6 +67,7 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_DELTA_Y	7	/* Y delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_X	8	/* X location */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
+#define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 
 
 /*
