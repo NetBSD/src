@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.6.4.2 2000/07/27 09:26:34 mjl Exp $	*/
+/*	$NetBSD: process.c,v 1.6.4.3 2000/09/30 15:59:50 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.6.4.2 2000/07/27 09:26:34 mjl Exp $");
+__RCSID("$NetBSD: process.c,v 1.6.4.3 2000/09/30 15:59:50 sommerfeld Exp $");
 #endif
 
 #include "os.h"
@@ -228,14 +228,15 @@ mopStartLoad(dst, src, dl_rpr, trans)
 	int	 index;
 	u_char	 mopcode = MOP_K_CODE_MLD;
 	u_short	 newlen,ptype = MOP_K_PROTO_DL;
+	struct dllist *dle;
 
 	slot = -1;
 	
 	/* Look if we have a non terminated load, if so, use it's slot */
 
-	for (i = 0; i < MAXDL; i++) {
-		if (dllist[i].status != DL_STATUS_FREE) {
-			if (mopCmpEAddr(dllist[i].eaddr,dst) == 0) {
+	for (i = 0, dle = dllist; i < MAXDL; i++, dle++) {
+		if (dle->status != DL_STATUS_FREE) {
+			if (mopCmpEAddr(dle->eaddr, dst) == 0) {
 				slot = i;
 			}
 		}
@@ -244,11 +245,11 @@ mopStartLoad(dst, src, dl_rpr, trans)
 	/* If no slot yet, then find first free */
 
 	if (slot == -1) {
-		for (i = 0; i < MAXDL; i++) {
-			if (dllist[i].status == DL_STATUS_FREE) {
+		for (i = 0, dle = dllist; i < MAXDL; i++, dle++) {
+			if (dle->status == DL_STATUS_FREE) {
 				if (slot == -1) {
 					slot = i;
-					memmove((char *)dllist[i].eaddr,
+					memmove((char *)dle->eaddr,
 					    (char *)dst, 6);
 				}
 			}
@@ -263,44 +264,44 @@ mopStartLoad(dst, src, dl_rpr, trans)
 	/* Ok, save info from RPR */
 
 	dllist[slot] = *dl_rpr;
-	dllist[slot].status = DL_STATUS_READ_IMGHDR;
+	dle = &dllist[slot];
+	dle->status = DL_STATUS_READ_IMGHDR;
 	
 	/* Get Load and Transfer Address. */
 
-	GetFileInfo(dllist[slot].ldfd,
-		    &dllist[slot].loadaddr,
-		    &dllist[slot].xferaddr,
-		    &dllist[slot].aout,
-		    &dllist[slot].a_text, &dllist[slot].a_text_fill,
-		    &dllist[slot].a_data, &dllist[slot].a_data_fill,
-		    &dllist[slot].a_bss,  &dllist[slot].a_bss_fill);
+	GetFileInfo(dle->ldfd,
+		    &dle->loadaddr,
+		    &dle->xferaddr,
+		    &dle->aout,
+		    &dle->a_text, &dle->a_text_fill,
+		    &dle->a_data, &dle->a_data_fill,
+		    &dle->a_bss,  &dle->a_bss_fill);
 
-	dllist[slot].nloadaddr = dllist[slot].loadaddr;
-	dllist[slot].lseek     = lseek(dllist[slot].ldfd,0L,SEEK_CUR);
-	dllist[slot].a_lseek   = 0;
+	dle->nloadaddr = dle->loadaddr;
+	dle->lseek     = lseek(dle->ldfd, 0L, SEEK_CUR);
+	dle->a_lseek   = 0;
 
-	dllist[slot].count     = 0;
-	if (dllist[slot].dl_bsz >= MAX_ETH_PAYLOAD || dllist[slot].dl_bsz == 0)
-		dllist[slot].dl_bsz = MAX_ETH_PAYLOAD;
-	if (dllist[slot].dl_bsz == 1030)	/* VS/uVAX 2000 needs this */
-		dllist[slot].dl_bsz = 1000;
-	if (dllist[slot].dl_bsz == 0)		/* Needed by "big" VAXen */
-		dllist[slot].dl_bsz = MAX_ETH_PAYLOAD;
-
+	dle->count     = 0;
+	if (dle->dl_bsz >= MAX_ETH_PAYLOAD || dle->dl_bsz == 0)
+		dle->dl_bsz = MAX_ETH_PAYLOAD;
+	if (dle->dl_bsz == 1030)	/* VS/uVAX 2000 needs this */
+		dle->dl_bsz = 1000;
+	if (dle->dl_bsz == 0)		/* Needed by "big" VAXen */
+		dle->dl_bsz = MAX_ETH_PAYLOAD;
 	if (trans == TRANS_8023)
-		dllist[slot].dl_bsz = dllist[slot].dl_bsz - 8;
+		dle->dl_bsz = dle->dl_bsz - 8;
 
 	index = 0;
 	mopPutHeader(pkt, &index, dst, src, ptype, trans);
 	p = &pkt[index];
-	mopPutChar (pkt,&index,mopcode);
+	mopPutChar (pkt, &index, mopcode);
 
-	mopPutChar (pkt,&index,dllist[slot].count);
-	mopPutLong (pkt,&index,dllist[slot].loadaddr);
+	mopPutChar (pkt, &index, dle->count);
+	mopPutLong (pkt, &index, dle->loadaddr);
 
-	len = mopFileRead(&dllist[slot],&pkt[index]);
+	len = mopFileRead(dle, &pkt[index]);
 
-	dllist[slot].nloadaddr = dllist[slot].loadaddr + len;
+	dle->nloadaddr = dle->loadaddr + len;
 	index = index + len;
 
 	mopPutLength(pkt, trans, index);
@@ -319,18 +320,18 @@ mopStartLoad(dst, src, dl_rpr, trans)
 		mopDumpDL(stdout, pkt, trans);
 	}
 
-	if (pfWrite(dllist[slot].ii->fd, pkt, index, trans) != index) {
+	if (pfWrite(dle->ii->fd, pkt, index, trans) != index) {
 		if (DebugFlag) {
 			(void)fprintf(stderr, "error pfWrite()\n");
 		}
 	}
 
-	dllist[slot].status = DL_STATUS_SENT_MLD;
+	dle->status = DL_STATUS_SENT_MLD;
 }
 
 void
 mopNextLoad(dst, src, new_count, trans)
-	u_char	*dst,*src,new_count;
+	u_char	*dst, *src, new_count;
 	int	 trans;
 {
 	int	 len;
@@ -340,12 +341,13 @@ mopNextLoad(dst, src, new_count, trans)
 	char	 line[100];
 	u_short  newlen = 0,ptype = MOP_K_PROTO_DL;
 	u_char	 mopcode;
+	struct dllist *dle;
 
 	slot = -1;
 	
-	for (i = 0; i < MAXDL; i++) {
-		if (dllist[i].status != DL_STATUS_FREE) {
-			if (mopCmpEAddr(dst,dllist[i].eaddr) == 0)
+	for (i = 0, dle = dllist; i < MAXDL; i++, dle++) {
+		if (dle->status != DL_STATUS_FREE) {
+			if (mopCmpEAddr(dst, dle->eaddr) == 0)
 				slot = i;
 		}
 	}
@@ -355,17 +357,17 @@ mopNextLoad(dst, src, new_count, trans)
 	if (slot == -1)
 		return;
 
-	if ((new_count == ((dllist[slot].count+1) % 256))) {
-		dllist[slot].loadaddr = dllist[slot].nloadaddr;
-		dllist[slot].count    = new_count;
-	} else {
+	if ((new_count == ((dle->count+1) % 256))) {
+		dle->loadaddr = dllist[slot].nloadaddr;
+		dle->count    = new_count;
+	} else if (new_count != (dle->count % 256)) {
 		return;
 	}
 
-	if (dllist[slot].status == DL_STATUS_SENT_PLT) {
-		close(dllist[slot].ldfd);
-		dllist[slot].ldfd = 0;
-		dllist[slot].status = DL_STATUS_FREE;
+	if (dle->status == DL_STATUS_SENT_PLT) {
+		close(dle->ldfd);
+		dle->ldfd = -1;
+		dle->status = DL_STATUS_FREE;
 		sprintf(line,
 			"%x:%x:%x:%x:%x:%x Load completed",
 			dst[0],dst[1],dst[2],dst[3],dst[4],dst[5]);
@@ -373,25 +375,25 @@ mopNextLoad(dst, src, new_count, trans)
 		return;
 	}
 
-	dllist[slot].lseek     = lseek(dllist[slot].ldfd,0L,SEEK_CUR);
+	dle->lseek     = lseek(dle->ldfd, 0L, SEEK_CUR);
 	
-	if (dllist[slot].dl_bsz >= MAX_ETH_PAYLOAD)
-		dllist[slot].dl_bsz = MAX_ETH_PAYLOAD;
+	if (dle->dl_bsz >= MAX_ETH_PAYLOAD)
+		dle->dl_bsz = MAX_ETH_PAYLOAD;
 	
 	index = 0;
 	mopPutHeader(pkt, &index, dst, src, ptype, trans);
 	p = &pkt[index];
 	mopcode = MOP_K_CODE_MLD;
 	pindex = index;
-	mopPutChar (pkt,&index,mopcode);
-	mopPutChar (pkt,&index,dllist[slot].count);
-	mopPutLong (pkt,&index,dllist[slot].loadaddr);
+	mopPutChar (pkt,&index, mopcode);
+	mopPutChar (pkt,&index, dle->count);
+	mopPutLong (pkt,&index, dle->loadaddr);
 
-	len = mopFileRead(&dllist[slot],&pkt[index]);
+	len = mopFileRead(dle, &pkt[index]);
 	
 	if (len > 0 ) {
 			
-		dllist[slot].nloadaddr = dllist[slot].loadaddr + len;
+		dle->nloadaddr = dle->loadaddr + len;
 		index = index + len;
 
 		mopPutLength(pkt, trans, index);
@@ -401,25 +403,25 @@ mopNextLoad(dst, src, new_count, trans)
 		if (len == 0) {
 			index = pindex;
 			mopcode = MOP_K_CODE_PLT;
-			mopPutChar (pkt,&index,mopcode);
-			mopPutChar (pkt,&index,dllist[slot].count);
-			mopPutChar (pkt,&index,MOP_K_PLTP_HSN);
- 			mopPutChar (pkt,&index,3);
-			mopPutMulti(pkt,&index,"ipc",3);
-			mopPutChar (pkt,&index,MOP_K_PLTP_HSA);
-			mopPutChar (pkt,&index,6);
-			mopPutMulti(pkt,&index,src,6);
-			mopPutChar (pkt,&index,MOP_K_PLTP_HST);
-			mopPutTime (pkt,&index, 0);
-			mopPutChar (pkt,&index,0);
-			mopPutLong (pkt,&index,dllist[slot].xferaddr);
+			mopPutChar (pkt, &index, mopcode);
+			mopPutChar (pkt, &index, dle->count);
+			mopPutChar (pkt, &index, MOP_K_PLTP_HSN);
+ 			mopPutChar (pkt, &index, 3);
+			mopPutMulti(pkt, &index, "ipc", 3);
+			mopPutChar (pkt, &index, MOP_K_PLTP_HSA);
+			mopPutChar (pkt, &index, 6);
+			mopPutMulti(pkt, &index, src, 6);
+			mopPutChar (pkt, &index, MOP_K_PLTP_HST);
+			mopPutTime (pkt, &index, 0);
+			mopPutChar (pkt, &index, 0);
+			mopPutLong (pkt, &index, dle->xferaddr);
 
 			mopPutLength(pkt, trans, index);
 			newlen = mopGetLength(pkt, trans);
 		
-			dllist[slot].status = DL_STATUS_SENT_PLT;
+			dle->status = DL_STATUS_SENT_PLT;
 		} else {
-			dllist[slot].status = DL_STATUS_FREE;
+			dle->status = DL_STATUS_FREE;
 			return;
 		}
 	}
@@ -437,7 +439,7 @@ mopNextLoad(dst, src, new_count, trans)
 		mopDumpDL(stdout, pkt, trans);
 	}
 
-	if (pfWrite(dllist[slot].ii->fd, pkt, index, trans) != index) {
+	if (pfWrite(dle->ii->fd, pkt, index, trans) != index) {
 		if (DebugFlag) {
 			(void)fprintf(stderr, "error pfWrite()\n");
 		}
