@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.10 1998/03/12 01:25:52 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.11 1998/07/08 04:35:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,6 +168,9 @@ extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.
