@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.47 2000/11/08 23:21:38 eeh Exp $	*/
+/*	$NetBSD: rcons.c,v 1.48 2001/01/22 17:18:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -108,7 +108,6 @@ rcons_connect (info)
 		bior = WSDISPLAY_FONTORDER_L2R;
 		break;
 	case PMAX_FBTYPE_PM_MONO:
-	case PMAX_FBTYPE_PM_COLOR:
 		ri.ri_depth = info->fi_type.fb_depth;
 		ri.ri_flg = RI_CLEAR;
 		epwf = 1;
