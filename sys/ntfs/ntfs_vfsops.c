@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.5 1999/07/26 14:35:19 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.6 1999/07/28 20:42:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -775,6 +775,7 @@ ntfs_statfs(
 			(caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
 	}
 	sbp->f_flags = mp->mnt_flag;
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	
 	return (0);
 }
@@ -843,8 +844,9 @@ ntfs_vgetex(
 	struct fnode *fp;
 	struct vnode *vp;
 
-	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%x, f: 0x%x\n",
-		ino, attrtype, attrname?attrname:"", lkflags, flags ));
+	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
+		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
+		(u_long)flags ));
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
