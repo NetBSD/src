@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.24 2000/07/02 09:56:39 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.25 2000/07/06 12:36:19 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.95 2000/07/02 07:49:37 jinmei Exp $	*/
 
 /*
@@ -446,10 +446,11 @@ ip6_input(m)
 	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 && 
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &ip6_forward_rt.ro_dst.sin6_addr))
-		; /* cache hit */
+		ip6stat.ip6s_forward_cachehit++;
 	else {
 		if (ip6_forward_rt.ro_rt) {
 			/* route is down or destination is different */
+			ip6stat.ip6s_forward_cachemiss++;
 			RTFREE(ip6_forward_rt.ro_rt);
 			ip6_forward_rt.ro_rt = 0;
 		}
@@ -664,6 +665,24 @@ ip6_input(m)
 		ip6_forward(m, 0);
 		return;
 	}	
+
+	ip6 = mtod(m, struct ip6_hdr *);
+
+	/*
+	 * Malicious party may be able to use IPv4 mapped addr to confuse
+	 * tcp/udp stack and bypass security checks (act as if it was from
+	 * 127.0.0.1 by using IPv6 src ::ffff:127.0.0.1).  Be cautious.
+	 *
+	 * For SIIT end node behavior, you may want to disable the check.
+	 * However, you will  become vulnerable to attacks using IPv4 mapped
+	 * source.
+	 */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		goto bad;
+	}
 
 	/*
 	 * Tell launch routine the next header
