@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.39 2000/09/10 09:39:57 takemura Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.40 2000/09/10 11:44:13 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.39 2000/09/10 09:39:57 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.40 2000/09/10 11:44:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -101,8 +101,6 @@ struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
 				      const struct wsscreen_descr *, void *,
 				      int, int, long));
 void wsscreen_detach __P((struct wsscreen *));
-static const struct wsscreen_descr *
-wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
 int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
 static void wsdisplay_shutdownhook __P((void *));
 static void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
@@ -298,7 +296,7 @@ wsscreen_detach(scr)
 	free(scr, M_DEVBUF);
 }
 
-static const struct wsscreen_descr *
+const struct wsscreen_descr *
 wsdisplay_screentype_pick(scrdata, name)
 	const struct wsscreen_list *scrdata;
 	const char *name;
