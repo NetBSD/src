@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.h,v 1.1 1996/01/31 23:23:34 mark Exp $ */
+/* $NetBSD: vidc.h,v 1.2 1996/03/28 21:22:24 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  *
  * Based on kate/display/vidc.h
  *
- *    $Id: vidc.h,v 1.1 1996/01/31 23:23:34 mark Exp $
+ *    $Id: vidc.h,v 1.2 1996/03/28 21:22:24 mark Exp $
  */
 
 #ifndef __vidc_h
@@ -97,6 +97,29 @@
 #define VIDC_GREEN(g) (g << 8)
 #define VIDC_BLUE(b)  (b << 16)
 #define VIDC_COL(r, g, b) (VIDC_RED(r) | VIDC_GREEN(g) | VIDC_BLUE(b))
+
+#ifdef RC7500
+/*
+ * Video frequency definitions
+ */
+#define VIDFREQ_25_18	0x00
+#define VIDFREQ_28_32	0x01
+#define VIDFREQ_40_00	0x02
+#define VIDFREQ_72_00	0x03
+#define VIDFREQ_50_00	0x04
+#define VIDFREQ_77_00	0x05
+#define VIDFREQ_36_00	0x06
+#define VIDFREQ_44_90	0x07
+#define VIDFREQ_130_0	0x08
+#define VIDFREQ_120_0	0x09
+#define VIDFREQ_80_00	0x0A
+#define VIDFREQ_31_50	0x0B
+#define VIDFREQ_110_0	0x0C
+#define VIDFREQ_65_00	0x0D
+#define VIDFREQ_75_00	0x0E
+#define VIDFREQ_94_50	0x0F
+#endif
+
 
 /* Sound registers */
 
