@@ -42,7 +42,7 @@
  *	@(#)vaddrs.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vaddrs.h,v 1.3 92/11/26 03:05:11 torek Exp 
- * $Id: vaddrs.h,v 1.2 1994/08/20 01:28:09 deraadt Exp $
+ * $Id: vaddrs.h,v 1.3 1994/08/25 20:58:36 deraadt Exp $
  */
 
 /*
@@ -72,7 +72,8 @@
 #define	ZS0_VA		(IODEV_0 + 1*NBPG)
 #define	ZS1_VA		(IODEV_0 + 2*NBPG)
 #define	AUXREG_VA	(IODEV_0 + 3*NBPG)
-#define	IODEV_BASE	(IODEV_0 + 4*NBPG)
+#define	TMPMAP_VA	(IODEV_0 + 4*NBPG)
+#define	IODEV_BASE	(IODEV_0 + 5*NBPG)
 #define	IODEV_END	0xff000000		/* 16 MB of iospace */
 
 #define	DVMA_BASE	0xfff00000
