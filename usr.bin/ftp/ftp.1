@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.56 1999/10/24 12:31:39 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.57 1999/11/10 07:34:41 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd October 24, 1999
+.Dd November 10, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -233,7 +233,7 @@ Retry the connection attempt if it failed, pausing for
 .Ar wait
 seconds.
 .It Fl R
-Restart all non-proxied ftp auto-fetches.
+Restart all non-proxied auto-fetches.
 .It Fl t
 Enables packet tracing.
 .It Xo
@@ -1496,17 +1496,34 @@ will connect to the site and
 to the directory given as the path, and leave the user in interactive
 mode ready for further input.
 .Pp
+Direct
+.Tn HTTP
+transfers use HTTP 1.1.
+Proxied
+.Tn FTP
+and
+.Tn HTTP
+transfers use HTTP 1.0.
+.Pp
 If
 .Fl R
-is given, all
+is given, all auto-fetches that don't go via the
 .Tn FTP
-auto-fetches that don't go via the
-.Ic "set ftp_proxy"
-will be restarted.
-This is implemented by using
+or
+.Tn HTTP
+proxies will be restarted.
+For
+.Tn FTP ,
+this is implemented by using
 .Nm reget
 instead of
 .Nm get .
+For
+.Tn HTTP ,
+this is implemented by using the
+.Sq "Range: bytes="
+.Tn "HTTP/1.1"
+directive.
 .Pp
 If WWW or proxy WWW authentication is required, you will be prompted
 to enter a username and password to authenticate with.
