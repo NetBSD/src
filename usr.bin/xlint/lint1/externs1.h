@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.19 2002/10/22 22:50:11 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.20 2002/11/02 20:09:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -120,6 +120,7 @@ extern	void	error(int, ...);
 extern	void	warning(int, ...);
 extern	void	message(int, ...);
 extern	int	gnuism(int, ...);
+extern	int	c99ism(int, ...);
 extern	void	lerror(const char *, int, const char *, ...)
      __attribute__((__noreturn__,__format__(__printf__, 3, 4)));
 
