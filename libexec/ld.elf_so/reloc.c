@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.11 1999/02/24 18:31:00 christos Exp $	 */
+/*	$NetBSD: reloc.c,v 1.12 1999/02/25 21:49:04 tv Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -219,8 +219,8 @@ _rtld_relocate_nonplt_object(
 
 		tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
 		    *where + rela->r_addend;
-		if (*where != tmp_value)
-			*where = tmp_value;
+		if (*where != tmp)
+			*where = tmp;
 		rdbg(dodebug, "REFQUAD %s in %s --> %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
 		    (void *)*where, defobj->path);
@@ -242,8 +242,7 @@ _rtld_relocate_nonplt_object(
 		break;
 
 	case R_TYPE(RELATIVE):
-		if (obj != &_rtld_objself ||
-		    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+		if ((caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
 		    (caddr_t)where >= (caddr_t)&_DYNAMIC) {
 			*where += (Elf_Addr)obj->relocbase;
 			rdbg(dodebug, "RELATIVE in %s --> %p", obj->path,
