@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.31 2003/07/08 04:21:28 lukem Exp $
+$NetBSD: README,v 1.32 2003/11/08 04:49:17 ross Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -48,8 +48,7 @@ prep:		PowerPC Reference Platform machines (powerpc, 20000229)
 sandpoint:	Motorola Sandpoint reference platform (powerpc, 20010211)
 sbmips:		Broadcom's SiByte processor evaluation boards (mips, 20020306)
 sgimips:	MIPS based Silicon Graphics machines (mips, 20000614)
-shark:		Digital Network Appliance Reference Design (pronounced "Shark")
-		machines (arm, 19960131)
+shark:		Digital Network Appliance Reference Design ("Shark") (arm, 19960131)
 sparc:		Sun Microsystems SPARC (sun4, sun4c, sun4m) 32 bit machines
 		(sparc, 19931002)
 sparc64:	Sun Microsystems UltraSPARC 64 bit machines (sparc64/sparc, 19980620)
