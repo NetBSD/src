@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.196 2003/08/17 15:52:06 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.197 2003/09/15 20:15:44 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.196 2003/08/17 15:52:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.197 2003/09/15 20:15:44 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -175,6 +175,7 @@ void amd7x6_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void amd7x6_setup_channel __P((struct channel_softc*));
 
 void apollo_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void apollo_sata_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void apollo_setup_channel __P((struct channel_softc*));
 
 void cmd_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
@@ -443,6 +444,11 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  NULL,
 	  apollo_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "VIA Technologies VT8237 SATA Controller",
+	  apollo_sata_chip_map,
 	},
 	{ 0,
 	  0,
@@ -2381,10 +2387,6 @@ apollo_chip_map(sc, pa)
 		aprint_normal("VT8235 ATA133 controller\n");
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
-	case PCI_PRODUCT_VIATECH_VT8237_RAID:
-		aprint_normal("VT8237 ATA133 controller\n");
-		sc->sc_wdcdev.UDMA_cap = 6;
-		break;
 	default:
 		aprint_normal("unknown ATA controller\n");
 		sc->sc_wdcdev.UDMA_cap = 0;
@@ -2539,6 +2541,57 @@ pio:		/* setup PIO mode */
 	pciide_print_modes(cp);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM, datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_UDMA, udmatim_reg);
+}
+
+void
+apollo_sata_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	if ( interface == 0 ) {
+		WDCDEBUG_PRINT(("apollo_sata_chip_map interface == 0\n"),
+			       DEBUG_PROBE);
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+			PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	aprint_normal("%s: bus-master DMA support present",
+		      sc->sc_wdcdev.sc_dev.dv_xname);
+	pciide_mapreg_dma(sc, pa);
+	aprint_normal("\n");
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 6;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+		WDC_CAPABILITY_MODE | WDC_CAPABILITY_SINGLE_DRIVE;
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		     pciide_pci_intr);
+
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		sata_setup_channel(&cp->wdc_channel);
+	}
 }
 
 void
