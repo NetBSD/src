@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.5 2000/07/04 08:57:44 enami Exp $
+.\"	$NetBSD: lm.4,v 1.6 2000/07/27 21:59:21 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ the
 .Xr envsys 4
 API.
 .Pp
-These devices possess 11 sensors:
+Most supported devices possess 11 sensors:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "IN0" Ta "uV DC" Ta "Core voltage"
@@ -68,6 +68,8 @@ These devices possess 11 sensors:
 .It Li "Fan1" Ta "RPM" Ta "Chassis Fan"
 .It Li "Fan2" Ta "RPM" Ta "Fan"
 .El
+for some devices (such as the W83627HF) sensors names and numbers will be
+different.
 .Pp
 Sensor names as well as nominal RPMs for fans 0 and 1 may be changed
 through the
@@ -91,6 +93,9 @@ LM79
 .It
 .Tn Winbond
 W83781D and W83782D (untested)
+.It
+.Tn Winbond
+W83627HF
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,
