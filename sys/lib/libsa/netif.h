@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.h,v 1.2 1994/10/26 05:44:54 cgd Exp $	*/
+/*	$NetBSD: netif.h,v 1.3 1995/09/03 20:49:38 pk Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
 #define __SYS_LIBNETBOOT_NETIF_H
@@ -41,6 +41,7 @@ struct netif {
 	struct netif_driver	*nif_driver;
 	int			nif_unit;
 	int			nif_sel;
+	void			*nif_devdata;
 };
 
 extern struct netif_driver	*netif_drivers[];	/* machdep */
