@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 1999/02/09 19:55:58 cjs Exp $
+#	$NetBSD: Makefile,v 1.99 1999/02/11 18:19:21 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -198,6 +198,8 @@ distrib-dirs:
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}
 	-mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -u
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
+
+release: snapshot
 
 .if !defined(RELEASEDIR)
 snapshot snap_pre:
