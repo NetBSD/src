@@ -47,6 +47,12 @@ CORE_ADDR arm_addr_bits_remove (CORE_ADDR);
 
 #define ADDR_BITS_REMOVE(val)	(arm_addr_bits_remove (val))
 
+#ifdef ARM_26BIT_R15
+/* Functions to unpack and pack R15 on 26-bit ARMs. */
+void arm_supply_26bit_r15 (char *);
+void arm_read_26bit_r15 (char *);
+#endif
+
 /* Offset from address of function to start of its code.  Zero on most
    machines.  */
 
