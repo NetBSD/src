@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.130 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.131 2004/01/09 19:10:22 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.130 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.131 2004/01/09 19:10:22 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -491,10 +491,6 @@ ffs_reload(mountp, cred, p)
 	}
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
-#ifdef SUPPORT_42POSTBLFMT_WRITE
-	if (fs->fs_old_postblformat == FS_42POSTBLFMT)
-		memcpy(ump->um_opostsave, &newfs->fs_old_postbl_start, 256);
-#endif
 #ifdef FFS_EI
 	if (ump->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
@@ -769,18 +765,6 @@ next_sblock:
 	memset(ump, 0, sizeof *ump);
 	ump->um_fs = fs;
 
-	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
-#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
-		ump->um_opostsave = malloc(256, M_UFSMNT, M_WAITOK);
-		memcpy(ump->um_opostsave, &fs->fs_old_postbl_start, 256);
-#else
-		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-			error = EROFS;
-			goto out;
-		}
-#endif
-	}
-
 #ifdef FFS_EI
 	if (needswap) {
 		ffs_sb_swap((struct fs*)bp->b_data, fs);
@@ -788,6 +772,8 @@ next_sblock:
 	} else
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
+
+	ffs_oldfscompat_read(fs, ump, sblockloc);
 
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
@@ -799,8 +785,6 @@ next_sblock:
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
-
-	ffs_oldfscompat_read(fs, ump, sblockloc);
 
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
@@ -946,10 +930,8 @@ out:
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	VOP_UNLOCK(devvp, 0);
 	if (ump) {
-#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
-		if (ump->um_opostsave != NULL)
-			free(ump->um_opostsave, M_UFSMNT);
-#endif
+		if (ump->um_oldfscompat)
+			free(ump->um_oldfscompat, M_UFSMNT);
 		free(ump, M_UFSMNT);
 		mp->mnt_data = NULL;
 	}
@@ -970,38 +952,46 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	daddr_t sblockloc;
 {
 	off_t maxfilesize;
-	int old_ufs1;
+	int32_t *extrasave;
 
-	if (fs->fs_magic != FS_UFS1_MAGIC)
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
 		return;
 
-	/*
-	 * If not yet done, update UFS1 superblock with new wider fields,
-	 * and  update fs_flags location and value of fs_sblockloc.
-	 */
-	old_ufs1 = fs->fs_maxbsize != fs->fs_bsize;
-	if (old_ufs1) {
-		fs->fs_maxbsize = fs->fs_bsize;
-		fs->fs_time = fs->fs_old_time;
-		fs->fs_size = fs->fs_old_size;
-		fs->fs_dsize = fs->fs_old_dsize;
-		fs->fs_csaddr = fs->fs_old_csaddr;
-		fs->fs_sblockloc = sblockloc;
-		fs->fs_flags = fs->fs_old_flags;
-		fs->fs_old_flags |= FS_FLAGS_UPDATED;
-	}
+	if (!ump->um_oldfscompat)
+		ump->um_oldfscompat = malloc(512 + 3*sizeof(int32_t),
+		    M_UFSMNT, M_WAITOK);
 
-	/*
-	 * If the new fields haven't been set yet, or if the filesystem
-	 * was mounted and modified by an old kernel, use the old csum
-	 * totals, and update the flags
+	memcpy(ump->um_oldfscompat, &fs->fs_old_postbl_start, 512);
+	extrasave = ump->um_oldfscompat;
+	extrasave += 512/sizeof(int32_t);
+	extrasave[0] = fs->fs_old_npsect;
+	extrasave[1] = fs->fs_old_interleave;
+	extrasave[2] = fs->fs_old_trackskew;
+
+	/* These fields will be overwritten by their
+	 * original values in fs_oldfscompat_write, so it is harmless
+	 * to modify them here.
 	 */
-	if (old_ufs1 || fs->fs_time < fs->fs_old_time) {
-		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
-		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
-		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
-		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
-		fs->fs_flags |= (fs->fs_old_flags & ~FS_FLAGS_UPDATED);
+	fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
+	fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
+	fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
+	fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
+
+	fs->fs_maxbsize = fs->fs_bsize;
+	fs->fs_time = fs->fs_old_time;
+	fs->fs_size = fs->fs_old_size;
+	fs->fs_dsize = fs->fs_old_dsize;
+	fs->fs_csaddr = fs->fs_old_csaddr;
+	fs->fs_sblockloc = sblockloc;
+
+	fs->fs_flags = fs->fs_old_flags;
+
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
+		fs->fs_old_nrpos = 8;
+		fs->fs_old_npsect = fs->fs_old_nsect;
+		fs->fs_old_interleave = 1;
+		fs->fs_old_trackskew = 0;
 	}
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
@@ -1010,7 +1000,6 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
 
-	ump->um_savedmaxfilesize = fs->fs_maxfilesize;
 	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
 	if (fs->fs_maxfilesize > maxfilesize)
 		fs->fs_maxfilesize = maxfilesize;
@@ -1020,6 +1009,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
+
 #if 0
 	if (bigcgs) {
 		fs->fs_save_cgsize = fs->fs_cgsize;
@@ -1040,38 +1030,32 @@ ffs_oldfscompat_write(fs, ump)
 	struct fs *fs;
 	struct ufsmount *ump;
 {
-	if (fs->fs_magic != FS_UFS1_MAGIC)
-		return;
+	int32_t *extrasave;
 
-	/*
-	 * if none of the newer flags are used, copy back fs_flags
-	 * to fs_old_flags
-	 */
-	if ((fs->fs_flags & ~(FS_UNCLEAN|FS_DOSOFTDEP)) == 0)
-		fs->fs_old_flags = fs->fs_flags & (FS_UNCLEAN|FS_DOSOFTDEP);
-	/*
-	 * OS X somehow still seems to use this field and panic.
-	 * Just set it to zero.
-	 */
-	if (ump->um_flags & UFS_ISAPPLEUFS)
-		fs->fs_old_nrpos = 0;
-	/*
-	 * Copy back UFS2 updated fields that UFS1 inspects.
-	 */
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		return;
 
 	fs->fs_old_time = fs->fs_time;
 	fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
 	fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
 	fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
 	fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
-	fs->fs_maxfilesize = ump->um_savedmaxfilesize;
+	fs->fs_old_flags = fs->fs_flags;
 
 #if 0
 	if (bigcgs) {
 		fs->fs_cgsize = fs->fs_save_cgsize;
-		fs->fs_save_cgsize = 0;
 	}
 #endif
+
+	memcpy(&fs->fs_old_postbl_start, ump->um_oldfscompat, 512);
+	extrasave = ump->um_oldfscompat;
+	extrasave += 512/sizeof(int32_t);
+	fs->fs_old_npsect = extrasave[0];
+	fs->fs_old_interleave = extrasave[1];
+	fs->fs_old_trackskew = extrasave[2];
+
 }
 
 /*
@@ -1131,10 +1115,8 @@ ffs_unmount(mp, mntflags, p)
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT);
 	free(fs, M_UFSMNT);
-#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
-	if (ump->um_opostsave != NULL)
-		free(ump->um_opostsave, M_UFSMNT);
-#endif
+	if (ump->um_oldfscompat != NULL)
+		free(ump->um_oldfscompat, M_UFSMNT);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -1604,11 +1586,6 @@ ffs_sbupdate(mp, waitfor)
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
 		ffs_sb_swap((struct fs *)bp->b_data, (struct fs *)bp->b_data);
-#endif
-#ifdef SUPPORT_FS_42POSTBLFMT_WRITE
-	if (fs->fs_old_postblformat == FS_42POSTBLFMT)
-		memcpy(&((struct fs *)bp->b_data)->fs_old_postbl_start,
-		    mp->um_opostsave, 256);
 #endif
 	fs->fs_flags |= saveflag;
 
