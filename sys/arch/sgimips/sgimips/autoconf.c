@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2004/01/19 03:26:14 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,10 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2004/01/19 03:26:14 sekiya Exp $");
 
 #include "opt_ddb.h"
-#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
