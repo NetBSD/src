@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12 1997/08/22 12:16:28 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.13 1997/10/30 04:18:31 jonathan Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -23,14 +23,23 @@
 # Call units:
 # Special purpose devices:
 #	bpf*	packet filter
-#	lkm	loadable kernel modules interface
+#	lkm	loadable kernel modules interface    (unsupported in 1.3_ALPHA)
 #	tun*	network tunnel driver
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
+#	fb*	generic framebuffer pseudo-device
+#
+# The following names are reserved for future use:
 #	pm*	raw interface to PMAX graphics devices
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
+#	px*	raw interface to i860-accelerated framebuffers
+#	sd*, st*, cd*, ss*, uk*  -- MI scsi devices
+#	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
+#	audio*	phone-quality audio on Personal  DECstations
+#
+
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
@@ -40,14 +49,15 @@ case $i in
 
 all)
 	sh $0 std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
-	sh $0 cd0
+	sh $0 dc0 scc0 
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 bpf0 bpf1 bpf2 bpf3
-	sh $0 lkm local
-#	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
 	sh $0 fb0 fb1 fb2
 	sh $0 ipl
+#	sh $0 lkm local			# XXX no lkm driver in 1.3_ALPHA(?)
+#	sh $0 audio pm0 cfb0 xcfb0 mfb0 sfb0
+#	sh $0 cd0 			 # no MI scsi yet
 	;;
 
 std)
@@ -99,27 +109,22 @@ tz*)
 	esac
 	;;
 
-bpf*)
-	unit=${i#bpf};
-	rm -f bpf$unit
-	mknod bpf$unit c 12 $unit
-	chmod 600 bpf$unit
-	chown root.wheel bpf$unit
-	;;
-
-tun*)
-#	unit=${i#tun}
-#	rm -f tun$unit
-#	mknod tun$unit c 111 $unit
-#	chmod 600 tun$unit
-#	chown root.wheel tun$unit
+bpf*|tun*)
+	case $i in
+	bpf*) name=bpf;	unit=${i#bpf};	chr=12;;
+	tun*) name=tun;	unit=${i#tun};	chr=90;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c 12 $unit
+	chmod 600 $name$unit
+	chown root.wheel $name$unit
 	;;
 
 lkm)
-	rm -f lkm
-	mknod lkm c 90 0
-	chown root.kmem lkm
-	chmod 640 lkm
+#	rm -f lkm
+#	mknod lkm c 90 0
+#	chown root.kmem lkm
+#	chmod 640 lkm
 	;;
 
 rz*|vnd*|ccd*)
@@ -156,16 +161,43 @@ rz*|vnd*|ccd*)
 	esac
 	;;
 
-dc*|scc*)
+# Serial devices: dc*, scc*.
+#
+#     Create dc* devices as /dev/ttyD[0-3],
+#     for compatibility with NetBSD's vax  dc/dz driver.
+dc*|dz*)
 	case $i in
-	dc*)	name=dc;	unit=${i#dc};	chr=16;;
-	scc*)	name=scc;	unit=${i#scc};	chr=17;;
+	dc*|dz*)	name=dc;	unit=${i#dc};	chr=16;;
 	esac
 	case $unit in
 	0)
-		rm -f tty00 tty01
-		mknod tty00 c $chr 2
-		mknod tty01 c $chr 3
+		rm -f ttyD[0123]
+		mknod ttyD0 c $chr 0
+		mknod ttyD1 c $chr 1
+		mknod ttyD2 c $chr 2
+		mknod ttyD3 c $chr 3
+		;;
+	*)
+		echo bad unit for $name in: $i
+		;;
+	esac
+	;;
+
+# Make scc devices as /dev/tty[abcd],
+# for compatibility with NetBSD's MI zs tty  driver.
+#
+scc*|zs*)
+	case $i in
+	scc*)	name=scc;	unit=${i#scc};	chr=17;;
+	zs*)	name=scc;	unit=${i#zs};	chr=17;;
+	esac
+	case $unit in
+	0|1)
+		rm -f tty[abcd]
+		mknod ttya c $chr 0
+		mknod ttyb c $chr 1
+		mknod ttyc c $chr 2
+		mknod ttyd c $chr 3
 		;;
 	*)
 		echo bad unit for $name in: $i
@@ -183,6 +215,7 @@ fb*)
 # NOTE:
 # framebuffer-specific devices pm*, cfb*, xfb*, sfb* ,mfb* are not 
 # supported in 1.2.  Use the generic fb device intsead.
+# the names and device entries are reserved for compatilibity reasons.
 #
 pm*|cfb*|xcfb*|mfb*)
 	case $i in
