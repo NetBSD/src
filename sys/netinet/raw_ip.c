@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.62 2002/08/14 00:23:33 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.63 2002/10/22 02:34:47 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.62 2002/08/14 00:23:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.63 2002/10/22 02:34:47 simonb Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -126,8 +126,6 @@ rip_init()
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
-static struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
-
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -142,7 +140,7 @@ rip_input(m, va_alist)
 	va_dcl
 #endif
 {
-	int off, proto;
+	int proto;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp;
 	struct inpcb *last = 0;
@@ -151,7 +149,6 @@ rip_input(m, va_alist)
 	va_list ap;
 
 	va_start(ap, m);
-	off = va_arg(ap, int);
 	proto = va_arg(ap, int);
 	va_end(ap);
 
