@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.1 2002/05/16 12:57:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,6 +313,19 @@ struct prefix {
 };
 
 /*
+ * Device major informations.
+ */
+struct devm {
+	struct devm	*dm_next;	 /* linked list */
+	const char	*dm_srcfile;	/* the name of the "devsw" file */
+	u_short		dm_srcline;	/* the line number */
+	const char	*dm_name;	/* [bc]devsw name */
+	int		dm_cmajor;	/* character major */
+	int		dm_bmajor;	/* block major */
+	struct nvlist	*dm_opts;	/* options */
+};
+
+/*
  * Hash tables look up name=value pairs.  The pointer value of the name
  * is assumed to be constant forever; this can be arranged by interning
  * the name.  (This is fairly convenient since our lexer does this for
@@ -351,14 +364,19 @@ struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *bdevmtab;	/* block devm lookup */
+struct	hashtab *cdevmtab;	/* character devm lookup */
 
 struct	devbase *allbases;	/* list of all devbase structures */
 struct	deva *alldevas;		/* list of all devbase attachment structures */
 struct	config *allcf;		/* list of configured kernels */
 struct	devi *alldevi;		/* list of all instances */
 struct	devi *allpseudo;	/* list of all pseudo-devices */
+struct	devm *alldevms;		/* list of all device-majors */
 int	ndevi;			/* number of devi's (before packing) */
 int	npseudo;		/* number of pseudo's */
+int	maxbdevm;		/* max number of block major */
+int	maxcdevm;		/* max number of character major */
 
 struct	files *allfiles;	/* list of all kernel source files */
 struct	objects *allobjects;	/* list of all kernel object and library
