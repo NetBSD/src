@@ -1,4 +1,4 @@
-/*	$NetBSD: emulate.s,v 1.2 1997/03/15 16:14:25 ragge Exp $ */
+/*	$NetBSD: emulate.s,v 1.3 2000/07/17 02:54:04 matt Exp $ */
 /*
  * Copyright (c) 1986, 1987 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,8 @@
  *
  *	@(#)emulate.s	7.5 (Berkeley) 6/28/90
  */
+
+#include <machine/asm.h>
 
 /*
  * String instruction emulation - MicroVAX only.  These routines are called
@@ -85,8 +87,7 @@
 
 	.text
 	.align	1
-	.globl	_EMcrc
-_EMcrc:
+ALTENTRY(EMcrc)
 	argl(1,r11)		# (1) table address == r11
 	argl(2,r0)		# (2) initial crc == r0
 	argl(4,r3)		# (4) source address == r3
@@ -109,8 +110,7 @@ Lcrc_out:
 
 
 	.align	1
-	.globl	_EMmovtc
-_EMmovtc:
+ALTENTRY(EMmovtc)
 	arguw(1,r0)		# (1) source length == r0
 	argl(2,r1)		# (2) source address == r1
 	argub(3,r11)		# (3) fill character == r11
@@ -137,8 +137,7 @@ Lmovtc_out:
 
 
 	.align	1
-	.globl	_EMmovtuc
-_EMmovtuc:
+ALTENTRY(EMmovtuc)
 	arguw(1,r0)		# (1) source length == r0
 	argl(2,r1)		# (2) source address == r1
 	argub(3,r11)		# (3) escape character == r11
@@ -165,8 +164,7 @@ Lmovtuc_out:
 
 
 	.align	1
-	.globl	_EMmatchc
-_EMmatchc:
+ALTENTRY(EMmatchc)
 	argl(2,r10)		# (2) substring address == r10
 	arguw(3,r2)		# (3) source length == r2
 	argl(4,r3)		# (4) source address == r3
@@ -201,8 +199,7 @@ Lmatchc_out:
 
 
 	.align	1
-	.globl	_EMspanc
-_EMspanc:
+ALTENTRY(EMspanc)
 	argl(2,r1)		# (2) string address == r1
 	argub(4,r2)		# (4) character-mask == r2
 	argl(3,r3)		# (3) table address == r3
@@ -222,8 +219,7 @@ Lspanc_out:
 
 
 	.align	1
-	.globl	_EMscanc
-_EMscanc:
+ALTENTRY(EMscanc)
 	argl(2,r1)		# (2) string address == r1
 	argub(4,r2)		# (4) character-mask == r2
 	argl(3,r3)		# (3) table address == r3
@@ -243,8 +239,7 @@ Lscanc_out:
 
 
 	.align	1
-	.globl	_EMskpc
-_EMskpc:
+ALTENTRY(EMskpc)
 	argub(1,r11)		# (1) character == r11
 	argl(3,r1)		# (3) string address == r1
 	arguw(2,r0)		# (2) string length == r0
@@ -261,8 +256,7 @@ Lskpc_out:
 
 
 	.align	1
-	.globl	_EMlocc
-_EMlocc:
+ALTENTRY(EMlocc)
 	argub(1,r11)		# (1) character == r11
 	argl(3,r1)		# (3) string address == r1
 	arguw(2,r0)		# (2) string length == r0
@@ -279,8 +273,7 @@ Llocc_out:
 
 
 	.align	1
-	.globl	_EMcmpc3
-_EMcmpc3:
+ALTENTRY(EMcmpc3)
 	argl(2,r1)		# (2) string1 address == r1
 	argl(3,r3)		# (3) string2 address == r3
 	arguw(1,r0)		# (1) strings length == r0
@@ -298,8 +291,7 @@ Lcmpc3_out:
 
 
 	.align	1
-	.globl	_EMcmpc5
-_EMcmpc5:
+ALTENTRY(EMcmpc5)
 	argl(2,r1)		# (2) string1 address == r1
 	argub(3,r11)		# (1) fill character == r11
 	arguw(4,r2)		# (1) string2 length == r2
@@ -344,8 +336,7 @@ Lcmpc5_out:
 
 
 	.align	1
-	.globl	_EMaddp4
-_EMaddp4:
+ALTENTRY(EMaddp4)
 	toarg(r9,6)		# save register r9 in arg6 spot
 	arguw(1,r11)		# (1) source length == r11
 	argl(2,r10)		# (2) source address == r10
@@ -584,8 +575,7 @@ Laddp4_out:
 
 
 	.align	1
-	.globl	_EMmovp
-_EMmovp:
+ALTENTRY(EMmovp)
 	arguw(1,r11)		# (1) string length == r11
 	argl(2,r10)		# (1) source address == r10
 	argl(3,r3)		# (1) destination address == r3
@@ -675,8 +665,7 @@ Lmovp_out:
 
 
 	.align	1
-	.globl	_EMeditpc
-_EMeditpc:
+ALTENTRY(EMeditpc)
 	arguw(1,r11)		# (1) source length == r11
 	argl(2,r10)		# (2) source address == r10
 	argl(3,r3)		# (3) pattern address == r3
@@ -899,8 +888,7 @@ L228:
 
 
 	.align	1
-	.globl	_EMashp
-_EMashp:
+ALTENTRY(EMashp)
 	argb(1,r11)		# (1) scale (number to shift) == r11
 	arguw(2,r10)		# (2) source length == r10
 	argl(3,r1)		# (3) source address == r1
@@ -1051,8 +1039,7 @@ Lashp_overfl:			#    do overflow
 
 
 	.align	1
-	.globl	_EMcvtlp
-_EMcvtlp:
+ALTENTRY(EMcvtlp)
 	arguw(2,r10)		# (2) destination length == r10
 	argl(3,r3)		# (3) destination address == r3
 	ashl	$-1,r10,r10
@@ -1104,8 +1091,7 @@ Lcvtlp_out:
 
 
 	.align	1
-	.globl	_EMcvtpl
-_EMcvtpl:
+ALTENTRY(EMcvtpl)
 	arguw(1,r11)		# (1) source length == r11
 	argl(2,r10)		# (2) source address == r10
 	clrl	r3		# r3 == destination
@@ -1143,68 +1129,57 @@ Lcvtpl_out:
 
 
 	.align	1
-	.globl	_EMcvtps
-_EMcvtps:
+ALTENTRY(EMcvtps)
 	return
 
 
 	.align	1
-	.globl	_EMcvtsp
-_EMcvtsp:
+ALTENTRY(EMcvtsp)
 	return
 
 
 	.align	1
-	.globl	_EMaddp6
-_EMaddp6:
+ALTENTRY(EMaddp6)
 	return
 
 
 	.align	1
-	.globl	_EMsubp4
-_EMsubp4:
+ALTENTRY(EMsubp4)
 	return
 
 
 	.align	1
-	.globl	_EMsubp6
-_EMsubp6:
+ALTENTRY(EMsubp6)
 	return
 
 
 	.align	1
-	.globl	_EMcvtpt
-_EMcvtpt:
+ALTENTRY(EMcvtpt)
 	return
 
 
 	.align	1
-	.globl	_EMmulp
-_EMmulp:
+ALTENTRY(EMmulp)
 	return
 
 
 	.align	1
-	.globl	_EMcvttp
-_EMcvttp:
+ALTENTRY(EMcvttp)
 	return
 
 
 	.align	1
-	.globl	_EMdivp
-_EMdivp:
+ALTENTRY(EMdivp)
 	return
 
 
 	.align	1
-	.globl	_EMcmpp3
-_EMcmpp3:
+ALTENTRY(EMcmpp3)
 	return
 
 
 	.align	1
-	.globl	_EMcmpp4
-_EMcmpp4:
+ALTENTRY(EMcmpp4)
 	return
 
 
@@ -1217,8 +1192,8 @@ _EMcmpp4:
 #define EMUTABLE	0x43
 #define NOEMULATE	.long noemulate
 #define	EMULATE(a)	.long _EM/**/a
-	.globl	_emJUMPtable
-_emJUMPtable:
+	.globl	_C_LABEL(emJUMPtable)
+_C_LABEL(emJUMPtable)
 /* f8 */	EMULATE(ashp);	EMULATE(cvtlp);	NOEMULATE;	NOEMULATE
 /* fc */	NOEMULATE;	NOEMULATE;	NOEMULATE;	NOEMULATE
 /* 00 */	NOEMULATE;	NOEMULATE;	NOEMULATE;	NOEMULATE
@@ -1279,7 +1254,8 @@ SCBVEC(emulate):
 	addl2	$8,r10			# shift negative opcodes
 	subl3	r10,$EMUTABLE,r11	# forget it if opcode is out of range
 	bcs	noemulate
-	movl	_emJUMPtable[r10],r10	# call appropriate emulation routine
+	movl	_C_LABEL(emJUMPtable)[r10],r10
+					# call appropriate emulation routine
 	jsb	(r10)		# routines put return values into regs 0-5
 	movl	32(sp),r11		# restore register r11
 	movl	36(sp),r10		# restore register r10
