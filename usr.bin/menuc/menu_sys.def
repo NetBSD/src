@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.37 2003/06/03 11:51:56 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.38 2003/06/04 19:07:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,15 +146,12 @@ init_menu(struct menudesc *m)
 	wmax = strlen(m->title);
 
 	/* Calculate h? h == number of visible options. */
-	if (m->h == 0) {
+	if (m->h == 0)
 		m->h = m->numopts + exithadd;
-		if (m->h + m->y + hadd >= max_lines && (m->mopt & MC_SCROLL)) {
-			hadd++;
-			m->h = max_lines - m->y - hadd;
-		}
-	}
+	else
+		m->h -= hadd;
+	m->h = MIN(m->h, max_lines - m->y - hadd);
 
-	/* Check window heights and set scrolling */
 	if (m->h < m->numopts + exithadd) {
 		if (!(m->mopt & MC_SCROLL) || m->h < 3) {
 			endwin();
@@ -163,17 +160,21 @@ init_menu(struct menudesc *m)
 				m->title);
 			exit(1);
 		}
+		hadd++;
+		m->h--;
 	} else
 		m->mopt &= ~MC_SCROLL;
-
+#if 0
 	/* check for screen fit */
 	if (m->y + m->h + hadd > max_lines) {
 		endwin();
 		(void)fprintf(stderr,
-			"Screen too short for menu \"%s\"\n", m->title);
+		    "Screen too short (%d + %d + %d > %d) for menu \"%s\"\n",
+			m->y, m->h, hadd, max_lines, m->title);
 		exit(1);
 
 	}
+#endif
 
 	/* Calculate w? */
 	if (m->w == 0) {
@@ -199,7 +200,6 @@ init_menu(struct menudesc *m)
 
 	/* Get the windows. */
 	m->mw = newwin(m->h + hadd, m->w + wadd, m->y, m->x);
-	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
 
 	if (m->mw == NULL) {
 		endwin();
@@ -207,6 +207,7 @@ init_menu(struct menudesc *m)
 			"Could not create window for menu \"%s\"\n", m->title);
 		exit(1);
 	}
+	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
 
 	/* XXX is it even worth doing this right? */
 	if (has_colors()) {
@@ -248,7 +249,7 @@ draw_menu_line(struct menudesc *m, int i, int cury, char opt, const char *text)
 static void
 draw_menu(struct menudesc *m)
 {
-	int i;
+	int opt;
 	int hasbox, cury, maxy;
 	int tadd;
 	
@@ -274,18 +275,23 @@ draw_menu(struct menudesc *m)
 		maxy += tadd;
 	}
 
-	for (i = m->topline; i < m->numopts; i++) {
+	for (opt = m->topline; opt < m->numopts; opt++) {
 		if (cury >= maxy)
 			break;
-		draw_menu_line(m, i, cury++, opt_ch(i), m->opts[i].opt_name);
+		draw_menu_line(m, opt, cury++, opt_ch(opt),
+				m->opts[opt].opt_name);
 	}
 
 	/* Add the exit option. */
-	if (!(m->mopt & MC_NOEXITOPT) && cury < maxy)
-		draw_menu_line(m, m->numopts, cury++, 'x', m->exitstr);
+	if (!(m->mopt & MC_NOEXITOPT)) {
+		if (cury < maxy)
+			draw_menu_line(m, m->numopts, cury++, 'x', m->exitstr);
+		else
+			opt = 0;
+	}
 
 	/* Add the scroll line */
-	if (m->mopt & MC_SCROLL)
+	if (opt != m->numopts || m->topline != 0)
 		mvwaddstr(m->mw, cury, hasbox, scrolltext);
 
 	/* Add the box. */
@@ -435,7 +441,7 @@ process_req(struct menudesc *m, int num, int req)
 			return;
 		}
 		m->topline = MIN(m->topline + m->h,
-				 m->numopts + hasexit - m->h);
+				 MAX(m->numopts + hasexit - m->h, 0));
 		m->cursel = MIN(m->numopts + hasexit - 1, m->cursel + m->h);
 		wclear(m->mw);
 		break;
@@ -567,8 +573,10 @@ process_menu(int num, void *arg)
 			process_req(m, num, req);
 
 		sel = m->cursel;
-		wclear(m->mw);
-		wrefresh(m->mw);
+		if (!(m->mopt & MC_NOCLEAR)) {
+			wclear(m->mw);
+			wrefresh(m->mw);
+		}
 
 		/* Process the items */
 		if (sel < m->numopts) {
@@ -604,6 +612,11 @@ process_menu(int num, void *arg)
 		}
 	}
 
+	if (m->mopt & MC_NOCLEAR) {
+		wclear(m->mw);
+		wrefresh(m->mw);
+	}
+
 	/* Process the exit action */
 	if (m->exit_act)
 		(*m->exit_act)();
@@ -632,9 +645,10 @@ double_menus(void)
 }
 
 int
-new_menu(char * title, menu_ent * opts, int numopts, 
+new_menu(const char *title, menu_ent *opts, int numopts, 
 	int x, int y, int h, int w, int mopt,
-	void (*post_act)(void), void (*exit_act)(void), char * help)
+	void (*post_act)(void), void (*exit_act)(void),
+	const char * help, const char *exit)
 {
 	int ix;
 
@@ -661,7 +675,7 @@ new_menu(char * title, menu_ent * opts, int numopts,
 	menus[ix].post_act = post_act;
 	menus[ix].exit_act = exit_act;
 	menus[ix].helpstr  = help;
-	menus[ix].exitstr  = "Exit";
+	menus[ix].exitstr  = exit ? exit : "Exit";
 
 	init_menu(&menus[ix]);
 

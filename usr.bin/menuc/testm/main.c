@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2000/08/15 02:09:12 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2003/06/04 19:07:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@ int main(void)
 {
 
 	/* Menu processing */
-	process_menu (MENU_root);
+	process_menu (MENU_root, NULL);
 	
 	return 0;
 }
@@ -120,7 +120,7 @@ void do_dynamic(void)
 		(void) fprintf (stderr, "Dynamic memu creation failure. \n");
 		exit (1);
 	}
-	process_menu (menu_no);
+	process_menu (menu_no, NULL);
 	free_menu (menu_no);
 }
 
