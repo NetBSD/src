@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.1 2004/06/30 21:16:49 jdc Exp $
+# $NetBSD: GENERIC,v 1.47.2.2 2004/07/02 17:38:20 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.2.1 $"
+#ident 		"GENERIC-$Revision: 1.47.2.2 $"
 
 maxusers	8
 
@@ -43,6 +43,7 @@ options 	SYSVSEM			# System V semaphores
 #options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
