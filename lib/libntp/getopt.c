@@ -70,12 +70,12 @@ ntp_getopt(argc, argv, optstring)
 		if (ntp_optind >= argc
 		    || argv[ntp_optind][0] != '-'
 		    || argv[ntp_optind][1] == '\0') {
-			return (EOF);
+			return (-1);
 		}
 		if (argv[ntp_optind][1] == '-'
 		    && argv[ntp_optind][2] == '\0') {
 			ntp_optind++;
-			return (EOF);
+			return (-1);
 		}
 	
 		scan = argv[ntp_optind++]+1;
