@@ -67,29 +67,29 @@ static boolean elf32_vax_print_private_bfd_data
   PARAMS ((bfd *, PTR));
 
 static reloc_howto_type howto_table[] = {
-  HOWTO(R_VAX_NONE,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_NONE",      false, 0x00000000, 0x00000000, false),
-  HOWTO(R_VAX_32,         0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_32",        false, 0xffffffff, 0xffffffff, false),
-  HOWTO(R_VAX_16,         0, 1,16, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_16",        false, 0x0000ffff, 0x0000ffff, false),
-  HOWTO(R_VAX_8,          0, 0, 8, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_8",         false, 0x000000ff, 0x000000ff, false),
-  HOWTO(R_VAX_PC32,       0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PC32",      false, 0xffffffff, 0xffffffff, false),
-  HOWTO(R_VAX_PC16,       0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC16",      false, 0x0000ffff, 0x0000ffff, false),
-  HOWTO(R_VAX_PC8,        0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC8",       false, 0x000000ff, 0x000000ff, false),
-  HOWTO(R_VAX_GOT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32",     false, 0xffffffff, 0xffffffff, false),
+  HOWTO(R_VAX_NONE,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_NONE",      false, 0, 0x00000000, false),
+  HOWTO(R_VAX_32,         0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_32",        false, 0, 0xffffffff, false),
+  HOWTO(R_VAX_16,         0, 1,16, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_16",        false, 0, 0x0000ffff, false),
+  HOWTO(R_VAX_8,          0, 0, 8, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_8",         false, 0, 0x000000ff, false),
+  HOWTO(R_VAX_PC32,       0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PC32",      false, 0, 0xffffffff, true),
+  HOWTO(R_VAX_PC16,       0, 1,16, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC16",      false, 0, 0x0000ffff, true),
+  HOWTO(R_VAX_PC8,        0, 0, 8, true, 0, complain_overflow_signed,   bfd_elf_generic_reloc, "R_VAX_PC8",       false, 0, 0x000000ff, true),
+  HOWTO(R_VAX_GOT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32",     false, 0, 0xffffffff, true),
   EMPTY_HOWTO(-1),
   EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_GOT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32O",    false, 0xffffffff, 0xffffffff, false),
+  HOWTO(R_VAX_GOT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_GOT32O",    false, 0, 0xffffffff, true),
   EMPTY_HOWTO(-1),
   EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_PLT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32",     false, 0xffffffff, 0xffffffff, false),
+  HOWTO(R_VAX_PLT32,      0, 2,32, true, 0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32",     false, 0, 0xffffffff, true),
   EMPTY_HOWTO(-1),
   EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_PLT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32O",    false, 0xffffffff, 0xffffffff, false),
+  HOWTO(R_VAX_PLT32O,     0, 2,32, false,0, complain_overflow_bitfield, bfd_elf_generic_reloc, "R_VAX_PLT32O",    false, 0, 0xffffffff, false),
   EMPTY_HOWTO(-1),
   EMPTY_HOWTO(-1),
-  HOWTO(R_VAX_COPY,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_COPY",      false, 0x00000000, 0xffffffff, true),
-  HOWTO(R_VAX_GLOB_DAT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_GLOB_DAT",  false, 0x00000000, 0xffffffff, true),
-  HOWTO(R_VAX_JMP_SLOT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_JMP_SLOT",  false, 0x00000000, 0xffffffff, true),
-  HOWTO(R_VAX_RELATIVE,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_RELATIVE",  false, 0x00000000, 0xffffffff, true),
+  HOWTO(R_VAX_COPY,       0, 0, 0, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_COPY",      false, 0, 0xffffffff, true),
+  HOWTO(R_VAX_GLOB_DAT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_GLOB_DAT",  false, 0, 0xffffffff, true),
+  HOWTO(R_VAX_JMP_SLOT,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_JMP_SLOT",  false, 0, 0xffffffff, true),
+  HOWTO(R_VAX_RELATIVE,   0, 2,32, false,0, complain_overflow_dont,     bfd_elf_generic_reloc, "R_VAX_RELATIVE",  false, 0, 0xffffffff, true),
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_VAX_GNU_VTINHERIT,	/* type */
 	 0,			/* rightshift */
@@ -1830,6 +1830,10 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	default:
 	  break;
 	}
+
+      /* VAX PCREL relocations are from the end of relocation, not the start */
+      if (howto->pc_relative && howto->pcrel_offset)
+	relocation -= bfd_get_reloc_size(howto);
 
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
 				    contents, rel->r_offset,
