@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.54 2004/12/01 22:27:46 grant Exp $
+#	$NetBSD: IOPENER,v 1.55 2005/01/31 16:54:35 hannken Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.54 $"
+#ident 		"IOPENER-$Revision: 1.55 $"
 
 maxusers	32		# estimated number of users
 
@@ -407,6 +407,7 @@ include	"arch/i386/conf/GENERIC.local"
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 

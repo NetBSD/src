@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2005/01/28 03:19:50 rumble Exp $
+# $NetBSD: GENERIC,v 1.45 2005/01/31 16:55:01 hannken Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	8			# estimated number of users
 
@@ -123,6 +123,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	ccd		4	# Concatenated Disk Driver
+pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	rnd			# kernel random number generator
 pseudo-device	clockctl		# user control of clock subsystem
