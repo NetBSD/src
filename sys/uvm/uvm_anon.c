@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.5 2000/01/11 06:57:49 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.5.4.1 2000/08/06 17:08:58 thorpej Exp $	*/
 
 /*
  *
@@ -483,10 +483,13 @@ anon_pagein(anon)
 	struct uvm_object *uobj;
 	int rv;
 	UVMHIST_FUNC("anon_pagein"); UVMHIST_CALLED(pdhist);
-	
+
 	/* locked: anon */
 	rv = uvmfault_anonget(NULL, NULL, anon);
-	/* unlocked: anon */
+	/*
+	 * if rv == VM_PAGER_OK, anon is still locked, else anon
+	 * is unlocked
+	 */
 
 	switch (rv) {
 	case VM_PAGER_OK:
