@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.28.4.3 2003/09/01 07:40:02 tron Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.28.4.4 2003/09/01 09:31:36 tron Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.4.3 2003/09/01 07:40:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.4.4 2003/09/01 09:31:36 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -537,7 +537,7 @@ ip6_mrouter_detach(ifp)
 	 * Clear rte->ifp of cache entries received on ifp.
 	 */
 	for (i = 0; i < MF6CTBLSIZ; i++) {
-		if (n6expire[i] == 0)
+		if (nexpire6[i] == 0)
 			continue;
 
 		for (mfc = mf6ctable[i]; mfc != NULL; mfc = mfc->mf6c_next) {
