@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.14 2001/06/30 16:33:54 bjh21 Exp $
+.\"	$NetBSD: le.4,v 1.15 2001/09/22 01:22:49 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -339,6 +339,44 @@ The
 .Tn LANCE
 transmitter was turned off due to an error.
 .El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr inet 4 ,
+.Xr intro 4 ,
+.Xr mca 4 ,
+.Xr ifconfig 8
+.Rs
+.%R "Am79C90 - CMOS Local Area Network Controller for Ethernet"
+.%D May 1994
+.%N 17881
+.%O Advanced Micro Devices
+.Re
+.Sh HISTORY
+The pmax
+.Nm
+driver is derived from a
+.Nm
+driver that first appeared in
+.Bx 4.4 .
+Support for multiple bus attachments first appeared in
+.Nx 1.2 .
+.Pp
+The
+.Tn Amiga
+.Nm
+interface first appeared in
+.Nx 1.0
+.Pp
+The Ariadne Ethernet card first appeared with the
+.Tn Amiga
+ae interface in
+.Nx 1.1
+and was converted to the
+.Tn Amiga
+.Nm
+interface in
+.Nx 1.3
 .Sh BUGS
 The Am7990 Revision C chips have a bug which causes garbage to
 be inserted in front of the received packet occasionally.
@@ -402,41 +440,3 @@ The
 must copy to and from an onboard SRAM DMA buffer.
 The CPU overhead is noticeable, but all machines
 can sustain full 10 Mb/s media speed.
-.Sh HISTORY
-The pmax
-.Nm
-driver is derived from a
-.Nm
-driver that first appeared in
-.Bx 4.4 .
-Support for multiple bus attachments first appeared in
-.Nx 1.2 .
-.Pp
-The
-.Tn Amiga
-.Nm
-interface first appeared in
-.Nx 1.0
-.Pp
-The Ariadne Ethernet card first appeared with the
-.Tn Amiga
-ae interface in
-.Nx 1.1
-and was converted to the
-.Tn Amiga
-.Nm
-interface in
-.Nx 1.3
-.Sh SEE ALSO
-.Xr arp 4 ,
-.Xr intro 4 ,
-.Xr inet 4 ,
-.Xr ifmedia 4 ,
-.Xr mca 4 ,
-.Xr ifconfig 8
-.Rs
-.%R "Am79C90 - CMOS Local Area Network Controller for Ethernet"
-.%D May 1994
-.%N 17881
-.%O Advanced Micro Devices
-.Re
