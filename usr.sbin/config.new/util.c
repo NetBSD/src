@@ -50,6 +50,7 @@
 #else
 #include <varargs.h>
 #endif
+#include <sys/types.h>
 #include "config.h"
 
 static void nomem __P((void));
@@ -259,4 +260,12 @@ panic(fmt, va_alist)
 	(void)putc('\n', stderr);
 	va_end(ap);
 	exit(2);
+}
+
+#include <errno.h>
+extern char *sys_errlist[];
+
+char *strerror(int errnum)
+{
+    return sys_errlist[errnum];
 }
