@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.21 2003/10/27 17:17:42 mycroft Exp $ */
+/* $NetBSD: j720ssp.c,v 1.22 2004/05/28 17:52:07 tsarna Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.21 2003/10/27 17:17:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.22 2004/05/28 17:52:07 tsarna Exp $");
 
 #include "apm.h"
 
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.21 2003/10/27 17:17:42 mycroft Exp $")
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsmousevar.h>
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 extern const struct wscons_keydesc j720kbd_keydesctab[];
 
@@ -678,19 +678,7 @@ j720tp_ioctl(arg, cmd, data, flag, p)
 {
 	struct j720ssp_softc *sc = arg;
 
-	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
-
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
-
-	default:
-		return (EPASSTHROUGH);
-	}
+	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 }
 
 int
