@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <err.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -53,7 +54,14 @@ arg_t source_types[] = {
 	{ NULL,      0 }
 };
 
-void
+static void usage(void);
+u_int32_t find_type(char *name);
+char *find_name(u_int32_t);
+void do_ioctl(rndctl_t *);
+char * strflags(u_int32_t);
+void do_list(int, u_int32_t, char *);
+
+static void
 usage(void)
 {
 	errx(1, "Usage:  rndctl [-CEce | -l] [-d name | -t type]");
@@ -145,7 +153,7 @@ do_list(int all, u_int32_t type, char *name)
 		err(1, "open");
 
 	if (all == 0 && type == 0xff) {
-		strncpy(&rstat_name.name, name, 16);
+		strncpy(rstat_name.name, name, 16);
 		res = ioctl(fd, RNDGETSRCNAME, &rstat_name);
 		if (res < 0)
 			err(1, "ioctl(RNDGETSRCNAME)");
@@ -176,7 +184,8 @@ do_list(int all, u_int32_t type, char *name)
 			break;
                         
 		for (res = 0 ; res < rstat.count ; res++) {
-			if (all != 0 || type == rstat.source[res].tyfl & 0xff)
+			if ((all != 0)
+			    || (type == (rstat.source[res].tyfl & 0xff)))
 				printf("%-16s %-8s %10u %s\n",
 				       rstat.source[res].name,
 				       find_name(rstat.source[res].tyfl & 0xff),
@@ -206,6 +215,7 @@ main(int argc, char **argv)
 	cmd = 0;
 	lflag = 0;
 	mflag = 0;
+	type = 0xff;
 
 	while ((ch = getopt(argc, argv, "CEcelt:d:")) != -1)
 		switch(ch) {
