@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.27 1998/12/18 22:07:53 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.28 1998/12/19 23:48:39 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -232,6 +232,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE,
+	    PCMCIA_CIS_TDK_XIR_CE,
+	    0,
+	    "TDK Corporation",
+	    "Xircom CreditCard Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10,
