@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.69 2003/11/01 07:07:31 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.70 2003/11/17 10:16:18 cube Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.69 2003/11/01 07:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.70 2003/11/17 10:16:18 cube Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -413,11 +413,25 @@ lkmioctl(dev, cmd, data, flag, p)
 			memset((caddr_t)curp->area + curp->offset, 0,
 			       curp->size - curp->offset);
 
+		if (curp->syms && curp->sym_offset >= curp->sym_size) {
+			error = ksyms_addsymtab("/lkmtemp/",
+			    (char *)curp->syms, curp->sym_symsize,
+			    (char *)curp->syms + curp->sym_symsize,
+			    curp->sym_size - curp->sym_symsize);
+			if (error)
+				break;
+#ifdef DEBUG
+			if (lkmdebug & LKMDB_INFO)
+				printf( "DDB symbols added!\n" );
+#endif
+		}
+
 		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
 				(*((long *) (data)));
 
 		/* call entry(load)... (assigns "private" portion) */
 		error = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION);
+		(void)ksyms_rensymtab("/lkmtemp/", curp->private.lkm_any->lkm_name);
 		if (error) {
 			/*
 			 * Module may refuse loading or may have a
@@ -439,18 +453,6 @@ lkmioctl(dev, cmd, data, flag, p)
 		if (lkmdebug & LKMDB_INFO)
 			printf("LKM: LMREADY\n");
 #endif /* DEBUG */
-		if (curp->syms && curp->sym_offset >= curp->sym_size) {
-			error = ksyms_addsymtab(curp->private.lkm_any->lkm_name,
-			    (char *)curp->syms, curp->sym_symsize,
-			    (char *)curp->syms + curp->sym_symsize,
-			    curp->sym_size - curp->sym_symsize);
-			if (error)
-				break;
-#ifdef DEBUG
-			if (lkmdebug & LKMDB_INFO)
-				printf( "DDB symbols added!\n" );
-#endif
-		}
 		lkm_state = LKMS_IDLE;
 		break;
 
