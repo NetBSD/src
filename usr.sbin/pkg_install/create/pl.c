@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.8 1998/10/12 12:03:25 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.9 1998/10/19 20:15:24 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.8 1998/10/12 12:03:25 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.9 1998/10/19 20:15:24 agc Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 	if ((cc = readlink(name, oldtgt, sizeof(oldtgt))) > 0) {
 		oldtgt[cc] = 0;
 		if (strncmp(oldtgt, prefix, prefixcc) == 0 && oldtgt[prefixcc] == '/') {
-			for (slashc = 0, slash = &oldtgt[prefixcc + 1] ; (slash = strchr(slash, '/')) != (char *) NULL ; slash++, slashc++) {
+			for (slashc = 0, slash = &name[prefixcc + 1] ; (slash = strchr(slash, '/')) != (char *) NULL ; slash++, slashc++) {
 			}
 			for (cc = i = 0 ; i < slashc ; i++) {
 				strnncpy(&newtgt[cc], sizeof(newtgt) - cc, "../", 3);
