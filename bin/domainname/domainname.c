@@ -1,4 +1,4 @@
-/*	$NetBSD: domainname.c,v 1.8 1997/07/20 06:04:11 thorpej Exp $	*/
+/*	$NetBSD: domainname.c,v 1.9 1997/11/05 21:20:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: domainname.c,v 1.8 1997/07/20 06:04:11 thorpej Exp $");
+__RCSID("$NetBSD: domainname.c,v 1.9 1997/11/05 21:20:16 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 		usage();
 
 	if (*argv) {
-		if (setdomainname(*argv, strlen(*argv)))
+		if (setdomainname(*argv, (int)strlen(*argv)))
 			err(1, "setdomainname");
 	} else {
 		if (getdomainname(domainname, sizeof(domainname)))
@@ -88,6 +88,7 @@ main(argc, argv)
 		(void)printf("%s\n", domainname);
 	}
 	exit(0);
+	/* NOTREACHED */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.13 1997/07/20 17:44:42 christos Exp $	*/
+/*	$NetBSD: ln.c,v 1.14 1997/11/05 21:19:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.13 1997/07/20 17:44:42 christos Exp $");
+__RCSID("$NetBSD: ln.c,v 1.14 1997/11/05 21:19:31 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,10 +101,13 @@ main(argc, argv)
 	switch(argc) {
 	case 0:
 		usage();
+		/* NOTREACHED */
 	case 1:				/* ln target */
 		exit(linkit(argv[0], ".", 1));
+		/* NOTREACHED */
 	case 2:				/* ln target source */
 		exit(linkit(argv[0], argv[1], 0));
+		/* NOTREACHED */
 	}
 					/* ln target1 target2 directory */
 	sourcedir = argv[argc - 1];
@@ -121,6 +124,7 @@ main(argc, argv)
 	for (exitval = 0; *argv != sourcedir; ++argv)
 		exitval |= linkit(*argv, sourcedir, 1);
 	exit(exitval);
+	/* NOTREACHED */
 }
 
 int

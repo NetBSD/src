@@ -1,4 +1,4 @@
-/*	$NetBSD: rmdir.c,v 1.14 1997/07/20 20:52:05 christos Exp $	*/
+/*	$NetBSD: rmdir.c,v 1.15 1997/11/05 21:18:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.14 1997/07/20 20:52:05 christos Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.15 1997/11/05 21:18:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ main(argc, argv)
 	int ch, errors;
 	int pflag;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	pflag = 0;
 	while ((ch = getopt(argc, argv, "p")) != -1)
@@ -102,6 +102,7 @@ main(argc, argv)
 	}
 
 	exit(errors);
+	/* NOTREACHED */
 }
 
 int

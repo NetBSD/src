@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.8 1997/07/20 21:32:54 christos Exp $	*/
+/*	$NetBSD: sync.c,v 1.9 1997/11/05 21:19:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sync.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sync.c,v 1.8 1997/07/20 21:32:54 christos Exp $");
+__RCSID("$NetBSD: sync.c,v 1.9 1997/11/05 21:19:04 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: sync.c,v 1.8 1997/07/20 21:32:54 christos Exp $");
 
 int main __P((int, char *[]));
 
+/* ARGSUSED */
 int
 main(argc, argv)
 	int argc;
@@ -58,4 +59,5 @@ main(argc, argv)
 {
 	sync();
 	exit(0);
+	/* NOTREACHED */
 }
