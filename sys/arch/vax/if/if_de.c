@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.15 1996/02/11 13:47:55 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.16 1996/03/02 14:29:23 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -196,7 +196,7 @@ deattach(parent, self, aux)
 	 * the pcbb buffer onto the Unibus.
 	 */
 	addr->pcsr0 = 0;		/* reset INTE */
-	DELAY(5000);
+	DELAY(100);
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ds, "reset");
 
@@ -295,7 +295,7 @@ deinit(unit)
 	addr->pcsr2 = incaddr & 0xffff;
 	addr->pcsr3 = (incaddr >> 16) & 0x3;
 	addr->pclow = 0;	/* reset INTE */
-	DELAY(5000);
+	DELAY(500);
 	addr->pclow = CMD_GETPCBB;
 	(void)dewait(ds, "pcbb");
 
