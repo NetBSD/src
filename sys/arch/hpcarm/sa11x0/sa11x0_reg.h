@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.4 2001/03/10 13:34:35 toshii Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.5 2001/03/21 14:48:30 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -54,13 +54,13 @@
 #define SACOM3_BASE             0xd000d000
 
 /* Interrupt controller registers */
-#define SAIPIC_NPORTS		6
+#define SAIPIC_NPORTS		9
 #define SAIPIC_IP		0x00		/* IRQ pending register */
 #define SAIPIC_MR		0x04		/* Mask register */
 #define SAIPIC_LR		0x08		/* Level register */
-#define SAIPIC_FP		0x0C		/* FIQ pending register */
-#define SAIPIC_PR		0x10		/* Pending register */
-#define SAIPIC_CR		0x14		/* Control register */
+#define SAIPIC_FP		0x10		/* FIQ pending register */
+#define SAIPIC_PR		0x20		/* Pending register */
+#define SAIPIC_CR		0x0C		/* Control register */
 
 /* width of interrupt controller */
 #define ICU_LEN			32
