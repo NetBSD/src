@@ -508,7 +508,7 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 #ifdef BFD64
-  sparc64-*-elf*)
+  sparc64-*-elf* | sparc64-*-netbsd*)
     targ_defvec=bfd_elf64_sparc_vec
     targ_selvecs=bfd_elf32_sparc_vec
     ;;    

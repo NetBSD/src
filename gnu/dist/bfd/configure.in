@@ -300,7 +300,7 @@ changequote([,])dnl
   powerpc-*-netbsd*)
 	COREFILE=netbsd-core.o
 	;;
-  sparc-*-netbsd* | sparc-*-openbsd*)
+  sparc*-*-netbsd* | sparc-*-openbsd*)
 	COREFILE=netbsd-core.o
 	;;
   tahoe-*-*)
@@ -538,7 +538,8 @@ do
     sparclinux_vec)		tb="$tb sparclinux.o aout32.o stab-syms.o" ;;
     sparclynx_aout_vec)		tb="$tb sparclynx.o lynx-core.o aout32.o" ;;
     sparclynx_coff_vec)		tb="$tb cf-sparclynx.o lynx-core.o" ;;
-    sparcnetbsd_vec)		tb="$tb sparcnetbsd.o aout32.o" ;;
+    sparcnetbsd_vec)		tb="$tb sparcnetbsd.o aout32.o elf32-sparc.o elf64-sparc.o elf64.o $elf"
+				target64=true ;;
     sparccoff_vec)		tb="$tb coff-sparc.o" ;;
     srec_vec)			tb="$tb srec.o" ;;
     sunos_big_vec)		tb="$tb sunos.o aout32.o" ;;
