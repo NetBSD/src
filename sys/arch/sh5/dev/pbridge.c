@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.1 2002/07/05 13:31:53 scw Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.2 2002/08/30 10:39:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 /*
  * SH-5 Peripheral Bridge Controller
  */
+
+#include "opt_sh5_debug.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,12 +92,13 @@ static int
 pbridgematch(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct superhyway_attach_args *sa = args;
+#ifndef SH5_SIM
 	bus_space_handle_t bh;
 	u_int64_t vcr;
-
+#endif
 	if (strcmp(sa->sa_name, pbridge_cd.cd_name))
 		return (0);
-
+#ifndef SH5_SIM
 	sa->sa_pport = 0;
 
 	bus_space_map(sa->sa_bust,
@@ -106,7 +109,7 @@ pbridgematch(struct device *parent, struct cfdata *cf, void *args)
 
 	if (SUPERHYWAY_VCR_MOD_ID(vcr) != PBRIDGE_MODULE_ID)
 		return (0);
-
+#endif
 	sa->sa_pport = cf->cf_loc[SUPERHYWAYCF_PPORT];
 
 	return (1);
