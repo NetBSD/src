@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 1999/10/28 05:20:05 mycroft Exp $	 */
+/*	$NetBSD: devopen.c,v 1.10 2001/05/19 18:15:14 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -46,6 +46,9 @@
 #ifdef _STANDALONE
 #include <bootinfo.h>
 #endif
+#ifdef SUPPORT_PS2
+#include <biosmca.h>
+#endif
 
 extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
 			      unsigned int*, const char**));
@@ -68,8 +71,13 @@ static struct {
 	},
 	{
 		"sd", 0x80
+	},
+#ifdef SUPPORT_PS2
+	{
+		"ed", 0x80
 	}
-#endif
+#endif /* SUPPORT_PS2 */
+#endif /* COMPAT_OLDBOOT */
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
@@ -98,22 +106,30 @@ bios2dev(biosdev, devname, unit)
 	char          **devname;
 	unsigned int   *unit;
 {
+	u_int8_t devidx;
+
 	if (biosdev & 0x80) {
 #if defined(COMPAT_OLDBOOT) && defined(_STANDALONE)
 		extern struct disklabel disklabel;
 
-		if(disklabel.d_magic == DISKMAGIC) {
-			if(disklabel.d_type == DTYPE_SCSI)
-				*devname = biosdevtab[3].name;
+		if (disklabel.d_magic == DISKMAGIC) {
+			if (disklabel.d_type == DTYPE_SCSI)
+				devidx = 3;
+#ifdef SUPPORT_PS2
+			else if (disklabel.d_type == DTYPE_ESDI
+				 && biosmca_ps2model)
+				devidx = 4;
+#endif
 			else
-				*devname = biosdevtab[2].name;
+				devidx = 2;
 		} else
 #endif
 			/* call it "hd", we don't know better */
-			*devname = biosdevtab[1].name;
+			devidx = 1;
 	} else
-		*devname = biosdevtab[0].name;
+		devidx = 0;
 
+	*devname = biosdevtab[devidx].name;
 	*unit = biosdev & 0x7f;
 
 	return (0);

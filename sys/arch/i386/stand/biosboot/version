@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2000/09/24 12:32:35 jdolecek Exp $
+$NetBSD: version,v 1.10 2001/05/19 18:15:14 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -15,3 +15,6 @@ is taken as the current.
 2.6:	Support ELF boot.
 2.7:	Support on-the-fly switching of console devices.
 2.8:	Support verbose/quiet boot.
+2.9:	Recognize PS/2 L40 at runtime and use appropriate gate A20
+	initialization (rather than using a compile flag).
+	Recognize ESDI disks and identify them as ed(4) for COMPAT_OLDBOOT.
