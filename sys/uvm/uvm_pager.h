@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.25 2002/03/25 02:08:10 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.26 2003/02/17 23:48:24 perseant Exp $	*/
 
 /*
  *
@@ -124,6 +124,7 @@ struct uvm_pagerops {
 
 #define PGO_ALLPAGES	0x010	/* flush whole object/get all pages */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
+#define PGO_BUSYFAIL	0x080	/* fail if a page is busy [put] */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
 #define PGO_PASTEOF	0x400	/* allow allocation of pages past EOF */
 
