@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_portal.8,v 1.13 2001/11/16 10:25:48 wiz Exp $
+.\"	$NetBSD: mount_portal.8,v 1.14 2001/11/16 12:01:22 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ The
 namespace opens the named file, starting back at the root directory.
 This can be used to provide a controlled escape path from
 a chrooted environment.
-
+.Pp
 The
 .Pa rfilter
 and
@@ -114,7 +114,7 @@ namespace opens a read-only pipe, while the
 .Pa wfilter
 namespace opens a write-only pipe.  See the EXAMPLES section
 below for more examples.
-.Sh "CONFIGURATION FILE"
+.Sh CONFIGURATION FILE
 The configuration file contains a list of rules.
 Each rule takes one line and consists of two or more
 whitespace separated fields.
@@ -126,7 +126,7 @@ against the requested pathname.
 If a match is found, the second field
 tells the daemon what type of object to create.
 Subsequent fields are passed to the creation function.
-
+.Pp
 The
 .Pa rfilter
 and
@@ -148,11 +148,15 @@ will be assumed, to maintain similarity with the
 and
 .Pa fs
 namespaces.
+.Sh FILES
+.Bl -tag -width /p/* -compact
+.It Pa /p/*
+.El
 .Sh EXAMPLES
 A tutorial and several examples are provided in
 /usr/share/examples/mount_portal.  The following is an example
 configuration file.
-
+.Pp
 .Bd -literal
 # @(#)portal.conf	5.1 (Berkeley) 7/13/92
 tcp/		tcp tcp/
@@ -169,10 +173,10 @@ http://		rfilter	nostrip	ftp -Vo - %s
 bzcat/		rfilter	bzcat/	bzcat %s
 nroff/		rfilter	nroff/	nroff -man %s
 .Ed
-
+.Pp
 As is true with many other filesystems, a weird sense of humor is
 handy.
-
+.Pp
 Notice that after the keynames, like nroff/ and bzcat/, we
 typically use another slash.  In reality, the
 .Nm
@@ -183,29 +187,26 @@ would be to change the configuration file to something like:
 .Bd -literal
 nroff%	rfilter	nroff%	nroff -man
 .Ed
-
+.Pp
 One might then use
 .Bd -literal
 less /p/nroff%/usr/share/man/man8/mount_portal.8
 .Ed
-.Sh FILES
-.Bl -tag -width /p/* -compact
-.It Pa /p/*
-.El
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
-.Sh CAVEATS
-This filesystem may not be NFS-exported.
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
-.Bx 4.4 .  The
+.Bx 4.4 .
+The
 .Pa rfilter
 and
 .Pa wfilter
 capabilities first appeared in
 .Nx 1.5 .
+.Sh BUGS
+This filesystem may not be NFS-exported.
