@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61.2.1 2000/02/04 23:06:19 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.61.2.2 2000/06/27 14:28:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -131,7 +131,6 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-static void initrtclock __P((void));
 void	spinwait __P((int));
 int	clockintr __P((void *));
 int	gettick __P((void));
@@ -271,8 +270,8 @@ gettick_broken_latch()
 }
 
 /* minimal initialization, enough for delay() */
-static void
-initrtclock()
+void
+initrtclock(void)
 {
 	u_long tval;
 
