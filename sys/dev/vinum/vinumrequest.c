@@ -37,7 +37,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumrequest.c,v 1.1.1.1 2003/10/10 03:09:14 grog Exp $
+ * $Id: vinumrequest.c,v 1.2 2004/11/08 21:30:05 explorer Exp $
  * $FreeBSD$
  */
 
@@ -334,7 +334,7 @@ launch_requests(struct request *rq, int reviveok)
 #ifdef VINUMDEBUG
 	if (debug & DEBUG_REVIVECONFLICT)
 	    log(LOG_DEBUG,
-		"Revive conflict sd %d: %p\n%s dev %d.%d, offset 0x%llx, length %ld\n",
+		"Revive conflict sd %d: %p\n%s dev %d.%d, offset 0x%llx, length %d\n",
 		rq->sdno,
 		rq,
 		rq->bp->b_flags & B_READ ? "Read" : "Write",
@@ -357,7 +357,7 @@ launch_requests(struct request *rq, int reviveok)
 #ifdef VINUMDEBUG
     if (debug & DEBUG_ADDRESSES)
 	log(LOG_DEBUG,
-	    "Request: %p\n%s dev %d.%d, offset 0x%llx, length %ld\n",
+	    "Request: %p\n%s dev %d.%d, offset 0x%llx, length %d\n",
 	    rq,
 	    rq->bp->b_flags & B_READ ? "Read" : "Write",
 	    major(rq->bp->b_dev),
@@ -431,7 +431,7 @@ launch_requests(struct request *rq, int reviveok)
 #ifdef VINUMDEBUG
 		if (debug & DEBUG_ADDRESSES)
 		    log(LOG_DEBUG,
-			"  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %ld\n",
+			"  %s dev %d.%d, sd %d, offset 0x%x, devoffset 0x%llx, length %d\n",
 			rqe->b.b_flags & B_READ ? "Read" : "Write",
 			major(rqe->b.b_dev),
 			minor(rqe->b.b_dev),
@@ -962,7 +962,7 @@ sdio(struct buf *bp)
 #ifdef VINUMDEBUG
     if (debug & DEBUG_ADDRESSES)
 	log(LOG_DEBUG,
-	    "  %s dev %d.%d, sd %d, offset 0x%llx, devoffset 0x%llx, length %ld\n",
+	    "  %s dev %d.%d, sd %d, offset 0x%llx, devoffset 0x%llx, length %d\n",
 	    sbp->b.b_flags & B_READ ? "Read" : "Write",
 	    major(sbp->b.b_dev),
 	    minor(sbp->b.b_dev),
