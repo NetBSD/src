@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.46 2003/06/29 22:30:41 fvdl Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.46.4.1 2004/09/11 12:53:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46 2003/06/29 22:30:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46.4.1 2004/09/11 12:53:44 he Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -287,7 +287,7 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= XS_CTL_ESCAPE;
 
-	error = scsipi_command(periph,
+	error = scsipi_command(periph, NULL,
 	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
 	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
