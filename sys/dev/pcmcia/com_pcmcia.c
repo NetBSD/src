@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.36 2004/07/07 05:51:42 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.37 2004/07/07 06:43:22 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.36 2004/07/07 05:51:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.37 2004/07/07 06:43:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 
-	printf(": serial device\n%s", sc->sc_dev.dv_xname);
+	aprint_normal("\n%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 

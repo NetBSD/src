@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.44 2003/11/02 11:14:22 wiz Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.45 2004/07/07 06:43:22 mycroft Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.44 2003/11/02 11:14:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.45 2004/07/07 06:43:22 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -503,7 +503,6 @@ ray_attach(parent, self, aux)
 	struct ray_softc *sc;
 	struct ifnet *ifp;
 	bus_size_t memoff;
-	char devinfo[256];
 
 	pa = aux;
 	sc = (struct ray_softc *)self;
@@ -511,9 +510,7 @@ ray_attach(parent, self, aux)
 	ifp = &sc->sc_if;
 	sc->sc_window = -1;
 
-	/* Print out what we are */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof devinfo);
-	printf(": %s\n", devinfo);
+	aprint_normal("\n");
 
 	/* enable the card */
 	pcmcia_function_init(sc->sc_pf, SIMPLEQ_FIRST(&sc->sc_pf->cfe_head));
