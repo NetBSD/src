@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.38 1997/06/07 05:10:42 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.39 1997/06/16 03:46:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,9 +139,8 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/cpu.h>
-#include <machine/machConst.h>	/* XXX */
-#include <machine/locore.h>	/* XXX */
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
