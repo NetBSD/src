@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.23 1999/08/04 22:45:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 1999/09/12 10:15:46 hwr Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>			# for INSTALL_OFFENSIVE_FORTUNES
 
-SRCFILES=	fortunes fortunes2 startrek zippy unamerican
+SRCFILES=	fortunes fortunes2 startrek zippy unamerican-o limerick
 DATFILES=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
 		fortunes-o fortunes-o.dat fortunes2-o fortunes2-o.dat \
-		limerick limerick.dat unamerican unamerican.dat
+		limerick.dat limerick-o.dat unamerican-o unamerican-o.dat 
 
 # TO AVOID INSTALLING THE POTENTIALLY OFFENSIVE FORTUNES, RUN 'make' with
 # "INSTALL_OFFENSIVE_FORTUNES=NO", or set "INSTALL_OFFENSIVE_FORTUNES=NO"
@@ -33,12 +33,13 @@ all: ${DATFILES}
 
 # Normal fortunes: build directly from data files.
 
-fortunes.dat fortunes2.dat startrek.dat zippy.dat:
+fortunes.dat fortunes2.dat startrek.dat zippy.dat limerick.dat:
 	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
 fortunes.dat:	fortunes
 fortunes2.dat:	fortunes2
 startrek.dat:	startrek
 zippy.dat:	zippy
+limerick.dat:	limerick
 
 # Obscene fortunes: we have to build source and data files
 
@@ -52,14 +53,14 @@ fortunes2-o: fortunes2-o.${TYPE}
 fortunes2-o.dat: fortunes2-o
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
-limerick: limerick.${TYPE}
+limerick-o: limerick-o.${TYPE}
 	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
-limerick.dat: limerick
+limerick-o.dat: limerick-o
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
-unamerican: unamerican.${TYPE}
+unamerican-o: unamerican-o.${TYPE}
 	tr [a-zA-Z] [n-za-mN-ZA-M] < ${.ALLSRC} > ${.TARGET}
-unamerican.dat: unamerican
+unamerican-o.dat: unamerican-o
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
 
