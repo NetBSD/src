@@ -1,2 +1,0 @@
-@c	$NetBSD: GDBvn.texi,v 1.1 1999/02/16 20:19:03 tv Exp $
-@set GDBVN 4.17

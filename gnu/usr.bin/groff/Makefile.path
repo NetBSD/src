@@ -1,4 +1,0 @@
-#	$NetBSD: Makefile.path,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
-
-IDIST=	${.CURDIR}/../../../dist/groff
-IIDIST=	${.CURDIR}/../../../../dist/groff

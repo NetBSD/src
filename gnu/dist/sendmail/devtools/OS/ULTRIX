@@ -1,9 +1,0 @@
-#	Id: ULTRIX,v 8.12.16.1 2000/04/11 20:49:38 ca Exp
-define(`confCC', `cc -Olimit 1350')
-define(`confMAPDEF', `-DNDBM -DNIS')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')
-define(`confHFDIR', `/usr/lib')
-define(`confDEPEND_TYPE', `CC-M')

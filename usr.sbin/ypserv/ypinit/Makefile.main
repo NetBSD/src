@@ -1,8 +1,0 @@
-#	$NetBSD: Makefile.main,v 1.5 2000/07/30 02:33:13 itojun Exp $
-
-SUBDIR=	
-
-TARGETS+=	passwd aliases amd.home ethers group hosts ipnodes netgroup \
-		networks protocols rpc services netid
-
-.include <bsd.subdir.mk>

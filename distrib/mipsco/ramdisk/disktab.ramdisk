@@ -1,6 +1,0 @@
-install-ramdisk:3MB Installation Ramdisk:\
-	:ty=simulated:se#512:nt#3:ns#16:nc#128:\
-	:ta=4.4BSD:\
-	:pa#6144:oa#0:ba#4096:fa#512:\
-	:pb#0:ob#0:\
-	:pc#6144:oc#0:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.112 2001/04/18 08:28:10 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.112.2.1 2001/07/10 12:19:04 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -49,7 +49,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
 	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
-	getsockopt.o gettimeofday.o ioctl.o kill.o ktrace.o \
+	getsockopt.o gettimeofday.o ioctl.o kevent.o kill.o kqueue.o ktrace.o \
 	lchflags.o lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
 	lfs_segclean.o lfs_segwait.o link.o listen.o lutimes.o \
 	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
@@ -195,8 +195,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
-	kill.2 ktrace.2 lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
-	link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 \
+	kill.2 kqueue.2 ktrace.2 lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 \
+	lfs_segwait.2 link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 open.2 pathconf.2 pipe.2 \
@@ -231,6 +231,7 @@ MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=intro.2 errno.2
+MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
 MLINKS+=mlock.2 munlock.2
