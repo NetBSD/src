@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.11 1996/03/15 03:04:07 paulus Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.12 1996/03/28 02:51:02 paulus Exp $";
 #endif
 
 /*
@@ -76,6 +76,7 @@ static unsigned char inbuf[512]; /* buffer for chars read from loopback */
 static int sockfd;		/* socket for doing interface ioctls */
 
 static int if_is_up;		/* the interface is currently up */
+static u_int32_t ifaddrs[2];	/* local and remote addresses we set */
 static u_int32_t default_route_gateway;	/* gateway addr for default route */
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */
 
@@ -120,7 +121,8 @@ sys_cleanup()
 	    ioctl(sockfd, SIOCSIFFLAGS, &ifr);
 	}
     }
-
+    if (ifaddrs[0] != 0)
+	cifaddr(0, ifaddrs[0], ifaddrs[1]);
     if (default_route_gateway)
 	cifdefaultroute(0, default_route_gateway);
     if (proxy_arp_addr)
@@ -981,6 +983,8 @@ sifaddr(u, o, h, m)
 	syslog(LOG_WARNING,
 	       "Couldn't set interface address: Address already exists");
     }
+    ifaddrs[0] = o;
+    ifaddrs[1] = h;
     return 1;
 }
 
@@ -995,6 +999,7 @@ cifaddr(u, o, h)
 {
     struct ifaliasreq ifra;
 
+    ifaddrs[0] = 0;
     strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name));
     SET_SA_FAMILY(ifra.ifra_addr, AF_INET);
     ((struct sockaddr_in *) &ifra.ifra_addr)->sin_addr.s_addr = o;
