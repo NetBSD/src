@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.47 1995/07/29 23:04:54 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.48 1995/08/12 20:31:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -136,7 +136,7 @@ int Debugger();
 #define AHA_MBIF		0x01	/* MBX in full */
 
 /*
- * Mail box defs 
+ * Mail box defs
  */
 #define AHA_MBX_SIZE	16	/* mail box size */
 
@@ -335,7 +335,7 @@ struct aha_mbx_out *aha_send_mbo __P((struct aha_softc *, int, struct aha_ccb *)
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
 int aha_find __P((struct aha_softc *));
 void aha_init __P((struct aha_softc *));
-u_int ahaminphys __P((struct buf *));
+void ahaminphys __P((struct buf *));
 int aha_scsi_cmd __P((struct scsi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsi_xfer *, int));
 int aha_set_bus_speed __P((struct aha_softc *));
@@ -611,7 +611,7 @@ ahaintr(arg)
 
 	/*
 	 * First acknowlege the interrupt, Then if it's not telling about
-	 * a completed operation just return. 
+	 * a completed operation just return.
 	 */
 	stat = inb(AHA_INTR_PORT);
 	if ((stat & (AHA_MBOA | AHA_MBIF)) == 0) {
@@ -710,7 +710,7 @@ AGAIN:
 }
 
 /*
- * A ccb (and hence a mbx-out is put onto the 
+ * A ccb (and hence a mbx-out is put onto the
  * free list.
  */
 void
@@ -825,7 +825,7 @@ aha_send_mbo(aha, cmd, ccb)
 	wmbo = wmbx->tmbo;
 	aha_nextmbx(wmbx->tmbo, wmbx, mbo);
 
-	/* 
+	/*
 	 * Check the outmail box is free or not.
 	 * Note: Under the normal operation, it shuld NOT happen to wait.
 	 */
@@ -933,7 +933,7 @@ aha_find(aha)
 	struct aha_extbios extbios;
 
 	/*
-	 * reset board, If it doesn't respond, assume 
+	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
 
@@ -1068,7 +1068,7 @@ noinquire:
 #error XXX Must deal with configuring the DRQ channel if we do this.
 	/*
 	 * Initialize memory transfer speed
-	 * Not compiled in by default because it breaks some machines 
+	 * Not compiled in by default because it breaks some machines
 	 */
 	if (!aha_set_bus_speed(aha))
 		return EIO;
@@ -1088,7 +1088,7 @@ aha_init(aha)
 	int i;
 
 	/*
-	 * Initialize mail box 
+	 * Initialize mail box
 	 */
 	lto3b(KVTOPHYS(&aha->aha_mbx), ad);
 
@@ -1107,21 +1107,21 @@ aha_init(aha)
 	aha->aha_mbx.tmbi = &aha->aha_mbx.mbi[0];
 }
 
-u_int 
+void
 ahaminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((AHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((AHA_NSEG - 1) << PGSHIFT);
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
-int 
+int
 aha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -1317,7 +1317,7 @@ aha_scsi_cmd(xs)
 /*
  * Poll a particular unit, looking for a particular xs
  */
-int 
+int
 aha_poll(aha, xs, count)
 	struct aha_softc *aha;
 	struct scsi_xfer *xs;
@@ -1346,7 +1346,7 @@ aha_poll(aha, xs, count)
  * speed that fails, back off one notch from the last working
  * speed (unless there is no other notch).
  * Returns the nSEC value of the time used
- * or 0 if it could get a working speed (or the NEXT speed 
+ * or 0 if it could get a working speed (or the NEXT speed
  * failed)
  */
 static struct bus_speed {
@@ -1363,7 +1363,7 @@ static struct bus_speed {
 	{0xff, 450}
 };
 
-int	
+int
 aha_set_bus_speed(aha)
 	struct aha_softc *aha;
 {
@@ -1404,7 +1404,7 @@ char aha_scratch_buf[256];
 char aha_test_string[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz!@";
 
-int 
+int
 aha_bus_speed_check(aha, speed)
 	struct aha_softc *aha;
 	int speed;
@@ -1431,10 +1431,10 @@ aha_bus_speed_check(aha, speed)
 		 * board.
 		 */
 		bzero(aha_scratch_buf, 54);
-	
+
 		lto3b(KVTOPHYS(aha_scratch_buf), ad);
 		aha_cmd(aha, 3, 0, 0, 0, AHA_READ_FIFO, ad[0], ad[1], ad[2]);
-	
+
 		/*
 		 * Compare the original data and the final data and return the
 		 * correct value depending upon the result.  We only check the
