@@ -92,9 +92,9 @@ extern CORE_ADDR arm_saved_pc_after_call (struct frame_info *);
    Even this may only true if the condition predicate is true. The
    following use a condition predicate of ALWAYS so it is always TRUE.
    
-   There are other ways of forcing a breakpoint.  ARM Linux, RisciX,
-   and I suspect NetBSD will all use a software interrupt rather than
-   an undefined instruction to force a trap.  This can be handled by
+   There are other ways of forcing a breakpoint.  ARM Linux, RISC iX,
+   and NetBSD will all use a software interrupt rather than an
+   undefined instruction to force a trap.  This can be handled by
    redefining some or all of the following in a target dependent
    fashion.  */
 
@@ -470,6 +470,16 @@ extern int arm_call_dummy_breakpoint_offset (void);
 void arm_fix_call_dummy (char *dummy, CORE_ADDR pc, CORE_ADDR fun,
 			 int nargs, struct value ** args,
 			 struct type * type, int gcc_p);
+
+/* Most ARMs don't have single stepping capability, so provide a 
+   single-stepping mechanism by default */
+#ifndef SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP_P 1
+#endif
+#if SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP(sig,bpt) arm_software_single_step((sig), (bpt))
+void arm_software_single_step PARAMS((int, int));
+#endif
 
 CORE_ADDR arm_get_next_pc (CORE_ADDR pc);
 
