@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.3 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.4 2001/07/17 20:18:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ static void
 pthread__start(void)
 {
 	pthread_t first, idle;
-	int ret;
+	int i, ret;
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
@@ -95,13 +95,15 @@ pthread__start(void)
 	sigprocmask(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
 
-	/* Create idle threads */
-	ret = pthread__stackalloc(&idle);
-	if (ret != 0)
-		err(1, "Couldn't allocate stack for idle thread!");
-	pthread__initthread(idle);
-	PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
-	pthread__sched_idle(first, idle);
+	for (i = 0; i < NIDLETHREADS; i++) {
+		/* Create idle threads */
+		ret = pthread__stackalloc(&idle);
+		if (ret != 0)
+			err(1, "Couldn't allocate stack for idle thread!");
+		pthread__initthread(idle);
+		PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
+		pthread__sched_idle(first, idle);
+	}
 
 	/* Start up the SA subsystem */
 	pthread__sa_start();

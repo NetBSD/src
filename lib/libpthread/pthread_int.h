@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.4 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.5 2001/07/17 20:18:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ struct	pthread_st {
 
 #define PT_UPCALLSTACKS	16
 
+#define NIDLETHREADS	4
 #define IDLESPINS	1000
 
 /* Utility functions */
