@@ -5,10 +5,10 @@
 
 SRCS+=	alarm.c clock.c closedir.c crypt.c ctermid.c ctime.c ctype_.c \
 	difftime.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
-	fstab.c fts.c getcwd.c getgrent.c getlogin.c getmntinfo.c getpass.c \
-	getpwent.c getsubopt.c getttyent.c getusershell.c glob.c initgroups.c \
-	isatty.c isctype.c isinf.c mktemp.c nice.c nlist.c opendir.c \
-	pause.c popen.c psignal.c raise.c readdir.c \
+	fstab.c fts.c getcap.c getcwd.c getgrent.c getlogin.c getmntinfo.c \
+	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
+	initgroups.c isatty.c isctype.c isinf.c mktemp.c nice.c nlist.c \
+	opendir.c pause.c popen.c psignal.c raise.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setjmperr.c \
 	setmode.c setrgid.c setruid.c siginterrupt.c \
 	siglist.c signal.c sigsetops.c sleep.c syslog.c telldir.c \
@@ -39,8 +39,8 @@ SRCS+=	udiv.s urem.s
 .endif
 
 MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
-	exec.0 fnmatch.0 frexp.0 fts.0 getcwd.0 getdiskbyname.0 getfsent.0 \
-	getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
+	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
+	getfsent.0 getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
 	getttyent.0 getusershell.0 glob.0 initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
@@ -61,6 +61,10 @@ MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
 	exec.3 execvp.3
 MLINKS+=isinf.3 isnan.3
+MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
+	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
+	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
+	getcap.3 cgetustr.3
 MLINKS+=getcwd.3 getwd.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
 	getfsent.3 getfstype.3 getfsent.3 setfsent.3
