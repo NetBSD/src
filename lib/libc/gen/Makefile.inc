@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.43 1994/05/19 06:09:10 jtc Exp $
+#	$Id: Makefile.inc,v 1.44 1994/05/19 06:27:11 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -7,7 +7,7 @@
 # won't compile (missing shm.h): shmat.c shmctl.c shmdt.c shmget.c 
 
 SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
-	cuserid.c daemon.c devname.c difftime.c \
+	daemon.c devname.c difftime.c \
 	directory.c disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
 	frexp.c fstab.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
@@ -52,7 +52,7 @@ SRCS+=	_setjmp.S fabs.S frexp.c infinity.c isnan.c ldexp.c modf.S
 SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 .endif
 
-MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 \
+MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 \
 	daemon.0 devname.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
 	getbsize.0 getcap.0 getcwd.0 getdomainname.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 \
