@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.6 2001/05/28 12:40:38 lukem Exp $	*/
+/*	$NetBSD: hash.c,v 1.7 2002/01/21 19:49:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,18 +33,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.6 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: hash.c,v 1.7 2002/01/21 19:49:52 tv Exp $");
 #endif
 
 /*
  * XXX Really need a generalized hash table package
  */
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <err.h>
 
 #include "lint2.h"
 
