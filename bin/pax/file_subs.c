@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.11 1999/10/22 10:38:41 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.12 1999/10/22 10:43:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.11 1999/10/22 10:38:41 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.12 1999/10/22 10:43:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: file_subs.c,v 1.11 1999/10/22 10:38:41 mrg Exp $");
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
+#include <err.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -893,7 +894,8 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 				/*
 				 * skip, buf is empty so far
 				 */
-				if (lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
+				if (fd > -1 &&
+				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
 					syswarn(1,errno,"File seek on %s",
 					    name);
 					return(-1);
@@ -910,7 +912,18 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 		/*
 		 * have non-zero data in this file system block, have to write
 		 */
-		if (write(fd, st, wcnt) != wcnt) {
+		if (fd == -1) {
+			/* GNU hack */
+			if (gnu_hack_string)
+				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
+			gnu_hack_string = malloc(wcnt + 1);
+			if (gnu_hack_string == NULL) {
+				tty_warn(1, "Out of memory");
+				return(-1);
+			}
+			strncpy(gnu_hack_string, st, wcnt);
+			gnu_hack_string[wcnt] = 0;
+		} else if (write(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
 		}

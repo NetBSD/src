@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.12 1999/08/24 07:57:06 tron Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.13 1999/10/22 10:43:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.12 1999/08/24 07:57:06 tron Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.13 1999/10/22 10:43:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,8 @@ extract()
 	 * says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		int gnu_longlink_hack =
+		    (arcn->type == PAX_GLL || arcn->type == PAX_GLF);
 
 		if (arcn->name[0] == '/' && !check_Aflag()) {
 			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
@@ -207,16 +209,19 @@ extract()
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
 		 */
-		if ((res = pat_match(arcn)) < 0)
-			break;
+		if (!gnu_longlink_hack) {
+			if ((res = pat_match(arcn)) < 0)
+				break;
 
-		if ((res > 0) || (sel_chk(arcn) != 0)) {
-			/*
-			 * file is not selected. skip past any file data and
-			 * padding and go back for the next archive member
-			 */
-			(void)rd_skip(arcn->skip + arcn->pad);
-			continue;
+			if ((res > 0) || (sel_chk(arcn) != 0)) {
+				/*
+				 * file is not selected. skip past any file
+				 * data and padding and go back for the next
+				 * archive member
+				 */
+				(void)rd_skip(arcn->skip + arcn->pad);
+				continue;
+			}
 		}
 
 		/*
@@ -227,9 +232,10 @@ extract()
 		 * specified by pax. this operation can be confusing to the
 		 * user who might expect the test to be done on an existing
 		 * file AFTER the name mod. In honesty the pax spec is probably
-		 * flawed in this respect.
+		 * flawed in this respect.  ignore this for GNU long links.
 		 */
-		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0))) {
+		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0)) &&
+		    !gnu_longlink_hack) {
 			if (uflag && Dflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -263,9 +269,10 @@ extract()
 
 		/*
 		 * Non standard -Y and -Z flag. When the exisiting file is
-		 * same age or newer skip
+		 * same age or newer skip; ignore this for GNU long links.
 		 */
-		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
+		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0)) &&
+		    !gnu_longlink_hack) {
 			if (Yflag && Zflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -291,7 +298,8 @@ extract()
 		/*
 		 * all ok, extract this member based on type
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) {
+		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG) &&
+		    !gnu_longlink_hack) {
 			/*
 			 * process archive members that are not regular files.
 			 * throw out padding and any data that might follow the
@@ -316,7 +324,9 @@ extract()
 		 * we have a file with data here. If we can not create it, skip
 		 * over the data and purge the name from hard link table
 		 */
-		if ((fd = file_creat(arcn)) < 0) {
+		if (gnu_longlink_hack)
+			fd = -1;  /* this tells the pax internals to DTRT */
+		else if ((fd = file_creat(arcn)) < 0) {
 			(void)rd_skip(arcn->skip + arcn->pad);
 			purg_lnk(arcn);
 			continue;
@@ -326,7 +336,8 @@ extract()
 		 * any unprocessed data
 		 */
 		res = (*frmt->rd_data)(arcn, fd, &cnt);
-		file_close(arcn, fd);
+		if (!gnu_longlink_hack)
+			file_close(arcn, fd);
 		if (vflag && vfpart) {
 			(void)putc('\n', stderr);
 			vfpart = 0;
