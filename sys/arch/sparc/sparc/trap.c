@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.1 1993/10/02 10:24:30 deraadt Exp $
+ * $Id: trap.c,v 1.2 1993/10/11 02:16:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
+#include <sys/vmmeter.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -690,10 +691,10 @@ syscall(code, tf, pc, suncompat)
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 #ifdef COMPAT_SUNOS
 	if (suncompat) {
-		extern int nsunsys;
-		extern struct sysent sunsys[];
+		extern int nsun_sysent;
+		extern struct sysent sun_sysent[];
 
-		callp = sunsys, nsys = nsunsys;
+		callp = sun_sysent, nsys = nsun_sysent;
 	} else
 #endif
 		callp = sysent, nsys = nsysent;
@@ -712,6 +713,10 @@ syscall(code, tf, pc, suncompat)
 	ap = &tf->tf_out[0];
 	nap = 6;
 	switch (code) {
+
+/* TDR: fix this */
+#define SYS_syscall	0
+#define SYS___syscall	100000
 
 	case SYS_syscall:
 		code = *ap++;

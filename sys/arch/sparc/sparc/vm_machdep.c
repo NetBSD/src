@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.1 1993/10/02 10:24:32 deraadt Exp $
+ * $Id: vm_machdep.c,v 1.2 1993/10/11 02:16:27 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -248,6 +248,7 @@ cpu_fork(p1, p2)
  * Since the latter is also the interrupt stack, we release it
  * from assembly code after switching to a temporary pcb+stack.
  */
+void
 cpu_exit(p)
 	struct proc *p;
 {
@@ -265,6 +266,7 @@ cpu_exit(p)
 	/* NOTREACHED */
 }
 
+#ifdef notdef
 /*
  * cpu_coredump is called to write a core dump header.
  * (should this be defined elsewhere?  machdep.c?)
@@ -285,3 +287,4 @@ cpu_coredump(p, vp, cred)
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)up, ctob(UPAGES), (off_t)0,
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p));
 }
+#endif

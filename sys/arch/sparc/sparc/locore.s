@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.1 1993/10/02 10:24:18 deraadt Exp $
+ * $Id: locore.s,v 1.2 1993/10/11 02:16:20 deraadt Exp $
  */
 
 #define	LOCORE
@@ -2411,7 +2411,7 @@ dostart:
 	 * to return_from_trap.
 	 */
 	mov	PSR_S, %l0		! user psr
-#define XADDR 0x2000 /* XXX */
+#define XADDR 0
 	set	XADDR, %l1		! pc
 	add	%l1, 4, %l2		! npc
 	b	return_from_trap
@@ -4075,8 +4075,6 @@ ENTRY(loadfpstate)
  * Set and clear bits in the interrupt register.
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
- *
- * NB: ___main is defined here for gcc-2 idiocy.  Ignore it.
  */
 ENTRY(ienab_bis)
 	! %o0 = bits to set
@@ -4089,8 +4087,6 @@ ENTRY(ienab_bis)
 	stb	%o4, [%o3 + %lo(IE_reg_addr)]
 	wr	%o2, 0, %psr		! reenable traps
 	nop
-	.globl	___main
-___main:
 	retl
 	 nop
 

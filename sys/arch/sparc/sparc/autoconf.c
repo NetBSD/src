@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.1 1993/10/02 10:24:01 deraadt Exp $
+ * $Id: autoconf.c,v 1.2 1993/10/11 02:16:12 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -82,9 +82,12 @@ void	setroot __P((void));
 static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct dkdevice *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
-static	struct device *parsedisk __P((char *, int, int, dev_t *));
 
 struct	bootpath bootpath[8];
+
+/* TDR -- this is a hack, and the entire file needs redoing */
+extern int ufs_mountroot();
+int (*mountroot)() = ufs_mountroot;
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -439,11 +442,20 @@ mainbus_attach(parent, dev, aux)
 	struct romaux ra;
 	static const char *const special[] = {
 		/* find these first (end with empty string) */
-		"memory-error", "eeprom", "counter-timer", "",
+		"eeprom",
+		"counter-timer",
+		"memory-error",
+		"",
 
 		/* ignore these (end with NULL) */
-		"options", "packages", "openprom", "memory", "virtual-memory",
-		"interrupt-enable", NULL
+		"aliases",
+		"interrupt-enable",
+		"memory",
+		"openprom",
+		"options",
+		"packages",
+		"virtual-memory",
+		NULL
 	};
 
 	printf("\n");
@@ -722,6 +734,7 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
+#ifdef RCONSOLE
 /* Pass a string to the FORTH PROM to be interpreted */
 void
 rominterpret(s)
@@ -733,6 +746,35 @@ rominterpret(s)
 	else
 		promvec->pv_fortheval.v2_eval(s);
 }
+
+/*
+ * Try to figure out where the PROM stores the cursor row & column
+ * variables.  Returns nonzero on error.
+ */
+int
+romgetcursoraddr(rowp, colp)
+	register int **rowp, **colp;
+{
+	char buf[100];
+
+	/*
+	 * line# and column# are global in older proms (rom vector < 2)
+	 * and in some newer proms.  They are local in version 2.9.  The
+	 * correct cutoff point is unknown, as yet; we use 2.9 here.
+	 */
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+		sprintf(buf,
+		    "' line# >body >user %x ! ' column# >body >user %x !",
+		    rowp, colp);
+	else
+		sprintf(buf,
+		    "stdout @ is my-self addr line# %x ! addr column# %x !",
+		    rowp, colp);
+	*rowp = *colp = NULL;
+	rominterpret(buf);
+	return (*rowp == NULL || *colp == NULL);
+}
+#endif
 
 volatile void
 romhalt()
@@ -798,7 +840,7 @@ findblkmajor(dv)
 	return (-1);
 }
 
-static struct device *
+struct device *
 getdisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
@@ -816,26 +858,27 @@ getdisk(str, len, defpart, devp)
 	return (dv);
 }
 
-static struct device *
+struct device *
 parsedisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
 	dev_t *devp;
 {
 	register struct device *dv;
-	register char *cp;
+	register char *cp, c;
 	int majdev, mindev, part;
 
 	if (len == 0)
 		return (NULL);
 	cp = str + len - 1;
-	if (*cp >= 'a' && *cp <= 'h') {
-		part = *cp - 'a';
-		*cp-- = '\0';
+	c = *cp;
+	if (c >= 'a' && c <= 'h') {
+		part = c - 'a';
+		*cp = '\0';
 	} else
 		part = defpart;
 
-	for (dv = alldevs; dv != NULL; dv = dv->dv_next)
+	for (dv = alldevs; dv != NULL; dv = dv->dv_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 			majdev = findblkmajor((struct dkdevice *)dv);
@@ -843,10 +886,11 @@ parsedisk(str, len, defpart, devp)
 				panic("parsedisk");
 			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
 			*devp = makedev(majdev, mindev);
-			return (dv);
+			break;
 		}
+	}
 
-	return (NULL);
+	return (dv);
 }
 
 /*
@@ -862,11 +906,12 @@ setroot()
 	register int len, majdev, mindev, part;
 	dev_t nrootdev, nswapdev;
 	char buf[128];
+	extern int (*mountroot)();
 #ifdef DOSWAP
 	dev_t temp;
 #endif
-#ifdef NFS
-	extern int (*mountroot)(), nfs_mountroot();
+#if defined(NFSCLIENT)
+	extern int nfs_mountroot();
 #endif
 
 	if (boothowto & RB_ASKNAME) {
@@ -918,12 +963,9 @@ gotswap:
 
 	switch (bootdv->dv_class) {
 
-#ifdef NFS
+#if defined(NFSCLIENT)
 	case DV_IFNET:
 		mountroot = nfs_mountroot;
-#ifdef LBL
-		lbl_diskless_setup();
-#endif
 		return;
 #endif
 

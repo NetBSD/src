@@ -42,10 +42,12 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.1 1993/10/02 10:24:20 deraadt Exp $
+ * $Id: machdep.c,v 1.2 1993/10/11 02:16:23 deraadt Exp $
  */
 
 #include <sys/param.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/map.h>
@@ -57,6 +59,7 @@
 #include <sys/file.h>
 #include <sys/clist.h>
 #include <sys/callout.h>
+#include <sys/vmmeter.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -65,7 +68,7 @@
 #include <sys/shm.h>
 #endif
 #include <sys/exec.h>
-#include <sys/sysctl.h>
+/*TDR #include <sys/sysctl.h>*/
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
@@ -113,6 +116,7 @@ caddr_t allocsys();
 /*
  * Machine-dependent startup code
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -161,6 +165,11 @@ cpu_startup()
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+	if (base >= MAXBSIZE) {
+		/* don't want to alloc more physical mem than needed */
+		base = MAXBSIZE;
+		residual = 0;
+	}
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -177,12 +186,16 @@ cpu_startup()
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+
+#ifdef notdef
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16*NCARGS, TRUE);
+#endif
+
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
 	 * map, but we want one completely separate, even though it uses
@@ -212,7 +225,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -222,15 +235,9 @@ cpu_startup()
 	bufinit();
 
 	/*
-	 * Configure the system.
+	 * Configure the system.  The cpu code will turn on the cache.
 	 */
 	configure();
-
-	/*
-	 * Turn on the cache (do after configuration due to a bug in
-	 * some versions of the SPARC chips -- this info from Gilmore).
-	 */
-	cache_enable();
 }
 
 /*
@@ -284,14 +291,16 @@ allocsys(v)
  * XXX this entire mess must be fixed
  */
 /* ARGSUSED */
-setregs(p, entry, retval)
-	register struct proc *p;
+void
+setregs(p, entry, stack, retval)
+	struct proc *p;
 	u_long entry;
+	u_long stack;
 	int retval[2];
 {
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
-	register int psr, sp;
+	register int psr;
 
 	/*
 	 * The syscall will ``return'' to npc or %g7 or %g2; set them all.
@@ -299,7 +308,6 @@ setregs(p, entry, retval)
 	 * built in exec()) and psr (retain CWP and PSR_S bits).
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
-	sp = tf->tf_out[6];
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
@@ -315,8 +323,9 @@ setregs(p, entry, retval)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = entry & ~3;
-	tf->tf_out[6] = sp;
+	tf->tf_pc = entry & ~3;
+	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = (entry+4) & ~3;
+	tf->tf_out[6] = stack + 64;	/* TDR: this 64 EERK ACKK */
 	retval[1] = 0;
 }
 
@@ -373,6 +382,7 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	unsigned code;
 {
+#ifdef notdef		/* TDR: fix this */
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sigframe *fp;
@@ -476,6 +486,7 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig: about to return to catcher\n");
 #endif
+#endif /* notdef */
 }
 
 /*
@@ -496,6 +507,7 @@ sigreturn(p, uap, retval)
 	struct sigreturn_args *uap;
 	int *retval;
 {
+#ifdef notdef		/* TDR: fix this */
 	register struct sigcontext *scp;
 	register struct trapframe *tf;
 
@@ -532,10 +544,12 @@ sigreturn(p, uap, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
+#endif /* notdef */
 }
 
 int	waittime = -1;
 
+void
 boot(howto)
 	register int howto;
 {
@@ -608,7 +622,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -665,7 +679,7 @@ int
 dumpmmu(blkno)
 	register daddr_t blkno;
 {
-	register int (*dump)(/*dev_t, daddr_t, caddr_t, int*/);
+	register int (*dump)	__P((dev_t, daddr_t, caddr_t, int));
 	register int pmeg;
 	register int addr;	/* unused kernel virtual address */
 	register int i;
@@ -761,7 +775,7 @@ dumpsys()
 	register unsigned bytes, i, n;
 	register int maddr, psize;
 	register daddr_t blkno;
-	register int (*dump)(/*dev_t, daddr_t, caddr_t, int, int*/);
+	register int (*dump)	__P((dev_t, daddr_t, caddr_t, int));
 	int error = 0;
 
 	if (dumpdev == NODEV)
@@ -871,4 +885,62 @@ mapdev(phys, virt, size)
 		phys += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
 	return (ret);
+}
+
+cpu_exec_aout_makecmds(p, epp)
+struct proc *p;
+struct exec_package *epp;
+{
+	return (ENOEXEC);
+}
+
+struct sysarch_args {
+	int op;
+	char *parms;
+};
+
+sysarch(p, uap, retval)
+	struct proc *p;
+	register struct sysarch_args *uap;
+	int *retval;
+{
+	int error = 0;
+
+	switch(uap->op) {
+	default:
+		error = EINVAL;
+		break;
+	}
+	return(error);
+}
+
+int
+ptrace_set_pc(p, addr)
+struct proc *p;
+u_long addr;
+{
+	/* TDR: IMPLIMENT! */
+}
+
+int
+ptrace_getregs(p, addr)
+struct proc *p;
+u_long addr;
+{
+	/* TDR: IMPLIMENT! */
+}
+
+int
+ptrace_setregs(p, addr)
+struct proc *p;
+u_long addr;
+{
+	/* TDR: IMPLIMENT! */
+}
+
+int
+ptrace_single_step(p)
+struct proc *p;
+{
+	/* TDR: IMPLIMENT! */
 }

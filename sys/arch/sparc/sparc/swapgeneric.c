@@ -2,11 +2,14 @@
  * fake swapgeneric.c -- should do this differently.
  *
  *	@(#)swapgeneric.c	8.1 (Berkeley) 7/19/93
- * $Id: swapgeneric.c,v 1.1 1993/10/02 10:24:28 deraadt Exp $
+ * $Id: swapgeneric.c,v 1.2 1993/10/11 02:16:26 deraadt Exp $
  */
 
 #include <sys/param.h>
 #include <sys/conf.h>
+
+extern int ufs_mountroot();
+int (*mountroot)() = ufs_mountroot;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
@@ -22,4 +25,3 @@ struct	swdevt swdevt[] = {
 	{ makedev(7, 57), 0, 0 },	/* sd7b */
 	{ NODEV, 0, 0 }
 };
- * $Id: swapgeneric.c,v 1.1 1993/10/02 10:24:28 deraadt Exp $
