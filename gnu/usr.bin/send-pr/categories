@@ -9,10 +9,10 @@ port-atari
 port-hp300
 port-i386
 port-m68k
-port-mac
+port-mac68k
+port-mvme68k
 port-pc532
 port-pmax
-port-sparc
 port-sparc
 port-sun3
 port-vax
