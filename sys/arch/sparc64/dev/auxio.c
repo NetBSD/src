@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.2 2001/10/22 07:31:41 mrg Exp $	*/
+/*	$NetBSD: auxio.c,v 1.3 2001/10/23 20:59:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -133,9 +133,9 @@ void
 auxio_attach_common(sc)
 	struct auxio_softc *sc;
 {
+#ifdef BLINK
 	static int do_once = 1;
 
-#ifdef BLINK
 	/* only start one blinker */
 	if (do_once) {
 		auxio_blink(sc);
