@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.22 2000/02/03 05:27:57 jwise Exp $
+# $NetBSD: md.alpha,v 1.23 2000/02/27 23:46:04 mycroft Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -34,6 +34,7 @@
 ./usr/include/alpha/pal.h	comp-c-include
 ./usr/include/alpha/param.h	comp-c-include
 ./usr/include/alpha/pcb.h	comp-c-include
+./usr/include/alpha/pio.h	comp-c-include
 ./usr/include/alpha/pmap.h	comp-c-include
 ./usr/include/alpha/proc.h	comp-c-include
 ./usr/include/alpha/profile.h	comp-c-include
@@ -53,3 +54,8 @@
 ./usr/include/alpha/vuid_event.h	comp-c-include
 ./usr/include/alpha/z8530var.h	comp-c-include
 ./usr/include/alpha/sysarch.h	comp-c-include
+./usr/lib/libalpha.so		comp-c-shlib
+./usr/lib/libalpha.a		comp-c-lib
+./usr/lib/libalpha_p.a		comp-c-proflib
+./usr/lib/libalpha_pic.a	comp-c-piclib
+./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib
