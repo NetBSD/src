@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.127 2000/11/22 05:50:59 soren Exp $	*/
+/*	$NetBSD: uhci.c,v 1.128 2000/11/26 11:08:59 takemura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -694,7 +694,9 @@ uhci_power(int why, void *v)
 	DPRINTF(("uhci_power: sc=%p, why=%d (was %d), cmd=0x%x\n", 
 		 sc, why, sc->sc_suspend, cmd));
 
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
@@ -714,7 +716,8 @@ uhci_power(int why, void *v)
 		sc->sc_suspend = why;
 		sc->sc_bus.use_polling--;
 		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
-	} else {
+		break;
+	case PWR_RESUME:
 #ifdef DIAGNOSTIC
 		if (sc->sc_suspend == PWR_RESUME)
 			printf("uhci_power: weird, resume without suspend.\n");
@@ -744,6 +747,11 @@ uhci_power(int why, void *v)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
