@@ -1,16 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/19 20:52:11 tv Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2004/03/28 07:47:43 jmc Exp $
 
 NOOBJ=	# defined
 
 .include <bsd.own.mk>
 
-# This include file keeps the includes/build of libstdc++ separate,
-# to avoid issues like "iostream.cc" using the default ".cc:" rule
-# to build the "iostream" file (which is actually a header).
-
 .if defined(USE_NEW_TOOLCHAIN)
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
+
+.cc: # disable .cc->NULL transform
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
