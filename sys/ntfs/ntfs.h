@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.8 1999/10/25 19:08:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.9 1999/10/31 19:45:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -305,7 +305,7 @@ MALLOC_DECLARE(M_NTFSNTHASH);
 typedef int (vop_t) __P((void *));
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
-#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), 0)
+#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b))
 #define VGET(a, b, c)		vget((a), (b))
 #define VN_LOCK(a, b, c)	vn_lock((a), (b))
 #else /* !NetBSD */
