@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 2001/04/17 16:07:13 toshii Exp $	*/
+/*	$NetBSD: spl.S,v 1.4 2001/05/14 16:19:30 toshii Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -49,12 +49,6 @@
 Lcurrent_spl_level:
 	.word	_C_LABEL(current_spl_level)
 
-Lspl_masks:
-	.word	_C_LABEL(spl_masks)
-
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)
-
 ENTRY(raisespl)
 	stmfd	sp!, {r4}
 	/* Disable interrupts */
@@ -69,12 +63,6 @@ ENTRY(raisespl)
 	ble	raisespl_exit
 
 	str	r3, [r1]		/* Store the new spl level */
-
-	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r2, [r2, r3, lsl #2]
-
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
-	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
@@ -98,12 +86,6 @@ ENTRY(lowerspl)
 	bge	lowerspl_exit
 
 	str	r3, [r1]		/* Store the new spl level */
-
-	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r2, [r2, r3, lsl #2]
-
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
-	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
@@ -131,12 +113,6 @@ ENTRY(splx)
 	beq	splx_exit
 
 	str	r3, [r1]		/* Store the new spl level */
-
-	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r2, [r2, r3, lsl #2]	/* Use r4 so available later */
-
-	ldr	r1, Lspl_mask		/* Store in the current spl mask */
-	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
