@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.5 1995/04/23 10:33:26 cgd Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.6 1995/06/06 19:53:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,6 @@ int *fdp;
 	int fd;
 	char pbuf[MAXPATHLEN];
 	int error;
-	gid_t gidset[NGROUPS];
 	int i;
 
 	pbuf[0] = '/';
@@ -71,10 +70,8 @@ int *fdp;
 	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_groups[0]);
 #endif
 
-	for (i = 0; i < pcr->pcr_ngroups; i++)
-		gidset[i] = pcr->pcr_groups[i];
-
-	if (setgroups(pcr->pcr_ngroups, gidset) < 0)
+	if (setegid(pcr->pcr_gid) < 0 ||
+	    setgroups(pcr->pcr_ngroups, pcr->pcr_groups) < 0)
 		return (errno);
 
 	if (seteuid(pcr->pcr_uid) < 0)
