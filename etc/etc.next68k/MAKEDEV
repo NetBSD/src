@@ -20,7 +20,14 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.7 1999/08/25 23:06:48 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.8 1999/09/18 00:23:38 hubertf Exp $
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 # @@@ This was taken from the mac68k port.  It works, but still should
 # be reviewed for next68k device #'s --dbj
 #

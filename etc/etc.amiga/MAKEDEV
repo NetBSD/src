@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.49 1999/09/15 20:31:53 is Exp $
+#	$NetBSD: MAKEDEV,v 1.50 1999/09/18 00:23:35 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,8 +37,15 @@
 #	hp300/MAKEDEV (1/15/94), from:
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#       
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices, including local devices,
+#	all	makes all known devices, including local devices. 
 #		Tries to make the ``standard'' number of each.
 #	fd	makes fd/* for the fdescfs.
 #	floppy	devices needed for install floppies
@@ -63,7 +70,7 @@
 #	mouse*	Amiga mice
 #
 # Terminal ports:
-#	tty00	standard serial port.
+#	tty00	standard serial port
 #	ttyA*	mfc serial ports
 #	ttyB*	msc serial ports
 #	ttyC*	com style serial ports (DraCo, HyperCom)
@@ -83,18 +90,18 @@
 #		CyberVision 64 (grf5), ET4000 boards (grf6)
 #		or CyberVision 64/3D (grf7).
 #	kbd	Amiga keyboard
-#	view*	generic interface to graphic displays.
-#	lkm	loadable kernel modules interface.
-#	ipl	ip filter
+#	view*	generic interface to graphic displays
+#	lkm	loadable kernel modules interface
+#	ipl	IP filter
 #	random	Random number generator
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	audio*	one unit of the audio device. On Amiga machines, 
-#		Unit 0 is custom chip audio, if configured.
+#		Unit 0 is custom chip audio, if configured
 #
 
 # for new-style serial interfaces:
