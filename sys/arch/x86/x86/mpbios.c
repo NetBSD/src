@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.16 2003/10/21 23:22:52 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.17 2003/10/27 03:51:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.16 2003/10/21 23:22:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.17 2003/10/27 03:51:35 lukem Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -1043,7 +1043,7 @@ mpbios_int(ent, enttype, mpi)
 	struct ioapic_softc *sc = NULL, *sc2;
 
 	struct mp_intr_map *altmpi;
-	struct mp_bus *mpb;
+	struct mp_bus *mpb = NULL;	/* XXX gcc */
 
 	u_int32_t id = entry->dst_apic_id;
 	u_int32_t pin = entry->dst_apic_int;
