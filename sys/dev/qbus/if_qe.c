@@ -1,11 +1,6 @@
-/*	$NetBSD: if_qe.c,v 1.36 1999/06/06 19:26:44 ragge Exp $ */
-
+/*      $NetBSD: if_qe.c,v 1.37 1999/06/20 00:04:47 ragge Exp $ */
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Digital Equipment Corp.
+ * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,273 +12,119 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed at Ludd, University of 
+ *      Lule}, Sweden and its contributors.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)if_qe.c	7.20 (Berkeley) 3/28/91
- */
-
-/* from	 @(#)if_qe.c	1.15	(ULTRIX)	4/16/86 */
-
-/****************************************************************
- *								*
- *	  Licensed from Digital Equipment Corporation		*
- *			 Copyright (c)				*
- *		 Digital Equipment Corporation			*
- *		     Maynard, Massachusetts			*
- *			   1985, 1986				*
- *		      All rights reserved.			*
- *								*
- *	  The Information in this software is subject to change *
- *   without notice and should not be construed as a commitment *
- *   by	 Digital  Equipment  Corporation.   Digital   makes  no *
- *   representations about the suitability of this software for *
- *   any purpose.  It is supplied "As Is" without expressed  or *
- *   implied  warranty.						*
- *								*
- *	  If the Regents of the University of California or its *
- *   licensees modify the software in a manner creating		*
- *   derivative copyright rights, appropriate copyright		*
- *   legends may be placed on the derivative work in addition	*
- *   to that set forth above.					*
- *								*
- ****************************************************************/
-/* ---------------------------------------------------------------------
- * Modification History
- *
- * 15-Apr-86  -- afd
- *	Rename "unused_multi" to "qunused_multi" for extending Generic
- *	kernel to MicroVAXen.
- *
- * 18-mar-86  -- jaw	 br/cvec changed to NOT use registers.
- *
- * 12 March 86 -- Jeff Chase
- *	Modified to handle the new MCLGET macro
- *	Changed if_qe_data.c to use more receive buffers
- *	Added a flag to poke with adb to log qe_restarts on console
- *
- * 19 Oct 85 -- rjl
- *	Changed the watch dog timer from 30 seconds to 3.  VMS is using
- *	less than 1 second in their's. Also turned the printf into an
- *	mprintf.
- *
- *  09/16/85 -- Larry Cohen
- *		Add 43bsd alpha tape changes for subnet routing
- *
- *  1 Aug 85 -- rjl
- *	Panic on a non-existent memory interrupt and the case where a packet
- *	was chained.  The first should never happen because non-existant
- *	memory interrupts cause a bus reset. The second should never happen
- *	because we hang 2k input buffers on the device.
- *
- *  1 Aug 85 -- rich
- *	Fixed the broadcast loopback code to handle Clusters without
- *	wedging the system.
- *
- *  27 Feb. 85 -- ejf
- *	Return default hardware address on ioctl request.
- *
- *  12 Feb. 85 -- ejf
- *	Added internal extended loopback capability.
- *
- *  27 Dec. 84 -- rjl
- *	Fixed bug that caused every other transmit descriptor to be used
- *	instead of every descriptor.
- *
- *  21 Dec. 84 -- rjl
- *	Added watchdog timer to mask hardware bug that causes device lockup.
- *
- *  18 Dec. 84 -- rjl
- *	Reworked driver to use q-bus mapping routines.	MicroVAX-I now does
- *	copying instead of m-buf shuffleing.
- *	A number of deficencies in the hardware/firmware were compensated
- *	for. See comments in qestart and qerint.
- *
- *  14 Nov. 84 -- jf
- *	Added usage counts for multicast addresses.
- *	Updated general protocol support to allow access to the Ethernet
- *	header.
- *
- *  04 Oct. 84 -- jf
- *	Added support for new ioctls to add and delete multicast addresses
- *	and set the physical address.
- *	Add support for general protocols.
- *
- *  14 Aug. 84 -- rjl
- *	Integrated Shannon changes. (allow arp above 1024 and ? )
- *
- *  13 Feb. 84 -- rjl
- *
- *	Initial version of driver. derived from IL driver.
- *
- * ---------------------------------------------------------------------
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Digital Q-BUS to NI Adapter
- * supports DEQNA and DELQA in DEQNA-mode.
+ * Driver for DEQNA/DELQA ethernet cards.
+ * Things that is still to do:
+ *	Have a timeout check for hang transmit logic.
+ *	Handle ubaresets. Does not work at all right now.
+ *	Fix ALLMULTI reception. But someone must tell me how...
+ *	Collect statistics.
  */
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/sockio.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-#ifdef INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
-#endif
-
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
 
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/rpb.h>
+#include <machine/bus.h>
 
-#include <vax/if/if_qereg.h>
-#include <vax/if/if_uba.h>
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/qbus/ubavar.h>
+#include <dev/qbus/if_qereg.h>
 
-#define NRCV	15			/* Receive descriptors		*/
-#define NXMT	5			/* Transmit descriptors		*/
-#define NTOT	(NXMT + NRCV)
+#include "ioconf.h"
 
-#define QETIMEOUT	2		/* transmit timeout, must be > 1 */
-#define QESLOWTIMEOUT	40		/* timeout when no xmits in progress */
-
-#define MINDATA 60
+#define RXDESCS	30	/* # of receive descriptors */
+#define TXDESCS	60	/* # transmit descs */
 
 /*
- * Ethernet software status per interface.
- *
- * Each interface is referenced by a network interface structure,
- * qe_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, its address, ...
+ * Structure containing the elements that must be in DMA-safe memory.
  */
-struct	qe_softc {
-	struct	device qe_dev;		/* Configuration common part	*/
-	struct	ethercom qe_ec;		/* Ethernet common part		*/
-#define qe_if	qe_ec.ec_if		/* network-visible interface	*/
-	struct	ifubinfo qe_uba;	/* Q-bus resources		*/
-	struct	ifrw qe_ifr[NRCV];	/*	for receive buffers;	*/
-	struct	ifxmt qe_ifw[NXMT];	/*	for xmit buffers;	*/
-	struct	qedevice *qe_vaddr;
-	int	qe_flags;		/* software state		*/
-#define QEF_RUNNING	0x01
-#define QEF_SETADDR	0x02
-#define QEF_FASTTIMEO	0x04
-	int	setupaddr;		/* mapping info for setup pkts	*/
-	int	ipl;			/* interrupt priority		*/
-	struct	qe_ring *rringaddr;	/* mapping info for rings	*/
-	struct	qe_ring *tringaddr;	/*	 ""			*/
-	struct	qe_ring rring[NRCV+1];	/* Receive ring descriptors	*/
-	struct	qe_ring tring[NXMT+1];	/* Xmit ring descriptors	*/
-	u_char	setup_pkt[16][8];	/* Setup packet			*/
-	int	rindex;			/* Receive index		*/
-	int	tindex;			/* Transmit index		*/
-	int	otindex;		/* Old transmit index		*/
-	int	qe_intvec;		/* Interrupt vector		*/
-	struct	qedevice *addr;		/* device addr			*/
-	int	setupqueued;		/* setup packet queued		*/
-	int	setuplength;		/* length of setup packet	*/
-	int	nxmit;			/* Transmits in progress	*/
-	int	qe_restarts;		/* timeouts			*/
+struct qe_cdata {
+	struct qe_ring	qc_recv[RXDESCS+1];	/* Receive descriptors */
+	struct qe_ring	qc_xmit[TXDESCS+1];	/* Transmit descriptors */
+	u_int8_t	qc_setup[128];		/* Setup packet layout */
 };
 
-int	qematch __P((struct device *, struct cfdata *, void *));
-void	qeattach __P((struct device *, struct device *, void *));
-void	qereset __P((int));
-void	qeinit __P((struct qe_softc *));
-void	qestart __P((struct ifnet *));
-void	qeintr __P((int));
-void	qetint __P((int));
-void	qerint __P((int));
-int	qeioctl __P((struct ifnet *, u_long, caddr_t));
-void	qe_setaddr __P((u_char *, struct qe_softc *));
-void	qeinitdesc __P((struct qe_ring *, caddr_t, int));
-void	qesetup __P((struct qe_softc *));
-void	qeread __P((struct qe_softc *, struct ifrw *, int));
-void	qetimeout __P((struct ifnet *));
-void	qerestart __P((struct qe_softc *));
+struct	qe_softc {
+	struct device	sc_dev;		/* Configuration common part	*/
+	struct ethercom sc_ec;		/* Ethernet common part		*/
+#define sc_if	sc_ec.ec_if		/* network-visible interface	*/
+	bus_space_tag_t sc_iot;
+	bus_addr_t	sc_ioh;
+	bus_dma_tag_t	sc_dmat;
+	struct qe_cdata *sc_qedata;	/* Descriptor struct		*/
+	struct qe_cdata *sc_pqedata;	/* Unibus address of above	*/
+	bus_dmamap_t	sc_cmap;	/* Map for control structures	*/
+	struct mbuf*	sc_txmbuf[TXDESCS];
+	struct mbuf*	sc_rxmbuf[RXDESCS];
+	bus_dmamap_t	sc_xmtmap[TXDESCS];
+	bus_dmamap_t	sc_rcvmap[RXDESCS];
+	int		sc_intvec;	/* Interrupt vector		*/
+	int		sc_nexttx;
+	int		sc_inq;
+	int		sc_lastack;
+	int		sc_nextrx;
+	int		sc_setup;	/* Setup packet in queue	*/
+};
+
+static	int	qematch __P((struct device *, struct cfdata *, void *));
+static	void	qeattach __P((struct device *, struct device *, void *));
+static	void	qeinit __P((struct qe_softc *));
+static	void	qestart __P((struct ifnet *));
+static	void	qeintr __P((int));
+static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
+static	int	qe_add_rxbuf __P((struct qe_softc *, int));
+static	void	qe_setup __P((struct qe_softc *));
 
 struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
 
-extern struct cfdriver qe_cd;
+#define	QE_WCSR(csr, val) \
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
+#define	QE_RCSR(csr) \
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, csr)
 
-#define QEUNIT(x)	minor(x)
-/*
- * The deqna shouldn't receive more than ETHERMTU + sizeof(struct ether_header)
- * but will actually take in up to 2048 bytes. To guard against the receiver
- * chaining buffers (which we aren't prepared to handle) we allocate 2kb
- * size buffers.
- */
-#define MAXPACKETSIZE 2048		/* Should really be ETHERMTU	*/
+#define	LOWORD(x)	((int)(x) & 0xffff)
+#define	HIWORD(x)	(((int)(x) >> 16) & 0x3f)
 
 /*
- * Probe the QNA to see if it's there
+ * Check for present DEQNA. Done by sending a fake setup packet
+ * and wait for interrupt.
  */
 int
 qematch(parent, cf, aux)
@@ -291,78 +132,77 @@ qematch(parent, cf, aux)
 	struct	cfdata *cf;
 	void	*aux;
 {
-	struct	qe_softc sc;
+	bus_dmamap_t	cmap;
+	struct	qe_softc ssc;
+	struct	qe_softc *sc = &ssc;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+
+#define	PROBESIZE	(sizeof(struct qe_ring) * 4 + 128)
+	struct	qe_ring ring[15]; /* For diag purposes only */
 	struct	qe_ring *rp;
-	struct	qe_ring *prp;	/* physical rp		*/
-	volatile struct qedevice *addr = (struct qedevice *)ua->ua_addr;
-	int i;
+	int error;
+
+	bzero(sc, sizeof(struct qe_softc));
+	bzero(ring, PROBESIZE);
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
+	sc->sc_dmat = ua->ua_dmat;
+
+	ubasc->uh_lastiv -= 4;
+	QE_WCSR(QE_CSR_CSR, QE_RESET);
+	QE_WCSR(QE_CSR_VECTOR, ubasc->uh_lastiv);
 
 	/*
-	 * The QNA interrupts on i/o operations. To do an I/O operation
-	 * we have to setup the interface by transmitting a setup  packet.
+	 * Map the ring area. Actually this is done only to be able to 
+	 * send and receive a internal packet; some junk is loopbacked
+	 * so that the DEQNA has a reason to interrupt.
 	 */
-
-	addr->qe_csr = QE_RESET;
-	addr->qe_csr &= ~QE_RESET;
-	addr->qe_vector = (ubasc->uh_lastiv -= 4);
-
-	bzero(&sc, sizeof(struct qe_softc));
-	/*
-	 * Map the communications area and the setup packet.
-	 */
-	sc.setupaddr =
-	    uballoc(ubasc, (caddr_t)sc.setup_pkt, sizeof(sc.setup_pkt), 0);
-	sc.rringaddr = (struct qe_ring *) uballoc(ubasc, (caddr_t)sc.rring,
-	    sizeof(struct qe_ring) * (NTOT+2), 0);
-	prp = (struct qe_ring *)UBAI_ADDR((int)sc.rringaddr);
+	if ((error = bus_dmamap_create(sc->sc_dmat, PROBESIZE, 1, PROBESIZE, 0,
+	    BUS_DMA_NOWAIT, &cmap))) {
+		printf("qematch: bus_dmamap_create failed = %d\n", error);
+		return 0;
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, cmap, ring, PROBESIZE, 0,
+	    BUS_DMA_NOWAIT))) {
+		printf("qematch: bus_dmamap_load failed = %d\n", error);
+		bus_dmamap_destroy(sc->sc_dmat, cmap);
+		return 0;
+	}
 
 	/*
-	 * The QNA will loop the setup packet back to the receive ring
-	 * for verification, therefore we initialize the first
-	 * receive & transmit ring descriptors and link the setup packet
-	 * to them.
+	 * Init a simple "fake" receive and transmit descriptor that
+	 * points to some unused area. Send a fake setup packet.
 	 */
-	qeinitdesc(sc.tring, (caddr_t)UBAI_ADDR(sc.setupaddr),
-	    sizeof(sc.setup_pkt));
-	qeinitdesc(sc.rring, (caddr_t)UBAI_ADDR(sc.setupaddr),
-	    sizeof(sc.setup_pkt));
+	rp = (void *)cmap->dm_segs[0].ds_addr;
+	ring[0].qe_flag = ring[0].qe_status1 = QE_NOTYET;
+	ring[0].qe_addr_lo = LOWORD(&rp[4]);
+	ring[0].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID | QE_EOMSG | QE_SETUP;
+	ring[0].qe_buf_len = 128;
 
-	rp = (struct qe_ring *)sc.tring;
-	rp->qe_setup = 1;
-	rp->qe_eomsg = 1;
-	rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-	rp->qe_valid = 1;
+	ring[2].qe_flag = ring[2].qe_status1 = QE_NOTYET;
+	ring[2].qe_addr_lo = LOWORD(&rp[4]);
+	ring[2].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID;
+	ring[2].qe_buf_len = 128;
 
-	rp = (struct qe_ring *)sc.rring;
-	rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-	rp->qe_valid = 1;
+	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
+	DELAY(1000);
 
-	/*
-	 * Get the addr off of the interface and place it into the setup
-	 * packet. This code looks strange due to the fact that the address
-	 * is placed in the setup packet in col. major order.
-	 */
-	for (i = 0; i < 6; i++)
-		sc.setup_pkt[i][1] = addr->qe_sta_addr[i];
-
-	qesetup(&sc);
 	/*
 	 * Start the interface and wait for the packet.
 	 */
-	addr->qe_csr = QE_INT_ENABLE | QE_XMIT_INT | QE_RCV_INT;
-	addr->qe_rcvlist_lo = (short)((int)prp);
-	addr->qe_rcvlist_hi = (short)((int)prp >> 16);
-	prp += NRCV+1;
-	addr->qe_xmtlist_lo = (short)((int)prp);
-	addr->qe_xmtlist_hi = (short)((int)prp >> 16);
+	QE_WCSR(QE_CSR_CSR, QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
+	QE_WCSR(QE_CSR_RCLL, LOWORD(&rp[2]));
+	QE_WCSR(QE_CSR_RCLH, HIWORD(&rp[2]));
+	QE_WCSR(QE_CSR_XMTL, LOWORD(rp));
+	QE_WCSR(QE_CSR_XMTH, HIWORD(rp));
 	DELAY(10000);
+
 	/*
 	 * All done with the bus resources.
 	 */
-	ubarelse(ubasc, &sc.setupaddr);
-	ubarelse(ubasc, (int *)&sc.rringaddr);
+	bus_dmamap_unload(sc->sc_dmat, cmap);
+	bus_dmamap_destroy(sc->sc_dmat, cmap);
 	ua->ua_ivec = qeintr;
 	return 1;
 }
@@ -378,67 +218,183 @@ qeattach(parent, self, aux)
 	void	*aux;
 {
 	struct	uba_attach_args *ua = aux;
+	struct	uba_softc *ubasc = (struct uba_softc *)parent;
 	struct	qe_softc *sc = (struct qe_softc *)self;
-	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	struct qedevice *addr =(struct qedevice *)ua->ua_addr;
-	int i;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	struct	ifnet *ifp = (struct ifnet *)&sc->sc_if;
+	struct	qe_ring *rp;
+	u_int8_t enaddr[ETHER_ADDR_LEN];
+	bus_dma_segment_t seg;
+	int i, rseg, error;
 
-	printf("\n");
-	sc->ipl = 0x15;
-	sc->qe_vaddr = addr;
-	bcopy(sc->qe_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_softc = sc;
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
+	sc->sc_dmat = ua->ua_dmat;
+
+        /*
+         * Allocate DMA safe memory for descriptors and setup memory.
+         */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof(struct qe_cdata), NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to allocate control data, error = %d\n",
+		    error);
+		goto fail_0;
+	}
+
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct qe_cdata), (caddr_t *)&sc->sc_qedata,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf(": unable to map control data, error = %d\n", error);
+		goto fail_1;
+	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct qe_cdata), 1,
+	    sizeof(struct qe_cdata), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_cmap)) != 0) {
+		printf(": unable to create control data DMA map, error = %d\n",
+		    error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
+	    sc->sc_qedata, sizeof(struct qe_cdata), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf(": unable to load control data DMA map, error = %d\n",
+		    error);
+		goto fail_3;
+	}
+
 	/*
-	 * The Deqna is cable of transmitting broadcasts, but
-	 * doesn't listen to its own.
+	 * Zero the newly allocated memory.
 	 */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	bzero(sc->sc_qedata, sizeof(struct qe_cdata));
+	/*
+	 * Create the transmit descriptor DMA maps. We take advantage
+	 * of the fact that the Qbus address space is big, and therefore 
+	 * allocate map registers for all transmit descriptors also,
+	 * so that we can avoid this each time we send a packet.
+	 */
+	for (i = 0; i < TXDESCS; i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    &sc->sc_xmtmap[i]))) {
+			printf(": unable to create tx DMA map %d, error = %d\n",
+			    i, error);
+			goto fail_4;
+		}
+	}
 
 	/*
-	 * Read the address from the prom and save it.
+	 * Create receive buffer DMA maps.
+	 */
+	for (i = 0; i < RXDESCS; i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_rcvmap[i]))) {
+			printf(": unable to create rx DMA map %d, error = %d\n",
+			    i, error);
+			goto fail_5;
+		}
+	}
+	/*
+	 * Pre-allocate the receive buffers.
+	 */
+	for (i = 0; i < RXDESCS; i++) {
+		if ((error = qe_add_rxbuf(sc, i)) != 0) {
+			printf(": unable to allocate or map rx buffer %d\n,"
+			    " error = %d\n", i, error);
+			goto fail_6;
+		}
+	}
+
+	/*
+	 * Create ring loops of the buffer chains.
+	 * This is only done once.
+	 */
+	sc->sc_pqedata = (struct qe_cdata *)sc->sc_cmap->dm_segs[0].ds_addr;
+
+	rp = sc->sc_qedata->qc_recv;
+	rp[RXDESCS].qe_addr_lo = LOWORD(&sc->sc_pqedata->qc_recv[0]);
+	rp[RXDESCS].qe_addr_hi = HIWORD(&sc->sc_pqedata->qc_recv[0]) |
+	    QE_VALID | QE_CHAIN;
+	rp[RXDESCS].qe_flag = rp[RXDESCS].qe_status1 = QE_NOTYET;
+
+	rp = sc->sc_qedata->qc_xmit;
+	rp[TXDESCS].qe_addr_lo = LOWORD(&sc->sc_pqedata->qc_xmit[0]);
+	rp[TXDESCS].qe_addr_hi = HIWORD(&sc->sc_pqedata->qc_xmit[0]) |
+	    QE_VALID | QE_CHAIN;
+	rp[TXDESCS].qe_flag = rp[TXDESCS].qe_status1 = QE_NOTYET;
+
+	/*
+	 * Get the vector that were set at match time, and remember it.
+	 */
+	sc->sc_intvec = ubasc->uh_lastiv;
+	QE_WCSR(QE_CSR_CSR, QE_RESET);
+	DELAY(1000);
+	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
+
+	/*
+	 * Read out ethernet address and tell which type this card is.
 	 */
 	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = myaddr[i] =
-		    addr->qe_sta_addr[i] & 0xff;
-	addr->qe_vector |= 1;
-	printf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
-		addr->qe_vector&01 ? "delqa":"deqna",
-		ether_sprintf(myaddr));
-	addr->qe_vector &= ~1;
+		enaddr[i] = QE_RCSR(i * 2) & 0xff;
 
-	/*
-	 * Save the vector for initialization at reset time.
-	 */
-	sc->qe_intvec = addr->qe_vector;
+	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec | 1);
+	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname,
+		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa":"deqna",
+		ether_sprintf(enaddr));
 
+	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
+
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
-	ifp->if_watchdog = qetimeout;
-	sc->qe_uba.iff_flags = UBA_CANTWAIT;
+
+	/*
+	 * Attach the interface.
+	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, myaddr);
+	ether_ifattach(ifp, enaddr);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	if (B_TYPE(bootdev) == BDEV_QE)
-		booted_from = self;
-}
+	return;
 
-/*
- * Reset of interface after UNIBUS reset.
- */
-void
-qereset(unit)
-	int unit;
-{
-	struct	qe_softc *sc = qe_cd.cd_devs[unit];
-
-	printf(" %s", sc->qe_dev.dv_xname);
-	sc->qe_if.if_flags &= ~IFF_RUNNING;
-	qeinit(sc);
+	/*
+	 * Free any resources we've allocated during the failed attach
+	 * attempt.  Do this in reverse order and fall through.
+	 */
+ fail_6:
+	for (i = 0; i < RXDESCS; i++) {
+		if (sc->sc_rxmbuf[i] != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+			m_freem(sc->sc_rxmbuf[i]);
+		}
+	}
+ fail_5:
+	for (i = 0; i < RXDESCS; i++) {
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
+	}
+ fail_4:
+	for (i = 0; i < TXDESCS; i++) {
+		if (sc->sc_rcvmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmap);
+ fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_qedata,
+	    sizeof(struct qe_cdata));
+ fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+ fail_0:
+	return;
 }
 
 /*
@@ -448,349 +404,249 @@ void
 qeinit(sc)
 	struct qe_softc *sc;
 {
-	struct qedevice *addr = sc->qe_vaddr;
-	struct uba_softc *ubasc = (void *)sc->qe_dev.dv_parent;
-	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
+	struct qe_cdata *qc = sc->sc_qedata;
 	int i;
-	int s;
 
-	/* address not known */
-	if (ifp->if_addrlist.tqh_first == (struct ifaddr *)0)
-			return;
-	if (sc->qe_flags & QEF_RUNNING)
-		return;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		/*
-		 * map the communications area onto the device
-		 */
-		i = uballoc(ubasc, (caddr_t)sc->rring,
-		    sizeof(struct qe_ring) * (NTOT+2), 0);
-		if (i == 0)
-			goto fail;
-		sc->rringaddr = (struct qe_ring *)UBAI_ADDR(i);
-		sc->tringaddr = sc->rringaddr + NRCV + 1;
-		i = uballoc(ubasc, (caddr_t)sc->setup_pkt,
-		    sizeof(sc->setup_pkt), 0);
-		if (i == 0)
-			goto fail;
-		sc->setupaddr = UBAI_ADDR(i);
-		/*
-		 * init buffers and maps
-		 */
-		if (if_ubaminit(&sc->qe_uba, (void *)sc->qe_dev.dv_parent,
-		    sizeof (struct ether_header), (int)vax_btoc(MAXPACKETSIZE),
-		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
-	fail:
-			printf("%s: can't allocate uba resources\n", 
-			    sc->qe_dev.dv_xname);
-			sc->qe_if.if_flags &= ~IFF_UP;
-			return;
+	/*
+	 * Reset the interface.
+	 */
+	QE_WCSR(QE_CSR_CSR, QE_RESET);
+	DELAY(1000);
+	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
+	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec);
+
+	sc->sc_nexttx = sc->sc_inq = sc->sc_lastack = 0;
+	/*
+	 * Release and init transmit descriptors.
+	 */
+	for (i = 0; i < TXDESCS; i++) {
+		if (sc->sc_txmbuf[i]) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+			m_freem(sc->sc_txmbuf[i]);
+			sc->sc_txmbuf[i] = 0;
 		}
+		qc->qc_xmit[i].qe_addr_hi = 0; /* Clear valid bit */
+		qc->qc_xmit[i].qe_status1 = qc->qc_xmit[i].qe_flag = QE_NOTYET;
 	}
-	/*
-	 * Init the buffer descriptors and indexes for each of the lists and
-	 * loop them back to form a ring.
-	 */
-	for (i = 0; i < NRCV; i++) {
-		qeinitdesc( &sc->rring[i],
-		    (caddr_t)UBAI_ADDR(sc->qe_ifr[i].ifrw_info), MAXPACKETSIZE);
-		sc->rring[i].qe_flag = sc->rring[i].qe_status1 = QE_NOTYET;
-		sc->rring[i].qe_valid = 1;
-	}
-	qeinitdesc(&sc->rring[i], (caddr_t)NULL, 0);
 
-	sc->rring[i].qe_addr_lo = (short)((int)sc->rringaddr);
-	sc->rring[i].qe_addr_hi = (short)((int)sc->rringaddr >> 16);
-	sc->rring[i].qe_chain = 1;
-	sc->rring[i].qe_flag = sc->rring[i].qe_status1 = QE_NOTYET;
-	sc->rring[i].qe_valid = 1;
-
-	for( i = 0 ; i <= NXMT ; i++ )
-		qeinitdesc(&sc->tring[i], (caddr_t)NULL, 0);
-	i--;
-
-	sc->tring[i].qe_addr_lo = (short)((int)sc->tringaddr);
-	sc->tring[i].qe_addr_hi = (short)((int)sc->tringaddr >> 16);
-	sc->tring[i].qe_chain = 1;
-	sc->tring[i].qe_flag = sc->tring[i].qe_status1 = QE_NOTYET;
-	sc->tring[i].qe_valid = 1;
-
-	sc->nxmit = sc->otindex = sc->tindex = sc->rindex = 0;
 
 	/*
-	 * Take the interface out of reset, program the vector,
-	 * enable interrupts, and tell the world we are up.
+	 * Init receive descriptors.
 	 */
-	s = splnet();
-	addr->qe_vector = sc->qe_intvec;
-	sc->addr = addr;
-	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
-	    QE_RCV_INT | QE_ILOOP;
-	addr->qe_rcvlist_lo = (short)((int)sc->rringaddr);
-	addr->qe_rcvlist_hi = (short)((int)sc->rringaddr >> 16);
-	ifp->if_flags |= IFF_UP | IFF_RUNNING;
-	sc->qe_flags |= QEF_RUNNING;
-	qesetup( sc );
-	qestart( ifp );
-	sc->qe_if.if_timer = QESLOWTIMEOUT;	/* Start watchdog */
-	splx( s );
+	for (i = 0; i < RXDESCS; i++)
+		qc->qc_recv[i].qe_status1 = qc->qc_recv[i].qe_flag = QE_NOTYET;
+	sc->sc_nextrx = 0;
+
+	/*
+	 * Write the descriptor addresses to the device.
+	 * Receiving packets will be enabled in the interrupt routine.
+	 */
+	QE_WCSR(QE_CSR_CSR, QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
+	QE_WCSR(QE_CSR_RCLL, LOWORD(sc->sc_pqedata->qc_recv));
+	QE_WCSR(QE_CSR_RCLH, HIWORD(sc->sc_pqedata->qc_recv));
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/*
+	 * Send a setup frame.
+	 * This will start the transmit machinery as well.
+	 */
+	qe_setup(sc);
+
 }
 
 /*
  * Start output on interface.
- *
  */
 void
 qestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct qe_softc *sc = ifp->if_softc;
-	volatile struct qedevice *addr = sc->qe_vaddr;
-	register struct qe_ring *rp;
-	register int index;
-	struct mbuf *m;
-	int buf_addr, len, s;
+	struct qe_softc *sc = ifp->if_softc;
+	struct qe_cdata *qc = sc->sc_qedata;
+	paddr_t	buffer;
+	struct mbuf *m, *m0;
+	int idx, len, s, i, oldidx = 0;
+	short orword;
 
+	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
+		return;
 
-	s = splnet();
-	/*
-	 * The deqna doesn't look at anything but the valid bit
-	 * to determine if it should transmit this packet. If you have
-	 * a ring and fill it the device will loop indefinately on the
-	 * packet and continue to flood the net with packets until you
-	 * break the ring. For this reason we never queue more than n-1
-	 * packets in the transmit ring.
-	 *
-	 * The microcoders should have obeyed their own defination of the
-	 * flag and status words, but instead we have to compensate.
-	 */
-	for( index = sc->tindex;
-		sc->tring[index].qe_valid == 0 && sc->nxmit < (NXMT-1) ;
-		sc->tindex = index = ++index % NXMT){
-		rp = &sc->tring[index];
-		if( sc->setupqueued ) {
-			buf_addr = sc->setupaddr;
-			len = sc->setuplength;
-			rp->qe_setup = 1;
-			sc->setupqueued = 0;
-		} else {
-			IF_DEQUEUE(&sc->qe_if.if_snd, m);
-			if (m == 0) {
-				splx(s);
-				return;
-			}
+	s = splimp();
+	while (sc->sc_inq < (TXDESCS - 1)) {
+
+		if (sc->sc_setup) {
+			qe_setup(sc);
+			continue;
+		}
+		idx = sc->sc_nexttx;
+		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		if (m == 0)
+			goto out;
+		/*
+		 * Count number of mbufs in chain.
+		 * Always do DMA directly from mbufs, therefore the transmit
+		 * ring is really big.
+		 */
+		for (m0 = m, i = 0; m0; m0 = m0->m_next)
+			i++;
+		if (i >= TXDESCS)
+			panic("qestart");
+
+		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
+			IF_PREPEND(&sc->sc_if.if_snd, m);
+			goto out;
+		}
+		
 #if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
 #endif
-			buf_addr = sc->qe_ifw[index].ifw_info;
-			len = if_ubaput(&sc->qe_uba, &sc->qe_ifw[index], m);
-		}
-		if( len < MINDATA )
-			len = MINDATA;
 		/*
-		 *  Does buffer end on odd byte ?
+		 * m now points to a mbuf chain that can be loaded.
+		 * Loop around and set it.
 		 */
-		if( len & 1 ) {
-			len++;
-			rp->qe_odd_end = 1;
+		for (m0 = m; m0; m0 = m0->m_next) {
+			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
+			    mtod(m0, void *), m0->m_len, 0, 0);
+			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
+			len = m0->m_len;
+
+			/* Word alignment calc */
+			orword = 0;
+			if (!m0->m_next) {
+				if (m->m_pkthdr.len < ETHER_MIN_LEN)
+					len += (ETHER_MIN_LEN -
+					    m->m_pkthdr.len);
+				orword |= QE_EOMSG;
+			}
+			if ((buffer & 1) || (len & 1))
+				len += 2;
+			if (buffer & 1)
+				orword |= QE_ODDBEGIN;
+			if ((buffer + len) & 1)
+				orword |= QE_ODDEND;
+			qc->qc_xmit[idx].qe_buf_len = -(len/2);
+			qc->qc_xmit[idx].qe_addr_lo = LOWORD(buffer);
+			qc->qc_xmit[idx].qe_addr_hi = HIWORD(buffer);
+			qc->qc_xmit[idx].qe_flag =
+			    qc->qc_xmit[idx].qe_status1 = QE_NOTYET;
+			qc->qc_xmit[idx].qe_addr_hi |= (QE_VALID | orword);
+			oldidx = idx;
+			if (++idx == TXDESCS)
+				idx = 0;
+			sc->sc_inq++;
 		}
-		rp->qe_buf_len = -(len/2);
-		buf_addr = UBAI_ADDR(buf_addr);
-		rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-		rp->qe_addr_lo = (short)buf_addr;
-		rp->qe_addr_hi = (short)(buf_addr >> 16);
-		rp->qe_eomsg = 1;
-		rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-		rp->qe_valid = 1;
-		if (sc->nxmit++ == 0) {
-			sc->qe_flags |= QEF_FASTTIMEO;
-			sc->qe_if.if_timer = QETIMEOUT;
-		}
+		sc->sc_txmbuf[oldidx] = m;
 
 		/*
-		 * See if the xmit list is invalid.
+		 * Kick off the transmit logic, if it is stopped.
 		 */
-		if( addr->qe_csr & QE_XL_INVALID ) {
-			buf_addr = (int)(sc->tringaddr+index);
-			addr->qe_xmtlist_lo = (short)buf_addr;
-			addr->qe_xmtlist_hi = (short)(buf_addr >> 16);
+		if (QE_RCSR(QE_CSR_CSR) & QE_XL_INVALID) {
+			QE_WCSR(QE_CSR_XMTL,
+			    LOWORD(&sc->sc_pqedata->qc_xmit[sc->sc_nexttx]));
+			QE_WCSR(QE_CSR_XMTH,
+			    HIWORD(&sc->sc_pqedata->qc_xmit[sc->sc_nexttx]));
 		}
+		sc->sc_nexttx = idx;
 	}
-	splx(s);
-	return;
+	if (sc->sc_inq == (TXDESCS - 1))
+		ifp->if_flags |= IFF_OACTIVE;
+out:	splx(s);
 }
 
-/*
- * Ethernet interface interrupt processor
- */
 void
 qeintr(unit)
 	int	unit;
 {
-	register struct qe_softc *sc;
-	volatile struct qedevice *addr;
-	int buf_addr, csr;
+	struct qe_softc *sc = qe_cd.cd_devs[unit];
+	struct qe_cdata *qc = sc->sc_qedata;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ether_header *eh;
+	struct mbuf *m;
+	int csr, status1, status2, len;
 
-	sc = qe_cd.cd_devs[unit];
-	addr = sc->qe_vaddr;
-	splx(sc->ipl);
-	if (!(sc->qe_flags & QEF_FASTTIMEO))
-		sc->qe_if.if_timer = QESLOWTIMEOUT; /* Restart timer clock */
-	csr = addr->qe_csr;
-	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE |
-	    QE_XMIT_INT | QE_RCV_INT | QE_ILOOP;
+	csr = QE_RCSR(QE_CSR_CSR);
+
+	QE_WCSR(QE_CSR_CSR, QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
+	    QE_RCV_INT | QE_ILOOP);
+
 	if (csr & QE_RCV_INT)
-		qerint(unit);
-	if (csr & QE_XMIT_INT)
-		qetint(unit );
-	if (csr & QE_NEX_MEM_INT)
-		printf("qe%d: Nonexistent memory interrupt\n", unit);
-
-	if (addr->qe_csr & QE_RL_INVALID && sc->rring[sc->rindex].qe_status1 ==
-	    QE_NOTYET) {
-		buf_addr = (int)&sc->rringaddr[sc->rindex];
-		addr->qe_rcvlist_lo = (short)buf_addr;
-		addr->qe_rcvlist_hi = (short)(buf_addr >> 16);
-	}
-}
-
-/*
- * Ethernet interface transmit interrupt.
- */
-void
-qetint(unit)
-	int unit;
-{
-	register struct qe_softc *sc = qe_cd.cd_devs[unit];
-	register struct qe_ring *rp;
-	register struct ifxmt *ifxp;
-	int status1, setupflag;
-	short len;
-
-
-	while (sc->otindex != sc->tindex && sc->tring[sc->otindex].qe_status1
-	    != QE_NOTYET && sc->nxmit > 0) {
-		/*
-		 * Save the status words from the descriptor so that it can
-		 * be released.
-		 */
-		rp = &sc->tring[sc->otindex];
-		status1 = rp->qe_status1;
-		setupflag = rp->qe_setup;
-		len = (-rp->qe_buf_len) * 2;
-		if( rp->qe_odd_end )
-			len++;
-		/*
-		 * Init the buffer descriptor
-		 */
-		bzero((caddr_t)rp, sizeof(struct qe_ring));
-		if( --sc->nxmit == 0 ) {
-			sc->qe_flags &= ~QEF_FASTTIMEO;
-			sc->qe_if.if_timer = QESLOWTIMEOUT;
-		}
-		if( !setupflag ) {
+		while (qc->qc_recv[sc->sc_nextrx].qe_status1 != QE_NOTYET) {
+			status1 = qc->qc_recv[sc->sc_nextrx].qe_status1;
+			status2 = qc->qc_recv[sc->sc_nextrx].qe_status2;
+			m = sc->sc_rxmbuf[sc->sc_nextrx];
+			len = ((status1 & QE_RBL_HI) |
+			    (status2 & QE_RBL_LO)) + 60;
+			qe_add_rxbuf(sc, sc->sc_nextrx);
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = len;
+			if (++sc->sc_nextrx == RXDESCS)
+				sc->sc_nextrx = 0;
+			eh = mtod(m, struct ether_header *);
+#if NBPFILTER > 0
+			if (ifp->if_bpf) {
+				bpf_mtap(ifp->if_bpf, m);
+				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+				    ETHER_ADDR_LEN) != 0 &&
+				    ((eh->ether_dhost[0] & 1) == 0)) {
+					m_freem(m);
+					continue;
+				}
+			}
+#endif
 			/*
-			 * Do some statistics.
+			 * ALLMULTI means PROMISC in this driver.
 			 */
-			sc->qe_if.if_opackets++;
-			sc->qe_if.if_collisions += ( status1 & QE_CCNT ) >> 4;
-			if (status1 & QE_ERROR)
-				sc->qe_if.if_oerrors++;
-			ifxp = &sc->qe_ifw[sc->otindex];
-			if (ifxp->ifw_xtofree) {
-				m_freem(ifxp->ifw_xtofree);
-				ifxp->ifw_xtofree = 0;
+			if ((ifp->if_flags & IFF_ALLMULTI) &&
+			    ((eh->ether_dhost[0] & 1) == 0) &&
+			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN)) {
+				m_freem(m);
+				continue;
+			}
+				
+			(*ifp->if_input)(ifp, m);
+		}
+
+	if (csr & QE_XMIT_INT) {
+		while (qc->qc_xmit[sc->sc_lastack].qe_status1 != QE_NOTYET) {
+			int idx = sc->sc_lastack;
+
+			sc->sc_inq--;
+			if (++sc->sc_lastack == TXDESCS)
+				sc->sc_lastack = 0;
+
+			/* XXX collect statistics */
+			qc->qc_xmit[idx].qe_addr_hi &= ~QE_VALID;
+			qc->qc_xmit[idx].qe_status1 =
+			    qc->qc_xmit[idx].qe_flag = QE_NOTYET;
+
+			if (qc->qc_xmit[idx].qe_addr_hi & QE_SETUP)
+				continue;
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
+			if (sc->sc_txmbuf[idx]) {
+				m_freem(sc->sc_txmbuf[idx]);
+				sc->sc_txmbuf[idx] = 0;
 			}
 		}
-		sc->otindex = ++sc->otindex % NXMT;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		qestart(ifp); /* Put in more in queue */
 	}
-	qestart(&sc->qe_if);
-}
-
-/*
- * Ethernet interface receiver interrupt.
- * If can't determine length from type, then have to drop packet.
- * Othewise decapsulate packet based on type and pass to type specific
- * higher-level input routine.
- */
-void
-qerint(unit)
-	int unit;
-{
-	register struct qe_softc *sc = qe_cd.cd_devs[unit];
-	register struct qe_ring *rp;
-	register int nrcv = 0;
-	int len, status1, status2;
-	int bufaddr;
-
 	/*
-	 * Traverse the receive ring looking for packets to pass back.
-	 * The search is complete when we find a descriptor not in use.
-	 *
-	 * As in the transmit case the deqna doesn't honor it's own protocols
-	 * so there exists the possibility that the device can beat us around
-	 * the ring. The proper way to guard against this is to insure that
-	 * there is always at least one invalid descriptor. We chose instead
-	 * to make the ring large enough to minimize the problem. With a ring
-	 * size of 4 we haven't been able to see the problem. To be safe we
-	 * doubled that to 8.
-	 *
+	 * How can the receive list get invalid???
+	 * Verified that it happens anyway.
 	 */
-	while (sc->rring[sc->rindex].qe_status1 == QE_NOTYET && nrcv < NRCV) {
-		/*
-		 * We got an interrupt but did not find an input packet
-		 * where we expected one to be, probably because the ring
-		 * was overrun.
-		 * We search forward to find a valid packet and start
-		 * processing from there.  If no valid packet is found it
-		 * means we processed all the packets during a previous
-		 * interrupt and that the QE_RCV_INT bit was set while
-		 * we were processing one of these earlier packets.  In
-		 * this case we can safely ignore the interrupt (by dropping
-		 * through the code below).
-		 */
-		sc->rindex = (sc->rindex + 1) % NRCV;
-		nrcv++;
-	}
-#ifndef QE_NO_OVERRUN_WARNINGS
-	if (nrcv && nrcv < NRCV)
-		log(LOG_ERR, "qe%d: ring overrun, resync'd by skipping %d\n",
-		    unit, nrcv);
-#endif
-
-	for (; sc->rring[sc->rindex].qe_status1 != QE_NOTYET;
-	    sc->rindex = ++sc->rindex % NRCV) {
-		rp = &sc->rring[sc->rindex];
-		status1 = rp->qe_status1;
-		status2 = rp->qe_status2;
-		bzero((caddr_t)rp, sizeof(struct qe_ring));
-		if( (status1 & QE_MASK) == QE_MASK )
-			panic("qe: chained packet");
-		len = ((status1 & QE_RBL_HI) | (status2 & QE_RBL_LO)) + 60;
-		sc->qe_if.if_ipackets++;
-
-		if (status1 & QE_ERROR) {
-			if ((status1 & QE_RUNT) == 0)
-				sc->qe_if.if_ierrors++;
-		} else {
-			/*
-			 * We don't process setup packets.
-			 */
-			if (!(status1 & QE_ESETUP))
-				qeread(sc, &sc->qe_ifr[sc->rindex],
-					len - sizeof(struct ether_header));
-		}
-		/*
-		 * Return the buffer to the ring
-		 */
-		bufaddr = (int)UBAI_ADDR(sc->qe_ifr[sc->rindex].ifrw_info);
-		rp->qe_buf_len = -((MAXPACKETSIZE)/2);
-		rp->qe_addr_lo = (short)bufaddr;
-		rp->qe_addr_hi = (short)((int)bufaddr >> 16);
-		rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-		rp->qe_valid = 1;
+	if ((qc->qc_recv[sc->sc_nextrx].qe_status1 == QE_NOTYET) &&
+	    (QE_RCSR(QE_CSR_CSR) & QE_RL_INVALID)) {
+		QE_WCSR(QE_CSR_RCLL,
+		    LOWORD(&sc->sc_pqedata->qc_recv[sc->sc_nextrx]));
+		QE_WCSR(QE_CSR_RCLH,
+		    HIWORD(&sc->sc_pqedata->qc_recv[sc->sc_nextrx]));
 	}
 }
 
@@ -804,48 +660,48 @@ qeioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct qe_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		qeinit(sc);
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+			qeinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-			if (ns_nullhost(*ina))
-				ina->x_host = 
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				qe_setaddr(ina->x_host.c_host, sc);
-			break;
-		    }
 #endif
 		}
 		break;
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    sc->qe_flags & QEF_RUNNING) {
-			sc->qe_vaddr->qe_csr = QE_RESET;
-			sc->qe_flags &= ~QEF_RUNNING;
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
-		    IFF_RUNNING && (sc->qe_flags & QEF_RUNNING) == 0)
-			qerestart(sc);
-		else
+		    (ifp->if_flags & IFF_RUNNING) != 0) {
+			/*
+			 * If interface is marked down and it is running,
+			 * stop it. (by disabling receive mechanism).
+			 */
+			QE_WCSR(QE_CSR_CSR,
+			    QE_RCSR(QE_CSR_CSR) & ~QE_RCV_ENABLE);
+			ifp->if_flags &= ~IFF_RUNNING;
+		} else if ((ifp->if_flags & IFF_UP) != 0 &&
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			/*
+			 * If interface it marked up and it is stopped, then
+			 * start it.
+			 */
 			qeinit(sc);
-
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Send a new setup packet to match any new changes.
+			 * (Like IFF_PROMISC etc)
+			 */
+			qe_setup(sc);
+		}
 		break;
 
 	case SIOCADDMULTI:
@@ -854,15 +710,15 @@ qeioctl(ifp, cmd, data)
 		 * Update our multicast list.
 		 */
 		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->qe_ec):
-			ether_delmulti(ifr, &sc->qe_ec);
+			ether_addmulti(ifr, &sc->sc_ec):
+			ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			qeinit(sc);
+			qe_setup(sc);
 			error = 0;
 		}
 		break;
@@ -876,244 +732,134 @@ qeioctl(ifp, cmd, data)
 }
 
 /*
- * set ethernet address for unit
+ * Add a receive buffer to the indicated descriptor.
  */
-void
-qe_setaddr(physaddr, sc)
-	u_char *physaddr;
+int
+qe_add_rxbuf(sc, i) 
 	struct qe_softc *sc;
+	int i;
 {
-	register int i;
-
-	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = LLADDR(sc->qe_if.if_sadl)[i] 
-		    = physaddr[i];
-	sc->qe_flags |= QEF_SETADDR;
-	if (sc->qe_if.if_flags & IFF_RUNNING)
-		qesetup(sc);
-	qeinit(sc);
-}
-
-
-/*
- * Initialize a ring descriptor with mbuf allocation side effects
- */
-void
-qeinitdesc(rp, addr, len)
-	register struct qe_ring *rp;
-	caddr_t addr;			/* mapped address */
-	int len;
-{
-	/*
-	 * clear the entire descriptor
-	 */
-	bzero((caddr_t)rp, sizeof(struct qe_ring));
-
-	if (len) {
-		rp->qe_buf_len = -(len/2);
-		rp->qe_addr_lo = (short)((int)addr);
-		rp->qe_addr_hi = (short)((int)addr >> 16);
-	}
-}
-/*
- * Build a setup packet - the physical address will already be present
- * in first column.
- */
-void
-qesetup(sc)
-	struct qe_softc *sc;
-{
-	register int i, j;
-
-	/*
-	 * Copy the target address to the rest of the entries in this row.
-	 */
-	 for (j = 0; j < 6; j++)
-		for (i = 2; i < 8; i++)
-			sc->setup_pkt[j][i] = sc->setup_pkt[j][1];
-	/*
-	 * Duplicate the first half.
-	 */
-	bcopy((caddr_t)sc->setup_pkt[0], (caddr_t)sc->setup_pkt[8], 64);
-	/*
-	 * Fill in the broadcast (and ISO multicast) address(es).
-	 */
-	for (i = 0; i < 6; i++) {
-		sc->setup_pkt[i][2] = 0xff;
-#ifdef ISO
-		/*
-		 * XXX layer violation, should use SIOCADDMULTI.
-		 * Will definitely break with IPmulticast.
-		 */
-
-		sc->setup_pkt[i][3] = all_es_snpa[i];
-		sc->setup_pkt[i][4] = all_is_snpa[i];
-		sc->setup_pkt[i][5] = all_l1is_snpa[i];
-		sc->setup_pkt[i][6] = all_l2is_snpa[i];
-#endif
-	}
-	if (sc->qe_if.if_flags & IFF_PROMISC) {
-		sc->setuplength = QE_PROMISC;
-	/* XXX no IFF_ALLMULTI support in 4.4bsd */
-	} else if (sc->qe_if.if_flags & IFF_ALLMULTI) {
-		sc->setuplength = QE_ALLMULTI;
-	} else {
-		register int k;
-		struct ether_multi *enm;
-		struct ether_multistep step;
-		/*
-		 * Step through our list of multicast addresses, putting them
-		 * in the third through fourteenth address slots of the setup
-		 * packet.  (See the DEQNA manual to understand the peculiar
-		 * layout of the bytes within the setup packet.)  If we have
-		 * too many multicast addresses, or if we have to listen to
-		 * a range of multicast addresses, turn on reception of all
-		 * multicasts.
-		 */
-		sc->setuplength = QE_SOMEMULTI;
-		i = 2;
-		k = 0;
-		ETHER_FIRST_MULTI(step, &sc->qe_ec, enm);
-		while (enm != NULL) {
-			if ((++i > 7 && k != 0) ||
-			    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-				sc->setuplength = QE_ALLMULTI;
-				break;
-			}
-			if (i > 7) {
-				i = 1;
-				k = 8;
-			}
-			for (j = 0; j < 6; j++)
-				sc->setup_pkt[j+k][i] = enm->enm_addrlo[j];
-			ETHER_NEXT_MULTI(step, enm);
-		}
-	}
-	sc->setupqueued++;
-}
-
-/*
- * Pass a packet to the higher levels.
- * We deal with the trailer protocol here.
- */
-void
-qeread(sc, ifrw, len)
-	register struct qe_softc *sc;
-	struct ifrw *ifrw;
-	int len;
-{
-	struct ether_header *eh;
 	struct mbuf *m;
+	struct qe_ring *rp;
+	vaddr_t addr;
+	int error;
 
-	/*
-	 * Deal with trailer protocol: if type is INET trailer
-	 * get true type from first 16-bit word past data.
-	 * Remember that type was trailer by setting off.
-	 */
-
-	eh = (struct ether_header *)ifrw->ifrw_addr;
-	if (len == 0)
-		return;
-
-	/*
-	 * Pull packet off interface.  Off is nonzero if packet
-	 * has trailing header; qeget will then force this header
-	 * information to be at the front, but we still have to drop
-	 * the type and length which are at the front of any trailer data.
-	 */
-	m = if_ubaget(&sc->qe_uba, ifrw, len, &sc->qe_if);
-#ifdef notdef
-if (m) {
-*(((u_long *)m->m_data)+0),
-*(((u_long *)m->m_data)+1),
-*(((u_long *)m->m_data)+2),
-*(((u_long *)m->m_data)+3)
-; }
-#endif
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return;
+		return (ENOBUFS);
 
-	/*
-	 * XXX I'll let ragge make this sane.  I'm not entirely
-	 * XXX sure what's going on in if_ubaget().
-	 */
-	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
-	if (m == NULL)
-		return;
-	bcopy(eh, mtod(m, caddr_t), sizeof(struct ether_header));
-
-#if NBPFILTER > 0
-	/*
-	 * Check for a BPF filter; if so, hand it up.
-	 * Note that we have to stick an extra mbuf up front, because
-	 * bpf_mtap expects to have the ether header at the front.
-	 * It doesn't matter that this results in an ill-formatted mbuf chain,
-	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
-	 * tho' it will make a copy for tcpdump.)
-	 */
-	if (sc->qe_if.if_bpf) {
-		/* Pass it up */
-		bpf_mtap(sc->qe_if.if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.	And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->qe_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(sc->qe_if.if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (ENOBUFS);
 	}
-#endif /* NBPFILTER > 0 */
 
-	(*sc->qe_if.if_input)(&sc->qe_if, m);
+	if (sc->sc_rxmbuf[i] != NULL)
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	if (error)
+		panic("%s: can't load rx DMA map %d, error = %d\n",
+		    sc->sc_dev.dv_xname, i, error);
+	sc->sc_rxmbuf[i] = m;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rcvmap[i], 0,
+	    sc->sc_rcvmap[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+	/*
+	 * We know that the mbuf cluster is page aligned. Also, be sure
+	 * that the IP header will be longword aligned.
+	 */
+	m->m_data += 2;
+	addr = sc->sc_rcvmap[i]->dm_segs[0].ds_addr + 2;
+	rp = &sc->sc_qedata->qc_recv[i];
+	rp->qe_flag = rp->qe_status1 = QE_NOTYET;
+	rp->qe_addr_lo = LOWORD(addr);
+	rp->qe_addr_hi = HIWORD(addr) | QE_VALID;
+	rp->qe_buf_len = -(m->m_ext.ext_size - 2)/2;
+
+	return (0);
 }
 
 /*
- * Watchdog timeout routine. There is a condition in the hardware that
- * causes the board to lock up under heavy load. This routine detects
- * the hang up and restarts the device.
+ * Create a setup packet and put in queue for sending.
  */
 void
-qetimeout(ifp)
-	struct ifnet *ifp;
-{
-	register struct qe_softc *sc = ifp->if_softc;
-
-#ifdef notdef
-	log(LOG_ERR, "%s: transmit timeout, restarted %d\n",
-	     sc->sc_dev.dv_xname, sc->qe_restarts++);
-#endif
-	qerestart(sc);
-}
-/*
- * Restart for board lockup problem.
- */
-void
-qerestart(sc)
+qe_setup(sc)
 	struct qe_softc *sc;
 {
-	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	register struct qedevice *addr = sc->addr;
-	register struct qe_ring *rp;
-	register int i;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	struct qe_cdata *qc = sc->sc_qedata;
+	struct ifnet *ifp = &sc->sc_if;
+	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	int i, j, k, idx, s;
 
-	addr->qe_csr = QE_RESET;
-	addr->qe_csr &= ~QE_RESET;
-	qesetup(sc);
-	for (i = 0, rp = sc->tring; i < NXMT; rp++, i++) {
-		rp->qe_flag = rp->qe_status1 = QE_NOTYET;
-		rp->qe_valid = 0;
+	s = splimp();
+	if (sc->sc_inq == (TXDESCS - 1)) {
+		sc->sc_setup = 1;
+		splx(s);
+		return;
 	}
-	sc->nxmit = sc->otindex = sc->tindex = sc->rindex = 0;
-	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
-	    QE_RCV_INT | QE_ILOOP;
-	addr->qe_rcvlist_lo = (short)((int)sc->rringaddr);
-	addr->qe_rcvlist_hi = (short)((int)sc->rringaddr >> 16);
-	sc->qe_flags |= QEF_RUNNING;
-	qestart(ifp);
+	sc->sc_setup = 0;
+	/*
+	 * Init the setup packet with valid info.
+	 */
+	memset(qc->qc_setup, 0xff, sizeof(qc->qc_setup)); /* Broadcast */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		qc->qc_setup[i * 8 + 1] = enaddr[i]; /* Own address */
+
+	/*
+	 * Multicast handling. The DEQNA can handle up to 12 direct 
+	 * ethernet addresses.
+	 */
+	j = 3; k = 0;
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
+		}
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			qc->qc_setup[i * 8 + j + k] = enm->enm_addrlo[i];
+		j++;
+		if (j == 8) {
+			j = 1; k += 64;
+		}
+		if (k > 64) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
+		}
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	idx = sc->sc_nexttx;
+	qc->qc_xmit[idx].qe_buf_len = -64;
+
+	/*
+	 * How is the DEQNA turned in ALLMULTI mode???
+	 * Until someone tells me, fall back to PROMISC when more than
+	 * 12 ethernet addresses.
+	 */
+	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI))
+		qc->qc_xmit[idx].qe_buf_len = -65;
+
+	qc->qc_xmit[idx].qe_addr_lo = LOWORD(sc->sc_pqedata->qc_setup);
+	qc->qc_xmit[idx].qe_addr_hi =
+	    HIWORD(sc->sc_pqedata->qc_setup) | QE_SETUP | QE_EOMSG;
+	qc->qc_xmit[idx].qe_status1 = qc->qc_xmit[idx].qe_flag = QE_NOTYET;
+	qc->qc_xmit[idx].qe_addr_hi |= QE_VALID;
+
+	if (QE_RCSR(QE_CSR_CSR) & QE_XL_INVALID) {
+		QE_WCSR(QE_CSR_XMTL,
+		    LOWORD(&sc->sc_pqedata->qc_xmit[idx]));
+		QE_WCSR(QE_CSR_XMTH,
+		    HIWORD(&sc->sc_pqedata->qc_xmit[idx]));
+	}
+
+	sc->sc_inq++;
+	if (++sc->sc_nexttx == TXDESCS)
+		sc->sc_nexttx = 0;
+	splx(s);
 }
