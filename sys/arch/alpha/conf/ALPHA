@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.142 2001/01/10 17:32:08 nathanw Exp $
+# $NetBSD: ALPHA,v 1.143 2001/01/16 03:38:22 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.142 $"
+ident		"ALPHA-$Revision: 1.143 $"
 
 maxusers 32
 
@@ -466,6 +466,9 @@ ucom*	at uftdi? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

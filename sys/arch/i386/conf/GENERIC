@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.391 2001/01/11 06:03:21 augustss Exp $
+#	$NetBSD: GENERIC,v 1.392 2001/01/16 03:38:23 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.391 $"
+#ident 		"GENERIC-$Revision: 1.392 $"
 
 maxusers	32		# estimated number of users
 
@@ -713,6 +713,9 @@ uscanner* at uhub? port ?
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
 scsibus* at usscanner? channel ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
