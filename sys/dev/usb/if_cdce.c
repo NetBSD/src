@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.3 2004/10/24 08:47:27 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.4 2004/10/24 12:50:54 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.3 2004/10/24 08:47:27 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.4 2004/10/24 12:50:54 augustss Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -793,7 +793,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	splx(s);
 }
 
-Static int
+int
 cdce_activate(device_ptr_t self, enum devact act)
 {
 	struct cdce_softc *sc = (struct cdce_softc *)self;
