@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.48 1995/04/24 07:38:09 cgd Exp $
+#	$Id: Makefile,v 1.49 1995/04/25 21:26:37 cgd Exp $
 
 SUBDIR=	apply apropos asa at biff basename cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
@@ -21,7 +21,7 @@ SUBDIR=	apply apropos asa at biff basename cal calendar cap_mkdb \
 	xargs xinstall xstr yacc yes ypcat ypmatch ypwhich
 
 # Don't use the standard tool chain on the alpha.
-.if (${MACHINE_ARCH} != "alpha"
+.if (${MACHINE_ARCH} != "alpha")
 SUBDIR+= ar gprof nm ranlib size strip
 .endif
 
