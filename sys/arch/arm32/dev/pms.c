@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.11 1997/07/28 18:07:22 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.12 1997/10/14 19:35:34 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -39,11 +39,6 @@
  * D.C. Tsen
  */
 
-#include "pms.h"
-#if NPMS > 1
-#error Only one PS/2 style mouse may be configured into your system.
-#endif
-
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -59,15 +54,10 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 
-#include <machine/cpu.h>
-#include <machine/katelib.h>
-#include <machine/irqhandler.h>
+#include <machine/bus.h>
 #include <machine/conf.h>
-#include <machine/iomd.h>
 #include <machine/mouse.h>
-#include <arm32/mainbus/mainbus.h>
-
-#include "locators.h"
+#include <arm32/dev/pmsvar.h>
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
@@ -83,65 +73,73 @@
 #define	PMS_CHUNK	128	/* chunk size for read */
 #define	PMS_BSIZE	(20*64)	/* buffer size */
 
-struct pms_softc {		/* driver status information */
-	struct device sc_dev;
-	irqhandler_t sc_ih;
+/* function prototypes */
 
-	struct proc *sc_proc;
-	struct clist sc_q;
-	struct selinfo sc_rsel;
-	u_int sc_state;	/* mouse driver state */
-#define	PMS_OPEN	0x01	/* device is open */
-#define	PMS_ASLP	0x02	/* waiting for mouse data */
-	int sc_mode;
-	u_int sc_status;	/* mouse button status */
-	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
-	int boundx, boundy, bounda, boundb;	/* Bounding box.  x,y is bottom left */
-	int origx, origy;
-	int lastx, lasty, lastb;
-};
-
-int pmsprobe		__P((struct device *, void *, void *));
-void pmsattach		__P((struct device *, struct device *, void *));
-int pmsintr		__P((void *));
-int pmsinit		__P((void));
 void pmswatchdog	__P((void *));
 void pmsputbuffer	__P((struct pms_softc *sc, struct mousebufrec *buf));
-static __inline void pms_flush __P((void));
+static __inline void pms_flush __P((struct pms_softc *sc));
 
-struct cfattach pms_ca = {
-	sizeof(struct pms_softc), pmsprobe, pmsattach
-};
+/* pms device driver structure */
 
 struct cfdriver	pms_cd = {
 	NULL, "pms", DV_DULL
 };
 
+#define PMS_DATA	0
+#define PMS_CR		1
+#define PMS_STATUS	1
+
+#define PMS_CR_ENABLE	0x08
+#define PMS_CR_KDATAO	0x02
+#define PMS_CR_KCLKO	0x01
+
+#define PMS_ST_TXE	0x80
+#define PMS_ST_TXB	0x40
+#define PMS_ST_RXF	0x20
+#define PMS_ST_RXB	0x10
+#define PMS_ST_ENABLE	0x08
+#define PMS_ST_RXPARITY	0x04
+#define PMS_ST_KDATAI	0x02
+#define PMS_ST_KCLKI	0x01
+
 #define	PMSUNIT(dev)	(minor(dev))
 
+/*
+ * Flush any pending mouse data
+ */
+
 static __inline void
-pms_flush()
+pms_flush(sc)
+	struct pms_softc *sc;
 {
 	int n = 1000;
-	while (n-- && (inb(IOMD_MSCR) & 0x20)) {
+
+	while (n-- && (bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS)
+	    & PMS_ST_RXF)) {
 		delay(6);
-		(void) inb(IOMD_MSDATA);
+		(void) bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 		delay(6);
-		(void) inb(IOMD_MSDATA);
+		(void) bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 		delay(6);
-		(void) inb(IOMD_MSDATA);
+		(void) bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 	}
 }
 
+/*
+ * Send a command to the mouse
+ */
+
 static int
-cmd_mouse(unsigned char cmd)
+cmd_mouse(sc, cmd)
+	struct pms_softc * sc;
+	u_char cmd;
 {
-	unsigned char c;
+	int c;
 	int i = 0;
 	int retry = 10;
 
 	for (i = 0; i < 1000; i++) {
-		if (inb(IOMD_MSCR) & 0x80)
+		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS) & PMS_ST_TXE)
 			break;
 		delay(2);
 	}
@@ -149,138 +147,48 @@ cmd_mouse(unsigned char cmd)
 		printf("Mouse transmit not ready\n");
 
 resend:
-	outb(IOMD_MSDATA, cmd);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PMS_DATA, cmd);
 	delay(2);
-	c = inb(IOMD_MSCR) & (unsigned char) 0xff;
+	c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS);
 	i = 1000;
-	while (i-- && !(c & (unsigned char) 0x20)) {
+	while (i-- && !(c & PMS_ST_RXF)) {
 		delay(1);
-		c = inb(IOMD_MSCR);
+		c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS);
 	}
 
 	delay(10000);
 
-	c = inb(IOMD_MSDATA) & 0xff;
+	c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 	if ((c == 0xFA) || (c == 0xEE))
 		return(0);
 
 	if (--retry) {
-		pms_flush();
+		pms_flush(sc);
 		goto resend;
 	}
 
-	printf("Mouse cmd failed, cmd = %x, status = %x\n", cmd, c);
+	printf("%s: Mouse cmd failed, cmd = %x, status = %x\n", sc->sc_dev.dv_xname, cmd, c);
 	return(1);
 }
 
 /*
- * This needs fixing ...
- * The probe should just establish the presence not wether it is fully
- * working. We should just verify that we have an IOMD that supports
- * a PS2 mouse interface and leave it at that.
- * The attach function just test the mouse and flag is as working or not.
+ * initialise the mouse
+ *
+ *
+ * The sets up parts of the softc and then tests the mouse
+ * to make sure it is responding.
+ * It then configures the mouse as required.
  */
 
 int
-pmsprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct mainbus_attach_args *mb = aux;
-
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
-		return(0);
-
-	return(pmsinit());
-}
-
-int
-pmsinit()
+pmsinit(sc)
+	struct pms_softc *sc;
 {
 	int i, j;
 	int mid;
 	int id;
 
-/* Make sure we have an IOMD we understand */
-    
-	id = IOMD_ID;
-
-/* So far I only know about this IOMD */
-
-	switch (id) {
-	case RPC600_IOMD_ID:
-		return(0);
-		break;
-	case ARM7500_IOC_ID:
-		break;
-	default:
-		printf("pms: Unknown IOMD id=%04x", id);
-		return(0);
-		break;
-	}
-
-	outb(IOMD_MSCR, 0x08);	/* enable the mouse */
-
-	i = 0;
-	while ((inb(IOMD_MSCR) & 0x03) != 0x03) {
-		if (i++ > 10) {
-			printf("Mouse not found, status = <%x>.\n", inb(IOMD_MSCR));
-			return(0);
-		}
-		pms_flush();
-		delay(2);
-		outb(IOMD_MSCR, 0x08);
-	}
-
-	pms_flush();
-
-	/*
-	 * Disable, reset and enable the mouse.
-	 */
-	if (cmd_mouse(PMS_DEV_DISABLE))
-		return(0);
-
-	cmd_mouse(PMS_RESET);
-	delay(300000);
-	j = 10;
-	i = 0;
-	while ((mid = inb(IOMD_MSDATA)) != 0xAA) {
-		if (++i > 500) {
-			if (--j < 0) {
-				printf("Mouse Reset failed, status = <%x>.\n", mid);
-				return(0);
-			}
-			pms_flush();
-			cmd_mouse(PMS_RESET);
-			i = 0;
-		}
-		delay(100000);
-	}
-	mid = inb(IOMD_MSDATA);
-#if 0
-	cmd_mouse(PMS_SET_RES);
-	cmd_mouse(3);		/* 8 counts/mm */
-	cmd_mouse(PMS_SET_SCALE21);
-#endif
-	cmd_mouse(PMS_SET_SAMPLE);
-	cmd_mouse(40);	/* 40 samples/sec */
-	cmd_mouse(PMS_SET_STREAM);
-	cmd_mouse(PMS_DEV_ENABLE);
-	return 1;
-}
-
-void
-pmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct pms_softc *sc = (void *)self;
-	struct mainbus_attach_args *mb = aux;
-
-	printf("\n");
-
-	/* Other initialization was done by pmsprobe. */
+	/* Set up softc */
 	sc->sc_state = 0;
 	sc->origx = 0;
 	sc->origy = 0;
@@ -289,20 +197,64 @@ pmsattach(parent, self, aux)
 	sc->bounda = 4096;
 	sc->boundb = 4096;
 
-	sc->sc_ih.ih_func = pmsintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_TTY;
-	sc->sc_ih.ih_name = "pms";
-	if (mb->mb_irq != IRQUNK)
-		sc->sc_ih.ih_num = mb->mb_irq;
-	else
-#ifdef CPU_ARM7500
-		sc->sc_ih.ih_num = IRQ_MSDRX;
-#else
-		panic("pms: No IRQ specified for pms interrupt handler\n");
+	/* Enable the mouse */
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PMS_CR, PMS_CR_ENABLE);
+
+	i = 0;
+	while ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS) & 0x03)
+	     != 0x03) {
+		if (i++ > 10) {
+			printf("Mouse not found, status = <%x>.\n",
+			    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			    PMS_STATUS));
+			return(0);
+		}
+		pms_flush(sc);
+		delay(2);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PMS_CR, PMS_CR_ENABLE);
+	}
+
+	pms_flush(sc);
+
+	/*
+	 * Disable, reset and enable the mouse.
+	 */
+	if (cmd_mouse(sc, PMS_DEV_DISABLE))
+		return(0);
+
+	cmd_mouse(sc, PMS_RESET);
+	delay(300000);
+	j = 10;
+	i = 0;
+	while ((mid = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA)) != 0xAA) {
+		if (++i > 500) {
+			if (--j < 0) {
+				printf("Mouse Reset failed, status = <%x>.\n", mid);
+				return(0);
+			}
+			pms_flush(sc);
+			cmd_mouse(sc, PMS_RESET);
+			i = 0;
+		}
+		delay(100000);
+	}
+	mid = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
+#if 0
+	cmd_mouse(sc, PMS_SET_RES);
+	cmd_mouse(sc, 3);		/* 8 counts/mm */
+	cmd_mouse(sc, PMS_SET_SCALE21);
 #endif
+	cmd_mouse(sc, PMS_SET_SAMPLE);
+	cmd_mouse(sc, 40);	/* 40 samples/sec */
+	cmd_mouse(sc, PMS_SET_STREAM);
+	cmd_mouse(sc, PMS_DEV_ENABLE);
+	return(1);
 }
 
+/*
+ * device open routine
+ */
 int
 pmsopen(dev, flag, mode, p)
 	dev_t dev;
@@ -313,18 +265,22 @@ pmsopen(dev, flag, mode, p)
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
 
+	/* validate the unit and the softc */
 	if (unit >= pms_cd.cd_ndevs)
 		return ENXIO;
 	sc = pms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
+	/* Are we already open ? */
 	if (sc->sc_state & PMS_OPEN)
 		return EBUSY;
 
+	/* initialise buffer */
 	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
 		return ENOMEM;
 
+	/* set up the softc structure */
 	sc->sc_proc = p;
 	sc->sc_mode = MOUSEMODE_ABS;
 	sc->sc_state |= PMS_OPEN;
@@ -334,14 +290,18 @@ pmsopen(dev, flag, mode, p)
 	sc->lasty = -1;
 	sc->lastb = -1;
 
-	if (irq_claim(IRQ_INSTRUCT, &sc->sc_ih) == -1)
-		panic("Cannot claim MOUSE IRQ\n");
-
+	/* enable interrupts */
+	sc->sc_intenable(sc, 1);
+	
+	/* install watchdog timeout */
 	timeout(pmswatchdog, (void *) sc, 30 * hz);
 
-	return 0;
+	return(0);
 }
 
+/*
+ * driver close function
+ */
 int
 pmsclose(dev, flag, mode, p)
 	dev_t dev;
@@ -351,11 +311,13 @@ pmsclose(dev, flag, mode, p)
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
+	/* remove the timeout */
 	untimeout(pmswatchdog, (void *) sc);
 
-	if (irq_release(IRQ_INSTRUCT, &sc->sc_ih) != 0)
-		panic("Cannot release MOUSE IRQ\n");
+	/* disable interrupts */
+	sc->sc_intenable(sc, 0);
  
+ 	/* clean up*/
 	sc->sc_proc = NULL;
 	sc->sc_state &= ~PMS_OPEN;
 	sc->sc_x = sc->sc_y = 0;
@@ -382,13 +344,13 @@ pmsread(dev, uio, flag)
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {
 		if (flag & IO_NDELAY) {
-			splx(s);
+			(void)splx(s);
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
 		if ((error = tsleep((caddr_t)sc, (PZERO | PCATCH), "pmsread", 0))) {
 			sc->sc_state &= ~PMS_ASLP;
-			splx(s);
+			(void)splx(s);
 			return error;
 		}
 	}
@@ -407,7 +369,7 @@ pmsread(dev, uio, flag)
 		if ((error = uiomove(buffer, length, uio)))
 			break;
 	}
-	splx(s);
+	(void)splx(s);
 
 	return error;
 }
@@ -468,7 +430,8 @@ pmsioctl(dev, cmd, addr, flag, p)
 		buffer.y = sc->origy;
 #ifdef MOUSE_IOC_ACK
 		if (sc->sc_q.c_cc > 0)
-			printf("pms: setting mode with non empty buffer (%d)\n", sc->sc_q.c_cc);
+			printf("%s: setting mode with non empty buffer (%d)\n",
+			    sc->sc_dev.dv_xname, sc->sc_q.c_cc);
 		pmsputbuffer(sc, &buffer);
 		(void)splx(s);
 #endif
@@ -505,12 +468,6 @@ pmsioctl(dev, cmd, addr, flag, p)
 		break;
 	}
 	case MOUSEIOC_GETSTATE:
-		printf("MOUSEIOC_GETSTATE called\n");
-		/*
-		 * Fall through.
-		 */
-/*	case MOUSEIOCREAD:*/
-
 		info.status = sc->sc_status;
 		if (sc->sc_x || sc->sc_y)
 			info.status |= MOVEMENT;
@@ -546,7 +503,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 		error = EINVAL;
 		break;
 	}
-	splx(s);
+	(void)splx(s);
 
 	return error;
 }
@@ -575,26 +532,25 @@ pmsintr(arg)
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
-		pms_flush();
+		pms_flush(sc);
 		return(-1);	/* Could have been ours but pass it on */
 	}
 
 	switch (state) {
-
 	case 0:
-		buttons = inb(IOMD_MSDATA);
+		buttons = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(IOMD_MSDATA);
+		dx = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 		dx = (buttons & XNEG_MASK) ? -dx : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(IOMD_MSDATA);
+		dy = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_DATA);
 		dy = (buttons & YNEG_MASK) ? -dy : dy;
 		state = 0;
 
@@ -630,14 +586,13 @@ pmsintr(arg)
 			else if (sc->sc_y < sc->boundy)
 				sc->sc_y = sc->boundy;
 
-			if (sc->sc_q.c_cc == 0) {
+			if (sc->sc_q.c_cc == 0)
 				dosignal = 1;
-			}
 
 			/* Add this event to the queue. */
 			b = buttons & BUTSTATMASK;
 			mbuffer.status = b | (b ^ sc->lastb) << 3
-				| (((sc->sc_x==sc->lastx) && (sc->sc_y==sc->lasty))?0:MOVEMENT);
+			    | (((sc->sc_x==sc->lastx) && (sc->sc_y==sc->lasty))?0:MOVEMENT);
 			mbuffer.x = sc->sc_x * 2;
 			mbuffer.y = sc->sc_y * 2;
 			microtime(&mbuffer.event_time);
@@ -668,32 +623,6 @@ pmsintr(arg)
 	return(1);	/* Claim interrupt */
 }
 
-#if 0
-int
-pmsselect(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
-{
-	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
-	int s;
-	int ret;
-
-	if (rw == FWRITE)
-		return 0;
-
-	s = spltty();
-	if (!sc->sc_q.c_cc) {
-		selrecord(p, &sc->sc_rsel);
-		ret = 0;
-	} else
-		ret = 1;
-	splx(s);
-
-	return ret;
-}
-
-#else
 
 int
 pmspoll(dev, events, p)
@@ -711,24 +640,26 @@ pmspoll(dev, events, p)
 		else
 			selrecord(p, &sc->sc_rsel);
 
-	splx(s);
+	(void)splx(s);
 	return (revents);
 }
-
-#endif
 
 
 void
 pmswatchdog(arg)
 	void *arg;
 {
+	struct pms_softc *sc = arg;
 	int s;
 
-	if ((inb(IOMD_MSCR) & 0x03) != 0x03) {
-		printf("Mouse is dead (%x), restart it\n", inb(IOMD_MSCR));
+	if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, PMS_STATUS) & 0x03)
+	    != 0x03) {
+		printf("%s: Mouse is dead (%x), restart it\n",
+		    sc->sc_dev.dv_xname, bus_space_read_1(sc->sc_iot,
+		    sc->sc_ioh, PMS_STATUS));
 		s = spltty();
-		pmsinit();
-		splx(s);
+		pmsinit(sc);
+		(void)splx(s);
 	}
 }
 
@@ -738,16 +669,16 @@ pmsputbuffer(sc, buffer)
 	struct mousebufrec *buffer;
 {
 	int s;
-	int dosignal=0;
+	int dosignal = 0;
 
 	/* Time stamp the buffer */
 	microtime(&buffer->event_time);
 
-	if (sc->sc_q.c_cc==0)
-		dosignal=1;
+	if (sc->sc_q.c_cc == 0)
+		dosignal = 1;
 
 	s=spltty();
-	(void) b_to_q((char *)buffer, sizeof(*buffer), &sc->sc_q);
+	(void)b_to_q((char *)buffer, sizeof(*buffer), &sc->sc_q);
 	(void)splx(s);
 	selwakeup(&sc->sc_rsel);
 
@@ -759,3 +690,5 @@ pmsputbuffer(sc, buffer)
 	if (dosignal)
 		psignal(sc->sc_proc, SIGIO);
 }
+
+/* End of pms.c */
