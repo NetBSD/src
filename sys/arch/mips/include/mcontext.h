@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.4 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5 2003/10/29 23:40:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -140,6 +140,9 @@ typedef struct {
 #else
 #define _OFFSETOF_UC_GREGS	56
 #endif
+
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
