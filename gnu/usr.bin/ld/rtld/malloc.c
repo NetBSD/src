@@ -1,3 +1,5 @@
+/*	$NetBSD: malloc.c,v 1.4 1996/07/03 03:31:54 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: malloc.c,v 1.3 1994/09/19 16:58:18 deraadt Exp $";
+#if 0
+static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: malloc.c,v 1.4 1996/07/03 03:31:54 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
