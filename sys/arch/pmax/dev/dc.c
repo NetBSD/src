@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.38 1998/03/22 09:27:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.38 1998/03/22 09:27:07 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <dev/dec/lk201.h>
+
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/bus.h>			/*  wbflush() */
@@ -91,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.37 1998/03/22 07:04:13 jonathan Exp $");
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-#include <pmax/dev/lk201.h>
 
 /*
  * XXX in dcvar.h or not?
