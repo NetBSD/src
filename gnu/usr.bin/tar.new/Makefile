@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/10/09 16:17:45 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2002/10/13 18:41:48 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SRCS+=	buffer.c compare.c create.c delete.c extract.c \
 SUBDIR=	libtar
 
 LIBTARDIR!=	cd ${.CURDIR}/libtar; ${MAKE} print-objdir
+
+buffer.o names.o tar.o:	all-libtar
 
 CPPFLAGS+=	-I${DIST}/lib -I${DIST}/src -I${.CURDIR}/libtar -I${LIBTARDIR}
 
@@ -43,3 +45,4 @@ MAN=tar.1
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
+

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/10/10 13:03:19 drochner Exp $
+#	$NetBSD: Makefile,v 1.3 2002/10/13 18:41:49 martin Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -25,7 +25,7 @@ SRCS+=	fnmatch.c getline.c mktime.c
 
 CPPFLAGS+=	-I${DIST}/lib -I${.CURDIR} -I.
 
-.depend: fnmatch.h
+.depend fnmatch.o exclude.o: fnmatch.h
 fnmatch.h: fnmatch.hin
 	cp $> fnmatch.h
 CLEANFILES+=	fnmatch.h
