@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.5 1999/01/06 04:11:28 nisimura Exp $ */
+/* $NetBSD: db_machdep.h,v 1.6 1999/01/14 18:45:45 castor Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -78,10 +78,9 @@ db_addr_t  db_disasm_insn __P((int insn, db_addr_t loc,  boolean_t altfmt));
 /*
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
-void 	kdb_kbd_trap __P((int *));
-int 	kdb_trap __P((int type, int *));
+void 	kdb_kbd_trap __P((db_regs_t *));
+int 	kdb_trap __P((int type, mips_reg_t *));
 void	db_machine_init __P((void));
-
 
 /*
  * We use ELF symbols in DDB.
