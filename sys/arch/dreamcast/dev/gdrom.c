@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.3 2001/02/20 00:04:40 marcus Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.4 2001/04/24 19:43:25 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -53,7 +53,8 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <sh3/shbvar.h>
+#include <machine/shbvar.h>
+#include <machine/sysasicvar.h>
 
 int	gdrommatch __P((struct device *, struct cfdata *, void *));
 void	gdromattach __P((struct device *, struct device *, void *));
@@ -420,7 +421,7 @@ gdromattach(pdp, dp, auxp)
 	    x = ((volatile u_int32_t *)0xa0000000)[p];
 	}
 
-	shb_intr_establish(9, IST_EDGE, 0, gdrom_intr, sc);
+	sysasic_intr_establish(9, SYSASIC_EVENT_GDROM, 0, gdrom_intr, sc);
 }
 
 int

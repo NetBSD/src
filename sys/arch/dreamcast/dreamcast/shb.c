@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.4 2001/02/20 00:03:53 marcus Exp $	*/
+/*	$NetBSD: shb.c,v 1.5 2001/04/24 19:43:23 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <sh3/intcreg.h>
 #include <sh3/trapreg.h>
 #include <machine/shbvar.h>
+#include <machine/sysasicvar.h>
 
 #if 0
 #include <dev/isa/isareg.h>
@@ -650,13 +651,17 @@ mask_irq(irq)
 		break;
 #endif
 
-	 case 9:
-	  *(volatile unsigned int *)(void *)(0xa05f6934) &= ~1;
-	  break;
+	case 9:
+	 	sysasic_mask_irq(SYSASIC_IRQ_LEVEL_9);
+		break;
 
-	 case 11:
-   	  *(volatile unsigned int *)(void *)(0xa05f6924) &= ~(1<<3);
-	  break;
+	case 11:
+	 	sysasic_mask_irq(SYSASIC_IRQ_LEVEL_11);
+		break;
+
+	case 13:
+	 	sysasic_mask_irq(SYSASIC_IRQ_LEVEL_13);
+		break;
 
 	default:
 		if (irq < SHB_MAX_HARDINTR)
@@ -693,13 +698,17 @@ unmask_irq(irq)
 		SHREG_IPRE |= ((15 - irq)<<12);
 		break;
 #endif
-	 case 9:
-	  *(volatile unsigned int *)(void *)(0xa05f6934) |= 1;
-	  break;
+	case 9:
+	 	sysasic_unmask_irq(SYSASIC_IRQ_LEVEL_9);
+		break;
 
-	 case 11:
-   	  *(volatile unsigned int *)(void *)(0xa05f6924) |= (1<<3);
-	  break;
+	case 11:
+	 	sysasic_unmask_irq(SYSASIC_IRQ_LEVEL_11);
+		break;
+
+	case 13:
+	 	sysasic_unmask_irq(SYSASIC_IRQ_LEVEL_13);
+		break;
 
 	default:
 		if (irq < SHB_MAX_HARDINTR)
