@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.11 2002/01/25 23:40:51 sjg Exp $	*/
+/*	$NetBSD: emacs.c,v 1.12 2002/09/25 02:41:11 provos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1769,16 +1769,6 @@ x_expand(c)
 }
 
 
-static int
-is_dir(const char *path)
-{
-	struct stat st;
-
-	if (stat(path, &st) == 0)
-		return S_ISDIR(st.st_mode);
-	return 0;
-}
-
 /* type == 0 for list, 1 for complete and 2 for complete-list */
 static void
 do_complete(flags, type)
@@ -1786,99 +1776,50 @@ do_complete(flags, type)
 	Comp_type type;
 {
 	char **words;
-	int nwords = 0;
-	int start, end;
+	int nwords;
+	int start, end, nlen, olen;
 	int is_command;
-	int do_glob = 1;
-	Comp_type t = type;
-	char *comp_word = (char *) 0;
+	int completed = 0;
 
-	if (type == CT_COMPLIST) {
-		do_glob = 0;
-		/* decide what we will do */
-		nwords = x_cf_glob(flags,
-			xbuf, xep - xbuf, xcp - xbuf,
-			&start, &end, &words, &is_command);
-		if (nwords > 0) {
-			if (nwords > 1) {
-				int len = x_longest_prefix(nwords, words);
-
-				t = CT_LIST;
-				/* Do completion if prefix matches original
-				 * prefix (ie, no globbing chars), otherwise
-				 * don't bother
-				 */
-				if (strncmp(words[0], xbuf + start, end - start)
-									== 0)
-					comp_word = str_nsave(words[0], len,
-						ATEMP);
-				else
-					type = CT_LIST;
-				/* Redo globing to show full paths if this
-				 * is a command.
-				 */
-				if (is_command) {
-					do_glob = 1;
-					x_free_words(nwords, words);
-				}
-			} else
-				type = t = CT_COMPLETE;
-		}
-	}
-	if (do_glob)
-		nwords = x_cf_glob(flags | (t == CT_LIST ? XCF_FULLPATH : 0),
-			xbuf, xep - xbuf, xcp - xbuf,
-			&start, &end, &words, &is_command);
+	nwords = x_cf_glob(flags, xbuf, xep - xbuf, xcp - xbuf,
+		&start, &end, &words, &is_command);
+	/* no match */
 	if (nwords == 0) {
 		x_e_putc(BEL);
 		return;
 	}
-	switch (type) {
-	  case CT_LIST:
+	if (type == CT_LIST) {
 		x_print_expansions(nwords, words, is_command);
 		x_redraw(0);
-		break;
-
-	  case CT_COMPLIST:
-		/* Only get here if nwords > 1 && comp_word is set */
-		{
-			int olen = end - start;
-			int nlen = strlen(comp_word);
-
-			x_print_expansions(nwords, words, is_command);
-			xcp = xbuf + end;
-			x_escape(comp_word + olen, nlen - olen, x_emacs_putbuf);
-			x_redraw(0);
-		}
-		break;
-
-	  case CT_COMPLETE:
-		{
-			int nlen = x_longest_prefix(nwords, words);
-
-			if (nlen > 0) {
-				x_goto(xbuf + start);
-				x_delete(end - start, FALSE);
-				x_escape(words[0], nlen, x_emacs_putbuf);
-				x_adjust();
-				/* If single match is not a directory, add a
-				 * space to the end...
-				 */
-				if (nwords == 1
-				    && !ISDIRSEP(words[0][nlen - 1])) {
-					/*
-					 * we may be here because we
-					 * just expanded $HOME in
-					 * which case adding '/' is
-					 * correct.
-					 */
-					x_ins(is_dir(words[0]) ? slash : space);
-				}
-			} else
-				x_e_putc(BEL);
-		}
-		break;
+		x_free_words(nwords, words);
 	}
+
+
+	olen = end - start;
+	nlen = x_longest_prefix(nwords, words);
+	/* complete single match, or multi-match without globbing chars */
+	if ((nlen > olen) &&
+	    ((nwords == 1) || (strncmp(words[0], xbuf + start, olen) == 0))) {
+		x_goto(xbuf + start);
+		x_delete(olen, FALSE);
+		x_escape(words[0], nlen, x_emacs_putbuf);
+		x_adjust();
+		completed = 1;
+	}
+	if ((nwords == 1) && (!ISDIRSEP(words[0][nlen - 1]))) {
+		x_ins(space);
+		completed = 1;
+	}
+
+	if (type == CT_COMPLIST && !completed) {
+		x_print_expansions(nwords, words, is_command);
+		completed = 1;
+	}
+
+	if (completed)
+		x_redraw(0);
+
+	x_free_words(nwords, words);
 }
 
 /* NAME:
