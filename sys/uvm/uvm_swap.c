@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.24 1999/02/23 15:58:28 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.25 1999/03/18 01:45:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1151,8 +1151,7 @@ swstrategy(bp)
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
-	int	pageno;
-	int	bn;
+	int s, pageno, bn;
 	UVMHIST_FUNC("swstrategy"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -1199,6 +1198,7 @@ swstrategy(bp)
 		 * must convert "bp" from an I/O on /dev/drum to an I/O
 		 * on the swapdev (sdp).
 		 */
+		s = splbio();
 		bp->b_blkno = bn;		/* swapdev block number */
 		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
@@ -1209,10 +1209,8 @@ swstrategy(bp)
 		 * drum's v_numoutput counter to the swapdevs.
 		 */
 		if ((bp->b_flags & B_READ) == 0) {
-			int s = splbio();
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
 			vp->v_numoutput++;	/* put it on swapdev */
-			splx(s);
 		}
 
 		/* 
@@ -1226,6 +1224,7 @@ swstrategy(bp)
 		 * finally plug in swapdev vnode and start I/O
 		 */
 		bp->b_vp = vp;
+		splx(s);
 		VOP_STRATEGY(bp);
 		return;
 #ifdef SWAP_TO_FILES
@@ -1793,8 +1792,10 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
+	s = splbio();
 	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
+	splx(s);
 	/* XXXCDC: isn't swapdev_vp always a VCHR? */
 	/* XXXMRG: probably -- this is obviously something inherited... */
 	if (swapdev_vp->v_type == VBLK)
@@ -1852,7 +1853,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now dispose of the swap buffer
 	 */
 	s = splbio();
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY|B_NOCACHE);
 	if (bp->b_vp)
 		brelvp(bp);
 
@@ -1887,9 +1887,8 @@ uvm_swap_bufdone(bp)
 #endif
 
 	/*
-	 * drop buffers reference to the vnode and its flags.
+	 * drop the buffer's reference to the vnode.
 	 */
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY|B_NOCACHE);
 	if (bp->b_vp)
 		brelvp(bp);
 
@@ -1958,8 +1957,4 @@ uvm_swap_aiodone(aio)
 	s = splbio();
 	pool_put(swapbuf_pool, sbp);
 	splx(s);
-
-	/*
-	 * done!
-	 */
 }
