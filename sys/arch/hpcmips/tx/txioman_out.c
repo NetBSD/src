@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman_out.c,v 1.1 2000/10/22 10:42:33 uch Exp $	*/
+/*	$NetBSD: txioman_out.c,v 1.2 2001/04/24 17:09:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct cfattach txout_ca = {
 int
 txout_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -98,9 +98,7 @@ txout_hook(void *arg, int type, long id, void *msg)
 	struct txout_softc *sc = arg;
 	struct txio_ops *ops = sc->sc_ops;	
 
-	printf("%s: %d\n", __FUNCTION__, sc->sc_port);
 	ops->_out(ops->_v, sc->sc_port, (int)msg);
-	printf("done.\n");
 
-	return 0;
+	return (0);
 }
