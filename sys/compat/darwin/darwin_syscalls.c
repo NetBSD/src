@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.18 2003/01/18 23:30:22 thorpej Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.19 2003/01/22 17:47:35 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.18 2003/01/18 23:30:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.19 2003/01/22 17:47:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -94,7 +94,7 @@ const char *const darwin_syscallnames[] = {
 #endif
 	"sigprocmask13",			/* 48 = sigprocmask13 */
 	"__getlogin",			/* 49 = __getlogin */
-	"setlogin",			/* 50 = setlogin */
+	"__setlogin",			/* 50 = __setlogin */
 	"acct",			/* 51 = acct */
 	"sigpending13",			/* 52 = sigpending13 */
 	"sigaltstack13",			/* 53 = sigaltstack13 */

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.18 2003/01/18 23:30:22 thorpej Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.19 2003/01/22 17:47:35 christos Exp $ */
 
 /*
  * System call numbers.
@@ -113,8 +113,8 @@
 /* syscall: "__getlogin" ret: "int" args: "char *" "size_t" */
 #define	DARWIN_SYS___getlogin	49
 
-/* syscall: "setlogin" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_setlogin	50
+/* syscall: "__setlogin" ret: "int" args: "const char *" */
+#define	DARWIN_SYS___setlogin	50
 
 /* syscall: "sigpending13" ret: "int" args: */
 #define	DARWIN_SYS_sigpending13	52

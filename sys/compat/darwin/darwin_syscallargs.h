@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.18 2003/01/18 23:30:22 thorpej Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.19 2003/01/22 17:47:35 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -293,7 +293,7 @@ int	sys_getgid(struct lwp *, void *, register_t *);
 #endif
 int	compat_13_sys_sigprocmask(struct lwp *, void *, register_t *);
 int	sys___getlogin(struct lwp *, void *, register_t *);
-int	sys_setlogin(struct lwp *, void *, register_t *);
+int	sys___setlogin(struct lwp *, void *, register_t *);
 int	bsd_sys_acct(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigpending(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigaltstack(struct lwp *, void *, register_t *);
