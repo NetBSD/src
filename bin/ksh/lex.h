@@ -2,7 +2,7 @@
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.1.1.2 1996/10/09 15:12:48 jtc Exp $ */
+/* $Id: lex.h,v 1.1.1.3 1996/10/09 15:29:20 jtc Exp $ */
 
 #define	IDENT	64
 
@@ -12,12 +12,13 @@ struct source {
 	int	type;		/* input type */
 	char const *start;	/* start of current buffer */
 	union {
-		char ugbuf[2];	/* buffer for ungetsc() (SREREAD) */
 		char **strv;	/* string [] */
 		struct shf *shf; /* shell file */
-		struct tbl *tblp; /* alias */
+		struct tbl *tblp; /* alias (SALIAS) */
 		char *freeme;	/* also for SREREAD */
 	} u;
+	char	ugbuf[2];	/* buffer for ungetsc() (SREREAD) and
+				 * alias (SALIAS) */
 	int	line;		/* line number */
 	int	errline;	/* line the error occured on (0 if not set) */
 	const char *file;	/* input file name */
