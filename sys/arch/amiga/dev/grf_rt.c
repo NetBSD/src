@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.34 1996/12/23 09:10:09 veego Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -905,6 +905,7 @@ rt_getvmode (gp, vm)
 	struct grfvideo_mode *vm;
 {
 	struct MonDef *md;
+	int vmul;
 
 	if (vm->mode_num && vm->mode_num > retina_mon_max)
 		return (EINVAL);
@@ -935,24 +936,35 @@ rt_getvmode (gp, vm)
 	 * 			- Ignatios Souvatzis
 	 */
 
-	if (md->DEP == 4) {
+	if (md->DEP != 4) {
 		vm->hblank_start = md->HBS * 32 / md->DEP;
-		vm->hblank_stop  = md->HBE * 32 / md->DEP;
 		vm->hsync_start  = md->HSS * 32 / md->DEP;
 		vm->hsync_stop   = md->HSE * 32 / md->DEP;
 		vm->htotal       = md->HT * 32 / md->DEP;
 	} else {
 		vm->hblank_start = md->HBS * md->FX;
-		vm->hblank_stop  = md->HBE * md->FX;
 		vm->hsync_start  = md->HSS * md->FX;
 		vm->hsync_stop   = md->HSE * md->FX;
 		vm->htotal       = md->HT * md->FX;
 	}
-	vm->vblank_start = md->VBS;
-	vm->vblank_stop  = md->VBE;
-	vm->vsync_start  = md->VSS;
-	vm->vsync_stop   = md->VSE;
-	vm->vtotal       = md->VT;
+
+
+	/* XXX move vm->disp_flags and vmul to rt_load_mon
+	* if rt_setvmode can add new modes with grfconfig */
+	vm->disp_flags = 0;
+	vmul = 2;
+	if (md->FLG & MDF_DBL) {
+		vm->disp_flags |= GRF_FLAGS_DBLSCAN;
+		vmul = 4;
+	}
+	if (md->FLG & MDF_LACE) {
+		vm->disp_flags |= GRF_FLAGS_LACE;
+		vmul = 1;
+	}
+	vm->vblank_start = md->VBS * vmul / 2;
+	vm->vsync_start  = md->VSS * vmul / 2;
+	vm->vsync_stop   = md->VSE * vmul / 2;
+	vm->vtotal       = md->VT * vmul / 2;
 
 	return (0);
 }
