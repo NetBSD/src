@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.20 2001/06/18 11:06:26 jdolecek Exp $	*/
+/*	$NetBSD: lance.c,v 1.21 2001/06/18 13:47:18 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -566,7 +566,6 @@ lance_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct lance_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
