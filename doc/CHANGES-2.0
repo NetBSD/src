@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.24 2004/04/01 12:02:12 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.25 2004/04/01 16:10:14 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -237,4 +237,16 @@ sys/kern/kern_ras.c				1.8-1.9
 	             spinlock.
 	ras_fork:    don't do PR_WAITOK holding a spinlock.
 	[yamt, ticket #41]
+
+usr.sbin/ipf/ipf/Makefile			1.20
+usr.sbin/ipf/ipftest/Makefile			1.27
+usr.sbin/ipf/ipmon/Makefile			1.20
+usr.sbin/ipf/ipnat/Makefile			1.22
+usr.sbin/ipf/ippool/Makefile			1.6
+usr.sbin/ipf/ipsend/Makefile			1.23
+
+	Simplify `bar.c: bar.y' (et al) rules by moving header dependencies
+	which bar.o (not bar.c) needs to DPSRCS, and using {.ALLSRC} in the
+	target now that only bar.y is a source.
+	[lukem, ticket #42]
 
