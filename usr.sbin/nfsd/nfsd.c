@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.29 1999/06/07 06:06:20 thorpej Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.30 1999/06/07 06:13:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.29 1999/06/07 06:06:20 thorpej Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.30 1999/06/07 06:13:41 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ main(argc, argv)
 #define	GETOPT	"n:rtu"
 #define	USAGE	"[-rtu] [-n num_servers]"
 #endif
-	while ((ch = getopt(argc, argv, GETOPT)) != -1)
+	while ((ch = getopt(argc, argv, GETOPT)) != -1) {
 		switch (ch) {
 		case 'n':
 			nfsdcnt = atoi(optarg);
@@ -205,6 +205,7 @@ main(argc, argv)
 		case '?':
 			usage();
 		};
+	}
 	argv += optind;
 	argc -= optind;
 
@@ -287,62 +288,70 @@ main(argc, argv)
 			if (gettimeofday(&ktv, (struct timezone *)0) == 0 &&
 			    kt.length > 0 && kt.length <=
 			    (RPCAUTH_MAXSIZ - 3 * NFSX_UNSIGNED)) {
-			    kin.w1 = NFS_KERBW1(kt);
-			    kt.mbz = 0;
-			    (void)strcpy(inst, "*");
-			    if (krb_rd_req(&kt, NFS_KERBSRV,
-				inst, nsd.nsd_haddr, &kauth, "") == RD_AP_OK &&
-				krb_kntoln(&kauth, lnam) == KSUCCESS &&
-				(pwd = getpwnam(lnam)) != NULL) {
-				cr = &nsd.nsd_cr;
-				cr->cr_uid = pwd->pw_uid;
-				cr->cr_groups[0] = pwd->pw_gid;
-				cr->cr_ngroups = 1;
-				setgrent();
-				while ((grp = getgrent()) != NULL) {
-					if (grp->gr_gid == cr->cr_groups[0])
-						continue;
-					for (cpp = grp->gr_mem;
-					    *cpp != NULL; ++cpp)
-						if (!strcmp(*cpp, lnam))
+				kin.w1 = NFS_KERBW1(kt);
+				kt.mbz = 0;
+				(void)strcpy(inst, "*");
+				if (krb_rd_req(&kt, NFS_KERBSRV,
+				     inst, nsd.nsd_haddr, &kauth, "") ==
+				     RD_AP_OK &&
+				    krb_kntoln(&kauth, lnam) == KSUCCESS &&
+				    (pwd = getpwnam(lnam)) != NULL) {
+					cr = &nsd.nsd_cr;
+					cr->cr_uid = pwd->pw_uid;
+					cr->cr_groups[0] = pwd->pw_gid;
+					cr->cr_ngroups = 1;
+					setgrent();
+					while ((grp = getgrent()) != NULL) {
+						if (grp->gr_gid ==
+						    cr->cr_groups[0])
+							continue;
+						for (cpp = grp->gr_mem;
+						    *cpp != NULL; ++cpp)
+							if (!strcmp(*cpp, lnam))
+								break;
+						if (*cpp == NULL)
+							continue;
+						cr->cr_groups[cr->cr_ngroups++]
+						    = grp->gr_gid;
+						if (cr->cr_ngroups == NGROUPS)
 							break;
-					if (*cpp == NULL)
-						continue;
-					cr->cr_groups[cr->cr_ngroups++]
-					    = grp->gr_gid;
-					if (cr->cr_ngroups == NGROUPS)
-						break;
+					}
+					endgrent();
+
+					/*
+					 * Get the timestamp verifier out of
+					 * the authenticator and verifier
+					 * strings.
+					 */
+					kin.t1 = kverf.t1;
+					kin.t2 = kverf.t2;
+					kin.w2 = kverf.w2;
+					memset((caddr_t)kivec, 0,
+					    sizeof(kivec));
+					memmove((caddr_t)nsd.nsd_key,
+					    (caddr_t)kauth.session,
+					    sizeof(kauth.session));
+
+					/*
+					 * Decrypt the timestamp verifier
+					 * in CBC mode.
+					 */
+					XXX
+
+					/*
+					 * Validate the timestamp verifier, to
+					 * check that the session key is ok.
+					 */
+					nsd.nsd_timestamp.tv_sec =
+					    ntohl(kout.t1);
+					nsd.nsd_timestamp.tv_usec =
+					    ntohl(kout.t2);
+					nsd.nsd_ttl = ntohl(kout.w1);
+					if ((nsd.nsd_ttl - 1) == ntohl(kout.w2))
+					    nfssvc_flag =
+					        NFSSVC_NFSD | NFSSVC_AUTHIN;
 				}
-				endgrent();
-
-				/*
-				 * Get the timestamp verifier out of the
-				 * authenticator and verifier strings.
-				 */
-				kin.t1 = kverf.t1;
-				kin.t2 = kverf.t2;
-				kin.w2 = kverf.w2;
-				memset((caddr_t)kivec, 0, sizeof (kivec));
-				memmove((caddr_t)nsd.nsd_key,
-				    (caddr_t)kauth.session,
-				    sizeof(kauth.session));
-
-				/*
-				 * Decrypt the timestamp verifier in CBC mode.
-				 */
-				XXX
-
-				/*
-				 * Validate the timestamp verifier, to
-				 * check that the session key is ok.
-				 */
-				nsd.nsd_timestamp.tv_sec = ntohl(kout.t1);
-				nsd.nsd_timestamp.tv_usec = ntohl(kout.t2);
-				nsd.nsd_ttl = ntohl(kout.w1);
-				if ((nsd.nsd_ttl - 1) == ntohl(kout.w2))
-				    nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHIN;
 			}
-		    }
 #endif /* NFSKERB */
 		}
 		exit(0);
