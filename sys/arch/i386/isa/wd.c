@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.95 1994/10/20 16:19:08 mycroft Exp $
+ *	$Id: wd.c,v 1.96 1994/10/20 16:36:21 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -733,7 +733,7 @@ wdcintr(wdc)
 	wdc->sc_timeout = 0;
     
 	/* Have we an error? */
-	if (wdc->sc_status & (WDCS_ERR | WDCS_ECCCOR)) {
+	if (wdc->sc_status & WDCS_ERR) {
 	lose:
 #ifdef WDDEBUG
 		wderror(wd, NULL, "wdcintr");
@@ -742,26 +742,24 @@ wdcintr(wdc)
 			wdc->sc_flags |= WDCF_ERROR;
 			goto restart;
 		}
+
 #ifdef B_FORMAT
-		if (bp->b_flags & B_FORMAT) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			goto done;
-		}
+		if (bp->b_flags & B_FORMAT)
+			goto bad;
 #endif
 	
-		/* Error or error correction? */
-		if (wdc->sc_status & WDCS_ERR) {
-			if (++wdc->sc_errors >= WDIORETRIES) {
-				wderror(wd, bp, "hard error");
-				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;	/* Flag the error. */
-				goto done;
-			} else
-				goto restart;
-		} else
-			wderror(wd, bp, "soft ecc");
+		if (++wdc->sc_errors < WDIORETRIES)
+			goto restart;
+		wderror(wd, bp, "hard error");
+
+	bad:
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		goto done;
 	}
+
+	if (wdc->sc_status & WDCS_ECCCOR)
+		wderror(wd, bp, "soft ecc");
     
 	/* If this was a read, fetch the data. */
 	if (bp->b_flags & B_READ) {
