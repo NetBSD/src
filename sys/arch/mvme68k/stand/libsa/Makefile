@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/31 21:22:06 cjs Exp $
+#	$NetBSD: Makefile,v 1.6 1998/08/01 11:22:52 scw Exp $
 
 LIB=sa
 
@@ -32,9 +32,9 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_mvme} ${SRC_here}
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-INCL= -I. -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
+CPPFLAGS+= -I. -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 COPTS= #-fno-defer-pop
-CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
+CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG}
 
 .PATH:  ${DIR_SA} ${DIR_KERN} 
 

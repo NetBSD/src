@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:06:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/01 11:22:53 scw Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
@@ -11,6 +11,7 @@ NOMAN=
 SRCS=	start.s clock.c console.c etherfun.c le_poll.c libc_sa.c \
 		oc_cksum.s sboot.c
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
+CLEANFILES+= srec sboot sboot.srec
 
 BOOTS=	sboot.srec
 

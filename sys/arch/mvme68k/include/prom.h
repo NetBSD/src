@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.4 1997/11/05 04:05:00 thorpej Exp $	*/
+/*	$NetBSD: prom.h,v 1.5 1998/08/01 11:22:51 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -168,9 +168,10 @@ struct mvmeprom_args {
 #define MVMEPROM_RETURN(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (ret);			/* return a value (int) */
+/* return a byte, ret must be int */
 #define MVMEPROM_RETURN_BYTE(ret) \
 	MVMEPROM_GETRES(ret); \
-	return((ret >> 24) & 0xff);	/* return a byte, ret must be int */
+	return(int)((((unsigned int)(ret)) >> 24) & 0xff);
 #define MVMEPROM_STATRET(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (!(ret & 0x4));		/* return a 'status' */

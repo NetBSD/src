@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1996/05/17 20:54:50 chuck Exp $ */
+/*	$NetBSD: clock.c,v 1.3 1998/08/01 11:22:52 scw Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -9,8 +9,10 @@
 /*
  * BCD to decimal and decimal to BCD.
  */
-#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
-#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
+#define FROMBCD(x)      (int)((((unsigned int)(x)) >> 4) * 10 +\
+				(((unsigned int)(x)) & 0xf))
+#define TOBCD(x)        (int)((((unsigned int)(x)) / 10 * 16) +\
+				(((unsigned int)(x)) % 10))
 
 #define SECDAY          (24 * 60 * 60)
 #define SECYR           (SECDAY * 365)
@@ -27,9 +29,9 @@ const short dayyr[12] =
 
 static  u_long
 chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
+	int sec, min, hour, day, mon, year;
 {
-	register int days, yr;
+	int days, yr;
 
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
