@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.22.16.3 1998/01/29 11:53:42 mellon Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22.16.4 1998/01/29 12:06:48 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -164,9 +164,9 @@ process_read_fpregs(p, regs)
 		 * save it temporarily.
 		 */
 		cw = frame->sv_env.en_cw;
-		bzero(frame, sizeof(*frame));
+		bzero(frame, sizeof(*regs));
 		frame->sv_env.en_cw = cw;
-		frame->sv_env.en_sw = 0;
+		frame->sv_env.en_sw = 0x0000;
 		frame->sv_env.en_tw = 0xffff;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
