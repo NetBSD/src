@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.13 2002/02/13 08:18:44 ross Exp $
+.\"     $NetBSD: lock.9,v 1.14 2002/07/14 04:08:44 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@ Try to acquire the simplelock
 without spinning.  If the simplelock is held by another thread
 then the return value is 0.  If the simplelock was acquired
 successfully then the return value is 1.
-.It Fn simple_lock_unlock "slock"
+.It Fn simple_unlock "slock"
 The simplelock
 .Fa slock
 is unlocked.  The simplelock must be locked and the calling thread must

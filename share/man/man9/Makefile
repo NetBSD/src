@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.113 2002/07/09 02:28:10 thorpej Exp $
+#       $NetBSD: Makefile,v 1.114 2002/07/14 04:08:44 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -180,7 +180,7 @@ MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
 	kthread.9 kthread_create1.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
-	lock.9 simple_lock_try.9 lock.9 simple_lock_unlock.9 \
+	lock.9 simple_lock_try.9 lock.9 simple_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
 	lock.9 lockinit.9 lock.9 lockmgr.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
