@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.37 1999/02/02 18:37:20 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.38 1999/05/23 23:03:44 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -208,50 +208,21 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
  * Therefore it is done a fast revalidation of the page if it is
  * referenced. Trouble here is the hardware bug on KA650 CPUs that
  * put in a need for an extra check when the fault is gotten during
- * PTE reference.
+ * PTE reference. Handled in pmap.c.
  */
 		.align	2
 transl_v: .globl transl_v	# Translation violation, 20
-#ifdef DEBUG
-	bbc	$0,(sp),1f	# pte len illegal in trans fault
-	pushab	2f
-	calls	$1,_panic
-2:	.asciz	"pte trans"
-#endif
-1:	pushr	$3		# save r0 & r1
-	movl	12(sp),r0	# Save faulted address in r0
-	blss	2f		# Jump if in kernelspace
-
-	ashl	$1,r0,r0
-	blss	3f		# Jump if P1
-	mfpr	$PR_P0BR,r1
-	brb	4f
-3:	mfpr	$PR_P1BR,r1
-
-4:	bbc	$1,8(sp),5f	# Jump if not indirect
-	extzv	$10,$21,r0,r0	# extract pte number
-	moval	(r1)[r0],r0	# get address of pte
-#if defined(VAX650) || defined(DEBUG)
-	extzv	$10,$20,r0,r1
-	movl	_Sysmap,r0
-	movaq	(r0)[r1],r0
-	tstl	(r0)		# If pte clear, found HW bug.
-	bneq	6f
-	popr	$3
-	brb	access_v
-#endif
-2:	extzv	$10,$20,r0,r1	# get pte index
-	movl	_Sysmap,r0
-	movaq	(r0)[r1],r0	# pte address
-6:	bisl2	$0x80000000,(r0)+ # set valid bit
-	bisl2	$0x80000000,(r0)
-	popr	$3
+	pushr	$0x3f
+	pushl	28(sp)
+	pushl	28(sp)
+	calls	$2,_pmap_simulref
+	tstl	r0
+	bneq	1f
+	popr	$0x3f
 	addl2	$8,sp
 	rei
-
-5:	extzv	$11,$20,r0,r0
-	movaq	(r1)[r0],r0
-	brb	6b
+1:	popr	$0x3f
+	brb	access_v
 
 		.align	2
 access_v:.globl access_v	# Access cntrl viol fault,	24
