@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1997/02/12 23:06:27 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1997/02/20 00:54:21 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1076,10 +1076,10 @@ Lswnofpsave:
 	lea	_kernel_crp, a3		| our CPU Root Ptr. (CRP)
 	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
 	movl	a2@(PM_A_PHYS),d0	| phys = pmap->pm_a_phys
-	cmpl	a3(4),d0		|  == kernel_crp.rp_addr ?
+	cmpl	a3@(4),d0		|  == kernel_crp.rp_addr ?
 	jeq	Lsame_mmuctx		| skip loadcrp/flush
 	/* OK, it is a new MMU context.  Load it up. */
-	movl	d0,a3(4)
+	movl	d0,a3@(4)
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
