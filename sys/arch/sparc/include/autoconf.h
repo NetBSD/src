@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.37 2003/08/07 16:29:38 agc Exp $ */
+/*	$NetBSD: autoconf.h,v 1.38 2004/06/27 18:24:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -186,4 +186,4 @@ struct device *getdevunit __P((char *, int));
 int	romgetcursoraddr __P((int **, int **));
 
 int	bus_translate_address_generic(struct openprom_range *, int,
-	    bus_addr_t, bus_addr_t *);
+	    bus_addr_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.10 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.11 2004/06/27 18:24:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.10 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.11 2004/06/27 18:24:46 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -93,6 +93,7 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	struct cpuunit_softc *sc = (void *) self;
 	struct mainbus_attach_args *ma = aux;
 	int node, error;
+	bus_space_tag_t sbt;
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_st = ma->ma_bustag;
@@ -105,19 +106,18 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize the bus space tag we pass on to our children.
 	 */
-	sc->sc_bustag = malloc(sizeof(*sc->sc_bustag), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	sc->sc_bustag->cookie = sc;
-	sc->sc_bustag->parent = sc->sc_st;
-	sc->sc_bustag->sparc_bus_map = sc->sc_st->sparc_bus_map;
-	sc->sc_bustag->sparc_bus_mmap = sc->sc_st->sparc_bus_mmap;
+	sbt = sc->sc_bustag = malloc(sizeof(*sbt), M_DEVBUF, M_WAITOK);
+	memcpy(sbt, sc->sc_st, sizeof(*sbt));
+	sbt->cookie = sc;
+	sbt->parent = sc->sc_st;
+	sbt->nranges = 0;
+	sbt->ranges = NULL;
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
 	error = prom_getprop(sc->sc_node, "ranges",
-	    sizeof(struct openprom_range), &sc->sc_bustag->nranges,
-	    &sc->sc_bustag->ranges);
+	    sizeof(struct openprom_range), &sbt->nranges, &sbt->ranges);
 	if (error) {
 		printf("%s: error %d getting \"ranges\" property\n",
 		    sc->sc_dev.dv_xname, error);
@@ -129,7 +129,7 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	     node = nextsibling(node)) {
 		struct cpuunit_attach_args cpua;
 
-		if (cpuunit_setup_attach_args(sc, sc->sc_bustag, node, &cpua))
+		if (cpuunit_setup_attach_args(sc, sbt, node, &cpua))
 			panic("cpuunit_attach: failed to set up attach args");
 
 		(void) config_found(&sc->sc_dev, &cpua, cpuunit_print);
