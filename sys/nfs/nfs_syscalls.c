@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.70 2003/08/07 16:33:53 agc Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.71 2003/12/07 18:58:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.70 2003/08/07 16:33:53 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.71 2003/12/07 18:58:11 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -176,13 +176,13 @@ sys_nfssvc(l, v, retval)
 	 * Must be super user
 	 */
 	error = suser(p->p_ucred, &p->p_acflag);
-	if(error)
+	if (error)
 		return (error);
 #ifdef NFSSERVER
 	s = splsoftnet();
 	simple_lock(&nfsd_slock);
 	while (nfssvc_sockhead_flag & SLP_INIT) {
-		 nfssvc_sockhead_flag |= SLP_WANTINIT;
+		nfssvc_sockhead_flag |= SLP_WANTINIT;
 		(void) ltsleep(&nfssvc_sockhead, PSOCK, "nfsd init", 0,
 		    &nfsd_slock);
 	}
