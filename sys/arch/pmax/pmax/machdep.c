@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 1999/05/11 05:06:35 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 1999/05/11 05:06:35 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
 #include <sys/proc.h>
@@ -89,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $"
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
+#include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/clockreg.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -97,38 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 1999/05/07 18:04:36 thorpej Exp $"
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
-
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/dev/promiovar.h>		/* prom console I/O vector */
-#include <pmax/pmax/machdep.h>		/* splXXX() function pointer hack */
-
-/* Motherboard or system-specific initialization vector */
-void		unimpl_os_init __P((void));
-void		unimpl_bus_reset __P((void));
-void		unimpl_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
-
-int		unimpl_intr __P((u_int mask, u_int pc,
-			      u_int statusReg, u_int causeReg));
-
-void		unimpl_cons_init __P((void));
-void		unimpl_device_register __P((struct device *, void *));
-const char*	unimpl_model_name __P((void));
-void	 	unimpl_iointr __P ((void *, u_long));
-void 		unimpl_clockintr __P ((void *));
-void	 	unimpl_errintr __P ((void));
-
-struct platform  platform = {
-	"iobus not set",
-	unimpl_os_init,
-	unimpl_bus_reset,
-	unimpl_cons_init,
-	unimpl_device_register,
-	unimpl_iointr,
-	unimpl_clockintr
-};
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -140,11 +109,11 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
+int	systype;		/* mother board type */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */
-int	systype;		/* Mother board type */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
+int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
@@ -157,20 +126,15 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-
 void	mach_init __P((int, char *[], int, int, u_int, char *));
-int	initcpu __P((void));
+
+unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
-int	atoi __P((const char *cp));
+
 void	prom_haltbutton __P((void));
 void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
 int	prom_systype __P((void));
-
-extern caddr_t esym;
-
-/* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
+int	initcpu __P((void));
 
 /* XXX XXX XXX */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
@@ -181,6 +145,7 @@ void	(*tc_enable_interrupt)
      __P ((u_int slotno, int (*handler) __P((void *sc)),
           void *sc, int onoff));
 
+#include <pmax/pmax/machdep.h>		/* splXXX() function pointer hack */
 /*
  * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
  * register and baseboard interrupt-control registers at runtime.
@@ -203,6 +168,28 @@ const	struct callback *callv;	/* pointer to PROM entry points */
 /* stacktrace code violates prototypes to get callee's registers */
 extern void stacktrace __P((void)); /*XXX*/
 #endif
+
+/* Motherboard or system-specific initialization vector */
+void	unimpl_os_init __P((void));
+void	unimpl_bus_reset __P((void));
+int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
+void	unimpl_cons_init __P((void));
+void	unimpl_device_register __P((struct device *, void *));
+void 	unimpl_iointr __P ((void *, u_long));
+void	unimpl_clockintr __P ((void *));
+
+struct platform platform = {
+	"iobus not set",
+	unimpl_os_init,
+	unimpl_bus_reset,
+	unimpl_cons_init,
+	unimpl_device_register,
+	unimpl_iointr,
+	unimpl_clockintr
+};
+
+extern caddr_t esym;
+extern struct consdev promcd;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -359,8 +346,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	db_machine_init();
 	/* init symbols if present */
-	if (nsym && ssym && esym)
-		ddb_init(nsym, (int *)ssym, (int *)esym);
+	if (esym)
+		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -404,7 +391,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Find out how much memory is available.
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
-	physmem = btoc((vaddr_t)kernend - MIPS_KSEG0_START);
+	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
 	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
 	while (cp < (char *)physmem_boardmax) {
 	  	int j;
@@ -685,56 +672,6 @@ lookup_bootinfo(type)
 	return (NULL);
 }
 
-/*
- * PROM reset callback for reset switch.
- * XXX enter ddb instead?
- */
-void
-prom_haltbutton()
-{
-	(*callv->_halt)((int *)0, 0);
-}
-
-/*
- * Call PROM to halt or reboot.
- */
-volatile void
-prom_halt(howto, bootstr)
-	int howto;
-	char *bootstr;
-
-{
-	if (callv != &callvec)
-		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
-	else {
-		volatile void (*f) __P((void));
-
-		f = (howto & RB_HALT)
-			? (void *)DEC_PROM_REINIT
-			: (void *)DEC_PROM_AUTOBOOT;
-		(*f)();
-	}
-
-	while(1) ;	/* fool gcc */
-	/*NOTREACHED*/
-}
-
-/*
- * Get 32bit system type of Digital hardware.
- *	From highest order byte to lowest;
- *	'cputype,' 'systype,' 'firmware revision' and 'hardware revision.'
- */
-int
-prom_systype()
-{
-	char *cp;
-
-	if (callv != &callvec)
-		return (*callv->_getsysid)();
-	cp = (*callv->_getenv)("systype");
-	return (cp != NULL) ? atoi(cp) : 0;
-}
-
 void
 cpu_reboot(howto, bootstr)
 	volatile int howto;	/* XXX volatile to keep gcc happy */
@@ -815,7 +752,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-#if (DEC_3MIN + DEC_3MAXPLUS + DEC_MAXINE) > 1
+#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
 	tvp->tv_usec += (*clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {
@@ -873,130 +810,34 @@ delay(n)
         DELAY(n);
 }
 
-
 /*
- * Convert an ASCII string into an integer.
- */
-int
-atoi(s)
-	const char *s;
-{
-	int c;
-	unsigned base = 10, d;
-	int neg = 0, val = 0;
-
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
-
-	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
-		c = *s++;
-
-	/* parse sign, allow more than one (compat) */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* parse base specification, if any */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* parse number proper */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-out:
-	return val;
-}
-
-/*
- *  Ensure all  platform vectors are always initialized.
+ *  Ensure all platform vectors are always initialized.
  */
 void
 unimpl_os_init()
 {
-	panic("sysconf.init didnt set os_init\n");
+	panic("sysconf.init didnt set os_init");
 }
 
 void
 unimpl_bus_reset()
 {
-	panic("sysconf.init didnt set bus_reset\n");
-}
-
-void
-unimpl_enable_intr(slotno, handler, sc, onoff)
-	u_int slotno;
-	int (*handler) __P((intr_arg_t sc));
-	 intr_arg_t sc;
-	int onoff;
-{
-	panic("sysconf.init didnt set enable_intr\n");
-}
-
-
-int
-unimpl_intr (mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr\n");
+	panic("sysconf.init didnt set bus_reset");
 }
 
 void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init\n");
+	panic("sysconf.init didnt set cons_init");
 }
 
 void
 unimpl_device_register(sc, arg)
-     struct device *sc;
-     void *arg;
-{
-	panic("sysconf.init didnt set device_register\n");
-
-}
-
-const char*
-unimpl_model_name()
-{
-	panic("sysconf.init didnt set model_name\n");
-}
-
-void
-unimpl_clockintr(arg)
+	struct device *sc;
 	void *arg;
 {
-	panic("sysconf.init didnt set clockintr\n");
+	panic("sysconf.init didnt set device_register");
+
 }
 
 void
@@ -1004,17 +845,28 @@ unimpl_iointr(arg, arg2)
 	void *arg;
 	u_long arg2;
 {
-	panic("sysconf.init didnt set iointr\n");
+	panic("sysconf.init didnt set iointr");
 }
 
 void
-unimpl_errintr()
+unimpl_clockintr(arg)
+	void *arg;
 {
-	panic("sysconf.init didnt set errintr_name\n");
+	panic("sysconf.init didnt set clockintr");
+}
+
+int
+unimpl_intr(mask, pc, statusreg, causereg)
+	u_int mask;
+	u_int pc;
+	u_int statusreg;
+	u_int causereg;
+{
+	panic("sysconf.init didnt set intr");
 }
 
 unsigned
 nullclkread()
 {
-	return (0);
-}       
+	return 0;
+}	
