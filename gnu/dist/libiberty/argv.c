@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #ifdef __STDC__
 
 #include <stddef.h>
+#include <string.h>
 extern void *memcpy (void *s1, const void *s2, size_t n);	/* 4.11.2.1 */
 extern size_t strlen (const char *s);				/* 4.11.6.3 */
 extern void *malloc (size_t size);				/* 4.10.3.3 */
