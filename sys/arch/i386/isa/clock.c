@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.16 1994/02/01 02:02:54 deraadt Exp $
+ *	$Id: clock.c,v 1.17 1994/02/08 05:10:48 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -120,8 +120,6 @@ startrtclock(void)
         outb (IO_RTC, RTC_DIAG);
 	if (s = inb (IO_RTC+1))
 		printf("RTC BIOS diagnostic error %b\n", s, RTCDG_BITS);
-	outb (IO_RTC, RTC_DIAG);
-	outb (IO_RTC+1, 0);
 }
 
 void
