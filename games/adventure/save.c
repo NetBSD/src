@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.5 1998/09/13 00:07:24 hubertf Exp $	*/
+/*	$NetBSD: save.c,v 1.6 1999/07/16 01:38:20 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.5 1998/09/13 00:07:24 hubertf Exp $");
+__RCSID("$NetBSD: save.c,v 1.6 1999/07/16 01:38:20 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -95,7 +95,7 @@ struct savestruct save_array[] =
 	{&oldlc2, sizeof(oldlc2)},
 	{&oldloc, sizeof(oldloc)},
 	{&panic, sizeof(panic)},
-	{&saved, sizeof(saved)},
+	{&saveday, sizeof(saveday)},
 	{&savet, sizeof(savet)},
 	{&scorng, sizeof(scorng)},
 	{&spk, sizeof(spk)},
