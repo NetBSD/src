@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.12 2000/09/19 18:24:54 christos Exp $
+#	$NetBSD: Makefile.yp,v 1.13 2000/10/11 16:51:55 itojun Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -116,7 +116,7 @@ shadow.time: ${DIR}/master.passwd
 		${ECHO} "couldn't find ${.ALLSRC}"; \
 	fi
 
-aliases.time: ${DIR}/aliases
+aliases.time: ${DIR}/mail/aliases
 	-@if [ -f ${.ALLSRC} ]; then \
 		${CP} -p ${.ALLSRC} ${DOMAIN}-aliases; \
 		${SENDMAIL} -bi -oA${PWD}/${DOMAIN}-aliases; \
@@ -418,7 +418,7 @@ ypservers: ypservers.time
 ${DIR}/passwd:
 ${DIR}/group:
 ${DIR}/hosts:
-${DIR}/aliases:
+${DIR}/mail/aliases:
 ${AMDDIR}/amd.home:
 ${DIR}/ethers:
 ${DIR}/master.passwd:
