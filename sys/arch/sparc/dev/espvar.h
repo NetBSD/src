@@ -1,7 +1,12 @@
-/*	$NetBSD: espvar.h,v 1.13 1996/05/16 20:31:30 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.14 1996/09/28 01:49:07 thorpej Exp $	*/
+
+#if defined(__sparc__) && !defined(SPARC_DRIVER)
+#define	SPARC_DRIVER
+#endif
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -28,7 +33,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ESP_DEBUG 0
+#define ESP_DEBUG		0
+
+#define	ESP_ABORT_TIMEOUT	2000	/* time to wait for abort */
 
 #define FREQTOCCF(freq)	(((freq + 4) / 5))
 
@@ -36,15 +43,7 @@
 #define	ESP100		0x01
 #define	ESP100A		0x02
 #define	ESP200		0x03
-
-#if 0
-typedef caddr_t physaddr;
-
-struct esp_dma_seg {
-	physaddr	addr;
-	long		len;
-};
-#endif
+#define	NCR53C94	0x04
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
@@ -54,23 +53,23 @@ struct esp_dma_seg {
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
-struct ecb {
-	TAILQ_ENTRY(ecb) chain;
+struct esp_ecb {
+	TAILQ_ENTRY(esp_ecb) chain;
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
-	int		flags;	/* Status */
-#define ECB_QNONE	0
-#define ECB_QFREE	1
-#define ECB_QREADY	2
-#define ECB_QNEXUS	3
-#define ECB_QBITS	0x07
-#define ECB_CHKSENSE	0x08
-#define ECB_ABORTED	0x10
-#define ECB_SETQ(e, q)	do (e)->flags = ((e)->flags&~ECB_QBITS)|(q); while(0)
+	int flags;
+#define	ECB_ALLOC	0x01
+#define	ECB_NEXUS	0x02
+#define	ECB_SENSE	0x04
+#define	ECB_ABORT	0x40
+#define	ECB_RESET	0x80
+	int timeout;
+
 	struct scsi_generic cmd;  /* SCSI command block */
 	int	 clen;
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
+
 #if ESP_DEBUG > 0
 	char trace[1000];
 #endif
@@ -143,18 +142,27 @@ extern int esp_debug;
 #define ESP_START(str)
 #define ESP_PHASE(str)
 #define ESP_DMA(str)
+#define ESP_MSGS(str)
 #endif
 
 #define ESP_MAX_MSG_LEN 8
 
 struct esp_softc {
 	struct device sc_dev;			/* us as a device */
+#ifdef SPARC_DRIVER
 	struct sbusdev sc_sd;			/* sbus device */
 	struct intrhand sc_ih;			/* intr handler */
+#endif
 	struct evcnt sc_intrcnt;		/* intr count */
 	struct scsi_link sc_link;		/* scsi lint struct */
+#ifdef SPARC_DRIVER
 	volatile u_char *sc_reg;		/* the registers */
 	struct dma_softc *sc_dma;		/* pointer to my dma */
+#else
+	volatile u_int32_t *sc_reg;		/* the registers */
+	struct tcds_slotconfig *sc_dma;		/* DMA/slot info lives here. */
+	void	*sc_cookie;			/* intr. handling cookie */
+#endif
 
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
@@ -170,12 +178,12 @@ struct esp_softc {
 	u_char	sc_espfflags;
 
 	/* Lists of command blocks */
-	TAILQ_HEAD(ecb_list, ecb) free_list,
-				  ready_list,
-				  nexus_list;
+	TAILQ_HEAD(ecb_list, esp_ecb) free_list,
+				      ready_list,
+				      nexus_list;
 
-	struct ecb *sc_nexus;			/* current command */
-	struct ecb sc_ecb[8];			/* one per target */
+	struct esp_ecb *sc_nexus;		/* current command */
+	struct esp_ecb sc_ecb[8];		/* one per target */
 	struct esp_tinfo sc_tinfo[8];
 
 	/* Data about the current nexus (updated for every cmd switch) */
@@ -193,6 +201,7 @@ struct esp_softc {
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* One or more messages to send (encoded) */
 	u_char	sc_msgout;	/* What message is on its way out? */
+	u_char	sc_msgoutq;	/* What messages have been sent so far? */
 	u_char	sc_omess[ESP_MAX_MSG_LEN];
 	caddr_t	sc_omp;	/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
@@ -203,64 +212,45 @@ struct esp_softc {
 	/* hardware/openprom stuff */
 	int sc_node;				/* PROM node ID */
 	int sc_freq;				/* Freq in HZ */
+#ifdef SPARC_DRIVER
 	int sc_pri;				/* SBUS priority */
+#endif
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
 	int sc_minsync;				/* minimum sync period / 4 */
 	int sc_maxxfer;				/* maximum transfer size */
 };
 
-/*
- * Macros to read and write the chip's registers.
- */
-#define	ESP_READ_REG(sc, reg)			\
-	((sc)->sc_reg[(reg) * 4])
-#define	ESP_WRITE_REG(sc, reg, val)		\
-	do {					\
-		u_char v = (val);		\
-		(sc)->sc_reg[(reg) * 4] = v;	\
-	} while (0)
-
 /* values for sc_state */
-#define ESP_IDLE	0x01	/* waiting for something to do */
-#define ESP_TMP_UNAVAIL	0x02	/* Don't accept SCSI commands */
-#define ESP_SELECTING	0x03	/* SCSI command is arbiting  */
-#define ESP_RESELECTED	0x04	/* Has been reselected */
-#define ESP_HASNEXUS	0x05	/* Actively using the SCSI bus */
-#define ESP_CLEANING	0x06
-#define ESP_SBR		0x07	/* Expect a SCSI RST because we commanded it */
+#define ESP_IDLE	1	/* waiting for something to do */
+#define ESP_SELECTING	2	/* SCSI command is arbiting  */
+#define ESP_RESELECTED	3	/* Has been reselected */
+#define ESP_CONNECTED	4	/* Actively using the SCSI bus */
+#define	ESP_DISCONNECT	5	/* MSG_DISCONNECT received */
+#define	ESP_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
+#define	ESP_CLEANING	7
+#define ESP_SBR		8	/* Expect a SCSI RST because we commanded it */
 
 /* values for sc_flags */
 #define ESP_DROP_MSGI	0x01	/* Discard all msgs (parity err detected) */
-#define ESP_DOINGDMA	0x02	/* The FIFO data path is active! */
-#define ESP_BUSFREE_OK	0x04	/* Bus free phase is OK. */
+#define ESP_ABORTING	0x02	/* Bailing out */
+#define ESP_DOINGDMA	0x04	/* The FIFO data path is active! */
 #define ESP_SYNCHNEGO	0x08	/* Synch negotiation in progress. */
-/*#define ESP_BLOCKED	0x10	* Don't schedule new scsi bus operations */
-#define ESP_DISCON	0x10	/* Target sent DISCONNECT msg */
-#define ESP_ABORTING	0x20	/* Bailing out */
-#define ESP_ICCS	0x40	/* Expect status phase results */
-#define ESP_WAITI	0x80	/* Waiting for non-DMA data to arrive */
+#define ESP_ICCS	0x10	/* Expect status phase results */
+#define ESP_WAITI	0x20	/* Waiting for non-DMA data to arrive */
+#define	ESP_ATN		0x40	/* ATN asserted */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
 #define SEND_PARITY_ERROR	0x02
-#define SEND_ABORT		0x04
+#define SEND_INIT_DET_ERR	0x04
 #define SEND_REJECT		0x08
-#define SEND_INIT_DET_ERR	0x10
-#define SEND_IDENTIFY  		0x20
+#define SEND_IDENTIFY  		0x10
+#define SEND_ABORT		0x20
 #define SEND_SDTR		0x40
+#define SEND_WDTR		0x80
 
 /* SCSI Status codes */
-#define ST_GOOD			0x00
-#define ST_CHKCOND		0x02
-#define ST_CONDMET		0x04
-#define ST_BUSY			0x08
-#define ST_INTERMED		0x10
-#define ST_INTERMED_CONDMET	0x14
-#define ST_RESERVATION_CONFLICT	0x18
-#define ST_CMD_TERM		0x22
-#define ST_QUEUE_FULL		0x28
-
 #define ST_MASK			0x3e /* bit 0,6,7 is reserved */
 
 /* phase bits */
@@ -283,6 +273,42 @@ struct esp_softc {
 #define INVALID_PHASE		0x101	/* Re/Selection valid, but no REQ yet */
 #define PSEUDO_PHASE		0x100	/* "pseudo" bit */
 
+/*
+ * Macros to read and write the chip's registers.
+ */
+#ifdef SPARC_DRIVER
+#define	ESP_READ_REG(sc, reg)			\
+	((sc)->sc_reg[(reg) * 4])
+#define	ESP_WRITE_REG(sc, reg, val)		\
+	do {					\
+		u_char v = (val);		\
+		(sc)->sc_reg[(reg) * 4] = v;	\
+	} while (0)
+#else /* ! SPARC_DRIVER */
+#if 1
+static inline u_char
+ESP_READ_REG(sc, reg)
+	struct esp_softc *sc;
+	int reg;
+{
+	u_char v;
+
+	v = sc->sc_reg[reg * 2] & 0xff;
+	alpha_mb();
+	return v;
+}
+#else
+#define	ESP_READ_REG(sc, reg)			\
+	((u_char)((sc)->sc_reg[(reg) * 2] & 0xff))
+#endif
+#define	ESP_WRITE_REG(sc, reg, val)		\
+	do {					\
+		u_char v = (val);		\
+		(sc)->sc_reg[(reg) * 2] = v;	\
+		alpha_mb();			\
+	} while (0)
+#endif /* SPARC_DRIVER */
+
 #ifdef ESP_DEBUG
 #define	ESPCMD(sc, cmd) do {				\
 	if (esp_debug & ESP_SHOWCCMDS)			\
@@ -298,3 +324,13 @@ struct esp_softc {
 	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
+#ifndef SPARC_DRIVER
+/* DMA macros for ESP */
+#define	DMA_ISINTR(sc)		tcds_dma_isintr(sc)
+#define	DMA_RESET(sc)		tcds_dma_reset(sc)
+#define	DMA_INTR(sc)		tcds_dma_intr(sc)
+#define	DMA_SETUP(sc, addr, len, datain, dmasize) \
+				tcds_dma_setup(sc, addr, len, datain, dmasize)
+#define	DMA_GO(sc)		tcds_dma_go(sc)
+#define	DMA_ISACTIVE(sc)	tcds_dma_isactive(sc)
+#endif
