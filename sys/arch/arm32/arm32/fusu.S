@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.4 1997/10/14 09:54:41 mark Exp $	*/
+/*	$NetBSD: fusu.S,v 1.5 1998/04/01 23:00:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -34,12 +34,6 @@
 
 #include "assym.h"
 #include <machine/asm.h>
-
-ip	.req	r12
-lr	.req	r14
-pc	.req	r15
-
-	.text
 
 /*
  * Reads a word but traps failed faults
