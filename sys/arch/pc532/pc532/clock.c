@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1997/03/22 08:28:56 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 1997/04/01 16:32:16 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,31 +117,25 @@ clock_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	static u_char icu_table[] = {
+		CICTL,	0,		/* Disable clock interrupt for now. */
+		CIPTR,	IR_CLK << 4,	/* Select clock interrupt vector. */
+		OCASN,	0,		/* No clock output. */
+		CCTL,	0x1c,		/* Two clocks, prescale, output zero */
+					/* detect of L-counter, run both */
+					/* clocks. */
+		0xff
+	};
 
 	printf("\n");
-	divisor = ICU_CLK_HZ / hz;
-
-	/* Disable clock interrupt for now. */
-	ICUB(CICTL) = 0;
-
-	/* Select clock interrupt vector. */
-	ICUB(CIPTR) = ca->ca_irq << 4;
+	icu_init(icu_table);
 
 	/* Establish interrupt vector */
 	intr_establish(IR_CLK, (void (*)(void *))hardclock, NULL,
 		       self->dv_xname, IPL_CLOCK, IPL_CLOCK, FALLING_EDGE);
 
-	/* No clock output. */
-	ICUB(OCASN) = 0;
-
-	/*
-	 * Two clocks, prescale, output zero detect of L-counter,
-	 * run both clocks.
-	 */
-	ICUB(CCTL) = 0x1c;
-
 	/* Write the timer values to the ICU. */
+	divisor = ICU_CLK_HZ / hz;
 	ICUW(HCSV) = divisor;
 	ICUW(HCCV) = divisor;
 }
@@ -179,13 +173,18 @@ microtime(tvp)
 	tvp->tv_usec += delta;
 
 	/* check for timer overflow (ie; clock int disabled) */
-	if (count > 0 && (ipend & (1<<IR_CLK))) {
+	if (count > 0 && (ipend & (1 << IR_CLK)))
 		tvp->tv_usec += tick;
-		if (tvp->tv_usec > 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
+
+	if (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
 	}
+
+#ifdef DIAGNOSTIC
+	if (tvp->tv_usec < 0 || tvp->tv_usec > 1000000)
+		printf("microtime bad tv_usec: %ld\n", tvp->tv_usec);
+#endif
 }
 
 /*
