@@ -1,4 +1,4 @@
-.\" $NetBSD: uscanner.4,v 1.6 2001/01/11 07:05:58 augustss Exp $
+.\" $NetBSD: uscanner.4,v 1.7 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,10 +78,16 @@ Many other scanners are recognized, but there is no software support
 for them yet.
 .Sh SEE ALSO
 .Xr scanimage 1 ,
-.Xr usscanner 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Xr usscanner 4
 .br
-.Xr http://www.buzzard.org.uk/jonathan/scanners-usb.html
+.Pa http://www.buzzard.org.uk/jonathan/scanners-usb.html
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Nx 1.6 .
 .Sh BUGS
 This driver should not really exist.  The scanners it recognizes
 can be accessed through the
@@ -91,9 +97,3 @@ interface to scanners instead of exposing the innards of the
 scanner.
 The reason the driver exists is to have something that is compatible
 with the Linux driver.
-.Sh HISTORY
-The
-.Nm
-driver
-appeared in
-.Nx 1.6 .
