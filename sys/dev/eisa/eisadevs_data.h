@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.3 1996/03/17 00:18:46 cgd Exp 
+ *	NetBSD: eisadevs,v 1.5 1996/05/17 19:27:48 mycroft Exp 
  */
 
 /*
@@ -113,6 +113,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_PRODUCT_TCM5093,
 	},
 	{
+	    0,
+	    "USC0240",
+	    EISA_PRODUCT_USC0240,
+	},
+	{
 	    EISA_KNOWNDEV_NOPROD,
 	    "ADP",
 	    "Adaptec",
@@ -136,6 +141,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "TCM",
 	    "3Com",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "USC",
+	    "UltraStor",
 	},
 	{ 0, NULL, NULL, }
 };
