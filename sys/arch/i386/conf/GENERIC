@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.593 2004/02/25 18:50:01 perry Exp $
+# $NetBSD: GENERIC,v 1.594 2004/02/25 18:56:26 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.593 $"
+#ident 		"GENERIC-$Revision: 1.594 $"
 
 maxusers	32		# estimated number of users
 
@@ -1087,7 +1087,7 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # Joysticks
 
-#joy*	at pnpbios? index ?	# Game port
+#joy*	at pnpbios? index ?		# Game port
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)
