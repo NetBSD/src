@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1998/01/17 07:14:11 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1998/01/21 22:34:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -826,7 +826,7 @@ int
 pmap_allocpagedir(pmap)
 	struct pmap *pmap;
 {
-	vm_offset_t pa, va;
+	vm_offset_t pa;
 	struct l1pt *pt;
 	pt_entry_t *pte;
 
@@ -1230,18 +1230,18 @@ pmap_zero_page(phys)
 {
 	int s;
 	register struct pv_entry *pv;
-	vm_offset_t addr;
+	vm_offset_t addr = 0;
 	int pind;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level > 0)
-		printf("pmap_zero_page(pa=%08x)", phys);
+		printf("pmap_zero_page(pa=%lx)", phys);
 #endif	/* PMAP_DEBUG */
 
 	pind = pmap_page_index(phys);
 #ifdef DIAGNOSTIC
 	if (pind == -1)
-		panic("pmap_zero_page: pind=-1 phys=%x\n", phys);
+		panic("pmap_zero_page: pind=-1 phys=%lx\n", phys);
 #endif	/* DIAGNOSTIC */
 	s = splimp();
 	if (pv_table) {
@@ -1298,12 +1298,13 @@ pmap_copy_page(src, dest)
 {
 	int s;
 	register struct pv_entry *spv, *dpv;
-	vm_offset_t saddr, daddr;
+	vm_offset_t saddr = 0;
+	vm_offset_t daddr = 0;
 	int spind, dpind;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= -1)
-		printf("pmap_copy_pag(src=P%08x, dest=P%08x)\n",
+		printf("pmap_copy_pag(src=P%lx, dest=P%lx)\n",
 		    src, dest);
 #endif	/* PMAP_DEBUG */
 
@@ -1313,9 +1314,9 @@ pmap_copy_page(src, dest)
 	dpind = pmap_page_index(dest);
 #ifdef DIAGNOSTIC
 	if (spind == -1)
-		panic("pmap_copy_page: pind=-1 src=%x\n", src);
+		panic("pmap_copy_page: pind=-1 src=%lx\n", src);
 	if (dpind == -1)
-		panic("pmap_copy_page: pind=-1 dest=%x\n", dest);
+		panic("pmap_copy_page: pind=-1 dest=%lx\n", dest);
 #endif	/* DIAGNOSTIC */
 	s = splimp();
 	if (pv_table) {
@@ -1409,8 +1410,9 @@ pmap_next_page(addr)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 10) {
-		printf("pmap_next_page: Allocated physpage %08x\n", *addr);
-		printf("pmap_next_page: Next page is       %08x\n", physical_freestart);
+		printf("pmap_next_page: Allocated physpage %lx\n", *addr);
+		printf("pmap_next_page: Next page is       %lx\n",
+		    physical_freestart);
 	}
 #endif	/* PMAP_DEBUG */
 
@@ -1497,7 +1499,7 @@ pmap_page_index(pa)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 5)
-		printf("pmap_page_index(pa=P%08x)", pa);
+		printf("pmap_page_index(pa=P%lx)", pa);
 #endif	/* PMAP_DEBUG */
 
 	index = 0;
@@ -1525,7 +1527,7 @@ pmap_page_index(pa)
 	if (pmap_debug_level >= 5)
 		printf(" index = Invalid\n");
 	if (pmap_debug_level >= 1)
-		printf("page invalid - no index %08x\n", pa);
+		printf("page invalid - no index %lx\n", pa);
 #endif	/* PMAP_DEBUG */
 	return(-1);
 }
@@ -1618,7 +1620,7 @@ pmap_remove(pmap, sva, eva)
 			/* pmap_remove_pv will update pmap_attributes */
 #ifdef DIAGNOSTIC
 			if (pind < 0) {
-				printf("eerk ! pind=%08x pa=%08x\n", pind, pa);
+				printf("eerk ! pind=%x pa=%lx\n", pind, pa);
 				panic("The axe has fallen, were dead\n");
 			}
 #endif	/* DIAGNOSTIC */
@@ -1657,7 +1659,7 @@ pmap_remove_all(pa)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("pmap_remove_all: pa=%08x ", pa);
+		printf("pmap_remove_all: pa=%lx ", pa);
 #endif	/* PMAP_DEBUG */
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -2313,7 +2315,7 @@ pmap_page_protect(phys, prot)
 {
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("pmap_page_protect(pa=%08x, prot=%d)\n", phys, prot);
+		printf("pmap_page_protect(pa=%lx, prot=%d)\n", phys, prot);
 #endif	/* PMAP_DEBUG */
 
 	switch(prot) {
