@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.1 1998/07/12 19:52:01 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.2 1998/07/12 20:44:53 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD:  
+ *	NetBSD: usbdevs,v 1.1 1998/07/12 19:52:00 augustss Exp 
  */
 
 /*
