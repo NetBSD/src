@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2.2.4 2002/04/17 00:04:43 nathanw Exp $	   */
+/*	$NetBSD: subr.S,v 1.2.2.5 2002/06/22 00:47:15 nathanw Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -431,7 +431,7 @@ ENTRY(cpu_preempt, 0)
 	movl	%r1,SSP(%r0)		# Put it in new PCB
 
 	extzv	$9,$21,%r0,%r1		# extract offset
-	ashl	$9,*_C_LABEL(Sysmap)[r1],%r3
+	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
 
 	mtpr	%r3,$PR_PCBB
 	ldpctx
