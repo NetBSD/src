@@ -1,5 +1,5 @@
 #include "libioP.h"
-#if _G_HAVE_ATEXIT
+#if _G_HAVE_ATEXIT && 0
 #include <stdlib.h>
 
 typedef void (*voidfunc) __P((void));
