@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bktr2netbsd,v 1.1 2000/05/07 00:24:33 wiz Exp $
+#	$NetBSD: bktr2netbsd,v 1.2 2000/05/07 03:01:58 wiz Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,8 +87,12 @@ done
 echo merging ioctl_meteor.h and ioctl_bt848.h to bt8xx.h
 echo "/* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */" > bt8xx.h
 echo "/* The copyright below only applies to the ioctl_meteor.h part of this file. */" >> bt8xx.h
+echo "" >> bt8xx.h
+echo "#ifndef _DEV_IC_BT8XX_H_" >> bt8xx.h
+echo "#define _DEV_IC_BT8XX_H_" >> bt8xx.h
 cat ioctl_meteor.h ioctl_bt848.h | grep -v _MACHINE_IOCTL_METEOR_H_ | \
 	grep -v _MACHINE_IOCTL_BT848_H >> bt8xx.h
+echo "#endif /* _DEV_IC_BT8XX_H_ */" >> bt8xx.h
 rm ioctl_meteor.h ioctl_bt848.h
 
 ### Add our NetBSD RCS Id
