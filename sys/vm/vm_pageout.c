@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.21 1995/05/07 19:27:27 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.22 1995/06/28 02:58:51 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -74,8 +74,6 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <machine/cpu.h>
-
 #ifndef VM_PAGE_FREE_MIN
 #define VM_PAGE_FREE_MIN	(cnt.v_free_count / 20)
 #endif
@@ -121,7 +119,7 @@ vm_pageout_scan()
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(s);
 
-#ifndef BROKEN_SWAP					/* XXX */
+#ifndef __SWAP_BROKEN					/* XXX */
 	if (free < cnt.v_free_target) {
 		swapout_threads();
 
