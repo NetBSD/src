@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 1999/06/10 00:54:13 simonb Exp $
+# $NetBSD: mi,v 1.147 1999/06/15 23:32:09 thorpej Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1282,6 +1282,7 @@
 ./usr/share/man/cat2/mkfifo.0
 ./usr/share/man/cat2/mknod.0
 ./usr/share/man/cat2/mlock.0
+./usr/share/man/cat2/mlockall.0
 ./usr/share/man/cat2/mmap.0
 ./usr/share/man/cat2/mount.0
 ./usr/share/man/cat2/mprotect.0
@@ -2348,6 +2349,7 @@
 ./usr/share/man/man2/mkfifo.2
 ./usr/share/man/man2/mknod.2
 ./usr/share/man/man2/mlock.2
+./usr/share/man/man2/mlockall.2
 ./usr/share/man/man2/mmap.2
 ./usr/share/man/man2/mount.2
 ./usr/share/man/man2/mprotect.2
