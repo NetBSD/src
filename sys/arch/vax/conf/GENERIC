@@ -1,9 +1,9 @@
-#	$NetBSD: GENERIC,v 1.19 1997/01/11 11:15:38 ragge Exp $
+#	$NetBSD: GENERIC,v 1.20 1997/01/12 12:38:56 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
-machine	vax
+include		"std.vax"
 
 # Here are all different supported CPU types listed.
 options         "VAX8600"
@@ -20,9 +20,6 @@ options         GENERIC
 
 # Max users on system; this is just a hint
 maxusers	8
-
-# Paging system, we always have them all.
-options		SWAPPAGER, DEVPAGER, VNODEPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
 options		DDB
@@ -51,10 +48,6 @@ options		UNION
 options		SYSVMSG
 options		SYSVSEM
 options		SYSVSHM
-
-# What executables to look for.
-options		EXEC_AOUT
-options		EXEC_SCRIPT
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
