@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.30 2001/11/12 15:25:04 lukem Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.30.10.1 2003/08/17 13:41:00 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.30 2001/11/12 15:25:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.30.10.1 2003/08/17 13:41:00 tron Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -96,7 +96,7 @@ exec_script_makecmds(struct proc *p, struct exec_package *epp)
 	 * (The latter requirement means that we have to check
 	 * for both spaces and tabs later on.)
 	 */
-	hdrlinelen = min(epp->ep_hdrvalid, MAXINTERP);
+	hdrlinelen = min(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
 	    cp++) {
 		if (*cp == '\n') {
