@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2003/06/06 14:31:31 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 2003/06/11 21:35:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,3 +81,6 @@ of merging the newly created /emul/aout directory with the old one.
 message arm32fspart
 {We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}

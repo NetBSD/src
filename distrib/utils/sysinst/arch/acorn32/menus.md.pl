@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2003/06/10 17:47:16 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/06/11 21:35:37 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.3 2002/02/14 15:28:31 reinoud Exp	*/
 
@@ -41,22 +41,3 @@
 
 /* Acorn32 machine dependent menus, Polish */
 
-menu md_distcustom, x=26, y=5, exit, title "Wybierz";
-	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",		 action { toggle_getit (0); };
-	option	"Kernel (RPC_WSCONS)",	 action { toggle_getit (1); };
-	option	"Kernel (NC)",				 action { toggle_getit (2); };
-	option	"Kernel (NC_WSCONS)",	 action { toggle_getit (3); };
-	option	"Base",						 action { toggle_getit (4); };
-	option	"System (/etc)",			 action { toggle_getit (5); };
-	option	"Compiler Tools",			 action { toggle_getit (6); };
-	option	"Games",						 action { toggle_getit (7); };
-	option	"Online Manual Pages",	 action { toggle_getit (8); };
-	option	"Miscellaneous",			 action { toggle_getit (9); };
-	option	"Text Processing Tools", action { toggle_getit (10); };
-	option	"X11 base and clients",	 action { toggle_getit (11); };
-	option	"X11 fonts",				 action { toggle_getit (12); };
-	option	"X11 servers",				 action { toggle_getit (13); };
-	option	"X contrib clients",		 action { toggle_getit (14); };
-	option	"X11 programming",		 action { toggle_getit (15); };
-	option	"X11 Misc.",				 action { toggle_getit (16); };

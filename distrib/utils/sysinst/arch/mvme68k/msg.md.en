@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2003/06/06 14:31:28 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.3 2003/06/11 21:35:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,6 +60,9 @@ message ordering
 message emptypart
 {There is an valid partition %c after empty partition(s).
 Please re-edit the partition table.}
+
+message set_kernel_1
+{Kernel (GENERIC)}
 
 /* XXX: not yet implemented
 message existing

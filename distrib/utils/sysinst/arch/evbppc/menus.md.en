@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.6 2003/06/10 17:47:18 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.7 2003/06/11 21:35:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,19 +95,3 @@ menu cyl1024;
 		c1024_resp = 3;
 	};
 
-menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
-	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Base",			 action { toggle_getit (1); };
-	option	"System (/etc)",	 action { toggle_getit (2); };
-	option  "Compiler Tools", 	 action { toggle_getit (3); };
-	option  "Games", 		 action { toggle_getit (4); };
-	option  "Online Manual Pages", 	 action { toggle_getit (5); };
-	option  "Miscellaneous", 	 action { toggle_getit (6); };
-	option  "Text Processing Tools", action { toggle_getit (7); };
-	option  "X11 base and clients",	 action { toggle_getit (8); };
-	option  "X11 fonts",		 action { toggle_getit (9); };
-	option  "X11 servers",		 action { toggle_getit (10); };
-	option  "X contrib clients",	 action { toggle_getit (11); };
-	option  "X11 programming",	 action { toggle_getit (12); };
-	option  "X11 Misc.",		 action { toggle_getit (13); };

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2003/06/06 14:31:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 2003/06/11 21:35:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,3 +58,5 @@ Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
 
+message set_kernel_1
+{Kernel (GENERIC)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.85 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.86 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,6 +76,40 @@ extern const char * const fstypenames[];
 #define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
 #define RUN_SYSTEM	0x0010		/* just use system(3) */
 
+/* Installation sets */
+#define SET_KERNEL	0x000000ff	/* allow 8 kernels */
+#define SET_KERNEL_1	0x00000001	/* Usually GENERIC */
+#define SET_KERNEL_2	0x00000002	/* MD kernel... */
+#define SET_KERNEL_3	0x00000004	/* MD kernel... */
+#define SET_KERNEL_4	0x00000008	/* MD kernel... */
+#define SET_KERNEL_5	0x00000010	/* MD kernel... */
+#define SET_KERNEL_6	0x00000020	/* MD kernel... */
+#define SET_KERNEL_7	0x00000040	/* MD kernel... */
+#define SET_KERNEL_8	0x00000080	/* MD kernel... */
+
+#define SET_SYSTEM	0x000fff00	/* all system sets */
+#define SET_BASE	0x00000100	/* base */
+#define SET_ETC		0x00000200	/* /etc */
+#define SET_COMPILER	0x00000400	/* compiler tools */
+#define SET_GAMES	0x00000800	/* text games */
+#define SET_MAN_PAGES	0x00001000	/* online manual pages */
+#define SET_MISC	0x00002000	/* miscellaneuous */
+#define SET_TEXT_TOOLS	0x00004000	/* text processing tools */
+
+#define SET_X11		0x0ff00000	/* All X11 sets */
+#define SET_X11_BASE	0x00100000	/* X11 base and clients */
+#define SET_X11_FONTS	0x00200000	/* X11 fonts */
+#define SET_X11_SERVERS	0x00400000	/* X11 servers */
+#define SET_X_CONTRIB	0x00800000	/* X contrib clients */
+#define SET_X11_PROG	0x01000000	/* X11 programming */
+#define SET_X11_MISC	0x02000000	/* X11 miscelllaneous */
+
+#define SET_MD		0xf0000000	/* All machine dependant sets */
+#define	SET_MD_1	0x10000000	/* Machine dependant set */
+#define	SET_MD_2	0x20000000	/* Machine dependant set */
+#define	SET_MD_3	0x40000000	/* Machine dependant set */
+#define	SET_MD_4	0x80000000	/* Machine dependant set */
+
 /* Macros */
 #define nelem(x) (sizeof (x) / sizeof *(x))
 
@@ -91,9 +125,9 @@ extern const char * const fstypenames[];
 
 /* Types */
 typedef struct distinfo {
-	char *name;
-	int   getit;
-	char *desc;
+	char		*name;
+	int		set;
+	const char	*desc;
 } distinfo;
 
 typedef struct _partinfo {
@@ -106,6 +140,7 @@ typedef struct _partinfo {
 	int8_t	pi_newfs;
 	int8_t	pi_reset;
 } partinfo;	/* Single partition from a disklabel */
+
 
 /* variables */
 
@@ -252,6 +287,11 @@ EXTERN int net_ip6conf INIT(0);
 #define IP6CONF_AUTOHOST	0x01
 #endif
 
+/* selescted sets */
+extern distinfo dist_list[];
+extern unsigned int sets_valid;
+extern unsigned int sets_selected;
+
 /* Variables for upgrade. */
 #if 0
 #define MAXFS 16
@@ -349,7 +389,6 @@ int	get_via_cdrom(void);
 int	get_via_localfs(void);
 int	get_via_localdir(void);
 void	cd_dist_dir(char *);
-void	toggle_getit(int);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void	ask_verbose_dist(void);
@@ -366,6 +405,7 @@ int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);
+void	customise_sets(void);
 
 /* from target.c */
 int	must_mount_root(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2003/06/06 14:31:31 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2003/06/11 21:35:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,3 +86,7 @@ message arm32fspart
 {Nous avons maintenant vos partitions NetBSD sur %s comme suit
 (taille et Offset en %s) :
 }
+
+message set_kernel_1
+{Kernel (GENERIC)}
+

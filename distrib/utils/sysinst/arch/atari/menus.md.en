@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.4 2003/06/10 17:47:17 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.5 2003/06/11 21:35:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,32 +38,3 @@
 
 /* Menu definitions for sysinst. atari version, machine dependent. */
 
-menu md_distcustom, y=2, x=28, exit, title "Selection toggles inclusion";
-	display action { show_cur_distsets (); };
-	option	"Kernel (TT030/Falcon)", action { toggle_getit (0); };
-	option	"Kernel (Hades)",	 action { toggle_getit (1); };
-	option	"Kernel (Milan)",	 action { toggle_getit (2); };
-	option	"Kernel (Milan)",	 action { toggle_getit (3); };
-	option	"Base",			 action { toggle_getit (4); };
-	option	"System (/etc)",	 action { toggle_getit (5); };
-	option  "Compiler Tools", 	 action { toggle_getit (6); };
-	option  "Games", 		 action { toggle_getit (7); };
-	option  "Online Manual Pages", 	 action { toggle_getit (8); };
-	option  "Miscellaneous", 	 action { toggle_getit (9); };
-	option  "Text Processing Tools", action { toggle_getit (10); };
-	option  "X11 base and clients",	 action { toggle_getit (11); };
-	option  "X11 fonts",		 action { toggle_getit (12); };
-	option  "X11 servers",		 action { toggle_getit (13); };
-	option  "X contrib clients",	 action { toggle_getit (14); };
-	option  "X11 programming",	 action { toggle_getit (15); };
-	option	"X11 Misc.",		 action { toggle_getit (16); };
-
-menu md_layout, y=16, title  "Choose your installation";
-	option "Standard", 	  exit, action { layoutkind = 1; md_set_no_x(); };
-	option "Standard with X", exit, action { layoutkind = 2; };
-	option "Custom", 	  exit, action { layoutkind = 3; };
-	option "Use Existing", 	  exit, action { layoutkind = 4; };
-
-menu md_noyes, y=18, title "yes or no?";
-	option "No",  exit, action  {yesno = 0;};
-	option "Yes", exit, action  {yesno = 1;};

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2003/06/06 14:31:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2003/06/11 21:35:40 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.11 2001/04/12 03:48:13 briggs Exp */
 
@@ -90,3 +90,6 @@ tego ograniczenia. Mozesz ponadto: }
 
 message wmbrfail
 {Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
+
+message set_kernel_1
+{Kernel (GENERIC)}

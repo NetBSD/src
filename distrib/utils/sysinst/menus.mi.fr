@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.49 2003/06/11 09:03:32 dsl Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.50 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,8 +85,7 @@ menu ok, title "Presser entrée pour continuer";
 	option "ok", exit;
 
 menu layout, y=13, title  "Choisissez votre type d'installation";
-	option "Standard", 	  exit, action { layoutkind = 1; md_set_no_x(); };
-	option "Standard avec X", exit, action { layoutkind = 2; };
+	option "Standard", 	  exit, action { layoutkind = 1; };
 	option "Use Existing", 	  exit, action { layoutkind = 4; };	/* XXX translate me */
 
 menu sizechoice, title  "Choisissez votre unité d'espace disque";
@@ -130,7 +129,7 @@ menu distmedium, title "Sélection du media d'installation";
 menu distset, title "Sélection de la distribution";
 	display action { msg_display (MSG_distset); };
 	option "Installation complète", exit;
-	option "Installation personnalisée", next menu md_distcustom;
+	option "Installation personnalisée", exit, action { customise_sets(); };
 
 menu ftpsource, title "Changer";
 	display action

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.103 2003/06/11 09:03:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.104 2003/06/11 21:35:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,8 +45,10 @@ message usage
 message newline {\n}
 
 message yes {Yes}
-
 message no {No}
+message all {All}
+message some {Some}
+message none {None}
 
 message install
 {install}
@@ -809,12 +811,63 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{Distribution set   Use?
------------------- ----
+{   Distribution set         Selected
+   ------------------------ --------
 }
 
+message set_base
+{Base}
+
+message set_system
+{System (/etc)}
+
+message set_compiler
+{Compiler Tools}
+
+message set_games
+{Games}
+
+message set_man_pages
+{Online Manual Pages}
+
+message set_misc
+{Miscellaneous}
+
+message set_text_tools
+{Text Processing Tools}
+
+message set_X11
+{X11 sets}
+
+message set_X11_base
+{X11 base and clients}
+
+message set_X11_fonts
+{X11 fonts}
+
+message set_X11_servers
+{X11 servers}
+
+message set_X_contrib
+{X contrib clients}
+
+message set_X11_prog
+{X11 programming}
+
+message set_X11_misc
+{X11 Misc.}
+
 message cur_distsets_row
-{%-18s %s\n}
+{%-27s %3s\n}
+
+message select_all
+{Select all the above sets}
+
+message select_none
+{Deselect all the above sets}
+
+message install_selected_sets
+{Install selected sets}
 
 message tarerror
 {There was an error in extracting the file %s.  That means

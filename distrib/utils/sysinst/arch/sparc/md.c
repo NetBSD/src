@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2003/05/31 08:10:01 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.35 2003/06/11 21:35:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -225,20 +225,4 @@ md_set_sizemultname()
 {
 
 	set_sizemultname_cyl();
-}
-
-void
-md_set_no_x()
-{
-
-	/*
-	 * Don't forget to update the the set choice lists
-	 * in the menus.md.* as well!
-	 */
-	toggle_getit (10);
-	toggle_getit (11);
-	toggle_getit (12);
-	toggle_getit (13);
-	toggle_getit (14);
-	toggle_getit (15);
 }
