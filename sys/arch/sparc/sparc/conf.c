@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.12 1994/05/21 08:44:26 deraadt Exp $
+ * $Id: conf.c,v 1.13 1994/09/18 00:00:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -107,9 +107,13 @@ int	ttselect	__P((dev_t, int, struct proc *));
 bdev_decl(no);	/* dummy declarations */
 
 #include "sd.h"
-bdev_decl(sd);
-
+#include "st.h"
+#include "cd.h"
 #include "vn.h"
+
+bdev_decl(sd);
+bdev_decl(st);
+bdev_decl(cd);
 bdev_decl(vn);
 
 #ifdef LKM
@@ -134,12 +138,21 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),		/*  6 */
 	bdev_disk_init(NSD,sd),	/*  7: scsi disk */
 	bdev_disk_init(NVN,vn), /*  8: vnode */
-	bdev_lkm_stub(),	/*  9: LKM STUB */
-	bdev_lkm_stub(),	/* 10: LKM STUB */
-	bdev_lkm_stub(),	/* 11: LKM STUB */
-	bdev_lkm_stub(),	/* 12: LKM STUB */
-	bdev_lkm_stub(),	/* 13: LKM STUB */
-	bdev_lkm_stub(),	/* 14: LKM STUB */
+	bdev_notdef(),		/*  9: */
+	bdev_notdef(),		/* 10: */
+	bdev_notdef(),		/* 12: scsi tape */
+	bdev_notdef(),		/* 13: */
+	bdev_notdef(),		/* 14: */
+	bdev_notdef(),		/* 15: */
+	bdev_notdef(),		/* 16: */
+	bdev_notdef(),		/* 17: */
+	bdev_disk_init(NCD,cd),	/* 18: scsi cdrom */
+	bdev_lkm_stub(),	/* 19: LKM STUB */
+	bdev_lkm_stub(),	/* 20: LKM STUB */
+	bdev_lkm_stub(),	/* 21: LKM STUB */
+	bdev_lkm_stub(),	/* 22: LKM STUB */
+	bdev_lkm_stub(),	/* 23: LKM STUB */
+	bdev_lkm_stub(),	/* 24: LKM STUB */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -169,9 +182,8 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, seltrue, 0, \
-	dev_init(c,n,strategy) }
+	dev_init(c,n,open), dev_init(c,n,close), rawread, rawwrite, \
+	dev_init(c,n,ioctl), 0, 0, 0, seltrue, 0, dev_init(c,n,strategy) }
 
 /* open, close, read, write, ioctl, tty */
 #define	cdev_tty_init(c,n) { \
@@ -261,6 +273,9 @@ cdev_decl(bwtwo);
 #include "cgthree.h"
 cdev_decl(cgthree);
 
+cdev_decl(sd);
+cdev_decl(st);
+cdev_decl(cd);
 cdev_decl(vn);
 
 #ifdef LKM
@@ -320,7 +335,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
 	cdev_disk_init(NSD,sd),		/* 17: scsi disk */
-	cdev_notdef(),			/* 18: should be scsi tape */
+	cdev_tape_init(NST,st),		/* 18: scsi tape */
 	cdev_notdef(),			/* 19 */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
@@ -360,7 +375,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NCGTHREE,cgthree),	/* 55: /dev/cgthree */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
-	cdev_notdef(),			/* 58 */
+	cdev_disk_init(NCD,cd),		/* 58 scsi cdrom */
 	cdev_notdef(),			/* 59 */
 	cdev_notdef(),			/* 60 */
 	cdev_notdef(),			/* 61 */
