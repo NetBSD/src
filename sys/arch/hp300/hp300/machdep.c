@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 1998/02/19 04:18:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 1998/04/26 21:24:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,7 +206,6 @@ hp300_init()
 {
 	int i;
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	extern vm_offset_t avail_start, avail_end;
 
 	/*
@@ -220,7 +219,6 @@ hp300_init()
 	vm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end));
 #endif /* UVM */
-#endif /* MACHINE_NEW_NONCONTIG */
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
