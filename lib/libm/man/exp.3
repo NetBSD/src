@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
-.\"	$NetBSD: exp.3,v 1.18 2002/02/20 11:51:15 wiz Exp $
+.\"	$NetBSD: exp.3,v 1.19 2002/10/01 19:21:30 wiz Exp $
 .\"
 .Dd July 31, 1991
 .Dt EXP 3
@@ -235,12 +235,14 @@ operand on a
 .Tn VAX ) .
 Previous implementations of pow may
 have defined x**0 to be undefined in some or all of these
-cases.  Here are reasons for returning x**0 = 1 always:
+cases.
+Here are reasons for returning x**0 = 1 always:
 .Bl -enum -width indent
 .It
 Any program that already tests whether x is zero (or
 infinite or \*(Na) before computing x**0 cannot care
-whether 0**0 = 1 or not. Any program that depends
+whether 0**0 = 1 or not.
+Any program that depends
 upon 0**0 to be invalid is dubious anyway since that
 expression's meaning and, if invalid, its consequences
 vary from one computer system to another.

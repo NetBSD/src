@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan2.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: atan2.3,v 1.13 2002/02/20 11:53:02 wiz Exp $
+.\"	$NetBSD: atan2.3,v 1.14 2002/10/01 19:21:30 wiz Exp $
 .\"
 .Dd May 2, 1991
 .Dt ATAN2 3
@@ -143,8 +143,8 @@ is mapped to
 (r=0,theta=0)
 .if t \
 (r=0,\(*h=0)
-on a VAX.  In general, conversions to polar coordinates
-should be computed thus:
+on a VAX.
+In general, conversions to polar coordinates should be computed thus:
 .Bd -unfilled -offset indent
 .if n \{\
 r	:= hypot(x,y);  ... := sqrt(x\(**x+y\(**y)
