@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.1 2001/07/10 14:58:28 ichiro Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.2 2001/07/13 06:54:35 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -34,8 +34,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define GPIO(x)		(0x00000001 << (x))
 
 /*
  * iPAQ H3600 specific parameter
