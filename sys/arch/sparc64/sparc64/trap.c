@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.3 2002/01/03 10:03:57 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.4 2002/01/04 09:26:49 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -435,7 +435,12 @@ userret(l, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	l->l_priority = l->l_usrpri;
+
+	/* XXX copied from alpha port */
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
 	if (want_ast) {
 		want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
@@ -462,7 +467,8 @@ userret(l, pc, oticks)
 	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+;
 }
 
 /*
