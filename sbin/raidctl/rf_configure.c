@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.13 2001/01/27 19:32:47 oster Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -132,10 +132,6 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
 	RF_ASSERT(p->parityConfig == parityConfig);
 	return (p);
 }
-
-
-char *rf_find_non_white(char *p);
-char *rf_find_white(char *p);
 
 static int rf_search_file_for_start_of(const char *string, char *buf,
     int len, FILE * fp);
