@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.124 2002/03/11 16:39:40 uch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.125 2002/03/13 13:18:58 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.124 2002/03/11 16:39:40 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.125 2002/03/13 13:18:58 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -258,6 +258,8 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R4000, MIPS_REV_R4400_A,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
 	{ 0, MIPS_R4000, MIPS_REV_R4400_B,	CPU_ARCH_MIPS3, 48,
+	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
+	{ 0, MIPS_R4000, MIPS_REV_R4400_C,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"MIPS R4400 CPU"	},
 
 	{ 0, MIPS_R3LSI, -1,			CPU_ARCH_MIPS1, -1,
