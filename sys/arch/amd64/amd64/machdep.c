@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/05/04 12:00:14 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -187,6 +187,12 @@ paddr_t	idt_paddr;
 vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
+#ifdef LKM
+vaddr_t lkm_start, lkm_end;
+static struct vm_map lkm_map_store;
+extern struct vm_map *lkm_map;
+#endif
+
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -306,6 +312,12 @@ cpu_startup()
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+
+#ifdef LKM
+	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
+	lkm_map_store.pmap = pmap_kernel();
+	lkm_map = &lkm_map_store;
+#endif
 
 	/*
 	 * XXX Buffer cache pages haven't yet been allocated, so
@@ -1393,6 +1405,11 @@ init_x86_64(first_avail)
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
+
+#ifdef LKM
+	lkm_start = KERNBASE + first_avail;
+	lkm_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+#endif
 
 	/*
 	 * Now, load the memory clusters (which have already been
