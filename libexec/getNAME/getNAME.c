@@ -1,6 +1,7 @@
-/*	$NetBSD: getNAME.c,v 1.23 2004/03/20 20:26:58 christos Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.24 2004/03/20 20:30:48 christos Exp $	*/
 
 /*-
+ * Copyright (c) 1997, Christos Zoulas.  All rights reserved.
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.23 2004/03/20 20:26:58 christos Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.24 2004/03/20 20:30:48 christos Exp $");
 #endif
 #endif /* not lint */
 
