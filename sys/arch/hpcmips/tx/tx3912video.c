@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.11 2000/05/02 17:50:52 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.12 2000/05/08 21:57:58 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,6 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#define TX3912VIDEO_DEBUG
 
 #include "opt_tx39_debug.h"
 #include "hpcfb.h"
@@ -35,6 +36,8 @@
 #include <sys/extent.h>
 
 #include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
@@ -43,11 +46,14 @@
 #include <hpcmips/tx/tx3912videovar.h>
 #include <hpcmips/tx/tx3912videoreg.h>
 
+/* CLUT */
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <arch/hpcmips/dev/video_subr.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
-
-#define TX3912VIDEO_DEBUG
 
 static struct tx3912video_chip {
 	tx_chipset_tag_t vc_tc;
@@ -83,13 +89,21 @@ void	tx3912video_hpcfbinit __P((struct tx3912video_softc *));
 int	tx3912video_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	tx3912video_mmap __P((void *, off_t, int));
 
+void	tx3912video_clut_init __P((struct tx3912video_softc *));
+void	tx3912video_clut_install __P((void *, struct rasops_info *));
+void	tx3912video_clut_get __P((struct tx3912video_softc *,
+				u_int32_t *, int, int));
+static int __get_color8 __P((int));
+static int __get_color4 __P((int));
+
 struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
 	tx3912video_attach
 };
 
 struct hpcfb_accessops tx3912video_ha = {
-	tx3912video_ioctl, tx3912video_mmap
+	tx3912video_ioctl, tx3912video_mmap, 0, 0, 0, 0,
+	tx3912video_clut_install
 };
 
 void	__tx3912video_attach_drawfunc __P((struct tx3912video_chip*));
@@ -118,6 +132,8 @@ tx3912video_attach(parent, self, aux)
 		[TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR] = "8bit color"
 	};
 	struct hpcfb_attach_args ha;
+	tx_chipset_tag_t tc;
+	txreg_t val;
 	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
 	sc->sc_chip = chip = &tx3912video_chip;
@@ -127,6 +143,15 @@ tx3912video_attach(parent, self, aux)
 	       depth_print[(ffs(chip->vc_fbdepth) - 1) & 0x3],
 	       (unsigned)chip->vc_fbaddr, 
 	       (unsigned)(chip->vc_fbaddr + chip->vc_fbsize));
+
+	/* don't inverse VDAT[3:0] signal */
+	tc = chip->vc_tc;
+	val = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
+	val &= ~TX3912_VIDEOCTRL1_INVVID;
+	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, val);
+
+	/* install default CLUT */
+	tx3912video_clut_init(sc);
 
 	/* if serial console, power off video module */
 #ifndef TX3912VIDEO_DEBUG
@@ -176,16 +201,17 @@ tx3912video_hpcfbinit(sc)
 	
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
-	strcpy(fb->hf_name, "TX3912 built-in video");
+	strncpy(fb->hf_name, "TX3912 built-in video", HPCFB_MAXNAMELEN);
 					/* frame buffer name		*/
-	strcpy(fb->hf_conf_name, "LCD");
+	strncpy(fb->hf_conf_name, "LCD", HPCFB_MAXNAMELEN);
 					/* configuration name		*/
 	fb->hf_height		= chip->vc_fbheight;
 	fb->hf_width		= chip->vc_fbwidth;
 	fb->hf_baseaddr		= mips_ptob(mips_btop(fbcaddr));
 	fb->hf_offset		= (u_long)fbcaddr - fb->hf_baseaddr;
 					/* frame buffer start offset   	*/
-	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth) / NBBY;
+	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth)
+		/ NBBY;
 	fb->hf_nplanes		= 1;
 	fb->hf_bytes_per_plane	= chip->vc_fbheight * fb->hf_bytes_per_line;
 
@@ -193,7 +219,6 @@ tx3912video_hpcfbinit(sc)
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
 
-	fb->hf_access_flags |= HPCFB_ACCESS_REVERSE; /* XXX */
 	switch (chip->vc_fbdepth) {
 	default:
 		panic("tx3912video_hpcfbinit: not supported color depth\n");
@@ -208,7 +233,7 @@ tx3912video_hpcfbinit(sc)
 		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
 		break;
 	case 8:
-		fb->hf_class = HPCFB_CLASS_INDEXCOLOR; /* XXX */
+		fb->hf_class = HPCFB_CLASS_INDEXCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
 		fb->hf_pack_width = 8;
 		fb->hf_pixels_per_pack = 1;
@@ -441,14 +466,50 @@ tx3912video_ioctl(v, cmd, data, flag, p)
 	struct tx3912video_softc *sc = (struct tx3912video_softc *)v;
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
+	struct wsdisplay_cmap *cmap;
+	u_int8_t *r, *g, *b;
+	u_int32_t *rgb;
+	int idx, cnt, error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		/* XXX not implemented yet */
-		return (EINVAL);
+		cmap = (struct wsdisplay_cmap*)data;
+		cnt = cmap->count;
+		idx = cmap->index;
+
+		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
+			sc->sc_fbconf.hf_pack_width != 8 ||
+			!LEGAL_CLUT_INDEX(idx) ||
+			!LEGAL_CLUT_INDEX(idx + cnt -1)) {
+			return (EINVAL);
+		}
+
+		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
+		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
+		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
+			return (EFAULT);
+		}
+
+		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
+		if (error != 0) {
+			cmap_work_free(r, g, b, rgb);
+			return  (ENOMEM);
+		}
+		tx3912video_clut_get(sc, rgb, idx, cnt);
+		rgb24_decompose(rgb, r, g, b, cnt);
+
+		copyout(r, cmap->red, cnt);
+		copyout(g, cmap->green,cnt);
+		copyout(b, cmap->blue, cnt);
+
+		cmap_work_free(r, g, b, rgb);
+
+		return (0);
 		
 	case WSDISPLAYIO_PUTCMAP:
-		/* XXX not implemented yet */
+		/*
+		 * TX3912 can't change CLUT index. R:G:B = 3:3:2
+		 */
 		return (EINVAL);
 
 	case HPCFBIO_GCONF:
@@ -519,6 +580,187 @@ tx3912video_mmap(ctx, offset, prot)
 	}
 
 	return (mips_btop(sc->sc_chip->vc_fbaddr + offset));
+}
+
+/*
+ * CLUT staff
+ */
+static const struct {
+	int mul, div;
+} dither_list [] = {
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1]	= { 1, 1 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_6_7]	= { 6, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_5]	= { 4, 5 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_4]	= { 3, 4 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_5_7]	= { 5, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_3]	= { 2, 3 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_5]	= { 3, 5 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_7]	= { 4, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_4]	= { 2, 4 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_7]	= { 3, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_5]	= { 2, 5 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_3]	= { 1, 3 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_7]	= { 2, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_5]	= { 1, 5 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_7]	= { 1, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_0]	= { 0, 1 }
+}, *dlp;
+
+static const int dither_level8[8] = {
+	TX3912_VIDEO_DITHER_DUTYCYCLE_0,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_2_7,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_2_5,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_2_4,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_3_5,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_5_7,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_4_5,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_1,
+};
+
+static const int dither_level4[4] = {
+	TX3912_VIDEO_DITHER_DUTYCYCLE_0,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_1_3,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_5_7,
+	TX3912_VIDEO_DITHER_DUTYCYCLE_1,
+};
+
+static int
+__get_color8(luti)
+	int luti;
+{
+	KASSERT(luti >=0 && luti < 8);
+	dlp = &dither_list[dither_level8[luti]];
+
+	return ((0xff * dlp->mul) / dlp->div);
+}
+
+static int
+__get_color4(luti)
+	int luti;
+{
+	KASSERT(luti >=0 && luti < 4);
+	dlp = &dither_list[dither_level4[luti]];
+
+	return ((0xff * dlp->mul) / dlp->div);
+}
+
+void
+tx3912video_clut_get(sc, rgb, beg, cnt)
+	struct tx3912video_softc *sc;
+	u_int32_t *rgb;
+	int beg, cnt;
+{
+	int i;
+
+	KASSERT(rgb);
+	KASSERT(LEGAL_CLUT_INDEX(beg));
+	KASSERT(LEGAL_CLUT_INDEX(beg + cnt - 1));
+	
+	for (i = 0; i < cnt; i++) {
+		rgb[i] =  RGB24(__get_color8((i >> 5) & 0x7),
+				__get_color8((i >> 2) & 0x7),
+				__get_color4(i & 0x3));
+	}
+}
+
+void
+tx3912video_clut_install(ctx, ri)
+	void *ctx;
+	struct rasops_info *ri;
+{
+	struct tx3912video_softc *sc = ctx;
+	const int system_cmap[0x10] = {
+		TX3912VIDEO_BLACK,
+		TX3912VIDEO_RED,
+		TX3912VIDEO_GREEN,
+		TX3912VIDEO_YELLOW,
+		TX3912VIDEO_BLUE,
+		TX3912VIDEO_MAGENTA,
+		TX3912VIDEO_CYAN,
+		TX3912VIDEO_WHITE,
+		TX3912VIDEO_DARK_BLACK,
+		TX3912VIDEO_DARK_RED,
+		TX3912VIDEO_DARK_GREEN,
+		TX3912VIDEO_DARK_YELLOW,
+		TX3912VIDEO_DARK_BLUE,
+		TX3912VIDEO_DARK_MAGENTA,
+		TX3912VIDEO_DARK_CYAN,
+		TX3912VIDEO_DARK_WHITE,
+	};
+
+	KASSERT(ri);
+	
+	if (sc->sc_chip->vc_fbdepth == 8) {
+		/* XXX 2bit gray scale LUT not supported */
+		memcpy(ri->ri_devcmap, system_cmap, sizeof system_cmap);
+	}
+}
+
+void
+tx3912video_clut_init(sc)
+	struct tx3912video_softc *sc;
+{
+	tx_chipset_tag_t tc = sc->sc_chip->vc_tc;
+
+	if (sc->sc_chip->vc_fbdepth != 8) {
+		return; /* XXX 2bit gray scale LUT not supported */
+	}
+
+	/* 
+	 * time-based dithering pattern (TOSHIBA recommended pattern)
+	 */
+	/* 2/3, 1/3 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL8_REG, 
+		      TX3912_VIDEOCTRL8_PAT2_3_DEFAULT);
+	/* 3/4, 2/4 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL9_REG, 
+		      (TX3912_VIDEOCTRL9_PAT3_4_DEFAULT << 16) |
+		      TX3912_VIDEOCTRL9_PAT2_4_DEFAULT);
+	/* 4/5, 1/5 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL10_REG, 
+		      TX3912_VIDEOCTRL10_PAT4_5_DEFAULT);
+	/* 3/5, 2/5 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL11_REG, 
+		      TX3912_VIDEOCTRL11_PAT3_5_DEFAULT);
+	/* 6/7, 1/7 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL12_REG, 
+		      TX3912_VIDEOCTRL12_PAT6_7_DEFAULT);
+	/* 5/7, 2/7 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL13_REG, 
+		      TX3912_VIDEOCTRL13_PAT5_7_DEFAULT);
+	/* 4/7, 3/7 */
+	tx_conf_write(tc, TX3912_VIDEOCTRL14_REG, 
+		      TX3912_VIDEOCTRL14_PAT4_7_DEFAULT);
+
+	/* 
+	 * dither-pattern look-up table. (selected by uch)
+	 */
+	/* red */
+	tx_conf_write(tc, TX3912_VIDEOCTRL5_REG,
+		      (dither_level8[7] << 28) |
+		      (dither_level8[6] << 24) |
+		      (dither_level8[5] << 20) |
+		      (dither_level8[4] << 16) |
+		      (dither_level8[3] << 12) |
+		      (dither_level8[2] << 8) |
+		      (dither_level8[1] << 4) |
+		      (dither_level8[0] << 0));
+	/* green */
+	tx_conf_write(tc, TX3912_VIDEOCTRL6_REG,
+		      (dither_level8[7] << 28) |
+		      (dither_level8[6] << 24) |
+		      (dither_level8[5] << 20) |
+		      (dither_level8[4] << 16) |
+		      (dither_level8[3] << 12) |
+		      (dither_level8[2] << 8) |
+		      (dither_level8[1] << 4) |
+		      (dither_level8[0] << 0));
+	/* blue (2bit gray scale also use this look-up table) */
+	tx_conf_write(tc, TX3912_VIDEOCTRL7_REG,
+		      (dither_level4[3] << 12) |
+		      (dither_level4[2] << 8) |
+		      (dither_level4[1] << 4) |
+		      (dither_level4[0] << 0));
 }
 
 /*

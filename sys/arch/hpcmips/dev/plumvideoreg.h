@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideoreg.h,v 1.3 2000/05/02 17:50:51 uch Exp $ */
+/*	$NetBSD: plumvideoreg.h,v 1.4 2000/05/08 21:57:57 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -141,10 +141,14 @@
 /* Graphics Mode */
 #define	PLUM_VIDEO_PLGMD_REG		0x0dc
 
-#define PLUM_VIDEO_PLGMD_MASK		0x3
+#define PLUM_VIDEO_PLGMD_GMODE_MASK	0x3
 #define PLUM_VIDEO_PLGMD_DISABLE	0x0
 #define PLUM_VIDEO_PLGMD_8BPP		0x1
 #define PLUM_VIDEO_PLGMD_16BPP		0x2
+
+#define PLUM_VIDEO_PLGMD_MODE_DISPLAY	0x4
+#define PLUM_VIDEO_PLGMD_PALETTE_ENABLE 0x8
+
 /*
  *	CRT Timing Register
  */

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.20 2000/05/04 10:25:45 takemura Exp $
+#	$NetBSD: TX3912,v 1.21 2000/05/08 21:57:59 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -165,6 +165,8 @@ btnmgr0		at mainbus0
 wskbd*		at btnmgr0 mux 1
 
 options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_BROWN
+options 	WS_KERNEL_BG=WSCOL_BLUE
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x10
 # compatibility to other console drivers
