@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.11 2000/06/17 06:58:35 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.12 2000/06/20 08:26:55 soda Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -193,7 +193,7 @@ isabrattach(parent, self, aux)
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	case DESKSTATION_RPC44:
-		_bus_dma_tag_init(&sc->sc_dmat); /* XXX bounce for >16MB */
+		isadma_bounce_tag_init(&sc->sc_dmat);
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	default:

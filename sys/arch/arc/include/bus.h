@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2000/06/09 05:14:42 soda Exp $	*/
+/*	$NetBSD: bus.h,v 1.8 2000/06/20 08:26:54 soda Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -834,6 +834,10 @@ void	_mips3_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    paddr_t low, paddr_t high);
 void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
@@ -846,11 +850,12 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vaddr_t low, vaddr_t high));
+	    paddr_t low, paddr_t high));
 #endif /* _ARC_BUS_DMA_PRIVATE */
 
 void	_bus_dma_tag_init __P((bus_dma_tag_t tag));
 void	jazz_bus_dma_tag_init __P((bus_dma_tag_t tag));
+void	isadma_bounce_tag_init __P((bus_dma_tag_t tag));
 
 #endif /* _KERNEL */
 #endif /* _ARC_BUS_H_ */
