@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.9 2000/08/21 23:16:01 thorpej Exp $
+.\"	$NetBSD: spl.9,v 1.10 2000/08/22 01:33:52 enami Exp $
 .\"
 .\" Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -93,7 +93,7 @@ listed here are arranged from
 .Dq highest
 to
 .Dq lowest .
-In other words, if a platform's hardware interrutps are arranged in
+In other words, if a platform's hardware interrupts are arranged in
 a hierarchical manner, a priority level should also block all of the
 levels listed below it.
 .Pp
@@ -117,7 +117,7 @@ expensive processing at a lower interrupt priority, and are explicitly
 scheduled by the higher-level interrupt handler.  The most common use
 of this is in the networking code, where network interface drivers
 defer the more expensive TCP/IP processing in order to avoid dropping
-additional incoming packets.  Software interrutps are further described
+additional incoming packets.  Software interrupts are further described
 by
 .Xr softintr 9 .
 .Pp
