@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1997/01/31 02:14:22 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.9 1997/01/31 06:03:38 thorpej Exp $
 
 #
 #	GENERIC
@@ -51,7 +51,7 @@ options 	TCP_COMPAT_42		# 4.2 networking ABI
 # file system options
 file-system 	FFS			# Berkeley fast file system
 file-system 	MFS			# memory file system; uses RAM and swap
-file-system 	NFSCLIENT		# Network File System client
+file-system 	NFS			# Network File System client
 file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
 file-system 	MSDOSFS			# MS-DOS FAT file system
 #file-system 	FDESC			# /dev/fd
