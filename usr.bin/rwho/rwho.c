@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.7 1997/03/08 23:08:28 cgd Exp $	*/
+/*	$NetBSD: rwho.c,v 1.8 1997/10/19 14:34:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: rwho.c,v 1.7 1997/03/08 23:08:28 cgd Exp $";
+__RCSID("$NetBSD: rwho.c,v 1.8 1997/10/19 14:34:11 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,13 +82,13 @@ main(argc, argv)
 	int ch;
 	struct dirent *dp;
 	int cc, width;
-	register struct whod *w = &wd;
-	register struct whoent *we;
-	register struct myutmp *mp;
+	struct whod *w = &wd;
+	struct whoent *we;
+	struct myutmp *mp;
 	int f, n, i, nhosts;
 	time_t time();
 
-	while ((ch = getopt(argc, argv, "a")) != EOF)
+	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
 		case 'a':
 			aflg = 1;
