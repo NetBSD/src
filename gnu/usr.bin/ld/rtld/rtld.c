@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.20 1994/06/10 15:17:26 pk Exp $
+ *	$Id: rtld.c,v 1.21 1994/06/24 13:31:34 pk Exp $
  */
 
 #include <sys/param.h>
@@ -399,7 +399,7 @@ alloc_link_map(path, sodp, parent, addr, dp)
 	link_map_tail = &smp->som_next;
 
 	smp->som_addr = addr;
-	smp->som_path = strdup(path);
+	smp->som_path = path?strdup(path):NULL;
 	smp->som_sod = sodp;
 	smp->som_dynamic = dp;
 	smp->som_spd = (caddr_t)smpp;
