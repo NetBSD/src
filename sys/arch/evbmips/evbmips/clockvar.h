@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2002/03/07 14:43:58 simonb Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2002/04/08 14:08:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -59,8 +59,10 @@ struct clockfns {
 	void	(*cf_set)(struct device *, struct clocktime *);
 };
 
-extern struct device *clockdev;
-extern const struct clockfns *clockfns;
-
 void clockattach(struct device *, const struct clockfns *);
-int clockintr(void *);
+
+/* XXX need better places for following two declarations */
+/* CP0 count register;  set in interrupt handler, used by microtime. */
+extern uint32_t last_cp0_count;
+/* CP0 compare register; set initially in cpu_initclocks. */
+extern uint32_t next_cp0_clk_intr;
