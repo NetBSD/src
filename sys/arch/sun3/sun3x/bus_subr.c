@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.6 1997/05/28 04:27:00 jeremy Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.7 1997/05/30 07:02:14 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,11 +132,9 @@ bus_print(args, name)
 
 label_t *nofault;
 
-/* This is defined in pmap.c */
+/* These are defined in pmap.c */
 extern vm_offset_t tmp_vpages[];
-extern u_char tmp_vpage0_inuse, tmp_vpage1_inuse;
-
-vm_offset_t pmap_extract_kernel(vm_offset_t);
+extern int tmp_vpages_inuse;
 
 static const int bustype_to_patype[4] = {
 	0,		/* OBMEM  */
@@ -153,11 +151,12 @@ static const int bustype_to_patype[4] = {
  *	Try the access using peek_*
  *	Clean up temp. mapping
  */
-int bus_peek(bustype, paddr, sz)
+int
+bus_peek(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
 	int	offset, rtn, s;
-	vm_offset_t va_page, oldpaddr;
+	vm_offset_t va_page;
 	caddr_t va;
 
 	/* XXX - Must fix for VME support... */
@@ -170,11 +169,9 @@ int bus_peek(bustype, paddr, sz)
 	paddr |= PMAP_NC;
 
 	s = splimp();
-	oldpaddr = 0; /*XXXgcc*/
-	if (tmp_vpage1_inuse++) {
-		oldpaddr = pmap_extract_kernel(tmp_vpages[1]);
-	}
-	splx(s);
+	if (tmp_vpages_inuse)
+		panic("bus_peek: temporary vpages are in use.");
+	tmp_vpages_inuse++;
 
 	va_page = tmp_vpages[1];
 	va      = (caddr_t) va_page + offset;
@@ -197,16 +194,11 @@ int bus_peek(bustype, paddr, sz)
 			rtn = -1;
 	}
 
-	s = splimp();
-	if (--tmp_vpage1_inuse) {
-		pmap_enter(pmap_kernel(), tmp_vpages[1], oldpaddr,
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	} else {
-		pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
-	}
+	pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
+	--tmp_vpages_inuse;
 	splx(s);
 
-	return rtn;
+	return (rtn);
 }
 
 

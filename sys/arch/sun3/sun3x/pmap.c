@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1997/05/28 04:28:52 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1997/05/30 07:02:15 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -265,8 +265,7 @@ static TAILQ_HEAD(c_pool_head_struct, c_tmgr_struct) c_pool;
  */
 static boolean_t pv_initialized = FALSE, /* PV system has been initialized. */
        bootstrap_alloc_enabled = FALSE; /*Safe to use pmap_bootstrap_alloc().*/
-u_char tmp_vpage0_inuse,	/* Temporary virtual page 0 is in use */
-       tmp_vpage1_inuse;	/* Temporary virtual page 1 is in use */
+int tmp_vpages_inuse;	/* Temporary virtual pages are in use */
 
 /*
  * XXX:  For now, retain the traditional variables that were
@@ -284,8 +283,7 @@ vm_offset_t virtual_contig_end;
 vm_offset_t avail_next;
 
 /* These are used by pmap_copy_page(), etc. */
-vm_offset_t tmp_vpages[2];	/* Note: tmp_vpage[0] MUST be mapped R/O */
-				/*       tmp_vpage[1] MUST be mapped R/W */
+vm_offset_t tmp_vpages[2];
 
 /*
  * The 3/80 is the only member of the sun3x family that has non-contiguous
@@ -834,7 +832,6 @@ pmap_bootstrap(nextva)
 	virtual_avail += NBPG;
 	tmp_vpages[1] = virtual_avail;
 	virtual_avail += NBPG;
-	tmp_vpage0_inuse = tmp_vpage1_inuse = 0;
 
 	/** Initialize the PV system **/
 	pmap_init_pv();
@@ -2081,68 +2078,50 @@ pmap_enter_kernel(va, pa, prot)
 		/*
 		 * If the PTE is already mapped to an address and it differs
 		 * from the address requested, unlink it from the PV list.
-		 *
-		 * This only applies to mappings within virtual_avail
-		 * and VM_MAX_KERNEL_ADDRESS.  All others are not requests
-		 * from the VM system and should not be part of the PV system.
 		 */
-		if ((va >= virtual_avail) && (va < VM_MAX_KERNEL_ADDRESS)) {
-		    old_pa = MMU_PTE_PA(*pte);
-		    if (pa != old_pa) {
-		        if (is_managed(old_pa)) {
-		            /* XXX - Make this into a function call? */
-		            pv = pa2pv(old_pa);
-		            pv_idx = pv->pv_idx;
-		            if (pv_idx == pte_idx) {
-		                pv->pv_idx = pvebase[pte_idx].pve_next;
-		            } else {
-		                while (pvebase[pv_idx].pve_next != pte_idx)
-		                    pv_idx = pvebase[pv_idx].pve_next;
-		                pvebase[pv_idx].pve_next =
-		                    pvebase[pte_idx].pve_next;
-		            }
-		            /* Save modified/reference bits */
-		            pv->pv_flags |= (u_short) pte->attr.raw;
+		old_pa = MMU_PTE_PA(*pte);
+		if (pa != old_pa) {
+		    if (is_managed(old_pa)) {
+		        /* XXX - Make this into a function call? */
+		        pv = pa2pv(old_pa);
+		        pv_idx = pv->pv_idx;
+		        if (pv_idx == pte_idx) {
+		            pv->pv_idx = pvebase[pte_idx].pve_next;
+		        } else {
+		            while (pvebase[pv_idx].pve_next != pte_idx)
+		                pv_idx = pvebase[pv_idx].pve_next;
+		            pvebase[pv_idx].pve_next =
+		                pvebase[pte_idx].pve_next;
 		        }
-		        if (is_managed(pa))
-		            insert = TRUE;
-		        else
-		            insert = FALSE;
-		        /*
-		         * Clear out any old bits in the PTE.
-		         */
-		        pte->attr.raw = MMU_DT_INVALID;
-		    } else {
-		        /*
-		         * Old PA and new PA are the same.  No need to relink
-		         * the mapping within the PV list.
-		         */
-		        insert = FALSE;
-
-		        /*
-		         * Save any mod/ref bits on the PTE.
-		         */
-		        pte->attr.raw &= (MMU_SHORT_PTE_USED|MMU_SHORT_PTE_M);
+		        /* Save modified/reference bits */
+		        pv->pv_flags |= (u_short) pte->attr.raw;
 		    }
+		    if (is_managed(pa))
+		        insert = TRUE;
+		    else
+		        insert = FALSE;
+		    /*
+		     * Clear out any old bits in the PTE.
+		     */
+		    pte->attr.raw = MMU_DT_INVALID;
 		} else {
 		    /*
-		     * If the VA lies below virtual_avail or beyond 
-		     * VM_MAX_KERNEL_ADDRESS, it is not a request by the VM
-		     * system and hence does not need to be linked into the PV
-		     * system.
+		     * Old PA and new PA are the same.  No need to relink
+		     * the mapping within the PV list.
 		     */
-		    insert = FALSE;
-		    pte->attr.raw = MMU_DT_INVALID;
+		     insert = FALSE;
+
+		    /*
+		     * Save any mod/ref bits on the PTE.
+		     */
+		    pte->attr.raw &= (MMU_SHORT_PTE_USED|MMU_SHORT_PTE_M);
 		}
 	} else {
 		pte->attr.raw = MMU_DT_INVALID;
 		was_valid = FALSE;
-		if ((va >= virtual_avail) && (va < VM_MAX_KERNEL_ADDRESS)) {
-			if (is_managed(pa))
-				insert = TRUE; 
-			else
-				insert = FALSE;
-		} else
+		if (is_managed(pa))
+			insert = TRUE; 
+		else
 			insert = FALSE;
 	}
 
@@ -2454,42 +2433,36 @@ pmap_copy(pmap_a, pmap_b, dst, len, src)
  * Copy the contents of one physical page into another.
  *
  * This function makes use of two virtual pages allocated in pmap_bootstrap()
- * to map the two specified physical pages into the kernel address space.  It
- * then uses bcopy() to copy one into the other.
+ * to map the two specified physical pages into the kernel address space.
  *
  * Note: We could use the transparent translation registers to make the
  * mappings.  If we do so, be sure to disable interrupts before using them.
  */
 void
-pmap_copy_page(src, dst)
-	vm_offset_t src, dst;
+pmap_copy_page(srcpa, dstpa)
+	vm_offset_t srcpa, dstpa;
 {
+	vm_offset_t srcva, dstva;
 	int s;
-	vm_offset_t oldsrc, olddst;
+
+	srcva = tmp_vpages[0];
+	dstva = tmp_vpages[1];
 
 	s = splimp();
-	oldsrc = olddst = 0; /*XXXgcc*/
-	if (tmp_vpage0_inuse++) {
-		oldsrc = pmap_extract_kernel(tmp_vpages[0]);
-	}
-	if (tmp_vpage1_inuse++) {
-		olddst = pmap_extract_kernel(tmp_vpages[1]);
-	}
-	splx(s);
+	if (tmp_vpages_inuse++)
+		panic("pmap_copy_page: temporary vpages are in use.");
 
 	/* Map pages as non-cacheable to avoid cache polution? */
-	pmap_enter_kernel(tmp_vpages[0], src, VM_PROT_READ);
-	pmap_enter_kernel(tmp_vpages[1], dst, VM_PROT_READ|VM_PROT_WRITE);
-	copypage((char *) tmp_vpages[0], (char *) tmp_vpages[1]);
+	pmap_enter_kernel(srcva, srcpa, VM_PROT_READ);
+	pmap_enter_kernel(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
-	s = splimp();
-	if (--tmp_vpage0_inuse) {
-		pmap_enter_kernel(tmp_vpages[0], oldsrc, VM_PROT_READ);
-	}
-	if (--tmp_vpage1_inuse) {
-		pmap_enter_kernel(tmp_vpages[1], olddst,
-			VM_PROT_READ|VM_PROT_WRITE);
-	}
+	/* Hand-optimized version of bcopy(src, dst, NBPG) */
+	copypage((char *) srcva, (char *) dstva);
+
+	pmap_remove_kernel(srcva, srcva + NBPG);
+	pmap_remove_kernel(dstva, dstva + NBPG);
+
+	--tmp_vpages_inuse;
 	splx(s);
 }
 
@@ -2498,31 +2471,33 @@ pmap_copy_page(src, dst)
  * Zero the contents of the specified physical page.
  *
  * Uses one of the virtual pages allocated in pmap_boostrap()
- * to map the specified page into the kernel address space.  Then uses
- * bzero() to zero out the page.
+ * to map the specified page into the kernel address space.
  */
 void
-pmap_zero_page(pa)
-	vm_offset_t pa;
+pmap_zero_page(dstpa)
+	vm_offset_t dstpa;
 {
+	vm_offset_t dstva;
 	int s;
-	vm_offset_t oldpa;
 
+	dstva = tmp_vpages[1];
 	s = splimp();
-	oldpa = 0; /*XXXgcc*/
-	if (tmp_vpage1_inuse++) {
-		oldpa = pmap_extract_kernel(tmp_vpages[1]);
-	}
-	splx(s);
+	if (tmp_vpages_inuse)
+		panic("pmap_zero_page: temporary vpages are in use.");
+	tmp_vpages_inuse++;
 
-	pmap_enter_kernel(tmp_vpages[1], pa, VM_PROT_READ|VM_PROT_WRITE);
-	zeropage((char *) tmp_vpages[1]);
+	/* The comments in pmap_copy_page() above apply here also. */
+	pmap_enter_kernel(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
-	s = splimp();
-	if (--tmp_vpage1_inuse) {
-		pmap_enter_kernel(tmp_vpages[1], oldpa,
-			VM_PROT_READ|VM_PROT_WRITE);
-	}
+	/* Hand-optimized version of bzero(ptr, NBPG) */
+	zeropage((char *) dstva);
+
+#if 0
+	/* XXX - See comment above about the PV problem. */
+	pmap_remove_kernel(dstva, dstva + NBPG);
+#endif
+
+	--tmp_vpages_inuse;
 	splx(s);
 }
 
@@ -3053,10 +3028,11 @@ pmap_remove_kernel(sva, eva)
 	idx  = _btop(sva - KERNBASE);
 	eidx = _btop(eva - KERNBASE);
 
-	while (idx < eidx)
+	while (idx < eidx) {
 		pmap_remove_pte(&kernCbase[idx++]);
-	/* Always flush the ATC when maniplating the kernel address space. */
-	TBIAS();
+		TBIS(sva);
+		sva += NBPG;
+	}
 }
 
 /* pmap_remove			INTERFACE
@@ -3539,7 +3515,8 @@ pmap_pa_exists(pa)
  **
  * This is called by locore.s:cpu_switch when we are switching to a
  * new process.  This should load the MMU context for the new proc.
- * XXX - Later, this should be done directly in locore.s
+ *
+ * Note: Only used when locore.s is compiled with PMAP_DEBUG.
  */
 void
 pmap_activate(pmap)
