@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 1997/04/01 03:12:29 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12 1997/04/27 20:43:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -45,6 +45,7 @@
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 #include <machine/vmparam.h>
 #include <machine/pte.h>
 
