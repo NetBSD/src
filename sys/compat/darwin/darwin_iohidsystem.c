@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.24 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.25 2003/12/09 17:13:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.24 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.25 2003/12/09 17:13:19 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -269,6 +269,21 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 		break;
 	}
 
+	case DARWIN_IOHIDPOSTEVENT: {
+		darwin_nxll_event *dne;
+
+		dne = (darwin_nxll_event *)&req->req_in[0];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOHIDPOSTEVENT: setcursor = %d, type = %d, "
+		    " location = (%d, %d), setflags = %x, flags = %x\n",
+		dne->dne_setcursor, dne->dne_type, dne->dne_location.x, 
+		dne->dne_location.y, dne->dne_setflags, dne->dne_flags);
+#endif
+		/* We don't support it yet */
+		rep->rep_outcount = 0;
+		break;
+	}
+
 	default:
 #ifdef DEBUG_DARWIN
 		printf("Unknown selector %d\n", req->req_selector);
@@ -299,7 +314,8 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	printf("darwin_iohidsystem_connect_method_structi_structo()\n");
 #endif
 	rep->rep_outcount = 0;
-	maxoutcount = req->req_in[req->req_incount]; 
+	/* maxoutcount is word aligned */
+	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4]; 
 
 	switch (req->req_selector) {
 	case DARWIN_IOHIDSETMOUSELOCATION: {

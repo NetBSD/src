@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.26 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.27 2003/12/09 17:13:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.26 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.27 2003/12/09 17:13:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,6 +227,17 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 		break;
 	}
 
+	case DARWIN_IOFBSETCURSORVISIBLE: {
+		mach_boolean_t	visible;
+
+		visible = req->req_in[0];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETCURSORVISIBLE: visible = %d\n", visible);
+#endif
+		/* Nothing for now */
+		break;
+	}
+
 	case DARWIN_IOFBGETATTRIBUTE: {
 		/* Get attribute value */
 		char *name;
@@ -410,13 +421,37 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int maxoutcount;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_structi_structo()\n");
 #endif
 
-	rep->rep_outcount = 1;
-	rep->rep_out[0] = 1;
+	rep->rep_outcount = 0;
+	/* maxoutcount is word aligned */
+	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4]; 
+
+	switch(req->req_selector) {
+	case DARWIN_IOFBSETBOUNDS: {
+		darwin_iogbounds *bounds;
+
+		bounds = (darwin_iogbounds *)&req->req_in[0];
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETBOUNDS: bounds (%d, %d) - (%d, %d)\n", 
+		    bounds->minx, bounds->miny, bounds->maxx, bounds->maxy);
+#endif
+		/* Nothing yet */
+		break;
+	}
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;	
+	}
 
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
 	mach_set_header(rep, req, *msglen);

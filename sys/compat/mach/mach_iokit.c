@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.29 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.30 2003/12/09 17:13:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.29 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.30 2003/12/09 17:13:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,7 +226,7 @@ mach_io_connect_method_scalari_scalaro(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
-	int end_offset;
+	int end_offset, outcount;
 
 	/* 
 	 * Sanity check req_incount 
@@ -238,7 +238,8 @@ mach_io_connect_method_scalari_scalaro(args)
 		return mach_msg_error(args, EINVAL);
 
 	/* Sanity check req->req_outcount */
-	if (req->req_outcount > 16)
+	outcount = req->req_in[req->req_incount];
+	if (outcount > 16)
 		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
@@ -412,18 +413,28 @@ mach_io_service_add_interest_notification(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
-	int end_offset;
-	int item_size, refitem_size;
+	int end_offset, refcount_offset;
+	int item_size, refitem_size, refcount;
 
 	/* 
 	 * req_typeofinterestoffset is not used.
-	 * Sanity check req_typeofinterestcount and req_refcount
+	 * Sanity checks: first check refcount is not 
+	 * outside the message. NB: it is word aligned
+	 */
+	refcount_offset = (req->req_typeofinterestcount & ~0x3UL) + 4;
+	if (MACH_REQMSG_OVERFLOW(args, 
+	    req->req_typeofinterest[refcount_offset]))
+		return mach_msg_error(args, EINVAL);
+	refcount = req->req_typeofinterest[refcount_offset];
+
+	/* 
+	 * Sanity check typeofinterestcount and refcount
 	 */
 	item_size = sizeof(req->req_typeofinterest[0]);
 	refitem_size = sizeof(req->req_ref[0]);
 	end_offset = req->req_typeofinterestcount +
-		     (sizeof(req->req_refcount) / item_size) + 
-		     (req->req_refcount * refitem_size / item_size);
+		     (sizeof(refcount) / item_size) + 
+		     (refcount * refitem_size / item_size);
 	if (MACH_REQMSG_OVERFLOW(args, req->req_typeofinterest[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
@@ -927,6 +938,7 @@ mach_io_connect_method_structi_structo(args)
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
 	int end_offset;
+	int outcount;
 
 	/* Sanity check req_incount */
 	end_offset = req->req_incount +
@@ -934,8 +946,9 @@ mach_io_connect_method_structi_structo(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
-	/* Sanity check req_outcount */
-	if (req->req_outcount > 4096)
+	/* Sanity check outcount. It is word aligned */
+	outcount = req->req_in[(req->req_incount & ~0x3UL) + 4];
+	if (outcount > 4096)
 		return mach_msg_error(args, EINVAL);
 
 	mn = req->req_msgh.msgh_remote_port;
@@ -1028,14 +1041,19 @@ mach_io_connect_method_scalari_structi(args)
 	struct mach_right *mr;
 	struct mach_iokit_devclass *mid;
 	int end_offset;
-	int scalar_size, struct_size;
+	int scalar_size, struct_size, instructcount;
 
-	/* Sanity check req_incount and req_instructcount */
+	/* Sanity check req_incount and get instructcount */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
+		return mach_msg_error(args, EINVAL);
+	instructcount = req->req_in[req->req_incount];
+
+	/* Sanity check instructcount */
 	scalar_size = sizeof(req->req_in[0]);
 	struct_size = sizeof(req->req_instruct[0]);
 	end_offset = req->req_incount +
-		     (sizeof(req->req_instructcount) / scalar_size) +
-		     (req->req_instructcount * struct_size / scalar_size);
+		     (sizeof(instructcount) / scalar_size) +
+		     (instructcount * struct_size / scalar_size);
 	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
