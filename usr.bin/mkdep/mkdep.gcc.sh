@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.13 1998/03/31 04:25:30 perry Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.14 1998/04/09 05:59:35 fair Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -53,8 +53,6 @@ fi
 cmd='set -- `type "${CC}"` ; eval echo \$$#'
 CC=`eval $cmd`
 export CC
-PATH=/bin:/usr/bin
-export PATH
 
 D=.depend			# default dependency file is .depend
 append=0
