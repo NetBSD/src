@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.11 2002/12/09 21:53:28 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.12 2002/12/09 22:28:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.11 2002/12/09 21:53:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.12 2002/12/09 22:28:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,8 +154,8 @@ mach_port_insert_right(p, msgh, maxlen, dst)
 	size_t maxlen;
 	mach_msg_header_t *dst;
 {
-	mach_port_allocate_request_t req;
-	mach_port_allocate_reply_t rep;
+	mach_port_insert_right_request_t req;
+	mach_port_insert_right_reply_t rep;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
