@@ -53,7 +53,7 @@
 # Printers:
 # Call units:
 # Special purpose devices:
-	fd	file descriptors
+#	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
 #	ite*	terminal emulator interface to HP300 graphics devices
 #	hil	HP300 HIL input devices
@@ -151,30 +151,21 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-vnd*)
-	unit=`expr $i : '...\(.*\)'`
-	name=vnd; blk=6; chr=19
-	rm -f ${name}${unit}c r${name}${unit}c
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-	chgrp operator ${name}${unit}c r${name}${unit}c
-	chmod 640 ${name}${unit}c r${name}${unit}c
-	;;
-
-ccd*|fd*|rd*|sd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+ccd*|fd*|rd*|sd*|vnd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	rd*) name=rd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=8;;
 	ccd*) name=ccd; blk=5; chr=17;;
+	vnd*) name=vnd; blk=6; chr=19;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
 	17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+		rm -f $name$unit? r$name$unit?
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
 		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
 		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
@@ -182,6 +173,7 @@ ccd*|fd*|rd*|sd*)
 		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
 		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
 		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
 		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
 		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
