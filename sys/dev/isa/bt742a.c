@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.33 1994/11/04 18:34:56 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.34 1994/11/04 19:01:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -64,7 +64,6 @@
 
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/icu.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
