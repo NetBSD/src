@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16 1999/03/27 01:26:37 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.1 1999/04/07 16:37:50 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -966,8 +966,12 @@ raidioctl(dev, cmd, data, flag, p)
 		/* initialize all parity */
 	case RAIDFRAME_REWRITEPARITY:
 
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0)
-			return (EINVAL);
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* Parity for RAID 0 is trivially correct */
+			raidPtrs[unit]->parity_good = RF_RAID_CLEAN;
+			return(0);
+		}
+
 		/* borrow the thread of the requesting process */
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_RewriteParity(raidPtrs[unit]);
