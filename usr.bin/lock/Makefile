@@ -1,12 +1,10 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 4/16/91
-#	$Id: Makefile,v 1.4 1993/07/31 15:20:41 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/10/07 02:18:49 cgd Exp $
 
 PROG=	lock
 BINOWN= root
 BINMODE=4555
-.ifndef EXPORTABLE_SYSTEM
-DPADD+= ${LIBCRYPT}
 LDADD+= -lcrypt
-.endif
+DPADD+= ${LIBCRYPT}
 
 .include <bsd.prog.mk>
