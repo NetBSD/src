@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.20 2002/02/12 06:39:11 ross Exp $	*/
+/*	$NetBSD: show.c,v 1.21 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.20 2002/02/12 06:39:11 ross Exp $");
+__RCSID("$NetBSD: show.c,v 1.21 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,6 +153,7 @@ shcmd(cmd, fp)
 			putchar(' ');
 		switch (np->nfile.type) {
 			case NTO:	s = ">";  dftfd = 1; break;
+			case NCLOBBER:	s = ">|"; dftfd = 1; break;
 			case NAPPEND:	s = ">>"; dftfd = 1; break;
 			case NTOFD:	s = ">&"; dftfd = 1; break;
 			case NFROM:	s = "<";  dftfd = 0; break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.58 2002/02/14 21:51:41 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.59 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.58 2002/02/14 21:51:41 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.59 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -441,6 +441,7 @@ expredir(n)
 		case NFROMTO:
 		case NFROM:
 		case NTO:
+		case NCLOBBER:
 		case NAPPEND:
 			expandarg(redir->nfile.fname, &fn, EXP_TILDE | EXP_REDIR);
 			redir->nfile.expfname = fn.list->text;

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.45 2002/04/10 15:52:07 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.46 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.45 2002/04/10 15:52:07 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.46 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1100,6 +1100,8 @@ until:
 		break;
 	case NTO:
 		p = ">";  i = 1;  goto redir;
+	case NCLOBBER:
+		p = ">|";  i = 1;  goto redir;
 	case NAPPEND:
 		p = ">>";  i = 1;  goto redir;
 	case NTOFD:
