@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.9 1999/11/01 09:59:23 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.10 1999/11/08 20:19:10 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -52,6 +52,8 @@
 #include <dev/pci/pcivar.h>	/* XXX */
 #include <dev/pci/pcireg.h>	/* XXX */
 
+#include <dev/pcmcia/pcmciareg.h> /* XXX */
+
 #if defined CARDBUS_DEBUG
 #define STATIC
 #define DPRINTF(a) printf a
@@ -76,7 +78,12 @@ static int cardbussubmatch __P((struct device *, void *, void *));
 #endif
 static int cardbusprint __P((void *, const char *));
 
-static int decode_tuples __P((u_int8_t *, int));
+typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
+
+static int decode_tuples __P((u_int8_t *, int, tuple_decode_func, void*));
+#ifdef CARDBUS_DEBUG
+static void print_tuple __P((u_int8_t*, int, void*));
+#endif
 
 static int cardbus_read_tuples __P((struct cardbus_attach_args *,
 				    cardbusreg_t, u_int8_t *, size_t));
@@ -262,10 +269,6 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 	    cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
 			       command | CARDBUS_COMMAND_MEM_ENABLE);
 
-	    printf("reg = %x\n", reg);
-	    printf("bar_addr = %lx, exrom = %x\n", bar_addr, exrom);
-	    printf("exrom = %x\n", cardbus_conf_read(cc, cf, tag, reg));
-
 	    if(cardbus_read_exrom(ca->ca_memt, bar_memh, &rom_image))
 		goto out;
 
@@ -315,6 +318,77 @@ cardbus_read_tuples(ca, cis_ptr, tuples, len)
 #endif
     }
     return !found;
+}
+
+static void
+parse_tuple(u_int8_t *tuple, int len, void *data)
+{
+#ifdef CARDBUS_DEBUG
+    static const char __func__[] = "parse_tuple";
+#endif
+    struct cardbus_cis_info *cis = data;
+    int bar_index;
+    int i;
+    char *p;
+    switch(tuple[0]) {
+    case PCMCIA_CISTPL_MANFID:
+	if(tuple[1] != 5) {
+	    DPRINTF(("%s: wrong length manufacturer id (%d)\n", 
+		     __func__, tuple[1]));
+	    break;
+	}
+	cis->manufacturer = tuple[2] | (tuple[3] << 8);
+	cis->product = tuple[4] | (tuple[5] << 8);
+	break;
+    case PCMCIA_CISTPL_VERS_1:
+	memcpy(cis->cis1_info_buf, tuple + 2, tuple[1]);
+	i = 0;
+	p = cis->cis1_info_buf + 2;
+	while(i < sizeof(cis->cis1_info) / sizeof(cis->cis1_info[0])) {
+	    cis->cis1_info[i++] = p;
+	    while(*p != '\0' && *p != '\xff')
+		p++;
+	    if(*p == '\xff')
+		break;
+	    p++;
+	}
+	break;
+    case PCMCIA_CISTPL_BAR:
+	if(tuple[1] != 6) {
+	    DPRINTF(("%s: BAR with short length (%d)\n", __func__, tuple[1]));
+	    break;
+	}
+	bar_index = tuple[2] & 7;
+	if(bar_index == 0) {
+	    DPRINTF(("%s: invalid ASI in BAR tuple\n",
+		     __func__, bar_index));
+	    break;
+	}
+	bar_index--;
+	cis->bar[bar_index].flags = tuple[2];
+	cis->bar[bar_index].size = (tuple[4] << 0) |
+				   (tuple[5] << 8) |
+				   (tuple[6] << 16) |
+				   (tuple[7] << 24);
+	break;
+    case PCMCIA_CISTPL_FUNCID:
+	cis->funcid = tuple[2];
+	break;
+	
+    case PCMCIA_CISTPL_FUNCE:
+	if(cis->funcid == PCMCIA_FUNCTION_NETWORK && tuple[1] >= 8) {
+	    if(tuple[2] == PCMCIA_TPLFE_TYPE_LAN_NID) {
+		if(tuple[3] > sizeof(cis->funce.network.netid)) {
+		    DPRINTF(("%s: unknown network id type (len = %d)\n", 
+			     __func__, tuple[3]));
+		} else {
+		    memcpy(cis->funce.network.netid, 
+			   tuple + 4, tuple[3]);
+		}
+	    }
+	}
+	break;
+    }
 }
 
 /*
@@ -445,7 +519,10 @@ cardbus_attach_card(sc)
 	  continue;
       }
     
-      decode_tuples(tuple, 2048);
+#ifdef CARDBUS_DEBUG
+      decode_tuples(tuple, 2048, print_tuple, NULL);
+#endif
+      decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
     
     
       if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
@@ -508,16 +585,27 @@ cardbusprint(aux, pnp)
      void *aux;
      const char *pnp;
 {
-  register struct cardbus_attach_args *ca = aux;
-  char devinfo[256];
+    struct cardbus_attach_args *ca = aux;
+    char devinfo[256];
+    int i;
+    if (pnp) {
+	pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
+	for (i = 0; i < 4; i++) {
+	    if (ca->ca_cis.cis1_info[i] == NULL)
+		break;
+	    if (i)
+		printf(", ");
+	    printf("%s", ca->ca_cis.cis1_info[i]);
+	}
+	if (i)
+	    printf(" ");
+	printf("(manufacturer 0x%x, product 0x%x)", ca->ca_cis.manufacturer,
+	       ca->ca_cis.product);
+	printf(" %s at %s", devinfo, pnp);
+    }
+    printf(" dev %d function %d", ca->ca_device, ca->ca_function);
 
-  if (pnp) {
-    pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
-    printf("%s at %s", devinfo, pnp);
-  }
-  printf(" dev %d function %d", ca->ca_device, ca->ca_function);
-
-  return UNCONF;
+    return UNCONF;
 }
 
 
@@ -667,15 +755,15 @@ cardbus_function_disable(sc, func)
  * They should go out from this file.
  */
 
-static u_int8_t *decode_tuple __P((u_int8_t *));
-#ifdef CARDBUS_DEBUG
-static char *tuple_name __P((int));
-#endif
+static u_int8_t *
+decode_tuple __P((u_int8_t *tuple, tuple_decode_func func, void *data));
 
 static int
-decode_tuples(tuple, buflen)
+decode_tuples(tuple, buflen, func, data)
      u_int8_t *tuple;
      int buflen;
+     tuple_decode_func func;
+     void *data;
 {
   u_int8_t *tp = tuple;
 
@@ -684,7 +772,7 @@ decode_tuples(tuple, buflen)
     return 0;
   }
 
-  while (NULL != (tp = decode_tuple(tp))) {
+  while (NULL != (tp = decode_tuple(tp, func, data))) {
     if (tuple + buflen < tp) {
       break;
     }
@@ -695,45 +783,30 @@ decode_tuples(tuple, buflen)
 
 
 static u_int8_t *
-decode_tuple(tuple)
+decode_tuple(tuple, func, data)
      u_int8_t *tuple;
+     tuple_decode_func func;
+     void *data;
 {
-  u_int8_t type;
-  u_int8_t len;
-#ifdef CARDBUS_DEBUG
-  int i;
-#endif
+    u_int8_t type;
+    u_int8_t len;
 
-  type = tuple[0];
-  len = tuple[1] + 2;
+    type = tuple[0];
+    len = tuple[1] + 2;
 
-#ifdef CARDBUS_DEBUG
-  printf("tuple: %s len %d\n", tuple_name(type), len);
-#endif
-  if (CISTPL_END == type) {
-    return NULL;
-  }
+    (*func)(tuple, len, data);
 
-#ifdef CARDBUS_DEBUG
-  for (i = 0; i < len; ++i) {
-    if (i % 16 == 0) {
-      printf("  0x%2x:", i);
+    if (CISTPL_END == type) {
+	return NULL;
     }
-    printf(" %x",tuple[i]);
-    if (i % 16 == 15) {
-      printf("\n");
-    }
-  }
-  if (i % 16 != 0) {
-    printf("\n");
-  }
-#endif
 
-  return tuple + len;
+    return tuple + len;
 }
 
 
 #ifdef CARDBUS_DEBUG
+static char *tuple_name __P((int type));
+
 static char *
 tuple_name(type)
      int type;
@@ -768,4 +841,30 @@ tuple_name(type)
     return "Reserved";
   }
 }
+
+static void
+print_tuple(tuple, len, data)
+     u_int8_t *tuple;
+     int len;
+     void *data;
+{
+    int i;
+
+    printf("tuple: %s len %d\n", tuple_name(tuple[0]), len);
+
+    for (i = 0; i < len; ++i) {
+	if (i % 16 == 0) {
+	    printf("  0x%2x:", i);
+	}
+	printf(" %x",tuple[i]);
+	if (i % 16 == 15) {
+	    printf("\n");
+	}
+    }
+    if (i % 16 != 0) {
+	printf("\n");
+    }
+}
+
 #endif
+
