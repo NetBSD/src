@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.6 1998/06/24 19:27:12 mark Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.7 1998/06/28 00:53:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -227,8 +227,10 @@ initarm(ofw_handle)
 	process_kernel_args();
 
 	ofw_configisadma(&isadmaphysbufs);
+#ifdef DMA_BOUNCE
 	isaphysmem = ofw_map(isadmaphysbufs, 
 	    (DMA_BOUNCE * NBPG + DMA_LARGE_BUFFER_SIZE), 0);
+#endif
 
 	/* allocate a cache clean space */
 	if ((pclean = ofw_getcleaninfo()) != -1) {
