@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.35 2005/01/11 22:41:50 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.36 2005/01/12 03:33:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -130,7 +130,7 @@ int		 getpwuid_r __P((uid_t, struct passwd *, char *, size_t,
 				struct passwd **));
 #endif
 #if defined(_NETBSD_SOURCE)
-int		 pw_gensalt __P((char *, size_t, const struct passwd *, char));
+int		 pw_gensalt __P((char *, size_t, const char *, const char *));
 int		 pw_scan __P((char *, struct passwd *, int *));
 int		 setpassent __P((int));
 const char	*user_from_uid __P((uid_t, int));
