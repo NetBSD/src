@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2002/11/27 18:00:27 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.135 2002/12/10 12:24:07 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1806,7 +1806,7 @@ static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int, int (*) __P((void *)),
-						   void *));
+						   void *, void (*)__P((void))));
 static int	sparc_bus_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 				     bus_size_t, bus_size_t, bus_size_t, int,
 				     bus_addr_t *, bus_space_handle_t *));
@@ -1973,13 +1973,14 @@ sparc_bus_mmap(t, paddr, off, prot, flags)
 
 
 void *
-sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int	pil;
 	int	level;
 	int	flags;
 	int	(*handler)__P((void *));
 	void	*arg;
+	void	(*fastvec)__P((void));	/* ignored */
 {
 	struct intrhand *ih;
 
