@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/11/14 05:25:59 matt Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2004/05/29 14:03:52 tron Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
@@ -35,7 +35,7 @@ MLINKS=	vi.1 ex.1 vi.1 view.1
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
-CFLAGS+= -I.
+CPPFLAGS+= -I.
 
 DPSRCS+=options_def.h
 CLEANFILES+=options_def.h
