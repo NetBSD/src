@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.1 1997/01/14 21:24:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.2 1997/01/20 23:26:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -316,7 +316,7 @@ extern  struct cfdriver sd_cd;
 extern  struct cfdriver cd_cd;
 #endif
 
-struct cfdriver genericconf[] = {
+struct cfdriver *genericconf[] = {
 #if NFD > 0
 	&fd_cd,
 #endif
@@ -336,8 +336,7 @@ findroot(devpp, partp)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct bdevsw *bdp;
-	struct device *dv, **devs;
+	struct device **devs;
 	int i, maj, unit;
 
 	/*
@@ -346,11 +345,11 @@ findroot(devpp, partp)
 	*devpp = NULL;
 
 	/* always partition 'a' */
-	*part = 0;
+	*partp = 0;
 
 	for (i = 0; genericconf[i] != NULL; i++) {
 		for (unit = genericconf[i]->cd_ndevs - 1; unit >= 0; unit--) {
-			for (genericconf[i]->cd_devs[unit] == NULL)
+			if (genericconf[i]->cd_devs[unit] == NULL)
 				continue;
 
 			/*
@@ -365,12 +364,12 @@ findroot(devpp, partp)
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
 
-			for (maj = 0; maj < nbdevsw; maj++)
+			for (maj = 0; maj < nblkdev; maj++)
 				if (bdevsw[maj].d_strategy ==
 				    dkp->dk_driver->d_strategy)
 					break;
 #ifdef DIAGNOSTIC
-			if (maj >= nbdevsw)
+			if (maj >= nblkdev)
 				panic("findroot: impossible");
 #endif
 
