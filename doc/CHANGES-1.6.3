@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.56 2004/04/01 03:00:25 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.57 2004/04/01 03:06:19 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -340,3 +340,8 @@ sys/netinet/udp_usrreq.c			1.117-1.118
 	mandatory in IPv6).
 	[itojun, ticket #1645]
 
+sbin/routed/rdisc.c				patch
+sbin/routed/main.c				patch
+
+	Fix invalid cast wrt router discovery.
+	[ws, ticket #1642]
