@@ -12,13 +12,19 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.12.2.1 1993/07/29 21:26:50 deraadt Exp $
+ *	$Id: aha1542.c,v 1.12.2.2 1993/08/13 12:43:54 cgd Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.12.2.1  1993/07/29 21:26:50  deraadt
+ * Revision 1.12.2.2  1993/08/13 12:43:54  cgd
+ * from chmr@edvz.tu-graz.ac.at (Christoph Robitschko):
+ * it seems that the bustek needs a little more time to settle down after a
+ * reset command than the adaptecs. Up to PK-0.2.3 there was a printf there
+ * that did the job quite well.
+ *
+ * Revision 1.12.2.1  1993/07/29  21:26:50  deraadt
  * reliability fudge for dealing with drives that do scsi resets very slowly
  * (or so it seems)
  *
@@ -806,6 +812,7 @@ aha_init(int unit)
 	 * Assume we have a board at this stage
 	 * setup dma channel from jumpers and save int level
 	 */
+	DELAY(1000);
 	aha_cmd(unit, 0, sizeof(conf), 0, (u_char *)&conf, AHA_CONF_GET);
 	switch(conf.chan) {
 	case CHAN0:
