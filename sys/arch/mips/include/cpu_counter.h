@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.4 2002/03/05 15:40:10 simonb Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.1 2003/02/05 13:57:54 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,11 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MIPS_RND_H_
-#define	_MIPS_RND_H_
+#ifndef _MIPS_CPU_COUNTER_H_
+#define _MIPS_CPU_COUNTER_H_
 
 /*
- * Machine-specific support for rnd(4)
+ * Machine-specific support for CPU counter.
  */
 
 #include <machine/cpu.h>
@@ -41,6 +41,7 @@
 static __inline int
 cpu_hascounter(void)
 {
+
 	/*
 	 * MIPS III and MIPS IV CPU's have a cycle counter
 	 * running at half the internal pipeline rate.
@@ -48,12 +49,22 @@ cpu_hascounter(void)
 	return (MIPS_HAS_CLOCK);
 }
 
-static __inline u_int32_t
-cpu_counter(void)
+#define cpu_counter()		cpu_counter32()
+
+static __inline uint32_t
+cpu_counter32(void)
 {
+
 	return mips3_cp0_count_read();
 }
+
+#if 0	/* XXX MI microtime() needs frequency of CPU counter. */
+static __inline uint64_t
+cpu_frequency(struct cpu_info *ci)
+{
+}
+#endif
 #endif
 
 #endif /* _KERNEL */
-#endif /* !_MIPS_RND_H_ */
+#endif /* !_MIPS_CPU_COUNTER_H_ */
