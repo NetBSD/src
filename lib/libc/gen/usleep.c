@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.7 1995/05/03 12:52:44 mycroft Exp $	*/
+/*	$NetBSD: usleep.c,v 1.7.2.1 1995/10/20 17:33:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.7 1995/05/03 12:52:44 mycroft Exp $";
+static char rcsid[] = "$NetBSD: usleep.c,v 1.7.2.1 1995/10/20 17:33:23 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,8 @@ static char rcsid[] = "$NetBSD: usleep.c,v 1.7 1995/05/03 12:52:44 mycroft Exp $
 #include <unistd.h>
 
 #define	TICK	10000		/* system clock resolution in microseconds */
+
+static volatile int ringring;
 
 void
 usleep(useconds)
@@ -93,16 +95,27 @@ usleep(useconds)
 
 	set = oset;
 	sigdelset(&set, SIGALRM);
+	ringring = 0;
  	(void) sigsuspend(&set);
 
-	sigaction(SIGALRM, &oact, NULL);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
-
-	(void) setitimer(ITIMER_REAL, &oitv, &itv);
+	if (ringring) {
+		/* Our alarm went off; timer is not currently running */
+		sigaction(SIGALRM, &oact, NULL);
+		sigprocmask(SIG_SETMASK, &oset, NULL);
+		(void) setitimer(ITIMER_REAL, &oitv, &itv);
+	} else {
+		/*
+		 * Interrupted by other signal; allow for pending 
+		 * SIGALRM to be processed before resetting handler.
+		 */
+		(void) setitimer(ITIMER_REAL, &oitv, &itv);
+		sigprocmask(SIG_SETMASK, &oset, NULL);
+		sigaction(SIGALRM, &oact, NULL);
+	}
 }
 
 static void
 sleephandler()
 {
-
+	ringring = 1;
 }
