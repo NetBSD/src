@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7 2000/09/23 12:54:47 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.8 2000/12/23 23:06:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2000/09/23 12:54:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2000/12/23 23:06:51 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -591,6 +591,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pv->pv_pflags = 0;
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
+	if (flags & VM_PROT_WRITE)
+		pv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
+	else if (flags & (VM_PROT_ALL))
+		pv->pv_pflags |= PV_REFERENCED;
 	pv_update(pv);
 	pmap->pm_entries[lpn] = pv;
 	splx(s);
