@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.32 1997/08/26 13:10:39 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.33 1997/09/18 07:27:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.32 1997/08/26 13:10:39 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.33 1997/09/18 07:27:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.32 1997/08/26 13:10:39 lukem Exp $");
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 7.00";
+static char version[] = "Version 7.01";
 
 extern	off_t restart_point;
 extern	char cbuf[];
@@ -187,6 +187,7 @@ static FILE	*getdatasock __P((char *));
 static char	*gunique __P((char *));
 static void	 lostconn __P((int));
 static int	 receive_data __P((FILE *, FILE *));
+static void	 replydirname __P((const char *, const char *));
 static void	 send_data __P((FILE *, FILE *, off_t));
 static struct passwd *
 		 sgetpwnam __P((char *));
@@ -1407,6 +1408,22 @@ cwd(path)
 	}
 }
 
+static void
+replydirname(name, message)
+	const char *name, *message;
+{
+	char npath[MAXPATHLEN + 1];
+	int i;
+
+	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
+		npath[i] = *name;
+		if (*name == '"')
+			npath[++i] = '"';
+	}
+	npath[i] = '\0';
+	reply(257, "\"%s\" %s", npath, message);
+}
+
 void
 makedir(name)
 	char *name;
@@ -1416,7 +1433,7 @@ makedir(name)
 	if (mkdir(name, 0777) < 0)
 		perror_reply(550, name);
 	else
-		reply(257, "MKD command successful.");
+		replydirname(name, "directory created.");
 }
 
 void
@@ -1436,10 +1453,10 @@ pwd()
 {
 	char path[MAXPATHLEN + 1];
 
-	if (getwd(path) == (char *)NULL)
+	if (getcwd(path, sizeof(path) - 1) == NULL)
 		reply(550, "%s.", path);
 	else
-		reply(257, "\"%s\" is current directory.", path);
+		replydirname(path, "is the current directory.");
 }
 
 char *
@@ -1691,6 +1708,8 @@ send_file_list(whichf)
 		goto out;
 	}
 	while ((dirname = *dirlist++) != NULL) {
+		int trailingslash = 0;
+
 		if (stat(dirname, &st) < 0) {
 			/*
 			 * If user typed "ls -l", etc, and the client
@@ -1725,6 +1744,9 @@ send_file_list(whichf)
 		} else if (!S_ISDIR(st.st_mode))
 			continue;
 
+		if (dirname[strlen(dirname) - 1] == '/')
+			trailingslash++;
+
 		if ((dirp = opendir(dirname)) == NULL)
 			continue;
 
@@ -1737,8 +1759,8 @@ send_file_list(whichf)
 			    dir->d_namlen == 2)
 				continue;
 
-			(void)snprintf(nbuf, sizeof(nbuf), "%s/%s", dirname,
-			    dir->d_name);
+			(void)snprintf(nbuf, sizeof(nbuf), "%s%s%s", dirname,
+			    trailingslash ? "" : "/", dir->d_name);
 
 			/*
 			 * We have to do a stat to ensure it's
