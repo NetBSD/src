@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.6 1999/02/19 21:58:15 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.7 1999/02/24 04:11:03 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -159,11 +159,11 @@ void if_register_send (info)
 	info -> wfdesc = info -> rfdesc;
 #endif
 	if (!quiet_interface_discovery)
-		note ("Sending on   Socket/%s/%s",
+		note ("Sending on   Socket/%s%s%s",
 		      info -> name,
+		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
-
+		       info -> shared_network -> name : ""));
 }
 #endif /* USE_SOCKET_SEND */
 
@@ -175,10 +175,11 @@ void if_register_receive (info)
 	   we don't need to register this interface twice. */
 	info -> rfdesc = if_register_socket (info);
 	if (!quiet_interface_discovery)
-		note ("Listening on Socket/%s/%s",
+		note ("Listening on Socket/%s%s%s",
 		      info -> name,
+		      (info -> shared_network ? "/" : ""),
 		      (info -> shared_network ?
-		       info -> shared_network -> name : "unattached"));
+		       info -> shared_network -> name : ""));
 }
 #endif /* USE_SOCKET_RECEIVE */
 
@@ -206,6 +207,12 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 		  errno == ECONNREFUSED) &&
 		 retry++ < 10);
 #endif
+	if (result < 0) {
+		warn ("send_packet: %m");
+		if (errno == ENETUNREACH)
+			warn ("send_packet: please consult README file %s",
+			      "regarding broadcast address.");
+	}
 	return result;
 }
 #endif /* USE_SOCKET_SEND */

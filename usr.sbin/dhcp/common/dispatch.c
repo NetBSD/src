@@ -3,8 +3,8 @@
    Network input dispatcher... */
 
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.
- * All rights reserved.
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999
+ * The Internet Software Consortium.   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.8 1999/02/19 21:58:14 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.9 1999/02/24 04:11:02 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -434,9 +434,13 @@ void discover_interfaces (state)
 			sizeof tmp -> ifp -> ifr_addr);
 
 		/* We must have a subnet declaration for each interface. */
-		if (!tmp -> shared_network && (state == DISCOVER_SERVER))
-			error ("No subnet declaration for %s (%s).",
-			       tmp -> name, inet_ntoa (foo.sin_addr));
+		if (!tmp -> shared_network && (state == DISCOVER_SERVER)) {
+			warn ("No subnet declaration for %s (%s).",
+			      tmp -> name, inet_ntoa (foo.sin_addr));
+			warn ("Please write a subnet declaration for the %s",
+			      "network segment to");
+			error ("which interface %s is attached.", tmp -> name);
+		}
 
 		/* Find subnets that don't have valid interface
 		   addresses... */
