@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2002/10/01 07:55:18 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2002/10/02 14:40:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2002/10/01 07:55:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2002/10/02 14:40:27 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,10 +530,12 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	 * the first partial cache-line.
 	 */
 	if ((va & (SH5_CACHELINE_SIZE - 1)) != 0) {
-		bytes = min((vsize_t)va & (SH5_CACHELINE_SIZE - 1), len);
-		__cpu_cache_dpurge(va & ~SH5_CACHELINE_SIZE,
-		    pa & ~SH5_CACHELINE_SIZE, SH5_CACHELINE_SIZE);
-		len -= bytes;
+		bytes = (vsize_t)va & (SH5_CACHELINE_SIZE - 1);
+		bytes = min(SH5_CACHELINE_SIZE - bytes, len);
+		__cpu_cache_dpurge(va & ~(SH5_CACHELINE_SIZE - 1),
+		    pa & ~(SH5_CACHELINE_SIZE - 1), SH5_CACHELINE_SIZE);
+		if ((len -= bytes) == 0)
+			return;
 		pa += bytes;
 		va += bytes;
 	}
@@ -546,11 +548,9 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 		bytes = min((vsize_t)len & (SH5_CACHELINE_SIZE - 1), len);
 		__cpu_cache_dpurge(va + (len - bytes), pa + (len - bytes),
 		    SH5_CACHELINE_SIZE);
-		len -= bytes;
+		if ((len -= bytes) == 0)
+			return;
 	}
-
-	if (len == 0)
-		return;
 
 	/*
 	 * For KSEG0, we don't need to flush the cache on a page-by-page
