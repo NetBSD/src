@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/11/11 01:57:32 eeh Exp $
+#	$NetBSD: Makefile,v 1.2 1998/11/24 12:56:40 mrg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -32,7 +32,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
 all:: bootblk.text bootblk
 
 clean:: 
-	rm assym.fth.h bootblk.text machine bootblk
+	rm -f assym.fth.h bootblk.text machine bootblk
 
 machine:
 	ln -s ../../include machine
