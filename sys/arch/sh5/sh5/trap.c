@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2002/08/31 09:11:56 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2002/08/31 09:41:05 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -163,8 +163,8 @@ trap(struct proc *p, struct trapframe *tf)
 		kdb_trap(traptype, tf);
 #else
 		dump_trapframe(tf);
-		panic("trap");
 #endif
+		panic("trap");
 		/* NOTREACHED */
 
 	case T_EXECPROT|T_USER:
