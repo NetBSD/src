@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2001/08/07 22:26:56 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2001/08/11 12:59:45 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -114,7 +114,8 @@
 
 #define arm_byte_to_page(x) ((x) >> PGSHIFT)
 #define arm_page_to_byte(x) ((x) << PGSHIFT)
-
+#define arm_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+    
 #ifdef _KERNEL
 #ifndef _LOCORE
 void	delay __P((unsigned));
