@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.3 1995/03/26 09:08:29 glass Exp $	*/
+/*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,10 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)column.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$NetBSD: column.c,v 1.3 1995/03/26 09:08:29 glass Exp $";
+static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +55,7 @@ static char rcsid[] = "$NetBSD: column.c,v 1.3 1995/03/26 09:08:29 glass Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void  c_columnate __P((void));
 void *emalloc __P((int));

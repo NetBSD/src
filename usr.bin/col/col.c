@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.6 1995/03/26 05:25:53 glass Exp $	*/
+/*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -44,10 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)col.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$NetBSD: col.c,v 1.6 1995/03/26 05:25:53 glass Exp $";
+static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -55,6 +54,7 @@ static char rcsid[] = "$NetBSD: col.c,v 1.6 1995/03/26 05:25:53 glass Exp $";
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define	BS	'\b'		/* backspace */
 #define	TAB	'\t'		/* tab */
@@ -300,6 +300,9 @@ main(argc, argv)
 			l->l_max_col = cur_col;
 		cur_col++;
 	}
+	if (max_line == 0)
+		exit(0);	/* no lines, so just exit */
+
 	/* goto the last line that had a character on it */
 	for (; l->l_next; l = l->l_next)
 		this_line++;
