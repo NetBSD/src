@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.23 2002/02/22 15:57:38 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.24 2002/02/22 17:11:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -611,7 +611,7 @@ initarm(bootargs)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
