@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/27 05:33:55 heas Exp $
+#	$NetBSD: Makefile,v 1.13 2004/05/16 09:53:10 lukem Exp $
 
 # The first four of these are libraries and have to be built first.
 
@@ -21,17 +21,17 @@ SUBDIR+=conf
 # we're now treating it as a configuration file, per Wietse Venema's
 # request. We now have conf/Makefile install a copy into
 # share/examples/postfix, and postfix-etc/Makefile (only called by
-# make distribution) installs a copy in /etc/postfix
+# make configinstall) installs a copy in /etc/postfix
 
 # also not built: fsstone (unneeded), smtpstone (unneeded), qmqpd (unneeded)
 
-# The distribution: target is invoked from the make distribution
+# The configinstall: target is invoked from the make distribution
 # target in src/etc/Makefile. It is there for building the /etc/
 # set. You don't want to run it normally as it would blow away your
 # /etc/postfix directory.
 
-distribution:
-	cd ${.CURDIR}/postfix-etc; ${MAKE} install
+configinstall:
+	${MAKEDIRTARGET} postfix-etc configinstall
 
 .include "Makefile.inc"
 

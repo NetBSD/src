@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/24 08:18:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/05/16 09:53:09 lukem Exp $
 
-FILES=		daily.conf monthly.conf rc.conf security.conf weekly.conf
+CONFIGFILES=	daily.conf monthly.conf rc.conf security.conf weekly.conf
 FILESDIR=	/etc/defaults
 FILESMODE=	${NONBINMODE}
 
