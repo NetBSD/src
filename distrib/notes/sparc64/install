@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17 2002/10/21 20:35:39 martin Exp $
+.\"	$NetBSD: install,v 1.18 2002/11/18 12:39:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,18 +217,18 @@ that will be used for installation.
 The second is intended for clients that will use a network boot normally.
 .Pp
 If you are going to be installing onto local disk, place the
-.Pa netbsd.INSTALL.gz
+.Pa netbsd-INSTALL.gz
 file, located in the
 .Pa binary/kernel
 directory, into the root directory for your machine.
 The
-.Pa netbsd.INSTALL.gz
+.Pa netbsd-INSTALL.gz
 file contains a kernel with an embedded ramdisk that has the basic
 installer file system that is part of the normal miniroot.
 Now you need to boot your workstation
 from the server by entering the following command at the monitor prompt:
 .Pp
-.Dl "ok boot net netbsd.INSTALL.gz"
+.Dl "ok boot net netbsd-INSTALL.gz"
 .Pp
 And then follow the install instructions.
 .Pp
@@ -580,8 +580,8 @@ your new
 root partition and install the bootblocks using
 Solaris's installboot command.
 .Pp
-.Dl # Ic "cp ~/netbsd/binary/kernel/netbsd.GENERIC /mnt"
-.Dl # Ic "cp /mnt/netbsd.GENERIC /mnt/netbsd"
+.Dl # Ic "cp ~/netbsd/binary/kernel/netbsd-GENERIC /mnt"
+.Dl # Ic "cp /mnt/netbsd-GENERIC /mnt/netbsd"
 .Dl # Ic "cp ~/netbsd/installation/misc/ofwboot /mnt"
 .Dl # Ic "installboot ~/netbsd/installation/misc/bootblk /dev/c1t2d0s0"
 .Pp

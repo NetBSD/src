@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23 2002/07/20 07:39:30 lukem Exp $
+.\"	$NetBSD: install,v 1.24 2002/11/18 12:39:50 lukem Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -273,7 +273,7 @@ formatted floppy has a bunch of stuff, as well as the two important files:
 Note that
 .Tn MacOS
 shortened
-.Pa netbsd.GENERIC_MD.gz No to Pa NETBSD~1.GZ
+.Pa netbsd-GENERIC_MD.gz No to Pa NETBSD~1.GZ
 since MS-DOS file systems can only natively hold 8 characters for the
 filename.
 Keep in mind that Open Firmware is often case-sensitive when it
@@ -371,7 +371,7 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd-GENERIC_MD.gz"
 .disp)
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
@@ -403,7 +403,7 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd-GENERIC_MD.gz"
 .disp)
 .It
 .To 2 "Booting off the NetBSD/macppc install CD-R"
@@ -464,9 +464,9 @@ and
 .Ic mkhybrid
 programs have a similar problem.
 For them,
-.Pa netbsd.GENERIC_MD.gz
+.Pa netbsd-GENERIC_MD.gz
 becomes
-.Pa NETBSD_GENERIC_MD.GZ .
+.Pa NETBSD-GENERIC_MD.GZ .
 .Pp
 Another thing to note is that you
 .Em must
@@ -559,10 +559,10 @@ Here are some examples of what you might use to boot the installer kernel
 located on an HFS or HFS+ partition:
 .Pp
 .(disp
-.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd.GENERIC_MD.gz"
-.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd.GENERIC_MD.gz"
-.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd.GENERIC_MD.gz"
-.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd-GENERIC_MD.gz"
 .disp)
 .Pp
 .bullet)
@@ -582,7 +582,7 @@ get an idea of what to expect (user-typed commands are in
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
   ok
-.No  0 \*> Ic "boot enet:,ofwboot.xcf netbsd.GENERIC_MD.gz"
+.No  0 \*> Ic "boot enet:,ofwboot.xcf netbsd-GENERIC_MD.gz"
  loading XCOFF
  tsize=C280 dsize=14AC bsize=2620 entry=600000
  SECTIONS:
