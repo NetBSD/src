@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.269 2003/12/04 13:57:30 keihan Exp $ */
+/*	$NetBSD: wd.c,v 1.270 2003/12/14 05:33:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.269 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.270 2003/12/14 05:33:29 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -289,7 +289,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
 	wd->drvp = adev->adev_drv_data;
-	/* give back our softc to our caller */
+
+	wd->drvp->drv_done = wddone;
 	wd->drvp->drv_softc = &wd->sc_dev;
 
 	aprint_naive("\n");
