@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1995/02/15 23:55:51 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1995/05/25 11:48:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -360,12 +360,13 @@ void inittodr(time_t base)
  */
 void resettodr(void)
 {
-	if (0 && mac68k_trust_pram) {
+	if (0 && mac68k_trust_pram)
 		pram_settime(ugmt_2_pramt(time.tv_sec));
-	} else {
+#if DIAGNOSTIC
+	else
 		printf("NetBSD/mac68k does not trust itself to try and write "
 			"to the pram on this system.\n");
-	}
+#endif
 }
 
 /*
