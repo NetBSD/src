@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.360 2001/09/05 13:47:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.361 2001/09/10 15:09:48 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp 
+ *	NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp 
  */
 
 /*
@@ -1699,6 +1699,7 @@
 #define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ethernet */
 #define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire controller */
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB controller */
+#define	PCI_PRODUCT_SUN_GEMNETWORK	0x2bad		/* GEM Gigabit Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
