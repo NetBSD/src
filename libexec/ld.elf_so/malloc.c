@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4 1999/03/03 21:18:00 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5 1999/06/17 21:13:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -457,7 +457,7 @@ int	n;
 
 	if ((pagepool_start = mmap(0, n * pagesz,
 			PROT_READ|PROT_WRITE,
-			MAP_ANON|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+			MAP_ANON|MAP_PRIVATE, fd, 0)) == (caddr_t)-1) {
 		xprintf("Cannot map anonymous memory");
 		return 0;
 	}
