@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 1999/04/30 04:33:51 cgd Exp $
+	$NetBSD: syscalls.master,v 1.24 1999/05/04 02:12:15 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -352,8 +352,8 @@
 244	UNIMPL		proplist_syscall
 245	UNIMPL		ntp_adjtime
 246	UNIMPL		ntp_gettime
-247	UNIMPL		pathconf
-248	UNIMPL		fpathconf
+247	STD		{ long osf1_sys_pathconf(const char *path, int name); }
+248	STD		{ long osf1_sys_fpathconf(int fd, int name); }
 249	UNIMPL
 250	UNIMPL		uswitch
 251	STD		{ int osf1_sys_usleep_thread( \
