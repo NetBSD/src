@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.4 2000/10/11 20:23:49 is Exp $	*/
+/*	$NetBSD: getether.c,v 1.5 2002/07/14 00:07:01 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.4 2000/10/11 20:23:49 is Exp $");
+__RCSID("$NetBSD: getether.c,v 1.5 2002/07/14 00:07:01 wiz Exp $");
 #endif
 
 /*
@@ -26,15 +26,7 @@ __RCSID("$NetBSD: getether.c,v 1.4 2000/10/11 20:23:49 is Exp $");
 #include "report.h"
 #define EALEN 6
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern int getether P((char *, char *));
-
-#undef P
+extern int getether(char *, char *);
 
 #if defined(ultrix) || (defined(__osf__) && defined(__alpha))
 /*
@@ -50,8 +42,7 @@ extern int getether P((char *, char *));
 #include <net/if.h>				/* struct ifdevea */
 
 int
-getether(ifname, eap)
-	char *ifname, *eap;
+getether(char *ifname, char *eap)
 {
 	int rc = -1;
 	int fd;
@@ -83,9 +74,9 @@ getether(ifname, eap)
 #include <net/nit_if.h>			/* for NIOCBIND */
 #include <net/if.h>				/* for struct ifreq */
 
-getether(ifname, eap)
-	char *ifname;				/* interface name from ifconfig structure */
-	char *eap;					/* Ether address (output) */
+/* ifname: interface name from ifconfig structure */
+/* eap: Ether address (output) */
+getether(char *ifname, char *eap)
 {
 	int rc = -1;
 
@@ -128,10 +119,10 @@ getether(ifname, eap)
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
+/* ifname: interface name from ifconfig structure */
+/* eap: Ether address (output) */
 int
-getether(ifname, eap)
-	char *ifname;				/* interface name from ifconfig structure */
-	char *eap;					/* Ether address (output) */
+getether(char *ifname, char *eap)
 {
 	int fd, rc = -1;
 	register int n;
@@ -193,9 +184,9 @@ getether(ifname, eap)
 #define NULL 0
 #endif
 
-getether(ifname, eap)
-	char *ifname;				/* interface name from ifconfig structure */
-	char *eap;					/* Ether address (output) */
+/* ifname: interface name from ifconfig structure */
+/* eap: Ether address (output) */
+getether(char *ifname, char *eap)
 {
 	int rc = -1;
 	char devname[32];
@@ -346,8 +337,7 @@ getether(ifname, eap)
    or sys/sockios.h, but on my distribution these don't line up correctly */
 #include <linux/sockios.h>	/* Needed for IOCTL defs */
 
-getether(ifname, eap)
-	char *ifname, *eap;
+getether(char *ifname, char *eap)
 {
 	int rc = -1;
 	int fd;
@@ -374,8 +364,7 @@ getether(ifname, eap)
 
 /* If we don't know how on this system, just return an error. */
 #ifndef	GETETHER
-getether(ifname, eap)
-	char *ifname, *eap;
+getether(char *ifname, char *eap)
 {
 	return -1;
 }

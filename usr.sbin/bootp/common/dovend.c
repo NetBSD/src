@@ -1,8 +1,8 @@
-/*	$NetBSD: dovend.c,v 1.4 2000/10/11 20:23:49 is Exp $	*/
+/*	$NetBSD: dovend.c,v 1.5 2002/07/14 00:26:16 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dovend.c,v 1.4 2000/10/11 20:23:49 is Exp $");
+__RCSID("$NetBSD: dovend.c,v 1.5 2002/07/14 00:26:16 wiz Exp $");
 #endif
 
 /*
@@ -34,13 +34,7 @@ __RCSID("$NetBSD: dovend.c,v 1.4 2000/10/11 20:23:49 is Exp $");
 #include "report.h"
 #include "dovend.h"
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-PRIVATE int insert_generic P((struct shared_bindata *, byte **, int *));
+PRIVATE int insert_generic(struct shared_bindata *, byte **, int *);
 
 /*
  * Insert the 2nd part of the options into an option buffer.
@@ -56,10 +50,7 @@ PRIVATE int insert_generic P((struct shared_bindata *, byte **, int *));
  */
 
 int
-dovend_rfc1497(hp, buf, len)
-	struct host *hp;
-	byte *buf;
-	int len;
+dovend_rfc1497(struct host *hp, byte *buf, int len)
 {
 	int bytesleft = len;
 	byte *vp = buf;
@@ -295,11 +286,7 @@ dovend_rfc1497(hp, buf, len)
  */
 
 int
-insert_ip(tag, iplist, dest, bytesleft)
-	byte tag;
-	struct in_addr_list *iplist;
-	byte **dest;
-	int *bytesleft;
+insert_ip(byte tag, struct in_addr_list *iplist, byte **dest, int *bytesleft)
 {
 	struct in_addr *addrptr;
 	unsigned addrcount = 1;
@@ -338,10 +325,7 @@ insert_ip(tag, iplist, dest, bytesleft)
  */
 
 static int
-insert_generic(gendata, buff, bytesleft)
-	struct shared_bindata *gendata;
-	byte **buff;
-	int *bytesleft;
+insert_generic(struct shared_bindata *gendata, byte **buff, int *bytesleft)
 {
 	byte *srcptr;
 	int length, numbytes;
@@ -393,9 +377,7 @@ insert_generic(gendata, buff, bytesleft)
  */
 
 void
-insert_u_long(value, dest)
-	u_int32 value;
-	byte **dest;
+insert_u_long(u_int32 value, byte **dest)
 {
 	byte *temp;
 	int n;

@@ -1,8 +1,8 @@
-/*	$NetBSD: trygetif.c,v 1.4 1998/03/14 04:39:55 lukem Exp $	*/
+/*	$NetBSD: trygetif.c,v 1.5 2002/07/14 00:26:18 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trygetif.c,v 1.4 1998/03/14 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: trygetif.c,v 1.5 2002/07/14 00:26:18 wiz Exp $");
 #endif
 
 /*
@@ -30,8 +30,8 @@ __RCSID("$NetBSD: trygetif.c,v 1.4 1998/03/14 04:39:55 lukem Exp $");
 int debug = 0;
 char *progname;
 
-main(argc, argv)
-	char **argv;
+int
+main(int argc, char **argv)
 {
 	struct hostent *hep;
 	struct sockaddr ea;			/* Ethernet address */

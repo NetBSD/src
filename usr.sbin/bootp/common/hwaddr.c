@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.5 2000/10/11 20:23:49 is Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.6 2002/07/14 00:26:17 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.5 2000/10/11 20:23:49 is Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.6 2002/07/14 00:26:17 wiz Exp $");
 #endif
 
 /*
@@ -72,13 +72,10 @@ int hwinfocnt = sizeof(hwinfolist) / sizeof(hwinfolist[0]);
 /*
  * Setup the arp cache so that IP address 'ia' will be temporarily
  * bound to hardware address 'ha' of length 'len'.
+ * s is the socket fd.
  */
 void
-setarp(s, ia, ha, len)
-	int s;						/* socket fd */
-	struct in_addr *ia;
-	u_char *ha;
-	int len;
+setarp(int s, struct in_addr *ia, u_char *ha, int len)
 {
 #ifdef	SIOCSARP
 	struct arpreq arpreq;		/* Arp request ioctl block */
@@ -157,9 +154,7 @@ setarp(s, ia, ha, len)
  * Convert a hardware address to an ASCII string.
  */
 char *
-haddrtoa(haddr, hlen)
-	u_char *haddr;
-	int hlen;
+haddrtoa(u_char *haddr, int hlen)
 {
 	static char haddrbuf[3 * MAXHADDRLEN + 1];
 	char *bufptr;
@@ -236,9 +231,7 @@ static u_char conv802table[256] =
 };
 
 void
-haddr_conv802(addr_in, addr_out, len)
-	register u_char *addr_in, *addr_out;
-	int len;
+haddr_conv802(register u_char *addr_in, register u_char *addr_out, int len)
 {
 	u_char *lim;
 
@@ -253,8 +246,7 @@ haddr_conv802(addr_in, addr_out, len)
  * bit-reverse table above.
  */
 static int
-bitrev(n)
-	int n;
+bitrev(int n)
 {
 	int i, r;
 
@@ -267,7 +259,7 @@ bitrev(n)
 	return r;
 }
 
-main()
+main(void)
 {
 	int i;
 	for (i = 0; i <= 0xFF; i++) {

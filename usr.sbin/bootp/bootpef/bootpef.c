@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpef.c,v 1.4 1998/03/14 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: bootpef.c,v 1.5 2002/07/13 23:58:30 wiz Exp $");
 #endif
 
 
@@ -40,11 +40,7 @@ __RCSID("$NetBSD: bootpef.c,v 1.4 1998/03/14 04:39:53 lukem Exp $");
 
 
 
-#ifdef	__STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -92,17 +88,9 @@ __RCSID("$NetBSD: bootpef.c,v 1.4 1998/03/14 04:39:53 lukem Exp $");
  * Externals, forward declarations, and global variables
  */
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-static void mktagfile P((struct host *));
-static void usage P((void));
-int main P((int, char **));
-
-#undef P
+static void mktagfile(struct host *);
+static void usage(void);
+int main(int, char **);
 
 
 /*
@@ -125,7 +113,7 @@ char *bootptab = CONFIG_FILE;
  * Print "usage" message and exit
  */
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	   "usage:  $s [ -c chdir ] [-d level] [-f configfile] [host...]\n");
@@ -141,9 +129,7 @@ usage()
  * main server loop is started.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct host *hp;
 	char *stmp;
@@ -287,8 +273,7 @@ main(argc, argv)
  */
 
 static void
-mktagfile(hp)
-	struct host *hp;
+mktagfile(struct host *hp)
 {
 	FILE *fp;
 	int bytesleft, len;

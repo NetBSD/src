@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.5 1998/03/26 06:44:19 thorpej Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.6 2002/07/14 00:07:01 wiz Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -43,28 +43,17 @@ __RCSID("$NetBSD: print-bootp.c,v 1.5 1998/03/26 06:44:19 thorpej Exp $");
 #include "bootp.h"
 #include "bootptest.h"
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
 /* These decode the vendor data. */
-static void cmu_print P((u_char *, int));
-static void dump_hex P((u_char *, int));
-static void other_print P((u_char *, int));
-static void rfc1048_print P((u_char *, int));
-
-#undef P
+static void cmu_print(u_char *, int);
+static void dump_hex(u_char *, int);
+static void other_print(u_char *, int);
+static void rfc1048_print(u_char *, int);
 
 /*
  * Print bootp requests
  */
 void
-bootp_print(bp, length, sport, dport)
-	struct bootp *bp;
-	int length;
-	u_short sport, dport;
+bootp_print(struct bootp *bp, int length, u_short sport, u_short dport)
 {
 	static char tstr[] = " [|bootp]";
 	static unsigned char vm_cmu[4] = VM_CMU;
@@ -282,9 +271,7 @@ rfc1048_opts[] = {
 #define	KNOWN_OPTIONS (sizeof(rfc1048_opts) / sizeof(rfc1048_opts[0]))
 
 static void
-rfc1048_print(bp, length)
-	register u_char *bp;
-	int length;
+rfc1048_print(register u_char *bp, int length)
 {
 	u_char tag;
 	u_char *ep;
@@ -384,9 +371,7 @@ rfc1048_print(bp, length)
 }
 
 static void
-cmu_print(bp, length)
-	register u_char *bp;
-	int length;
+cmu_print(register u_char *bp, int length)
 {
 	struct cmu_vend *v;
 	u_char *ep;
@@ -435,9 +420,7 @@ cmu_print(bp, length)
  */
 
 static void
-other_print(bp, length)
-	register u_char *bp;
-	int length;
+other_print(register u_char *bp, int length)
 {
 	u_char *ep;					/* end pointer */
 	u_char *zp;					/* points one past last non-zero byte */
@@ -475,9 +458,7 @@ other_print(bp, length)
 }
 
 static void
-dump_hex(bp, len)
-	u_char *bp;
-	int len;
+dump_hex(u_char *bp, int len)
 {
 	while (len > 0) {
 		printf("%02X", *bp);

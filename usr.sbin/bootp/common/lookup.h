@@ -1,17 +1,9 @@
-/*	$NetBSD: lookup.h,v 1.2 1998/01/09 08:09:13 perry Exp $	*/
+/*	$NetBSD: lookup.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
 
 /* lookup.h */
 
 #include "bptypes.h"	/* for int32, u_int32 */
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern u_char *lookup_hwa P((char *hostname, int htype));
-extern int lookup_ipa P((char *hostname, u_int32 *addr));
-extern int lookup_netmask P((u_int32 addr, u_int32 *mask));
-
-#undef P
+extern u_char *lookup_hwa(char *hostname, int htype);
+extern int lookup_ipa(char *hostname, u_int32 *addr);
+extern int lookup_netmask(u_int32 addr, u_int32 *mask);

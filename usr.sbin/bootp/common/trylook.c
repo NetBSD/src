@@ -1,8 +1,8 @@
-/*	$NetBSD: trylook.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+/*	$NetBSD: trylook.c,v 1.4 2002/07/14 00:26:18 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trylook.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: trylook.c,v 1.4 2002/07/14 00:26:18 wiz Exp $");
 #endif
 
 /*
@@ -16,14 +16,14 @@ __RCSID("$NetBSD: trylook.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
 #include "report.h"
 #include "lookup.h"
 
-extern char *ether_ntoa();
-extern char *inet_ntoa();
+extern char *ether_ntoa(struct ether_addr *);
+extern char *inet_ntoa(struct in_addr);
 
 int debug = 0;
 char *progname;
 
-main(argc, argv)
-	char **argv;
+int
+main(int argc, char **argv)
 {
 	int i;
 	struct in_addr in;

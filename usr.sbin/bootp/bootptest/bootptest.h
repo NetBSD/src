@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.h,v 1.3 1998/03/14 04:39:54 lukem Exp $	*/
+/*	$NetBSD: bootptest.h,v 1.4 2002/07/14 00:07:01 wiz Exp $	*/
 
 /* bootptest.h */
 /*
@@ -21,14 +21,6 @@ extern int vflag; /* verbose flag */
 extern unsigned char *packetp;
 extern unsigned char *snapend;
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern void bootp_print P((struct bootp *, int, u_short, u_short));
-extern char *ipaddr_string P((struct in_addr *));
-extern int printfn P((u_char *, u_char *));
-
-#undef P
+extern void bootp_print(struct bootp *, int, u_short, u_short);
+extern char *ipaddr_string(struct in_addr *);
+extern int printfn(u_char *, u_char *);

@@ -1,15 +1,7 @@
-/*	$NetBSD: dovend.h,v 1.2 1998/01/09 08:09:06 perry Exp $	*/
+/*	$NetBSD: dovend.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
 
 /* dovend.h */
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern int dovend_rfc1497 P((struct host *hp, u_char *buf, int len));
-extern int insert_ip P((int, struct in_addr_list *, u_char **, int *));
-extern void insert_u_long P((u_int32, u_char **));
-
-#undef P
+extern int dovend_rfc1497(struct host *hp, u_char *buf, int len);
+extern int insert_ip(byte, struct in_addr_list *, byte **, int *);
+extern void insert_u_long(u_int32, u_char **);

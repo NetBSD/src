@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.8 2001/08/20 12:00:57 wiz Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.9 2002/07/14 00:26:18 wiz Exp $");
 #endif
 
 
@@ -231,62 +231,55 @@ PRIVATE struct htypename htnamemap[] = {
  * Externals and forward declarations.
  */
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-boolean nmcmp P((hash_datum *, hash_datum *));
+boolean nmcmp(hash_datum *, hash_datum *);
 
 PRIVATE void
-	adjust P((char **));
+	adjust(char **);
 PRIVATE void
-	del_string P((struct shared_string *));
+	del_string(struct shared_string *);
 PRIVATE void
-	del_bindata P((struct shared_bindata *));
+	del_bindata(struct shared_bindata *);
 PRIVATE void
-	del_iplist P((struct in_addr_list *));
+	del_iplist(struct in_addr_list *);
 PRIVATE void
-	eat_whitespace P((char **));
+	eat_whitespace(char **);
 PRIVATE int
-	eval_symbol P((char **, struct host *));
+	eval_symbol(char **, struct host *);
 PRIVATE void
-	fill_defaults P((struct host *, char **));
+	fill_defaults(struct host *, char **);
 PRIVATE void
-	free_host P((hash_datum *));
+	free_host(hash_datum *);
 PRIVATE struct in_addr_list *
-	get_addresses P((char **));
+	get_addresses(char **);
 PRIVATE struct shared_string *
-	get_shared_string P((char **));
+	get_shared_string(char **);
 PRIVATE char *
-	get_string P((char **, char *, u_int *));
+	get_string(char **, char *, u_int *);
 PRIVATE u_int32
-	get_u_long P((char **));
+	get_u_long(char **);
 PRIVATE boolean
-	goodname P((char *));
+	goodname(char *);
 PRIVATE boolean
-	hwinscmp P((hash_datum *, hash_datum *));
+	hwinscmp(hash_datum *, hash_datum *);
 PRIVATE int
-	interp_byte P((char **, byte *));
+	interp_byte(char **, byte *);
 PRIVATE void
-	makelower P((char *));
+	makelower(char *);
 PRIVATE boolean
-        nullcmp P((hash_datum *, hash_datum *));
+        nullcmp(hash_datum *, hash_datum *);
 PRIVATE int
-	process_entry P((struct host *, char *));
+	process_entry(struct host *, char *);
 PRIVATE int
-	process_generic P((char **, struct shared_bindata **, u_int));
+	process_generic(char **, struct shared_bindata **, u_int);
 PRIVATE byte *
-	prs_haddr P((char **, u_int));
+	prs_haddr(char **, u_int);
 PRIVATE int
-	prs_inetaddr P((char **, u_int32 *));
+	prs_inetaddr(char **, u_int32 *);
 PRIVATE void
-	read_entry P((FILE *, char *, u_int *));
+	read_entry(FILE *, char *, u_int *);
 PRIVATE char *
-	smalloc P((u_int));
+	smalloc(u_int);
 
-#undef P
 
 
 /*
@@ -307,7 +300,7 @@ hash_tbl *nmhashtable;
  * (shared by bootpd and bootpef)
  */
 void
-rdtab_init()
+rdtab_init(void)
 {
 	hwhashtable = hash_Init(HASHTABLESIZE);
 	iphashtable = hash_Init(HASHTABLESIZE);
@@ -325,8 +318,7 @@ rdtab_init()
  */
 
 void
-readtab(force)
-	int force;
+readtab(int force)
 {
 	struct host *hp;
 	FILE *fp;
@@ -508,10 +500,7 @@ readtab(force)
  */
 
 PRIVATE void
-read_entry(fp, buffer, bufsiz)
-	FILE *fp;
-	char *buffer;
-	unsigned *bufsiz;
+read_entry(FILE *fp, char *buffer, unsigned int *bufsiz)
 {
 	int c, length;
 
@@ -647,9 +636,7 @@ read_entry(fp, buffer, bufsiz)
  */
 
 PRIVATE int
-process_entry(host, src)
-	struct host *host;
-	char *src;
+process_entry(struct host *host, char *src)
 {
 	int retval;
 	char *msg;
@@ -791,9 +778,7 @@ process_entry(host, src)
  * Obviously, this need a few more comments. . . .
  */
 PRIVATE int
-eval_symbol(symbol, hp)
-	char **symbol;
-	struct host *hp;
+eval_symbol(char **symbol, struct host *hp)
 {
 	char tmpstr[MAXSTRINGLEN];
 	byte *tmphaddr;
@@ -1166,9 +1151,7 @@ eval_symbol(symbol, hp)
  */
 
 PRIVATE char *
-get_string(src, dest, length)
-	char **src, *dest;
-	unsigned *length;
+get_string(char **src, char *dest, unsigned int *length)
 {
 	int n, len, quoteflag;
 
@@ -1218,8 +1201,7 @@ get_string(src, dest, length)
  */
 
 PRIVATE struct shared_string *
-get_shared_string(src)
-	char **src;
+get_shared_string(char **src)
 {
 	char retstring[MAXSTRINGLEN];
 	struct shared_string *s;
@@ -1255,10 +1237,7 @@ get_shared_string(src)
  */
 
 PRIVATE int
-process_generic(src, dest, tagvalue)
-	char **src;
-	struct shared_bindata **dest;
-	u_int tagvalue;
+process_generic(char **src, struct shared_bindata **dest, u_int tagvalue)
 {
 	byte tmpbuf[MAXBUFLEN];
 	byte *str;
@@ -1313,8 +1292,7 @@ process_generic(src, dest, tagvalue)
  */
 
 PRIVATE boolean
-goodname(hostname)
-	register char *hostname;
+goodname(register char *hostname)
 {
 	do {
 		if (!isalpha(*hostname++)) {	/* First character must be a letter */
@@ -1346,8 +1324,7 @@ goodname(hostname)
  */
 
 PRIVATE boolean
-nullcmp(d1, d2)
-	hash_datum *d1, *d2;
+nullcmp(hash_datum *d1, hash_datum *d2)
 {
 	return FALSE;
 }
@@ -1359,8 +1336,7 @@ nullcmp(d1, d2)
  */
 
 boolean
-nmcmp(d1, d2)
-	hash_datum *d1, *d2;
+nmcmp(hash_datum *d1, hash_datum *d2)
 {
 	char *name = (char *) d1;	/* XXX - OK? */
 	struct host *hp = (struct host *) d2;
@@ -1382,8 +1358,7 @@ nmcmp(d1, d2)
  */
 
 PRIVATE boolean
-hwinscmp(d1, d2)
-	hash_datum *d1, *d2;
+hwinscmp(hash_datum *d1, hash_datum *d2)
 {
 	struct host *host1 = (struct host *) d1;
 	struct host *host2 = (struct host *) d2;
@@ -1438,9 +1413,7 @@ hwinscmp(d1, d2)
  * current host entry are inferred from the template entry.
  */
 PRIVATE void
-fill_defaults(hp, src)
-	struct host *hp;
-	char **src;
+fill_defaults(struct host *hp, char **src)
 {
 	unsigned int tlen, hashcode;
 	struct host *hp2;
@@ -1530,8 +1503,7 @@ fill_defaults(hp, src)
  */
 
 PRIVATE void
-adjust(s)
-	char **s;
+adjust(char **s)
 {
 	register char *t;
 
@@ -1555,8 +1527,7 @@ adjust(s)
  */
 
 PRIVATE void
-eat_whitespace(s)
-	char **s;
+eat_whitespace(char **s)
 {
 	register char *t;
 
@@ -1574,8 +1545,7 @@ eat_whitespace(s)
  */
 
 PRIVATE void
-makelower(s)
-	char *s;
+makelower(char *s)
 {
 	while (*s) {
 		if (isupper(*s)) {
@@ -1615,8 +1585,7 @@ makelower(s)
  */
 
 PRIVATE struct in_addr_list *
-get_addresses(src)
-	char **src;
+get_addresses(char **src)
 {
 	struct in_addr tmpaddrlist[MAXINADDRS];
 	struct in_addr *address1, *address2;
@@ -1672,9 +1641,7 @@ get_addresses(src)
  */
 
 PRIVATE int
-prs_inetaddr(src, result)
-	char **src;
-	u_int32 *result;
+prs_inetaddr(char **src, u_int32 *result)
 {
 	char tmpstr[MAXSTRINGLEN];
 	register u_int32 value;
@@ -1774,9 +1741,7 @@ prs_inetaddr(src, result)
  */
 
 PRIVATE byte *
-prs_haddr(src, htype)
-	char **src;
-	u_int htype;
+prs_haddr(char **src, u_int htype)
 {
 	static byte haddr[MAXHADDRLEN];
 	byte *hap;
@@ -1831,9 +1796,7 @@ prs_haddr(src, htype)
  */
 
 PRIVATE int
-interp_byte(src, retbyte)
-	char **src;
-	byte *retbyte;
+interp_byte(char **src, byte *retbyte)
 {
 	int v;
 
@@ -1863,8 +1826,7 @@ interp_byte(src, retbyte)
  */
 
 PRIVATE u_int32
-get_u_long(src)
-	char **src;
+get_u_long(char **src)
 {
 	register u_int32 value, base;
 	char c;
@@ -1912,8 +1874,7 @@ get_u_long(src)
  */
 
 PRIVATE void
-free_host(hmp)
-	hash_datum *hmp;
+free_host(hash_datum *hmp)
 {
 	struct host *hostptr = (struct host *) hmp;
 	if (hostptr == NULL)
@@ -1969,8 +1930,7 @@ free_host(hmp)
  */
 
 PRIVATE void
-del_iplist(iplist)
-	struct in_addr_list *iplist;
+del_iplist(struct in_addr_list *iplist)
 {
 	if (iplist) {
 		if (!(--(iplist->linkcount))) {
@@ -1988,8 +1948,7 @@ del_iplist(iplist)
  */
 
 PRIVATE void
-del_string(stringptr)
-	struct shared_string *stringptr;
+del_string(struct shared_string *stringptr)
 {
 	if (stringptr) {
 		if (!(--(stringptr->linkcount))) {
@@ -2007,8 +1966,7 @@ del_string(stringptr)
  */
 
 PRIVATE void
-del_bindata(dataptr)
-	struct shared_bindata *dataptr;
+del_bindata(struct shared_bindata *dataptr)
 {
 	if (dataptr) {
 		if (!(--(dataptr->linkcount))) {
@@ -2029,8 +1987,7 @@ del_bindata(dataptr)
  */
 
 PRIVATE char *
-smalloc(nbytes)
-	unsigned nbytes;
+smalloc(unsigned int nbytes)
 {
 	char *retvalue;
 
@@ -2054,8 +2011,7 @@ smalloc(nbytes)
  */
 
 boolean
-hwlookcmp(d1, d2)
-	hash_datum *d1, *d2;
+hwlookcmp(hash_datum *d1, hash_datum *d2)
 {
 	struct host *host1 = (struct host *) d1;
 	struct host *host2 = (struct host *) d2;
@@ -2075,8 +2031,7 @@ hwlookcmp(d1, d2)
  */
 
 boolean
-iplookcmp(d1, d2)
-	hash_datum *d1, *d2;
+iplookcmp(hash_datum *d1, hash_datum *d2)
 {
 	struct host *host1 = (struct host *) d1;
 	struct host *host2 = (struct host *) d2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hwaddr.h,v 1.2 1998/01/09 08:09:11 perry Exp $	*/
+/*	$NetBSD: hwaddr.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
 
 /* hwaddr.h */
 #ifndef	HWADDR_H
@@ -19,17 +19,9 @@ struct hwinfo {
 extern struct hwinfo hwinfolist[];
 extern int hwinfocnt;
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern void setarp P((int, struct in_addr *, u_char *, int));
-extern char *haddrtoa P((u_char *, int));
-extern void haddr_conv802 P((u_char *, u_char *, int));
-
-#undef P
+extern void setarp(int, struct in_addr *, u_char *, int);
+extern char *haddrtoa(u_char *, int);
+extern void haddr_conv802(u_char *, u_char *, int);
 
 /*
  * Return the length in bytes of a hardware address of the given type.

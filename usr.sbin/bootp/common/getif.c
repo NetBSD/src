@@ -1,8 +1,8 @@
-/*	$NetBSD: getif.c,v 1.4 1998/03/14 04:39:54 lukem Exp $	*/
+/*	$NetBSD: getif.c,v 1.5 2002/07/14 00:26:17 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getif.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+__RCSID("$NetBSD: getif.c,v 1.5 2002/07/14 00:26:17 wiz Exp $");
 #endif
 
 /*
@@ -41,21 +41,13 @@ __RCSID("$NetBSD: getif.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
 static struct ifreq ifreq[10];	/* Holds interface configuration */
 static struct ifconf ifconf;	/* points to ifreq */
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-static int nmatch P((u_char *, u_char *));
-
-#undef P
+static int nmatch(u_char *, u_char *);
 
 /* Return a pointer to the interface struct for the passed address. */
 struct ifreq *
-getif(s, addrp)
-	int s;						/* socket file descriptor */
-	struct in_addr *addrp;		/* destination address on interface */
+getif(int s, struct in_addr *addrp)
+	      						/* socket file descriptor */
+	                      		/* destination address on interface */
 {
 	int maxmatch;
 	int len, m, incr;
@@ -124,8 +116,8 @@ getif(s, addrp)
  * internet addresses supplied.
  */
 static int
-nmatch(ca, cb)
-	u_char *ca, *cb;			/* ptrs to IP address, network order */
+nmatch(u_char *ca, u_char *cb)
+	                			/* ptrs to IP address, network order */
 {
 	u_int m = 0;				/* count of matching bits */
 	u_int n = 4;				/* bytes left, then bitmask */
