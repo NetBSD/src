@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.2 2003/07/15 01:37:38 lukem Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.3 2003/07/25 11:44:21 scw Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.2 2003/07/15 01:37:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.3 2003/07/25 11:44:21 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,29 +96,29 @@ dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(paa->pb_name, cf->cf_name) != 0)
 		return 0;
 
-	if (bus_space_map(0, paa->pb_addr, DS_SIZE, 0, &h)) {
+	if (bus_space_map(paa->pb_bt, paa->pb_addr, DS_SIZE, 0, &h)) {
 		printf("%s: can't map i/o space\n", paa->pb_name);
 		return 0;
 	}
 
 	/* Read one byte of what's supposed to be NVRAM */
-	x = bus_space_read_1(0, h, DS_SCRATCH_ADDR);
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0xAA);
-	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0xAA) {
+	x = bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR);
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, 0xAA);
+	if (bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR) != 0xAA) {
 		retval = 0;
 		goto done;
 	}
 	
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, 0x55);
-	if (bus_space_read_1(0, h, DS_SCRATCH_ADDR) != 0x55) {
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, 0x55);
+	if (bus_space_read_1(paa->pb_bt, h, DS_SCRATCH_ADDR) != 0x55) {
 		retval = 0;
 		goto done;
 	}
 
 	/* Restore scratch byte value */
-	bus_space_write_1(0, h, DS_SCRATCH_ADDR, x);
+	bus_space_write_1(paa->pb_bt, h, DS_SCRATCH_ADDR, x);
   done:	
-	bus_space_unmap(0, h, DS_SIZE);
+	bus_space_unmap(paa->pb_bt, h, DS_SIZE);
 	  
 	return retval;
 }
@@ -138,8 +138,7 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 
 	ds1743found = 1;
 	
-	sc->sc_iot = 0;
-	sc->sc_ioh = paa->pb_addr;
+	sc->sc_iot = paa->pb_bt;
 	if (bus_space_map(sc->sc_iot, paa->pb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;

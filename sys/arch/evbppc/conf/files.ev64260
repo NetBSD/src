@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.3 2003/03/24 17:07:16 matt Exp $
+#	$NetBSD: files.ev64260,v 1.4 2003/07/25 11:44:18 scw Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -13,8 +13,6 @@ file	arch/evbppc/ev64260/machdep.c
 
 #file	arch/powerpc/marvell/bus_dma.c
 file	arch/powerpc/marvell/extintr.c
-file	arch/powerpc/powerpc/bus_dma.c
-file	arch/powerpc/powerpc/bus_space.c
 
 include "dev/marvell/files.discovery"
 

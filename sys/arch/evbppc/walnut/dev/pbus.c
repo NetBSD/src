@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.4 2003/07/16 08:06:10 simonb Exp $	*/
+/*	$NetBSD: pbus.c,v 1.5 2003/07/25 11:44:21 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.4 2003/07/16 08:06:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.5 2003/07/25 11:44:21 scw Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -103,6 +103,13 @@ static int	pbus_print(void *, const char *);
 
 CFATTACH_DECL(pbus, sizeof(struct device),
     pbus_match, pbus_attach, NULL, NULL);
+
+static struct powerpc_bus_space pbus_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+	0x00000000,
+	NVRAM_BASE,
+	NVRAM_BASE + 0x0300010	/* Cover from NVRAM_BASE -> FPGA_BASE */
+};
 
 /*
  * Probe for the peripheral bus.
@@ -142,17 +149,20 @@ pbus_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 #if NPCKBC > 0
 	bus_space_handle_t ioh_fpga;
-	bus_space_tag_t iot_fpga = paa->plb_bt;
+	bus_space_tag_t iot_fpga = &pbus_tag;
 	uint8_t fpga_reg;
 #endif
 
 	printf("\n");
 
+	if (bus_space_init(&pbus_tag, "pbus", NULL, 0))
+		panic("pbus_attach: can't init tag");
+
 	for (i = 0; pbus_devs[i].name != NULL; i++) {
 		pba.pb_name = pbus_devs[i].name;
 		pba.pb_addr = pbus_devs[i].addr;
 		pba.pb_irq = pbus_devs[i].irq;
-		pba.pb_bt = paa->plb_bt;
+		pba.pb_bt = &pbus_tag;
 		pba.pb_dmat = paa->plb_dmat;
 
 		(void) config_found_sm(self, &pba, pbus_print, pbus_submatch);
