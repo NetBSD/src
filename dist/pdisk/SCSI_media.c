@@ -812,7 +812,7 @@ step_scsi_iterator(MEDIA_ITERATOR m)
 		result = (char *) malloc(20);
 		if (result != NULL) {
 		    if (a->bus == 0xFF) {
-			sprintf(result, "/dev/scsi%c", '0'+a->id);
+			snprintf(result, 20, "/dev/scsi%c", '0'+a->id);
 			probe_scsi_device(a->bus, a->id, 1);
 		    } else {
 			// insure bus number in range
@@ -821,7 +821,8 @@ step_scsi_iterator(MEDIA_ITERATOR m)
 			    result = NULL;
 			    break;
 			}
-			sprintf(result, "/dev/scsi%c.%c", '0'+a->bus, '0'+a->id);
+			snprintf(result, 20, "/dev/scsi%c.%c",
+			    '0'+a->bus, '0'+a->id);
 			/* only probe out of iterate; so always added in order. */
 			probe_scsi_device(a->bus, a->id, 0);
 		    }
@@ -901,13 +902,13 @@ linux_scsi_name(long bus, long id)
 		    // too many CD's, give up
 		    free(result); result = NULL;
 		} else {
-		    sprintf(result, "/dev/scd%c%s", '0' + value, suffix);
+		    snprintf(result, 20, "/dev/scd%c%s", '0' + value, suffix);
 		}
 	    } else {
 		if (value < 26) {
-		    sprintf(result, "/dev/sd%c%s", 'a' + value, suffix);
+		    snprintf(result, 20, "/dev/sd%c%s", 'a' + value, suffix);
 		} else {
-		    sprintf(result, "/dev/sd%c%c%s",
+		    snprintf(result, 20, "/dev/sd%c%c%s",
 			    'a' + value / 26, 'a' + value % 26, suffix);
 		}
 	    }
