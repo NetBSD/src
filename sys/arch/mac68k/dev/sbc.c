@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.16 1997/01/05 10:01:42 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.17 1997/01/07 07:40:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -276,7 +276,7 @@ sbc_attach(parent, self, args)
 	case MACH_MACPB270:
 	case MACH_MACPB280:
 	case MACH_MACPB280C:
-		if (cf->cf_unit == 1) {
+		if (ncr_sc->sc_dev.dv_unit == 1) {
 			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
 			sc->sc_drq_addr = (vm_offset_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
 			sc->sc_nodrq_addr = (vm_offset_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
