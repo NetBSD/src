@@ -1,4 +1,4 @@
-/*	$NetBSD: sup.h,v 1.5 1997/06/17 18:56:42 christos Exp $	*/
+/*	$NetBSD: sup.h,v 1.6 1997/07/08 05:01:15 mikel Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -128,7 +128,7 @@ extern char scmversion[];		/* string version of scm */
 #define FILEBKDIR	"%s/BACKUP"
 #define FILEBACKUP	"%s/BACKUP/%s"
 #define FILELAST	"sup/%s/last%s"
-#define FILELASTTEMP	"sup/%s/last.temp"
+#define FILELASTTEMP	"sup/%s/last%s.temp"
 #define FILELOCK	"sup/%s/lock"	/* also supfilesrv */
 #define FILEREFUSE	"sup/%s/refuse"
 #define FILEWHEN	"sup/%s/when%s"

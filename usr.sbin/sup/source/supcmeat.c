@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.11 1997/06/18 15:23:52 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.12 1997/07/08 05:01:16 mikel Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1363,7 +1363,7 @@ int x;
 		done (FDONESUCCESS,"Success");
 		(void) requestend ();
 	}
-	(void) sprintf (tname,FILELASTTEMP,collname);
+	(void) sprintf (tname,FILELASTTEMP,collname,relsufix);
 	finishfile = fopen (tname,"w");
 	if (finishfile == NULL) {
 		notify ("SUP: Can't record list of all files in %s\n",tname);
