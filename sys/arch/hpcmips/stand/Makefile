@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2003/10/26 07:25:36 lukem Exp $
+# $NetBSD: Makefile,v 1.8.2.1 2004/06/22 07:55:23 tron Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates
@@ -32,7 +32,7 @@ rom-boot:
 
 clean:
 	rm -f hpcmips_stand.ncb
-	for dir in $(PROJECT_DIRS); do \
+	-for dir in $(PROJECT_DIRS); do \
 	    (cd $$dir && rm -rf WMIPSDbg wmipsdbg WMIPSRel wmipsrel); \
 	    (cd $$dir && rm -f $$dir.plg $$dir.vcl $$dir.[0-9][0-9][0-9]); \
 	    (cd $$dir && rm -f $$dir.ncb $$dir.opt); \
