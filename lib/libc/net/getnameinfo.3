@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.26 2003/08/28 01:46:45 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.27 2003/08/28 01:49:30 itojun Exp $
 .\"	$KAME: getnameinfo.3,v 1.27 2003/04/30 06:06:42 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -339,7 +339,7 @@ if (error == 0) {
 } else {
 	/* addr is numeric string */
 	error = getnameinfo(sa, salen, addr, sizeof(addr),
-	    NULL, 0, 0);
+	    NULL, 0, NI_NUMERICHOST);
 }
 .Ed
 .\"
