@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.179 2003/01/10 16:34:14 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.180 2003/01/11 03:40:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4611,7 +4611,9 @@ ENTRY(switchexit)
 
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
+#if !defined(MULTIPROCESSOR)
 	clr	%l4			! lastproc = NULL;
+#endif
 	sethi	%hi(cpcb), %l6
 	sethi	%hi(curproc), %l7
 	b	idle_enter
@@ -4627,9 +4629,15 @@ idle:
 	! unlock scheduler lock
 	call	_C_LABEL(sched_unlock_idle)
 	 nop
+	! flush this process's context & tlb
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	 mov	%l4, %o0
 #endif
 
 idle_enter:
+#if defined(MULTIPROCESSOR)
+	clr	%l4			! lastproc = NULL;
+#endif
 	wr	%l1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
@@ -4932,6 +4940,11 @@ Lsw_load:
 	/* finally, enable traps and continue at splsched() */
 	wr	%g2, IPL_SCHED << 8 , %psr	! psr = newpsr;
 
+#if defined(MULTIPROCESSOR)
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	 mov	%g4, %o0
+#endif
+
 	/*
 	 * Now running p.  Make sure it has a context so that it
 	 * can talk about user space stuff.  (Its pcb_uw is currently
@@ -4949,6 +4962,15 @@ Lsw_load:
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
 	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
+#if defined(MULTIPROCESSOR)
+	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
+	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
+	mov	1, %o2
+	ld	[%o3 + PMAP_CPUSET], %o0
+	sll	%o2, %o1, %o2
+	or	%o0, %o2, %o0		! pm->pm_cpuset |= cpu_number();
+	st	%o0, [%o3 + PMAP_CPUSET]
+#endif
 	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
