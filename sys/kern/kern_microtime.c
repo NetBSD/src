@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.12 2004/08/12 12:15:21 hannken Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.13 2004/09/22 11:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.12 2004/08/12 12:15:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.13 2004/09/22 11:32:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,6 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.12 2004/08/12 12:15:21 hannken 
 
 #include <machine/cpu.h>
 #include <machine/cpu_counter.h>
+
+/* XXX compat definitions */
+#define	ci_cc_time	ci_cc.cc_time
+#define	ci_cc_cc	ci_cc.cc_cc
+#define	ci_cc_ms_delta	ci_cc.cc_ms_delta
+#define	ci_cc_denom	ci_cc.cc_denom
 
 struct timeval cc_microset_time;
 

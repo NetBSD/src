@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.115 2004/05/16 12:32:53 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116 2004/09/22 11:32:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,8 @@
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
+#include <sys/cc_microtime.h>
 
 #include <lib/libkern/libkern.h>	/* offsetof */
 
@@ -72,7 +73,6 @@ struct cpu_info {
 	struct cpu_info *ci_self;	/* self-pointer */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
 
 	/*
@@ -82,8 +82,8 @@ struct cpu_info {
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
 	/*
 	 * Private members.
@@ -137,14 +137,6 @@ struct cpu_info {
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
-
-	/*
-	 * Variables used by cc_microtime().
-	 */
-	struct timeval ci_cc_time;
-	int64_t ci_cc_cc;
-	int64_t ci_cc_ms_delta;
-	int64_t ci_cc_denom;
 
 	union descriptor *ci_gdt;
 
@@ -386,12 +378,6 @@ void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
-
-/* kern_microtime.c */
-
-extern struct timeval cc_microset_time;
-void	cc_microtime(struct timeval *);
-void	cc_microset(struct cpu_info *);
 
 /* cpu.c */
 
