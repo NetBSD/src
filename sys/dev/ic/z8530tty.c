@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.60 1999/04/22 20:37:37 pk Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.61 1999/10/15 06:16:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -1487,8 +1487,6 @@ zstty_stint(cs, force)
 					timespecadd(&zst->ppsinfo.assert_timestamp,
 					    &zst->ppsparam.assert_offset,
 					    &zst->ppsinfo.assert_timestamp);
-					TIMESPEC_TO_TIMEVAL(&tv,
-					    &zst->ppsinfo.assert_timestamp);
 				}
 
 #ifdef PPS_SYNC
@@ -1506,8 +1504,6 @@ zstty_stint(cs, force)
 				if (zst->ppsparam.mode & PPS_OFFSETCLEAR) {
 					timespecadd(&zst->ppsinfo.clear_timestamp,
 						&zst->ppsparam.clear_offset,
-						&zst->ppsinfo.clear_timestamp);
-					TIMESPEC_TO_TIMEVAL(&tv,
 						&zst->ppsinfo.clear_timestamp);
 				}
 
