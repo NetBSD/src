@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.10 2002/03/17 19:40:46 atatat Exp $	*/
+/*	$NetBSD: fb.c,v 1.10.4.1 2002/07/15 00:07:25 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -267,6 +267,7 @@ fb_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+		break;
 	}
 	return EPASSTHROUGH;
 }
