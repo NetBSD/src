@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.32 2000/07/09 13:39:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.33 2000/07/13 17:39:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2320,6 +2320,10 @@ netbsd32_setitimer(p, v, retval)
 	if (which == ITIMER_REAL) {
 		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
 			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
 			    realitexpire, p);
@@ -2466,12 +2470,6 @@ netbsd32_select(p, v, retval)
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
 		splx(s);
 	} else
 		timo = 0;
@@ -2482,11 +2480,15 @@ retry:
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
+	if (SCARG(uap, tv)) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0)
+			goto done;
 	}
+	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
