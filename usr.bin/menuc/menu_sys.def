@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.31 2003/05/07 16:39:45 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.32 2003/05/07 16:54:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -436,7 +436,7 @@ process_req (struct menudesc *m, int num, int req)
 	} else if (req == REQ_SCROLLUP) {
 		if (!(m->mopt & MC_SCROLL))
 			mbeep();
-		else if (m->topline == 0)
+		else if (m->cursel == 0)
 			mbeep();
 		else {
 			m->topline = MAX(0, m->topline - m->h + 1);
@@ -448,7 +448,7 @@ process_req (struct menudesc *m, int num, int req)
 	} else if (req == REQ_SCROLLDOWN) {
 		if (!(m->mopt & MC_SCROLL))
 			mbeep();
-		else if (m->topline + m->h - 1 >= m->numopts + hasexit)
+		else if (m->cursel >= m->numopts + hasexit - 1)
 			mbeep();
 		else {
 			m->topline = MIN(m->topline + m->h - 1,
