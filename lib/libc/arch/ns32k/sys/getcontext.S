@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1 2003/01/21 21:03:25 kleink Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.2 2003/11/13 06:29:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.1 2003/01/21 21:03:25 kleink Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.2 2003/11/13 06:29:39 simonb Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(getcontext, _getcontext)
+WEAK_ALIAS(getcontext,_getcontext)
 #endif
 
-_SYSCALL(_getcontext, getcontext)
+_SYSCALL(_getcontext,getcontext)
 	movd	S_ARG0,r2
 	addr	4(sp),(36 +  8 * 4)(r2)	/* Adjust saved sp ... */
 	movd	0(sp),(36 + 11 * 4)(r2)	/* ... and pc. */

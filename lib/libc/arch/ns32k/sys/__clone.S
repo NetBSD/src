@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/08/08 09:19:40 matthias Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2003/11/13 06:29:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "SYS.h"
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(clone, __clone)
+WEAK_ALIAS(clone,__clone)
 #endif
 
 /*
