@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 1998/03/10 11:43:11 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 1998/04/10 08:20:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -87,14 +87,22 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct pcibus_attach_args	pba;
+	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
+
 
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
-	pba.pba_iot     = PCI_IO_PHYS;
-	pba.pba_memt    = PCI_MEM_PHYS;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= BUS_PCI_DMA_TAG;
+	pba.pba_iot     = leb_alloc_bus_space_tag();
+	pba.pba_memt    = leb_alloc_bus_space_tag();
+	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {
+		printf("leb_alloc_bus_space_tag failed!\n");
+		return;
+	}
+	pba.pba_iot->base  = PCI_IO_PHYS;
+	pba.pba_memt->base = PCI_MEM_PHYS;
 
 	MFP2->mf_aer &= ~(0x27); /* PCI interrupts: HIGH -> LOW */
 
