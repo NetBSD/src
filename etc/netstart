@@ -17,7 +17,7 @@ kerberos_server=NO
 #
 hostname=`cat /etc/myname`
 hostname $hostname
-if [ -f /etc/defaultdomaie ]; then
+if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
 
@@ -86,6 +86,6 @@ if [ -f /etc/mygate ]; then
 	route add default `cat /etc/mygate`
 fi
 
-if [ -d /var/yp -a -f /usr/sbin/ypbind ]; then
+if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
 	ypbind;		echo ypbind
 fi
