@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25 1994/12/16 04:00:21 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.26 1995/04/10 01:01:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -832,6 +832,7 @@ ite_clrtoeos(ip, sp)
 int	whichconsole = 0;
 #endif
 
+void
 itecnprobe(cp)
 	struct consdev *cp;
 {
@@ -893,6 +894,7 @@ itecnprobe(cp)
 	cp->cn_pri = pri;
 }
 
+void
 itecninit(cp)
 	struct consdev *cp;
 {
@@ -930,6 +932,7 @@ itecngetc(dev)
 	return(c);
 }
 
+void
 itecnputc(dev, c)
 	dev_t dev;
 	int c;
