@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.29 2004/03/02 16:40:10 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.30 2004/03/13 02:00:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.29 2004/03/02 16:40:10 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.30 2004/03/13 02:00:15 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -276,7 +276,6 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t *desc)
 	if (raidPtr->accesses_suspended && raidPtr->accs_in_flight == 0) {
 		rf_SignalQuiescenceLock(raidPtr);
 	}
-	rf_UpdateUserStats(raidPtr, RF_ETIMER_VAL_US(desc->timer), desc->numBlocks);
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 
 	desc->state++;

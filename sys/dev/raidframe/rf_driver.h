@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.9 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.10 2004/03/13 02:00:15 oster Exp $	*/
 /*
  * rf_driver.h
  */
@@ -63,10 +63,5 @@ int     rf_FailDisk(RF_Raid_t * raidPtr, RF_RowCol_t fcol, int initRecon);
 void    rf_SignalQuiescenceLock(RF_Raid_t * raidPtr);
 int     rf_SuspendNewRequestsAndWait(RF_Raid_t * raidPtr);
 void    rf_ResumeNewRequests(RF_Raid_t * raidPtr);
-void    rf_StartThroughputStats(RF_Raid_t * raidPtr);
-void    rf_StartUserStats(RF_Raid_t * raidPtr);
-void    rf_StopUserStats(RF_Raid_t * raidPtr);
-void    rf_UpdateUserStats(RF_Raid_t * raidPtr, int rt, int numsect);
-void    rf_PrintUserStats(RF_Raid_t * raidPtr);
 
 #endif				/* !_RF__RF_DRIVER_H_ */
