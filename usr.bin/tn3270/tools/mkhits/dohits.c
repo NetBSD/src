@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.10 2002/01/31 19:36:52 tv Exp $	*/
+/*	$NetBSD: dohits.c,v 1.11 2002/06/13 23:41:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.10 2002/01/31 19:36:52 tv Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.11 2002/06/13 23:41:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,15 +60,12 @@ __RCSID("$NetBSD: dohits.c,v 1.10 2002/01/31 19:36:52 tv Exp $");
  * all fields are separated by a single space.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <err.h>
 #include <ctype.h>
-#ifdef __STDC__
+#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
-#else
-extern char *malloc();
-#endif
+#include <string.h>
+
 #include "../general/general.h"
 #include "../api/asc_ebc.h"
 #include "../api/ebc_disp.h"
@@ -80,11 +77,11 @@ struct Hits Hits[256];		/* one for each of 0x00-0xff */
 
 struct thing *table[100];
 
-static void add __P((const char *, const char *, int));
-static void scanwhite __P((const char *, const char *));
-static void scandefine __P((const char *, const char *));
-static char *savechr __P((unsigned int));
-static char *doit __P((struct hit *, unsigned char *, struct Hits *));
+static void add(const char *, const char *, int);
+static void scanwhite(const char *, const char *);
+static void scandefine(const char *, const char *);
+static char *savechr(unsigned int);
+static char *doit(struct hit *, unsigned char *, struct Hits *);
 
 unsigned int
 dohash(seed, string)

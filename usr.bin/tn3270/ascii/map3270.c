@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.8 2000/07/06 14:30:08 ad Exp $	*/
+/*	$NetBSD: map3270.c,v 1.9 2002/06/13 23:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.8 2000/07/06 14:30:08 ad Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.9 2002/06/13 23:41:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,10 @@ __RCSID("$NetBSD: map3270.c,v 1.8 2000/07/06 14:30:08 ad Exp $");
  */
 #endif /* DOCUMENTATION_ONLY */
 
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
-#ifdef __STDC__
+#include <stdio.h>
 #include <stdlib.h>
-#else
-extern char *malloc();
-extern void free();
-extern char *getenv();
-#endif
+#include <string.h>
 
 #define	IsPrint(c)	((isprint((unsigned char)c) && !isspace((unsigned char)c)) || ((c) == ' '))
 
@@ -116,7 +110,7 @@ static state *headOfQueue = &firstentry;
 static int debug = 0;		/* debug flag (for debuggin tables) */
 #endif	/* DEBUG */
 
-static int (*GetTc) __P((char *));
+static int (*GetTc)(char *);
 static int doPaste = 1;		/* should we have side effects */
 static int picky = 0;		/* do we complain of unknown functions? */
 static char usePointer = 0;	/* use pointer, or file */
@@ -138,33 +132,33 @@ static	lexicon	lifo[200];		/* character stack for parser */
 static	int	rp = 0,			/* read pointer into lifo */
 		wp = 0;			/* write pointer into lifo */
 
-static int GetC __P((void));
-static lexicon Get __P((void));
-static void UnGet __P((lexicon));
-static stringWithLength *GetQuotedString __P((void));
+static int GetC(void);
+static lexicon Get(void);
+static void UnGet(lexicon);
+static stringWithLength *GetQuotedString(void);
 #ifdef NOTUSED
-static stringWithLength *GetCharString __P((void));
+static stringWithLength *GetCharString(void);
 #endif
-static int GetCharacter __P((int));
+static int GetCharacter(int);
 #ifdef NOTUSED
-static int GetString __P((char *));
+static int GetString(char *);
 #endif
-static stringWithLength *GetAlphaMericString __P((void));
-static lexicon EatToNL __P((void));
-static void GetWS __P((void));
-static void FreeState __P((state *));
-static state *GetState __P((void));
-static state *FindMatchAtThisLevel __P((state *, int));
-static state *PasteEntry __P((state *, char *, int, char *));
-static int GetInput __P((int, char *));
-static int GetDefinition __P((void));
-static int GetDefinitions __P((void));
-static int GetBegin __P((void));
-static int GetEnd __P((void));
-static int GetName __P((void));
-static int GetNames __P((void));
-static int GetEntry0 __P((void));
-static int GetEntry __P((void));
+static stringWithLength *GetAlphaMericString(void);
+static lexicon EatToNL(void);
+static void GetWS(void);
+static void FreeState(state *);
+static state *GetState(void);
+static state *FindMatchAtThisLevel(state *, int);
+static state *PasteEntry(state *, char *, int, char *);
+static int GetInput(int, char *);
+static int GetDefinition(void);
+static int GetDefinitions(void);
+static int GetBegin(void);
+static int GetEnd(void);
+static int GetName(void);
+static int GetNames(void);
+static int GetEntry0(void);
+static int GetEntry(void);
 
 static int
 GetC()
@@ -884,7 +878,7 @@ state *
 InitControl(keybdPointer, pickyarg, translator)
 char	*keybdPointer;
 int	pickyarg;		/* Should we be picky? */
-int	(*translator) __P((char *));	/* Translates ascii string to integer */
+int	(*translator)(char *);	/* Translates ascii string to integer */
 {
     int GotIt;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prt3270.c,v 1.6 2002/01/31 19:36:53 tv Exp $	*/
+/*	$NetBSD: prt3270.c,v 1.7 2002/06/13 23:41:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)prt3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: prt3270.c,v 1.6 2002/01/31 19:36:53 tv Exp $");
+__RCSID("$NetBSD: prt3270.c,v 1.7 2002/06/13 23:41:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,23 +78,23 @@ unsigned char printBuffer[200], *print = printBuffer;
 
 
 /* prt3270.c */
-void putSpace __P((void));
-void Column1 __P((void));
-void Indent __P((void));
-void Undent __P((void));
-void putChar __P((int));
-void putstr __P((char *));
-void put2hex __P((int));
-void putdecimal __P((int));
-void puthex __P((int));
-void putEChar __P((int));
-void PrintAid __P((int));
-void PrintAddr __P((int));
-int DataFromNetwork __P((unsigned char *, int, int));
-int DataToNetwork __P((unsigned char *, int, int));
-int GetXValue __P((int));
-void termblock __P((int, int , int));
-int main __P((int, char *[]));
+void putSpace(void);
+void Column1(void);
+void Indent(void);
+void Undent(void);
+void putChar(int);
+void putstr(char *);
+void put2hex(int);
+void putdecimal(int);
+void puthex(int);
+void putEChar(int);
+void PrintAid(int);
+void PrintAddr(int);
+int DataFromNetwork(unsigned char *, int, int);
+int DataToNetwork(unsigned char *, int, int);
+int GetXValue(int);
+void termblock(int, int , int);
+int main(int, char *[]);
 
 void
 putSpace()
