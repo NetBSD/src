@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	7.5 (Berkeley) 4/20/91
- *	$Id: vnode_pager.c,v 1.2 1993/05/20 03:59:53 cgd Exp $
+ *	$Id: vnode_pager.c,v 1.3 1993/08/30 07:09:26 deraadt Exp $
  */
 
 /*
@@ -46,8 +46,6 @@
  *	pageouts
  *	fix credential use (uses current process credentials now)
  */
-#include "vnodepager.h"
-#if NVNODEPAGER > 0
 
 #include "param.h"
 #include "proc.h"
@@ -481,4 +479,3 @@ vnode_pager_io(vnp, m, rw)
 	vm_pager_unmap_page(kva);
 	return (error ? VM_PAGER_FAIL : VM_PAGER_OK);
 }
-#endif

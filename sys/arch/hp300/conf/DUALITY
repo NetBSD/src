@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.2 1993/08/19 14:29:28 mycroft Exp $
+#	$Id: DUALITY,v 1.3 1993/08/30 07:17:53 deraadt Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -17,6 +17,7 @@ timezone	5 dst
 maxusers	16
 
 # Standard options
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
 options		MFS,KERNFS,FDESC
 options		NFSSERVER,NFSCLIENT
@@ -80,7 +81,3 @@ pseudo-device	loop
 pseudo-device	ether
 
 pseudo-device	clock
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
