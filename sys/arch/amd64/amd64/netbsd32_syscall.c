@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.4 2003/10/31 03:28:12 simonb Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.5 2004/02/13 17:07:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.4 2003/10/31 03:28:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.5 2004/02/13 17:07:56 drochner Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -147,7 +147,10 @@ netbsd32_syscall_plain(frame)
 	printf("netbsd32: syscall %d (%x %x %x %x %x %x, %x)\n", code,
 	    args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 #endif
+	KERNEL_PROC_LOCK(l);
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
+
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
@@ -232,6 +235,8 @@ netbsd32_syscall_fancy(frame)
 			goto bad;
 	}
 
+	KERNEL_PROC_LOCK(l);
+
 #if defined(KTRACE) || defined(SYSTRACE)
 	if (
 #ifdef KTRACE
@@ -246,14 +251,17 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		if ((error = trace_enter(l, code, code, NULL, args64)) != 0) {
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
+		}
 	}
 #endif
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
