@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2005/01/19 20:37:52 xtraeme Exp $ */
+/*	$NetBSD: util.c,v 1.22 2005/01/31 06:24:08 joff Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,8 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_ATARI,		"atari" },
 	{ WSKBD_TYPE_SUN,		"sun" },
 	{ WSKBD_TYPE_SUN5,		"sun-type5" },
+	{ WSKBD_TYPE_SGI,		"sgi" },
+	{ WSKBD_TYPE_MATRIXKP,		"matrix-keypad" },
 };
 
 static struct nameint mstype_tab[] = {
