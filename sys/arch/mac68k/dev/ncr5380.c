@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.37 1996/12/16 16:17:09 scottr Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -223,9 +223,9 @@ int
 ncr_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void *auxp;
+	void *aux;
 {
-	return (machine_match(pdp, match, auxp, &CFNAME(DRNAME)));
+	return (machine_match(parent, cf, aux, &CFNAME(DRNAME)));
 }
 
 void
