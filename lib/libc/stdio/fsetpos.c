@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fsetpos.c	5.2 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: fsetpos.c,v 1.3 1993/08/26 00:46:57 jtc Exp $";
+static char *rcsid = "$Id: fsetpos.c,v 1.4 1993/12/31 19:14:19 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: fsetpos.c,v 1.3 1993/08/26 00:46:57 jtc Exp $";
 /*
  * fsetpos: like fseek.
  */
+int
 fsetpos(iop, pos)
 	FILE *iop;
 	const fpos_t *pos;

@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)flags.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: flags.c,v 1.3 1993/08/26 00:46:47 jtc Exp $";
+static char *rcsid = "$Id: flags.c,v 1.4 1993/12/31 19:14:15 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ static char *rcsid = "$Id: flags.c,v 1.3 1993/08/26 00:46:47 jtc Exp $";
  * to be passed to an open() syscall through *optr.
  * Return 0 on error.
  */
+int
 __sflags(mode, optr)
 	register char *mode;
 	int *optr;
