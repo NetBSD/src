@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.22 2002/06/21 01:38:57 briggs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.23 2002/07/05 18:45:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -35,6 +35,7 @@
 
 #include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
+#include "opt_altivec.h"
 #include "sysmon_envsys.h"
 
 #include <sys/param.h>
@@ -67,6 +68,7 @@ struct cpu_info cpu_info[CPU_MAXNUM];
 struct cpu_info cpu_info_store;
 #endif
 
+int cpu_altivec;
 char cpu_model[80];
 
 void
@@ -319,14 +321,16 @@ cpu_attach_common(struct device *self, int id)
 		&ci->ci_ev_traps, self->dv_xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_ali_fatal, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_ali, self->dv_xname, "user alignment traps");
-	if (vers == MPC7400 || vers == MPC7410 || vers == MPC7450) {
-		evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_traps, self->dv_xname,
-			"user AltiVec unavailable");
+	evcnt_attach_dynamic(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_umchk, self->dv_xname, "user MCHK failures");
+	evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, self->dv_xname, "AltiVec unavailable");
+#ifdef ALTIVEC
+	if (cpu_altivec) {
 		evcnt_attach_dynamic(&ci->ci_ev_vecsw, EVCNT_TYPE_TRAP,
-			&ci->ci_ev_vec, self->dv_xname,
-			"user AltiVec context switches");
+		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
 	}
+#endif
 
 	return ci;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2002/05/30 16:10:08 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2002/07/05 18:45:23 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,38 +89,21 @@ void dumpsys __P((void));
 void strayintr __P((int));
 int lcsplx __P((int));
 
-/*
- * Global variables used here and there
- */
-struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
-struct vm_map *phys_map = NULL;
-
 char bootinfo[BOOTINFO_MAXSIZE];
-
-char machine[] = MACHINE;		/* machine */
-char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
-
-struct pcb *curpcb;
-struct pmap *curpm;
-struct proc *fpuproc;
-
-extern struct user *proc0paddr;
-
-struct bat battable[16];
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
-paddr_t msgbuf_paddr;
-vaddr_t msgbuf_vaddr;
-
 paddr_t avail_end;			/* XXX temporary */
 
 RESIDUAL *res;
 RESIDUAL resdata;
+
+#ifdef DDB
+extern void *endsym, *startsym;
+#endif
 
 void
 initppc(startkernel, endkernel, args, btinfo)
@@ -128,19 +111,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	u_int args;
 	void *btinfo;
 {
-	extern int trapcode, trapsize;
-	extern int alitrap, alisize;
-	extern int dsitrap, dsisize;
-	extern int isitrap, isisize;
-	extern int decrint, decrsize;
-	extern int tlbimiss, tlbimsize;
-	extern int tlbdlmiss, tlbdlmsize;
-	extern int tlbdsmiss, tlbdsmsize;
-#ifdef DDB
-	extern int ddblow, ddbsize;
-	extern void *startsym, *endsym;
-#endif
-	int exc, scratch;
 
 	/*
 	 * copy bootinfo
@@ -198,13 +168,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	/* Initialize the CPU type */
 	ident_platform();
 
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
-
-	curpcb = &proc0paddr->u_pcb;
-
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
 	/*
 	 * boothowto
 	 */
@@ -223,115 +186,19 @@ initppc(startkernel, endkernel, args, btinfo)
 	consinit();
 
 	/*
-	 * Initialize BAT registers to unmapped to not generate
-	 * overlapping mappings below.
-	 */
-	asm volatile ("mtibatu 0,%0" :: "r"(0));
-	asm volatile ("mtibatu 1,%0" :: "r"(0));
-	asm volatile ("mtibatu 2,%0" :: "r"(0));
-	asm volatile ("mtibatu 3,%0" :: "r"(0));
-	asm volatile ("mtdbatu 0,%0" :: "r"(0));
-	asm volatile ("mtdbatu 1,%0" :: "r"(0));
-	asm volatile ("mtdbatu 2,%0" :: "r"(0));
-	asm volatile ("mtdbatu 3,%0" :: "r"(0));
-
-	/*
-	 * Set up initial BAT table
-	 */
-	/* map the lowest 256 MB area */
-	battable[0x00000000 >> 28].batl =
-	    BATL(0x00000000, BAT_M, BAT_PP_RW);
-	battable[0x00000000 >> 28].batu =
-	    BATU(0x00000000, BAT_BL_256M, BAT_Vs);
-
-	/* map the PCI/ISA I/O 256 MB area */
-	battable[PREP_BUS_SPACE_IO >> 28].batl =
-	    BATL(PREP_BUS_SPACE_IO, BAT_I | BAT_G, BAT_PP_RW);
-	battable[PREP_BUS_SPACE_IO >> 28].batu =
-	    BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
-
-	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[PREP_BUS_SPACE_MEM >> 28].batl =
-	    BATL(PREP_BUS_SPACE_MEM, BAT_I | BAT_G, BAT_PP_RW);
-	battable[PREP_BUS_SPACE_MEM >> 28].batu =
-	    BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
-
-	/*
 	 * Now setup fixed bat registers
 	 */
-	asm volatile ("mtibatl 0,%0; mtibatu 0,%1"
-		      :: "r"(battable[0x00000000 >> 28].batl),
-			 "r"(battable[0x00000000 >> 28].batu));
+	mpc6xx_batinit(
+	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
+	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
+	    0);
 
-	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0x00000000 >> 28].batl),
-			 "r"(battable[0x00000000 >> 28].batu));
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[PREP_BUS_SPACE_IO >> 28].batl),
-			 "r"(battable[PREP_BUS_SPACE_IO >> 28].batu));
-	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[PREP_BUS_SPACE_MEM >> 28].batl),
-			 "r"(battable[PREP_BUS_SPACE_MEM >> 28].batu));
-
-	asm volatile ("sync; isync");
-	/*
-	 * Set up trap vectors
-	 */
-	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
-		switch (exc) {
-		default:
-			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
-			break;
-		case EXC_EXI:
-			/*
-			 * This one is (potentially) installed during autoconf
-			 */
-			break;
-		case EXC_ALI:
-			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
-			break;
-		case EXC_DSI:
-			memcpy((void *)EXC_DSI, &dsitrap, (size_t)&dsisize);
-			break;
-		case EXC_ISI:
-			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
-			break;
-		case EXC_DECR:
-			memcpy((void *)EXC_DECR, &decrint, (size_t)&decrsize);
-			break;
-		case EXC_IMISS:
-			memcpy((void *)EXC_IMISS, &tlbimiss,
-			    (size_t)&tlbimsize);
-			break;
-		case EXC_DLMISS:
-			memcpy((void *)EXC_DLMISS, &tlbdlmiss,
-			    (size_t)&tlbdlmsize);
-			break;
-		case EXC_DSMISS:
-			memcpy((void *)EXC_DSMISS, &tlbdsmiss,
-			    (size_t)&tlbdsmsize);
-			break;
-#ifdef DDB
-		case EXC_PGM:
-		case EXC_TRC:
-		case EXC_BPT:
-			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
-			break;
-#endif
-		}
-
-	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+	mpc6xx_init(NULL);
 
 	/*
 	 * external interrupt handler install
 	 */
 	(*platform->init_intr)();
-
-	/*
-	 * Now enable translation (and machine checks/recoverable interrupts).
-	 */
-	asm volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
         /*
 	 * Set the page size.
@@ -366,131 +233,17 @@ mem_regions(mem, avail)
 void
 cpu_startup()
 {
-	int sz, i;
-	caddr_t v;
-	vaddr_t minaddr, maxaddr;
-	int base, residual;
-	char pbuf[9];
-
-	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
-
 	/*
 	 * Mapping PReP interrput vector register.
 	 */
-	if (!(prep_intr_reg = uvm_km_valloc(kernel_map, round_page(NBPG))))
+	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, NBPG);
+	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
-	pmap_enter(pmap_kernel(), prep_intr_reg, PREP_INTR_REG,
-	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
 
 	/*
-	 * Initialize error message buffer (at end of core).
+	 * Do common startup.
 	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
-		panic("startup: no room for message buffer");
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
-
-	printf("%s", version);
-
-	printf("Model: %s\n", res->VitalProductData.PrintableModel);
-	cpu_identify(NULL, 0);
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	sz = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(sz),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("startup: not enough memory for "
-					"buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(kernel_map->pmap);
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
-
-#ifndef PMAP_MAP_POOLPAGE
-	/*
-	 * We need to allocate an mbuf cluster submap if the pool
-	 * allocater isn't using direct-mapped pool pages.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 FALSE, NULL);
-#endif
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers.
-	 */
-	bufinit();
+	mpc6xx_startup(res->VitalProductData.PrintableModel);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -499,7 +252,7 @@ cpu_startup()
 		int msr;
 
 		splraise(-1);
-		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
 
@@ -529,35 +282,6 @@ lookup_bootinfo(type)
 		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
 
 	return (NULL);
-}
-
-void
-dumpsys()
-{
-
-	printf("dumpsys: TBD\n");
-}
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet()
-{
-	extern volatile int netisr;
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {	\
-	if (isr & (1 << bit))	\
-		fn();		\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
 }
 
 /*
@@ -610,7 +334,7 @@ cpu_reboot(howto, what)
 
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		dumpsys();
+		mpc6xx_dumpsys();
 
 halt_sys:
 	doshutdownhooks();
@@ -651,34 +375,4 @@ lcsplx(ipl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
-}
-
-/*
- * Allocate vm space and mapin the I/O address
- */
-void *
-mapiodev(pa, len)
-	paddr_t pa;
-	psize_t len;
-{
-	paddr_t faddr;
-	vaddr_t taddr, va;
-	int off;
-
-	faddr = trunc_page(pa);
-	off = pa - faddr;
-	len = round_page(off + len);
-	va = taddr = uvm_km_valloc(kernel_map, len);
-
-	if (va == 0)
-		return NULL;
-
-	for (; len > 0; len -= NBPG) {
-		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
-		faddr += NBPG;
-		taddr += NBPG;
-	}
-	pmap_update(pmap_kernel());
-
-	return (void *)(va + off);
 }

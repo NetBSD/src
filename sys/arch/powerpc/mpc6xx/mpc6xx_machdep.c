@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.1 2002/06/28 02:32:16 matt Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.2 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -75,11 +75,11 @@
 
 #include <powerpc/mpc6xx/bat.h>
 #include <powerpc/trap.h>
+#include <powerpc/stdarg.h>
+#include <powerpc/spr.h>
+#include <powerpc/altivec.h>
 #include <machine/powerpc.h>
 
-/*
- * This should probably be in autoconf!				XXX
- */
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
@@ -93,7 +93,6 @@ struct vm_map *phys_map = NULL;
 #ifndef MULTIPROCESSOR
 struct pcb *curpcb;
 struct pmap *curpm;
-struct proc *fpuproc;
 #endif
 
 extern struct user *proc0paddr;
@@ -117,6 +116,9 @@ mpc6xx_init(void (*handler)(void))
 #endif
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
+#endif
+#ifdef ALTIVEC
+	int msr;
 #endif
 	int exc, scratch;
 	size_t size;
@@ -220,6 +222,49 @@ mpc6xx_init(void (*handler)(void))
 	 */
 	cpu_probe_cache();
 
+#ifdef ALTIVEC
+#define	MFSPR_VRSAVE	0x7c0042a6
+#define	MTSPR_VRSAVE	0x7c0043a6
+#define	MxSPR_MASK	0x7c1fffff
+#define	NOP		0x60000000
+	
+	/*
+	 * Try to set the VEC bit in the MSR.  If it doesn't get set, we are
+	 * not on a AltiVec capable processor.
+	 */
+	__asm __volatile (
+	    "mfmsr %0; oris %1,%0,%2@h; mtmsr %1; isync; "
+		"mfmsr %1; mtmsr %0; isync"
+	    :	"=r"(msr), "=r"(scratch)
+	    :	"J"(PSL_VEC));
+
+	/*
+	 * If we aren't on an AltiVec capable processor, we to need zap any of
+	 * sequences we save/restore the VRSAVE SPR into NOPs.
+	 */
+	if (scratch & PSL_VEC) {
+		cpu_altivec = 1;
+	} else {
+		extern int trapstart[], trapend[];
+		int *ip = trapstart;
+		
+		for (; ip < trapend; ip++) {
+			if ((ip[0] & MxSPR_MASK) == MFSPR_VRSAVE) {
+				ip[0] = NOP;	/* mfspr */
+				ip[1] = NOP;	/* stw */
+			} else if ((ip[0] & MxSPR_MASK) == MTSPR_VRSAVE) {
+				ip[-1] = NOP;	/* lwz */
+				ip[0] = NOP;	/* mtspr */
+			}
+		}
+		/*
+		 * Sync the changed instructions.
+		 */
+		__syncicache((void *) trapstart,
+		    (uintptr_t) trapend - (uintptr_t) trapstart);
+	}
+#endif
+
 	/*
 	 * external interrupt handler install
 	 */
@@ -230,16 +275,51 @@ mpc6xx_init(void (*handler)(void))
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
+	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 }
 
 void
-mpc6xx_batinit(int iobatmask, int primary_iobat)
+mpc6xx_iobat_add(paddr_t pa, register_t len)
+{
+	static int n = 1;
+	const u_int i = pa >> 28;
+	battable[i].batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
+	battable[i].batu = BATU(pa, len, BAT_Vs);
+
+	/*
+	 * Let's start loading the BAT registers.
+	 */
+	switch (n) {
+	case 1:
+		__asm __volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		n = 2;
+		break;
+	case 2:
+		__asm __volatile ("mtdbatl 2,%0; mtdbatu 2,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		n = 3;
+		break;
+	case 3:
+		__asm __volatile ("mtdbatl 3,%0; mtdbatu 3,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		n = 4;
+		break;
+	default:
+		break;
+	}
+}
+
+void
+mpc6xx_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
-	int bat;
+	va_list ap;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -260,32 +340,29 @@ mpc6xx_batinit(int iobatmask, int primary_iobat)
 	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
 	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
-	/*
-	 * Map PCI memory space.
-	 */
-	for (bat = 0; bat < 16; bat++) {
-		if ((iobatmask & (1 << bat)) == 0)
-			continue;
-		battable[bat].batl = BATL((bat << 28), BAT_I|BAT_G, BAT_PP_RW);
-		battable[bat].batu = BATU((bat << 28), BAT_BL_256M, BAT_Vs);
-	}
+	__asm __volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+			  "mtdbatl 0,%0; mtdbatu 0,%1;"
+	    ::	"r"(battable[0].batl), "r"(battable[0].batu));
 
 	/*
-	 * Now setup fixed bat registers
+	 * Now setup other fixed bat registers
 	 *
 	 * Note that we still run in real mode, and the BAT
 	 * registers were cleared above.
 	 */
-	/* BAT0 used for initial 256 MB segment */
-	__asm __volatile ("mtibatl 0,%0; mtibatu 0,%1;"
-			  "mtdbatl 0,%0; mtdbatu 0,%1;"
-	    ::	"r"(battable[0].batl), "r"(battable[0].batu));
-	if (primary_iobat != 0) {
-		/* BAT1 used for primary I/O 256 MB segment */
-		__asm __volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
-		    ::	"r"(battable[primary_iobat].batl),
-			"r"(battable[primary_iobat].batu));
+
+	va_start(ap, pa);
+
+	/*
+	 * Add any I/O BATs specificed.
+	 */
+	while (pa != 0) {
+		register_t len = va_arg(ap, register_t);
+		mpc6xx_iobat_add(pa, len);
+		pa = va_arg(ap, paddr_t);
 	}
+
+	va_end(ap);
 
 	/*
 	 * Set up battable to map all RAM regions.
@@ -297,10 +374,10 @@ mpc6xx_batinit(int iobatmask, int primary_iobat)
 		paddr_t end = mp->start + mp->size;
 
 		do {
-			u_int n = pa >> 28;
+			u_int i = pa >> 28;
 
-			battable[n].batl = BATL(pa, BAT_M, BAT_PP_RW);
-			battable[n].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
+			battable[i].batl = BATL(pa, BAT_M, BAT_PP_RW);
+			battable[i].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
 			pa += SEGMENT_LENGTH;
 		} while (pa < end);
 	}
@@ -458,6 +535,11 @@ mpc6xx_startup(const char *model)
 	 * Set up the buffers.
 	 */
 	bufinit();
+
+#ifdef ALTIVEC
+	if (cpu_altivec)
+		init_vec();
+#endif
 }
 
 /*

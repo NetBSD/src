@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2002/06/08 15:58:47 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.20 2002/07/05 18:45:15 matt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -415,8 +415,6 @@ void show_me_regs()
 		scr0, scr1, scr2, scr3);
 }
 
-
-paddr_t msgbuf_paddr;
 
 /*
  * This is called during initppc, before the system is really initialized.

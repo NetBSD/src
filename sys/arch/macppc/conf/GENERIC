@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2002/06/25 00:32:24 itojun Exp $
+# $NetBSD: GENERIC,v 1.135 2002/07/05 18:45:17 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,11 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134 $"
+#ident 		"GENERIC-$Revision: 1.135 $"
 
 maxusers	32
+
+options 	ALTIVEC		# Include AltiVec support
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -51,9 +53,11 @@ options 	LKM		# loadable kernel modules
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
+options 	ZS_CONSOLE_ABORT# allow break to get into DDB on serial
 options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=0	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	TRAP_PANICWAIT
+#options 	TRAP_PANICWAIT
 
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
@@ -178,6 +182,7 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 gm*	at pci? dev ? function ?	# gmac ethernet
+#gem*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 

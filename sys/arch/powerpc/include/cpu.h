@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2002/03/26 21:20:24 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2002/07/05 18:45:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/device.h>
@@ -70,6 +71,7 @@ struct cpu_info {
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
 	struct proc *ci_fpuproc;
+	struct proc *ci_vecproc;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
@@ -103,6 +105,7 @@ struct cpu_info {
 	struct evcnt ci_ev_scalls;	/* system call traps */
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
+	struct evcnt ci_ev_umchk;	/* user MCHK events */
 };
 
 #ifdef MULTIPROCESSOR
@@ -130,7 +133,6 @@ extern struct cpu_info cpu_info[];
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define curproc			curcpu()->ci_curproc
-#define fpuproc			curcpu()->ci_fpuproc
 #define curpcb			curcpu()->ci_curpcb
 #define curpm			curcpu()->ci_curpm
 #define want_resched		curcpu()->ci_want_resched
@@ -161,20 +163,35 @@ extern volatile int intr_depth;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
+extern char cpu_model[];
 
-extern struct cpu_info *cpu_attach_common(struct device *, int);
-extern void cpu_identify(char *, size_t);
-extern void delay (unsigned int);
-extern void cpu_probe_cache(void);
-extern void dcache_flush_page(vaddr_t);
-extern void icache_flush_page(vaddr_t);
-extern void dcache_flush(vaddr_t, vsize_t);
-extern void icache_flush(vaddr_t, vsize_t);
+struct cpu_info *cpu_attach_common(struct device *, int);
+void cpu_identify(char *, size_t);
+void delay (unsigned int);
+void cpu_probe_cache(void);
+void dcache_flush_page(vaddr_t);
+void icache_flush_page(vaddr_t);
+void dcache_flush(vaddr_t, vsize_t);
+void icache_flush(vaddr_t, vsize_t);
+
 #define	DELAY(n)		delay(n)
 
 #define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
+
+#ifdef PPC_MPC6XX
+void mpc6xx_init(void (*)(void));
+void mpc6xx_startup(const char *);
+void mpc6xx_dumpsys(void);
+void mpc6xx_install_extint(void (*)(void));
+void *mapiodev(paddr_t, psize_t);
+paddr_t kvtop(caddr_t); 
+void softnet(int);
+
+extern paddr_t msgbuf_paddr;
+extern int cpu_altivec;
+#endif
 
 #endif /* _KERNEL */
 
@@ -195,7 +212,9 @@ void __syncicache(void *, size_t);
 #define	CPU_CPUTEMP		3
 #define	CPU_PRINTFATALTRAPS	4
 #define	CPU_CACHEINFO		5
-#define	CPU_MAXID		6
+#define	CPU_ALTIVEC		6
+#define	CPU_MODEL		7
+#define	CPU_MAXID		8
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -204,6 +223,8 @@ void __syncicache(void *, size_t);
 	{ "cputempature", CTLTYPE_INT }, \
 	{ "printfataltraps", CTLTYPE_INT }, \
 	{ "cacheinfo", CTLTYPE_STRUCT }, \
+	{ "altivec", CTLTYPE_INT }, \
+	{ "model", CTLTYPE_STRING }, \
 }
 
 #endif	/* _POWERPC_CPU_H_ */

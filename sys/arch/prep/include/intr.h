@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2002/05/30 16:10:05 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2002/07/05 18:45:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,13 +75,6 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void setsoftclock(void);
-void clearsoftclock(void);
-int  splsoftclock(void);
-void setsoftnet(void);
-void clearsoftnet(void);
-int  splsoftnet(void);
-
 void do_pending_int(void);
 
 void init_intr(void);
@@ -94,7 +87,7 @@ void disable_intr(void);
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 
-void softnet(void);
+void softnet(int);
 void softserial(void);
 int isa_intr(void);
 void isa_intr_mask(int);

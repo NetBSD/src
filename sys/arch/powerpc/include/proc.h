@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 1997/04/16 22:57:48 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.3 2002/07/05 18:45:21 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,10 +30,22 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _POWERPC_PROC_H_
+#define _POWERPC_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure
  */
+struct trapframe;
 struct mdproc {
-	int md_regs;
+	void (*md_syscall)(struct trapframe *);
+	int md_flags;
+#define MDP_USEDFP	0x0001	/* this process has used the FPU */
+#define	MDP_USEDVEC	0x0002	/* this process has used AltiVec */
 };
+
+#ifdef _KERNEL
+extern void syscall_intern(struct proc *);
+#endif
+
+#endif /* _POWERPC_PROC_H_ */

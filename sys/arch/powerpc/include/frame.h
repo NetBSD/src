@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2002/04/21 22:05:45 kleink Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2002/07/05 18:45:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,7 @@ struct trapframe {
 	register_t dar;			/* dar & dsisr are only filled on a DSI trap */
 	int dsisr;
 	int exc;
+	uint32_t vrsave;
 };
 /*
  * This is to ensure alignment of the stackpointer

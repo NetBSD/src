@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc.h,v 1.1 2002/05/30 20:02:04 augustss Exp $	*/
+/*	$NetBSD: pmppc.h,v 1.2 2002/07/05 18:45:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ void setleds(int leds);
  * The variables below are extracted from the config register located
  * at PMPPC_CONFIG.
  */
-struct {
+struct a_config {
 	int a_boot_device;
 #define A_BOOT_ROM 0
 #define A_BOOT_FLASH 1
@@ -96,4 +96,6 @@ struct {
 	int a_has_rtc;
 	uint a_flash_size;		/* in bytes */
 	uint a_flash_width;		/* in bits */
-} a_config;
+};
+
+extern struct a_config a_config;
