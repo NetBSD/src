@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/07/19 18:06:19 matt Exp $
+#	$NetBSD: Makefile,v 1.23 2001/07/19 22:13:23 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,8 @@ OBJS+=		${G_LIB2FUNCS:=.o} ${G_LIB2FUNCS_EH:=.o} \
 		${G_CXX_LIB2FUNCS:Mop*} ${G_CXXSRCS:T:R:=.o} \
 		${G_CSRCS:T:R:=.o}
 
+CLEANFILES+=	fp-bit.c dp-bit.c
+
 ${G_LIB2FUNCS:=.o}: libgcc2.c
 	${COMPILE.c} -DL$* -o $@ ${>:M*.c}
 
@@ -58,6 +60,13 @@ ${f}.o: ${G_CXX_LIB2SRCS:M*/${f}.cc}
 ${f}.o: ${G_CXX_LIB2ADD:M*/${f}.c}
 	${COMPILE.c} -o $@ ${>:M*.c}
 .endfor
+
+fp-bit.c: ${DIST}/gcc/config/fp-bit.c
+	cat $> > $@
+
+dp-bit.c: ${DIST}/gcc/config/fp-bit.c
+	echo '#define FLOAT' > $@
+	cat $> >> $@
 
 .include <bsd.lib.mk>
 
