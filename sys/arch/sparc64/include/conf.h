@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.6 2000/04/14 08:36:39 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.7 2000/05/19 05:26:18 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,3 +101,5 @@ cdev_decl(scsibus);
 
 bdev_decl(wd);
 cdev_decl(wd);
+
+cdev_decl(pcons);

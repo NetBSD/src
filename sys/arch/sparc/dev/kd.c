@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.10 2000/03/24 11:46:46 hannken Exp $	*/
+/*	$NetBSD: kd.c,v 1.11 2000/05/19 05:26:16 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -450,8 +450,9 @@ kd_cons_input(c)
 }
 
 void
-cons_attach_input(cc)
+cons_attach_input(cc, cn)
 	struct cons_channel *cc;
+	struct consdev *cn;
 {
 	struct kd_softc *kd = &kd_softc;
 
