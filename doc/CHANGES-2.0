@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.108 2004/04/21 03:17:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.109 2004/04/21 03:19:17 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1078,3 +1078,10 @@ sys/fs/msdosfs/msdosfsmount.h			1.6
 	Properly version the msdosfs mount structure after addition
 	of gmt time offset support. PR#25226
 	[jdolecek, ticket #160]
+
+sys/dev/dksubr.c				1.12
+
+	Redo dk_start(). If di->di_diskstart() runs synchronous its biodone() 
+	will call dk_start() via dk_iodone() before the buffer gets removed 
+	from queue.  PR#25240
+	[elric, ticket #163]
