@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.14 1994/06/14 05:49:19 jtc Exp $";
+static char *rcsid = "$Id: eval.c,v 1.14.2.1 1994/08/24 05:49:23 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -866,8 +866,9 @@ prehash(n)
 	{
 	struct cmdentry entry;
 
-	if (n->type == NCMD && goodname(n->ncmd.args->narg.text))
-		find_command(n->ncmd.args->narg.text, &entry, 0);
+	if (n->type == NCMD && n->ncmd.args)
+		if (goodname(n->ncmd.args->narg.text))
+			find_command(n->ncmd.args->narg.text, &entry, 0);
 }
 
 
