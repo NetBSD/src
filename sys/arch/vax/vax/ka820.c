@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.28 2000/07/26 11:44:25 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.29 2000/08/08 17:54:46 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -195,6 +195,9 @@ ka820_conf()
 	 * Setup parameters necessary to read time from clock chip.
 	 */
 	ka820_clkpage = (void *)vax_map_physmem(KA820_CLOCKADDR, 1);
+
+	/* Enable cache */
+	mtpr(0, PR_CADR);
 
 	/* Steal the interrupt vectors that are unique for us */
 	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK, NULL);
