@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.3 1997/10/09 08:40:03 jtc Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.4 1998/01/12 19:51:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * Defintions exported to ASIC-specific clock attachment.
  */
 
-extern	struct cfdriver clock_cd;
 extern	struct evcnt clock_profcnt;
 extern	struct evcnt clock_statcnt;
 

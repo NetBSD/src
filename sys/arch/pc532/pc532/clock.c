@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 1997/04/01 16:32:16 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 1998/01/12 19:55:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,19 +74,11 @@ struct cfattach clock_ca = {
 	sizeof(struct device), clock_match, clock_attach
 };
 
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
-};
-
 static int  rtc_match __P((struct device *, struct cfdata *, void *args));
 static void rtc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach rtc_ca = {
 	sizeof(struct device), rtc_match, rtc_attach
-};
-
-struct cfdriver rtc_cd = {
-	NULL, "rtc", DV_DULL
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.10 1997/10/05 18:17:36 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.11 1998/01/12 19:51:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -108,9 +108,7 @@ struct cfattach pcc_ca = {
 	sizeof(struct pccsoftc), pccmatch, pccattach
 };
 
-struct cfdriver pcc_cd = {
-	NULL, "pcc", DV_DULL, 0
-};
+extern struct cfdriver pcc_cd;
 
 int	pccintr __P((void *));
 

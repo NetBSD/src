@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1998/01/05 07:03:09 perry Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 1998/01/12 19:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -45,10 +45,6 @@ static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mbprobe, mbattach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
 };
 
 static int

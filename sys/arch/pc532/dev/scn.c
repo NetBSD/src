@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.40 1997/10/22 03:35:56 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.41 1998/01/12 19:55:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -93,7 +93,9 @@ void	scncnreinit __P((void *));
 int     scnhwiflow __P((struct tty *, int));
 
 struct cfattach scn_ca = {sizeof(struct scn_softc), scnprobe, scnattach};
-struct cfdriver scn_cd = {NULL, "scn", DV_TTY, NULL, 0};
+
+extern struct cfdriver scn_cd;
+
 #ifndef CONSOLE_SPEED
 #define CONSOLE_SPEED TTYDEF_SPEED
 #endif

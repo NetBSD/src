@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.5 1997/10/09 08:42:47 jtc Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.6 1998/01/12 19:51:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct cfattach zsc_pcc_ca = {
 	sizeof(struct zsc_softc), zsc_pcc_match, zsc_pcc_attach
 };
 
+extern struct cfdriver zsc_cd;
 
 /*
  * Is the zs chip present?

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.7 1997/10/09 08:42:44 jtc Exp $	*/
+/*	$NetBSD: vme.c,v 1.8 1998/01/12 19:51:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,25 +58,17 @@ int	vme_print __P((void *, const char *));
 
 int	vmechip_print __P((void *, const char *));
 
-struct cfdriver vmechip_cd = {
-	NULL, "vmechip", DV_DULL
-};
-
 struct cfattach vmes_ca = {
 	sizeof(struct device), vmes_match, vme_attach
 };
 
-struct cfdriver vmes_cd = {
-	NULL, "vmes", DV_DULL
-};
+extern struct cfdriver vmes_cd;
 
 struct cfattach vmel_ca = {
 	sizeof(struct device), vmel_match, vme_attach
 };
 
-struct cfdriver vmel_cd = {
-	NULL, "vmel", DV_DULL
-};
+extern struct cfdriver vmel_cd;
 
 /* Pointer to the system vmechip softc. */
 struct	vmechip_softc *sys_vmechip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.40 1997/11/24 12:35:20 phil Exp $	*/
+/*	$NetBSD: ncr.c,v 1.41 1998/01/12 19:55:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -97,10 +97,6 @@ struct scsipi_device ncr_dev = {
 
 struct cfattach ncr_ca = {
 	sizeof(struct ncr5380_softc), ncr_match, ncr_attach
-};
-
-struct cfdriver ncr_cd = {
-	NULL, "ncr", DV_DULL
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1997/10/13 00:18:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1998/01/12 19:51:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,10 +87,6 @@ struct mainbus_softc {
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 0
 };
 
 #ifdef MVME147

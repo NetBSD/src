@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.4 1997/10/09 08:42:42 jtc Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.5 1998/01/12 19:51:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@ u_char	clock_pcc_lvl;
 struct cfattach clock_pcc_ca = {
 	sizeof(struct device), clock_pcc_match, clock_pcc_attach
 };
+
+extern struct cfdriver clock_cd;
 
 int
 clock_pcc_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 1997/11/02 08:05:09 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 1998/01/12 19:51:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -117,12 +117,9 @@ u_char zs_init_reg[16] = {
 /* Definition of the driver for autoconfig. */
 static int	zsc_print __P((void *, const char *name));
 
-struct cfdriver zsc_cd = {
-	NULL, "zsc", DV_DULL
-};
-
 static int zs_get_speed __P((struct zs_chanstate *));
 
+extern struct cfdriver zsc_cd;
 
 /*
  * Configure children of an SCC.
