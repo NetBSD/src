@@ -31,8 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)float.h	7.1 (Berkeley) 5/8/90
- *	$Id: float.h,v 1.4 1993/08/15 15:46:35 mycroft Exp $
+ *	$Id: float.h,v 1.5 1994/04/10 02:22:10 chopps Exp $
  */
+#ifndef _M68K_FLOAT_H_
+#deifne _M68K_FLOAT_H_
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
@@ -66,3 +68,5 @@
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+
+#endif /* !_M68K_FLOAT_H_ */

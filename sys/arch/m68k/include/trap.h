@@ -37,8 +37,10 @@
  *
  *	from: Utah Hdr: trap.h 1.1 90/07/09
  *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.4 1994/01/09 19:30:04 mycroft Exp $
+ *	$Id: trap.h,v 1.5 1994/04/10 02:22:15 chopps Exp $
  */
+#ifndef _M68K_TRAP_H_
+#define _M68K_TRAP_H_
 
 /*
  * Trap codes
@@ -63,3 +65,4 @@
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 
+#endif /* !_M68K_TRAP_H_ */

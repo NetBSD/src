@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
- *	$Id: signal.h,v 1.1 1993/10/13 07:58:39 cgd Exp $
+ *	$Id: signal.h,v 1.2 1994/04/10 02:22:14 chopps Exp $
  */
-
-#ifndef _MACHINE_SIGNAL_H_
-#define _MACHINE_SIGNAL_H_
+#ifndef _M68K_SIGNAL_H_
+#define _M68K_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
@@ -61,4 +60,4 @@ struct	sigcontext {
 	int	sc_ps;			/* psl to restore */
 };
 
-#endif	/* _MACHINE_SIGNAL_H_ */
+#endif	/* !_M68K_SIGNAL_H_ */
