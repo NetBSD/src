@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.42 2001/10/02 00:26:07 lukem Exp $
+#	$NetBSD: special,v 1.43 2001/10/02 01:08:11 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -116,7 +116,90 @@ protocols	type=file mode=0644 uname=root gname=wheel
 rbootd.conf	type=file mode=0644 uname=root gname=wheel optional
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
-# XXX support rc.d/*
+rc.d		type=dir mode=0755 uname=root gname=wheel
+DAEMON		type=file mode=0555 uname=root gname=wheel
+LOGIN		type=file mode=0555 uname=root gname=wheel
+NETWORK		type=file mode=0555 uname=root gname=wheel
+SERVERS		type=file mode=0555 uname=root gname=wheel
+accounting	type=file mode=0555 uname=root gname=wheel
+altqd		type=file mode=0555 uname=root gname=wheel
+amd		type=file mode=0555 uname=root gname=wheel
+apmd		type=file mode=0555 uname=root gname=wheel
+bootconf.sh	type=file mode=0555 uname=root gname=wheel
+bootparams	type=file mode=0555 uname=root gname=wheel
+ccd		type=file mode=0555 uname=root gname=wheel
+cleartmp	type=file mode=0555 uname=root gname=wheel
+cron		type=file mode=0555 uname=root gname=wheel
+dhclient	type=file mode=0555 uname=root gname=wheel
+dhcpd		type=file mode=0555 uname=root gname=wheel
+dhcrelay	type=file mode=0555 uname=root gname=wheel
+dmesg		type=file mode=0555 uname=root gname=wheel
+downinterfaces	type=file mode=0555 uname=root gname=wheel
+fsck		type=file mode=0555 uname=root gname=wheel
+inetd		type=file mode=0555 uname=root gname=wheel
+ipfilter	type=file mode=0555 uname=root gname=wheel
+ipmon		type=file mode=0555 uname=root gname=wheel
+ipnat		type=file mode=0555 uname=root gname=wheel
+ipsec		type=file mode=0555 uname=root gname=wheel
+isdnd		type=file mode=0555 uname=root gname=wheel
+kdc		type=file mode=0555 uname=root gname=wheel
+ldconfig	type=file mode=0555 uname=root gname=wheel
+lkm1		type=file mode=0555 uname=root gname=wheel
+lkm2		type=file mode=0555 uname=root gname=wheel
+lkm3		type=file mode=0555 uname=root gname=wheel
+local		type=file mode=0555 uname=root gname=wheel
+lpd		type=file mode=0555 uname=root gname=wheel
+mopd		type=file mode=0555 uname=root gname=wheel
+motd		type=file mode=0555 uname=root gname=wheel
+mountall	type=file mode=0555 uname=root gname=wheel
+mountcritlocal	type=file mode=0555 uname=root gname=wheel
+mountcritremote	type=file mode=0555 uname=root gname=wheel
+mountd		type=file mode=0555 uname=root gname=wheel
+mrouted		type=file mode=0555 uname=root gname=wheel
+named		type=file mode=0555 uname=root gname=wheel
+ndbootd		type=file mode=0555 uname=root gname=wheel
+network		type=file mode=0555 uname=root gname=wheel
+newsyslog	type=file mode=0555 uname=root gname=wheel
+nfsd		type=file mode=0555 uname=root gname=wheel
+nfslocking	type=file mode=0555 uname=root gname=wheel
+ntpd		type=file mode=0555 uname=root gname=wheel
+ntpdate		type=file mode=0555 uname=root gname=wheel
+poffd		type=file mode=0555 uname=root gname=wheel
+postfix		type=file mode=0555 uname=root gname=wheel
+ppp		type=file mode=0555 uname=root gname=wheel
+pwcheck		type=file mode=0555 uname=root gname=wheel
+quota		type=file mode=0555 uname=root gname=wheel
+racoon		type=file mode=0555 uname=root gname=wheel
+raidframe	type=file mode=0555 uname=root gname=wheel
+rarpd		type=file mode=0555 uname=root gname=wheel
+rbootd		type=file mode=0555 uname=root gname=wheel
+root		type=file mode=0555 uname=root gname=wheel
+route6d		type=file mode=0555 uname=root gname=wheel
+routed		type=file mode=0555 uname=root gname=wheel
+rpcbind		type=file mode=0555 uname=root gname=wheel
+rtadvd		type=file mode=0555 uname=root gname=wheel
+rtsold		type=file mode=0555 uname=root gname=wheel
+rwho		type=file mode=0555 uname=root gname=wheel
+savecore	type=file mode=0555 uname=root gname=wheel
+screenblank	type=file mode=0555 uname=root gname=wheel
+securelevel	type=file mode=0555 uname=root gname=wheel
+sendmail	type=file mode=0555 uname=root gname=wheel
+sshd		type=file mode=0555 uname=root gname=wheel
+swap1		type=file mode=0555 uname=root gname=wheel
+swap2		type=file mode=0555 uname=root gname=wheel
+sysctl		type=file mode=0555 uname=root gname=wheel
+sysdb		type=file mode=0555 uname=root gname=wheel
+syslogd		type=file mode=0555 uname=root gname=wheel
+timed		type=file mode=0555 uname=root gname=wheel
+ttys		type=file mode=0555 uname=root gname=wheel
+virecover	type=file mode=0555 uname=root gname=wheel
+wscons		type=file mode=0555 uname=root gname=wheel
+xdm		type=file mode=0555 uname=root gname=wheel
+xfs		type=file mode=0555 uname=root gname=wheel
+ypbind		type=file mode=0555 uname=root gname=wheel
+yppasswdd	type=file mode=0555 uname=root gname=wheel
+ypserv		type=file mode=0555 uname=root gname=wheel
+..	#etc/rc.d
 # XXX support rc.conf.d/*
 rc.lkm		type=file mode=0644 uname=root gname=wheel
 rc.local	type=file mode=0644 uname=root gname=wheel optional
