@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.3 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.4 2001/11/06 03:17:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -70,6 +71,9 @@ struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
 	ehci_pci_detach, ehci_activate
 };
+
+static TAILQ_HEAD(, usb_pci) ehci_pci_alldevs =
+	TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
 
 int
 ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -109,9 +113,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	/* bus_space_write_2(sc->sc.iot, sc->sc.ioh, EHCI_INTR, 0); */
-
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
@@ -120,6 +121,11 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
+
+	sc->sc.sc_offs = bus_space_read_1(sc->sc.iot, sc->sc.ioh, EHCI_CAPLENGTH);
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -139,14 +145,11 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
-		break;
 	case PCI_USBREV_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_1_0;
-		break;
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_1_1;
-		break;
+		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		printf("%s: pre-2.0 USB rev\n", devname);
+		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
 		break;
@@ -194,4 +197,20 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 	return (0);
+}
+
+void
+usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, struct usbd_bus *bu)
+{
+	TAILQ_INSERT_TAIL(&ehci_pci_alldevs, up, next);
+	up->bus = pa->pa_bus;
+	up->device = pa->pa_device;
+	up->function = pa->pa_function;
+	up->usb = bu;
+}
+
+void
+usb_pci_rem(struct usb_pci *up)
+{
+	TAILQ_REMOVE(&ehci_pci_alldevs, up, next);
 }
