@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31.4.3 2001/03/20 18:04:56 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.31.4.4 2002/06/26 16:54:46 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31.4.3 2001/03/20 18:04:56 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31.4.4 2002/06/26 16:54:46 he Exp $");
 #endif
 #endif
 
@@ -130,7 +130,7 @@ pkg_do(char *pkg)
 				char    try[FILENAME_MAX];
 				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-					find_fn, NULL) != 0) {
+					add_to_list_fn, &pkgs) != 0) {
 					return 0;	/* we've just appended some names to the pkgs list,
 							 * they will be processed after this package. */
 				}
@@ -240,8 +240,9 @@ bail:
  * Function to be called for pkgs found
  */
 static int
-foundpkg(const char *found, char *data)
+foundpkg(const char *found, void *vp)
 {
+	char *data = vp;
 	char buf[FILENAME_MAX+1];
 
 	/* we only want to display this if it really is a directory */
@@ -299,7 +300,7 @@ cleanup(int sig)
 }
 
 int
-pkg_perform(lpkg_head_t *pkgs)
+pkg_perform(lpkg_head_t *pkghead)
 {
 	struct dirent *dp;
 	char   *tmp;
@@ -354,8 +355,8 @@ pkg_perform(lpkg_head_t *pkgs)
 		/* Show info on individual pkg(s) */
 		lpkg_t *lpp;
 
-		while ((lpp = TAILQ_FIRST(pkgs))) {
-			TAILQ_REMOVE(pkgs, lpp, lp_link);
+		while ((lpp = TAILQ_FIRST(pkghead))) {
+			TAILQ_REMOVE(pkghead, lpp, lp_link);
 			err_cnt += pkg_do(lpp->lp_name);
 			free_lpkg(lpp);
 		}
