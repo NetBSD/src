@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.23 2003/12/30 16:28:37 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.23 2003/12/30 16:28:37 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -39,11 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/syslog.h>
+#include <sys/proc.h>
+#include <sys/kthread.h>
+#include <sys/errno.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -53,8 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $");
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
+#include "locators.h"
+
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+#define DEBUG_DETACH 0x20
 #ifdef WDCDEBUG
 extern int wdcdebug_mask; /* init'ed in wdc.c */
 #define WDCDEBUG_PRINT(args, level) \
@@ -63,6 +66,294 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif
+
+/*****************************************************************************
+ * ATA bus layer.
+ *
+ * ATA controllers attach an atabus instance, which handles probing the bus
+ * for drives, etc.
+ *****************************************************************************/
+
+/*
+ * atabusprint:
+ *
+ *	Autoconfiguration print routine used by ATA controllers when
+ *	attaching an atabus instance.
+ */
+int
+atabusprint(void *aux, const char *pnp)
+{
+	struct channel_softc *chan = aux;
+	
+	if (pnp)
+		aprint_normal("atabus at %s", pnp);
+	aprint_normal(" channel %d", chan->channel);
+
+	return (UNCONF);
+}
+
+/*
+ * ataprint:
+ *
+ *	Autoconfiguration print routine.
+ */
+int
+ataprint(void *aux, const char *pnp)
+{
+	struct ata_device *adev = aux;
+
+	if (pnp)
+		aprint_normal("wd at %s", pnp);
+	aprint_normal(" drive %d", adev->adev_drv_data->drive);
+
+	return (UNCONF);
+}
+
+/*
+ * atabus_thread:
+ *
+ *	Worker thread for the ATA bus.
+ */
+static void
+atabus_thread(void *arg)
+{
+	struct atabus_softc *sc = arg;
+	struct channel_softc *chp = sc->sc_chan;
+	struct wdc_xfer *xfer;
+	int s;
+
+	s = splbio();
+	chp->ch_flags |= WDCF_TH_RUN;
+	splx(s);
+
+	/* Configure the devices on the bus. */
+	atabusconfig(sc);
+
+	for (;;) {
+		s = splbio();
+		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
+		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
+		     chp->ch_queue->queue_freeze == 0)) {
+			chp->ch_flags &= ~WDCF_TH_RUN;
+			(void) tsleep(&chp->thread, PRIBIO, "atath", 0);
+			chp->ch_flags |= WDCF_TH_RUN;
+		}
+		splx(s);
+		if (chp->ch_flags & WDCF_SHUTDOWN)
+			break;
+		s = splbio();
+		if (chp->ch_flags & WDCF_TH_RESET) {
+			int drive;
+
+			(void) wdcreset(chp, RESET_SLEEP);
+			for (drive = 0; drive < 2; drive++)
+				chp->ch_drive[drive].state = 0;
+			chp->ch_flags &= ~WDCF_TH_RESET;
+			chp->ch_queue->queue_freeze--;
+			wdcstart(chp);
+		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
+			   chp->ch_queue->queue_freeze == 1) {
+			/*
+			 * Caller has bumped queue_freeze, decrease it.
+			 */
+			chp->ch_queue->queue_freeze--;
+			xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
+			KASSERT(xfer != NULL);
+			(*xfer->c_start)(chp, xfer);
+		} else if (chp->ch_queue->queue_freeze > 1)
+			panic("ata_thread: queue_freeze");
+		splx(s);
+	}
+	chp->thread = NULL;
+	wakeup(&chp->ch_flags);
+	kthread_exit(0);
+}
+
+/*
+ * atabus_create_thread:
+ *
+ *	Helper routine to create the ATA bus worker thread.
+ */
+static void
+atabus_create_thread(void *arg)
+{
+	struct atabus_softc *sc = arg;
+	struct channel_softc *chp = sc->sc_chan;
+	int error;
+
+	if ((error = kthread_create1(atabus_thread, sc, &chp->thread,
+				     "%s", sc->sc_dev.dv_xname)) != 0)
+		aprint_error("%s: unable to create kernel thread: error %d\n",
+		    sc->sc_dev.dv_xname, error);
+}
+
+/*
+ * atabus_match:
+ *
+ *	Autoconfiguration match routine.
+ */
+static int
+atabus_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct channel_softc *chp = aux;
+
+	if (chp == NULL)
+		return (0);
+	
+	if (cf->cf_loc[ATACF_CHANNEL] != chp->channel &&
+	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
+	    	return (0);
+	
+	return (1);
+}
+
+/*
+ * atabus_attach:
+ *
+ *	Autoconfiguration attach routine.
+ */
+static void
+atabus_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct atabus_softc *sc = (void *) self;
+	struct channel_softc *chp = aux;
+	struct atabus_initq *initq;
+
+	sc->sc_chan = chp;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
+
+	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
+	initq->atabus_sc = sc;
+	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	config_pending_incr();
+	kthread_create(atabus_create_thread, sc);
+}
+
+/*
+ * atabus_activate:
+ *
+ *	Autoconfiguration activation routine.
+ */
+static int
+atabus_activate(struct device *self, enum devact act)
+{
+	struct atabus_softc *sc = (void *) self;
+	struct channel_softc *chp = sc->sc_chan;
+	struct device *dev = NULL;
+	int s, i, error = 0;
+
+	s = splbio();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+	
+	case DVACT_DEACTIVATE:
+		/*
+		 * We might deactivate the children of atapibus twice
+		 * (once bia atapibus, once directly), but since the
+		 * generic autoconfiguration code maintains the DVF_ACTIVE
+		 * flag, it's safe.
+		 */
+		if ((dev = chp->atapibus) != NULL) {
+			error = config_deactivate(dev);
+			if (error)
+				goto out;
+		}
+
+		for (i = 0; i < 2; i++) {
+			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
+				WDCDEBUG_PRINT(("atabus_activate: %s: "
+				    "deactivating %s\n", sc->sc_dev.dv_xname,
+				    dev->dv_xname),
+				    DEBUG_DETACH);
+				error = config_deactivate(dev);
+				if (error)
+					goto out;
+			}
+		}
+		break;
+	}
+ out:
+	splx(s);
+
+#ifdef WDCDEBUG
+	if (dev != NULL && error != 0)
+		WDCDEBUG_PRINT(("atabus_activate: %s: "
+		    "error %d deactivating %s\n", sc->sc_dev.dv_xname,
+		    error, dev->dv_xname), DEBUG_DETACH);
+#endif /* WDCDEBUG */
+
+	return (error);
+}
+
+/*
+ * atabus_detach:
+ *
+ *	Autoconfiguration detach routine.
+ */
+static int
+atabus_detach(struct device *self, int flags)
+{
+	struct atabus_softc *sc = (void *) self;
+	struct channel_softc *chp = sc->sc_chan;
+	struct device *dev = NULL;
+	int i, error = 0;
+
+	/* Shutdown the channel. */
+	/* XXX NEED AN INTERLOCK HERE. */
+	chp->ch_flags |= WDCF_SHUTDOWN;
+	wakeup(&chp->thread);
+	while (chp->thread != NULL)
+		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
+	
+	/*
+	 * Detach atapibus and its children.
+	 */
+	if ((dev = chp->atapibus) != NULL) {
+		WDCDEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
+		    sc->sc_dev.dv_xname, dev->dv_xname), DEBUG_DETACH);
+		error = config_detach(dev, flags);
+		if (error)
+			goto out;
+	}
+
+	/*
+	 * Detach our other children.
+	 */
+	for (i = 0; i < 2; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
+			continue;
+		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
+			WDCDEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
+			    sc->sc_dev.dv_xname, dev->dv_xname),
+			    DEBUG_DETACH);
+			error = config_detach(dev, flags);
+			if (error)
+				goto out;
+		}
+	}
+
+	wdc_kill_pending(chp);
+ out:
+#ifdef WDCDEBUG
+	if (dev != NULL && error != 0)
+		WDCDEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
+		    sc->sc_dev.dv_xname, error, dev->dv_xname),
+		    DEBUG_DETACH);
+#endif /* WDCDEBUG */
+
+	return (error);
+}
+
+CFATTACH_DECL(atabus, sizeof(struct atabus_softc),
+    atabus_match, atabus_attach, atabus_detach, atabus_activate);
+
+/*****************************************************************************
+ * Common ATA bus operations.
+ *****************************************************************************/
 
 /* Get the disk's parameters */
 int

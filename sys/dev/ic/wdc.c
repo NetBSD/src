@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.161 2003/12/15 00:27:13 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.162 2003/12/30 16:28:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.161 2003/12/15 00:27:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.162 2003/12/30 16:28:37 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.161 2003/12/15 00:27:13 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -144,26 +143,6 @@ const struct ata_bustype wdc_ata_bustype = {
 };
 #endif
 
-int	atabusmatch __P((struct device *, struct cfdata *, void *));
-void	atabusattach __P((struct device *, struct device *, void *));
-void	atabus_create_thread __P((void *));
-void	atabus_thread __P((void *));
-void	atabusconfig __P((struct atabus_softc *));
-int	atabusactivate __P((struct device *, enum devact));
-int	atabusdetach __P((struct device *, int flags));
-int	atabusprint __P((void *, const char *));
-
-CFATTACH_DECL(atabus, sizeof(struct atabus_softc),
-    atabusmatch, atabusattach, atabusdetach, atabusactivate);
-
-struct atabus_initq {
-        struct atabus_softc *atabus_sc;
-        TAILQ_ENTRY(atabus_initq) atabus_initq;
-};    
-static TAILQ_HEAD(, atabus_initq) atabus_initq_head =
-    TAILQ_HEAD_INITIALIZER(atabus_initq_head);
-static struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
-
 int wdcprobe1 __P((struct channel_softc*, int));
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int, int));
@@ -171,7 +150,6 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   __wdcwait __P((struct channel_softc *, int, int, int));
-int   wdprint __P((void *, const char *));
 void wdc_finish_attach __P((struct device *));
 void wdc_channel_attach __P((struct channel_softc *));
 
@@ -190,127 +168,27 @@ int wdc_nxfer = 0;
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
-int
-atabusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct channel_softc *chan = aux;
-	if (pnp)
-		aprint_normal("atabus at %s", pnp);
-	aprint_normal(" channel %d", chan->channel);
-	return (UNCONF);
-}
+/*
+ * A queue of atabus instances, used to ensure the same bus probe order
+ * for a given hardware configuration at each boot.
+ */
+struct atabus_initq_head atabus_initq_head =
+    TAILQ_HEAD_INITIALIZER(atabus_initq_head);
+struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
 
-int
-atabusmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct channel_softc *chp = aux;
-
-	if (chp == NULL)
-		return (0);
-
-	if (cf->cf_loc[ATACF_CHANNEL] != chp->channel &&
-	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
-		return (0);
-
-	return (1);
-}
-
-void
-atabusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct atabus_softc *atabus_sc = (struct atabus_softc *)self;
-	struct channel_softc *chp = aux;
-	struct atabus_initq *atabus_initq;
-
-	atabus_sc->sc_chan = chp;
-
-	aprint_normal("\n");
-	aprint_naive("\n");
-	atabus_initq  = malloc(sizeof(struct atabus_initq), M_DEVBUF, M_NOWAIT);
-	atabus_initq->atabus_sc = atabus_sc;
-	TAILQ_INSERT_TAIL(&atabus_initq_head, atabus_initq, atabus_initq);
-	config_pending_incr();
-	kthread_create(atabus_create_thread, atabus_sc);
-
-}
-
-void
-atabus_create_thread(arg)
-	void *arg;
-{
-	struct atabus_softc *atabus_sc = arg;
-	struct channel_softc *chp = atabus_sc->sc_chan;
-	int error;
-	
-	if ((error = kthread_create1(atabus_thread, atabus_sc, &chp->thread,
-	    "%s", atabus_sc->sc_dev.dv_xname)) != 0)
-		printf("unable to create kernel thread for %s: error %d\n",
-		    atabus_sc->sc_dev.dv_xname, error);
-}
-
-void
-atabus_thread(arg)
-	void *arg;
-{
-	struct atabus_softc *atabus_sc = arg;
-	struct channel_softc *chp = atabus_sc->sc_chan;
-	struct wdc_xfer *xfer;
-	int s;
-
-	s = splbio();
-	chp->ch_flags |= WDCF_TH_RUN;
-	splx(s);
-	atabusconfig(atabus_sc);
-	for(;;) {
-		s = splbio();
-		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
-		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
-		     chp->ch_queue->queue_freeze == 0)) {
-			chp->ch_flags &= ~WDCF_TH_RUN;
-			tsleep(&chp->thread, PRIBIO, "atath", 0);
-			chp->ch_flags |= WDCF_TH_RUN;
-		}
-		splx(s);
-		if (chp->ch_flags & WDCF_SHUTDOWN)
-			break;
-		s = splbio();
-		if (chp->ch_flags & WDCF_TH_RESET) {
-			int drive;
-			(void) wdcreset(chp, RESET_SLEEP);
-			for (drive = 0; drive < 2; drive++) {
-				chp->ch_drive[drive].state = 0;
-			}
-			chp->ch_flags &= ~WDCF_TH_RESET;
-			chp->ch_queue->queue_freeze--;
-			wdcstart(chp);
-		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
-		    chp->ch_queue->queue_freeze == 1) {
-			/*
-			 * caller has bumped queue_freeze, decrease it
-			 */
-			chp->ch_queue->queue_freeze--;
-			xfer = chp->ch_queue->sc_xfer.tqh_first;
-#ifdef DIAGNOSTIC
-			if (xfer == NULL)
-				panic("channel active with no xfer ?");
-#endif
-			xfer->c_start(chp, xfer);
-		} else if (chp->ch_queue->queue_freeze > 1) {
-			panic("queue_freeze");
-		}
-		splx(s);
-	}
-	chp->thread = NULL;
-	wakeup(&chp->ch_flags);
-	kthread_exit(0);
-}
+/* Test to see controller with at last one attached drive is there.
+ * Returns a bit for each possible drive found (0x01 for drive 0,
+ * 0x02 for drive 1).
+ * Logic:
+ * - If a status register is at 0xff, assume there is no drive here
+ *   (ISA has pull-up resistors).  Similarly if the status register has
+ *   the value we last wrote to the bus (for IDE interfaces without pullups).
+ *   If no drive at all -> return.
+ * - reset the controller, wait for it to complete (may take up to 31s !).
+ *   If timeout -> return.
+ * - test ATA/ATAPI signatures. If at last one drive found -> return.
+ * - try an ATA command on the master.
+ */
 
 void
 atabusconfig(atabus_sc)
@@ -524,7 +402,7 @@ atabusconfig(atabus_sc)
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
-		    &adev, wdprint);
+		    &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			wdc_probe_caps(&chp->ch_drive[i]);
 		else
@@ -578,33 +456,6 @@ out:
 	if (need_delref)
 		wdc_delref(chp);
 }
-
-
-int
-wdprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_device *adev = aux;
-	if (pnp)
-		aprint_normal("wd at %s", pnp);
-	aprint_normal(" drive %d", adev->adev_drv_data->drive);
-	return (UNCONF);
-}
-
-/* Test to see controller with at last one attached drive is there.
- * Returns a bit for each possible drive found (0x01 for drive 0,
- * 0x02 for drive 1).
- * Logic:
- * - If a status register is at 0xff, assume there is no drive here
- *   (ISA has pull-up resistors).  Similarly if the status register has
- *   the value we last wrote to the bus (for IDE interfaces without pullups).
- *   If no drive at all -> return.
- * - reset the controller, wait for it to complete (may take up to 31s !).
- *   If timeout -> return.
- * - test ATA/ATAPI signatures. If at last one drive found -> return.
- * - try an ATA command on the master.
- */
 
 int
 wdcprobe(chp)
@@ -815,67 +666,6 @@ wdcattach(chp)
 	chp->atabus = config_found(&chp->wdc->sc_dev, chp, atabusprint);
 }
 
-/*
- * Call activate routine of underlying devices.
- */
-int
-atabusactivate(self, act)
-	struct device *self;
-	enum devact act;
-{
-	struct atabus_softc *atabus_sc = (struct atabus_softc *)self;
-	struct channel_softc *chp = atabus_sc->sc_chan;
-	struct device *sc = 0;
-	int s, i, error = 0;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * We might call deactivate routine for
-		 * the children of atapibus twice (once via
-		 * atapibus, once directly), but since
-		 * config_deactivate maintains DVF_ACTIVE flag,
-		 * it's safe.
-		 */
-		sc = chp->atapibus;
-		if (sc != NULL) {
-			error = config_deactivate(sc);
-			if (error != 0)
-				goto out;
-		}
-
-		for (i = 0; i < 2; i++) {
-			sc = chp->ch_drive[i].drv_softc;
-			WDCDEBUG_PRINT(("atabusactivate: %s:"
-			    " deactivating %s\n", atabus_sc->sc_dev.dv_xname,
-			    sc == NULL ? "nodrv" : sc->dv_xname),
-			    DEBUG_DETACH);
-			if (sc != NULL) {
-				error = config_deactivate(sc);
-				if (error != 0)
-					goto out;
-			}
-		}
-		break;
-	}
-
-out:
-	splx(s);
-
-#ifdef WDCDEBUG
-	if (sc && error != 0)
-		WDCDEBUG_PRINT(("atabusactivate: %s: "
-		    "error %d deactivating %s\n", atabus_sc->sc_dev.dv_xname,
-		    error, sc->dv_xname), DEBUG_DETACH);
-#endif
-	return (error);
-}
-
 int wdcactivate(self, act)
 	struct device *self;
 	enum devact act;
@@ -901,65 +691,6 @@ int wdcactivate(self, act)
 	return (error);
 }
 	
-
-int
-atabusdetach(self, flags)
-	struct device *self;
-	int flags;
-{
-	struct atabus_softc *atabus_sc = (struct atabus_softc *)self;
-	struct channel_softc *chp = atabus_sc->sc_chan;
-	struct device *sc = 0;
-	int i, error = 0;
-
-	/* shutdown channel */
-	chp->ch_flags |= WDCF_SHUTDOWN;
-	wakeup(&chp->thread);
-	while (chp->thread != NULL)
-		tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
-
-	/*
-	 * Detach atapibus and its children.
-	 */
-	sc = chp->atapibus;
-	if (sc != NULL) {
-		WDCDEBUG_PRINT(("atabusdetach: %s: detaching %s\n",
-		    atabus_sc->sc_dev.dv_xname, sc->dv_xname), DEBUG_DETACH);
-		error = config_detach(sc, flags);
-		if (error != 0)
-			goto out;
-	}
-
-	/*
-	 * Detach our other children.
-	 */
-	for (i = 0; i < 2; i++) {
-		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
-			continue;
-		sc = chp->ch_drive[i].drv_softc;
-		WDCDEBUG_PRINT(("atabusdetach: %s: detaching %s\n",
-		    atabus_sc->sc_dev.dv_xname,
-		    sc == NULL ? "nodrv" : sc->dv_xname),
-		    DEBUG_DETACH);
-		if (sc != NULL) {
-			error = config_detach(sc, flags);
-			if (error != 0)
-				goto out;
-		}
-	}
-
-	wdc_kill_pending(chp);
-
-out:
-#ifdef WDCDEBUG
-	if (sc && error != 0)
-		WDCDEBUG_PRINT(("atabusdetach: %s: error %d detaching %s\n",
-		    atabus_sc->sc_dev.dv_xname, error, sc->dv_xname),
-		    DEBUG_DETACH);
-#endif
-	return (error);
-}
-
 int
 wdcdetach(self, flags)
 	struct device *self;
