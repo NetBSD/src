@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2001/09/21 07:11:33 enami Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2001/12/01 14:10:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,6 +53,7 @@ int	 queryuser __P((char **));
 PLAN	*c_amin __P((char ***, int));
 PLAN	*c_atime __P((char ***, int));
 PLAN	*c_cmin __P((char ***, int));
+PLAN	*c_cnewer __P((char ***, int));
 PLAN	*c_ctime __P((char ***, int));
 PLAN	*c_depth __P((char ***, int));
 PLAN	*c_exec __P((char ***, int));
