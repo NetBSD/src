@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.91 1999/04/11 04:04:05 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.92 1999/04/15 21:21:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 1999/04/11 04:04:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 1999/04/15 21:21:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,32 +808,15 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
     {
-#if defined(MULTIPROCESSOR)
-	extern pt_entry_t *prom_lev1map;		/* XXX */
-#else
 	extern pt_entry_t prom_pte;			/* XXX */
-#endif
 	extern int prom_mapped;				/* XXX */
 
 	if (pmap_uses_prom_console()) {
 		/*
 		 * XXX Save old PTE so we can remap the PROM, if
 		 * XXX necessary.
-		 * XXX
-		 * XXX On MP systems, the processor using the PROM
-		 * XXX actually has to switch to another page table
-		 * XXX so as to avoid stomping on an existing mapping
-		 * XXX which may be shared with another processor.
 		 */
-#if defined(MULTIPROCESSOR)
-		prom_lev1map = (pt_entry_t *)
-		    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
-		memcpy(prom_lev1map, kernel_lev1map,
-		    sizeof(pt_entry_t) * NPTEPG);
-		prom_lev1map[0] = *(pt_entry_t *)ptaddr & ~PG_ASM;
-#else
 		prom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;
-#endif
 	}
 	prom_mapped = 0;
 
