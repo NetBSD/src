@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.3.4.1 1993/09/24 08:54:56 mycroft Exp $
+ *	$Id: ip_input.c,v 1.3.4.2 1993/11/14 17:54:46 mycroft Exp $
  */
 
 #include "param.h"
@@ -144,7 +144,7 @@ ipintr()
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
 	int hlen, s;
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 	static int busy = 0;
 
 	if (busy)
@@ -160,7 +160,7 @@ next:
 	IF_DEQUEUE(&ipintrq, m);
 	splx(s);
 	if (m == 0) {
-#ifdef PARANOID
+#ifdef DIAGNOSTIC
 		--busy;
 #endif
 		return;
