@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.28 1997/05/06 00:31:52 lukem Exp $
+#	$NetBSD: SPOT,v 1.29 1997/05/07 00:32:46 lukem Exp $
 #
 # SPOT
 
@@ -63,7 +63,7 @@ options 	GATEWAY		# IP packet forwarding
 #options 	CCITT,LLC,HDLC	# X.25
 options 	PPP_BSDCOMP	# PPP header compression
 options 	PPP_DEFLATE	# PPP-Deflate compression
-options  	PFIL_HOOKS	# pfil(9) packet filter hooks.
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 
 # Mac-specific options
 #options 	M68040
