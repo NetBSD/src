@@ -1,5 +1,5 @@
 #
-#	$NetBSD: rd_bin.list,v 1.2 1995/10/13 16:38:36 gwr Exp $
+#	$NetBSD: rd_bin.list,v 1.2.6.1 1996/09/13 20:27:07 gwr Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -10,6 +10,7 @@ COPY	${OBJDIR}/rd_bin	rd_bin
 LINK	rd_bin			sbin/init
 LINK	rd_bin			sbin/ifconfig
 LINK	rd_bin			sbin/edlabel
+LINK	rd_bin			sbin/route
 LINK	rd_bin			bin/dd
 LINK	rd_bin			bin/ls
 LINK	rd_bin			bin/rsh
@@ -40,5 +41,6 @@ LINK	rd_bin			bin/mv
 LINK	rd_bin			bin/pwd
 # LINK	rd_bin			bin/rm
 LINK	rd_bin			bin/sync
+LINK	rd_bin			bin/zcat
 
 SPECIAL  rm rd_bin
