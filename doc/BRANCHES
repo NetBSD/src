@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.19 2005/01/25 13:14:56 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.20 2005/02/13 20:20:24 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -657,6 +657,70 @@ Base Tag:	yamt-km-base
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		kernel
 Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
+
+		works enough to go to multiuser:
+			alpha
+			i386
+			pc532 (tested by simonb@)
+
+		buildable:
+			src/sys/arch/acorn26/conf/GENERIC
+			src/sys/arch/acorn32/conf/GENERIC
+			src/sys/arch/algor/conf/P6032
+			src/sys/arch/alpha/conf/GENERIC
+			src/sys/arch/alpha/conf/GENERIC.MP
+			src/sys/arch/amd64/conf/GENERIC
+			src/sys/arch/amd64/conf/GENERIC.MP
+			src/sys/arch/amiga/conf/GENERIC
+			src/sys/arch/arc/conf/GENERIC
+			src/sys/arch/atari/conf/MILAN-PCIIDE
+			src/sys/arch/bebox/conf/GENERIC
+			src/sys/arch/cats/conf/GENERIC
+			src/sys/arch/cesfic/conf/GENERIC
+			src/sys/arch/cobalt/conf/GENERIC
+			src/sys/arch/dreamcast/conf/GENERIC
+			src/sys/arch/evbarm/conf/TS7200
+			src/sys/arch/evbppc/conf/WALNUT
+			src/sys/arch/evbsh3/conf/COMPUTEXEVB
+			src/sys/arch/evbsh5/conf/CAYMAN64
+			src/sys/arch/hp300/conf/GENERIC
+			src/sys/arch/hp700/conf/GENERIC
+			src/sys/arch/hpcarm/conf/JORNADA728
+			src/sys/arch/hpcmips/conf/GENERIC
+			src/sys/arch/hpcsh/conf/GENERIC
+			src/sys/arch/hpcsh/conf/HPW650PA
+			src/sys/arch/i386/conf/GENERIC
+			src/sys/arch/i386/conf/GENERIC.MP
+			src/sys/arch/ibmnws/conf/GENERIC
+			src/sys/arch/iyonix/conf/GENERIC
+			src/sys/arch/luna68k/conf/GENERIC
+			src/sys/arch/mac68k/conf/GENERIC
+			src/sys/arch/macppc/conf/GENERIC
+			src/sys/arch/macppc/conf/GENERIC.MP
+			src/sys/arch/mipsco/conf/GENERIC
+			src/sys/arch/mvme68k/conf/GENERIC
+			src/sys/arch/netwinder/conf/GENERIC
+			src/sys/arch/news68k/conf/GENERIC
+			src/sys/arch/newsmips/conf/GENERIC
+			src/sys/arch/next68k/conf/GENERIC
+			src/sys/arch/ofppc/conf/GENERIC
+			src/sys/arch/pc532/conf/GENERIC
+			src/sys/arch/pmax/conf/GENERIC
+			src/sys/arch/prep/conf/GENERIC
+			src/sys/arch/sandpoint/conf/GENERIC
+			src/sys/arch/sbmips/conf/GENERIC
+			src/sys/arch/sgimips/conf/GENERIC32_IP3x
+			src/sys/arch/shark/conf/GENERIC
+			src/sys/arch/sparc/conf/GENERIC
+			src/sys/arch/sparc/conf/GENERIC.MP
+			src/sys/arch/sparc64/conf/GENERIC
+			src/sys/arch/sparc64/conf/GENERIC.MP
+			src/sys/arch/sun2/conf/GENERIC
+			src/sys/arch/sun3/conf/GENERIC
+			src/sys/arch/vax/conf/GENERIC
+			src/sys/arch/vax/conf/GENERIC.MP
+			src/sys/arch/x68k/conf/GENERIC
+			src/sys/arch/xen/conf/GENERIC
 
 
 # Other:
