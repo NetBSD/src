@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.195 2001/12/28 01:32:41 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.196 2001/12/28 01:40:50 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -380,9 +380,9 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	# We don't use INSTALL_SYMLINK here because this is just
-	# happening inside the build directory/objdir. XXX Why does
-	# this spend so much effort on libraries that aren't live??? XXX
+#  We don't use INSTALL_SYMLINK here because this is just
+#  happening inside the build directory/objdir. XXX Why does
+#  this spend so much effort on libraries that aren't live??? XXX
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
 	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
