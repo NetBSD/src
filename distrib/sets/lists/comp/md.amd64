@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.5 2003/06/05 15:45:17 jwise Exp $
+# $NetBSD: md.amd64,v 1.6 2003/09/27 02:09:36 mrg Exp $
 ./usr/include/amd64			comp-c-include
 ./usr/include/amd64/ansi.h		comp-c-include
 ./usr/include/amd64/aout_machdep.h	comp-c-include
@@ -77,8 +77,8 @@
 ./usr/include/x86/psl.h			comp-c-include
 ./usr/include/x86/specialreg.h		comp-c-include
 ./usr/include/x86/trap.h		comp-c-include
-./usr/lib/libx86_64.a		comp-c-lib
-./usr/lib/libx86_64.a		comp-c-piclib
-./usr/lib/libx86_64.a		comp-c-proflib
+./usr/lib/libx86_64.a			comp-c-lib
 ./usr/lib/libx86_64.so			comp-sys-shlib
+./usr/lib/libx86_64_p.a			comp-c-piclib
+./usr/lib/libx86_64_pic.a		comp-c-proflib
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib
