@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1994/11/30 22:02:47 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41.2.1 1994/11/30 22:35:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1487,10 +1487,7 @@ pmap_virtual_space(v_start, v_end)
  * possible return values for pmap_page_index() for
  * all addresses provided by pmap_next_page().  This
  * return value is used to allocate per-page data.
- *
- * Note that a machine with a "hole" in physical memory
- * may include the pages in the hole in this count, and
- * skip the pages in the hole in pmap_next_page().
+ * It is OK to overestimate, so I ignore the hole.
  */
 u_int
 pmap_free_pages()
@@ -1506,9 +1503,6 @@ pmap_free_pages()
  * the next available one at paddr and return TRUE.  Otherwise,
  * return FALSE to indicate that there are no more free pages.
  * Note that avail_next is set to avail_start in pmap_bootstrap().
- *
- * Imporant:  The page indices of the pages returned here must be
- * in ascending order.
  */
 int
 pmap_next_page(paddr)
@@ -1533,12 +1527,9 @@ pmap_next_page(paddr)
  *
  * Given a physical address, return a page index.
  *
- * There can be some values that we never return (i.e. a hole)
- * as long as the range of indices returned by this function
- * is smaller than the value returned by pmap_free_pages().
- * The returned index does NOT need to start at zero.
- *
- * XXX - Should make this a macro in pmap.h
+ * The page indices must form a contiguous range
+ * corresponding to the physical addresses given out
+ * by pmap_next_page() -- until the VM code is fixed.
  */
 u_long
 pmap_page_index(pa)
@@ -1549,12 +1540,18 @@ pmap_page_index(pa)
 #ifdef	DIAGNOSTIC
 	if (pa < avail_start || pa >= avail_end)
 		panic("pmap_page_index: pa=0x%x", pa);
-	if (hole_start && pa >= hole_start) {
-		/* Make sure pa is not in the hole. */
-		if (pa < (hole_start + hole_size))
-			panic("pmap_page_index: pa=0x%x", pa);
-	}
 #endif
+
+	if (hole_start) {
+		if (pa >= hole_start) {
+#ifdef	DIAGNOSTIC
+			/* Make sure pa is not in the hole. */
+			if (pa < (hole_start + hole_size))
+				panic("pmap_page_index: pa=0x%x", pa);
+#endif
+			pa -= hole_size;
+		}
+	}
 
 	return (sun3_btop(pa));
 }
