@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.9 2001/06/11 13:48:28 rearnsha Exp $
+#	$NetBSD: files.netwinder,v 1.10 2001/06/11 22:25:11 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,7 +21,6 @@ defopt	COMPAT_OLD_BOOTLOADER
 # Architectures and core logic
 defopt	EBSA285
 defopt	NETWINDER
-defopt	FOOTBRIDGE
 
 define todservice {}
 
