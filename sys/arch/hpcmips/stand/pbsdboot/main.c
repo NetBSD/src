@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2000/04/16 03:17:59 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2000/04/23 10:20:50 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.13.2 2000.04.16\r\n")
+	TEXT("Version 1.13.3 2000.04.23\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -197,6 +197,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R520"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520 },
+	{ TEXT("NEC MC/R530(256 colors)"), BIFB_D8_00,
+		640, 240, 640, 0xa1d4c00,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("MobileGearII MC/R530"), BIFB_D16_0000,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
