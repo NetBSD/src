@@ -1,4 +1,4 @@
-/*	$NetBSD: phantstruct.h,v 1.2 1995/03/24 04:00:11 cgd Exp $	*/
+/*	$NetBSD: phantstruct.h,v 1.3 1999/09/08 21:17:55 jsm Exp $	*/
 
 /*
  * phantstruct.h - structure definitions for Phantasia
@@ -121,6 +121,6 @@ struct	charstats			/* character type statistics */
 
 struct menuitem				/* menu item for purchase */
     {
-    char	*item;		/* menu item name */
+    const char	*item;		/* menu item name */
     double	cost;		/* cost of item */
     };

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1999/02/10 00:45:45 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.10 1999/09/08 21:17:58 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -214,7 +214,7 @@ struct File {
 };
 
 struct ship {
-	char *shipname;			/* 0 */
+	const char *shipname;		/* 0 */
 	struct shipspecs *specs;	/* 2 */
 	unsigned char nationality;	/* 4 */
 	short shiprow;			/* 6 */
@@ -228,7 +228,7 @@ struct scenario {
 	char windspeed;			/* 2 */
 	char windchange;		/* 4 */
 	unsigned char vessels;		/* 12 */
-	char *name;			/* 14 */
+	const char *name;		/* 14 */
 	struct ship ship[NSHIP];	/* 16 */
 };
 extern struct scenario scene[];
@@ -266,29 +266,29 @@ struct ship *ls;		/* &cc->ship[cc->vessels] */
 struct windeffects {
 	char A, B, C, D;
 };
-struct windeffects WET[7][6];
+const struct windeffects WET[7][6];
 
 struct Tables {
 	char H, G, C, R;
 };
-struct Tables RigTable[11][6];
-struct Tables HullTable[11][6];
+const struct Tables RigTable[11][6];
+const struct Tables HullTable[11][6];
 
-char AMMO[9][4];
-char HDT[9][10];
-char HDTrake[9][10];
-char QUAL[9][5];
-char MT[9][3];
+const char AMMO[9][4];
+const char HDT[9][10];
+const char HDTrake[9][10];
+const char QUAL[9][5];
+const char MT[9][3];
 
-extern char *countryname[];
-extern char *classname[];
-extern char *directionname[];
-extern char *qualname[];
-extern char loadname[];
+extern const char *const countryname[];
+extern const char *const classname[];
+extern const char *const directionname[];
+extern const char *const qualname[];
+extern const char loadname[];
 
-extern char rangeofshot[];
+extern const char rangeofshot[];
 
-extern char dr[], dc[];
+extern const char dr[], dc[];
 
 int winddir;
 int windspeed;
@@ -314,10 +314,10 @@ int next __P((void));
 void thinkofgrapples __P((void));
 void checkup __P((void));
 void prizecheck __P((void));
-int strend __P((char *));
+int strend __P((const char *));
 void closeon __P((struct ship *, struct ship *, char[], int, int, int));
 int score __P((char[], struct ship *, struct ship *, int));
-void move_ship __P((char *, struct ship *, unsigned char *, short *, short *, char *));
+void move_ship __P((const char *, struct ship *, unsigned char *, short *, short *, char *));
 void try __P((char[], char [], int, int, int, int, int, struct ship *,
     struct ship *, int *, int));
 void rmend __P((char *));
@@ -383,7 +383,7 @@ void unfoulplayer __P((void));
 void changesail __P((void));
 void acceptsignal __P((void));
 void lookout __P((void));
-char *saywhat __P((struct ship *, int));
+const char *saywhat __P((struct ship *, int));
 void eyeball __P((struct ship *));
 
 /* pl_5.c */
@@ -405,10 +405,10 @@ void Signal __P((const char *, struct ship *, ...))
 void Msg __P((const char *, ...))
 	 __attribute__((__format__(__printf__,1,2)));
 void Scroll __P((void));
-void prompt __P((char *, struct ship *));
+void prompt __P((const char *, struct ship *));
 void endprompt __P((int));
-int sgetch __P((char *, struct ship *, int));
-void sgetstr __P((char *, char *, int));
+int sgetch __P((const char *, struct ship *, int));
+void sgetstr __P((const char *, char *, int));
 void draw_screen __P((void));
 void draw_view __P((void));
 void draw_turn __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1998/02/03 05:40:45 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1998/02/03 05:40:45 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1999/09/08 21:17:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ char	*prog;			/* name of program */
 FILE	*debugfp;		/* file for debug output */
 FILE	*inputfp;		/* file for debug input */
 
-char	pdir[4]		= "-\\|/";
+const char	pdir[4]		= "-\\|/";
 char	fmtbuf[128];
 
 struct	spotstr	board[BAREA];		/* info for board */
@@ -81,7 +81,7 @@ u_char	overlap[FAREA * FAREA];		/* true if frame [a][b] overlap */
 short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
-char	*plyr[2];			/* who's who */
+const char	*plyr[2];			/* who's who */
 
 int	main __P((int, char *[]));
 
@@ -93,7 +93,7 @@ main(argc, argv)
 	char buf[128];
 	int color, curmove, i, ch;
 	int input[2];
-	static char *fmt[2] = {
+	static const char *const fmt[2] = {
 		"%3d %-6s",
 		"%3d        %-6s"
 	};
@@ -497,7 +497,7 @@ syntax:
  */
 void
 dlog(str)
-	char *str;
+	const char *str;
 {
 
 	if (debugfp)
@@ -510,7 +510,7 @@ dlog(str)
 
 void
 log(str)
-	char *str;
+	const char *str;
 {
 
 	if (debugfp)
@@ -543,7 +543,7 @@ quitsig(dummy)
  */
 void
 panic(str)
-	char *str;
+	const char *str;
 {
 	fprintf(stderr, "%s: %s\n", prog, str);
 	fputs("resign\n", stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1998/08/30 09:19:39 veego Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1999/09/08 21:17:54 jsm Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -10,7 +10,7 @@
 void
 movelevel()
 {
-	struct charstats *statptr;	/* for pointing into Stattable */
+	const struct charstats *statptr; /* for pointing into Stattable */
 	double  new;		/* new level */
 	double  inc;		/* increment between new and old levels */
 
@@ -60,15 +60,15 @@ movelevel()
 		death("Old age");
 }
 
-char   *
+const char   *
 descrlocation(playerp, shortflag)
 	struct player *playerp;
 	bool    shortflag;
 {
 	double  circle;		/* corresponding circle for coordinates */
 	int     quadrant;	/* quandrant of grid */
-	char   *label;		/* pointer to place name */
-	static char *nametable[4][4] =	/* names of places */
+	const char   *label;	/* pointer to place name */
+	static const char *const nametable[4][4] =	/* names of places */
 	{
 		{"Anorien", "Ithilien", "Rohan", "Lorien"},
 		{"Gondor", "Mordor", "Dunland", "Rovanion"},
@@ -412,7 +412,7 @@ displaystats()
 void
 allstatslist()
 {
-	static char *flags[] =	/* to print value of some bools */
+	static const char *const flags[] = /* to print value of some bools */
 	{
 		"False",
 		" True"
@@ -442,13 +442,13 @@ allstatslist()
 	    flags[(int)Player.p_palantir]);
 }
 
-char   *
+const char   *
 descrtype(playerp, shortflag)
 	struct player *playerp;
 	bool    shortflag;
 {
 	int     type;		/* for caluculating result subscript */
-	static char *results[] =/* description table */
+	static const char *const results[] =/* description table */
 	{
 		" Magic User", " MU",
 		" Fighter", " F ",
@@ -508,7 +508,7 @@ descrtype(playerp, shortflag)
 
 long
 findname(name, playerp)
-	char   *name;
+	const char   *name;
 	struct player *playerp;
 {
 	long    loc = 0;	/* location in the file */
@@ -576,11 +576,11 @@ leavegame()
 
 void
 death(how)
-	char   *how;
+	const char   *how;
 {
 	FILE   *fp;		/* for updating various files */
 	int     ch;		/* input */
-	static char *deathmesg[] =
+	static const char *const deathmesg[] =
 	/* add more messages here, if desired */
 	{
 		"You have been wounded beyond repair.  ",
@@ -935,7 +935,7 @@ readmessage()
 
 void
 error(whichfile)
-	char   *whichfile;
+	const char   *whichfile;
 {
 	int     (*funcp) __P((const char *,...));
 
@@ -973,7 +973,7 @@ ill_sig(whichsig)
 	/* NOTREACHED */
 }
 
-char *
+const char *
 descrstatus(playerp)
 	struct player *playerp;
 {

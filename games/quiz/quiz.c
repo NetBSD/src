@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.13 1998/09/13 15:27:29 hubertf Exp $	*/
+/*	$NetBSD: quiz.c,v 1.14 1999/09/08 21:17:56 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.13 1998/09/13 15:27:29 hubertf Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.14 1999/09/08 21:17:56 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,12 +69,12 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static u_int qsize;
 
-char	*appdstr __P((char *, char *, size_t));
+char	*appdstr __P((char *, const char *, size_t));
 void	 downcase __P((char *));
 void	 get_cats __P((char *, char *));
-void	 get_file __P((char *));
+void	 get_file __P((const char *));
 int	 main __P((int, char *[]));
-char	*next_cat __P((char *));
+const char	*next_cat __P((const char *));
 void	 quiz __P((void));
 void	 score __P((u_int, u_int, u_int));
 void	 show_index __P((void));
@@ -86,7 +86,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	char *indexfile;
+	const char *indexfile;
 
 	indexfile = _PATH_QUIZIDX;
 	while ((ch = getopt(argc, argv, "i:t")) != -1)
@@ -122,7 +122,7 @@ main(argc, argv)
 
 void
 get_file(file)
-	char *file;
+	const char *file;
 {
 	FILE *fp;
 	QE *qp;
@@ -164,7 +164,7 @@ void
 show_index()
 {
 	QE *qp;
-	char *p, *s;
+	const char *p, *s;
 	FILE *pf;
 
 	if ((pf = popen(_PATH_PAGER, "w")) == NULL)
@@ -192,7 +192,7 @@ get_cats(cat1, cat2)
 {
 	QE *qp;
 	int i;
-	char *s;
+	const char *s;
 
 	downcase(cat1);
 	downcase(cat2);
@@ -227,7 +227,8 @@ quiz()
 	size_t len;
 	u_int guesses, rights, wrongs;
 	int next;
-	char *answer, *s, *t, question[LINE_SZ];
+	char *answer, *t, question[LINE_SZ];
+	const char *s;
 
 	srandom(time(NULL));
 	guesses = rights = wrongs = 0;
@@ -301,9 +302,9 @@ quiz()
 	score(rights, wrongs, guesses);
 }
 
-char *
+const char *
 next_cat(s)
-	char *	s;
+	const char *	s;
 {
 	int esc;
 
@@ -328,10 +329,11 @@ next_cat(s)
 char *
 appdstr(s, tp, len)
 	char *s;
-	char *tp;
+	const char *tp;
 	size_t len;
 {
-	char *mp, *sp;
+	char *mp;
+	const char *sp;
 	int ch;
 	char *m;
 
