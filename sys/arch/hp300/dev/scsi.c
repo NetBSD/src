@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.5 1995/10/09 08:07:37 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.6 1995/10/16 08:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -1229,4 +1229,24 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	return (stat);
 }
 #endif
+
+/*
+ * Copy a counted string, trimming the trailing space, and turn
+ * the result into a C-style string.
+ */
+void    
+scsi_str(src, dst, len)
+	char *src, *dst;
+	size_t len;
+{
+
+	while (src[len - 1] == ' ') {
+		if (--len == 0) {
+			*dst = '\0';
+			return;
+		}
+	}
+	bcopy(src, dst, len);
+	dst[len] = '\0';
+}
 #endif
