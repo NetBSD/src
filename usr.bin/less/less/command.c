@@ -1,5 +1,7 @@
+/*	$NetBSD: command.c,v 1.3 1997/04/22 14:16:18 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +39,7 @@
 extern int erase_char, kill_char;
 extern int sigs;
 extern int quit_at_eof;
+extern int squished;
 extern int hit_eof;
 extern int sc_width;
 extern int sc_height;
@@ -44,25 +47,19 @@ extern int swindow;
 extern int jump_sline;
 extern int quitting;
 extern int wscroll;
-extern int nohelp;
 extern int top_scroll;
 extern int ignore_eoi;
+extern int secure;
+extern int hshift;
 extern char *every_first_cmd;
 extern char *curr_altfilename;
 extern char version[];
 extern struct scrpos initial_scrpos;
 extern IFILE curr_ifile;
-#if CMD_HISTORY
-extern void *ml_search;
-extern void *ml_examine;
+extern void constant *ml_search;
+extern void constant *ml_examine;
 #if SHELL_ESCAPE || PIPEC
-extern void *ml_shell;
-#endif
-#else
-/* No CMD_HISTORY */
-#define	ml_search	NULL
-#define	ml_examine	NULL
-#define	ml_shell  	NULL
+extern void constant *ml_shell;
 #endif
 #if EDITOR
 extern char *editor;
@@ -73,7 +70,7 @@ extern int be_helpful;
 
 public int helpprompt;
 
-static char ungot[100];
+static char ungot[UNGOT_SIZE];
 static char *ungotp = NULL;
 #if SHELL_ESCAPE
 static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
@@ -111,11 +108,9 @@ start_mca(action, prompt, mlist)
 	void *mlist;
 {
 	mca = action;
-	clear_bot();
+	clear_cmd();
 	cmd_putstr(prompt);
-#if CMD_HISTORY
 	set_mlist(mlist);
-#endif
 }
 
 	public int
@@ -135,24 +130,24 @@ mca_search()
 	else
 		mca = A_B_SEARCH;
 
-	clear_bot();
+	clear_cmd();
 
+	if (search_type & SRCH_NO_MATCH)
+		cmd_putstr("Non-match ");
 	if (search_type & SRCH_FIRST_FILE)
-		cmd_putstr("@");
-
+		cmd_putstr("First-file ");
 	if (search_type & SRCH_PAST_EOF)
-		cmd_putstr("*");
-
-	if (search_type & SRCH_NOMATCH)
-		cmd_putstr("!");
+		cmd_putstr("EOF-ignore ");
+	if (search_type & SRCH_NO_MOVE)
+		cmd_putstr("Keep-pos ");
+	if (search_type & SRCH_NO_REGEX)
+		cmd_putstr("Regex-off ");
 
 	if (search_type & SRCH_FORW)
 		cmd_putstr("/");
 	else
 		cmd_putstr("?");
-#if CMD_HISTORY
 	set_mlist(ml_search);
-#endif
 }
 
 /*
@@ -197,6 +192,8 @@ exec_mca()
 		break;
 #if EXAMINE
 	case A_EXAMINE:
+		if (secure)
+			break;
 		edit_list(cbuf);
 		break;
 #endif
@@ -214,15 +211,18 @@ exec_mca()
 			shellcmd = fexpand(cbuf);
 		}
 
+		if (secure)
+			break;
 		if (shellcmd == NULL)
-			lsystem("");
+			lsystem("", "!done");
 		else
-			lsystem(shellcmd);
-		error("!done", NULL_PARG);
+			lsystem(shellcmd, "!done");
 		break;
 #endif
 #if PIPEC
 	case A_PIPE:
+		if (secure)
+			break;
 		(void) pipe_mark(pipec, cbuf);
 		error("|done", NULL_PARG);
 		break;
@@ -334,7 +334,7 @@ mca_char(c)
 		 * Special case for search commands.
 		 * Certain characters as the first char of 
 		 * the pattern have special meaning:
-		 *	!  Toggle the NOMATCH flag
+		 *	!  Toggle the NO_MATCH flag
 		 *	*  Toggle the PAST_EOF flag
 		 *	@  Toggle the FIRST_FILE flag
 		 */
@@ -347,14 +347,23 @@ mca_char(c)
 		flag = 0;
 		switch (c)
 		{
-		case '!':
-			flag = SRCH_NOMATCH;
+		case CONTROL('E'): /* ignore END of file */
+		case '*':
+			flag = SRCH_PAST_EOF;
 			break;
+		case CONTROL('F'): /* FIRST file */
 		case '@':
 			flag = SRCH_FIRST_FILE;
 			break;
-		case '*':
-			flag = SRCH_PAST_EOF;
+		case CONTROL('K'): /* KEEP position */
+			flag = SRCH_NO_MOVE;
+			break;
+		case CONTROL('R'): /* Don't use REGULAR EXPRESSIONS */
+			flag = SRCH_NO_REGEX;
+			break;
+		case CONTROL('N'): /* NOT match */
+		case '!':
+			flag = SRCH_NO_MATCH;
 			break;
 		}
 		if (flag != 0)
@@ -405,22 +414,11 @@ mca_char(c)
 }
 
 /*
- * Display the appropriate prompt.
+ * Make sure the screen is displayed.
  */
 	static void
-prompt()
+make_display()
 {
-	register char *p;
-
-	if (ungotp != NULL && ungotp > ungot)
-	{
-		/*
-		 * No prompt necessary if commands are from 
-		 * ungotten chars rather than from the user.
-		 */
-		return;
-	}
-
 	/*
 	 * If nothing is displayed yet, display starting from initial_scrpos.
 	 */
@@ -444,18 +442,51 @@ prompt()
 		repaint();
 		top_scroll = save_top_scroll;
 	}
+}
+
+/*
+ * Display the appropriate prompt.
+ */
+	static void
+prompt()
+{
+	register char *p;
+
+	if (ungotp != NULL && ungotp > ungot)
+	{
+		/*
+		 * No prompt necessary if commands are from 
+		 * ungotten chars rather than from the user.
+		 */
+		return;
+	}
+
+	/*
+	 * Make sure the screen is displayed.
+	 */
+	make_display();
 
 	/*
 	 * If the -E flag is set and we've hit EOF on the last file, quit.
 	 */
 	if (quit_at_eof == OPT_ONPLUS && hit_eof && 
+	    !(ch_getflags() & CH_HELPFILE) && 
 	    next_ifile(curr_ifile) == NULL_IFILE)
 		quit(QUIT_OK);
+#if 0 /* This doesn't work well because some "te"s clear the screen. */
+	/*
+	 * If the -e flag is set and we've hit EOF on the last file,
+	 * and the file is squished (shorter than the screen), quit.
+	 */
+	if (quit_at_eof && squished &&
+	    next_ifile(curr_ifile) == NULL_IFILE)
+		quit(QUIT_OK);
+#endif
 
 	/*
 	 * Select the proper prompt and display it.
 	 */
-	clear_bot();
+	clear_cmd();
 	if (helpprompt) {
 		so_enter();
 		putstr("[Press 'h' for instructions.]");
@@ -605,7 +636,14 @@ multi_search(pattern, n)
 
 	for (;;)
 	{
-		if ((n = search(search_type, pattern, n)) == 0)
+		n = search(search_type, pattern, n);
+		/*
+		 * The SRCH_NO_MOVE flag doesn't "stick": it gets cleared
+		 * after being used once.  This allows "n" to work after
+		 * using a /@@ search.
+		 */
+		search_type &= ~SRCH_NO_MOVE;
+		if (n == 0)
 			/*
 			 * Found it.
 			 */
@@ -648,8 +686,7 @@ multi_search(pattern, n)
 		/*
 		 * Restore the file we were originally viewing.
 		 */
-		if (edit_ifile(save_ifile))
-			quit(QUIT_ERROR);
+		reedit_ifile(save_ifile);
 	}
 }
 
@@ -663,6 +700,7 @@ commands()
 	register int c;
 	register int action;
 	register char *cbuf;
+	int newaction;
 	int save_search_type;
 	char *s;
 	char tbuf[2];
@@ -670,6 +708,7 @@ commands()
 
 	search_type = SRCH_FORW;
 	wscroll = (sc_height + 1) / 2;
+	newaction = A_NOACTION;
 
 	for (;;)
 	{
@@ -695,77 +734,85 @@ commands()
 		prompt();
 		if (sigs)
 			continue;
-		c = getcc();
+		if (newaction == A_NOACTION)
+			c = getcc();
 
 	again:
 		if (sigs)
 			continue;
 
-		/*
-		 * If we are in a multicharacter command, call mca_char.
-		 * Otherwise we call fcmd_decode to determine the
-		 * action to be performed.
-		 */
-		if (mca)
-			switch (mca_char(c))
-			{
-			case MCA_MORE:
-				/*
-				 * Need another character.
-				 */
-				c = getcc();
-				goto again;
-			case MCA_DONE:
-				/*
-				 * Command has been handled by mca_char.
-				 * Start clean with a prompt.
-				 */
-				continue;
-			case NO_MCA:
-				/*
-				 * Not a multi-char command
-				 * (at least, not anymore).
-				 */
-				break;
-			}
-
-		/*
-		 * Decode the command character and decide what to do.
-		 */
-		if (mca)
+		if (newaction != A_NOACTION)
 		{
-			/*
-			 * We're in a multichar command.
-			 * Add the character to the command buffer
-			 * and display it on the screen.
-			 * If the user backspaces past the start 
-			 * of the line, abort the command.
-			 */
-			if (cmd_char(c) == CC_QUIT || len_cmdbuf() == 0)
-				continue;
-			cbuf = get_cmdbuf();
+			action = newaction;
+			newaction = A_NOACTION;
 		} else
 		{
 			/*
-			 * Don't use cmd_char if we're starting fresh
-			 * at the beginning of a command, because we
-			 * don't want to echo the command until we know
-			 * it is a multichar command.  We also don't
-			 * want erase_char/kill_char to be treated
-			 * as line editing characters.
+			 * If we are in a multicharacter command, call mca_char.
+			 * Otherwise we call fcmd_decode to determine the
+			 * action to be performed.
 			 */
-			tbuf[0] = c;
-			tbuf[1] = '\0';
-			cbuf = tbuf;
+			if (mca)
+				switch (mca_char(c))
+				{
+				case MCA_MORE:
+					/*
+					 * Need another character.
+					 */
+					c = getcc();
+					goto again;
+				case MCA_DONE:
+					/*
+					 * Command has been handled by mca_char.
+					 * Start clean with a prompt.
+					 */
+					continue;
+				case NO_MCA:
+					/*
+					 * Not a multi-char command
+					 * (at least, not anymore).
+					 */
+					break;
+				}
+
+			/*
+			 * Decode the command character and decide what to do.
+			 */
+			if (mca)
+			{
+				/*
+				 * We're in a multichar command.
+				 * Add the character to the command buffer
+				 * and display it on the screen.
+				 * If the user backspaces past the start 
+				 * of the line, abort the command.
+				 */
+				if (cmd_char(c) == CC_QUIT || len_cmdbuf() == 0)
+					continue;
+				cbuf = get_cmdbuf();
+			} else
+			{
+				/*
+				 * Don't use cmd_char if we're starting fresh
+				 * at the beginning of a command, because we
+				 * don't want to echo the command until we know
+				 * it is a multichar command.  We also don't
+				 * want erase_char/kill_char to be treated
+				 * as line editing characters.
+				 */
+				tbuf[0] = c;
+				tbuf[1] = '\0';
+				cbuf = tbuf;
+			}
+			s = NULL;
+			action = fcmd_decode(cbuf, &s);
+			/*
+			 * If an "extra" string was returned,
+			 * process it as a string of command characters.
+			 */
+			if (s != NULL)
+				ungetsc(s);
 		}
-		s = NULL;
-		action = fcmd_decode(cbuf, &s);
-		/*
-		 * If an "extra" string was returned,
-		 * process it as a string of command characters.
-		 */
-		if (s != NULL)
-			ungetsc(s);
 		/*
 		 * Clear the cmdbuf string.
 		 * (But not if we're in the prefix of a command,
@@ -857,17 +904,35 @@ commands()
 			backward(number, 1, 0);
 			break;
 		
+		case A_FF_SCREEN:
+			/*
+			 * Force forward one screen.
+			 */
+			if (number <= 0)
+				number = get_swindow();
+			cmd_exec();
+			forward(number, 1, 0);
+			break;
+
 		case A_F_FOREVER:
 			/*
 			 * Forward forever, ignoring EOF.
 			 */
+			if (ch_getflags() & CH_HELPFILE)
+				break;
 			cmd_exec();
 			jump_forw();
 			ignore_eoi = 1;
 			hit_eof = 0;
-			while (!ABORT_SIGS())
+			while (!sigs)
 				forward(1, 0, 0);
 			ignore_eoi = 0;
+			/*
+			 * This gets us back in "F mode" after processing 
+			 * a non-abort signal (e.g. window-change).  
+			 */
+			if (sigs && !ABORT_SIGS())
+				newaction = A_F_FOREVER;
 			break;
 
 		case A_F_SCROLL:
@@ -958,11 +1023,13 @@ commands()
 			/*
 			 * Print file name, etc.
 			 */
+			if (ch_getflags() & CH_HELPFILE)
+				break;
 			cmd_exec();
 			parg.p_string = eq_message();
 			error("%s", &parg);
 			break;
-			
+
 		case A_VERSION:
 			/*
 			 * Print version number, without the "@(#)".
@@ -975,7 +1042,19 @@ commands()
 			/*
 			 * Exit.
 			 */
+			if (curr_ifile != NULL_IFILE && 
+			    ch_getflags() & CH_HELPFILE)
+			{
+				/*
+				 * Quit while viewing the help file
+				 * just means return to viewing the
+				 * previous file.
+				 */
+				if (edit_prev(1) == 0)
+					break;
+			}
 			quit(QUIT_OK);
+			break;
 
 /*
  * Define abbreviation for a commonly used sequence below.
@@ -1055,15 +1134,10 @@ commands()
 			/*
 			 * Help.
 			 */
-			if (nohelp)
-			{
-				bell();
+			if (ch_getflags() & CH_HELPFILE)
 				break;
-			}
-			clear_bot();
-			putstr(" help");
 			cmd_exec();
-			help(0);
+			(void) edit(FAKE_HELPFILE);
 			break;
 
 		case A_EXAMINE:
@@ -1071,6 +1145,11 @@ commands()
 			/*
 			 * Edit a new file.  Get the filename.
 			 */
+			if (secure)
+			{
+				error("Command not available", NULL_PARG);
+				break;
+			}
 			start_mca(A_EXAMINE, "Examine: ", ml_examine);
 			c = getcc();
 			goto again;
@@ -1084,6 +1163,13 @@ commands()
 			 * Invoke an editor on the input file.
 			 */
 #if EDITOR
+			if (secure)
+			{
+				error("Command not available", NULL_PARG);
+				break;
+			}
+			if (ch_getflags() & CH_HELPFILE)
+				break;
 			if (strcmp(get_filename(curr_ifile), "-") == 0)
 			{
 				error("Cannot edit standard input", NULL_PARG);
@@ -1095,19 +1181,22 @@ commands()
 					NULL_PARG);
 				break;
 			}
+			start_mca(A_SHELL, "!", ml_shell);
 			/*
 			 * Expand the editor prototype string
 			 * and pass it to the system to execute.
+			 * (Make sure the screen is displayed so the
+			 * expansion of "+%lm" works.)
 			 */
+			make_display();
 			cmd_exec();
-			lsystem(pr_expand(editproto, 0));
+			lsystem(pr_expand(editproto, 0), (char*)NULL);
 			/*
 			 * Re-edit the file, since data may have changed.
 			 * Some editors even recreate the file, so flushing
 			 * buffers is not sufficient.
 			 */
-			if (edit_ifile(curr_ifile))
-				quit(QUIT_ERROR);
+			reedit_ifile(curr_ifile);
 			break;
 #else
 			error("Command not available", NULL_PARG);
@@ -1122,7 +1211,8 @@ commands()
 				number = 1;
 			if (edit_next(number))
 			{
-				if (quit_at_eof && hit_eof)
+				if (quit_at_eof && hit_eof && 
+				    !(ch_getflags() & CH_HELPFILE))
 					quit(QUIT_OK);
 				parg.p_string = (number > 1) ? "(N-th) " : "";
 				error("No %snext file", &parg);
@@ -1182,6 +1272,11 @@ commands()
 			 * Shell escape.
 			 */
 #if SHELL_ESCAPE
+			if (secure)
+			{
+				error("Command not available", NULL_PARG);
+				break;
+			}
 			start_mca(A_SHELL, "!", ml_shell);
 			c = getcc();
 			goto again;
@@ -1194,6 +1289,8 @@ commands()
 			/*
 			 * Set a mark.
 			 */
+			if (ch_getflags() & CH_HELPFILE)
+				break;
 			start_mca(A_SETMARK, "mark: ", (void*)NULL);
 			c = getcc();
 			if (c == erase_char || c == kill_char ||
@@ -1216,6 +1313,11 @@ commands()
 
 		case A_PIPE:
 #if PIPEC
+			if (secure)
+			{
+				error("Command not available", NULL_PARG);
+				break;
+			}
 			start_mca(A_PIPE, "|mark: ", (void*)NULL);
 			c = getcc();
 			if (c == erase_char || c == kill_char)
@@ -1239,6 +1341,22 @@ commands()
 			c = getcc();
 			goto again;
 
+		case A_LSHIFT:
+			if (number <= 0)
+				number = 8;
+			if (number > hshift)
+				number = hshift;
+			hshift -= number;
+			screen_trashed = 1;
+			break;
+
+		case A_RSHIFT:
+			if (number <= 0)
+				number = 8;
+			hshift += number;
+			screen_trashed = 1;
+			break;
+
 		case A_PREFIX:
 			/*
 			 * The command is incomplete (more chars are needed).
@@ -1247,8 +1365,8 @@ commands()
 			 */
 			if (mca != A_PREFIX)
 			{
-				start_mca(A_PREFIX, " ", (void*)NULL);
 				cmd_reset();
+				start_mca(A_PREFIX, " ", (void*)NULL);
 				(void) cmd_char(c);
 			}
 			c = getcc();
