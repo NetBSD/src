@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.23 1995/02/01 09:54:36 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.24 1995/04/10 18:21:52 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -94,8 +94,8 @@ struct le_softc {
 
 int leintr __P((struct le_softc *));
 int leioctl __P((struct ifnet *, u_long, caddr_t));
-int lestart __P((struct ifnet *));
-int lewatchdog __P((/* short */));
+void lestart __P((struct ifnet *));
+void lewatchdog __P((/* short */));
 static inline void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
 static inline u_short lerdcsr __P((/* struct le_softc *, u_short */));
 void leinit __P((struct le_softc *));
@@ -430,7 +430,7 @@ lereset(sc)
 	leinit(sc);
 }
 
-int
+void
 lewatchdog(unit)
 	short unit;
 {
@@ -674,7 +674,7 @@ out:
  * interface before starting the output.
  * Called only at splimp or interrupt level.
  */
-int
+void
 lestart(ifp)
 	struct ifnet *ifp;
 {
