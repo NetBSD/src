@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)show.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: show.c,v 1.7 1994/12/04 07:12:27 cgd Exp $";
+static char *rcsid = "$Id: show.c,v 1.8 1994/12/05 19:07:56 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,23 +48,26 @@ static char *rcsid = "$Id: show.c,v 1.7 1994/12/04 07:12:27 cgd Exp $";
 
 
 #ifdef DEBUG
-static shtree(), shcmd(), sharg(), indent();
+static void shtree(), shcmd(), sharg(), indent();
+static void trstring __P((char *));
 
 
+int
 showtree(n)
 	union node *n;
-	{
+{
 	trputs("showtree called\n");
 	shtree(n, 1, NULL, stdout);
 }
 
 
-static
+static void
 shtree(n, ind, pfx, fp)
 	union node *n;
+	int ind;
 	char *pfx;
 	FILE *fp;
-	{
+{
 	struct nodelist *lp;
 	char *s;
 
@@ -110,7 +113,7 @@ binop:
 
 
 
-static
+static void
 shcmd(cmd, fp)
 	union node *cmd;
 	FILE *fp;
@@ -151,7 +154,7 @@ shcmd(cmd, fp)
 
 
 
-static
+static void
 sharg(arg, fp)
 	union node *arg;
 	FILE *fp;
@@ -217,11 +220,12 @@ sharg(arg, fp)
 }
 
 
-static
+static void
 indent(amount, pfx, fp)
+	int amount;
 	char *pfx;
 	FILE *fp;
-	{
+{
 	int i;
 
 	for (i = 0 ; i < amount ; i++) {
@@ -248,7 +252,10 @@ int debug = 0;
 #endif
 
 
-trputc(c) {
+void
+trputc(c) 
+	int c;
+{
 #ifdef DEBUG
 	if (tracefile == NULL)
 		return;
@@ -286,9 +293,10 @@ trputs(s)
 }
 
 
+static void
 trstring(s)
 	char *s;
-	{
+{
 	register char *p;
 	char c;
 

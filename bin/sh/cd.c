@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cd.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: cd.c,v 1.9 1994/12/04 07:12:07 cgd Exp $";
+static char *rcsid = "$Id: cd.c,v 1.10 1994/12/05 19:07:32 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,10 @@ char *prevdir;			/* previous working directory */
 STATIC char *cdcomppath;
 
 int
-cdcmd(argc, argv)  char **argv; {
+cdcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	char *dest;
 	char *path;
 	char *p;
@@ -149,7 +152,8 @@ docd(dest, print)
 STATIC int
 docd(dest, print)
 	char *dest;
-	{
+	int print;
+{
 	register char *p;
 	register char *q;
 	char *symlink;
@@ -312,7 +316,10 @@ updatepwd(dir)
 
 
 int
-pwdcmd(argc, argv)  char **argv; {
+pwdcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	getpwd();
 	out1str(curdir);
 	out1c('\n');

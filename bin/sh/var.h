@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)var.h	8.1 (Berkeley) 5/31/93
- *	$Id: var.h,v 1.6 1994/06/11 16:12:40 mycroft Exp $
+ *	$Id: var.h,v 1.7 1994/12/05 19:07:59 cgd Exp $
  */
 
 /*
@@ -114,6 +114,7 @@ char **environment();
 int showvarscmd(int, char **);
 void mklocal(char *);
 void poplocalvars(void);
+int unsetcmd(int, char **);
 #else
 void initvar();
 void setvar();
@@ -125,4 +126,5 @@ char **environment();
 int showvarscmd();
 void mklocal();
 void poplocalvars();
+int unsetcmd();
 #endif
