@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.19 1995/08/04 01:12:23 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.19.2.1 1996/02/02 06:12:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -63,7 +63,6 @@
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
-struct	inpcb *tcp_last_inpcb = 0;
 
 extern u_long sb_max;
 
@@ -320,13 +319,10 @@ tcp_input(m, iphlen)
 	 * Locate pcb for segment.
 	 */
 findpcb:
-	inp = tcp_last_inpcb;
-	if (inp == 0 ||
-	    inp->inp_lport != ti->ti_dport ||
-	    inp->inp_fport != ti->ti_sport ||
-	    inp->inp_faddr.s_addr != ti->ti_src.s_addr ||
-	    inp->inp_laddr.s_addr != ti->ti_dst.s_addr) {
-		++tcpstat.tcps_pcbcachemiss;
+	inp = in_pcbhashlookup(&tcbtable, ti->ti_src, ti->ti_sport,
+	    ti->ti_dst, ti->ti_dport);
+	if (inp == 0) {
+		++tcpstat.tcps_pcbhashmiss;
 		inp = in_pcblookup(&tcbtable, ti->ti_src, ti->ti_sport,
 		    ti->ti_dst, ti->ti_dport, INPLOOKUP_WILDCARD);
 		/*
@@ -335,9 +331,10 @@ findpcb:
 		 * If the TCB exists but is in CLOSED state, it is embryonic,
 		 * but should either do a listen or a connect soon.
 		 */
-		if (inp == 0)
+		if (inp == 0) {
+			++tcpstat.tcps_noport;
 			goto dropwithreset;
-		tcp_last_inpcb = inp;
+		}
 	}
 
 	tp = intotcpcb(inp);
@@ -377,6 +374,7 @@ findpcb:
 			inp = (struct inpcb *)so->so_pcb;
 			inp->inp_laddr = ti->ti_dst;
 			inp->inp_lport = ti->ti_dport;
+			in_pcbrehash(inp);
 #if BSD>=43
 			inp->inp_options = ip_srcroute();
 #endif
@@ -1191,7 +1189,7 @@ dodata:							/* XXX */
 	 * case PRU_RCVD).  If a FIN has already been received on this
 	 * connection then we just ignore the text.
 	 */
-	if ((ti->ti_len || (tiflags&TH_FIN)) &&
+	if ((ti->ti_len || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		TCP_REASS(tp, ti, m, so, tiflags);
 		/*
@@ -1207,9 +1205,10 @@ dodata:							/* XXX */
 
 	/*
 	 * If FIN is received ACK the FIN and let the user know
-	 * that the connection is closing.
+	 * that the connection is closing.  Ignore a FIN received before
+	 * the connection is fully established.
 	 */
-	if (tiflags & TH_FIN) {
+	if ((tiflags & TH_FIN) && TCPS_HAVEESTABLISHED(tp->t_state)) {
 		if (TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 			socantrcvmore(so);
 			tp->t_flags |= TF_ACKNOW;
@@ -1218,10 +1217,8 @@ dodata:							/* XXX */
 		switch (tp->t_state) {
 
 	 	/*
-		 * In SYN_RECEIVED and ESTABLISHED STATES
-		 * enter the CLOSE_WAIT state.
+		 * In ESTABLISHED STATE enter the CLOSE_WAIT state.
 		 */
-		case TCPS_SYN_RECEIVED:
 		case TCPS_ESTABLISHED:
 			tp->t_state = TCPS_CLOSE_WAIT;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.14 1995/09/30 07:02:08 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.14.2.1 1996/02/02 06:13:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -230,7 +230,9 @@ struct	tcpstat {
 	u_long	tcps_pawsdrop;		/* segments dropped due to PAWS */
 	u_long	tcps_predack;		/* times hdr predict ok for acks */
 	u_long	tcps_preddat;		/* times hdr predict ok for data pkts */
-	u_long	tcps_pcbcachemiss;
+
+	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
+	u_long	tcps_noport;		/* no socket on port */
 };
 
 /*

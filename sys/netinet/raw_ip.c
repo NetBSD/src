@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.21 1995/06/18 20:01:15 cgd Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.21.2.1 1996/02/02 06:12:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -73,7 +73,7 @@ void
 rip_init()
 {
 
-	in_pcbinit(&rawcbtable);
+	in_pcbinit(&rawcbtable, 1);
 }
 
 struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };

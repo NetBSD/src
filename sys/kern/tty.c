@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.63 1995/10/10 01:26:57 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.63.2.1 1996/02/02 06:12:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1765,7 +1765,7 @@ ttyecho(c, tp)
 	if (!ISSET(tp->t_state, TS_CNTTB))
 		CLR(tp->t_lflag, FLUSHO);
 	if ((!ISSET(tp->t_lflag, ECHO) &&
-	    (!ISSET(tp->t_lflag, ECHONL) || c == '\n')) ||
+	    (!ISSET(tp->t_lflag, ECHONL) || c != '\n')) ||
 	    ISSET(tp->t_lflag, EXTPROC))
 		return;
 	if (ISSET(tp->t_lflag, ECHOCTL) &&
