@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chpass.c	5.17 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: chpass.c,v 1.3 1993/08/01 18:17:59 mycroft Exp $";
+static char rcsid[] = "$Id: chpass.c,v 1.4 1994/08/17 19:54:39 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ main(argc, argv)
 	char *arg;
 
 #ifdef	YP
-        use_yp = _yp_check(NULL);
+	use_yp = _yp_check(NULL);
 #endif
 
 	op = EDITENTRY;
@@ -94,17 +94,17 @@ main(argc, argv)
 			arg = optarg;
 			break;
 #ifdef	YP
-                case 'l':
-                        use_yp = 0;
-                        break;
-                case 'y':
-                        if (!use_yp) {
-                                fprintf(stderr, "chpass: YP not in use.\n");
-                                usage();
-                                exit(1);
-                        }
-                        force_yp = 1;
-                        break;
+		case 'l':
+			use_yp = 0;
+			break;
+		case 'y':
+			if (!use_yp) {
+				fprintf(stderr, "chpass: YP not in use.\n");
+				usage();
+				exit(1);
+			}
+			force_yp = 1;
+			break;
 #endif
 		case '?':
 		default:
@@ -114,22 +114,22 @@ main(argc, argv)
 	argv += optind;
 
 #ifdef	YP
-        if (op == LOADENTRY && use_yp) {
-                (void)fprintf(stderr, "chpass: cannot load entry using NIS.\n\tUse the -l flag to load local.\n");
-                exit(1);
-        }
+	if (op == LOADENTRY && use_yp) {
+		(void)fprintf(stderr, "chpass: cannot load entry using NIS.\n\tUse the -l flag to load local.\n");
+		exit(1);
+	}
 #endif
 	uid = getuid();
 
 	if (op == EDITENTRY || op == NEWSH)
 		switch(argc) {
 		case 0:
-                        pw = getpwuid(uid);
+			pw = getpwuid(uid);
 #ifdef	YP
-                        if (pw && !force_yp)
-                                use_yp = 0;
-                        else if (use_yp)
-                                pw = ypgetpwuid(uid);
+			if (pw && !force_yp)
+				use_yp = 0;
+			else if (use_yp)
+				pw = ypgetpwuid(uid);
 #endif	/* YP */
 			if (!pw) {
 				(void)fprintf(stderr,
@@ -140,10 +140,10 @@ main(argc, argv)
 		case 1:
 			pw = getpwnam(*argv);
 #ifdef	YP
-                        if (pw && !force_yp)
-                                use_yp = 0;
-                        else if (use_yp)
-                                pw = ypgetpwnam(*argv);
+			if (pw && !force_yp)
+				use_yp = 0;
+			else if (use_yp)
+				pw = ypgetpwnam(*argv);
 #endif	/* YP */
 			if (!pw) {
 				(void)fprintf(stderr,
@@ -210,14 +210,14 @@ main(argc, argv)
 	}
 		
 #ifdef	YP
-        if (use_yp) {
+	if (use_yp) {
 		(void)unlink(tempname);
-                if (pw_yp(pw, uid))
-                        pw_error((char *)NULL, 0, 1);
-                else
-                        exit(0);
-        }
-        else
+		if (pw_yp(pw, uid))
+			pw_error((char *)NULL, 0, 1);
+		else
+			exit(0);
+	}
+	else
 #endif	/* YP */
 	pw_copy(pfd, tfd, pw);
 
