@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.22 1995/06/27 00:40:53 jtc Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.23 1995/08/27 06:20:27 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.22 1995/06/27 00:40:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.23 1995/08/27 06:20:27 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,10 @@ struct nlist namelist[] = {
 	{ "_ckeystats" },
 #define	X_DKEYSTATS	(X_END+2)
 	{ "_dkeystats" },
+#endif
+#if defined(pc532)
+#define	X_IVT		(X_END)
+	{ "_ivt" },
 #endif
 	{ "" },
 };
@@ -704,6 +708,40 @@ cpustats()
 	(void)printf("%2.0f", cur.time[CP_IDLE] * pct);
 }
 
+#if defined(pc532)
+#include <machine/psl.h>
+void
+dointr()
+{
+	register long i, j, inttotal, uptime;
+	static char iname[64];
+	struct iv ivt[32], *ivp = ivt;
+
+	iname[63] = '\0';
+	uptime = getuptime();
+	kread(X_IVT, ivp, sizeof(ivt));
+
+	for (i = 0; i < 2; i++) {
+		(void)printf("%sware interrupts:\n", i ? "\nsoft" : "hard");
+		(void)printf("interrupt       total     rate\n");
+		inttotal = 0;
+		for (j = 0; j < 16; j++, ivp++) {
+			if (ivp->iv_vec && ivp->iv_use && ivp->iv_cnt) {
+				if (kvm_read(kd, (u_long)ivp->iv_use, iname, 63) != 63) {
+					(void)fprintf(stderr, "vmstat: iv_use: %s\n",
+					    kvm_geterr(kd));
+					exit(1);
+				}
+				(void)printf("%-12s %8ld %8ld\n", iname,
+				    ivp->iv_cnt, ivp->iv_cnt / uptime);
+				inttotal += ivp->iv_cnt;
+			}
+		}
+		(void)printf("Total        %8ld %8ld\n",
+		    inttotal, inttotal / uptime);
+	}
+}
+#else
 void
 dointr()
 {
@@ -758,6 +796,7 @@ dointr()
 	}
 	(void)printf("Total        %8ld %8ld\n", inttotal, inttotal / uptime);
 }
+#endif
 
 /*
  * These names are defined in <sys/malloc.h>.
