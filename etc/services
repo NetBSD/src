@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.17 1996/02/25 02:19:56 ghudson Exp $
+#	$NetBSD: services,v 1.18 1996/03/26 00:07:58 mrg Exp $
 #
 # Network services, Internet style
 #
@@ -26,7 +26,8 @@ chargen		19/tcp		ttytst source
 chargen		19/udp		ttytst source
 ftp-data	20/tcp		# default ftp data port
 ftp		21/tcp
-# 22 - unassigned
+ssh		22/tcp
+ssh		22/udp
 telnet		23/tcp
 # 24 - private
 smtp		25/tcp		mail
