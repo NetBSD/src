@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.23.2.10 2001/02/04 18:28:09 he Exp $	*/
+/*	$NetBSD: key.c,v 1.23.2.11 2003/08/05 11:35:04 msaitoh Exp $	*/
 /*	$KAME: key.c,v 1.180 2001/01/10 16:35:27 sakane Exp $	*/
 
 /*
@@ -2882,6 +2882,7 @@ key_setsaval(sav, m, mhp)
 		sav->key_enc = NULL;
 	}
 	if (sav->sched) {
+		bzero(sav->sched, sav->schedlen);
 		KFREE(sav->sched);
 		sav->sched = NULL;
 	}
