@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.9 1996/05/07 01:12:53 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.10 1996/05/19 05:32:09 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -406,7 +406,7 @@ lptintr(struct lpt_softc *sc)
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 
 #if defined(INET) && defined(PLIP)
-	if(sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
 		i8255->port_a &= ~LPA_ACKENABLE;
 		sc->sc_pending |= PLIP_IPENDING;
 		softintr(sc->sc_ifsoftint);
@@ -532,7 +532,6 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->sc_arpcom.ac_enaddr[1] = 0xfc;
 			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
 			      (caddr_t)&sc->sc_arpcom.ac_enaddr[2], 4);
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
