@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2003/01/18 08:28:26 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.24 2003/10/13 18:53:35 fvdl Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -463,7 +463,7 @@
 			    const netbsd32_sigsetp_t set, \
 			    netbsd32_sigsetp_t oset); }
 294	STD		{ int netbsd32___sigsuspend14(const netbsd32_sigsetp_t set); }
-295	STD		{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
+295	COMPAT_16	{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
 297	STD		{ int netbsd32_fchroot(int fd); }
 298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
@@ -497,8 +497,9 @@
 ;
 ; Syscalls 307 and 308 are reserved for getcontext and setcontext
 ;
-307	UNIMPL
-308	UNIMPL
+307	STD		{ int netbsd32_getcontext(netbsd32_ucontextp ucp); }
+308	STD		{ int netbsd32_setcontext(netbsd32_ucontextp ucp, \
+			    uint32_t flags, netbsd32_lwpidp new_lwp); }
 ;
 ; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
 ;
