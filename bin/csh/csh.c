@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.30 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: csh.c,v 1.31 2002/07/10 22:22:29 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.30 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: csh.c,v 1.31 2002/07/10 22:22:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1283,7 +1283,7 @@ vis_fputc(int ch, FILE *fp)
 
 /*
  * Move the initial descriptors to their eventual
- * resting places, closin all other units.
+ * resting places, closing all other units.
  */
 void
 initdesc(void)
