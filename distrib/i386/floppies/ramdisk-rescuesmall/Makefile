@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/08 05:02:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/09/24 06:04:24 grant Exp $
 
 BOOTMODEL=	small
 IMAGE=		ramdisk-rescue${BOOTMODEL}.fs
-IMAGESIZE=	1320k
+IMAGESIZE=	1440k
 
 .include "${.CURDIR}/../common/Makefile.ramdisk"
