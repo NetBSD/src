@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276 2004/01/27 04:19:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.277 2004/01/27 15:55:42 he Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -196,7 +196,7 @@ etc-release: .EXEC
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build settings:"; \
-		${MAKE} params; \
+		(cd ${.CURDIR}; ${MAKE} ${MFLAGS} params); \
 	) >${.OBJDIR}/${.TARGET}
 
 install-etc-release: .PHONY etc-release
