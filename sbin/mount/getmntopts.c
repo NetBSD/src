@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntopts.c,v 1.4 1997/07/04 15:17:56 christos Exp $	*/
+/*	$NetBSD: getmntopts.c,v 1.5 1997/09/16 12:22:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: getmntopts.c,v 1.4 1997/07/04 15:17:56 christos Exp $");
+__RCSID("$NetBSD: getmntopts.c,v 1.5 1997/09/16 12:22:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,15 +53,19 @@ __RCSID("$NetBSD: getmntopts.c,v 1.4 1997/07/04 15:17:56 christos Exp $");
 
 #include "mntopts.h"
 
+int getmnt_silent = 0;
+
 void
-getmntopts(options, m0, flagp)
+getmntopts(options, m0, flagp, altflagp)
 	const char *options;
 	const struct mntopt *m0;
 	int *flagp;
+	int *altflagp;
 {
 	const struct mntopt *m;
 	int negative;
 	char *opt, *optbuf, *p;
+	int *thisflagp;
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
@@ -90,12 +94,14 @@ getmntopts(options, m0, flagp)
 
 		/* Save flag, or fail if option is not recognised. */
 		if (m->m_option) {
+			thisflagp = m->m_altloc ? altflagp : flagp;
 			if (negative == m->m_inverse)
-				*flagp |= m->m_flag;
+				*thisflagp |= m->m_flag;
 			else
-				*flagp &= ~m->m_flag;
-		} else
+				*thisflagp &= ~m->m_flag;
+		} else if (!getmnt_silent) {
 			errx(1, "-o %s: option not supported", opt);
+		}
 	}
 
 	free(optbuf);

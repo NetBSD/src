@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $	*/
+/*	$NetBSD: mount.c,v 1.32 1997/09/16 12:22:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
+static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $");
+__RCSID("$NetBSD: mount.c,v 1.32 1997/09/16 12:22:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,14 +64,14 @@ __RCSID("$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $");
 #include "pathnames.h"
 
 int	debug, verbose;
-char	**typelist = NULL;
 
-int	selected __P((const char *));
+int	checkvfsname __P((const char *, const char **));
 char   *catopt __P((char *, const char *));
 struct statfs
        *getmntpt __P((const char *));
 int	hasopt __P((const char *, const char *));
-void	maketypelist __P((char *));
+const char
+      **makevfslist __P((char *));
 void	mangle __P((char *, int *, const char **));
 int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
@@ -111,7 +112,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	const char *mntonname, *vfstype;
+	const char *mntfromname, *mntonname, **vfslist, *vfstype;
 	struct fstab *fs;
 	struct statfs *mntbuf;
 	FILE *mountdfp;
@@ -120,6 +121,7 @@ main(argc, argv)
 
 	all = forceall = init_flags = 0;
 	options = NULL;
+	vfslist = NULL;
 	vfstype = ffs;
 	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
 		switch (ch) {
@@ -143,9 +145,9 @@ main(argc, argv)
 			init_flags |= MNT_RDONLY;
 			break;
 		case 't':
-			if (typelist != NULL)
+			if (vfslist != NULL)
 				errx(1, "only one -t option may be specified.");
-			maketypelist(optarg);
+			vfslist = makevfslist(optarg);
 			vfstype = optarg;
 			break;
 		case 'u':
@@ -176,7 +178,7 @@ main(argc, argv)
 			while ((fs = getfsent()) != NULL) {
 				if (BADTYPE(fs->fs_type))
 					continue;
-				if (!selected(fs->fs_vfstype))
+				if (checkvfsname(fs->fs_vfstype, vfslist))
 					continue;
 				if (hasopt(fs->fs_mntops, "noauto"))
 					continue;
@@ -189,14 +191,15 @@ main(argc, argv)
 			if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
 				err(1, "getmntinfo");
 			for (i = 0; i < mntsize; i++) {
-				if (!selected(mntbuf[i].f_fstypename))
+				if (checkvfsname(mntbuf[i].f_fstypename,
+				    vfslist))
 					continue;
 				prmount(&mntbuf[i]);
 			}
 		}
 		exit(rval);
 	case 1:
-		if (typelist != NULL)
+		if (vfslist != NULL)
 			usage();
 
 		if (init_flags & MNT_UPDATE) {
@@ -204,9 +207,10 @@ main(argc, argv)
 				errx(1,
 				    "unknown special file or file system %s.",
 				    *argv);
-			if ((fs = getfsfile(mntbuf->f_mntonname)) == NULL)
-				errx(1, "can't find fstab entry for %s.",
-				    *argv);
+			if ((fs = getfsfile(mntbuf->f_mntonname)) != NULL)
+				mntfromname = fs->fs_spec;
+			else
+				mntfromname = mntbuf->f_mntfromname;
 			/* If it's an update, ignore the fstab file options. */
 			fs->fs_mntops = NULL;
 			mntonname = mntbuf->f_mntonname;
@@ -219,9 +223,10 @@ main(argc, argv)
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
 				    *argv);
+			mntfromname = fs->fs_spec;
 			mntonname = fs->fs_file;
 		}
-		rval = mountfs(fs->fs_vfstype, fs->fs_spec,
+		rval = mountfs(fs->fs_vfstype, mntfromname,
 		    mntonname, init_flags, options, fs->fs_mntops, 0);
 		break;
 	case 2:
@@ -230,7 +235,7 @@ main(argc, argv)
 		 * a ':' or a '@' then assume that an NFS filesystem is being
 		 * specified ala Sun.
 		 */
-		if (typelist == NULL && strpbrk(argv[0], ":@") != NULL)
+		if (vfslist == NULL && strpbrk(argv[0], ":@") != NULL)
 			vfstype = "nfs";
 		rval = mountfs(vfstype,
 		    argv[0], argv[1], init_flags, options, NULL, 0);
@@ -314,9 +319,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	if (mntopts == NULL)
 		mntopts = "";
 	if (options == NULL) {
-		if (*mntopts == '\0')
+		if (*mntopts == '\0') {
 			options = "rw";
-		else {
+		} else {
 			options = mntopts;
 			mntopts = "";
 		}
@@ -423,17 +428,18 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 }
 
 void
-prmount(sf)
-	struct statfs *sf;
+prmount(sfp)
+	struct statfs *sfp;
 {
 	int flags;
 	struct opt *o;
+	struct passwd *pw;
 	int f;
 
-	(void)printf("%s on %s type %.*s", sf->f_mntfromname, sf->f_mntonname,
-	    MFSNAMELEN, sf->f_fstypename);
+	(void)printf("%s on %s type %.*s", sfp->f_mntfromname, sfp->f_mntonname,
+	    MFSNAMELEN, sfp->f_fstypename);
 
-	flags = sf->f_flags & MNT_VISFLAGMASK;
+	flags = sfp->f_flags & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o->o_opt; o++)
 		if (flags & o->o_opt) {
 			if (!o->o_silent)
@@ -444,6 +450,13 @@ prmount(sf)
 	if (flags)
 		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ",
 		    flags & (flags - 1) ? "s" : "", flags);
+	if (sfp->f_owner) {
+		(void)printf("%smounted by ", !f++ ? " (" : ", ");
+		if ((pw = getpwuid(sfp->f_owner)) != NULL)
+			(void)printf("%s", pw->pw_name);
+		else
+			(void)printf("%d", sfp->f_owner);
+	}
 	(void)printf(f ? ")\n" : "\n");
 }
 
@@ -460,60 +473,6 @@ getmntpt(name)
 		    strcmp(mntbuf[i].f_mntonname, name) == 0)
 			return (&mntbuf[i]);
 	return (NULL);
-}
-
-static enum { IN_LIST, NOT_IN_LIST } which;
-
-int
-selected(type)
-	const char *type;
-{
-	char **av;
-
-	/* If no type specified, it's always selected. */
-	if (typelist == NULL)
-		return (1);
-	for (av = typelist; *av != NULL; ++av)
-		if (!strncmp(type, *av, MFSNAMELEN))
-			return (which == IN_LIST ? 1 : 0);
-	return (which == IN_LIST ? 0 : 1);
-}
-
-void
-maketypelist(fslist)
-	char *fslist;
-{
-	int i;
-	char *nextcp, **av;
-
-	if ((fslist == NULL) || (fslist[0] == '\0'))
-		errx(1, "empty type list");
-
-	/*
-	 * XXX
-	 * Note: the syntax is "noxxx,yyy" for no xxx's and
-	 * no yyy's, not the more intuitive "noyyy,noyyy".
-	 */
-	if (fslist[0] == 'n' && fslist[1] == 'o') {
-		fslist += 2;
-		which = NOT_IN_LIST;
-	} else
-		which = IN_LIST;
-
-	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++)
-		++nextcp;
-
-	/* Build an array of that many types. */
-	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
-		err(1, "%s", "");
-	av[0] = fslist;
-	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++) {
-		*nextcp = '\0';
-		av[i] = ++nextcp;
-	}
-	/* Terminate the array. */
-	av[i] = NULL;
 }
 
 char *
