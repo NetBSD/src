@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1995/07/11 21:24:29 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1995/08/17 17:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -75,6 +75,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -93,6 +95,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
+	bdev_disk_init(NCCD,ccd),	/* 13: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -143,6 +146,7 @@ cdev_decl(ms);
 cdev_decl(fd);
 #undef	fdopen
 cdev_decl(vnd);
+cdev_decl(ccd);
 dev_decl(fd,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -184,6 +188,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 24 */
 	cdev_lkm_dummy(),		/* 25 */
 	cdev_lkm_dummy(),		/* 26 */
+	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -271,6 +276,7 @@ static int chrtoblktab[] = {
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
+	/* 27 */	13,
 };
 
 /*

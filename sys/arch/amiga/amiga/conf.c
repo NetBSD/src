@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1995/07/04 07:15:42 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1995/08/17 17:40:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -69,6 +69,8 @@ bdev_decl(st);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
 #undef	fdopen
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -82,7 +84,7 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_disk_init(NCD,cd),		/* 7: SCSI CD-ROM */
-	bdev_notdef(),			/* 8 */
+	bdev_disk_init(NCCD,ccd),	/* 8: concatenated disk driver */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
@@ -148,6 +150,7 @@ cdev_decl(mfcs);
 cdev_decl(fd);
 #undef	fdopen
 cdev_decl(vnd);
+cdev_decl(ccd);
 cdev_decl(st);
 dev_decl(fd,open);
 #include "bpfilter.h"
@@ -170,7 +173,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_notdef(),			/* 7 */
+	cdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
@@ -264,7 +267,7 @@ static int chrtoblktab[] = {
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	NODEV,
+	/*  7 */	8,
 	/*  8 */	4,
 	/*  9 */	7,
 	/* 10 */	NODEV,
