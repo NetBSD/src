@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.54 1998/07/28 20:58:39 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.55 1998/08/14 00:49:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1086,9 +1086,14 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = swap_bytes_change_sign16;
-			rswcode = change_sign16_swap_bytes;
+			if (sc->mode == 1) {
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+				pswcode = swap_bytes_change_sign16;
+				rswcode = change_sign16_swap_bytes;
+			} else {
+				enc = AUDIO_ENCODING_SLINEAR_BE;
+				pswcode = rswcode = change_sign16;
+			}
 		}
 		break;
 	}
