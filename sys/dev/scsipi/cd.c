@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.190 2003/09/08 01:56:33 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.191 2003/09/08 16:16:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.190 2003/09/08 01:56:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.191 2003/09/08 16:16:43 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -140,6 +140,8 @@ int	dvd_read_struct __P((struct cd_softc *, dvd_struct *));
 
 static int cd_mode_sense __P((struct cd_softc *, u_int8_t, void *, size_t, int,
     int, int *));
+static int cd_mode_select __P((struct cd_softc *, u_int8_t, void *, size_t,
+    int, int));
 int	cd_setchan __P((struct cd_softc *, int, int, int, int, int));
 int	cd_getvol __P((struct cd_softc *, struct ioc_vol *, int));
 int	cd_setvol __P((struct cd_softc *, const struct ioc_vol *, int));
@@ -2214,13 +2216,39 @@ cd_mode_sense(cd, byte2, sense, size, page, flags, big)
 	if (cd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
 		*big = 1;
 		return scsipi_mode_sense_big(cd->sc_periph, byte2, page, sense,
-		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
-		    CDRETRIES, 20000);
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	} else {
 		*big = 0;
 		return scsipi_mode_sense(cd->sc_periph, byte2, page, sense,
-		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
-		    CDRETRIES, 20000);
+		    size + sizeof(struct scsipi_mode_header),
+		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
+	}
+}
+
+static int
+cd_mode_select(cd, byte2, sense, size, flags, big)
+	struct cd_softc *cd;
+	u_int8_t byte2;
+	void *sense;
+	size_t size;
+	int flags, big;
+{
+
+	if (big) {
+		struct scsipi_mode_header_big *header = sense;
+
+		_lto2b(0, header->data_length);
+		return scsipi_mode_select_big(cd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
+	} else {
+		struct scsipi_mode_header *header = sense;
+
+		header->data_length = 0;
+		return scsipi_mode_select(cd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000);
 	}
 }
 
@@ -2241,7 +2269,7 @@ cd_set_pa_immed(cd, flags)
 	int big;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data),
+	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
 	    AUDIO_PAGE, flags, &big)) != 0)
 		return (error);
 
@@ -2256,21 +2284,9 @@ cd_set_pa_immed(cd, flags)
 	if (oflags == page->flags)
 		return (0);
 
-	if (big) {
-		_lto2b(0, data.header.big.data_length);
-		return (scsipi_mode_select_big(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.big) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	} else {
-		data.header.small.data_length = 0;
-		return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.small) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	}
+	return (cd_mode_select(cd, SMS_PF, &data,
+	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    flags, big));
 }
 
 int
@@ -2290,7 +2306,7 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 	int big;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data),
+	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
 	    AUDIO_PAGE, flags, &big)) != 0)
 		return (error);
 
@@ -2304,21 +2320,9 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 	page->port[2].channels = p2;
 	page->port[3].channels = p3;
 
-	if (big) {
-		_lto2b(0, data.header.big.data_length);
-		return (scsipi_mode_select_big(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.big) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	} else {
-		data.header.small.data_length = 0;
-		return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.small) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	}
+	return (cd_mode_select(cd, SMS_PF, &data,
+	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    flags, big));
 }
 
 int
@@ -2338,7 +2342,7 @@ cd_getvol(cd, arg, flags)
 	int big;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data),
+	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
 	    AUDIO_PAGE, flags, &big)) != 0)
 		return (error);
 
@@ -2372,10 +2376,10 @@ cd_setvol(cd, arg, flags)
 	int big;
 	struct cd_audio_page *page, *page2;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data),
+	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
 	    AUDIO_PAGE, flags, &big)) != 0)
 		return (error);
-	if ((error = cd_mode_sense(cd, SMS_DBD, &mask, sizeof(mask),
+	if ((error = cd_mode_sense(cd, SMS_DBD, &mask, sizeof(mask.page),
 	    AUDIO_PAGE|SMS_PAGE_CTRL_CHANGEABLE, flags, &big)) != 0)
 		return (error);
 
@@ -2395,21 +2399,9 @@ cd_setvol(cd, arg, flags)
 	page->port[0].channels = CHANNEL_0;
 	page->port[1].channels = CHANNEL_1;
 
-	if (big) {
-		_lto2b(0, data.header.big.data_length);
-		return (scsipi_mode_select_big(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.big) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	} else {
-		data.header.small.data_length = 0;
-		return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.small) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    page->pg_length,
-		    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	}
+	return (cd_mode_select(cd, SMS_PF, &data,
+	    sizeof(struct scsipi_mode_page_header) + page->pg_length,
+	    flags, big));
 }
 
 int
@@ -2444,7 +2436,7 @@ cd_setblksize(cd)
 	int big, bsize;
 	struct scsi_blk_desc *bdesc;
 
-	if ((error = cd_mode_sense(cd, 0, &data, sizeof(data), 0, 0,
+	if ((error = cd_mode_sense(cd, 0, &data, sizeof(data.blk_desc), 0, 0,
 	    &big)) != 0)
 		return (error);
 
@@ -2467,17 +2459,6 @@ printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
 		
 	_lto3b(2048, bdesc->blklen);
 
-	if (big) {
-		_lto2b(0, data.header.big.data_length);
-		return (scsipi_mode_select_big(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.big) +
-		    sizeof(struct scsi_blk_desc),
-		    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	} else {
-		data.header.small.data_length = 0;
-		return (scsipi_mode_select(cd->sc_periph, SMS_PF,
-		    (void *)&data, sizeof(data.header.small) +
-		    sizeof(struct scsi_blk_desc),
-		    XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
-	}
+	return (cd_mode_select(cd, SMS_PF, &data,
+	    sizeof(struct scsi_blk_desc), 0, big));
 }
