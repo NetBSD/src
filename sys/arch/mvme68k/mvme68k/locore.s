@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1996/05/09 21:09:14 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 1996/05/17 04:38:02 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,10 @@ tmpstk:
 	.text
 	.globl	_edata
 	.globl	_etext,_end
-	.globl	start
+	.globl	start,_kernel_text
+| This is for kvm_mkdb, and should be the address of the beginning
+| of the kernel text segment (not necessarily the same as kernbase).
+_kernel_text:
 start:					| start of kernel and .text!
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	movl	#0,d6			| get bootdev
