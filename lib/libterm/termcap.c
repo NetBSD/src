@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.26 2000/04/20 13:22:36 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.27 2000/05/08 13:17:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.26 2000/04/20 13:22:36 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.27 2000/05/08 13:17:14 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ t_getent(bp, name)
 	char  *cp;
 	char **fname;
 	char  *home;
-	int    i;
+	int    i, did_getset;
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
@@ -144,10 +144,25 @@ t_getent(bp, name)
 			}
 		}
 	*fname = (char *) 0;			/* mark end of vector */
-	if (cp && *cp && *cp != '/')
+
+	  /*
+	   * try ignoring TERMCAP if it has a ZZ in it, we do this
+	   * because a TERMCAP with ZZ in it indicates the entry has been
+	   * exported by another program using the "old" interface, the
+	   * termcap entry has been truncated and ZZ points to an address
+	   * in the exporting programs memory space which is of no use
+	   * here - anyone who is exporting the termcap entry and then
+	   * reading it back again in the same program deserves to be
+	   * taken out, beaten up, dragged about, shot and then hurt some
+	   * more.
+	   */
+	did_getset = 0;
+	if (cp && *cp && *cp != '/' && strstr(cp, ":ZZ") == NULL) {
+		did_getset = 1;
 		if (cgetset(cp) < 0)
 			return (-2);
-
+	}
+	
 	/*
 	 * XXX potential security hole here in a set-id program if the
 	 * user had setup name to be built from a path they can not
@@ -156,6 +171,18 @@ t_getent(bp, name)
  	(*bp)->info = NULL;
  	i = cgetent(&((*bp)->info), pathvec, name);      
 
+	  /*
+	   * if we get an error and we skipped doing the cgetset before
+	   * we try with TERMCAP in place - we may be using a truncated
+	   * termcap entry but what else can one do?
+	   */
+	if ((i < 0) && (did_getset == 0)) {
+		if (cp && *cp && *cp != '/')
+			if (cgetset(cp) < 0)
+				return (-2);
+		i = cgetent(&((*bp)->info), pathvec, name);      
+	}
+	
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
