@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.16 2002/03/16 21:45:49 jmcneill Exp $	*/
+/*	$NetBSD: auvia.c,v 1.17 2002/04/02 16:02:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.16 2002/03/16 21:45:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.17 2002/04/02 16:02:38 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -950,6 +950,9 @@ auvia_intr(void *arg)
 {
 	struct auvia_softc *sc = arg;
 	u_int8_t r;
+	int rval;
+
+	rval = 0;
 
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -959,6 +962,7 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT,
 			AUVIA_RPSTAT_INTR);
+		rval = 1;
 	}
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -968,7 +972,8 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT,
 			AUVIA_RPSTAT_INTR);
+		rval = 1;
 	}
 
-	return 1;
+	return rval;
 }
