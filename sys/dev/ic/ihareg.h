@@ -1,4 +1,4 @@
-/*	$NetBSD: ihareg.h,v 1.1 2001/06/03 13:43:46 tsutsui Exp $ */
+/*	$NetBSD: ihareg.h,v 1.2 2001/07/27 16:16:34 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -31,7 +31,7 @@
  * Ported from i91uscsi.h, provided by Initio Corporation, which probably
  * came from the same people who provided i91u.c:
  *
- * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
+ * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
  *
  * FreeBSD
  *
@@ -49,7 +49,7 @@
  */
 
 /*
- *  Tulip (aka inic-950) PCI Configuration Space Initio Specific Registers
+ *  Tulip (aka inic-940/950) PCI Configuration Space Initio Specific Registers
  *
  *  Offsets 0x00 through 0x3f are the standard PCI Configuration Header
  *  registers.
@@ -60,7 +60,7 @@
  *  Registers 0x50 and 0x52 always read as 0.
  *
  *  The register offset names and associated bit field names are taken
- *  from the Init-950 Data Sheet, Version 2.1, March 1997
+ *  from the Inic-950 Data Sheet, Version 2.1, March 1997
  */
 #define TUL_GCTRL0	0x54	       /* R/W Global Control 0		     */
 #define     EEPRG	    0x04       /*     Enable EEPROM Programming	     */
@@ -81,7 +81,7 @@
 #define     NVRDI	    0x01       /*     NVRAM Read  Data		     */
 
 /*
- *   Tulip (aka inic-950) SCSI Registers
+ *   Tulip (aka inic-940/950) SCSI Registers
  */
 #define TUL_STCNT0	0x80	       /* R/W 24 bit SCSI Xfer Count	     */
 #define     TCNT	    0x00ffffff /*     SCSI Xfer Transfer Count	     */
@@ -190,7 +190,7 @@
 #define TUL_STEST1	0x93	       /* R/W Test1			     */
 
 /*
- *   Tulip (aka inic-950) DMA Registers
+ *   Tulip (aka inic-940/950) DMA Registers
  */
 #define TUL_DXPA	0xC0	       /* R/W DMA      Xfer Physcl Addr	 0-31*/
 #define TUL_DXPAE	0xC4	       /* R/W DMA      Xfer Physcl Addr 32-63*/
