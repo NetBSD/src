@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.3 2003/01/19 19:49:51 scw Exp $	*/
+/*	$NetBSD: reg.h,v 1.4 2003/01/20 20:07:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,26 +39,35 @@
 #define _SH5_REG_H
 
 /*
- * Note: The layout of this structure exactly matches SH5's mcontext_t.
- * Do not change one without also updating the other.
+ * Note: Various bits of code assume that the in-core representation of:
+ *
+ *  struct {
+ *    struct reg gpr;
+ *    struct fpreg fpr;
+ *  };
+ *
+ * is identical to the layout of mcontext_t. Please don't update one without
+ * also updating the other.
  */
+
 struct reg {
 	register_t r_pc;
 	register_t r_usr;
-	register_t r_intregs[63];
-#define	r_sp r_intregs[15];
-
+	register_t r_regs[63];
+#define	r_sp r_regs[15];
 	register_t r_tr[8];
+};
 
+struct fpreg {
 	u_int32_t r_fpscr;
 	u_int32_t r_pad;
-	register_t r_fpregs[32];
+	register_t r_regs[32];
 };
 
 struct lwp;
 int process_read_regs(struct lwp *, struct reg *);
 int process_write_regs(struct lwp *, struct reg *);
-int process_read_fpregs(struct lwp *, struct reg *);
-int process_write_fpregs(struct lwp *, struct reg *);
+int process_read_fpregs(struct lwp *, struct fpreg *);
+int process_write_fpregs(struct lwp *, struct fpreg *);
 
 #endif /* _SH5_REG_H */

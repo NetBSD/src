@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.10 2003/01/19 19:49:56 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11 2003/01/20 20:07:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 
 	/* Build stack frame for signal trampoline. */
 	process_read_regs(l, &ksc.sc_regs);
-	ksc.sc_regs.r_intregs[24] = 0xACEBABE5ULL;	/* magic number */
+	ksc.sc_regs.r_regs[24] = 0xACEBABE5ULL;	/* magic number */
 
 	/* Save FP state if necessary */
 	if ((l->l_md.md_flags & MDP_FPSAVED) == 0) {
@@ -93,10 +93,11 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 		    &l->l_addr->u_pcb);
 	}
 	if ((l->l_md.md_flags & MDP_FPUSED) != 0)
-		process_read_fpregs(l, &ksc.sc_regs);
+		process_read_fpregs(l, &ksc.sc_fpregs);
 	else {
 		/* Always copy the FPSCR */
-		ksc.sc_regs.r_fpscr = l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
+		ksc.sc_fpregs.r_fpscr =
+		    l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
 	}
 	ksc.sc_fpstate = l->l_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
 
@@ -179,7 +180,7 @@ sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
 		return (EFAULT);
 
-	if (ksc.sc_regs.r_intregs[24] != 0xACEBABE5ULL)	/* magic number */
+	if (ksc.sc_regs.r_regs[24] != 0xACEBABE5ULL)	/* magic number */
 		return (EINVAL);
 
 	/*
@@ -203,11 +204,12 @@ sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	/* Restore register context. */
 	process_write_regs(l, &ksc.sc_regs);
 	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
-		process_write_fpregs(l, &ksc.sc_regs);
+		process_write_fpregs(l, &ksc.sc_fpregs);
 		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
 	} else {
 		/* Always restore FPSCR */
-		l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = ksc.sc_regs.r_fpscr;
+		l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr =
+		    ksc.sc_fpregs.r_fpscr;
 	}
 	l->l_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
 
@@ -249,8 +251,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
 
-	process_read_regs(l, (struct reg *)(void *)mcp);
-	gr[_REG_R(24)] = 0x12345678ACEBABE5ULL;	/* magic number */
+	process_read_regs(l, (struct reg *)(void *)gr);
 	*flags |= _UC_CPU;
 
 	/* Save FP state if necessary */
@@ -259,7 +260,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		    &l->l_addr->u_pcb);
 	}
 	if ((l->l_md.md_flags & MDP_FPUSED) != 0) {
-		process_read_fpregs(l, (struct reg *)(void *)mcp);
+		process_read_fpregs(l, (struct fpreg *)(void *)&mcp->__fpregs);
 		*flags |= _UC_FPU;
 	} else {
 		/* Always copy the FPSCR */
@@ -276,9 +277,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	int i;
 
 	if (flags & _UC_CPU) {
-		if (gr[_REG_R(24)] != 0x12345678ACEBABE5ULL) /* magic number */
-		return (EINVAL);
-
 		/*
 		 * Validate the branch target registers. If we don't, we risk
 		 * a kernel-mode exception when trying to restore invalid
@@ -302,7 +300,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 
 	if (flags & _UC_FPU) {
-		process_write_fpregs(l, (struct reg *)(void *)mcp);
+		process_write_fpregs(l, (struct fpreg *)(void *)&mcp->__fpregs);
 		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
 	} else {
 		/* Always restore FPSCR */
