@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.11 2002/07/11 21:14:30 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.12 2002/08/22 09:57:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.11 2002/07/11 21:14:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.12 2002/08/22 09:57:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.11 2002/07/11 21:14:30 augustss Exp $");
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
 
-#ifdef URIO_DEBUG
+#ifdef UIRDA_DEBUG
 #define DPRINTF(x)	if (uirdadebug) logprintf x
 #define DPRINTFN(n,x)	if (uirdadebug>(n)) logprintf x
 int	uirdadebug = 0;
