@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.2 1994/03/30 01:46:45 jtc Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.2.8.1 1997/01/26 04:25:32 rat Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -143,8 +143,10 @@ parse_args(argc, argv)
 		fprintf(stderr, "bailing out.\n");
 		exit(ERROR_EXIT);
 	}
-	strcpy(User, pw->pw_name);
-	strcpy(RealUser, User);
+	strncpy(User, pw->pw_name, sizeof(User) - 1);
+	User[sizeof(User) - 1] = '\0';
+	strncpy(RealUser, User, sizeof(RealUser) - 1);
+	RealUser[sizeof(RealUser) - 1] = '\0';
 	Filename[0] = '\0';
 	Option = opt_unknown;
 	while (EOF != (argch = getopt(argc, argv, "u:lerx:"))) {
@@ -166,7 +168,8 @@ parse_args(argc, argv)
 					ProgramName, optarg);
 				exit(ERROR_EXIT);
 			}
-			(void) strcpy(User, optarg);
+			(void) strncpy(User, optarg, sizeof(User - 1));
+			User[sizeof(User) - 1] = '\0';
 			break;
 		case 'l':
 			if (Option != opt_unknown)
@@ -197,7 +200,9 @@ parse_args(argc, argv)
 	} else {
 		if (argv[optind] != NULL) {
 			Option = opt_replace;
-			(void) strcpy (Filename, argv[optind]);
+			(void) strncpy (Filename, argv[optind],
+			    sizeof(Filename) - 1);
+			Filename[sizeof(Filename) - 1] = '\0';
 		} else {
 			usage("file name must be specified for replace");
 		}
@@ -246,7 +251,7 @@ list_cmd() {
 	int	ch;
 
 	log_it(RealUser, Pid, "LIST", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof(n), CRON_TAB(User));
 	if (!(f = fopen(n, "r"))) {
 		if (errno == ENOENT)
 			fprintf(stderr, "no crontab for %s\n", User);
@@ -269,7 +274,7 @@ delete_cmd() {
 	char	n[MAX_FNAME];
 
 	log_it(RealUser, Pid, "DELETE", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof(n), CRON_TAB(User));
 	if (unlink(n)) {
 		if (errno == ENOENT)
 			fprintf(stderr, "no crontab for %s\n", User);
@@ -301,7 +306,7 @@ edit_cmd() {
 	PID_T		pid, xpid;
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof(n), CRON_TAB(User));
 	if (!(f = fopen(n, "r"))) {
 		if (errno != ENOENT) {
 			perror(n);
@@ -315,7 +320,7 @@ edit_cmd() {
 		}
 	}
 
-	(void) sprintf(Filename, "/tmp/crontab.%d", Pid);
+	(void) snprintf(Filename, sizeof(Filename), "/tmp/crontab.%d", Pid);
 	if (-1 == (t = open(Filename, O_CREAT|O_EXCL|O_RDWR, 0600))) {
 		perror(Filename);
 		goto fatal;
@@ -409,7 +414,7 @@ edit_cmd() {
 				ProgramName);
 			exit(ERROR_EXIT);
 		}
-		sprintf(q, "%s %s", editor, Filename);
+		snprintf(q, sizeof(q), "%s %s", editor, Filename);
 		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", q, NULL);
 		perror(editor);
 		exit(ERROR_EXIT);
@@ -496,8 +501,8 @@ replace_cmd() {
 	time_t	now = time(NULL);
 	char	**envp = env_init();
 
-	(void) sprintf(n, "tmp.%d", Pid);
-	(void) sprintf(tn, CRON_TAB(n));
+	(void) snprintf(n, sizeof(n), "tmp.%d", Pid);
+	(void) snprintf(tn, sizeof(tn), CRON_TAB(n));
 	if (!(tmp = fopen(tn, "w+"))) {
 		perror(tn);
 		return (-2);
@@ -585,7 +590,7 @@ replace_cmd() {
 		return (-2);
 	}
 
-	(void) sprintf(n, CRON_TAB(User));
+	(void) snprintf(n, sizeof(n), CRON_TAB(User));
 	if (rename(tn, n)) {
 		fprintf(stderr, "%s: error renaming %s to %s\n",
 			ProgramName, tn, n);
