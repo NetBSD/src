@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.22.16.2 1998/01/29 11:40:25 mellon Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22.16.3 1998/01/29 11:53:42 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -156,9 +156,16 @@ process_read_fpregs(p, regs)
 			npxsave();
 #endif
 	} else {
-		/* Fake a FNINIT. */
+		u_short cw;
+
+		/*
+		 * Fake a FNINIT.
+		 * The initial control word was already set by setregs(), so
+		 * save it temporarily.
+		 */
+		cw = frame->sv_env.en_cw;
 		bzero(frame, sizeof(*frame));
-		frame->sv_env.en_cw = __INITIAL_NPXCW__;
+		frame->sv_env.en_cw = cw;
 		frame->sv_env.en_sw = 0;
 		frame->sv_env.en_tw = 0xffff;
 		p->p_md.md_flags |= MDP_USEDFPU;
