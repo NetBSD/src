@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.12 2002/02/19 17:21:20 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.1 2002/02/19 17:21:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,38 +33,68 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPUFUNC_H_
-#define	_SH3_CPUFUNC_H_
-
-#ifdef _KERNEL
-#ifndef _LOCORE
-
-/*
- * Memory-mapped register access method.
- */
-#define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
-#define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
-#define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
-#define	_reg_write_1(a, v)						\
-	(*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v))
-#define	_reg_write_2(a, v)						\
-	(*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v))
-#define	_reg_write_4(a, v)						\
-	(*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v))
+#include <machine/asm.h>
+	
+	.text
+	.align 5	/* align cache line size (32B) */
 
 /*
- * CPU exception/interrupt ops.	(locore_subr.S)
+ * u_int32_t _cpu_intr_suspend(void):
+ *	Mask all external interrupt. returns previous mask. (SR.IMASK)
+ */					
+NENTRY(_cpu_intr_suspend)
+	stc	sr, r0		/* r0 = SR */	
+	mov	#0x78, r1
+	shll	r1		/* r1 = 0x000000f0 */
+	mov	r0, r2		/* r2 = SR */
+	or	r1, r2		/* r2 |= 0x000000f0 */
+	ldc	r2, sr		/* SR = r2 */
+	rts
+	and	r1, r0		/* r0 = SR & 0x000000f0 */
+
+/*
+ * void _cpu_intr_resume(u_int32_t s):
+ *	restore 's' interrupt mask. (SR.IMASK)
  */
-/* suspend/resume external interrupt (SR.IMASK) */
-u_int32_t _cpu_intr_suspend(void);
-void _cpu_intr_resume(u_int32_t);
-/* suspend/resume exception (SR.BL) */
-u_int32_t _cpu_exception_suspend(void);
-void _cpu_exception_resume(u_int32_t);
+NENTRY(_cpu_intr_resume)
+	stc	sr, r0		/* r0 = SR */	
+	mov	#0x78, r1
+	shll	r1		/* r1 = 0x000000f0 */
+	not	r1, r1		/* r1 = 0xffffff0f */
+	and	r1, r0		/* r0 &= ~0x000000f0 */
+	or	r4, r0		/* r0 |= old SR.IMASK */
+	ldc	r0, sr		/* SR = r0 (don't move to delay slot) */
+	rts
+	nop	
 
-/* Hard reset */
-void cpu_reset(void);
+/*	
+ * u_int32_t _cpu_exception_suspend(void):
+ *	Block exception (SR.BL). if external interrupt raise, pending interrupt.
+ *	if exception occur, jump to 0xa0000000 (hard reset).
+ */	
+NENTRY(_cpu_exception_suspend)	
+	stc	sr, r0		/* r0 = SR */
+	mov	#0x10, r1
+	swap.b	r1, r1
+	mov	r0, r2		/* r2 = r0 */
+	swap.w	r1, r1		/* r1 = 0x10000000 */
+	or	r1, r2		/* r2 |= 0x10000000 */
+	ldc	r2, sr		/* SR = r2 */
+	rts
+	and	r1, r0		/* r0 &= 0x10000000 */
 
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
-#endif /* !_SH3_CPUFUNC_H_ */
+/*
+ * void _cpu_exception_resume(u_int32_t s):
+ *	restore 's' exception mask. (SR.BL)
+ */
+NENTRY(_cpu_exception_resume)	
+	stc	sr, r0		/* r0 = SR */	
+	mov	#0x10, r1
+	swap.b	r1, r1
+	swap.w	r1, r1
+	not	r1, r1		/* r1 = ~0x10000000 */
+	and	r1, r0		/* r0 &= ~0x10000000 */
+	or	r4, r0		/* r0 |= old SR.BL */
+	ldc	r0, sr		/* SR = r0 (don't move to delay slot) */	
+	rts
+	nop

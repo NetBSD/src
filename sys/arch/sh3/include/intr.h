@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2002/02/12 15:26:48 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2002/02/19 17:21:21 uch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #ifndef _SH3_INTR_H_
 #define _SH3_INTR_H_
+
+#include <sh3/cpufunc.h>
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -122,12 +124,11 @@ spllower(int ncpl)
 static __inline void
 softintr(int mask)
 {
-	extern void enable_interrupt(void);	/* XXX */
-	extern void disable_interrupt(void);
+	int s;
 
-	disable_interrupt();
+	s = _cpu_intr_suspend();
 	ipending |= (1 << mask);
-	enable_interrupt();
+	_cpu_intr_resume(s);
 }
 
 #define	setsoftast()	(astpending = 1)

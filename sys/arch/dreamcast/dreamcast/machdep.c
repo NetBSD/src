@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2002/02/17 20:57:11 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2002/02/19 17:21:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
 #include <machine/psl.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
+#include <sh3/cpufunc.h>
 #include <sh3/bscreg.h>
 #include <sh3/ccrreg.h>
 #include <sh3/cpgreg.h>
@@ -188,6 +189,7 @@ void sh3_cache_on __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
 void Sh3Reset __P((void));
+
 #ifdef SH4
 void sh4_cache_flush __P((vaddr_t));
 #endif
@@ -653,7 +655,7 @@ initSH3(pc)
 #endif
 
 	splraise(-1);
-	enable_intr();
+	_cpu_exception_resume(0);	/* SR.BL = 0 */
 
 	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
 
@@ -787,7 +789,7 @@ void
 cpu_reset()
 {
 
-	disable_intr();
+	_cpu_exception_suspend();
 
 	Sh3Reset();
 	for (;;)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 2002/02/17 21:01:19 uch Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 2002/02/19 17:21:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -45,14 +45,34 @@
 
 #include "assym.h"
 
-#include <sys/errno.h>
-#include <sys/syscall.h>
-
 #include <machine/asm.h>
-#include <machine/cputypes.h>
-#include <machine/param.h>
-#include <machine/pte.h>
-#include <machine/trap.h>
+#include <sys/syscall.h>/* SYS___sigreturn14, SYS_exit */	
+#include <sh3/param.h>	/* NBPG */
+#include <sh3/pte.h>	/* PDSHIFT */
+#include <sh3/trap.h>	/* T_ASTFLT */
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
+
+#define SH3_BBRA	0xffffffb8
+#define SH4_BBRA	0xff200008
+#define SH3_EXPEVT	0xffffffd4
+#define SH3_INTEVT	0xffffffd8
+#define SH4_EXPEVT	0xff000024	
+#define SH4_INTEVT	0xff000028
+
+#if defined(SH3) && defined(SH4)
+#define MOV(x, r)	mov.l XL_/**/x, r; mov.l @r, r
+#define	REG_SYMBOL(x)	XL_/**/x:	.long	_C_LABEL(__sh_/**/x)
+#define	FUNC_SYMBOL(x)	XL_/**/x:	.long	_C_LABEL(__sh_/**/x)	
+#elif defined(SH3)
+#define MOV(x, r)	mov.l XL_/**/x, r
+#define	REG_SYMBOL(x)	XL_/**/x:	.long	SH3_/**/x
+#define	FUNC_SYMBOL(x)	XL_/**/x:	.long	_C_LABEL(sh3_/**/x)		
+#elif defined(SH4)	
+#define MOV(x, r)	mov.l XL_/**/x, r
+#define	REG_SYMBOL(x)	XL_/**/x:	.long	SH4_/**/x
+#define	FUNC_SYMBOL(x)	XL_/**/x:	.long	_C_LABEL(sh4_/**/x)
+#endif
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -399,7 +419,6 @@ XXLwhichqs:
 	.long	_C_LABEL(sched_whichqs)
 
 
-#define DIAGNOSTIC 1
 #ifdef DIAGNOSTIC
 switch_error:
 	mova	1f, r0
@@ -409,10 +428,10 @@ switch_error:
 	nop
 
 	.align	2
-1:	.asciz	"cpu_swicth"
+1:	.asciz	"cpu_switch"
 	.align	2
 2:	.long	_C_LABEL(panic)
-#endif
+#endif /* DIAGNOSTIC */
 
 /*
  * void cpu_switch(struct proc *)
@@ -442,13 +461,13 @@ ENTRY(cpu_switch)
 	mov	r12, r4
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r0, r4		/* r4 = oldCurproc->p_addr */
 	mov	#PCB_R15, r1
 	add	r1, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)
 	jsr	@r0
 	nop
 	mov.l	r15, @r0
@@ -464,14 +483,6 @@ ENTRY(cpu_switch)
 	xor	r0, r0
 	mov.l	XXLcurproc, r1
 	mov.l	r0, @r1
-
-#if 0
-	/* switch to proc0's stack */
-	mov.l	XXLKernelStack, r1
-	mov.l	@r1, r1
-	mov.l	XXLKernelSp, r0
-	mov.l	r1, @r0
-#endif
 
 #if defined(LOCKDEBUG)
 	/* Release the sched_lock before processing interrupts. */
@@ -492,7 +503,6 @@ ENTRY(cpu_switch)
 XXLcpl:		.long	_C_LABEL(cpl)
 XXLcurproc:	.long	_C_LABEL(curproc)
 XXLXspllower:	.long	_C_LABEL(Xspllower)
-XXLKernelSp:	.long	KernelSp
 
 switch_search:
 	/*
@@ -586,7 +596,7 @@ sw1:	mov	#1, r1
 	mov	r2, r4
 	
 	mov.l	r1, @-r15
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)
 	jsr	@r0
 	nop
 	mov.l	@r15+, r1
@@ -602,14 +612,14 @@ sw1:	mov	#1, r1
 	jmp	@r0
 	nop
 10:
-#endif
+#endif /* DIAGNOSTIC */
 
 	mov	r8, r3
 	add	r1, r3
 
 	mov	r3, r4
 	mov.l	r2, @-r15
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r15+, r2
@@ -623,7 +633,7 @@ sw1:	mov	#1, r1
 	mov	#P_BACK, r2
 	add	r2, r4
 
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)
 	jsr	@r0
 	nop
 	mov	r0, r10
@@ -642,7 +652,6 @@ sw1:	mov	#1, r1
 	and	r0, r14
 	mov.l	XLwhichqs, r0
 	mov.l	r14, @r0
-/* #define sh3_debug */
 #ifdef sh3_debug
 	mova	1f, r0
 	mov	r0, r4
@@ -658,7 +667,7 @@ sw1:	mov	#1, r1
 1:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
 2:	.long	_C_LABEL(printf)
-#endif
+#endif /* sh3_debug */
 
 3:
 	xor	r0, r0
@@ -668,7 +677,7 @@ sw1:	mov	#1, r1
 #ifdef DIAGNOSTIC
 	mov	r8, r4
 	add	#P_WCHAN, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r0, r0
@@ -677,7 +686,7 @@ sw1:	mov	#1, r1
 
 	mov	r8, r4
 	add	#P_STAT, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.b	@r0, r0
@@ -694,14 +703,14 @@ sw1:	mov	#1, r1
 XL_switch_error:
 	.long	switch_error
 11:
-#endif
+#endif /* DIAGNOSTIC */
 
 	/* Isolate process.  XXX Is this necessary? */
 	mov	r8, r4
 	mov	#P_BACK, r2
 	add	r2, r4
 
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov	r0, r1
@@ -775,7 +784,7 @@ switch_exited:
 	mov	r8, r4		/* r8 = qs[i]->p_forw */
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r0, r12
@@ -783,7 +792,7 @@ switch_exited:
 	/* Restore stack pointers. */
 	mov	r12, r4
 	add	#PCB_R15, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r0, r15
@@ -791,7 +800,7 @@ switch_exited:
 	/* Store new kernel mode stack pointer */
 	mov	r12, r4
 	add	#PCB_KR15, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 	mov.l	@r0, r0
@@ -801,16 +810,16 @@ switch_exited:
 	/* Switch address space. */
 	mov	r12, r4
 	add	#PCB_PAGEDIRREG, r4
-	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
+	MOV	(mmu_pt_kaddr, r0)	
 	jsr	@r0
 	nop
 
 	mov.l	@r0, r0
-	mov.l	XL_SH_TTB, r2; mov.l @r2, r2
+	MOV	(TTB, r2)
 	mov.l	r0, @r2
 
 	/* flush TLB */
-	mov.l	XXL_TLBFLUSH, r0; mov.l	@r0, r0
+	MOV	(tlb_invalidate_all, r0)
 	jsr	@r0
 	nop
 
@@ -850,9 +859,15 @@ XLP_ADDR:	.long	P_ADDR
 XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
-XL_sh_mmu_pt_kaddr:	.long	_C_LABEL(__sh_mmu_pt_kaddr)
 XL_KernelSp:	.long	KernelSp
-XL_SH_TTB:	.long	_C_LABEL(__sh_TTB)
+#if defined(SH3) && defined(SH4)
+XL_mmu_pt_kaddr:	.long	_C_LABEL(__sh_mmu_pt_kaddr)
+#elif defined(SH3)	
+XL_mmu_pt_kaddr:	.long	_C_LABEL(sh3_mmu_pt_p1addr)
+#elif defined(SH4)
+XL_mmu_pt_kaddr:	.long	_C_LABEL(sh4_mmu_pt_p2addr)
+#endif
+
 #if defined(LOCKDEBUG)
 Xsched_lock:	.long	_C_LABEL(sched_lock_idle)
 Xsched_unlock:	.long	_C_LABEL(sched_unlock_idle)
@@ -889,11 +904,11 @@ ENTRY(switch_exit)
 	mov	r10, r0
 	add	#PCB_PAGEDIRREG, r0
 	mov.l	@r0, r2
-	mov.l	XXL_SH_TTB, r1	; mov.l @r1, r1
+	MOV	(TTB, r1)
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov.l	XXL_TLBFLUSH, r0; mov.l	@r0, r0
+	MOV	(tlb_invalidate_all, r0)	
 	jsr	@r0
 	nop
 	
@@ -923,8 +938,7 @@ ENTRY(switch_exit)
 XLexit2:
 	.long	_C_LABEL(exit2)
 
-XXL_TLBFLUSH:
-	.long	__sh_tlb_invalidate_all
+FUNC_SYMBOL(tlb_invalidate_all)
 XXLP_ADDR:
 	.long	P_ADDR
 
@@ -963,7 +977,6 @@ ENTRY(savectx)
 	.text
 
 NENTRY(exphandler)
-/* #define	CHECK_SP */
 #ifdef CHECK_SP
 	mov.l	XL_splimit3, r0
 	cmp/hs	r15, r0
@@ -975,9 +988,9 @@ NENTRY(exphandler)
 	jmp	@r0
 	nop
 100:
-#endif
+#endif /* CHECK_SP */
 
-	mov.l	XL_SH_EXPEVT, r0; mov.l @r0, r0
+	MOV	(EXPEVT, r0)
 	mov.l	@r0, r0
 	cmp/eq	#0x40, r0	/* T_TLBINVALIDR */
 	bf	1f
@@ -995,11 +1008,11 @@ NENTRY(exphandler)
 	INTRENTRY
 #ifdef DDB
 	mov	#0, r0
-	mov.l	XL_SH_BBRA, r1; mov.l @r1, r1
+	MOV	(BBRA, r1)
 	mov.w	r0, @r1		/* disable UBC */
 	mov.l	r0, @r15	/* clear frame->dummy */
 #endif
-	mov.l	XL_SH_EXPEVT, r0; mov.l @r0, r0
+	MOV	(EXPEVT, r0)
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 	INTR_ENABLE
@@ -1045,7 +1058,7 @@ NENTRY(exphandler)
 
 #ifdef DDB
 	mov.l	@r15, r0
-	mov.l	XL_SH_BBRA, r1; mov.l @r1, r1
+	MOV	(BBRA, r1)
 	mov.w	r0, @r1
 #endif
 	INTRFASTEXIT
@@ -1053,10 +1066,8 @@ NENTRY(exphandler)
 	.align	2
 XL_TLBPROTWR:
 	.long	0x000000c0
-XL_SH_EXPEVT:
-	.long	_C_LABEL(__sh_EXPEVT)
-XL_SH_BBRA:
-	.long	_C_LABEL(__sh_BBRA)
+REG_SYMBOL(EXPEVT)	
+REG_SYMBOL(BBRA)
 
 	.globl	_C_LABEL(tlbmisshandler_stub)
 	.globl	_C_LABEL(tlbmisshandler_stub_end)
@@ -1086,7 +1097,7 @@ NENTRY(tlbmisshandler)
 XL_splimit3:		.long	_end
 XL_splimit_low3:	.long	0x80000000
 100:
-#endif
+#endif /* CHECK_SP */
 	INTR_DISABLE
 	/* we must permit interrupt to enable address translation */
 	EXCEPT_ENABLE
@@ -1126,19 +1137,17 @@ _C_LABEL(MonTrap600_end):
  * Immediate Data
  */
 		.align	2
-
 XL_curpcb:	.long	_C_LABEL(curpcb)
 XLcurproc:	.long	_C_LABEL(curproc)
 XLcpl:		.long	_C_LABEL(cpl)
 XLXspllower:	.long	_C_LABEL(Xspllower)
 XLproc0:	.long	_C_LABEL(proc0)
-
 XL_trap:	.long	_C_LABEL(trap)
 XL_astpending:	.long	_C_LABEL(astpending)
 XLT_ASTFLT:	.long	T_ASTFLT
 XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
 XLexphandler:	.long	_C_LABEL(exphandler)
-XXL_SH_TTB:	.long	_C_LABEL(__sh_TTB)
+REG_SYMBOL(TTB)
 
 Xrecurse:
 	stc	sr, r0
@@ -1164,9 +1173,9 @@ NENTRY(ihandler)
 XL_splimit2:		.long	_end
 XL_splimit_low2:	.long	0x80000000
 100:
-#endif
+#endif /* CHECK_SP */
 7:
-	mov.l	XL_SH_INTEVT, r0; mov.l @r0, r0
+	MOV	(INTEVT, r0)
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
@@ -1221,32 +1230,12 @@ XL_splimit_low2:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-XL_SH_INTEVT:		.long	_C_LABEL(__sh_INTEVT)
+REG_SYMBOL(INTEVT)
 XL_intrhandler:		.long	_C_LABEL(intrhandler)
 XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
 XXL_trap:		.long	_C_LABEL(trap)
 XL_check_ipending:	.long	_C_LABEL(check_ipending)
-
-ENTRY(enable_interrupt)
-	INTR_ENABLE
-	rts
-	nop
-
-ENTRY(disable_interrupt)
-	INTR_DISABLE
-	rts
-	nop
-
-ENTRY(enable_ext_intr)
-	INTR_ENABLE
-	rts
-	nop
-
-ENTRY(disable_ext_intr)
-	INTR_DISABLE
-	rts
-	nop
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15

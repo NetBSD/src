@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2002/02/17 21:01:19 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2002/02/19 17:21:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* enable exception */
 	splraise(-1);
-	enable_intr();
+	_cpu_exception_resume(0); /* SR.BL = 0 */
 
 #ifdef DDB
 	/* initialize debugger */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2002/02/17 20:55:58 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2002/02/19 17:21:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -661,12 +661,12 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 	/* Fault the original page in. */
 #ifdef RECURSE_TLB_HANDLER
 	if (reentrant)
-		enable_ext_intr();
+		_cpu_intr_resume(0);
 #endif
 	rv = uvm_fault(map, va, 0, ftype);
 #ifdef RECURSE_TLB_HANDLER
 	if (reentrant)
-		disable_ext_intr();
+		_cpu_intr_suspend();
 #endif
 
 	/*

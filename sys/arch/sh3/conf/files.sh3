@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.16 2002/02/17 20:55:59 uch Exp $
+#	$NetBSD: files.sh3,v 1.17 2002/02/19 17:21:20 uch Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -14,7 +14,7 @@ file	arch/sh3/sh3/in_cksum.S		inet
 file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/Locore.c
-file	arch/sh3/sh3/math_emulate.c	math_emulate
+file	arch/sh3/sh3/locore_subr.S
 file	arch/sh3/sh3/mem.c
 file	netns/ns_cksum.c		ns
 file	arch/sh3/sh3/pmap.c

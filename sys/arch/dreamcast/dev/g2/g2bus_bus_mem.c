@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.3 2001/02/01 01:01:50 thorpej Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.4 2002/02/19 17:21:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,16 +127,16 @@ g2bus_bus_mem_unmap(void *v, bus_space_handle_t sh, bus_size_t size)
 
 #define G2_LOCK								\
 	do {								\
-		disable_intr();						\
+		_cpu_exception_suspend();				\
 		/* suspend any G2 DMA here... */			\
 		while((*(volatile unsigned int *)0xa05f688c) & 32);	\
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #define G2_UNLOCK							\
 	do {								\
 		/* resume any G2 DMA here... */				\
-		enable_intr();						\
-	} while(0)
+		_cpu_exception_resume(0);				\
+	} while(/*CONSTCOND*/0)
 
 
 u_int8_t
