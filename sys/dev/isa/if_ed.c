@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.89 1996/03/16 06:41:20 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.90 1996/03/16 07:24:15 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -73,8 +73,8 @@ struct ed_softc {
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
 
-	int	asic_addr;	/* ASIC I/O bus address */
-	int	nic_addr;	/* NIC (DS8390) I/O bus address */
+	int	asic_base;	/* Base ASIC I/O port */
+	int	nic_base;	/* Base NIC (DS8390) I/O port */
 
 /*
  * The following 'proto' variable is part of a work-around for 8013EBT asics
@@ -238,13 +238,14 @@ ed_find_WD80x3(sc, cf, ia)
 	int i;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
+	int asicbase, nicbase;
 
-	sc->asic_addr = ia->ia_iobase;
-	sc->nic_addr = sc->asic_addr + ED_WD_NIC_OFFSET;
+	sc->asic_base = asicbase = ia->ia_iobase;
+	sc->nic_base = nicbase = asicbase + ED_WD_NIC_OFFSET;
 	sc->is790 = 0;
 
 #ifdef TOSH_ETHER
-	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_POW);
+	outb(asicbase + ED_WD_MSR, ED_WD_MSR_POW);
 	delay(10000);
 #endif
 
@@ -255,7 +256,7 @@ ed_find_WD80x3(sc, cf, ia)
 	 * Danpex boards for one.
 	 */
 	for (sum = 0, i = 0; i < 8; ++i)
-		sum += inb(sc->asic_addr + ED_WD_PROM + i);
+		sum += inb(asicbase + ED_WD_PROM + i);
 
 	if (sum != ED_WD_ROM_CHECKSUM_TOTAL) {
 		/*
@@ -263,25 +264,25 @@ ed_find_WD80x3(sc, cf, ia)
 		 * clones.  In this case, the checksum byte (the eighth byte)
 		 * seems to always be zero.
 		 */
-		if (inb(sc->asic_addr + ED_WD_CARD_ID) != ED_TYPE_WD8003E ||
-		    inb(sc->asic_addr + ED_WD_PROM + 7) != 0)
+		if (inb(asicbase + ED_WD_CARD_ID) != ED_TYPE_WD8003E ||
+		    inb(asicbase + ED_WD_PROM + 7) != 0)
 			return (0);
 	}
 
 	/* Reset card to force it into a known state. */
 #ifdef TOSH_ETHER
-	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_RST | ED_WD_MSR_POW);
+	outb(asicbase + ED_WD_MSR, ED_WD_MSR_RST | ED_WD_MSR_POW);
 #else
-	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_RST);
+	outb(asicbase + ED_WD_MSR, ED_WD_MSR_RST);
 #endif
 	delay(100);
-	outb(sc->asic_addr + ED_WD_MSR,
-	    inb(sc->asic_addr + ED_WD_MSR) & ~ED_WD_MSR_RST);
+	outb(asicbase + ED_WD_MSR,
+	    inb(asicbase + ED_WD_MSR) & ~ED_WD_MSR_RST);
 	/* Wait in the case this card is reading it's EEROM. */
 	delay(5000);
 
 	sc->vendor = ED_VENDOR_WD_SMC;
-	sc->type = inb(sc->asic_addr + ED_WD_CARD_ID);
+	sc->type = inb(asicbase + ED_WD_CARD_ID);
 
 	/* Set initial values for width/size. */
 	memsize = 8192;
@@ -310,7 +311,7 @@ ed_find_WD80x3(sc, cf, ia)
 		isa16bit = 1;
 		break;
 	case ED_TYPE_WD8013EP:		/* also WD8003EP */
-		if (inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_16BIT) {
+		if (inb(asicbase + ED_WD_ICR) & ED_WD_ICR_16BIT) {
 			isa16bit = 1;
 			memsize = 16384;
 			sc->type_str = "WD8013EP";
@@ -336,9 +337,9 @@ ed_find_WD80x3(sc, cf, ia)
 	case ED_TYPE_SMC8216T:
 		sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
 				"SMC8216/SMC8216C" : "SMC8216T";
-		outb(sc->asic_addr + ED_WD790_HWR,
-			inb(sc->asic_addr + ED_WD790_HWR) | ED_WD790_HWR_SWH);
-		switch (inb(sc->asic_addr + ED_WD790_RAR) & ED_WD790_RAR_SZ64) {
+		outb(asicbase + ED_WD790_HWR,
+			inb(asicbase + ED_WD790_HWR) | ED_WD790_HWR_SWH);
+		switch (inb(asicbase + ED_WD790_RAR) & ED_WD790_RAR_SZ64) {
 		case ED_WD790_RAR_SZ64:
 			memsize = 65536;
 			break;
@@ -355,8 +356,8 @@ ed_find_WD80x3(sc, cf, ia)
 			memsize = 8192;
 			break;
 		}
-		outb(sc->asic_addr + ED_WD790_HWR,
-			inb(sc->asic_addr + ED_WD790_HWR) & ~ED_WD790_HWR_SWH);
+		outb(asicbase + ED_WD790_HWR,
+			inb(asicbase + ED_WD790_HWR) & ~ED_WD790_HWR_SWH);
 
 		isa16bit = 1;
 		sc->is790 = 1;
@@ -385,7 +386,7 @@ ed_find_WD80x3(sc, cf, ia)
 #ifdef TOSH_ETHER
 	    (sc->type != ED_TYPE_TOSHIBA1) && (sc->type != ED_TYPE_TOSHIBA4) &&
 #endif
-	    ((inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_16BIT) == 0)) {
+	    ((inb(asicbase + ED_WD_ICR) & ED_WD_ICR_16BIT) == 0)) {
 		isa16bit = 0;
 		memsize = 8192;
 	}
@@ -395,7 +396,7 @@ ed_find_WD80x3(sc, cf, ia)
 	    sc->type, sc->type_str ?: "unknown", isa16bit, memsize,
 	    ia->ia_msize);
 	for (i = 0; i < 8; i++)
-		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
+		printf("%x -> %x\n", i, inb(asicbase + i));
 #endif
 	/* Allow the user to override the autoconfiguration. */
 	if (ia->ia_msize)
@@ -491,7 +492,7 @@ ed_find_WD80x3(sc, cf, ia)
 	/* Get station address from on-board ROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		sc->sc_arpcom.ac_enaddr[i] =
-		    inb(sc->asic_addr + ED_WD_PROM + i);
+		    inb(asicbase + ED_WD_PROM + i);
 
 	/*
 	 * Set upper address bits and 8/16 bit access to shared memory.
@@ -499,7 +500,7 @@ ed_find_WD80x3(sc, cf, ia)
 	if (isa16bit) {
 		if (sc->is790) {
 			sc->wd_laar_proto =
-			    inb(sc->asic_addr + ED_WD_LAAR) &
+			    inb(asicbase + ED_WD_LAAR) &
 			    ~ED_WD_LAAR_M16EN;
 		} else {
 			sc->wd_laar_proto =
@@ -507,7 +508,7 @@ ed_find_WD80x3(sc, cf, ia)
 			    ((kvtop(sc->mem_start) >> 19) &
 			    ED_WD_LAAR_ADDRHI);
 		}
-		outb(sc->asic_addr + ED_WD_LAAR,
+		outb(asicbase + ED_WD_LAAR,
 		    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 	} else  {
 		if ((sc->type & ED_WD_SOFTCONFIG) ||
@@ -519,7 +520,7 @@ ed_find_WD80x3(sc, cf, ia)
 			sc->wd_laar_proto =
 			    ((kvtop(sc->mem_start) >> 19) &
 			    ED_WD_LAAR_ADDRHI);
-			outb(sc->asic_addr + ED_WD_LAAR,
+			outb(asicbase + ED_WD_LAAR,
 			    sc->wd_laar_proto);
 		}
 	}
@@ -529,9 +530,9 @@ ed_find_WD80x3(sc, cf, ia)
 	 */
 	if (!sc->is790) {
 #ifdef TOSH_ETHER
-		outb(sc->asic_addr + ED_WD_MSR + 1,
+		outb(asicbase + ED_WD_MSR + 1,
 		    ((kvtop(sc->mem_start) >> 8) & 0xe0) | 4);
-		outb(sc->asic_addr + ED_WD_MSR + 2,
+		outb(asicbase + ED_WD_MSR + 2,
 		    ((kvtop(sc->mem_start) >> 16) & 0x0f));
 		sc->wd_msr_proto = ED_WD_MSR_POW;
 #else
@@ -540,18 +541,18 @@ ed_find_WD80x3(sc, cf, ia)
 #endif
 		sc->cr_proto = ED_CR_RD2;
 	} else {
-		outb(sc->asic_addr + 0x04,
-		    inb(sc->asic_addr + 0x04) | 0x80);
-		outb(sc->asic_addr + 0x0b,
+		outb(asicbase + 0x04,
+		    inb(asicbase + 0x04) | 0x80);
+		outb(asicbase + 0x0b,
 		    ((kvtop(sc->mem_start) >> 13) & 0x0f) |
 		    ((kvtop(sc->mem_start) >> 11) & 0x40) |
-		    (inb(sc->asic_addr + 0x0b) & 0xb0));
-		outb(sc->asic_addr + 0x04,
-		    inb(sc->asic_addr + 0x04) & ~0x80);
+		    (inb(asicbase + 0x0b) & 0xb0));
+		outb(asicbase + 0x04,
+		    inb(asicbase + 0x04) & ~0x80);
 		sc->wd_msr_proto = 0x00;
 		sc->cr_proto = 0;
 	}
-	outb(sc->asic_addr + ED_WD_MSR,
+	outb(asicbase + ED_WD_MSR,
 	    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
 	(void) inb(0x84);
@@ -567,10 +568,10 @@ ed_find_WD80x3(sc, cf, ia)
 			    kvtop(sc->mem_start + i));
 
 			/* Disable 16 bit access to shared memory. */
-			outb(sc->asic_addr + ED_WD_MSR,
+			outb(asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto);
 			if (isa16bit)
-				outb(sc->asic_addr + ED_WD_LAAR,
+				outb(asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
 			(void) inb(0x84);
 			(void) inb(0x84);
@@ -585,9 +586,9 @@ ed_find_WD80x3(sc, cf, ia)
 	 * and 2) so that other 8 bit devices with shared memory can be
 	 * used in this 128k region, too.
 	 */
-	outb(sc->asic_addr + ED_WD_MSR, sc->wd_msr_proto);
+	outb(asicbase + ED_WD_MSR, sc->wd_msr_proto);
 	if (isa16bit)
-		outb(sc->asic_addr + ED_WD_LAAR, sc->wd_laar_proto);
+		outb(asicbase + ED_WD_LAAR, sc->wd_laar_proto);
 	(void) inb(0x84);
 	(void) inb(0x84);
 
@@ -613,10 +614,10 @@ ed_find_3Com(sc, cf, ia)
 	int i;
 	u_int memsize;
 	u_char isa16bit, sum, x;
-	int ptr, nicbase;
+	int ptr, asicbase, nicbase;
 
-	sc->asic_addr = ia->ia_iobase + ED_3COM_ASIC_OFFSET;
-	sc->nic_addr = nicbase = ia->ia_iobase + ED_3COM_NIC_OFFSET;
+	sc->asic_base = asicbase = ia->ia_iobase + ED_3COM_ASIC_OFFSET;
+	sc->nic_base = nicbase = ia->ia_iobase + ED_3COM_NIC_OFFSET;
 
 	/*
 	 * Verify that the kernel configured I/O address matches the board
@@ -626,7 +627,7 @@ ed_find_3Com(sc, cf, ia)
 	 * board is there; after all, we are already talking it at that
 	 * address.
 	 */
-	x = inb(sc->asic_addr + ED_3COM_BCFR);
+	x = inb(asicbase + ED_3COM_BCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
 		return (0);
 	ptr = ffs(x) - 1;
@@ -640,7 +641,7 @@ ed_find_3Com(sc, cf, ia)
 	} else
 		ia->ia_iobase = ed_3com_iobase[ptr];
 
-	x = inb(sc->asic_addr + ED_3COM_PCFR);
+	x = inb(asicbase + ED_3COM_PCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
 		return (0);
 	ptr = ffs(x) - 1;
@@ -655,7 +656,7 @@ ed_find_3Com(sc, cf, ia)
 		ia->ia_maddr = ed_3com_maddr[ptr];
 
 #if 0
-	x = inb(sc->asic_addr + ED_3COM_IDCFR) & ED_3COM_IDCFR_IRQ;
+	x = inb(asicbase + ED_3COM_IDCFR) & ED_3COM_IDCFR_IRQ;
 	if (x == 0 || (x & (x - 1)) != 0)
 		return (0);
 	ptr = ffs(x) - 1;
@@ -675,7 +676,7 @@ ed_find_3Com(sc, cf, ia)
 	 * sequence because it'll lock up if the cable isn't connected if we
 	 * don't.
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_RST | ED_3COM_CR_XSEL);
+	outb(asicbase + ED_3COM_CR, ED_3COM_CR_RST | ED_3COM_CR_XSEL);
 
 	/* Wait for a while, then un-reset it. */
 	delay(50);
@@ -685,7 +686,7 @@ ed_find_3Com(sc, cf, ia)
 	 * reset - it's important to set it again after the following outb
 	 * (this is done when we map the PROM below).
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+	outb(asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
 
 	/* Wait a bit for the NIC to recover from the reset. */
 	delay(5000);
@@ -707,7 +708,7 @@ ed_find_3Com(sc, cf, ia)
 	 * First, map ethernet address PROM over the top of where the NIC
 	 * registers normally appear.
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
+	outb(asicbase + ED_3COM_CR, ED_3COM_CR_EALO | ED_3COM_CR_XSEL);
 
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		sc->sc_arpcom.ac_enaddr[i] = NIC_GET(nicbase, i);
@@ -717,7 +718,7 @@ ed_find_3Com(sc, cf, ia)
 	 * tranceiver is set in edinit so that the attach code is given a
 	 * chance to set the default based on a compile-time config option.
 	 */
-	outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+	outb(asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
 
 	/* Determine if this is an 8bit or 16bit board. */
 
@@ -783,22 +784,22 @@ ed_find_3Com(sc, cf, ia)
 	 * Initialize GA page start/stop registers.  Probably only needed if
 	 * doing DMA, but what the Hell.
 	 */
-	outb(sc->asic_addr + ED_3COM_PSTR, sc->rec_page_start);
-	outb(sc->asic_addr + ED_3COM_PSPR, sc->rec_page_stop);
+	outb(asicbase + ED_3COM_PSTR, sc->rec_page_start);
+	outb(asicbase + ED_3COM_PSPR, sc->rec_page_stop);
 
 	/* Set IRQ.  3c503 only allows a choice of irq 3-5 or 9. */
 	switch (ia->ia_irq) {
 	case 9:
-		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ2);
+		outb(asicbase + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ2);
 		break;
 	case 3:
-		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ3);
+		outb(asicbase + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ3);
 		break;
 	case 4:
-		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ4);
+		outb(asicbase + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ4);
 		break;
 	case 5:
-		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ5);
+		outb(asicbase + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ5);
 		break;
 	default:
 		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
@@ -810,7 +811,7 @@ ed_find_3Com(sc, cf, ia)
 	 * Initialize GA configuration register.  Set bank and enable shared
 	 * mem.
 	 */
-	outb(sc->asic_addr + ED_3COM_GACFR,
+	outb(asicbase + ED_3COM_GACFR,
 	    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
 
 	/*
@@ -819,9 +820,9 @@ ed_find_3Com(sc, cf, ia)
 	 * shared memory is disabled. We set them to 0xffff0...allegedly the
 	 * reset vector.
 	 */
-	outb(sc->asic_addr + ED_3COM_VPTR2, 0xff);
-	outb(sc->asic_addr + ED_3COM_VPTR1, 0xff);
-	outb(sc->asic_addr + ED_3COM_VPTR0, 0x00);
+	outb(asicbase + ED_3COM_VPTR2, 0xff);
+	outb(asicbase + ED_3COM_VPTR1, 0xff);
+	outb(asicbase + ED_3COM_VPTR0, 0x00);
 
 	/* Zero memory and verify that it is clear. */
 	bzero(sc->mem_start, memsize);
@@ -851,19 +852,19 @@ ed_find_Novell(sc, cf, ia)
 	u_char romdata[16], isa16bit = 0, tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
 	u_char test_buffer[32];
-	int nicbase;
+	int asicbase, nicbase;
 
-	sc->asic_addr = ia->ia_iobase + ED_NOVELL_ASIC_OFFSET;
-	sc->nic_addr = nicbase = ia->ia_iobase + ED_NOVELL_NIC_OFFSET;
+	sc->asic_base = asicbase = ia->ia_iobase + ED_NOVELL_ASIC_OFFSET;
+	sc->nic_base = nicbase = ia->ia_iobase + ED_NOVELL_NIC_OFFSET;
 
 	/* XXX - do Novell-specific probe here */
 
 	/* Reset the board. */
 #ifdef GWETHER
-	outb(sc->asic_addr + ED_NOVELL_RESET, 0);
+	outb(asicbase + ED_NOVELL_RESET, 0);
 	delay(200);
 #endif /* GWETHER */
-	tmp = inb(sc->asic_addr + ED_NOVELL_RESET);
+	tmp = inb(asicbase + ED_NOVELL_RESET);
 
 	/*
 	 * I don't know if this is necessary; probably cruft leftover from
@@ -873,7 +874,7 @@ ed_find_Novell(sc, cf, ia)
 	 * complete documentation on what the 'right' thing to do is...so we do
 	 * the invasive thing for now.  Yuck.]
 	 */
-	outb(sc->asic_addr + ED_NOVELL_RESET, tmp);
+	outb(asicbase + ED_NOVELL_RESET, tmp);
 	delay(5000);
 
 	/*
@@ -887,7 +888,7 @@ ed_find_Novell(sc, cf, ia)
 	delay(5000);
 
 	/* Make sure that we really have an 8390 based board. */
-	if (!ed_probe_generic8390(sc->nic_addr))
+	if (!ed_probe_generic8390(nicbase))
 		return (0);
 
 	sc->vendor = ED_VENDOR_NOVELL;
@@ -1071,6 +1072,10 @@ edattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int asicbase;
+
+
+	asicbase = sc->asic_base;
 
 	/* Set interface to stopped condition (reset). */
 	edstop(sc);
@@ -1096,7 +1101,7 @@ edattach(parent, self, aux)
 	case ED_VENDOR_WD_SMC:
 		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
 			break;
-		if ((inb(sc->asic_addr + ED_WD_IRR) & ED_WD_IRR_OUT2) == 0)
+		if ((inb(asicbase + ED_WD_IRR) & ED_WD_IRR_OUT2) == 0)
 			ifp->if_flags |= IFF_LINK0;
 		break;
 	}
@@ -1159,7 +1164,7 @@ void
 edstop(sc)
 	struct ed_softc *sc;
 {
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base;
 	int n = 5000;
 
 	/* Stop everything on the interface, and select page 0 registers. */
@@ -1197,7 +1202,7 @@ edinit(sc)
 	struct ed_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
 	u_char command;
 	u_long mcaf[2];
@@ -1308,19 +1313,19 @@ edinit(sc)
 		u_char x;
 	case ED_VENDOR_3COM:
 		if (ifp->if_flags & IFF_LINK0)
-			outb(sc->asic_addr + ED_3COM_CR, 0);
+			outb(asicbase + ED_3COM_CR, 0);
 		else
-			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+			outb(asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
 		break;
 	case ED_VENDOR_WD_SMC:
 		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
 			break;
-		x = inb(sc->asic_addr + ED_WD_IRR);
+		x = inb(asicbase + ED_WD_IRR);
 		if (ifp->if_flags & IFF_LINK0)
 			x &= ~ED_WD_IRR_OUT2;
 		else
 			x |= ED_WD_IRR_OUT2;
-		outb(sc->asic_addr + ED_WD_IRR, x);
+		outb(asicbase + ED_WD_IRR, x);
 		break;
 	}
 
@@ -1343,7 +1348,7 @@ ed_xmit(sc)
 	struct ed_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -1388,6 +1393,7 @@ edstart(ifp)
 	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
+	int asicbase = sc->asic_base;
 	int len;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1428,7 +1434,7 @@ outloop:
 		 */
 		case ED_VENDOR_3COM:
 			if (sc->isa16bit)
-				outb(sc->asic_addr + ED_3COM_GACFR,
+				outb(asicbase + ED_3COM_GACFR,
 				    ED_3COM_GACFR_RSEL);
 			break;
 		/*
@@ -1437,9 +1443,9 @@ outloop:
 		 */
 		case ED_VENDOR_WD_SMC:
 			if (sc->isa16bit)
-				outb(sc->asic_addr + ED_WD_LAAR,
+				outb(asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
-			outb(sc->asic_addr + ED_WD_MSR,
+			outb(asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto | ED_WD_MSR_MENB);
 			(void) inb(0x84);
 			(void) inb(0x84);
@@ -1456,14 +1462,14 @@ outloop:
 		switch (sc->vendor) {
 		case ED_VENDOR_3COM:
 			if (sc->isa16bit)
-				outb(sc->asic_addr + ED_3COM_GACFR,
+				outb(asicbase + ED_3COM_GACFR,
 				    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
 			break;
 		case ED_VENDOR_WD_SMC:
-			outb(sc->asic_addr + ED_WD_MSR,
+			outb(asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto);
 			if (sc->isa16bit)
-				outb(sc->asic_addr + ED_WD_LAAR,
+				outb(asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
 			(void) inb(0x84);
 			(void) inb(0x84);
@@ -1495,7 +1501,7 @@ static inline void
 ed_rint(sc)
 	struct ed_softc *sc;
 {
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base;
 	u_char boundary, current;
 	u_short len;
 	u_char nlen;
@@ -1612,7 +1618,7 @@ edintr(arg)
 {
 	struct ed_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -1745,9 +1751,9 @@ edintr(arg)
 				 */
 				if (sc->vendor == ED_VENDOR_WD_SMC) {
 					if (sc->isa16bit)
-						outb(sc->asic_addr + ED_WD_LAAR,
+						outb(asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
-					outb(sc->asic_addr + ED_WD_MSR,
+					outb(asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto | ED_WD_MSR_MENB);
 					(void) inb(0x84);
 					(void) inb(0x84);
@@ -1757,10 +1763,10 @@ edintr(arg)
 
 				/* Disable 16-bit access. */
 				if (sc->vendor == ED_VENDOR_WD_SMC) {
-					outb(sc->asic_addr + ED_WD_MSR,
+					outb(asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto);
 					if (sc->isa16bit)
-						outb(sc->asic_addr + ED_WD_LAAR,
+						outb(asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto);
 					(void) inb(0x84);
 					(void) inb(0x84);
@@ -1977,7 +1983,7 @@ ed_pio_readmem(sc, src, dst, amount)
 	caddr_t dst;
 	u_short amount;
 {
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base;
 
 	/* Select page 0 registers. */
 	NIC_PUT(nicbase, ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
@@ -1997,9 +2003,9 @@ ed_pio_readmem(sc, src, dst, amount)
 	NIC_PUT(nicbase, ED_P0_CR, ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (sc->isa16bit)
-		insw(sc->asic_addr + ED_NOVELL_DATA, dst, amount / 2);
+		insw(sc->asic_base + ED_NOVELL_DATA, dst, amount / 2);
 	else
-		insb(sc->asic_addr + ED_NOVELL_DATA, dst, amount);
+		insb(sc->asic_base + ED_NOVELL_DATA, dst, amount);
 }
 
 /*
@@ -2013,7 +2019,7 @@ ed_pio_writemem(sc, src, dst, len)
 	u_short dst;
 	u_short len;
 {
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base;
 	int maxwait = 100; /* about 120us */
 
 	/* Select page 0 registers. */
@@ -2034,9 +2040,9 @@ ed_pio_writemem(sc, src, dst, len)
 	NIC_PUT(nicbase, ED_P0_CR, ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (sc->isa16bit)
-		outsw(sc->asic_addr + ED_NOVELL_DATA, src, len / 2);
+		outsw(sc->asic_base + ED_NOVELL_DATA, src, len / 2);
 	else
-		outsb(sc->asic_addr + ED_NOVELL_DATA, src, len);
+		outsb(sc->asic_base + ED_NOVELL_DATA, src, len);
 
 	/*
 	 * Wait for remote DMA complete.  This is necessary because on the
@@ -2059,7 +2065,7 @@ ed_pio_write_mbufs(sc, m, dst)
 	struct mbuf *m;
 	u_short dst;
 {
-	int nicbase = sc->nic_addr;
+	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_short len;
 	struct mbuf *mp;
 	int maxwait = 100; /* about 120us */
@@ -2093,7 +2099,7 @@ ed_pio_write_mbufs(sc, m, dst)
 		/* NE1000s are easy. */
 		for (; m != 0; m = m->m_next) {
 			if (m->m_len) {
-				outsb(sc->asic_addr + ED_NOVELL_DATA,
+				outsb(asicbase + ED_NOVELL_DATA,
 				    mtod(m, u_char *), m->m_len);
 			}
 		}
@@ -2111,7 +2117,7 @@ ed_pio_write_mbufs(sc, m, dst)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				outw(sc->asic_addr + ED_NOVELL_DATA,
+				outw(asicbase + ED_NOVELL_DATA,
 				    *(u_short *)savebyte);
 				data++;
 				len--;
@@ -2119,7 +2125,7 @@ ed_pio_write_mbufs(sc, m, dst)
 			}
 			/* Output contiguous words. */
 			if (len > 1)
-				outsw(sc->asic_addr + ED_NOVELL_DATA,
+				outsw(asicbase + ED_NOVELL_DATA,
 				    data, len >> 1);
 			/* Save last byte, if necessary. */
 			if (len & 1) {
@@ -2131,8 +2137,7 @@ ed_pio_write_mbufs(sc, m, dst)
 
 		if (wantbyte) {
 			savebyte[1] = 0;
-			outw(sc->asic_addr + ED_NOVELL_DATA,
-			    *(u_short *)savebyte);
+			outw(asicbase + ED_NOVELL_DATA, *(u_short *)savebyte);
 		}
 	}
 
