@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.5 1999/09/27 05:04:10 cgd Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.6 1999/09/28 04:46:28 cgd Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1014,6 +1014,12 @@ raidioctl(dev, cmd, data, flag, p)
 		return(retcode);
 
 	case RAIDFRAME_REBUILD_IN_PLACE:
+
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* Can't do this on a RAID 0!! */
+			return(EINVAL);
+		}
+
 		componentPtr = (RF_SingleComponent_t *) data;
 		memcpy( &component, componentPtr, 
 			sizeof(RF_SingleComponent_t));
@@ -1123,6 +1129,12 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
+
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* Can't do this on a RAID 0!! */
+			return(EINVAL);
+		}
+
 		rr = (struct rf_recon_req *) data;
 
 		if (rr->row < 0 || rr->row >= raidPtrs[unit]->numRow
@@ -1149,6 +1161,12 @@ raidioctl(dev, cmd, data, flag, p)
 		/* invoke a copyback operation after recon on whatever disk
 		 * needs it, if any */
 	case RAIDFRAME_COPYBACK:
+
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* This makes no sense on a RAID 0!! */
+			return(EINVAL);
+		}
+
 		/* borrow the current thread to get this done */
 		raidPtrs[unit]->proc = p;	/* ICK.. but needed :-p  GO */
 		s = splbio();
@@ -1158,6 +1176,11 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* return the percentage completion of reconstruction */
 	case RAIDFRAME_CHECKRECON:
+		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+			/* This makes no sense on a RAID 0 */
+			return(EINVAL);
+		}
+
 		row = *(int *) data;
 		if (row < 0 || row >= raidPtrs[unit]->numRow)
 			return (EINVAL);
