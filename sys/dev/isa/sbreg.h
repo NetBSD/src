@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.14 1996/02/20 11:15:17 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.15 1996/03/01 04:08:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -150,6 +150,8 @@
 #define SB_MIDI_UART_INTR	0x35	/* enter UART mode w/ read intrs */
 #define SB_MIDI_WRITE		0x38	/* write a MIDI byte (non-UART mode) */
 #define SB_DSP_TIMECONST	0x40	/* set ADAC time constant */
+#define	SB_DSP16_OUTPUTRATE	0x41	/* set ADAC output rate */
+#define	SB_DSP16_INPUTRATE	0x42	/* set ADAC input rate */
 #define SB_DSP_BLOCKSIZE	0x48	/* set blk size for high speed xfer */
 #define SB_DSP_WDMA_4		0x74	/* begin 4-bit ADPCM DMA output */
 #define SB_DSP_WDMA_2_6		0x76	/* begin 2.6-bit ADPCM DMA output */
@@ -158,6 +160,10 @@
 #define SB_DSP_HS_INPUT		0x99	/* set high speed mode for rdma */
 #define SB_DSP_RECORD_MONO	0xA0	/* set mono recording */
 #define SB_DSP_RECORD_STEREO	0xA8	/* set stereo recording */
+#define	SB_DSP16_WDMA_16	0xB6	/* begin 16-bit linear output */
+#define	SB_DSP16_RDMA_16	0xBE	/* begin 16-bit linear input */
+#define	SB_DSP16_WDMA_8		0xC6	/* begin 8-bit linear output */
+#define	SB_DSP16_RDMA_8		0xCE	/* begin 8-bit linear input */
 #define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
