@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.154 2004/04/29 04:27:06 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.155 2004/04/29 04:30:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1552,3 +1552,10 @@ sys/dev/scsipi/scsipi_base.c			1.105
 	capacity. Checking/decreasing xs_retries on the bus reset reported 
 	by the adapter is enouth to avoid the problem reported by rev 1.102.
 	[bouyer, ticket #214]
+
+gnu/lib/libgcc3/libgcc_s/Makefile		1.6
+
+	Copy .s.so rule we use for libgcc_pic to make sure the millicode is
+	.hidden in libgcc_s.so as well.  Enable it for sh3.  Other CPUs for
+	which gcc uses millicode probably need this too.
+	[uwe, ticket #215]
