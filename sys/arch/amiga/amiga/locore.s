@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 1996/09/29 21:27:33 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 1996/09/30 16:10:03 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -552,8 +552,7 @@ _DraCoLev2intr:
 
 	CIAAADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
-	tstb	d0			| check if CIAB was source
-	jeq	Ldrintrcommon
+	jge     Ldrintrcommon		| CIAA IR not set, go through isr chain
 	movel	_draco_intpen,a0
 |	andib	#4,a0@
 |XXX this would better be 
