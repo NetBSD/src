@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.5 2002/03/25 19:40:35 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.6 2002/03/25 20:29:30 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -280,7 +280,11 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 	const wchar_t* pwcs0;
 
 	pwcs0 = *pwcs;
-	while (1/*CONSTCOND*/) {
+
+	if (!s)
+		n = 1;
+
+	while (n > 0) {
 		err = _FUNCNAME(wcrtomb_priv)(ei, buf, sizeof(buf),
 					      *pwcs0, psenc, &siz);
 		if (siz == (size_t)-1) {
@@ -289,21 +293,21 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 		}
 
 		if (s) {
-			if (n - cnt < siz)
-				break;
+			if (n < siz)
+				break; /* XXX should restore state */
 			memcpy(s, buf, siz);
+			s += siz;
+			n -= siz;
 		}
+		cnt += siz;
 		if (!*pwcs0) {
 			if (s) {
 				_FUNCNAME(init_state)(ei, psenc);
 			}
 			pwcs0 = 0;
-			cnt += siz - 1; /* don't include terminating null */
+			cnt--; /* don't include terminating null */
 			break;
 		}
-		if (s)
-			s += siz;
-		cnt += siz;
 		pwcs0++;
 	}
 	if (s)
