@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.76 2002/05/13 05:35:47 simonb Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.77 2002/05/20 06:22:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.76 2002/05/13 05:35:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.77 2002/05/20 06:22:43 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -560,10 +560,9 @@ linux_fakedev(dev, raw)
 		if (major(dev) == NETBSD_WSCONS_MAJOR)
 			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
-		return 0;
-	} else {
-		return dev;
 	}
+
+	return dev;
 }
 
 #if (NWSDISPLAY > 0)
