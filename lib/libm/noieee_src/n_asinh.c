@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asinh.c,v 1.4 1999/07/02 15:37:36 simonb Exp $	*/
+/*	$NetBSD: n_asinh.c,v 1.5 2002/06/15 00:10:17 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,7 @@ static char sccsid[] = "@(#)asinh.c	8.1 (Berkeley) 6/4/93";
  * from decimal to binary accurately enough to produce the hexadecimal values
  * shown.
  */
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(ln2hi, 6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
@@ -83,8 +84,8 @@ ic(ln2lo, 1.9082149292705877000E-10, -33, 1.A39EF35793C76)
 #define    ln2lo    vccast(ln2lo)
 #endif
 
-double asinh(x)
-double x;
+double
+asinh(double x)
 {
 	double t,s;
 	const static double	small=1.0E-10,	/* fl(1+small*small) == 1 */

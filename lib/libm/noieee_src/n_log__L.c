@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log__L.c,v 1.4 1999/07/02 15:37:37 simonb Exp $ */
+/*      $NetBSD: n_log__L.c,v 1.5 2002/06/15 00:10:17 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,6 +72,7 @@ static char sccsid[] = "@(#)log__L.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(L1, 6.6666666666666703212E-1 ,aaaa,402a,aac5,aaaa,  0, .AAAAAAAAAAAAC5)
@@ -102,8 +103,8 @@ ic(L7, 1.4795612545334174692E-1, -3, 1.2F039F0085122)
 #define	L8	vccast(L8)
 #endif
 
-double __log__L(z)
-double z;
+double
+__log__L(double z)
 {
 #if defined(__vax__)||defined(tahoe)
     return(z*(L1+z*(L2+z*(L3+z*(L4+z*(L5+z*(L6+z*(L7+z*L8))))))));

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.3 1998/10/20 02:26:11 matt Exp $ */
+/*      $NetBSD: n_floor.c,v 1.4 2002/06/15 00:10:17 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)floor.c	8.1 (Berkeley) 6/4/93";
 #endif
 #endif /* not lint */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(L, 4503599627370496.0E0 ,0000,5c00,0000,0000, 55, 1.0) /* 2**55 */
@@ -56,8 +57,7 @@ ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
  *	customary for IEEE 754.  No other signal can be emitted.
  */
 double
-floor(x)
-double x;
+floor(double x)
 {
 	volatile double y;
 
@@ -77,8 +77,7 @@ double x;
 }
 
 double
-ceil(x)
-double x;
+ceil(double x)
 {
 	volatile double y;
 
@@ -120,8 +119,7 @@ double x;
  *	customary for IEEE 754.  No other signal can be emitted.
  */
 double
-rint(x)
-double x;
+rint(double x)
 {
 	double s;
 	volatile double t;

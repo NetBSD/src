@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.5 1999/07/02 15:37:36 simonb Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.6 2002/06/15 00:10:17 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -93,8 +93,7 @@ static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
 #include "mathimpl.h"
 
 double
-asin(x)
-	double x;
+asin(double x)
 {
 	double s,t,one=1.0;
 #if !defined(__vax__)&&!defined(tahoe)
@@ -161,8 +160,7 @@ asin(x)
  */
 
 double
-acos(x)
-	double x;
+acos(double x)
 {
 	double t,one=1.0;
 #if !defined(__vax__)&&!defined(tahoe)

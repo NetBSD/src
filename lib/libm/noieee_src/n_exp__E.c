@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp__E.c,v 1.4 1999/07/02 15:37:37 simonb Exp $ */
+/*      $NetBSD: n_exp__E.c,v 1.5 2002/06/15 00:10:17 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,7 @@ static char sccsid[] = "@(#)exp__E.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(p1, 1.5150724356786683059E-2 ,3abe,3d78,066a,67e1,  -6, .F83ABE67E1066A)
@@ -110,8 +111,8 @@ ic(q2, 9.9176615021572857300E-4, -10, 1.03FC4CB8C98E8)
 #define       q3    vccast(q3)
 #endif
 
-double __exp__E(x,c)
-double x,c;
+double
+__exp__E(double x, double c)
 {
 	const static double zero=0.0, one=1.0, half=1.0/2.0, small=1.0E-19;
 	double z,p,q,xp,xh,w;

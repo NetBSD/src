@@ -1,4 +1,4 @@
-/*      $NetBSD: n_cosh.c,v 1.5 1999/07/02 15:37:36 simonb Exp $ */
+/*      $NetBSD: n_cosh.c,v 1.6 2002/06/15 00:10:17 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -85,6 +85,7 @@ static char sccsid[] = "@(#)cosh.c	8.1 (Berkeley) 6/4/93";
  * shown.
  */
 
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(mln2hi, 8.8029691931113054792E1   ,0f33,43b0,2bdb,c7e2,   7, .B00F33C7E22BDB)
@@ -102,13 +103,13 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #endif
 
 #if defined(__vax__)||defined(tahoe)
-static int max = 126;
-#else	/* defined(__vax__)||defined(tahoe) */
-static int max = 1023;
+#define EXPMAX 126
+#else
+#define EXPMAX 1023
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-double cosh(x)
-double x;
+double
+cosh(double x)
 {
 	static const double half=1.0/2.0,
 		one=1.0, small=1.0E-18; /* fl(1+small)==1 */
@@ -127,10 +128,10 @@ double x;
 	}
 
 	if( lnovfl <= x && x <= (lnovfl+0.7))
-        /* for x lies in [lnovfl, lnovfl+ln2], decrease x by ln(2^(max+1))
-         * and return 2^max*exp(x) to avoid unnecessary overflow
+        /* for x lies in [lnovfl, lnovfl+ln2], decrease x by ln(2^(EXPMAX+1))
+         * and return 2^EXPMAX*exp(x) to avoid unnecessary overflow
          */
-	    return(scalb(exp((x-mln2hi)-mln2lo), max));
+	    return(scalb(exp((x-mln2hi)-mln2lo), EXPMAX));
 
 	else
 	    return(exp(x)*half);	/* for large x,  cosh(x)=exp(x)/2 */
