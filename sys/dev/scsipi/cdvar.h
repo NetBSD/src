@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.9 1998/08/05 16:29:05 drochner Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.10 1999/02/02 13:02:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	CDRETRIES	1
+#define	CDRETRIES	4
 
 struct cd_ops;
 
