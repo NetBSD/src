@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.13 2001/05/16 08:10:36 kanaoka Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.14 2001/07/06 18:03:47 mcr Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ int	pciintr_link_fixup __P((void));
 int	pciintr_link_route __P((u_int16_t *));
 int	pciintr_irq_release __P((u_int16_t *));
 int	pciintr_header_fixup __P((pci_chipset_tag_t));
-void	pciintr_do_header_fixup __P((pci_chipset_tag_t, pcitag_t));
+void	pciintr_do_header_fixup __P((pci_chipset_tag_t, pcitag_t, void*));
 
 SIMPLEQ_HEAD(, pciintr_link_map) pciintr_link_map_list;
 
@@ -582,16 +582,17 @@ pciintr_header_fixup(pc)
 	PCIBIOS_PRINTV(("------------------------------------------\n"));
 	PCIBIOS_PRINTV(("  device vendor product pin PIRQ IRQ stage\n"));
 	PCIBIOS_PRINTV(("------------------------------------------\n"));
-	pci_device_foreach(pc, pcibios_max_bus, pciintr_do_header_fixup);
+	pci_device_foreach(pc, pcibios_max_bus, pciintr_do_header_fixup, NULL);
 	PCIBIOS_PRINTV(("------------------------------------------\n"));
 
 	return (0);
 }
 
 void
-pciintr_do_header_fixup(pc, tag)
+pciintr_do_header_fixup(pc, tag, context)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+	void *context;
 {
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;
@@ -606,12 +607,14 @@ pciintr_do_header_fixup(pc, tag)
 	pin = PCI_INTERRUPT_PIN(intr);
 	irq = PCI_INTERRUPT_LINE(intr);
 
+#if 0
 	if (pin == 0) {
 		/*
 		 * No interrupt used.
 		 */
 		return;
 	}
+#endif
 
 	pir = pciintr_pir_lookup(bus, device);
 	if (pir == NULL || (link = pir->linkmap[pin - 1].link) == 0) {
