@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.116 2003/09/23 05:26:13 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.117 2003/09/23 05:26:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.116 2003/09/23 05:26:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.117 2003/09/23 05:26:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,33 +452,38 @@ unreserve:
 		vrele(vp2);						\
 }
 
-#define	MARK_VNODE(dvp)	 do {						\
-	struct inode *_ip = VTOI(dvp);					\
-	struct lfs *_fs = _ip->i_lfs;					\
-									\
-	if (!((dvp)->v_flag & VDIROP)) {				\
-		(void)lfs_vref(dvp);					\
-		++lfs_dirvcount;					\
-		TAILQ_INSERT_TAIL(&_fs->lfs_dchainhd, _ip, i_lfs_dchain); \
-	}								\
-	(dvp)->v_flag |= VDIROP;					\
-	if (!(_ip->i_flag & IN_ADIROP)) {				\
-		++_fs->lfs_nadirop;					\
-	}								\
-	_ip->i_flag |= IN_ADIROP;					\
-} while (0)
+#define	MARK_VNODE(vp)		lfs_mark_vnode(vp)
+#define	UNMARK_VNODE(vp)	lfs_unmark_vnode(vp)
 
-#define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
-
-void lfs_unmark_vnode(struct vnode *vp)
+void
+lfs_mark_vnode(struct vnode *vp)
 {
-	struct inode *ip;
+	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
 
-	ip = VTOI(vp);
+	if (!(ip->i_flag & IN_ADIROP)) {
+		if (!(vp->v_flag & VDIROP)) {
+			(void)lfs_vref(vp);
+			++lfs_dirvcount;
+			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+			vp->v_flag |= VDIROP;
+		}
+		++fs->lfs_nadirop;
+		ip->i_flag |= IN_ADIROP;
+	} else
+		KASSERT(vp->v_flag & VDIROP);
+}
 
-	if (ip->i_flag & IN_ADIROP)
+void
+lfs_unmark_vnode(struct vnode *vp)
+{
+	struct inode *ip = VTOI(vp);
+
+	if (ip->i_flag & IN_ADIROP) {
+		KASSERT(vp->v_flag & VDIROP);
 		--ip->i_lfs->lfs_nadirop;
-	ip->i_flag &= ~IN_ADIROP;
+		ip->i_flag &= ~IN_ADIROP;
+	}
 }
 
 int
