@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: ranlib.c,v 1.2 1993/08/01 18:09:54 mycroft Exp $";
+static char rcsid[] = "$Id: ranlib.c,v 1.3 1994/03/03 10:20:10 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ch, eval, tflag;
 
 	tflag = 0;

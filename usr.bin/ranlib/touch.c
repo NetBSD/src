@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: touch.c,v 1.2 1993/08/01 18:09:52 mycroft Exp $";
+static char rcsid[] = "$Id: touch.c,v 1.3 1994/03/03 10:20:12 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,6 +66,7 @@ touch()
 		return(1);
 	}
 	settime(afd);
+	close_archive(afd);
 	return(0);
 }
 

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: misc.c,v 1.3 1994/01/03 19:14:18 jtc Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.4 1994/03/03 10:20:09 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,12 +48,12 @@ static char rcsid[] = "$Id: misc.c,v 1.3 1994/01/03 19:14:18 jtc Exp $";
 #include <string.h>
 #include "pathnames.h"
 
-extern char *archive;			/* archive name */
-char *tname = "temporary file";		/* temporary file "name" */
+extern char	*archive;			/* archive name */
+char		*tname = "temporary file";
 
 tmp()
 {
-	char *envtmp;
+	static char *envtmp;
 	sigset_t set, oset;
 	static int first;
 	int fd;
@@ -65,7 +65,7 @@ tmp()
 	}
 
 	if (envtmp)
-		(void)sprintf(path, "%s/%s", envtmp, _NAME_RANTMP);
+		(void)snprintf(path, MAXPATHLEN, "%s/%s", envtmp, _NAME_RANTMP);
 	else
 		bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
 
