@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.9 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.10 1999/04/27 08:07:26 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -259,6 +259,18 @@ LEAF(splsoftnet)
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftnet)
 
+/* 
+ * nesting interrupt masks.
+ */
+#define MIPS_INT_MASK_SPL_SOFT0 MIPS_SOFT_INT_MASK_0
+#define MIPS_INT_MASK_SPL_SOFT1 (MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_SPL_SOFT0)
+#define MIPS_INT_MASK_SPL0      (MIPS_INT_MASK_0|MIPS_INT_MASK_SPL_SOFT1)
+#define MIPS_INT_MASK_SPL1      (MIPS_INT_MASK_1|MIPS_INT_MASK_SPL0)
+#define MIPS_INT_MASK_SPL2      (MIPS_INT_MASK_2|MIPS_INT_MASK_SPL1)
+#define MIPS_INT_MASK_SPL3      (MIPS_INT_MASK_3|MIPS_INT_MASK_SPL2)
+#define MIPS_INT_MASK_SPL4      (MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
+#define MIPS_INT_MASK_SPL5      (MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
+
 /*
  * hardware-level spls for hardware where the device interrupt priorites
  * are ordered, and map onto mips interrupt pins in increasing priority.
@@ -422,6 +434,7 @@ END(splhigh)
  */
 LEAF(splx)
 ALEAF(_splx)
+ALEAF(_splset)
 	mfc0	v0, MIPS_COP_0_STATUS_REG
 	li	t0, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
 	and	t0, t0, v0
