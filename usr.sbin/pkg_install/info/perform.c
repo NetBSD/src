@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.55 2004/08/18 19:10:15 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.56 2004/10/06 15:40:11 erh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.55 2004/08/18 19:10:15 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.56 2004/10/06 15:40:11 erh Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ pkg_do(char *pkg)
 			strlcpy(fname, cp, sizeof(fname));
 			isTMP = TRUE;
 		}
-	} else if (fexists(pkg) && isfile(pkg)) {
+	} else if (usedot && fexists(pkg) && isfile(pkg)) {
 		int     len;
 
 		if (*pkg != '/') {
@@ -72,7 +72,7 @@ pkg_do(char *pkg)
 			strlcpy(fname, pkg, sizeof(fname));
 		}
 		cp = fname;
-	} else {
+	} else if (usedot) {
 		if ((cp = fileFindByPath(pkg)) != NULL) {
 			strncpy(fname, cp, FILENAME_MAX);
 		}
@@ -126,6 +126,7 @@ pkg_do(char *pkg)
 				if (Flags & SHOW_REQUIRE)	{ strcat(flist, REQUIRE_FNAME); 	strcat(flist, " "); }
 				/* PRESERVE_FNAME? */
 #endif				
+				strcat(flist, PRESERVE_FNAME); strcat(flist, " ");
 
 				if (stat(fname, &sb) == FAIL) {
 					warnx("can't stat package file '%s'", fname);
@@ -161,7 +162,8 @@ pkg_do(char *pkg)
 			}
 
 			/* No match */
-			warnx("can't find package `%s' installed or in a file!", pkg);
+			warnx("can't find package `%s' installed%s!", pkg,
+				  usedot ? " or in a file" : "");
 			return 1;
 		}
 		if (chdir(log_dir) == FAIL) {
