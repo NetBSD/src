@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: bumpversion,v 1.6 1998/04/09 05:08:32 fair Exp $
+#	$NetBSD: bumpversion,v 1.7 1999/07/02 15:12:15 simonb Exp $
 #
 # Copyright (c) 1993 Christopher G. Demetriou
 # All rights reserved.
@@ -97,7 +97,7 @@ for dir in $@ ; do
 		        error=1
 			continue
 		fi
-	
+
 		. $versf
 	fi
 
