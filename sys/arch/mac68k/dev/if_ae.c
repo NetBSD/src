@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.50 1996/12/18 02:54:43 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.50.6.1 1997/03/04 14:03:53 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -36,7 +36,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -71,7 +71,7 @@ struct ae_softc {
 	nubus_slot	sc_slot;
 /*	struct	intrhand sc_ih;	*/
 
-	struct arpcom sc_arpcom;/* ethernet common */
+	struct ethercom sc_ethercom;	/* ethernet common */
 
 	char	type_str[INTERFACE_NAME_LEN];	/* type string */
 	u_short	type;		/* interface type code */
@@ -122,7 +122,7 @@ struct mbuf *aeget __P((struct ae_softc *, caddr_t, int));
 #define inline			/* XXX for debugging porpoises */
 
 u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
-void ae_getmcaf __P((struct arpcom *, u_char *));
+void ae_getmcaf __P((struct ethercom *, u_char *));
 
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
@@ -305,10 +305,11 @@ aeattach(parent, self, aux)
 {
 	struct ae_softc *sc = (struct ae_softc *) self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	caddr_t addr;
 	int i, memsize;
 	int flags = 0;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->regs_rev = 0;
 	sc->vendor = ae_card_vendor(na);
@@ -334,7 +335,7 @@ aeattach(parent, self, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 4);
+			myaddr[i] = *(sc->rom_addr + i * 4);
 		break;
 
 		/* apple-compatible cards */
@@ -351,7 +352,7 @@ aeattach(parent, self, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
+			myaddr[i] = *(sc->rom_addr + i * 2);
 		break;
 
 	case AE_VENDOR_DAYNA:
@@ -362,7 +363,7 @@ aeattach(parent, self, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
+			myaddr[i] = *(sc->rom_addr + i * 2);
 
 		printf(": unsupported Dayna hardware\n");
 		return;
@@ -379,7 +380,7 @@ aeattach(parent, self, aux)
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i);
+			myaddr[i] = *(sc->rom_addr + i);
 		break;
 	case AE_VENDOR_FOCUS:
 		printf(": unsupported Focus hardware\n");
@@ -430,7 +431,7 @@ printf("%s: failed to clear shared memory at %p - check configuration\n",
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(myaddr));
 
 	printf("type %s, %ldKB memory\n", sc->type_str, sc->mem_size / 1024);
 
@@ -517,7 +518,7 @@ aewatchdog(ifp)
 #endif
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	aereset(sc);
 }
@@ -529,7 +530,7 @@ void
 aeinit(sc)
 	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int     i;
 	u_char  mcaf[8];
 
@@ -594,10 +595,10 @@ aeinit(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(sc, ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
+		NIC_PUT(sc, ED_P1_PAR0 + i, LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
-	ae_getmcaf(&sc->sc_arpcom, mcaf);
+	ae_getmcaf(&sc->sc_ethercom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(sc, ED_P1_MAR0 + i, mcaf[i]);
 
@@ -642,7 +643,7 @@ static inline void
 ae_xmit(sc)
 	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -828,13 +829,13 @@ loop:
 			/* Go get packet. */
 			aeread(sc, packet_ptr + sizeof(struct ae_ring),
 			    len - sizeof(struct ae_ring));
-			++sc->sc_arpcom.ac_if.if_ipackets;
+			++sc->sc_ethercom.ec_if.if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++sc->sc_ethercom.ec_if.if_ierrors;
 			aereset(sc);
 			return;
 		}
@@ -862,7 +863,7 @@ aeintr(arg, slot)
 	int	slot;
 {
 	struct ae_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_char  isr;
 
 	aeintr_ctr++;
@@ -1047,7 +1048,7 @@ aeioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			aeinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1058,11 +1059,11 @@ aeioctl(ifp, cmd, data)
 
 				if (ns_nullhost(*ina))
 					ina->x_host =
-					    *(union ns_host *) (sc->sc_arpcom.ac_enaddr);
+					    *(union ns_host *)LLADDR(ifp->if_sadl);
 				else
 					bcopy(ina->x_host.c_host,
-					    sc->sc_arpcom.ac_enaddr,
-					    sizeof(sc->sc_arpcom.ac_enaddr));
+					    LLADDR(ifp->if_sadl),
+					    ETHER_ADDR_LEN);
 				/* Set new address. */
 				aeinit(sc);
 				break;
@@ -1105,8 +1106,8 @@ aeioctl(ifp, cmd, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1138,7 +1139,7 @@ aeread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -1169,8 +1170,8 @@ aeread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			sizeof(eh->ether_dhost)) != 0) {
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+			ETHER_ADDR_LEN) != 0) {
 			m_freem(m);
 			return;
 		}
@@ -1227,7 +1228,7 @@ aeget(sc, src, total_len)
 	caddr_t src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -1269,10 +1270,10 @@ aeget(sc, src, total_len)
  */
 void
 ae_getmcaf(ac, af)
-	struct arpcom *ac;
+	struct ethercom *ec;
 	u_char *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -1295,7 +1296,7 @@ ae_getmcaf(ac, af)
 	}
 	for (i = 0; i < 8; i++)
 		af[i] = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 			sizeof(enm->enm_addrlo)) != 0) {
