@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.26 2001/04/20 16:22:33 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.27 2001/04/21 16:27:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.26 2001/04/20 16:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27 2001/04/21 16:27:10 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -169,13 +169,13 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
 
 #ifdef DIAGNOSTIC
 	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
-	    cpu_info[cpu_id].ci_softc == NULL)
+	    cpu_info[cpu_id] == NULL)
 		panic("alpha_send_ipi: bogus cpu_id");
 	if (((1UL << cpu_id) & cpus_running) == 0)
 		panic("alpha_send_ipi: CPU %ld not running", cpu_id);
 #endif
 
-	atomic_setbits_ulong(&cpu_info[cpu_id].ci_ipis, ipimask);
+	atomic_setbits_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
 	alpha_pal_wripir(cpu_id);
 }
 
