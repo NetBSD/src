@@ -2730,11 +2730,13 @@ NAME(bfd_elf,size_dynamic_sections) (output_bfd, soname, rpath,
 	 We will build the contents of .dynsym and .hash when we build
 	 the final symbol table, because until then we do not know the
 	 correct value to give the symbols.  We built the .dynstr
-	 section as we went along in elf_link_add_object_symbols.  */
+	 section as we went along in elf_link_add_object_symbols.
+	 FIXME: We use bfd_zalloc() here because there may be holes
+	 where sections were deleted above.  */
       s = bfd_get_section_by_name (dynobj, ".dynsym");
       BFD_ASSERT (s != NULL);
       s->_raw_size = dynsymcount * sizeof (Elf_External_Sym);
-      s->contents = (bfd_byte *) bfd_alloc (output_bfd, s->_raw_size);
+      s->contents = (bfd_byte *) bfd_zalloc (output_bfd, s->_raw_size);
       if (s->contents == NULL && s->_raw_size != 0)
 	return false;
 
