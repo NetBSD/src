@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.22 1999/11/27 03:11:41 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.23 1999/11/27 06:34:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,16 +76,13 @@
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <machine/dec_prom.h>
-
-#include "byteswap.h"
-
 
 typedef void (*entrypt) __P((int, char **, int, const void *));
 
 int main __P((int, char **));
-entrypt loadfile __P((char *name));
+entrypt loadfile __P((char *path, char *name));
 
 extern int clear_cache __P((char *addr, int len));
 extern int bcmp __P((const void *, const void *, size_t));	/* XXX */
@@ -114,18 +111,32 @@ main(argc, argv)
 	}
 	cp = *argv;
 
-#ifdef notused
-	printf(">> NetBSD/pmax Primary Boot\n");
-#endif
-	entry = loadfile(cp);
-	if ((int)entry == -1)
-		return (1);
+        printf("\nNetBSD/pmax " NETBSD_VERS " " BOOTXX_FS_NAME " Primary Bootstrap\n");
 
-	clear_cache((char *)RELOC, 1024 * 1024);
+	entry = loadfile(cp, "/boot.pmax");
+	if ((int)entry != -1)
+		goto goodload;
+
+	/* Give old /boot a go... */
+	entry = loadfile(cp, "/boot");
+	if ((int)entry != -1)
+		goto goodload;
+
+	/* Booting off an 8.3 filesystem? */
+	entry = loadfile(cp, "/boot.pma");
+	if ((int)entry != -1)
+		goto goodload;
+
+	goto bad;
+goodload:
+
+	clear_cache((char *)PRIMARY_LOAD_ADDRESS, 1024 * 1024);
 	if (callv == &callvec)
 		entry(argc, argv, 0, 0);
 	else
 		entry(argc, argv, DEC_PROM_MAGIC, callv);
+bad:
+	/* XXX would calling prom_halt here be cleaner? */
 	return (1);
 }
 
@@ -133,15 +144,15 @@ main(argc, argv)
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
 entrypt
-loadfile(fname)
-	char *fname;
+loadfile(path, name)
+	char *path, *name;
 {
 	int fd, i;
 	char c, *buf, bootfname[64];
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
 
-	strcpy(bootfname, fname);
+	strcpy(bootfname, path);
 	buf = bootfname;
 	while ((c = *buf++) != '\0') {
 		if (c == ')')
@@ -153,7 +164,7 @@ loadfile(fname)
 				break;
 		/*
 		 * Make "N/rzY" with no trailing '/' valid by adding
-		 * the extra '/' before appending 'boot' to the path.
+		 * the extra '/' before appending 'bootpmax' to the path.
 		 */
 		if (c != '/') {
 			buf--;
@@ -162,7 +173,7 @@ loadfile(fname)
 		}
 		break;
 	}
-	strcpy(buf, "boot");
+	strcpy(buf, name);
 	if ((fd = open(bootfname, 0)) < 0) {
 		printf("open %s: %d\n", bootfname, errno);
 		goto err;
