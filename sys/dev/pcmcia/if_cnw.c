@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17 2000/12/14 06:29:37 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.18 2001/07/07 16:49:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -580,7 +580,7 @@ cnw_attach(parent, self, aux)
 	    ether_sprintf(macaddr));
 
 	/* Set up ifnet structure */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = cnw_start;
 	ifp->if_ioctl = cnw_ioctl;
@@ -1130,9 +1130,8 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCGCNWSTATS:
-		bcopy((void *)&sc->sc_stats,
-		    (void *)&(((struct cnwistats *)data)->stats),
-		    sizeof(struct cnwstats));
+		memcpy((void *)&(((struct cnwistats *)data)->stats),
+		    (void *)&sc->sc_stats, sizeof(struct cnwstats));
 			break;
 
 	default:
