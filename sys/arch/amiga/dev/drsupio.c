@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.7 1999/12/30 20:56:45 is Exp $ */
+/*	$NetBSD: drsupio.c,v 1.8 2000/03/16 16:37:20 kleink Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,13 +77,14 @@ drsupiomatch(parent, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int drsupio_matched = 0;
 
 	/* Exactly one of us lives on the DraCo */
+	if (!is_draco() || !matchname(auxp, "drsupio") || drsupio_matched)
+		return 0;
 
-	if (is_draco() && matchname(auxp, "drsupio") && (cfp->cf_unit == 0))
-		return 1;
-
-	return 0;
+	drsupio_matched = 1;
+	return 1;
 }
 
 struct drsupio_devs {
