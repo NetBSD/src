@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_wait.h,v 1.3 1995/01/09 01:04:24 christos Exp $	 */
+/*	$NetBSD: svr4_wait.h,v 1.4 1995/01/25 04:17:07 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -59,45 +59,31 @@
 #define	SVR4_CLD_STOPPED	5
 #define	SVR4_CLD_CONTINUED	6
 
-struct svr4_siginfo {
-	int	si_signo;
-	int	si_code;
-	int	si_errno;
-
-	union {
-		int	_pad[(128 / sizeof(int)) - 3];
+/*
+ * This is the stuff we need for waitid(2)
+ */
+typedef union svr4_siginfo {
+	char	si_pad[128];	/* Total size; for future expansion */
+	struct {
+		int			_signo;
+		int			_code;
+		int			_errno;
+		svr4_pid_t		_pid;
 		struct {
-			svr4_pid_t	_pid;
-			union {
-				struct {
-					svr4_uid_t	_uid;
-				} _kill;
-				struct {
-					svr4_clock_t	_utime;
-					int		_status;
-					svr4_clock_t	_stime;
-				} _cld;
-			} _pdata;
-		} _proc;
+			svr4_clock_t	_utime;
+			int		_status;
+			svr4_clock_t	_stime;
+		} _child;
 
-		struct {
-			svr4_caddr_t _addr;
-		} _fault;
+	} _info;
+} svr4_siginfo_t;
 
-		struct {
-			int	_fd;
-			long	_band;
-		} _file;
-	} _data;
-};
-
-#define si_band		_data._file._band
-#define si_fd		_data._file._fd
-#define si_addr		_data._fault._addr
-#define si_stime	_data._proc._pdata._cld._stime
-#define si_status	_data._proc._pdata._cld._status
-#define si_utime	_data._proc._pdata._cld._utime
-#define si_uid		_data._proc._pdata._kill._uid
-#define si_pid		_data._proc._pid
+#define	si_signo	_info._signo
+#define	si_code		_info._code
+#define	si_errno	_info._errno
+#define si_pid		_info._pid
+#define si_stime	_info._child._stime
+#define si_status	_info._child._status
+#define si_utime	_info._child._utime
 
 #endif /* !_SVR4_WAIT_H_ */
