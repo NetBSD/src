@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.14 1993/07/18 13:29:27 deraadt Exp $
+#	$Id: TDR,v 1.15 1993/08/10 04:01:03 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -11,7 +11,7 @@ maxusers	10
 options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options		SCSI
+options		KERNFS
 options 	DDB
 options		"COMPAT_NOMID"
 options		"DUMMY_NOPS"
@@ -35,6 +35,7 @@ device		ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
 pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl	2
+pseudo-device	ppp	2
 pseudo-device	log
 pseudo-device	pty	32
 pseudo-device	bpfilter 4
