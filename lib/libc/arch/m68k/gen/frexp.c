@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.3 1997/07/13 18:45:20 christos Exp $	*/
+/*	$NetBSD: frexp.c,v 1.4 1999/03/10 08:14:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "from: @(#)frexp.c	5.1 (Berkeley) 3/6/91";
 #else
-__RCSID("$NetBSD: frexp.c,v 1.3 1997/07/13 18:45:20 christos Exp $");
+__RCSID("$NetBSD: frexp.c,v 1.4 1999/03/10 08:14:45 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <machine/ieee.h>
 #include <math.h>
 
 double
@@ -52,21 +53,16 @@ frexp(value, eptr)
 {
 	union {
                 double v;
-                struct {
-                        u_int  u_sign :  1;
-			u_int   u_exp : 11;
-			u_int u_mant1 : 20;
-			u_int u_mant2 : 32;
-                } s;
+                struct ieee_double s;
         } u;
 
 	if (value) {
 		u.v = value;
-		*eptr = u.s.u_exp - 1022;
-		u.s.u_exp = 1022;
-		return(u.v);
+		*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+		u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		return (u.v);
 	} else {
 		*eptr = 0;
-		return((double)0);
+		return (0.0);
 	}
 }
