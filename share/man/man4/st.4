@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.9 1998/07/04 02:26:03 mjacob Exp $
+.\"	$NetBSD: st.4,v 1.10 1998/07/30 03:52:42 mjacob Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -148,8 +148,13 @@ before the rewind is requested.
 On completion of the rewind an unload command will be issued.
 The device is unmounted.
 .It 11
-Reserved.
-Currently unused.
+This is Control mode, which  allows the tape driver to be opened without a tape
+inserted to allow various ioctls (e.g. MTIOCGET or MTIOCTOP to set density
+or blocksize) and raw SCSI command on
+through. I/O can be done in this mode, if desired, with the same
+rewind/eject behaviour as mode 00. This isn't really an 'action taken
+on close' type of distinction, but this seems to be the place to put
+this mode.
 .El
 .Sh BLOCKING MODES
 .Tn SCSI
@@ -220,6 +225,43 @@ These devices include the QIC family of devices
 the same set as that of fixed block devices.
 This has not been determined yet, and they are treated as separate
 behaviors by the driver at this time).
+.Sh EOM HANDLING
+Attempts to write past EOM and how EOM is reported are handled slightly
+differently based upon whether EARLY WARNING recognition is enabled in
+the driver.
+.Pp
+If EARLY WARNING recognitions is \fBnot\fR enabled, then detection
+of EOM (as reported in SCSI Sense Data with an EOM indicator)
+causes the write operation to be flagged with I/O error (EIO).
+This has the effect for the user application of not knowing actually
+how many bytes were written (since the return of the
+.Xr read 2
+system call is set to \(mi1).
+.Pp
+If EARLY WARNING recognition \fBis\fR enabled, then detection of EOM
+has no immediate effect except that
+the driver notes that EOM has been detected. If the write completing
+didn't transfer all data that was requested, then the residual count
+is returned to the user application. In any event, the next attempt
+to write (if that is the next action the user application takes)
+is immediately completed with no data transferred, and a residual
+returned to the user application indicating that no data was transferred.
+This is the traditional UNIX EOF indication. The state that EOM had
+been seen is then cleared.
+.Pp
+In either mode of operation, the driver does not prohibit the
+user application from writing more data, if chooses to do so. This
+will continue up until the physical end of media, which is usually
+signalled internally to the driver as a CHECK CONDITION with
+the Sense Key set to VOLUME OVERFLOW. When this or any otherwise
+unhandled error occurs, an error return of EIO will be transmitted
+to the user application.  This does indeed mean that if EARLY WARNING
+is enables and the device continues to set EOM indicators prior to
+hitting physical end of media, that an indeterminate number of 'short write
+returns' as described in the previous paragraph will occur. However, the
+expected user application behaviour (in common with other systems) is
+to close the tape and rewind and request another tape upon the receipt
+of the first EOM indicator.
 .Sh KERNEL CONFIGURATION
 Because different tape drives behave differently, there is a
 mechanism within the source to
@@ -317,27 +359,28 @@ Disable controller buffering.
 Set the blocksize to use for the device/mode.
 If the device is capable of variable blocksize operation, and the
 blocksize is set to 0, then the drive will be driven in variable mode.
-This parameter is in effect for the present mount session only.
+This parameter is in effect for the present mount session only, unless
+the device was opened in Control Mode (in which case this set value persists
+until a reboot).
 .It Dv MTSETDNSTY
 Set the density value (see
 .Xr mt 1 )
 to use when running in the mode opened (minor bits 2 and 3).
 This parameter is in effect for the present
-mount session only.
+mount session only, unless the device was opened in Control Mode (in which
+case this set value persists until a reboot).
+Any byte sized value may be specified. Note that
+only a very small number of them will actually usefully work. The
+rest will cause the tape drive to spit up. 
 .It Dv MTCMPRESS
 Enable or disable tape drive data compression.
 Typically tape drives will quite contentedly ignore settings on
 reads, and will probably keep you from changing density for writing
 anywhere but BOT.
+.It Dv MTEWARN
+Enable or disable EARLY WARNING at EOM behaviour (using the count
+as a boolean value).
 .El
-.It Dv MTIOCIEOT
-Set end-of-tape processing (not presently supported for
-.Nm
-devices).
-.It Dv MTIOCEEOT
-Set end-of-tape processing (not presently supported for
-.Nm
-devices).
 .It Dv MTIOCRDSPOS
 .Pq Li "u_int32_t"
 Read device logical block position.
@@ -363,14 +406,13 @@ Mode 0, rewind on close
 .It Pa /dev/nrst0
 Mode 2, No rewind on close
 .It Pa /dev/erst0
-Mode 3, Eject on close (if capable)
+Mode 2, Eject on close (if capable)
+.It Pa /dev/enst0
+Mode 3, Control Mode (elsewise like mode 0)
 .El
 .Sh BUGS
-Currently the driver signals to that it has reached
-End of Media during writing by returning EIO to the
-writer. This is wrong, and also has the unfortunate
-side effect of leading the writer to think it has
-written one or more fewer records than it has.
+The selection of compression could possibly also be usefully done
+as with a minor device bit.
 .Sh DIAGNOSTICS
 A variety, far too many to list.
 .Sh SEE ALSO
