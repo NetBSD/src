@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.187 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.188 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -442,3 +442,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		the S3C2410 Processor.  [bsh 20030804]
 	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
 		[christos,skrll 20030812]
+	kernel: Add support for non-executable mappings for many platforms.
+		Map the stack and heap non-executable.  [chs 20030824]
