@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.49 2000/06/26 14:20:45 mrg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.50 2000/06/29 08:44:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

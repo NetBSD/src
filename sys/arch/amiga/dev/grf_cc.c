@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.27 2000/06/26 14:38:56 mrg Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.28 2000/06/29 08:44:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,8 +56,6 @@
 
 #include <sys/conf.h>
 #include <machine/conf.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.8 2000/06/26 04:55:30 simonb Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.9 2000/06/29 08:53:02 mrg Exp $	*/
 
 /*
  * Copyright 1998
@@ -42,7 +42,8 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <dev/ofw/openfirm.h>

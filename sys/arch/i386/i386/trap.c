@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2000/06/06 18:52:36 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.140 2000/06/29 08:44:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,8 +101,6 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/syscall.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 1998/12/04 20:19:22 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15 2000/06/29 08:44:57 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/param.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/trap.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */

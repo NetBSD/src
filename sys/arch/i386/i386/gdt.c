@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.21 2000/06/26 14:20:44 mrg Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22 2000/06/29 08:44:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

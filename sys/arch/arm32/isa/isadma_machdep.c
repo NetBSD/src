@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.4 1999/03/19 04:58:45 cgd Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.5 2000/06/29 08:53:01 mrg Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -53,7 +53,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * ISA has a 24-bit address limitation, so at most it has a 16M

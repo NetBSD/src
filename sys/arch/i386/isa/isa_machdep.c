@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.48 2000/06/04 21:27:41 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.49 2000/06/29 08:44:57 mrg Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -96,7 +96,7 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/icu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "mca.h"
 #if NMCA > 0

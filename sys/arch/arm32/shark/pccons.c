@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.10 2000/06/26 04:55:31 simonb Exp $       */
+/*      $NetBSD: pccons.c,v 1.11 2000/06/29 08:53:03 mrg Exp $       */
 
 /*
  * Copyright 1997
@@ -117,7 +117,8 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <machine/kerndebug.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

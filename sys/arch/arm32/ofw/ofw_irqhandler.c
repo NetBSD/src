@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.7 1998/09/05 04:04:25 mark Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.8 2000/06/29 08:53:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -47,7 +47,8 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>

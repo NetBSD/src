@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.12 2000/06/26 14:20:36 mrg Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.13 2000/06/29 08:53:02 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,7 +46,8 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

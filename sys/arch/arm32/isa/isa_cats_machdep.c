@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_cats_machdep.c,v 1.4 2000/06/04 19:14:32 cgd Exp $	*/
+/*	$NetBSD: isa_cats_machdep.c,v 1.5 2000/06/29 08:53:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #include <arm32/footbridge/dc21285reg.h>
 #include <arm32/footbridge/dc21285mem.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "isadma.h"
 

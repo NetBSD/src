@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2000/06/26 14:20:36 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2000/06/29 08:53:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/conf.h>
