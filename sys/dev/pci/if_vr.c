@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.34.4.1 2000/09/13 16:48:24 tron Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.34.4.2 2001/03/13 20:44:29 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -479,7 +479,9 @@ vr_setmulti(sc)
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxfilt |= VR_RXCFG_RX_MULTI;
 		CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
 		CSR_WRITE_4(sc, VR_MAR0, 0xFFFFFFFF);
@@ -494,8 +496,9 @@ vr_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, &sc->vr_ec, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0)
-			continue;
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			goto allmulti;
 
 		h = vr_calchash(enm->enm_addrlo);
 
@@ -506,6 +509,8 @@ vr_setmulti(sc)
 		ETHER_NEXT_MULTI(step, enm);
 		mcnt++;
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (mcnt)
 		rxfilt |= VR_RXCFG_RX_MULTI;
