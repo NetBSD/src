@@ -1,4 +1,9 @@
-/*	$NetBSD: iop.c,v 1.1 1999/06/28 01:56:57 briggs Exp $	*/
+/*	$NetBSD: iop.c,v 1.2 1999/06/28 04:33:22 briggs Exp $	*/
+
+/*
+ * Freely contributed to the NetBSD Foundation.
+ * XXX - Do paperwork and put a proper copyright here.
+ */
 
 /*
  *	This code handles VIA, RBV, and OSS functionality.
@@ -144,12 +149,18 @@ iop_init(fullinit)
 		  0, NULL, NULL, M_DEVBUF);
 	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
 
+/*
+ * XXX  The problem here seems to be that the IOP wants to go back into
+ *	BYPASS mode.  The state should be 0x86 after we're done with it
+ *	here.  It switches to 0x7 almost immediately.
+ *	This means one of a couple of things to me--
+ *		1. We're doing something wrong
+ *		2. MacOS is really shutting down the IOP
+ *	Most likely, it's the first.
+ */
 	printf("OLD cs0: 0x%x\n", (unsigned) ioph->control_status);
 
-	iop_write1(ioph, IOP_ADDR_MAX_SEND_CHAN, 7);
-	iop_write1(ioph, IOP_ADDR_MAX_RECV_CHAN, 7);
 	ioph->control_status = 0x80 | IOP_CS_RUN | IOP_CS_AUTOINC;
-	iop_write1(ioph, IOP_ADDR_ALIVE, 0);
 {unsigned cs, c2;
 	cs = (unsigned) ioph->control_status;
 	printf("OLD cs1: 0x%x\n", cs);
@@ -378,7 +389,7 @@ printf("loading msg to iop: cs: 0x%x V1-%x- ", (unsigned) iop->iop->control_stat
 printf("msg loaded to iop: cs: 0x%x V1-%x- ", (unsigned) iop->iop->control_status, (unsigned)via_reg(VIA1, vIFR));
 	}
 
-{int i; for (i=0;i<100;i++) {
+{int i; for (i=0;i<16;i++) {
 printf(" cs: 0x%x V1-%x- ", (unsigned) iop->iop->control_status, (unsigned)via_reg(VIA1, vIFR));
 delay(1000);
 }}

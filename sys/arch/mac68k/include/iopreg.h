@@ -1,4 +1,9 @@
-/*	$NetBSD: iopreg.h,v 1.1 1999/06/28 01:56:57 briggs Exp $	*/
+/*	$NetBSD: iopreg.h,v 1.2 1999/06/28 04:33:21 briggs Exp $	*/
+
+/*
+ * Freely contributed to The NetBSD Foundation.
+ * XXX - Do paperwork and put a proper copyright here.
+ */
 
 #include <sys/pool.h>
 #include <sys/queue.h>
