@@ -1,6 +1,5 @@
-/*	$NetBSD: cpuconf.h,v 1.7 1997/11/06 00:42:03 thorpej Exp $	*/
-#ifndef	_ALPHA_CPUCONF_H
-#define	_ALPHA_CPUCONF_H
+/*	$NetBSD: cpuconf.h,v 1.8 1998/06/06 20:18:50 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -34,7 +33,10 @@
  * Additional reworking by Matthew Jacob for NASA/Ames Research Center.
  * Copyright (c) 1997
  */
-#ifdef _KERNEL
+
+#ifndef	_ALPHA_CPUCONF_H_
+#define	_ALPHA_CPUCONF_H_
+
 /*
  * Platform Specific Information and Function Hooks.
  *
@@ -43,10 +45,9 @@
  * The tag iobus describes the primary iobus for the platform- primarily
  * to give a hint as to where to start configuring. The likely choices
  * are one of tcasic, lca, apecs, cia, or tlsb.
- *
  */
 
-extern struct platform {
+struct platform {
 	/*
 	 * Platform Information.
 	 */
@@ -68,6 +69,7 @@ extern struct platform {
 	void	(*clockintr) __P((void *));
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
+	void	(*powerdown) __P((void));
 } platform;
 
 /*
@@ -89,13 +91,14 @@ struct cpuinit {
 	const char *option;
 };
 
+#ifdef _KERNEL
 #define	cpu_notsupp(st)		{ platform_not_supported, st }
 #define	cpu_init(fn, opt)	{ fn, opt }
 
+extern struct platform platform;
 extern struct cpuinit cpuinit[];
 extern int ncpuinit;
 extern void platform_not_configured __P((void));
 extern void platform_not_supported __P((void));
-
 #endif /* _KERNEL */
-#endif /* !_ALPHA_CPUCONF_H */
+#endif /* ! _ALPHA_CPUCONF_H_ */
