@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.2 2002/10/16 21:12:01 thorpej Exp $	*/
+/*	$NetBSD: test.c,v 1.3 2002/10/16 21:13:43 thorpej Exp $	*/
 
 /*
  * Regression test for dirname(3).
@@ -45,7 +45,8 @@ struct {
 	{ "//foo",		"/" },
 /*
  * Make sure the trailing slashes after the directory name component
- * get trimmed.
+ * get trimmed.  The Std does not talk about this, but this is what
+ * Solaris 8's dirname(3) does.
  */
 	{ "/usr///lib",		"/usr" },
 
