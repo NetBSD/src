@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.45 2003/12/06 15:15:19 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.46 2003/12/06 15:16:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.45 2003/12/06 15:15:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.46 2003/12/06 15:16:10 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -658,6 +658,7 @@ mach_task_resume(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	proc_unstop(tl->l_proc);
 	rep->rep_retval = 0;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
