@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 1994/10/26 07:28:02 cgd Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 1995/09/02 05:04:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -247,6 +247,11 @@ nmi:
 	movw	#18,BOOTTYPE	| mark as system switch
 	jsr	_kbdnmi		| clear the interrupt
 	jra	begin		| start over
+
+	.globl _call_req_reboot
+_call_req_reboot:
+	jmp	0x1A4		| call ROM reboot function
+	rts			| XXX: just in case?
 
 #ifdef ROMPRF
 	.globl	_romout

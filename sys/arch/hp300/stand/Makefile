@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1995/08/04 07:55:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 1995/09/02 05:04:14 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -12,7 +12,8 @@ RELOC=	FFF00000
 
 CONS=	-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
 DEFS=	-DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
-DEFS+=	-DNETIF_DEBUG
+#DEFS+=	-DNETIF_DEBUG -DRPC_DEBUG -DNFS_DEBUG -DRARP_DEBUG -DNET_DEBUG
+#DEFS+=	-DLE_DEBUG
 CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
 SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
@@ -82,8 +83,8 @@ cat:	srt0.o cat.o conf.o ${LIBS}
 
 # bootable from network
 
-netboot:	srt0.o netboot.o clock.o netconf.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o netboot.o clock.o netconf.o ${LIBS} -o $@
+netboot:	srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS}
+	${LD} -N -T ${RELOC} -e begin srt0.o netboot.o clock.o netconf.o netio.o tgets.o ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 	

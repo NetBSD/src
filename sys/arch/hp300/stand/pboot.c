@@ -1,4 +1,4 @@
-/*	$NetBSD: pboot.c,v 1.7 1995/08/05 16:47:47 thorpej Exp $	*/
+/*	$NetBSD: pboot.c,v 1.8 1995/09/02 05:04:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: pboot.c,v 1.7 1995/08/05 16:47:47 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pboot.c,v 1.8 1995/09/02 05:04:22 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,8 @@ main()
 	int currname = 0;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.7 $");
+	       getmachineid(), "$Revision: 1.8 $");
+	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);
@@ -108,6 +109,11 @@ getbootdev(howto)
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
+		if (strcmp(line, "reset") == 0) {
+			call_req_reboot();      /* reset machine */
+			printf("panic: can't reboot, halting\n");
+			asm("stop #0x2700");
+		}
 		while (c = *ptr) {
 			while (c == ' ')
 				c = *++ptr;
