@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.1,v 1.14 2002/02/08 01:21:58 ross Exp $
+.\"	$NetBSD: mkdir.1,v 1.15 2002/09/25 15:18:40 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,8 +77,8 @@ operand must already exist.
 Intermediate directories are created with permission bits of
 .Li rwxrwxrwx (\&0777)
 as modified by the current umask, plus write and search
-permission for the owner.  Do not consider it an error if the
-argument directory already exists.
+permission for the owner.
+Do not consider it an error if the argument directory already exists.
 .El
 .Pp
 The user must have write permission in the parent directory.
