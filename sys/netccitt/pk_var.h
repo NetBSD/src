@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.8 1996/02/13 22:05:47 christos Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.9 1996/05/23 23:35:29 mycroft Exp $	*/
 
 /* 
  * Copyright (c) Computing Centre, University of British Columbia, 1985 
@@ -89,7 +89,7 @@ struct pklcd {
 	long    lcd_txcnt;		/* Data packet transmit count */
 	long    lcd_rxcnt;		/* Data packet receive count */
 	short   lcd_intrcnt;		/* Interrupt packet transmit count */
-	struct	pklcd *lcd_listen;	/* Next lcd on listen queue */
+	TAILQ_ENTRY(pklcd) lcd_listen;	/* Next lcd on listen queue */
 	struct	pkcb *lcd_pkp;		/* Network this lcd is attached to */
 	struct	mbuf *lcd_cps;		/* Complete Packet Sequence reassembly*/
 	long	lcd_cpsmax;		/* Max length for CPS */
@@ -228,8 +228,10 @@ struct mbuf_cache {
 };
 
 #if defined(_KERNEL) && defined(CCITT)
+#include <sys/queue.h>
+
 extern struct pkcb_q pkcb_q;
-struct	pklcd *pk_listenhead;
+TAILQ_HEAD(, pklcd) pk_listenhead;
 
 extern char	*pk_name[], *pk_state[];
 int	pk_t20, pk_t21, pk_t22, pk_t23;

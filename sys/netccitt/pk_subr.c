@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.13 1996/05/23 23:35:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -130,16 +130,10 @@ pk_disconnect(lcp)
 	register struct pklcd *lcp;
 {
 	register struct socket *so = lcp->lcd_so;
-	register struct pklcd *l, *p;
 
 	switch (lcp->lcd_state) {
 	case LISTEN:
-		for (p = 0, l = pk_listenhead; l && l != lcp; p = l, l = l->lcd_listen);
-		if (p == 0) {
-			if (l != 0)
-				pk_listenhead = l->lcd_listen;
-		} else if (l != 0)
-			p->lcd_listen = l->lcd_listen;
+		TAILQ_REMOVE(&pk_listenhead, lcp, lcd_listen);
 		pk_close(lcp);
 		break;
 
@@ -376,7 +370,7 @@ pk_bind(lcp, nam)
 	/*
 	 * For ISO's sake permit default listeners, but only one such . . .
 	 */
-	for (pp = pk_listenhead; pp; pp = pp->lcd_listen) {
+	for (pp = pk_listenhead.tqh_first; pp; pp = pp->lcd_listen.tqe_next) {
 		register struct sockaddr_x25 *sa2 = pp->lcd_ceaddr;
 		if ((sa2->x25_udlen == sa->x25_udlen) &&
 		    (sa2->x25_udlen == 0 ||
@@ -406,12 +400,9 @@ pk_listen(lcp)
 	 * Add default listener at end, any others at start.
 	 */
 	if (lcp->lcd_ceaddr->x25_udlen == 0) {
-		for (pp = &pk_listenhead; *pp;)
-			pp = &((*pp)->lcd_listen);
-		*pp = lcp;
+		TAILQ_INSERT_TAIL(&pk_listenhead, lcp, lcd_listen);
 	} else {
-		lcp->lcd_listen = pk_listenhead;
-		pk_listenhead = lcp;
+		TAILQ_INSERT_HEAD(&pk_listenhead, lcp, lcd_listen);
 	}
 	return (0);
 }
