@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.14 1999/10/22 20:59:08 is Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.15 2000/02/17 03:06:12 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.14 1999/10/22 20:59:08 is Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.15 2000/02/17 03:06:12 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -438,7 +438,7 @@ ar_drain()
 	/*
 	 * keep reading until pipe is drained
 	 */
-	while ((res = read(arfd, drbuf, sizeof(drbuf))) > 0)
+	while ((res = read_with_restart(arfd, drbuf, sizeof(drbuf))) > 0)
 		;
 	lstrval = res;
 }
@@ -518,6 +518,132 @@ ar_app_ok()
 	return(-1);
 }
 
+#ifdef SYS_NO_RESTART
+/*
+ * read_with_restart()
+ *	Equivalent to read() but does retry on signals.
+ *	This function is not needed on 4.2BSD and later.
+ * Return:
+ *	Number of bytes written.  -1 indicates an error.
+ */
+
+#if __STDC__
+int
+read_with_restart(int fd, void *buf, int bsz)
+#else
+int
+read_with_restart(fd, buf, bsz)
+	int fd;
+	void *buf;
+	int bsz;
+#endif
+{
+	int r;
+
+	while (((r = read(fd, buf, bsz)) < 0) && errno == EINTR)
+		;
+
+	return(r);
+}
+#endif
+
+/*
+ * xread()
+ *	Equivalent to read() but does retry on partial read, which may occur
+ *	on signals.
+ * Return:
+ *	Number of bytes read.  0 for end of file, -1 for an error.
+ */
+
+#if __STDC__
+int
+xread(int fd, void *buf, int bsz)
+#else
+int
+xread(fd, buf, bsz)
+	int fd;
+	void *buf;
+	int bsz;
+#endif
+{
+	char *b = buf;
+	int nread = 0;
+	int r;
+
+	do {
+		if ((r = read_with_restart(fd, b, bsz)) <= 0)
+			break;
+		b += r;
+		bsz -= r;
+		nread += r;
+	} while (bsz > 0);
+
+	return(nread ? nread : r);
+}
+
+#ifdef SYS_NO_RESTART
+/*
+ * write_with_restart()
+ *	Equivalent to write() but does retry on signals.
+ *	This function is not needed on 4.2BSD and later.
+ * Return:
+ *	Number of bytes written.  -1 indicates an error.
+ */
+
+#if __STDC__
+int
+write_with_restart(int fd, void *buf, int bsz)
+#else
+int
+write_with_restart(fd, buf, bsz)
+	int fd;
+	void *buf;
+	int bsz;
+#endif
+{
+	int r;
+
+	while (((r = write(fd, buf, bsz)) < 0) && errno == EINTR)
+		;
+
+	return(r);
+}
+#endif
+
+/*
+ * xwrite()
+ *	Equivalent to write() but does retry on partial write, which may occur
+ *	on signals.
+ * Return:
+ *	Number of bytes written.  -1 indicates an error.
+ */
+
+#if __STDC__
+int
+xwrite(int fd, void *buf, int bsz)
+#else
+int
+xwrite(fd, buf, bsz)
+	int fd;
+	void *buf;
+	int bsz;
+#endif
+{
+	char *b = buf;
+	int written = 0;
+	int r;
+
+	do {
+		if ((r = write_with_restart(fd, b, bsz)) <= 0)
+			break;
+		b += r;
+		bsz -= r;
+		written += r;
+	} while (bsz > 0);
+
+	return(written ? written : r);
+}
+
 /*
  * ar_read()
  *	read up to a specified number of bytes from the archive into the
@@ -550,7 +676,7 @@ ar_read(buf, cnt)
 	 */
 	switch (artyp) {
 	case ISTAPE:
-		if ((res = read(arfd, buf, cnt)) > 0) {
+		if ((res = read_with_restart(arfd, buf, cnt)) > 0) {
 			/*
 			 * CAUTION: tape systems may not always return the same
 			 * sized records so we leave blksz == MAXBLK. The
@@ -588,7 +714,7 @@ ar_read(buf, cnt)
 		 * and return. Trying to do anything else with them runs the
 		 * risk of failure.
 		 */
-		if ((res = read(arfd, buf, cnt)) > 0) {
+		if ((res = read_with_restart(arfd, buf, cnt)) > 0) {
 			io_ok = 1;
 			return(res);
 		}
@@ -637,7 +763,7 @@ ar_write(buf, bsz)
 	if (lstrval <= 0)
 		return(lstrval);
 
-	if ((res = write(arfd, buf, bsz)) == bsz) {
+	if ((res = xwrite(arfd, buf, bsz)) == bsz) {
 		wr_trail = 1;
 		io_ok = 1;
 		return(bsz);
@@ -1064,7 +1190,7 @@ get_phys()
 		 * we know we are at file mark when we get back a 0 from
 		 * read()
 		 */
-		while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
+		while ((res = read_with_restart(arfd, scbuf, sizeof(scbuf))) > 0)
 			padsz += res;
 		if (res < 0) {
 			syswarn(1, errno, "Unable to locate tape filemark.");
@@ -1093,7 +1219,7 @@ get_phys()
 		syswarn(1, errno, "Unable to backspace over last tape block.");
 		return(-1);
 	}
-	if ((phyblk = read(arfd, scbuf, sizeof(scbuf))) <= 0) {
+	if ((phyblk = read_with_restart(arfd, scbuf, sizeof(scbuf))) <= 0) {
 		syswarn(1, errno, "Cannot determine archive tape blocksize.");
 		return(-1);
 	}
@@ -1102,7 +1228,7 @@ get_phys()
 	 * read foward to the file mark, then back up in front of the filemark
 	 * (this is a bit paranoid, but should be safe to do).
 	 */
-	while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
+	while ((res = read_with_restart(arfd, scbuf, sizeof(scbuf))) > 0)
 		;
 	if (res < 0) {
 		syswarn(1, errno, "Unable to locate tape filemark.");
