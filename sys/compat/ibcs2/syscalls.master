@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.1 1994/08/24 19:14:29 mycroft Exp $
+	$Id: syscalls.master,v 1.2 1994/09/05 01:29:06 mycroft Exp $
 ;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created ibcs2_sysent.c, ibcs2_syscalls.c and ibcs2_syscall.h.
@@ -57,10 +57,10 @@
 34	STD	1 ibcs2_nice
 35	STD	4 ibcs2_statfs
 36	STD	0 sync
-37	STD	2 kill
+37	STD	2 ibcs2_kill
 38	STD	4 ibcs2_fstatfs
 39	STD	4 ibcs2_pgrpsys
-40	STD	4 ibcs2_xenix
+40	UNIMPL	0 nosys		XENIX trampoline
 41	STD	2 dup
 42	STD	1 pipe
 43	STD	1 ibcs2_times
@@ -167,12 +167,12 @@
 132	UNIMPL	0 XENIX sigsem		0x0428
 133	UNIMPL	0 XENIX waitsem		0x0528
 134	UNIMPL	0 XENIX nbwaitsem	0x0628
-135	UNIMPL	0 XENIX rdchk		0x0728
+135	STD	1 xenix_rdchk		0x0728
 136	UNIMPL	0 XENIX nosys		0x0828
 137	UNIMPL	0 XENIX nosys		0x0928
-138	UNIMPL	0 XENIX chsize		0x0a28
-139	STD	1 ibcs2_ftime
-140	UNIMPL	0 XENIX nap		0x0c28
+138	STD	2 xenix_chsize		0x0a28
+139	STD	1 ibcs2_ftime		0x0b28
+140	STD	1 xenix_nap		0x0c28
 141	UNIMPL	0 XENIX sdget		0x0d28
 142	UNIMPL	0 XENIX sdfree		0x0e28
 143	UNIMPL	0 XENIX sdenter		0x0f28
@@ -196,16 +196,16 @@
 161	UNIMPL	0 XENIX execseg		0x2128
 162	UNIMPL	0 XENIX unexecseg	0x2228
 163	UNIMPL	0 XENIX nosys		0x2328
-164	STD	5 ibcs2_select
+164	STD	5 ibcs2_select		0x2428
 165	UNIMPL	0 XENIX eaccess		0x2528
 166	UNIMPL	0 XENIX paccess		0x2628
-167	STD	3 ibcs2_sigaction
-168	STD	3 ibcs2_sigprocmask
-169	STD	1 ibcs2_sigpending
-170	STD	1 ibcs2_sigsuspend
-171	STD	2 ibcs2_getgroups
-172	STD	2 ibcs2_setgroups
-173	STD	1 ibcs2_sysconf
-174	STD	2 ibcs2_pathconf
-175	STD	2 ibcs2_fpathconf
-176	STD	2 rename
+167	STD	3 ibcs2_sigaction	0x2728
+168	STD	3 ibcs2_sigprocmask	0x2828
+169	STD	1 ibcs2_sigpending	0x2928
+170	STD	1 ibcs2_sigsuspend	0x2a28
+171	STD	2 ibcs2_getgroups	0x2b28
+172	STD	2 ibcs2_setgroups	0x2c28
+173	STD	1 ibcs2_sysconf		0x2d28
+174	STD	2 ibcs2_pathconf	0x2e28
+175	STD	2 ibcs2_fpathconf	0x2f28
+176	STD	2 rename		0x3028

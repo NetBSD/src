@@ -157,4 +157,127 @@ struct coff_slhdr {
 
 int     exec_ibcs2_coff_makecmds __P((struct proc *, struct exec_package *));
 
+/*
+ * x.out (XENIX)
+ */
+
+struct xexec {
+	u_short	x_magic;	/* magic number */
+	u_short	x_ext;		/* size of extended header */
+	long	x_text;		/* ignored */
+	long	x_data;		/* ignored */
+	long	x_bss;		/* ignored */
+	long	x_syms;		/* ignored */
+	long	x_reloc;	/* ignored */
+	long	x_entry;	/* executable entry point */
+	char	x_cpu;		/* processor type */
+	char	x_relsym;	/* ignored */
+	u_short	x_renv;		/* flags */
+};
+
+/* x_magic flags */
+#define XOUT_MAGIC	0x0206
+
+/* x_cpu flags */
+#define XC_386		0x004a	/* 386, word-swapped */
+
+/* x_renv flags */
+#define XE_V5		0xc000
+#define XE_SEG		0x0800
+#define XE_ABS		0x0400
+#define XE_ITER		0x0200
+#define XE_VMOD		0x0100
+#define XE_FPH		0x0080
+#define XE_LTEXT	0x0040
+#define XE_LDATA	0x0020
+#define XE_OVER		0x0010
+#define XE_FS		0x0008
+#define XE_PURE		0x0004
+#define XE_SEP		0x0002
+#define XE_EXEC		0x0001
+
+/*
+ * x.out extended header
+ */
+
+struct xext {
+	long	xe_trsize;	/* ignored */
+	long	xe_drsize;	/* ignored */
+	long	xe_tbase;	/* ignored */
+	long	xe_dbase;	/* ignored */
+	long	xe_stksize;	/* stack size if XE_FS set in x_renv */
+	long	xe_segpos;	/* offset of segment table */
+	long	xe_segsize;	/* segment table size */
+	long	xe_mdtpos;	/* ignored */
+	long	xe_mdtsize;	/* ignored */
+	char	xe_mdttype;	/* ignored */
+	char	xe_pagesize;	/* ignored */
+	char	xe_ostype;	/* ignored */
+	char	xe_osvers;	/* ignored */
+	u_short	xe_eseg;	/* ignored */
+	u_short	xe_sres;	/* ignored */
+};
+
+/*
+ * x.out segment table
+ */
+
+struct xseg {
+	u_short	xs_type;	/* segment type */
+	u_short	xs_attr;	/* attribute flags */
+	u_short	xs_seg;		/* segment selector number */
+	char	xs_align;	/* ignored */
+	char	xs_cres;	/* ignored */
+	long	xs_filpos;	/* offset of this segment */
+	long	xs_psize;	/* physical segment size */
+	long	xs_vsize;	/* virtual segment size */
+	long	xs_rbase;	/* relocation base address */
+	u_short	xs_noff;	/* ignored */
+	u_short	xs_sres;	/* ignored */
+	long	xs_lres;	/* ignored */
+};
+
+/* xs_type flags */
+#define	XS_TNULL	0	/* unused */
+#define	XS_TTEXT	1	/* text (read-only) */
+#define	XS_TDATA	2	/* data (read-write) */
+#define	XS_TSYMS	3	/* symbol table (noload) */
+#define	XS_TREL		4	/* relocation segment (noload) */
+#define	XS_TSESTR	5	/* string table (noload) */
+#define	XS_TGRPS	6	/* group segment (noload) */
+
+#define	XS_TIDATA	64
+#define	XS_TTSS		65
+#define	XS_TLFIX	66
+#define	XS_TDNAME	67
+#define	XS_TDTEXT	68
+#define	XS_TDFIX	69
+#define	XS_TOVTAB	70
+#define	XS_T71		71
+#define	XS_TSYSTR	72
+
+/* xs_attr flags */
+#define XS_AMEM		0x8000	/* memory image */
+#define XS_AITER	0x0001	/* iteration records */
+#define XS_AHUGE	0x0002	/* unused */
+#define XS_ABSS		0x0004	/* uninitialized data */
+#define XS_APURE	0x0008	/* read-only (sharable) segment */
+#define XS_AEDOWN	0x0010	/* expand down memory segment */
+#define XS_APRIV	0x0020	/* unused */
+#define	XS_A32BIT	0x0040	/* 32-bit text/data */
+
+/*
+ * x.out iteration record
+ */
+
+struct xiter {
+	long	xi_size;	/* text/data size */
+	long	xi_rep;		/* number of replications */
+	long	xi_offset;	/* offset within segment to replicated data */
+};
+
+#define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
+
+int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
+
 #endif /* !_IBCS2_EXEC_H_ */
