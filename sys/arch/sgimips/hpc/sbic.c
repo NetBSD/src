@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.2 2001/11/10 07:32:42 wdk Exp $	*/
+/*	$NetBSD: sbic.c,v 1.3 2001/11/10 22:54:54 wdk Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -115,7 +115,6 @@ int     sbic_div2stp	__P((struct sbic_softc *, int));
 int     sbic_stp2div	__P((struct sbic_softc *, int));
 void	sbic_setsync 	__P((struct sbic_softc *, struct sbic_tinfo *ti));
 void    sbic_update_xfer_mode __P((struct sbic_softc *, int));
-void    sbic_hexdump	__P((u_char *, int));
 
 static struct pool sbic_pool;		/* Adapter Control Blocks */
 static int sbic_pool_initialized = 0;
@@ -138,10 +137,10 @@ int     sbic_notags	= 0;   /* No Tags */
 
 #define QPRINTF(a)	SBIC_DEBUG(MISC, a)
 
-int     sbic_debug	= 0;    /* Debug all chip related things */
-int     data_pointer_debug = 0; /* Debug Data Pointer related things */
+int     sbic_debug	= 0;		/* Debug flags */
 
 void    sbic_print_csr	__P((u_char));
+void    sbic_hexdump	__P((u_char *, int));
 
 #else
 #define QPRINTF(a)  /* */
@@ -440,10 +439,7 @@ sbic_dma_stop(dev)
 		dev->sc_tcnt   = 0;
 		dev->sc_flags &= ~SBICF_INDMA;
 		splx(s);
-#ifdef DEBUG
-		if (data_pointer_debug)
-			printf("dma_stop\n");
-#endif
+		SBIC_DEBUG(DMA, ("dma_stop\n"));
 	}
 	/*
 	 * Ensure the WD chip is back in polled I/O mode, with nothing to
@@ -551,8 +547,8 @@ sbic_scsi_request(chan, req, arg)
 
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ti->flags & T_NOSYNC) == 0 && dev->sc_minsync != 0) {
-			QPRINTF(("%s: target %d: sync negotiation\n",
-				    dev->sc_dev.dv_xname, xm->xm_target));
+			SBIC_DEBUG(SYNC, ("target %d: sync negotiation\n",
+				       xm->xm_target));
 			ti->flags |= T_NEGOTIATE;
 			ti->period = dev->sc_minsync;
 		}
@@ -657,15 +653,12 @@ sbic_sched(dev)
 	}
 
 	if (acb == NULL) {
-		QPRINTF(("sbicsched: no work\n"));
+		SBIC_DEBUG(ACBS, ("sbicsched: no work\n"));
 		return;			/* did not find an available command */
 	}
 
-#ifdef DEBUG
-	if (data_pointer_debug)
-		printf("sbic_sched(%d,%d)\n", periph->periph_target,
-		            periph->periph_lun);
-#endif
+	SBIC_DEBUG(ACBS, ("sbic_sched(%d,%d)\n", periph->periph_target,
+		       periph->periph_lun));
 
 	TAILQ_REMOVE(&dev->ready_list, acb, chain);
 	acb->flags &= ~ACB_READY;
@@ -691,14 +684,13 @@ sbic_scsidone(dev, acb, status)
 	int               status;
 {
 	struct scsipi_xfer   *xs  = acb->xs;
-	struct scsipi_periph *periph = xs->xs_periph;
 	struct sbic_tinfo    *ti;
 	struct sbic_linfo    *li;
 	int                  s;
 
 #ifdef DIAGNOSTIC
-	KASSERT(dev->target == periph->periph_target);
-	KASSERT(dev->lun    == periph->periph_lun);
+	KASSERT(dev->target == xs->xs_periph->periph_target);
+	KASSERT(dev->lun    == xs->xs_periph->periph_lun);
 	if (acb == NULL || xs == NULL) {
 		panic("sbic_scsidone -- (%d,%d) no scsipi_xfer\n",
 		    dev->target, dev->lun);
@@ -706,12 +698,9 @@ sbic_scsidone(dev, acb, status)
 	KASSERT(acb->flags != ACB_FREE);
 #endif
 
-#ifdef DEBUG
-	if (data_pointer_debug)
-		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
-		    periph->periph_target, periph->periph_lun,
-		    dev->target, dev->lun, status);
-#endif
+	SBIC_DEBUG(ACBS, ("scsidone: (%d,%d)->(%d,%d)%02x\n",
+		       xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
+		       dev->target, dev->lun, status));
 	callout_stop(&xs->xs_callout);
 
 	xs->status = status & SCSI_STATUS_MASK;
@@ -888,8 +877,8 @@ sbic_abort(dev, acb, where)
 				SBIC_WAIT (dev, SBIC_ASR_INT, 0);
 				GET_SBIC_asr(dev, asr);
 				GET_SBIC_csr(dev, csr);
-				QPRINTF(("csr: 0x%02x, asr: 0x%02x\n",
-					    csr, asr));
+				SBIC_DEBUG(MISC, ("csr: 0x%02x, asr: 0x%02x\n",
+					       csr, asr));
 			} while ((csr != SBIC_CSR_DISC) && 
 			    (csr != SBIC_CSR_DISC_1) &&
 			    (csr != SBIC_CSR_CMD_INVALID));
@@ -927,7 +916,7 @@ sbic_selectbus(dev, acb)
 	dev->target    = target;
 	dev->lun       = lun;
 
-	QPRINTF(("sbic_selectbus %d: ", target));
+	SBIC_DEBUG(PHASE, ("sbic_selectbus %d: ", target));
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&xs->xs_callout, SCSI_TIMEOUT(acb->timeout),
@@ -943,7 +932,7 @@ sbic_selectbus(dev, acb)
 	GET_SBIC_asr(dev, asr);
 	if (asr & (SBIC_ASR_INT|SBIC_ASR_BSY)) {
 		/* This means we got ourselves reselected upon */
-		QPRINTF(("WD busy (reselect?) ASR=%02x\n", asr));
+		SBIC_DEBUG(PHASE, ("WD busy (reselect?) ASR=%02x\n", asr));
 		return 0;
 	}
 
@@ -966,7 +955,7 @@ sbic_selectbus(dev, acb)
 
 		/* Reselected from under our feet? */
 		if (csr == SBIC_CSR_RSLT_NI || csr == SBIC_CSR_RSLT_IFY) {
-			QPRINTF(("got reselected, asr %02x\n", asr));
+			SBIC_DEBUG(PHASE, ("got reselected, asr %02x\n", asr));
 			/*
 			 * We need to handle this now so we don't lock up later
 			 */
@@ -987,11 +976,11 @@ sbic_selectbus(dev, acb)
 	/* Anyone at home? */
 	if (csr == SBIC_CSR_SEL_TIMEO) {
 		xs->error = XS_SELTIMEOUT;
-		QPRINTF(("-- Selection Timeout\n"));
+		SBIC_DEBUG(PHASE, ("-- Selection Timeout\n"));
 		return 0;
 	}
 
-	QPRINTF(("Selection Complete\n"));
+	SBIC_DEBUG(PHASE, ("Selection Complete\n"));
 
 	/* Assume we're now selected */
 	GET_SBIC_selid(dev, id);
@@ -1126,9 +1115,7 @@ sbic_xfout(dev, len, bp)
 		}
 	} while (len && (asr & SBIC_ASR_INT) == 0 && wait-- > 0);
 
-#ifdef  DEBUG
 	QPRINTF(("sbic_xfout done: %d bytes remaining (wait:%d)\n", len, wait));
-#endif
 
 	/*
 	 * Normally, an interrupt will be pending when this routing returns.
@@ -1246,10 +1233,7 @@ sbic_go(dev, acb)
 	int             i, dmaok;
 	u_char          csr, asr;
 
-#ifdef DEBUG
-	if (data_pointer_debug)
-		printf("sbic_go(%d:%d)\n", dev->target, dev->lun);
-#endif
+	SBIC_DEBUG(ACBS, ("sbic_go(%d:%d)\n", dev->target, dev->lun));
 
 	dev->sc_nexus = acb;
 
@@ -1268,12 +1252,9 @@ sbic_go(dev, acb)
 	if (dmaok == 0)
 		dev->sc_flags |= SBICF_NODMA;
 
-#ifdef DEBUG
-	if (data_pointer_debug) {
-		printf("sbic_go dmago:%d(tcnt=%x) dmaok=%dx\n",
-		    dev->target, dev->sc_tcnt, dmaok);
-	}
-#endif
+	SBIC_DEBUG(DMA, ("sbic_go dmago:%d(tcnt=%x) dmaok=%dx\n",
+		       dev->target, dev->sc_tcnt, dmaok));
+
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if ((csr = sbic_selectbus(dev, acb)) == 0)
 		return(0); /* Not done: needs to be rescheduled */
@@ -1331,7 +1312,7 @@ sbic_intr(dev)
 	GET_SBIC_csr(dev, csr);
 
 	do {
-		QPRINTF(("intr[0x%x]", csr));
+		SBIC_DEBUG(INTS, ("intr[csr=0x%x]", csr));
 
 		i = sbic_nextstate(dev, dev->sc_nexus, csr, asr);
 		WAIT_CIP(dev);		/* XXX */
@@ -1348,7 +1329,7 @@ sbic_intr(dev)
 	} while (dev->sc_state == SBIC_CONNECTED &&
 	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 	
-	QPRINTF(("intr done. state=%d, asr=0x%02x\n", i, asr));
+	SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n", i, asr));
 
 	return(1);
 }
@@ -1388,7 +1369,7 @@ sbic_poll(dev, acb)
 			return (0);
 
 		if (dev->sc_state == SBIC_IDLE) {
-			QPRINTF(("[poll: rescheduling] "));
+			SBIC_DEBUG(ACBS, ("[poll: rescheduling] "));
 			sbic_sched(dev);
 		}
 	}
@@ -1686,7 +1667,7 @@ void sbic_msgin(dev, msgaddr, msglen)
 		 * IDENTIFY message with target
 		 */
 		if (MSG_ISIDENTIFY(msgaddr[0])) {
-			QPRINTF(("IFFY"));
+			SBIC_DEBUG(PHASE, ("IFFY[%x] ", msgaddr[0]));
 			dev->sc_msgify = msgaddr[0];
 		} else {
 			printf("%s: reselect without IDENTIFY;"
@@ -1716,7 +1697,7 @@ sbic_sched_msgout(dev, msg)
 {
 	u_char	asr;
 
-	printf("sched_msgout: %04x\n", msg);
+	SBIC_DEBUG(SYNC,("sched_msgout: %04x\n", msg));
 	dev->sc_msgpriq |= msg;
 
 	/* Schedule MSGOUT Phase to send message */
@@ -1810,8 +1791,6 @@ sbic_msgout(dev)
 			break;
 		}
 	}
-	printf("MSGOUT:");
-	sbic_hexdump(dev->sc_omsg, dev->sc_omsglen);
 
 	sbic_xfout(dev, dev->sc_omsglen, dev->sc_omsg);
 }
@@ -1831,7 +1810,7 @@ sbic_nextstate(dev, acb, csr, asr)
 	struct sbic_acb     *acb;
 	u_char              csr, asr;
 {
-	QPRINTF(("next[%02x,%02x]: ",asr,csr));
+	SBIC_DEBUG(PHASE, ("next[a=%02x,c=%02x]: ",asr,csr));
 
 	switch (csr) {
 
@@ -1857,12 +1836,6 @@ sbic_nextstate(dev, acb, csr, asr)
 		 * device driver look at what happened.
 		 */
 		sbic_xferdone(dev);
-
-#ifdef DEBUG
-		if (data_pointer_debug)
-			printf("next dmastop: %d(%x)\n", dev->target,
-			    dev->sc_tcnt);
-#endif
 
 		sbic_dma_stop(dev);
 
@@ -1903,12 +1876,8 @@ sbic_nextstate(dev, acb, csr, asr)
 			/* Perfrom transfer using PIO */
 			int resid;
 
-#ifdef DEBUG
-			if (data_pointer_debug)
-				printf("next PIO: %d(%p:%x)\n", dev->target,
-				    dev->sc_daddr,
-				    dev->sc_dleft);
-#endif
+			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%x)\n", dev->target,
+				       dev->sc_daddr, dev->sc_dleft));
 
 			if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 				/* data in */
@@ -1929,11 +1898,9 @@ sbic_nextstate(dev, acb, csr, asr)
 			SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI |
 			    SBIC_CTL_DMA);
 
-#ifdef DEBUG
-			if (data_pointer_debug)
-				printf("next DMA: %d(%x)\n", dev->target,
-				    dev->sc_tcnt);
-#endif
+			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%x)\n", dev->target,
+				       dev->sc_daddr, dev->sc_dleft));
+
 			/* Setup byte count for transfer */
 			SBIC_TC_PUT(dev, (unsigned)dev->sc_dleft);
 
@@ -2098,23 +2065,12 @@ sbic_nextstate(dev, acb, csr, asr)
 		Debugger();
 #endif
 
-#ifdef DEBUG
-		if (data_pointer_debug)
-			printf("next dmastop: %d(%x)\n", dev->target,
-			    dev->sc_tcnt);
-#endif
-
 		SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
 		if (acb->xs)
 			sbic_error(dev, acb);
 		sbic_abort(dev, acb, "next");
 
 		if (dev->sc_flags & SBICF_INDMA) {
-#ifdef DEBUG
-			if (data_pointer_debug)
-				printf("next dmastop: %d(%x)\n", dev->target,
-				    dev->sc_tcnt);
-#endif
 			sbic_dma_stop(dev);
 			sbic_scsidone(dev, acb, STATUS_UNKNOWN);
 		}
