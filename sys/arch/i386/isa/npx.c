@@ -32,24 +32,27 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.8 1993/09/16 03:24:54 brezak Exp $
+ *	$Id: npx.c,v 1.9 1993/12/20 05:30:55 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
 
-#include "param.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "proc.h"
-#include "machine/cpu.h"
-#include "machine/pcb.h"
-#include "machine/trap.h"
-#include "ioctl.h"
-#include "i386/isa/icu.h"
-#include "machine/specialreg.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/isa.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/vmmeter.h>
+
+#include <machine/cpu.h>
+#include <machine/pcb.h>
+#include <machine/trap.h>
+#include <machine/specialreg.h>
+
+#include <i386/isa/icu.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/isa.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
@@ -386,6 +389,8 @@ npxintr(frame)
 	struct intrframe frame;
 {
 	int code;
+
+	cnt.v_trap++;
 
 	if (npxproc == NULL || !npx_exists) {
 		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
