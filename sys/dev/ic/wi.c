@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.92 2002/10/01 03:24:35 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.93 2002/10/01 03:27:03 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.92 2002/10/01 03:24:35 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.93 2002/10/01 03:27:03 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -553,6 +553,7 @@ wi_init(struct ifnet *ifp)
 	    ic->ic_des_esslen);
 	wi_write_val(sc, WI_RID_OWN_CHNL, ic->ic_ibss_chan);
 	wi_write_ssid(sc, WI_RID_OWN_SSID, ic->ic_des_essid, ic->ic_des_esslen);
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	wi_write_val(sc, WI_RID_PM_ENABLED,
 	    (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
