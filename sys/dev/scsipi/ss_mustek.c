@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.11.2.1 1999/10/19 17:39:43 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.11.2.2 1999/10/20 20:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -487,7 +487,6 @@ mustek_read(ss, bp)
 
 	/*
 	 * go ask the adapter to do all this for us
-	 * XXX Really need NOSLEEP?
 	 */
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),

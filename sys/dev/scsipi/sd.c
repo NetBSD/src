@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.1 1999/10/19 17:39:39 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.2 1999/10/20 20:39:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -754,7 +754,6 @@ sdstart(periph)
 
 		/*
 		 * Figure out what flags to use.
-		 * XXX NOSLEEP really needed?
 		 * XXX Need a B_ORDERED.
 		 */
 		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
