@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.23 2000/04/22 21:14:19 thorpej Exp $	*/
+/*	$NetBSD: getch.c,v 1.24 2000/04/23 14:14:49 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.23 2000/04/22 21:14:19 thorpej Exp $");
+__RCSID("$NetBSD: getch.c,v 1.24 2000/04/23 14:14:49 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -568,6 +568,8 @@ wgetch(WINDOW *win)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
 	    && __echoit)
 		return (ERR);
+	
+	wrefresh(win);
 #ifdef DEBUG
 	__CTRACE("wgetch: __echoit = %d, __rawmode = %d, flags = %0.2o\n",
 	    __echoit, __rawmode, win->flags);
@@ -654,7 +656,6 @@ wgetch(WINDOW *win)
 	if (weset)
 		nocbreak();
 
-	wrefresh(win);
 	return ((inp < 0) || (inp == ERR) ? ERR : inp);
 }
 
