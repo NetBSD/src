@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.1 2001/02/14 05:41:25 cgd Exp $ */
+/* $NetBSD: hcreate.c,v 1.2 2001/02/19 21:26:04 ross Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.1 2001/02/14 05:41:25 cgd Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.2 2001/02/19 21:26:04 ross Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
@@ -83,7 +83,7 @@ SLIST_HEAD(internal_head, internal_entry);
  * assumes internal_entry is <= 32 (2^5) bytes.
  */
 #define	MAX_BUCKETS_LG2	(sizeof (size_t) * 8 - 1 - 5)
-#define	MAX_BUCKETS	(1 << MAX_BUCKETS_LG2)
+#define	MAX_BUCKETS	((size_t)1 << MAX_BUCKETS_LG2)
 
 /* Default hash function, from db/hash/hash_func.c */
 extern u_int32_t (*__default_hash)(const void *, size_t);
