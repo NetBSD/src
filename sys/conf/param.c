@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.45 2003/12/31 12:34:22 martin Exp $	*/
+/*	$NetBSD: param.c,v 1.46 2004/07/01 12:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.45 2003/12/31 12:34:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.46 2004/07/01 12:44:26 yamt Exp $");
 
+#include "opt_hz.h"
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
 #include "opt_sysvparam.h"
