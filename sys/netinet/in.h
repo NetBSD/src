@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.47.4.1 2000/08/26 16:38:32 tron Exp $	*/
+/*	$NetBSD: in.h,v 1.47.4.2 2001/04/24 22:21:35 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -347,7 +347,8 @@ struct ip_mreq {
 #define IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
 #define IPCTL_LOWPORTMIN       16	/* minimum reserved port */
 #define IPCTL_LOWPORTMAX       17	/* maximum reserved port */
-#define	IPCTL_MAXID	       18
+#define IPCTL_MAXFRAGPACKETS   18	/* max packets in reassembly queue */
+#define	IPCTL_MAXID	       19
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -368,6 +369,7 @@ struct ip_mreq {
 	{ "gifttl", CTLTYPE_INT }, \
 	{ "lowportmin", CTLTYPE_INT }, \
 	{ "lowportmax", CTLTYPE_INT }, \
+	{ "maxfragpackets", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
