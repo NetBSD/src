@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.90 2000/06/11 17:09:34 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.91 2000/06/12 21:10:41 bouyer Exp $ */
 
 
 /*
@@ -1323,6 +1323,8 @@ __wdccommand_intr(chp, xfer, irq)
 		__wdccommand_done(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 	if (wdc_c->flags & AT_READ) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
 			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
