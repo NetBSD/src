@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.94 1997/10/07 12:11:48 lukem Exp $
+#	$NetBSD: rc,v 1.95 1997/10/10 09:37:54 drochner Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -104,10 +104,19 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-if [ ! -d /usr/bin ]; then
-	mount /usr >/dev/null 2>&1
-fi
-mount /var >/dev/null 2>&1
+for fs in /usr /var $critical_filesystems; do
+	mount | (
+        		ismounted=no
+        		while read what _on on _type type; do
+               		 if [ $on = $fs ]; then
+                        			ismounted=yes
+               		 fi
+        		done
+       		if [ $ismounted = no ]; then
+			mount $fs >/dev/null 2>&1
+		fi
+	)
+done
 
 # "Critical" file systems are now mounted.  Go ahead and swap
 # to files now, since they will be residing in the critical file
