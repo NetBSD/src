@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.7 2004/04/04 16:47:02 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.8 2004/04/06 02:25:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,16 +54,17 @@ userret(struct lwp *l, struct trapframe *frame)
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
-	 * disable it
+	 * disable it.  Note that if the PSL FP/VEC bits aren't set, then
+	 * we don't own it.
 	 */
 #ifdef PPC_HAVE_FPU
-	if ((pcb->pcb_flags & PCB_FPU) &&
+	if ((frame->srr1 & PSL_FP) &&
 	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
 		frame->srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
 #ifdef ALTIVEC
-	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
+	if ((frame->srr1 & PSL_VEC) &&
 	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
 		frame->srr1 &= ~PSL_VEC;
 	}
