@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
- *	$Id: nvram.h,v 1.1 1993/09/14 17:32:47 mycroft Exp $
+ *	$Id: nvram.h,v 1.2 1993/09/24 08:49:21 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -125,8 +125,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define NVRAM_VALID		0x0d	/* register D address */
 #define NVRAM_VALID_VRT		0x80	/* Valid RAM and time bit */
 
-#define NVRAM_NREG		0x0e	/* number of RTC registers */
-#define NVRAM_NREGP		0x0a	/* number of RTC registers to set time */
+#define CLOCK_NREG		0x0a	/* number of RTC registers */
 
 /*
  * These are generic CMOS locations, but we call then RTC anyway...
@@ -153,4 +152,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define CLOCK_CENTURY		0x32	/* current century - please increment in Dec99 */
 
-#define	NVRAM_NPORTS		16
+#define	CLOCK_NPORTS		16
+
+
+u_char nvram __P((u_char pos));
