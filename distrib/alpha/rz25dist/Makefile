@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1995/12/21 14:22:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1996/04/25 13:20:05 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -30,13 +30,21 @@ mount-fs:
 
 build-fs:
 	cd ${.CURDIR}/../../../etc && make distribution
-	cd ${.CURDIR}/../../../cygnus && \
-	    make prefix=${DESTDIR}/usr/local install
-	cd ${.CURDIR}/../../../xc && make install install.man
+	if [ -d /usr/alphasrc/cygnus ]; then \
+		cd /usr/alphasrc/cygnus && \
+		    make prefix=${DESTDIR}/usr/local install; \
+	else \
+		true; \
+	fi
+	if [ -d /usr/alphasrc/xc ]; then \
+		cd /usr/alphasrc/xc && make install install.man; \
+	else \
+		true; \
+	fi
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
 	ln -s \
-	../local/lib/gcc-lib/alpha-unknown-netbsd1.1A./2.7-95q4/cpp \
+	../local/lib/gcc-lib/alpha-unknown-netbsd1.1B/2.7-95q4/cpp \
 	    ${DESTDIR}/usr/libexec
 	ln -s ../local/bin/ar ${DESTDIR}/usr/bin
 	ln -s ../local/bin/as ${DESTDIR}/usr/bin
