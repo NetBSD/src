@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 2001/07/08 20:30:14 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 2001/07/08 21:04:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -256,8 +256,8 @@ zs_hpc_attach(parent, self, aux)
 		}
 		ch->cs_bustag = zsc->zsc_bustag;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		zsc_args.hwflags = 0;
 		zsc_args.consdev = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2001/07/08 20:30:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2001/07/08 21:04:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -200,7 +200,7 @@ mach_init(argc, argv, envp)
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif  
 	{

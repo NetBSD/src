@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.6 2001/07/08 20:57:34 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.7 2001/07/08 21:04:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -144,7 +144,7 @@ void sq_trace_dump(struct sq_softc* sc);
 	sq_trace[sq_trace_idx].status = (stat);				\
 	sq_trace[sq_trace_idx].freebuf = (free);			\
 	if (++sq_trace_idx == SQ_TRACEBUF_SIZE) {			\
-		bzero(&sq_trace, sizeof(sq_trace));			\
+		memset(&sq_trace, 0, sizeof(sq_trace));			\
 		sq_trace_idx = 0;					\
 	}								\
 } while (0)
@@ -221,7 +221,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
 
-	bzero(sc->sc_control, sizeof(struct sq_control));
+	memset(sc->sc_control, 0, sizeof(struct sq_control));
 
 	/* Create transmit buffer DMA maps */
 	for (i = 0; i < SQ_NTXDESC; i++) {
@@ -288,7 +288,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname, 
 					   ether_sprintf(sc->sc_enaddr));
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_init = sq_init;
@@ -302,7 +302,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	bzero(&sq_trace, sizeof(sq_trace));
+	memset(&sq_trace, 0, sizeof(sq_trace));
 	/* Done! */
 	return;
 
@@ -737,7 +737,7 @@ sq_watchdog(struct ifnet *ifp)
 
 	sq_trace_dump(sc);
 
-	bzero(&sq_trace, sizeof(sq_trace));
+	memset(&sq_trace, 0, sizeof(sq_trace));
 	sq_trace_idx = 0;
 
 	++ifp->if_oerrors;
