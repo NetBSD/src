@@ -1,40 +1,36 @@
 List of known bugs:
 
-+ Large numbers of matches (e.g. %, g or v commands), with the
-  ignorecase option set, triggers a memory corruption bug in the
-  regex routines.
++ The number option doesn't display line numbers in ex append/insert
+  mode.
 
-+ Autoindent doesn't work in the ex editor.
++ The option sidescroll is completely wrong, and setting it does more
+  harm than good.
+
++ When nvi edits files that don't have trailing newlines, it appends
+  one, regardless.
+
++ Open mode is not yet implemented.
 
 + ^C isn't passed to the shell in the script windows as an interrupt
   character.
 
-+ The command ":ab foo^J bar" prints a usage message -- non-word
-  characters should be quoted in the underlying terminal engine
-  so that the upper-level knows they're quoted and doesn't use them
-  as delimiters.  (Note, this isn't historical practice, vi didn't
-  permit escaping of ^J in this type of command.)
++ The options:
 
-+ The options edcompatible, hardtabs*, lisp*, optimize*, redraw*,
-  and slowopen* are recognized, but not implemented.  Options with
-  an asterisk are unlikely to ever be implemented, so if you want
-  them you might want to say something!  I will implement lisp if
-  anyone ever documents how it really worked.
+	hardtabs, lisp, optimize, redraw, slowopen
 
-+ Screen repainting over slow lines, for some screen changes, is not
+  are recognized, but not implemented.  These options are unlikely to
+  be implemented, so if you want them you might want to say something!
+  I will implement lisp if anyone ever documents how it worked.
+
++ Screen repainting over slow lines, for some screen changes, isn't
   as good as the historic vi's.
 
-+ If an error results during input in ex, it is not displayed until
-  after input mode is exited.
-
-+ If the ex append command is used from vi, the input command buffer
-  is overwritten by the ex_append function, causing random errors.
++ The line movement commands ('k', 'j' are easy examples) don't find the
+  most attractive cursor position correctly when wrapped lines are longer
+  than 80 characters, and they're on the second or subsequent lines.
 
 + Colon commands longer than a single line cause the display to be
   incorrect.
-
-+ When switching files in a small screen (O_WINDOW) with :e, the status
-  message isn't displayed.
 
 + The usages of S_{REDRAW,REFORMAT,REFRESH,RENUMBER,RESIZE} are
   inconsistent, and should be reviewed.  In particular, S_REFRESH
