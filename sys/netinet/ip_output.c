@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.64 1999/12/13 17:04:11 is Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.65 1999/12/20 05:46:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1486,6 +1486,9 @@ ip_mloopback(ifp, m, dst)
 	struct mbuf *copym;
 
 	copym = m_copy(m, 0, M_COPYALL);
+        if (copym != NULL
+	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
+		copym = m_pullup(copym, sizeof(struct ip));
 	if (copym != NULL) {
 		/*
 		 * We don't bother to fragment if the IP length is greater
