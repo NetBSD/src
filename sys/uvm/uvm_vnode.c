@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.3 1999/07/11 05:47:13 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.4 1999/07/31 19:04:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -970,6 +970,9 @@ ReTry:
 
 		s = splbio();
 		while (vp->v_numoutput != 0) {
+			UVMHIST_LOG(ubchist, "waiting for vp %p num %d",
+				    vp, vp->v_numoutput,0,0);
+
 			vp->v_flag |= VBWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput,
 					    &uvn->u_obj.vmobjlock, 
@@ -1106,17 +1109,10 @@ uvn_findpage(uobj, offset, pps, flags)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
 
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-
-	if (*pps == PGO_DONTCARE) {
+	if (*pps != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
 		return 0;
 	}
-#ifdef DIAGNOTISTIC
-	if (*pps != NULL) {
-		panic("uvn_findpage: *pps not NULL");
-	}
-#endif
-
 	for (;;) {
 		/* look for an existing page */
 		ptmp = uvm_pagelookup(uobj, offset);
