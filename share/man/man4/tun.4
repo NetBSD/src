@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.1 1996/06/25 22:17:37 pk Exp $
+.\" $NetBSD: tun.4,v 1.2 1997/09/25 13:14:46 matt Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -142,11 +142,13 @@ this stores the internal debugging variable's value into it.
 .It Dv TUNSIFMODE
 The argument should be a pointer to an
 .Va int ;
-its value must be
+its value must be either
 .Dv IFF_POINTOPOINT
 or
-.Dv IFF_BROADCAST .
-The type of the corresponding
+.Dv IFF_BROADCAST 
+(optionally
+.Dv IFF_MULTICAST
+may be or'ed into the value).  The type of the corresponding
 .Em tun Ns Sy n
 interface is set to the supplied type.  If the value is anything else,
 an
