@@ -1,7 +1,7 @@
-.\"	$NetBSD: rpcgen.1,v 1.9 2001/03/21 00:30:39 mycroft Exp $
+.\"	$NetBSD: rpcgen.1,v 1.10 2001/04/04 09:41:36 wiz Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd June 11, 1995
+.Dd April 3, 2001
 .Dt RPCGEN 1
 .Sh NAME
 .Nm rpcgen
@@ -110,7 +110,7 @@ it creates server handles for all the visible transports from
 .Pa /etc/netconfig
 file.
 .Pp
-.Em Note:
+.Em Note :
 the transports are chosen at run time and not at compile time.
 When the server is self-started,
 it backgrounds itself by default.
@@ -275,7 +275,7 @@ When monitoring for a server,
 some port monitors, like the
 .At V.4
 utility
-.Xr listen 1 ,
+.Ic listen ,
 .Em always
 spawn a new process in response to a service request.
 If it is known that a server will be used with such a monitor, the
@@ -307,7 +307,7 @@ flag.
 .It Fl n Ar netid
 Compile into server-side stubs for the transport
 specified by
-.Ar netid.
+.Ar netid .
 There should be an entry for
 .Ar netid
 in the
@@ -340,19 +340,19 @@ Compile into server-side stubs for all the
 transports belonging to the class
 .Ar nettype .
 The supported classes are
-.Em netpath,
-.Em visible,
-.Em circuit_n,
-.Em circuit_v,
-.Em datagram_n,
-.Em datagram_v,
-.Em tcp,
+.Em netpath ,
+.Em visible ,
+.Em circuit_n ,
+.Em circuit_v ,
+.Em datagram_n ,
+.Em datagram_v ,
+.Em tcp ,
 and
 .Em udp
 [see
 .Xr rpc 3
 for the meanings associated with these classes.
-.Em Note:
+.Em Note :
 .Bx
 currently supports only the
 .Em tcp
@@ -360,7 +360,7 @@ and
 .Em udp
 classes].
 This option may be specified more than once.
-.Em Note:
+.Em Note :
 the transports are chosen at run time and not at compile time.
 .It Fl S\&c
 Generate sample code to show the use of remote procedure and how to bind
@@ -456,11 +456,11 @@ use:
 .Bd -literal -offset indent
 $ rpcgen -n tcp -o prot_svc.c prot.x
 .Ed
+.Sh SEE ALSO
+.Xr cpp 1
 .Sh HISTORY
 The
 .Fl M
 option was first implemented in RedHat Linux, and was reimplemented by
 Charles M. Hannum in
 .Nx 1.6 .
-.Sh SEE ALSO
-.Xr cpp 1
