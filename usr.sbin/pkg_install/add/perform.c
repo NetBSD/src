@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63.2.5 2002/07/23 11:15:16 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.63.2.6 2002/11/24 22:22:14 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63.2.5 2002/07/23 11:15:16 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.63.2.6 2002/11/24 22:22:14 tron Exp $");
 #endif
 #endif
 
@@ -93,9 +93,8 @@ installprereq(const char *name, int *errc)
 }
 
 /*
- * This is seriously ugly code following.  Written very fast!
- * [And subsequently made even worse..  Sigh!  This code was just born
- * to be hacked, I guess.. :) -jkh]
+ * Install a single package
+ * Returns 0 if everything is ok, >0 else
  */
 static int
 pkg_do(const char *pkg)
@@ -302,10 +301,26 @@ pkg_do(const char *pkg)
 			char    buf[FILENAME_MAX];
 			char    installed[FILENAME_MAX];
 
+			/*
+			 * See if the pkg is already installed. If so, we might
+			 * want to upgrade it. 
+			 */
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				if (upgrade) {
+					/*
+					 * Upgrade step 1/4: Check if the new version is ok with all pkgs
+					 * that require this pkg
+					 */
+					/* TODO */
+
+					/*
+					 * Upgrade step 2/4: Do the actual update by moving aside
+					 * the +REQUIRED_BY file, deinstalling the old pkg, adding
+					 * the new one and moving the +REQUIRED_BY file back
+					 * into place (finished in step 3/4)
+					 */
 					snprintf(upgrade_from, sizeof(upgrade_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
 					snprintf(upgrade_via, sizeof(upgrade_via), "%s/.%s." REQUIRED_BY_FNAME,
@@ -649,8 +664,19 @@ success:
 	leave_playpen(Home);
 
 	if (upgrading) {
+		/*
+		 * Upgrade step 3/4: move back +REQUIRED_BY file
+		 * (see also step 2/4)
+		 */
 		rc = rename(upgrade_via, upgrade_to);
 		assert(rc == 0);
+		
+		/*
+		 * Upgrade step 4/4: Fix pkgs that depend on us to
+		 * depend on the new version instead of the old
+		 * one by fixing @pkgdep lines in +CONTENTS files.
+		 */
+		/* TODO */
 	}
 
 	return errc;
