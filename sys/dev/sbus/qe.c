@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.9 2000/05/10 14:16:11 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.10 2000/05/10 14:25:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -275,8 +275,7 @@ qeattach(parent, self, aux)
 	}
 
 	/* Allocate DMA buffer */
-	if ((error = bus_dmamem_alloc(dmatag, size,
-				      NBPG, 0,
+	if ((error = bus_dmamem_alloc(dmatag, size, 0, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			self->dv_xname, error);
