@@ -1,3 +1,8 @@
+/*	$NetBSD: filename.c,v 1.2 1994/12/24 17:17:06 cgd Exp $	*/
+
+#include <stdlib.h>
+#include <string.h>
+
 /*
  * Expand a string, substituting any "%" with the current filename,
  * and any "#" with the previous filename and an initial "!" with 

@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.13 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: main.c,v 1.2 1993/11/09 05:10:21 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.3 1994/12/24 17:17:09 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,7 @@ static char *rcsid = "$Id: main.c,v 1.2 1993/11/09 05:10:21 cgd Exp $";
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 int	ispipe;
