@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.10 2001/04/19 18:02:57 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.11 2001/04/19 18:25:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.10 2001/04/19 18:02:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.11 2001/04/19 18:25:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,15 @@ static int comcnrate = CONSPEED;
 void _dec_1000a_init __P((void));
 static void dec_1000a_cons_init __P((void));
 static void dec_1000a_device_register __P((struct device *, void *));
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 static const struct alpha_variation_table dec_1000_variations[] = {
 	{ 0, "AlphaServer 1000" },
@@ -232,6 +241,10 @@ dec_1000a_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, iot);
+#endif /* KGDB */
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
+/* $NetBSD: api_up1000.c,v 1.5 2001/04/19 18:25:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.5 2001/04/19 18:25:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,15 @@ static int comcnrate = CONSPEED;
 void api_up1000_init __P((void));
 static void api_up1000_cons_init __P((void));
 static void api_up1000_device_register __P((struct device *, void *));
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 void
 api_up1000_init()
@@ -151,6 +160,10 @@ api_up1000_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &icp->ic_iot);
+#endif /* KGDB */
 }
 
 static void
