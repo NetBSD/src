@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.44 1994/02/26 00:00:17 mycroft Exp $
+ *	$Id: wd.c,v 1.45 1994/02/26 00:08:01 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -1408,7 +1408,7 @@ wddump(dev_t dev)
 
 			for (i = 0; du->dk_badsect[i] != -1; i++) {
 				if (blknum < du->dk_badsect[i]) {
-					* sorted list, passed our block by */
+					/* sorted list, passed our block by */
 					break;
 				} else if (blknum == du->dk_badsect[i]) {
 					newblk = du->dk_dd.d_secperunit -
