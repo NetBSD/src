@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1996/10/02 18:07:20 ws Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1998/02/06 04:47:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,9 +77,6 @@ void	 started __P((KINFO *, VARENT *));
 void	 state __P((KINFO *, VARENT *));
 void	 tdev __P((KINFO *, VARENT *));
 void	 tname __P((KINFO *, VARENT *));
-#ifndef NEWVM
-void	 trss __P((KINFO *, VARENT *));
-#endif
 void	 tsize __P((KINFO *, VARENT *));
 void	 ucomm __P((KINFO *, VARENT *));
 void	 uname __P((KINFO *, VARENT *));
