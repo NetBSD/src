@@ -1,4 +1,4 @@
-/*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
+/*	$NetBSD: size.c,v 1.8 1997/01/16 22:23:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $";
+static char rcsid[] = "$NetBSD: size.c,v 1.8 1997/01/16 22:23:16 perry Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,7 +56,9 @@ static char rcsid[] = "$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $";
 #include <stdio.h>
 #include <err.h>
 
+unsigned long total_text, total_data, total_bss, total_total;
 int ignore_bad_archive_entries = 1;
+int print_totals = 0;
 
 int	process_file __P((int, char *));
 int	show_archive __P((int, char *, FILE *));
@@ -72,10 +74,13 @@ main(argc, argv)
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "w")) != EOF)
+	while ((ch = getopt(argc, argv, "wt")) != EOF)
 		switch(ch) {
 		case 'w':
 			ignore_bad_archive_entries = 0;
+			break;
+		case 't':
+			print_totals = 1;
 			break;
 		case '?':
 		default:
@@ -91,6 +96,11 @@ main(argc, argv)
 		} while (*++argv);
 	else
 		eval |= process_file(1, "a.out");
+
+	if (print_totals)
+		(void)printf("\n%lu\t%lu\t%lu\t%lu\t%lx\tTOTAL\n",
+		    total_text, total_data, total_bss,
+		    total_total, total_total);
 	exit(eval);
 }
 
@@ -108,7 +118,7 @@ process_file(count, fname)
 	FILE *fp;
 	int retval;
 	char magic[SARMAG];
-    
+
 	if (!(fp = fopen(fname, "r"))) {
 		warnx("cannot read %s", fname);
 		return(1);
@@ -282,6 +292,12 @@ show_objfile(count, name, fp)
 	    head.a_bss, total, total);
 	if (count > 1)
 		(void)printf("\t%s", name);
+
+	total_text += head.a_text;
+	total_data += head.a_data;
+	total_bss += head.a_bss;
+	total_total += total;
+
 	(void)printf("\n");
 	return (0);
 }
