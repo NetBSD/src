@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.5 2000/04/02 12:03:04 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.6 2000/06/15 18:36:52 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -107,6 +107,7 @@ void gmac_stop __P((struct gmac_softc *));
 void gmac_reset __P((struct gmac_softc *));
 void gmac_init __P((struct gmac_softc *));
 void gmac_init_mac __P((struct gmac_softc *));
+void gmac_setladrf __P((struct gmac_softc *));
 
 int gmac_ioctl __P((struct ifnet *, u_long, caddr_t));
 void gmac_watchdog __P((struct ifnet *));
@@ -227,7 +228,6 @@ gmac_attach(parent, self, aux)
 	ifp->if_watchdog = gmac_watchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_flags |= IFF_ALLMULTI;
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = gmac_mii_readreg;
@@ -644,7 +644,7 @@ gmac_init_mac(sc)
 	gmac_write_reg(sc, GMAC_MACADDRFILT2_1MASK, 0);
 	gmac_write_reg(sc, GMAC_MACADDRFILT0MASK, 0);
 
-	for (i = 0; i < 0x6c; i+= 4)
+	for (i = 0; i < 0x6c; i += 4)
 		gmac_write_reg(sc, GMAC_HASHTABLE0 + i, 0);
 
 	gmac_write_reg(sc, GMAC_SLOTTIME, 0x40);
@@ -664,24 +664,110 @@ gmac_init_mac(sc)
 }
 
 void
+gmac_setladrf(sc)
+	struct gmac_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	struct ethercom *ec = &sc->sc_ethercom;
+	u_char *cp;
+	u_int32_t crc;
+	u_int32_t hash[16];
+	u_int v;
+	int len, i;
+
+	/* Clear hash table */
+	for (i = 0; i < 16; i++)
+		hash[i] = 0;
+
+	/* Get current RX configuration */
+	v = gmac_read_reg(sc, GMAC_RXMACCONFIG);
+
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/* Turn on promiscuous mode; turn off the hash filter */
+		v |= GMAC_RXMAC_PR;
+		v &= ~GMAC_RXMAC_HEN;
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto chipit;
+	}
+
+	/* Turn off promiscuous mode; turn on the hash filter */
+	v &= ~GMAC_RXMAC_PR;
+	v |= GMAC_RXMAC_HEN;
+
+	/*
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using the high order 8 bits as an
+	 * index into the 256 bit logical address filter.  The high order bit
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
+	 */
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			for (i = 0; i < 16; i++)
+				hash[i] = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto chipit;
+		}
+
+		cp = enm->enm_addrlo;
+		crc = 0xffffffff;
+		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
+			int octet = *cp++;
+			int i;
+
+#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
+			for (i = 0; i < 8; i++) {
+				if ((crc & 1) ^ (octet & 1)) {
+					crc >>= 1;
+					crc ^= MC_POLY_LE;
+				} else {
+					crc >>= 1;
+				}
+				octet >>= 1;
+			}
+		}
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+
+		/* Set the corresponding bit in the filter. */
+		hash[crc >> 4] |= 1 << (crc & 0xf);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	/* Now load the hash table into the chip */
+	for (i = 0; i < 16; i++)
+		gmac_write_reg(sc, GMAC_HASHTABLE0 + i * 4, hash[i]);
+
+	gmac_write_reg(sc, GMAC_RXMACCONFIG, v);
+}
+
+void
 gmac_init(sc)
 	struct gmac_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	u_int x;
-	int i;
 
 	gmac_stop_txdma(sc);
 	gmac_stop_rxdma(sc);
 
 	gmac_init_mac(sc);
-
-	x = gmac_read_reg(sc, GMAC_RXMACCONFIG);
-	if (ifp->if_flags & IFF_PROMISC)
-		x |= GMAC_RXMAC_PR;
-	else
-		x &= ~GMAC_RXMAC_PR;
-	gmac_write_reg(sc, GMAC_RXMACCONFIG, x);
+	gmac_setladrf(sc);
 
 	gmac_start_txdma(sc);
 	gmac_start_rxdma(sc);
