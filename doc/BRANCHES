@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.10 2003/07/26 17:24:45 salo Exp $
+#	$NetBSD: BRANCHES,v 1.11 2003/08/06 06:35:31 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -297,6 +297,16 @@ Notes:		Integration of FreeBSD's kqueue(2) mechanism, with various
 		number, and dynamic registration of "user" filters.
 		The work is complete as is, but is awaiting more
 		feedback from various kernel gurus before going mainline.
+
+Branch:		ktrace-lwp
+Description:	ktrace support for lwp ids.
+Status:		Active
+Start Date:	Wed Jul  2 15:27:30 UTC 2003
+End Date:	
+Base Tag:	ktrace-lwp-base
+Maintainer:	Darren Reed <darrenr@netbsd.org>
+Scope:		sys
+Notes:		
 
 Branch:		marc-pcmcia
 Description:	PCMCIA support
