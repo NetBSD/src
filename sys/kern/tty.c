@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.87 1997/04/06 08:15:17 cgd Exp $	*/
+/*	$NetBSD: tty.c,v 1.88 1997/04/06 14:44:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -220,7 +220,13 @@ ttyclose(tp)
 		ndflush(q, (q)->c_cc);					\
 }
 
-/* Is 'c' a line delimiter ("break" character)? */
+/*
+ * This macro is used in canonical mode input processing, where a read
+ * request shall not return unless a 'line delimiter' ('\n') or 'break'
+ * (EOF, EOL, EOL2) character (or a signal) has been received. As EOL2
+ * is an extension to the POSIX.1 defined set of special characters,
+ * recognize it only if IEXTEN is set in the set of local flags.
+ */
 #define	TTBREAKC(c, lflg)						\
 	((c) == '\n' || (((c) == cc[VEOF] || (c) == cc[VEOL] ||		\
 	((c) == cc[VEOL2] && ISSET(lflg, IEXTEN))) && (c) != _POSIX_VDISABLE))
