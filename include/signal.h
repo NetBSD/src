@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 1998/05/25 21:55:48 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.13 1998/09/12 10:53:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,15 +57,36 @@ __BEGIN_DECLS
 int	raise __P((int));
 #ifndef	_ANSI_SOURCE
 int	kill __P((pid_t, int));
-int	sigaction __P((int, const struct sigaction *, struct sigaction *));
-int	sigaddset __P((sigset_t *, int));
-int	sigdelset __P((sigset_t *, int));
-int	sigemptyset __P((sigset_t *));
-int	sigfillset __P((sigset_t *));
-int	sigismember __P((const sigset_t *, int));
-int	sigpending __P((sigset_t *));
-int	sigprocmask __P((int, const sigset_t *, sigset_t *));
-int	sigsuspend __P((const sigset_t *));
+
+#ifdef __LIBC13_SOURCE__
+int	sigaction __P((int, const struct sigaction13 *, struct sigaction13 *));
+int	__sigaction14 __P((int, const struct sigaction *, struct sigaction *));
+int	sigaddset __P((sigset13_t *, int));
+int	__sigaddset14 __P((sigset_t *, int));
+int	sigdelset __P((sigset13_t *, int));
+int	__sigdelset14 __P((sigset_t *, int));
+int	sigemptyset __P((sigset13_t *));
+int	__sigemptyset14 __P((sigset_t *));
+int	sigfillset __P((sigset13_t *));
+int	__sigfillset14 __P((sigset_t *));
+int	sigismember __P((const sigset13_t *, int));
+int	__sigismember14 __P((const sigset_t *, int));
+int	sigpending __P((sigset13_t *));
+int	__sigpending14 __P((sigset_t *));
+int	sigprocmask __P((int, const sigset13_t *, sigset13_t *));
+int	__sigprocmask14 __P((int, const sigset_t *, sigset_t *));
+int	sigsuspend __P((const sigset13_t *));
+int	__sigsuspend14 __P((const sigset_t *));
+#else /* !__LIBC13_SOURCE__ */
+int	sigaction __P((int, const struct sigaction *, struct sigaction *)) __RENAME(__sigaction14);
+int	sigaddset __P((sigset_t *, int)) __RENAME(__sigaddset14);
+int	sigdelset __P((sigset_t *, int)) __RENAME(__sigdelset14);
+int	sigemptyset __P((sigset_t *)) __RENAME(__sigemptyset14);
+int	sigfillset __P((sigset_t *)) __RENAME(__sigfillset14);
+int	sigismember __P((const sigset_t *, int)) __RENAME(__sigismember14);
+int	sigpending __P((sigset_t *)) __RENAME(__sigpending14);
+int	sigprocmask __P((int, const sigset_t *, sigset_t *)) __RENAME(__sigprocmask14);
+int	sigsuspend __P((const sigset_t *)) __RENAME(__sigsuspend14);
 
 #if defined(__GNUC__) && defined(__STDC__)
 extern __inline int sigaddset(sigset_t *set, int signo) {
@@ -75,7 +96,7 @@ extern __inline int sigaddset(sigset_t *set, int signo) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
-	*set |= (1 << ((signo)-1));		/* sigmask(signo) */
+	__sigaddset(set, signo);
 	return (0);
 }
 
@@ -86,7 +107,7 @@ extern __inline int sigdelset(sigset_t *set, int signo) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
-	*set &= ~(1 << ((signo)-1));		/* sigmask(signo) */
+	__sigdelset(set, signo);
 	return (0);
 }
 
@@ -97,13 +118,14 @@ extern __inline int sigismember(const sigset_t *set, int signo) {
 		errno = 22;			/* EINVAL */
 		return -1;
 	}
-	return ((*set & (1 << ((signo)-1))) != 0);
+	return (__sigismember(set, signo));
 }
-#endif
+#endif /* __GNUC__ && __STDC__ */
 
 /* List definitions after function declarations, or Reiser cpp gets upset. */
-#define	sigemptyset(set)	(*(set) = 0, 0)
-#define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
+#define	sigemptyset(set)	(__sigemptyset(set), 0)
+#define	sigfillset(set)		(__sigfillset(set), 0)
+#endif /* !__LIBC13_SOURCE__ */
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -123,7 +145,12 @@ int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 void	psignal __P((unsigned int, const char *));
 int	sigblock __P((int));
-int	sigreturn __P((struct sigcontext *));
+#ifdef __LIBC13_SOURCE__
+int	sigreturn __P((struct sigcontext13 *));
+int	__sigreturn14 __P((struct sigcontext *));
+#else
+int	sigreturn __P((struct sigcontext *)) __RENAME(__sigreturn14);
+#endif
 int	sigsetmask __P((int));
 int	sigvec __P((int, struct sigvec *, struct sigvec *));
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
