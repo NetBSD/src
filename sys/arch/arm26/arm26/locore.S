@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.13 2001/03/08 21:30:35 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.14 2001/04/30 19:57:10 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -377,6 +377,14 @@ ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
 ENTRY(int_off)
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
+	/* These are used by mcount */
+ENTRY_NP(int_off_save)
+	mov	r0, r15
+	orrs	r15, r14, #(R15_IRQ_DISABLE)
+ENTRY_NP(int_restore)
+	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
+	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
+	movs	r15, r14			/* Yes, just return */
 
 	/*
 	 * Low-level context-switch operation.  cpu_switch() is in C -- this
@@ -450,4 +458,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.13 2001/03/08 21:30:35 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.14 2001/04/30 19:57:10 bjh21 Exp $")
