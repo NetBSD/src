@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 1996/02/01 00:03:38 phil Exp $	*/
+/*	$NetBSD: trap.h,v 1.5 1999/01/15 07:42:48 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,6 +36,8 @@
 
 #ifndef _MACHINE_TRAP_H_
 #define _MACHINE_TRAP_H_
+
+#ifdef _KERNEL
 
 #define T_NVI		0	/* non-vectored interrupt */
 #define T_NMI		1	/* non-maskable interrupt */
@@ -88,4 +90,6 @@
 #define   TEX_PTE2	0x02	   /* Second level PTE invalid */
 #define   TEX_PROT	0x03	   /* Protection violation */
 
-#endif
+#endif /* _KERNEL */
+
+#endif /* _MACHINE_TRAP_H_ */
