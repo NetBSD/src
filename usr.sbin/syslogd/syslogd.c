@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.20 1998/07/18 05:04:40 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.21 1998/07/30 23:29:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,8 +657,17 @@ fprintlog(f, flags, msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		l = snprintf(line, sizeof line, "<%d>%.15s %s", f->f_prevpri,
-		    (char *)iov[0].iov_base, (char *)iov[4].iov_base);
+		/* check for local vs remote messages (from FreeBSD PR#bin/7055) */
+		if (strcmp(f->f_prevhost, LocalHostName)) {
+			l = snprintf(line, sizeof(line) - 1,
+				     "<%d>%.15s [%s]: %s",
+				     f->f_prevpri, (char *) iov[0].iov_base,
+				     f->f_prevhost, (char *) iov[4].iov_base);
+		} else {
+			l = snprintf(line, sizeof(line) - 1, "<%d>%.15s %s",
+				     f->f_prevpri, (char *) iov[0].iov_base,
+				     (char *) iov[4].iov_base);
+		}
 		if (l > MAXLINE)
 			l = MAXLINE;
 		if ((finet >= 0) &&
