@@ -1,4 +1,4 @@
-/*      $NetBSD: mot_machdep.c,v 1.1 2002/02/26 16:09:15 kleink Exp $	*/
+/*      $NetBSD: mot_machdep.c,v 1.2 2002/05/02 14:58:37 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,15 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_platform.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/platform.h>
 
 static struct platform *platform_mot[] = {
-	&platform_mot_ulmb60xa
+#if defined(PLATFORM_MOTOROLA_ULMB60XA)
+	&platform_mot_ulmb60xa,
+#endif
+	NULL
 };
 
 struct plattab plattab_mot = {
-	platform_mot,	sizeof(platform_mot)/sizeof(platform_mot[0])
+	platform_mot,	sizeof(platform_mot)/sizeof(platform_mot[0]) - 1
 };
