@@ -5262,7 +5262,7 @@ build_conditional_expr (ifexp, op1, op2)
     op2 = convert_for_initialization
       (NULL_TREE, result_type, op2, LOOKUP_NORMAL, "converting", NULL_TREE, 0);
 
-  if (TREE_CONSTANT (ifexp))
+  if (TREE_CODE (ifexp) == INTEGER_CST)
     return integer_zerop (ifexp) ? op2 : op1;
 
   return convert_from_reference
@@ -7291,9 +7291,17 @@ c_expand_return (retval)
     }
   else
     {
+      tree functype = TREE_TYPE (TREE_TYPE (current_function_decl));
+
+      /* First convert the value to the function's return type, then
+	 to the type of return value's location to handle the
+         case that functype is thiner than the valtype. */
+
       retval = convert_for_initialization
-	(NULL_TREE, valtype, retval, LOOKUP_NORMAL|LOOKUP_ONLYCONVERTING,
+	(NULL_TREE, functype, retval, LOOKUP_NORMAL|LOOKUP_ONLYCONVERTING,
 	 "return", NULL_TREE, 0);
+
+      retval = convert (valtype, retval);
 
       if (retval == error_mark_node)
 	{
