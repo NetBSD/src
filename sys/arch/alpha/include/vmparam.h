@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.12 1998/08/14 16:50:03 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.13 1999/01/16 20:04:22 chuck Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,9 +161,6 @@ extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */
-
-/* Use new non-contiguous physical memory code. */
-#define	MACHINE_NEW_NONCONTIG
 
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
