@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.9 2002/11/23 09:27:03 scw Exp $
+$NetBSD: TODO,v 1.10 2003/03/13 13:44:16 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ DONE.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
 
 10.	Stress-testing of just about everything. ;-)
 
-11.	Define a "board_info" structure, and move a whole bunch of currently
+DONE.	Define a "board_info" structure, and move a whole bunch of currently
 	hard-coded stuff into it. For example:
 
 	  - CPU speed,
@@ -67,7 +67,7 @@ DONE.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
 	  - Cache/TLB interface routines (currently __cpu_cache*/__cpu_tlb*)
 	  - etc.
 
-12.	Support for nathan_sa when the branch is merged.
+DONE.	Support for nathan_sa when the branch is merged.
 
 DONE.	In the pmap, we should clear the Referenced bit in the PTE (after
 	saving its value in the mdpg_attrs/pvo, if it's a managed page)

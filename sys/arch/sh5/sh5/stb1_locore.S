@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.9 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.10 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,10 +44,11 @@
  * ##########
  */
 
+#include <sh5/sh5/stb1var.h>
+
 /*
  * Manifest constants describing the TLB layout
  */
-#define	STB1_TLB_NSLOTS		64
 #define	STB1_TLB_IDX_STEP	16
 #define	STB1_TLB_IDX_SHIFT	4
 #define	STB1_DTLB(idx)		(0x00800000 + (STB1_TLB_IDX_STEP * (idx)))
@@ -57,9 +58,6 @@
 /*
  * Ditto for the cache
  */
-#define	STB1_CACHE_NWAYS	4
-#define	STB1_CACHE_NSETS	256
-#define	STB1_CACHE_LINE_SIZE	32
 #define	STB1_ICCR		(0x01600000)
 #define	STB1_OCCR		(0x01e00000)
 #define	STB1_OCACHETAG0(w,s)	(0x01800000 + ((w) * 65536) + ((s) * 16))
