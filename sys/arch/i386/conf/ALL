@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.43 1994/03/09 22:55:57 hpeyerl Exp $
+#	$Id: ALL,v 1.44 1994/03/29 04:40:38 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -17,7 +17,7 @@ cpu		"I586_CPU"
 options		MATH_EMULATE
 
 # make the kernel a little faster; will break on some machines
-#options		DUMMY_NOPS
+#options	DUMMY_NOPS
 
 # temporary kluge while adding support for non-contiguous physical memory
 options		MACHINE_NONCONTIG
@@ -80,7 +80,7 @@ options		FDESC
 options		KERNFS
 
 # various types of networks and protocols
-#options		IMP	 
+#options	IMP	 
 options		INET
 options		NS
 options		ISO
@@ -109,9 +109,6 @@ controller	isa0
 #console
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 
-#math co-processor
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
-
 #serial ports
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
@@ -133,13 +130,13 @@ device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 
 #non-scsi disk controllers
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
-disk		wd0	at wdc0 drive 0
-disk		wd1	at wdc0 drive 1
+disk		wd0	at wdc0 drive ?
+disk		wd1	at wdc0 drive ?
 
 #non-scsi floppy controllers
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
-disk		fd1	at fdc0 drive 1
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
 
 #non-scsi tape drives
 device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
@@ -150,52 +147,59 @@ device		mcd0	at isa? port 0x300 bio irq 10 vector mcdintr
 
 #scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-device		sd0	at aha0 flags 0 drive ?
-device		sd1	at aha0 flags 0 drive ?
-device		sd2	at aha0 flags 0 drive ?
-device		sd3	at aha0 flags 0 drive ?
-device		st0	at aha0 flags 1 drive ?
-device		st1	at aha0 flags 1 drive ?
-device		cd0	at aha0 flags 2 drive ?
-device		cd1	at aha0 flags 2 drive ?
-device	        ch0	at aha0 flags 3 drive ?
-device	        ch1	at aha0 flags 3 drive ?
+master		scsibus0 at aha0
+device		sd0	at scsibus0 slave ?
+device		sd1	at scsibus0 slave ?
+device		sd2	at scsibus0 slave ?
+device		sd3	at scsibus0 slave ?
+device		st0	at scsibus0 slave ?
+device		st1	at scsibus0 slave ?
+device		cd0	at scsibus0 slave ?
+device		cd1	at scsibus0 slave ?
+device	        ch0	at scsibus0 slave ?
+device	        ch1	at scsibus0 slave ?
 
 controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
-device		sd0	at ahb0 flags 0 drive ?
-device		sd1	at ahb0 flags 0 drive ?
-device		sd2	at ahb0 flags 0 drive ?
-device		sd3	at ahb0 flags 0 drive ?
-device		st0	at ahb0 flags 1 drive ?
-device		st1	at ahb0 flags 1 drive ?
-device		cd0	at ahb0 flags 2 drive ?
-device		cd1	at ahb0 flags 2 drive ?
-device	        ch0	at ahb0 flags 3 drive ?
-device	        ch1	at ahb0 flags 3 drive ?
+master		scsibus1 at ahb0
+device		sd0	at scsibus1 slave ?
+device		sd1	at scsibus1 slave ?
+device		sd2	at scsibus1 slave ?
+device		sd3	at scsibus1 slave ?
+device		st0	at scsibus1 slave ?
+device		st1	at scsibus1 slave ?
+device		cd0	at scsibus1 slave ?
+device		cd1	at scsibus1 slave ?
+device	        ch0	at scsibus1 slave ?
+device	        ch1	at scsibus1 slave ?
 
 controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
-device		sd0	at bt0 flags 0 drive ?
-device		sd1	at bt0 flags 0 drive ?
-device		sd2	at bt0 flags 0 drive ?
-device		sd3	at bt0 flags 0 drive ?
-device		st0	at bt0 flags 1 drive ?
-device		st1	at bt0 flags 1 drive ?
-device		cd0	at bt0 flags 2 drive ?
-device		cd1	at bt0 flags 2 drive ?
-device	        ch0	at bt0 flags 3 drive ?
-device	        ch1	at bt0 flags 3 drive ?
+master		scsibus2 at bt0
+device		sd0	at scsibus2 slave ?
+device		sd1	at scsibus2 slave ?
+device		sd2	at scsibus2 slave ?
+device		sd3	at scsibus2 slave ?
+device		st0	at scsibus2 slave ?
+device		st1	at scsibus2 slave ?
+device		cd0	at scsibus2 slave ?
+device		cd1	at scsibus2 slave ?
+device	        ch0	at scsibus2 slave ?
+device	        ch1	at scsibus2 slave ?
 
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
-device		sd0	at uha0 flags 0 drive ?
-device		sd1	at uha0 flags 0 drive ?
-device		sd2	at uha0 flags 0 drive ?
-device		sd3	at uha0 flags 0 drive ?
-device		st0	at uha0 flags 1 drive ?
-device		st1	at uha0 flags 1 drive ?
-device		cd0	at uha0 flags 2 drive ?
-device		cd1	at uha0 flags 2 drive ?
-device	        ch0	at uha0 flags 3 drive ?
-device	        ch1	at uha0 flags 3 drive ?
+master		scsibus3 at uha0
+device		sd0	at scsibus3 slave ?
+device		sd1	at scsibus3 slave ?
+device		sd2	at scsibus3 slave ?
+device		sd3	at scsibus3 slave ?
+device		st0	at scsibus3 slave ?
+device		st1	at scsibus3 slave ?
+device		cd0	at scsibus3 slave ?
+device		cd1	at scsibus3 slave ?
+device	        ch0	at scsibus3 slave ?
+device	        ch1	at scsibus3 slave ?
+
+#sound-blaster
+device		sb0	at isa? port 0x220 bio irq 7 drq 1 vector sbintr
 
 #ethernet
 device ed0 at isa? port 0x300 net irq 10 iomem 0xcc000 vector edintr
@@ -204,8 +208,8 @@ device hp0 at isa? port 0x300 net irq 5 vector hpintr
 device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 device ep0 at isa? port 0x300 net irq 10 vector epintr
 
-#sound-blaster
-device		sb0	at isa? port 0x220 bio irq 7 drq 1 vector sbintr
+#math co-processor
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 # psuedo-terminals; REQUIRED for remote logins and many other things
 pseudo-device pty	64

@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.29 1994/03/02 10:40:16 mycroft Exp $
+#	$Id: TRINITY,v 1.30 1994/03/29 04:40:51 mycroft Exp $
 #
 
 machine		"i386"
@@ -53,26 +53,9 @@ options		SCSI
 config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
 controller	isa0
-controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-disk		sd0	at aha0 flags 0 drive ?
-disk		sd1	at aha0 flags 0 drive ?
-disk		sd2	at aha0 flags 0 drive ?
-disk		sd3	at aha0 flags 0 drive ?
-tape		st0	at aha0 flags 1 drive ?
-tape		st1	at aha0 flags 1 drive ?
-disk		cd0	at aha0 flags 2 drive ?
-disk		cd1	at aha0 flags 2 drive ?
 
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
-disk		wd0	at wdc0 drive 0
-disk		wd1	at wdc0 drive 1
-
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
-disk		fd1	at fdc0 drive 1
-
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+#device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
+device		vt0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
@@ -82,7 +65,28 @@ device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 #device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
 #device		pms0	at isa? port "IO_KBD" tty irq 12 vector pmsintr
 
+controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
+master		scsibus0 at aha0
+disk		sd0	at scsibus0 slave ?
+disk		sd1	at scsibus0 slave ?
+disk		sd2	at scsibus0 slave ?
+disk		sd3	at scsibus0 slave ?
+tape		st0	at scsibus0 slave ?
+tape		st1	at scsibus0 slave ?
+disk		cd0	at scsibus0 slave ?
+disk		cd1	at scsibus0 slave ?
+
+controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
+disk		wd0	at wdc0 drive ?
+disk		wd1	at wdc0 drive ?
+
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
+
 device		ed0	at isa? port 0x300 net irq 9 vector edintr
+
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 pseudo-device	loop
 pseudo-device	ether

@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.28 1994/03/24 08:20:20 deraadt Exp $
+#	$Id: TDR,v 1.29 1994/03/29 04:40:49 mycroft Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -22,37 +22,38 @@ options		MACHINE_NONCONTIG
 config		netbsd	root on sd0 swap on sd0 and sd1
 
 controller	isa0
-controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
-disk		wd0	at wdc0 drive 0
-disk		wd1	at wdc0 drive 1
-
-controller	bt0	at isa? port "IO_BT0" bio irq 11 vector btintr
-disk		sd0	at bt0 flags 0 drive ?
-disk		sd1	at bt0 flags 0 drive ?
-disk		sd2	at bt0 flags 0 drive ?
-disk		sd3	at bt0 flags 0 drive ?
-tape		st0	at bt0 flags 1 drive ?
-tape		st1	at bt0 flags 1 drive ?
-disk		cd0	at bt0 flags 2 drive ?
-disk		cd1	at bt0 flags 2 drive ?
-
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
-disk		fd1	at fdc0 drive 1
-
-device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
-
-master		ast0	at isa? port 0x1a0 tty irq 5 vector astintr
-device		com1	at ast0 flags 2 slave 0
-device		com2	at ast0 flags 2 slave 1
-device		com3	at ast0 flags 2 slave 2
-device		com4	at ast0 flags 2 slave 3
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
+master		ast0	at isa? port 0x1a0 tty irq 5 vector astintr
+device		com1	at ast0 flags 1 slave ?
+device		com2	at ast0 flags 1 slave ?
+device		com3	at ast0 flags 1 slave ?
+device		com4	at ast0 flags 1 slave ?
+
+controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
+disk		wd0	at wdc0 drive ?
+disk		wd1	at wdc0 drive ?
+
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
+
+controller	bt0	at isa? port "IO_BT0" bio irq 11 vector btintr
+master		scsibus0 at bt0
+disk		sd0	at scsibus0 slave ?
+disk		sd1	at scsibus0 slave ?
+disk		sd2	at scsibus0 slave ?
+disk		sd3	at scsibus0 slave ?
+tape		st0	at scsibus0 slave ?
+tape		st1	at scsibus0 slave ?
+disk		cd0	at scsibus0 slave ?
+disk		cd1	at scsibus0 slave ?
 
 device		ep0 at isa? port 0x350 net irq 10 vector epintr
 device		ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
+
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 pseudo-device	loop
 pseudo-device	ether

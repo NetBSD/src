@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.23 1994/03/09 21:22:40 ws Exp $
+#	$Id: PAIN,v 1.24 1994/03/29 04:40:46 mycroft Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -67,23 +67,25 @@ options		SCSI
 config		netbsd	root on sd0 swap on sd0
 
 controller	isa0
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
-disk		fd0	at fdc0 drive 0
-disk		fd1	at fdc0 drive 1
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
-
-controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
-
-disk		sd0	at ahb0 flags 0 drive 000
-disk		sd1	at ahb0 flags 0 drive ?
-tape		st0	at ahb0 flags 1	drive ?
-
-device		ed0	at isa? port 0x300 net irq 5 iomem 0xca000 vector edintr
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
+
+controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
+
+controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
+master		scsibus0 at ahb0
+disk		sd0	at scsibus0 slave 000
+disk		sd1	at scsibus0 slave ?
+tape		st0	at scsibus0 slave ?
+
+device		ed0	at isa? port 0x300 net irq 5 iomem 0xca000 vector edintr
+
+device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 pseudo-device	loop		2
 pseudo-device	ether

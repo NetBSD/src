@@ -1,13 +1,13 @@
 #
-# GENERICAHA -- Generic machine w/aha driver -- distribution floppy
+# GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.37 1994/03/29 04:40:42 mycroft Exp $
+#	$Id: GENERICBT,v 1.1 1994/03/29 04:40:44 mycroft Exp $
 #
 
 machine		"i386"
 cpu		"I386_CPU"
 cpu		"I486_CPU"
-ident		GENERICAHA
+ident		GENERICBT
 timezone	8 dst
 maxusers	10
 maxfdescs	2048
@@ -48,8 +48,8 @@ disk		fd1	at fdc0 drive ?
 
 device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
 
-controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-master		scsibus0 at aha0
+controller	bt0	at isa? port "IO_BT0" bio irq 11 vector btintr
+master		scsibus0 at bt0
 disk		sd0	at scsibus0 slave ?
 disk		sd1	at scsibus0 slave ?
 disk		sd2	at scsibus0 slave ?
