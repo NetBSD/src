@@ -1,3 +1,5 @@
+/*	$NetBSD: inet.h,v 1.11 2002/04/26 15:32:45 bjh21 Exp $	*/
+
 /*
  * ++Copyright++ 1983, 1993
  * -
@@ -51,11 +53,8 @@
  * SOFTWARE.
  * -
  * --Copyright--
- */
-
-/*
+ *
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: inet.h,v 1.10 2002/04/26 14:56:16 bjh21 Exp $
  */
 
 #ifndef _ARPA_INET_H_
