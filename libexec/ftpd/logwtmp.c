@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.12 1999/08/25 20:07:33 christos Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.13 2000/01/12 22:39:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.12 1999/08/25 20:07:33 christos Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.13 2000/01/12 22:39:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: logwtmp.c,v 1.12 1999/08/25 20:07:33 christos Exp $");
 #include <sys/stat.h>
 
 #include <fcntl.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
