@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.25 2003/02/02 20:33:08 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.26 2003/02/02 20:34:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -88,7 +88,7 @@
 				/* threads */
 #define	_POSIX_THREADS		200112L
 				/* semaphores */
-#define	_POSIX_SEMAPHORES	200112L
+#define	_POSIX_SEMAPHORES	0
 				/* barriers */
 #define	_POSIX_BARRIERS		200112L
 				/* timers */
