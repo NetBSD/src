@@ -25,13 +25,14 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  *
- * $Id: deflate.c,v 1.4 2002/05/29 21:47:35 christos Exp $
+ * $Id: deflate.c,v 1.5 2002/05/30 12:29:04 agc Exp $
  */
 
 #include <sys/types.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pppdump.h"
 #include <net/ppp_defs.h>
 #include <net/ppp-comp.h>
