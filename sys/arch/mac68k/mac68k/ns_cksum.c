@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_cksum.c	7.7 (Berkeley) 4/29/91
+ *	from: from: @(#)ns_cksum.c	7.7 (Berkeley) 4/29/91
+ *	$Id: ns_cksum.c,v 1.2 1993/11/29 00:40:58 briggs Exp $
  *	ns_cksum.c,v 1.2 1993/05/22 07:57:36 cgd Exp
  */
-#ident "$Id: ns_cksum.c,v 1.1.1.1 1993/09/29 06:09:13 briggs Exp $"
 
 #include "sys/param.h"
 #include "sys/mbuf.h"

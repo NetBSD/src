@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	from: from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	$Id: disksubr.c,v 1.2 1993/11/29 00:40:45 briggs Exp $
  */
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -65,7 +66,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: disksubr.c,v 1.1.1.1 1993/09/29 06:09:14 briggs Exp $"
 
 #include "param.h"
 #include "systm.h"
@@ -138,10 +138,8 @@ netbsd puts the whole disk in d, go figure
 	/* if (lp->d_partitions[0].p_size == 0) */
 		/* lp->d_partitions[0].p_size = 0x1fffffff; */
 	/* lp->d_partitions[0].p_offset = 0; */
-
 	/* get buffer */
 	bp = geteblk((int)lp->d_secsize * MAXPARTITIONS);
-
 
 	bp->b_dev = dev;
 	bp->b_blkno = 1; 	/* pmap starts at block 1 */
@@ -186,6 +184,8 @@ netbsd puts the whole disk in d, go figure
 			bzb= (struct blockzeroblock *)(&pmap->pmBootArgs);
 			if (bzb->bzbMagic!=BZB_MAGIC)
 				continue;
+			if (bzb->bzbCluster)
+				continue;
 
 		/* brad wrote this in mac bsd */
 		/* I have no idea where these magic numbers came from */
@@ -195,19 +195,19 @@ netbsd puts the whole disk in d, go figure
 			lp->d_partitions[0].p_offset=pmap->pmPyPartStart;
 			lp->d_partitions[0].p_fstype=FS_BSDFFS;
 			/* just in case name is 32 long */
-			/* printf("A: Root '%s' at %d size %d\n", */
-				/* pmap->pmPartName, */
-				/* pmap->pmPyPartStart, */
-				/* pmap->pmPartBlkCnt); */
+			printf("A: Root '%s' at %d size %d\n",
+				pmap->pmPartName,
+				pmap->pmPyPartStart,
+				pmap->pmPartBlkCnt);
 		    }else if((bzb->bzbFlags & BZB_USRFS) && !usr ){
 			usr ++;
 			lp->d_partitions[6].p_size =pmap->pmPartBlkCnt;
 			lp->d_partitions[6].p_offset=pmap->pmPyPartStart;
 			lp->d_partitions[6].p_fstype=FS_BSDFFS;
-			/* printf("G: Usr '%s' at %d size %d\n", */
-				/* pmap->pmPartName, */
-				/* pmap->pmPyPartStart, */
-				/* pmap->pmPartBlkCnt); */
+			printf("G: Usr '%s' at %d size %d\n",
+				pmap->pmPartName,
+				pmap->pmPyPartStart,
+				pmap->pmPartBlkCnt);
 
 		    }
 		    if((bzb->bzbType == BZB_TYPESWAP) && !swap){
@@ -215,10 +215,10 @@ netbsd puts the whole disk in d, go figure
 			lp->d_partitions[1].p_size =pmap->pmPartBlkCnt;
 			lp->d_partitions[1].p_offset=pmap->pmPyPartStart;
 			lp->d_partitions[1].p_fstype=FS_SWAP;
-			/* printf("B: Swap '%s' at %d size %d\n", */
-				/* pmap->pmPartName, */
-				/* pmap->pmPyPartStart, */
-				/* pmap->pmPartBlkCnt); */
+			printf("B: Swap '%s' at %d size %d\n",
+				pmap->pmPartName,
+				pmap->pmPyPartStart,
+				pmap->pmPartBlkCnt);
 		    }
 
 			}
@@ -259,13 +259,9 @@ netbsd puts the whole disk in d, go figure
 
 	lp->d_npartitions=MAXPARTITIONS;
 
-
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
-
-
-
 }
 
 /*

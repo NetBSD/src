@@ -68,11 +68,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: autoconf.c,v 1.1.1.1 1993/09/29 06:09:19 briggs Exp $"
 /*
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
- *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
+ *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
+ *	$Id: autoconf.c,v 1.2 1993/11/29 00:40:36 briggs Exp $
  */
 
 /*
@@ -92,8 +92,8 @@
  */
 
 #include "sys/param.h"
+#include "sys/device.h"
 #include "sys/systm.h"
-/* #include "sys/map.h" */
 #include "sys/buf.h"
 #include "sys/dkstat.h"
 #include "sys/conf.h"
@@ -103,15 +103,6 @@
 #include "sys/disklabel.h"  /* CPC: For MAXPARTITIONS */
 #include "sd.h"			/* for NSD MF */
 int root_scsi_id;           /* CPC: set in locore.s */
-/* MF Allen is going to hell for this one */
-struct	sd_data
-{
-	int	flags;
-	struct	scsi_switch *sc_sw;	/* address of scsi low level switch */
-	int	ctlr;			/* so they know which one we want */
-	int	targ;			/* our scsi target ID */
-	int	lu;			/* out scsi lu */
-} *sd_data[NSD];
 
 #include "../include/vmparam.h"
 #include "../include/param.h"  /* LAK: Added this for some constants */
@@ -120,8 +111,6 @@ struct	sd_data
 #include "isr.h"
 #include "../dev/device.h"
 
-/* #include "../dev/con.h" */   /* BARF -- where is this? */
-
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -129,11 +118,7 @@ struct	sd_data
  */
 int	cold;		    /* if 1, still working on cold-start */
 int	dkn;		    /* number of iostat dk numbers assigned so far */
-#if convert_from_hp300
-	int	cpuspeed = MHZ_16;   /* relative cpu speed */
-#endif
 struct	isr isrqueue[NISR];
-struct	nubus_hw nubus_table[MAXSLOTS];
 struct	adb_hw adb_table[MAXADB];
 
 #ifdef DEBUG
@@ -145,9 +130,20 @@ int	acdebug = 0;
  */
 configure()
 {
-	register struct nubus_hw *hw;
-	int nubus_num;
 	int found;
+
+#ifdef NEWCONFIG
+	VIA_initialize();
+
+	adb_init();		/* ADB device subsystem & driver */
+
+	isrinit();
+
+	startrtclock();
+
+	if (config_rootfound("mainbus", "mainbus") == 0)
+		panic("No main device!");
+#else
 
 	VIA_initialize();
 
@@ -176,63 +172,10 @@ configure()
 	/* Ask each driver if they find their hardware and init it: */
 	find_devs();
 
-#if 0
-#include "cd.h"
-#if NCD > 0
-	/*
-	 * Now deal with concatenated disks
-	 */
-	find_cdevices();
 #endif
-#endif
-
-#if GENERIC && 0
-	if ((boothowto & RB_ASKNAME) == 0) 
-		setroot(); /* Make root dev <== load dev */
-	setconf();
-#else
 	setroot(); /* Make root dev <== load dev */
-#endif
 	swapconf();
 	cold = 0;
-}
-
-find_nubus()
-{
-   /* This functions sets up the array "nubus_table" which contains the
-   basic information about each card in the Nubus slot.  When device
-   drivers are initialized later, they can look through this array to
-   see if their hardware is present and claim it. */
-
-   register struct nubus_hw *nu;
-   int nubus_num;
-
-   for (nubus_num = 0; nubus_num < MAXSLOTS; nubus_num++)
-     nubus_table[nubus_num].found = 0; /* Empty */
-
-   /* LAK: For now we can only check 9..F because that's all we map
-   in locore.s.  Eventually (i.e. near future) we should put THIS
-   function in locore.s before enabling the MMU and only map the
-   slots that have a card in them.  Also, the next loop should go from
-   1 to 0xF inclusive (0 is "reserved") to cover all possible hardware.
-   Even if the MacII only has 9..F, it won't hurt us to probe 1..8 also. */
-   for (nubus_num = 0; nubus_num < 6; nubus_num++)
-   {
-      nu = nubus_table + nubus_num + 9;
-      nu->addr = (caddr_t)(NBBASE + nubus_num * NBMEMSIZE);
-      nu->rom = nu->addr + NBROMOFFSET;
-
-
-      if(!badaddr(nu->rom))
-      {
-	
-	 InitNubusSlot(nu->addr,&(nu->Slot));
-
-         nu->found = 1;
-         nu->claimed = 0; /* No driver has claimed this slot yet */
-
-      }
-   }
 }
 
 find_adbs()
@@ -240,115 +183,110 @@ find_adbs()
    printf("No ADB drivers to match to devices; using default.\n");
 }
 
-find_devs()
+struct newconf_S {
+	char	*name;
+	int	req;
+};
+
+static int
+mbprint(aux, name)
+	void	*aux;
+	char	*name;
 {
-  /* LAK: This routine goes through the list of device drivers and
-  asks each one to initialize themselves. */
+	struct newconf_S	*c = (struct newconf_S *) aux;
 
-  struct macdriver *md;
-  int i;
-
-  printf ("Initializing drivers:\n");
-/* BARF this does funny frame buffer stuff MF */
-/* grfconfig(); */
-
-  for (i = 0; i < numdrivers; i++)
-  {
-    md = &macdriver[i]; /* macdriver[] in ioconf.c in "compile/" */
-    md -> hwfound = 0;
-/*    printf ("  -- ");  CPC 3/20/93 This was uncool, IMHO! */
-    (md -> init)(md);
-    /* print only if necessary. CPC */
-    if( strcmp( md->name, "" ) )
-      printf ("%s\n",md -> name);
-  }
-
-  /* Look for Nubus cards which were found but not claimed by any driver: */
-
-  for (i = 0; i < MAXSLOTS; i++)
-    if (nubus_table[i].found && !nubus_table[i].claimed)
-    {
-      printf ("slot %d, type %d not claimed: \"", i,nubus_table[i].Slot.type);
-      printf ("%s, ",nubus_table[i].Slot.name);
-      printf ("%s\"\n",nubus_table[i].Slot.manufacturer);
-    }
+	if (name)
+		printf("%s at %s", c->name, name);
+	return(UNCONF);
 }
 
-
-#if defined(WE_DONT_NEED_THIS) /* LAK */
-
-/*
- * Allocate/deallocate a cache-inhibited range of kernel virtual address
- * space mapping the indicated physical address range [pa - pa+size)
- */
-caddr_t
-iomap(pa, size)
-	caddr_t pa;
-	int size;
+static int
+root_matchbyname(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
-	int ix, npf;
-	caddr_t kva;
-
-#ifdef DEBUG
-	if (((int)pa & PGOFSET) || (size & PGOFSET))
-		panic("iomap: unaligned");
-#endif
-	npf = btoc(size);
-	ix = rmalloc(extiomap, npf);
-	if (ix == 0)
-		return(0);
-	kva = extiobase + ctob(ix-1);
-	physaccess(kva, pa, size, PG_RW|PG_CI);
-	return(kva);
+	return (strcmp(cf->cf_driver->cd_name, (char *)aux) == 0);
 }
 
-iounmap(kva, size)
-	caddr_t kva;
-	int size;
+extern int
+matchbyname(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
-	int ix;
+	struct newconf_S	*c = (struct newconf_S *) aux;
 
-#ifdef DEBUG
-	if (((int)kva & PGOFSET) || (size & PGOFSET))
-		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
-		panic("iounmap: bad address");
-#endif
-	physunaccess(kva, size);
-	ix = btoc(kva - extiobase) + 1;
-	rmfree(extiomap, btoc(size), ix);
+	return (strcmp(cf->cf_driver->cd_name, c->name) == 0);
 }
 
-#endif /* IF_WE_DONT... */
-
-#if NCD > 0
-#include "../dev/cdvar.h"
-
-find_cdevices()
+static void
+mainbus_attach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
 {
-	register struct cddevice *cd;
+	struct newconf_S	conf_data[] = {
+					{"adb",    1},
+/*					{"clock",  1},	*/
+					{"nubus",  1},
+					{"ser",    0},
+					{"ncr",    1},
+					{"audio",  0},
+					{"floppy", 0},
+					{NULL, 0}
+			 	};
+	struct newconf_S	*c;
+	int			fail=0, warn=0;
 
-	for (cd = cddevice; cd->cd_unit >= 0; cd++) {
-		/*
-		 * XXX
-		 * Assign disk index first so that init routine
-		 * can use it (saves having the driver drag around
-		 * the cddevice pointer just to set up the dk_*
-		 * info in the open routine).
-		 */
-		if (dkn < DK_NDRIVE)
-			cd->cd_dk = dkn++;
-		else
-			cd->cd_dk = -1;
-		if (cdinit(cd))
-			printf("cd%d configured\n", cd->cd_unit);
-		else if (cd->cd_dk >= 0) {
-			cd->cd_dk = -1;
-			dkn--;
+	printf("\n");
+	for (c=conf_data ; c->name ; c++) {
+		if (config_found(dev, c, mbprint)) {
+		} else {
+			if (c->req) {
+				fail++;
+			}
+			warn++;
 		}
 	}
+
+	if (fail) {
+		printf("Failed to find %d required devices.\n", fail);
+		panic("Can't continue.");
+	}
 }
-#endif
+
+struct cfdriver mainbuscd =
+      { NULL, "mainbus", root_matchbyname, mainbus_attach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
+
+extern int dummy_match(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
+{
+	return 0;
+}
+
+static void
+dummy_attach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
+{
+	printf("\n");
+}
+
+struct cfdriver scsibuscd =
+      { NULL, "scsibus", dummy_match, dummy_attach,
+	DV_DULL, sizeof(struct device), NULL, 0 };
+struct cfdriver sdcd =
+      { NULL, "sd", dummy_match, dummy_attach,
+	DV_DISK, sizeof(struct device), NULL, 0 };
+struct cfdriver stcd =
+      { NULL, "st", dummy_match, dummy_attach,
+	DV_TAPE, sizeof(struct device), NULL, 0 };
+struct cfdriver cdcd =
+      { NULL, "cd", dummy_match, dummy_attach,
+	DV_DISK, sizeof(struct device), NULL, 0 };
 
 isrinit()
 {
@@ -379,7 +317,7 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev; swp++)
+	for (swp = swdevt; swp->sw_dev != NODEV ; swp++)
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
 			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
@@ -390,7 +328,6 @@ swapconf()
 	dumpconf();
 }
 
-#define	DOSWAP			/* Change swdevt and dumpdev too */
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
@@ -411,93 +348,6 @@ static	char devname[][2] = {
  */
 setroot()
 {
-#if defined(THIS_IS_PROBABLY_NOT_NECESSARY)
-
-	register struct hp_ctlr *hc;
-	register struct hp_device *hd;
-	int  majdev, mindev, unit, part, adaptor;
-	dev_t temp, orootdev;
-	struct swdevt *swp;
-
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
-		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	/*
-	 * First, find the controller type which support this device.
-	 */
-	for (hd = hp_dinit; hd->hp_driver; hd++)
-		if (hd->hp_driver->d_name[0] == devname[majdev][0] &&
-		    hd->hp_driver->d_name[1] == devname[majdev][1])
-			break;
-	if (hd->hp_driver == 0)
-		return;
-	/*
-	 * Next, find the controller of that type corresponding to
-	 * the adaptor number.
-	 */
-	for (hc = hp_cinit; hc->hp_driver; hc++)
-		if (hc->hp_alive && hc->hp_unit == adaptor &&
-		    hc->hp_driver == hd->hp_cdriver)
-			break;
-	if (hc->hp_driver == 0)
-		return;
-	/*
-	 * Finally, find the device in question attached to that controller.
-	 */
-	for (hd = hp_dinit; hd->hp_driver; hd++)
-		if (hd->hp_alive && hd->hp_slave == unit &&
-		    hd->hp_cdriver == hc->hp_driver &&
-		    hd->hp_ctlr == hc->hp_unit)
-			break;
-	if (hd->hp_driver == 0)
-		return;
-	mindev = hd->hp_unit;
-	/*
-	 * Form a new rootdev
-	 */
-	mindev = (mindev << PARTITIONSHIFT) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	if (rootdev == orootdev)
-		return;
-
-	printf("Changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
-
-#ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
-	for (swp = swdevt; swp->sw_dev; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == 0)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
-
-#else /* not THIS_IS_PROBABLY_NOT_NECESSARY */
 /* MF BARF BARF */
 /* what we should do is take root_scsi_id and figure out the real
 disk to mount, the value to mount is the n'th mountable volume
@@ -512,8 +362,16 @@ which is all of them, or so the rumor goes... */
    kludge in kansas, utah, or south dakota
 */
 
+#if 0
 {
-	extern struct sd_data *sd_data[];
+	extern struct	sd_data
+	{
+		int	flags;
+		struct	scsi_switch *sc_sw;	/* address of scsi low level switch */
+		int	ctlr;			/* so they know which one we want */
+		int	targ;			/* our scsi target ID */
+		int	lu;			/* out scsi lu */
+	} *sd_data[];
 	int i;
 
 	for(i=0;i<NSD;i++)
@@ -537,9 +395,9 @@ which is all of them, or so the rumor goes... */
 
 
 }
+#endif
+	rootdev = makedev(4, 0 * MAXPARTITIONS);
 
-
-#endif /* THIS_IS_PROBABLY_NOT_NECESSARY */
 #if NO_SERIAL_ECHO
 	{
 		extern char	serial_boot_echo;
@@ -552,13 +410,35 @@ which is all of them, or so the rumor goes... */
 #endif
 }
 
-#ifdef STRCMP_IN_KERN_SUBR_C
-strcmp(s1, s2)
-	register char *s1, *s2;
+/*
+	The following four functions should be filled in to work...
+*/
+
+caddr_t
+sctova(sc)
+	register int sc;
 {
-	while (*s1 == *s2++)
-		if (*s1++=='\0')
-			return (0);
-	return (*s1 - *--s2);
 }
-#endif
+
+caddr_t
+iomap(pa, size)
+	caddr_t pa;
+	int size;
+{
+}
+
+patosc(addr)
+	register caddr_t addr;
+{
+}
+
+vatosc(addr)
+	register caddr_t addr;
+{
+}
+
+caddr_t
+sctopa(sc)
+	register int sc;
+{
+}

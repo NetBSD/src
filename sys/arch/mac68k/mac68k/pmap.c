@@ -63,10 +63,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: pmap.c,v 1.1.1.1 1993/09/29 06:09:16 briggs Exp $"
-
 /* 
- *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
+ *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
+ *	$Id: pmap.c,v 1.2 1993/11/29 00:41:00 briggs Exp $
  */
 
 #define DEBUG

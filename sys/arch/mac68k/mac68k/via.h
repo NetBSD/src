@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: via.h,v 1.1.1.1 1993/09/29 06:09:14 briggs Exp $"
 /*
 
 	Prototype VIA control definitions
@@ -119,25 +118,22 @@
 #define VIABUFA		0
 #define VIABUFB		1
 
-
-#define vBufA		7680
-#define vBufB		0
-#define vDirA		1536
-#define vDirB		1024
-#define vT1C		2048
-#define vT1CH		2560
-#define vT1L		3072
-#define vT1LH		3584
-#define vT2C		4096
-#define vT2CH		4608
-#define vSR		5120
-#define vACR		5632
-#define vPCR		6144
-#define vIFR		6656 /* +3 */
-#define vIER		7168 /* +0x13 */
-
+#define vBufA		0x1e00	/* register A */
+#define vBufB		0	/* register B */
+#define vDirA		0x0600	/* data direction register */
+#define vDirB		0x0400	/* data direction register */
+#define vT1C		0x0800
+#define vT1CH		0x0a00
+#define vT1L		0x0c00
+#define vT1LH		0x0e00
+#define vT2C		0x1000
+#define vT2CH		0x1200
+#define vSR		0x1400	/* shift register */
+#define vACR		0x1600	/* aux control register */
+#define vPCR		0x1800	/* peripheral control register */
+#define vIFR		0x1a00	/* interrupt flag register */
+#define vIER		0x1c00	/* interrupt enable register */
 
 #define via_reg(v, r) (*((volatile unsigned char *)VIA1_addr+(v)*0x2000+(r)))
-
 
 void VIA_initialize();

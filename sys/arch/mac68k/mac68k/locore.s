@@ -85,7 +85,8 @@
 /*
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	$Id: locore.s,v 1.2 1993/11/29 00:40:52 briggs Exp $
  */
 
 #include "assym.s"
@@ -578,7 +579,7 @@ _lev2intr:
 	.globl _ser_intr
 
 _lev4intr:
-	/* We'll do this later (BARF: what is there to do? LAK) */
+	/* handle level 4 (SCC) interrupt special... */
 	clrw	sp@-
 	moveml	#0xFFFF,sp@-	| save registers
 	movl	sp,sp@-		| push pointer to frame
@@ -586,8 +587,8 @@ _lev4intr:
 	addl	#4,sp		| throw away frame pointer
 	moveml	sp@+, #0xFFFF	| restore registers
 	addql	#2,sp
-	| rte			| return from exception
-	jra	rei		| Apparently we don't know what we're doing.
+	rte			| return from exception
+|	jra	rei		| Apparently we don't know what we're doing.
 
 	.globl _rtclock_intr
 
@@ -844,8 +845,6 @@ start:
 	movl	#tmpstk,sp		| give ourselves a temporary stack
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
-|	jbsr	_macinit		| Just in case
-					| (i.e. trace trap bfore main())
 
 	jbsr	_gray_bar		| first greybar call, we needed stack
 					| that above gives us
@@ -1335,9 +1334,9 @@ _esigcode:
 	ENTRY(name); jra rname+12
 #else
 #define	ENTRY(name) \
-	.globl _ ## name ; _ ## name:
+	.globl _ ## name; _ ## name:
 #define ALTENTRY(name, rname) \
-	.globl _ ## name ; _ ## name:
+	.globl _ ## name; _ ## name:
 #endif
 
 /*
@@ -1796,7 +1795,6 @@ Lsw1:
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-
 	clrl	d0
 	lea	_whichqs,a0
 	movl	a0@,d1
@@ -1808,8 +1806,8 @@ Lswchk:
 	jne	Lswchk
 	jra	idle
 Lswfnd:
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	|movw	#0x2300,sr		| lock out clock and scsi, but not tty.
+|	movw	#PSL_HIGHIPL,sr		| lock out interrupts
+	movw	#0x2300,sr		| lock out clock and scsi, but not tty.
 	movl	a0@,d1			| and check again...
 	bclr	d0,d1
 	jeq	Lsw1			| proc moved, rescan
@@ -2660,7 +2658,6 @@ _intrnames:
 	.asciz  "pclock"
 #endif
 	.asciz	"nmi"
-	.asciz	"$Id: locore.s,v 1.1.1.1 1993/09/29 06:09:17 briggs Exp $"
 _eintrnames:
 	.even
 _intrcnt:

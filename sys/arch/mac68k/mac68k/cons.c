@@ -35,11 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ident "$Id: cons.c,v 1.1.1.1 1993/09/29 06:09:18 briggs Exp $"
 /*
  * from: Utah $Hdr: cons.c 1.1 90/07/09$
  *
- *	@(#)cons.c	7.6 (Berkeley) 5/4/91
+ *	from: @(#)cons.c	7.6 (Berkeley) 5/4/91
+ *	$Id: cons.c,v 1.2 1993/11/29 00:40:42 briggs Exp $
  */
 
 #include "sys/param.h"

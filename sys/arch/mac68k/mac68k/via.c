@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: via.c,v 1.1.1.1 1993/09/29 06:09:14 briggs Exp $"
 
 #include "sys/param.h"
 #include "machine/frame.h"
@@ -39,8 +38,10 @@
 #include "kernel.h"
 /* #include "stand.h" */
 
-long via_noint(), adb_intr(), rtclock_intr(), scsi_drq_intr(),
-	  scsi_irq_intr(), profclock();
+long via1_noint(), via2_noint();
+long adb_intr(), rtclock_intr(), scsi_drq_intr(), scsi_irq_intr(), profclock();
+long nubus_intr();
+int  slot_noint();
 
 long via1_spent[2][7]={
 	{0,0,0,0,0,0,0}, 
@@ -48,31 +49,43 @@ long via1_spent[2][7]={
  };
 
 long (*via1itab[7])()={
-	via_noint,
-	via_noint,
+	via1_noint,
+	via1_noint,
 	adb_intr,
-	via_noint,
-	via_noint,
-	via_noint,
+	via1_noint,
+	via1_noint,
+	via1_noint,
 	rtclock_intr,
  };	/* VIA1 interrupt handler table */
+
 long (*via2itab[7])()={
 	scsi_drq_intr,
-	via_noint, /* nubus_intr*/
-	via_noint,
+	nubus_intr,
+	via2_noint,
 	scsi_irq_intr,
-	via_noint, /* snd_intr */
-	via_noint, /* via2t2_intr */
+	via2_noint, /* snd_intr */
+	via2_noint, /* via2t2_intr */
 #if defined(GPROF) && defined(PROFTIMER)
 	profclock,
 #else
-	via_noint,
+	via2_noint,
 #endif
  };	/* VIA2 interrupt handler table */
 
 
 int via_inited=0;
 
+/* nubus slot interrupt routines */
+int (*slotitab[6])() = {
+	slot_noint,
+	slot_noint,
+	slot_noint,
+	slot_noint,
+	slot_noint,
+	slot_noint
+};
+
+int slotutab[6];
 
 void VIA_initialize()
 {
@@ -87,6 +100,12 @@ void VIA_initialize()
 	via_reg(VIA1, vT1CH) = 0;
 	via_reg(VIA1, vT2C) = 0;
 	via_reg(VIA1, vT2CH) = 0;
+
+	/* program direction and data for VIA #1 */
+	via_reg(VIA1, vBufA) = 0x01;
+	via_reg(VIA1, vDirA) = 0x3f;
+	via_reg(VIA1, vBufB) = 0x07;
+	via_reg(VIA1, vDirB) = 0x87;
 
 	/* disable all interrupts */
 	via_reg(VIA1, vIFR) = 0x7f;
@@ -111,12 +130,25 @@ void VIA_initialize()
 	/* turn off timer latch */
 	via_reg(VIA2, vACR) &= 0x3f;
 
+	/* program direction and data for VIA #2 */
+	via_reg(VIA2, vBufA) = via_reg(VIA2, vBufA);
+	via_reg(VIA2, vDirA) = 0xc0;
+	via_reg(VIA2, vBufB) = 0x05;
+	via_reg(VIA2, vDirB) = 0x80;
+
+	/* unlock nubus */
+	via_reg(VIA2, vPCR)   = 0x06;
+	via_reg(VIA2, vBufB) |= 0x02;
+	via_reg(VIA2, vDirB) |= 0x02;
+
+#ifdef never
 	/* disable all interrupts */
 	via_reg(VIA2, vIER) = 0x7f;
 	via_reg(VIA2, vIFR) = 0x7f;
 
 	/* enable specific interrupts */
 	via_reg(VIA2, vIER) = VIA2_INTS | 0x80;
+#endif
 	via_inited=1;
 }
 
@@ -138,7 +170,7 @@ void via1_intr(struct frame *fp)
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
 			before = time;
-			via1itab[bitnum]();	/* run interrupt handler */
+			via1itab[bitnum](bitnum);	/* run interrupt handler */
 			after = time;
 			via1_spent[0][bitnum] += (after.tv_sec - before.tv_sec) *
 			    1000000;
@@ -172,7 +204,7 @@ void via2_intr(struct frame *fp)
 	while(bitnum < 7){
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
-			via2itab[bitnum]();	/* run interrupt handler */
+			via2itab[bitnum](bitnum);	/* run interrupt handler */
 			intpend &= ~bitmsk;	/* fix previous pending */
 			via_reg(VIA2, vIFR) = bitmsk;
 					/* turn off interrupt pending. */
@@ -180,12 +212,63 @@ void via2_intr(struct frame *fp)
 		bitnum++;
 		bitmsk <<= 1;
 	}
+	if (intpend) printf("via2_intr(): intpend at end 0x%x.\n", intpend);
 }
 
-long via_noint()
+long via1_noint(int bitnum)
 {
-  printf("via_noint().\n");
+  printf("via1_noint(%d)\n", bitnum);
   return 1;
+}
+
+long via2_noint(int bitnum)
+{
+  printf("via2_noint(%d)\n", bitnum);
+  return 1;
+}
+
+int add_nubus_intr(slot, func, unit)
+int slot;
+int (*func)();
+int unit;
+{
+	int s = splhigh();
+	slotitab[slot-9] = func;
+	slotutab[slot-9] = unit;
+
+	via_reg(VIA2, vIER) = /*VIA2_INTS |*/ V2IF_SLOTINT | 0x80;
+	splx(s);
+	return 1;
+}
+
+long nubus_intr()
+{
+	int i, mask;
+
+if ((~(via_reg(VIA2, vBufA) & 0x3f)) == 0x02)
+	printf("slot a nu-bus intr\n");
+
+	do {
+	    mask = 1;
+	    for (i = 0; i < 6; i++) {
+		if ((via_reg(VIA2, vBufA) & mask) == 0)
+			(*slotitab[i])(slotutab[i], i+9);
+		mask <<= 1;
+	    } 
+	} while ((via_reg(VIA2, vBufA) & 0x3f) != 0x3f);
+
+	return 1;
+}
+
+static char zero = 0;
+
+int slot_noint(int unit, int slot)
+{
+/*
+	printf("slot_noint() slot %x\n", slot);
+*/
+((char *)(0xf0000000 | ((long)slot << 24)))[0xa0000] = zero;
+	return 1;
 }
 
 
@@ -194,3 +277,4 @@ void via_shutdown()
   via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2 */
   via_reg(VIA2, vBufB) &= ~0x04; /* Shut down */
 }
+

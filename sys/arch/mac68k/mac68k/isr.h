@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
 */
-#ident "$Id: isr.h,v 1.1.1.1 1993/09/29 06:09:18 briggs Exp $"
 /*
- *	@(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	$Id: isr.h,v 1.2 1993/11/29 00:40:49 briggs Exp $
  */
 
 struct isr {

@@ -29,7 +29,8 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	@(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+|	from: @(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+|	$Id: oc_cksum.s,v 1.2 1993/11/29 00:40:59 briggs Exp $
 |
 |
 | oc_cksum: ones complement 16 bit checksum for MC68020.
@@ -90,7 +91,7 @@
 
 	.even
 	.text
-	.asciz	"$Id: oc_cksum.s,v 1.1.1.1 1993/09/29 06:09:16 briggs Exp $"
+	.asciz	"$Id: oc_cksum.s,v 1.2 1993/11/29 00:40:59 briggs Exp $"
 	.even
 
 	.globl	_oc_cksum
