@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.37 1999/09/01 05:03:41 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.37 1999/09/01 05:03:41 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1226,7 +1226,7 @@ struct tab cmdtab[] = {
 	{ "CWD",  CWD,  OSTR,	1, 0,	"[ <sp> directory-name ]" },
 	{ "CDUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
 	{ "SMNT", SMNT, ARGS,	0, 0,	"(structure mount)" },
-	{ "QUIT", QUIT, NOARGS,	1, 0,	"(terminate service)", },
+	{ "QUIT", QUIT, NOARGS,	1, 0,	"(terminate service)" },
 	{ "REIN", REIN, NOARGS,	0, 0,	"(reinitialize server state)" },
 	{ "PORT", PORT, ARGS,	1, 0,	"<sp> b0, b1, b2, b3, b4" },
 	{ "LPRT", LPRT, ARGS,	1, 0,	"<sp> af, hal, h1, h2, h3,..., pal, p1, p2..." },
@@ -1285,7 +1285,7 @@ struct tab cmdtab[] = {
 	{ "MSND", MSND, OSTR,	0, 0,	"(mail send to terminal)" },
 	{ "MSOM", MSOM, OSTR,	0, 0,	"(mail send to terminal or mailbox)" },
 	{ "XCUP", CDUP, NOARGS,	1, 0,	"(change to parent directory)" },
-	{ "XCWD", CWD,	OSTR,	1, 0,	"[ <sp> directory-name ]" },
+	{ "XCWD", CWD,  OSTR,	1, 0,	"[ <sp> directory-name ]" },
 	{ "XMKD", MKD,  STR1,	1, 0,	"<sp> path-name" },
 	{ "XPWD", PWD,  NOARGS,	1, 0,	"(return current directory)" },
 	{ "XRMD", RMD,  STR1,	1, 0,	"<sp> path-name" },
