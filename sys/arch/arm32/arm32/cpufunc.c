@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.3 1997/11/06 00:43:41 mark Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.4 1998/01/21 22:20:02 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -45,6 +45,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bootconfig.h>
