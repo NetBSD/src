@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.5 2001/09/13 21:41:01 briggs Exp $
+.\"     $NetBSD: autoconf.9,v 1.6 2001/10/18 19:35:25 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,12 +224,26 @@ detachment (eg. because of hardware removal) and DETACH_QUIET (do not
 print a notice).
 .Fn config_detach
 returns zero if successful and an error code otherwise.
+.Fn config_detach
+is always called from a thread context, allowing
+.Xr sleep 9
+to be called while the device detaches itself.
 .It Fn config_activate "dev"
 Called by the parent to activate the child device
 .Fa dev .
+It is called to activate resources and initialise other kernel
+subsystems (such as the network subsystem).
+.Fn config_activate
+is called from interrupt contect after the device has been attached.
 .It Fn config_deactivate "dev"
 Called by the parent to deactivate the child device
 .Fa dev .
+.Fn config_deactivate
+is called from interrupt context to immediately relinquish resources
+and notify dependent kernel subsystems that the device is about to be
+detached.  At some later point
+.Fn config_detach
+will be called to finalise the removal of the device.
 .It Fn config_defer "dev" "func"
 Called by the child to defer the remainder of its configuration until
 all its parent's devices have been attached.  At this point, the
@@ -275,5 +289,5 @@ Autoconfiguration first appeared in
 .Bx 4.1 .
 The autoconfiguration framework was completely revised in
 .Bx 4.4 .
-The detach and activate interfaces appeared in
+The detach and activate/deactivate interfaces appeared in
 .Nx 1.5 .
