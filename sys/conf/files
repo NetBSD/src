@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.464 2001/09/28 02:06:17 thorpej Exp $
+#	$NetBSD: files,v 1.465 2001/10/03 04:25:29 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -518,6 +518,10 @@ file	dev/ic/msm6258.c		msm6258
 # LSI64854 DMA controller back-end
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
+
+# Cirrus Logic CL-CD180/1864/1865 multi port serial controller back-end
+define	cd18xx
+file	dev/ic/cd18xx.c			cd18xx
 
 # RealTek 8019/8029 NE2000-compatible network interface subroutines
 define	rtl80x9
