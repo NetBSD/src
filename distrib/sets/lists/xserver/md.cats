@@ -1,5 +1,4 @@
-# $NetBSD: md.cats,v 1.12 2005/03/26 21:33:48 tron Exp $
-./var/db/obsolete/xserver			xbase-sys-root
+# $NetBSD: md.cats,v 1.13 2005/03/28 13:48:04 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
