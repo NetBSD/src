@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2002/04/08 14:11:32 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2002/04/09 03:38:28 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -207,24 +207,27 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	malta_bus_mem_init(&mcp->mc_memt, mcp);
 	malta_dma_init(mcp);
 
+	/*
+	 * Calibrate the timer, delay() relies on this.
+	 */
+	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
+	malta_cal_timer(&mcp->mc_iot, sh);
+	bus_space_unmap(&mcp->mc_iot, sh, 2);
+
+
 #if NCOM > 0
 	/*
 	 * Delay to allow firmware putchars to complete.
 	 * FIFO depth * character time.
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
-	DELAY(160000000 / comcnrate);
-	if (comcnattach(&mcp->mc_iot, 0x3f8, comcnrate,
-	    COM_FREQ,
+	delay(160000000 / comcnrate);
+	if (comcnattach(&mcp->mc_iot, MALTA_UART0ADR, comcnrate, COM_FREQ,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 		panic("malta: unable to initialize serial console");
 #else
 	panic("malta: not configured to use serial console");
 #endif /* NCOM > 0 */
-
-	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
-	malta_cal_timer(&mcp->mc_iot, sh);
-	bus_space_unmap(&mcp->mc_iot, sh, 2);
 
 	consinit();
 
