@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.62 1997/07/18 17:31:46 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.63 1997/08/29 16:12:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -266,7 +266,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 int
 nfs_mountroot()
 {
-	struct nfs_diskless nd;
+	struct nfs_diskless *nd;
 	struct vattr attr;
 	struct mount *mp;
 	struct vnode *vp;
@@ -292,21 +292,22 @@ nfs_mountroot()
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
-	bzero((caddr_t) &nd, sizeof(nd));
-	error = nfs_boot_init(&nd, procp);
+	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
+	bzero((caddr_t)nd, sizeof(*nd));
+	error = nfs_boot_init(nd, procp);
 	if (error)
-		return (error);
+		goto out;
 
 	/*
 	 * Create the root mount point.
 	 */
-	error = nfs_boot_getfh(&nd.nd_root);
+	error = nfs_boot_getfh(&nd->nd_root);
 	if (error)
-		return (error);
-	error = nfs_mount_diskless(&nd.nd_root, "/", &mp, &vp);
+		goto out;
+	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp);
 	if (error)
-		return (error);
-	printf("root on %s\n", nd.nd_root.ndm_host);
+		goto out;
+	printf("root on %s\n", nd->nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
@@ -339,25 +340,21 @@ nfs_mountroot()
 #if 0
 	/* 
 	 * XXX splnet, so networks will receive...
-	 * XXX What system needed this hack?
+	 * XXX Which port needed this hack?
 	 * XXX Should already be at spl0.
 	 */
 	splnet();
 #endif
 
+#if 0	/* swap now comes in from swapctl(2) */
 #ifdef notyet
 	/* Set up swap credentials. */
-	proc0.p_ucred->cr_uid = ntohl(nd.swap_ucred.cr_uid);
-	proc0.p_ucred->cr_gid = ntohl(nd.swap_ucred.cr_gid);
-	if ((proc0.p_ucred->cr_ngroups = ntohs(nd.swap_ucred.cr_ngroups)) >
-		NGROUPS)
-		proc0.p_ucred->cr_ngroups = NGROUPS;
-	for (i = 0; i < proc0.p_ucred->cr_ngroups; i++)
-	    proc0.p_ucred->cr_groups[i] = ntohl(nd.swap_ucred.cr_groups[i]);
+	proc0.p_ucred->cr_uid = 0;
+	proc0.p_ucred->cr_gid = 0;
+	proc0.p_ucred->cr_ngroups = 0;
 #endif
 
-	/* swap from outside now */
-#if 0
+	/*
 	 * "Mount" the swap device.
 	 *
 	 * On a "dataless" configuration (swap on disk) we will have:
@@ -367,7 +364,8 @@ nfs_mountroot()
 		panic("nfs_mountroot: can't setup swap vp");
 	if (swdevt[0].sw_dev != NODEV) {
 		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -375,19 +373,22 @@ nfs_mountroot()
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 */
-	if ((error = nfs_boot_getfh(&nd.nd_swap)) != 0) {
+	error = nfs_boot_getfh(&nd->nd_swap);
+	if (error) {
 		printf("nfs_boot: warning: getfh(swap), error=%d\n", error);
-		return (0);
+		error = 0;
+		goto out;
 	}
-	error = nfs_mount_diskless(&nd.nd_swap, "/swap", &mp, &vp);
+	error = nfs_mount_diskless(&nd->nd_swap, "/swap", &mp, &vp);
 	if (error) {
 		printf("nfs_boot: warning: mount(swap), error=%d\n", error);
-		return (0);
+		error = 0;
+		goto out;
 	}
 #ifdef Lite2_integrated
 	vfs_unbusy(mp, procp);
 #endif
-	printf("swap on %s\n", nd.nd_swap.ndm_host);
+	printf("swap on %s\n", nd->nd_swap.ndm_host);
 
 	/*
 	 * Since the swap file is not the root dir of a file system,
@@ -410,11 +411,15 @@ nfs_mountroot()
 	swdevt[0].sw_nblks = n;
 #endif
 
-	return (0);
+out:
+	free(nd, M_NFSMNT);
+	return (error);
 }
 
 /*
  * Internal version of mount system call for diskless setup.
+ * Separate function because we used to call it twice.
+ * (once for root and once for swap)
  */
 static int
 nfs_mount_diskless(ndmntp, mntname, mpp, vpp)
