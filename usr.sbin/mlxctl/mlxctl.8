@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlxctl.8,v 1.1 2001/02/04 17:30:37 ad Exp $
+.\"	$NetBSD: mlxctl.8,v 1.2 2001/02/06 12:53:49 ad Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,15 +125,14 @@ This command returns
 1 if one or more drives are critical and
 2 if one or more are offline.
 .It rescan
-Rescan the controller for new, unattached or changed drives.
+Re-scan the logical drive table, and attach or detach devices from the system
+as necessary.
 .It detach
 Detach the specified drives.  Drives must be unmounted and unopened for this
 command to succeed.
 .It check
-Initiate a consistency check and repair pass on a redundant drive
-(eg. RAID1 or RAID5).
-The controller will scan the drive and repair any inconsistencies.  This
-command returns immediately.  The
+Initiate a consistency check and repair pass on a drive that provides
+redundancy (eg. RAID1 or RAID5).  This command returns immediately.  The
 .Ar status
 command can be used to monitor the progress of the check.
 .It rebuild

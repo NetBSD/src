@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.2 2001/02/05 04:50:27 enami Exp $	*/
+/*	$NetBSD: mlx.c,v 1.3 2001/02/06 12:53:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1163,7 +1163,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 #endif
 	}
 
-out:
+ out:
 	if (mc->mc_mbox[0] == MLX_CMD_ENQSYSDRIVE)
 		mlx->mlx_flags &= ~MLXF_PERIODIC_DRIVE;
 	else
@@ -1207,7 +1207,7 @@ mlx_periodic_eventlog_poll(struct mlx_softc *mlx)
 	/* Start the command. */
 	mlx_ccb_enqueue(mlx, mc);
 
-out:
+ out:
 	if (rv != 0) {
 		if (mc != NULL)
 			mlx_ccb_free(mlx, mc);
@@ -1525,7 +1525,7 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 	}
 
 	rv = 0;
-out:
+ out:
 	/* We got a command, but nobody else will free it. */
 	if (handler == NULL && mc != NULL) {
 		if (mapped)
@@ -1578,7 +1578,7 @@ mlx_flush(struct mlx_softc *mlx, int async)
 		    mlx_ccb_diagnose(mc));
 		rv = EIO;
 	}
-out:
+ out:
 	if (mc != NULL)
 		mlx_ccb_free(mlx, mc);
 
@@ -1587,9 +1587,6 @@ out:
 
 /*
  * Start a background consistency check on (drive).
- *
- * May be called with interrupts enabled or disabled; will return as soon as
- * the operation has started or been refused.
  */
 static int
 mlx_check(struct mlx_softc *mlx, int drive)
@@ -1620,7 +1617,7 @@ mlx_check(struct mlx_softc *mlx, int drive)
 		    mlx->mlx_sysdrive[drive].ms_dv->dv_xname);
 
 	rv = mc->mc_status;
-out:
+ out:
 	if (mc != NULL)
 		mlx_ccb_free(mlx, mc);
 
@@ -1660,7 +1657,7 @@ mlx_rebuild(struct mlx_softc *mlx, int channel, int target)
 
 	error = mc->mc_status;
 
-out:
+ out:
 	if (mc != NULL)
 		mlx_ccb_free(mlx, mc);
 
@@ -1770,7 +1767,7 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 #endif
 	}
 
-out:
+ out:
 	if (mc != NULL) {
 		if (mapped)
 			mlx_ccb_unmap(mlx, mc);
