@@ -1,4 +1,4 @@
-/*	$NetBSD: getbootfile.c,v 1.3 2003/02/14 04:03:27 petrov Exp $	*/
+/*	$NetBSD: getbootfile.c,v 1.4 2003/10/21 00:47:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getbootfile.c,v 1.3 2003/02/14 04:03:27 petrov Exp $");
+__RCSID("$NetBSD: getbootfile.c,v 1.4 2003/10/21 00:47:46 fvdl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ getbootfile(void)
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_BOOTED_KERNEL;
 	size = sizeof(name) - 1;
-	if (sysctl(mib, 2, name + 1, &size, NULL, NULL) == 0) {
+	if (sysctl(mib, 2, name + 1, &size, NULL, 0) == 0) {
 		/*
 		 * traditionally, this sysctl returns the relative
 		 * path of the kernel with the leading slash stripped
