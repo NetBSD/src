@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2001/08/26 19:41:57 matt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9 2001/10/14 00:17:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -354,7 +354,7 @@ u_int get_stackptr	__P((u_int mode));
  * Miscellany
  */
 
-int get_pc_str_offset();
+int get_pc_str_offset	__P((void));
 
 /*
  * CPU functions from locore.S
