@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1995/03/29 21:35:16 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.3 1995/09/16 13:34:20 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 int	nmba=0, nuba=0, nbi=0,nsbi=0,nuda=0;
 int	*mbaaddr, *ubaaddr;
-int	*udaaddr,*uioaddr;
+int	*udaaddr, *uioaddr, tmsaddr;
 
 static int mba750[]={0xf28000,0xf2a000,0xf2c000};
 static int uba750[]={0xf30000,0xf32000};
@@ -59,30 +59,33 @@ static int uda630[]={qbdev(0772150),qbdev(0760334)};
 
 autoconf()
 {
-	int i=MACHID(mfpr(PR_SID));
+	int i = MACHID(mfpr(PR_SID));
 
-	switch(i){
+	switch (i) {
 
 	default:
 		printf("CPU type %d not supported by boot\n",i);
 		asm("halt");
 
 	case VAX_750:
-		nmba=3;
-		nuba=2;
-		nuda=1;
-		mbaaddr=mba750;
-		ubaaddr=uba750;
-		udaaddr=uda750;
-		uioaddr=uio750;
+		nmba = 3;
+		nuba = 2;
+		nuda = 1;
+		mbaaddr = mba750;
+		ubaaddr = uba750;
+		udaaddr = uda750;
+		uioaddr = uio750;
+		tmsaddr = 0774500;
 		break;
 
+	case VAX_650:	/* the same for uvaxIII */
 	case VAX_78032:
-		nuba=1;
-		nuda=2;
-		ubaaddr=uba630;
-		udaaddr=uda630;
-		uioaddr=uio630;
+		nuba = 1;
+		nuda = 2;
+		ubaaddr = uba630;
+		udaaddr = uda630;
+		uioaddr = uio630;
+		tmsaddr = qbdev(0774500);
 		break;
 	}
 }
