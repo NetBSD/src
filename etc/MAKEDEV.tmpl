@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.21 2004/02/03 21:43:43 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.22 2004/03/08 23:05:37 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,7 +305,9 @@ shift $((${OPTIND} - 1))
 
 
 MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
-if ! $do_force; then
+if $do_force; then
+	MKNOD="${MKNOD} -R"
+else
 	MKNOD="${MKNOD} -r"
 fi
 
