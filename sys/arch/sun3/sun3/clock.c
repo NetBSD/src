@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 1997/03/05 00:01:13 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.38 1997/03/05 19:00:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -68,18 +68,16 @@
 #include <sun3/sun3/interreg.h>
 #include "intersil7170.h"
 
-#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
-
 #define	CLOCK_PRI	5
+#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
 static void frob_leds __P((void));
 
-/* Note: this is used by locore.s:__isr_clock */
-static volatile char *clock_va;
+static volatile void *intersil_va;
 
-#define intersil_clock ((volatile struct intersil7170 *) clock_va)
+#define intersil_clock ((volatile struct intersil7170 *) intersil_va)
 
 #define intersil_command(run, interrupt) \
 	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
@@ -97,6 +95,21 @@ struct cfattach clock_ca = {
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
+
+/*
+ * This is called very early (by obio_init()) but after
+ * intreg_init() has found the PROM mapping for the
+ * interrupt register and cleared it.
+ */
+void
+clock_init()
+{
+	intersil_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
+	if (!intersil_va) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
+}
 
 static int
 clock_match(parent, cf, args)
@@ -131,6 +144,20 @@ clock_attach(parent, self, args)
 	printf("\n");
 
 	/*
+	 * Set the clock to the correct interrupt rate, but
+	 * do not enable the interrupt until cpu_initclocks.
+	 * XXX: Actually, the interrupt_reg should be zero
+	 * at this point, so the clock interrupts should not
+	 * affect us, but we need to set the rate...
+	 */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	intersil_clear();
+
+	/* Set the clock to 100 Hz, but do not enable it yet. */
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+
+	/*
 	 * Can not hook up the ISR until cpu_initclocks()
 	 * because hardclock is not ready until then.
 	 * For now, the handler is _isr_autovec(), which
@@ -152,10 +179,10 @@ set_clk_mode(on, off, enable_clk)
 	register u_char interreg;
 
 	/*
-	 * If we have not yet mapped these registers,
+	 * If we have not yet mapped the register,
 	 * then we do not want to do any of this...
 	 */
-	if (!clock_va || !interrupt_reg)
+	if (!interrupt_reg)
 		return;
 
 #ifdef	DIAGNOSTIC
@@ -175,56 +202,36 @@ set_clk_mode(on, off, enable_clk)
 	single_inst_bclr_b(*interrupt_reg, IREG_ALL_ENAB);
 
 	/*
-	 * Save a copy of current interrupt register, and
-	 * turn off/on the requested bits in the copy.
+	 * Save the current interrupt register clock bits,
+	 * and turn off/on the requested bits in the copy.
 	 */
-	interreg = *interrupt_reg;
+	interreg = *interrupt_reg & IREG_CLK_BITS;
 	interreg &= ~off;
 	interreg |= on;
 
 	/* Clear the CLK5 and CLK7 bits to clear the flip-flops. */
 	single_inst_bclr_b(*interrupt_reg, IREG_CLK_BITS);
 
-	/*
-	 * Then disable clock interrupts, and read the clock's
-	 * interrupt register to clear any pending signals there.
-	 */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
+	if (intersil_va) {
+		/*
+		 * Then disable clock interrupts, and read the clock's
+		 * interrupt register to clear any pending signals there.
+		 */
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		intersil_clear();
+	}
 
 	/* Set the requested bits in the interrupt register. */
 	single_inst_bset_b(*interrupt_reg, interreg);
 
 	/* Turn the clock back on (maybe) */
-	if (enable_clk)
+	if (intersil_va && enable_clk)
 		intersil_clock->clk_cmd_reg =
 			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 
 	/* Finally, turn the "master" enable back on. */
 	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
-}
-
-/* Called very early by internal_configure. */
-void
-clock_init()
-{
-	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
-
-	if (!clock_va || !interrupt_reg) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
-	}
-
-	/* intreg_init() already cleared the interrupt register. */
-
-	/* Turn off clock interrupts until cpu_initclocks() */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
-
-	/* Set the clock to 100 Hz, but do not enable it yet. */
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
 }
 
 /*
@@ -270,15 +277,16 @@ void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	register volatile struct intersil7170 *clk = intersil_clock;
 
 	/* Read the clock interrupt register. */
-	(void) clk->clk_intr_reg;
+	intersil_clear();
+
 	/* Pulse the clock intr. enable low. */
 	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
-	/* Read the clock intr. reg AGAIN! */
-	(void) clk->clk_intr_reg;
+
+	/* Read the clock intr. reg. AGAIN! */
+	intersil_clear();
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
@@ -302,6 +310,7 @@ frob_leds()
 		led_pattern = 0xFE;
 	set_control_byte((char *) DIAG_REG, led_pattern);
 }
+
 
 /*
  * Return the best possible estimate of the time in the timeval
