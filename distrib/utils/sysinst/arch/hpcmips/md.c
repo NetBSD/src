@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2003/01/10 20:00:30 christos Exp $ */
+/*	$NetBSD: md.c,v 1.18 2003/01/11 19:06:54 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* md.c -- Machine specific code for i386 */
+/* md.c -- Machine specific code for hpcmips */
 
 #include <stdio.h>
 #include <util.h>
@@ -49,16 +49,14 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#if !defined(__i386__)
 #include "endian.h"
 #include "mbr.h"
-#endif
 
 
-#ifdef __i386__
-char mbr[512];
-#else
+#ifdef __mips__
 extern char mbr[512];
+#else
+char mbr[512];
 #endif
 int mbr_present, mbr_len;
 int c1024_resp;
@@ -68,13 +66,6 @@ struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
 int netbsd_bootsel_installed = 0;
 
-#ifdef __i386__
-static int md_read_bootcode (char *, char *, size_t);
-static int count_mbr_parts (struct mbr_partition *);
-static int mbr_part_above_chs (struct mbr_partition *);
-static int mbr_partstart_above_chs (struct mbr_partition *);
-static void configure_bootsel (void);
-#endif
 static void md_upgrade_mbrtype (void);
 
 struct mbr_bootsel *mbs;
@@ -92,97 +83,20 @@ md_get_info()
 		memset(&mbr[MBR_PARTOFF], 0,
 		    NMBRPART * sizeof (struct mbr_partition));
 		/* XXX check result and give up if < 0 */
-#ifdef __i386__
-		mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
-#else
 		*((u_int16_t *)&mbr[MBR_MAGICOFF]) = le_to_native16(MBR_MAGIC);
-#endif
 		netbsd_mbr_installed = 1;
 	} else
 		mbr_len = MBR_SECSIZE;
 	md_bios_info(diskdev);
 
-#ifdef __i386__
-edit:
-#endif
 	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
 
-#ifdef __i386__
-	if (mbr_part_above_chs(part) &&
-	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
-		msg_display(MSG_partabovechs);
-		process_menu(MENU_noyes);
-		if (!yesno)
-			goto edit;
-	}
-#endif
-
-#ifdef __i386__
-	if (count_mbr_parts(part) > 1) {
-		msg_display(MSG_installbootsel);
-		process_menu(MENU_yesno);
-		if (yesno) {
-			mbr_len =
-			    md_read_bootcode(_PATH_BOOTSEL, mbr, sizeof mbr);
-			configure_bootsel();
-			netbsd_mbr_installed = netbsd_bootsel_installed = 1;
-		}
-	}
-
-	if (mbr_partstart_above_chs(part) && !netbsd_mbr_installed) {
-		msg_display(MSG_installmbr);
-		process_menu(MENU_yesno);
-		if (yesno) {
-			mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
-			netbsd_mbr_installed = 1;
-		}
-	}
-
-#endif
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
 
 	return 1;
 }
 
-#ifdef __i386__
-/*
- * Read MBR code from a file. It may be a maximum of "len" bytes
- * long. This function skips the partition table. Space for this
- * is assumed to be in the file, but a table already in the buffer
- * is not overwritten.
- */
-static int
-md_read_bootcode(path, buf, len)
-	char *path, *buf;
-	size_t len;
-{
-	int fd, cc;
-	struct stat st;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return -1;
-
-	if (fstat(fd, &st) < 0 || st.st_size > len || st.st_size < MBR_SECSIZE){
-		close(fd);
-		return -1;
-	}
-	if (read(fd, buf, MBR_PARTOFF) != MBR_PARTOFF) {
-		close(fd);
-		return -1;
-	}
-	if (lseek(fd, MBR_MAGICOFF, SEEK_SET) < 0) {
-		close(fd);
-		return -1;
-	}
-	cc = read(fd, &buf[MBR_MAGICOFF], st.st_size - MBR_MAGICOFF);
-
-	close(fd);
-
-	return (cc + MBR_MAGICOFF);
-}
-#endif
 
 int
 md_pre_disklabel()
@@ -214,15 +128,7 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-#if !defined(__i386__)
 	return 0;
-#else
-	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(RUN_DISPLAY, NULL,
-	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
-	    diskdev);
-#endif
 }
 
 int
@@ -397,26 +303,6 @@ custom:		ask_sizemult(dlcylsize);
 		return 0;
 	}
 
-#ifdef __i386__
-	/*
-	 * XXX check for int13 extensions.
-	 */
-	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024 &&
-	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
-		process_menu(MENU_cyl1024);
-		/* XXX UGH! need arguments to process_menu */
-		switch (c1024_resp) {
-		case 1:
-			edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
-			/*FALLTHROUGH*/
-		case 2:
-			goto editlab;
-		default:
-			break;
-		}
-	}
-#endif
-
 	/* Disk name */
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
@@ -525,144 +411,19 @@ int
 md_bios_info(dev)
 	char *dev;
 {
-#ifdef __i386__
-	int mib[2], i, len;
-	struct biosdisk_info *bip;
-	struct nativedisk_info *nip = NULL, *nat;
-#endif
 	int cyl, head, sec;
 
-#ifdef __i386__
-	if (disklist == NULL) {
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_DISKINFO;
-		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
-			goto nogeom;
-		disklist = (struct disklist *)malloc(len);
-		sysctl(mib, 2, disklist, &len, NULL, 0);
-	}
-
-	nativedisk = NULL;
-
-	for (i = 0; i < disklist->dl_nnativedisks; i++) {
-		nat = &disklist->dl_nativedisks[i];
-		if (!strcmp(dev, nat->ni_devname)) {
-			nativedisk = nip = nat;
-			break;
-		}
-	}
-	if (nip == NULL || nip->ni_nmatches == 0) {
-nogeom:
-#endif
-		msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-		if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
-			msg_display_add(MSG_biosguess, cyl, head, sec);
-			set_bios_geom(cyl, head, sec);
-		} else
-			set_bios_geom(dlcyl, dlhead, dlsec);
-		biosdisk = NULL;
-#ifdef __i386__
-	} else if (nip->ni_nmatches == 1) {
-		bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
-		msg_display(MSG_onebiosmatch);
-		msg_table_add(MSG_onebiosmatch_header);
-		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
-		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
-		process_menu(MENU_biosonematch);
-	} else {
-		msg_display(MSG_biosmultmatch);
-		msg_table_add(MSG_biosmultmatch_header);
-		for (i = 0; i < nip->ni_nmatches; i++) {
-			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[i]];
-			msg_table_add(MSG_biosmultmatch_row, i,
-			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
-			    bip->bi_sec);
-		}
-		process_menu(MENU_biosmultmatch);
-	}
-	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
-		bsize = dlsize;
-	else
-#endif
-		bsize = bcyl * bhead * bsec;
+	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+		msg_display_add(MSG_biosguess, cyl, head, sec);
+		set_bios_geom(cyl, head, sec);
+	} else
+		set_bios_geom(dlcyl, dlhead, dlsec);
+	biosdisk = NULL;
+	bsize = bcyl * bhead * bsec;
 	bcylsize = bhead * bsec;
 	return 0;
 }
-
-#ifdef __i386__
-static int
-count_mbr_parts(pt)
-	struct mbr_partition *pt;
-{
-	int i, count = 0;;
-
-	for (i = 0; i < NMBRPART; i++)
-		if (pt[i].mbrp_typ != 0)
-			count++;
-
-	return count;
-}
-
-static int
-mbr_part_above_chs(pt)
-	struct mbr_partition *pt;
-{
-	return ((pt[bsdpart].mbrp_start + pt[bsdpart].mbrp_size) >=
-		bcyl * bhead * bsec);
-}
-
-static int
-mbr_partstart_above_chs(pt)
-	struct mbr_partition *pt;
-{
-	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
-}
-
-static void
-configure_bootsel()
-{
-	struct mbr_partition *parts =
-	    (struct mbr_partition *)&mbr[MBR_PARTOFF];
-	int i;
-
-
-	mbs = (struct mbr_bootsel *)&mbr[MBR_BOOTSELOFF];
-	mbs->flags = BFL_SELACTIVE;
-
-	/* Setup default labels for partitions, since if not done by user */
-	/* they don't get set and and bootselector doesn't 'appear' when  */
-	/* it's loaded.                                                   */
-	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ != 0 && mbs->nametab[i][0] == '\0')
-			snprintf(mbs->nametab[i], sizeof(mbs->nametab[0]),
-			    "entry %d", i+1);
-	}
-
-	process_menu(MENU_configbootsel);
-
-	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ != 0 &&
-		   parts[i].mbrp_start >= (bcyl * bhead * bsec)) {
-			mbs->flags |= BFL_EXTINT13;
-			break;
-		}
-	}
-}
-
-void
-disp_bootsel(part, mbsp)
-	struct mbr_partition *part;
-	struct mbr_bootsel *mbsp;
-{
-	int i;
-
-	msg_table_add(MSG_bootsel_header);
-	for (i = 0; i < 4; i++) {
-		msg_table_add(MSG_bootsel_row,
-		    i, get_partname(i), mbs->nametab[i]);
-	}
-}
-#endif
 
 int
 md_pre_update()
