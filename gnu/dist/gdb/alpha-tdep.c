@@ -498,6 +498,10 @@ heuristic_proc_desc(start_pc, limit_pc, next_frame)
 		 epilogue is reached.  */
 	      break;
 	  }
+	else if ((word & 0xffe01fff) == 0x43c0153e)	/* subq $sp,n,$sp */
+	  {
+	    frame_size += (word & 0x001fe000) >> 13;
+	  }
 	else if ((word & 0xfc1f0000) == 0xb41e0000	/* stq reg,n($sp) */
 		 && (word & 0xffff0000) != 0xb7fe0000)	/* reg != $zero */
 	  {
