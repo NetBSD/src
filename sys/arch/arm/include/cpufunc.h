@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.17 2002/01/25 19:19:26 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2002/01/30 00:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -303,6 +303,8 @@ void	armv4_drain_writebuf	__P((void));
 
 #ifdef CPU_SA110
 void	sa110_setttb		__P((u_int ttb));
+
+void	sa11x0_cpu_sleep	__P((int mode));
 
 void	sa110_tlb_flushID_SE	__P((u_int va));
 
