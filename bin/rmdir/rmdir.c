@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.20 2003/08/13 03:27:20 itojun Exp $ */
+/* $NetBSD: rmdir.c,v 1.21 2003/09/11 17:38:23 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.20 2003/08/13 03:27:20 itojun Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.21 2003/09/11 17:38:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,16 @@ main(int argc, char *argv[])
 	stdout_ok = isatty(STDIN_FILENO);
 
 	for (errors = 0; *argv; argv++) {
+#ifdef notdef
 		char *p;
 
+		/* Kernel takes care of this */
 		/* Delete trailing slashes, per POSIX. */
 		p = *argv + strlen(*argv);
 		while (--p > *argv && *p == '/')
 			;
 		*++p = '\0';
+#endif
 
 		if (rmdir(*argv) < 0) {
 			char *dn;
