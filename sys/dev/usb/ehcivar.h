@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.10 2001/11/21 02:44:31 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.11 2001/11/21 12:28:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,13 +42,7 @@ typedef struct ehci_soft_qtd {
 	ehci_physaddr_t physaddr;
 	usbd_xfer_handle xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
-#if 0
-	struct ehci_soft_qtd *dnext; /* next in done list */
 	u_int16_t len;
-	u_int16_t flags;
-#define EHCI_CALL_DONE	0x0001
-#define EHCI_ADD_LEN	0x0002
-#endif
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_QTD_ALIGN - 1) / EHCI_QTD_ALIGN * EHCI_QTD_ALIGN)
 #define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
@@ -61,6 +55,18 @@ typedef struct ehci_soft_qh {
 } ehci_soft_qh_t;
 #define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
+
+struct ehci_xfer {
+	struct usbd_xfer xfer;
+	struct usb_task	abort_task;
+	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
+	ehci_soft_qtd_t *sqtdstart;
+	ehci_soft_qtd_t *sqtdend;
+#ifdef DIAGNOSTIC
+	int isdone;
+#endif
+};
+#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 
 #define EHCI_HASH_SIZE 128
@@ -85,6 +91,8 @@ typedef struct ehci_softc {
 
 	usb_dma_t sc_fldma;
 	u_int sc_flsize;
+
+	LIST_HEAD(, ehci_xfer) sc_intrhead;
 
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
@@ -121,13 +129,6 @@ typedef struct ehci_softc {
 #define EOWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 #define EOWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 #define EOWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
-
-struct ehci_xfer {
-	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
-};
-
-#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
