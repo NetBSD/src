@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.63 2003/06/24 09:37:20 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.64 2003/06/24 09:39:52 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -807,3 +807,9 @@ sys/arch/sparc64/sparc64/locore.s		1.173
 	Divide `set' instruction in delay slot (from OpenBSD change to rev
 	1.30).
 	[nakayama, ticket #1330]
+
+sys/arch/sparc64/sparc64/process_machdep.c	1.12 (via patch)
+
+	Wrap a 64-bit mode case with #ifdef __arch64__ for 32-bit kernels,
+	and fix typo in comment.
+	[nakayama, ticket #1331]
