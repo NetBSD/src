@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1993/10/23 01:13:46 jtc Exp $
+#	$Id: Makefile,v 1.9 1993/12/08 21:31:57 mycroft Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -22,7 +22,7 @@ afterinstall:
 	   ${DESTDIR}${BINDIR}
 
 match.o: ${.CURDIR}/match.S
-	$(CPP) ${.CURDIR}/match.S >_match.s
+	$(CPP) -D__NetBSD__ ${.CURDIR}/match.S >_match.s
 	$(CC) -c _match.s
 	mv _match.o match.o
 	rm -f _match.s
