@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36 2000/05/12 01:00:08 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.1 2000/09/20 20:14:06 hubertf Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -469,31 +469,40 @@ md_cleanup_install(void)
 {
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
-	char sedcmd[STRSIZE];
+	char cmd[STRSIZE];
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
-	sprintf(sedcmd, "sed "
+	sprintf(cmd, "sed "
 			"-e 's/rc_configured=NO/rc_configured=YES/' "
-			"-e 's/wscons=NO/wscons=YES/' "
 			" < %s > %s", realfrom, realto);
 	if (logging)
-		(void)fprintf(log, "%s\n", sedcmd);
+		(void)fprintf(log, "%s\n", cmd);
 	if (scripting)
-		(void)fprintf(script, "%s\n", sedcmd);
-	do_system(sedcmd);
+		(void)fprintf(script, "%s\n", cmd);
+	do_system(cmd);
+
+	/* put "wscons=YES" into rc.conf.install (which will be renamed
+	 * to rc.conf in a second) */
+	sprintf(cmd, "echo wscons=YES >> %s", realto);
+	if (logging)
+		(void)fprintf(log, "%s\n", cmd);
+	if (scripting)
+		(void)fprintf(script, "%s\n", cmd);
+	do_system(cmd);
+
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
 
 	strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
 	strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
-	sprintf(sedcmd, "sed "
+	sprintf(cmd, "sed "
 			"-e '/^ttyE/s/off/on/'"
 			" < %s > %s", realfrom, realto);
 	if (logging)
-		(void)fprintf(log, "%s\n", sedcmd);
+		(void)fprintf(log, "%s\n", cmd);
 	if (scripting)
-		(void)fprintf(script, "%s\n", sedcmd);
-	do_system(sedcmd);
+		(void)fprintf(script, "%s\n", cmd);
+	do_system(cmd);
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
 
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
