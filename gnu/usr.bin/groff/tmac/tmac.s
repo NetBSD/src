@@ -1,3 +1,4 @@
+.\" -*- nroff -*-
 .ig
 Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
@@ -16,9 +17,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: tmac.s,v 1.2 1993/08/02 17:45:26 mycroft Exp $
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ..
 .if !\n(.g .ab These ms macros require groff.
 .if \n(.C \
@@ -46,6 +45,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .de @nop
 ..
 .de @init
+.nr PO \\n(.o
 .\" a non-empty environment
 .ev ne
 \c
@@ -210,6 +210,8 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .als IP LP
 .als PP LP
 .als XP LP
+.als QP LP
+.als RS LP
 .als NH LP
 .als SH LP
 .als MC LP
@@ -233,6 +235,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .als MC @MC
 .als EQ @EQ
 .als EN @EN
+.als TS @TS
 .als AB cov*err-not-after-ab
 .als AU par@AU
 .als AI par@AI
@@ -396,7 +399,6 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .nr pg@fn-colw 0
 .nr HM 1i
 .nr FM 1i
-.nr PO 1i
 .ds LF
 .ds CF
 .ds RF
@@ -964,8 +966,24 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\" ******** module par ********
 .\" ****************************
 .\" Paragraph-level formatting.
-.nr PS 10
-.nr LL 6i
+.\" Load time initialization.
+.de par@load-init
+.\" PS and VS might have been set on the command-line
+.if !rPS .nr PS 10
+.if !rLL .nr LL 6i
+.ll \\n[LL]u
+.\" don't set LT so that it can be defaulted from LL
+.ie rLT .lt \\n[LT]u
+.el .lt \\n[LL]u
+.ps \\n[PS]
+.\" don't set VS so that it can be defaulted from PS
+.ie rVS .par*vs \\n[VS]
+.el .par*vs \\n[PS]+2
+.if dFAM .fam \\*[FAM]
+.if !rHY .nr HY 14
+.hy \\n[HY]
+.TA
+..
 .de par*vs
 .\" If it's too big to be in points, treat it as units.
 .ie (p;\\$1)>=40p .vs (u;\\$1)
@@ -992,13 +1010,20 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .if !rLT .nr LT \\n[LL]
 .if !rFL .nr FL \\n[LL]*5/6
 .if !rVS .nr VS \\n[PS]+2
-.ps \\n[PS]
 .if !rDI .nr DI .5i
+.if !rFPS .nr FPS \\n[PS]-2
+.if !rFVS .nr FVS \\n[FPS]+2
+.\" don't change environment 0
+.ev h
+.ps \\n[PS]
 .if !rQI .nr QI 5n
 .if !rPI .nr PI 5n
 .par*vs \\n[VS]
 .if !rPD .nr PD .3v>?\n(.V
 .if !rDD .nr DD .5v>?\n(.V
+.if !rFI .nr FI 2n
+.if !rFPD .nr FPD \\n[PD]/2
+.ev
 .if !dFAM .ds FAM \\n[.fam]
 .nr par*adj \\n[.j]
 .par*env-init
@@ -1015,10 +1040,6 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .aln 0:MCLT pg@colw
 .aln k:MCLL pg@colw
 .aln k:MCLT pg@colw
-.if !rFPS .nr FPS \\n[PS]-2
-.if !rFVS .nr FVS \\n[FPS]+2
-.if !rFI .nr FI 2n
-.if !rFPD .nr FPD \\n[PD]/2
 .aln fn:PS FPS
 .aln fn:VS FVS
 .aln fn:LL FL
@@ -1059,9 +1080,13 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .par*vs \\n[\\n[.ev]:VS]
 .ls 1
 .TA
-.hy 14
+.hy \\n[HY]
 ..
-.als @RT par@reset
+.de @RT
+.nr \\n[.ev]:pli 0
+.nr \\n[.ev]:pri 0
+.par@reset
+..
 .\" This can be redefined by the user.
 .de TA
 .ta T 5n
@@ -1103,12 +1128,10 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .if !'\\$1'' \{\
 .	\" Divert the label so as to freeze any spaces.
 .	di par*label
-.	in 0
-.	nf
+.	par*push-tag-env
 \&\\$1
+.	par*pop-tag-env
 .	di
-.	in
-.	fi
 .	chop par*label
 .	ti -\\n[\\n[.ev]:ai]u
 .	ie \\n[dl]+1n<=\\n[\\n[.ev]:ai] \\*[par*label]\h'|\\n[\\n[.ev]:ai]u'\c
@@ -1118,6 +1141,26 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .	\}
 .	rm par*label
 .\}
+..
+.\" We don't want margin characters to be attached when we divert
+.\" the tag.  Since there's no way to save and restore the current
+.\" margin character, we have to switch to a new environment, taking
+.\" what we need of the old environment with us.
+.de par*push-tag-env
+.nr par*saved-font \\n[.f]
+.nr par*saved-size \\n[.s]z
+.nr par*saved-ss \\n[.ss]
+.ds par*saved-fam \\n[.fam]
+.ev par
+.nf
+.TA
+.ft \\n[par*saved-font]
+.ps \\n[par*saved-size]u
+.ss \\n[par*saved-ss]
+.fam \\*[par*saved-fam]
+..
+.de par*pop-tag-env
+.ev
 ..
 .de @RS
 .br
@@ -1164,7 +1207,13 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .di par*box-div
 .nr \\n[.ev]:li +1n
 .nr \\n[.ev]:ri +1n
-.par@reset
+.nr par*box-in \\n[.in]
+.\" remember what 1n is, just in case the point size changes
+.nr par*box-n 1n
+.in +1n
+.ll -1n
+.lt -1n
+.ti \\n[par*box-in]u+1n
 ..
 .de @div-end!par*box-div
 .B2
@@ -1175,21 +1224,28 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .de B2
 .ie '\\n(.z'par*box-div' \{\
 .	br
+.	if \n[.V]>.25m .sp
 .	di
+.	if \n[.V]>.25m .sp
 .	ds@need \\n[dn]
 .	par*box-mark-top
 .	ev nf
 .	par*box-div
 .	ev
-.	nr \\n[.ev]:ri -1n
-.	nr \\n[.ev]:li -1n
-.	par@finish
-.	par*box-draw \\n[.i]u \\n[.l]u
+.	nr \\n[.ev]:ri -\\n[par*box-n]
+.	nr \\n[.ev]:li -\\n[par*box-n]
+.	in -\\n[par*box-n]u
+.	ll +\\n[par*box-n]u
+.	lt +\\n[par*box-n]u
+.	par*box-draw \\n[.i]u \\n[.l]u-(\\n[.H]u==1n*1n)
 .\}
 .el .@error B2 without B1
 ..
 .de par*box-mark-top
-.ie '\\n[.z]'' .mk par*box-top
+.ie '\\n[.z]'' \{\
+.	rs
+.	mk par*box-top
+.\}
 .el \!.par*box-mark-top
 ..
 .de par*box-draw
@@ -1197,6 +1253,8 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .	nr par*box-in \\n[.i]
 .	nr par*box-ll \\n[.l]
 .	nr par*box-vpt \\n[.vpt]
+.	nr par*box-ad \\n[.j]
+.	ad l
 .	vpt 0
 .	in \\$1
 .	ll \\$2
@@ -1210,6 +1268,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .	in \\n[par*box-in]u
 .	ll \\n[par*box-ll]u
 .	vpt \\n[par*box-vpt]
+.	ad \\n[par*box-ad]
 .\}
 .el \!.par*box-draw \\$1 \\$2
 ..
@@ -1404,7 +1463,8 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .		el .ds toc*num "\\$1
 .	\}
 .	el .ds toc*num \\n[PN]
-.	LP
+.	br
+.	par@reset
 .	na
 .	ll -8n
 .	in (n;0\\$2)
@@ -1507,9 +1567,9 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 \t\\*[eqn*num]
 .		\}
 .		sp \\n[DD]u
-.		fi
 .		ta \\*[eqn*tabs]
 .	\}
+.	fi
 .\}
 ..
 .\" ****************************
@@ -1517,9 +1577,13 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\" ****************************
 .\" Tbl support.
 .nr tbl*have-header 0
+.\" This gets called if TS occurs before the first paragraph.
 .de TS
-.\" The break is necessary in the case where the first page has not yet begun.
-.br
+.LP
+.\" cov*ab-init aliases TS to @TS
+\\*[TS]\\
+..
+.de @TS
 .sp \\n[DD]u
 .if '\\$1'H' .di tbl*header-div
 ..
@@ -1802,4 +1866,5 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .ds ? \(r?\"			upside down ?
 .ds ! \(r!\"			upside down !
 ..
+.par@load-init
 .\" Make sure that no blank lines creep in at the end of this file.

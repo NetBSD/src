@@ -16,10 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: token.h,v 1.2 1993/08/02 17:45:05 mycroft Exp $
-*/
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 enum token_type {
   TOKEN_OTHER,
@@ -27,7 +24,8 @@ enum token_type {
   TOKEN_LOWER,
   TOKEN_ACCENT,
   TOKEN_PUNCT,
-  TOKEN_HYPHEN
+  TOKEN_HYPHEN,
+  TOKEN_RANGE_SEP
 };
 
 class token_info {
@@ -48,6 +46,7 @@ public:
   int is_other() const;
   int is_punct() const;
   int is_hyphen() const;
+  int is_range_sep() const;
 };
 
 inline int token_info::is_upper() const
@@ -78,6 +77,11 @@ inline int token_info::is_punct() const
 inline int token_info::is_hyphen() const
 {
   return type == TOKEN_HYPHEN;
+}
+
+inline int token_info::is_range_sep() const
+{
+  return type == TOKEN_RANGE_SEP;
 }
 
 int get_token(const char **ptr, const char *end);

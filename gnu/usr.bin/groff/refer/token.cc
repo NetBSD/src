@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "refer.h"
 #include "token.h"
@@ -155,7 +155,7 @@ static void store_token(const char *tok, token_type typ,
 			const char *sk = 0, const char *oc = 0)
 {
   unsigned n = hash_string(tok, strlen(tok)) % TOKEN_TABLE_SIZE;
-  while (n >= 0) {
+  for (;;) {
     if (token_table[n].tok == 0) {
       if (++ntokens == TOKEN_TABLE_SIZE)
 	assert(0);
@@ -164,8 +164,10 @@ static void store_token(const char *tok, token_type typ,
     }
     if (strcmp(tok, token_table[n].tok) == 0)
       break;
-    if (--n < 0)
+    if (n == 0)
       n = TOKEN_TABLE_SIZE - 1;
+    else
+      --n;
   }
   token_table[n].ti.set(typ, sk, oc);
 }
@@ -176,21 +178,24 @@ token_info default_token_info;
 const token_info *lookup_token(const char *start, const char *end)
 {
   unsigned n = hash_string(start, end - start) % TOKEN_TABLE_SIZE;
-  while (n >= 0) {
+  for (;;) {
     if (token_table[n].tok == 0)
       break;
     if (strlen(token_table[n].tok) == end - start
 	&& memcmp(token_table[n].tok, start, end - start) == 0)
       return &(token_table[n].ti);
-    if (--n < 0)
+    if (n == 0)
       n = TOKEN_TABLE_SIZE - 1;
+    else
+      --n;
   }
   return &default_token_info;
 }
 
 static void init_ascii()
 {
-  const char *p; for (p = "abcdefghijklmnopqrstuvwxyz"; *p; p++) {
+  const char *p;
+  for (p = "abcdefghijklmnopqrstuvwxyz"; *p; p++) {
     char buf[2];
     buf[0] = *p;
     buf[1] = '\0';
@@ -296,7 +301,8 @@ static void init_two_char_letter(char l1, char l2, char u1, char u2,
 
 static void init_special_chars()
 {
-  const char *p; for (p = "':^`~"; *p; p++)
+  const char *p;
+  for (p = "':^`~"; *p; p++)
     for (const char *q = "aeiouy"; *q; q++) {
       // Use a variable to work around bug in gcc 2.0
       char c = cmupper(*q);
@@ -321,6 +327,8 @@ static void init_special_chars()
   store_token("\\[Sd]", TOKEN_LOWER, "d", "\\[-D]");
   store_token("\\(hy", TOKEN_HYPHEN);
   store_token("\\[hy]", TOKEN_HYPHEN);
+  store_token("\\(en", TOKEN_RANGE_SEP);
+  store_token("\\[en]", TOKEN_RANGE_SEP);
 }
 
 static void init_strings()

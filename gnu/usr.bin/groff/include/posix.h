@@ -16,19 +16,16 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: posix.h,v 1.2 1993/08/02 17:43:36 mycroft Exp $
-*/
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 
-#ifdef HAVE_CC_UNISTD_H
-#include <unistd.h>
-#else
+#ifdef HAVE_CC_OSFCN_H
 #include <osfcn.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #ifndef S_IRUSR

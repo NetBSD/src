@@ -1,4 +1,21 @@
-.\"	$Id: groff_font.5,v 1.2 1993/08/02 17:44:21 mycroft Exp $	-*- nroff -*-
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
 .de TQ
 .br
 .ns
@@ -10,7 +27,7 @@
 .ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
 .el .TP "\\$1"
 ..
-.TH GROFF_FONT 5 "24 September 1992" "Groff Version 1.08"
+.TH GROFF_FONT 5 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 groff_font \- format of groff device and font description files
 .SH DESCRIPTION
@@ -151,7 +168,7 @@ are ligatures; possible ligatures are
 .BR fl 
 and
 .BR ffl .
-For backwards compatibiliy, the list of ligatures may be terminated
+For backwards compatibility, the list of ligatures may be terminated
 with a
 .BR 0.
 The list of ligatures may not extend over more than one line.
@@ -260,7 +277,7 @@ if it starts with
 .B 0x
 or
 .B 0X
-it will be intepreted as hexdecimal.
+it will be intepreted as hexadecimal.
 .LP
 Anything on the line after the code field will be ignored.
 .LP

@@ -1,7 +1,9 @@
+/*
+ * $XConsortium: DviP.h,v 1.5 89/07/22 19:44:08 keith Exp $
+ */
+
 /* 
  * DviP.h - Private definitions for Dvi widget
- *
- *	$Id: DviP.h,v 1.2 1993/08/02 17:45:53 mycroft Exp $
  */
 
 #ifndef _XtDviP_h

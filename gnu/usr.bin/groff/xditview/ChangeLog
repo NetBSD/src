@@ -1,3 +1,31 @@
+Mon Sep 11 10:40:33 1995  James Clark  <jjc@jclark.com>
+
+	* device.c (INT_MIN, INT_MAX): Don't define if already defined.
+
+Mon Aug  8 11:14:11 1994  James Clark  (jjc@jclark.com)
+
+	* DviChar.c (Adobe_Symbol_map): Use \(nb for notsubset.
+
+Tue Apr 19 04:41:16 1994  James Clark  (jjc@jclark.com)
+
+	* Dvi.c (resources): Change default for background and foreground
+	to "XtDefaultBackground" and "XtDefaultForeground".
+
+Sat Feb 12 10:38:47 1994  James Clark  (jjc@jclark.com)
+
+	* DviChar.c (Adobe_Symbol_map): Rename radicalex to rn.
+
+Thu May 27 20:30:12 1993  James Clark  (jjc@jclark.com)
+
+	* device.c (isascii): Define if necessary.
+	(canonicalize_name): Cast argument to isdigit() to unsigned char.
+
+Thu Apr 29 18:36:57 1993  James Clark  (jjc at jclark.com)
+
+	* xditview.c: Include <X11/Xos.h>.
+	(NewFile): Don't declare rindex(). Use strrchr() rather than
+	rindex().
+
 Tue Mar 30 15:12:09 1993  James Clark  (jjc at jclark)
 
 	* draw.c (charExists): Check that fi->per_char is not NULL.

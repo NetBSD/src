@@ -1,5 +1,22 @@
-.\"	$Id: groff_ms.7,v 1.2 1993/08/02 17:45:25 mycroft Exp $	-*- nroff -*-
-.TH GROFF_MS 7 "6 August 1992" "Groff Version 1.08"
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
+.TH GROFF_MS 7 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 groff_ms \- groff ms macros
 .SH SYNOPSIS
@@ -14,7 +31,8 @@ groff_ms \- groff ms macros
 .SH DESCRIPTION
 This manual page describes the GNU version of the ms macros,
 which is part of the groff document formatting system.
-The groff ms macros are intended to be compatible with the 4.3
+The groff ms macros are intended to be compatible with the
+documented behaviour of the 4.3
 .SM BSD
 Unix ms macros subject to the following limitations:
 .IP \(bu
@@ -161,6 +179,13 @@ and
 .B \en(PD/2
 respectively; however, if any of these registers has been defined
 before initialization, it will not be set.
+The hyphenation flags (as set by the
+.B .hy
+request) are set from the
+.B HY
+register;
+if this has not been defined at initialization,
+it will be set to 14.
 .LP
 Right-aligned displays are available with
 .B ".DS R"

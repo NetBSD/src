@@ -4,10 +4,6 @@
  * build/parse X Font name strings
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: XFontName.c,v 1.2 1993/08/02 17:45:56 mycroft Exp $";
-#endif /* not lint */
-
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 #include "XFontName.h"

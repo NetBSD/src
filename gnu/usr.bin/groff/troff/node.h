@@ -16,10 +16,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-	$Id: node.h,v 1.4 1995/09/27 14:02:06 cgd Exp $
-*/
 
 struct hyphen_list {
   unsigned char hyphen;
@@ -55,7 +53,7 @@ struct node {
   node(node *n);
   node *add_char(charinfo *c, environment *, hunits *widthp);
 
-  virtual inline ~node();
+  virtual ~node();
   virtual node *copy() = 0;
   virtual hunits width();
   virtual hunits subscript_correction();
@@ -472,13 +470,13 @@ public:
 #endif /* COLUMN */
 };
 
+#ifndef POPEN_MISSING
 extern char *pipe_command;
+#endif
 
 extern output_file *the_output;
 extern void init_output();
 int in_output_page_list(int n);
-
-static void invalidate_fontno(int);
 
 class font_family {
   int *map;
@@ -488,8 +486,8 @@ public:
 
   font_family(symbol);
   ~font_family();
-  make_definite(int);
-  friend void invalidate_fontno(int);
+  int make_definite(int);
+  static void invalidate_fontno(int);
 };
 
 font_family *lookup_family(symbol);

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <string.h>
@@ -207,7 +207,7 @@ inline int font::scale(int w, int sz)
 int font::get_skew(int c, int point_size, int sl)
 {
   int h = get_height(c, point_size);
-  return int(h*tan((slant+sl)*M_PI/180.0) + .5);
+  return int(h*tan((slant+sl)*PI/180.0) + .5);
 }
 
 int font::contains(int c)
@@ -246,7 +246,8 @@ int font::get_width(int c, int point_size)
   if (!widths_cache)
     widths_cache = new font_widths_cache(point_size, ch_size);
   else if (widths_cache->point_size != point_size) {
-    font_widths_cache **p; for (p = &widths_cache; *p; p = &(*p)->next)
+    font_widths_cache **p;
+    for (p = &widths_cache; *p; p = &(*p)->next)
       if ((*p)->point_size == point_size)
 	break;
     if (*p) {
@@ -398,7 +399,8 @@ void font::extend_ch()
 
 void font::compact()
 {
-  int i; for (i = nindices - 1; i >= 0; i--)
+  int i;
+  for (i = nindices - 1; i >= 0; i--)
     if (ch_index[i] >= 0)
       break;
   i++;
@@ -700,16 +702,16 @@ static struct {
   const char *command;
   int *ptr;
 } table[] = {
-  "res", &font::res,
-  "hor", &font::hor,
-  "vert", &font::vert,
-  "unitwidth", &font::unitwidth,
-  "paperwidth", &font::paperwidth,
-  "paperlength", &font::paperlength,
-  "spare1", &font::biggestfont,
-  "biggestfont", &font::biggestfont,
-  "spare2", &font::spare2,
-  "sizescale", &font::sizescale
+  { "res", &font::res },
+  { "hor", &font::hor },
+  { "vert", &font::vert },
+  { "unitwidth", &font::unitwidth },
+  { "paperwidth", &font::paperwidth },
+  { "paperlength", &font::paperlength },
+  { "spare1", &font::biggestfont },
+  { "biggestfont", &font::biggestfont },
+  { "spare2", &font::spare2 },
+  { "sizescale", &font::sizescale }
   };
 
 
@@ -728,7 +730,8 @@ int font::load_desc()
   while (t.next()) {
     char *p = strtok(t.buf, WS);
     int found = 0;
-    int i; for (i = 0; !found && i < sizeof(table)/sizeof(table[0]); i++)
+    int i;
+    for (i = 0; !found && i < sizeof(table)/sizeof(table[0]); i++)
       if (strcmp(table[i].command, p) == 0)
 	found = 1;
     if (found) {
@@ -830,7 +833,8 @@ int font::load_desc()
     else if (strcmp("styles", p) == 0) {
       int style_table_size = 5;
       style_table = (const char **)new char *[style_table_size];
-      int j; for (j = 0; j < style_table_size; j++)
+      int j;
+      for (j = 0; j < style_table_size; j++)
 	style_table[j] = 0;
       int i = 0;
       for (;;) {
@@ -870,7 +874,7 @@ int font::load_desc()
     return 0;
   }
   if (font_name_table == 0) {
-    t.error("missing `fonts' commmand");
+    t.error("missing `fonts' command");
     return 0;
   }
   if (sizes == 0) {

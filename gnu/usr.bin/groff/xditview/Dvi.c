@@ -1,11 +1,13 @@
+#ifndef SABER
+#ifndef lint
+static char Xrcsid[] = "$XConsortium: Dvi.c,v 1.9 89/12/10 16:12:25 rws Exp $";
+#endif /* lint */
+#endif /* SABER */
+
 /*
  * Dvi.c - Dvi display widget
  *
  */
-
-#ifndef lint
-static char rcsid[] = "$Id: Dvi.c,v 1.2 1993/08/02 17:45:49 mycroft Exp $";
-#endif /* not lint */
 
 #define XtStrlen(s)	((s) ? strlen(s) : 0)
 
@@ -58,9 +60,9 @@ static XtResource resources[] = {
 	{XtNfontMap, XtCFontMap, XtRString, sizeof (char *),
 	 offset(dvi.font_map_string), XtRString, default_font_map},
 	{XtNforeground, XtCForeground, XtRPixel, sizeof (unsigned long),
-	 offset(dvi.foreground), XtRString, "black"},
+	 offset(dvi.foreground), XtRString, "XtDefaultForeground"},
 	{XtNbackground, XtCBackground, XtRPixel, sizeof (unsigned long),
-	 offset(dvi.background), XtRString, "white"},
+	 offset(dvi.background), XtRString, "XtDefaultBackground"},
 	{XtNpageNumber, XtCPageNumber, XtRInt, sizeof (int),
 	 offset(dvi.requested_page), XtRString, "1"},
 	{XtNlastPageNumber, XtCLastPageNumber, XtRInt, sizeof (int),
@@ -468,7 +470,7 @@ FindPage (dw)
 		while (dw->dvi.current_page != dw->dvi.requested_page) {
 			dw->dvi.current_page = ParseInput (dw);
 			/*
-			 * at EOF, seek back to the begining of this page.
+			 * at EOF, seek back to the beginning of this page.
 			 */
 			if (!dw->dvi.readingTmp && feof (dw->dvi.file)) {
 				file_position = SearchPagePosition (dw,

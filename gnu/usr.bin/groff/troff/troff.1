@@ -1,4 +1,21 @@
-.\"	$Id: troff.1,v 1.3 1993/08/02 17:45:42 mycroft Exp $	-*- nroff -*-
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
 .\" define a string tx for the TeX logo
 .ie t .ds tx T\h'-.1667m'\v'.224m'E\v'-.224m'\h'-.125m'X
 .el .ds tx TeX
@@ -16,7 +33,7 @@
 .\" The BSD man macros can't handle " in arguments to font change macros,
 .\" so use \(ts instead of ".
 .tr \(ts"
-.TH TROFF 1 "1 April 1993" "Groff Version 1.08"
+.TH TROFF 1 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 troff \- format documents
 .SH SYNOPSIS
@@ -150,6 +167,8 @@ means print every page up to
 .IB n \-
 means print every page from
 .IR n .
+.B Troff
+will exit after printing the last page in the list.
 .TP
 .BI \-r cn
 .TQ
@@ -274,7 +293,7 @@ nor
 and so
 .B troff
 disallows this.
-Similarily it would make no sense to use a scaling indicator
+Similarly it would make no sense to use a scaling indicator
 other than
 .B z
 or
@@ -593,9 +612,9 @@ space when a line is adjusted.
 Everything up to and including the next newline is ignored.
 This is interpreted in copy mode.
 This is like
-.B \e%
+.B \e"
 except that
-.B \e%
+.B \e"
 does not ignore the terminating newline.
 .SS New requests
 .TP
@@ -673,6 +692,13 @@ to 1.
 .B .backtrace
 Print a backtrace of the input stack on stderr.
 .TP
+.BI .blm\  xx
+Set the blank line macro to
+.IR xx .
+If there is a blank line macro,
+it will be invoked when a blank line is encountered instead of the usual
+troff behaviour.
+.TP
 .B .break
 Break out of a while loop.
 See also the
@@ -702,12 +728,18 @@ have this property);
 2
 lines can be broken before the character
 (initially no characters have this property);
+a line will not be broken at a character with this property
+unless the characters on each side both have non-zero
+hyphenation codes.
 .TP
 4
 lines can be broken after the character
 (initially characters
 .B \-\e(hy\e(em
 have this property);
+a line will not be broken at a character with this property
+unless the characters on each side both have non-zero
+hyphenation codes.
 .TP
 8
 the character overlaps horizontally
@@ -853,7 +885,7 @@ will be special, that is, they will searched for characters not in
 the current font.
 Any fonts specified in the
 .B special
-request will be searched before fonts specified in the
+request will be searched after fonts specified in the
 .B fspecial
 request.
 .TP
@@ -1050,6 +1082,12 @@ exists, append to it instead of truncating it.
 Print the names and contents of all currently defined number registers
 on stderr.
 .TP
+.BI .pso \ command
+This is behaves like the
+.B so
+request except that input comes from the standard output of
+.IR command .
+.TP
 .B .ptr
 Print the names and positions of all traps (not including input line
 traps and diversion traps) on stderr.  Empty slots in the page trap
@@ -1071,7 +1109,7 @@ Right justify the next
 .I n
 input lines.
 Without an argument right justify the next input line.
-The number of lines to be right justifed is available in the
+The number of lines to be right justified is available in the
 .B \en[.rj]
 register.
 This implicitly does
@@ -1790,7 +1828,9 @@ So, in most cases, at most one warning will be given for
 use of a particular name.
 .TP
 .BR tab \t2048
-Use of a tab character where a number was expected.
+Inappropriate use of a tab character.
+Either use of a tab character where a number was expected,
+or use of tab character in an unquoted macro argument.
 .TP
 .BR right-brace \t4096
 Use of
@@ -1821,6 +1861,13 @@ This warning will never occur in compatibility mode.
 .BR font \t131072
 Non-existent fonts.
 This is enabled by default.
+.TP
+.BR ig \t262144
+Illegal escapes in text ignored with the
+.B ig
+request.
+These are conditions that are errors when they do not occur
+in ignored text.
 .LP
 There are also names that can be used to refer to groups of warnings:
 .TP

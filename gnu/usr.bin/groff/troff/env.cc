@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "troff.h"
 #include "symbol.h"
@@ -61,7 +61,7 @@ class pending_output_line {
   node *nd;
   int no_fill;
   vunits vs;
-  int ls;
+  vunits post_vs;
   hunits width;
 #ifdef WIDOW_CONTROL
   int last_line;		// Is it the last line of the paragraph?
@@ -69,20 +69,20 @@ class pending_output_line {
 public:
   pending_output_line *next;
 
-  pending_output_line(node *, int, vunits, int, hunits,
+  pending_output_line(node *, int, vunits, vunits, hunits,
 		      pending_output_line * = 0);
   ~pending_output_line();
   int output();
 
 #ifdef WIDOW_CONTROL
   friend void environment::mark_last_line();
-  friend void environment::output(node *, int, vunits, int, hunits);
+  friend void environment::output(node *, int, vunits, vunits, hunits);
 #endif /* WIDOW_CONTROL */
 };
 
-pending_output_line::pending_output_line(node *n, int nf, vunits v, int l,
+pending_output_line::pending_output_line(node *n, int nf, vunits v, vunits pv,
 					 hunits w, pending_output_line *p)
-: nd(n), no_fill(nf), vs(v), ls(l), width(w),
+: nd(n), no_fill(nf), vs(v), post_vs(pv), width(w),
 #ifdef WIDOW_CONTROL
   last_line(0),
 #endif /* WIDOW_CONTROL */
@@ -101,19 +101,19 @@ int pending_output_line::output()
     return 0;
 #ifdef WIDOW_CONTROL
   if (next && next->last_line && !no_fill) {
-    curdiv->need(vs*ls + vunits(vresolution));
+    curdiv->need(vs + post_vs + vunits(vresolution));
     if (trap_sprung_flag) {
       next->last_line = 0;	// Try to avoid infinite loops.
       return 0;
     }
   }
 #endif
-  curdiv->output(nd, no_fill, vs, ls, width);
+  curdiv->output(nd, no_fill, vs, post_vs, width);
   nd = 0;
   return 1;
 }
 
-void environment::output(node *nd, int no_fill, vunits vs, int ls,
+void environment::output(node *nd, int no_fill, vunits vs, vunits post_vs,
 			 hunits width)
 {
 #ifdef WIDOW_CONTROL
@@ -134,23 +134,24 @@ void environment::output(node *nd, int no_fill, vunits vs, int ls,
       && (!widow_control || no_fill)
 #endif /* WIDOW_CONTROL */
       )
-    curdiv->output(nd, no_fill, vs, ls, width);
+    curdiv->output(nd, no_fill, vs, post_vs, width);
   else {
-    pending_output_line **p; for (p = &pending_lines; *p; p = &(*p)->next)
+    pending_output_line **p;
+    for (p = &pending_lines; *p; p = &(*p)->next)
       ;
-    *p = new pending_output_line(nd, no_fill, vs, ls, width);
+    *p = new pending_output_line(nd, no_fill, vs, post_vs, width);
   }
 }
 
 // a line from .tl goes at the head of the queue
 
-void environment::output_title(node *nd, int no_fill, vunits vs, int ls,
-			       hunits width)
+void environment::output_title(node *nd, int no_fill, vunits vs,
+			       vunits post_vs, hunits width)
 {
   if (!trap_sprung_flag)
-    curdiv->output(nd, no_fill, vs, ls, width);
+    curdiv->output(nd, no_fill, vs, post_vs, width);
   else
-    pending_lines = new pending_output_line(nd, no_fill, vs, ls, width,
+    pending_lines = new pending_output_line(nd, no_fill, vs, post_vs, width,
 					    pending_lines);
 }
 
@@ -451,7 +452,7 @@ void environment::set_font(int n)
     fontno = n;
   }
   else
-    error("bad font number");
+    warning(WARN_FONT, "bad font number");
 }
 
 void environment::set_family(symbol fam)
@@ -531,6 +532,8 @@ environment::environment(symbol nm)
   right_justify_lines(0),
   prev_vertical_spacing(points_to_units(12)),
   vertical_spacing(points_to_units(12)),
+  prev_post_vertical_spacing(0),
+  post_vertical_spacing(0),
   prev_line_spacing(1),
   line_spacing(1),
   prev_indent(0),
@@ -606,6 +609,8 @@ environment::environment(const environment *e)
   right_justify_lines(0),
   prev_vertical_spacing(e->prev_vertical_spacing),
   vertical_spacing(e->vertical_spacing),
+  prev_post_vertical_spacing(e->prev_post_vertical_spacing),
+  post_vertical_spacing(e->post_vertical_spacing),
   prev_line_spacing(e->prev_line_spacing),
   line_spacing(e->line_spacing),
   prev_indent(e->prev_indent),
@@ -700,9 +705,22 @@ vunits environment::get_vertical_spacing()
   return vertical_spacing;
 }
 
+vunits environment::get_post_vertical_spacing()
+{
+  return post_vertical_spacing;
+}
+
 int environment::get_line_spacing()
 {
   return line_spacing;
+}
+
+vunits environment::total_post_vertical_spacing()
+{
+  vunits tem(post_vertical_spacing);
+  if (line_spacing > 1)
+    tem += (line_spacing - 1)*vertical_spacing;
+  return tem;
 }
 
 int environment::get_bold()
@@ -1076,6 +1094,23 @@ void vertical_spacing()
   skip_line();
 }
 
+void post_vertical_spacing()
+{
+  vunits temp;
+  if (has_arg() && get_vunits(&temp, 'p', curenv->post_vertical_spacing)) {
+    if (temp < V0) {
+      warning(WARN_RANGE,
+	      "post vertical spacing must be greater than or equal to 0");
+      temp = V0;
+    }
+  }
+  else
+    temp = curenv->prev_post_vertical_spacing;
+  curenv->prev_post_vertical_spacing = curenv->post_vertical_spacing;
+  curenv->post_vertical_spacing = temp;
+  skip_line();
+}
+
 void line_spacing()
 {
   int temp;
@@ -1180,9 +1215,14 @@ void no_break_control_char()
 
 void margin_character()
 {
-  charinfo *ci = get_optional_char();
+  while (tok.space())
+    tok.next();
+  charinfo *ci = tok.get_char();
   if (ci) {
+    // Call tok.next() only after making the node so that
+    // .mc \s+9\(br\s0 works.
     node *nd = curenv->make_char_node(ci);
+    tok.next();
     if (nd) {
       delete curenv->margin_character_node;
       curenv->margin_character_node = nd;
@@ -1194,6 +1234,7 @@ void margin_character()
     }
   }
   else {
+    check_missing_character();
     curenv->margin_character_flags &= ~MARGIN_CHARACTER_ON;
     if (curenv->margin_character_flags == 0) {
       delete curenv->margin_character_node;
@@ -1437,7 +1478,7 @@ void environment::output_line(node *n, hunits width)
     width += w;
     ++next_line_number;
   }
-  output(nn, !fill, vertical_spacing, line_spacing, width);
+  output(nn, !fill, vertical_spacing, total_post_vertical_spacing(), width);
 }
 
 void environment::start_line()
@@ -1586,7 +1627,8 @@ void environment::hyphenate_line()
   if (line == 0)
     return;
   hyphenation_type prev_type = line->get_hyphenation_type();
-  node **startp; for (startp = &line->next; *startp != 0; startp = &(*startp)->next) {
+  node **startp;
+  for (startp = &line->next; *startp != 0; startp = &(*startp)->next) {
     hyphenation_type this_type = (*startp)->get_hyphenation_type();
     if (prev_type == HYPHEN_BOUNDARY && this_type == HYPHEN_MIDDLE)
       break;
@@ -1626,7 +1668,8 @@ void environment::hyphenate_line()
       && !inhibit
       // this may not be right if we have extra space on this line
       && !((hyphenation_flags & HYPHEN_LAST_LINE)
-	   && curdiv->distance_to_next_trap() <= line_spacing*vertical_spacing)
+	   && (curdiv->distance_to_next_trap()
+	       <= vertical_spacing + total_post_vertical_spacing()))
       && i >= 4)
     hyphenate(sl, hyphenation_flags);
   while (forward != 0) {
@@ -1669,7 +1712,11 @@ void environment::possibly_break_line(int forced)
 {
   if (!fill || current_tab || current_field || dummy)
     return;
-  while (line != 0 && (forced || width_total > target_text_length)) {
+  while (line != 0
+	 && (forced
+	     // When a macro follows a paragraph in fill mode, the
+	     // current line should not be empty.
+	     || (width_total - line->width()) > target_text_length)) {
     hyphenate_line();
     breakpoint *bp = choose_breakpoint();
     if (bp == 0)
@@ -1705,7 +1752,8 @@ void environment::possibly_break_line(int forced)
     space_total = 0;
     width_total = 0;
     node *first_non_discardable = 0;
-    node *tem; for (tem = line; tem != 0; tem = tem->next)
+    node *tem;
+    for (tem = line; tem != 0; tem = tem->next)
       if (!tem->discardable())
 	first_non_discardable = tem;
     node *to_be_discarded;
@@ -1897,7 +1945,7 @@ void title()
     n = tem;
   }
   curenv->output_title(n, !curenv->fill, curenv->vertical_spacing,
-		       curenv->line_spacing, title_length);
+		       curenv->total_post_vertical_spacing(), title_length);
   curenv->hyphen_line_count = 0;
   tok.next();
 }  
@@ -2025,7 +2073,8 @@ tab_stops::~tab_stops()
 tab_type tab_stops::distance_to_next_tab(hunits curpos, hunits *distance)
 {
   hunits lastpos = 0;
-  tab *tem; for (tem = initial_list; tem && tem->pos <= curpos; tem = tem->next)
+  tab *tem;
+  for (tem = initial_list; tem && tem->pos <= curpos; tem = tem->next)
     lastpos = tem->pos;
   if (tem) {
     *distance = tem->pos - curpos;
@@ -2053,7 +2102,8 @@ const char *tab_stops::to_string()
   static int buf_size = 0;
   // figure out a maximum on the amount of space we can need
   int count = 0;
-  tab *p; for (p = initial_list; p; p = p->next)
+  tab *p;
+  for (p = initial_list; p; p = p->next)
     ++count;
   for (p = repeated_list; p; p = p->next)
     ++count;
@@ -2149,7 +2199,8 @@ void tab_stops::clear()
 
 void tab_stops::add_tab(hunits pos, tab_type type, int repeated)
 {
-  tab **p; for (p = repeated ? &repeated_list : &initial_list; *p; p = &(*p)->next)
+  tab **p;
+  for (p = repeated ? &repeated_list : &initial_list; *p; p = &(*p)->next)
     ;
   *p = new tab(pos, type);
 }
@@ -2282,7 +2333,8 @@ void environment::wrap_up_tab()
     field_spaces += tab_field_spaces;
   }
   if (tab_contents != 0) {
-    node *tem; for (tem = tab_contents; tem->next != 0; tem = tem->next)
+    node *tem;
+    for (tem = tab_contents; tem->next != 0; tem = tem->next)
       ;
     tem->next = line;
     line = tab_contents;
@@ -2390,7 +2442,8 @@ void environment::wrap_up_field()
 	    current_tab = TAB_NONE;
 	  }
 	  if (tab_contents != 0) {
-	    node *tem; for (tem = tab_contents; tem->next != 0; tem = tem->next)
+	    node *tem;
+	    for (tem = tab_contents; tem->next != 0; tem = tem->next)
 	      ;
 	    tem->next = line;
 	    line = tab_contents;
@@ -2660,6 +2713,7 @@ void init_env_requests()
 #endif  
   init_request("hys", hyphenation_space_request);
   init_request("hym", hyphenation_margin_request);
+  init_request("pvs", post_vertical_spacing);
   init_int_env_reg(".f", get_font);
   init_int_env_reg(".b", get_bold);
   init_hunits_env_reg(".i", get_indent);
@@ -2676,6 +2730,7 @@ void init_env_requests()
   init_int_env_reg(".psr", get_requested_point_size);
   init_int_env_reg(".u", get_fill);
   init_vunits_env_reg(".v", get_vertical_spacing);
+  init_vunits_env_reg(".pvs", get_post_vertical_spacing);
   init_hunits_env_reg(".w", get_prev_char_width);
   init_int_env_reg(".ss", get_space_size);
   init_int_env_reg(".sss", get_sentence_space_size);
@@ -2901,7 +2956,8 @@ void hyphen_trie::insert_pattern(const char *pat, int patlen, int *num)
 
 void hyphen_trie::hyphenate(const char *word, int len, int *hyphens)
 {
-  int j; for (j = 0; j < len+1; j++)
+  int j;
+  for (j = 0; j < len+1; j++)
     hyphens[j] = 0;
   for (j = 0; j < len - 1; j++) {
     h = hyphens + j;
@@ -2981,43 +3037,49 @@ void hyphenate(hyphen_list *h, unsigned flags)
 {
   if (!current_language)
     return;
-  while (h && h->hyphenation_code == 0)
-    h = h->next;
-  int len = 0;
-  char hbuf[WORD_MAX+2];
-  char *buf = hbuf + 1;
-  hyphen_list *tem; for (tem = h; tem && len < WORD_MAX; tem = tem->next) {
-    if (tem->hyphenation_code != 0)
-      buf[len++] = tem->hyphenation_code;
-    else
-      break;
-  }
-  if (len > 2) {
-    buf[len] = 0;
-    unsigned char *pos = (unsigned char *)current_language->exceptions.lookup(buf);
-    if (pos != 0) {
-      int j = 0;
-      int i = 1;
-      for (tem = h; tem != 0; tem = tem->next, i++)
-	if (pos[j] == i) {
-	  tem->hyphen = 1;
-	  j++;
-	}
+  while (h) {
+    while (h && h->hyphenation_code == 0)
+      h = h->next;
+    int len = 0;
+    char hbuf[WORD_MAX+2];
+    char *buf = hbuf + 1;
+    hyphen_list *tem;
+    for (tem = h; tem && len < WORD_MAX; tem = tem->next) {
+      if (tem->hyphenation_code != 0)
+	buf[len++] = tem->hyphenation_code;
+      else
+	break;
     }
-    else {
-      hbuf[0] = hbuf[len+1] = '.';
-      int num[WORD_MAX+3];
-      current_language->patterns.hyphenate(hbuf, len+2, num);
-      int i;
-      num[2] = 0;
-      if (flags & 8)
-	num[3] = 0;
-      if (flags & 4)
-	--len;
-      for (i = 2, tem = h; i < len && tem; tem = tem->next, i++)
-	if (num[i] & 1)
-	  tem->hyphen = 1;
+    hyphen_list *nexth = tem;
+    if (len > 2) {
+      buf[len] = 0;
+      unsigned char *pos
+	= (unsigned char *)current_language->exceptions.lookup(buf);
+      if (pos != 0) {
+	int j = 0;
+	int i = 1;
+	for (tem = h; tem != 0; tem = tem->next, i++)
+	  if (pos[j] == i) {
+	    tem->hyphen = 1;
+	    j++;
+	  }
+      }
+      else {
+	hbuf[0] = hbuf[len+1] = '.';
+	int num[WORD_MAX+3];
+	current_language->patterns.hyphenate(hbuf, len+2, num);
+	int i;
+	num[2] = 0;
+	if (flags & 8)
+	  num[3] = 0;
+	if (flags & 4)
+	  --len;
+	for (i = 2, tem = h; i < len && tem; tem = tem->next, i++)
+	  if (num[i] & 1)
+	    tem->hyphen = 1;
+      }
     }
+    h = nexth;
   }
 }
 

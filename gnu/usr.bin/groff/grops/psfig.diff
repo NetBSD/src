@@ -3,7 +3,7 @@ version of psfig in comp.sources.unix/Volume11.  After applying them,
 psfig should be recompiled with -DGROFF.  The resulting psfig will
 work only with groff, so you might want to install it under a
 different name.  The output of this psfig must be processed using the
-macros in the file ../macros/tmac.psfig.  These will automatically add
+macros in the file ../tmac/tmac.psfig.  These will automatically add
 the necessary PostScript code to the prologue output by grops.  Use of
 the `global' feature in psfig will result in non-conformant PostScript
 which will fail if processed by a page reversal program.  Note that

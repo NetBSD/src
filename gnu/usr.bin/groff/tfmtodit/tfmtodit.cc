@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 /* I have tried to incorporate the changes needed for TeX 3.0 tfm files,
 but I haven't tested them. */
@@ -652,14 +652,14 @@ struct {
   const char *ch;
   int i;
 } lig_chars[] = {
-  "f", -1,
-  "i", -1,
-  "l", -1,
-  "ff", -1,
-  "fi", -1,
-  "fl", -1,
-  "Fi", -1,
-  "Fl", -1,
+  { "f", -1 },
+  { "i", -1 },
+  { "l", -1 },
+  { "ff", -1 },
+  { "fi", -1 },
+  { "fl", -1 },
+  { "Fi", -1 },
+  { "Fl", -1 },
 };
 
 // Indices into lig_chars[].
@@ -672,11 +672,11 @@ struct {
   unsigned char c1, c2, res;
   const char *ch;
 } lig_table[] = {
-  CH_f, CH_f, CH_ff, "ff",
-  CH_f, CH_i, CH_fi, "fi",
-  CH_f, CH_l, CH_fl, "fl",
-  CH_ff, CH_i, CH_ffi, "ffi",
-  CH_ff, CH_l, CH_ffl, "ffl",
+  { CH_f, CH_f, CH_ff, "ff" },
+  { CH_f, CH_i, CH_fi, "fi" },
+  { CH_f, CH_l, CH_fl, "fl" },
+  { CH_ff, CH_i, CH_ffi, "ffi" },
+  { CH_ff, CH_l, CH_ffl, "ffl" },
   };
 
 static void usage();
@@ -758,7 +758,7 @@ int main(int argc, char **argv)
       printf("spacewidth %d\n", n*MULTIPLIER);
   }
   if (t.get_param(1, &n) && n != 0)
-    printf("slant %f\n", atan2(n/double(1<<20), 1.0)*180.0/M_PI);
+    printf("slant %f\n", atan2(n/double(1<<20), 1.0)*180.0/PI);
   int xheight;
   if (!t.get_param(5, &xheight))
     xheight = 0;
@@ -825,7 +825,8 @@ int main(int argc, char **argv)
       m[4] = g.get_left_adjustment(i);
       m[5] = g.get_right_adjustment(i);
       printf("%s\t%d", p->ch, m[0]*MULTIPLIER);
-      int j; for (j = int(sizeof(m)/sizeof(m[0])) - 1; j > 0; j--)
+      int j;
+      for (j = int(sizeof(m)/sizeof(m[0])) - 1; j > 0; j--)
 	if (m[j] != 0)
 	  break;
       for (k = 1; k <= j; k++)

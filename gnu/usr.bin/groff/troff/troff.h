@@ -16,10 +16,8 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-	$Id: troff.h,v 1.2 1993/08/02 17:45:43 mycroft Exp $
-*/
 
 #include <stdio.h>
 #include <ctype.h>
@@ -33,13 +31,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "assert.h"
 #include "device.h"
 
-#ifdef __GNUG__
-#define NO_RETURN volatile
-#else
-#define NO_RETURN
-#endif
-
-NO_RETURN void cleanup_and_exit(int n);
+void cleanup_and_exit(int n);
 
 typedef int units;
 
@@ -78,11 +70,12 @@ enum warning_type {
   WARN_INPUT = 040000,
   WARN_ESCAPE = 0100000,
   WARN_SPACE = 0200000,
-  WARN_FONT = 0400000
+  WARN_FONT = 0400000,
+  WARN_IG =  01000000
   // change WARN_TOTAL if you add more warning types
 };
 
-const int WARN_TOTAL = 0777777;
+const int WARN_TOTAL = 01777777;
 
 int warning(warning_type, const char *,
 	    const errarg & = empty_errarg,

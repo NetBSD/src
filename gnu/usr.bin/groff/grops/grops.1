@@ -1,17 +1,34 @@
-.\"	$Id: grops.1,v 1.3 1993/08/02 17:43:14 mycroft Exp $	-*- nroff -*-
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
 .\" Like TP, but if specified indent is more than half
 .\" the current line-length - indent, use the default indent.
 .de Tp
 .ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
 .el .TP "\\$1"
 ..
-.TH GROPS 1 "5 April 1993" "Groff Version 1.08"
+.TH GROPS 1 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 grops \- PostScript driver for groff
 .SH SYNOPSIS
 .B grops
 [
-.B \-glv
+.B \-glmv
 ] [
 .BI \-b n
 ] [
@@ -123,8 +140,11 @@ centered on the page.
 This option allows you to generate documents that can be printed
 both on letter (8.5\(mu11) paper and on A4 paper without change.
 .TP
-.BI \-l
+.B \-l
 Print the document in landscape format.
+.TP
+.B \-m
+Turn manual feed on for the document.
 .TP
 .BI \-F dir
 Search the directory
@@ -335,7 +355,7 @@ There are also some special fonts called
 .B SS
 and
 .BR S .
-Zapf Dingbats is avilable as
+Zapf Dingbats is available as
 .BR ZD
 and a reversed version of ZapfDingbats (with symbols pointing in the opposite
 direction) is available as
@@ -381,7 +401,15 @@ will draw a horizontal line one inch long.
 may make changes to the graphics state,
 but any changes will persist only to the
 end of the page.
-Any definitions will also persist only until the end of the page.
+A dictionary containing the definitions specified by the
+.B def
+and
+.B mdef
+will be on top of the dictionary stack.
+If your code adds definitions to this dictionary,
+you should allocate space for them using
+.BI \eX'ps\ mdef \ n '\fR.
+Any definitions will persist only until the end of the page.
 If you use the
 .B \eY
 escape sequence with an argument that names a macro,
@@ -446,7 +474,7 @@ definitions.
 needs to know how many definitions
 .I code
 contains
-so that it can create an apppropriately sized PostScript dictionary
+so that it can create an appropriately sized PostScript dictionary
 to contain them.
 .TP
 .BI \eX'ps:\ import\  file\ llx\ lly\ urx\ ury\ width\ \fR[\fP\ height\ \fR]\fP '
@@ -511,7 +539,8 @@ is run by the groff command) include a
 macro which allows a picture to be easily imported.
 This has the format
 .IP
-.BI .PSPIC\  file\  \fR[ width\  \fR[ height \fR]]
+\&\fB.PSPIC\fP [ \fB\-L\fP | \fB-R\fP | \fB\-I\fP \fIn\fP ]\ \"
+\fI\|file\fP [ \fIwidth\fP [ \fIheight\fP ]]
 .LP
 .I file
 is the name of the file containing the illustration;
@@ -533,6 +562,17 @@ wide
 and
 .I height
 high.
+By default, the graphic will be horizontally centered.
+The
+.BI \-L
+and
+.BI \-R
+cause the graphic to be left-aligned and right-aligned
+respectively.
+The
+.B \-I
+option causes the graphic to be indented by
+.IR n .
 .RE
 .TP
 .B \eX'ps:\ invis'
@@ -751,7 +791,7 @@ should be used.
 .SH FILES
 .Tp \w'\fB/usr/share/groff_font/devps/download'u+2n
 .B /usr/share/groff_font/devps/DESC
-Device desciption file.
+Device description file.
 .TP
 .BI /usr/share/groff_font/devps/ F
 Font description file for font

@@ -224,6 +224,7 @@ notelement nm
 notequal !=
 notequivalence ne
 notpropersuperset nc
+notsubset nb
 ntilde ~n
 numbersign #
 numbersign sh
@@ -430,7 +431,7 @@ bracketrighttp bracketrighttp
 bracketrightbt bracketrightbt
 bracketrightex bracketrightex
 radical sr
-radicalex rn
+radicalex radicalex
 approxequal ~=
 bracketlefttp lc
 bracketleftbt lf

@@ -15,19 +15,14 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
-
-#ifndef lint
-static char rcsid[] = "$Id: pipeline.c,v 1.3 1993/12/04 03:12:19 cgd Exp $";
-#endif /* not lint */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 /*
 Compile options are:
 
 -DWCOREFLAG=0200 (or whatever)
--DHAVE_VFORK_H
--Dvfork=fork
 -DHAVE_SYS_SIGLIST
+-DSYS_SIGLIST_DECLARED
 -DHAVE_UNISTD_H
 */
 
@@ -37,9 +32,6 @@ Compile options are:
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_VFORK_H
-#include <vfork.h>
 #endif
 
 #ifndef errno
@@ -94,13 +86,15 @@ extern char *strerror();
 #define P(parms) parms
 #else
 #define P(parms) ()
+#define const /* as nothing */
 #endif
 
 #define error c_error
-extern void error P((char *, char *, char *, char *));
+extern void error P((const char *, const char *, const char *, const char *));
+extern void c_fatal P((const char *, const char *, const char *, const char *));
 
-static void sys_fatal P((char *));
-static char *strsignal P((int));
+static void sys_fatal P((const char *));
+static const char *xstrsignal P((int));
 static char *itoa P((int));
 
 int run_pipeline(ncommands, commands)
@@ -120,7 +114,7 @@ int run_pipeline(ncommands, commands)
 	if (pipe(pdes) < 0)
 	  sys_fatal("pipe");
       }
-      pid = vfork();
+      pid = fork();
       if (pid < 0)
 	sys_fatal("fork");
       if (pid == 0) {
@@ -195,7 +189,7 @@ int run_pipeline(ncommands, commands)
 	  {
 	    error("%1: %2%3",
 		  commands[i][0],
-		  strsignal(sig),
+		  xstrsignal(sig),
 		  WCOREDUMP(status) ? " (core dumped)" : "");
 	    ret |= 2;
 	  }
@@ -217,7 +211,7 @@ int run_pipeline(ncommands, commands)
 }
 
 static void sys_fatal(s)
-     char *s;
+     const char *s;
 {
   c_fatal("%1: %2", s, strerror(errno), (char *)0);
 }
@@ -230,14 +224,16 @@ static char *itoa(n)
   return buf;
 }
 
-static char *strsignal(n)
+static const char *xstrsignal(n)
      int n;
 {
   static char buf[sizeof("Signal ") + 1 + sizeof(int)*3];
-#ifdef HAVE_SYS_SIGLIST
+#ifdef NSIG
+#ifdef SYS_SIGLIST_DECLARED
   if (n >= 0 && n < NSIG && sys_siglist[n] != 0)
-    return (char *) sys_siglist[n];
-#endif /* HAVE_SYS_SIGLIST */
+    return sys_siglist[n];
+#endif /* SYS_SIGLIST_DECLARED */
+#endif /* NSIG */
   sprintf(buf, "Signal %d", n);
   return buf;
 }

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 #include <string.h>
@@ -58,7 +58,8 @@ static map_init the_map_init;
 
 map_init::map_init()
 {
-  int i; for (i = 0; i < 256; i++)
+  int i;
+  for (i = 0; i < 256; i++)
     map[i] = csalnum(i) ? cmlower(i) : '\0';
   for (i = 0; i < 256; i++) {
     if (cslower(i)) {
@@ -132,7 +133,7 @@ const char *bmpattern::search(const char *buf, const char *end) const
     for (;;) {
       if (j == 0)
 	return s;
-      if (map[uchar(*--s)] != pattern[--j])
+      if (map[uchar(*--s)] != uchar(pattern[--j]))
 	break;
     }
     k++;
@@ -175,7 +176,8 @@ static const char *skip_field(const char *end, const char *p)
     if (*p++ == '\n') {
       if (p == end || *p == '%')
 	break;
-      const char *q; for (q = p; *q == ' ' || *q == '\t'; q++)
+      const char *q;
+      for (q = p; *q == ' ' || *q == '\t'; q++)
 	;
       if (*q == '\n')
 	break;
@@ -190,7 +192,8 @@ static const char *find_end(const char *bufend, const char *p)
     if (*p++ == '\n') {
       if (p == bufend)
 	break;
-      const char *q; for (q = p; *q == ' ' || *q == '\t'; q++)
+      const char *q;
+      for (q = p; *q == ' ' || *q == '\t'; q++)
 	;
       if (*q == '\n')
 	break;
@@ -262,7 +265,8 @@ int linear_searcher::check_match(const char *buf, const char *bufend,
 	  *start = p + 1;
 	return 1;
       }
-      const char *q; for (q = p - 1; *q == ' ' || *q == '\t'; q--)
+      const char *q;
+      for (q = p - 1; *q == ' ' || *q == '\t'; q--)
 	;
       if (*q == '\n') {
 	if (start)
@@ -301,13 +305,13 @@ int file_buffer::load(int fd, const char *filename)
   struct stat sb;
   if (fstat(fd, &sb) < 0)
     error("can't fstat `%1': %2", filename, strerror(errno));
-  else if ((sb.st_mode & S_IFMT) != S_IFREG)
+  else if (!S_ISREG(sb.st_mode))
     error("`%1' is not a regular file", filename);
   else {
     // We need one character extra at the beginning for an additional newline
     // used as a sentinel.  We get 4 instead so that the read buffer will be
     // word-aligned.  This seems to make the read slightly faster.  We also
-    // need one character at the end also for an addional newline used as a
+    // need one character at the end also for an additional newline used as a
     // sentinel.
     int size = int(sb.st_size);
     buffer = new char[size + 4 + 1];
@@ -392,7 +396,8 @@ int linear_searcher::search(const char *buffer, const char *bufend,
     if (!found)
       break;
     const char *refend = find_end(bufend, found + keys[0]->length());
-    int i; for (i = 1; i < nkeys; i++)
+    int i;
+    for (i = 1; i < nkeys; i++)
       if (!search_and_check(keys[i], refstart, refend))
 	break;
     if (i >= nkeys) {

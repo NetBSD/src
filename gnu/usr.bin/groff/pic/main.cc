@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "pic.h"
 
@@ -29,10 +29,14 @@ int zero_length_line_flag = 0;
 // Non-zero means we're using a groff driver.
 int driver_extension_flag = 1;
 int compatible_flag = 0;
+int safer_flag = 0;
 int command_char = '.';		// the character that introduces lines
 				// that should be passed through tranparently
 static int lf_flag = 1;		// non-zero if we should attempt to understand
 				// lines beginning with `.lf'
+
+// Non-zero means a parse error was encountered.
+static int had_parse_error = 0;
 
 void do_file(const char *filename);
 
@@ -273,8 +277,10 @@ void do_picture(FILE *fp)
     out->set_desired_width_height(wid, ht);
     out->set_args(start_line.contents());
     lex_init(new top_input(fp));
-    if (yyparse())
+    if (yyparse()) {
+      had_parse_error = 1;
       lex_error("giving up on this picture");
+    }
     parse_cleanup();
     lex_cleanup();
 
@@ -451,7 +457,8 @@ void do_whole_file(const char *filename)
       fatal("can't open `%1': %2", filename, strerror(errno));
   }
   lex_init(new file_input(fp, filename));
-  yyparse();
+  if (yyparse())
+    had_parse_error = 1;
   parse_cleanup();
   lex_cleanup();
 }
@@ -511,13 +518,16 @@ int main(int argc, char **argv)
   int whole_file_flag = 0;
   int fig_flag = 0;
 #endif
-  while ((opt = getopt(argc, argv, "T:CDtcvnxzpf")) != EOF)
+  while ((opt = getopt(argc, argv, "T:CDStcvnxzpf")) != EOF)
     switch (opt) {
     case 'C':
       compatible_flag = 1;
       break;
     case 'D':
     case 'T':
+      break;
+    case 'S':
+      safer_flag = 1;
       break;
     case 'f':
 #ifdef FIG_SUPPORT
@@ -606,6 +616,6 @@ int main(int argc, char **argv)
   delete out;
   if (ferror(stdout) || fflush(stdout) < 0)
     fatal("output error");
-  exit(0);
+  return had_parse_error;
 }
 

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 #include "troff.h"
@@ -68,6 +68,9 @@ static unsigned int hash_string(const char *p)
   return hc;
 }
 
+// Tell compiler that a variable is intentionally unused.
+inline void unused(void *) { }
+
 symbol::symbol(const char *p, int how)
 {
   if (p == 0 || *p == 0) {
@@ -82,7 +85,8 @@ symbol::symbol(const char *p, int how)
     table_used = 0;
   }
   unsigned int hc = hash_string(p);
-  const char **pp; for (pp  = table + hc % table_size; 
+  const char **pp;
+  for (pp = table + hc % table_size; 
        *pp != 0; 
        (pp == table ? pp = table + table_size - 1 : --pp))
     if (strcmp(p, *pp) == 0) {
@@ -96,7 +100,8 @@ symbol::symbol(const char *p, int how)
   if (table_used  >= table_size - 1 || table_used >= table_size*FULL_MAX) {
     const char **old_table = table;
     unsigned int old_table_size = table_size;
-    int i; for (i = 1; table_sizes[i] <= old_table_size; i++)
+    int i;
+    for (i = 1; table_sizes[i] <= old_table_size; i++)
       if (table_sizes[i] == 0)
 	fatal("too many symbols");
     table_size = table_sizes[i];
@@ -108,6 +113,7 @@ symbol::symbol(const char *p, int how)
 	 pp >= old_table;
 	 --pp) {
 	   symbol temp(*pp, 1); /* insert it into the new table */
+	   unused(&temp);
 	 }
     a_delete old_table;
     for (pp = table + hc % table_size;

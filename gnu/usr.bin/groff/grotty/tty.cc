@@ -16,12 +16,16 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "driver.h"
 
-#ifndef USHRT_MAX
-#define USHRT_MAX 65535
+#ifndef SHRT_MIN
+#define SHRT_MIN (-32768)
+#endif
+
+#ifndef SHRT_MAX
+#define SHRT_MAX 32767
 #endif
 
 #define TAB_WIDTH 8
@@ -98,7 +102,7 @@ class glyph {
   static glyph *free_list;
 public:
   glyph *next;
-  unsigned short hpos;
+  short hpos;
   unsigned char code;
   unsigned char mode;
   void *operator new(size_t);
@@ -175,12 +179,8 @@ void tty_printer::add_char(unsigned char c, int h, int v, unsigned char mode)
     fatal("horizontal position not a multiple of horizontal resolution");
 #endif
   int hpos = h / font::hor;
-  if (hpos < 0) {
-    error("character to the left of first column discarded");
-    return;
-  }
-  if (hpos > USHRT_MAX) {
-    error("character with ridiculously large horizontal position discarded");
+  if (hpos < SHRT_MIN || hpos > SHRT_MAX) {
+    error("character with ridiculous horizontal position discarded");
     return;
   }
   int vpos;
@@ -218,8 +218,9 @@ void tty_printer::add_char(unsigned char c, int h, int v, unsigned char mode)
   // characters before normal characters at each hpos, and otherwise
   // in order of occurrence.
 
-  glyph **pp; for (pp = lines + (vpos - 1); *pp; pp = &(*pp)->next)
-    if (int((*pp)->hpos) < hpos
+  glyph **pp;
+  for (pp = lines + (vpos - 1); *pp; pp = &(*pp)->next)
+    if ((*pp)->hpos < hpos
 	|| ((*pp)->hpos == hpos && (*pp)->draw_mode() >= g->draw_mode()))
       break;
 
@@ -270,7 +271,8 @@ void tty_printer::end_page(int page_length)
   if (page_length % font::vert != 0)
     error("vertical position at end of page not multiple of vertical resolution");
   int lines_per_page = page_length / font::vert;
-  int last_line; for (last_line = nlines; last_line > 0; last_line--)
+  int last_line;
+  for (last_line = nlines; last_line > 0; last_line--)
     if (lines[last_line - 1])
       break;
 #if 0
@@ -313,21 +315,23 @@ void tty_printer::end_page(int page_length)
 	if (!overstrike_flag)
 	  continue;
       }
-      if (hpos > int(p->hpos)) {
-	putchar('\b');
-	hpos--;
+      if (hpos > p->hpos) {
+	do {
+	  putchar('\b');
+	  hpos--;
+	} while (hpos > p->hpos);
       }
       else {
 	if (horizontal_tab_flag) {
 	  for (;;) {
 	    int next_tab_pos = ((hpos + TAB_WIDTH) / TAB_WIDTH) * TAB_WIDTH;
-	    if (next_tab_pos > int(p->hpos))
+	    if (next_tab_pos > p->hpos)
 	      break;
 	    putchar('\t');
 	    hpos = next_tab_pos;
 	  }
 	}
-	for (; hpos < int(p->hpos); hpos++)
+	for (; hpos < p->hpos; hpos++)
 	  putchar(' ');
       }
       assert(hpos == p->hpos);
@@ -428,7 +432,7 @@ int main(int argc, char **argv)
       do_file(argv[i]);
   }
   delete pr;
-  exit(0);
+  return 0;
 }
 
 static void usage()

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 // diversions
@@ -35,6 +35,8 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 int exit_started = 0;		// the exit process has started
 int done_end_macro = 0;		// the end macro (if any) has finished
 int seen_last_page_ejector = 0;	// seen the LAST_PAGE_EJECTOR cookie
+int last_page_number = 0;	// if > 0, the number of the last page
+				// specified with -o
 static int began_page_in_end_macro = 0;	// a new page was begun during the end macro
 
 static int last_post_line_extra_space = 0; // needed for \n(.a
@@ -52,16 +54,12 @@ diversion::diversion(symbol s)
 
 struct vertical_size {
   vunits pre_extra, post_extra, pre, post;
-  vertical_size(vunits vs, int ls);
+  vertical_size(vunits vs, vunits post_vs);
 };
 
-vertical_size::vertical_size(vunits vs, int ls)
-: pre_extra(V0), post_extra(V0), pre(vs)
+vertical_size::vertical_size(vunits vs, vunits post_vs)
+: pre_extra(V0), post_extra(V0), pre(vs), post(post_vs)
 {
-  if (ls > 1)
-    post = vs*(ls - 1);
-  else
-    post = V0;
 }
 
 void node::set_vertical_size(vertical_size *)
@@ -220,9 +218,9 @@ void macro_diversion::transparent_output(node *n)
 }
 
 void macro_diversion::output(node *nd, int retain_size,
-			     vunits vs, int ls, hunits width)
+			     vunits vs, vunits post_vs, hunits width)
 {
-  vertical_size v(vs, ls);
+  vertical_size v(vs, post_vs);
   while (nd != 0) {
     nd->set_vertical_size(&v);
     node *temp = nd;
@@ -241,7 +239,7 @@ void macro_diversion::output(node *nd, int retain_size,
     last_post_line_extra_space = v.post_extra.to_units();
   if (!retain_size) {
     v.pre = vs;
-    v.post = (ls > 1) ? vs*(ls - 1) : V0;
+    v.post = post_vs;
   }
   if (width > max_width)
     max_width = width;
@@ -330,21 +328,21 @@ vunits top_level_diversion::distance_to_next_trap()
 }
 
 void top_level_diversion::output(node *nd, int retain_size,
-				 vunits vs, int ls, hunits /*width*/)
+				 vunits vs, vunits post_vs, hunits /*width*/)
 {
   no_space_mode = 0;
   vunits next_trap_pos;
   trap *next_trap = find_next_trap(&next_trap_pos);
   if (before_first_page && begin_page()) 
     fatal("sorry, I didn't manage to begin the first page in time: use an explicit .br request");
-  vertical_size v(vs, ls);
+  vertical_size v(vs, post_vs);
   for (node *tem = nd; tem != 0; tem = tem->next)
     tem->set_vertical_size(&v);
   if (!v.post_extra.is_zero())
     last_post_line_extra_space = v.post_extra.to_units();
   if (!retain_size) {
     v.pre = vs;
-    v.post = (ls > 1) ? vs*(ls - 1) : V0;
+    v.post = post_vs;
   }
   vertical_position += v.pre;
   vertical_position += v.pre_extra;
@@ -446,7 +444,8 @@ trap::trap(symbol s, vunits n, trap *p)
 void top_level_diversion::add_trap(symbol nm, vunits pos)
 {
   trap *first_free_slot = 0;
-  trap **p; for (p = &page_trap_list; *p; p = &(*p)->next) {
+  trap **p;
+  for (p = &page_trap_list; *p; p = &(*p)->next) {
     if ((*p)->nm.is_null()) {
       if (first_free_slot == 0)
 	first_free_slot = *p;
@@ -512,7 +511,7 @@ void end_diversions()
   }
 }
 
-NO_RETURN void cleanup_and_exit(int exit_code)
+void cleanup_and_exit(int exit_code)
 {
   if (the_output) {
     the_output->trailer(topdiv->get_page_length());
@@ -533,6 +532,8 @@ int top_level_diversion::begin_page()
     if (!done_end_macro)
       began_page_in_end_macro = 1;
   }
+  if (last_page_number > 0 && page_number == last_page_number)
+    cleanup_and_exit(0);
   if (!the_output)
     init_output();
   ++page_count;
@@ -603,7 +604,10 @@ diversion::~diversion()
 void page_offset()
 {
   hunits n;
-  if (!has_arg() || !get_hunits(&n, 'v', topdiv->page_offset))
+  // The troff manual says that the default scaling indicator is v,
+  // but it is in fact m: v wouldn't make sense for a horizontally
+  // oriented request.
+  if (!has_arg() || !get_hunits(&n, 'm', topdiv->page_offset))
     n = topdiv->prev_page_offset;
   topdiv->prev_page_offset = topdiv->page_offset;
   topdiv->page_offset = n;

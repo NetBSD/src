@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,7 +242,8 @@ int main(int argc, char **argv)
     string path;
     int lineno = 1;
     for (;;) {
-      int c; for (c = getc(fp); c != '\n' && c != EOF; c = getc(fp)) {
+      int c;
+      for (c = getc(fp); c != '\n' && c != EOF; c = getc(fp)) {
 	if (c == '\0')
 	  error_with_file_and_line(foption, lineno,
 				   "nul character in pathname ignored");
@@ -286,7 +287,7 @@ int main(int argc, char **argv)
     fatal("can't unlink temporary index file: %1", strerror(errno));
 #endif /* not HAVE_RENAME */
   temp_index_file = 0;
-  exit(failed);
+  return failed;
 }
 
 static void usage()
@@ -700,8 +701,9 @@ static void write_hash_table()
   if (sizeof(table_entry) == sizeof(int))
     fwrite_or_die(hash_table, sizeof(int), hash_table_size, indxfp);
   else {
-    assert(0);
     // write it out word by word
+    for (int i = 0; i < hash_table_size; i++)
+      fwrite_or_die(&hash_table[i].count, sizeof(int), 1, indxfp);
   }
   fwrite_or_die(filenames.contents(), 1, filenames.length(), indxfp);
   if (fseek(indxfp, 0, 0) < 0)

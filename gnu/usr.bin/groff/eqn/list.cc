@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "eqn.h"
 #include "pbox.h"
@@ -174,7 +174,8 @@ int list_box::compute_metrics(int style)
 void list_box::compute_sublist_width(int n)
 {
   int total_spacing = 0;
-  int i; for (i = 1; i < n + 1 && i < list.len; i++)
+  int i;
+  for (i = 1; i < n + 1 && i < list.len; i++)
     total_spacing += compute_spacing(is_script, list.p[i-1]->spacing_type,
 				     list.p[i]->spacing_type);
   printf(".nr " TEMP_REG " %dM", total_spacing);

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "troff.h"
 #include "symbol.h"
@@ -134,6 +134,7 @@ protected:
   int slant;
 public:
   tfont_spec(symbol nm, int pos, font *, font_size, int, int);
+  tfont_spec(const tfont_spec &spec) { *this = spec; }
   tfont_spec plain();
   int operator==(const tfont_spec &);
   friend tfont *font_info::get_tfont(font_size fs, int, int, int);
@@ -172,8 +173,6 @@ inline int env_definite_font(environment *env)
 {
   return env->get_family()->make_definite(env->get_font());
 }
-
-static void invalidate_fontno(int n);
 
 /* font_info functions */
 
@@ -610,7 +609,8 @@ tfont::tfont(tfont_spec &spec) : tfont_spec(spec)
   next = tfont_list;
   tfont_list = this;
   tfont_spec plain_spec = plain();
-  tfont *p; for (p = tfont_list; p; p = p->next)
+  tfont *p;
+  for (p = tfont_list; p; p = p->next)
     if (*p == plain_spec) {
       plain_version = p;
       break;
@@ -622,7 +622,9 @@ tfont::tfont(tfont_spec &spec) : tfont_spec(spec)
 /* output_file */
 
 class real_output_file : public output_file {
+#ifndef POPEN_MISSING
   int piped;
+#endif
   int printing;
   virtual void really_transparent_char(unsigned char) = 0;
   virtual void really_print_line(hunits x, vunits y, node *n,
@@ -1176,6 +1178,7 @@ void output_file::trailer(vunits)
 real_output_file::real_output_file()
 : printing(0)
 {
+#ifndef POPEN_MISSING
   if (pipe_command) {
     if ((fp = popen(pipe_command, "w")) != 0) {
       piped = 1;
@@ -1184,6 +1187,7 @@ real_output_file::real_output_file()
     error("pipe open failed: %1", strerror(errno));
   }
   piped = 0;
+#endif /* not POPEN_MISSING */
   fp = stdout;
 }
 
@@ -1196,6 +1200,7 @@ real_output_file::~real_output_file()
     fp = 0;
     fatal("error writing output file");
   }
+#ifndef POPEN_MISSING
   if (piped) {
     int result = pclose(fp);
     fp = 0;
@@ -1211,7 +1216,9 @@ real_output_file::~real_output_file()
 	      pipe_command, exit_status);
     }
   }
-  else if (fclose(fp) < 0) {
+  else
+#endif /* not POPEN MISSING */
+  if (fclose(fp) < 0) {
     fp = 0;
     fatal("error closing output file");
   }
@@ -1306,10 +1313,44 @@ void suppress_output_file::really_transparent_char(unsigned char)
 
 /* glyphs, ligatures, kerns, discretionary breaks */
 
-class glyph_node : public node {
-  static glyph_node *free_list;
+class charinfo_node : public node {
 protected:
   charinfo *ci;
+public:
+  charinfo_node(charinfo *, node * = 0);
+  int ends_sentence();
+  int overlaps_vertically();
+  int overlaps_horizontally();
+};
+
+charinfo_node::charinfo_node(charinfo *c, node *x)
+: ci(c), node(x)
+{
+}
+
+int charinfo_node::ends_sentence()
+{
+  if (ci->ends_sentence())
+    return 1;
+  else if (ci->transparent())
+    return 2;
+  else
+    return 0;
+}
+
+int charinfo_node::overlaps_horizontally()
+{
+  return ci->overlaps_horizontally();
+}
+
+int charinfo_node::overlaps_vertically()
+{
+  return ci->overlaps_vertically();
+}
+
+class glyph_node : public charinfo_node {
+  static glyph_node *free_list;
+protected:
   tfont *tf;
 #ifdef STORE_WIDTH
   hunits wid;
@@ -1323,7 +1364,7 @@ public:
   node *copy();
   node *merge_glyph_node(glyph_node *);
   node *merge_self(node *);
-  inline hunits width();
+  hunits width();
   node *last_char_node();
   units size();
   void vertical_extent(vunits *, vunits *);
@@ -1337,9 +1378,6 @@ public:
   void zero_width_tprint(troff_output_file *);
   hyphen_list *get_hyphen_list(hyphen_list *ss = 0);
   node *add_self(node *, hyphen_list **);
-  int ends_sentence();
-  int overlaps_vertically();
-  int overlaps_horizontally();
   void ascii_print(ascii_output_file *);
   void asciify(macro *);
   int character_type();
@@ -1392,6 +1430,7 @@ public:
   void asciify(macro *);
   int same(node *);
   const char *type();
+  void vertical_extent(vunits *, vunits *);
 };
 
 class dbreak_node : public node {
@@ -1456,7 +1495,7 @@ void ligature_node::operator delete(void *p)
 }
 
 glyph_node::glyph_node(charinfo *c, tfont *t, node *x)
-     : ci(c), tf(t), node(x)
+: charinfo_node(c, x), tf(t)
 {
 #ifdef STORE_WIDTH
   wid = tf->get_width(ci);
@@ -1465,7 +1504,7 @@ glyph_node::glyph_node(charinfo *c, tfont *t, node *x)
 
 #ifdef STORE_WIDTH
 glyph_node::glyph_node(charinfo *c, tfont *t, hunits w, node *x)
-     : ci(c), tf(t), wid(w), node(x)
+: charinfo_node(c, x), tf(t), wid(w)
 {
 }
 #endif
@@ -1504,16 +1543,6 @@ node *glyph_node::add_self(node *n, hyphen_list **p)
   *p = (*p)->next;
   delete pp;
   return nn;
-}
-
-int glyph_node::overlaps_horizontally()
-{
-  return ci->overlaps_horizontally();
-}
-
-int glyph_node::overlaps_vertically()
-{
-  return ci->overlaps_vertically();
 }
 
 units glyph_node::size()
@@ -1607,16 +1636,6 @@ hunits glyph_node::left_italic_correction()
 hyphenation_type glyph_node::get_hyphenation_type()
 {
   return HYPHEN_MIDDLE;
-}
-
-int glyph_node::ends_sentence()
-{
-  if (ci->ends_sentence())
-    return 1;
-  else if (ci->transparent())
-    return 2;
-  else
-    return 0;
 }
 
 void glyph_node::ascii_print(ascii_output_file *ascii)
@@ -1739,6 +1758,17 @@ hunits kern_pair_node::subscript_correction()
   return n2->subscript_correction();
 }
 
+void kern_pair_node::vertical_extent(vunits *min, vunits *max)
+{
+  n1->vertical_extent(min, max);
+  vunits min2, max2;
+  n2->vertical_extent(&min2, &max2);
+  if (min2 < *min)
+    *min = min2;
+  if (max2 > *max)
+    *max = max2;
+}
+  
 node *kern_pair_node::add_discretionary_hyphen()
 {
   tfont *tf = n2->get_tfont();
@@ -2374,7 +2404,8 @@ void overstrike_node::overstrike(node *n)
   hunits w = n->width();
   if (w > max_width)
     max_width = w;
-  node **p; for (p = &list; *p; p = &(*p)->next)
+  node **p;
+  for (p = &list; *p; p = &(*p)->next)
     ;
   n->next = 0;
   *p = n;
@@ -2968,7 +2999,8 @@ void dbreak_node::split(int where, node **prep, node **postp)
     if (pre == 0)
       *prep = next;
     else {
-      node *tem; for (tem = pre; tem->next != 0; tem = tem->next)
+      node *tem;
+      for (tem = pre; tem->next != 0; tem = tem->next)
 	;
       tem->next = next;
       *prep = pre;
@@ -3054,8 +3086,7 @@ void special_node::tprint_end(troff_output_file *out)
 
 /* composite_node */
 
-class composite_node : public node {
-  charinfo *ci;
+class composite_node : public charinfo_node {
   node *n;
   tfont *tf;
 public:
@@ -3067,8 +3098,6 @@ public:
   units size();
   void tprint(troff_output_file *);
   hyphenation_type get_hyphenation_type();
-  int overlaps_horizontally();
-  int overlaps_vertically();
   void ascii_print(ascii_output_file *);
   void asciify(macro *);
   hyphen_list *get_hyphen_list(hyphen_list *tail);
@@ -3081,7 +3110,7 @@ public:
 };
 
 composite_node::composite_node(node *p, charinfo *c, tfont *t, node *x)
-: node(x), n(p), ci(c), tf(t)
+: charinfo_node(c, x), n(p), tf(t)
 {
 }
 
@@ -3131,16 +3160,6 @@ units composite_node::size()
 hyphenation_type composite_node::get_hyphenation_type()
 {
   return HYPHEN_MIDDLE;
-}
-
-int composite_node::overlaps_horizontally()
-{
-  return ci->overlaps_horizontally();
-}
-
-int composite_node::overlaps_vertically()
-{
-  return ci->overlaps_vertically();
 }
 
 void composite_node::asciify(macro *m)
@@ -3519,7 +3538,8 @@ void bracket_node::tprint(troff_output_file *out)
   if (list == 0)
     return;
   int npieces = 0;
-  node *tem; for (tem = list; tem; tem = tem->next)
+  node *tem;
+  for (tem = list; tem; tem = tem->next)
     ++npieces;
   vunits h = list->size();
   vunits totalh = h*npieces;
@@ -4306,7 +4326,7 @@ static int mount_font_no_translate(int n, symbol name, symbol external_name)
   else if (font_table[n] != 0)
     delete font_table[n];
   font_table[n] = new font_info(name, n, external_name, fm);
-  invalidate_fontno(n);
+  font_family::invalidate_fontno(n);
   return 1;
 }
 
@@ -4334,7 +4354,7 @@ void mount_style(int n, symbol name)
   else if (font_table[n] != 0)
     delete font_table[n];
   font_table[n] = new font_info(get_font_translation(name), n, NULL_SYMBOL, 0);
-  invalidate_fontno(n);
+  font_family::invalidate_fontno(n);
 }
 
 /* global functions */
@@ -4442,7 +4462,7 @@ font_family *lookup_family(symbol nm)
   return f;
 } 
 
-static void invalidate_fontno(int n)
+void font_family::invalidate_fontno(int n)
 {
   assert(n >= 0 && n < font_table_size);
   dictionary_iterator iter(family_dictionary);
@@ -4552,7 +4572,8 @@ void special_request()
 
 int next_available_font_position()
 {
-  int i; for (i = 1; i < font_table_size && font_table[i] != 0; i++)
+  int i;
+  for (i = 1; i < font_table_size && font_table[i] != 0; i++)
     ;
   return i;
 }

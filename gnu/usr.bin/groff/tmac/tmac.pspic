@@ -11,9 +11,24 @@
 .\}
 ..
 .de PSPIC
+.nr ps-offset-mode 0
+.if '\\$1'-L' \{\
+.	nr ps-offset-mode 1
+.	shift
+.\}
+.if '\\$1'-R' \{\
+.	nr ps-offset-mode 2
+.	shift
+.\}
+.if '\\$1'-I' \{\
+.	nr ps-offset-mode 3
+.	nr ps-offset (m;\\$2)
+.	shift 2
+.\}
 .br
 .sy echo .ps-bb `psbb \\$1` >/tmp/psbb\\n[$$]
 .so /tmp/psbb\\n[$$]
+.sy rm /tmp/psbb\\n[$$]
 .if \\n[ps-nargs]=4 \{\
 .	nr ps-wid (\\n[ps-urx]-\\n[ps-llx])
 .	nr ps-ht (\\n[ps-ury]-\\n[ps-lly])
@@ -21,11 +36,17 @@
 .	if \\n[ps-ht]<0 .nr ps-ht 0-\\n[ps-ht]
 .	ie \\n[.$]>=2 .nr ps-deswid (i;\\$2)
 .	el .nr ps-deswid \\n[.l]-\\n[.i]<?\\n[ps-wid]p
-.	ie \\n[.$]>=3 .nr ps-desht (i;\\$3)
-.	el .nr ps-desht \\n[ps-deswid]*1000+(\\n[ps-wid]/2)/\\n[ps-wid]\
+.	nr ps-desht \\n[ps-deswid]*1000+(\\n[ps-wid]/2)/\\n[ps-wid]\
 *\\n[ps-ht]+500/1000
+.	if \\n[.$]>=3&(\\n[ps-desht]>(i;0\\$3)) \{\
+.		nr ps-desht (i;\\$3)
+.		nr ps-deswid \\n[ps-desht]*1000+(\\n[ps-ht]/2)/\\n[ps-ht]\
+*\\n[ps-wid]+500/1000
+.	\}
 .	ne \\n[ps-desht]u+1v
-.	nr ps-offset \\n[.l]-\\n[.i]-\\n[ps-deswid]/2
+.       if \\n[ps-offset-mode]=0 .nr ps-offset \\n[.l]-\\n[.i]-\\n[ps-deswid]/2
+.       if \\n[ps-offset-mode]=1 .nr ps-offset 0
+.       if \\n[ps-offset-mode]=2 .nr ps-offset \\n[.l]-\\n[.i]-\\n[ps-deswid]
 .	ie \\n[.$]>=3 .ds ps-desht \\n[ps-desht]
 .	el .ds ps-desht \" empty
 \h'\\n[ps-offset]u'\
@@ -37,5 +58,4 @@
 .	br
 .	sp \\n[ps-desht]u
 .\}
-.sy rm /tmp/psbb\\n[$$]
 ..

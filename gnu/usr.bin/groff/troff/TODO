@@ -70,7 +70,7 @@ Request to set character slant.
 
 Provide some way to upcase or downcase strings.
 
-Support non-uniformly scaleable fonts. Perhaps associate a suffix with
+Support non-uniformly scalable fonts. Perhaps associate a suffix with
 a particular range of sizes.  eg
   sizesuffix .display 14-512
 Then is you ask for R at pointsize 16, groff will first look for
@@ -110,7 +110,7 @@ Better string-processing support (substring, length, search).
 Generalized ligatures.
 
 Provide some way for a macro to tell whether it was called with `'' or
-`.'.  This would be useful for implementing a tracing macro packge.
+`.'.  This would be useful for implementing a tracing macro package.
 
 Request to remove an environment. (Maintain a count of the references
 to the environment from the environment table, environment dictionary
@@ -130,3 +130,10 @@ copy mode.  Should we do the same?
 Number register giving name of end macro.
 
 More thorough range checking.
+
+Provide syntax for octal and hexadecimal numeric constants.  Perhaps
+o#100 and x#7f as per Scheme.  Or perhaps PostScript 16#7f.  Ambiguity
+between whether `c' is treated as digit or scaling indicator.
+
+Request to return from a macro (ie ignore the rest of the current
+input level).

@@ -16,10 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: table.h,v 1.3 1993/08/02 17:45:14 mycroft Exp $
-*/
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +60,7 @@ enum format_type {
   FORMAT_DOUBLE_HLINE
 };
 
-struct entry_format : entry_modifier {
+struct entry_format : public entry_modifier {
   format_type type;
 
   entry_format(format_type);
@@ -87,6 +84,7 @@ class table {
   stuff *stuff_list;
   horizontal_span *span_list;
   table_entry *entry_list;
+  table_entry **entry_list_tailp;
   table_entry ***entry;
   char **vline;
   char *row_is_all_lines;

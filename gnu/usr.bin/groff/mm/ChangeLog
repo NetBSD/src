@@ -1,7 +1,102 @@
+Tue Jan 10 07:51:37 1995 Jörgen Hägg (jh at axis.se)
+
+	* version 1.27
+	* Manual updated
+	* More bugs fixed in DS/DF
+	* added alias for :g
+	* LC can now be used without argument (as the manual says. :-)
+	* Register :R now supported (RS/RF)
+	* footnote line was printed even if there was no room for
+	  any footnotes. Fixed.
+	* Fixed 1C so that it can be used without page eject
+	* Added support for EOP (TPs twin)
+	* Hyphenation turned off by default. (Hy == 0)
+
+Fri Nov 4 08:14:50 1994 Jörgen Hägg (jh at axis.se)
+
+	* version 1.25
+	* DS/DF separated and several bugs fixed. Watch out for new though. :-)
+	* string DT was emptied by mistake in the previous version.
+	* RD made prettier.
+	* typo in AV and let@print-head fixed.
+
+Mon Oct 31 08:19:24 1994 Jörgen Hägg (jh at axis.se)
+
+	* version 1.24
+	* Bug fixed and format extended in .SG and .FC.
+	* date is always printed unless .ND without argument is used.
+	  (I wonder what's the right thing to do, this might change.)
+	* Swedish letter-standards implemented in tmac.mse.
+	* .ND can be used to turn off the date. (Empty argument)
+
+Mon Oct 31 08:14:09 1994 Jörgen Hägg (jh at axis.se)
+
+	* version 1.23
+	* An attempt to get in sync with RCS. This is the distributed
+	  version.
+
+Thu Oct 27 08:29:34 1994 Jörgen Hägg (jh at axis.se)
+
+	* version 1.22
+	* (version 1.21 lost... :-)
+	* Letter macros added!!
+	* The following macros are added:
+	* AV, FC, IA ,IE, LT, LO, NE, NS, SG, WA, WE
+	* nP also added.
+
+Tue Dec 14 16:26:36 1993 Joergen Haegg (jh at efd.lth.se)
+
+	* version 1.20
+	* spelling-corrections
+	* Makefile.sim updated to the correct version, and a uninstall
+	  target added.
+	* @cur-lib removed from tmac.m (obsolete)
+	* fixed check for references i .TC, .RP now resets the flag correctly.
+	* floating display should now be printed if there is space.
+	* first version using RCS. I've been avoiding version control until it
+	  became necessary.
+	* WC WD now works in two-column-mode.
+
+Tue Sep 7 08:37:00 1993 Jörgen Hägg (jh at efd.lth.se)
+
+	* version 1.19
+	* .lt is called in the header for .TP also.
+	* Variable Pgps added to control the header and footer point-size.
+	* Error-text printed with .APP removed.
+	* Error with .FG, .TB, .EC and .EX indentation fixed.
+	* header and footer line-length is not changed by MC or 2C.
+	* Default for page-length and page-offset is now taken from
+	  \n[.p] and \n[.o].
+	* Argument to .ab (abort) is supplied.
+	* Argument to .1C added.
+	* Argument to .PGFORM added.
+	* RP/RS/RF totally rewritten. Should work with 2C now.
+
+Fri Apr 23 10:37:25 1993 Joergen Haegg (jh at efd.lth.se)
+
+	* version 1.18
+	* Height of display is now more exactly calculated.
+	* tabs and blankspaces where wrong in .VERBON.
+	* error in manual for escape-character in VERBON.
+	* Makefile.sub: installed tmac.m as tmac.m and tmac.mse
+	* Installation of tmac.mse now supports TMAC_M.
+	* bug with N fixed.
+
+Mon Apr 5 09:36:01 1993 Joergen Haegg (jh at efd.lth.se)
+
+	* version 1.17
+	* MULB preserves size.
+	* bug in VERBON fixed, causing strange errors.
+	* section-page footer fixed.
+	* added support for numberregister S
+	* fixed bug with floating displays wich made floats to
+	  generate space on a page, but broke page anyway.
+	* end-of-page trap reinstalled.
+
 Mon Mar 29 10:53:13 1993 Joergen Haegg (jh at efd.lth.se)
 
 	* version 1.16
-	* MUL* now use the previus font and family.
+	* MUL* now use the previous font and family.
 	* extra blank page at end-of-text eliminated.
 
 Mon Mar 8 10:27:47 1993 Joergen Haegg (jh at efd.lth.se)

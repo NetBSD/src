@@ -11,6 +11,7 @@
 .char \(ru \D'l .5m 0'
 .char \(ul \v'.25m'\D'l .5m 0'\v'-.25m'
 .char \(br \v'.25m'\D'l 0 -1m'\v'.75m'
+.char \(rn \v'-.75m'\D'l .5m 0'\v'.75m'
 .char ~ \v'-.55m'\\s[\\n(.s/2u]\v'.2m'\(ti\v'-.2m'\s0\v'.55m'
 .char ^ \v'-.55m'\\s[\\n(.s/2u]\v'.3m'\(ha\v'-.3m'\s0\v'.55m'
 .if !c\(va .char \(va \o'\(ua\(da'
@@ -40,6 +41,6 @@
 .if !c\(rh .tr \(rh\(rA
 .if !c\(bq .tr \(bq,
 .if !c\(aq .tr \(aq'
-.if '\*(.T'X100' .char \(rn \h'-\w'\(sr'u'\(rn\h'\w'\(sr'u'
+.if '\*(.T'X100' .char \[radicalex] \h'-\w'\(sr'u'\[radicalex]\h'\w'\(sr'u'
 .if !\n(_C .mso tmac.pspic
 .cp \n(_C

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "pic.h"
 #include "ptable.h"
@@ -512,7 +512,8 @@ void object_list::append(object *obj)
 
 void object_list::wrap_up_block(object_list *ol)
 {
-  object *p; for (p = tail; p && p->type() != MARK_OBJECT; p = p->prev)
+  object *p;
+  for (p = tail; p && p->type() != MARK_OBJECT; p = p->prev)
     ;
   assert(p != 0);
   ol->head = p->next;
@@ -595,7 +596,8 @@ void graphic_object::add_text(text_item *t, int a)
 {
   aligned = a;
   int len = 0;
-  text_item *p; for (p = t; p; p = p->next)
+  text_item *p;
+  for (p = t; p; p = p->next)
     len++;
   if (len == 0)
     text = 0;
@@ -1341,7 +1343,8 @@ linear_object *object_spec::make_line(position *curpos, direction *dirp)
   // Absolutise all movements
   position endpos = startpos;
   int nsegments = 0;
-  segment *s; for (s = segment_list; s; s = s->next, nsegments++)
+  segment *s;
+  for (s = segment_list; s; s = s->next, nsegments++)
     if (s->is_absolute)
       endpos = s->pos;
     else {
@@ -1740,12 +1743,12 @@ place and follow the path through the place to place within the place.
 Note that `.A.B.C.sw' will work. */
 
 path::path(corner c)
-: label_list(0), crn(c)
+: label_list(0), crn(c), ypath(0)
 {
 }
 
 path::path(char *l, corner c)
-: crn(c)
+: crn(c), ypath(0)
 {
   label_list = new string_list(l);
 }
@@ -1757,6 +1760,7 @@ path::~path()
     label_list = label_list->next;
     delete tem;
   }
+  delete ypath;
 }
 
 void path::append(corner c)
@@ -1767,9 +1771,15 @@ void path::append(corner c)
 
 void path::append(char *s)
 {
-  string_list **p; for (p = &label_list; *p; p = &(*p)->next)
+  string_list **p;
+  for (p = &label_list; *p; p = &(*p)->next)
     ;
   *p = new string_list(s);
+}
+
+void path::set_ypath(path *p)
+{
+  ypath = p;
 }
 
 // return non-zero for success
@@ -1789,6 +1799,14 @@ int path::follow(const place &pl, place *result) const
     result->x = pos.x;
     result->y = pos.y;
     result->obj = 0;
+  }
+  if (ypath) {
+    place tem;
+    if (!ypath->follow(pl, &tem))
+      return 0;
+    result->y = tem.y;
+    if (result->obj != tem.obj)
+      result->obj = 0;
   }
   return 1;
 }

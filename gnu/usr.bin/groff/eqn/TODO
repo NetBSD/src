@@ -13,7 +13,7 @@ adjustments.
 
 Possibly generate .lf commands during compute_metrics phase.
 
-Consider whether there shuld be extra space at the side of piles.
+Consider whether there should be extra space at the side of piles.
 
 Provide scriptstyle displaystyle etc.
 
@@ -39,3 +39,11 @@ Smash.
 Provide a variant of vec that extends over the length of the accentee.
 
 Support vertical arrow delimiters.
+
+Make the following work:
+.EQ
+delim @@
+.EN
+.EQ @<-@
+some equation
+.EN

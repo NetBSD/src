@@ -25,12 +25,15 @@
  *   Display ditroff output in an X window
  */
 
+#ifndef SABER
 #ifndef lint
-static char rcsid[] = "$Id: xditview.c,v 1.2 1993/08/02 17:46:04 mycroft Exp $";
-#endif /* not lint */
+static char rcsid[] = "$XConsortium: xditview.c,v 1.17 89/12/10 17:05:08 rws Exp $";
+#endif /* lint */
+#endif /* SABER */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <X11/Xos.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -263,7 +266,7 @@ NewFile (name)
 char	*name;
 {
     Arg	    arg[2];
-    char    *n, *rindex ();
+    char    *n;
     FILE    *new_file;
     Boolean seek = 0;
 
@@ -292,7 +295,7 @@ char	*name;
     XtSetValues (dvi, arg, 2);
     if (hadFile || name[0] != '-' || name[1] != '\0') {
 	XtSetArg (arg[0], XtNtitle, name);
-	if (name[0] != '/' && (n = rindex (name, '/')))
+	if (name[0] != '/' && (n = strrchr (name, '/')))
 	    n = n + 1;
 	else
 	    n = name;

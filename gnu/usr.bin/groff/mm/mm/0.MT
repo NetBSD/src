@@ -1,4 +1,5 @@
 .\"------------
+.\" $Id: 0.MT,v 1.2 1996/08/13 07:06:46 explorer Exp $
 .\" Cover sheet. Memorandum type 0-3 and "string".
 .\"------------
 .if !r Au .nr Au 1
@@ -76,6 +77,7 @@ TM
 .de cov@print-date
 .MOVE 4.8c 13.3c
 .S 8
+.nf
 \\$1:
 .br
 .S
@@ -83,6 +85,7 @@ TM
 .in 0.8c
 .B "\\*[cov*new-date]"
 .br
+.fi
 .PGFORM
 ..
 .\"------------

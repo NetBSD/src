@@ -15,7 +15,7 @@
 .\"
 .\"You should have received a copy of the GNU General Public License along
 .\"with groff; see the file COPYING.  If not, write to the Free Software
-.\"Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+.\"Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
 .\" -rC1 => number pages continuously, rather than start each at 1
 .\" -rD1 => double-sided printing, ie different odd and even page footers
@@ -224,12 +224,13 @@
 .in \\n[an-margin]u+\\n[an-prevailing-indent]u
 .ti \\n[an-margin]u
 ..
+.ds an-empty \" this is referenced to avoid looping on eg .RB ( \\ )
 .de RI
 .if \\n[.$] \{\
 .	ds an-result \&\\$1
 .	shift
 .	while \\n[.$]>=2 \{\
-.		as an-result \,\fI\\$1\fR\/\\$2
+.		as an-result \,\fI\\$1\fR\/\\$2\\*[an-empty]
 .		shift 2
 .	\}
 .	if \\n[.$] .as an-result \,\fI\\$1\fR
@@ -253,7 +254,7 @@
 .	ds an-result \&\fI\\$1
 .	shift
 .	while \\n[.$]>=2 \{\
-.		as an-result \/\\fB\\$1\fI\,\\$2
+.		as an-result \/\\fB\\$1\fI\,\\$2\\*[an-empty]
 .		shift 2
 .	\}
 .	if \\n[.$] .as an-result \/\\fB\\$1
@@ -266,7 +267,7 @@
 .	ds an-result \&\fB\\$1
 .	shift
 .	while \\n[.$]>=2 \{\
-.		as an-result \,\fI\\$1\fB\/\\$2
+.		as an-result \,\fI\\$1\fB\/\\$2\\*[an-empty]
 .		shift 2
 .	\}
 .	if \\n[.$] .as an-result \,\fI\\$1
@@ -277,7 +278,7 @@
 .de RB
 .ds an-result \&
 .while \\n[.$]>=2 \{\
-.	as an-result \fR\\$1\fB\\$2
+.	as an-result \fR\\$1\fB\\$2\\*[an-empty]
 .	shift 2
 .\}
 .if \\n[.$] .as an-result \fR\\$1
@@ -287,7 +288,7 @@
 .de BR
 .ds an-result \&
 .while \\n[.$]>=2 \{\
-.	as an-result \fB\\$1\fR\\$2
+.	as an-result \fB\\$1\fR\\$2\\*[an-empty]
 .	shift 2
 .\}
 .if \\n[.$] .as an-result \fB\\$1

@@ -15,7 +15,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 %{
 #include "pic.h"
 #include "ptable.h"
@@ -345,7 +345,10 @@ placeless_element:
 	  DELIMITED
 		{
 		  delim_flag = 0;
-		  system($3);
+		  if (safer_flag)
+		    lex_error("unsafe to run command `%1'", $3);
+		  else
+		    system($3);
 		  a_delete $3;
 		}
 	| COPY TEXT
@@ -940,7 +943,8 @@ object_spec:
 	| object_spec text   %prec TEXT
 		{
 		  $$ = $1;
-		  text_item **p; for (p = & $$->text; *p; p = &(*p)->next)
+		  text_item **p;
+		  for (p = & $$->text; *p; p = &(*p)->next)
 		    ;
 		  *p = new text_item($2.str, $2.filename, $2.lineno);
 		}
@@ -948,7 +952,8 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    text_item *p; for (p = $$->text; p->next; p = p->next)
+		    text_item *p;
+		    for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.h = LEFT_ADJUST;
 		  }
@@ -957,7 +962,8 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    text_item *p; for (p = $$->text; p->next; p = p->next)
+		    text_item *p;
+		    for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.h = RIGHT_ADJUST;
 		  }
@@ -966,7 +972,8 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    text_item *p; for (p = $$->text; p->next; p = p->next)
+		    text_item *p;
+		    for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.v = ABOVE_ADJUST;
 		  }
@@ -975,7 +982,8 @@ object_spec:
 		{
 		  $$ = $1;
 		  if ($$->text) {
-		    text_item *p; for (p = $$->text; p->next; p = p->next)
+		    text_item *p;
+		    for (p = $$->text; p->next; p = p->next)
 		      ;
 		    p->adj.v = BELOW_ADJUST;
 		  }
@@ -1162,7 +1170,8 @@ nth_primitive:
 	ordinal object_type
 		{
 		  int count = 0;
-		  object *p; for (p = olist.head; p != 0; p = p->next)
+		  object *p;
+		  for (p = olist.head; p != 0; p = p->next)
 		    if (p->type() == $2 && ++count == $1) {
 		      $$ = p;
 		      break;
@@ -1176,7 +1185,8 @@ nth_primitive:
 	| optional_ordinal_last object_type
 		{
 		  int count = 0;
-		  object *p; for (p = olist.tail; p != 0; p = p->prev)
+		  object *p;
+		  for (p = olist.tail; p != 0; p = p->prev)
 		    if (p->type() == $2 && ++count == $1) {
 		      $$ = p;
 		      break;
@@ -1245,6 +1255,11 @@ path:
 	relative_path
 		{
 		  $$ = $1;
+		}
+	| '(' relative_path ',' relative_path ')'
+		{
+		  $$ = $2;
+		  $$->set_ypath($4);
 		}
 	/* The rest of these rules are a compatibility sop. */
 	| ORDINAL LAST object_type relative_path
@@ -1524,28 +1539,28 @@ static struct {
   double val;
   int scaled;		     // non-zero if val should be multiplied by scale
 } defaults_table[] = {
-  "arcrad", .25, 1,
-  "arrowht", .1, 1,
-  "arrowwid", .05, 1,
-  "circlerad", .25, 1,
-  "boxht", .5, 1,
-  "boxwid", .75, 1,
-  "boxrad", 0.0, 1,
-  "dashwid", .05, 1,
-  "ellipseht", .5, 1,
-  "ellipsewid", .75, 1,
-  "moveht", .5, 1,
-  "movewid", .5, 1,
-  "lineht", .5, 1,
-  "linewid", .5, 1,
-  "textht", 0.0, 1,
-  "textwid", 0.0, 1,
-  "scale", 1.0, 0,
-  "linethick", -1.0, 0,		// in points
-  "fillval", .5, 0,
-  "arrowhead", 1.0, 0,
-  "maxpswid", 8.5, 0,
-  "maxpsht", 11.0, 0,
+  { "arcrad", .25, 1 },
+  { "arrowht", .1, 1 },
+  { "arrowwid", .05, 1 },
+  { "circlerad", .25, 1 },
+  { "boxht", .5, 1 },
+  { "boxwid", .75, 1 },
+  { "boxrad", 0.0, 1 },
+  { "dashwid", .05, 1 },
+  { "ellipseht", .5, 1 },
+  { "ellipsewid", .75, 1 },
+  { "moveht", .5, 1 },
+  { "movewid", .5, 1 },
+  { "lineht", .5, 1 },
+  { "linewid", .5, 1 },
+  { "textht", 0.0, 1 },
+  { "textwid", 0.0, 1 },
+  { "scale", 1.0, 0 },
+  { "linethick", -1.0, 0 },		// in points
+  { "fillval", .5, 0 },
+  { "arrowhead", 1.0, 0 },
+  { "maxpswid", 8.5, 0 },
+  { "maxpsht", 11.0, 0 },
 };
 
 place *lookup_label(const char *label)

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
      
 #include "refer.h"
 #include "refid.h"
@@ -54,7 +54,8 @@ reference::reference(const char *start, int len, reference_id *ridp)
 : no(-1), field(0), nfields(0), h(0), merged(0), label_ptr(0),
   computed_authors(0), last_needed_author(-1), nauthors(-1)
 {
-  int i; for (i = 0; i < 256; i++)
+  int i;
+  for (i = 0; i < 256; i++)
     field_index[i] = NULL_FIELD_INDEX;
   if (ridp)
     rid = *ridp;
@@ -199,7 +200,8 @@ void reference::insert_field(unsigned char c, string &s)
   string *old_field = field;
   field = new string[nfields + 1];
   int pos = 0;
-  int i; for (i = 0; i < int(c); i++)
+  int i;
+  for (i = 0; i < int(c); i++)
     if (field_index[i] != NULL_FIELD_INDEX)
       pos++;
   for (i = 0; i < pos; i++)
@@ -222,7 +224,8 @@ void reference::delete_field(unsigned char c)
     return;
   string *old_field = field;
   field = new string[nfields - 1];
-  int i; for (i = 0; i < int(field_index[c]); i++)
+  int i;
+  for (i = 0; i < int(field_index[c]); i++)
     field[i].move(old_field[i]);
   for (i = field_index[c]; i < nfields - 1; i++)
     field[i].move(old_field[i + 1]);
@@ -330,7 +333,8 @@ void sortify_title(const char *s, int len, string &key)
 	 a < ae;
 	 a = strchr(a, '\0') + 1)
       if (first_word_len == strlen(a)) {
-	int j; for (j = 0; j < first_word_len; j++)
+	int j;
+	for (j = 0; j < first_word_len; j++)
 	  if (a[j] != cmlower(s[j]))
 	    break;
 	if (j >= first_word_len) {
@@ -395,7 +399,8 @@ void sortify_label(const char *s, int len, string &key)
 {
   const char *end = s + len;
   for (;;) {
-    const char *ptr; for (ptr = s;
+    const char *ptr;
+    for (ptr = s;
 	 ptr < end && *ptr != SORT_SUB_SEP && *ptr != SORT_SUB_SUB_SEP;
 	 ptr++)
       ;
@@ -692,7 +697,8 @@ int join_fields(string &f)
   const char *ptr = f.contents();
   int len = f.length();
   int nfield_seps = 0;
-  int j; for (j = 0; j < len; j++)
+  int j;
+  for (j = 0; j < len; j++)
     if (ptr[j] == FIELD_SEPARATOR)
       nfield_seps++;
   if (nfield_seps == 0)
@@ -831,8 +837,18 @@ void reference::output(FILE *fp)
       }
       if (i == 'P') {
 	int multiple_pages = 0;
-	if (f.length() > 0 && memchr(f.contents(), '-', f.length()) != 0)
-	  multiple_pages = 1;
+	const char *s = f.contents();
+	const char *end = f.contents() + f.length();
+	for (;;) {
+	  const char *token_start = s;
+	  if (!get_token(&s, end))
+	    break;
+	  const token_info *ti = lookup_token(token_start, s);
+	  if (ti->is_hyphen() || ti->is_range_sep()) {
+	    multiple_pages = 1;
+	    break;
+	  }
+	}
 	fprintf(fp, ".nr [P %d\n", multiple_pages);
       }
       else if (i == 'E')

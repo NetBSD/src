@@ -1,9 +1,5 @@
 /* device.c */
 
-#ifndef lint
-static char rcsid[] = "$Id: device.c,v 1.2 1993/08/02 17:45:57 mycroft Exp $";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <ctype.h>
 
@@ -16,6 +12,10 @@ static char rcsid[] = "$Id: device.c,v 1.2 1993/08/02 17:45:57 mycroft Exp $";
 #define FONTPATH "/usr/local/lib/groff/font:/usr/local/lib/font:/usr/lib/font"
 #endif
 
+#ifndef isascii
+#define isascii(c) (1)
+#endif
+
 extern void exit();
 extern char *strtok(), *strchr();
 extern char *getenv();
@@ -26,9 +26,11 @@ searching for device and font description files. */
 
 #define WS " \t\r\n"
 
+#ifndef INT_MIN
 /* Minimum and maximum values a `signed int' can hold.  */
 #define INT_MIN (-INT_MAX-1)
 #define INT_MAX 2147483647
+#endif
 
 #define CHAR_TABLE_SIZE 307
 
@@ -311,7 +313,7 @@ char *canonicalize_name(s)
 	int n;
 
 	for (p = s + 4; *p; p++)
-	    if (!isascii(*p) || !isdigit(*p))
+	    if (!isascii(*p) || !isdigit((unsigned char)*p))
 		return s;
 	n = atoi(s + 4);
 	if (n >= 0 && n <= 0xff) {
