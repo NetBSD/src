@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.233 2002/03/10 02:54:57 augustss Exp $
+$NetBSD: usbdevs,v 1.234 2002/03/10 02:58:14 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -294,6 +294,7 @@ vendor PORTSMITH	0x095a	Portsmith
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
+vendor INTERSIL		0x09aa	Intersil
 vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
