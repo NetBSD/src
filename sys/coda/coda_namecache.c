@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.4 1998/09/15 02:02:58 rvb Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.5 1998/09/25 15:01:12 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,11 @@
 /*
  * HISTORY
  * $Log: coda_namecache.c,v $
+ * Revision 1.5  1998/09/25 15:01:12  rvb
+ * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
+ * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
+ * make coda an lkm.
+ *
  * Revision 1.4  1998/09/15 02:02:58  rvb
  * Final piece of rename cfs->coda
  *
@@ -227,6 +232,10 @@
 #include <coda/cnode.h>
 #include <coda/coda_namecache.h>
 
+#ifdef	DEBUG
+#include <coda/coda_vnops.h>
+#endif
+
 #ifndef insque
 #include <sys/systm.h>
 #endif /* insque */
@@ -278,7 +287,9 @@ coda_nc_init(void)
     
     bzero(&coda_nc_stat, (sizeof(struct coda_nc_statistics)));
 
+#ifdef	DIAGNOSTIC
     printf("CODA NAME CACHE: CACHE %d, HASH TBL %d\n", CODA_NC_CACHESIZE, CODA_NC_HASHSIZE);
+#endif
     CODA_ALLOC(coda_nc_heap, struct coda_cache *, TOTAL_CACHE_SIZE);
     CODA_ALLOC(coda_nc_hash, struct coda_hash *, TOTAL_HASH_SIZE);
     

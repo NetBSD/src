@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,11 @@
 /*
  * HISTORY
  * $Log: coda_vfsops.c,v $
+ * Revision 1.5  1998/09/25 15:01:13  rvb
+ * Conditionalize "stray" printouts under DIAGNOSTIC and DEBUG.
+ * Make files compile if DEBUG is on (from  Alan Barrett).  Finally,
+ * make coda an lkm.
+ *
  * Revision 1.4  1998/09/15 02:03:00  rvb
  * Final piece of rename cfs->coda
  *
@@ -185,7 +190,11 @@
  * 
  */ 
 
+#ifdef	_LKM
+#define	NVCODA 4
+#else
 #include <vcoda.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
