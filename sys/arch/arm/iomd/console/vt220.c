@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: vt220.c,v 1.2 2002/10/05 17:16:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -90,6 +90,8 @@ char console_proc[41];	/* Is this debugging ? */
 
 extern struct vconsole *vconsole_master;
 
+extern void sysbeep(int, int);	/* XXX elsewhere ? */
+
 static int default_beepstate = 0;
 
 #define CDATA struct vt220_info *cdata = (struct vt220_info *)vc->data
@@ -97,13 +99,64 @@ static int default_beepstate = 0;
 struct vt220_info master_termdata_store;
 struct vt220_info *master_termdata = &master_termdata_store;
 
-int do_render __P(( char /*c*/, struct vconsole */*vc*/ ));
-void do_render_noscroll __P(( char /*c*/, struct vconsole */*vc*/ ));
-void do_scrollcheck __P(( struct vconsole */*vc*/ ));
-void vt_ris __P((struct vconsole */*vc*/));
+int do_render(char, struct vconsole *);
+void do_render_noscroll(char, struct vconsole *);
+void do_scrollcheck(struct vconsole *);
+int mapped_cls(struct vconsole *);
+void do_scrollup(struct vconsole *);
+void do_scrolldown(struct vconsole *);
+void vt_ris(struct vconsole *);
 #if defined(DIAGNOSTIC) && NQMS > 0
-void qms_console_freeze __P((void));	/* XXX */
+void qms_console_freeze(void);	/* XXX */
 #endif /* DIAGNOSTIC && NQMS */
+
+void clr_params(struct vt220_info *);
+void respond(struct vconsole *);
+
+int vt220_init(struct vconsole *);
+int vt220_putstring(char *, int, struct vconsole *);
+int vt220_swapin(struct vconsole *);
+int vt220_swapout(struct vconsole *);
+int vt220_sleep(struct vconsole *);
+int vt220_wake(struct vconsole *);
+int vt220_scrollback(struct vconsole *);
+int vt220_scrollforward(struct vconsole *);
+int vt220_scrollbackend(struct vconsole *);
+int vt220_debugprint(struct vconsole *);
+int vt220_modechange(struct vconsole *);
+int vt220_attach(struct vconsole *, struct device *, struct device *, void *);
+
+void vt_curadr(struct vconsole *);
+void vt_reset_dec_priv_qm(struct vconsole *);
+void vt_sc(struct vconsole *);
+void vt_rc(struct vconsole *);
+void vt_clreol(struct vconsole *);
+void vt_ind(struct vconsole *);
+void vt_nel(struct vconsole *);
+void vt_ri(struct vconsole *);
+int vt_sel(struct vconsole *);
+void vt_cuu(struct vconsole *);
+void vt_cub(struct vconsole *);
+void vt_da(struct vconsole *);
+void vt_str(struct vconsole *);
+void vt_ris(struct vconsole *);
+void vt_cud(struct vconsole *);
+void vt_tst(struct vconsole *);
+void vt_il(struct vconsole *);
+void vt_ic(struct vconsole *);
+void vt_dch(struct vconsole *);
+void vt_dl(struct vconsole *);
+void vt_stbm(struct vconsole *);
+void vt_dsr(struct vconsole *);
+void vt_su(struct vconsole *);
+void vt_set_dec_priv_qm(struct vconsole *);
+void vt_keyappl(struct vconsole *);
+void vt_clrtab(struct vconsole *);
+void vt_cuf(struct vconsole *);
+void vt_sgr(struct vconsole *);
+void vt_clreos(struct vconsole *);
+void vt_set_ansi(struct vconsole *);
+void vt_reset_ansi(struct vconsole *);
 
 void
 clr_params(cdata)
@@ -308,8 +361,6 @@ vt_curadr(vc)
 }
     }
 }
-
-extern void sysbeep __P((int pitch, int period));	/* XXX elsewhere ? */
 
 void
 vt_reset_dec_priv_qm(vc)
@@ -1771,11 +1822,6 @@ TERMTYPE_PUTSTRING(string, length, vc)
 		vc->CURSORUPDATE(vc);
 #endif
 	return 0;
-}
-
-void
-console_debug()
-{
 }
 
 int
