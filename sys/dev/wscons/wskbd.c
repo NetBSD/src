@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.50 2001/10/25 14:46:41 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.51 2001/10/26 20:36:27 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.50 2001/10/25 14:46:41 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.51 2001/10/26 20:36:27 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -688,10 +688,13 @@ wskbd_mux_open(struct wsevsrc *me, struct wseventvar *evp)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)me;
 
+	if (sc->sc_dying)
+		return (EIO);
+
 	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
-	return wskbd_do_open(sc, evp);
+	return (wskbd_do_open(sc, evp));
 }
 #endif
 
@@ -730,7 +733,6 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	evar = &sc->sc_base.me_evar;
 	wsevent_init(evar);
-	sc->sc_base.me_evp = evar;
 	evar->io = p;
 
 	error = wskbd_do_open(sc, evar);
@@ -749,8 +751,7 @@ wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
 	sc->sc_base.me_evp = evp;
 	sc->sc_translating = 0;
 
-	wskbd_enable(sc, 1);
-	return (0);
+	return (wskbd_enable(sc, 1));
 }
 
 int
@@ -766,7 +767,7 @@ wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
-	wskbd_enable(sc, 0);
+	(void)wskbd_enable(sc, 0);
 	wsevent_fini(evar);
 
 	return (0);
@@ -780,7 +781,7 @@ wskbd_mux_close(struct wsevsrc *me)
 
 	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
-	wskbd_enable(sc, 0);
+	(void)wskbd_enable(sc, 0);
 
 	return (0);
 }
