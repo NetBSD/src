@@ -64,6 +64,24 @@ in the normal tabstop positions of
 every eight characters.
 \*(Es
 .Ds
+.Fn addchstr "chtype *str" \(dg
+.De
+Add the characters and attributes in the string pointed to by
+.Vn str
+on the window at the current \*y.
+\*(Es
+In this case, it will put on as much as it can.
+.Ds
+.Fn addchnstr "chtype *str" "int len" \(dg
+.De
+Add no more than
+.Vn len
+characters and attributes of the string pointed to by
+.Vn str
+on the window at the current \*y.
+\*(Es
+In this case, it will put on as much as it can.
+.Ds
 .Fn addstr "char *str" \(dg
 .De
 Add the string pointed to by
@@ -902,6 +920,22 @@ Moves the cursor to the position
 and then adds a character in the same manner as
 .Fn addch .
 .Ds
+.Fn mvaddchstr "int y" "int x" "chtype *str" \(dg
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then adds characters and attributes in the same manner as
+.Fn addchstr .
+.Ds
+.Fn mvaddchnstr "int y" "int x" "chtype *str" \(dg
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then adds characters and attributes in the same manner as
+.Fn addchnstr .
+.Ds
 .Fn mvaddstr "int y" "int x" "char *str" \(dg
 .De
 Moves the cursor to the position
@@ -1609,6 +1643,8 @@ specification of a window, rather than the use of the default
 .Ds
 .Fn waddbytes "WINDOW *win" "char* str" "int len"
 .Fn waddch "WINDOW *win" "chtype ch"
+.Fn waddchnstr "WINDOW *win" "chtype *str" "int len"
+.Fn waddchstr "WINDOW *win" "chtype *str" "int len"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
 .Fn waddstr "WINDOW *win" "char *str"
 .Fn wattroff "WINDOW *win" "int attr"
@@ -1647,6 +1683,8 @@ specification of a window, rather than the use of the default
 .Fn wunderscore "WINDOW *win"
 .Fn wvline "WINDOW *win" "chtype ch" "int count"
 .Fn mvwaddch "WINDOW *win" "int y" "int x" "chtype ch"
+.Fn mvwaddchstr "WINDOW *win" "int y" "int x" "chtype *str" \(dg
+.Fn mvwaddchnstr "WINDOW *win" "int y" "int x" "chtype *str" \(dg
 .Fn mvwaddnstr "WINDOW *win" "int y" "int x" "char *str" "int len"
 .Fn mvwaddstr "WINDOW *win" "int y" "int x" "char *str"
 .Fn mvwgetnstr "WINDOW *win" "int y" "int x" "char *str" "int len"

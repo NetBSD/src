@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.46 2003/05/21 06:57:08 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.47 2003/05/21 21:19:52 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,8 @@ must be called before any of the other routines that deal with color are used.
 .Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
 .It Sy "Function Name" Ta Sy "Manual Page Name"
 .It addch Ta Xr curses_addch 3
+.It addchnstr Ta Xr curses_addchstr 3
+.It addchstr Ta Xr curses_addchstr 3
 .It addstr Ta Xr curses_addstr 3
 .It addnstr Ta Xr curses_addstr 3
 .It assume_default_colors Ta Xr curses_default_colors 3
@@ -172,6 +174,8 @@ must be called before any of the other routines that deal with color are used.
 .It meta Ta Xr curses_tty 3
 .It move Ta Xr curses_cursor 3
 .It mvaddch Ta Xr curses_addch 3
+.It mvaddchnstr Ta Xr curses_addchstr 3
+.It mvaddchstr Ta Xr curses_addchstr 3
 .It mvaddstr Ta Xr curses_addstr 3
 .It mvaddnstr Ta Xr curses_addstr 3
 .It mvcur Ta Xr curses_cursor 3
@@ -182,6 +186,8 @@ must be called before any of the other routines that deal with color are used.
 .It mvprintw Ta Xr curses_print 3
 .It mvvline Ta Xr curses_line 3
 .It mvwaddch Ta Xr curses_addch 3
+.It mvwaddchnstr Ta Xr curses_addchstr 3
+.It mvwaddchstr Ta Xr curses_addchstr 3
 .It mvwaddstr Ta Xr curses_addstr 3
 .It mvwaddnstr Ta Xr curses_addstr 3
 .It mvwgetnstr Ta Xr curses_input 3
@@ -237,6 +243,8 @@ must be called before any of the other routines that deal with color are used.
 .It use_default_colors Ta Xr curses_default_colors 3
 .It vline Ta Xr curses_line 3
 .It waddch Ta Xr curses_addch 3
+.It waddchnstr Ta Xr curses_addchstr 3
+.It waddchstr Ta Xr curses_addchstr 3
 .It waddstr Ta Xr curses_addstr 3
 .It waddnstr Ta Xr curses_addstr 3
 .It wattr_get Ta Xr curses_attributes 3
