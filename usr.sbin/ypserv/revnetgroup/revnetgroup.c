@@ -1,4 +1,5 @@
-/* $OpenBSD: revnetgroup.c,v 1.1 1997/04/15 22:06:15 maja Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.2 1997/10/06 06:54:15 lukem Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -36,19 +37,25 @@
  * Center for Telecommunications Research
  * Columbia University, New York City
  *
- *	$FreeBSD: revnetgroup.c,v 1.7 1997/03/28 15:48:15 imp Exp $
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: revnetgroup.c,v 1.2 1997/10/06 06:54:15 lukem Exp $");
+#endif
+
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <err.h>
+
 #include "hash.h"
 
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.1 1997/04/15 22:06:15 maja Exp $";
-#endif
+int	main __P((int, char *[]));
+void	usage __P((void));
+
+
 
 /* Default location of netgroup file. */
 char *netgroup = "/etc/netgroup";
@@ -62,14 +69,14 @@ struct group_entry *gtable[TABLESIZE];
  */
 struct member_entry *mtable[TABLESIZE];
 
-void usage(prog)
-char *prog;
+void
+usage()
 {
-	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n",prog);
+	extern char *__progname;		/* from crt0.o */
+
+	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n", __progname);
 	exit(1);
 }
-
-extern char *optarg;
 
 int
 main(argc, argv)
@@ -86,21 +93,21 @@ main(argc, argv)
 	int hosts = -1, i;
 
 	if (argc < 2)
-		usage(argv[0]);
+		usage();
 
 	while ((ch = getopt(argc, argv, "uhf:")) != -1) {
 		switch(ch) {
 		case 'u':
 			if (hosts != -1) {
 				warnx("please use only one of -u or -h");
-				usage(argv[0]);
+				usage();
 			}
 			hosts = 0;
 			break;
 		case 'h':
 			if (hosts != -1) {
 				warnx("please use only one of -u or -h");
-				usage(argv[0]);
+				usage();
 			}
 			hosts = 1;
 			break;
@@ -108,13 +115,13 @@ main(argc, argv)
 			netgroup = optarg;
 			break;
 		default:
-			usage(argv[0]);
+			usage();
 			break;
 		}
 	}
 
 	if (hosts == -1)
-		usage(argv[0]);
+		usage();
 
 	if (strcmp(netgroup, "-")) {
 		if ((fp = fopen(netgroup, "r")) == NULL) {
@@ -150,8 +157,8 @@ main(argc, argv)
 	for (i = 0; i < TABLESIZE; i++) {
 		gcur = gtable[i];
 		while(gcur) {
-			__setnetgrent(gcur->key);
-			while(__getnetgrent(&host, &user, &domain) != NULL) {
+			rng_setnetgrent(gcur->key);
+			while(rng_getnetgrent(&host, &user, &domain) != NULL) {
 				if (hosts) {
 					if (!(host && !strcmp(host,"-"))) {
 						mstore(mtable,
@@ -173,7 +180,7 @@ main(argc, argv)
 	}
 
 	/* Release resources used by the netgroup parser code. */
-	__endnetgrent();
+	rng_endnetgrent();
 
 	/* Spew out the results. */
 	for (i = 0; i < TABLESIZE; i++) {
