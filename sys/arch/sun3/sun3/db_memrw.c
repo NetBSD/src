@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 1996/02/16 19:11:27 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 1996/02/16 23:32:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -46,8 +46,10 @@
 
 #include <vm/vm.h>
 
-#include <machine/db_machdep.h>
 #include <machine/pte.h>
+#include <machine/db_machdep.h>
+
+#include <ddb/db_access.h>
 
 #include "cache.h"
 
@@ -59,7 +61,7 @@
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*src = (char*)addr;
@@ -85,7 +87,7 @@ db_read_bytes(addr, size, data)
 static void
 db_write_text(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char *dst;
@@ -154,7 +156,7 @@ extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*dst = (char *)addr;
