@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.8 1997/10/18 15:38:05 mrg Exp $
+.\"	$NetBSD: printf.1,v 1.9 1997/11/08 09:34:24 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,11 @@
 .Nm printf
 .Nd formatted output
 .Sh SYNOPSIS
-.Nm printf 
+.Nm
 .Ar format
 .Op Ar arguments  ...
 .Sh DESCRIPTION
-.Nm Printf
+.Nm
 formats and prints its arguments, after the first, under control
 of the
 .Ar format  .
@@ -261,14 +261,14 @@ In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
 .Sh RETURN VALUES
-.Nm Printf
+.Nm
 exits 0 on success, 1 on failure.
 .Sh SEE ALSO
 .Xr echo 1 ,
 .Xr printf 3
 .Sh STANDARDS
 The
-.Nm printf
+.Nm
 utility conforms to 
 .St -p1003.2-92 .
 .Sh BUGS
