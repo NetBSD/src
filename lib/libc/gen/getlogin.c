@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getlogin.c	5.9 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: getlogin.c,v 1.4 1993/10/11 19:45:56 jtc Exp $";
+static char *rcsid = "$Id: getlogin.c,v 1.5 1993/12/18 01:16:18 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,17 +43,17 @@ static char *rcsid = "$Id: getlogin.c,v 1.4 1993/10/11 19:45:56 jtc Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int	_logname_valid;		/* known to setlogin() */
+int	__logname_valid;		/* known to setlogin() */
 
 char *
 getlogin()
 {
 	static char logname[MAXLOGNAME + 1];
 
-	if (_logname_valid == 0) {
+	if (__logname_valid == 0) {
 		if (_getlogin(logname, sizeof(logname) - 1) < 0)
 			return ((char *)NULL);
-		_logname_valid = 1;
+		__logname_valid = 1;
 	}
 	return (*logname ? logname : (char *)NULL);
 }
