@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.60 2002/05/15 18:39:47 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.61 2002/05/15 19:23:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.60 2002/05/15 18:39:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.61 2002/05/15 19:23:51 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -116,9 +116,6 @@ pcimatch(parent, cf, aux)
 
 	return (1);
 }
-
-/* XXX Temporary */
-#define	pci_enumerate_bus	pci_enumerate_bus_generic
 
 void
 pciattach(parent, self, aux)
