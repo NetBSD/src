@@ -1,12 +1,12 @@
-/*	$NetBSD: esp.c,v 1.5 1998/08/15 04:16:55 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.6 1998/08/15 05:16:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center and Charles M. Hannum.
+ * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
