@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)perror.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: perror.c,v 1.5 1993/10/09 00:11:19 jtc Exp $";
+static char *rcsid = "$Id: perror.c,v 1.6 1994/09/03 05:20:00 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ perror(s)
 {
 	register struct iovec *v;
 	struct iovec iov[4];
-	static char buf[40];
+	static char buf[128];
 
 	v = iov;
 	if (s && *s) {
