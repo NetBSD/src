@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.281 2002/03/31 15:01:39 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.282 2002/04/03 05:32:58 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -118,6 +118,7 @@ GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
 HOST_MKDEP=	${TOOLDIR}/bin/nbhost-mkdep
 INDXBIB=	${TOOLDIR}/bin/nbindxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
+INSTALLBOOT=	${TOOLDIR}/bin/nbinstallboot
 INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
 LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
