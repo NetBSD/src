@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.200.2.1 2004/04/27 18:50:21 jdc Exp $	*/
+/*	$NetBSD: cd.c,v 1.200.2.2 2004/09/11 12:48:58 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.200.2.1 2004/04/27 18:50:21 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.200.2.2 2004/09/11 12:48:58 he Exp $");
 
 #include "rnd.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.200.2.1 2004/04/27 18:50:21 jdc Exp $");
 					/* from there */
 #include <dev/scsipi/scsi_disk.h>	/* rw comes from there */
 #include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/cdvar.h>
 
 #define	CDUNIT(z)			DISKUNIT(z)
@@ -109,6 +110,7 @@ struct cd_toc {
 int	cdlock __P((struct cd_softc *));
 void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((struct scsipi_periph *));
+void	cdrestart __P((void *));
 void	cdminphys __P((struct buf *));
 void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
 void	cdgetdisklabel __P((struct cd_softc *));
@@ -236,6 +238,8 @@ cdattach(parent, self, aux)
 
 	bufq_alloc(&cd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
+	callout_init(&cd->sc_callout);
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -301,6 +305,9 @@ cddetach(self, flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
+
+	/* kill any pending restart */
+	callout_stop(&cd->sc_callout);
 
 	s = splbio();
 
@@ -776,7 +783,7 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy and scsipi_done
+ * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
  */
 void 
 cdstart(periph)
@@ -787,6 +794,7 @@ cdstart(periph)
 	struct scsipi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsipi_generic *cmdp;
+	struct scsipi_xfer *xs;
 	int flags, nblks, cmdlen, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdstart "));
@@ -806,23 +814,28 @@ cdstart(periph)
 		}
 
 		/*
-		 * See if there is a buf with work for us to do..
-		 */
-		if ((bp = BUFQ_GET(&cd->buf_queue)) == NULL)
-			return;
-
-		/*
 		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
 		 * re-opened
 		 */
-		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			continue;
+		if (__predict_false(
+		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
+			if ((bp = BUFQ_GET(&cd->buf_queue)) != NULL) {
+				bp->b_error = EIO;
+				bp->b_flags |= B_ERROR;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
+				continue;
+			} else {
+				return;
+			}
 		}
+
+		/*
+		 * See if there is a buf with work for us to do..
+		 */
+		if ((bp = BUFQ_PEEK(&cd->buf_queue)) == NULL)
+			return;
 
 		/*
 		 * We have a buf, now we should make a command.
@@ -876,15 +889,43 @@ cdstart(periph)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		error = scsipi_command(periph, cmdp, cmdlen,
+		xs = scsipi_make_xs(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
-		if (error) {
-			disk_unbusy(&cd->sc_dk, 0, 0);
-			printf("%s: not queued, error %d\n",
-			    cd->sc_dev.dv_xname, error);
+		if (__predict_false(xs == NULL)) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&cd->sc_callout, hz / 2, cdrestart,
+			    periph);
+			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
+#ifdef DIAGNOSTIC
+		if (BUFQ_GET(&cd->buf_queue) != bp)
+			panic("cdstart(): dequeued wrong buf");
+#else
+		BUFQ_GET(&cd->buf_queue);
+#endif
+		error = scsipi_command(periph, xs, cmdp, cmdlen,
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    CDRETRIES, 30000, bp, flags);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	}
+}
+
+void
+cdrestart(void *v)
+{
+	int s = splbio();
+	cdstart((struct scsipi_periph *)v);
+	splx(s);
 }
 
 void
@@ -1628,7 +1669,7 @@ cd_size(cd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (scsipi_command(cd->sc_periph,
+	if (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0)
@@ -1668,7 +1709,7 @@ cd_play(cd, blkno, nblks)
 	scsipi_cmd.opcode = PLAY;
 	_lto4b(blkno, scsipi_cmd.blk_addr);
 	_lto2b(nblks, scsipi_cmd.xfer_len);
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
@@ -1726,7 +1767,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	scsipi_cmd.end_m = endm;
 	scsipi_cmd.end_s = ends;
 	scsipi_cmd.end_f = endf;
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
@@ -1744,7 +1785,7 @@ cd_pause(cd, go)
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PAUSE;
 	scsipi_cmd.resume = go & 0xff;
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
@@ -1757,7 +1798,7 @@ cd_reset(cd)
 	struct cd_softc *cd;
 {
 
-	return (scsipi_command(cd->sc_periph, 0, 0, 0, 0,
+	return (scsipi_command(cd->sc_periph, NULL, 0, 0, 0, 0,
 	    CDRETRIES, 30000, NULL, XS_CTL_RESET));
 }
 
@@ -1781,7 +1822,7 @@ cd_read_subchannel(cd, mode, format, track, data, len, flags)
 	scsipi_cmd.subchan_format = format;
 	scsipi_cmd.track = track;
 	_lto2b(len, scsipi_cmd.data_len);
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
 	    CDRETRIES, 30000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
@@ -1814,7 +1855,7 @@ cd_read_toc(cd, mode, start, data, len, flags, control)
 	scsipi_cmd.from_track = start;
 	_lto2b(ntoc, scsipi_cmd.data_len);
 	scsipi_cmd.control = control;
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
 	    30000, NULL, flags | XS_CTL_DATA_IN));
@@ -1901,7 +1942,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 0 | (0 << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1913,7 +1954,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 16;
 		cmd.bytes[9] = 1 | (a->lsc.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1925,7 +1966,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 2 | (a->lsk.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1938,7 +1979,7 @@ dvd_auth(cd, a)
 		_lto4b(a->lstk.lba, &cmd.bytes[1]);
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 4 | (a->lstk.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1953,7 +1994,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 5 | (a->lsasf.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1967,7 +2008,7 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 1 | (a->hsc.agid << 6);
 		buf[1] = 14;
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1981,7 +2022,7 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 3 | (a->hsk.agid << 6);
 		buf[1] = 10;
 		dvd_copy_key(&buf[4], a->hsk.key);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error) {
@@ -1994,7 +2035,7 @@ dvd_auth(cd, a)
 	case DVD_INVALIDATE_AGID:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL, 0);
 		if (error)
 			return (error);
@@ -2004,7 +2045,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 8 | (0 << 6);
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -2022,7 +2063,7 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 6 | (0 << 6);
 		buf[1] = 6;
 		buf[4] = a->hrpcs.pdrc;
-		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -2052,7 +2093,7 @@ dvd_read_physical(cd, s)
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->physical.layer_num;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -2092,7 +2133,7 @@ dvd_read_copyright(cd, s)
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->copyright.layer_num;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -2119,7 +2160,7 @@ dvd_read_disckey(cd, s)
 	_lto2b(4 + 2048, &cmd.bytes[7]);
 
 	cmd.bytes[9] = s->disckey.agid << 6;
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
+	error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error == 0)
 		memcpy(s->disckey.value, &buf[4], 2048);
@@ -2142,7 +2183,7 @@ dvd_read_bca(cd, s)
 	cmd.bytes[6] = s->type;
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -2170,7 +2211,7 @@ dvd_read_manufact(cd, s)
 	cmd.bytes[6] = s->type;
 	_lto2b(4 + 2048, &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 4 + 2048,
+	error = scsipi_command(cd->sc_periph, NULL, &cmd, 12, buf, 4 + 2048,
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error == 0) {
 		s->manufact.len = _2btol(&buf[0]);
@@ -2470,7 +2511,7 @@ cd_load_unload(cd, args)
 	scsipi_cmd.options = args->options;    /* ioctl uses MMC values */
 	scsipi_cmd.slot = args->slot;
 
-	return (scsipi_command(cd->sc_periph,
+	return (scsipi_command(cd->sc_periph, NULL,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 200000, NULL, 0));
 }
