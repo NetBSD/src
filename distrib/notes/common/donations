@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.12 2000/02/20 03:24:17 jwise Exp $	
+.\"	$NetBSD: donations,v 1.13 2000/02/23 17:58:20 ad Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,11 +65,14 @@ Jordan K. Hubbard
 S\(/oren J\(/orvang
 Scott Kaplan
 Noah M. Keiserman
+Harald Koerfgen 
 John Kohl
 Chris Legrow
 Ted Lemon
+Norman R. McBride
 Neil J. McRae
 Perry E. Metzger
+Toru Nishimura
 Herb Peyerl
 Mike Price
 Dave Rand
@@ -100,6 +103,7 @@ Canada Connect Corporation
 Co-operative Research Centre for Enterprise Distributed Systems Technology
 Demon Internet, UK
 Digital Equipment Corporation
+Distributed Processing Technology
 Easynet, UK
 Free Hardware Foundation
 Innovation Development Enterprises of America
