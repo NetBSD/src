@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.6 2000/01/26 22:28:38 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.7 2000/02/02 07:22:06 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -261,6 +261,7 @@ static int ray_cmd_is_running __P((struct ray_softc *, int));
 static int ray_cmd_is_scheduled __P((struct ray_softc *, int));
 static void ray_cmd_done __P((struct ray_softc *, int));
 static int ray_detach __P((struct device *, int));
+static int ray_activate __P((struct device *, enum devact));
 static void ray_disable __P((struct ray_softc *));
 static void ray_download_params __P((struct ray_softc *));
 static int ray_enable __P((struct ray_softc *));
@@ -429,7 +430,8 @@ static int ray_nsubcmdtab = sizeof(ray_subcmdtab) / sizeof(*ray_subcmdtab);
 
 /* autoconf information */
 struct cfattach ray_ca = {
-	sizeof(struct ray_softc), ray_match, ray_attach, ray_detach, 0
+	sizeof(struct ray_softc), ray_match, ray_attach, ray_detach,
+	ray_activate
 };
 
 
@@ -621,13 +623,42 @@ fail:
 }
 
 static int
+ray_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct ray_softc *sc = (struct ray_softc *)dev;
+	struct ifnet *ifp = &sc->sc_if;
+	int s;
+	int rv = 0;
+
+	RAY_DPRINTF(("%s: activate\n", sc->sc_xname));
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		ray_disable(sc);
+		if_deactivate(ifp);
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+static int
 ray_detach(self, flags)
 	struct device *self;
 	int flags;
 {
 	struct ray_softc *sc;
+	struct ifnet *ifp;
 
 	sc = (struct ray_softc *)self;
+	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
@@ -645,16 +676,13 @@ ray_detach(self, flags)
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
 	}
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(sc->sc_if);
-	return (0);
-#else 
-	return (EBUSY);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
 #endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (0);	
 }
 
 /*
