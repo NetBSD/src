@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.17 2000/02/27 08:20:01 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.18 2000/12/13 08:19:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -334,7 +334,7 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 	AUDIO_INITINFO(&info);
 	sunhdr = hdr;
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
-		if (audio_get_sun_encoding(ntohl(sunhdr->encoding), 
+		if (audio_sun_to_encoding(ntohl(sunhdr->encoding), 
 		    &info.play.encoding, &info.play.precision)) {
 			warnx("unknown unsupported Sun audio encoding format %d",
 			    ntohl(sunhdr->encoding));

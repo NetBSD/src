@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.9 1999/09/27 05:06:10 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.10 2000/12/13 08:19:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -132,7 +132,7 @@ struct {
 };
 
 int
-audio_get_sun_encoding(sun_encoding, encp, precp)
+audio_sun_to_encoding(sun_encoding, encp, precp)
 	int	sun_encoding;
 	int	*encp;
 	int	*precp;
@@ -143,6 +143,23 @@ audio_get_sun_encoding(sun_encoding, encp, precp)
 		if (file2sw_encodings[i].file_encoding == sun_encoding) {
 			*precp = file2sw_encodings[i].precision;
 			*encp = file2sw_encodings[i].encoding;
+			return (0);
+		}
+	return (1);
+}
+
+int
+audio_encoding_to_sun(encoding, precision, sunep)
+	int	encoding;
+	int	precision;
+	int	*sunep;
+{
+	int i;
+
+	for (i = 0; file2sw_encodings[i].file_encoding != -1; i++)
+		if (file2sw_encodings[i].encoding == encoding &&
+		    file2sw_encodings[i].precision == precision) {
+			*sunep = file2sw_encodings[i].file_encoding;
 			return (0);
 		}
 	return (1);
