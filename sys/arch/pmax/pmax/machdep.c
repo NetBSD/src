@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1995/04/22 20:28:10 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1995/05/01 17:22:20 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,7 +98,6 @@
 #include <cfb.h>
 #include <mfb.h>
 #include <xcfb.h>
-#include <sfb.h>
 #include <dc.h>
 #include <dtop.h>
 #include <scc.h>
@@ -117,7 +116,7 @@ extern int sccGetc(), sccparam();
 extern void sccPutc();
 #endif
 extern int KBDGetc();
-/* extern void fbPutc(); */
+extern void fbPutc();
 extern struct consdev cn_tab;
 
 /* Will scan from max to min, inclusive */
@@ -225,13 +224,6 @@ mach_init(argc, argv, code, cv)
 	/* clear the BSS segment */
 	v = (caddr_t)pmax_round_page(end);
 	bzero(edata, v - edata);
-
-	/* Initialize callv so we can do PROM output... */
-	if (code == DEC_PROM_MAGIC) {
-		callv = cv;
-	} else {
-		callv = &callvec;
-	}
 
 	/* check for direct boot from DS5000 PROM */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
@@ -344,9 +336,11 @@ mach_init(argc, argv, code, cv)
 	 * Determine what model of computer we are running on.
 	 */
 	if (code == DEC_PROM_MAGIC) {
+		callv = cv;
 		i = (*cv->_getsysid)();
 		cp = "";
 	} else {
+		callv = &callvec;
 		if (cp = (*callv->_getenv)("systype"))
 			i = atoi(cp);
 		else {
@@ -651,6 +645,188 @@ mach_init(argc, argv, code, cv)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap((vm_offset_t)v);
+}
+
+/*
+ * Console initialization: called early on from main,
+ * before vm init or startup.  Do enough configuration
+ * to choose and initialize a console.
+ */
+consinit()
+{
+	register int kbd, crt;
+	register char *oscon;
+
+	/*
+	 * First get the "osconsole" environment variable.
+	 */
+	oscon = (*callv->_getenv)("osconsole");
+	crt = kbd = -1;
+	if (oscon && *oscon >= '0' && *oscon <= '9') {
+		kbd = *oscon - '0';
+		cn_tab.cn_screen = 0;
+		while (*++oscon) {
+			if (*oscon == ',')
+				cn_tab.cn_screen = 1;
+			else if (cn_tab.cn_screen &&
+			    *oscon >= '0' && *oscon <= '9') {
+				crt = kbd;
+				kbd = *oscon - '0';
+				break;
+			}
+		}
+	}
+	if (pmax_boardtype == DS_PMAX && kbd == 1)
+		cn_tab.cn_screen = 1;
+	/*
+	 * The boot program uses PMAX ROM entrypoints so the ROM sets
+	 * osconsole to '1' like the PMAX.
+	 */
+	if (pmax_boardtype == DS_3MAX && crt == -1 && kbd == 1) {
+		cn_tab.cn_screen = 1;
+		crt = 0;
+		kbd = 7;
+	}
+
+	/*
+	 * First try the keyboard/crt cases then fall through to the
+	 * remote serial lines.
+	 */
+	if (cn_tab.cn_screen) {
+	    switch (pmax_boardtype) {
+	    case DS_PMAX:
+#if NDC > 0 && NPM > 0
+		if (pminit()) {
+			cn_tab.cn_dev = makedev(DCDEV, DCKBD_PORT);
+			cn_tab.cn_getc = KBDGetc;
+			cn_tab.cn_kbdgetc = dcGetc;
+			cn_tab.cn_putc = fbPutc;
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* NDC and NPM */
+		goto remcons;
+
+	    case DS_MAXINE:
+#if NDTOP > 0
+		if (kbd == 3) {
+			cn_tab.cn_dev = makedev(DTOPDEV, 0);
+			cn_tab.cn_getc = dtopKBDGetc;
+			cn_tab.cn_putc = fbPutc;
+		} else
+#endif /* NDTOP */
+			goto remcons;
+#if NXCFB > 0
+		if (crt == 3 && xcfbinit()) {
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* XCFB */
+		break;
+
+	    case DS_3MAX:
+#if NDC > 0
+		if (kbd == 7) {
+			cn_tab.cn_dev = makedev(DCDEV, DCKBD_PORT);
+			cn_tab.cn_getc = KBDGetc;
+			cn_tab.cn_kbdgetc = dcGetc;
+			cn_tab.cn_putc = fbPutc;
+		} else
+#endif /* NDC */
+			goto remcons;
+		break;
+
+	    case DS_3MIN:
+	    case DS_3MAXPLUS:
+#if NSCC > 0
+		if (kbd == 3) {
+			cn_tab.cn_dev = makedev(SCCDEV, SCCKBD_PORT);
+			cn_tab.cn_getc = KBDGetc;
+			cn_tab.cn_kbdgetc = sccGetc;
+			cn_tab.cn_putc = fbPutc;
+		} else
+#endif /* NSCC */
+			goto remcons;
+		break;
+
+	    default:
+		goto remcons;
+	    };
+
+	    /*
+	     * Check for a suitable turbochannel frame buffer.
+	     */
+	    if (tc_slot_info[crt].driver_name) {
+#if NMFB > 0
+		if (strcmp(tc_slot_info[crt].driver_name, "mfb") == 0 &&
+		    mfbinit(tc_slot_info[crt].k1seg_address)) {
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* NMFB */
+#if NSFB > 0
+		if (strcmp(tc_slot_info[crt].driver_name, "sfb") == 0 &&
+		    sfbinit(tc_slot_info[crt].k1seg_address)) {
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* NSFB */
+#if NCFB > 0
+		if (strcmp(tc_slot_info[crt].driver_name, "cfb") == 0 &&
+		    cfbinit(tc_slot_info[crt].k1seg_address)) {
+			cn_tab.cn_disabled = 0;
+			return;
+		}
+#endif /* NCFB */
+		printf("crt: %s not supported as console device\n",
+			tc_slot_info[crt].driver_name);
+	    } else
+		printf("No crt console device in slot %d\n", crt);
+	}
+remcons:
+	/*
+	 * Configure a serial port as a remote console.
+	 */
+	cn_tab.cn_screen = 0;
+	switch (pmax_boardtype) {
+	case DS_PMAX:
+#if NDC > 0
+		if (kbd == 4)
+			cn_tab.cn_dev = makedev(DCDEV, DCCOMM_PORT);
+		else
+			cn_tab.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
+		cn_tab.cn_getc = dcGetc;
+		cn_tab.cn_putc = dcPutc;
+#endif /* NDC */
+		break;
+
+	case DS_3MAX:
+#if NDC > 0
+		cn_tab.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
+		cn_tab.cn_getc = dcGetc;
+		cn_tab.cn_putc = dcPutc;
+#endif /* NDC */
+		break;
+
+	case DS_3MIN:
+	case DS_3MAXPLUS:
+#if NSCC > 0
+		cn_tab.cn_dev = makedev(SCCDEV, SCCCOMM3_PORT);
+		cn_tab.cn_getc = sccGetc;
+		cn_tab.cn_putc = sccPutc;
+#endif /* NSCC */
+		break;
+
+	case DS_MAXINE:
+#if NSCC > 0
+		cn_tab.cn_dev = makedev(SCCDEV, SCCCOMM2_PORT);
+		cn_tab.cn_getc = sccGetc;
+		cn_tab.cn_putc = sccPutc;
+#endif /* NSCC */
+		break;
+	};
+	if (cn_tab.cn_dev == NODEV)
+		printf("Can't configure console!\n");
 }
 
 /*
