@@ -24,25 +24,26 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.6 1994/01/04 00:24:02 mycroft Exp $
+ *	$Id: db_interface.c,v 1.7 1994/01/09 22:53:31 mycroft Exp $
  */
 
 /*
  * Interface to new debugger.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h> /* just for boothowto --eichin */
+#include <setjmp.h>
+
+#include <vm/vm.h>
+
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
 
-#include <sys/reboot.h>
-#include <vm/vm_statistics.h>
-#include <vm/pmap.h>
+extern jmp_buf	*db_recover;
 
-#include <setjmp.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
 int	db_active = 0;
-extern jmp_buf	db_jmpbuf;
 
 /*
  * Received keyboard interrupt sequence.
@@ -59,9 +60,6 @@ kdb_kbd_trap(regs)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
-
-static jmp_buf *db_nofault = 0;
-
 kdb_trap(type, code, regs)
 	int	type, code;
 	register struct i386_saved_state *regs;
@@ -72,27 +70,19 @@ kdb_trap(type, code, regs)
 #endif
 
 	switch (type) {
-	    case T_BPTFLT:	/* breakpoint */
-	    case T_TRCTRAP:	/* single_step */
-
-	    case -1:		/* keyboard interrupt */
+	case T_BPTFLT:	/* breakpoint */
+	case T_TRCTRAP:	/* single_step */
+	case -1:	/* keyboard interrupt */
 		break;
-
-	    default:
+	default:
 		kdbprinttrap(type, code);
-
-		if (db_nofault) {
-			jmp_buf *no_fault = db_nofault;
-			db_nofault = 0;
-			longjmp(*no_fault, 1);
-		} else if (db_active) {
-			db_printf("Faulted in DDB; continuing...\n");
-			db_flush_lex();
-			longjmp(db_jmpbuf, 1);
+		if (db_recover != 0) {
+			db_error("Faulted in DDB; continuing...\n");
+			/*NOTREACHED*/
 		}
 	}
 
-	/*  Should switch to kdb`s own stack here. */
+	/* Should switch to kdb`s own stack here. */
 
 	ddb_regs = *regs;
 
@@ -143,6 +133,9 @@ kdb_trap(type, code, regs)
 	return (1);
 }
 
+extern char *trap_type[];
+extern int trap_types;
+
 /*
  * Print trap reason.
  */
@@ -150,7 +143,10 @@ kdbprinttrap(type, code)
 	int	type, code;
 {
 	printf("kernel: ");
-	printf("type %d", type);
+	if (type >= trap_types || type < 0)
+		printf("type %d", type);
+	else
+		printf("%s", trap_type[type]);
 	printf(" trap, code=%x\n", code);
 }
 
@@ -165,13 +161,9 @@ db_read_bytes(addr, size, data)
 {
 	register char	*src;
 
-	db_nofault = &db_jmpbuf;
-
 	src = (char *)addr;
 	while (--size >= 0)
 		*data++ = *src++;
-
-	db_nofault = 0;
 }
 
 struct pte *pmap_pte(pmap_t, vm_offset_t);
@@ -194,8 +186,6 @@ db_write_bytes(addr, size, data)
 	pt_entry_t	oldmap1 = { 0 };
 	extern char	etext;
 
-	db_nofault = &db_jmpbuf;
-
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vm_offset_t)&etext) {
 		ptep0 = pmap_pte(kernel_pmap, addr);
@@ -216,8 +206,6 @@ db_write_bytes(addr, size, data)
 
 	while (--size >= 0)
 		*dst++ = *data++;
-
-	db_nofault = 0;
 
 	if (ptep0) {
 		*ptep0 = oldmap0;
