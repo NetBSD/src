@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.12 2004/07/24 19:09:29 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2005/02/19 18:18:53 tsutsui Exp $
 
 SRCS+=	bswap16.c bswap32.c bswap64.c
+SRCS+=	fabs.c
 SRCS+=	__sigsetjmp14.S __setjmp14.S _setjmp.S __longjmp14.c
 
 # Common ieee754 constants and functions
