@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.45 1997/07/06 21:18:27 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.46 1997/07/06 22:23:37 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -879,7 +879,14 @@ void
 turbosparc_hotfix(sc)
 	struct cpu_softc *sc;
 {
-	/* Turn off uS2 emulation bit */
+	int pcf;
+
+	pcf = lda(SRMMU_PCFG, ASI_SRMMU);
+	if (pcf & TURBOSPARC_PCFG_US2) {
+		/* Turn off uS2 emulation bit */
+		pcf &= ~TURBOSPARC_PCFG_US2;
+		sta(SRMMU_PCFG, ASI_SRMMU, pcf);
+	}
 }
 #endif /* SUN4M */
 
