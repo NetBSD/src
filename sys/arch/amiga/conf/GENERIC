@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164 2001/12/14 05:34:45 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.165 2001/12/28 12:21:53 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.164 $"
+#ident 		"GENERIC-$Revision: 1.165 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -482,6 +482,7 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)

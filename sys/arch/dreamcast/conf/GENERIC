@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2001/12/14 05:34:47 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.15 2001/12/28 12:21:55 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -169,6 +169,7 @@ ukphy*		at mii? phy ?
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
