@@ -1,10 +1,11 @@
-/*	$NetBSD: fmt.c,v 1.12 1998/01/09 07:00:57 perry Exp $	*/
+/*	$NetBSD: fmt.c,v 1.13 1998/02/03 03:16:01 perry Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include "ps.h"
 #include "extern.h"
