@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.38 1998/09/14 12:52:47 tv Exp $	*/
+/*	$NetBSD: ping.c,v 1.39 1998/09/14 17:08:56 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.38 1998/09/14 12:52:47 tv Exp $");
+__RCSID("$NetBSD: ping.c,v 1.39 1998/09/14 17:08:56 tv Exp $");
 #endif
 
 #include <stdio.h>
@@ -327,8 +327,12 @@ main(int argc, char *argv[])
 	if (interval == 0)
 		interval = (pingflags & F_FLOOD) ? FLOOD_INTVL : 1.0;
 #ifndef sgi
+	if (pingflags & F_FLOOD)
+		errx(1, "Must be superuser to use -f");
 	if (interval < 1.0 && getuid())
 		errx(1, "Must be superuser to use < 1 sec ping interval");
+	if (preload > 0 && getuid())
+		errx(1, "Must be superuser to use -l");
 #endif
 	sec_to_timeval(interval, &interval_tv);
 
