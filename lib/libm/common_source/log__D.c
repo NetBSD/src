@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: log__D.c,v 1.2 1993/08/14 19:31:27 mycroft Exp $";
+static char rcsid[] = "$Id: log__D.c,v 1.3 1994/02/06 18:48:06 chopps Exp $";
 #endif /* not lint */
 
 #include <math.h>
@@ -90,7 +90,6 @@ log__D(x) double x;
 	int m, j;
 	double F, f, g, q, u, u2, v, zero = 0.0, one = 1.0;
 	struct Double r;
-	double logb(), ldexp();
 	volatile double u1;
 
 	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
