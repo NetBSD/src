@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.24 2002/10/22 22:50:11 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.25 2002/11/02 20:09:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.24 2002/10/22 22:50:11 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.25 2002/11/02 20:09:27 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -498,6 +498,27 @@ message(int n, ...)
 	(void)vprintf(msgs[n], ap);
 	(void)printf(" [%d]\n", n);
 	va_end(ap);
+}
+
+int
+c99ism(int n, ...)
+{
+	va_list	ap;
+	int	msg;
+
+	va_start(ap, n);
+	if (sflag && !(Sflag || gflag)) {
+		verror(n, ap);
+		msg = 1;
+	} else if (!sflag && (Sflag || gflag)) {
+		msg = 0;
+	} else {
+		vwarning(n, ap);
+		msg = 1;
+	}
+	va_end(ap);
+
+	return (msg);
 }
 
 int
