@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 1995/03/01 09:07:54 glass Exp $
+#	$NetBSD: Makefile,v 1.4 1995/03/21 12:14:18 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 SUBDIR=	boggle mkdict mkindex
