@@ -1,4 +1,4 @@
-.\" $NetBSD: 2.t,v 1.2 1995/11/15 22:54:27 pk Exp $
+.\" $NetBSD: 2.t,v 1.3 1997/07/09 02:34:43 jtc Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -50,7 +50,7 @@ database restarting any printers that have jobs.
 In normal operation
 .I lpd
 listens for service requests on multiple sockets,
-one in the UNIX domain (named ``/dev/printer'') for
+one in the UNIX domain (named ``/var/run/printer'') for
 local requests, and one in the Internet domain
 (under the ``printer'' service specification)
 for requests for printer access from off machine;
