@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.2 1997/08/25 22:39:57 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.3 1997/10/20 01:15:56 thorpej Exp $	*/
 
 /*                  
  * Copyright (c) 1995, David Greenman
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      Id: if_fxp.c,v 1.34 1997/04/23 01:44:30 davidg Exp
+ *	Id: if_fxpvar.h,v 1.3 1997/09/29 11:27:43 davidg Exp
  */
 
 /*
@@ -46,7 +46,8 @@ struct fxp_softc {
 	struct ethercom sc_ethercom;	/* ethernet common part */
 #else
 	struct arpcom arpcom;		/* per-interface network data */
-	struct caddr_t csr;		/* control/status registers */
+	caddr_t csr;			/* control/status registers */
+	struct callout_handle stat_ch;	/* Handle for canceling our stat timeout */
 #endif /* __NetBSD__ */
 	struct ifmedia sc_media;	/* media information */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
@@ -60,6 +61,10 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+	int rx_idle_secs;		/* # of seconds RX has been idle */
+	int need_mcsetup;		/* multicast filter needs programming */
+	int all_mcasts;			/* receive all multicasts */
+	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
 };
 
 /* Macros to ease CSR access. */
@@ -99,6 +104,9 @@ struct fxp_softc {
 #define	FXP_INTR_TYPE		int
 #define	FXP_IOCTLCMD_TYPE	u_long
 #define	FXP_BPFTAP_ARG(ifp)	(ifp)->if_bpf
+#define	FXP_TIMEOUT(sc, func, hz)					\
+				timeout((func), (sc), (hz))
+#define	FXP_UNTIMEOUT(sc, func)	untimeout((func), (sc))
 #else /* __FreeBSD__ */
 #define	sc_if			arpcom.ac_if
 #define	FXP_FORMAT		"fxp%d"
@@ -106,4 +114,7 @@ struct fxp_softc {
 #define	FXP_INTR_TYPE		void
 #define	FXP_IOCTLCMD_TYPE	int
 #define	FXP_BPFTAP_ARG(ifp)	ifp
+#define	FXP_TIMEOUT(sc, func, hz)					\
+				(sc)->stat_ch = timeout((func), (sc), (hz))
+#define	FXP_UNTIMEOUT(sc, func)	untimeout((func), (sc), (sc)->stat_ch)
 #endif /* __NetBSD__ */
