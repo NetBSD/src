@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.3 2002/05/26 21:37:13 manu Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.4 2002/05/30 05:16:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.3 2002/05/26 21:37:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4 2002/05/30 05:16:10 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,9 @@ static struct irix_waiting_proc_rec *iur_proc_queue
 	__P((struct irix_usema_rec *, struct proc *));
 static void iur_proc_dequeue 
 	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
-static int iur_proc_isinqueue __P((struct irix_usema_rec *, struct proc *));
+static void iur_proc_release
+	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
+static int iur_proc_isreleased __P((struct irix_usema_rec *, struct proc *));
 static struct irix_waiting_proc_rec *iur_proc_getfirst 
 	__P((struct irix_usema_rec *));
 
@@ -231,7 +233,7 @@ irix_usema_ioctl(v)
 			return EBADF;
 
 		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
-			iur_proc_dequeue(iur, iwpr);
+			iur_proc_release(iur, iwpr);
 			wakeup((void *)&selwait);
 		}
 		break;
@@ -286,7 +288,7 @@ irix_usema_poll(v)
 	int check = POLLIN|POLLRDNORM|POLLRDBAND|POLLPRI;
 
 #ifdef DEBUG_IRIX
-	printf("irix_usema_poll() vn = %p, events = %d\n", vp, events);
+	printf("irix_usema_poll() vn = %p, events = 0x%x\n", vp, events);
 #endif
 	if ((events & check) == 0)
 		return 0;
@@ -294,7 +296,7 @@ irix_usema_poll(v)
 	if ((iur = iur_lookup_by_vn(vp)) == NULL)
 		return 0;
 
-	if (iur_proc_isinqueue(iur, ap->a_p))
+	if (iur_proc_isreleased(iur, ap->a_p) == 0)
 		return 0;
 		
 	return (events & check);
@@ -551,6 +553,7 @@ iur_insert(sem, vp, p)
 	iur->iur_p = p;
 	iur->iur_waiting_count = 0;
 	TAILQ_INIT(&iur->iur_waiting_p);
+	TAILQ_INIT(&iur->iur_released_p);
 	LIST_INSERT_HEAD(&irix_usema_reclist, iur, iur_list);
 	return iur;
 }
@@ -560,10 +563,21 @@ iur_remove(iur)
 	struct irix_usema_rec *iur;
 {
 	struct irix_waiting_proc_rec *iwpr;
-
+	
+waiting_restart:
 	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
 		TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
 		free(iwpr, M_DEVBUF);
+		/* iwpr is now invalid, restart */
+		goto waiting_restart;
+	}
+
+released_restart:
+	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
+		TAILQ_REMOVE(&iur->iur_released_p, iwpr, iwpr_list);
+		free(iwpr, M_DEVBUF);
+		/* iwpr is now invalid, restart */
+		goto released_restart;
 	}
 
 	LIST_REMOVE(iur, iur_list);
@@ -578,8 +592,19 @@ iur_proc_queue(iur, p)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
+	/* Do we have this iwpr on the released list? If we do, reuse it */
+	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
+		if (iwpr->iwpr_p == p) {
+			TAILQ_REMOVE(&iur->iur_released_p, iwpr, iwpr_list);
+			goto got_iwpr;
+		}
+	}
+
+	/* Otherwise, create a new one */
 	iwpr = malloc(sizeof(struct irix_waiting_proc_rec), M_DEVBUF, M_WAITOK);
 	iwpr->iwpr_p = p;
+
+got_iwpr:
 	TAILQ_INSERT_TAIL(&iur->iur_waiting_p, iwpr, iwpr_list);
 	iur->iur_waiting_count++;
 	return iwpr;
@@ -596,16 +621,29 @@ iur_proc_dequeue(iur, iwpr)
 	return;
 }
 
+static void
+iur_proc_release(iur, iwpr)
+	struct irix_usema_rec *iur;
+	struct irix_waiting_proc_rec *iwpr;
+{
+	iur->iur_waiting_count--;
+	TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
+	TAILQ_INSERT_TAIL(&iur->iur_released_p, iwpr, iwpr_list);
+	return;
+}
+
+
 static int
-iur_proc_isinqueue(iur, p)
+iur_proc_isreleased(iur, p)
 	struct irix_usema_rec *iur;
 	struct proc *p;
 {
 	struct irix_waiting_proc_rec *iwpr;
 
-	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list)
+	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
 		if (iwpr->iwpr_p == p)
 			return 1;
+	}
 	return 0;
 
 }
@@ -614,7 +652,7 @@ static struct irix_waiting_proc_rec *
 iur_proc_getfirst(iur)
 	struct irix_usema_rec *iur;
 {
-	return iur->iur_waiting_p.tqh_first;
+	return TAILQ_FIRST(&iur->iur_waiting_p);
 }
 
 #ifdef DEBUG_IRIX
@@ -634,6 +672,11 @@ irix_usema_debug(void)
 		    iur->iur_waiting_count);
 		printf("  Waiting processes\n");
 		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
+			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n", 
+			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
+		}
+		printf("  Released processes\n");
+		TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
 			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n", 
 			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
 		}
