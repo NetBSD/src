@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.162 2003/03/19 11:36:36 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.163 2003/03/22 14:35:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -343,7 +343,7 @@ MALLOC_DECLARE(M_SUBPROC);
  * NO_PGID is used to represent "no process group" for a tty.
  */
 #define	PID_MAX		30000
-#define	NO_PGID		(-(pid_t)1)
+#define	NO_PGID		((pid_t)-1)
 
 #define	SESS_LEADER(p)	((p)->p_session->s_leader == (p))
 #define	SESSHOLD(s)	((s)->s_count++)
