@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1998/09/28 09:33:13 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 1998/10/06 03:48:12 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,7 +127,7 @@ struct bat battable[16];
 
 paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 
-#define OFMEMREGIONS	32
+#define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 int astpending;
@@ -195,7 +195,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	{
 		struct btinfo_clock *clockinfo;
 		extern u_long ticks_per_sec, ns_per_tick;
-	
+
 		clockinfo =
 			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
 		if (!clockinfo)
@@ -210,15 +210,15 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x0ffffffc;
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x80000023;
-	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;  
+	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
-	
+
 	curpcb = &proc0paddr->u_pcb;
-	
+
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-	
+
 	/*
 	 * boothowto
 	 */
@@ -243,9 +243,9 @@ initppc(startkernel, endkernel, args, btinfo)
 	asm volatile ("mtdbatu 1,%0" :: "r"(0));
 	asm volatile ("mtdbatu 2,%0" :: "r"(0));
 	asm volatile ("mtdbatu 3,%0" :: "r"(0));
-	
+
 	/*
-	 * Set up initial BAT table 
+	 * Set up initial BAT table
 	 */
 	/* map the lowest 256 MB area */
 	battable[0].batl = BATL(0x00000000, BAT_M);
@@ -425,7 +425,7 @@ install_extint(handler)
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
-	
+
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
@@ -483,7 +483,7 @@ cpu_startup()
 
 	printf("%s", version);
 	identifycpu();
-	
+
 	printf("real memory  = %d (%dK bytes)\n",
 		ctob(physmem), ctob(physmem) / 1024);
 
@@ -513,6 +513,7 @@ cpu_startup()
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vaddr_t)buffers;
 #else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
@@ -555,7 +556,7 @@ cpu_startup()
 #else
 		vsize_t curbufsize;
 		vaddr_t curbuf;
-		
+
 		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
@@ -624,7 +625,7 @@ cpu_startup()
 	 */
 	{
 		int msr;
-		
+
 		splhigh();
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
@@ -653,7 +654,7 @@ allocsys(v)
 #ifdef	SYSVSEM
 	valloc(sema, struct semid_ds, seminfo.semmni);
 	valloc(sem, struct sem, seminfo.semmns);
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof (int));
 #endif
 #ifdef	SYSVMSG
 	valloc(msgpool, char, msginfo.msgmax);
@@ -681,8 +682,8 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	
-	return v;
+
+	return (v);
 }
 
 /*
@@ -716,7 +717,7 @@ consinit()
 {
 	struct btinfo_console *consinfo;
 	static int initted;
-	
+
 	if (initted)
 		return;
 	initted = 1;
@@ -957,10 +958,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
-		return ENOTDIR;
+		return (ENOTDIR);
 	switch (name[0]) {
 	default:
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 	}
 }
 
@@ -1113,14 +1114,14 @@ cpu_reboot(howto, what)
 #if 0
 	ppc_boot(str);
 #endif 0
-	while(1);
+	while (1);
 }
 
 void
 lcsplx(ipl)
 	int ipl;
 {
-	splx(ipl); 
+	splx(ipl);
 }
 
 /* not impliment */

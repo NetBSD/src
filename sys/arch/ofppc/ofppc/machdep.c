@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1998/09/13 11:58:00 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1998/10/06 03:48:12 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -148,11 +148,11 @@ initppc(startkernel, endkernel, args)
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
-	
+
 	curpcb = &proc0paddr->u_pcb;
-	
+
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-	
+
 	/*
 	 * i386 port says, that this shouldn't be here,
 	 * but I really think the console should be initialized
@@ -175,7 +175,7 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtdbatu 1,%0" :: "r"(0));
 	asm volatile ("mtdbatu 2,%0" :: "r"(0));
 	asm volatile ("mtdbatu 3,%0" :: "r"(0));
-	
+
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
 	 */
@@ -194,7 +194,7 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	
+
 	/*
 	 * Set up trap vectors
 	 */
@@ -267,7 +267,7 @@ initppc(startkernel, endkernel, args)
 				break;
 			}
 		}
-	}			
+	}
 
 #ifdef DDB
 	/* ddb_init(startsym, endsym); */
@@ -356,7 +356,7 @@ install_extint(handler)
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
-	
+
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
@@ -391,7 +391,7 @@ cpu_startup()
 
 	printf("%s", version);
 	identifycpu();
-	
+
 	printf("real mem = %d\n", ctob(physmem));
 
 	/*
@@ -420,6 +420,7 @@ cpu_startup()
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vaddr_t)buffers;
 #else
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
@@ -462,7 +463,7 @@ cpu_startup()
 #else
 		vsize_t curbufsize;
 		vaddr_t curbuf;
-		
+
 		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
@@ -518,7 +519,7 @@ cpu_startup()
 #endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
-	
+
 	/*
 	 * Set up the buffers.
 	 */
@@ -538,12 +539,12 @@ cpu_startup()
 	 */
 	{
 		int msr;
-		
+
 		splhigh();
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
-	
+
 	/*
 	 * Configure devices.
 	 */
@@ -567,7 +568,7 @@ allocsys(v)
 #ifdef	SYSVSEM
 	valloc(sema, struct semid_ds, seminfo.semmni);
 	valloc(sem, struct sem, seminfo.semmns);
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof (int));
 #endif
 #ifdef	SYSVMSG
 	valloc(msgpool, char, msginfo.msgmax);
@@ -595,8 +596,8 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	
-	return v;
+
+	return (v);
 }
 
 /*
@@ -607,7 +608,7 @@ void
 consinit()
 {
 	static int initted;
-	
+
 	if (initted)
 		return;
 	initted = 1;
@@ -633,7 +634,7 @@ setregs(p, pack, stack)
 	 * XXX Machine-independent code has already copied arguments and
 	 * XXX environment to userland.  Get them back here.
 	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof(arginfo));
+	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof (arginfo));
 
 	/*
 	 * Set up arguments for _start():
@@ -797,10 +798,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
-		return ENOTDIR;
+		return (ENOTDIR);
 	switch (name[0]) {
 	default:
-		return EOPNOTSUPP;
+		return (EOPNOTSUPP);
 	}
 }
 
@@ -936,7 +937,7 @@ fake_spl()
 
 	asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
-	return -1;
+	return (-1);
 }
 
 static void
@@ -949,7 +950,7 @@ static int
 fake_splx(new)
 	int new;
 {
-	return fake_spl();
+	return (fake_spl());
 }
 
 static void
