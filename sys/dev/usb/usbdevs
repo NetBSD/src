@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.167 2001/04/19 00:47:12 augustss Exp $
+$NetBSD: usbdevs,v 1.168 2001/05/22 00:18:03 jhawk Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -808,7 +808,8 @@ product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 /* Prolific products */
 product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
-product PROLIFIC PL2303		0x04bb	PL2303 Serial adapter (IODATA USB-RSAQ2)
+product PROLIFIC RSAQ2		0x04bb	PL2303 Serial adapter (IODATA USB-RSAQ2)
+product PROLIFIC PL2303 	0x2303  PL2303 Serial adapter (ATEN/IOGEAR UC232A)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 
