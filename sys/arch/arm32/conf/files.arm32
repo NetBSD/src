@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.42 1998/06/09 00:39:47 tv Exp $
+#	$NetBSD: files.arm32,v 1.43 1998/06/12 23:21:53 tv Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,15 +24,62 @@ attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
 # Standard NetBSD wd driver
-device  wdc: atapi, ata
-device  wd: disk
-attach  wd at ata
-file    arch/arm32/dev/wdc.c           wdc needs-flag
-file    arch/arm32/dev/wd.c            wd needs-flag
-major   {wd = 16}
-
+device	wdc: atapi, ata
+device	wd: disk
+attach	wd at ata
+# XXX shouldn't have to have NWD in wdc.h
+file	dev/ic/wdc.c				wdc & (wd | !wd) & shark needs-flag
+file	arch/arm32/dev/wdc.c			wdc & (wd | !wd) & !shark needs-flag
+file	dev/ata/wd.c				wd & shark needs-flag
+file	arch/arm32/dev/wd.c			wd & !shark needs-flag
+major	{wd = 16}
 attach	wdc at pioc with wdc_pioc
-file    arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
+file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
+
+# Standard parallel driver
+device	lpt
+file	dev/ic/lpt.c				lpt needs-flag
+major   {lpt = 8}
+attach  lpt at pioc with lpt_pioc
+file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
+
+# Common OFW files
+include "../../../dev/ofw/files.ofw"
+attach	ofbus at root with ofbus_root
+file	arch/arm32/ofw/ofw.c			ofw
+file	arch/arm32/ofw/openfirm.c		ofw
+file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
+
+# OFW ISA bus driver.
+include "../../../dev/ofisa/files.ofisa"
+file	arch/arm32/ofw/ofisa_machdep.c		ofisa
+file	arch/arm32/ofw/com_ofisa_machdep.c	com_ofisa
+file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
+file	arch/arm32/ofw/lpt_ofisa_machdep.c	lpt_ofisa
+file	arch/arm32/ofw/wdc_ofisa_machdep.c	wdc_ofisa
+
+# XXX So ISA locator names are present in locators.h.
+device	   isa {[port = -1], [size = 0],
+	   [iomem = -1], [iosiz = 0],
+	   [irq = -1], [drq = -1], [drq2 = -1]}
+
+# Glue for OFW ISA device attachment
+device	ofisapc {}
+attach	ofisapc at ofbus
+file	arch/arm32/ofw/ofisapc.c			pc & ofw
+device	ofisacs {}
+attach	ofisacs at ofisa
+file	arch/arm32/ofw/ofisacs.c			cs & ofw
+device	ofisaess {}
+attach	ofisaess at ofisa
+file	arch/arm32/ofw/ofisaess.c		        ess & ofw
+device	ofisascr {}
+attach	ofisascr at ofisa
+file	arch/arm32/ofw/ofisascr.c			scr & ofw
+
+device	ofrom
+attach	ofrom at ofbus
+file	arch/arm32/ofw/ofrom.c				ofrom	needs-flag
 
 # Standard NetBSD fd driver
 device  fdc {drive = -1}
@@ -41,14 +88,6 @@ device  fd: disk
 attach	fd at fdc
 file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
-
-# Standard parallel driver
-device	lpt
-file	dev/ic/lpt.c				lpt needs-flag
-major   {lpt = 8}
-
-attach  lpt at pioc with lpt_pioc
-file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
 # Standard serial driver
 major   {com = 12}
@@ -87,11 +126,17 @@ major   {qms = 9}
 attach	qms at iomd with qms_iomd
 file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 
+# attribute used to represent the "keyboard controller" on the shark
+# XXX should be a real device
+define	pckbd { [irq = -1], [port = -1] }
+
 # PS/2 mouse device
-device	pms
-file	arch/arm32/dev/pms.c			pms needs-flag
+device	pms: tty
+file	arch/arm32/dev/pms.c			pms & pms_iomd needs-flag
+file	arch/arm32/shark/pms.c			pms & ofw needs-flag
 major	{pms = 40}
 
+attach	pms at pckbd with pms
 attach	pms at iomd with pms_iomd
 file	arch/arm32/iomd/pms_iomd.c		pms_iomd
 
@@ -347,3 +392,60 @@ file	arch/arm32/rc7500/rc7500_machdep.c	rc7500
 file    arch/arm32/rc7500/rc7500_kbd_map.c	rc7500 & kbd
 file	arch/arm32/rc7500/rc7500_prom.c		rc7500 & prom_debug
 file	arch/arm32/rc7500/rc7500_promsys.S	rc7500 & prom_debug
+
+# Shark specific files
+file	arch/arm32/shark/shark_machdep.c	shark
+file	arch/arm32/shark/sequoia.c              shark
+file	arch/arm32/shark/fiq.S                  shark
+file	arch/arm32/shark/hat.c                  shark
+file	arch/arm32/isa/isa_irqhandler.c		shark
+file	arch/arm32/isa/clock.c			shark
+file	arch/arm32/isa/isa_irq.S		shark
+file	arch/arm32/isa/isa_shark_machdep.c	shark
+file	arch/arm32/isa/isa_io.c			shark
+file	arch/arm32/isa/isa_io_asm.S		shark
+
+# OFWGENCFG specific files
+file	arch/arm32/ofw/ofw_irq.S		ofwgencfg
+file	arch/arm32/ofw/ofw_irqhandler.c		ofwgencfg
+file	arch/arm32/ofw/ofwgencfg_clock.c	ofwgencfg
+file	arch/arm32/ofw/ofwgencfg_machdep.c	ofwgencfg
+
+# National Semiconductor PC97307VUL SuperIO chip configuration routines
+define	nsio
+file	arch/arm32/shark/ns87307.c	nsio & shark
+
+# 8042 microcontroller routines for keyboard and mouse
+define	i8042
+file	arch/arm32/shark/i8042.c	i8042
+
+pseudo-device profiler: disk
+file	arch/arm32/shark/profile.c	profiler needs-flag
+
+# SHARK pc console
+device  pc: tty, pckbd, i8042
+attach  pc at ofisapc
+file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
+
+# ISA DMA controller
+define	isadma
+file	arch/arm32/isa/isadma.c			isadma needs-flag
+
+# cs8900 Crystal Ethernet Controller
+device	cs: ether, ifnet, isadma, arp
+attach	cs at ofisacs
+file	arch/arm32/isa/if_cs_isa.c		cs
+
+# the SoundBlaster DSP, or close likenesses; used by other drivers
+define	sbdsp
+file	dev/isa/sbdsp.c                         sbdsp
+
+# ESS Technology ES1887/ES888, currently based on SoundBlaster code
+device	ess: audio, isadma, sbdsp, mulaw
+attach	ess at ofisaess
+file	arch/arm32/isa/ess.c			ess needs-flag
+
+# Smart Card Reader
+device  scr: tty
+file	arch/arm32/shark/scr.c			scr needs-flag
+attach  scr at ofisascr
