@@ -33,6 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)dir.c	5.19 (Berkeley) 7/26/91";
+static char rcsid[] = "$Id: dir.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

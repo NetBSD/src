@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)ls.h	5.11 (Berkeley) 7/22/90
+ *
+ *	$Id: ls.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 typedef struct _lsstruct {

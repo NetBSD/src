@@ -33,6 +33,8 @@
 #
 #	@(#)fasthalt.sh	5.4 (Berkeley) 4/16/91
 #
+#	$Id: fasthalt.sh,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#
 
 cp /dev/null /fastboot
 /sbin/halt $*

@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	5.2 (Berkeley) 6/3/91
+ *
+ *	$Id: extern.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 #include <sys/cdefs.h>

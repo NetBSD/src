@@ -1,11 +1,5 @@
-#
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00092
-# --------------------         -----   ----------------------
-#
-# 15 Mar 93	Patchkit Coordinator	Corrected SRCS, missing .c
-#
+#	$Id: Makefile,v 1.3 1993/03/22 08:04:00 cgd Exp $
+
 PROG=expr
 SRCS=expr.c
 CFLAGS+=-I. -I${.CURDIR}

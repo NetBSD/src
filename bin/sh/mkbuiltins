@@ -35,6 +35,8 @@
 # SUCH DAMAGE.
 #
 #	@(#)mkbuiltins	5.2 (Berkeley) 3/8/91
+#
+#	$Id: mkbuiltins,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 temp=/tmp/ka$$
 havejobs=0

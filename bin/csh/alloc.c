@@ -33,6 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)alloc.c	5.8 (Berkeley) 6/8/91";
+static char rcsid[] = "$Id: alloc.c,v 1.2 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 /*

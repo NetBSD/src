@@ -29,17 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00051
- * --------------------         -----   ----------------------
- *
- * 14 Aug 92	David Greenman		Fixed NEWVM mempages calculation
  */
 
 #ifndef lint
 static char sccsid[] = "@(#)nlist.c	5.5 (Berkeley) 7/1/91";
+static char rcsid[] = "$Id: nlist.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

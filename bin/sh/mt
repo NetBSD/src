@@ -35,6 +35,8 @@
 # SUCH DAMAGE.
 #
 #	@(#)mktokens	5.1 (Berkeley) 3/7/91
+#
+#	$Id: mt,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 # The following is a list of tokens.  The second column is nonzero if the
 # token marks the end of a list.  The third column is the name to print in

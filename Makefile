@@ -1,11 +1,4 @@
-#
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00101
-# --------------------         -----   ----------------------
-#
-# 10 Mar 93	Rodney W. Grimes	Added user.share to SUBDIR
-#
+#	$Id: Makefile,v 1.3 1993/03/22 08:04:00 cgd Exp $
 
 SUBDIR=	bin include lib libexec sbin usr.bin usr.sbin share games
 
