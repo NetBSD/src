@@ -1,7 +1,7 @@
-/*	$NetBSD: ipnat.c,v 1.9.2.3 1998/07/23 00:59:02 mellon Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.9.2.4 1998/11/24 07:21:28 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -64,7 +64,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.8 1998/06/06 14:39:56 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.16 1998/11/22 01:50:36 darrenr Exp ";
 #endif
 
 
@@ -74,6 +74,7 @@ static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.8 1998/06/06 14:39:56 
 
 extern	char	*optarg;
 
+void	printaps __P((ap_session_t *, int opts));
 ipnat_t	*parse __P((char *));
 u_32_t	hostnum __P((char *, int *));
 u_32_t	hostmask __P((char *));
@@ -192,8 +193,9 @@ ipnat_t *np;
 int verbose;
 void *ptr;
 {
-	int	bits;
 	struct	protoent	*pr;
+	struct	servent	*sv;
+	int	bits;
 
 	switch (np->in_redir)
 	{
@@ -250,12 +252,22 @@ void *ptr;
 		else
 			printf("%s", inet_ntoa(np->in_out[1]));
 		if (*np->in_plabel) {
+			pr = getprotobynumber(np->in_p);
 			printf(" proxy port");
-			if (np->in_dport)
-				printf(" %hu", ntohs(np->in_dport));
+			if (np->in_dport != 0) {
+				if (pr != NULL)
+					sv = getservbyport(np->in_dport,
+							   pr->p_name);
+				else
+					sv = getservbyport(np->in_dport, NULL);
+				if (sv != NULL)
+					printf(" %s", sv->s_name);
+				else
+					printf(" %hu", ntohs(np->in_dport));
+			}
 			printf(" %.*s/", (int)sizeof(np->in_plabel),
 				np->in_plabel);
-			if ((pr = getprotobynumber(np->in_p)))
+			if (pr != NULL)
 				fputs(pr->p_name, stdout);
 			else
 				printf("%d", np->in_p);
@@ -271,10 +283,49 @@ void *ptr;
 			       ntohs(np->in_pmax));
 		}
 		printf("\n");
-		if (verbose)
-			printf("\t%p %u %s %d %x\n", np->in_ifp,
-			       np->in_space, inet_ntoa(np->in_nextip),
-			       np->in_pnext, np->in_flags);
+		if (verbose) {
+			printf("\tifp %p space %u nextip %s pnext %d",
+			       np->in_ifp, np->in_space,
+			       inet_ntoa(np->in_nextip), np->in_pnext);
+			printf(" flags %x use %u\n",
+			       np->in_flags, np->in_use);
+		}
+	}
+}
+
+
+void printaps(aps, opts)
+ap_session_t *aps;
+int opts;
+{
+	ap_session_t ap;
+	aproxy_t apr;
+
+	if (kmemcpy((char *)&ap, (long)aps, sizeof(ap)))
+		return;
+	if (kmemcpy((char *)&apr, (long)ap.aps_apr, sizeof(apr)))
+		return;
+	printf("\tproxy %s/%d use %d flags %x\n", apr.apr_label,
+		apr.apr_p, apr.apr_ref, apr.apr_flags);
+	printf("\t\t%d %s -> ", ap.aps_p, inet_ntoa(ap.aps_src));
+	printf("%s [%#x ", inet_ntoa(ap.aps_dst), ap.aps_flags);
+#ifdef	USE_QUAD_T
+	printf("%qu %qu", ap.aps_bytes, ap.aps_pkts);
+#else
+	printf("%lu %lu", ap.aps_bytes, ap.aps_pkts);
+#endif
+	printf(" %p[%d]]\n", ap.aps_data, ap.aps_psiz);
+	if ((ap.aps_p == IPPROTO_TCP) && (opts & OPT_VERBOSE)) {
+		printf("\t\t%hu -> %hu state[%d,%d], sel[%d,%d]\n",
+			ap.aps_sport, ap.aps_dport,
+			ap.aps_state[0], ap.aps_state[1],
+			ap.aps_sel[0], ap.aps_sel[1]);
+		printf("\t\tseq: off %hd/%hd min %x/%x\n",
+			ap.aps_seqoff[0], ap.aps_seqoff[1],
+			ap.aps_seqmin[0], ap.aps_seqmin[1]);
+		printf("\t\tack: off %hd/%hd min %x/%x\n",
+			ap.aps_ackoff[0], ap.aps_ackoff[1],
+			ap.aps_ackmin[0], ap.aps_ackmin[1]);
 	}
 }
 
@@ -371,13 +422,28 @@ int fd, opts;
 					ntohs(nat.nat_outport));
 				printf(" [%s %hu]", inet_ntoa(nat.nat_oip),
 					ntohs(nat.nat_oport));
-				printf(" %ld %hu %x", nat.nat_age,
-					nat.nat_use, nat.nat_sumd);
-#if SOLARIS
-				printf(" %lx", nat.nat_ipsumd);
+				if (opts & OPT_VERBOSE) {
+					printf("\n\tage %lu use %hu sumd %x",
+						nat.nat_age, nat.nat_use,
+						nat.nat_sumd);
+					printf(" bkt %d flags %x ",
+						i, nat.nat_flags);
+#ifdef	USE_QUAD_T
+					printf("bytes %qu pkts %qu",
+						nat.nat_bytes, nat.nat_pkts);
+#else
+					printf("bytes %lu pkts %lu",
+						nat.nat_bytes, nat.nat_pkts);
 #endif
+#if SOLARIS
+					printf(" %lx", nat.nat_ipsumd);
+#endif
+				}
 				putchar('\n');
+				if (nat.nat_aps)
+					printaps(nat.nat_aps, opts);
 			}
+
 		free(nt[0]);
 	}
 }
@@ -600,6 +666,11 @@ char *line;
 		if (*dnetm == '/')
 			*dnetm++ = '\0';
 	} else {
+		if (strrchr(dhost, '/') != NULL) {
+			fprintf(stderr, "No netmask supported in %s\n",
+				"destination host for redirect");
+			return NULL;
+		}
 		/* If it's a in_redir, expect target port */
 		if (!(s = strtok(NULL, " \t"))) {
 			fprintf(stderr, "missing fields (destination port)\n");
