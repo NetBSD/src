@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.9 2000/08/14 17:34:12 tv Exp $
+.\"	$NetBSD: mbuf.9,v 1.10 2000/10/13 04:19:58 itojun Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,7 @@
 .Nm m_copydata ,
 .Nm m_copyback ,
 .Nm m_cat ,
+.Nm m_dup ,
 .Nm m_prepend ,
 .Nm m_pullup ,
 .Nm m_split ,
@@ -92,6 +93,8 @@
 .Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
+.Ft struct mbuf *
+.Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_prepend "struct mbuf *m" "int len" "int how"
 .Ft struct mbuf *
@@ -230,6 +233,12 @@ which has no additional overhead
 and is used instead of the internal data area; this is done when at least
 .Dv MINCLSIZE
 bytes of data must be stored.
+.Pp
+When the
+.Dv M_EXT
+flag is raised for an mbuf,
+the external storage area could be shared among multiple mbufs.
+Be careful when you attempt to overwrite the data content of the mbuf.
 .Bl -tag -width compact
 .It Fn m_get "int nowait" "int type"
 Allocates an mbuf and initializes it to contain internal data.
@@ -323,6 +332,22 @@ to
 Both chains must be of the same type; packet headers will
 .Em not
 be updated if present.
+.It Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
+Similarly to
+.Fn m_copym ,
+the function creates a copy of an mbuf chain starting
+.Fa off0
+bytes from the beginning, continuing for
+.Fa len
+bytes.
+While
+.Fn m_copym
+tries to share external storage for mbufs with
+.Dv M_EXT
+flag,
+.Fn m_dup
+will deep-copy the whole data content into new mbuf chain
+and avoids shared external storage.
 .It Fn m_prepend "struct mbuf *m" "int len" "int how"
 Lesser-used path for
 .Fn M_PREPEND :
