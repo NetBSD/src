@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1998/11/24 11:34:31 tsubai Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/04/18 19:40:07 ws Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -49,11 +49,6 @@ _rtld_start:
 	mflr	3
 	lwz	4,0(3)
 	add	3,3,4			# r3 = _GLOBAL_OFFSET_TABLE_ - 4
-
-	dcbst	0,3			# sync i-cache with d-cache
-	sync
-	icbi	0,3
-	isync
 
 	addi	11,3,4			# r11 = (real) GOT
 	lwz	10,_GLOBAL_OFFSET_TABLE_@got(11)
