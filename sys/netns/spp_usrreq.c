@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.6 1995/03/08 02:14:56 cgd Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.7 1995/08/12 23:59:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1263,7 +1263,7 @@ spp_usrreq(so, req, m, nam, controlp)
 {
 	struct nspcb *nsp = sotonspcb(so);
 	register struct sppcb *cb;
-	int s = splnet();
+	int s = splsoftnet();
 	int error = 0, ostate;
 	struct mbuf *mm;
 	register struct sockbuf *sb;
@@ -1639,7 +1639,7 @@ spp_fasttimo()
 {
 	register struct nspcb *nsp;
 	register struct sppcb *cb;
-	int s = splnet();
+	int s = splsoftnet();
 
 	nsp = nspcb.nsp_next;
 	if (nsp)
@@ -1663,7 +1663,7 @@ spp_slowtimo()
 {
 	register struct nspcb *ip, *ipnxt;
 	register struct sppcb *cb;
-	int s = splnet();
+	int s = splsoftnet();
 	register long i;
 
 	/*

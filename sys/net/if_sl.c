@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.36 1995/06/13 05:31:00 mycroft Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.37 1995/08/12 23:59:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -310,7 +310,7 @@ slclose(tp)
 	int s;
 
 	ttywflush(tp);
-	s = splimp();		/* actually, max(spltty, splnet) */
+	s = splimp();		/* actually, max(spltty, splsoftnet) */
 	tp->t_line = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {

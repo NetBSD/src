@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.6 1995/03/08 02:16:18 cgd Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.7 1995/08/12 23:59:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -377,7 +377,7 @@ tp_usrreq(so, req, m, nam, controlp)
 	struct mbuf *m, *nam, *controlp;
 {	
 	register struct tp_pcb *tpcb =  sototpcb(so);
-	int s = splnet();
+	int s = splsoftnet();
 	int error = 0;
 	int flags, *outflags = &flags; 
 	u_long eotsdu = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.11 1995/07/04 23:24:07 paulus Exp $	*/
+/*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -38,7 +38,7 @@
 /*
  * The networking code runs off software interrupts.
  *
- * You can switch into the network by doing splnet() and return by splx().
+ * You can switch into the network by doing splsoftnet() and return by splx().
  * The software interrupt level for the network is higher than the software
  * level for the clock (so you can enter the network in routines called
  * at timeout time).
