@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1999/03/04 20:32:21 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.8.2.1 1999/04/07 16:17:57 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -12,6 +12,8 @@ VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		xxx-${REV}.fs
 KERN?=		netbsd-xxx
+KERNNAME?=	netbsd.xxx
+GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list
@@ -28,15 +30,15 @@ DISKTYPE=	floppy5
 # 204800	1167k,  29 inodes free
 INO_BYTES?=	204800
 
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp*
+CLEANFILES+=	${KERNNAME} ${GZNAME} netbsd.tmp*
 
-all:	netbsd.ram.gz
+all:	${GZNAME}
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} KERN=${GZNAME} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -51,12 +53,14 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
+${KERNNAME}: ${KERN} ${RAMDISK}
 	-/bin/rm -f netbsd.tmp*
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
-	mv -f netbsd.tmp.gz ${.TARGET}
+	mv -f netbsd.tmp ${.TARGET}
+
+${GZNAME}: ${KERNNAME}
+	gzip -cv9 ${KERNNAME} > ${.TARGET}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
