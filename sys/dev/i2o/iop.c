@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.8 2001/01/01 19:03:30 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.9 2001/01/03 21:04:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -207,13 +207,14 @@ static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *);
 static void	iop_devinfo(int, char *);
 static int	iop_print(void *, const char *);
-static int	iop_reconfigure(struct iop_softc *, u_int32_t);
+static int	iop_reconfigure(struct iop_softc *, u_int32_t, int);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
 #ifdef notyet
 static int	iop_vendor_print(void *, const char *);
 #endif
 
+static void	iop_create_reconf_thread(void *);
 static void	iop_intr_event(struct device *, struct iop_msg *, void *);
 static int	iop_hrt_get(struct iop_softc *);
 static int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, int);
@@ -222,7 +223,7 @@ static int	iop_lct_get0(struct iop_softc *, struct i2o_lct *, int,
 static int	iop_msg_wait(struct iop_softc *, struct iop_msg *, int);
 static int	iop_ofifo_init(struct iop_softc *);
 static int	iop_handle_reply(struct iop_softc *, u_int32_t);
-static void	iop_reconfigure_proc(void *);
+static void	iop_reconf_thread(void *);
 static void	iop_release_mfa(struct iop_softc *, u_int32_t);
 static int	iop_reset(struct iop_softc *);
 static int	iop_status_get(struct iop_softc *);
@@ -451,17 +452,31 @@ iop_config_interrupts(struct device *self)
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
 #endif
 
-	if ((rv = iop_reconfigure(sc, 0)) != 0) {
+	if ((rv = iop_reconfigure(sc, 0, 0)) != 0) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 		return;
 	}
 
-	sc->sc_flags |= IOP_ONLINE;
+	kthread_create(iop_create_reconf_thread, sc);
+}
 
-	rv = kthread_create1(iop_reconfigure_proc, sc, &sc->sc_reconf_proc,
+/*
+ * Create the reconfiguration thread.  Called after the standard kernel
+ * threads have been created.
+ */
+static void
+iop_create_reconf_thread(void *cookie)
+{
+	struct iop_softc *sc;
+	int rv;
+
+	sc = cookie;
+
+	sc->sc_flags |= IOP_ONLINE;
+	rv = kthread_create1(iop_reconf_thread, sc, &sc->sc_reconf_proc,
 	    "%s", sc->sc_dv.dv_xname);
 	if (rv != 0) {
-		printf("%s: unable to create thread (%d)",
+		printf("%s: unable to create reconfiguration thread (%d)",
 		    sc->sc_dv.dv_xname, rv);
 		return;
 	}
@@ -472,7 +487,7 @@ iop_config_interrupts(struct device *self)
  * initiates re-configuration if recieved.
  */
 static void
-iop_reconfigure_proc(void *cookie)
+iop_reconf_thread(void *cookie)
 {
 	struct iop_softc *sc;
 	struct i2o_lct lct;
@@ -486,10 +501,10 @@ iop_reconfigure_proc(void *cookie)
 		if (iop_lct_get0(sc, &lct, sizeof(lct), chgind) == 0) {
 			DPRINTF(("%s: async reconfiguration (0x%08x)\n",
 			    sc->sc_dv.dv_xname, le32toh(lct.changeindicator)));
-			iop_reconfigure(sc, lct.changeindicator);
+			iop_reconfigure(sc, lct.changeindicator, LK_NOWAIT);
 		}
 
-		tsleep(iop_reconfigure_proc, PWAIT, "iopzzz", hz * 5);
+		tsleep(iop_reconf_thread, PWAIT, "iopzzz", hz * 5);
 	}
 }
 
@@ -497,7 +512,7 @@ iop_reconfigure_proc(void *cookie)
  * Reconfigure: find new and removed devices.
  */
 static int
-iop_reconfigure(struct iop_softc *sc, u_int32_t chgind)
+iop_reconfigure(struct iop_softc *sc, u_int32_t chgind, int lkflags)
 {
 	struct iop_msg *im;
 	struct i2o_hba_bus_scan *mb;
@@ -505,8 +520,8 @@ iop_reconfigure(struct iop_softc *sc, u_int32_t chgind)
 	struct iop_initiator *ii, *nextii;
 	int rv, tid, i;
 
-	rv = lockmgr(&sc->sc_conflock, LK_EXCLUSIVE | LK_RECURSEFAIL, NULL);
-	if (rv != 0) {
+	lkflags |= LK_EXCLUSIVE | LK_RECURSEFAIL;
+	if ((rv = lockmgr(&sc->sc_conflock, lkflags, NULL)) != 0) {
 		DPRINTF(("iop_reconfigure: unable to acquire lock\n"));
 		return (rv);
 	}
@@ -577,19 +592,18 @@ iop_reconfigure(struct iop_softc *sc, u_int32_t chgind)
 		free(sc->sc_tidmap, M_DEVBUF);
 	sc->sc_tidmap = malloc(sc->sc_nlctent * sizeof(struct iop_tidmap),
 	    M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_tidmap, 0, sc->sc_nlctent * sizeof(struct iop_tidmap));
 
 	/* Match and attach child devices. */
 	iop_configure_devices(sc);
 
 	for (ii = LIST_FIRST(&sc->sc_iilist); ii != NULL; ii = nextii) {
-		nextii = LIST_NEXT(ii, ii_list);
+		nextii = ii;
+		do {
+			if ((nextii = LIST_NEXT(nextii, ii_list)) == NULL)
+				break;
+		} while ((nextii->ii_flags & II_UTILITY) != 0);
 		if ((ii->ii_flags & II_UTILITY) != 0)
 			continue;
-		if ((ii->ii_flags & II_CONFIGURED) == 0) {
-			ii->ii_flags |= II_CONFIGURED;
-			continue;
-		}
 
 		/* Detach devices that were configured, but are now gone. */
 		for (i = 0; i < sc->sc_nlctent; i++)
@@ -625,10 +639,15 @@ iop_configure_devices(struct iop_softc *sc)
 	struct iop_attach_args ia;
 	struct iop_initiator *ii;
 	const struct i2o_lct_entry *le;
+	struct device *dv;
 	int i, j, nent;
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
+		sc->sc_tidmap[i].it_tid = le32toh(le->localtid) & 4095;
+		sc->sc_tidmap[i].it_flags = 0;
+		sc->sc_tidmap[i].it_dvname[0] = '\0';
+
 		/*
 		 * Ignore the device if it's in use.
 		 */
@@ -636,7 +655,7 @@ iop_configure_devices(struct iop_softc *sc)
 			continue;
 
 		ia.ia_class = le16toh(le->classid) & 4095;
-		ia.ia_tid = le32toh(le->localtid) & 4095;
+		ia.ia_tid = sc->sc_tidmap[i].it_tid;
 
 		/* Ignore uninteresting devices. */
 		for (j = 0; j < sizeof(iop_class) / sizeof(iop_class[0]); j++)
@@ -653,14 +672,21 @@ iop_configure_devices(struct iop_softc *sc)
  		LIST_FOREACH(ii, &sc->sc_iilist, ii_list) {
  			if ((ii->ii_flags & II_UTILITY) != 0)
  				continue;
- 			if (ia.ia_tid == ii->ii_tid)
+ 			if (ia.ia_tid == ii->ii_tid) {
+				sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
+				strcpy(sc->sc_tidmap[i].it_dvname,
+				    ii->ii_dv->dv_xname);
 				break;
+			}
 		}
 		if (ii != NULL)
 			continue;
 
-		if (config_found_sm(&sc->sc_dv, &ia, iop_print, iop_submatch))
+		dv = config_found_sm(&sc->sc_dv, &ia, iop_print, iop_submatch);
+		if (dv != NULL) {
 			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
+			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
+		}
 	}
 }
 
@@ -969,7 +995,12 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 	mb->classid = I2O_CLASS_ANY;
 	mb->changeindicator = chgind;
 
-	DPRINTF(("iop_lct_get0: reading LCT\n"));
+#ifdef I2ODEBUG
+	printf("iop_lct_get0: reading LCT");
+	if (chgind != 0)
+		printf(" (async)");
+	printf("\n");
+#endif
 
 	iop_msg_map(sc, im, lct, size, 0);
 	rv = iop_msg_enqueue(sc, im, (chgind == 0 ? 120*1000 : 0));
@@ -1777,6 +1808,7 @@ iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
 			    (le32toh(sc->sc_status.segnumber) >> 16) & 0xff); 
 	}
 #endif
+
 	if ((im->im_flags & (IM_REPLIED | IM_NOSTATUS)) == IM_REPLIED) {
 		rb = (struct i2o_reply *)im->im_msg;
 		rv = (rb->reqstatus != I2O_STATUS_SUCCESS ? EIO : 0);
@@ -1976,6 +2008,14 @@ iopopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (EIO);
 	sc->sc_flags |= IOP_OPEN;
 
+	/* XXX */
+	sc->sc_ptb = malloc(((MAXPHYS + 3) & ~3) * IOP_MAX_MSG_XFERS, M_DEVBUF,
+	    M_WAITOK);
+	if (sc->sc_ptb == NULL) {
+		sc->sc_flags ^= IOP_OPEN;
+		return (ENOMEM);
+	}
+
 	return (0);
 }
 
@@ -1985,7 +2025,8 @@ iopclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct iop_softc *sc;
 
 	sc = device_lookup(&iop_cd, minor(dev));
-	sc->sc_flags &= ~IOP_OPEN;
+	free(sc->sc_ptb, M_DEVBUF);
+	sc->sc_flags ^= IOP_OPEN;
 	return (0);
 }
 
@@ -1999,11 +2040,15 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct i2o_msg *mb;
 	struct i2o_reply *rb;
 	int rv, i;
+	struct ioppt_buf *ptb;
+	void *buf;
 
 	if (securelevel >= 2)
 		return (EPERM);
 
 	sc = device_lookup(&iop_cd, minor(dev));
+
+	PHOLD(p);
 
 	switch (cmd) {
 	case IOPIOCPT:
@@ -2019,6 +2064,9 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    	rv = EINVAL;
 		    	break;
 		}
+		for (i = 0; i < pt->pt_nbufs; i++)
+			if (pt->pt_bufs[i].ptb_datalen > ((MAXPHYS + 3) & ~3))
+				return (ENOMEM);
 
 		rv = iop_msg_alloc(sc, NULL, &im, IM_NOINTR | IM_NOSTATUS);
 		if (rv != 0)
@@ -2034,12 +2082,18 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		mb->msgtctx = im->im_tctx;
 
 		for (i = 0; i < pt->pt_nbufs; i++) {
-			rv = iop_msg_map(sc, im, pt->pt_bufs[i].ptb_data,
-			    pt->pt_bufs[i].ptb_datalen,
-			    pt->pt_bufs[i].ptb_out != 0);
+			ptb = &pt->pt_bufs[i];
+			buf = sc->sc_ptb + i * ((MAXPHYS + 3) & ~3);
+
+			if (ptb->ptb_out != 0)
+				rv = copyin(ptb->ptb_data, buf,
+				    ptb->ptb_datalen);
+
+			rv = iop_msg_map(sc, im, buf, ptb->ptb_datalen,
+			    ptb->ptb_out != 0);
 			if (rv != 0) {
 				iop_msg_free(sc, NULL, im);
-				return (rv);
+				break;
 			}
 		}
 
@@ -2053,12 +2107,20 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			rv = copyout(rb, pt->pt_reply, i);
 		}
 
+		for (i = 0; i < pt->pt_nbufs; i++) {
+			ptb = &pt->pt_bufs[i];
+			if (ptb->ptb_out != 0 || rv != 0)
+				continue;
+			rv = copyout(sc->sc_ptb + i * ((MAXPHYS + 3) & ~3),
+			    ptb->ptb_data, ptb->ptb_datalen);
+		}
+
 		iop_msg_free(sc, NULL, im);
 		break;
 
 	case IOPIOCGLCT:
 		iov = (struct iovec *)data;
-		rv = lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL);
+		rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL);
 		if (rv == 0) {
 			i = le16toh(sc->sc_lct->tablesize) << 2;
 			if (i > iov->iov_len)
@@ -2082,7 +2144,21 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case IOPIOCRECONFIG:
-		rv = iop_reconfigure(sc, 0);
+		rv = iop_reconfigure(sc, 0, 0);
+		break;
+
+	case IOPIOCGTIDMAP:
+		iov = (struct iovec *)data;
+		rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL);
+		if (rv == 0) {
+			i = sizeof(struct iop_tidmap) * sc->sc_nlctent;
+			if (i > iov->iov_len)
+				i = iov->iov_len;
+			else
+				iov->iov_len = i;
+			rv = copyout(sc->sc_tidmap, iov->iov_base, i);
+			lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
+		}
 		break;
 
 	default:
@@ -2092,6 +2168,8 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		rv = ENOTTY;
 		break;
 	}
+
+	PRELE(p);
 
 	return (rv);
 }
