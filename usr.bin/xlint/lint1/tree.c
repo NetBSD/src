@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.15 1998/04/09 00:32:38 tv Exp $	*/
+/*	$NetBSD: tree.c,v 1.16 1998/07/27 12:10:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.15 1998/04/09 00:32:38 tv Exp $");
+__RCSID("$NetBSD: tree.c,v 1.16 1998/07/27 12:10:23 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -769,7 +769,8 @@ typeok(op, arg, ln, rn)
 	tnode_t	*ln, *rn;
 {
 	mod_t	*mp;
-	tspec_t	lt, rt = NULL, lst = NULL, rst = NULL, olt = NULL, ort = NULL;
+	tspec_t	lt, rt = NOTSPEC, lst = NOTSPEC, rst = NOTSPEC, olt = NOTSPEC,
+	    ort = NOTSPEC;
 	type_t	*ltp, *rtp = NULL, *lstp = NULL, *rstp = NULL;
 	tnode_t	*tn;
 
@@ -1220,7 +1221,7 @@ asgntypok(op, arg, ln, rn)
 	int	arg;
 	tnode_t	*ln, *rn;
 {
-	tspec_t	lt, rt, lst = NULL, rst = NULL;
+	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 	mod_t	*mp;
 	const	char *lts, *rts;
@@ -1673,7 +1674,7 @@ convert(op, arg, tp, tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ntn;
-	tspec_t	nt, ot, ost = NULL;
+	tspec_t	nt, ot, ost = NOTSPEC;
 
 	if (tn->tn_lvalue)
 		lerror("convert() 1");
@@ -1915,7 +1916,7 @@ cvtcon(op, arg, tp, nv, v)
 	val_t	*nv, *v;
 {
 	tspec_t	ot, nt;
-	ldbl_t	max = NULL, min = NULL;
+	ldbl_t	max = 0.0, min = 0.0;
 	int	sz, rchk;
 	quad_t	xmask, xmsk1;
 	int	osz, nsz;
@@ -3881,7 +3882,7 @@ precconf(tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ln, *rn;
-	op_t	lop, rop = NULL;
+	op_t	lop, rop = NOOP;
 	int	lparn, rparn = 0;
 	mod_t	*mp;
 	int	warn;

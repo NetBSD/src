@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.5 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: chk.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.5 1998/02/22 15:40:40 christos Exp $");
+__RCSID("$NetBSD: chk.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -709,7 +709,7 @@ printflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	fwidth, prec, left, sign, space, alt, zero;
-	tspec_t	sz, t1, t2 = NULL;
+	tspec_t	sz, t1, t2 = NOTSPEC;
 	type_t	*tp;
 
 	fp = fmt;
@@ -939,7 +939,7 @@ scanflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	noasgn, fwidth;
-	tspec_t	sz, t1 = NULL, t2 = NULL;
+	tspec_t	sz, t1 = NOTSPEC, t2 = NOTSPEC;
 	type_t	*tp = NULL;
 
 	fp = fmt;
