@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.3 2000/02/26 15:16:19 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.4 2000/03/13 18:49:17 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -27,8 +27,7 @@
  */
 
 #include "opt_tx39_debug.h"
-#include "biconsdev.h"
-#include "fb.h"
+#include "hpcfb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,16 +46,12 @@
 
 #include <machine/bootinfo.h>
 
-#if NBICONSDEV > 0
-#include <hpcmips/dev/biconsvar.h>
-#include <hpcmips/dev/bicons.h>
+#if NHPCFB > 0
+#include <arch/hpcmips/dev/hpcfbvar.h>
+#include <arch/hpcmips/dev/hpcfbio.h>
+#include <arch/hpcmips/dev/bivideovar.h>
 #endif
-
-#if NFB > 0
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <arch/hpcmips/dev/fbvar.h>
-#endif
+#include <machine/autoconf.h> /* XXX */
 
 #ifdef PLUMVIDEODEBUG
 int	plumvideo_debug = 1;
@@ -113,7 +108,7 @@ plumvideo_attach(parent, self, aux)
 {
 	struct plum_attach_args *pa = aux;
 	struct plumvideo_softc *sc = (void*)self;
-	struct fb_attach_args fba;
+	struct mainbus_attach_args ma; /* XXX */
 
 	sc->sc_pc	= pa->pa_pc;
 	sc->sc_regt	= pa->pa_regt;
@@ -170,13 +165,13 @@ plumvideo_attach(parent, self, aux)
 		plumvideo_dump(sc);
 #endif
 
-#if NFB > 0
-	if(!cn_tab && fb_cnattach(0, 0, 0, 0)) {
+#if NHPCFB > 0
+	if(!cn_tab && hpcfb_cnattach(0, 0, 0, 0)) {
 		panic("plumvideo_attach: can't init fb console");
 	}
 	/* Attach frame buffer device */
-	fba.fba_name = "fb";
-	config_found(self, &fba, plumvideo_print);
+	ma.ma_name = "bivideo"; /* XXX */
+	config_found(self, &ma, plumvideo_print);
 #endif
 }
 
@@ -212,11 +207,6 @@ plumvideo_bootinforefil(sc)
 	}
 	
 	bootinfo->fb_addr = (unsigned char *)ioh;
-
-#if NBICONSDEV > 0
-	/* re-install */
-	bicons_init();
-#endif
 }
 
 #ifdef PLUMVIDEODEBUG
