@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.13 2002/11/26 21:39:18 kim Exp $	*/
+/*	$NetBSD: ppt.c,v 1.14 2002/11/26 23:07:36 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.13 2002/11/26 21:39:18 kim Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.14 2002/11/26 23:07:36 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(argc, argv)
 	char **argv;
 {
 	char *p, buf[132];
-	int c, start, dflag;
+	int c, start, neednl, dflag;
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
@@ -98,25 +98,29 @@ main(argc, argv)
 			usage();
 
 		start = 0;
+		neednl = 0;
 		while (fgets(buf, sizeof(buf), stdin) != NULL) {
 			c = getppt(buf);
 			if (c < 0) {
 				if (start) {
-					/* lost sync */
-					putchar('\n');
+					/* lost sync? */
+					if (neednl)
+						putchar('\n');
 					exit(0);
 				} else
 					continue;
 			}
 			start = 1;
 			putchar(c);
+			neednl = (c != '\n');
 		}
 		if (!feof(stdin))
 			err(1, "fgets");
-		putchar('\n');
+		if (neednl)
+			putchar('\n');
 	} else {
 		(void) puts(EDGE);
-		if (argc > 1)
+		if (argc > 0)
 			while ((p = *argv++)) {
 				for (; *p; ++p)
 					putppt((int)*p);
