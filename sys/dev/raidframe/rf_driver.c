@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.24 2000/01/09 01:29:28 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.25 2000/01/09 03:14:32 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,6 @@
 #include "rf_driver.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
-#include "rf_cpuutil.h"
 #include "rf_kintf.h"
 
 #include <sys/buf.h>
@@ -424,7 +423,6 @@ rf_Configure(raidPtr, cfgPtr)
 		DO_INIT_CONFIGURE(rf_ConfigureReconstruction);
 		DO_INIT_CONFIGURE(rf_ConfigureCopyback);
 		DO_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
-		DO_INIT_CONFIGURE(rf_ConfigureCpuMonitor);
 		isconfigged = 1;
 	}
 	RF_UNLOCK_MUTEX(configureMutex);
