@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.72 2003/10/10 03:23:28 grog Exp $	*/
+/*	$NetBSD: newfs.c,v 1.73 2003/10/10 09:00:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.72 2003/10/10 03:23:28 grog Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.73 2003/10/10 09:00:24 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -881,7 +881,7 @@ struct help_strings {
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
 #endif
-	{ BOTH,		"-V\t\tignore partition for Vinum" },
+	{ BOTH,		"-V \t\tignore partition for Vinum" },
 	{ NEWFS,	"-Z \t\tpre-zero the image file (with -F)" },
 	{ BOTH,		"-a maxcontig\tmaximum contiguous blocks" },
 	{ BOTH,		"-b bsize\tblock size" },
