@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.38 2003/12/30 19:12:24 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.39 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -34,6 +34,43 @@
 
 #include <sys/lock.h>
 #include <sys/queue.h>
+
+/*
+ * Description of a command to be handled by an ATA controller.  These
+ * commands are queued in a list.
+ */
+struct ata_xfer {
+	__volatile u_int c_flags;	/* command state flags */
+	
+	/* Channel and drive that are to process the request. */
+	struct channel_softc *c_chp;
+	int	c_drive;
+
+	void	*c_cmd;			/* private request structure pointer */
+	void	*c_databuf;		/* pointer to data buffer */
+	int	c_bcount;		/* byte count left */
+	int	c_skip;			/* bytes already transferred */
+	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
+
+	/* Link on the command queue. */
+	TAILQ_ENTRY(ata_xfer) c_xferchain;
+
+	/* Low-level protocol handlers. */
+	void	(*c_start)(struct channel_softc *, struct ata_xfer *);
+	int	(*c_intr)(struct channel_softc *, struct ata_xfer *, int);
+	void	(*c_kill_xfer)(struct channel_softc *, struct ata_xfer *);
+};
+
+#define	C_ATAPI		0x0001		/* xfer is ATAPI request */
+#define	C_TIMEOU	0x0002		/* xfer processing timed out */
+#define	C_POLL		0x0004		/* command is polled */
+#define	C_DMA		0x0008		/* command uses DMA */
+
+/* Per-channel queue of ata_xfers.  May be shared by multiple channels. */
+struct ata_queue {
+	TAILQ_HEAD(, ata_xfer) queue_xfer;
+	int queue_freeze;
+};
 
 /* ATA bus instance state information. */
 struct atabus_softc {

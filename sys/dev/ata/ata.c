@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.23 2003/12/30 16:28:37 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.24 2004/01/01 17:18:54 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.23 2003/12/30 16:28:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.24 2004/01/01 17:18:54 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -119,7 +119,7 @@ atabus_thread(void *arg)
 {
 	struct atabus_softc *sc = arg;
 	struct channel_softc *chp = sc->sc_chan;
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 	int s;
 
 	s = splbio();
@@ -157,7 +157,7 @@ atabus_thread(void *arg)
 			 * Caller has bumped queue_freeze, decrease it.
 			 */
 			chp->ch_queue->queue_freeze--;
-			xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
+			xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 			KASSERT(xfer != NULL);
 			(*xfer->c_start)(chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)

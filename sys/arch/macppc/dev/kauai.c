@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.8 2003/12/31 02:50:34 thorpej Exp $	*/
+/*	$NetBSD: kauai.c,v 1.9 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.8 2003/12/31 02:50:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.9 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
 	struct channel_softc wdc_chanlist[1];
 	struct channel_softc wdc_channel;
-	struct channel_queue wdc_queue;
+	struct ata_queue wdc_queue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];

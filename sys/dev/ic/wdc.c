@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.164 2003/12/30 17:18:11 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.165 2004/01/01 17:18:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.164 2003/12/30 17:18:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.165 2004/01/01 17:18:53 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -146,9 +146,9 @@ const struct ata_bustype wdc_ata_bustype = {
 int wdcprobe1 __P((struct channel_softc*, int));
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int, int));
-void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
-void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
-int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
+void  __wdccommand_done __P((struct channel_softc *, struct ata_xfer *));
+void  __wdccommand_start __P((struct channel_softc *, struct ata_xfer *));	
+int   __wdccommand_intr __P((struct channel_softc *, struct ata_xfer *, int));
 int   __wdcwait __P((struct channel_softc *, int, int, int));
 void wdc_finish_attach __P((struct device *));
 void wdc_channel_attach __P((struct channel_softc *));
@@ -661,12 +661,12 @@ wdcattach(struct channel_softc *chp)
 	if (chp->wdc->drv_probe == NULL)
 		chp->wdc->drv_probe = wdc_drvprobe;
 	if (inited == 0) {
-		/* Initialize the wdc_xfer pool. */
-		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
+		/* Initialize the ata_xfer pool. */
+		pool_init(&wdc_xfer_pool, sizeof(struct ata_xfer), 0,
 		    0, 0, "wdcspl", NULL);
 		inited++;
 	}
-	TAILQ_INIT(&chp->ch_queue->sc_xfer);
+	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
 
 	chp->atabus = config_found(&chp->wdc->sc_dev, chp, atabusprint);
@@ -722,7 +722,7 @@ wdcdetach(struct device *self, int flags)
 void
 wdcstart(struct channel_softc *chp)
 {
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 
 #ifdef WDC_DIAGNOSTIC
 	int spl1, spl2;
@@ -738,11 +738,11 @@ wdcstart(struct channel_softc *chp)
 #endif /* WDC_DIAGNOSTIC */
 
 	/* is there a xfer ? */
-	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL)
+	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
 		return;
 
 	/* adjust chp, in case we have a shared queue */
-	chp = xfer->chp;
+	chp = xfer->c_chp;
 
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
@@ -759,11 +759,11 @@ wdcstart(struct channel_softc *chp)
 			return;
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
-	    chp->channel, xfer->drive), DEBUG_XFERS);
+	    chp->channel, xfer->c_drive), DEBUG_XFERS);
 	chp->ch_flags |= WDCF_ACTIVE;
-	if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_RESET) {
-		chp->ch_drive[xfer->drive].drive_flags &= ~DRIVE_RESET;
-		chp->ch_drive[xfer->drive].state = 0;
+	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_RESET) {
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_RESET;
+		chp->ch_drive[xfer->c_drive].state = 0;
 	}
 	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
@@ -793,7 +793,7 @@ int
 wdcintr(void *arg)
 {
 	struct channel_softc *chp = arg;
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 	int ret;
 
 	if ((chp->wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
@@ -810,11 +810,11 @@ wdcintr(void *arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	xfer = chp->ch_queue->sc_xfer.tqh_first;
+	xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 	if (chp->ch_flags & WDCF_DMA_WAIT) {
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
-			xfer->drive, 0);
+			xfer->c_drive, 0);
 		if (chp->wdc->dma_status & WDC_DMAST_NOIRQ) {
 			/* IRQ not for us, not detected by DMA engine */
 			return 0;
@@ -1035,7 +1035,7 @@ __wdcwait(struct channel_softc *chp, int mask, int bits, int timeout)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && time > WDCNDELAY_DEBUG) {
-		struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+		struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
@@ -1102,20 +1102,20 @@ wdcwait(struct channel_softc *chp, int mask, int bits, int timeout, int flags)
  * Busy-wait for DMA to complete
  */
 int
-wdc_dmawait(struct channel_softc *chp, struct wdc_xfer *xfer, int timeout)
+wdc_dmawait(struct channel_softc *chp, struct ata_xfer *xfer, int timeout)
 {
 	int time;
 	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			chp->channel, xfer->drive, 0);
+			chp->channel, xfer->c_drive, 0);
 		if ((chp->wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
 			return 0;
 		delay(WDCDELAY);
 	}
 	/* timeout, force a DMA halt */
 	chp->wdc->dma_status = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-	    chp->channel, xfer->drive, 1);
+	    chp->channel, xfer->c_drive, 1);
 	return 1;
 }
 
@@ -1123,7 +1123,7 @@ void
 wdctimeout(void *arg)
 {
 	struct channel_softc *chp = (struct channel_softc *)arg;
-	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+	struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 	int s;
 
 	WDCDEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
@@ -1138,7 +1138,7 @@ wdctimeout(void *arg)
 		if (chp->ch_flags & WDCF_DMA_WAIT) {
 			chp->wdc->dma_status =
 			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				chp->channel, xfer->drive, 1);
+				chp->channel, xfer->c_drive, 1);
 			chp->ch_flags &= ~WDCF_DMA_WAIT;
 		}
 		/*
@@ -1442,7 +1442,7 @@ int
 wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 	int s, ret;
 
 	WDCDEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
@@ -1460,10 +1460,10 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 		wdc_c->flags |= AT_POLL;
 	if (wdc_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
-	xfer->drive = drvp->drive;
-	xfer->databuf = wdc_c->data;
+	xfer->c_drive = drvp->drive;
+	xfer->c_databuf = wdc_c->data;
 	xfer->c_bcount = wdc_c->bcount;
-	xfer->cmd = wdc_c;
+	xfer->c_cmd = wdc_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
 	xfer->c_kill_xfer = __wdccommand_done;
@@ -1492,13 +1492,13 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 }
 
 void
-__wdccommand_start(struct channel_softc *chp, struct wdc_xfer *xfer)
+__wdccommand_start(struct channel_softc *chp, struct ata_xfer *xfer)
 {   
-	int drive = xfer->drive;
-	struct wdc_command *wdc_c = xfer->cmd;
+	int drive = xfer->c_drive;
+	struct wdc_command *wdc_c = xfer->c_cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->c_drive),
 	    DEBUG_FUNCS);
 
 	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
@@ -1539,9 +1539,9 @@ __wdccommand_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 }
 
 int
-__wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
+__wdccommand_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
 {
-	struct wdc_command *wdc_c = xfer->cmd;
+	struct wdc_command *wdc_c = xfer->c_cmd;
 	int bcount = wdc_c->bcount;
 	char *data = wdc_c->data;
 	int wflags;
@@ -1555,7 +1555,8 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 
  again:
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->c_drive),
+	    DEBUG_INTR);
 	/*
 	 * after a ATAPI_SOFT_RESET, the device will have released the bus.
 	 * Reselect again, it doesn't hurt for others commands, and the time
@@ -1563,7 +1564,7 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 	 * wdc_exec_command() isn't called often (mosly for autoconfig)
 	 */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
-	    WDSD_IBM | (xfer->drive << 4));
+	    WDSD_IBM | (xfer->c_drive << 4));
 	if ((wdc_c->flags & AT_XFDONE) != 0) {
 		/*
 		 * We have completed a data xfer. The drive should now be
@@ -1592,7 +1593,7 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 			wdc_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
+		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
 			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
 			    0, (u_int32_t*)data, bcount >> 2);
 			data += bcount & 0xfffffffc;
@@ -1610,7 +1611,7 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 			wdc_c->flags |= AT_TIMEOU;
 			goto out;
 		}
-		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
+		if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_CAP32) {
 			bus_space_write_multi_4(chp->data32iot, chp->data32ioh,
 			    0, (u_int32_t*)data, bcount >> 2);
 			data += bcount & 0xfffffffc;
@@ -1636,12 +1637,13 @@ __wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 }
 
 void
-__wdccommand_done(struct channel_softc *chp, struct wdc_xfer *xfer)
+__wdccommand_done(struct channel_softc *chp, struct ata_xfer *xfer)
 {
-	struct wdc_command *wdc_c = xfer->cmd;
+	struct wdc_command *wdc_c = xfer->c_cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_FUNCS);
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->c_drive),
+	    DEBUG_FUNCS);
 
 	callout_stop(&chp->ch_callout);
 
@@ -1790,14 +1792,14 @@ wdccommandshort(struct channel_softc *chp, int drive, int command)
 
 /* Add a command to the queue and start controller. Must be called at splbio */
 void
-wdc_exec_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
+wdc_exec_xfer(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 
 	WDCDEBUG_PRINT(("wdc_exec_xfer %p channel %d drive %d\n", xfer,
-	    chp->channel, xfer->drive), DEBUG_XFERS);
+	    chp->channel, xfer->c_drive), DEBUG_XFERS);
 
 	/* complete xfer setup */
-	xfer->chp = chp;
+	xfer->c_chp = chp;
 
 	/*
 	 * If we are a polled command, and the list is not empty,
@@ -1805,20 +1807,20 @@ wdc_exec_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	 * to complete, we're going to reboot soon anyway.
 	 */
 	if ((xfer->c_flags & C_POLL) != 0 &&
-	    chp->ch_queue->sc_xfer.tqh_first != NULL) {
-		TAILQ_INIT(&chp->ch_queue->sc_xfer);
+	    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != NULL) {
+		TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	}
 	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&chp->ch_queue->sc_xfer,xfer , c_xferchain);
+	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
 }
 
-struct wdc_xfer *
+struct ata_xfer *
 wdc_get_xfer(int flags)
 {
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 	int s;
 
 	s = splbio();
@@ -1826,13 +1828,13 @@ wdc_get_xfer(int flags)
 	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	splx(s);
 	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct wdc_xfer));
+		memset(xfer, 0, sizeof(struct ata_xfer));
 	}
 	return xfer;
 }
 
 void
-wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
+wdc_free_xfer(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->wdc;
 	int s;
@@ -1841,7 +1843,7 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 		(*wdc->free_hw)(chp);
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
-	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
+	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
 }
@@ -1854,10 +1856,10 @@ wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 void
 wdc_kill_pending(struct channel_softc *chp)
 {
-	struct wdc_xfer *xfer;
+	struct ata_xfer *xfer;
 
-	while ((xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer)) != NULL) {
-		chp = xfer->chp;
+	while ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) != NULL) {
+		chp = xfer->c_chp;
 		(*xfer->c_kill_xfer)(chp, xfer);
 	}
 }
@@ -1865,14 +1867,14 @@ wdc_kill_pending(struct channel_softc *chp)
 static void
 __wdcerror(struct channel_softc *chp, char *msg) 
 {
-	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+	struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    msg);
 	else
 		printf("%s:%d:%d: %s\n", chp->wdc->sc_dev.dv_xname,
-		    chp->channel, xfer->drive, msg);
+		    chp->channel, xfer->c_drive, msg);
 }
 
 /* 

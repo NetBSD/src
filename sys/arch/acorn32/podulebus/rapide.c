@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.16 2003/12/31 02:41:22 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.16 2003/12/31 02:41:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.17 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,8 @@ struct rapide_softc {
 	bus_space_tag_t		sc_ctliot;		/* Bus tag */
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
-		struct channel_softc wdc_channel; /* generic part */
-		struct channel_queue wdc_chqueue; /* channel queue */
+		struct channel_softc wdc_channel;	/* generic part */
+		struct ata_queue wdc_chqueue;		/* channel queue */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
 	} rapide_channels[2];

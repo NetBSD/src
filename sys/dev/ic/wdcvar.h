@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.48 2003/12/30 17:18:11 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.49 2004/01/01 17:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -45,11 +45,6 @@
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
 
-struct channel_queue {  /* per channel queue (may be shared) */
-	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
-	int queue_freeze;
-};
-
 #define WDC_NREG	8 /* number of command registers */
 
 struct channel_softc { /* Per channel data */
@@ -92,7 +87,7 @@ struct channel_softc { /* Per channel data */
 	 * channel queues. May be the same for all channels, if hw channels
 	 * are not independent.
 	 */
-	struct channel_queue *ch_queue;
+	struct ata_queue *ch_queue;
 
 	/* the channel kernel thread */
 	struct proc *thread;
@@ -160,33 +155,6 @@ struct wdc_softc { /* Per controller state */
 	void		(*irqack) __P((struct channel_softc *));
 };
 
- /*
-  * Description of a command to be handled by a controller.
-  * These commands are queued in a list.
-  */
-struct wdc_xfer {
-	volatile u_int c_flags;    
-#define C_ATAPI  	0x0001 /* xfer is ATAPI request */
-#define C_TIMEOU  	0x0002 /* xfer processing timed out */
-#define C_POLL		0x0004 /* cmd is polled */
-#define C_DMA		0x0008 /* cmd uses DMA */
-
-	/* Informations about our location */
-	struct channel_softc *chp;
-	u_int8_t drive;
-
-	/* Information about the current transfer  */
-	void *cmd; /* wdc, ata or scsipi command structure */
-	void *databuf;
-	int c_bcount;      /* byte count left */
-	int c_skip;        /* bytes already transferred */
-	int c_dscpoll;	   /* counter for dsc polling (ATAPI) */
-	TAILQ_ENTRY(wdc_xfer) c_xferchain;
-	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
-	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
-	void (*c_kill_xfer) __P((struct channel_softc *, struct wdc_xfer *));
-};
-
 /*
  * Public functions which can be called by ATA or ATAPI specific parts,
  * or bus-specific backends.
@@ -197,11 +165,11 @@ void  wdcattach __P((struct channel_softc *));
 int   wdcdetach __P((struct device *, int));
 int   wdcactivate __P((struct device *, enum devact));
 int   wdcintr __P((void *));
-void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
-struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
+void  wdc_exec_xfer __P((struct channel_softc *, struct ata_xfer *));
+struct ata_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP 0x00
 #define WDC_NOSLEEP 0x01
-void   wdc_free_xfer  __P((struct channel_softc *, struct wdc_xfer *));
+void   wdc_free_xfer  __P((struct channel_softc *, struct ata_xfer *));
 void  wdcstart __P((struct channel_softc *));
 void  wdcrestart __P((void*));
 int   wdcreset	__P((struct channel_softc *, int));
@@ -211,7 +179,7 @@ int   wdcwait __P((struct channel_softc *, int, int, int, int));
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
-int   wdc_dmawait __P((struct channel_softc *, struct wdc_xfer *, int));
+int   wdc_dmawait __P((struct channel_softc *, struct ata_xfer *, int));
 void  wdcbit_bucket __P(( struct channel_softc *, int));
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
     u_int8_t, u_int8_t, u_int8_t, u_int8_t));

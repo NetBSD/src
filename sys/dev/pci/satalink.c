@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.8 2003/12/31 12:46:04 martin Exp $	*/
+/*	$NetBSD: satalink.c,v 1.9 2004/01/01 17:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -542,7 +542,7 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue =
-	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",

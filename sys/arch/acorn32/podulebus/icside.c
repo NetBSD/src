@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.17 2003/12/31 02:41:22 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.17 2003/12/31 02:41:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.18 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -86,7 +86,7 @@ struct icside_softc {
 	struct channel_softc *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
 		struct channel_softc	wdc_channel;	/* generic part */
-		struct channel_queue	wdc_chqueue;	/* channel queue */
+		struct ata_queue	wdc_chqueue;	/* channel queue */
 		void			*ic_ih;		/* interrupt handler */
 		struct evcnt		ic_intrcnt;	/* interrupt count */
 		u_int			ic_irqaddr;	/* interrupt flag */

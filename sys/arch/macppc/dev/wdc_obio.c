@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.32 2003/12/31 02:50:34 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.33 2004/01/01 17:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.32 2003/12/31 02:50:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.33 2004/01/01 17:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
 	struct channel_softc wdc_chanptr[1];
 	struct channel_softc wdc_channel;
-	struct channel_queue wdc_chqueue;
+	struct ata_queue wdc_chqueue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
