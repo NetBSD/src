@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.6 1995/09/18 23:26:39 pk Exp $ */
+/* $NetBSD: xd.c,v 1.7 1995/09/24 00:27:59 chuck Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.6 1995/09/18 23:26:39 pk Exp $
+ * id: $Id: xd.c,v 1.7 1995/09/24 00:27:59 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -613,6 +613,8 @@ xdattach(parent, self, aux)
 	xd->nhead = 1;
 	xd->nsect = 1;
 	xd->sectpercyl = 1;
+	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
+		xd->dkb.bt_bad[lcv].bt_cyl = xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
@@ -657,8 +659,6 @@ xdattach(parent, self, aux)
 	 * read bad144 table. this table resides on the first sector of the
 	 * last track of the disk (i.e. second cyl of "acyl" area).
 	 */
-	for (lcv = 0; lcv < 126; lcv++)	/* init empty */
-		xd->dkb.bt_bad[lcv].bt_cyl = xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 
 	blk = (xd->ncyl + xd->acyl - 1) * (xd->nhead * xd->nsect) + /* last cyl */
 	    (xd->nhead - 1) * xd->nsect;	/* last head */
