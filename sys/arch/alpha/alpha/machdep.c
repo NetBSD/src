@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1996/07/09 00:54:00 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1996/07/11 03:53:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -92,7 +92,11 @@
 #include <alpha/alpha/dec_21000.h>
 #endif
 
+#include <net/if.h>
 #include <net/netisr.h>
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include <netinet/if_arp.h>
 #include "ether.h"
 
 #include "le_ioasic.h"			/* for le_iomem creation */
@@ -184,6 +188,8 @@ char boot_flags[64];
 /* for cpu_sysctl() */
 char		root_device[17];
 
+void		identifycpu();
+
 int
 alpha_init(pfn, ptb)
 	u_long pfn;		/* first free PFN number */
@@ -253,13 +259,13 @@ alpha_init(pfn, ptb)
 #define cnt	 mddtp->mddt_cluster_cnt
 #define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
 	if (cnt != 2 && cnt != 3) {
-		printf("WARNING: weird number (%d) of mem clusters\n", cnt);
+		printf("WARNING: weird number (%ld) of mem clusters\n", cnt);
 		mddtweird = 1;
 	} else if (usage(0) != MDDT_PALCODE ||
 		   usage(1) != MDDT_SYSTEM ||
 	           (cnt == 3 && usage(2) != MDDT_PALCODE)) {
 		mddtweird = 1;
-		printf("WARNING: %d mem clusters, but weird config\n", cnt);
+		printf("WARNING: %ld mem clusters, but weird config\n", cnt);
 	}
 
 	for (i = 0; i < cnt; i++) {
@@ -545,9 +551,9 @@ alpha_init(pfn, ptb)
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make proc0's trapframe pointer point to it for sanity.
 	 */
-	proc0paddr->u_pcb.pcb_ksp =
+	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
-	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_ksp;
+	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -615,11 +621,10 @@ void
 cpu_startup()
 {
 	register unsigned i;
-	register caddr_t v;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-#ifdef DEBUG
+#if defined(DEBUG) && defined(OLD_PMAP)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 
@@ -699,7 +704,7 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(OLD_PMAP)
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
@@ -717,15 +722,16 @@ cpu_startup()
 	configure();
 }
 
+void
 identifycpu()
 {
 
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s, %dMHz\n", cpu_model,
+	printf("%s, %ldMHz\n", cpu_model,
 	    hwrpb->rpb_cc_freq / 1000000);	/* XXX true for 21164? */
-	printf("%d byte page size, %d processor%s.\n",
+	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
 #if 0
 	/* this isn't defined for any systems that we run on? */
@@ -852,7 +858,7 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	printf("dump ");
 	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
@@ -907,9 +913,9 @@ frametoreg(framep, regp)
 	regp->r_regs[R_S4] = framep->tf_regs[FRAME_S4];
 	regp->r_regs[R_S5] = framep->tf_regs[FRAME_S5];
 	regp->r_regs[R_S6] = framep->tf_regs[FRAME_S6];
-	regp->r_regs[R_A0] = framep->tf_a0;
-	regp->r_regs[R_A1] = framep->tf_a1;
-	regp->r_regs[R_A2] = framep->tf_a2;
+	regp->r_regs[R_A0] = framep->tf_af.af_a0;
+	regp->r_regs[R_A1] = framep->tf_af.af_a1;
+	regp->r_regs[R_A2] = framep->tf_af.af_a2;
 	regp->r_regs[R_A3] = framep->tf_regs[FRAME_A3];
 	regp->r_regs[R_A4] = framep->tf_regs[FRAME_A4];
 	regp->r_regs[R_A5] = framep->tf_regs[FRAME_A5];
@@ -920,7 +926,7 @@ frametoreg(framep, regp)
 	regp->r_regs[R_RA] = framep->tf_regs[FRAME_RA];
 	regp->r_regs[R_T12] = framep->tf_regs[FRAME_T12];
 	regp->r_regs[R_AT] = framep->tf_regs[FRAME_AT];
-	regp->r_regs[R_GP] = framep->tf_gp;
+	regp->r_regs[R_GP] = framep->tf_af.af_gp;
 	regp->r_regs[R_SP] = framep->tf_regs[FRAME_SP];
 	regp->r_regs[R_ZERO] = 0;
 }
@@ -947,9 +953,9 @@ regtoframe(regp, framep)
 	framep->tf_regs[FRAME_S4] = regp->r_regs[R_S4];
 	framep->tf_regs[FRAME_S5] = regp->r_regs[R_S5];
 	framep->tf_regs[FRAME_S6] = regp->r_regs[R_S6];
-	framep->tf_a0 = regp->r_regs[R_A0];
-	framep->tf_a1 = regp->r_regs[R_A1];
-	framep->tf_a2 = regp->r_regs[R_A2];
+	framep->tf_af.af_a0 = regp->r_regs[R_A0];
+	framep->tf_af.af_a1 = regp->r_regs[R_A1];
+	framep->tf_af.af_a2 = regp->r_regs[R_A2];
 	framep->tf_regs[FRAME_A3] = regp->r_regs[R_A3];
 	framep->tf_regs[FRAME_A4] = regp->r_regs[R_A4];
 	framep->tf_regs[FRAME_A5] = regp->r_regs[R_A5];
@@ -960,7 +966,7 @@ regtoframe(regp, framep)
 	framep->tf_regs[FRAME_RA] = regp->r_regs[R_RA];
 	framep->tf_regs[FRAME_T12] = regp->r_regs[R_T12];
 	framep->tf_regs[FRAME_AT] = regp->r_regs[R_AT];
-	framep->tf_gp = regp->r_regs[R_GP];
+	framep->tf_af.af_gp = regp->r_regs[R_GP];
 	framep->tf_regs[FRAME_SP] = regp->r_regs[R_SP];
 	/* ??? = regp->r_regs[R_ZERO]; */
 }
@@ -1034,7 +1040,7 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (u_long)scp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %lx usp %lx\n", p->p_pid,
+		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
 		    sig, &oonstack, scp);
 #endif
 	if (useracc((caddr_t)scp, fsize, B_WRITE) == 0) {
@@ -1061,8 +1067,8 @@ sendsig(catcher, sig, mask, code)
 	 */
 	ksc.sc_onstack = oonstack;
 	ksc.sc_mask = mask;
-	ksc.sc_pc = frame->tf_pc;
-	ksc.sc_ps = frame->tf_ps;
+	ksc.sc_pc = frame->tf_af.af_pc;
+	ksc.sc_ps = frame->tf_af.af_ps;
 
 	/* copy the registers. */
 	frametoreg(frame, (struct reg *)ksc.sc_regs);
@@ -1095,24 +1101,24 @@ sendsig(catcher, sig, mask, code)
 	(void) copyout((caddr_t)&ksc, (caddr_t)scp, fsize);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %lx code %lx\n", p->p_pid, sig,
+		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
 		    scp, code);
 #endif
 
 	/*
 	 * Set up the registers to return to sigcode.
 	 */
-	frame->tf_pc = (u_int64_t)PS_STRINGS - (esigcode - sigcode);
+	frame->tf_af.af_pc = (u_int64_t)PS_STRINGS - (esigcode - sigcode);
 	frame->tf_regs[FRAME_SP] = (u_int64_t)scp;
-	frame->tf_a0 = sig;
-	frame->tf_a1 = code;
-	frame->tf_a2 = (u_int64_t)scp;
+	frame->tf_af.af_a0 = sig;
+	frame->tf_af.af_a1 = code;
+	frame->tf_af.af_a2 = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
-		    frame->tf_pc, frame->tf_regs[FRAME_A3]);
+		    frame->tf_af.af_pc, frame->tf_regs[FRAME_A3]);
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
 		    p->p_pid, sig);
@@ -1145,7 +1151,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-	    printf("sigreturn: pid %d, scp %lx\n", p->p_pid, scp);
+	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
 	if (ALIGN(scp) != (u_int64_t)scp)
@@ -1170,8 +1176,8 @@ sys_sigreturn(p, v, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
-	p->p_md.md_tf->tf_pc = ksc.sc_pc;
-	p->p_md.md_tf->tf_ps =
+	p->p_md.md_tf->tf_af.af_pc = ksc.sc_pc;
+	p->p_md.md_tf->tf_af.af_ps =
 	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
 	regtoframe((struct reg *)ksc.sc_regs, p->p_md.md_tf);
@@ -1193,6 +1199,7 @@ sys_sigreturn(p, v, retval)
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -1243,25 +1250,25 @@ setregs(p, pack, stack, retval)
 #ifdef DEBUG
 	for (i = 0; i < FRAME_NSAVEREGS; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
-	tfp->tf_gp = 0xbabefacedeadbeef;
-	tfp->tf_a0 = 0xbabefacedeadbeef;
-	tfp->tf_a1 = 0xbabefacedeadbeef;
-	tfp->tf_a2 = 0xbabefacedeadbeef;
+	tfp->tf_af.af_gp = 0xbabefacedeadbeef;
+	tfp->tf_af.af_a0 = 0xbabefacedeadbeef;
+	tfp->tf_af.af_a1 = 0xbabefacedeadbeef;
+	tfp->tf_af.af_a2 = 0xbabefacedeadbeef;
 #else
 	bzero(tfp->tf_regs, FRAME_NSAVEREGS * sizeof tfp->tf_regs[0]);
-	tfp->tf_gp = 0;
-	tfp->tf_a0 = 0;
-	tfp->tf_a1 = 0;
-	tfp->tf_a2 = 0;
+	tfp->tf_af.af_gp = 0;
+	tfp->tf_af.af_a0 = 0;
+	tfp->tf_af.af_a1 = 0;
+	tfp->tf_af.af_a2 = 0;
 #endif
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
 #define FP_RN 2 /* XXX */
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
 	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
-	tfp->tf_ps = ALPHA_PSL_USERSET;
-	tfp->tf_pc = pack->ep_entry & ~3;
+	tfp->tf_af.af_ps = ALPHA_PSL_USERSET;
+	tfp->tf_af.af_pc = pack->ep_entry & ~3;
 
-	p->p_md.md_flags & ~MDP_FPUSED;
+	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (fpcurproc == p)
 		fpcurproc = NULL;
 
@@ -1448,7 +1455,7 @@ cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
 	setregs(p, epp, stack, retval);
-	p->p_md.md_tf->tf_gp = execp->a.gp_value;
+	p->p_md.md_tf->tf_af.af_gp = execp->a.gp_value;
 }
 
 /*
@@ -1486,24 +1493,3 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
-
-vm_offset_t
-vtophys(vaddr)
-	vm_offset_t vaddr;
-{
-	vm_offset_t paddr;
-
-	if (vaddr < ALPHA_K0SEG_BASE) {
-		printf("vtophys: invalid vaddr 0x%lx", vaddr);
-		paddr = vaddr;
-	} else if (vaddr <= ALPHA_K0SEG_END)
-		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
-	else
-		paddr = vatopa(vaddr);
-
-#if 0
-	printf("vtophys(0x%lx) -> %lx\n", vaddr, paddr);
-#endif
-
-	return (paddr);
-}
