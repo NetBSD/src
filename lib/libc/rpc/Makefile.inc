@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2003/09/09 03:56:23 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2004/02/16 02:39:36 lukem Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -130,6 +130,7 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		rpc_soc.3 svcfd_create.3 \
 		rpc_soc.3 svcraw_create.3 \
 		rpc_soc.3 svctcp_create.3 \
+		rpc_soc.3 svcudp_create.3 \
 		rpc_soc.3 svcudp_bufcreate.3 \
 		rpc_soc.3 xdr_pmap.3 \
 		rpc_soc.3 xdr_pmaplist.3 \
