@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.14 1996/06/18 07:03:44 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.15 1996/06/18 07:17:47 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -105,20 +105,22 @@ ENTRY(biosread)
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
 #			%bl = foreground color
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 01h" to write character to console
 #	Call with	%ah = 0x01
 #			%al = character
 #			%dx = port number
-#endif
 */
+#endif /* SERIAL */
 ENTRY(putc)
 	pushl	%ebp
 	pushl	%ebx
@@ -136,11 +138,11 @@ ENTRY(putc)
 	data32
 	movl	$0x0001, %ebx
 	int	$0x10		# display a byte
-#else
+#else /* SERIAL */
 	movb	$0x01, %ah
 	xorl	%edx, %edx
 	int	$0x14		# display a byte
-#endif
+#endif /* SERIAL */
 
 	data32
 	call	_C_LABEL(real_to_prot)
@@ -152,20 +154,22 @@ ENTRY(putc)
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 16H Function 00H" to read character from the keyboard
 #	Call with	%ah = 0x00
 #	Return:		%ah = keyboard scan code
 #			%al = ASCII character
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 02H" to read character from the serial port
 #	Call with	%ah = 0x02
 #			%dx = port number
 #	Return:		%ah = line status
 #			%al = ASCII character
-#endif
 */
+#endif /* SERIAL */
 ENTRY(getc)
 	pushl	%ebp
 	pushl	%ebx
@@ -177,11 +181,11 @@ ENTRY(getc)
 #ifndef SERIAL
 	movb	$0x00, %ah
 	int	$0x16
-#else
+#else /* SERIAL */
 	movb	$0x02, %ah
 	xorl	%edx, %edx
 	int	$0x14
-#endif
+#endif /* SERIAL */
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
@@ -198,8 +202,8 @@ ENTRY(getc)
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 16H Function 01H" to check whether a character is pending
 #	Call with	%ah = 0x01
 #	Return:	
@@ -209,14 +213,16 @@ ENTRY(getc)
 #			ZF  = clear
 #		else
 #			ZF  = set
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 03H" to check whether a character is pending
 #	Call with	%ah = 0x03
 #			%dx = port number
 #	Return:		%ah = line status
 #			%al = modem status
-#endif
 */
+#endif /* SERIAL */
 ENTRY(ischar)
 	pushl	%ebp
 	pushl	%ebx
@@ -229,12 +235,12 @@ ENTRY(ischar)
 	movb	$0x01, %ah
 	int	$0x16
 	setnz	%ah
-#else
+#else /* SERIAL */
 	movb	$0x03, %ah
 	xorl	%edx, %edx
 	int	$0x14
 	andb	$0x1f, %ah
-#endif
+#endif /* SERIAL */
 
 	movb	%ah, %bl	# real_to_prot uses %eax
 
