@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.22 1999/01/13 23:07:30 sommerfe Exp $	*/
+/*	$NetBSD: modload.c,v 1.23 1999/04/23 17:47:02 abs Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.22 1999/01/13 23:07:30 sommerfe Exp $");
+__RCSID("$NetBSD: modload.c,v 1.23 1999/04/23 17:47:02 abs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -266,10 +266,9 @@ main(argc, argv)
 	p = strrchr(modout, '.');
 	if (!p || strcmp(p, ".o"))
 		errx(2, "module object must end in .o");
-	if (out == NULL) {
+	*p = '\0';
+	if (out == NULL)
 		out = modout;
-		*p = '\0';
-	}
 
 	/*
 	 * Verify that the entry point for the module exists.
