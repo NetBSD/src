@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.10 1998/10/04 00:02:34 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.11 1998/12/15 19:31:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ __END_DECLS
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_ioctl.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_ioctl.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_ioctl.h>
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.6 1998/10/04 00:02:43 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.7 1998/12/15 19:31:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -125,6 +125,8 @@
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_socket.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_socket.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_socket.h>
 #else
