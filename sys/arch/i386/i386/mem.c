@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 1995/01/09 09:13:09 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 1995/04/10 01:26:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 University of Utah.
@@ -60,17 +60,8 @@
 
 #include <vm/vm.h>
 
-extern        char *vmmap;            /* poor name! */
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
-{
-
-	return(0);
-}
+extern char *vmmap;            /* poor name! */
+caddr_t zeropage;
 
 /*ARGSUSED*/
 int
@@ -90,10 +81,18 @@ mmopen(dev, flag, mode)
 	default:
 		break;
 	}
-	return(0);
+	return (0);
 }
 
-caddr_t zeropage;
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
