@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.8 1996/01/08 13:51:44 mycroft Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.9 1998/02/25 21:27:05 perry Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -43,7 +43,7 @@ int i386_set_ldt __P((int, union descriptor *, int));
 int i386_iopl __P((int));
 int i386_get_ioperm __P((u_long *));
 int i386_set_ioperm __P((u_long *));
-int sysarch __P((int, char *));
+int sysarch __P((int, void *));
 #endif
 
 #endif /* !_I386_SYSARCH_H_ */
