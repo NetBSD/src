@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:13 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.3 2001/09/18 19:36:36 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ static struct execsw exec_ibcs2_elf =
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
 	  { ELFNAME2(ibcs2,probe) },
 	  &emul_ibcs2, EXECSW_PRIO_ANY,
-	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs, setregs };
+	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs };
 				/* SCO 32bit ELF bins (not 64bit safe) */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.3 2001/07/18 16:53:34 mrg Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.4 2001/09/18 19:36:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,13 +59,13 @@ static struct execsw exec_svr4_elf =
 	  { ELFNAME2(svr4,probe) },
 	  NULL, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ,
-	  svr4_copyargs, svr4_setregs };	/* SVR4 32bit ELF bins (not 64bit safe) */
+	  svr4_copyargs };	/* SVR4 32bit ELF bins (not 64bit safe) */
 #else
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
 	  { ELFNAME2(svr4,probe) },
 	  NULL, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ64,
-	  svr4_copyargs64, svr4_setregs };	/* SVR4 64bit ELF bins (not 64bit safe) */
+	  svr4_copyargs64 };	/* SVR4 64bit ELF bins (not 64bit safe) */
 #endif
 
 /*
