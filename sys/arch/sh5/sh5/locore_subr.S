@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.17 2003/03/13 13:44:19 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.18 2003/03/19 11:34:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,8 +64,6 @@
 Lsh5_init_env:
 	/*
 	 * Fix up the vector table.
-	 * Note: For now, we don't touch RESVEC on the assumption that
-	 * a ROM-based debugger is being used.
 	 */
 	LEA(_C_LABEL(sh5_vector_table), r0)
 	putcon  r0, vbr
@@ -82,6 +80,8 @@ Lsh5_init_env:
 
 	/*
 	 * If we have an FPU, ensure it's quiescent
+	 * XXX: The kernel currently requires an FPU for certain
+	 * operations.
 	 */
 	getcon	sr, r0
 	pta/u	1f, tr0
@@ -342,7 +342,11 @@ ENTRY_NOPROFILE(splraise)
  *                         r2           r3            r4
  */
 ENTRY(copyout)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	add	r18, r63, r61
+#endif
 	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
@@ -404,7 +408,11 @@ ENTRY(copyout)
  *                        r2           r3            r4
  */
 ENTRY(copyin)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	add	r18, r63, r61
+#endif
 	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
@@ -461,7 +469,12 @@ Lcopyerr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r63	/* Clear pcb_onfault */
 Lcopyexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#else
 	ptabs/l	r61, tr0
+#endif
 	or	r60, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
@@ -473,7 +486,11 @@ Lcopyexit:
  *                            r2           r3            r4           r5
  */
 ENTRY(copyoutstr)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/u	r18, tr0
+#endif
 	pta/u	Lcopystrerr, tr3
 	movi	EFAULT, r6		/* Assume the worst */
 	movi	0, r7
@@ -518,7 +535,11 @@ ENTRY(copyoutstr)
  *                           r2           r3            r4           r5
  */
 ENTRY(copyinstr)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/u	r18, tr0
+#endif
 	pta/u	Lcopystrerr, tr3
 	movi	EFAULT, r6		/* Assume the worst */
 	movi	0, r7
@@ -563,6 +584,10 @@ Lcopystrerr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r63	/* Clear pcb_onfault */
 	or	r6, r63, r2		/* Grab return code */
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	beq/u	r5, r63, tr0		/* Just return if "done" == NULL */
 	STPTR	r5, 0, r7		/* NOTE: sizeof(size_t) = sizeof(ptr) */
 	blink	tr0, r63
@@ -600,7 +625,11 @@ ENTRY(copystr)
  *                       r2         r3          r4
  */
 ENTRY(kcopy)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	add	r18, r63, r61
+#endif
 	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lkcopyexit, tr1
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
@@ -654,7 +683,12 @@ Lkcopyerr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r6	/* Restore pcb_onfault */
 Lkcopyexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#else
 	ptabs/l	r61, tr0
+#endif
 	or	r60, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
@@ -668,7 +702,11 @@ Lkcopyexit:
  */
 ENTRY(subyte)
 ALTENTRY(suibyte)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lsubexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -690,6 +728,10 @@ Lsuberr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lsubexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
@@ -703,7 +745,11 @@ Lsubexit:
  */
 ENTRY(susword)
 ALTENTRY(suisword)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lsusexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -725,6 +771,10 @@ Lsuserr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lsusexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
@@ -738,7 +788,11 @@ Lsusexit:
  */
 ENTRY(suword)
 ALTENTRY(suiword)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lsuwexit, tr1
 	movi	EFAULT, r5		/* Assume there was a problem */
 #ifndef _LP64
@@ -760,6 +814,10 @@ Lsuwerr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lsuwexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
@@ -773,7 +831,11 @@ Lsuwexit:
  */
 ENTRY(fubyte)
 ALTENTRY(fuibyte)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lfubexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -794,6 +856,10 @@ Lfuberr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lfubexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy result */
 	blink	tr0, r63
 
@@ -807,7 +873,11 @@ Lfubexit:
  */
 ENTRY(fusword)
 ALTENTRY(fuisword)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lfusexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -828,6 +898,10 @@ Lfuserr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lfusexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy result */
 	blink	tr0, r63
 
@@ -841,7 +915,11 @@ Lfusexit:
  */
 ENTRY(fuword)
 ALTENTRY(fuiword)
+#ifdef DDB
+	LINK_FRAME(0)
+#else
 	ptabs/l	r18, tr0
+#endif
 	pta/u	Lfuwexit, tr1
 	movi	-1, r5			/* Assume there was a problem */
 #ifndef _LP64
@@ -862,6 +940,10 @@ Lfuwerr:
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r8	/* Clear pcb_onfault */
 Lfuwexit:
+#ifdef DDB
+	UNLINK_FRAME(0)
+	ptabs/l	r18, tr0
+#endif
 	or	r5, r63, r2		/* Copy result */
 	blink	tr0, r63
 
