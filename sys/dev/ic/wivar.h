@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.2 2001/05/08 16:42:49 ichiro Exp $	*/
+/*	$NetBSD: wivar.h,v 1.3 2001/05/15 04:14:06 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -72,6 +72,8 @@ struct wi_softc	{
 	u_int16_t		wi_pm_enabled;
 	u_int16_t		wi_mor_enabled;
 	u_int16_t		wi_max_sleep;
+	u_int16_t		wi_authtype;
+	u_int16_t		wi_roaming;
 
 	struct ieee80211_nwid	wi_nodeid;
 	struct ieee80211_nwid	wi_netid;

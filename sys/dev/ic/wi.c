@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.3 2001/05/08 16:42:49 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.4 2001/05/15 04:14:06 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -140,6 +140,8 @@ static int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
 static int wi_media_change __P((struct ifnet *));
 static void wi_media_status __P((struct ifnet *, struct ifmediareq *));
 
+static void wi_get_id		__P((struct wi_softc *));
+
 static int wi_set_ssid __P((struct ieee80211_nwid *, u_int8_t *, int));
 static void wi_request_fill_ssid __P((struct wi_req *,
     struct ieee80211_nwid *));
@@ -195,6 +197,9 @@ wi_attach(sc)
 
 	printf(" 802.11 address %s\n", ether_sprintf(sc->sc_macaddr));
 
+	/* Read NIC identification */
+	wi_get_id(sc);
+
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = wi_start;
@@ -224,6 +229,8 @@ wi_attach(sc)
 	sc->wi_create_ibss = WI_DEFAULT_CREATE_IBSS;
 	sc->wi_pm_enabled = WI_DEFAULT_PM_ENABLED;
 	sc->wi_max_sleep = WI_DEFAULT_MAX_SLEEP;
+	sc->wi_roaming = WI_DEFAULT_ROAMING;
+	sc->wi_authtype = WI_DEFAULT_AUTHTYPE;
 
 	/*
 	 * Read the default channel from the NIC. This may vary
@@ -669,6 +676,13 @@ static int wi_read_record(sc, ltv)
 			oltv->wi_len = 2;
 			oltv->wi_val = ltv->wi_val;
 			break;
+		case WI_RID_AUTH_CNTL:
+			oltv->wi_len = 2;
+			if (ltv->wi_val & 0x01)
+				oltv->wi_val = 1;
+			else if (ltv->wi_val & 0x02)
+				oltv->wi_val = 2;
+			break;
 		}
 	}
 
@@ -735,6 +749,15 @@ static int wi_write_record(sc, ltv)
 			}
 			return 0;
 		    }
+		case WI_RID_AUTH_CNTL:
+			p2ltv.wi_type = WI_RID_AUTH_CNTL;
+			p2ltv.wi_len = 2;
+			if (ltv->wi_val == 1)
+				p2ltv.wi_val = 0x01;
+			else if (ltv->wi_val == 2)
+				p2ltv.wi_val = 0x02;
+			ltv = &p2ltv;
+			break;
 		}
 	}
 
@@ -1006,6 +1029,12 @@ wi_setdef(sc, wreq)
 	case WI_RID_MAX_SLEEP:
 		sc->wi_max_sleep = wreq->wi_val[0];
 		break;
+	case WI_RID_AUTH_CNTL:
+		sc->wi_authtype = wreq->wi_val[0];
+		break;
+	case WI_RID_ROAMING_MODE:
+		sc->wi_roaming = wreq->wi_val[0];
+		break;
 	case WI_RID_ENCRYPTION:
 		sc->wi_use_wep = wreq->wi_val[0];
 		break;
@@ -1081,6 +1110,12 @@ wi_getdef(sc, wreq)
 		break;
 	case WI_RID_MAX_SLEEP:
 		wreq->wi_val[0] = sc->wi_max_sleep;
+		break;
+	case WI_RID_AUTH_CNTL:
+		wreq->wi_val[0] = sc->wi_authtype;
+		break;
+	case WI_RID_ROAMING_MODE:
+		wreq->wi_val[0] = sc->wi_roaming;
 		break;
 	case WI_RID_WEP_AVAIL:
 		wreq->wi_val[0] = sc->wi_has_wep;
@@ -1332,6 +1367,9 @@ wi_init(ifp)
 	/* Power Managment Max Sleep */
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
 
+	/* Roaming type */
+	WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
+
 	/* Specify the IBSS name */
 	wi_write_ssid(sc, WI_RID_OWN_SSID, &wreq, &sc->wi_ibssid);
 
@@ -1350,6 +1388,13 @@ wi_init(ifp)
 	memcpy(&mac.wi_mac_addr, sc->sc_macaddr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
+	/* Initialize promisc mode. */
+	if (ifp->if_flags & IFF_PROMISC) {
+		WI_SETVAL(WI_RID_PROMISC, 1);
+	} else {
+		WI_SETVAL(WI_RID_PROMISC, 0);
+	}
+
 	/* Configure WEP. */
 	if (sc->wi_has_wep) {
 		WI_SETVAL(WI_RID_ENCRYPTION, sc->wi_use_wep);
@@ -1357,13 +1402,16 @@ wi_init(ifp)
 		sc->wi_keys.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
 		sc->wi_keys.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
-	}
-
-	/* Initialize promisc mode. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		WI_SETVAL(WI_RID_PROMISC, 1);
-	} else {
-		WI_SETVAL(WI_RID_PROMISC, 0);
+		if (sc->sc_prism2 && sc->wi_use_wep) {
+			/*
+			 * If promiscuous mode disable, Prism2 chip
+			 * does not work with WEP .
+			 * It is under investigation for details.
+			 * (ichiro@netbsd.org)
+			 */
+			WI_SETVAL(WI_RID_PROMISC, 1); /* XXX */
+			WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
+		}
 	}
 
 	/* Set multicast filter. */
@@ -1542,9 +1590,11 @@ wi_stop(ifp, disable)
 	callout_stop(&sc->wi_inquire_ch);
 
 	if (disable) {
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
+		if (sc->sc_enabled) {
+			if (sc->sc_disable)
+				(*sc->sc_disable)(sc);
+			sc->sc_enabled = 0;
+		}
 	}
 
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
@@ -1605,6 +1655,59 @@ wi_activate(self, act)
 	return (rv);
 }
 
+static void
+wi_get_id(sc)
+	struct wi_softc *sc;
+{
+	struct wi_ltv_ver       ver;
+
+#if 0
+        DELAY(10*1000); /* 10 m sec */
+#endif
+        memset(&ver, 0, sizeof(ver));
+        ver.wi_type = WI_RID_CARDID;
+        ver.wi_len = 5;
+        wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	switch (ver.wi_ver[0]) {
+		case WI_NIC_EVB2:
+			printf("%s: using PRISM2 HFA3841(EVB2) chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3763:
+			printf("%s: using PRISM2 HWB3763 rev.B chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3163:
+			printf("%s: using PRISM2 HWB3163 rev.A chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3163B:
+			printf("%s: using PRISM2 HWB3163 rev.B chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_EVB3:
+			printf("%s: using PRISM2 HFA3842(EVB3) chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB1153:
+			printf("%s: using PRISM2 HFA1153 chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 1;
+			break;
+		default:               
+			printf("%s: using Lucent Chip or unknown chip.\n",
+			       sc->sc_dev.dv_xname);
+			sc->sc_prism2 = 0;
+			break;  
+	}
+	return;
+}
+
 int
 wi_detach(sc)
 	struct wi_softc *sc;
@@ -1647,8 +1750,10 @@ wi_power(sc, why)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		wi_stop(sc->sc_ifp, 0);
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
+		if (sc->sc_enabled) {
+			if (sc->sc_disable)
+				(*sc->sc_disable)(sc);
+		}
 		break;
 	case PWR_RESUME:
 		sc->sc_enabled = 0;
