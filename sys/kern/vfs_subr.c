@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.162 2001/11/12 15:25:39 lukem Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.163 2001/11/29 21:21:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.162 2001/11/12 15:25:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.163 2001/11/29 21:21:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2082,7 +2082,7 @@ vfs_hang_addrlist(mp, nep, argp)
 			return (EPERM);
 		np = &nep->ne_defexported;
 		np->netc_exflags = argp->ex_flags;
-		np->netc_anon = argp->ex_anon;
+		crcvt(&np->netc_anon, &argp->ex_anon);
 		np->netc_anon.cr_ref = 1;
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return (0);
@@ -2150,7 +2150,7 @@ vfs_hang_addrlist(mp, nep, argp)
 		goto out;
 	}
 	np->netc_exflags = argp->ex_flags;
-	np->netc_anon = argp->ex_anon;
+	crcvt(&np->netc_anon, &argp->ex_anon);
 	np->netc_anon.cr_ref = 1;
 	return (0);
 out:
