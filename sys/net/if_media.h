@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.26 2001/06/30 21:23:39 kleink Exp $	*/
+/*	$NetBSD: if_media.h,v 1.27 2002/08/10 23:21:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -214,7 +214,10 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence 1Mbps */
 
-#define	IFM_IEEE80211_ADHOC	0x00000100	/* Operate in Adhoc mode */
+#define	IFM_IEEE80211_ADHOC	 0x00000100	/* Operate in Adhoc mode */
+#define	IFM_IEEE80211_HOSTAP	 0x00000200	/* Operate in Host AP mode */
+#define	IFM_IEEE80211_IBSS	 0x00000400	/* Operate in IBSS mode */
+#define	IFM_IEEE80211_IBSSMASTER 0x00000800	/* Operate as an IBSS master */
 
 /*
  * Shared media sub-types
@@ -415,6 +418,9 @@ struct ifmedia_description {
 	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
 									\
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_HOSTAP,	"hostap" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_IBSS,	"ibss" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_IBSSMASTER,"ibss-master" },	\
 									\
 	{ 0, NULL },							\
 }
