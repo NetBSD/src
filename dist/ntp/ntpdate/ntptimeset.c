@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptimeset.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: ntptimeset.c,v 1.2 2000/04/17 05:49:54 simonb Exp $	*/
 
 /*
  * ntptimeset - get/set the time via ntp
@@ -310,7 +310,6 @@ u_long finish_time = 0;
 
 
 int	ntptimesetmain	P((int argc, char *argv[]));
-extern	void	loadservers	P((char *cfgpath));
 static	void	analysis	P((int final));
 static	int	have_enough	P((void));
 static	void	transmit	P((register struct server *server));
