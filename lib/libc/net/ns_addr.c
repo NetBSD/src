@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.16 2003/08/07 16:43:12 agc Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.17 2004/05/09 11:25:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.16 2003/08/07 16:43:12 agc Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.17 2004/05/09 11:25:20 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netns/ns.h>
 
