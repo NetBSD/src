@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.74 2001/06/26 12:19:49 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.75 2001/07/04 20:34:03 wiz Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1522,7 +1522,7 @@ ahc_intr(void *arg)
 		      ahc_inb(ahc, SEQADDR0) |
 		      (ahc_inb(ahc, SEQADDR1) << 8));
 
-		/* Tell everyone that this HBA is no longer availible */
+		/* Tell everyone that this HBA is no longer available */
 		ahc_abort_scbs(ahc, AHC_TARGET_WILDCARD, ALL_CHANNELS,
 			       AHC_LUN_WILDCARD, SCB_LIST_NULL, ROLE_UNKNOWN,
 			       XS_DRIVER_STUFFUP);
@@ -2894,9 +2894,9 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_periph *periph,
 	targ_scsirate = tinfo->scsirate;
 
 	/*
-	 * Parse as much of the message as is availible,
+	 * Parse as much of the message as is available,
 	 * rejecting it if we don't support it.  When
-	 * the entire message is availible and has been
+	 * the entire message is available and has been
 	 * handled, return MSGLOOP_MSGCOMPLETE, indicating
 	 * that we have parsed an entire message.
 	 *
