@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.43 2003/10/21 01:12:42 fvdl Exp $	*/
+/*	$NetBSD: auich.c,v 1.44 2003/10/22 11:32:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.43 2003/10/21 01:12:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.44 2003/10/22 11:32:12 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,6 +356,8 @@ static const struct auich_devtype {
 	    QUIRK_IGNORE_CODEC_READY },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
 	    "nForce2 MCP-T AC-97 Audio",	"nForce-MCP-T" },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
+	    "nForce3 MCP-T AC-97 Audio",	"nForce-MCP-T" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
 	    "AMD768 AC-97 Audio",		"AMD768" },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
