@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/01/07 07:18:32 phil Exp $
+#	$NetBSD: Makefile,v 1.14 2001/12/12 01:48:46 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ CPPFLAGS+=-I.
 WARNS=	1
 LDADD+=	-lcurses -ltermcap
 DPADD+=	${LIBCURSES}
-MKMAN=	no
+NOMAN=	# defined
 
 CLEANFILES+= menu_defs.c menu_defs.h msg_defs.c msg_defs.h
 

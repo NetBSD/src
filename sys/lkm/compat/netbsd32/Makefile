@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/10 19:18:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 01:50:07 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	compat_netbsd32
 

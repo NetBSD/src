@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/01/06 13:26:27 martin Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:16 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,6 @@ FILES=	holidays.D.SH isdnd.rates.A isdnd.rates.D isdnd.rates.F \
 	isdnd.rates.L isdnd.rates.UK.BT isdnd.rc.sample
 FILESDIR=/usr/share/examples/isdn
 .endif
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include <bsd.prog.mk>

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.23 2001/09/21 15:38:15 tv Exp $
+#	$NetBSD: Makefile,v 1.24 2001/12/12 01:48:57 tv Exp $
 
 LIB=		bfd
 
-MKLINKLIB=	no
-MKLINT=		no
-MKMAN=		no
-MKPROFILE=	no
+NOLINKLIB=	# defined
+NOLINT=		# defined
+NOMAN=		# defined
+NOPROFILE=	# defined
 
 .include <bsd.own.mk>
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/04/25 18:32:03 garbled Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:24 tv Exp $
 
 SUBDIR= interface listif
 
 FILES=	index help
 FILESDIR=${BINDIR}/sushi/network/interfaces
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../../Makefile.inc"
 .include <bsd.prog.mk>

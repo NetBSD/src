@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/31 21:39:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:47 tv Exp $
 
 S=${.CURDIR}/../../../../
 HOSTPROG=	wrtvid
-MKMAN=	no
+NOMAN=	# defined
 LIBSA=${.CURDIR}/../../../../lib/libsa
 COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 HOST_CPPFLAGS+= -I. -I${LIBSA}

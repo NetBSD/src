@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/14 12:57:12 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:50:02 tv Exp $
 
 SA_PROG= bootyy
 SRCS=   bootyy.c conf.c
 
 PROG=	${SA_PROG}
-MKMAN=	no
+NOMAN=	# defined
 
 .include <bsd.prog.mk>
 

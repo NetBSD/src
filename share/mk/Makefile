@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2001/11/02 05:21:49 tv Exp $
+#	$NetBSD: Makefile,v 1.31 2001/12/12 01:49:17 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ FILES=	bsd.README bsd.doc.mk bsd.dep.mk bsd.files.mk bsd.hostprog.mk \
 
 FILESDIR=/usr/share/mk
 .endif
-MKOBJ=	no
+NOOBJ=	# defined
 
 FILESMODE=444
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/11 01:09:27 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:48:54 tv Exp $
 
 LIB=	ntp
 SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \
@@ -15,9 +15,9 @@ SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \
 	icom.c audio.c
 NTPSRCDIR=lib${LIB}
 
-MKLINKLIB=no
-MKMAN=	no
-MKPIC=	no
-MKLINT=	no	# XXX
+NOLINKLIB=# defined
+NOMAN=	# defined
+NOPIC=	# defined
+NOLINT=	# defined
 
 .include <bsd.lib.mk>
