@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: var.c,v 1.9 1995/01/20 04:35:10 christos Exp $";
+static char *rcsid = "$Id: var.c,v 1.10 1995/02/04 23:44:45 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -537,6 +537,7 @@ Var_Exists(name, ctxt)
     if (v == (Var *)NIL) {
 	return(FALSE);
     } else if (v->flags & VAR_FROM_ENV) {
+	free(v->name);
 	Buf_Destroy(v->val, TRUE);
 	free((char *)v);
     }
