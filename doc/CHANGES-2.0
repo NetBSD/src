@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.14 2004/03/31 18:21:31 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.15 2004/03/31 20:06:12 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -160,4 +160,20 @@ usr.bin/calendar/calendars/calendar.birthday	1.16
 	Tweak change for Asimov's entry some. Restore reference to
 	Russian SFSR, but note that it's now Russia, not part of the USSR.
 	[wrstuden, ticket #26]
+
+crypto/dist/kame/racoon/isakmp.c		1.14
+
+	Reject packet with too big isakmp message length field.
+	[itojun, ticket #27]
+
+sys/netinet/udp_usrreq.c			1.117-1.118
+
+	Drop packet if IPv6 udp packet does not have checksum (checksum is
+	mandatory in IPv6).
+	[itojun, ticket #28]
+
+sys/netinet/ip_compat.h				1.36
+
+	Fix panics caused by IPFilter on most platforms.
+	[mrg, ticket #32]
 
