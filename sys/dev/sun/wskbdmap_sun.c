@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.1 2002/10/25 20:40:34 martin Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.2 2002/10/25 21:50:10 martin Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -197,35 +197,6 @@ const keysym_t wssun_keydesctab_sv_nodead[] = {
     KC(0x29),		KS_apostrophe,	KS_grave,
     KC(0x41),		KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
-
-const keysym_t wssun_keydesctab_sv[] = {
-    KC(0x0d),		KS_Mode_switch,
-    KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
-    KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
-    KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
-    KC(0x21),		KS_4,		KS_currency,	KS_dollar,
-    KC(0x23),		KS_6,		KS_ampersand,
-    KC(0x24),		KS_7,		KS_slash,	KS_braceleft,
-    KC(0x25),		KS_8,		KS_parenleft,	KS_bracketleft,
-    KC(0x26),		KS_9,		KS_parenright,	KS_bracketright,
-    KC(0x27),		KS_0,		KS_equal,	KS_braceright,
-    KC(0x28),		KS_plus,	KS_question,	KS_backslash,
-    KC(0x29),		KS_dead_acute,	KS_dead_grave,
-    KC(0x2a),		KS_paragraph,	KS_onehalf,
-    KC(0x40),		KS_aring,
-    KC(0x41),		KS_dead_diaeresis,KS_dead_circumflex,KS_dead_tilde,
-    KC(0x43),		KS_Multi_key,
-    KC(0x4c),		KS_Control_L,
-    KC(0x56),		KS_odiaeresis,
-    KC(0x57),		KS_adiaeresis,
-    KC(0x58),		KS_apostrophe,	KS_asterisk,	KS_grave,
-    KC(0x6b),		KS_comma,	KS_semicolon,
-    KC(0x6c),		KS_period,	KS_colon,
-    KC(0x6d),		KS_minus,	KS_underscore,
-    KC(0x77),		KS_Caps_Lock,
-    KC(0x7c),		KS_less,	KS_greater,	KS_bar,
-};
-
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
