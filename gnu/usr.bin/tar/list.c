@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: list.c,v 1.5 1997/06/06 07:59:52 jeremy Exp $";
+static char rcsid[] = "$Id: list.c,v 1.6 1999/08/24 18:40:10 bad Exp $";
 #endif /* not lint */
 
 /*
@@ -384,7 +384,7 @@ recurse:
       userec (header);
       if (*longp)
 	free (*longp);
-      bp = *longp = (char *) ck_malloc (hstat.st_size);
+      bp = *longp = (char *) ck_malloc ((size_t)hstat.st_size);
 
       for (size = hstat.st_size;
 	   size > 0;
