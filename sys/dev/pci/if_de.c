@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.82 1999/02/28 17:08:51 explorer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.83 1999/04/01 11:02:20 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3094,7 +3094,11 @@ tulip_addr_filter(
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
+#if BYTE_ORDER == BIG_ENDIAN
+		    sp[hash >> 4] |= bswap32(1 << (hash & 0xF));
+#else
 		    sp[hash >> 4] |= 1 << (hash & 0xF);
+#endif
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    sc->tulip_flags &= ~(TULIP_WANTHASHONLY|TULIP_WANTHASHPERFECT);
@@ -3108,14 +3112,28 @@ tulip_addr_filter(
 	 */
 	if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
 	    hash = tulip_mchash(etherbroadcastaddr);
+#if BYTE_ORDER == BIG_ENDIAN
+	    sp[hash >> 4] |= bswap32(1 << (hash & 0xF));
+#else
 	    sp[hash >> 4] |= 1 << (hash & 0xF);
+#endif
 	    if (sc->tulip_flags & TULIP_WANTHASHONLY) {
 		hash = tulip_mchash(sc->tulip_enaddr);
+#if BYTE_ORDER == BIG_ENDIAN
+		sp[hash >> 4] |= bswap32(1 << (hash & 0xF));
+#else
 		sp[hash >> 4] |= 1 << (hash & 0xF);
+#endif
 	    } else {
+#if BYTE_ORDER == BIG_ENDIAN
+		sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0] << 16;
+		sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1] << 16;
+		sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2] << 16;
+#else
 		sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0]; 
 		sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1]; 
 		sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2];
+#endif
 	    }
 	}
     }
@@ -3129,9 +3147,15 @@ tulip_addr_filter(
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    for (; enm != NULL; idx++) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+#if BYTE_ORDER == BIG_ENDIAN
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0] << 16;
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1] << 16;
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2] << 16;
+#else
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
+#endif
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    break;
@@ -3142,17 +3166,29 @@ tulip_addr_filter(
 	     * Add the broadcast address.
 	     */
 	    idx++;
+#if BYTE_ORDER == BIG_ENDIAN
+	    *sp++ = 0xFFFF << 16;
+	    *sp++ = 0xFFFF << 16;
+	    *sp++ = 0xFFFF << 16;
+#else
 	    *sp++ = 0xFFFF;
 	    *sp++ = 0xFFFF;
 	    *sp++ = 0xFFFF;
+#endif
 	}
 	/*
 	 * Pad the rest with our hardware address
 	 */
 	for (; idx < 16; idx++) {
+#if BYTE_ORDER == BIG_ENDIAN
+	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[0] << 16;
+	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[1] << 16;
+	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[2] << 16;
+#else
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[0]; 
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[1]; 
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[2];
+#endif
 	}
     }
 #if defined(IFF_ALLMULTI)
@@ -3206,7 +3242,8 @@ tulip_reset(
 		    (1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
 		    |TULIP_BUSMODE_CACHE_ALIGN8
 		    |TULIP_BUSMODE_READMULTIPLE
-		    |(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_BIGENDIAN : 0));
+		    |(BYTE_ORDER != LITTLE_ENDIAN ?
+		      TULIP_BUSMODE_DESC_BIGENDIAN : 0));
 
     sc->tulip_txtimer = 0;
     sc->tulip_txq.ifq_maxlen = TULIP_TXDESCS;
