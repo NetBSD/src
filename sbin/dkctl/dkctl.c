@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.5 2003/04/16 08:39:56 dsl Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.6 2003/04/16 13:32:58 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -284,6 +284,7 @@ disk_badsectors(int argc, char *argv[])
 	u_int32_t count;
 	struct stat sb;
 	u_char *block;
+	time_t tm;
 
 	if (argc != 1)
 		usage();
@@ -306,9 +307,10 @@ disk_badsectors(int argc, char *argv[])
 
 			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
 			for (count = dbsi.dbsi_copied; count > 0; count--) {
+				tm = dbs->dbs_failedat.tv_sec;
 				printf("%s: blocks %" PRIdaddr " - %" PRIdaddr " failed at %s",
 					dvname, dbs->dbs_min, dbs->dbs_max,
-					ctime(&dbs->dbs_failedat.tv_sec));
+					ctime(&tm));
 				dbs++;
 			}
 			dbsi.dbsi_skip += dbsi.dbsi_copied;
