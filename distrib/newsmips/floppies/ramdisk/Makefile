@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/02/03 15:56:26 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2002/02/03 16:35:11 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -53,8 +53,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 # turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o localeconv.o \
-	perror.o strerror.o strsignal.o setlocale.o utmp.o yplib.o
+HACKOBJS:= ${HACKOBJS:Ngethost.o}
 
 clean cleandir distclean:
 	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi; \
