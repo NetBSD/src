@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.22 1999/03/25 23:11:52 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.22.2.1 1999/09/13 23:08:29 he Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1314,9 +1314,18 @@ ie_read_frame(sc, num)
 		ether_sprintf(eh.ether_shost), (u_int)eh.ether_type );
 */
 
-#if NBFILTER > 0
+#if NBPFILTER > 0
     if ( ifp->if_bpf ) {
-	bpf_mtap(ifp->if_bpf, m );
+        /* We need to pass the ethernet header; cons up an mbuf to hold it.
+	   This is safe since the bpf will only read the packet, it will
+	   never try to free it.  */
+	struct mbuf m0;
+
+	m0.m_next = m;
+	m0.m_len = sizeof (struct ether_header);
+	m0.m_data = (char *)&eh;
+
+	bpf_mtap(ifp->if_bpf, &m0 );
     };
 #endif
 
