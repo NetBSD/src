@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.2.4 2002/07/21 00:50:10 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.5 2002/07/22 05:02:13 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -11,14 +11,16 @@
 MKTOCS?=yes
 
 M?=	${.CURDIR:T}
+COMMON=	${.CURDIR}/../common
 
-MAIN=	${.CURDIR}/../common/main ${.CURDIR}/../common/macros ${EXTRA}
+MAIN=	${COMMON}/main ${COMMON}/macros ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
-SRCS=	${MAIN} whatis contents hardware xfer prep ${.CURDIR}/install \
-	upgrade donations legal.common legal postinstall \
+SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
+	${.CURDIR}/install ${COMMON}/postinstall upgrade \
+	${COMMON}/donations ${COMMON}/legal.common legal \
 	${.CURDIR}/../Makefile.inc ${MERGED_SRCS}
 
 PRESET=	${GFLAGS} -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
@@ -98,8 +100,6 @@ ${TARG}.more.toc: ${SRCS}
 
 release: check_RELEASEDIR .WAIT ${TARGS}
 	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/.
-
-.PATH: ${.CURDIR}/../common
 
 cleannotes:
 	rm -f [Ee]rrs mklog core *.core ${TARGS} ${TOCS} \
