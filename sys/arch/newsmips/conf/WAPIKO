@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.5 1998/06/26 01:54:03 lukem Exp $
+# 	$NetBSD: WAPIKO,v 1.6 1998/11/16 12:21:30 tsubai Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -15,8 +15,6 @@ options 	CPU_SINGLE
 options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	UCONSOLE		# users can redirect console (unsafe)
-
-options 	UVM
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger
