@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/10/26 07:25:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/11/27 00:56:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,11 +19,6 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 
 ALL_TARGET=	all-gcc
 INSTALL_TARGET=	install-gcc
-
-#.if ${MKCROSSGDB:Uno} != "no"
-#ALL_TARGET+=	all-gdb
-#INSTALL_TARGET+=install-gdb
-#.endif
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
@@ -49,8 +44,8 @@ native-gcc: .native/.configure_done
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
-	@mkdir .native 2>/dev/null || true
-	@PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+	mkdir .native 2>/dev/null || true
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
