@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2002/10/03 07:28:33 lukem Exp $
+# $NetBSD: Makefile,v 1.13 2002/10/08 15:20:50 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -90,30 +90,47 @@ IMAGEDIR?=	${.OBJDIR}
 EXTFILEDIR?=	${.OBJDIR}/extfiles
 EASTER_EGG?=	/dev/null
 
-##### MACHINE_ARCH for possible shared sets for each port #####
+##### MACHINE_ARCH for possible shared sets for each (shared) port #####
 
+MACHINE_ARCH.acorn26=	arm
+MACHINE_ARCH.acorn32=	arm
+MACHINE_ARCH.algor=	mipsel
 MACHINE_ARCH.amiga=	m68k
 MACHINE_ARCH.amigappc=	powerpc
 MACHINE_ARCH.arc=	mipsel
 MACHINE_ARCH.atari=	m68k
 MACHINE_ARCH.bebox=	powerpc
+MACHINE_ARCH.cats=	arm
+MACHINE_ARCH.cesfic=	m68k
 MACHINE_ARCH.cobalt=	mipsel
+MACHINE_ARCH.dreamcast=	sh3el
+MACHINE_ARCH.evbarm=	arm
+MACHINE_ARCH.evbmips=	mipsel
+MACHINE_ARCH.evbsh3=	sh3eb
 MACHINE_ARCH.hp300=	m68k
+MACHINE_ARCH.hpcarm=	arm
 MACHINE_ARCH.hpcmips=	mipsel
+MACHINE_ARCH.hpcsh=	sh3el
 MACHINE_ARCH.luna68k=	m68k
 MACHINE_ARCH.mac68k=	m68k
 MACHINE_ARCH.macppc=	powerpc
 MACHINE_ARCH.mipsco=	mipseb
+MACHINE_ARCH.mmeye=	sh3eb
 MACHINE_ARCH.mvme68k=	m68k
+MACHINE_ARCH.netwinder=	arm
 MACHINE_ARCH.news68k=	m68k
 MACHINE_ARCH.newsmips=	mipseb
 MACHINE_ARCH.next68k=	m68k
 MACHINE_ARCH.ofppc=	powerpc
+MACHINE_ARCH.playstation2=mipsel
 MACHINE_ARCH.pmax=	mipsel
 MACHINE_ARCH.prep=	powerpc
+MACHINE_ARCH.sandpoint=	powerpc
+MACHINE_ARCH.sbmips=	mipseb
 MACHINE_ARCH.sgimips=	mipseb
+MACHINE_ARCH.shark=	arm
 MACHINE_ARCH.sun3=	m68k
-MACHINE_ARCH.sun3x=	m68k
+MACHINE_ARCH.walnut=	powerpc
 MACHINE_ARCH.x68k=	m68k
 
 ##### Fetched directories from FTP server #####
@@ -124,13 +141,16 @@ RSYNC_EXCLUDE+=		--exclude "/[a-z]*" \
 			--exclude "/shared/[a-z]*/"
 .endif
 
-.for port in ${ALL_PORTS}			# {
+RSYNC_ARCHS=
+.for port in ${ALL_PORTS:O:u}			# {
 RSYNC_INCLUDE+=		--include "/${port}/"
 .if defined(MACHINE_ARCH.${port})
-RSYNC_INCLUDE+=		--include "/${MACHINE_ARCH.${port}}/" \
-			--include "/shared/${MACHINE_ARCH.${port}}/"
+RSYNC_ARCHS+=		${MACHINE_ARCH.${port}}
 .endif
 .endfor						# }
+.for arch in ${RSYNC_ARCHS:O:u}
+RSYNC_INCLUDE+=		--include "/shared/${arch}/"
+.endfor
 
 ##### Boot info and additional options for various platforms #####
 
@@ -141,6 +161,9 @@ MKISOFS_ARGS+=		-P "${PUBLISHER}"
 .if defined(PREPARER)
 MKISOFS_ARGS+=		-p "${PREPARER}"
 .endif
+
+
+##### Per image settings #####
 
 .for image in ${CD_IMAGES}			# {
 ports:=${BASE_PORTS.${image}}
@@ -169,13 +192,21 @@ INTFILES.${image}?=
 INTDIRS.${image}?=
 ADDFILES.${image}?=
 
+bports=			shared/ALL
 .for port in ${ports}					# {
 EXTFILES+=		${EXTFILES.${port}}
 INTFILES.${image}+=	${INTFILES.${port}}
 INTDIRS.${image}+=	${INTDIRS.${port}}
 ADDFILES.${image}+=	${ADDFILES.${port}}
 MKISOFS_ARGS.${image}+=	${MKISOFS_ARGS.${port}}
+# add shared/ALL and shared/${MACHINE_ARCH} to BASE_PORTS.${image}
+bports+=		${port}
+.if defined(MACHINE_ARCH.${port})
+bports+=		shared/${MACHINE_ARCH.${port}}
+.endif
 .endfor							# }
+BASE_PORTS.${image}:=	${bports:O:u}
+
 
 # i386
 
