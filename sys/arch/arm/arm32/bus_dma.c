@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.40 2004/10/06 08:59:40 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.41 2004/11/28 17:36:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2004/10/06 08:59:40 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41 2004/11/28 17:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2004/10/06 08:59:40 scw Exp $");
 #include <arm/cpufunc.h>
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *);
+	    bus_size_t, struct proc *, int);
 struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 	    int, bus_addr_t);
 
@@ -84,6 +84,83 @@ _bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
 	}
 
 	return (NULL);
+}
+
+/*
+ * Common function to load the specified physical address into the
+ * DMA map, coalescing segments and boundary checking as necessary.
+ */
+static int
+_bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_addr_t paddr, bus_size_t size)
+{
+	bus_dma_segment_t * const segs = map->dm_segs;
+	int nseg = map->dm_nsegs;
+	bus_addr_t lastaddr = 0xdead;	/* XXX gcc */
+	bus_addr_t bmask = ~(map->_dm_boundary - 1);
+	bus_addr_t curaddr;
+	bus_size_t sgsize;
+
+	if (nseg > 0)
+		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
+ again:
+	sgsize = size;
+
+	/* Make sure we're in an allowed DMA range. */
+	if (t->_ranges != NULL) {
+		/* XXX cache last result? */
+		const struct arm32_dma_range * const dr =
+		    _bus_dma_inrange(t->_ranges, t->_nranges, paddr);
+		if (dr == NULL)
+			return (EINVAL);
+		
+		/*
+		 * In a valid DMA range.  Translate the physical
+		 * memory address to an address in the DMA window.
+		 */
+		curaddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
+	} else
+		curaddr = paddr;
+
+	/*
+	 * Make sure we don't cross any boundaries.
+	 */
+	if (map->_dm_boundary > 0) {
+		bus_addr_t baddr;	/* next boundary address */
+
+		baddr = (curaddr + map->_dm_boundary) & bmask;
+		if (sgsize > (baddr - curaddr))
+			sgsize = (baddr - curaddr);
+	}
+
+	/*
+	 * Insert chunk into a segment, coalescing with the
+	 * previous segment if possible.
+	 */
+	if (nseg > 0 && curaddr == lastaddr &&
+	    segs[nseg-1].ds_len + sgsize <= map->_dm_maxsegsz &&
+	    (map->_dm_boundary == 0 ||
+	     (segs[nseg-1].ds_addr & bmask) == (curaddr & bmask))) {
+	     	/* coalesce */
+		segs[nseg-1].ds_len += sgsize;
+	} else if (nseg >= map->_dm_segcnt) {
+		return (EFBIG);
+	} else {
+		/* new segment */
+		segs[nseg].ds_addr = curaddr;
+		segs[nseg].ds_len = sgsize;
+		nseg++;
+	}
+
+	lastaddr = curaddr + sgsize;
+
+	paddr += sgsize;
+	size -= sgsize;
+	if (size > 0)
+		goto again;
+	
+	map->dm_nsegs = nseg;
+	return (0);
 }
 
 /*
@@ -173,8 +250,7 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	paddr_t lastaddr;
-	int seg, error;
+	int error;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_load: t=%p map=%p buf=%p len=%lx p=%p f=%d\n",
@@ -193,12 +269,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
 	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
-	seg = -1;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
-	    &lastaddr, &seg);
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
-		map->dm_nsegs = seg + 1;
 		map->_dm_origbuf = buf;
 		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
 		map->_dm_proc = p;
@@ -216,9 +289,7 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
-	struct arm32_dma_range *dr;
-	paddr_t lastaddr;
-	int seg, error;
+	int error;
 	struct mbuf *m;
 
 #ifdef DEBUG_DMA
@@ -246,62 +317,74 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
 
-	seg = -1;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		int offset;
+		int remainbytes;
+		const struct vm_page * const *pgs;
+		paddr_t paddr;
+		int size;
+
 		if (m->m_len == 0)
 			continue;
-		/* XXX Could be better about coalescing. */
-		/* XXX Doesn't check boundaries. */
-		switch (m->m_flags & (M_EXT|M_CLUSTER)) {
+		switch (m->m_flags & (M_EXT|M_CLUSTER|M_EXT_PAGES)) {
 		case M_EXT|M_CLUSTER:
 			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-			lastaddr = m->m_ext.ext_paddr +
+			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
- have_addr:
-			if (++seg >= map->_dm_segcnt) {
-				error = EFBIG;
-				break;
-			}
-			/*
-			 * Make sure we're in an allowed DMA range.
-			 */
-			if (t->_ranges != NULL) {
-				/* XXX cache last result? */
-				dr = _bus_dma_inrange(t->_ranges, t->_nranges,
-				    lastaddr);
-				if (dr == NULL) {
-					error = EINVAL;
-					break;
-				}
+			size = m->m_len;
+			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			break;
+		
+		case M_EXT|M_EXT_PAGES:
+			KASSERT(m->m_ext.ext_buf <= m->m_data);
+			KASSERT(m->m_data <=
+			    m->m_ext.ext_buf + m->m_ext.ext_size);
 			
-				/*
-				 * In a valid DMA range.  Translate the
-				 * physical memory address to an address
-				 * in the DMA window.
-				 */
-				lastaddr = (lastaddr - dr->dr_sysbase) +
-				    dr->dr_busbase;
+			offset = (vaddr_t)m->m_data -
+			    trunc_page((vaddr_t)m->m_ext.ext_buf);
+			remainbytes = m->m_len;
+
+			/* skip uninteresting pages */
+			pgs = (const struct vm_page * const *)
+			    m->m_ext.ext_pgs + (offset >> PAGE_SHIFT);
+			
+			offset &= PAGE_MASK;	/* offset in the first page */
+
+			/* load each page */
+			while (remainbytes > 0) {
+				const struct vm_page *pg;
+
+				size = MIN(remainbytes, PAGE_SIZE - offset);
+
+				pg = *pgs++;
+				KASSERT(pg);
+				paddr = VM_PAGE_TO_PHYS(pg) + offset;
+
+				error = _bus_dmamap_load_paddr(t, map,
+				    paddr, size);
+				if (error)
+					break;
+				offset = 0;
+				remainbytes -= size;
 			}
-			map->dm_segs[seg].ds_addr = lastaddr;
-			map->dm_segs[seg].ds_len = m->m_len;
-			lastaddr += m->m_len;
 			break;
 
 		case 0:
-			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
-			goto have_addr;
+			size = m->m_len;
+			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			break;
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags, &lastaddr, &seg);
+			    m->m_len, NULL, flags);
 		}
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
-		map->dm_nsegs = seg + 1;
 		map->_dm_origbuf = m0;
 		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
 		map->_dm_proc = NULL;	/* always kernel */
@@ -319,8 +402,7 @@ int
 _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
-	paddr_t lastaddr;
-	int seg, i, error;
+	int i, error;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
@@ -346,7 +428,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
 	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
-	seg = -1;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
@@ -357,13 +438,12 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags, &lastaddr, &seg);
+		    p, flags);
 
 		resid -= minlen;
 	}
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
-		map->dm_nsegs = seg + 1;
 		map->_dm_origbuf = uio;
 		map->_dm_buftype = ARM32_BUFTYPE_UIO;
 		map->_dm_proc = p;
@@ -861,16 +941,14 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
-    int *segp)
+    bus_size_t buflen, struct proc *p, int flags)
 {
-	struct arm32_dma_range *dr;
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	pd_entry_t *pde;
 	pt_entry_t pte;
-	int seg;
+	int error;
 	pmap_t pmap;
 	pt_entry_t *ptep;
 
@@ -884,10 +962,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	else
 		pmap = pmap_kernel();
 
-	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
-
-	for (seg = *segp; buflen > 0; ) {
+	while (buflen > 0) {
 		/*
 		 * Get the physical address for this segment.
 		 *
@@ -929,71 +1004,20 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		}
 
 		/*
-		 * Make sure we're in an allowed DMA range.
-		 */
-		if (t->_ranges != NULL) {
-			/* XXX cache last result? */
-			dr = _bus_dma_inrange(t->_ranges, t->_nranges,
-			    curaddr);
-			if (dr == NULL)
-				return (EINVAL);
-			
-			/*
-			 * In a valid DMA range.  Translate the physical
-			 * memory address to an address in the DMA window.
-			 */
-			curaddr = (curaddr - dr->dr_sysbase) + dr->dr_busbase;
-		}
-
-		/*
 		 * Compute the segment size, and adjust counts.
 		 */
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		/*
-		 * Make sure we don't cross any boundaries.
-		 */
-		if (map->_dm_boundary > 0) {
-			baddr = (curaddr + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - curaddr))
-				sgsize = (baddr - curaddr);
-		}
+		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
+		if (error)
+			return (error);
 
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (seg >= 0 && curaddr == lastaddr &&
-		    (map->dm_segs[seg].ds_len + sgsize) <= map->_dm_maxsegsz &&
-		    (map->_dm_boundary == 0 ||
-		     (map->dm_segs[seg].ds_addr & bmask) ==
-		     (curaddr & bmask))) {
-		     	/* coalesce */
-			map->dm_segs[seg].ds_len += sgsize;
-		} else if (++seg >= map->_dm_segcnt) {
-			/* EFBIG */
-			break;
-		} else {
-			/* new segment */
-			map->dm_segs[seg].ds_addr = curaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-		}
-
-		lastaddr = curaddr + sgsize;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
 
-	*segp = seg;
-	*lastaddrp = lastaddr;
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
 	return (0);
 }
 
