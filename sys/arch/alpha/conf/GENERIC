@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2000/06/30 17:10:15 itojun Exp $
+# $NetBSD: GENERIC,v 1.160 2000/07/05 18:40:47 bouyer Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 maxusers 32
 
@@ -256,6 +256,7 @@ isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
+ec0	at	isa? port 0x250 iomem 0xd8000 irq 9  # 3Com 3c503 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
