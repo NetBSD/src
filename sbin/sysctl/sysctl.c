@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.1 2004/04/07 05:04:46 jmc Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.2 2004/04/08 19:34:16 jdc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.1 2004/04/07 05:04:46 jmc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.2 2004/04/08 19:34:16 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -607,10 +607,12 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		__learn_tree(name, namelen, pnode);
 		node = pnode->sysctl_child;
 		if (node == NULL) {
-			if (p != NULL)
+			if (dflag)
+				/* do nothing */;
+			else if (p != NULL)
 				(*p->ps_p)(gsname, gdname, NULL, name, namelen,
 					   pnode, type, p->ps_d);
-			else if ((Aflag || req) && !Mflag && !dflag)
+			else if ((Aflag || req) && !Mflag)
 				printf("%s: no children\n", gsname);
 		}
 		else {
