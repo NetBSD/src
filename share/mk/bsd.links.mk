@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.8 1998/12/31 15:28:52 castor Exp $
+#	$NetBSD: bsd.links.mk,v 1.9 2000/01/22 19:45:42 mycroft Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -12,7 +12,7 @@ linksinstall::
 		t=${DESTDIR}$$1; \
 		shift; \
 		echo ".include <bsd.own.mk>"; \
-		echo "all:: $$t"; \
+		echo "realall: $$t"; \
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
@@ -29,7 +29,7 @@ linksinstall::
 		t=${DESTDIR}$$1; \
 		shift; \
 		echo ".include <bsd.own.mk>"; \
-		echo "all:: $$t"; \
+		echo "realall: $$t"; \
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
