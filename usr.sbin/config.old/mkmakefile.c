@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.7 1993/05/18 11:51:52 cgd Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.8 1993/05/24 11:04:45 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -435,10 +435,8 @@ do_systemspec(f, fl, first)
 	register struct file_list *fl;
 	int first;
 {
-
-	fprintf(f, "%s: ${SYSTEM_DEP} swap%s.o", fl->f_needs, fl->f_fn);
-	if (first)						/* 29 Jun 92*/
-		fprintf(f, " newvers");
+	fprintf(f, "SYSTEM_SWAP_DEP+= swap%s.o\n", fl->f_fn);
+	fprintf(f, "%s: ${SYSTEM_DEP} swap%s.o vers.o", fl->f_needs, fl->f_fn);
 	fprintf(f, "\n\t${SYSTEM_LD_HEAD}\n");
 	fprintf(f, "\t${SYSTEM_LD} swap%s.o\n", fl->f_fn);
 	fprintf(f, "\t${SYSTEM_LD_TAIL}\n\n");
