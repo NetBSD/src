@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.6 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.7 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 static __inline__ u_int8_t __attribute__((__unused__))
 opti_read_config(struct ata_channel *chp, int reg)
 {
-	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	u_int8_t rv;
 	int s = splhigh();
 
@@ -140,7 +140,7 @@ opti_read_config(struct ata_channel *chp, int reg)
 static __inline__ void __attribute__((__unused__))
 opti_write_config(struct ata_channel *chp, int reg, u_int8_t val)
 {
-	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	int s = splhigh();
 
 	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.18 2004/08/16 22:11:13 enami Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.19 2004/08/19 23:25:35 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.18 2004/08/16 22:11:13 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.19 2004/08/19 23:25:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -201,9 +201,9 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	int compatchan;
 	bus_size_t *cmdsizep, *ctlsizep;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
-	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[wdc_cp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(wdc_cp);
 	int i;
 
 	cp->compat = 1;
@@ -254,9 +254,9 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	bus_size_t *cmdsizep, *ctlsizep;
 	int (*pci_intr) __P((void *));
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
-	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[wdc_cp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(wdc_cp);
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	int i;
@@ -492,7 +492,7 @@ pciide_channel_dma_setup(cp)
 	struct pciide_channel *cp;
 {
 	int drive;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_drive_datas *drvp;
 
 	KASSERT(cp->ata_channel.ch_ndrive != 0);
@@ -736,8 +736,8 @@ void
 pciide_irqack(chp)
 	struct ata_channel *chp;
 {
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	/* clear status bits in IDE DMA registers */
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
@@ -804,7 +804,7 @@ pciide_map_compat_intr(pa, cp, compatchan)
 	struct pciide_channel *cp;
 	int compatchan;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
@@ -874,7 +874,7 @@ default_chip_map(sc, pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		wdr = &cp->ata_channel.ch_wdc->regs[channel];
+		wdr = CHAN_TO_WDC_REGS(&cp->ata_channel);
 		if (interface & PCIIDE_INTERFACE_PCI(channel))
 			pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
 			    pciide_pci_intr);
@@ -974,8 +974,8 @@ sata_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc*)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
