@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.81 1999/02/24 19:36:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.82 1999/02/25 03:43:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 1999/02/24 19:36:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 1999/02/25 03:43:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,26 +793,6 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	 * Set up level 1 page table
 	 */
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-    {
-	extern pt_entry_t rom_pte;			/* XXX */
-	extern int prom_mapped;				/* XXX */
-
-	if (pmap_uses_prom_console()) {
-		/* XXX save old pte so that we can remap prom if necessary */
-		rom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;	/* XXX */
-	}
-	prom_mapped = 0;
-
-	/*
-	 * Actually, this code lies.  The prom is still mapped, and will
-	 * remain so until the context switch after alpha_init() returns.
-	 * Printfs using the firmware before then will end up frobbing
-	 * kernel_lev1map unnecessarily, but that's OK.
-	 */
-    }
-#endif
-
 	/* Map all of the level 2 pte pages */
 	for (i = 0; i < howmany(lev2mapsize, NPTEPG); i++) {
 		pte = (ALPHA_K0SEG_TO_PHYS(((vaddr_t)lev2map) +
@@ -828,6 +808,44 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	kernel_lev1map[l1pte_index(VPTBASE)] = pte;
 	VPT = (pt_entry_t *)VPTBASE;
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+    {
+#if defined(MULTIPROCESSOR)
+	extern pt_entry_t *prom_lev1map;		/* XXX */
+#else
+	extern pt_entry_t prom_pte;			/* XXX */
+#endif
+	extern int prom_mapped;				/* XXX */
+
+	if (pmap_uses_prom_console()) {
+		/*
+		 * XXX Save old PTE so we can remap the PROM, if
+		 * XXX necessary.
+		 * XXX
+		 * XXX On MP systems, the processor using the PROM
+		 * XXX actually has to switch to another page table
+		 * XXX so as to avoid stomping on an existing mapping
+		 * XXX which may be shared with another processor.
+		 */
+#if defined(MULTIPROCESSOR)
+		prom_lev1map = (pt_entry_t *)
+		    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
+		memcpy(prom_lev1map, kernel_lev1map,
+		    sizeof(pt_entry_t) * NPTEPG);
+		prom_lev1map[0] = *(pt_entry_t *)ptaddr & ~PG_ASM;
+#else
+		prom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;
+#endif
+	}
+	prom_mapped = 0;
+
+	/*
+	 * Actually, this code lies.  The prom is still mapped, and will
+	 * remain so until the context switch after alpha_init() returns.
+	 */
+    }
+#endif
 
 	/*
 	 * Set up level 2 page table.
