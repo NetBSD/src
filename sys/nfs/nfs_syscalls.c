@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.23 1996/12/03 00:22:47 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.24 1997/01/31 02:58:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -102,7 +102,7 @@ static struct nfsdrt nfsdrt;
 #define	TRUE	1
 #define	FALSE	0
 
-#ifdef NFSCLIENT
+#ifdef NFS
 static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 #endif
 
@@ -173,7 +173,7 @@ sys_nfssvc(p, v, retval)
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
 	int error;
-#ifdef NFSCLIENT
+#ifdef NFS
 	struct nameidata nd;
 	struct nfsmount *nmp;
 	struct nfsd_cargs ncd;
@@ -199,13 +199,13 @@ sys_nfssvc(p, v, retval)
 		(void) tsleep((caddr_t)&nfssvc_sockhead, PSOCK, "nfsd init", 0);
 	}
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
-#ifdef NFSCLIENT
+#ifdef NFS
 		error = nfssvc_iod(p);
 #else
 		error = ENOSYS;
 #endif
 	} else if (SCARG(uap, flag) & NFSSVC_MNTD) {
-#ifndef NFSCLIENT
+#ifndef NFS
 		error = ENOSYS;
 #else
 		error = copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd));
@@ -228,7 +228,7 @@ sys_nfssvc(p, v, retval)
 		nmp->nm_flag |= NFSMNT_MNTD;
 		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), p);
-#endif /* NFSCLIENT */
+#endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
 		error = ENOSYS;
@@ -876,7 +876,7 @@ nfsd_rt(sotype, nd, cacherep)
 }
 #endif /* NFSSERVER */
 
-#ifdef NFSCLIENT
+#ifdef NFS
 
 int nfs_defect = 0;
 /*
@@ -1157,4 +1157,4 @@ nfsmout:
 	*dposp = dpos;
 	return (error);
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
