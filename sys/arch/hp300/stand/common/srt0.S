@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.6 1999/07/31 00:45:28 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.7 1999/07/31 17:20:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,9 @@ GLOBAL(lowram)
 GLOBAL(machineid)
 	.long	0
 
+GLOBAL(mmuid)
+	.long	0
+
 	.text
 ASENTRY_NOPROFILE(begin)
 	movl	#STACK,sp
@@ -126,8 +129,11 @@ not370:
 	movl	MMUCMD,d0		| read it back
 	btst	#16,d0			| still on?
 	jeq	ihpibcheck		| no, a 360
+	lea	_C_LABEL(mmuid),a0
 	lsrl	#MMUID_SHIFT,d0		| save MMU ID
 	andl	#MMUID_MASK,d0
+	movl	d0,a0@
+	lea	_C_LABEL(machineid),a0
 	cmpb	#MMUID_345,d0		| are we a 345?
 	jeq	isa345
 	cmpb	#MMUID_375,d0		| how about a 375?
@@ -164,9 +170,12 @@ not68030:
 	 * 68040 models
 	 */
 
+	lea	_C_LABEL(mmuid),a0
 	movl	MMUCMD,d0		| get MMU ID
 	lsrl	#MMUID_SHIFT,d0
 	andl	#MMUID_MASK,d0
+	movl	d0,a0@			| save it
+	lea	_C_LABEL(machineid),a0
 	cmpb	#MMUID_425_T,d0		| are we a 425t?
 	jeq	isa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
