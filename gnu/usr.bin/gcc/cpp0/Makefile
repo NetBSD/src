@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/07/18 14:01:14 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/26 18:19:49 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,9 @@ CPPFLAGS+=	-I${GCCARCH} \
 BINDIR=		/usr/libexec
 
 .include <bsd.prog.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
 
 .PATH: ${DIST}/gcc
