@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.20 2003/05/01 02:34:20 itojun Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.21 2003/05/02 03:15:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.20 2003/05/01 02:34:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.21 2003/05/02 03:15:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -237,7 +237,7 @@ token_output(ifp, m0, dst, rt0)
 		ah = mtod(m, struct arphdr *);
 		ah->ar_hrd = htons(ARPHRD_IEEE802);
 
-		switch(ntohs(ah->ar_op)) {
+		switch (ntohs(ah->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			etype = htons(ETHERTYPE_REVARP);
