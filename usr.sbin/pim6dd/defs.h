@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5 2000/05/19 10:43:37 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.5.4.1 2000/10/18 02:16:21 tv Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -323,7 +323,8 @@ extern void config_vifs_from_file   __P((void));
 /* debug.c */
 extern char     *packet_kind __P((u_int proto, u_int type, u_int code));
 extern int      debug_kind   __P((u_int proto, u_int type, u_int code));
-extern void     log          __P((int, int, char *, ...));
+extern void     log          __P((int, int, char *, ...))
+	__attribute__((__format__(__printf__, 3, 4)));
 extern void	dump_mldqueriers __P((FILE *));
 extern int      log_level    __P((u_int proto, u_int type, u_int code));
 extern void     dump         __P((int i));
