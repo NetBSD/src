@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.20 2001/08/03 09:18:58 itojun Exp $       */
+/*      $NetBSD: scanform.c,v 1.21 2002/04/02 18:59:54 christos Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -995,9 +995,13 @@ strlen_data(FTREE_ENTRY *ftp)
 	case DATAT_MLIST:
 	case DATAT_MFUNC:
 	case DATAT_MSCRIPT:
-		for (i = 0, j = 0; ftp->list[i] != NULL; i++)
-			if (strlen(ftp->list[i]) > j)
-				j = strlen(ftp->list[i]);
+		if (ftp->list == NULL)
+			return 0;
+		for (i = 0, j = 0; ftp->list[i] != NULL; i++) {
+			size_t k;
+			if ((k = strlen(ftp->list[i])) > j)
+				j = k;
+		}
 		return(j);
 		/* NOTREACHED */
 		break;
@@ -1021,10 +1025,11 @@ static void
 gen_list(FTREE_ENTRY *ftp, int max, char **args)
 {
 	int i=0;
+	int lmax = 10;
 	int cur;
 	char *p, *q;
 
-	ftp->list = malloc(sizeof(char*));
+	ftp->list = malloc(sizeof(char*) * lmax);
 	if (ftp->list == NULL)
 		bailout("malloc: %s", strerror(errno));
 	for (p = ftp->data; p != NULL;) {
@@ -1036,7 +1041,10 @@ gen_list(FTREE_ENTRY *ftp, int max, char **args)
 			else
 				ftp->list[i++] = strdup(q);
 		}
-		ftp->list = realloc(ftp->list, (i+1)*sizeof(char*));
+		if (i == lmax - 2) {
+			lmax += 10;
+			ftp->list = realloc(ftp->list, sizeof(char*) * lmax);
+		}
 		if (ftp->list == NULL)
 			bailout("realloc: %s", strerror(errno));
 	}
@@ -1072,9 +1080,12 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	char *p, *q, *qo, *po, *comm, *test;
 	FILE *file;
 	char buf[PATH_MAX+30];
-/*	struct stat sb; */
+#if 0
+	struct stat sb;
+#endif
 	size_t len;
 	int i, cur;
+	int lmax = 10;
 
 	qo = q = strdup(ftp->data);
 	comm = malloc(sizeof(char) * strlen(q) + 2);
@@ -1123,25 +1134,31 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	if (file == NULL)
 		bailout("popen: %s", strerror(errno));
 
-	ftp->list = malloc(sizeof(char *)*2);
+	ftp->list = malloc(sizeof(char *) * lmax);
 	if (ftp->list == NULL)
 		bailout("malloc: %s", strerror(errno));
 
-	for (i = 0; (p = fgetln(file, &len)) != NULL; i++) {
-		if (len == 1)
+	for (i = 0; (p = fgetln(file, &len)) != NULL;) {
+		if (len <= 1)
 			continue;
-		p[len - 1] = '\0';	/* NUL terminate */
-		ftp->list[i] = strdup(p);
-		ftp->list[i][len -1] = '\0';
-		ftp->list = realloc(ftp->list, sizeof(char *) * (i+2));
-		if (ftp->list == NULL)
-			bailout("realloc: %s", strerror(errno));
+		ftp->list[i] = malloc(len);
+		if (ftp->list[i] == NULL)
+			bailout("malloc: %s", strerror(errno));
+		memcpy(ftp->list[i], p, len);
+		ftp->list[i][len - 1] = '\0';
+		if (++i == lmax - 2) {
+			lmax += 10; 
+			ftp->list = realloc(ftp->list, sizeof(char *) * lmax);
+			if (ftp->list == NULL)
+				bailout("realloc: %s", strerror(errno));
+		}
 	}
-	ftp->list[i] = NULL;
 	pclose(file);
 	if (i == 0) {
 		ftp->list[0] = "";
 		ftp->list[1] = NULL;
+	} else {
+		ftp->list[i] = NULL;
 	}
 	free(comm);
 }
