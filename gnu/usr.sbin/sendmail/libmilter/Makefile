@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/04 04:52:59 atatat Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/10 13:07:27 atatat Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -16,7 +16,7 @@ SRCS=		comm.c engine.c handler.c listener.c main.c signal.c \
 		sm_gethost.c smfi.c
 
 INCS=		mfapi.h mfdef.h
-INCSDIR=	/usr/include/milter
+INCSDIR=	/usr/include/libmilter
 
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/sendmail

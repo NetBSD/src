@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.237 2003/07/04 04:54:40 atatat Exp $
+#	$NetBSD: NetBSD.dist,v 1.238 2003/07/10 13:07:24 atatat Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -81,7 +81,7 @@
 ./usr/include/kadm5
 ./usr/include/kerberosIV
 ./usr/include/krb5
-./usr/include/milter
+./usr/include/libmilter
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
 ./usr/include/miscfs/fifofs
