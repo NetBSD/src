@@ -16,6 +16,7 @@ AC_CONFIG_SRCDIR([makeinfo/makeinfo.c])
 AM_CONFIG_HEADER(config.h:config.in)dnl Keep filename to 8.3 for MS-DOS.
 AM_INIT_AUTOMAKE([dist-bzip2])
 dnl
+AM_MAINTAINER_MODE
 AM_CONDITIONAL(TEXINFO_MAINT, test -n "$TEXINFO_MAINT")
 
 dnl Checks for programs.
