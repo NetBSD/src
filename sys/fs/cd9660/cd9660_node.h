@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.5 2003/08/07 16:31:34 agc Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.5.2.1 2004/06/22 09:02:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -86,9 +86,9 @@ struct iso_node {
 	doff_t	i_offset;	/* offset of free space in directory */
 	ino_t	i_ino;		/* inode number of found directory */
 
-	long iso_extent;	/* extent of file */
-	long i_size;
-	long iso_start;		/* actual start of data of file (may be different */
+	unsigned long iso_extent;	/* extent of file */
+	unsigned long i_size;
+	unsigned long iso_start;		/* actual start of data of file (may be different */
 				/* from iso_extent, if file has extended attributes) */
 	ISO_RRIP_INODE  inode;
 };
