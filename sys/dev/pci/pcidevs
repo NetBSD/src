@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.318 2001/04/21 13:28:52 tsutsui Exp $
+$NetBSD: pcidevs,v 1.319 2001/04/25 03:06:11 simonb Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1681,7 +1681,7 @@ product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
 /* Toshiba products */
-product TOSHIBA2 PROTEGE	0x0001  Protege Notebook
+product TOSHIBA2 PORTEGE	0x0001  Portege Notebook
 product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602  ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
