@@ -1,4 +1,4 @@
-/*	$NetBSD: genbsubs.c,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
+/*	$NetBSD: genbsubs.c,v 1.5 1998/03/11 16:49:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)genbsubs.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: genbsubs.c,v 1.4 1998/03/04 13:16:08 christos Exp $");
+__RCSID("$NetBSD: genbsubs.c,v 1.5 1998/03/11 16:49:19 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ char *s;
 int c;
 unsigned int n;
 int and;
-int stride;
+ssize_t stride;
 {
     unsigned char _c, *_s, _and;
 
