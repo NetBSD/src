@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2003/11/01 14:48:16 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2003/12/12 14:55:58 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2003/11/01 14:48:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2003/12/12 14:55:58 sekiya Exp $");
 
 /*
  *	Manages physical address maps.
@@ -260,11 +260,10 @@ struct pool_allocator pmap_pv_page_allocator = {
  * Misc. functions.
  */
 
-#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 void mips_dump_segtab(struct proc *);
-#endif
+static void mips_flushcache_allpvh(paddr_t);
 
-#if defined(MIPS3_L2CACHE_ABSENT)
 /*
  * Flush virtual addresses associated with a given physical address
  */
@@ -288,7 +287,7 @@ mips_flushcache_allpvh(paddr_t pa)
 	}
 #endif
 }
-#endif	/* MIPS3_L2CACHE_ABSENT */
+#endif /* MIPS3_PLUS */
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -1583,7 +1582,7 @@ pmap_zero_page(phys)
 
 	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1595,7 +1594,7 @@ pmap_zero_page(phys)
 	 */
 	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -1616,7 +1615,7 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx) dst nonphys\n", (u_long)dst);
 #endif
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings, we must force an
@@ -1635,12 +1634,12 @@ pmap_copy_page(src, dst)
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
 	}
-#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 
 	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
 		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1656,7 +1655,7 @@ pmap_copy_page(src, dst)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
-#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -1882,7 +1881,7 @@ again:
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 		if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 			/*
 			 * There is at least one other VA mapping this page.
@@ -1935,7 +1934,7 @@ again:
 			}
 #endif	/* !MIPS3_NO_PV_UNCACHED */
 		}
-#endif /* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
+#endif /* MIPS3_PLUS */
 
 		/*
 		 * There is at least one other VA mapping this page.
