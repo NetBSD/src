@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 2000/04/10 13:34:20 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.38 2000/04/18 02:07:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -626,7 +626,9 @@ trap(type, tstate, pc, tf)
 
 	default:
 		if (type < 0x100) {
+			extern int trap_trace_dis;
 dopanic:
+			trap_trace_dis = 1;
 			printf("trap type 0x%x: pc=%lx",
 			       type, pc); 
 			printf(" npc=%lx pstate=%b\n",
@@ -1013,7 +1015,8 @@ data_access_fault(type, addr, pc, tf)
 	}
 	write_user_windows();
 /*	if (cpcb->pcb_nsaved > 6) trapdebug |= TDB_NSAVED; */
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
+	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || 
+	    trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
 		printf("%ld: data_access_fault(%lx, %p, %p, %p) nsaved=%d\n",
 		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, 
 		       (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
@@ -1142,6 +1145,8 @@ kfault:
 			onfault = p->p_addr ?
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
+				extern int trap_trace_dis;
+				trap_trace_dis = 1; /* Disable traptrace for printf */
 				(void) splhigh();
 				printf("data fault: pc=%lx addr=%lx\n",
 				    pc, addr);
@@ -1232,7 +1237,8 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || 
+	    trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("%ld data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %lx %%qb\n",
 		       (long)curproc?curproc->p_pid:-1, 
 		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
@@ -1413,6 +1419,8 @@ kfault:
 			onfault = p->p_addr ?
 			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
+				extern int trap_trace_dis;
+				trap_trace_dis = 1; /* Disable traptrace for printf */
 				(void) splhigh();
 				printf("data fault: pc=%lx addr=%lx sfsr=%%qb\n",
 				    (u_long)pc, (long)sfva, (long)sfsr, SFSR_BITS);
@@ -1482,7 +1490,8 @@ text_access_fault(type, pc, tf)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
+	if (((trapdebug&TDB_NSAVED) && cpcb->pcb_nsaved) || 
+	    (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)))
 		printf("%d text_access_fault(%x, %x, %x)\n",
 		       curproc?curproc->p_pid:-1, type, pc, tf); 
 	if (trapdebug & TDB_FRAME) {
@@ -1511,6 +1520,8 @@ text_access_fault(type, pc, tf)
 
 	access_type = /* VM_PROT_EXECUTE| */VM_PROT_READ;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
 		printf("text_access_fault: pc=%x\n", pc);
 		DEBUGGER(type, tf);
@@ -1549,6 +1560,8 @@ text_access_fault(type, pc, tf)
 		 * fault, deliver SIGSEGV.
 		 */
 		if (tstate & TSTATE_PRIV) {
+			extern int trap_trace_dis;
+			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
 			printf("text fault: pc=%x\n",
 			       pc);
@@ -1652,6 +1665,8 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		 */
 		goto out;
 #else
+		extern int trap_trace_dis;
+		trap_trace_dis = 1; /* Disable traptrace for printf */
 		printf("text_access_error: memory error...");
 		printf("text memory error type %d sfsr=%p sfva=%p afsr=%p afva=%p tf=%p\n",
 		       type, sfsr, pc, afsr, afva, tf);
@@ -1681,6 +1696,8 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 	access_type = /* VM_PROT_EXECUTE| */ VM_PROT_READ;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+		extern int trap_trace_dis;
+		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
 		printf("text error: pc=%lx sfsr=%%qb\n", pc, (long)sfsr, SFSR_BITS);
 		DEBUGGER(type, tf);
@@ -1715,6 +1732,8 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 		 * fault, deliver SIGSEGV.
 		 */
 		if (tstate & TSTATE_PRIV) {
+			extern int trap_trace_dis;
+			trap_trace_dis = 1; /* Disable traptrace for printf */
 			(void) splhigh();
 			printf("text error: pc=%lx sfsr=%%qb\n",
 			       pc, sfsr, SFSR_BITS);
@@ -1872,10 +1891,19 @@ syscall(code, tf, pc)
 #ifdef DEBUG
 /*	printf("code=%x, nsys=%x\n", code, nsys); */
 	if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", curproc?curproc->p_pid:-1, code, code,
+		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", 
+		       curproc?curproc->p_pid:-1, code, code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
-		       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
-	p->p_addr->u_pcb.lastcall = ((code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
+		       (p->p_emul->e_syscallnames) ?
+		       ((code < 0 || code >= nsys) ? 
+			"illegal syscall" : 
+			p->p_emul->e_syscallnames[code]) :
+		       "unknown syscall");
+	if (p->p_emul->e_syscallnames)
+		p->p_addr->u_pcb.lastcall = 
+			((code < 0 || code >= nsys) ? 
+			 "illegal syscall" : 
+			 p->p_emul->e_syscallnames[code]);
 #endif
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
@@ -1893,8 +1921,12 @@ syscall(code, tf, pc)
 #ifdef DEBUG
 		if (i != (long)callp->sy_argsize / sizeof(register64_t))
 			printf("syscall %s: narg=%hd, argsize=%hd, call=%p, argsz/reg64=%ld\n",
-			       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code], 
-			       callp->sy_narg, callp->sy_argsize, callp->sy_call, (long)callp->sy_argsize / sizeof(register64_t));
+			       (p->p_emul->e_syscallnames) ? ((code < 0 || code >= nsys) ? 
+							      "illegal syscall" : 
+							      p->p_emul->e_syscallnames[code])
+			       : "unknown syscall", 
+			       callp->sy_narg, callp->sy_argsize, callp->sy_call, 
+			       (long)callp->sy_argsize / sizeof(register64_t));
 #endif
 		if (i > nap) {	/* usually false */
 #ifdef DEBUG
@@ -2016,8 +2048,12 @@ syscall(code, tf, pc)
 #ifdef DEBUG
 	if (callp->sy_call == sys_nosys) {
 		printf("trapdebug: emul %s UNIPL syscall %d:%s\n", 
-		       p->p_emul->e_name, code,
-		       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code]);
+		       p->p_emul->e_name, code, 
+		       p->p_emul->e_syscallnames ? (
+			       (code < 0 || code >= nsys) ? 
+			       "illegal syscall" : 
+			       p->p_emul->e_syscallnames[code]) :
+		       "unknown syscall");
 	}
 #endif
 	error = (*callp->sy_call)(p, &args, rval);
