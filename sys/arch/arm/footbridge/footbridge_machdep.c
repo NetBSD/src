@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.7 2002/04/09 19:37:17 thorpej Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.8 2002/05/03 16:45:22 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,12 +54,12 @@
  * use it.
  */
 
-extern unsigned int sa110_cache_clean_addr;
-extern unsigned int sa110_cache_clean_size;
+extern unsigned int sa1_cache_clean_addr;
+extern unsigned int sa1_cache_clean_size;
 
 void
 footbridge_sa110_cc_setup(void)
 {
-	sa110_cache_clean_addr = DC21285_CACHE_FLUSH_VBASE;
-	sa110_cache_clean_size = (NBPG * 4);
+	sa1_cache_clean_addr = DC21285_CACHE_FLUSH_VBASE;
+	sa1_cache_clean_size = (NBPG * 4);
 }
