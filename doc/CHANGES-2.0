@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.228 2004/05/26 20:16:13 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.229 2004/05/28 07:55:09 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3098,3 +3098,40 @@ sys/kern/vfs_bio.c				1.125
 
 	Add remaining sysctl descriptions under kern subtree.
 	[atatat, ticket #388]
+
+sys/dev/pci/if_sip.c				1.91
+
+	Two changes:
+	1. ifdef out the restriction that the SiS 900 has only one PHY
+	This is demonstrably false; the SiS 960 super south bridge in
+	PR 18590 has a SiS 900 rev 1 core in it.
+	2. bitbang the MII for all versions of the SiS 900; this is the
+	only way that the PHYs on this system answer.
+	[fair, ticket #296]
+
+sys/uvm/uvm_meter.c				1.32
+
+	Sysctl descriptions under vm subtree
+	[atatat, ticket #389]
+
+sys/ddb/db_variables.c				1.31
+
+	Sysctl descriptions under ddb subtree
+	[atatat, ticket #390]
+
+sys/kern/uipc_domain.c				1.48
+sys/net/bpf.c					1.98
+sys/net/if.c					1.142
+sys/net/rtsock.c				1.71
+sys/netinet/ip_icmp.c				1.84
+sys/netinet/ip_input.c				1.203
+sys/netinet/tcp_usrreq.c			1.92
+sys/netinet/udp_usrreq.c			1.122
+sys/netinet6/icmp6.c				1.107
+sys/netinet6/ip6_input.c			1.74
+sys/netinet6/ipsec.c				1.97
+sys/netinet6/udp6_usrreq.c			1.63
+
+	Sysctl descriptions under net subtree (net.key not done)
+	[atatat, ticket #391]
+
