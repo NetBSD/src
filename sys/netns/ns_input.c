@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.7 1995/06/13 08:37:04 mycroft Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.8 1995/07/27 20:37:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -87,6 +87,7 @@ ns_init()
 	nspcb.nsp_next = nspcb.nsp_prev = &nspcb;
 	nsrawpcb.nsp_next = nsrawpcb.nsp_prev = &nsrawpcb;
 	nsintrq.ifq_maxlen = nsqmaxlen;
+	TAILQ_INIT(&ns_ifaddr);
 	ns_pexseq = time.tv_usec;
 	ns_netmask.sns_len = 6;
 	ns_netmask.sns_addr.x_net = ns_broadnet;
