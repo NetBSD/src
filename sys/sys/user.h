@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.11 1997/01/22 07:09:30 mikel Exp $	*/
+/*	$NetBSD: user.h,v 1.12 1997/10/16 02:32:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -49,8 +49,6 @@
 #endif
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
-#include <vm/vm.h>		/* XXX */
-#include <sys/sysctl.h>
 
 
 /*
@@ -65,34 +63,6 @@ struct	user {
 
 	struct	sigacts u_sigacts;	/* p_sigacts points here (use it!) */
 	struct	pstats u_stats;		/* p_stats points here (use it!) */
-
-	/*
-	 * Remaining fields only for core dump and/or ptrace--
-	 * not valid at other times!
-	 */
-	struct	kinfo_proc u_kproc;	/* proc + eproc */
-	struct	md_coredump u_md;	/* machine dependent glop */
 };
-
-/*
- * Redefinitions to make the debuggers happy for now...  This subterfuge
- * brought to you by coredump() and trace_req().  These fields are *only*
- * valid at those times!
- */
-#define	U_ar0	u_kproc.kp_proc.p_md.md_regs /* copy of curproc->p_md.md_regs */
-#define	U_tsize	u_kproc.kp_eproc.e_vm.vm_tsize
-#define	U_dsize	u_kproc.kp_eproc.e_vm.vm_dsize
-#define	U_ssize	u_kproc.kp_eproc.e_vm.vm_ssize
-#define	U_sig	u_sigacts.ps_sig
-#define	U_code	u_sigacts.ps_code
-
-#ifndef _KERNEL
-#define	u_ar0	U_ar0
-#define	u_tsize	U_tsize
-#define	u_dsize	U_dsize
-#define	u_ssize	U_ssize
-#define	u_sig	U_sig
-#define	u_code	U_code
-#endif /* _KERNEL */
 
 #endif /* !_SYS_USER_H_ */
