@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 01:49:01 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2001/12/15 03:37:37 thorpej Exp $
 
 .include <bsd.own.mk>
 
-.ifdef USE_NEW_TOOLCHAIN
+.if defined(USE_NEW_TOOLCHAIN) && !defined(BOOTSTRAP_NEW_TOOLCHAIN)
 
 SUBDIR+=	backend frontend cpp0 gcov .WAIT \
 		cc1 cc1obj cc1plus f771 cpp g++ g77 gcc
