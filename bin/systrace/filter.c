@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.15 2002/11/25 06:25:09 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.16 2003/03/25 22:48:43 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.15 2002/11/25 06:25:09 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.16 2003/03/25 22:48:43 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -167,6 +167,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 			/* Profile feedback optimization */
 			filter->match_count++;
 			if (last != NULL && last->match_action == action &&
+			    last->match_flags == filter->match_flags &&
 			    filter->match_count > last->match_count) {
 				TAILQ_REMOVE(fls, last, next);
 				TAILQ_INSERT_AFTER(fls, filter, last, next);
