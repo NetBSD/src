@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.57 2003/04/02 17:56:46 atatat Exp $
+# $NetBSD: postinstall,v 1.58 2003/04/18 05:38:40 thorpej Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -424,7 +424,7 @@ do_rc()
 		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
 		mountall mountcritlocal mountcritremote mountd moused \
 		mrouted mixerctl named ndbootd network newsyslog nfsd \
-		nfslocking ntpd ntpdate poffd postfix ppp pwcheck \
+		nfslocking ntpd ntpdate poffd postfix powerd ppp pwcheck \
 		quota racoon rpcbind raidframe raidframeparity rarpd rbootd \
 		root route6d routed rtadvd rtsold rwho savecore \
 		screenblank sendmail securelevel smmsp sshd staticroute \
