@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.67 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: eap.c,v 1.68 2004/04/23 21:13:06 itojun Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.67 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.68 2004/04/23 21:13:06 itojun Exp $");
 
 #include "midi.h"
 
@@ -599,7 +599,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	 * The vendor and product ID's are quite "interesting". Just
 	 * trust the following and be happy.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
 	ct5880 = 0;
 	if (sc->sc_1371) {

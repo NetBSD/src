@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.82 2003/08/18 05:39:07 itojun Exp $	*/
+/*	$NetBSD: pci.c,v 1.83 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.82 2003/08/18 05:39:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.83 2004/04/23 21:13:07 itojun Exp $");
 
 #include "opt_pci.h"
 
@@ -198,7 +198,7 @@ pciprint(aux, pnp)
 	const struct pci_quirkdata *qd;
 
 	if (pnp) {
-		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
 	aprint_normal(" dev %d function %d", pa->pa_device, pa->pa_function);
@@ -206,7 +206,7 @@ pciprint(aux, pnp)
 		printf(": ");
 		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 		if (!pnp)
-			pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+			pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo, sizeof(devinfo));
 		printf("%s at %s", devinfo, pnp ? pnp : "?");
 		printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
 #ifdef __i386__

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.28 2003/11/23 04:34:26 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.29 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.28 2003/11/23 04:34:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.29 2004/04/23 21:13:07 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ pcscp_attach(parent, self, aux)
 	int error, rseg;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 	printf("%s", sc->sc_dev.dv_xname);
 
