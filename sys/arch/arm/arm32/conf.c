@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/09/03 01:50:01 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2001/09/04 21:45:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -170,7 +170,7 @@
 /*
  * ISDN devices
  */
-#ifdef CONS_HAVE_ISDN
+#ifdef CONF_HAVE_ISDN
 #include "i4b.h"
 #include "i4bctl.h"
 #include "i4btrc.h"
