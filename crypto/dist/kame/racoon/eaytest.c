@@ -204,7 +204,7 @@ certtest(ac, av)
 
 	asn1dn = eay_str2asn1dn(dnstr, sizeof(dnstr));
 	if (asn1dn == NULL || asn1dn->l != asn1dn0.l)
-		errx(1, "asn1dn length mismatched.\n");
+		errx(1, "asn1dn length mismatched.");
 
 	/*
 	 * NOTE: The value pointed by "<==" above is different from the
@@ -212,7 +212,7 @@ certtest(ac, av)
 	 * both of the names are same name.
 	 */
 	if (eay_cmp_asn1dn(&asn1dn0,  asn1dn))
-		errx(1, "asn1dn mismatched.\n");
+		errx(1, "asn1dn mismatched.");
 	vfree(asn1dn);
 
 	printf("succeed.\n");

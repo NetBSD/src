@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.69 2002/07/19 19:04:34 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.70 2002/07/20 08:36:19 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.69 2002/07/19 19:04:34 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70 2002/07/20 08:36:19 grant Exp $");
 #endif
 #endif
 
@@ -352,7 +352,7 @@ pkg_do(const char *pkg)
 		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
-			      "\t\"pkg_delete %s\" first to remove it!\n", installed, installed);
+			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
 			++errc;
 		}
 	}

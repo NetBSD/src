@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.128 2002/06/14 09:12:08 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.129 2002/07/20 08:36:26 grant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.128 2002/06/14 09:12:08 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.129 2002/07/20 08:36:26 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -2775,7 +2775,7 @@ at_getaddr(addr, which)
 	sat->sat_family = AF_APPLETALK;
 	sat->sat_len = sizeof(*sat);
 	if (which == MASK)
-		errx(EXIT_FAILURE, "AppleTalk does not use netmasks\n");
+		errx(EXIT_FAILURE, "AppleTalk does not use netmasks");
 	if (sscanf(addr, "%u.%u", &net, &node) != 2
 	    || net == 0 || net > 0xffff || node == 0 || node > 0xfe)
 		errx(EXIT_FAILURE, "%s: illegal address", addr);

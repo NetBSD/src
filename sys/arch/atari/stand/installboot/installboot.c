@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.13 2002/04/12 22:11:33 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.14 2002/07/20 08:36:18 grant Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -193,7 +193,7 @@ oscheck ()
 		errx(EXIT_FAILURE, "kvm_read: %s", kvm_geterr(kd_kern));
 	kvm_close(kd_kern);
 	if (kvers != BOOTVERSION)
-		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d\n",
+		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d",
 					kvers, BOOTVERSION);
 }
 

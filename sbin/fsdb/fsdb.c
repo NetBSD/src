@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.20 2002/03/18 20:04:49 thorpej Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.21 2002/07/20 08:36:26 grant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.20 2002/03/18 20:04:49 thorpej Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.21 2002/07/20 08:36:26 grant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -441,7 +441,7 @@ CMDFUNCSTART(blks)
 	int blkno = 0;
 	int i, type;
 	if (!curinode) {
-		warnx("no current inode\n");
+		warnx("no current inode");
 		return 0;
 	}
 	type = iswap16(curinode->di_mode) & IFMT;
@@ -698,7 +698,7 @@ CMDFUNCSTART(chname)
 		return 0;
 	else
 		if (rval & FOUND) {
-			warnx("new name `%s' does not fit in slot %s\n",
+			warnx("new name `%s' does not fit in slot %s",
 			    argv[2], argv[1]);
 			return 1;
 		} else {
@@ -798,7 +798,7 @@ CMDFUNCSTART(chaflags)
 		return 1;
 	}
 	if (flags > UINT_MAX) {
-		warnx("flags set beyond 32-bit range of field (0x%lx)\n",
+		warnx("flags set beyond 32-bit range of field (0x%lx)",
 		    flags);
 		return (1);
 	}
@@ -822,7 +822,7 @@ CMDFUNCSTART(chgen)
 		return 1;
 	}
 	if (gen > INT_MAX || gen < INT_MIN) {
-		warnx("gen set beyond 32-bit range of field (0x%lx)\n", gen);
+		warnx("gen set beyond 32-bit range of field (0x%lx)", gen);
 		return (1);
 	}
 	curinode->di_gen = iswap32(gen);
@@ -845,7 +845,7 @@ CMDFUNCSTART(linkcount)
 		return 1;
 	}
 	if (lcnt > USHRT_MAX || lcnt < 0) {
-		warnx("max link count is %d\n", USHRT_MAX);
+		warnx("max link count is %d", USHRT_MAX);
 		return 1;
 	}
 	curinode->di_nlink = iswap16(lcnt);

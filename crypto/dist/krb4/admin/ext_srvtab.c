@@ -9,7 +9,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: ext_srvtab.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
+RCSID("$Id: ext_srvtab.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
 
 static des_cblock master_key;
 static des_cblock session_key;
@@ -39,7 +39,7 @@ FWrite(void *p, int size, int n, FILE *f)
 {
     if (fwrite(p, size, n, f) != n) {
         StampOutSecrets();
-	errx(1, "Error writing output file.  Terminating.\n");
+	errx(1, "Error writing output file.  Terminating.");
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1999/01/15 07:48:07 matthias Exp $  */
+/*	$NetBSD: md.c,v 1.13 2002/07/20 08:36:24 grant Exp $  */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ get_disp(addr, n)
 		Ivalue = (Ivalue << 8) | *addr;
 		break;
 	default:
-		errx(1, "get_disp: invalid argument %d\n", n);
+		errx(1, "get_disp: invalid argument %d", n);
 	}
 	return Ivalue;
 }

@@ -16,7 +16,7 @@
 #include "adm_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: kdb_util.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
+RCSID("$Id: kdb_util.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
 
 static des_cblock master_key, new_master_key;
 static des_key_schedule master_key_schedule, new_master_key_schedule;
@@ -383,7 +383,7 @@ convert_old_format_db (char *db_file, FILE *out)
   n = kerb_get_principal(KERB_M_NAME, KERB_M_INST, principal_data,
 			 1 /* only one please */, &more);
   if ((n != 1) || more)
-    errx (1, "verify_master_key: Kerberos error on master key lookup, %d found.\n", n);
+    errx (1, "verify_master_key: Kerberos error on master key lookup, %d found.", n);
 
   /* set up the master key */
   fprintf(stderr, "Current Kerberos master key version is %d.\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.19 2001/11/01 07:48:08 lukem Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.20 2002/07/20 08:36:27 grant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.19 2001/11/01 07:48:08 lukem Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.20 2002/07/20 08:36:27 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
 	 */
 	if (conf[0] != '/') {
 	  errx(-1, "Error:  the configuration file must be specified as an\n"
-	      "absolute path, as the daemon chdir's to / immediately.\n");
+	      "absolute path, as the daemon chdir's to / immediately.");
 	}
 	/*
 	 * Construct the listening socket

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.4 2002/07/18 02:13:13 mjl Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.5 2002/07/20 08:36:18 grant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,10 +147,10 @@ main(int argc, char *argv[])
 
 	dprintf(("%04x sections, offset %08x\n", htobe16(eh->e_shnum), htobe32(eh->e_shoff)));
 	if (htobe16(eh->e_type) != ET_REL)
-		errx(1, "%s isn't a relocatable file, type=%d\n",
+		errx(1, "%s isn't a relocatable file, type=%d",
 		    argv[0], htobe16(eh->e_type));
 	if (htobe16(eh->e_machine) != EM_68K)
-		errx(1, "%s isn't M68K, machine=%d\n", argv[0],
+		errx(1, "%s isn't M68K, machine=%d", argv[0],
 		    htobe16(eh->e_machine));
 
 	tsz = dsz = bsz = trsz = pcrelsz = r32sz = 0;
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 	    tsz, dsz, bsz, tsz + dsz + bsz));
 
 	if (trsz == 0)
-		errx(1, "%s has no relocation records.\n", argv[0]);
+		errx(1, "%s has no relocation records.", argv[0]);
 
 	dprintf(("%d relocs\n", trsz/12));
 
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 	 * We have one contiguous area allocated by the ROM to us.
 	 */
 	if (tsz+dsz+bsz > bbsize)
-		errx(1, "%s: resulting image too big\n", argv[0]);
+		errx(1, "%s: resulting image too big", argv[0]);
 
 	memset(buffer, 0, bbsize);
 
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 	relver = htobe32(*(u_int32_t *)(buffer + 4));
 	switch (relver) {
 	default:
-		errx(1, "%s: unrecognized relocator version %d\n",
+		errx(1, "%s: unrecognized relocator version %d",
 			argv[0], relver);
 		/*NOTREACHED*/
 
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 	}
 
 	if (symtab == NULL)
-		errx(1, "No symbol table found\n");
+		errx(1, "No symbol table found");
 	/*
 	 * Link sections and generate relocation data
 	 * Nasty:  .text, .rodata, .data, .bss sections are not linked
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		if (base == NULL)
-			errx(1, "Can't find section for reloc %s\n", shstrtab +
+			errx(1, "Can't find section for reloc %s", shstrtab +
 			    htobe32(sh[i].sh_name));
 		ra = (Elf32_Rela *)(image + htobe32(sh[i].sh_offset));
 		for (n = 0; n < htobe32(sh[i].sh_size); n += sizeof(Elf32_Rela), ++ra) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.36 2002/07/01 20:55:30 itojun Exp $	*/
+/*	$NetBSD: fortune.c,v 1.37 2002/07/20 08:36:23 grant Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.36 2002/07/01 20:55:30 itojun Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.37 2002/07/20 08:36:23 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -760,7 +760,7 @@ add_dir(fp)
 			free(name);
 	}
 	if (fp->num_children == 0) {
-		warnx("`%s': No fortune files in directory.\n", fp->path);
+		warnx("`%s': No fortune files in directory.", fp->path);
 		return FALSE;
 	}
 	return TRUE;

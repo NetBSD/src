@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.16 2002/06/26 16:04:14 mjacob Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.17 2002/07/20 08:36:28 grant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ device_format(argc, argv)
 	if (j != SKEY_NO_SENSE) {
 		cp = scsi_decode_sense((const unsigned char *) &sense, 2,
 		    buffer, sizeof (buffer));
-		errx(1, "failed to clean Unit Attention: %s\n", cp);
+		errx(1, "failed to clean Unit Attention: %s", cp);
 	}
 
 	/*
@@ -292,7 +292,7 @@ device_format(argc, argv)
 	if (argc > 0) {
 		blksize = strtoul(argv[0], &cp, 10);
 		if (*cp != '\0')
-			errx(1, "invalid block size: %s\n", argv[0]);
+			errx(1, "invalid block size: %s", argv[0]);
 
 		memset(&data_select, 0, sizeof(data_select));
 
@@ -740,7 +740,7 @@ bus_detach(argc, argv)
 	else {
 		args.sa_target = strtol(argv[0], &cp, 10);
 		if (*cp != '\0' || args.sa_target < 0)
-			errx(1, "invalid target: %s\n", argv[0]);
+			errx(1, "invalid target: %s", argv[0]);
 	}
 
 	if (strcmp(argv[1], "any") == 0 || strcmp(argv[1], "all") == 0)
@@ -748,7 +748,7 @@ bus_detach(argc, argv)
 	else {
 		args.sa_lun = strtol(argv[1], &cp, 10);
 		if (*cp != '\0' || args.sa_lun < 0)
-			errx(1, "invalid lun: %s\n", argv[1]);
+			errx(1, "invalid lun: %s", argv[1]);
 	}
 
 	if (ioctl(fd, SCBUSIODETACH, &args) != 0)

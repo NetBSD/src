@@ -1,4 +1,4 @@
-/*	$NetBSD: swabcheck.c,v 1.2 2001/05/24 21:04:47 kleink Exp $	*/
+/*	$NetBSD: swabcheck.c,v 1.3 2002/07/20 08:36:25 grant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 		(void)memset(r, ~0, MAXCHK);
 		swab(a, r, i);
 		if (memcmp(b, r, MAXCHK) != 0) {
-			warnx("pattern mismatch at %lu bytes\n",
+			warnx("pattern mismatch at %lu bytes",
 			    (unsigned long)i);
 			dump("expect:", b, MAXCHK);
 			dump("result:", r, MAXCHK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.3 2001/02/19 22:48:58 cgd Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.4 2002/07/20 08:36:19 grant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ main(argc, argv)
 
 	for (i = 0; i < X_NSYMS; i++) {
 		if (findoff_elf32(mappedbfile, osb.st_size, nl[i].n_value, &offsets[i]) != 0)
-			errx(1, "Couldn't find offset for %s in %s\n", nl[i].n_name, bootfile);
+			errx(1, "Couldn't find offset for %s in %s", nl[i].n_name, bootfile);
 #ifdef DEBUG
 		printf("%s is at offset %#x in %s\n", nl[i].n_name, offsets[i], bootfile);
 #endif
@@ -200,7 +200,7 @@ main(argc, argv)
 	    highaddr - lowaddr, Z_BEST_COMPRESSION);
 	if (i != Z_OK) {
 		printf("\n");
-		errx(1, "%s compression error %d\n", kernel, i);
+		errx(1, "%s compression error %d", kernel, i);
 	}
 	printf("done.\n"); fflush(stdout);
 
@@ -208,7 +208,7 @@ main(argc, argv)
 	printf("compressed size = %ld\n", destlen);
 	if (destlen > NLVAR(X_MAXKERNEL_SIZE))
 		errx(1, "kernel %s is too big, "
-		    "increase KERNELSIZE to at least %ld\n",
+		    "increase KERNELSIZE to at least %ld",
 		    kernel, destlen);
 
 	NLVAR(X_KERNEL_SIZE) = destlen;

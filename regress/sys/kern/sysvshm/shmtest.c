@@ -1,4 +1,4 @@
-/*	$NetBSD: shmtest.c,v 1.2 2001/02/19 22:44:41 cgd Exp $	*/
+/*	$NetBSD: shmtest.c,v 1.3 2002/07/20 08:36:26 grant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ sigchld_handler(signo)
 		errx(1, "receiver exited abnormally");
 
 	if (WEXITSTATUS(cstatus) != 0)
-		errx(1, "receiver exited with status %d\n",
+		errx(1, "receiver exited with status %d",
 		    WEXITSTATUS(cstatus));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.1 2002/06/06 19:48:14 fredette Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.2 2002/07/20 08:36:19 grant Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -263,7 +263,7 @@ putfile(from_file, to)
 	} else if (*(u_char *)&ex == 0x1f && ((u_char *)&ex)[1] == 0x8b) {
 		entry = 0;
 	} else
-		errx(1, "%s: bad magic number\n", from_file);
+		errx(1, "%s: bad magic number", from_file);
 
 	entry += sizeof(load);
 	lseek(to, sizeof(load), SEEK_CUR);

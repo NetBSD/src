@@ -41,7 +41,7 @@
 
 #include "kauth.h"
 
-RCSID("$Id: kauth.c,v 1.1.1.1 2000/06/16 18:31:51 thorpej Exp $");
+RCSID("$Id: kauth.c,v 1.2 2002/07/20 08:36:20 grant Exp $");
 
 krb_principal princ;
 static char srvtab[MaxPathLen];
@@ -155,12 +155,12 @@ get_ticket_address(krb_principal *princ, des_cblock *key)
 	
     code = get_ad_tkt(princ->name, princ->instance, princ->realm, 0);
     if(code) {
-	warnx("get_ad_tkt: %s\n", krb_get_err_text(code));
+	warnx("get_ad_tkt: %s", krb_get_err_text(code));
 	return code;
     }
     code = krb_get_cred(princ->name, princ->instance, princ->realm, &c);
     if(code) {
-	warnx("krb_get_cred: %s\n", krb_get_err_text(code));
+	warnx("krb_get_cred: %s", krb_get_err_text(code));
 	return code;
     }
 
@@ -179,7 +179,7 @@ get_ticket_address(krb_principal *princ, des_cblock *key)
 			 key,
 			 schedule);
     if(code) {
-	warnx("decomp_ticket: %s\n", krb_get_err_text(code));
+	warnx("decomp_ticket: %s", krb_get_err_text(code));
 	return code;
     }
     memset(&session, 0, sizeof(session));

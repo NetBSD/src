@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.11 2001/01/05 02:02:58 lukem Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.12 2002/07/20 08:36:26 grant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.11 2001/01/05 02:02:58 lukem Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.12 2002/07/20 08:36:26 grant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ int
 checkactive()
 {
 	if (!curinode) {
-		warnx("no current inode\n");
+		warnx("no current inode");
 		return 0;
 	}
 	return 1;
@@ -187,7 +187,7 @@ int
 checkactivedir()
 {
 	if (!curinode) {
-		warnx("no current inode\n");
+		warnx("no current inode");
 		return 0;
 	}
 	if ((iswap16(curinode->di_mode) & IFMT) != IFDIR) {

@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	FILE *imagef;
 
 	if (argc != 4)
-		errx(1, "Usage: %s imagefile ofwboot_512block bootxx_offset\n", argv[0]);
+		errx(1, "Usage: %s imagefile ofwboot_512block bootxx_offset", argv[0]);
 
 	if (!(imagef = fopen(argv[1], "rb+")))
 		err(1, "error opening %s", argv[1]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.6 2002/02/21 07:38:20 itojun Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.7 2002/07/20 08:36:25 grant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -454,7 +454,7 @@ stress_test_getcwd()
 
 		cp = old_getcwd (ubuf, MAXPATHLEN);
 		if (strcmp(buf, ubuf) != 0) {
-			warnx("In %s, old_getcwd says %s\n",
+			warnx("In %s, old_getcwd says %s",
 			    buf, ubuf);
 		}
 

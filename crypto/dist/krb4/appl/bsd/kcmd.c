@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: kcmd.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+RCSID("$Id: kcmd.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
 
 #define	START_PORT	5120	 /* arbitrary */
 
@@ -123,7 +123,7 @@ kcmd(int *sock,
 		s = getport(&lport);
 		if (s < 0) {
 			if (errno == EAGAIN)
-				warnx("kcmd(socket): All ports in use\n");
+				warnx("kcmd(socket): All ports in use");
 			else
 				warn("kcmd: socket");
 			return (-1);

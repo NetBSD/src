@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.23 2001/11/01 07:31:23 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.24 2002/07/20 08:36:26 grant Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.23 2001/11/01 07:31:23 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.24 2002/07/20 08:36:26 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 
 	for (passno = 1; passno <= 2; passno++) {
 		if (setfsent() == 0) {
-			warnx("Can't open checklist file: %s\n", _PATH_FSTAB);
+			warnx("Can't open checklist file: %s", _PATH_FSTAB);
 			return (8);
 		}
 		while ((fs = getfsent()) != 0) {
@@ -162,7 +162,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 					break;
 
 			if (d == NULL) {
-				warnx("Unknown pid %d\n", pid);
+				warnx("Unknown pid %d", pid);
 				continue;
 			}
 
@@ -300,7 +300,7 @@ addpart(const char *type, const char *dev, const char *mntpt, void *auxarg)
 
 	TAILQ_FOREACH(p, &d->d_part, p_entries)
 		if (strcmp(p->p_devname, dev) == 0) {
-			warnx("%s in fstab more than once!\n", dev);
+			warnx("%s in fstab more than once!", dev);
 			return;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.6 2001/07/25 05:17:50 matt Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.7 2002/07/20 08:36:24 grant Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -73,7 +73,7 @@ test1()
 	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGUSR1,
 	    (void *)frobme)) {
 	case 0:
-		errx(1, "clone returned 0\n");
+		errx(1, "clone returned 0");
 		/*NOTREACHED*/
 	case -1:
 		err(1, "clone");
@@ -84,7 +84,7 @@ test1()
 	}
 
 	if (WIFEXITED(stat) == 0)
-		errx(1, "child didn't exit\n");
+		errx(1, "child didn't exit");
 
 	printf("parent: childexit = 0x%x, frobme = %ld\n",
 	    WEXITSTATUS(stat), frobme[1]);
@@ -132,10 +132,10 @@ newclone(void *arg)
 	fflush(stdout);
 
 	if (frobp[0] != getppid())
-		errx(1, "argument does not contain parent's pid\n");
+		errx(1, "argument does not contain parent's pid");
 
 	if (frobp[0] == getpid())
-		errx(1, "called in parent's pid\n");
+		errx(1, "called in parent's pid");
 
 	if (frobp[1] > (long)&frobp)
 		diff = frobp[1] - (long)&frobp;
@@ -143,7 +143,7 @@ newclone(void *arg)
 		diff = (long)&frobp - frobp[1];
 
 	if (diff > 1024)
-		errx(1, "called with bad stack\n");
+		errx(1, "called with bad stack");
 
 	frobp[1] = FROBVAL;
 
