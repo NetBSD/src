@@ -315,7 +315,7 @@ dumpppp(f)
 			++r;
 			if (endp - r > mru)
 			    printf("     ERROR: length (%d) > MRU (%d)\n",
-				   endp - r, mru);
+				   (int)(endp - r), mru);
 			if (decompress && fcs == PPP_GOODFCS) {
 			    /* See if this is a CCP or compressed packet */
 			    d = dbuf;
