@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1999/11/21 07:04:33 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2000/02/29 19:08:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
+#include "ucom.h"
+cdev_decl(ucom);
 #endif
 #include "rnd.h"
 
@@ -223,6 +225,9 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NTX39UART,txcom),	/* 35: TX39 internal UART */
 #else
 	cdev_notdef(),
+#endif
+#if notyet
+	cdev_tty_init(NUCOM, ucom),	/* 36: USB tty */
 #endif
 };
 
