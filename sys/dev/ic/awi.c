@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.50 2002/10/01 03:27:04 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.51 2003/01/18 10:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.50 2002/10/01 03:27:04 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.51 2003/01/18 10:14:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1616,7 +1616,7 @@ awi_lock(struct awi_softc *sc)
 {
 	int error = 0;
 
-	if (curproc == NULL) {
+	if (curlwp == NULL) {
 		/*
 		 * XXX
 		 * Though driver ioctl should be called with context,
