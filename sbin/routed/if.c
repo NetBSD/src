@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.19 2000/03/02 20:57:42 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.19.2.1 2000/06/22 16:05:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.19 2000/03/02 20:57:42 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.19.2.1 2000/06/22 16:05:45 minoura Exp $");
 #endif
 
 #include "defs.h"
@@ -243,6 +243,7 @@ struct interface *
 iflookup(naddr addr)
 {
 	struct interface *ifp, *maybe;
+	int once = 0;
 
 	maybe = 0;
 	for (;;) {
@@ -266,13 +267,14 @@ iflookup(naddr addr)
 			}
 		}
 
-		if (maybe != 0)
+		if (maybe != 0 || once)
 			return maybe;
 
 		/* If there is no known interface, maybe there is a
 		 * new interface.  So just once look for new interfaces.
 		 */
 		ifinit();
+		once = 1;
 	}
 }
 

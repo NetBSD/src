@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.19.2.1 2000/06/22 16:05:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.2.1 2000/06/22 16:05:43 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,9 @@ main(argc, argv)
 
 	if (command == '\0')
 		errx(1, "none of i, R, r, t or x options specified");
+
+	if (Nflag || command == 't')
+		uflag = 0;
 
 	if (signal(SIGINT, onintr) == SIG_IGN)
 		(void) signal(SIGINT, SIG_IGN);

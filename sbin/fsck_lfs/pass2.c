@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.4 2000/05/23 01:48:54 perseant Exp $	 */
+/* $NetBSD: pass2.c,v 1.4.2.1 2000/06/22 16:05:27 minoura Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -365,7 +365,7 @@ chk2:
 	}
 	idesc->id_entryno++;
 	n = 0;
-	if (dirp->d_ino > maxino) {
+	if (dirp->d_ino >= maxino) {
 		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
 		n = reply("REMOVE");
 	} else if (dirp->d_ino == LFS_IFILE_INUM &&
