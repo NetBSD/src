@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.57 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.58 2004/07/17 20:50:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.57 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.58 2004/07/17 20:50:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ pipe_create(pipep, allockva)
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
-	lockinit(&pipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
+	lockinit(&pipe->pipe_lock, PSOCK | PCATCH, "pipelk", 0, 0);
 
 	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
 		return (error);
@@ -375,7 +375,7 @@ pipelock(pipe, catch)
 		 * interruptable at the start of pipe_read/pipe_write to be
 		 * beneficial.
 		 */
-		(void) ltsleep(&lbolt, PRIBIO, "rstrtpipelock", hz,
+		(void) ltsleep(&lbolt, PSOCK, "rstrtpipelock", hz,
 		    &pipe->pipe_slock);
 	}
 	return (error);
@@ -577,7 +577,7 @@ again:
 
 			/* Now wait until the pipe is filled */
 			rpipe->pipe_state |= PIPE_WANTR;
-			error = ltsleep(rpipe, PRIBIO | PCATCH,
+			error = ltsleep(rpipe, PSOCK | PCATCH,
 					"piperd", 0, &rpipe->pipe_slock);
 			if (error != 0)
 				goto unlocked_error;
@@ -759,7 +759,7 @@ pipe_direct_write(fp, wpipe, uio)
 		}
 
 		wpipe->pipe_state |= PIPE_WANTW;
-		error = ltsleep(wpipe, PRIBIO | PCATCH, "pipdwc", 0,
+		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwc", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
@@ -775,7 +775,7 @@ pipe_direct_write(fp, wpipe, uio)
 			wakeup(wpipe);
 		}
 		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_IN);
-		error = ltsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0,
+		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwt", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
@@ -912,7 +912,7 @@ retry:
 				wakeup(wpipe);
 			}
 			pipeunlock(wpipe);
-			error = ltsleep(wpipe, PRIBIO | PCATCH,
+			error = ltsleep(wpipe, PSOCK | PCATCH,
 					"pipbww", 0, &wpipe->pipe_slock);
 
 			(void)pipelock(wpipe, 0);
@@ -1044,7 +1044,7 @@ retry:
 			PIPE_LOCK(wpipe);
 			pipeunlock(wpipe);
 			wpipe->pipe_state |= PIPE_WANTW;
-			error = ltsleep(wpipe, PRIBIO | PCATCH, "pipewr", 0,
+			error = ltsleep(wpipe, PSOCK | PCATCH, "pipewr", 0,
 					&wpipe->pipe_slock);
 			(void)pipelock(wpipe, 0);
 			if (error != 0)
@@ -1302,7 +1302,7 @@ retry:
 	while (pipe->pipe_busy) {
 		wakeup(pipe);
 		pipe->pipe_state |= PIPE_WANTCLOSE | PIPE_EOF;
-		ltsleep(pipe, PRIBIO, "pipecl", 0, &pipe->pipe_slock);
+		ltsleep(pipe, PSOCK, "pipecl", 0, &pipe->pipe_slock);
 	}
 
 	/*
