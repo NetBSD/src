@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.140 2002/08/20 13:51:09 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.141 2002/08/20 13:55:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.140 2002/08/20 13:51:09 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.141 2002/08/20 13:55:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,12 @@ __RCSID("$NetBSD: ftpd.c,v 1.140 2002/08/20 13:51:09 christos Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 #ifdef SKEY
 #include <skey.h>
 #endif
@@ -184,7 +189,12 @@ int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
 off_t	byte_count;
 static char ttyline[20];
+#ifdef SUPPORT_UTMP
 static struct utmp utmp;	/* for utmp */
+#endif
+#ifdef SUPPORT_UTMPX
+static struct utmpx utmpx;	/* for utmpx */
+#endif
 
 static const char *anondir = NULL;
 static const char *confdir = _DEFAULT_CONFDIR;
@@ -237,6 +247,7 @@ static enum send_status
 static enum send_status
 		 send_data_with_mmap(int, int, const struct stat *, int);
 static void	 logrusage(const struct rusage *, const struct rusage *);
+static void	 logout_utmp(void);
 
 int	main(int, char *[]);
 
@@ -2386,7 +2397,7 @@ dologout(int status)
 	* back to the main program loop.
 	*/
 	transflag = 0;
-	logout_wtmp();
+	logout_utmp();
 	if (logged_in) {
 #ifdef KERBEROS
 		if (!notickets && krbtkfile_env)
