@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.9 2002/04/26 17:45:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.10 2002/05/20 17:47:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,14 @@
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+#undef PTHREAD_COND_DEBUG
+
+#ifdef PTHREAD_COND_DEBUG
+#define SDPRINTF(x) DPRINTF(x)
+#else
+#define SDPRINTF(x)
+#endif
 
 static void pthread_cond_wait__callback(void *);
 
@@ -100,6 +108,8 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 			pthread_spinunlock(self, &cond->ptc_lock);
 			return EINVAL;
 		}
+	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
+	    self, cond, mutex));
 	pthread_spinlock(self, &self->pt_statelock);
 	if (self->pt_cancel) {
 		pthread_spinunlock(self, &self->pt_statelock);
@@ -119,6 +129,8 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	/* Spinlock is unlocked on return */
 	pthread_mutex_lock(mutex);
 	pthread__testcancel(self);
+	SDPRINTF(("(cond wait %p) Woke up on %p, mutex %p\n",
+	    self, cond, mutex));
 
 	return 0;
 }
@@ -157,6 +169,8 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	wait.ptw_thread = self;
 	wait.ptw_cond = cond;
 	retval = 0;
+	SDPRINTF(("(cond timed wait %p) Waiting on %p, until %d.%06ld\n",
+	    self, cond, mutex, abstime->tv_sec, abstime->tv_nsec/1000));
 
 	pthread_spinlock(self, &self->pt_statelock);
 	if (self->pt_cancel) {
@@ -167,6 +181,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	alarm = pthread__alarm_add(self, abstime, pthread_cond_wait__callback,
 	    &wait);
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
+	self->pt_sleepobj = cond;
 	self->pt_sleepq = &cond->ptc_waiters;
 	self->pt_sleeplock = &cond->ptc_lock;
 	pthread_spinunlock(self, &self->pt_statelock);
@@ -182,6 +197,9 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	pthread_mutex_lock(mutex);
 	pthread__testcancel(self);
 
+	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p %s\n",
+	    self, cond, mutex, (retval == ETIMEDOUT) ? "(timed out)" : ""));
+
 	return retval;
 }
 
@@ -193,6 +211,7 @@ pthread_cond_wait__callback(void *arg)
 
 	a = arg;
 	self = pthread__self();
+
 	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
 	PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
@@ -209,6 +228,8 @@ pthread_cond_signal(pthread_cond_t *cond)
 #endif
 
 	self = pthread__self();
+	SDPRINTF(("(cond signal %p) Signaling %p\n",
+	    self, cond));
 
 	pthread_spinlock(self, &cond->ptc_lock);
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
@@ -236,6 +257,8 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #endif
 
 	self = pthread__self();
+	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
+	    self, cond));
 
 	pthread_spinlock(self, &cond->ptc_lock);
 	blockedq = cond->ptc_waiters;
