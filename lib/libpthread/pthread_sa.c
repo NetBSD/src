@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.24 2004/01/02 14:29:22 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.25 2004/01/02 18:56:39 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.24 2004/01/02 14:29:22 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.25 2004/01/02 18:56:39 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -721,7 +721,7 @@ pthread__sa_start(void)
 	if (value)
 		rr = atoi(value);
 
-	ret = sa_register(pthread__upcall, NULL, flags);
+	ret = sa_register(pthread__upcall, NULL, flags, 0);
 	if (ret) {
 		if (errno == ENOSYS)
 			errx(1,

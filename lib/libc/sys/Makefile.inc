@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.145 2003/11/18 00:56:56 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.146 2004/01/02 18:56:39 cl Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -68,7 +68,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	__setlogin.S setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
 	setsid.S setsockopt.S setuid.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S \
-	__sigaltstack14.S __sigpending14.S __sigprocmask14.S \
+	__sigaltstack14.S __sigpending14.S \
 	__sigaction_sigtramp.S __sigtimedwait.S \
 	socket.S socketpair.S __stat13.S statfs.S \
 	swapctl.S symlink.S umask.S undelete.S unlink.S \
@@ -79,14 +79,15 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
 	_lwp_getprivate.S _lwp_setprivate.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-	sa_preempt.S sa_unblockyield.S \
+	sa_preempt.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
 WEAKASM= accept.S close.S connect.S execve.S fcntl.S fsync.S fsync_range.S \
 	kill.S msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S read.S readv.S \
-	select.S __sigsuspend14.S sysarch.S wait4.S write.S writev.S
+	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 	issetugid.S sync.S
