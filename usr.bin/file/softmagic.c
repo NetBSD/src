@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.19 2000/09/22 16:35:00 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.20 2001/02/05 01:51:52 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -41,7 +41,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.41 2000/05/14 17:58:36 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.19 2000/09/22 16:35:00 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.20 2001/02/05 01:51:52 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -52,6 +52,8 @@ static int mcheck	__P((union VALUETYPE *, struct magic *));
 static int32 mprint	__P((union VALUETYPE *, struct magic *));
 static void mdebug	__P((int32, char *, int));
 static int mconvert	__P((union VALUETYPE *, struct magic *));
+
+extern int kflag;
 
 /*
  * softmagic - lookup one file in database 
@@ -110,7 +112,6 @@ match(s, nbytes)
 	static size_t tmplen = 0;
 	int32 oldoff = 0;
 	int returnval = 0; /* if a match is found it is set to 1*/
-	extern int kflag;
 	int firstline = 1; /* a flag to print X\n  X\n- X */
 
 	if (tmpoff == NULL)
