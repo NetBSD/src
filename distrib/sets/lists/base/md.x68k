@@ -1,16 +1,22 @@
-# $NetBSD: md.x68k,v 1.35 2001/10/21 23:03:16 jmc Exp $
+# $NetBSD: md.x68k,v 1.36 2001/12/02 10:05:45 minoura Exp $
 ./usr/bin/bellctrl				base-util-bin
 ./usr/bin/loadfont				base-util-bin
 ./usr/bin/loadkmap				base-util-bin
 ./usr/bin/palette				base-util-bin
 ./usr/bin/rtcalarm				base-util-bin
 ./usr/bin/tvctrl				base-util-bin
+./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/fdboot				base-sysutil-bin
+./usr/mdec/fdboot_ufs				base-sysutil-bin
+./usr/mdec/fdboot_ustar				base-sysutil-bin
 ./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/installboot.new			base-sysutil-bin
 ./usr/mdec/loadbsd.x				base-sysutil-bin
 ./usr/mdec/mboot				base-sysutil-bin
 ./usr/mdec/newdisk				base-sysutil-bin
 ./usr/mdec/sdboot				base-sysutil-bin
+./usr/mdec/sdboot_ufs				base-sysutil-bin
+./usr/mdec/xxboot_ufs				base-sysutil-bin
 ./usr/sbin/memswitch				base-sysutil-bin
 ./usr/sbin/poffd				base-sysutil-bin
 ./usr/share/keymaps/x68k/ascii_kmap		base-sys-share
