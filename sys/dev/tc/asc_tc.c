@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.11 1999/11/15 05:25:57 nisimura Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.12 2000/02/11 01:32:42 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -80,17 +80,14 @@ asc_tc_attach(parent, self, aux)
 	register asc_softc_t asc = (asc_softc_t) self;
 	u_char *buff;
 	int i, speed;
-	tc_addr_t ascaddr;
 	int unit;
 
-	/* Use uncached address for chip registers.  */
-	ascaddr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(t->ta_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
-	asc->regs = (asc_regmap_t *)(ascaddr + ASC_OFFSET_53C94);
+	asc->regs = (asc_regmap_t *)(t->ta_addr + ASC_OFFSET_53C94);
 
 	/*
 	 * Set up machine dependencies.
@@ -101,8 +98,8 @@ asc_tc_attach(parent, self, aux)
 	/*
 	 * Fall through for turbochannel option.
 	 */
-	asc->dmar = (volatile int *)(ascaddr + ASC_OFFSET_DMAR);
-	buff = (u_char *)(ascaddr + ASC_OFFSET_RAM);
+	asc->dmar = (volatile int *)(t->ta_addr + ASC_OFFSET_DMAR);
+	buff = (u_char *)(t->ta_addr + ASC_OFFSET_RAM);
 
 	/*
 	 * Statically partition the DMA buffer between targets.
