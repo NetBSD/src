@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1997/07/29 01:43:26 mhitch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1997/08/09 03:41:02 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -121,6 +121,8 @@ void	pmap_bootstrap __P((vm_offset_t firstaddr));
 void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
 #endif /* MIPS3 */
 
+
+void pmap_activate __P((register struct proc *p));
 
 /*
  * Kernel cache operations for the user-space API 
