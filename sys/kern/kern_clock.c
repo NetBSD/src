@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.47 1999/02/28 18:14:57 ross Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.47.2.1 1999/10/10 23:21:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -341,6 +341,10 @@ initclocks()
 		break;
 	default:
 		panic("weird hz");
+	}
+	if (fixtick == 0) {
+		/* give MD code a chance to set this to a better value; but, if it doesn't, we should.. */
+		fixtick = (1000000 - (hz*tick));
 	}
 #endif
 }
