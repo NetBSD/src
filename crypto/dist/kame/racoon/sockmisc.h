@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.h,v 1.7 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: sockmisc.h,v 1.8 2001/01/29 10:37:31 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,5 +47,6 @@ extern struct sockaddr *newsaddr __P((int));
 extern struct sockaddr *dupsaddr __P((struct sockaddr *));
 extern char *saddr2str __P((struct sockaddr *));
 extern char *saddrwop2str __P((struct sockaddr *));
+extern struct sockaddr *str2saddr __P((char *, char *));
 extern void mask_sockaddr __P((struct sockaddr *, const struct sockaddr *,
 	size_t));

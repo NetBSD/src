@@ -1,4 +1,4 @@
-/*	$KAME: libpfkey.h,v 1.4 2000/12/27 11:38:10 sakane Exp $	*/
+/*	$KAME: libpfkey.h,v 1.5 2001/01/29 10:29:58 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,10 +29,12 @@
  * SUCH DAMAGE.
  */
 
+struct sadb_msg;
 extern void pfkey_sadump __P((struct sadb_msg *));
 extern void pfkey_spdump __P((struct sadb_msg *));
 
 struct sockaddr;
+struct sadb_alg;
 int ipsec_check_keylen __P((u_int, u_int, u_int));
 int ipsec_check_keylen2 __P((u_int, u_int, u_int));
 int ipsec_get_keylen __P((u_int, u_int, struct sadb_alg *));
