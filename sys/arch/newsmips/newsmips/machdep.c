@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 1999/03/26 07:07:06 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 1999/03/26 23:41:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 1999/03/26 07:07:06 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 1999/03/26 23:41:32 mycroft Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -380,7 +380,8 @@ cpu_startup()
 			pmap_kenter_pgs(curbuf, &pg, 1);
 #else
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 #endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 1999/03/24 05:51:14 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.31 1999/03/26 23:41:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -109,6 +109,7 @@ mmrw(dev, uio, flags)
 	register int c, rw;
 	int error = 0;
 	static int physlock;
+	vm_prot_t prot;
 
 	if (minor(dev) == 0) {
 		if (vmmap == 0)
@@ -158,9 +159,10 @@ mmrw(dev, uio, flags)
 				goto use_kmem;
 			}
 			/* Temporarily map the memory at vmmap. */
-			pmap_enter(pmap_kernel(), vmmap,
-			    m68k_trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
+			    VM_PROT_WRITE;
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			    trunc_page(v), prot, TRUE, prot);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
