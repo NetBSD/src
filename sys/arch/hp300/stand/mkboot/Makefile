@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2002/10/23 14:22:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2004/11/28 11:14:41 jmc Exp $
 
 NOMAN=		# defined
 
-HOSTPROG=	mkboot
+PROG=		mkboot
 SRCS=		mkboot.c
 
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>
