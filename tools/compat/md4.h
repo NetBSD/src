@@ -1,5 +1,5 @@
-/*	$NetBSD: md4.h,v 1.1 2002/09/13 19:07:01 thorpej Exp $	*/
+/*	$NetBSD: md4.h,v 1.2 2003/10/01 11:59:06 seb Exp $	*/
 
 /* We unconditionally use the NetBSD MD4 in libnbcompat. */
 #include "config.h"
-#include "../../include/md4.h"
+#include "../../sys/sys/md4.h"
