@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2003/01/30 02:03:35 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2003/01/30 22:45:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ trap(frame)
 	struct trapframe frame;
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct proc *p = l ? l->l_proc : 0;
 	int type = (int)frame.tf_trapno;
 	struct pcb *pcb;
 	extern char fusuintrfailure[],
@@ -183,7 +183,7 @@ trap(frame)
 
 	uvmexp.traps++;
 
-	pcb = (p != NULL) ? &l->l_addr->u_pcb : NULL;
+	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
 
 #ifdef DEBUG
 	if (trapdebug) {
