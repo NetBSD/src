@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.7 1999/02/02 00:32:21 thorpej Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.8 1999/02/05 01:10:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -199,8 +199,8 @@
  * MII command register bits.
  */
 #define	VR_MIICMD_CLK		0x01
-#define	VR_MIICMD_DATAOUT	0x02
-#define	VR_MIICMD_DATAIN	0x04
+#define	VR_MIICMD_DATAIN	0x02
+#define	VR_MIICMD_DATAOUT	0x04
 #define	VR_MIICMD_DIR		0x08
 #define	VR_MIICMD_DIRECTPGM	0x10
 #define	VR_MIICMD_WRITE_ENB	0x20
