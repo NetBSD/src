@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.29 1997/09/21 22:53:03 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.30 1997/10/05 02:11:21 carrel Exp $
 #
 # hp300-specific configuration info
 
@@ -225,3 +225,7 @@ major	{vnd = 6}
 #
 include "compat/hpux/files.hpux"
 file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include	"compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
