@@ -22,6 +22,8 @@
 extern int own_inet_addr(struct in_addr *);
 extern struct INET_ADDR_LIST *own_inet_addr_list(void);
 extern struct INET_ADDR_LIST *own_inet_mask_list(void);
+extern int proxy_inet_addr(struct in_addr *);
+extern struct INET_ADDR_LIST *proxy_inet_addr_list(void);
 
 /* LICENSE
 /* .ad

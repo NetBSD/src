@@ -14,6 +14,7 @@
 #include <vstring.h>
 #include <vstream.h>
 #include <argv.h>
+#include <nvtable.h>
 
  /*
   * Global library.
@@ -23,6 +24,7 @@
 #include <been_here.h>
 #include <mail_stream.h>
 #include <mail_conf.h>
+#include <mime_state.h>
 
  /*
   * These state variables are accessed by many functions, and there is only
@@ -33,6 +35,7 @@ typedef struct CLEANUP_STATE {
     VSTRING *temp2;			/* scratch buffer, local use only */
     VSTREAM *dst;			/* current output stream */
     MAIL_STREAM *handle;		/* mail stream handle */
+    char   *queue_name;			/* queue name */
     char   *queue_id;			/* queue file basename */
     time_t  time;			/* posting time */
     char   *fullname;			/* envelope sender full name */
@@ -40,14 +43,13 @@ typedef struct CLEANUP_STATE {
     char   *from;			/* From: address */
     char   *resent_from;		/* Resent-From: address */
     char   *recip;			/* envelope recipient address */
+    char   *orig_rcpt;			/* original recipient address */
     char   *return_receipt;		/* return-receipt address */
     char   *errors_to;			/* errors-to address */
     int     flags;			/* processing options */
     int     errs;			/* any badness experienced */
     int     err_mask;			/* allowed badness */
-    VSTRING *header_buf;		/* multi-record header */
     int     headers_seen;		/* which headers were seen */
-    int     long_header;		/* multi-record physical header line */
     int     hop_count;			/* count of received: headers */
     ARGV   *recipients;			/* recipients from regular headers */
     ARGV   *resent_recip;		/* recipients from resent headers */
@@ -61,6 +63,10 @@ typedef struct CLEANUP_STATE {
     int     end_seen;			/* REC_TYPE_END seen */
     int     rcpt_count;			/* recipient count */
     char   *reason;			/* failure reason */
+    NVTABLE *attr;			/* queue file attribute list */
+    MIME_STATE *mime_state;		/* MIME state engine */
+    int     mime_errs;			/* MIME error flags */
+    char   *filter;			/* from header/body patterns */
 } CLEANUP_STATE;
 
  /*
@@ -70,8 +76,10 @@ extern MAPS *cleanup_comm_canon_maps;
 extern MAPS *cleanup_send_canon_maps;
 extern MAPS *cleanup_rcpt_canon_maps;
 extern MAPS *cleanup_header_checks;
+extern MAPS *cleanup_mimehdr_checks;
+extern MAPS *cleanup_nesthdr_checks;
 extern MAPS *cleanup_body_checks;
-extern MAPS *cleanup_virtual_maps;
+extern MAPS *cleanup_virt_alias_maps;
 extern ARGV *cleanup_masq_domains;
 extern int cleanup_masq_flags;
 
@@ -120,14 +128,15 @@ extern CONFIG_TIME_TABLE cleanup_time_table[];
  /*
   * cleanup_out.c
   */
-extern void cleanup_out(CLEANUP_STATE *, int, char *, int);
-extern void cleanup_out_string(CLEANUP_STATE *, int, char *);
-extern void PRINTFLIKE(3, 4) cleanup_out_format(CLEANUP_STATE *, int, char *,...);
+extern void cleanup_out(CLEANUP_STATE *, int, const char *, int);
+extern void cleanup_out_string(CLEANUP_STATE *, int, const char *);
+extern void PRINTFLIKE(3, 4) cleanup_out_format(CLEANUP_STATE *, int, const char *,...);
 
 #define CLEANUP_OUT_BUF(s, t, b) \
 	cleanup_out((s), (t), vstring_str((b)), VSTRING_LEN((b)))
 
-#define CLEANUP_OUT_OK(s)	(((s)->errs & (s)->err_mask) == 0)
+#define CLEANUP_OUT_OK(s) \
+	(!((s)->errs & (s)->err_mask) && !((s)->flags & CLEANUP_FLAG_DISCARD))
 
  /*
   * cleanup_envelope.c
@@ -161,7 +170,7 @@ extern void cleanup_map11_tree(CLEANUP_STATE *, TOK822 *, MAPS *, int);
  /*
   * cleanup_map1n.c
   */
-ARGV   *cleanup_map1n_internal(CLEANUP_STATE *, char *, MAPS *, int);
+ARGV   *cleanup_map1n_internal(CLEANUP_STATE *, const char *, MAPS *, int);
 
  /*
   * cleanup_masquerade.c
@@ -173,7 +182,7 @@ extern void cleanup_masquerade_tree(TOK822 *, ARGV *);
  /*
   * Cleanup_recipient.c
   */
-extern void cleanup_out_recipient(CLEANUP_STATE *, char *);
+extern void cleanup_out_recipient(CLEANUP_STATE *, const char *, const char *);
 
 /* LICENSE
 /* .ad
