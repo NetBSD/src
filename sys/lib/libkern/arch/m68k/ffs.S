@@ -1,5 +1,3 @@
-/*	$NetBSD: ffs.S,v 1.3 1994/10/26 06:39:26 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,10 +37,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-#ifdef notdef
-	.asciz "@(#)ffs.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$NetBSD: ffs.S,v 1.3 1994/10/26 06:39:26 cgd Exp $"
+	/*.asciz "from: @(#)ffs.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: ffs.S,v 1.4 1995/02/08 18:35:52 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
