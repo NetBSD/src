@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1998/07/02 18:21:03 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1998/07/02 18:46:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1052,8 +1052,6 @@ mapiodev(pa, len)
 	return (void *)(va + off);
 }
 
-#include <dev/ofw/openfirm.h>
-
 #include "ite.h"
 #include "zstty.h"
 
@@ -1063,19 +1061,18 @@ void
 cninit()
 {
 	struct consdev *cp;
-	int options, l, node;
-	char name[32];
+	int l, node;
+	int chosen, stdout;
 	char type[16];
 
-	options = OF_finddevice("/options");
-	bzero(name, sizeof(name));
-	l = OF_getprop(options, "output-device", name, sizeof(name));
-	if (l == -1 || l >= sizeof(name) - 1)
+	chosen = OF_finddevice("/chosen");
+	if (chosen == -1)
 		goto nocons;
 
-	node = OF_finddevice(name);
-	if (node == -1)
+	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
+	if (l != sizeof(stdout))
 		goto nocons;
+	node = OF_instance_to_package(stdout);
 
 	bzero(type, sizeof(type));
 	l = OF_getprop(node, "device_type", type, sizeof(type));
@@ -1096,6 +1093,17 @@ cninit()
 		return;
 	}
 #endif
+
+	if (1) {
+		extern struct consdev consdev_ofcons;
+
+		cp = &consdev_ofcons;
+		(*cp->cn_probe)(cp);
+		(*cp->cn_init)(cp);
+		cn_tab = cp;
+
+		return;
+	}
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {
