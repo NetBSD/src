@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.73 1999/06/04 21:35:47 castor Exp $	*/
+/*	$NetBSD: locore.S,v 1.74 1999/06/04 21:43:12 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -363,7 +363,9 @@ LEAF(switch_exit)
 	lw	v0, _C_LABEL(proc0paddr)	# get proc0 p_addr
 	nop
 	sw	v0, _C_LABEL(curpcb)		# set current pcb
+	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
+	REG_EPILOGUE
 	la	ra, sw1				# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
