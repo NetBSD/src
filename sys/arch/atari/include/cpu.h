@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38.4.4 2002/11/11 21:57:22 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.4.5 2002/12/03 20:18:27 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,8 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_wait(p)			/* nothing */
 #define cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
-#define	cpu_proc_fork(p1, p2)		/* nothing */
+
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
