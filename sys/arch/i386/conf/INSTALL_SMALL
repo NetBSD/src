@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.33 1998/10/12 16:37:44 perry Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.34 1999/01/23 15:35:21 drochner Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -426,11 +426,11 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # Mice
 
 # ISA busmice
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#olms1	at isa? port 0x238 irq 5
+#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#omms1	at isa? port 0x238 irq 5
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

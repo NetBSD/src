@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.1 1999/01/21 09:58:27 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.2 1999/01/23 15:35:21 drochner Exp $
 #	From: GENERIC,v 1.196 1998/10/25 18:40:17 christos Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -511,12 +511,12 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # Mice
 
 # ISA busmice
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
-pms0	at vt? irq 12		# PS/2 auxiliary port mouse
+#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#olms1	at isa? port 0x238 irq 5
+#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#omms1	at isa? port 0x238 irq 5
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
+opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

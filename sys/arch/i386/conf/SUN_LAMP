@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.103 1999/01/14 04:26:47 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.104 1999/01/23 15:35:21 drochner Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -111,11 +111,11 @@ com*	at ast? slave ?
 #lpt1	at isa? port 0x278
 #lpt2	at isa? port 0x3bc
 
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#olms1	at isa? port 0x238 irq 5
+#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#omms1	at isa? port 0x238 irq 5
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers

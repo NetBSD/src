@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.214 1999/01/22 22:47:16 tron Exp $
+#	$NetBSD: GENERIC,v 1.215 1999/01/23 15:35:21 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -535,12 +535,12 @@ midi*	at opl?			# OPL FM synth
 # Mice
 
 # ISA busmice
-lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-lms1	at isa? port 0x238 irq 5
-mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-mms1	at isa? port 0x238 irq 5
-pms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#pms0	at vt? irq 12		# PS/2 auxiliary port mouse
+olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+olms1	at isa? port 0x238 irq 5
+omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+omms1	at isa? port 0x238 irq 5
+opms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.105 1999/01/06 23:30:53 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.106 1999/01/23 15:35:21 drochner Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -458,11 +458,11 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Mice
 
 # ISA busmice
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
-#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#olms1	at isa? port 0x238 irq 5
+#omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#omms1	at isa? port 0x238 irq 5
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
