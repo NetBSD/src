@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.6 2001/11/20 12:56:40 lukem Exp $
+#	$NetBSD: files.sun2,v 1.7 2002/03/22 00:25:56 fredette Exp $
 
 #
 # sun2-specific configuration info
@@ -27,8 +27,8 @@ file arch/sun2/sun2/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
 
-# Console support
-#file arch/sun2/sun2/cninit.c
+# Console support:
+file arch/sun2/dev/consinit.c
 file dev/cons.c
 
 #
@@ -67,6 +67,16 @@ include "dev/scsipi/files.scsipi"
 #
 
 include "dev/sun/files.sun"
+
+device zs {channel = -1}
+file arch/sun2/dev/zs.c			zs needs-count
+file dev/ic/z8530sc.c			zs
+file arch/sun2/dev/zs_kgdb.c		kgdb
+
+define zstty {}
+device zstty: tty
+attach zstty at zs
+file dev/ic/z8530tty.c			zstty needs-flag
 
 file arch/sun2/dev/zs_any.c		zs_obio | zs_obmem | zs_mbmem
 file arch/sun2/dev/bwtwo_any.c		bwtwo_obio | bwtwo_obmem
@@ -128,11 +138,15 @@ file	arch/sun2/dev/if_ec.c		ec
 # Console (zs) related stuff
 #
 
+device pcons
+attach pcons at mainbus
+file	arch/sun2/dev/pcons.c		pcons needs-flag
+
 device kbd
 attach kbd at zstty
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c		kbd
-file dev/sun/kd.c			kbd
+file arch/sun2/dev/kd.c			kbd
 file dev/sun/sunkbd.c			kbd needs-flag
 
 device ms
