@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2002/07/05 13:32:00 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/09/07 20:43:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 /* Interrupt priority levels */
-#define	NIPL		15
+#define	NIPL		16
 #define	_IPL_NSOFT	4
 
 #define	IPL_NONE	0	/* nothing */
