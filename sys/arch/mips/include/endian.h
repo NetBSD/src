@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.11 1997/10/20 09:57:26 jonathan Exp $	*/
+/*	$NetBSD: endian.h,v 1.12 1997/10/20 19:15:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -74,9 +74,9 @@
 /*
  *  Traditional names for byteorder.
  */
-#define	LITTLE_ENDIAN	_LITTLE_ENDIAN
-#define	BIG_ENDIAN	_BIG_ENDIAN
-#define	PDP_ENDIAN	_PDP_ENDIAN
+#define	LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
+#define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
+#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 #define BYTE_ORDER	_BYTE_ORDER
 
 #ifndef _LOCORE
