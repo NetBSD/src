@@ -1692,12 +1692,12 @@ vga_test(void)
 
 	new = old | CURSOR_ON_BIT;	/* set cursor on by setting bit 5 on */
 
-	DELAY(1);
+	delay(1);
 	
 	outb(addr_6845,CRTC_CURSTART);	/* cursor start reg */
 	outb(addr_6845+1,new);		/* cursor should be on now */
 
-	DELAY(1);
+	delay(1);
 	
 	outb(addr_6845,CRTC_CURSTART);	/* cursor start reg */
 	check = inb(addr_6845+1);	/* get current value */
@@ -1714,7 +1714,7 @@ vga_test(void)
 	outb(addr_6845,CRTC_CURSTART);	/* cursor start reg */
 	outb(addr_6845+1,new);		/* cursor should be off now */
 
-	DELAY(1);
+	delay(1);
 	
 	outb(addr_6845,CRTC_CURSTART);	/* cursor start reg */
 	check = inb(addr_6845+1);	/* get current value */
@@ -1726,7 +1726,7 @@ vga_test(void)
 		return(0);			/* must be ega */
 	}
 
-	DELAY(1);
+	delay(1);
 	
 	outb(addr_6845,CRTC_CURSTART);	/* cursor start reg */
 	outb(addr_6845+1,old);		/* failsafe */
