@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1 1993/06/08 03:53:43 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/13 11:20:58 lukem Exp $
 #
 
 SUBDIR=	module
