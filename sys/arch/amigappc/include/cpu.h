@@ -34,6 +34,8 @@ void	physaccess	__P((caddr_t, caddr_t, int, int));
 #define CLKF_PC(frame)          ((frame)->srr0)
 #define CLKF_INTR(frame)        ((frame)->depth > 0)
 
+#define	PROC_PC(p)		(trapframe(p)->srr0)
+
 #define cpu_swapout(p)
 #define cpu_wait(p)
 #define cpu_number()            0

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2000/11/16 19:02:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2000/12/14 10:33:42 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -101,6 +101,8 @@ extern struct machvec machine_interface;
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth >= 0)
+
+#define	PROC_PC(p)		(trapframe(p)->srr0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
