@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param.h,v 1.13 1994/08/24 19:34:07 mycroft Exp $
+ *	$Id: param.h,v 1.14 1994/09/09 23:56:14 mycroft Exp $
  */
 
 /*
@@ -59,7 +59,7 @@
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof (struct pte)))
+#define	NPTEPG		(NBPG / (sizeof (pt_entry_t)))
 
 #define NBSEG		0x400000	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
@@ -110,18 +110,18 @@
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
-#define	dtoc(x)	((x)>>(PGSHIFT-DEV_BSHIFT))
-#define	dtob(x)	((x)<<DEV_BSHIFT)
+#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	dtob(x)	((x) << DEV_BSHIFT)
 
 /* pages to bytes */
-#define	ctob(x)	((x)<<PGSHIFT)
+#define	ctob(x)	((x) << PGSHIFT)
 
 /* bytes to pages */
-#define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
+#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 
 #ifndef LABELSECTOR
-#define LABELSECTOR	(1024/DEV_BSIZE)
+#define LABELSECTOR	(1024 / DEV_BSIZE)
 #endif
 #ifndef LABELOFFSET
 #define LABELOFFSET	0
@@ -138,7 +138,7 @@
  * field from the disk label.
  * For now though just use DEV_BSIZE.
  */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Mach derived conversion macros
