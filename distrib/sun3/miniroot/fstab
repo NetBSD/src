@@ -1,4 +1,4 @@
-#	$NetBSD: mr.fstab,v 1.2 1998/01/09 18:56:53 perry Exp $
+#	$NetBSD: fstab,v 1.1 2002/05/17 17:52:35 lukem Exp $
 #
 /kern  /kern kernfs ro 0 0
 /kern/rootdev / ffs rw 1 1
