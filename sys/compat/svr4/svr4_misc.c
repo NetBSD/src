@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.9 1994/10/26 11:58:26 christos Exp $	*/
+/*	$NetBSD: svr4_misc.c,v 1.10 1994/10/29 00:43:22 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -73,78 +73,82 @@
 
 int
 svr4_wait(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_wait_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_wait_args	*uap;
+	register_t			*retval;
 {
-    struct wait4_args w4;
-    SCARG(&w4, rusage) = NULL;
-    SCARG(&w4, options) = 0;
-    SCARG(&w4, status) = SCARG(uap, status);
-    SCARG(&w4, pid) = WAIT_ANY;
-    return wait4(p, &w4, retval);
+	struct wait4_args w4;
+
+	SCARG(&w4, rusage) = NULL;
+	SCARG(&w4, options) = 0;
+	SCARG(&w4, status) = SCARG(uap, status);
+	SCARG(&w4, pid) = WAIT_ANY;
+
+	return wait4(p, &w4, retval);
 }
 
 
 int
 svr4_execv(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_execv_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_execv_args	*uap;
+	register_t			*retval;
 {
-    struct execve_args ex;
+	struct execve_args ex;
 
-    stackgap_init();
-    CHECKALT(p, SCARG(uap, path));
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
 
-    SCARG(&ex, path) = SCARG(uap, path);
-    SCARG(&ex, argp) = SCARG(uap, argp);
-    SCARG(&ex, envp) = NULL;
-    return execve(p, &ex, retval);
+	SCARG(&ex, path) = SCARG(uap, path);
+	SCARG(&ex, argp) = SCARG(uap, argp);
+	SCARG(&ex, envp) = NULL;
+
+	return execve(p, &ex, retval);
 }
 
 
 int
 svr4_execve(p, uap, retval)
-    register struct proc *p;
-    register struct execve_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct execve_args	*uap;
+	register_t			*retval;
 {
-    stackgap_init();
-    CHECKALT(p, SCARG(uap, path));
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
 
-    return execve(p, uap, retval);
+	return execve(p, uap, retval);
 }
 
 
 int
 svr4_time(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_time_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_time_args	*uap;
+	register_t			*retval;
 {
-    int error = 0;
-    struct timeval tv;
+	int		error = 0;
+	struct timeval	tv;
 
-    microtime(&tv);
-    if (SCARG(uap, t))
-	error = copyout(&tv.tv_sec, SCARG(uap, t), sizeof(*(SCARG(uap, t))));
-    else
-	*retval = (int) tv.tv_sec;
+	microtime(&tv);
+	if (SCARG(uap, t))
+		error = copyout(&tv.tv_sec, SCARG(uap, t),
+				sizeof(*(SCARG(uap, t))));
+	else
+		*retval = (int) tv.tv_sec;
 
-    return error;
+	return error;
 }
 
 
 int
 svr4_sigpending(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_sigpending_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_sigpending_args	*uap;
+	register_t				*retval;
 {
-    int mask = p->p_siglist & p->p_sigmask;
+	int	mask = p->p_siglist & p->p_sigmask;
 
-    return copyout(&mask, SCARG(uap, mask), sizeof(int));
+	return copyout(&mask, SCARG(uap, mask), sizeof(int));
 }
 
 /*
@@ -156,221 +160,221 @@ svr4_sigpending(p, uap, retval)
  */
 int
 svr4_getdents(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_getdents_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_getdents_args	*uap;
+	register_t				*retval;
 {
-    struct vnode *vp;
-    caddr_t inp, buf;	/* BSD-format */
-    int len, reclen;	/* BSD-format */
-    caddr_t outp;	/* SVR4-format */
-    int resid;		/* SVR4-format */
-    struct file *fp;
-    struct uio auio;
-    struct iovec aiov;
-    struct svr4_dirent idb;
-    off_t off;			/* true file offset */
-    svr4_off_t soff;		/* SYSV file offset */
-    int buflen, error, eofflag;
+	struct vnode		*vp;
+	caddr_t			 inp, buf;	/* BSD-format */
+	int			 len, reclen;	/* BSD-format */
+	caddr_t			 outp;		/* SVR4-format */
+	int			 resid;		/* SVR4-format */
+	struct file		*fp;
+	struct uio		 auio;
+	struct iovec		 aiov;
+	struct svr4_dirent	 idb;
+	off_t			 off;		/* true file offset */
+	svr4_off_t		 soff;		/* SYSV file offset */
+	int			 buflen, error, eofflag;
 
 #define	BSD_DIRENT(cp)		((struct dirent *)(cp))
 #define SVR4_DIRENT(cp)		((struct svr4_dirent *)(cp))
 #define	SVR4_RECLEN(reclen)	(reclen + sizeof(u_short))
 
-    if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-	return (error);
-    if ((fp->f_flag & FREAD) == 0)
-	return (EBADF);
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	if ((fp->f_flag & FREAD) == 0)
+		return (EBADF);
 
-    vp = (struct vnode *)fp->f_data;
+	vp = (struct vnode *) fp->f_data;
 
-    if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
-	return (EINVAL);
+	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
+		return (EINVAL);
 
-    buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-    buf = malloc(buflen, M_TEMP, M_WAITOK);
-    VOP_LOCK(vp);
-    off = fp->f_offset;
+	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	VOP_LOCK(vp);
+	off = fp->f_offset;
 again:
-    aiov.iov_base = buf;
-    aiov.iov_len = buflen;
-    auio.uio_iov = &aiov;
-    auio.uio_iovcnt = 1;
-    auio.uio_rw = UIO_READ;
-    auio.uio_segflg = UIO_SYSSPACE;
-    auio.uio_procp = p;
-    auio.uio_resid = buflen;
-    auio.uio_offset = off;
-    /*
-     * First we read into the malloc'ed buffer, then
-     * we massage it into user space, one record at a time.
-     */
-    error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0, 0);
-    if (error)
-	goto out;
-
-    inp = buf;
-    outp = SCARG(uap, buf);
-    resid = SCARG(uap, nbytes);
-    if ((len = buflen - auio.uio_resid) == 0)
-	goto eof;
-
-    for (; len > 0; len -= reclen) {
-	reclen = ((struct dirent *)inp)->d_reclen;
-	if (reclen & 3)
-	    panic("svr4_getdents");
-	off += reclen;		/* each entry points to next */
-	if (BSD_DIRENT(inp)->d_fileno == 0) {
-	    inp += reclen;	/* it is a hole; squish it out */
-	    continue;
-	}
-	if (reclen > len || resid < SVR4_RECLEN(reclen)) {
-	    /* entry too big for buffer, so just stop */
-	    outp++;
-	    break;
-	}
+	aiov.iov_base = buf;
+	aiov.iov_len = buflen;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
 	/*
-	 * Massage in place to make a SVR4-shaped dirent (otherwise
-	 * we have to worry about touching user memory outside of
-	 * the copyout() call).
-	 */
-	idb.d_ino = (svr4_ino_t)BSD_DIRENT(inp)->d_fileno;
-	idb.d_off = (svr4_off_t)off;
-	idb.d_reclen = (u_short)SVR4_RECLEN(reclen);
-	if ((error = copyout((caddr_t)&idb, outp, 10)) != 0 ||
-	    (error = copyout(BSD_DIRENT(inp)->d_name, outp + 10,
-			     BSD_DIRENT(inp)->d_namlen + 1)) != 0)
+         * First we read into the malloc'ed buffer, then
+         * we massage it into user space, one record at a time.
+         */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *) 0, 0);
+	if (error)
 		goto out;
-	/* advance past this real entry */
-	inp += reclen;
-	/* advance output past Sun-shaped entry */
-	outp += SVR4_RECLEN(reclen);
-	resid -= SVR4_RECLEN(reclen);
-    }
 
-    /* if we squished out the whole block, try again */
-    if (outp == SCARG(uap, buf))
-	goto again;
-    fp->f_offset = off;		/* update the vnode offset */
+	inp = buf;
+	outp = SCARG(uap, buf);
+	resid = SCARG(uap, nbytes);
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (; len > 0; len -= reclen) {
+		reclen = ((struct dirent *) inp)->d_reclen;
+		if (reclen & 3)
+			panic("svr4_getdents");
+		off += reclen;	/* each entry points to next */
+		if (BSD_DIRENT(inp)->d_fileno == 0) {
+			inp += reclen;	/* it is a hole; squish it out */
+			continue;
+		}
+		if (reclen > len || resid < SVR4_RECLEN(reclen)) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		/*
+		 * Massage in place to make a SVR4-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_ino = (svr4_ino_t) BSD_DIRENT(inp)->d_fileno;
+		idb.d_off = (svr4_off_t) off;
+		idb.d_reclen = (u_short) SVR4_RECLEN(reclen);
+		if ((error = copyout((caddr_t) & idb, outp, 10)) != 0 ||
+		    (error = copyout(BSD_DIRENT(inp)->d_name, outp + 10,
+				     BSD_DIRENT(inp)->d_namlen + 1)) != 0)
+			goto out;
+		/* advance past this real entry */
+		inp += reclen;
+		/* advance output past Sun-shaped entry */
+		outp += SVR4_RECLEN(reclen);
+		resid -= SVR4_RECLEN(reclen);
+	}
+
+	/* if we squished out the whole block, try again */
+	if (outp == SCARG(uap, buf))
+		goto again;
+	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
-    *retval = SCARG(uap, nbytes) - resid;
+	*retval = SCARG(uap, nbytes) - resid;
 out:
-    VOP_UNLOCK(vp);
-    free(buf, M_TEMP);
-    return error;
+	VOP_UNLOCK(vp);
+	free(buf, M_TEMP);
+	return error;
 }
 
 #define DEVZERO makedev(2, 12)
 
 int
 svr4_mmap(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_mmap_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_mmap_args	*uap;
+	register_t			*retval;
 {
-    struct filedesc *fdp;
-    struct file *fp;
-    struct vnode *vp;
-    struct mmap_args mm;
+	struct filedesc		*fdp;
+	struct file		*fp;
+	struct vnode		*vp;
+	struct mmap_args	 mm;
+	caddr_t 		 rp;
 
-    /*
-     * Verify the arguments.
-     */
-    if (SCARG(uap, prot) & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
-	return EINVAL;			/* XXX still needed? */
+	/*
+         * Verify the arguments.
+         */
+	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;	/* XXX still needed? */
 
-    SCARG(&mm, prot) = SCARG(uap, prot);
-    SCARG(&mm, len) = SCARG(uap, len);
-    SCARG(&mm, flags) = SCARG(uap, flags);
-    SCARG(&mm, fd) = SCARG(uap, fd);
-    SCARG(&mm, addr) = SCARG(uap, addr);
-    SCARG(&mm, pos) = SCARG(uap, pos);
+	SCARG(&mm, prot) = SCARG(uap, prot);
+	SCARG(&mm, len) = SCARG(uap, len);
+	SCARG(&mm, flags) = SCARG(uap, flags);
+	SCARG(&mm, fd) = SCARG(uap, fd);
+	SCARG(&mm, addr) = SCARG(uap, addr);
+	SCARG(&mm, pos) = SCARG(uap, pos);
 
-    if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
-	SCARG(&mm, addr) != 0 &&
-	SCARG(&mm, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-	SCARG(&mm, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	rp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
+	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
+		SCARG(&mm, addr) = rp;
 
-    /*
-     * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-     */
-    fdp = p->p_fd;
-    if ((unsigned)SCARG(uap, fd) < fdp->fd_nfiles &&			/*XXX*/
-	(fp = fdp->fd_ofiles[SCARG(uap, fd)]) != NULL &&		/*XXX*/
-	fp->f_type == DTYPE_VNODE &&				/*XXX*/
-	(vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	vp->v_rdev == DEVZERO) {				/*XXX*/
-	SCARG(&mm, flags) |= MAP_ANON;
-	SCARG(&mm, fd) = -1;
-    }
+	/*
+         * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
+         */
+	fdp = p->p_fd;
+	if ((unsigned) SCARG(uap, fd) < fdp->fd_nfiles &&	 /* XXX */
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) != NULL &&	 /* XXX */
+	    fp->f_type == DTYPE_VNODE &&			 /* XXX */
+	    (vp = (struct vnode *) fp->f_data)->v_type == VCHR &&/* XXX */
+	    vp->v_rdev == DEVZERO) {	/* XXX */
+		SCARG(&mm, flags) |= MAP_ANON;
+		SCARG(&mm, fd) = -1;
+	}
 
-    return mmap(p, &mm, retval);
+	return mmap(p, &mm, retval);
 }
 
 int
 svr4_fchroot(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_fchroot_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_fchroot_args	*uap;
+	register_t				*retval;
 {
-    struct filedesc *fdp = p->p_fd;
-    struct vnode *vp;
-    struct file *fp;
-    int error;
+	struct filedesc	*fdp = p->p_fd;
+	struct vnode	*vp;
+	struct file	*fp;
+	int		 error;
 
-    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-	return error;
-    if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
-	return error;
-    vp = (struct vnode *)fp->f_data;
-    VOP_LOCK(vp);
-    if (vp->v_type != VDIR)
-	error = ENOTDIR;
-    else
-	error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-    VOP_UNLOCK(vp);
-    if (error)
-	return error;
-    VREF(vp);
-    if (fdp->fd_rdir != NULL)
-	vrele(fdp->fd_rdir);
-    fdp->fd_rdir = vp;
-    return 0;
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return error;
+	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
+		return error;
+	vp = (struct vnode *) fp->f_data;
+	VOP_LOCK(vp);
+	if (vp->v_type != VDIR)
+		error = ENOTDIR;
+	else
+		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
+	VOP_UNLOCK(vp);
+	if (error)
+		return error;
+	VREF(vp);
+	if (fdp->fd_rdir != NULL)
+		vrele(fdp->fd_rdir);
+	fdp->fd_rdir = vp;
+	return 0;
 }
 
 
 int
 svr4_mknod(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_mknod_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_mknod_args	*uap;
+	register_t			*retval;
 {
-    stackgap_init();
-    CHECKALT(p, SCARG(uap, path));
+	caddr_t sg = stackgap_init();
+	CHECKALT(p, &sg, SCARG(uap, path));
 
-    if (S_ISFIFO(SCARG(uap, mode))) {
-	struct mkfifo_args ap;
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, mode) = SCARG(uap, mode);
-	return mkfifo(p, &ap, retval);
-    }
-    else {
-	struct mknod_args ap;
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, mode) = SCARG(uap, mode);
-	SCARG(&ap, dev) = SCARG(uap, dev);
-	return mknod(p, &ap, retval);
-    }
+	if (S_ISFIFO(SCARG(uap, mode))) {
+		struct mkfifo_args ap;
+		SCARG(&ap, path) = SCARG(uap, path);
+		SCARG(&ap, mode) = SCARG(uap, mode);
+		return mkfifo(p, &ap, retval);
+	} else {
+		struct mknod_args ap;
+		SCARG(&ap, path) = SCARG(uap, path);
+		SCARG(&ap, mode) = SCARG(uap, mode);
+		SCARG(&ap, dev) = SCARG(uap, dev);
+		return mknod(p, &ap, retval);
+	}
 }
 
 int
 svr4_vhangup(p, uap, retval)
-    struct proc *p;
-    void *uap;
-    int *retval;
+	struct proc	*p;
+	void		*uap;
+	int		*retval;
 {
-    return 0;
+	return 0;
 }
 
 #define SVR4_CONFIG_UNUSED	1
@@ -385,44 +389,44 @@ svr4_vhangup(p, uap, retval)
 
 int
 svr4_sysconfig(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_sysconfig_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_sysconfig_args	*uap;
+	register_t				*retval;
 {
-    extern int maxfiles;
+	extern int	maxfiles;
 
-    switch(SCARG(uap, name)) {
-    case SVR4_CONFIG_UNUSED:
-	*retval = 0;
-	break;
-    case SVR4_CONFIG_NGROUPS:
-	*retval = NGROUPS_MAX;
-	break;
-    case SVR4_CONFIG_CHILD_MAX:
-	*retval = maxproc;
-	break;
-    case SVR4_CONFIG_OPEN_FILES:
-	*retval = maxfiles;
-	break;
-    case SVR4_CONFIG_POSIX_VER:
-	*retval = 198808;
-	break;
-    case SVR4_CONFIG_PAGESIZE:
-	*retval = NBPG;
-	break;
-    case SVR4_CONFIG_CLK_TCK:
-	*retval = 60;		/* should this be `hz', ie. 100? */
-	break;
-    case SVR4_CONFIG_XOPEN_VER:
-	*retval = 2;		/* XXX: What should that be? */
-	break;
-    case SVR4_CONFIG_PROF_TCK:
-	*retval = 60;		/* XXX: What should that be? */
-	break;
-    default:
-	return EINVAL;
-    }
-    return 0;
+	switch (SCARG(uap, name)) {
+	case SVR4_CONFIG_UNUSED:
+		*retval = 0;
+		break;
+	case SVR4_CONFIG_NGROUPS:
+		*retval = NGROUPS_MAX;
+		break;
+	case SVR4_CONFIG_CHILD_MAX:
+		*retval = maxproc;
+		break;
+	case SVR4_CONFIG_OPEN_FILES:
+		*retval = maxfiles;
+		break;
+	case SVR4_CONFIG_POSIX_VER:
+		*retval = 198808;
+		break;
+	case SVR4_CONFIG_PAGESIZE:
+		*retval = NBPG;
+		break;
+	case SVR4_CONFIG_CLK_TCK:
+		*retval = 60;	/* should this be `hz', ie. 100? */
+		break;
+	case SVR4_CONFIG_XOPEN_VER:
+		*retval = 2;	/* XXX: What should that be? */
+		break;
+	case SVR4_CONFIG_PROF_TCK:
+		*retval = 60;	/* XXX: What should that be? */
+		break;
+	default:
+		return EINVAL;
+	}
+	return 0;
 }
 
 #define SVR4_RLIMIT_NOFILE	5	/* Other RLIMIT_* are the same */
@@ -431,155 +435,157 @@ svr4_sysconfig(p, uap, retval)
 
 int
 svr4_getrlimit(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_getrlimit_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_getrlimit_args	*uap;
+	register_t				*retval;
 {
-    struct compat_43_getrlimit_args ap;
-    if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-	return EINVAL;
+	struct compat_43_getrlimit_args ap;
 
-    if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-	SCARG(uap, which) = RLIMIT_NOFILE;
-    if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-	SCARG(uap, which) = RLIMIT_RSS;
+	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
+		return EINVAL;
 
-    SCARG(&ap, which) = SCARG(uap, which);
-    SCARG(&ap, rlp) = SCARG(uap, rlp);
+	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
+		SCARG(uap, which) = RLIMIT_NOFILE;
+	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
+		SCARG(uap, which) = RLIMIT_RSS;
 
-    return compat_43_getrlimit(p, &ap, retval);
+	SCARG(&ap, which) = SCARG(uap, which);
+	SCARG(&ap, rlp) = SCARG(uap, rlp);
+
+	return compat_43_getrlimit(p, &ap, retval);
 }
 
 int
 svr4_setrlimit(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_setrlimit_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_setrlimit_args	*uap;
+	register_t				*retval;
 {
-    struct compat_43_setrlimit_args ap;
-    if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
-	return EINVAL;
+	struct compat_43_setrlimit_args ap;
 
-    if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
-	SCARG(uap, which) = RLIMIT_NOFILE;
-    if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
-	SCARG(uap, which) = RLIMIT_RSS;
+	if (SCARG(uap, which) >= SVR4_RLIM_NLIMITS)
+		return EINVAL;
 
-    SCARG(&ap, which) = SCARG(uap, which);
-    SCARG(&ap, rlp) = SCARG(uap, rlp);
+	if (SCARG(uap, which) == SVR4_RLIMIT_NOFILE)
+		SCARG(uap, which) = RLIMIT_NOFILE;
+	if (SCARG(uap, which) == SVR4_RLIMIT_VMEM)
+		SCARG(uap, which) = RLIMIT_RSS;
 
-    return compat_43_setrlimit(p, uap, retval);
+	SCARG(&ap, which) = SCARG(uap, which);
+	SCARG(&ap, rlp) = SCARG(uap, rlp);
+
+	return compat_43_setrlimit(p, uap, retval);
 }
 
 
 int
 svr4_syssun(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_syssun_args *uap;
-    register_t *retval;
+	register struct proc			*p;
+	register struct svr4_syssun_args	*uap;
+	register_t				*retval;
 {
 #ifdef DEBUG_SVR4
-    printf("syssun(%d)\n", SCARG(uap, gate));
+	printf("syssun(%d)\n", SCARG(uap, gate));
 #endif
-    return 0;
+	return 0;
 }
 
 /* ARGSUSED */
 int
 svr4_break(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_break_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_break_args	*uap;
+	register_t			*retval;
 {
-    register struct vmspace *vm = p->p_vmspace;
-    vm_offset_t new, old;
-    int rv;
-    register int diff;
+	register struct vmspace *vm = p->p_vmspace;
+	vm_offset_t     new, old;
+	int             rv;
+	register int    diff;
 
-    old = (vm_offset_t)vm->vm_daddr;
-    new = round_page(SCARG(uap, nsize));
-    diff = new - old;
+	old = (vm_offset_t) vm->vm_daddr;
+	new = round_page(SCARG(uap, nsize));
+	diff = new - old;
 
-    printf("break(1): old %x new %x diff %x\n", old, new, diff);
+	printf("break(1): old %x new %x diff %x\n", old, new, diff);
 
-    if ((int) diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
-	return ENOMEM;
+	if ((int) diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+		return ENOMEM;
 
-    old = round_page(old + ctob(vm->vm_dsize));
-    printf("break(2): dsize = %x ctob %x\n",
-	   vm->vm_dsize, ctob(vm->vm_dsize));
+	old = round_page(old + ctob(vm->vm_dsize));
+	printf("break(2): dsize = %x ctob %x\n",
+	       vm->vm_dsize, ctob(vm->vm_dsize));
 
-    new = old + diff;
-    printf("break(3): old %x new %x diff %x\n", old, new, diff);
+	new = old + diff;
+	printf("break(3): old %x new %x diff %x\n", old, new, diff);
 
-    if (diff > 0) {
-	rv = vm_allocate(&vm->vm_map, &old, diff, FALSE);
-	if (rv != KERN_SUCCESS) {
-	    uprintf("sbrk: grow failed, return = %d\n", rv);
-	    return ENOMEM;
+	if (diff > 0) {
+		rv = vm_allocate(&vm->vm_map, &old, diff, FALSE);
+		if (rv != KERN_SUCCESS) {
+			uprintf("sbrk: grow failed, return = %d\n", rv);
+			return ENOMEM;
+		}
+		vm->vm_dsize += btoc(diff);
+	} else if (diff < 0) {
+		diff = -diff;
+		rv = vm_deallocate(&vm->vm_map, new, diff);
+		if (rv != KERN_SUCCESS) {
+			uprintf("sbrk: shrink failed, return = %d\n", rv);
+			return ENOMEM;
+		}
+		vm->vm_dsize -= btoc(diff);
 	}
-	vm->vm_dsize += btoc(diff);
-    } else if (diff < 0) {
-	diff = -diff;
-	rv = vm_deallocate(&vm->vm_map, new, diff);
-	if (rv != KERN_SUCCESS) {
-	    uprintf("sbrk: shrink failed, return = %d\n", rv);
-	    return ENOMEM;
-	}
-	vm->vm_dsize -= btoc(diff);
-    }
-    return 0;
+	return 0;
 }
 
 static __inline clock_t
 timeval_to_clock_t(tv)
-    struct timeval* tv;
+	struct timeval *tv;
 {
-    return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
+	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
 }
 
 int
 svr4_times(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_times_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_times_args	*uap;
+	register_t			*retval;
 {
-    int error;
-    struct tms tms;
-    struct timeval t;
-    struct rusage *ru;
-    struct rusage r;
-    struct getrusage_args ga;
+	int			 error;
+	struct tms		 tms;
+	struct timeval		 t;
+	struct rusage		*ru;
+	struct rusage		 r;
+	struct getrusage_args 	 ga;
 
-    stackgap_init();
-    ru = stackgap_alloc(sizeof(struct rusage));
+	caddr_t sg = stackgap_init();
+	ru = stackgap_alloc(&sg, sizeof(struct rusage));
 
-    SCARG(&ga, who) = RUSAGE_SELF;
-    SCARG(&ga, rusage) = ru;
+	SCARG(&ga, who) = RUSAGE_SELF;
+	SCARG(&ga, rusage) = ru;
 
-    error = getrusage(p, &ga, retval);
-    if (error)
-	return error;
+	error = getrusage(p, &ga, retval);
+	if (error)
+		return error;
 
-    if (error = copyin(ru, &r, sizeof r))
-	return error;
+	if (error = copyin(ru, &r, sizeof r))
+		return error;
 
-    tms.tms_utime = timeval_to_clock_t(r.ru_utime);
-    tms.tms_stime = timeval_to_clock_t(r.ru_stime);
+	tms.tms_utime = timeval_to_clock_t(r.ru_utime);
+	tms.tms_stime = timeval_to_clock_t(r.ru_stime);
 
-    SCARG(&ga, who) = RUSAGE_CHILDREN;
-    error = getrusage(p, &ga, retval);
-    if (error)
-	return error;
+	SCARG(&ga, who) = RUSAGE_CHILDREN;
+	error = getrusage(p, &ga, retval);
+	if (error)
+		return error;
 
-    if (error = copyin(ru, &r, sizeof r))
-	return error;
+	if (error = copyin(ru, &r, sizeof r))
+		return error;
 
-    tms.tms_cutime = timeval_to_clock_t(&r.ru_utime);
-    tms.tms_cstime = timeval_to_clock_t(&r.ru_stime);
+	tms.tms_cutime = timeval_to_clock_t(&r.ru_utime);
+	tms.tms_cstime = timeval_to_clock_t(&r.ru_stime);
 
-    microtime(&t);
-    *retval = timeval_to_clock_t(t);
-    
-    return copyout(&tms, SCARG(uap, tp), sizeof(tms));
+	microtime(&t);
+	*retval = timeval_to_clock_t(t);
+
+	return copyout(&tms, SCARG(uap, tp), sizeof(tms));
 }
