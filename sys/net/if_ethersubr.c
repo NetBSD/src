@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.113 2003/08/07 16:32:51 agc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.113 2003/08/07 16:32:51 agc Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
