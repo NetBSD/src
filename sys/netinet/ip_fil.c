@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.24.2.4 1998/11/24 07:19:17 cgd Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.24.2.5 1998/11/29 03:19:43 cgd Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -1029,7 +1029,7 @@ frdest_t *fdp;
 	m0 = m;
 	mhlen = sizeof (struct ip);
 	for (off = hlen + len; off < ip->ip_len; off += len) {
-		MGET(m, M_DONTWAIT, MT_HEADER);
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
 			goto bad;
