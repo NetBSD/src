@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.4 1997/09/14 13:26:12 lukem Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.5 1997/09/29 06:20:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -46,7 +46,7 @@
 #include <util.h>
 
 /*
- * Machine dependend constants you want to retrieve only once...
+ * Machine dependent constants you want to retrieve only once...
  */
 int rawpartition, maxpartitions;
 
@@ -412,7 +412,8 @@ label_read(dl, dn)
 	if (ioctl(fd, DIOCGDINFO, dl) < 0) {
 		if (errno == ESRCH)
 			fprintf(stderr, "edlabel: No disk label on disk\n");
-		else perror("ioctl DIOCGDINFO");
+		else
+		    	perror("ioctl DIOCGDINFO");
 		exit(1);
 	}
 
