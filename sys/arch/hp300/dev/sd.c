@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.16 1995/10/09 08:07:40 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.17 1995/10/15 10:03:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -138,6 +138,36 @@ static struct scsi_fmt_cdb inq = {
 	CMD_INQUIRY, 0, 0, 0, sizeof(inqbuf), 0
 };
 
+/*
+ * Perform a mode-sense on page 0x04 (rigid geometry).
+ */
+static void
+sdgetgeom(sc, hd)
+	struct sd_softc *sc;
+	struct hp_device *hd;
+{
+	struct scsi_mode_sense_geom {
+		struct scsi_modesense_hdr	header;
+		struct scsi_geometry		geom;
+	} sensebuf;
+	struct scsi_fmt_cdb modesense_geom = {
+		6,
+		CMD_MODE_SENSE, 0, 0x04, 0, sizeof(sensebuf), 0
+	};
+	int ctlr, slave, unit;
+
+	ctlr = hd->hp_ctlr;
+	slave = hd->hp_slave;
+	unit = sc->sc_punit;
+
+	(void)scsi_immed_command(ctlr, slave, unit, &modesense_geom,
+	    (u_char *)&sensebuf, sizeof(sensebuf), B_READ);
+
+	sc->sc_heads = sensebuf.geom.heads;
+	sc->sc_cyls = (sensebuf.geom.cyl_ub << 16) |
+	    (sensebuf.geom.cyl_mb << 8) | sensebuf.geom.cyl_lb;
+}
+
 static int
 sdident(sc, hd)
 	struct sd_softc *sc;
@@ -250,10 +280,35 @@ sdident(sc, hd)
 		       inqbuf.type, inqbuf.qual, inqbuf.version);
 		break;
 	}
-	if (sc->sc_blks)
-		printf(", %d %d byte blocks",
-		       sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
 	printf("\n");
+
+	/*
+	 * Print out some additional information.
+	 */
+	printf("sd%d: ", hd->hp_unit);
+	switch (inqbuf.type) {
+	case 4:	
+		printf("WORM, ");
+		break;
+
+	case 5:
+		printf("CD-ROM, ");
+		break;
+
+	case 7:
+		printf("Magneto-optical, ");
+		break;
+
+	default:
+		printf("%d cylinders, %d heads, ", sc->sc_cyls, sc->sc_heads);
+	}
+
+	if (sc->sc_blks)
+		printf("%d %d byte blocks\n",
+		    sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
+	else
+		printf("drive empty\n");
+
 	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
 	scsi_delay(0);
 	return(inqbuf.type);
@@ -392,6 +447,7 @@ sdgetcapacity(sc, hd, dev)
 		printf("sd%d: blks=%d, blksize=%d, bshift=%d\n", hd->hp_unit,
 		       sc->sc_blks, sc->sc_blksize, sc->sc_bshift);
 #endif
+	sdgetgeom(sc, hd);
 	return (0);
 }
 
