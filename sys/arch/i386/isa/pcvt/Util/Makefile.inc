@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/11/01 16:37:06 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1999/06/04 18:47:33 thorpej Exp $
 
 ECHO	?=	echo
 
@@ -9,7 +9,7 @@ LIBMODE	=	644
 
 INCDIR= ${DESTDIR}/usr/include/machine
 
-${PROG}: ${INCDIR}/pcvt_ioctl.h
+#${PROG}: ${INCDIR}/pcvt_ioctl.h
 
 MAN3EXT	=	3
 MAN4EXT	=	4
