@@ -32,8 +32,8 @@
 LIB    = minires
 SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
 	 res_sendsigned.c res_findzonecut.c res_query.c res_mkquery.c \
-	 ns_date.c ns_parse.c ns_sign.c ns_name.c ns_samedomain.c ns_verify.c \
-	 dst_api.c hmac_link.c md5_dgst.c prandom.c support.c base64.c
+	 ns_date.c ns_parse.c ns_sign.c ns_name.c ns_samedomain.c \
+	 ns_verify.c toisc.c
 
 MKLINT=	no
 MKPIC=	no
