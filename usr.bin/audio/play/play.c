@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.39 2002/11/03 19:35:00 wiz Exp $	*/
+/*	$NetBSD: play.c,v 1.40 2002/11/04 12:04:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -211,6 +211,7 @@ play(file)
 	struct stat sb;
 	void *addr, *oaddr;
 	off_t	filesize;
+	size_t	sizet_filesize;
 	size_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
@@ -231,16 +232,17 @@ play(file)
 	if (fstat(fd, &sb) < 0)
 		err(1, "could not fstat %s", file);
 	filesize = sb.st_size;
-
-	oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
-	    MAP_SHARED, fd, 0);
+	sizet_filesize = (size_t)filesize;
 
 	/*
-	 * if we failed to mmap the file, try to read it
-	 * instead, so that filesystems, etc, that do not
-	 * support mmap() work
+	 * if the file is not a regular file, doesn't fit in a size_t,
+	 * or if we failed to mmap the file, try to read it instead, so
+	 * that filesystems, etc, that do not support mmap() work
 	 */
-	if (addr == MAP_FAILED) {
+	if (S_ISREG(sb.st_rdev & S_IFMT) == 0 || 
+	    ((off_t)sizet_filesize != filesize) ||
+	    (oaddr = addr = mmap(0, sizet_filesize, PROT_READ,
+	    MAP_SHARED, fd, 0)) == MAP_FAILED) {
 		play_fd(file, fd);
 		close(fd);
 		return;
@@ -250,7 +252,7 @@ play(file)
 	 * give the VM system a bit of a hint about the type
 	 * of accesses we will make.
 	 */
-	if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
+	if (madvise(addr, sizet_filesize, MADV_SEQUENTIAL) < 0 &&
 	    !qflag)
 		warn("madvise failed, ignoring");
 
@@ -258,7 +260,7 @@ play(file)
 	 * get the header length and set up the audio device
 	 */
 	if ((hdrlen = audioctl_write_fromhdr(addr,
-	    (size_t)filesize, audiofd, &datasize, file)) < 0) {
+	    sizet_filesize, audiofd, &datasize, file)) < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
@@ -284,7 +286,7 @@ play(file)
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
-	if (munmap(oaddr, (size_t)filesize) < 0)
+	if (munmap(oaddr, sizet_filesize) < 0)
 		err(1, "munmap failed");
 
 	close(fd);
