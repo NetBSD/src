@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.4 1998/09/30 22:14:13 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.5 1998/09/30 23:13:59 thorpej Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -82,8 +82,12 @@ _vectab:
 	.long	_lev6intr	/* 30: level 6 interrupt autovector */
 	.long	_lev7intr	/* 31: level 7 interrupt autovector */
 	.long	_trap0		/* 32: syscalls */
-	.long	_trap1		/* 33: compat_13_sigreturn or breakpoint */
-	.long	_trap2		/* 34: breakpoint or compat_13_sigreturn */
+#ifdef COMPAT_13
+	.long	_trap1		/* 33: compat_13_sigreturn */
+#else
+	.long	_illinst
+#endif
+	.long	_trap2		/* 34: trace */
 	.long	_trap3		/* 35: special handling syscalls */
 	.long	_illinst	/* 36: TRAP instruction vector */
 	.long	_illinst	/* 37: TRAP instruction vector */
