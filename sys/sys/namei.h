@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.23 2001/10/17 23:33:29 thorpej Exp $	*/
+/*	$NetBSD: namei.h,v 1.24 2001/12/06 04:02:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -103,7 +103,7 @@ struct nameidata {
 #define	RENAME		3	/* setup for file renaming */
 #define	OPMASK		3	/* mask for operation */
 /*
- * namei operational modifier flags, stored in ni_cnd.flags
+ * namei operational modifier flags, stored in ni_cnd.cn_flags
  */
 #define	LOCKLEAF	0x0004	/* lock inode on return */
 #define	LOCKPARENT	0x0008	/* want parent vnode returned locked */
