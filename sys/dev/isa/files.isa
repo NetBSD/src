@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.101 2000/04/21 17:48:30 explorer Exp $
+#	$NetBSD: files.isa,v 1.102 2000/05/01 22:48:33 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -373,6 +373,11 @@ file	dev/isa/gus.c			gus needs-flag
 device	aria: audio, mulaw, auconv
 attach	aria at isa
 file	dev/isa/aria.c			aria needs-flag
+
+# Creative Music System (CMS)
+device	cms: midibus
+attach	cms at isa
+file	dev/isa/cms.c			cms needs-flag
 
 #
 # PlanetConnect satellite receiver driver.
