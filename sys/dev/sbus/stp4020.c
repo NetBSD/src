@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.32 2003/01/03 11:57:49 mrg Exp $ */
+/*	$NetBSD: stp4020.c,v 1.33 2003/01/03 13:28:54 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.32 2003/01/03 11:57:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.33 2003/01/03 13:28:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,9 @@ struct stp4020_socket {
 					   interrupt? */
 	int		int_enable;	/* ICR0 value for interrupt enabled */
 	int		int_disable;	/* ICR0 value for interrupt disabled */
-	bus_space_tag_t	tag;		/* socket control space */
-	bus_space_handle_t	regs;	/* 			*/
+	bus_space_tag_t	tag;		/* socket control io	*/
+	bus_space_handle_t	regs;	/*  space		*/
+	bus_space_tag_t	pcmciat;	/* io space for pcmcia  */
 	struct device	*pcmcia;	/* Associated PCMCIA device */
 	int		(*intrhandler)	/* Card driver interrupt handler */
 			    __P((void *));
@@ -126,7 +127,6 @@ struct stp4020_softc {
 	struct device	sc_dev;		/* Base device */
 	struct sbusdev	sc_sd;		/* SBus device */
 	bus_space_tag_t	sc_bustag;
-	bus_dma_tag_t	sc_dmatag;
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
 	struct proc	*event_thread;		/* event handling thread */
@@ -250,10 +250,11 @@ stp4020_wr_winctl(h, win, idx, v)
 	bus_space_write_2(h->tag, h->regs, o, v);
 }
 
-#if __FULL_SPARC_BUS_SPACE
-#ifdef sparc64
-#error "sparc64 does not want (need) __FULL_SPARC_BUS_SPACE"
-#endif
+#ifndef SUN4U	/* XXX - move to SBUS machdep function? */
+
+#if !__FULL_SPARC_BUS_SPACE
+#error "stp4020 (nell) needs __FULL_SPARC_BUS_SPACE defined as well"
+#else
 static	u_int16_t stp4020_read_2(bus_space_tag_t,
 				 bus_space_handle_t,
 				 bus_size_t);
@@ -332,11 +333,8 @@ stp4020_write_8(space, handle, offset, value)
 {
 	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
 }
-#else
-#if 0	/* XXX */
-#error "stp4020 needs __FULL_SPARC_BUS_SPACE defined as well"
-#endif
-#endif
+#endif	/* __FULL_SPARC_BUS_SPACE */
+#endif	/* SUN4U */
 
 int
 stp4020print(aux, busname)
@@ -394,11 +392,15 @@ stp4020attach(parent, self, aux)
 	tag = sa->sa_bustag;
 #endif
 	sc->sc_bustag = tag;
-	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Set up per-socket static initialization */
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
-	sc->sc_socks[0].tag = sc->sc_socks[1].tag = tag;
+	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
+	/*
+	 * XXX we rely on "tag" accepting the same handle-domain
+	 * as sa->sa_bustag.
+	 */
+	sc->sc_socks[0].pcmciat = sc->sc_socks[1].pcmciat = tag;
 	sc->sc_socks[0].sbus_intno =
 		sc->sc_socks[1].sbus_intno = sbus_intno;
 
@@ -438,7 +440,7 @@ stp4020attach(parent, self, aux)
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;
-		}
+		}		
 
 		if (i == STP4020_BANK_CTRL) {
 			/*
@@ -840,7 +842,7 @@ stp4020_chip_mem_alloc(pch, size, pcmhp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
 	/* we can not do much here, defere work to _mem_map */
-	pcmhp->memt = h->tag;
+	pcmhp->memt = h->pcmciat;
 	pcmhp->size = size;
 	pcmhp->addr = 0;
 	pcmhp->mhandle = 0;
@@ -869,8 +871,8 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int win = (kind&PCMCIA_MEM_ATTR)? STP_WIN_ATTR : STP_WIN_MEM;
 
-	pcmhp->memt = h->tag;
-	bus_space_subregion(h->tag, h->windows[win].winaddr, card_addr, size, &pcmhp->memh);
+	pcmhp->memt = h->pcmciat;
+	bus_space_subregion(h->pcmciat, h->windows[win].winaddr, card_addr, size, &pcmhp->memh);
 	pcmhp->size = size;
 	pcmhp->realsize = STP4020_WINDOW_SIZE - card_addr;
 	*offsetp = 0;
@@ -896,7 +898,7 @@ stp4020_chip_io_alloc(pch, start, size, align, pcihp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
-	pcihp->iot = h->tag;
+	pcihp->iot = h->pcmciat;
 	pcihp->ioh = h->windows[STP_WIN_IO].winaddr;
 	return 0;
 }
@@ -919,8 +921,8 @@ stp4020_chip_io_map(pch, width, offset, size, pcihp, windowp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
-	pcihp->iot = h->tag;
-	bus_space_subregion(h->tag, h->windows[STP_WIN_IO].winaddr, offset, size, &pcihp->ioh);
+	pcihp->iot = h->pcmciat;
+	bus_space_subregion(h->pcmciat, h->windows[STP_WIN_IO].winaddr, offset, size, &pcihp->ioh);
 	*windowp = 0;
 	return 0;
 }
