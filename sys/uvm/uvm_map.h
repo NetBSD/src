@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.9 1998/08/31 01:54:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.10 1998/10/11 23:14:48 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -153,15 +153,13 @@ int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t,
 			vaddr_t *));
 void		uvm_map_setup __P((vm_map_t, vaddr_t, 
 			vaddr_t, boolean_t));
-void		uvm_map_sharemapcopy __P((vm_map_t, vm_map_entry_t,
-					  vm_map_t));
 int		uvm_map_submap __P((vm_map_t, vaddr_t, 
 			vaddr_t, vm_map_t));
 MAP_INLINE
-int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t, boolean_t));
+int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
 void		uvm_unmap_detach __P((vm_map_entry_t,int));
 int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
-				      boolean_t, vm_map_entry_t *));
+				      vm_map_entry_t *));
 
 struct vmspace *uvmspace_fork __P((struct vmspace *));
 
