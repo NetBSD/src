@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.9 2001/04/06 05:24:59 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.10 2001/05/11 14:04:48 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -70,6 +70,8 @@ FIELD _formi_default_field = {
 	NULL, /* type struct for the field */
 	{NULL, NULL}, /* circle queue glue for sorting fields */
 	NULL, /* args for field type. */
+	0,    /* number of allocated slots in lines array */
+	NULL, /* pointer to the array of lines structures. */
 	NULL, /* array of buffers for the field */
 };
 
@@ -282,7 +284,8 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 		return E_BAD_ARGUMENT;
 
 	len = strlen(value);
-	if (((field->opts & O_STATIC) == O_STATIC) && (len > field->cols))
+	if (((field->opts & O_STATIC) == O_STATIC) && (len > field->cols)
+	    && ((field->rows + field->nrows) == 1))
 		len = field->cols;
 		
 	if ((field->buffers[buffer].string =
@@ -293,7 +296,10 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
 	field->row_count = 1; /* must be at least one row */
-
+	field->lines[0].start = 0;
+	field->lines[0].end = (len > 0)? (len - 1) : 0;
+	field->lines[0].length = len;
+	
 	  /* we have to hope the wrap works - if it does not then the
 	     buffer is pretty much borked */
 	status = _formi_wrap_field(field, 0);
@@ -592,12 +598,27 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 	  /* Initialise the strings to a zero length string */
 	for (i = 0; i < nbuf + 1; i++) {
 		if ((new->buffers[i].string =
-		     (char *) malloc(sizeof(char))) == NULL)
+		     (char *) malloc(sizeof(char))) == NULL) {
+			free(new->buffers);
+			free(new);
 			return NULL;
+		}
 		new->buffers[i].string[0] = '\0';
 		new->buffers[i].length = 0;
 		new->buffers[i].allocated = 1;
 	}
+
+	if ((new->lines = (_FORMI_FIELD_LINES *)
+	     malloc(sizeof(struct _formi_field_lines))) == NULL) {
+		free(new->buffers);
+		free(new);
+		return NULL;
+	}
+
+	new->lines_alloced = 1;
+	new->lines[0].length = 0;
+	new->lines[0].start = 0;
+	new->lines[0].end = 0;
 	
 	return new;
 }
