@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.10 2004/03/16 22:30:36 uwe Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.11 2004/06/10 15:57:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,15 +51,23 @@
 ElfLoader::ElfLoader(Console *&cons, MemoryManager *&mem)
 	: Loader(cons, mem)
 {
+
 	_sym_blk.enable = FALSE;
+	_ph = NULL;
+	_sh = NULL;
 
 	DPRINTF((TEXT("Loader: ELF\n")));
 }
 
 ElfLoader::~ElfLoader(void)
 {
+
 	if (_sym_blk.header != NULL)
-		free (_sym_blk.header);
+		free(_sym_blk.header);
+	if (_ph != NULL)
+		free(_ph);
+	if (_sh != NULL)
+		free(_sh);
 }
 
 BOOL
@@ -71,14 +79,30 @@ ElfLoader::setFile(File *&file)
 	// read ELF header and check it
 	if (!read_header())
 		return FALSE;
+
 	// read section header
 	sz = _eh.e_shnum * _eh.e_shentsize;
-	_file->read(_sh, _eh.e_shentsize * _eh.e_shnum, _eh.e_shoff);
+	if ((_sh = static_cast<Elf_Shdr *>(malloc(sz))) == NULL) {
+		DPRINTF((TEXT("can't allocate section header table.\n")));
+		return FALSE;
+	}
+	if (_file->read(_sh, sz, _eh.e_shoff) != sz) {
+		DPRINTF((TEXT("section header read error.\n")));
+		return FALSE;
+	}
 
 	// read program header
 	sz = _eh.e_phnum * _eh.e_phentsize;
+	if ((_ph = static_cast<Elf_Phdr *>(malloc(sz))) == NULL) {
+		DPRINTF((TEXT("can't allocate program header table.\n")));
+		return FALSE;
+	}
+	if (_file->read(_ph, sz, _eh.e_phoff) != sz) {
+		DPRINTF((TEXT("program header read error.\n")));
+		return FALSE;
+	}
 
-	return _file->read(_ph, sz, _eh.e_phoff) == sz;
+	return TRUE;
 }
 
 size_t
