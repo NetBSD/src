@@ -24,6 +24,7 @@ caddr_t malloc();
 # include <string.h>
 # include <memory.h>
 # include <stdlib.h>
+# include <unistd.h>
 # define memzero(a, b)		memset((a), 0, (b))
   typedef void sigret_t;
 #endif

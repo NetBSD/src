@@ -48,8 +48,6 @@
 
 extern char *myname;
 
-int putstdout();
-
 int  overstrike;
 int  screen_length;
 int  screen_width;
@@ -57,8 +55,6 @@ char ch_erase;
 char ch_kill;
 char smart_terminal;
 char PC;
-char *tgetstr();
-char *tgoto();
 char termcap_buf[1024];
 char string_buffer[1024];
 char home[15];
@@ -95,6 +91,7 @@ static int new_lword;
 #define	STDOUT	1
 #define	STDERR	2
 
+void
 init_termcap(interactive)
 
 int interactive;
@@ -103,7 +100,6 @@ int interactive;
     char *bufptr;
     char *PCptr;
     char *term_name;
-    char *getenv();
     int status;
 
     /* set defaults in case we aren't smart */
@@ -233,6 +229,7 @@ int interactive;
 #endif
 }
 
+void
 init_screen()
 
 {
@@ -323,6 +320,7 @@ init_screen()
     }
 }
 
+void
 end_screen()
 
 {
@@ -353,6 +351,7 @@ end_screen()
     }
 }
 
+void
 reinit_screen()
 
 {
@@ -380,6 +379,7 @@ reinit_screen()
     }
 }
 
+void
 get_screensize()
 
 {
@@ -423,6 +423,7 @@ get_screensize()
     (void) strcpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1));
 }
 
+void
 standout(msg)
 
 char *msg;
@@ -440,6 +441,7 @@ char *msg;
     }
 }
 
+void
 clear()
 
 {
@@ -449,6 +451,7 @@ clear()
     }
 }
 
+int
 clear_eol(len)
 
 int len;
@@ -473,6 +476,7 @@ int len;
     return(-1);
 }
 
+void
 go_home()
 
 {
@@ -484,9 +488,10 @@ go_home()
 
 /* This has to be defined as a subroutine for tputs (instead of a macro) */
 
+void
 putstdout(ch)
 
-char ch;
+int ch;
 
 {
     putchar(ch);

@@ -29,6 +29,11 @@
 #include "os.h"
 #include <ctype.h>
 #include <time.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -53,8 +58,6 @@ static int display_width = MAX_COLS;
 
 #define lineindex(l) ((l)*display_width)
 
-char *printable();
-
 /* things initialized by display_init and used thruout */
 
 /* buffer of proc information lines for display updating */
@@ -77,9 +80,9 @@ static int cpustate_total_length;
 
 static enum { OFF, ON, ERASE } header_status = ON;
 
-static int string_count();
-static void summary_format();
-static void line_update();
+static int string_count __P((char **));
+static void summary_format __P((char *, int *, char **));
+static void line_update __P((char *, char *, int, int));
 
 int display_resize()
 
@@ -166,6 +169,7 @@ struct statics *statics;
     return(lines);
 }
 
+void
 i_loadave(mpid, avenrun)
 
 int mpid;
@@ -194,6 +198,7 @@ double *avenrun;
     lmpid = mpid;
 }
 
+void
 u_loadave(mpid, avenrun)
 
 int mpid;
@@ -233,6 +238,7 @@ double *avenrun;
     }
 }
 
+void
 i_timeofday(tod)
 
 time_t *tod;
@@ -278,6 +284,7 @@ static char procstates_buffer[MAX_COLS];
  *		  lastline is valid
  */
 
+void
 i_procstates(total, brkdn)
 
 int total;
@@ -305,6 +312,7 @@ int *brkdn;
     memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
 }
 
+void
 u_procstates(total, brkdn)
 
 int total;
@@ -387,6 +395,7 @@ char *cpustates_tag()
     return(use);
 }
 
+void
 i_cpustates(states)
 
 register int *states;
@@ -421,6 +430,7 @@ register int *states;
     memcpy(lcpustates, states, num_cpustates * sizeof(int));
 }
 
+void
 u_cpustates(states)
 
 register int *states;
@@ -468,6 +478,7 @@ register int *states;
     }
 }
 
+void
 z_cpustates()
 
 {
@@ -506,6 +517,7 @@ z_cpustates()
 
 char memory_buffer[MAX_COLS];
 
+void
 i_memory(stats)
 
 int *stats;
@@ -519,6 +531,7 @@ int *stats;
     fputs(memory_buffer, stdout);
 }
 
+void
 u_memory(stats)
 
 int *stats;
@@ -550,6 +563,7 @@ static int msglen = 0;
 /* Invariant: msglen is always the length of the message currently displayed
    on the screen (even when next_msg doesn't contain that message). */
 
+void
 i_message()
 
 {
@@ -571,6 +585,7 @@ i_message()
     }
 }
 
+void
 u_message()
 
 {
@@ -585,6 +600,7 @@ static int header_length;
  *  Assumptions:  cursor is on the previous line and lastline is consistent
  */
 
+void
 i_header(text)
 
 char *text;
@@ -604,6 +620,7 @@ char *text;
 }
 
 /*ARGSUSED*/
+void
 u_header(text)
 
 char *text;		/* ignored */
@@ -624,6 +641,7 @@ char *text;		/* ignored */
  *  Assumptions:  lastline is consistent
  */
 
+void
 i_process(line, thisline)
 
 int line;
@@ -654,6 +672,7 @@ char *thisline;
     memzero(p, display_width - (p - base));
 }
 
+void
 u_process(line, newline)
 
 int line;
@@ -701,6 +720,7 @@ char *newline;
     }
 }
 
+void
 u_endscreen(hi)
 
 register int hi;
@@ -761,6 +781,7 @@ register int hi;
     }
 }
 
+void
 display_header(t)
 
 int t;
@@ -777,17 +798,33 @@ int t;
 }
 
 /*VARARGS2*/
-new_message(type, msgfmt, a1, a2, a3)
+void
+#ifdef __STDC__
+new_message(int type, const char *msgfmt, ...)
+#else
+new_message(va_alist)
+    va_dcl
 
-int type;
-char *msgfmt;
-caddr_t a1, a2, a3;
-
+#endif
 {
     register int i;
+    va_list ap;
+#ifndef __STDC__
+    int type;
+    const char *msgfmt;
+
+    va_start(ap);
+    type = va_arg(ap, int);
+    msgfmt = va_arg(ap, const char *);
+#else
+
+    va_start(ap, msgfmt);
+#endif
 
     /* first, format the message */
-    (void) sprintf(next_msg, msgfmt, a1, a2, a3);
+    (void) vsprintf(next_msg, msgfmt, ap);
+
+    va_end(ap);
 
     if (msglen > 0)
     {
@@ -817,6 +854,7 @@ caddr_t a1, a2, a3;
     }
 }
 
+void
 clear_message()
 
 {
@@ -826,6 +864,7 @@ clear_message()
     }
 }
 
+int
 readline(buffer, size, numeric)
 
 char *buffer;
@@ -938,7 +977,6 @@ register char **names;
     register char *p;
     register int num;
     register char *thisname;
-    register int useM = No;
 
     /* format each number followed by its string */
     p = str;

@@ -29,6 +29,7 @@
 #include "boolean.h"
 #include "machine.h"
 #include "utils.h"
+#include "commands.h"
 
 extern int  errno;
 
@@ -37,14 +38,12 @@ extern char *copyright;
 /* imported from screen.c */
 extern int overstrike;
 
-int err_compar();
-char *err_string();
-
 /*
  *  show_help() - display the help screen; invoked in response to
  *		either 'h' or '?'.
  */
 
+void
 show_help(statics)
     struct statics *statics;
 {
@@ -115,6 +114,7 @@ register char *str;
     return(*str == '\0' ? NULL : str);
 }
 
+int
 scanint(str, intp)
 
 char *str;
@@ -254,6 +254,7 @@ char *err_string()
  *	the string "str".
  */
 
+int
 str_adderr(str, len, err)
 
 char *str;
@@ -281,6 +282,7 @@ int err;
  *	is set (indicating that a comma should NOT be added to the front).
  */
 
+int
 str_addarg(str, len, arg, first)
 
 char *str;
@@ -313,11 +315,13 @@ int  first;
  *	for sorting errors.
  */
 
-err_compar(p1, p2)
+int
+err_compar(e1, e2)
 
-register struct errs *p1, *p2;
+    const void *e1, *e2;
 
 {
+    register const struct errs *p1 = e1, *p2 = e2;
     register int result;
 
     if ((result = p1->errnum - p2->errnum) == 0)
@@ -331,6 +335,7 @@ register struct errs *p1, *p2;
  *  error_count() - return the number of errors currently logged.
  */
 
+int
 error_count()
 
 {
@@ -341,6 +346,7 @@ error_count()
  *  show_errors() - display on stdout the current log of errors.
  */
 
+void
 show_errors()
 
 {

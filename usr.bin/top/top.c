@@ -43,7 +43,9 @@ char *copyright =
 #include "top.h"
 #include "top.local.h"
 #include "boolean.h"
+#include "commands.h"
 #include "machine.h"
+#include "username.h"
 #include "utils.h"
 
 /* Size of the stdio buffer given to stdout */
@@ -62,17 +64,6 @@ extern char *optarg;
 /* imported from screen.c */
 extern int overstrike;
 
-/* signal handling routines */
-sigret_t leave();
-sigret_t onalrm();
-sigret_t tstop();
-#ifdef SIGWINCH
-sigret_t winch();
-#endif
-
-/* internal routines */
-void quit();
-
 /* values which need to be accessed by signal handlers */
 static int max_topn;		/* maximum displayable processes */
 
@@ -80,53 +71,18 @@ static int max_topn;		/* maximum displayable processes */
 char *myname = "top";
 jmp_buf jmp_int;
 
-/* routines that don't return int */
-
-char *username();
-char *ctime();
-char *kill_procs();
-char *renice_procs();
-
-#ifdef ORDER
-extern int (*proc_compares[])();
-#else
-extern int proc_compare();
-#endif
-time_t time();
-
-caddr_t get_process_info();
-
-/* different routines for displaying the user's identification */
-/* (values assigned to get_userid) */
-char *username();
-char *itoa7();
-
-/* display routines that need to be predeclared */
-int i_loadave();
-int u_loadave();
-int i_procstates();
-int u_procstates();
-int i_cpustates();
-int u_cpustates();
-int i_memory();
-int u_memory();
-int i_message();
-int u_message();
-int i_header();
-int u_header();
-int i_process();
-int u_process();
-
 /* pointers to display routines */
-int (*d_loadave)() = i_loadave;
-int (*d_procstates)() = i_procstates;
-int (*d_cpustates)() = i_cpustates;
-int (*d_memory)() = i_memory;
-int (*d_message)() = i_message;
-int (*d_header)() = i_header;
-int (*d_process)() = i_process;
+void (*d_loadave) __P((int, double *)) = i_loadave;
+void (*d_procstates) __P((int, int *)) = i_procstates;
+void (*d_cpustates) __P((int *)) = i_cpustates;
+void (*d_memory) __P((int *)) = i_memory;
+void (*d_message) __P((void)) = i_message;
+void (*d_header) __P((char *)) = i_header;
+void (*d_process) __P((int, char *)) = i_process;
 
+int main __P((int, char *[]));
 
+int
 main(argc, argv)
 
 int  argc;
@@ -148,7 +104,7 @@ char *argv[];
     int delay = Default_DELAY;
     int displays = 0;		/* indicates unspecified */
     time_t curr_time;
-    char *(*get_userid)() = username;
+    char *(*get_userid) __P((int)) = username;
     char *uname_field = "USERNAME";
     char *header_text;
     char *env_top;
@@ -905,6 +861,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 #endif
     quit(0);
     /*NOTREACHED*/
+    return 0;
 }
 
 /*
@@ -912,6 +869,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
  *	screen will get redrawn.
  */
 
+void
 reset_display()
 
 {
@@ -928,7 +886,9 @@ reset_display()
  *  signal handlers
  */
 
-sigret_t leave()	/* exit under normal conditions -- INT handler */
+sigret_t leave(n)	/* exit under normal conditions -- INT handler */
+
+int n;
 
 {
     end_screen();
@@ -997,7 +957,9 @@ int status;
     /*NOTREACHED*/
 }
 
-sigret_t onalrm()	/* SIGALRM handler */
+sigret_t onalrm(n)	/* SIGALRM handler */
+
+int n;
 
 {
     /* this is only used in batch mode to break out of the pause() */

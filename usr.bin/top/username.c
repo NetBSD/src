@@ -31,8 +31,10 @@
 #include <stdio.h>
 #include <pwd.h>
 
+#include "os.h"
 #include "top.local.h"
 #include "utils.h"
+#include "username.h"
 
 struct hash_el {
     int  uid;
@@ -51,6 +53,7 @@ struct hash_el {
 /* We depend on that for hash_table and YOUR compiler had BETTER do it! */
 struct hash_el hash_table[Table_size];
 
+void
 init_hash()
 
 {

@@ -32,8 +32,9 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.1 1999/02/15 00:30:26 simonb Exp $
+ * $Id: m_netbsd13.c,v 1.2 1999/03/24 11:57:10 christos Exp $
  */
+#define UVM
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -155,7 +156,9 @@ static int ccpu;
 
 static unsigned long cp_time_offset;
 static unsigned long avenrun_offset;
+#if !defined(UVM)
 static unsigned long cnt_offset;
+#endif
 /* these are for calculating cpu state percentages */
 
 static long cp_time[CPUSTATES];
@@ -200,14 +203,7 @@ char *ordernames[] = {
 };
 
 /* forward definitions for comparison functions */
-int compare_cpu();
-int compare_prio();
-int compare_res();
-int compare_size();
-int compare_state();
-int compare_time();
-
-int (*proc_compares[])() = {
+int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
     compare_cpu,
     compare_prio,
     compare_res,
@@ -233,9 +229,6 @@ static int pageshift;		/* log base 2 of the pagesize */
 /* define pagetok in terms of pageshift */
 
 #define pagetok(size) ((size) << pageshift)
-
-/* useful externals */
-long percentages();
 
 int
 machine_init(statics)
@@ -432,7 +425,7 @@ caddr_t
 get_process_info(si, sel, compare)
     struct system_info *si;
     struct process_select *sel;
-    int (*compare)();
+    int (*compare) __P((struct proc **, struct proc **));
 {
     int i;
     int total_procs;
@@ -496,7 +489,8 @@ get_process_info(si, sel, compare)
     /* if requested, sort the "interesting" processes */
     if (compare != NULL)
     {
-	qsort((char *)pref, active_procs, sizeof(struct kinfo_proc *), compare);
+	qsort((char *)pref, active_procs, sizeof(struct kinfo_proc *), 
+	    (int (*) __P((const void *, const void *)))compare);
     }
 
     /* remember active and total counts */
@@ -514,7 +508,7 @@ char fmt[128];		/* static area where result is built */
 char *
 format_next_process(handle, get_userid)
     caddr_t handle;
-    char *(*get_userid)();
+    char *(*get_userid) __P((int));
 {
     struct kinfo_proc *pp;
     long cputime;

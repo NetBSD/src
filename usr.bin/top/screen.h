@@ -10,8 +10,12 @@
 #define Move_to(x, y)	TCputs(tgoto(cursor_motion, x, y))
 
 /* declare return values for termcap functions */
+#ifdef __NetBSD__
+#include <termcap.h>
+#else
 char *tgetstr();
 char *tgoto();
+#endif
 
 extern char ch_erase;		/* set to the user's erase character */
 extern char ch_kill;		/* set to the user's kill  character */
@@ -27,5 +31,13 @@ extern char *clear_to_end;
 extern int  screen_length;
 extern int  screen_width;
 
-/* a function that puts a single character on stdout */
-int putstdout();
+void init_termcap __P((int));
+void init_screen __P((void));
+void end_screen __P((void));
+void reinit_screen __P((void));
+void get_screensize __P((void));
+void standout __P((char *));
+void clear __P((void));
+int clear_eol __P((int));
+void go_home __P((void));
+void putstdout __P((int));

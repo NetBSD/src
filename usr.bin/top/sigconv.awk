@@ -18,7 +18,7 @@ BEGIN		{
 				    if (nsig < j) 
 					nsig = j;
 
-				    siglist[j] = sprintf("\"%s\",\t%2d,", \
+				    siglist[j] = sprintf(" { \"%s\",\t%2d },", \
 						substr(str, 4), j);
 				}
 /^#[ \t]*define[ \t][ \t]*SIG[A-Z]/	{
@@ -29,7 +29,7 @@ BEGIN		{
 				    if (nsig < j)
 					nsig = j;
 
-				    siglist[j] = sprintf("\"%s\",\t%2d,", \
+				    siglist[j] = sprintf(" { \"%s\",\t%2d },", \
 						substr(str, 4), j);
 				}
 /^#[ \t]*define[ \t][ \t]*_SIG[A-Z]/	{
@@ -40,7 +40,7 @@ BEGIN		{
 				    if (nsig < j)
 					nsig = j;
 
-				    siglist[j] = sprintf("\"%s\",\t%2d,", \
+				    siglist[j] = sprintf(" { \"%s\",\t%2d },", \
 					    substr(str, 5), j);
 				}
 
@@ -49,5 +49,5 @@ END				{
 					if (siglist[n] != "")
 					    printf("    %s\n", siglist[n]);
 
-				    printf("    NULL,\t 0\n};\n");
+				    printf("    { NULL,\t 0 }\n};\n");
 				}

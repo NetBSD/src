@@ -13,8 +13,9 @@
  *  This file contains various handy utilities used by top.
  */
 
-#include "top.h"
 #include "os.h"
+#include "top.h"
+#include "utils.h"
 
 #include <errno.h>
 
@@ -382,9 +383,6 @@ char *format_time(seconds)
 long seconds;
 
 {
-    register int value;
-    register int digit;
-    register char *ptr;
     static char result[10];
 
     /* sanity protection */
@@ -407,7 +405,7 @@ long seconds;
     {
 	/* standard method produces MMM:SS */
 	/* we avoid printf as must as possible to make this quick */
-	sprintf(result, "%3d:%02d", seconds / 60l, seconds % 60l);
+	sprintf(result, "%3ld:%02ld", seconds / 60l, seconds % 60l);
     }
     return(result);
 }
