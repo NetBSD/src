@@ -1,4 +1,4 @@
-/*	$NetBSD: setruid.c,v 1.10 1998/02/02 06:26:42 perry Exp $	*/
+/*	$NetBSD: setruid.c,v 1.11 1998/02/25 22:57:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setruid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: setruid.c,v 1.10 1998/02/02 06:26:42 perry Exp $");
+__RCSID("$NetBSD: setruid.c,v 1.11 1998/02/25 22:57:22 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,5 +55,5 @@ setruid(ruid)
 	int ruid;
 #endif
 {
-	return (setreuid(ruid, -1));
+	return (setreuid(ruid, (uid_t)-1));
 }
