@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1995/09/18 23:33:42 pk Exp $
+#	$NetBSD: Makefile,v 1.3 1995/09/30 21:43:41 pk Exp $
 
-.PATH:	..
+.PATH:	${.CURDIR}/..
 PROG=	installboot
-NOMAN=1
-BINDIR=/usr/mdec
+MAN=	installboot.8
+BINDIR=/usr/sbin
+
+# XXX - prevent sa clutter
+__stand_makefile_inc=1
 
 .include <bsd.prog.mk>
