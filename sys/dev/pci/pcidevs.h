@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.443 2002/06/10 08:38:28 cjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.444 2002/06/17 14:08:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.438 2002/06/10 08:30:29 cjs Exp 
+ *	NetBSD: pcidevs,v 1.439 2002/06/17 14:07:14 jdolecek Exp 
  */
 
 /*
@@ -2094,9 +2094,10 @@
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233 AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT6102	0x3065		/* VT6102 (Rhine II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233	0x3074		/* VT8233 PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366	0x3099		/* VT8366 (Apollo KT266) CPU-PCI Bridge */
-#define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
+#define	PCI_PRODUCT_VIATECH_VT8653	0x3101		/* VT8653 (Apollo Pro 266T) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8231	0x8231		/* VT8231 IDE Controller */
@@ -2106,6 +2107,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8605AGP	0x8605		/* VT8605 (Apollo ProMedia 133) Host-AGP Bridge */
+#define	PCI_PRODUCT_VIATECH_VT8633AGP	0xb091		/* VT8633 (Apollo Pro 266) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366AGP	0xb099		/* VT8366 CPU-AGP Bridge */
 
 /* Vortex Computer Systems products */
