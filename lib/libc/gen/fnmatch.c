@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.14 1999/03/16 18:13:45 christos Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.15 1999/09/16 11:44:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.14 1999/03/16 18:13:45 christos Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.15 1999/09/16 11:44:56 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: fnmatch.c,v 1.14 1999/03/16 18:13:45 christos Exp $");
  */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <fnmatch.h>
 #include <string.h>
 
@@ -69,6 +71,14 @@ fnmatch(pattern, string, flags)
 {
 	const char *stringstart;
 	char c, test;
+
+	_DIAGASSERT(pattern != NULL);
+	_DIAGASSERT(string != NULL);
+#ifdef _DIAGNOSTIC
+	if (pattern == NULL || string == NULL)
+		return (FNM_NOMATCH + 1);
+			/* per SUS, return non zero but not FNM_NOMATCH */
+#endif
 
 	for (stringstart = string;;)
 		switch (c = *pattern++) {
@@ -151,6 +161,8 @@ rangematch(pattern, test, flags)
 {
 	int negate, ok;
 	char c, c2;
+
+	_DIAGASSERT(pattern != NULL);
 
 	/*
 	 * A bracket expression starting with an unquoted circumflex

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.9 1999/09/16 11:45:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,12 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.9 1999/09/16 11:45:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netns/ns.h>
+
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -61,6 +63,12 @@ ns_addr(name)
 	char separator;
 	char *hostname, *socketname, *cp;
 	char buf[50];
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (zero_addr);
+#endif
 
 	(void)strncpy(buf, name, sizeof(buf) - 1);
 	buf[sizeof(buf) - 1] = '\0';
@@ -111,6 +119,9 @@ Field(buf, out, len)
 	int i, ibase, base16 = 0, base10 = 0, clen = 0;
 	int hb[6], *hp;
 	char *fmt;
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(out != NULL);
 
 	/*
 	 * first try 2-273#2-852-151-014#socket
@@ -216,6 +227,9 @@ cvtbase(oldbase,newbase,input,inlen,result,reslen)
 {
 	int d, e;
 	long sum;
+
+	_DIAGASSERT(input != NULL);
+	_DIAGASSERT(result != NULL);
 
 	e = 1;
 	while (e > 0 && reslen > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfmakeraw.c,v 1.5 1998/08/18 07:51:45 msaitoh Exp $	*/
+/*	$NetBSD: cfmakeraw.c,v 1.6 1999/09/16 11:45:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfmakeraw.c,v 1.5 1998/08/18 07:51:45 msaitoh Exp $");
+__RCSID("$NetBSD: cfmakeraw.c,v 1.6 1999/09/16 11:45:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <stdio.h>
 #include <termios.h>
 
 #ifdef __weak_alias
@@ -57,6 +60,13 @@ void
 cfmakeraw(t)
 	struct termios *t;
 {
+
+	_DIAGASSERT(t != NULL);
+#ifdef _DIAGNOSTIC
+	if (t == NULL)
+		return;
+#endif
+
 	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	t->c_oflag &= ~OPOST;
 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);

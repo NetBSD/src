@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.10 1999/08/17 17:50:27 itojun Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.11 1999/09/16 11:45:14 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.10 1999/08/17 17:50:27 itojun Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.11 1999/09/16 11:45:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -32,10 +32,12 @@ __RCSID("$NetBSD: inet_pton.c,v 1.10 1999/08/17 17:50:27 itojun Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(inet_aton,_inet_aton);
@@ -67,6 +69,16 @@ inet_pton(af, src, dst)
 	const char *src;
 	void *dst;
 {
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || dst == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	switch (af) {
 	case AF_INET:
 		return (inet_pton4(src, dst));
@@ -99,6 +111,9 @@ inet_pton4(src, dst)
 	unsigned char c;
 	u_int parts[4];
 	register u_int *pp = parts;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
 
 	c = *src;
 	for (;;) {
@@ -210,6 +225,9 @@ inet_pton6(src, dst)
 	int ch, saw_xdigit;
 	u_int val;
 
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+
 	memset((tp = tmp), '\0', IN6ADDRSZ);
 	endp = tp + IN6ADDRSZ;
 	colonp = NULL;
@@ -296,6 +314,12 @@ inet_addr(cp)
 {
 	struct in_addr val;
 
+	_DIAGASSERT(cp != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL)
+		return (INADDR_NONE);
+#endif
+
 	if (inet_pton4(cp, (u_char *)(void *)&val.s_addr))
 		return (val.s_addr);
 	return (INADDR_NONE);
@@ -313,5 +337,13 @@ inet_aton(cp, addr)
 	register const char *cp;
 	struct in_addr *addr;
 {
+
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(addr != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL || addr == NULL)
+		return (0);
+#endif
+
 	return inet_pton4(cp, (u_char *)(void *)&addr->s_addr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.12 1998/08/09 22:48:11 wrstuden Exp $	*/
+/*	$NetBSD: memset.c,v 1.13 1999/09/16 11:45:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,18 +41,20 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.12 1998/08/09 22:48:11 wrstuden Exp $");
+__RCSID("$NetBSD: memset.c,v 1.13 1999/09/16 11:45:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <string.h>
+#include <assert.h>
 #include <limits.h>
+#include <string.h>
 #else
 #include <lib/libkern/libkern.h>
 #include <machine/limits.h>
+#define _DIAGASSERT(x)	(void)0
 #endif 
 
 #define	wsize	sizeof(u_int)
@@ -84,6 +86,12 @@ memset(dst0, c0, length)
 	u_int c;
 #endif
 	u_char *dst;
+
+	_DIAGASSERT(dst0 != 0);
+#ifdef _DIAGNOSTIC
+	if (dst0 == 0)
+		RETURN;
+#endif
 
 	dst = dst0;
 	/*

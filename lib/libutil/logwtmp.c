@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.8 1998/12/09 14:35:03 christos Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.9 1999/09/16 11:45:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.8 1998/12/09 14:35:03 christos Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.9 1999/09/16 11:45:51 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: logwtmp.c,v 1.8 1998/12/09 14:35:03 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -60,6 +61,14 @@ logwtmp(line, name, host)
 	struct utmp ut;
 	struct stat buf;
 	int fd;
+
+	_DIAGASSERT(line != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(host != NULL);
+#ifdef _DIAGNOSTIC
+	if (line == NULL || name == NULL || host == NULL)
+		return;
+#endif
 
 	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
 		return;

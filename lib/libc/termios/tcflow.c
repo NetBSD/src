@@ -1,4 +1,4 @@
-/*	$NetBSD: tcflow.c,v 1.4 1997/07/21 14:09:15 jtc Exp $	*/
+/*	$NetBSD: tcflow.c,v 1.5 1999/09/16 11:45:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcflow.c,v 1.4 1997/07/21 14:09:15 jtc Exp $");
+__RCSID("$NetBSD: tcflow.c,v 1.5 1999/09/16 11:45:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/ioctl.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <termios.h>
 #include <unistd.h>
-#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(tcflow,_tcflow);
@@ -58,6 +60,14 @@ tcflow(fd, action)
 {
 	struct termios term;
 	u_char c;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	switch (action) {
 	case TCOOFF:

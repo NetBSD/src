@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
+/*	$NetBSD: descr.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -26,11 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+
 #include <dev/usb/usb.h>
 
 #include "usb.h"
@@ -42,6 +45,14 @@ hid_get_report_desc(fd)
 {
 	struct usb_ctl_report_desc rep;
 	report_desc_t r;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (0);
+	}
+#endif
 
 	rep.size = 0;
 	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) < 0)
@@ -56,8 +67,10 @@ hid_get_report_desc(fd)
 	return (r);
 }
 
-void hid_dispose_report_desc(r)
+void
+hid_dispose_report_desc(r)
 	report_desc_t r;
 {
+
 	free(r);
 }

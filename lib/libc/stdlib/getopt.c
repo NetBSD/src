@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.13 1999/01/09 20:31:07 kleink Exp $	*/
+/*	$NetBSD: getopt.c,v 1.14 1999/09/16 11:45:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.13 1999/01/09 20:31:07 kleink Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.14 1999/09/16 11:45:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -75,6 +78,16 @@ getopt(nargc, nargv, ostr)
 	extern char *__progname;
 	static char *place = EMSG;		/* option letter processing */
 	char *oli;				/* option letter list index */
+
+	_DIAGASSERT(nargv != NULL);
+	_DIAGASSERT(ostr != NULL);
+#ifdef _DIAGNOSTIC
+	if (nargv == NULL || ostr == NULL) {
+		errno = EFAULT;
+		place = EMSG;
+		return (-1);
+	}
+#endif
 
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;

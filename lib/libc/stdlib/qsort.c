@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.10 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: qsort.c,v 1.11 1999/09/16 11:45:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.10 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.11 1999/09/16 11:45:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 
 static __inline char	*med3 __P((char *, char *, char *,
@@ -108,6 +111,15 @@ qsort(a, n, es, cmp)
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;
+
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(cmp != NULL);
+#ifdef _DIAGNOSTIC
+	if (n == 0)
+		return;
+	if (a == NULL || cmp == NULL)
+		return;
+#endif
 
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;

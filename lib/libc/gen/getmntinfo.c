@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.8 1998/02/26 03:08:13 perry Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.9 1999/09/16 11:44:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.8 1998/02/26 03:08:13 perry Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.9 1999/09/16 11:44:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: getmntinfo.c,v 1.8 1998/02/26 03:08:13 perry Exp $");
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -63,6 +66,14 @@ getmntinfo(mntbufp, flags)
 	static struct statfs *mntbuf;
 	static int mntsize;
 	static size_t bufsize;
+
+	_DIAGASSERT(mntbufp != NULL);
+#ifdef _DIAGNOSTIC
+	if (mntbufp == NULL) {
+		errno = EFAULT;
+		return (0);
+	}
+#endif
 
 	if (mntsize <= 0 &&
 	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) < 0)

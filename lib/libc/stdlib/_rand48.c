@@ -1,4 +1,4 @@
-/*	$NetBSD: _rand48.c,v 1.4 1998/01/09 03:15:34 perry Exp $	*/
+/*	$NetBSD: _rand48.c,v 1.5 1999/09/16 11:45:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -12,6 +12,8 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  */
+
+#include <assert.h>
 
 #include "rand48.h"
 
@@ -32,6 +34,12 @@ __dorand48(unsigned short xseed[3])
 {
 	unsigned long accu;
 	unsigned short temp[2];
+
+	_DIAGASSERT(xseed != NULL);
+#ifdef _DIAGNOSTIC
+	if (xseed == NULL)
+		return;
+#endif
 
 	accu = (unsigned long) __rand48_mult[0] * (unsigned long) xseed[0] +
 	 (unsigned long) __rand48_add;

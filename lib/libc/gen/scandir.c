@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.14 1998/11/13 12:31:51 christos Exp $	*/
+/*	$NetBSD: scandir.c,v 1.15 1999/09/16 11:45:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.14 1998/11/13 12:31:51 christos Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.15 1999/09/16 11:45:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,9 @@ __RCSID("$NetBSD: scandir.c,v 1.14 1998/11/13 12:31:51 christos Exp $");
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +86,15 @@ scandir(dirname, namelist, select, dcomp)
 	size_t nitems, arraysz;
 	struct stat stb;
 	DIR *dirp;
+
+	_DIAGASSERT(dirname != NULL);
+	_DIAGASSERT(namelist != NULL);
+#ifdef _DIAGNOSTIC
+	if (dirname == NULL || namelist == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if ((dirp = opendir(dirname)) == NULL)
 		return(-1);
@@ -143,6 +155,10 @@ alphasort(d1, d2)
 	const void *d1;
 	const void *d2;
 {
+
+	_DIAGASSERT(d1 != NULL);
+	_DIAGASSERT(d2 != NULL);
+
 	return(strcmp((*(const struct dirent *const *)d1)->d_name,
 	    (*(const struct dirent *const *)d2)->d_name));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.12 1999/01/19 08:32:34 mycroft Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.13 1999/09/16 11:45:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.12 1999/01/19 08:32:34 mycroft Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.13 1999/09/16 11:45:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: pwcache.c,v 1.12 1999/01/19 08:32:34 mycroft Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <assert.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -92,6 +93,8 @@ st_hash(name, len, tabsz)
 	int tabsz;
 {
 	u_int key = 0;
+
+	_DIAGASSERT(name != NULL);
 
 	while (len--) {
 		key += *name++;
@@ -397,7 +400,7 @@ uid_from_user(name, uid)
 	/*
 	 * return -1 for mangled names
 	 */
-	if (((namelen = strlen(name)) == 0) || (name[0] == '\0'))
+	if (name == NULL || ((namelen = strlen(name)) == 0))
 		return (-1);
 	if ((usrtb == NULL) && (usrtb_start() < 0))
 		return (-1);
@@ -469,7 +472,7 @@ gid_from_group(name, gid)
 	/*
 	 * return -1 for mangled names
 	 */
-	if (((namelen = strlen(name)) == 0) || (name[0] == '\0'))
+	if (name == NULL || ((namelen = strlen(name)) == 0))
 		return (-1);
 	if ((grptb == NULL) && (grptb_start() < 0))
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.12 1999/04/25 14:47:46 lukem Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.13 1999/09/16 11:44:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.12 1999/04/25 14:47:46 lukem Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.13 1999/09/16 11:44:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: getgrouplist.c,v 1.12 1999/04/25 14:47:46 lukem Exp $");
 #include "namespace.h"
 #include <sys/param.h>
 
+#include <assert.h>
 #include <grp.h>
 #include <string.h>
 #include <unistd.h>
@@ -66,6 +67,14 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	struct group *grp;
 	int i, ngroups;
 	int ret, maxgroups;
+
+	_DIAGASSERT(uname != NULL);
+	_DIAGASSERT(groups != NULL);
+	_DIAGASSERT(grpcnt != NULL);
+#ifdef _DIAGNOSTIC
+	if (uname == NULL || groups == NULL || grpcnt == NULL)
+		return (-1);
+#endif
 
 	ret = 0;
 	ngroups = 0;

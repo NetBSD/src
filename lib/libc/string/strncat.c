@@ -1,4 +1,4 @@
-/*	$NetBSD: strncat.c,v 1.7 1998/02/03 18:49:21 perry Exp $	*/
+/*	$NetBSD: strncat.c,v 1.8 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)strncat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncat.c,v 1.7 1998/02/03 18:49:21 perry Exp $");
+__RCSID("$NetBSD: strncat.c,v 1.8 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -57,6 +58,14 @@ strncat(dst, src, n)
 	const char *src;
 	size_t n;
 {
+
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+#ifdef _DIAGNOSTIC
+	if (dst == NULL || src == NULL)
+		return (NULL);
+#endif
+
 	if (n != 0) {
 		char *d = dst;
 		const char *s = src;

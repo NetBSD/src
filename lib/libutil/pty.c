@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.12 1999/07/02 15:49:12 simonb Exp $	*/
+/*	$NetBSD: pty.c,v 1.13 1999/09/16 11:45:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.12 1999/07/02 15:49:12 simonb Exp $");
+__RCSID("$NetBSD: pty.c,v 1.13 1999/09/16 11:45:51 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: pty.c,v 1.12 1999/07/02 15:49:12 simonb Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -74,6 +75,18 @@ openpty(amaster, aslave, name, termp, winp)
 	int master, slave;
 	gid_t ttygid;
 	struct group *gr;
+
+	_DIAGASSERT(amaster != NULL);
+	_DIAGASSERT(aslave != NULL);
+	/* name may be NULL */
+	/* termp may be NULL */
+	/* winp may be NULL */
+#ifdef _DIAGNOSTIC
+	if (amaster == NULL || aslave == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
@@ -123,6 +136,17 @@ forkpty(amaster, name, termp, winp)
 {
 	int master, slave;
 	pid_t pid;
+
+	_DIAGASSERT(amaster != NULL);
+	/* name may be NULL */
+	/* termp may be NULL */
+	/* winp may be NULL */
+#ifdef _DIAGNOSTIC
+	if (amaster == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (openpty(&master, &slave, name, termp, winp) == -1)
 		return (-1);

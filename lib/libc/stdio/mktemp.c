@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.15 1998/07/27 16:39:11 mycroft Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.16 1999/09/16 11:45:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,10 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mktemp.c,v 1.15 1998/07/27 16:39:11 mycroft Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.16 1999/09/16 11:45:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -51,6 +53,15 @@ char *
 _mktemp(path)
 	char *path;
 {
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (NULL);
+	}
+#endif
+
 	return (__gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
 }
 
@@ -61,5 +72,14 @@ char *
 mktemp(path)
 	char *path;
 {
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (NULL);
+	}
+#endif
+
 	return (__gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
 }

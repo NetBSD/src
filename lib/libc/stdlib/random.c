@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.16 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.17 1999/09/16 11:45:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.16 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: random.c,v 1.17 1999/09/16 11:45:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include "reentrant.h"
 
@@ -293,7 +296,15 @@ initstate(seed, arg_state, n)
 	size_t n;			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
-	long *long_arg_state = (long *)(void *)arg_state;
+	long *long_arg_state;
+
+	_DIAGASSERT(arg_state != NULL);
+#ifdef _DIAGNOSTIC
+	if (arg_state == NULL)
+		return (NULL);
+#endif
+
+	long_arg_state = (long *)(void *)arg_state;
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
@@ -358,10 +369,20 @@ char *
 setstate(arg_state)
 	char *arg_state;		/* pointer to state array */
 {
-	long *new_state = (long *)(void *)arg_state;
-	int type = (int)(new_state[0] % MAX_TYPES);
-	int rear = (int)(new_state[0] / MAX_TYPES);
+	long *new_state;
+	int type;
+	int rear;
 	void *ostate = (void *)(&state[-1]);
+
+	_DIAGASSERT(arg_state != NULL);
+#ifdef _DIAGNOSTIC
+	if (arg_state == NULL)
+		return (NULL);
+#endif
+
+	new_state = (long *)(void *)arg_state;
+	type = (int)(new_state[0] % MAX_TYPES);
+	rear = (int)(new_state[0] / MAX_TYPES);
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)

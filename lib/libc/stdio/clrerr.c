@@ -1,4 +1,4 @@
-/*	$NetBSD: clrerr.c,v 1.6 1998/01/19 07:38:41 jtc Exp $	*/
+/*	$NetBSD: clrerr.c,v 1.7 1999/09/16 11:45:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,9 +41,10 @@
 #if 0
 static char sccsid[] = "@(#)clrerr.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: clrerr.c,v 1.6 1998/01/19 07:38:41 jtc Exp $");
+__RCSID("$NetBSD: clrerr.c,v 1.7 1999/09/16 11:45:25 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdio.h>
 #include "reentrant.h"
 
@@ -53,6 +54,12 @@ void
 clearerr(fp)
 	FILE *fp;
 {
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL)
+		return;
+#endif
+
 	FLOCKFILE(fp);
 	__sclearerr(fp);
 	FUNLOCKFILE(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.14 1999/01/15 18:47:49 tsarna Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.15 1999/09/16 11:45:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.14 1999/01/15 18:47:49 tsarna Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.15 1999/09/16 11:45:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <ttyent.h>
-#include <stdio.h>
+
+#include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
+#include <ttyent.h>
 
 #ifdef __weak_alias
 __weak_alias(endttyent,_endttyent);
@@ -65,6 +67,12 @@ getttynam(tty)
 	const char *tty;
 {
 	struct ttyent *t;
+
+	_DIAGASSERT(tty != NULL);
+#ifdef _DIAGNOSTIC
+	if (tty == NULL)
+		return (NULL);
+#endif
 
 	setttyent();
 	while ((t = getttyent()) != NULL)
@@ -166,6 +174,8 @@ skip(p)
 	char *t;
 	int c, q;
 
+	_DIAGASSERT(p != NULL);
+
 	for (q = 0, t = p; (c = *p) != '\0'; p++) {
 		if (c == '"') {
 			q ^= QUOTED;	/* obscure, but nice */
@@ -197,6 +207,8 @@ static char *
 value(p)
 	char *p;
 {
+
+	_DIAGASSERT(p != NULL);
 
 	return ((p = strchr(p, '=')) ? ++p : NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stringlist.c,v 1.5 1997/09/29 06:52:40 enami Exp $	*/
+/*	$NetBSD: stringlist.c,v 1.6 1999/09/16 11:45:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,14 +33,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: stringlist.c,v 1.5 1997/09/29 06:52:40 enami Exp $");
+__RCSID("$NetBSD: stringlist.c,v 1.6 1999/09/16 11:45:05 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <stdio.h>
-#include <string.h>
+
+#include <assert.h>
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stringlist.h>
 
 #ifdef __weak_alias
@@ -58,7 +60,9 @@ __weak_alias(sl_init,_sl_init);
 StringList *
 sl_init()
 {
-	StringList *sl = malloc(sizeof(StringList));
+	StringList *sl;
+
+	sl = malloc(sizeof(StringList));
 	if (sl == NULL)
 		err(1, "stringlist");
 
@@ -79,6 +83,9 @@ sl_add(sl, name)
 	StringList *sl;
 	char *name;
 {
+
+	_DIAGASSERT(sl != NULL);
+
 	if (sl->sl_cur == sl->sl_max - 1) {
 		sl->sl_max += _SL_CHUNKSIZE;
 		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
@@ -121,7 +128,12 @@ sl_find(sl, name)
 {
 	size_t i;
 
+	_DIAGASSERT(sl != NULL);
+
 	for (i = 0; i < sl->sl_cur; i++)
+			/*
+			 * XXX check sl->sl_str[i] != NULL?
+			 */
 		if (strcmp(sl->sl_str[i], name) == 0)
 			return sl->sl_str[i];
 

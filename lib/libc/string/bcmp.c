@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.11 1999/04/01 00:27:49 simonb Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.12 1999/09/16 11:45:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,13 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.11 1999/04/01 00:27:49 simonb Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.12 1999/09/16 11:45:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
+#define _DIAGASSERT(x)	(void)0
 #include <lib/libkern/libkern.h>
 #endif
 
@@ -57,6 +60,13 @@ bcmp(b1, b2, length)
 	size_t length;
 {
 	const char *p1 = b1, *p2 = b2;
+
+	_DIAGASSERT(b1 != 0);
+	_DIAGASSERT(b2 != 0);
+#ifdef _DIAGNOSTIC
+	if (b1 == 0 || b2 == 0)
+		return(0);
+#endif
 
 	if (length == 0)
 		return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcoll.c,v 1.6 1998/01/30 23:38:29 perry Exp $	*/
+/*	$NetBSD: strcoll.c,v 1.7 1999/09/16 11:45:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)strcoll.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcoll.c,v 1.6 1998/01/30 23:38:29 perry Exp $");
+__RCSID("$NetBSD: strcoll.c,v 1.7 1999/09/16 11:45:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -54,6 +55,14 @@ int
 strcoll(s1, s2)
 	const char *s1, *s2;
 {
+
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (s1 == NULL || s2 == NULL)
+		return (0);
+#endif
+
 	/* LC_COLLATE is unimplemented, hence always "C" */
 	return (strcmp(s1, s2));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.4 1999/05/12 00:37:43 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -26,17 +26,29 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include "usb.h"
 
 int
 hid_get_data(void *p, hid_item_t *h)
 {
-	unsigned char *buf = p;
-	unsigned int hpos = h->pos;	/* bit position of data */
-	unsigned int hsize = h->report_size; /* bit length of data */
+	unsigned char *buf;
+	unsigned int hpos;
+	unsigned int hsize;
 	int data;
 	int i, end, offs;
+
+	_DIAGASSERT(p != NULL);
+	_DIAGASSERT(h != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL || h == NULL)
+		return (0);
+#endif
+
+	buf = p;
+	hpos = h->pos;			/* bit position of data */
+	hsize = h->report_size;		/* bit length of data */
 
 	if (hsize == 0)
 		return (0);
@@ -58,10 +70,21 @@ hid_get_data(void *p, hid_item_t *h)
 void
 hid_set_data(void *p, hid_item_t *h, int data)
 {
-	unsigned char *buf = p;
-	unsigned int hpos = h->pos;	/* bit position of data */
-	unsigned int hsize = h->report_size; /* bit length of data */
+	unsigned char *buf;
+	unsigned int hpos;
+	unsigned int hsize;
 	int i, end, offs;
+
+	_DIAGASSERT(p != NULL);
+	_DIAGASSERT(h != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL || h == NULL)
+		return;
+#endif
+
+	buf = p;
+	hpos = h->pos;			/* bit position of data */
+	hsize = h->report_size;		/* bit length of data */
 
 	if (hsize != 32)
 		data &= (1 << hsize) - 1;
@@ -73,4 +96,3 @@ hid_set_data(void *p, hid_item_t *h, int data)
 	for (i = 0; i <= end; i++)
 		buf[offs + i] |= (data >> (i*8)) & 0xff;
 }
-

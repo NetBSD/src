@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.8 1998/10/13 14:19:21 kleink Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.9 1999/09/16 11:45:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.8 1998/10/13 14:19:21 kleink Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.9 1999/09/16 11:45:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #if __STDC__
 #include <stdarg.h>
@@ -71,6 +74,15 @@ snprintf(str, n, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+
+	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(fmt != NULL);
+#ifdef _DIAGNOSTIC
+	if (str == NULL || fmt == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if ((int)n < 1)
 		return (-1);

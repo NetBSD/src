@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.11 1999/01/11 23:31:50 kleink Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.12 1999/09/16 11:45:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,15 +44,16 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "util.h"
 
@@ -79,6 +80,14 @@ ttyaction(tty, act, user)
 	char env_act[64];
 	char env_user[256];
 	int error, linenum, pid, status;
+
+	_DIAGASSERT(tty != NULL);
+	_DIAGASSERT(act != NULL);
+	_DIAGASSERT(user != NULL);
+#ifdef _DIAGNOSTIC
+	if (tty == NULL || act == NULL || user == NULL)
+		return 0;
+#endif
 
 	fp = fopen(actfile, "r");
 	if (fp == NULL)
@@ -155,4 +164,3 @@ ttyaction(tty, act, user)
 	fclose(fp);
 	return status;
 }
-
