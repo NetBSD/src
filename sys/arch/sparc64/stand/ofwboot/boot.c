@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/08/16 23:30:00 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1998/08/23 02:48:28 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -151,10 +151,9 @@ chain(pentry, args, ssym, esym)
 	extern char end[];
 	void (*entry)();
 	int l, machine_tag;
-	int newargs[3];
+	long newargs[3];
 
-	/* FIXME FIXME FIXME */
-	entry = (void*)(int)pentry;
+	entry = (void*)pentry;
 
 	freeall();
 	/*
@@ -184,8 +183,8 @@ chain(pentry, args, ssym, esym)
 	 * we won't pass it in.  Just pass in esym and magic #
 	 */
 	newargs[0] = SPARC_MACHINE_OPENFIRMWARE;
-	newargs[1] = (int)esym;
-	newargs[2] = (int)ssym;
+	newargs[1] = (long)esym;
+	newargs[2] = (long)ssym;
 	args = (char *)newargs;
 	l = sizeof(newargs);
 
@@ -250,7 +249,7 @@ loadfile(fd, args)
 	if (rval)
 		goto err;
 
-	printf(" start=0x%x\n", (int)entry);
+	printf(" start=0x%lx\n", (unsigned long)entry);
 
 	close(fd);
 
@@ -528,7 +527,9 @@ main()
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
 			gets(bootline);
+printf("You said %s\n", bootline);
 			parseargs(bootline, &boothowto);
+printf("parseargs says you said %s\n", bootline);
 		}
 		if ((fd = open(bootline, 0)) >= 0)
 			break;
