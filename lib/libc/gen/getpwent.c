@@ -1,7 +1,7 @@
-/*	$NetBSD: getpwent.c,v 1.65 2004/11/10 12:57:32 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.66 2005/02/28 00:40:05 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.65 2004/11/10 12:57:32 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.66 2005/02/28 00:40:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -833,6 +833,7 @@ _dns_getpwent(void *nsrv, void *nscb, va_list ap)
 			return rv;
 	}
 
+ next_dns_entry:
 	hp = NULL;
 	rv = NS_NOTFOUND;
 
@@ -854,8 +855,10 @@ _dns_getpwent(void *nsrv, void *nscb, va_list ap)
 		if (_pw_parse(hp[0], &_dns_passwd,
 		    _dns_passwdbuf, sizeof(_dns_passwdbuf), 1))
 			rv = NS_SUCCESS;
-		else
-			rv = NS_UNAVAIL;
+		else {				/* dodgy entry, try again */
+			hesiod_free_list(_dns_state.context, hp);
+			goto next_dns_entry;
+		}
 	}
 
 	if (hp)
@@ -1249,6 +1252,7 @@ _nis_getpwent(void *nsrv, void *nscb, va_list ap)
 			return rv;
 	}
 
+ next_nis_entry:
 	key = NULL;
 	data = NULL;
 	rv = NS_NOTFOUND;
@@ -1286,8 +1290,12 @@ _nis_getpwent(void *nsrv, void *nscb, va_list ap)
 	if (_nis_parse(data, &_nis_passwd,
 	    _nis_passwdbuf, sizeof(_nis_passwdbuf), &_nis_state))
 		rv = NS_SUCCESS;
-	else
-		rv = NS_UNAVAIL;
+	else {					/* dodgy entry, try again */
+		if (key)
+			free(key);
+		free(data);
+		goto next_nis_entry;
+	}
 
  nisent_out:
 	if (key)
