@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.1 2005/02/23 01:27:32 christos Exp $	*/
+/*	$NetBSD: rexec.c,v 1.2 2005/02/27 01:34:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rexec.c,v 1.1 2005/02/23 01:27:32 christos Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.2 2005/02/27 01:34:07 christos Exp $");
 
 #include <stdio.h>
 #include <netdb.h>
@@ -51,12 +51,14 @@ int rexec(char **, int, char *, char *, char *, int *);
 int
 main(int argc, char **argv)
 {
-	int c;
+	int c, s;
+	ssize_t nr;
 	struct servent *sv;
 	char *host = __UNCONST("localhost");
 	char *user = __UNCONST("root");
 	char *pass = __UNCONST("h@x0R");
 	char *cmd  = __UNCONST("ls");
+	char line[BUFSIZ];
 
 	while ((c = getopt(argc, argv, "h:u:p:c:")) != -1)
 		switch (c) {
@@ -79,8 +81,12 @@ main(int argc, char **argv)
 	if ((sv = getservbyname("exec", "tcp")) == NULL)
 		errx(1, "Cannot find service exec/tcp");
 
-	if (rexec(&host, sv->s_port, user, pass, cmd, NULL) == -1)
+	if ((s = rexec(&host, sv->s_port, user, pass, cmd, NULL)) == -1)
 		return 1;
+	while ((nr = read(s, line, sizeof(line))) > 0) 
+		(void)write(STDOUT_FILENO, line, nr);
+	if (nr == -1)
+		err(1, "read failed");
 	return 0;
 }
 
