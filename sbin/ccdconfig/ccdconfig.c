@@ -1,7 +1,7 @@
-/*	$NetBSD: ccdconfig.c,v 1.7 1996/06/06 23:34:39 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.8 1997/01/30 04:02:09 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,15 +92,17 @@ static	struct nlist nl[] = {
 #define CCD_UNCONFIG		2	/* unconfigure a device */
 #define CCD_UNCONFIGALL		3	/* unconfigure all devices */
 #define CCD_DUMP		4	/* dump a ccd's configuration */
+#define CCD_STATS		5	/* show a ccd's stats */
 
 static	int checkdev __P((char *));
 static	int do_io __P((char *, u_long, struct ccd_ioctl *));
 static	int do_single __P((int, char **, int));
 static	int do_all __P((int));
-static	int dump_ccd __P((int, char **));
+static	int dump_ccd __P((int, char **, int));
 static	int flags_to_val __P((char *));
 static	int pathtodevt __P((char *, dev_t *));
 static	void print_ccd_info __P((struct ccd_softc *, kvm_t *));
+static	void print_ccd_stats __P((struct ccd_softc *));
 static	char *resolve_ccdname __P((char *));
 static	void usage __P((void));
 
@@ -111,7 +113,7 @@ main(argc, argv)
 {
 	int ch, options = 0, action = CCD_CONFIG;
 
-	while ((ch = getopt(argc, argv, "cCf:gM:N:uUv")) != -1) {
+	while ((ch = getopt(argc, argv, "cCf:gM:N:suUv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = CCD_CONFIG;
@@ -137,6 +139,10 @@ main(argc, argv)
 
 		case 'N':
 			kernel = optarg;
+			break;
+
+		case 's':
+			action = CCD_STATS;
 			break;
 
 		case 'u':
@@ -182,7 +188,8 @@ main(argc, argv)
 			/* NOTREACHED */
 
 		case CCD_DUMP:
-			exit(dump_ccd(argc, argv));
+		case CCD_STATS:
+			exit(dump_ccd(argc, argv, action));
 			/* NOTREACHED */
 	}
 	/* NOTREACHED */
@@ -480,9 +487,10 @@ do_io(path, cmd, cciop)
 }
 
 static int
-dump_ccd(argc, argv)
+dump_ccd(argc, argv, action)
 	int argc;
 	char **argv;
+	int action;
 {
 	char errbuf[_POSIX2_LINE_MAX], *ccd, *cp;
 	struct ccd_softc *cs, *kcs;
@@ -537,7 +545,10 @@ dump_ccd(argc, argv)
 		for (i = 0; i < numccd; ++i)
 			if (cs[i].sc_flags & CCDF_INITED) {
 				++numconfiged;
-				print_ccd_info(&cs[i], kd);
+				if (action == CCD_STATS)
+					print_ccd_stats(&cs[i]);
+				else
+					print_ccd_info(&cs[i], kd);
 			}
 
 		if (numconfiged == 0)
@@ -557,9 +568,12 @@ dump_ccd(argc, argv)
 				warnx("ccd%d not configured", i);
 				continue;
 			}
-			if (cs[i].sc_flags & CCDF_INITED)
-				print_ccd_info(&cs[i], kd);
-			else
+			if (cs[i].sc_flags & CCDF_INITED) {
+				if (action == CCD_STATS)
+					print_ccd_stats(&cs[i]);
+				else
+					print_ccd_info(&cs[i], kd);
+			} else
 				printf("ccd%d not configured\n", i);
 		}
 	}
@@ -628,6 +642,18 @@ print_ccd_info(cs, kd)
 
  done:
 	free(cip);
+}
+
+static void
+print_ccd_stats(cs)
+	struct ccd_softc *cs;
+{
+
+	printf("Statistics for %s:\n", cs->sc_xname);
+	printf("\tfreelist count: %d\n", cs->sc_freecount);
+	printf("\tfreelist hiwater: %d\n", cs->sc_hiwat);
+	printf("\tfreelist misses: %lu\n", cs->sc_nmisses);
+	printf("\tccdbuf allocations: %lu\n", cs->sc_ngetbuf);
 }
 
 static int
@@ -699,6 +725,8 @@ usage()
 	fprintf(stderr, "       %s -u [-v] ccd [...]\n", __progname);
 	fprintf(stderr, "       %s -U [-v] [-f config_file]\n", __progname);
 	fprintf(stderr, "       %s -g [-M core] [-N system] %s\n", __progname,
+	    "[ccd [...]]");
+	fprintf(stderr, "       %s -s [-M core] [-N system] %s\n", __progname,
 	    "[ccd [...]]");
 	exit(1);
 }
