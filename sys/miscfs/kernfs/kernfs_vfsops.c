@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.3 1993/03/27 00:37:09 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.4 1993/03/27 02:00:45 cgd Exp $
  */
 
 /*
@@ -52,7 +52,42 @@
 #include "conf.h"
 #include "miscfs/kernfs/kernfs.h"
 
+/* bring in the spec vnodeops for cdevvp */
+extern struct vnodeops spec_vnodeops;
+
 struct vnode *rrootdevvp;
+
+/*
+ * cdevvp:
+ * get a character device node.
+ * this is used a few places in the miscfs routines.
+ *
+ * copied from the bdevvp in kern/vfs_subr.c
+ */
+cdevvp(dev, vpp)
+	dev_t dev;
+	struct vnode **vpp;
+{
+	register struct vnode *vp;
+	struct vnode *nvp;
+	int error;
+
+	if (dev == NODEV)
+		return (0);
+	error = getnewvnode(VT_NON, (struct mount *)0, &spec_vnodeops, &nvp);
+	if (error) {
+		*vpp = 0;
+		return (error);
+	}
+	vp = nvp;
+	vp->v_type = VCHR;
+	if (nvp = checkalias(vp, dev, (struct mount *)0)) {
+		vput(vp);
+		vp = nvp;
+	}
+	*vpp = vp;
+	return (0);
+}
 
 kernfs_init()
 {
