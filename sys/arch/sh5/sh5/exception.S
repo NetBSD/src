@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.5 2002/08/28 21:05:25 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.6 2002/08/31 08:42:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1180,29 +1180,6 @@ Ltlbmiss_dotrap:
 
 
 
-
-/******************************************************************************
- *
- * void check_softint_loweripl(int newipl)
- *
- * [Note: Do not call directly from C code]
- *
- * Check for pending soft interrupt BEFORE lowering the interrupt priority
- * to "newipl" in r2. Called from splx().
- */
-Lcheck_softint_loweripl:
-	ptabs/l	r18, tr0		/* Return address to tr0 */
-	pta/l	Lcheck_softint_lower, tr1
-	LEA(_C_LABEL(ssir), r0)		/* Get bitmap of pending soft ints */
-	ld.l	r0, 0, r1
-	beq/l	r1, r63, tr0		/* Return if no soft ints pending */
-	pta/u	1f, tr0
-	blink	tr1, r63
-1:	ptabs/l	r18, tr0		/* Return address to tr0 */
-	putcon	r2, sr
-	blink	tr0, r63
-
-
 /******************************************************************************
  *
  * void Lcheck_softint(void)	[Note: Do not call directly from C code]
@@ -1223,23 +1200,17 @@ Lcheck_softint:
 	getcon	sr, r2
 
 Lcheck_softint_lower:
+	pta/u	1f, tr1			/* Preload the exit path */
+	ori	r2, SH5_CONREG_SR_IMASK_ALL, r3
+	putcon	r3, sr			/* Disable interrupts */
 	shlri	r2, SH5_CONREG_SR_IMASK_SHIFT, r3
 	andi	r3, SH5_CONREG_SR_IMASK_MASK, r3	/* current spl to r3 */
+	ld.l	r0, 0, r1		/* Re-fetch ssir */
 	movi	1, r4
 	shlld	r4, r3, r4		/* r4 = 1 << curspl */
 	addi	r4, -1, r4
 	andc	r1, r4, r1		/* r1 &= ~((1 << curspl) - 1) */
-	beq/l	r1, r63, tr0		/* Return if ipl is too high */
-
-	/*
-	 * Disable interrupts and re-check in case we were pre-emted.
-	 */
-	pta/u	1f, tr1
-	ori	r2, SH5_CONREG_SR_IMASK_ALL, r3
-	putcon	r3, sr
-	ld.l	r0, 0, r1		/* Re-fetch softint-pending bitmap */
-	andc	r1, r4, r1		/* r1 &= ~((1 << curspl) - 1) */
-	beq/u	r1, r63, tr1		/* Exit if we were pre-emted */
+	beq/l	r1, r63, tr1		/* Return if ipl is too high */
 
 	/*
 	 * Raise spl to the level of the highest priority pending soft int.
@@ -1264,6 +1235,7 @@ Lcheck_softint_lower:
 	and	r2, r0, r2
 	and	r3, r0, r3
 	blink	tr0, r63
+
 1:	putcon	r2, sr
 	blink	tr0, r63
 
