@@ -368,6 +368,7 @@ AcpiDbLoadTable(
  *
  ******************************************************************************/
 
+#if 0 /* XXX unused -- thorpej@wasabisystems.com */
 ACPI_STATUS
 AeLocalLoadTable (
     ACPI_TABLE_HEADER       *TablePtr)
@@ -410,6 +411,7 @@ AeLocalLoadTable (
 
     return_ACPI_STATUS (Status);
 }
+#endif /* 0 */
 
 
 /*******************************************************************************

@@ -145,7 +145,7 @@
  *
  *****************************************************************************/
 
-void *
+static void *
 AcpiDbGetPointer (
     void                    *Target)
 {
@@ -187,7 +187,7 @@ AcpiDbGetPointer (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbDumpParserDescriptor (
     ACPI_PARSE_OBJECT       *Op)
 {

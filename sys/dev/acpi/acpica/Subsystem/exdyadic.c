@@ -144,7 +144,7 @@
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiExDoConcatenate (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_OPERAND_OBJECT     *ObjDesc2,

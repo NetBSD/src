@@ -165,7 +165,7 @@ ARGUMENT_INFO               AcpiDbStatTypes [] =
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbEnumerateObject (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
@@ -249,7 +249,7 @@ AcpiDbEnumerateObject (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbClassifyOneObject (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
@@ -319,7 +319,7 @@ AcpiDbClassifyOneObject (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbCountNamespaceObjects (
     void)
 {
@@ -363,7 +363,6 @@ AcpiDbDisplayStatistics (
 {
     UINT32                  i;
     UINT32                  Type;
-    UINT32                  Outstanding;
     UINT32                  Size;
 
 

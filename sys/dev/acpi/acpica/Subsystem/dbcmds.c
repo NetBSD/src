@@ -173,7 +173,7 @@ ARGUMENT_INFO         AcpiDbObjectTypes [] =
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbWalkForReferences (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
@@ -756,7 +756,7 @@ AcpiDbSetMethodData (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbWalkForSpecificObjects (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
@@ -880,7 +880,7 @@ AcpiDbDisplayObjects (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbWalkAndMatchName (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,

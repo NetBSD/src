@@ -393,7 +393,7 @@ AcpiExConvertToBuffer (
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiExConvertToAscii (
     ACPI_INTEGER            Integer,
     UINT32                  Base,

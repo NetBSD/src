@@ -296,7 +296,7 @@ const COMMAND_INFO          AcpiGbl_DbCommands[] =
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbDisplayHelp (
     NATIVE_CHAR             *HelpType)
 {
@@ -407,7 +407,7 @@ AcpiDbDisplayHelp (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+static NATIVE_CHAR *
 AcpiDbGetNextToken (
     NATIVE_CHAR             *String,
     NATIVE_CHAR             **Next)
@@ -475,7 +475,7 @@ AcpiDbGetNextToken (
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiDbGetLine (
     NATIVE_CHAR             *InputBuffer)
 {
@@ -530,7 +530,7 @@ AcpiDbGetLine (
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiDbMatchCommand (
     NATIVE_CHAR             *UserCommand)
 {
@@ -923,7 +923,7 @@ AcpiDbExecuteThread (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbSingleThread (
     void)
 {
