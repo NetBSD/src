@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.31 1997/04/07 21:26:19 jeremy Exp $	*/
+/*	$NetBSD: isr.c,v 1.32 1997/04/28 21:48:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ void isr_autovec(cf)
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
 		panic("isr_autovec: bad vec");
-	ipl = vec - 0x18;
+	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n+1;
