@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.156 2003/10/22 02:45:57 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.157 2003/10/22 05:55:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.156 2003/10/22 02:45:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.157 2003/10/22 05:55:54 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -911,14 +911,11 @@ void
 tcp_tcpcb_template(void)
 {
 	struct tcpcb *tp = &tcpcb_template;
-	int flags, i;
+	int flags;
 
 	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
-
-	for (i = 0; i < TCPT_NTIMERS; i++)
-		TCP_TIMER_INIT(tp, i);
 
 	flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)
@@ -953,6 +950,7 @@ tcp_newtcpcb(family, aux)
 	void *aux;
 {
 	struct tcpcb *tp;
+	int i;
 
 	/* XXX Consider using a pool_cache for speed. */
 	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
@@ -963,6 +961,10 @@ tcp_newtcpcb(family, aux)
 	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
+
+	/* XXX Figure out a way to make this a bit less painful. */
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		TCP_TIMER_INIT(tp, i);
 
 	switch (family) {
 	case AF_INET:
