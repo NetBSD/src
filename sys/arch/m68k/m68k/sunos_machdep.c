@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.17 1998/10/25 21:58:25 is Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.18 1999/03/25 00:41:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,6 @@
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
-
-#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

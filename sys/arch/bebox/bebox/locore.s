@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 1998/09/13 09:15:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 1999/03/25 00:41:46 mrg Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "fs_kernfs.h"
 #include "ipkdb.h"
 #include "assym.h"
