@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.45 2004/03/19 12:04:37 wiz Exp $	*/
+/*	$NetBSD: modload.c,v 1.46 2004/06/08 19:25:16 cjep Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.45 2004/03/19 12:04:37 wiz Exp $");
+__RCSID("$NetBSD: modload.c,v 1.46 2004/06/08 19:25:16 cjep Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,9 +122,9 @@ usage(void)
 
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr, "modload [-dfnsSv] "
-	    "[-A <kernel>] [-e <entry>]\n");
+	    "[-A <kernel>] [-e <entry>] [-p <postinstall>]\n");
 	fprintf(stderr,
-	    "        [-p <postinstall>] [-o <output file>] <input file>\n");
+	    "        [-o <output file>] [-T <linker_script>] <input file>\n");
 	exit(1);
 }
 
