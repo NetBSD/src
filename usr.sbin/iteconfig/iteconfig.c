@@ -1,4 +1,4 @@
-/*	$NetBSD: iteconfig.c,v 1.5 1996/06/04 16:27:56 is Exp $	*/
+/*	$NetBSD: iteconfig.c,v 1.6 1997/10/17 09:54:34 lukem Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: iteconfig.c,v 1.6 1997/10/17 09:54:34 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -62,13 +66,14 @@
 
 #include "pathnames.h"
 
+int	initialize __P((char *, struct itewinsize *, struct itebell *,
+			struct itewinsize *, struct itebell *));
+int	main __P((int, char **));
 void	printcmap __P((colormap_t *, int));
-void	usage __P((void));
 void	xioctl __P((int, int, void *));
 colormap_t *xgetcmap __P((int, int));
 long	xstrtol __P((char *));
-int	initialize __P((char *, struct itewinsize *, struct itebell *,
-			struct itewinsize *, struct itebell *));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -89,7 +94,7 @@ main(argc, argv)
 	fd = initialize(_PATH_CONSOLE, &is, &ib, &newis, &newib);
 
 	while ((ch = getopt(argc, argv, "D:H:P:T:V:W:X:Y:d:f:h:ip:t:v:w:x:y:"))
-	    != EOF) {
+	    != -1) {
 		switch (ch) {
 		case 'D':		/* undocumented backward compat */
 		case 'd':
