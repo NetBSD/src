@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.155 2001/12/01 16:17:45 wiz Exp $
+.\"	$NetBSD: options.4,v 1.156 2001/12/05 13:28:54 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1775,6 +1775,17 @@ Enable support for sun4 3-level MMU machines.
 .It Cd options V9
 Enable SPARC V9 assembler in
 .Xr ddb 4 .
+.El
+.Ss sparc64-specific Options
+.Bl -ohang
+.It Cd options AUDIO_DEBUG
+Enable simple event debugging of the logging of the
+.Xr audio 4
+device.
+.It Cd options BLINK
+Enable blinking of LED.  Blink rate is full cycle every N seconds for
+N < then current load average.  See
+.Xr getloadavg 3 .
 .El
 .Ss x68k-specific Options
 .Bl -ohang
