@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1.c,v 1.8 1994/06/14 22:50:48 mycroft Exp $";
+static char *rcsid = "$Id: pass1.c,v 1.9 1994/06/29 11:01:35 ws Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ checkinode(inumber, idesc)
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
-	char symbuf[MAXSYMLINKLEN];
+	char *symbuf;
 
 	dp = getnextinode(inumber);
 	mode = dp->di_mode & IFMT;
@@ -149,9 +149,10 @@ checkinode(inumber, idesc)
 		if (doinglevel2 &&
 		    dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN &&
 		    dp->di_blocks != 0) {
+			symbuf = alloca(secsize);
 			if (bread(fsreadfd, symbuf,
 			    fsbtodb(&sblock, dp->di_db[0]),
-			    (long)dp->di_size) != 0)
+			    (long)secsize) != 0)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.10 1994/06/08 19:00:32 mycroft Exp $";
+static char *rcsid = "$Id: setup.c,v 1.11 1994/06/29 11:01:37 ws Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -223,7 +223,7 @@ setup(dev)
 		sbdirty();
 		dirty(&asblk);
 	}
-	if (asblk.b_dirty) {
+	if (asblk.b_dirty && !bflag) {
 		bcopy((char *)&sblock, (char *)&altsblock,
 			(size_t)sblock.fs_sbsize);
 		flush(fswritefd, &asblk);
