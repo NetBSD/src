@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.450 2004/01/03 13:50:26 lukem Exp $
+# $NetBSD: mi,v 1.451 2004/01/03 14:17:06 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -642,10 +642,10 @@
 ./usr/bin/write		base-util-bin
 ./usr/bin/xargs		base-util-bin
 ./usr/bin/yes		base-util-bin
-./usr/bin/ypcat		base-nis-bin
-./usr/bin/ypmatch	base-nis-bin
-./usr/bin/yppasswd	base-nis-bin
-./usr/bin/ypwhich	base-nis-bin
+./usr/bin/ypcat		base-nis-bin	yp
+./usr/bin/ypmatch	base-nis-bin	yp
+./usr/bin/yppasswd	base-nis-bin	yp
+./usr/bin/ypwhich	base-nis-bin	yp
 ./usr/bin/zcat		base-util-bin
 ./usr/bin/zcmp		base-util-bin
 ./usr/bin/zdiff		base-util-bin
@@ -913,7 +913,7 @@
 ./usr/sbin/lptest		base-lpr-bin
 ./usr/sbin/mailstats		base-mailwrapper-bin	sendmail
 ./usr/sbin/mailwrapper		base-mailwrapper-bin
-./usr/sbin/makedbm		base-nis-bin
+./usr/sbin/makedbm		base-nis-bin	yp
 ./usr/sbin/makefs		base-sysutil-bin
 ./usr/sbin/makemap		base-sendmail-bin	sendmail
 ./usr/sbin/map-mbone		base-netutil-bin
@@ -921,8 +921,8 @@
 ./usr/sbin/mdconfig		base-sysutil-bin
 ./usr/sbin/mdsetimage		base-sysutil-bin
 ./usr/sbin/mk-amd-map		base-amd-bin
-./usr/sbin/mkalias		base-nis-bin
-./usr/sbin/mknetid		base-nis-bin
+./usr/sbin/mkalias		base-nis-bin	yp
+./usr/sbin/mknetid		base-nis-bin	yp
 ./usr/sbin/mld6query		base-netutil-bin
 ./usr/sbin/mlxctl		base-sysutil-bin
 ./usr/sbin/mopa.out			base-obsolete	obsolete
@@ -1004,7 +1004,7 @@
 ./usr/sbin/rdate		base-netutil-bin
 ./usr/sbin/rdconfig			base-obsolete	obsolete
 ./usr/sbin/repquota		base-sysutil-bin
-./usr/sbin/revnetgroup		base-nis-bin
+./usr/sbin/revnetgroup		base-nis-bin	yp
 ./usr/sbin/rip6query		base-netutil-bin
 ./usr/sbin/rmt			base-sysutil-bin
 ./usr/sbin/route6d		base-router-bin
@@ -1012,7 +1012,7 @@
 ./usr/sbin/rpc.lockd		base-nfsserver-bin
 ./usr/sbin/rpc.pcnfsd		base-nfsserver-bin
 ./usr/sbin/rpc.statd		base-nfsserver-bin
-./usr/sbin/rpc.yppasswdd	base-nis-bin
+./usr/sbin/rpc.yppasswdd	base-nis-bin	yp
 ./usr/sbin/rpcbind		base-rpcbind-bin
 ./usr/sbin/rtadvd		base-router-bin
 ./usr/sbin/rtquery		base-netutil-bin
@@ -1034,8 +1034,8 @@
 ./usr/sbin/spray		base-rpcutil-bin
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/statmsg			base-obsolete	obsolete
-./usr/sbin/stdethers		base-nis-bin
-./usr/sbin/stdhosts		base-nis-bin
+./usr/sbin/stdethers		base-nis-bin	yp
+./usr/sbin/stdhosts		base-nis-bin	yp
 ./usr/sbin/sunlabel		base-sysutil-bin
 ./usr/sbin/sup			base-sup-bin
 ./usr/sbin/supfilesrv		base-sup-bin
@@ -1073,14 +1073,14 @@
 ./usr/sbin/wsmuxctl		base-sysutil-bin
 ./usr/sbin/xntpd			base-obsolete	obsolete
 ./usr/sbin/xntpdc			base-obsolete	obsolete
-./usr/sbin/ypbind		base-nis-bin
-./usr/sbin/ypinit		base-nis-bin
-./usr/sbin/yppoll		base-nis-bin
-./usr/sbin/yppush		base-nis-bin
-./usr/sbin/ypserv		base-nis-bin
-./usr/sbin/ypset		base-nis-bin
-./usr/sbin/yptest		base-nis-bin
-./usr/sbin/ypxfr		base-nis-bin
+./usr/sbin/ypbind		base-nis-bin	yp
+./usr/sbin/ypinit		base-nis-bin	yp
+./usr/sbin/yppoll		base-nis-bin	yp
+./usr/sbin/yppush		base-nis-bin	yp
+./usr/sbin/ypserv		base-nis-bin	yp
+./usr/sbin/ypset		base-nis-bin	yp
+./usr/sbin/yptest		base-nis-bin	yp
+./usr/sbin/ypxfr		base-nis-bin	yp
 ./usr/sbin/zdump		base-sysutil-bin
 ./usr/sbin/zic			base-sysutil-bin
 ./usr/share			base-sys-share
