@@ -1,5 +1,5 @@
-/*	$NetBSD: identcpu.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
-/*	NetBSD: identcpu.c,v 1.8 2003/11/20 13:30:29 fvdl Exp 	*/
+/*	$NetBSD: identcpu.c,v 1.1.2.1 2004/05/22 15:59:58 he Exp $	*/
+/*	NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.1.2.1 2004/05/22 15:59:58 he Exp $");
 
 #include "opt_cputype.h"
 
@@ -110,6 +110,7 @@ static const char * const i386_intel_brand[] = {
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
 	"Xeon",		    /* Intel (R) Xeon (TM) processor */
 	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
+	"",		    /* Reserved */
 	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
@@ -298,8 +299,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, "Athlon", "Duron", "Athlon", 0, 0, 0,
-				0, 0, 0, 0,
+				0, "Athlon", "Duron", "Athlon", 0,
+				"Athlon", 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
@@ -661,11 +662,15 @@ intel_family6_name(struct cpu_info *ci)
 				if (ci->ci_signature == 0x6B1)
 					ret = "Celeron";
 				break;
-			case 0x08:
+			case 0x8:
 				if (ci->ci_signature >= 0xF13)
 					ret = "genuine processor";
 				break;
-			case 0x0E:
+			case 0xB:
+				if (ci->ci_signature >= 0xF13)
+					ret = "Xeon MP";
+				break;
+			case 0xE:
 				if (ci->ci_signature < 0xF13)
 					ret = "Xeon";
 				break;
@@ -1113,11 +1118,20 @@ identifycpu(struct cpu_info *ci)
 			ci->cpu_setup = cpufam->cpu_setup;
 			ci->ci_info = cpufam->cpu_info;
 
-			if (vendor == CPUVENDOR_INTEL && family == 6 &&
-			    model >= 5) {
-				const char *tmp = intel_family6_name(ci);
-				if (tmp != NULL)
-					name = tmp;
+			if (vendor == CPUVENDOR_INTEL) {
+				if (family == 6 && model >= 5) {
+					const char *tmp;
+					tmp = intel_family6_name(ci);
+					if (tmp != NULL)
+						name = tmp;
+				}
+				if (family == CPU_MAXFAMILY &&
+				    ci->ci_brand_id <
+				    (sizeof(i386_intel_brand) /
+				     sizeof(i386_intel_brand[0])) &&
+				    i386_intel_brand[ci->ci_brand_id])
+					name =
+					     i386_intel_brand[ci->ci_brand_id];
 			}
 
 			if (vendor == CPUVENDOR_AMD && family == 6 &&
@@ -1141,24 +1155,14 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-#if defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 * XXX this needs to run on the CPU being probed..
-	 */
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		u_int64_t last_tsc;
-
-		last_tsc = rdtsc();
-		delay(100000);
-		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		/* XXX this needs to read the shared_info of the CPU
+		 * being probed.. */
+		ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #ifndef NO_TSC_TIME
 		microtime_func = cc_microtime;
 #endif
 	}
-	/* XXX end XXX */
-#endif
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
