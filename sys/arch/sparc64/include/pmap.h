@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2004/02/26 20:24:29 petrov Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2004/03/14 18:18:54 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -172,18 +172,7 @@ int pmap_count_wired __P((struct pmap *));
 #define	pmap_phys_address(x)		(x)
 
 void pmap_activate_pmap(struct pmap *);
-
-static __inline void
-pmap_update(struct pmap *pmap)
-{
-
-	if (pmap->pm_refs > 0) {
-		return;
-	}
-	pmap->pm_refs = 1;
-	pmap_activate_pmap(pmap);
-}
-
+void pmap_update(struct pmap *);
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define	PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))

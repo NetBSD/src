@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2004/01/06 09:38:19 petrov Exp $ */
+/*	$NetBSD: cpu.h,v 1.43 2004/03/14 18:18:54 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/intr.h>
+#include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/sched.h>
@@ -93,6 +94,7 @@
  */
 
 struct cpu_info {
+
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
 	 * VA (so each CPU can access any other CPU's cpu_info)
@@ -170,10 +172,13 @@ extern struct cpu_bootargs *cpu_args;
 extern int ncpus;
 extern struct cpu_info *cpus;
 
-#define	curcpu()	((struct cpu_info *)CPUINFO_VA)
-
+#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
 #define	cpu_number()	(curcpu()->ci_number)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpus; ci != NULL; \
+					ci = ci->ci_next
 
 #define curlwp		curcpu()->ci_curlwp
 #define fplwp		curcpu()->ci_fplwp

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.10 2004/01/06 09:38:19 petrov Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.11 2004/03/14 18:18:54 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,5 +64,7 @@ int OF_milliseconds (void);
 int OF_searchprop (int node, char *prop, void *buf, int buflen);
 int OF_mapintr(int node, int *interrupt, int validlen, int buflen);
 void* OF_claim __P((void*, u_int, u_int));
+
+int	openfirmware_exit(void *);
 
 #endif /* _SPARC64_OPENFIRM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2003/06/16 20:01:06 thorpej Exp $ */
+/*	$NetBSD: intr.h,v 1.10 2004/03/14 18:18:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SPARC64_INTR_H_
+#define _SPARC64_INTR_H_
+
+#include <machine/cpuset.h>
+
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define	IPL_NONE	0		/* nothing */
 #define	IPL_SOFTINT	1		/* softint */
@@ -52,6 +57,38 @@
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
 #define	IPL_LOCK	PIL_LOCK	/* locks */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
+#define	IPL_HALT	5		/* cpu stop-self */
+#define	IPL_PAUSE	13		/* pause cpu */
+
+/*
+ * Interprocessor interrupts. In order how we want them processed.
+ */
+#define	SPARC64_IPI_HALT	(1UL << 0)
+#define	SPARC64_IPI_PAUSE	(1UL << 1)
+#define	SPARC64_IPI_FLUSH_PTE	(1UL << 2)
+#define	SPARC64_IPI_FLUSH_CTX	(1UL << 3)
+#define	SPARC64_IPI_FLUSH_ALL	(1UL << 4)
+#define	SPARC64_IPI_SAVE_FP	(1UL << 5)
+
+#define SPARC64_NIPIS		6
+
+#if defined(MULTIPROCESSOR)
+void	sparc64_ipi_init __P((void));
+void	sparc64_multicast_ipi __P((cpuset_t, u_long));
+void	sparc64_broadcast_ipi __P((u_long));
+void	sparc64_send_ipi __P((int, u_long));
+void	sparc64_ipi_halt_cpus __P((void));
+void	sparc64_ipi_pause_cpus __P((void));
+void	sparc64_ipi_resume_cpus __P((void));
+#else
+#define	sparc64_ipi_init()		((void)0)
+#define	sparc64_multicast_ipi(set,ipi)	((void)0)
+#define	sparc64_broadcast_ipi(ipi)	((void)0)
+#define	sparc64_send_ipi(cpu,ipi)	((void)0)
+#define	sparc64_ipi_halt_cpus()		((void)0)
+#define	sparc64_ipi_pause_cpus()	((void)0)
+#define	sparc64_ipi_resume_cpus()	((void)0)
+#endif
 
 void *
 softintr_establish __P((int level, void (*fun)(void *), void *arg));
@@ -61,3 +98,5 @@ softintr_disestablish __P((void *cookie));
 
 void
 softintr_schedule __P((void *cookie));
+
+#endif /* _SPARC64_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.20 2004/01/06 09:38:20 petrov Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.20 2004/01/06 09:38:20 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.20 2004/01/06 09:38:20 petrov Exp 
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/kprintf.h>
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -562,6 +563,9 @@ prom_get_msgbuf(len, align)
 }
 
 #ifdef MULTIPROCESSOR
+/*
+ * Start secondary cpu, arrange 'func' as the entry.
+ */
 void
 prom_startcpu(u_int cpu, void *func, u_long arg)
 {
@@ -582,6 +586,26 @@ prom_startcpu(u_int cpu, void *func, u_long arg)
         args.arg = (cell_t)arg;
 
         openfirmware(&args);
+}
+
+/*
+ * Stop the calling cpu.
+ */
+void
+prom_stopself(void)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+	} args;
+
+	args.name = ADR2CELL(&"SUNW,stop-self");
+	args.nargs = 0;
+	args.nreturns = 0;
+
+	openfirmware_exit(&args);
+	panic("sun4u_stopself: failed.");
 }
 #endif
 
@@ -632,15 +656,19 @@ prom_printf(fmt, va_alist)
 	va_dcl
 #endif
 {
-	int len;
+	int s, len;
 	static char buf[256];
 	va_list ap;
+#ifdef MULTIPROCESSOR
+	extern struct simplelock kprintf_slock;
+#endif
 
+	KPRINTF_MUTEX_ENTER(s);
 	va_start(ap, fmt);
 	len = vsprintf(buf, fmt, ap);
 	va_end(ap);
-
 	OF_write(OF_stdout(), buf, len);
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 #ifdef DEBUG

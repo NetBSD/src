@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.30 2002/04/24 23:54:24 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.31 2004/03/14 18:18:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -393,8 +393,11 @@
 #define	IDSR_BUSY	0x01
 
 #define	ASI_INTERRUPT_DISPATCH		0x77	/* [4u] spitfire interrupt dispatch regs */
-#define	IDCR(x)		(((x)<<14)&0x70)	/* Store anything to this address to dispatch crosscall to CPU (x) */
-#define	IDDR_0H		0x40			/* Store data to send in these regs */
+
+/* Interrupt delivery initiation */
+#define	IDCR(x)		((((uint64_t)(x)) << 14) | 0x70)
+
+#define	IDDR_0H		0x40	/* Store data to send in these regs */
 #define	IDDR_0L		0x48	/* unimplemented */
 #define	IDDR_1H		0x50
 #define	IDDR_1L		0x58	/* unimplemented */
