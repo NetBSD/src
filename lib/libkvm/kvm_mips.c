@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mips.c,v 1.7 1997/08/15 02:22:00 mikel Exp $	*/
+/*	$NetBSD: kvm_mips.c,v 1.8 1997/10/20 19:43:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_mips.c,v 1.7 1997/08/15 02:22:00 mikel Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.8 1997/10/20 19:43:26 jonathan Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: kvm_mips.c,v 1.7 1997/08/15 02:22:00 mikel Exp $");
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -145,6 +146,7 @@ _kvm_kvatop(kd, va, pa)
 	}
 
 	/* Compute TLB offsets for the level of mips cpu we're running on */
+	vm = kd->vmst;
 	switch (vm->cpu_arch) {
 	case 1:
 		pgshift = MIPS1_PG_SHIFT;
@@ -163,7 +165,6 @@ _kvm_kvatop(kd, va, pa)
 		return((off_t)0);
 	}
 	
-	vm = kd->vmst;
 	offset = va & PGOFSET;
 	/*
 	 * If we are initializing (kernel segment table pointer not yet set)
