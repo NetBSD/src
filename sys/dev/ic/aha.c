@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.7 1997/08/27 11:24:45 bouyer Exp $	*/
+/*	$NetBSD: aha.c,v 1.8 1997/10/28 18:40:07 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -558,6 +558,9 @@ aha_create_ccbs(sc, mem, size, max_ccbs)
 	if (sc->sc_numccbs >= AHA_CCB_MAX)
 		return (0);
 
+	if (max_ccbs > AHA_CCB_MAX)
+		max_ccbs = AHA_CCB_MAX;
+
 	if ((ccb = mem) != NULL)
 		goto have_mem;
 
@@ -576,14 +579,12 @@ aha_create_ccbs(sc, mem, size, max_ccbs)
 
  have_mem:
 	bzero(ccb, size);
-	while (size > sizeof(struct aha_ccb)) {
+	while (size > sizeof(struct aha_ccb) && sc->sc_numccbs < max_ccbs) {
 		aha_init_ccb(sc, ccb);
-		sc->sc_numccbs++;
-		if (sc->sc_numccbs >= max_ccbs)
-			break;
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
 		(caddr_t)ccb += ALIGN(sizeof(struct aha_ccb));
 		size -= ALIGN(sizeof(struct aha_ccb));
+		sc->sc_numccbs++;
 	}
 
 	return (0);
