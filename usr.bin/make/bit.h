@@ -1,4 +1,4 @@
-/*	$NetBSD: bit.h,v 1.5 1995/11/08 02:30:53 christos Exp $	*/
+/*	$NetBSD: bit.h,v 1.5.2.1 1998/05/08 06:12:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,11 +86,11 @@
 	(!(Bit_IsSet((numBits), (bitArrayPtr))))
 
 #define Bit_Copy(numBits, srcArrayPtr, destArrayPtr) \
-	bcopy((char *)(srcArrayPtr), (char *)(destArrayPtr), \
+	memmove((char *)(destArrayPtr), (char *)(srcArrayPtr), \
 		Bit_NumBytes(numBits))
 
 #define Bit_Zero(numBits, bitArrayPtr) \
-	bzero((char *)(bitArrayPtr), Bit_NumBytes(numBits))
+	memset((char *)(bitArrayPtr), 0, Bit_NumBytes(numBits))
 
 extern int	  Bit_FindFirstSet();
 extern int	  Bit_FindFirstClear();
