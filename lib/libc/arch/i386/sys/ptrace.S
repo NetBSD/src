@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.8 1998/07/01 06:24:25 thorpej Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.9 1998/10/01 19:25:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,12 +40,29 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.8 1998/07/01 06:24:25 thorpej Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.9 1998/10/01 19:25:05 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
+#ifdef _REENTRANT
+	.globl	_C_LABEL(__errno)
+#else
+	.globl	_C_LABEL(errno)
+#endif
+
 ENTRY(ptrace)
+#ifdef _REENTRANT
+#ifdef PIC
+	PIC_PROLOGUE
+	call	PIC_PLT(_C_LABEL(__errno))
+	PIC_EPILOGUE
+#else
+	call	_C_LABEL(__errno)
+#endif /* PIC */
+	xorl	%ecx,%ecx
+	movl	%ecx,(%eax)
+#else
 #ifdef PIC
 	xorl	%eax,%eax
 	PIC_PROLOGUE
@@ -54,7 +71,8 @@ ENTRY(ptrace)
 	movl	%eax,(%edx)
 #else
 	movl	$0,_C_LABEL(errno)
-#endif
+#endif /* PIC */
+#endif /* _REENTRANT */
 	movl	$(SYS_ptrace),%eax
 	int	$0x80
 	jc	err

@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.10 1998/07/01 06:24:25 thorpej Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.11 1998/10/01 19:25:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,16 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.10 1998/07/01 06:24:25 thorpej Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.11 1998/10/01 19:25:05 kleink Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
+
+#ifdef _REENTRANT
+	.globl	_C_LABEL(__errno)
+#else
+	.globl	_C_LABEL(errno)
+#endif
 
 /*
  * pid = vfork();
@@ -61,6 +67,20 @@ ENTRY(vfork)
 	andl	%edx,%eax
 	jmp	%ecx
 err:
+#ifdef _REENTRANT
+	pushl	%ecx
+	pushl	%eax
+#ifdef PIC
+	PIC_PROLOGUE
+	call	PIC_PLT(_C_LABEL(__errno))
+	PIC_EPILOGUE
+#else
+	call	_C_LABEL(__errno)
+#endif /* PIC */
+	popl	%ecx
+	movl	%ecx,(%eax)
+	popl	%ecx
+#else
 #ifdef PIC
 	PIC_PROLOGUE
 	movl	PIC_GOT(_C_LABEL(errno)),%edx
@@ -68,6 +88,7 @@ err:
 	movl	%eax,(%edx)
 #else
 	movl	%eax,_C_LABEL(errno)
-#endif
+#endif /* PIC */
+#endif /* _REENTRANT */
 	movl	$-1,%eax
 	jmp	%ecx
