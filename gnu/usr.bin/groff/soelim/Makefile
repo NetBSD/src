@@ -1,10 +1,10 @@
-# Makefile for tbl
+# Makefile for soelim
 
-PROG=		tbl
-SRCS=		main.cc table.cc
+PROG=		soelim
+SRCS=		soelim.cc
 CFLAGS+=	-I$(.CURDIR)/../include
-LDADD+=		$(LIBGROFF) -lm
-DPADD+=		$(LIBGROFF) $(LIBMATH)
+LDADD+=		$(LIBGROFF)
+DPADD+=		$(LIBGROFF)
 
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
