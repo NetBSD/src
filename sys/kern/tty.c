@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.84 1997/04/04 21:05:00 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.85 1997/04/05 19:50:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -221,9 +221,9 @@ ttyclose(tp)
 }
 
 /* Is 'c' a line delimiter ("break" character)? */
-#define	TTBREAKC(c)							\
-	((c) == '\n' || ((c) == cc[VEOF] ||				\
-	(c) == cc[VEOL] || (((c) == cc[VEOL2]) && (c) != _POSIX_VDISABLE)))
+#define	TTBREAKC(c, lflg)						\
+	((c) == '\n' || ((c) == cc[VEOF] || (c) == cc[VEOL] ||		\
+	((c) == cc[VEOL2] && ISSET(lflg, IEXTEN))) && (c) != _POSIX_VDISABLE))
 
 
 /*
@@ -511,7 +511,7 @@ parmrk:				(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
 			ttyecho(c, tp);
 			goto endcase;
 		}
-		if (TTBREAKC(c)) {
+		if (TTBREAKC(c, lflag)) {
 			tp->t_rocount = 0;
 			catq(&tp->t_rawq, &tp->t_canq);
 			ttwakeup(tp);
@@ -1395,7 +1395,7 @@ read:
 		 * In canonical mode check for a "break character"
 		 * marking the end of a "line of input".
 		 */
-		if (ISSET(lflag, ICANON) && TTBREAKC(c))
+		if (ISSET(lflag, ICANON) && TTBREAKC(c, lflag))
 			break;
 		first = 0;
 	}
