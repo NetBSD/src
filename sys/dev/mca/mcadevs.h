@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.8 2001/03/24 09:48:39 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.9 2001/04/19 07:31:17 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.7 2001/03/24 09:48:11 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.8 2001/04/19 07:30:25 jdolecek Exp 
  */
 
 /*-
@@ -77,6 +77,8 @@
 #define	MCA_PRODUCT_QRAM2	0x76DE	/* Quadmeg PS/Q Memory Adapter */
 #define	MCA_PRODUCT_EVERAM	0x77FB	/* Everex EV-136 4Mb Memory Expansion */
 #define	MCA_PRODUCT_BOCARAM	0x7A7A	/* Boca BOCARAM/2 PLUS Memory Expansion */
+#define	MCA_PRODUCT_IBM_ESDIC	0xDDFF	/* IBM ESDI Fixed Disk Controller */
+#define	MCA_PRODUCT_IBM_ESDIC_IG	0xDF9F	/* IBM Integ. ESDI Fixed Disk & Controller */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */
 #define	MCA_PRODUCT_IBM_MOD	0xEDFF	/* IBM Internal Modem */
 #define	MCA_PRODUCT_IBM_WD_2	0xEFD4	/* IBM PS/2 Adapter/A for Ethernet Networks (UTP) */
