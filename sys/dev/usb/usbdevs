@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.30 1999/06/05 09:54:09 tron Exp $
+$NetBSD: usbdevs,v 1.31 1999/06/05 14:14:02 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
-vendor BROTHER		0x04f9	Brother Industries
+vendor BROTHER		0x04f9	Brother Industries Corp.
 vendor JAZZ		0x04fa	Dallas Semiconductor
 vendor AKS		0x0529	Fast Security AG
 vendor VISION		0x0533	Alcatel Mobile Phones
@@ -147,7 +147,7 @@ product KONICA CAMERA		0x0720	Digital Color Camera
 product SHUTTLE EUSB		0x0001	E-USB Bridge
 
 /* Brother Industries products */
-product	BROTHER HL1050		0x0002	Brother HL-1050 laser printer
+product	BROTHER HL1050		0x0002	HL-1050 laser printer
 
 /* Jazz products */
 product JAZZ J6502		0x4201	J-6502 speakers
