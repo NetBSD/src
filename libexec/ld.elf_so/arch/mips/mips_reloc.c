@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.24 2002/09/13 03:09:38 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.25 2002/09/13 04:09:49 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -217,7 +217,6 @@ _rtld_relocate_nonplt_objects(obj, self)
 				    obj->strtab + def->st_name, obj->path,
 				    (void *)*where, obj->path));
 			} else {
-				/* XXX maybe do something re: bootstrapping? */
 				def = _rtld_find_symdef(symnum, obj, &defobj,
 				    false);
 				if (def == NULL)
