@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.14 2000/06/06 05:40:47 mycroft Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.15 2000/06/06 09:22:01 mycroft Exp $
 
 # System configuration variables:
 #
@@ -64,8 +64,10 @@ SYMLINKS+=	${KDIR} ${INCSDIR}
 
 # make sure the directory is OK, and install includes.
 
+incinstall:: ${DESTDIR}${INCSDIR}
 .PRECIOUS: ${DESTDIR}${INCSDIR}
 .PHONY: ${DESTDIR}${INCSDIR}
+
 ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
@@ -74,14 +76,12 @@ ${DESTDIR}${INCSDIR}:
 		    ${.TARGET}; \
 	fi
 
-incinstall:: ${DESTDIR}${INCSDIR}
-
 .if defined(INCS)
 incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
+.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
 .PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
-.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 
 .for I in ${INCS}
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
@@ -96,10 +96,10 @@ ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I
 
 .if defined(DEPINCS)
 incinstall:: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
+.PRECIOUS: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
 .PHONY: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
-.PRECIOUS: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 
 .for I in ${DEPINCS}
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 

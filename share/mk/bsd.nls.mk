@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.22 2000/06/06 05:40:47 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.23 2000/06/06 09:22:02 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -42,10 +42,10 @@ cleannls:
 	rm -f ${NLSALL}
 
 nlsinstall:: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
+.PRECIOUS: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .if !defined(UPDATE)
 .PHONY: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .endif
-.PRECIOUS: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 
 .for F in ${NLSALL}
 .if !defined(BUILD) && !make(all) && !make(${F})

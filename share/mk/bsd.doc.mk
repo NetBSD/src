@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.46 2000/06/06 05:40:47 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.47 2000/06/06 09:22:00 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -53,10 +53,10 @@ FILES?=${SRCS}
 ALLFILES=Makefile ${FILES} ${EXTRA}
 
 docinstall:: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
+.PRECIOUS: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .if !defined(UPDATE)
 .PHONY: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .endif
-.PRECIOUS: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 
 .for F in ${ALLFILES}
 .if !defined(BUILD) && !make(all) && !make(${F})
