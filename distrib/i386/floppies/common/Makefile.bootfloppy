@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.1 2002/02/03 16:22:21 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.2 2002/02/26 13:27:50 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -76,7 +76,7 @@ boot: ${BOOTCODE}
 	cp ${BOOTCODE} boot
 	${STRIP} boot
 
-release:
+release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
 	
