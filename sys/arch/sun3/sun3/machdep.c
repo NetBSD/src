@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1995/04/22 23:23:58 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1995/04/26 23:25:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -939,7 +939,9 @@ sigreturn(p, uap, retval)
 
 /*
  * Do a sync in preparation for a reboot.
- * XXX - This could probably be common code. -gwr
+ * XXX - This could probably be common code.
+ * XXX - And now, most of it is in vfs_shutdown()
+ * XXX - Put waittime checks in there too?
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void reboot_sync()
@@ -947,37 +949,11 @@ static void reboot_sync()
 	struct buf *bp;
 	int iter, nbusy;
 
+	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
 		return;
 	waittime = 0;
-
-	/* XXX - Should this be spl0() like hp300? -gwr */
-	(void) splnet();
-
-	printf("syncing disks... ");
-	/*
-	 * Release vnodes held by texts before sync.
-	 */
-	if (panicstr == 0)
-		vnode_pager_umount(NULL);
-
-	sync(&proc0, (void *)0, (int *)0);
-	
-	for (iter = 0; iter < 20; iter++) {
-		nbusy = 0;
-		for (bp = &buf[nbuf]; --bp >= buf; )
-			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-				nbusy++;
-		if (nbusy == 0)
-			break;
-		printf("%d ", nbusy);
-		DELAY(40000 * iter);
-	}
-	if (nbusy)
-		printf("giving up\n");
-	else
-		printf("done\n");
-	DELAY(10000);			/* wait for printf to finish */
+	vfs_shutdown();
 }
 
 /*
