@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.c,v 1.4 1994/10/26 21:11:09 cgd Exp $	*/
+/*	$NetBSD: strcpy.c,v 1.5 1995/01/18 06:53:59 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)strcpy.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <pmax/stand/dec_prom.h>
+#include <arch/pmax/stand/dec_prom.h>
 
 char *
 strcpy(s1, s2)

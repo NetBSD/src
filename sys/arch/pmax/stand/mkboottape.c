@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboottape.c,v 1.5 1994/10/26 21:10:57 cgd Exp $	*/
+/*	$NetBSD: mkboottape.c,v 1.6 1995/01/18 06:53:44 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,8 +119,9 @@ rooterr:	err(1, "%s", argv[2]);
 	/*
 	 * Check for exec header and skip to code segment.
 	 */
-	if (read(ifd, &aout, sizeof(aout)) != sizeof(aout) ||
-	    aout.a_magic != OMAGIC) {
+	if (read(ifd, &aout, sizeof(aout)) != sizeof(aout)
+	    || ((N_GETMAGIC (aout) != OMAGIC)
+		&& (aout.a_midmag & 0xffff) != OMAGIC)) {
 		fprintf(stderr, "%s: %s: need old text format (OMAGIC) file\n",
 			__progname, argv[1]);
 		exit(1);
@@ -129,7 +130,9 @@ rooterr:	err(1, "%s", argv[2]);
 	loadAddr = aout.a_entry;
 	execAddr = aout.a_entry;
 	length = aout.a_text + aout.a_data;
+#if 0
 	textoff = N_TXTOFF(aout);
+#endif
 	(void)printf("Input file is a.out format\n");
 	(void)printf("load %x, start %x, len %d\n", loadAddr, execAddr, length);
 
@@ -187,9 +190,11 @@ rooterr:	err(1, "%s", argv[2]);
 		    sizeof(decBootInfo))
 			goto deverr;
 	}
+#if 0
 	/* seek to start of text */
 	if (lseek(ifd, textoff, SEEK_SET) < 0)
 		goto bootferr;
+#endif
 
 	/*
 	 * Write the remaining code to the correct place on the tape.

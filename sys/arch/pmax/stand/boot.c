@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1994/10/26 21:10:49 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1995/01/18 06:53:38 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 #include <sys/exec.h>
 #include <pmax/stand/dec_prom.h>
 
+#include "byteswap.h"
+
 char	line[1024];
 
 /*
@@ -52,7 +54,7 @@ char	line[1024];
  * Argv[0,1] should be something like "boot 5/rz0/vmunix" on a DECstation 5000.
  * The argument "-a" means vmunix should do an automatic reboot.
  */
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -71,22 +73,21 @@ main(argc, argv)
 	cp = *argv;
 	ask = 0;
 #endif /* JUSTASK */
-	for (;;) {
-		if (ask) {
-			printf("Boot: ");
-			gets(line);
-			if (line[0] == '\0')
-				continue;
-			cp = line;
-			argv[0] = cp;
-			argc = 1;
-		} else
-			printf("Boot: %s\n", cp);
-		entry = loadfile(cp);
-		if (entry != -1)
-			break;
-		ask = 1;
-	}
+
+  	printf("Boot: ");
+	if (ask) {
+		gets(line);
+		if (line[0] == '\0')
+			return 0;
+		cp = line;
+		argv[0] = cp;
+		argc = 1;
+	} else
+		printf("%s\n", cp);
+	entry = loadfile(cp);
+	if (entry == -1)
+		return 0;
+
 	printf("Starting at 0x%x\n\n", entry);
 	if (callv == &callvec)
 		((void (*)())entry)(argc, argv, 0, 0);
@@ -112,15 +113,18 @@ loadfile(fname)
 	i = read(fd, (char *)&aout, sizeof(aout));
 	if (i != sizeof(aout)) {
 		goto cerr;
-	} else if (aout.a_magic != OMAGIC) {
+	} else if ((N_GETMAGIC(aout) != OMAGIC)
+		   && (aout.a_midmag & 0xfff) != OMAGIC) {
 		goto cerr;
 	}
 
 	/* read the code and initialized data */
 	printf("Size: %d+%d", aout.a_text, aout.a_data);
+#if 0	/* In an OMAGIC file, we're already there. */
 	if (lseek(fd, (off_t)N_TXTOFF(aout), 0) < 0) {
 		goto cerr;
 	}
+#endif
 	i = aout.a_text + aout.a_data;
 	n = read(fd, (char *)aout.a_entry, i);
 #ifndef SMALL

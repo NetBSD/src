@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.4 1994/10/26 21:11:07 cgd Exp $	*/
+/*	$NetBSD: strcat.c,v 1.5 1995/01/18 06:53:57 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)strcat.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <pmax/stand/dec_prom.h>
+#include <arch/pmax/stand/dec_prom.h>
 
 char *
 strcat(s1, s2)

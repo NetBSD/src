@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1994/10/26 21:11:03 cgd Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 1995/01/18 06:53:54 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,8 @@
  *	@(#)devopen.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand/stand.h>
+#include <lib/libsa/stand.h>
+#include <arch/pmax/stand/dec_prom.h>
 
 /*
  * Decode the string 'fname', open the device and return the remaining
@@ -126,6 +127,14 @@ devopen(f, fname, file)
 	}
 	*ncp = '\0';
 
+#ifdef SMALL
+	if (strcmp (namebuf, "rz")) {
+		printf ("Unknown device: %s\n", namebuf);
+		return ENXIO;
+	}
+	dp = devsw;
+	i = 0;
+#else
 	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
 		if (dp->dv_name && strcmp(namebuf, dp->dv_name) == 0)
 			goto fnd;
@@ -137,6 +146,7 @@ devopen(f, fname, file)
 	return (ENXIO);
 
 fnd:
+#endif
 	rc = (dp->dv_open)(f, ctlr, unit, part);
 	if (rc)
 		return (rc);

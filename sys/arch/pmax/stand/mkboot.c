@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.4 1994/10/26 21:10:56 cgd Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.5 1995/01/18 06:53:42 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.4 1994/10/26 21:10:56 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1995/01/18 06:53:42 mellon Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -193,15 +193,22 @@ GetHeader(bootFID, loadAddr, execAddr, length)
 		return 0;
 	}
 	bytesRead = read(bootFID, (char *)&aout, sizeof(aout));
-	if (bytesRead != sizeof(aout) || aout.a_magic != OMAGIC)
+	if (bytesRead != sizeof(aout)
+	    || (N_GETMAGIC(aout) != OMAGIC &&
+		(aout.a_midmag & 0xffff) != OMAGIC))
 		return 0;
 	*loadAddr = aout.a_entry;
 	*execAddr = aout.a_entry;
 	*length = aout.a_text + aout.a_data;
+#if 0 /* N_TXTOFF(aout) on an OMAGIC file is where we are now. */
 	if (lseek(bootFID, N_TXTOFF(aout), 0) < 0) {
 		perror(bootfname);
 		return 0;
 	}
-	printf("Input file is a.out format\n");
+#endif
+	if (N_GETMAGIC (aout) == OMAGIC)
+		printf("Input file is in NetBSD a.out format.\n");
+	else
+		printf ("Input file is in 4.4BSD mips a.out format.\n");
 	return 1;
 }

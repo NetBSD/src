@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1994/10/26 21:10:50 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1995/01/18 06:53:39 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,14 +38,22 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand/stand.h>
+#include <stand.h>
+#include <dec_prom.h>
 
-const	struct callback *callv;
+const	struct callback *callv = &callvec;
 int	errno;
 
-extern int	nullsys(), nodev(), noioctl();
+extern void	nullsys();
+extern int	nodev(), noioctl();
 
-int	rzstrategy(), rzopen(), rzclose();
+int	rzstrategy(), rzopen();
+#ifdef SMALL
+#define rzclose 0
+#else	/*!SMALL*/
+int	 rzclose();
+#endif	/*!SMALL*/
+
 #define	rzioctl		noioctl
 
 #ifndef BOOT
