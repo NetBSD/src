@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.28 1998/09/27 14:39:11 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.28.8.1 2000/06/27 15:19:39 he Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -418,6 +418,11 @@ ae_nb_card_vendor(bst, bsh, na)
 		}
 		break;
 	case NUBUS_DRSW_APPLE:
+		if (na->drhw == NUBUS_DRHW_ASANTE_LC) {
+			vendor = DP8390_VENDOR_UNKNOWN;
+			break;
+		}
+		/* FALLTHROUGH */
 	case NUBUS_DRSW_DAYNA2:
 	case NUBUS_DRSW_TECHWORKS:
 	case NUBUS_DRSW_TFLLAN:
