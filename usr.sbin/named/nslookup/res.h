@@ -1,4 +1,4 @@
-/*	$NetBSD: res.h,v 1.3 1998/01/09 08:10:10 perry Exp $	*/
+/*	$NetBSD: res.h,v 1.4 1998/10/15 12:34:21 drochner Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -57,7 +57,7 @@
 
 /*
  *	@(#)res.h	5.10 (Berkeley) 6/1/90
- *	$Id: res.h,v 1.3 1998/01/09 08:10:10 perry Exp $
+ *	$Id: res.h,v 1.4 1998/10/15 12:34:21 drochner Exp $
  */
 
 /*
@@ -119,6 +119,7 @@ typedef int Boolean;
  */
 
 #define NAME_LEN 256
+#define NAME_LEN_STR "%255s"	/* for scanf formats */
 
 
 /*
