@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnetd.8,v 1.29 2003/09/07 16:22:22 wiz Exp $
+.\"	$NetBSD: telnetd.8,v 1.30 2004/07/17 18:34:01 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)telnetd.8	8.3 (Berkeley) 3/1/94
 .\"
-.Dd July 14, 2003
+.Dd July 17, 2004
 .Dt TELNETD 8
 .Os
 .Sh NAME
@@ -281,7 +281,7 @@ This option causes
 .Nm
 to refuse connections from addresses that
 cannot be mapped back into a symbolic name via the
-.Xr gethostbyaddr 3
+.Xr getnameinfo 3
 routine.
 .It Fl X Ar authtype
 This option is only valid if
