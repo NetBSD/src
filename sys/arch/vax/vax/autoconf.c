@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2002/03/23 18:13:04 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.72 2002/09/19 17:41:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -339,7 +339,8 @@ booted_sd(struct device *dev, void *aux)
 	    SCSIPI_BUSTYPE_SCSI)
 		return 0; /* ``Cannot happen'' */
 
-	if (sa->sa_periph->periph_target != rpb.unit)
+	if (sa->sa_periph->periph_target != (rpb.unit/100) ||
+	    sa->sa_periph->periph_lun != (rpb.unit % 100))
 		return 0; /* Wrong unit */
 
 	ppdev = dev->dv_parent->dv_parent;
