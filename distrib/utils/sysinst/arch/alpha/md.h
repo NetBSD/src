@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 2003/08/30 13:53:28 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.17 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,9 +44,9 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define	PART_ROOT	A
-#define	PART_RAW	C
-#define	PART_USR	D
+#define	PART_ROOT	PART_A
+#define	PART_RAW	PART_C
+#define	PART_USR	PART_D
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50	/* XXXTHORPEJ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.122 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.123 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -215,13 +215,13 @@ message askunits
 {Change input units (sectors/cylinders/MB)}
 
 message NetBSD_partition_cant_change
-{NetBSD partition - can't change}
+{NetBSD partition}
 
 message Whole_disk_cant_change
-{Whole disk - can't change}
+{Whole disk}
 
 message Boot_partition_cant_change
-{Boot partition - can't change}
+{Boot partition}
 
 message add_another_ptn
 {Add a user defined partition}
@@ -244,18 +244,18 @@ Type enter to continue
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as (Start, End and Size in %s).
-This is your last chance to change it.
+{We now have your BSD-disklabel partitions as: 
+This is your last chance to change them.
 
 }
 
 message fspart_header
-{       Start       End      Size FStype Newfs Mount Mount point
-   --------- --------- --------- ------ ----- ----- -----------
+{   Start %3s   End %3s  Size %3s FS type    Newfs Mount Mount point
+   --------- --------- --------- ---------- ----- ----- -----------
 }
 
 message fspart_row
-{%9d %9d %9d %-6s %-5s %-5s %s}
+{%9d %9d %9d %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions
 {Show all unused partitions}
@@ -412,7 +412,7 @@ message nomount
 a mount point.}
 
 message mountfail
-{mount of device %s on %s failed.
+{mount of device /dev/%s%c on %s failed.
 }
 
 message extractcomplete
@@ -760,12 +760,12 @@ message makedev
 }
 
 message badfs
-{It appears that %s%s is not a BSD file system or the fsck was
+{It appears that /dev/%s%c is not a BSD file system or the fsck was
 not successful.  The upgrade has been aborted.  (Error number %d.)
 }
 
 message badmount
-{Your file system %s%s was not successfully mounted.  Upgrade aborted.}
+{Your file system /dev/%s%c was not successfully mounted.  Upgrade aborted.}
 
 message rootmissing
 { target root is missing %s.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.71 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.72 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -221,13 +221,13 @@ message askunits
 {Changer d'unité (secteurs/cylindres/Mo)}
 
 message NetBSD_partition_cant_change
-{Partition de NetBSD - pas de changement}
+{Partition de NetBSD}
 
 message Whole_disk_cant_change
-{Totalité du disque - pas de changement}
+{Totalité du disque}
 
 message Boot_partition_cant_change
-{Partition de démarrer - pas de changement}
+{Partition de démarrer}
 
 message add_another_ptn
 {Ajouter une nouvelle partition manuellement}
@@ -248,17 +248,17 @@ La taille de la partition a été tronquée à %d %s.
 }
 
 message fspart
-{Vos partitions NetBSD sont les suivantes (taille et décalages en %s) :
+{Vos partitions NetBSD sont les suivantes:
 
 }
 
 message fspart_header
-{       Debut       Fin    Taille   Type Newfs Mount Point de montage
-   --------- --------- --------- ------ ----- ----- ----------------
+{   Debut %3s   Fin %3s Taille %3s Type       Newfs Mount Point de montage
+   --------- --------- ---------- ---------- ----- ----- ----------------
 }
 
 message fspart_row
-{%9d %9d %9d %-6s %-5s %-5s %s}
+{%9d %9d %10d %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions	/* XXX translate */
 {Show all unused partitions}
@@ -421,7 +421,7 @@ ni msdos et ne dispose donc d'aucun point de montage.
 }
 
 message mountfail
-{Le montage de %s sur %s a échoué.
+{Le montage de /dev/%s%c sur %s a échoué.
 }
 
 message extractcomplete
@@ -784,13 +784,13 @@ message makedev
 }
 
 message badfs
-{%s%s n'est pas un système de fichiers BSD ou bien sa vérification
+{/dev/%s%c n'est pas un système de fichiers BSD ou bien sa vérification
 par fsck a rencontré un problème.
 La mise à jour a été interrompue avec un code erreur %d.
 }
 
 message badmount
-{Le système de fichiers %s%s n'a pas été monté correctement.
+{Le système de fichiers /dev/%s%c n'a pas été monté correctement.
 Arrêt de la mise à jour
 }
 

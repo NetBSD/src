@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.9 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.10 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,20 +56,20 @@
 
 /* prototypes */
 
-static void process(struct lookfor *, char *);
-static void match(char *, struct lookfor *, size_t);
+static int process(struct lookfor *, char *);
+static int match(char *, struct lookfor *, size_t);
 static int finddata(struct lookfor *, char *, struct data *, size_t *);
-static char *strndup(char *, size_t);
 
 /*
  * Walk the buffer, call match for each line.
  */
-void
+int
 walk(char *buffer, size_t size, struct lookfor *these, size_t numthese)
 {
 	size_t i = 0;
 	size_t len;
 	int line = 1;
+	int error;
 
 	while (i < size) {
 		/* Ignore zero characters. */
@@ -85,24 +85,28 @@ walk(char *buffer, size_t size, struct lookfor *these, size_t numthese)
 #ifdef DEBUG
 			printf ("%5d: %s\n", line, buffer);
 #endif
-			match(buffer, these, numthese);
+			error = match(buffer, these, numthese);
+			if (error != 0)
+				return error;
 			buffer += len+1;
 			i += len+1;
 			line++;
 		}
 	}
+	return 0;
 }
 
 /*
  * Match the current line with a string of interest.
  * For each match in these, process the match.
  */
-static void
+static int
 match(char *line, struct lookfor *these, size_t numthese)
 {
 	size_t linelen;		/* Line length */
 	size_t patlen;		/* Pattern length */
 	size_t which;		/* Which pattern we are using */
+	int error;
 
 	linelen = strlen(line); 	
 
@@ -110,20 +114,25 @@ match(char *line, struct lookfor *these, size_t numthese)
 		patlen = strlen(these[which].head);
 		if (linelen < patlen)
 			continue;
-		if (strncmp(these[which].head, line, patlen) == 0)
-			process(&these[which], line);
+		if (strncmp(these[which].head, line, patlen) == 0) {
+			error = process(&these[which], line);
+			if (error != 0)
+				return error;
+		}
 	}
+	return 0;
 }
 
 
 /* process the matched line. */
-static void
+static int
 process(struct lookfor *item, char *line)
 {
 	struct data found[MAXDATA];
 	size_t numfound = 0;
 	const char *p;
 	size_t  i, j;
+	int error;
 	
 	if (finddata(item, line, found, &numfound)) {
 #ifdef DEBUG
@@ -157,10 +166,9 @@ process(struct lookfor *item, char *line)
 						= found[i].u.i_val;
 					break;
 				case STR:
-					strncpy(*((char **)item->var+j),
+					strlcpy(*((char **)item->var+j),
 					        found[i].u.s_val,
-						item->size-1);
-					found[i].u.s_val[item->size-1] = 0;
+						item->size);
 					break;
 				}
 				while (isdigit(*p))
@@ -175,10 +183,13 @@ process(struct lookfor *item, char *line)
 			}
 			break;
 		case 'c':  /* Call a function with data. */
-			(*item->func)(found, numfound);
+			error = (*item->func)(found, numfound);
+			if (error != 0)
+				return error;
 			break;
 		}
 	}
+	return 0;
 }
 
 /*
@@ -191,11 +202,11 @@ process(struct lookfor *item, char *line)
 static int
 finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 {
-	const char *fmt = item->fmt;
+	const char *fmt;
 	size_t len;
 
 	*numfound = 0;
-	while (*fmt) {
+	for (fmt = item->fmt; *fmt; fmt++) {
 		if (!*line && *fmt)
 			return 0;
 		if (*fmt == '%') {
@@ -232,49 +243,29 @@ finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 				    && line[len] != fmt[1])
 					len++;
 				found[*numfound].what = STR;
-				found[*numfound].u.s_val = strndup(line, len);
-				if (found[(*numfound)++].u.s_val == NULL) {
-					(void)fprintf(stderr,
-					    "msgwalk: strndup: out of vm.\n");
-					exit(1);
-				}
-				line += len;
+				found[(*numfound)++].u.s_val = line;
+				line[len] = 0;
+				line += len + 1;
 				break;
 			default:
 				return 0;
 			}
-			
-		} else if (*fmt == ' ') {
+			continue;
+
+		}
+		if (*fmt == ' ') {
 			while (*line && isspace(*line))
 				line++;
-		} else if (*line == *fmt) {
-			line++;
-		} else {
-			/* Mis match! */
-			return 0;
+			continue;
 		}
-		fmt++;
+		if (*line == *fmt) {
+			line++;
+			continue;
+		}
+		/* Mis match! */
+		return 0;
 	}
 	
 	/* Ran out of fmt. */
 	return 1;
-}
-
-/*
- * Utility routines.... 
- */
-
-static char *
-strndup(char *str, size_t len)
-{
-	size_t alen;
-	char *val;
-	
-	alen = strlen(str);
-	alen = len < alen ? len + 1 : alen + 1;
-	val = malloc(alen);
-	if (!val)
-		return NULL;
-	strlcpy(val, str, alen);
-	return val;
 }

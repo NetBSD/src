@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.106 2003/11/15 12:53:34 sekiya Exp $	*/
+/*	$NetBSD: defs.h,v 1.107 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,11 +45,18 @@
 #include <sys/types.h>
 #include <sys/disklabel.h>
 extern const char * const fstypenames[];
+extern const char * const mountnames[];
+
+static inline void *
+deconst(const void *p)
+{
+	return (char *)0 + ((const char *)p - (const char *)0);
+}
 
 #include "msg_defs.h"
 
-#define	min(a,b)	((a) < (b) ? (a) : (b))
-#define	max(a,b)	((a) > (b) ? (a) : (b))
+#define min(a,b)	((a) < (b) ? (a) : (b))
+#define max(a,b)	((a) > (b) ? (a) : (b))
 
 /* Define for external varible use */ 
 #ifdef MAIN
@@ -66,8 +73,8 @@ extern const char * const fstypenames[];
 #define SSTRSIZE 30
 
 /* For run.c: collect() */
-#define T_FILE 0
-#define T_OUTPUT 1
+#define T_FILE		0
+#define T_OUTPUT	1
 
 /* run_prog flags */
 #define RUN_DISPLAY	0x0001		/* Display program output */
@@ -75,9 +82,10 @@ extern const char * const fstypenames[];
 #define RUN_CHROOT	0x0004		/* chroot to target disk */
 #define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
 #define RUN_SILENT	0x0010		/* Do not show output */
-#define RUN_DISPLAY_ERR	0x0020		/* Display on error */
+#define RUN_SILENT_ERR	0x0020		/* Remain silent even if cmd fails */
 #define RUN_ERROR_OK	0x0040		/* Don't wait for error confirmation */
 #define RUN_PROGRESS	0x0080		/* Output is just progess test */
+#define RUN_NO_CLEAR	0x0100		/* Leave program output after error */
 
 /* Installation sets */
 #define SET_KERNEL	0x000000ffu	/* allow 8 kernels */
@@ -108,18 +116,18 @@ extern const char * const fstypenames[];
 #define SET_X11_MISC	0x02000000u	/* X11 miscelllaneous */
 
 #define SET_MD		0xf0000000u	/* All machine dependant sets */
-#define	SET_MD_1	0x10000000u	/* Machine dependant set */
-#define	SET_MD_2	0x20000000u	/* Machine dependant set */
-#define	SET_MD_3	0x40000000u	/* Machine dependant set */
-#define	SET_MD_4	0x80000000u	/* Machine dependant set */
+#define SET_MD_1	0x10000000u	/* Machine dependant set */
+#define SET_MD_2	0x20000000u	/* Machine dependant set */
+#define SET_MD_3	0x40000000u	/* Machine dependant set */
+#define SET_MD_4	0x80000000u	/* Machine dependant set */
 
 /* Macros */
 #define nelem(x) (sizeof (x) / sizeof *(x))
 
 /* Round up to the next full cylinder size */
-#define	ROUNDDOWN(n,d) (((n)/(d)) * (d))
-#define	DIVUP(n,d) (((n) + (d) - 1) / (d))
-#define	ROUNDUP(n,d) (DIVUP((n), (d)) * (d))
+#define ROUNDDOWN(n,d) (((n)/(d)) * (d))
+#define DIVUP(n,d) (((n) + (d) - 1) / (d))
+#define ROUNDUP(n,d) (DIVUP((n), (d)) * (d))
 #define NUMSEC(size, sizemult, cylsize) \
 	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
 	 ROUNDUP((size) * (sizemult), (cylsize)))
@@ -144,10 +152,11 @@ typedef struct _partinfo {
 #define pi_frag		pi_partition.p_frag
 #define pi_cpg		pi_partition.p_cpg
 	char	pi_mount[20];
-	uint	pi_isize;		/* bytes per inode */
+	uint	pi_isize;		/* bytes per inode (for # inodes) */
 	uint	pi_flags;
 #define PIF_NEWFS	0x0001		/* need to 'newfs' partition */
-#define PIF_MOUNT	0x0002		/* need to mount partition */
+#define PIF_FFSv2	0x0002		/* newfs with FFSv2, not FFSv1 */
+#define PIF_MOUNT	0x0004		/* need to mount partition */
 #define PIF_ASYNC	0x0010		/* mount -o async */
 #define PIF_NOATIME	0x0020		/* mount -o noatime */
 #define PIF_NODEV	0x0040		/* mount -o nodev */
@@ -202,7 +211,8 @@ EXTERN int current_cylsize;
 EXTERN int root_limit;
 
 /* Information for the NetBSD disklabel */
-enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
+enum DLTR { PART_A, PART_B, PART_C, PART_D, PART_E, PART_F, PART_G, PART_H,
+	    PART_I, PART_J, PART_K, PART_L, PART_M, PART_N, PART_O, PART_P};
 #define partition_name(x)	('a' + (x))
 EXTERN partinfo oldlabel[MAXPARTITIONS];	/* What we found on the disk */
 EXTERN partinfo bsdlabel[MAXPARTITIONS];	/* What we want it to look like */
@@ -218,15 +228,15 @@ EXTERN int  clean_dist_dir INIT(0);
 /* Absolute path name where the distribution should be extracted from. */
 
 #if !defined(SYSINST_FTP_HOST)
-#define	SYSINST_FTP_HOST	"ftp.NetBSD.org"
+#define SYSINST_FTP_HOST	"ftp.NetBSD.org"
 #endif
 
 #if !defined(SYSINST_FTP_DIR)
-#define	SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL "/" MACH
+#define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL "/" MACH
 #endif
 
 #if !defined(SYSINST_CDROM_DIR)
-#define	SYSINST_CDROM_DIR	"/" MACH
+#define SYSINST_CDROM_DIR	"/" MACH
 #endif
 
 EXTERN char ext_dir[STRSIZE] INIT("");
@@ -260,13 +270,6 @@ extern unsigned int sets_valid;
 extern unsigned int sets_selected;
 extern unsigned int sets_installed;
 
-/* Variables for upgrade. */
-#if 0
-#define MAXFS 16
-EXTERN char fs_dev[MAXFS][STRSIZE];
-EXTERN char fs_mount[MAXFS][STRSIZE];
-#endif
-
 /* needed prototypes */
 void set_menu_numopts(int, int);
 
@@ -296,7 +299,7 @@ void	disp_cur_fspart(int, int);
 int	write_disklabel(void);
 int	make_filesystems(void);
 int	make_fstab(void);
-int	fsck_disks(void);
+int	mount_disks(void);
 int	set_swap(const char *, partinfo *);
 int	check_swap(const char *, int);
 
@@ -304,7 +307,6 @@ int	check_swap(const char *, int);
 int	fs_is_lfs(void *);
 
 /* from label.c */
-
 const char *get_last_mounted(int, int);
 void	emptylabel(partinfo *);
 int	savenewlabel(partinfo *, int);
@@ -312,8 +314,9 @@ int	incorelabel(const char *, partinfo *);
 int	edit_and_check_label(partinfo *, int, int, int);
 int	getpartoff(int);
 int	getpartsize(int, int);
-int	set_bsize(partinfo *, int);
-int	set_fsize(partinfo *, int);
+void	set_bsize(partinfo *, int);
+void	set_fsize(partinfo *, int);
+void	set_ptype(partinfo *, int, int, int);
 
 /* from install.c */
 void	do_install(void);
@@ -338,7 +341,7 @@ void	mnt_net_config(void);
 
 /* From run.c */
 int	collect(int, char **, const char *, ...);
-int	run_prog(int, msg, const char *, ...);
+int	run_program(int, const char *, ...);
 void	do_logging(void);
 int	do_system(const char *);
 
@@ -348,7 +351,6 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
-int	askyesno(int);
 int	dir_exists_p(const char *);
 int	file_exists_p(const char *);
 int	file_mode_match(const char *, unsigned int);
@@ -402,7 +404,7 @@ int	cp_to_target(const char *, const char *);
 void	dup_file_into_target(const char *);
 void	mv_within_target_or_die(const char *, const char *);
 int	cp_within_target(const char *, const char *);
-int	target_mount(const char *, const char *, const char *);
+int	target_mount(const char *, const char *, int, const char *);
 int	target_test(unsigned int, const char *);
 int	target_dir_exists_p(const char *);
 int	target_file_exists_p(const char *);
