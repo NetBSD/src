@@ -1,7 +1,7 @@
-/*	$NetBSD: sbpf.c,v 1.5 1997/10/30 16:10:38 mrg Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.6 1998/11/22 15:21:56 mrg Exp $	*/
 
 /*
- * (C)opyright 1995-1997 Darren Reed. (from tcplog)
+ * (C)opyright 1995-1998 Darren Reed. (from tcplog)
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -41,7 +41,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sbpf.c,v 2.0.2.7 1997/10/23 11:42:47 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: sbpf.c,v 2.0.2.7.2.1 1998/11/22 01:51:19 darrenr Exp ";
 #endif
 
 /*
