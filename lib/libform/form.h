@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.8 2001/02/10 14:53:11 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.9 2001/02/16 03:21:35 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -63,7 +63,7 @@ typedef unsigned int Form_Options;
 #define O_AUTOSKIP 0x040  /* Skip to next field when current is full */
 #define O_NULLOK   0x080  /* Field is allowed to contain no data */
 #define O_STATIC   0x100  /* Field is not dynamic */
-#define O_PASSOK   0x200  /* ??? */
+#define O_PASSOK   0x200  /* An umodified field is OK */
 
 /*
  * Form driver requests - be VERY careful about changing the ordering
@@ -284,6 +284,7 @@ void *field_userptr(FIELD *);
 int form_driver(FORM *, int);
 FIELD **form_fields(FORM *);
 Form_Hook form_init(FORM *);
+int form_max_page(FORM *);
 Form_Options form_opts(FORM *);
 int form_opts_off(FORM *, Form_Options);
 int form_opts_on(FORM *, Form_Options);
