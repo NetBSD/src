@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.55 1998/02/07 20:07:37 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.56 1998/02/27 11:46:25 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.49 1998/02/07 20:05:25 augustss Exp 
+ *	NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp 
  */
 
 /*
@@ -780,6 +780,9 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Macronix */
+#define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 100/10base PCI MAC controller */
 
 /* Madge Networks products */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
