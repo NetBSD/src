@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.26 2000/04/10 11:38:16 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.27 2000/04/11 01:32:19 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -852,78 +852,6 @@ outofworld:
 END(mips1_TLBMissException)
 
 
-#if 0
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBWriteIndexed --
- *
- *	Write the given entry into the TLB at the given index.
- *
- *	mips1_TLBWriteIndexed(index, highEntry, lowEntry)
- *		int index;
- *		int highEntry;
- *		int lowEntry;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	TLB entry set.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBWriteIndexed)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
-
-	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
-	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index.
-	mtc0	a1, MIPS_COP_0_TLB_HI		# Set up entry high.
-	mtc0	a2, MIPS_COP_0_TLB_LOW		# Set up entry low.
-	nop
-	tlbwi					# Write the TLB
-
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID.
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBWriteIndexed)
-
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBWriteRandom --
- *
- *	Write the given entry into the TLB at a random location.
- *
- *	mips1_TLBWriteRandom(highEntry, lowEntry)
- *		unsigned highEntry;
- *		unsigned lowEntry;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	TLB entry set.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBWriteRandom)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	v0, MIPS_COP_0_TLB_HI		# Save the current PID.
-	nop
-
-	mtc0	a0, MIPS_COP_0_TLB_HI		# Set up entry high.
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# Set up entry low.
-	nop
-	tlbwr					# Write the TLB
-
-	mtc0	v0, MIPS_COP_0_TLB_HI		# Restore the PID.
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBWriteRandom)
-#endif
-
 /*--------------------------------------------------------------------------
  *
  * mips1_SetPID --
@@ -948,95 +876,6 @@ LEAF(mips1_SetPID)
 	nop
 END(mips1_SetPID)
 
-#if 0
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBFlush --
- *
- *	Flush the "random" entries from the TLB.
- *
- *	mips1_TLBFlush()
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The TLB is flushed.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBFlush)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
-	li	t1, MIPS_KSEG0_START		# invalid address
-	mtc0	t1, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
-/*
- * Align the starting value (t1) and the upper bound (t2).
- */
-	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
-1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
-	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
-	bne	t1, t2, 1b
-	tlbwi					# Write the TLB entry.
-
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBFlush)
-
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBFlushPID --
- *
- *	Flush all entries with the given PID from the TLB.
- *
- *	mips1_TLBFlushPID(pid)
- *		int pid;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	All entries corresponding to this PID are flushed.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBFlushPID)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the current PID
-	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# Align the pid to flush.
-/*
- * Align the starting value (t1) and the upper bound (t2).
- */
-	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register
-1:
-	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
-	tlbr					# Read from the TLB
-	mfc0	t4, MIPS_COP_0_TLB_HI		# Fetch the hi register.
-	nop
-	and	t4, t4, MIPS1_TLB_PID		# compare PIDs
-	bne	t4, a0, 2f
-	li	v0, MIPS_KSEG0_START		# invalid address
-	mtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
-	nop
-	tlbwi					# Write the entry.
-2:
-	bne	t1, t2, 1b
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register
-
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBFlushPID)
-#endif
 
 /*--------------------------------------------------------------------------
  *
@@ -1078,48 +917,6 @@ LEAF(mips1_TLBUpdate)
 	mtc0	v1, MIPS_COP_0_STATUS
 END(mips1_TLBUpdate)
 
-#if 0
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBFind --
- *
- *	Search the TLB for the given entry.
- *
- *	mips1_TLBFind(hi, tlb)
- *		unsigned hi;
- *		struct mips1_tlb *tlb;
- *
- * Results:
- *	Returns a value >= 0 if the entry was found (the index).
- *	Returns a value < 0 if the entry was not found.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBFind)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
-	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# Set up entry high.
-	nop
-	tlbp					# Probe for the entry.
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
-	nop
-	bltz	v0, 1f				# not found
-	nop
-	tlbr					# read TLB
-	mfc0	t1, MIPS_COP_0_TLB_HI		# See what we got
-	mfc0	t2, MIPS_COP_0_TLB_LOW		# See what we got
-	sw	t1, 0(a1)
-	sw	t2, 4(a1)
-	srl	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
-1:
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore current PID
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBFind)
-#endif
-
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBRead --
@@ -1153,30 +950,6 @@ LEAF(mips1_TLBRead)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBRead)
-
-#if 0
-/*--------------------------------------------------------------------------
- *
- * mips1_TLBGetPID --
- *
- *	mips1_TLBGetPID()
- *
- * Results:
- *	Returns the current TLB pid reg.
- *
- * Side effects:
- *	None.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips1_TLBGetPID)
-	mfc0	v0, MIPS_COP_0_TLB_HI		# get PID
-	nop
-	and	v0, v0, MIPS1_TLB_PID		# mask off PID
-	j	ra
-	srl	v0, v0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
-END(mips1_TLBGetPID)
-#endif
 
 /*----------------------------------------------------------------------------
  *
