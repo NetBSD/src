@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.62 2004/07/21 03:16:29 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.63 2004/08/17 02:29:56 ginsbach Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.62 2004/07/21 03:16:29 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.63 2004/08/17 02:29:56 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.62 2004/07/21 03:16:29 itojun Exp $");
 #if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(gethostbyaddr,_gethostbyaddr)
 __weak_alias(gethostbyname,_gethostbyname)
+__weak_alias(gethostent,_gethostent)
 #endif
 
 #define	MAXALIASES	35
@@ -859,7 +860,7 @@ _gethtbyname2(const char *name, int af)
 
 	_DIAGASSERT(name != NULL);
 
-	_sethtent(0);
+	_sethtent(stayopen);
 	ptr = tmpbuf = NULL;
 	num = 0;
 	while ((p = _gethtent()) != NULL && num < MAXADDRS) {
@@ -955,7 +956,7 @@ _gethtbyaddr(void *rv, void *cb_data, va_list ap)
 	host.h_length = len;
 	host.h_addrtype = af;
 
-	_sethtent(0);
+	_sethtent(stayopen);
 	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == af && !memcmp(p->h_addr, addr,
 		    (size_t)len))
@@ -1063,51 +1064,11 @@ addrsort(char **ap, int num, res_state res)
 }
 #endif
 
-#if defined(BSD43_BSD43_NFS) || defined(sun)
-/* XXX: should we remove this cruft? - lukem */
-/* some libc's out there are bound internally to these names (UMIPS) */
-void
-ht_sethostent(int stayopen)
-{
-	_sethtent(stayopen);
-}
-
-void
-ht_endhostent(void)
-{
-	_endhtent();
-}
-
-struct hostent *
-ht_gethostbyname(char *name)
-{
-	return _gethtbyname(name);
-}
-
-struct hostent *
-ht_gethostbyaddr(const char *addr, int len, int af)
-{
-	return _gethtbyaddr(addr, len, af);
-}
-
 struct hostent *
 gethostent(void)
 {
 	return _gethtent();
 }
-
-void
-dns_service(void)
-{
-	return;
-}
-
-int
-dn_skipname(const u_char *comp_dn, const u_char *eom)
-{
-	return __dn_skipname(comp_dn, eom);
-}
-#endif /*old-style libc with yp junk in it*/
 
 /*ARGSUSED*/
 int
