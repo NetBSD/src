@@ -54,9 +54,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#ifdef __bsdi__
 #include <machine/cpu.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
