@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.53 1997/08/15 02:21:56 mikel Exp $	*/
+/*	$NetBSD: kvm.c,v 1.54 1997/10/10 08:45:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.53 1997/08/15 02:21:56 mikel Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.54 1997/10/10 08:45:31 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -446,7 +446,7 @@ fail:
 		kd->cpu_data = NULL;
 		kd->cpu_dsize = 0;
 	}
-
+	return (-1);
 }
 
 /*
