@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1998/11/11 06:43:50 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1998/11/21 20:18:47 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -116,8 +116,8 @@ trap(frame)
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
-				frame->cr = (*fb)[2];
-				bcopy(&(*fb)[3], &frame->fixreg[13],
+				frame->cr = (*fb)[3];
+				bcopy(&(*fb)[4], &frame->fixreg[13],
 				      19 * sizeof(register_t));
 				return;
 			}
