@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.53 2005/01/13 15:01:10 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.54 2005/01/13 17:03:03 jmmv Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -25,6 +25,7 @@ ATAPI	advanced technology attachment packet interface
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
 BEDO	burst extended data output
+BER	basic encoding rules
 BER	bit error rate
 BGP	border gateway protocol
 BIOS	basic input/output system
@@ -85,7 +86,7 @@ EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
 EFM	eight to fourteen modulation
 EGA	enhanced graphics array
-EGP	external gateway protocol
+EGP	exterior gateway protocol
 EISA	extended industry standard architecture
 ELF	executable and linking format
 EPP	enhanced parallel port
@@ -204,7 +205,7 @@ PIC	programmable interrupt controller
 PID	process id
 PIN	personal identification number
 PIO	programmed input/output
-PLL	phase lock loop
+PLL	phase locked loop
 PMT	photo-multiplier tube
 PNG	portable network graphics
 POP	post office protocol
@@ -228,7 +229,7 @@ RCS	revision control system
 RFC	request for comments
 RGB	red green blue
 RIP	routing information protocol
-RIR	regional internet register
+RIR	regional internet registry
 RISC	reduced instruction set computing
 RLE	run length encoding
 RLL	run length limited
