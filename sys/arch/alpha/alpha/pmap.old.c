@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.10 1996/07/11 03:52:16 cgd Exp $	*/
+/*	$NetBSD: pmap.old.c,v 1.11 1996/07/14 20:00:27 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -461,7 +461,7 @@ pmap_unmap_prom()
 	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
 	bzero(Lev1map, kvtol1pte(VM_MIN_KERNEL_ADDRESS) * sizeof Lev1map[0]);
 	prom_mapped = 0;
-	TBIA();
+	ALPHA_TBIA();
 }
 
 /*
@@ -884,7 +884,7 @@ pmap_protect(pmap, sva, eva, prot)
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, bits)) {
 				pmap_pte_set_prot(pte, bits);
 				if (needtflush)
-					TBIS(sva);
+					ALPHA_TBIS(sva);
 #ifdef PMAPSTATS
 				protect_stats.changed++;
 #endif
@@ -1128,7 +1128,7 @@ validate:
 	wired = ((*pte ^ npte) == PG_WIRED);
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
-		TBIS(va);
+		ALPHA_TBIS(va);
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1260,7 +1260,7 @@ void pmap_update()
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_update()\n");
 #endif
-	TBIA();
+	ALPHA_TBIA();
 }
 
 /*
@@ -1717,7 +1717,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 	*pte = PG_NV;
 	if ((flags & PRM_TFLUSH) && active_pmap(pmap))
-		TBIS(va);
+		ALPHA_TBIS(va);
 	/*
 	 * For user mappings decrement the wiring count on
 	 * the PT page.  We do this after the PTE has been
@@ -1844,9 +1844,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * flushing individual mappings as we go.
 		 */
 		if (ptpmap == pmap_kernel())
-			TBIAS();
+			ALPHA_TBIAS();
 		else
-			TBIAU();
+			ALPHA_TBIAU();
 #endif
 		pv->pv_flags &= ~PV_PTPAGE;
 		ptpmap->pm_ptpages--;
@@ -1919,7 +1919,7 @@ pmap_changebit(pa, bit, setem)
 			if (*pte != npte) {
 				*pte = npte;
 				if (active_pmap(pv->pv_pmap))
-					TBIS(va);
+					ALPHA_TBIS(va);
 #ifdef PMAPSTATS
 				if (setem)
 					chgp->sethits++;
@@ -2105,9 +2105,9 @@ pmap_enter_ptpage(pmap, va)
 	 * Flush stale TLB info.
 	 */
 	if (pmap == pmap_kernel())
-		TBIAS();
+		ALPHA_TBIAS();
 	else
-		TBIAU();
+		ALPHA_TBIAU();
 #endif
 	pmap->pm_ptpages++;
 	splx(s);
@@ -2213,7 +2213,7 @@ pmap_emulate_reference(p, v, user, write)
 		printf("warning: pmap_changebit didn't.");
 #endif
 		*pte &= ~faultoff;
-		TBIS(v);
+		ALPHA_TBIS(v);
 	}
 }
 

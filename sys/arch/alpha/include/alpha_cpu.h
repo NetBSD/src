@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.4 1996/07/14 04:12:46 cgd Exp $	*/
+/*	$NetBSD: alpha_cpu.h,v 1.5 1996/07/14 20:00:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -246,11 +246,11 @@ typedef unsigned long alpha_pt_entry_t;
  * Translation Buffer Invalidation definitions [OSF/1 PALcode Specific]
  */
 
-#define	TBIA()		alpha_pal_tbi(-2, 0)		/* all TB entries */
-#define	TBIAP()		alpha_pal_tbi(-1, 0)		/* all per-process */
-#define	TBISI(va)	alpha_pal_tbi(1, (va))		/* ITB entry for va */
-#define	TBISD(va)	alpha_pal_tbi(2, (va))		/* DTB entry for va */
-#define	TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
+#define	ALPHA_TBIA()	alpha_pal_tbi(-2, 0)		/* all TB entries */
+#define	ALPHA_TBIAP()	alpha_pal_tbi(-1, 0)		/* all per-process */
+#define	ALPHA_TBISI(va)	alpha_pal_tbi(1, (va))		/* ITB entry for va */
+#define	ALPHA_TBISD(va)	alpha_pal_tbi(2, (va))		/* DTB entry for va */
+#define	ALPHA_TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
 
 /*
  * Stubs for Alpha instructions normally inaccessible from C.
@@ -276,6 +276,5 @@ void		alpha_pal_wrfen __P((unsigned long));
 void		alpha_pal_wrusp __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
-
 
 #endif __ALPHA_ALPHA_CPU_H__
