@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.190 2003/12/06 23:56:10 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.191 2003/12/07 01:18:26 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.190 2003/12/06 23:56:10 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.191 2003/12/07 01:18:26 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1189,8 +1189,8 @@ ip_freef(fp)
 void
 ip_slowtimo()
 {
-	static unsigned dropscanidx = 0;
-	unsigned i;
+	static u_int dropscanidx = 0;
+	u_int i;
 	struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
