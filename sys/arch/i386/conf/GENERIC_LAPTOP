@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.45 2002/04/12 17:58:17 mycroft Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.46 2002/04/13 02:25:27 mycroft Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	32		# estimated number of users
 
@@ -560,6 +560,15 @@ uaudio*	at uhub? port ? configuration ?
 # USB MIDI
 umidi* at uhub? port ? configuration ?
 
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
@@ -591,6 +600,13 @@ uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+
+# IrDA and Consumer Ir devices
+
+# Toshiba Oboe
+oboe* 	at pci? dev ? function ?
+irframe* at oboe?
 
 
 # Audio Devices
@@ -764,6 +780,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
