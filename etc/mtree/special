@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.77 2004/01/14 10:51:54 jmmv Exp $
+#	$NetBSD: special,v 1.78 2004/02/01 02:32:58 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -150,6 +150,7 @@
 ./etc/rc.d/dmesg		type=file mode=0555
 ./etc/rc.d/downinterfaces	type=file mode=0555
 ./etc/rc.d/fsck			type=file mode=0555
+./etc/rc.d/identd		type=file mode=0555
 ./etc/rc.d/inetd		type=file mode=0555
 ./etc/rc.d/ipfilter		type=file mode=0555
 ./etc/rc.d/ipmon		type=file mode=0555
