@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.68 2000/10/04 16:11:27 sommerfeld Exp $	*/
+/*	$NetBSD: kvm.c,v 1.69 2000/11/16 08:57:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.68 2000/10/04 16:11:27 sommerfeld Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.69 2000/11/16 08:57:15 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -240,6 +240,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
+	kd->arglen = 0;
 	kd->argbuf = 0;
 	kd->argv = 0;
 	kd->vmst = 0;
