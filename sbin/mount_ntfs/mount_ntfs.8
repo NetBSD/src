@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.7 2001/10/31 19:16:36 jdolecek Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.8 2001/10/31 21:04:45 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -137,6 +137,7 @@ read-only.
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr disklabel 8 ,
+.Xr mbrlabel 8 ,
 .Xr mount 8
 .Sh HISTORY
 Support for NTFS first appeared in
@@ -167,4 +168,15 @@ mount_ntfs: /dev/wd0k on /mnt: Invalid argument
 make sure that appropriate partition has correct entry in the
 disk label, particularily that the partition offset is correct.
 If the NTFS partition is the first partition on the fisk, the
-offset should be '63' on i386.
+offset should be '63' on i386 (see
+.Xr disklabel 8 ).
+.Xr mbrlabel 8
+could help you to setup the disk label correctly.
+.Pp
+If you mark the NTFS partition as
+.Ql dynamic
+under Microsoft Windows XP,
+it won't be possible to access it under
+.Nx
+anymore.
+
