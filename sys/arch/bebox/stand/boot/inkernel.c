@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stand.h>
 #include <sys/param.h>
-#include "stand.h"
+#include "boot.h"
 #include "magic.h"
 
 #define	KERNENTRY	(RELOC - 0x200000)
 
+void
 init_in()
 {
 	int p;
@@ -53,10 +55,11 @@ init_in()
 			continue;
 
 		p += sizeof (int) * 3;
-		if (bcmp((char *)p, magic, MAGICSIZE) == 0) {
+		if (memcmp((char *)p, magic, MAGICSIZE) == 0) {
 			kern_len = *(int *)(p + MAGICSIZE);
-			bcopy((char *)(p + MAGICSIZE + KERNLENSIZE),
-				(char *)KERNENTRY, kern_len);
+			memcpy((char *)KERNENTRY,
+				(char *)(p + MAGICSIZE + KERNLENSIZE),
+				kern_len);
 			break;
 		}
 	}
@@ -88,7 +91,7 @@ instrategy(devdata, func, blk, size, buf, rsize)
 	size_t *rsize;	/* bytes transferred */
 {
 
-	bcopy((char *)(KERNENTRY + blk * DEV_BSIZE), buf, size);
+	memcpy(buf, (char *)(KERNENTRY + blk * DEV_BSIZE), size);
 	*rsize = size;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.2 1998/01/19 03:01:04 sakamoto Exp $	*/
+/*	$NetBSD: tgets.c,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,17 +35,19 @@
  *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
-#include "stand.h"
+#include <stand.h>
+#include "boot.h"
 
 int
 tgets(buf)
 	char *buf;
 {
 	register int c;
-	register int i;
 	register char *lp;
 
 #ifdef	USE_SCAN
+	int i;
+
 #define	SCANWAIT	10000
 #define	PWAIT		500
 	for (i = 0; i < PWAIT; i++) {
