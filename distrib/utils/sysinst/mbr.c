@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.62 2004/04/25 21:55:18 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.63 2004/07/17 19:36:59 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -722,11 +722,11 @@ edit_mbr_size(menudesc *m, void *arg)
 				/* Round end to cylinder boundary */
 				if (sizemult != 1) {
 					new *= sizemult;
-					new += ROUNDDOWN(start, bcylsize);
-					new = ROUNDUP(new, bcylsize);
+					new += ROUNDDOWN(start,current_cylsize);
+					new = ROUNDUP(new, current_cylsize);
 					new -= start;
 					while (new <= 0)
-						new += bcylsize;
+						new += current_cylsize;
 				}
 			}
 		}
@@ -1271,8 +1271,10 @@ edit_mbr(mbr_info_t *mbri)
 		return 0;
 
 	/* Ask for sizes, which partitions, ... */
-	sizemult = MEG / sectorsize;
-	ask_sizemult(bcylsize);
+	set_sizemultname_meg();
+	/* ask_sizemult() is due for the chop, when this will be needed */
+	/* current_cylsize = bhead * bsec; */
+	ask_sizemult(bhead * bsec);
 
 	for (;;) {
 		ptstart = 0;
