@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.17 2003/08/07 10:04:31 agc Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.18 2004/03/01 23:01:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.17 2003/08/07 10:04:31 agc Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.18 2004/03/01 23:01:18 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,19 +75,9 @@ portal_tcp(pcr, key, v, kso, fdp)
 	char *p = key + (v[1] ? strlen(v[1]) : 0);
 	char *q;
 	int priv = 0;
-#ifdef INET6
 	struct addrinfo hints, *res, *lres;
 	int so = -1;
 	const char *cause = "unknown";
-#else /* ! INET6 */
-	struct hostent *hp;
-	struct servent *sp;
-	struct in_addr **ipp;
-	struct in_addr *ip[2];
-	struct in_addr ina;
-	int s_port;
-	struct sockaddr_in sain;
-#endif
 
 	q = strchr(p, '/');
 	if (q == 0 || q - p >= sizeof(host))
@@ -114,7 +104,6 @@ portal_tcp(pcr, key, v, kso, fdp)
 		}
 	}
 
-#ifdef INET6
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -149,56 +138,6 @@ portal_tcp(pcr, key, v, kso, fdp)
 		syslog(LOG_WARNING, "%s: %m", cause);
 		
 	freeaddrinfo(res);
-#else /* ! INET6 */
-	if (inet_aton(host, &ina) == 0) {
-		hp = gethostbyname(host);
-		if (hp == 0)
-			return (EINVAL);
-		ipp = (struct in_addr **) hp->h_addr_list;
-	} else {
-		ip[0] = &ina;
-		ip[1] = 0;
-		ipp = ip;
-	}
-
-	sp = getservbyname(port, "tcp");
-	if (sp != 0)
-		s_port = sp->s_port;
-	else {
-		s_port = strtoul(port, &p, 0);
-		if (s_port == 0 || *p != '\0')
-			return (EINVAL);
-		s_port = htons(s_port);
-	}
-
-	memset(&sain, 0, sizeof(sain));
-	sain.sin_len = sizeof(sain);
-	sain.sin_family = AF_INET;
-	sain.sin_port = s_port;
-
-	while (ipp[0]) {
-		int so;
-
-		if (priv)
-			so = rresvport((int *) 0);
-		else
-			so = socket(AF_INET, SOCK_STREAM, 0);
-		if (so < 0) {
-			syslog(LOG_WARNING, "socket: %m");
-			return (errno);
-		}
-
-		sain.sin_addr = *ipp[0];
-		if (connect(so, (struct sockaddr *) &sain,
-		    sizeof(sain)) == 0) {
-			*fdp = so;
-			return (0);
-		}
-		(void) close(so);
-
-		ipp++;
-	}
-#endif /* INET6 */
 
 	return (errno);
 }

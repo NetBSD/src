@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/03/22 12:44:01 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.21 2004/03/01 23:01:18 itojun Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -11,7 +11,6 @@ SUBDIR= examples
 MAN=	mount_portal.8
 
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys
-CPPFLAGS+= -DINET6
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
