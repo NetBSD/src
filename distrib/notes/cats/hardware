@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.3 2002/06/29 10:49:51 lukem Exp $
+.\"	$NetBSD: hardware,v 1.4 2002/06/29 21:39:54 chris Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,8 @@
 .\"
 .
 .Nx*M
-\*V runs on a Chalice CATS systems from and Intel EBSA boards.
+\*V runs on a Chalice CATS systems from Simtec Electronics and Intel EBSA
+boards.
 The minimal configuration is said to
 require 8 MB of RAM and 50 MB of disk space, though we do not know of anyone
 running with a system quite this minimal today.
