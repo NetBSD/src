@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.16 1999/07/21 06:38:49 cgd Exp $	*/
+/*	$NetBSD: forward.c,v 1.17 2001/11/21 06:47:07 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.16 1999/07/21 06:38:49 cgd Exp $");
+__RCSID("$NetBSD: forward.c,v 1.17 2001/11/21 06:47:07 explorer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -249,40 +249,79 @@ rlines(fp, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	off_t size;
+	off_t file_size;
+	off_t file_remaining;
 	char *p;
 	char *start;
+	off_t mmap_size;
+	off_t mmap_offset;
+	off_t mmap_remaining;
 
-	if (!(size = sbp->st_size))
+#define MMAP_MAXSIZE  (10 * 1024 * 1024)
+
+	if (!(file_size = sbp->st_size))
 		return (0);
+	file_remaining = file_size;
 
-	if (size > SIZE_T_MAX) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
-		return (1);
+	if (mmap_size > MMAP_MAXSIZE) {
+		mmap_size = MMAP_MAXSIZE;
+		mmap_offset = file_size - MMAP_MAXSIZE;
+	} else {
+		mmap_size = file_size;
+		mmap_offset = 0;
 	}
 
-	if ((start = mmap(NULL, (size_t)size, PROT_READ,
-	    MAP_FILE|MAP_SHARED, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
-		return (1);
-	}
-
-	/* Last char is special, ignore whether newline or not. */
-	for (p = start + size - 1; --size;)
-		if (*--p == '\n' && !--off) {
-			++p;
-			break;
+	while (off) {
+		start = mmap(NULL, (size_t)mmap_size, PROT_READ,
+			     MAP_FILE|MAP_SHARED, fileno(fp), mmap_offset);
+		if (start == MAP_FAILED) {
+			err(0, "%s: %s", fname, strerror(EFBIG));
+			return (1);
 		}
 
-	/* Set the file pointer to reflect the length displayed. */
-	size = sbp->st_size - size;
-	WR(p, size);
-	if (fseek(fp, (long)sbp->st_size, SEEK_SET) == -1) {
-		ierr();
+		mmap_remaining = mmap_size;
+		/* Last char is special, ignore whether newline or not. */
+		for (p = start + mmap_remaining - 1 ; --mmap_remaining ; )
+			if (*--p == '\n' && !--off) {
+				++p;
+				break;
+			}
+
+		file_remaining -= mmap_size - mmap_remaining;
+
+		if (off == 0)
+			break;
+
+		if (munmap(start, mmap_size)) {
+			err(0, "%s: %s", fname, strerror(errno));
+			return (1);
+		}
+
+		if (mmap_offset >= MMAP_MAXSIZE) {
+			mmap_offset -= MMAP_MAXSIZE;
+		} else {
+			mmap_offset = 0;
+			mmap_size = file_remaining;
+		}
+	}
+
+	/*
+	 * Output the (perhaps partial) data in this mmap'd block.
+	 */
+	WR(p, mmap_size - mmap_remaining);
+	file_remaining += mmap_size - mmap_remaining;
+	if (munmap(start, mmap_size)) {
+		err(0, "%s: %s", fname, strerror(errno));
 		return (1);
 	}
-	if (munmap(start, (size_t)sbp->st_size)) {
-		err(0, "%s: %s", fname, strerror(errno));
+
+	/*
+	 * Set the file pointer to reflect the length displayed.
+	 * This will cause the caller to redisplay the data if/when
+	 * needed.
+	 */
+	if (fseeko(fp, file_remaining, SEEK_SET) == -1) {
+		ierr();
 		return (1);
 	}
 	return (0);
