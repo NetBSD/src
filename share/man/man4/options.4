@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.216 2003/07/04 13:11:14 wiz Exp $
+.\"	$NetBSD: options.4,v 1.217 2003/07/04 13:26:52 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1648,9 +1648,10 @@ The TCP window sizes can be altered via
 as well.
 .It Cd options TCP_INIT_WIN=value
 This option sets the initial TCP window size for non-local connections,
-which is used when the transmission starts. The default size is 1,
-but if the machine should act more aggressive the initial size can be
-set to some other value. The initial TCP window size can be set via
+which is used when the transmission starts.
+The default size is 1, but if the machine should act more aggressive
+the initial size can be set to some other value.
+The initial TCP window size can be set via
 .Xr sysctl 8
 as well.
 .It Cd options PFIL_HOOKS
@@ -1793,13 +1794,15 @@ panic.
 .It Cd options SB_MAX=value
 Sets the max size in bytes that a socket buffer is allowed to occupy.
 The default is 256k, but sometimes it need to be increased, for example
-when using large TCP windows.  This option can be changed via
+when using large TCP windows.
+This option can be changed via
 .Xr sysctl 8
 as well.
 .It Cd options SOMAXKVA=value
 Sets the maximum size of kernel virtual memory that the socket buffers
-are allowed to use. The default is 16MB, but in situations where for
-example large TCP windows are used this value must also be increased.
+are allowed to use.
+The default is 16MB, but in situations where for example large TCP
+windows are used this value must also be increased.
 This option can be changed via
 .Xr sysctl 8
 as well.
@@ -1808,7 +1811,7 @@ Size of the buffer cache as a percentage of total available
 .Tn RAM .
 Ignored if BUFPAGES is also specified.
 .It Cd options NBUF=value
-Sets the number of buffer headers available, i.e. the number of
+Sets the number of buffer headers available, i.e., the number of
 open files that may have a buffer cache entry.
 Each buffer header
 requires MAXBSIZE (machine dependent, but usually 65536) bytes.
@@ -2163,7 +2166,7 @@ N \*[Lt] then current load average.
 See
 .Xr getloadavg 3 .
 .\" .It Cd options COLORFONT_CACHE
-.\" this is totally fucked up.. what does this do?
+.\" What does this do?
 .It Cd options COUNT_SW_LEFTOVERS
 Count how many times the sw SCSI device has left 3, 2, 1 and 0 in the
 sw_3_leftover, sw_2_leftover, sw_1_leftover, and sw_0_leftover
