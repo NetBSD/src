@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.40 2001/06/28 12:55:44 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.45 2003/08/26 03:24:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -703,11 +703,14 @@ pfkey_recv_register(so)
 	int error = -1;
 
 	/* receive message */
-	do {
+	for (;;) {
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
-	} while (newmsg->sadb_msg_type != SADB_REGISTER
-	    || newmsg->sadb_msg_pid != pid);
+		if (newmsg->sadb_msg_type == SADB_REGISTER &&
+		    newmsg->sadb_msg_pid == pid)
+			break;
+		free(newmsg);
+	}
 
 	/* check and fix */
 	newmsg->sadb_msg_len = PFKEY_UNUNIT64(newmsg->sadb_msg_len);
@@ -1759,6 +1762,9 @@ pfkey_align(msg, mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
+#ifdef SADB_X_EXT_TAG
+		case SADB_X_EXT_TAG:
+#endif
 			mhp[ext->sadb_ext_type] = (caddr_t)ext;
 			break;
 		default:
