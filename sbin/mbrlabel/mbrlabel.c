@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.14 2001/02/04 20:08:24 christos Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.15 2001/02/18 03:36:07 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.14 2001/02/04 20:08:24 christos Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.15 2001/02/18 03:36:07 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,15 +52,14 @@ __RCSID("$NetBSD: mbrlabel.c,v 1.14 2001/02/04 20:08:24 christos Exp $");
 #include "dkcksum.h"
 #include "extern.h"
 
-#define	FIRSTPART	0
-
 int	main(int, char **);
 void	usage(void);
 void	getlabel(int);
 void	setlabel(int, int);
-int	getparts(int, int, u_int32_t, u_int32_t, int);
+int	getparts(int, u_int32_t, u_int32_t, int);
 int	nbsdtype(int);
-u_int32_t getlong(void *p);
+u_int16_t	getshort(void *);
+u_int32_t	getlong(void *);
 
 struct disklabel label;
 extern char *__progname;
@@ -122,6 +121,14 @@ nbsdtype(int type)
 	return (FS_OTHER);
 }
 
+u_int16_t
+getshort(void *p)
+{
+	unsigned char *cp = p;
+
+	return (cp[0] | (cp[1] << 8));
+}
+
 u_int32_t
 getlong(void *p)
 {
@@ -131,7 +138,7 @@ getlong(void *p)
 }
 
 int
-getparts(int sd, int np, u_int32_t off, u_int32_t extoff, int verbose)
+getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 {
 	unsigned char		buf[DEV_BSIZE];
 	struct mbr_partition	parts[NMBRPART];
@@ -150,7 +157,7 @@ getparts(int sd, int np, u_int32_t off, u_int32_t extoff, int verbose)
 		perror("read label");
 		exit(1);
 	}
-	if (buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
+	if (getshort(buf + MBR_MAGICOFF) != MBR_MAGIC)
 		return (changed);
 	memcpy(parts, buf + MBR_PARTOFF, sizeof parts);
 
@@ -241,7 +248,7 @@ getparts(int sd, int np, u_int32_t off, u_int32_t extoff, int verbose)
 
 		if (MBR_IS_EXTENDED(parts[i].mbrp_typ)) {
 			poff = getlong(&parts[i].mbrp_start) + extoff;
-			changed += getparts(sd, np, poff,
+			changed += getparts(sd, poff,
 			    extoff ? extoff : poff, verbose);
 		}
 	}
@@ -264,12 +271,12 @@ main(int argc, char **argv)
 	int	force;			/* force label update */
 	int	raw;			/* update on-disk label as well */
 	int	verbose;		/* verbose output */
-	int	write;			/* update in-core label if changed */
+	int	write_it;		/* update in-core label if changed */
 
 	force = 0;
 	raw = 0;
 	verbose = 1;
-	write = 0;
+	write_it = 0;
 	while ((ch = getopt(argc, argv, "fqrw")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -282,7 +289,7 @@ main(int argc, char **argv)
 			raw = 1;
 			break;
 		case 'w':
-			write = 1;
+			write_it = 1;
 			break;
 		default:
 			usage();
@@ -298,14 +305,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	getlabel(sd);
-	changed = getparts(sd, FIRSTPART, MBR_BBSECTOR, 0, verbose);
+	changed = getparts(sd, MBR_BBSECTOR, 0, verbose);
 
 	if (verbose) {
 		putchar('\n');
 		showpartitions(stdout, &label, 0);
 		putchar('\n');
 	}
-	if (write) {
+	if (write_it) {
 		if (! changed && ! force)
 			printf("No change; not updating disk label.\n");
 		else {
