@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.87 1996/03/27 00:48:50 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.88 1996/03/27 01:11:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -194,7 +194,7 @@ cdattach(parent, self, aux)
 #endif
   
 	/*
-	 * Note if this device is ancient.  This is used in sdminphys().
+	 * Note if this device is ancient.  This is used in cdminphys().
 	 */
 	if ((sa->sa_inqbuf->version & SID_ANSII) == 0)
 		cd->flags |= CDF_ANCIENT;
