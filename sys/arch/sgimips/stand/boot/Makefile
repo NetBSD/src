@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/11/11 06:30:39 sekiya Exp $
+#	$NetBSD: Makefile,v 1.7 2003/11/13 08:01:17 sekiya Exp $
 
 PROG=	boot
 
@@ -10,26 +10,25 @@ STRIPFLAG=
 SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 	getopt.c disk.c
 
-${PROG}: ${PROG}.elf ${PROG}.ip32
-	${ELF2ECOFF} ${PROG}.elf ${PROG}
-	@${SIZE} ${PROG}
+${PROG}: ip2x${PROG} ip3x${PROG}
+	${ELF2ECOFF} ip2x${PROG} aout${PROG}
 
 # XXX Temporary hack to install the ELF verision, too.
-FILES+=		${PROG}.elf ${PROG}.ip32
-CLEANFILES+=	${PROG}.elf ${PROG}.ip32
+FILES+=		ip2x${PROG} ip3x${PROG}
+CLEANFILES+=	ip2x${PROG} ip3x${PROG}
 
 CLEANFILES+=	${PROG}.map
 
 .include "../Makefile.booters"
 
-${PROG}.ip32: ${OBJS} ${LIBS}
+ip3x${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
-	    -e start -o ${PROG}.ip32 ${OBJS} ${LIBS}
-	@${STRIP} -s ${PROG}.ip32
-	@${SIZE} ${PROG}.ip32
+	    -e start -o ip3x${PROG} ${OBJS} ${LIBS}
+	@${STRIP} -s ip3x${PROG}
+	@${SIZE} ip3x${PROG}
 
-${PROG}.elf: ${OBJS} ${LIBS}
+ip2x${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${PROG}.elf ${OBJS} ${LIBS}
-	@${STRIP} -s ${PROG}.elf
-	@${SIZE} ${PROG}.elf
+	    -e start -o ip2x${PROG} ${OBJS} ${LIBS}
+	@${STRIP} -s ip2x${PROG}
+	@${SIZE} ip2x${PROG}
