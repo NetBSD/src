@@ -1,4 +1,4 @@
-/*	$NetBSD: vfslist.h,v 1.2 2003/08/07 10:04:26 agc Exp $	*/
+/*	$NetBSD: vfslist.h,v 1.3 2004/04/21 15:21:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -29,5 +29,5 @@
  * SUCH DAMAGE.
  */
 
-int checkvfsname __P((const char *, const char **));
-const char **makevfslist __P((char *));
+int checkvfsname(const char *, const char **);
+const char **makevfslist(char *);
