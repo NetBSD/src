@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.69 2000/03/27 12:33:58 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.70 2000/03/29 01:45:20 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -695,6 +695,7 @@ usbd_setup_pipe(dev, iface, ep, ival, pipe)
 	p->refcnt = 1;
 	p->intrxfer = 0;
 	p->running = 0;
+	p->aborting = 0;
 	p->repeat = 0;
 	p->interval = ival;
 	SIMPLEQ_INIT(&p->queue);
