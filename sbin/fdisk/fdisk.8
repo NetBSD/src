@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.21 1999/10/11 01:04:57 hubertf Exp $
+.\"	$NetBSD: fdisk.8,v 1.22 2000/06/07 22:40:59 augustss Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -83,6 +83,7 @@ The various fields in each partition are:
 is used to label the partition.
 .Nx
 reserves the magic number 169 decimal (A9 in hex).
+The number 0 is used to mark a partition as unused.
 .It Xo
 .Em start ,
 .Em size
