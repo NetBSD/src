@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.569 2003/08/26 17:25:32 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.570 2003/08/26 21:02:22 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.569 2003/08/26 17:25:00 tron Exp 
+ *	NetBSD: pcidevs,v 1.570 2003/08/26 21:01:35 jdolecek Exp 
  */
 
 /*
@@ -2300,6 +2300,7 @@
 /* Schneider & Koch (really SysKonnect) products */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI	0x4000		/* SK-NET FDDI-xP */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE	0x4300		/* SK-NET GE */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2	0x4320		/* SK-9821 v2.0 */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1	0x4400		/* SK-NET SK-9DX1 Gigabit Ethernet */
 /* These next two are are really subsystem IDs */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21	0x4421		/* SK-9D21 1000BASE-T */
