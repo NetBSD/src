@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: prog_setup.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
+RCSID("$Id: prog_setup.c,v 1.2 2000/08/06 17:59:15 thorpej Exp $");
 
 void
 krb5_std_usage(int code, struct getargs *args, int num_args)
@@ -48,13 +48,20 @@ krb5_program_setup(krb5_context *context, int argc, char **argv,
 		   struct getargs *args, int num_args, 
 		   void (*usage)(int, struct getargs*, int))
 {
+    krb5_error_code err;
     int optind = 0;
 
     if(usage == NULL)
 	usage = krb5_std_usage;
 
     set_progname(argv[0]);
-    krb5_init_context(context);
+    err = krb5_init_context(context);
+    if (err != 0) {
+	fprintf(stderr,
+	  "krb5_program_setup: error %d while trying to init context\n", err);
+	exit (1);
+    }
+	    
     
     if(getarg(args, num_args, argc, argv, &optind))
 	(*usage)(1, args, num_args);
