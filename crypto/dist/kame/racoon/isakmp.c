@@ -186,6 +186,18 @@ isakmp_handler(so_isakmp)
 		goto end;
 	}
 
+	/* reject it if the size is tooooo big. */
+	if (ntohl(isakmp.len) > 0xffff) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"the length of the isakmp header is too big.\n");
+		if ((len = recvfrom(so_isakmp, (char *)&isakmp, sizeof(isakmp),
+			    0, (struct sockaddr *)&remote, &remote_len)) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to receive isakmp packet\n");
+		}
+		goto end;
+	}
+
 	/* read real message */
 	if ((buf = vmalloc(ntohl(isakmp.len))) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
