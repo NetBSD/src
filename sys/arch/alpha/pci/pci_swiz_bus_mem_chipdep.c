@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.32 2000/02/06 03:52:27 elric Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.33 2000/02/25 00:45:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -67,6 +67,9 @@ void		__C(CHIP,_mem_unmap) __P((void *, bus_space_handle_t,
 		    bus_size_t, int));
 int		__C(CHIP,_mem_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
+
+int		__C(CHIP,_mem_translate) __P((void *, bus_addr_t, bus_size_t,
+		    int, struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_mem_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -214,6 +217,8 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_map =		__C(CHIP,_mem_map);
 	t->abs_unmap =		__C(CHIP,_mem_unmap);
 	t->abs_subregion =	__C(CHIP,_mem_subregion);
+
+	t->abs_translate =	__C(CHIP,_mem_translate);
 
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
@@ -485,6 +490,19 @@ __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
 	} else
 #endif
 		return (0);
+}
+
+int
+__C(CHIP,_mem_translate)(v, memaddr, memlen, flags, abst)
+	void *v;
+	bus_addr_t memaddr;
+	bus_size_t memlen;
+	int flags;
+	struct alpha_bus_space_translation *abst;
+{
+
+	/* XXX */
+	return (EOPNOTSUPP);
 }
 
 int
