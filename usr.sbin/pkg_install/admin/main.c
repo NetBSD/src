@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.30 2003/01/05 21:27:22 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2003/01/05 21:49:53 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.30 2003/01/05 21:27:22 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2003/01/05 21:49:53 agc Exp $");
 #endif
 
 /*
@@ -163,7 +163,7 @@ rebuild(void)
 	if (unlink(_pkgdb_getPKGDB_FILE(cachename, sizeof(cachename))) != 0 && errno != ENOENT)
 		err(EXIT_FAILURE, "unlink %s", cachename);
 
-	if (pkgdb_open(0) == -1)
+	if (!pkgdb_open(ReadWrite))
 		err(EXIT_FAILURE, "cannot open pkgdb");
 
 	setbuf(stdout, NULL);
@@ -515,7 +515,7 @@ main(int argc, char *argv[])
 
 		printf("Dumping pkgdb %s:\n", _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)));
 
-		if (pkgdb_open(1) == -1) {
+		if (!pkgdb_open(ReadOnly)) {
 			err(EXIT_FAILURE, "cannot open %s", cachename);
 		}
 		while ((key = pkgdb_iter())) {
@@ -532,7 +532,7 @@ main(int argc, char *argv[])
 
 		int     rc;
 
-		if (pkgdb_open(0) == -1)
+		if (!pkgdb_open(ReadWrite))
 			err(EXIT_FAILURE, "cannot open pkgdb");
 
 		rc = pkgdb_remove(argv[2]);
@@ -549,7 +549,7 @@ main(int argc, char *argv[])
 
 		int     rc;
 
-		if (pkgdb_open(0) == -1) {
+		if (!pkgdb_open(ReadWrite)) {
 			err(EXIT_FAILURE, "cannot open pkgdb");
 		}
 
