@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 1998/03/26 19:57:13 mark Exp $	*/
+/*	$NetBSD: param.h,v 1.12 1998/04/29 23:11:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -102,6 +102,11 @@
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_gateway.h"
+#endif /* _KERNEL && ! _LKM */
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
