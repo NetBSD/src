@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.4 2004/02/28 23:01:55 dsl Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.5 2004/06/27 15:37:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ bootparams:				/* space for patchable variables */
 
 	and	$0xff, %edx
 	push	%esi			/* save args for secondary bootstrap */
+	movl	%esp, %esi		/* address of sector number */
 	push	%edx
 	push	%esi			/* args for boot1 */
 	push	%edx

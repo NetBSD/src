@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.5 2004/02/28 22:32:23 dsl Exp $	*/
+/*	$NetBSD: boot1.c,v 1.6 2004/06/27 15:37:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.5 2004/02/28 22:32:23 dsl Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.6 2004/06/27 15:37:11 dsl Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -51,24 +51,22 @@ __RCSID("$NetBSD: boot1.c,v 1.5 2004/02/28 22:32:23 dsl Exp $");
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
-static uint32_t bios_dev;
 static uint32_t bios_sector;
 
-struct biosdisk_ll d;
+static struct biosdisk_ll d;
 
-const char *boot1(uint32_t biosdev, uint32_t sector);
+const char *boot1(uint32_t, uint32_t *);
 extern void putstr(const char *);
 
 extern struct disklabel ptn_disklabel;
 
 const char *
-boot1(uint32_t biosdev, uint32_t sector)
+boot1(uint32_t biosdev, uint32_t *sector)
 {
         struct stat sb;
 	int fd;
 
-	bios_sector = sector;
-	bios_dev = biosdev;
+	bios_sector = *sector;
 	d.dev = biosdev;
 
         putstr("\r\nNetBSD/" MACHINE " " STR(FS) " Primary Bootstrap\r\n");
@@ -106,6 +104,7 @@ boot1(uint32_t biosdev, uint32_t sector)
 		if (ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
 			break;
 		bios_sector = ptn_disklabel.d_partitions[0].p_offset;
+		*sector = bios_sector;
 		if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
 			bios_sector += RF_PROTECTED_SECTORS;
 		fd = open("boot", 0);
