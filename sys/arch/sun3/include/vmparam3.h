@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.24 1999/02/18 07:13:21 gwr Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.25 1999/04/05 14:35:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -118,7 +118,6 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-#define VM_PHYSSEG_MAX		4	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 

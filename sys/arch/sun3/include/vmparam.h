@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 1999/02/18 07:13:21 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 1999/04/05 14:35:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <machine/vmparam3x.h>
 #endif	/* SUN3X */
 
+/* This is needed by some LKMs. */
+#define VM_PHYSSEG_MAX		4
 struct pmap_physseg {
 	/* NULL */
 };
