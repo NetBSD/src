@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.28 2003/08/25 20:58:04 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.29 2003/08/25 21:21:19 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -65,7 +65,7 @@ checkpkg() {
 	if [ -d "$2/$1" ]; then
 		:
 	else
-		echo "pkgview: \`$1' doesn't exist in \`$2'" 1>&2
+		echo "pkg_view: \`$1' doesn't exist in \`$2'" 1>&2
 		exit 1
 	fi
 }
