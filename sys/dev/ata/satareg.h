@@ -1,4 +1,4 @@
-/*	$NetBSD: satareg.h,v 1.1 2003/12/14 17:14:47 thorpej Exp $	*/
+/*	$NetBSD: satareg.h,v 1.2 2003/12/17 16:16:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 	 */
 #define	SStatus_SPD_NONE	(0x0 << 4)	/* no negotiated speed */
 #define	SStatus_SPD_G1		(0x1 << 4)	/* Generation 1 (1.5Gb/s) */
+#define	SStatus_SPD_G2		(0x2 << 4)	/* Generation 2 (3.0Gb/s) */
 #define	SStatus_SPD_mask	(0xf << 4)
 #define	SStatus_SPD_shift	4
 	/*
@@ -110,6 +111,7 @@
 #define	SError_DIAG_T		(1U << 24)	/* Transport state transition
 						   error */
 #define	SError_DIAG_F		(1U << 25)	/* Unrecognized FIS type */
+#define	SError_DIAG_X		(1U << 26)	/* Device Exchanged */
 
 /*
  * SControl (SCR2) --
@@ -134,6 +136,7 @@
 	 */
 #define	SControl_SPD_ANY	(0x0 << 4)	/* No restrictions */
 #define	SControl_SPD_G1		(0x1 << 4)	/* Generation 1 (1.5Gb/s) */
+#define	SControl_SPD_G2		(0x2 << 4)	/* Generation 2 (3.0Gb/s) */
 	/*
 	 * The IPM field represents the enabled interface power management
 	 * states that can be invoked via the Serial ATA interface power
@@ -143,5 +146,18 @@
 #define	SControl_IPM_NOPARTIAL	(0x1 << 8)	/* PARTIAL disabled */
 #define	SControl_IPM_NOSLUMBER	(0x2 << 8)	/* SLUMBER disabled */
 #define	SControl_IPM_NONE	(0x3 << 8)	/* No power management */
+	/*
+	 * The SPM field selects a power management state.  A non-zero
+	 * value written to this field causes initiation of the selected
+	 * power management state.
+	 */
+#define	SControl_SPM_PARTIAL	(0x1 << 12)	/* transition to PARTIAL */
+#define	SControl_SPM_SLUMBER	(0x2 << 12)	/* transition to SLUBMER */
+#define	SControl_SPM_ComWake	(0x4 << 12)	/* transition from PM */
+	/*
+	 * The PMP field identifies the selected Port Multiplier Port
+	 * for accessing the SActive register.
+	 */
+#define	SControl_PMP(x)		((x) << 16)
 
 #endif /* _DEV_ATA_SATAREG_H_ */
