@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.2 1993/09/24 08:46:11 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.3 1993/10/10 08:47:46 mycroft Exp $
  */
 
 /*
@@ -52,10 +52,11 @@
 #include "buf.h"
 #include "user.h"
 
-#include "../include/cpu.h"
-
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
+
+#include "machine/cpu.h"
+#include "machine/cpufunc.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
