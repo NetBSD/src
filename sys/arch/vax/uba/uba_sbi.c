@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.5 2000/06/04 06:16:57 matt Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.6 2000/06/04 17:59:50 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -54,6 +54,7 @@
 
 #include <vax/uba/uba_common.h>
 
+#include "locators.h"
 #include "ioconf.h"
 
 /* Some SBI-specific defines */
@@ -86,16 +87,16 @@ char    ubasr_bits[] = UBASR_BITS;
 /*
  * The DW780 are directly connected to the SBI on 11/780 and 8600.
  */
-static	int	dw780_match __P((struct device *, struct cfdata *, void *));
-static	void	dw780_attach __P((struct device *, struct device *, void *));
-static	void	dw780_init __P((struct uba_softc*));
-static	void    dw780_beforescan __P((struct uba_softc *));
-static	void    dw780_afterscan __P((struct uba_softc *));
-static	int     dw780_errchk __P((struct uba_softc *));
-static	void    uba_dw780int __P((void *));
-static  void	ubaerror __P((struct uba_softc *, int *, int *));
+static	int	dw780_match(struct device *, struct cfdata *, void *);
+static	void	dw780_attach(struct device *, struct device *, void *);
+static	void	dw780_init(struct uba_softc*);
+static	void    dw780_beforescan(struct uba_softc *);
+static	void    dw780_afterscan(struct uba_softc *);
+static	int     dw780_errchk(struct uba_softc *);
+static	void    uba_dw780int(void *);
+static  void	ubaerror(struct uba_softc *, int *, int *);
 #ifdef notyet
-static	void	dw780_purge __P((struct uba_softc *, int));
+static	void	dw780_purge(struct uba_softc *, int);
 #endif
 
 struct	cfattach uba_sbi_ca = {
@@ -107,33 +108,29 @@ extern	struct vax_bus_space vax_mem_bus_space;
 volatile int svec;
 
 int
-dw780_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dw780_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
+	if (cf->cf_loc[SBICF_TR] != sa->sa_nexnum &&
+	    cf->cf_loc[SBICF_TR] != SBICF_TR_DEFAULT)
 		return 0;
 	/*
 	 * The uba type is actually only telling where the uba
 	 * space is in nexus space.
 	 */
-	if ((sa->type & ~3) != NEX_UBA0)
+	if ((sa->sa_type & ~3) != NEX_UBA0)
 		return 0;
 
 	return 1;
 }
 
 void
-dw780_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dw780_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_vsoftc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
-	int ubaddr = sa->type & 3;
+	int ubaddr = sa->sa_type & 3;
 	int i;
 
 	printf(": DW780\n");
@@ -149,14 +146,14 @@ dw780_attach(parent, self, aux)
 	sc->uv_sc.uh_errchk = dw780_errchk;
 	sc->uv_sc.uh_iot = &vax_mem_bus_space;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
-	sc->uv_uba = (void *)sa->nexaddr;
+	sc->uv_uba = (void *)sa->sa_ioh;
 	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 
 	/*
 	 * Set up dispatch vectors for DW780.
 	 */
-	for (i = 0; i < 4; i++)
-		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
+	for (i = 14; i < 17; i++)
+		scb_vecalloc(vecnum(0, i, sa->sa_nexnum), uba_dw780int,
 		    sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt);
 	evcnt_attach(&sc->uv_sc.uh_dev, "intr", &sc->uv_sc.uh_intrcnt);
 
