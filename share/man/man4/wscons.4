@@ -1,4 +1,4 @@
-.\" $NetBSD: ums.4,v 1.3 1998/07/26 17:50:13 augustss Exp $
+.\" $NetBSD: wscons.4,v 1.1 1998/07/26 17:50:13 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -31,29 +31,37 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
-.Dt UMS 4
+.Dd July 26, 1998
+.Dt WSCONS 4
 .Os
 .Sh NAME
-.Nm ums
-.Nd USB mouse support
+.Nm wscons
+.Nd console access
 .Sh SYNOPSIS
-.Cd "ums*     at uhub? port ?"
-.Cd "wsmouse* at ums?"
+.Cd "options WSEMUL_SUN"
+.Cd "options WSEMUL_VT100"
+.Cd "options WS_KERNEL_FG=WSCOL_XXX"
+.Cd "options WSDISPLAY_COMPAT_PCVT"
+.Cd "options WSDISPLAY_COMPAT_SYSCONS"
+.Cd "options WSDISPLAY_COMPAT_USL"
+.Cd "options WSDISPLAY_COMPAT_RAWKBD"
+.Cd "options PCKBD_LAYOUT=XXX"
+
+.Cd "pckbc0     at isa?"
+.Cd "pckbd*     at pckbc?"
+.Cd "psm*       at pckbc?"
+.Cd "vga0       at isa?"
+.Cd "vga*       at pci?"
+.Cd "pcdisplay0 at isa?"
+.Cd "wsdisplay* at vga? console ?"
+.Cd "wsdisplay* at pcdisplay? console ?"
+.Cd "wskbd*     at pckbd? console ?"
+.Cd "wsmouse*   at psm?"
 .Pp
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB mice.
-Access to the mouse is through the
-.Xr wscons 4
-driver.
+driver provides support for machine independent access to the console.
 .Sh SEE ALSO
-.Xr usb 4 ,
-.Xr wsmouse 4
-.Sh HISTORY
-The
-.Nm
-driver
-appeared in
-.Nx 1.4 .
+.Xr isa 4 ,
+.Xr pci 4
