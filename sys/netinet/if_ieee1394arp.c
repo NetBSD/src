@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.5 2001/07/04 02:29:59 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.6 2001/11/13 00:32:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394arp.c,v 1.6 2001/11/13 00:32:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

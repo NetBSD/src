@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.90 2001/11/07 06:30:50 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.91 2001/11/13 00:32:42 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)udp_usrreq.c	8.6 (Berkeley) 5/23/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.91 2001/11/13 00:32:42 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

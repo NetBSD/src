@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.50 2001/10/30 06:41:10 kml Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)in_proto.c	8.2 (Berkeley) 2/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
