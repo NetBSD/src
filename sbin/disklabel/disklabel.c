@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
-static char rcsid[] = "$Header: /cvsroot/src/sbin/disklabel/Attic/disklabel.c,v 1.4 1993/03/23 00:26:44 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/disklabel/Attic/disklabel.c,v 1.5 1993/04/18 18:22:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sbin/disklabel/Attic/disklabel.c,v 
 #include <sys/disklabel.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 /*
@@ -361,7 +362,6 @@ writelabel(f, boot, lp)
 {
 	register int i;
 	int flag;
-	off_t lseek();
 #ifdef	__386BSD__
 	off_t lbl_off; struct partition *pp = lp->d_partitions;
 #endif
