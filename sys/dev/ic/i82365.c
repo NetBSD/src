@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.40 2000/02/03 09:00:39 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.41 2000/02/04 08:42:07 chopps Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1334,6 +1334,11 @@ pcic_chip_socket_enable(pch)
 	int reg;
 #endif
 
+#ifdef DIAGNOSTIC
+	if (h->flags & PCIC_FLAG_ENABLED)
+		printf("pcic_chip_socket_enable: enabling twice");
+#endif
+
 	/* disable interrupts */
 	intr = pcic_read(h, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
@@ -1422,6 +1427,8 @@ pcic_chip_socket_enable(pch)
 		if (h->ioalloc & (1 << win))
 			pcic_chip_do_io_map(h, win);
 
+	h->flags |= PCIC_FLAG_ENABLED;
+
 	/* finally enable the interrupt */
 	intr |= h->ih_irq;
 	pcic_write(h, PCIC_INTR, intr);
@@ -1443,6 +1450,8 @@ pcic_chip_socket_disable(pch)
 
 	/* power down the socket */
 	pcic_write(h, PCIC_PWRCTL, 0);
+
+	h->flags &= ~PCIC_FLAG_ENABLED;
 }
 
 static u_int8_t
