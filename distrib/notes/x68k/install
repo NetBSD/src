@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 1999/01/13 07:30:10 ross Exp $	
+.\"	$NetBSD: install,v 1.8 1999/04/01 14:09:49 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -365,7 +365,7 @@ probably pick a directory under
 The default is
 .Pa /mnt/usr/distrib .
 .Pp
-Configure the SLIP interface, with the following
+Configure the network interface.  To use SLIP, type the following
 command sequence:
 .D1 Ic slattach\ -h\ -s Ar speed Ic tty00
 .D1 Ic ifconfig\ sl0 Ar my_ipaddr peer_ipaddr
@@ -389,6 +389,14 @@ your machine (with IP address 192.168.0.1) and the peer
 (192.168.0.10) with speed 38400 bps. Note that IP
 addresses 192.168.*.* are the private IP addresses
 described in RFC 1597.
+.Pp
+To use ethernet, do following:
+.D1 Ic ifconfig\ ne0 Ar my_ipaddr
+where
+.Ar my_ipaddr
+is the numeric IP address of the machine you are going
+to install NetBSD/x68k.  ne0 is the interface name which correspond to
+the Neptune-X or clone.
 .Pp
 If you are NFS-mounting the distribution sets, mount
 them on the temporary directory with a command like:
