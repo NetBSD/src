@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.33 2003/05/21 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.34 2003/05/31 01:40:05 kristerw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,6 +87,8 @@
 #include <machine/frame.h>
 #include <machine/asm.h>
 
+/* LINTSTUB: include <sys/param.h> */
+	
 #undef IRQdisable
 #undef IRQenable
 
@@ -834,7 +836,7 @@ ENTRY(cpu_switchto)
  * stack for l.  Then jump into cpu_switch(), as if we were in lwp0 all along.
  */
 
-/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0, void (*)(struct lwp *)) */
+/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0, void (*func)(struct lwp *)) */
 ENTRY(switch_exit)
 	/*
 	 * The process is going away, so we can use callee-saved
