@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.15 1998/03/19 02:42:57 kml Exp $
+.\"	$NetBSD: netstat.1,v 1.16 1998/06/03 02:41:11 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,6 +60,11 @@
 .Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Nm ""
+.Op Fl p Ar protocol
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Fl P Ar pcbaddr
 .Sh DESCRIPTION
 The
 .Nm
@@ -161,6 +166,15 @@ Show network addresses as numbers (normally
 interprets addresses and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
+.It Fl P Ar pcbaddr
+Dump the contents of the protocol control block (PCB) located at kernel
+virtual address
+.Ar pcbaddr .
+This address may be obtained using the
+.Fl A
+flag.  The default protocol is TCP, but may be overridden using the
+.Fl p
+flag.
 .It Fl p Ar protocol 
 Show statistics about
 .Ar protocol  ,
