@@ -1,0 +1,43 @@
+#	$NetBSD: files.pb1000,v 1.1 2002/07/29 16:23:01 simonb Exp $
+
+file	arch/evbmips/alchemy/pb1000_intr.c
+
+file	arch/evbmips/alchemy/autoconf.c
+file	arch/evbmips/alchemy/conf.c
+file	arch/evbmips/alchemy/disksubr.c
+file	arch/evbmips/alchemy/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/clock.c
+file	arch/evbmips/evbmips/interrupt.c
+file	arch/evbmips/evbmips/yamon.c
+
+# System bus
+device	mainbus { }
+attach	mainbus at root
+file	arch/evbmips/alchemy/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/alchemy/cpu.c		cpu
+
+# Pb1000 on-board devices
+device	obio { [addr=-1] }
+attach	obio at mainbus
+file	arch/evbmips/alchemy/pb1000_obio.c		obio
+#file	arch/evbmips/alchemy/pb1000_obio_space.c	obio
+
+device	aupcmcia: pcmciabus
+attach	aupcmcia at obio
+file	arch/evbmips/alchemy/dev/aupcmcia.c	aupcmcia
+
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+
+# Machine-independent PCMCIA drivers
+device	fdc {drive = -1}	# files.pcmcia requires.
+include "dev/pcmcia/files.pcmcia"
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks
+major	{ md = 6 }

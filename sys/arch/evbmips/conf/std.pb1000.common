@@ -1,0 +1,17 @@
+# $NetBSD: std.pb1000.common,v 1.1 2002/07/29 16:23:01 simonb Exp $
+
+machine evbmips mips
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+# Platform support
+options	ALCHEMY_PB1000
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x800a0000"
+makeoptions	BOARDTYPE="pb1000"
+
+include 	"arch/evbmips/conf/files.pb1000"
+include 	"arch/mips/conf/files.alchemy"
