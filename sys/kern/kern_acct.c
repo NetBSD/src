@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.50.4.1 2002/03/11 19:14:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50.4.1 2002/03/11 19:14:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $")
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
@@ -91,17 +91,9 @@ struct ucred *acct_ucred;		/* Credential of accounting file
 struct proc *acct_dkwatcher;		/* Free disk space checker. */
 
 /*
- * Lock to serialize system calls and kernel threads.
+ * Mutex to serialize system calls and kernel threads.
  */
-struct	lock acct_lock;
-#define	ACCT_LOCK()						\
-do {								\
-	(void) lockmgr(&acct_lock, LK_EXCLUSIVE, NULL);		\
-} while (/* CONSTCOND */0)
-#define	ACCT_UNLOCK()						\
-do {								\
-	(void) lockmgr(&acct_lock, LK_RELEASE, NULL);		\
-} while (/* CONSTCOND */0)
+kmutex_t acct_mutex;
 
 /*
  * Internal accounting functions.
@@ -127,7 +119,7 @@ acct_init()
 	acct_state = ACCT_STOP;
 	acct_vp = NULLVP;
 	acct_ucred = NULL;
-	lockinit(&acct_lock, PWAIT, "acctlk", 0, 0);
+	mutex_init(&acct_mutex, MUTEX_DEFAULT, 0);
 }
 
 void
@@ -216,7 +208,7 @@ sys_acct(p, v, retval)
 		}
 	}
 
-	ACCT_LOCK();
+	mutex_enter(&acct_mutex);
 
 	/*
 	 * If accounting was previously enabled, kill the old space-watcher,
@@ -250,7 +242,7 @@ sys_acct(p, v, retval)
 	}
 
  out:
-	ACCT_UNLOCK();
+	mutex_exit(&acct_mutex);
 	return (error);
 }
 
@@ -270,7 +262,7 @@ acct_process(p)
 	int s, t, error = 0;
 	struct plimit *oplim = NULL;
 
-	ACCT_LOCK();
+	mutex_enter(&acct_mutex);
 
 	/* If accounting isn't enabled, don't bother */
 	if (acct_state != ACCT_ACTIVE)
@@ -348,7 +340,7 @@ acct_process(p)
 	}
 
  out:
-	ACCT_UNLOCK();
+	mutex_exit(&acct_mutex);
 	return (error);
 }
 
@@ -404,7 +396,7 @@ acctwatch(arg)
 	int error;
 
 	log(LOG_NOTICE, "Accounting started\n");
-	ACCT_LOCK();
+	mutex_enter(&acct_mutex);
 	while (acct_state != ACCT_STOP) {
 		if (acct_vp->v_type == VBAD) {
 			log(LOG_NOTICE, "Accounting terminated\n");
@@ -419,16 +411,17 @@ acctwatch(arg)
 			    error);
 #endif
 
-		ACCT_UNLOCK();
+		/* XXXNEWLOCK use interlocking tsleep */
+		mutex_exit(&acct_mutex);
 		error = tsleep(acctwatch, PSWP, "actwat", acctchkfreq * hz);
-		ACCT_LOCK();
+		mutex_enter(&acct_mutex);
 #ifdef DIAGNOSTIC
 		if (error != 0 && error != EWOULDBLOCK)
 			printf("acctwatch: sleep error %d\n", error);
 #endif
 	}
 	acct_dkwatcher = NULL;
-	ACCT_UNLOCK();
+	mutex_exit(&acct_mutex);
 
 	kthread_exit(0);
 }
