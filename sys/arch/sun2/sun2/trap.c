@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2001/06/02 18:09:22 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2001/08/17 00:00:26 fredette Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -145,6 +145,7 @@ short	exframesize[] = {
 /* #define	DEBUG XXX */
 
 #ifdef DEBUG
+unsigned short buserr_reg;
 int mmudebug = 0;
 int mmupid = -1;
 #define MDB_ISPID(p)	((p) == mmupid)
