@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.h,v 1.15 2000/06/08 19:01:44 danw Exp $	*/
-/*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.15.2.1 2000/07/16 05:56:27 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,10 +72,6 @@
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
 
-#ifndef _XOPEN_SOURCE
-#include <sys/queue.h>
-#endif
-
 /*
  * Identification of the network protocol stack
  */
@@ -91,7 +87,7 @@
  * When a user does a bind(2) or connect(2) with a port number of zero,
  * a non-conflicting local port address is chosen.
  *
- * The default range is IPPORT_ANONMIX to IPPORT_ANONMAX, although
+ * The default range is IPPORT_ANONMIN to IPPORT_ANONMAX, although
  * that is settable by sysctl(3); net.inet.ip.anonportmin and
  * net.inet.ip.anonportmax respectively.
  *
@@ -563,7 +559,6 @@ struct in6_pktinfo {
 #ifdef _KERNEL
 struct cmsghdr;
 
-int	in6_canforward __P((struct in6_addr *, struct in6_addr *));
 int	in6_cksum __P((struct mbuf *, u_int8_t, u_int32_t, u_int32_t));
 int	in6_localaddr __P((struct in6_addr *));
 int	in6_addrscope __P((struct in6_addr *));
