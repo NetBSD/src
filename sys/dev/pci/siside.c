@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.6 2004/04/22 11:30:04 skd Exp $	*/
+/*	$NetBSD: siside.c,v 1.7 2004/07/21 16:40:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -136,6 +136,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_733,   0x00, 5, "733", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_735,   0x00, 5, "735", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_740,   0x00, 5, "740", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_741,   0x00, 5, "741", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_745,   0x00, 5, "745", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_746,   0x00, 6, "746", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_748,   0x00, 6, "748", SIS_TYPE_SOUTH},
