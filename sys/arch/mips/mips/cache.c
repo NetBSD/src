@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.25 2004/12/13 08:39:21 sekiya Exp $	*/
+/*	$NetBSD: cache.c,v 1.26 2005/03/01 04:23:44 sekiya Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.25 2004/12/13 08:39:21 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.26 2005/03/01 04:23:44 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -128,6 +128,8 @@ u_int mips_sdcache_way_mask;
 int mips_sdcache_write_through;
 
 int mips_scache_unified;
+
+u_int mips_sdcache_forceinv = 0;
 
 /* TERTIARY CACHE VARIABLES */
 u_int mips_tcache_size;		/* always unified */
