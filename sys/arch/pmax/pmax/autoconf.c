@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1999/06/07 20:16:13 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1999/06/10 01:06:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 1999/06/07 20:16:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 1999/06/10 01:06:40 nisimura Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -90,8 +90,6 @@ void configure_scsi __P((void));
 
 void findroot __P((struct device **, int *));
 
-extern struct devnametobdevmaj dev_name2blk[];
-
 /*
  * Determine mass storage and memory configuration for a machine.
  * Print cpu type, and then iterate over an array of devices
@@ -102,20 +100,15 @@ extern struct devnametobdevmaj dev_name2blk[];
 void
 configure()
 {
-	/*
-	 * Kick off autoconfiguration
-	 */
+	/* Kick off autoconfiguration. */
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
-	    panic("no mainbus found");
+		panic("no mainbus found");
 
 	/* Reset any bus errors due to probing nonexistent devices. */
 	(*platform.bus_reset)();
 
 	/* Configuration is finished, turn on interrupts. */
-#ifdef DEBUG
-	printf("autconfiguration done, spl back to 0x%x\n", s);
-#endif
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 
 	/*
