@@ -1,0 +1,108 @@
+MI drivers:
+
+atapi			OK (i386, sparc64)
+adv			compiles
+adw			compiles
+aha			compiles
+ahb			compiles
+ahc			brocken
+aic			compiles
+asc
+bha			compiles
+dpt			compiles
+esp			compiles
+iopsp			compiles
+isp			compiles
+mb89352
+nca			compiles
+ncr			brocken (garbage-collect ?)
+ncr5380sbc		compiles
+ncr53c9x		compiles
+pcscp
+sea			compiles
+si			compiles
+siop			OK (i386, sparc64, alpha)
+uha			compiles
+umass			compiles
+usscanner		compiles
+wds			compiles
+
+
+Port			Status of		comments
+			GENERIC kernel
+alpha
+
+amiga			not yet
+
+amigappc		depends on amiga I guess
+
+arc
+
+arm26
+
+arm32			not yet
+
+atari
+
+bebox
+
+cobalt
+
+dnard
+
+dreamcast
+
+evbsh3
+
+hp300
+
+hpcarm
+
+hpcmips
+
+hpcsh
+
+i386		compiles, exept ahc
+
+luna68k
+
+mac68k
+
+macppc
+
+mipsco
+
+mmeye
+
+mvme68k		not yet
+
+news68k
+
+newsmips
+
+next68k
+
+ofppc
+
+pc532		not yet
+
+pmax		not yet
+
+prep
+
+sandpoint
+
+sgimips
+
+sh3
+
+sparc
+
+sparc64		compiles		tested on U5(+siop)
+
+sun3
+
+vax		not yet
+
+x68k
+
