@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1997/05/07 16:01:46 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1998/04/13 14:28:04 lukem Exp $
 #
-# C Optimizer (-O) breaks this program - don't use !!
-CFLAGS=-g
 PROG=	testldt
 NOMAN=	noman
 
@@ -14,3 +12,6 @@ regress:
 	else echo FAILED; fi
 
 .include <bsd.prog.mk>
+
+# C Optimizer (-O) breaks this program - don't use !!
+COPTS+=-O0
