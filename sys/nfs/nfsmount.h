@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.17 1999/02/26 23:44:48 wrstuden Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.18 1999/07/04 19:56:00 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -158,6 +158,7 @@ struct	nfsmount {
 	int	nm_bufqiods;		/* number of iods processing queue */
 	u_int64_t nm_maxfilesize;	/* maximum file size */
 	int	nm_iflag;		/* internal flags */
+	int	nm_waiters;		/* number of waiting listeners.. */
 };
 
 /*
