@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.5 2001/12/15 13:23:29 soren Exp $
+.\"     $NetBSD: pcmcia.9,v 1.6 2001/12/26 00:16:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -425,12 +425,6 @@ New manufacturer and product identifiers should be added to this
 file.  The database can be regenerated using the Makefile
 .Pa sys/dev/pcmcia/Makefile.pcmciadevs .
 .Sh SEE ALSO
-.Rs
-.%A Personal Computer Memory Card International Association (PCMCIA)
-.%T "PC Card 95 Standard"
-.%D 1995
-.Re
-.sp
 .Xr pcic 4 ,
 .Xr pcmcia 4 ,
 .Xr tcic 4 ,
@@ -438,6 +432,11 @@ file.  The database can be regenerated using the Makefile
 .Xr bus_dma 9 ,
 .Xr bus_space 9 ,
 .Xr driver 9
+.Rs
+.%A Personal Computer Memory Card International Association (PCMCIA)
+.%T "PC Card 95 Standard"
+.%D 1995
+.Re
 .Sh HISTORY
 The machine-independent PCMCIA subsystem appeared in
 .Nx 1.3 .
