@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.7 2002/03/18 17:14:14 christos Exp $
+.\" $NetBSD: pms.4,v 1.8 2002/03/18 18:59:57 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -73,10 +73,6 @@ after being switched away or reset (for instance, by a console switch).
 .Xr pckbc 4 ,
 .Xr ums 4 ,
 .Xr wsmouse 4
-.Sh BUGS
-It is possible for the driver to mistakenly negotiate the non-scroll-wheel
-protocol, after which it is unlikely to recover until the device is closed
-and reopened.
 .Sh AUTHORS
 The
 .Nm
@@ -86,3 +82,7 @@ merge the
 protocol in, and reset the mouse in the event of protocol problems, were
 contributed by Peter Seebach.  Special thanks to Ray Trent, at Synaptics,
 who contributed valuable insight into how to identify bogus mouse data.
+.Sh BUGS
+It is possible for the driver to mistakenly negotiate the non-scroll-wheel
+protocol, after which it is unlikely to recover until the device is closed
+and reopened.
