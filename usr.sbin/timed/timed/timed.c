@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.13 2001/09/02 00:13:07 reinoud Exp $	*/
+/*	$NetBSD: timed.c,v 1.14 2002/06/23 17:47:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.13 2001/09/02 00:13:07 reinoud Exp $");
+__RCSID("$NetBSD: timed.c,v 1.14 2002/06/23 17:47:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -776,7 +776,8 @@ void
 get_goodgroup(int force)
 {
 # define NG_DELAY (30*60*CLK_TCK)	/* 30 minutes */
-	static unsigned long last_update = -NG_DELAY;
+	static unsigned long last_update;
+	static int firsttime;
 	unsigned long new_update;
 	struct goodhost *ghp, **ghpp;
 #ifdef HAVENIS
@@ -785,6 +786,10 @@ get_goodgroup(int force)
 #endif
 	struct tms tm;
 
+	if (firsttime == 0) {
+		last_update = -NG_DELAY;
+		firsttime++;
+	}
 
 	/* if no netgroup, then we are finished */
 	if (goodgroup == 0 || !Mflag)
