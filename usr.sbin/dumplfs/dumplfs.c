@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.24 2003/02/23 04:32:07 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.25 2003/03/07 22:50:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.24 2003/02/23 04:32:07 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.25 2003/03/07 22:50:10 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ char *special;
 		    i, (ip)->if_version, (ip)->if_daddr)
 #define fsbtobyte(fs, b)	fsbtob((fs), (off_t)((b)))
 
+int datasum_check = 0;
+
 int
 main(int argc, char **argv)
 {
@@ -126,13 +128,16 @@ main(int argc, char **argv)
 	do_segentries = 0;
 	idaddr = 0x0;
 	sbdaddr = 0x0;
-	while ((ch = getopt(argc, argv, "ab:iI:Ss:")) != -1)
+	while ((ch = getopt(argc, argv, "ab:diI:Ss:")) != -1)
 		switch(ch) {
 		case 'a':		/* Dump all superblocks */
 			do_allsb = 1;
 			break;
 		case 'b':		/* Use this superblock */
 			sbdaddr = strtol(optarg, NULL, 0);
+			break;
+		case 'd':
+			datasum_check = 1;
 			break;
 		case 'i':		/* Dump ifile entries */
 			do_ientries = !do_ientries;
@@ -456,11 +461,15 @@ static int
 dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 {
 	FINFO *fp;
-	int32_t *dp;
-	int i, j;
+	int32_t *dp, *idp;
+	int i, j, acc;
 	int ck;
-	int numbytes;
+	int numbytes, numblocks;
+	char *datap;
 	struct dinode *inop;
+	size_t el_size;
+	u_int32_t datasum;
+	char *buf;
 
 	if (sp->ss_magic != SS_MAGIC || 
 	    sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
@@ -503,7 +512,9 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	inop = malloc(lfsp->lfs_bsize);
 	printf("    Inode addresses:");
 	numbytes = 0;
+	numblocks = 0;
 	for (dp--, i = 0; i < sp->ss_ninos; dp--) {
+		++numblocks;
 		numbytes += lfsp->lfs_ibsize;	/* add bytes for inode block */
 		printf("\t0x%x {", *dp);
 		get(fd, fsbtobyte(lfsp, *dp), inop, lfsp->lfs_ibsize);
@@ -519,6 +530,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	free(inop);
 
 	printf("\n");
+
 	if (lfsp->lfs_version == 1)
 		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
 	else
@@ -528,6 +540,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		    fp->fi_ino, fp->fi_version, fp->fi_nblocks,
 		    fp->fi_lastlength);
 		dp = &(fp->fi_blocks[0]);
+		numblocks += fp->fi_nblocks;
 		for (j = 0; j < fp->fi_nblocks; j++, dp++) {
 			(void)printf("\t%d", *dp);
 			if ((j % 8) == 7)
@@ -541,6 +554,65 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			(void)printf("\n");
 		fp = (FINFO *)dp;
 	}
+
+	if (datasum_check == 0)
+		return (numbytes);
+
+	/*
+	 * Now that we know the number of blocks, run back through and
+	 * compute the data checksum.  (A bad data checksum is not enough
+	 * to prevent us from continuing, but it odes merit a warning.)
+	 */
+	idp = (int32_t *)sp;
+	idp += lfsp->lfs_sumsize / sizeof(int32_t);
+	--idp;
+	if (lfsp->lfs_version == 1) {
+		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
+		el_size = sizeof(unsigned long);
+	} else {
+		fp = (FINFO *)(sp + 1);
+		el_size = sizeof(u_int32_t);
+	}
+	datap = (char *)malloc(el_size * numblocks);
+	memset(datap, 0, el_size * numblocks);
+	acc = 0;
+	addr += btofsb(lfsp, lfsp->lfs_sumsize);
+	buf = malloc(lfsp->lfs_bsize);
+	for (i = 0; i < sp->ss_nfinfo; i++) {
+		while (addr == *idp) {
+			get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_ibsize);
+			memcpy(datap + acc * el_size, buf, el_size);
+			addr += btofsb(lfsp, lfsp->lfs_ibsize);
+			--idp;
+			++acc;
+		}
+		for (j = 0; j < fp->fi_nblocks; j++) {
+			get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_fsize);
+			memcpy(datap + acc * el_size, buf, el_size);
+			if (j == fp->fi_nblocks - 1)
+				addr += btofsb(lfsp, fp->fi_lastlength);
+			else
+				addr += btofsb(lfsp, lfsp->lfs_bsize);
+			++acc;
+		}
+		fp = (FINFO *)&(fp->fi_blocks[fp->fi_nblocks]);
+	}
+	while (addr == *idp) {
+		get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_ibsize);
+		memcpy(datap + acc * el_size, buf, el_size);
+		addr += btofsb(lfsp, lfsp->lfs_ibsize);
+		--idp;
+		++acc;
+	}
+	free(buf);
+	if (acc != numblocks)
+		printf("** counted %d blocks but should have been %d\n",
+		     acc, numblocks);
+	datasum = cksum(datap, numblocks * el_size);
+	if (datasum != sp->ss_datasum)
+		printf("** computed datasum 0x%lx does not match given datasum 0x%lx\n", (unsigned long)datasum, (unsigned long)sp->ss_datasum);
+	free(datap);
+
 	return (numbytes);
 }
 
