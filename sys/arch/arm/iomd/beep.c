@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.5 2002/02/18 12:36:27 bjh21 Exp $	*/
+/*	$NetBSD: beep.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: beep.c,v 1.5 2002/02/18 12:36:27 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>

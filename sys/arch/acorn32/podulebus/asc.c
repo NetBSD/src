@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.4 2002/02/18 13:19:54 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.5 2002/03/10 15:47:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: asc.c,v 1.4 2002/02/18 13:19:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.5 2002/03/10 15:47:45 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
