@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.11.4.1 1996/12/11 04:08:41 mycroft Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.11.4.2 1996/12/11 06:59:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -701,7 +701,7 @@ tpip_ctlinput(cmd, sa, dummy)
 		notify = tpin_abort;
 		break;
 	}
-	in_pcbnotifyall(&tp_inpcb, satosin(sa)->sin_addr, errno, notify);
+	in_pcbnotifyall(&tp_inpcb, sa, errno, notify);
 	return NULL;
 }
 
