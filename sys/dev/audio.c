@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.74 1997/10/14 18:43:42 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.75 1997/10/16 16:41:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1569,6 +1569,9 @@ audio_pint_silence(sc, cb, inp, cc)
 {
 	u_char *s, *e, *p, *q;
 
+        if (!sc->sc_open)
+        	return;         /* ignore interrupt if not open */
+
 	if (sc->sc_sil_count > 0) {
 		s = sc->sc_sil_start; /* start of silence */
 		e = s + sc->sc_sil_count; /* end of silence, may be beyond end */
@@ -1621,6 +1624,9 @@ audio_pint(v)
 	u_char *inp;
 	int cc, ccr;
 	int error;
+
+        if (!sc->sc_open)
+        	return;         /* ignore interrupt if not open */
 
 	cb->outp += cb->blksize;
 	if (cb->outp >= cb->end)
