@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.3 2001/06/12 15:17:19 wiz Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.4 2001/07/07 09:06:45 scw Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@ do_rev_arp ()
   for ( i = 0; i < 6; i++ ) {
     eh->ether_dhost[i] = 0xff;
   }
-  bcopy(myea, eh->ether_shost, 6);
+  memcpy(eh->ether_shost, myea, 6);
   eh->ether_type = ETYPE_RARP;
   
   rarp->ar_hrd = 1;              /* hardware type is 1 */
@@ -53,8 +53,8 @@ do_rev_arp ()
   rarp->ar_hln = 6;              /* length of hardware address is 6 bytes */
   rarp->ar_pln = 4;              /* length of ip address is 4 byte */
   rarp->ar_op = OPCODE_RARP;
-  bcopy(myea, rarp->arp_sha, sizeof(myea));
-  bcopy(myea, rarp->arp_tha, sizeof(myea));
+  memcpy(rarp->arp_sha, myea, sizeof(myea));
+  memcpy(rarp->arp_tha, myea, sizeof(myea));
   for ( i = 0; i < 4; i++ ) {
     rarp->arp_spa[i] = rarp->arp_tpa[i] = 0x00;
   }
@@ -69,9 +69,9 @@ get_rev_arp ()
 {
   le_get(buf, sizeof(buf), 6);
   if ( eh->ether_type == ETYPE_RARP && rarp->ar_op == OPCODE_REPLY ) {
-    bcopy(rarp->arp_tpa, myip,  sizeof(rarp->arp_tpa));
-    bcopy(rarp->arp_spa, servip, sizeof(rarp->arp_spa));
-    bcopy(rarp->arp_sha, servea, sizeof(rarp->arp_sha));
+    memcpy(myip, rarp->arp_tpa, sizeof(rarp->arp_tpa));
+    memcpy(servip, rarp->arp_spa, sizeof(rarp->arp_spa));
+    memcpy(servea, rarp->arp_sha, sizeof(rarp->arp_sha));
     return 1;
   }
   return 0;
@@ -111,8 +111,8 @@ do_send_tftp ( int mesgtype )
     tot = (char *)tftp_a + 4;
   }
 
-  bcopy (servea, eh->ether_dhost, sizeof(servea));
-  bcopy (myea, eh->ether_shost, sizeof(myea));
+  memcpy (eh->ether_dhost, servea, sizeof(servea));
+  memcpy (eh->ether_shost, myea, sizeof(myea));
   eh->ether_type = ETYPE_IP;
   
   iph->ip_v = IP_VERSION;
@@ -122,8 +122,8 @@ do_send_tftp ( int mesgtype )
   iph->ip_off = IP_DF;
   iph->ip_ttl = 3;         /* time to live is 3 seconds/hops */
   iph->ip_p = IPP_UDP;
-  bcopy(myip, iph->ip_src, sizeof(myip));
-  bcopy(servip, iph->ip_dst, sizeof(servip));
+  memcpy(iph->ip_src, myip, sizeof(myip));
+  memcpy(iph->ip_dst, servip, sizeof(servip));
   iph->ip_sum = 0;
   iph->ip_len = tot - (char *)iph;
   res = oc_cksum(iph, sizeof(struct ip), 0);
@@ -136,8 +136,8 @@ do_send_tftp ( int mesgtype )
     tftp_a->op_code = FTPOP_ACKN;
     tftp_a->block = (u_short)(mesgtype);
   } else {
-    bcopy (myip, &iptmp, sizeof(iptmp));
-    bcopy(MSG, tftp_r, (sizeof(MSG)-1));
+    memcpy (&iptmp, myip, sizeof(iptmp));
+    memcpy(tftp_r, MSG, (sizeof(MSG)-1));
     for (lcv = 9; lcv >= 2; lcv--) {
       tftp_r[lcv] = "0123456789ABCDEF"[iptmp & 0xF];
       
@@ -196,8 +196,8 @@ do_get_file ()
 	last_ack++;
         oldlen = udph->uh_ulen;
 	do_send_tftp( last_ack );
-	/*printf("bcopy %x %x %d\n", &tftp->data, loadat, oldlen - 12);*/
-	bcopy(&tftp->data, loadat, oldlen - 12);
+	/*printf("memcpy %x %x %d\n", loadat, &tftp->data, oldlen - 12);*/
+	memcpy(loadat, &tftp->data, oldlen - 12);
 	loadat += oldlen - 12;
 	if (oldlen < (8 + 4 + 512)) {
           printf("\n");

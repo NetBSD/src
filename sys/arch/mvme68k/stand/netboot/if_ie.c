@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.5 2000/07/24 18:39:51 jdolecek Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.6 2001/07/07 09:06:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -120,7 +120,7 @@ ie_match(nif, machdep_hint)
 	if (bugargs.cputyp == CPU_147)
 		return (0);
 	name = machdep_hint;
-	if (name && !bcmp(ie_driver.netif_bname, name, 2))
+	if (name && !memcmp(ie_driver.netif_bname, name, 2))
 		val += 10;
 	for (i = 0; i < nie_config; i++) {
 		if (ie_config[i].used)
@@ -189,7 +189,7 @@ ie_reset(nif, myea)
 
 	*(u_char *)0xfff4202a = 0x40;
 
-	bzero(iem, sizeof(*iem));
+	memset(iem, 0, sizeof(*iem));
 	iem->im_scp.scp_sysbus = 0;
 	iem->im_scp.scp_iscp_low = (int) &iem->im_iscp & 0xffff;
 	iem->im_scp.scp_iscp_high = (int) &iem->im_iscp >> 16;
@@ -260,7 +260,8 @@ ie_reset(nif, myea)
 	iem->im_ic.com.ie_cmd_status = 0;
 	iem->im_ic.com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 	iem->im_ic.com.ie_cmd_link = 0xffff;
-	bcopy(myea, (void *)&iem->im_ic.ie_address, sizeof iem->im_ic.ie_address);
+	memcpy((void *)&iem->im_ic.ie_address, myea,
+	    sizeof iem->im_ic.ie_address);
 
 	ier->ie_attention = 1;	/* chan attention! */
 	for (t = timo * 10; t--;)
@@ -321,8 +322,8 @@ ie_poll(desc, pkt, len)
 			length = iem->im_rbd[slot].ie_rbd_actual & 0x3fff;
 			if (length > len)
 				length = len;
-			bcopy((void *)&iem->im_rxbuf[slot * IE_RBUF_SIZE],
-			    pkt, length);
+			memcpy(pkt, (void *)&iem->im_rxbuf[slot * IE_RBUF_SIZE],
+			    length);
 
 			iem->im_rfd[slot].ie_fd_status = 0;
 			iem->im_rfd[slot].ie_fd_last |= IE_FD_LAST;
@@ -382,7 +383,7 @@ ie_put(desc, pkt, len)
 		;
 
 	/* copy data */
-	bcopy(p, (void *)&iem->im_txbuf[xx], len);
+	memcpy((void *)&iem->im_txbuf[xx], p, len);
 
 	len = MAX(len, ETHER_MIN_LEN);
 
@@ -399,7 +400,7 @@ ie_put(desc, pkt, len)
 	iem->im_xc[xx].com.ie_cmd_link = 0xffff;
 	iem->im_xc[xx].ie_xmit_desc = (int) &iem->im_xd[xx] - (int) iem;
 	iem->im_xc[xx].ie_xmit_length = len;
-	bcopy(p, (void *)&iem->im_xc[xx].ie_xmit_addr,
+	memcpy((void *)&iem->im_xc[xx].ie_xmit_addr, p,
 	    sizeof iem->im_xc[xx].ie_xmit_addr);
 
 	iem->im_scb.ie_command = IE_CU_START;
@@ -445,7 +446,7 @@ ie_init(desc, machdep_hint)
 	if (ie_debug)
 		printf("ie%d: ie_init called\n", desc->io_netif->nif_unit);
 	machdep_common_ether(desc->myea);
-	bzero(&ie_softc, sizeof(ie_softc));
+	memset(&ie_softc, 0, sizeof(ie_softc));
 	ie_softc.sc_reg =
 	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
 	ie_softc.sc_mem = (struct iemem *) 0x3e0000;

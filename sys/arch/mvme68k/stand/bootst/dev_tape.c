@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.4 2000/07/24 18:39:15 jdolecek Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.5 2001/07/07 09:06:43 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ tape_open(struct open_file *f, ...)
 	 * (determines what gets opened)
 	 */
 	ti = &tape_ioreq;
-	bzero((caddr_t)ti, sizeof(*ti));
+	memset((caddr_t)ti, 0, sizeof(*ti));
 
 	ti->ctrl_lun = bugargs.ctrl_lun;
 	ti->dev_lun = bugargs.dev_lun;
@@ -215,7 +215,7 @@ hackprom_diskrd(struct mvmeprom_dskio *ti)
 	/*
 	 * Grab the required number of block(s)
 	 */
-	bcopy(&(hackload_addr[blkoffset]), ti->pbuffer,
+	memcpy(ti->pbuffer, &(hackload_addr[blkoffset]),
 	      ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
 
 	blkoffset += (ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
