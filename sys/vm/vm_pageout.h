@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.h,v 1.9 1994/06/29 06:48:36 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.h,v 1.10 1994/10/30 19:11:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -86,8 +86,8 @@ simple_lock_data_t	vm_pages_needed_lock;
 
 #define	VM_WAIT		{ \
 			simple_lock(&vm_pages_needed_lock); \
-			thread_wakeup((int)&vm_pages_needed); \
-			thread_sleep((int)&cnt.v_free_count, \
+			thread_wakeup(&vm_pages_needed); \
+			thread_sleep(&cnt.v_free_count, \
 				&vm_pages_needed_lock, FALSE); \
 			}
 #ifdef KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.26 1994/10/29 07:35:16 cgd Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.27 1994/10/30 19:11:18 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -315,7 +315,7 @@ vm_object_terminate(object)
 	 * Wait until the pageout daemon is through with the object.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep((long)object, object, FALSE);
+		vm_object_sleep(object, object, FALSE);
 		vm_object_lock(object);
 	}
 
@@ -420,7 +420,7 @@ again:
 	 * Wait until the pageout daemon is through with the object.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep((long)object, object, FALSE);
+		vm_object_sleep(object, object, FALSE);
 		vm_object_lock(object);
 	}
 	/*

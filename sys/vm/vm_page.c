@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.19 1994/10/29 07:35:18 cgd Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.20 1994/10/30 19:11:20 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -758,7 +758,7 @@ vm_page_alloc(object, offset)
 	if (cnt.v_free_count < cnt.v_free_min ||
 	    (cnt.v_free_count < cnt.v_free_target &&
 	     cnt.v_inactive_count < cnt.v_inactive_target))
-		thread_wakeup((int)&vm_pages_needed);
+		thread_wakeup(&vm_pages_needed);
 	return (mem);
 }
 
