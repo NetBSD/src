@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.12 1994/02/28 06:05:46 chopps Exp $
+ *	$Id: locore.s,v 1.13 1994/03/08 07:52:07 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -796,7 +796,8 @@ Ldorte:
 	.data
 	.set	_kstack,-(UPAGES*NBPG)
 _Umap:	.long	0
-	.globl	_kstack, _Umap
+_esym:	.long	0
+	.globl	_kstack, _Umap, _esym
 
 
 /*
