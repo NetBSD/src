@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.62 2001/12/02 09:14:21 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.63 2001/12/02 22:43:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -76,10 +76,9 @@ typedef	char	bool;
 #define	_putchar(c)	__cputchar(c)
 
 /* Old-style terminal modes access. */
-#define	baudrate()	(cfgetospeed(&__baset))
 #define	crmode()	cbreak()
 #define	nocrmode()	nocbreak()
-#define	ospeed		(cfgetospeed(&__baset))
+#define	ospeed		baudrate()
 #endif /* _CURSES_PRIVATE */
 
 /* Termcap capabilities. */
@@ -426,8 +425,6 @@ extern chtype _acs_char[NUM_ACS];
 extern WINDOW	*curscr;		/* Current screen. */
 extern WINDOW	*stdscr;		/* Standard screen. */
 
-extern struct termios __orig_termios;	/* Terminal state before curses */
-extern struct termios __baset;		/* Our base terminal state */
 extern int	__tcaction;		/* If terminal hardware set. */
 
 extern int	 COLS;			/* Columns on the screen. */
@@ -613,6 +610,7 @@ __END_DECLS
 
 /* Public function prototypes. */
 __BEGIN_DECLS
+int	 baudrate(void);
 int	 beep(void);
 int	 box(WINDOW *, chtype, chtype);
 bool	 can_change_colors(void);

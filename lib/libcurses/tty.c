@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.25 2001/12/02 09:14:23 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.26 2001/12/02 22:43:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.25 2001/12/02 09:14:23 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.26 2001/12/02 22:43:44 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,13 +66,6 @@ int	__tcaction = 1;			/* Ignore hardware settings. */
 int	__tcaction = 0;
 #endif
 
-/*struct termios	__orig_termios, __baset;*/
-/*int		__endwin;
-  static struct	termios cbreakt, rawt, *curt;
-  static int	useraw;
-static int	ovmin = 1;
-static int	ovtime = 0;*/
-
 #ifndef	OXTABS
 #ifdef	XTABS			/* SMI uses XTABS. */
 #define	OXTABS	XTABS
@@ -80,6 +73,16 @@ static int	ovtime = 0;*/
 #define	OXTABS	0
 #endif
 #endif
+
+/*
+ * baudrate --
+ *	Return the current baudrate
+ */
+int
+baudrate(void)
+{
+    return cfgetospeed(&_cursesi_screen->baset);
+}
 
 /*
  * gettmode --
