@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 1997/01/31 02:16:53 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.48 1997/03/31 20:27:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1086,8 +1086,6 @@ int
 fdchwintr(fdc)
 	struct fdc_softc *fdc;
 {
-	struct buf *bp;
-	int read;
 
 	switch (fdc->sc_istate) {
 	case ISTATE_IDLE:
@@ -1112,7 +1110,6 @@ fdchwintr(fdc)
 		return (1);
 	}
 
-	read = bp->b_flags & B_READ;
 	for (;;) {
 		register int msr;
 
@@ -1130,16 +1127,8 @@ fdchwintr(fdc)
 		}
 
 		if (msr & NE7_DIO) {
-#ifdef DIAGNOSTIC
-			if (!read)
-				printf("fdxfer: false read\n");
-#endif
 			*fdc->sc_data++ = *fdc->sc_reg_fifo;
 		} else {
-#ifdef DIAGNOSTIC
-			if (read)
-				printf("fdxfer: false write\n");
-#endif
 			*fdc->sc_reg_fifo = *fdc->sc_data++;
 		}
 		if (--fdc->sc_tc == 0) {
