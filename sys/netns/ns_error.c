@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.13 2002/05/12 19:09:13 matt Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.14 2003/01/20 02:12:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.13 2002/05/12 19:09:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.14 2003/01/20 02:12:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,9 +207,10 @@ ns_err_input(m)
 	struct ns_errp *ep;
 #ifdef NS_ERRPRINTFS
 	struct ns_epidp *epidp = mtod(m, struct ns_epidp *);
+	int param;
 #endif
 	int i;
-	int type, code, param;
+	int type, code;
 
 	/*
 	 * Locate ns_err structure in mbuf, and check
@@ -230,7 +231,9 @@ ns_err_input(m)
 	}
 	ep = &(mtod(m, struct ns_epidp *)->ns_ep_errp);
 	type = ntohs(ep->ns_err_num);
+#ifdef NS_ERRPRINTFS
 	param = ntohs(ep->ns_err_param);
+#endif
 	ns_errstat.ns_es_inhist[ns_err_x(type)]++;
 
 #ifdef NS_ERRPRINTFS
