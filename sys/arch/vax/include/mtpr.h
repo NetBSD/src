@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.13 2000/07/06 17:42:49 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -150,6 +150,15 @@
 #define PR_PCIDX  125 /* primary cache index (KA43/KA46) */
 #define PR_PCERR  126 /* primary cache error address (KA43/KA46) */
 #define PR_PCSTS  127 /* primary cache status (KA43/KA46) */
+
+#define PR_VPSR   144 /* Vector processor status register */
+#define PR_VAER   145 /* Vector arithmetic error register */
+#define PR_VMAC   146 /* Vector memory activity register */
+#define PR_VTBIA  147 /* Vector TBIA */
+#define PR_VSAR   148 /* Vector state address register */
+#define PR_VIADR  157 /* Vector indirect address register */
+#define PR_VIDLO  158 /* Vector indirect data low */
+#define PR_VIDHI  159 /* Vector indirect data high */
 
 /* Definitions for AST */
 #define	AST_NO	  4

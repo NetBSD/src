@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.h,v 1.1 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: ka670.h,v 1.2 2000/07/06 17:42:49 ragge Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -86,4 +86,16 @@
  */
 #define KA670_ACCS_VECTOR	(1<<0)	/* Vector Unit Present */
 #define KA670_ACCS_FCHIP		(1<<1)	/* FPU chip present */
-#define KA670_ACCS_WEP		(1<<31)	/* Write Even Parity */
+#define KA670_ACCS_WEP		(1<<31) /* Write Even Parity */
+
+/*
+ * CPU-specific definitions for VAX 6000/400 (Calypso/XRP).
+ */
+
+/* Rigel SSC definitions */
+#define RSSC_ADDR	0x20140000	/* Phys address */
+#define RSSC_CONFIG	0x10		/* Offset */
+#define RSSC_BUSCTRL	0x20		/* Offset */
+#define RSSC_OPORT	0x30		/* Offset */
+#define RSSC_IPORT	0x40		/* Offset */
+
