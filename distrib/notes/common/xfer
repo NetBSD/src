@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.6 2000/10/10 12:26:27 lukem Exp $
+.\"	$NetBSD: xfer,v 1.7 2000/10/11 11:47:46 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,7 +125,7 @@ and use them to write the floppy image(s) to floppy disk,
 you can use the
 .Li rawrite
 utility, provided in the
-.Pa i386/utilities
+.Pa i386/installation/misc
 directory of the
 .Nx
 distribution.
