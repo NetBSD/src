@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.6 1998/12/10 17:13:10 christos Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.7 1999/04/24 06:59:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,27 +33,15 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/termios.h>
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
-
-#define OSF1_IOCPARM_MASK	0x1fff	/* parameter length, at most 13 bits */
-#define	OSF1_IOCPARM_LEN(x)	(((x) >> 16) & OSF1_IOCPARM_MASK)
-#define	OSF1_IOCGROUP(x)	(((x) >> 8) & 0xff)
-
-#define	OSF1_IOCPARM_MAX	NBPG		/* max size of ioctl */
-#define	OSF1_IOC_VOID		0x20000000	/* no parameters */
-#define	OSF1_IOC_OUT		0x40000000	/* copy out parameters */
-#define	OSF1_IOC_IN		0x80000000	/* copy in parameters */
-#define	OSF1_IOC_INOUT		(OSF1_IOC_IN|OSF1_IOC_OUT)
-#define	OSF1_IOC_DIRMASK	0xe0000000	/* mask for IN/OUT/VOID */
-
-#define OSF1_IOCCMD(x)		((x) & 0xff)
 
 int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
