@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.524 2002/05/02 17:55:48 thorpej Exp $
+#	$NetBSD: files,v 1.525 2002/05/03 00:06:56 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -40,6 +40,12 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
+
+# DO NOT defflag the _LP64.  There is no point.  LP64 and ILP32 should
+# be completely different object code formats and require a complete
+# recompile anyway.
+#
+#no defflag			_LP64
 
 # compatibility options
 #
