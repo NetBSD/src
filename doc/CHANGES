@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.397 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.398 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -14,11 +14,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	powerpc: implement FP exception handling for OEA processors.
 		[matt 20040404]
 	file(1): update to 4.09.  [pooka 20040408]
-	hp300: Fix a longstanding bug in console attachment functions,
-		so that now DIO based framebuffers (mostly used on HP4xx
-		machines) can be used as console again. [tsutsui 20040408]
-	hp300: Fix some bugs in apci serial which was switched to MI com(4),
-		so that now it's actually functional. [tsutsui 20040410]
 	setrlimit(2): Add RLIMIT_SBSIZE to limit the socket buffer size.
 		[christos 20040417]
 	csh(1): Add support for "limit sbsize" to control the
