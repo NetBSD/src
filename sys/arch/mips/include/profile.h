@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.9 1997/07/20 03:47:29 jonathan Exp $	*/
+/*	$NetBSD: profile.h,v 1.10 1997/10/18 22:31:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,15 +42,23 @@
 #define _MIPS_PROFILE_H_
 
 #ifdef _KERNEL
+
+ /*
+  *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
+  *  see MCOUNT_ENTER and MCOUNT_EXIT.
+  */
 #define	_KERNEL_MCOUNT_DECL \
     extern int _splhigh __P((void)); extern int _splx __P((int));
-#else
-#define	_KERNEL_MCOUNT_DECL
-#endif	/* _KERNEL */
+
+#else   /* !_KERNEL */
+
+/* Make __mcount static. */
+#define	_KERNEL_MCOUNT_DECL	static
+#endif	/* !_KERNEL */
 
 #define	_MCOUNT_DECL \
     _KERNEL_MCOUNT_DECL \
-    static void __attribute__((unused)) __mcount
+    void __attribute__((unused)) __mcount
 
 #define	MCOUNT \
 	asm(".globl _mcount;" \
