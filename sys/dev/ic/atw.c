@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.61 2004/07/15 07:22:13 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.62 2004/07/15 07:25:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.61 2004/07/15 07:22:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.62 2004/07/15 07:25:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -357,7 +357,7 @@ atw_disable(struct atw_softc *sc)
 }
 
 /* Returns -1 on failure. */
-int
+static int
 atw_read_srom(struct atw_softc *sc)
 {
 	struct seeprom_descriptor sd;
