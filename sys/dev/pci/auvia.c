@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.1 2000/03/31 04:45:28 tsarna Exp $	*/
+/*	$NetBSD: auvia.c,v 1.2 2000/04/08 03:33:58 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -452,7 +452,13 @@ auvia_open(void *addr, int flags)
 void
 auvia_close(void *addr)
 {
-	/* NOP */
+	struct auvia_softc *sc = addr;
+    
+	auvia_halt_output(sc);
+	auvia_halt_input(sc);
+
+	sc->sc_play.sc_intr = NULL;
+	sc->sc_record.sc_intr = NULL;
 }
 
 
@@ -688,6 +694,7 @@ auvia_malloc(void *addr, int direction, size_t size, int pool, int flags)
 	if (!p)
 		return 0;
 
+	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
 				      &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate dma, error = %d\n", 
@@ -738,16 +745,21 @@ void
 auvia_free(void *addr, void *ptr, int pool)
 {
 	struct auvia_softc *sc = addr;
-	struct auvia_dma *p;
+	struct auvia_dma **pp, *p;
 
-	for (p = sc->sc_dmas; p->addr != ptr; p = p->next)
-		if (p->next == NULL)
-			panic("auvia_free: trying to free unallocated memory");
+	for (pp = &(sc->sc_dmas); (p = *pp) != NULL; pp = &p->next)
+		if (p->addr == ptr) {
+			bus_dmamap_unload(sc->sc_dmat, p->map);
+			bus_dmamap_destroy(sc->sc_dmat, p->map);
+			bus_dmamem_unmap(sc->sc_dmat, p->addr, p->size);
+			bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
+			
+			*pp = p->next;
+			free(p, pool);
+			return;
+		}
 
-	bus_dmamap_unload(sc->sc_dmat, p->map);
-	bus_dmamap_destroy(sc->sc_dmat, p->map);
-	bus_dmamem_unmap(sc->sc_dmat, p->addr, p->size);
-	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
+	panic("auvia_free: trying to free unallocated memory");
 }
 
 
@@ -929,7 +941,8 @@ auvia_intr(void *arg)
 
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
-		sc->sc_record.sc_intr(sc->sc_record.sc_arg);
+		if (sc->sc_record.sc_intr)
+			sc->sc_record.sc_intr(sc->sc_record.sc_arg);
 
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT,
@@ -937,7 +950,8 @@ auvia_intr(void *arg)
 	}
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
-		sc->sc_play.sc_intr(sc->sc_play.sc_arg);
+		if (sc->sc_play.sc_intr)
+			sc->sc_play.sc_intr(sc->sc_play.sc_arg);
 
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT,
