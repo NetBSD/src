@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.3 1995/04/17 23:04:31 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.4 1995/04/24 19:13:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.3 1995/04/17 23:04:31 mycroft Exp $
+ *	$Id: audio.c,v 1.4 1995/04/24 19:13:52 pk Exp $
  */
 
 /*
@@ -952,7 +952,7 @@ audio_write(dev, uio, ioflag)
 #ifdef DEBUG
 		if (audiodebug > 1) {
 		    int left = cb->ep - tp;
-		    dprintf("audiowrite: cc=%d tp=0x%x bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
+		    Dprintf("audiowrite: cc=%d tp=0x%x bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
 		}
 #endif		
 #ifdef DIAGNOSTIC
@@ -1226,14 +1226,14 @@ audio_pint(sc)
 		    cb->cb_pdrops++;
 #ifdef DEBUG
 		    if (audiodebug > 1)
-			dprintf("audio_pint: paused %d\n", cb->cb_pdrops);
+			Dprintf("audio_pint: paused %d\n", cb->cb_pdrops);
 #endif
 		    goto psilence;
 		}
 		else {
 #ifdef DEBUG
 		    if (audiodebug > 1)
-		    	dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
+		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
 #endif
 		    if (err = hw->start_output(sc->hw_hdl, hp, cc,
 					       audio_pint, (void *)sc)) {
@@ -1256,7 +1256,7 @@ audio_pint(sc)
 		cb->cb_drops++;
 #ifdef DEBUG
 		if (audiodebug > 1)
-		    dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
+		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
 #endif
  psilence:
 		if (err = hw->start_output(sc->hw_hdl,
@@ -1313,7 +1313,7 @@ audio_rint(sc)
 	    	if (++cb->nblk < cb->maxblk) {
 #ifdef DEBUG
 		    	if (audiodebug > 1)
-				dprintf("audio_rint: tp=0x%x cc=%d\n", tp, cc);
+				Dprintf("audio_rint: tp=0x%x cc=%d\n", tp, cc);
 #endif
 			if (err = hw->start_input(sc->hw_hdl, tp, cc,
 						  audio_rint, (void *)sc)) {
@@ -1578,6 +1578,7 @@ audiogetinfo(sc, ai)
 	p->port = hw->get_out_port(sc->hw_hdl);
 
 	ct.dev = r->port;
+	ct.type = AUDIO_MIXER_VALUE;
 	ct.un.value.num_channels = 1;
 	if (hw->get_port(sc->hw_hdl, &ct) == 0)
 	    r->gain = ct.un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -1699,6 +1700,8 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 	case AUDIO_MIXER_WRITE:
 	    DPRINTF(("AUDIO_MIXER_WRITE\n"));
 	    error = hw->set_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
+	    if (error == 0)
+		error = hw->commit_settings(sc->hw_hdl);
 	    break;
 
 	default:
