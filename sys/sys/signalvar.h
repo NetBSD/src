@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.44 2003/09/16 12:04:58 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.45 2003/09/25 21:58:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -153,7 +153,7 @@ void	kpsignal1 __P((struct proc *, struct ksiginfo *, void *, int));
 #define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
 void	siginit __P((struct proc *));
 #ifdef __HAVE_SIGINFO
-void	trapsignal __P((struct lwp *, struct ksiginfo *));
+void	trapsignal __P((struct lwp *, const struct ksiginfo *));
 #else
 void	trapsignal __P((struct lwp *, int, u_long));
 #endif
@@ -178,13 +178,14 @@ void	sigactsinit __P((struct proc *, struct proc *, int));
 void	sigactsunshare __P((struct proc *));
 void	sigactsfree __P((struct proc *));
 
-void	kpsendsig __P((struct lwp *, struct ksiginfo *, sigset_t *));
+void	kpsendsig __P((struct lwp *, const struct ksiginfo *,
+    const sigset_t *));
 
 /*
  * Machine-dependent functions:
  */
 #ifdef __HAVE_SIGINFO
-void	sendsig __P((struct ksiginfo *, sigset_t *));
+void	sendsig __P((const struct ksiginfo *, const sigset_t *));
 #else
 void	sendsig __P((int, sigset_t *, u_long));
 #endif
