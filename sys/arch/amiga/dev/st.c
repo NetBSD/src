@@ -320,9 +320,13 @@ stinit(ad)
 	register struct amiga_device *ad;
 {
 	register struct st_softc *sc = &st_softc[ad->amiga_unit];
+	register struct buf *bp;
 
 	if (sc->sc_flags & STF_ALIVE)
 		return (0);		/* unit already configured */
+        for (bp = sttab; bp < &sttab[NST]; bp++)
+		bp->b_actb = &bp->b_actf;
+	 
 	sc->sc_ad = ad;
 	sc->sc_punit = stpunit(ad->amiga_flags);
 	sc->sc_type = stident(sc, ad);
@@ -876,13 +880,11 @@ ststrategy(bp)
 
 	unit = UNIT(bp->b_dev);
 	dp = &sttab[unit];
-	bp->av_forw = NULL;
+	bp->b_actf = NULL;
 	s = splbio();
-	if (dp->b_actf == NULL)
-		dp->b_actf = bp;
-	else
-		dp->b_actl->av_forw = bp;
-	dp->b_actl = bp;
+        bp->b_actb = dp->b_actb;
+	*dp->b_actb = bp;
+	dp->b_actb = &bp->b_actf;
 	if (dp->b_active == 0) {
 		dp->b_active = 1;
 		stustart(unit);
@@ -998,8 +1000,14 @@ stfinish(unit, sc, bp)
 	struct st_softc *sc;
 	struct buf *bp;
 {
+        register struct buf *dp;
+	
 	sttab[unit].b_errcnt = 0;
-	sttab[unit].b_actf = bp->b_actf;
+        if (dp = bp->b_actf)
+	        dp->b_actb = bp->b_actb;
+	else
+	        sttab[unit].b_actb = bp->b_actb;
+	*bp->b_actb = dp;
 	iodone(bp);
 	(sc->sc_ad->amiga_cdriver->d_free)(&sc->sc_dq);
 	if (sttab[unit].b_actf)
