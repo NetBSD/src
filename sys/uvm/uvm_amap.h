@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.11 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.12 1999/07/07 05:31:40 thorpej Exp $	*/
 
 /*
  *
@@ -81,7 +81,7 @@ struct vm_amap;
  */
 
 AMAP_INLINE
-vaddr_t		amap_add 	/* add an anon to an amap */
+void		amap_add 	/* add an anon to an amap */
 			__P((struct vm_aref *, vaddr_t,
 			     struct vm_anon *, int));
 struct vm_amap	*amap_alloc	/* allocate a new amap */
@@ -120,7 +120,7 @@ void		amap_splitref	/* split reference to amap into two */
 			     vaddr_t));
 AMAP_INLINE
 void		amap_unadd	/* remove an anon from an amap */
-			__P((struct vm_amap *, vaddr_t));
+			__P((struct vm_aref *, vaddr_t));
 void		amap_unlock	/* unlock amap */
 			__P((struct vm_amap *));
 AMAP_INLINE
