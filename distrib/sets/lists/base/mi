@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.537 2005/03/22 12:45:07 tron Exp $
+# $NetBSD: mi,v 1.538 2005/03/27 22:30:05 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1345,6 +1345,11 @@
 ./usr/share/groff_font/devutf8			base-groff-font
 ./usr/share/i18n				base-sysutil-share
 ./usr/share/i18n/csmapper			base-sysutil-share
+./usr/share/i18n/csmapper/CNS			base-sysutil-share
+./usr/share/i18n/csmapper/CNS/CNS11643-1%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-2%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS%CNS11643-1.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS%CNS11643-2.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP			base-sysutil-share
 ./usr/share/i18n/csmapper/CP/CP037%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP038%UCS.mps	base-sysutil-share	nls
@@ -1671,6 +1676,7 @@
 ./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-KR.esdb	base-sysutil-share	nls
