@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.10 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.9 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.10 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,11 @@ struct acpilid_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
+};
+
+static const char * const lid_hid[] = {
+	"PNP0C0D",
+	NULL
 };
 
 int	acpilid_match(struct device *, struct cfdata *, void *);
@@ -80,10 +85,7 @@ acpilid_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C0D") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, lid_hid));
 }
 
 /*

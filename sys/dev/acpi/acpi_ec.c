@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.15 2003/11/01 08:34:54 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.16 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.15 2003/11/01 08:34:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.16 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,11 @@ struct acpi_ec_softc {
 	int		sc_flags;	/* see below */
 
 	uint32_t	sc_csrvalue;	/* saved control register */
+};
+
+static const char * const ec_hid[] = {
+	"PNP0C09",
+	NULL
 };
 
 #define	EC_F_LOCKED	0x01		/* EC is locked */
@@ -287,10 +292,7 @@ acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C09") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid));
 }
 
 /*

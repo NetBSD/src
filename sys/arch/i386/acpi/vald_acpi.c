@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.14 2003/10/31 21:49:39 mycroft Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.15 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.14 2003/10/31 21:49:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.15 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,11 @@ struct vald_acpi_softc {
 	int lcd_index;			/* index of lcd brightness table */
 
 	int	sc_ac_status;		/* AC adaptor status when attach */
+};
+
+static const char * const vald_acpi_hids[] = {
+	"TOS6200",
+	NULL
 };
 
 #define AVALD_F_VERBOSE		0x01	/* verbose events */
@@ -173,10 +178,7 @@ vald_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "TOS6200") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, vald_acpi_hids));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.6 2003/10/31 21:49:39 mycroft Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.6 2003/10/31 21:49:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,11 @@ struct spic_acpi_softc {
 	void *sc_ih;
 };
 
+static const char * const spic_acpi_ids[] = {
+	"SNY6001",
+	NULL
+};
+
 int	spic_acpi_match(struct device *, struct cfdata *, void *);
 void	spic_acpi_attach(struct device *, struct device *, void *);
 
@@ -78,10 +83,7 @@ spic_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "SNY6001") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, spic_acpi_ids));
 }
 
 void

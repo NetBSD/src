@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,19 +113,11 @@ int
 pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	const char *id;
-	int i;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	for (i = 0; (id = pckbc_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, id) == 0)
-			return (1);
-	}
-
-	/* No matches found */
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids));
 }
 
 void
@@ -138,7 +130,7 @@ pckbc_acpi_attach(struct device *parent,
 	struct pckbc_internal *t;
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh_d, ioh_c;
-	const char *idstr = aa->aa_node->ad_devinfo.HardwareId.Value;
+	const char *idstr = aa->aa_node->ad_devinfo->HardwareId.Value;
 	pckbc_slot_t peer;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1;
