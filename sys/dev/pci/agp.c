@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.10 2001/09/16 18:33:08 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.11 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -137,6 +137,8 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810E_MCH,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82840_HB,
 	  NULL,			agp_i810_attach },
 #endif
 
@@ -280,12 +282,15 @@ int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
 	/*
-	 * Find and map the aperture.
+	 * Find and the aperture. Don't map it (yet), this would
+	 * eat KVA.
 	 */
-	if (pci_mapreg_map(pa, AGP_APBASE, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR,
-	    &sc->as_apt, &sc->as_aph, &sc->as_apaddr, &sc->as_apsize) != 0)
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &sc->as_apaddr, &sc->as_apsize,
+	    &sc->as_apflags) != 0)
 		return ENXIO;
+
+	sc->as_apt = pa->pa_memt;
 
 	return 0;
 }
@@ -872,7 +877,6 @@ agp_get_info(void *devcookie, struct agp_info *info)
 	    sc->as_capoff + AGP_STATUS);
 	info->ai_aperture_base = sc->as_apaddr;
 	info->ai_aperture_size = sc->as_apsize;	/* XXXfvdl inconsistent */
-	info->ai_aperture_vaddr = bus_space_vaddr(sc->as_apt, sc->as_aph);
 	info->ai_memory_allowed = sc->as_maxmem;
 	info->ai_memory_used = sc->as_allocated;
 }
