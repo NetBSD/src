@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.66 2002/08/04 16:43:07 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.67 2002/08/04 17:08:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -325,6 +325,9 @@ extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
 #define	addch(ch)			waddch(stdscr, ch)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
+#define	attroff(attr)			wattroff(stdscr, attr)
+#define	attron(attr)			wattron(stdscr, attr)
+#define	attrset(attr)			wattrset(stdscr, attr)
 #define bkgd(ch)			wbkgd(stdscr, ch)
 #define bkgdset(ch)			wbkgdset(stdscr, ch)
 #define	border(l, r, t, b, tl, tr, bl, br) \
@@ -355,9 +358,6 @@ extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
 #define	timeout(delay)			wtimeout(stdscr, delay)
 #define	underscore()			wunderscore(stdscr)
 #define	underend()			wunderend(stdscr)
-#define	attron(attr)			wattron(stdscr, attr)
-#define	attroff(attr)			wattroff(stdscr, attr)
-#define	attrset(attr)			wattrset(stdscr, attr)
 #define	waddbytes(w, s, n)		__waddbytes(w, s, n, 0)
 #define	waddstr(w, s)			waddnstr(w, s, -1)
 
@@ -416,6 +416,9 @@ int	 addbytes(const char *, int);
 int	 addch(chtype);
 int	 addnstr(const char *, int);
 int	 addstr(const char *);
+int	 attroff(int);
+int	 attron(int);
+int	 attrset(int);
 int	 bkgd(chtype);
 void	 bkgdset(chtype);
 int	 border(chtype, chtype, chtype, chtype,
@@ -446,9 +449,6 @@ int	 standout(void);
 void	 timeout(int);
 int	 underscore(void);
 int	 underend(void);
-int	 attron(int);
-int	 attroff(int);
-int	 attrset(int);
 int	 waddbytes(WINDOW *, const char *, int);
 int	 waddstr(WINDOW *, const char *);
 
@@ -604,8 +604,8 @@ int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__(__scanf__, 2, 0)));
 int	 waddch(WINDOW *, chtype);
 int	 waddnstr(WINDOW *, const char *, int);
-int	 wattron(WINDOW *, int);
 int	 wattroff(WINDOW *, int);
+int	 wattron(WINDOW *, int);
 int	 wattrset(WINDOW *, int);
 int	 wbkgd(WINDOW *, chtype);
 void	 wbkgdset(WINDOW *, chtype);
