@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.17 1996/05/22 13:55:28 mycroft Exp $	*/
+/*	$NetBSD: in_var.h,v 1.17.8.1 1997/05/14 17:03:03 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -210,6 +210,7 @@ int	in_ifinit __P((struct ifnet *,
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 void	in_delmulti __P((struct in_multi *));
 void	in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
+void	in_setmaxmtu __P ((void));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
 #endif
