@@ -5,6 +5,7 @@
 ./usr/include/arm32/asm.h
 ./usr/include/arm32/beep.h
 ./usr/include/arm32/bootconfig.h
+./usr/include/arm32/bswap.h
 ./usr/include/arm32/bus.h
 ./usr/include/arm32/cdefs.h
 ./usr/include/arm32/conf.h

@@ -3,6 +3,7 @@
 ./usr/include/m68k/aout_machdep.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
+./usr/include/m68k/bswap.h
 ./usr/include/m68k/cacheops.h
 ./usr/include/m68k/cacheops_20.h
 ./usr/include/m68k/cacheops_30.h

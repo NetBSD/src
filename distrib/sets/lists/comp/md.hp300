@@ -4,6 +4,7 @@
 ./usr/include/hp300/aout_machdep.h
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/autoconf.h
+./usr/include/hp300/bswap.h
 ./usr/include/hp300/cdefs.h
 ./usr/include/hp300/cpu.h
 ./usr/include/hp300/db_machdep.h

@@ -4,6 +4,7 @@
 ./usr/include/next68k/aout_machdep.h
 ./usr/include/next68k/asm.h
 ./usr/include/next68k/autoconf.h
+./usr/include/next68k/bswap.h
 ./usr/include/next68k/bus.h
 ./usr/include/next68k/bus_dma.h
 ./usr/include/next68k/bus_space.h

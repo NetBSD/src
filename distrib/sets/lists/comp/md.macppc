@@ -6,6 +6,7 @@
 ./usr/include/macppc/asm.h
 ./usr/include/macppc/autoconf.h
 ./usr/include/macppc/bat.h
+./usr/include/macppc/bswap.h
 ./usr/include/macppc/bus.h
 ./usr/include/macppc/cdefs.h
 ./usr/include/macppc/cpu.h

@@ -4,6 +4,7 @@
 ./usr/include/sun3/aout_machdep.h
 ./usr/include/sun3/asm.h
 ./usr/include/sun3/autoconf.h
+./usr/include/sun3/bswap.h
 ./usr/include/sun3/cdefs.h
 ./usr/include/sun3/cg2reg.h
 ./usr/include/sun3/cpu.h

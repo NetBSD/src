@@ -5,6 +5,7 @@
 ./usr/include/atari/ansi.h
 ./usr/include/atari/aout_machdep.h
 ./usr/include/atari/asm.h
+./usr/include/atari/bswap.h
 ./usr/include/atari/bus.h
 ./usr/include/atari/cdefs.h
 ./usr/include/atari/cpu.h
