@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.12 1994/06/10 14:33:08 pk Exp $
+ * $Id: locore.s,v 1.13 1994/08/20 09:13:25 deraadt Exp $
  */
 
 #define	LOCORE
@@ -131,7 +131,7 @@
 	.globl	_intstack
 	.globl	_eintstack
 _intstack:
-	.skip	4 * NBPG		! 16k = 128 128-byte stack frames
+	.skip	128 * 128		! 16k = 128 128-byte stack frames
 _eintstack:
 
 /*
@@ -144,7 +144,7 @@ _eintstack:
  */
 	.globl	_idle_u
 _idle_u:
-	.skip	UPAGES * NBPG
+	.skip	USPACE
 
 /*
  * Process 0's u.
@@ -152,7 +152,7 @@ _idle_u:
  * This must be aligned on an 8 byte boundary.
  */
 	.globl	_u0
-_u0:	.skip	UPAGES * NBPG
+_u0:	.skip	USPACE
 estack0:
 
 #ifdef KGDB
@@ -173,11 +173,23 @@ _kgdb_stack:
 _cpcb:	.word	_u0
 
 /* 
- * _cputyp is the current cpu type, to distinguish sun4c/sun4m
- * machines. this should be cleaned up. 0 = sun4c/sun4; 1 = sun4m
+ * _cputyp is the current cpu type, used to distinguish between
+ * the many variations of different sun4* machines. It contains
+ * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
  */
 	.globl	_cputyp
 _cputyp:
+	.word	1
+/*
+ * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
+ * and PGOFSET.
+ */
+	.globl	_pgshift, _nbpg, _pgofset
+_pgshift:
+	.word	1
+_nbpg:
+	.word	1
+_pgofset:
 	.word	1
 
 #if defined(SUN4M)
@@ -189,9 +201,13 @@ _mapme:
 sun4m_notsup:
 	.asciz	"cr .( NetBSD/sparc: sun4m support not compiled into kernel) cr"
 #endif
-#if !(defined(SUN4) || defined(SUN4C))
+#if !defined(SUN4C)
 sun4c_notsup:
-	.asciz	"cr .( NetBSD/sparc: sun4/sun4c support not compiled into kernel) cr"
+	.asciz	"cr .( NetBSD/sparc: sun4c support not compiled into kernel) cr"
+#endif
+#if !defined(SUN4)
+sun4_notsup:
+	.asciz	"cr .( NetBSD/sparc: sun4 support not compiled into kernel) cr"
 #endif
 	ALIGN
 
@@ -208,8 +224,8 @@ sun4c_notsup:
  * message buffer (1 page).
  */
 	.globl	_msgbuf
-msgbufsize = NBPG			! 1 page for msg buffer
-_msgbuf	= KERNBASE + NBPG
+msgbufsize = 4096			! 1 page for msg buffer
+_msgbuf	= KERNBASE + 4096
 
 /*
  * The remaining two physical pages are currently unused.  We need to
@@ -641,13 +657,13 @@ Lpanic_red:
  * slot; it is, at it merely sets its `pte' register to a temporary value.
  */
 	/* input: addr, output: pte; aux: bad address label */
-#define	PTE_OF_ADDR(addr, pte, bad) \
+#define	PTE_OF_ADDR(addr, pte, bad, page_offset) \
 	sra	addr, PG_VSHIFT, pte; \
 	cmp	pte, -1; \
-	be,a	1f; andn addr, 4095, pte; \
+	be,a	1f; andn addr, page_offset, pte; \
 	tst	pte; \
 	bne	bad; EMPTY; \
-	andn	addr, 4095, pte; \
+	andn	addr, page_offset, pte; \
 1:
 
 	/* input: pte; output: condition codes */
@@ -672,20 +688,21 @@ Lpanic_red:
  *
  * A chunk of 64 bytes is on a single page if and only if:
  *
- *	((base + 64 - 1) & ~4095) == (base & ~4095)
+ *	((base + 64 - 1) & ~(NBPG-1)) == (base & ~(NBPG-1))
  *
  * Equivalently (and faster to test), the low order bits (base & 4095) must
  * be small enough so that the sum (base + 63) does not carry out into the
  * upper page-address bits, i.e.,
  *
- *	(base & 4095) < (4096 - 63)
+ *	(base & (NBPG-1)) < (NBPG - 63)
  *
  * so we allow testing that here.  This macro is also assumed to be safe
  * in a delay slot (modulo overwriting its temporary).
  */
-#define	SLT_IF_1PAGE_RW(addr, tmp) \
-	and	addr, 4095, tmp; \
-	cmp	tmp, (4096 - 63)
+#define	SLT_IF_1PAGE_RW(addr, tmp, page_offset) \
+	and	addr, page_offset, tmp; \
+	sub	page_offset, 62, page_offset; \
+	cmp	tmp, page_offset
 
 /*
  * Every trap that enables traps must set up stack space.
@@ -797,15 +814,15 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	st	%l5, [%l6 + PCB_UW]; \
 	/* cond codes still indicate whether in trap window */ \
 	bz,a	2f; \
-	 sethi	%hi(UPAGES*NBPG+(stackspace)), %l5; \
+	 sethi	%hi(USPACE+(stackspace)), %l5; \
 	/* yes, in trap window; must clean it */ \
 	CALL_CLEAN_TRAP_WINDOW; \
 	sethi	%hi(_cpcb), %l6; \
 	ld	[%l6 + %lo(_cpcb)], %l6; \
-	sethi	%hi(UPAGES*NBPG+(stackspace)), %l5; \
+	sethi	%hi(USPACE+(stackspace)), %l5; \
 2: \
 	/* trap window is (now) clean: set %sp */ \
-	or	%l5, %lo(UPAGES*NBPG+(stackspace)), %l5; \
+	or	%l5, %lo(USPACE+(stackspace)), %l5; \
 	add	%l6, %l5, %sp; \
 	SET_SP_REDZONE(%l6, %l5); \
 3: \
@@ -905,6 +922,8 @@ ctw_merge:
 	sll	%g5, %g7, %g5
 	wr	%g5, 0, %wim		! setwim(g5);
 	and	%g7, 31, %g7		! cpcb->pcb_wim = g7 & 31;
+	sethi	%hi(_cpcb), %g6		! re-get current pcb
+	ld	[%g6 + %lo(_cpcb)], %g6
 	st	%g7, [%g6 + PCB_WIM]
 	nop
 	restore				! back to trap window
@@ -925,15 +944,19 @@ ctw_user:
 	btst	7, %sp			! if not aligned,
 	bne	ctw_invalid		! choke on it
 	 EMPTY
-	PTE_OF_ADDR(%sp, %g7, ctw_invalid)
+
+	sethi	%hi(_pgofset), %g6	! trash %g6=curpcb
+	ld	[%g6 + %lo(_pgofset)], %g6
+	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6)
 	CMP_PTE_USER_WRITE(%g7)		! likewise if not writable
 	bne	ctw_invalid
 	 EMPTY
-	SLT_IF_1PAGE_RW(%sp, %g7)
+	SLT_IF_1PAGE_RW(%sp, %g7, %g6)
 	bl,a	ctw_merge		! all ok if only 1
 	 std	%l0, [%sp]
 	add	%sp, 7*8, %g5		! check last addr too
-	PTE_OF_ADDR(%g5, %g7, ctw_invalid)
+	add	%g6, 62, %g6
+	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6)
 	CMP_PTE_USER_WRITE(%g7)
 	be,a	ctw_merge		! all ok: store <l0,l1> and merge
 	 std	%l0, [%sp]
@@ -951,6 +974,9 @@ ctw_invalid:
 	 * Reread cpcb->pcb_uw.  We decremented this earlier,
 	 * so it is off by one.
 	 */
+	sethi	%hi(_cpcb), %g6		! re-get current pcb
+	ld	[%g6 + %lo(_cpcb)], %g6
+
 	ld	[%g6 + PCB_UW], %g7	! (number of user windows) - 1
 	add	%g6, PCB_RW, %g5
 
@@ -1240,7 +1266,7 @@ softtrap:
 	 EMPTY
 	sethi	%hi(_cpcb), %l6
 	ld	[%l6 + %lo(_cpcb)], %l6
-	set	UPAGES*NBPG - CCFSZ - 80, %l5
+	set	USPACE-CCFSZ-80, %l5
 	add	%l6, %l5, %l7
 	SET_SP_REDZONE(%l6, %l5)
 	b	Lslowtrap_reenter
@@ -1771,7 +1797,7 @@ winof_user:
 	 mov	%g7, %l7		! for clean_trap_window
 	sethi	%hi(_cpcb), %l6
 	ld	[%l6 + %lo(_cpcb)], %l6
-	set	UPAGES*NBPG-CCFSZ-80, %l5
+	set	USPACE-CCFSZ-80, %l5
 	add	%l6, %l5, %sp		/* over to kernel stack */
 	CHECK_SP_REDZONE(%l6, %l5)
 
@@ -1869,15 +1895,18 @@ winuf_user:
 	bne	winuf_invalid
 	 EMPTY
 
-	PTE_OF_ADDR(%sp, %l7, winuf_invalid)
+	sethi	%hi(_pgofset), %l4
+	ld	[%l4 + %lo(_pgofset)], %l4
+	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4)
 	CMP_PTE_USER_READ(%l7)		! if first page not readable,
 	bne	winuf_invalid		! it is invalid
 	 EMPTY
-	SLT_IF_1PAGE_RW(%sp, %l7)	! first page is readable
+	SLT_IF_1PAGE_RW(%sp, %l7, %l4)	! first page is readable
 	bl,a	winuf_ok		! if only one page, enter window X
 	 restore %g0, 1, %l1		! and goto ok, & set %l1 to 1
 	add	%sp, 7*8, %l5
-	PTE_OF_ADDR(%l5, %l7, winuf_invalid)
+	add     %l4, 62, %l4
+	PTE_OF_ADDR(%l5, %l7, winuf_invalid, %l4)
 	CMP_PTE_USER_READ(%l7)		! check second page too
 	be,a	winuf_ok		! enter window X and goto ok
 	 restore %g0, 1, %l1		! (and then set %l1 to 1)
@@ -1912,7 +1941,7 @@ winuf_invalid:
 	ld	[%l6 + PCB_WIM], %l5	! get log2(%wim)
 	sll	%l4, %l5, %l4		! %l4 = old %wim
 	wr	%l4, 0, %wim		! window I is now invalid again
-	set	UPAGES*NBPG-CCFSZ-80, %l5
+	set	USPACE-CCFSZ-80, %l5
 	add	%l6, %l5, %sp		! get onto kernel stack
 	CHECK_SP_REDZONE(%l6, %l5)
 
@@ -2095,15 +2124,18 @@ rft_user:
 	bne	rft_invalid
 	 EMPTY
 
-	PTE_OF_ADDR(%fp, %l7, rft_invalid)
+	sethi	%hi(_pgofset), %l3
+	ld	[%l3 + %lo(_pgofset)], %l3
+	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3)
 	CMP_PTE_USER_READ(%l7)		! try first page
 	bne	rft_invalid		! no good
 	 EMPTY
-	SLT_IF_1PAGE_RW(%fp, %l7)
+	SLT_IF_1PAGE_RW(%fp, %l7, %l3)
 	bl,a	rft_user_ok		! only 1 page: ok
 	 wr	%g0, 0, %wim
 	add	%fp, 7*8, %l5
-	PTE_OF_ADDR(%l5, %l7, rft_invalid)
+	add	%l3, 62, %l3
+	PTE_OF_ADDR(%l5, %l7, rft_invalid, %l3)
 	CMP_PTE_USER_READ(%l7)		! check 2nd page too
 	be,a	rft_user_ok
 	 wr	%g0, 0, %wim
@@ -2290,16 +2322,48 @@ init_tables:
 	retl
 	 stb	%o2, [%o3 + %o1]	! (wmask - 1)[i] = j;
 
-dostart:
-	mov	%o0, %g7		! save prom vector pointer
+#ifdef SUN4
+/*
+ * getidprom(struct idprom *, sizeof(struct idprom))
+ */
+	.global _getidprom
+_getidprom:
+	set	AC_IDPROM, %o2
+1:	lduba	[%o2] ASI_CONTROL, %o3
+	stb	%o3, [%o0]
+	inc	%o0
+	inc	%o2
+	dec	%o1
+	cmp	%o1, 0
+	bne	1b
+	 nop
+	retl
+	 nop
+#endif
 
+dostart:
+	/*
+	 * Sun4 passes in the `load address'.  Although possible, its highly
+	 * unlikely that OpenBoot would place the prom vector there.
+	 */
+	cmp	%o0, 0x4000
+	beq	is_sun4
+	 mov	%o0, %g7		! save prom vector pointer
+
+	/*
+	 * are we on a sun4c or a sun4m?
+	 */
 	rd	%psr, %g4		! hack: if the cpu version number is
 	srl	%g4, 24, %g4		! 4, we have a sun4m machine of some
 	and	%g4, 0xf, %g4		! ilk, with some SRMMU thingy instead
 	cmp	%g4, 0x4
-	bne	0f
-	 mov	%g0, %g4		! clear flag for sun4c
-#if !defined(SUN4M)
+	bne	is_sun4c
+	 nop
+#if defined(SUN4M)
+	mov	SUN4CM_PGSHIFT, %g5
+	b	start_havetype
+	 mov	CPU_SUN4M, %g4
+#else
 	set	sun4m_notsup-KERNBASE, %o0
 	ld	[%g7 + 0x7c], %o1
 	call	%o1			! print a message saying that the
@@ -2307,12 +2371,18 @@ dostart:
 	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
-#else
-	b	1f
-	 mov	1, %g4			! set flag for sun4m
+	/*NOTREACHED*/
 #endif
-0:
-#if !(defined(SUN4) || defined(SUN4C))
+is_sun4c:
+#if defined(SUN4C)
+	mov	SUN4CM_PGSHIFT, %g5
+
+	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
+	stba	%g0, [%g1] ASI_CONTROL
+
+	b	start_havetype
+	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
+#else
 	set	sun4c_notsup-KERNBASE, %o0
 	ld	[%g7 + 0x7c], %o1
 	call	%o1			! print a message saying that the
@@ -2320,9 +2390,29 @@ dostart:
 	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
+	/*NOTREACHED*/
+#endif
+is_sun4:
+#if defined(SUN4)
+	mov	SUN4_PGSHIFT, %g5
+
+	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
+	stba	%g0, [%g1] ASI_CONTROL
+
+	b	start_havetype
+	 mov	CPU_SUN4C, %g4
+#else
+	set	sun4_notsup-KERNBASE, %o0
+	ld	[%g7 + 0x18], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4 architecture is not supported
+	ld	[%g7 + 0xc4], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+	/*NOTREACHED*/
 #endif
 
-1:
+start_havetype:
 	/*
 	 * Startup.
 	 *
@@ -2339,16 +2429,6 @@ dostart:
 	 */
 #endif
 
-#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	cmp	%g4, %g0		! skip for sun4m!
-	bne	1f
-	 nop
-#endif
-#if defined(SUN4) || defined(SUN4C)
-	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
-	stba	%g0, [%g1] ASI_CONTROL
-#endif
-1:
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
@@ -2376,12 +2456,15 @@ dostart:
 	add	%l2, %o1, %l2
 1:
 #endif
-#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	cmp	%g4, %g0		! skip for sun4m!
+	/*
+	 * Need different initial mapping functions for different
+	 * types of machines.
+	 */
+#if defined(SUN4C)
+	cmp	%g4, CPU_SUN4C
 	bne	1f
 	 nop
-#endif
-#if defined(SUN4) || defined(SUN4C)
+
 	set	1 << 18, %l3		! segment size in bytes
 0:
 	lduba	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
@@ -2397,23 +2480,71 @@ dostart:
 	 * %tbr.
 	 */
 	set	IE_reg_addr, %l0
-	set	IE_REG_PTE, %l1
+
+	set	IE_REG_PTE_PG, %l1
+	set	INT_ENABLE_REG_PHYSADR, %l2
+	srl	%l2, %g5, %l2
+	or	%l2, %l1, %l1
+
 	sta	%l1, [%l0] ASI_PTE
 	mov	IE_ALLIE, %l1
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
-	b	2f
+	b	startmap_done
 	 nop
-#endif /* SUN4 || SUN4C */
+#endif /* SUN4C */
 1:
+#if defined(SUN4)
+	cmp	%g4, CPU_SUN4
+	bne	2f
+	 nop
+
+	set	1 << 18, %l3		! segment size in bytes
+0:
+	lduha	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
+	stha	%l4, [%l1] ASI_SEGMAP
+	add	%l3, %l1, %l1		! highva += segsiz;
+	cmp	%l1, %l2		! done?
+	bl	0b			! no, loop
+	 add	%l3, %l0, %l0		! (and lowva += segsz)
+
+	/*
+	 * Now map the interrupt enable register and clear any interrupts,
+	 * enabling NMIs.  Note that we will not take NMIs until we change
+	 * %tbr.
+	 */
+	set	IE_reg_addr, %l0
+
+	set	IE_REG_PTE_PG, %l1
+	set	INT_ENABLE_REG_PHYSADR, %l2
+	srl	%l2, %g5, %l2
+	or	%l2, %l1, %l1
+
+	sta	%l1, [%l0] ASI_PTE
+	mov	IE_ALLIE, %l1
+	nop; nop			! paranoia
+	stb	%l1, [%l0]
+	b	startmap_done
+	 nop
+#endif /* SUN4 */
+2:
 #if defined(SUN4M)
+	cmp	%g4, CPU_SUN4M		! skip for sun4m!
+	bne	3f
+	 nop
+
 	! rominterpret("0 0 f8000000 15c6a0 map-pages");
 	set	_mapme-KERNBASE, %o0
 	ld	[%g7 + 0x7c], %o1
 	call	%o1			! forth eval
 	 nop
+	b	startmap_done
+	 nop
 #endif /* SUN4M */
-2:
+3:
+	! botch! We should blow up.
+
+startmap_done:
 	/*
 	 * All set, fix pc and npc.  Once we are where we should be,
 	 * we can give ourselves a stack and enable traps.
@@ -2422,8 +2553,20 @@ dostart:
 	jmp	%g1
 	 nop
 1:
-	sethi	%hi(_cputyp), %o0	! store sun4c/sun4m flag
+	sethi	%hi(_cputyp), %o0	! what type of cpu we are on
 	st	%g4, [%o0 + %lo(_cputyp)]
+
+	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
+	st	%g5, [%o0 + %lo(_pgshift)]
+
+	mov	1, %o0			! nbpg = 1 << pgshift
+	sll	%o0, %g5, %g5
+	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
+	st	%g5, [%o0 + %lo(_nbpg)]
+
+	sub	%g5, 1, %g5
+	sethi	%hi(_pgofset), %o0	! page offset = bytes in a page - 1
+	st	%g5, [%o0 + %lo(_pgofset)]
 
 	rd	%psr, %g3		! paranoia: make sure ...
 	andn	%g3, PSR_ET, %g3	! we have traps off
@@ -2940,7 +3083,7 @@ ENTRY(switchexit)
 	wr	%g0, 2, %wim		! and make window 1 the trap window
 	st	%g5, [%g6 + %lo(_cpcb)]	! cpcb = &idle_u
 	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	set	_idle_u + UPAGES * NBPG - CCFSZ, %sp	! set new %sp
+	set	_idle_u + USPACE-CCFSZ, %sp	! set new %sp
 #ifdef DEBUG
 	set	_idle_u, %l6
 	SET_SP_REDZONE(%l6, %l5)
@@ -3254,9 +3397,9 @@ Lsw_load:
 Lsw_havectx:
 !	ld	[%o3 + VM_PMAP_CTXNUM], %o0	! (done in delay slot)
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	set	_cputyp, %o1
-	ld	[%o1], %o1
-	cmp	%o1, %g0
+	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
+	ld	[%o1 + %lo(_cputyp)], %01
+	cmp	%o1, CPU_SUN4M
 	bne	1f
 	 nop
 #endif
