@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.5 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.6 2000/02/23 02:01:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -70,6 +70,8 @@ struct RF_RaidDisk_s {
 	int     blockSize;
 	RF_SectorCount_t partitionSize; /* The *actual* and *full* size of 
 					   the partition, from the disklabel */
+	int     auto_configured;/* 1 if this component was autoconfigured.
+				   0 otherwise. */
 	dev_t   dev;
 };
 /*

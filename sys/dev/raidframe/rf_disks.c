@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.15 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.16 2000/02/23 02:01:55 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -466,6 +466,11 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				       ac->clabel, sizeof(*ac->clabel));
 				sprintf(diskPtr->devname, "/dev/%s", 
 					ac->devname);
+				
+				/* note the fact that this component was
+				   autoconfigured.  You'll need this info
+				   later.  Trust me :) */
+				diskPtr->auto_configured = 1;
 				diskPtr->dev = ac->dev;
 			
 				/* 
@@ -575,6 +580,8 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 		raidPtr->raid_cinfo[row][col].ci_vp = vp;
 		raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;
 		
+		/* This component was not automatically configured */
+		diskPtr->auto_configured = 0;
 		diskPtr->dev = va.va_rdev;
 		
 		/* we allow the user to specify that only a fraction of the
