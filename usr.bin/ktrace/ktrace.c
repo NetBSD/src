@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.24 2001/09/02 23:18:01 assar Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.25 2002/07/19 12:53:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.24 2001/09/02 23:18:01 assar Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.25 2002/07/19 12:53:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,13 +278,15 @@ usage()
 	exit(1);
 }
 
+static const char *ktracefile = NULL;
 void
 no_ktrace(sig)
         int sig;
 {
-        (void)fprintf(stderr,
-"error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'options KTRACE'\n");
-        exit(1);
+	if (ktracefile)
+		(void)unlink(ktracefile);
+        (void)errx(1, "ktrace(2) system call not supported in the running"
+	    " kernel; re-compile kernel with `options KTRACE'");
 }
 
 int
@@ -359,7 +361,7 @@ do_ktrace(tracefile, ops, trpoints, pid)
 		ret = fktrace(pi[1], ops, trpoints, pid);
 #endif
 	} else
-		ret = ktrace(tracefile, ops, trpoints, pid);
+		ret = ktrace(ktracefile = tracefile, ops, trpoints, pid);
 	if (ret < 0)
 		err(1, "%s", tracefile);
 	return 1;
