@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.140 2001/12/18 16:40:51 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.141 2002/01/08 11:47:27 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.140 2001/12/18 16:40:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.141 2002/01/08 11:47:27 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3602,7 +3602,7 @@ pdc202xx_setup_channel(chp)
 		scr = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_U66);
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
-		/* Trimm UDMA mode */
+		/* Trim UDMA mode */
 		if ((st & PDC262_STATE_80P(channel)) != 0 ||
 		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
 		    chp->ch_drive[0].UDMA_mode <= 2) ||
