@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.21 2002/06/08 23:43:24 itojun Exp $	*/
+/*	$NetBSD: lpr.c,v 1.22 2002/07/03 22:12:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.21 2002/06/08 23:43:24 itojun Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.22 2002/07/03 22:12:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ main(argc, argv)
 
 	errs = 0;
 	while ((c = getopt(argc, argv,
-	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lnmprstvw:")) != -1) {
+	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lmnprstvw:")) != -1) {
 		switch (c) {
 
 		case '#':		/* n copies */
@@ -162,6 +162,7 @@ main(argc, argv)
 				if (i > 0)
 					ncopies = i;
 			}
+			break;
 
 		case '4':		/* troff fonts */
 		case '3':
@@ -787,6 +788,6 @@ usage()
 	fprintf(stderr, "%s\n%s\n",
 	    "usage: lpr [-Pprinter] [-#num] [-C class] [-J job] [-T title] "
 	    "[-U user]",
-	    "[-i[numcols]] [-1234 font] [-wnum] [-cdfghlnmprstv] [name ...]");
+	    "[-i[numcols]] [-1234 font] [-wnum] [-cdfghlmnprstv] [name ...]");
 	exit(1);
 }
