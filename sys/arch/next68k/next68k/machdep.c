@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1999/01/09 22:10:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1999/01/31 07:02:33 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,6 +102,7 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <next68k/next68k/seglist.h>
+#include <next68k/next68k/nextrom.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 
@@ -220,14 +221,27 @@ next68k_init()
 #endif
 	}
 
-#if 1
-  /* @@@ Since the boot rom doesn't know how to pass in
-	 * these parameters yet, I manually set them here while debugging
-	 * the scsi driver.
-	 * Darrin B. Jewell <dbj@netbsd.org>  Sun Jul 19 06:14:52 1998
-	 */
-	boothowto = RB_KDB | RB_ASKNAME;
-#endif
+	{
+		char *p = rom_boot_arg;
+		boothowto = 0;
+		if (*p++ == '-') {
+			for (;*p;p++) {
+				switch(*p) {
+				case 'a':
+					boothowto |= RB_ASKNAME;
+					break;
+				case 's':
+					boothowto |= RB_SINGLE;
+					break;
+				case 'd':
+					boothowto |= RB_KDB;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
 
   /* Initialize the interrupt handlers. */
   isrinit();
@@ -261,25 +275,19 @@ consinit()
   
   if (!init) {
 
-		/* @@@ I used to call cninit() before ddb_init(),
-		 * but then I had to debug something in the console
-		 * initiailization.  I still don't know if this is
-		 * okay, but it looks like it will work.
-		 */
+		cninit();
 
 #ifdef  DDB
     /*
      * Initialize kernel debugger, if compiled in.
      */
-	{
-		extern int end;
-		extern int *esym; 
+		{
+			extern int end;
+			extern int *esym; 
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-	}
+			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		}
 #endif
-
-    cninit();
 
 #ifdef DDB
 		if (boothowto & RB_KDB) {
@@ -800,18 +808,23 @@ cpu_reboot(howto, bootstr)
 	}
 #endif
 
+	if (howto & RB_POWERDOWN) {
+		poweroff();
+	}
+
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
 		printf("System halted.  Hit any key to reboot.\n\n");
 		(void)cngetc();
 	}
+
 #if 0
 	printf("rebooting...\n");
 	DELAY(1000000);
 	doboot();
 #else
-        printf("Don't know how to reboot, powering off instead\n");
-        poweroff();
+	printf("Don't know how to reboot, powering off instead\n");
+	poweroff();
 #endif
 
 	/*NOTREACHED*/

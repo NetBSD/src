@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.2 1999/01/27 11:27:17 dbj Exp $        */
+/*      $NetBSD: rtc.c,v 1.3 1999/01/31 07:02:34 dbj Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -236,6 +236,8 @@ poweroff(void)
 	}
 
 	rtc_write(reg, rtc_read(reg)|(RTC_PDOWN));
+	
+	printf("....................."); /* @@@ work around some sort of bug. */
 
 	panic("Failed to poweroff!\n");
 }
