@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.5 1998/10/15 14:39:53 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.6 1998/12/29 06:27:59 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -226,8 +226,15 @@ config_slot(node, pc)
 		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		intr = (intr & 0xffffff00) | (irq & 0xff);
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+	} else if (OF_getprop(node, "interrupts", &irq, sizeof(irq)) ==
+			sizeof(irq)) {
+		/* XXX USB on iMac */
+		if (bus == 0 && dev == 20 && func == 0 && irq == 1)
+			irq = 28;
+		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		intr = (intr & 0xffffff00) | (irq & 0xff);
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 	}
-
 }
 
 /*
