@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.522 2002/10/10 08:22:23 itojun Exp $
+# $NetBSD: mi,v 1.523 2002/10/14 06:31:39 takemura Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1274,6 +1274,7 @@
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/amiga/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/amq.0			man-amd-catman
+./usr/share/man/cat8/apm.0			man-sysutil-catman
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman
 ./usr/share/man/cat8/arc/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arc/makedev.0		man-sysutil-catman
@@ -1407,14 +1408,12 @@
 ./usr/share/man/cat8/hprop.0			man-krb5-catman
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/i386/apm.0			man-sysutil-catman
 ./usr/share/man/cat8/i386/boot.0		man-sys-catman
 ./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
 ./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/w95boot.0		man-sys-catman
-./usr/share/man/cat8/i386/zzz.0			man-sysutil-catman
 ./usr/share/man/cat8/identd.0			man-netutil-catman
 ./usr/share/man/cat8/ifconfig.0			man-netutil-catman
 ./usr/share/man/cat8/ifmcstat.0			man-netutil-catman
@@ -1783,6 +1782,7 @@
 ./usr/share/man/cat8/ypxfr.0			man-nis-catman
 ./usr/share/man/cat8/zdump.0			man-sysutil-catman
 ./usr/share/man/cat8/zic.0			man-sysutil-catman
+./usr/share/man/cat8/zzz.0			man-sysutil-catman
 ./usr/share/man/man1/Mail.1			man-mail-man
 ./usr/share/man/man1/[.1			man-util-man
 ./usr/share/man/man1/alias.1			man-util-man
@@ -3028,6 +3028,7 @@
 ./usr/share/man/man8/amiga/installboot.8	man-sysutil-man
 ./usr/share/man/man8/amiga/makedev.8		man-sysutil-man
 ./usr/share/man/man8/amq.8			man-amd-man
+./usr/share/man/man8/apm.8			man-sysutil-man
 ./usr/share/man/man8/apmd.8			man-sysutil-man
 ./usr/share/man/man8/arc/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arc/makedev.8		man-sysutil-man
@@ -3161,14 +3162,12 @@
 ./usr/share/man/man8/hprop.8			man-krb5-man
 ./usr/share/man/man8/hpropd.8			man-krb5-man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/i386/apm.8			man-sysutil-man
 ./usr/share/man/man8/i386/boot.8		man-sys-man
 ./usr/share/man/man8/i386/boot_console.8	man-sys-man
 ./usr/share/man/man8/i386/dosboot.8		man-sys-man
 ./usr/share/man/man8/i386/installboot.8		man-sysutil-man
 ./usr/share/man/man8/i386/makedev.8		man-sysutil-man
 ./usr/share/man/man8/i386/w95boot.8		man-sys-man
-./usr/share/man/man8/i386/zzz.8			man-sysutil-man
 ./usr/share/man/man8/identd.8			man-netutil-man
 ./usr/share/man/man8/ifconfig.8			man-netutil-man
 ./usr/share/man/man8/ifmcstat.8			man-netutil-man
@@ -3537,3 +3536,4 @@
 ./usr/share/man/man8/ypxfr.8			man-nis-man
 ./usr/share/man/man8/zdump.8			man-sysutil-man
 ./usr/share/man/man8/zic.8			man-sysutil-man
+./usr/share/man/man8/zzz.8			man-sysutil-man
