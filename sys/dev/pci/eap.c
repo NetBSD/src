@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.35 2000/03/19 17:11:50 soren Exp $	*/
+/*	$NetBSD: eap.c,v 1.36 2000/04/24 17:55:24 augustss Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -474,7 +474,7 @@ eap1371_set_dac_rate(sc, rate, which)
 	int rate;
 	int which;
 {
-        int dac = (which == 1) ? ESRC_DAC1 : ESRC_DAC2;
+        int dac = which == 1 ? ESRC_DAC1 : ESRC_DAC2;
 	int freq, r;
  
         /* Whatever, it works, so I'll leave it :) */
@@ -495,7 +495,7 @@ eap1371_set_dac_rate(sc, rate, which)
         eap1371_src_write(sc, dac + ESRC_VFF, freq & 0x7fff);
         r = EREAD4(sc, E1371_SRC) & (E1371_SRC_DISABLE | 
             E1371_SRC_DISP2 | E1371_SRC_DISP1 | E1371_SRC_DISREC);
-        r &= ~((which == 1) ? E1371_SRC_DISP1 : E1371_SRC_DISP2);
+        r &= ~(which == 1 ? E1371_SRC_DISP1 : E1371_SRC_DISP2);
         EWRITE4(sc, E1371_SRC, r);
 }
 
@@ -518,7 +518,8 @@ eap_attach(parent, self, aux)
 	int revision;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, (revision = PCI_REVISION(pa->pa_class)));
+	revision = PCI_REVISION(pa->pa_class);
+	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 
         /* Flag if we're "creative" */
 	sc->sc_1371 = PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI97;
@@ -747,14 +748,13 @@ eap_intr(p)
 			sc->sc_pintr(sc->sc_parg);
 	}
 #if NMIDI > 0
-	if (intr & EAP_I_UART) {
+	if ((intr & EAP_I_UART) && sc->sc_iintr != NULL) {
 		u_int32_t data;
 
 		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXINT) {
 			while (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXRDY) {
 				data = EREAD1(sc, EAP_UART_DATA);
-				if (sc->sc_iintr)
-					sc->sc_iintr(sc->sc_arg, data);
+				sc->sc_iintr(sc->sc_arg, data);
 			}
 		}
 	}
