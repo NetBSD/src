@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.pager.c,v 1.2 1993/08/02 17:19:13 mycroft Exp $";
+static char rcsid[] = "$Id: hack.pager.c,v 1.3 1995/02/28 18:31:36 jtc Exp $";
 #endif /* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -11,13 +11,14 @@ static char rcsid[] = "$Id: hack.pager.c,v 1.2 1993/08/02 17:19:13 mycroft Exp $
    contact the outside world. */
 
 #include	<sys/types.h>
-#include	<sys/signal.h>
+#include	<signal.h>
 #include	<stdio.h>
+#include	<stdlib.h>
+#include	<unistd.h>
 #include "hack.h"
 extern int CO, LI;	/* usually COLNO and ROWNO+2 */
 extern char *CD;
 extern char quitchars[];
-extern char *getenv(), *getlogin();
 void done1();
 
 dowhatis()
