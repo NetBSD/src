@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.18 2001/11/10 10:59:09 lukem Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.19 2002/03/20 23:07:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.18 2001/11/10 10:59:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.19 2002/03/20 23:07:37 thorpej Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -411,17 +411,17 @@ bootpcheck(m, context)
 		}
 		switch (tag) {
 #ifdef NFS_BOOT_DHCP
-		    case TAG_DHCP_MSGTYPE:
+		case TAG_DHCP_MSGTYPE:
 			if (*p != bpc->expected_dhcpmsgtype)
 				return (-1);
 			bpc->dhcp_ok = 1;
 			break;
-		    case TAG_SERVERID:
+		case TAG_SERVERID:
 			memcpy(&bpc->dhcp_serverip.s_addr, p,
 			      sizeof(bpc->dhcp_serverip.s_addr));
 			break;
 #endif
-		    default:
+		default:
 			break;
 		}
 		p += len;
@@ -448,6 +448,10 @@ bootpc_call(nd, procp)
 	u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
+#ifdef NFS_BOOT_DHCP
+	char vci[64];
+	int vcilen;
+#endif
 
 	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
 	if (error) {
@@ -559,7 +563,15 @@ bootpc_call(nd, procp)
 	bootp->bp_vend[4] = TAG_DHCP_MSGTYPE;
 	bootp->bp_vend[5] = 1;
 	bootp->bp_vend[6] = DHCPDISCOVER;
-	bootp->bp_vend[7] = TAG_END;
+	/*
+	 * Insert a NetBSD Vendor Class Identifier option.
+	 */
+	sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
+	vcilen = strlen(vci);
+	bootp->bp_vend[7] = TAG_CLASSID;
+	bootp->bp_vend[8] = vcilen;
+	memcpy(&bootp->bp_vend[9], vci, vcilen);
+	bootp->bp_vend[9 + vcilen] = TAG_END;
 #else
 	bootp->bp_vend[4] = TAG_END;
 #endif
@@ -594,7 +606,15 @@ bootpc_call(nd, procp)
 		bootp->bp_vend[20] = 4;
 		leasetime = htonl(300);
 		memcpy(&bootp->bp_vend[21], &leasetime, 4);
-		bootp->bp_vend[25] = TAG_END;
+		/*
+		 * Insert a NetBSD Vendor Class Identifier option.
+		 */
+		sprintf(vci, "%s:%s:kernel:%s", ostype, MACHINE, osrelease);
+		vcilen = strlen(vci);
+		bootp->bp_vend[25] = TAG_CLASSID;
+		bootp->bp_vend[26] = vcilen;
+		memcpy(&bootp->bp_vend[27], vci, vcilen);
+		bootp->bp_vend[27 + vcilen] = TAG_END;
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
