@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.37 2000/05/09 00:56:22 hubertf Exp $
+#	$NetBSD: Makefile.arc,v 1.38 2000/05/21 02:50:10 soren Exp $
 
 # Makefile for NetBSD
 #
@@ -64,7 +64,8 @@ GP?=		-G 0 # -G 30 # XXX: check this
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -mips2 -D_LOCORE
-LINKFLAGS=	-T${MIPS}/conf/kern.ldscript -Ttext ${TEXTADDR} -e start ${GP}
+LINKFLAGS=	-T${MIPS}/conf/kern.ldscript.le -Ttext ${TEXTADDR} \
+		-e start ${GP}
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
