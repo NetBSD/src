@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.12 2002/09/27 20:40:42 thorpej Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.13 2002/09/30 20:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.12 2002/09/27 20:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.13 2002/09/30 20:38:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ struct siop_pci_softc {
 	struct siop_pci_common_softc siop_pci;
 };
 
-const struct cfattach siop_pci_ca = {
-	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach
-};
+CFATTACH_DECL(siop_pci, sizeof(struct siop_pci_softc),
+    siop_pci_match, siop_pci_attach, NULL, NULL)
 
 int
 siop_pci_match(parent, match, aux)

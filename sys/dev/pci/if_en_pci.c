@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.16 2002/09/27 20:40:06 thorpej Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.17 2002/09/30 20:37:29 thorpej Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.16 2002/09/27 20:40:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.17 2002/09/30 20:37:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +128,8 @@ static	void en_pci_attach __P((struct device *, struct device *, void *));
  * PCI autoconfig attachments
  */
 
-const struct cfattach en_pci_ca = {
-    sizeof(struct en_pci_softc), en_pci_match, en_pci_attach,
-};
+CFATTACH_DECL(en_pci, sizeof(struct en_pci_softc),
+    en_pci_match, en_pci_attach, NULL, NULL)
 
 #if !defined(MIDWAY_ENIONLY)
 
