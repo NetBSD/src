@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.1 2004/10/23 17:25:15 thorpej Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.2 2005/01/01 19:29:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.1 2004/10/23 17:25:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.2 2005/01/01 19:29:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ mbr_ptype_to_str(uint8_t ptype)
 	case MBR_PTYPE_FAT16L:	str = DKW_PTYPE_FAT;		break;
 	case MBR_PTYPE_LNXSWAP:	str = DKW_PTYPE_SWAP;		break;
 	case MBR_PTYPE_LNXEXT2:	str = DKW_PTYPE_EXT2FS;		break;
-	case MBR_PTYPE_APPLEUFS:str = DKW_PTYPE_APPLEUFS;	break;
+	case MBR_PTYPE_APPLE_UFS:str = DKW_PTYPE_APPLEUFS;	break;
 	case MBR_PTYPE_EFI:	str = DKW_PTYPE_FAT;		break;
 	default:		str = NULL;			break;
 	}
