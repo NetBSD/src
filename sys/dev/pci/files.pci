@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.6 1995/07/27 04:43:19 mycroft Exp $
+#	$NetBSD: files.pci,v 1.7 1995/08/19 00:44:48 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -10,10 +10,14 @@
 #device	pci at mainbus {[bus = -1], [dev = -1]}
 file	dev/pci/pci_subr.c		pci needs-flag
 
-# NCR 53C8{10,15,25} SCSI chips
-device	ncr at pci: scsi
-file	dev/pci/ncr.c			ncr
-
 # Ethernet driver for DC21040-based boards
 device	de at pci: ether, ifnet
 file	dev/pci/if_de.c			de
+
+# Digital DEFPA PCI FDDI Controller
+device	fpa at pci: pdq, fddi, ifnet
+file	dev/pci/if_fpa.c		fpa
+
+# NCR 53c8xx SCSI chips
+device	ncr at pci: scsi
+file	dev/pci/ncr.c			ncr
