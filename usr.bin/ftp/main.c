@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 1999/01/23 15:46:25 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.37 1999/01/24 02:39:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 1999/01/23 15:46:25 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 1999/01/24 02:39:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,18 +174,17 @@ main(argc, argv)
 	else
 		dumbterm = 0;
 	fromatty = isatty(fileno(stdin));
-	if (fromatty) {
+	ttyout = stdout;
+	if (isatty(fileno(ttyout))) {
 		verbose = 1;		/* verbose if from a tty */
 #ifndef SMALL
-		if (! dumbterm)
+		if (! dumbterm) {
 			editing = 1;	/* editing mode on if tty is usable */
+			if (foregroundproc())
+				progress = 1;	/* progress bar on if fg */
+		}
 #endif
 	}
-	ttyout = stdout;
-#ifndef SMALL
-	if (isatty(fileno(ttyout)) && !dumbterm && foregroundproc())
-		progress = 1;		/* progress bar on if tty is usable */
-#endif
 
 	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:tvV")) != -1) {
 		switch (ch) {
@@ -256,17 +255,19 @@ main(argc, argv)
 			break;
 
 		case 'v':
-			verbose = 1;
+			progress = verbose = 1;
 			break;
 
 		case 'V':
-			verbose = 0;
+			progress = verbose = 0;
 			break;
 
 		default:
 			usage();
 		}
 	}
+			/* set line buffering on ttyout */
+	setvbuf(ttyout, NULL, _IOLBF, 0);
 	argc -= optind;
 	argv += optind;
 

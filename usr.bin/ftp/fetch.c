@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.47 1999/01/23 15:46:24 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.48 1999/01/24 02:39:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.47 1999/01/23 15:46:24 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.48 1999/01/24 02:39:30 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -883,7 +883,6 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 		if (bytes < mark)
 			(void)putc('#', ttyout);
 		(void)putc('\n', ttyout);
-		(void)fflush(ttyout);
 	}
 	if (ferror(fin)) {
 		warn("Reading file");
@@ -948,7 +947,6 @@ aborthttp(notused)
 
 	alarmtimer(0);
 	fputs("\nHTTP fetch aborted.\n", ttyout);
-	(void)fflush(ttyout);
 	longjmp(httpabort, 1);
 }
 

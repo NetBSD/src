@@ -1,12 +1,15 @@
-/*	$NetBSD: util.c,v 1.40 1999/01/05 22:54:49 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.41 1999/01/24 02:39:30 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.40 1999/01/05 22:54:49 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.41 1999/01/24 02:39:30 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -882,7 +885,7 @@ progressmeter(flag)
 			    "%02d:%02d ETA", i / 60, i % 60);
 		}
 	}
-	(void)write(fileno(ttyout), buf, len);
+	(void)fwrite(buf, sizeof(char), len, ttyout);
 
 	if (flag == -1) {
 		(void)xsignal(SIGALRM, updateprogressmeter);
@@ -980,7 +983,7 @@ ptransfer(siginfo)
 			    "  (stalled)");
 	}
 	len += snprintf(buf + len, sizeof(buf) - len, "\n");
-	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
+	(void)fwrite(buf, sizeof(char), len, siginfo ? stderr : ttyout);
 #endif	/* SMALL */
 }
 
