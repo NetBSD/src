@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.30 2001/09/21 03:04:09 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Copyright (c) 1997-1999 Eduardo E. Horvath. All rights reserved.
+ * Copyright (c) 1997-1999, 2001 Eduardo E. Horvath. All rights reserved.
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -1499,7 +1499,7 @@ struct sparc_bus_dma_tag {
  */
 struct sparc_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_addr_t	_dm_dvmastart;	/* start and size of allocated */
 	bus_size_t	_dm_dvmasize;	/* DVMA segment for this map. */
@@ -1514,7 +1514,7 @@ struct sparc_bus_dmamap {
 #define _DM_TYPE_UIO	2
 #define _DM_TYPE_MBUF	3
 	int		_dm_type;	/* type of mapping: raw, uio, mbuf, etc */
-	void		*_dm_source;	/* source mbuf, uio, etc. needed for unload *///////////////////////
+	void		*_dm_source;	/* source mbuf, uio, etc. needed for unload */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
