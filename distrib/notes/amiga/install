@@ -31,6 +31,10 @@ begin again from scratch.
 	the dblNTSC mode, you may also include the "-A" option to
 	enable the dblNTSC display mode.
 
+	If your machine has a fragmented physical memory space, as, 
+	e.g., DraCo machines, you should add the "-n2" option to 
+	enable the use of all memory segments.
+
 	You should see the screen clear and some information about
 	your system as the kernel configures the hardware.  Note which
 	hard disk device(s) are configured (sd0, sd1, etc).  Then
@@ -129,11 +133,11 @@ begin again from scratch.
 		to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base11
+			Extract base12
 
 		and to extract the games distribution:
 
-			Extract game11
+			Extract game12
 
 		If the distribution sets are in different directories,
 		you will need to cd to each directory in turn, runing
@@ -176,11 +180,11 @@ begin again from scratch.
 		wish to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base11
+			Extract base12
 
 		and to extract the games distribution:
 
-			Extract game11
+			Extract game12
 
 		After the extraction is complete, go to the location
 		of the next set you want to extract, "Set_tmp_dir"
@@ -199,7 +203,7 @@ begin again from scratch.
 		files for the game09 set, after the "Extract game09"
 		command has completed, issue the command:
 
-			rm game11.??
+			rm game12.??
 
 		Once you have extracted all sets and are at the "#" prompt
 		again, proceed to the section "Configuring Your System,"
