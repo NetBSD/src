@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.5 1995/03/21 15:08:42 cgd Exp $	*/
+/*	$NetBSD: crib.c,v 1.6 1997/07/09 06:25:45 phil Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: crib.c,v 1.5 1995/03/21 15:08:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: crib.c,v 1.6 1997/07/09 06:25:45 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -226,10 +226,13 @@ game()
 			} else
 				compcrib = (deck[i].rank > deck[j].rank);
 		} while (flag);
+		do_wait();
 		clear();
 		makeboard();
 		refresh();
 	} else {
+		makeboard();
+		refresh();
 		werase(Tablewin);
 		wrefresh(Tablewin);
 		werase(Compwin);
@@ -287,6 +290,9 @@ playhand(mycrib)
 	register int deckpos;
 
 	werase(Compwin);
+	wrefresh(Compwin);
+	werase(Tablewin);
+	wrefresh(Tablewin);
 
 	knownum = 0;
 	deckpos = deal(mycrib);
@@ -427,6 +433,7 @@ prcrib(mycrib, blank)
 
 	for (y = CRIB_Y; y <= CRIB_Y + 5; y++)
 		mvaddstr(y, cardx, "       ");
+	refresh();
 }
 
 /*
@@ -473,6 +480,7 @@ peg(mycrib)
 				else {			/* give him his point */
 					msg(quiet ? "You get one" :
 					    "You get one point");
+					do_wait();
 					if (chkscr(&pscore, 1))
 						return TRUE;
 					sum = 0;
@@ -550,6 +558,8 @@ peg(mycrib)
 				if (i > 0) {
 					msg(quiet ? "You got %d" :
 					    "You got %d points", i);
+					if (pnum == 0)
+						do_wait();
 					if (chkscr(&pscore, i))
 						return TRUE;
 				}
@@ -580,6 +590,7 @@ peg(mycrib)
 		} else {
 			msg(quiet ? "You get one for last" :
 			    "You get one point for last");
+			do_wait();
 			if (chkscr(&pscore, 1))
 				return TRUE;
 		}
@@ -616,6 +627,7 @@ score(mycrib)
 		do_wait();
 		if (comphand(crib, "crib"))
 			return (TRUE);
+		do_wait();
 	} else {
 		if (comphand(chand, "hand"))
 			return (TRUE);

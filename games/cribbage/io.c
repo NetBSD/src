@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.8 1997/05/17 19:26:18 pk Exp $	*/
+/*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: io.c,v 1.8 1997/05/17 19:26:18 pk Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,7 @@ msg(fmt, va_alist)
 	va_start(ap);
 #endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	Newpos = strlen(Msgbuf);
 	va_end(ap);
 	endmsg();
 }
@@ -432,6 +433,7 @@ addmsg(fmt, va_alist)
 	va_start(ap);
 #endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	Newpos = strlen(Msgbuf);
 	va_end(ap);
 }
 
