@@ -1,4 +1,4 @@
-/*	$NetBSD: ports.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: ports.c,v 1.2 2004/11/13 15:18:41 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -30,7 +30,7 @@ int     linenum;
 		return 0;
 	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(*seg + 2)) {
 		(*seg)++;
-		if (isalnum(***seg) && *(*seg + 2)) {
+		if (isalnum((unsigned char)***seg) && *(*seg + 2)) {
 			if (portnum(**seg, proto, pp, linenum) == 0)
 				return -1;
 			(*seg)++;
