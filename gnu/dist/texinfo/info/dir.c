@@ -1,7 +1,7 @@
-/* dir.c -- How to build a special "dir" node from "localdir" files.
-   $Id: dir.c,v 1.1.1.1 1999/02/11 03:57:19 tv Exp $
+/* dir.c -- how to build a special "dir" node from "localdir" files.
+   $Id: dir.c,v 1.1.1.2 2001/07/25 16:20:45 assar Exp $
 
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ maybe_build_dir_node (dirname)
           char *fullpath = xmalloc (3 + strlen (this_dir) + namelen);
           
           strcpy (fullpath, this_dir);
-          if (fullpath[strlen (fullpath) - 1] != '/')
+          if (!IS_SLASH (fullpath[strlen (fullpath) - 1]))
             strcat (fullpath, "/");
           strcat (fullpath, from_file);
 
@@ -135,8 +135,9 @@ maybe_build_dir_node (dirname)
           if (statable && S_ISREG (finfo.st_mode) && new_dir_file_p (&finfo))
             {
               long filesize;
+	      int compressed;
               char *contents = filesys_read_info_file (fullpath, &filesize,
-                                                       &finfo);
+                                                       &finfo, &compressed);
               if (contents)
                 {
                   update_tags++;
