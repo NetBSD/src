@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/16 06:37:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2000/06/21 04:07:57 thorpej Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.2 2000/06/16 06:37:17 thorpej Exp $
+#	$Id: Makefile,v 1.2.2.1 2000/06/21 04:07:57 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -101,13 +101,10 @@ SRCS+=	rsa.c genrsa.c
 ssleay.o:	ssleay.c
 	${CC} ${CFLAGS} -UMONOLITH -o ${.TARGET} -c ${.IMPSRC}
 
-FILES=	openssl.cnf
-FILESDIR=/etc/openssl
-
 .include <bsd.prog.mk>
 
 .if ${MKSHARE} != "no"
-FILES=  CA.sh CA.pl der_chop
+FILES=  CA.sh CA.pl der_chop openssl.cnf
 FILESDIR=/usr/share/examples/openssl
 .endif
 
