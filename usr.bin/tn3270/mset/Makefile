@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1993/12/28 11:38:14 davidb Exp $
+#	$Id: Makefile,v 1.9 1994/01/22 01:52:56 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -17,7 +17,7 @@ DEPSRCS += astosc.OUT map3270.c mset.c
 PROG = mset
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -r -s -f - xxx
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
@@ -32,7 +32,7 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 # astosc.out
 
 ${MKASTOSC}:
-	cd ${.CURDIR}/../tools/mkastosc; make
+	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
 
 
 depend: .depend

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1993/12/28 11:39:16 davidb Exp $
+#	$Id: Makefile,v 1.10 1994/01/22 01:53:09 cgd Exp $
 
 .include <../../Makefile.inc>
 
@@ -31,16 +31,16 @@ DEPSRCS += tn3270.c utilities.c
 PROG = tn3270
 
 MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -r -s -f - xxx
 
 MKASTODS!=cd $(.CURDIR)/../tools/mkastods; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | ${MAKE} -r -s -f - xxx
 
 MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | ${MAKE} -r -s -f - xxx
 
 MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | ${MAKE} -r -s -f - xxx
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
@@ -79,13 +79,13 @@ kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 # kbd.out
 
 ${MKASTOSC}:
-	cd ${.CURDIR}/../tools/mkastosc; make
+	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
 ${MKASTODS}:
-	cd ${.CURDIR}/../tools/mkastods; make
+	cd ${.CURDIR}/../tools/mkastods; ${MAKE}
 ${MKDSTOAS}:
-	cd ${.CURDIR}/../tools/mkdstoas; make
+	cd ${.CURDIR}/../tools/mkdstoas; ${MAKE}
 ${MKHITS}:
-	cd ${.CURDIR}/../tools/mkhits; make
+	cd ${.CURDIR}/../tools/mkhits; ${MAKE}
 
 
 depend: .depend
