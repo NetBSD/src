@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.19 2002/02/07 03:15:11 ross Exp $
+.\"	$NetBSD: fstat.1,v 1.20 2002/02/08 01:36:23 ross Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.19 2002/02/07 03:15:11 ross Exp $
+.\"	$NetBSD: fstat.1,v 1.20 2002/02/08 01:36:23 ross Exp $
 .\"
 .Dd February 18, 1999
 .Dt FSTAT 1
@@ -218,12 +218,12 @@ A unidirectional
 .Ux
 domain socket indicates the direction of flow with an arrow
 .Po
-.Dq <-
+.Dq \*[Lt]-
 or
-.Dq ->
+.Dq -\*[Gt]
 .Pc ,
 and a full duplex socket shows a double arrow
-.Pq Dq <-> .
+.Pq Dq \*[Lt]-\*[Gt] .
 .Pp
 For internet sockets
 .Nm fstat

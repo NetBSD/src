@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.8,v 1.4 2002/01/19 03:16:41 wiz Exp $
+.\" $NetBSD: isdnd.8,v 1.5 2002/02/08 01:38:49 ross Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.8,v 1.4 2002/01/19 03:16:41 wiz Exp $
+.\"	$Id: isdnd.8,v 1.5 2002/02/08 01:38:49 ross Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -265,7 +265,7 @@ Charging information from the kernel.
 .Ss OUTGOING CALLS
 Currently the only possibility to trigger an outgoing call is that an
 isdn4bsd network driver
-.Em ( ipr<n> )
+.Em ( ipr\*[Lt]n\*[Gt] )
 sends a
 .Em MSG_DIALOUT_IND
 to the

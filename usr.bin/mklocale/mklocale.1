@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.6 2001/12/01 20:45:20 wiz Exp $
+.\" $NetBSD: mklocale.1,v 1.7 2002/02/08 01:36:29 ross Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -46,8 +46,8 @@
 .Sh SYNOPSIS
 .Nm mklocale
 .Op Fl d
-.Ar "< src-file"
-.Ar "> language/LC_CTYPE"
+.Ar "\*[Lt] src-file"
+.Ar "\*[Gt] language/LC_CTYPE"
 .Nm mklocale
 .Op Fl d
 .Fl o
@@ -121,10 +121,10 @@ or
 Used to indicate ranges.
 .It Ar literal
 The follow characters are taken literally:
-.Bl -tag -width "<\|\|(\|\|["
-.It Dv "<\|(\|["
+.Bl -tag -width "\*[Lt]\|\|(\|\|["
+.It Dv "\*[Lt]\|(\|["
 Used to start a mapping.  All are equivalent.
-.It Dv ">\|\^)\|]"
+.It Dv "\*[Gt]\|\^)\|]"
 Used to end a mapping.  All are equivalent.
 .It Dv :
 Used as a delimiter in mappings.
@@ -170,12 +170,12 @@ follows and is used as the invalid rune for this locale.
 The following keywords may appear multiple times and have the following
 format for data:
 .in +.5i
-.Bl -tag -width "<RUNE1 THRU RUNEn : RUNE2>"
-.It Dv <RUNE1 RUNE2>
+.Bl -tag -width "\*[Lt]RUNE1 THRU RUNEn : RUNE2\*[Gt]"
+.It Dv \*[Lt]RUNE1 RUNE2\*[Gt]
 .Dv RUNE1
 is mapped to
 .Dv RUNE2 .
-.It Dv <RUNE1 THRU RUNEn : RUNE2>
+.It Dv \*[Lt]RUNE1 THRU RUNEn : RUNE2\*[Gt]
 Runes
 .Dv RUNE1
 through

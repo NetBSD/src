@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.10 2000/05/31 05:50:06 blymn Exp $
+.\"	$NetBSD: tset.1,v 1.11 2002/02/08 01:36:36 ross Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,7 @@ newline translation and resets any unset special characters to their
 default values before doing the terminal initialization described above.
 This is useful after a program dies leaving a terminal in a abnormal state.
 Note, you may have to type
-.Dq Li <LF>reset<LF>
+.Dq Li \*[Lt]LF\*[Gt]reset\*[Lt]LF\*[Gt]
 (the line-feed character is normally control-J) to get the terminal
 to work, as carriage-return may no longer work in the abnormal state.
 Also, the terminal will often not echo the command.
@@ -270,14 +270,14 @@ type.
 The port type is a string (delimited by either the operator or the colon
 character).
 The operator may be any combination of:
-.Dq Li \&> ,
-.Dq Li \&< ,
+.Dq Li \&\*[Gt] ,
+.Dq Li \&\*[Lt] ,
 .Dq Li \&@ ,
 and
 .Dq Li \&! ;
-.Dq Li \&>
+.Dq Li \&\*[Gt]
 means greater than,
-.Dq Li \&<
+.Dq Li \&\*[Lt]
 means less than,
 .Dq Li \&@
 means equal to
@@ -296,11 +296,11 @@ in the mapping replaces the current type.
 If more than one mapping is specified, the first applicable mapping is used.
 .Pp
 For example, consider the following mapping:
-.Dq Li dialup>9600:vt100 .
+.Dq Li dialup\*[Gt]9600:vt100 .
 The port type is
 .Dq Li dialup ,
 the operator is
-.Dq Li > ,
+.Dq Li \*[Gt] ,
 the baud rate specification is
 .Dq Li 9600 ,
 and the terminal type is

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.27 2002/01/19 02:01:35 wiz Exp $
+.\" $NetBSD: pkg_info.1,v 1.28 2002/02/08 01:38:53 ross Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -99,12 +99,12 @@ packages using
 style {,} alternates have also been implemented in addition to this.
 Package version numbers can also be matched in a relational manner
 using the
-.Pa >=, <=, >
+.Pa \*[Ge], \*[Le], \*[Gt]
 and
-.Pa <
+.Pa \*[Lt]
 operators.
 For example,
-.Pa pkg_info -e 'name>=1.3'
+.Pa pkg_info -e 'name\*[Ge]1.3'
 will match versions 1.3 and later of the
 .Pa name
 package.
@@ -227,7 +227,7 @@ default locations.
 Package info is either extracted from package files named on the
 command line, or from already installed package information
 in
-.Pa /var/db/pkg/<pkg-name> .
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] .
 .Pp
 A filename can be given instead of a (installed) package name to query
 information on the package this file belongs to. This filename is then

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.80 2001/12/26 09:40:16 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.81 2002/02/08 01:36:23 ross Exp $
 .\"
 .\" Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -310,7 +310,7 @@ from the user.
 When
 .Nm
 is awaiting commands from the user the prompt
-.Ql ftp>
+.Ql ftp\*[Gt]
 is provided to the user.
 The following commands are recognized
 by
@@ -427,7 +427,7 @@ When debugging is on,
 .Nm
 prints each command sent to the remote machine, preceded
 by the string
-.Ql \-\->
+.Ql \-\-\*[Gt]
 .It Ic delete Ar remote-file
 Delete the file
 .Ar remote-file
@@ -824,7 +824,7 @@ the output filename "myfile.data" for input filenames "myfile.data" and
 "myfile.myfile" for the input filename ".myfile".
 Spaces may be included in
 .Ar outpattern  ,
-as in the example: `nmap $1 sed "s/  *$//" > $1' .
+as in the example: `nmap $1 sed "s/  *$//" \*[Gt] $1' .
 Use the `\e' character to prevent special treatment
 of the `$','[',']', and `,' characters.
 .It Ic ntrans Op Ar inchars Op Ar outchars
@@ -1873,7 +1873,7 @@ By default, this is bound to the TAB key.
 By default,
 .Nm
 displays a command line prompt of
-.Dq "ftp> "
+.Dq "ftp\*[Gt] "
 to the user.
 This can be changed with the
 .Ic "set prompt"
@@ -1901,7 +1901,7 @@ begins with
 .Sq 0 ,
 the number of skipped components precede the trailing component(s) in
 the format
-.Dq /\fI<skipped>\fRtrailing
+.Dq /\fI\*[Lt]skipped\*[Gt]\fRtrailing
 (for
 .Sq %c )
 or
@@ -1949,7 +1949,7 @@ only
 .It Ev FTPPROMPT
 Command-line prompt to use.
 Defaults to
-.Dq "ftp> " .
+.Dq "ftp\*[Gt] " .
 Refer to
 .Sx COMMAND LINE PROMPT
 for more information.
@@ -2060,7 +2060,7 @@ and other enhancements over the standard
 were implemented in
 .Nx 1.3
 and later releases
-by Luke Mewburn <lukem@netbsd.org>.
+by Luke Mewburn \*[Lt]lukem@netbsd.org\*[Gt].
 .Pp
 IPv6 support was added by the WIDE/KAME project
 (but may not be present in all non-NetBSD versions of this program, depending

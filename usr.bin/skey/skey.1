@@ -1,4 +1,4 @@
-.\"	$NetBSD: skey.1,v 1.17 2001/12/08 19:15:32 wiz Exp $
+.\"	$NetBSD: skey.1,v 1.18 2002/02/08 01:36:32 ross Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
@@ -40,7 +40,7 @@ program
 .Nm "" :
 .Bd -literal -offset indent
 % skey  99  th91334
-Enter password: <your secret password is entered here>
+Enter password: \*[Lt]your secret password is entered here\*[Gt]
 OMEN US HORN OMIT BACK AHOY
 %
 .Ed
@@ -113,10 +113,10 @@ option.
 Initialize generation of one time passwords:
 .Bd -literal -offset indent
 host% skeyinit
-Password: <normal login password>
+Password: \*[Lt]normal login password\*[Gt]
 [Adding username]
-Enter secret password: <new secret password>
-Again secret password: <new secret password again>
+Enter secret password: \*[Lt]new secret password\*[Gt]
+Again secret password: \*[Lt]new secret password again\*[Gt]
 ID username s/key is 99 host12345
 Next login password: SOME SIX WORDS THAT WERE COMPUTED
 .Ed
@@ -124,7 +124,7 @@ Next login password: SOME SIX WORDS THAT WERE COMPUTED
 Produce a list of one time passwords to take with to a conference:
 .Bd -literal -offset indent
 host% skey -n 3 99 host12345
-Enter secret password: <secret password as used with skeyinit>
+Enter secret password: \*[Lt]secret password as used with skeyinit\*[Gt]
 97: NOSE FOOT RUSH FEAR GREY JUST
 98: YAWN LEO DEED BIND WACK BRAE
 99: SOME SIX WORDS THAT WERE COMPUTED
@@ -136,7 +136,7 @@ is installed:
 .Bd -literal -offset indent
 host% telnet host
 
-login: <username>
+login: \*[Lt]username\*[Gt]
 Password [s/key 97 host12345]:
 .Ed
 .Pp

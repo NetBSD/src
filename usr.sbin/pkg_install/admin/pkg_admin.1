@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.15 2002/02/02 01:31:16 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.16 2002/02/08 01:38:53 ross Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -82,12 +82,12 @@ unzip-5.40.tgz  unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip*'
 unzip-5.40.tgz
 unzip-5.41.tgz
-yui# pkg_admin lsall 'unzip>=5.40'
+yui# pkg_admin lsall 'unzip\*[Ge]5.40'
 unzip-5.40.tgz
 unzip-5.41.tgz
-yui# pkg_admin lsall 'unzip>=5.41'
+yui# pkg_admin lsall 'unzip\*[Ge]5.41'
 unzip-5.41.tgz
-yui# pkg_admin lsbest 'unzip>=5.40'
+yui# pkg_admin lsbest 'unzip\*[Ge]5.40'
 unzip-5.41.tgz
 yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
@@ -122,7 +122,7 @@ Where to register packages instead of
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db
-.It Pa /var/db/pkg/<pkg>/+CONTENTS
+.It Pa /var/db/pkg/\*[Lt]pkg\*[Gt]/+CONTENTS
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,

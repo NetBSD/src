@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntrace.8,v 1.3 2002/01/19 03:19:42 wiz Exp $
+.\" $NetBSD: isdntrace.8,v 1.4 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdntrace.8,v 1.3 2002/01/19 03:19:42 wiz Exp $
+.\"	$Id: isdntrace.8,v 1.4 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -101,7 +101,7 @@ switch D channel tracing off (default on).
 Use
 .Ar filename
 as the name of a file into which to write tracing output (default filename is
-isdntrace<n> where n is the number of the unit to trace).
+isdntrace\*[Lt]n\*[Gt] where n is the number of the unit to trace).
 .It Fl h
 switch display of header off (default on).
 .It Fl i
@@ -117,7 +117,7 @@ switch off writing trace output to a file (default on).
 Use
 .Ar filename
 as the name of a file used for the -B and -P options (default filename
-is isdntracebin<n> where n is the number of the unit to trace).
+is isdntracebin\*[Lt]n\*[Gt] where n is the number of the unit to trace).
 .It Fl r
 Switch off printing a raw hexadecimal dump of the packets preceding
 the decoded protocol information (default on).
@@ -177,8 +177,8 @@ automatically detects the layer 3 protocol being used by looking at the
 Protocol Discriminator (see: Q.931/1993 pp. 53).
 .Sh FILES
 .Bl -tag -width daddeldi -compact
-.It Pa /dev/i4btrc<n>
-The devicefile(s) used to get the trace messages for ISDN card unit <n>
+.It Pa /dev/i4btrc\*[Lt]n\*[Gt]
+The devicefile(s) used to get the trace messages for ISDN card unit \*[Lt]n\*[Gt]
 out of the kernel.
 .El
 .Sh EXAMPLES

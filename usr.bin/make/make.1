@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.61 2002/02/07 03:15:11 ross Exp $
+.\"	$NetBSD: make.1,v 1.62 2002/02/08 01:36:28 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -185,7 +185,7 @@ Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
 Specify a directory in which to search for sys.mk and makefiles included
-via the <...> style.  Multiple directories can be added to form a search path.
+via the \*[Lt]...\*[Gt] style.  Multiple directories can be added to form a search path.
 This path will override the default system include path: /usr/share/mk.
 Furthermore the system include path will be appended to the search path used
 for "..."-style inclusions (see the
@@ -386,13 +386,13 @@ The seven local variables are as follows:
 .Bl -tag -width ".ARCHIVE"
 .It Va .ALLSRC
 The list of all sources for this target; also known as
-.Ql Va \&> .
+.Ql Va \&\*[Gt] .
 .It Va .ARCHIVE
 The name of the archive file.
 .It Va .IMPSRC
 The name/path of the source from which the target is to be transformed
 (the ``implied'' source); also known as
-.Ql Va \&< .
+.Ql Va \&\*[Lt] .
 .It Va .MEMBER
 The name of the archive member.
 .It Va .OODATE
@@ -411,7 +411,7 @@ The name of the target; also known as
 The shorter forms
 .Ql Va @ ,
 .Ql Va ? ,
-.Ql Va \&>
+.Ql Va \&\*[Gt]
 and
 .Ql Va *
 are permitted for backward
@@ -419,8 +419,8 @@ compatibility with historical makefiles and are not recommended.
 The six variables
 .Ql Va "@F" ,
 .Ql Va "@D" ,
-.Ql Va "<F" ,
-.Ql Va "<D" ,
+.Ql Va "\*[Lt]F" ,
+.Ql Va "\*[Lt]D" ,
 .Ql Va "*F"
 and
 .Ql Va "*D"
@@ -619,7 +619,7 @@ it is anchored at the end of each word.
 Inside
 .Ar new_string ,
 an ampersand
-.Pq Ql &
+.Pq Ql \*[Am]
 is replaced by
 .Ar old_string
 (without any
@@ -902,7 +902,7 @@ may be any one of the following:
 .Bl -tag -width "Cm XX"
 .It Cm \&|\&|
 logical OR
-.It Cm \&&&
+.It Cm \&\*[Am]\*[Am]
 Logical
 .Tn AND ;
 of higher precedence than
@@ -919,7 +919,7 @@ The boolean operator
 may be used to logically negate an entire
 conditional.
 It is of higher precedence than
-.Ql Ic \&&& .
+.Ql Ic \&\*[Am]\*[Am] .
 .Pp
 The value of
 .Ar expression
@@ -1005,7 +1005,7 @@ The syntax of a for loop is:
 .Ar expression
 .Xc
 .It Xo
-<make-rules>
+\*[Lt]make-rules\*[Gt]
 .Ic \&.endfor
 .Xc
 .El
