@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 1994/11/28 19:33:08 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 1994/12/02 18:18:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -31,7 +31,9 @@
  * Interface to the debugger for virtual memory read/write.
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.
- * For reads, validate address first to avoid MMU trap.
+ * For writes outside the text segment, and all reads,
+ * just do the access -- if it causes a fault, the debugger
+ * will recover with a longjmp to an appropriate place.
  */
 
 #include <sys/param.h>
@@ -43,30 +45,9 @@
 #include <machine/pte.h>
 
 /*
- * Read one byte somewhere in the kernel.
- * It does not matter if this is slow. -gwr
- */
-static char
-db_read_data(src)
-	char *src;
-{
-	int		oldpte;
-	vm_offset_t pgva;
-	int ch;
-
-	pgva = sun3_trunc_page((long)src);
-	oldpte = get_pte(pgva);
-
-	if ((oldpte & PG_VALID) == 0) {
-		db_printf(" address 0x%x not a valid page\n", src);
-		return 0;
-	}
-	return (*src);
-}
-
-/*
  * Read bytes from kernel address space for debugger.
- * It does not matter if this is slow. -gwr
+ * This used to check for valid PTEs, but now that
+ * traps in DDB work correctly, "Just Do It!"
  */
 void
 db_read_bytes(addr, size, data)
@@ -74,16 +55,11 @@ db_read_bytes(addr, size, data)
 	register int	size;
 	register char	*data;
 {
-	char	*src, *limit;
+	register char	*src;
 
 	src = (char *)addr;
-	limit = src + size;
-
-	while (src < limit) {
-		*data = db_read_data(src);
-		data++;
-		src++;
-	}
+	while (--size >= 0)
+		*data++ = *src++;
 }
 
 /*
@@ -115,28 +91,6 @@ db_write_text(dst, ch)
 }
 
 /*
- * Write one byte somewhere outside kernel text.
- * It does not matter if this is slow. -gwr
- */
-static void
-db_write_data(dst, ch)
-	char *dst;
-	int ch;
-{
-	int		oldpte;
-	vm_offset_t pgva;
-
-	pgva = sun3_trunc_page((long)dst);
-	oldpte = get_pte(pgva);
-
-	if ((oldpte & (PG_VALID | PG_WRITE)) == 0) {
-		db_printf(" address 0x%x not a valid page\n", dst);
-		return;
-	}
-	*dst = (char) ch;
-}
-
-/*
  * Write bytes to kernel address space for debugger.
  */
 void
@@ -146,17 +100,14 @@ db_write_bytes(addr, size, data)
 	char	*data;
 {
 	extern char	start[], etext[] ;
-	char	*dst, *limit;
+	char	*dst;
 
 	dst = (char *)addr;
-	limit = dst + size;
-
-	while (dst < limit) {
+	while (--size >= 0) {
 		if ((dst >= start) && (dst < etext))
 			db_write_text(dst, *data);
 		else
-			db_write_data(dst, *data);
-		dst++;
-		data++;
+			*dst = *data;
+		dst++; data++;
 	}
 }
