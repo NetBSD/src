@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.15 2003/06/30 00:50:46 marcus Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.16 2003/07/02 15:29:34 marcus Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,8 +79,10 @@ _rtld_relocate_nonplt_objects(obj)
 			if (def == NULL)
 				return -1;
 
-			*where += (Elf_Addr)(defobj->relocbase + def->st_value +
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend) - (Elf_Addr)where;
+			if (*where != tmp)
+				*where = tmp;
 			rdbg(("PC32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
@@ -92,8 +94,10 @@ _rtld_relocate_nonplt_objects(obj)
 			if (def == NULL)
 				return -1;
 
-			*where += (Elf_Addr)(defobj->relocbase + def->st_value +
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
+			if (*where != tmp)
+				*where = tmp;
 			rdbg(("32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
