@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.43 1996/12/05 01:25:42 cgd Exp $	*/
+/*	$NetBSD: lpt.c,v 1.44 1997/09/02 01:37:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -77,11 +77,11 @@
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
 
-#if !defined(DEBUG) || !defined(notdef)
+#ifndef LPTDEBUG
 #define LPRINTF(a)
 #else
-#define LPRINTF		if (lptdebug) printf a
-int lptdebug = 1;
+#define LPRINTF(a)	if (lptdebug) printf a
+int lptdebug = 0;
 #endif
 
 struct lpt_softc {
@@ -163,8 +163,8 @@ lpt_port_test(iot, ioh, base, off, data, mask)
 		delay(10);
 		temp = bus_space_read_1(iot, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	LPRINTF(("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", base + off,
-	    data, temp, timeout));
+	LPRINTF(("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n",
+	    (unsigned)(base + off), (unsigned)data, (unsigned)temp, timeout));
 	return (temp == data);
 }
 
@@ -324,7 +324,8 @@ lptopen(dev, flag, mode, p)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags));
+	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname,
+	    (unsigned)flags));
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -469,7 +470,8 @@ pushbytes(sc)
 			}
 
 			bus_space_write_1(iot, ioh, lpt_data, *sc->sc_cp++);
-			bus_space_write_1(iot, ioh, lpt_control, control | LPC_STROBE);
+			bus_space_write_1(iot, ioh, lpt_control,
+			    control | LPC_STROBE);
 			sc->sc_count--;
 			bus_space_write_1(iot, ioh, lpt_control, control);
 
@@ -483,7 +485,7 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
+				LPRINTF(("%s: write %u\n", sc->sc_dev.dv_xname,
 				    sc->sc_count));
 				s = spltty();
 				(void) lptintr(sc);
