@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.3 1996/03/27 21:21:59 mark Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.4 1996/04/19 19:39:17 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -374,16 +374,20 @@ inittodr(base)
 
 	timeset = 1;
 
-	printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
-	    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
-	    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
-	    rtc.rtc_year);
+/* If the base was 0 then keep quiet */
 
-	if (n > base + 60) {
-		days = (n - base) / SECPERDAY;
-		printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
-		    days, ((days == 1) ? 0 : 's'), ((n - base)  / 3600) % 24,
-		    ((n - base) / 60) % 60, (n - base) % 60);
+	if (base) {
+		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
+		    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
+		    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
+		    rtc.rtc_year);
+
+		if (n > base + 60) {
+			days = (n - base) / SECPERDAY;
+			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
+			    days, ((days == 1) ? 0 : 's'), ((n - base)  / 3600) % 24,
+			    ((n - base) / 60) % 60, (n - base) % 60);
+		}
 	}
 }  
 
