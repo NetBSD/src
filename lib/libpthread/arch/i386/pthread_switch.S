@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.17 2002/12/18 23:01:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.18 2003/01/02 21:32:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,42 +55,6 @@
 #define	NOTREACHED			  \
 	int3
 
-/*
- * void	pthread__switch(pthread_t self, pthread_t next);
- *
- * Plain switch that doesn't do any special checking or handle
- * spin-preemption. It isn't used much by normal code, actually; it's
- * main purpose is to be a basic switch engine when the MI code is
- * already dealing with spin-preemption or other gunk.  
- */
-
-ENTRY(pthread__switch)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%esi			/* callee save */
-	pushl	%edi			/* callee save */
-	PIC_PROLOGUE
-	movl	8(%ebp), %eax		/* eax holds the current thread	     */
-	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
-	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
-	leal	12(%esp), %edi
-	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
-	movl	%edi, PT_UC(%eax)
-	/*
-	 * Note: Alignment space below the ucontext_t can consume up to
-	 * 12 bytes of STACKSPACE.
-	 */
-	movl	PT_UC(%ecx), %esi
-	pushl	%esi			/* ucontext_t *ucp  */
-	pushl	%edi			/* ucontext_t *oucp */
-	call	*PIC_GOTOFF(_C_LABEL(_md_swapcontext_u))
-	addl	$CONTEXTSIZE+20, %esp
-	PIC_EPILOGUE
-	popl	%edi
-	popl	%esi
-	movl	%ebp, %esp
-	popl	%ebp
-	ret
 
 /*
  * Utility macro to switch to the stack of another thread.
@@ -141,6 +105,63 @@ ENTRY(pthread__switch)
 
 
 /*
+ * void	pthread__switch(pthread_t self, pthread_t next);
+ *
+ * Plain switch that doesn't do any special checking or handle
+ * spin-preemption. It isn't used much by normal code, actually; it's
+ * main purpose is to be a basic switch engine when the MI code is
+ * already dealing with spin-preemption or other gunk.  
+ */
+ENTRY(pthread__switch)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%esi			/* callee save */
+	pushl	%edi			/* callee save */
+	PIC_PROLOGUE	
+	movl	8(%ebp), %eax		/* eax holds the current thread	     */
+	movl	12(%ebp), %ecx 		/* ecx holds the thread to switch to */
+	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
+	leal	12(%esp), %edi
+	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
+	/*
+	 * Note: Alignment space below the ucontext_t can consume up to
+	 * 12 bytes of STACKSPACE.
+	 */
+	pushl	%eax			/* caller save */
+	pushl	%ecx			/* caller save */
+	pushl	%edi			/* ucontext_t *ucp */
+	call	*PIC_GOTOFF(_C_LABEL(_md_getcontext_u))
+	addl	$4, %esp
+	popl	%ecx	
+	popl	%eax
+	/*
+	 * Edit the context so that it continues as if returning from
+	 * the _setcontext_u below.  
+	 */
+#ifdef PIC
+	movl	PIC_GOT(switch_return_point), %esi
+#else
+	leal	locked_return_point, %esi
+#endif
+	movl	%esi, UC_EIP(%edi)
+	
+	STACK_SWITCH
+	
+	movl	%edi, PT_UC(%eax)
+
+	pushl	%esi			/* ucontext_t *ucp */
+	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
+switch_return_point:
+	/* We're back on the original stack. */
+	addl	$CONTEXTSIZE+24, %esp
+	PIC_EPILOGUE
+	popl	%edi
+	popl	%esi
+	movl	%ebp, %esp
+	popl	%ebp
+	ret
+
+/*
  * Helper switch code used by pthread__locked_switch() and 
  * pthread__upcall_switch() when they discover spinlock preemption.
  */
@@ -184,7 +205,6 @@ ENTRY(pthread__locked_switch)
 	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
 	leal	12(%esp), %edi
 	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
-	movl	%edi, PT_UC(%eax)
 	/*
 	 * Note: Alignment space below the ucontext_t can consume up to
 	 * 12 bytes of STACKSPACE.
@@ -211,6 +231,7 @@ ENTRY(pthread__locked_switch)
 	
 	STACK_SWITCH
 	
+	movl	%edi, PT_UC(%eax)
 	/*
 	 * Check if the original thread was preempted while holding
 	 * its queue lock.
