@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.5 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.6 1999/02/23 09:14:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ wss_isapnp_attach(parent, self, aux)
 
         sc->wss_ic  = ipa->ipa_ic;
 	sc->wss_irq = ipa->ipa_irq[0].num;
-	sc->wss_drq = ipa->ipa_drq[0].num;
+	sc->wss_playdrq = ipa->ipa_drq[0].num;
 	sc->wss_recdrq = 
 		ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num;
 
