@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.14 2003/07/24 19:19:42 nathanw Exp $	*/
+/*	$NetBSD: bthci.c,v 1.15 2004/01/04 05:39:35 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.14 2003/07/24 19:19:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.15 2004/01/04 05:39:35 dsainty Exp $");
 
 #include "bthcidrv.h"
 
@@ -293,7 +293,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 	struct bthci_softc *sc;
 	int error;
 	int s;
-	unsigned int blocked;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
@@ -310,18 +309,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 
 	s = sc->sc_methods->bt_splraise();
 	while (!sc->sc_outputready) {
-#define BTHCI_READ_EVTS (BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT)
-		blocked = sc->sc_methods->bt_unblockcb(sc->sc_handle,
-						       BTHCI_READ_EVTS);
-		if ((blocked & BTHCI_READ_EVTS) != 0) {
-			/* Problem unblocking events */
-			splx(s);
-			DPRINTFN(1,("%s: couldn't unblock events\n",
-				    __func__));
-			error = EIO;
-			goto ret;
-		}
-
 		DPRINTFN(5,("%s: calling tsleep()\n", __func__));
 		error = tsleep(&sc->sc_outputready, PZERO | PCATCH,
 			       "bthcrd", 0);
@@ -350,11 +337,6 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 	if (!error) {
 		sc->sc_outputready = 0;
 		sc->sc_rd_len = 0;
-
-		/* Unblock events (in case they were blocked) */
-		sc->sc_methods->bt_unblockcb(sc->sc_handle,
-					     BT_CBBLOCK_ACL_DATA |
-					     BT_CBBLOCK_EVENT);
 	}
 
  ret:
@@ -606,9 +588,6 @@ bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 	sc->sc_rd_len = len + 1;
 	sc->sc_outputready = 1;
 
-	sc->sc_methods->bt_blockcb(sc->sc_handle,
-				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
-
 	wakeup(&sc->sc_outputready);
 	selnotify(&sc->sc_rd_sel, 0);
 }
@@ -650,9 +629,6 @@ bthci_recvacldata(void *h, u_int8_t *data, size_t len)
 	memcpy(&sc->sc_rd_buf[1], data, len);
 	sc->sc_rd_len = len + 1;
 	sc->sc_outputready = 1;
-
-	sc->sc_methods->bt_blockcb(sc->sc_handle,
-				   BT_CBBLOCK_ACL_DATA | BT_CBBLOCK_EVENT);
 
 	wakeup(&sc->sc_outputready);
 	selnotify(&sc->sc_rd_sel, 0);
