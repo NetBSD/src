@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.525 2002/10/30 11:46:53 blymn Exp $
+# $NetBSD: mi,v 1.526 2002/10/30 17:02:14 agc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1074,6 +1074,7 @@
 ./usr/share/man/cat4/vax/va.0			man-sys-catman
 ./usr/share/man/cat4/vax/vp.0			man-sys-catman
 ./usr/share/man/cat4/vax/vv.0			man-sys-catman
+./usr/share/man/cat4/veriexec.0			man-sys-catman
 ./usr/share/man/cat4/vga.0			man-sys-catman
 ./usr/share/man/cat4/viaenv.0			man-sys-catman
 ./usr/share/man/cat4/viapm.0			man-sys-catman
