@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.7 1996/02/08 20:45:05 mycroft Exp $	*/
+/*	$NetBSD: win.c,v 1.8 1996/02/08 21:07:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: win.c,v 1.7 1996/02/08 20:45:05 mycroft Exp $";
+static char rcsid[] = "$NetBSD: win.c,v 1.8 1996/02/08 21:07:57 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,8 @@ char *shf, **sh;
 	}
 	w->ww_id = id;
 	window[id] = w;
-	w->ww_uflags = uflags;
+	CLR(w->ww_uflags, WWU_ALLFLAGS);
+	SET(w->ww_uflags, uflags);
 	w->ww_alt = w->ww_w;
 	if (label != 0 && setlabel(w, label) < 0)
 		error("No memory for label.");
