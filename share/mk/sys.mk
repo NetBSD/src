@@ -1,5 +1,5 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.11 1994/01/25 21:56:04 cgd Exp $
+#	$Id: sys.mk,v 1.12 1994/01/25 21:56:52 cgd Exp $
 
 unix=		We run UNIX.
 
@@ -144,7 +144,7 @@ YFLAGS=		-d
 	rm -f lex.yy.c
 
 .8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
-	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"  
+	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
 	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
 
 .include <bsd.own.mk>
