@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.33 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.34 2004/03/19 02:27:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.33 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.34 2004/03/19 02:27:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -322,6 +322,16 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
 #define RF_MAX_FREE_PDA 192
 #define RF_MIN_FREE_PDA  64
 
+#define RF_MAX_FREE_ASMHLE 64
+#define RF_MIN_FREE_ASMHLE 16
+
+#define RF_MAX_FREE_FSS 128
+#define RF_MIN_FREE_FSS  32
+
+#define RF_MAX_FREE_VFPLE 128
+#define RF_MIN_FREE_VFPLE  32
+
+
 /* called at shutdown time.  So far, all that is necessary is to
    release all the free lists */
 static void rf_ShutdownMapModule(void *);
@@ -341,8 +351,14 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 		     "rf_asmhdr_pl", RF_MIN_FREE_ASMHDR, RF_MAX_FREE_ASMHDR);
 	rf_pool_init(&rf_pools.asmap, sizeof(RF_AccessStripeMap_t),
 		     "rf_asm_pl", RF_MIN_FREE_ASM, RF_MAX_FREE_ASM);
+	rf_pool_init(&rf_pools.asmhle, sizeof(RF_ASMHeaderListElem_t),
+		     "rf_asmhle_pl", RF_MIN_FREE_ASMHLE, RF_MAX_FREE_ASMHLE);
 	rf_pool_init(&rf_pools.pda, sizeof(RF_PhysDiskAddr_t),
 		     "rf_pda_pl", RF_MIN_FREE_PDA, RF_MAX_FREE_PDA);
+	rf_pool_init(&rf_pools.fss, sizeof(RF_FailedStripe_t),
+		     "rf_fss_pl", RF_MIN_FREE_FSS, RF_MAX_FREE_FSS);
+	rf_pool_init(&rf_pools.vfple, sizeof(RF_VoidFunctionPointerListElem_t),
+		     "rf_vfple_pl", RF_MIN_FREE_VFPLE, RF_MAX_FREE_VFPLE);
 	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
 
 	return (0);
@@ -364,6 +380,64 @@ rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 {
 	pool_put(&rf_pools.asm_hdr, p);
 }
+
+
+RF_VoidFunctionPointerListElem_t *
+rf_AllocVFPListElem()
+{
+	RF_VoidFunctionPointerListElem_t *p;
+
+	p = pool_get(&rf_pools.vfple, PR_WAITOK);
+	memset((char *) p, 0, sizeof(RF_VoidFunctionPointerListElem_t));
+
+	return (p);
+}
+
+void
+rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
+{
+
+	pool_put(&rf_pools.vfple, p);
+}
+
+RF_ASMHeaderListElem_t *
+rf_AllocASMHeaderListElem()
+{
+	RF_ASMHeaderListElem_t *p;
+
+	p = pool_get(&rf_pools.asmhle, PR_WAITOK);
+	memset((char *) p, 0, sizeof(RF_ASMHeaderListElem_t));
+
+	return (p);
+}
+
+void
+rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *p)
+{
+
+	pool_put(&rf_pools.asmhle, p);
+}
+
+RF_FailedStripe_t *
+rf_AllocFailedStripeStruct()
+{
+	RF_FailedStripe_t *p;
+
+	p = pool_get(&rf_pools.fss, PR_WAITOK);
+	memset((char *) p, 0, sizeof(RF_FailedStripe_t));
+
+	return (p);
+}
+
+void
+rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
+{
+	pool_put(&rf_pools.fss, p);
+}
+
+
+
+
 
 RF_PhysDiskAddr_t *
 rf_AllocPhysDiskAddr()
