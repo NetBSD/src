@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.40 2004/01/27 02:49:42 lukem Exp $
+.\"	$NetBSD: install.1,v 1.41 2004/01/29 07:58:33 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 27, 2003
+.Dd January 29, 2003
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -72,6 +72,9 @@
 .Op Fl l Ar linkflags
 .Ek
 .Bk -words
+.Op Fl h Ar hash
+.Ek
+.Bk -words
 .Op Fl S Ar stripflag
 .Ek
 .Ar file1 file2
@@ -109,6 +112,9 @@
 .Ek
 .Bk -words
 .Op Fl l Ar linkflags
+.Ek
+.Bk -words
+.Op Fl h Ar hash
 .Ek
 .Bk -words
 .Op Fl S Ar stripflag
@@ -227,6 +233,23 @@ Specify the target's file flags.
 for a list of possible flags and their meanings.)
 .It Fl g Ar group
 Specify a group.
+.It Fl h Ar hash
+When copying, calculate the digest of the files with
+.Ar hash
+to store in the
+.Fl M Ar metalog .
+Supported digests:
+.Bl -tag -width rmd160 -offset indent
+.It Sy none
+No hash.
+This is the default.
+.It Sy md5
+The MD5 cryptographic message digest.
+.It Sy rmd160
+The RMD-160 cryptographic message digest.
+.It Sy sha1
+The SHA-1 cryptographic message digest.
+.El
 .It Fl l Ar linkflags
 Instead of copying the file make a link to the source.
 The type of the link is determined by the
