@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.29 1998/05/21 17:41:29 thorpej Exp $	*/
+/*	$NetBSD: asic.c,v 1.30 1998/09/05 05:54:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -356,16 +356,28 @@ void ioasic_init(int flag);
  * Initialize the I/O asic
  */
 void
-ioasic_init(isa_maxine)
-	int isa_maxine;
+ioasic_init(bogus)
+	int bogus; /* XXX */
 {
-	volatile u_int *decoder;
+	/* common across 3min, 3maxplus and maxine */
+        *(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+        *(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 
-	/* These are common between 3min and maxine */
-	decoder = (volatile u_int *)IOASIC_REG_LANCE_DECODE(ioasic_base);
-	*decoder = KMIN_LANCE_CONFIG;
+#if 0
+        switch (systype) {
+        case DS_3MIN:
+        case DS_3MAXPLUS:
+        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+        *(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+                break;
 
-	/* set the SCSI DMA configuration map */
-	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
-	(*decoder) = 0x00000000e;
+        case DS_MAXINE:
+        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+        *(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
+        *(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
+        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
+                break;
+        }
+#endif
 }
