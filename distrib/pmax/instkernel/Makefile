@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/12/28 10:56:54 simonb Exp $
+#	$NetBSD: Makefile,v 1.13 2000/01/03 21:59:12 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -30,14 +30,14 @@ netbsd.gz: ${KERN} ${RAMDISK}
 	rm -f netbsd.gz
 	gzip -9 netbsd
 
-${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot
+${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
 	${PRELABEL}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
 	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp -p ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}
+	cp -p ${DESTDIR}/usr/mdec/boot.pmax ${MOUNT_POINT}
 	cp -p netbsd.gz ${MOUNT_POINT}/netbsd
 	@echo ""
 	@df -i ${MOUNT_POINT}
