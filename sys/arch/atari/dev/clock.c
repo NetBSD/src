@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1999/08/06 08:27:30 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 2000/01/06 12:03:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -491,8 +491,8 @@ rtcread(dev, uio, flags)
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
-	sprintf(buffer, "%02d%02d%02d%02d%02d.%02d\n",
-	    clkregs[MC_YEAR] + GEMSTARTOFTIME - 1900,
+	sprintf(buffer, "%4d%02d%02d%02d%02d.%02d\n",
+	    clkregs[MC_YEAR] + GEMSTARTOFTIME,
 	    clkregs[MC_MONTH], clkregs[MC_DOM],
 	    clkregs[MC_HOUR], clkregs[MC_MIN], clkregs[MC_SEC]);
 
@@ -528,7 +528,7 @@ rtcwrite(dev, uio, flags)
 {
 	mc_todregs		clkregs;
 	int			s, length, error;
-	char			buffer[14];
+	char			buffer[16];
 
 	/*
 	 * We require atomic updates!
@@ -548,13 +548,12 @@ rtcwrite(dev, uio, flags)
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
-	clkregs[MC_SEC]   = twodigits(buffer, 11);
-	clkregs[MC_MIN]   = twodigits(buffer, 8);
-	clkregs[MC_HOUR]  = twodigits(buffer, 6);
-	clkregs[MC_DOM]   = twodigits(buffer, 4);
-	clkregs[MC_MONTH] = twodigits(buffer, 2);
-	s = twodigits(buffer, 0);
-	s = (s < 70) ? s + 2000 : s + 1900;
+	clkregs[MC_SEC]   = twodigits(buffer, 13);
+	clkregs[MC_MIN]   = twodigits(buffer, 10);
+	clkregs[MC_HOUR]  = twodigits(buffer, 8);
+	clkregs[MC_DOM]   = twodigits(buffer, 6);
+	clkregs[MC_MONTH] = twodigits(buffer, 4);
+	s = twodigits(buffer, 0) * 100 + twodigits(buffer, 2);
 	clkregs[MC_YEAR]  = s - GEMSTARTOFTIME; 
 
 	s = splclock();
