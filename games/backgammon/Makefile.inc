@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/10/11 20:24:05 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.2.2.1 1997/11/06 03:32:21 mellon Exp $
 
 LIBCOMMON != cd ${.CURDIR}/../common_source;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CFLAGS+=-DV7 -I${.CURDIR}/../common_source
 DPADD+=	${LIBTERM} ${LIBCOMPAT} ${LIBCOMMON}/libcommon.a
-LDADD+=	-ltermcap -lcompat  -L${LIBCOMMON} -lcommon
+LDADD+=	-L${LIBCOMMON} -lcommon -ltermcap -lcompat
 
 HIDEGAME=hidegame
 
