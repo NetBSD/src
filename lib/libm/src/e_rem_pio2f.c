@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_rem_pio2f.c,v 1.4 1995/01/25 01:06:37 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_rem_pio2f.c,v 1.5 1995/05/10 20:46:03 jtc Exp $";
 #endif
 
 /* __ieee754_rem_pio2f(x,y)
