@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.6 2002/05/08 02:12:55 matt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.7 2002/05/11 00:36:03 matt Exp $ */
 
 /*
  * 
@@ -130,6 +130,13 @@ struct gem_softc {
 	int		sc_mif_config;	/* Selected MII reg setting */
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
+	u_int		sc_variant;	/* which GEM are we dealing with? */
+#define	GEM_UNKNOWN		0	/* don't know */
+#define	GEM_SUN_GEM		1	/* Sun GEM variant */
+#define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
+
+	u_int		sc_flags;	/* */
+#define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
 
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */
@@ -163,6 +170,7 @@ struct gem_softc {
 	struct gem_txsq	sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int		sc_rxptr;	/* next ready RX descriptor/descsoft */
+	int		sc_rxfifosize;	/* Rx FIFO size (bytes) */
 
 	/* ========== */
 	int		sc_inited;
