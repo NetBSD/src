@@ -1,4 +1,4 @@
-.\" $NetBSD: ipip.4,v 1.4 2000/05/13 15:22:17 mycroft Exp $
+.\" $NetBSD: ipip.4,v 1.5 2001/04/04 10:07:47 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -18,25 +18,25 @@
 .\"    must display the following acknowledgement:
 .\"     This product includes software developed by the NetBSD
 .\"	Foundation, Inc. and its contributors.
-.\" 4. Neither the name of the The NetBSD Foundation nor the names of its 
-.\"    contributors may be used to endorse or promote products derived 
+.\" 4. Neither the name of the The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd 28 March 1999
 .Dt IPIP 4
-.Os 
+.Os
 .Sh NAME
 .Nm ipip
 .Nd encapsulating network device
@@ -54,14 +54,14 @@ IP type 4 (IPIP).
 .Pp
 The network interfaces are named
 .Sy ipip Ns Ar 0 ,
-.Sy ipip Ns Ar 1 
-and so on, as many as have given on the 
+.Sy ipip Ns Ar 1
+and so on, as many as have given on the
 .Sy pseudo-device
 line in the system config file.
 .Pp
 Note that the IP addresses of the tunnel endpoints may be the same as the
-ones defined with 
-.Xr ifconfig
+ones defined with
+.Ic ifconfig
 for the interface (as if IP is encapsulated), but need not be.
 .Pp
 .Sh EXAMPLE
@@ -81,7 +81,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
 
    On Host D (Cisco):
 
-   Interface TunnelX 	
+   Interface TunnelX
     ip unnumbered D   ! e.g. address from Ethernet interface
     tunnel source D   ! e.g. address from Ethernet interface
     tunnel destination A
@@ -94,11 +94,11 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    On Host D (NetBSD):
 
    # route add default C
-   # ifconfig ipipN D A 
+   # ifconfig ipipN D A
 .Pp
 If all goes well, you should see packets flowing ;-)
 .Pp
-If you want to reach Host A over the tunnel (from the Cisco D), then 
+If you want to reach Host A over the tunnel (from the Cisco D), then
 you have to have an alias on Host A for e.g. the Ethernet interface like:
      ifconfig <etherif> alias Y
  and on the cisco
@@ -111,24 +111,24 @@ one over the tunnel.
 (Basically, there needs to be a route to the decapsulating host that
 does not run over the tunnel, as this would be a loop ..)
 .Pp
-In order to 
-.Xr ifconfig
+In order to get
+.Ic ifconfig
 to actually mark the interface as up, the keyword ``up'' must be given
 last on its command line.
 .Pp
 The kernel must be set to forward datagrams by either option
-``GATEWAY'' in the kernel config file or by issuing the appropriate 
+``GATEWAY'' in the kernel config file or by issuing the appropriate
 option to
-.Xr sysctl .
+.Xr sysctl 8 .
 .Sh SEE ALSO
-.Xr netintro 4 ,
-.Xr ip 4 ,
-.Xr gre 4 ,
 .Xr atalk 4 ,
+.Xr gre 4 ,
 .Xr inet 4 ,
-.Xr ifconfig 8 ,
+.Xr ip 4 ,
+.Xr netintro 4 ,
 .Xr options 4 ,
 .Xr protocols 5 ,
+.Xr ifconfig 8 ,
 .Xr sysctl 8
 .Pp
 A description of IPIP encapsulation can be found in RFC 2003.
