@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp 
  */
 
 /*
@@ -1388,10 +1388,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DC-690C",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_CT1130,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
 	    0,
 	    "Texas Instruments",
-	    "CT1130",
+	    "PCI1130",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131,
+	    0,
+	    "Texas Instruments",
+	    "PCI1131",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
+	    0,
+	    "Texas Instruments",
+	    "PCI2030",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp 
  */
 
 /*
@@ -40,6 +40,8 @@
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
  *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *
+ * (but it doesn't always seem to match vendor documentation)
  */
 
 /*
@@ -861,7 +863,9 @@
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
 
 /* Texas Instruments products */
-#define	PCI_PRODUCT_TI_CT1130	0xac12		/* CT1130 */
+#define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 */
+#define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 */
+#define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 */
   
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI Bridge */
