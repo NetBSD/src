@@ -1,2 +1,2 @@
-# $NetBSD: md.sun3,v 1.9 2002/12/17 15:55:06 jdolecek Exp $
-./etc/ttyaction		etc-sys-etc
+# $NetBSD: md.sun3,v 1.10 2004/01/11 09:59:49 lukem Exp $
+./etc/ttyaction					etc-sys-etc

@@ -1,2 +1,2 @@
-# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:50 fvdl Exp $
-./etc/ttyaction		etc-sys-etc
+# $NetBSD: md.amd64,v 1.2 2004/01/11 09:59:49 lukem Exp $
+./etc/ttyaction					etc-sys-etc
