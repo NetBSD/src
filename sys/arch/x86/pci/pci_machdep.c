@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2003/04/28 20:26:18 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/04/28 20:26:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/04/28 20:26:18 fvdl Exp $")
 #include <machine/pio.h>
 #include <machine/intr.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -163,7 +164,16 @@ struct {
  * of these functions.
  */
 struct x86_bus_dma_tag pci_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+#if defined(_LP64) || defined(PAE)
+	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_thresh */
+	ISA_DMA_BOUNCE_THRESHOLD,	/* bounce_alloclo */
+	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_allochi */
+#else
+	0,
+	0,
+	0,
+#endif
+	NULL,			/* _may_bounce */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
@@ -171,7 +181,11 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	NULL,			/* _dmamap_sync */
+#if defined(_LP64) || defined(PAE)
+	_bus_dmamap_sync,
+#else
+	NULL,
+#endif
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
