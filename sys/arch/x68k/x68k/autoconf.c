@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 1996/10/13 03:35:14 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 1997/01/13 14:04:48 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -150,6 +150,9 @@ config_console()
 	x68k_config_found(cf, NULL, "grfbus", NULL);
 }
 
+/*
+ * Configure swap space and related parameters.
+ */
 void
 swapconf()
 {
@@ -159,10 +162,8 @@ swapconf()
 
 	for (swp = swdevt; swp->sw_dev > 0; swp++) {
 		maj = major(swp->sw_dev);
-
 		if (maj > nblkdev)
 			break;
-
 		if (bdevsw[maj].d_psize) {
 			nb = bdevsw[maj].d_psize(swp->sw_dev);
 			if (nb > 0 && 

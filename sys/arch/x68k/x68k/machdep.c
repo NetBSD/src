@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1996/10/13 03:35:23 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1997/01/13 14:04:55 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,11 +187,6 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-#ifdef BUFFERS_UNMANAGED
-	vm_offset_t bufmemp;
-	caddr_t buffermem;
-	int ix;
-#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -219,7 +214,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate space for system data structures.
@@ -302,11 +297,6 @@ again:
 		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
-#ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
-		if (buffermem == 0)
-			panic("startup: no room for buffers");
-#endif
 		goto again;
 	}
 	/*
@@ -333,9 +323,6 @@ again:
 #endif
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-#ifdef BUFFERS_UNMANAGED
-	bufmemp = (vm_offset_t) buffermem;
-#endif
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -349,36 +336,9 @@ again:
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-#ifdef BUFFERS_UNMANAGED
-		/*
-		 * Move the physical pages over from buffermem.
-		 */
-		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
-			vm_offset_t pa;
-
-			pa = pmap_extract(pmap_kernel(), bufmemp);
-			if (pa == 0)
-				panic("startup: unmapped buffer");
-			pmap_remove(pmap_kernel(), bufmemp, bufmemp+CLBYTES);
-			pmap_enter(pmap_kernel(),
-				   (vm_offset_t)(curbuf + ix * CLBYTES),
-				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-			bufmemp += CLBYTES;
-		}
-#else
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
-#endif
 	}
-#ifdef BUFFERS_UNMANAGED
-#if 0
-	/*
-	 * We would like to free the (now empty) original address range
-	 * but too many bad things will happen if we try.
-	 */
-	kmem_free(kernel_map, (vm_offset_t)buffermem, bufpages*CLBYTES);
-#endif
-#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -506,6 +466,17 @@ setregs(p, pack, stack, retval)
  */
 char	cpu_model[120];
 extern	char version[];
+static char *fpu_descr[] = {
+#ifdef	FPU_EMULATE
+	"emulator FPU", 	/* 0 */
+#else
+	"no math support",	/* 0 */
+#endif
+	" mc68881 FPU",		/* 1 */
+	" mc68882 FPU",		/* 2 */
+	"/FPU",			/* 3 */
+	"/FPU",			/* 4 */
+	};
 
 void
 identifycpu()
@@ -543,19 +514,33 @@ identifycpu()
 		break;
 	}
 
-	if (mmutype == MMU_68040) {
+	switch (cputype) {
+	case CPU_68060:
+		cpu_type = "m68060";
+		mmu = "/MMU";
+		break;
+	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
-		fpu = "/FPU";
-	} else if (mmutype == MMU_68030) {
+		break;
+	case CPU_68030:
 		cpu_type = "m68030";
 		mmu = "/MMU";
-		fpu = " m68882 FPU";
-	} else {
+		break;
+	case CPU_68020:
 		cpu_type = "m68020";
 		mmu = " m68851 MMU";
-		fpu = " m68881 FPU";
+		break;
+	default:
+		cpu_type = "unknown";
+		mmu = " unknown MMU";
+		break;
 	}
+	fputype = fpu_probe();
+	if (fputype >= 0 && fputype < sizeof(fpu_descr)/sizeof(fpu_descr[0]))
+		fpu = fpu_descr[fputype];
+	else
+		fpu = " unknown FPU";
 	sprintf(cpu_model, "X68%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
@@ -1046,6 +1031,11 @@ boot(howto, bootstr)
 	doshutdownhooks();
 
 #if defined(PANICWAIT) && !defined(DDB)
+	if ((howto & RB_HALT) == 0 && panicstr) {
+		printf("hit any key to reboot...\n");
+		(void)cngetc();
+		printf("\n");
+	}
 #endif
 
 	/* Finally, halt/reboot the system. */
@@ -1171,7 +1161,10 @@ dumpsys()
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 
+	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -1183,7 +1176,7 @@ dumpsys()
 	}
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -1261,6 +1254,18 @@ dumpsys()
 void
 initcpu()
 {
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060)
+	extern caddr_t vectab[256];
+#if defined(M060SP)
+	extern u_int8_t I_CALL_TOP[];
+	extern u_int8_t FP_CALL_TOP[];
+#else
+	extern u_int8_t illinst;
+#endif
+	extern u_int8_t fpfault;
+#endif
+
 #ifdef MAPPEDCOPY
 	extern u_int mappedcopysize;
 
@@ -1272,6 +1277,31 @@ initcpu()
 	if (mappedcopysize == 0) {
 		mappedcopysize = NBPG;
 	}
+#endif
+
+#if defined(M68060)
+	if (cputype == CPU_68060) {
+#if defined(M060SP)
+		/* integer support */
+		vectab[61] = &I_CALL_TOP[128 + 0x00];
+
+		/* floating point support */
+		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+		vectab[55] = &FP_CALL_TOP[128 + 0x38];
+		vectab[60] = &FP_CALL_TOP[128 + 0x40];
+
+		vectab[54] = &FP_CALL_TOP[128 + 0x00];
+		vectab[52] = &FP_CALL_TOP[128 + 0x08];
+		vectab[53] = &FP_CALL_TOP[128 + 0x10];
+		vectab[51] = &FP_CALL_TOP[128 + 0x18];
+		vectab[50] = &FP_CALL_TOP[128 + 0x20];
+		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+#else
+		vectab[61] = &illinst;
+#endif
+		vectab[48] = &fpfault;
+	}
+	DCIS();
 #endif
 }
 
@@ -1296,9 +1326,6 @@ badaddr(addr)
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1316,9 +1343,6 @@ badbaddr(addr)
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1639,12 +1663,12 @@ cpu_exec_aout_makecmds(p, epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 	default:
@@ -1656,59 +1680,3 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 #endif
 }
-
-#if defined(COMPAT_NOMID) || defined(COMPAT_44)
-/*
- * cpu_exec_aout_prep_oldzmagic():
- *	Prepare the vmcmds to build a vmspace for an old
- *	(i.e. USRTEXT == 0) binary.
- *
- * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
- * description of operation is there.
- */
-int
-cpu_exec_aout_prep_oldzmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-	/*
-	 * check if vnode is in open for writing, because we want to			 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, NBPG, /* XXX - should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp,
-	    execp->a_text + NBPG, /* XXX - should NBPG be CLBYTES? */
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_aout_setup_stack(p, epp);
-}
-#endif /* COMPAT_NOMID */
