@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: advnops.c,v 1.2 1994/05/13 04:53:51 chopps Exp $
+ *	$Id: advnops.c,v 1.3 1994/05/16 05:03:56 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -122,7 +122,7 @@ adosfs_getattr(vp, vap, ucp, p)
 	vap->va_type = vp->v_type;
 	vap->va_mode = amp->mask & adunixprot(ap->adprot);
 	if (vp->v_type == VDIR) {
-		vap->va_nlink = 2;	/* XXX bogus, oh well */
+		vap->va_nlink = 1;	/* XXX bogus, oh well */
 		vap->va_bytes = amp->bsize;
 		vap->va_size = amp->bsize;
 	} else {
