@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.137 2005/03/19 02:05:06 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.138 2005/03/19 02:34:56 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1605,4 +1605,30 @@ sys/netinet6/ipsec.c				1.98-1.99
 
 	Add missing break.
 	[itojun, ticket #1774]
+
+usr.bin/vi/vi/v_txt.c				1.12
+
+	Move a line of code which was "obviously" misplaced.
+	This fixes a core dump when auto-completing filenames and at least
+	one of the file names is larger than the screen width.
+	Bug report and fix by Peter Bex in PR#28382.
+	[aymeric, ticket #1790]
+
+usr.bin/calendar/calendars/calendar.holiday	1.10
+
+	Fix the date of the Australia Day holiday.
+	[simonb, ticket #1850]
+
+sys/netinet6/ipsec.c				1.101
+
+	Fix possible remote DoS via IPSec AH packets.
+	[itojun, ticket #5711]
+
+sys/arch/i386/i386/locore.s			patch
+
+	Check the passed in address as well as determining the maximum length
+	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
+	Problem originally fixed in OpenBSD/i386.
+	This fix suggested by Charles Hannum (mycroft at netbsd dot org).
+	[fvdl, ticket #5712]
 
