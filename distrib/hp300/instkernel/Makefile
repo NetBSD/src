@@ -1,46 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/11 05:30:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/04/11 15:34:54 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-.include <bsd.kernobj.mk>
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+TARGETS=	RAMDISK ${RAMDISK}
 
-CLEANFILES=	netbsd.tmp netbsd.tmp.gz
+MDSETDIR=	binary/kernel
 
-RAMDISKS=	RAMDISK	ramdisk
-
-.for V F in ${RAMDISKS}
-${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
-${V}=		${${V}DIR}/${F}.fs
-.endfor
-
-#	create netbsd.*.gz targets
-#
-#	TARGETS is a list of:
-#		KERNEL_name	fs-image
-#
-TARGETS=	RAMDISK		${RAMDISK}
-
-.for K R in ${TARGETS}
-KERNELS+=	netbsd.${K}.gz
-KERNELSYMS+=	netbsd.${K}.symbols
-CLEANFILES+=	netbsd.${K}.gz netbsd.${K}.symbols
-netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
-	@echo "Populating ${.TARGET} with ${R}"
-	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${R}
-	${NM} netbsd.tmp > netbsd.${K}.symbols
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-.endfor
-
-#	do the work
-#
-realall: ${KERNELS}
-
-release:
-	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
-
-.include <bsd.prog.mk>
+.include "${DISTRIBDIR}/common/Makefile.mdset"

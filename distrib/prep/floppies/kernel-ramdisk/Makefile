@@ -1,39 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/21 23:23:22 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/11 15:34:58 lukem Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
-.include <bsd.subdir.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-KERN=		${KERNOBJDIR}/INSTALL/netbsd
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
-KERNEL=		netbsd.INSTALL.gz
-MDSETIMAGE?=	mdsetimage
+TARGETS=	INSTALL	${RAMDISK}
 
-CLEANFILES+=	${KERNEL} netbsd.tmp netbsd.tmp.gz
+MDSETDIR=	binary/kernel
 
-all:	${KERNEL}
-
-${KERNEL}: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
-	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p ${KERNEL} ${RELEASEDIR}/binary/kernel
-.endif
-
-clean cleandir distclean:
-	rm -f *.core ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include "${DISTRIBDIR}/common/Makefile.mdset"
