@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.7 2002/09/17 21:15:20 nathanw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.8 2002/09/18 00:02:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -354,12 +354,12 @@ Lsame_mmuctx:
 	 *  Check for restartable atomic sequences (RAS)
 	 */
 	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%a0
-	tstl	%a0@(P_NRAS)
+	movl	%a0@(L_PROC),%a2
+	tstl	%a2@(P_NRAS)
 	jeq	1f
 	movl	%a0@(L_MD_REGS),%a1
 	movl	%a1@(TF_PC),%sp@-
-	movl	%a0,%sp@-
+	movl	%a2,%sp@-
 	jbsr	_C_LABEL(ras_lookup)
 	addql	#8,%sp
 	movql	#-1,%d0
