@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.25 2000/03/07 20:02:59 jdolecek Exp $	*/
+/*	$NetBSD: reboot.c,v 1.26 2000/04/25 14:03:26 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.25 2000/03/07 20:02:59 jdolecek Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.26 2000/04/25 14:03:26 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ void usage __P((void));
 extern char *__progname;
 
 int dohalt;
+int dopoweroff;
 
 int
 main(argc, argv)
@@ -82,6 +83,10 @@ main(argc, argv)
 	if (!strcmp(__progname, "halt") || !strcmp(__progname, "-halt")) {
 		dohalt = 1;
 		howto = RB_HALT;
+	} else if (!strcmp(__progname, "poweroff") 
+		   || !strcmp(__progname, "-poweroff")) {
+		dopoweroff = 1;
+		howto = RB_HALT | RB_POWERDOWN;
 	} else
 		howto = 0;
 	lflag = nflag = qflag = 0;
@@ -142,6 +147,9 @@ main(argc, argv)
 		if (dohalt) {
 			openlog("halt", 0, LOG_AUTH | LOG_CONS);
 			syslog(LOG_CRIT, "halted by %s", user);
+		} else if (dopoweroff) {
+			openlog("poweroff", 0, LOG_AUTH | LOG_CONS);
+			syslog(LOG_CRIT, "powered off by %s", user);
 		} else {
 			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
 			if (bootstr)

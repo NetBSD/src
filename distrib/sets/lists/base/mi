@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.156 2000/04/24 22:06:50 mellon Exp $
+# $NetBSD: mi,v 1.157 2000/04/25 14:03:25 hubertf Exp $
 .
 ./altroot
 ./bin
@@ -114,6 +114,7 @@
 ./sbin/nologin
 ./sbin/ping
 ./sbin/ping6
+./sbin/poweroff
 ./sbin/raidctl
 ./sbin/rcorder
 ./sbin/rdump
