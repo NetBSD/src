@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/01/16 02:59:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1997/01/17 21:14:31 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,8 +10,6 @@ BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 BOOT_SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
 
 BOOT_SRCS+= devopen.c filesystem.c prom_swpal.S
-
-#BOOT_SRCS+= cread.c
 
 BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
@@ -30,6 +28,7 @@ LIBZ=		${ZLIB}
 ### find out what to use for libsa
 SA_AS=		library
 SAREL=
+#SA_USE_CREAD=	yes
 EXTRACFLAGS=	-mno-fp-regs
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
@@ -44,11 +43,11 @@ CLEANFILES+= vers.c vers.o ${BOOT_PROG}.sym ${BOOT_PROG}.nosym \
 
 all: ${BOOT_PROG}
 
-${BOOT_PROG}.sym: ${BOOT_OBJS} ${LIBZ} ${LIBSA} ${LIBKERN}
+${BOOT_PROG}.sym: ${BOOT_OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.sym \
-	    ${BOOT_OBJS} vers.o ${LIBZ} ${LIBSA} ${LIBKERN}
+	    ${BOOT_OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	size ${BOOT_PROG}.sym
 
 ${BOOT_PROG}.nosym: ${BOOT_PROG}.sym
