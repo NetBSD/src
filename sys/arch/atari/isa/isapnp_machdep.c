@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.3 1998/09/05 15:28:05 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.4 2001/06/20 10:24:22 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,11 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+
+#ifdef DIAGNOSTIC
+#include <machine/iomap.h>
+#endif
+
 
 /* isapnp_map():
  *	Map I/O regions used by PnP
