@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:36:54 mellon Exp $	*/
+/*	$NetBSD: perform.c,v 1.4.2.2 1998/11/06 20:41:09 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:36:54 mellon Exp $");
+__RCSID("$NetBSD: perform.c,v 1.4.2.2 1998/11/06 20:41:09 cgd Exp $");
 #endif
 #endif
 
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:36:54 mellon Exp $");
 #include <err.h>
 #include <signal.h>
 #include <dirent.h>
-#include <fnmatch.h>
 #include <ctype.h>
 
 static char    *Home;
@@ -49,7 +48,7 @@ pkg_do(char *pkg)
 	Boolean         installed = FALSE, isTMP = FALSE;
 	char            log_dir[FILENAME_MAX];
 	char            fname[FILENAME_MAX];
-	Package         plist;
+	package_t       plist;
 	FILE           *fp;
 	struct stat     sb;
 	char           *cp = NULL;
@@ -64,8 +63,10 @@ pkg_do(char *pkg)
 		int             len;
 
 		if (*pkg != '/') {
-			if (!getcwd(fname, FILENAME_MAX))
-				upchuck("getcwd");
+			if (!getcwd(fname, FILENAME_MAX)) {
+			    cleanup(0);
+			    err(1, "fatal error during execution: getcwd");
+			}
 			len = strlen(fname);
 			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
 		} else
@@ -91,7 +92,7 @@ pkg_do(char *pkg)
 				code = 1;
 				goto bail;
 			}
-			Home = make_playpen(PlayPen, sb.st_size / 2);
+			Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
 			if (unpack(fname, "+*")) {
 				warnx("error during unpacking, no info for '%s' available", pkg);
 				code = 1;
@@ -100,13 +101,13 @@ pkg_do(char *pkg)
 		}
 	}
 	/*
-	 * It's not an ininstalled package, try and find it among the
+	 * It's not an uninstalled package, try and find it among the
 	 * installed
 	 */
 	else {
 		char           *tmp;
 
-		sprintf(log_dir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			pkg);
 		if (!fexists(log_dir)) {
 			warnx("can't find package `%s' installed or in a file!", pkg);
@@ -142,30 +143,48 @@ pkg_do(char *pkg)
 		show_index(tmp, COMMENT_FNAME);
 	} else {
 		/* Start showing the package contents */
-		if (!Quiet)
+		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
-		if (Flags & SHOW_COMMENT)
+		}
+		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
-		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME))
+		}
+		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);
-		if (Flags & SHOW_DESC)
+		}
+		if (Flags & SHOW_DESC) {
 			show_file("Description:\n", DESC_FNAME);
-		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME))
+		}
+		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
 			show_file("Install notice:\n", DISPLAY_FNAME);
-		if (Flags & SHOW_PLIST)
-			show_plist("Packing list:\n", &plist, (plist_t) - 1);
-		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME))
+		}
+		if (Flags & SHOW_PLIST) {
+			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
+		}
+		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
 			show_file("Install script:\n", INSTALL_FNAME);
-		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME))
+		}
+		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
 			show_file("De-Install script:\n", DEINSTALL_FNAME);
-		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME))
+		}
+		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
 			show_file("mtree file:\n", MTREE_FNAME);
-		if (Flags & SHOW_PREFIX)
+		}
+		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
-		if (Flags & SHOW_FILES)
+		}
+		if (Flags & SHOW_FILES) {
 			show_files("Files:\n", &plist);
-		if (!Quiet)
+		}
+		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
+			show_file("Build version:\n", BUILD_VERSION_FNAME);
+		}
+		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
+			show_file("Build information:\n", BUILD_INFO_FNAME);
+		}
+		if (!Quiet) {
 			puts(InfoPrefix);
+		}
 	}
 	free_plist(&plist);
 bail:
@@ -175,170 +194,35 @@ bail:
 	return code;
 }
 
-/* use fnmatch to do a glob-style match */
-/* returns 0 if found, 1 if not (1) */
+/* fn to be called for pkgs found */
 static int
-globmatch(char *pkgspec, char *dbdir, int quiet)
+foundpkg(const char *found, char *data)
 {
-	/* Using glob-match */
-	struct dirent  *dp;
-	int             found;
-	DIR            *dirp;
-
-	found = 0;
-	if ((dirp = opendir(dbdir)) == (DIR *) NULL) {
-		warnx("can't opendir package dir '%s'", dbdir);
-		return !0;
+	if (!Quiet) {
+		printf("%s\n", found);
 	}
-	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
-			continue;
-		}
-		if (fnmatch(pkgspec, dp->d_name, FNM_PERIOD) == 0) {
-			if (!quiet)
-				printf("%s\n", dp->d_name);
-			found = 1;
-		}
-	}
-	closedir(dirp);
-	return !found;
+	return 0;
 }
 
-enum {
-	GT,
-	GE,
-	LT,
-	LE
-};
-
-/* compare two dewey decimal numbers */
+/* check if a package "pkgspec" (which can be a pattern) is installed */
+/* return 0 if found, 1 otherwise (indicating an error). */
 static int
-deweycmp(char *a, int op, char *b)
+CheckForPkg(char *pkgspec, char *dbdir)
 {
-	int	ad;
-	int	bd;
-	int	cmp;
-
-	for (;;) {
-		if (*a == 0 && *b == 0) {
-			cmp = 0;
-			break;
-		}
-		ad = bd = 0;
-		for ( ; *a && *a != '.' ; a++) {
-			ad = (ad * 10) + (*a - '0');
-		}
-		for ( ; *b && *b != '.' ; b++) {
-			bd = (bd * 10) + (*b - '0');
-		}
-		if ((cmp = ad - bd) != 0) {
-			break;
-		}
-		if (*a == '.') {
-			a++;
-		}
-		if (*b == '.') {
-			b++;
-		}
-	}
-	return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
-}
-
-/* match on a relation against dewey decimal numbers */
-/* returns 0 if found, 1 if not (!) */
-static int
-deweymatch(char *name, int op, char *ver, char *dbdir, int quiet)
-{
-	struct dirent  *dp;
-	char		*cp;
-	DIR            *dirp;
-	int             ret;
-        int     	n;
-
-	n = strlen(name);
-	ret = 1;
-	if ((dirp = opendir(dbdir)) == (DIR *) NULL) {
-		warnx("can't opendir package dir '%s'", dbdir);
-		return 1;
-	}
-	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
-			continue;
-		}
-		if ((cp = strrchr(dp->d_name, '-')) != (char *) NULL) {
-			if (strncmp(dp->d_name, name, cp - dp->d_name) == 0 && n == cp - dp->d_name) {
-				if (deweycmp(cp + 1, op, ver)) {
-					if (!quiet)
-						printf("%s\n", dp->d_name);
-					ret = 0;
-				}
-			}
-		}
-	}
-	closedir(dirp);
-	return ret;
-}
-
-/* do a match on a package pattern in dbdir */
-/* returns 0 if found, 1 if not (!) */
-static int
-matchname(char *pkgspec, char *dbdir, int quiet)
-{
-	struct stat	st;
+	struct stat     st;
 	char            buf[FILENAME_MAX];
-	char		*sep;
-	char		*last;
-	char		*alt;
-	char		*cp;
 	int             error;
-	int		cnt;
-	int		ret;
 
-	if ((sep = strchr(pkgspec, '{')) != (char *) NULL) {
-		/* emulate csh-type alternates */
-		(void) strncpy(buf, pkgspec, sep - pkgspec);
-		alt = &buf[sep - pkgspec];
-		for (last = NULL, cnt = 0, cp = sep ; *cp && !last ; cp++) {
-			if (*cp == '{') {
-				cnt++;
-			} else if (*cp == '}' && --cnt == 0 && last == NULL) {
-				last = cp + 1;
-			}
-		}
-		if (cnt != 0) {
-			warnx("Malformed alternate `%s'", pkgspec);
-			return 1;
-		}
-		for (ret = 1, cp = sep + 1 ; *sep != '}' ; cp = sep + 1) {
-			for (cnt = 0, sep = cp ; cnt > 0 || (cnt == 0 && *sep != '}' && *sep != ',') ; sep++) {
-				if (*sep == '{') {
-					cnt++;
-				} else if (*sep == '}') {
-					cnt--;
-				}
-			}
-			(void) snprintf(alt, sizeof(buf) - (alt - buf), "%.*s%s", (int)(sep - cp), cp, last);
-			if (matchname(buf, dbdir, quiet) == 0) {
-				ret = 0;
-			}
-		}
-		return ret;
+	if (strpbrk(pkgspec, "<>[]?*{")) {
+	    /* expensive (pattern) match */
+	    return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
 	}
-	if ((sep = strpbrk(pkgspec, "<>")) != (char *) NULL) {
-		/* perform relational dewey match on version number */
-		(void) snprintf(buf, sizeof(buf), "%.*s", (int)(sep - pkgspec), pkgspec);
-		cnt = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
-		cp = (cnt == GE || cnt == LE) ? sep + 2 : sep + 1;
-		return deweymatch(buf, cnt, cp, dbdir, quiet);
-	}
-	if (strpbrk(pkgspec, "*?[]") != (char *) NULL) {
-		return globmatch(pkgspec, dbdir, quiet);
-	}
-	/* No shell meta character given - simple check */
-	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = (lstat(buf, &st) < 0);
-	if (!error && !quiet)
+	/* simple match */
+	snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
+	error = (stat(buf, &st) < 0);
+	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
+	}
 	return error;
 }
 
@@ -352,23 +236,24 @@ cleanup(int sig)
 int
 pkg_perform(char **pkgs)
 {
-	int             i, err_cnt = 0;
+	struct dirent  *dp;
 	char           *tmp;
+	DIR            *dirp;
+	int             i;
+	int		err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
-	tmp = getenv(PKG_DBDIR);
-	if (!tmp)
+	if ((tmp = getenv(PKG_DBDIR)) == (char *) NULL) {
 		tmp = DEF_LOG_DIR;
+	}
 	/* Overriding action? */
 	if (CheckPkg) {
-		return matchname(CheckPkg, tmp, Quiet);
+		err_cnt += CheckForPkg(CheckPkg, tmp);
 	} else if (AllInstalled) {
-		struct dirent  *dp;
-		DIR            *dirp;
-
-		if (!(isdir(tmp) || islinktodir(tmp)))
+		if (!(isdir(tmp) || islinktodir(tmp))) {
 			return 1;
+		}
 		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
 			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 				if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
