@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.9 2001/12/25 04:05:34 jmcneill Exp $	*/
+/*	$NetBSD: esl.c,v 1.10 2003/05/16 23:55:32 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.9 2001/12/25 04:05:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10 2003/05/16 23:55:32 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ esl_set_port(void *hdl, mixer_ctrl_t *mc)
 		return (0);
 		break;
 	default:
-		/* FALLTHROUGH */
+		break;
 	}
 
 	return (EINVAL);
@@ -403,7 +403,7 @@ esl_get_port(void *hdl, mixer_ctrl_t *mc)
 		}
 		return (0);
 	default:
-		/* FALLTHROUGH */
+		break;
 	}
 
 	return (EINVAL);
@@ -451,7 +451,7 @@ esl_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		di->type = AUDIO_MIXER_CLASS;
 		return (0);
 	default:
-		/* FALLTHROUGH */
+		break;
 	}
 
 	return (ENXIO);
