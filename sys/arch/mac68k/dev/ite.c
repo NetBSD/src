@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.37.2.1 1997/08/23 07:10:15 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.37.2.2 1997/09/06 18:18:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -935,7 +935,21 @@ itematch(parent, cf, aux)
 		return 0;
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)(gm->fbbase + gm->fboff));
 
-	return (pa == (vm_offset_t)m68k_trunc_page(mac68k_vidphys));
+	if (pa != mac68k_vidphys) {
+		if (pa < 0xf9000000 || pa > 0xfeffffff)
+			return 0;
+		/*
+		 * OK, this is in the NuBus standard slot space range,
+		 * so it might be of the form 0xFssxxxxx.  Mask off the
+		 * slot number and duplicate it in bits 20-23, per IM:V
+		 * pp 459, 463, and IM:VI ch 30 p 17.
+		 * Note:  this is an ugly hack and I with I knew what
+		 * to do about it.  -- sr
+		 */
+		pa = (vm_offset_t)(((u_long)pa & 0xff0fffff) |
+		    (((u_long)pa & 0x0f000000) >> 4));
+	}
+	return (pa == mac68k_vidphys);
 }
 
 static void 

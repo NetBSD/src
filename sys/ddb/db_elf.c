@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.1 1997/07/01 18:36:36 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.1.2.1 1997/09/06 18:47:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -166,7 +166,9 @@ X_db_sym_init(symtab, esymtab, name)
 	/*
 	 * Now, sanity check the symbols against the string table.
 	 */
-	if (symtab_start == NULL || strtab_start == NULL)
+	if (symtab_start == NULL || strtab_start == NULL ||
+	    ALIGNED_POINTER(symtab_start, long) == 0 ||
+	    ALIGNED_POINTER(strtab_start, long) == 0)
 		goto badheader;
 	for (symp = symtab_start; symp < symtab_end; symp++)
 		if (symp->st_name + strtab_start > strtab_end)

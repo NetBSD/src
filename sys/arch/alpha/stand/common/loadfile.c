@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.5 1997/07/25 00:09:01 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.5.2.1 1997/09/06 18:00:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,6 @@ loadfile(fname, entryp)
 	char *fname;
 	u_int64_t *entryp;
 {
-	struct devices *dp;
 	union {
 #ifdef ALPHA_BOOT_ECOFF
 		struct ecoff_exechdr coff;
@@ -195,7 +194,7 @@ coff_exec(fd, coff, entryp)
 		ffp_save = coff->a.data_start + coff->a.dsize;
 	if (ffp_save < coff->a.bss_start + coff->a.bsize)
 		ffp_save = coff->a.bss_start + coff->a.bsize;
-	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
+	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET) & ~PGOFSET) >> PGSHIFT;
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 
 	(void)printf("\n");
@@ -213,8 +212,6 @@ elf_exec(fd, elf, entryp)
 {
 	Elf_Shdr *shp;
 	Elf_Off off;
-	void *addr;
-	size_t size;
 	int i;
 	int first = 1;
 
@@ -262,16 +259,18 @@ elf_exec(fd, elf, entryp)
 		return (1);
 	}
 	shp = (Elf_Shdr *)ffp_save;
-	ffp_save += elf->e_shnum * sizeof(Elf_Shdr);
+	ffp_save += roundup((elf->e_shnum * sizeof(Elf_Shdr)), sizeof(long));
 
 	/*
-	 * Now load the symbol sections themselves.
+	 * Now load the symbol sections themselves.  Make sure the
+	 * sections are aligned.
 	 */
-	off = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr));
+	off = roundup((sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr))),
+	    sizeof(long));
 	for (first = 1, i = 0; i < elf->e_shnum; i++) {
 		if (shp[i].sh_type == Elf_sht_symtab ||
 		    shp[i].sh_type == Elf_sht_strtab) {
-			printf("%s%d", first ? " [" : "+", shp[i].sh_size);
+			printf("%s%ld", first ? " [" : "+", shp[i].sh_size);
 			(void)lseek(fd, shp[i].sh_offset, SEEK_SET);
 			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
 			    shp[i].sh_size) {
@@ -279,9 +278,9 @@ elf_exec(fd, elf, entryp)
 				    strerror(errno));
 				return (1);
 			}
-			ffp_save += shp[i].sh_size;
+			ffp_save += roundup(shp[i].sh_size, sizeof(long));
 			shp[i].sh_offset = off;
-			off += shp[i].sh_size;
+			off += roundup(shp[i].sh_size, sizeof(long));
 			first = 0;
 		}
 	}
@@ -290,7 +289,7 @@ elf_exec(fd, elf, entryp)
 	if (first == 0)
 		printf("]");
 
-	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET))
+	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET) & ~PGOFSET)
 	    >> PGSHIFT;
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.4.2.1 1997/08/23 07:07:21 thorpej Exp $ */
+/* $NetBSD: boot.c,v 1.4.2.2 1997/09/06 18:00:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,8 +48,9 @@
 #include <machine/autoconf.h>
 #include <machine/prom.h>
 
-#define _KERNEL
-#include "include/pte.h"
+#include <machine/pte.h>
+
+#include "common.h"
 
 int loadfile __P((char *, u_int64_t *));
 

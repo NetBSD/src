@@ -1,40 +1,38 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/31 21:22:09 cjs Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 1997/09/06 18:44:27 thorpej Exp $
 
 LIB=sa
 
-NOPIC=nopic
-NOPROFILE=noprofile
+NOLINT=
+NOPIC=
+NOPROFILE=
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
-SRC_net= nfs.c rpc.c net.c ether.c arp.c in_cksum.c \
-	 bootparam.c rarp.c
+.PATH:  ${DIR_SA} ${DIR_KERN}
+
+# DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
+#  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
+DEFS= -Dsun3x -D_STANDALONE
+INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
+CFLAGS= -O2 -msoft-float -fno-defer-pop
+CPPFLAGS= ${DEFS} ${DBG} ${INCL}
+CLEANFILES= SRT0.o SRT1.o machine m68k
+
+SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
 SRC_sa = alloc.c bcopy.c close.c getfile.c memcpy.c open.c \
-	 printf.c read.c strerror.c ufs.c 
+	 printf.c read.c strerror.c
 
 SRC_kern= ashrdi3.c bcmp.c bzero.c strcmp.c strlen.c
 
 SRC_here= clock.c dev_disk.c devopen.c dvma.c \
-	 exec_sun.c gets.c iommu.c mmu.c netif_sun.c\
+	 exec_sun.c gets.c iommu.c mmu.c netif_sun.c \
 	 panic.c promboot.c promcons.c promdev.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
-
-CLEANFILES+=	SRT0.o SRT1.o
-
-# DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
-#  -DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG -DDEBUG_PROM
-
-DEFS= -Dsun3x -DSTANDALONE -DCOMPAT_UFS
-INCL= -I${.CURDIR} -I${S}/lib/libsa -I${S}
-COPTS= -msoft-float
-CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}
-
-.PATH:  ${DIR_SA} ${DIR_KERN} ${.CURDIR}/../../sun3
 
 all: libsa.a SRT0.o SRT1.o
 
@@ -42,3 +40,25 @@ all: libsa.a SRT0.o SRT1.o
 libinstall::
 
 .include <bsd.lib.mk>
+
+# Nuke these...
+LOBJS=
+POBJS=
+SOBJS=
+
+# Customized rules...
+
+${OBJS} SRT0.o SRT1.o : machine m68k
+
+machine :
+	-rm -f $@
+	ln -s ${S}/arch/sun3x/include $@
+
+m68k :
+	-rm -f $@
+	ln -s ${S}/arch/m68k/include $@
+
+# This is for programs using ../Makefile.inc
+echo_objdir:
+	@echo ${.OBJDIR}
+
