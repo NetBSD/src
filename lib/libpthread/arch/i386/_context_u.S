@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/08/02 19:10:28 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/08/02 19:29:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,66 +39,60 @@
 #include <machine/asm.h>
 
 #define GETC \
-	movl	%gs,	%eax	; \
-	movl	%eax,  36(%ecx) ; \
-	movl	%fs,	%eax	; \
-	movl	%eax,  40(%ecx)	; \
-	movl	%es,	%eax	; \
-	movl	%eax,  44(%ecx)	; \
-	movl	%ds,	%eax	; \
-	movl	%eax,  48(%ecx)	; \
-	movl	%edi,  52(%ecx)	; \
-	movl	%esi,  56(%ecx)	; \
-	movl	%ebp,  60(%ecx)	; \
-	movl	$0,    64(%ecx) ; \
-	movl	%ebx,  68(%ecx)	; \
-	movl    $0,    72(%ecx) ; \
-	movl    $0,    76(%ecx) ; \
-	movl    $0,    80(%ecx) ; \
-	movl    $0,    84(%ecx) ; \
-	movl    $0,    88(%ecx) ; \
-	movl	%edx,  92(%ecx)	; \
-	movl	%cs,	%eax	; \
-	movl	%eax,  96(%ecx) ; \
-	pushfl			; \
-	popl	%eax		; \
-	movl	%eax, 100(%ecx)	; \
-	movl	%ss,	%eax	; \
-	movl	%eax, 108(%ecx)	; \
-	movl	$4,	%eax	; \
+	movl	%gs,	%eax	;		\
+	movl	%eax,  36(%ecx) ; /* GS  */	\
+	movl	%fs,	%eax	;		\
+	movl	%eax,  40(%ecx)	; /* FS  */	\
+	movl	%es,	%eax	;		\
+	movl	%eax,  44(%ecx)	; /* ES  */	\
+	movl	%ds,	%eax	;		\
+	movl	%eax,  48(%ecx)	; /* DS  */	\
+	movl	%edi,  52(%ecx)	; /* EDI */	\
+	movl	%esi,  56(%ecx)	; /* ESI */	\
+	movl	%ebp,  60(%ecx)	; /* EBP */	\
+	movl	%ebx,  68(%ecx)	; /* EBX */	\
+	movl	%edx,  92(%ecx)	; /* EIP */	\
+	movl	%cs,	%eax	;		\
+	movl	%eax,  96(%ecx) ; /* CS	 */	\
+	pushfl			;		\
+	popl	%eax		;		\
+	movl	%eax, 100(%ecx)	; /* EFLAGS */	\
+	movl	%ss,	%eax	;		\
+	movl	%eax, 108(%ecx)	; /* SS */	\
+	movl	$4,	%eax	;		\
  	movl	%eax,	0(%ecx)	
 
 #define SETC \
-	movl	36(%ecx), %gs	; \
-	movl	40(%ecx), %fs	; \
-	movl	44(%ecx), %es	; \
-	movl	52(%ecx), %edi	; \
-	movl	56(%ecx), %esi	; \
-	movl	60(%ecx), %ebp	; \
-	movl	68(%ecx), %ebx	; \
+	movl	36(%ecx), %gs	; /* GS	 */	\
+	movl	40(%ecx), %fs	; /* FS  */	\
+	movl	44(%ecx), %es	; /* ES	 */	\
+	movl	52(%ecx), %edi	; /* EDI */	\
+	movl	56(%ecx), %esi	; /* ESI */	\
+	movl	60(%ecx), %ebp	; /* EBP */	\
+	movl	68(%ecx), %ebx	; /* EBX */	\
 	;; \
-	movl	104(%ecx), %edx ; \
-	movl	96(%ecx), %eax  ; \
-	mov	%eax, -4(%edx)	; \
-	movl	92(%ecx), %eax	; \
-	movl	%eax, -8(%edx)	; \
-	movl	48(%ecx), %eax	; \
-	movl	%ax, -12(%edx)	; \
-	movl	72(%ecx), %eax	; \
-	movl	%eax, -16(%edx)	; \
-	movl	76(%ecx), %eax	; \
-	movl	%eax, -20(%edx)	; \
-	movl	80(%ecx), %eax	; \
-	movl	%eax, -24(%edx)	; \
-	movl	100(%ecx), %eax ; \
-	movl	%eax, -28(%edx)	; \
-	movl	108(%ecx), %ss	; \
-	leal	-28(%edx), %esp	; \
-	popfl			; \
-	popl	%eax		; \
-	popl	%ecx		; \
-	popl	%edx		; \
-	popl	%ds		; \
+	movl	104(%ecx), %edx ; /* UESP */	\
+	movl	96(%ecx), %eax  ; /* CS	 */	\
+	mov	%eax, -4(%edx)	;		\
+	movl	92(%ecx), %eax	; /* EIP */	\
+	movl	%eax, -8(%edx)	;		\
+	movl	48(%ecx), %eax	; /* DS	 */	\
+	movl	%ax, -12(%edx)	;		\
+	movl	72(%ecx), %eax	; /* EDX */	\
+	movl	%eax, -16(%edx)	;		\
+	movl	76(%ecx), %eax	; /* ECX */	\
+	movl	%eax, -20(%edx)	;		\
+	movl	80(%ecx), %eax	; /* EAX */	\
+	movl	%eax, -24(%edx)	;		\
+	movl	100(%ecx), %eax ; /* EFLAGS */	\
+	movl	%eax, -28(%edx)	;		\
+	movl	108(%ecx), %ss	; /* SS	 */	\
+	leal	-28(%edx), %esp	;		\
+	popfl			;		\
+	popl	%eax		;		\
+	popl	%ecx		;		\
+	popl	%edx		;		\
+	popl	%ds		;		\
 	lret
 
 
