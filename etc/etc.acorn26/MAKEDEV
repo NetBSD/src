@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.1 2002/03/24 21:20:38 bjh21 Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2002/04/02 22:21:28 bjh21 Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,10 +119,10 @@ all)
 	makedev clockctl
 	;;
 
-minimal)
-	makedev std
-	makedev opty ccd0 ccd1 md0
-	makedev ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
+ramdisk)
+	makedev std wd0 wd1 wd2 wd3 md0 md1 sd0 sd1 sd2 sd3
+	makedev opty ttyE0 wskbd0 ttyEcfg
+	makedev cd0 cd1
 	;;
 
 wscons)
