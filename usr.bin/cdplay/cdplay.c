@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.26 2003/07/14 11:55:56 itojun Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.27 2003/09/12 00:39:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.26 2003/07/14 11:55:56 itojun Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.27 2003/09/12 00:39:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -147,7 +147,7 @@ const char	*prompt(void);
 int	read_toc_entrys(int);
 int	run(int, const char *);
 int	setvol(int, int);
-void	sig_timer(int, int, struct sigcontext *);
+void	sig_timer(int);
 int	skip(int, int);
 const char	*strstatus(int);
 void 	usage(void);
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	el_source(elptr, NULL);
 
 	sigemptyset(&sa_timer.sa_mask);
-	sa_timer.sa_handler = (void (*)(int))sig_timer;
+	sa_timer.sa_handler = sig_timer;
 	sa_timer.sa_flags = SA_RESTART;
 	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
 		err(EXIT_FAILURE, "sigaction()");
@@ -682,7 +682,7 @@ Clean_up:
 }
 
 void
-sig_timer(int sig, int code, struct sigcontext *scp)
+sig_timer(int sig)
 {
 	sigset_t anymore;
 
