@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.12 1996/03/11 23:09:09 phil Exp $
+#	$NetBSD: STEELHEAD,v 1.13 1996/08/26 23:40:42 mrg Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -23,6 +23,8 @@ options		"COMPAT_43"		# 4.3 system calls
 options		"TCP_COMPAT_42"		# 4.2 networking ABI
 options		"COMPAT_09"		# NetBSD-0.9
 options		"COMPAT_10"		# NetBSD-1.0
+options 	COMPAT_11
+options 	COMPAT_12
 
 # file system options
 #options	QUOTA			# file system quotas

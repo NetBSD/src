@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.66 1996/05/20 18:17:41 mrg Exp $
+#	$NetBSD: PAIN,v 1.67 1996/08/26 23:40:18 mrg Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -40,6 +40,7 @@ options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 

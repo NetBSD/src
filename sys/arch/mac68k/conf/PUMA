@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
+#	$NetBSD: PUMA,v 1.14 1996/08/26 23:40:30 mrg Exp $
 #
 # PUMA
 
@@ -46,6 +46,8 @@ options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
 options		COMPAT_10
+options 	COMPAT_11
+options 	COMPAT_12
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 

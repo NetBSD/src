@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.9 1996/05/15 12:57:32 leo Exp $
+#	$NetBSD: BOOT,v 1.10 1996/08/26 23:39:48 mrg Exp $
 #
 # BOOT
 #
@@ -60,6 +60,7 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
+options 	COMPAT_12
 
 #
 # Support for various kernel options

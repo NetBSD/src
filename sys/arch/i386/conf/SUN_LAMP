@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.72 1996/05/30 22:36:49 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.73 1996/08/26 23:40:21 mrg Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -40,6 +40,7 @@ options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 

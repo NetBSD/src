@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.2 1996/05/20 14:56:32 oki Exp $
+#	$NetBSD: ALL,v 1.3 1996/08/26 23:41:22 mrg Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -41,6 +41,7 @@ options 	COMPAT_44		# compatibility with 4.4BSD binaries
 options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
+options		COMPAT_12
 options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
 # file system options

@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.7 1996/07/14 00:10:14 explorer Exp $
+#	$NetBSD: WARPED,v 1.8 1996/08/26 23:40:24 mrg Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -31,6 +31,7 @@ options		DEVPAGER	# mmap() of devices
 options		KTRACE		# system call tracing, a la ktrace(1)
 
 options		COMPAT_43	# and 4.3BSD
+options 	COMPAT_12
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 options		FFS		# UFS

@@ -1,11 +1,11 @@
-#	$NetBSD: EMPTY,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: EMPTY,v 1.2 1996/08/26 23:41:24 mrg Exp $
 
 #
 #	EMPTY
 #
 
 #--- from std.x68k
-#	$NetBSD: EMPTY,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: EMPTY,v 1.2 1996/08/26 23:41:24 mrg Exp $
 #
 # standard x68k information
 #
@@ -63,6 +63,7 @@ options 	FIFO			# FIFOs; RECOMMENDED
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
+options		COMPAT_12
 
 # file system options
 options		FFS			# Berkeley fast file system

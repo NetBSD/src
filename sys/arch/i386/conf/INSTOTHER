@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.15 1996/05/20 00:50:40 thorpej Exp $
+#	$NetBSD: INSTOTHER,v 1.16 1996/08/26 23:40:07 mrg Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -34,6 +34,7 @@ options		DEVPAGER	# mmap() of devices
 
 options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12
 
 options		LKM		# loadable kernel modules
 
