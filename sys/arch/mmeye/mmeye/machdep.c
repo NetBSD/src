@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1999/09/21 13:16:16 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2000/01/17 21:59:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -968,7 +968,7 @@ InitializeBsc()
 
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
+	SHREG_CCR = CCR_CE;
 #endif
 
 	/* MMEYE_LED = 0x04; */
@@ -979,9 +979,9 @@ sh3_cache_on(void)
 {
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
-	SHREG_CCR = 0x0009; /* cache clear */
-	SHREG_CCR = 0x0001; /* cache on */
+	SHREG_CCR = CCR_CE;
+	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
+	SHREG_CCR = CCR_CE;		/* cache on */
 #endif
 }
 
