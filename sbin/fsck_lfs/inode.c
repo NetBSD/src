@@ -1,4 +1,4 @@
-/*	$Id: inode.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: inode.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -711,7 +711,7 @@ pinode(ino)
         printf("MODE=%o\n", dp->di_mode);
         if (preen)
             printf("%s: ", cdevname());
-        printf("SIZE=%qu ", dp->di_size);
+        printf("SIZE=%qu ", (unsigned long long)dp->di_size);
         t = dp->di_mtime;
         p = ctime(&t);
         printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);

@@ -1,4 +1,4 @@
-/*	$Id: setup.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: setup.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -310,7 +310,8 @@ u_quad_t maxtable[] = {
 #endif
 		if (sblock.lfs_maxfilesize != maxfilesize) {
 			pwarn("INCORRECT MAXFILESIZE=%qu IN SUPERBLOCK (should be %qu)",
-				sblock.lfs_maxfilesize, maxfilesize);
+				(unsigned long long)sblock.lfs_maxfilesize, 
+				(unsigned long long)maxfilesize);
 			sblock.lfs_maxfilesize = maxfilesize;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -362,8 +363,8 @@ u_quad_t maxtable[] = {
 	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
-		printf("cannot alloc %u bytes for lncntp\n", 
-		    (unsigned)(maxino + 1) * sizeof(int16_t));
+		printf("cannot alloc %lu bytes for lncntp\n", 
+		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
 	bufinit();

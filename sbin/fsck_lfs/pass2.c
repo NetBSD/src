@@ -1,4 +1,4 @@
-/*	$Id: pass2.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: pass2.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -137,8 +137,8 @@ pass2()
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
-			pwarn("DIRECTORY %s: LENGTH %d NOT MULTIPLE OF %d",
-				pathbuf, inp->i_isize, DIRBLKSIZ);
+			pwarn("DIRECTORY %s: LENGTH %lu NOT MULTIPLE OF %d",
+				pathbuf, (unsigned long)inp->i_isize, DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
