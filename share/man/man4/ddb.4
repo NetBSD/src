@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" 
-.\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
+.\"	$NetBSD: ddb.4,v 1.6 1997/01/09 05:42:55 thorpej Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -324,11 +324,16 @@ The width of the displayed line.
 The number of lines.  It is used by "more" feature.
 .IP tabstops 12n
 Tab stop width.
+.IP onpanic 12n
+If non-zero, the debugger will be called when the kernel panics.  Default
+is "on", and may be initialzed at build time with the "DDB_ONPANIC=0"
+option set in the kernel configuration file.
 .IP work\fIxx\fR
 Work variable.
 .I 'xx'
 can be 0 to 31.
 .LP
+All built-in variables are accessible via sysctl(3).
 .LP
 .sp
 .B EXPRESSIONS
