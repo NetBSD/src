@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.112 2000/05/25 23:28:44 enami Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.113 2000/05/26 08:36:48 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2747,7 +2747,7 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	int s, error = 0, slptimeo = 0, slpflag = 0, retv, bvecpos;
 	int passone = 1;
 	u_quad_t off, endoff, toff;
-	struct ucred* wcred = NULL;
+	struct ucred* wcred;
 #ifndef NFS_COMMITBVECSIZ
 #define NFS_COMMITBVECSIZ	20
 #endif
@@ -2768,6 +2768,7 @@ again:
 	bvecpos = 0;
 	off = (u_quad_t)-1;
 	endoff = 0;
+	wcred = NULL;
 	if (NFS_ISV3(vp) && commit) {
 		s = splbio();
 		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
@@ -2855,10 +2856,11 @@ again:
 		}
 
 		/*
-		 * If commit succeeded and we haven't walked through
-		 * all dirty buffers, try to commit more.
+		 * If there may be more uncommitted buffer, try to
+		 * commit them unless write verf isn't changed.
 		 */
-		if (retv == 0 && bvecpos == NFS_COMMITBVECSIZ)
+		if (retv != NFSERR_STALEWRITEVERF &&
+		    bvecpos == NFS_COMMITBVECSIZ)
 			goto again;
 	}
 
