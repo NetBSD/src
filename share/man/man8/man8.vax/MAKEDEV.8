@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.18 2002/03/14 01:38:40 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.19 2002/06/18 12:59:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 5, 1993
+.Dd June 18, 2002
 .Dt MAKEDEV 8 vax
 .Os
 .Sh NAME
@@ -256,6 +256,9 @@ SCSI media changer, see
 .Xr \&ch 4
 . It Ar random
 Random number generator
+. It Ar systrace
+Syscall tracer, see
+.Xr \&systrace 4
 . El
 .El
 .Sh FILES
