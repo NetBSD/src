@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1995/09/29 03:55:35 phil Exp $ 
+#	$Id: Makefile.inc,v 1.4 1995/09/29 04:00:18 phil Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -90,7 +90,7 @@ netbsd: netbsd.o go.o
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
-	/bin/rm -f netbsd* inject* cloak
+	/bin/rm -f netbsd* inject* cloak pwd_mkdb
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
