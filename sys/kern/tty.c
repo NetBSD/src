@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.122 2000/11/05 15:37:09 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.123 2000/11/14 22:17:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2021,7 +2021,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%ld.%02lds ", (long int)stime.tv_sec,
 		    (long int)stime.tv_usec / 10000);
 
-#define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
+#define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 		/* Print percentage cpu. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf(tp, "%d%% ", tmp / 100);
