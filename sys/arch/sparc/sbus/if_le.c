@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.9 1994/07/02 01:10:05 deraadt Exp $
+ * $Id: if_le.c,v 1.10 1994/07/04 21:37:27 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -51,6 +51,8 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>
+
+#include <vm/vm.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

@@ -42,7 +42,7 @@
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bwtwo.c,v 1.14 92/11/26 02:28:04 torek Exp 
- * $Id: bwtwo.c,v 1.2 1993/10/11 02:45:49 deraadt Exp $
+ * $Id: bwtwo.c,v 1.3 1994/07/04 21:37:20 deraadt Exp $
  */
 
 /*
@@ -57,6 +57,8 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+
+#include <vm/vm.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
