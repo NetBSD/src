@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.25 1998/05/20 00:32:05 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.26 1998/09/24 17:49:48 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.25 1998/05/20 00:32:05 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.26 1998/09/24 17:49:48 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,10 +230,16 @@ umaskcmd(argc, argv)
 			umask(mask);
 		} else {
 			void *set;
-			if ((set = setmode (ap)) == 0)
-					error("Illegal number: %s", ap);
 
-			mask = getmode (set, ~mask & 0777);
+			INTOFF;
+			if ((set = setmode(ap)) != 0) {
+				mask = getmode(set, ~mask & 0777);
+				ckfree(set);
+			}
+			INTON;
+			if (!set)
+				error("Illegal mode: %s", ap);
+
 			umask(~mask & 0777);
 		}
 	}
