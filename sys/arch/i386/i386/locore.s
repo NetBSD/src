@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.53 1994/04/04 16:48:21 mycroft Exp $
+ *	$Id: locore.s,v 1.54 1994/04/04 23:07:22 mycroft Exp $
  */
 
 /*
@@ -1401,48 +1401,66 @@ ENTRY(swtch)
 
 	incl	_cnt+V_SWTCH
 
+	/* Don't accumulate system time while idle. */
+	movl	_curproc,%esi
+	movl	$0,_curproc
+
+	/*
+	 * First phase: find new process.
+	 *
+	 * Registers:
+	 *   %eax - queue head, scratch, then zero
+	 *   %ebx - queue number
+	 *   %ecx - cached value of whichqs
+	 *   %edx - next process in queue
+	 *   %esi - old process
+	 *   %edi - new process
+	 */
+
 	/* Wait for new process. */
-sw0:	cli				# splhigh doesn't do a cli
+	cli				# splhigh doesn't do a cli
 	movl	_whichqs,%ecx
 
 sw1:	bsfl	%ecx,%ebx		# find a full q
 	jz	_idle			# if none, idle
 
-	lea	_qs(,%ebx,8),%esi	# select q
+	lea	_qs(,%ebx,8),%eax	# select q
 
-	movl	P_LINK(%esi),%edi	# unlink from front of process q
+	movl	P_LINK(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
-	cmpl	%edi,%esi		# linked to self? (e.g. not on list)
+	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
 	je	badsw			# not possible
 #endif
 	movl	P_LINK(%edi),%edx
-	movl	%edx,P_LINK(%esi)
-	movl	P_RLINK(%edi),%eax
-	movl	%eax,P_RLINK(%edx)
+	movl	%edx,P_LINK(%eax)
 
-	cmpl	%edx,%esi		# q empty
+	cmpl	%edx,%eax		# q empty
 	jne	3f
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
 
-3:	movl	%ecx,_whichqs		# update q status
+3:	movl	P_RLINK(%edi),%eax
+	movl	%eax,P_RLINK(%edx)
 
+	movl	%ecx,_whichqs		# update q status
+
+	/* We just did it. */
 	xorl	%eax,%eax
 	movl	%eax,_want_resched
 
 #ifdef	DIAGNOSTIC
-	cmpl	%eax,P_WCHAN(%edi)
-	jne	badsw
-	cmpb	$SRUN,P_STAT(%edi)
-	jne	badsw
+	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
+	jne	badsw			# Yes; shouldn't be queued.
+	cmpb	$SRUN,P_STAT(%edi)	# In run state?
+	jne	badsw			# No; shouldn't be queued.
 #endif
 
-	movl	%eax,P_RLINK(%edi) /* isolate process to run */
+	/* Isolate process.  XXX Is this necessary? */
+	movl	%eax,P_RLINK(%edi)
 
 	/* It's okay to take interrupts here. */
 	sti
 
 	/* Skip context switch if same process. */
-	movl	_curproc,%esi
 	cmpl	%edi,%esi
 	je	swtch_return
 
@@ -1450,71 +1468,90 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	testl	%esi,%esi
 	jz	swtch_exited
 
+	/*
+	 * Second phase: save old context.
+	 *
+	 * Registers:
+	 *   %eax - old process
+	 *   %ecx - scratch
+	 *   %esi - old pcb
+	 *   %edi - new process
+	 */
+
 	/* Save context. */
+	movl	%esi,%eax
 	movl	P_ADDR(%esi),%esi
 
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
-	movl	%fs,%ax
-	movl	%eax,PCB_FS(%esi)
-	movl	%gs,%ax
-	movl	%eax,PCB_GS(%esi)
+	movl	%fs,%cx
+	movl	%ecx,PCB_FS(%esi)
+	movl	%gs,%cx
+	movl	%ecx,PCB_GS(%esi)
 
 #if NNPX > 0
-	/* have we used fp, and need a save? */
-	movl	_curproc,%ecx
-	cmpl	%ecx,_npxproc
+	/* Have we used fp, and need a save? */
+	cmpl	%eax,_npxproc
 	jne	1f
 
-	leal	PCB_SAVEFPU(%esi),%ebx
-	pushl	%ebx
+	leal	PCB_SAVEFPU(%esi),%ecx
+	pushl	%ecx
 	call	_npxsave		/* do it in a big C function */
 	addl	$4,%esp
 1:
 #endif
 
-	movl	$0,_curproc		# out of process
-
 swtch_exited:
-	/* Restore context. */
-	movl	P_ADDR(%edi),%edx
+	/*
+	 * Third phase: restore saved context.
+	 *
+	 * Registers:
+	 *   %ecx - scratch
+	 *   %esi - new pcb
+	 *   %edi - new process
+	 */
 
 	/* No interrupts while loading new state. */
 	cli
+	movl	P_ADDR(%edi),%esi
 
 	/* Switch address space. */
-	movl	PCB_CR3(%edx),%ebx
-	movl	%ebx,%cr3
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
 
 #ifdef	USER_LDT
-	cmpl	$0,PCB_USERLDT(%edx)
+	cmpl	$0,PCB_USERLDT(%esi)
 	jnz	1f
-	movl	__default_ldt,%eax
-	cmpl	_currentldt,%eax
+	movl	__default_ldt,%ecx
+	cmpl	_currentldt,%ecx
 	je	2f
 	lldt	__default_ldt
-	movl	%eax,_currentldt
+	movl	%ecx,_currentldt
 	jmp	2f
-1:	pushl	%edx
+1:	pushl	%esi
 	call	_set_user_ldt
-	popl	%edx
+	addl	$4,%esp
 2:
 #endif
 
-	movl	PCB_ESP(%edx),%esp
-	movl	PCB_EBP(%edx),%ebp
-	movl	PCB_FS(%edx),%eax
-	movl	%ax,%fs
-	movl	PCB_GS(%edx),%eax
-	movl	%ax,%gs
+	/* Restore stack and segments. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+	movl	PCB_FS(%esi),%ecx
+	movl	%cx,%fs
+	movl	PCB_GS(%esi),%ecx
+	movl	%cx,%gs
 
-	movl	%edi,_curproc		# into next process
-	movl	%edx,_curpcb
+	/* Record new pcb. */
+	movl	%esi,_curpcb
 
 	/* Interrupts are okay again. */
 	sti
 
 swtch_return:
+	/* Record new process. */
+	movl	%edi,_curproc
+
 	/* Old _cpl is already on the stack. */
 	call    _splx			# restore the process's ipl
 	addl	$4,%esp
@@ -1558,10 +1595,10 @@ ENTRY(savectx)
 
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
-	movl	%fs,%ax
-	movl	%eax,PCB_FS(%esi)
-	movl	%gs,%ax
-	movl	%eax,PCB_GS(%esi)
+	movl	%fs,%cx
+	movl	%ecx,PCB_FS(%esi)
+	movl	%gs,%cx
+	movl	%ecx,PCB_GS(%esi)
 
 #if NNPX > 0
 	/*
