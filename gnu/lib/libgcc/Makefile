@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2001/01/08 08:29:59 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2001/07/13 19:54:28 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,8 @@ LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .if (${MACHINE_ARCH} == "vax")
 LIB2OBJS+=	_udiv_w_sdiv.o
 .endif
-.if (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "arm26")
+.if (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") || \
+    (${MACHINE_ARCH} == "arm26") || (${MACHINE_ARCH} == "arm")
 LIB2OBJS+=	_fixunsdfsi.o _fixunssfsi.o
 .endif
 OBJS+=		${LIB2OBJS}
