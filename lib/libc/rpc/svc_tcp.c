@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.24 1999/09/16 11:45:25 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.25 1999/09/16 17:03:46 sommerfeld Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.24 1999/09/16 11:45:25 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.25 1999/09/16 17:03:46 sommerfeld Exp $");
 #endif
 #endif
 
@@ -395,14 +395,8 @@ writetcp(xprtp, buf, len)
 	xprt = (SVCXPRT *)(void *)xprtp;
 	_DIAGASSERT(xprt != NULL);
 
-#ifdef _DIAGNOSTIC
-	if (buf == NULL)
-		goto fatal_write;
-#endif
-
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
 		if ((i = write(xprt->xp_sock, buf, (size_t)cnt)) < 0) {
-fatal_write:
 			((struct tcp_conn *)(xprt->xp_p1))->strm_stat =
 			    XPRT_DIED;
 			return (-1);
