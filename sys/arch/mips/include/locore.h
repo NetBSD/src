@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.49 2000/10/05 02:36:45 cgd Exp $ */
+/* $NetBSD: locore.h,v 1.50 2000/10/09 07:33:31 nisimura Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -52,7 +52,6 @@ void	mips_cp0_status_write(u_int32_t);
 
 int	mips1_icsize(void);
 int	mips1_dcsize(void);
-void	mips1_ConfigCache(void);	/* XXX TX3900 XXX */
 void	mips1_FlushCache(void);
 void	mips1_FlushDCache(vaddr_t addr, vsize_t len);
 void	mips1_FlushICache(vaddr_t addr, vsize_t len);
