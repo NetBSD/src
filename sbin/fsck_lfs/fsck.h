@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.8 2003/03/28 08:09:53 perseant Exp $	 */
+/* $NetBSD: fsck.h,v 1.9 2003/03/29 22:48:38 wiz Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -125,7 +125,7 @@ struct inodesc {
  * To check if a block has been found as a duplicate it is only
  * necessary to search from duplist through muldup. To find the
  * total number of times that a block has been found as a duplicate
- * the entire list must be searched for occurences of the block
+ * the entire list must be searched for occurrences of the block
  * in question. The following diagram shows a sample list where
  * w (found twice), x (found once), y (found three times), and z
  * (found once) are duplicate block numbers:

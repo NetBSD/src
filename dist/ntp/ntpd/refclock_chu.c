@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.2 2003/03/29 22:48:37 wiz Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -1319,13 +1319,13 @@ chu_major(
 	/*
 	 * Majority decoder. Each burst encodes two replications at each
 	 * digit position in the timecode. Each row of the decoding
-	 * matrix encodes the number of occurences of each digit found
+	 * matrix encodes the number of occurrences of each digit found
 	 * at the corresponding position. The maximum over all
-	 * occurences at each position is the distance for this position
+	 * occurrences at each position is the distance for this position
 	 * and the corresponding digit is the maximumn likelihood
 	 * candidate. If the distance is zero, assume a miss '_'; if the
 	 * distance is not more than half the total number of
-	 * occurences, assume a soft error '-'; if two different digits
+	 * occurrences, assume a soft error '-'; if two different digits
 	 * with the same distance are found, assume a hard error '='.
 	 * These will later cause a format error when the timecode is
 	 * interpreted. The decoding distance is defined as the minimum
@@ -1361,7 +1361,7 @@ chu_major(
 	/*
 	 * A valid timecode requires at least three bursts and a
 	 * decoding distance greater than half the total number of
-	 * occurences. A valid timecode also requires at least 20 valid
+	 * occurrences. A valid timecode also requires at least 20 valid
 	 * timestamps.
 	 */
 	if (up->burstcnt < 3 || up->mindist <= up->burstcnt)
