@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.13 1998/02/13 01:29:09 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.14 1998/02/13 02:09:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -124,6 +124,8 @@ struct bootinfo_v1 {
 struct bootinfo_kernel {
 	u_long	ssym;			/* start of syms */
 	u_long	esym;			/* end of syms */
+	u_long	hwrpb_phys;		/* hwrpb physical address */
+	u_long	hwrpb_size;		/* size of hwrpb data */
 	char	boot_flags[64];		/* boot flags */
 	char	booted_kernel[64];	/* name of booted kernel */
 	char	booted_dev[64];		/* name of booted device */
