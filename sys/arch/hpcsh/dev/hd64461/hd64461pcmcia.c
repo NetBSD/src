@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.22 2003/07/15 02:29:37 lukem Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.23 2003/10/23 02:34:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.22 2003/07/15 02:29:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.23 2003/10/23 02:34:07 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -710,6 +710,9 @@ hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 		return (1);
 
 	hd64461_set_bus_width(CHANNEL_0, width);
+
+	/* fake.  drivers init that to -1 and check if it was changed. */
+	*windowp = 0;
 
 	DPRINTF("%#lx:%#lx+%#lx %s\n", pcihp->ioh, offset, size,
 	    width_names[width]);
