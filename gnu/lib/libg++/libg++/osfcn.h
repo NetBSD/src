@@ -1,3 +1,4 @@
+/*	$Id: osfcn.h,v 1.2 1993/08/02 17:23:45 mycroft Exp $ */
 
 #ifndef OSFCN_H
 #define OSFCN_H 1

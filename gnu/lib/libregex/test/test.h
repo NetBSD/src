@@ -1,4 +1,4 @@
-/* test.h: for Regex testing.  */
+/*	$Id: test.h,v 1.2 1993/08/02 17:24:33 mycroft Exp $ */
 
 #ifndef TEST_H
 #define TEST_H

@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: fileregex.c,v 1.2 1993/08/02 17:24:16 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <stdio.h>
 #include "regex.h"

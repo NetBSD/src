@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: diag.c,v 1.3 1993/08/02 17:19:58 mycroft Exp $";
+#endif /* not lint */
+
 /*	diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/types.h>
 #include <sys/times.h>

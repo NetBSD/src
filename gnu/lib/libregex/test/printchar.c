@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: printchar.c,v 1.2 1993/08/02 17:24:23 mycroft Exp $";
+#endif /* not lint */
+
 void
 printchar (c)
      char c;

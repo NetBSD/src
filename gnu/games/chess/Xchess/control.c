@@ -18,9 +18,11 @@ can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: control.c,v 1.2 1993/08/02 17:20:50 mycroft Exp $";
+#endif /* not lint */
 
-/* RCS Info: $Revision: 1.1.1.1 $ on $Date: 1993/03/21 09:45:37 $
- *           $Source: /cvsroot/src/gnu/games/chess/Xchess/Attic/control.c,v $
+/*
  * Copyright (c) 1986 Wayne A. Christopher, U. C. Berkeley CAD Group
  *	Permission is granted to do anything with this code except sell it
  *	or remove this message.

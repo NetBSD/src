@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.termcap.c - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.termcap.c,v 1.2 1993/08/02 17:19:27 mycroft Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 #include "config.h"	/* for ROWNO and COLNO */

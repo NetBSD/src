@@ -7,6 +7,8 @@
  *
  * This file contains definitions for a scrollable text window
  * with scroll bar support.
+ *
+ *	$Id: scrollText.h,v 1.2 1993/08/02 17:21:00 mycroft Exp $
  */
 
 int TxtGrab();

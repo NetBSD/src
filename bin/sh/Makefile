@@ -1,4 +1,4 @@
-#	$Header: /cvsroot/src/bin/sh/Makefile,v 1.4 1993/05/04 13:56:27 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/08/02 17:18:50 mycroft Exp $
 
 PROG=	sh
 SRCS=	builtins.c cd.c dirent.c echo.c error.c eval.c exec.c expand.c \

@@ -1,6 +1,10 @@
 /* Main routine for running various tests.  Meant only to be linked with
    all the auxiliary test source files, with `test' undefined.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.2 1993/08/02 17:24:20 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 test_type t = all_test;

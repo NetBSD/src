@@ -20,6 +20,8 @@ supposed to have been given to you along with GNU CC so you
 can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  
+
+	$Id: PlotFile.h,v 1.2 1993/08/02 17:22:28 mycroft Exp $
 */
 
 /* 

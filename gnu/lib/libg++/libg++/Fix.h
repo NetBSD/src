@@ -1,6 +1,8 @@
 //
 // Fix.h : variable length fixed point data type 
 //
+//	$Id: Fix.h,v 1.2 1993/08/02 17:23:09 mycroft Exp $
+//
 
 #ifndef _Fix_h
 #ifdef __GNUG__

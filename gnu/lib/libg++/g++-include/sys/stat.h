@@ -1,3 +1,5 @@
+//	$Id: stat.h,v 1.2 1993/08/02 17:21:47 mycroft Exp $
+
 #ifndef __libgxx_sys_stat_h
 
 extern "C"

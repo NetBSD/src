@@ -22,35 +22,8 @@
    The author of the program may be contacted at ian@airs.com or
    c/o AIRS, P.O. Box 520, Waltham, MA 02254.
 
-   $Log: policy.h,v $
-   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-   initial import of 386bsd-0.1 sources
-
-   Revision 1.8  1992/04/01  21:58:35  ian
-   Added CLOSE_LOGFILES configuration parameter
-
-   Revision 1.7  1992/03/30  15:29:58  ian
-   Added HAVE_SVR4_LOCKFILES
-
-   Revision 1.6  1992/03/27  05:31:09  ian
-   David J. MacKenzie: various cleanups
-
-   Revision 1.5  1992/03/16  01:23:08  ian
-   Make blocking writes optional
-
-   Revision 1.4  1992/03/12  19:54:43  ian
-   Debugging based on types rather than number
-
-   Revision 1.3  1992/03/11  22:34:25  ian
-   Chip Salzenberg: support Internet mail addresses in uuxqt replies
-
-   Revision 1.2  1992/03/02  04:53:07  ian
-   Marc Unangst: added HAVE_SCO_LOCKFILES configuration parameter
-
-   Revision 1.1  1992/02/23  03:26:51  ian
-   Initial revision
-
-   */
+	$Id: policy.h,v 1.2 1993/08/02 17:25:07 mycroft Exp $
+*/
 
 /* This header file contains macro definitions which must be set by
    each site before compilation.  The first few are system

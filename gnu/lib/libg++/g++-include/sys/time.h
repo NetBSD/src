@@ -1,3 +1,5 @@
+//	$Id: time.h,v 1.2 1993/08/02 17:21:48 mycroft Exp $
+
 #ifndef __libgxx_sys_time_h
 
 extern "C"

@@ -24,6 +24,8 @@
                 Western Washington University
                 Bellingham, WA 98226-9062
        
+	$Id: bcdefs.h,v 1.2 1993/08/02 17:25:33 mycroft Exp $
+
 *************************************************************************/
 
 /* Include the configuration file. */

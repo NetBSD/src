@@ -1,6 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.version.c - version 1.0.3 */
-/* $Header: /cvsroot/src/games/hack/hack.version.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.version.c,v 1.2 1993/08/02 17:19:37 mycroft Exp $";
+#endif /* not lint */
 
 #include	"date.h"
 

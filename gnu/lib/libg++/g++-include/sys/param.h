@@ -1,3 +1,5 @@
+//	$Id: param.h,v 1.2 1993/08/02 17:21:41 mycroft Exp $
+
 #ifndef __libgxx_sys_param_h
 
 extern "C"

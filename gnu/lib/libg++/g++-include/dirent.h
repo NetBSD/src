@@ -1,3 +1,5 @@
+//	$Id: dirent.h,v 1.2 1993/08/02 17:22:05 mycroft Exp $
+
 #ifndef __libgxx_dirent_h
 
 #include <_G_config.h>

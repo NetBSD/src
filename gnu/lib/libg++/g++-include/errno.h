@@ -1,3 +1,5 @@
+//	$Id: errno.h,v 1.2 1993/08/02 17:22:06 mycroft Exp $
+
 #ifndef errno_h
 
 extern "C" {

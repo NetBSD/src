@@ -1,3 +1,4 @@
+//	$Id: memory.h,v 1.2 1993/08/02 17:22:10 mycroft Exp $
 
 #ifndef _memory_h
 #define _memory_h 1

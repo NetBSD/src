@@ -24,6 +24,9 @@
   and this notice must be preserved on all copies.
 */
 
+#ifndef lint
+static char rcsid[] = "$Id: uxdsp.c,v 1.2 1993/08/02 17:21:23 mycroft Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>

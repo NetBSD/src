@@ -1,3 +1,5 @@
+//	$Id: stddef.h,v 1.2 1993/08/02 17:22:16 mycroft Exp $
+
 #ifndef __libgxx_stddef_h
 
 extern "C" {

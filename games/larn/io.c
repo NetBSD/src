@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: io.c,v 1.2 1993/08/02 17:20:05 mycroft Exp $";
+#endif /* not lint */
+
 /* io.c			 Larn is copyrighted 1986 by Noah Morgan.
  *
  *	Below are the functions in this file:

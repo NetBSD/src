@@ -18,6 +18,10 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: strsignal.c,v 1.2 1993/08/02 17:23:54 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 
 #include <stdio.h>

@@ -22,47 +22,8 @@
    The author of the program may be contacted at ian@airs.com or
    c/o AIRS, P.O. Box 520, Waltham, MA 02254.
 
-   $Log: prot.h,v $
-   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-   initial import of 386bsd-0.1 sources
-
-   Revision 1.12  1992/03/13  22:59:25  ian
-   Have breceive_char go through freceive_data
-
-   Revision 1.11  1992/03/07  15:00:28  ian
-   prot.h is never included more than once
-
-   Revision 1.10  1992/02/08  03:54:18  ian
-   Include <string.h> only in <uucp.h>, added 1992 copyright
-
-   Revision 1.9  1992/01/18  22:48:53  ian
-   Reworked sending of mail and general handling of failed transfers
-
-   Revision 1.8  1991/12/31  19:43:13  ian
-   Added 'e' protocol
-
-   Revision 1.7  1991/11/15  21:00:59  ian
-   Efficiency hacks for 'f' and 't' protocols
-
-   Revision 1.6  1991/11/14  03:20:13  ian
-   Added seven-bit and reliable commands to help when selecting protocols
-
-   Revision 1.5  1991/11/12  18:25:33  ian
-   Added 't' protocol
-
-   Revision 1.4  1991/11/11  04:21:16  ian
-   Added 'f' protocol
-
-   Revision 1.3  1991/11/10  19:24:22  ian
-   Added pffile protocol entry point for file level control
-
-   Revision 1.2  1991/11/09  18:53:07  ian
-   Reworked protocol interface
-
-   Revision 1.1  1991/09/10  19:47:55  ian
-   Initial revision
-
-   */
+	$Id: prot.h,v 1.2 1993/08/02 17:25:12 mycroft Exp $
+*/
 
 /* The sprotocol structure holds information and functions for a specific
    protocol (e.g. the 'g' protocol).  */

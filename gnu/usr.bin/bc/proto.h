@@ -24,6 +24,8 @@
                 Western Washington University
                 Bellingham, WA 98226-9062
        
+	$Id: proto.h,v 1.2 1993/08/02 17:25:43 mycroft Exp $
+
 *************************************************************************/
 
 /* For the pc version using k&r ACK. (minix1.5 and earlier.) */

@@ -1,5 +1,9 @@
 /* debugmalloc.c: a malloc for debugging purposes.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: debugmalloc.c,v 1.2 1993/08/02 17:24:15 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>

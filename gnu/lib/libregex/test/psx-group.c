@@ -1,5 +1,9 @@
 /* psx-group.c: test POSIX grouping, both basic and extended.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-group.c,v 1.2 1993/08/02 17:24:28 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 

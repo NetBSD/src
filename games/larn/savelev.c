@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: savelev.c,v 1.2 1993/08/02 17:20:18 mycroft Exp $";
+#endif /* not lint */
+
 /* savelev.c		 Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 extern struct cel *cell;

@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with GAS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#	$Id: Makefile.gnu,v 1.2 1993/08/02 17:27:55 mycroft Exp $
 
 # This makefile may be used to make the VAX, 68020, 80386, 
 # SPARC, ns32k, or i860 assembler(s).

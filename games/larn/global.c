@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: global.c,v 1.2 1993/08/02 17:20:02 mycroft Exp $";
+#endif /* not lint */
+
 /*	global.c 		Larn is copyrighted 1986 by Noah Morgan.
  *
  *	raiselevel()		subroutine to raise the player one level

@@ -5,6 +5,8 @@
  *	Created from VMS definition file "objrecdef.mar"
  *	Mon Oct 14 14:01:29 1985
  *
+ *	$Id: objrecdef.h,v 1.2 1993/08/02 17:28:30 mycroft Exp $
+ *
  */
 struct OBJREC {
 	unsigned char	obj$b_rectyp;

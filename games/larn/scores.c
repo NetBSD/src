@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: scores.c,v 1.3 1993/08/02 17:20:19 mycroft Exp $";
+#endif /* not lint */
+
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
  *
  *	Functions in this file are:

@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: expr.c,v 1.2 1993/08/02 17:28:12 mycroft Exp $";
+#endif /* not lint */
+
 /*
  * This is really a branch office of as-read.c. I split it out to clearly
  * distinguish the world of expressions from the world of statements.

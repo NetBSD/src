@@ -26,6 +26,9 @@
        
 *************************************************************************/
 
+#ifndef lint
+static char rcsid[] = "$Id: util.c,v 1.2 1993/08/02 17:25:45 mycroft Exp $";
+#endif /* not lint */
 
 #include "bcdefs.h"
 #ifndef VARARGS

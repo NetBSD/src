@@ -1,5 +1,9 @@
 /* psx-interv.c: test POSIX intervals, both basic and extended.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-interv.c,v 1.2 1993/08/02 17:24:31 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 void

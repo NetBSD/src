@@ -1,6 +1,10 @@
 /* Indexed by a character, gives the upper case equivalent of the
    character.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: upcase.c,v 1.2 1993/08/02 17:24:35 mycroft Exp $";
+#endif /* not lint */
+
 char upcase[0400] = 
   { 000, 001, 002, 003, 004, 005, 006, 007,
     010, 011, 012, 013, 014, 015, 016, 017,

@@ -1,3 +1,5 @@
+//	$Id: dir.h,v 1.2 1993/08/02 17:21:34 mycroft Exp $
+
 #ifndef __libgxx_sys_dir_h
 
 extern "C" {

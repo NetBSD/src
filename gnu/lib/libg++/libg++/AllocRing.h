@@ -14,8 +14,9 @@ PURPOSE.  See the GNU Library General Public License for more details.
 You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
 
+	$Id: AllocRing.h,v 1.2 1993/08/02 17:22:58 mycroft Exp $
+*/
 
 #ifndef _AllocRing_h
 #ifdef __GNUG__

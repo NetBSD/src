@@ -1,3 +1,5 @@
+//	$Id: curses.h,v 1.3 1993/08/02 17:22:04 mycroft Exp $
+
 #ifndef _G_curses_h
 
 #include <_G_config.h>

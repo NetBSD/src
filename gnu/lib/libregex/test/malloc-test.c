@@ -1,4 +1,6 @@
-
+#ifndef lint
+static char rcsid[] = "$Id: malloc-test.c,v 1.2 1993/08/02 17:24:21 mycroft Exp $";
+#endif /* not lint */
 
 typedef struct {
    unsigned *bits;

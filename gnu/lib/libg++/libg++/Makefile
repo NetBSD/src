@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.13 1993/08/02 17:23:21 mycroft Exp $
+
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
 		BitSet.cc BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \

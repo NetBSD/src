@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: atof-vax.c,v 1.2 1993/08/02 17:26:46 mycroft Exp $";
+#endif /* not lint */
+
 	/* JF added these two for md_atof() */
 #include "as.h"
 #include "read.h"

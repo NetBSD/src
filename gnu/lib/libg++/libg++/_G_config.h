@@ -1,3 +1,5 @@
+/*	$Id: _G_config.h,v 1.3 1993/08/02 17:23:41 mycroft Exp $ */
+
 /* AUTOMATICALLY GENERATED; DO NOT EDIT! */ 
 #ifndef _G_config_h
 #define _G_config_h

@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.rip.c - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.rip.c,v 1.3 1993/08/02 17:19:18 mycroft Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 #include "hack.h"
