@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.766 2005/02/22 14:39:58 peter Exp $
+#	$NetBSD: mi,v 1.767 2005/02/26 18:06:27 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2087,9 +2087,11 @@
 ./usr/share/man/cat2/pmc_control.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pmc_get_info.0		comp-c-catman		.cat
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
+./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/profil.0			comp-c-catman		.cat
+./usr/share/man/cat2/pselect.0			comp-c-catman		.cat
 ./usr/share/man/cat2/ptrace.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pwrite.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pwritev.0			comp-c-catman		.cat
@@ -5925,9 +5927,11 @@
 ./usr/share/man/man2/pmc_control.2		comp-c-man		.man
 ./usr/share/man/man2/pmc_get_info.2		comp-c-man		.man
 ./usr/share/man/man2/poll.2			comp-c-man		.man
+./usr/share/man/man2/pollts.2			comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
 ./usr/share/man/man2/profil.2			comp-c-man		.man
+./usr/share/man/man2/pselect.2			comp-c-man		.man
 ./usr/share/man/man2/ptrace.2			comp-c-man		.man
 ./usr/share/man/man2/pwrite.2			comp-c-man		.man
 ./usr/share/man/man2/pwritev.2			comp-c-man		.man
