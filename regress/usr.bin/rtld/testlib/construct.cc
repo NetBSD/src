@@ -1,8 +1,10 @@
-// $NetBSD: construct.cc,v 1.1 2000/12/08 19:21:28 drochner Exp $
+// $NetBSD: construct.cc,v 1.2 2003/09/03 20:53:16 drochner Exp $
 
 // check constructor / destructor calls
 
 #include <iostream>
+
+using namespace std;
 
 class mist {
 public:
