@@ -38,7 +38,7 @@
  *
  *	from: @(#)conf.c	7.9 (Berkeley) 5/28/91
  *	conf.c,v 1.2 1993/05/22 07:57:16 cgd Exp
- *	$Id: conf.c,v 1.20 1994/07/14 01:17:40 gwr Exp $
+ *	$Id: conf.c,v 1.21 1994/09/20 16:52:56 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -260,11 +260,15 @@ decl_open(lkmenodev);
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef,	/*  0 */
-	bdev_notdef,	/*  1 */
+	bdev_notdef,	/*  1: /dev/mt (tapemaster tape) */
 	bdev_notdef,	/*  2 */
 
-#define	SWAP_MAJ 3
-	{	/*  3: internal swap device */
+	/*  3: XyLogics Disk (/dev/xy*) */
+	bdev_notdef,
+
+	/* BLK Major number of internal swap device. */
+#define	SWAP_BMAJ 4
+	{	/*  4: internal swap device */
 		nsup_open,
 		nsup_close,
 		swstrategy,
@@ -273,30 +277,63 @@ struct bdevsw	bdevsw[] =
 		nsup_psize,
 		0 },
 
-	bdev_notdef,	/*  4 */
 	bdev_notdef,	/*  5 */
 	bdev_notdef,	/*  6 */
 
-	/*  7: scsi disk */
+	/*  7: /dev/sd* (SCSI disk) */
 	{ sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, 0 },
+
+	bdev_notdef,	/*  8: /dev/xt* (do we need block tapes?) */
+
+	bdev_notdef,	/*  9 */
+
+	/* 10: /dev/xd* (Xylogics 7053 SMD Disk controller) */
+	bdev_notdef,
+
+	bdev_notdef,	/*  11: /dev/st* (do we need block tapes?) */
+	bdev_notdef,	/*  12: Sun ns? */
+
+	/*  13: /dev/rd* (RAM disk - for install tape) */
+	bdev_notdef,
+
+	bdev_notdef,	/*  14: Sun ft? */
+	bdev_notdef,	/*  15: Sun hd? */
+
+	bdev_notdef,	/*  16: Sun fd? */
+	bdev_notdef,	/*  17: Sun vd_unused */
+	bdev_notdef,	/*  18: /dev/sr* (SCSI CD-ROM) */
+
+	bdev_notdef,	/*  19: Sun vd_unused */
+	bdev_notdef,	/*  20: Sun vd_unused */
+	bdev_notdef,	/*  21: Sun vd_unused */
+	bdev_notdef,	/*  22: Sun IPI disks... */
+	bdev_notdef,	/*  23: Sun IPI disks... */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 /*
  * Corresponding CHR major numbers for BLK devices above.
  * Note that isdisk() assumes non-zero entries are disks.
- * The length of this array must be at least nblkdev.
  */
 static int blktochrtbl[] = {
-	0,	/* 0 */
-	0,	/* 1 */
-	0,	/* 2 */
-	0,	/* 3 */
-	0,	/* 4 */
-	0,	/* 5 */
-	0,	/* 6 */
-	17,	/* 7 (sd) */
+	0,	/*  0 */
+	0,	/*  1 */
+	0,	/*  2 */
+	9,	/*  3: /dev/xy */
+	0,	/*  4 */
+	0,	/*  5 */
+	0,	/*  6 */
+	17,	/*  7: /dev/sd */
+	0,	/*  8 */
+	0,	/*  9 */
+	42,	/* 10: /dev/xd */
+	0,	/* 11 */
+	0,	/* 12 */
+	52,	/* 13: /dev/rd */
+	0,	/* 14 */
+	0,	/* 15 */
 };
+static int nblktochr = sizeof(blktochrtbl) / sizeof(blktochrtbl[0]);
 
 /*
  * Character device declarations
@@ -493,7 +530,8 @@ struct cdevsw	cdevsw[] =
 		cttyioctl, null_stop, null_reset, nsup_ttys,
 		cttyselect, nsup_mmap, nsup_strategy },
 
-#define	MEM_MAJ	3
+	/* CHR Major number of /dev/mem */
+#define	MEM_CMAJ	3
 	/*  3: /dev/{mem,kmem,null,...} */
 	{	null_open, null_close, mmrw, mmrw,
 		nsup_ioctl, null_stop, null_reset, nsup_ttys,
@@ -504,7 +542,7 @@ struct cdevsw	cdevsw[] =
 		promioctl, null_stop, null_reset, nsup_ttys,
 		ttselect, nsup_mmap, nsup_strategy },
 
-	/*  5: /dev/mt (tapemaster) */
+	/*  5: /dev/mt (tapemaster tape) */
 	cdev_notdef,
 
 	/*  6: /dev/vp (systech/versatec) */
@@ -540,7 +578,7 @@ struct cdevsw	cdevsw[] =
 	/* 14: old sun cgone */
 	cdev_notdef,
 
-	/* 15: sun /dev/winNNN */
+	/* 15: sun /dev/winXXX */
 	cdev_notdef,
 
 	/* 16: /dev/klog */
@@ -548,7 +586,7 @@ struct cdevsw	cdevsw[] =
 		logioctl, null_stop, null_reset, nsup_ttys,
 		logselect, nsup_mmap, nsup_strategy },
 
-	/* 17: scsi disk */
+	/* 17: /dev/sd* (SCSI disk) */
 	{	sdopen, sdclose, rawread, rawwrite,
 		sdioctl, null_stop, null_reset, nsup_ttys,
 		seltrue, nsup_mmap, sdstrategy },
@@ -558,7 +596,7 @@ struct cdevsw	cdevsw[] =
 		stioctl, null_stop, null_reset, nsup_ttys,
 		seltrue, nsup_mmap, ststrategy },
 
-	/* 19: sun nd (network disk protocol) */
+	/* 19: old sun nd (network disk protocol - unused) */
 	cdev_notdef,
 
 	/* 20: pseudo-tty slave */
@@ -586,7 +624,7 @@ struct cdevsw	cdevsw[] =
 	/* 25: sun pi? */
 	cdev_notdef,
 
-	/* 26: old sun bwone */
+	/* 26: old sun bwone (unused) */
 	cdev_notdef,
 
  	/* 27: /dev/bwtwo */
@@ -609,16 +647,16 @@ struct cdevsw	cdevsw[] =
 	/* 32: /dev/gpone */
 	cdev_notdef,
 
-	/* 33: **unused */
+	/* 33: (unused) */
 	cdev_notdef,
 
-	/* 34: Floating Point Accelerator */
+	/* 34: /dev/fpa (Floating Point Accelerator) */
 	cdev_notdef,
 
 	/* 35: (sp) */
 	cdev_notdef,
 
-	/* 36: **unused */
+	/* 36: (unused) */
 	/* Berkeley Packet Filter (old sun ip) */
 	{	bpfopen, bpfclose, bpfread, bpfwrite,
 		bpfioctl, null_stop, null_reset, nsup_ttys,
@@ -636,32 +674,52 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef,	/* 40: (sni) */
 	cdev_notdef,	/* 41: (sun dump) */
 
-	/* 42: /dev/xd (Xylogics 7053 SMD Disk controller) */
+	/* 42: /dev/xd* (Xylogics 7053 SMD Disk controller) */
 	cdev_notdef,
 
 	cdev_notdef,	/* 43: (sun hrc) */
-	cdev_notdef,	/* 44: (sun ifd) */
-	cdev_notdef,	/* 45 */
-	cdev_notdef,	/* 46 */
-	cdev_notdef,	/* 47 */
-	cdev_notdef,	/* 48 */
-	cdev_notdef,	/* 49 */
-	cdev_notdef,	/* 50 */
-	cdev_notdef,	/* 51 */
-	cdev_notdef,	/* 52: **unused */
-	cdev_notdef,	/* 53: (hd) */
-	cdev_notdef,	/* 54: (fd) */
+	cdev_notdef,	/* 44: (mcp) */
+	cdev_notdef,	/* 45: (sun ifd) */
+	cdev_notdef,	/* 46: (dcp) */
+	cdev_notdef,	/* 47: (dna) */
+	cdev_notdef,	/* 48: (tbi) */
+	cdev_notdef,	/* 49: (chat) */
+	cdev_notdef,	/* 50: (chut) */
+	cdev_notdef,	/* 51: (chut) */
+	cdev_notdef,	/* 52: /dev/rd* (RAM disk) */
+	cdev_notdef,	/* 53: (hd - N/A) */
+	cdev_notdef,	/* 54: (fd - N/A) */
 
 	/* 55: /dev/cgthree */
 	cdev_notdef,
 
 	cdev_notdef,	/* 56: (pp) */
-	cdev_notdef,	/* 57: Loadable Kernel Module control */
-	cdev_notdef,	/* 58 /dev/sr (SCSI CD-ROM) */
-	cdev_notdef,	/* 59: Loadable Kernel Module stub */
+	cdev_notdef,	/* 57: (vd) Loadable Kernel Module control */
+	cdev_notdef,	/* 58 /dev/sr* (SCSI CD-ROM) */
+	cdev_notdef,	/* 59: (vd) Loadable Kernel Module stub */
 	cdev_notdef,	/* 60:    ||      ||     ||    ||  */
-};
+	cdev_notdef,	/* 61:    ||      ||     ||    ||  */
 
+	cdev_notdef,	/* 62: (taac) */
+	cdev_notdef,	/* 63: (tcp/tli) */
+
+	/* 64: /dev/cgeight */
+	cdev_notdef,
+
+	cdev_notdef,	/* 65: old IPI */
+	cdev_notdef,	/* 66: (mcp) parallel printer */
+
+	/* 67: /dev/cgsix */
+	cdev_notdef,
+
+	/* 68: /dev/cgnine */
+	cdev_notdef,
+
+	cdev_notdef,	/* 69: /dev/audio */
+	cdev_notdef,	/* 70: open prom */
+	cdev_notdef,	/* 71: (sg?) */
+
+};
 int nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
 /*
@@ -673,7 +731,7 @@ int nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(SWAP_MAJ, 0);
+dev_t	swapdev = makedev(SWAP_BMAJ, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
@@ -681,7 +739,7 @@ dev_t	swapdev = makedev(SWAP_MAJ, 0);
 iskmemdev(dev)
 	dev_t dev;
 {
-	return (major(dev) == MEM_MAJ && minor(dev) < 2);
+	return ((major(dev) == MEM_CMAJ) && (minor(dev) < 2));
 }
 
 /*
@@ -690,19 +748,23 @@ iskmemdev(dev)
 iszerodev(dev)
 	dev_t dev;
 {
-	return (major(dev) == MEM_MAJ && minor(dev) == 12);
+	return ((major(dev) == MEM_CMAJ) && (minor(dev) == 12));
 }
 
 /*
  * Convert a character device number to a block device number.
  */
 static int *chrtoblktbl;
-chrtoblk(dev)
+dev_t chrtoblk(dev)
 	dev_t dev;
 {
-	int maj;
+	int maj = major(dev);
 
-	maj = major(dev);
+#ifdef	DIAGNOSTIC
+	if (!chrtoblktbl)
+		panic("chrtoblk: conf_init not done");
+#endif
+
 	if (maj < 0 || maj >= nchrdev)
 		return (NODEV);
 	maj = chrtoblktbl[maj];
@@ -721,6 +783,11 @@ isdisk(dev, type)
 {
 	int maj = major(dev);
 
+#ifdef	DIAGNOSTIC
+	if (!chrtoblktbl)
+		panic("chrtoblk: conf_init not done");
+#endif
+
 	if (type == VCHR) {
 		/* Convert to BLK major number. */
 		if (maj < 0 || maj >= nchrdev)
@@ -728,7 +795,7 @@ isdisk(dev, type)
 		maj = chrtoblktbl[maj];
 	}
 	/* Now have a BLK major number. */
-	if (maj < 0 || maj >= nblkdev)
+	if (maj < 0 || maj >= nblktochr)
 		return(0);
 
 	return (blktochrtbl[maj]);
@@ -750,7 +817,7 @@ conf_init()
 		chrtoblktbl[c] = NODEV;
 
 	/* Set CHR dev slots with corresponging BLK devices. */
-	for (b = 0; b < nblkdev; b++) {
+	for (b = 0; b < nblktochr; b++) {
 		c = blktochrtbl[b];
 		if (c > 0 && c < nchrdev) {
 			chrtoblktbl[c] = b;
