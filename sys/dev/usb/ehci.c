@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.23 2001/11/21 16:05:13 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.24 2001/11/21 16:22:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.23 2001/11/21 16:05:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.24 2001/11/21 16:22:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,7 +647,9 @@ void
 ehci_idone(struct ehci_xfer *ex)
 {
 	usbd_xfer_handle xfer = &ex->xfer;
+#ifdef EHCI_DEBUG
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
+#endif
 	ehci_soft_qtd_t *sqtd;
 	u_int32_t status = 0, nstatus;
 	int actlen;
@@ -1132,12 +1134,6 @@ ehci_open(usbd_pipe_handle pipe)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
-#if 0
-	ehci_soft_itd_t *sitd;
-	ehci_physaddr_t tdphys;
-	u_int32_t fmt;
-	int ival;
-#endif
 	int s;
 	int speed, naks;
 
@@ -1161,6 +1157,7 @@ ehci_open(usbd_pipe_handle pipe)
 		return (USBD_NORMAL_COMPLETION);
 	}
 
+	/* XXX All this stuff is only valid for async. */
 	switch (dev->speed) {
 	case USB_SPEED_LOW:  speed = EHCI_QH_SPEED_LOW;  break;
 	case USB_SPEED_FULL: speed = EHCI_QH_SPEED_FULL; break;
@@ -1212,6 +1209,12 @@ ehci_open(usbd_pipe_handle pipe)
 		ehci_add_qh(sqh, sc->sc_async_head);
 		splx(s);
 		break;
+	case UE_INTERRUPT:
+		pipe->methods = &ehci_device_intr_methods;
+		return (USBD_INVAL);
+	case UE_ISOCHRONOUS:
+		pipe->methods = &ehci_device_isoc_methods;
+		return (USBD_INVAL);
 	default:
 		return (USBD_INVAL);
 	}
@@ -1810,13 +1813,13 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 void
 ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 {
-	int i, port;
+	int port;
 	u_int32_t v;
 
 	DPRINTF(("ehci_disown: index=%d lowspeed=%d\n", index, lowspeed));
 #ifdef DIAGNOSTIC
 	if (sc->sc_npcomp != 0) {
-		i = (index-1) / sc->sc_npcomp;
+		int i = (index-1) / sc->sc_npcomp;
 		if (i >= sc->sc_ncomp)
 			printf("%s: strange port\n",
 			       USBDEVNAME(sc->sc_bus.bdev));
@@ -2146,16 +2149,10 @@ void
 ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
-	ehci_soft_qh_t *sqh = epipe->sqh;
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
-#if 0
-	ehci_soft_td_t *p, *n;
-	ehci_physaddr_t headp;
-	int hit;
-#endif
 	int s;
 
-	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p sqh=%p\n", xfer, epipe,sqh));
+	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p\n", xfer, epipe));
 
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
