@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.15.2.2 2003/09/17 23:25:53 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.15.2.3 2003/09/18 15:40:31 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -734,7 +734,7 @@ new_socket(sock_type type, int fd)
 		sockets = xrealloc(sockets, new_alloc * sizeof(sockets[0]));
 	else
 		sockets = xmalloc(new_alloc * sizeof(sockets[0]));
-	for (i = old_alloc; i < sockets_alloc; i++)
+	for (i = old_alloc; i < new_alloc; i++)
 		sockets[i].type = AUTH_UNUSED;
 	sockets_alloc = new_alloc;
 	sockets[old_alloc].fd = fd;
