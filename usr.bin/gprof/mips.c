@@ -4,7 +4,7 @@
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * contributed to Berkeley. Modified by Ralph Campbell for mips.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * From: sparc.c 5.1 (Berkeley) 7/7/92
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sparc.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include	"gprof.h"
@@ -89,21 +91,21 @@ findcall(parentp, p_lowpc, p_highpc)
 	for (pc = p_lowpc; pc < p_highpc; pc += 4) {
 		off = pc - s_lowpc;
 		op = *(u_long *)&textspace[off];
-		if ((op & 0xc0000000) == 0x40000000) {
+		if ((op & 0xfc000000) == 0x0c000000) {
 			/*
-			 * a pc relative call insn -- check that this
+			 * a jal insn -- check that this
 			 * is the address of a function.
 			 */
-			off = (op & 0x3fffffff) << 2;
-			destpc = pc + off;
+			off = (op & 0x03ffffff) << 2;
+			destpc = (pc & 0xf0000000) | off;
 			if (destpc >= s_lowpc && destpc <= s_highpc) {
 				childp = nllookup(destpc);
 				if (childp != 0 && childp->value == destpc)
 					addarc(parentp, childp, 0L);
 			}
-		} else if ((op & 0xfff80000) == 0x9fc00000)
+		} else if ((op & 0xfc00f83f) == 0x0000f809)
 			/*
-			 * A jmpl with rd = 15 (%o7) -- an indirect call.
+			 * A jalr -- an indirect call.
 			 */
 			addarc(parentp, &indirectchild, 0L);
 	}
