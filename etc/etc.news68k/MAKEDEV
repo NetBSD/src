@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.3 2000/01/21 12:28:26 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.4 2000/06/11 17:30:00 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -59,6 +59,7 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
+#	fd	file descriptors
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -75,7 +76,7 @@ do
 case $i in
 
 all)
-	sh $0 std sd0 sd1 sd2 sd3 cd0 st0 st1
+	sh $0 std fd sd0 sd1 sd2 sd3 cd0 st0 st1
 	sh $0 pty0 pty1 tty0 tty1
 	sh $0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3 raid0 raid1 raid2 raid3
@@ -92,7 +93,7 @@ floppy)
 
 std)
 	rm -f console tty kmem mem null zero drum klog \
-		stdin stdout stderr fd/* fb mouse kbd
+		stdin stdout stderr fb mouse kbd
 	mknod console		c 0 0
 	mknod tty		c 2 0	; chmod 666 tty
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -104,17 +105,23 @@ std)
 	mknod stdin		c 48 0	; chmod 666 stdin
 	mknod stdout		c 48 1	; chmod 666 stdout
 	mknod stderr		c 48 2	; chmod 666 stderr
-	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 48 %d;", i, i)}'`)
-	chown -R bin.bin fd
-	chmod 555 fd
-	chmod 666 fd/*
 
 	mknod fb		c 14 0 ; chmod 666 fb
 	mknod mouse		c 12 0 ; chmod 666 mouse
 	mknod kbd		c 11 0 ; chmod 666 kbd
+	;;
+
+fd)
+	rm -f fd/*
+	mkdir fd > /dev/null 2>&1
+	n=0
+	while [ $n -lt 64 ]; do
+		mknod fd/$n c 22 $n
+		n=$(($n + 1))
+	done
+	chown -R root.wheel fd
+	chmod 755 fd
+	chmod 666 fd/*
 	;;
 
 audio)
