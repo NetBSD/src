@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.37.2.1 1999/03/05 08:26:55 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.37.2.2 1999/05/16 22:52:33 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering -- at least one of each except ch*
@@ -109,8 +109,8 @@ std)
 	;;
 
 raminst)
-	sh $0 std
-	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $0 std 
+	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 md0
 	sh $0 adb grf0 grf1 ttye0
 	sh $0 tty0 tty1 pty0
 	;;
@@ -143,7 +143,7 @@ wscons)
 	;;
 
 ttyEcfg)
-	chr=44
+	chr=45
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
 	chown root.wheel ttyEcfg
@@ -151,7 +151,7 @@ ttyEcfg)
 	;;
 
 ttyE*)
-	chr=44; unit=${i#ttyE}
+	chr=45; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
 	chown root.wheel ttyE$unit
