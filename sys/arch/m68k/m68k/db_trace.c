@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.31 2001/01/18 10:54:28 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.32 2001/02/05 12:37:33 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -119,8 +119,6 @@ static void stacktop __P((db_regs_t *, struct stackpos *,
 
 #define FR_SAVFP	0
 #define FR_SAVPC	4
-#define K_CALLTRAMP	1	/* for k_flags: caller is __sigtramp */
-#define K_SIGTRAMP	2	/* for k_flags: this is   __sigtramp */
 
 static void
 stacktop(regs, sp, pr)
@@ -200,58 +198,36 @@ nextframe(sp, pcb, kerneltrace, pr)
 
 	calladdr = sp->k_caller;
 	addr     = sp->k_entry;
-	if (sp->k_flags & K_CALLTRAMP) {
-#if	0
-	/* we never set CALLTRAMP */
+	if (addr == MAXINT) {
+
 		/*
-		 * Caller was sigtramp.  Therefore:
-		 *   - no registers were saved;
-		 *   - no new frame-pointer
-		 *   - caller found in sigcontext structure.
-		 *   - WE become sigtramp
-		 *   - we have no parameters
-		 * MUCH MAGIC USED IN FINDING CALLER'S PC.
+		 * we don't know what registers are involved here,
+		 * invalidate them all.
 		 */
-		sp->k_pc = sp->k_caller;
-		sp->k_entry = trampsym->n_value;
-		sp->k_flags = 0;
-		addr = get(sp->k_fp + sizeof(int) * 11, DSP);
+		for (i = 0; i < NREGISTERS; i++)
+			sp->k_regloc[i] = -1;
+	} else
+		findregs(sp, addr);
+
+	/* find caller's pc and fp */
+	sp->k_pc = calladdr;
+	sp->k_fp = get(sp->k_fp + FR_SAVFP, DSP);
+
+	/* 
+	 * Now that we have assumed the identity of our caller, find
+	 * how many longwords of argument WE were called with.
+	 */
+	sp->k_flags = 0;
+
+	/*
+	 * Don't dig around in user stack to find no. of args and
+	 * entry point if just tracing the kernel
+	 */
+	if (kerneltrace && !INKERNEL(sp->k_fp, pcb)) {
 		sp->k_nargs = 0;
-#if DEBUG
-		(*pr)("nextframe: sigcontext at 0x%x, signaled at 0x%x\n",
-		    addr, sp->k_caller);
-#endif
-		errflg = 0;
-#endif	0
-	} else {
-		if (addr == MAXINT) {
-			/* we don't know what registers are involved here--
-			   invalidate all */
-			for (i = 0; i < NREGISTERS; i++)
-				sp->k_regloc[i] = -1;
-		} else
-			findregs(sp, addr);
-
-		/* find caller's pc and fp */
-		sp->k_pc = calladdr;
-		sp->k_fp = get(sp->k_fp + FR_SAVFP, DSP);
-
-		/* 
-		 * Now that we have assumed the identity of our caller, find
-		 * how many longwords of argument WE were called with.
-		 */
-		sp->k_flags = 0;
-
-		/*
-		 * Don't dig around in user stack to find no. of args and
-		 * entry point if just tracing the kernel
-		 */
-		if (kerneltrace && !INKERNEL(sp->k_fp, pcb)) {
-			sp->k_nargs = 0;
-			sp->k_entry = MAXINT;
-		} else
-			findentry(sp, pr);
-	}
+		sp->k_entry = MAXINT;
+	} else
+		findentry(sp, pr);
 
 	if (sp->k_fp == 0 || oldfp == sp->k_fp)
 		return 0;
@@ -331,43 +307,6 @@ findentry(sp, pr)
 				/* was a call through a proc parameter */
 				sp->k_caller = addr - 2;
 				sp->k_entry  = MAXINT;
-				/*
-				 * We know that sigtramp calls your signal
-				 * catcher this way -- see if this is the
-				 * tramp: if so then:
-				 *   - set the K_CALLTRAMP flag, for use by
-				 *     nextframe();
-				 *   - take k_entry from __sigfunc array.
-				 */
-#if	0
-	/* not in kernel */
-				/*
-				 * The number (9) in the below expression is
-				 * magic: it is the number of stack items below
-				 * callee`s fp and sigtramp`s copy of the
-				 * signal number.
-				 */
-				if (trampsym &&
-				    (findsym(sp->k_caller, ISYM), cursym == trampsym)) {
-					int signl;
-					sp->k_flags |= K_CALLTRAMP;
-					if (funcsym) {
-						signl = get(sp->k_fp + sizeof(int) * 9, DSP);
-						sp->k_entry = get(funcsym->n_value+(sizeof(int(*)()))*signl, DSP);
-					} else
-						sp->k_entry = -1;
-
-					errflg = 0;
-#ifdef DEBUG
-					(*pr)("Caller is sigtramp: signal is %d: entry is %x\n",
-					    signl, sp->k_entry);
-#endif
-				}
-#ifdef DEBUG
-				else
-				(*pr)("Non-tramp jsr a0@\n");
-#endif
-#endif	0
 			}
 		}
 	}
@@ -498,24 +437,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 	if (!have_addr)
 		stacktop(&ddb_regs, &pos, pr);
-#if 0
-	else {
-
-		/*
-		 * Only have user register state.
-		 */
-		pcb_t	t_pcb;
-		db_regs_t *user_regs;
-		
-		t_pcb = (pcb_t) get(&th->pcb, 0);
-		user_regs = (db_regs_t *)
-			get(&t_pcb->user_regs, 0);
-		
-		stacktop(user_regs, &pos, pr);
-
-		/* foo*/
-	}
-#endif
 	else {
 		if (trace_thread) {
 			struct proc *p;
@@ -582,13 +503,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * NOTE: If the argument list for 'trap()' ever changes,
 		 * we lose.
 		 */
-		if ( strcmp(
-#ifndef __ELF__
-		    "_trap",
-#else
-		    "trap",
-#endif
-		    name) == 0 ) {
+		if (strcmp(_C_LABEL_STRING("trap"), name) == 0) {
 			int tfp;
 
 			/* Point to 'trap()'s 4th argument (frame structure) */
@@ -596,7 +511,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 			/* Determine if fault was from kernel or user mode */
 			regp = tfp + offsetof(struct frame, f_sr);
-			if ( ! USERMODE(get16(regp, DSP)) ) {
+			if (!USERMODE(get16(regp, DSP))) {
+
 				/*
 				 * Definitely a kernel mode fault,
 				 * so get the PC at the time of the fault.
@@ -604,9 +520,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				regp = tfp + offsetof(struct frame, f_pc);
 				fault_pc = get(regp, DSP);
 			}
-		} else
-		if ( fault_pc ) {
-			if ( strcmp("faultstkadj", name) == 0 ) {
+		} else if (fault_pc) {
+			if (strcmp("faultstkadj", name) == 0) {
 				db_find_sym_and_offset(fault_pc, &name, &val);
 				if (name == 0) {
 					name = "?";
