@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.295 2000/12/22 01:31:49 itojun Exp $
+# $NetBSD: mi,v 1.296 2000/12/29 02:41:56 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -980,6 +980,7 @@
 ./usr/share/man/cat5/pim6sd.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
+./usr/share/man/cat5/racoon.conf.0
 ./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/relocated.0
@@ -1302,6 +1303,7 @@
 ./usr/share/man/cat8/quotacheck.0
 ./usr/share/man/cat8/quotaoff.0
 ./usr/share/man/cat8/quotaon.0
+./usr/share/man/cat8/racoon.0
 ./usr/share/man/cat8/raidctl.0
 ./usr/share/man/cat8/rarpd.0
 ./usr/share/man/cat8/rbootd.0
@@ -2417,6 +2419,7 @@
 ./usr/share/man/man5/pim6sd.conf.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
+./usr/share/man/man5/racoon.conf.5
 ./usr/share/man/man5/rc.conf.5
 ./usr/share/man/man5/rcsfile.5
 ./usr/share/man/man5/relocated.5
@@ -2739,6 +2742,7 @@
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
 ./usr/share/man/man8/quotaon.8
+./usr/share/man/man8/racoon.8
 ./usr/share/man/man8/raidctl.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
