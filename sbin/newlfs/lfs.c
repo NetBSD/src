@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.13 1998/03/18 17:11:34 bouyer Exp $	*/
+/*	$NetBSD: lfs.c,v 1.14 1998/04/01 16:24:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.13 1998/03/18 17:11:34 bouyer Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.14 1998/04/01 16:24:34 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,10 +52,12 @@ __RCSID("$NetBSD: lfs.c,v 1.13 1998/03/18 17:11:34 bouyer Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
-#include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "config.h"
 #include "extern.h"
 
