@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1995/04/25 14:14:23 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.4 1995/09/16 13:18:28 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,9 @@
 
 #include "vaxstand.h"
 
-int	rastrategy(), raopen();
-int	hpopen(),hpstrategy();
+int	raopen(),  rastrategy();
+int	hpopen(),  hpstrategy();
+int     tmscpopen(), tmscpstrategy();
 
 struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
@@ -52,6 +53,13 @@ struct	devsw devsw[]={
 	SADEV("mt",nullsys, nodev, nullsys, noioctl),
 	SADEV("tu",nullsys, nodev, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
+	SADEV("ut",nullsys, nodev, nullsys, noioctl),
+	SADEV("id",nullsys, nodev, nullsys, noioctl),
+	SADEV("rx",nullsys, nodev, nullsys, noioctl),
+	SADEV("uu",nullsys, nodev, nullsys, noioctl),
+	SADEV("rl",nullsys, nodev, nullsys, noioctl),
+	SADEV("tms",tmscpstrategy, tmscpopen, nullsys, noioctl),
+	SADEV("kra",nullsys, nodev, nullsys, noioctl),
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
