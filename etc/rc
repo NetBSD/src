@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.142 2000/01/07 05:53:21 enami Exp $
+#	$NetBSD: rc,v 1.143 2000/01/19 03:52:12 enami Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -173,7 +173,7 @@ swapctl -A -t noblk
 # Check for no swap, and warn about it unless that is desired.
 if ! checkyesno no_swap; then
 	swapctl -s | grep 'no swap devices configured' > /dev/null && \
-		echo "WARNING:  no swap space configured!"
+		echo "WARNING: no swap space configured!"
 fi
 
 # clean up left-over files
@@ -295,7 +295,7 @@ if checkyesno bootparamd; then
 		echo -n ' rpc.bootparamd'; rpc.bootparamd $bootparamd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/bootparams not found." \
+		logger -s "WARNING: /etc/bootparams not found;" \
 		    "bootparamd not started."
 	fi
 fi
