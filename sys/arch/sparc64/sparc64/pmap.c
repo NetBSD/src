@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2002/03/08 20:48:35 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2002/03/14 20:59:19 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2426,7 +2426,7 @@ pmap_protect(pm, sva, eva, prot)
 	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
-	if (prot & VM_PROT_WRITE) 
+	if ((prot & (VM_PROT_WRITE|PMAP_WIRED)) == VM_PROT_WRITE) 
 		return;
 
 	if (prot == VM_PROT_NONE) {
@@ -2476,6 +2476,10 @@ pmap_protect(pm, sva, eva, prot)
 			}
 			/* Just do the pmap and TSB, not the pv_list */
 			data &= ~(TLB_W|TLB_REAL_W);
+			/* Turn *ON* write to wired mappings. */
+			if ((prot & (VM_PROT_WRITE|PMAP_WIRED)) == 
+				(VM_PROT_WRITE|PMAP_WIRED))
+				data |= (TLB_W|TLB_REAL_W);
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");
