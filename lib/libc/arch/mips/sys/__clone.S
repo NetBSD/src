@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2001/07/17 02:05:32 thorpej Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2001/07/20 17:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,28 +71,33 @@ LEAF(__clone)
 	 */
 	move	a0, a2
 	SYSTRAP(__clone)
-	bne	a3, zero, 9f
+	bne	a3, zero, 8f
 
-	beq	v1, zero, 8f	# v1 (rv[1]) == 0, parent, child pid in v0
+	bne	v1, zero, 9f	# v1 (rv[1]) == 0, parent, child pid in v0
 
-	/*
-	 * Fetch the function and argument from the new stack, and
-	 * pop it back.
+	j	ra		# parent return
+
+8:	PIC_CALL(__cerror, t9)
+	/* NOTREACHED */
+
+9:	/*
+	 * Child: Fetch the function and argument from the new stack,
+	 * and pop it back.
 	 */
 	REG_L	t9, 0(sp)
 	REG_L	a0, SZREG(sp)
 	addu	sp, sp, (2 * SZREG)
 
+#ifdef ABICALLS
+	.cprestore
+#endif
+
 	/* Call the clone's entry point. */
-	jr	t9
+	jal	t9
 
 	/* Pass the return value to _exit(). */
 	move	a0, v0
 	PIC_CALL(_exit, t9)
 
 	/* NOTREACHED */
-
-8:	j	ra
-
-9:	PIC_CALL(__cerror, t9)
 END(__clone)
