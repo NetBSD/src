@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.170 2002/06/07 11:15:45 wiz Exp $
+.\"	$NetBSD: options.4,v 1.171 2002/06/12 02:08:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1082,6 +1082,8 @@ such as
 .Tn CLNP
 or
 .Tn XNS ) .
+.Em GATEWAY
+option also compiles IPv4 fast forwarding code into the kernel.
 .It Cd options IPFORWARDING=value
 If
 .Em value
