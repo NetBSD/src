@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.11 1998/01/18 04:02:53 mark Exp $	*/
+/*	$NetBSD: podules.h,v 1.12 1998/09/26 03:30:50 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp 
+ *	NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp 
  */
 
 /*
@@ -68,6 +68,7 @@
 #define	MANUFACTURER_SIMTEC	0x005f		/* Simtec Electronics */
 #define	MANUFACTURER_YES	0x0060		/* Yellowstone Educational Solutions */
 #define	MANUFACTURER_MCS	0x0063		/* MCS */
+#define	MANUFACTURER_EESOX	0x0064		/* EESOX */
 
 /*
  * List of known podules.  Grouped by vendor.
@@ -151,3 +152,5 @@
 #define	PODULE_YES_RAPIDE	0x0114		/* RapIDE32 interface */
 
 #define	PODULE_MCS_SCSI	0x0125		/* Connect32 SCSI II interface */
+
+#define	PODULE_EESOX_SCSI	0x008c		/* EESOX SCSI II interface */

@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.11 1998/01/18 04:02:55 mark Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.12 1998/09/26 03:30:50 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp 
+ *	NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp 
  */
 
 /*
@@ -197,6 +197,11 @@ static struct podule_description podules_mcs[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_eesox[] = {
+	{ PODULE_EESOX_SCSI,	"EESOX SCSI II interface" },
+	{ 0x0000, NULL }
+};
+
 
 struct podule_list known_podules[] = {
 	{ MANUFACTURER_ACORN, 		"Acorn Computers", 	podules_acorn },
@@ -225,5 +230,6 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
 	{ MANUFACTURER_MCS, 		"MCS", 	podules_mcs },
+	{ MANUFACTURER_EESOX, 		"EESOX", 	podules_eesox },
 	{ 0, NULL, NULL }
 };
