@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 1999/04/01 14:09:49 minoura Exp $	
+.\"	$NetBSD: install,v 1.9 1999/04/03 14:15:00 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,8 +132,8 @@ with "c" for cylinders, or "s" for sectors.
 You will be asked to enter the size of your
 .Nx
 root
-partition. It should be at least 15M, but if you are going to
-be doing development, 20M is a more desirable size. This
+partition. It should be at least 20M, but if you are going to
+be doing development, 25M is a more desirable size. This
 size should be expressed in units of sectors or cylinders,
 depending on which you said you wanted to use.
 .It
