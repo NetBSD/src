@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.5 1993/10/26 19:30:13 pk Exp $
+ *	$Id: rtld.c,v 1.6 1993/11/03 04:58:57 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -510,8 +510,10 @@ caddr_t			addr;
 	else
 		sym = "";
 
+#ifdef DEBUG
 	fprintf(stderr, "ld.so: warning: non pure code in %s at %x (%s)\n",
 				lmp->lm_name, r->r_address, sym);
+#endif
 
 	if (mprotect(	lmp->lm_addr + LM_TXTADDR(lmp),
 			LD_TEXTSZ(lmp->lm_ld),
