@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.88 2005/03/20 19:15:48 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.89 2005/03/23 01:16:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.88 2005/03/20 19:15:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.89 2005/03/23 01:16:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -895,19 +895,23 @@ uid_find(uid_t uid)
 	struct uidinfo *uip;
 	struct uihashhead *uipp;
 
-	simple_lock(&uihashtbl_slock);
 	uipp = UIHASH(uid);
 
+	simple_lock(&uihashtbl_slock);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid) {
 			simple_unlock(&uihashtbl_slock);
 			return uip;
 		}
+	simple_unlock(&uihashtbl_slock);
 
 	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK|M_ZERO);
+
+	simple_lock(&uihashtbl_slock);
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
 	simple_unlock(&uihashtbl_slock);
+
 	return uip;
 }
 
