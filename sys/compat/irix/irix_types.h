@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.5 2001/12/22 12:09:21 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.6 2001/12/22 14:43:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -143,5 +143,10 @@ struct irix_stat64 {
 	long		ist_projid;
 	long		ist_pad4[7];
 };
+
+/* From IRIX's <sys/mount.h> */
+typedef struct irix_mountid {
+	unsigned int ival[4];
+} irix_mountid_t;
 
 #endif /* _IRIX_TYPES_H_ */
