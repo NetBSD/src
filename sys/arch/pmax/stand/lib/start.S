@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.11 1999/03/26 05:23:58 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.12 1999/03/29 13:48:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ Label_goes_here:
 	.word	0,0, 0,0, 0
 #endif
 
-	.extern callv, 4		/* XXX SNARK XXX */
+	.extern callv, 4
 /*
  * Amount to take off of the stack for the benefit of the debugger.
  */
