@@ -1,4 +1,4 @@
-/*	$NetBSD: hidsubr.h,v 1.2 1998/11/25 22:17:08 augustss Exp $	*/
+/*	$NetBSD: hidsubr.h,v 1.3 1999/04/21 16:23:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ struct hid_item {
 struct hid_data *hid_start_parse(u_char *d, int len, int kindset);
 void hid_end_parse(struct hid_data *s);
 int hid_get_item(struct hid_data *s, struct hid_item *h);
-int hid_report_size(u_char *buf, int len, enum hid_kind k);
+int hid_report_size(u_char *buf, int len, enum hid_kind k, int *idp);
 char *usage_page(int i);
 char *usage_in_page(unsigned int u);
 void init_hid(char *file);
