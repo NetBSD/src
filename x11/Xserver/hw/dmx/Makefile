@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/03/22 04:18:48 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2005/03/22 22:34:24 rtr Exp $
 
 .include "../../Makefile.serverlib"
 
@@ -12,6 +12,19 @@ SRCS=		dmxinit.c dmxscrinit.c dmxshadow.c dmxcursor.c dmxinput.c \
 
 .PATH:          ${X11SRCDIR.xc}/programs/Xserver/mi
 SRCS+=		miinitext.c
+
+.PATH:		${X11SRCDIR.xc}/doc/man/DMX
+MAN=		DMX.3 DMXAddInput.3 DMXAddScreen.3 \
+		DMXChangeDesktopAttributes.3 DMXChangeScreensAttributes.3 \
+		DMXForceWindowCreation.3 DMXGetDesktopAttributes.3 \
+		DMXGetInputAttributes.3 DMXGetInputCount.3 \
+		DMXGetScreenAttributes.3 DMXGetScreenCount.3 \
+		DMXGetWindowAttributes.3 DMXQueryExtension.3 \
+		DMXQueryVersion.3 DMXRemoveInput.3 DMXRemoveScreen.3 DMXSync.3
+
+MLINKS=         DMXAddInput.3 DMXAddBackendInput.3 \
+		DMXAddInput.3 DMXAddConsoleInput.3
+
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/dmx \
 		-I${DESTDIR}${X11INCDIR}/X11 \
