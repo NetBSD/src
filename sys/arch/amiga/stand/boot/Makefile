@@ -1,4 +1,3 @@
-SCRIPTS=installboot
 MAN=installboot.8
 
 ### what we need:
@@ -88,7 +87,7 @@ libboot.a: $(OBJS)
 
 ### install what we need: ###
 
-install: all catinstall
+install:
 	install -o $(BINOWN) -g $(BINGRP) installboot ${DESTDIR}/usr/sbin
 	install -o $(BINOWN) -g $(BINGRP) $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
 
@@ -119,4 +118,3 @@ depend::
 ### end of helper programs ###
 
 .include <bsd.prog.mk>
-.include <bsd.man.mk>
