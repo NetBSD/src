@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.5 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.6 2004/04/22 11:30:04 skd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,6 +39,7 @@
 #include <dev/pci/pciide_sis_reg.h>
 
 static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void sis_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void sis_setup_channel(struct wdc_channel *);
 static void sis96x_setup_channel(struct wdc_channel *);
 
@@ -56,6 +57,11 @@ static const struct pciide_product_desc pciide_sis_products[] =  {
 	  0,
 	  NULL,
 	  sis_chip_map,
+	},
+	{ PCI_PRODUCT_SIS_180_SATA,
+	  0,
+	  NULL,
+	  sis_sata_chip_map,
 	},
 	{ 0,
 	  0,
@@ -143,6 +149,7 @@ static struct sis_hostbr_type {
 	 */
 	{PCI_PRODUCT_SIS_962,   0x00, 6, "962", SIS_TYPE_133NEW},
 	{PCI_PRODUCT_SIS_963,   0x00, 6, "963", SIS_TYPE_133NEW},
+	{PCI_PRODUCT_SIS_964,   0x00, 6, "964", SIS_TYPE_133NEW},
 };
 
 static struct sis_hostbr_type *sis_hostbr_type_match;
@@ -187,7 +194,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: Silicon Integrated System ",
+	aprint_normal("%s: Silicon Integrated Systems ",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pci_find_device(NULL, sis_hostbr_match);
 	if (sis_hostbr_type_match) {
@@ -455,5 +462,56 @@ pio:		switch (sc->sis_type) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
+	}
+}
+
+static void
+sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	if (interface == 0) {
+		WDCDEBUG_PRINT(("sis_sata_chip_map interface == 0\n"),
+		    DEBUG_PROBE);
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	aprint_normal("%s: Silicon Integrated Systems 180/96X SATA controller (rev. 0x%02x)\n",
+		      sc->sc_wdcdev.sc_dev.dv_xname,
+		      PCI_REVISION(pa->pa_class));
+
+	aprint_normal("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+	pciide_mapreg_dma(sc, pa);
+	aprint_normal("\n");
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
+		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 6;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
 	}
 }
