@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 1997/06/10 19:03:38 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149 1997/06/12 15:46:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -344,7 +344,6 @@ again:
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
