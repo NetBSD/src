@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypwhich.1,v 1.3 1996/05/13 02:43:46 thorpej Exp $
+.\"	$NetBSD: ypwhich.1,v 1.4 1997/10/20 03:44:39 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm ypwhich
 .Nd return hostname of YP server of map master
 .Sh SYNOPSIS
-.Nm ypwhich
+.Nm
 .Op Fl d Ar domain
 .Oo
 .Op Fl t
@@ -43,10 +43,10 @@
 |
 .Ar host
 .Oc
-.Nm ypwhich
+.Nm ""
 .Fl x
 .Sh DESCRIPTION
-.Nm Ypwhich
+.Nm
 tells which
 .Tn YP
 server supplies
@@ -81,7 +81,7 @@ option.
 can be a map name or nickname.  If
 .Ar mname
 is ommitted,
-.Nm ypwhich
+.Nm
 will produce a list of available maps.
 .It Fl x
 Display the map nickname table.
