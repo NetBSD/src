@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.23 2001/11/08 07:44:32 tron Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.24 2001/12/12 16:55:10 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,10 +116,14 @@ main(argc, argv)
 {
 	int ch, rv, action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "ct:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "cf:t:uv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = VND_CONFIG;
+			break;
+		case 'f':
+			if (setdisktab(optarg) == -1)
+				usage();
 			break;
 		case 't':
 			tabname = optarg;
@@ -284,7 +288,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-c] [-t typename] [-v] special-file"
+	    "usage: vnconfig [-c] [-f disktab] [-t typename] [-v] special-file"
 		" regular-file [geomspec]\n",
 	    "       vnconfig -u [-v] special-file\n");
 	exit(1);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.19 2001/11/08 15:41:55 christos Exp $
+.\"	$NetBSD: vnconfig.8,v 1.20 2001/12/12 16:55:10 fredette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,8 +79,9 @@
 .Nm vnconfig
 .Nd configure vnode disks
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl c
+.Op Fl f Ar disktab
 .Op Fl t Ar typename
 .Op Fl v
 .Ar vnode_disk
@@ -138,6 +139,13 @@ is the number of sectors per track.
 is the number of tracks per cylinder.
 .Ar ncylinders
 is the number of cylinders in the device.
+.It Fl f Ar disktab
+Specifies that the
+.Fl t
+option should look up in
+.Ar disktab
+instead of in
+.Pa /etc/disktab .
 .It Fl t Ar typename
 If configuring the device, look up
 .Ar typename
