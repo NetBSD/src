@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1996/10/09 07:45:17 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -86,6 +86,14 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <machine/psl.h>
 #include <machine/fpu.h>
 #include <machine/pmap.h>
+#include <machine/icu.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 /*
  * Support for VERY low debugging ... in case we get NO output.
@@ -93,7 +101,7 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
  * output. In this case use umprintf to display debug messages.
  */
 #if VERYLOWDEBUG
-#include <pc532/umprintf.c> 
+#include "umprintf.c"
 
 /* Inform scncnputc the state of mapping. */
 int _mapped = 0;
@@ -118,6 +126,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
+int	maxphysmem = 0;
 int	physmem;
 int	boothowto;
 
@@ -128,9 +137,10 @@ vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
 
-caddr_t allocsys __P((caddr_t));
-void dumpsys __P((void));
-void cpu_reset __P((void));
+caddr_t	allocsys __P((caddr_t));
+void	dumpsys __P((void));
+void	consinit __P((void));
+void	cpu_reset __P((void));
 
 /*
  * Machine-dependent startup code
@@ -233,7 +243,7 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -315,6 +325,7 @@ allocsys(v)
 /*  
  * machine dependent system variables.
  */ 
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -492,8 +503,7 @@ sys_sigreturn(p, v, retval)
 }
 
 int waittime = -1;
-struct pcb dumppcb;
-struct reg dumppcb_regs;
+static struct switchframe dump_sf;
 
 void
 boot(howto, bootstr)
@@ -502,6 +512,7 @@ boot(howto, bootstr)
 {
 	extern int cold;
 	extern const char *panicstr;
+	int s;
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -522,14 +533,14 @@ boot(howto, bootstr)
 	}
 
 	/* Disable interrupts. */
-	splhigh();
+	s = splhigh();
 
 	/* If rebooting and a dump is requested do it. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-#if STACK_DUMP
+		int *fp;
+#if !defined(DDB) && defined(STACK_DUMP)
 		/* dump the stack! */
 		{
-			int *fp;
 			u_int limit = ns532_round_page(fp) - 40;
 			int i=0;
 			sprd(fp, fp);
@@ -543,20 +554,15 @@ boot(howto, bootstr)
 			}
 		}
 #endif
-		di();
-		sprd(sp, dumppcb.pcb_ksp);
-		sprd(fp, dumppcb.pcb_kfp);
-		smr(ptb0, dumppcb.pcb_ptb);
-		dumppcb.pcb_onstack = &dumppcb_regs;
-		sprw(psr, dumppcb_regs.r_psr);
-		sprw(mod, dumppcb_regs.r_mod);
-		lprd(sp, &dumppcb_regs.r_mod);
-		__asm __volatile("bsr 1f; 1: enter [r0,r1,r2,r3,r4,r5,r6,r7],8");
-		lprd(sp, dumppcb.pcb_ksp);
-		lprd(fp, dumppcb.pcb_kfp);
-		sprd(sb, dumppcb_regs.r_sb);
-		sprd(usp, dumppcb_regs.r_sp);
-		ei();
+		if (curpcb) {
+			curpcb->pcb_ksp = (long) &dump_sf;
+			sprd(fp,  curpcb->pcb_kfp);
+			smr(ptb0, curpcb->pcb_ptb);
+			sprd(fp, fp);
+			dump_sf.sf_fp = fp[0];
+			dump_sf.sf_pc = fp[1];
+			dump_sf.sf_pl = s;
+		}
 		dumpsys();
 	}
 
@@ -649,8 +655,7 @@ dumpsys()
 	int maddr, psize;
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	int error = 0;
-	int c;
+	int error;
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
@@ -664,7 +669,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -682,6 +687,7 @@ dumpsys()
 	maddr = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
+	error = 0;
 	for (i = 0; i < bytes; i += n) {
 		/* Print out how many MBs we to go. */
 		n = bytes - i;
@@ -740,21 +746,6 @@ dumpsys()
 	}
 	printf("\n\n");
 	DELAY(5000000);		/* 5 seconds */
-}
-
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splhigh();
-
-	*tvp = time;
-	tvp->tv_usec += tick;
-	splx(s);
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
 }
 
 /*
@@ -874,7 +865,7 @@ init532()
 {
 	extern void icu_init();
 	extern int inttab[];
-	extern char etext[], edata[], end[];
+	extern char etext[], edata[], end[], *esym;
 	pd_entry_t *pd;
 
 
@@ -902,8 +893,17 @@ init532()
 	lprd(cfg, CFG_ONE | CFG_IC | CFG_DC | CFG_DE | CFG_M);
 
 	/* Setup memory allocation variables. */
-	avail_start = kppa(end);
+#ifdef DDB
+	if (esym) {
+		avail_start = kppa(esym);
+		esym += KERNBASE;
+	} else
+#endif
+		avail_start = kppa(end);
+
 	avail_end   = ram_size(avail_start);
+	if (maxphysmem != 0 && avail_end > maxphysmem)
+		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
 
 #if VERYLOWDEBUG
@@ -985,16 +985,6 @@ init532()
 	icu_init();
 	intr_init();
 
-#ifdef DDB
-	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-
 	/* Initialize the pmap module. */
 	pmap_bootstrap(avail_start + KERNBASE);
 
@@ -1011,33 +1001,43 @@ init532()
 	panic("main returned to init532\n");
 }
 
+struct queue {
+	struct queue *q_next, *q_prev;
+};
+
 /*
- * insert an element into a queue 
+ * insert an element into a queue
  */
 void
 _insque(v1, v2)
-     void *v1, *v2;
+	void *v1;
+	void *v2;
 {
-	register struct prochd *element=v1, *head=v2;
+	register struct queue *elem = v1, *head = v2;
+	register struct queue *next;
 
-	element->ph_link = head->ph_link;
-	head->ph_link = (struct proc *)element;
-	element->ph_rlink = (struct proc *)head;
-	((struct prochd *)(element->ph_link))->ph_rlink=(struct proc *)element;
+	next = head->q_next;
+	elem->q_next = next;
+	head->q_next = elem;
+	elem->q_prev = head;
+	next->q_prev = elem;
 }
 
 /*
  * remove an element from a queue
  */
 void
-_remque(v1)
-     void *v1;
+_remque(v)
+	void *v;
 {
-	register struct prochd *element = v1;
+	register struct queue *elem = v;
+	register struct queue *next, *prev;
 
-	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
-	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
-	element->ph_rlink = (struct proc *)0;
+	next = elem->q_next;
+	prev = elem->q_prev;
+	next->q_prev = prev;
+	prev->q_next = next;
+	elem->q_prev = 0;
 }
 
 /*
@@ -1059,18 +1059,27 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 /*
- * consinit:
- * initialize the system console.
- * XXX - shouldn't deal with this initted thing.
+ * Console initialization: called early on from main,
+ * before vm init or startup.  Do enough configuration
+ * to choose and initialize a console.
  */
 void
 consinit()
 {
-	static int initted;
-	if (initted)
-		return;
-	initted = 1;
+	extern void cninit();
 	cninit();
+
+#ifdef KGDB
+	if (boothowto & RB_KDB) {
+		extern int kgdb_debug_init;
+		kgdb_debug_init = 1;
+	}
+#endif
+#if defined (DDB)
+        ddb_init();
+        if(boothowto & RB_KDB)
+                Debugger();
+#endif
 }
 
 void
