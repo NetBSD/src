@@ -54,7 +54,9 @@
 #	openprom
 #	bwtwo*
 #	cgthree*
+#	cgfour*
 #	cgsix*
+#	cgeight*
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -68,7 +70,8 @@ case $i in
 all)
 	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 cd0 st0 st1 pty0
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgsix0
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgfour0 cgsix0
+	sh MAKEDEV cgeight0
 	sh MAKEDEV lkm local
 	;;
 std)
@@ -110,9 +113,19 @@ cgthree*)
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
+cgfour*)
+	unit=`expr $i : '.......\(.*\)'`
+	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
+	;;
+
 cgsix*)
 	unit=`expr $i : '.....\(.*\)'`
 	mknod cgsix$unit	c 67 $unit; chmod 666 cgsix$unit
+	;;
+
+cgeight*)
+	unit=`expr $i : '.....\(.*\)'`
+	mknod cgeight$unit	c 64 $unit; chmod 666 cgeight$unit
 	;;
 
 audio)
