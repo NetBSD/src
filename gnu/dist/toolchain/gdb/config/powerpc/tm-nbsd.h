@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "powerpc/tm-ppc-eabi.h"
 
+#undef IBM6000_TARGET
 #undef TARGET_BYTE_ORDER_SELECTABLE_P
 
 #define SOLIB_BKPT_NAME "_start"
