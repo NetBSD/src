@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/02/21 14:44:18 pk Exp $
+#	$NetBSD: Makefile,v 1.13 2000/02/21 15:07:34 pk Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
@@ -7,7 +7,7 @@ PROGSOURCE=	bootxx.c
 
 CPPFLAGS+=	-DBOOTXX -DLIBSA_NO_CLOSE
 STRIPFLAG=
-LINKFLAGS=	-N -Ttext ${RELOC_DEFAULT} -e start
+LINKFLAGS=	-N -Ttext ${RELOC_BOOTXX} -e start
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -o ${.TARGET} ${LINKFLAGS} ${OBJS} ${LIBSA} ${LIBKERN}
