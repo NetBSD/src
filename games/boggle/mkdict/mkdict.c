@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdict.c,v 1.3 1997/10/11 02:12:21 lukem Exp $	*/
+/*	$NetBSD: mkdict.c,v 1.4 1999/09/10 00:18:20 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkdict.c,v 1.3 1997/10/11 02:12:21 lukem Exp $";
+static char rcsid[] = "$NetBSD: mkdict.c,v 1.4 1999/09/10 00:18:20 jsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: mkdict.c,v 1.3 1997/10/11 02:12:21 lukem Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #include "bog.h"
 
@@ -125,5 +126,8 @@ main(argc, argv)
 		current = !current;
 	}
 	warnx("%d words", nwords);
+	fflush(stdout);
+	if (ferror(stdout))
+		err(1, "writing standard output");
 	exit(0);
 }

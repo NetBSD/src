@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.12 1999/09/09 17:30:19 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.13 1999/09/10 00:18:21 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.12 1999/09/09 17:30:19 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.13 1999/09/10 00:18:21 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,6 +256,9 @@ main(ac, av)
 			HTOBE64(*p);
 		(void) fwrite((char *) Seekpts, sizeof *Seekpts, (int) Num_pts, outf);
 	}
+	fflush(outf);
+	if (ferror(outf))
+		err(1, "fwrite %s", Outfile);
 	(void) fclose(outf);
 	exit(0);
 }
