@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ FREETYPESRC=	${FREETYPETOP}/src
 SUBDIR=	freetype
 
 SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
-	ftinit.c ftmm.c ftpfr.c ftstroker.c ftsynth.c ftsystem.c \
+	ftinit.c ftlzw.c ftmm.c ftpfr.c ftsynth.c ftsystem.c \
 	fttype1.c ftwinfnt.c ftxf86.c autohint.c bdf.c cff.c \
 	type1cid.c ftgzip.c pcf.c pfr.c psaux.c pshinter.c psnames.c \
 	raster.c sfnt.c smooth.c truetype.c type1.c type42.c winfnt.c
@@ -32,6 +32,7 @@ CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
 .PATH:	${FREETYPESRC}/cff
 .PATH:	${FREETYPESRC}/cid
 .PATH:	${FREETYPESRC}/gzip
+.PATH:	${FREETYPESRC}/lzw
 .PATH:	${FREETYPESRC}/pcf
 .PATH:	${FREETYPESRC}/pfr
 .PATH:	${FREETYPESRC}/psaux

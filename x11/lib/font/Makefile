@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/05 12:03:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -168,7 +168,7 @@ SRCS=		${SRCS.bitmap} ${SRCS.fontfile} ${SRCS.fc} \
 		${SRCS.FreeType} ${SRCS.X-TrueType} ${SRCS.builtins} \
 		${SRCS.util}
 
-SUBDIR=	stubs xtt
+SUBDIR=	stubs
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

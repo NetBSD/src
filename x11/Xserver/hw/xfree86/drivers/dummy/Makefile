@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2005/03/19 21:41:58 christos Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,7 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 MODULE=	dummy_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/dummy
 
-SRCS=	dummy_driver.c dummy_cursor.c dummy_dga.c
+SRCS=	dummy_driver.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/dummy \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
