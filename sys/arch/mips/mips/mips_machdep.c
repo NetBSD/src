@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.68 2000/03/19 19:16:14 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.69 2000/03/24 18:15:41 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.68 2000/03/19 19:16:14 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.69 2000/03/24 18:15:41 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -588,8 +588,12 @@ cpu_identify()
 		printf("L1 cache: %dKB/%dB Instruction, %dKB/%dB Data",
 		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
 		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
-		if (mips3_L1TwoWayCache)
+		if (mips3_L1TwoWayCache) {
 			printf(", two way set associative");
+			/* One less alias bit with 2 way cache. */
+			mips_CacheAliasMask =
+				((mips_L1DCacheSize/2) - 1) & ~(NBPG - 1);
+		}
 		else
 			printf(", direct mapped");
 		printf("\n");
