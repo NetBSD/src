@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.7 2001/04/20 10:15:03 sato Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.8 2001/05/05 05:45:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -432,6 +432,34 @@ extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT300;
 extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT310;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define FUJITSU_INTERTOP_IT310 ((int)&platid_mask_MACH_FUJITSU_INTERTOP_IT310)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA ((int)&platid_mask_MACH_FUJITSU_PENCENTRA)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_130;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_130 ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_130)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_130TM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_130TM ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_130TM)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_130RF;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_130RF ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_130RF)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_200;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_200 ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_200)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_200CTM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_200CTM ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_200CTM)
+#endif
+extern platid_t platid_mask_MACH_FUJITSU_PENCENTRA_200CRF;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define FUJITSU_PENCENTRA_200CRF ((int)&platid_mask_MACH_FUJITSU_PENCENTRA_200CRF)
 #endif
 #endif /* hpcmips */
 #ifdef hpcmips
