@@ -1,10 +1,9 @@
-/*	$NetBSD: cpu.h,v 1.11 2001/09/04 06:19:23 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2001/09/04 06:23:17 simonb Exp $	*/
 
 #ifndef _NEWSMIPS_CPU_H_
 #define _NEWSMIPS_CPU_H_
 
 #include <mips/cpu.h>
-#include <mips/cpuregs.h>
 
 extern int systype;
 
