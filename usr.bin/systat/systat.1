@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.23 2001/07/08 18:16:40 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.24 2002/01/13 07:04:56 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm systat
-.Nd display system statistics on a crt
+.Nd display system statistics on a CRT
 .Sh SYNOPSIS
 .Nm
 .Op Fl n
@@ -57,17 +57,17 @@ using the curses screen display library,
 While
 .Nm
 is running the screen is usually divided into two windows (an exception
-is the vmstat display which uses the entire screen).  The
-upper window depicts the current system load average.  The
-information displayed in the lower window may vary, depending on
-user commands.  The last line on the screen is reserved for user
-input and error messages.
+is the vmstat display which uses the entire screen).
+The upper window depicts the current system load average.
+The information displayed in the lower window may vary, depending on
+user commands.
+The last line on the screen is reserved for user input and error messages.
 .Pp
 By default
 .Nm
 displays the processes getting the largest percentage of the processor
-in the lower window.  Other displays show more detailed process information,
-swap space usage, disk
+in the lower window.
+Other displays show more detailed process information, swap space usage, disk
 .Tn I/O
 statistics (a la
 .Xr iostat  8  ) ,
@@ -79,8 +79,8 @@ network ``mbuf'' utilization, and network connections (a la
 Input is interpreted at two different levels.
 A ``global'' command interpreter processes all keyboard input.
 If this command interpreter fails to recognize a command, the
-input line is passed to a per-display command interpreter.  This
-allows each display to have certain display-specific commands.
+input line is passed to a per-display command interpreter.
+This allows each display to have certain display-specific commands.
 .Pp
 Command line options:
 .Bl -tag -width "refresh_interval"
@@ -133,8 +133,8 @@ full detail below.
 .It Ar refresh-interval
 The
 .Ar refresh-interval
-specifies the screen refresh time interval in seconds.  This is provided
-for backwards compatibility, and overrides the
+specifies the screen refresh time interval in seconds.
+This is provided for backwards compatibility, and overrides the
 .Ar refresh-interval
 specified with the
 .Fl w
@@ -157,9 +157,9 @@ Stop
 Print the names of the available displays on the command line.
 .It Ic \&:
 Move the cursor to the command line and interpret the input
-line typed as a command.  While entering a command the
-current character erase, word erase, and line kill characters
-may be used.
+line typed as a command.
+While entering a command the current character erase, word erase,
+and line kill characters may be used.
 .El
 .Pp
 The following commands are interpreted by the ``global''
@@ -184,9 +184,9 @@ Stop refreshing the screen.
 .Op Ic start
 .Op Ar number
 .Xc
-Start (continue) refreshing the screen.  If a second, numeric,
-argument is provided it is interpreted as a refresh interval
-(in seconds).
+Start (continue) refreshing the screen.
+If a second, numeric, argument is provided it is interpreted as a
+refresh interval in seconds.
 Supplying only a number will set the refresh interval to this
 value.
 .It Ic quit
@@ -199,7 +199,8 @@ Exit
 The available displays are:
 .Bl -tag -width Ic
 .It Ic all
-Cycle through all displays automatically. At each display, wait some
+Cycle through all displays automatically.
+At each display, wait some
 refresh-turns, then switch to the next display.
 Duration of one refresh-turn is adjustable with the
 .Fl w
@@ -227,15 +228,17 @@ Display IPv6 statistics.
 Display IPsec statistics for both IPv4 and v6.
 .It Ic iostat
 Display, in the lower window, statistics about processor use
-and disk throughput.  Statistics on processor use appear as
-bar graphs of the amount of time executing in user mode (``user''),
-in user mode running low priority processes (``nice''), in
-system mode (``system''), and idle (``idle'').  Statistics
-on disk throughput show, for each drive, kilobytes of data transferred,
-number of disk transactions performed, and time spent in disk accesses
-(in milliseconds).  This information may be displayed as
-bar graphs or as rows of numbers which scroll downward.  Bar
-graphs are shown by default;
+and disk throughput.
+Statistics on processor use appear as bar graphs of the amount of
+time executing in user mode (``user''), in user mode running low
+priority processes (``nice''), in system mode (``system''), and
+idle (``idle'').
+Statistics on disk throughput show, for each drive, kilobytes of
+data transferred, number of disk transactions performed, and time
+spent in disk accesses in milliseconds.
+This information may be displayed as bar graphs or as rows of
+numbers which scroll downward.
+Bar graphs are shown by default;
 .Pp
 The following commands are specific to the
 .Ic iostat
@@ -245,7 +248,8 @@ display; the minimum unambiguous prefix may be supplied.
 .It Cm numbers
 Show the disk
 .Tn I/O
-statistics in numeric form.  Values are
+statistics in numeric form.
+Values are
 displayed in numeric columns which scroll downward.
 .It Cm bars
 Show the disk
@@ -259,10 +263,11 @@ not display time).
 Display, in the lower window, the number of mbufs allocated
 for particular uses, i.e. data, socket structures, etc.
 .It Ic netstat
-Display, in the lower window, network connections.  By default,
-network servers awaiting requests are not displayed.  Each address
-is displayed in the format ``host.port'', with each shown symbolically,
-when possible.  It is possible to have addresses displayed numerically,
+Display, in the lower window, network connections.
+By default, network servers awaiting requests are not displayed.
+Each address is displayed in the format ``host.port'', with each
+shown symbolically, when possible.
+It is possible to have addresses displayed numerically,
 limit the display to a set of ports, hosts, and/or protocols
 (the minimum unambiguous prefix may be supplied):
 .Pp
@@ -282,21 +287,24 @@ Display only network connections using the indicated protocol
 (currently either ``tcp'' or ``udp'').
 .It Cm ignore Op Ar items
 Do not display information about connections associated with
-the specified hosts or ports.  Hosts and ports may be specified
-by name (``vangogh'', ``ftp''), or numerically.  Host addresses
-use the Internet dot notation (``128.32.0.9'').  Multiple items
-may be specified with a single command by separating them with
-spaces.
+the specified hosts or ports.
+Hosts and ports may be specified by name (``vangogh'', ``ftp''),
+or numerically.
+Host addresses use the Internet dot notation (``128.32.0.9'').
+Multiple items may be specified with a single command by separating
+them with spaces.
 .It Cm display Op Ar items
 Display information about the connections associated with the
-specified hosts or ports.  As for
+specified hosts or ports.
+As for
 .Ar ignore  ,
 .Op Ar items
 may be names or numbers.
 .It Cm show Op Ar ports\&|hosts
 Show, on the command line, the currently selected protocols,
-hosts, and ports.  Hosts and ports which are being ignored
-are prefixed with a `!'.  If
+hosts, and ports.
+Hosts and ports which are being ignored are prefixed with a `!'.
+If
 .Ar ports
 or
 .Ar hosts
@@ -445,26 +453,26 @@ Only devices that have interrupted at least once since boot time are shown.
 Commands to switch between displays may be abbreviated to the
 minimum unambiguous prefix; for example, ``io'' for ``iostat''.
 Certain information may be discarded when the screen size is
-insufficient for display.  For example, on a machine with 10
-drives the
+insufficient for display.
+For example, on a machine with 10 drives the
 .Ic iostat
-bar graph displays only 3 drives on a 24 line terminal.  When
-a bar graph would overflow the allotted screen space it is
+bar graph displays only 3 drives on a 24 line terminal.
+When a bar graph would overflow the allotted screen space it is
 truncated and the actual value is printed ``over top'' of the bar.
 .Pp
 The following commands are common to each display which shows
-information about disk drives.  These commands are used to
-select a set of drives to report on, should your system have
-more drives configured than can normally be displayed on the
-screen.
+information about disk drives.
+These commands are used to select a set of drives to report on,
+should your system have more drives configured than can normally
+be displayed on the screen.
 .Pp
 .Bl -tag -width Tx -compact
 .It Cm ignore Op Ar drives
-Do not display information about the drives indicated.  Multiple
-drives may be specified, separated by spaces.
+Do not display information about the drives indicated.s
+Multiple drives may be specified, separated by spaces.
 .It Cm display Op Ar drives
-Display information about the drives indicated.  Multiple drives
-may be specified, separated by spaces.
+Display information about the drives indicated.
+Multiple drives may be specified, separated by spaces.
 .El
 .Pp
 The following commands are specific to the
@@ -521,8 +529,10 @@ program appeared in
 .Bx 4.3 .
 .Sh BUGS
 Consumes CPU resources and thus may skew statistics.
+.Pp
 Certain displays presume a minimum of 80 characters per line.
+.Pp
 The
 .Ic vmstat
 display looks out of place because it is (it was added in as
-a separate display rather than created as a new program).
+a separate display from what used to be a different program).
