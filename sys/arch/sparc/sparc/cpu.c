@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.53 1997/08/04 22:41:25 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.54 1997/08/05 10:40:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -301,8 +301,8 @@ cache_print(sc)
 		       ci->c_totalsize/1024, ci->c_linesize);
 	} else {
 		/* combined, virtual */
-		printf(" %d byte write-%s, %d bytes/line, %cw flush ",
-		       ci->c_totalsize,
+		printf(" %dK byte write-%s, %d bytes/line, %cw flush ",
+		       ci->c_totalsize/1024,
 		       (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		       ci->c_linesize,
 		       ci->c_hwflush ? 'h' : 's');
@@ -1155,6 +1155,7 @@ static struct info fpu_types[] = {
 	 * Vendor 1, IU ROSS0/1 or Pinnacle.
 	 */
 	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle */
+	{ 1, 0x1, 0xe, 0, "on-chip" },		/* Hypersparc RT 625/626 */
 	{ 1, 0x1, ANY, 0, "L64812 or ACT8847" },
 	{ 1, 0x1, ANY, 1, "L64814" },
 	{ 1, 0x1, ANY, 2, "TMS390C602A" },
