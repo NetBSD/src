@@ -1,4 +1,4 @@
-/* $NetBSD: dc_ibus.c,v 1.1.2.2 1999/04/17 13:45:53 nisimura Exp $ */
+/* $NetBSD: dc_ibus.c,v 1.1.2.3 1999/11/19 11:06:23 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,36 +32,32 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.2 1999/04/17 13:45:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.3 1999/11/19 11:06:23 nisimura Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
-
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/ibus/dc7085reg.h>	/* XXX dev/ic/dc7085reg.h XXX */
-#include <pmax/ibus/dc7085var.h>	/* XXX machine/dc7085var.h XXX */
+#include <pmax/ibus/dc7085reg.h>
+#include <pmax/ibus/dc7085var.h>
 
-int  dcibus_match	__P((struct device *, struct cfdata *, void *));
-void dcibus_attach	__P((struct device *, struct device *, void *));
-int  dcibus_print	__P((void *, const char *));
+int  dc_ibus_match __P((struct device *, struct cfdata *, void *));
+void dc_ibus_attach __P((struct device *, struct device *, void *));
+int  dc_ibus_print __P((void *, const char *));
 
 struct cfattach dc_ibus_ca = {
-	sizeof(struct dc_softc), dcibus_match, dcibus_attach
+	sizeof(struct dc_softc), dc_ibus_match, dc_ibus_attach
 };
+extern struct cfdriver dc_cd;
 
 int dc_major = 16;		/* EXPORT */
 int dcintr __P((void *));	/* IMPORT */
 
-extern int badaddr __P((void *, u_int)); /* XXX */
 
 int
-dcibus_match(parent, match, aux)
+dc_ibus_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -73,47 +69,43 @@ dcibus_match(parent, match, aux)
 	    strcmp(d->ia_name, "dc7085") != 0)
 		return 0;
 
-	if (badaddr((caddr_t)d->ia_addr, 2))
+	if (badaddr((caddr_t)d->ia_addr, 2)) /* XXX */
 		return 0;
 
 	return 1;
 }
 
 void
-dcibus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
+dc_ibus_attach(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
+	struct dc_softc *sc = (struct dc_softc *)self;
 	struct ibus_attach_args *d = aux;
-	struct dc_softc *sc = (struct dc_softc*)self;
 	struct dc_attach_args args;
 	int line;
 
-	sc->sc_bst = /* XXX */ 0;
+	sc->sc_bst = ((struct ibus_softc *)parent)->sc_bst;
 	if (bus_space_map(sc->sc_bst, d->ia_addr, 0x32, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
 		return;
 	}
-	sc->sc_unit = /* XXX */ 0;
+	sc->sc_unit = dc_cd.cd_ndevs;
+
 	printf("\n");
 
 	for (line = 0; line < 4; line++) {
 		args.line = line;
-		config_found(self, (void *)&args, dcibus_print);
+		config_found(self, (void *)&args, dc_ibus_print);
 	}
 
-	ibus_intr_establish(parent, d->ia_cookie, IPL_TTY, dcintr, sc);
+	ibus_intr_establish(self, d->ia_cookie, IPL_TTY, dcintr, sc);
 
-#if 0
-	s = splhigh();
 	/* XXX enable DC7085 circuit here XXX */
-	splx(s);
-#endif
 }
 
 int
-dcibus_print(aux, name)
+dc_ibus_print(aux, name)
 	void *aux;
 	const char *name;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.12 1999/11/12 11:07:20 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.13 1999/11/19 11:06:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,21 +73,21 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.12 1999/11/12 11:07:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.13 1999/11/19 11:06:27 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
-#include <sys/termios.h>
-#include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
+#include <mips/mips/mips_mcclock.h>
+
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
-#include <mips/mips/mips_mcclock.h>
 
 #include <dev/tc/tcvar.h>
 #include <pmax/ibus/ibusvar.h>
@@ -108,9 +108,9 @@ static void dec_3max_memerr __P((void));
 
 extern void kn02_wbflush __P((void));
 extern void prom_findcons __P((int *, int *, int *));
-extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dc_cnattach __P((paddr_t, int));
 extern void dckbd_cnattach __P((paddr_t));
-extern int tc_fb_cnattach __P((int));
+extern int tcfb_cnattach __P((int));
 
 int _splraise_kn02 __P((int));
 int _spllower_kn02 __P((int));
@@ -133,7 +133,7 @@ dec_3max_init()
 	u_int32_t csr;
 	extern char cpu_model[];
 
-	platform.iobus = "tc3max";
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
@@ -193,9 +193,10 @@ dec_3max_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		dckbd_cnattach(KN02_SYS_DZ);
-		if (tc_fb_cnattach(crt) > 0)
+		if (tcfb_cnattach(crt) > 0) {
+			dckbd_cnattach(KN02_SYS_DZ);
 			return;
+		}
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
@@ -207,9 +208,7 @@ dec_3max_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-	if (dc_cnattach(KN02_SYS_DZ, 3,
-	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-		panic("can't init serial console");
+	dc_cnattach(KN02_SYS_DZ, kbd);
 }
 
 void
@@ -341,12 +340,13 @@ static struct tc_builtin tc_kn02_builtins[] = {
 	{ "PMAZ-AA ",	5, 0x0, C(SYS_DEV_SCSI), },
 };
 
-struct tcbus_attach_args kn02_tc_desc = {
-	"tc", 0,
+struct tcbus_attach_args kn02_tc_desc = { /* global not a const */
+	NULL, 0,
 	TC_SPEED_25_MHZ,
 	3, tc_kn02_slots,
 	3, tc_kn02_builtins,
-	kn02_intr_establish, kn02_intr_disestablish
+	kn02_intr_establish, kn02_intr_disestablish,
+	NULL,
 };
 
 struct {
@@ -365,7 +365,6 @@ static struct ibus_attach_args kn02sys_devs[] = {
 	{ "mc146818",	KV(KN02_SYS_CLOCK), C(SYS_DEV_BOGUS), },
 	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
 };
-static int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
 void
 kn02_intr_establish(ioa, cookie, level, func, arg)
@@ -421,8 +420,6 @@ kn02sys_match(parent, cfdata, aux)
 
 	if (strncmp("KN02SYS ", ta->ta_modname, TC_ROM_LLEN) != 0)
 		return 0;
-	if (systype != DS_3MAX)
-		panic("kn02sys_match: how did we get here?");
 	return 1;
 }
 
@@ -432,16 +429,16 @@ kn02sys_attach(parent, self, aux)
         struct device *self;
         void *aux;
 {
-	struct ibus_softc *sc = (struct ibus_softc *)self;
-	struct tc_attach_args *ta = aux;
+	struct tc_softc *sc = (void *)parent;
+	struct ibus_dev_attach_args ida;
+   
+	ida.ida_busname = "ibus"; 
+	ida.ida_devs = kn02sys_devs;
+	ida.ida_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
+	ida.ida_establish = sc->sc_intr_establish;
+	ida.ida_disestablish = sc->sc_intr_disestablish;
 
-	sc->sc_bst = ta->ta_memt;
-	sc->ibd_establish = kn02_intr_establish;
-	sc->ibd_disestablish = kn02_intr_disestablish;
-
-	printf("\n");
-
-	ibus_attach_devs(sc, kn02sys_devs, kn02sys_ndevs);
+	ibusattach(parent, self, &ida);
 }
 
 /*

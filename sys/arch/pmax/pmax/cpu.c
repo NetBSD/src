@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10.4.3 1999/11/12 11:07:20 nisimura Exp $ */
+/* $NetBSD: cpu.c,v 1.10.4.4 1999/11/19 11:06:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,8 +28,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -50,10 +50,10 @@ cpumatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0) {
+	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
 		return (0);
 	}
 	return (1);

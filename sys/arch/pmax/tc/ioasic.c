@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.13 1999/10/26 16:58:32 drochner Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.14 1999/11/19 11:06:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.13 1999/10/26 16:58:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.14 1999/11/19 11:06:30 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ void
 ioasic_intr_establish(ioa, cookie, level, func, arg)
 	struct device *ioa;
 	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int level;
 	int (*func) __P((void *));
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];

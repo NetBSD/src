@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.16 1999/10/29 16:46:57 drochner Exp $
+#	$NetBSD: files.pmax,v 1.56.2.17 1999/11/19 11:11:37 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -48,15 +48,15 @@ file	dev/dec/if_le_dec.c		le_dec_subr	# XXX
 
 # "ibus" for PMAX, MIPSMATE and 3MAX
 device	ibus {}
-file	arch/pmax/ibus/ibus_subr.c	ibus
+file	arch/pmax/ibus/ibus.c		ibus
 
 attach	ibus at mainbus with ibus_pmax
-file	arch/pmax/ibus/ibus_pmax.c	ibus_pmax
+file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100 | dec_5100)
 
 # TURBOchannel devices
 include	"dev/tc/files.tc"
-attach	tc at mainbus
-file	arch/pmax/tc/tc_subr.c		tc needs-flag
+attach	tc at mainbus with tcbus
+file	arch/pmax/tc/tcbus.c		tc
 
 # IOASIC as a TURBOchannel device for 3MIN, 3MAX+ and MAXINE
 # device defined in files.tc:
@@ -120,7 +120,7 @@ attach	dctty at dc
 file	arch/pmax/ibus/dctty.c		dctty needs-flag
 
 # 8530 UARTs using the MI 8530 driver
-device	zsc { [channel = -1] }
+device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic	
 file	arch/pmax/tc/zs_ioasic.c	zsc_ioasic
 file	dev/ic/z8530sc.c		zsc
@@ -155,6 +155,10 @@ file	dev/tc/tfb.c			tfb needs-flag
 device	xcfb: wsemuldisplaydev, wsrasteremulops
 attach	xcfb at tc
 file	dev/tc/xcfb.c 			xcfb needs-flag
+
+device	sfbp: wsemuldisplaydev, wsrasteremulops
+attach	sfbp at tc
+file	dev/tc/sfbplus.c		sfbp needs-flag
 
 device	pm: wsemuldisplaydev, wsrasteremulops
 attach	pm at ibus

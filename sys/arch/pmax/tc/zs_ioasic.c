@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.1.2.8 1999/10/29 16:54:40 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.1.2.9 1999/11/19 11:06:31 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.8 1999/10/29 16:54:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.9 1999/11/19 11:06:31 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.8 1999/10/29 16:54:40 drochner E
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-#include <dev/dec/zskbdvar.h>
 
 #include <pmax/tc/zs_ioasicvar.h>
 #include <pmax/pmax/pmaxtype.h>
@@ -82,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.1.2.8 1999/10/29 16:54:40 drochner E
 int	zs_ioasic_cngetc __P((dev_t));
 void	zs_ioasic_cnputc __P((dev_t, int));
 void	zs_ioasic_cnpollc __P((dev_t, int));
+void	zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
+void	zs_ioasic_lk201_cninit __P((tc_addr_t, tc_offset_t, int));
 
 struct consdev zs_ioasic_cons = {
 	NULL, NULL, zs_ioasic_cngetc, zs_ioasic_cnputc,
@@ -95,7 +96,6 @@ int zs_ioasic_console;
 int	zs_ioasic_isconsole __P((tc_offset_t, int));
 
 struct zs_chanstate zs_ioasic_conschanstate_store;
-struct zs_chanstate *zs_ioasic_conschanstate;
 
 int	zs_getc __P((struct zs_chanstate *));
 void	zs_putc __P((struct zs_chanstate *, int));
@@ -192,8 +192,6 @@ void	zs_ioasic_softintr __P((void *));
 volatile int zs_ioasic_soft_scheduled;
 
 extern struct cfdriver ioasic_cd;
-
-void zs_ioasic_cninit __P((tc_addr_t, tc_offset_t, int));
 
 /*
  * Is the zs chip present?
@@ -620,10 +618,10 @@ zs_abort(cs)
 		rr0 = zs_read_csr(cs);
 	} while (rr0 & ZSRR0_BREAK);
 
-#if defined(KGDB) /* XXX doesn't work - we don't get called */
+#if defined(KGDB)
 	zskgdb(cs);
 #elif defined(DDB)
-	console_debugger();
+	Debugger();
 #else
 	printf("zs_abort: ignoring break on console\n");
 #endif
@@ -662,7 +660,7 @@ zs_putc(cs, c)
 	struct zs_chanstate *cs;
 	int c;
 {
-	register int s, rr0;
+	int s, rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
@@ -677,6 +675,31 @@ zs_putc(cs, c)
 		rr0 = zs_read_csr(cs);
 	} while ((rr0 & ZSRR0_TX_READY) == 0);
 	splx(s);
+}
+
+int zs_query __P((struct zs_chanstate *, char *, int, int));
+
+int
+zs_query(cs, buf, size, timeout)
+	struct zs_chanstate *cs;
+	char *buf;
+	int size, timeout;
+{
+	int n, ticks, rr0;
+	
+	n = 0;
+	do {
+		ticks = 0;
+		rr0 = zs_read_csr(cs);
+		while ((rr0 & ZSRR0_RX_READY) == 0) {
+			ticks += 100;
+			if (ticks > timeout)
+				return -1;
+			DELAY(100);
+		}
+		buf[n] = zs_read_data(cs);
+	} while (++n < size);
+	return (size);
 }
 
 /*****************************************************************/
@@ -703,7 +726,7 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	 * state is copied into the softc, and the console channel
 	 * pointer adjusted to point to the new copy.
 	 */
-	zs_ioasic_conschanstate = cs = &zs_ioasic_conschanstate_store;
+	cs = &zs_ioasic_conschanstate_store;
 
 	/*
 	 * Compute the physical address of the chip, "map" it via
@@ -747,39 +770,45 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	zs_loadchannelregs(cs);
 }
 
-int
-zs_ioasic_cnattach(ioasic_addr, zs_offset, channel, rate, cflag)
+void
+zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	tc_addr_t ioasic_addr;
 	tc_offset_t zs_offset;
-	int channel, rate, cflag;
+	int channel;
 {
-	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	struct zs_chanstate *cs;
 
-	zs_ioasic_conschanstate->cs_defspeed = rate;
-	zs_ioasic_conschanstate->cs_defcflag = cflag;
+	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	cs = &zs_ioasic_conschanstate_store;
+	cs->cs_defspeed = 9600;
+	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 
 	/* Point the console at the SCC. */
 	cn_tab = &zs_ioasic_cons;
-
-	return (0);
+	cn_tab->cn_pri = CN_REMOTE;
+	cn_tab->cn_dev = makedev(zs_major, 0);
 }
 
-int
+void
 zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
 	tc_addr_t ioasic_addr;
 	tc_offset_t zs_offset;
 	int channel;
 {
 #if (NZSKBD > 0)
+	extern int zskbd_cnattach __P((struct zs_chanstate *));
+	struct zs_chanstate *cs;
+
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
-	zs_ioasic_conschanstate->cs_defspeed = 4800;
-	zs_ioasic_conschanstate->cs_defcflag =
-	     (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-	zs_ioasic_conschanstate->cs_brg_clk = PCLK / 16;
-	zs_loadchannelregs(zs_ioasic_conschanstate);
-	return (zskbd_cnattach(zs_ioasic_conschanstate));
-#else
-	return (ENXIO);
+	cs = &zs_ioasic_conschanstate_store;
+	cs->cs_defspeed = 4800;
+	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+	cs->cs_brg_clk = PCLK / 16;
+#if 0
+	zs_set_speed(cs, 4800);
+	zs_loadchannelregs(cs);
+#endif
+	zskbd_cnattach(cs);
 #endif
 }
 
@@ -805,7 +834,7 @@ zs_ioasic_cngetc(dev)
 	dev_t dev;
 {
 
-	return (zs_getc(&zs_ioasic_conschanstate_store));
+	return zs_getc(&zs_ioasic_conschanstate_store);
 }
 
 /*

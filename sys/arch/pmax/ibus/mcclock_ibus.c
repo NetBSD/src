@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ibus.c,v 1.2 1998/04/19 07:50:26 jonathan Exp $ */
+/* $NetBSD: mcclock_ibus.c,v 1.2.4.1 1999/11/19 11:06:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,14 +29,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.2 1998/04/19 07:50:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.2.4.1 1999/11/19 11:06:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
@@ -50,8 +49,9 @@ void	mcclock_ibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ibus_ca = {
 	sizeof (struct mcclock_pad32_softc),
-	     (void *)mcclock_ibus_match, mcclock_ibus_attach, 
+	(void *)mcclock_ibus_match, mcclock_ibus_attach,
 };
+extern struct cfdriver ibus_cd;
 
 
 int
@@ -62,15 +62,13 @@ mcclock_ibus_match(parent, match, aux)
 {
 	struct ibus_attach_args *ia = aux;
 
-#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
-
-	if (strcmp(CFNAME(parent), "ibus") != 0)
+	if (parent->dv_cfdata->cf_driver != &ibus_cd)
 		return 0;
 
 	if (strcmp("mc146818", ia->ia_name) != 0)
 		return (0);
 
-	if (badaddr((void*)ia->ia_addr, sizeof(u_int32_t)))
+	if (badaddr((void *)ia->ia_addr, sizeof(u_int32_t)))
 		return (0);
 
 	return (1);
@@ -84,7 +82,7 @@ mcclock_ibus_attach(parent, self, aux)
 	struct ibus_attach_args *ia =aux;
 	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)self;
 
-	sc->sc_dp = (struct mcclock_pad32_clockdatum*)ia->ia_addr;
+	sc->sc_dp = (struct mcclock_pad32_clockdatum *)ia->ia_addr;
 
 	/* Attach MI driver, using busfns with TC-style register padding */
 	mcclock_attach(&sc->sc_mcclock, &mcclock_pad32_busfns);
