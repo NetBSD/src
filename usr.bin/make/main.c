@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -966,8 +966,6 @@ ReadMakefile(p, q)
 		Parse_File("(stdin)", stdin);
 		Var_Set("MAKEFILE", "", VAR_GLOBAL);
 	} else {
-		if ((stream = fopen(fname, "r")) != NULL)
-			goto found;
 		/* if we've chdir'd, rebuild the path name */
 		if (curdir != objdir && *fname != '/') {
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
@@ -979,7 +977,8 @@ ReadMakefile(p, q)
 				fname = path;
 				goto found;
 			}
-		}
+		} else if ((stream = fopen(fname, "r")) != NULL)
+			goto found;
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
