@@ -1,0 +1,434 @@
+#
+#   This file is part of the program psim.
+#
+#   Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+default: all
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+srcroot = $(srcdir)/../..
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+host_alias = @host_alias@
+target_alias = @target_alias@
+program_transform_name = @program_transform_name@
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+tooldir = $(libdir)/$(target_alias)
+
+datadir = $(prefix)/lib
+mandir = $(prefix)/man
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+man8dir = $(mandir)/man8
+man9dir = $(mandir)/man9
+infodir = $(prefix)/info
+includedir = $(prefix)/include
+docdir = $(datadir)/doc
+
+SHELL = /bin/sh
+
+INSTALL = $(srcroot)/install.sh -c
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL)
+INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
+INSTALL_XFORM1= $(INSTALL_XFORM) -b=.1
+
+AR = @AR@
+AR_FLAGS = rc
+CC = @CC@
+CFLAGS = @CFLAGS@
+CC_FOR_BUILD = @CC_FOR_BUILD@
+BISON = bison
+MAKEINFO = makeinfo
+RANLIB = @RANLIB@
+
+SIM_CFLAGS = @sim_cflags@
+INLINE_CFLAGS = @sim_inline@
+BSWAP_CFLAGS = @sim_bswap@
+ENDIAN_CFLAGS = @sim_endian@
+HOSTENDIAN_CFLAGS = @sim_hostendian@
+SMP_CFLAGS = @sim_smp@
+XOR_ENDIAN_CFLAGS = @sim_xor_endian@
+BITSIZE_CFLAGS = @sim_bitsize@
+HOSTBITSIZE_CFLAGS = @sim_hostbitsize@
+ENV_CFLAGS = @sim_env@
+TIMEBASE_CFLAGS = @sim_timebase@
+ALIGNMENT_CFLAGS = @sim_alignment@
+FLOAT_CFLAGS = @sim_float@
+TRACE_CFLAGS = @sim_trace@
+ASSERT_CFLAGS = @sim_assert@
+RESERVED_CFLAGS = @sim_reserved@
+MONITOR_CFLAGS = @sim_monitor@
+MODEL_CFLAGS = @sim_model@ @sim_default_model@ @sim_model_issue@
+WARNING_CFLAGS = @sim_warnings@
+CONFIG_CFLAGS = $(BSWAP_CFLAGS) \
+  $(ENDIAN_CFLAGS) \
+  $(HOSTENDIAN_CFLAGS) \
+  $(SMP_CFLAGS) \
+  $(XOR_ENDIAN_CFLAGS) \
+  $(BITSIZE_CFLAGS) \
+  $(HOSTBITSIZE_CFLAGS) \
+  $(ENV_CFLAGS) \
+  $(TIMEBASE_CFLAGS) \
+  $(ALIGNMENT_CFLAGS) \
+  $(FLOAT_CFLAGS) \
+  $(TRACE_CFLAGS) \
+  $(ASSERT_CFLAGS) \
+  $(RESERVED_CFLAGS) \
+  $(MONITOR_CFLAGS) \
+  $(MODEL_CFLAGS)
+
+STD_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(WARNING_CFLAGS) $(SIM_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES)
+NOWARN_CFLAGS	= $(CFLAGS) $(INLINE_CFLAGS) $(CONFIG_CFLAGS) $(SIM_CFLAGS) $(HDEFINES) $(TDEFINES) $(INCLUDES)
+
+CONFIG_FILE = @sim_config@
+IGEN_OPCODE_RULES = @sim_opcode@
+IGEN_DUPLICATE = @sim_dup@
+IGEN_FILTER = @sim_filter@
+IGEN_ICACHE = @sim_icache@
+DGEN_FLAGS = @sim_switch@
+
+HDEFINES = @HDEFINES@
+TDEFINES =
+IGEN_FLAGS = $(IGEN_DUPLICATE) $(IGEN_FILTER) $(IGEN_ICACHE)
+
+.NOEXPORT:
+MAKEOVERRIDES=
+
+LIB_INCLUDES	= -I$(srcdir)/../../include
+BFD_INCLUDES	= -I../../bfd -I$(srcdir)/../../bfd
+GDB_INCLUDES	= -I../../gdb -I$(srcdir)/../../gdb  -I$(srcdir)/../../gdb/config -I$(srcdir)/../../mmalloc
+INCLUDES	= -I. -I$(srcdir) $(LIB_INCLUDES) $(BFD_INCLUDES) $(GDB_INCLUDES)
+
+LIBIBERTY_LIB	= ../../libiberty/libiberty.a
+BFD_LIB		= ../../bfd/libbfd.a
+
+TARGETLIB	= libsim.a
+
+all:	run $(TARGETLIB) $(GDB_OBJ)
+
+.c.o:
+	$(CC) -c $(STD_CFLAGS) $<
+
+
+
+BASICS_H = \
+	basics.h \
+	config.h \
+	ppc-config.h \
+	inline.h \
+	sim_callbacks.h \
+	debug.h filter_filename.h \
+	words.h \
+	bits.h \
+	sim-endian.h
+
+PSIM_H = \
+	psim.h \
+	$(BASICS_H)
+
+IDECODE_H = \
+	idecode.h \
+	idecode_expression.h \
+	idecode_branch.h \
+	idecode_fields.h \
+	icache.h
+
+REGISTERS_H = \
+	registers.h \
+	spreg.h
+
+CPU_H = \
+	cpu.h \
+	$(BASICS_H) \
+	$(REGISTERS_H) \
+	device.h \
+	corefile.h \
+	vm.h \
+	events.h \
+	interrupts.h \
+	psim.h \
+	icache.h \
+	itable.h \
+	mon.h \
+	model.h
+
+DEVICE_TABLE_H = \
+	$(BASICS_H) \
+	device_table.h \
+	device.h
+
+EMUL_GENERIC_H = \
+	$(CPU_H) \
+	$(IDECODE_H) \
+	emul_generic.h \
+	os_emul.h
+
+
+INLINE = \
+	inline.h \
+	inline.c
+
+BUILT_SRC_WO_CONFIG = \
+	icache.h \
+	idecode.h idecode.c \
+	semantics.h semantics.c \
+	itable.h itable.c \
+	spreg.h spreg.c \
+	model.h model.c
+
+BUILT_SRC = \
+	$(BUILT_SRC_WO_CONFIG) \
+	config.h \
+	ppc-config.h 
+
+LIB_SRC = \
+	psim.c \
+	bits.c \
+	debug.c \
+	sim-endian.c \
+	sim-endian.h \
+	sim-endian-n.h \
+	vm.c \
+	vm_n.h \
+	corefile.c \
+	events.c \
+	os_emul.c \
+	emul_generic.c \
+	emul_netbsd.c \
+	emul_chirp.c \
+	emul_bugapi.c \
+	registers.c \
+	cpu.c \
+	interrupts.c \
+	device.c \
+	device_table.c \
+	cap.c \
+	mon.c \
+	options.c
+
+MAIN_SRC = \
+	main.c \
+	sim_calls.c
+
+
+# NOTE: semantics, idecode and psim put last so smaller files are compiled
+#       first
+LIB_OBJ = \
+	debug.o \
+	filter_filename.o \
+	bits.o \
+	sim-endian.o \
+	os_emul.o \
+	emul_generic.o \
+	emul_netbsd.o \
+	emul_chirp.o \
+	emul_bugapi.o \
+	registers.o \
+	vm.o \
+	corefile.o \
+	model.o \
+	spreg.o \
+	cpu.o \
+	interrupts.o \
+	events.o \
+	cap.o \
+	device.o \
+	device_table.o \
+	itable.o \
+	mon.o \
+	semantics.o \
+	idecode.o \
+	psim.o \
+	options.o
+
+
+GDB_OBJ = sim_calls.o 
+
+
+psim: $(TARGETLIB) main.o $(LIBIBERTY_LIB) $(BFD_LIB) $(LIBS)
+	$(CC) $(CFLAGS) $(SIM_CFLAGS) $(LDFLAGS) -o psim main.o $(TARGETLIB) $(BFD_LIB) $(LIBIBERTY_LIB) $(LIBS)
+
+run: psim
+	rm -f run
+	ln psim run
+
+$(TARGETLIB): tmp-igen tmp-dgen $(LIB_OBJ) $(GDB_OBJ)
+	rm -f $(TARGETLIB)
+	$(AR) $(AR_FLAGS) $(TARGETLIB) $(LIB_OBJ) $(GDB_OBJ)
+	$(RANLIB) $(TARGETLIB)
+
+# Given that inlines are turned on now, rebuild psim whenever
+# anything changes.
+psim.o: psim.c psim.h $(CPU_H) $(IDECODE_H) $(INLINE) $(LIB_SRC) $(BUILT_SRC)
+
+bits.o: bits.c $(BASICS_H)
+
+debug.o: debug.c $(BASICS_H)
+filter_filename.o: filter_filename.c filter_filename.h config.h ppc-config.h
+
+sim-endian.o: sim-endian.c sim-endian-n.h $(BASICS_H)
+
+os_emul.o: os_emul.c emul_netbsd.h emul_chirp.h emul_bugapi.h $(EMUL_GENERIC_H)
+emul_generic.o: emul_generic.c $(EMUL_GENERIC_H)
+
+emul_netbsd.o: emul_netbsd.c emul_netbsd.h $(EMUL_GENERIC_H)
+emul_chirp.o: emul_chirp.c emul_chirp.h $(EMUL_GENERIC_H)
+emul_bugapi.o: emul_bugapi.c emul_bugapi.h $(EMUL_GENERIC_H)
+
+registers.o: registers.c $(REGISTERS_H) $(BASICS_H) 
+
+cpu.o: cpu.c $(CPU_H) $(IDECODE_H)
+
+interrupts.o: interrupts.c $(CPU_H) $(IDECODE_H) os_emul.h
+
+idecode.o: idecode.c $(CPU_H) $(IDECODE_H) semantics.h
+	$(CC) -c $(NOWARN_CFLAGS) $<
+
+# double.o: double.c dp-bit.c
+
+vm.o: vm.c vm.h vm_n.h $(BASICS_H) $(REGISTERS_H) \
+	device.h corefile.h interrupts.h itable.h mon.h
+
+corefile.o: corefile.c corefile.h corefile-n.h $(BASICS_H) device.h
+
+model.o: model.c $(CPU_H)
+
+events.o: events.c events.h $(BASICS_H) 
+
+sim_calls.o: sim_calls.c $(PSIM_H) itable.h ../../gdb/tm.h options.h
+
+spreg.o: spreg.h spreg.c $(BASICS_H)
+
+main.o: main.c $(PSIM_H) itable.h options.h
+
+device.o: device.c $(DEVICE_TABLE_H) cap.h
+
+device_table.o: device_table.c $(DEVICE_TABLE_H) events.h
+
+cap.o: cap.c cap.h $(BASICS_H)
+
+semantics.o: semantics.c semantics.h $(CPU_H) $(IDECODE_H)
+	$(CC) -c $(NOWARN_CFLAGS) $<
+
+itable.o: itable.c itable.h
+
+mon.o: mon.c $(CPU_H)
+
+# Rebuild options whenever something changes so the date/time is up to date.
+options.o: options.c $(BASICS_H) $(CPU_H) $(IDECODE_H) $(INLINE) $(LIB_SRC) $(BUILT_SRC) config.status Makefile
+	$(CC) -c $(STD_CFLAGS) '-DOPCODE_RULES="@sim_opcode@"' '-DIGEN_FLAGS="$(IGEN_FLAGS)"' '-DDGEN_FLAGS="$(DGEN_FLAGS)"' $<
+
+#
+# Rules to create the built c source code files
+#
+
+ppc-config.h: $(CONFIG_FILE)
+	cp $(srcdir)/$(CONFIG_FILE) ppc-config.h
+
+
+tmp-dgen: dgen ppc-spr-table $(srcdir)/../../move-if-change
+	./dgen $(DGEN_FLAGS) \
+		-r $(srcdir)/ppc-spr-table \
+		-n spreg.h     -P tmp-spreg.h \
+		-n spreg.c     -p tmp-spreg.c
+	$(srcdir)/../../move-if-change tmp-spreg.h spreg.h
+	$(srcdir)/../../move-if-change tmp-spreg.c spreg.c
+	touch tmp-dgen
+
+
+tmp-igen: igen ppc-instructions $(IGEN_OPCODE_RULES) ppc-cache-rules $(srcdir)/../../move-if-change
+	./igen	$(IGEN_FLAGS) \
+		-o $(srcdir)/$(IGEN_OPCODE_RULES) \
+		-k $(srcdir)/ppc-cache-rules \
+		-i $(srcdir)/ppc-instructions \
+		-n icache.h    -C tmp-icache.h \
+		-n semantics.h -S tmp-semantics.h \
+		-n semantics.c -s tmp-semantics.c \
+		-n idecode.h   -D tmp-idecode.h \
+		-n idecode.c   -d tmp-idecode.c \
+		-n itable.h    -T tmp-itable.h \
+		-n itable.c    -t tmp-itable.c \
+		-n model.h     -M tmp-model.h \
+		-n model.c     -m tmp-model.c
+	$(srcdir)/../../move-if-change tmp-icache.h icache.h
+	$(srcdir)/../../move-if-change tmp-idecode.h idecode.h
+	$(srcdir)/../../move-if-change tmp-idecode.c idecode.c
+	$(srcdir)/../../move-if-change tmp-semantics.h semantics.h
+	$(srcdir)/../../move-if-change tmp-semantics.c semantics.c
+	$(srcdir)/../../move-if-change tmp-itable.h itable.h
+	$(srcdir)/../../move-if-change tmp-itable.c itable.c
+	$(srcdir)/../../move-if-change tmp-model.h model.h
+	$(srcdir)/../../move-if-change tmp-model.c model.c
+	touch tmp-igen
+
+# NOTE: Some versions of make don't handle files created as side-effects
+# uncomment the below if that is the case.
+
+$(TARGETLIB): tmp-igen tmp-dgen
+itable.h itable.c icache.h idecode.h idecode.c semantics.h semantics.c model.h model.c: tmp-igen
+spreg.h spreg.c: tmp-dgen
+
+dgen: dgen.o table.o lf.o misc.o filter_filename.o
+	$(CC_FOR_BUILD) $(CFLAGS) $(SIM_CFLAGS) $(LDFLAGS) -o dgen dgen.o table.o lf.o misc.o filter_filename.o $(LIBIBERTY_LIB) $(LIBS)
+
+igen: igen.o table.o lf.o misc.o filter_filename.o
+	$(CC_FOR_BUILD) $(CFLAGS) $(SIM_CFLAGS) $(LDFLAGS) -o igen igen.o table.o lf.o misc.o filter_filename.o $(LIBIBERTY_LIB) $(LIBS)
+
+table.o: misc.h filter_filename.h lf.h table.h
+lf.o: misc.h filter_filename.h lf.h
+dgen.o igen.o: misc.h filter_filename.h lf.h table.h
+misc.o: misc.h filter_filename.h
+# With out this #, make thinks that misc.o doesn't have a rule
+
+tags etags: TAGS
+
+TAGS: $(BUILT_SRC)
+	etags $(srcdir)/*.h $(srcdir)/*.c $(BUILT_SRC)
+
+clean mostlyclean:
+	rm -f tmp-* *.[oasi] core psim run igen dgen config.log $(BUILT_SRC_WO_CONFIG)
+
+distclean realclean: clean
+	rm -f TAGS Makefile config.cache config.status config.h stamp-h
+
+maintainer-clean: distclean
+	rm -f *~ *.log ppc-config.h core *.core
+
+Makefile: Makefile.in config.status
+	CONFIG_FILES=Makefile CONFIG_HEADERS= $(SHELL) ./config.status
+
+config.h: stamp-h ; @true
+stamp-h: config.in config.status
+	CONFIG_FILES= CONFIG_HEADERS=config.h:config.in $(SHELL) ./config.status
+
+config.status: configure
+	$(SHELL) ./config.status --recheck
+
+install:
+	$(INSTALL_XFORM) run $(bindir)/run
+
